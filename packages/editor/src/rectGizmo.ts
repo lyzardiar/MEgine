@@ -1,27 +1,31 @@
 /**
- * Screen-space RectTransform gizmo (Scene view UI — move / rotate / scale).
- * Axes: local X (red) / local Y (green), oriented by local_rotation.
+ * Screen-space RectTransform gizmo (Scene view UI).
+ * Move / rotate / scale tools + Unity-like size handles on the rect.
  */
 
 import type { GizmoMode, GizmoPart } from './transformGizmo';
 import type { Rect } from './ui/rectLayout';
 
+export type SizeHandle = 'n' | 's' | 'e' | 'w' | 'ne' | 'nw' | 'se' | 'sw';
+
 export type RectGizmoHit =
   | { kind: 'axis'; axis: 'x' | 'y'; x0: number; y0: number; x1: number; y1: number }
   | { kind: 'center'; x: number; y: number; r: number }
-  | { kind: 'ring'; cx: number; cy: number; r: number };
+  | { kind: 'ring'; cx: number; cy: number; r: number }
+  | { kind: 'size'; handle: SizeHandle; x: number; y: number };
 
 const AXIS_LEN = 56;
 const AXIS_GAP = 10;
 const SHAFT_W = 3;
 const HEAD_LEN = 11;
-const HEAD_W = 5.5;
 const HIT_AXIS = 10;
 const HIT_CENTER = 9;
 const HIT_RING = 12;
+const HIT_SIZE = 8;
+const SIZE_BOX = 7;
 const ROTATE_R = AXIS_LEN * 0.9;
 
-const COL = { x: '#e74c3c', y: '#2ecc71', center: '#f0f0f0', ring: '#88c0ff' };
+const COL = { x: '#e74c3c', y: '#2ecc71', center: '#f0f0f0', ring: '#88c0ff', size: '#9ad0ff' };
 const HOVER = '#ffc107';
 const ACTIVE = '#ffe566';
 
@@ -29,6 +33,7 @@ function samePart(a: GizmoPart | null, b: GizmoPart): boolean {
   if (!a || a.kind !== b.kind) return false;
   if (a.kind === 'axis' && b.kind === 'axis') return a.axis === b.axis;
   if (a.kind === 'center' && b.kind === 'center') return true;
+  if (a.kind === 'size' && b.kind === 'size') return a.handle === b.handle;
   return false;
 }
 
@@ -69,6 +74,20 @@ function scaleBox(
   ctx.strokeRect(x - s / 2 + 0.5, y - s / 2 + 0.5, s - 1, s - 1);
 }
 
+function sizeHandleBox(
+  ctx: CanvasRenderingContext2D,
+  x: number,
+  y: number,
+  fill: string,
+) {
+  const s = SIZE_BOX;
+  ctx.fillStyle = fill;
+  ctx.strokeStyle = '#1a1a1a';
+  ctx.lineWidth = 1;
+  ctx.fillRect(x - s / 2, y - s / 2, s, s);
+  ctx.strokeRect(x - s / 2 + 0.5, y - s / 2 + 0.5, s - 1, s - 1);
+}
+
 /** Pivot point of a laid-out UI rect. */
 export function rectPivot(rect: Rect, pivot: [number, number] = [0.5, 0.5]): { x: number; y: number } {
   return {
@@ -77,16 +96,46 @@ export function rectPivot(rect: Rect, pivot: [number, number] = [0.5, 0.5]): { x
   };
 }
 
-/** Local UI axes in screen space (y-down). rotDeg = Z rotation (Unity, degrees CCW).
- *  Always orthonormal: X ⊥ Y, both unit length, glued to the object's local XY. */
+/** Local UI axes in screen space (y-down). rotDeg = Z rotation (Unity, degrees CCW). */
 export function rectLocalAxes(rotDeg: number): { x: { dx: number; dy: number }; y: { dx: number; dy: number } } {
   const rad = (rotDeg * Math.PI) / 180;
   const c = Math.cos(rad);
   const s = Math.sin(rad);
-  // Unity y-up: X=(c,s) Y=(-s,c) → screen y-down flip Y:
   return {
     x: { dx: c, dy: -s },
     y: { dx: -s, dy: -c },
+  };
+}
+
+/** Corner / edge positions in screen space for a (possibly rotated) rect. */
+function sizeHandlePoints(
+  rect: Rect,
+  rotDeg: number,
+  pivot: [number, number],
+): Record<SizeHandle, { x: number; y: number }> {
+  const piv = rectPivot(rect, pivot);
+  const axes = rectLocalAxes(rotDeg);
+  const [px, py] = pivot;
+  const { w, h } = rect;
+  const at = (u: number, v: number) => ({
+    x: piv.x + u * axes.x.dx + v * axes.y.dx,
+    y: piv.y + u * axes.x.dy + v * axes.y.dy,
+  });
+  // axes.x = UI 右；axes.y = 屏幕向上（与 UI Y+ 向下相反）
+  // 因此「上」沿 +axes.y，「下」沿 -axes.y
+  const l = -w * px;
+  const r = w * (1 - px);
+  const top = h * py;
+  const bot = -h * (1 - py);
+  return {
+    nw: at(l, top),
+    n: at((l + r) * 0.5, top),
+    ne: at(r, top),
+    e: at(r, (top + bot) * 0.5),
+    se: at(r, bot),
+    s: at((l + r) * 0.5, bot),
+    sw: at(l, bot),
+    w: at(l, (top + bot) * 0.5),
   };
 }
 
@@ -97,11 +146,36 @@ export function drawRectGizmo(
   mode: GizmoMode,
   hover: GizmoPart | null,
   active: GizmoPart | null,
+  /** When set, draw Unity-style size handles on the rect. */
+  rect?: Rect | null,
+  pivotNorm: [number, number] = [0.5, 0.5],
 ): RectGizmoHit[] {
   const hits: RectGizmoHit[] = [];
   const axes = rectLocalAxes(rotDeg);
   const ox = pivot.x;
   const oy = pivot.y;
+
+  // Size handles (always when rect provided — Unity Rect tool feel)
+  if (rect && rect.w > 2 && rect.h > 2) {
+    const pts = sizeHandlePoints(rect, rotDeg, pivotNorm);
+    // Outline
+    ctx.strokeStyle = 'rgba(100, 180, 255, 0.85)';
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    const order: SizeHandle[] = ['nw', 'ne', 'se', 'sw'];
+    ctx.moveTo(pts.nw.x, pts.nw.y);
+    for (const h of order.slice(1)) ctx.lineTo(pts[h].x, pts[h].y);
+    ctx.closePath();
+    ctx.stroke();
+
+    for (const handle of Object.keys(pts) as SizeHandle[]) {
+      const p = pts[handle];
+      const part: GizmoPart = { kind: 'size', handle };
+      const col = colorOf(part, hover, active, COL.size);
+      sizeHandleBox(ctx, p.x, p.y, col);
+      hits.push({ kind: 'size', handle, x: p.x, y: p.y });
+    }
+  }
 
   if (mode === 'translate' || mode === 'scale') {
     for (const axis of ['x', 'y'] as const) {
@@ -148,7 +222,6 @@ export function drawRectGizmo(
     ctx.beginPath();
     ctx.arc(ox, oy, ROTATE_R, 0, Math.PI * 2);
     ctx.stroke();
-    // handle knob along local X
     const tip = {
       x: ox + axes.x.dx * ROTATE_R,
       y: oy + axes.x.dy * ROTATE_R,
@@ -165,7 +238,12 @@ export function drawRectGizmo(
 }
 
 export function hitTestRectGizmo(hits: RectGizmoHit[], x: number, y: number): GizmoPart | null {
-  // Prefer axes / center over ring
+  // Size handles first (precise)
+  for (const h of hits) {
+    if (h.kind === 'size') {
+      if (Math.hypot(x - h.x, y - h.y) <= HIT_SIZE) return { kind: 'size', handle: h.handle };
+    }
+  }
   for (const h of hits) {
     if (h.kind === 'center') {
       if (Math.hypot(x - h.x, y - h.y) <= h.r) return { kind: 'center' };
@@ -180,7 +258,7 @@ export function hitTestRectGizmo(hits: RectGizmoHit[], x: number, y: number): Gi
   for (const h of hits) {
     if (h.kind === 'ring') {
       const d = Math.abs(Math.hypot(x - h.cx, y - h.cy) - h.r);
-      if (d <= HIT_RING) return { kind: 'center' }; // treat as rotate grab
+      if (d <= HIT_RING) return { kind: 'center' };
     }
   }
   return null;
@@ -205,13 +283,19 @@ function distToSeg(
 
 export function cursorForRectGizmo(part: GizmoPart | null, mode: GizmoMode): string {
   if (!part) return 'default';
+  if (part.kind === 'size') {
+    const h = part.handle;
+    if (h === 'e' || h === 'w') return 'ew-resize';
+    if (h === 'n' || h === 's') return 'ns-resize';
+    if (h === 'ne' || h === 'sw') return 'nesw-resize';
+    return 'nwse-resize';
+  }
   if (mode === 'rotate') return 'grab';
   if (part.kind === 'center') return 'move';
   if (part.kind === 'axis') return part.axis === 'x' ? 'ew-resize' : 'ns-resize';
   return 'default';
 }
 
-/** Project screen delta onto local axis (unit screen dir). */
 export function projectScreenDelta(
   dx: number,
   dy: number,

@@ -63,6 +63,11 @@ export function drawSpriteInRect(
 
   const [cr, cg, cb, ca] = color;
   ctx.save();
+  // destination-in 会清掉 clip 外像素；必须限制在目标矩形内
+  ctx.beginPath();
+  ctx.rect(x, y, w, h);
+  ctx.clip();
+
   ctx.globalAlpha = Math.max(0, Math.min(1, ca));
   ctx.drawImage(img, x, y, w, h);
 

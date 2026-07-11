@@ -40,14 +40,25 @@ import {
   type RectGizmoHit,
 } from '../rectGizmo';
 import {
-  drawSceneUiOverlay,
   drawUiItems,
   hitTestUi,
   hitTestUiSelect,
   layoutUiOverlay,
+  layoutUiScene3D,
+  UI_SCENE_PPU,
   type UiDrawItem,
 } from '../ui/uiLayout';
 import { canvasScaleFactor, readRectTransform } from '../ui/rectLayout';
+
+const SCENE_2D_KEY = 'mengine.scene.2d';
+
+function loadScene2D(): boolean {
+  try {
+    return localStorage.getItem(SCENE_2D_KEY) === '1';
+  } catch {
+    return false;
+  }
+}
 
 type Ent = {
   entity: number;
@@ -137,6 +148,12 @@ export function Viewport(props: {
   onRectTranslate?: (entity: number, dx: number, dy: number) => void;
   onRectRotate?: (entity: number, degrees: number) => void;
   onRectScale?: (entity: number, axis: 'x' | 'y' | 'both', amount: number) => void;
+  onRectResize?: (
+    entity: number,
+    handle: 'n' | 's' | 'e' | 'w' | 'ne' | 'nw' | 'se' | 'sw',
+    dLocalX: number,
+    dLocalY: number,
+  ) => void;
   onAspect: (a: GameAspect) => void;
   onOrientation: (o: GameOrientation) => void;
   onFrame: () => void;
@@ -214,6 +231,11 @@ export function Viewport(props: {
   >(null);
 
   const [tick, setTick] = useState(0);
+  const [scene2D, setScene2D] = useState(loadScene2D);
+  const scene2DRef = useRef(scene2D);
+  scene2DRef.current = scene2D;
+  /** Saved orbit angles when entering 2D (restore on exit). */
+  const savedOrbitRef = useRef<{ yaw: number; pitch: number } | null>(null);
 
   // Continuous render loop
   useEffect(() => {
@@ -252,6 +274,12 @@ export function Viewport(props: {
 
     const isGame = p.tab === 'game';
     hitsRef.current = [];
+
+    // Scene 2D：锁定正视 Canvas（yaw/pitch = 0，从 +Z 看 XY 平面）
+    if (!isGame && scene2DRef.current) {
+      sc.yaw = 0;
+      sc.pitch = 0;
+    }
 
     ctx.fillStyle = '#1a1a1a';
     ctx.fillRect(0, 0, pw, ph);
@@ -437,55 +465,65 @@ export function Viewport(props: {
       gizmoHitsRef.current = [];
     }
 
-    // UI Canvas Overlay — Game: full draw; Scene: letterbox screen preview (Unity-like)
+    // UI Canvas — Game: screen overlay; Scene: world XY plane (zoomable)
     {
-      const panel = { x: 0, y: 0, w: pw, h: ph };
-      const uiRoot = isGame
-        ? vp
-        : letterbox(pw, ph, p.gameAspect, p.gameOrientation);
-      const uiItems = layoutUiOverlay(p.entities, uiRoot, selSet);
-      uiItemsRef.current = uiItems;
-
-      // CanvasScaler factor for gizmo drag → anchored_position
-      let layoutScale = 1;
-      if (p.selected != null) {
-        let walk: Ent | undefined = p.entities.find((e) => e.entity === p.selected);
-        while (walk) {
-          if (walk.components.Canvas) {
-            layoutScale = canvasScaleFactor(
-              walk.components.CanvasScaler,
-              uiRoot.w,
-              uiRoot.h,
-            );
-            break;
-          }
-          const pid = walk.parent ?? null;
-          walk = pid != null ? p.entities.find((e) => e.entity === pid) : undefined;
-        }
-      }
-      uiLayoutScaleRef.current = layoutScale || 1;
-
       if (isGame) {
-        drawUiItems(ctx, uiItems, uiHoverRef.current, uiPressRef.current);
-      } else if (uiItems.length) {
-        drawSceneUiOverlay(ctx, panel, uiRoot, uiItems);
+        const uiRoot = vp;
+        const uiItems = layoutUiOverlay(p.entities, uiRoot, selSet);
+        uiItemsRef.current = uiItems;
 
-        // RectTransform 2D gizmo on top of UI preview
-        if (usingRectGizmoRef.current && p.selected != null) {
-          const item = uiItems.find((it) => it.entity === p.selected);
-          const sel = p.entities.find((e) => e.entity === p.selected);
-          if (item && sel?.components.RectTransform) {
-            const rt = readRectTransform(sel.components.RectTransform);
-            const pivot = rectPivot(item.rect, rt.pivot);
-            const rh = drawRectGizmo(
-              ctx,
-              pivot,
-              rt.local_rotation,
-              p.gizmo,
-              hoverGizmoRef.current,
-              activeGizmoRef.current,
-            );
-            rectGizmoHitsRef.current = rh;
+        let layoutScale = 1;
+        if (p.selected != null) {
+          let walk: Ent | undefined = p.entities.find((e) => e.entity === p.selected);
+          while (walk) {
+            if (walk.components.Canvas) {
+              layoutScale = canvasScaleFactor(
+                walk.components.CanvasScaler,
+                uiRoot.w,
+                uiRoot.h,
+              );
+              break;
+            }
+            const pid = walk.parent ?? null;
+            walk = pid != null ? p.entities.find((e) => e.entity === pid) : undefined;
+          }
+        }
+        uiLayoutScaleRef.current = layoutScale || 1;
+        drawUiItems(ctx, uiItems, uiHoverRef.current, uiPressRef.current);
+      } else {
+        // 与 Game 同一 letterbox 尺寸，竖屏时 Scene Canvas 也是竖图
+        const gameBox = letterbox(pw, ph, p.gameAspect, p.gameOrientation);
+        const { items: uiItems, layoutScale } = layoutUiScene3D(
+          p.entities,
+          cam,
+          vp,
+          selSet,
+          { w: gameBox.w, h: gameBox.h },
+        );
+        uiItemsRef.current = uiItems;
+        uiLayoutScaleRef.current = layoutScale || 1;
+
+        if (uiItems.length) {
+          drawUiItems(ctx, uiItems, null, null, { sceneLabel: true });
+
+          if (usingRectGizmoRef.current && p.selected != null) {
+            const item = uiItems.find((it) => it.entity === p.selected);
+            const sel = p.entities.find((e) => e.entity === p.selected);
+            if (item && sel?.components.RectTransform) {
+              const rt = readRectTransform(sel.components.RectTransform);
+              const pivot = item.pivotScreen ?? rectPivot(item.rect, rt.pivot);
+              const rh = drawRectGizmo(
+                ctx,
+                pivot,
+                rt.local_rotation,
+                p.gizmo,
+                hoverGizmoRef.current,
+                activeGizmoRef.current,
+                item.rect,
+                rt.pivot,
+              );
+              rectGizmoHitsRef.current = rh;
+            }
           }
         }
       }
@@ -568,9 +606,14 @@ export function Viewport(props: {
       return;
     }
     if (propsRef.current.tab === 'scene') {
+      // 2D：右键改为平移，禁止环绕旋转
       if (ev.button === 2) {
         draggingRef.current = true;
-        dragRef.current = { type: 'orbit', lx: ev.clientX, ly: ev.clientY };
+        dragRef.current = {
+          type: scene2DRef.current ? 'pan' : 'orbit',
+          lx: ev.clientX,
+          ly: ev.clientY,
+        };
         ev.preventDefault();
         return;
       }
@@ -592,7 +635,7 @@ export function Viewport(props: {
             const item = uiItemsRef.current.find((it) => it.entity === ent.entity);
             const rt = readRectTransform(ent.components.RectTransform);
             const pivot = item
-              ? rectPivot(item.rect, rt.pivot)
+              ? (item.pivotScreen ?? rectPivot(item.rect, rt.pivot))
               : { x, y };
             let lastAng: number | undefined;
             if (propsRef.current.gizmo === 'rotate') {
@@ -710,6 +753,7 @@ export function Viewport(props: {
       d.ly = ev.clientY;
 
       if (d.type === 'orbit') {
+        if (scene2DRef.current) return;
         liveCam.current.yaw -= dx * 0.35;
         liveCam.current.pitch = Math.max(-89, Math.min(89, liveCam.current.pitch + dy * 0.25));
         syncCamToStore();
@@ -732,16 +776,27 @@ export function Viewport(props: {
         const scale = d.layoutScale > 1e-6 ? d.layoutScale : 1;
         const axes = rectLocalAxes(d.rotDeg);
 
-        if (mode === 'translate') {
-          let sdx = dx;
-          let sdy = dy;
+        if (d.part.kind === 'size') {
+          const alongX = projectScreenDelta(dx, dy, axes.x) / scale;
+          const alongY = -projectScreenDelta(dx, dy, axes.y) / scale;
+          propsRef.current.onRectResize?.(d.entity, d.part.handle, alongX, alongY);
+        } else if (mode === 'translate') {
           if (d.part.kind === 'axis') {
             const dir = d.part.axis === 'x' ? axes.x : axes.y;
-            const along = projectScreenDelta(dx, dy, dir);
-            sdx = dir.dx * along;
-            sdy = dir.dy * along;
+            const along = projectScreenDelta(dx, dy, dir) / scale;
+            if (d.part.axis === 'x') {
+              propsRef.current.onRectTranslate?.(d.entity, along, 0);
+            } else {
+              // local Y screen points up; UI y+ is down
+              propsRef.current.onRectTranslate?.(d.entity, 0, -along);
+            }
+          } else {
+            propsRef.current.onRectTranslate?.(
+              d.entity,
+              projectScreenDelta(dx, dy, axes.x) / scale,
+              -projectScreenDelta(dx, dy, axes.y) / scale,
+            );
           }
-          propsRef.current.onRectTranslate?.(d.entity, sdx / scale, sdy / scale);
         } else if (mode === 'scale') {
           if (d.part.kind === 'axis' && (d.part.axis === 'x' || d.part.axis === 'y')) {
             const dir = d.part.axis === 'x' ? axes.x : axes.y;
@@ -766,7 +821,6 @@ export function Viewport(props: {
           if (dAng > Math.PI) dAng -= Math.PI * 2;
           if (dAng < -Math.PI) dAng += Math.PI * 2;
           d.lastAng = ang;
-          // Screen atan2 CW+；Unity Z 旋转 CCW+ → 取反
           propsRef.current.onRectRotate?.(d.entity, (-dAng * 180) / Math.PI);
           d.rotDeg += (-dAng * 180) / Math.PI;
         }
@@ -891,6 +945,41 @@ export function Viewport(props: {
     syncCamToStore();
   };
 
+  const applyScene2D = (on: boolean) => {
+    setScene2D(on);
+    try {
+      localStorage.setItem(SCENE_2D_KEY, on ? '1' : '0');
+    } catch {
+      /* ignore */
+    }
+    if (on) {
+      savedOrbitRef.current = {
+        yaw: liveCam.current.yaw,
+        pitch: liveCam.current.pitch,
+      };
+      liveCam.current.yaw = 0;
+      liveCam.current.pitch = 0;
+      // 对准 Canvas 平面中心
+      const box = letterbox(
+        Math.max(1, canvasRef.current?.clientWidth ?? 800),
+        Math.max(1, canvasRef.current?.clientHeight ?? 600),
+        propsRef.current.gameAspect,
+        propsRef.current.gameOrientation,
+      );
+      liveCam.current.pivot = [0, 0, 0];
+      const worldW = box.w / UI_SCENE_PPU;
+      const worldH = box.h / UI_SCENE_PPU;
+      liveCam.current.distance = Math.max(2, Math.max(worldW, worldH) * 1.15);
+      syncCamToStore();
+    } else if (savedOrbitRef.current) {
+      liveCam.current.yaw = savedOrbitRef.current.yaw;
+      liveCam.current.pitch = savedOrbitRef.current.pitch;
+      savedOrbitRef.current = null;
+      syncCamToStore();
+    }
+    setTick((t) => t + 1);
+  };
+
   useEffect(() => {
     const onKey = (ev: KeyboardEvent) => {
       if (propsRef.current.tab !== 'scene') return;
@@ -902,6 +991,24 @@ export function Viewport(props: {
 
   return (
     <div className="viewport-wrap">
+      {props.tab === 'scene' && (
+        <div className="game-toolbar scene-toolbar">
+          <div className="orient-toggle" title="2D：锁定正视 Canvas，仅平移/缩放">
+            <button
+              type="button"
+              className={scene2D ? 'active' : ''}
+              onClick={() => applyScene2D(!scene2D)}
+            >
+              2D
+            </button>
+          </div>
+          <span className="game-hint">
+            {scene2D
+              ? '正视 Canvas · RMB/MMB 平移 · Wheel 缩放'
+              : 'RMB 旋转 · MMB/Alt+LMB 平移 · Wheel 缩放 · F 聚焦'}
+          </span>
+        </div>
+      )}
       {props.tab === 'game' && (
         <div className="game-toolbar">
           <label>
@@ -947,9 +1054,11 @@ export function Viewport(props: {
       />
       {props.tab === 'scene' && (
         <div className="viewport-overlay">
-          Scene
+          Scene{scene2D ? ' 2D' : ''}
           <br />
-          RMB orbit · MMB/Alt+LMB pan · Wheel zoom · drag RGB arrows · F frame
+          {scene2D
+            ? 'Pan · Zoom · Rect gizmos'
+            : 'Orbit · Pan · Zoom · F frame'}
         </div>
       )}
     </div>

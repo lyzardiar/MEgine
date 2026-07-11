@@ -524,6 +524,10 @@ export function App() {
                 store.scaleRectBy(entity, axis, amount);
                 refresh();
               }}
+              onRectResize={(entity, handle, dx, dy) => {
+                store.resizeRectBy(entity, handle, dx, dy);
+                refresh();
+              }}
               onUiClick={(entity, onClick) => {
                 const action = resolveUnityAction(entity, onClick);
                 if (action) {

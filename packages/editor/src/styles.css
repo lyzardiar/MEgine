@@ -1341,6 +1341,11 @@ body.insp-scrubbing * {
   font-size: 11px;
 }
 
+.scene-toolbar .orient-toggle button {
+  min-width: 36px;
+  font-weight: 600;
+}
+
 .viewport-overlay {
   position: absolute;
   left: 8px;

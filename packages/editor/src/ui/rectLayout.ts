@@ -97,6 +97,12 @@ export type CanvasScalerData = {
   scaleFactor?: number;
 };
 
+export function canvasReferenceSize(scaler: unknown): { w: number; h: number } {
+  const s = (scaler ?? {}) as CanvasScalerData;
+  const ref = v2(s.reference_resolution ?? s.referenceResolution, [1920, 1080]);
+  return { w: Math.max(1, ref[0]), h: Math.max(1, ref[1]) };
+}
+
 /** Scale factor for ScaleWithScreenSize (Unity CanvasScaler). */
 export function canvasScaleFactor(scaler: unknown, viewW: number, viewH: number): number {
   const s = (scaler ?? {}) as CanvasScalerData;

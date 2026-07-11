@@ -13,7 +13,9 @@ export type GizmoPlane = 'xy' | 'xz' | 'yz';
 export type GizmoPart =
   | { kind: 'axis'; axis: GizmoAxis }
   | { kind: 'plane'; plane: GizmoPlane }
-  | { kind: 'center' };
+  | { kind: 'center' }
+  /** RectTransform size handle (Unity Rect tool). */
+  | { kind: 'size'; handle: 'n' | 's' | 'e' | 'w' | 'ne' | 'nw' | 'se' | 'sw' };
 
 export type GizmoHit =
   | { kind: 'axis'; axis: GizmoAxis; x0: number; y0: number; x1: number; y1: number }
@@ -568,6 +570,7 @@ export function gizmoPartEquals(a: GizmoPart | null, b: GizmoPart | null): boole
   if (!a || !b || a.kind !== b.kind) return false;
   if (a.kind === 'axis' && b.kind === 'axis') return a.axis === b.axis;
   if (a.kind === 'plane' && b.kind === 'plane') return a.plane === b.plane;
+  if (a.kind === 'size' && b.kind === 'size') return a.handle === b.handle;
   return a.kind === 'center';
 }
 

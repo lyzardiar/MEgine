@@ -1,6 +1,7 @@
-/** Build screen-space rects for UI trees (Canvas Overlay). */
+/** Build screen-space / Scene-world rects for UI trees (Canvas Overlay). */
 
 import {
+  canvasReferenceSize,
   canvasScaleFactor,
   pointInRect,
   readRectTransform,
@@ -10,6 +11,10 @@ import {
 import { rectLocalAxes, rectPivot } from '../rectGizmo';
 import { drawSpriteInRect } from '../spriteDraw';
 import { resolveSpriteId } from '../spriteLibrary';
+import { project, type Camera, type Vec3 } from '../math3d';
+
+/** World pixels-per-unit for Scene view Overlay canvas plane. */
+export const UI_SCENE_PPU = 100;
 
 export type UiEnt = {
   entity: number;
@@ -24,9 +29,7 @@ export type UiDrawItem = {
   entity: number;
   rect: Rect;
   depth: number;
-  /** Canvas root = screen frame; graphic = Image/Button content */
   role: 'canvas' | 'graphic';
-  /** Z rotation degrees (Unity); gizmo / draw use this */
   rotation: number;
   pivot: [number, number];
   image?: {
@@ -37,10 +40,11 @@ export type UiDrawItem = {
   button?: {
     interactable: boolean;
     transition: string;
-    /** Raw Button.on_click (UnityEvent object or legacy method string). */
     onClick: unknown;
   };
   selected: boolean;
+  /** Projected pivot (Scene 3D). */
+  pivotScreen?: { x: number; y: number };
 };
 
 function color4(raw: unknown, fallback: [number, number, number, number]): [number, number, number, number] {
@@ -59,9 +63,52 @@ function childrenOf(entities: UiEnt[], parent: number | null): UiEnt[] {
     .sort((a, b) => (a.siblingIndex ?? 0) - (b.siblingIndex ?? 0));
 }
 
+/** Pixel (canvas y-down) → world XY plane (Y-up), canvas centered at origin. */
+export function uiPixelToWorld(
+  px: number,
+  py: number,
+  canvasW: number,
+  canvasH: number,
+  ppu = UI_SCENE_PPU,
+): Vec3 {
+  return [(px - canvasW * 0.5) / ppu, (canvasH * 0.5 - py) / ppu, 0];
+}
+
+function pixelCorners(
+  rect: Rect,
+  rotation: number,
+  pivot: [number, number],
+): Array<[number, number]> {
+  const piv = rectPivot(rect, pivot);
+  const axes = rectLocalAxes(rotation);
+  const [px, py] = pivot;
+  const { w, h } = rect;
+  const locals: Array<[number, number]> = [
+    [-w * px, -h * py],
+    [w * (1 - px), -h * py],
+    [w * (1 - px), h * (1 - py)],
+    [-w * px, h * (1 - py)],
+  ];
+  return locals.map(([u, v]) => [
+    piv.x + u * axes.x.dx + v * axes.y.dx,
+    piv.y + u * axes.x.dy + v * axes.y.dy,
+  ]);
+}
+
+function inCanvasTree(entities: UiEnt[], entityId: number, canvasId: number): boolean {
+  let cur: number | null = entityId;
+  const guard = new Set<number>();
+  while (cur != null) {
+    if (cur === canvasId) return true;
+    if (guard.has(cur)) break;
+    guard.add(cur);
+    cur = entities.find((e) => e.entity === cur)?.parent ?? null;
+  }
+  return false;
+}
+
 /**
- * Layout all Overlay canvases into viewRect (Game / Scene letterbox).
- * Returns painter's algorithm list (back → front) for draw; reverse for hit-test.
+ * Layout Overlay canvases into viewRect (Game letterbox / pixel root).
  */
 export function layoutUiOverlay(
   entities: UiEnt[],
@@ -92,9 +139,7 @@ export function layoutUiOverlay(
       (canvas.components.Canvas as { render_mode?: string; renderMode?: string })?.render_mode
       ?? (canvas.components.Canvas as { renderMode?: string })?.renderMode
       ?? 'ScreenSpaceOverlay';
-    if (mode !== 'ScreenSpaceOverlay' && mode !== 'ScreenSpaceCamera') {
-      continue;
-    }
+    if (mode !== 'ScreenSpaceOverlay' && mode !== 'ScreenSpaceCamera') continue;
 
     const scaler = canvas.components.CanvasScaler;
     const scale = canvasScaleFactor(scaler, viewRect.w, viewRect.h);
@@ -123,7 +168,7 @@ export function layoutUiOverlay(
       const isCanvas = isCanvasRoot || !!ent.components.Canvas;
       const rt = hasRt ? readRectTransform(ent.components.RectTransform) : null;
       const rotation = rt?.local_rotation ?? 0;
-      const pivot: [number, number] = rt ? [...rt.pivot] as [number, number] : [0.5, 0.5];
+      const pivot: [number, number] = rt ? ([...rt.pivot] as [number, number]) : [0.5, 0.5];
 
       if (isCanvas) {
         out.push({
@@ -160,7 +205,6 @@ export function layoutUiOverlay(
           selected: selectedIds.has(ent.entity),
         });
       } else if (selectedIds.has(ent.entity) && hasRt) {
-        // Empty RectTransform node — selection outline only
         out.push({
           entity: ent.entity,
           rect,
@@ -188,13 +232,133 @@ export function layoutUiOverlay(
   return out;
 }
 
-/** Point in rotated UI rect (local XY / Z-rot). */
+/**
+ * Scene view: Overlay UI on world XY plane.
+ * `canvasSize` must match Game letterbox (w×h) so portrait/landscape stay aligned.
+ */
+export function layoutUiScene3D(
+  entities: UiEnt[],
+  cam: Camera,
+  viewport: Rect,
+  selectedIds: Set<number>,
+  canvasSize: { w: number; h: number },
+): { items: UiDrawItem[]; layoutScale: number } {
+  const canvases = entities.filter((e) => e.components.Canvas && e.active !== false);
+  if (!canvases.length) return { items: [], layoutScale: 1 };
+
+  const cw = Math.max(1, canvasSize.w);
+  const ch = Math.max(1, canvasSize.h);
+  const pixelRoot: Rect = { x: 0, y: 0, w: cw, h: ch };
+
+  const out: UiDrawItem[] = [];
+  let layoutScale = 1;
+  let depthBase = 0;
+
+  for (const canvas of canvases) {
+    const mode =
+      (canvas.components.Canvas as { render_mode?: string; renderMode?: string })?.render_mode
+      ?? (canvas.components.Canvas as { renderMode?: string })?.renderMode
+      ?? 'ScreenSpaceOverlay';
+    if (mode !== 'ScreenSpaceOverlay' && mode !== 'ScreenSpaceCamera') continue;
+
+    const laid = layoutUiOverlay(entities, pixelRoot, selectedIds).filter((it) =>
+      inCanvasTree(entities, it.entity, canvas.entity),
+    );
+
+    const c0 = project(uiPixelToWorld(cw * 0.5, ch * 0.5, cw, ch), cam, viewport);
+    const c1 = project(uiPixelToWorld(cw * 0.5 + 1, ch * 0.5, cw, ch), cam, viewport);
+    if (c0 && c1) {
+      const s = Math.hypot(c1.x - c0.x, c1.y - c0.y);
+      if (s > 1e-4) layoutScale = s;
+    }
+
+    for (const it of laid) {
+      const corners = pixelCorners(it.rect, it.rotation, it.pivot);
+      const world = corners.map(([px, py]) => uiPixelToWorld(px, py, cw, ch));
+      const scr = world.map((w) => project(w, cam, viewport));
+      if (scr.some((p) => !p)) continue;
+      const P = scr as Array<{ x: number; y: number; depth: number }>;
+      let minX = Infinity;
+      let minY = Infinity;
+      let maxX = -Infinity;
+      let maxY = -Infinity;
+      for (const p of P) {
+        minX = Math.min(minX, p.x);
+        minY = Math.min(minY, p.y);
+        maxX = Math.max(maxX, p.x);
+        maxY = Math.max(maxY, p.y);
+      }
+      const pivPx = rectPivot(it.rect, it.pivot);
+      const pivS = project(uiPixelToWorld(pivPx.x, pivPx.y, cw, ch), cam, viewport);
+
+      out.push({
+        ...it,
+        rect: { x: minX, y: minY, w: maxX - minX, h: maxY - minY },
+        depth: depthBase + it.depth,
+        pivotScreen: pivS ? { x: pivS.x, y: pivS.y } : undefined,
+      });
+    }
+    depthBase += 1000;
+  }
+
+  out.sort((a, b) => a.depth - b.depth);
+  return { items: out, layoutScale };
+}
+
+/**
+ * Logical canvas pixel size matching Game display aspect (for framing / fallback).
+ * Portrait → taller than wide (e.g. 1080×1920 from 1920×1080 ref).
+ */
+export function gameAlignedCanvasSize(
+  scaler: unknown,
+  aspectRatio: number | null,
+): { w: number; h: number } {
+  const ref = canvasReferenceSize(scaler);
+  if (aspectRatio == null || !Number.isFinite(aspectRatio) || aspectRatio <= 0) {
+    return ref;
+  }
+  const long = Math.max(ref.w, ref.h);
+  if (aspectRatio >= 1) {
+    return { w: long, h: long / aspectRatio };
+  }
+  return { w: long * aspectRatio, h: long };
+}
+
+/** World pivot of a UI entity for Scene framing. */
+export function uiEntityWorldPivot(
+  entities: UiEnt[],
+  entityId: number,
+  canvasSize?: { w: number; h: number },
+): { position: Vec3; size: number } | null {
+  const canvases = entities.filter((e) => e.components.Canvas && e.active !== false);
+  for (const canvas of canvases) {
+    const size =
+      canvasSize ??
+      gameAlignedCanvasSize(canvas.components.CanvasScaler, null);
+    const cw = Math.max(1, size.w);
+    const ch = Math.max(1, size.h);
+    const laid = layoutUiOverlay(
+      entities,
+      { x: 0, y: 0, w: cw, h: ch },
+      new Set([entityId]),
+    );
+    const it = laid.find((x) => x.entity === entityId);
+    if (!it) continue;
+    if (!inCanvasTree(entities, entityId, canvas.entity)) continue;
+    const piv = rectPivot(it.rect, it.pivot);
+    const pos = uiPixelToWorld(piv.x, piv.y, cw, ch);
+    const extent = Math.max(it.rect.w, it.rect.h) / UI_SCENE_PPU;
+    return { position: pos, size: Math.max(0.5, extent) };
+  }
+  return null;
+}
+
 function pointInUiItem(px: number, py: number, it: UiDrawItem): boolean {
   if (it.role === 'canvas' || Math.abs(it.rotation) < 1e-4) {
     return pointInRect(px, py, it.rect);
   }
   const { w, h } = it.rect;
-  const piv = rectPivot(it.rect, it.pivot);
+  const piv = it.pivotScreen ?? rectPivot(it.rect, it.pivot);
   const axes = rectLocalAxes(it.rotation);
   const dx = px - piv.x;
   const dy = py - piv.y;
@@ -204,7 +368,6 @@ function pointInUiItem(px: number, py: number, it: UiDrawItem): boolean {
   return u >= -w * pxN && u <= w * (1 - pxN) && v >= -h * pyN && v <= h * (1 - pyN);
 }
 
-/** Game view: interactable Button / Image raycast. */
 export function hitTestUi(items: UiDrawItem[], x: number, y: number): UiDrawItem | null {
   for (let i = items.length - 1; i >= 0; i--) {
     const it = items[i];
@@ -216,7 +379,6 @@ export function hitTestUi(items: UiDrawItem[], x: number, y: number): UiDrawItem
   return null;
 }
 
-/** Scene view: pick any UI graphic (or canvas frame) under cursor. */
 export function hitTestUiSelect(items: UiDrawItem[], x: number, y: number): UiDrawItem | null {
   for (let i = items.length - 1; i >= 0; i--) {
     const it = items[i];
@@ -237,34 +399,30 @@ export function drawUiItems(
   items: UiDrawItem[],
   hoverId: number | null,
   pressId: number | null,
-  opts?: { scenePreview?: boolean },
+  opts?: { sceneLabel?: boolean },
 ) {
-  const scene = !!opts?.scenePreview;
+  const showLabel = !!opts?.sceneLabel;
 
   for (const it of items) {
     const { x, y, w, h } = it.rect;
     if (w < 0.5 || h < 0.5) continue;
 
     if (it.role === 'canvas') {
-      // Screen frame for Overlay Canvas (Unity-like)
-      ctx.setLineDash(scene ? [6, 4] : []);
+      ctx.setLineDash(showLabel ? [6, 4] : []);
       ctx.strokeStyle = it.selected ? 'rgba(100, 200, 255, 0.95)' : 'rgba(140, 160, 200, 0.55)';
       ctx.lineWidth = it.selected ? 2 : 1.25;
       ctx.strokeRect(x + 0.5, y + 0.5, w - 1, h - 1);
       ctx.setLineDash([]);
-      if (scene) {
-        ctx.fillStyle = 'rgba(30, 40, 70, 0.12)';
-        ctx.fillRect(x, y, w, h);
-        ctx.fillStyle = 'rgba(180, 200, 230, 0.85)';
+      if (showLabel) {
+        ctx.fillStyle = 'rgba(180, 200, 230, 0.9)';
         ctx.font = '11px sans-serif';
-        ctx.fillText('Canvas (Screen Space Overlay)', x + 8, y + 16);
+        ctx.fillText('Canvas', x + 8, y + 16);
       }
       continue;
     }
 
-    let [r, g, b, a] = it.image?.color ?? [0.85, 0.85, 0.9, scene ? 0.55 : 0.92];
-    const piv = rectPivot(it.rect, it.pivot);
-    // Canvas 2D positive rotate = CW; Unity Z+ = CCW → negate
+    let [r, g, b, a] = it.image?.color ?? [0.85, 0.85, 0.9, 0.92];
+    const piv = it.pivotScreen ?? rectPivot(it.rect, it.pivot);
     const rotRad = (-it.rotation * Math.PI) / 180;
 
     const withRot = (draw: () => void) => {
@@ -306,8 +464,6 @@ export function drawUiItems(
       if (!it.button.interactable) a *= 0.45;
     }
 
-    if (scene) a = Math.min(a, 0.7);
-
     withRot(() => {
       const sprite = it.image?.sprite ?? 'white';
       const tint: [number, number, number, number] = [r, g, b, a];
@@ -332,35 +488,4 @@ export function drawUiItems(
       }
     });
   }
-}
-
-/** Dim outside letterbox + draw UI (Scene view Overlay preview). */
-export function drawSceneUiOverlay(
-  ctx: CanvasRenderingContext2D,
-  panel: Rect,
-  screen: Rect,
-  items: UiDrawItem[],
-) {
-  // Dim area outside the game screen frame
-  ctx.fillStyle = 'rgba(0, 0, 0, 0.28)';
-  // top
-  if (screen.y > panel.y) {
-    ctx.fillRect(panel.x, panel.y, panel.w, screen.y - panel.y);
-  }
-  // bottom
-  const bottomY = screen.y + screen.h;
-  if (bottomY < panel.y + panel.h) {
-    ctx.fillRect(panel.x, bottomY, panel.w, panel.y + panel.h - bottomY);
-  }
-  // left
-  if (screen.x > panel.x) {
-    ctx.fillRect(panel.x, screen.y, screen.x - panel.x, screen.h);
-  }
-  // right
-  const rightX = screen.x + screen.w;
-  if (rightX < panel.x + panel.w) {
-    ctx.fillRect(rightX, screen.y, panel.x + panel.w - rightX, screen.h);
-  }
-
-  drawUiItems(ctx, items, null, null, { scenePreview: true });
 }

@@ -14,6 +14,11 @@ import {
   createUiImageComponents,
 } from './componentCatalog';
 import { readRectTransform } from './ui/rectLayout';
+import {
+  gameAlignedCanvasSize,
+  uiEntityWorldPivot,
+  type UiEnt,
+} from './ui/uiLayout';
 import './behaviours';
 
 export type EditorMode = 'edit' | 'play' | 'pause';
@@ -861,13 +866,110 @@ export function createEditorStore() {
       ];
       e.components.RectTransform = { ...rt, local_scale: next };
     },
+    /**
+     * Unity Rect size handles → size_delta + anchored_position.
+     * dLocalX/Y: 布局像素，沿 UI 局部轴（X+ 右，Y+ 下）。
+     * 对边固定：pivot≠角点时轴心会跟着动（与 Unity 一致）。
+     *
+     * 注意：width = size_delta.x * |local_scale.x|，而 anchored_position
+     * 不乘 local_scale，故 Δap 不能再除以 scale。
+     */
+    resizeRectBy(
+      entity: number,
+      handle: 'n' | 's' | 'e' | 'w' | 'ne' | 'nw' | 'se' | 'sw',
+      dLocalX: number,
+      dLocalY: number,
+    ) {
+      const e = find(entity);
+      if (!e?.components.RectTransform) return;
+      const rt = readRectTransform(e.components.RectTransform);
+      const [px, py] = rt.pivot;
+      const sx = Math.abs(rt.local_scale[0]) || 1;
+      const sy = Math.abs(rt.local_scale[1]) || 1;
+
+      // 布局空间的宽高变化（与 size_delta * local_scale 同单位）
+      let dW = 0;
+      let dH = 0;
+      // anchored_position 增量（与 ap 同单位，勿除以 local_scale）
+      let dApX = 0;
+      let dApY = 0;
+
+      // 东：左缘固定，宽度 += dLocalX，pivot 右移 dW*pivot.x
+      if (handle.includes('e')) {
+        dW += dLocalX;
+        dApX += dLocalX * px;
+      }
+      // 西：右缘固定；手柄沿 +X 移动 dLocalX → 宽度 -= dLocalX
+      if (handle.includes('w')) {
+        dW -= dLocalX;
+        dApX += dLocalX * (1 - px);
+      }
+      // 南：上缘固定
+      if (handle.includes('s')) {
+        dH += dLocalY;
+        dApY += dLocalY * py;
+      }
+      // 北：下缘固定；手柄沿 +Y(下) 移动 → 高度 -= dLocalY
+      if (handle.includes('n')) {
+        dH -= dLocalY;
+        dApY += dLocalY * (1 - py);
+      }
+
+      e.components.RectTransform = {
+        ...rt,
+        size_delta: [
+          rt.size_delta[0] + dW / sx,
+          rt.size_delta[1] + dH / sy,
+        ],
+        anchored_position: [
+          rt.anchored_position[0] + dApX,
+          rt.anchored_position[1] + dApY,
+        ],
+      };
+    },
     getTransform,
     frameSelected() {
       const id = primarySelected();
-      const t = id != null ? getTransform(id) : null;
+      if (id == null) return;
+      const t = getTransform(id);
       if (t) {
         sceneCamera.pivot = [...t.position] as Vec3;
         sceneCamera.distance = Math.max(3, Math.max(...t.scale, 1) * 4);
+        return;
+      }
+      // UI RectTransform → Overlay world plane（与 Game 横竖屏对齐）
+      const e = find(id);
+      let canvasSize: { w: number; h: number } | undefined;
+      if (e) {
+        let walk: EntityRec | undefined = e;
+        while (walk) {
+          if (walk.components.Canvas) {
+            const ASPECTS: Record<string, number> = {
+              '16:9': 16 / 9,
+              '16:10': 16 / 10,
+              '4:3': 4 / 3,
+              '1:1': 1,
+            };
+            let ratio: number | null = null;
+            const effective =
+              gameAspect === 'free' && gameOrientation === 'portrait' ? '16:9' : gameAspect;
+            if (effective !== 'free') {
+              ratio = ASPECTS[effective] ?? null;
+              if (ratio != null && gameOrientation === 'portrait' && effective !== '1:1') {
+                ratio = 1 / ratio;
+              }
+            }
+            canvasSize = gameAlignedCanvasSize(walk.components.CanvasScaler, ratio);
+            break;
+          }
+          const pid: number | null = walk.parent ?? null;
+          walk = pid != null ? find(pid) ?? undefined : undefined;
+        }
+      }
+      const ui = uiEntityWorldPivot(list() as UiEnt[], id, canvasSize);
+      if (ui) {
+        sceneCamera.pivot = [...ui.position] as Vec3;
+        sceneCamera.distance = Math.max(2, ui.size * 2.5);
       }
     },
     spawnPrefab(name: string) {

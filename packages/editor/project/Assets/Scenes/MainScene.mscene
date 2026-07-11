@@ -210,7 +210,7 @@
             ],
             "anchored_position": [
               8.674698795180763,
-              404.8192771084338
+              299.8859
             ],
             "size_delta": [
               364,
@@ -270,11 +270,11 @@
             ]
           },
           "Image": {
-            "sprite": "white",
+            "sprite": "Assets/Test/Hurt.png",
             "color": [
-              0.25,
-              0.45,
-              0.85,
+              1,
+              1,
+              1,
               1
             ],
             "image_type": "Simple",
@@ -317,29 +317,84 @@
             ]
           }
         }
+      },
+      {
+        "entity": 8,
+        "name": "Image",
+        "parent": 5,
+        "siblingIndex": 2,
+        "active": true,
+        "components": {
+          "RectTransform": {
+            "anchor_min": [
+              0.5,
+              0.5
+            ],
+            "anchor_max": [
+              0.5,
+              0.5
+            ],
+            "pivot": [
+              0.5,
+              0.5
+            ],
+            "anchored_position": [
+              353.37961347449715,
+              196.16585475624342
+            ],
+            "size_delta": [
+              189.87255679085737,
+              131.8304523570799
+            ],
+            "local_rotation": 0,
+            "local_scale": [
+              1,
+              1
+            ]
+          },
+          "Image": {
+            "sprite": "white",
+            "color": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "image_type": "Simple",
+            "raycast_target": true
+          },
+          "Button": {
+            "interactable": true,
+            "transition": "ColorTint",
+            "on_click": {
+              "target": null,
+              "component": "",
+              "method": ""
+            }
+          }
+        }
       }
     ],
     "frame": 0,
-    "simFrame": 0,
     "clearColor": [
       0.1,
       0.1,
       0.14,
       1
     ],
-    "selected": 6,
+    "selected": 7,
     "selectedIds": [
-      6
+      7
     ]
   },
   "sceneCamera": {
-    "yaw": 70.7000000000004,
-    "pitch": 45,
-    "distance": 12.767697035300403,
+    "yaw": 0,
+    "pitch": 0,
+    "distance": 3.420640859742465,
     "pivot": [
-      -2.671303411209703,
-      3.0139403758699483,
-      -2.367425695228752
+      0.4227330524755968,
+      -0.13527457679219101,
+      0
     ]
   },
   "gameAspect": "16:9",
