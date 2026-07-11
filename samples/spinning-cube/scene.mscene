@@ -1,0 +1,46 @@
+{
+  "version": 1,
+  "name": "SpinningCube",
+  "world": {
+    "entities": [
+      {
+        "entity": 1,
+        "name": "MainCamera",
+        "parent": null,
+        "components": {
+          "Transform": {
+            "position": [0.0, 1.5, 4.0],
+            "rotation": [0.0, 0.0, 0.0, 1.0],
+            "scale": [1.0, 1.0, 1.0]
+          },
+          "Camera3D": {
+            "fov_y_degrees": 60.0,
+            "near": 0.1,
+            "far": 100.0,
+            "primary": true
+          }
+        }
+      },
+      {
+        "entity": 2,
+        "name": "Cube",
+        "parent": null,
+        "components": {
+          "Transform": {
+            "position": [0.0, 0.0, 0.0],
+            "rotation": [0.0, 0.0, 0.0, 1.0],
+            "scale": [1.0, 1.0, 1.0]
+          },
+          "MeshRenderer": {
+            "mesh": "cube",
+            "material": "default"
+          }
+        }
+      }
+    ],
+    "frame": 0,
+    "sim_frame": 0,
+    "clear_color": [0.1, 0.1, 0.14, 1.0],
+    "selected": 2
+  }
+}

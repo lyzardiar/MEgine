@@ -1,0 +1,10 @@
+[package]
+name = "mengine-audio"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+description = "MEngine audio subsystem (stub + interface)"
+
+[dependencies]
+log.workspace = true
+thiserror.workspace = true

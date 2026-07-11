@@ -1,0 +1,11 @@
+[package]
+name = "mengine-jobs"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+description = "MEngine job system (rayon-backed)"
+
+[dependencies]
+rayon.workspace = true
+log.workspace = true
+parking_lot.workspace = true

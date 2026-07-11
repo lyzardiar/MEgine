@@ -1,0 +1,491 @@
+{
+  "AutoRotate": {
+    "properties": {
+      "angle": {
+        "type": "number"
+      },
+      "axis": {
+        "items": {
+          "type": "number"
+        },
+        "type": "array"
+      },
+      "speed": {
+        "type": "number"
+      }
+    },
+    "required": [
+      "axis",
+      "angle",
+      "speed"
+    ],
+    "type": "object"
+  },
+  "Button": {
+    "properties": {
+      "interactable": {
+        "type": "boolean"
+      },
+      "on_click": {
+        "type": "string"
+      },
+      "transition": {
+        "type": "string"
+      }
+    },
+    "required": [
+      "interactable",
+      "transition",
+      "on_click"
+    ],
+    "type": "object"
+  },
+  "Camera2D": {
+    "properties": {
+      "primary": {
+        "type": "boolean"
+      },
+      "size": {
+        "type": "number"
+      }
+    },
+    "required": [
+      "size",
+      "primary"
+    ],
+    "type": "object"
+  },
+  "Camera3D": {
+    "properties": {
+      "aspect": {
+        "type": "number"
+      },
+      "far": {
+        "type": "number"
+      },
+      "fov_y_degrees": {
+        "type": "number"
+      },
+      "near": {
+        "type": "number"
+      },
+      "orthographic_size": {
+        "type": "number"
+      },
+      "primary": {
+        "type": "boolean"
+      },
+      "projection": {
+        "type": "string"
+      }
+    },
+    "required": [
+      "fov_y_degrees",
+      "near",
+      "far",
+      "primary",
+      "projection",
+      "orthographic_size",
+      "aspect"
+    ],
+    "type": "object"
+  },
+  "Canvas": {
+    "properties": {
+      "plane_distance": {
+        "type": "number"
+      },
+      "render_mode": {
+        "type": "string"
+      },
+      "sorting_order": {
+        "type": "number"
+      }
+    },
+    "required": [
+      "render_mode",
+      "sorting_order",
+      "plane_distance"
+    ],
+    "type": "object"
+  },
+  "CanvasScaler": {
+    "properties": {
+      "match_width_or_height": {
+        "type": "number"
+      },
+      "reference_resolution": {
+        "items": {
+          "type": "number"
+        },
+        "type": "array"
+      },
+      "scale_factor": {
+        "type": "number"
+      },
+      "ui_scale_mode": {
+        "type": "string"
+      }
+    },
+    "required": [
+      "ui_scale_mode",
+      "reference_resolution",
+      "match_width_or_height",
+      "scale_factor"
+    ],
+    "type": "object"
+  },
+  "Despawn": {
+    "properties": {
+      "entity": {
+        "type": "number"
+      }
+    },
+    "required": [
+      "entity"
+    ],
+    "type": "object"
+  },
+  "DirectionalLight": {
+    "properties": {
+      "color": {
+        "items": {
+          "type": "number"
+        },
+        "type": "array"
+      },
+      "intensity": {
+        "type": "number"
+      }
+    },
+    "required": [
+      "color",
+      "intensity"
+    ],
+    "type": "object"
+  },
+  "EditorOnly": {
+    "properties": {},
+    "type": "object"
+  },
+  "Image": {
+    "properties": {
+      "color": {
+        "items": {
+          "type": "number"
+        },
+        "type": "array"
+      },
+      "image_type": {
+        "type": "string"
+      },
+      "raycast_target": {
+        "type": "boolean"
+      },
+      "sprite": {
+        "type": "string"
+      }
+    },
+    "required": [
+      "sprite",
+      "color",
+      "image_type",
+      "raycast_target"
+    ],
+    "type": "object"
+  },
+  "Layer": {
+    "properties": {
+      "value": {
+        "type": "number"
+      }
+    },
+    "required": [
+      "value"
+    ],
+    "type": "object"
+  },
+  "Material": {
+    "properties": {
+      "path": {
+        "type": "string"
+      },
+      "shader": {
+        "type": "string"
+      }
+    },
+    "required": [
+      "path",
+      "shader"
+    ],
+    "type": "object"
+  },
+  "Mesh": {
+    "properties": {
+      "path": {
+        "type": "string"
+      }
+    },
+    "required": [
+      "path"
+    ],
+    "type": "object"
+  },
+  "MeshRenderer": {
+    "properties": {
+      "material": {
+        "type": "string"
+      },
+      "mesh": {
+        "type": "string"
+      }
+    },
+    "required": [
+      "mesh",
+      "material"
+    ],
+    "type": "object"
+  },
+  "Name": {
+    "properties": {
+      "value": {
+        "type": "string"
+      }
+    },
+    "required": [
+      "value"
+    ],
+    "type": "object"
+  },
+  "RectTransform": {
+    "properties": {
+      "anchor_max": {
+        "items": {
+          "type": "number"
+        },
+        "type": "array"
+      },
+      "anchor_min": {
+        "items": {
+          "type": "number"
+        },
+        "type": "array"
+      },
+      "anchored_position": {
+        "items": {
+          "type": "number"
+        },
+        "type": "array"
+      },
+      "local_rotation": {
+        "type": "number"
+      },
+      "local_scale": {
+        "items": {
+          "type": "number"
+        },
+        "type": "array"
+      },
+      "pivot": {
+        "items": {
+          "type": "number"
+        },
+        "type": "array"
+      },
+      "size_delta": {
+        "items": {
+          "type": "number"
+        },
+        "type": "array"
+      }
+    },
+    "required": [
+      "anchor_min",
+      "anchor_max",
+      "pivot",
+      "anchored_position",
+      "size_delta",
+      "local_rotation",
+      "local_scale"
+    ],
+    "type": "object"
+  },
+  "RemoveComponent": {
+    "properties": {
+      "component": {
+        "type": "string"
+      },
+      "entity": {
+        "type": "number"
+      }
+    },
+    "required": [
+      "entity",
+      "component"
+    ],
+    "type": "object"
+  },
+  "SetClearColor": {
+    "properties": {
+      "a": {
+        "type": "number"
+      },
+      "b": {
+        "type": "number"
+      },
+      "g": {
+        "type": "number"
+      },
+      "r": {
+        "type": "number"
+      }
+    },
+    "required": [
+      "r",
+      "g",
+      "b",
+      "a"
+    ],
+    "type": "object"
+  },
+  "SetComponent": {
+    "properties": {
+      "component": {
+        "type": "string"
+      },
+      "entity": {
+        "type": "number"
+      },
+      "value": {
+        "type": "object"
+      }
+    },
+    "required": [
+      "entity",
+      "component",
+      "value"
+    ],
+    "type": "object"
+  },
+  "SetParent": {
+    "properties": {
+      "entity": {
+        "type": "number"
+      },
+      "parent": {
+        "type": "number"
+      }
+    },
+    "required": [
+      "entity"
+    ],
+    "type": "object"
+  },
+  "Spawn": {
+    "properties": {
+      "components": {
+        "type": "object"
+      },
+      "name": {
+        "type": "string"
+      }
+    },
+    "required": [
+      "components"
+    ],
+    "type": "object"
+  },
+  "SpriteRenderer": {
+    "properties": {
+      "color": {
+        "items": {
+          "type": "number"
+        },
+        "type": "array"
+      },
+      "size": {
+        "items": {
+          "type": "number"
+        },
+        "type": "array"
+      },
+      "sorting_order": {
+        "type": "number"
+      },
+      "sprite": {
+        "type": "string"
+      }
+    },
+    "required": [
+      "sprite",
+      "color",
+      "size",
+      "sorting_order"
+    ],
+    "type": "object"
+  },
+  "Texture": {
+    "properties": {
+      "path": {
+        "type": "string"
+      }
+    },
+    "required": [
+      "path"
+    ],
+    "type": "object"
+  },
+  "Transform": {
+    "properties": {
+      "position": {
+        "items": {
+          "type": "number"
+        },
+        "type": "array"
+      },
+      "rotation": {
+        "items": {
+          "type": "number"
+        },
+        "type": "array"
+      },
+      "scale": {
+        "items": {
+          "type": "number"
+        },
+        "type": "array"
+      }
+    },
+    "required": [
+      "position",
+      "rotation",
+      "scale"
+    ],
+    "type": "object"
+  },
+  "Transform2D": {
+    "properties": {
+      "position": {
+        "items": {
+          "type": "number"
+        },
+        "type": "array"
+      },
+      "rotation": {
+        "type": "number"
+      },
+      "scale": {
+        "items": {
+          "type": "number"
+        },
+        "type": "array"
+      }
+    },
+    "required": [
+      "position",
+      "rotation",
+      "scale"
+    ],
+    "type": "object"
+  }
+}

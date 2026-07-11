@@ -1,0 +1,347 @@
+{
+  "version": 1,
+  "name": "MainScene",
+  "world": {
+    "entities": [
+      {
+        "entity": 1,
+        "name": "MainCamera",
+        "parent": null,
+        "siblingIndex": 0,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              1.5,
+              4
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          },
+          "Camera3D": {
+            "fov_y_degrees": 60,
+            "near": 0.1,
+            "far": 100,
+            "primary": true
+          }
+        }
+      },
+      {
+        "entity": 2,
+        "name": "Cube",
+        "parent": null,
+        "siblingIndex": 1,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "cube",
+            "material": "default"
+          }
+        }
+      },
+      {
+        "entity": 3,
+        "name": "Cube",
+        "parent": null,
+        "siblingIndex": 2,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              -0.3310519084813943,
+              0.7889810429850798,
+              -3.766468788286809
+            ],
+            "rotation": [
+              0.702617546366904,
+              -0.12743553087343046,
+              0.6606818949970298,
+              0.23149125821830124
+            ],
+            "scale": [
+              0.5428191742627481,
+              1,
+              3.084325344611393
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "cube",
+            "material": "default"
+          },
+          "AutoRotate": {
+            "axis": [
+              0,
+              1,
+              0
+            ],
+            "angle": 90,
+            "speed": 1
+          }
+        }
+      },
+      {
+        "entity": 4,
+        "name": "Cube",
+        "parent": null,
+        "siblingIndex": 3,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0.5418911811819245,
+              0.5,
+              -0.2563201498906629
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "cube",
+            "material": "default"
+          }
+        }
+      },
+      {
+        "entity": 5,
+        "name": "Canvas",
+        "parent": null,
+        "siblingIndex": 4,
+        "active": true,
+        "components": {
+          "RectTransform": {
+            "anchor_min": [
+              0,
+              0
+            ],
+            "anchor_max": [
+              1,
+              1
+            ],
+            "pivot": [
+              0.5,
+              0.5
+            ],
+            "anchored_position": [
+              0,
+              0
+            ],
+            "size_delta": [
+              0,
+              0
+            ],
+            "local_rotation": 0,
+            "local_scale": [
+              1,
+              1
+            ]
+          },
+          "Canvas": {
+            "render_mode": "ScreenSpaceOverlay",
+            "sorting_order": 0,
+            "plane_distance": 100
+          },
+          "CanvasScaler": {
+            "ui_scale_mode": "ScaleWithScreenSize",
+            "reference_resolution": [
+              1920,
+              1080
+            ],
+            "match_width_or_height": 0.5,
+            "scale_factor": 1
+          }
+        }
+      },
+      {
+        "entity": 6,
+        "name": "Image",
+        "parent": 5,
+        "siblingIndex": 0,
+        "active": true,
+        "components": {
+          "RectTransform": {
+            "anchor_min": [
+              0.5,
+              0.5
+            ],
+            "anchor_max": [
+              0.5,
+              0.5
+            ],
+            "pivot": [
+              0.5,
+              0.5
+            ],
+            "anchored_position": [
+              8.674698795180763,
+              404.8192771084338
+            ],
+            "size_delta": [
+              364,
+              364
+            ],
+            "local_rotation": 0,
+            "local_scale": [
+              1,
+              0.7808114770549572
+            ]
+          },
+          "Image": {
+            "sprite": "Assets/Test/Hurt.png",
+            "color": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "image_type": "Simple",
+            "raycast_target": true
+          }
+        }
+      },
+      {
+        "entity": 7,
+        "name": "Button",
+        "parent": 5,
+        "siblingIndex": 1,
+        "active": true,
+        "components": {
+          "RectTransform": {
+            "anchor_min": [
+              0.5,
+              0.5
+            ],
+            "anchor_max": [
+              0.5,
+              0.5
+            ],
+            "pivot": [
+              0.5,
+              0.5
+            ],
+            "anchored_position": [
+              0,
+              0
+            ],
+            "size_delta": [
+              160,
+              40
+            ],
+            "local_rotation": 0,
+            "local_scale": [
+              1.3624999999999987,
+              1.437499999999999
+            ]
+          },
+          "Image": {
+            "sprite": "white",
+            "color": [
+              0.25,
+              0.45,
+              0.85,
+              1
+            ],
+            "image_type": "Simple",
+            "raycast_target": true
+          },
+          "Button": {
+            "interactable": true,
+            "transition": "ColorTint",
+            "on_click": {
+              "target": 7,
+              "component": "AutoRotate",
+              "method": "resetAngle"
+            }
+          },
+          "AutoRotate": {
+            "axis": [
+              0,
+              1,
+              0
+            ],
+            "angle": 90,
+            "speed": 1
+          },
+          "Transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          }
+        }
+      }
+    ],
+    "frame": 0,
+    "simFrame": 0,
+    "clearColor": [
+      0.1,
+      0.1,
+      0.14,
+      1
+    ],
+    "selected": 6,
+    "selectedIds": [
+      6
+    ]
+  },
+  "sceneCamera": {
+    "yaw": 70.7000000000004,
+    "pitch": 45,
+    "distance": 12.767697035300403,
+    "pivot": [
+      -2.671303411209703,
+      3.0139403758699483,
+      -2.367425695228752
+    ]
+  },
+  "gameAspect": "16:9",
+  "gameOrientation": "portrait"
+}

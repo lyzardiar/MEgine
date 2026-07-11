@@ -1,0 +1,12 @@
+[package]
+name = "mengine-platform"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+description = "MEngine platform: window, input, files, threads"
+
+[dependencies]
+winit.workspace = true
+log.workspace = true
+thiserror.workspace = true
+serde.workspace = true

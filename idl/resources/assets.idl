@@ -1,0 +1,12 @@
+resource Mesh {
+  path: string
+}
+
+resource Texture {
+  path: string
+}
+
+resource Material {
+  path: string
+  shader: string = "pbr"
+}

@@ -1,0 +1,16 @@
+[package]
+name = "mengine-scene"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+description = "MEngine scene and prefab serialization"
+
+[dependencies]
+mengine-core.workspace = true
+mengine-assets.workspace = true
+glam.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+thiserror.workspace = true
+log.workspace = true
+uuid.workspace = true

@@ -1,0 +1,22 @@
+[package]
+name = "mengine-editor-tauri"
+version = "0.1.0"
+description = "Tauri shell for MEngine Editor"
+edition = "2021"
+
+[lib]
+name = "mengine_editor_tauri_lib"
+crate-type = ["staticlib", "cdylib", "rlib"]
+
+[build-dependencies]
+tauri-build = { version = "2", features = [] }
+
+[dependencies]
+tauri = { version = "2", features = [] }
+tauri-plugin-shell = "2"
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+parking_lot = "0.12"
+mengine-editor-host = { path = "../../../crates/mengine-editor-host" }
+mengine-core = { path = "../../../crates/mengine-core" }
+log = "0.4"

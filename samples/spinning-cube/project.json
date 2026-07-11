@@ -1,0 +1,8 @@
+{
+  "name": "spinning-cube",
+  "version": 1,
+  "language": "typescript",
+  "mainScene": "scene.mscene",
+  "scripts": ["main.ts"],
+  "compiled": ["main.js"]
+}

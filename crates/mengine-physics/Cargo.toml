@@ -1,0 +1,12 @@
+[package]
+name = "mengine-physics"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+description = "MEngine physics subsystem (stub + interface)"
+
+[dependencies]
+mengine-core.workspace = true
+glam.workspace = true
+log.workspace = true
+thiserror.workspace = true

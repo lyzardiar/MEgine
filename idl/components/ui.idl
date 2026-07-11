@@ -1,0 +1,42 @@
+/// Unity-like uGUI components. SpriteRenderer stays world-space (core.idl).
+
+component Canvas {
+  /// "ScreenSpaceOverlay" | "ScreenSpaceCamera" | "WorldSpace"
+  render_mode:   string = "ScreenSpaceOverlay"
+  sorting_order:  int    = 0
+  plane_distance: float  = 100
+}
+
+component CanvasScaler {
+  /// "ConstantPixelSize" | "ScaleWithScreenSize"
+  ui_scale_mode:           string  = "ScaleWithScreenSize"
+  reference_resolution:    float2  = [1920, 1080]
+  match_width_or_height:   float   = 0.5
+  scale_factor:            float   = 1
+}
+
+component RectTransform {
+  anchor_min:         float2 = [0.5, 0.5]
+  anchor_max:         float2 = [0.5, 0.5]
+  pivot:              float2 = [0.5, 0.5]
+  anchored_position:  float2 = [0, 0]
+  size_delta:         float2 = [100, 100]
+  local_rotation:     float  = 0
+  local_scale:        float2 = [1, 1]
+}
+
+component Image {
+  sprite:          string = "white"
+  color:           float4 = [1, 1, 1, 1]
+  /// "Simple" | "Sliced" (Unity Image.type)
+  image_type:      string = "Simple"
+  raycast_target:  bool   = true
+}
+
+component Button {
+  interactable:    bool   = true
+  /// "None" | "ColorTint"
+  transition:      string = "ColorTint"
+  /// Optional method name on a Behaviour on the same entity
+  on_click:        string = ""
+}

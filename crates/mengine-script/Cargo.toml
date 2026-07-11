@@ -1,0 +1,15 @@
+[package]
+name = "mengine-script"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+description = "MEngine JS script host (Boa) and TS bridge"
+
+[dependencies]
+mengine-core.workspace = true
+boa_engine.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+thiserror.workspace = true
+log.workspace = true
+anyhow.workspace = true

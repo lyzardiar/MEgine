@@ -1,0 +1,31 @@
+command Spawn {
+  name:       string?
+  components: object
+}
+
+command Despawn {
+  entity: u64
+}
+
+command SetComponent {
+  entity:    u64
+  component: string
+  value:     object
+}
+
+command RemoveComponent {
+  entity:    u64
+  component: string
+}
+
+command SetParent {
+  entity: u64
+  parent: u64?
+}
+
+command SetClearColor {
+  r: float
+  g: float
+  b: float
+  a: float
+}

@@ -1,0 +1,17 @@
+[package]
+name = "mengine-rhi"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+description = "MEngine render hardware interface (wgpu)"
+
+[dependencies]
+mengine-core.workspace = true
+wgpu.workspace = true
+winit.workspace = true
+raw-window-handle.workspace = true
+glam.workspace = true
+bytemuck.workspace = true
+thiserror.workspace = true
+log.workspace = true
+pollster.workspace = true

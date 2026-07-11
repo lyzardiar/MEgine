@@ -1,0 +1,64 @@
+component Name {
+  value: string
+}
+
+component Transform {
+  position: float3 = [0, 0, 0]
+  rotation: float4 = [0, 0, 0, 1]
+  scale:    float3 = [1, 1, 1]
+}
+
+component Transform2D {
+  position: float2 = [0, 0]
+  rotation: float  = 0
+  scale:    float2 = [1, 1]
+}
+
+component Camera3D {
+  fov_y_degrees:     float  = 60
+  near:              float  = 0.1
+  far:               float  = 1000
+  primary:           bool   = true
+  /// "perspective" | "orthographic"
+  projection:        string = "perspective"
+  orthographic_size: float  = 5
+  aspect:            float  = 1.777778
+}
+
+component DirectionalLight {
+  color:     float4 = [1, 1, 0.95, 1]
+  intensity: float  = 1
+}
+
+component Camera2D {
+  size:    float = 5
+  primary: bool  = true
+}
+
+component MeshRenderer {
+  mesh:     string = "cube"
+  material: string = "default"
+}
+
+component SpriteRenderer {
+  sprite: string = "white"
+  color:  float4 = [1, 1, 1, 1]
+  /// World-space quad half-extents (meters-ish)
+  size:   float2 = [1, 1]
+  /// Draw order among world sprites (higher = closer / later)
+  sorting_order: int = 0
+}
+
+component Layer {
+  value: int = 0
+}
+
+component EditorOnly {
+}
+
+/// Continuous spin around an axis. angle = deg/s base, speed = multiplier.
+component AutoRotate {
+  axis:  float3 = [0, 1, 0]
+  angle: float  = 90
+  speed: float  = 1
+}

@@ -1,0 +1,33 @@
+[package]
+name = "mengine-runtime"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+description = "MEngine PC player / sample runner"
+
+[[bin]]
+name = "mengine-runtime"
+path = "src/main.rs"
+
+[lib]
+name = "mengine_runtime"
+path = "src/lib.rs"
+
+[dependencies]
+mengine-core.workspace = true
+mengine-rhi.workspace = true
+mengine-assets.workspace = true
+mengine-scene.workspace = true
+mengine-script.workspace = true
+mengine-platform.workspace = true
+mengine-jobs.workspace = true
+mengine-audio.workspace = true
+mengine-physics.workspace = true
+winit.workspace = true
+pollster.workspace = true
+clap.workspace = true
+anyhow.workspace = true
+log.workspace = true
+env_logger.workspace = true
+glam.workspace = true
+serde_json.workspace = true

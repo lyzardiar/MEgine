@@ -1,0 +1,198 @@
+/* Dock workspace — recursive splits + directional drop */
+
+.dock-workspace {
+  position: relative;
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  background: #111;
+  overflow: hidden;
+}
+
+.dock-split {
+  flex: 1;
+  min-width: 0;
+  min-height: 0;
+  display: flex;
+  overflow: hidden;
+}
+
+.dock-split.dir-h {
+  flex-direction: row;
+}
+
+.dock-split.dir-v {
+  flex-direction: column;
+}
+
+.dock-split-child {
+  min-width: 0;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.dock-pane {
+  flex: 1;
+  min-width: 0;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  position: relative;
+}
+
+.dock-pane > .dock {
+  flex: 1;
+  min-height: 0;
+  position: relative;
+}
+
+.dock-splitter {
+  flex-shrink: 0;
+  background: #1a1a1a;
+  z-index: 6;
+  transition: background 0.1s;
+}
+
+.dock-splitter.horizontal {
+  width: 4px;
+  cursor: col-resize;
+}
+
+.dock-splitter.vertical {
+  height: 4px;
+  width: 100%;
+  cursor: row-resize;
+}
+
+.dock-splitter:hover,
+body.dock-resizing-x .dock-splitter.horizontal,
+body.dock-resizing-y .dock-splitter.vertical {
+  background: var(--u-selected);
+}
+
+body.dock-resizing-x {
+  cursor: col-resize !important;
+  user-select: none !important;
+}
+
+body.dock-resizing-y {
+  cursor: row-resize !important;
+  user-select: none !important;
+}
+
+.dock-content {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.dock.dock-drop-target {
+  outline: 1px solid rgba(126, 200, 255, 0.45);
+  outline-offset: -1px;
+}
+
+/* Directional drop preview over a dock */
+.dock-drop-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 20;
+  pointer-events: none;
+}
+
+.dock-drop-fill {
+  position: absolute;
+  background: rgba(80, 150, 220, 0.32);
+  border: 2px solid #7ec8ff;
+  box-sizing: border-box;
+  transition: inset 0.06s ease-out, width 0.06s, height 0.06s;
+}
+
+.dock-drop-fill.zone-center {
+  inset: 18%;
+}
+
+.dock-drop-fill.zone-left {
+  top: 0;
+  bottom: 0;
+  left: 0;
+  width: 42%;
+}
+
+.dock-drop-fill.zone-right {
+  top: 0;
+  bottom: 0;
+  right: 0;
+  width: 42%;
+}
+
+.dock-drop-fill.zone-top {
+  left: 0;
+  right: 0;
+  top: 0;
+  height: 42%;
+}
+
+.dock-drop-fill.zone-bottom {
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 42%;
+}
+
+.dock-drop-hint {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  padding: 4px 10px;
+  border-radius: 3px;
+  background: rgba(20, 28, 40, 0.88);
+  color: #cfe8ff;
+  font-size: 12px;
+  white-space: nowrap;
+  pointer-events: none;
+}
+
+.dock-tab-drag {
+  cursor: grab;
+}
+
+.dock-tab-drag:active {
+  cursor: grabbing;
+}
+
+.dock-tabs-extra {
+  display: flex;
+  align-items: stretch;
+  margin-left: auto;
+  border-left: 1px solid var(--u-border);
+}
+
+.dock-workspace.is-dragging .dock-tab-drag {
+  cursor: grabbing;
+}
+
+.dock-reset {
+  position: absolute;
+  right: 10px;
+  bottom: 10px;
+  z-index: 30;
+  border: 1px solid var(--u-border-2);
+  background: rgba(40, 40, 40, 0.92);
+  color: var(--u-muted);
+  font-size: 11px;
+  padding: 3px 8px;
+  border-radius: 3px;
+  cursor: pointer;
+}
+
+.dock-reset:hover {
+  color: #fff;
+  border-color: var(--u-selected);
+}

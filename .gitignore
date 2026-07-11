@@ -1,0 +1,33 @@
+# Rust
+/target
+**/target
+Cargo.lock
+
+# Node
+node_modules
+dist
+*.tsbuildinfo
+.turbo
+
+# IDE
+.idea
+.vscode/*
+!.vscode/extensions.json
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Engine
+Library/
+Imported/
+*.log
+.env
+
+# Generated (keep structure, ignore if needed)
+# packages/api/src/generated is committed for bootstrap
+
+# Tauri
+packages/editor/src-tauri/target
