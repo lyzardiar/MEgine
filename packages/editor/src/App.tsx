@@ -139,6 +139,19 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
   const syncReady = useRef(!props.detachedPanel);
   sceneNameRef.current = sceneName;
 
+  useEffect(() => {
+    const onBeforeUnload = (event: BeforeUnloadEvent) => {
+      const dirty = props.detachedPanel
+        ? materialDirty || animationDirty
+        : sceneDirty || materialDirty || animationDirty;
+      if (!dirty) return;
+      event.preventDefault();
+      event.returnValue = '';
+    };
+    window.addEventListener('beforeunload', onBeforeUnload);
+    return () => window.removeEventListener('beforeunload', onBeforeUnload);
+  }, [animationDirty, materialDirty, props.detachedPanel, sceneDirty]);
+
   const broadcastScene = (immediate = false) => {
     const channel = syncChannel.current;
     if (!channel || !syncReady.current || applyingRemote.current || !booted.current) return;

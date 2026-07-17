@@ -218,6 +218,14 @@ export function Timeline(props: {
   const [propertyPath, setPropertyPath] = useState('Transform.position');
   const playbackFrame = useRef<number | null>(null);
   const previousFrameTime = useRef<number | null>(null);
+  const loadedClipPath = useRef('');
+  const drafts = useRef(new Map<string, {
+    clip: AnimationClip;
+    savedText: string;
+    time: number;
+    selectedTrack: number | null;
+    selectedKey: { track: number; key: number } | null;
+  }>());
 
   useEffect(() => {
     setNewClipName(props.entity?.name ?? 'New Animation');
@@ -226,17 +234,46 @@ export function Timeline(props: {
 
   useEffect(() => {
     let cancelled = false;
+    const previousPath = loadedClipPath.current;
+    if (previousPath && clip) {
+      if (serializeAnimationClip(clip) !== savedText) {
+        drafts.current.set(previousPath, {
+          clip: structuredClone(clip),
+          savedText,
+          time,
+          selectedTrack,
+          selectedKey: selectedKey ? { ...selectedKey } : null,
+        });
+      } else {
+        drafts.current.delete(previousPath);
+      }
+    }
+    loadedClipPath.current = clipPath;
     setPlaying(false);
-    setSelectedTrack(null);
-    setSelectedKey(null);
     setError(null);
+    setClip(null);
+    setSavedText('');
+    setTime(0);
+    setLoading(false);
     if (!clipPath) {
-      setClip(null);
-      setSavedText('');
-      setTime(0);
+      setSelectedTrack(null);
+      setSelectedKey(null);
       props.onClearPreview();
       return () => { cancelled = true; };
     }
+    const draft = drafts.current.get(clipPath);
+    if (draft) {
+      drafts.current.delete(clipPath);
+      setClip(structuredClone(draft.clip));
+      setSavedText(draft.savedText);
+      setTime(draft.time);
+      setSelectedTrack(draft.selectedTrack);
+      setSelectedKey(draft.selectedKey ? { ...draft.selectedKey } : null);
+      setLoading(false);
+      return () => { cancelled = true; };
+    }
+    setSelectedTrack(null);
+    setSelectedKey(null);
     setLoading(true);
     void readProjectAssetText(clipPath)
       .then((text) => {
@@ -256,17 +293,18 @@ export function Timeline(props: {
         if (!cancelled) setLoading(false);
       });
     return () => { cancelled = true; };
-  }, [clipPath, props.entity?.entity]);
+  }, [clipPath]);
 
   const serializedClip = useMemo(
     () => clip ? serializeAnimationClip(clip) : '',
     [clip],
   );
   const dirty = Boolean(clip && serializedClip !== savedText);
+  const anyDirty = dirty || drafts.current.size > 0;
 
   useEffect(() => {
-    props.onDirtyChange(dirty);
-  }, [dirty, props.onDirtyChange]);
+    props.onDirtyChange(anyDirty);
+  }, [anyDirty, props.onDirtyChange]);
 
   useEffect(() => () => props.onClearPreview(), [props.entity?.entity]);
 
@@ -332,6 +370,7 @@ export function Timeline(props: {
     try {
       await writeProjectAssetText(clipPath, serializeAnimationClip(normalized));
       await refreshProjectFiles();
+      drafts.current.delete(clipPath);
       setSavedText(serializeAnimationClip(normalized));
       props.onAssetsChanged();
       return true;
@@ -359,6 +398,19 @@ export function Timeline(props: {
     try {
       await writeProjectAssetText(path, serializeAnimationClip(next));
       await refreshProjectFiles();
+      if (loadedClipPath.current && clip) {
+        const currentText = serializeAnimationClip(clip);
+        if (currentText !== savedText) {
+          drafts.current.set(loadedClipPath.current, {
+            clip: structuredClone(clip),
+            savedText,
+            time,
+            selectedTrack,
+            selectedKey: selectedKey ? { ...selectedKey } : null,
+          });
+        }
+      }
+      loadedClipPath.current = path;
       assignClip(path);
       setClip(next);
       setSavedText(serializeAnimationClip(next));

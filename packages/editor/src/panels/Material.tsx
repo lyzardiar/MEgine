@@ -1,6 +1,7 @@
 import {
   useEffect,
   useMemo,
+  useRef,
   useState,
   type CSSProperties,
   type DragEvent,
@@ -105,13 +106,36 @@ export function MaterialEditor(props: {
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const loadedPath = useRef<string | null>(null);
+  const drafts = useRef(new Map<string, { material: MaterialAsset; savedText: string }>());
 
   useEffect(() => {
     let cancelled = false;
+    const previousPath = loadedPath.current;
+    if (previousPath && material) {
+      if (serializeMaterialAsset(material) !== savedText) {
+        drafts.current.set(previousPath, {
+          material: structuredClone(material),
+          savedText,
+        });
+      } else {
+        drafts.current.delete(previousPath);
+      }
+    }
+    loadedPath.current = props.assetPath;
     setError(null);
+    setMaterial(null);
+    setSavedText('');
+    setLoading(false);
     if (!props.assetPath) {
-      setMaterial(null);
-      setSavedText('');
+      return () => { cancelled = true; };
+    }
+    const draft = drafts.current.get(props.assetPath);
+    if (draft) {
+      drafts.current.delete(props.assetPath);
+      setMaterial(structuredClone(draft.material));
+      setSavedText(draft.savedText);
+      setLoading(false);
       return () => { cancelled = true; };
     }
     setLoading(true);
@@ -138,10 +162,11 @@ export function MaterialEditor(props: {
     [material],
   );
   const dirty = Boolean(material && serialized !== savedText);
+  const anyDirty = dirty || drafts.current.size > 0;
 
   useEffect(() => {
-    props.onDirtyChange(dirty);
-  }, [dirty, props.onDirtyChange]);
+    props.onDirtyChange(anyDirty);
+  }, [anyDirty, props.onDirtyChange]);
   const canAssign = Boolean(
     props.assetPath
     && props.selectedEntity?.components.MeshRenderer,
@@ -159,6 +184,7 @@ export function MaterialEditor(props: {
       const text = serializeMaterialAsset(material);
       await writeProjectAssetText(props.assetPath, text);
       await refreshProjectFiles();
+      drafts.current.delete(props.assetPath);
       setSavedText(text);
       props.onAssetsChanged();
       props.onLog(`Saved ${props.assetPath}`);
