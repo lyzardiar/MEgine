@@ -4,8 +4,8 @@ use crate::entity::Entity;
 use crate::generated::{
     AutoRotate, Button, Camera2D, Camera3D, Canvas, CanvasGroup, CanvasScaler, DirectionalLight,
     Dropdown, EditorOnly, Image, InputField, Layer, LayoutGroup, ListView, MeshRenderer, Name,
-    Panel, PbrMaterial, PointLight, ProgressBar, RectMask2D, RectTransform, ScrollView, Slider,
-    SpotLight, SpriteRenderer, TabView, Text, Toggle, Transform, Transform2D,
+    Panel, PbrMaterial, PointLight, ProgressBar, RectMask2D, RectTransform, ScrollView, Scrollbar,
+    Slider, SpotLight, SpriteRenderer, TabView, Text, Toggle, Transform, Transform2D,
 };
 use crate::hierarchy::{Children, Parent};
 use crate::schedule::Schedule;
@@ -401,6 +401,9 @@ impl World {
             "Slider" | "slider" => {
                 self.insert_json_component::<Slider>(entity, value);
             }
+            "Scrollbar" | "scrollbar" => {
+                self.insert_json_component::<Scrollbar>(entity, value);
+            }
             "Panel" | "panel" => {
                 self.insert_json_component::<Panel>(entity, value);
             }
@@ -472,6 +475,7 @@ fn canonical_component_name(component: &str) -> &str {
         "Text" | "text" => "Text",
         "Toggle" | "toggle" => "Toggle",
         "Slider" | "slider" => "Slider",
+        "Scrollbar" | "scrollbar" => "Scrollbar",
         "Panel" | "panel" => "Panel",
         "ProgressBar" | "progressBar" => "ProgressBar",
         "InputField" | "inputField" => "InputField",

@@ -737,6 +737,40 @@ impl Component for Slider {
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
 #[serde(default)]
+pub struct Scrollbar {
+    pub value: f32,
+    pub size: f32,
+    pub number_of_steps: i32,
+    pub interactable: bool,
+    pub direction: String,
+    pub background_color: [f32; 4],
+    pub handle_color: [f32; 4],
+    pub on_value_changed: serde_json::Value,
+}
+
+impl Default for Scrollbar {
+    fn default() -> Self {
+        Self {
+            value: 0.0,
+            size: 0.2,
+            number_of_steps: 0,
+            interactable: true,
+            direction: "BottomToTop".into(),
+            background_color: [0.12, 0.14, 0.18, 1.0],
+            handle_color: [0.52, 0.58, 0.68, 1.0],
+            on_value_changed: serde_json::Value::Null,
+        }
+    }
+}
+
+impl Component for Scrollbar {
+    fn type_name() -> &'static str {
+        "Scrollbar"
+    }
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize)]
+#[serde(default)]
 pub struct Panel {
     pub color: [f32; 4],
     pub border_color: [f32; 4],
@@ -1092,6 +1126,7 @@ pub mod meta {
         "Text",
         "Toggle",
         "Slider",
+        "Scrollbar",
         "Panel",
         "CanvasGroup",
         "LayoutGroup",

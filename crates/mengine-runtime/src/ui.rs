@@ -1,6 +1,7 @@
 use mengine_core::generated::{
     Button, Canvas, CanvasGroup, CanvasScaler, Dropdown, Image, InputField, LayoutGroup, ListView,
-    Panel, ProgressBar, RectMask2D, RectTransform, ScrollView, Slider, TabView, Text, Toggle,
+    Panel, ProgressBar, RectMask2D, RectTransform, ScrollView, Scrollbar, Slider, TabView, Text,
+    Toggle,
 };
 use mengine_core::hierarchy::Parent;
 use mengine_core::{Entity, World};
@@ -27,6 +28,12 @@ pub enum UiControlKind {
         max: f32,
         value: f32,
         whole_numbers: bool,
+        direction: String,
+    },
+    Scrollbar {
+        value: f32,
+        size: f32,
+        number_of_steps: i32,
         direction: String,
     },
     InputField,
@@ -76,16 +83,29 @@ impl UiControlRegion {
             && local_y <= self.rect.height
     }
 
-    pub fn slider_value_at(&self, x: f32, y: f32) -> Option<f32> {
-        let UiControlKind::Slider {
-            min,
-            max,
-            whole_numbers,
-            direction,
-            ..
-        } = &self.kind
-        else {
-            return None;
+    pub fn range_value_at(&self, x: f32, y: f32) -> Option<f32> {
+        let (min, max, whole_numbers, direction, handle_size, number_of_steps) = match &self.kind {
+            UiControlKind::Slider {
+                min,
+                max,
+                whole_numbers,
+                direction,
+                ..
+            } => (*min, *max, *whole_numbers, direction, 0.0, 0),
+            UiControlKind::Scrollbar {
+                size,
+                number_of_steps,
+                direction,
+                ..
+            } => (
+                0.0,
+                1.0,
+                false,
+                direction,
+                size.clamp(0.0, 1.0),
+                *number_of_steps,
+            ),
+            _ => return None,
         };
         let pivot_x = self.rect.x + self.rect.width * self.pivot[0];
         let pivot_y = self.rect.y + self.rect.height * self.pivot[1];
@@ -100,14 +120,21 @@ impl UiControlRegion {
         } else {
             local_y / self.rect.height.max(1.0)
         };
+        if handle_size > 0.0 {
+            t = (t - handle_size * 0.5) / (1.0 - handle_size).max(0.0001);
+        }
         if direction == "RightToLeft" || direction == "BottomToTop" {
             t = 1.0 - t;
         }
-        let low = min.min(*max);
-        let high = min.max(*max);
+        let low = min.min(max);
+        let high = min.max(max);
         let mut value = low + (high - low) * t.clamp(0.0, 1.0);
-        if *whole_numbers {
+        if whole_numbers {
             value = value.round();
+        }
+        if number_of_steps > 1 {
+            let intervals = (number_of_steps - 1) as f32;
+            value = (value * intervals).round() / intervals;
         }
         Some(value)
     }
@@ -476,6 +503,71 @@ fn walk(
                     direction: slider.direction.clone(),
                 },
                 callback: slider.on_value_changed.clone(),
+            });
+        }
+    }
+
+    if let Some(scrollbar) = world.get_component::<Scrollbar>(entity) {
+        let alpha = state.alpha
+            * if scrollbar.interactable && state.interactable {
+                1.0
+            } else {
+                0.45
+            };
+        primitives.push(primitive(
+            rect,
+            multiply_alpha(scrollbar.background_color, alpha),
+            pivot,
+            rotation,
+            "ui/scrollbar",
+            "white",
+            clip,
+        ));
+        let vertical = scrollbar.direction == "BottomToTop" || scrollbar.direction == "TopToBottom";
+        let reverse = scrollbar.direction == "RightToLeft" || scrollbar.direction == "BottomToTop";
+        let size = scrollbar.size.clamp(0.0, 1.0);
+        let value = scrollbar.value.clamp(0.0, 1.0);
+        let t = if reverse { 1.0 - value } else { value };
+        let handle_rect = if vertical {
+            let handle = (rect.height * size).clamp(4.0_f32.min(rect.height), rect.height);
+            UiRect {
+                x: rect.x,
+                y: rect.y + (rect.height - handle) * t,
+                width: rect.width,
+                height: handle,
+            }
+        } else {
+            let handle = (rect.width * size).clamp(4.0_f32.min(rect.width), rect.width);
+            UiRect {
+                x: rect.x + (rect.width - handle) * t,
+                y: rect.y,
+                width: handle,
+                height: rect.height,
+            }
+        };
+        primitives.push(primitive(
+            handle_rect,
+            multiply_alpha(scrollbar.handle_color, alpha),
+            pivot,
+            rotation,
+            "ui/scrollbar",
+            "white",
+            clip,
+        ));
+        if scrollbar.interactable && state.interactable && state.blocks_raycasts {
+            controls.push(UiControlRegion {
+                entity,
+                rect,
+                clip,
+                rotation_radians: rotation,
+                pivot,
+                kind: UiControlKind::Scrollbar {
+                    value: scrollbar.value,
+                    size: scrollbar.size,
+                    number_of_steps: scrollbar.number_of_steps,
+                    direction: scrollbar.direction.clone(),
+                },
+                callback: scrollbar.on_value_changed.clone(),
             });
         }
     }
@@ -1500,9 +1592,20 @@ mod tests {
         );
         world.insert_component(slider, Slider::default());
         world.set_parent(slider, Some(canvas));
+        let scrollbar = world.spawn_empty();
+        world.insert_component(
+            scrollbar,
+            RectTransform {
+                anchored_position: [140.0, 0.0],
+                size_delta: [20.0, 180.0],
+                ..Default::default()
+            },
+        );
+        world.insert_component(scrollbar, Scrollbar::default());
+        world.set_parent(scrollbar, Some(canvas));
 
         let frame = collect_ui_frame(&world, 1920, 1080);
-        assert_eq!(frame.controls.len(), 2);
+        assert_eq!(frame.controls.len(), 3);
         assert!(!frame.plan.primitives.is_empty());
         assert!(frame.plan.batches.len() < frame.plan.primitives.len());
         assert!(frame.controls.iter().all(|control| control.contains(
@@ -1538,8 +1641,39 @@ mod tests {
             },
             callback: Value::Null,
         };
-        assert_eq!(control.slider_value_at(10.0, 30.0), Some(10.0));
-        assert_eq!(control.slider_value_at(110.0, 30.0), Some(0.0));
+        assert_eq!(control.range_value_at(10.0, 30.0), Some(10.0));
+        assert_eq!(control.range_value_at(110.0, 30.0), Some(0.0));
+    }
+
+    #[test]
+    fn scrollbar_value_mapping_accounts_for_handle_size_and_steps() {
+        let control = UiControlRegion {
+            entity: Entity::new(1, 1),
+            rect: UiRect {
+                x: 0.0,
+                y: 0.0,
+                width: 20.0,
+                height: 100.0,
+            },
+            clip: UiClipRect {
+                x: 0,
+                y: 0,
+                width: 100,
+                height: 100,
+            },
+            rotation_radians: 0.0,
+            pivot: [0.5, 0.5],
+            kind: UiControlKind::Scrollbar {
+                value: 0.0,
+                size: 0.2,
+                number_of_steps: 5,
+                direction: "TopToBottom".into(),
+            },
+            callback: Value::Null,
+        };
+        assert_eq!(control.range_value_at(10.0, 10.0), Some(0.0));
+        assert_eq!(control.range_value_at(10.0, 50.0), Some(0.5));
+        assert_eq!(control.range_value_at(10.0, 90.0), Some(1.0));
     }
 
     #[test]

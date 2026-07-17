@@ -228,6 +228,17 @@ export interface Slider {
   onValueChanged: Record<string, unknown>;
 }
 
+export interface Scrollbar {
+  value: number;
+  size: number;
+  numberOfSteps: number;
+  interactable: boolean;
+  direction: string;
+  backgroundColor: [number, number, number, number];
+  handleColor: [number, number, number, number];
+  onValueChanged: Record<string, unknown>;
+}
+
 export interface Panel {
   color: [number, number, number, number];
   borderColor: [number, number, number, number];
@@ -359,6 +370,7 @@ export type ComponentName =
   | 'Text'
   | 'Toggle'
   | 'Slider'
+  | 'Scrollbar'
   | 'Panel'
   | 'CanvasGroup'
   | 'LayoutGroup'
@@ -396,6 +408,7 @@ export const COMPONENT_NAMES = [
   'Text',
   'Toggle',
   'Slider',
+  'Scrollbar',
   'Panel',
   'CanvasGroup',
   'LayoutGroup',

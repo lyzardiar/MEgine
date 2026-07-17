@@ -81,6 +81,19 @@ component Slider {
   on_value_changed: object
 }
 
+/// Unity-style scrollbar. Size is the normalized handle length in [0, 1].
+component Scrollbar {
+  value:             float  = 0
+  size:              float  = 0.2
+  number_of_steps:   int    = 0
+  interactable:      bool   = true
+  /// "LeftToRight" | "RightToLeft" | "BottomToTop" | "TopToBottom"
+  direction:         string = "BottomToTop"
+  background_color:  float4 = [0.12, 0.14, 0.18, 1]
+  handle_color:      float4 = [0.52, 0.58, 0.68, 1]
+  on_value_changed:  object
+}
+
 /// Background/container control inspired by Godot PanelContainer and FairyGUI GComponent.
 component Panel {
   color:          float4 = [0.12, 0.14, 0.18, 0.96]

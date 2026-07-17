@@ -1045,6 +1045,51 @@
     ],
     "type": "object"
   },
+  "Scrollbar": {
+    "properties": {
+      "background_color": {
+        "items": {
+          "type": "number"
+        },
+        "type": "array"
+      },
+      "direction": {
+        "type": "string"
+      },
+      "handle_color": {
+        "items": {
+          "type": "number"
+        },
+        "type": "array"
+      },
+      "interactable": {
+        "type": "boolean"
+      },
+      "number_of_steps": {
+        "type": "number"
+      },
+      "on_value_changed": {
+        "type": "object"
+      },
+      "size": {
+        "type": "number"
+      },
+      "value": {
+        "type": "number"
+      }
+    },
+    "required": [
+      "value",
+      "size",
+      "number_of_steps",
+      "interactable",
+      "direction",
+      "background_color",
+      "handle_color",
+      "on_value_changed"
+    ],
+    "type": "object"
+  },
   "SetClearColor": {
     "properties": {
       "a": {

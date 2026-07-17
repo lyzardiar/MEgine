@@ -6,7 +6,7 @@ use glam::{Quat, Vec3, Vec4};
 use mengine_core::command::WorldCommand;
 use mengine_core::generated::{
     Camera3D, DirectionalLight, Dropdown, InputField, ListView, MeshRenderer, PbrMaterial,
-    PointLight, ScrollView, Slider, SpotLight, TabView, Toggle, Transform,
+    PointLight, ScrollView, Scrollbar, Slider, SpotLight, TabView, Toggle, Transform,
 };
 use mengine_core::{Entity, World};
 use mengine_platform::InputState;
@@ -497,9 +497,11 @@ impl App {
         else {
             return;
         };
-        if let Some(value) = region.slider_value_at(self.cursor[0], self.cursor[1]) {
+        if let Some(value) = region.range_value_at(self.cursor[0], self.cursor[1]) {
             if let Some(slider) = self.world.get_component_mut::<Slider>(entity) {
                 slider.value = value;
+            } else if let Some(scrollbar) = self.world.get_component_mut::<Scrollbar>(entity) {
+                scrollbar.value = value;
             }
         }
     }
@@ -530,6 +532,10 @@ impl App {
                 }
             }
             UiControlKind::Slider { .. } => {
+                self.active_slider = Some(control.entity);
+                self.update_active_slider();
+            }
+            UiControlKind::Scrollbar { .. } => {
                 self.active_slider = Some(control.entity);
                 self.update_active_slider();
             }
