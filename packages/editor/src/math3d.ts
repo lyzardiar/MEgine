@@ -323,6 +323,31 @@ export function spriteSourceAffine(
   ];
 }
 
+export function spriteLocalCorners(
+  halfSize: [number, number],
+  pivot: [number, number] = [0.5, 0.5],
+): Vec3[] {
+  const hx = Math.abs(halfSize[0]);
+  const hy = Math.abs(halfSize[1]);
+  const safePivot: [number, number] = [
+    Number.isFinite(pivot[0]) ? Math.max(0, Math.min(1, pivot[0])) : 0.5,
+    Number.isFinite(pivot[1]) ? Math.max(0, Math.min(1, pivot[1])) : 0.5,
+  ];
+  const width = hx * 2;
+  const height = hy * 2;
+  const left = -width * safePivot[0];
+  const right = width * (1 - safePivot[0]);
+  const bottom = -height * safePivot[1];
+  const top = height * (1 - safePivot[1]);
+  const cleanZero = (value: number) => value === 0 ? 0 : value;
+  return [
+    [cleanZero(left), cleanZero(bottom), 0],
+    [cleanZero(right), cleanZero(bottom), 0],
+    [cleanZero(right), cleanZero(top), 0],
+    [cleanZero(left), cleanZero(top), 0],
+  ];
+}
+
 /** World-space textured/colored quad (SpriteRenderer) — local XY plane. */
 export function drawWorldSprite(
   ctx: CanvasRenderingContext2D,
@@ -336,15 +361,12 @@ export function drawWorldSprite(
   image?: CanvasImageSource | null,
   flipX = false,
   flipY = false,
+  pivot: [number, number] = [0.5, 0.5],
 ): { x: number; y: number; r: number } | null {
-  const hx = halfSize[0];
-  const hy = halfSize[1];
-  const local: Vec3[] = [
-    [-hx, -hy, 0],
-    [+hx, -hy, 0],
-    [+hx, +hy, 0],
-    [-hx, +hy, 0],
-  ];
+  const hx = Math.abs(halfSize[0]);
+  const hy = Math.abs(halfSize[1]);
+  if (!Number.isFinite(hx) || !Number.isFinite(hy) || hx <= 0 || hy <= 0) return null;
+  const local = spriteLocalCorners([hx, hy], pivot);
   const q =
     rotation &&
     (rotation[0] !== 0 || rotation[1] !== 0 || rotation[2] !== 0 || rotation[3] !== 1)
@@ -390,17 +412,19 @@ export function drawWorldSprite(
   ctx.lineWidth = selected ? 1.5 : 1;
   ctx.stroke();
   const c = project(center, cam, viewport)!;
-  let minX = Infinity,
-    minY = Infinity,
-    maxX = -Infinity,
-    maxY = -Infinity;
-  for (const p of P) {
-    minX = Math.min(minX, p.x);
-    minY = Math.min(minY, p.y);
-    maxX = Math.max(maxX, p.x);
-    maxY = Math.max(maxY, p.y);
+  if (selected) {
+    ctx.save();
+    ctx.strokeStyle = 'rgba(255,224,140,0.95)';
+    ctx.fillStyle = 'rgba(26,26,26,0.9)';
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.arc(c.x, c.y, 3.5, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.stroke();
+    ctx.restore();
   }
-  return { x: c.x, y: c.y, r: Math.max(maxX - minX, maxY - minY) * 0.55 };
+  const radius = Math.max(...P.map((point) => Math.hypot(point.x - c.x, point.y - c.y)));
+  return { x: c.x, y: c.y, r: Math.max(6, radius) };
 }
 
 export function drawWorldLine2D(

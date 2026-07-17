@@ -859,6 +859,7 @@ export function Viewport(props: {
               sprite?: string;
               color?: number[];
               size?: number[];
+              pivot?: number[];
               flip_x?: boolean;
               flip_y?: boolean;
               sorting_order?: number;
@@ -873,6 +874,7 @@ export function Viewport(props: {
               frame?: unknown;
               color?: number[];
               size?: number[];
+              pivot?: number[];
               flip_x?: boolean;
               flip_y?: boolean;
               sorting_order?: number;
@@ -881,11 +883,18 @@ export function Viewport(props: {
         const spr = animatedSprite ?? staticSprite;
         if (spr && pr) {
           const sz = spr.size ?? [1, 1];
+          const sizeX = Number(sz[0]);
+          const sizeY = Number(sz[1]);
           const half: [number, number] = [
-            0.5 * (Number(sz[0]) || 1) * t.scale[0],
-            0.5 * (Number(sz[1]) || 1) * t.scale[1],
+            0.5 * (Number.isFinite(sizeX) ? Math.abs(sizeX) : 1) * Math.abs(t.scale[0]),
+            0.5 * (Number.isFinite(sizeY) ? Math.abs(sizeY) : 1) * Math.abs(t.scale[1]),
           ];
           const col = (spr.color ?? [1, 1, 1, 1]) as [number, number, number, number];
+          const authoredPivot = spr.pivot ?? [0.5, 0.5];
+          const pivot: [number, number] = [
+            Number.isFinite(Number(authoredPivot[0])) ? Number(authoredPivot[0]) : 0.5,
+            Number.isFinite(Number(authoredPivot[1])) ? Number(authoredPivot[1]) : 0.5,
+          ];
           const rot = t.rotation as [number, number, number, number] | undefined;
           const sprite = animatedSprite
             ? resolveAnimatedSpriteFrame(animatedSprite, performance.now() / 1000)
@@ -903,6 +912,7 @@ export function Viewport(props: {
             image?.complete && image.naturalWidth > 0 ? image : null,
             spr.flip_x === true,
             spr.flip_y === true,
+            pivot,
           );
           if (hit) hitsRef.current.push({ kind: 'object', id: e.entity, x: hit.x, y: hit.y, r: hit.r });
           continue;

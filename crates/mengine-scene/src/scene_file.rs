@@ -375,12 +375,14 @@ mod tests {
         assert_eq!(components["Image"]["source_size"][0], 64.0);
         assert_eq!(components["SpriteRenderer"]["flip_x"], true);
         assert_eq!(components["SpriteRenderer"]["flip_y"], false);
+        assert_eq!(components["SpriteRenderer"]["pivot"], json!([0.5, 0.5]));
         assert_eq!(
             components["AnimatedSprite2D"]["frames"][1],
             "Assets/Sprites/run1.png"
         );
         assert_eq!(components["AnimatedSprite2D"]["sorting_order"], 3);
         assert_eq!(components["AnimatedSprite2D"]["flip_y"], true);
+        assert_eq!(components["AnimatedSprite2D"]["pivot"], json!([0.5, 0.5]));
         assert_eq!(components["Line2D"]["points"][1][1], 1.0);
         assert_eq!(components["Line2D"]["closed"], true);
         assert_eq!(

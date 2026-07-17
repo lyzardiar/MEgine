@@ -28,6 +28,12 @@
       "looped": {
         "type": "boolean"
       },
+      "pivot": {
+        "items": {
+          "type": "number"
+        },
+        "type": "array"
+      },
       "playing": {
         "type": "boolean"
       },
@@ -49,6 +55,7 @@
       "frame",
       "color",
       "size",
+      "pivot",
       "flip_x",
       "flip_y",
       "sorting_order"
@@ -1558,6 +1565,12 @@
       "flip_y": {
         "type": "boolean"
       },
+      "pivot": {
+        "items": {
+          "type": "number"
+        },
+        "type": "array"
+      },
       "size": {
         "items": {
           "type": "number"
@@ -1575,6 +1588,7 @@
       "sprite",
       "color",
       "size",
+      "pivot",
       "flip_x",
       "flip_y",
       "sorting_order"

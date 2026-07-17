@@ -32,7 +32,7 @@ createItem(
   },
   { separatorBefore: true },
 );
-createItem('3D Object/Sprite Quad', 110, ({ store }) => store.spawnSpriteQuad());
+createItem('2D Object/Sprite', 124, ({ store }) => store.spawnSpriteQuad());
 createItem('2D Object/Animated Sprite', 125, ({ store }) => store.spawnAnimatedSprite2D());
 createItem('2D Object/Line 2D', 126, ({ store }) => store.spawnLine2D());
 createItem('Effects/Particle System 3D', 120, ({ store }) => store.spawnParticleEmitter3D());

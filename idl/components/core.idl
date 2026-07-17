@@ -68,8 +68,10 @@ component PbrMaterial {
 component SpriteRenderer {
   sprite: string = "white"
   color:  float4 = [1, 1, 1, 1]
-  /// World-space quad half-extents (meters-ish)
+  /// World-space quad size (meters-ish)
   size:   float2 = [1, 1]
+  /// Normalized transform origin in sprite space (bottom-left = [0, 0])
+  pivot:  float2 = [0.5, 0.5]
   /// Mirror texture coordinates without changing Transform scale
   flip_x: bool = false
   flip_y: bool = false
@@ -86,6 +88,7 @@ component AnimatedSprite2D {
   frame:         int          = 0
   color:         float4       = [1, 1, 1, 1]
   size:          float2       = [1, 1]
+  pivot:         float2       = [0.5, 0.5]
   flip_x:        bool         = false
   flip_y:        bool         = false
   sorting_order: int          = 0

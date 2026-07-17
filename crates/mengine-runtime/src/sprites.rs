@@ -37,6 +37,7 @@ pub fn collect_world_sprites(
                 sprite: resolve_animated_frame(animation, world.time.elapsed).into(),
                 color: animation.color,
                 size: animation.size,
+                pivot: animation.pivot,
                 flip_x: animation.flip_x,
                 flip_y: animation.flip_y,
                 sorting_order: animation.sorting_order,
@@ -205,9 +206,11 @@ fn project_sprite(
     if !width.is_finite() || !height.is_finite() || width <= 0.0 || height <= 0.0 {
         return None;
     }
+    let pivot = normalized_pivot(sprite.pivot);
+    let screen_pivot = [pivot[0], 1.0 - pivot[1]];
     let rect = [
-        center[0] - width * 0.5,
-        center[1] - height * 0.5,
+        center[0] - width * screen_pivot[0],
+        center[1] - height * screen_pivot[1],
         width,
         height,
     ];
@@ -224,7 +227,7 @@ fn project_sprite(
         primitive: UiPrimitive {
             rect,
             color: sprite.color,
-            pivot: [0.5, 0.5],
+            pivot: screen_pivot,
             rotation_radians: (right[1] - center[1]).atan2(right[0] - center[0]),
             uv: [
                 if sprite.flip_x { 1.0 } else { 0.0 },
@@ -243,6 +246,16 @@ fn project_sprite(
                 blend: UiBlendMode::Alpha,
             },
         },
+    })
+}
+
+fn normalized_pivot(value: [f32; 2]) -> [f32; 2] {
+    value.map(|part| {
+        if part.is_finite() {
+            part.clamp(0.0, 1.0)
+        } else {
+            0.5
+        }
     })
 }
 
@@ -284,6 +297,7 @@ mod tests {
             sprite: "Assets/Sprites/hero.png".into(),
             color: [0.25, 0.5, 1.0, 0.8],
             size: [2.0, 2.0],
+            pivot: [0.25, 0.75],
             flip_x: true,
             flip_y: false,
             sorting_order: 4,
@@ -292,6 +306,9 @@ mod tests {
 
         assert!((projected.primitive.rect[2] - 40.0).abs() < 0.001);
         assert!((projected.primitive.rect[3] - 20.0).abs() < 0.001);
+        assert!((projected.primitive.rect[0] - 90.0).abs() < 0.001);
+        assert!((projected.primitive.rect[1] - 45.0).abs() < 0.001);
+        assert_eq!(projected.primitive.pivot, [0.25, 0.25]);
         assert!((projected.primitive.rotation_radians + std::f32::consts::FRAC_PI_4).abs() < 0.001);
         assert_eq!(projected.primitive.color, sprite.color);
         assert_eq!(projected.primitive.key.texture, sprite.sprite);

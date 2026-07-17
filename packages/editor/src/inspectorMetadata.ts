@@ -108,11 +108,13 @@ export const BUILTIN_INSPECTOR_FIELDS: Readonly<
   },
   SpriteRenderer: {
     sprite,
+    pivot: { min: 0, max: 1, step: 0.01 },
     flip_x: { label: 'Flip X' },
     flip_y: { label: 'Flip Y' },
   },
   AnimatedSprite2D: {
     frames: { kind: 'string-list' },
+    pivot: { min: 0, max: 1, step: 0.01 },
     fps: { min: 0, step: 0.1 },
     frame: { min: 0, step: 1 },
     flip_x: { label: 'Flip X' },

@@ -70,6 +70,7 @@ export class SpriteRenderer {
   sprite!: string;
   color!: Color4;
   size?: [number, number];
+  pivot?: [number, number];
   flip_x?: boolean;
   flip_y?: boolean;
   sorting_order?: number;
@@ -120,6 +121,7 @@ export class AnimatedSprite2D {
   frame!: number;
   color!: Color4;
   size!: [number, number];
+  pivot!: [number, number];
   flip_x!: boolean;
   flip_y!: boolean;
   sorting_order!: number;
