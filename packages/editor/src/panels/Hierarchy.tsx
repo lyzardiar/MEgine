@@ -272,7 +272,9 @@ export function Hierarchy(props: {
   };
 
   const onPointerDown = (ev: ReactPointerEvent, id: number) => {
-    if (ev.button !== 0 || editing === id) return;
+    if (ev.button !== 0) return;
+    hierarchyBodyRef.current?.focus({ preventScroll: true });
+    if (editing === id) return;
     const target = ev.target as HTMLElement;
     if (target.closest('button, input, textarea, select, .hier-icon')) return;
     pointerDrag.current = {

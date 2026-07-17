@@ -203,6 +203,7 @@ export function Viewport(props: {
   onGizmoAxis: (entity: number, axis: 'x' | 'y' | 'z', amount: number) => void;
   onRotateWorld?: (entity: number, axis: Vec3, degrees: number) => void;
   onRectTranslate?: (entity: number, dx: number, dy: number) => void;
+  onRectNudge?: (dx: number, dy: number) => void;
   onRectRotate?: (entity: number, degrees: number) => void;
   onRectScale?: (entity: number, axis: 'x' | 'y' | 'both', amount: number) => void;
   onRectResize?: (
@@ -1404,6 +1405,12 @@ export function Viewport(props: {
   };
 
   useEffect(() => {
+    const heldNudgeKeys = new Set<string>();
+    const endNudge = () => {
+      if (!heldNudgeKeys.size) return;
+      heldNudgeKeys.clear();
+      propsRef.current.onEndGesture();
+    };
     const onKey = (ev: KeyboardEvent) => {
       const focused = focusedInputRef.current;
       if (propsRef.current.tab === 'game' && focused != null) {
@@ -1436,10 +1443,46 @@ export function Viewport(props: {
         return;
       }
       if (propsRef.current.tab !== 'scene') return;
+      const isSceneCanvas = ev.target === canvasRef.current;
+      const isArrow =
+        ev.key === 'ArrowLeft' ||
+        ev.key === 'ArrowRight' ||
+        ev.key === 'ArrowUp' ||
+        ev.key === 'ArrowDown';
+      if (isSceneCanvas && isArrow) {
+        if (propsRef.current.playing) return;
+        const ids = propsRef.current.selectedIds ?? (
+          propsRef.current.selected == null ? [] : [propsRef.current.selected]
+        );
+        const hasRectSelection = ids.some((id) => propsRef.current.entities.some(
+          (entity) => entity.entity === id && entity.components.RectTransform != null,
+        ));
+        if (!hasRectSelection) return;
+        ev.preventDefault();
+        ev.stopImmediatePropagation();
+        if (!heldNudgeKeys.size) propsRef.current.onBeginGesture();
+        heldNudgeKeys.add(ev.key);
+        const step = ev.shiftKey ? 10 : 1;
+        const dx = ev.key === 'ArrowLeft' ? -step : ev.key === 'ArrowRight' ? step : 0;
+        const dy = ev.key === 'ArrowUp' ? -step : ev.key === 'ArrowDown' ? step : 0;
+        propsRef.current.onRectNudge?.(dx, dy);
+        return;
+      }
       if (ev.key === 'f' || ev.key === 'F') propsRef.current.onFrame();
     };
+    const onKeyUp = (ev: KeyboardEvent) => {
+      if (!heldNudgeKeys.delete(ev.key)) return;
+      if (!heldNudgeKeys.size) propsRef.current.onEndGesture();
+    };
     window.addEventListener('keydown', onKey);
-    return () => window.removeEventListener('keydown', onKey);
+    window.addEventListener('keyup', onKeyUp);
+    window.addEventListener('blur', endNudge);
+    return () => {
+      window.removeEventListener('keydown', onKey);
+      window.removeEventListener('keyup', onKeyUp);
+      window.removeEventListener('blur', endNudge);
+      endNudge();
+    };
   }, []);
 
   return (
@@ -1518,7 +1561,7 @@ export function Viewport(props: {
           </div>
           <span className="game-hint">
             {scene2D
-              ? '正视 Canvas · RMB/MMB 平移 · Wheel 缩放'
+              ? '正视 Canvas · Arrows 1px / Shift 10px · RMB/MMB 平移 · Wheel 缩放'
               : 'RMB 旋转 · MMB/Alt+LMB 平移 · Wheel 缩放 · F 聚焦'}
           </span>
         </div>
@@ -1562,7 +1605,13 @@ export function Viewport(props: {
       )}
       <canvas
         ref={canvasRef}
-        onMouseDown={onPointerDown}
+        data-scene-viewport={props.tab === 'scene' ? 'true' : undefined}
+        tabIndex={props.tab === 'scene' ? 0 : -1}
+        aria-label={props.tab === 'scene' ? 'Scene viewport' : 'Game viewport'}
+        onMouseDown={(event) => {
+          if (props.tab === 'scene') event.currentTarget.focus({ preventScroll: true });
+          onPointerDown(event);
+        }}
         onContextMenu={(e) => e.preventDefault()}
         onWheel={onWheel}
         style={{ cursor: props.tab === 'scene' ? 'crosshair' : 'default', width: '100%', height: '100%' }}

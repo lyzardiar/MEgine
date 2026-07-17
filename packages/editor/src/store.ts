@@ -34,6 +34,7 @@ import {
   type UiEnt,
 } from './ui/uiLayout';
 import { planHierarchyMove } from './hierarchyMove';
+import { selectedRectRoots } from './rectSelection';
 import './behaviours';
 
 export type EditorMode = 'edit' | 'play' | 'pause';
@@ -969,6 +970,26 @@ export function createEditorStore() {
           rt.anchored_position[1] + dy,
         ],
       };
+    },
+    nudgeSelectedRects(dx: number, dy: number) {
+      if (mode !== 'edit' || !Number.isFinite(dx) || !Number.isFinite(dy)) return false;
+      if (Math.abs(dx) < 1e-8 && Math.abs(dy) < 1e-8) return false;
+      const roots = selectedRectRoots(editEntities, selectedIds);
+      if (!roots.length) return false;
+      if (!gizmoDragging) pushUndo();
+      for (const id of roots) {
+        const entity = find(id);
+        if (!entity?.components.RectTransform) continue;
+        const rt = readRectTransform(entity.components.RectTransform);
+        entity.components.RectTransform = {
+          ...rt,
+          anchored_position: [
+            rt.anchored_position[0] + dx,
+            rt.anchored_position[1] + dy,
+          ],
+        };
+      }
+      return true;
     },
     rotateRectBy(entity: number, degrees: number) {
       const e = find(entity);

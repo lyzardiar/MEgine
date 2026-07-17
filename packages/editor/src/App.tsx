@@ -414,6 +414,9 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
         refresh();
         return;
       }
+      const sceneViewportFocused =
+        e.target instanceof HTMLCanvasElement && e.target.dataset.sceneViewport === 'true';
+      if (sceneViewportFocused && e.key.startsWith('Arrow')) return;
       if (e.key === 'ArrowUp') {
         e.preventDefault();
         store.navigateVisible(-1);
@@ -561,6 +564,10 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
               }}
               onRectTranslate={(entity, dx, dy) => {
                 store.translateRectBy(entity, dx, dy);
+                refresh();
+              }}
+              onRectNudge={(dx, dy) => {
+                store.nudgeSelectedRects(dx, dy);
                 refresh();
               }}
               onRectRotate={(entity, degrees) => {

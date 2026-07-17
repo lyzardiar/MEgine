@@ -2033,6 +2033,10 @@ body.insp-scrubbing * {
   display: block;
 }
 
+.viewport-wrap canvas:focus {
+  outline: none;
+}
+
 .game-toolbar {
   display: flex;
   align-items: center;
