@@ -1,5 +1,11 @@
-import { useRef, useEffect, type PointerEvent as ReactPointerEvent } from 'react';
+import { useRef, useEffect, useState, type PointerEvent as ReactPointerEvent } from 'react';
 import { readRectTransform, type Vec2 } from '../ui/rectLayout';
+import {
+  ANCHOR_PRESETS,
+  applyAnchorPreset,
+  readRectAxis,
+  writeRectAxis,
+} from '../ui/rectTransformModel';
 
 type RT = ReturnType<typeof readRectTransform>;
 
@@ -62,20 +68,104 @@ function Axis(props: {
   );
 }
 
+function AnchorIcon(props: { min: Vec2; max: Vec2 }) {
+  const width = Math.max(0, props.max[0] - props.min[0]);
+  const height = Math.max(0, props.max[1] - props.min[1]);
+  return (
+    <span className="rect-anchor-icon" aria-hidden>
+      <span className="rect-anchor-icon-frame" />
+      <span
+        className="rect-anchor-icon-range"
+        style={{
+          left: `${props.min[0] * 100}%`,
+          top: `${props.min[1] * 100}%`,
+          width: `${width * 100}%`,
+          height: `${height * 100}%`,
+        }}
+      />
+      <span
+        className="rect-anchor-icon-point"
+        style={{ left: `${props.min[0] * 100}%`, top: `${props.min[1] * 100}%` }}
+      />
+      <span
+        className="rect-anchor-icon-point"
+        style={{ left: `${props.max[0] * 100}%`, top: `${props.max[1] * 100}%` }}
+      />
+    </span>
+  );
+}
+
 export function RectTransformEditor(props: {
   data: unknown;
   onChange: (next: RT) => void;
 }) {
   const rt = readRectTransform(props.data);
+  const [presetOpen, setPresetOpen] = useState(false);
+  const presetRef = useRef<HTMLDivElement>(null);
   const set = (partial: Partial<RT>) => props.onChange({ ...rt, ...partial });
   const setV2 = (key: keyof RT, i: number, v: number) => {
     const cur = [...(rt[key] as Vec2)] as Vec2;
     cur[i] = v;
     set({ [key]: cur } as Partial<RT>);
   };
+  const horizontal = readRectAxis(rt, 0);
+  const vertical = readRectAxis(rt, 1);
+
+  useEffect(() => {
+    if (!presetOpen) return;
+    const close = (event: PointerEvent) => {
+      if (!presetRef.current?.contains(event.target as Node)) setPresetOpen(false);
+    };
+    window.addEventListener('pointerdown', close);
+    return () => window.removeEventListener('pointerdown', close);
+  }, [presetOpen]);
 
   return (
     <>
+      <div className="rect-anchor-section" ref={presetRef}>
+        <button
+          type="button"
+          className={`rect-anchor-current${presetOpen ? ' active' : ''}`}
+          title="Anchor Presets"
+          aria-label="Anchor Presets"
+          aria-expanded={presetOpen}
+          onClick={() => setPresetOpen((open) => !open)}
+        >
+          <AnchorIcon min={rt.anchor_min} max={rt.anchor_max} />
+        </button>
+        <div className="rect-anchor-summary">
+          <strong>Anchor Presets</strong>
+          <span>
+            {rt.anchor_min.map((value) => value.toFixed(2)).join(', ')} →{' '}
+            {rt.anchor_max.map((value) => value.toFixed(2)).join(', ')}
+          </span>
+        </div>
+        {presetOpen && (
+          <div className="rect-anchor-popup" role="dialog" aria-label="Anchor Presets">
+            <div className="rect-anchor-popup-title">Anchor Presets</div>
+            <div className="rect-anchor-popup-hint">Shift: also set pivot · Alt: also set position</div>
+            <div className="rect-anchor-preset-grid">
+              {ANCHOR_PRESETS.map((preset) => (
+                <button
+                  type="button"
+                  key={preset.key}
+                  title={preset.label}
+                  aria-label={preset.label}
+                  onClick={(event) => {
+                    props.onChange(applyAnchorPreset(rt, preset, {
+                      setPivot: event.shiftKey,
+                      snap: event.altKey,
+                    }));
+                    setPresetOpen(false);
+                  }}
+                >
+                  <AnchorIcon min={preset.anchorMin} max={preset.anchorMax} />
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+      </div>
       <div className="axis-row">
         <label>Anch Min</label>
         <Axis label="x" value={rt.anchor_min[0]} step={0.05} onChange={(v) => setV2('anchor_min', 0, v)} />
@@ -92,9 +182,30 @@ export function RectTransformEditor(props: {
         <Axis label="y" value={rt.pivot[1]} step={0.05} onChange={(v) => setV2('pivot', 1, v)} />
       </div>
       <div className="axis-row">
-        <label>Pos</label>
-        <Axis label="x" value={rt.anchored_position[0]} onChange={(v) => setV2('anchored_position', 0, v)} />
-        <Axis label="y" value={rt.anchored_position[1]} onChange={(v) => setV2('anchored_position', 1, v)} />
+        <label>Horizontal</label>
+        <Axis
+          label={horizontal.firstLabel.toLowerCase()}
+          value={horizontal.first}
+          onChange={(value) => props.onChange(writeRectAxis(rt, 0, 0, value))}
+        />
+        <Axis
+          label={horizontal.secondLabel.toLowerCase()}
+          value={horizontal.second}
+          onChange={(value) => props.onChange(writeRectAxis(rt, 0, 1, value))}
+        />
+      </div>
+      <div className="axis-row">
+        <label>Vertical</label>
+        <Axis
+          label={vertical.firstLabel.toLowerCase()}
+          value={vertical.first}
+          onChange={(value) => props.onChange(writeRectAxis(rt, 1, 0, value))}
+        />
+        <Axis
+          label={vertical.secondLabel.toLowerCase()}
+          value={vertical.second}
+          onChange={(value) => props.onChange(writeRectAxis(rt, 1, 1, value))}
+        />
       </div>
       <div className="axis-row">
         <label>Rotation</label>
@@ -104,11 +215,6 @@ export function RectTransformEditor(props: {
           step={1}
           onChange={(v) => set({ local_rotation: v })}
         />
-      </div>
-      <div className="axis-row">
-        <label>Size</label>
-        <Axis label="x" value={rt.size_delta[0]} onChange={(v) => setV2('size_delta', 0, v)} />
-        <Axis label="y" value={rt.size_delta[1]} onChange={(v) => setV2('size_delta', 1, v)} />
       </div>
       <div className="axis-row">
         <label>Scale</label>
