@@ -12,6 +12,21 @@ export type AnimationPreviewEntity = {
   components: Record<string, unknown>;
 };
 
+function arrayIndex(segment: string): number | null {
+  if (/^\d+$/.test(segment)) return Number(segment);
+  const aliases: Record<string, number> = {
+    x: 0,
+    r: 0,
+    y: 1,
+    g: 1,
+    z: 2,
+    b: 2,
+    w: 3,
+    a: 3,
+  };
+  return aliases[segment] ?? null;
+}
+
 export function resolveAnimationTarget(
   source: readonly AnimationPreviewEntity[],
   root: number,
@@ -46,17 +61,17 @@ function applyPreviewProperty(
   let cursor: Record<string, unknown> | unknown[] = component;
   for (let index = 0; index < segments.length - 1; index++) {
     const segment = segments[index];
-    const key: string | number = Array.isArray(cursor) && /^\d+$/.test(segment)
-      ? Number(segment)
-      : segment;
+    const indexKey = Array.isArray(cursor) ? arrayIndex(segment) : null;
+    if (Array.isArray(cursor) && indexKey == null) return;
+    const key: string | number = indexKey ?? segment;
     const next = cursor[key as keyof typeof cursor];
     if (next == null || typeof next !== 'object') return;
     cursor = next as Record<string, unknown> | unknown[];
   }
   const last = segments[segments.length - 1];
-  const key: string | number = Array.isArray(cursor) && /^\d+$/.test(last)
-    ? Number(last)
-    : last;
+  const indexKey = Array.isArray(cursor) ? arrayIndex(last) : null;
+  if (Array.isArray(cursor) && indexKey == null) return;
+  const key: string | number = indexKey ?? last;
   cursor[key as keyof typeof cursor] = structuredClone(value) as never;
 }
 

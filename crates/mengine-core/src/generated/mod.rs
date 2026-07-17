@@ -14,6 +14,15 @@ impl Component for Name {
     fn type_name() -> &'static str {
         "Name"
     }
+    fn as_any(&self) -> &dyn std::any::Any {
+        self
+    }
+    fn as_any_mut(&mut self) -> &mut dyn std::any::Any {
+        self
+    }
+    fn to_value(&self) -> serde_json::Value {
+        serde_json::to_value(self).unwrap_or(serde_json::Value::Null)
+    }
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
@@ -38,6 +47,15 @@ impl Component for Transform {
     fn type_name() -> &'static str {
         "Transform"
     }
+    fn as_any(&self) -> &dyn std::any::Any {
+        self
+    }
+    fn as_any_mut(&mut self) -> &mut dyn std::any::Any {
+        self
+    }
+    fn to_value(&self) -> serde_json::Value {
+        serde_json::to_value(self).unwrap_or(serde_json::Value::Null)
+    }
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
@@ -61,6 +79,15 @@ impl Default for Transform2D {
 impl Component for Transform2D {
     fn type_name() -> &'static str {
         "Transform2D"
+    }
+    fn as_any(&self) -> &dyn std::any::Any {
+        self
+    }
+    fn as_any_mut(&mut self) -> &mut dyn std::any::Any {
+        self
+    }
+    fn to_value(&self) -> serde_json::Value {
+        serde_json::to_value(self).unwrap_or(serde_json::Value::Null)
     }
 }
 
@@ -94,6 +121,15 @@ impl Component for Camera3D {
     fn type_name() -> &'static str {
         "Camera3D"
     }
+    fn as_any(&self) -> &dyn std::any::Any {
+        self
+    }
+    fn as_any_mut(&mut self) -> &mut dyn std::any::Any {
+        self
+    }
+    fn to_value(&self) -> serde_json::Value {
+        serde_json::to_value(self).unwrap_or(serde_json::Value::Null)
+    }
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
@@ -115,6 +151,15 @@ impl Default for DirectionalLight {
 impl Component for DirectionalLight {
     fn type_name() -> &'static str {
         "DirectionalLight"
+    }
+    fn as_any(&self) -> &dyn std::any::Any {
+        self
+    }
+    fn as_any_mut(&mut self) -> &mut dyn std::any::Any {
+        self
+    }
+    fn to_value(&self) -> serde_json::Value {
+        serde_json::to_value(self).unwrap_or(serde_json::Value::Null)
     }
 }
 
@@ -139,6 +184,15 @@ impl Default for PointLight {
 impl Component for PointLight {
     fn type_name() -> &'static str {
         "PointLight"
+    }
+    fn as_any(&self) -> &dyn std::any::Any {
+        self
+    }
+    fn as_any_mut(&mut self) -> &mut dyn std::any::Any {
+        self
+    }
+    fn to_value(&self) -> serde_json::Value {
+        serde_json::to_value(self).unwrap_or(serde_json::Value::Null)
     }
 }
 
@@ -168,6 +222,15 @@ impl Component for SpotLight {
     fn type_name() -> &'static str {
         "SpotLight"
     }
+    fn as_any(&self) -> &dyn std::any::Any {
+        self
+    }
+    fn as_any_mut(&mut self) -> &mut dyn std::any::Any {
+        self
+    }
+    fn to_value(&self) -> serde_json::Value {
+        serde_json::to_value(self).unwrap_or(serde_json::Value::Null)
+    }
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
@@ -190,6 +253,15 @@ impl Component for Camera2D {
     fn type_name() -> &'static str {
         "Camera2D"
     }
+    fn as_any(&self) -> &dyn std::any::Any {
+        self
+    }
+    fn as_any_mut(&mut self) -> &mut dyn std::any::Any {
+        self
+    }
+    fn to_value(&self) -> serde_json::Value {
+        serde_json::to_value(self).unwrap_or(serde_json::Value::Null)
+    }
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
@@ -211,6 +283,15 @@ impl Default for MeshRenderer {
 impl Component for MeshRenderer {
     fn type_name() -> &'static str {
         "MeshRenderer"
+    }
+    fn as_any(&self) -> &dyn std::any::Any {
+        self
+    }
+    fn as_any_mut(&mut self) -> &mut dyn std::any::Any {
+        self
+    }
+    fn to_value(&self) -> serde_json::Value {
+        serde_json::to_value(self).unwrap_or(serde_json::Value::Null)
     }
 }
 
@@ -244,6 +325,15 @@ impl Component for PbrMaterial {
     fn type_name() -> &'static str {
         "PbrMaterial"
     }
+    fn as_any(&self) -> &dyn std::any::Any {
+        self
+    }
+    fn as_any_mut(&mut self) -> &mut dyn std::any::Any {
+        self
+    }
+    fn to_value(&self) -> serde_json::Value {
+        serde_json::to_value(self).unwrap_or(serde_json::Value::Null)
+    }
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
@@ -273,6 +363,15 @@ impl Default for SpriteRenderer {
 impl Component for SpriteRenderer {
     fn type_name() -> &'static str {
         "SpriteRenderer"
+    }
+    fn as_any(&self) -> &dyn std::any::Any {
+        self
+    }
+    fn as_any_mut(&mut self) -> &mut dyn std::any::Any {
+        self
+    }
+    fn to_value(&self) -> serde_json::Value {
+        serde_json::to_value(self).unwrap_or(serde_json::Value::Null)
     }
 }
 
@@ -312,6 +411,15 @@ impl Component for AnimatedSprite2D {
     fn type_name() -> &'static str {
         "AnimatedSprite2D"
     }
+    fn as_any(&self) -> &dyn std::any::Any {
+        self
+    }
+    fn as_any_mut(&mut self) -> &mut dyn std::any::Any {
+        self
+    }
+    fn to_value(&self) -> serde_json::Value {
+        serde_json::to_value(self).unwrap_or(serde_json::Value::Null)
+    }
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
@@ -339,6 +447,15 @@ impl Default for Line2D {
 impl Component for Line2D {
     fn type_name() -> &'static str {
         "Line2D"
+    }
+    fn as_any(&self) -> &dyn std::any::Any {
+        self
+    }
+    fn as_any_mut(&mut self) -> &mut dyn std::any::Any {
+        self
+    }
+    fn to_value(&self) -> serde_json::Value {
+        serde_json::to_value(self).unwrap_or(serde_json::Value::Null)
     }
 }
 
@@ -368,6 +485,15 @@ impl Component for AnimationPlayer {
     fn type_name() -> &'static str {
         "AnimationPlayer"
     }
+    fn as_any(&self) -> &dyn std::any::Any {
+        self
+    }
+    fn as_any_mut(&mut self) -> &mut dyn std::any::Any {
+        self
+    }
+    fn to_value(&self) -> serde_json::Value {
+        serde_json::to_value(self).unwrap_or(serde_json::Value::Null)
+    }
 }
 
 #[derive(Clone, Debug, Default, Serialize, Deserialize)]
@@ -380,6 +506,15 @@ impl Component for Layer {
     fn type_name() -> &'static str {
         "Layer"
     }
+    fn as_any(&self) -> &dyn std::any::Any {
+        self
+    }
+    fn as_any_mut(&mut self) -> &mut dyn std::any::Any {
+        self
+    }
+    fn to_value(&self) -> serde_json::Value {
+        serde_json::to_value(self).unwrap_or(serde_json::Value::Null)
+    }
 }
 
 #[derive(Clone, Debug, Default, Serialize, Deserialize)]
@@ -388,6 +523,15 @@ pub struct EditorOnly {}
 impl Component for EditorOnly {
     fn type_name() -> &'static str {
         "EditorOnly"
+    }
+    fn as_any(&self) -> &dyn std::any::Any {
+        self
+    }
+    fn as_any_mut(&mut self) -> &mut dyn std::any::Any {
+        self
+    }
+    fn to_value(&self) -> serde_json::Value {
+        serde_json::to_value(self).unwrap_or(serde_json::Value::Null)
     }
 }
 
@@ -412,6 +556,15 @@ impl Default for AutoRotate {
 impl Component for AutoRotate {
     fn type_name() -> &'static str {
         "AutoRotate"
+    }
+    fn as_any(&self) -> &dyn std::any::Any {
+        self
+    }
+    fn as_any_mut(&mut self) -> &mut dyn std::any::Any {
+        self
+    }
+    fn to_value(&self) -> serde_json::Value {
+        serde_json::to_value(self).unwrap_or(serde_json::Value::Null)
     }
 }
 
@@ -481,6 +634,15 @@ impl Component for ParticleEmitter2D {
     fn type_name() -> &'static str {
         "ParticleEmitter2D"
     }
+    fn as_any(&self) -> &dyn std::any::Any {
+        self
+    }
+    fn as_any_mut(&mut self) -> &mut dyn std::any::Any {
+        self
+    }
+    fn to_value(&self) -> serde_json::Value {
+        serde_json::to_value(self).unwrap_or(serde_json::Value::Null)
+    }
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
@@ -549,6 +711,15 @@ impl Component for ParticleEmitter3D {
     fn type_name() -> &'static str {
         "ParticleEmitter3D"
     }
+    fn as_any(&self) -> &dyn std::any::Any {
+        self
+    }
+    fn as_any_mut(&mut self) -> &mut dyn std::any::Any {
+        self
+    }
+    fn to_value(&self) -> serde_json::Value {
+        serde_json::to_value(self).unwrap_or(serde_json::Value::Null)
+    }
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
@@ -589,6 +760,15 @@ impl Component for SpineSkeleton {
     fn type_name() -> &'static str {
         "SpineSkeleton"
     }
+    fn as_any(&self) -> &dyn std::any::Any {
+        self
+    }
+    fn as_any_mut(&mut self) -> &mut dyn std::any::Any {
+        self
+    }
+    fn to_value(&self) -> serde_json::Value {
+        serde_json::to_value(self).unwrap_or(serde_json::Value::Null)
+    }
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
@@ -612,6 +792,15 @@ impl Default for Canvas {
 impl Component for Canvas {
     fn type_name() -> &'static str {
         "Canvas"
+    }
+    fn as_any(&self) -> &dyn std::any::Any {
+        self
+    }
+    fn as_any_mut(&mut self) -> &mut dyn std::any::Any {
+        self
+    }
+    fn to_value(&self) -> serde_json::Value {
+        serde_json::to_value(self).unwrap_or(serde_json::Value::Null)
     }
 }
 
@@ -638,6 +827,15 @@ impl Default for CanvasScaler {
 impl Component for CanvasScaler {
     fn type_name() -> &'static str {
         "CanvasScaler"
+    }
+    fn as_any(&self) -> &dyn std::any::Any {
+        self
+    }
+    fn as_any_mut(&mut self) -> &mut dyn std::any::Any {
+        self
+    }
+    fn to_value(&self) -> serde_json::Value {
+        serde_json::to_value(self).unwrap_or(serde_json::Value::Null)
     }
 }
 
@@ -671,6 +869,15 @@ impl Component for RectTransform {
     fn type_name() -> &'static str {
         "RectTransform"
     }
+    fn as_any(&self) -> &dyn std::any::Any {
+        self
+    }
+    fn as_any_mut(&mut self) -> &mut dyn std::any::Any {
+        self
+    }
+    fn to_value(&self) -> serde_json::Value {
+        serde_json::to_value(self).unwrap_or(serde_json::Value::Null)
+    }
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
@@ -693,6 +900,15 @@ impl Component for AspectRatioFitter {
     fn type_name() -> &'static str {
         "AspectRatioFitter"
     }
+    fn as_any(&self) -> &dyn std::any::Any {
+        self
+    }
+    fn as_any_mut(&mut self) -> &mut dyn std::any::Any {
+        self
+    }
+    fn to_value(&self) -> serde_json::Value {
+        serde_json::to_value(self).unwrap_or(serde_json::Value::Null)
+    }
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
@@ -714,6 +930,15 @@ impl Default for ContentSizeFitter {
 impl Component for ContentSizeFitter {
     fn type_name() -> &'static str {
         "ContentSizeFitter"
+    }
+    fn as_any(&self) -> &dyn std::any::Any {
+        self
+    }
+    fn as_any_mut(&mut self) -> &mut dyn std::any::Any {
+        self
+    }
+    fn to_value(&self) -> serde_json::Value {
+        serde_json::to_value(self).unwrap_or(serde_json::Value::Null)
     }
 }
 
@@ -745,6 +970,15 @@ impl Component for Image {
     fn type_name() -> &'static str {
         "Image"
     }
+    fn as_any(&self) -> &dyn std::any::Any {
+        self
+    }
+    fn as_any_mut(&mut self) -> &mut dyn std::any::Any {
+        self
+    }
+    fn to_value(&self) -> serde_json::Value {
+        serde_json::to_value(self).unwrap_or(serde_json::Value::Null)
+    }
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
@@ -771,6 +1005,15 @@ impl Component for RawImage {
     fn type_name() -> &'static str {
         "RawImage"
     }
+    fn as_any(&self) -> &dyn std::any::Any {
+        self
+    }
+    fn as_any_mut(&mut self) -> &mut dyn std::any::Any {
+        self
+    }
+    fn to_value(&self) -> serde_json::Value {
+        serde_json::to_value(self).unwrap_or(serde_json::Value::Null)
+    }
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
@@ -795,6 +1038,15 @@ impl Component for Shadow {
     fn type_name() -> &'static str {
         "Shadow"
     }
+    fn as_any(&self) -> &dyn std::any::Any {
+        self
+    }
+    fn as_any_mut(&mut self) -> &mut dyn std::any::Any {
+        self
+    }
+    fn to_value(&self) -> serde_json::Value {
+        serde_json::to_value(self).unwrap_or(serde_json::Value::Null)
+    }
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
@@ -818,6 +1070,15 @@ impl Default for Outline {
 impl Component for Outline {
     fn type_name() -> &'static str {
         "Outline"
+    }
+    fn as_any(&self) -> &dyn std::any::Any {
+        self
+    }
+    fn as_any_mut(&mut self) -> &mut dyn std::any::Any {
+        self
+    }
+    fn to_value(&self) -> serde_json::Value {
+        serde_json::to_value(self).unwrap_or(serde_json::Value::Null)
     }
 }
 
@@ -848,6 +1109,15 @@ impl Default for Button {
 impl Component for Button {
     fn type_name() -> &'static str {
         "Button"
+    }
+    fn as_any(&self) -> &dyn std::any::Any {
+        self
+    }
+    fn as_any_mut(&mut self) -> &mut dyn std::any::Any {
+        self
+    }
+    fn to_value(&self) -> serde_json::Value {
+        serde_json::to_value(self).unwrap_or(serde_json::Value::Null)
     }
 }
 
@@ -883,6 +1153,15 @@ impl Component for Text {
     fn type_name() -> &'static str {
         "Text"
     }
+    fn as_any(&self) -> &dyn std::any::Any {
+        self
+    }
+    fn as_any_mut(&mut self) -> &mut dyn std::any::Any {
+        self
+    }
+    fn to_value(&self) -> serde_json::Value {
+        serde_json::to_value(self).unwrap_or(serde_json::Value::Null)
+    }
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
@@ -915,6 +1194,15 @@ impl Component for Toggle {
     fn type_name() -> &'static str {
         "Toggle"
     }
+    fn as_any(&self) -> &dyn std::any::Any {
+        self
+    }
+    fn as_any_mut(&mut self) -> &mut dyn std::any::Any {
+        self
+    }
+    fn to_value(&self) -> serde_json::Value {
+        serde_json::to_value(self).unwrap_or(serde_json::Value::Null)
+    }
 }
 
 #[derive(Clone, Debug, Default, Serialize, Deserialize)]
@@ -926,6 +1214,15 @@ pub struct ToggleGroup {
 impl Component for ToggleGroup {
     fn type_name() -> &'static str {
         "ToggleGroup"
+    }
+    fn as_any(&self) -> &dyn std::any::Any {
+        self
+    }
+    fn as_any_mut(&mut self) -> &mut dyn std::any::Any {
+        self
+    }
+    fn to_value(&self) -> serde_json::Value {
+        serde_json::to_value(self).unwrap_or(serde_json::Value::Null)
     }
 }
 
@@ -965,6 +1262,15 @@ impl Component for Slider {
     fn type_name() -> &'static str {
         "Slider"
     }
+    fn as_any(&self) -> &dyn std::any::Any {
+        self
+    }
+    fn as_any_mut(&mut self) -> &mut dyn std::any::Any {
+        self
+    }
+    fn to_value(&self) -> serde_json::Value {
+        serde_json::to_value(self).unwrap_or(serde_json::Value::Null)
+    }
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
@@ -999,6 +1305,15 @@ impl Component for Scrollbar {
     fn type_name() -> &'static str {
         "Scrollbar"
     }
+    fn as_any(&self) -> &dyn std::any::Any {
+        self
+    }
+    fn as_any_mut(&mut self) -> &mut dyn std::any::Any {
+        self
+    }
+    fn to_value(&self) -> serde_json::Value {
+        serde_json::to_value(self).unwrap_or(serde_json::Value::Null)
+    }
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
@@ -1025,6 +1340,15 @@ impl Component for Panel {
     fn type_name() -> &'static str {
         "Panel"
     }
+    fn as_any(&self) -> &dyn std::any::Any {
+        self
+    }
+    fn as_any_mut(&mut self) -> &mut dyn std::any::Any {
+        self
+    }
+    fn to_value(&self) -> serde_json::Value {
+        serde_json::to_value(self).unwrap_or(serde_json::Value::Null)
+    }
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
@@ -1048,6 +1372,15 @@ impl Default for CanvasGroup {
 impl Component for CanvasGroup {
     fn type_name() -> &'static str {
         "CanvasGroup"
+    }
+    fn as_any(&self) -> &dyn std::any::Any {
+        self
+    }
+    fn as_any_mut(&mut self) -> &mut dyn std::any::Any {
+        self
+    }
+    fn to_value(&self) -> serde_json::Value {
+        serde_json::to_value(self).unwrap_or(serde_json::Value::Null)
     }
 }
 
@@ -1079,6 +1412,15 @@ impl Component for LayoutGroup {
     fn type_name() -> &'static str {
         "LayoutGroup"
     }
+    fn as_any(&self) -> &dyn std::any::Any {
+        self
+    }
+    fn as_any_mut(&mut self) -> &mut dyn std::any::Any {
+        self
+    }
+    fn to_value(&self) -> serde_json::Value {
+        serde_json::to_value(self).unwrap_or(serde_json::Value::Null)
+    }
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
@@ -1100,6 +1442,15 @@ impl Default for RectMask2D {
 impl Component for RectMask2D {
     fn type_name() -> &'static str {
         "RectMask2D"
+    }
+    fn as_any(&self) -> &dyn std::any::Any {
+        self
+    }
+    fn as_any_mut(&mut self) -> &mut dyn std::any::Any {
+        self
+    }
+    fn to_value(&self) -> serde_json::Value {
+        serde_json::to_value(self).unwrap_or(serde_json::Value::Null)
     }
 }
 
@@ -1136,6 +1487,15 @@ impl Default for ProgressBar {
 impl Component for ProgressBar {
     fn type_name() -> &'static str {
         "ProgressBar"
+    }
+    fn as_any(&self) -> &dyn std::any::Any {
+        self
+    }
+    fn as_any_mut(&mut self) -> &mut dyn std::any::Any {
+        self
+    }
+    fn to_value(&self) -> serde_json::Value {
+        serde_json::to_value(self).unwrap_or(serde_json::Value::Null)
     }
 }
 
@@ -1179,6 +1539,15 @@ impl Component for InputField {
     fn type_name() -> &'static str {
         "InputField"
     }
+    fn as_any(&self) -> &dyn std::any::Any {
+        self
+    }
+    fn as_any_mut(&mut self) -> &mut dyn std::any::Any {
+        self
+    }
+    fn to_value(&self) -> serde_json::Value {
+        serde_json::to_value(self).unwrap_or(serde_json::Value::Null)
+    }
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
@@ -1216,6 +1585,15 @@ impl Default for Dropdown {
 impl Component for Dropdown {
     fn type_name() -> &'static str {
         "Dropdown"
+    }
+    fn as_any(&self) -> &dyn std::any::Any {
+        self
+    }
+    fn as_any_mut(&mut self) -> &mut dyn std::any::Any {
+        self
+    }
+    fn to_value(&self) -> serde_json::Value {
+        serde_json::to_value(self).unwrap_or(serde_json::Value::Null)
     }
 }
 
@@ -1259,6 +1637,15 @@ impl Component for ListView {
     fn type_name() -> &'static str {
         "ListView"
     }
+    fn as_any(&self) -> &dyn std::any::Any {
+        self
+    }
+    fn as_any_mut(&mut self) -> &mut dyn std::any::Any {
+        self
+    }
+    fn to_value(&self) -> serde_json::Value {
+        serde_json::to_value(self).unwrap_or(serde_json::Value::Null)
+    }
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
@@ -1290,6 +1677,15 @@ impl Default for ScrollView {
 impl Component for ScrollView {
     fn type_name() -> &'static str {
         "ScrollView"
+    }
+    fn as_any(&self) -> &dyn std::any::Any {
+        self
+    }
+    fn as_any_mut(&mut self) -> &mut dyn std::any::Any {
+        self
+    }
+    fn to_value(&self) -> serde_json::Value {
+        serde_json::to_value(self).unwrap_or(serde_json::Value::Null)
     }
 }
 
@@ -1328,6 +1724,15 @@ impl Default for TabView {
 impl Component for TabView {
     fn type_name() -> &'static str {
         "TabView"
+    }
+    fn as_any(&self) -> &dyn std::any::Any {
+        self
+    }
+    fn as_any_mut(&mut self) -> &mut dyn std::any::Any {
+        self
+    }
+    fn to_value(&self) -> serde_json::Value {
+        serde_json::to_value(self).unwrap_or(serde_json::Value::Null)
     }
 }
 

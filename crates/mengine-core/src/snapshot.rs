@@ -1,4 +1,4 @@
-use crate::hierarchy::{Children, Parent};
+use crate::hierarchy::Parent;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use std::collections::HashMap;
@@ -55,58 +55,13 @@ impl WorldSnapshot {
                 .map(|n| n.value.clone());
             let parent = world.get_component::<Parent>(e).map(|p| p.entity.to_u64());
             let mut components = world.serialized_components(e).cloned().unwrap_or_default();
-            macro_rules! capture_component {
-                ($ty:ty, $name:literal) => {
-                    if let Some(component) = world.get_component::<$ty>(e) {
-                        components.insert(
-                            $name.into(),
-                            serde_json::to_value(component).unwrap_or(Value::Null),
-                        );
-                    }
-                };
+            if let Some(live_components) = world.component_values(e) {
+                components.extend(
+                    live_components.into_iter().filter(|(name, _)| {
+                        name != "Name" && name != "Parent" && name != "Children"
+                    }),
+                );
             }
-            capture_component!(crate::generated::Transform, "Transform");
-            capture_component!(crate::generated::Transform2D, "Transform2D");
-            capture_component!(crate::generated::Camera3D, "Camera3D");
-            capture_component!(crate::generated::Camera2D, "Camera2D");
-            capture_component!(crate::generated::DirectionalLight, "DirectionalLight");
-            capture_component!(crate::generated::PointLight, "PointLight");
-            capture_component!(crate::generated::SpotLight, "SpotLight");
-            capture_component!(crate::generated::MeshRenderer, "MeshRenderer");
-            capture_component!(crate::generated::PbrMaterial, "PbrMaterial");
-            capture_component!(crate::generated::SpriteRenderer, "SpriteRenderer");
-            capture_component!(crate::generated::AnimatedSprite2D, "AnimatedSprite2D");
-            capture_component!(crate::generated::Line2D, "Line2D");
-            capture_component!(crate::generated::AnimationPlayer, "AnimationPlayer");
-            capture_component!(crate::generated::Canvas, "Canvas");
-            capture_component!(crate::generated::CanvasScaler, "CanvasScaler");
-            capture_component!(crate::generated::CanvasGroup, "CanvasGroup");
-            capture_component!(crate::generated::RectTransform, "RectTransform");
-            capture_component!(crate::generated::AspectRatioFitter, "AspectRatioFitter");
-            capture_component!(crate::generated::ContentSizeFitter, "ContentSizeFitter");
-            capture_component!(crate::generated::RectMask2D, "RectMask2D");
-            capture_component!(crate::generated::LayoutGroup, "LayoutGroup");
-            capture_component!(crate::generated::Image, "Image");
-            capture_component!(crate::generated::RawImage, "RawImage");
-            capture_component!(crate::generated::Shadow, "Shadow");
-            capture_component!(crate::generated::Outline, "Outline");
-            capture_component!(crate::generated::Button, "Button");
-            capture_component!(crate::generated::Text, "Text");
-            capture_component!(crate::generated::Toggle, "Toggle");
-            capture_component!(crate::generated::ToggleGroup, "ToggleGroup");
-            capture_component!(crate::generated::Slider, "Slider");
-            capture_component!(crate::generated::Scrollbar, "Scrollbar");
-            capture_component!(crate::generated::Panel, "Panel");
-            capture_component!(crate::generated::ProgressBar, "ProgressBar");
-            capture_component!(crate::generated::InputField, "InputField");
-            capture_component!(crate::generated::Dropdown, "Dropdown");
-            capture_component!(crate::generated::ListView, "ListView");
-            capture_component!(crate::generated::ScrollView, "ScrollView");
-            capture_component!(crate::generated::TabView, "TabView");
-            capture_component!(crate::generated::Layer, "Layer");
-            capture_component!(crate::generated::EditorOnly, "EditorOnly");
-            capture_component!(crate::generated::AutoRotate, "AutoRotate");
-            let _ = world.get_component::<Children>(e);
             entities.push(EntitySnapshot {
                 entity: e.to_u64(),
                 name,

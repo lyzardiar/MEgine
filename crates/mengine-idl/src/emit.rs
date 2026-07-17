@@ -63,6 +63,11 @@ fn emit_rust_component(def: &Def) -> String {
         "    fn type_name() -> &'static str {{ \"{}\" }}\n",
         def.name
     ));
+    out.push_str("    fn as_any(&self) -> &dyn std::any::Any { self }\n");
+    out.push_str("    fn as_any_mut(&mut self) -> &mut dyn std::any::Any { self }\n");
+    out.push_str(
+        "    fn to_value(&self) -> serde_json::Value { serde_json::to_value(self).unwrap_or(serde_json::Value::Null) }\n",
+    );
     out.push_str("}\n");
     out
 }

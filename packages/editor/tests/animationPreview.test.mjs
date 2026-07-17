@@ -35,7 +35,7 @@ test('resolves root, entity id, and relative hierarchy targets', () => {
 test('applies preview values to a cloned snapshot only', () => {
   const preview = applyAnimationPreview(entities, 1, [
     { target: '.', component: 'Transform', property: 'position', value: [9, 8, 7] },
-    { target: 'Arm', component: 'Transform', property: 'scale.1', value: 2 },
+    { target: 'Arm', component: 'Transform', property: 'scale.y', value: 2 },
   ]);
 
   assert.deepEqual(preview[0].components.Transform.position, [9, 8, 7]);

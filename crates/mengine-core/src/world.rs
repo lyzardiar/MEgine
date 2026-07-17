@@ -153,7 +153,7 @@ impl World {
         self.entities[entity.index as usize]
             .components
             .values()
-            .find_map(|c| c.downcast_ref::<T>())
+            .find_map(|c| c.as_any().downcast_ref::<T>())
     }
 
     pub fn get_component_mut<T: Any + Send + Sync>(&mut self, entity: Entity) -> Option<&mut T> {
@@ -163,7 +163,38 @@ impl World {
         self.entities[entity.index as usize]
             .components
             .values_mut()
-            .find_map(|c| c.downcast_mut::<T>())
+            .find_map(|c| c.as_any_mut().downcast_mut::<T>())
+    }
+
+    /// Serialize the live typed component, including runtime mutations.
+    pub fn component_value(&self, entity: Entity, name: &str) -> Option<Value> {
+        if !self.is_alive(entity) {
+            return None;
+        }
+        let name = canonical_component_name(name);
+        self.entities[entity.index as usize]
+            .components
+            .get(name)
+            .map(|component| component.to_value())
+    }
+
+    /// Snapshot every live typed component without maintaining a manual type list.
+    pub fn component_values(&self, entity: Entity) -> Option<HashMap<String, Value>> {
+        if !self.is_alive(entity) {
+            return None;
+        }
+        Some(
+            self.entities[entity.index as usize]
+                .components
+                .iter()
+                .map(|(name, component)| (name.clone(), component.to_value()))
+                .collect(),
+        )
+    }
+
+    /// Replace a component from its serialized value through the canonical IDL path.
+    pub fn set_component_value(&mut self, entity: Entity, name: &str, value: Value) {
+        self.apply_set_component(entity, name, value);
     }
 
     fn insert_json_component<T>(&mut self, entity: Entity, value: Value)

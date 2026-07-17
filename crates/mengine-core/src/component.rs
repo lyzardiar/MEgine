@@ -1,4 +1,5 @@
 use serde::{Deserialize, Serialize};
+use serde_json::Value;
 use std::any::{Any, TypeId};
 use std::collections::HashMap;
 
@@ -10,6 +11,10 @@ pub trait Component: Any + Send + Sync + 'static {
     fn type_name() -> &'static str
     where
         Self: Sized;
+
+    fn as_any(&self) -> &dyn Any;
+    fn as_any_mut(&mut self) -> &mut dyn Any;
+    fn to_value(&self) -> Value;
 }
 
 #[derive(Default)]
@@ -56,4 +61,4 @@ impl ComponentRegistry {
 }
 
 /// Erased component storage entry.
-pub type ComponentBox = Box<dyn Any + Send + Sync>;
+pub type ComponentBox = Box<dyn Component>;

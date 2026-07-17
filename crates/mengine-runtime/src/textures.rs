@@ -83,7 +83,7 @@ impl RuntimeTextureCache {
     }
 }
 
-pub fn resolve_texture_path(project_root: &Path, key: &str) -> Option<PathBuf> {
+pub fn resolve_project_asset_path(project_root: &Path, key: &str) -> Option<PathBuf> {
     let normalized = key.trim().replace('\\', "/");
     let relative = Path::new(&normalized);
     if relative.is_absolute()
@@ -97,6 +97,10 @@ pub fn resolve_texture_path(project_root: &Path, key: &str) -> Option<PathBuf> {
         return None;
     }
     Some(project_root.join(relative))
+}
+
+pub fn resolve_texture_path(project_root: &Path, key: &str) -> Option<PathBuf> {
+    resolve_project_asset_path(project_root, key)
 }
 
 #[cfg(test)]

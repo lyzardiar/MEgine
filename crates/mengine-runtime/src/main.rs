@@ -14,6 +14,7 @@ use mengine_rhi::{
     look_at, orthographic, perspective, DirectionalLightData, FrameCamera, FrameLighting,
     PointLightData, RenderMaterial, RenderObject, Renderer, SpotLightData, UiBatchPlan,
 };
+use mengine_runtime::animation::{infer_project_root_from_scene, AnimationRuntime};
 use mengine_runtime::particles::ParticleWorld;
 use mengine_runtime::sprites::collect_world_sprites;
 use mengine_runtime::textures::RuntimeTextureCache;
@@ -21,6 +22,7 @@ use mengine_runtime::ui::{
     append_ui_focus_ring, collect_ui_frame, next_ui_focus, set_toggle_value, UiControlKind,
     UiControlRegion,
 };
+use mengine_scene::load_scene;
 use mengine_script::ScriptHost;
 use serde_json::json;
 use std::path::PathBuf;
@@ -44,6 +46,10 @@ struct Args {
     /// Project directory used to resolve texture keys such as Assets/Textures/icon.png.
     #[arg(long)]
     project_root: Option<PathBuf>,
+
+    /// Scene file to run. Relative paths are resolved from --project-root.
+    #[arg(long)]
+    scene: Option<PathBuf>,
 }
 
 struct App {
@@ -65,11 +71,23 @@ struct App {
     last_ui_draw_calls: u32,
     particles: ParticleWorld,
     textures: RuntimeTextureCache,
+    animations: AnimationRuntime,
 }
 
 impl App {
-    fn new(args: Args) -> Self {
+    fn new(mut args: Args) -> Self {
+        if args.project_root.is_none() {
+            args.project_root = args.scene.as_deref().and_then(|scene| {
+                let absolute = if scene.is_absolute() {
+                    scene.to_owned()
+                } else {
+                    std::env::current_dir().ok()?.join(scene)
+                };
+                infer_project_root_from_scene(&absolute)
+            });
+        }
         let textures = RuntimeTextureCache::new(args.project_root.clone());
+        let animations = AnimationRuntime::new(args.project_root.clone());
         Self {
             args,
             window: None,
@@ -89,6 +107,30 @@ impl App {
             last_ui_draw_calls: u32::MAX,
             particles: ParticleWorld::default(),
             textures,
+            animations,
+        }
+    }
+
+    fn load_requested_scene(&mut self) -> bool {
+        let Some(scene) = self.args.scene.as_deref() else {
+            return false;
+        };
+        let path = if scene.is_absolute() {
+            scene.to_owned()
+        } else if let Some(project_root) = self.args.project_root.as_deref() {
+            project_root.join(scene)
+        } else {
+            scene.to_owned()
+        };
+        match load_scene(&path, &mut self.world) {
+            Ok(scene) => {
+                log::info!("loaded scene '{}' from {}", scene.name, path.display());
+                true
+            }
+            Err(error) => {
+                log::error!("failed to load scene {}: {error}", path.display());
+                false
+            }
         }
     }
 
@@ -851,7 +893,9 @@ impl ApplicationHandler for App {
         let renderer = pollster::block_on(Renderer::new(window.clone())).expect("renderer");
         self.window = Some(window);
         self.renderer = Some(renderer);
-        self.bootstrap_sample();
+        if !self.load_requested_scene() {
+            self.bootstrap_sample();
+        }
 
         let mut script = ScriptHost::new().ok();
         if let Some(ref mut s) = script {
@@ -866,6 +910,8 @@ function onTick(dt, frame) {
 "#;
             if let Some(path) = &self.args.script {
                 let _ = s.load_file(path);
+            } else if self.args.scene.is_some() {
+                // Project scenes run without the sample fallback script unless explicitly requested.
             } else {
                 let mut loaded = false;
                 let sample_js = PathBuf::from(format!("samples/{}/main.js", self.args.sample));
@@ -1001,6 +1047,15 @@ function onTick(dt, frame) {
                             t.rotation = [0.0, half.sin(), 0.0, half.cos()];
                         }
                     }
+                }
+
+                for failure in self.animations.update(&mut self.world, dt) {
+                    log::error!(
+                        "AnimationPlayer {:?} failed to load '{}': {}",
+                        failure.entity,
+                        failure.clip,
+                        failure.error
+                    );
                 }
 
                 if let Some(script) = self.script.as_mut() {
