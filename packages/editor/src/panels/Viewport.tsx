@@ -109,6 +109,7 @@ import {
   type RectSmartGuide,
 } from '../rectSmartGuides';
 import type { RectResizeOptions, RectResizePlan } from '../rectResize';
+import { nextUiSelectable, uiNavigationAction } from '../ui/uiNavigation';
 
 const SCENE_2D_KEY = 'mengine.scene.2d';
 const SCENE_SNAP_KEY = 'mengine.scene.snap';
@@ -453,6 +454,7 @@ export function Viewport(props: {
   const uiHoverRef = useRef<number | null>(null);
   const uiPressRef = useRef<number | null>(null);
   const focusedInputRef = useRef<number | null>(null);
+  const focusedUiRef = useRef<number | null>(null);
   const uiStatsRef = useRef({ elements: 0, batches: 0 });
   const particleStatesRef = useRef(new Map<number, ParticleEmitterState>());
   const spineRuntimeRef = useRef<SpineCanvasRuntime | null>(null);
@@ -1054,7 +1056,13 @@ export function Viewport(props: {
           }
         }
         uiLayoutScaleRef.current = layoutScale || 1;
-        const stats = drawUiItems(ctx, uiItems, uiHoverRef.current, uiPressRef.current ?? focusedInputRef.current);
+        const stats = drawUiItems(
+          ctx,
+          uiItems,
+          uiHoverRef.current,
+          uiPressRef.current ?? focusedInputRef.current,
+          { focusId: focusedUiRef.current },
+        );
         if (
           stats.elements !== uiStatsRef.current.elements ||
           stats.batches !== uiStatsRef.current.batches
@@ -1236,6 +1244,8 @@ export function Viewport(props: {
       if (ev.button === 0) {
         const ui = hitTestUi(uiItemsRef.current, x, y);
         if (ui?.slider?.interactable || ui?.scrollbar?.interactable) {
+          focusedUiRef.current = ui.entity;
+          focusedInputRef.current = null;
           const component = ui.slider ? 'Slider' : 'Scrollbar';
           const value = component === 'Slider'
             ? sliderValueAtPoint(ui, x, y)
@@ -1266,8 +1276,10 @@ export function Viewport(props: {
           || ui?.tabs?.interactable
         ) {
           uiPressRef.current = ui.entity;
+          focusedUiRef.current = ui.entity;
           focusedInputRef.current = ui.input?.interactable ? ui.entity : null;
         } else {
+          focusedUiRef.current = null;
           focusedInputRef.current = null;
         }
       }
@@ -2133,6 +2145,17 @@ export function Viewport(props: {
       propsRef.current.onEndGesture();
     };
     const onKey = (ev: KeyboardEvent) => {
+      if (propsRef.current.tab === 'game' && ev.key === 'Tab') {
+        focusedUiRef.current = nextUiSelectable(
+          uiItemsRef.current,
+          focusedUiRef.current,
+          ev.shiftKey,
+        );
+        focusedInputRef.current = null;
+        ev.preventDefault();
+        ev.stopImmediatePropagation();
+        return;
+      }
       const focused = focusedInputRef.current;
       if (propsRef.current.tab === 'game' && focused != null) {
         const item = uiItemsRef.current.find((candidate) => candidate.entity === focused);
@@ -2162,6 +2185,33 @@ export function Viewport(props: {
         ev.stopImmediatePropagation();
         propsRef.current.onUiValueChange?.(focused, 'InputField', { text: next }, callback);
         return;
+      }
+      if (propsRef.current.tab === 'game' && focusedUiRef.current != null) {
+        const item = uiItemsRef.current.find(
+          (candidate) => candidate.entity === focusedUiRef.current,
+        );
+        if (!item) {
+          focusedUiRef.current = null;
+          return;
+        }
+        const action = uiNavigationAction(item, ev.key);
+        if (action) {
+          ev.preventDefault();
+          ev.stopImmediatePropagation();
+          if (action.kind === 'click') {
+            propsRef.current.onUiClick?.(item.entity, action.callback);
+          } else if (action.kind === 'focus-input') {
+            focusedInputRef.current = item.entity;
+          } else {
+            propsRef.current.onUiValueChange?.(
+              item.entity,
+              action.component,
+              action.patch,
+              action.callback,
+            );
+          }
+          return;
+        }
       }
       if (propsRef.current.tab !== 'scene') return;
       const isSceneCanvas = ev.target === canvasRef.current;
@@ -2470,10 +2520,10 @@ export function Viewport(props: {
       <canvas
         ref={canvasRef}
         data-scene-viewport={props.tab === 'scene' ? 'true' : undefined}
-        tabIndex={props.tab === 'scene' ? 0 : -1}
+        tabIndex={0}
         aria-label={props.tab === 'scene' ? 'Scene viewport' : 'Game viewport'}
         onMouseDown={(event) => {
-          if (props.tab === 'scene') event.currentTarget.focus({ preventScroll: true });
+          event.currentTarget.focus({ preventScroll: true });
           onPointerDown(event);
         }}
         onContextMenu={(e) => e.preventDefault()}

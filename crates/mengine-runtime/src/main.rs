@@ -17,7 +17,9 @@ use mengine_rhi::{
 use mengine_runtime::particles::ParticleWorld;
 use mengine_runtime::sprites::collect_world_sprites;
 use mengine_runtime::textures::RuntimeTextureCache;
-use mengine_runtime::ui::{collect_ui_frame, UiControlKind, UiControlRegion};
+use mengine_runtime::ui::{
+    append_ui_focus_ring, collect_ui_frame, next_ui_focus, UiControlKind, UiControlRegion,
+};
 use mengine_script::ScriptHost;
 use serde_json::json;
 use std::path::PathBuf;
@@ -26,7 +28,7 @@ use std::time::Instant;
 use winit::application::ApplicationHandler;
 use winit::event::{ElementState, Ime, KeyEvent, MouseButton, MouseScrollDelta, WindowEvent};
 use winit::event_loop::{ActiveEventLoop, ControlFlow, EventLoop};
-use winit::keyboard::{KeyCode as WinitKey, PhysicalKey};
+use winit::keyboard::{KeyCode as WinitKey, ModifiersState, PhysicalKey};
 use winit::window::{Window, WindowId};
 
 #[derive(Parser, Debug)]
@@ -57,6 +59,8 @@ struct App {
     ui_controls: Vec<UiControlRegion>,
     active_slider: Option<Entity>,
     focused_input: Option<Entity>,
+    focused_ui: Option<Entity>,
+    modifiers: ModifiersState,
     last_ui_draw_calls: u32,
     particles: ParticleWorld,
     textures: RuntimeTextureCache,
@@ -79,6 +83,8 @@ impl App {
             ui_controls: Vec::new(),
             active_slider: None,
             focused_input: None,
+            focused_ui: None,
+            modifiers: ModifiersState::empty(),
             last_ui_draw_calls: u32::MAX,
             particles: ParticleWorld::default(),
             textures,
@@ -525,6 +531,18 @@ impl App {
         else {
             return;
         };
+        if !matches!(
+            control.kind,
+            UiControlKind::Blocker | UiControlKind::ScrollView
+        ) {
+            self.focused_ui = Some(control.entity);
+            if !matches!(control.kind, UiControlKind::InputField) {
+                self.focused_input = None;
+                if let Some(window) = &self.window {
+                    window.set_ime_allowed(false);
+                }
+            }
+        }
         match control.kind {
             UiControlKind::Blocker => {}
             UiControlKind::Button => {
@@ -580,6 +598,114 @@ impl App {
                 }
             }
         }
+    }
+
+    fn move_ui_focus(&mut self, reverse: bool) {
+        self.focused_ui = next_ui_focus(&self.ui_controls, self.focused_ui, reverse);
+        self.focused_input = None;
+        if let Some(window) = &self.window {
+            window.set_ime_allowed(false);
+        }
+    }
+
+    fn activate_focused_ui(&mut self) -> bool {
+        let Some(entity) = self.focused_ui else {
+            return false;
+        };
+        if let Some(control) = self.ui_controls.iter().find(|control| {
+            control.entity == entity && matches!(control.kind, UiControlKind::Button)
+        }) {
+            log::info!("UI Button {:?} clicked: {}", entity, control.callback);
+            return true;
+        }
+        if let Some(toggle) = self.world.get_component_mut::<Toggle>(entity) {
+            toggle.is_on = !toggle.is_on;
+            return true;
+        }
+        if self.world.get_component::<InputField>(entity).is_some() {
+            self.focused_input = Some(entity);
+            if let Some(window) = &self.window {
+                window.set_ime_allowed(true);
+            }
+            return true;
+        }
+        if let Some(dropdown) = self.world.get_component_mut::<Dropdown>(entity) {
+            dropdown.expanded = !dropdown.expanded;
+            return true;
+        }
+        false
+    }
+
+    fn adjust_focused_ui(&mut self, key: WinitKey) -> bool {
+        let Some(entity) = self.focused_ui else {
+            return false;
+        };
+        if let Some(slider) = self.world.get_component_mut::<Slider>(entity) {
+            let sign = range_navigation_sign(&slider.direction, key);
+            if sign == 0.0 {
+                return false;
+            }
+            let low = slider.min_value.min(slider.max_value);
+            let high = slider.min_value.max(slider.max_value);
+            let step = if slider.whole_numbers {
+                1.0
+            } else {
+                ((high - low) * 0.05).max(0.0001)
+            };
+            slider.value = (slider.value + sign * step).clamp(low, high);
+            if slider.whole_numbers {
+                slider.value = slider.value.round();
+            }
+            return true;
+        }
+        if let Some(scrollbar) = self.world.get_component_mut::<Scrollbar>(entity) {
+            let sign = range_navigation_sign(&scrollbar.direction, key);
+            if sign == 0.0 {
+                return false;
+            }
+            let step = if scrollbar.number_of_steps > 1 {
+                1.0 / (scrollbar.number_of_steps - 1) as f32
+            } else {
+                0.1
+            };
+            scrollbar.value = (scrollbar.value + sign * step).clamp(0.0, 1.0);
+            return true;
+        }
+        let list_delta = match key {
+            WinitKey::ArrowUp => -1,
+            WinitKey::ArrowDown => 1,
+            _ => 0,
+        };
+        if let Some(dropdown) = self.world.get_component_mut::<Dropdown>(entity) {
+            if list_delta == 0 || dropdown.options.is_empty() {
+                return false;
+            }
+            dropdown.selected_index =
+                (dropdown.selected_index + list_delta).clamp(0, dropdown.options.len() as i32 - 1);
+            return true;
+        }
+        if let Some(list) = self.world.get_component_mut::<ListView>(entity) {
+            if list_delta == 0 || list.items.is_empty() {
+                return false;
+            }
+            let selected = list.selected_index.max(0);
+            list.selected_index = (selected + list_delta).clamp(0, list.items.len() as i32 - 1);
+            return true;
+        }
+        let tab_delta = match key {
+            WinitKey::ArrowLeft => -1,
+            WinitKey::ArrowRight => 1,
+            _ => 0,
+        };
+        if let Some(tabs) = self.world.get_component_mut::<TabView>(entity) {
+            if tab_delta == 0 || tabs.tabs.is_empty() {
+                return false;
+            }
+            tabs.selected_index =
+                (tabs.selected_index + tab_delta).clamp(0, tabs.tabs.len() as i32 - 1);
+            return true;
+        }
+        false
     }
 
     fn edit_focused_input(&mut self, text: &str) {
@@ -687,6 +813,20 @@ impl App {
     }
 }
 
+fn range_navigation_sign(direction: &str, key: WinitKey) -> f32 {
+    match (direction, key) {
+        ("LeftToRight", WinitKey::ArrowRight)
+        | ("RightToLeft", WinitKey::ArrowLeft)
+        | ("BottomToTop", WinitKey::ArrowUp)
+        | ("TopToBottom", WinitKey::ArrowDown) => 1.0,
+        ("LeftToRight", WinitKey::ArrowLeft)
+        | ("RightToLeft", WinitKey::ArrowRight)
+        | ("BottomToTop", WinitKey::ArrowDown)
+        | ("TopToBottom", WinitKey::ArrowUp) => -1.0,
+        _ => 0.0,
+    }
+}
+
 impl ApplicationHandler for App {
     fn resumed(&mut self, event_loop: &ActiveEventLoop) {
         if self.window.is_some() {
@@ -760,6 +900,10 @@ function onTick(dt, frame) {
             } => {
                 if state == ElementState::Pressed {
                     match code {
+                        WinitKey::Tab => {
+                            self.move_ui_focus(self.modifiers.shift_key());
+                            return;
+                        }
                         WinitKey::Backspace if self.backspace_focused_input() => return,
                         WinitKey::Enter | WinitKey::NumpadEnter if self.submit_focused_input() => {
                             if self.focused_input.is_none() {
@@ -774,6 +918,19 @@ function onTick(dt, frame) {
                             if let Some(window) = &self.window {
                                 window.set_ime_allowed(false);
                             }
+                            return;
+                        }
+                        WinitKey::Enter | WinitKey::NumpadEnter | WinitKey::Space
+                            if self.focused_input.is_none() && self.activate_focused_ui() =>
+                        {
+                            return;
+                        }
+                        WinitKey::ArrowLeft
+                        | WinitKey::ArrowRight
+                        | WinitKey::ArrowUp
+                        | WinitKey::ArrowDown
+                            if self.adjust_focused_ui(code) =>
+                        {
                             return;
                         }
                         _ => {}
@@ -797,6 +954,7 @@ function onTick(dt, frame) {
                     event_loop.exit();
                 }
             }
+            WindowEvent::ModifiersChanged(modifiers) => self.modifiers = modifiers.state(),
             WindowEvent::Ime(Ime::Commit(text)) => self.edit_focused_input(&text),
             WindowEvent::CursorMoved { position, .. } => {
                 self.cursor = [position.x as f32, position.y as f32];
@@ -855,6 +1013,7 @@ function onTick(dt, frame) {
                         .unwrap_or(winit::dpi::PhysicalSize::new(1, 1));
                     let mut ui =
                         collect_ui_frame(&self.world, window_size.width, window_size.height);
+                    append_ui_focus_ring(&mut ui.plan, &ui.controls, self.focused_ui);
                     let mut world_primitives = collect_world_sprites(
                         &self.world,
                         camera,
@@ -1203,5 +1362,23 @@ mod tests {
         assert_eq!(lights.directional.unwrap().intensity, 2.0);
         assert_eq!(lights.points[0].range, 7.0);
         assert_eq!(lights.spots[0].outer_angle_degrees, 55.0);
+    }
+
+    #[test]
+    fn keyboard_range_navigation_matches_ui_direction() {
+        assert_eq!(
+            range_navigation_sign("LeftToRight", WinitKey::ArrowRight),
+            1.0
+        );
+        assert_eq!(
+            range_navigation_sign("RightToLeft", WinitKey::ArrowRight),
+            -1.0
+        );
+        assert_eq!(range_navigation_sign("BottomToTop", WinitKey::ArrowUp), 1.0);
+        assert_eq!(
+            range_navigation_sign("TopToBottom", WinitKey::ArrowUp),
+            -1.0
+        );
+        assert_eq!(range_navigation_sign("LeftToRight", WinitKey::ArrowUp), 0.0);
     }
 }

@@ -140,6 +140,112 @@ impl UiControlRegion {
     }
 }
 
+pub fn next_ui_focus(
+    controls: &[UiControlRegion],
+    current: Option<Entity>,
+    reverse: bool,
+) -> Option<Entity> {
+    let mut entities = Vec::new();
+    for control in controls {
+        if matches!(
+            control.kind,
+            UiControlKind::Blocker | UiControlKind::ScrollView
+        ) || entities.contains(&control.entity)
+        {
+            continue;
+        }
+        entities.push(control.entity);
+    }
+    if entities.is_empty() {
+        return None;
+    }
+    let Some(index) = current.and_then(|entity| entities.iter().position(|id| *id == entity))
+    else {
+        return reverse
+            .then(|| entities[entities.len() - 1])
+            .or_else(|| entities.first().copied());
+    };
+    let next = if reverse {
+        (index + entities.len() - 1) % entities.len()
+    } else {
+        (index + 1) % entities.len()
+    };
+    Some(entities[next])
+}
+
+pub fn append_ui_focus_ring(
+    plan: &mut UiBatchPlan,
+    controls: &[UiControlRegion],
+    focused: Option<Entity>,
+) {
+    let Some(focused) = focused else {
+        return;
+    };
+    let matching: Vec<&UiControlRegion> = controls
+        .iter()
+        .filter(|control| {
+            control.entity == focused
+                && !matches!(
+                    control.kind,
+                    UiControlKind::Blocker | UiControlKind::ScrollView
+                )
+        })
+        .collect();
+    let Some(first) = matching.first() else {
+        return;
+    };
+    let mut left = first.rect.x;
+    let mut top = first.rect.y;
+    let mut right = first.rect.x + first.rect.width;
+    let mut bottom = first.rect.y + first.rect.height;
+    for control in matching.iter().skip(1) {
+        left = left.min(control.rect.x);
+        top = top.min(control.rect.y);
+        right = right.max(control.rect.x + control.rect.width);
+        bottom = bottom.max(control.rect.y + control.rect.height);
+    }
+    let color = [0.22, 0.72, 1.0, 1.0];
+    let thickness = 2.0;
+    let rects = [
+        UiRect {
+            x: left - thickness,
+            y: top - thickness,
+            width: right - left + thickness * 2.0,
+            height: thickness,
+        },
+        UiRect {
+            x: left - thickness,
+            y: bottom,
+            width: right - left + thickness * 2.0,
+            height: thickness,
+        },
+        UiRect {
+            x: left - thickness,
+            y: top,
+            width: thickness,
+            height: bottom - top,
+        },
+        UiRect {
+            x: right,
+            y: top,
+            width: thickness,
+            height: bottom - top,
+        },
+    ];
+    for rect in rects {
+        plan.primitives.push(primitive(
+            rect,
+            color,
+            [0.5, 0.5],
+            0.0,
+            "ui/focus",
+            "white",
+            first.clip,
+        ));
+    }
+    *plan = UiBatchPlan::build(std::mem::take(&mut plan.primitives));
+}
+
 #[derive(Clone, Debug, Default)]
 pub struct RuntimeUiFrame {
     pub plan: UiBatchPlan,
@@ -2101,6 +2207,59 @@ mod tests {
         assert_eq!(primitives[1].color, [1.0, 0.5, 0.0, 0.2]);
         assert_eq!(primitives[5].rect[0..2], [10.0, 20.0]);
         assert_eq!(UiBatchPlan::build(primitives).batches.len(), 1);
+    }
+
+    #[test]
+    fn ui_focus_navigation_deduplicates_subcontrols_wraps_and_draws_one_ring() {
+        let entity_a = Entity::new(1, 0);
+        let entity_b = Entity::new(2, 0);
+        let clip = UiClipRect {
+            x: 0,
+            y: 0,
+            width: 400,
+            height: 300,
+        };
+        let region = |entity, y, kind| UiControlRegion {
+            entity,
+            rect: UiRect {
+                x: 20.0,
+                y,
+                width: 100.0,
+                height: 30.0,
+            },
+            clip,
+            rotation_radians: 0.0,
+            pivot: [0.5, 0.5],
+            kind,
+            callback: Value::Null,
+        };
+        let controls = vec![
+            region(entity_a, 20.0, UiControlKind::Button),
+            region(entity_b, 60.0, UiControlKind::ListItem { index: 0 }),
+            region(entity_b, 90.0, UiControlKind::ListItem { index: 1 }),
+            region(entity_a, 0.0, UiControlKind::Blocker),
+        ];
+
+        assert_eq!(next_ui_focus(&controls, None, false), Some(entity_a));
+        assert_eq!(
+            next_ui_focus(&controls, Some(entity_a), false),
+            Some(entity_b)
+        );
+        assert_eq!(
+            next_ui_focus(&controls, Some(entity_b), false),
+            Some(entity_a)
+        );
+        assert_eq!(
+            next_ui_focus(&controls, Some(entity_a), true),
+            Some(entity_b)
+        );
+
+        let mut plan = UiBatchPlan::default();
+        append_ui_focus_ring(&mut plan, &controls, Some(entity_b));
+        assert_eq!(plan.primitives.len(), 4);
+        assert_eq!(plan.batches.len(), 1);
+        assert_eq!(plan.primitives[0].rect, [18.0, 58.0, 104.0, 2.0]);
+        assert_eq!(plan.primitives[1].rect, [18.0, 120.0, 104.0, 2.0]);
     }
 
     #[test]

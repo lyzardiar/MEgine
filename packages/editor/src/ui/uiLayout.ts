@@ -1220,7 +1220,7 @@ export function drawUiItems(
   items: UiDrawItem[],
   hoverId: number | null,
   pressId: number | null,
-  opts?: { sceneLabel?: boolean },
+  opts?: { sceneLabel?: boolean; focusId?: number | null },
 ) {
   const showLabel = !!opts?.sceneLabel;
   const batches = buildUiBatches(items);
@@ -1617,6 +1617,15 @@ export function drawUiItems(
         } else {
           ctx.fillRect(x + w * handle.start, y, w * handle.size, h);
         }
+      }
+
+      if (opts?.focusId === it.entity) {
+        ctx.filter = 'none';
+        ctx.setLineDash([3, 2]);
+        ctx.strokeStyle = 'rgba(112, 210, 255, 0.98)';
+        ctx.lineWidth = 2;
+        ctx.strokeRect(x - 2, y - 2, w + 4, h + 4);
+        ctx.setLineDash([]);
       }
 
       if (it.selected) {
