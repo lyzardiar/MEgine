@@ -113,6 +113,7 @@ import type { RectResizeOptions, RectResizePlan } from '../rectResize';
 import { nextUiSelectable, uiNavigationAction } from '../ui/uiNavigation';
 import { getSpriteImage } from '../spriteDraw';
 import { resolveAnimatedSpriteFrame } from '../animatedSprite';
+import { compareWorldDrawOrder, entity2DSortingOrder } from '../worldDrawOrder';
 
 const SCENE_2D_KEY = 'mengine.scene.2d';
 const SCENE_SNAP_KEY = 'mengine.scene.snap';
@@ -707,7 +708,7 @@ export function Viewport(props: {
       : new Set(p.selectedIds?.length ? p.selectedIds : p.selected != null ? [p.selected] : []);
 
     const drawn = p.entities
-      .map((e) => {
+      .map((e, hierarchyOrder) => {
         if (!isActive(e.entity)) return null;
         const t = e.components.Transform as TransformData | undefined;
         if (!t) return null;
@@ -720,14 +721,26 @@ export function Viewport(props: {
           !!e.components.SpotLight ||
           (e.name ?? '').toLowerCase().includes('light');
         if (!pr && !camComp && !isLight) return null;
-        return { e, t, pr };
+        return {
+          e,
+          t,
+          pr,
+          depth: pr?.depth ?? 0,
+          hierarchyOrder,
+          sortingOrder: entity2DSortingOrder(e.components),
+          editorGizmo: !isGame && (!!camComp || isLight),
+        };
       })
       .filter(Boolean) as Array<{
       e: Ent;
       t: TransformData;
       pr: { x: number; y: number; depth: number } | null;
+      depth: number;
+      hierarchyOrder: number;
+      sortingOrder: number | null;
+      editorGizmo: boolean;
     }>;
-    drawn.sort((a, b) => (b.pr?.depth ?? 0) - (a.pr?.depth ?? 0));
+    drawn.sort(compareWorldDrawOrder);
 
     for (const { e, t, pr } of drawn) {
       const mesh = e.components.MeshRenderer;
