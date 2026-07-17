@@ -167,6 +167,7 @@ pub fn apply_snapshot(world: &mut World, snap: &WorldSnapshot) {
 mod tests {
     use super::*;
     use mengine_core::command::WorldCommand;
+    use mengine_core::generated::{ParticleEmitter2D, ParticleEmitter3D, SpineSkeleton};
     use serde_json::json;
 
     fn temp_scene(name: &str) -> (PathBuf, PathBuf) {
@@ -509,6 +510,53 @@ mod tests {
         assert_eq!(components["BoxCollider2D"]["size"], json!([2.0, 4.0]));
         assert!((components["BoxCollider2D"]["bounciness"].as_f64().unwrap() - 0.2).abs() < 0.0001);
         assert_eq!(components["CircleCollider2D"]["is_trigger"], true);
+        std::fs::remove_dir_all(dir).unwrap();
+    }
+
+    #[test]
+    fn generated_loader_restores_particle_and_spine_runtime_types() {
+        let (dir, path) = temp_scene("generated-runtime-components.mscene");
+        let mut world = World::new();
+        world.commands.push(WorldCommand::Spawn {
+            name: Some("Runtime Components".into()),
+            components: json!({
+                "Transform": {},
+                "ParticleEmitter2D": { "rate_over_time": 12, "sorting_order": 7 },
+                "ParticleEmitter3D": { "max_particles": 321, "shape": "sphere" },
+                "SpineSkeleton": {
+                    "skeleton": "Assets/Spine/hero.json",
+                    "atlas": "Assets/Spine/hero.atlas",
+                    "animation": "walk"
+                }
+            }),
+        });
+        world.commit();
+
+        save_scene(&path, "Generated Runtime Components", &world).unwrap();
+        let mut loaded = World::new();
+        load_scene(&path, &mut loaded).unwrap();
+        let entity = loaded.iter_entities().next().unwrap();
+        assert_eq!(
+            loaded
+                .get_component::<ParticleEmitter2D>(entity)
+                .unwrap()
+                .sorting_order,
+            7
+        );
+        assert_eq!(
+            loaded
+                .get_component::<ParticleEmitter3D>(entity)
+                .unwrap()
+                .max_particles,
+            321
+        );
+        assert_eq!(
+            loaded
+                .get_component::<SpineSkeleton>(entity)
+                .unwrap()
+                .animation,
+            "walk"
+        );
         std::fs::remove_dir_all(dir).unwrap();
     }
 }

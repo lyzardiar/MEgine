@@ -1,20 +1,11 @@
 use crate::command::{CommandBuffer, WorldCommand};
 use crate::component::{Component, ComponentBox, ComponentId, ComponentRegistry};
 use crate::entity::Entity;
-use crate::generated::{
-    AnimatedSprite2D, AnimationPlayer, Animator, AspectRatioFitter, AudioListener, AudioMixer,
-    AudioSource, AutoRotate, BoxCollider2D, BoxCollider3D, Button, Camera2D, Camera3D, Canvas,
-    CanvasGroup, CanvasScaler, CircleCollider2D, ContentSizeFitter, DirectionalLight, Dropdown,
-    EditorOnly, Image, InputField, Layer, LayoutGroup, Line2D, ListView, MeshRenderer, Name,
-    Outline, Panel, PbrMaterial, PointLight, ProgressBar, RawImage, RectMask2D, RectTransform,
-    RigidBody3D, Rigidbody2D, ScrollView, Scrollbar, Shadow, Slider, SphereCollider3D, SpotLight,
-    SpriteRenderer, TabView, Text, Toggle, ToggleGroup, Transform, Transform2D,
-};
+use crate::generated::{Name, Transform};
 use crate::hierarchy::{Children, Parent};
 use crate::schedule::Schedule;
 use crate::time::Time;
 use glam::{Quat, Vec3, Vec4};
-use serde::de::DeserializeOwned;
 use serde_json::Value;
 use std::any::Any;
 use std::collections::HashMap;
@@ -198,19 +189,6 @@ impl World {
         self.apply_set_component(entity, name, value);
     }
 
-    fn insert_json_component<T>(&mut self, entity: Entity, value: Value)
-    where
-        T: Component + DeserializeOwned,
-    {
-        match serde_json::from_value::<T>(value) {
-            Ok(component) => self.insert_component(entity, component),
-            Err(error) => log::warn!(
-                "component '{}' could not be deserialized and remains preserved: {error}",
-                T::type_name()
-            ),
-        }
-    }
-
     pub fn remove_component_by_name(&mut self, entity: Entity, name: &str) {
         if !self.is_alive(entity) {
             return;
@@ -375,159 +353,21 @@ impl World {
                 let t = parse_transform(&value);
                 self.insert_component(entity, t);
             }
-            "Transform2D" | "transform2D" | "transform2d" => {
-                self.insert_json_component::<Transform2D>(entity, value);
-            }
-            "Camera3D" | "camera3D" | "camera3d" => {
-                self.insert_json_component::<Camera3D>(entity, value);
-            }
-            "Camera2D" | "camera2D" | "camera2d" => {
-                self.insert_json_component::<Camera2D>(entity, value);
-            }
-            "DirectionalLight" | "directionalLight" => {
-                self.insert_json_component::<DirectionalLight>(entity, value);
-            }
-            "PointLight" | "pointLight" => {
-                self.insert_json_component::<PointLight>(entity, value);
-            }
-            "SpotLight" | "spotLight" => {
-                self.insert_json_component::<SpotLight>(entity, value);
-            }
-            "MeshRenderer" | "meshRenderer" => {
-                self.insert_json_component::<MeshRenderer>(entity, value);
-            }
-            "PbrMaterial" | "pbrMaterial" => {
-                self.insert_json_component::<PbrMaterial>(entity, value);
-            }
-            "SpriteRenderer" | "spriteRenderer" => {
-                self.insert_json_component::<SpriteRenderer>(entity, value);
-            }
-            "AnimatedSprite2D" | "animatedSprite2D" | "animatedSprite2d" => {
-                self.insert_json_component::<AnimatedSprite2D>(entity, value);
-            }
-            "Line2D" | "line2D" | "line2d" => {
-                self.insert_json_component::<Line2D>(entity, value);
-            }
-            "AnimationPlayer" | "animationPlayer" => {
-                self.insert_json_component::<AnimationPlayer>(entity, value);
-            }
-            "Animator" | "animator" => {
-                self.insert_json_component::<Animator>(entity, value);
-            }
-            "AudioListener" | "audioListener" => {
-                self.insert_json_component::<AudioListener>(entity, value);
-            }
-            "AudioSource" | "audioSource" => {
-                self.insert_json_component::<AudioSource>(entity, value);
-            }
-            "AudioMixer" | "audioMixer" => {
-                self.insert_json_component::<AudioMixer>(entity, value);
-            }
-            "RigidBody3D" | "rigidBody3D" | "rigidBody3d" => {
-                self.insert_json_component::<RigidBody3D>(entity, value);
-            }
-            "BoxCollider3D" | "boxCollider3D" | "boxCollider3d" => {
-                self.insert_json_component::<BoxCollider3D>(entity, value);
-            }
-            "SphereCollider3D" | "sphereCollider3D" | "sphereCollider3d" => {
-                self.insert_json_component::<SphereCollider3D>(entity, value);
-            }
-            "Rigidbody2D" | "rigidbody2D" | "rigidbody2d" => {
-                self.insert_json_component::<Rigidbody2D>(entity, value);
-            }
-            "BoxCollider2D" | "boxCollider2D" | "boxCollider2d" => {
-                self.insert_json_component::<BoxCollider2D>(entity, value);
-            }
-            "CircleCollider2D" | "circleCollider2D" | "circleCollider2d" => {
-                self.insert_json_component::<CircleCollider2D>(entity, value);
-            }
-            "Canvas" | "canvas" => {
-                self.insert_json_component::<Canvas>(entity, value);
-            }
-            "CanvasScaler" | "canvasScaler" => {
-                self.insert_json_component::<CanvasScaler>(entity, value);
-            }
-            "CanvasGroup" | "canvasGroup" => {
-                self.insert_json_component::<CanvasGroup>(entity, value);
-            }
-            "RectTransform" | "rectTransform" => {
-                self.insert_json_component::<RectTransform>(entity, value);
-            }
-            "AspectRatioFitter" | "aspectRatioFitter" => {
-                self.insert_json_component::<AspectRatioFitter>(entity, value);
-            }
-            "ContentSizeFitter" | "contentSizeFitter" => {
-                self.insert_json_component::<ContentSizeFitter>(entity, value);
-            }
-            "RectMask2D" | "rectMask2D" | "rectMask2d" => {
-                self.insert_json_component::<RectMask2D>(entity, value);
-            }
-            "LayoutGroup" | "layoutGroup" => {
-                self.insert_json_component::<LayoutGroup>(entity, value);
-            }
-            "Image" | "image" => {
-                self.insert_json_component::<Image>(entity, value);
-            }
-            "RawImage" | "rawImage" => {
-                self.insert_json_component::<RawImage>(entity, value);
-            }
-            "Shadow" | "shadow" => {
-                self.insert_json_component::<Shadow>(entity, value);
-            }
-            "Outline" | "outline" => {
-                self.insert_json_component::<Outline>(entity, value);
-            }
-            "Button" | "button" => {
-                self.insert_json_component::<Button>(entity, value);
-            }
-            "Text" | "text" => {
-                self.insert_json_component::<Text>(entity, value);
-            }
-            "Toggle" | "toggle" => {
-                self.insert_json_component::<Toggle>(entity, value);
-            }
-            "ToggleGroup" | "toggleGroup" => {
-                self.insert_json_component::<ToggleGroup>(entity, value);
-            }
-            "Slider" | "slider" => {
-                self.insert_json_component::<Slider>(entity, value);
-            }
-            "Scrollbar" | "scrollbar" => {
-                self.insert_json_component::<Scrollbar>(entity, value);
-            }
-            "Panel" | "panel" => {
-                self.insert_json_component::<Panel>(entity, value);
-            }
-            "ProgressBar" | "progressBar" => {
-                self.insert_json_component::<ProgressBar>(entity, value);
-            }
-            "InputField" | "inputField" => {
-                self.insert_json_component::<InputField>(entity, value);
-            }
-            "Dropdown" | "dropdown" => {
-                self.insert_json_component::<Dropdown>(entity, value);
-            }
-            "ListView" | "listView" => {
-                self.insert_json_component::<ListView>(entity, value);
-            }
-            "ScrollView" | "scrollView" => {
-                self.insert_json_component::<ScrollView>(entity, value);
-            }
-            "TabView" | "tabView" => {
-                self.insert_json_component::<TabView>(entity, value);
-            }
-            "Layer" | "layer" => {
-                self.insert_json_component::<Layer>(entity, value);
-            }
-            "EditorOnly" | "editorOnly" => {
-                self.insert_json_component::<EditorOnly>(entity, value);
-            }
-            "AutoRotate" | "autoRotate" => {
-                self.insert_json_component::<AutoRotate>(entity, value);
-            }
-            other => {
-                log::debug!("unknown component '{other}' preserved as serialized data");
-            }
+            other => match crate::generated::component_from_value(other, value) {
+                Ok(Some(component)) => {
+                    self.entities[entity.index as usize]
+                        .components
+                        .insert(other.to_string(), component);
+                }
+                Ok(None) => {
+                    log::debug!("unknown component '{other}' preserved as serialized data");
+                }
+                Err(error) => {
+                    log::warn!(
+                        "component '{other}' could not be deserialized and remains preserved: {error}"
+                    );
+                }
+            },
         }
     }
 
@@ -596,6 +436,9 @@ fn canonical_component_name(component: &str) -> &str {
         "Layer" | "layer" => "Layer",
         "EditorOnly" | "editorOnly" => "EditorOnly",
         "AutoRotate" | "autoRotate" => "AutoRotate",
+        "ParticleEmitter2D" | "particleEmitter2D" | "particleEmitter2d" => "ParticleEmitter2D",
+        "ParticleEmitter3D" | "particleEmitter3D" | "particleEmitter3d" => "ParticleEmitter3D",
+        "SpineSkeleton" | "spineSkeleton" => "SpineSkeleton",
         other => other,
     }
 }
@@ -648,5 +491,22 @@ impl Transform {
             ),
             Vec3::from(self.position),
         )
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    #[test]
+    fn generated_factory_deserializes_every_registered_idl_component() {
+        for name in crate::generated::meta::COMPONENT_NAMES {
+            let component = crate::generated::component_from_value(name, serde_json::json!({}))
+                .unwrap_or_else(|error| panic!("{name} failed: {error}"));
+            assert!(component.is_some(), "{name} has no generated factory arm");
+        }
+        assert!(
+            crate::generated::component_from_value("UserBehaviour", serde_json::json!({}))
+                .unwrap()
+                .is_none()
+        );
     }
 }
