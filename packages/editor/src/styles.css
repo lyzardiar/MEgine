@@ -2788,6 +2788,57 @@ body.insp-scrubbing * {
 
 .timeline-key:hover { background: #fff39a; }
 
+.timeline-key.selected {
+  width: 11px;
+  height: 11px;
+  border-color: #fff;
+  background: #ffdf52;
+  box-shadow: 0 0 0 1px #111, 0 0 5px rgba(255, 223, 82, 0.65);
+}
+
+.timeline-selection-editor {
+  display: flex;
+  min-height: 31px;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 6px;
+  overflow-x: auto;
+  border-bottom: 1px solid var(--u-border);
+  background: #292929;
+  white-space: nowrap;
+}
+
+.timeline-selection-editor label {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  color: var(--u-muted);
+}
+
+.timeline-selection-editor input,
+.timeline-selection-editor select {
+  width: 92px;
+  height: 22px;
+  box-sizing: border-box;
+  border: 1px solid var(--u-border-2);
+  border-radius: 0;
+  background: var(--u-input);
+  color: var(--u-text);
+}
+
+.timeline-selection-editor button {
+  height: 22px;
+  border: 1px solid #713838;
+  border-radius: 0;
+  background: #4a2929;
+  color: #efb1b1;
+}
+
+.timeline-key-vector > span { display: inline-flex; gap: 2px; }
+.timeline-key-vector input { width: 62px; }
+.timeline-key-bool input { width: 16px; height: 16px; }
+.timeline-selection-hint { color: var(--u-muted); font-style: italic; }
+
 .timeline-track-value {
   padding: 9px 8px 0;
   overflow: hidden;

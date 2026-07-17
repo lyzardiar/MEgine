@@ -28,6 +28,11 @@ export type AnimationSample = Pick<AnimationTrack, 'target' | 'component' | 'pro
   value: AnimationValue;
 };
 
+export type AnimationKeyframeEdit = {
+  track: AnimationTrack;
+  keyIndex: number;
+};
+
 const DEFAULT_FRAME_RATE = 60;
 
 export function createAnimationClip(name = 'New Animation'): AnimationClip {
@@ -116,6 +121,74 @@ export function parseAnimationClip(text: string): AnimationClip {
 
 export function serializeAnimationClip(clip: AnimationClip): string {
   return `${JSON.stringify(normalizeAnimationClip(clip), null, 2)}\n`;
+}
+
+export function snapAnimationTime(
+  time: number,
+  frameRate: number,
+  duration = Number.POSITIVE_INFINITY,
+): number {
+  const fps = Number.isFinite(frameRate) && frameRate > 0 ? frameRate : DEFAULT_FRAME_RATE;
+  const safeTime = Number.isFinite(time) ? Math.max(0, time) : 0;
+  const snapped = Math.round(safeTime * fps) / fps;
+  const limit = Number.isFinite(duration) ? Math.max(0, duration) : Number.POSITIVE_INFINITY;
+  return Math.min(limit, snapped);
+}
+
+function writeAnimationKeyframe(
+  track: AnimationTrack,
+  excludedIndex: number | null,
+  time: number,
+  value: AnimationValue,
+  frameRate: number,
+  duration: number,
+): AnimationKeyframeEdit {
+  const keyTime = snapAnimationTime(time, frameRate, duration);
+  const epsilon = 0.5 / (Number.isFinite(frameRate) && frameRate > 0
+    ? frameRate
+    : DEFAULT_FRAME_RATE);
+  const keyframes = track.keyframes.filter((key, index) => (
+    index !== excludedIndex && Math.abs(key.time - keyTime) > epsilon
+  ));
+  keyframes.push({ time: keyTime, value: structuredClone(value) });
+  keyframes.sort((left, right) => left.time - right.time);
+  return {
+    track: { ...track, keyframes },
+    keyIndex: keyframes.findIndex((key) => key.time === keyTime),
+  };
+}
+
+export function upsertAnimationKeyframe(
+  track: AnimationTrack,
+  time: number,
+  value: AnimationValue,
+  frameRate: number,
+  duration = Number.POSITIVE_INFINITY,
+): AnimationKeyframeEdit {
+  return writeAnimationKeyframe(track, null, time, value, frameRate, duration);
+}
+
+export function replaceAnimationKeyframe(
+  track: AnimationTrack,
+  keyIndex: number,
+  time: number,
+  value: AnimationValue,
+  frameRate: number,
+  duration = Number.POSITIVE_INFINITY,
+): AnimationKeyframeEdit | null {
+  if (!track.keyframes[keyIndex]) return null;
+  return writeAnimationKeyframe(track, keyIndex, time, value, frameRate, duration);
+}
+
+export function removeAnimationKeyframe(
+  track: AnimationTrack,
+  keyIndex: number,
+): AnimationTrack {
+  if (!track.keyframes[keyIndex]) return track;
+  return {
+    ...track,
+    keyframes: track.keyframes.filter((_key, index) => index !== keyIndex),
+  };
 }
 
 export function wrappedAnimationTime(

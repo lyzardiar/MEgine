@@ -3,9 +3,13 @@ import test from 'node:test';
 import {
   normalizeAnimationClip,
   parseAnimationClip,
+  removeAnimationKeyframe,
+  replaceAnimationKeyframe,
   sampleAnimationClip,
   sampleAnimationTrack,
   serializeAnimationClip,
+  snapAnimationTime,
+  upsertAnimationKeyframe,
   wrappedAnimationTime,
 } from '../src/animationClip.ts';
 
@@ -76,4 +80,31 @@ test('AnimationClip parsing normalizes metadata key ordering and duplicate times
   ]);
   assert.deepEqual(sampleAnimationClip(clip, 2)[0].value, 3);
   assert.deepEqual(normalizeAnimationClip(JSON.parse(serializeAnimationClip(clip))), clip);
+});
+
+test('AnimationClip keyframe editing snaps replaces moves and removes on frame boundaries', () => {
+  const track = floatTrack('linear');
+  assert.equal(snapAnimationTime(0.26, 10, 2), 0.3);
+  assert.equal(snapAnimationTime(5, 10, 2), 2);
+
+  const inserted = upsertAnimationKeyframe(track, 0.26, 4, 10, 2);
+  assert.equal(inserted.keyIndex, 1);
+  assert.deepEqual(inserted.track.keyframes, [
+    { time: 0, value: 0 },
+    { time: 0.3, value: 4 },
+    { time: 2, value: 10 },
+  ]);
+
+  const replaced = upsertAnimationKeyframe(inserted.track, 0.31, 5, 10, 2);
+  assert.equal(replaced.keyIndex, 1);
+  assert.deepEqual(replaced.track.keyframes[1], { time: 0.3, value: 5 });
+
+  const moved = replaceAnimationKeyframe(replaced.track, 1, 1.04, 6, 10, 2);
+  assert.ok(moved);
+  assert.equal(moved.keyIndex, 1);
+  assert.deepEqual(moved.track.keyframes[1], { time: 1, value: 6 });
+  assert.deepEqual(removeAnimationKeyframe(moved.track, 1).keyframes, [
+    { time: 0, value: 0 },
+    { time: 2, value: 10 },
+  ]);
 });

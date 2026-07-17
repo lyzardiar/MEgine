@@ -1,13 +1,25 @@
-import { useEffect, useMemo, useRef, useState, type DragEvent } from 'react';
+import {
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type DragEvent,
+  type PointerEvent as ReactPointerEvent,
+} from 'react';
 import type { WorldSnapshotView } from '@mengine/api';
 import {
   createAnimationClip,
   normalizeAnimationClip,
   parseAnimationClip,
+  removeAnimationKeyframe,
+  replaceAnimationKeyframe,
   sampleAnimationClip,
   serializeAnimationClip,
+  snapAnimationTime,
+  upsertAnimationKeyframe,
   wrappedAnimationTime,
   type AnimationClip,
+  type AnimationKeyframe,
   type AnimationSample,
   type AnimationTrack,
   type AnimationValue,
@@ -85,6 +97,70 @@ function valueLabel(value: AnimationValue): string {
   return String(value);
 }
 
+function KeyframeValueEditor(props: {
+  value: AnimationValue;
+  onChange: (value: AnimationValue) => void;
+}) {
+  if (typeof props.value === 'boolean') {
+    return (
+      <label className="timeline-key-bool">
+        Value
+        <input
+          aria-label="Keyframe value"
+          type="checkbox"
+          checked={props.value}
+          onChange={(event) => props.onChange(event.target.checked)}
+        />
+      </label>
+    );
+  }
+  if (Array.isArray(props.value)) {
+    const values = props.value;
+    return (
+      <label className="timeline-key-vector">
+        Value
+        <span>
+          {values.map((part, index) => (
+            <input
+              key={index}
+              aria-label={`Keyframe value ${index + 1}`}
+              type="number"
+              step="any"
+              value={part}
+              onChange={(event) => {
+                if (!Number.isFinite(event.target.valueAsNumber)) return;
+                const next = [...values];
+                next[index] = event.target.valueAsNumber;
+                props.onChange(next);
+              }}
+            />
+          ))}
+        </span>
+      </label>
+    );
+  }
+  return (
+    <label>
+      Value
+      <input
+        aria-label="Keyframe value"
+        type={typeof props.value === 'number' ? 'number' : 'text'}
+        step={typeof props.value === 'number' ? 'any' : undefined}
+        value={props.value}
+        onChange={(event) => {
+          if (typeof props.value === 'number') {
+            if (Number.isFinite(event.target.valueAsNumber)) {
+              props.onChange(event.target.valueAsNumber);
+            }
+          } else {
+            props.onChange(event.target.value);
+          }
+        }}
+      />
+    </label>
+  );
+}
+
 function safeClipName(raw: string): string {
   return raw
     .trim()
@@ -133,6 +209,7 @@ export function Timeline(props: {
   const [time, setTime] = useState(0);
   const [playing, setPlaying] = useState(false);
   const [selectedTrack, setSelectedTrack] = useState<number | null>(null);
+  const [selectedKey, setSelectedKey] = useState<{ track: number; key: number } | null>(null);
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -151,6 +228,7 @@ export function Timeline(props: {
     let cancelled = false;
     setPlaying(false);
     setSelectedTrack(null);
+    setSelectedKey(null);
     setError(null);
     if (!clipPath) {
       setClip(null);
@@ -310,7 +388,7 @@ export function Timeline(props: {
     }
   };
 
-  const addProperty = async () => {
+  const addProperty = () => {
     if (!clip || !props.entity) return;
     const raw = propertyPath.trim();
     const dot = raw.indexOf('.');
@@ -319,6 +397,15 @@ export function Timeline(props: {
     const value = dot > 0 ? getProperty(props.entity.components[component], property) : null;
     if (!component || !property || value == null) {
       props.onLog(`无法记录属性：${raw}`, 'warn');
+      return;
+    }
+    const existing = clip.tracks.findIndex((track) => (
+      track.target === '.' && track.component === component && track.property === property
+    ));
+    if (existing >= 0) {
+      setSelectedTrack(existing);
+      setSelectedKey(null);
+      props.onLog(`${component}.${property} 已在当前 Animation Clip 中`, 'warn');
       return;
     }
     const keyframes = [{ time: 0, value: structuredClone(value) }];
@@ -334,10 +421,11 @@ export function Timeline(props: {
       }],
     });
     setSelectedTrack(next.tracks.length - 1);
-    await persist(next);
+    setSelectedKey(null);
+    setClip(next);
   };
 
-  const recordKey = async () => {
+  const recordKey = () => {
     if (!clip || !props.entity || selectedTrack == null) return;
     const track = clip.tracks[selectedTrack];
     if (!track) return;
@@ -349,21 +437,82 @@ export function Timeline(props: {
       props.onLog(`无法读取 ${track.target}:${track.component}.${track.property}`, 'warn');
       return;
     }
-    const tolerance = 0.5 / Math.max(1, clip.frame_rate);
-    const keys = track.keyframes.filter((key) => Math.abs(key.time - time) > tolerance);
-    keys.push({ time, value: structuredClone(value) });
-    keys.sort((left, right) => left.time - right.time);
+    const result = upsertAnimationKeyframe(
+      track,
+      time,
+      value,
+      clip.frame_rate,
+      clip.duration,
+    );
     const tracks = clip.tracks.map((candidate, index) => index === selectedTrack
-      ? { ...candidate, keyframes: keys }
+      ? result.track
       : candidate);
-    await persist({ ...clip, tracks });
+    setClip({ ...clip, tracks });
+    setSelectedKey({ track: selectedTrack, key: result.keyIndex });
   };
 
-  const deleteTrack = async () => {
+  const deleteTrack = () => {
     if (!clip || selectedTrack == null) return;
     const tracks = clip.tracks.filter((_track, index) => index !== selectedTrack);
     setSelectedTrack(null);
-    await persist({ ...clip, tracks });
+    setSelectedKey(null);
+    setClip({ ...clip, tracks });
+  };
+
+  const selectedKeyframe = selectedKey && clip
+    ? clip.tracks[selectedKey.track]?.keyframes[selectedKey.key] ?? null
+    : null;
+
+  const updateSelectedKey = (patch: Partial<AnimationKeyframe>) => {
+    if (!clip || !selectedKey || !selectedKeyframe) return;
+    const track = clip.tracks[selectedKey.track];
+    const result = replaceAnimationKeyframe(
+      track,
+      selectedKey.key,
+      patch.time ?? selectedKeyframe.time,
+      patch.value ?? selectedKeyframe.value,
+      clip.frame_rate,
+      clip.duration,
+    );
+    if (!result) return;
+    setClip({
+      ...clip,
+      tracks: clip.tracks.map((candidate, index) => (
+        index === selectedKey.track ? result.track : candidate
+      )),
+    });
+    setSelectedKey({ track: selectedKey.track, key: result.keyIndex });
+    setTime(result.track.keyframes[result.keyIndex].time);
+  };
+
+  const deleteSelectedKey = () => {
+    if (!clip || !selectedKey) return;
+    const track = clip.tracks[selectedKey.track];
+    if (!track) return;
+    setClip({
+      ...clip,
+      tracks: clip.tracks.map((candidate, index) => (
+        index === selectedKey.track
+          ? removeAnimationKeyframe(candidate, selectedKey.key)
+          : candidate
+      )),
+    });
+    setSelectedKey(null);
+  };
+
+  const seekAtPointer = (
+    event: ReactPointerEvent<HTMLElement>,
+    duration: number,
+    frameRate: number,
+  ) => {
+    const rect = event.currentTarget.getBoundingClientRect();
+    if (rect.width <= 0) return;
+    setPlaying(false);
+    setTime(snapAnimationTime(
+      (event.clientX - rect.left) / rect.width * duration,
+      frameRate,
+      duration,
+    ));
   };
 
   if (!props.entity) {
@@ -464,13 +613,75 @@ export function Timeline(props: {
               value={propertyPath}
               onChange={(event) => setPropertyPath(event.target.value)}
               onKeyDown={(event) => {
-                if (event.key === 'Enter') void addProperty();
+                if (event.key === 'Enter') addProperty();
               }}
             />
-            <button type="button" onClick={() => void addProperty()}>+ Add Property</button>
-            <button type="button" disabled={selectedTrack == null} onClick={() => void recordKey()}>◆ Add Key</button>
-            <button type="button" disabled={selectedTrack == null} onClick={() => void deleteTrack()}>Delete Track</button>
+            <button type="button" onClick={addProperty}>+ Add Property</button>
+            <button type="button" disabled={selectedTrack == null} onClick={recordKey}>◆ Add Key</button>
+            <button type="button" disabled={selectedTrack == null} onClick={deleteTrack}>Delete Track</button>
           </div>
+
+          {selectedTrack != null && clip.tracks[selectedTrack] && (
+            <div className="timeline-selection-editor">
+              <label>
+                Target
+                <input
+                  aria-label="Animation track target"
+                  value={clip.tracks[selectedTrack].target}
+                  onChange={(event) => setClip({
+                    ...clip,
+                    tracks: clip.tracks.map((track, index) => index === selectedTrack
+                      ? { ...track, target: event.target.value }
+                      : track),
+                  })}
+                />
+              </label>
+              <label>
+                Interpolation
+                <select
+                  aria-label="Animation track interpolation"
+                  value={clip.tracks[selectedTrack].interpolation}
+                  onChange={(event) => setClip({
+                    ...clip,
+                    tracks: clip.tracks.map((track, index) => index === selectedTrack
+                      ? { ...track, interpolation: event.target.value as AnimationTrack['interpolation'] }
+                      : track),
+                  })}
+                >
+                  <option value="step">Step</option>
+                  <option value="linear">Linear</option>
+                  <option value="smooth">Smooth</option>
+                </select>
+              </label>
+              {selectedKeyframe ? (
+                <>
+                  <label>
+                    Key Time
+                    <input
+                      aria-label="Keyframe time"
+                      type="number"
+                      min={0}
+                      max={clip.duration}
+                      step={1 / Math.max(1, clip.frame_rate)}
+                      value={selectedKeyframe.time}
+                      onChange={(event) => {
+                        if (Number.isFinite(event.target.valueAsNumber)) {
+                          updateSelectedKey({ time: event.target.valueAsNumber });
+                        }
+                      }}
+                    />
+                  </label>
+                  <KeyframeValueEditor
+                    value={selectedKeyframe.value}
+                    onChange={(value) => updateSelectedKey({ value })}
+                  />
+                  <button type="button" className="danger" onClick={deleteSelectedKey}>Delete Key</button>
+                </>
+              ) : (
+                <span className="timeline-selection-hint">Select a diamond to edit its time and value.</span>
+              )}
+            </div>
+          )}
 
           <div className="timeline-scrubber">
             <input
@@ -489,7 +700,11 @@ export function Timeline(props: {
 
           <div className="timeline-grid">
             <div className="timeline-ruler-label">Target / Property</div>
-            <div className="timeline-ruler">
+            <div
+              className="timeline-ruler"
+              title="Click to move the playhead"
+              onPointerDown={(event) => seekAtPointer(event, clip.duration, clip.frame_rate)}
+            >
               {Array.from({ length: 11 }, (_unused, index) => (
                 <span key={index} style={{ left: `${index * 10}%` }}>{(clip.duration * index / 10).toFixed(2)}</span>
               ))}
@@ -504,25 +719,39 @@ export function Timeline(props: {
                 && candidate.property === track.property
               )?.value;
               return (
-                <div className={`timeline-track-row${selectedTrack === index ? ' selected' : ''}`} key={`${track.target}:${track.component}.${track.property}:${index}`} onClick={() => setSelectedTrack(index)}>
+                <div className={`timeline-track-row${selectedTrack === index ? ' selected' : ''}`} key={`${track.target}:${track.component}.${track.property}:${index}`} onClick={(event) => {
+                  if ((event.target as HTMLElement).closest('.timeline-key')) return;
+                  setSelectedTrack(index);
+                  setSelectedKey(null);
+                }}>
                   <div className="timeline-track-label">
                     <strong>{track.component}.{track.property}</strong>
                     <span>{track.target} · {track.interpolation}</span>
                   </div>
-                  <div className="timeline-track-keys">
+                  <div
+                    className="timeline-track-keys"
+                    onPointerDown={(event) => {
+                      if ((event.target as HTMLElement).closest('.timeline-key')) return;
+                      seekAtPointer(event, clip.duration, clip.frame_rate);
+                    }}
+                  >
                     {track.keyframes.map((key, keyIndex) => (
                       <button
                         type="button"
-                        className="timeline-key"
+                        className={`timeline-key${selectedKey?.track === index && selectedKey.key === keyIndex ? ' selected' : ''}`}
                         key={`${key.time}:${keyIndex}`}
                         title={`${key.time.toFixed(3)} s · ${valueLabel(key.value)}`}
-                        style={{ left: `${clip.duration > 0 ? key.time / clip.duration * 100 : 0}%` }}
-                        onClick={(event) => {
+                        style={{
+                          left: `clamp(6px, ${clip.duration > 0 ? key.time / clip.duration * 100 : 0}%, calc(100% - 6px))`,
+                        }}
+                        onPointerDown={(event) => {
                           event.stopPropagation();
                           setPlaying(false);
                           setSelectedTrack(index);
+                          setSelectedKey({ track: index, key: keyIndex });
                           setTime(key.time);
                         }}
+                        onClick={(event) => event.stopPropagation()}
                       />
                     ))}
                     <i className="timeline-playhead" style={{ left: `${clip.duration > 0 ? time / clip.duration * 100 : 0}%` }} />
