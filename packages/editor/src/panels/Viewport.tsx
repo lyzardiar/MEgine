@@ -67,6 +67,12 @@ import {
   type SceneSnapSettings,
   type SnapAccumulator,
 } from '../sceneSnap';
+import {
+  marqueeHitIds,
+  normalizeMarquee,
+  type MarqueeRect,
+  type MarqueeSelectionMode,
+} from '../marqueeSelection';
 
 const SCENE_2D_KEY = 'mengine.scene.2d';
 const SCENE_SNAP_KEY = 'mengine.scene.snap';
@@ -196,6 +202,7 @@ export function Viewport(props: {
   gameAspect: GameAspect;
   gameOrientation: GameOrientation;
   onPick: (id: number, modifiers: { toggle: boolean; additive: boolean }) => void;
+  onMarqueeSelect: (ids: number[], mode: MarqueeSelectionMode) => void;
   onSceneCamera: (partial: Partial<SceneCamera>) => void;
   onBeginGesture: () => void;
   onEndGesture: () => void;
@@ -276,6 +283,15 @@ export function Viewport(props: {
     | { type: 'pan'; lx: number; ly: number }
     | { type: 'uiSlider'; lx: number; ly: number; entity: number }
     | {
+        type: 'marquee';
+        lx: number;
+        ly: number;
+        startX: number;
+        startY: number;
+        toggle: boolean;
+        additive: boolean;
+      }
+    | {
         type: 'gizmo';
         part: GizmoPart;
         lx: number;
@@ -311,6 +327,7 @@ export function Viewport(props: {
   snapSettingsRef.current = snapSettings;
   const [snapSettingsOpen, setSnapSettingsOpen] = useState(false);
   const snapSettingsElementRef = useRef<HTMLDivElement>(null);
+  const [marquee, setMarquee] = useState<MarqueeRect | null>(null);
   /** Saved orbit angles when entering 2D (restore on exit). */
   const savedOrbitRef = useRef<{ yaw: number; pitch: number } | null>(null);
 
@@ -829,7 +846,20 @@ export function Viewport(props: {
     // Scene: UI graphics over 3D
     if (propsRef.current.tab === 'scene') {
       const ui = hitTestUiSelect(uiItemsRef.current, x, y);
-      if (ui) return { kind: 'object', id: ui.entity, x, y, r: 8 };
+      if (ui) {
+        const canvasInterior = ui.role === 'canvas' && scene2DRef.current;
+        const edgeDistance = canvasInterior
+          ? Math.min(
+              Math.abs(x - ui.rect.x),
+              Math.abs(x - (ui.rect.x + ui.rect.w)),
+              Math.abs(y - ui.rect.y),
+              Math.abs(y - (ui.rect.y + ui.rect.h)),
+            )
+          : 0;
+        if (!canvasInterior || edgeDistance <= 6) {
+          return { kind: 'object', id: ui.entity, x, y, r: 8 };
+        }
+      }
     }
 
     let best: { h: Hit; d: number } | null = null;
@@ -1003,6 +1033,25 @@ export function Viewport(props: {
             toggle: ev.ctrlKey || ev.metaKey,
             additive: ev.shiftKey,
           });
+          return;
+        }
+        if (scene2DRef.current && !propsRef.current.playing) {
+          draggingRef.current = true;
+          dragRef.current = {
+            type: 'marquee',
+            lx: ev.clientX,
+            ly: ev.clientY,
+            startX: x,
+            startY: y,
+            toggle: ev.ctrlKey || ev.metaKey,
+            additive: ev.shiftKey,
+          };
+          setMarquee(normalizeMarquee(x, y, x, y));
+          ev.preventDefault();
+          return;
+        }
+        if (!ev.ctrlKey && !ev.metaKey && !ev.shiftKey) {
+          propsRef.current.onMarqueeSelect([], 'replace');
         }
       }
     }
@@ -1043,6 +1092,17 @@ export function Viewport(props: {
       }
 
       if (!d) return;
+
+      if (d.type === 'marquee') {
+        const rect = canvas?.getBoundingClientRect();
+        if (!rect) return;
+        const x = ev.clientX - rect.left;
+        const y = ev.clientY - rect.top;
+        d.lx = ev.clientX;
+        d.ly = ev.clientY;
+        setMarquee(normalizeMarquee(d.startX, d.startY, x, y));
+        return;
+      }
 
       if (d.type === 'uiSlider') {
         const canvas = canvasRef.current;
@@ -1304,6 +1364,25 @@ export function Viewport(props: {
         }
       }
       uiPressRef.current = null;
+      if (dragRef.current?.type === 'marquee' && canvasRef.current) {
+        const drag = dragRef.current;
+        const canvasRect = canvasRef.current.getBoundingClientRect();
+        const x = ev.clientX - canvasRect.left;
+        const y = ev.clientY - canvasRect.top;
+        const box = normalizeMarquee(drag.startX, drag.startY, x, y);
+        const moved = Math.hypot(box.w, box.h) >= 5;
+        if (moved) {
+          const mode: MarqueeSelectionMode = drag.toggle
+            ? 'toggle'
+            : drag.additive
+              ? 'add'
+              : 'replace';
+          propsRef.current.onMarqueeSelect(marqueeHitIds(uiItemsRef.current, box), mode);
+        } else if (!drag.toggle && !drag.additive) {
+          propsRef.current.onMarqueeSelect([], 'replace');
+        }
+        setMarquee(null);
+      }
       if (dragRef.current?.type === 'orbit' || dragRef.current?.type === 'pan') {
         syncCamToStore();
       }
@@ -1619,12 +1698,24 @@ export function Viewport(props: {
         onWheel={onWheel}
         style={{ cursor: props.tab === 'scene' ? 'crosshair' : 'default', width: '100%', height: '100%' }}
       />
+      {props.tab === 'scene' && marquee && (
+        <div
+          className="scene-marquee"
+          aria-hidden
+          style={{
+            left: marquee.x,
+            top: (canvasRef.current?.offsetTop ?? 0) + marquee.y,
+            width: marquee.w,
+            height: marquee.h,
+          }}
+        />
+      )}
       {props.tab === 'scene' && (
         <div className="viewport-overlay">
           Scene{scene2D ? ' 2D' : ''}
           <br />
           {scene2D
-            ? 'Pan · Zoom · Rect gizmos'
+            ? 'Pan · Zoom · Rect gizmos · Box select'
             : 'Orbit · Pan · Zoom · F frame'}
         </div>
       )}

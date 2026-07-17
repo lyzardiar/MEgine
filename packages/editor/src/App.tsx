@@ -33,6 +33,7 @@ import { DockWorkspace, type PanelKind } from './panels/DockWorkspace';
 import { EditorWindowHost } from './editorWindow';
 import { resolveUnityAction } from './panels/uiFieldEditors';
 import { refreshSprites } from './spriteLibrary';
+import { combineMarqueeSelection } from './marqueeSelection';
 import './editorWindow'; // MenuItem side-effects
 
 function isTypingTarget(el: EventTarget | null) {
@@ -544,6 +545,11 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
                 if (modifiers.toggle) store.selectMany([id], 'toggle', id);
                 else if (modifiers.additive) store.selectMany([id], 'add', id);
                 else store.select(id);
+                refresh();
+              }}
+              onMarqueeSelect={(ids, selectionMode) => {
+                const next = combineMarqueeSelection(store.selectedIds, ids, selectionMode);
+                store.selectMany(next, 'replace');
                 refresh();
               }}
               onSceneCamera={(partial) => {
