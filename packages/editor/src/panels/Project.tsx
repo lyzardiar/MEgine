@@ -48,6 +48,7 @@ export function Project(props: {
   sceneTick: number;
   onSpawnPrefab: (name: string) => void;
   onOpenScene: (name: string) => void;
+  onOpenMaterial: (path: string) => void;
   onRenameScene: (oldName: string, newName: string) => boolean | Promise<boolean>;
   onLog?: (msg: string, level?: 'info' | 'warn' | 'error') => void;
 }) {
@@ -221,6 +222,10 @@ export function Project(props: {
     }
     if (a.kind === 'script') {
       openScript(a);
+      return;
+    }
+    if (a.kind === 'material' && a.spriteId) {
+      props.onOpenMaterial(a.spriteId);
       return;
     }
     if (a.spawn) props.onSpawnPrefab(a.spawn);

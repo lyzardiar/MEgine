@@ -43,6 +43,7 @@ export function MenuBar(props: {
 
   useSyncExternalStore(subscribeMenuItems, getMenuRevision, getMenuRevision);
   const windowItems = listMenuItems('Window');
+  const assetItems = listMenuItems('Assets');
   const gameObjectItems = listMenuItems('GameObject');
   const menuContext: MenuItemContext = {
     source: 'menu-bar',
@@ -107,6 +108,18 @@ export function MenuBar(props: {
             <div className="menu-drop popup-menu" role="menu">
               <PopupMenuItems
                 entries={gameObjectItems}
+                context={menuContext}
+                onSelect={() => setOpen(null)}
+              />
+            </div>
+          )}
+          {name === 'Assets' && (
+            <div className="menu-drop popup-menu" role="menu">
+              {assetItems.length === 0 && (
+                <button type="button" disabled>(no asset commands)</button>
+              )}
+              <PopupMenuItems
+                entries={assetItems}
                 context={menuContext}
                 onSelect={() => setOpen(null)}
               />

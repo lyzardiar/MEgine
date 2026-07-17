@@ -489,6 +489,7 @@ function GenericCompEditor(props: {
               assetKinds={meta.assetKinds ?? []}
               referenceType={meta.referenceType ?? 'Asset'}
               allowNone={meta.allowNone}
+              noneValue={meta.noneValue}
               onChange={setValue}
             />
           );

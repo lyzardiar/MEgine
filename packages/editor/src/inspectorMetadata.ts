@@ -61,14 +61,11 @@ export const BUILTIN_INSPECTOR_FIELDS: Readonly<
       options: [{ value: 'cube', label: 'Cube' }],
     },
     material: {
-      kind: 'named-reference',
+      kind: 'project-asset',
       referenceType: 'Material',
-      options: [
-        { value: 'default', label: 'Default' },
-        { value: 'gold', label: 'Gold' },
-        { value: 'chrome', label: 'Chrome' },
-        { value: 'unlit', label: 'Unlit' },
-      ],
+      assetKinds: ['material'],
+      allowNone: true,
+      noneValue: 'default',
     },
   },
   Camera3D: {

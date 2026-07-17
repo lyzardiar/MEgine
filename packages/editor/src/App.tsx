@@ -30,6 +30,12 @@ import { Inspector } from './panels/Inspector';
 import { Project } from './panels/Project';
 import { Console } from './panels/Console';
 import { Timeline } from './panels/Timeline';
+import {
+  MaterialEditor,
+  OPEN_MATERIAL_EVENT,
+  PROJECT_ASSETS_CHANGED_EVENT,
+  openMaterialAsset,
+} from './panels/Material';
 import { Viewport } from './panels/Viewport';
 import { DockWorkspace, type PanelKind } from './panels/DockWorkspace';
 import { EditorWindowHost } from './editorWindow';
@@ -99,6 +105,7 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
   const [treeTick, setTreeTick] = useState(0);
   const [sceneTick, setSceneTick] = useState(0);
   const [sceneName, setSceneName] = useState<string | null>(null);
+  const [materialPath, setMaterialPath] = useState<string | null>(null);
   const [sceneDirty, setSceneDirty] = useState(false);
   const [logs, setLogs] = useState<string[]>([
     'MEngine Editor',
@@ -172,6 +179,20 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
   };
 
   const bumpScenes = () => setSceneTick((t) => t + 1);
+
+  useEffect(() => {
+    const openMaterial = (event: Event) => {
+      const path = (event as CustomEvent<string>).detail;
+      if (typeof path === 'string' && path) setMaterialPath(path);
+    };
+    const assetsChanged = () => bumpScenes();
+    window.addEventListener(OPEN_MATERIAL_EVENT, openMaterial);
+    window.addEventListener(PROJECT_ASSETS_CHANGED_EVENT, assetsChanged);
+    return () => {
+      window.removeEventListener(OPEN_MATERIAL_EVENT, openMaterial);
+      window.removeEventListener(PROJECT_ASSETS_CHANGED_EVENT, assetsChanged);
+    };
+  }, []);
 
   const log = (msg: string, level: 'info' | 'warn' | 'error' = 'info') => {
     const prefix = level === 'info' ? '' : level === 'warn' ? '[Warn] ' : '[Error] ';
@@ -902,6 +923,7 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
               onOpenScene={(name) => {
                 void openSceneByName(name);
               }}
+              onOpenMaterial={(path) => openMaterialAsset(path)}
               onRenameScene={async (oldName, newName) => {
                 const next = await renameScene(oldName, newName);
                 if (next == null) {
@@ -945,6 +967,20 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
               }}
               onClearPreview={() => {
                 if (store.clearAnimationPreview()) refresh(false);
+              }}
+              onAssetsChanged={bumpScenes}
+              onLog={log}
+            />
+          ),
+          material: (
+            <MaterialEditor
+              assetPath={materialPath}
+              selectedEntity={snap.entities.find((entity) => entity.entity === selected) ?? null}
+              onOpenAsset={setMaterialPath}
+              onAssignMaterial={(entity, path) => {
+                store.patchComponent(entity, 'MeshRenderer', { material: path });
+                log(`Assigned ${path}`);
+                refresh();
               }}
               onAssetsChanged={bumpScenes}
               onLog={log}

@@ -385,6 +385,7 @@ export function ProjectAssetSlot(props: {
   assetKinds: ProjectFileAsset['kind'][];
   referenceType: string;
   allowNone?: boolean;
+  noneValue?: string;
   onChange: (value: string) => void;
 }) {
   const [dragOver, setDragOver] = useState(false);
@@ -402,7 +403,10 @@ export function ProjectAssetSlot(props: {
     const accepted = new Set(props.assetKinds);
     return listProjectFiles().filter((asset) => accepted.has(asset.kind));
   }, [props.assetKinds, revision]);
-  const selected = assets.find((asset) => asset.id === props.value);
+  const hasValue = Boolean(props.value) && props.value !== props.noneValue;
+  const selected = hasValue
+    ? assets.find((asset) => asset.id === props.value)
+    : undefined;
 
   const applyDrop = (event: DragEvent) => {
     event.preventDefault();
@@ -418,7 +422,7 @@ export function ProjectAssetSlot(props: {
     <div className="field-row">
       <label>{props.label}</label>
       <div
-        className={`object-slot project-asset-slot${props.value ? ' filled' : ''}${dragOver ? ' drag-over' : ''}`}
+        className={`object-slot project-asset-slot${hasValue ? ' filled' : ''}${dragOver ? ' drag-over' : ''}`}
         onDragEnter={(event) => {
           if (!Array.from(event.dataTransfer.types).includes('text/mengine-asset')) return;
           event.preventDefault();
@@ -442,10 +446,10 @@ export function ProjectAssetSlot(props: {
           className="object-slot-name-btn"
           title="Ping in Project"
           onClick={() => {
-            if (props.value) pingProjectAsset(props.value, selected?.folder);
+            if (hasValue) pingProjectAsset(props.value, selected?.folder);
           }}
         >
-          {selected?.name ?? (props.value || `None (${props.referenceType})`)}
+          {selected?.name ?? (hasValue ? props.value : `None (${props.referenceType})`)}
         </button>
         <button
           ref={pickerBtnRef}
@@ -457,12 +461,12 @@ export function ProjectAssetSlot(props: {
             setPickerOpen(true);
           }}
         />
-        {props.allowNone && props.value && (
+        {props.allowNone && hasValue && (
           <button
             type="button"
             className="object-slot-clear"
             title="Clear"
-            onClick={() => props.onChange('')}
+            onClick={() => props.onChange(props.noneValue ?? '')}
           >
             ×
           </button>
@@ -477,11 +481,11 @@ export function ProjectAssetSlot(props: {
             sub: asset.folder,
             icon: asset.kind === 'spine-atlas' ? 'A' : 'S',
           }))}
-          current={props.value || null}
+          current={hasValue ? props.value : null}
           allowNone={props.allowNone}
           noneLabel={`None (${props.referenceType})`}
           anchorRect={anchor}
-          onPick={(id) => props.onChange(id ?? '')}
+          onPick={(id) => props.onChange(id ?? props.noneValue ?? '')}
           onClose={() => setPickerOpen(false)}
         />
       )}

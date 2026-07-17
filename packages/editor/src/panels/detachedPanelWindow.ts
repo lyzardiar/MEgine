@@ -10,6 +10,7 @@ export const CORE_PANEL_IDS = [
   'project',
   'console',
   'timeline',
+  'material',
 ] as const;
 
 export type CorePanelId = (typeof CORE_PANEL_IDS)[number];
@@ -22,6 +23,7 @@ const PANEL_TITLES: Record<CorePanelId, string> = {
   project: 'Project',
   console: 'Console',
   timeline: 'Timeline',
+  material: 'Material',
 };
 
 const CHANNEL_NAME = 'mengine.editor.panels.v1';

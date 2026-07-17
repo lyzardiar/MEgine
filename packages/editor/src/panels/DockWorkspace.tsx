@@ -75,6 +75,7 @@ const PANEL_TITLE: Record<PanelKind, string> = {
   project: 'Project',
   console: 'Console',
   timeline: 'Timeline',
+  material: 'Material',
 };
 
 const ALL_PANELS: PanelKind[] = [...CORE_PANEL_IDS];
@@ -122,7 +123,7 @@ function defaultTree(): DockNode {
         dir: 'h',
         ratio: 0.7,
         a: leaf(['scene', 'game']),
-        b: leaf(['inspector']),
+        b: leaf(['inspector', 'material']),
       },
     },
     b: {
@@ -298,7 +299,11 @@ function ensureAllPanels(
   let tree: DockNode = root;
   for (const p of ALL_PANELS) {
     if (seen.has(p) || excluded.has(p)) continue;
-    const preferredLeaf = p === 'timeline' ? findLeafContaining(tree, 'console') : null;
+    const preferredLeaf = p === 'timeline'
+      ? findLeafContaining(tree, 'console')
+      : p === 'material'
+        ? findLeafContaining(tree, 'inspector')
+        : null;
     if (preferredLeaf) {
       tree = mapLeaf(tree, preferredLeaf.id, (candidate) => ({
         ...candidate,
