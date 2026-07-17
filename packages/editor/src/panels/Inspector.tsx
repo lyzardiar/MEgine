@@ -12,6 +12,7 @@ import { eulerXYZToQuat, quatToEulerXYZ } from '../math3d';
 import { loadSpineInspectorOptions } from '../spine/spineCanvasRuntime';
 import { SchemaFieldEditor } from './SchemaFieldEditor';
 import { RectTransformEditor } from './RectTransformEditor';
+import { InspectorGestureProvider, useInspectorGesture } from './inspectorGesture';
 import {
   ColorField,
   ImageEditor,
@@ -34,6 +35,9 @@ function useScrubDrag(
   step: number,
   onChange: (v: number) => void,
 ) {
+  const gesture = useInspectorGesture();
+  const gestureRef = useRef(gesture);
+  gestureRef.current = gesture;
   const valueRef = useRef(value);
   valueRef.current = value;
   const onChangeRef = useRef(onChange);
@@ -58,6 +62,7 @@ function useScrubDrag(
       if (!d || e.pointerId !== d.pointerId) return;
       drag.current = null;
       document.body.classList.remove('insp-scrubbing');
+      gestureRef.current.end();
     };
     window.addEventListener('pointermove', onMove);
     window.addEventListener('pointerup', onUp);
@@ -66,6 +71,11 @@ function useScrubDrag(
       window.removeEventListener('pointermove', onMove);
       window.removeEventListener('pointerup', onUp);
       window.removeEventListener('pointercancel', onUp);
+      if (drag.current) {
+        drag.current = null;
+        document.body.classList.remove('insp-scrubbing');
+        gestureRef.current.end();
+      }
     };
   }, [step]);
 
@@ -78,6 +88,7 @@ function useScrubDrag(
       startX: e.clientX,
       startV: valueRef.current,
     };
+    gestureRef.current.begin();
     document.body.classList.add('insp-scrubbing');
   };
 }
@@ -606,6 +617,8 @@ export function Inspector(props: {
   onInvokeBehaviourMethod?: (entity: number, type: string, method: string) => void;
   onRename?: (entity: number, name: string) => void;
   onSetActive?: (entity: number, active: boolean) => void;
+  onBeginEditGesture?: () => void;
+  onEndEditGesture?: () => void;
 }) {
   const [menuOpen, setMenuOpen] = useState(false);
   const [nameDraft, setNameDraft] = useState('');
@@ -690,6 +703,10 @@ export function Inspector(props: {
   });
 
   return (
+    <InspectorGestureProvider
+      begin={props.onBeginEditGesture ?? (() => {})}
+      end={props.onEndEditGesture ?? (() => {})}
+    >
     <div className="dock-body">
       <div className="insp-header">
         <div className="insp-object-row">
@@ -875,5 +892,6 @@ export function Inspector(props: {
         )}
       </div>
     </div>
+    </InspectorGestureProvider>
   );
 }

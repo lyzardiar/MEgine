@@ -702,6 +702,8 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
               entity={snap.entities.find((e) => e.entity === selected) ?? null}
               entities={snap.entities}
               selectionCount={selectedIds.length}
+              onBeginEditGesture={() => store.beginTransformGesture()}
+              onEndEditGesture={() => store.endTransformGesture()}
               onRename={(entity, name) => {
                 store.rename(entity, name);
                 refresh();

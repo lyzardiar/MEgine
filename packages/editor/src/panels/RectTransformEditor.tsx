@@ -6,10 +6,14 @@ import {
   readRectAxis,
   writeRectAxis,
 } from '../ui/rectTransformModel';
+import { useInspectorGesture } from './inspectorGesture';
 
 type RT = ReturnType<typeof readRectTransform>;
 
 function useScrub(value: number, step: number, onChange: (v: number) => void) {
+  const gesture = useInspectorGesture();
+  const gestureRef = useRef(gesture);
+  gestureRef.current = gesture;
   const valueRef = useRef(value);
   valueRef.current = value;
   const onChangeRef = useRef(onChange);
@@ -26,14 +30,22 @@ function useScrub(value: number, step: number, onChange: (v: number) => void) {
       const next = d.startV + ((e.clientX - d.startX) / 5) * sens;
       onChangeRef.current(parseFloat(next.toFixed(4)));
     };
-    const onUp = () => {
+    const onUp = (e: PointerEvent) => {
+      if (!drag.current || e.pointerId !== drag.current.pointerId) return;
       drag.current = null;
+      gestureRef.current.end();
     };
     window.addEventListener('pointermove', onMove);
     window.addEventListener('pointerup', onUp);
+    window.addEventListener('pointercancel', onUp);
     return () => {
       window.removeEventListener('pointermove', onMove);
       window.removeEventListener('pointerup', onUp);
+      window.removeEventListener('pointercancel', onUp);
+      if (drag.current) {
+        drag.current = null;
+        gestureRef.current.end();
+      }
     };
   }, [step]);
 
@@ -41,6 +53,7 @@ function useScrub(value: number, step: number, onChange: (v: number) => void) {
     if (e.button !== 0) return;
     e.preventDefault();
     drag.current = { pointerId: e.pointerId, startX: e.clientX, startV: valueRef.current };
+    gestureRef.current.begin();
   };
 }
 

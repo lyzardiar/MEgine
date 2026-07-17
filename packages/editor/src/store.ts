@@ -925,7 +925,7 @@ export function createEditorStore() {
       }
     },
     setTransform(entity: number, transform: TransformData) {
-      pushUndo();
+      if (mode === 'edit' && !gizmoDragging) pushUndo();
       const e = find(entity);
       if (e) e.components.Transform = transform;
     },
