@@ -15,6 +15,7 @@ use mengine_rhi::{
     PointLightData, RenderMaterial, RenderObject, Renderer, SpotLightData, UiBatchPlan,
 };
 use mengine_runtime::particles::ParticleWorld;
+use mengine_runtime::textures::RuntimeTextureCache;
 use mengine_runtime::ui::{collect_ui_frame, UiControlKind, UiControlRegion};
 use mengine_script::ScriptHost;
 use serde_json::json;
@@ -35,6 +36,10 @@ struct Args {
 
     #[arg(long)]
     script: Option<PathBuf>,
+
+    /// Project directory used to resolve texture keys such as Assets/Textures/icon.png.
+    #[arg(long)]
+    project_root: Option<PathBuf>,
 }
 
 struct App {
@@ -53,10 +58,12 @@ struct App {
     focused_input: Option<Entity>,
     last_ui_draw_calls: u32,
     particles: ParticleWorld,
+    textures: RuntimeTextureCache,
 }
 
 impl App {
     fn new(args: Args) -> Self {
+        let textures = RuntimeTextureCache::new(args.project_root.clone());
         Self {
             args,
             window: None,
@@ -73,6 +80,7 @@ impl App {
             focused_input: None,
             last_ui_draw_calls: u32::MAX,
             particles: ParticleWorld::default(),
+            textures,
         }
     }
 
@@ -856,6 +864,14 @@ function onTick(dt, frame) {
                         let mut primitives = std::mem::take(&mut ui.plan.primitives);
                         primitives.extend(particle_primitives);
                         ui.plan = UiBatchPlan::build(primitives);
+                    }
+                    for failure in self.textures.sync(r, &ui.plan) {
+                        log::warn!(
+                            "UI texture '{}' could not be loaded from {}: {}",
+                            failure.key,
+                            failure.path.display(),
+                            failure.error
+                        );
                     }
                     self.ui_controls = ui.controls;
                     if let Err(e) = r.render_lit_frame(camera, &objects, &lighting, Some(&ui.plan))
