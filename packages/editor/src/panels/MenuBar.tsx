@@ -79,6 +79,16 @@ export function MenuBar(props: {
                 Open Scene…
               </button>
               <div className="sep" />
+              <button
+                type="button"
+                onClick={() => {
+                  window.dispatchEvent(new CustomEvent('mengine:focus-panel', { detail: 'build' }));
+                  setOpen(null);
+                }}
+              >
+                Build Settings… <span className="hint">Ctrl+Shift+B</span>
+              </button>
+              <div className="sep" />
               <button type="button" onClick={() => setOpen(null)}>Exit</button>
             </div>
           )}

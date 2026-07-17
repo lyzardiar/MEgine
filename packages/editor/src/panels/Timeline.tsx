@@ -123,11 +123,13 @@ export function Timeline(props: {
   onPreview: (entity: number, samples: AnimationSample[]) => void;
   onClearPreview: () => void;
   onAssetsChanged: () => void;
+  onDirtyChange: (dirty: boolean) => void;
   onLog: (message: string, level?: 'info' | 'warn' | 'error') => void;
 }) {
   const player = playerOf(props.entity);
   const clipPath = player?.clip?.trim() ?? '';
   const [clip, setClip] = useState<AnimationClip | null>(null);
+  const [savedText, setSavedText] = useState('');
   const [time, setTime] = useState(0);
   const [playing, setPlaying] = useState(false);
   const [selectedTrack, setSelectedTrack] = useState<number | null>(null);
@@ -152,6 +154,7 @@ export function Timeline(props: {
     setError(null);
     if (!clipPath) {
       setClip(null);
+      setSavedText('');
       setTime(0);
       props.onClearPreview();
       return () => { cancelled = true; };
@@ -162,6 +165,7 @@ export function Timeline(props: {
         if (cancelled) return;
         const loaded = parseAnimationClip(text);
         setClip(loaded);
+        setSavedText(serializeAnimationClip(loaded));
         setTime(wrappedAnimationTime(Number(player?.time ?? 0), loaded.duration, loaded.wrap_mode));
       })
       .catch((reason: unknown) => {
@@ -175,6 +179,16 @@ export function Timeline(props: {
       });
     return () => { cancelled = true; };
   }, [clipPath, props.entity?.entity]);
+
+  const serializedClip = useMemo(
+    () => clip ? serializeAnimationClip(clip) : '',
+    [clip],
+  );
+  const dirty = Boolean(clip && serializedClip !== savedText);
+
+  useEffect(() => {
+    props.onDirtyChange(dirty);
+  }, [dirty, props.onDirtyChange]);
 
   useEffect(() => () => props.onClearPreview(), [props.entity?.entity]);
 
@@ -240,6 +254,7 @@ export function Timeline(props: {
     try {
       await writeProjectAssetText(clipPath, serializeAnimationClip(normalized));
       await refreshProjectFiles();
+      setSavedText(serializeAnimationClip(normalized));
       props.onAssetsChanged();
       return true;
     } catch (reason) {
@@ -268,6 +283,7 @@ export function Timeline(props: {
       await refreshProjectFiles();
       assignClip(path);
       setClip(next);
+      setSavedText(serializeAnimationClip(next));
       setTime(0);
       setShowNewClip(false);
       props.onAssetsChanged();
@@ -402,9 +418,9 @@ export function Timeline(props: {
           setTime((value) => Math.min(clip.duration, value + 1 / clip.frame_rate));
         }}>▶|</button>
         <span className="timeline-time">{time.toFixed(3)} s</span>
-        <span className="timeline-clip-path" title={clipPath}>{clipPath}</span>
+        <span className="timeline-clip-path" title={clipPath}>{clipPath}{dirty ? ' *' : ''}</span>
         <button type="button" onClick={() => setShowNewClip((value) => !value)} disabled={saving}>New</button>
-        <button type="button" onClick={() => void persist()} disabled={!clip || saving}>
+        <button type="button" onClick={() => void persist()} disabled={!dirty || saving}>
           {saving ? 'Saving…' : 'Save'}
         </button>
       </div>

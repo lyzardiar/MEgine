@@ -30,6 +30,7 @@ import { Inspector } from './panels/Inspector';
 import { Project } from './panels/Project';
 import { Console } from './panels/Console';
 import { Timeline } from './panels/Timeline';
+import { BuildSettings } from './panels/BuildSettings';
 import {
   MaterialEditor,
   OPEN_MATERIAL_EVENT,
@@ -106,7 +107,15 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
   const [sceneTick, setSceneTick] = useState(0);
   const [sceneName, setSceneName] = useState<string | null>(null);
   const [materialPath, setMaterialPath] = useState<string | null>(null);
+  const [materialDirty, setMaterialDirty] = useState(false);
+  const [animationDirty, setAnimationDirty] = useState(false);
   const [sceneDirty, setSceneDirty] = useState(false);
+  const dirtyPanels = useMemo(() => {
+    const dirty = new Set<PanelKind>();
+    if (materialDirty) dirty.add('material');
+    if (animationDirty) dirty.add('timeline');
+    return dirty;
+  }, [animationDirty, materialDirty]);
   const [logs, setLogs] = useState<string[]>([
     'MEngine Editor',
     '场景落盘：packages/editor/project/Assets/Scenes/*.mscene',
@@ -323,9 +332,20 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
         ? 'project/Assets/Scenes'
         : 'localStorage（磁盘 API 不可用）';
       log(`Saved ${sceneFileName(name)} → ${where}`);
+      return true;
     } catch (err) {
       log(`保存失败: ${err}`, 'error');
+      return false;
     }
+  };
+
+  const saveSceneForBuild = async () => {
+    const current = sceneNameRef.current;
+    if (!current) {
+      log('Build requires a named scene.', 'warn');
+      return false;
+    }
+    return persistScene(current);
   };
 
   const saveScene = () => {
@@ -485,6 +505,11 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
         return;
       }
       if (isTypingTarget(e.target)) return;
+      if (ctrl && e.shiftKey && e.key.toLowerCase() === 'b') {
+        e.preventDefault();
+        window.dispatchEvent(new CustomEvent('mengine:focus-panel', { detail: 'build' }));
+        return;
+      }
       if (ctrl && e.key.toLowerCase() === 'n') {
         e.preventDefault();
         newScene();
@@ -656,6 +681,7 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
 
       <DockWorkspace
         detachedPanel={props.detachedPanel}
+        dirtyPanels={dirtyPanels}
         panels={{
           hierarchy: (
             <Hierarchy
@@ -969,6 +995,7 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
                 if (store.clearAnimationPreview()) refresh(false);
               }}
               onAssetsChanged={bumpScenes}
+              onDirtyChange={setAnimationDirty}
               onLog={log}
             />
           ),
@@ -983,6 +1010,16 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
                 refresh();
               }}
               onAssetsChanged={bumpScenes}
+              onDirtyChange={setMaterialDirty}
+              onLog={log}
+            />
+          ),
+          build: (
+            <BuildSettings
+              sceneName={sceneName}
+              sceneDirty={sceneDirty}
+              resourceDirty={materialDirty || animationDirty}
+              onSaveScene={saveSceneForBuild}
               onLog={log}
             />
           ),

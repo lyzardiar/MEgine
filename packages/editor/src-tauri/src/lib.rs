@@ -5,6 +5,7 @@ use mengine_editor_host::{
 use parking_lot::Mutex;
 use std::collections::HashSet;
 use std::path::{Component, Path, PathBuf};
+use std::process::Command;
 use std::time::{SystemTime, UNIX_EPOCH};
 use tauri::{Manager, State};
 
@@ -29,6 +30,149 @@ struct ProjectSpriteInfo {
     name: String,
     folder: String,
     rel_path: String,
+}
+
+#[derive(Debug, serde::Serialize)]
+#[serde(rename_all = "camelCase")]
+struct BuildPlayerResult {
+    output_dir: String,
+    executable: String,
+    file_count: usize,
+    profile: String,
+    log: String,
+}
+
+fn find_engine_root(start: &Path) -> Option<PathBuf> {
+    let mut current = start.to_path_buf();
+    loop {
+        let cargo = current.join("Cargo.toml");
+        let runtime = current.join("crates/mengine-runtime/Cargo.toml");
+        if cargo.is_file() && runtime.is_file() {
+            return Some(current);
+        }
+        if !current.pop() {
+            return None;
+        }
+    }
+}
+
+fn node_platform_name() -> &'static str {
+    if cfg!(target_os = "windows") {
+        "windows"
+    } else if cfg!(target_os = "macos") {
+        "macos"
+    } else {
+        "linux"
+    }
+}
+
+fn node_arch_name() -> &'static str {
+    match std::env::consts::ARCH {
+        "x86_64" => "x64",
+        "aarch64" => "arm64",
+        "x86" => "ia32",
+        other => other,
+    }
+}
+
+fn command_failure(label: &str, output: &std::process::Output) -> String {
+    let stderr = String::from_utf8_lossy(&output.stderr).trim().to_owned();
+    let stdout = String::from_utf8_lossy(&output.stdout).trim().to_owned();
+    let detail = if stderr.is_empty() { stdout } else { stderr };
+    if detail.is_empty() {
+        format!("{label} failed with exit code {:?}", output.status.code())
+    } else {
+        format!("{label} failed: {detail}")
+    }
+}
+
+fn run_player_build(
+    project_root: PathBuf,
+    profile: String,
+    clean: bool,
+) -> Result<BuildPlayerResult, String> {
+    if profile != "debug" && profile != "release" {
+        return Err(format!("unsupported build profile: {profile}"));
+    }
+    let manifest = project_root.join("project.json");
+    if !manifest.is_file() {
+        return Err(format!("project.json not found: {}", manifest.display()));
+    }
+    let manifest_dir = Path::new(env!("CARGO_MANIFEST_DIR"));
+    let engine_root = find_engine_root(manifest_dir)
+        .or_else(|| {
+            std::env::current_exe()
+                .ok()
+                .and_then(|path| find_engine_root(&path))
+        })
+        .ok_or_else(|| {
+            "MEngine build tools were not found. Run this editor from an engine source checkout."
+                .to_string()
+        })?;
+    let cli = engine_root.join("packages/cli/dist/cli.js");
+    if !cli.is_file() {
+        let npm = if cfg!(target_os = "windows") {
+            "npm.cmd"
+        } else {
+            "npm"
+        };
+        let output = Command::new(npm)
+            .current_dir(&engine_root)
+            .args(["--prefix", "packages/cli", "run", "build"])
+            .output()
+            .map_err(|error| format!("cannot start CLI build: {error}"))?;
+        if !output.status.success() {
+            return Err(command_failure("MEngine CLI build", &output));
+        }
+    }
+    let output_dir =
+        project_root
+            .join("Builds")
+            .join(format!("{}-{}", node_platform_name(), node_arch_name()));
+    let mut command = Command::new("node");
+    command
+        .current_dir(&engine_root)
+        .arg(&cli)
+        .arg("build")
+        .arg(&project_root)
+        .arg("--out")
+        .arg(&output_dir);
+    if profile == "debug" {
+        command.arg("--debug");
+    }
+    if clean {
+        command.arg("--clean");
+    }
+    let output = command
+        .output()
+        .map_err(|error| format!("cannot start player build: {error}"))?;
+    if !output.status.success() {
+        return Err(command_failure("MEngine player build", &output));
+    }
+    let build_manifest_path = output_dir.join("mengine-build.json");
+    let build_manifest: serde_json::Value =
+        serde_json::from_slice(&std::fs::read(&build_manifest_path).map_err(|error| {
+            format!(
+                "build finished without {}: {error}",
+                build_manifest_path.display()
+            )
+        })?)
+        .map_err(|error| format!("invalid build manifest: {error}"))?;
+    let executable = build_manifest
+        .get("executable")
+        .and_then(serde_json::Value::as_str)
+        .ok_or_else(|| "build manifest does not contain executable".to_string())?;
+    let file_count = build_manifest
+        .get("files")
+        .and_then(serde_json::Value::as_array)
+        .map_or(0, Vec::len);
+    Ok(BuildPlayerResult {
+        output_dir: output_dir.to_string_lossy().into_owned(),
+        executable: output_dir.join(executable).to_string_lossy().into_owned(),
+        file_count,
+        profile,
+        log: String::from_utf8_lossy(&output.stdout).trim().to_owned(),
+    })
 }
 
 const MAX_RECENT_PROJECTS: usize = 12;
@@ -287,6 +431,25 @@ fn get_project_snapshot(state: State<'_, AppState>) -> Result<ProjectSnapshot, E
         .as_ref()
         .map(ProjectSession::snapshot)
         .ok_or_else(no_project)
+}
+
+#[tauri::command]
+async fn build_pc_player(
+    profile: String,
+    clean: bool,
+    state: State<'_, AppState>,
+) -> Result<BuildPlayerResult, String> {
+    let project_root = state
+        .project
+        .lock()
+        .as_ref()
+        .map(|session| session.snapshot().project_root)
+        .ok_or_else(|| no_project().message)?;
+    tauri::async_runtime::spawn_blocking(move || {
+        run_player_build(PathBuf::from(project_root), profile, clean)
+    })
+    .await
+    .map_err(|error| format!("player build task failed: {error}"))?
 }
 
 fn asset_relative_tail(relative_path: &str) -> Result<PathBuf, String> {
@@ -573,6 +736,7 @@ pub fn run() {
             list_recent_projects,
             remove_recent_project,
             get_project_snapshot,
+            build_pc_player,
             read_project_asset,
             write_project_asset,
             list_project_assets,
@@ -589,6 +753,46 @@ pub fn run() {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn build_backend_finds_workspace_and_rejects_unknown_profiles() {
+        let manifest_dir = Path::new(env!("CARGO_MANIFEST_DIR"));
+        let root = find_engine_root(manifest_dir).expect("workspace root");
+        assert!(root.join("crates/mengine-runtime/Cargo.toml").is_file());
+        assert!(run_player_build(root, "shipping".into(), true)
+            .unwrap_err()
+            .contains("unsupported build profile"));
+    }
+
+    #[test]
+    #[ignore = "builds and self-validates a real player executable"]
+    fn build_backend_packages_a_project_through_the_editor_path() {
+        let root = std::env::temp_dir().join(format!(
+            "mengine-editor-build-{}-{}",
+            std::process::id(),
+            SystemTime::now()
+                .duration_since(UNIX_EPOCH)
+                .unwrap()
+                .as_nanos()
+        ));
+        std::fs::create_dir_all(root.join("Assets/Scenes")).unwrap();
+        std::fs::write(
+            root.join("project.json"),
+            r#"{"name":"Editor Build QA","version":1,"mainScene":"Assets/Scenes/Main.mscene"}"#,
+        )
+        .unwrap();
+        std::fs::write(
+            root.join("Assets/Scenes/Main.mscene"),
+            r#"{"version":1,"name":"Main","world":{"entities":[],"frame":0,"sim_frame":0,"clear_color":[0.1,0.1,0.14,1]}}"#,
+        )
+        .unwrap();
+
+        let result = run_player_build(root.clone(), "debug".into(), true).unwrap();
+        assert_eq!(result.profile, "debug");
+        assert!(Path::new(&result.executable).is_file());
+        assert!(result.file_count >= 4);
+        std::fs::remove_dir_all(root).unwrap();
+    }
 
     fn recent(index: usize, path: String, last_opened_at: u64) -> RecentProjectInfo {
         RecentProjectInfo {

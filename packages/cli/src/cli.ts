@@ -29,7 +29,7 @@ Build options:
   --out <dir>                 Output directory (default: <project>/Builds/<platform>-<arch>)
   --runtime <file>            Use an existing mengine-runtime executable
   --debug                     Build/use the debug runtime instead of release
-  --skip-runtime-build        Do not invoke Cargo when the runtime is missing
+  --skip-runtime-build        Reuse an existing runtime without invoking Cargo
   --skip-verify               Skip packaged player scene validation
   --clean                     Replace an existing output directory
 `);
@@ -160,7 +160,7 @@ function resolveRuntime(args: BuildArguments): string {
     throw new Error('cannot locate the MEngine source root; pass --runtime <file>');
   }
   const path = join(engineRoot, 'target', args.profile, runtimeFileName());
-  if (!existsSync(path) && !args.skipRuntimeBuild) {
+  if (!args.skipRuntimeBuild) {
     console.log(`Building ${args.profile} player runtime…`);
     const cargoArgs = ['build', '-p', 'mengine-runtime'];
     if (args.profile === 'release') cargoArgs.push('--release');

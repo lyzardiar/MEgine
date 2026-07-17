@@ -37,6 +37,16 @@ export type RecentProjectInfo = {
   lastOpenedAt: number;
 };
 
+export type BuildPlayerProfile = 'debug' | 'release';
+
+export type BuildPlayerResult = {
+  outputDir: string;
+  executable: string;
+  fileCount: number;
+  profile: BuildPlayerProfile;
+  log: string;
+};
+
 export type EditorOperation =
   | { op: 'select'; entity: number | null }
   | { op: 'undo' }
@@ -152,6 +162,16 @@ export async function removeRecentProject(path: string): Promise<RecentProjectIn
 
 export async function getProjectSnapshot(): Promise<ProjectSnapshot> {
   return invoke<ProjectSnapshot>('get_project_snapshot');
+}
+
+export async function buildPcPlayer(
+  profile: BuildPlayerProfile,
+  clean = true,
+): Promise<BuildPlayerResult> {
+  if (!isDesktopEditor()) {
+    throw new Error('PC player builds require the desktop editor');
+  }
+  return invoke<BuildPlayerResult>('build_pc_player', { profile, clean });
 }
 
 export async function openProjectScene(relativePath: string): Promise<ProjectSnapshot> {

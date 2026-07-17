@@ -97,6 +97,7 @@ export function MaterialEditor(props: {
   onOpenAsset: (path: string) => void;
   onAssignMaterial: (entity: number, path: string) => void;
   onAssetsChanged: () => void;
+  onDirtyChange: (dirty: boolean) => void;
   onLog: (message: string, level?: 'info' | 'warn' | 'error') => void;
 }) {
   const [material, setMaterial] = useState<MaterialAsset | null>(null);
@@ -137,6 +138,10 @@ export function MaterialEditor(props: {
     [material],
   );
   const dirty = Boolean(material && serialized !== savedText);
+
+  useEffect(() => {
+    props.onDirtyChange(dirty);
+  }, [dirty, props.onDirtyChange]);
   const canAssign = Boolean(
     props.assetPath
     && props.selectedEntity?.components.MeshRenderer,

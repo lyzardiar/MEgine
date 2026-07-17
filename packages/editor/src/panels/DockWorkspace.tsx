@@ -76,6 +76,7 @@ const PANEL_TITLE: Record<PanelKind, string> = {
   console: 'Console',
   timeline: 'Timeline',
   material: 'Material',
+  build: 'Build Settings',
 };
 
 const ALL_PANELS: PanelKind[] = [...CORE_PANEL_IDS];
@@ -123,7 +124,7 @@ function defaultTree(): DockNode {
         dir: 'h',
         ratio: 0.7,
         a: leaf(['scene', 'game']),
-        b: leaf(['inspector', 'material']),
+        b: leaf(['inspector', 'material', 'build']),
       },
     },
     b: {
@@ -301,7 +302,7 @@ function ensureAllPanels(
     if (seen.has(p) || excluded.has(p)) continue;
     const preferredLeaf = p === 'timeline'
       ? findLeafContaining(tree, 'console')
-      : p === 'material'
+      : p === 'material' || p === 'build'
         ? findLeafContaining(tree, 'inspector')
         : null;
     if (preferredLeaf) {
@@ -569,6 +570,7 @@ function DropOverlay(props: { zone: DropZone | null }) {
 function DockLeaf(props: {
   node: LeafNode;
   panelContent: (panel: PanelKind) => ReactNode;
+  dirtyPanels: ReadonlySet<PanelKind>;
   dragging: boolean;
   drop: DropTarget | null;
   onActivate: (leafId: string, panel: PanelKind) => void;
@@ -615,94 +617,115 @@ function DockLeaf(props: {
     >
       <div className={`dock${isDropHere ? ' dock-drop-target' : ''}`}>
         <div className="dock-tabs">
-          {node.panels.map((kind) => (
-            <button
-              key={kind}
-              type="button"
-              className={`dock-tab dock-tab-drag${active === kind ? ' active' : ''}`}
-              title="拖到面板中间=叠页签；拖到边缘=上下左右拆分"
-              onClick={(event) => {
-                if (suppressClick.current) {
-                  suppressClick.current = false;
+          {node.panels.map((kind) => {
+            const dirty = props.dirtyPanels.has(kind);
+            return (
+              <button
+                key={kind}
+                type="button"
+                className={`dock-tab dock-tab-drag${active === kind ? ' active' : ''}${dirty ? ' dirty' : ''}`}
+                title={dirty
+                  ? `Save ${PANEL_TITLE[kind]} before moving or detaching it`
+                  : '拖到面板中间=叠页签；拖到边缘=上下左右拆分'}
+                onClick={(event) => {
+                  if (suppressClick.current) {
+                    suppressClick.current = false;
+                    event.preventDefault();
+                    return;
+                  }
+                  props.onActivate(node.id, kind);
+                }}
+                onPointerDown={(event) => {
+                  if (event.button !== 0 || dirty) return;
+                  event.currentTarget.setPointerCapture(event.pointerId);
+                  pointerDrag.current = {
+                    pointerId: event.pointerId,
+                    panel: kind,
+                    startX: event.clientX,
+                    startY: event.clientY,
+                    started: false,
+                  };
+                }}
+                onPointerMove={(event) => {
+                  const current = pointerDrag.current;
+                  if (!current || current.pointerId !== event.pointerId) return;
+                  if (!current.started) {
+                    const distance = Math.hypot(
+                      event.clientX - current.startX,
+                      event.clientY - current.startY,
+                    );
+                    if (distance < 5) return;
+                    current.started = true;
+                    suppressClick.current = true;
+                    props.onDragStart({ panel: current.panel, fromId: node.id });
+                  }
                   event.preventDefault();
-                  return;
-                }
-                props.onActivate(node.id, kind);
-              }}
-              onPointerDown={(event) => {
-                if (event.button !== 0) return;
-                event.currentTarget.setPointerCapture(event.pointerId);
-                pointerDrag.current = {
-                  pointerId: event.pointerId,
-                  panel: kind,
-                  startX: event.clientX,
-                  startY: event.clientY,
-                  started: false,
-                };
-              }}
-              onPointerMove={(event) => {
-                const current = pointerDrag.current;
-                if (!current || current.pointerId !== event.pointerId) return;
-                if (!current.started) {
-                  const distance = Math.hypot(
-                    event.clientX - current.startX,
-                    event.clientY - current.startY,
-                  );
-                  if (distance < 5) return;
-                  current.started = true;
-                  suppressClick.current = true;
-                  props.onDragStart({ panel: current.panel, fromId: node.id });
-                }
-                event.preventDefault();
-                const outside = event.clientX <= 0
-                  || event.clientY <= 0
-                  || event.clientX >= window.innerWidth - 1
-                  || event.clientY >= window.innerHeight - 1;
-                if (outside) {
+                  const outside = event.clientX <= 0
+                    || event.clientY <= 0
+                    || event.clientX >= window.innerWidth - 1
+                    || event.clientY >= window.innerHeight - 1;
+                  if (outside) {
+                    pointerDrag.current = null;
+                    props.onDetach(current.panel, {
+                      x: Math.max(0, event.screenX - 40),
+                      y: Math.max(0, event.screenY - 16),
+                    });
+                    return;
+                  }
+                  props.onDragOver(dropTargetAtPoint(event.clientX, event.clientY));
+                }}
+                onPointerUp={(event) => {
+                  const current = pointerDrag.current;
                   pointerDrag.current = null;
-                  props.onDetach(current.panel, {
-                    x: Math.max(0, event.screenX - 40),
-                    y: Math.max(0, event.screenY - 16),
-                  });
-                  return;
-                }
-                props.onDragOver(dropTargetAtPoint(event.clientX, event.clientY));
-              }}
-              onPointerUp={(event) => {
-                const current = pointerDrag.current;
-                pointerDrag.current = null;
-                if (!current || current.pointerId !== event.pointerId || !current.started) return;
-                event.preventDefault();
-                const target = dropTargetAtPoint(event.clientX, event.clientY);
-                if (target) props.onDrop(target, { panel: current.panel, fromId: node.id });
-                else props.onDragEnd();
-              }}
-              onPointerCancel={() => {
-                pointerDrag.current = null;
-                props.onDragEnd();
-              }}
-              onLostPointerCapture={() => {
-                const current = pointerDrag.current;
-                pointerDrag.current = null;
-                if (current?.started) props.onDragEnd();
-              }}
-            >
-              {PANEL_TITLE[kind]}
-            </button>
-          ))}
+                  if (!current || current.pointerId !== event.pointerId || !current.started) return;
+                  event.preventDefault();
+                  const target = dropTargetAtPoint(event.clientX, event.clientY);
+                  if (target) props.onDrop(target, { panel: current.panel, fromId: node.id });
+                  else props.onDragEnd();
+                }}
+                onPointerCancel={() => {
+                  pointerDrag.current = null;
+                  props.onDragEnd();
+                }}
+                onLostPointerCapture={() => {
+                  const current = pointerDrag.current;
+                  pointerDrag.current = null;
+                  if (current?.started) props.onDragEnd();
+                }}
+              >
+                {PANEL_TITLE[kind]}{dirty ? ' *' : ''}
+              </button>
+            );
+          })}
           {active && (
             <button
               type="button"
               className="dock-popout"
-              title={`Open ${PANEL_TITLE[active]} as a native window`}
+              title={props.dirtyPanels.has(active)
+                ? `Save ${PANEL_TITLE[active]} before detaching it`
+                : `Open ${PANEL_TITLE[active]} as a native window`}
               aria-label={`Detach ${PANEL_TITLE[active]}`}
+              disabled={props.dirtyPanels.has(active)}
               onClick={() => props.onDetach(active)}
             >
               ↗
             </button>
           )}
         </div>
-        <div className="dock-content">{active ? props.panelContent(active) : null}</div>
+        <div className="dock-content">
+          {node.panels.map((panel) => {
+            if (active !== panel && (panel === 'scene' || panel === 'game')) return null;
+            return (
+              <div
+                key={panel}
+                className={`dock-panel-slot${active === panel ? '' : ' hidden'}`}
+                aria-hidden={active !== panel}
+              >
+                {props.panelContent(panel)}
+              </div>
+            );
+          })}
+        </div>
         {props.dragging && <DropOverlay zone={zone} />}
       </div>
     </div>
@@ -712,6 +735,7 @@ function DockLeaf(props: {
 function DockNodeView(props: {
   node: DockNode;
   panelContent: (panel: PanelKind) => ReactNode;
+  dirtyPanels: ReadonlySet<PanelKind>;
   dragging: boolean;
   drop: DropTarget | null;
   onActivate: (leafId: string, panel: PanelKind) => void;
@@ -729,6 +753,7 @@ function DockNodeView(props: {
       <DockLeaf
         node={node}
         panelContent={props.panelContent}
+        dirtyPanels={props.dirtyPanels}
         dragging={props.dragging}
         drop={props.drop}
         onActivate={props.onActivate}
@@ -787,6 +812,7 @@ function DockNodeView(props: {
 export function DockWorkspace(props: {
   panels: DockPanelContents;
   detachedPanel?: PanelKind | null;
+  dirtyPanels?: ReadonlySet<PanelKind>;
 }) {
   const boot = useRef(loadTree());
   const [tree, setTree] = useState<DockNode>(boot.current);
@@ -1024,6 +1050,10 @@ export function DockWorkspace(props: {
     panel: PanelKind,
     position?: { x: number; y: number },
   ) => {
+    if (props.dirtyPanels?.has(panel)) {
+      endDrag();
+      return;
+    }
     const opened = await detachPanelWindow(panel, position);
     if (opened) {
       setTree((previous) => stripPanel(previous, panel) ?? leaf([]));
@@ -1054,13 +1084,17 @@ export function DockWorkspace(props: {
   };
 
   if (props.detachedPanel) {
+    const detachedDirty = props.dirtyPanels?.has(props.detachedPanel) ?? false;
     return (
       <div className="dock-workspace detached-panel-workspace">
         <div className="detached-dock-header">
           <button
             type="button"
             className="detached-dock-drag"
-            title="拖回主窗口中的目标区域即可重新停靠"
+            title={detachedDirty
+              ? `Save ${PANEL_TITLE[props.detachedPanel]} before moving it`
+              : '拖回主窗口中的目标区域即可重新停靠'}
+            disabled={detachedDirty}
             onPointerDown={(event) => {
               if (event.button !== 0) return;
               event.preventDefault();
@@ -1073,8 +1107,11 @@ export function DockWorkspace(props: {
             <button
               type="button"
               className="detached-dock-return"
-              title="停靠回主窗口"
+              title={detachedDirty
+                ? `Save ${PANEL_TITLE[props.detachedPanel]} before docking it`
+                : '停靠回主窗口'}
               aria-label="停靠回主窗口"
+              disabled={detachedDirty}
               onClick={() => requestPanelDock(props.detachedPanel!)}
             >
               ↙
@@ -1116,6 +1153,7 @@ export function DockWorkspace(props: {
       <DockNodeView
         node={tree}
         panelContent={panelContent}
+        dirtyPanels={props.dirtyPanels ?? new Set<PanelKind>()}
         dragging={dragging}
         drop={drop}
         onActivate={(leafId, panel) => {
