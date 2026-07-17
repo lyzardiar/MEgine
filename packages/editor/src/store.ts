@@ -925,9 +925,30 @@ export function createEditorStore() {
       }
     },
     setTransform(entity: number, transform: TransformData) {
+      this.setTransforms([{ entity, transform }]);
+    },
+    setTransforms(updates: Array<{ entity: number; transform: TransformData }>) {
+      const applicable = updates.filter((update) => find(update.entity)?.components.Transform != null);
+      if (!applicable.length) return false;
       if (mode === 'edit' && !gizmoDragging) pushUndo();
-      const e = find(entity);
-      if (e) e.components.Transform = transform;
+      for (const update of applicable) {
+        const entity = find(update.entity);
+        if (entity) entity.components.Transform = structuredClone(update.transform);
+      }
+      return true;
+    },
+    setComponents(
+      type: string,
+      updates: Array<{ entity: number; value: Record<string, unknown> }>,
+    ) {
+      const applicable = updates.filter((update) => find(update.entity)?.components[type] != null);
+      if (!applicable.length) return false;
+      if (mode === 'edit' && !gizmoDragging) pushUndo();
+      for (const update of applicable) {
+        const entity = find(update.entity);
+        if (entity) entity.components[type] = structuredClone(update.value);
+      }
+      return true;
     },
     beginTransformGesture() {
       if (!gizmoDragging) {

@@ -1990,6 +1990,8 @@ body.insp-scrubbing * {
 .axis span.x { background: var(--u-x); color: #fff; }
 .axis span.y { background: var(--u-y); color: #fff; }
 .axis span.z { background: var(--u-z); color: #fff; }
+.axis span.w,
+.axis span.h { background: #56616b; color: #fff; }
 .axis span.l,
 .axis span.r,
 .axis span.t,

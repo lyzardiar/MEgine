@@ -9,6 +9,7 @@ import { getBehaviour } from '@mengine/behaviour';
 import { createComponentDefaults, getComponentCatalog } from '../componentCatalog';
 import { getBuiltinInspectorField, type InspectorOption } from '../inspectorMetadata';
 import { eulerXYZToQuat, quatToEulerXYZ } from '../math3d';
+import { readRectTransform } from '../ui/rectLayout';
 import { loadSpineInspectorOptions } from '../spine/spineCanvasRuntime';
 import { SchemaFieldEditor } from './SchemaFieldEditor';
 import { RectTransformEditor } from './RectTransformEditor';
@@ -94,10 +95,11 @@ function useScrubDrag(
 }
 
 function AxisInput(props: {
-  label: 'x' | 'y' | 'z' | 'w';
+  label: 'x' | 'y' | 'z' | 'w' | 'h';
   value: number;
   onChange: (v: number) => void;
   step?: number;
+  mixed?: boolean;
 }) {
   const step = props.step ?? 0.1;
   const onScrub = useScrubDrag(props.value, step, props.onChange);
@@ -113,7 +115,9 @@ function AxisInput(props: {
       <input
         type="number"
         step={step}
-        value={Number(props.value.toFixed(3))}
+        value={props.mixed ? '' : Number(props.value.toFixed(3))}
+        placeholder={props.mixed ? '—' : undefined}
+        title={props.mixed ? 'Mixed values' : undefined}
         onChange={(e) => props.onChange(parseFloat(e.target.value) || 0)}
       />
     </div>
@@ -599,6 +603,167 @@ function SpineSkeletonEditor(props: {
   );
 }
 
+function valuesAreMixed(values: number[]): boolean {
+  return values.some((value) => Math.abs(value - values[0]) > 1e-6);
+}
+
+function MultiSelectionInspector(props: {
+  count: number;
+  entities: Array<{ entity: number; components: Record<string, unknown> }>;
+  primary: { entity: number; components: Record<string, unknown> };
+  onChangeTransforms?: (updates: Array<{ entity: number; transform: Transform }>) => void;
+  onSetComponents?: (
+    type: string,
+    updates: Array<{ entity: number; value: Record<string, unknown> }>,
+  ) => void;
+  onBeginEditGesture?: () => void;
+  onEndEditGesture?: () => void;
+}) {
+  const transformEntities = props.entities.filter((entity) => entity.components.Transform != null);
+  const rectEntities = props.entities.filter((entity) => entity.components.RectTransform != null);
+  const allTransforms = transformEntities.length === props.entities.length;
+  const allRects = rectEntities.length === props.entities.length;
+  const primaryTransform = props.primary.components.Transform as Transform | undefined;
+  const primaryRect = props.primary.components.RectTransform
+    ? readRectTransform(props.primary.components.RectTransform)
+    : null;
+
+  const setTransformAxis = (field: 'position' | 'rotation' | 'scale', axis: number, value: number) => {
+    props.onChangeTransforms?.(transformEntities.map((entity) => {
+      const current = entity.components.Transform as Transform;
+      if (field === 'rotation') {
+        const euler = quatToEulerXYZ(current.rotation);
+        euler[axis] = value;
+        return {
+          entity: entity.entity,
+          transform: {
+            ...current,
+            rotation: eulerXYZToQuat(euler[0], euler[1], euler[2]),
+          },
+        };
+      }
+      const vector = [...current[field]] as [number, number, number];
+      vector[axis] = value;
+      return { entity: entity.entity, transform: { ...current, [field]: vector } };
+    }));
+  };
+
+  const rectValues = rectEntities.map((entity) => readRectTransform(entity.components.RectTransform));
+  const setRectAxis = (
+    field: 'anchored_position' | 'size_delta' | 'local_scale',
+    axis: 0 | 1,
+    value: number,
+  ) => {
+    props.onSetComponents?.('RectTransform', rectEntities.map((entity, index) => {
+      const current = rectValues[index];
+      const vector = [...current[field]] as [number, number];
+      vector[axis] = value;
+      return { entity: entity.entity, value: { ...current, [field]: vector } };
+    }));
+  };
+  const setRectRotation = (value: number) => {
+    props.onSetComponents?.('RectTransform', rectEntities.map((entity, index) => ({
+      entity: entity.entity,
+      value: { ...rectValues[index], local_rotation: value },
+    })));
+  };
+
+  return (
+    <InspectorGestureProvider
+      begin={props.onBeginEditGesture ?? (() => {})}
+      end={props.onEndEditGesture ?? (() => {})}
+    >
+      <div className="dock-body">
+        <div className="insp-header">
+          <div className="insp-name">{props.count} selected</div>
+          <div className="insp-tag">Editing shared values</div>
+        </div>
+        {allRects && primaryRect && (
+          <CompBlock title="Rect Transform (Multi)">
+            <div className="axis-row">
+              <label>Position</label>
+              {([0, 1] as const).map((axis) => (
+                <AxisInput
+                  key={axis}
+                  label={axis === 0 ? 'x' : 'y'}
+                  value={primaryRect.anchored_position[axis]}
+                  mixed={valuesAreMixed(rectValues.map((value) => value.anchored_position[axis]))}
+                  onChange={(value) => setRectAxis('anchored_position', axis, value)}
+                />
+              ))}
+            </div>
+            <div className="axis-row">
+              <label>Size</label>
+              {([0, 1] as const).map((axis) => (
+                <AxisInput
+                  key={axis}
+                  label={axis === 0 ? 'w' : 'h'}
+                  value={primaryRect.size_delta[axis]}
+                  mixed={valuesAreMixed(rectValues.map((value) => value.size_delta[axis]))}
+                  onChange={(value) => setRectAxis('size_delta', axis, value)}
+                />
+              ))}
+            </div>
+            <div className="axis-row">
+              <label>Rotation</label>
+              <AxisInput
+                label="z"
+                value={primaryRect.local_rotation}
+                mixed={valuesAreMixed(rectValues.map((value) => value.local_rotation))}
+                step={1}
+                onChange={setRectRotation}
+              />
+            </div>
+            <div className="axis-row">
+              <label>Scale</label>
+              {([0, 1] as const).map((axis) => (
+                <AxisInput
+                  key={axis}
+                  label={axis === 0 ? 'x' : 'y'}
+                  value={primaryRect.local_scale[axis]}
+                  mixed={valuesAreMixed(rectValues.map((value) => value.local_scale[axis]))}
+                  onChange={(value) => setRectAxis('local_scale', axis, value)}
+                />
+              ))}
+            </div>
+          </CompBlock>
+        )}
+        {allTransforms && primaryTransform && (
+          <CompBlock title="Transform (Multi)">
+            {(['position', 'rotation', 'scale'] as const).map((field) => {
+              const primaryValues = field === 'rotation'
+                ? quatToEulerXYZ(primaryTransform.rotation)
+                : primaryTransform[field];
+              const allValues = transformEntities.map((entity) => {
+                const transform = entity.components.Transform as Transform;
+                return field === 'rotation' ? quatToEulerXYZ(transform.rotation) : transform[field];
+              });
+              return (
+                <div className="axis-row" key={field}>
+                  <label>{field[0].toUpperCase() + field.slice(1)}</label>
+                  {([0, 1, 2] as const).map((axis) => (
+                    <AxisInput
+                      key={axis}
+                      label={(['x', 'y', 'z'] as const)[axis]}
+                      value={primaryValues[axis]}
+                      mixed={valuesAreMixed(allValues.map((values) => values[axis]))}
+                      step={field === 'rotation' ? 1 : 0.1}
+                      onChange={(value) => setTransformAxis(field, axis, value)}
+                    />
+                  ))}
+                </div>
+              );
+            })}
+          </CompBlock>
+        )}
+        {!allRects && !allTransforms && (
+          <div className="empty-state">Selection has no shared Transform type</div>
+        )}
+      </div>
+    </InspectorGestureProvider>
+  );
+}
+
 export function Inspector(props: {
   entity: {
     entity: number;
@@ -607,11 +772,17 @@ export function Inspector(props: {
     components: Record<string, unknown>;
   } | null;
   entities?: Array<{ entity: number; name?: string | null; components: Record<string, unknown> }>;
+  selectedIds?: number[];
   selectionCount?: number;
   onChangeTransform: (entity: number, t: Transform) => void;
+  onChangeTransforms?: (updates: Array<{ entity: number; transform: Transform }>) => void;
   onAddComponent: (entity: number, type: string, value: Record<string, unknown>) => void;
   onRemoveComponent: (entity: number, type: string) => void;
   onSetComponent: (entity: number, type: string, value: Record<string, unknown>) => void;
+  onSetComponents?: (
+    type: string,
+    updates: Array<{ entity: number; value: Record<string, unknown> }>,
+  ) => void;
   /** Merge patch into existing component (avoids stale full-replace wiping fields). */
   onPatchComponent?: (entity: number, type: string, patch: Record<string, unknown>) => void;
   onInvokeBehaviourMethod?: (entity: number, type: string, method: string) => void;
@@ -642,13 +813,20 @@ export function Inspector(props: {
   }
 
   if ((props.selectionCount ?? 1) > 1) {
+    const byId = new Map((props.entities ?? []).map((entity) => [entity.entity, entity]));
+    const selectedEntities = (props.selectedIds ?? [])
+      .map((id) => byId.get(id))
+      .filter((entity): entity is NonNullable<typeof entity> => entity != null);
     return (
-      <div className="dock-body">
-        <div className="insp-header">
-          <div className="insp-name">{props.selectionCount} selected</div>
-          <div className="insp-tag">Multi-edit Transform is not available yet</div>
-        </div>
-      </div>
+      <MultiSelectionInspector
+        count={selectedEntities.length}
+        entities={selectedEntities}
+        primary={props.entity}
+        onChangeTransforms={props.onChangeTransforms}
+        onSetComponents={props.onSetComponents}
+        onBeginEditGesture={props.onBeginEditGesture}
+        onEndEditGesture={props.onEndEditGesture}
+      />
     );
   }
 

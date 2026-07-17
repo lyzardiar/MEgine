@@ -701,6 +701,7 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
             <Inspector
               entity={snap.entities.find((e) => e.entity === selected) ?? null}
               entities={snap.entities}
+              selectedIds={selectedIds}
               selectionCount={selectedIds.length}
               onBeginEditGesture={() => store.beginTransformGesture()}
               onEndEditGesture={() => store.endTransformGesture()}
@@ -714,6 +715,10 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
               }}
               onChangeTransform={(entity, transform) => {
                 store.setTransform(entity, transform);
+                refresh();
+              }}
+              onChangeTransforms={(updates) => {
+                store.setTransforms(updates);
                 refresh();
               }}
               onAddComponent={(entity, type, value) => {
@@ -732,6 +737,10 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
               }}
               onSetComponent={(entity, type, value) => {
                 store.setComponent(entity, type, value);
+                refresh();
+              }}
+              onSetComponents={(type, updates) => {
+                store.setComponents(type, updates);
                 refresh();
               }}
               onPatchComponent={(entity, type, patch) => {
