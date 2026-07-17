@@ -1,4 +1,19 @@
 {
+  "AspectRatioFitter": {
+    "properties": {
+      "aspect_mode": {
+        "type": "string"
+      },
+      "aspect_ratio": {
+        "type": "number"
+      }
+    },
+    "required": [
+      "aspect_mode",
+      "aspect_ratio"
+    ],
+    "type": "object"
+  },
   "AutoRotate": {
     "properties": {
       "angle": {

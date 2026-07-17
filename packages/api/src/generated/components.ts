@@ -178,6 +178,11 @@ export interface RectTransform {
   localScale: [number, number];
 }
 
+export interface AspectRatioFitter {
+  aspectMode: string;
+  aspectRatio: number;
+}
+
 export interface Image {
   sprite: string;
   color: [number, number, number, number];
@@ -367,6 +372,7 @@ export type ComponentName =
   | 'Canvas'
   | 'CanvasScaler'
   | 'RectTransform'
+  | 'AspectRatioFitter'
   | 'Image'
   | 'Button'
   | 'Text'
@@ -405,6 +411,7 @@ export const COMPONENT_NAMES = [
   'Canvas',
   'CanvasScaler',
   'RectTransform',
+  'AspectRatioFitter',
   'Image',
   'Button',
   'Text',

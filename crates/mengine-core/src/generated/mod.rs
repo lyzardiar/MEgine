@@ -577,6 +577,28 @@ impl Component for RectTransform {
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
 #[serde(default)]
+pub struct AspectRatioFitter {
+    pub aspect_mode: String,
+    pub aspect_ratio: f32,
+}
+
+impl Default for AspectRatioFitter {
+    fn default() -> Self {
+        Self {
+            aspect_mode: "None".into(),
+            aspect_ratio: 1.0,
+        }
+    }
+}
+
+impl Component for AspectRatioFitter {
+    fn type_name() -> &'static str {
+        "AspectRatioFitter"
+    }
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize)]
+#[serde(default)]
 pub struct Image {
     pub sprite: String,
     pub color: [f32; 4],
@@ -1125,6 +1147,7 @@ pub mod meta {
         "Canvas",
         "CanvasScaler",
         "RectTransform",
+        "AspectRatioFitter",
         "Image",
         "Button",
         "Text",

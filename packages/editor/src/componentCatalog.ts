@@ -113,6 +113,12 @@ const BUILTIN_CATALOG: ComponentCatalogEntry[] = [
     create: () => defaultRectTransform(),
   },
   {
+    type: 'AspectRatioFitter',
+    label: 'Aspect Ratio Fitter',
+    description: 'Unity-style aspect ratio layout controller',
+    create: () => ({ aspect_mode: 'None', aspect_ratio: 1 }),
+  },
+  {
     type: 'Image',
     label: 'Image',
     description: 'UI 图形',

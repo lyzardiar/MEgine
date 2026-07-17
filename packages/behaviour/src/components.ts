@@ -109,6 +109,12 @@ export class Image {
   raycast_target!: boolean;
 }
 
+export class AspectRatioFitter {
+  static readonly typeName = 'AspectRatioFitter' as const;
+  aspect_mode!: string;
+  aspect_ratio!: number;
+}
+
 /** UI Button component (not the @Button decorator). */
 export class UIButton {
   static readonly typeName = 'Button' as const;
@@ -131,6 +137,7 @@ export type BuiltinComponents = {
   Canvas: Canvas;
   CanvasScaler: CanvasScaler;
   RectTransform: RectTransform;
+  AspectRatioFitter: AspectRatioFitter;
   Image: Image;
   Button: UIButton;
 };

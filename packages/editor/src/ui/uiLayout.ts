@@ -11,6 +11,7 @@ import {
 import { rectLocalAxes, rectPivot } from '../rectGizmo';
 import { drawSpriteInRect, drawSpriteSlicedInRect } from '../spriteDraw';
 import type { SpriteBorder } from './nineSlice';
+import { applyAspectRatio } from './aspectRatioFitter';
 import { resolveSpriteId } from '../spriteLibrary';
 import { project, type Camera, type Vec3 } from '../math3d';
 import { rectComponentSceneScale } from '../rectSceneScale';
@@ -450,9 +451,20 @@ export function layoutUiOverlay(
       inheritedClip?: Rect,
     ) => {
       const hasRt = !!ent.components.RectTransform;
-      const rect = forcedRect ?? (hasRt
+      const rt = hasRt ? readRectTransform(ent.components.RectTransform) : null;
+      let rect = forcedRect ?? (hasRt
         ? solveRectTransform(parentRect, scaleRt(ent.components.RectTransform))
         : parentRect);
+      const aspect = ent.components.AspectRatioFitter as Record<string, unknown> | undefined;
+      if (aspect && rt) {
+        rect = applyAspectRatio(
+          rect,
+          parentRect,
+          rt.pivot,
+          String(aspect.aspect_mode ?? aspect.aspectMode ?? 'None'),
+          number(aspect.aspect_ratio ?? aspect.aspectRatio, 1),
+        );
+      }
 
       const img = ent.components.Image as Record<string, unknown> | undefined;
       const btn = ent.components.Button as Record<string, unknown> | undefined;
@@ -471,7 +483,6 @@ export function layoutUiOverlay(
       const layout = ent.components.LayoutGroup as Record<string, unknown> | undefined;
       const mask = ent.components.RectMask2D as Record<string, unknown> | undefined;
       const isCanvas = isCanvasRoot || !!ent.components.Canvas;
-      const rt = hasRt ? readRectTransform(ent.components.RectTransform) : null;
       const anchorParentRect = hasRt && !isCanvasRoot ? { ...parentRect } : undefined;
       const rotation = rt?.local_rotation ?? 0;
       const pivot: [number, number] = rt ? ([...rt.pivot] as [number, number]) : [0.5, 0.5];

@@ -1,7 +1,7 @@
 use mengine_core::generated::{
-    Button, Canvas, CanvasGroup, CanvasScaler, Dropdown, Image, InputField, LayoutGroup, ListView,
-    Panel, ProgressBar, RectMask2D, RectTransform, ScrollView, Scrollbar, Slider, TabView, Text,
-    Toggle,
+    AspectRatioFitter, Button, Canvas, CanvasGroup, CanvasScaler, Dropdown, Image, InputField,
+    LayoutGroup, ListView, Panel, ProgressBar, RectMask2D, RectTransform, ScrollView, Scrollbar,
+    Slider, TabView, Text, Toggle,
 };
 use mengine_core::hierarchy::Parent;
 use mengine_core::{Entity, World};
@@ -258,7 +258,16 @@ fn walk(
         clip,
         forced_rect,
     } = layout_state;
-    let rect = forced_rect.unwrap_or_else(|| solve_rect(parent_rect, &rect_transform, scale));
+    let mut rect = forced_rect.unwrap_or_else(|| solve_rect(parent_rect, &rect_transform, scale));
+    if let Some(fitter) = world.get_component::<AspectRatioFitter>(entity) {
+        rect = apply_aspect_ratio(
+            rect,
+            parent_rect,
+            rect_transform.pivot,
+            &fitter.aspect_mode,
+            fitter.aspect_ratio,
+        );
+    }
     let rotation = -rect_transform.local_rotation.to_radians();
     let pivot = rect_transform.pivot;
     let mut state = inherited;
@@ -1290,6 +1299,63 @@ fn solve_rect(parent: UiRect, rect: &RectTransform, scale: f32) -> UiRect {
     }
 }
 
+fn apply_aspect_ratio(
+    rect: UiRect,
+    parent: UiRect,
+    pivot: [f32; 2],
+    mode: &str,
+    aspect_ratio: f32,
+) -> UiRect {
+    if mode.eq_ignore_ascii_case("none") || !aspect_ratio.is_finite() || aspect_ratio <= 0.0 {
+        return rect;
+    }
+    let pivot_x = rect.x + rect.width * pivot[0];
+    let pivot_y = rect.y + rect.height * pivot[1];
+    if mode.eq_ignore_ascii_case("widthcontrolsheight") {
+        let height = rect.width / aspect_ratio;
+        return UiRect {
+            y: pivot_y - height * pivot[1],
+            height,
+            ..rect
+        };
+    }
+    if mode.eq_ignore_ascii_case("heightcontrolswidth") {
+        let width = rect.height * aspect_ratio;
+        return UiRect {
+            x: pivot_x - width * pivot[0],
+            width,
+            ..rect
+        };
+    }
+    let fit = mode.eq_ignore_ascii_case("fitinparent");
+    let envelope = mode.eq_ignore_ascii_case("envelopeparent");
+    if (!fit && !envelope) || parent.width <= 0.0 || parent.height <= 0.0 {
+        return rect;
+    }
+    let parent_ratio = parent.width / parent.height;
+    let fit_width = if fit {
+        parent_ratio <= aspect_ratio
+    } else {
+        parent_ratio >= aspect_ratio
+    };
+    let width = if fit_width {
+        parent.width
+    } else {
+        parent.height * aspect_ratio
+    };
+    let height = if fit_width {
+        parent.width / aspect_ratio
+    } else {
+        parent.height
+    };
+    UiRect {
+        x: parent.x + (parent.width - width) * pivot[0],
+        y: parent.y + (parent.height - height) * pivot[1],
+        width,
+        height,
+    }
+}
+
 fn canvas_scale_factor(scaler: &CanvasScaler, width: f32, height: f32) -> f32 {
     if scaler.ui_scale_mode == "ConstantPixelSize" {
         return scaler.scale_factor.max(0.0001);
@@ -1663,6 +1729,49 @@ fn glyph_rows(character: char) -> [u8; 7] {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn aspect_ratio_modes_match_editor_layout_semantics() {
+        let parent = UiRect {
+            x: 0.0,
+            y: 0.0,
+            width: 200.0,
+            height: 100.0,
+        };
+        let rect = UiRect {
+            x: 50.0,
+            y: 25.0,
+            width: 100.0,
+            height: 50.0,
+        };
+        assert_eq!(
+            apply_aspect_ratio(rect, parent, [0.5, 0.5], "WidthControlsHeight", 1.0),
+            UiRect {
+                x: 50.0,
+                y: 0.0,
+                width: 100.0,
+                height: 100.0,
+            }
+        );
+        assert_eq!(
+            apply_aspect_ratio(rect, parent, [0.5, 0.5], "FitInParent", 1.0),
+            UiRect {
+                x: 50.0,
+                y: 0.0,
+                width: 100.0,
+                height: 100.0,
+            }
+        );
+        assert_eq!(
+            apply_aspect_ratio(rect, parent, [0.0, 0.0], "EnvelopeParent", 1.0),
+            UiRect {
+                x: 0.0,
+                y: 0.0,
+                width: 200.0,
+                height: 200.0,
+            }
+        );
+    }
 
     #[test]
     fn sliced_images_emit_uv_regions_with_one_shared_rotation_pivot() {

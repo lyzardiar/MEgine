@@ -313,6 +313,7 @@ mod tests {
                     "sprite": "Assets/UI/panel.png", "image_type": "Sliced",
                     "border": [8, 10, 8, 10], "source_size": [64, 64]
                 },
+                "AspectRatioFitter": { "aspect_mode": "FitInParent", "aspect_ratio": 1.777778 },
                 "Text": { "text": "Saved UI" },
                 "Toggle": { "is_on": true },
                 "Slider": { "min_value": 0, "max_value": 10, "value": 7 },
@@ -343,6 +344,10 @@ mod tests {
         assert_eq!(components["Image"]["image_type"], "Sliced");
         assert_eq!(components["Image"]["border"][1], 10.0);
         assert_eq!(components["Image"]["source_size"][0], 64.0);
+        assert_eq!(
+            components["AspectRatioFitter"]["aspect_mode"],
+            "FitInParent"
+        );
         assert_eq!(components["Text"]["text"], "Saved UI");
         assert_eq!(components["Toggle"]["is_on"], true);
         assert_eq!(components["Slider"]["value"], 7.0);

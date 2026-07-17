@@ -79,6 +79,7 @@ impl WorldSnapshot {
             capture_component!(crate::generated::CanvasScaler, "CanvasScaler");
             capture_component!(crate::generated::CanvasGroup, "CanvasGroup");
             capture_component!(crate::generated::RectTransform, "RectTransform");
+            capture_component!(crate::generated::AspectRatioFitter, "AspectRatioFitter");
             capture_component!(crate::generated::RectMask2D, "RectMask2D");
             capture_component!(crate::generated::LayoutGroup, "LayoutGroup");
             capture_component!(crate::generated::Image, "Image");

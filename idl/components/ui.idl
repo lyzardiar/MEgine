@@ -25,6 +25,13 @@ component RectTransform {
   local_scale:        float2 = [1, 1]
 }
 
+/// Unity-style aspect ratio layout controller.
+component AspectRatioFitter {
+  /// "None" | "WidthControlsHeight" | "HeightControlsWidth" | "FitInParent" | "EnvelopeParent"
+  aspect_mode:  string = "None"
+  aspect_ratio: float  = 1
+}
+
 component Image {
   sprite:          string = "white"
   color:           float4 = [1, 1, 1, 1]

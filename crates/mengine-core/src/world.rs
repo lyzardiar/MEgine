@@ -2,10 +2,11 @@ use crate::command::{CommandBuffer, WorldCommand};
 use crate::component::{Component, ComponentBox, ComponentId, ComponentRegistry};
 use crate::entity::Entity;
 use crate::generated::{
-    AutoRotate, Button, Camera2D, Camera3D, Canvas, CanvasGroup, CanvasScaler, DirectionalLight,
-    Dropdown, EditorOnly, Image, InputField, Layer, LayoutGroup, ListView, MeshRenderer, Name,
-    Panel, PbrMaterial, PointLight, ProgressBar, RectMask2D, RectTransform, ScrollView, Scrollbar,
-    Slider, SpotLight, SpriteRenderer, TabView, Text, Toggle, Transform, Transform2D,
+    AspectRatioFitter, AutoRotate, Button, Camera2D, Camera3D, Canvas, CanvasGroup, CanvasScaler,
+    DirectionalLight, Dropdown, EditorOnly, Image, InputField, Layer, LayoutGroup, ListView,
+    MeshRenderer, Name, Panel, PbrMaterial, PointLight, ProgressBar, RectMask2D, RectTransform,
+    ScrollView, Scrollbar, Slider, SpotLight, SpriteRenderer, TabView, Text, Toggle, Transform,
+    Transform2D,
 };
 use crate::hierarchy::{Children, Parent};
 use crate::schedule::Schedule;
@@ -380,6 +381,9 @@ impl World {
             "RectTransform" | "rectTransform" => {
                 self.insert_json_component::<RectTransform>(entity, value);
             }
+            "AspectRatioFitter" | "aspectRatioFitter" => {
+                self.insert_json_component::<AspectRatioFitter>(entity, value);
+            }
             "RectMask2D" | "rectMask2D" | "rectMask2d" => {
                 self.insert_json_component::<RectMask2D>(entity, value);
             }
@@ -468,6 +472,7 @@ fn canonical_component_name(component: &str) -> &str {
         "CanvasScaler" | "canvasScaler" => "CanvasScaler",
         "CanvasGroup" | "canvasGroup" => "CanvasGroup",
         "RectTransform" | "rectTransform" => "RectTransform",
+        "AspectRatioFitter" | "aspectRatioFitter" => "AspectRatioFitter",
         "RectMask2D" | "rectMask2D" | "rectMask2d" => "RectMask2D",
         "LayoutGroup" | "layoutGroup" => "LayoutGroup",
         "Image" | "image" => "Image",

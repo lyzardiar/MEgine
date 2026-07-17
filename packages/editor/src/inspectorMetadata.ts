@@ -123,6 +123,19 @@ export const BUILTIN_INSPECTOR_FIELDS: Readonly<
     match_width_or_height: { label: 'Match', min: 0, max: 1, step: 0.01 },
     scale_factor: { min: 0.0001, step: 0.1 },
   },
+  AspectRatioFitter: {
+    aspect_mode: {
+      kind: 'enum',
+      options: options(
+        'None',
+        'WidthControlsHeight',
+        'HeightControlsWidth',
+        'FitInParent',
+        'EnvelopeParent',
+      ),
+    },
+    aspect_ratio: { min: 0.0001, step: 0.01 },
+  },
   Image: {
     sprite,
     image_type: { kind: 'enum', options: options('Simple', 'Sliced') },
