@@ -149,6 +149,7 @@ export function drawRectGizmo(
   /** When set, draw Unity-style size handles on the rect. */
   rect?: Rect | null,
   pivotNorm: [number, number] = [0.5, 0.5],
+  pivotEditing = false,
 ): RectGizmoHit[] {
   const hits: RectGizmoHit[] = [];
   const axes = rectLocalAxes(rotDeg);
@@ -168,13 +169,38 @@ export function drawRectGizmo(
     ctx.closePath();
     ctx.stroke();
 
-    for (const handle of Object.keys(pts) as SizeHandle[]) {
-      const p = pts[handle];
-      const part: GizmoPart = { kind: 'size', handle };
-      const col = colorOf(part, hover, active, COL.size);
-      sizeHandleBox(ctx, p.x, p.y, col);
-      hits.push({ kind: 'size', handle, x: p.x, y: p.y });
+    if (!pivotEditing) {
+      for (const handle of Object.keys(pts) as SizeHandle[]) {
+        const p = pts[handle];
+        const part: GizmoPart = { kind: 'size', handle };
+        const col = colorOf(part, hover, active, COL.size);
+        sizeHandleBox(ctx, p.x, p.y, col);
+        hits.push({ kind: 'size', handle, x: p.x, y: p.y });
+      }
     }
+  }
+
+  if (pivotEditing) {
+    const part: GizmoPart = { kind: 'center' };
+    const col = colorOf(part, hover, active, '#66c7ff');
+    ctx.strokeStyle = '#151515';
+    ctx.lineWidth = 4;
+    ctx.beginPath();
+    ctx.arc(ox, oy, 7, 0, Math.PI * 2);
+    ctx.moveTo(ox - 12, oy);
+    ctx.lineTo(ox + 12, oy);
+    ctx.moveTo(ox, oy - 12);
+    ctx.lineTo(ox, oy + 12);
+    ctx.stroke();
+    ctx.strokeStyle = col;
+    ctx.lineWidth = 2;
+    ctx.stroke();
+    ctx.fillStyle = col;
+    ctx.beginPath();
+    ctx.arc(ox, oy, 2.5, 0, Math.PI * 2);
+    ctx.fill();
+    hits.push({ kind: 'center', x: ox, y: oy, r: 12 });
+    return hits;
   }
 
   if (mode === 'translate' || mode === 'scale') {

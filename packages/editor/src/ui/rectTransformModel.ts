@@ -68,6 +68,38 @@ export function applyAnchorPreset(
   return next;
 }
 
+function clamp01(value: number): number {
+  return Math.max(0, Math.min(1, Number.isFinite(value) ? value : 0.5));
+}
+
+/**
+ * Changes the pivot without moving the RectTransform's visible rectangle.
+ * This is the same position compensation Unity applies when its pivot handle is
+ * dragged: position shifts by sizeDelta times the normalized pivot delta.
+ */
+export function applyPivotKeepingRect(
+  value: RectTransformValue,
+  pivot: Vec2,
+): RectTransformValue {
+  const nextPivot: Vec2 = [clamp01(pivot[0]), clamp01(pivot[1])];
+  const delta: Vec2 = [
+    nextPivot[0] - value.pivot[0],
+    nextPivot[1] - value.pivot[1],
+  ];
+  return {
+    ...value,
+    anchor_min: [...value.anchor_min],
+    anchor_max: [...value.anchor_max],
+    pivot: nextPivot,
+    anchored_position: [
+      value.anchored_position[0] + value.size_delta[0] * delta[0],
+      value.anchored_position[1] + value.size_delta[1] * delta[1],
+    ],
+    size_delta: [...value.size_delta],
+    local_scale: [...value.local_scale],
+  };
+}
+
 export type RectAxisFields = {
   stretched: boolean;
   firstLabel: string;

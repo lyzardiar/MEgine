@@ -158,6 +158,8 @@ export type UiDrawItem = {
   selected: boolean;
   /** Projected pivot (Scene 3D). */
   pivotScreen?: { x: number; y: number };
+  /** Exact unrotated size in Scene screen pixels (rect is the rotated AABB). */
+  unrotatedSize?: { w: number; h: number };
 };
 
 function color4(raw: unknown, fallback: [number, number, number, number]): [number, number, number, number] {
@@ -778,6 +780,7 @@ export function layoutUiScene3D(
         clip: it.clip ? projectPixelRect(it.clip) : undefined,
         depth: depthBase + it.depth,
         pivotScreen: pivS ? { x: pivS.x, y: pivS.y } : undefined,
+        unrotatedSize: { w: it.rect.w * sceneScale, h: it.rect.h * sceneScale },
       });
     }
     depthBase += 1000;

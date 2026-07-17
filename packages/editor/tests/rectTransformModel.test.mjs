@@ -3,9 +3,11 @@ import test from 'node:test';
 import {
   ANCHOR_PRESETS,
   applyAnchorPreset,
+  applyPivotKeepingRect,
   readRectAxis,
   writeRectAxis,
 } from '../src/ui/rectTransformModel.ts';
+import { solveRectTransform } from '../src/ui/rectLayout.ts';
 
 const base = () => ({
   anchor_min: [0.5, 0.5],
@@ -48,4 +50,38 @@ test('stretch offsets round-trip through Left Right Top Bottom fields', () => {
   const fields = readRectAxis(withRight, 0);
   assert.equal(fields.first, 25);
   assert.equal(fields.second, 10);
+});
+
+test('pivot editing preserves a fixed-anchor rectangle', () => {
+  const value = {
+    anchor_min: [0.5, 0.5],
+    anchor_max: [0.5, 0.5],
+    pivot: [0.5, 0.5],
+    anchored_position: [20, -10],
+    size_delta: [200, 80],
+    local_rotation: 0,
+    local_scale: [1, 1],
+  };
+  const parent = { x: 0, y: 0, w: 800, h: 600 };
+  const before = solveRectTransform(parent, value);
+  const next = applyPivotKeepingRect(value, [0, 1]);
+  assert.deepEqual(solveRectTransform(parent, next), before);
+  assert.deepEqual(next.anchored_position, [-80, 30]);
+});
+
+test('pivot editing preserves a stretched rectangle and clamps the handle', () => {
+  const value = {
+    anchor_min: [0, 0.25],
+    anchor_max: [1, 0.75],
+    pivot: [0.5, 0.5],
+    anchored_position: [5, 7],
+    size_delta: [-40, 20],
+    local_rotation: 0,
+    local_scale: [1, 1],
+  };
+  const parent = { x: 10, y: 20, w: 500, h: 300 };
+  const before = solveRectTransform(parent, value);
+  const next = applyPivotKeepingRect(value, [-2, 3]);
+  assert.deepEqual(next.pivot, [0, 1]);
+  assert.deepEqual(solveRectTransform(parent, next), before);
 });

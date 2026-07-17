@@ -582,6 +582,10 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
                 store.applySelectedRectDeltas(deltas);
                 refresh();
               }}
+              onRectPivot={(entity, pivot) => {
+                store.setRectPivot(entity, pivot);
+                refresh();
+              }}
               onRectRotate={(entity, degrees) => {
                 store.rotateRectBy(entity, degrees);
                 refresh();

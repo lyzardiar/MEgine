@@ -153,6 +153,21 @@ function drawCanvasGrid(
   ctx.restore();
 }
 
+function rectGizmoBounds(
+  item: UiDrawItem,
+  pivot: { x: number; y: number },
+  pivotNorm: [number, number],
+): { x: number; y: number; w: number; h: number } {
+  const size = item.unrotatedSize;
+  if (!size) return item.rect;
+  return {
+    x: pivot.x - size.w * pivotNorm[0],
+    y: pivot.y - size.h * pivotNorm[1],
+    w: size.w,
+    h: size.h,
+  };
+}
+
 type RectSnapDrag = {
   active: boolean;
   settings: SceneSnapSettings;
@@ -264,6 +279,7 @@ export function Viewport(props: {
   onRectTranslate?: (entity: number, dx: number, dy: number) => void;
   onRectNudge?: (dx: number, dy: number) => void;
   onRectAlign?: (deltas: RectAlignmentDelta[]) => void;
+  onRectPivot?: (entity: number, pivot: [number, number]) => void;
   onRectRotate?: (entity: number, degrees: number) => void;
   onRectScale?: (entity: number, axis: 'x' | 'y' | 'both', amount: number) => void;
   onRectResize?: (
@@ -365,6 +381,9 @@ export function Viewport(props: {
         pivot: { x: number; y: number };
         rotDeg: number;
         layoutScale: number;
+        pivotEditing: boolean;
+        pivotNorm: [number, number];
+        rectSize: { w: number; h: number };
         lastAng?: number;
         snap: RectSnapDrag;
       }
@@ -378,6 +397,9 @@ export function Viewport(props: {
   const [sceneGrid, setSceneGrid] = useState(loadSceneGrid);
   const sceneGridRef = useRef(sceneGrid);
   sceneGridRef.current = sceneGrid;
+  const [pivotEditing, setPivotEditing] = useState(false);
+  const pivotEditingRef = useRef(pivotEditing);
+  pivotEditingRef.current = pivotEditing;
   const [snapSettings, setSnapSettings] = useState(loadSceneSnap);
   const snapSettingsRef = useRef(snapSettings);
   snapSettingsRef.current = snapSettings;
@@ -864,6 +886,7 @@ export function Viewport(props: {
             if (item && sel?.components.RectTransform) {
               const rt = readRectTransform(sel.components.RectTransform);
               const pivot = item.pivotScreen ?? rectPivot(item.rect, rt.pivot);
+              const gizmoRect = rectGizmoBounds(item, pivot, rt.pivot);
               const rh = drawRectGizmo(
                 ctx,
                 pivot,
@@ -871,8 +894,9 @@ export function Viewport(props: {
                 p.gizmo,
                 hoverGizmoRef.current,
                 activeGizmoRef.current,
-                item.rect,
+                gizmoRect,
                 rt.pivot,
+                scene2DRef.current && pivotEditingRef.current,
               );
               rectGizmoHitsRef.current = rh;
             }
@@ -1030,6 +1054,9 @@ export function Viewport(props: {
             const pivot = item
               ? (item.pivotScreen ?? rectPivot(item.rect, rt.pivot))
               : { x, y };
+            const gizmoRect = item
+              ? rectGizmoBounds(item, pivot, rt.pivot)
+              : { x: pivot.x - 50, y: pivot.y - 50, w: 100, h: 100 };
             let lastAng: number | undefined;
             if (propsRef.current.gizmo === 'rotate') {
               lastAng = Math.atan2(y - pivot.y, x - pivot.x);
@@ -1046,6 +1073,9 @@ export function Viewport(props: {
               pivot,
               rotDeg: rt.local_rotation,
               layoutScale: uiLayoutScaleRef.current || 1,
+              pivotEditing: scene2DRef.current && pivotEditingRef.current,
+              pivotNorm: [...rt.pivot],
+              rectSize: { w: gizmoRect.w, h: gizmoRect.h },
               lastAng,
               snap: createRectSnapDrag(
                 snapSettingsRef.current.enabled || ev.ctrlKey || ev.metaKey,
@@ -1243,7 +1273,18 @@ export function Viewport(props: {
           return next.delta;
         };
 
-        if (d.part.kind === 'size') {
+        if (d.pivotEditing && d.part.kind === 'center') {
+          const deltaX = projectScreenDelta(dx, dy, axes.x) / Math.max(1, d.rectSize.w);
+          const deltaY = -projectScreenDelta(dx, dy, axes.y) / Math.max(1, d.rectSize.h);
+          const nextPivot: [number, number] = [
+            Math.max(0, Math.min(1, d.pivotNorm[0] + deltaX)),
+            Math.max(0, Math.min(1, d.pivotNorm[1] + deltaY)),
+          ];
+          if (nextPivot[0] !== d.pivotNorm[0] || nextPivot[1] !== d.pivotNorm[1]) {
+            propsRef.current.onRectPivot?.(d.entity, nextPivot);
+            d.pivotNorm = nextPivot;
+          }
+        } else if (d.part.kind === 'size') {
           const alongX = snapped(
             'x',
             projectScreenDelta(dx, dy, axes.x) / scale,
@@ -1681,6 +1722,11 @@ export function Viewport(props: {
     props.entities,
     props.selectedIds ?? (props.selected == null ? [] : [props.selected]),
   ).filter((id) => !props.entities.find((entity) => entity.entity === id)?.components.Canvas).length;
+  const canEditPivot = scene2D && props.selected != null && props.entities.some(
+    (entity) => entity.entity === props.selected
+      && entity.components.RectTransform != null
+      && entity.components.Canvas == null,
+  );
 
   return (
     <div className="viewport-wrap">
@@ -1705,6 +1751,17 @@ export function Viewport(props: {
             onClick={toggleSceneGrid}
           >
             Grid
+          </button>
+          <button
+            type="button"
+            className={`scene-grid-toggle${pivotEditing && canEditPivot ? ' active' : ''}`}
+            aria-label="Edit RectTransform pivot"
+            aria-pressed={pivotEditing && canEditPivot}
+            disabled={!canEditPivot}
+            title="Drag the selected RectTransform pivot without moving its rectangle"
+            onClick={() => setPivotEditing((editing) => !editing)}
+          >
+            Pivot
           </button>
           <div className="scene-snap" ref={snapSettingsElementRef}>
             <div className="scene-snap-buttons">
