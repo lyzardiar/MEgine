@@ -22,6 +22,15 @@ struct ProjectAssetInfo {
     kind: String,
 }
 
+#[derive(serde::Serialize)]
+#[serde(rename_all = "camelCase")]
+struct ProjectSpriteInfo {
+    id: String,
+    name: String,
+    folder: String,
+    rel_path: String,
+}
+
 const MAX_RECENT_PROJECTS: usize = 12;
 
 #[derive(Clone, Default, serde::Deserialize, serde::Serialize)]
@@ -138,6 +147,47 @@ fn collect_project_assets(root: &Path, dir: &Path, output: &mut Vec<ProjectAsset
             folder,
             rel_path,
             kind: kind.into(),
+        });
+    }
+}
+
+fn collect_project_sprites(root: &Path, dir: &Path, output: &mut Vec<ProjectSpriteInfo>) {
+    let Ok(entries) = std::fs::read_dir(dir) else {
+        return;
+    };
+    for entry in entries.flatten() {
+        if output.len() >= 10_000 {
+            return;
+        }
+        let path = entry.path();
+        let name = entry.file_name().to_string_lossy().into_owned();
+        if name.starts_with('.') || name.ends_with(".meta") {
+            continue;
+        }
+        if path.is_dir() {
+            collect_project_sprites(root, &path, output);
+            continue;
+        }
+        let lower = name.to_ascii_lowercase();
+        if ![".png", ".jpg", ".jpeg", ".webp", ".gif"]
+            .iter()
+            .any(|extension| lower.ends_with(extension))
+        {
+            continue;
+        }
+        let Ok(relative) = path.strip_prefix(root) else {
+            continue;
+        };
+        let rel_path = relative.to_string_lossy().replace('\\', "/");
+        let folder = relative
+            .parent()
+            .map(|parent| parent.to_string_lossy().replace('\\', "/"))
+            .unwrap_or_else(|| "Assets".into());
+        output.push(ProjectSpriteInfo {
+            id: rel_path.clone(),
+            name,
+            folder,
+            rel_path,
         });
     }
 }
@@ -282,6 +332,23 @@ fn list_project_assets(state: State<'_, AppState>) -> Result<Vec<ProjectAssetInf
 }
 
 #[tauri::command]
+fn list_project_sprites(state: State<'_, AppState>) -> Result<Vec<ProjectSpriteInfo>, String> {
+    let project_root = state
+        .project
+        .lock()
+        .as_ref()
+        .map(|session| session.snapshot().project_root)
+        .ok_or_else(|| no_project().message)?;
+    let root = Path::new(&project_root)
+        .canonicalize()
+        .map_err(|error| error.to_string())?;
+    let mut sprites = Vec::new();
+    collect_project_sprites(&root, &root.join("Assets"), &mut sprites);
+    sprites.sort_by(|left, right| left.rel_path.cmp(&right.rel_path));
+    Ok(sprites)
+}
+
+#[tauri::command]
 fn open_scene(
     relative_path: String,
     state: State<'_, AppState>,
@@ -346,6 +413,7 @@ pub fn run() {
             get_project_snapshot,
             read_project_asset,
             list_project_assets,
+            list_project_sprites,
             open_scene,
             save_scene,
             replace_scene_snapshot,
@@ -396,5 +464,30 @@ mod tests {
         assert!(normalized
             .windows(2)
             .all(|pair| pair[0].last_opened_at >= pair[1].last_opened_at));
+    }
+
+    #[test]
+    fn project_sprite_scan_recurses_and_filters_non_images() {
+        let root = std::env::temp_dir().join(format!(
+            "mengine-sprite-scan-{}-{}",
+            std::process::id(),
+            SystemTime::now()
+                .duration_since(UNIX_EPOCH)
+                .unwrap()
+                .as_nanos()
+        ));
+        let nested = root.join("Assets/UI");
+        std::fs::create_dir_all(&nested).unwrap();
+        std::fs::write(nested.join("panel.png"), []).unwrap();
+        std::fs::write(nested.join("panel.png.meta"), []).unwrap();
+        std::fs::write(nested.join("notes.txt"), []).unwrap();
+
+        let mut sprites = Vec::new();
+        collect_project_sprites(&root, &root.join("Assets"), &mut sprites);
+        std::fs::remove_dir_all(root).unwrap();
+
+        assert_eq!(sprites.len(), 1);
+        assert_eq!(sprites[0].id, "Assets/UI/panel.png");
+        assert_eq!(sprites[0].folder, "Assets/UI");
     }
 }

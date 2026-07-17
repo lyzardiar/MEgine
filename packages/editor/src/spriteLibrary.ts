@@ -1,5 +1,8 @@
 /** Texture / sprite assets under project/Assets (via Vite `/__mengine`). */
 
+import { invoke } from '@tauri-apps/api/core';
+import { isDesktopEditor } from './transport/editorTransport';
+
 const API = '/__mengine';
 
 export type SpriteAsset = {
@@ -25,6 +28,18 @@ export function listAssetFolders(): string[] {
 
 export async function refreshSprites(): Promise<SpriteAsset[]> {
   try {
+    if (isDesktopEditor()) {
+      _sprites = await invoke<SpriteAsset[]>('list_project_sprites');
+      _folders = [...new Set([
+        'Assets',
+        ..._sprites.flatMap((sprite) => {
+          const parts = sprite.folder.split('/');
+          return parts.map((_, index) => parts.slice(0, index + 1).join('/'));
+        }),
+      ])].sort((a, b) => a.localeCompare(b));
+      _ready = true;
+      return _sprites;
+    }
     const res = await fetch(`${API}/sprites`);
     if (!res.ok) throw new Error(String(res.status));
     const body = (await res.json()) as {
@@ -101,6 +116,7 @@ export function spriteAssetUrl(id: string): string | null {
   if (!ref || ref === 'white') return null;
   const withExt = /\.(png|jpe?g|webp|gif)$/i.test(ref) ? ref : `${ref}.png`;
   if (!withExt.toLowerCase().startsWith('assets/')) return null;
+  if (isDesktopEditor()) return null;
   return `${API}/asset/${withExt.split('/').map(encodeURIComponent).join('/')}`;
 }
 

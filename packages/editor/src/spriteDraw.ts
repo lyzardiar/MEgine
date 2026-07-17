@@ -1,12 +1,34 @@
 /** Load & draw project sprites for editor UI canvas. */
 
 import { resolveSpriteId, spriteAssetUrl } from './spriteLibrary';
+import { readProjectAssetBytes } from './projectAssets';
+import { isDesktopEditor } from './transport/editorTransport';
 
 const _cache = new Map<string, HTMLImageElement>();
 
 export function getSpriteImage(sprite: string): HTMLImageElement | null {
   const id = resolveSpriteId(sprite);
   if (!id || id === 'white') return null;
+  if (isDesktopEditor()) {
+    const cacheKey = `desktop:${id}`;
+    let img = _cache.get(cacheKey);
+    if (!img) {
+      img = new Image();
+      img.decoding = 'async';
+      _cache.set(cacheKey, img);
+      void readProjectAssetBytes(id)
+        .then((bytes) => {
+          const copy = new Uint8Array(bytes.byteLength);
+          copy.set(bytes);
+          const objectUrl = URL.createObjectURL(new Blob([copy.buffer]));
+          img!.addEventListener('load', () => URL.revokeObjectURL(objectUrl), { once: true });
+          img!.addEventListener('error', () => URL.revokeObjectURL(objectUrl), { once: true });
+          img!.src = objectUrl;
+        })
+        .catch(() => _cache.delete(cacheKey));
+    }
+    return img;
+  }
   const url = spriteAssetUrl(id);
   if (!url) return null;
 
