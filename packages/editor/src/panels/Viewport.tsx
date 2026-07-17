@@ -74,6 +74,7 @@ import {
   type MarqueeSelectionMode,
 } from '../marqueeSelection';
 import { selectedRectRoots } from '../rectSelection';
+import { isRectMoveMode, transformGizmoMode } from '../editorTool';
 import {
   planRectAlignment,
   type RectAlignmentCommand,
@@ -905,7 +906,7 @@ export function Viewport(props: {
           vp,
           t.position as Vec3,
           t.rotation as [number, number, number, number],
-          p.gizmo,
+          transformGizmoMode(p.gizmo),
           hoverGizmoRef.current,
           activeGizmoRef.current,
         );
@@ -1202,7 +1203,7 @@ export function Viewport(props: {
                 .map((candidate) => candidate.rect),
             );
             const smartGuides = smartGuidesEnabledRef.current
-              && propsRef.current.gizmo === 'translate'
+              && isRectMoveMode(propsRef.current.gizmo)
               && hit.part.kind === 'center'
               && movingRect
               ? {
@@ -1225,7 +1226,7 @@ export function Viewport(props: {
             activeGizmoRef.current = hit.part;
             propsRef.current.onBeginGesture();
             const duplicateForDrag = ev.altKey
-              && propsRef.current.gizmo === 'translate'
+              && isRectMoveMode(propsRef.current.gizmo)
               && !pivotEditingRef.current
               && !anchorEditingRef.current
               && hit.part.kind !== 'size';
@@ -1273,7 +1274,8 @@ export function Viewport(props: {
           const basis = transformBasis(tr?.rotation as [number, number, number, number] | undefined);
           let axisWorld: Vec3 | undefined;
           let lastAng: number | undefined;
-          if (propsRef.current.gizmo === 'rotate' && hit.part.kind === 'axis') {
+          const transformMode = transformGizmoMode(propsRef.current.gizmo);
+          if (transformMode === 'rotate' && hit.part.kind === 'axis') {
             // 与移动箭头同一方向：X=right Y=up Z=forward
             axisWorld =
               hit.part.axis === 'x'
@@ -1290,7 +1292,7 @@ export function Viewport(props: {
               lastVpRef.current,
             );
             if (ang != null) lastAng = ang;
-          } else if (propsRef.current.gizmo === 'rotate' && scr) {
+          } else if (transformMode === 'rotate' && scr) {
             lastAng = Math.atan2(y - scr.y, x - scr.x);
           }
           draggingRef.current = true;
@@ -1505,7 +1507,7 @@ export function Viewport(props: {
             d.snap.settings.move,
           );
           propsRef.current.onRectResize?.(d.entity, d.part.handle, alongX, alongY);
-        } else if (mode === 'translate') {
+        } else if (isRectMoveMode(mode)) {
           if (d.part.kind === 'axis') {
             const dir = d.part.axis === 'x' ? axes.x : axes.y;
             const along = rectAxisTranslationAmount(dx, dy, dir, scale);
@@ -1598,7 +1600,7 @@ export function Viewport(props: {
         const tr = ent?.components.Transform as TransformData | undefined;
         const origin = (tr?.position as Vec3 | undefined) ?? d.origin;
         const basis = transformBasis(tr?.rotation as [number, number, number, number] | undefined);
-        const gizmo = propsRef.current.gizmo;
+        const gizmo = transformGizmoMode(propsRef.current.gizmo);
         const screen = { dx, dy };
 
         if (gizmo === 'translate') {

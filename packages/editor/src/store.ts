@@ -46,10 +46,11 @@ import {
   type EditorUndoState,
 } from './editorUndo';
 import { sceneContentFingerprint } from './sceneFingerprint';
+import type { GizmoMode } from './editorTool';
 import './behaviours';
 
 export type EditorMode = 'edit' | 'play' | 'pause';
-export type GizmoMode = 'translate' | 'rotate' | 'scale';
+export type { GizmoMode };
 export type GameAspect = 'free' | '16:9' | '16:10' | '4:3' | '1:1';
 export type GameOrientation = 'landscape' | 'portrait';
 export type SelectMode = 'replace' | 'add' | 'toggle' | 'range';
@@ -1034,7 +1035,7 @@ export function createEditorStore() {
         scale: [...src.scale] as TransformData['scale'],
       };
       const i = axis === 'x' ? 0 : axis === 'y' ? 1 : 2;
-      if (kind === 'translate') t.position[i] += amount;
+      if (kind === 'translate' || kind === 'rect') t.position[i] += amount;
       else if (kind === 'scale') t.scale[i] = Math.max(0.01, t.scale[i] + amount);
       else {
         // amount = degrees；本地轴（与 Transform 本地 XYZ / 移动箭头一致）

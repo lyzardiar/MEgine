@@ -562,6 +562,9 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
       } else if (e.key === 'r' || e.key === 'R') {
         store.setGizmo('scale');
         refresh();
+      } else if (e.key === 't' || e.key === 'T') {
+        store.setGizmo('rect');
+        refresh();
       }
     };
     window.addEventListener('keydown', onKey);

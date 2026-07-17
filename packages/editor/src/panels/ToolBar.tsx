@@ -36,6 +36,14 @@ export function ToolBar(props: {
         >
           R
         </button>
+        <button
+          type="button"
+          className={`tool-btn${props.gizmo === 'rect' ? ' active' : ''}`}
+          title="Rect Tool (T)"
+          onClick={() => props.onGizmo('rect')}
+        >
+          T
+        </button>
       </div>
 
       <div className="tool-group center">

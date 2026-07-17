@@ -5,8 +5,8 @@
 import type { Camera, Quat, Vec3 } from './math3d';
 import { add, cross, dot, lookBasis, norm, project, scale, sub } from './math3d';
 import { transformBasis } from './editorGizmos';
+import type { GizmoMode } from './editorTool';
 
-export type GizmoMode = 'translate' | 'rotate' | 'scale';
 export type GizmoAxis = 'x' | 'y' | 'z';
 export type GizmoPlane = 'xy' | 'xz' | 'yz';
 

@@ -3,7 +3,8 @@
  * Move / rotate / scale tools + Unity-like size handles on the rect.
  */
 
-import type { GizmoMode, GizmoPart } from './transformGizmo';
+import type { GizmoMode } from './editorTool';
+import type { GizmoPart } from './transformGizmo';
 import type { Rect } from './ui/rectLayout';
 
 export type SizeHandle = 'n' | 's' | 'e' | 'w' | 'ne' | 'nw' | 'se' | 'sw';
@@ -12,6 +13,7 @@ export type RectGizmoHit =
   | { kind: 'axis'; axis: 'x' | 'y'; x0: number; y0: number; x1: number; y1: number }
   | { kind: 'center'; x: number; y: number; r: number }
   | { kind: 'ring'; cx: number; cy: number; r: number }
+  | { kind: 'body'; corners: Array<{ x: number; y: number }> }
   | { kind: 'size'; handle: SizeHandle; x: number; y: number }
   | { kind: 'anchor'; target: 'min' | 'max' | 'both'; x: number; y: number };
 
@@ -159,7 +161,7 @@ export function drawRectGizmo(
   const ox = pivot.x;
   const oy = pivot.y;
 
-  // Size handles (always when rect provided — Unity Rect tool feel)
+  // The outline stays visible for every tool; resize handles belong to Rect Tool.
   if (rect && rect.w > 2 && rect.h > 2) {
     const pts = sizeHandlePoints(rect, rotDeg, pivotNorm);
     // Outline
@@ -172,7 +174,7 @@ export function drawRectGizmo(
     ctx.closePath();
     ctx.stroke();
 
-    if (!pivotEditing && !anchors) {
+    if (mode === 'rect' && !pivotEditing && !anchors) {
       for (const handle of Object.keys(pts) as SizeHandle[]) {
         const p = pts[handle];
         const part: GizmoPart = { kind: 'size', handle };
@@ -180,6 +182,21 @@ export function drawRectGizmo(
         sizeHandleBox(ctx, p.x, p.y, col);
         hits.push({ kind: 'size', handle, x: p.x, y: p.y });
       }
+
+      const part: GizmoPart = { kind: 'center' };
+      const col = colorOf(part, hover, active, '#66c7ff');
+      ctx.fillStyle = '#181818';
+      ctx.beginPath();
+      ctx.arc(ox, oy, 5, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.strokeStyle = col;
+      ctx.lineWidth = 2;
+      ctx.stroke();
+      hits.push({ kind: 'center', x: ox, y: oy, r: 7 });
+      hits.push({
+        kind: 'body',
+        corners: [pts.nw, pts.ne, pts.se, pts.sw],
+      });
     }
   }
 
@@ -342,7 +359,26 @@ export function hitTestRectGizmo(hits: RectGizmoHit[], x: number, y: number): Gi
       if (d <= HIT_RING) return { kind: 'center' };
     }
   }
+  for (const h of hits) {
+    if (h.kind === 'body' && pointInQuad(x, y, h.corners)) return { kind: 'center' };
+  }
   return null;
+}
+
+function pointInQuad(
+  x: number,
+  y: number,
+  corners: Array<{ x: number; y: number }>,
+): boolean {
+  let inside = false;
+  for (let index = 0, previous = corners.length - 1; index < corners.length; previous = index++) {
+    const a = corners[index];
+    const b = corners[previous];
+    const crosses = (a.y > y) !== (b.y > y)
+      && x < ((b.x - a.x) * (y - a.y)) / ((b.y - a.y) || Number.EPSILON) + a.x;
+    if (crosses) inside = !inside;
+  }
+  return inside;
 }
 
 function distToSeg(
