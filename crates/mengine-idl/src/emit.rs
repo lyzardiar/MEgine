@@ -77,7 +77,7 @@ fn is_language_default(ty: &str, value: &str) -> bool {
         "float2" => compact == "[0,0]" || compact == "[0.0,0.0]",
         "float3" => compact == "[0,0,0]" || compact == "[0.0,0.0,0.0]",
         "float4" => compact == "[0,0,0,0]" || compact == "[0.0,0.0,0.0,0.0]",
-        "string_array" => compact == "[]",
+        "string_array" | "float2_array" => compact == "[]",
         _ => false,
     }
 }
@@ -93,6 +93,7 @@ fn map_rust_type(ty: &str, optional: bool) -> String {
         "float3" => "[f32; 3]".into(),
         "float4" => "[f32; 4]".into(),
         "string_array" => "Vec<String>".into(),
+        "float2_array" => "Vec<[f32; 2]>".into(),
         "object" => "serde_json::Value".into(),
         other => other.to_pascal_case(),
     };
@@ -122,7 +123,7 @@ fn default_expr(ty: &str, default: Option<&str>, optional: bool) -> String {
                 }
             }
             "float2" | "float3" | "float4" => array_lit(d),
-            "string_array" => "Vec::new()".into(),
+            "string_array" | "float2_array" => "Vec::new()".into(),
             _ => "Default::default()".into(),
         };
     }
@@ -135,7 +136,7 @@ fn default_expr(ty: &str, default: Option<&str>, optional: bool) -> String {
         "float2" => "[0.0, 0.0]".into(),
         "float3" => "[0.0, 0.0, 0.0]".into(),
         "float4" => "[0.0, 0.0, 0.0, 0.0]".into(),
-        "string_array" => "Vec::new()".into(),
+        "string_array" | "float2_array" => "Vec::new()".into(),
         "object" => "serde_json::Value::Null".into(),
         _ => "Default::default()".into(),
     }
@@ -249,6 +250,7 @@ fn map_ts_type(ty: &str) -> &'static str {
         "float3" => "[number, number, number]",
         "float4" => "[number, number, number, number]",
         "string_array" => "string[]",
+        "float2_array" => "[number, number][]",
         "object" => "Record<string, unknown>",
         _ => "unknown",
     }
@@ -296,6 +298,18 @@ fn json_type(ty: &str) -> serde_json::Value {
             m.insert("type".into(), "array".into());
             m.insert("items".into(), serde_json::json!({ "type": "string" }));
         }
+        "float2_array" => {
+            m.insert("type".into(), "array".into());
+            m.insert(
+                "items".into(),
+                serde_json::json!({
+                    "type": "array",
+                    "items": { "type": "number" },
+                    "minItems": 2,
+                    "maxItems": 2
+                }),
+            );
+        }
         "object" => {
             m.insert("type".into(), "object".into());
         }
@@ -326,5 +340,17 @@ mod tests {
         assert!(typescript.contains("items: string[]"));
         assert!(schema.contains("\"type\": \"array\""));
         assert!(schema.contains("\"type\": \"string\""));
+    }
+
+    #[test]
+    fn emits_typed_float2_arrays_for_all_targets() {
+        let defs = parse_idl("component Line2D {\npoints: float2_array = []\n}").unwrap();
+        let rust = emit_rust(&defs);
+        let typescript = emit_typescript(&defs);
+        let schema = emit_json_schema(&defs);
+        assert!(rust.contains("pub points: Vec<[f32; 2]>"));
+        assert!(typescript.contains("points: [number, number][]"));
+        assert!(schema.contains("\"minItems\": 2"));
+        assert!(schema.contains("\"maxItems\": 2"));
     }
 }
