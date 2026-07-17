@@ -30,7 +30,7 @@ use mengine_runtime::ui::{
     UiControlKind, UiControlRegion,
 };
 use mengine_scene::load_scene;
-use mengine_script::{ScriptHost, ScriptRuntimeRequest};
+use mengine_script::{ScriptAnimationEvent, ScriptHost, ScriptRuntimeRequest};
 use serde_json::json;
 use std::path::PathBuf;
 use std::sync::Arc;
@@ -1250,6 +1250,21 @@ function onTick(dt, frame) {
                         failure.error
                     );
                 }
+                let animation_events = self
+                    .animations
+                    .take_events()
+                    .into_iter()
+                    .map(|event| ScriptAnimationEvent {
+                        entity: event.entity.to_u64(),
+                        function: event.function,
+                        time: event.time,
+                        parameter: event
+                            .parameter
+                            .and_then(|parameter| serde_json::to_value(parameter).ok()),
+                        state: event.state,
+                        weight: event.weight,
+                    })
+                    .collect::<Vec<_>>();
 
                 for failure in self.audio.update(&mut self.world) {
                     log::error!(
@@ -1261,6 +1276,9 @@ function onTick(dt, frame) {
                 }
 
                 let runtime_requests = if let Some(script) = self.script.as_mut() {
+                    if let Err(error) = script.notify_animation_events(&animation_events) {
+                        log::error!("animation event callback failed: {error}");
+                    }
                     if let Err(error) =
                         script.notify_collision_events(&collision_started, &collision_stopped)
                     {

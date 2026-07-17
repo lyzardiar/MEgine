@@ -39,6 +39,16 @@ pub enum ScriptRuntimeRequest {
     },
 }
 
+#[derive(Clone, Debug, PartialEq)]
+pub struct ScriptAnimationEvent {
+    pub entity: u64,
+    pub function: String,
+    pub time: f32,
+    pub parameter: Option<JsonValue>,
+    pub state: Option<String>,
+    pub weight: f32,
+}
+
 fn pending_runtime_requests() -> &'static Mutex<Vec<ScriptRuntimeRequest>> {
     static CELL: std::sync::OnceLock<Mutex<Vec<ScriptRuntimeRequest>>> = std::sync::OnceLock::new();
     CELL.get_or_init(|| Mutex::new(Vec::new()))
@@ -139,6 +149,34 @@ impl ScriptHost {
         self.eval(&format!(
             "for (const event of {started}) {{ if (typeof onCollisionEnter === 'function') onCollisionEnter(event); }}\
              for (const event of {stopped}) {{ if (typeof onCollisionExit === 'function') onCollisionExit(event); }}"
+        ))
+    }
+
+    /// Delivers clip events after animation sampling and before the project's `onTick` callback.
+    pub fn notify_animation_events(
+        &mut self,
+        events: &[ScriptAnimationEvent],
+    ) -> Result<(), ScriptError> {
+        if events.is_empty() {
+            return Ok(());
+        }
+        let events = JsonValue::Array(
+            events
+                .iter()
+                .map(|event| {
+                    serde_json::json!({
+                        "entity": event.entity.to_string(),
+                        "function": event.function,
+                        "time": event.time,
+                        "parameter": event.parameter,
+                        "state": event.state,
+                        "weight": event.weight,
+                    })
+                })
+                .collect(),
+        );
+        self.eval(&format!(
+            "for (const event of {events}) {{ if (typeof onAnimationEvent === 'function') onAnimationEvent(event); }}"
         ))
     }
 
@@ -535,6 +573,32 @@ mod tests {
             }
             if (exited.length !== 1 || exited[0].secondEntity !== "9007199254740995") {
               throw new Error("collision exit event missing");
+            }
+            "#,
+        )
+        .unwrap();
+    }
+
+    #[test]
+    fn scripts_receive_typed_animation_events_with_exact_entity_ids() {
+        let mut host = ScriptHost::new().unwrap();
+        host.eval("var animationEvents = []; function onAnimationEvent(event) { animationEvents.push(event); }")
+            .unwrap();
+        host.notify_animation_events(&[ScriptAnimationEvent {
+            entity: 9_007_199_254_740_993,
+            function: "Footstep".into(),
+            time: 0.25,
+            parameter: Some(serde_json::json!("left")),
+            state: Some("Run".into()),
+            weight: 0.75,
+        }])
+        .unwrap();
+        host.eval(
+            r#"
+            if (animationEvents.length !== 1) throw new Error("animation event missing");
+            const event = animationEvents[0];
+            if (event.entity !== "9007199254740993" || event.function !== "Footstep" || event.parameter !== "left" || event.state !== "Run" || event.weight !== 0.75) {
+              throw new Error("animation event payload mismatch");
             }
             "#,
         )

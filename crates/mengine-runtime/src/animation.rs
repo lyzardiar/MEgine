@@ -1,6 +1,6 @@
 use crate::textures::resolve_project_asset_path;
 use mengine_assets::{
-    load_animation_clip, load_animator_controller, AnimationClip, AnimationValue,
+    load_animation_clip, load_animator_controller, AnimationClip, AnimationEvent, AnimationValue,
     AnimationWrapMode, AnimatorCondition, AnimatorConditionMode, AnimatorController,
     AnimatorParameterKind,
 };
@@ -17,6 +17,16 @@ pub struct AnimationLoadFailure {
     pub entity: Entity,
     pub clip: String,
     pub error: String,
+}
+
+#[derive(Clone, Debug, PartialEq)]
+pub struct RuntimeAnimationEvent {
+    pub entity: Entity,
+    pub function: String,
+    pub time: f32,
+    pub parameter: Option<AnimationValue>,
+    pub state: Option<String>,
+    pub weight: f32,
 }
 
 #[derive(Clone)]
@@ -56,6 +66,9 @@ pub struct AnimationRuntime {
     controllers: HashMap<PathBuf, CachedController>,
     animator_instances: HashMap<Entity, AnimatorInstance>,
     reported_failures: HashSet<(String, String)>,
+    active_players: HashSet<Entity>,
+    active_animators: HashSet<Entity>,
+    pending_events: Vec<RuntimeAnimationEvent>,
 }
 
 impl AnimationRuntime {
@@ -66,6 +79,9 @@ impl AnimationRuntime {
             controllers: HashMap::new(),
             animator_instances: HashMap::new(),
             reported_failures: HashSet::new(),
+            active_players: HashSet::new(),
+            active_animators: HashSet::new(),
+            pending_events: Vec::new(),
         }
     }
 
@@ -78,6 +94,9 @@ impl AnimationRuntime {
         self.controllers.clear();
         self.animator_instances.clear();
         self.reported_failures.clear();
+        self.active_players.clear();
+        self.active_animators.clear();
+        self.pending_events.clear();
     }
 
     pub fn invalidate(&mut self, clip: &str) {
@@ -91,6 +110,7 @@ impl AnimationRuntime {
     }
 
     pub fn update(&mut self, world: &mut World, delta_seconds: f32) -> Vec<AnimationLoadFailure> {
+        self.pending_events.clear();
         if !delta_seconds.is_finite() {
             return Vec::new();
         }
@@ -100,6 +120,8 @@ impl AnimationRuntime {
             .collect();
         self.animator_instances
             .retain(|entity, _| animator_entities.contains(entity) && world.is_alive(*entity));
+        self.active_animators
+            .retain(|entity| animator_entities.contains(entity) && world.is_alive(*entity));
 
         let mut failures = self.update_animators(world, delta_seconds);
         let players: Vec<_> = world
@@ -114,9 +136,13 @@ impl AnimationRuntime {
                     .map(|player| (entity, player))
             })
             .collect();
+        let live_players: HashSet<_> = players.iter().map(|(entity, _)| *entity).collect();
+        self.active_players
+            .retain(|entity| live_players.contains(entity) && world.is_alive(*entity));
         for (entity, player) in players {
             let clip_key = player.clip.trim();
             if !player.playing || clip_key.is_empty() {
+                self.active_players.remove(&entity);
                 continue;
             }
             let clip = match self.load_clip(clip_key) {
@@ -140,12 +166,26 @@ impl AnimationRuntime {
                 }
             };
 
-            let next_time = advance_player_time(
+            let delta = delta_seconds * player.speed;
+            let just_started = self.active_players.insert(entity);
+            if just_started {
+                self.pending_events.extend(events_at_sample_time(
+                    &clip,
+                    entity,
+                    player.time,
+                    None,
+                    1.0,
+                ));
+            }
+            self.pending_events.extend(crossed_animation_events(
+                &clip,
+                entity,
                 player.time,
-                delta_seconds * player.speed,
-                clip.duration,
-                clip.wrap_mode,
-            );
+                delta,
+                None,
+                1.0,
+            ));
+            let next_time = advance_player_time(player.time, delta, clip.duration, clip.wrap_mode);
             for sample in clip.sample(next_time.time) {
                 let Some(target) = resolve_animation_target(world, entity, &sample.target) else {
                     continue;
@@ -162,11 +202,16 @@ impl AnimationRuntime {
                 live_player.time = next_time.time;
                 if next_time.finished {
                     live_player.playing = false;
+                    self.active_players.remove(&entity);
                 }
             }
         }
 
         failures
+    }
+
+    pub fn take_events(&mut self) -> Vec<RuntimeAnimationEvent> {
+        std::mem::take(&mut self.pending_events)
     }
 
     fn update_animators(
@@ -190,6 +235,7 @@ impl AnimationRuntime {
             let controller_key = animator.controller.trim();
             if controller_key.is_empty() {
                 self.animator_instances.remove(&entity);
+                self.active_animators.remove(&entity);
                 continue;
             }
             let controller = match self.load_controller(controller_key) {
@@ -203,7 +249,9 @@ impl AnimationRuntime {
                 .retain(|(reported_asset, _)| reported_asset != controller_key);
 
             let requested_state = animator.current_state.trim();
-            let mut instance = self.animator_instances.remove(&entity).unwrap_or_else(|| {
+            let previous_instance = self.animator_instances.remove(&entity);
+            let mut entered_state = previous_instance.is_none();
+            let mut instance = previous_instance.unwrap_or_else(|| {
                 let state = controller
                     .state(requested_state)
                     .map(|state| state.name.clone())
@@ -216,6 +264,7 @@ impl AnimationRuntime {
                 }
             });
             if instance.controller != controller_key {
+                entered_state = true;
                 instance = AnimatorInstance {
                     controller: controller_key.to_owned(),
                     state: controller.default_state.clone(),
@@ -226,22 +275,26 @@ impl AnimationRuntime {
                 && requested_state != instance.state
                 && controller.state(requested_state).is_some()
             {
+                entered_state = true;
                 instance.state = requested_state.to_owned();
                 instance.state_time = 0.0;
                 instance.transition = None;
             }
             animator.current_state = instance.state.clone();
             if !animator.playing {
+                self.active_animators.remove(&entity);
                 if let Some(live) = world.get_component_mut::<Animator>(entity) {
                     live.current_state = animator.current_state;
                 }
                 self.animator_instances.insert(entity, instance);
                 continue;
             }
+            entered_state |= self.active_animators.insert(entity);
 
             let parameters = animator_parameters(&controller, &animator.parameters_json);
             let delta = delta_seconds * animator.speed;
             let mut consumed_triggers = Vec::new();
+            let advanced_transition = instance.transition.is_some();
 
             if let Some(active) = instance.transition.as_mut() {
                 let Some(source) = controller.state(&active.source_state) else {
@@ -264,6 +317,7 @@ impl AnimationRuntime {
                     self.animator_instances.insert(entity, instance);
                     continue;
                 };
+                let previous_state_time = instance.state_time;
                 instance.state_time += delta * state.speed;
                 let state_clip = match self.load_clip(&state.clip) {
                     Ok(clip) => clip,
@@ -273,6 +327,23 @@ impl AnimationRuntime {
                         continue;
                     }
                 };
+                if entered_state {
+                    self.pending_events.extend(events_at_sample_time(
+                        &state_clip,
+                        entity,
+                        previous_state_time,
+                        Some(&state.name),
+                        1.0,
+                    ));
+                }
+                self.pending_events.extend(crossed_animation_events(
+                    &state_clip,
+                    entity,
+                    previous_state_time,
+                    delta * state.speed,
+                    Some(&state.name),
+                    1.0,
+                ));
                 if let Some(transition) = select_transition(
                     &controller,
                     &instance.state,
@@ -281,6 +352,21 @@ impl AnimationRuntime {
                     &parameters,
                     &mut consumed_triggers,
                 ) {
+                    if let Some(destination) = controller.state(&transition.to) {
+                        if let Ok(destination_clip) = self.load_clip(&destination.clip) {
+                            self.pending_events.extend(events_at_sample_time(
+                                &destination_clip,
+                                entity,
+                                0.0,
+                                Some(&destination.name),
+                                if transition.duration <= f32::EPSILON {
+                                    1.0
+                                } else {
+                                    0.0
+                                },
+                            ));
+                        }
+                    }
                     if transition.duration <= f32::EPSILON {
                         instance.state = transition.to.clone();
                         instance.state_time = 0.0;
@@ -317,6 +403,24 @@ impl AnimationRuntime {
                     }
                 };
                 let amount = (active.elapsed / active.duration).clamp(0.0, 1.0);
+                if advanced_transition {
+                    self.pending_events.extend(crossed_animation_events(
+                        &source_clip,
+                        entity,
+                        active.source_time - delta * source.speed,
+                        delta * source.speed,
+                        Some(&source.name),
+                        1.0 - amount,
+                    ));
+                    self.pending_events.extend(crossed_animation_events(
+                        &destination_clip,
+                        entity,
+                        active.destination_time - delta * destination.speed,
+                        delta * destination.speed,
+                        Some(&destination.name),
+                        amount,
+                    ));
+                }
                 blend_samples(
                     source_clip.sample(active.source_time),
                     destination_clip.sample(active.destination_time),
@@ -608,6 +712,125 @@ fn apply_animation_samples(
     }
 }
 
+const MAX_ANIMATION_EVENTS_PER_UPDATE: usize = 4096;
+const MAX_EVENT_PERIODS_PER_UPDATE: f32 = 1024.0;
+
+fn runtime_event(
+    entity: Entity,
+    event: &AnimationEvent,
+    state: Option<&str>,
+    weight: f32,
+) -> RuntimeAnimationEvent {
+    RuntimeAnimationEvent {
+        entity,
+        function: event.function.clone(),
+        time: event.time,
+        parameter: event.parameter.clone(),
+        state: state.map(str::to_owned),
+        weight: weight.clamp(0.0, 1.0),
+    }
+}
+
+fn events_at_sample_time(
+    clip: &AnimationClip,
+    entity: Entity,
+    time: f32,
+    state: Option<&str>,
+    weight: f32,
+) -> Vec<RuntimeAnimationEvent> {
+    let sample_time = clip.sample_time(time);
+    clip.events
+        .iter()
+        .filter(|event| (event.time - sample_time).abs() <= 1.0e-5)
+        .take(MAX_ANIMATION_EVENTS_PER_UPDATE)
+        .map(|event| runtime_event(entity, event, state, weight))
+        .collect()
+}
+
+fn crossed_animation_events(
+    clip: &AnimationClip,
+    entity: Entity,
+    start: f32,
+    delta: f32,
+    state: Option<&str>,
+    weight: f32,
+) -> Vec<RuntimeAnimationEvent> {
+    if clip.events.is_empty()
+        || !start.is_finite()
+        || !delta.is_finite()
+        || delta.abs() <= f32::EPSILON
+        || clip.duration <= f32::EPSILON
+    {
+        return Vec::new();
+    }
+    let period = match clip.wrap_mode {
+        AnimationWrapMode::Once => None,
+        AnimationWrapMode::Loop => Some(clip.duration),
+        AnimationWrapMode::PingPong => Some(clip.duration * 2.0),
+    };
+    let bounded_delta = period
+        .map(|period| {
+            delta.clamp(
+                -period * MAX_EVENT_PERIODS_PER_UPDATE,
+                period * MAX_EVENT_PERIODS_PER_UPDATE,
+            )
+        })
+        .unwrap_or(delta);
+    let end = start + bounded_delta;
+    let forward = end >= start;
+    let crossed = |occurrence: f32| {
+        if forward {
+            occurrence > start && occurrence <= end
+        } else {
+            occurrence >= end && occurrence < start
+        }
+    };
+    let mut occurrences: Vec<(f32, usize)> = Vec::new();
+    for (index, event) in clip.events.iter().enumerate() {
+        let offsets: Vec<f32> = match clip.wrap_mode {
+            AnimationWrapMode::PingPong
+                if event.time > f32::EPSILON
+                    && (event.time - clip.duration).abs() > f32::EPSILON =>
+            {
+                vec![event.time, clip.duration * 2.0 - event.time]
+            }
+            _ => vec![event.time],
+        };
+        if let Some(period) = period {
+            for offset in offsets {
+                let min = start.min(end);
+                let max = start.max(end);
+                let first = ((min - offset) / period).floor() as i64 - 1;
+                let last = ((max - offset) / period).ceil() as i64 + 1;
+                for cycle in first..=last {
+                    let occurrence = offset + cycle as f32 * period;
+                    if crossed(occurrence) {
+                        occurrences.push((occurrence, index));
+                    }
+                }
+            }
+        } else if crossed(event.time) {
+            occurrences.push((event.time, index));
+        }
+    }
+    occurrences.sort_by(|left, right| {
+        let order = left
+            .0
+            .total_cmp(&right.0)
+            .then_with(|| left.1.cmp(&right.1));
+        if forward {
+            order
+        } else {
+            order.reverse()
+        }
+    });
+    occurrences
+        .into_iter()
+        .take(MAX_ANIMATION_EVENTS_PER_UPDATE)
+        .map(|(_occurrence, index)| runtime_event(entity, &clip.events[index], state, weight))
+        .collect()
+}
+
 #[derive(Clone, Copy, Debug, PartialEq)]
 struct PlayerTime {
     time: f32,
@@ -797,6 +1020,67 @@ mod tests {
     }
 
     #[test]
+    fn animation_events_cross_loops_reverse_and_ping_pong_turnarounds_in_order() {
+        let clip = |wrap_mode| AnimationClip {
+            duration: 1.0,
+            wrap_mode,
+            events: vec![
+                AnimationEvent {
+                    time: 0.1,
+                    function: "Early".into(),
+                    parameter: None,
+                },
+                AnimationEvent {
+                    time: 0.9,
+                    function: "Late".into(),
+                    parameter: Some(AnimationValue::String("step".into())),
+                },
+            ],
+            ..AnimationClip::default()
+        };
+        let entity = Entity::new(7, 1);
+        let names = |events: Vec<RuntimeAnimationEvent>| {
+            events
+                .into_iter()
+                .map(|event| event.function)
+                .collect::<Vec<_>>()
+        };
+        assert_eq!(
+            names(crossed_animation_events(
+                &clip(AnimationWrapMode::Loop),
+                entity,
+                0.8,
+                0.4,
+                None,
+                1.0,
+            )),
+            ["Late", "Early"]
+        );
+        assert_eq!(
+            names(crossed_animation_events(
+                &clip(AnimationWrapMode::Loop),
+                entity,
+                0.2,
+                -0.4,
+                None,
+                1.0,
+            )),
+            ["Early", "Late"]
+        );
+        assert_eq!(
+            names(crossed_animation_events(
+                &clip(AnimationWrapMode::PingPong),
+                entity,
+                0.8,
+                0.4,
+                Some("Run"),
+                0.5,
+            )),
+            ["Late", "Late"]
+        );
+    }
+
+    #[test]
     fn runtime_loads_samples_and_preserves_unanimated_fields() {
         let project = temp_project();
         let clip_path = project.join("Assets/Animations/move.manim");
@@ -808,6 +1092,11 @@ mod tests {
               "duration": 1,
               "frame_rate": 60,
               "wrap_mode": "once",
+              "events": [
+                {"time":0,"function":"Started"},
+                {"time":0.25,"function":"Quarter","parameter":"step"},
+                {"time":1,"function":"Finished"}
+              ],
               "tracks": [{
                 "target": ".",
                 "component": "Transform",
@@ -832,14 +1121,77 @@ mod tests {
         );
         let mut runtime = AnimationRuntime::new(Some(project.clone()));
         assert!(runtime.update(&mut world, 0.5).is_empty());
+        assert_eq!(
+            runtime
+                .take_events()
+                .into_iter()
+                .map(|event| event.function)
+                .collect::<Vec<_>>(),
+            ["Started", "Quarter"]
+        );
         let transform = world.get_component::<Transform>(entity).unwrap();
         assert!((transform.position[0] - 5.0).abs() < 0.0001);
         assert_eq!(transform.scale, [1.0, 1.0, 1.0]);
 
         assert!(runtime.update(&mut world, 0.5).is_empty());
+        assert_eq!(runtime.take_events()[0].function, "Finished");
         let player = world.get_component::<AnimationPlayer>(entity).unwrap();
         assert!(!player.playing);
         assert_eq!(player.time, 1.0);
+
+        let player = world.get_component_mut::<AnimationPlayer>(entity).unwrap();
+        player.time = 0.0;
+        player.playing = true;
+        assert!(runtime.update(&mut world, 0.0).is_empty());
+        assert_eq!(runtime.take_events()[0].function, "Started");
+        fs::remove_dir_all(project).unwrap();
+    }
+
+    #[test]
+    fn animator_emits_state_events_and_restarts_after_pause() {
+        let project = temp_project();
+        fs::write(
+            project.join("Assets/Animations/idle.manim"),
+            r#"{
+              "name":"Idle","duration":1,"wrap_mode":"loop",
+              "events":[{"time":0,"function":"EnterIdle"},{"time":0.5,"function":"IdlePulse"}],
+              "tracks":[]
+            }"#,
+        )
+        .unwrap();
+        fs::write(
+            project.join("Assets/Animations/idle.mcontroller"),
+            r#"{
+              "name":"Idle","default_state":"Idle","parameters":[],
+              "states":[{"name":"Idle","clip":"Assets/Animations/idle.manim"}],
+              "transitions":[]
+            }"#,
+        )
+        .unwrap();
+        let mut world = World::new();
+        let entity = world.spawn_empty();
+        world.insert_component(
+            entity,
+            Animator {
+                controller: "Assets/Animations/idle.mcontroller".into(),
+                playing: true,
+                ..Animator::default()
+            },
+        );
+        let mut runtime = AnimationRuntime::new(Some(project.clone()));
+        assert!(runtime.update(&mut world, 0.5).is_empty());
+        let events = runtime.take_events();
+        assert_eq!(events.len(), 2);
+        assert_eq!(events[0].function, "EnterIdle");
+        assert_eq!(events[0].state.as_deref(), Some("Idle"));
+        assert_eq!(events[1].function, "IdlePulse");
+
+        world.get_component_mut::<Animator>(entity).unwrap().playing = false;
+        runtime.update(&mut world, 0.1);
+        assert!(runtime.take_events().is_empty());
+        world.get_component_mut::<Animator>(entity).unwrap().playing = true;
+        runtime.update(&mut world, 0.0);
+        assert_eq!(runtime.take_events()[0].function, "IdlePulse");
         fs::remove_dir_all(project).unwrap();
     }
 

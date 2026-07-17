@@ -72,6 +72,15 @@ pub struct AnimationKeyframe {
 }
 
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+pub struct AnimationEvent {
+    pub time: f32,
+    #[serde(alias = "name")]
+    pub function: String,
+    #[serde(default)]
+    pub parameter: Option<AnimationValue>,
+}
+
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 #[serde(default)]
 pub struct AnimationTrack {
     pub target: String,
@@ -103,6 +112,7 @@ pub struct AnimationClip {
     #[serde(default = "default_frame_rate")]
     pub frame_rate: f32,
     pub wrap_mode: AnimationWrapMode,
+    pub events: Vec<AnimationEvent>,
     pub tracks: Vec<AnimationTrack>,
 }
 
@@ -114,6 +124,7 @@ impl Default for AnimationClip {
             duration: 0.0,
             frame_rate: default_frame_rate(),
             wrap_mode: AnimationWrapMode::Loop,
+            events: Vec::new(),
             tracks: Vec::new(),
         }
     }
@@ -139,6 +150,24 @@ impl AnimationClip {
             !track.component.trim().is_empty() && !track.property.trim().is_empty()
         });
         let mut max_time = 0.0_f32;
+        self.events.retain(|event| {
+            event.time.is_finite()
+                && !event.function.trim().is_empty()
+                && event
+                    .parameter
+                    .as_ref()
+                    .is_none_or(AnimationValue::is_valid)
+        });
+        for event in &mut self.events {
+            event.time = event.time.max(0.0);
+            event.function = event.function.trim().to_owned();
+            max_time = max_time.max(event.time);
+        }
+        self.events.sort_by(|left, right| {
+            left.time
+                .total_cmp(&right.time)
+                .then_with(|| left.function.cmp(&right.function))
+        });
         for track in &mut self.tracks {
             if track.target.trim().is_empty() {
                 track.target = ".".into();
@@ -366,6 +395,11 @@ mod tests {
             "duration": 1,
             "frame_rate": 0,
             "wrap_mode": "once",
+            "events": [
+                {"time": 0.5, "name": "Footstep", "parameter": "left"},
+                {"time": -2, "function": "Start"},
+                {"time": 1, "function": ""}
+            ],
             "tracks": [{
                 "target": "",
                 "component": "Transform",
@@ -383,6 +417,14 @@ mod tests {
         assert_eq!(clip.version, 1);
         assert_eq!(clip.frame_rate, 60.0);
         assert_eq!(clip.duration, 2.0);
+        assert_eq!(clip.events.len(), 2);
+        assert_eq!(clip.events[0].function, "Start");
+        assert_eq!(clip.events[0].time, 0.0);
+        assert_eq!(clip.events[1].function, "Footstep");
+        assert_eq!(
+            clip.events[1].parameter,
+            Some(AnimationValue::String("left".into()))
+        );
         assert_eq!(clip.tracks[0].target, ".");
         assert_eq!(clip.tracks[0].keyframes.len(), 2);
         assert_eq!(

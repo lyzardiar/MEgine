@@ -8,10 +8,14 @@ import {
 } from 'react';
 import type { WorldSnapshotView } from '@mengine/api';
 import {
+  advanceAnimationPreviewPhase,
+  addAnimationEvent,
   createAnimationClip,
   normalizeAnimationClip,
   parseAnimationClip,
   removeAnimationKeyframe,
+  removeAnimationEvent,
+  replaceAnimationEvent,
   replaceAnimationKeyframe,
   sampleAnimationClip,
   serializeAnimationClip,
@@ -19,6 +23,7 @@ import {
   upsertAnimationKeyframe,
   wrappedAnimationTime,
   type AnimationClip,
+  type AnimationEvent,
   type AnimationKeyframe,
   type AnimationSample,
   type AnimationTrack,
@@ -173,6 +178,49 @@ function KeyframeValueEditor(props: {
   );
 }
 
+function AnimationEventParameterEditor(props: {
+  value: AnimationValue | null;
+  onChange: (value: AnimationValue | null) => void;
+}) {
+  const kind = props.value == null
+    ? 'none'
+    : Array.isArray(props.value)
+      ? 'vector'
+      : typeof props.value;
+  return (
+    <>
+      <label>
+        Parameter
+        <select
+          aria-label="Animation event parameter type"
+          value={kind}
+          onChange={(event) => {
+            const next = event.target.value;
+            props.onChange(next === 'none'
+              ? null
+              : next === 'number'
+                ? 0
+                : next === 'boolean'
+                  ? false
+                  : next === 'vector'
+                    ? [0, 0, 0]
+                    : '');
+          }}
+        >
+          <option value="none">None</option>
+          <option value="string">String</option>
+          <option value="number">Number</option>
+          <option value="boolean">Boolean</option>
+          <option value="vector">Vector</option>
+        </select>
+      </label>
+      {props.value != null && (
+        <KeyframeValueEditor value={props.value} onChange={props.onChange} />
+      )}
+    </>
+  );
+}
+
 function safeClipName(raw: string): string {
   return raw
     .trim()
@@ -235,6 +283,7 @@ export function Timeline(props: {
   const [recording, setRecording] = useState(false);
   const [selectedTrack, setSelectedTrack] = useState<number | null>(null);
   const [selectedKey, setSelectedKey] = useState<{ track: number; key: number } | null>(null);
+  const [selectedEvent, setSelectedEvent] = useState<number | null>(null);
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -243,6 +292,7 @@ export function Timeline(props: {
   const [propertyPath, setPropertyPath] = useState('Transform.position');
   const playbackFrame = useRef<number | null>(null);
   const previousFrameTime = useRef<number | null>(null);
+  const playbackPhase = useRef<number | null>(null);
   const recordingValues = useRef(new Map<string, string | null>());
   const loadedClipPath = useRef('');
   const drafts = useRef(new Map<string, {
@@ -251,6 +301,7 @@ export function Timeline(props: {
     time: number;
     selectedTrack: number | null;
     selectedKey: { track: number; key: number } | null;
+    selectedEvent: number | null;
   }>());
 
   useEffect(() => {
@@ -295,6 +346,7 @@ export function Timeline(props: {
           time,
           selectedTrack,
           selectedKey: selectedKey ? { ...selectedKey } : null,
+          selectedEvent,
         });
       } else {
         drafts.current.delete(previousPath);
@@ -308,10 +360,12 @@ export function Timeline(props: {
     setClip(null);
     setSavedText('');
     setTime(0);
+    playbackPhase.current = 0;
     setLoading(false);
     if (!clipPath) {
       setSelectedTrack(null);
       setSelectedKey(null);
+      setSelectedEvent(null);
       props.onClearPreview();
       return () => { cancelled = true; };
     }
@@ -323,11 +377,14 @@ export function Timeline(props: {
       setTime(draft.time);
       setSelectedTrack(draft.selectedTrack);
       setSelectedKey(draft.selectedKey ? { ...draft.selectedKey } : null);
+      setSelectedEvent(draft.selectedEvent);
+      playbackPhase.current = draft.time;
       setLoading(false);
       return () => { cancelled = true; };
     }
     setSelectedTrack(null);
     setSelectedKey(null);
+    setSelectedEvent(null);
     setLoading(true);
     void readProjectAssetText(clipPath)
       .then((text) => {
@@ -335,7 +392,9 @@ export function Timeline(props: {
         const loaded = parseAnimationClip(text);
         setClip(loaded);
         setSavedText(serializeAnimationClip(loaded));
-        setTime(wrappedAnimationTime(Number(player?.time ?? 0), loaded.duration, loaded.wrap_mode));
+        const authoredTime = Number(player?.time ?? 0);
+        playbackPhase.current = Number.isFinite(authoredTime) ? authoredTime : 0;
+        setTime(wrappedAnimationTime(authoredTime, loaded.duration, loaded.wrap_mode));
       })
       .catch((reason: unknown) => {
         if (cancelled) return;
@@ -384,12 +443,16 @@ export function Timeline(props: {
         ? Number(animator.speed ?? 1) * animatorStateSpeed
         : player?.speed ?? 1);
       setTime((current) => {
-        const next = current + Math.max(0, now - previous) * 0.001 * (Number.isFinite(speed) ? speed : 1);
-        if (clip.wrap_mode === 'once' && next >= clip.duration) {
-          setPlaying(false);
-          return clip.duration;
-        }
-        return wrappedAnimationTime(next, clip.duration, clip.wrap_mode);
+        const delta = Math.max(0, now - previous) * 0.001 * (Number.isFinite(speed) ? speed : 1);
+        const next = advanceAnimationPreviewPhase(
+          playbackPhase.current ?? current,
+          delta,
+          clip.duration,
+          clip.wrap_mode,
+        );
+        playbackPhase.current = next.phase;
+        if (next.finished) setPlaying(false);
+        return next.time;
       });
       playbackFrame.current = requestAnimationFrame(tick);
     };
@@ -510,6 +573,7 @@ export function Timeline(props: {
             time,
             selectedTrack,
             selectedKey: selectedKey ? { ...selectedKey } : null,
+            selectedEvent,
           });
         }
       }
@@ -518,6 +582,7 @@ export function Timeline(props: {
       setClip(next);
       setSavedText(serializeAnimationClip(next));
       setTime(0);
+      playbackPhase.current = 0;
       setShowNewClip(false);
       props.onAssetsChanged();
       props.onLog(`Created ${path}`);
@@ -577,6 +642,7 @@ export function Timeline(props: {
     });
     setSelectedTrack(next.tracks.length - 1);
     setSelectedKey(null);
+    setSelectedEvent(null);
     setClip(next);
   };
 
@@ -604,6 +670,7 @@ export function Timeline(props: {
       : candidate);
     setClip({ ...clip, tracks });
     setSelectedKey({ track: selectedTrack, key: result.keyIndex });
+    setSelectedEvent(null);
   };
 
   const toggleRecording = () => {
@@ -632,6 +699,36 @@ export function Timeline(props: {
     setClip({ ...clip, tracks });
   };
 
+  const addEvent = () => {
+    if (!clip) return;
+    const result = addAnimationEvent(clip, time);
+    setClip(result.clip);
+    setSelectedTrack(null);
+    setSelectedKey(null);
+    setSelectedEvent(result.eventIndex);
+  };
+
+  const selectedAnimationEvent = selectedEvent != null && clip
+    ? clip.events[selectedEvent] ?? null
+    : null;
+
+  const updateSelectedEvent = (patch: Partial<AnimationEvent>) => {
+    if (!clip || selectedEvent == null) return;
+    const result = replaceAnimationEvent(clip, selectedEvent, patch);
+    if (!result) return;
+    setClip(result.clip);
+    setSelectedEvent(result.eventIndex);
+    const next = result.clip.events[result.eventIndex].time;
+    playbackPhase.current = next;
+    setTime(next);
+  };
+
+  const deleteSelectedEvent = () => {
+    if (!clip || selectedEvent == null) return;
+    setClip(removeAnimationEvent(clip, selectedEvent));
+    setSelectedEvent(null);
+  };
+
   const selectedKeyframe = selectedKey && clip
     ? clip.tracks[selectedKey.track]?.keyframes[selectedKey.key] ?? null
     : null;
@@ -655,7 +752,9 @@ export function Timeline(props: {
       )),
     });
     setSelectedKey({ track: selectedKey.track, key: result.keyIndex });
-    setTime(result.track.keyframes[result.keyIndex].time);
+    const next = result.track.keyframes[result.keyIndex].time;
+    playbackPhase.current = next;
+    setTime(next);
   };
 
   const deleteSelectedKey = () => {
@@ -681,11 +780,13 @@ export function Timeline(props: {
     const rect = event.currentTarget.getBoundingClientRect();
     if (rect.width <= 0) return;
     setPlaying(false);
-    setTime(snapAnimationTime(
+    const next = snapAnimationTime(
       (event.clientX - rect.left) / rect.width * duration,
       frameRate,
       duration,
-    ));
+    );
+    playbackPhase.current = next;
+    setTime(next);
   };
 
   if (!props.entity) {
@@ -756,7 +857,11 @@ export function Timeline(props: {
         <button type="button" title="Previous frame" disabled={!clip} onClick={() => {
           if (!clip) return;
           setPlaying(false);
-          setTime((value) => Math.max(0, value - 1 / clip.frame_rate));
+          setTime((value) => {
+            const next = Math.max(0, value - 1 / clip.frame_rate);
+            playbackPhase.current = next;
+            return next;
+          });
         }}>◀</button>
         <button type="button" className={playing ? 'active' : ''} disabled={!clip} onClick={() => setPlaying(!playing)}>
           {playing ? 'Ⅱ' : '▶'}
@@ -764,7 +869,11 @@ export function Timeline(props: {
         <button type="button" title="Next frame" disabled={!clip} onClick={() => {
           if (!clip) return;
           setPlaying(false);
-          setTime((value) => Math.min(clip.duration, value + 1 / clip.frame_rate));
+          setTime((value) => {
+            const next = Math.min(clip.duration, value + 1 / clip.frame_rate);
+            playbackPhase.current = next;
+            return next;
+          });
         }}>▶|</button>
         <span className="timeline-time">{time.toFixed(3)} s</span>
         <span className="timeline-clip-path" title={clipPath}>{clipPath}{dirty ? ' *' : ''}</span>
@@ -817,6 +926,7 @@ export function Timeline(props: {
               }}
             />
             <button type="button" onClick={addProperty}>+ Add Property</button>
+            <button type="button" onClick={addEvent}>+ Add Event</button>
             <button type="button" disabled={selectedTrack == null} onClick={recordKey}>◆ Add Key</button>
             <button type="button" disabled={selectedTrack == null} onClick={deleteTrack}>Delete Track</button>
           </div>
@@ -883,6 +993,40 @@ export function Timeline(props: {
             </div>
           )}
 
+          {selectedAnimationEvent && (
+            <div className="timeline-selection-editor timeline-event-editor">
+              <label>
+                Event
+                <input
+                  aria-label="Animation event function"
+                  value={selectedAnimationEvent.function}
+                  onChange={(event) => updateSelectedEvent({ function: event.target.value })}
+                />
+              </label>
+              <label>
+                Time
+                <input
+                  aria-label="Animation event time"
+                  type="number"
+                  min={0}
+                  max={clip.duration}
+                  step={1 / Math.max(1, clip.frame_rate)}
+                  value={selectedAnimationEvent.time}
+                  onChange={(event) => {
+                    if (Number.isFinite(event.target.valueAsNumber)) {
+                      updateSelectedEvent({ time: event.target.valueAsNumber });
+                    }
+                  }}
+                />
+              </label>
+              <AnimationEventParameterEditor
+                value={selectedAnimationEvent.parameter}
+                onChange={(parameter) => updateSelectedEvent({ parameter })}
+              />
+              <button type="button" className="danger" onClick={deleteSelectedEvent}>Delete Event</button>
+            </div>
+          )}
+
           <div className="timeline-scrubber">
             <input
               aria-label="Animation time"
@@ -893,7 +1037,9 @@ export function Timeline(props: {
               value={Math.min(time, clip.duration)}
               onChange={(event) => {
                 setPlaying(false);
-                setTime(Number(event.target.value));
+                const next = Number(event.target.value);
+                playbackPhase.current = next;
+                setTime(next);
               }}
             />
           </div>
@@ -912,6 +1058,49 @@ export function Timeline(props: {
             </div>
             <div className="timeline-ruler-value">Sample</div>
 
+            <div className={`timeline-track-row timeline-event-row${selectedEvent != null ? ' selected' : ''}`}>
+              <div className="timeline-track-label">
+                <strong>Animation Events</strong>
+                <span>{clip.events.length} event{clip.events.length === 1 ? '' : 's'}</span>
+              </div>
+              <div
+                className="timeline-track-keys"
+                onPointerDown={(event) => {
+                  if ((event.target as HTMLElement).closest('.timeline-event-key')) return;
+                  seekAtPointer(event, clip.duration, clip.frame_rate);
+                }}
+              >
+                {clip.events.map((animationEvent, eventIndex) => (
+                  <button
+                    type="button"
+                    className={`timeline-event-key${selectedEvent === eventIndex ? ' selected' : ''}`}
+                    key={`${animationEvent.time}:${animationEvent.function}:${eventIndex}`}
+                    title={`${animationEvent.time.toFixed(3)} s - ${animationEvent.function}`}
+                    style={{
+                      left: `clamp(6px, ${clip.duration > 0 ? animationEvent.time / clip.duration * 100 : 0}%, calc(100% - 6px))`,
+                    }}
+                    onPointerDown={(event) => {
+                      event.stopPropagation();
+                      setPlaying(false);
+                      setSelectedTrack(null);
+                      setSelectedKey(null);
+                      setSelectedEvent(eventIndex);
+                      playbackPhase.current = animationEvent.time;
+                      setTime(animationEvent.time);
+                    }}
+                    onClick={(event) => event.stopPropagation()}
+                  />
+                ))}
+                <i className="timeline-playhead" style={{ left: `${clip.duration > 0 ? time / clip.duration * 100 : 0}%` }} />
+              </div>
+              <div className="timeline-track-value">
+                {clip.events
+                  .filter((animationEvent) => Math.abs(animationEvent.time - time) < 0.5 / Math.max(1, clip.frame_rate))
+                  .map((animationEvent) => animationEvent.function)
+                  .join(', ') || '-'}
+              </div>
+            </div>
+
             {clip.tracks.map((track, index) => {
               const sample = samples.find((candidate) =>
                 candidate.target === track.target
@@ -923,6 +1112,7 @@ export function Timeline(props: {
                   if ((event.target as HTMLElement).closest('.timeline-key')) return;
                   setSelectedTrack(index);
                   setSelectedKey(null);
+                  setSelectedEvent(null);
                 }}>
                   <div className="timeline-track-label">
                     <strong>{track.component}.{track.property}</strong>
@@ -949,6 +1139,8 @@ export function Timeline(props: {
                           setPlaying(false);
                           setSelectedTrack(index);
                           setSelectedKey({ track: index, key: keyIndex });
+                          setSelectedEvent(null);
+                          playbackPhase.current = key.time;
                           setTime(key.time);
                         }}
                         onClick={(event) => event.stopPropagation()}

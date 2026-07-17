@@ -15,12 +15,19 @@ export type AnimationTrack = {
   keyframes: AnimationKeyframe[];
 };
 
+export type AnimationEvent = {
+  time: number;
+  function: string;
+  parameter: AnimationValue | null;
+};
+
 export type AnimationClip = {
   version: number;
   name: string;
   duration: number;
   frame_rate: number;
   wrap_mode: AnimationWrapMode;
+  events: AnimationEvent[];
   tracks: AnimationTrack[];
 };
 
@@ -42,6 +49,7 @@ export function createAnimationClip(name = 'New Animation'): AnimationClip {
     duration: 1,
     frame_rate: DEFAULT_FRAME_RATE,
     wrap_mode: 'loop',
+    events: [],
     tracks: [],
   };
 }
@@ -97,6 +105,19 @@ export function normalizeAnimationClip(value: unknown): AnimationClip {
       keyframes: [...byTime.values()].sort((left, right) => left.time - right.time),
     });
   }
+  const events: AnimationEvent[] = [];
+  for (const rawEvent of Array.isArray(source.events) ? source.events : []) {
+    const event = record(rawEvent);
+    const time = Number(event.time);
+    const functionName = String(event.function ?? event.name ?? '').trim();
+    if (!Number.isFinite(time) || !functionName) continue;
+    const safeTime = Math.max(0, time);
+    const parameter = event.parameter == null ? null : animationValue(event.parameter);
+    if (event.parameter != null && parameter == null) continue;
+    events.push({ time: safeTime, function: functionName, parameter });
+    maxTime = Math.max(maxTime, safeTime);
+  }
+  events.sort((left, right) => left.time - right.time || left.function.localeCompare(right.function));
   const authoredDuration = Number(source.duration);
   const authoredFrameRate = Number(source.frame_rate ?? source.frameRate);
   const authoredVersion = Math.trunc(Number(source.version));
@@ -111,6 +132,7 @@ export function normalizeAnimationClip(value: unknown): AnimationClip {
       ? authoredFrameRate
       : DEFAULT_FRAME_RATE,
     wrap_mode: wrapMode(source.wrap_mode ?? source.wrapMode),
+    events,
     tracks,
   };
 }
@@ -191,6 +213,44 @@ export function removeAnimationKeyframe(
   };
 }
 
+export function addAnimationEvent(
+  clip: AnimationClip,
+  time: number,
+  functionName = 'AnimationEvent',
+): { clip: AnimationClip; eventIndex: number } {
+  const event: AnimationEvent = {
+    time: snapAnimationTime(time, clip.frame_rate, clip.duration),
+    function: functionName.trim() || 'AnimationEvent',
+    parameter: null,
+  };
+  const events = [...clip.events, event]
+    .sort((left, right) => left.time - right.time || left.function.localeCompare(right.function));
+  return { clip: { ...clip, events }, eventIndex: events.indexOf(event) };
+}
+
+export function replaceAnimationEvent(
+  clip: AnimationClip,
+  eventIndex: number,
+  patch: Partial<AnimationEvent>,
+): { clip: AnimationClip; eventIndex: number } | null {
+  const current = clip.events[eventIndex];
+  if (!current) return null;
+  const next: AnimationEvent = {
+    time: snapAnimationTime(patch.time ?? current.time, clip.frame_rate, clip.duration),
+    function: (patch.function ?? current.function).trim() || current.function,
+    parameter: patch.parameter === undefined ? current.parameter : structuredClone(patch.parameter),
+  };
+  const events = clip.events.filter((_event, index) => index !== eventIndex);
+  events.push(next);
+  events.sort((left, right) => left.time - right.time || left.function.localeCompare(right.function));
+  return { clip: { ...clip, events }, eventIndex: events.indexOf(next) };
+}
+
+export function removeAnimationEvent(clip: AnimationClip, eventIndex: number): AnimationClip {
+  if (!clip.events[eventIndex]) return clip;
+  return { ...clip, events: clip.events.filter((_event, index) => index !== eventIndex) };
+}
+
 export function wrappedAnimationTime(
   time: number,
   duration: number,
@@ -202,6 +262,33 @@ export function wrappedAnimationTime(
   const period = duration * 2;
   const wrapped = ((time % period) + period) % period;
   return wrapped <= duration ? wrapped : period - wrapped;
+}
+
+export function advanceAnimationPreviewPhase(
+  phase: number,
+  delta: number,
+  duration: number,
+  mode: AnimationWrapMode,
+): { phase: number; time: number; finished: boolean } {
+  if (!Number.isFinite(phase) || !Number.isFinite(delta) || !Number.isFinite(duration) || duration <= 0) {
+    return { phase: 0, time: 0, finished: mode === 'once' };
+  }
+  const next = phase + delta;
+  if (mode === 'once') {
+    const time = Math.max(0, Math.min(duration, next));
+    return {
+      phase: time,
+      time,
+      finished: (delta >= 0 && next >= duration) || (delta < 0 && next <= 0),
+    };
+  }
+  const period = mode === 'ping_pong' ? duration * 2 : duration;
+  const nextPhase = ((next % period) + period) % period;
+  return {
+    phase: nextPhase,
+    time: wrappedAnimationTime(nextPhase, duration, mode),
+    finished: false,
+  };
 }
 
 function interpolateValue(

@@ -1,9 +1,13 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import {
+  advanceAnimationPreviewPhase,
+  addAnimationEvent,
   normalizeAnimationClip,
   parseAnimationClip,
   removeAnimationKeyframe,
+  removeAnimationEvent,
+  replaceAnimationEvent,
   replaceAnimationKeyframe,
   sampleAnimationClip,
   sampleAnimationTrack,
@@ -30,6 +34,20 @@ test('AnimationClip wrap modes match runtime semantics', () => {
   assert.equal(wrappedAnimationTime(-0.5, 2, 'loop'), 1.5);
   assert.equal(wrappedAnimationTime(2.5, 2, 'ping_pong'), 1.5);
   assert.equal(wrappedAnimationTime(4.5, 2, 'ping_pong'), 0.5);
+});
+
+test('Animation preview keeps ping-pong phase while sample time reverses', () => {
+  const turned = advanceAnimationPreviewPhase(0.9, 0.2, 1, 'ping_pong');
+  assert.equal(turned.phase, 1.1);
+  assert.ok(Math.abs(turned.time - 0.9) < 1e-9);
+  const returning = advanceAnimationPreviewPhase(turned.phase, 0.2, 1, 'ping_pong');
+  assert.ok(Math.abs(returning.phase - 1.3) < 1e-9);
+  assert.ok(Math.abs(returning.time - 0.7) < 1e-9);
+  assert.deepEqual(advanceAnimationPreviewPhase(0.1, -0.2, 1, 'once'), {
+    phase: 0,
+    time: 0,
+    finished: true,
+  });
 });
 
 test('AnimationClip scalar vector and discrete interpolation is deterministic', () => {
@@ -107,4 +125,33 @@ test('AnimationClip keyframe editing snaps replaces moves and removes on frame b
     { time: 0, value: 0 },
     { time: 2, value: 10 },
   ]);
+});
+
+test('Animation events normalize, snap, edit, and remain backward compatible', () => {
+  const legacy = normalizeAnimationClip({ version: 1, name: 'Legacy', duration: 1, tracks: [] });
+  assert.deepEqual(legacy.events, []);
+
+  const added = addAnimationEvent(legacy, 0.509, 'Footstep');
+  assert.equal(added.clip.events[0].time, 31 / 60);
+  const replaced = replaceAnimationEvent(added.clip, added.eventIndex, {
+    function: 'SpawnDust',
+    parameter: 'left',
+  });
+  assert.ok(replaced);
+  assert.equal(replaced.clip.events[0].function, 'SpawnDust');
+  assert.equal(replaced.clip.events[0].parameter, 'left');
+  assert.deepEqual(removeAnimationEvent(replaced.clip, replaced.eventIndex).events, []);
+
+  const parsed = normalizeAnimationClip({
+    version: 1,
+    name: 'Events',
+    duration: 0.1,
+    tracks: [],
+    events: [
+      { time: 0.75, name: 'LegacyName', parameter: 3 },
+      { time: -1, function: '' },
+    ],
+  });
+  assert.equal(parsed.duration, 0.75);
+  assert.deepEqual(parsed.events, [{ time: 0.75, function: 'LegacyName', parameter: 3 }]);
 });

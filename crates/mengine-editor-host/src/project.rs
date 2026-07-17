@@ -532,11 +532,21 @@ interface PhysicsCollisionInfo {
   readonly secondEntity: string;
 }
 
+interface EngineAnimationEventInfo {
+  readonly entity: string;
+  readonly function: string;
+  readonly time: number;
+  readonly parameter: boolean | number | number[] | string | null;
+  readonly state: string | null;
+  readonly weight: number;
+}
+
 declare const engine: EngineApi;
 declare function onTick(dt: number, frame: number): void;
 declare function onSceneLoaded(scene: EngineSceneInfo): void;
 declare function onCollisionEnter(event: PhysicsCollisionInfo): void;
 declare function onCollisionExit(event: PhysicsCollisionInfo): void;
+declare function onAnimationEvent(event: EngineAnimationEventInfo): void;
 "#,
     )?;
 
