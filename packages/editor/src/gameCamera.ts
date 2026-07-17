@@ -5,6 +5,7 @@ import type {
 } from '@mengine/behaviour';
 import { add, type Camera, type Vec3 } from './math3d.ts';
 import { transformBasis } from './editorGizmos.ts';
+import { buildWorldTransforms, resolvedTransform } from './worldTransform.ts';
 
 export type GameCameraKind = '2d' | '3d';
 
@@ -15,6 +16,8 @@ export type ResolvedGameCamera = Camera & {
 
 type CameraEntity = {
   entity: number;
+  parent?: number | null;
+  active?: boolean;
   components: Record<string, unknown>;
 };
 
@@ -44,10 +47,11 @@ export function primaryGameCamera(
   entities: CameraEntity[],
   isActive?: (id: number) => boolean,
 ): ResolvedGameCamera | null {
+  const world = buildWorldTransforms(entities);
   for (const entity of entities) {
-    if (isActive && !isActive(entity.entity)) continue;
+    if (!world.get(entity.entity)?.active || (isActive && !isActive(entity.entity))) continue;
     const camera = entity.components.Camera2D as Camera2DData | undefined;
-    const transform = entity.components.Transform as TransformData | undefined;
+    const transform = resolvedTransform(world, entity.entity) ?? undefined;
     if (camera?.primary && transform) {
       return transformCamera(
         entity,
@@ -61,9 +65,9 @@ export function primaryGameCamera(
   }
 
   for (const entity of entities) {
-    if (isActive && !isActive(entity.entity)) continue;
+    if (!world.get(entity.entity)?.active || (isActive && !isActive(entity.entity))) continue;
     const camera = entity.components.Camera3D as Camera3DData | undefined;
-    const transform = entity.components.Transform as TransformData | undefined;
+    const transform = resolvedTransform(world, entity.entity) ?? undefined;
     if (camera?.primary && transform) {
       const projection = camera.projection?.toLowerCase() === 'orthographic'
         ? 'orthographic'

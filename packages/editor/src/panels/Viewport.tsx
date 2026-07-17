@@ -116,6 +116,7 @@ import { nextUiSelectable, uiNavigationAction } from '../ui/uiNavigation';
 import { getSpriteImage } from '../spriteDraw';
 import { resolveAnimatedSpriteFrame } from '../animatedSprite';
 import { compareWorldDrawOrder, entity2DSortingOrder } from '../worldDrawOrder';
+import { buildWorldTransforms, resolvedTransform } from '../worldTransform';
 import {
   hitTestLinePoint,
   linePointDeltaFromWorld,
@@ -725,6 +726,7 @@ export function Viewport(props: {
 
     const isActive = (id: number) =>
       p.activeInHierarchy ? p.activeInHierarchy(id) : true;
+    const worldTransforms = buildWorldTransforms(p.entities);
     // Game 视图不显示编辑器选中态（只能 Hierarchy / Scene 点选）
     const selSet = isGame
       ? new Set<number>()
@@ -733,7 +735,7 @@ export function Viewport(props: {
     const drawn = p.entities
       .map((e, hierarchyOrder) => {
         if (!isActive(e.entity)) return null;
-        const t = e.components.Transform as TransformData | undefined;
+        const t = resolvedTransform(worldTransforms, e.entity) ?? undefined;
         if (!t) return null;
         const pr = project(t.position as Vec3, cam, vp);
         // Keep cameras/lights even if origin is barely off-screen — frustum/rays may still show
@@ -968,7 +970,7 @@ export function Viewport(props: {
     const particleBatches = new Map<string, ReturnType<typeof collectParticleDrawItems>>();
     for (const entity of p.entities) {
       if (!isActive(entity.entity)) continue;
-      const transform = entity.components.Transform as TransformData | undefined;
+      const transform = resolvedTransform(worldTransforms, entity.entity) ?? undefined;
       if (!transform) continue;
       const emitter2D = entity.components.ParticleEmitter2D as Record<string, unknown> | undefined;
       const emitter3D = entity.components.ParticleEmitter3D as Record<string, unknown> | undefined;
@@ -1037,7 +1039,7 @@ export function Viewport(props: {
 
     const liveSpineIds = new Set<number>();
     const spineEntities = p.entities
-      .filter((entity) => entity.components.SpineSkeleton && entity.components.Transform)
+      .filter((entity) => entity.components.SpineSkeleton && resolvedTransform(worldTransforms, entity.entity))
       .sort((left, right) => {
         const a = left.components.SpineSkeleton as { sorting_order?: number };
         const b = right.components.SpineSkeleton as { sorting_order?: number };
@@ -1056,7 +1058,7 @@ export function Viewport(props: {
     for (const entity of spineEntities) {
       if (!isActive(entity.entity)) continue;
       const component = entity.components.SpineSkeleton as Record<string, unknown> | undefined;
-      const transform = entity.components.Transform as TransformData | undefined;
+      const transform = resolvedTransform(worldTransforms, entity.entity) ?? undefined;
       if (!component || !transform) continue;
       liveSpineIds.add(entity.entity);
       const origin = transform.position as Vec3;
@@ -1105,7 +1107,7 @@ export function Viewport(props: {
     rectGizmoHitsRef.current = [];
     if (!isGame && !p.playing && p.selected != null) {
       const sel = p.entities.find((e) => e.entity === p.selected);
-      const t = sel?.components.Transform as TransformData | undefined;
+      const t = sel ? (resolvedTransform(worldTransforms, sel.entity) ?? undefined) : undefined;
       const hasRect = !!sel?.components.RectTransform;
       // UI 优先用 2D Rect 轴；纯 3D 才用世界坐标轴
       if (hasRect) {
@@ -1154,7 +1156,9 @@ export function Viewport(props: {
     // Unity-style LineRenderer point handles: visible and directly draggable in Scene.
     if (!isGame && !p.playing && p.selected != null) {
       const selectedLine = p.entities.find((entity) => entity.entity === p.selected);
-      const transform = selectedLine?.components.Transform as TransformData | undefined;
+      const transform = selectedLine
+        ? (resolvedTransform(worldTransforms, selectedLine.entity) ?? undefined)
+        : undefined;
       const line = selectedLine?.components.Line2D as { points?: unknown } | undefined;
       if (selectedLine && transform && line) {
         const points = readLine2DPoints(line.points);
@@ -1593,7 +1597,10 @@ export function Viewport(props: {
             return;
           }
 
-          const tr = ent?.components.Transform as TransformData | undefined;
+          const pointerWorldTransforms = buildWorldTransforms(propsRef.current.entities);
+          const tr = ent
+            ? (resolvedTransform(pointerWorldTransforms, ent.entity) ?? undefined)
+            : undefined;
           const origin = transformHandleOrigin(
             propsRef.current.entities,
             propsRef.current.selectedIds ?? [propsRef.current.selected],
@@ -1785,7 +1792,9 @@ export function Viewport(props: {
         syncCamToStore();
       } else if (d.type === 'linePoint') {
         const entity = propsRef.current.entities.find((candidate) => candidate.entity === d.entity);
-        const transform = entity?.components.Transform as TransformData | undefined;
+        const transform = entity
+          ? (resolvedTransform(buildWorldTransforms(propsRef.current.entities), entity.entity) ?? undefined)
+          : undefined;
         const line = entity?.components.Line2D as { points?: unknown } | undefined;
         const points = readLine2DPoints(line?.points);
         const point = points[d.index];
@@ -2042,7 +2051,9 @@ export function Viewport(props: {
         const cam: Camera = { eye, target: liveCam.current.pivot, fovYDeg: 60 };
         const vp = lastVpRef.current;
         const ent = propsRef.current.entities.find((e) => e.entity === d.entity);
-        const tr = ent?.components.Transform as TransformData | undefined;
+        const tr = ent
+          ? (resolvedTransform(buildWorldTransforms(propsRef.current.entities), ent.entity) ?? undefined)
+          : undefined;
         const origin = transformHandleOrigin(
           propsRef.current.entities,
           propsRef.current.selectedIds ?? [d.entity],

@@ -34,6 +34,14 @@ test('Pivot handle follows the active object and ignores invalid selection entri
   assert.deepEqual(transformHandleOrigin(entities, [2], 2, 'center'), null);
 });
 
+test('Pivot handle resolves child Transform into parent world space', () => {
+  const entities = [
+    transform(1, [10, 0, 0]),
+    transform(2, [2, 3, 4], 1),
+  ];
+  assert.deepEqual(transformHandleOrigin(entities, [2], 2, 'pivot'), [12, 3, 4]);
+});
+
 test('group rotation moves the position around the shared pivot and rotates the object', () => {
   const source = transform(1, [2, 0, 0]).components.Transform;
   const result = rotateTransformAround(source, [1, 0, 0], [0, 0, 1], 90);

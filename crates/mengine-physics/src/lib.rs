@@ -1,7 +1,7 @@
 //! Rapier-backed 3D rigid-body simulation synchronized with MEngine ECS components.
 
 use mengine_core::generated::{BoxCollider3D, RigidBody3D, SphereCollider3D, Transform};
-use mengine_core::{Entity, Parent, World};
+use mengine_core::{Entity, TransformHierarchy, World};
 use rapier3d::prelude::PhysicsWorld as RapierWorld;
 use rapier3d::prelude::{
     ColliderBuilder, ColliderHandle, Pose, RigidBodyBuilder, RigidBodyHandle, RigidBodyType,
@@ -129,7 +129,8 @@ impl PhysicsWorld {
     }
 
     pub fn step(&mut self, world: &mut World, dt: f32) -> PhysicsStepEvents {
-        let definitions = collect_definitions(world);
+        let hierarchy = TransformHierarchy::build(world);
+        let definitions = collect_definitions(world, &hierarchy);
         self.remove_stale_bodies(&definitions);
         for (entity, definition) in &definitions {
             let rebuild = self
@@ -145,7 +146,7 @@ impl PhysicsWorld {
 
         self.rapier.integration_parameters.dt = finite_or(dt, 1.0 / 60.0).clamp(0.0001, 0.1);
         self.rapier.step();
-        self.write_back(world);
+        self.write_back(world, &hierarchy);
         self.collect_events()
     }
 
@@ -288,7 +289,7 @@ impl PhysicsWorld {
         }
     }
 
-    fn write_back(&self, world: &mut World) {
+    fn write_back(&self, world: &mut World, hierarchy: &TransformHierarchy) {
         for (entity, entry) in &self.bodies {
             if entry.signature.kind != BodyKind::Dynamic {
                 continue;
@@ -298,9 +299,44 @@ impl PhysicsWorld {
             };
             let translation = body.translation();
             let rotation = body.rotation();
+            let parent_world = hierarchy.parent_world(world, *entity);
+            let (local_position, local_rotation) = parent_world.map_or(
+                (
+                    [translation.x, translation.y, translation.z],
+                    [rotation.x, rotation.y, rotation.z, rotation.w],
+                ),
+                |parent| {
+                    let mut world_position = parent.position;
+                    world_position.x = translation.x;
+                    world_position.y = translation.y;
+                    world_position.z = translation.z;
+                    let determinant = parent.matrix.determinant();
+                    let local_position = if determinant.is_finite() && determinant.abs() > 0.000001
+                    {
+                        parent.matrix.inverse().transform_point3(world_position)
+                    } else {
+                        world_position
+                    };
+                    let mut world_rotation = parent.rotation;
+                    world_rotation.x = rotation.x;
+                    world_rotation.y = rotation.y;
+                    world_rotation.z = rotation.z;
+                    world_rotation.w = rotation.w;
+                    let local_rotation = (parent.rotation.conjugate() * world_rotation).normalize();
+                    (
+                        local_position.to_array(),
+                        [
+                            local_rotation.x,
+                            local_rotation.y,
+                            local_rotation.z,
+                            local_rotation.w,
+                        ],
+                    )
+                },
+            );
             if let Some(transform) = world.get_component_mut::<Transform>(*entity) {
-                transform.position = [translation.x, translation.y, translation.z];
-                transform.rotation = [rotation.x, rotation.y, rotation.z, rotation.w];
+                transform.position = local_position;
+                transform.rotation = local_rotation;
             }
             if let Some(component) = world.get_component_mut::<RigidBody3D>(*entity) {
                 let velocity = body.linvel();
@@ -349,12 +385,14 @@ impl PhysicsWorld {
     }
 }
 
-fn collect_definitions(world: &World) -> HashMap<Entity, BodyDefinition> {
+fn collect_definitions(
+    world: &World,
+    hierarchy: &TransformHierarchy,
+) -> HashMap<Entity, BodyDefinition> {
     world
         .iter_entities()
-        .filter(|entity| active_in_hierarchy(world, *entity))
         .filter_map(|entity| {
-            let transform = world.get_component::<Transform>(entity)?.clone();
+            let transform = hierarchy.get(entity)?.to_transform();
             let rigid_body = world.get_component::<RigidBody3D>(entity).cloned();
             let box_collider = world.get_component::<BoxCollider3D>(entity).cloned();
             let sphere_collider = world.get_component::<SphereCollider3D>(entity).cloned();
@@ -394,20 +432,6 @@ fn collect_definitions(world: &World) -> HashMap<Entity, BodyDefinition> {
             ))
         })
         .collect()
-}
-
-fn active_in_hierarchy(world: &World, entity: Entity) -> bool {
-    let mut current = Some(entity);
-    let mut visited = HashSet::new();
-    while let Some(value) = current {
-        if !visited.insert(value) || !world.entity_active(value) {
-            return false;
-        }
-        current = world
-            .get_component::<Parent>(value)
-            .map(|parent| parent.entity);
-    }
-    true
 }
 
 fn body_kind(value: &str) -> BodyKind {
@@ -497,6 +521,7 @@ fn finite_vec4(value: [f32; 4], fallback: [f32; 4]) -> [f32; 4] {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use mengine_core::Parent;
 
     fn spawn_body(
         world: &mut World,
@@ -647,5 +672,47 @@ mod tests {
         world.insert_component(parent, Parent { entity });
         physics.step(&mut world, 1.0 / 60.0);
         assert_eq!(physics.body_count(), 0);
+    }
+
+    #[test]
+    fn child_rigid_bodies_simulate_in_world_space_and_write_back_local_space() {
+        let mut world = World::new();
+        let parent = world.spawn_empty();
+        world.insert_component(
+            parent,
+            Transform {
+                position: [10.0, 0.0, 0.0],
+                ..Transform::default()
+            },
+        );
+        spawn_body(
+            &mut world,
+            [10.0, -0.5, 0.0],
+            None,
+            Some(BoxCollider3D {
+                size: [10.0, 1.0, 10.0],
+                ..BoxCollider3D::default()
+            }),
+            None,
+        );
+        let child = spawn_body(
+            &mut world,
+            [0.0, 3.0, 0.0],
+            Some(RigidBody3D::default()),
+            None,
+            Some(SphereCollider3D::default()),
+        );
+        world.set_parent(child, Some(parent));
+        let mut physics = PhysicsWorld::new();
+        for _ in 0..240 {
+            physics.step(&mut world, 1.0 / 60.0);
+        }
+        let local = world.get_component::<Transform>(child).unwrap();
+        assert!(local.position[0].abs() < 0.001, "{:?}", local.position);
+        assert!(
+            (local.position[1] - 0.5).abs() < 0.08,
+            "{:?}",
+            local.position
+        );
     }
 }

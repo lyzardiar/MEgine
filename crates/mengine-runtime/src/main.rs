@@ -8,7 +8,7 @@ use mengine_core::generated::{
     Camera2D, Camera3D, DirectionalLight, Dropdown, InputField, ListView, MeshRenderer,
     PbrMaterial, PointLight, ScrollView, Scrollbar, Slider, SpotLight, TabView, Toggle, Transform,
 };
-use mengine_core::{Entity, World};
+use mengine_core::{Entity, TransformHierarchy, World};
 use mengine_physics::PhysicsWorld;
 use mengine_platform::InputState;
 use mengine_rhi::{
@@ -20,11 +20,11 @@ use mengine_runtime::materials::RuntimeMaterialCache;
 use mengine_runtime::particles::ParticleWorld;
 use mengine_runtime::player_config::load_player_config;
 use mengine_runtime::scenes::{LoadedScene, SceneManager, SceneSelector};
-use mengine_runtime::sprites::collect_world_sprites;
+use mengine_runtime::sprites::collect_world_sprites_with_hierarchy;
 use mengine_runtime::textures::RuntimeTextureCache;
 use mengine_runtime::ui::{
-    append_ui_focus_ring, collect_ui_frame, next_ui_focus, set_toggle_value, UiControlKind,
-    UiControlRegion,
+    append_ui_focus_ring, collect_ui_frame_with_hierarchy, next_ui_focus, set_toggle_value,
+    UiControlKind, UiControlRegion,
 };
 use mengine_scene::load_scene;
 use mengine_script::{ScriptHost, ScriptRuntimeRequest};
@@ -1179,25 +1179,32 @@ function onTick(dt, frame) {
 
                 if let Some(r) = self.renderer.as_mut() {
                     r.clear = self.world.time.clear_color.into();
+                    let hierarchy = TransformHierarchy::build(&self.world);
                     let aspect = r.aspect();
-                    let camera = find_camera(&self.world, aspect);
-                    let objects = collect_objects(&self.world, &mut self.materials);
-                    let lighting = collect_lighting(&self.world);
+                    let camera = find_camera(&self.world, &hierarchy, aspect);
+                    let objects = collect_objects(&self.world, &hierarchy, &mut self.materials);
+                    let lighting = collect_lighting(&self.world, &hierarchy);
                     let window_size = self
                         .window
                         .as_ref()
                         .map(|window| window.inner_size())
                         .unwrap_or(winit::dpi::PhysicalSize::new(1, 1));
-                    let mut ui =
-                        collect_ui_frame(&self.world, window_size.width, window_size.height);
-                    append_ui_focus_ring(&mut ui.plan, &ui.controls, self.focused_ui);
-                    let mut world_primitives = collect_world_sprites(
+                    let mut ui = collect_ui_frame_with_hierarchy(
                         &self.world,
+                        &hierarchy,
+                        window_size.width,
+                        window_size.height,
+                    );
+                    append_ui_focus_ring(&mut ui.plan, &ui.controls, self.focused_ui);
+                    let mut world_primitives = collect_world_sprites_with_hierarchy(
+                        &self.world,
+                        &hierarchy,
                         camera,
                         [window_size.width, window_size.height],
                     );
-                    let particle_primitives = self.particles.update_and_collect(
+                    let particle_primitives = self.particles.update_and_collect_with_hierarchy(
                         &self.world,
+                        &hierarchy,
                         camera,
                         [window_size.width, window_size.height],
                         dt,
@@ -1256,24 +1263,18 @@ function onTick(dt, frame) {
     }
 }
 
-fn find_camera(world: &World, viewport_aspect: f32) -> FrameCamera {
+fn find_camera(world: &World, hierarchy: &TransformHierarchy, viewport_aspect: f32) -> FrameCamera {
     for e in world.iter_entities() {
-        if let (Some(t), Some(c)) = (
-            world.get_component::<Transform>(e),
-            world.get_component::<Camera2D>(e),
-        ) {
+        if let (Some(t), Some(c)) = (hierarchy.get(e), world.get_component::<Camera2D>(e)) {
             if c.primary {
-                return camera2d_from_components(t, c, viewport_aspect);
+                return camera2d_from_components(&t.to_transform(), c, viewport_aspect);
             }
         }
     }
     for e in world.iter_entities() {
-        if let (Some(t), Some(c)) = (
-            world.get_component::<Transform>(e),
-            world.get_component::<Camera3D>(e),
-        ) {
+        if let (Some(t), Some(c)) = (hierarchy.get(e), world.get_component::<Camera3D>(e)) {
             if c.primary {
-                return camera_from_components(t, c, viewport_aspect);
+                return camera_from_components(&t.to_transform(), c, viewport_aspect);
             }
         }
     }
@@ -1317,16 +1318,17 @@ fn camera_from_components(t: &Transform, c: &Camera3D, viewport_aspect: f32) -> 
     }
 }
 
-fn collect_objects(world: &World, materials: &mut RuntimeMaterialCache) -> Vec<RenderObject> {
+fn collect_objects(
+    world: &World,
+    hierarchy: &TransformHierarchy,
+    materials: &mut RuntimeMaterialCache,
+) -> Vec<RenderObject> {
     let mut out = Vec::new();
     for e in world.iter_entities() {
-        if let (Some(t), Some(m)) = (
-            world.get_component::<Transform>(e),
-            world.get_component::<MeshRenderer>(e),
-        ) {
+        if let (Some(t), Some(m)) = (hierarchy.get(e), world.get_component::<MeshRenderer>(e)) {
             out.push(RenderObject {
                 mesh_key: m.mesh.clone(),
-                model: t.to_matrix(),
+                model: t.matrix,
                 material: world
                     .get_component::<PbrMaterial>(e)
                     .map(render_material_from_component)
@@ -1341,7 +1343,7 @@ fn collect_objects(world: &World, materials: &mut RuntimeMaterialCache) -> Vec<R
     out
 }
 
-fn collect_lighting(world: &World) -> FrameLighting {
+fn collect_lighting(world: &World, hierarchy: &TransformHierarchy) -> FrameLighting {
     let mut frame = FrameLighting {
         ambient: [0.055, 0.06, 0.08],
         directional: None,
@@ -1349,10 +1351,10 @@ fn collect_lighting(world: &World) -> FrameLighting {
         spots: Vec::new(),
     };
     for entity in world.iter_entities() {
-        let Some(transform) = world.get_component::<Transform>(entity) else {
+        let Some(transform) = hierarchy.get(entity) else {
             continue;
         };
-        let rotation = safe_rotation(transform.rotation);
+        let rotation = transform.rotation;
         let direction = rotation * -Vec3::Z;
         if frame.directional.is_none() {
             if let Some(light) = world.get_component::<DirectionalLight>(entity) {
@@ -1365,7 +1367,7 @@ fn collect_lighting(world: &World) -> FrameLighting {
         }
         if let Some(light) = world.get_component::<PointLight>(entity) {
             frame.points.push(PointLightData {
-                position: Vec3::from(transform.position),
+                position: transform.position,
                 color: [light.color[0], light.color[1], light.color[2]],
                 intensity: light.intensity,
                 range: light.range,
@@ -1373,7 +1375,7 @@ fn collect_lighting(world: &World) -> FrameLighting {
         }
         if let Some(light) = world.get_component::<SpotLight>(entity) {
             frame.spots.push(SpotLightData {
-                position: Vec3::from(transform.position),
+                position: transform.position,
                 direction,
                 color: [light.color[0], light.color[1], light.color[2]],
                 intensity: light.intensity,
@@ -1569,7 +1571,8 @@ mod tests {
         });
         world.commit();
 
-        let frame = find_camera(&world, 2.0);
+        let hierarchy = TransformHierarchy::build(&world);
+        let frame = find_camera(&world, &hierarchy, 2.0);
         assert_eq!(frame.position, Vec3::new(2.0, 3.0, 10.0));
         assert!((frame.proj.x_axis.x - 0.125).abs() < 0.0001);
         assert!((frame.proj.y_axis.y - 0.25).abs() < 0.0001);
@@ -1615,10 +1618,58 @@ mod tests {
             });
         }
         world.commit();
-        let lights = collect_lighting(&world);
+        let hierarchy = TransformHierarchy::build(&world);
+        let lights = collect_lighting(&world, &hierarchy);
         assert_eq!(lights.directional.unwrap().intensity, 2.0);
         assert_eq!(lights.points[0].range, 7.0);
         assert_eq!(lights.spots[0].outer_angle_degrees, 55.0);
+    }
+
+    #[test]
+    fn runtime_render_inputs_share_parent_world_transform_and_activity() {
+        let mut world = World::new();
+        let parent = world.spawn_empty();
+        world.insert_component(
+            parent,
+            Transform {
+                position: [10.0, 0.0, 0.0],
+                ..Transform::default()
+            },
+        );
+        let child = world.spawn_empty();
+        world.insert_component(
+            child,
+            Transform {
+                position: [1.0, 2.0, 3.0],
+                ..Transform::default()
+            },
+        );
+        world.insert_component(child, MeshRenderer::default());
+        world.insert_component(
+            child,
+            PointLight {
+                range: 7.0,
+                ..PointLight::default()
+            },
+        );
+        world.insert_component(child, Camera3D::default());
+        world.set_parent(child, Some(parent));
+
+        let hierarchy = TransformHierarchy::build(&world);
+        let camera = find_camera(&world, &hierarchy, 1.0);
+        let lights = collect_lighting(&world, &hierarchy);
+        let objects = collect_objects(&world, &hierarchy, &mut RuntimeMaterialCache::new(None));
+        let expected = Vec3::new(11.0, 2.0, 3.0);
+        assert_eq!(camera.position, expected);
+        assert_eq!(lights.points[0].position, expected);
+        assert_eq!(objects[0].model.transform_point3(Vec3::ZERO), expected);
+
+        world.set_editor_state(parent, 0, false);
+        let hierarchy = TransformHierarchy::build(&world);
+        assert!(collect_lighting(&world, &hierarchy).points.is_empty());
+        assert!(
+            collect_objects(&world, &hierarchy, &mut RuntimeMaterialCache::new(None),).is_empty()
+        );
     }
 
     #[test]

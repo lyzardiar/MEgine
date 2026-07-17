@@ -66,6 +66,16 @@ import {
 } from './transformSelection';
 import { applyAnimationPreview, type AnimationPreviewSample } from './animationPreview';
 import { assignMaterialToComponents } from './materialAssignment';
+import {
+  buildWorldTransforms,
+  parentWorldTransform,
+  resolvedTransform,
+  worldDeltaToLocal,
+  worldAxisScaleDeltaToLocal,
+  worldPointToLocal,
+  worldRotationToLocal,
+  worldTransformToLocal,
+} from './worldTransform';
 import './behaviours';
 
 export type EditorMode = 'edit' | 'play' | 'pause';
@@ -725,9 +735,27 @@ export function createEditorStore() {
       if (!plan) return false;
 
       if (withUndo) pushUndo();
+      const before = buildWorldTransforms(current);
+      const preservedWorld = new Map(
+        plan.roots.flatMap((id) => {
+          const entity = current.find((candidate) => candidate.entity === id);
+          if ((entity?.parent ?? null) === plan.parent) return [];
+          const transform = resolvedTransform(before, id);
+          return transform ? [[id, transform] as const] : [];
+        }),
+      );
       for (const id of plan.roots) {
         const entity = find(id);
         if (entity) entity.parent = plan.parent;
+      }
+      if (preservedWorld.size) {
+        const after = buildWorldTransforms(editEntities);
+        for (const [id, worldTransform] of preservedWorld) {
+          const entity = find(id);
+          const parentTransform = parentWorldTransform(editEntities, after, id);
+          if (!entity?.components.Transform || !parentTransform) continue;
+          entity.components.Transform = worldTransformToLocal(parentTransform, worldTransform);
+        }
       }
       plan.destinationOrder.forEach((id, index) => {
         const entity = find(id);
@@ -1146,13 +1174,17 @@ export function createEditorStore() {
     translateSelectedTransformsBy(entity: number, delta: Vec3) {
       if (!delta.every(Number.isFinite)) return;
       const ids = selectedTransformRoots(editEntities, selectedIds, entity);
+      const world = buildWorldTransforms(editEntities);
       for (const id of ids) {
         const target = find(id);
         const transform = target?.components.Transform as TransformData | undefined;
         if (!target || !transform) continue;
+        const parent = parentWorldTransform(editEntities, world, id);
+        if (!parent) continue;
+        const localDelta = worldDeltaToLocal(parent, delta);
         target.components.Transform = {
           ...transform,
-          position: add(transform.position, delta) as TransformData['position'],
+          position: add(transform.position, localDelta) as TransformData['position'],
         };
       }
     },
@@ -1169,11 +1201,19 @@ export function createEditorStore() {
         || Math.abs(degrees) < 1e-8
       ) return;
       const ids = selectedTransformRoots(editEntities, selectedIds, entity);
+      const world = buildWorldTransforms(editEntities);
       for (const id of ids) {
         const target = find(id);
         const transform = target?.components.Transform as TransformData | undefined;
-        if (!target || !transform) continue;
-        target.components.Transform = rotateTransformAround(transform, pivot, axis, degrees);
+        const resolved = resolvedTransform(world, id);
+        const parent = parentWorldTransform(editEntities, world, id);
+        if (!target || !transform || !resolved || !parent) continue;
+        const nextWorld = rotateTransformAround(resolved, pivot, axis, degrees);
+        target.components.Transform = {
+          ...transform,
+          position: worldPointToLocal(parent, nextWorld.position) as TransformData['position'],
+          rotation: worldRotationToLocal(parent, nextWorld.rotation as Quat) as TransformData['rotation'],
+        };
       }
     },
     scaleSelectedTransformsAlong(
@@ -1192,8 +1232,12 @@ export function createEditorStore() {
         || !Number.isFinite(amount)
       ) return;
       const component = axis === 'x' ? 0 : axis === 'y' ? 1 : 2;
+      const world = buildWorldTransforms(editEntities);
+      const primaryParent = parentWorldTransform(editEntities, world, entity);
+      if (!primaryParent) return;
+      const localAmount = worldAxisScaleDeltaToLocal(primaryParent, component, amount);
       const previous = Math.max(0.01, primaryTransform.scale[component]);
-      const next = Math.max(0.01, previous + amount);
+      const next = Math.max(0.01, previous + localAmount);
       const factor = next / previous;
       if (!Number.isFinite(factor) || Math.abs(factor - 1) < 1e-8) return;
 
@@ -1201,14 +1245,23 @@ export function createEditorStore() {
       for (const id of ids) {
         const target = find(id);
         const transform = target?.components.Transform as TransformData | undefined;
-        if (!target || !transform) continue;
-        target.components.Transform = scaleTransformAlong(
-          transform,
+        const resolved = resolvedTransform(world, id);
+        const parent = parentWorldTransform(editEntities, world, id);
+        if (!target || !transform || !resolved || !parent) continue;
+        const nextWorld = scaleTransformAlong(
+          resolved,
           pivot,
           component,
           axisWorld,
           factor,
         );
+        const nextScale = [...transform.scale] as TransformData['scale'];
+        nextScale[component] = Math.max(0.01, nextScale[component] * factor);
+        target.components.Transform = {
+          ...transform,
+          position: worldPointToLocal(parent, nextWorld.position) as TransformData['position'],
+          scale: nextScale,
+        };
       }
     },
     /** Screen-space UI move → anchored_position (delta already in layout units). */

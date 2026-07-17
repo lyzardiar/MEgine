@@ -1,9 +1,7 @@
 use glam::{Quat, Vec3};
 use mengine_core::generated::{AnimatedSprite2D, Line2D, SpriteRenderer, Transform};
-use mengine_core::hierarchy::Parent;
-use mengine_core::{Entity, World};
+use mengine_core::{TransformHierarchy, World};
 use mengine_rhi::{project_world_to_viewport, FrameCamera, UiBatchKey, UiBlendMode, UiPrimitive};
-use std::collections::HashSet;
 
 #[derive(Clone, Debug)]
 struct ProjectedSprite {
@@ -17,16 +15,23 @@ pub fn collect_world_sprites(
     camera: FrameCamera,
     viewport: [u32; 2],
 ) -> Vec<UiPrimitive> {
+    let hierarchy = TransformHierarchy::build(world);
+    collect_world_sprites_with_hierarchy(world, &hierarchy, camera, viewport)
+}
+
+pub fn collect_world_sprites_with_hierarchy(
+    world: &World,
+    hierarchy: &TransformHierarchy,
+    camera: FrameCamera,
+    viewport: [u32; 2],
+) -> Vec<UiPrimitive> {
     let mut sprites = Vec::new();
     for entity in world.iter_entities() {
-        if !active_in_hierarchy(world, entity) {
-            continue;
-        }
-        let Some(transform) = world.get_component::<Transform>(entity) else {
+        let Some(transform) = hierarchy.get(entity).map(|value| value.to_transform()) else {
             continue;
         };
         if let Some(line) = world.get_component::<Line2D>(entity) {
-            sprites.extend(project_line(transform, line, camera, viewport));
+            sprites.extend(project_line(&transform, line, camera, viewport));
             continue;
         }
         let animated = world.get_component::<AnimatedSprite2D>(entity);
@@ -48,7 +53,7 @@ pub fn collect_world_sprites(
         } else {
             continue;
         };
-        if let Some(projected) = project_sprite(transform, sprite, camera, viewport) {
+        if let Some(projected) = project_sprite(&transform, sprite, camera, viewport) {
             sprites.push(projected);
         }
     }
@@ -161,20 +166,6 @@ fn resolve_animated_frame(animation: &AnimatedSprite2D, elapsed_seconds: f64) ->
         .map(String::as_str)
         .filter(|frame| !frame.is_empty())
         .unwrap_or("white")
-}
-
-fn active_in_hierarchy(world: &World, entity: Entity) -> bool {
-    let mut current = Some(entity);
-    let mut visited = HashSet::new();
-    while let Some(value) = current {
-        if !visited.insert(value) || !world.entity_active(value) {
-            return false;
-        }
-        current = world
-            .get_component::<Parent>(value)
-            .map(|parent| parent.entity);
-    }
-    true
 }
 
 fn project_sprite(

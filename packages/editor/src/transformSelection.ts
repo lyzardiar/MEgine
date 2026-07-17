@@ -12,6 +12,7 @@ import {
 } from './math3d.ts';
 import type { ToolPivotMode } from './editorTool';
 import { selectedHierarchyRoots } from './hierarchySelection.ts';
+import { buildWorldTransforms, resolvedTransform } from './worldTransform.ts';
 
 export type TransformSelectionEntity = {
   entity: number;
@@ -51,13 +52,16 @@ export function transformHandleOrigin(
   const byId = new Map(entities.map((entity) => [entity.entity, entity]));
   const primaryTransform = transformOf(byId.get(primary));
   if (!primaryTransform) return null;
-  if (mode === 'pivot') return [...primaryTransform.position] as Vec3;
+  const world = buildWorldTransforms(entities);
+  const primaryWorld = resolvedTransform(world, primary);
+  if (!primaryWorld) return null;
+  if (mode === 'pivot') return [...primaryWorld.position] as Vec3;
 
   const roots = selectedTransformRoots(entities, selectedIds, primary);
   const positions = roots
-    .map((id) => transformOf(byId.get(id))?.position)
+    .map((id) => resolvedTransform(world, id)?.position)
     .filter((position): position is Vec3 => position != null);
-  if (!positions.length) return [...primaryTransform.position] as Vec3;
+  if (!positions.length) return [...primaryWorld.position] as Vec3;
 
   const min: Vec3 = [...positions[0]];
   const max: Vec3 = [...positions[0]];

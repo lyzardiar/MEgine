@@ -10,6 +10,7 @@ pub mod query;
 pub mod schedule;
 pub mod snapshot;
 pub mod time;
+pub mod transform_hierarchy;
 pub mod world;
 
 pub use command::{CommandBuffer, WorldCommand};
@@ -21,4 +22,5 @@ pub use query::Query;
 pub use schedule::{Schedule, Stage, SystemDesc};
 pub use snapshot::{EntitySnapshot, WorldSnapshot};
 pub use time::Time;
+pub use transform_hierarchy::{TransformHierarchy, WorldTransform};
 pub use world::World;

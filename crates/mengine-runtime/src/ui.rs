@@ -4,7 +4,7 @@ use mengine_core::generated::{
     RectTransform, ScrollView, Scrollbar, Shadow, Slider, TabView, Text, Toggle, ToggleGroup,
 };
 use mengine_core::hierarchy::Parent;
-use mengine_core::{Entity, World};
+use mengine_core::{Entity, TransformHierarchy, World};
 use mengine_rhi::{UiBatchKey, UiBatchPlan, UiBlendMode, UiClipRect, UiPrimitive};
 use serde_json::Value;
 
@@ -268,6 +268,7 @@ fn nearest_toggle_group(world: &World, entity: Entity) -> Option<Entity> {
 
 /// Apply one Toggle value atomically, enforcing the nearest ancestor ToggleGroup.
 pub fn set_toggle_value(world: &mut World, target: Entity, requested_on: bool) -> bool {
+    let hierarchy = TransformHierarchy::build(world);
     let Some(current) = world
         .get_component::<Toggle>(target)
         .map(|toggle| toggle.is_on)
@@ -291,7 +292,7 @@ pub fn set_toggle_value(world: &mut World, target: Entity, requested_on: bool) -
     let members: Vec<(Entity, bool)> = world
         .iter_entities()
         .filter(|entity| {
-            world.entity_active(*entity)
+            hierarchy.is_active(*entity)
                 && world.get_component::<Toggle>(*entity).is_some()
                 && nearest_toggle_group(world, *entity) == Some(group_entity)
         })
@@ -362,6 +363,16 @@ impl Default for UiInheritedState {
 }
 
 pub fn collect_ui_frame(world: &World, width: u32, height: u32) -> RuntimeUiFrame {
+    let hierarchy = TransformHierarchy::build(world);
+    collect_ui_frame_with_hierarchy(world, &hierarchy, width, height)
+}
+
+pub fn collect_ui_frame_with_hierarchy(
+    world: &World,
+    hierarchy: &TransformHierarchy,
+    width: u32,
+    height: u32,
+) -> RuntimeUiFrame {
     let root = UiRect {
         x: 0.0,
         y: 0.0,
@@ -371,7 +382,7 @@ pub fn collect_ui_frame(world: &World, width: u32, height: u32) -> RuntimeUiFram
     let mut canvases: Vec<Entity> = world
         .iter_entities()
         .filter(|entity| {
-            world.entity_active(*entity) && world.get_component::<Canvas>(*entity).is_some()
+            hierarchy.is_active(*entity) && world.get_component::<Canvas>(*entity).is_some()
         })
         .collect();
     canvases.sort_by_key(|entity| {
@@ -2784,5 +2795,23 @@ mod tests {
             panel_control.clip.x as f32 - 1.0,
             panel_control.clip.y as f32 + 1.0,
         ));
+    }
+
+    #[test]
+    fn canvas_below_an_inactive_parent_does_not_render_or_receive_input() {
+        let mut world = World::new();
+        let parent = world.spawn_empty();
+        world.set_editor_state(parent, 0, false);
+        let canvas = world.spawn_empty();
+        world.insert_component(canvas, Canvas::default());
+        world.set_parent(canvas, Some(parent));
+        let button = world.spawn_empty();
+        world.insert_component(button, RectTransform::default());
+        world.insert_component(button, Button::default());
+        world.set_parent(button, Some(canvas));
+
+        let frame = collect_ui_frame(&world, 1920, 1080);
+        assert!(frame.plan.primitives.is_empty());
+        assert!(frame.controls.is_empty());
     }
 }

@@ -76,3 +76,21 @@ test('inactive 2D camera is skipped and 3D camera remains the fallback', () => {
   assert.equal(camera?.projection, 'orthographic');
   assert.equal(camera?.orthographicSize, 6);
 });
+
+test('Game camera uses its parent world transform', () => {
+  const camera = primaryGameCamera([
+    {
+      entity: 1,
+      components: { Transform: transform([10, 0, 0]) },
+    },
+    {
+      entity: 2,
+      parent: 1,
+      components: {
+        Transform: transform([2, 3, 4]),
+        Camera3D: { primary: true, projection: 'perspective', fov_y_degrees: 60 },
+      },
+    },
+  ]);
+  assert.deepEqual(camera?.eye, [12, 3, 4]);
+});

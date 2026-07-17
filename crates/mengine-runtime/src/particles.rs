@@ -1,6 +1,6 @@
 use glam::{Vec3, Vec4};
-use mengine_core::generated::{ParticleEmitter2D, ParticleEmitter3D, Transform};
-use mengine_core::{Entity, World};
+use mengine_core::generated::{ParticleEmitter2D, ParticleEmitter3D};
+use mengine_core::{Entity, TransformHierarchy, World};
 use mengine_rhi::{project_world_to_viewport, FrameCamera, UiBatchKey, UiBlendMode, UiPrimitive};
 use std::collections::{HashMap, HashSet};
 
@@ -204,10 +204,22 @@ impl ParticleWorld {
         viewport: [u32; 2],
         delta_seconds: f32,
     ) -> Vec<UiPrimitive> {
+        let hierarchy = TransformHierarchy::build(world);
+        self.update_and_collect_with_hierarchy(world, &hierarchy, camera, viewport, delta_seconds)
+    }
+
+    pub fn update_and_collect_with_hierarchy(
+        &mut self,
+        world: &World,
+        hierarchy: &TransformHierarchy,
+        camera: FrameCamera,
+        viewport: [u32; 2],
+        delta_seconds: f32,
+    ) -> Vec<UiPrimitive> {
         let mut live = HashSet::new();
         let mut output: Vec<(String, UiPrimitive)> = Vec::new();
         for entity in world.iter_entities() {
-            let Some(transform) = world.get_component::<Transform>(entity) else {
+            let Some(transform) = hierarchy.get(entity) else {
                 continue;
             };
             let emitter = if let Some(component) = world.get_component::<ParticleEmitter2D>(entity)
@@ -220,16 +232,11 @@ impl ParticleWorld {
             };
             live.insert(entity);
             let state = self.emitters.entry(entity).or_default();
-            step_emitter(
-                state,
-                &emitter,
-                Vec3::from_array(transform.position),
-                delta_seconds,
-            );
+            step_emitter(state, &emitter, transform.position, delta_seconds);
             collect_emitter(
                 state,
                 &emitter,
-                Vec3::from_array(transform.position),
+                transform.position,
                 camera,
                 viewport,
                 &mut output,
@@ -432,6 +439,16 @@ fn collect_emitter(
 #[cfg(test)]
 mod tests {
     use super::*;
+    use mengine_core::generated::Transform;
+    use mengine_rhi::{look_at, orthographic};
+
+    fn camera() -> FrameCamera {
+        FrameCamera {
+            view: look_at(Vec3::new(0.0, 0.0, 10.0), Vec3::ZERO, Vec3::Y),
+            proj: orthographic(10.0, 1.0, 0.01, 100.0),
+            position: Vec3::new(0.0, 0.0, 10.0),
+        }
+    }
 
     #[test]
     fn emission_is_frame_rate_independent() {
@@ -465,5 +482,48 @@ mod tests {
         let mut state = EmitterState::default();
         step_emitter(&mut state, &Emitter::Three(&emitter), Vec3::ZERO, 1.0);
         assert_eq!(state.particles.len(), 8);
+    }
+
+    #[test]
+    fn emitters_use_parent_world_position_and_hierarchy_activity() {
+        let mut world = World::new();
+        let parent = world.spawn_empty();
+        world.insert_component(
+            parent,
+            Transform {
+                position: [5.0, 0.0, 0.0],
+                ..Transform::default()
+            },
+        );
+        let child = world.spawn_empty();
+        world.insert_component(
+            child,
+            Transform {
+                position: [2.0, 0.0, 0.0],
+                ..Transform::default()
+            },
+        );
+        world.insert_component(
+            child,
+            ParticleEmitter2D {
+                rate_over_time: 60.0,
+                lifetime_min: 10.0,
+                lifetime_max: 10.0,
+                speed_min: 0.0,
+                speed_max: 0.0,
+                gravity: [0.0, 0.0],
+                shape: "point".into(),
+                ..ParticleEmitter2D::default()
+            },
+        );
+        world.set_parent(child, Some(parent));
+        let mut particles = ParticleWorld::default();
+        particles.update_and_collect(&world, camera(), [200, 200], 1.0 / 60.0);
+        let particle = &particles.emitters[&child].particles[0];
+        assert!((particle.position.x - 7.0).abs() < 0.0001);
+
+        world.set_editor_state(parent, 0, false);
+        particles.update_and_collect(&world, camera(), [200, 200], 1.0 / 60.0);
+        assert!(!particles.emitters.contains_key(&child));
     }
 }
