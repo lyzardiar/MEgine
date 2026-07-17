@@ -144,6 +144,45 @@ export function readGameProject(projectDir: string): GameProjectManifest {
   return { name, version, mainScene, buildScenes, ...(startupScript ? { startupScript } : {}) };
 }
 
+function validateProjectSettings(projectDir: string): void {
+  const path = join(projectDir, 'ProjectSettings', 'sorting-layers.json');
+  if (!existsSync(path)) return;
+  if (!statSync(path).isFile()) {
+    throw new Error(`sorting layer settings must be a file: ${path}`);
+  }
+  const settings = readJsonAsset(path, projectDir, 'sorting layer settings');
+  if (settings.version !== 1) {
+    throw new Error(`invalid sorting layer settings ProjectSettings/sorting-layers.json: unsupported version ${String(settings.version)}`);
+  }
+  if (!Array.isArray(settings.layers) || settings.layers.length > 64) {
+    throw new Error('invalid sorting layer settings ProjectSettings/sorting-layers.json: layers must contain at most 64 entries');
+  }
+  const ids = new Set<string>();
+  const names = new Set<string>();
+  for (const entry of settings.layers) {
+    const layer = jsonObject(entry);
+    const id = typeof layer?.id === 'string' ? layer.id.trim() : '';
+    let name = typeof layer?.name === 'string' ? layer.name.trim() : '';
+    const idKey = id.toLowerCase();
+    if (idKey === 'default') name = 'Default';
+    const nameKey = name.toLocaleLowerCase();
+    if (!/^[A-Za-z0-9_-]{1,64}$/.test(id)) {
+      throw new Error(`invalid sorting layer id '${id}' in ProjectSettings/sorting-layers.json`);
+    }
+    if (!name || [...name].length > 64) {
+      throw new Error(`invalid sorting layer name '${name}' in ProjectSettings/sorting-layers.json`);
+    }
+    if (ids.has(idKey)) {
+      throw new Error(`duplicate sorting layer id '${id}' in ProjectSettings/sorting-layers.json`);
+    }
+    if (names.has(nameKey)) {
+      throw new Error(`duplicate sorting layer name '${name}' in ProjectSettings/sorting-layers.json`);
+    }
+    ids.add(idKey);
+    names.add(nameKey);
+  }
+}
+
 type JsonObject = Record<string, unknown>;
 
 interface PendingAsset {
@@ -610,6 +649,7 @@ export function buildPcPackage(options: PcPackageOptions): PcBuildManifest {
   if (existsSync(outputDir) && !options.clean) {
     throw new Error(`build output already exists (pass --clean to replace it): ${outputDir}`);
   }
+  validateProjectSettings(projectDir);
   const assetValidation = validateBuildAssetDependencies(projectDir, project);
 
   const stageDir = join(
@@ -622,6 +662,13 @@ export function buildPcPackage(options: PcPackageOptions): PcBuildManifest {
   try {
     for (const root of roots) {
       copyTree(root, join(stageDir, basename(root)));
+    }
+    const projectSettings = join(projectDir, 'ProjectSettings');
+    if (existsSync(projectSettings)) {
+      if (!statSync(projectSettings).isDirectory()) {
+        throw new Error(`ProjectSettings must be a directory: ${projectSettings}`);
+      }
+      copyTree(projectSettings, join(stageDir, 'ProjectSettings'));
     }
     const packagedStartupScript = compileProjectTypeScript(
       projectDir,

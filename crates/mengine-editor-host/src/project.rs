@@ -499,6 +499,15 @@ fn initialize_project(root: &Path, name: &str) -> Result<(), ProjectError> {
   "gameOrientation": "landscape"
 }"#,
     )?;
+    write_new_synced(
+        &root.join("ProjectSettings/sorting-layers.json"),
+        br#"{
+  "version": 1,
+  "layers": [
+    { "id": "default", "name": "Default" }
+  ]
+}"#,
+    )?;
     write_new_synced(&root.join(".gitignore"), b".mengine/\n")?;
     write_new_synced(
         &root.join("Assets/Scripts/Main.ts"),
@@ -814,6 +823,15 @@ mod tests {
         assert!(project_root.join("Assets/Scripts/mengine.d.ts").is_file());
         assert!(project_root.join("Assets/Models").is_dir());
         assert!(project_root.join("ProjectSettings/editor.json").is_file());
+        assert!(project_root
+            .join("ProjectSettings/sorting-layers.json")
+            .is_file());
+        let sorting_layers: serde_json::Value = serde_json::from_str(
+            &std::fs::read_to_string(project_root.join("ProjectSettings/sorting-layers.json"))
+                .unwrap(),
+        )
+        .unwrap();
+        assert_eq!(sorting_layers["layers"][0]["id"], "default");
         assert!(project_root.join(".mengine/Library").is_dir());
         let manifest: serde_json::Value = serde_json::from_str(
             &std::fs::read_to_string(project_root.join("project.json")).unwrap(),

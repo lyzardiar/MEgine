@@ -32,6 +32,7 @@ import { Console } from './panels/Console';
 import { Timeline } from './panels/Timeline';
 import { AnimatorEditor, OPEN_ANIMATOR_EVENT, openAnimatorAsset } from './panels/Animator';
 import { BuildSettings } from './panels/BuildSettings';
+import { ProjectSettings } from './panels/ProjectSettings';
 import {
   MaterialEditor,
   OPEN_MATERIAL_EVENT,
@@ -47,6 +48,7 @@ import { combineMarqueeSelection } from './marqueeSelection';
 import { instantiateProjectPrefab } from './prefabWorkflow';
 import { isDesktopEditor } from './transport/editorTransport';
 import type { ToolHandleOrientation, ToolPivotMode } from './editorTool';
+import { loadSortingLayers, SORTING_LAYERS_CHANGED_EVENT } from './sortingLayers';
 import './editorWindow'; // MenuItem side-effects
 
 function isTypingTarget(el: EventTarget | null) {
@@ -113,14 +115,16 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
   const [animatorPath, setAnimatorPath] = useState<string | null>(null);
   const [animatorDirty, setAnimatorDirty] = useState(false);
   const [animationDirty, setAnimationDirty] = useState(false);
+  const [projectSettingsDirty, setProjectSettingsDirty] = useState(false);
   const [sceneDirty, setSceneDirty] = useState(false);
   const dirtyPanels = useMemo(() => {
     const dirty = new Set<PanelKind>();
     if (materialDirty) dirty.add('material');
     if (animatorDirty) dirty.add('animator');
     if (animationDirty) dirty.add('timeline');
+    if (projectSettingsDirty) dirty.add('projectSettings');
     return dirty;
-  }, [animationDirty, animatorDirty, materialDirty]);
+  }, [animationDirty, animatorDirty, materialDirty, projectSettingsDirty]);
   const [logs, setLogs] = useState<string[]>([
     'MEngine Editor',
     '场景落盘：packages/editor/project/Assets/Scenes/*.mscene',
@@ -471,6 +475,11 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
     booted.current = true;
     void (async () => {
       const { backend, migrated, prefs } = await initSceneLibrary();
+      try {
+        await loadSortingLayers();
+      } catch (reason) {
+        log(`Sorting layer settings could not be loaded: ${String(reason)}`, 'warn');
+      }
       await refreshSprites();
       bumpScenes();
       // A detached panel is a view of the main editor's in-memory scene. It must
@@ -497,6 +506,12 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
       refresh();
     })();
   }, [props.detachedPanel, store]);
+
+  useEffect(() => {
+    const onChanged = () => refresh(false);
+    window.addEventListener(SORTING_LAYERS_CHANGED_EVENT, onChanged);
+    return () => window.removeEventListener(SORTING_LAYERS_CHANGED_EVENT, onChanged);
+  }, []);
 
   useEffect(() => {
     const id = setInterval(() => {
@@ -1116,6 +1131,9 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
               onSaveScene={saveSceneForBuild}
               onLog={log}
             />
+          ),
+          projectSettings: (
+            <ProjectSettings onDirtyChange={setProjectSettingsDirty} onLog={log} />
           ),
           console: <Console lines={logs} />,
         }}

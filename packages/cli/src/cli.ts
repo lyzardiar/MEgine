@@ -94,6 +94,7 @@ function newProject(name: string) {
   mkdirSync(join(root, 'Assets', 'Scenes'), { recursive: true });
   mkdirSync(join(root, 'Assets', 'Scripts'), { recursive: true });
   mkdirSync(join(root, 'Assets', 'Models'), { recursive: true });
+  mkdirSync(join(root, 'ProjectSettings'), { recursive: true });
   writeFileSync(
     join(root, 'project.json'),
     `${JSON.stringify({
@@ -110,6 +111,17 @@ function newProject(name: string) {
     "let elapsed = 0;\nlet loadedSceneName = '';\n\nfunction onSceneLoaded(scene: EngineSceneInfo) {\n  loadedSceneName = scene.name;\n}\n\nfunction onTick(dt: number, _frame: number) {\n  elapsed += dt;\n}\n",
   );
   writeFileSync(join(root, 'Assets', 'Scripts', 'mengine.d.ts'), ENGINE_TYPES);
+  writeFileSync(
+    join(root, 'ProjectSettings', 'editor.json'),
+    `${JSON.stringify({ gameAspect: '16:9', gameOrientation: 'landscape' }, null, 2)}\n`,
+  );
+  writeFileSync(
+    join(root, 'ProjectSettings', 'sorting-layers.json'),
+    `${JSON.stringify({
+      version: 1,
+      layers: [{ id: 'default', name: 'Default' }],
+    }, null, 2)}\n`,
+  );
   writeFileSync(
     join(root, 'Assets', 'Scenes', 'Main.mscene'),
     `${JSON.stringify({

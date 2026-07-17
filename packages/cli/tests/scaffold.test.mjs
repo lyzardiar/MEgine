@@ -24,6 +24,10 @@ test('mengine new creates a TypeScript project that is ready for the player buil
     assert.equal(existsSync(join(project, 'Assets', 'Scripts', 'Main.ts')), true);
     assert.equal(existsSync(join(project, 'Assets', 'Scripts', 'mengine.d.ts')), true);
     assert.equal(existsSync(join(project, 'Assets', 'Models')), true);
+    assert.deepEqual(
+      JSON.parse(readFileSync(join(project, 'ProjectSettings', 'sorting-layers.json'), 'utf8')),
+      { version: 1, layers: [{ id: 'default', name: 'Default' }] },
+    );
     assert.match(
       readFileSync(join(project, 'Assets', 'Scripts', 'Main.ts'), 'utf8'),
       /function onSceneLoaded/,

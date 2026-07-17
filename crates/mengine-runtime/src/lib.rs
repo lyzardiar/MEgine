@@ -9,6 +9,7 @@ pub mod particles;
 pub mod player_config;
 pub mod prefabs;
 pub mod scenes;
+pub mod sorting;
 pub mod sprites;
 pub mod textures;
 pub mod ui;

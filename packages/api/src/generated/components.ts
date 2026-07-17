@@ -72,6 +72,7 @@ export interface SpriteRenderer {
   pivot: [number, number];
   flipX: boolean;
   flipY: boolean;
+  sortingLayer: string;
   sortingOrder: number;
 }
 
@@ -86,6 +87,7 @@ export interface AnimatedSprite2D {
   pivot: [number, number];
   flipX: boolean;
   flipY: boolean;
+  sortingLayer: string;
   sortingOrder: number;
 }
 
@@ -94,6 +96,7 @@ export interface Line2D {
   width: number;
   color: [number, number, number, number];
   closed: boolean;
+  sortingLayer: string;
   sortingOrder: number;
 }
 
@@ -235,6 +238,7 @@ export interface ParticleEmitter2D {
   simulationSpace: string;
   blendMode: string;
   texture: string;
+  sortingLayer: string;
   sortingOrder: number;
   seed: number;
 }
@@ -278,6 +282,7 @@ export interface SpineSkeleton {
   scale: number;
   color: [number, number, number, number];
   premultipliedAlpha: boolean;
+  sortingLayer: string;
   sortingOrder: number;
 }
 

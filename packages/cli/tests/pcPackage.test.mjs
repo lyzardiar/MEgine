@@ -25,6 +25,7 @@ function fixture(name) {
   mkdirSync(join(project, 'Assets', 'Materials'), { recursive: true });
   mkdirSync(join(project, 'Assets', 'Animations'), { recursive: true });
   mkdirSync(join(project, 'Assets', 'Audio'), { recursive: true });
+  mkdirSync(join(project, 'ProjectSettings'), { recursive: true });
   writeFileSync(join(project, 'project.json'), JSON.stringify({
     name: 'Package Test',
     version: 7,
@@ -38,6 +39,13 @@ function fixture(name) {
   writeFileSync(join(project, 'Assets', 'Scenes', 'Main.mscene'), '{"version":1}');
   writeFileSync(join(project, 'Assets', 'Scenes', 'Level2.mscene'), '{"version":1,"name":"Level2"}');
   writeFileSync(join(project, 'Assets', 'Scripts', 'main.js'), 'function onTick() {}');
+  writeFileSync(join(project, 'ProjectSettings', 'sorting-layers.json'), JSON.stringify({
+    version: 1,
+    layers: [
+      { id: 'default', name: 'Default' },
+      { id: 'effects', name: 'Effects' },
+    ],
+  }));
   writeFileSync(join(project, 'Assets', 'Textures', 'pixel.bin'), Buffer.from([1, 2, 3, 4]));
   const runtime = join(root, process.platform === 'win32' ? 'runtime.exe' : 'runtime');
   writeFileSync(runtime, 'runtime-binary');
@@ -104,6 +112,16 @@ test('buildPcPackage creates a directly launchable, hashed project bundle', () =
     assert.deepEqual(packagedLevel.world.entities[0].components.Transform, { position: [0, 0, 0] });
     assert.equal(packagedLevel.world.entities[0].components.__MEnginePrefab, undefined);
     assert.equal(readFileSync(join(paths.output, manifest.executable), 'utf8'), 'runtime-binary');
+    assert.deepEqual(
+      JSON.parse(readFileSync(join(paths.output, 'ProjectSettings', 'sorting-layers.json'), 'utf8')),
+      {
+        version: 1,
+        layers: [
+          { id: 'default', name: 'Default' },
+          { id: 'effects', name: 'Effects' },
+        ],
+      },
+    );
 
     const diskManifest = JSON.parse(readFileSync(join(paths.output, BUILD_MANIFEST_FILE), 'utf8'));
     assert.deepEqual(diskManifest, manifest);
@@ -157,6 +175,28 @@ test('buildPcPackage validates transitive material animator and audio dependenci
       references: 8,
       validatedFiles: 8,
     });
+  } finally {
+    rmSync(paths.root, { recursive: true, force: true });
+  }
+});
+
+test('buildPcPackage rejects ambiguous sorting layers before publishing output', () => {
+  const paths = fixture('invalid-sorting-layers');
+  try {
+    writeFileSync(join(paths.project, 'ProjectSettings', 'sorting-layers.json'), JSON.stringify({
+      version: 1,
+      layers: [
+        { id: 'default', name: 'Default' },
+        { id: 'DEFAULT', name: 'Other' },
+      ],
+    }));
+    assert.throws(() => buildPcPackage({
+      projectDir: paths.project,
+      outputDir: paths.output,
+      runtimePath: paths.runtime,
+      engineVersion: 'test-engine',
+    }), /duplicate sorting layer id 'DEFAULT'/);
+    assert.equal(existsSync(paths.output), false);
   } finally {
     rmSync(paths.root, { recursive: true, force: true });
   }

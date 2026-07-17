@@ -78,6 +78,7 @@ const PANEL_TITLE: Record<PanelKind, string> = {
   animator: 'Animator',
   material: 'Material',
   build: 'Build Settings',
+  projectSettings: 'Project Settings',
 };
 
 const ALL_PANELS: PanelKind[] = [...CORE_PANEL_IDS];
@@ -91,6 +92,14 @@ CORE_PANEL_IDS.forEach((panel, index) => {
     { priority: 100 + index },
   );
 });
+
+registerMenuItem(
+  'Edit/Project Settings...',
+  () => {
+    window.dispatchEvent(new CustomEvent('mengine:focus-panel', { detail: 'projectSettings' }));
+  },
+  { priority: 900 },
+);
 
 let _idSeq = 0;
 function nextId(prefix = 'n'): string {
@@ -125,7 +134,7 @@ function defaultTree(): DockNode {
         dir: 'h',
         ratio: 0.7,
         a: leaf(['scene', 'game']),
-        b: leaf(['inspector', 'material', 'build']),
+        b: leaf(['inspector', 'material', 'build', 'projectSettings']),
       },
     },
     b: {
@@ -303,7 +312,7 @@ function ensureAllPanels(
     if (seen.has(p) || excluded.has(p)) continue;
     const preferredLeaf = p === 'timeline'
       ? findLeafContaining(tree, 'console')
-      : p === 'material' || p === 'build'
+      : p === 'material' || p === 'build' || p === 'projectSettings'
         ? findLeafContaining(tree, 'inspector')
         : null;
     if (preferredLeaf) {

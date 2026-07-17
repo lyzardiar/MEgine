@@ -119,7 +119,11 @@ import type { RectResizeOptions, RectResizePlan } from '../rectResize';
 import { nextUiSelectable, uiNavigationAction } from '../ui/uiNavigation';
 import { getSpriteImage } from '../spriteDraw';
 import { resolveAnimatedSpriteFrame } from '../animatedSprite';
-import { compareWorldDrawOrder, entity2DSortingOrder } from '../worldDrawOrder';
+import {
+  compareWorldDrawOrder,
+  component2DSortingSettings,
+} from '../worldDrawOrder';
+import { getSortingLayerRank } from '../sortingLayers';
 import { buildWorldTransforms, resolvedTransform } from '../worldTransform';
 import {
   hitTestLinePoint,
@@ -742,8 +746,67 @@ export function Viewport(props: {
       ? new Set<number>()
       : new Set(p.selectedIds?.length ? p.selectedIds : p.selected != null ? [p.selected] : []);
 
+    // Simulate first, then place every emitter into the same world draw list as
+    // SpriteRenderer/Line2D/Spine. This avoids the old "all particles on top"
+    // behavior and keeps transparent order identical to the native player.
+    const liveEmitterIds = new Set<number>();
+    const particleDrawByEntity = new Map<number, {
+      items: ReturnType<typeof collectParticleDrawItems>;
+      additive: boolean;
+      twoDimensional: boolean;
+      component: Record<string, unknown>;
+    }>();
+    for (const entity of p.entities) {
+      if (!isActive(entity.entity)) continue;
+      const transform = resolvedTransform(worldTransforms, entity.entity) ?? undefined;
+      if (!transform) continue;
+      const emitter2D = entity.components.ParticleEmitter2D as Record<string, unknown> | undefined;
+      const emitter3D = entity.components.ParticleEmitter3D as Record<string, unknown> | undefined;
+      const emitter = emitter2D ?? emitter3D;
+      if (!emitter) continue;
+      liveEmitterIds.add(entity.entity);
+      let state = particleStatesRef.current.get(entity.entity);
+      if (!state) {
+        state = createParticleEmitterState(Number(emitter.seed) || 1);
+        particleStatesRef.current.set(entity.entity, state);
+      }
+      const emitterPosition = transform.position as Vec3;
+      stepParticleEmitter(emitter2D ? 2 : 3, emitter, state, particleDelta, emitterPosition);
+      particleDrawByEntity.set(entity.entity, {
+        items: collectParticleDrawItems(state, emitterPosition, emitter.simulation_space),
+        additive: String(emitter.blend_mode).toLowerCase() === 'additive',
+        twoDimensional: !!emitter2D,
+        component: emitter,
+      });
+    }
+    for (const entityId of particleStatesRef.current.keys()) {
+      if (!liveEmitterIds.has(entityId)) particleStatesRef.current.delete(entityId);
+    }
+
+    const liveSpineIds = new Set<number>();
+    for (const entity of p.entities) {
+      if (
+        isActive(entity.entity)
+        && entity.components.SpineSkeleton
+        && resolvedTransform(worldTransforms, entity.entity)
+      ) {
+        liveSpineIds.add(entity.entity);
+      }
+    }
+    const hasSpine = liveSpineIds.size > 0;
+    if (hasSpine && !spineRuntimeRef.current && !spineRuntimeLoadRef.current) {
+      spineRuntimeLoadRef.current = loadSpineRuntime()
+        .then(({ SpineCanvasRuntime }) => {
+          spineRuntimeRef.current = new SpineCanvasRuntime();
+          spineRuntimeErrorRef.current = null;
+        })
+        .catch((reason) => {
+          spineRuntimeErrorRef.current = String(reason);
+        });
+    }
+
     const drawn = p.entities
-      .map((e, hierarchyOrder) => {
+      .flatMap((e, hierarchyOrder) => {
         if (!isActive(e.entity)) return null;
         const t = resolvedTransform(worldTransforms, e.entity) ?? undefined;
         if (!t) return null;
@@ -760,16 +823,67 @@ export function Viewport(props: {
           !!e.components.SphereCollider3D ||
           !!e.components.BoxCollider2D ||
           !!e.components.CircleCollider2D;
-        if (!pr && !camComp && !isLight && !hasCollider) return null;
-        return {
-          e,
-          t,
-          pr,
-          depth: pr?.depth ?? 0,
-          hierarchyOrder,
-          sortingOrder: entity2DSortingOrder(e.components),
-          editorGizmo: !isGame && (!!camComp || isLight || hasCollider),
-        };
+        const entries: Array<{
+          e: Ent;
+          t: TransformData;
+          pr: { x: number; y: number; depth: number } | null;
+          depth: number;
+          hierarchyOrder: number;
+          sortingOrder: number | null;
+          sortingLayerOrder: number | null;
+          editorGizmo: boolean;
+          renderKind: 'entity' | 'particle' | 'spine';
+        }> = [];
+        if (pr || camComp || isLight || hasCollider) {
+          const renderer2D = (e.components.Line2D
+            ?? e.components.AnimatedSprite2D
+            ?? e.components.SpriteRenderer) as Record<string, unknown> | undefined;
+          const sorting = renderer2D ? component2DSortingSettings(renderer2D) : null;
+          entries.push({
+            e,
+            t,
+            pr,
+            depth: pr?.depth ?? 0,
+            hierarchyOrder: hierarchyOrder * 3,
+            sortingOrder: sorting?.order ?? null,
+            sortingLayerOrder: sorting ? getSortingLayerRank(sorting.layer) : null,
+            editorGizmo: !isGame && !renderer2D && !e.components.MeshRenderer && (!!camComp || isLight),
+            renderKind: 'entity',
+          });
+        }
+        const particle = particleDrawByEntity.get(e.entity);
+        if (particle) {
+          const sorting = particle.twoDimensional
+            ? component2DSortingSettings(particle.component)
+            : null;
+          entries.push({
+            e,
+            t,
+            pr,
+            depth: pr?.depth ?? 0,
+            hierarchyOrder: hierarchyOrder * 3 + 1,
+            sortingOrder: sorting?.order ?? null,
+            sortingLayerOrder: sorting ? getSortingLayerRank(sorting.layer) : null,
+            editorGizmo: false,
+            renderKind: 'particle',
+          });
+        }
+        const spine = e.components.SpineSkeleton as Record<string, unknown> | undefined;
+        if (spine && pr) {
+          const sorting = component2DSortingSettings(spine);
+          entries.push({
+            e,
+            t,
+            pr,
+            depth: pr.depth,
+            hierarchyOrder: hierarchyOrder * 3 + 2,
+            sortingOrder: sorting.order,
+            sortingLayerOrder: getSortingLayerRank(sorting.layer),
+            editorGizmo: false,
+            renderKind: 'spine',
+          });
+        }
+        return entries;
       })
       .filter(Boolean) as Array<{
       e: Ent;
@@ -778,11 +892,82 @@ export function Viewport(props: {
       depth: number;
       hierarchyOrder: number;
       sortingOrder: number | null;
+      sortingLayerOrder: number | null;
       editorGizmo: boolean;
+      renderKind: 'entity' | 'particle' | 'spine';
     }>;
     drawn.sort(compareWorldDrawOrder);
 
-    for (const { e, t, pr } of drawn) {
+    for (const { e, t, pr, renderKind } of drawn) {
+      if (renderKind === 'particle') {
+        const particleDraw = particleDrawByEntity.get(e.entity);
+        if (!particleDraw) continue;
+        ctx.save();
+        ctx.globalCompositeOperation = particleDraw.additive ? 'lighter' : 'source-over';
+        for (const particle of particleDraw.items) {
+          const screen = project(particle.position, cam, vp);
+          if (!screen || particle.size <= 0 || particle.color[3] <= 0) continue;
+          const sizePoint = project(
+            [particle.position[0] + particle.size, particle.position[1], particle.position[2]],
+            cam,
+            vp,
+          );
+          const radius = Math.max(
+            0.75,
+            Math.min(96, sizePoint ? Math.hypot(sizePoint.x - screen.x, sizePoint.y - screen.y) : particle.size * 20),
+          );
+          const [red, green, blue, alpha] = particle.color;
+          ctx.fillStyle = `rgba(${Math.round(red * 255)},${Math.round(green * 255)},${Math.round(blue * 255)},${Math.max(0, Math.min(1, alpha))})`;
+          ctx.beginPath();
+          ctx.arc(screen.x, screen.y, radius, 0, Math.PI * 2);
+          ctx.fill();
+        }
+        ctx.restore();
+        continue;
+      }
+
+      if (renderKind === 'spine') {
+        const component = e.components.SpineSkeleton as Record<string, unknown> | undefined;
+        if (!component || !pr) continue;
+        const origin = t.position as Vec3;
+        const unit = project([origin[0] + 1, origin[1], origin[2]], cam, vp);
+        const transformScale = Math.max(0.0001, Math.abs(t.scale[0] ?? 1));
+        const pixelsPerWorldUnit = (unit ? Math.max(1, Math.hypot(unit.x - pr.x, unit.y - pr.y)) : 64)
+          * transformScale;
+        const result: SpineDrawResult = spineRuntimeRef.current
+          ? spineRuntimeRef.current.drawEntity({
+              entity: e.entity,
+              component,
+              context: ctx,
+              screenX: pr.x,
+              screenY: pr.y,
+              pixelsPerWorldUnit,
+              deltaSeconds: particleDelta,
+            })
+          : spineRuntimeErrorRef.current
+            ? { error: spineRuntimeErrorRef.current }
+            : 'loading';
+        if (result !== 'drawn' && !isGame) {
+          const message = result === 'missing'
+            ? 'Spine: assign skeleton + atlas'
+            : result === 'loading'
+              ? 'Loading Spine 4.3…'
+              : result.error;
+          ctx.save();
+          ctx.strokeStyle = result === 'loading' ? '#56b7d0' : '#e06c75';
+          ctx.fillStyle = 'rgba(24, 24, 24, 0.86)';
+          ctx.fillRect(pr.x - 76, pr.y - 20, 152, 40);
+          ctx.strokeRect(pr.x - 76, pr.y - 20, 152, 40);
+          ctx.fillStyle = '#eee';
+          ctx.font = '11px sans-serif';
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'middle';
+          ctx.fillText(message.slice(0, 42), pr.x, pr.y, 144);
+          ctx.restore();
+        }
+        continue;
+      }
+
       const mesh = e.components.MeshRenderer;
       const camComp = e.components.Camera3D as Camera3DData | undefined;
       const cam2DComp = e.components.Camera2D as Camera2DData | undefined;
@@ -979,7 +1164,8 @@ export function Viewport(props: {
     }
 
     if (!isGame) {
-      for (const { e, t } of drawn) {
+      for (const { e, t, renderKind } of drawn) {
+        if (renderKind !== 'entity') continue;
         if (!selSet.has(e.entity)) continue;
         const box = e.components.BoxCollider3D as
           | { size?: number[]; center?: number[]; is_trigger?: boolean }
@@ -1000,143 +1186,6 @@ export function Viewport(props: {
       }
     }
 
-    // 2D and 3D particles share the same deterministic simulator. The editor
-    // draws them as a single Canvas batch per blend mode; native runtime uses
-    // the equivalent billboard instance data.
-    const liveEmitterIds = new Set<number>();
-    const particleBatches = new Map<string, ReturnType<typeof collectParticleDrawItems>>();
-    for (const entity of p.entities) {
-      if (!isActive(entity.entity)) continue;
-      const transform = resolvedTransform(worldTransforms, entity.entity) ?? undefined;
-      if (!transform) continue;
-      const emitter2D = entity.components.ParticleEmitter2D as Record<string, unknown> | undefined;
-      const emitter3D = entity.components.ParticleEmitter3D as Record<string, unknown> | undefined;
-      const emitter = emitter2D ?? emitter3D;
-      if (!emitter) continue;
-      liveEmitterIds.add(entity.entity);
-      let state = particleStatesRef.current.get(entity.entity);
-      if (!state) {
-        state = createParticleEmitterState(Number(emitter.seed) || 1);
-        particleStatesRef.current.set(entity.entity, state);
-      }
-      const emitterPosition = transform.position as Vec3;
-      stepParticleEmitter(
-        emitter2D ? 2 : 3,
-        emitter,
-        state,
-        particleDelta,
-        emitterPosition,
-      );
-      const drawItems = collectParticleDrawItems(
-        state,
-        emitterPosition,
-        emitter.simulation_space,
-      );
-      const sortingOrder = emitter2D ? Number(emitter.sorting_order) || 0 : 0;
-      const blendKey = String(emitter.blend_mode).toLowerCase() === 'additive'
-        ? 'additive'
-        : 'alpha';
-      const batchKey = `${sortingOrder}|${blendKey}`;
-      const batch = particleBatches.get(batchKey);
-      if (batch) batch.push(...drawItems);
-      else particleBatches.set(batchKey, drawItems);
-    }
-    const sortedParticleBatches = [...particleBatches.entries()].sort((left, right) => {
-      const order = Number(left[0].split('|')[0]) - Number(right[0].split('|')[0]);
-      return order || left[0].localeCompare(right[0]);
-    });
-    for (const [batchKey, drawItems] of sortedParticleBatches) {
-      ctx.save();
-      ctx.globalCompositeOperation = batchKey.endsWith('|additive')
-        ? 'lighter'
-        : 'source-over';
-      for (const particle of drawItems) {
-        const screen = project(particle.position, cam, vp);
-        if (!screen || particle.size <= 0 || particle.color[3] <= 0) continue;
-        const sizePoint = project(
-          [particle.position[0] + particle.size, particle.position[1], particle.position[2]],
-          cam,
-          vp,
-        );
-        const radius = Math.max(
-          0.75,
-          Math.min(96, sizePoint ? Math.hypot(sizePoint.x - screen.x, sizePoint.y - screen.y) : particle.size * 20),
-        );
-        const [red, green, blue, alpha] = particle.color;
-        ctx.fillStyle = `rgba(${Math.round(red * 255)},${Math.round(green * 255)},${Math.round(blue * 255)},${Math.max(0, Math.min(1, alpha))})`;
-        ctx.beginPath();
-        ctx.arc(screen.x, screen.y, radius, 0, Math.PI * 2);
-        ctx.fill();
-      }
-      ctx.restore();
-    }
-    for (const entityId of particleStatesRef.current.keys()) {
-      if (!liveEmitterIds.has(entityId)) particleStatesRef.current.delete(entityId);
-    }
-
-    const liveSpineIds = new Set<number>();
-    const spineEntities = p.entities
-      .filter((entity) => entity.components.SpineSkeleton && resolvedTransform(worldTransforms, entity.entity))
-      .sort((left, right) => {
-        const a = left.components.SpineSkeleton as { sorting_order?: number };
-        const b = right.components.SpineSkeleton as { sorting_order?: number };
-        return (a.sorting_order ?? 0) - (b.sorting_order ?? 0);
-      });
-    if (spineEntities.length && !spineRuntimeRef.current && !spineRuntimeLoadRef.current) {
-      spineRuntimeLoadRef.current = loadSpineRuntime()
-        .then(({ SpineCanvasRuntime }) => {
-          spineRuntimeRef.current = new SpineCanvasRuntime();
-          spineRuntimeErrorRef.current = null;
-        })
-        .catch((reason) => {
-          spineRuntimeErrorRef.current = String(reason);
-        });
-    }
-    for (const entity of spineEntities) {
-      if (!isActive(entity.entity)) continue;
-      const component = entity.components.SpineSkeleton as Record<string, unknown> | undefined;
-      const transform = resolvedTransform(worldTransforms, entity.entity) ?? undefined;
-      if (!component || !transform) continue;
-      liveSpineIds.add(entity.entity);
-      const origin = transform.position as Vec3;
-      const screen = project(origin, cam, vp);
-      if (!screen) continue;
-      const unit = project([origin[0] + 1, origin[1], origin[2]], cam, vp);
-      const transformScale = Math.max(0.0001, Math.abs(transform.scale[0] ?? 1));
-      const pixelsPerWorldUnit = (unit ? Math.max(1, Math.hypot(unit.x - screen.x, unit.y - screen.y)) : 64)
-        * transformScale;
-      const result: SpineDrawResult = spineRuntimeRef.current
-        ? spineRuntimeRef.current.drawEntity({
-            entity: entity.entity,
-            component,
-            context: ctx,
-            screenX: screen.x,
-            screenY: screen.y,
-            pixelsPerWorldUnit,
-            deltaSeconds: particleDelta,
-          })
-        : spineRuntimeErrorRef.current
-          ? { error: spineRuntimeErrorRef.current }
-          : 'loading';
-      if (result !== 'drawn' && !isGame) {
-        const message = result === 'missing'
-          ? 'Spine: assign skeleton + atlas'
-          : result === 'loading'
-            ? 'Loading Spine 4.3…'
-            : result.error;
-        ctx.save();
-        ctx.strokeStyle = result === 'loading' ? '#56b7d0' : '#e06c75';
-        ctx.fillStyle = 'rgba(24, 24, 24, 0.86)';
-        ctx.fillRect(screen.x - 76, screen.y - 20, 152, 40);
-        ctx.strokeRect(screen.x - 76, screen.y - 20, 152, 40);
-        ctx.fillStyle = '#eee';
-        ctx.font = '11px sans-serif';
-        ctx.textAlign = 'center';
-        ctx.textBaseline = 'middle';
-        ctx.fillText(message.slice(0, 42), screen.x, screen.y, 144);
-        ctx.restore();
-      }
-    }
     spineRuntimeRef.current?.retainOnly(liveSpineIds);
 
     // Transform gizmo — 3D Transform OR RectTransform (UI)

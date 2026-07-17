@@ -308,7 +308,8 @@ mod tests {
                 },
                 "MeshRenderer": { "mesh": "cube", "material": "gold" },
                 "SpriteRenderer": {
-                    "sprite": "Assets/Sprites/hero.png", "flip_x": true, "flip_y": false
+                    "sprite": "Assets/Sprites/hero.png", "flip_x": true, "flip_y": false,
+                    "sorting_layer": "characters"
                 },
                 "PbrMaterial": { "base_color": [1, 0.5, 0.1, 1], "metallic": 0.8 },
                 "PointLight": { "intensity": 9, "range": 11 },
@@ -320,11 +321,13 @@ mod tests {
                 "AnimatedSprite2D": {
                     "frames": ["Assets/Sprites/run0.png", "Assets/Sprites/run1.png"],
                     "fps": 8, "playing": true, "looped": true, "frame": 1,
-                    "flip_x": false, "flip_y": true, "sorting_order": 3
+                    "flip_x": false, "flip_y": true, "sorting_layer": "characters",
+                    "sorting_order": 3
                 },
                 "Line2D": {
                     "points": [[-1, 0], [0, 1], [1, 0]], "width": 0.15,
-                    "color": [0.2, 0.8, 1, 1], "closed": true, "sorting_order": 4
+                    "color": [0.2, 0.8, 1, 1], "closed": true,
+                    "sorting_layer": "effects", "sorting_order": 4
                 },
                 "AnimationPlayer": {
                     "clip": "Assets/Animations/idle.manim", "play_on_awake": true,
@@ -402,16 +405,22 @@ mod tests {
         assert_eq!(components["Image"]["source_size"][0], 64.0);
         assert_eq!(components["SpriteRenderer"]["flip_x"], true);
         assert_eq!(components["SpriteRenderer"]["flip_y"], false);
+        assert_eq!(components["SpriteRenderer"]["sorting_layer"], "characters");
         assert_eq!(components["SpriteRenderer"]["pivot"], json!([0.5, 0.5]));
         assert_eq!(
             components["AnimatedSprite2D"]["frames"][1],
             "Assets/Sprites/run1.png"
         );
         assert_eq!(components["AnimatedSprite2D"]["sorting_order"], 3);
+        assert_eq!(
+            components["AnimatedSprite2D"]["sorting_layer"],
+            "characters"
+        );
         assert_eq!(components["AnimatedSprite2D"]["flip_y"], true);
         assert_eq!(components["AnimatedSprite2D"]["pivot"], json!([0.5, 0.5]));
         assert_eq!(components["Line2D"]["points"][1][1], 1.0);
         assert_eq!(components["Line2D"]["closed"], true);
+        assert_eq!(components["Line2D"]["sorting_layer"], "effects");
         assert_eq!(
             components["AnimationPlayer"]["clip"],
             "Assets/Animations/idle.manim"
@@ -521,12 +530,15 @@ mod tests {
             name: Some("Runtime Components".into()),
             components: json!({
                 "Transform": {},
-                "ParticleEmitter2D": { "rate_over_time": 12, "sorting_order": 7 },
+                "ParticleEmitter2D": {
+                    "rate_over_time": 12, "sorting_layer": "effects", "sorting_order": 7
+                },
                 "ParticleEmitter3D": { "max_particles": 321, "shape": "sphere" },
                 "SpineSkeleton": {
                     "skeleton": "Assets/Spine/hero.json",
                     "atlas": "Assets/Spine/hero.atlas",
-                    "animation": "walk"
+                    "animation": "walk",
+                    "sorting_layer": "characters"
                 }
             }),
         });
@@ -545,6 +557,13 @@ mod tests {
         );
         assert_eq!(
             loaded
+                .get_component::<ParticleEmitter2D>(entity)
+                .unwrap()
+                .sorting_layer,
+            "effects"
+        );
+        assert_eq!(
+            loaded
                 .get_component::<ParticleEmitter3D>(entity)
                 .unwrap()
                 .max_particles,
@@ -556,6 +575,13 @@ mod tests {
                 .unwrap()
                 .animation,
             "walk"
+        );
+        assert_eq!(
+            loaded
+                .get_component::<SpineSkeleton>(entity)
+                .unwrap()
+                .sorting_layer,
+            "characters"
         );
         std::fs::remove_dir_all(dir).unwrap();
     }

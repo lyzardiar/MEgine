@@ -165,6 +165,7 @@ const BUILTIN_CATALOG: ComponentCatalogEntry[] = [
       pivot: [0.5, 0.5],
       flip_x: false,
       flip_y: false,
+      sorting_layer: 'default',
       sorting_order: 0,
     }),
   },
@@ -248,6 +249,7 @@ const BUILTIN_CATALOG: ComponentCatalogEntry[] = [
       pivot: [0.5, 0.5],
       flip_x: false,
       flip_y: false,
+      sorting_layer: 'default',
       sorting_order: 0,
     }),
   },
@@ -260,6 +262,7 @@ const BUILTIN_CATALOG: ComponentCatalogEntry[] = [
       width: 0.1,
       color: [1, 1, 1, 1],
       closed: false,
+      sorting_layer: 'default',
       sorting_order: 0,
     }),
   },
@@ -612,6 +615,7 @@ export function createParticleEmitter2D(): Record<string, unknown> {
     simulation_space: 'world',
     blend_mode: 'additive',
     texture: '',
+    sorting_layer: 'default',
     sorting_order: 0,
     seed: 1,
   };
@@ -659,6 +663,7 @@ export function createSpineSkeleton(): Record<string, unknown> {
     scale: 1,
     color: [1, 1, 1, 1],
     premultiplied_alpha: true,
+    sorting_layer: 'default',
     sorting_order: 0,
   };
 }

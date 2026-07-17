@@ -151,18 +151,21 @@ export const BUILTIN_INSPECTOR_FIELDS: Readonly<
     pivot: { min: 0, max: 1, step: 0.01 },
     flip_x: { label: 'Flip X' },
     flip_y: { label: 'Flip Y' },
+    sorting_layer: { label: 'Sorting Layer', kind: 'enum' },
   },
   AnimatedSprite2D: {
     frames: { kind: 'string-list' },
     pivot: { min: 0, max: 1, step: 0.01 },
     fps: { min: 0, step: 0.1 },
     frame: { min: 0, step: 1 },
+    sorting_layer: { label: 'Sorting Layer', kind: 'enum' },
     flip_x: { label: 'Flip X' },
     flip_y: { label: 'Flip Y' },
   },
   Line2D: {
     points: { kind: 'vector2-list' },
     width: { min: 0, step: 0.01 },
+    sorting_layer: { label: 'Sorting Layer', kind: 'enum' },
   },
   AnimationPlayer: {
     clip: {
@@ -296,6 +299,7 @@ export const BUILTIN_INSPECTOR_FIELDS: Readonly<
     simulation_space: { kind: 'enum', options: options('world', 'local') },
     blend_mode: { kind: 'enum', options: options('alpha', 'additive') },
     texture: { ...sprite, noneValue: '' },
+    sorting_layer: { label: 'Sorting Layer', kind: 'enum' },
   },
   ParticleEmitter3D: {
     duration: { min: 0, step: 0.1 },
@@ -324,6 +328,7 @@ export const BUILTIN_INSPECTOR_FIELDS: Readonly<
     },
     time_scale: { min: 0, step: 0.1 },
     scale: { min: 0.0001, step: 0.1 },
+    sorting_layer: { label: 'Sorting Layer', kind: 'enum' },
   },
   Text: {
     text: { kind: 'multiline' },

@@ -75,6 +75,8 @@ component SpriteRenderer {
   /// Mirror texture coordinates without changing Transform scale
   flip_x: bool = false
   flip_y: bool = false
+  /// Stable id from ProjectSettings/sorting-layers.json
+  sorting_layer: string = "default"
   /// Draw order among world sprites (higher = closer / later)
   sorting_order: int = 0
 }
@@ -91,6 +93,7 @@ component AnimatedSprite2D {
   pivot:         float2       = [0.5, 0.5]
   flip_x:        bool         = false
   flip_y:        bool         = false
+  sorting_layer: string       = "default"
   sorting_order: int          = 0
 }
 
@@ -100,6 +103,7 @@ component Line2D {
   width:         float        = 0.1
   color:         float4       = [1, 1, 1, 1]
   closed:        bool         = false
+  sorting_layer: string       = "default"
   sorting_order: int          = 0
 }
 
@@ -255,6 +259,7 @@ component ParticleEmitter2D {
   simulation_space: string = "world"
   blend_mode:       string = "additive"
   texture:          string = ""
+  sorting_layer:    string = "default"
   sorting_order:    int    = 0
   seed:             int    = 1
 }
@@ -300,5 +305,6 @@ component SpineSkeleton {
   scale:                float  = 1
   color:                float4 = [1, 1, 1, 1]
   premultiplied_alpha:  bool   = true
+  sorting_layer:        string = "default"
   sorting_order:        int    = 0
 }

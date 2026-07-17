@@ -59,6 +59,16 @@ export type ProjectBuildSettings = {
   availableScenes: string[];
 };
 
+export type ProjectSortingLayer = {
+  id: string;
+  name: string;
+};
+
+export type ProjectSortingLayers = {
+  version: 1;
+  layers: ProjectSortingLayer[];
+};
+
 export type EditorOperation =
   | { op: 'select'; entity: number | null }
   | { op: 'undo' }
@@ -216,6 +226,33 @@ export async function saveProjectBuildSettings(
     throw new Error(detail || `cannot save build settings: ${response.status}`);
   }
   return response.json() as Promise<ProjectBuildSettings>;
+}
+
+export async function getProjectSortingLayers(): Promise<ProjectSortingLayers> {
+  if (isDesktopEditor()) {
+    return invoke<ProjectSortingLayers>('get_project_sorting_layers');
+  }
+  const response = await fetch('/__mengine/sorting-layers');
+  if (!response.ok) throw new Error(`cannot read sorting layers: ${response.status}`);
+  return response.json() as Promise<ProjectSortingLayers>;
+}
+
+export async function saveProjectSortingLayers(
+  settings: ProjectSortingLayers,
+): Promise<ProjectSortingLayers> {
+  if (isDesktopEditor()) {
+    return invoke<ProjectSortingLayers>('save_project_sorting_layers', { settings });
+  }
+  const response = await fetch('/__mengine/sorting-layers', {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(settings),
+  });
+  if (!response.ok) {
+    const detail = await response.text();
+    throw new Error(detail || `cannot save sorting layers: ${response.status}`);
+  }
+  return response.json() as Promise<ProjectSortingLayers>;
 }
 
 export async function openProjectScene(relativePath: string): Promise<ProjectSnapshot> {

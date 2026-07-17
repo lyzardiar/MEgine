@@ -345,6 +345,7 @@ pub struct SpriteRenderer {
     pub pivot: [f32; 2],
     pub flip_x: bool,
     pub flip_y: bool,
+    pub sorting_layer: String,
     pub sorting_order: i32,
 }
 
@@ -357,6 +358,7 @@ impl Default for SpriteRenderer {
             pivot: [0.5, 0.5],
             flip_x: false,
             flip_y: false,
+            sorting_layer: "default".into(),
             sorting_order: 0,
         }
     }
@@ -390,6 +392,7 @@ pub struct AnimatedSprite2D {
     pub pivot: [f32; 2],
     pub flip_x: bool,
     pub flip_y: bool,
+    pub sorting_layer: String,
     pub sorting_order: i32,
 }
 
@@ -406,6 +409,7 @@ impl Default for AnimatedSprite2D {
             pivot: [0.5, 0.5],
             flip_x: false,
             flip_y: false,
+            sorting_layer: "default".into(),
             sorting_order: 0,
         }
     }
@@ -433,6 +437,7 @@ pub struct Line2D {
     pub width: f32,
     pub color: [f32; 4],
     pub closed: bool,
+    pub sorting_layer: String,
     pub sorting_order: i32,
 }
 
@@ -443,6 +448,7 @@ impl Default for Line2D {
             width: 0.1,
             color: [1.0, 1.0, 1.0, 1.0],
             closed: false,
+            sorting_layer: "default".into(),
             sorting_order: 0,
         }
     }
@@ -992,6 +998,7 @@ pub struct ParticleEmitter2D {
     pub simulation_space: String,
     pub blend_mode: String,
     pub texture: String,
+    pub sorting_layer: String,
     pub sorting_order: i32,
     pub seed: i32,
 }
@@ -1022,6 +1029,7 @@ impl Default for ParticleEmitter2D {
             simulation_space: "world".into(),
             blend_mode: "additive".into(),
             texture: "".into(),
+            sorting_layer: "default".into(),
             sorting_order: 0,
             seed: 1,
         }
@@ -1133,6 +1141,7 @@ pub struct SpineSkeleton {
     pub scale: f32,
     pub color: [f32; 4],
     pub premultiplied_alpha: bool,
+    pub sorting_layer: String,
     pub sorting_order: i32,
 }
 
@@ -1149,6 +1158,7 @@ impl Default for SpineSkeleton {
             scale: 1.0,
             color: [1.0, 1.0, 1.0, 1.0],
             premultiplied_alpha: true,
+            sorting_layer: "default".into(),
             sorting_order: 0,
         }
     }

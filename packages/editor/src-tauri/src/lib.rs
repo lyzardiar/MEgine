@@ -48,6 +48,32 @@ struct ProjectBuildSettings {
     available_scenes: Vec<String>,
 }
 
+#[derive(Clone, Debug, serde::Deserialize, serde::Serialize)]
+#[serde(rename_all = "camelCase")]
+struct ProjectSortingLayer {
+    id: String,
+    name: String,
+}
+
+#[derive(Clone, Debug, serde::Deserialize, serde::Serialize)]
+#[serde(rename_all = "camelCase")]
+struct ProjectSortingLayers {
+    version: u32,
+    layers: Vec<ProjectSortingLayer>,
+}
+
+impl Default for ProjectSortingLayers {
+    fn default() -> Self {
+        Self {
+            version: 1,
+            layers: vec![ProjectSortingLayer {
+                id: "default".into(),
+                name: "Default".into(),
+            }],
+        }
+    }
+}
+
 #[derive(Debug, serde::Serialize)]
 #[serde(rename_all = "camelCase")]
 struct BuildPlayerResult {
@@ -573,6 +599,160 @@ fn save_project_build_settings(
     })
 }
 
+fn normalize_sorting_layers(value: ProjectSortingLayers) -> Result<ProjectSortingLayers, String> {
+    if value.version != 1 {
+        return Err(format!(
+            "unsupported sorting layer version {}",
+            value.version
+        ));
+    }
+    if value.layers.len() > 64 {
+        return Err("at most 64 sorting layers are supported".into());
+    }
+    let mut ids = HashSet::new();
+    let mut names = HashSet::new();
+    let mut layers = Vec::with_capacity(value.layers.len().max(1));
+    for layer in value.layers {
+        let id = layer.id.trim().to_string();
+        let mut name = layer.name.trim().to_string();
+        if id.is_empty()
+            || id.len() > 64
+            || !id
+                .bytes()
+                .all(|value| value.is_ascii_alphanumeric() || value == b'-' || value == b'_')
+        {
+            return Err(format!("invalid sorting layer id '{id}'"));
+        }
+        if name.is_empty() || name.chars().count() > 64 {
+            return Err(format!("invalid sorting layer name '{name}'"));
+        }
+        let id_key = id.to_ascii_lowercase();
+        if id_key == "default" {
+            name = "Default".into();
+        }
+        let name_key = name.to_lowercase();
+        if !ids.insert(id_key.clone()) {
+            return Err(format!("duplicate sorting layer id '{id}'"));
+        }
+        if !names.insert(name_key) {
+            return Err(format!("duplicate sorting layer name '{name}'"));
+        }
+        layers.push(ProjectSortingLayer { id, name });
+    }
+    if !ids.contains("default") {
+        layers.insert(
+            0,
+            ProjectSortingLayer {
+                id: "default".into(),
+                name: "Default".into(),
+            },
+        );
+    }
+    Ok(ProjectSortingLayers { version: 1, layers })
+}
+
+fn sorting_layers_path(
+    project_root: &Path,
+    create_parent: bool,
+) -> Result<Option<PathBuf>, String> {
+    let root = project_root
+        .canonicalize()
+        .map_err(|error| format!("cannot resolve project root: {error}"))?;
+    let requested = root.join("ProjectSettings");
+    if !requested.exists() {
+        if !create_parent {
+            return Ok(None);
+        }
+        std::fs::create_dir(&requested).map_err(|error| error.to_string())?;
+    }
+    let metadata = std::fs::symlink_metadata(&requested).map_err(|error| error.to_string())?;
+    if metadata.file_type().is_symlink() || !metadata.is_dir() {
+        return Err("ProjectSettings must be a regular directory inside the project".into());
+    }
+    let directory = requested
+        .canonicalize()
+        .map_err(|error| error.to_string())?;
+    if !directory.starts_with(&root) {
+        return Err("ProjectSettings escapes the project root".into());
+    }
+    let target = directory.join("sorting-layers.json");
+    if let Ok(metadata) = std::fs::symlink_metadata(&target) {
+        if metadata.file_type().is_symlink() || !metadata.is_file() {
+            return Err("sorting-layers.json must be a regular file".into());
+        }
+    }
+    Ok(Some(target))
+}
+
+fn read_sorting_layers(project_root: &Path) -> Result<ProjectSortingLayers, String> {
+    let Some(path) = sorting_layers_path(project_root, false)? else {
+        return Ok(ProjectSortingLayers::default());
+    };
+    if !path.is_file() {
+        return Ok(ProjectSortingLayers::default());
+    }
+    let contents = std::fs::read(&path).map_err(|error| error.to_string())?;
+    let value = serde_json::from_slice(&contents)
+        .map_err(|error| format!("cannot parse {}: {error}", path.display()))?;
+    normalize_sorting_layers(value)
+}
+
+fn write_sorting_layers(
+    project_root: &Path,
+    settings: &ProjectSortingLayers,
+) -> Result<(), String> {
+    let target = sorting_layers_path(project_root, true)?
+        .ok_or_else(|| "sorting layer path is unavailable".to_string())?;
+    let parent = target
+        .parent()
+        .ok_or_else(|| "sorting layer path has no parent".to_string())?;
+    std::fs::create_dir_all(parent).map_err(|error| error.to_string())?;
+    let contents = serde_json::to_vec_pretty(settings).map_err(|error| error.to_string())?;
+    let nonce = SystemTime::now()
+        .duration_since(UNIX_EPOCH)
+        .unwrap_or_default()
+        .as_nanos();
+    let temporary = parent.join(format!(
+        ".sorting-layers.json.{}.{nonce}.tmp",
+        std::process::id()
+    ));
+    let result = (|| -> std::io::Result<()> {
+        use std::io::Write;
+        let mut file = std::fs::OpenOptions::new()
+            .write(true)
+            .create_new(true)
+            .open(&temporary)?;
+        file.write_all(&contents)?;
+        file.write_all(b"\n")?;
+        file.sync_all()?;
+        drop(file);
+        replace_file_atomically(&temporary, &target)
+    })();
+    if result.is_err() {
+        let _ = std::fs::remove_file(&temporary);
+    }
+    result.map_err(|error| error.to_string())
+}
+
+#[tauri::command]
+fn get_project_sorting_layers(state: State<'_, AppState>) -> Result<ProjectSortingLayers, String> {
+    let guard = state.project.lock();
+    let session = guard.as_ref().ok_or_else(|| no_project().message)?;
+    read_sorting_layers(Path::new(&session.snapshot().project_root))
+}
+
+#[tauri::command]
+fn save_project_sorting_layers(
+    settings: ProjectSortingLayers,
+    state: State<'_, AppState>,
+) -> Result<ProjectSortingLayers, String> {
+    let settings = normalize_sorting_layers(settings)?;
+    let guard = state.project.lock();
+    let session = guard.as_ref().ok_or_else(|| no_project().message)?;
+    write_sorting_layers(Path::new(&session.snapshot().project_root), &settings)?;
+    Ok(settings)
+}
+
 #[tauri::command]
 async fn build_pc_player(
     profile: String,
@@ -879,6 +1059,8 @@ pub fn run() {
             list_project_scenes,
             get_project_build_settings,
             save_project_build_settings,
+            get_project_sorting_layers,
+            save_project_sorting_layers,
             build_pc_player,
             read_project_asset,
             write_project_asset,
@@ -932,6 +1114,50 @@ mod tests {
     }
 
     #[test]
+    fn sorting_layers_are_validated_and_atomically_replaceable() {
+        let root = std::env::temp_dir().join(format!(
+            "mengine-sorting-layers-{}-{}",
+            std::process::id(),
+            SystemTime::now()
+                .duration_since(UNIX_EPOCH)
+                .unwrap()
+                .as_nanos()
+        ));
+        let settings = normalize_sorting_layers(ProjectSortingLayers {
+            version: 1,
+            layers: vec![ProjectSortingLayer {
+                id: "effects".into(),
+                name: "Effects".into(),
+            }],
+        })
+        .unwrap();
+        assert_eq!(settings.layers[0].id, "default");
+        std::fs::create_dir(&root).unwrap();
+        write_sorting_layers(&root, &settings).unwrap();
+        let loaded = read_sorting_layers(&root).unwrap();
+        assert_eq!(loaded.layers.len(), 2);
+        assert_eq!(loaded.layers[1].id, "effects");
+
+        let duplicate = ProjectSortingLayers {
+            version: 1,
+            layers: vec![
+                ProjectSortingLayer {
+                    id: "default".into(),
+                    name: "Default".into(),
+                },
+                ProjectSortingLayer {
+                    id: "DEFAULT".into(),
+                    name: "Other".into(),
+                },
+            ],
+        };
+        assert!(normalize_sorting_layers(duplicate)
+            .unwrap_err()
+            .contains("duplicate sorting layer id"));
+        std::fs::remove_dir_all(root).unwrap();
+    }
+
+    #[test]
     #[ignore = "builds and self-validates a real player executable"]
     fn build_backend_packages_a_project_through_the_editor_path() {
         let root = std::env::temp_dir().join(format!(
@@ -944,6 +1170,7 @@ mod tests {
         ));
         std::fs::create_dir_all(root.join("Assets/Scenes")).unwrap();
         std::fs::create_dir_all(root.join("Assets/Scripts")).unwrap();
+        std::fs::create_dir_all(root.join("ProjectSettings")).unwrap();
         std::fs::write(
             root.join("project.json"),
             r#"{"name":"Editor Build QA","version":1,"language":"typescript","mainScene":"Assets/Scenes/Main.mscene","buildScenes":["Assets/Scenes/Main.mscene","Assets/Scenes/Level2.mscene"],"startupScript":"Assets/Scripts/Main.ts"}"#,
@@ -969,6 +1196,11 @@ mod tests {
             r#"{"version":1,"name":"Main","world":{"entities":[],"frame":0,"sim_frame":0,"clear_color":[0.1,0.1,0.14,1]}}"#,
         )
         .unwrap();
+        std::fs::write(
+            root.join("ProjectSettings/sorting-layers.json"),
+            r#"{"version":1,"layers":[{"id":"default","name":"Default"},{"id":"effects","name":"Effects"}]}"#,
+        )
+        .unwrap();
 
         let result = run_player_build(root.clone(), "debug".into(), true).unwrap();
         assert_eq!(result.profile, "debug");
@@ -978,6 +1210,7 @@ mod tests {
         assert!(output.join("Assets/Scripts/Main.js").is_file());
         assert!(!output.join("Assets/Scripts/Main.ts").exists());
         assert!(!output.join("Assets/Scripts/mengine.d.ts").exists());
+        assert!(output.join("ProjectSettings/sorting-layers.json").is_file());
         std::fs::remove_dir_all(root).unwrap();
     }
 

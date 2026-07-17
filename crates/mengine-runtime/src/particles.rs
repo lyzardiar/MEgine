@@ -1,3 +1,4 @@
+use crate::sorting::{sort_world_primitives, SortingLayers, WorldPrimitive, WorldPrimitiveKind};
 use glam::{Vec3, Vec4};
 use mengine_core::generated::{ParticleEmitter2D, ParticleEmitter3D};
 use mengine_core::{Entity, TransformHierarchy, World};
@@ -145,6 +146,20 @@ impl Emitter<'_> {
         }
     }
 
+    fn sorting_layer(&self) -> &str {
+        match self {
+            Self::Two(value) => &value.sorting_layer,
+            Self::Three(_) => "default",
+        }
+    }
+
+    fn primitive_kind(&self) -> WorldPrimitiveKind {
+        match self {
+            Self::Two(_) => WorldPrimitiveKind::TwoD,
+            Self::Three(_) => WorldPrimitiveKind::ThreeD,
+        }
+    }
+
     fn gravity(&self) -> Vec3 {
         match self {
             Self::Two(value) => Vec3::new(value.gravity[0], value.gravity[1], 0.0),
@@ -216,8 +231,27 @@ impl ParticleWorld {
         viewport: [u32; 2],
         delta_seconds: f32,
     ) -> Vec<UiPrimitive> {
+        let mut output = self.update_and_collect_world_with_hierarchy(
+            world,
+            hierarchy,
+            camera,
+            viewport,
+            delta_seconds,
+        );
+        sort_world_primitives(&mut output, &SortingLayers::default());
+        output.into_iter().map(|value| value.primitive).collect()
+    }
+
+    pub fn update_and_collect_world_with_hierarchy(
+        &mut self,
+        world: &World,
+        hierarchy: &TransformHierarchy,
+        camera: FrameCamera,
+        viewport: [u32; 2],
+        delta_seconds: f32,
+    ) -> Vec<WorldPrimitive> {
         let mut live = HashSet::new();
-        let mut output: Vec<(String, UiPrimitive)> = Vec::new();
+        let mut output = Vec::new();
         for entity in world.iter_entities() {
             let Some(transform) = hierarchy.get(entity) else {
                 continue;
@@ -243,8 +277,7 @@ impl ParticleWorld {
             );
         }
         self.emitters.retain(|entity, _| live.contains(entity));
-        output.sort_by(|left, right| left.0.cmp(&right.0));
-        output.into_iter().map(|(_, primitive)| primitive).collect()
+        output
     }
 }
 
@@ -375,7 +408,7 @@ fn collect_emitter(
     origin: Vec3,
     camera: FrameCamera,
     viewport: [u32; 2],
-    output: &mut Vec<(String, UiPrimitive)>,
+    output: &mut Vec<WorldPrimitive>,
 ) {
     let local = emitter.simulation_space().eq_ignore_ascii_case("local");
     let blend = emitter.blend();
@@ -384,8 +417,6 @@ fn collect_emitter(
         Emitter::Two(_) => "particle/2d",
         Emitter::Three(_) => "particle/3d",
     };
-    let order_key = (emitter.sorting_order() as i64 - i32::MIN as i64) as u32;
-    let sort_key = format!("{order_key:010}|{:?}|{}|{}", blend, material, texture);
     for particle in &state.particles {
         let position = if local {
             particle.position + origin
@@ -412,9 +443,12 @@ fn collect_emitter(
         if color[3] <= 0.0 || radius <= 0.0 {
             continue;
         }
-        output.push((
-            sort_key.clone(),
-            UiPrimitive {
+        output.push(WorldPrimitive {
+            kind: emitter.primitive_kind(),
+            sorting_layer: emitter.sorting_layer().into(),
+            sorting_order: emitter.sorting_order(),
+            depth: screen[2],
+            primitive: UiPrimitive {
                 rect: [
                     screen[0] - radius,
                     screen[1] - radius,
@@ -432,7 +466,7 @@ fn collect_emitter(
                     blend,
                 },
             },
-        ));
+        });
     }
 }
 
@@ -525,5 +559,38 @@ mod tests {
         world.set_editor_state(parent, 0, false);
         particles.update_and_collect(&world, camera(), [200, 200], 1.0 / 60.0);
         assert!(!particles.emitters.contains_key(&child));
+    }
+
+    #[test]
+    fn two_dimensional_particles_preserve_project_sorting_metadata() {
+        let mut world = World::new();
+        let entity = world.spawn_empty();
+        world.insert_component(entity, Transform::default());
+        world.insert_component(
+            entity,
+            ParticleEmitter2D {
+                rate_over_time: 60.0,
+                lifetime_min: 10.0,
+                lifetime_max: 10.0,
+                speed_min: 0.0,
+                speed_max: 0.0,
+                sorting_layer: "effects".into(),
+                sorting_order: -4,
+                ..ParticleEmitter2D::default()
+            },
+        );
+        let hierarchy = TransformHierarchy::build(&world);
+        let mut particles = ParticleWorld::default();
+        let output = particles.update_and_collect_world_with_hierarchy(
+            &world,
+            &hierarchy,
+            camera(),
+            [200, 200],
+            1.0 / 60.0,
+        );
+        assert_eq!(output.len(), 1);
+        assert_eq!(output[0].kind, WorldPrimitiveKind::TwoD);
+        assert_eq!(output[0].sorting_layer, "effects");
+        assert_eq!(output[0].sorting_order, -4);
     }
 }

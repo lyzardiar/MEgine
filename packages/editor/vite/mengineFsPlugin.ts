@@ -125,6 +125,7 @@ export function mengineFsPlugin(opts: MengineFsOptions | string): Plugin {
   const behavioursDir = path.join(editorRoot, 'src', 'behaviours');
   const statePath = path.join(projectRoot, '.editor', 'state.json');
   const manifestPath = path.join(projectRoot, 'project.json');
+  const sortingLayersRequestedPath = path.join(projectRoot, 'ProjectSettings', 'sorting-layers.json');
 
   const IMG_EXT = /\.(png|jpe?g|webp|gif)$/i;
 
@@ -175,6 +176,29 @@ export function mengineFsPlugin(opts: MengineFsOptions | string): Plugin {
     sprites.sort((a, b) => a.relPath.localeCompare(b.relPath));
     const folders = [...folderSet].sort((a, b) => a.localeCompare(b));
     return { sprites, folders };
+  }
+
+  function resolveSortingLayersPath(createParent: boolean): string | null {
+    const root = fs.realpathSync(projectRoot);
+    const requestedDirectory = path.dirname(sortingLayersRequestedPath);
+    if (!fs.existsSync(requestedDirectory)) {
+      if (!createParent) return null;
+      fs.mkdirSync(requestedDirectory);
+    }
+    const directoryMetadata = fs.lstatSync(requestedDirectory);
+    if (directoryMetadata.isSymbolicLink() || !directoryMetadata.isDirectory()) {
+      throw new Error('ProjectSettings must be a regular directory inside the project');
+    }
+    const directory = fs.realpathSync(requestedDirectory);
+    if (!isUnder(root, directory)) throw new Error('ProjectSettings escapes the project root');
+    const target = path.join(directory, 'sorting-layers.json');
+    if (fs.existsSync(target)) {
+      const targetMetadata = fs.lstatSync(target);
+      if (targetMetadata.isSymbolicLink() || !targetMetadata.isFile()) {
+        throw new Error('sorting-layers.json must be a regular file');
+      }
+    }
+    return target;
   }
 
   function listProjectAssets(): ProjectFileAsset[] {
@@ -363,6 +387,48 @@ export function mengineFsPlugin(opts: MengineFsOptions | string): Plugin {
     };
   }
 
+  function normalizeSortingLayers(value: unknown) {
+    const source = value && typeof value === 'object'
+      ? value as { version?: unknown; layers?: unknown }
+      : null;
+    if (source?.version !== 1) {
+      throw new Error(`unsupported sorting layer version ${String(source?.version)}`);
+    }
+    const raw = source.layers;
+    if (!Array.isArray(raw) || raw.length > 64) {
+      throw new Error('sorting layers must contain at most 64 entries');
+    }
+    const ids = new Set<string>();
+    const names = new Set<string>();
+    const layers: Array<{ id: string; name: string }> = [];
+    for (const entry of raw) {
+      if (!entry || typeof entry !== 'object') throw new Error('invalid sorting layer entry');
+      const source = entry as { id?: unknown; name?: unknown };
+      const id = typeof source.id === 'string' ? source.id.trim() : '';
+      let name = typeof source.name === 'string' ? source.name.trim() : '';
+      const idKey = id.toLowerCase();
+      if (idKey === 'default') name = 'Default';
+      const nameKey = name.toLocaleLowerCase();
+      if (!/^[A-Za-z0-9_-]{1,64}$/.test(id)) throw new Error(`invalid sorting layer id '${id}'`);
+      if (!name || [...name].length > 64) throw new Error(`invalid sorting layer name '${name}'`);
+      if (ids.has(idKey)) throw new Error(`duplicate sorting layer id '${id}'`);
+      if (names.has(nameKey)) throw new Error(`duplicate sorting layer name '${name}'`);
+      ids.add(idKey);
+      names.add(nameKey);
+      layers.push({ id, name });
+    }
+    if (!ids.has('default')) layers.unshift({ id: 'default', name: 'Default' });
+    return { version: 1 as const, layers };
+  }
+
+  function readSortingLayers() {
+    const sortingLayersPath = resolveSortingLayersPath(false);
+    if (!sortingLayersPath || !fs.existsSync(sortingLayersPath)) {
+      return { version: 1 as const, layers: [{ id: 'default', name: 'Default' }] };
+    }
+    return normalizeSortingLayers(JSON.parse(fs.readFileSync(sortingLayersPath, 'utf8')));
+  }
+
   function collectTs(dir: string, folder: string, idPrefix: string, out: ScriptAsset[]) {
     if (!fs.existsSync(dir)) return;
     for (const f of fs.readdirSync(dir)) {
@@ -479,6 +545,21 @@ export function mengineFsPlugin(opts: MengineFsOptions | string): Plugin {
           Buffer.from(`${JSON.stringify(manifest, null, 2)}\n`, 'utf8'),
         );
         return sendJson(res, 200, readBuildSettings().settings);
+      }
+
+      if (pathname === `${API}/sorting-layers` && method === 'GET') {
+        return sendJson(res, 200, readSortingLayers());
+      }
+
+      if (pathname === `${API}/sorting-layers` && method === 'PUT') {
+        const settings = normalizeSortingLayers(JSON.parse(await readBody(req) || '{}'));
+        const sortingLayersPath = resolveSortingLayersPath(true);
+        if (!sortingLayersPath) throw new Error('sorting layer path is unavailable');
+        writeFileAtomic(
+          sortingLayersPath,
+          Buffer.from(`${JSON.stringify(settings, null, 2)}\n`, 'utf8'),
+        );
+        return sendJson(res, 200, settings);
       }
 
       const assetMatch = pathname.match(new RegExp(`^${API}/asset/(.+)$`));

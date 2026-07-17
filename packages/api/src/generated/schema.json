@@ -43,6 +43,9 @@
         },
         "type": "array"
       },
+      "sorting_layer": {
+        "type": "string"
+      },
       "sorting_order": {
         "type": "number"
       }
@@ -58,6 +61,7 @@
       "pivot",
       "flip_x",
       "flip_y",
+      "sorting_layer",
       "sorting_order"
     ],
     "type": "object"
@@ -788,6 +792,9 @@
         },
         "type": "array"
       },
+      "sorting_layer": {
+        "type": "string"
+      },
       "sorting_order": {
         "type": "number"
       },
@@ -800,6 +807,7 @@
       "width",
       "color",
       "closed",
+      "sorting_layer",
       "sorting_order"
     ],
     "type": "object"
@@ -1054,6 +1062,9 @@
       "size_start": {
         "type": "number"
       },
+      "sorting_layer": {
+        "type": "string"
+      },
       "sorting_order": {
         "type": "number"
       },
@@ -1097,6 +1108,7 @@
       "simulation_space",
       "blend_mode",
       "texture",
+      "sorting_layer",
       "sorting_order",
       "seed"
     ],
@@ -1848,6 +1860,9 @@
       "skin": {
         "type": "string"
       },
+      "sorting_layer": {
+        "type": "string"
+      },
       "sorting_order": {
         "type": "number"
       },
@@ -1866,6 +1881,7 @@
       "scale",
       "color",
       "premultiplied_alpha",
+      "sorting_layer",
       "sorting_order"
     ],
     "type": "object"
@@ -1926,6 +1942,9 @@
         },
         "type": "array"
       },
+      "sorting_layer": {
+        "type": "string"
+      },
       "sorting_order": {
         "type": "number"
       },
@@ -1940,6 +1959,7 @@
       "pivot",
       "flip_x",
       "flip_y",
+      "sorting_layer",
       "sorting_order"
     ],
     "type": "object"

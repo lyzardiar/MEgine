@@ -16,6 +16,7 @@ import { getBuiltinInspectorField, type InspectorOption } from '../inspectorMeta
 import { eulerXYZToQuat, quatToEulerXYZ } from '../math3d';
 import { readRectTransform } from '../ui/rectLayout';
 import { loadSpineRuntime } from '../spine/spineRuntimeLoader';
+import { getSortingLayerOptions } from '../sortingLayers';
 import { SchemaFieldEditor } from './SchemaFieldEditor';
 import { RectTransformEditor } from './RectTransformEditor';
 import {
@@ -533,7 +534,8 @@ function GenericCompEditor(props: {
           );
         }
         if (typeof val === 'string') {
-          const selectOptions = props.dynamicOptions?.[key] ?? meta?.options;
+          const selectOptions = props.dynamicOptions?.[key]
+            ?? (key === 'sorting_layer' ? getSortingLayerOptions() : meta?.options);
           return (
             <div className="field-row" key={key}>
               <label title={key}>{label}</label>
@@ -543,7 +545,11 @@ function GenericCompEditor(props: {
                   onChange={(e) => setValue(e.target.value)}
                 >
                   {!selectOptions.some((option) => option.value === val) && (
-                    <option value={val}>{val || 'None'}</option>
+                    <option value={val}>
+                      {key === 'sorting_layer' && val
+                        ? `${val} (Missing - uses Default)`
+                        : val || 'None'}
+                    </option>
                   )}
                   {selectOptions.map((option) => (
                     <option key={option.value} value={option.value}>{option.label}</option>

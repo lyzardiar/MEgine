@@ -24,7 +24,8 @@ use mengine_runtime::particles::ParticleWorld;
 use mengine_runtime::player_config::load_player_config;
 use mengine_runtime::prefabs::instantiate_project_prefab;
 use mengine_runtime::scenes::{LoadedScene, SceneManager, SceneSelector};
-use mengine_runtime::sprites::collect_world_sprites_with_hierarchy;
+use mengine_runtime::sorting::{sort_world_primitives, SortingLayers};
+use mengine_runtime::sprites::collect_world_primitives_with_hierarchy;
 use mengine_runtime::textures::RuntimeTextureCache;
 use mengine_runtime::ui::{
     append_ui_focus_ring, collect_ui_frame_with_hierarchy, next_ui_focus, set_toggle_value,
@@ -94,6 +95,7 @@ struct App {
     modifiers: ModifiersState,
     last_ui_draw_calls: u32,
     particles: ParticleWorld,
+    sorting_layers: SortingLayers,
     textures: RuntimeTextureCache,
     animations: AnimationRuntime,
     audio: AudioRuntime,
@@ -122,6 +124,11 @@ impl App {
         let audio = AudioRuntime::new(args.project_root.clone());
         let materials = RuntimeMaterialCache::new(args.project_root.clone());
         let meshes = RuntimeMeshCache::new(args.project_root.clone());
+        let sorting_layers =
+            SortingLayers::load(args.project_root.as_deref()).unwrap_or_else(|error| {
+                log::warn!("sorting layer settings rejected; using Default only: {error}");
+                SortingLayers::default()
+            });
         let scenes = SceneManager::new(
             args.project_root.clone(),
             args.build_scenes.clone(),
@@ -145,6 +152,7 @@ impl App {
             modifiers: ModifiersState::empty(),
             last_ui_draw_calls: u32::MAX,
             particles: ParticleWorld::default(),
+            sorting_layers,
             textures,
             animations,
             audio,
@@ -1390,23 +1398,29 @@ function onTick(dt, frame) {
                         window_size.height,
                     );
                     append_ui_focus_ring(&mut ui.plan, &ui.controls, self.focused_ui);
-                    let mut world_primitives = collect_world_sprites_with_hierarchy(
+                    let mut world_primitives = collect_world_primitives_with_hierarchy(
                         &self.world,
                         &hierarchy,
                         camera,
                         [window_size.width, window_size.height],
                     );
-                    let particle_primitives = self.particles.update_and_collect_with_hierarchy(
-                        &self.world,
-                        &hierarchy,
-                        camera,
-                        [window_size.width, window_size.height],
-                        dt,
-                    );
+                    let particle_primitives =
+                        self.particles.update_and_collect_world_with_hierarchy(
+                            &self.world,
+                            &hierarchy,
+                            camera,
+                            [window_size.width, window_size.height],
+                            dt,
+                        );
                     world_primitives.extend(particle_primitives);
                     if !world_primitives.is_empty() {
-                        world_primitives.extend(std::mem::take(&mut ui.plan.primitives));
-                        ui.plan = UiBatchPlan::build(world_primitives);
+                        sort_world_primitives(&mut world_primitives, &self.sorting_layers);
+                        let mut primitives = world_primitives
+                            .into_iter()
+                            .map(|value| value.primitive)
+                            .collect::<Vec<_>>();
+                        primitives.extend(std::mem::take(&mut ui.plan.primitives));
+                        ui.plan = UiBatchPlan::build(primitives);
                     }
                     for failure in self.textures.sync(r, &ui.plan) {
                         log::warn!(

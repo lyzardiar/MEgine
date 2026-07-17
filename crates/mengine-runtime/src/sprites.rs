@@ -1,14 +1,8 @@
+use crate::sorting::{sort_world_primitives, SortingLayers, WorldPrimitive, WorldPrimitiveKind};
 use glam::{Quat, Vec3};
 use mengine_core::generated::{AnimatedSprite2D, Line2D, SpriteRenderer, Transform};
 use mengine_core::{TransformHierarchy, World};
 use mengine_rhi::{project_world_to_viewport, FrameCamera, UiBatchKey, UiBlendMode, UiPrimitive};
-
-#[derive(Clone, Debug)]
-struct ProjectedSprite {
-    sorting_order: i32,
-    depth: f32,
-    primitive: UiPrimitive,
-}
 
 pub fn collect_world_sprites(
     world: &World,
@@ -25,6 +19,17 @@ pub fn collect_world_sprites_with_hierarchy(
     camera: FrameCamera,
     viewport: [u32; 2],
 ) -> Vec<UiPrimitive> {
+    let mut sprites = collect_world_primitives_with_hierarchy(world, hierarchy, camera, viewport);
+    sort_world_primitives(&mut sprites, &SortingLayers::default());
+    sprites.into_iter().map(|sprite| sprite.primitive).collect()
+}
+
+pub fn collect_world_primitives_with_hierarchy(
+    world: &World,
+    hierarchy: &TransformHierarchy,
+    camera: FrameCamera,
+    viewport: [u32; 2],
+) -> Vec<WorldPrimitive> {
     let mut sprites = Vec::new();
     for entity in world.iter_entities() {
         let Some(transform) = hierarchy.get(entity).map(|value| value.to_transform()) else {
@@ -45,6 +50,7 @@ pub fn collect_world_sprites_with_hierarchy(
                 pivot: animation.pivot,
                 flip_x: animation.flip_x,
                 flip_y: animation.flip_y,
+                sorting_layer: animation.sorting_layer.clone(),
                 sorting_order: animation.sorting_order,
             };
             &resolved
@@ -57,12 +63,7 @@ pub fn collect_world_sprites_with_hierarchy(
             sprites.push(projected);
         }
     }
-    sprites.sort_by(|left, right| {
-        left.sorting_order
-            .cmp(&right.sorting_order)
-            .then_with(|| right.depth.total_cmp(&left.depth))
-    });
-    sprites.into_iter().map(|sprite| sprite.primitive).collect()
+    sprites
 }
 
 fn project_line(
@@ -70,7 +71,7 @@ fn project_line(
     line: &Line2D,
     camera: FrameCamera,
     viewport: [u32; 2],
-) -> Vec<ProjectedSprite> {
+) -> Vec<WorldPrimitive> {
     if line.points.len() < 2 || line.width <= 0.0 || line.color[3] <= 0.0 {
         return Vec::new();
     }
@@ -116,7 +117,9 @@ fn project_line(
             if !length.is_finite() || !width.is_finite() || length <= 0.0 {
                 return None;
             }
-            Some(ProjectedSprite {
+            Some(WorldPrimitive {
+                kind: WorldPrimitiveKind::TwoD,
+                sorting_layer: line.sorting_layer.clone(),
                 sorting_order: line.sorting_order,
                 depth: (start_screen[2] + end_screen[2]) * 0.5,
                 primitive: UiPrimitive {
@@ -173,7 +176,7 @@ fn project_sprite(
     sprite: &SpriteRenderer,
     camera: FrameCamera,
     viewport: [u32; 2],
-) -> Option<ProjectedSprite> {
+) -> Option<WorldPrimitive> {
     if sprite.color[3] <= 0.0 {
         return None;
     }
@@ -212,7 +215,9 @@ fn project_sprite(
     {
         return None;
     }
-    Some(ProjectedSprite {
+    Some(WorldPrimitive {
+        kind: WorldPrimitiveKind::TwoD,
+        sorting_layer: sprite.sorting_layer.clone(),
         sorting_order: sprite.sorting_order,
         depth: center[2],
         primitive: UiPrimitive {
@@ -291,6 +296,7 @@ mod tests {
             pivot: [0.25, 0.75],
             flip_x: true,
             flip_y: false,
+            sorting_layer: "default".into(),
             sorting_order: 4,
         };
         let projected = project_sprite(&transform, &sprite, camera(), [200, 100]).unwrap();
@@ -390,6 +396,7 @@ mod tests {
             width: 0.2,
             color: [0.2, 0.8, 1.0, 0.75],
             closed: true,
+            sorting_layer: "default".into(),
             sorting_order: 3,
         };
         let segments = project_line(&Transform::default(), &line, camera(), [200, 100]);
