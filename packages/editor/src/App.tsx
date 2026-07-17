@@ -685,6 +685,10 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
               }}
               onBeginGesture={() => store.beginTransformGesture()}
               onEndGesture={() => store.endTransformGesture()}
+              onLinePointChange={(entity, points) => {
+                store.patchComponent(entity, 'Line2D', { points });
+                refresh();
+              }}
               onDuplicateRectDrag={() => {
                 const duplicated = store.duplicateSelection();
                 if (duplicated != null) log('Duplicate (Alt Drag)');

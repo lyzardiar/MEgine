@@ -114,6 +114,14 @@ import { nextUiSelectable, uiNavigationAction } from '../ui/uiNavigation';
 import { getSpriteImage } from '../spriteDraw';
 import { resolveAnimatedSpriteFrame } from '../animatedSprite';
 import { compareWorldDrawOrder, entity2DSortingOrder } from '../worldDrawOrder';
+import {
+  hitTestLinePoint,
+  linePointDeltaFromWorld,
+  linePointWorld,
+  moveLine2DPoint,
+  readLine2DPoints,
+  type LinePointHit,
+} from '../line2dEditing';
 
 const SCENE_2D_KEY = 'mengine.scene.2d';
 const SCENE_SNAP_KEY = 'mengine.scene.snap';
@@ -393,6 +401,10 @@ export function Viewport(props: {
   onSceneCamera: (partial: Partial<SceneCamera>) => void;
   onBeginGesture: () => void;
   onEndGesture: () => void;
+  onLinePointChange?: (
+    entity: number,
+    points: Array<[number, number]>,
+  ) => void;
   onDuplicateRectDrag?: () => number | null;
   onTranslate: (entity: number, delta: Vec3) => void;
   onGizmoScale: (
@@ -452,6 +464,7 @@ export function Viewport(props: {
   const hitsRef = useRef<Hit[]>([]);
   const gizmoHitsRef = useRef<GizmoHit[]>([]);
   const rectGizmoHitsRef = useRef<RectGizmoHit[]>([]);
+  const linePointHitsRef = useRef<LinePointHit[]>([]);
   const uiItemsRef = useRef<UiDrawItem[]>([]);
   const uiLayoutScaleRef = useRef(1);
   const usingRectGizmoRef = useRef(false);
@@ -502,6 +515,13 @@ export function Viewport(props: {
     | null
     | { type: 'orbit'; lx: number; ly: number }
     | { type: 'pan'; lx: number; ly: number }
+    | {
+        type: 'linePoint';
+        lx: number;
+        ly: number;
+        entity: number;
+        index: number;
+      }
     | {
         type: 'uiRange';
         lx: number;
@@ -653,6 +673,7 @@ export function Viewport(props: {
 
     const isGame = p.tab === 'game';
     hitsRef.current = [];
+    linePointHitsRef.current = [];
 
     // Scene 2D：锁定正视 Canvas（yaw/pitch = 0，从 +Z 看 XY 平面）
     if (!isGame && scene2DRef.current) {
@@ -1097,6 +1118,43 @@ export function Viewport(props: {
       gizmoHitsRef.current = [];
     }
 
+    // Unity-style LineRenderer point handles: visible and directly draggable in Scene.
+    if (!isGame && !p.playing && p.selected != null) {
+      const selectedLine = p.entities.find((entity) => entity.entity === p.selected);
+      const transform = selectedLine?.components.Transform as TransformData | undefined;
+      const line = selectedLine?.components.Line2D as { points?: unknown } | undefined;
+      if (selectedLine && transform && line) {
+        const points = readLine2DPoints(line.points);
+        ctx.save();
+        for (let index = 0; index < points.length; index++) {
+          const world = linePointWorld(
+            points[index],
+            transform.position as Vec3,
+            transform.scale as Vec3,
+            transform.rotation as [number, number, number, number],
+          );
+          const screen = project(world, cam, vp);
+          if (!screen) continue;
+          const handle = {
+            entity: selectedLine.entity,
+            index,
+            x: screen.x,
+            y: screen.y,
+          };
+          linePointHitsRef.current.push(handle);
+          const active = dragRef.current?.type === 'linePoint'
+            && dragRef.current.entity === handle.entity
+            && dragRef.current.index === handle.index;
+          ctx.fillStyle = active ? '#ffd866' : '#f2f2f2';
+          ctx.strokeStyle = '#202020';
+          ctx.lineWidth = 1;
+          ctx.fillRect(screen.x - 4, screen.y - 4, 8, 8);
+          ctx.strokeRect(screen.x - 4.5, screen.y - 4.5, 9, 9);
+        }
+        ctx.restore();
+      }
+    }
+
     // UI Canvas — Game: screen overlay; Scene: world XY plane (zoomable)
     {
       if (isGame) {
@@ -1369,6 +1427,20 @@ export function Viewport(props: {
         return;
       }
       if (ev.button === 0) {
+        const linePoint = hitTestLinePoint(linePointHitsRef.current, x, y);
+        if (linePoint && propsRef.current.onLinePointChange) {
+          draggingRef.current = true;
+          dragRef.current = {
+            type: 'linePoint',
+            lx: ev.clientX,
+            ly: ev.clientY,
+            entity: linePoint.entity,
+            index: linePoint.index,
+          };
+          propsRef.current.onBeginGesture();
+          ev.preventDefault();
+          return;
+        }
         const hit = hitTest(x, y);
         if (hit?.kind === 'gizmo' && propsRef.current.selected != null) {
           const ent = propsRef.current.entities.find(
@@ -1595,17 +1667,23 @@ export function Viewport(props: {
               ? 'pointer'
               : 'default';
         } else if (propsRef.current.tab === 'scene' && !propsRef.current.playing) {
-          const next = usingRectGizmoRef.current
-            ? hitTestRectGizmo(rectGizmoHitsRef.current, x, y)
-            : hitTestTransformGizmo(gizmoHitsRef.current, x, y);
-          if (!gizmoPartEquals(hoverGizmoRef.current, next)) {
-            hoverGizmoRef.current = next;
-            canvas.style.cursor = usingRectGizmoRef.current
-              ? cursorForRectGizmo(next, propsRef.current.gizmo)
-              : cursorForGizmoPart(next);
-          } else if (!next) {
-            const ui = hitTestUiSelect(uiItemsRef.current, x, y);
-            canvas.style.cursor = ui ? 'pointer' : 'default';
+          const linePoint = hitTestLinePoint(linePointHitsRef.current, x, y);
+          if (linePoint) {
+            hoverGizmoRef.current = null;
+            canvas.style.cursor = 'move';
+          } else {
+            const next = usingRectGizmoRef.current
+              ? hitTestRectGizmo(rectGizmoHitsRef.current, x, y)
+              : hitTestTransformGizmo(gizmoHitsRef.current, x, y);
+            if (!gizmoPartEquals(hoverGizmoRef.current, next)) {
+              hoverGizmoRef.current = next;
+              canvas.style.cursor = usingRectGizmoRef.current
+                ? cursorForRectGizmo(next, propsRef.current.gizmo)
+                : cursorForGizmoPart(next);
+            } else if (!next) {
+              const ui = hitTestUiSelect(uiItemsRef.current, x, y);
+              canvas.style.cursor = ui ? 'pointer' : 'default';
+            }
           }
         }
       }
@@ -1672,6 +1750,42 @@ export function Viewport(props: {
           add(vscale(right, -dx * sens), vscale(up, dy * sens)),
         );
         syncCamToStore();
+      } else if (d.type === 'linePoint') {
+        const entity = propsRef.current.entities.find((candidate) => candidate.entity === d.entity);
+        const transform = entity?.components.Transform as TransformData | undefined;
+        const line = entity?.components.Line2D as { points?: unknown } | undefined;
+        const points = readLine2DPoints(line?.points);
+        const point = points[d.index];
+        if (!transform || !point) return;
+        const eye = orbitEye(
+          liveCam.current.pivot,
+          liveCam.current.yaw,
+          liveCam.current.pitch,
+          liveCam.current.distance,
+        );
+        const cam: Camera = { eye, target: liveCam.current.pivot, fovYDeg: 60 };
+        const rotation = transform.rotation as [number, number, number, number];
+        const world = linePointWorld(
+          point,
+          transform.position as Vec3,
+          transform.scale as Vec3,
+          rotation,
+        );
+        const worldDelta = worldDeltaViewPlane(
+          world,
+          { dx, dy },
+          cam,
+          lastVpRef.current,
+        );
+        const localDelta = linePointDeltaFromWorld(
+          worldDelta,
+          transform.scale as Vec3,
+          rotation,
+        );
+        propsRef.current.onLinePointChange?.(
+          d.entity,
+          moveLine2DPoint(points, d.index, localDelta),
+        );
       } else if (d.type === 'rectGizmo') {
         const mode = propsRef.current.gizmo;
         const scale = d.layoutScale > 1e-6 ? d.layoutScale : 1;
@@ -2042,7 +2156,11 @@ export function Viewport(props: {
       if (dragRef.current?.type === 'orbit' || dragRef.current?.type === 'pan') {
         syncCamToStore();
       }
-      if (dragRef.current?.type === 'gizmo' || dragRef.current?.type === 'rectGizmo') {
+      if (
+        dragRef.current?.type === 'gizmo'
+        || dragRef.current?.type === 'rectGizmo'
+        || dragRef.current?.type === 'linePoint'
+      ) {
         propsRef.current.onEndGesture();
       }
       if (dragRef.current?.type === 'uiRange') {
