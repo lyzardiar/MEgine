@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import type { WorldSnapshotView } from '@mengine/api';
+import { getCurrentWindow } from '@tauri-apps/api/window';
 import {
   createEditorStore,
   type EditorMode,
@@ -34,6 +35,7 @@ import { EditorWindowHost } from './editorWindow';
 import { resolveUnityAction } from './panels/uiFieldEditors';
 import { refreshSprites } from './spriteLibrary';
 import { combineMarqueeSelection } from './marqueeSelection';
+import { isDesktopEditor } from './transport/editorTransport';
 import './editorWindow'; // MenuItem side-effects
 
 function isTypingTarget(el: EventTarget | null) {
@@ -75,6 +77,7 @@ type WorkspaceSyncMessage =
       sceneJson: string;
       selectedIds: number[];
       logs: string[];
+      dirty: boolean;
     };
 
 const WORKSPACE_CHANNEL = 'mengine.editor.workspace.v1';
@@ -92,6 +95,7 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
   const [treeTick, setTreeTick] = useState(0);
   const [sceneTick, setSceneTick] = useState(0);
   const [sceneName, setSceneName] = useState<string | null>(null);
+  const [sceneDirty, setSceneDirty] = useState(false);
   const [logs, setLogs] = useState<string[]>([
     'MEngine Editor',
     '场景落盘：packages/editor/project/Assets/Scenes/*.mscene',
@@ -103,6 +107,10 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
   const logsRef = useRef(logs);
   const booted = useRef(false);
   const sceneNameRef = useRef<string | null>(null);
+  const sceneDirtyRef = useRef(false);
+  const savedSceneFingerprint = useRef(store.sceneContentFingerprint());
+  const remoteSceneFingerprint = useRef(savedSceneFingerprint.current);
+  const remoteSceneDirty = useRef(false);
   const syncSender = useRef(crypto.randomUUID());
   const syncChannel = useRef<BroadcastChannel | null>(null);
   const syncTimer = useRef<number | null>(null);
@@ -125,6 +133,7 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
         sceneJson: store.saveSessionSceneJson(sceneNameRef.current ?? 'Untitled'),
         selectedIds: store.selectedIds,
         logs: logsRef.current,
+        dirty: sceneDirtyRef.current,
       } satisfies WorkspaceSyncMessage);
     };
     if (immediate) {
@@ -133,6 +142,16 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
       return;
     }
     if (syncTimer.current == null) syncTimer.current = window.setTimeout(send, 33);
+  };
+
+  const updateSceneDirty = () => {
+    if (store.mode !== 'edit') return;
+    const current = store.sceneContentFingerprint();
+    const next = props.detachedPanel
+      ? (current === remoteSceneFingerprint.current ? remoteSceneDirty.current : true)
+      : current !== savedSceneFingerprint.current;
+    sceneDirtyRef.current = next;
+    setSceneDirty(next);
   };
 
   const refresh = (publish = true) => {
@@ -144,6 +163,7 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
     setGameAspect(store.gameAspect);
     setGameOrientation(store.gameOrientation);
     setTreeTick((t) => t + 1);
+    updateSceneDirty();
     if (publish) broadcastScene();
   };
 
@@ -176,6 +196,18 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
         lastRemoteTimestamp.current = message.timestamp;
         store.loadRemoteSceneJson(message.sceneJson, message.mode);
         store.selectMany(message.selectedIds, 'replace');
+        const remoteFingerprint = store.sceneContentFingerprint();
+        if (props.detachedPanel) {
+          remoteSceneFingerprint.current = remoteFingerprint;
+          remoteSceneDirty.current = message.dirty === true;
+          sceneDirtyRef.current = remoteSceneDirty.current;
+          setSceneDirty(remoteSceneDirty.current);
+        } else {
+          if (message.dirty === false) savedSceneFingerprint.current = remoteFingerprint;
+          const dirty = remoteFingerprint !== savedSceneFingerprint.current;
+          sceneDirtyRef.current = dirty;
+          setSceneDirty(dirty);
+        }
         setSceneName(message.sceneName);
         setSnap(store.snapshot());
         setMode(store.mode);
@@ -213,14 +245,29 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
     };
   }, [props.detachedPanel, store]);
 
+  const confirmDiscardSceneChanges = (action: string) => (
+    !sceneDirtyRef.current
+    || window.confirm(`当前场景有未保存的修改。${action}将丢失这些修改，是否继续？`)
+  );
+
   const openSceneByName = async (name: string, silent = false) => {
     const json = readSceneJson(name);
     if (!json) {
       if (!silent) log(`Scene not found: ${name}`, 'warn');
       return false;
     }
+    if (!silent && !confirmDiscardSceneChanges(`打开 ${sceneFileName(name)}`)) return false;
     try {
       store.loadSceneJson(json);
+      const openedFingerprint = store.sceneContentFingerprint();
+      savedSceneFingerprint.current = openedFingerprint;
+      if (props.detachedPanel) {
+        remoteSceneFingerprint.current = openedFingerprint;
+        remoteSceneDirty.current = false;
+      }
+      sceneDirtyRef.current = false;
+      setSceneDirty(false);
+      sceneNameRef.current = name;
       setSceneName(name);
       await setActiveSceneName(name);
       if (!silent) log(`Opened ${sceneFileName(name)}`);
@@ -235,7 +282,16 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
 
   const persistScene = async (name: string) => {
     try {
-      await writeScene(name, store.saveSceneJson(name));
+      const json = store.saveSceneJson(name);
+      const savedFingerprint = store.sceneContentFingerprint();
+      await writeScene(name, json);
+      savedSceneFingerprint.current = savedFingerprint;
+      if (props.detachedPanel) {
+        remoteSceneFingerprint.current = savedFingerprint;
+        remoteSceneDirty.current = false;
+      }
+      updateSceneDirty();
+      sceneNameRef.current = name;
       setSceneName(name);
       bumpScenes();
       const where = isDiskBackend()
@@ -272,9 +328,48 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
     const name = askSceneName('新建场景 — 请输入名称', 'NewScene');
     if (!name) return;
     if (sceneExists(name) && !window.confirm(`场景「${name}」已存在，要覆盖吗？`)) return;
+    if (!confirmDiscardSceneChanges('新建场景')) return;
     store.newScene();
     void persistScene(name).then(() => refresh());
   };
+
+  useEffect(() => {
+    const title = `${sceneDirty ? '* ' : ''}${sceneName ? sceneFileName(sceneName) : 'Untitled'} — MEngine Editor`;
+    document.title = props.detachedPanel ? `${props.detachedPanel} — ${title}` : title;
+  }, [props.detachedPanel, sceneDirty, sceneName]);
+
+  useEffect(() => {
+    if (props.detachedPanel) return;
+    if (!isDesktopEditor()) {
+      const onBeforeUnload = (event: BeforeUnloadEvent) => {
+        if (!sceneDirtyRef.current) return;
+        event.preventDefault();
+        event.returnValue = '';
+      };
+      window.addEventListener('beforeunload', onBeforeUnload);
+      return () => window.removeEventListener('beforeunload', onBeforeUnload);
+    }
+
+    let disposed = false;
+    let unlisten: (() => void) | undefined;
+    void getCurrentWindow().onCloseRequested((event) => {
+      if (
+        sceneDirtyRef.current
+        && !window.confirm('当前场景有未保存的修改。关闭编辑器将丢失这些修改，是否继续？')
+      ) {
+        event.preventDefault();
+      }
+    }).then((stop) => {
+      if (disposed) stop();
+      else unlisten = stop;
+    }).catch((error) => {
+      console.error('Failed to register the editor close guard', error);
+    });
+    return () => {
+      disposed = true;
+      unlisten?.();
+    };
+  }, [props.detachedPanel]);
 
   const openSceneDialog = () => {
     const scenes = listScenes();
@@ -796,7 +891,10 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
                   return false;
                 }
                 if (next !== oldName) {
-                  if (sceneNameRef.current === oldName) setSceneName(next);
+                  if (sceneNameRef.current === oldName) {
+                    sceneNameRef.current = next;
+                    setSceneName(next);
+                  }
                   bumpScenes();
                   log(`Renamed ${sceneFileName(oldName)} → ${sceneFileName(next)}`);
                 }
@@ -817,7 +915,7 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
             <span className="on">Paused</span>
           )}
           {' · '}
-          {sceneName ? sceneFileName(sceneName) : '未命名场景'}
+          {sceneDirty ? '* ' : ''}{sceneName ? sceneFileName(sceneName) : '未命名场景'}
           {' · '}
           {snap.entities.length} objects
           {' · '}

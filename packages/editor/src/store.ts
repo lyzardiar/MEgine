@@ -45,6 +45,7 @@ import {
   restoreEditorUndoState,
   type EditorUndoState,
 } from './editorUndo';
+import { sceneContentFingerprint } from './sceneFingerprint';
 import './behaviours';
 
 export type EditorMode = 'edit' | 'play' | 'pause';
@@ -596,6 +597,9 @@ export function createEditorStore() {
         selected: primarySelected(),
         selectedIds: [...selectedIds],
       };
+    },
+    sceneContentFingerprint() {
+      return sceneContentFingerprint(editEntities, clearColor);
     },
     getVisibleFlat,
     activeInHierarchy,
