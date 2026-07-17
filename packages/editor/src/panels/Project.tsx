@@ -54,6 +54,7 @@ export function Project(props: {
   onOpenScene: (name: string) => void;
   onOpenMaterial: (path: string) => void;
   onOpenAnimator: (path: string) => void;
+  onOpenSprite: (path: string) => void;
   onRenameScene: (oldName: string, newName: string) => boolean | Promise<boolean>;
   onLog?: (msg: string, level?: 'info' | 'warn' | 'error') => void;
 }) {
@@ -239,6 +240,10 @@ export function Project(props: {
     }
     if (a.kind === 'script') {
       openScript(a);
+      return;
+    }
+    if (a.kind === 'sprite' && a.spriteId) {
+      props.onOpenSprite(a.spriteId);
       return;
     }
     if (a.kind === 'material' && a.spriteId) {

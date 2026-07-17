@@ -40,6 +40,11 @@ import {
   openMaterialAsset,
 } from './panels/Material';
 import { Viewport } from './panels/Viewport';
+import {
+  OPEN_SPRITE_EDITOR_EVENT,
+  SpriteEditor,
+  openSpriteAsset,
+} from './panels/SpriteEditor';
 import { DockWorkspace, type PanelKind } from './panels/DockWorkspace';
 import { EditorWindowHost } from './editorWindow';
 import { resolveUnityAction } from './panels/uiFieldEditors';
@@ -114,6 +119,8 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
   const [materialDirty, setMaterialDirty] = useState(false);
   const [animatorPath, setAnimatorPath] = useState<string | null>(null);
   const [animatorDirty, setAnimatorDirty] = useState(false);
+  const [spritePath, setSpritePath] = useState<string | null>(null);
+  const [spriteDirty, setSpriteDirty] = useState(false);
   const [animationDirty, setAnimationDirty] = useState(false);
   const [projectSettingsDirty, setProjectSettingsDirty] = useState(false);
   const [sceneDirty, setSceneDirty] = useState(false);
@@ -121,10 +128,11 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
     const dirty = new Set<PanelKind>();
     if (materialDirty) dirty.add('material');
     if (animatorDirty) dirty.add('animator');
+    if (spriteDirty) dirty.add('spriteEditor');
     if (animationDirty) dirty.add('timeline');
     if (projectSettingsDirty) dirty.add('projectSettings');
     return dirty;
-  }, [animationDirty, animatorDirty, materialDirty, projectSettingsDirty]);
+  }, [animationDirty, animatorDirty, materialDirty, projectSettingsDirty, spriteDirty]);
   const [logs, setLogs] = useState<string[]>([
     'MEngine Editor',
     '场景落盘：packages/editor/project/Assets/Scenes/*.mscene',
@@ -151,15 +159,15 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
   useEffect(() => {
     const onBeforeUnload = (event: BeforeUnloadEvent) => {
       const dirty = props.detachedPanel
-        ? materialDirty || animationDirty || animatorDirty
-        : sceneDirty || materialDirty || animationDirty || animatorDirty;
+        ? materialDirty || animationDirty || animatorDirty || spriteDirty
+        : sceneDirty || materialDirty || animationDirty || animatorDirty || spriteDirty;
       if (!dirty) return;
       event.preventDefault();
       event.returnValue = '';
     };
     window.addEventListener('beforeunload', onBeforeUnload);
     return () => window.removeEventListener('beforeunload', onBeforeUnload);
-  }, [animationDirty, animatorDirty, materialDirty, props.detachedPanel, sceneDirty]);
+  }, [animationDirty, animatorDirty, materialDirty, props.detachedPanel, sceneDirty, spriteDirty]);
 
   const broadcastScene = (immediate = false) => {
     const channel = syncChannel.current;
@@ -220,16 +228,25 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
       const path = (event as CustomEvent<string>).detail;
       if (typeof path === 'string' && path) setAnimatorPath(path);
     };
+    const openSprite = (event: Event) => {
+      const path = (event as CustomEvent<string>).detail;
+      if (typeof path !== 'string' || !path) return;
+      if (spriteDirty && path !== spritePath
+        && !window.confirm('Sprite import settings have unsaved changes. Discard them and open another texture?')) return;
+      setSpritePath(path);
+    };
     const assetsChanged = () => bumpScenes();
     window.addEventListener(OPEN_MATERIAL_EVENT, openMaterial);
     window.addEventListener(OPEN_ANIMATOR_EVENT, openAnimator);
+    window.addEventListener(OPEN_SPRITE_EDITOR_EVENT, openSprite);
     window.addEventListener(PROJECT_ASSETS_CHANGED_EVENT, assetsChanged);
     return () => {
       window.removeEventListener(OPEN_MATERIAL_EVENT, openMaterial);
       window.removeEventListener(OPEN_ANIMATOR_EVENT, openAnimator);
+      window.removeEventListener(OPEN_SPRITE_EDITOR_EVENT, openSprite);
       window.removeEventListener(PROJECT_ASSETS_CHANGED_EVENT, assetsChanged);
     };
-  }, []);
+  }, [spriteDirty, spritePath]);
 
   const log = (msg: string, level: 'info' | 'warn' | 'error' = 'info') => {
     const prefix = level === 'info' ? '' : level === 'warn' ? '[Warn] ' : '[Error] ';
@@ -1027,6 +1044,7 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
               }}
               onOpenMaterial={(path) => openMaterialAsset(path)}
               onOpenAnimator={(path) => openAnimatorAsset(path)}
+              onOpenSprite={(path) => openSpriteAsset(path)}
               onRenameScene={async (oldName, newName) => {
                 const next = await renameScene(oldName, newName);
                 if (next == null) {
@@ -1126,12 +1144,20 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
               onLog={log}
             />
           ),
+          spriteEditor: (
+            <SpriteEditor
+              assetPath={spritePath}
+              onAssetsChanged={bumpScenes}
+              onDirtyChange={setSpriteDirty}
+              onLog={log}
+            />
+          ),
           build: (
             <BuildSettings
               sceneName={sceneName}
               sceneTick={sceneTick}
               sceneDirty={sceneDirty}
-              resourceDirty={materialDirty || animationDirty || animatorDirty}
+              resourceDirty={materialDirty || animationDirty || animatorDirty || spriteDirty}
               onSaveScene={saveSceneForBuild}
               onLog={log}
             />

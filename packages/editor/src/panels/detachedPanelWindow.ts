@@ -12,6 +12,7 @@ export const CORE_PANEL_IDS = [
   'timeline',
   'animator',
   'material',
+  'spriteEditor',
   'build',
   'projectSettings',
 ] as const;
@@ -28,6 +29,7 @@ const PANEL_TITLES: Record<CorePanelId, string> = {
   timeline: 'Timeline',
   animator: 'Animator',
   material: 'Material',
+  spriteEditor: 'Sprite Editor',
   build: 'Build Settings',
   projectSettings: 'Project Settings',
 };
