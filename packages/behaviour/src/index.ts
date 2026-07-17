@@ -83,6 +83,7 @@ export type {
   Color4,
   TransformData,
   Camera3DData,
+  Camera2DData,
   BuiltinComponents,
   BuiltinComponentName,
   ComponentType,

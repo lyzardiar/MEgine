@@ -1495,6 +1495,17 @@ export function createEditorStore() {
         true,
       );
     },
+    spawnCamera2D() {
+      spawnAt(
+        'Camera 2D',
+        {
+          Transform: { position: [0, 0, 10], rotation: [0, 0, 0, 1], scale: [1, 1, 1] },
+          Camera2D: { size: 5, primary: true },
+        },
+        null,
+        true,
+      );
+    },
     spawnDirectionalLight() {
       spawnAt(
         'Directional Light',

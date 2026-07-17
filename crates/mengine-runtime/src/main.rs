@@ -5,8 +5,8 @@ use clap::Parser;
 use glam::{Quat, Vec3, Vec4};
 use mengine_core::command::WorldCommand;
 use mengine_core::generated::{
-    Camera3D, DirectionalLight, Dropdown, InputField, ListView, MeshRenderer, PbrMaterial,
-    PointLight, ScrollView, Scrollbar, Slider, SpotLight, TabView, Toggle, Transform,
+    Camera2D, Camera3D, DirectionalLight, Dropdown, InputField, ListView, MeshRenderer,
+    PbrMaterial, PointLight, ScrollView, Scrollbar, Slider, SpotLight, TabView, Toggle, Transform,
 };
 use mengine_core::{Entity, World};
 use mengine_platform::InputState;
@@ -894,6 +894,16 @@ fn find_camera(world: &World, viewport_aspect: f32) -> FrameCamera {
     for e in world.iter_entities() {
         if let (Some(t), Some(c)) = (
             world.get_component::<Transform>(e),
+            world.get_component::<Camera2D>(e),
+        ) {
+            if c.primary {
+                return camera2d_from_components(t, c, viewport_aspect);
+            }
+        }
+    }
+    for e in world.iter_entities() {
+        if let (Some(t), Some(c)) = (
+            world.get_component::<Transform>(e),
             world.get_component::<Camera3D>(e),
         ) {
             if c.primary {
@@ -905,6 +915,18 @@ fn find_camera(world: &World, viewport_aspect: f32) -> FrameCamera {
     FrameCamera {
         view: look_at(position, Vec3::ZERO, Vec3::Y),
         proj: perspective(60.0, viewport_aspect.max(0.001), 0.1, 100.0),
+        position,
+    }
+}
+
+fn camera2d_from_components(t: &Transform, c: &Camera2D, viewport_aspect: f32) -> FrameCamera {
+    let position = Vec3::from(t.position);
+    let rotation = safe_rotation(t.rotation);
+    let forward = rotation * -Vec3::Z;
+    let up = rotation * Vec3::Y;
+    FrameCamera {
+        view: look_at(position, position + forward, up),
+        proj: orthographic(c.size.max(0.001), viewport_aspect.max(0.001), 0.01, 1000.0),
         position,
     }
 }
@@ -1088,6 +1110,31 @@ mod tests {
         assert!((view_forward.z + 1.0).abs() < 0.0001);
         assert!((frame.proj.x_axis.x - (1.0 / 6.0)).abs() < 0.0001);
         assert_eq!(frame.position, Vec3::new(1.0, 2.0, 3.0));
+    }
+
+    #[test]
+    fn primary_2d_camera_wins_and_uses_orthographic_size() {
+        let mut world = World::new();
+        world.commands.push(WorldCommand::Spawn {
+            name: Some("Main Camera".into()),
+            components: json!({
+                "Transform": { "position": [0, 0, 4], "rotation": [0, 0, 0, 1], "scale": [1, 1, 1] },
+                "Camera3D": { "primary": true, "projection": "perspective" }
+            }),
+        });
+        world.commands.push(WorldCommand::Spawn {
+            name: Some("Camera 2D".into()),
+            components: json!({
+                "Transform": { "position": [2, 3, 10], "rotation": [0, 0, 0, 1], "scale": [1, 1, 1] },
+                "Camera2D": { "size": 4, "primary": true }
+            }),
+        });
+        world.commit();
+
+        let frame = find_camera(&world, 2.0);
+        assert_eq!(frame.position, Vec3::new(2.0, 3.0, 10.0));
+        assert!((frame.proj.x_axis.x - 0.125).abs() < 0.0001);
+        assert!((frame.proj.y_axis.y - 0.25).abs() < 0.0001);
     }
 
     #[test]

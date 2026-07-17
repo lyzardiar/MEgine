@@ -10,10 +10,10 @@ import {
   scale,
   sub,
   dot,
-} from './math3d';
+} from './math3d.ts';
 
-export type { Camera3DData, Transform as TransformLike } from '@mengine/behaviour';
-import type { Camera3DData, Transform as TransformLike } from '@mengine/behaviour';
+export type { Camera2DData, Camera3DData, Transform as TransformLike } from '@mengine/behaviour';
+import type { Camera2DData, Camera3DData, Transform as TransformLike } from '@mengine/behaviour';
 
 /** Local basis: forward = -Z (camera looks / light shines). */
 export function transformBasis(rotation?: Quat | null): {
@@ -228,6 +228,55 @@ export function drawCameraGizmo(
   ctx.fillText(`n ${near.toFixed(2)}  f ${far.toFixed(1)}`, pr.x - 10, pr.y + 24);
   ctx.restore();
 
+  return { x: pr.x, y: pr.y, r: 22 };
+}
+
+export function drawCamera2DGizmo(
+  ctx: CanvasRenderingContext2D,
+  viewCam: Camera,
+  vp: Vp,
+  transform: TransformLike,
+  camData: Camera2DData,
+  gameAspect: number,
+  selected: boolean,
+): { x: number; y: number; r: number } | null {
+  const origin: Vec3 = [
+    Number(transform.position[0]) || 0,
+    Number(transform.position[1]) || 0,
+    Number(transform.position[2]) || 0,
+  ];
+  const basis = transformBasis(transform.rotation);
+  const halfHeight = Math.max(0.001, Number(camData.size) || 5);
+  const halfWidth = halfHeight * Math.max(0.05, gameAspect || 16 / 9);
+  const center = add(origin, scale(basis.forward, 0.15));
+  const corners = [
+    add(add(center, scale(basis.right, -halfWidth)), scale(basis.up, -halfHeight)),
+    add(add(center, scale(basis.right, +halfWidth)), scale(basis.up, -halfHeight)),
+    add(add(center, scale(basis.right, +halfWidth)), scale(basis.up, +halfHeight)),
+    add(add(center, scale(basis.right, -halfWidth)), scale(basis.up, +halfHeight)),
+  ];
+  const color = selected ? '#ffcc66' : '#70d8ff';
+  const width = selected ? 2.2 : 1.6;
+  for (let i = 0; i < corners.length; i++) {
+    strokeWorldSeg(ctx, viewCam, vp, corners[i], corners[(i + 1) % corners.length], color, width);
+  }
+  strokeWorldSeg(ctx, viewCam, vp, center, add(center, scale(basis.right, halfWidth * 0.12)), color, 1);
+  strokeWorldSeg(ctx, viewCam, vp, center, add(center, scale(basis.up, halfHeight * 0.12)), color, 1);
+
+  const pr = projectPoint(origin, viewCam, vp);
+  if (!pr) return null;
+  ctx.save();
+  ctx.fillStyle = 'rgba(30, 40, 55, 0.88)';
+  ctx.strokeStyle = color;
+  ctx.lineWidth = width;
+  ctx.fillRect(pr.x - 12, pr.y - 9, 24, 18);
+  ctx.strokeRect(pr.x - 12, pr.y - 9, 24, 18);
+  ctx.fillStyle = color;
+  ctx.font = 'bold 10px sans-serif';
+  ctx.fillText('2D', pr.x - 7, pr.y + 4);
+  ctx.font = '10px sans-serif';
+  ctx.fillText(`Size ${halfHeight.toFixed(1)}`, pr.x - 12, pr.y + 25);
+  ctx.restore();
   return { x: pr.x, y: pr.y, r: 22 };
 }
 

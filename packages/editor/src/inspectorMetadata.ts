@@ -82,6 +82,9 @@ export const BUILTIN_INSPECTOR_FIELDS: Readonly<
     far: { min: 0.002, step: 1 },
     aspect: { min: 0.01, step: 0.01 },
   },
+  Camera2D: {
+    size: { label: 'Orthographic Size', min: 0.001, step: 0.1 },
+  },
   DirectionalLight: { intensity: { min: 0, step: 0.1 } },
   PointLight: {
     intensity: { min: 0, step: 0.1 },

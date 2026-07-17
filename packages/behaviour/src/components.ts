@@ -38,6 +38,14 @@ export class Camera3D {
 
 export type Camera3DData = Camera3D;
 
+export class Camera2D {
+  static readonly typeName = 'Camera2D' as const;
+  size!: number;
+  primary!: boolean;
+}
+
+export type Camera2DData = Camera2D;
+
 export class MeshRenderer {
   static readonly typeName = 'MeshRenderer' as const;
   mesh!: string;
@@ -113,6 +121,7 @@ export class UIButton {
 export type BuiltinComponents = {
   Transform: Transform;
   Camera3D: Camera3D;
+  Camera2D: Camera2D;
   MeshRenderer: MeshRenderer;
   DirectionalLight: DirectionalLight;
   Transform2D: Transform2D;

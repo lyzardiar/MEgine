@@ -55,6 +55,12 @@ const BUILTIN_CATALOG: ComponentCatalogEntry[] = [
     }),
   },
   {
+    type: 'Camera2D',
+    label: 'Camera 2D',
+    description: 'Orthographic camera for 2D world rendering',
+    create: () => ({ size: 5, primary: false }),
+  },
+  {
     type: 'PbrMaterial',
     label: 'PBR Material',
     description: 'Base color, metallic, roughness and emissive surface parameters',

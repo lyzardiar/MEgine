@@ -13,13 +13,16 @@ import {
   scale as vscale,
 } from '../math3d';
 import {
+  drawCamera2DGizmo,
   drawCameraGizmo,
   drawDirectionalLightGizmo,
   drawPointLightGizmo,
   drawSpotLightGizmo,
   transformBasis,
+  type Camera2DData,
   type Camera3DData,
 } from '../editorGizmos';
+import { primaryGameCamera } from '../gameCamera';
 import {
   angleAroundWorldAxis,
   cursorForGizmoPart,
@@ -365,26 +368,6 @@ function letterbox(
   return { x: 0, y: (panelH - h) / 2, w, h };
 }
 
-function primaryGameCamera(entities: Ent[], isActive?: (id: number) => boolean): Camera | null {
-  for (const e of entities) {
-    if (isActive && !isActive(e.entity)) continue;
-    const cam = e.components.Camera3D as Camera3DData | undefined;
-    const t = e.components.Transform as TransformData | undefined;
-    if (cam?.primary && t) {
-      const { forward } = transformBasis(t.rotation as [number, number, number, number]);
-      const eye = t.position as Vec3;
-      return {
-        eye,
-        target: add(eye, forward),
-        fovYDeg: cam.fov_y_degrees ?? 60,
-        projection: cam.projection?.toLowerCase() === 'orthographic' ? 'orthographic' : 'perspective',
-        orthographicSize: cam.orthographic_size ?? 5,
-      };
-    }
-  }
-  return null;
-}
-
 export function Viewport(props: {
   tab: 'scene' | 'game';
   clearColor: [number, number, number, number];
@@ -725,7 +708,7 @@ export function Viewport(props: {
         if (!t) return null;
         const pr = project(t.position as Vec3, cam, vp);
         // Keep cameras/lights even if origin is barely off-screen — frustum/rays may still show
-        const camComp = e.components.Camera3D;
+        const camComp = e.components.Camera3D ?? e.components.Camera2D;
         const isLight =
           !!e.components.DirectionalLight ||
           !!e.components.PointLight ||
@@ -744,6 +727,7 @@ export function Viewport(props: {
     for (const { e, t, pr } of drawn) {
       const mesh = e.components.MeshRenderer;
       const camComp = e.components.Camera3D as Camera3DData | undefined;
+      const cam2DComp = e.components.Camera2D as Camera2DData | undefined;
       const dirLight = e.components.DirectionalLight;
       const isLight =
         !!dirLight ||
@@ -752,7 +736,17 @@ export function Viewport(props: {
         (e.name ?? '').toLowerCase().includes('light');
       const selected = selSet.has(e.entity);
 
-      if (isGame && (camComp || (isLight && !mesh))) continue;
+      if (isGame && (camComp || cam2DComp || (isLight && !mesh))) continue;
+
+      if (cam2DComp && !isGame) {
+        try {
+          const hit = drawCamera2DGizmo(ctx, cam, vp, t, cam2DComp, vp.w / Math.max(1, vp.h), selected);
+          if (hit) hitsRef.current.push({ kind: 'object', id: e.entity, x: hit.x, y: hit.y, r: hit.r });
+        } catch (err) {
+          console.error('drawCamera2DGizmo', err);
+        }
+        continue;
+      }
 
       if (camComp && !isGame) {
         try {
