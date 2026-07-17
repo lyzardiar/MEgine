@@ -87,10 +87,16 @@ import {
   rectTranslationAlongAxis,
   screenRectTranslation,
 } from '../rectDrag';
+import {
+  rectBounds,
+  snapRectToGuides,
+  type RectSmartGuide,
+} from '../rectSmartGuides';
 
 const SCENE_2D_KEY = 'mengine.scene.2d';
 const SCENE_SNAP_KEY = 'mengine.scene.snap';
 const SCENE_GRID_KEY = 'mengine.scene.grid';
+const SCENE_SMART_GUIDES_KEY = 'mengine.scene.smart-guides';
 
 function loadScene2D(): boolean {
   try {
@@ -119,6 +125,14 @@ function saveSceneSnap(settings: SceneSnapSettings): void {
 function loadSceneGrid(): boolean {
   try {
     return localStorage.getItem(SCENE_GRID_KEY) !== '0';
+  } catch {
+    return true;
+  }
+}
+
+function loadSmartGuides(): boolean {
+  try {
+    return localStorage.getItem(SCENE_SMART_GUIDES_KEY) !== '0';
   } catch {
     return true;
   }
@@ -192,6 +206,43 @@ function rectAnchorPoints(
       y: parent.y + parent.h * anchorMax[1],
     },
   };
+}
+
+function inSelectedRectTree(
+  entityId: number,
+  roots: Set<number>,
+  byId: Map<number, Ent>,
+): boolean {
+  const visited = new Set<number>();
+  let current: number | null = entityId;
+  while (current != null && !visited.has(current)) {
+    if (roots.has(current)) return true;
+    visited.add(current);
+    current = byId.get(current)?.parent ?? null;
+  }
+  return false;
+}
+
+function drawSmartGuides(ctx: CanvasRenderingContext2D, guides: RectSmartGuide[]): void {
+  if (!guides.length) return;
+  ctx.save();
+  ctx.strokeStyle = '#e86de8';
+  ctx.lineWidth = 1;
+  ctx.setLineDash([5, 3]);
+  ctx.beginPath();
+  for (const guide of guides) {
+    if (guide.axis === 'x') {
+      const x = Math.round(guide.position) + 0.5;
+      ctx.moveTo(x, guide.from);
+      ctx.lineTo(x, guide.to);
+    } else {
+      const y = Math.round(guide.position) + 0.5;
+      ctx.moveTo(guide.from, y);
+      ctx.lineTo(guide.to, y);
+    }
+  }
+  ctx.stroke();
+  ctx.restore();
 }
 
 type RectSnapDrag = {
@@ -421,6 +472,11 @@ export function Viewport(props: {
         anchorMin: [number, number];
         anchorMax: [number, number];
         anchorParentSize: { w: number; h: number };
+        smartGuides?: {
+          startRect: { x: number; y: number; w: number; h: number };
+          candidates: Array<{ x: number; y: number; w: number; h: number }>;
+          applied: { x: number; y: number };
+        };
         lastAng?: number;
         snap: RectSnapDrag;
       }
@@ -434,6 +490,10 @@ export function Viewport(props: {
   const [sceneGrid, setSceneGrid] = useState(loadSceneGrid);
   const sceneGridRef = useRef(sceneGrid);
   sceneGridRef.current = sceneGrid;
+  const [smartGuidesEnabled, setSmartGuidesEnabled] = useState(loadSmartGuides);
+  const smartGuidesEnabledRef = useRef(smartGuidesEnabled);
+  smartGuidesEnabledRef.current = smartGuidesEnabled;
+  const smartGuidesRef = useRef<RectSmartGuide[]>([]);
   const [pivotEditing, setPivotEditing] = useState(false);
   const pivotEditingRef = useRef(pivotEditing);
   pivotEditingRef.current = pivotEditing;
@@ -965,6 +1025,10 @@ export function Viewport(props: {
       }
     }
 
+    if (!isGame && scene2DRef.current) {
+      drawSmartGuides(ctx, smartGuidesRef.current);
+    }
+
     if (isGame) {
       ctx.strokeStyle = '#000';
       ctx.lineWidth = 2;
@@ -1044,6 +1108,7 @@ export function Viewport(props: {
 
   const onPointerDown = (ev: React.MouseEvent) => {
     const { x, y } = localPos(ev);
+    smartGuidesRef.current = [];
     // Game 视图：只做运行时交互（如 Button），不可点选编辑物体
     if (propsRef.current.tab === 'game') {
       if (ev.button === 0) {
@@ -1118,6 +1183,36 @@ export function Viewport(props: {
               ? rectGizmoBounds(item, pivot, rt.pivot)
               : { x: pivot.x - 50, y: pivot.y - 50, w: 100, h: 100 };
             const anchorParent = item?.anchorParentRect ?? gizmoRect;
+            const selectedRoots = selectedRectRoots(
+              propsRef.current.entities,
+              propsRef.current.selectedIds
+                ?? (propsRef.current.selected == null ? [] : [propsRef.current.selected]),
+            );
+            const selectedRootSet = new Set(selectedRoots);
+            const entityById = new Map(
+              propsRef.current.entities.map((candidate) => [candidate.entity, candidate]),
+            );
+            const movingRect = rectBounds(
+              uiItemsRef.current
+                .filter((candidate) => selectedRootSet.has(candidate.entity))
+                .map((candidate) => candidate.rect),
+            );
+            const smartGuides = smartGuidesEnabledRef.current
+              && propsRef.current.gizmo === 'translate'
+              && hit.part.kind === 'center'
+              && movingRect
+              ? {
+                  startRect: movingRect,
+                  candidates: uiItemsRef.current
+                    .filter((candidate) => !inSelectedRectTree(
+                      candidate.entity,
+                      selectedRootSet,
+                      entityById,
+                    ))
+                    .map((candidate) => candidate.rect),
+                  applied: { x: 0, y: 0 },
+                }
+              : undefined;
             let lastAng: number | undefined;
             if (propsRef.current.gizmo === 'rotate') {
               lastAng = Math.atan2(y - pivot.y, x - pivot.x);
@@ -1149,6 +1244,7 @@ export function Viewport(props: {
               anchorMin: [...rt.anchor_min],
               anchorMax: [...rt.anchor_max],
               anchorParentSize: { w: anchorParent.w, h: anchorParent.h },
+              smartGuides,
               lastAng,
               snap: createRectSnapDrag(
                 snapSettingsRef.current.enabled || ev.ctrlKey || ev.metaKey,
@@ -1411,11 +1507,32 @@ export function Viewport(props: {
             propsRef.current.onRectTranslate?.(d.entity, delta.dx, delta.dy);
           } else {
             const delta = screenRectTranslation(dx, dy, scale);
-            propsRef.current.onRectTranslate?.(
-              d.entity,
-              snapped('x', delta.dx, d.snap.settings.move),
-              snapped('y', delta.dy, d.snap.settings.move),
-            );
+            if (d.smartGuides) {
+              snapped('x', delta.dx, d.snap.settings.move);
+              snapped('y', delta.dy, d.snap.settings.move);
+              const plan = snapRectToGuides(
+                d.smartGuides.startRect,
+                d.smartGuides.candidates,
+                {
+                  x: d.snap.x.applied * scale,
+                  y: d.snap.y.applied * scale,
+                },
+              );
+              propsRef.current.onRectTranslate?.(
+                d.entity,
+                (plan.offset.x - d.smartGuides.applied.x) / scale,
+                (plan.offset.y - d.smartGuides.applied.y) / scale,
+              );
+              d.smartGuides.applied = plan.offset;
+              smartGuidesRef.current = plan.guides;
+            } else {
+              smartGuidesRef.current = [];
+              propsRef.current.onRectTranslate?.(
+                d.entity,
+                snapped('x', delta.dx, d.snap.settings.move),
+                snapped('y', delta.dy, d.snap.settings.move),
+              );
+            }
           }
         } else if (mode === 'scale') {
           if (d.part.kind === 'axis' && (d.part.axis === 'x' || d.part.axis === 'y')) {
@@ -1602,6 +1719,7 @@ export function Viewport(props: {
       dragRef.current = null;
       draggingRef.current = false;
       activeGizmoRef.current = null;
+      smartGuidesRef.current = [];
     };
     window.addEventListener('mousemove', onMove);
     window.addEventListener('mouseup', onUp);
@@ -1714,6 +1832,18 @@ export function Viewport(props: {
     setSceneGrid(next);
     try {
       localStorage.setItem(SCENE_GRID_KEY, next ? '1' : '0');
+    } catch {
+      /* ignore unavailable storage */
+    }
+  };
+
+  const toggleSmartGuides = () => {
+    const next = !smartGuidesEnabledRef.current;
+    smartGuidesEnabledRef.current = next;
+    setSmartGuidesEnabled(next);
+    if (!next) smartGuidesRef.current = [];
+    try {
+      localStorage.setItem(SCENE_SMART_GUIDES_KEY, next ? '1' : '0');
     } catch {
       /* ignore unavailable storage */
     }
@@ -1886,6 +2016,17 @@ export function Viewport(props: {
             onClick={toggleSceneGrid}
           >
             Grid
+          </button>
+          <button
+            type="button"
+            className={`scene-grid-toggle${smartGuidesEnabled && scene2D ? ' active' : ''}`}
+            aria-label="Toggle smart alignment guides"
+            aria-pressed={smartGuidesEnabled && scene2D}
+            disabled={!scene2D}
+            title="Snap moved RectTransforms to Canvas and sibling edges or centers"
+            onClick={toggleSmartGuides}
+          >
+            Smart
           </button>
           <button
             type="button"
