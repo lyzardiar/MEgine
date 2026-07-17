@@ -248,6 +248,9 @@ function buildProject(values: string[]) {
   console.log(`Built ${manifest.project.name} → ${outputDir}`);
   console.log(`Player: ${join(outputDir, manifest.executable)}`);
   console.log(`Files: ${manifest.files.length} (SHA-256 manifest written)`);
+  console.log(
+    `Assets: ${manifest.assetValidation.validatedFiles} validated files, ${manifest.assetValidation.references} references`,
+  );
 }
 
 try {

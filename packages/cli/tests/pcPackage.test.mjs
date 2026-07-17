@@ -22,6 +22,9 @@ function fixture(name) {
   mkdirSync(join(project, 'Assets', 'Scenes'), { recursive: true });
   mkdirSync(join(project, 'Assets', 'Scripts'), { recursive: true });
   mkdirSync(join(project, 'Assets', 'Textures'), { recursive: true });
+  mkdirSync(join(project, 'Assets', 'Materials'), { recursive: true });
+  mkdirSync(join(project, 'Assets', 'Animations'), { recursive: true });
+  mkdirSync(join(project, 'Assets', 'Audio'), { recursive: true });
   writeFileSync(join(project, 'project.json'), JSON.stringify({
     name: 'Package Test',
     version: 7,
@@ -66,6 +69,11 @@ test('buildPcPackage creates a directly launchable, hashed project bundle', () =
       architecture: 'x64',
     });
     assert.equal(manifest.executable, 'Package Test.exe');
+    assert.deepEqual(manifest.assetValidation, {
+      rootScenes: 2,
+      references: 2,
+      validatedFiles: 2,
+    });
     assert.deepEqual(manifest.project, {
       name: 'Package Test',
       version: 7,
@@ -104,6 +112,103 @@ test('buildPcPackage creates a directly launchable, hashed project bundle', () =
       assert.equal(entry.size, bytes.length);
       assert.equal(entry.sha256, createHash('sha256').update(bytes).digest('hex'));
     }
+  } finally {
+    rmSync(paths.root, { recursive: true, force: true });
+  }
+});
+
+test('buildPcPackage validates transitive material animator and audio dependencies', () => {
+  const paths = fixture('asset-dependencies');
+  try {
+    writeFileSync(join(paths.project, 'Assets', 'Scenes', 'Main.mscene'), JSON.stringify({
+      version: 1,
+      world: {
+        entities: [{
+          entity: 1,
+          components: {
+            MeshRenderer: { mesh: 'cube', material: 'Assets/Materials/Hero.mmat' },
+            Animator: { controller: 'Assets/Animations/Hero.mcontroller' },
+            AudioSource: { clip: 'Assets/Audio/theme.ogg' },
+          },
+        }],
+      },
+    }));
+    writeFileSync(join(paths.project, 'Assets', 'Materials', 'Hero.mmat'), JSON.stringify({
+      version: 2,
+      base_color_texture: 'Assets/Textures/hero.png',
+      occlusion_texture: 'Assets/Textures/hero-ao.png',
+    }));
+    writeFileSync(join(paths.project, 'Assets', 'Animations', 'Hero.mcontroller'), JSON.stringify({
+      version: 1,
+      states: [{ name: 'Idle', clip: 'Assets/Animations/Idle.manim' }],
+    }));
+    writeFileSync(join(paths.project, 'Assets', 'Animations', 'Idle.manim'), '{}');
+    writeFileSync(join(paths.project, 'Assets', 'Audio', 'theme.ogg'), 'audio');
+    writeFileSync(join(paths.project, 'Assets', 'Textures', 'hero.png'), 'texture');
+    writeFileSync(join(paths.project, 'Assets', 'Textures', 'hero-ao.png'), 'texture');
+    const manifest = buildPcPackage({
+      projectDir: paths.project,
+      outputDir: paths.output,
+      runtimePath: paths.runtime,
+      engineVersion: 'test-engine',
+    });
+    assert.deepEqual(manifest.assetValidation, {
+      rootScenes: 2,
+      references: 8,
+      validatedFiles: 8,
+    });
+  } finally {
+    rmSync(paths.root, { recursive: true, force: true });
+  }
+});
+
+test('buildPcPackage rejects missing transitive assets without publishing output', () => {
+  const paths = fixture('missing-asset-dependency');
+  try {
+    writeFileSync(join(paths.project, 'Assets', 'Scenes', 'Main.mscene'), JSON.stringify({
+      world: { entities: [{ components: {
+        MeshRenderer: { material: 'Assets/Materials/Broken.mmat' },
+      } }] },
+    }));
+    writeFileSync(join(paths.project, 'Assets', 'Materials', 'Broken.mmat'), JSON.stringify({
+      normal_texture: 'Assets/Textures/missing-normal.png',
+    }));
+    assert.throws(() => buildPcPackage({
+      projectDir: paths.project,
+      outputDir: paths.output,
+      runtimePath: paths.runtime,
+      engineVersion: 'test-engine',
+    }), /missing material normal_texture: Assets\/Textures\/missing-normal\.png.*Broken\.mmat/);
+    assert.equal(existsSync(paths.output), false);
+  } finally {
+    rmSync(paths.root, { recursive: true, force: true });
+  }
+});
+
+test('buildPcPackage validates Spine atlas pages before publishing', () => {
+  const paths = fixture('spine-atlas-dependency');
+  try {
+    mkdirSync(join(paths.project, 'Assets', 'Spine'), { recursive: true });
+    writeFileSync(join(paths.project, 'Assets', 'Scenes', 'Main.mscene'), JSON.stringify({
+      world: { entities: [{ components: {
+        SpineSkeleton: {
+          skeleton: 'Assets/Spine/Hero.json',
+          atlas: 'Assets/Spine/Hero.atlas',
+        },
+      } }] },
+    }));
+    writeFileSync(join(paths.project, 'Assets', 'Spine', 'Hero.json'), '{}');
+    writeFileSync(
+      join(paths.project, 'Assets', 'Spine', 'Hero.atlas'),
+      'Hero.png\nsize: 64,64\nfilter: Linear,Linear\nrepeat: none\n',
+    );
+    assert.throws(() => buildPcPackage({
+      projectDir: paths.project,
+      outputDir: paths.output,
+      runtimePath: paths.runtime,
+      engineVersion: 'test-engine',
+    }), /missing Spine atlas page: Assets\/Spine\/Hero\.png.*Hero\.atlas/);
+    assert.equal(existsSync(paths.output), false);
   } finally {
     rmSync(paths.root, { recursive: true, force: true });
   }
