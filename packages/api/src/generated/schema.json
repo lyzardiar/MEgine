@@ -55,6 +55,33 @@
     ],
     "type": "object"
   },
+  "AnimationPlayer": {
+    "properties": {
+      "clip": {
+        "type": "string"
+      },
+      "play_on_awake": {
+        "type": "boolean"
+      },
+      "playing": {
+        "type": "boolean"
+      },
+      "speed": {
+        "type": "number"
+      },
+      "time": {
+        "type": "number"
+      }
+    },
+    "required": [
+      "clip",
+      "play_on_awake",
+      "playing",
+      "speed",
+      "time"
+    ],
+    "type": "object"
+  },
   "AspectRatioFitter": {
     "properties": {
       "aspect_mode": {

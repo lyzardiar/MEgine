@@ -77,6 +77,7 @@ impl WorldSnapshot {
             capture_component!(crate::generated::SpriteRenderer, "SpriteRenderer");
             capture_component!(crate::generated::AnimatedSprite2D, "AnimatedSprite2D");
             capture_component!(crate::generated::Line2D, "Line2D");
+            capture_component!(crate::generated::AnimationPlayer, "AnimationPlayer");
             capture_component!(crate::generated::Canvas, "Canvas");
             capture_component!(crate::generated::CanvasScaler, "CanvasScaler");
             capture_component!(crate::generated::CanvasGroup, "CanvasGroup");

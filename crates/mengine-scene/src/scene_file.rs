@@ -325,6 +325,10 @@ mod tests {
                     "points": [[-1, 0], [0, 1], [1, 0]], "width": 0.15,
                     "color": [0.2, 0.8, 1, 1], "closed": true, "sorting_order": 4
                 },
+                "AnimationPlayer": {
+                    "clip": "Assets/Animations/idle.manim", "play_on_awake": true,
+                    "playing": false, "speed": 1.25, "time": 0.5
+                },
                 "AspectRatioFitter": { "aspect_mode": "FitInParent", "aspect_ratio": 1.777778 },
                 "ContentSizeFitter": {
                     "horizontal_fit": "PreferredSize", "vertical_fit": "MinSize"
@@ -379,6 +383,12 @@ mod tests {
         assert_eq!(components["AnimatedSprite2D"]["flip_y"], true);
         assert_eq!(components["Line2D"]["points"][1][1], 1.0);
         assert_eq!(components["Line2D"]["closed"], true);
+        assert_eq!(
+            components["AnimationPlayer"]["clip"],
+            "Assets/Animations/idle.manim"
+        );
+        assert_eq!(components["AnimationPlayer"]["playing"], false);
+        assert_eq!(components["AnimationPlayer"]["speed"], 1.25);
         assert_eq!(
             components["AspectRatioFitter"]["aspect_mode"],
             "FitInParent"

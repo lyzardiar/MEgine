@@ -342,6 +342,34 @@ impl Component for Line2D {
     }
 }
 
+#[derive(Clone, Debug, Serialize, Deserialize)]
+#[serde(default)]
+pub struct AnimationPlayer {
+    pub clip: String,
+    pub play_on_awake: bool,
+    pub playing: bool,
+    pub speed: f32,
+    pub time: f32,
+}
+
+impl Default for AnimationPlayer {
+    fn default() -> Self {
+        Self {
+            clip: "".into(),
+            play_on_awake: true,
+            playing: true,
+            speed: 1.0,
+            time: 0.0,
+        }
+    }
+}
+
+impl Component for AnimationPlayer {
+    fn type_name() -> &'static str {
+        "AnimationPlayer"
+    }
+}
+
 #[derive(Clone, Debug, Default, Serialize, Deserialize)]
 #[serde(default)]
 pub struct Layer {
@@ -1318,6 +1346,7 @@ pub mod meta {
         "SpriteRenderer",
         "AnimatedSprite2D",
         "Line2D",
+        "AnimationPlayer",
         "Layer",
         "EditorOnly",
         "AutoRotate",

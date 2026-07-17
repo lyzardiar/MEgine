@@ -20,7 +20,14 @@ export type InspectorFieldMeta = {
     | 'vector2-list'
     | 'multiline';
   options?: InspectorOption[];
-  assetKinds?: Array<'spine-json' | 'spine-binary' | 'spine-atlas'>;
+  assetKinds?: Array<
+    | 'animation'
+    | 'material'
+    | 'prefab'
+    | 'spine-json'
+    | 'spine-binary'
+    | 'spine-atlas'
+  >;
   referenceType?: string;
   allowNone?: boolean;
   noneValue?: string;
@@ -117,6 +124,16 @@ export const BUILTIN_INSPECTOR_FIELDS: Readonly<
   Line2D: {
     points: { kind: 'vector2-list' },
     width: { min: 0, step: 0.01 },
+  },
+  AnimationPlayer: {
+    clip: {
+      kind: 'project-asset',
+      assetKinds: ['animation'],
+      referenceType: 'Animation Clip',
+      allowNone: true,
+    },
+    speed: { step: 0.1 },
+    time: { min: 0, step: 0.01 },
   },
   Canvas: {
     render_mode: {

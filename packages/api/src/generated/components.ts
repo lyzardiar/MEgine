@@ -95,6 +95,14 @@ export interface Line2D {
   sortingOrder: number;
 }
 
+export interface AnimationPlayer {
+  clip: string;
+  playOnAwake: boolean;
+  playing: boolean;
+  speed: number;
+  time: number;
+}
+
 export interface Layer {
   value: number;
 }
@@ -416,6 +424,7 @@ export type ComponentName =
   | 'SpriteRenderer'
   | 'AnimatedSprite2D'
   | 'Line2D'
+  | 'AnimationPlayer'
   | 'Layer'
   | 'EditorOnly'
   | 'AutoRotate'
@@ -462,6 +471,7 @@ export const COMPONENT_NAMES = [
   'SpriteRenderer',
   'AnimatedSprite2D',
   'Line2D',
+  'AnimationPlayer',
   'Layer',
   'EditorOnly',
   'AutoRotate',

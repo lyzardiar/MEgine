@@ -64,6 +64,7 @@ import {
   scaleTransformAlong,
   selectedTransformRoots,
 } from './transformSelection';
+import { applyAnimationPreview, type AnimationPreviewSample } from './animationPreview';
 import './behaviours';
 
 export type EditorMode = 'edit' | 'play' | 'pause';
@@ -141,6 +142,7 @@ export function createEditorStore() {
   let expanded = new Set<number>();
   let clipboard: ClipboardPayload | null = null;
   let renameRequestId: number | null = null;
+  let animationPreview: { root: number; samples: AnimationPreviewSample[] } | null = null;
   const behaviourRunner = createBehaviourRunner();
 
   const boot = (name: string, components: Record<string, unknown>, siblingIndex: number): EntityRec => {
@@ -206,6 +208,7 @@ export function createEditorStore() {
     editGestureDepth = 0;
     gestureUndoState = null;
     gestureRedoStack = null;
+    animationPreview = null;
   };
 
   buildDefaultScene();
@@ -473,8 +476,8 @@ export function createEditorStore() {
     }
   };
 
-  const snapshotEntities = () =>
-    structuredClone(list()).map((e) => ({
+  const snapshotEntities = () => {
+    const entities = list().map((e) => ({
       entity: e.entity,
       name: e.name,
       parent: e.parent,
@@ -482,6 +485,10 @@ export function createEditorStore() {
       active: e.active,
       components: e.components,
     }));
+    return animationPreview && mode === 'edit'
+      ? applyAnimationPreview(entities, animationPreview.root, animationPreview.samples)
+      : structuredClone(entities);
+  };
 
   const serializeScene = (sceneName: string, source: EntityRec[]) => JSON.stringify(
     {
@@ -546,6 +553,7 @@ export function createEditorStore() {
     playEntities = targetMode === 'edit' ? null : structuredClone(editEntities);
     mode = targetMode;
     playSpin = 0;
+    animationPreview = null;
     gizmoDragging = false;
     editGestureDepth = 0;
     gestureUndoState = null;
@@ -616,8 +624,21 @@ export function createEditorStore() {
         selectedIds: [...selectedIds],
       };
     },
+    authoredEntities() {
+      return structuredClone(editEntities);
+    },
     sceneContentFingerprint() {
       return sceneContentFingerprint(editEntities, clearColor);
+    },
+    setAnimationPreview(root: number, samples: AnimationPreviewSample[]) {
+      if (mode !== 'edit' || !editEntities.some((entity) => entity.entity === root)) return false;
+      animationPreview = { root, samples: structuredClone(samples) };
+      return true;
+    },
+    clearAnimationPreview() {
+      if (!animationPreview) return false;
+      animationPreview = null;
+      return true;
     },
     getVisibleFlat,
     activeInHierarchy,

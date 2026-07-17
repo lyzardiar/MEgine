@@ -182,6 +182,18 @@ const BUILTIN_CATALOG: ComponentCatalogEntry[] = [
     }),
   },
   {
+    type: 'AnimationPlayer',
+    label: 'Animation Player',
+    description: 'Play a .manim AnimationClip on this entity hierarchy',
+    create: () => ({
+      clip: '',
+      play_on_awake: true,
+      playing: true,
+      speed: 1,
+      time: 0,
+    }),
+  },
+  {
     type: 'RawImage',
     label: 'Raw Image',
     description: 'Texture view with an explicit normalized UV rectangle',

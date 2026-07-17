@@ -100,6 +100,15 @@ component Line2D {
   sorting_order: int          = 0
 }
 
+/// Plays a versioned .manim AnimationClip on this entity hierarchy.
+component AnimationPlayer {
+  clip:          string = ""
+  play_on_awake: bool   = true
+  playing:       bool   = true
+  speed:         float  = 1
+  time:          float  = 0
+}
+
 component Layer {
   value: int = 0
 }

@@ -134,6 +134,15 @@ export class Line2D {
   sorting_order!: number;
 }
 
+export class AnimationPlayer {
+  static readonly typeName = 'AnimationPlayer' as const;
+  clip!: string;
+  play_on_awake!: boolean;
+  playing!: boolean;
+  speed!: number;
+  time!: number;
+}
+
 export class RawImage {
   static readonly typeName = 'RawImage' as const;
   texture!: string;
@@ -194,6 +203,7 @@ export type BuiltinComponents = {
   SpriteRenderer: SpriteRenderer;
   AnimatedSprite2D: AnimatedSprite2D;
   Line2D: Line2D;
+  AnimationPlayer: AnimationPlayer;
   Canvas: Canvas;
   CanvasScaler: CanvasScaler;
   RectTransform: RectTransform;

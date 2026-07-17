@@ -24,6 +24,7 @@ import {
   type PanelWindowMessage,
 } from './detachedPanelWindow';
 import { isDesktopEditor } from '../transport/editorTransport';
+import { registerMenuItem } from '../editorWindow';
 import './dock.css';
 
 export type PanelKind = CorePanelId;
@@ -73,9 +74,20 @@ const PANEL_TITLE: Record<PanelKind, string> = {
   inspector: 'Inspector / Property',
   project: 'Project',
   console: 'Console',
+  timeline: 'Timeline',
 };
 
 const ALL_PANELS: PanelKind[] = [...CORE_PANEL_IDS];
+
+CORE_PANEL_IDS.forEach((panel, index) => {
+  registerMenuItem(
+    `Window/General/${PANEL_TITLE[panel]}`,
+    () => {
+      window.dispatchEvent(new CustomEvent('mengine:focus-panel', { detail: panel }));
+    },
+    { priority: 100 + index },
+  );
+});
 
 let _idSeq = 0;
 function nextId(prefix = 'n'): string {
@@ -119,7 +131,7 @@ function defaultTree(): DockNode {
       dir: 'h',
       ratio: 0.62,
       a: leaf(['project']),
-      b: leaf(['console']),
+      b: leaf(['console', 'timeline']),
     },
   };
 }
@@ -187,6 +199,11 @@ function attachPanel(root: DockNode, panel: PanelKind): DockNode {
 function findLeaf(n: DockNode, id: string): LeafNode | null {
   if (n.kind === 'tabs') return n.id === id ? n : null;
   return findLeaf(n.a, id) ?? findLeaf(n.b, id);
+}
+
+function findLeafContaining(n: DockNode, panel: PanelKind): LeafNode | null {
+  if (n.kind === 'tabs') return n.panels.includes(panel) ? n : null;
+  return findLeafContaining(n.a, panel) ?? findLeafContaining(n.b, panel);
 }
 
 /** Apply drop: center=tab merge; edges=split relative to target leaf */
@@ -281,6 +298,15 @@ function ensureAllPanels(
   let tree: DockNode = root;
   for (const p of ALL_PANELS) {
     if (seen.has(p) || excluded.has(p)) continue;
+    const preferredLeaf = p === 'timeline' ? findLeafContaining(tree, 'console') : null;
+    if (preferredLeaf) {
+      tree = mapLeaf(tree, preferredLeaf.id, (candidate) => ({
+        ...candidate,
+        panels: [...candidate.panels, p],
+      })) ?? tree;
+      seen.add(p);
+      continue;
+    }
     // attach missing to first leaf
     const attach = (n: DockNode): DockNode => {
       if (n.kind === 'tabs') {
@@ -949,8 +975,13 @@ export function DockWorkspace(props: {
   useEffect(() => {
     const onFocus = (ev: Event) => {
       const detail = (ev as CustomEvent).detail as PanelKind | undefined;
-      if (detail !== 'hierarchy' && detail !== 'project') return;
+      if (!detail || !CORE_PANEL_IDS.includes(detail)) return;
+      if (readDetachedPanels().has(detail)) {
+        void detachPanelWindow(detail);
+        return;
+      }
       setTree((prev) => {
+        const tree = collectPanels(prev).has(detail) ? prev : attachPanel(prev, detail);
         const walk = (n: DockNode): DockNode => {
           if (n.kind === 'tabs') {
             if (n.panels.includes(detail)) return { ...n, active: detail };
@@ -958,7 +989,7 @@ export function DockWorkspace(props: {
           }
           return { ...n, a: walk(n.a), b: walk(n.b) };
         };
-        return walk(prev);
+        return walk(tree);
       });
     };
     window.addEventListener('mengine:focus-panel', onFocus);

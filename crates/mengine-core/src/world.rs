@@ -2,9 +2,9 @@ use crate::command::{CommandBuffer, WorldCommand};
 use crate::component::{Component, ComponentBox, ComponentId, ComponentRegistry};
 use crate::entity::Entity;
 use crate::generated::{
-    AnimatedSprite2D, AspectRatioFitter, AutoRotate, Button, Camera2D, Camera3D, Canvas,
-    CanvasGroup, CanvasScaler, ContentSizeFitter, DirectionalLight, Dropdown, EditorOnly, Image,
-    InputField, Layer, LayoutGroup, Line2D, ListView, MeshRenderer, Name, Outline, Panel,
+    AnimatedSprite2D, AnimationPlayer, AspectRatioFitter, AutoRotate, Button, Camera2D, Camera3D,
+    Canvas, CanvasGroup, CanvasScaler, ContentSizeFitter, DirectionalLight, Dropdown, EditorOnly,
+    Image, InputField, Layer, LayoutGroup, Line2D, ListView, MeshRenderer, Name, Outline, Panel,
     PbrMaterial, PointLight, ProgressBar, RawImage, RectMask2D, RectTransform, ScrollView,
     Scrollbar, Shadow, Slider, SpotLight, SpriteRenderer, TabView, Text, Toggle, ToggleGroup,
     Transform, Transform2D,
@@ -376,6 +376,9 @@ impl World {
             "Line2D" | "line2D" | "line2d" => {
                 self.insert_json_component::<Line2D>(entity, value);
             }
+            "AnimationPlayer" | "animationPlayer" => {
+                self.insert_json_component::<AnimationPlayer>(entity, value);
+            }
             "Canvas" | "canvas" => {
                 self.insert_json_component::<Canvas>(entity, value);
             }
@@ -492,6 +495,7 @@ fn canonical_component_name(component: &str) -> &str {
         "SpriteRenderer" | "spriteRenderer" => "SpriteRenderer",
         "AnimatedSprite2D" | "animatedSprite2D" | "animatedSprite2d" => "AnimatedSprite2D",
         "Line2D" | "line2D" | "line2d" => "Line2D",
+        "AnimationPlayer" | "animationPlayer" => "AnimationPlayer",
         "Canvas" | "canvas" => "Canvas",
         "CanvasScaler" | "canvasScaler" => "CanvasScaler",
         "CanvasGroup" | "canvasGroup" => "CanvasGroup",

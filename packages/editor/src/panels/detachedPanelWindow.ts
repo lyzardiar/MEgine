@@ -9,6 +9,7 @@ export const CORE_PANEL_IDS = [
   'inspector',
   'project',
   'console',
+  'timeline',
 ] as const;
 
 export type CorePanelId = (typeof CORE_PANEL_IDS)[number];
@@ -20,6 +21,7 @@ const PANEL_TITLES: Record<CorePanelId, string> = {
   inspector: 'Inspector / Property',
   project: 'Project',
   console: 'Console',
+  timeline: 'Timeline',
 };
 
 const CHANNEL_NAME = 'mengine.editor.panels.v1';
@@ -129,7 +131,7 @@ export async function detachPanelWindow(
 ): Promise<boolean> {
   const url = `/?detachedPanel=${encodeURIComponent(panel)}`;
   const width = panel === 'hierarchy' || panel === 'inspector' ? 440 : 920;
-  const height = panel === 'console' || panel === 'project' ? 480 : 720;
+  const height = panel === 'console' || panel === 'project' || panel === 'timeline' ? 480 : 720;
 
   if (!isDesktopEditor()) {
     const popup = window.open(

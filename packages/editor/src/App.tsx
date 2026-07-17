@@ -29,6 +29,7 @@ import { Hierarchy } from './panels/Hierarchy';
 import { Inspector } from './panels/Inspector';
 import { Project } from './panels/Project';
 import { Console } from './panels/Console';
+import { Timeline } from './panels/Timeline';
 import { Viewport } from './panels/Viewport';
 import { DockWorkspace, type PanelKind } from './panels/DockWorkspace';
 import { EditorWindowHost } from './editorWindow';
@@ -921,6 +922,31 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
                 }
                 return true;
               }}
+              onLog={log}
+            />
+          ),
+          timeline: (
+            <Timeline
+              entity={snap.entities.find((entity) => entity.entity === selected) ?? null}
+              entities={snap.entities}
+              authoredEntities={store.authoredEntities()}
+              onAddComponent={(entity, type, value) => {
+                if (store.addComponent(entity, type, value)) {
+                  log(`Added ${type}`);
+                  refresh();
+                }
+              }}
+              onPatchComponent={(entity, type, patch) => {
+                store.patchComponent(entity, type, patch);
+                refresh();
+              }}
+              onPreview={(entity, samples) => {
+                if (store.setAnimationPreview(entity, samples)) refresh(false);
+              }}
+              onClearPreview={() => {
+                if (store.clearAnimationPreview()) refresh(false);
+              }}
+              onAssetsChanged={bumpScenes}
               onLog={log}
             />
           ),
