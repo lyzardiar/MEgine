@@ -727,8 +727,8 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
                 store.rotateSelectedRectsBy(deltas);
                 refresh();
               }}
-              onRectScale={(entity, axis, amount) => {
-                store.scaleRectBy(entity, axis, amount);
+              onRectScale={(deltas) => {
+                store.scaleSelectedRectsBy(deltas);
                 refresh();
               }}
               onRectResize={(entity, handle, dx, dy, options) => {

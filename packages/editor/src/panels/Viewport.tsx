@@ -41,6 +41,7 @@ import {
   rectPivot,
   rectToolHandlePivot,
   rotateRectToolPoint,
+  scaleRectToolPoint,
   type RectGizmoHit,
 } from '../rectGizmo';
 import {
@@ -433,7 +434,13 @@ export function Viewport(props: {
     dy: number;
     degrees: number;
   }>) => void;
-  onRectScale?: (entity: number, axis: 'x' | 'y' | 'both', amount: number) => void;
+  onRectScale?: (deltas: Array<{
+    entity: number;
+    dx: number;
+    dy: number;
+    factorX: number;
+    factorY: number;
+  }>) => void;
   onRectResize?: (
     entity: number,
     handle: 'n' | 's' | 'e' | 'w' | 'ne' | 'nw' | 'se' | 'sw',
@@ -541,6 +548,7 @@ export function Viewport(props: {
         anchorEditing: boolean;
         pivotNorm: [number, number];
         rectSize: { w: number; h: number };
+        rectScale: [number, number];
         anchorMin: [number, number];
         anchorMax: [number, number];
         anchorParentSize: { w: number; h: number };
@@ -549,7 +557,7 @@ export function Viewport(props: {
           candidates: Array<{ x: number; y: number; w: number; h: number }>;
           applied: { x: number; y: number };
         };
-        rotationPivots: Array<{ entity: number; point: { x: number; y: number } }>;
+        transformPivots: Array<{ entity: number; point: { x: number; y: number } }>;
         lastAng?: number;
         snap: RectSnapDrag;
       }
@@ -1328,7 +1336,7 @@ export function Viewport(props: {
               )
               ? rt.local_rotation
               : 0;
-            const rotationPivots = selectedRoots.flatMap((id) => {
+            const transformPivots = selectedRoots.flatMap((id) => {
               const candidate = uiItemsRef.current.find((uiItem) => uiItem.entity === id);
               const entity = propsRef.current.entities.find((value) => value.entity === id);
               if (!candidate || !entity?.components.RectTransform) return [];
@@ -1383,11 +1391,12 @@ export function Viewport(props: {
               anchorEditing: scene2DRef.current && anchorEditingRef.current,
               pivotNorm: [...rt.pivot],
               rectSize: { w: gizmoRect.w, h: gizmoRect.h },
+              rectScale: [...rt.local_scale],
               anchorMin: [...rt.anchor_min],
               anchorMax: [...rt.anchor_max],
               anchorParentSize: { w: anchorParent.w, h: anchorParent.h },
               smartGuides,
-              rotationPivots,
+              transformPivots,
               lastAng,
               snap: createRectSnapDrag(
                 snapSettingsRef.current.enabled || ev.ctrlKey || ev.metaKey,
@@ -1711,22 +1720,52 @@ export function Viewport(props: {
             }
           }
         } else if (mode === 'scale') {
+          let axis: 'x' | 'y' | 'both';
+          let amount: number;
           if (d.part.kind === 'axis' && (d.part.axis === 'x' || d.part.axis === 'y')) {
+            axis = d.part.axis;
             const dir = d.part.axis === 'x' ? localAxes.x : localAxes.y;
             const along = projectScreenDelta(dx, dy, dir);
-            propsRef.current.onRectScale?.(
-              d.entity,
-              d.part.axis,
-              snapped('scale', along / 80, d.snap.settings.scale),
-            );
+            amount = snapped('scale', along / 80, d.snap.settings.scale);
           } else {
-            const amount = (dx + -dy) / 160;
-            propsRef.current.onRectScale?.(
-              d.entity,
-              'both',
-              snapped('scale', amount, d.snap.settings.scale),
+            axis = 'both';
+            amount = snapped(
+              'scale',
+              (dx + -dy) / 160,
+              d.snap.settings.scale,
             );
           }
+          const factorX = axis === 'y'
+            ? 1
+            : Math.max(0.01, d.rectScale[0] + amount)
+              / Math.max(0.01, d.rectScale[0]);
+          const factorY = axis === 'x'
+            ? 1
+            : Math.max(0.01, d.rectScale[1] + amount)
+              / Math.max(0.01, d.rectScale[1]);
+          const deltas = d.transformPivots.map((entry) => {
+            const next = scaleRectToolPoint(
+              entry.point,
+              d.pivot,
+              d.rotDeg,
+              factorX,
+              factorY,
+            );
+            const delta = {
+              entity: entry.entity,
+              dx: (next.x - entry.point.x) / scale,
+              dy: (next.y - entry.point.y) / scale,
+              factorX,
+              factorY,
+            };
+            entry.point = next;
+            return delta;
+          });
+          propsRef.current.onRectScale?.(deltas);
+          d.rectScale = [
+            Math.max(0.01, d.rectScale[0] * factorX),
+            Math.max(0.01, d.rectScale[1] * factorY),
+          ];
         } else if (mode === 'rotate') {
           const canvas = canvasRef.current;
           if (!canvas) return;
@@ -1747,7 +1786,7 @@ export function Viewport(props: {
             (-dAng * 180) / Math.PI,
             d.snap.settings.rotate,
           );
-          const deltas = d.rotationPivots.map((entry) => {
+          const deltas = d.transformPivots.map((entry) => {
             const next = rotateRectToolPoint(entry.point, d.pivot, degrees);
             const delta = {
               entity: entry.entity,

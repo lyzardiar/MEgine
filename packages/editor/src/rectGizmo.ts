@@ -146,6 +146,25 @@ export function rotateRectToolPoint(
   };
 }
 
+/** Scale a screen point around the shared RectTransform tool center. */
+export function scaleRectToolPoint(
+  point: { x: number; y: number },
+  pivot: { x: number; y: number },
+  rotDeg: number,
+  factorX: number,
+  factorY: number,
+): { x: number; y: number } {
+  const axes = rectLocalAxes(rotDeg);
+  const dx = point.x - pivot.x;
+  const dy = point.y - pivot.y;
+  const localX = dx * axes.x.dx + dy * axes.x.dy;
+  const localY = dx * axes.y.dx + dy * axes.y.dy;
+  return {
+    x: pivot.x + axes.x.dx * localX * factorX + axes.y.dx * localY * factorY,
+    y: pivot.y + axes.x.dy * localX * factorX + axes.y.dy * localY * factorY,
+  };
+}
+
 /** Corner / edge positions in screen space for a (possibly rotated) rect. */
 function sizeHandlePoints(
   rect: Rect,

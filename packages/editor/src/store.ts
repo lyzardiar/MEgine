@@ -1271,6 +1271,38 @@ export function createEditorStore() {
       ];
       e.components.RectTransform = { ...rt, local_scale: next };
     },
+    scaleSelectedRectsBy(deltas: Array<{
+      entity: number;
+      dx: number;
+      dy: number;
+      factorX: number;
+      factorY: number;
+    }>) {
+      const roots = new Set(selectedRectRoots(editEntities, selectedIds));
+      for (const delta of deltas) {
+        if (
+          !roots.has(delta.entity)
+          || !Number.isFinite(delta.dx)
+          || !Number.isFinite(delta.dy)
+          || !Number.isFinite(delta.factorX)
+          || !Number.isFinite(delta.factorY)
+        ) continue;
+        const entity = find(delta.entity);
+        if (!entity?.components.RectTransform) continue;
+        const rt = readRectTransform(entity.components.RectTransform);
+        entity.components.RectTransform = {
+          ...rt,
+          anchored_position: [
+            rt.anchored_position[0] + delta.dx,
+            rt.anchored_position[1] + delta.dy,
+          ],
+          local_scale: [
+            Math.max(0.01, rt.local_scale[0] * delta.factorX),
+            Math.max(0.01, rt.local_scale[1] * delta.factorY),
+          ],
+        };
+      }
+    },
     /**
      * Unity Rect size handles → size_delta + anchored_position.
      * dLocalX/Y: 布局像素，沿 UI 局部轴（X+ 右，Y+ 下）。

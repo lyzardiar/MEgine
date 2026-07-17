@@ -5,6 +5,7 @@ import {
   hitTestRectGizmo,
   rectToolHandlePivot,
   rotateRectToolPoint,
+  scaleRectToolPoint,
 } from '../src/rectGizmo.ts';
 
 test('Rect Tool body hit moves the selected rectangle', () => {
@@ -42,6 +43,16 @@ test('Rect group points rotate around the shared tool center', () => {
   const point = rotateRectToolPoint({ x: 20, y: 10 }, { x: 10, y: 10 }, 90);
   assert.ok(Math.abs(point.x - 10) < 1e-8);
   assert.ok(Math.abs(point.y) < 1e-8);
+});
+
+test('Rect group points scale along the displayed local axes', () => {
+  const point = scaleRectToolPoint({ x: 10, y: -5 }, { x: 0, y: 0 }, 90, 2, 1);
+  assert.ok(Math.abs(point.x - 10) < 1e-8);
+  assert.ok(Math.abs(point.y + 10) < 1e-8);
+  assert.deepEqual(
+    scaleRectToolPoint({ x: 3, y: 4 }, { x: 1, y: 2 }, 0, 2, 3),
+    { x: 5, y: 8 },
+  );
 });
 
 test('Rect Tool size handles keep priority over the body hit area', () => {
