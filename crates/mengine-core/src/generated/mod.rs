@@ -581,6 +581,8 @@ pub struct Image {
     pub sprite: String,
     pub color: [f32; 4],
     pub image_type: String,
+    pub border: [f32; 4],
+    pub source_size: [f32; 2],
     pub raycast_target: bool,
 }
 
@@ -590,6 +592,8 @@ impl Default for Image {
             sprite: "white".into(),
             color: [1.0, 1.0, 1.0, 1.0],
             image_type: "Simple".into(),
+            border: [0.0, 0.0, 0.0, 0.0],
+            source_size: [100.0, 100.0],
             raycast_target: true,
         }
     }

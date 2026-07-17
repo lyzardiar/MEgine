@@ -9,7 +9,8 @@ import {
   type Rect,
 } from './rectLayout';
 import { rectLocalAxes, rectPivot } from '../rectGizmo';
-import { drawSpriteInRect } from '../spriteDraw';
+import { drawSpriteInRect, drawSpriteSlicedInRect } from '../spriteDraw';
+import type { SpriteBorder } from './nineSlice';
 import { resolveSpriteId } from '../spriteLibrary';
 import { project, type Camera, type Vec3 } from '../math3d';
 import { rectComponentSceneScale } from '../rectSceneScale';
@@ -45,6 +46,10 @@ export type UiDrawItem = {
   image?: {
     color: [number, number, number, number];
     sprite: string;
+    imageType: 'Simple' | 'Sliced';
+    border: SpriteBorder;
+    displayBorder: SpriteBorder;
+    sourceSize: [number, number];
     raycastTarget: boolean;
   };
   button?: {
@@ -211,6 +216,17 @@ function number2(raw: unknown, fallback: [number, number]): [number, number] {
     : fallback;
 }
 
+function number4(raw: unknown, fallback: SpriteBorder): SpriteBorder {
+  return Array.isArray(raw) && raw.length >= 4
+    ? [
+        number(raw[0], fallback[0]),
+        number(raw[1], fallback[1]),
+        number(raw[2], fallback[2]),
+        number(raw[3], fallback[3]),
+      ]
+    : fallback;
+}
+
 function intersectRect(a: Rect, b: Rect): Rect {
   const x = Math.max(a.x, b.x);
   const y = Math.max(a.y, b.y);
@@ -322,6 +338,12 @@ function scaleSceneVisuals(item: UiDrawItem, scale: number): UiDrawItem {
   const font = (value: number) => Math.max(10, value * s);
   return {
     ...item,
+    image: item.image
+      ? {
+          ...item.image,
+          displayBorder: item.image.displayBorder.map((value) => value * s) as SpriteBorder,
+        }
+      : undefined,
     button: item.button ? { ...item.button, fontSize: font(item.button.fontSize) } : undefined,
     text: item.text
       ? {
@@ -493,6 +515,16 @@ export function layoutUiOverlay(
             ? {
                 color: color4(img.color, [1, 1, 1, 1]),
                 sprite: resolveSpriteId(String(img.sprite ?? 'white')),
+                imageType: enumValue(
+                  img.image_type ?? img.imageType,
+                  ['Simple', 'Sliced'] as const,
+                  'Simple',
+                ),
+                border: number4(img.border, [0, 0, 0, 0]),
+                displayBorder: number4(img.border, [0, 0, 0, 0]).map(
+                  (value) => Math.max(0, value) * scale,
+                ) as SpriteBorder,
+                sourceSize: number2(img.source_size ?? img.sourceSize, [100, 100]),
                 raycastTarget: img.raycast_target !== false && img.raycastTarget !== false,
               }
             : undefined,
@@ -1367,7 +1399,20 @@ export function drawUiItems(
         const sprite = it.image?.sprite ?? 'white';
         const tint: [number, number, number, number] = [r, g, b, a];
         const drawn =
-          sprite !== 'white' && drawSpriteInRect(ctx, sprite, x, y, w, h, tint);
+          sprite !== 'white' && (it.image?.imageType === 'Sliced'
+            ? drawSpriteSlicedInRect(
+                ctx,
+                sprite,
+                x,
+                y,
+                w,
+                h,
+                tint,
+                it.image.border,
+                it.image.displayBorder,
+                it.image.sourceSize,
+              )
+            : drawSpriteInRect(ctx, sprite, x, y, w, h, tint));
 
         if (!drawn) {
           ctx.fillStyle = `rgba(${(r * 255) | 0},${(g * 255) | 0},${(b * 255) | 0},${a})`;

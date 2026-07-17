@@ -126,6 +126,11 @@ export const BUILTIN_INSPECTOR_FIELDS: Readonly<
   Image: {
     sprite,
     image_type: { kind: 'enum', options: options('Simple', 'Sliced') },
+    border: { visibleWhen: { field: 'image_type', equals: 'Sliced' } },
+    source_size: {
+      label: 'Source Size',
+      visibleWhen: { field: 'image_type', equals: 'Sliced' },
+    },
   },
   Button: {
     transition: {

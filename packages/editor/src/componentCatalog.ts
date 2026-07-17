@@ -120,6 +120,8 @@ const BUILTIN_CATALOG: ComponentCatalogEntry[] = [
       sprite: 'white',
       color: [1, 1, 1, 1],
       image_type: 'Simple',
+      border: [0, 0, 0, 0],
+      source_size: [100, 100],
       raycast_target: true,
     }),
   },
@@ -319,6 +321,8 @@ export function createUiImageComponents(color: [number, number, number, number] 
       sprite: 'white',
       color,
       image_type: 'Simple',
+      border: [0, 0, 0, 0],
+      source_size: [100, 100],
       raycast_target: true,
     },
   };
@@ -331,6 +335,8 @@ export function createUiButtonComponents() {
       sprite: 'white',
       color: [0.25, 0.45, 0.85, 1],
       image_type: 'Simple',
+      border: [0, 0, 0, 0],
+      source_size: [100, 100],
       raycast_target: true,
     },
     Button: {

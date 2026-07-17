@@ -309,6 +309,10 @@ mod tests {
                 "PbrMaterial": { "base_color": [1, 0.5, 0.1, 1], "metallic": 0.8 },
                 "PointLight": { "intensity": 9, "range": 11 },
                 "SpotLight": { "inner_angle_degrees": 20, "outer_angle_degrees": 45 },
+                "Image": {
+                    "sprite": "Assets/UI/panel.png", "image_type": "Sliced",
+                    "border": [8, 10, 8, 10], "source_size": [64, 64]
+                },
                 "Text": { "text": "Saved UI" },
                 "Toggle": { "is_on": true },
                 "Slider": { "min_value": 0, "max_value": 10, "value": 7 },
@@ -336,6 +340,9 @@ mod tests {
         assert!((metallic - 0.8).abs() < 0.0001);
         assert_eq!(components["PointLight"]["range"], 11.0);
         assert_eq!(components["SpotLight"]["outer_angle_degrees"], 45.0);
+        assert_eq!(components["Image"]["image_type"], "Sliced");
+        assert_eq!(components["Image"]["border"][1], 10.0);
+        assert_eq!(components["Image"]["source_size"][0], 64.0);
         assert_eq!(components["Text"]["text"], "Saved UI");
         assert_eq!(components["Toggle"]["is_on"], true);
         assert_eq!(components["Slider"]["value"], 7.0);

@@ -277,6 +277,39 @@ export function SpriteSlot(props: {
     </div>
   );
 }
+
+function NumberVectorField(props: {
+  label: string;
+  axes: readonly string[];
+  value: number[];
+  min?: number;
+  onChange: (value: number[]) => void;
+}) {
+  return (
+    <div className={`axis-row axis-${props.axes.length}`}>
+      <label>{props.label}</label>
+      {props.axes.map((axis, index) => (
+        <div className="axis" key={axis}>
+          <span className={axis.toLowerCase()}>{axis}</span>
+          <input
+            type="number"
+            min={props.min}
+            step={1}
+            value={Number(props.value[index] ?? 0)}
+            onChange={(event) => {
+              const next = [...props.value];
+              next[index] = Math.max(
+                props.min ?? Number.NEGATIVE_INFINITY,
+                Number(event.target.value) || 0,
+              );
+              props.onChange(next);
+            }}
+          />
+        </div>
+      ))}
+    </div>
+  );
+}
 export function NamedReferenceField(props: {
   label: string;
   value: string;
@@ -928,12 +961,12 @@ export function ImageEditor(props: {
   const [nativeBusy, setNativeBusy] = useState(false);
 
   const setNativeSize = () => {
-    if (!props.onPatchRect) return;
     const sprite = String(d.sprite ?? 'white');
     setNativeBusy(true);
     void loadSpriteNativeSize(sprite)
       .then((size) => {
         if (!size) return;
+        props.onPatch({ source_size: [size.w, size.h] });
         props.onPatchRect?.({ size_delta: [size.w, size.h] });
       })
       .finally(() => setNativeBusy(false));
@@ -944,7 +977,13 @@ export function ImageEditor(props: {
       <SpriteSlot
         label="Sprite"
         value={String(d.sprite ?? 'white')}
-        onChange={(sprite) => props.onPatch({ sprite: resolveSpriteId(sprite) })}
+        onChange={(sprite) => {
+          const resolved = resolveSpriteId(sprite);
+          props.onPatch({ sprite: resolved });
+          void loadSpriteNativeSize(resolved).then((size) => {
+            if (size) props.onPatch({ source_size: [size.w, size.h] });
+          });
+        }}
       />
       <ColorField
         label="Color"
@@ -964,6 +1003,25 @@ export function ImageEditor(props: {
           ))}
         </select>
       </div>
+      {String(d.image_type ?? d.imageType ?? 'Simple') === 'Sliced' && (
+        <>
+          <NumberVectorField
+            label="Border"
+            axes={['L', 'B', 'R', 'T']}
+            value={(d.border as number[]) ?? [0, 0, 0, 0]}
+            min={0}
+            onChange={(border) => props.onPatch({ border })}
+          />
+          <NumberVectorField
+            label="Source Size"
+            axes={['W', 'H']}
+            value={(d.source_size as number[]) ?? (d.sourceSize as number[]) ?? [100, 100]}
+            min={1}
+            onChange={(source_size) => props.onPatch({ source_size })}
+          />
+          <div className="field-hint">Border order: Left, Bottom, Right, Top (pixels)</div>
+        </>
+      )}
       <BoolField
         label="Raycast Target"
         value={d.raycast_target !== false && d.raycastTarget !== false}
@@ -973,7 +1031,7 @@ export function ImageEditor(props: {
         <button
           type="button"
           className="schema-btn"
-          disabled={nativeBusy || !props.onPatchRect}
+          disabled={nativeBusy}
           title="将 RectTransform Size 设为精灵像素尺寸"
           onClick={setNativeSize}
         >

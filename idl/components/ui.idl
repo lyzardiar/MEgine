@@ -30,6 +30,10 @@ component Image {
   color:           float4 = [1, 1, 1, 1]
   /// "Simple" | "Sliced" (Unity Image.type)
   image_type:      string = "Simple"
+  /// Sprite border in pixels: left, bottom, right, top.
+  border:          float4 = [0, 0, 0, 0]
+  /// Imported source texture size used to normalize sliced UVs.
+  source_size:     float2 = [100, 100]
   raycast_target:  bool   = true
 }
 

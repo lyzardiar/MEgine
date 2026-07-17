@@ -281,15 +281,30 @@ fn walk(
     let image = world.get_component::<Image>(entity);
 
     if let Some(image) = image {
-        primitives.push(primitive(
-            rect,
-            multiply_alpha(image.color, state.alpha),
-            pivot,
-            rotation,
-            "ui/image",
-            &image.sprite,
-            clip,
-        ));
+        if image.image_type.eq_ignore_ascii_case("sliced") {
+            push_sliced_image(
+                primitives,
+                rect,
+                multiply_alpha(image.color, state.alpha),
+                pivot,
+                rotation,
+                &image.sprite,
+                image.border,
+                image.source_size,
+                scale,
+                clip,
+            );
+        } else {
+            primitives.push(primitive(
+                rect,
+                multiply_alpha(image.color, state.alpha),
+                pivot,
+                rotation,
+                "ui/image",
+                &image.sprite,
+                clip,
+            ));
+        }
     }
 
     if let Some(button) = world.get_component::<Button>(entity) {
@@ -1311,6 +1326,92 @@ fn primitive(
     }
 }
 
+fn split_axis(total: f32, start: f32, end: f32) -> [f32; 4] {
+    let total = total.max(0.0);
+    let start = start.max(0.0);
+    let end = end.max(0.0);
+    let sum = start + end;
+    let scale = if sum > total && sum > 0.0 {
+        total / sum
+    } else {
+        1.0
+    };
+    [0.0, start * scale, total - end * scale, total]
+}
+
+#[allow(clippy::too_many_arguments)]
+fn push_sliced_image(
+    primitives: &mut Vec<UiPrimitive>,
+    rect: UiRect,
+    color: [f32; 4],
+    pivot: [f32; 2],
+    rotation_radians: f32,
+    texture: &str,
+    border: [f32; 4],
+    source_size: [f32; 2],
+    scale: f32,
+    clip: UiClipRect,
+) {
+    if rect.width <= 0.0 || rect.height <= 0.0 {
+        return;
+    }
+    let source_width = source_size[0].max(1.0);
+    let source_height = source_size[1].max(1.0);
+    let source_x = split_axis(source_width, border[0], border[2]);
+    let source_y = split_axis(source_height, border[3], border[1]);
+    let destination_x = split_axis(
+        rect.width,
+        border[0] * scale.max(0.0),
+        border[2] * scale.max(0.0),
+    );
+    let destination_y = split_axis(
+        rect.height,
+        border[3] * scale.max(0.0),
+        border[1] * scale.max(0.0),
+    );
+    let global_pivot = [
+        rect.x + pivot[0] * rect.width,
+        rect.y + pivot[1] * rect.height,
+    ];
+
+    for row in 0..3 {
+        for column in 0..3 {
+            let source_w = source_x[column + 1] - source_x[column];
+            let source_h = source_y[row + 1] - source_y[row];
+            let width = destination_x[column + 1] - destination_x[column];
+            let height = destination_y[row + 1] - destination_y[row];
+            if source_w <= 0.0 || source_h <= 0.0 || width <= 0.0 || height <= 0.0 {
+                continue;
+            }
+            let slice = UiRect {
+                x: rect.x + destination_x[column],
+                y: rect.y + destination_y[row],
+                width,
+                height,
+            };
+            let mut output = primitive(
+                slice,
+                color,
+                [
+                    (global_pivot[0] - slice.x) / slice.width,
+                    (global_pivot[1] - slice.y) / slice.height,
+                ],
+                rotation_radians,
+                "ui/image-sliced",
+                texture,
+                clip,
+            );
+            output.uv = [
+                source_x[column] / source_width,
+                source_y[row] / source_height,
+                source_w / source_width,
+                source_h / source_height,
+            ];
+            primitives.push(output);
+        }
+    }
+}
+
 #[allow(clippy::too_many_arguments)]
 fn push_text(
     primitives: &mut Vec<UiPrimitive>,
@@ -1562,6 +1663,44 @@ fn glyph_rows(character: char) -> [u8; 7] {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn sliced_images_emit_uv_regions_with_one_shared_rotation_pivot() {
+        let mut primitives = Vec::new();
+        push_sliced_image(
+            &mut primitives,
+            UiRect {
+                x: 10.0,
+                y: 20.0,
+                width: 200.0,
+                height: 100.0,
+            },
+            [1.0; 4],
+            [0.5, 0.5],
+            0.5,
+            "panel.png",
+            [10.0, 20.0, 30.0, 15.0],
+            [100.0, 80.0],
+            1.0,
+            UiClipRect {
+                x: 0,
+                y: 0,
+                width: 1000,
+                height: 1000,
+            },
+        );
+
+        assert_eq!(primitives.len(), 9);
+        assert_eq!(UiBatchPlan::build(primitives.clone()).batches.len(), 1);
+        assert_eq!(primitives[0].uv, [0.0, 0.0, 0.1, 0.1875]);
+        assert_eq!(primitives[8].uv, [0.7, 0.75, 0.3, 0.25]);
+        for primitive in primitives {
+            let pivot_x = primitive.rect[0] + primitive.pivot[0] * primitive.rect[2];
+            let pivot_y = primitive.rect[1] + primitive.pivot[1] * primitive.rect[3];
+            assert!((pivot_x - 110.0).abs() < 0.0001);
+            assert!((pivot_y - 70.0).abs() < 0.0001);
+        }
+    }
 
     #[test]
     fn canvas_controls_generate_batched_primitives_and_hit_regions() {

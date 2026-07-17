@@ -266,6 +266,12 @@
   },
   "Image": {
     "properties": {
+      "border": {
+        "items": {
+          "type": "number"
+        },
+        "type": "array"
+      },
       "color": {
         "items": {
           "type": "number"
@@ -278,6 +284,12 @@
       "raycast_target": {
         "type": "boolean"
       },
+      "source_size": {
+        "items": {
+          "type": "number"
+        },
+        "type": "array"
+      },
       "sprite": {
         "type": "string"
       }
@@ -286,6 +298,8 @@
       "sprite",
       "color",
       "image_type",
+      "border",
+      "source_size",
       "raycast_target"
     ],
     "type": "object"

@@ -3,6 +3,7 @@
 import { resolveSpriteId, spriteAssetUrl } from './spriteLibrary';
 import { readProjectAssetBytes } from './projectAssets';
 import { isDesktopEditor } from './transport/editorTransport';
+import { planNineSlice, type SpriteBorder } from './ui/nineSlice';
 
 const _cache = new Map<string, HTMLImageElement>();
 
@@ -83,6 +84,68 @@ export function drawSpriteInRect(
   const img = getSpriteImage(sprite);
   if (!img || !img.complete || img.naturalWidth < 1) return false;
 
+  drawSpriteRegion(
+    ctx,
+    img,
+    [0, 0, img.naturalWidth, img.naturalHeight],
+    [x, y, w, h],
+    color,
+  );
+  return true;
+}
+
+export function drawSpriteSlicedInRect(
+  ctx: CanvasRenderingContext2D,
+  sprite: string,
+  x: number,
+  y: number,
+  w: number,
+  h: number,
+  color: [number, number, number, number],
+  sourceBorder: SpriteBorder,
+  destinationBorder: SpriteBorder = sourceBorder,
+  sourceSize?: [number, number],
+): boolean {
+  const img = getSpriteImage(sprite);
+  if (!img || !img.complete || img.naturalWidth < 1 || img.naturalHeight < 1) return false;
+  const logicalSource: [number, number] = [
+    Math.max(1, Number(sourceSize?.[0]) || img.naturalWidth),
+    Math.max(1, Number(sourceSize?.[1]) || img.naturalHeight),
+  ];
+  const regions = planNineSlice(
+    logicalSource,
+    [w, h],
+    sourceBorder,
+    destinationBorder,
+  );
+  if (!regions.length) return false;
+  for (const region of regions) {
+    drawSpriteRegion(
+      ctx,
+      img,
+      [
+        region.source.x * img.naturalWidth / logicalSource[0],
+        region.source.y * img.naturalHeight / logicalSource[1],
+        region.source.w * img.naturalWidth / logicalSource[0],
+        region.source.h * img.naturalHeight / logicalSource[1],
+      ],
+      [x + region.destination.x, y + region.destination.y, region.destination.w, region.destination.h],
+      color,
+    );
+  }
+  return true;
+}
+
+function drawSpriteRegion(
+  ctx: CanvasRenderingContext2D,
+  img: HTMLImageElement,
+  source: [number, number, number, number],
+  destination: [number, number, number, number],
+  color: [number, number, number, number],
+): void {
+  const [sx, sy, sw, sh] = source;
+  const [x, y, w, h] = destination;
+
   const [cr, cg, cb, ca] = color;
   ctx.save();
   // destination-in 会清掉 clip 外像素；必须限制在目标矩形内
@@ -91,7 +154,7 @@ export function drawSpriteInRect(
   ctx.clip();
 
   ctx.globalAlpha = Math.max(0, Math.min(1, ca));
-  ctx.drawImage(img, x, y, w, h);
+  ctx.drawImage(img, sx, sy, sw, sh, x, y, w, h);
 
   if (cr < 0.998 || cg < 0.998 || cb < 0.998) {
     ctx.globalCompositeOperation = 'multiply';
@@ -99,8 +162,7 @@ export function drawSpriteInRect(
     ctx.fillRect(x, y, w, h);
     ctx.globalCompositeOperation = 'destination-in';
     ctx.globalAlpha = 1;
-    ctx.drawImage(img, x, y, w, h);
+    ctx.drawImage(img, sx, sy, sw, sh, x, y, w, h);
   }
   ctx.restore();
-  return true;
 }
