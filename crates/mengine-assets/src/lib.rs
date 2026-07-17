@@ -5,6 +5,7 @@ mod animator;
 mod gltf_import;
 mod material;
 mod registry;
+mod sprite;
 mod texture;
 
 pub use animation::{
@@ -23,7 +24,11 @@ pub use material::{
     MaterialSurface, MaterialWrap,
 };
 pub use registry::{AssetMeta, AssetRegistry};
-pub use texture::load_texture_rgba8;
+pub use sprite::{
+    load_sprite_import, parse_sprite_import, split_sprite_reference, sprite_import_path,
+    ResolvedSpriteSlice, SpriteImportSettings, SpriteMode, SpriteSlice,
+};
+pub use texture::{load_texture_rgba8, texture_dimensions};
 
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct TextureRgba8 {

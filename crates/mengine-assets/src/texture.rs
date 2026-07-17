@@ -14,6 +14,14 @@ pub fn load_texture_rgba8(path: &Path) -> Result<TextureRgba8, AssetError> {
     })
 }
 
+pub fn texture_dimensions(path: &Path) -> Result<[u32; 2], AssetError> {
+    if !path.is_file() {
+        return Err(AssetError::NotFound(path.display().to_string()));
+    }
+    let (width, height) = image::image_dimensions(path)?;
+    Ok([width, height])
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -35,6 +43,7 @@ mod tests {
             .unwrap();
 
         let decoded = load_texture_rgba8(&path).unwrap();
+        assert_eq!(texture_dimensions(&path).unwrap(), [2, 1]);
         std::fs::remove_file(path).unwrap();
         assert_eq!((decoded.width, decoded.height), (2, 1));
         assert_eq!(decoded.pixels, pixels);

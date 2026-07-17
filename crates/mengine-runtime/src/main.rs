@@ -1423,6 +1423,18 @@ function onTick(dt, frame) {
                         primitives.extend(std::mem::take(&mut ui.plan.primitives));
                         ui.plan = UiBatchPlan::build(primitives);
                     }
+                    for failure in self
+                        .textures
+                        .resolve_sprite_regions(&mut ui.plan.primitives)
+                    {
+                        log::warn!(
+                            "Sprite '{}' could not be resolved from {}: {}",
+                            failure.key,
+                            failure.path.display(),
+                            failure.error
+                        );
+                    }
+                    ui.plan = UiBatchPlan::build(std::mem::take(&mut ui.plan.primitives));
                     for failure in self.textures.sync(r, &ui.plan) {
                         log::warn!(
                             "UI texture '{}' could not be loaded from {}: {}",
@@ -1849,11 +1861,27 @@ fn validate_texture_asset(
     if reference.is_empty() || reference.eq_ignore_ascii_case("white") {
         return Ok(());
     }
-    let path = mengine_runtime::textures::resolve_project_asset_path(project_root, reference)
-        .with_context(|| format!("unsafe {kind} path: {reference}"))?;
+    let (texture_reference, slice) = mengine_assets::split_sprite_reference(reference);
+    let path =
+        mengine_runtime::textures::resolve_project_asset_path(project_root, texture_reference)
+            .with_context(|| format!("unsafe {kind} path: {reference}"))?;
     if validated.insert(path.clone()) {
         mengine_assets::load_texture_rgba8(&path)
             .with_context(|| format!("invalid {kind} {}", path.display()))?;
+    }
+    if let Some(slice) = slice {
+        let dimensions = mengine_assets::texture_dimensions(&path)
+            .with_context(|| format!("invalid {kind} {}", path.display()))?;
+        let import_path = mengine_assets::sprite_import_path(&path);
+        let import = mengine_assets::load_sprite_import(&path, dimensions)
+            .with_context(|| format!("invalid sprite import {}", import_path.display()))?;
+        validated.insert(import_path.clone());
+        if import.resolve(slice, dimensions).is_none() {
+            bail!(
+                "missing sprite slice '{slice}' for {kind} in {}",
+                import_path.display()
+            );
+        }
     }
     Ok(())
 }

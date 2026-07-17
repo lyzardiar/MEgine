@@ -135,7 +135,17 @@ export function mengineFsPlugin(opts: MengineFsOptions | string): Plugin {
     fs.mkdirSync(path.dirname(statePath), { recursive: true });
   }
 
-  type TextureAsset = { id: string; name: string; folder: string; relPath: string };
+  type TextureAsset = {
+    id: string;
+    name: string;
+    folder: string;
+    relPath: string;
+    textureId?: string;
+    sliceName?: string;
+    rect?: [number, number, number, number];
+    pivot?: [number, number];
+    pixelsPerUnit?: number;
+  };
   type ProjectFileAsset = TextureAsset & {
     kind: 'animation' | 'animator-controller' | 'audio' | 'material' | 'model' | 'prefab' | 'spine-json' | 'spine-binary' | 'spine-atlas';
   };
@@ -167,7 +177,50 @@ export function mengineFsPlugin(opts: MengineFsOptions | string): Plugin {
             name: f,
             folder,
             relPath,
+            textureId: relPath,
           });
+          const importPath = `${abs}.sprite.json`;
+          if (!fs.existsSync(importPath)) continue;
+          try {
+            const settings = JSON.parse(fs.readFileSync(importPath, 'utf8')) as {
+              version?: unknown;
+              mode?: unknown;
+              pixels_per_unit?: unknown;
+              slices?: unknown;
+            };
+            if (Number(settings.version ?? 1) !== 1 || settings.mode !== 'multiple' || !Array.isArray(settings.slices)) continue;
+            const pixelsPerUnit = Number(settings.pixels_per_unit ?? 100);
+            const seen = new Set<string>();
+            for (const candidate of settings.slices.slice(0, 4096)) {
+              if (!candidate || typeof candidate !== 'object') continue;
+              const slice = candidate as { name?: unknown; rect?: unknown; pivot?: unknown };
+              const sliceName = String(slice.name ?? '').trim();
+              const nameKey = sliceName.toLocaleLowerCase();
+              if (!sliceName || sliceName.includes('#') || seen.has(nameKey)) continue;
+              if (!Array.isArray(slice.rect) || slice.rect.length < 4) continue;
+              const rect = slice.rect.slice(0, 4).map(Number) as [number, number, number, number];
+              if (rect.some((value) => !Number.isInteger(value)) || rect[0] < 0 || rect[1] < 0 || rect[2] <= 0 || rect[3] <= 0) continue;
+              const rawPivot = Array.isArray(slice.pivot) ? slice.pivot : [0.5, 0.5];
+              const pivot: [number, number] = [0, 1].map((axis) => {
+                const value = Number(rawPivot[axis]);
+                return Number.isFinite(value) ? Math.max(0, Math.min(1, value)) : 0.5;
+              }) as [number, number];
+              seen.add(nameKey);
+              sprites.push({
+                id: `${relPath}#${sliceName}`,
+                name: `${sliceName} (${f})`,
+                folder,
+                relPath,
+                textureId: relPath,
+                sliceName,
+                rect,
+                pivot,
+                pixelsPerUnit: Number.isFinite(pixelsPerUnit) && pixelsPerUnit > 0 ? pixelsPerUnit : 100,
+              });
+            }
+          } catch {
+            // Invalid import metadata remains visible through the base texture and Sprite Editor.
+          }
         }
       }
     };
@@ -214,7 +267,9 @@ export function mengineFsPlugin(opts: MengineFsOptions | string): Plugin {
           continue;
         }
         const lower = file.toLowerCase();
-        const kind: ProjectFileAsset['kind'] | null = lower.endsWith('.manim')
+        const kind: ProjectFileAsset['kind'] | null = lower.endsWith('.sprite.json')
+          ? null
+          : lower.endsWith('.manim')
           ? 'animation'
           : lower.endsWith('.mcontroller')
             ? 'animator-controller'

@@ -1,6 +1,11 @@
 /** Load & draw project sprites for editor UI canvas. */
 
-import { resolveSpriteId, spriteAssetUrl } from './spriteLibrary';
+import {
+  resolveSpriteId,
+  resolveSpriteSourceRect,
+  resolveSpriteTextureId,
+  spriteAssetUrl,
+} from './spriteLibrary';
 import { readProjectAssetBytes } from './projectAssets';
 import { isDesktopEditor } from './transport/editorTransport';
 import { planNineSlice, type SpriteBorder } from './ui/nineSlice';
@@ -8,7 +13,7 @@ import { planNineSlice, type SpriteBorder } from './ui/nineSlice';
 const _cache = new Map<string, HTMLImageElement>();
 
 export function getSpriteImage(sprite: string): HTMLImageElement | null {
-  const id = resolveSpriteId(sprite);
+  const id = resolveSpriteTextureId(sprite);
   if (!id || id === 'white') return null;
   if (isDesktopEditor()) {
     const cacheKey = `desktop:${id}`;
@@ -43,6 +48,21 @@ export function getSpriteImage(sprite: string): HTMLImageElement | null {
   return img;
 }
 
+export function getSpriteSourceRect(
+  sprite: string,
+  image: HTMLImageElement,
+): [number, number, number, number] {
+  const authored = resolveSpriteSourceRect(sprite);
+  if (!authored) return [0, 0, image.naturalWidth, image.naturalHeight];
+  const x = Math.max(0, Math.min(image.naturalWidth, authored[0]));
+  const y = Math.max(0, Math.min(image.naturalHeight, authored[1]));
+  const width = Math.max(0, Math.min(image.naturalWidth - x, authored[2]));
+  const height = Math.max(0, Math.min(image.naturalHeight - y, authored[3]));
+  return width > 0 && height > 0
+    ? [x, y, width, height]
+    : [0, 0, image.naturalWidth, image.naturalHeight];
+}
+
 /** Pixel size of sprite (Unity SetNativeSize). Resolves when image loads. */
 export function loadSpriteNativeSize(
   sprite: string,
@@ -55,13 +75,15 @@ export function loadSpriteNativeSize(
   if (!img) return Promise.resolve(null);
 
   if (img.complete && img.naturalWidth > 0) {
-    return Promise.resolve({ w: img.naturalWidth, h: img.naturalHeight });
+    const source = getSpriteSourceRect(sprite, img);
+    return Promise.resolve({ w: source[2], h: source[3] });
   }
 
   return new Promise((resolve) => {
     const done = () => {
       if (img.naturalWidth > 0) {
-        resolve({ w: img.naturalWidth, h: img.naturalHeight });
+        const source = getSpriteSourceRect(sprite, img);
+        resolve({ w: source[2], h: source[3] });
       } else {
         resolve(null);
       }
@@ -87,7 +109,7 @@ export function drawSpriteInRect(
   drawSpriteRegion(
     ctx,
     img,
-    [0, 0, img.naturalWidth, img.naturalHeight],
+    getSpriteSourceRect(sprite, img),
     [x, y, w, h],
     color,
   );
@@ -108,9 +130,10 @@ export function drawSpriteSlicedInRect(
 ): boolean {
   const img = getSpriteImage(sprite);
   if (!img || !img.complete || img.naturalWidth < 1 || img.naturalHeight < 1) return false;
+  const sourceRect = getSpriteSourceRect(sprite, img);
   const logicalSource: [number, number] = [
-    Math.max(1, Number(sourceSize?.[0]) || img.naturalWidth),
-    Math.max(1, Number(sourceSize?.[1]) || img.naturalHeight),
+    Math.max(1, Number(sourceSize?.[0]) || sourceRect[2]),
+    Math.max(1, Number(sourceSize?.[1]) || sourceRect[3]),
   ];
   const regions = planNineSlice(
     logicalSource,
@@ -124,10 +147,10 @@ export function drawSpriteSlicedInRect(
       ctx,
       img,
       [
-        region.source.x * img.naturalWidth / logicalSource[0],
-        region.source.y * img.naturalHeight / logicalSource[1],
-        region.source.w * img.naturalWidth / logicalSource[0],
-        region.source.h * img.naturalHeight / logicalSource[1],
+        sourceRect[0] + region.source.x * sourceRect[2] / logicalSource[0],
+        sourceRect[1] + region.source.y * sourceRect[3] / logicalSource[1],
+        region.source.w * sourceRect[2] / logicalSource[0],
+        region.source.h * sourceRect[3] / logicalSource[1],
       ],
       [x + region.destination.x, y + region.destination.y, region.destination.w, region.destination.h],
       color,
@@ -148,6 +171,7 @@ export function drawSpriteUvInRect(
 ): boolean {
   const img = getSpriteImage(sprite);
   if (!img || !img.complete || img.naturalWidth < 1 || img.naturalHeight < 1) return false;
+  const sourceRect = getSpriteSourceRect(sprite, img);
   const u0 = Math.max(0, Math.min(1, Number(uvRect[0]) || 0));
   const v0 = Math.max(0, Math.min(1, Number(uvRect[1]) || 0));
   const u1 = Math.max(0, Math.min(1, u0 + (Number(uvRect[2]) || 0)));
@@ -157,10 +181,10 @@ export function drawSpriteUvInRect(
     ctx,
     img,
     [
-      u0 * img.naturalWidth,
-      v0 * img.naturalHeight,
-      (u1 - u0) * img.naturalWidth,
-      (v1 - v0) * img.naturalHeight,
+      sourceRect[0] + u0 * sourceRect[2],
+      sourceRect[1] + v0 * sourceRect[3],
+      (u1 - u0) * sourceRect[2],
+      (v1 - v0) * sourceRect[3],
     ],
     [x, y, w, h],
     color,

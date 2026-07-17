@@ -11,6 +11,11 @@ export type SpriteAsset = {
   name: string;
   folder: string;
   relPath: string;
+  textureId?: string | null;
+  sliceName?: string | null;
+  rect?: [number, number, number, number] | null;
+  pivot?: [number, number] | null;
+  pixelsPerUnit?: number | null;
 };
 
 let _sprites: SpriteAsset[] = [];
@@ -98,8 +103,10 @@ export function normalizeSpriteRef(raw: string): string {
 export function resolveSpriteId(raw: string): string {
   const n = normalizeSpriteRef(raw);
   if (!n || n === 'white') return 'white';
-  if (n.toLowerCase().startsWith('assets/')) return n;
   const lower = n.toLowerCase();
+  const exact = _sprites.find((sprite) => sprite.id.toLowerCase() === lower);
+  if (exact) return exact.id;
+  if (n.toLowerCase().startsWith('assets/')) return n;
   const withPng = lower.endsWith('.png') ? lower : `${lower}.png`;
   const hit = _sprites.find(
     (s) =>
@@ -111,8 +118,25 @@ export function resolveSpriteId(raw: string): string {
   return hit?.id ?? n;
 }
 
+export function resolveSpriteAsset(raw: string): SpriteAsset | null {
+  const id = resolveSpriteId(raw);
+  return _sprites.find((sprite) => sprite.id.toLowerCase() === id.toLowerCase()) ?? null;
+}
+
+export function resolveSpriteTextureId(raw: string): string {
+  const id = resolveSpriteId(raw);
+  if (id === 'white') return id;
+  const asset = resolveSpriteAsset(id);
+  return asset?.textureId || id.split('#', 1)[0];
+}
+
+export function resolveSpriteSourceRect(raw: string): [number, number, number, number] | null {
+  const rect = resolveSpriteAsset(raw)?.rect;
+  return rect ? [...rect] as [number, number, number, number] : null;
+}
+
 export function spriteAssetUrl(id: string): string | null {
-  const ref = resolveSpriteId(id);
+  const ref = resolveSpriteTextureId(id);
   if (!ref || ref === 'white') return null;
   const withExt = /\.(png|jpe?g|webp|gif)$/i.test(ref) ? ref : `${ref}.png`;
   if (!withExt.toLowerCase().startsWith('assets/')) return null;
@@ -123,5 +147,8 @@ export function spriteAssetUrl(id: string): string | null {
 export function spriteDisplayName(id: string): string {
   const ref = normalizeSpriteRef(id);
   if (ref === 'white') return 'white';
-  return ref.split('/').pop() || ref;
+  const asset = resolveSpriteAsset(ref);
+  if (asset?.sliceName) return asset.name;
+  const [texture, slice] = ref.split('#', 2);
+  return slice || texture.split('/').pop() || ref;
 }

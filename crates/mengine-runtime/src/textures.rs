@@ -1,5 +1,8 @@
-use mengine_assets::load_texture_rgba8;
-use mengine_rhi::{RenderObject, Renderer, UiBatchPlan};
+use mengine_assets::{
+    load_sprite_import, load_texture_rgba8, split_sprite_reference, sprite_import_path,
+    texture_dimensions,
+};
+use mengine_rhi::{RenderObject, Renderer, UiBatchPlan, UiPrimitive};
 use std::collections::HashMap;
 use std::path::{Component, Path, PathBuf};
 use std::time::SystemTime;
@@ -16,6 +19,7 @@ pub struct RuntimeTextureCache {
     project_root: Option<PathBuf>,
     attempted_ui: HashMap<String, FileStamp>,
     attempted_material: HashMap<String, FileStamp>,
+    sprite_regions: HashMap<String, CachedSpriteRegion>,
 }
 
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
@@ -24,12 +28,27 @@ struct FileStamp {
     length: Option<u64>,
 }
 
+#[derive(Clone, Debug)]
+struct ResolvedSpriteRegion {
+    texture: String,
+    uv: [f32; 4],
+}
+
+#[derive(Clone, Debug)]
+struct CachedSpriteRegion {
+    texture_stamp: FileStamp,
+    import_stamp: FileStamp,
+    result: Result<ResolvedSpriteRegion, String>,
+    reported: bool,
+}
+
 impl RuntimeTextureCache {
     pub fn new(project_root: Option<PathBuf>) -> Self {
         Self {
             project_root,
             attempted_ui: HashMap::new(),
             attempted_material: HashMap::new(),
+            sprite_regions: HashMap::new(),
         }
     }
 
@@ -40,12 +59,78 @@ impl RuntimeTextureCache {
         self.project_root = project_root;
         self.attempted_ui.clear();
         self.attempted_material.clear();
+        self.sprite_regions.clear();
     }
 
     pub fn invalidate(&mut self, key: &str) {
         self.attempted_ui.remove(key);
         self.attempted_material
             .retain(|attempt, _| attempt.split_once('\0').is_none_or(|(_, path)| path != key));
+        self.sprite_regions.clear();
+    }
+
+    /// Resolve `Assets/sheet.png#Slice` references before batching. Legacy texture paths pass through.
+    pub fn resolve_sprite_regions(
+        &mut self,
+        primitives: &mut [UiPrimitive],
+    ) -> Vec<TextureLoadFailure> {
+        let Some(root) = self.project_root.clone() else {
+            return Vec::new();
+        };
+        let mut failures = Vec::new();
+        for primitive in primitives {
+            let original = primitive.key.texture.trim().to_owned();
+            let (texture_reference, slice) = split_sprite_reference(&original);
+            let Some(slice) = slice else {
+                continue;
+            };
+            let Some(texture_path) = resolve_texture_path(&root, texture_reference) else {
+                failures.push(TextureLoadFailure {
+                    key: original.into(),
+                    path: root.clone(),
+                    error: "sprite texture must be a project-relative path without '..'".into(),
+                });
+                continue;
+            };
+            let import_path = sprite_import_path(&texture_path);
+            let texture_stamp = file_stamp(&texture_path);
+            let import_stamp = file_stamp(&import_path);
+            let stale = self.sprite_regions.get(&original).is_none_or(|cached| {
+                cached.texture_stamp != texture_stamp || cached.import_stamp != import_stamp
+            });
+            if stale {
+                let result = resolve_sprite_region(&texture_path, texture_reference, slice);
+                self.sprite_regions.insert(
+                    original.clone(),
+                    CachedSpriteRegion {
+                        texture_stamp,
+                        import_stamp,
+                        result,
+                        reported: false,
+                    },
+                );
+            }
+            let Some(cached) = self.sprite_regions.get_mut(&original) else {
+                continue;
+            };
+            match &cached.result {
+                Ok(region) => {
+                    primitive.uv = compose_uv(region.uv, primitive.uv);
+                    primitive.key.texture = region.texture.clone();
+                }
+                Err(error) if !cached.reported => {
+                    cached.reported = true;
+                    primitive.key.texture = texture_reference.replace('\\', "/");
+                    failures.push(TextureLoadFailure {
+                        key: original,
+                        path: import_path,
+                        error: error.clone(),
+                    });
+                }
+                Err(_) => primitive.key.texture = texture_reference.replace('\\', "/"),
+            }
+        }
+        failures
     }
 
     pub fn sync(&mut self, renderer: &mut Renderer, plan: &UiBatchPlan) -> Vec<TextureLoadFailure> {
@@ -161,6 +246,34 @@ impl RuntimeTextureCache {
     }
 }
 
+fn resolve_sprite_region(
+    texture_path: &Path,
+    texture_reference: &str,
+    slice: &str,
+) -> Result<ResolvedSpriteRegion, String> {
+    let dimensions = texture_dimensions(texture_path).map_err(|error| error.to_string())?;
+    let import = load_sprite_import(texture_path, dimensions).map_err(|error| error.to_string())?;
+    let region = import.resolve(slice, dimensions).ok_or_else(|| {
+        format!(
+            "sprite slice '{slice}' is not defined in {}",
+            sprite_import_path(texture_path).display()
+        )
+    })?;
+    Ok(ResolvedSpriteRegion {
+        texture: texture_reference.trim().replace('\\', "/"),
+        uv: region.uv,
+    })
+}
+
+fn compose_uv(region: [f32; 4], authored: [f32; 4]) -> [f32; 4] {
+    [
+        region[0] + authored[0] * region[2],
+        region[1] + authored[1] * region[3],
+        authored[2] * region[2],
+        authored[3] * region[3],
+    ]
+}
+
 fn file_stamp(path: &Path) -> FileStamp {
     match std::fs::metadata(path) {
         Ok(metadata) => FileStamp {
@@ -202,6 +315,7 @@ pub fn resolve_texture_path(project_root: &Path, key: &str) -> Option<PathBuf> {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use mengine_rhi::UiPrimitive;
 
     #[test]
     fn resolves_assets_relative_to_project_root() {
@@ -237,5 +351,61 @@ mod tests {
                 ..initial
             }
         ));
+    }
+
+    #[test]
+    fn sprite_subresources_compose_uvs_and_share_the_base_texture_batch_key() {
+        let root =
+            std::env::temp_dir().join(format!("mengine-sprite-region-{}", uuid::Uuid::new_v4()));
+        let texture = root.join("Assets/Sprites/sheet.png");
+        std::fs::create_dir_all(texture.parent().unwrap()).unwrap();
+        image::RgbaImage::from_pixel(4, 2, image::Rgba([255, 255, 255, 255]))
+            .save(&texture)
+            .unwrap();
+        std::fs::write(
+            mengine_assets::sprite_import_path(&texture),
+            r#"{
+                "version":1,"mode":"multiple","pixels_per_unit":16,
+                "slices":[{"name":"Right","rect":[2,0,2,2],"pivot":[0.5,0.5]}]
+            }"#,
+        )
+        .unwrap();
+
+        let mut primitive = UiPrimitive::solid([0.0; 4], [1.0; 4]);
+        primitive.key.texture = "Assets/Sprites/sheet.png#Right".into();
+        primitive.uv = [1.0, 0.0, -1.0, 1.0];
+        let mut cache = RuntimeTextureCache::new(Some(root.clone()));
+        let failures = cache.resolve_sprite_regions(std::slice::from_mut(&mut primitive));
+        assert!(failures.is_empty());
+        assert_eq!(primitive.key.texture, "Assets/Sprites/sheet.png");
+        assert_eq!(primitive.uv, [1.0, 0.0, -0.5, 1.0]);
+
+        std::fs::remove_dir_all(root).unwrap();
+    }
+
+    #[test]
+    fn missing_sprite_slice_is_reported_once_for_an_unchanged_import() {
+        let root = std::env::temp_dir().join(format!(
+            "mengine-missing-sprite-region-{}",
+            uuid::Uuid::new_v4()
+        ));
+        let texture = root.join("Assets/sheet.png");
+        std::fs::create_dir_all(texture.parent().unwrap()).unwrap();
+        image::RgbaImage::from_pixel(1, 1, image::Rgba([255, 255, 255, 255]))
+            .save(&texture)
+            .unwrap();
+        let mut primitive = UiPrimitive::solid([0.0; 4], [1.0; 4]);
+        primitive.key.texture = "Assets/sheet.png#Missing".into();
+        let mut cache = RuntimeTextureCache::new(Some(root.clone()));
+        assert_eq!(
+            cache
+                .resolve_sprite_regions(std::slice::from_mut(&mut primitive))
+                .len(),
+            1
+        );
+        assert!(cache
+            .resolve_sprite_regions(std::slice::from_mut(&mut primitive))
+            .is_empty());
+        std::fs::remove_dir_all(root).unwrap();
     }
 }

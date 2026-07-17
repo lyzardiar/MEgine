@@ -117,7 +117,7 @@ import {
 } from '../rectSmartGuides';
 import type { RectResizeOptions, RectResizePlan } from '../rectResize';
 import { nextUiSelectable, uiNavigationAction } from '../ui/uiNavigation';
-import { getSpriteImage } from '../spriteDraw';
+import { getSpriteImage, getSpriteSourceRect } from '../spriteDraw';
 import { listSprites } from '../spriteLibrary';
 import { resolveAnimatedSpriteFrame } from '../animatedSprite';
 import {
@@ -1141,7 +1141,9 @@ export function Viewport(props: {
           data.cells.forEach((cell, index) => {
             const local = cellLocalPosition(cell, grid);
             const position = linePointWorld(local, t.position as Vec3, t.scale as Vec3, rotation);
-            const image = getSpriteImage(data.sprites[index] || 'white');
+            const tileSprite = data.sprites[index] || 'white';
+            const image = getSpriteImage(tileSprite);
+            const imageReady = image?.complete && image.naturalWidth > 0 ? image : null;
             const hit = drawWorldSprite(
               ctx,
               cam,
@@ -1151,10 +1153,11 @@ export function Viewport(props: {
               color,
               selected,
               rotation,
-              image?.complete && image.naturalWidth > 0 ? image : null,
+              imageReady,
               false,
               false,
               anchor,
+              imageReady ? getSpriteSourceRect(tileSprite, imageReady) : null,
             );
             if (hit) hitsRef.current.push({ kind: 'object', id: e.entity, x: hit.x, y: hit.y, r: hit.r });
           });
@@ -1236,6 +1239,7 @@ export function Viewport(props: {
             ? resolveAnimatedSpriteFrame(animatedSprite, performance.now() / 1000)
             : String(staticSprite?.sprite ?? 'white');
           const image = getSpriteImage(sprite);
+          const imageReady = image?.complete && image.naturalWidth > 0 ? image : null;
           const hit = drawWorldSprite(
             ctx,
             cam,
@@ -1245,10 +1249,11 @@ export function Viewport(props: {
             col,
             selected,
             rot,
-            image?.complete && image.naturalWidth > 0 ? image : null,
+            imageReady,
             spr.flip_x === true,
             spr.flip_y === true,
             pivot,
+            imageReady ? getSpriteSourceRect(sprite, imageReady) : null,
           );
           if (hit) hitsRef.current.push({ kind: 'object', id: e.entity, x: hit.x, y: hit.y, r: hit.r });
           continue;

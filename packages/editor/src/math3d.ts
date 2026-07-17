@@ -440,6 +440,7 @@ export function drawWorldSprite(
   flipX = false,
   flipY = false,
   pivot: [number, number] = [0.5, 0.5],
+  sourceRect?: [number, number, number, number] | null,
 ): { x: number; y: number; r: number } | null {
   const hx = Math.abs(halfSize[0]);
   const hy = Math.abs(halfSize[1]);
@@ -463,7 +464,23 @@ export function drawWorldSprite(
   const sourceWidth = Number(source?.naturalWidth ?? source?.width ?? 0);
   const sourceHeight = Number(source?.naturalHeight ?? source?.height ?? 0);
   if (source && sourceWidth > 0 && sourceHeight > 0) {
-    const affine = spriteSourceAffine(P, sourceWidth, sourceHeight, flipX, flipY);
+    const authoredX = Number(sourceRect?.[0]);
+    const authoredY = Number(sourceRect?.[1]);
+    const authoredWidth = Number(sourceRect?.[2]);
+    const authoredHeight = Number(sourceRect?.[3]);
+    const sourceX = sourceRect ? Math.max(0, Math.min(sourceWidth, authoredX)) : 0;
+    const sourceY = sourceRect ? Math.max(0, Math.min(sourceHeight, authoredY)) : 0;
+    const croppedWidth = sourceRect
+      ? Math.max(0, Math.min(sourceWidth - sourceX, authoredWidth))
+      : sourceWidth;
+    const croppedHeight = sourceRect
+      ? Math.max(0, Math.min(sourceHeight - sourceY, authoredHeight))
+      : sourceHeight;
+    const drawX = croppedWidth > 0 && croppedHeight > 0 ? sourceX : 0;
+    const drawY = croppedWidth > 0 && croppedHeight > 0 ? sourceY : 0;
+    const drawWidth = croppedWidth > 0 && croppedHeight > 0 ? croppedWidth : sourceWidth;
+    const drawHeight = croppedWidth > 0 && croppedHeight > 0 ? croppedHeight : sourceHeight;
+    const affine = spriteSourceAffine(P, drawWidth, drawHeight, flipX, flipY);
     if (!affine) return null;
     ctx.save();
     ctx.beginPath();
@@ -474,7 +491,7 @@ export function drawWorldSprite(
     ctx.globalAlpha *= Math.max(0, Math.min(1, ca));
     // Canvas affine mapping uses top-left, top-right and bottom-left projected corners.
     ctx.transform(...affine);
-    ctx.drawImage(source, 0, 0, sourceWidth, sourceHeight);
+    ctx.drawImage(source, drawX, drawY, drawWidth, drawHeight, 0, 0, drawWidth, drawHeight);
     ctx.restore();
     textured = true;
   }

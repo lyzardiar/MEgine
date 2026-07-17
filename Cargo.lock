@@ -3361,6 +3361,7 @@ name = "mengine-editor-tauri"
 version = "0.1.0"
 dependencies = [
  "log",
+ "mengine-assets",
  "mengine-core",
  "mengine-editor-host",
  "parking_lot",
@@ -3440,6 +3441,7 @@ dependencies = [
  "clap",
  "env_logger",
  "glam 0.29.3",
+ "image",
  "log",
  "mengine-assets",
  "mengine-audio",

@@ -30,6 +30,11 @@ struct ProjectSpriteInfo {
     name: String,
     folder: String,
     rel_path: String,
+    texture_id: String,
+    slice_name: Option<String>,
+    rect: Option<[u32; 4]>,
+    pivot: Option<[f32; 2]>,
+    pixels_per_unit: Option<f32>,
 }
 
 #[derive(serde::Serialize)]
@@ -295,7 +300,9 @@ fn remember_recent_project(app: &tauri::AppHandle, snapshot: &ProjectSnapshot) {
 
 fn project_asset_kind(name: &str) -> Option<&'static str> {
     let lower = name.to_ascii_lowercase();
-    if lower.ends_with(".manim") {
+    if lower.ends_with(".sprite.json") {
+        None
+    } else if lower.ends_with(".manim") {
         Some("animation")
     } else if lower.ends_with(".mcontroller") {
         Some("animator-controller")
@@ -394,10 +401,41 @@ fn collect_project_sprites(root: &Path, dir: &Path, output: &mut Vec<ProjectSpri
             .unwrap_or_else(|| "Assets".into());
         output.push(ProjectSpriteInfo {
             id: rel_path.clone(),
-            name,
-            folder,
-            rel_path,
+            name: name.clone(),
+            folder: folder.clone(),
+            rel_path: rel_path.clone(),
+            texture_id: rel_path.clone(),
+            slice_name: None,
+            rect: None,
+            pivot: None,
+            pixels_per_unit: None,
         });
+        let Ok(dimensions) = mengine_assets::texture_dimensions(&path) else {
+            continue;
+        };
+        let Ok(settings) = mengine_assets::load_sprite_import(&path, dimensions) else {
+            continue;
+        };
+        if settings.mode != mengine_assets::SpriteMode::Multiple {
+            continue;
+        }
+        let pixels_per_unit = settings.pixels_per_unit;
+        for slice in settings.slices {
+            if output.len() >= 10_000 {
+                return;
+            }
+            output.push(ProjectSpriteInfo {
+                id: format!("{rel_path}#{}", slice.name),
+                name: format!("{} ({name})", slice.name),
+                folder: folder.clone(),
+                rel_path: rel_path.clone(),
+                texture_id: rel_path.clone(),
+                slice_name: Some(slice.name),
+                rect: Some(slice.rect),
+                pivot: Some(slice.pivot),
+                pixels_per_unit: Some(pixels_per_unit),
+            });
+        }
     }
 }
 
@@ -1299,6 +1337,7 @@ mod tests {
             "character.glb",
             "skeleton.atlas",
             "theme.ogg",
+            "hero.png.sprite.json",
             "ignored.txt",
         ] {
             std::fs::write(assets.join(name), []).unwrap();
