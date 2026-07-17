@@ -12,6 +12,7 @@ import { rectLocalAxes, rectPivot } from '../rectGizmo';
 import { drawSpriteInRect, drawSpriteSlicedInRect, drawSpriteUvInRect } from '../spriteDraw';
 import type { SpriteBorder } from './nineSlice';
 import { applyAspectRatio } from './aspectRatioFitter';
+import { applyContentSize, measureLayoutContent, type LayoutMetrics } from './contentSizeFitter';
 import { resolveSpriteId } from '../spriteLibrary';
 import { project, type Camera, type Vec3 } from '../math3d';
 import { rectComponentSceneScale } from '../rectSceneScale';
@@ -302,6 +303,19 @@ function layoutChildRect(
   };
 }
 
+function layoutMetrics(group: Record<string, unknown>): LayoutMetrics {
+  return {
+    direction: String(group.direction ?? 'Vertical'),
+    padding: number4(group.padding, [8, 8, 8, 8]),
+    spacing: number2(group.spacing, [6, 6]),
+    cellSize: number2(group.cell_size ?? group.cellSize, [120, 32]),
+    constraintCount: Math.max(
+      1,
+      Math.trunc(number(group.constraint_count ?? group.constraintCount, 1)),
+    ),
+  };
+}
+
 function childrenOf(entities: UiEnt[], parent: number | null): UiEnt[] {
   return entities
     .filter((e) => (e.parent ?? null) === parent && e.active !== false)
@@ -461,6 +475,17 @@ export function layoutUiOverlay(
       let rect = forcedRect ?? (hasRt
         ? solveRectTransform(parentRect, scaleRt(ent.components.RectTransform))
         : parentRect);
+      const layout = ent.components.LayoutGroup as Record<string, unknown> | undefined;
+      const contentFitter = ent.components.ContentSizeFitter as Record<string, unknown> | undefined;
+      if (contentFitter && layout && rt) {
+        rect = applyContentSize(
+          rect,
+          rt.pivot,
+          String(contentFitter.horizontal_fit ?? contentFitter.horizontalFit ?? 'Unconstrained'),
+          String(contentFitter.vertical_fit ?? contentFitter.verticalFit ?? 'Unconstrained'),
+          measureLayoutContent(layoutMetrics(layout), childrenOf(entities, ent.entity).length, scale),
+        );
+      }
       const aspect = ent.components.AspectRatioFitter as Record<string, unknown> | undefined;
       if (aspect && rt) {
         rect = applyAspectRatio(
@@ -487,7 +512,6 @@ export function layoutUiOverlay(
       const scroll = ent.components.ScrollView as Record<string, unknown> | undefined;
       const tabs = ent.components.TabView as Record<string, unknown> | undefined;
       const group = ent.components.CanvasGroup as Record<string, unknown> | undefined;
-      const layout = ent.components.LayoutGroup as Record<string, unknown> | undefined;
       const mask = ent.components.RectMask2D as Record<string, unknown> | undefined;
       const isCanvas = isCanvasRoot || !!ent.components.Canvas;
       const anchorParentRect = hasRt && !isCanvasRoot ? { ...parentRect } : undefined;

@@ -184,6 +184,21 @@
     ],
     "type": "object"
   },
+  "ContentSizeFitter": {
+    "properties": {
+      "horizontal_fit": {
+        "type": "string"
+      },
+      "vertical_fit": {
+        "type": "string"
+      }
+    },
+    "required": [
+      "horizontal_fit",
+      "vertical_fit"
+    ],
+    "type": "object"
+  },
   "Despawn": {
     "properties": {
       "entity": {

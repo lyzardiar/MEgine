@@ -32,6 +32,14 @@ component AspectRatioFitter {
   aspect_ratio: float  = 1
 }
 
+/// Unity-style self sizing driven by the attached LayoutGroup.
+component ContentSizeFitter {
+  /// "Unconstrained" | "MinSize" | "PreferredSize"
+  horizontal_fit: string = "Unconstrained"
+  /// "Unconstrained" | "MinSize" | "PreferredSize"
+  vertical_fit:   string = "Unconstrained"
+}
+
 component Image {
   sprite:          string = "white"
   color:           float4 = [1, 1, 1, 1]

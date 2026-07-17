@@ -1,7 +1,7 @@
 use mengine_core::generated::{
-    AspectRatioFitter, Button, Canvas, CanvasGroup, CanvasScaler, Dropdown, Image, InputField,
-    LayoutGroup, ListView, Panel, ProgressBar, RawImage, RectMask2D, RectTransform, ScrollView,
-    Scrollbar, Slider, TabView, Text, Toggle,
+    AspectRatioFitter, Button, Canvas, CanvasGroup, CanvasScaler, ContentSizeFitter, Dropdown,
+    Image, InputField, LayoutGroup, ListView, Panel, ProgressBar, RawImage, RectMask2D,
+    RectTransform, ScrollView, Scrollbar, Slider, TabView, Text, Toggle,
 };
 use mengine_core::hierarchy::Parent;
 use mengine_core::{Entity, World};
@@ -259,6 +259,18 @@ fn walk(
         forced_rect,
     } = layout_state;
     let mut rect = forced_rect.unwrap_or_else(|| solve_rect(parent_rect, &rect_transform, scale));
+    if let (Some(fitter), Some(layout)) = (
+        world.get_component::<ContentSizeFitter>(entity),
+        world.get_component::<LayoutGroup>(entity),
+    ) {
+        rect = apply_content_size(
+            rect,
+            rect_transform.pivot,
+            &fitter.horizontal_fit,
+            &fitter.vertical_fit,
+            measure_layout_content(layout, children_of(world, entity).len(), scale),
+        );
+    }
     if let Some(fitter) = world.get_component::<AspectRatioFitter>(entity) {
         rect = apply_aspect_ratio(
             rect,
@@ -1089,13 +1101,95 @@ fn children_of(world: &World, parent: Entity) -> Vec<Entity> {
     let mut children: Vec<Entity> = world
         .iter_entities()
         .filter(|entity| {
-            world
-                .get_component::<Parent>(*entity)
-                .is_some_and(|value| value.entity == parent)
+            world.entity_active(*entity)
+                && world
+                    .get_component::<Parent>(*entity)
+                    .is_some_and(|value| value.entity == parent)
         })
         .collect();
     children.sort_by_key(|entity| world.sibling_index(*entity));
     children
+}
+
+#[derive(Clone, Copy, Debug, PartialEq)]
+struct ContentSize {
+    min_width: f32,
+    min_height: f32,
+    preferred_width: f32,
+    preferred_height: f32,
+}
+
+fn measure_layout_content(group: &LayoutGroup, child_count: usize, scale: f32) -> ContentSize {
+    let count = child_count;
+    let left = (group.padding[0] * scale).max(0.0);
+    let top = (group.padding[1] * scale).max(0.0);
+    let right = (group.padding[2] * scale).max(0.0);
+    let bottom = (group.padding[3] * scale).max(0.0);
+    let cell_width = (group.cell_size[0] * scale).max(0.0);
+    let cell_height = (group.cell_size[1] * scale).max(0.0);
+    let spacing_x = (group.spacing[0] * scale).max(0.0);
+    let spacing_y = (group.spacing[1] * scale).max(0.0);
+    let min_width = left + right;
+    let min_height = top + bottom;
+    if count == 0 {
+        return ContentSize {
+            min_width,
+            min_height,
+            preferred_width: min_width,
+            preferred_height: min_height,
+        };
+    }
+    let (preferred_width, preferred_height) = match group.direction.as_str() {
+        "Horizontal" => (
+            min_width + cell_width * count as f32 + spacing_x * count.saturating_sub(1) as f32,
+            min_height + cell_height,
+        ),
+        "Grid" => {
+            let columns = (group.constraint_count.max(1) as usize).min(count);
+            let rows = count.div_ceil(columns);
+            (
+                min_width
+                    + cell_width * columns as f32
+                    + spacing_x * columns.saturating_sub(1) as f32,
+                min_height + cell_height * rows as f32 + spacing_y * rows.saturating_sub(1) as f32,
+            )
+        }
+        _ => (
+            min_width + cell_width,
+            min_height + cell_height * count as f32 + spacing_y * count.saturating_sub(1) as f32,
+        ),
+    };
+    ContentSize {
+        min_width,
+        min_height,
+        preferred_width,
+        preferred_height,
+    }
+}
+
+fn apply_content_size(
+    rect: UiRect,
+    pivot: [f32; 2],
+    horizontal_fit: &str,
+    vertical_fit: &str,
+    content: ContentSize,
+) -> UiRect {
+    let width = match horizontal_fit {
+        "MinSize" => content.min_width,
+        "PreferredSize" => content.preferred_width,
+        _ => rect.width,
+    };
+    let height = match vertical_fit {
+        "MinSize" => content.min_height,
+        "PreferredSize" => content.preferred_height,
+        _ => rect.height,
+    };
+    UiRect {
+        x: rect.x + (rect.width - width) * pivot[0],
+        y: rect.y + (rect.height - height) * pivot[1],
+        width: width.max(0.0),
+        height: height.max(0.0),
+    }
 }
 
 fn control_region(
@@ -1840,6 +1934,41 @@ mod tests {
                 y: 0.0,
                 width: 200.0,
                 height: 200.0,
+            }
+        );
+    }
+
+    #[test]
+    fn content_size_fitter_uses_layout_group_metrics_and_pivot() {
+        let group = LayoutGroup {
+            direction: "Grid".into(),
+            padding: [8.0, 10.0, 12.0, 14.0],
+            spacing: [6.0, 4.0],
+            cell_size: [100.0, 30.0],
+            constraint_count: 2,
+            child_force_expand: true,
+        };
+        let content = measure_layout_content(&group, 3, 1.0);
+        assert_eq!(content.preferred_width, 226.0);
+        assert_eq!(content.preferred_height, 88.0);
+        assert_eq!(
+            apply_content_size(
+                UiRect {
+                    x: 10.0,
+                    y: 20.0,
+                    width: 300.0,
+                    height: 200.0,
+                },
+                [0.5, 1.0],
+                "PreferredSize",
+                "MinSize",
+                content,
+            ),
+            UiRect {
+                x: 47.0,
+                y: 196.0,
+                width: 226.0,
+                height: 24.0,
             }
         );
     }

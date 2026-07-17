@@ -183,6 +183,11 @@ export interface AspectRatioFitter {
   aspectRatio: number;
 }
 
+export interface ContentSizeFitter {
+  horizontalFit: string;
+  verticalFit: string;
+}
+
 export interface Image {
   sprite: string;
   color: [number, number, number, number];
@@ -380,6 +385,7 @@ export type ComponentName =
   | 'CanvasScaler'
   | 'RectTransform'
   | 'AspectRatioFitter'
+  | 'ContentSizeFitter'
   | 'Image'
   | 'RawImage'
   | 'Button'
@@ -420,6 +426,7 @@ export const COMPONENT_NAMES = [
   'CanvasScaler',
   'RectTransform',
   'AspectRatioFitter',
+  'ContentSizeFitter',
   'Image',
   'RawImage',
   'Button',

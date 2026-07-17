@@ -599,6 +599,28 @@ impl Component for AspectRatioFitter {
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
 #[serde(default)]
+pub struct ContentSizeFitter {
+    pub horizontal_fit: String,
+    pub vertical_fit: String,
+}
+
+impl Default for ContentSizeFitter {
+    fn default() -> Self {
+        Self {
+            horizontal_fit: "Unconstrained".into(),
+            vertical_fit: "Unconstrained".into(),
+        }
+    }
+}
+
+impl Component for ContentSizeFitter {
+    fn type_name() -> &'static str {
+        "ContentSizeFitter"
+    }
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize)]
+#[serde(default)]
 pub struct Image {
     pub sprite: String,
     pub color: [f32; 4],
@@ -1174,6 +1196,7 @@ pub mod meta {
         "CanvasScaler",
         "RectTransform",
         "AspectRatioFitter",
+        "ContentSizeFitter",
         "Image",
         "RawImage",
         "Button",

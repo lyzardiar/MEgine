@@ -3,10 +3,10 @@ use crate::component::{Component, ComponentBox, ComponentId, ComponentRegistry};
 use crate::entity::Entity;
 use crate::generated::{
     AspectRatioFitter, AutoRotate, Button, Camera2D, Camera3D, Canvas, CanvasGroup, CanvasScaler,
-    DirectionalLight, Dropdown, EditorOnly, Image, InputField, Layer, LayoutGroup, ListView,
-    MeshRenderer, Name, Panel, PbrMaterial, PointLight, ProgressBar, RawImage, RectMask2D,
-    RectTransform, ScrollView, Scrollbar, Slider, SpotLight, SpriteRenderer, TabView, Text, Toggle,
-    Transform, Transform2D,
+    ContentSizeFitter, DirectionalLight, Dropdown, EditorOnly, Image, InputField, Layer,
+    LayoutGroup, ListView, MeshRenderer, Name, Panel, PbrMaterial, PointLight, ProgressBar,
+    RawImage, RectMask2D, RectTransform, ScrollView, Scrollbar, Slider, SpotLight, SpriteRenderer,
+    TabView, Text, Toggle, Transform, Transform2D,
 };
 use crate::hierarchy::{Children, Parent};
 use crate::schedule::Schedule;
@@ -384,6 +384,9 @@ impl World {
             "AspectRatioFitter" | "aspectRatioFitter" => {
                 self.insert_json_component::<AspectRatioFitter>(entity, value);
             }
+            "ContentSizeFitter" | "contentSizeFitter" => {
+                self.insert_json_component::<ContentSizeFitter>(entity, value);
+            }
             "RectMask2D" | "rectMask2D" | "rectMask2d" => {
                 self.insert_json_component::<RectMask2D>(entity, value);
             }
@@ -476,6 +479,7 @@ fn canonical_component_name(component: &str) -> &str {
         "CanvasGroup" | "canvasGroup" => "CanvasGroup",
         "RectTransform" | "rectTransform" => "RectTransform",
         "AspectRatioFitter" | "aspectRatioFitter" => "AspectRatioFitter",
+        "ContentSizeFitter" | "contentSizeFitter" => "ContentSizeFitter",
         "RectMask2D" | "rectMask2D" | "rectMask2d" => "RectMask2D",
         "LayoutGroup" | "layoutGroup" => "LayoutGroup",
         "Image" | "image" => "Image",

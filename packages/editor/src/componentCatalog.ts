@@ -119,6 +119,12 @@ const BUILTIN_CATALOG: ComponentCatalogEntry[] = [
     create: () => ({ aspect_mode: 'None', aspect_ratio: 1 }),
   },
   {
+    type: 'ContentSizeFitter',
+    label: 'Content Size Fitter',
+    description: 'Resize a RectTransform from its Layout Group content',
+    create: () => ({ horizontal_fit: 'Unconstrained', vertical_fit: 'Unconstrained' }),
+  },
+  {
     type: 'Image',
     label: 'Image',
     description: 'UI 图形',

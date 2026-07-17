@@ -136,6 +136,16 @@ export const BUILTIN_INSPECTOR_FIELDS: Readonly<
     },
     aspect_ratio: { min: 0.0001, step: 0.01 },
   },
+  ContentSizeFitter: {
+    horizontal_fit: {
+      kind: 'enum',
+      options: options('Unconstrained', 'MinSize', 'PreferredSize'),
+    },
+    vertical_fit: {
+      kind: 'enum',
+      options: options('Unconstrained', 'MinSize', 'PreferredSize'),
+    },
+  },
   Image: {
     sprite,
     image_type: { kind: 'enum', options: options('Simple', 'Sliced') },

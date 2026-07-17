@@ -314,6 +314,9 @@ mod tests {
                     "border": [8, 10, 8, 10], "source_size": [64, 64]
                 },
                 "AspectRatioFitter": { "aspect_mode": "FitInParent", "aspect_ratio": 1.777778 },
+                "ContentSizeFitter": {
+                    "horizontal_fit": "PreferredSize", "vertical_fit": "MinSize"
+                },
                 "RawImage": {
                     "texture": "Assets/UI/avatar.png", "uv_rect": [0.25, 0, 0.5, 1]
                 },
@@ -350,6 +353,10 @@ mod tests {
         assert_eq!(
             components["AspectRatioFitter"]["aspect_mode"],
             "FitInParent"
+        );
+        assert_eq!(
+            components["ContentSizeFitter"]["horizontal_fit"],
+            "PreferredSize"
         );
         assert_eq!(components["RawImage"]["uv_rect"][0], 0.25);
         assert_eq!(components["Text"]["text"], "Saved UI");

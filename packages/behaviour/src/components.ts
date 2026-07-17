@@ -123,6 +123,12 @@ export class AspectRatioFitter {
   aspect_ratio!: number;
 }
 
+export class ContentSizeFitter {
+  static readonly typeName = 'ContentSizeFitter' as const;
+  horizontal_fit!: string;
+  vertical_fit!: string;
+}
+
 /** UI Button component (not the @Button decorator). */
 export class UIButton {
   static readonly typeName = 'Button' as const;
@@ -146,6 +152,7 @@ export type BuiltinComponents = {
   CanvasScaler: CanvasScaler;
   RectTransform: RectTransform;
   AspectRatioFitter: AspectRatioFitter;
+  ContentSizeFitter: ContentSizeFitter;
   Image: Image;
   RawImage: RawImage;
   Button: UIButton;
