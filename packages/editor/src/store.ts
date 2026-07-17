@@ -37,6 +37,7 @@ import {
 import { planHierarchyMove } from './hierarchyMove';
 import { selectedRectRoots } from './rectSelection';
 import { planRectResize, type RectResizeHandle } from './rectResize';
+import { selectedHierarchyRoots } from './hierarchySelection';
 import './behaviours';
 
 export type EditorMode = 'edit' | 'play' | 'pause';
@@ -691,10 +692,7 @@ export function createEditorStore() {
     duplicateSelection() {
       if (!selectedIds.length || mode !== 'edit') return null;
       if (!gizmoDragging) pushUndo();
-      const roots = selectedIds.filter((id) => {
-        const e = find(id);
-        return !e?.parent || !selectedIds.includes(e.parent);
-      });
+      const roots = selectedHierarchyRoots(editEntities, selectedIds);
       const newIds: number[] = [];
       for (const r of roots) {
         const parent = find(r)?.parent ?? null;
@@ -708,20 +706,14 @@ export function createEditorStore() {
     deleteSelection() {
       if (!selectedIds.length || mode !== 'edit') return;
       pushUndo();
-      const roots = selectedIds.filter((id) => {
-        const e = find(id);
-        return !e?.parent || !selectedIds.includes(e.parent);
-      });
+      const roots = selectedHierarchyRoots(editEntities, selectedIds);
       deleteIdsWithSubtree(roots);
     },
     deleteSelected() {
       this.deleteSelection();
     },
     copySelection() {
-      const roots = selectedIds.filter((id) => {
-        const e = find(id);
-        return !e?.parent || !selectedIds.includes(e.parent);
-      });
+      const roots = selectedHierarchyRoots(editEntities, selectedIds);
       const payload: EntityRec[] = [];
       for (const r of roots) {
         for (const id of collectSubtreeIds(r)) {
