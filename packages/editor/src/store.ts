@@ -688,8 +688,8 @@ export function createEditorStore() {
       return this.createEmpty(p);
     },
     duplicateSelection() {
-      if (!selectedIds.length || mode !== 'edit') return;
-      pushUndo();
+      if (!selectedIds.length || mode !== 'edit') return null;
+      if (!gizmoDragging) pushUndo();
       const roots = selectedIds.filter((id) => {
         const e = find(id);
         return !e?.parent || !selectedIds.includes(e.parent);
@@ -702,6 +702,7 @@ export function createEditorStore() {
       }
       selectedIds = newIds;
       selectionAnchor = newIds[newIds.length - 1] ?? null;
+      return primarySelected();
     },
     deleteSelection() {
       if (!selectedIds.length || mode !== 'edit') return;

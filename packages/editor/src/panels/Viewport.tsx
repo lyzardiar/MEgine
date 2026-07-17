@@ -293,6 +293,7 @@ export function Viewport(props: {
   onSceneCamera: (partial: Partial<SceneCamera>) => void;
   onBeginGesture: () => void;
   onEndGesture: () => void;
+  onDuplicateRectDrag?: () => number | null;
   onTranslate: (entity: number, delta: Vec3) => void;
   onGizmoAxis: (entity: number, axis: 'x' | 'y' | 'z', amount: number) => void;
   onRotateWorld?: (entity: number, axis: Vec3, degrees: number) => void;
@@ -1071,7 +1072,7 @@ export function Viewport(props: {
         ev.preventDefault();
         return;
       }
-      if (ev.button === 1 || (ev.button === 0 && ev.altKey)) {
+      if (ev.button === 1 || (ev.button === 0 && ev.altKey && !scene2DRef.current)) {
         draggingRef.current = true;
         dragRef.current = { type: 'pan', lx: ev.clientX, ly: ev.clientY };
         ev.preventDefault();
@@ -1102,12 +1103,20 @@ export function Viewport(props: {
             draggingRef.current = true;
             activeGizmoRef.current = hit.part;
             propsRef.current.onBeginGesture();
+            const duplicateForDrag = ev.altKey
+              && propsRef.current.gizmo === 'translate'
+              && !pivotEditingRef.current
+              && !anchorEditingRef.current
+              && hit.part.kind !== 'size';
+            const dragEntity = duplicateForDrag
+              ? (propsRef.current.onDuplicateRectDrag?.() ?? propsRef.current.selected)
+              : propsRef.current.selected;
             dragRef.current = {
               type: 'rectGizmo',
               part: hit.part,
               lx: ev.clientX,
               ly: ev.clientY,
-              entity: propsRef.current.selected,
+              entity: dragEntity,
               pivot,
               rotDeg: rt.local_rotation,
               layoutScale: uiLayoutScaleRef.current || 1,

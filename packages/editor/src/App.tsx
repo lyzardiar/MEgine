@@ -558,6 +558,12 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
               }}
               onBeginGesture={() => store.beginTransformGesture()}
               onEndGesture={() => store.endTransformGesture()}
+              onDuplicateRectDrag={() => {
+                const duplicated = store.duplicateSelection();
+                if (duplicated != null) log('Duplicate (Alt Drag)');
+                refresh();
+                return duplicated;
+              }}
               onTranslate={(entity, delta) => {
                 store.translateBy(entity, delta);
                 refresh();
