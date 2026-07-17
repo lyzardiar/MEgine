@@ -82,6 +82,11 @@ import {
 import { buildSceneGrid } from '../sceneGrid';
 import { moveAnchorHandle } from '../ui/rectTransformModel';
 import { distanceForSceneZoom, normalizeSceneZoom } from '../sceneZoom';
+import {
+  rectAxisTranslationAmount,
+  rectTranslationAlongAxis,
+  screenRectTranslation,
+} from '../rectDrag';
 
 const SCENE_2D_KEY = 'mengine.scene.2d';
 const SCENE_SNAP_KEY = 'mengine.scene.snap';
@@ -1396,34 +1401,20 @@ export function Viewport(props: {
         } else if (mode === 'translate') {
           if (d.part.kind === 'axis') {
             const dir = d.part.axis === 'x' ? axes.x : axes.y;
-            const along = projectScreenDelta(dx, dy, dir) / scale;
-            if (d.part.axis === 'x') {
-              propsRef.current.onRectTranslate?.(
-                d.entity,
-                snapped('x', along, d.snap.settings.move),
-                0,
-              );
-            } else {
-              // local Y screen points up; UI y+ is down
-              propsRef.current.onRectTranslate?.(
-                d.entity,
-                0,
-                snapped('y', -along, d.snap.settings.move),
-              );
-            }
+            const along = rectAxisTranslationAmount(dx, dy, dir, scale);
+            const amount = snapped(
+              d.part.axis === 'x' ? 'x' : 'y',
+              along,
+              d.snap.settings.move,
+            );
+            const delta = rectTranslationAlongAxis(amount, dir);
+            propsRef.current.onRectTranslate?.(d.entity, delta.dx, delta.dy);
           } else {
+            const delta = screenRectTranslation(dx, dy, scale);
             propsRef.current.onRectTranslate?.(
               d.entity,
-              snapped(
-                'x',
-                projectScreenDelta(dx, dy, axes.x) / scale,
-                d.snap.settings.move,
-              ),
-              snapped(
-                'y',
-                -projectScreenDelta(dx, dy, axes.y) / scale,
-                d.snap.settings.move,
-              ),
+              snapped('x', delta.dx, d.snap.settings.move),
+              snapped('y', delta.dy, d.snap.settings.move),
             );
           }
         } else if (mode === 'scale') {
