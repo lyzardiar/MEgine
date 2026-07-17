@@ -93,6 +93,24 @@ impl ScriptHost {
         ))
     }
 
+    /// Delivers fixed-step collision transitions to the project's global script hooks.
+    /// Entity identifiers are strings so generation/index-packed `u64` values remain exact in JS.
+    pub fn notify_collision_events(
+        &mut self,
+        started: &[(u64, u64)],
+        stopped: &[(u64, u64)],
+    ) -> Result<(), ScriptError> {
+        if started.is_empty() && stopped.is_empty() {
+            return Ok(());
+        }
+        let started = collision_events_json(started);
+        let stopped = collision_events_json(stopped);
+        self.eval(&format!(
+            "for (const event of {started}) {{ if (typeof onCollisionEnter === 'function') onCollisionEnter(event); }}\
+             for (const event of {stopped}) {{ if (typeof onCollisionExit === 'function') onCollisionExit(event); }}"
+        ))
+    }
+
     pub fn push_json_commands(world: &mut World, value: JsonValue) {
         if let JsonValue::Array(arr) = value {
             for item in arr {
@@ -103,6 +121,20 @@ impl ScriptHost {
             world.commit();
         }
     }
+}
+
+fn collision_events_json(pairs: &[(u64, u64)]) -> JsonValue {
+    JsonValue::Array(
+        pairs
+            .iter()
+            .map(|(first, second)| {
+                serde_json::json!({
+                    "firstEntity": first.to_string(),
+                    "secondEntity": second.to_string(),
+                })
+            })
+            .collect(),
+    )
 }
 
 impl Default for ScriptHost {
@@ -252,6 +284,36 @@ mod tests {
             r#"
             if (!loadedScene || loadedScene.name !== "Level 2" || engine.scene.buildIndex !== 1) {
               throw new Error("scene context not delivered");
+            }
+            "#,
+        )
+        .unwrap();
+    }
+
+    #[test]
+    fn scripts_receive_exact_collision_entity_ids() {
+        let mut host = ScriptHost::new().unwrap();
+        host.eval(
+            r#"
+            var entered = [];
+            var exited = [];
+            function onCollisionEnter(event) { entered.push(event); }
+            function onCollisionExit(event) { exited.push(event); }
+            "#,
+        )
+        .unwrap();
+        host.notify_collision_events(
+            &[(9_007_199_254_740_993, 42)],
+            &[(11, 9_007_199_254_740_995)],
+        )
+        .unwrap();
+        host.eval(
+            r#"
+            if (entered.length !== 1 || entered[0].firstEntity !== "9007199254740993" || entered[0].secondEntity !== "42") {
+              throw new Error("collision enter event lost entity precision");
+            }
+            if (exited.length !== 1 || exited[0].secondEntity !== "9007199254740995") {
+              throw new Error("collision exit event missing");
             }
             "#,
         )

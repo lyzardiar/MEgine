@@ -30,7 +30,16 @@ interface EngineApi {
   scene: EngineSceneInfo | null;
 }
 
+interface PhysicsCollisionInfo {
+  readonly firstEntity: string;
+  readonly secondEntity: string;
+}
+
 declare const engine: EngineApi;
+declare function onTick(dt: number, frame: number): void;
+declare function onSceneLoaded(scene: EngineSceneInfo): void;
+declare function onCollisionEnter(event: PhysicsCollisionInfo): void;
+declare function onCollisionExit(event: PhysicsCollisionInfo): void;
 `;
 
 function help() {

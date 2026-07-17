@@ -105,6 +105,34 @@ export interface AnimationPlayer {
   time: number;
 }
 
+export interface RigidBody3D {
+  bodyType: string;
+  mass: number;
+  gravityScale: number;
+  linearDamping: number;
+  angularDamping: number;
+  velocity: [number, number, number];
+  angularVelocity: [number, number, number];
+  lockRotation: boolean;
+  ccd: boolean;
+}
+
+export interface BoxCollider3D {
+  size: [number, number, number];
+  center: [number, number, number];
+  isTrigger: boolean;
+  friction: number;
+  restitution: number;
+}
+
+export interface SphereCollider3D {
+  radius: number;
+  center: [number, number, number];
+  isTrigger: boolean;
+  friction: number;
+  restitution: number;
+}
+
 export interface Layer {
   value: number;
 }
@@ -427,6 +455,9 @@ export type ComponentName =
   | 'AnimatedSprite2D'
   | 'Line2D'
   | 'AnimationPlayer'
+  | 'RigidBody3D'
+  | 'BoxCollider3D'
+  | 'SphereCollider3D'
   | 'Layer'
   | 'EditorOnly'
   | 'AutoRotate'
@@ -474,6 +505,9 @@ export const COMPONENT_NAMES = [
   'AnimatedSprite2D',
   'Line2D',
   'AnimationPlayer',
+  'RigidBody3D',
+  'BoxCollider3D',
+  'SphereCollider3D',
   'Layer',
   'EditorOnly',
   'AutoRotate',

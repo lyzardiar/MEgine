@@ -520,7 +520,16 @@ interface EngineApi {
   scene: EngineSceneInfo | null;
 }
 
+interface PhysicsCollisionInfo {
+  readonly firstEntity: string;
+  readonly secondEntity: string;
+}
+
 declare const engine: EngineApi;
+declare function onTick(dt: number, frame: number): void;
+declare function onSceneLoaded(scene: EngineSceneInfo): void;
+declare function onCollisionEnter(event: PhysicsCollisionInfo): void;
+declare function onCollisionExit(event: PhysicsCollisionInfo): void;
 "#,
     )?;
 
@@ -557,6 +566,10 @@ declare const engine: EngineApi;
                     "scale": [1.0, 1.0, 1.0]
                 },
                 "MeshRenderer": { "mesh": "cube", "material": "default" },
+                "BoxCollider3D": {
+                    "size": [1.0, 1.0, 1.0], "center": [0.0, 0.0, 0.0],
+                    "is_trigger": false, "friction": 0.5, "restitution": 0.0
+                },
                 "PbrMaterial": { "base_color": [0.2, 0.55, 0.95, 1.0] }
             }),
         ),

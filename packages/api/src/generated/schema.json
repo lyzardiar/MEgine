@@ -126,6 +126,39 @@
     ],
     "type": "object"
   },
+  "BoxCollider3D": {
+    "properties": {
+      "center": {
+        "items": {
+          "type": "number"
+        },
+        "type": "array"
+      },
+      "friction": {
+        "type": "number"
+      },
+      "is_trigger": {
+        "type": "boolean"
+      },
+      "restitution": {
+        "type": "number"
+      },
+      "size": {
+        "items": {
+          "type": "number"
+        },
+        "type": "array"
+      }
+    },
+    "required": [
+      "size",
+      "center",
+      "is_trigger",
+      "friction",
+      "restitution"
+    ],
+    "type": "object"
+  },
   "Button": {
     "properties": {
       "font_size": {
@@ -1230,6 +1263,55 @@
     ],
     "type": "object"
   },
+  "RigidBody3D": {
+    "properties": {
+      "angular_damping": {
+        "type": "number"
+      },
+      "angular_velocity": {
+        "items": {
+          "type": "number"
+        },
+        "type": "array"
+      },
+      "body_type": {
+        "type": "string"
+      },
+      "ccd": {
+        "type": "boolean"
+      },
+      "gravity_scale": {
+        "type": "number"
+      },
+      "linear_damping": {
+        "type": "number"
+      },
+      "lock_rotation": {
+        "type": "boolean"
+      },
+      "mass": {
+        "type": "number"
+      },
+      "velocity": {
+        "items": {
+          "type": "number"
+        },
+        "type": "array"
+      }
+    },
+    "required": [
+      "body_type",
+      "mass",
+      "gravity_scale",
+      "linear_damping",
+      "angular_damping",
+      "velocity",
+      "angular_velocity",
+      "lock_rotation",
+      "ccd"
+    ],
+    "type": "object"
+  },
   "ScrollView": {
     "properties": {
       "horizontal": {
@@ -1464,6 +1546,36 @@
     },
     "required": [
       "components"
+    ],
+    "type": "object"
+  },
+  "SphereCollider3D": {
+    "properties": {
+      "center": {
+        "items": {
+          "type": "number"
+        },
+        "type": "array"
+      },
+      "friction": {
+        "type": "number"
+      },
+      "is_trigger": {
+        "type": "boolean"
+      },
+      "radius": {
+        "type": "number"
+      },
+      "restitution": {
+        "type": "number"
+      }
+    },
+    "required": [
+      "radius",
+      "center",
+      "is_trigger",
+      "friction",
+      "restitution"
     ],
     "type": "object"
   },

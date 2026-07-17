@@ -16,8 +16,10 @@ import {
 import {
   drawCamera2DGizmo,
   drawCameraGizmo,
+  drawBoxColliderGizmo,
   drawDirectionalLightGizmo,
   drawPointLightGizmo,
+  drawSphereColliderGizmo,
   drawSpotLightGizmo,
   transformBasis,
   type Camera2DData,
@@ -741,7 +743,8 @@ export function Viewport(props: {
           !!e.components.PointLight ||
           !!e.components.SpotLight ||
           (e.name ?? '').toLowerCase().includes('light');
-        if (!pr && !camComp && !isLight) return null;
+        const hasCollider = !!e.components.BoxCollider3D || !!e.components.SphereCollider3D;
+        if (!pr && !camComp && !isLight && !hasCollider) return null;
         return {
           e,
           t,
@@ -749,7 +752,7 @@ export function Viewport(props: {
           depth: pr?.depth ?? 0,
           hierarchyOrder,
           sortingOrder: entity2DSortingOrder(e.components),
-          editorGizmo: !isGame && (!!camComp || isLight),
+          editorGizmo: !isGame && (!!camComp || isLight || hasCollider),
         };
       })
       .filter(Boolean) as Array<{
@@ -942,6 +945,20 @@ export function Viewport(props: {
         materialColor,
       );
       if (hit) hitsRef.current.push({ kind: 'object', id: e.entity, x: hit.x, y: hit.y, r: hit.r });
+    }
+
+    if (!isGame) {
+      for (const { e, t } of drawn) {
+        if (!selSet.has(e.entity)) continue;
+        const box = e.components.BoxCollider3D as
+          | { size?: number[]; center?: number[]; is_trigger?: boolean }
+          | undefined;
+        const sphere = e.components.SphereCollider3D as
+          | { radius?: number; center?: number[]; is_trigger?: boolean }
+          | undefined;
+        if (box) drawBoxColliderGizmo(ctx, cam, vp, t, box);
+        if (sphere) drawSphereColliderGizmo(ctx, cam, vp, t, sphere);
+      }
     }
 
     // 2D and 3D particles share the same deterministic simulator. The editor

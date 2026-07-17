@@ -181,6 +181,7 @@ export function createEditorStore() {
       boot('Cube', {
         Transform: { position: [0, 0.5, 0], rotation: [0, 0, 0, 1], scale: [1, 1, 1] },
         MeshRenderer: { mesh: 'cube', material: 'default' },
+        BoxCollider3D: { size: [1, 1, 1], center: [0, 0, 0], is_trigger: false, friction: 0.5, restitution: 0 },
         AutoRotate: getBehaviour('AutoRotate')?.defaults() ?? {
           axis: [0, 1, 0],
           angle: 90,
@@ -1532,6 +1533,7 @@ export function createEditorStore() {
         {
           Transform: { position: [0, 0.5, 0], rotation: [0, 0, 0, 1], scale: [1, 1, 1] },
           MeshRenderer: { mesh: 'cube', material: 'default' },
+          BoxCollider3D: { size: [1, 1, 1], center: [0, 0, 0], is_trigger: false, friction: 0.5, restitution: 0 },
         },
         null,
         true,
@@ -1768,6 +1770,7 @@ export function createEditorStore() {
         {
           Transform: { position: [0, 0.5, 0], rotation: [0, 0, 0, 1], scale: [1, 1, 1] },
           MeshRenderer: { mesh: 'cube', material: 'default' },
+          BoxCollider3D: { size: [1, 1, 1], center: [0, 0, 0], is_trigger: false, friction: 0.5, restitution: 0 },
         },
         p,
         true,

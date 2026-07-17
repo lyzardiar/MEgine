@@ -106,6 +106,22 @@ export const BUILTIN_INSPECTOR_FIELDS: Readonly<
     roughness: { min: 0, max: 1, step: 0.01 },
     emissive_strength: { min: 0, step: 0.1 },
   },
+  RigidBody3D: {
+    body_type: { kind: 'enum', options: options('dynamic', 'fixed', 'kinematic') },
+    mass: { min: 0.001, step: 0.1 },
+    gravity_scale: { step: 0.1 },
+    linear_damping: { min: 0, step: 0.01 },
+    angular_damping: { min: 0, step: 0.01 },
+  },
+  BoxCollider3D: {
+    friction: { min: 0, step: 0.01 },
+    restitution: { min: 0, max: 1, step: 0.01 },
+  },
+  SphereCollider3D: {
+    radius: { min: 0.001, step: 0.01 },
+    friction: { min: 0, step: 0.01 },
+    restitution: { min: 0, max: 1, step: 0.01 },
+  },
   SpriteRenderer: {
     sprite,
     pivot: { min: 0, max: 1, step: 0.01 },

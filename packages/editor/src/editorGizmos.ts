@@ -231,6 +231,105 @@ export function drawCameraGizmo(
   return { x: pr.x, y: pr.y, r: 22 };
 }
 
+type BoxColliderData = {
+  size?: number[];
+  center?: number[];
+  is_trigger?: boolean;
+};
+
+type SphereColliderData = {
+  radius?: number;
+  center?: number[];
+  is_trigger?: boolean;
+};
+
+function colliderOrigin(transform: TransformLike, center?: number[]): {
+  origin: Vec3;
+  right: Vec3;
+  up: Vec3;
+  localZ: Vec3;
+  scale3: Vec3;
+} {
+  const position = transform.position.map((value) => Number(value) || 0) as Vec3;
+  const scale3 = transform.scale.map((value) => Number(value) || 0) as Vec3;
+  const basis = transformBasis(transform.rotation);
+  const localZ = scale(basis.forward, -1);
+  const offset = center ?? [0, 0, 0];
+  const origin = add(
+    add(position, scale(basis.right, (Number(offset[0]) || 0) * scale3[0])),
+    add(
+      scale(basis.up, (Number(offset[1]) || 0) * scale3[1]),
+      scale(localZ, (Number(offset[2]) || 0) * scale3[2]),
+    ),
+  );
+  return { origin, right: basis.right, up: basis.up, localZ, scale3 };
+}
+
+/** Selected collider wireframe matching the runtime's scaled Rapier cuboid. */
+export function drawBoxColliderGizmo(
+  ctx: CanvasRenderingContext2D,
+  viewCam: Camera,
+  vp: Vp,
+  transform: TransformLike,
+  collider: BoxColliderData,
+) {
+  const { origin, right, up, localZ, scale3 } = colliderOrigin(transform, collider.center);
+  const size = collider.size ?? [1, 1, 1];
+  const half: Vec3 = [
+    Math.max(0.001, Math.abs((Number(size[0]) || 0) * scale3[0])) * 0.5,
+    Math.max(0.001, Math.abs((Number(size[1]) || 0) * scale3[1])) * 0.5,
+    Math.max(0.001, Math.abs((Number(size[2]) || 0) * scale3[2])) * 0.5,
+  ];
+  const corners: Vec3[] = [];
+  for (const x of [-1, 1]) {
+    for (const y of [-1, 1]) {
+      for (const z of [-1, 1]) {
+        corners.push(
+          add(
+            add(origin, scale(right, x * half[0])),
+            add(scale(up, y * half[1]), scale(localZ, z * half[2])),
+          ),
+        );
+      }
+    }
+  }
+  const color = collider.is_trigger ? '#ffd76a' : '#72f2a8';
+  for (let a = 0; a < corners.length; a++) {
+    for (let b = a + 1; b < corners.length; b++) {
+      const differingAxes = ((a ^ b) & 1 ? 1 : 0) + ((a ^ b) & 2 ? 1 : 0) + ((a ^ b) & 4 ? 1 : 0);
+      if (differingAxes === 1) strokeWorldSeg(ctx, viewCam, vp, corners[a], corners[b], color, 2);
+    }
+  }
+}
+
+/** Selected collider wireframe matching the runtime's max-axis scaled sphere. */
+export function drawSphereColliderGizmo(
+  ctx: CanvasRenderingContext2D,
+  viewCam: Camera,
+  vp: Vp,
+  transform: TransformLike,
+  collider: SphereColliderData,
+) {
+  const { origin, right, up, localZ, scale3 } = colliderOrigin(transform, collider.center);
+  const authoredRadius = Number(collider.radius);
+  const radius = Math.max(0.001, Math.abs(Number.isFinite(authoredRadius) ? authoredRadius : 0.5)
+    * Math.max(Math.abs(scale3[0]), Math.abs(scale3[1]), Math.abs(scale3[2])));
+  const color = collider.is_trigger ? '#ffd76a' : '#72f2a8';
+  const circles: Array<[Vec3, Vec3]> = [[right, up], [right, localZ], [up, localZ]];
+  for (const [axisA, axisB] of circles) {
+    let previous = add(origin, scale(axisA, radius));
+    for (let i = 1; i <= 32; i++) {
+      const angle = (i / 32) * Math.PI * 2;
+      const current = add(
+        origin,
+        add(scale(axisA, Math.cos(angle) * radius), scale(axisB, Math.sin(angle) * radius)),
+      );
+      strokeWorldSeg(ctx, viewCam, vp, previous, current, color, 1.8);
+      previous = current;
+    }
+  }
+}
+
 export function drawCamera2DGizmo(
   ctx: CanvasRenderingContext2D,
   viewCam: Camera,

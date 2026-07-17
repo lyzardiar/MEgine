@@ -9,6 +9,7 @@ use mengine_core::generated::{
     PbrMaterial, PointLight, ScrollView, Scrollbar, Slider, SpotLight, TabView, Toggle, Transform,
 };
 use mengine_core::{Entity, World};
+use mengine_physics::PhysicsWorld;
 use mengine_platform::InputState;
 use mengine_rhi::{
     look_at, orthographic, perspective, DirectionalLightData, FrameCamera, FrameLighting,
@@ -90,6 +91,7 @@ struct App {
     textures: RuntimeTextureCache,
     animations: AnimationRuntime,
     materials: RuntimeMaterialCache,
+    physics: PhysicsWorld,
     scenes: SceneManager,
     loaded_scene: Option<LoadedScene>,
 }
@@ -135,6 +137,7 @@ impl App {
             textures,
             animations,
             materials,
+            physics: PhysicsWorld::default(),
             scenes,
             loaded_scene: None,
         }
@@ -180,6 +183,7 @@ impl App {
                 self.last_ui_draw_calls = u32::MAX;
                 self.particles = ParticleWorld::default();
                 self.animations = AnimationRuntime::new(self.args.project_root.clone());
+                self.physics.clear();
                 if let Some(window) = &self.window {
                     window.set_ime_allowed(false);
                 }
@@ -1120,15 +1124,31 @@ function onTick(dt, frame) {
                 self.last = now;
                 self.input.begin_frame(self.world.time.frame);
                 let steps = self.world.time.tick(dt);
+                let fixed_delta = self.world.time.fixed_delta;
+                let mut collision_started = Vec::new();
+                let mut collision_stopped = Vec::new();
 
                 for _ in 0..steps {
-                    self.angle += self.world.time.fixed_delta;
+                    self.angle += fixed_delta;
                     if let Some(cube) = self.cube {
                         if let Some(t) = self.world.get_component_mut::<Transform>(cube) {
                             let half = self.angle * 0.5;
                             t.rotation = [0.0, half.sin(), 0.0, half.cos()];
                         }
                     }
+                    let events = self.physics.step(&mut self.world, fixed_delta);
+                    collision_started.extend(
+                        events
+                            .started
+                            .into_iter()
+                            .map(|pair| (pair.first.to_u64(), pair.second.to_u64())),
+                    );
+                    collision_stopped.extend(
+                        events
+                            .stopped
+                            .into_iter()
+                            .map(|pair| (pair.first.to_u64(), pair.second.to_u64())),
+                    );
                 }
 
                 for failure in self.animations.update(&mut self.world, dt) {
@@ -1141,6 +1161,11 @@ function onTick(dt, frame) {
                 }
 
                 let scene_requests = if let Some(script) = self.script.as_mut() {
+                    if let Err(error) =
+                        script.notify_collision_events(&collision_started, &collision_stopped)
+                    {
+                        log::error!("physics callback failed: {error}");
+                    }
                     if let Err(error) = script.tick(&mut self.world, dt) {
                         log::error!("script tick failed: {error}");
                     }

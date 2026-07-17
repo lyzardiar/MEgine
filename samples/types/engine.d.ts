@@ -14,7 +14,16 @@ interface EngineSceneInfo {
   readonly buildSceneCount: number;
 }
 
+interface PhysicsCollisionInfo {
+  /** Exact generation/index-packed entity identifier. */
+  readonly firstEntity: string;
+  /** Exact generation/index-packed entity identifier. */
+  readonly secondEntity: string;
+}
+
 declare const engine: EngineApi;
 
 declare function onTick(dt: number, frame: number): void;
 declare function onSceneLoaded(scene: EngineSceneInfo): void;
+declare function onCollisionEnter(event: PhysicsCollisionInfo): void;
+declare function onCollisionExit(event: PhysicsCollisionInfo): void;

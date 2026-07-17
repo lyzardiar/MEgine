@@ -112,6 +112,37 @@ component AnimationPlayer {
   time:          float  = 0
 }
 
+/// 3D rigid-body simulation settings. body_type: "dynamic" | "fixed" | "kinematic".
+component RigidBody3D {
+  body_type:        string = "dynamic"
+  mass:             float  = 1
+  gravity_scale:    float  = 1
+  linear_damping:   float  = 0.05
+  angular_damping:  float  = 0.05
+  velocity:         float3 = [0, 0, 0]
+  angular_velocity: float3 = [0, 0, 0]
+  lock_rotation:    bool   = false
+  ccd:              bool   = false
+}
+
+/// Axis-aligned local box shape attached to this entity's RigidBody3D.
+component BoxCollider3D {
+  size:        float3 = [1, 1, 1]
+  center:      float3 = [0, 0, 0]
+  is_trigger:  bool   = false
+  friction:    float  = 0.5
+  restitution: float  = 0
+}
+
+/// Local sphere shape attached to this entity's RigidBody3D.
+component SphereCollider3D {
+  radius:      float  = 0.5
+  center:      float3 = [0, 0, 0]
+  is_trigger:  bool   = false
+  friction:    float  = 0.5
+  restitution: float  = 0
+}
+
 component Layer {
   value: int = 0
 }

@@ -500,6 +500,125 @@ impl Component for AnimationPlayer {
     }
 }
 
+#[derive(Clone, Debug, Serialize, Deserialize)]
+#[serde(default)]
+pub struct RigidBody3D {
+    pub body_type: String,
+    pub mass: f32,
+    pub gravity_scale: f32,
+    pub linear_damping: f32,
+    pub angular_damping: f32,
+    pub velocity: [f32; 3],
+    pub angular_velocity: [f32; 3],
+    pub lock_rotation: bool,
+    pub ccd: bool,
+}
+
+impl Default for RigidBody3D {
+    fn default() -> Self {
+        Self {
+            body_type: "dynamic".into(),
+            mass: 1.0,
+            gravity_scale: 1.0,
+            linear_damping: 0.05,
+            angular_damping: 0.05,
+            velocity: [0.0, 0.0, 0.0],
+            angular_velocity: [0.0, 0.0, 0.0],
+            lock_rotation: false,
+            ccd: false,
+        }
+    }
+}
+
+impl Component for RigidBody3D {
+    fn type_name() -> &'static str {
+        "RigidBody3D"
+    }
+    fn as_any(&self) -> &dyn std::any::Any {
+        self
+    }
+    fn as_any_mut(&mut self) -> &mut dyn std::any::Any {
+        self
+    }
+    fn to_value(&self) -> serde_json::Value {
+        serde_json::to_value(self).unwrap_or(serde_json::Value::Null)
+    }
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize)]
+#[serde(default)]
+pub struct BoxCollider3D {
+    pub size: [f32; 3],
+    pub center: [f32; 3],
+    pub is_trigger: bool,
+    pub friction: f32,
+    pub restitution: f32,
+}
+
+impl Default for BoxCollider3D {
+    fn default() -> Self {
+        Self {
+            size: [1.0, 1.0, 1.0],
+            center: [0.0, 0.0, 0.0],
+            is_trigger: false,
+            friction: 0.5,
+            restitution: 0.0,
+        }
+    }
+}
+
+impl Component for BoxCollider3D {
+    fn type_name() -> &'static str {
+        "BoxCollider3D"
+    }
+    fn as_any(&self) -> &dyn std::any::Any {
+        self
+    }
+    fn as_any_mut(&mut self) -> &mut dyn std::any::Any {
+        self
+    }
+    fn to_value(&self) -> serde_json::Value {
+        serde_json::to_value(self).unwrap_or(serde_json::Value::Null)
+    }
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize)]
+#[serde(default)]
+pub struct SphereCollider3D {
+    pub radius: f32,
+    pub center: [f32; 3],
+    pub is_trigger: bool,
+    pub friction: f32,
+    pub restitution: f32,
+}
+
+impl Default for SphereCollider3D {
+    fn default() -> Self {
+        Self {
+            radius: 0.5,
+            center: [0.0, 0.0, 0.0],
+            is_trigger: false,
+            friction: 0.5,
+            restitution: 0.0,
+        }
+    }
+}
+
+impl Component for SphereCollider3D {
+    fn type_name() -> &'static str {
+        "SphereCollider3D"
+    }
+    fn as_any(&self) -> &dyn std::any::Any {
+        self
+    }
+    fn as_any_mut(&mut self) -> &mut dyn std::any::Any {
+        self
+    }
+    fn to_value(&self) -> serde_json::Value {
+        serde_json::to_value(self).unwrap_or(serde_json::Value::Null)
+    }
+}
+
 #[derive(Clone, Debug, Default, Serialize, Deserialize)]
 #[serde(default)]
 pub struct Layer {
@@ -1756,6 +1875,9 @@ pub mod meta {
         "AnimatedSprite2D",
         "Line2D",
         "AnimationPlayer",
+        "RigidBody3D",
+        "BoxCollider3D",
+        "SphereCollider3D",
         "Layer",
         "EditorOnly",
         "AutoRotate",

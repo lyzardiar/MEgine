@@ -329,6 +329,16 @@ mod tests {
                     "clip": "Assets/Animations/idle.manim", "play_on_awake": true,
                     "playing": false, "speed": 1.25, "time": 0.5
                 },
+                "RigidBody3D": {
+                    "body_type": "dynamic", "mass": 2.5, "gravity_scale": 0.75,
+                    "velocity": [1, 2, 3], "lock_rotation": true, "ccd": true
+                },
+                "BoxCollider3D": {
+                    "size": [2, 3, 4], "center": [0, 0.5, 0], "friction": 0.8
+                },
+                "SphereCollider3D": {
+                    "radius": 1.25, "is_trigger": true, "restitution": 0.6
+                },
                 "AspectRatioFitter": { "aspect_mode": "FitInParent", "aspect_ratio": 1.777778 },
                 "ContentSizeFitter": {
                     "horizontal_fit": "PreferredSize", "vertical_fit": "MinSize"
@@ -391,6 +401,13 @@ mod tests {
         );
         assert_eq!(components["AnimationPlayer"]["playing"], false);
         assert_eq!(components["AnimationPlayer"]["speed"], 1.25);
+        assert_eq!(components["RigidBody3D"]["mass"], 2.5);
+        assert_eq!(
+            components["RigidBody3D"]["velocity"],
+            json!([1.0, 2.0, 3.0])
+        );
+        assert_eq!(components["BoxCollider3D"]["size"], json!([2.0, 3.0, 4.0]));
+        assert_eq!(components["SphereCollider3D"]["is_trigger"], true);
         assert_eq!(
             components["AspectRatioFitter"]["aspect_mode"],
             "FitInParent"
