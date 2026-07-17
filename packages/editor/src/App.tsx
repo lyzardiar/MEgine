@@ -578,6 +578,10 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
                 store.nudgeSelectedRects(dx, dy);
                 refresh();
               }}
+              onRectAlign={(deltas) => {
+                store.applySelectedRectDeltas(deltas);
+                refresh();
+              }}
               onRectRotate={(entity, degrees) => {
                 store.rotateRectBy(entity, degrees);
                 refresh();

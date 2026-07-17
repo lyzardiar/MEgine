@@ -73,6 +73,12 @@ import {
   type MarqueeRect,
   type MarqueeSelectionMode,
 } from '../marqueeSelection';
+import { selectedRectRoots } from '../rectSelection';
+import {
+  planRectAlignment,
+  type RectAlignmentCommand,
+  type RectAlignmentDelta,
+} from '../rectAlignment';
 
 const SCENE_2D_KEY = 'mengine.scene.2d';
 const SCENE_SNAP_KEY = 'mengine.scene.snap';
@@ -211,6 +217,7 @@ export function Viewport(props: {
   onRotateWorld?: (entity: number, axis: Vec3, degrees: number) => void;
   onRectTranslate?: (entity: number, dx: number, dy: number) => void;
   onRectNudge?: (dx: number, dy: number) => void;
+  onRectAlign?: (deltas: RectAlignmentDelta[]) => void;
   onRectRotate?: (entity: number, degrees: number) => void;
   onRectScale?: (entity: number, axis: 'x' | 'y' | 'both', amount: number) => void;
   onRectResize?: (
@@ -328,6 +335,8 @@ export function Viewport(props: {
   const [snapSettingsOpen, setSnapSettingsOpen] = useState(false);
   const snapSettingsElementRef = useRef<HTMLDivElement>(null);
   const [marquee, setMarquee] = useState<MarqueeRect | null>(null);
+  const [alignOpen, setAlignOpen] = useState(false);
+  const alignElementRef = useRef<HTMLDivElement>(null);
   /** Saved orbit angles when entering 2D (restore on exit). */
   const savedOrbitRef = useRef<{ yaw: number; pitch: number } | null>(null);
 
@@ -341,6 +350,15 @@ export function Viewport(props: {
     window.addEventListener('pointerdown', close);
     return () => window.removeEventListener('pointerdown', close);
   }, [snapSettingsOpen]);
+
+  useEffect(() => {
+    if (!alignOpen) return;
+    const close = (event: PointerEvent) => {
+      if (!alignElementRef.current?.contains(event.target as Node)) setAlignOpen(false);
+    };
+    window.addEventListener('pointerdown', close);
+    return () => window.removeEventListener('pointerdown', close);
+  }, [alignOpen]);
 
   // Continuous render loop
   useEffect(() => {
@@ -1486,6 +1504,27 @@ export function Viewport(props: {
     saveSceneSnap(next);
   };
 
+  const runRectAlignment = (command: RectAlignmentCommand) => {
+    const current = propsRef.current;
+    const roots = selectedRectRoots(
+      current.entities,
+      current.selectedIds ?? (current.selected == null ? [] : [current.selected]),
+    ).filter((id) => !current.entities.find((entity) => entity.entity === id)?.components.Canvas);
+    const screenDeltas = planRectAlignment(
+      uiItemsRef.current,
+      roots,
+      current.selected,
+      command,
+    );
+    const scale = uiLayoutScaleRef.current > 1e-6 ? uiLayoutScaleRef.current : 1;
+    current.onRectAlign?.(screenDeltas.map((delta) => ({
+      ...delta,
+      dx: delta.dx / scale,
+      dy: delta.dy / scale,
+    })));
+    setAlignOpen(false);
+  };
+
   useEffect(() => {
     const heldNudgeKeys = new Set<string>();
     const endNudge = () => {
@@ -1567,6 +1606,11 @@ export function Viewport(props: {
     };
   }, []);
 
+  const alignableRectCount = selectedRectRoots(
+    props.entities,
+    props.selectedIds ?? (props.selected == null ? [] : [props.selected]),
+  ).filter((id) => !props.entities.find((entity) => entity.entity === id)?.components.Canvas).length;
+
   return (
     <div className="viewport-wrap">
       {props.tab === 'scene' && (
@@ -1638,6 +1682,55 @@ export function Viewport(props: {
                   />
                 </label>
                 <small>Ctrl/Cmd: snap the current drag</small>
+              </div>
+            )}
+          </div>
+          <div className="scene-align" ref={alignElementRef}>
+            <button
+              type="button"
+              aria-label="Align RectTransforms"
+              aria-expanded={alignOpen}
+              disabled={alignableRectCount < 2}
+              className={alignOpen ? 'active' : ''}
+              title="Align selected RectTransforms to the primary selection"
+              onClick={() => setAlignOpen((open) => !open)}
+            >
+              Align ▾
+            </button>
+            {alignOpen && (
+              <div className="scene-align-popup" role="dialog" aria-label="Rect Alignment">
+                <strong>Align to Primary</strong>
+                <div className="scene-align-grid">
+                  {([
+                    ['left', 'Left'],
+                    ['center', 'H Center'],
+                    ['right', 'Right'],
+                    ['top', 'Top'],
+                    ['middle', 'V Center'],
+                    ['bottom', 'Bottom'],
+                  ] as Array<[RectAlignmentCommand, string]>).map(([command, label]) => (
+                    <button type="button" key={command} onClick={() => runRectAlignment(command)}>
+                      {label}
+                    </button>
+                  ))}
+                </div>
+                <strong>Distribute</strong>
+                <div className="scene-align-grid distribute">
+                  <button
+                    type="button"
+                    disabled={alignableRectCount < 3}
+                    onClick={() => runRectAlignment('distribute-horizontal')}
+                  >
+                    Horizontal
+                  </button>
+                  <button
+                    type="button"
+                    disabled={alignableRectCount < 3}
+                    onClick={() => runRectAlignment('distribute-vertical')}
+                  >
+                    Vertical
+                  </button>
+                </div>
               </div>
             )}
           </div>

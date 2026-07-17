@@ -2199,6 +2199,84 @@ body.insp-scrubbing * {
   font-size: 9px;
 }
 
+.scene-align {
+  position: relative;
+  flex: 0 0 auto;
+}
+
+.scene-align > button {
+  height: 26px;
+  padding: 0 8px;
+  border: 1px solid var(--u-border-2);
+  border-radius: 0;
+  background: var(--u-input);
+  color: var(--u-muted);
+  font-size: 11px;
+  cursor: pointer;
+}
+
+.scene-align > button:hover:not(:disabled),
+.scene-align > button.active {
+  color: #fff;
+  background: var(--u-selected);
+}
+
+.scene-align button:disabled {
+  opacity: 0.38;
+  cursor: default;
+}
+
+.scene-align-popup {
+  position: absolute;
+  z-index: 90;
+  top: 30px;
+  left: 0;
+  width: 222px;
+  padding: 8px;
+  border: 1px solid #171717;
+  box-shadow: 0 7px 18px rgba(0, 0, 0, 0.52);
+  background: #303030;
+}
+
+.scene-align-popup strong {
+  display: block;
+  margin: 0 0 5px;
+  color: var(--u-text-bright);
+  font-size: 10px;
+}
+
+.scene-align-popup strong:not(:first-child) {
+  margin-top: 8px;
+}
+
+.scene-align-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 3px;
+}
+
+.scene-align-grid.distribute {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.scene-align-grid button {
+  min-width: 0;
+  height: 26px;
+  padding: 0 4px;
+  border: 1px solid #202020;
+  border-radius: 0;
+  background: #3a3a3a;
+  color: var(--u-text);
+  font-size: 9px;
+  cursor: pointer;
+}
+
+.scene-align-grid button:hover:not(:disabled) {
+  border-color: #5794bd;
+  color: #fff;
+  background: #454b50;
+}
+
 .viewport-overlay {
   position: absolute;
   left: 8px;

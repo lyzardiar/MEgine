@@ -998,6 +998,31 @@ export function createEditorStore() {
     nudgeSelectedRects(dx: number, dy: number) {
       return translateSelectedRectRoots(dx, dy);
     },
+    applySelectedRectDeltas(deltas: Array<{ entity: number; dx: number; dy: number }>) {
+      if (mode !== 'edit') return false;
+      const roots = new Set(selectedRectRoots(editEntities, selectedIds));
+      const applicable = deltas.filter((delta) =>
+        roots.has(delta.entity) &&
+        Number.isFinite(delta.dx) &&
+        Number.isFinite(delta.dy) &&
+        (Math.abs(delta.dx) >= 1e-8 || Math.abs(delta.dy) >= 1e-8),
+      );
+      if (!applicable.length) return false;
+      pushUndo();
+      for (const delta of applicable) {
+        const entity = find(delta.entity);
+        if (!entity?.components.RectTransform) continue;
+        const rt = readRectTransform(entity.components.RectTransform);
+        entity.components.RectTransform = {
+          ...rt,
+          anchored_position: [
+            rt.anchored_position[0] + delta.dx,
+            rt.anchored_position[1] + delta.dy,
+          ],
+        };
+      }
+      return true;
+    },
     rotateRectBy(entity: number, degrees: number) {
       const e = find(entity);
       if (!e?.components.RectTransform || !Number.isFinite(degrees)) return;
