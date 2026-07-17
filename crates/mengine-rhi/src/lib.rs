@@ -1,13 +1,18 @@
 //! wgpu-based RHI with a minimal linear render-graph.
 
 mod mesh;
-mod renderer;
 mod render_graph;
+mod renderer;
+mod ui;
 
 pub use mesh::{MeshGpu, Vertex};
 pub use render_graph::{PassDesc, RenderGraph};
 pub use renderer::{
-    look_at, perspective, ClearColor, FrameCamera, RenderObject, Renderer,
+    look_at, orthographic, perspective, ClearColor, DirectionalLightData, FrameCamera,
+    FrameLighting, PointLightData, RenderMaterial, RenderObject, Renderer, SpotLightData,
+};
+pub use ui::{
+    UiBatch, UiBatchKey, UiBatchPlan, UiBlendMode, UiClipRect, UiFrameStats, UiPrimitive,
 };
 
 use thiserror::Error;

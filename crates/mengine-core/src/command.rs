@@ -8,7 +8,7 @@ use serde_json::Value;
 pub enum WorldCommand {
     Spawn {
         #[serde(default)]
-        name:       Option<String>,
+        name: Option<String>,
         #[serde(default)]
         components: Value,
     },
@@ -16,12 +16,12 @@ pub enum WorldCommand {
         entity: u64,
     },
     SetComponent {
-        entity:    u64,
+        entity: u64,
         component: String,
-        value:     Value,
+        value: Value,
     },
     RemoveComponent {
-        entity:    u64,
+        entity: u64,
         component: String,
     },
     SetParent {
@@ -53,14 +53,14 @@ impl CommandBuffer {
 
     pub fn spawn(&mut self, name: Option<&str>, components: Value) {
         self.push(WorldCommand::Spawn {
-            name:       name.map(|s| s.to_string()),
+            name: name.map(|s| s.to_string()),
             components,
         });
     }
 
     pub fn set_component(&mut self, entity: Entity, component: &str, value: Value) {
         self.push(WorldCommand::SetComponent {
-            entity:    entity.to_u64(),
+            entity: entity.to_u64(),
             component: component.to_string(),
             value,
         });

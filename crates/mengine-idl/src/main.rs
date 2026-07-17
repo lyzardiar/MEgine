@@ -4,8 +4,8 @@
 //!   command Name { ... }
 //!   resource Name { ... }
 
-mod parse;
 mod emit;
+mod parse;
 
 use anyhow::{Context, Result};
 use clap::Parser;
@@ -39,10 +39,9 @@ fn main() -> Result<()> {
         if path.extension().and_then(|s| s.to_str()) != Some("idl") {
             continue;
         }
-        let text = fs::read_to_string(path)
-            .with_context(|| format!("read {}", path.display()))?;
-        let parsed = parse::parse_idl(&text)
-            .with_context(|| format!("parse {}", path.display()))?;
+        let text = fs::read_to_string(path).with_context(|| format!("read {}", path.display()))?;
+        let parsed =
+            parse::parse_idl(&text).with_context(|| format!("parse {}", path.display()))?;
         log::info!("parsed {} ({} defs)", path.display(), parsed.len());
         units.extend(parsed);
     }

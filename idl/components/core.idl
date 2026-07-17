@@ -30,6 +30,20 @@ component DirectionalLight {
   intensity: float  = 1
 }
 
+component PointLight {
+  color:     float4 = [1, 1, 1, 1]
+  intensity: float  = 8
+  range:     float  = 10
+}
+
+component SpotLight {
+  color:               float4 = [1, 1, 1, 1]
+  intensity:           float  = 12
+  range:               float  = 12
+  inner_angle_degrees: float  = 25
+  outer_angle_degrees: float  = 40
+}
+
 component Camera2D {
   size:    float = 5
   primary: bool  = true
@@ -38,6 +52,17 @@ component Camera2D {
 component MeshRenderer {
   mesh:     string = "cube"
   material: string = "default"
+}
+
+/// Per-renderer physically based material override.
+component PbrMaterial {
+  base_color:        float4 = [0.8, 0.8, 0.8, 1]
+  metallic:          float  = 0
+  roughness:         float  = 0.5
+  emissive:          float3 = [0, 0, 0]
+  emissive_strength: float  = 1
+  unlit:             bool   = false
+  double_sided:      bool   = false
 }
 
 component SpriteRenderer {
@@ -61,4 +86,77 @@ component AutoRotate {
   axis:  float3 = [0, 1, 0]
   angle: float  = 90
   speed: float  = 1
+}
+
+/// Deterministic XY particle emitter rendered in world space.
+component ParticleEmitter2D {
+  playing:          bool   = true
+  looping:          bool   = true
+  duration:         float  = 5
+  start_delay:      float  = 0
+  rate_over_time:   float  = 20
+  max_particles:    int    = 1000
+  lifetime_min:     float  = 0.8
+  lifetime_max:     float  = 1.6
+  speed_min:        float  = 0.5
+  speed_max:        float  = 2
+  size_start:       float  = 0.18
+  size_end:         float  = 0
+  color_start:      float4 = [1, 0.75, 0.2, 1]
+  color_end:        float4 = [1, 0.15, 0.02, 0]
+  gravity:          float2 = [0, -0.8]
+  shape:            string = "circle"
+  shape_radius:     float  = 0.2
+  shape_size:       float2 = [1, 1]
+  direction:        float2 = [0, 1]
+  spread_degrees:   float  = 35
+  simulation_space: string = "world"
+  blend_mode:       string = "additive"
+  texture:          string = ""
+  sorting_order:    int    = 0
+  seed:             int    = 1
+}
+
+/// Deterministic XYZ particle emitter rendered as camera-facing billboards.
+component ParticleEmitter3D {
+  playing:          bool   = true
+  looping:          bool   = true
+  duration:         float  = 5
+  start_delay:      float  = 0
+  rate_over_time:   float  = 30
+  max_particles:    int    = 2000
+  lifetime_min:     float  = 1
+  lifetime_max:     float  = 2
+  speed_min:        float  = 0.8
+  speed_max:        float  = 3
+  size_start:       float  = 0.16
+  size_end:         float  = 0.02
+  color_start:      float4 = [0.35, 0.75, 1, 1]
+  color_end:        float4 = [0.05, 0.2, 1, 0]
+  gravity:          float3 = [0, -0.6, 0]
+  shape:            string = "cone"
+  shape_radius:     float  = 0.25
+  shape_size:       float3 = [1, 1, 1]
+  direction:        float3 = [0, 1, 0]
+  spread_degrees:   float  = 25
+  simulation_space: string = "world"
+  blend_mode:       string = "additive"
+  texture:          string = ""
+  billboard:        bool   = true
+  seed:             int    = 1
+}
+
+/// Spine 4.3 skeleton instance. Skeleton and atlas paths are project-relative assets.
+component SpineSkeleton {
+  skeleton:             string = ""
+  atlas:                string = ""
+  animation:            string = ""
+  skin:                 string = "default"
+  loop_animation:       bool   = true
+  playing:              bool   = true
+  time_scale:           float  = 1
+  scale:                float  = 1
+  color:                float4 = [1, 1, 1, 1]
+  premultiplied_alpha:  bool   = true
+  sorting_order:        int    = 0
 }

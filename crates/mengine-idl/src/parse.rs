@@ -9,16 +9,16 @@ pub enum DefKind {
 
 #[derive(Clone, Debug)]
 pub struct Field {
-    pub name:     String,
-    pub ty:       String,
+    pub name: String,
+    pub ty: String,
     pub optional: bool,
-    pub default:  Option<String>,
+    pub default: Option<String>,
 }
 
 #[derive(Clone, Debug)]
 pub struct Def {
-    pub kind:   DefKind,
-    pub name:   String,
+    pub kind: DefKind,
+    pub name: String,
     pub fields: Vec<Field>,
 }
 
@@ -42,16 +42,8 @@ pub fn parse_idl(text: &str) -> Result<Vec<Def>> {
             bail!("unexpected line: {line}");
         };
 
-        let rest = line
-            .split_once(' ')
-            .map(|(_, r)| r.trim())
-            .unwrap_or("");
-        let name = rest
-            .split('{')
-            .next()
-            .unwrap_or("")
-            .trim()
-            .to_string();
+        let rest = line.split_once(' ').map(|(_, r)| r.trim()).unwrap_or("");
+        let name = rest.split('{').next().unwrap_or("").trim().to_string();
         if name.is_empty() {
             bail!("missing name in: {line}");
         }

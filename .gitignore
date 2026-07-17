@@ -31,3 +31,4 @@ Imported/
 
 # Tauri
 packages/editor/src-tauri/target
+packages/editor/src-tauri/gen/schemas

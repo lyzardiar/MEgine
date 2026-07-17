@@ -24,8 +24,8 @@ impl Default for AssetId {
 /// Typed handle wrapper for scripts (TS sees u64 / string id).
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub struct Handle<T> {
-    pub id:    AssetId,
-    _marker:   std::marker::PhantomData<T>,
+    pub id: AssetId,
+    _marker: std::marker::PhantomData<T>,
 }
 
 impl<T> Handle<T> {

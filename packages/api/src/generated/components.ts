@@ -31,6 +31,20 @@ export interface DirectionalLight {
   intensity: number;
 }
 
+export interface PointLight {
+  color: [number, number, number, number];
+  intensity: number;
+  range: number;
+}
+
+export interface SpotLight {
+  color: [number, number, number, number];
+  intensity: number;
+  range: number;
+  innerAngleDegrees: number;
+  outerAngleDegrees: number;
+}
+
 export interface Camera2D {
   size: number;
   primary: boolean;
@@ -39,6 +53,16 @@ export interface Camera2D {
 export interface MeshRenderer {
   mesh: string;
   material: string;
+}
+
+export interface PbrMaterial {
+  baseColor: [number, number, number, number];
+  metallic: number;
+  roughness: number;
+  emissive: [number, number, number];
+  emissiveStrength: number;
+  unlit: boolean;
+  doubleSided: boolean;
 }
 
 export interface SpriteRenderer {
@@ -59,6 +83,76 @@ export interface AutoRotate {
   axis: [number, number, number];
   angle: number;
   speed: number;
+}
+
+export interface ParticleEmitter2D {
+  playing: boolean;
+  looping: boolean;
+  duration: number;
+  startDelay: number;
+  rateOverTime: number;
+  maxParticles: number;
+  lifetimeMin: number;
+  lifetimeMax: number;
+  speedMin: number;
+  speedMax: number;
+  sizeStart: number;
+  sizeEnd: number;
+  colorStart: [number, number, number, number];
+  colorEnd: [number, number, number, number];
+  gravity: [number, number];
+  shape: string;
+  shapeRadius: number;
+  shapeSize: [number, number];
+  direction: [number, number];
+  spreadDegrees: number;
+  simulationSpace: string;
+  blendMode: string;
+  texture: string;
+  sortingOrder: number;
+  seed: number;
+}
+
+export interface ParticleEmitter3D {
+  playing: boolean;
+  looping: boolean;
+  duration: number;
+  startDelay: number;
+  rateOverTime: number;
+  maxParticles: number;
+  lifetimeMin: number;
+  lifetimeMax: number;
+  speedMin: number;
+  speedMax: number;
+  sizeStart: number;
+  sizeEnd: number;
+  colorStart: [number, number, number, number];
+  colorEnd: [number, number, number, number];
+  gravity: [number, number, number];
+  shape: string;
+  shapeRadius: number;
+  shapeSize: [number, number, number];
+  direction: [number, number, number];
+  spreadDegrees: number;
+  simulationSpace: string;
+  blendMode: string;
+  texture: string;
+  billboard: boolean;
+  seed: number;
+}
+
+export interface SpineSkeleton {
+  skeleton: string;
+  atlas: string;
+  animation: string;
+  skin: string;
+  loopAnimation: boolean;
+  playing: boolean;
+  timeScale: number;
+  scale: number;
+  color: [number, number, number, number];
+  premultipliedAlpha: boolean;
+  sortingOrder: number;
 }
 
 export interface Canvas {
@@ -94,7 +188,147 @@ export interface Image {
 export interface Button {
   interactable: boolean;
   transition: string;
-  onClick: string;
+  label: string;
+  textColor: [number, number, number, number];
+  fontSize: number;
+  onClick: Record<string, unknown>;
+}
+
+export interface Text {
+  text: string;
+  color: [number, number, number, number];
+  fontSize: number;
+  alignment: string;
+  verticalAlign: string;
+  raycastTarget: boolean;
+}
+
+export interface Toggle {
+  isOn: boolean;
+  interactable: boolean;
+  label: string;
+  color: [number, number, number, number];
+  textColor: [number, number, number, number];
+  fontSize: number;
+  onValueChanged: Record<string, unknown>;
+}
+
+export interface Slider {
+  minValue: number;
+  maxValue: number;
+  value: number;
+  wholeNumbers: boolean;
+  interactable: boolean;
+  direction: string;
+  fillColor: [number, number, number, number];
+  backgroundColor: [number, number, number, number];
+  handleColor: [number, number, number, number];
+  onValueChanged: Record<string, unknown>;
+}
+
+export interface Panel {
+  color: [number, number, number, number];
+  borderColor: [number, number, number, number];
+  borderWidth: number;
+  raycastTarget: boolean;
+}
+
+export interface CanvasGroup {
+  alpha: number;
+  interactable: boolean;
+  blocksRaycasts: boolean;
+}
+
+export interface LayoutGroup {
+  direction: string;
+  padding: [number, number, number, number];
+  spacing: [number, number];
+  cellSize: [number, number];
+  constraintCount: number;
+  childForceExpand: boolean;
+}
+
+export interface RectMask2D {
+  enabled: boolean;
+  padding: [number, number, number, number];
+}
+
+export interface ProgressBar {
+  minValue: number;
+  maxValue: number;
+  value: number;
+  direction: string;
+  backgroundColor: [number, number, number, number];
+  fillColor: [number, number, number, number];
+  textColor: [number, number, number, number];
+  showLabel: boolean;
+  fontSize: number;
+}
+
+export interface InputField {
+  text: string;
+  placeholder: string;
+  textColor: [number, number, number, number];
+  placeholderColor: [number, number, number, number];
+  backgroundColor: [number, number, number, number];
+  caretColor: [number, number, number, number];
+  fontSize: number;
+  interactable: boolean;
+  multiline: boolean;
+  characterLimit: number;
+  onValueChanged: Record<string, unknown>;
+  onSubmit: Record<string, unknown>;
+}
+
+export interface Dropdown {
+  options: string[];
+  selectedIndex: number;
+  expanded: boolean;
+  interactable: boolean;
+  backgroundColor: [number, number, number, number];
+  itemColor: [number, number, number, number];
+  selectedColor: [number, number, number, number];
+  textColor: [number, number, number, number];
+  fontSize: number;
+  onValueChanged: Record<string, unknown>;
+}
+
+export interface ListView {
+  items: string[];
+  selectedIndex: number;
+  itemHeight: number;
+  spacing: number;
+  scrollOffset: number;
+  interactable: boolean;
+  backgroundColor: [number, number, number, number];
+  itemColor: [number, number, number, number];
+  selectedColor: [number, number, number, number];
+  textColor: [number, number, number, number];
+  fontSize: number;
+  onValueChanged: Record<string, unknown>;
+}
+
+export interface ScrollView {
+  horizontal: boolean;
+  vertical: boolean;
+  normalizedPosition: [number, number];
+  scrollSensitivity: number;
+  viewportColor: [number, number, number, number];
+  showScrollbar: boolean;
+  onValueChanged: Record<string, unknown>;
+}
+
+export interface TabView {
+  tabs: string[];
+  selectedIndex: number;
+  tabHeight: number;
+  interactable: boolean;
+  backgroundColor: [number, number, number, number];
+  tabColor: [number, number, number, number];
+  selectedColor: [number, number, number, number];
+  textColor: [number, number, number, number];
+  fontSize: number;
+  onValueChanged: Record<string, unknown>;
 }
 
 export type ComponentName =
@@ -103,17 +337,36 @@ export type ComponentName =
   | 'Transform2D'
   | 'Camera3D'
   | 'DirectionalLight'
+  | 'PointLight'
+  | 'SpotLight'
   | 'Camera2D'
   | 'MeshRenderer'
+  | 'PbrMaterial'
   | 'SpriteRenderer'
   | 'Layer'
   | 'EditorOnly'
   | 'AutoRotate'
+  | 'ParticleEmitter2D'
+  | 'ParticleEmitter3D'
+  | 'SpineSkeleton'
   | 'Canvas'
   | 'CanvasScaler'
   | 'RectTransform'
   | 'Image'
-  | 'Button';
+  | 'Button'
+  | 'Text'
+  | 'Toggle'
+  | 'Slider'
+  | 'Panel'
+  | 'CanvasGroup'
+  | 'LayoutGroup'
+  | 'RectMask2D'
+  | 'ProgressBar'
+  | 'InputField'
+  | 'Dropdown'
+  | 'ListView'
+  | 'ScrollView'
+  | 'TabView';
 
 export const COMPONENT_NAMES = [
   'Name',
@@ -121,17 +374,36 @@ export const COMPONENT_NAMES = [
   'Transform2D',
   'Camera3D',
   'DirectionalLight',
+  'PointLight',
+  'SpotLight',
   'Camera2D',
   'MeshRenderer',
+  'PbrMaterial',
   'SpriteRenderer',
   'Layer',
   'EditorOnly',
   'AutoRotate',
+  'ParticleEmitter2D',
+  'ParticleEmitter3D',
+  'SpineSkeleton',
   'Canvas',
   'CanvasScaler',
   'RectTransform',
   'Image',
   'Button',
+  'Text',
+  'Toggle',
+  'Slider',
+  'Panel',
+  'CanvasGroup',
+  'LayoutGroup',
+  'RectMask2D',
+  'ProgressBar',
+  'InputField',
+  'Dropdown',
+  'ListView',
+  'ScrollView',
+  'TabView',
 ] as const;
 
 export type WorldCommand =

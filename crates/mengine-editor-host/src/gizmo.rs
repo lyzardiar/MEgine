@@ -12,16 +12,16 @@ pub enum GizmoMode {
 
 #[derive(Clone, Debug)]
 pub struct GizmoState {
-    pub mode:     GizmoMode,
-    pub target:   Option<Entity>,
+    pub mode: GizmoMode,
+    pub target: Option<Entity>,
     pub dragging: bool,
 }
 
 impl Default for GizmoState {
     fn default() -> Self {
         Self {
-            mode:     GizmoMode::Translate,
-            target:   None,
+            mode: GizmoMode::Translate,
+            target: None,
             dragging: false,
         }
     }

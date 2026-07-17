@@ -37,6 +37,153 @@ component Button {
   interactable:    bool   = true
   /// "None" | "ColorTint"
   transition:      string = "ColorTint"
-  /// Optional method name on a Behaviour on the same entity
-  on_click:        string = ""
+  label:           string = "Button"
+  text_color:      float4 = [1, 1, 1, 1]
+  font_size:       float  = 16
+  /// Unity-style persistent call descriptor
+  on_click:        object
+}
+
+component Text {
+  text:            string = "Text"
+  color:           float4 = [1, 1, 1, 1]
+  font_size:       float  = 16
+  /// "Left" | "Center" | "Right"
+  alignment:       string = "Center"
+  /// "Top" | "Middle" | "Bottom"
+  vertical_align:  string = "Middle"
+  raycast_target:  bool   = false
+}
+
+component Toggle {
+  is_on:            bool   = false
+  interactable:     bool   = true
+  label:            string = "Toggle"
+  color:            float4 = [0.2, 0.45, 0.85, 1]
+  text_color:       float4 = [1, 1, 1, 1]
+  font_size:        float  = 16
+  on_value_changed: object
+}
+
+component Slider {
+  min_value:        float  = 0
+  max_value:        float  = 1
+  value:            float  = 0.5
+  whole_numbers:    bool   = false
+  interactable:     bool   = true
+  /// "LeftToRight" | "RightToLeft" | "BottomToTop" | "TopToBottom"
+  direction:        string = "LeftToRight"
+  fill_color:       float4 = [0.2, 0.55, 1, 1]
+  background_color: float4 = [0.15, 0.17, 0.2, 1]
+  handle_color:     float4 = [0.9, 0.92, 0.95, 1]
+  on_value_changed: object
+}
+
+/// Background/container control inspired by Godot PanelContainer and FairyGUI GComponent.
+component Panel {
+  color:          float4 = [0.12, 0.14, 0.18, 0.96]
+  border_color:   float4 = [0.32, 0.36, 0.44, 1]
+  border_width:   float  = 1
+  raycast_target: bool   = false
+}
+
+/// Inherited opacity/input state for a UI subtree.
+component CanvasGroup {
+  alpha:           float = 1
+  interactable:    bool  = true
+  blocks_raycasts: bool  = true
+}
+
+/// Automatic child arrangement: "Horizontal" | "Vertical" | "Grid".
+component LayoutGroup {
+  direction:          string = "Vertical"
+  padding:            float4 = [8, 8, 8, 8]
+  spacing:            float2 = [6, 6]
+  cell_size:          float2 = [120, 32]
+  constraint_count:   int    = 1
+  child_force_expand: bool   = true
+}
+
+/// Rectangular child clipping. Padding order is left, top, right, bottom.
+component RectMask2D {
+  enabled: bool   = true
+  padding: float4 = [0, 0, 0, 0]
+}
+
+component ProgressBar {
+  min_value:        float  = 0
+  max_value:        float  = 1
+  value:            float  = 0.5
+  direction:        string = "LeftToRight"
+  background_color: float4 = [0.12, 0.14, 0.18, 1]
+  fill_color:       float4 = [0.2, 0.65, 0.95, 1]
+  text_color:       float4 = [1, 1, 1, 1]
+  show_label:       bool   = true
+  font_size:        float  = 14
+}
+
+component InputField {
+  text:             string = ""
+  placeholder:      string = "Enter text..."
+  text_color:       float4 = [0.94, 0.95, 0.98, 1]
+  placeholder_color: float4 = [0.55, 0.58, 0.64, 1]
+  background_color: float4 = [0.08, 0.09, 0.12, 1]
+  caret_color:      float4 = [0.3, 0.7, 1, 1]
+  font_size:        float  = 16
+  interactable:     bool   = true
+  multiline:        bool   = false
+  character_limit:  int    = 0
+  on_value_changed: object
+  on_submit:        object
+}
+
+component Dropdown {
+  options:          string_array = []
+  selected_index:   int    = 0
+  expanded:         bool   = false
+  interactable:     bool   = true
+  background_color: float4 = [0.13, 0.15, 0.19, 1]
+  item_color:       float4 = [0.16, 0.18, 0.23, 1]
+  selected_color:   float4 = [0.2, 0.48, 0.85, 1]
+  text_color:       float4 = [1, 1, 1, 1]
+  font_size:        float  = 16
+  on_value_changed: object
+}
+
+component ListView {
+  items:            string_array = []
+  selected_index:   int    = -1
+  item_height:      float  = 32
+  spacing:          float  = 2
+  scroll_offset:    float  = 0
+  interactable:     bool   = true
+  background_color: float4 = [0.08, 0.09, 0.12, 1]
+  item_color:       float4 = [0.14, 0.16, 0.2, 1]
+  selected_color:   float4 = [0.2, 0.48, 0.85, 1]
+  text_color:       float4 = [1, 1, 1, 1]
+  font_size:        float  = 15
+  on_value_changed: object
+}
+
+component ScrollView {
+  horizontal:          bool   = false
+  vertical:            bool   = true
+  normalized_position: float2 = [0, 0]
+  scroll_sensitivity:  float  = 0.08
+  viewport_color:      float4 = [0.05, 0.06, 0.08, 0.72]
+  show_scrollbar:      bool   = true
+  on_value_changed:    object
+}
+
+component TabView {
+  tabs:             string_array = []
+  selected_index:   int    = 0
+  tab_height:       float  = 32
+  interactable:     bool   = true
+  background_color: float4 = [0.09, 0.1, 0.13, 1]
+  tab_color:        float4 = [0.15, 0.17, 0.21, 1]
+  selected_color:   float4 = [0.2, 0.48, 0.85, 1]
+  text_color:       float4 = [1, 1, 1, 1]
+  font_size:        float  = 15
+  on_value_changed: object
 }

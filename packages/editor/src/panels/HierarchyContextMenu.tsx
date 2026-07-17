@@ -1,5 +1,12 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useLayoutEffect, useRef, useState, useSyncExternalStore } from 'react';
 import { createPortal } from 'react-dom';
+import {
+  getMenuRevision,
+  listMenuItems,
+  subscribeMenuItems,
+  type MenuItemContext,
+} from '../editorWindow';
+import { PopupMenuItems } from './PopupMenu';
 
 export type CtxAction =
   | 'cut'
@@ -8,13 +15,6 @@ export type CtxAction =
   | 'rename'
   | 'duplicate'
   | 'delete'
-  | 'createEmptyChild'
-  | 'createCube'
-  | 'createSprite'
-  | 'createCamera'
-  | 'createUiCanvas'
-  | 'createUiImage'
-  | 'createUiButton'
   | 'selectChildren'
   | 'frame'
   | 'expandAll'
@@ -24,14 +24,33 @@ export function HierarchyContextMenu(props: {
   x: number;
   y: number;
   hasSelection: boolean;
+  menuContext: MenuItemContext;
   onAction: (a: CtxAction) => void;
   onClose: () => void;
 }) {
   const ref = useRef<HTMLDivElement>(null);
+  const [position, setPosition] = useState({ left: props.x, top: props.y });
   const onCloseRef = useRef(props.onClose);
   const onActionRef = useRef(props.onAction);
   onCloseRef.current = props.onClose;
   onActionRef.current = props.onAction;
+
+  const menuRevision = useSyncExternalStore(
+    subscribeMenuItems,
+    getMenuRevision,
+    getMenuRevision,
+  );
+  const gameObjectItems = listMenuItems('GameObject');
+
+  useLayoutEffect(() => {
+    const rect = ref.current?.getBoundingClientRect();
+    if (!rect) return;
+    const padding = 4;
+    setPosition({
+      left: Math.max(padding, Math.min(props.x, window.innerWidth - rect.width - padding)),
+      top: Math.max(padding, Math.min(props.y, window.innerHeight - rect.height - padding)),
+    });
+  }, [props.x, props.y, menuRevision]);
 
   useEffect(() => {
     // Defer so the opening contextmenu / mouseup does not instantly dismiss
@@ -66,6 +85,7 @@ export function HierarchyContextMenu(props: {
     <button
       type="button"
       disabled={p.disabled}
+      role="menuitem"
       onPointerDown={(e) => {
         // Prefer pointerdown so action runs before outside-close handlers
         e.preventDefault();
@@ -81,8 +101,9 @@ export function HierarchyContextMenu(props: {
   const menu = (
     <div
       ref={ref}
-      className="hier-ctx"
-      style={{ left: props.x, top: props.y }}
+      className="hier-ctx popup-menu"
+      style={position}
+      role="menu"
       onContextMenu={(e) => e.preventDefault()}
       onPointerDown={(e) => e.stopPropagation()}
     >
@@ -94,14 +115,11 @@ export function HierarchyContextMenu(props: {
       <Item action="duplicate" label="Duplicate" hint="Ctrl+D" disabled={!props.hasSelection} />
       <Item action="delete" label="Delete" hint="Del" disabled={!props.hasSelection} />
       <div className="sep" />
-      <Item action="createEmptyChild" label="Create Empty Child" />
-      <Item action="createCube" label="3D Object / Cube" />
-      <Item action="createSprite" label="3D Object / Sprite Quad" />
-      <Item action="createCamera" label="Camera" />
-      <div className="sep" />
-      <Item action="createUiCanvas" label="UI / Canvas" />
-      <Item action="createUiImage" label="UI / Image" />
-      <Item action="createUiButton" label="UI / Button" />
+      <PopupMenuItems
+        entries={gameObjectItems}
+        context={props.menuContext}
+        onSelect={props.onClose}
+      />
       <div className="sep" />
       <Item action="selectChildren" label="Select Children" disabled={!props.hasSelection} />
       <Item action="frame" label="Frame Selected" hint="F" disabled={!props.hasSelection} />

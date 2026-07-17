@@ -9,9 +9,23 @@ import type { Vec3, Quat } from './math3d';
 import { add, quatAxisAngle, quatMul, quatNormalize } from './math3d';
 import {
   createComponentDefaults,
+  createParticleEmitter2D,
+  createParticleEmitter3D,
+  createSpineSkeleton,
   createUiButtonComponents,
   createUiCanvasComponents,
+  createUiDropdownComponents,
   createUiImageComponents,
+  createUiInputFieldComponents,
+  createUiLayoutGroupComponents,
+  createUiListViewComponents,
+  createUiPanelComponents,
+  createUiProgressBarComponents,
+  createUiScrollViewComponents,
+  createUiSliderComponents,
+  createUiTabViewComponents,
+  createUiTextComponents,
+  createUiToggleComponents,
 } from './componentCatalog';
 import { readRectTransform } from './ui/rectLayout';
 import {
@@ -294,6 +308,30 @@ export function createEditorStore() {
     return id;
   };
 
+  const ensureUiCanvasInternal = (withUndo: boolean): number => {
+    const existing = editEntities.find((e) => e.components.Canvas);
+    if (existing) return existing.entity;
+    return spawnAt('Canvas', createUiCanvasComponents(), null, withUndo);
+  };
+
+  /** Spawn a UI control as one undoable transaction, including implicit Canvas creation. */
+  const spawnUiControl = (
+    name: string,
+    components: Record<string, unknown>,
+    requestedParent?: number | null,
+  ): number => {
+    pushUndo();
+    let parent = requestedParent;
+    if (parent === undefined) {
+      const selected = primarySelected();
+      const selectedEntity = selected != null ? find(selected) : null;
+      parent = selectedEntity && (selectedEntity.components.Canvas || selectedEntity.components.RectTransform)
+        ? selected
+        : ensureUiCanvasInternal(false);
+    }
+    return spawnAt(name, components, parent ?? null, false);
+  };
+
   const getTransform = (entity: number): TransformData | null => {
     const e = find(entity);
     return (e?.components.Transform as TransformData) ?? null;
@@ -364,6 +402,68 @@ export function createEditorStore() {
       active: e.active,
       components: e.components,
     }));
+
+  const serializeScene = (sceneName: string, source: EntityRec[]) => JSON.stringify(
+    {
+      version: 1,
+      name: sceneName,
+      world: {
+        entities: structuredClone(source).map((e) => ({
+          entity: e.entity,
+          name: e.name,
+          parent: e.parent,
+          siblingIndex: e.siblingIndex,
+          active: e.active,
+          components: e.components,
+        })),
+        frame,
+        clearColor,
+        selected: primarySelected(),
+        selectedIds: [...selectedIds],
+      },
+      sceneCamera,
+      gameAspect,
+      gameOrientation,
+    },
+    null,
+    2,
+  );
+
+  const applySceneJson = (
+    json: string,
+    targetMode: EditorMode,
+    recordUndo: boolean,
+  ) => {
+    if (recordUndo) pushUndo();
+    behaviourRunner.unmount();
+    const data = JSON.parse(json);
+    const ents = (data.world?.entities ?? data.entities ?? []) as EntityRec[];
+    editEntities = ents.map((e, i) =>
+      normalizeEntity({
+        ...e,
+        siblingIndex: e.siblingIndex ?? i,
+        active: e.active ?? true,
+      }),
+    );
+    nextId = Math.max(1, ...editEntities.map((e) => e.entity + 1), 1);
+    clearColor = data.world?.clearColor ?? clearColor;
+    if (data.sceneCamera) sceneCamera = data.sceneCamera;
+    if (data.gameAspect) gameAspect = data.gameAspect;
+    if (data.gameOrientation === 'landscape' || data.gameOrientation === 'portrait') {
+      gameOrientation = data.gameOrientation;
+    }
+    expanded = new Set(editEntities.map((e) => e.entity));
+    const incomingSelection = Array.isArray(data.world?.selectedIds)
+      ? data.world.selectedIds.filter((id: unknown) => typeof id === 'number')
+      : [];
+    selectedIds = incomingSelection.length
+      ? incomingSelection
+      : editEntities.length ? [editEntities[0].entity] : [];
+    selectionAnchor = selectedIds[0] ?? null;
+    playEntities = targetMode === 'edit' ? null : structuredClone(editEntities);
+    mode = targetMode;
+    playSpin = 0;
+  };
 
   return {
     get mode() {
@@ -533,6 +633,31 @@ export function createEditorStore() {
         { Transform: { position: [0, 0, 0], rotation: [0, 0, 0, 1], scale: [1, 1, 1] } },
         p,
         true,
+      );
+    },
+    /** Extension API: create an arbitrary GameObject from a MenuItem or editor tool. */
+    createGameObject(
+      name: string,
+      components: Record<string, unknown>,
+      parent: number | null = null,
+    ) {
+      return spawnAt(
+        name.trim() || 'GameObject',
+        structuredClone(components),
+        parent,
+        true,
+      );
+    },
+    /** Extension API: create a custom UI control and ensure it has a Canvas parent. */
+    createUiControl(
+      name: string,
+      components: Record<string, unknown>,
+      parent?: number | null,
+    ) {
+      return spawnUiControl(
+        name.trim() || 'UI Control',
+        structuredClone(components),
+        parent,
       );
     },
     createEmptyChild() {
@@ -720,13 +845,13 @@ export function createEditorStore() {
     setComponent(entity: number, type: string, value: Record<string, unknown>) {
       const e = find(entity);
       if (!e) return;
-      if (mode === 'edit') pushUndo();
+      if (mode === 'edit' && !gizmoDragging) pushUndo();
       e.components[type] = value;
     },
     patchComponent(entity: number, type: string, patch: Record<string, unknown>) {
       const e = find(entity);
       if (!e || e.components[type] == null) return;
-      if (mode === 'edit') pushUndo();
+      if (mode === 'edit' && !gizmoDragging) pushUndo();
       e.components[type] = { ...(e.components[type] as object), ...patch };
     },
     invokeBehaviourMethod(entity: number, type: string, method: string) {
@@ -993,6 +1118,50 @@ export function createEditorStore() {
         this.spawnUiButton();
         return;
       }
+      if (name === 'Text') {
+        this.spawnUiText();
+        return;
+      }
+      if (name === 'Toggle') {
+        this.spawnUiToggle();
+        return;
+      }
+      if (name === 'Slider') {
+        this.spawnUiSlider();
+        return;
+      }
+      if (name === 'Panel') {
+        this.spawnUiPanel();
+        return;
+      }
+      if (name === 'Layout Group') {
+        this.spawnUiLayoutGroup();
+        return;
+      }
+      if (name === 'Progress Bar') {
+        this.spawnUiProgressBar();
+        return;
+      }
+      if (name === 'Input Field') {
+        this.spawnUiInputField();
+        return;
+      }
+      if (name === 'Dropdown') {
+        this.spawnUiDropdown();
+        return;
+      }
+      if (name === 'List View') {
+        this.spawnUiListView();
+        return;
+      }
+      if (name === 'Scroll View') {
+        this.spawnUiScrollView();
+        return;
+      }
+      if (name === 'Tab View') {
+        this.spawnUiTabView();
+        return;
+      }
       if (name === 'Sprite') {
         this.spawnSpriteQuad();
         return;
@@ -1029,34 +1198,98 @@ export function createEditorStore() {
         true,
       );
     },
+    spawnDirectionalLight() {
+      spawnAt(
+        'Directional Light',
+        {
+          Transform: {
+            position: [0, 3, 0],
+            rotation: [-0.3827, 0, 0, 0.9239],
+            scale: [1, 1, 1],
+          },
+          DirectionalLight: { color: [1, 1, 0.95, 1], intensity: 1 },
+        },
+        null,
+        true,
+      );
+    },
+    spawnPointLight() {
+      spawnAt(
+        'Point Light',
+        {
+          Transform: { position: [0, 2, 0], rotation: [0, 0, 0, 1], scale: [1, 1, 1] },
+          PointLight: { color: [1, 0.82, 0.65, 1], intensity: 8, range: 10 },
+        },
+        null,
+        true,
+      );
+    },
+    spawnSpotLight() {
+      spawnAt(
+        'Spot Light',
+        {
+          Transform: {
+            position: [0, 3, 1],
+            rotation: [-0.7071, 0, 0, 0.7071],
+            scale: [1, 1, 1],
+          },
+          SpotLight: {
+            color: [0.7, 0.82, 1, 1],
+            intensity: 12,
+            range: 12,
+            inner_angle_degrees: 25,
+            outer_angle_degrees: 40,
+          },
+        },
+        null,
+        true,
+      );
+    },
     /** Ensure a Canvas exists; return its entity id. */
     ensureUiCanvas(): number {
-      const existing = editEntities.find((e) => e.components.Canvas);
-      if (existing) return existing.entity;
-      return this.spawnUiCanvas();
+      return ensureUiCanvasInternal(true);
     },
     spawnUiCanvas() {
       return spawnAt('Canvas', createUiCanvasComponents(), null, true);
     },
     spawnUiImage(parent?: number | null) {
-      let p = parent;
-      if (p === undefined) {
-        const sel = primarySelected();
-        const selE = sel != null ? find(sel) : null;
-        if (selE && (selE.components.Canvas || selE.components.RectTransform)) p = sel;
-        else p = this.ensureUiCanvas();
-      }
-      return spawnAt('Image', createUiImageComponents([1, 1, 1, 0.92]), p ?? null, true);
+      return spawnUiControl('Image', createUiImageComponents([1, 1, 1, 0.92]), parent);
     },
     spawnUiButton(parent?: number | null) {
-      let p = parent;
-      if (p === undefined) {
-        const sel = primarySelected();
-        const selE = sel != null ? find(sel) : null;
-        if (selE && (selE.components.Canvas || selE.components.RectTransform)) p = sel;
-        else p = this.ensureUiCanvas();
-      }
-      return spawnAt('Button', createUiButtonComponents(), p ?? null, true);
+      return spawnUiControl('Button', createUiButtonComponents(), parent);
+    },
+    spawnUiText(parent?: number | null) {
+      return spawnUiControl('Text', createUiTextComponents(), parent);
+    },
+    spawnUiToggle(parent?: number | null) {
+      return spawnUiControl('Toggle', createUiToggleComponents(), parent);
+    },
+    spawnUiSlider(parent?: number | null) {
+      return spawnUiControl('Slider', createUiSliderComponents(), parent);
+    },
+    spawnUiPanel(parent?: number | null) {
+      return spawnUiControl('Panel', createUiPanelComponents(), parent);
+    },
+    spawnUiLayoutGroup(parent?: number | null) {
+      return spawnUiControl('Layout Group', createUiLayoutGroupComponents(), parent);
+    },
+    spawnUiProgressBar(parent?: number | null) {
+      return spawnUiControl('Progress Bar', createUiProgressBarComponents(), parent);
+    },
+    spawnUiInputField(parent?: number | null) {
+      return spawnUiControl('Input Field', createUiInputFieldComponents(), parent);
+    },
+    spawnUiDropdown(parent?: number | null) {
+      return spawnUiControl('Dropdown', createUiDropdownComponents(), parent);
+    },
+    spawnUiListView(parent?: number | null) {
+      return spawnUiControl('List View', createUiListViewComponents(), parent);
+    },
+    spawnUiScrollView(parent?: number | null) {
+      return spawnUiControl('Scroll View', createUiScrollViewComponents(), parent);
+    },
+    spawnUiTabView(parent?: number | null) {
+      return spawnUiControl('Tab View', createUiTabViewComponents(), parent);
     },
     spawnSpriteQuad() {
       spawnAt(
@@ -1069,6 +1302,39 @@ export function createEditorStore() {
             size: [1, 1],
             sorting_order: 0,
           },
+        },
+        null,
+        true,
+      );
+    },
+    spawnParticleEmitter2D() {
+      spawnAt(
+        'Particle System 2D',
+        {
+          Transform: { position: [0, 0.5, 0], rotation: [0, 0, 0, 1], scale: [1, 1, 1] },
+          ParticleEmitter2D: createParticleEmitter2D(),
+        },
+        null,
+        true,
+      );
+    },
+    spawnParticleEmitter3D() {
+      spawnAt(
+        'Particle System 3D',
+        {
+          Transform: { position: [0, 0.5, 0], rotation: [0, 0, 0, 1], scale: [1, 1, 1] },
+          ParticleEmitter3D: createParticleEmitter3D(),
+        },
+        null,
+        true,
+      );
+    },
+    spawnSpineSkeleton() {
+      spawnAt(
+        'Spine Skeleton',
+        {
+          Transform: { position: [0, 0, 0], rotation: [0, 0, 0, 1], scale: [1, 1, 1] },
+          SpineSkeleton: createSpineSkeleton(),
         },
         null,
         true,
@@ -1087,61 +1353,21 @@ export function createEditorStore() {
       );
     },
     saveSceneJson(sceneName = 'Untitled') {
-      // 始终保存编辑态实体，避免 Play 模式克隆覆盖 / 丢改动
-      const entities = structuredClone(editEntities).map((e) => ({
-        entity: e.entity,
-        name: e.name,
-        parent: e.parent,
-        siblingIndex: e.siblingIndex,
-        active: e.active,
-        components: e.components,
-      }));
-      return JSON.stringify(
-        {
-          version: 1,
-          name: sceneName,
-          world: {
-            entities,
-            frame,
-            clearColor,
-            selected: primarySelected(),
-            selectedIds: [...selectedIds],
-          },
-          sceneCamera,
-          gameAspect,
-          gameOrientation,
-        },
-        null,
-        2,
-      );
+      // Always persist edit state so Play mode clones never overwrite authoring data.
+      return serializeScene(sceneName, editEntities);
+    },
+    /** Session-only serialization used to mirror live Play state to detached windows. */
+    saveSessionSceneJson(sceneName = 'Untitled') {
+      return serializeScene(sceneName, list());
     },
     newScene() {
       buildDefaultScene();
     },
     loadSceneJson(json: string) {
-      pushUndo();
-      const data = JSON.parse(json);
-      const ents = (data.world?.entities ?? data.entities ?? []) as EntityRec[];
-      editEntities = ents.map((e, i) =>
-        normalizeEntity({
-          ...e,
-          siblingIndex: e.siblingIndex ?? i,
-          active: e.active ?? true,
-        }),
-      );
-      nextId = Math.max(1, ...editEntities.map((e) => e.entity + 1), 1);
-      clearColor = data.world?.clearColor ?? clearColor;
-      if (data.sceneCamera) sceneCamera = data.sceneCamera;
-      if (data.gameAspect) gameAspect = data.gameAspect;
-      if (data.gameOrientation === 'landscape' || data.gameOrientation === 'portrait') {
-        gameOrientation = data.gameOrientation;
-      }
-      expanded = new Set(editEntities.map((e) => e.entity));
-      selectedIds = editEntities.length ? [editEntities[0].entity] : [];
-      selectionAnchor = selectedIds[0] ?? null;
-      mode = 'edit';
-      playEntities = null;
-      playSpin = 0;
+      applySceneJson(json, 'edit', true);
+    },
+    loadRemoteSceneJson(json: string, remoteMode: EditorMode) {
+      applySceneJson(json, remoteMode, false);
     },
   };
 }

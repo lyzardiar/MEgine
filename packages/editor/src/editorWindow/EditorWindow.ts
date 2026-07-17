@@ -1,5 +1,13 @@
 import type { ReactNode } from 'react';
-import { openEditorWindow, registerMenuItem } from './registry';
+import {
+  openEditorWindow,
+  registerEditorWindowType,
+  registerMenuItem,
+  registerMenuItemValidator,
+  type MenuItemContext,
+  type MenuItemOptions,
+} from './registry';
+import { openNativeEditorWindow } from './nativeEditorWindow';
 
 export type EditorWindowOptions = {
   /** Stable id — same id reopens/focuses one instance (Unity GetWindow). */
@@ -33,7 +41,20 @@ export abstract class EditorWindow {
     const height = Math.max(inst.minHeight, opts.height ?? 480);
     const x = opts.x ?? Math.max(40, (window.innerWidth - width) / 2 - 40);
     const y = opts.y ?? Math.max(60, (window.innerHeight - height) / 2 - 40);
-    openEditorWindow({
+    const definition = () => {
+      const current = new this();
+      return {
+        typeId: id,
+        title: current.title,
+        width,
+        height,
+        render: () => current.onGUI(),
+      };
+    };
+    registerEditorWindowType(id, definition);
+    void openNativeEditorWindow({ typeId: id, title: inst.title, width, height }).then((opened) => {
+      if (opened) return;
+      openEditorWindow({
       id,
       title: inst.title,
       x,
@@ -41,35 +62,51 @@ export abstract class EditorWindow {
       width,
       height,
       render: () => inst.onGUI(),
+      });
     });
   }
 }
 
 /**
- * Register a static method under MenuBar path.
+ * Register a static method under a Unity-style menu path.
  * Prefer registering from `.ts` files (esbuild + experimentalDecorators).
  * In `.tsx` (Babel), call `registerMenuItem(path, fn)` instead.
  *
  * Example:
  * ```ts
  * class MyWin extends EditorWindow {
- *   @MenuItem('Window/My Win')
+ *   @MenuItem('Window/My Win', false, 100)
  *   static open() { MyWin.show(); }
  * }
  * ```
  */
-export function MenuItem(path: string) {
+export function MenuItem(
+  path: string,
+  validateOrOptions: boolean | MenuItemOptions = false,
+  priority = 1000,
+) {
   return (target: unknown, key?: string, descriptor?: PropertyDescriptor) => {
-    const action =
+    const method =
       descriptor && typeof descriptor.value === 'function'
-        ? () => (descriptor.value as () => void).call(target)
+        ? descriptor.value as (context: MenuItemContext) => unknown
         : typeof target === 'function'
-          ? () => (target as () => void)()
+          ? target as (context: MenuItemContext) => unknown
           : null;
-    if (!action) {
+    if (!method) {
       console.warn(`[MenuItem] ${path}: expected static method`);
       return;
     }
-    registerMenuItem(path, action);
+    if (validateOrOptions === true) {
+      registerMenuItemValidator(path, (context) => Boolean(method.call(target, context)));
+      return;
+    }
+    const options =
+      typeof validateOrOptions === 'object'
+        ? validateOrOptions
+        : { priority };
+    registerMenuItem(path, (context) => {
+      const result = method.call(target, context);
+      return result instanceof Promise ? result.then(() => undefined) : undefined;
+    }, options);
   };
 }

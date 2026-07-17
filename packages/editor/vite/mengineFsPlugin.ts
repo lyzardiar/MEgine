@@ -115,6 +115,7 @@ export function mengineFsPlugin(opts: MengineFsOptions | string): Plugin {
   }
 
   type TextureAsset = { id: string; name: string; folder: string; relPath: string };
+  type ProjectFileAsset = TextureAsset & { kind: 'spine-json' | 'spine-binary' | 'spine-atlas' };
 
   function listTextures(): { sprites: TextureAsset[]; folders: string[] } {
     ensureDirs();
@@ -154,6 +155,35 @@ export function mengineFsPlugin(opts: MengineFsOptions | string): Plugin {
     return { sprites, folders };
   }
 
+  function listProjectAssets(): ProjectFileAsset[] {
+    const assets: ProjectFileAsset[] = [];
+    const walk = (dir: string, folder: string) => {
+      if (!fs.existsSync(dir)) return;
+      for (const file of fs.readdirSync(dir)) {
+        if (file.startsWith('.') || file.endsWith('.meta')) continue;
+        const abs = path.join(dir, file);
+        const stat = fs.statSync(abs);
+        if (stat.isDirectory()) {
+          walk(abs, `${folder}/${file}`);
+          continue;
+        }
+        const lower = file.toLowerCase();
+        const kind = lower.endsWith('.atlas')
+          ? 'spine-atlas'
+          : lower.endsWith('.skel')
+            ? 'spine-binary'
+            : lower.endsWith('.json')
+              ? 'spine-json'
+              : null;
+        if (!kind) continue;
+        const relPath = `Assets/${path.relative(assetsRoot, abs).replace(/\\/g, '/')}`;
+        assets.push({ id: relPath, name: file, folder, relPath, kind });
+      }
+    };
+    walk(assetsRoot, 'Assets');
+    return assets.sort((a, b) => a.relPath.localeCompare(b.relPath));
+  }
+
   function resolveAssetRel(relRaw: string): string | null {
     let rel = decodeURIComponent(relRaw).replace(/\\/g, '/').replace(/^\/+/, '');
     if (!rel.toLowerCase().startsWith('assets/')) return null;
@@ -170,6 +200,9 @@ export function mengineFsPlugin(opts: MengineFsOptions | string): Plugin {
     if (lower.endsWith('.jpg') || lower.endsWith('.jpeg')) return 'image/jpeg';
     if (lower.endsWith('.webp')) return 'image/webp';
     if (lower.endsWith('.gif')) return 'image/gif';
+    if (lower.endsWith('.json')) return 'application/json';
+    if (lower.endsWith('.atlas') || lower.endsWith('.txt')) return 'text/plain';
+    if (lower.endsWith('.skel')) return 'application/octet-stream';
     return 'application/octet-stream';
   }
 
@@ -265,6 +298,11 @@ export function mengineFsPlugin(opts: MengineFsOptions | string): Plugin {
       // GET /__mengine/sprites → textures under Assets + folder tree
       if (pathname === `${API}/sprites` && method === 'GET') {
         return sendJson(res, 200, listTextures());
+      }
+
+      // GET /__mengine/assets → Spine authoring assets visible in Project.
+      if (pathname === `${API}/assets` && method === 'GET') {
+        return sendJson(res, 200, { assets: listProjectAssets() });
       }
 
       // GET /__mengine/asset/Assets/...  → serve project texture

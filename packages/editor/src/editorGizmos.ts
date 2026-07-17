@@ -306,3 +306,87 @@ export function drawDirectionalLightGizmo(
 
   return { x: pr.x, y: pr.y, r: 20 };
 }
+
+export function drawPointLightGizmo(
+  ctx: CanvasRenderingContext2D,
+  viewCam: Camera,
+  vp: Vp,
+  transform: TransformLike,
+  range: number,
+  selected: boolean,
+): { x: number; y: number; r: number } | null {
+  const origin: Vec3 = [
+    Number(transform.position[0]) || 0,
+    Number(transform.position[1]) || 0,
+    Number(transform.position[2]) || 0,
+  ];
+  const color = selected ? '#ffe08a' : '#ffbd66';
+  const radius = Math.min(Math.max(Number(range) || 1, 0.2), 20);
+  const axisRadius = Math.min(radius, selected ? 1.5 : 0.9);
+  for (const axis of [
+    [1, 0, 0],
+    [0, 1, 0],
+    [0, 0, 1],
+  ] as Vec3[]) {
+    strokeWorldSeg(ctx, viewCam, vp, add(origin, scale(axis, -axisRadius)), add(origin, scale(axis, axisRadius)), color, selected ? 2 : 1.3);
+  }
+  const pr = projectPoint(origin, viewCam, vp);
+  if (!pr) return null;
+  ctx.save();
+  ctx.strokeStyle = color;
+  ctx.fillStyle = 'rgba(255, 184, 80, 0.22)';
+  ctx.lineWidth = selected ? 2.4 : 1.7;
+  ctx.beginPath();
+  ctx.arc(pr.x, pr.y, selected ? 11 : 8, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.stroke();
+  ctx.beginPath();
+  ctx.arc(pr.x, pr.y, selected ? 17 : 13, 0, Math.PI * 2);
+  ctx.stroke();
+  ctx.restore();
+  return { x: pr.x, y: pr.y, r: 20 };
+}
+
+export function drawSpotLightGizmo(
+  ctx: CanvasRenderingContext2D,
+  viewCam: Camera,
+  vp: Vp,
+  transform: TransformLike,
+  range: number,
+  outerAngleDegrees: number,
+  selected: boolean,
+): { x: number; y: number; r: number } | null {
+  const origin: Vec3 = [
+    Number(transform.position[0]) || 0,
+    Number(transform.position[1]) || 0,
+    Number(transform.position[2]) || 0,
+  ];
+  const { forward, right, up } = transformBasis(transform.rotation);
+  const length = Math.min(Math.max(Number(range) || 1, 0.2), 12);
+  const halfAngle = (Math.min(Math.max(Number(outerAngleDegrees) || 40, 1), 178) * Math.PI) / 360;
+  const ringRadius = Math.tan(halfAngle) * length;
+  const center = add(origin, scale(forward, length));
+  const color = selected ? '#ffe08a' : '#90c8ff';
+  const ring: Vec3[] = [];
+  for (let i = 0; i < 12; i++) {
+    const angle = (i / 12) * Math.PI * 2;
+    ring.push(
+      add(center, add(scale(right, Math.cos(angle) * ringRadius), scale(up, Math.sin(angle) * ringRadius))),
+    );
+  }
+  for (let i = 0; i < ring.length; i++) {
+    strokeWorldSeg(ctx, viewCam, vp, ring[i], ring[(i + 1) % ring.length], color, selected ? 2 : 1.3);
+  }
+  for (const index of [0, 3, 6, 9]) {
+    strokeWorldSeg(ctx, viewCam, vp, origin, ring[index], color, selected ? 2 : 1.3);
+  }
+  const pr = projectPoint(origin, viewCam, vp);
+  if (!pr) return null;
+  ctx.save();
+  ctx.fillStyle = color;
+  ctx.beginPath();
+  ctx.arc(pr.x, pr.y, selected ? 9 : 7, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.restore();
+  return { x: pr.x, y: pr.y, r: 18 };
+}

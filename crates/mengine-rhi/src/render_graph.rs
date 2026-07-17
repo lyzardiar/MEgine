@@ -2,7 +2,7 @@
 
 #[derive(Clone, Debug)]
 pub struct PassDesc {
-    pub name:  String,
+    pub name: String,
     pub color: bool,
     pub depth: bool,
 }
@@ -28,12 +28,12 @@ impl RenderGraph {
     pub fn default_forward() -> Self {
         let mut g = Self::new();
         g.add_pass(PassDesc {
-            name:  "forward_opaque".into(),
+            name: "forward_opaque".into(),
             color: true,
             depth: true,
         });
         g.add_pass(PassDesc {
-            name:  "editor_overlay".into(),
+            name: "ui_overlay".into(),
             color: true,
             depth: false,
         });

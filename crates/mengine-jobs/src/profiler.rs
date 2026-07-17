@@ -1,6 +1,7 @@
 //! Lightweight frame profiler hooks (Phase 4).
 
 use parking_lot::Mutex;
+use std::cmp::Reverse;
 use std::collections::HashMap;
 use std::time::Instant;
 
@@ -13,7 +14,7 @@ pub struct Profiler {
 pub struct ScopeStats {
     pub calls: u64,
     pub total_ns: u64,
-    pub last_ns:  u64,
+    pub last_ns: u64,
 }
 
 impl Profiler {
@@ -33,8 +34,12 @@ impl Profiler {
     }
 
     pub fn report(&self) -> Vec<(String, ScopeStats)> {
-        let mut v: Vec<_> = self.scopes.iter().map(|(k, v)| (k.clone(), v.clone())).collect();
-        v.sort_by(|a, b| b.1.total_ns.cmp(&a.1.total_ns));
+        let mut v: Vec<_> = self
+            .scopes
+            .iter()
+            .map(|(k, v)| (k.clone(), v.clone()))
+            .collect();
+        v.sort_by_key(|entry| Reverse(entry.1.total_ns));
         v
     }
 }

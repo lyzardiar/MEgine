@@ -1,6 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import type { WorldSnapshotView } from '@mengine/api';
-import { expandIntent } from '@mengine/agent';
 import {
   createEditorStore,
   type EditorMode,
@@ -30,7 +29,7 @@ import { Inspector } from './panels/Inspector';
 import { Project } from './panels/Project';
 import { Console } from './panels/Console';
 import { Viewport } from './panels/Viewport';
-import { DockWorkspace } from './panels/DockWorkspace';
+import { DockWorkspace, type PanelKind } from './panels/DockWorkspace';
 import { EditorWindowHost } from './editorWindow';
 import { resolveUnityAction } from './panels/uiFieldEditors';
 import { refreshSprites } from './spriteLibrary';
@@ -58,7 +57,22 @@ function parseGameOrientation(v: unknown): GameOrientation | null {
   return v === 'landscape' || v === 'portrait' ? v : null;
 }
 
-export function App() {
+type WorkspaceSyncMessage =
+  | { type: 'request-scene'; sender: string }
+  | {
+      type: 'scene-state';
+      sender: string;
+      timestamp: number;
+      mode: EditorMode;
+      sceneName: string | null;
+      sceneJson: string;
+      selectedIds: number[];
+      logs: string[];
+    };
+
+const WORKSPACE_CHANNEL = 'mengine.editor.workspace.v1';
+
+export function App(props: { detachedPanel?: PanelKind | null } = {}) {
   const store = useMemo(() => createEditorStore(), []);
   const [snap, setSnap] = useState<WorldSnapshotView & { selectedIds?: number[] }>(store.snapshot());
   const [mode, setMode] = useState<EditorMode>('edit');
@@ -79,11 +93,42 @@ export function App() {
   const [selected, setSelected] = useState<number | null>(null);
   const [selectedIds, setSelectedIds] = useState<number[]>([]);
   const logEnd = useRef(0);
+  const logsRef = useRef(logs);
   const booted = useRef(false);
   const sceneNameRef = useRef<string | null>(null);
+  const syncSender = useRef(crypto.randomUUID());
+  const syncChannel = useRef<BroadcastChannel | null>(null);
+  const syncTimer = useRef<number | null>(null);
+  const applyingRemote = useRef(false);
+  const lastRemoteTimestamp = useRef(0);
+  const syncReady = useRef(!props.detachedPanel);
   sceneNameRef.current = sceneName;
 
-  const refresh = () => {
+  const broadcastScene = (immediate = false) => {
+    const channel = syncChannel.current;
+    if (!channel || !syncReady.current || applyingRemote.current || !booted.current) return;
+    const send = () => {
+      syncTimer.current = null;
+      channel.postMessage({
+        type: 'scene-state',
+        sender: syncSender.current,
+        timestamp: Date.now(),
+        sceneName: sceneNameRef.current,
+        mode: store.mode,
+        sceneJson: store.saveSessionSceneJson(sceneNameRef.current ?? 'Untitled'),
+        selectedIds: store.selectedIds,
+        logs: logsRef.current,
+      } satisfies WorkspaceSyncMessage);
+    };
+    if (immediate) {
+      if (syncTimer.current != null) window.clearTimeout(syncTimer.current);
+      send();
+      return;
+    }
+    if (syncTimer.current == null) syncTimer.current = window.setTimeout(send, 33);
+  };
+
+  const refresh = (publish = true) => {
     setSnap(store.snapshot());
     setMode(store.mode);
     setGizmo(store.gizmo);
@@ -92,18 +137,74 @@ export function App() {
     setGameAspect(store.gameAspect);
     setGameOrientation(store.gameOrientation);
     setTreeTick((t) => t + 1);
+    if (publish) broadcastScene();
   };
 
   const bumpScenes = () => setSceneTick((t) => t + 1);
 
   const log = (msg: string, level: 'info' | 'warn' | 'error' = 'info') => {
     const prefix = level === 'info' ? '' : level === 'warn' ? '[Warn] ' : '[Error] ';
-    setLogs((l) => {
-      const next = [...l, `${prefix}${msg}`];
-      logEnd.current = next.length;
-      return next.slice(-300);
-    });
+    const next = [...logsRef.current, `${prefix}${msg}`].slice(-300);
+    logsRef.current = next;
+    logEnd.current = next.length;
+    setLogs(next);
+    broadcastScene();
   };
+
+  useEffect(() => {
+    if (typeof BroadcastChannel === 'undefined') return;
+    const channel = new BroadcastChannel(WORKSPACE_CHANNEL);
+    syncChannel.current = channel;
+    channel.onmessage = (event: MessageEvent<WorkspaceSyncMessage>) => {
+      const message = event.data;
+      if (!message || message.sender === syncSender.current) return;
+      if (message.type === 'request-scene') {
+        broadcastScene(true);
+        return;
+      }
+      if (message.type !== 'scene-state' || message.timestamp < lastRemoteTimestamp.current) return;
+      try {
+        applyingRemote.current = true;
+        syncReady.current = true;
+        lastRemoteTimestamp.current = message.timestamp;
+        store.loadRemoteSceneJson(message.sceneJson, message.mode);
+        store.selectMany(message.selectedIds, 'replace');
+        setSceneName(message.sceneName);
+        setSnap(store.snapshot());
+        setMode(store.mode);
+        setGizmo(store.gizmo);
+        setSelected(store.selected);
+        setSelectedIds(store.selectedIds);
+        setGameAspect(store.gameAspect);
+        setGameOrientation(store.gameOrientation);
+        if (Array.isArray(message.logs)) {
+          logsRef.current = message.logs;
+          logEnd.current = message.logs.length;
+          setLogs(message.logs);
+        }
+        setTreeTick((tick) => tick + 1);
+      } catch (reason) {
+        console.error('Failed to apply detached-window scene state', reason);
+      } finally {
+        applyingRemote.current = false;
+      }
+    };
+    if (props.detachedPanel) {
+      channel.postMessage({
+        type: 'request-scene',
+        sender: syncSender.current,
+      } satisfies WorkspaceSyncMessage);
+    }
+    const fallback = window.setTimeout(() => {
+      syncReady.current = true;
+    }, 1500);
+    return () => {
+      window.clearTimeout(fallback);
+      if (syncTimer.current != null) window.clearTimeout(syncTimer.current);
+      syncChannel.current = null;
+      channel.close();
+    };
+  }, [props.detachedPanel, store]);
 
   const openSceneByName = async (name: string, silent = false) => {
     const json = readSceneJson(name);
@@ -116,7 +217,7 @@ export function App() {
       setSceneName(name);
       await setActiveSceneName(name);
       if (!silent) log(`Opened ${sceneFileName(name)}`);
-      refresh();
+      refresh(!props.detachedPanel);
       bumpScenes();
       return true;
     } catch (err) {
@@ -201,7 +302,14 @@ export function App() {
       const { backend, migrated, prefs } = await initSceneLibrary();
       await refreshSprites();
       bumpScenes();
-      if (backend === 'disk') {
+      // A detached panel is a view of the main editor's in-memory scene. It must
+      // never restore the last saved scene from disk, otherwise its boot refresh
+      // can broadcast stale data and overwrite unsaved edits in the main window.
+      if (props.detachedPanel) {
+        refresh(false);
+        return;
+      }
+      if (backend === 'disk' || backend === 'desktop') {
         log('场景存储：磁盘 project/Assets/Scenes');
       } else {
         log('场景存储：localStorage（请用 Vite dev 启动以启用磁盘）', 'warn');
@@ -217,29 +325,17 @@ export function App() {
       applyEditorPrefs(prefs);
       refresh();
     })();
-  }, [store]);
+  }, [props.detachedPanel, store]);
 
   useEffect(() => {
     const id = setInterval(() => {
       // Edit 模式不要每帧 refresh，否则整树 60fps 重绘会卡死
       if (store.mode !== 'play') return;
       store.tick(1 / 60);
-      refresh();
+      refresh(!props.detachedPanel);
     }, 1000 / 60);
     return () => clearInterval(id);
-  }, [store]);
-
-  const spawnCube = () => {
-    const cmds = expandIntent({
-      kind: 'SpawnMesh',
-      mesh: 'cube',
-      at: [Math.random() * 2 - 1, 0.5, Math.random() * 2 - 1],
-      name: 'Cube',
-    });
-    store.applyCommands(cmds);
-    log('GameObject/3D Object/Cube');
-    refresh();
-  };
+  }, [props.detachedPanel, store]);
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
@@ -360,7 +456,7 @@ export function App() {
   const treeNodes = useMemo(() => store.getVisibleFlat(), [store, snap, treeTick]);
 
   return (
-    <div className="unity-shell">
+    <div className={`unity-shell${props.detachedPanel ? ' detached-shell' : ''}`}>
       <MenuBar
         onNew={newScene}
         onSave={saveScene}
@@ -370,47 +466,15 @@ export function App() {
           store.undo();
           refresh();
         }}
-        onCreateEmpty={() => {
-          store.createEmpty(null);
-          log('GameObject/Create Empty');
-          refresh();
-        }}
-        onCreateEmptyChild={() => {
-          store.createEmptyChild();
-          log('GameObject/Create Empty Child');
-          refresh();
-        }}
-        onCreateCube={spawnCube}
-        onCreateCamera={() => {
-          store.spawnCamera();
-          log('GameObject/Camera');
-          refresh();
-        }}
-        onCreateSprite={() => {
-          store.spawnSpriteQuad();
-          log('GameObject/3D Object/Sprite Quad');
-          refresh();
-        }}
-        onCreateUiCanvas={() => {
-          store.spawnUiCanvas();
-          log('GameObject/UI/Canvas');
-          refresh();
-        }}
-        onCreateUiImage={() => {
-          store.spawnUiImage();
-          log('GameObject/UI/Image');
-          refresh();
-        }}
-        onCreateUiButton={() => {
-          store.spawnUiButton();
-          log('GameObject/UI/Button');
-          refresh();
-        }}
         onDuplicate={() => {
           store.duplicateSelection();
           log('Duplicate');
           refresh();
         }}
+        store={store}
+        selectedIds={selectedIds}
+        onRefresh={refresh}
+        onLog={log}
       />
 
       <ToolBar
@@ -440,24 +504,7 @@ export function App() {
       />
 
       <DockWorkspace
-        viewportTabs={
-          <>
-            <button
-              className={`dock-tab${viewTab === 'scene' ? ' active' : ''}`}
-              type="button"
-              onClick={() => setViewTab('scene')}
-            >
-              Scene
-            </button>
-            <button
-              className={`dock-tab${viewTab === 'game' ? ' active' : ''}`}
-              type="button"
-              onClick={() => setViewTab('game')}
-            >
-              Game
-            </button>
-          </>
-        }
+        detachedPanel={props.detachedPanel}
         panels={{
           hierarchy: (
             <Hierarchy
@@ -563,6 +610,35 @@ export function App() {
                   );
                 } else {
                   log(`Button clicked (entity ${entity})`);
+                }
+                refresh();
+              }}
+              onUiValueChange={(entity, component, patch, callback) => {
+                store.patchComponent(entity, component, patch);
+                const action = resolveUnityAction(entity, callback);
+                if (action) {
+                  const target = store
+                    .snapshot()
+                    .entities.find((candidate) => candidate.entity === action.entity);
+                  if (target) {
+                    if (action.component && target.components[action.component]) {
+                      store.invokeBehaviourMethod(
+                        action.entity,
+                        action.component,
+                        action.method,
+                      );
+                    } else {
+                      const behaviourType = Object.keys(target.components).find((type) =>
+                        getBehaviour(type)?.methods.some((method) => method.key === action.method),
+                      );
+                      if (behaviourType) {
+                        store.invokeBehaviourMethod(action.entity, behaviourType, action.method);
+                      }
+                    }
+                  }
+                }
+                if (component === 'Toggle') {
+                  log(`${component} value changed (entity ${entity})`);
                 }
                 refresh();
               }}

@@ -8,7 +8,9 @@
     "codegen": "cargo run -p mengine-idl -- --idl-dir idl --out-rust crates/mengine-core/src/generated --out-ts packages/api/src/generated",
     "build:samples": "node scripts/build-samples.js",
     "dev:editor": "npm.cmd --prefix packages/editor exec -- vite",
-    "build:editor": "npm.cmd --prefix packages/editor run build",
+    "dev:editor:desktop": "npm.cmd --prefix packages/editor run tauri:dev",
+    "build:editor": "pnpm.cmd --filter @mengine/api build && pnpm.cmd --filter @mengine/behaviour build && pnpm.cmd --filter @mengine/agent build && pnpm.cmd --filter @mengine/editor build",
+    "build:editor:desktop": "npm.cmd --prefix packages/editor run tauri:build",
     "sample:cube": "npm.cmd run build:samples && cargo run -p mengine-runtime -- --sample spinning-cube"
   },
   "engines": {

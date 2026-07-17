@@ -1,14 +1,32 @@
 import {
+  cloneElement,
+  isValidElement,
   useCallback,
   useEffect,
-  useId,
   useRef,
   useState,
+  type ReactElement,
   type ReactNode,
 } from 'react';
+import { cursorPosition, getCurrentWindow } from '@tauri-apps/api/window';
+import {
+  CORE_PANEL_IDS,
+  closeAllDetachedPanelWindows,
+  closeDetachedPanelWindow,
+  createPanelChannel,
+  detachPanelWindow,
+  dragDetachedPanelWindow,
+  readDetachedPanels,
+  reconcileDetachedPanels,
+  requestPanelDock,
+  setDetachedPanelOpen,
+  type CorePanelId,
+  type PanelWindowMessage,
+} from './detachedPanelWindow';
+import { isDesktopEditor } from '../transport/editorTransport';
 import './dock.css';
 
-export type PanelKind = 'hierarchy' | 'viewport' | 'inspector' | 'project' | 'console';
+export type PanelKind = CorePanelId;
 
 export type DockGroup = {
   panels: PanelKind[];
@@ -39,17 +57,25 @@ type DockNode = LeafNode | SplitNode;
 type DragPayload = { panel: PanelKind; fromId: string };
 type DropTarget = { leafId: string; zone: DropZone };
 
-const LAYOUT_KEY = 'mengine.dock.layout.v3';
+const DOCK_DRAG_TYPE = 'text/mengine-dock';
+
+export type DockPanelContents = Omit<Record<PanelKind, ReactNode>, 'scene' | 'game'> & {
+  /** Legacy authoring element; Dock clones it with an independent Scene/Game tab prop. */
+  viewport: ReactElement<{ tab: 'scene' | 'game' }>;
+};
+
+const LAYOUT_KEY = 'mengine.dock.layout.v4';
 
 const PANEL_TITLE: Record<PanelKind, string> = {
   hierarchy: 'Hierarchy',
-  viewport: 'Viewport',
-  inspector: 'Inspector',
+  scene: 'Scene',
+  game: 'Game',
+  inspector: 'Inspector / Property',
   project: 'Project',
   console: 'Console',
 };
 
-const ALL_PANELS: PanelKind[] = ['hierarchy', 'viewport', 'inspector', 'project', 'console'];
+const ALL_PANELS: PanelKind[] = [...CORE_PANEL_IDS];
 
 let _idSeq = 0;
 function nextId(prefix = 'n'): string {
@@ -83,7 +109,7 @@ function defaultTree(): DockNode {
         id: nextId('row'),
         dir: 'h',
         ratio: 0.7,
-        a: leaf(['viewport']),
+        a: leaf(['scene', 'game']),
         b: leaf(['inspector']),
       },
     },
@@ -132,23 +158,30 @@ function mapLeaf(
   return { ...n, a, b };
 }
 
-function removePanel(root: DockNode, panel: PanelKind): DockNode {
-  const walk = (n: DockNode): DockNode | null => {
-    if (n.kind === 'tabs') {
-      if (!n.panels.includes(panel)) return n;
-      const panels = n.panels.filter((p) => p !== panel);
-      return panels.length
-        ? { ...n, panels, active: n.active === panel ? panels[0] : n.active }
-        : null;
-    }
-    const a = walk(n.a);
-    const b = walk(n.b);
-    if (!a && !b) return null;
-    if (!a) return b;
-    if (!b) return a;
-    return { ...n, a, b };
-  };
-  return walk(root) ?? leaf([panel]);
+function stripPanel(root: DockNode, panel: PanelKind): DockNode | null {
+  if (root.kind === 'tabs') {
+    if (!root.panels.includes(panel)) return root;
+    const panels = root.panels.filter((candidate) => candidate !== panel);
+    if (!panels.length) return null;
+    return {
+      ...root,
+      panels,
+      active: root.active === panel ? panels[0] : root.active,
+    };
+  }
+  const a = stripPanel(root.a, panel);
+  const b = stripPanel(root.b, panel);
+  if (!a) return b;
+  if (!b) return a;
+  return { ...root, a, b };
+}
+
+function attachPanel(root: DockNode, panel: PanelKind): DockNode {
+  if (collectPanels(root).has(panel)) return root;
+  if (root.kind === 'tabs') {
+    return { ...root, panels: [...root.panels, panel], active: panel };
+  }
+  return { ...root, a: attachPanel(root.a, panel) };
 }
 
 function findLeaf(n: DockNode, id: string): LeafNode | null {
@@ -163,7 +196,10 @@ function applyDrop(
   _fromId: string,
   target: DropTarget,
 ): DockNode {
-  let tree = removePanel(cloneNode(root), panel);
+  const stripped = stripPanel(cloneNode(root), panel);
+  // A single remaining panel cannot be split against itself.
+  if (!stripped) return root;
+  const tree = stripped;
 
   // If from leaf is also target and only that panel was there, ids may have collapsed —
   // find a leaf that still exists for target
@@ -172,30 +208,27 @@ function applyDrop(
   if (target.zone === 'center') {
     if (!targetLeaf) {
       // target leaf vanished (dragged last tab onto itself) — put panel back as alone leaf
-      return ensureAllPanels(tree, panel);
+      return leaf([panel]);
     }
     const next = mapLeaf(tree, target.leafId, (l) => {
       if (l.panels.includes(panel)) return { ...l, active: panel };
       return { ...l, panels: [...l.panels, panel], active: panel };
     });
-    return ensureAllPanels(next ?? leaf([panel]), panel);
+    return next ?? leaf([panel]);
   }
 
   const newLeaf = leaf([panel]);
 
   if (!targetLeaf) {
     // Target gone — attach as sibling of root
-    return ensureAllPanels(
-      {
-        kind: 'split',
-        id: nextId('split'),
-        dir: target.zone === 'top' || target.zone === 'bottom' ? 'v' : 'h',
-        ratio: 0.5,
-        a: target.zone === 'left' || target.zone === 'top' ? newLeaf : tree,
-        b: target.zone === 'left' || target.zone === 'top' ? tree : newLeaf,
-      },
-      panel,
-    );
+    return {
+      kind: 'split',
+      id: nextId('split'),
+      dir: target.zone === 'top' || target.zone === 'bottom' ? 'v' : 'h',
+      ratio: 0.5,
+      a: target.zone === 'left' || target.zone === 'top' ? newLeaf : tree,
+      b: target.zone === 'left' || target.zone === 'top' ? tree : newLeaf,
+    };
   }
 
   // Don't split if dropping edge onto the same leaf we emptied and it's the only remaining
@@ -219,14 +252,35 @@ function applyDrop(
     };
   });
 
-  return ensureAllPanels(splitResult ?? tree, panel);
+  return splitResult ?? tree;
 }
 
-function ensureAllPanels(root: DockNode, preferActive?: PanelKind): DockNode {
+function firstLeafId(n: DockNode): string {
+  return n.kind === 'tabs' ? n.id : firstLeafId(n.a);
+}
+
+function readDragPayload(dataTransfer: DataTransfer): DragPayload | null {
+  try {
+    const raw = dataTransfer.getData(DOCK_DRAG_TYPE) || dataTransfer.getData('text/plain');
+    const value = JSON.parse(raw) as Partial<DragPayload>;
+    if (!CORE_PANEL_IDS.includes(value.panel as PanelKind) || typeof value.fromId !== 'string') {
+      return null;
+    }
+    return { panel: value.panel as PanelKind, fromId: value.fromId };
+  } catch {
+    return null;
+  }
+}
+
+function ensureAllPanels(
+  root: DockNode,
+  preferActive?: PanelKind,
+  excluded: ReadonlySet<PanelKind> = new Set(),
+): DockNode {
   const seen = collectPanels(root);
   let tree: DockNode = root;
   for (const p of ALL_PANELS) {
-    if (seen.has(p)) continue;
+    if (seen.has(p) || excluded.has(p)) continue;
     // attach missing to first leaf
     const attach = (n: DockNode): DockNode => {
       if (n.kind === 'tabs') {
@@ -259,6 +313,16 @@ function hitZone(clientX: number, clientY: number, el: HTMLElement): DropZone {
   if (min === dR) return 'right';
   if (min === dT) return 'top';
   return 'bottom';
+}
+
+function dropTargetAtPoint(clientX: number, clientY: number): DropTarget | null {
+  const element = document.elementFromPoint(clientX, clientY);
+  const pane = element?.closest<HTMLElement>('[data-dock-leaf-id]');
+  if (!pane?.dataset.dockLeafId) return null;
+  return {
+    leafId: pane.dataset.dockLeafId,
+    zone: hitZone(clientX, clientY, pane),
+  };
 }
 
 /** Migrate old A–E slot layout if present */
@@ -371,16 +435,23 @@ function migrateV2(): DockNode | null {
 }
 
 function loadTree(): DockNode {
+  const detached = readDetachedPanels();
   try {
     const raw = localStorage.getItem(LAYOUT_KEY);
     if (raw) {
       const data = JSON.parse(raw) as { tree?: DockNode };
-      if (data.tree) return ensureAllPanels(reviveIds(data.tree));
+      if (data.tree) {
+        let tree: DockNode = reviveIds(data.tree);
+        for (const panel of detached) tree = stripPanel(tree, panel) ?? leaf([]);
+        return ensureAllPanels(tree, undefined, detached);
+      }
     }
   } catch {
     /* ignore */
   }
-  return migrateV2() ?? defaultTree();
+  let tree = migrateV2() ?? defaultTree();
+  for (const panel of detached) tree = stripPanel(tree, panel) ?? leaf([]);
+  return ensureAllPanels(tree, undefined, detached);
 }
 
 function reviveIds(n: DockNode): DockNode {
@@ -466,29 +537,37 @@ function DropOverlay(props: { zone: DropZone | null }) {
 
 function DockLeaf(props: {
   node: LeafNode;
-  panels: Record<PanelKind, ReactNode>;
-  viewportTabs?: ReactNode;
+  panelContent: (panel: PanelKind) => ReactNode;
   dragging: boolean;
   drop: DropTarget | null;
   onActivate: (leafId: string, panel: PanelKind) => void;
   onDragStart: (payload: DragPayload) => void;
   onDragEnd: () => void;
   onDragOver: (target: DropTarget | null) => void;
-  onDrop: (target: DropTarget) => void;
+  onDrop: (target: DropTarget, payload?: DragPayload | null) => void;
+  onDetach: (panel: PanelKind, position?: { x: number; y: number }) => void;
 }) {
   const { node } = props;
   const active = node.active;
-  const showViewportChrome = active === 'viewport' && props.viewportTabs;
   const isDropHere = props.drop?.leafId === node.id;
   const zone = isDropHere ? props.drop!.zone : null;
   const frameRef = useRef<HTMLDivElement>(null);
+  const pointerDrag = useRef<{
+    pointerId: number;
+    panel: PanelKind;
+    startX: number;
+    startY: number;
+    started: boolean;
+  } | null>(null);
+  const suppressClick = useRef(false);
 
   return (
     <div
       className="dock-pane"
       ref={frameRef}
+      data-dock-leaf-id={node.id}
       onDragOver={(e) => {
-        if (!props.dragging) return;
+        if (!props.dragging && !Array.from(e.dataTransfer.types).includes(DOCK_DRAG_TYPE)) return;
         e.preventDefault();
         e.dataTransfer.dropEffect = 'move';
         const z = hitZone(e.clientX, e.clientY, e.currentTarget);
@@ -500,7 +579,7 @@ function DockLeaf(props: {
       onDrop={(e) => {
         e.preventDefault();
         const z = hitZone(e.clientX, e.clientY, e.currentTarget);
-        props.onDrop({ leafId: node.id, zone: z });
+        props.onDrop({ leafId: node.id, zone: z }, readDragPayload(e.dataTransfer));
       }}
     >
       <div className={`dock${isDropHere ? ' dock-drop-target' : ''}`}>
@@ -510,25 +589,89 @@ function DockLeaf(props: {
               key={kind}
               type="button"
               className={`dock-tab dock-tab-drag${active === kind ? ' active' : ''}`}
-              draggable
               title="拖到面板中间=叠页签；拖到边缘=上下左右拆分"
-              onClick={() => props.onActivate(node.id, kind)}
-              onDragStart={(e) => {
-                e.dataTransfer.setData(
-                  'text/mengine-dock',
-                  JSON.stringify({ panel: kind, fromId: node.id }),
-                );
-                e.dataTransfer.effectAllowed = 'move';
-                props.onDragStart({ panel: kind, fromId: node.id });
+              onClick={(event) => {
+                if (suppressClick.current) {
+                  suppressClick.current = false;
+                  event.preventDefault();
+                  return;
+                }
+                props.onActivate(node.id, kind);
               }}
-              onDragEnd={props.onDragEnd}
+              onPointerDown={(event) => {
+                if (event.button !== 0) return;
+                event.currentTarget.setPointerCapture(event.pointerId);
+                pointerDrag.current = {
+                  pointerId: event.pointerId,
+                  panel: kind,
+                  startX: event.clientX,
+                  startY: event.clientY,
+                  started: false,
+                };
+              }}
+              onPointerMove={(event) => {
+                const current = pointerDrag.current;
+                if (!current || current.pointerId !== event.pointerId) return;
+                if (!current.started) {
+                  const distance = Math.hypot(
+                    event.clientX - current.startX,
+                    event.clientY - current.startY,
+                  );
+                  if (distance < 5) return;
+                  current.started = true;
+                  suppressClick.current = true;
+                  props.onDragStart({ panel: current.panel, fromId: node.id });
+                }
+                event.preventDefault();
+                const outside = event.clientX <= 0
+                  || event.clientY <= 0
+                  || event.clientX >= window.innerWidth - 1
+                  || event.clientY >= window.innerHeight - 1;
+                if (outside) {
+                  pointerDrag.current = null;
+                  props.onDetach(current.panel, {
+                    x: Math.max(0, event.screenX - 40),
+                    y: Math.max(0, event.screenY - 16),
+                  });
+                  return;
+                }
+                props.onDragOver(dropTargetAtPoint(event.clientX, event.clientY));
+              }}
+              onPointerUp={(event) => {
+                const current = pointerDrag.current;
+                pointerDrag.current = null;
+                if (!current || current.pointerId !== event.pointerId || !current.started) return;
+                event.preventDefault();
+                const target = dropTargetAtPoint(event.clientX, event.clientY);
+                if (target) props.onDrop(target, { panel: current.panel, fromId: node.id });
+                else props.onDragEnd();
+              }}
+              onPointerCancel={() => {
+                pointerDrag.current = null;
+                props.onDragEnd();
+              }}
+              onLostPointerCapture={() => {
+                const current = pointerDrag.current;
+                pointerDrag.current = null;
+                if (current?.started) props.onDragEnd();
+              }}
             >
               {PANEL_TITLE[kind]}
             </button>
           ))}
-          {showViewportChrome && <div className="dock-tabs-extra">{props.viewportTabs}</div>}
+          {active && (
+            <button
+              type="button"
+              className="dock-popout"
+              title={`Open ${PANEL_TITLE[active]} as a native window`}
+              aria-label={`Detach ${PANEL_TITLE[active]}`}
+              onClick={() => props.onDetach(active)}
+            >
+              ↗
+            </button>
+          )}
         </div>
-        <div className="dock-content">{active ? props.panels[active] : null}</div>
+        <div className="dock-content">{active ? props.panelContent(active) : null}</div>
         {props.dragging && <DropOverlay zone={zone} />}
       </div>
     </div>
@@ -537,16 +680,16 @@ function DockLeaf(props: {
 
 function DockNodeView(props: {
   node: DockNode;
-  panels: Record<PanelKind, ReactNode>;
-  viewportTabs?: ReactNode;
+  panelContent: (panel: PanelKind) => ReactNode;
   dragging: boolean;
   drop: DropTarget | null;
   onActivate: (leafId: string, panel: PanelKind) => void;
   onDragStart: (payload: DragPayload) => void;
   onDragEnd: () => void;
   onDragOver: (target: DropTarget | null) => void;
-  onDrop: (target: DropTarget) => void;
+  onDrop: (target: DropTarget, payload?: DragPayload | null) => void;
   onRatio: (splitId: string, ratio: number) => void;
+  onDetach: (panel: PanelKind, position?: { x: number; y: number }) => void;
 }) {
   const { node } = props;
 
@@ -554,8 +697,7 @@ function DockNodeView(props: {
     return (
       <DockLeaf
         node={node}
-        panels={props.panels}
-        viewportTabs={props.viewportTabs}
+        panelContent={props.panelContent}
         dragging={props.dragging}
         drop={props.drop}
         onActivate={props.onActivate}
@@ -563,6 +705,7 @@ function DockNodeView(props: {
         onDragEnd={props.onDragEnd}
         onDragOver={props.onDragOver}
         onDrop={props.onDrop}
+        onDetach={props.onDetach}
       />
     );
   }
@@ -611,21 +754,197 @@ function DockNodeView(props: {
 }
 
 export function DockWorkspace(props: {
-  panels: Record<PanelKind, ReactNode>;
-  viewportTabs?: ReactNode;
+  panels: DockPanelContents;
+  detachedPanel?: PanelKind | null;
 }) {
   const boot = useRef(loadTree());
   const [tree, setTree] = useState<DockNode>(boot.current);
   const dragRef = useRef<DragPayload | null>(null);
+  const dropRef = useRef<DropTarget | null>(null);
   const [dragging, setDragging] = useState(false);
   const [drop, setDrop] = useState<DropTarget | null>(null);
-  // Stable key prefix for remount after reset
-  const resetKey = useId();
-  const [layoutKey, setLayoutKey] = useState(0);
+  const [externalDragging, setExternalDragging] = useState<PanelKind | null>(null);
+
+  const panelContent = useCallback((panel: PanelKind): ReactNode => {
+    if (panel === 'scene' || panel === 'game') {
+      return isValidElement(props.panels.viewport)
+        ? cloneElement(
+            props.panels.viewport as ReactElement<{ tab: 'scene' | 'game' }>,
+            { tab: panel },
+          )
+        : null;
+    }
+    return props.panels[panel];
+  }, [props.panels]);
+
+  const setDropTarget = useCallback((target: DropTarget | null) => {
+    dropRef.current = target;
+    setDrop(target);
+  }, []);
+
+  const cursorInMainWindow = useCallback(async (): Promise<{ x: number; y: number } | null> => {
+    if (!isDesktopEditor()) return null;
+    const current = getCurrentWindow();
+    const [cursor, inner, scale] = await Promise.all([
+      cursorPosition(),
+      current.innerPosition(),
+      current.scaleFactor(),
+    ]);
+    const x = (cursor.x - inner.x) / scale;
+    const y = (cursor.y - inner.y) / scale;
+    return x >= 0 && y >= 0 && x < window.innerWidth && y < window.innerHeight
+      ? { x, y }
+      : null;
+  }, []);
+
+  const dockTargetAtCursor = useCallback(async (): Promise<DropTarget | null> => {
+    const cursor = await cursorInMainWindow();
+    if (!cursor) return null;
+    const panes = document.querySelectorAll<HTMLElement>('[data-dock-leaf-id]');
+    for (const pane of panes) {
+      const rect = pane.getBoundingClientRect();
+      if (
+        cursor.x >= rect.left
+        && cursor.x <= rect.right
+        && cursor.y >= rect.top
+        && cursor.y <= rect.bottom
+      ) {
+        return {
+          leafId: pane.dataset.dockLeafId!,
+          zone: hitZone(cursor.x, cursor.y, pane),
+        };
+      }
+    }
+    return null;
+  }, [cursorInMainWindow]);
 
   useEffect(() => {
-    saveTree(tree);
-  }, [tree]);
+    if (!props.detachedPanel) saveTree(tree);
+  }, [props.detachedPanel, tree]);
+
+  useEffect(() => {
+    const channel = createPanelChannel();
+    if (!channel) return;
+    if (props.detachedPanel) {
+      setDetachedPanelOpen(props.detachedPanel, true);
+      channel.postMessage({
+        type: 'panel-opened',
+        panel: props.detachedPanel,
+      } satisfies PanelWindowMessage);
+      const onUnload = () => {
+        setDetachedPanelOpen(props.detachedPanel!, false);
+        channel.postMessage({
+          type: 'panel-closed',
+          panel: props.detachedPanel!,
+        } satisfies PanelWindowMessage);
+      };
+      window.addEventListener('beforeunload', onUnload);
+      return () => {
+        window.removeEventListener('beforeunload', onUnload);
+        channel.close();
+      };
+    }
+    channel.onmessage = (event: MessageEvent<PanelWindowMessage>) => {
+      const message = event.data;
+      if (!message || !CORE_PANEL_IDS.includes(message.panel)) return;
+      if (message.type === 'panel-opened') {
+        setTree((previous) => stripPanel(previous, message.panel) ?? leaf([]));
+      } else if (message.type === 'panel-closed') {
+        setTree((previous) => attachPanel(previous, message.panel));
+      } else if (message.type === 'panel-drag-started') {
+        dragRef.current = { panel: message.panel, fromId: '__detached__' };
+        setExternalDragging(message.panel);
+        setDragging(true);
+      } else if (message.type === 'panel-drag-finished') {
+        void dockTargetAtCursor().then((target) => {
+          const payload = dragRef.current;
+          if (!payload || payload.panel !== message.panel || payload.fromId !== '__detached__') return;
+          if (target) {
+            setTree((previous) => applyDrop(previous, message.panel, payload.fromId, target));
+            void closeDetachedPanelWindow(message.panel);
+          }
+          dragRef.current = null;
+          dropRef.current = null;
+          setDrop(null);
+          setDragging(false);
+          setExternalDragging(null);
+        });
+      } else if (message.type === 'panel-dock-requested') {
+        setTree((previous) => applyDrop(
+          previous,
+          message.panel,
+          '__detached__',
+          { leafId: firstLeafId(previous), zone: 'center' },
+        ));
+        dragRef.current = null;
+        dropRef.current = null;
+        setDrop(null);
+        setDragging(false);
+        setExternalDragging(null);
+        void closeDetachedPanelWindow(message.panel);
+      }
+    };
+    void reconcileDetachedPanels().then((stale) => {
+      if (stale.length) {
+        setTree((previous) => stale.reduce(attachPanel, previous));
+      }
+    });
+    return () => channel.close();
+  }, [dockTargetAtCursor, props.detachedPanel]);
+
+  useEffect(() => {
+    if (!externalDragging || props.detachedPanel) return;
+    let cancelled = false;
+    let timer: number | null = null;
+    const sample = async () => {
+      const target = await dockTargetAtCursor();
+      if (cancelled) return;
+      setDropTarget(target);
+      timer = window.setTimeout(() => void sample(), 40);
+    };
+    void sample();
+    return () => {
+      cancelled = true;
+      if (timer != null) window.clearTimeout(timer);
+    };
+  }, [dockTargetAtCursor, externalDragging, props.detachedPanel, setDropTarget]);
+
+  useEffect(() => {
+    if (!dragging || externalDragging || props.detachedPanel) return;
+
+    const clearInternalDrag = () => {
+      dragRef.current = null;
+      dropRef.current = null;
+      setDragging(false);
+      setDrop(null);
+    };
+    const finishInternalDrag = () => {
+      // DockLeaf handles the normal path first. This window-level fallback
+      // covers pointer capture loss at WebView/window boundaries.
+      window.setTimeout(() => {
+        const payload = dragRef.current;
+        const target = dropRef.current;
+        if (payload && target) {
+          setTree((previous) => applyDrop(
+            previous,
+            payload.panel,
+            payload.fromId,
+            target,
+          ));
+        }
+        clearInternalDrag();
+      }, 0);
+    };
+
+    window.addEventListener('pointerup', finishInternalDrag);
+    window.addEventListener('pointercancel', clearInternalDrag);
+    window.addEventListener('blur', clearInternalDrag);
+    return () => {
+      window.removeEventListener('pointerup', finishInternalDrag);
+      window.removeEventListener('pointercancel', clearInternalDrag);
+      window.removeEventListener('blur', clearInternalDrag);
+    };
+  }, [dragging, externalDragging, props.detachedPanel]);
 
   useEffect(() => {
     const onFocus = (ev: Event) => {
@@ -659,12 +978,25 @@ export function DockWorkspace(props: {
 
   const endDrag = () => {
     dragRef.current = null;
+    dropRef.current = null;
     setDragging(false);
     setDrop(null);
+    setExternalDragging(null);
   };
 
-  const onDrop = (target: DropTarget) => {
-    const payload = dragRef.current;
+  const detach = async (
+    panel: PanelKind,
+    position?: { x: number; y: number },
+  ) => {
+    const opened = await detachPanelWindow(panel, position);
+    if (opened) {
+      setTree((previous) => stripPanel(previous, panel) ?? leaf([]));
+    }
+    endDrag();
+  };
+
+  const onDrop = (target: DropTarget, transferred?: DragPayload | null) => {
+    const payload = transferred ?? dragRef.current;
     if (!payload) {
       endDrag();
       return;
@@ -685,12 +1017,44 @@ export function DockWorkspace(props: {
     endDrag();
   };
 
+  if (props.detachedPanel) {
+    return (
+      <div className="dock-workspace detached-panel-workspace">
+        <div className="detached-dock-header">
+          <button
+            type="button"
+            className="detached-dock-drag"
+            title="拖回主窗口中的目标区域即可重新停靠"
+            onPointerDown={(event) => {
+              if (event.button !== 0) return;
+              event.preventDefault();
+              void dragDetachedPanelWindow(props.detachedPanel!);
+            }}
+          >
+            <span className="detached-dock-grip">⠿</span>
+            <span>{PANEL_TITLE[props.detachedPanel]}</span>
+          </button>
+          <button
+            type="button"
+            className="detached-dock-return"
+            title="停靠回主窗口"
+            onClick={() => requestPanelDock(props.detachedPanel!)}
+          >
+            停靠
+          </button>
+        </div>
+        <div className="detached-panel-content">
+          {panelContent(props.detachedPanel)}
+        </div>
+      </div>
+    );
+  }
+
   return (
-    <div className={`dock-workspace${dragging ? ' is-dragging' : ''}`} key={`${resetKey}-${layoutKey}`}>
+    <div className={`dock-workspace${dragging ? ' is-dragging' : ''}`}>
       <DockNodeView
         node={tree}
-        panels={props.panels}
-        viewportTabs={props.viewportTabs}
+        panelContent={panelContent}
         dragging={dragging}
         drop={drop}
         onActivate={(leafId, panel) => {
@@ -706,9 +1070,10 @@ export function DockWorkspace(props: {
           setDragging(true);
         }}
         onDragEnd={endDrag}
-        onDragOver={setDrop}
+        onDragOver={setDropTarget}
         onDrop={onDrop}
         onRatio={setRatio}
+        onDetach={(panel, position) => void detach(panel, position)}
       />
 
       <button
@@ -716,9 +1081,9 @@ export function DockWorkspace(props: {
         className="dock-reset"
         title="恢复默认布局"
         onClick={() => {
+          void closeAllDetachedPanelWindows();
           const t = defaultTree();
           setTree(t);
-          setLayoutKey((k) => k + 1);
         }}
       >
         重置布局

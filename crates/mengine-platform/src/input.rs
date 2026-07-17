@@ -15,18 +15,18 @@ pub enum KeyCode {
 
 #[derive(Clone, Debug, Default)]
 pub struct PointerState {
-    pub x:       f32,
-    pub y:       f32,
+    pub x: f32,
+    pub y: f32,
     pub delta_x: f32,
     pub delta_y: f32,
-    pub left:    bool,
-    pub right:   bool,
+    pub left: bool,
+    pub right: bool,
 }
 
 #[derive(Clone, Debug, Default)]
 pub struct InputState {
-    pressed:  HashSet<KeyCode>,
-    just:     HashSet<KeyCode>,
+    pressed: HashSet<KeyCode>,
+    just: HashSet<KeyCode>,
     pub pointer: PointerState,
     /// Frame-numbered events for deterministic replay (Phase 3+).
     pub frame: u64,

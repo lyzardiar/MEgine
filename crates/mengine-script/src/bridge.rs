@@ -1,5 +1,5 @@
 use crate::ScriptError;
-use boa_engine::{Context, JsArgs, JsError, JsValue, NativeFunction, Source};
+use boa_engine::{Context, JsArgs, JsValue, NativeFunction, Source};
 use mengine_core::command::{CommandBuffer, WorldCommand};
 use mengine_core::World;
 use serde_json::Value as JsonValue;
@@ -89,8 +89,7 @@ fn register_engine(context: &mut Context) -> Result<(), ScriptError> {
     let push_cmd = NativeFunction::from_copy_closure(|_this, args, ctx| {
         let s = args
             .get_or_undefined(0)
-            .to_string(ctx)
-            .map_err(JsError::from)?
+            .to_string(ctx)?
             .to_std_string_escaped();
         if let Ok(cmd) = serde_json::from_str::<WorldCommand>(&s) {
             if let Ok(mut buf) = pending().lock() {

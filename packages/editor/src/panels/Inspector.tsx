@@ -10,7 +10,7 @@ import { getComponentCatalog } from '../componentCatalog';
 import { eulerXYZToQuat, quatToEulerXYZ } from '../math3d';
 import { SchemaFieldEditor } from './SchemaFieldEditor';
 import { RectTransformEditor } from './RectTransformEditor';
-import { ButtonEditor, ImageEditor } from './uiFieldEditors';
+import { ButtonEditor, ColorField, ImageEditor } from './uiFieldEditors';
 
 type Transform = {
   position: [number, number, number];
@@ -73,7 +73,7 @@ function useScrubDrag(
 }
 
 function AxisInput(props: {
-  label: 'x' | 'y' | 'z';
+  label: 'x' | 'y' | 'z' | 'w';
   value: number;
   onChange: (v: number) => void;
   step?: number;
@@ -273,9 +273,17 @@ function Camera3DEditor(props: {
 }
 
 function GenericCompEditor(props: {
+  componentType?: string;
   data: Record<string, unknown>;
   onChange: (next: Record<string, unknown>) => void;
 }) {
+  const isColorVector = (key: string, value: number[]) => {
+    if (value.length !== 3 && value.length !== 4) return false;
+    const normalized = key.toLowerCase();
+    return normalized === 'emissive'
+      || normalized === 'tint'
+      || /(^|_)color($|_)/.test(normalized);
+  };
   const entries = Object.entries(props.data);
   if (!entries.length) {
     return <div className="field-hint">No fields</div>;
@@ -306,24 +314,63 @@ function GenericCompEditor(props: {
           );
         }
         if (typeof val === 'string') {
+          const options = key === 'simulation_space'
+            ? ['world', 'local']
+            : key === 'blend_mode'
+              ? ['alpha', 'additive']
+              : key === 'shape' && props.componentType === 'ParticleEmitter2D'
+                ? ['point', 'circle', 'box']
+                : key === 'shape' && props.componentType === 'ParticleEmitter3D'
+                  ? ['point', 'sphere', 'box', 'cone']
+                  : null;
           return (
             <div className="field-row" key={key}>
               <label>{key}</label>
-              <input
-                type="text"
-                value={val}
-                onChange={(e) => props.onChange({ ...props.data, [key]: e.target.value })}
-              />
+              {options ? (
+                <select
+                  value={val}
+                  onChange={(e) => props.onChange({ ...props.data, [key]: e.target.value })}
+                >
+                  {options.map((option) => <option key={option} value={option}>{option}</option>)}
+                </select>
+              ) : (
+                <input
+                  type="text"
+                  value={val}
+                  onDragOver={(event) => {
+                    if (key === 'skeleton' || key === 'atlas') event.preventDefault();
+                  }}
+                  onDrop={(event) => {
+                    if (key !== 'skeleton' && key !== 'atlas') return;
+                    event.preventDefault();
+                    const asset = event.dataTransfer.getData('text/mengine-asset')
+                      || event.dataTransfer.getData('text/plain');
+                    if (asset) props.onChange({ ...props.data, [key]: asset });
+                  }}
+                  onChange={(e) => props.onChange({ ...props.data, [key]: e.target.value })}
+                />
+              )}
             </div>
           );
         }
         if (Array.isArray(val) && val.every((x) => typeof x === 'number')) {
           const arr = val as number[];
-          if (arr.length === 3) {
+          if (isColorVector(key, arr)) {
             return (
-              <div className="axis-row" key={key}>
+              <ColorField
+                key={key}
+                label={key}
+                value={arr}
+                onChange={(next) => props.onChange({ ...props.data, [key]: next })}
+              />
+            );
+          }
+          if (arr.length >= 2 && arr.length <= 4) {
+            const axes = (['x', 'y', 'z', 'w'] as const).slice(0, arr.length);
+            return (
+              <div className={`axis-row axis-${arr.length}`} key={key}>
                 <label>{key}</label>
-                {(['x', 'y', 'z'] as const).map((ax, i) => (
+                {axes.map((ax, i) => (
                   <AxisInput
                     key={ax}
                     label={ax}
@@ -420,7 +467,8 @@ export function Inspector(props: {
   const extras = Object.keys(entity.components).filter(
     (k) => k !== 'Transform' && k !== 'RectTransform',
   );
-  const available = getComponentCatalog().filter((c) => {
+  const catalog = getComponentCatalog();
+  const available = catalog.filter((c) => {
     if (entity.components[c.type] != null) {
       const b = getBehaviour(c.type);
       if (b?.disallowMultiple) return false;
@@ -487,7 +535,7 @@ export function Inspector(props: {
         return (
           <CompBlock
             key={k}
-            title={behaviour?.label ?? k}
+            title={behaviour?.label ?? catalog.find((entry) => entry.type === k)?.label ?? k}
             onRemove={() => props.onRemoveComponent(entity.entity, k)}
             contextMenuItems={ctxItems}
           >
@@ -540,6 +588,7 @@ export function Inspector(props: {
               />
             ) : (
               <GenericCompEditor
+                componentType={k}
                 data={data}
                 onChange={(next) => props.onSetComponent(entity.entity, k, next)}
               />

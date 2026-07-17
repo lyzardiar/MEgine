@@ -23,11 +23,23 @@
   },
   "Button": {
     "properties": {
+      "font_size": {
+        "type": "number"
+      },
       "interactable": {
         "type": "boolean"
       },
-      "on_click": {
+      "label": {
         "type": "string"
+      },
+      "on_click": {
+        "type": "object"
+      },
+      "text_color": {
+        "items": {
+          "type": "number"
+        },
+        "type": "array"
       },
       "transition": {
         "type": "string"
@@ -36,6 +48,9 @@
     "required": [
       "interactable",
       "transition",
+      "label",
+      "text_color",
+      "font_size",
       "on_click"
     ],
     "type": "object"
@@ -109,6 +124,25 @@
     ],
     "type": "object"
   },
+  "CanvasGroup": {
+    "properties": {
+      "alpha": {
+        "type": "number"
+      },
+      "blocks_raycasts": {
+        "type": "boolean"
+      },
+      "interactable": {
+        "type": "boolean"
+      }
+    },
+    "required": [
+      "alpha",
+      "interactable",
+      "blocks_raycasts"
+    ],
+    "type": "object"
+  },
   "CanvasScaler": {
     "properties": {
       "match_width_or_height": {
@@ -164,6 +198,68 @@
     ],
     "type": "object"
   },
+  "Dropdown": {
+    "properties": {
+      "background_color": {
+        "items": {
+          "type": "number"
+        },
+        "type": "array"
+      },
+      "expanded": {
+        "type": "boolean"
+      },
+      "font_size": {
+        "type": "number"
+      },
+      "interactable": {
+        "type": "boolean"
+      },
+      "item_color": {
+        "items": {
+          "type": "number"
+        },
+        "type": "array"
+      },
+      "on_value_changed": {
+        "type": "object"
+      },
+      "options": {
+        "items": {
+          "type": "string"
+        },
+        "type": "array"
+      },
+      "selected_color": {
+        "items": {
+          "type": "number"
+        },
+        "type": "array"
+      },
+      "selected_index": {
+        "type": "number"
+      },
+      "text_color": {
+        "items": {
+          "type": "number"
+        },
+        "type": "array"
+      }
+    },
+    "required": [
+      "options",
+      "selected_index",
+      "expanded",
+      "interactable",
+      "background_color",
+      "item_color",
+      "selected_color",
+      "text_color",
+      "font_size",
+      "on_value_changed"
+    ],
+    "type": "object"
+  },
   "EditorOnly": {
     "properties": {},
     "type": "object"
@@ -194,6 +290,73 @@
     ],
     "type": "object"
   },
+  "InputField": {
+    "properties": {
+      "background_color": {
+        "items": {
+          "type": "number"
+        },
+        "type": "array"
+      },
+      "caret_color": {
+        "items": {
+          "type": "number"
+        },
+        "type": "array"
+      },
+      "character_limit": {
+        "type": "number"
+      },
+      "font_size": {
+        "type": "number"
+      },
+      "interactable": {
+        "type": "boolean"
+      },
+      "multiline": {
+        "type": "boolean"
+      },
+      "on_submit": {
+        "type": "object"
+      },
+      "on_value_changed": {
+        "type": "object"
+      },
+      "placeholder": {
+        "type": "string"
+      },
+      "placeholder_color": {
+        "items": {
+          "type": "number"
+        },
+        "type": "array"
+      },
+      "text": {
+        "type": "string"
+      },
+      "text_color": {
+        "items": {
+          "type": "number"
+        },
+        "type": "array"
+      }
+    },
+    "required": [
+      "text",
+      "placeholder",
+      "text_color",
+      "placeholder_color",
+      "background_color",
+      "caret_color",
+      "font_size",
+      "interactable",
+      "multiline",
+      "character_limit",
+      "on_value_changed",
+      "on_submit"
+    ],
+    "type": "object"
+  },
   "Layer": {
     "properties": {
       "value": {
@@ -202,6 +365,116 @@
     },
     "required": [
       "value"
+    ],
+    "type": "object"
+  },
+  "LayoutGroup": {
+    "properties": {
+      "cell_size": {
+        "items": {
+          "type": "number"
+        },
+        "type": "array"
+      },
+      "child_force_expand": {
+        "type": "boolean"
+      },
+      "constraint_count": {
+        "type": "number"
+      },
+      "direction": {
+        "type": "string"
+      },
+      "padding": {
+        "items": {
+          "type": "number"
+        },
+        "type": "array"
+      },
+      "spacing": {
+        "items": {
+          "type": "number"
+        },
+        "type": "array"
+      }
+    },
+    "required": [
+      "direction",
+      "padding",
+      "spacing",
+      "cell_size",
+      "constraint_count",
+      "child_force_expand"
+    ],
+    "type": "object"
+  },
+  "ListView": {
+    "properties": {
+      "background_color": {
+        "items": {
+          "type": "number"
+        },
+        "type": "array"
+      },
+      "font_size": {
+        "type": "number"
+      },
+      "interactable": {
+        "type": "boolean"
+      },
+      "item_color": {
+        "items": {
+          "type": "number"
+        },
+        "type": "array"
+      },
+      "item_height": {
+        "type": "number"
+      },
+      "items": {
+        "items": {
+          "type": "string"
+        },
+        "type": "array"
+      },
+      "on_value_changed": {
+        "type": "object"
+      },
+      "scroll_offset": {
+        "type": "number"
+      },
+      "selected_color": {
+        "items": {
+          "type": "number"
+        },
+        "type": "array"
+      },
+      "selected_index": {
+        "type": "number"
+      },
+      "spacing": {
+        "type": "number"
+      },
+      "text_color": {
+        "items": {
+          "type": "number"
+        },
+        "type": "array"
+      }
+    },
+    "required": [
+      "items",
+      "selected_index",
+      "item_height",
+      "spacing",
+      "scroll_offset",
+      "interactable",
+      "background_color",
+      "item_color",
+      "selected_color",
+      "text_color",
+      "font_size",
+      "on_value_changed"
     ],
     "type": "object"
   },
@@ -254,6 +527,412 @@
     },
     "required": [
       "value"
+    ],
+    "type": "object"
+  },
+  "Panel": {
+    "properties": {
+      "border_color": {
+        "items": {
+          "type": "number"
+        },
+        "type": "array"
+      },
+      "border_width": {
+        "type": "number"
+      },
+      "color": {
+        "items": {
+          "type": "number"
+        },
+        "type": "array"
+      },
+      "raycast_target": {
+        "type": "boolean"
+      }
+    },
+    "required": [
+      "color",
+      "border_color",
+      "border_width",
+      "raycast_target"
+    ],
+    "type": "object"
+  },
+  "ParticleEmitter2D": {
+    "properties": {
+      "blend_mode": {
+        "type": "string"
+      },
+      "color_end": {
+        "items": {
+          "type": "number"
+        },
+        "type": "array"
+      },
+      "color_start": {
+        "items": {
+          "type": "number"
+        },
+        "type": "array"
+      },
+      "direction": {
+        "items": {
+          "type": "number"
+        },
+        "type": "array"
+      },
+      "duration": {
+        "type": "number"
+      },
+      "gravity": {
+        "items": {
+          "type": "number"
+        },
+        "type": "array"
+      },
+      "lifetime_max": {
+        "type": "number"
+      },
+      "lifetime_min": {
+        "type": "number"
+      },
+      "looping": {
+        "type": "boolean"
+      },
+      "max_particles": {
+        "type": "number"
+      },
+      "playing": {
+        "type": "boolean"
+      },
+      "rate_over_time": {
+        "type": "number"
+      },
+      "seed": {
+        "type": "number"
+      },
+      "shape": {
+        "type": "string"
+      },
+      "shape_radius": {
+        "type": "number"
+      },
+      "shape_size": {
+        "items": {
+          "type": "number"
+        },
+        "type": "array"
+      },
+      "simulation_space": {
+        "type": "string"
+      },
+      "size_end": {
+        "type": "number"
+      },
+      "size_start": {
+        "type": "number"
+      },
+      "sorting_order": {
+        "type": "number"
+      },
+      "speed_max": {
+        "type": "number"
+      },
+      "speed_min": {
+        "type": "number"
+      },
+      "spread_degrees": {
+        "type": "number"
+      },
+      "start_delay": {
+        "type": "number"
+      },
+      "texture": {
+        "type": "string"
+      }
+    },
+    "required": [
+      "playing",
+      "looping",
+      "duration",
+      "start_delay",
+      "rate_over_time",
+      "max_particles",
+      "lifetime_min",
+      "lifetime_max",
+      "speed_min",
+      "speed_max",
+      "size_start",
+      "size_end",
+      "color_start",
+      "color_end",
+      "gravity",
+      "shape",
+      "shape_radius",
+      "shape_size",
+      "direction",
+      "spread_degrees",
+      "simulation_space",
+      "blend_mode",
+      "texture",
+      "sorting_order",
+      "seed"
+    ],
+    "type": "object"
+  },
+  "ParticleEmitter3D": {
+    "properties": {
+      "billboard": {
+        "type": "boolean"
+      },
+      "blend_mode": {
+        "type": "string"
+      },
+      "color_end": {
+        "items": {
+          "type": "number"
+        },
+        "type": "array"
+      },
+      "color_start": {
+        "items": {
+          "type": "number"
+        },
+        "type": "array"
+      },
+      "direction": {
+        "items": {
+          "type": "number"
+        },
+        "type": "array"
+      },
+      "duration": {
+        "type": "number"
+      },
+      "gravity": {
+        "items": {
+          "type": "number"
+        },
+        "type": "array"
+      },
+      "lifetime_max": {
+        "type": "number"
+      },
+      "lifetime_min": {
+        "type": "number"
+      },
+      "looping": {
+        "type": "boolean"
+      },
+      "max_particles": {
+        "type": "number"
+      },
+      "playing": {
+        "type": "boolean"
+      },
+      "rate_over_time": {
+        "type": "number"
+      },
+      "seed": {
+        "type": "number"
+      },
+      "shape": {
+        "type": "string"
+      },
+      "shape_radius": {
+        "type": "number"
+      },
+      "shape_size": {
+        "items": {
+          "type": "number"
+        },
+        "type": "array"
+      },
+      "simulation_space": {
+        "type": "string"
+      },
+      "size_end": {
+        "type": "number"
+      },
+      "size_start": {
+        "type": "number"
+      },
+      "speed_max": {
+        "type": "number"
+      },
+      "speed_min": {
+        "type": "number"
+      },
+      "spread_degrees": {
+        "type": "number"
+      },
+      "start_delay": {
+        "type": "number"
+      },
+      "texture": {
+        "type": "string"
+      }
+    },
+    "required": [
+      "playing",
+      "looping",
+      "duration",
+      "start_delay",
+      "rate_over_time",
+      "max_particles",
+      "lifetime_min",
+      "lifetime_max",
+      "speed_min",
+      "speed_max",
+      "size_start",
+      "size_end",
+      "color_start",
+      "color_end",
+      "gravity",
+      "shape",
+      "shape_radius",
+      "shape_size",
+      "direction",
+      "spread_degrees",
+      "simulation_space",
+      "blend_mode",
+      "texture",
+      "billboard",
+      "seed"
+    ],
+    "type": "object"
+  },
+  "PbrMaterial": {
+    "properties": {
+      "base_color": {
+        "items": {
+          "type": "number"
+        },
+        "type": "array"
+      },
+      "double_sided": {
+        "type": "boolean"
+      },
+      "emissive": {
+        "items": {
+          "type": "number"
+        },
+        "type": "array"
+      },
+      "emissive_strength": {
+        "type": "number"
+      },
+      "metallic": {
+        "type": "number"
+      },
+      "roughness": {
+        "type": "number"
+      },
+      "unlit": {
+        "type": "boolean"
+      }
+    },
+    "required": [
+      "base_color",
+      "metallic",
+      "roughness",
+      "emissive",
+      "emissive_strength",
+      "unlit",
+      "double_sided"
+    ],
+    "type": "object"
+  },
+  "PointLight": {
+    "properties": {
+      "color": {
+        "items": {
+          "type": "number"
+        },
+        "type": "array"
+      },
+      "intensity": {
+        "type": "number"
+      },
+      "range": {
+        "type": "number"
+      }
+    },
+    "required": [
+      "color",
+      "intensity",
+      "range"
+    ],
+    "type": "object"
+  },
+  "ProgressBar": {
+    "properties": {
+      "background_color": {
+        "items": {
+          "type": "number"
+        },
+        "type": "array"
+      },
+      "direction": {
+        "type": "string"
+      },
+      "fill_color": {
+        "items": {
+          "type": "number"
+        },
+        "type": "array"
+      },
+      "font_size": {
+        "type": "number"
+      },
+      "max_value": {
+        "type": "number"
+      },
+      "min_value": {
+        "type": "number"
+      },
+      "show_label": {
+        "type": "boolean"
+      },
+      "text_color": {
+        "items": {
+          "type": "number"
+        },
+        "type": "array"
+      },
+      "value": {
+        "type": "number"
+      }
+    },
+    "required": [
+      "min_value",
+      "max_value",
+      "value",
+      "direction",
+      "background_color",
+      "fill_color",
+      "text_color",
+      "show_label",
+      "font_size"
+    ],
+    "type": "object"
+  },
+  "RectMask2D": {
+    "properties": {
+      "enabled": {
+        "type": "boolean"
+      },
+      "padding": {
+        "items": {
+          "type": "number"
+        },
+        "type": "array"
+      }
+    },
+    "required": [
+      "enabled",
+      "padding"
     ],
     "type": "object"
   },
@@ -325,6 +1004,47 @@
     ],
     "type": "object"
   },
+  "ScrollView": {
+    "properties": {
+      "horizontal": {
+        "type": "boolean"
+      },
+      "normalized_position": {
+        "items": {
+          "type": "number"
+        },
+        "type": "array"
+      },
+      "on_value_changed": {
+        "type": "object"
+      },
+      "scroll_sensitivity": {
+        "type": "number"
+      },
+      "show_scrollbar": {
+        "type": "boolean"
+      },
+      "vertical": {
+        "type": "boolean"
+      },
+      "viewport_color": {
+        "items": {
+          "type": "number"
+        },
+        "type": "array"
+      }
+    },
+    "required": [
+      "horizontal",
+      "vertical",
+      "normalized_position",
+      "scroll_sensitivity",
+      "viewport_color",
+      "show_scrollbar",
+      "on_value_changed"
+    ],
+    "type": "object"
+  },
   "SetClearColor": {
     "properties": {
       "a": {
@@ -381,6 +1101,62 @@
     ],
     "type": "object"
   },
+  "Slider": {
+    "properties": {
+      "background_color": {
+        "items": {
+          "type": "number"
+        },
+        "type": "array"
+      },
+      "direction": {
+        "type": "string"
+      },
+      "fill_color": {
+        "items": {
+          "type": "number"
+        },
+        "type": "array"
+      },
+      "handle_color": {
+        "items": {
+          "type": "number"
+        },
+        "type": "array"
+      },
+      "interactable": {
+        "type": "boolean"
+      },
+      "max_value": {
+        "type": "number"
+      },
+      "min_value": {
+        "type": "number"
+      },
+      "on_value_changed": {
+        "type": "object"
+      },
+      "value": {
+        "type": "number"
+      },
+      "whole_numbers": {
+        "type": "boolean"
+      }
+    },
+    "required": [
+      "min_value",
+      "max_value",
+      "value",
+      "whole_numbers",
+      "interactable",
+      "direction",
+      "fill_color",
+      "background_color",
+      "handle_color",
+      "on_value_changed"
+    ],
+    "type": "object"
+  },
   "Spawn": {
     "properties": {
       "components": {
@@ -392,6 +1168,90 @@
     },
     "required": [
       "components"
+    ],
+    "type": "object"
+  },
+  "SpineSkeleton": {
+    "properties": {
+      "animation": {
+        "type": "string"
+      },
+      "atlas": {
+        "type": "string"
+      },
+      "color": {
+        "items": {
+          "type": "number"
+        },
+        "type": "array"
+      },
+      "loop_animation": {
+        "type": "boolean"
+      },
+      "playing": {
+        "type": "boolean"
+      },
+      "premultiplied_alpha": {
+        "type": "boolean"
+      },
+      "scale": {
+        "type": "number"
+      },
+      "skeleton": {
+        "type": "string"
+      },
+      "skin": {
+        "type": "string"
+      },
+      "sorting_order": {
+        "type": "number"
+      },
+      "time_scale": {
+        "type": "number"
+      }
+    },
+    "required": [
+      "skeleton",
+      "atlas",
+      "animation",
+      "skin",
+      "loop_animation",
+      "playing",
+      "time_scale",
+      "scale",
+      "color",
+      "premultiplied_alpha",
+      "sorting_order"
+    ],
+    "type": "object"
+  },
+  "SpotLight": {
+    "properties": {
+      "color": {
+        "items": {
+          "type": "number"
+        },
+        "type": "array"
+      },
+      "inner_angle_degrees": {
+        "type": "number"
+      },
+      "intensity": {
+        "type": "number"
+      },
+      "outer_angle_degrees": {
+        "type": "number"
+      },
+      "range": {
+        "type": "number"
+      }
+    },
+    "required": [
+      "color",
+      "intensity",
+      "range",
+      "inner_angle_degrees",
+      "outer_angle_degrees"
     ],
     "type": "object"
   },
@@ -424,6 +1284,102 @@
     ],
     "type": "object"
   },
+  "TabView": {
+    "properties": {
+      "background_color": {
+        "items": {
+          "type": "number"
+        },
+        "type": "array"
+      },
+      "font_size": {
+        "type": "number"
+      },
+      "interactable": {
+        "type": "boolean"
+      },
+      "on_value_changed": {
+        "type": "object"
+      },
+      "selected_color": {
+        "items": {
+          "type": "number"
+        },
+        "type": "array"
+      },
+      "selected_index": {
+        "type": "number"
+      },
+      "tab_color": {
+        "items": {
+          "type": "number"
+        },
+        "type": "array"
+      },
+      "tab_height": {
+        "type": "number"
+      },
+      "tabs": {
+        "items": {
+          "type": "string"
+        },
+        "type": "array"
+      },
+      "text_color": {
+        "items": {
+          "type": "number"
+        },
+        "type": "array"
+      }
+    },
+    "required": [
+      "tabs",
+      "selected_index",
+      "tab_height",
+      "interactable",
+      "background_color",
+      "tab_color",
+      "selected_color",
+      "text_color",
+      "font_size",
+      "on_value_changed"
+    ],
+    "type": "object"
+  },
+  "Text": {
+    "properties": {
+      "alignment": {
+        "type": "string"
+      },
+      "color": {
+        "items": {
+          "type": "number"
+        },
+        "type": "array"
+      },
+      "font_size": {
+        "type": "number"
+      },
+      "raycast_target": {
+        "type": "boolean"
+      },
+      "text": {
+        "type": "string"
+      },
+      "vertical_align": {
+        "type": "string"
+      }
+    },
+    "required": [
+      "text",
+      "color",
+      "font_size",
+      "alignment",
+      "vertical_align",
+      "raycast_target"
+    ],
+    "type": "object"
+  },
   "Texture": {
     "properties": {
       "path": {
@@ -432,6 +1388,47 @@
     },
     "required": [
       "path"
+    ],
+    "type": "object"
+  },
+  "Toggle": {
+    "properties": {
+      "color": {
+        "items": {
+          "type": "number"
+        },
+        "type": "array"
+      },
+      "font_size": {
+        "type": "number"
+      },
+      "interactable": {
+        "type": "boolean"
+      },
+      "is_on": {
+        "type": "boolean"
+      },
+      "label": {
+        "type": "string"
+      },
+      "on_value_changed": {
+        "type": "object"
+      },
+      "text_color": {
+        "items": {
+          "type": "number"
+        },
+        "type": "array"
+      }
+    },
+    "required": [
+      "is_on",
+      "interactable",
+      "label",
+      "color",
+      "text_color",
+      "font_size",
+      "on_value_changed"
     ],
     "type": "object"
   },

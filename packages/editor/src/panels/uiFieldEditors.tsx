@@ -62,14 +62,15 @@ function BoolField(props: {
   );
 }
 
-function ColorField(props: {
+export function ColorField(props: {
   label: string;
   value: number[];
-  onChange: (v: [number, number, number, number]) => void;
+  onChange: (v: number[]) => void;
 }) {
   const arr = (
     Array.isArray(props.value) && props.value.length >= 3 ? props.value : [1, 1, 1, 1]
   ) as number[];
+  const hasAlpha = arr.length >= 4;
   const a = arr[3] ?? 1;
   return (
     <div className="field-row">
@@ -82,22 +83,26 @@ function ColorField(props: {
           title={colorToHex(arr)}
           onChange={(e) => {
             const [r, g, b] = hexToRgb(e.target.value);
-            props.onChange([r, g, b, a]);
+            props.onChange(hasAlpha ? [r, g, b, a] : [r, g, b]);
           }}
         />
-        <input
-          type="number"
-          className="color-alpha"
-          min={0}
-          max={1}
-          step={0.01}
-          value={Number(a.toFixed(3))}
-          title="Alpha"
-          onChange={(e) => {
-            const next = Math.min(1, Math.max(0, parseFloat(e.target.value) || 0));
-            props.onChange([arr[0] ?? 1, arr[1] ?? 1, arr[2] ?? 1, next]);
-          }}
-        />
+        {hasAlpha && (
+          <label className="color-alpha-wrap" title="Alpha">
+            <span>A</span>
+            <input
+              type="number"
+              className="color-alpha"
+              min={0}
+              max={1}
+              step={0.01}
+              value={Number(a.toFixed(3))}
+              onChange={(e) => {
+                const next = Math.min(1, Math.max(0, parseFloat(e.target.value) || 0));
+                props.onChange([arr[0] ?? 1, arr[1] ?? 1, arr[2] ?? 1, next]);
+              }}
+            />
+          </label>
+        )}
       </div>
     </div>
   );

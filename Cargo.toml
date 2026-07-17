@@ -13,6 +13,7 @@ members = [
     "crates/mengine-jobs",
     "crates/mengine-audio",
     "crates/mengine-physics",
+    "packages/editor/src-tauri",
 ]
 default-members = [
     "crates/mengine-runtime",

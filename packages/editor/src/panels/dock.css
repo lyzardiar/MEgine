@@ -161,6 +161,8 @@ body.dock-resizing-y {
 
 .dock-tab-drag {
   cursor: grab;
+  touch-action: none;
+  user-select: none;
 }
 
 .dock-tab-drag:active {
@@ -172,6 +174,86 @@ body.dock-resizing-y {
   align-items: stretch;
   margin-left: auto;
   border-left: 1px solid var(--u-border);
+}
+
+.dock-popout {
+  margin-left: auto;
+  width: 28px;
+  border: 0;
+  border-left: 1px solid var(--u-border);
+  background: transparent;
+  color: var(--u-muted);
+  cursor: pointer;
+  font-size: 14px;
+}
+
+.dock-popout:hover {
+  background: var(--u-selected);
+  color: #fff;
+}
+
+.detached-panel-workspace,
+.detached-panel-content {
+  width: 100%;
+  height: 100%;
+  min-width: 0;
+  min-height: 0;
+}
+
+.detached-dock-header {
+  flex: 0 0 28px;
+  min-width: 0;
+  display: flex;
+  align-items: stretch;
+  background: var(--u-tab);
+  border-bottom: 1px solid var(--u-border);
+}
+
+.detached-dock-drag,
+.detached-dock-return {
+  border: 0;
+  border-radius: 0;
+  color: var(--u-text);
+  background: transparent;
+  font: inherit;
+}
+
+.detached-dock-drag {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 0 9px;
+  text-align: left;
+  cursor: grab;
+}
+
+.detached-dock-drag:active {
+  cursor: grabbing;
+  background: var(--u-selected-soft);
+}
+
+.detached-dock-grip {
+  color: var(--u-muted);
+  font-size: 16px;
+}
+
+.detached-dock-return {
+  width: 54px;
+  border-left: 1px solid var(--u-border);
+  cursor: pointer;
+}
+
+.detached-dock-return:hover {
+  color: #fff;
+  background: var(--u-selected);
+}
+
+.detached-panel-content {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
 }
 
 .dock-workspace.is-dragging .dock-tab-drag {

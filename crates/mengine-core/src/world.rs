@@ -2,28 +2,34 @@ use crate::command::{CommandBuffer, WorldCommand};
 use crate::component::{Component, ComponentBox, ComponentId, ComponentRegistry};
 use crate::entity::Entity;
 use crate::generated::{
-    Button, Camera3D, Canvas, CanvasScaler, Image, MeshRenderer, Name, RectTransform,
-    SpriteRenderer, Transform, Transform2D,
+    AutoRotate, Button, Camera2D, Camera3D, Canvas, CanvasGroup, CanvasScaler, DirectionalLight,
+    Dropdown, EditorOnly, Image, InputField, Layer, LayoutGroup, ListView, MeshRenderer, Name,
+    Panel, PbrMaterial, PointLight, ProgressBar, RectMask2D, RectTransform, ScrollView, Slider,
+    SpotLight, SpriteRenderer, TabView, Text, Toggle, Transform, Transform2D,
 };
 use crate::hierarchy::{Children, Parent};
 use crate::schedule::Schedule;
 use crate::time::Time;
 use glam::{Quat, Vec3, Vec4};
+use serde::de::DeserializeOwned;
 use serde_json::Value;
 use std::any::Any;
 use std::collections::HashMap;
 
 struct EntityRecord {
     generation: u32,
-    alive:      bool,
-    name:       Option<String>,
+    alive: bool,
+    name: Option<String>,
     components: HashMap<String, ComponentBox>,
+    serialized_components: HashMap<String, Value>,
+    sibling_index: i32,
+    active: bool,
 }
 
 pub struct World {
-    entities:   Vec<EntityRecord>,
-    free_list:  Vec<u32>,
-    pub time:   Time,
+    entities: Vec<EntityRecord>,
+    free_list: Vec<u32>,
+    pub time: Time,
     pub commands: CommandBuffer,
     pub schedule: Schedule,
     pub registry: ComponentRegistry,
@@ -41,30 +47,19 @@ impl Default for World {
 impl World {
     pub fn new() -> Self {
         let mut registry = ComponentRegistry::new();
-        registry.register_named("Name");
-        registry.register_named("Transform");
-        registry.register_named("Transform2D");
-        registry.register_named("Camera3D");
-        registry.register_named("Camera2D");
-        registry.register_named("MeshRenderer");
-        registry.register_named("SpriteRenderer");
-        registry.register_named("Canvas");
-        registry.register_named("CanvasScaler");
-        registry.register_named("RectTransform");
-        registry.register_named("Image");
-        registry.register_named("Button");
+        for name in crate::generated::meta::COMPONENT_NAMES {
+            registry.register_named(name);
+        }
         registry.register_named("Parent");
         registry.register_named("Children");
-        registry.register_named("Layer");
-        registry.register_named("EditorOnly");
         Self {
-            entities:     Vec::new(),
-            free_list:    Vec::new(),
-            time:         Time::default(),
-            commands:     CommandBuffer::new(),
-            schedule:     Schedule::new(),
+            entities: Vec::new(),
+            free_list: Vec::new(),
+            time: Time::default(),
+            commands: CommandBuffer::new(),
+            schedule: Schedule::new(),
             registry,
-            selected:     None,
+            selected: None,
             last_spawned: Vec::new(),
         }
     }
@@ -76,14 +71,20 @@ impl World {
             rec.generation = rec.generation.wrapping_add(1);
             rec.name = None;
             rec.components.clear();
+            rec.serialized_components.clear();
+            rec.sibling_index = 0;
+            rec.active = true;
             Entity::new(index, rec.generation)
         } else {
             let index = self.entities.len() as u32;
             self.entities.push(EntityRecord {
                 generation: 1,
-                alive:      true,
-                name:       None,
+                alive: true,
+                name: None,
                 components: HashMap::new(),
+                serialized_components: HashMap::new(),
+                sibling_index: 0,
+                active: true,
             });
             Entity::new(index, 1)
         }
@@ -93,8 +94,14 @@ impl World {
         if !self.is_alive(entity) {
             return;
         }
+        if self.selected == Some(entity) {
+            self.selected = None;
+        }
         // Detach children
-        if let Some(children) = self.get_component::<Children>(entity).map(|c| c.entities.clone()) {
+        if let Some(children) = self
+            .get_component::<Children>(entity)
+            .map(|c| c.entities.clone())
+        {
             for child in children {
                 self.remove_component_by_name(child, "Parent");
             }
@@ -105,6 +112,7 @@ impl World {
         let rec = &mut self.entities[entity.index as usize];
         rec.alive = false;
         rec.components.clear();
+        rec.serialized_components.clear();
         rec.name = None;
         self.free_list.push(entity.index);
     }
@@ -156,13 +164,60 @@ impl World {
             .find_map(|c| c.downcast_mut::<T>())
     }
 
+    fn insert_json_component<T>(&mut self, entity: Entity, value: Value)
+    where
+        T: Component + DeserializeOwned,
+    {
+        match serde_json::from_value::<T>(value) {
+            Ok(component) => self.insert_component(entity, component),
+            Err(error) => log::warn!(
+                "component '{}' could not be deserialized and remains preserved: {error}",
+                T::type_name()
+            ),
+        }
+    }
+
     pub fn remove_component_by_name(&mut self, entity: Entity, name: &str) {
         if !self.is_alive(entity) {
             return;
         }
+        let name = canonical_component_name(name);
+        self.entities[entity.index as usize].components.remove(name);
         self.entities[entity.index as usize]
-            .components
+            .serialized_components
             .remove(name);
+    }
+
+    pub fn serialized_components(&self, entity: Entity) -> Option<&HashMap<String, Value>> {
+        if !self.is_alive(entity) {
+            return None;
+        }
+        Some(&self.entities[entity.index as usize].serialized_components)
+    }
+
+    pub fn set_editor_state(&mut self, entity: Entity, sibling_index: i32, active: bool) {
+        if let Some(record) = self.entities.get_mut(entity.index as usize) {
+            if record.alive && record.generation == entity.generation {
+                record.sibling_index = sibling_index;
+                record.active = active;
+            }
+        }
+    }
+
+    pub fn sibling_index(&self, entity: Entity) -> i32 {
+        self.entities
+            .get(entity.index as usize)
+            .filter(|record| record.alive && record.generation == entity.generation)
+            .map(|record| record.sibling_index)
+            .unwrap_or_default()
+    }
+
+    pub fn entity_active(&self, entity: Entity) -> bool {
+        self.entities
+            .get(entity.index as usize)
+            .filter(|record| record.alive && record.generation == entity.generation)
+            .map(|record| record.active)
+            .unwrap_or(true)
     }
 
     pub fn entities_with_components<'a>(
@@ -171,9 +226,7 @@ impl World {
     ) -> impl Iterator<Item = Entity> + 'a {
         self.iter_entities().filter(move |e| {
             let rec = &self.entities[e.index as usize];
-            type_names
-                .iter()
-                .all(|n| rec.components.contains_key(*n))
+            type_names.iter().all(|n| rec.components.contains_key(*n))
         })
     }
 
@@ -253,10 +306,7 @@ impl World {
                 self.remove_component_by_name(Entity::from_u64(entity), &component);
             }
             WorldCommand::SetParent { entity, parent } => {
-                self.set_parent(
-                    Entity::from_u64(entity),
-                    parent.map(Entity::from_u64),
-                );
+                self.set_parent(Entity::from_u64(entity), parent.map(Entity::from_u64));
             }
             WorldCommand::SetClearColor { r, g, b, a } => {
                 self.time.clear_color = Vec4::new(r, g, b, a);
@@ -268,6 +318,10 @@ impl World {
         if !self.is_alive(entity) {
             return;
         }
+        let component = canonical_component_name(component);
+        self.entities[entity.index as usize]
+            .serialized_components
+            .insert(component.to_string(), value.clone());
         match component {
             "Name" | "name" => {
                 if let Ok(n) = serde_json::from_value::<Name>(value.clone()) {
@@ -275,7 +329,12 @@ impl World {
                     self.insert_component(entity, n);
                 } else if let Some(s) = value.as_str() {
                     self.entities[entity.index as usize].name = Some(s.to_string());
-                    self.insert_component(entity, Name { value: s.to_string() });
+                    self.insert_component(
+                        entity,
+                        Name {
+                            value: s.to_string(),
+                        },
+                    );
                 }
             }
             "Transform" | "transform" => {
@@ -283,52 +342,97 @@ impl World {
                 self.insert_component(entity, t);
             }
             "Transform2D" | "transform2D" | "transform2d" => {
-                if let Ok(t) = serde_json::from_value::<Transform2D>(value) {
-                    self.insert_component(entity, t);
-                }
+                self.insert_json_component::<Transform2D>(entity, value);
             }
             "Camera3D" | "camera3D" | "camera3d" => {
-                if let Ok(c) = serde_json::from_value::<Camera3D>(value) {
-                    self.insert_component(entity, c);
-                }
+                self.insert_json_component::<Camera3D>(entity, value);
+            }
+            "Camera2D" | "camera2D" | "camera2d" => {
+                self.insert_json_component::<Camera2D>(entity, value);
+            }
+            "DirectionalLight" | "directionalLight" => {
+                self.insert_json_component::<DirectionalLight>(entity, value);
+            }
+            "PointLight" | "pointLight" => {
+                self.insert_json_component::<PointLight>(entity, value);
+            }
+            "SpotLight" | "spotLight" => {
+                self.insert_json_component::<SpotLight>(entity, value);
             }
             "MeshRenderer" | "meshRenderer" => {
-                if let Ok(m) = serde_json::from_value::<MeshRenderer>(value) {
-                    self.insert_component(entity, m);
-                }
+                self.insert_json_component::<MeshRenderer>(entity, value);
+            }
+            "PbrMaterial" | "pbrMaterial" => {
+                self.insert_json_component::<PbrMaterial>(entity, value);
             }
             "SpriteRenderer" | "spriteRenderer" => {
-                if let Ok(s) = serde_json::from_value::<SpriteRenderer>(value) {
-                    self.insert_component(entity, s);
-                }
+                self.insert_json_component::<SpriteRenderer>(entity, value);
             }
             "Canvas" | "canvas" => {
-                if let Ok(c) = serde_json::from_value::<Canvas>(value) {
-                    self.insert_component(entity, c);
-                }
+                self.insert_json_component::<Canvas>(entity, value);
             }
             "CanvasScaler" | "canvasScaler" => {
-                if let Ok(c) = serde_json::from_value::<CanvasScaler>(value) {
-                    self.insert_component(entity, c);
-                }
+                self.insert_json_component::<CanvasScaler>(entity, value);
+            }
+            "CanvasGroup" | "canvasGroup" => {
+                self.insert_json_component::<CanvasGroup>(entity, value);
             }
             "RectTransform" | "rectTransform" => {
-                if let Ok(r) = serde_json::from_value::<RectTransform>(value) {
-                    self.insert_component(entity, r);
-                }
+                self.insert_json_component::<RectTransform>(entity, value);
+            }
+            "RectMask2D" | "rectMask2D" | "rectMask2d" => {
+                self.insert_json_component::<RectMask2D>(entity, value);
+            }
+            "LayoutGroup" | "layoutGroup" => {
+                self.insert_json_component::<LayoutGroup>(entity, value);
             }
             "Image" | "image" => {
-                if let Ok(i) = serde_json::from_value::<Image>(value) {
-                    self.insert_component(entity, i);
-                }
+                self.insert_json_component::<Image>(entity, value);
             }
             "Button" | "button" => {
-                if let Ok(b) = serde_json::from_value::<Button>(value) {
-                    self.insert_component(entity, b);
-                }
+                self.insert_json_component::<Button>(entity, value);
+            }
+            "Text" | "text" => {
+                self.insert_json_component::<Text>(entity, value);
+            }
+            "Toggle" | "toggle" => {
+                self.insert_json_component::<Toggle>(entity, value);
+            }
+            "Slider" | "slider" => {
+                self.insert_json_component::<Slider>(entity, value);
+            }
+            "Panel" | "panel" => {
+                self.insert_json_component::<Panel>(entity, value);
+            }
+            "ProgressBar" | "progressBar" => {
+                self.insert_json_component::<ProgressBar>(entity, value);
+            }
+            "InputField" | "inputField" => {
+                self.insert_json_component::<InputField>(entity, value);
+            }
+            "Dropdown" | "dropdown" => {
+                self.insert_json_component::<Dropdown>(entity, value);
+            }
+            "ListView" | "listView" => {
+                self.insert_json_component::<ListView>(entity, value);
+            }
+            "ScrollView" | "scrollView" => {
+                self.insert_json_component::<ScrollView>(entity, value);
+            }
+            "TabView" | "tabView" => {
+                self.insert_json_component::<TabView>(entity, value);
+            }
+            "Layer" | "layer" => {
+                self.insert_json_component::<Layer>(entity, value);
+            }
+            "EditorOnly" | "editorOnly" => {
+                self.insert_json_component::<EditorOnly>(entity, value);
+            }
+            "AutoRotate" | "autoRotate" => {
+                self.insert_json_component::<AutoRotate>(entity, value);
             }
             other => {
-                log::warn!("unknown component '{other}' — ignored");
+                log::debug!("unknown component '{other}' preserved as serialized data");
             }
         }
     }
@@ -341,6 +445,44 @@ impl World {
 
     pub fn component_id(&self, name: &str) -> Option<ComponentId> {
         self.registry.id_of_name(name)
+    }
+}
+
+fn canonical_component_name(component: &str) -> &str {
+    match component {
+        "Name" | "name" => "Name",
+        "Transform" | "transform" => "Transform",
+        "Transform2D" | "transform2D" | "transform2d" => "Transform2D",
+        "Camera3D" | "camera3D" | "camera3d" => "Camera3D",
+        "Camera2D" | "camera2D" | "camera2d" => "Camera2D",
+        "DirectionalLight" | "directionalLight" => "DirectionalLight",
+        "PointLight" | "pointLight" => "PointLight",
+        "SpotLight" | "spotLight" => "SpotLight",
+        "MeshRenderer" | "meshRenderer" => "MeshRenderer",
+        "PbrMaterial" | "pbrMaterial" => "PbrMaterial",
+        "SpriteRenderer" | "spriteRenderer" => "SpriteRenderer",
+        "Canvas" | "canvas" => "Canvas",
+        "CanvasScaler" | "canvasScaler" => "CanvasScaler",
+        "CanvasGroup" | "canvasGroup" => "CanvasGroup",
+        "RectTransform" | "rectTransform" => "RectTransform",
+        "RectMask2D" | "rectMask2D" | "rectMask2d" => "RectMask2D",
+        "LayoutGroup" | "layoutGroup" => "LayoutGroup",
+        "Image" | "image" => "Image",
+        "Button" | "button" => "Button",
+        "Text" | "text" => "Text",
+        "Toggle" | "toggle" => "Toggle",
+        "Slider" | "slider" => "Slider",
+        "Panel" | "panel" => "Panel",
+        "ProgressBar" | "progressBar" => "ProgressBar",
+        "InputField" | "inputField" => "InputField",
+        "Dropdown" | "dropdown" => "Dropdown",
+        "ListView" | "listView" => "ListView",
+        "ScrollView" | "scrollView" => "ScrollView",
+        "TabView" | "tabView" => "TabView",
+        "Layer" | "layer" => "Layer",
+        "EditorOnly" | "editorOnly" => "EditorOnly",
+        "AutoRotate" | "autoRotate" => "AutoRotate",
+        other => other,
     }
 }
 
@@ -384,7 +526,12 @@ impl Transform {
     pub fn to_matrix(&self) -> glam::Mat4 {
         glam::Mat4::from_scale_rotation_translation(
             Vec3::from(self.scale),
-            Quat::from_xyzw(self.rotation[0], self.rotation[1], self.rotation[2], self.rotation[3]),
+            Quat::from_xyzw(
+                self.rotation[0],
+                self.rotation[1],
+                self.rotation[2],
+                self.rotation[3],
+            ),
             Vec3::from(self.position),
         )
     }

@@ -5,7 +5,7 @@ import {
 } from '@mengine/behaviour';
 import { SchemaFieldEditor } from '../../panels/SchemaFieldEditor';
 import { EditorWindow } from '../EditorWindow';
-import { registerMenuItem } from '../registry';
+import { registerEditorWindowType, registerMenuItem } from '../registry';
 import './DecoratorShowcase';
 
 function GalleryBody() {
@@ -56,6 +56,17 @@ export class DecoratorGalleryWindow extends EditorWindow {
     return <GalleryBody />;
   }
 }
+
+registerEditorWindowType('EditorWindow.DecoratorGalleryWindow', () => {
+  const window = new DecoratorGalleryWindow();
+  return {
+    typeId: 'EditorWindow.DecoratorGalleryWindow',
+    title: window.title,
+    width: 440,
+    height: 560,
+    render: () => window.onGUI(),
+  };
+});
 
 // .tsx 经 Babel 编译，暂不支持 @MenuItem；在此命令式注册
 registerMenuItem('Window/Decorator Gallery', () => {

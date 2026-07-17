@@ -7,25 +7,25 @@ use std::sync::Arc;
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct AssetMeta {
-    pub id:       AssetId,
-    pub path:     PathBuf,
-    pub kind:     String,
+    pub id: AssetId,
+    pub path: PathBuf,
+    pub kind: String,
     pub imported: Option<PathBuf>,
 }
 
 #[derive(Default)]
 pub struct AssetRegistry {
     by_path: HashMap<PathBuf, AssetId>,
-    meta:    HashMap<AssetId, AssetMeta>,
-    root:    PathBuf,
+    meta: HashMap<AssetId, AssetMeta>,
+    root: PathBuf,
 }
 
 impl AssetRegistry {
     pub fn new(root: impl Into<PathBuf>) -> Self {
         Self {
             by_path: HashMap::new(),
-            meta:    HashMap::new(),
-            root:    root.into(),
+            meta: HashMap::new(),
+            root: root.into(),
         }
     }
 
@@ -44,7 +44,7 @@ impl AssetRegistry {
             AssetMeta {
                 id,
                 path,
-                kind:     kind.into(),
+                kind: kind.into(),
                 imported: None,
             },
         );

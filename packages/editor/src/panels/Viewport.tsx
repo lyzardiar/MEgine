@@ -15,6 +15,8 @@ import {
 import {
   drawCameraGizmo,
   drawDirectionalLightGizmo,
+  drawPointLightGizmo,
+  drawSpotLightGizmo,
   transformBasis,
   type Camera3DData,
 } from '../editorGizmos';
@@ -45,10 +47,19 @@ import {
   hitTestUiSelect,
   layoutUiOverlay,
   layoutUiScene3D,
+  sliderValueAtPoint,
+  uiPointAction,
   UI_SCENE_PPU,
   type UiDrawItem,
 } from '../ui/uiLayout';
 import { canvasScaleFactor, readRectTransform } from '../ui/rectLayout';
+import {
+  collectParticleDrawItems,
+  createParticleEmitterState,
+  stepParticleEmitter,
+  type ParticleEmitterState,
+} from '../particles/particleSystem';
+import { SpineCanvasRuntime } from '../spine/spineCanvasRuntime';
 
 const SCENE_2D_KEY = 'mengine.scene.2d';
 
@@ -119,6 +130,8 @@ function primaryGameCamera(entities: Ent[], isActive?: (id: number) => boolean):
         eye,
         target: add(eye, forward),
         fovYDeg: cam.fov_y_degrees ?? 60,
+        projection: cam.projection?.toLowerCase() === 'orthographic' ? 'orthographic' : 'perspective',
+        orthographicSize: cam.orthographic_size ?? 5,
       };
     }
   }
@@ -158,6 +171,12 @@ export function Viewport(props: {
   onOrientation: (o: GameOrientation) => void;
   onFrame: () => void;
   onUiClick?: (entity: number, onClick: unknown) => void;
+  onUiValueChange?: (
+    entity: number,
+    component: 'Toggle' | 'Slider' | 'InputField' | 'Dropdown' | 'ListView' | 'ScrollView' | 'TabView',
+    patch: Record<string, unknown>,
+    callback: unknown,
+  ) => void;
 }) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const hitsRef = useRef<Hit[]>([]);
@@ -168,6 +187,11 @@ export function Viewport(props: {
   const usingRectGizmoRef = useRef(false);
   const uiHoverRef = useRef<number | null>(null);
   const uiPressRef = useRef<number | null>(null);
+  const focusedInputRef = useRef<number | null>(null);
+  const uiStatsRef = useRef({ elements: 0, batches: 0 });
+  const particleStatesRef = useRef(new Map<number, ParticleEmitterState>());
+  const spineRuntimeRef = useRef(new SpineCanvasRuntime());
+  const lastParticleFrameRef = useRef(0);
   const hoverGizmoRef = useRef<GizmoPart | null>(null);
   const activeGizmoRef = useRef<GizmoPart | null>(null);
   const lastVpRef = useRef({ x: 0, y: 0, w: 1, h: 1 });
@@ -205,6 +229,7 @@ export function Viewport(props: {
     | null
     | { type: 'orbit'; lx: number; ly: number }
     | { type: 'pan'; lx: number; ly: number }
+    | { type: 'uiSlider'; lx: number; ly: number; entity: number }
     | {
         type: 'gizmo';
         part: GizmoPart;
@@ -231,6 +256,7 @@ export function Viewport(props: {
   >(null);
 
   const [tick, setTick] = useState(0);
+  const [uiStats, setUiStats] = useState({ elements: 0, batches: 0 });
   const [scene2D, setScene2D] = useState(loadScene2D);
   const scene2DRef = useRef(scene2D);
   scene2DRef.current = scene2D;
@@ -261,6 +287,11 @@ export function Viewport(props: {
     if (!ctx) return;
     const p = propsRef.current;
     const sc = liveCam.current;
+    const now = performance.now();
+    const particleDelta = lastParticleFrameRef.current > 0
+      ? Math.min(0.1, (now - lastParticleFrameRef.current) / 1000)
+      : 0;
+    lastParticleFrameRef.current = now;
 
     const dpr = window.devicePixelRatio || 1;
     const rect = canvas.getBoundingClientRect();
@@ -338,6 +369,8 @@ export function Viewport(props: {
         const camComp = e.components.Camera3D;
         const isLight =
           !!e.components.DirectionalLight ||
+          !!e.components.PointLight ||
+          !!e.components.SpotLight ||
           (e.name ?? '').toLowerCase().includes('light');
         if (!pr && !camComp && !isLight) return null;
         return { e, t, pr };
@@ -354,7 +387,10 @@ export function Viewport(props: {
       const camComp = e.components.Camera3D as Camera3DData | undefined;
       const dirLight = e.components.DirectionalLight;
       const isLight =
-        !!dirLight || (e.name ?? '').toLowerCase().includes('light');
+        !!dirLight ||
+        !!e.components.PointLight ||
+        !!e.components.SpotLight ||
+        (e.name ?? '').toLowerCase().includes('light');
       const selected = selSet.has(e.entity);
 
       if (isGame && (camComp || (isLight && !mesh))) continue;
@@ -371,7 +407,23 @@ export function Viewport(props: {
 
       if (isLight && !mesh && !isGame) {
         try {
-          const hit = drawDirectionalLightGizmo(ctx, cam, vp, t, selected);
+          const point = e.components.PointLight as { range?: number } | undefined;
+          const spot = e.components.SpotLight as
+            | { range?: number; outer_angle_degrees?: number }
+            | undefined;
+          const hit = point
+            ? drawPointLightGizmo(ctx, cam, vp, t, point.range ?? 10, selected)
+            : spot
+              ? drawSpotLightGizmo(
+                  ctx,
+                  cam,
+                  vp,
+                  t,
+                  spot.range ?? 12,
+                  spot.outer_angle_degrees ?? 40,
+                  selected,
+                )
+              : drawDirectionalLightGizmo(ctx, cam, vp, t, selected);
           if (hit) hitsRef.current.push({ kind: 'object', id: e.entity, x: hit.x, y: hit.y, r: hit.r });
         } catch (err) {
           console.error('drawDirectionalLightGizmo', err);
@@ -420,9 +472,145 @@ export function Viewport(props: {
       if (!pr) continue;
       const half: Vec3 = [0.5 * t.scale[0], 0.5 * t.scale[1], 0.5 * t.scale[2]];
       const rot = t.rotation as [number, number, number, number] | undefined;
-      const hit = drawSolidCube(ctx, cam, vp, t.position as Vec3, half, selected, rot);
+      const material = e.components.PbrMaterial as { base_color?: number[] } | undefined;
+      const materialColor = material?.base_color as [number, number, number, number] | undefined;
+      const hit = drawSolidCube(
+        ctx,
+        cam,
+        vp,
+        t.position as Vec3,
+        half,
+        selected,
+        rot,
+        materialColor,
+      );
       if (hit) hitsRef.current.push({ kind: 'object', id: e.entity, x: hit.x, y: hit.y, r: hit.r });
     }
+
+    // 2D and 3D particles share the same deterministic simulator. The editor
+    // draws them as a single Canvas batch per blend mode; native runtime uses
+    // the equivalent billboard instance data.
+    const liveEmitterIds = new Set<number>();
+    const particleBatches = new Map<string, ReturnType<typeof collectParticleDrawItems>>();
+    for (const entity of p.entities) {
+      if (!isActive(entity.entity)) continue;
+      const transform = entity.components.Transform as TransformData | undefined;
+      if (!transform) continue;
+      const emitter2D = entity.components.ParticleEmitter2D as Record<string, unknown> | undefined;
+      const emitter3D = entity.components.ParticleEmitter3D as Record<string, unknown> | undefined;
+      const emitter = emitter2D ?? emitter3D;
+      if (!emitter) continue;
+      liveEmitterIds.add(entity.entity);
+      let state = particleStatesRef.current.get(entity.entity);
+      if (!state) {
+        state = createParticleEmitterState(Number(emitter.seed) || 1);
+        particleStatesRef.current.set(entity.entity, state);
+      }
+      const emitterPosition = transform.position as Vec3;
+      stepParticleEmitter(
+        emitter2D ? 2 : 3,
+        emitter,
+        state,
+        particleDelta,
+        emitterPosition,
+      );
+      const drawItems = collectParticleDrawItems(
+        state,
+        emitterPosition,
+        emitter.simulation_space,
+      );
+      const sortingOrder = emitter2D ? Number(emitter.sorting_order) || 0 : 0;
+      const blendKey = String(emitter.blend_mode).toLowerCase() === 'additive'
+        ? 'additive'
+        : 'alpha';
+      const batchKey = `${sortingOrder}|${blendKey}`;
+      const batch = particleBatches.get(batchKey);
+      if (batch) batch.push(...drawItems);
+      else particleBatches.set(batchKey, drawItems);
+    }
+    const sortedParticleBatches = [...particleBatches.entries()].sort((left, right) => {
+      const order = Number(left[0].split('|')[0]) - Number(right[0].split('|')[0]);
+      return order || left[0].localeCompare(right[0]);
+    });
+    for (const [batchKey, drawItems] of sortedParticleBatches) {
+      ctx.save();
+      ctx.globalCompositeOperation = batchKey.endsWith('|additive')
+        ? 'lighter'
+        : 'source-over';
+      for (const particle of drawItems) {
+        const screen = project(particle.position, cam, vp);
+        if (!screen || particle.size <= 0 || particle.color[3] <= 0) continue;
+        const sizePoint = project(
+          [particle.position[0] + particle.size, particle.position[1], particle.position[2]],
+          cam,
+          vp,
+        );
+        const radius = Math.max(
+          0.75,
+          Math.min(96, sizePoint ? Math.hypot(sizePoint.x - screen.x, sizePoint.y - screen.y) : particle.size * 20),
+        );
+        const [red, green, blue, alpha] = particle.color;
+        ctx.fillStyle = `rgba(${Math.round(red * 255)},${Math.round(green * 255)},${Math.round(blue * 255)},${Math.max(0, Math.min(1, alpha))})`;
+        ctx.beginPath();
+        ctx.arc(screen.x, screen.y, radius, 0, Math.PI * 2);
+        ctx.fill();
+      }
+      ctx.restore();
+    }
+    for (const entityId of particleStatesRef.current.keys()) {
+      if (!liveEmitterIds.has(entityId)) particleStatesRef.current.delete(entityId);
+    }
+
+    const liveSpineIds = new Set<number>();
+    const spineEntities = p.entities
+      .filter((entity) => entity.components.SpineSkeleton && entity.components.Transform)
+      .sort((left, right) => {
+        const a = left.components.SpineSkeleton as { sorting_order?: number };
+        const b = right.components.SpineSkeleton as { sorting_order?: number };
+        return (a.sorting_order ?? 0) - (b.sorting_order ?? 0);
+      });
+    for (const entity of spineEntities) {
+      if (!isActive(entity.entity)) continue;
+      const component = entity.components.SpineSkeleton as Record<string, unknown> | undefined;
+      const transform = entity.components.Transform as TransformData | undefined;
+      if (!component || !transform) continue;
+      liveSpineIds.add(entity.entity);
+      const origin = transform.position as Vec3;
+      const screen = project(origin, cam, vp);
+      if (!screen) continue;
+      const unit = project([origin[0] + 1, origin[1], origin[2]], cam, vp);
+      const transformScale = Math.max(0.0001, Math.abs(transform.scale[0] ?? 1));
+      const pixelsPerWorldUnit = (unit ? Math.max(1, Math.hypot(unit.x - screen.x, unit.y - screen.y)) : 64)
+        * transformScale;
+      const result = spineRuntimeRef.current.drawEntity({
+        entity: entity.entity,
+        component,
+        context: ctx,
+        screenX: screen.x,
+        screenY: screen.y,
+        pixelsPerWorldUnit,
+        deltaSeconds: particleDelta,
+      });
+      if (result !== 'drawn' && !isGame) {
+        const message = result === 'missing'
+          ? 'Spine: assign skeleton + atlas'
+          : result === 'loading'
+            ? 'Loading Spine 4.3…'
+            : result.error;
+        ctx.save();
+        ctx.strokeStyle = result === 'loading' ? '#56b7d0' : '#e06c75';
+        ctx.fillStyle = 'rgba(24, 24, 24, 0.86)';
+        ctx.fillRect(screen.x - 76, screen.y - 20, 152, 40);
+        ctx.strokeRect(screen.x - 76, screen.y - 20, 152, 40);
+        ctx.fillStyle = '#eee';
+        ctx.font = '11px sans-serif';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(message.slice(0, 42), screen.x, screen.y, 144);
+        ctx.restore();
+      }
+    }
+    spineRuntimeRef.current.retainOnly(liveSpineIds);
 
     // Transform gizmo — 3D Transform OR RectTransform (UI)
     usingRectGizmoRef.current = false;
@@ -489,7 +677,14 @@ export function Viewport(props: {
           }
         }
         uiLayoutScaleRef.current = layoutScale || 1;
-        drawUiItems(ctx, uiItems, uiHoverRef.current, uiPressRef.current);
+        const stats = drawUiItems(ctx, uiItems, uiHoverRef.current, uiPressRef.current ?? focusedInputRef.current);
+        if (
+          stats.elements !== uiStatsRef.current.elements ||
+          stats.batches !== uiStatsRef.current.batches
+        ) {
+          uiStatsRef.current = stats;
+          setUiStats(stats);
+        }
       } else {
         // 与 Game 同一 letterbox 尺寸，竖屏时 Scene Canvas 也是竖图
         const gameBox = letterbox(pw, ph, p.gameAspect, p.gameOrientation);
@@ -599,8 +794,36 @@ export function Viewport(props: {
     if (propsRef.current.tab === 'game') {
       if (ev.button === 0) {
         const ui = hitTestUi(uiItemsRef.current, x, y);
-        if (ui?.button?.interactable) {
+        if (ui?.slider?.interactable) {
+          const value = sliderValueAtPoint(ui, x, y);
+          if (value != null) {
+            draggingRef.current = true;
+            dragRef.current = {
+              type: 'uiSlider',
+              lx: ev.clientX,
+              ly: ev.clientY,
+              entity: ui.entity,
+            };
+            propsRef.current.onBeginGesture();
+            propsRef.current.onUiValueChange?.(
+              ui.entity,
+              'Slider',
+              { value },
+              ui.slider.onValueChanged,
+            );
+          }
+        } else if (
+          ui?.button?.interactable
+          || ui?.toggle?.interactable
+          || ui?.input?.interactable
+          || ui?.dropdown?.interactable
+          || ui?.list?.interactable
+          || ui?.tabs?.interactable
+        ) {
           uiPressRef.current = ui.entity;
+          focusedInputRef.current = ui.input?.interactable ? ui.entity : null;
+        } else {
+          focusedInputRef.current = null;
         }
       }
       return;
@@ -729,7 +952,11 @@ export function Viewport(props: {
         if (propsRef.current.tab === 'game') {
           const ui = hitTestUi(uiItemsRef.current, x, y);
           uiHoverRef.current = ui?.entity ?? null;
-          canvas.style.cursor = ui?.button ? 'pointer' : 'default';
+          canvas.style.cursor = ui?.slider
+            ? 'ew-resize'
+            : ui?.button || ui?.toggle || ui?.input || ui?.dropdown || ui?.list || ui?.tabs
+              ? 'pointer'
+              : 'default';
         } else if (propsRef.current.tab === 'scene' && !propsRef.current.playing) {
           const next = usingRectGizmoRef.current
             ? hitTestRectGizmo(rectGizmoHitsRef.current, x, y)
@@ -747,6 +974,30 @@ export function Viewport(props: {
       }
 
       if (!d) return;
+
+      if (d.type === 'uiSlider') {
+        const canvas = canvasRef.current;
+        if (!canvas) return;
+        const rect = canvas.getBoundingClientRect();
+        const x = ev.clientX - rect.left;
+        const y = ev.clientY - rect.top;
+        const item = uiItemsRef.current.find((candidate) => candidate.entity === d.entity);
+        if (item?.slider) {
+          const value = sliderValueAtPoint(item, x, y);
+          if (value != null) {
+            propsRef.current.onUiValueChange?.(
+              item.entity,
+              'Slider',
+              { value },
+              item.slider.onValueChanged,
+            );
+          }
+        }
+        d.lx = ev.clientX;
+        d.ly = ev.clientY;
+        return;
+      }
+
       const dx = ev.clientX - d.lx;
       const dy = ev.clientY - d.ly;
       d.lx = ev.clientX;
@@ -914,8 +1165,27 @@ export function Viewport(props: {
         const x = ev.clientX - rect.left;
         const y = ev.clientY - rect.top;
         const ui = hitTestUi(uiItemsRef.current, x, y);
-        if (ui && ui.entity === press && ui.button?.interactable) {
-          propsRef.current.onUiClick?.(ui.entity, ui.button.onClick);
+        if (ui && ui.entity === press) {
+          if (ui.button?.interactable) {
+            propsRef.current.onUiClick?.(ui.entity, ui.button.onClick);
+          } else if (ui.toggle?.interactable) {
+            propsRef.current.onUiValueChange?.(
+              ui.entity,
+              'Toggle',
+              { is_on: !ui.toggle.isOn },
+              ui.toggle.onValueChanged,
+            );
+          } else {
+            const action = uiPointAction(ui, x, y);
+            if (action) {
+              propsRef.current.onUiValueChange?.(
+                ui.entity,
+                action.component,
+                action.patch,
+                action.callback,
+              );
+            }
+          }
         }
       }
       uiPressRef.current = null;
@@ -923,6 +1193,9 @@ export function Viewport(props: {
         syncCamToStore();
       }
       if (dragRef.current?.type === 'gizmo' || dragRef.current?.type === 'rectGizmo') {
+        propsRef.current.onEndGesture();
+      }
+      if (dragRef.current?.type === 'uiSlider') {
         propsRef.current.onEndGesture();
       }
       dragRef.current = null;
@@ -938,6 +1211,38 @@ export function Viewport(props: {
   }, []);
 
   const onWheel = (ev: React.WheelEvent) => {
+    if (propsRef.current.tab === 'game') {
+      const { x, y } = localPos(ev);
+      const ui = hitTestUi(uiItemsRef.current, x, y);
+      if (ui?.list) {
+        ev.preventDefault();
+        const entity = propsRef.current.entities.find((candidate) => candidate.entity === ui.entity);
+        const raw = entity?.components.ListView as Record<string, unknown> | undefined;
+        const current = Number(raw?.scroll_offset ?? raw?.scrollOffset ?? 0);
+        const itemHeight = Number(raw?.item_height ?? raw?.itemHeight ?? 32);
+        propsRef.current.onUiValueChange?.(
+          ui.entity,
+          'ListView',
+          { scroll_offset: Math.max(0, current + Math.sign(ev.deltaY) * itemHeight * 0.5) },
+          ui.list.onValueChanged,
+        );
+      } else if (ui?.scroll) {
+        ev.preventDefault();
+        const current = ui.scroll.normalizedPosition;
+        propsRef.current.onUiValueChange?.(
+          ui.entity,
+          'ScrollView',
+          {
+            normalized_position: [
+              Math.max(0, Math.min(1, current[0] + Math.sign(ev.deltaX) * ui.scroll.scrollSensitivity)),
+              Math.max(0, Math.min(1, current[1] + Math.sign(ev.deltaY) * ui.scroll.scrollSensitivity)),
+            ],
+          },
+          ui.scroll.onValueChanged,
+        );
+      }
+      return;
+    }
     if (propsRef.current.tab !== 'scene') return;
     ev.preventDefault();
     const factor = ev.deltaY > 0 ? 1.12 : 0.9;
@@ -982,6 +1287,36 @@ export function Viewport(props: {
 
   useEffect(() => {
     const onKey = (ev: KeyboardEvent) => {
+      const focused = focusedInputRef.current;
+      if (propsRef.current.tab === 'game' && focused != null) {
+        const item = uiItemsRef.current.find((candidate) => candidate.entity === focused);
+        if (!item?.input?.interactable) {
+          focusedInputRef.current = null;
+          return;
+        }
+        let next = item.input.text;
+        let callback = item.input.onValueChanged;
+        if (ev.key === 'Backspace') {
+          next = Array.from(next).slice(0, -1).join('');
+        } else if (ev.key === 'Enter') {
+          if (item.input.multiline) next += '\n';
+          else focusedInputRef.current = null;
+          callback = item.input.onSubmit;
+        } else if (ev.key.length === 1 && !ev.ctrlKey && !ev.metaKey && !ev.altKey) {
+          if (item.input.characterLimit <= 0 || Array.from(next).length < item.input.characterLimit) {
+            next += ev.key;
+          }
+        } else if (ev.key === 'Escape') {
+          focusedInputRef.current = null;
+          return;
+        } else {
+          return;
+        }
+        ev.preventDefault();
+        ev.stopImmediatePropagation();
+        propsRef.current.onUiValueChange?.(focused, 'InputField', { text: next }, callback);
+        return;
+      }
       if (propsRef.current.tab !== 'scene') return;
       if (ev.key === 'f' || ev.key === 'F') propsRef.current.onFrame();
     };
@@ -1043,6 +1378,7 @@ export function Viewport(props: {
             </button>
           </div>
           <span className="game-hint">Uses Main Camera · no Scene gizmos</span>
+          <span className="game-hint">UI {uiStats.elements} elements · {uiStats.batches} batches</span>
         </div>
       )}
       <canvas

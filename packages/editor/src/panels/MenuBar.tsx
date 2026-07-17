@@ -1,5 +1,12 @@
-import { useEffect, useRef, useState } from 'react';
-import { listMenuItems } from '../editorWindow';
+import { useEffect, useRef, useState, useSyncExternalStore } from 'react';
+import {
+  getMenuRevision,
+  listMenuItems,
+  subscribeMenuItems,
+  type MenuItemContext,
+} from '../editorWindow';
+import type { EditorStore } from '../store';
+import { PopupMenuItems } from './PopupMenu';
 
 const MENUS = ['File', 'Edit', 'Assets', 'GameObject', 'Component', 'Window', 'Help'] as const;
 
@@ -9,15 +16,11 @@ export function MenuBar(props: {
   onSaveAs: () => void;
   onLoad: () => void;
   onUndo: () => void;
-  onCreateEmpty: () => void;
-  onCreateEmptyChild: () => void;
-  onCreateCube: () => void;
-  onCreateCamera: () => void;
-  onCreateUiCanvas: () => void;
-  onCreateUiImage: () => void;
-  onCreateUiButton: () => void;
-  onCreateSprite: () => void;
   onDuplicate: () => void;
+  store: EditorStore;
+  selectedIds: readonly number[];
+  onRefresh: () => void;
+  onLog: (message: string) => void;
 }) {
   const [open, setOpen] = useState<string | null>(null);
   const root = useRef<HTMLDivElement>(null);
@@ -26,11 +29,28 @@ export function MenuBar(props: {
     const close = (e: MouseEvent) => {
       if (!root.current?.contains(e.target as Node)) setOpen(null);
     };
+    const closeOnEscape = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setOpen(null);
+    };
     window.addEventListener('mousedown', close);
-    return () => window.removeEventListener('mousedown', close);
+    window.addEventListener('keydown', closeOnEscape);
+    return () => {
+      window.removeEventListener('mousedown', close);
+      window.removeEventListener('keydown', closeOnEscape);
+    };
   }, []);
 
+  useSyncExternalStore(subscribeMenuItems, getMenuRevision, getMenuRevision);
   const windowItems = listMenuItems('Window');
+  const gameObjectItems = listMenuItems('GameObject');
+  const menuContext: MenuItemContext = {
+    source: 'menu-bar',
+    store: props.store,
+    selectedIds: props.selectedIds,
+    contextEntity: props.store.selected,
+    refresh: props.onRefresh,
+    log: props.onLog,
+  };
 
   return (
     <div className="menu-bar" ref={root}>
@@ -72,54 +92,26 @@ export function MenuBar(props: {
             </div>
           )}
           {name === 'GameObject' && (
-            <div className="menu-drop">
-              <button type="button" onClick={() => { props.onCreateEmpty(); setOpen(null); }}>
-                Create Empty
-              </button>
-              <button type="button" onClick={() => { props.onCreateEmptyChild(); setOpen(null); }}>
-                Create Empty Child
-              </button>
-              <div className="sep" />
-              <button type="button" onClick={() => { props.onCreateCube(); setOpen(null); }}>
-                3D Object / Cube
-              </button>
-              <button type="button" onClick={() => { props.onCreateSprite(); setOpen(null); }}>
-                3D Object / Sprite Quad
-              </button>
-              <button type="button" onClick={() => { props.onCreateCamera(); setOpen(null); }}>
-                Camera
-              </button>
-              <div className="sep" />
-              <button type="button" onClick={() => { props.onCreateUiCanvas(); setOpen(null); }}>
-                UI / Canvas
-              </button>
-              <button type="button" onClick={() => { props.onCreateUiImage(); setOpen(null); }}>
-                UI / Image
-              </button>
-              <button type="button" onClick={() => { props.onCreateUiButton(); setOpen(null); }}>
-                UI / Button
-              </button>
+            <div className="menu-drop popup-menu" role="menu">
+              <PopupMenuItems
+                entries={gameObjectItems}
+                context={menuContext}
+                onSelect={() => setOpen(null)}
+              />
             </div>
           )}
           {name === 'Window' && (
-            <div className="menu-drop">
+            <div className="menu-drop popup-menu" role="menu">
               {windowItems.length === 0 && (
                 <button type="button" disabled>
                   (no windows)
                 </button>
               )}
-              {windowItems.map((item) => (
-                <button
-                  key={item.path}
-                  type="button"
-                  onClick={() => {
-                    item.action();
-                    setOpen(null);
-                  }}
-                >
-                  {item.label}
-                </button>
-              ))}
+              <PopupMenuItems
+                entries={windowItems}
+                context={menuContext}
+                onSelect={() => setOpen(null)}
+              />
             </div>
           )}
           {name === 'Help' && (

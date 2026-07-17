@@ -4,7 +4,7 @@ use std::any::Any;
 
 /// Simple query over entities that have all requested component type names.
 pub struct Query<'a> {
-    world:      &'a World,
+    world: &'a World,
     type_names: Vec<&'static str>,
 }
 

@@ -17,7 +17,7 @@ pub struct ComponentRegistry {
     name_to_id: HashMap<String, ComponentId>,
     id_to_name: HashMap<ComponentId, String>,
     type_to_id: HashMap<TypeId, ComponentId>,
-    next:       u32,
+    next: u32,
 }
 
 impl ComponentRegistry {

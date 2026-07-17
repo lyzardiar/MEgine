@@ -4,13 +4,13 @@ use std::fmt;
 /// Stable entity id with generation to prevent ABA reuse bugs.
 #[derive(Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub struct Entity {
-    pub index:      u32,
+    pub index: u32,
     pub generation: u32,
 }
 
 impl Entity {
     pub const INVALID: Entity = Entity {
-        index:      u32::MAX,
+        index: u32::MAX,
         generation: 0,
     };
 
@@ -28,7 +28,7 @@ impl Entity {
 
     pub fn from_u64(v: u64) -> Self {
         Self {
-            index:      v as u32,
+            index: v as u32,
             generation: (v >> 32) as u32,
         }
     }

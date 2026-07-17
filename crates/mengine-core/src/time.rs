@@ -4,24 +4,24 @@ use serde::{Deserialize, Serialize};
 /// Fixed-timestep simulation clock.
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct Time {
-    pub delta:           f32,
-    pub elapsed:         f64,
-    pub fixed_delta:     f32,
-    pub accumulator:     f32,
-    pub frame:           u64,
-    pub sim_frame:       u64,
-    pub clear_color:     Vec4,
+    pub delta: f32,
+    pub elapsed: f64,
+    pub fixed_delta: f32,
+    pub accumulator: f32,
+    pub frame: u64,
+    pub sim_frame: u64,
+    pub clear_color: Vec4,
 }
 
 impl Default for Time {
     fn default() -> Self {
         Self {
-            delta:       0.0,
-            elapsed:     0.0,
+            delta: 0.0,
+            elapsed: 0.0,
             fixed_delta: 1.0 / 60.0,
             accumulator: 0.0,
-            frame:       0,
-            sim_frame:   0,
+            frame: 0,
+            sim_frame: 0,
             clear_color: Vec4::new(0.1, 0.1, 0.14, 1.0),
         }
     }

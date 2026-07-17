@@ -4,13 +4,14 @@ use std::path::Path;
 /// Minimal static mesh extraction from glTF (first mesh / first primitive).
 pub struct MeshData {
     pub positions: Vec<[f32; 3]>,
-    pub normals:   Vec<[f32; 3]>,
-    pub uvs:       Vec<[f32; 2]>,
-    pub indices:   Vec<u32>,
+    pub normals: Vec<[f32; 3]>,
+    pub uvs: Vec<[f32; 2]>,
+    pub indices: Vec<u32>,
 }
 
 pub fn load_gltf_mesh_data(path: &Path) -> Result<MeshData, AssetError> {
-    let (doc, buffers, _images) = gltf::import(path).map_err(|e| AssetError::Gltf(e.to_string()))?;
+    let (doc, buffers, _images) =
+        gltf::import(path).map_err(|e| AssetError::Gltf(e.to_string()))?;
     let mesh = doc
         .meshes()
         .next()

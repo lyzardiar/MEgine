@@ -1,5 +1,12 @@
 /** Scene library — disk via Vite `/__mengine/*` (IDE), localStorage fallback. */
 
+import {
+  desktopProjectSceneJson,
+  getDesktopProject,
+  replaceDesktopSceneJson,
+  saveDesktopScene,
+} from './transport/desktopProjectSession';
+
 export type SceneMeta = {
   name: string;
   updatedAt: number;
@@ -18,7 +25,7 @@ const SCENE_DATA_PREFIX = 'mengine.scene.data.';
 const LEGACY_SCENE_KEY = 'mengine.scene';
 const MIGRATED_FLAG = 'mengine.scenes.migratedToDisk';
 
-type Backend = 'disk' | 'local';
+type Backend = 'disk' | 'local' | 'desktop';
 
 let _backend: Backend = 'local';
 let _index: SceneMeta[] = [];
@@ -90,7 +97,7 @@ export function normalizeSceneName(input: string): string | null {
 }
 
 export function isDiskBackend() {
-  return _backend === 'disk';
+  return _backend === 'disk' || _backend === 'desktop';
 }
 
 export function isSceneLibraryReady() {
@@ -237,6 +244,20 @@ export async function initSceneLibrary(): Promise<{
   migrated: number;
   prefs: EditorPrefs;
 }> {
+  const desktopProject = getDesktopProject();
+  if (desktopProject) {
+    const json = desktopProjectSceneJson();
+    const name =
+      desktopProject.scenePath?.split('/').pop()?.replace(/\.mscene$/i, '') ?? 'Untitled';
+    _backend = 'desktop';
+    _index = [{ name, updatedAt: Date.now() }];
+    _data.clear();
+    if (json) _data.set(name, json);
+    _active = name;
+    loadLocalPrefs();
+    _ready = true;
+    return { backend: _backend, migrated: 0, prefs: getEditorPrefs() };
+  }
   const ok = await loadFromDisk();
   let migrated = 0;
   if (ok) {
@@ -260,6 +281,7 @@ export function migrateLegacyScene(): string | null {
 
 export async function setActiveSceneName(name: string | null) {
   _active = name;
+  if (_backend === 'desktop') return;
   if (_backend === 'disk') {
     await fetch(`${API}/active`, {
       method: 'PUT',
@@ -275,6 +297,10 @@ export async function setActiveSceneName(name: string | null) {
 /** Persist Game 视图比例 / 横竖屏（立即写入，无需保存场景）. */
 export async function setEditorPrefs(partial: EditorPrefs) {
   _prefs = { ..._prefs, ...partial };
+  if (_backend === 'desktop') {
+    saveLocalPrefs();
+    return;
+  }
   if (_backend === 'disk') {
     await fetch(`${API}/prefs`, {
       method: 'PUT',
@@ -291,6 +317,15 @@ export async function writeScene(name: string, json: string) {
   const meta = { name, updatedAt: Date.now() };
   _index = sortIndex([..._index.filter((s) => s.name !== name), meta]);
   _active = name;
+
+  if (_backend === 'desktop') {
+    await replaceDesktopSceneJson(json);
+    const saved = await saveDesktopScene(name);
+    const savedName = saved.scenePath?.split('/').pop()?.replace(/\.mscene$/i, '') ?? name;
+    _index = [{ name: savedName, updatedAt: Date.now() }];
+    _active = savedName;
+    return;
+  }
 
   if (_backend === 'disk') {
     const res = await fetch(`${API}/scenes/${encodeURIComponent(name)}`, {
@@ -315,6 +350,9 @@ export async function writeScene(name: string, json: string) {
 }
 
 export async function deleteScene(name: string) {
+  if (_backend === 'desktop') {
+    throw new Error('desktop scene deletion is not implemented yet');
+  }
   _data.delete(name);
   _index = _index.filter((s) => s.name !== name);
   if (_active === name) _active = null;
@@ -337,6 +375,8 @@ export async function renameScene(oldName: string, newNameRaw: string): Promise<
   if (newName === oldName) return oldName;
   if (!_data.has(oldName) && !readSceneJson(oldName)) return null;
   if (sceneExists(newName)) return null;
+
+  if (_backend === 'desktop') return null;
 
   if (_backend === 'disk') {
     const res = await fetch(`${API}/scenes/rename`, {

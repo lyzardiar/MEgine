@@ -21,5 +21,14 @@ export default defineConfig({
     port: 5173,
     strictPort: true,
   },
+  build: {
+    rollupOptions: {
+      output: {
+        manualChunks(id) {
+          return id.includes('@esotericsoftware/spine-') ? 'spine-runtime' : undefined;
+        },
+      },
+    },
+  },
   clearScreen: false,
 });

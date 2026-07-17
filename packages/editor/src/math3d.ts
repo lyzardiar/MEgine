@@ -63,6 +63,8 @@ export type Camera = {
   eye: Vec3;
   target: Vec3;
   fovYDeg: number;
+  projection?: 'perspective' | 'orthographic';
+  orthographicSize?: number;
 };
 
 export function project(
@@ -78,9 +80,17 @@ export function project(
   const x = dot(rel, right);
   const y = dot(rel, up);
   const aspect = viewport.w / Math.max(1, viewport.h);
-  const tanHalf = Math.tan(((cam.fovYDeg * Math.PI) / 180) * 0.5);
-  const ndcX = x / (z * tanHalf * aspect);
-  const ndcY = y / (z * tanHalf);
+  let ndcX: number;
+  let ndcY: number;
+  if (cam.projection === 'orthographic') {
+    const halfHeight = Math.max(0.001, cam.orthographicSize ?? 5);
+    ndcX = x / (halfHeight * aspect);
+    ndcY = y / halfHeight;
+  } else {
+    const tanHalf = Math.tan(((cam.fovYDeg * Math.PI) / 180) * 0.5);
+    ndcX = x / (z * tanHalf * aspect);
+    ndcY = y / (z * tanHalf);
+  }
   if (!Number.isFinite(ndcX) || !Number.isFinite(ndcY)) return null;
   return {
     x: viewport.x + (ndcX * 0.5 + 0.5) * viewport.w,
@@ -205,6 +215,7 @@ export function drawSolidCube(
   half: Vec3,
   selected: boolean,
   rotation?: Quat | null,
+  baseColor?: [number, number, number, number],
 ): { x: number; y: number; r: number } | null {
   const hx = half[0], hy = half[1], hz = half[2];
   const local: Vec3[] = [
@@ -230,7 +241,10 @@ export function drawSolidCube(
     const c = project(center, cam, viewport);
     if (!c) return null;
     const s = Math.max(12, 120 / c.depth);
-    ctx.fillStyle = selected ? '#5b9bd5' : '#c49a6c';
+    const [r, g, b, a] = baseColor ?? [0.77, 0.6, 0.42, 1];
+    ctx.fillStyle = selected
+      ? '#5b9bd5'
+      : `rgba(${Math.round(r * 255)},${Math.round(g * 255)},${Math.round(b * 255)},${a})`;
     ctx.fillRect(c.x - s / 2, c.y - s / 2, s, s);
     return { x: c.x, y: c.y, r: s * 0.7 };
   }
@@ -246,7 +260,15 @@ export function drawSolidCube(
   ];
   const faceColors = selected
     ? ['#4a8ab8', '#6eb0e0', '#3d7aa8', '#7ec0f0', '#2f6288', '#8ec8f5']
-    : ['#8a6a45', '#c49a6c', '#7a5a38', '#d4b48a', '#6a4a30', '#e0c49a'];
+    : (() => {
+        const color = baseColor ?? [0.77, 0.6, 0.42, 1];
+        const shades = [0.68, 0.95, 0.58, 1.05, 0.48, 1.15];
+        return shades.map((shade) =>
+          `rgba(${Math.round(Math.min(1, color[0] * shade) * 255)},${Math.round(
+            Math.min(1, color[1] * shade) * 255,
+          )},${Math.round(Math.min(1, color[2] * shade) * 255)},${color[3]})`,
+        );
+      })();
 
   const faceDepth = (idx: number[]) =>
     (P[idx[0]].depth + P[idx[1]].depth + P[idx[2]].depth + P[idx[3]].depth) / 4;

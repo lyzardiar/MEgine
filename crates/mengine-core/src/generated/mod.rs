@@ -4,24 +4,20 @@
 use crate::component::Component;
 use serde::{Deserialize, Serialize};
 
-#[derive(Clone, Debug, Serialize, Deserialize)]
+#[derive(Clone, Debug, Default, Serialize, Deserialize)]
+#[serde(default)]
 pub struct Name {
     pub value: String,
 }
 
-impl Default for Name {
-    fn default() -> Self {
-        Self {
-            value: String::new(),
-        }
+impl Component for Name {
+    fn type_name() -> &'static str {
+        "Name"
     }
 }
 
-impl Component for Name {
-    fn type_name() -> &'static str { "Name" }
-}
-
 #[derive(Clone, Debug, Serialize, Deserialize)]
+#[serde(default)]
 pub struct Transform {
     pub position: [f32; 3],
     pub rotation: [f32; 4],
@@ -39,10 +35,13 @@ impl Default for Transform {
 }
 
 impl Component for Transform {
-    fn type_name() -> &'static str { "Transform" }
+    fn type_name() -> &'static str {
+        "Transform"
+    }
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
+#[serde(default)]
 pub struct Transform2D {
     pub position: [f32; 2],
     pub rotation: f32,
@@ -60,10 +59,13 @@ impl Default for Transform2D {
 }
 
 impl Component for Transform2D {
-    fn type_name() -> &'static str { "Transform2D" }
+    fn type_name() -> &'static str {
+        "Transform2D"
+    }
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
+#[serde(default)]
 pub struct Camera3D {
     pub fov_y_degrees: f32,
     pub near: f32,
@@ -89,10 +91,13 @@ impl Default for Camera3D {
 }
 
 impl Component for Camera3D {
-    fn type_name() -> &'static str { "Camera3D" }
+    fn type_name() -> &'static str {
+        "Camera3D"
+    }
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
+#[serde(default)]
 pub struct DirectionalLight {
     pub color: [f32; 4],
     pub intensity: f32,
@@ -108,10 +113,65 @@ impl Default for DirectionalLight {
 }
 
 impl Component for DirectionalLight {
-    fn type_name() -> &'static str { "DirectionalLight" }
+    fn type_name() -> &'static str {
+        "DirectionalLight"
+    }
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
+#[serde(default)]
+pub struct PointLight {
+    pub color: [f32; 4],
+    pub intensity: f32,
+    pub range: f32,
+}
+
+impl Default for PointLight {
+    fn default() -> Self {
+        Self {
+            color: [1.0, 1.0, 1.0, 1.0],
+            intensity: 8.0,
+            range: 10.0,
+        }
+    }
+}
+
+impl Component for PointLight {
+    fn type_name() -> &'static str {
+        "PointLight"
+    }
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize)]
+#[serde(default)]
+pub struct SpotLight {
+    pub color: [f32; 4],
+    pub intensity: f32,
+    pub range: f32,
+    pub inner_angle_degrees: f32,
+    pub outer_angle_degrees: f32,
+}
+
+impl Default for SpotLight {
+    fn default() -> Self {
+        Self {
+            color: [1.0, 1.0, 1.0, 1.0],
+            intensity: 12.0,
+            range: 12.0,
+            inner_angle_degrees: 25.0,
+            outer_angle_degrees: 40.0,
+        }
+    }
+}
+
+impl Component for SpotLight {
+    fn type_name() -> &'static str {
+        "SpotLight"
+    }
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize)]
+#[serde(default)]
 pub struct Camera2D {
     pub size: f32,
     pub primary: bool,
@@ -127,10 +187,13 @@ impl Default for Camera2D {
 }
 
 impl Component for Camera2D {
-    fn type_name() -> &'static str { "Camera2D" }
+    fn type_name() -> &'static str {
+        "Camera2D"
+    }
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
+#[serde(default)]
 pub struct MeshRenderer {
     pub mesh: String,
     pub material: String,
@@ -146,10 +209,45 @@ impl Default for MeshRenderer {
 }
 
 impl Component for MeshRenderer {
-    fn type_name() -> &'static str { "MeshRenderer" }
+    fn type_name() -> &'static str {
+        "MeshRenderer"
+    }
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
+#[serde(default)]
+pub struct PbrMaterial {
+    pub base_color: [f32; 4],
+    pub metallic: f32,
+    pub roughness: f32,
+    pub emissive: [f32; 3],
+    pub emissive_strength: f32,
+    pub unlit: bool,
+    pub double_sided: bool,
+}
+
+impl Default for PbrMaterial {
+    fn default() -> Self {
+        Self {
+            base_color: [0.8, 0.8, 0.8, 1.0],
+            metallic: 0.0,
+            roughness: 0.5,
+            emissive: [0.0, 0.0, 0.0],
+            emissive_strength: 1.0,
+            unlit: false,
+            double_sided: false,
+        }
+    }
+}
+
+impl Component for PbrMaterial {
+    fn type_name() -> &'static str {
+        "PbrMaterial"
+    }
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize)]
+#[serde(default)]
 pub struct SpriteRenderer {
     pub sprite: String,
     pub color: [f32; 4],
@@ -169,35 +267,34 @@ impl Default for SpriteRenderer {
 }
 
 impl Component for SpriteRenderer {
-    fn type_name() -> &'static str { "SpriteRenderer" }
+    fn type_name() -> &'static str {
+        "SpriteRenderer"
+    }
 }
 
-#[derive(Clone, Debug, Serialize, Deserialize)]
+#[derive(Clone, Debug, Default, Serialize, Deserialize)]
+#[serde(default)]
 pub struct Layer {
     pub value: i32,
 }
 
-impl Default for Layer {
-    fn default() -> Self {
-        Self {
-            value: 0,
-        }
+impl Component for Layer {
+    fn type_name() -> &'static str {
+        "Layer"
     }
 }
 
-impl Component for Layer {
-    fn type_name() -> &'static str { "Layer" }
-}
-
 #[derive(Clone, Debug, Default, Serialize, Deserialize)]
-pub struct EditorOnly {
-}
+pub struct EditorOnly {}
 
 impl Component for EditorOnly {
-    fn type_name() -> &'static str { "EditorOnly" }
+    fn type_name() -> &'static str {
+        "EditorOnly"
+    }
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
+#[serde(default)]
 pub struct AutoRotate {
     pub axis: [f32; 3],
     pub angle: f32,
@@ -215,10 +312,189 @@ impl Default for AutoRotate {
 }
 
 impl Component for AutoRotate {
-    fn type_name() -> &'static str { "AutoRotate" }
+    fn type_name() -> &'static str {
+        "AutoRotate"
+    }
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
+#[serde(default)]
+pub struct ParticleEmitter2D {
+    pub playing: bool,
+    pub looping: bool,
+    pub duration: f32,
+    pub start_delay: f32,
+    pub rate_over_time: f32,
+    pub max_particles: i32,
+    pub lifetime_min: f32,
+    pub lifetime_max: f32,
+    pub speed_min: f32,
+    pub speed_max: f32,
+    pub size_start: f32,
+    pub size_end: f32,
+    pub color_start: [f32; 4],
+    pub color_end: [f32; 4],
+    pub gravity: [f32; 2],
+    pub shape: String,
+    pub shape_radius: f32,
+    pub shape_size: [f32; 2],
+    pub direction: [f32; 2],
+    pub spread_degrees: f32,
+    pub simulation_space: String,
+    pub blend_mode: String,
+    pub texture: String,
+    pub sorting_order: i32,
+    pub seed: i32,
+}
+
+impl Default for ParticleEmitter2D {
+    fn default() -> Self {
+        Self {
+            playing: true,
+            looping: true,
+            duration: 5.0,
+            start_delay: 0.0,
+            rate_over_time: 20.0,
+            max_particles: 1000,
+            lifetime_min: 0.8,
+            lifetime_max: 1.6,
+            speed_min: 0.5,
+            speed_max: 2.0,
+            size_start: 0.18,
+            size_end: 0.0,
+            color_start: [1.0, 0.75, 0.2, 1.0],
+            color_end: [1.0, 0.15, 0.02, 0.0],
+            gravity: [0.0, -0.8],
+            shape: "circle".into(),
+            shape_radius: 0.2,
+            shape_size: [1.0, 1.0],
+            direction: [0.0, 1.0],
+            spread_degrees: 35.0,
+            simulation_space: "world".into(),
+            blend_mode: "additive".into(),
+            texture: "".into(),
+            sorting_order: 0,
+            seed: 1,
+        }
+    }
+}
+
+impl Component for ParticleEmitter2D {
+    fn type_name() -> &'static str {
+        "ParticleEmitter2D"
+    }
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize)]
+#[serde(default)]
+pub struct ParticleEmitter3D {
+    pub playing: bool,
+    pub looping: bool,
+    pub duration: f32,
+    pub start_delay: f32,
+    pub rate_over_time: f32,
+    pub max_particles: i32,
+    pub lifetime_min: f32,
+    pub lifetime_max: f32,
+    pub speed_min: f32,
+    pub speed_max: f32,
+    pub size_start: f32,
+    pub size_end: f32,
+    pub color_start: [f32; 4],
+    pub color_end: [f32; 4],
+    pub gravity: [f32; 3],
+    pub shape: String,
+    pub shape_radius: f32,
+    pub shape_size: [f32; 3],
+    pub direction: [f32; 3],
+    pub spread_degrees: f32,
+    pub simulation_space: String,
+    pub blend_mode: String,
+    pub texture: String,
+    pub billboard: bool,
+    pub seed: i32,
+}
+
+impl Default for ParticleEmitter3D {
+    fn default() -> Self {
+        Self {
+            playing: true,
+            looping: true,
+            duration: 5.0,
+            start_delay: 0.0,
+            rate_over_time: 30.0,
+            max_particles: 2000,
+            lifetime_min: 1.0,
+            lifetime_max: 2.0,
+            speed_min: 0.8,
+            speed_max: 3.0,
+            size_start: 0.16,
+            size_end: 0.02,
+            color_start: [0.35, 0.75, 1.0, 1.0],
+            color_end: [0.05, 0.2, 1.0, 0.0],
+            gravity: [0.0, -0.6, 0.0],
+            shape: "cone".into(),
+            shape_radius: 0.25,
+            shape_size: [1.0, 1.0, 1.0],
+            direction: [0.0, 1.0, 0.0],
+            spread_degrees: 25.0,
+            simulation_space: "world".into(),
+            blend_mode: "additive".into(),
+            texture: "".into(),
+            billboard: true,
+            seed: 1,
+        }
+    }
+}
+
+impl Component for ParticleEmitter3D {
+    fn type_name() -> &'static str {
+        "ParticleEmitter3D"
+    }
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize)]
+#[serde(default)]
+pub struct SpineSkeleton {
+    pub skeleton: String,
+    pub atlas: String,
+    pub animation: String,
+    pub skin: String,
+    pub loop_animation: bool,
+    pub playing: bool,
+    pub time_scale: f32,
+    pub scale: f32,
+    pub color: [f32; 4],
+    pub premultiplied_alpha: bool,
+    pub sorting_order: i32,
+}
+
+impl Default for SpineSkeleton {
+    fn default() -> Self {
+        Self {
+            skeleton: "".into(),
+            atlas: "".into(),
+            animation: "".into(),
+            skin: "default".into(),
+            loop_animation: true,
+            playing: true,
+            time_scale: 1.0,
+            scale: 1.0,
+            color: [1.0, 1.0, 1.0, 1.0],
+            premultiplied_alpha: true,
+            sorting_order: 0,
+        }
+    }
+}
+
+impl Component for SpineSkeleton {
+    fn type_name() -> &'static str {
+        "SpineSkeleton"
+    }
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize)]
+#[serde(default)]
 pub struct Canvas {
     pub render_mode: String,
     pub sorting_order: i32,
@@ -236,10 +512,13 @@ impl Default for Canvas {
 }
 
 impl Component for Canvas {
-    fn type_name() -> &'static str { "Canvas" }
+    fn type_name() -> &'static str {
+        "Canvas"
+    }
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
+#[serde(default)]
 pub struct CanvasScaler {
     pub ui_scale_mode: String,
     pub reference_resolution: [f32; 2],
@@ -259,10 +538,13 @@ impl Default for CanvasScaler {
 }
 
 impl Component for CanvasScaler {
-    fn type_name() -> &'static str { "CanvasScaler" }
+    fn type_name() -> &'static str {
+        "CanvasScaler"
+    }
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
+#[serde(default)]
 pub struct RectTransform {
     pub anchor_min: [f32; 2],
     pub anchor_max: [f32; 2],
@@ -288,10 +570,13 @@ impl Default for RectTransform {
 }
 
 impl Component for RectTransform {
-    fn type_name() -> &'static str { "RectTransform" }
+    fn type_name() -> &'static str {
+        "RectTransform"
+    }
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
+#[serde(default)]
 pub struct Image {
     pub sprite: String,
     pub color: [f32; 4],
@@ -311,14 +596,20 @@ impl Default for Image {
 }
 
 impl Component for Image {
-    fn type_name() -> &'static str { "Image" }
+    fn type_name() -> &'static str {
+        "Image"
+    }
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
+#[serde(default)]
 pub struct Button {
     pub interactable: bool,
     pub transition: String,
-    pub on_click: String,
+    pub label: String,
+    pub text_color: [f32; 4],
+    pub font_size: f32,
+    pub on_click: serde_json::Value,
 }
 
 impl Default for Button {
@@ -326,13 +617,448 @@ impl Default for Button {
         Self {
             interactable: true,
             transition: "ColorTint".into(),
-            on_click: "".into(),
+            label: "Button".into(),
+            text_color: [1.0, 1.0, 1.0, 1.0],
+            font_size: 16.0,
+            on_click: serde_json::Value::Null,
         }
     }
 }
 
 impl Component for Button {
-    fn type_name() -> &'static str { "Button" }
+    fn type_name() -> &'static str {
+        "Button"
+    }
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize)]
+#[serde(default)]
+pub struct Text {
+    pub text: String,
+    pub color: [f32; 4],
+    pub font_size: f32,
+    pub alignment: String,
+    pub vertical_align: String,
+    pub raycast_target: bool,
+}
+
+impl Default for Text {
+    fn default() -> Self {
+        Self {
+            text: "Text".into(),
+            color: [1.0, 1.0, 1.0, 1.0],
+            font_size: 16.0,
+            alignment: "Center".into(),
+            vertical_align: "Middle".into(),
+            raycast_target: false,
+        }
+    }
+}
+
+impl Component for Text {
+    fn type_name() -> &'static str {
+        "Text"
+    }
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize)]
+#[serde(default)]
+pub struct Toggle {
+    pub is_on: bool,
+    pub interactable: bool,
+    pub label: String,
+    pub color: [f32; 4],
+    pub text_color: [f32; 4],
+    pub font_size: f32,
+    pub on_value_changed: serde_json::Value,
+}
+
+impl Default for Toggle {
+    fn default() -> Self {
+        Self {
+            is_on: false,
+            interactable: true,
+            label: "Toggle".into(),
+            color: [0.2, 0.45, 0.85, 1.0],
+            text_color: [1.0, 1.0, 1.0, 1.0],
+            font_size: 16.0,
+            on_value_changed: serde_json::Value::Null,
+        }
+    }
+}
+
+impl Component for Toggle {
+    fn type_name() -> &'static str {
+        "Toggle"
+    }
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize)]
+#[serde(default)]
+pub struct Slider {
+    pub min_value: f32,
+    pub max_value: f32,
+    pub value: f32,
+    pub whole_numbers: bool,
+    pub interactable: bool,
+    pub direction: String,
+    pub fill_color: [f32; 4],
+    pub background_color: [f32; 4],
+    pub handle_color: [f32; 4],
+    pub on_value_changed: serde_json::Value,
+}
+
+impl Default for Slider {
+    fn default() -> Self {
+        Self {
+            min_value: 0.0,
+            max_value: 1.0,
+            value: 0.5,
+            whole_numbers: false,
+            interactable: true,
+            direction: "LeftToRight".into(),
+            fill_color: [0.2, 0.55, 1.0, 1.0],
+            background_color: [0.15, 0.17, 0.2, 1.0],
+            handle_color: [0.9, 0.92, 0.95, 1.0],
+            on_value_changed: serde_json::Value::Null,
+        }
+    }
+}
+
+impl Component for Slider {
+    fn type_name() -> &'static str {
+        "Slider"
+    }
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize)]
+#[serde(default)]
+pub struct Panel {
+    pub color: [f32; 4],
+    pub border_color: [f32; 4],
+    pub border_width: f32,
+    pub raycast_target: bool,
+}
+
+impl Default for Panel {
+    fn default() -> Self {
+        Self {
+            color: [0.12, 0.14, 0.18, 0.96],
+            border_color: [0.32, 0.36, 0.44, 1.0],
+            border_width: 1.0,
+            raycast_target: false,
+        }
+    }
+}
+
+impl Component for Panel {
+    fn type_name() -> &'static str {
+        "Panel"
+    }
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize)]
+#[serde(default)]
+pub struct CanvasGroup {
+    pub alpha: f32,
+    pub interactable: bool,
+    pub blocks_raycasts: bool,
+}
+
+impl Default for CanvasGroup {
+    fn default() -> Self {
+        Self {
+            alpha: 1.0,
+            interactable: true,
+            blocks_raycasts: true,
+        }
+    }
+}
+
+impl Component for CanvasGroup {
+    fn type_name() -> &'static str {
+        "CanvasGroup"
+    }
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize)]
+#[serde(default)]
+pub struct LayoutGroup {
+    pub direction: String,
+    pub padding: [f32; 4],
+    pub spacing: [f32; 2],
+    pub cell_size: [f32; 2],
+    pub constraint_count: i32,
+    pub child_force_expand: bool,
+}
+
+impl Default for LayoutGroup {
+    fn default() -> Self {
+        Self {
+            direction: "Vertical".into(),
+            padding: [8.0, 8.0, 8.0, 8.0],
+            spacing: [6.0, 6.0],
+            cell_size: [120.0, 32.0],
+            constraint_count: 1,
+            child_force_expand: true,
+        }
+    }
+}
+
+impl Component for LayoutGroup {
+    fn type_name() -> &'static str {
+        "LayoutGroup"
+    }
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize)]
+#[serde(default)]
+pub struct RectMask2D {
+    pub enabled: bool,
+    pub padding: [f32; 4],
+}
+
+impl Default for RectMask2D {
+    fn default() -> Self {
+        Self {
+            enabled: true,
+            padding: [0.0, 0.0, 0.0, 0.0],
+        }
+    }
+}
+
+impl Component for RectMask2D {
+    fn type_name() -> &'static str {
+        "RectMask2D"
+    }
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize)]
+#[serde(default)]
+pub struct ProgressBar {
+    pub min_value: f32,
+    pub max_value: f32,
+    pub value: f32,
+    pub direction: String,
+    pub background_color: [f32; 4],
+    pub fill_color: [f32; 4],
+    pub text_color: [f32; 4],
+    pub show_label: bool,
+    pub font_size: f32,
+}
+
+impl Default for ProgressBar {
+    fn default() -> Self {
+        Self {
+            min_value: 0.0,
+            max_value: 1.0,
+            value: 0.5,
+            direction: "LeftToRight".into(),
+            background_color: [0.12, 0.14, 0.18, 1.0],
+            fill_color: [0.2, 0.65, 0.95, 1.0],
+            text_color: [1.0, 1.0, 1.0, 1.0],
+            show_label: true,
+            font_size: 14.0,
+        }
+    }
+}
+
+impl Component for ProgressBar {
+    fn type_name() -> &'static str {
+        "ProgressBar"
+    }
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize)]
+#[serde(default)]
+pub struct InputField {
+    pub text: String,
+    pub placeholder: String,
+    pub text_color: [f32; 4],
+    pub placeholder_color: [f32; 4],
+    pub background_color: [f32; 4],
+    pub caret_color: [f32; 4],
+    pub font_size: f32,
+    pub interactable: bool,
+    pub multiline: bool,
+    pub character_limit: i32,
+    pub on_value_changed: serde_json::Value,
+    pub on_submit: serde_json::Value,
+}
+
+impl Default for InputField {
+    fn default() -> Self {
+        Self {
+            text: "".into(),
+            placeholder: "Enter text...".into(),
+            text_color: [0.94, 0.95, 0.98, 1.0],
+            placeholder_color: [0.55, 0.58, 0.64, 1.0],
+            background_color: [0.08, 0.09, 0.12, 1.0],
+            caret_color: [0.3, 0.7, 1.0, 1.0],
+            font_size: 16.0,
+            interactable: true,
+            multiline: false,
+            character_limit: 0,
+            on_value_changed: serde_json::Value::Null,
+            on_submit: serde_json::Value::Null,
+        }
+    }
+}
+
+impl Component for InputField {
+    fn type_name() -> &'static str {
+        "InputField"
+    }
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize)]
+#[serde(default)]
+pub struct Dropdown {
+    pub options: Vec<String>,
+    pub selected_index: i32,
+    pub expanded: bool,
+    pub interactable: bool,
+    pub background_color: [f32; 4],
+    pub item_color: [f32; 4],
+    pub selected_color: [f32; 4],
+    pub text_color: [f32; 4],
+    pub font_size: f32,
+    pub on_value_changed: serde_json::Value,
+}
+
+impl Default for Dropdown {
+    fn default() -> Self {
+        Self {
+            options: Vec::new(),
+            selected_index: 0,
+            expanded: false,
+            interactable: true,
+            background_color: [0.13, 0.15, 0.19, 1.0],
+            item_color: [0.16, 0.18, 0.23, 1.0],
+            selected_color: [0.2, 0.48, 0.85, 1.0],
+            text_color: [1.0, 1.0, 1.0, 1.0],
+            font_size: 16.0,
+            on_value_changed: serde_json::Value::Null,
+        }
+    }
+}
+
+impl Component for Dropdown {
+    fn type_name() -> &'static str {
+        "Dropdown"
+    }
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize)]
+#[serde(default)]
+pub struct ListView {
+    pub items: Vec<String>,
+    pub selected_index: i32,
+    pub item_height: f32,
+    pub spacing: f32,
+    pub scroll_offset: f32,
+    pub interactable: bool,
+    pub background_color: [f32; 4],
+    pub item_color: [f32; 4],
+    pub selected_color: [f32; 4],
+    pub text_color: [f32; 4],
+    pub font_size: f32,
+    pub on_value_changed: serde_json::Value,
+}
+
+impl Default for ListView {
+    fn default() -> Self {
+        Self {
+            items: Vec::new(),
+            selected_index: -1,
+            item_height: 32.0,
+            spacing: 2.0,
+            scroll_offset: 0.0,
+            interactable: true,
+            background_color: [0.08, 0.09, 0.12, 1.0],
+            item_color: [0.14, 0.16, 0.2, 1.0],
+            selected_color: [0.2, 0.48, 0.85, 1.0],
+            text_color: [1.0, 1.0, 1.0, 1.0],
+            font_size: 15.0,
+            on_value_changed: serde_json::Value::Null,
+        }
+    }
+}
+
+impl Component for ListView {
+    fn type_name() -> &'static str {
+        "ListView"
+    }
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize)]
+#[serde(default)]
+pub struct ScrollView {
+    pub horizontal: bool,
+    pub vertical: bool,
+    pub normalized_position: [f32; 2],
+    pub scroll_sensitivity: f32,
+    pub viewport_color: [f32; 4],
+    pub show_scrollbar: bool,
+    pub on_value_changed: serde_json::Value,
+}
+
+impl Default for ScrollView {
+    fn default() -> Self {
+        Self {
+            horizontal: false,
+            vertical: true,
+            normalized_position: [0.0, 0.0],
+            scroll_sensitivity: 0.08,
+            viewport_color: [0.05, 0.06, 0.08, 0.72],
+            show_scrollbar: true,
+            on_value_changed: serde_json::Value::Null,
+        }
+    }
+}
+
+impl Component for ScrollView {
+    fn type_name() -> &'static str {
+        "ScrollView"
+    }
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize)]
+#[serde(default)]
+pub struct TabView {
+    pub tabs: Vec<String>,
+    pub selected_index: i32,
+    pub tab_height: f32,
+    pub interactable: bool,
+    pub background_color: [f32; 4],
+    pub tab_color: [f32; 4],
+    pub selected_color: [f32; 4],
+    pub text_color: [f32; 4],
+    pub font_size: f32,
+    pub on_value_changed: serde_json::Value,
+}
+
+impl Default for TabView {
+    fn default() -> Self {
+        Self {
+            tabs: Vec::new(),
+            selected_index: 0,
+            tab_height: 32.0,
+            interactable: true,
+            background_color: [0.09, 0.1, 0.13, 1.0],
+            tab_color: [0.15, 0.17, 0.21, 1.0],
+            selected_color: [0.2, 0.48, 0.85, 1.0],
+            text_color: [1.0, 1.0, 1.0, 1.0],
+            font_size: 15.0,
+            on_value_changed: serde_json::Value::Null,
+        }
+    }
+}
+
+impl Component for TabView {
+    fn type_name() -> &'static str {
+        "TabView"
+    }
 }
 
 pub mod meta {
@@ -342,16 +1068,35 @@ pub mod meta {
         "Transform2D",
         "Camera3D",
         "DirectionalLight",
+        "PointLight",
+        "SpotLight",
         "Camera2D",
         "MeshRenderer",
+        "PbrMaterial",
         "SpriteRenderer",
         "Layer",
         "EditorOnly",
         "AutoRotate",
+        "ParticleEmitter2D",
+        "ParticleEmitter3D",
+        "SpineSkeleton",
         "Canvas",
         "CanvasScaler",
         "RectTransform",
         "Image",
         "Button",
+        "Text",
+        "Toggle",
+        "Slider",
+        "Panel",
+        "CanvasGroup",
+        "LayoutGroup",
+        "RectMask2D",
+        "ProgressBar",
+        "InputField",
+        "Dropdown",
+        "ListView",
+        "ScrollView",
+        "TabView",
     ];
 }

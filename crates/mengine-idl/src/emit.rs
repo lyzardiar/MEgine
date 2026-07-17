@@ -24,12 +24,23 @@ pub fn emit_rust(defs: &[Def]) -> String {
 
 fn emit_rust_component(def: &Def) -> String {
     let mut out = String::new();
-    let derive = if def.fields.is_empty() {
+    let derives_default = def.fields.is_empty()
+        || def.fields.iter().all(|field| {
+            field.default.is_none()
+                || field
+                    .default
+                    .as_deref()
+                    .is_some_and(|value| is_language_default(&field.ty, value))
+        });
+    let derive = if derives_default {
         "#[derive(Clone, Debug, Default, Serialize, Deserialize)]\n"
     } else {
         "#[derive(Clone, Debug, Serialize, Deserialize)]\n"
     };
     out.push_str(derive);
+    if !def.fields.is_empty() {
+        out.push_str("#[serde(default)]\n");
+    }
     out.push_str(&format!("pub struct {} {{\n", def.name));
     for f in &def.fields {
         let rust_ty = map_rust_type(&f.ty, f.optional);
@@ -37,7 +48,7 @@ fn emit_rust_component(def: &Def) -> String {
     }
     out.push_str("}\n\n");
 
-    if !def.fields.is_empty() {
+    if !def.fields.is_empty() && !derives_default {
         out.push_str(&format!("impl Default for {} {{\n", def.name));
         out.push_str("    fn default() -> Self {\n        Self {\n");
         for f in &def.fields {
@@ -56,6 +67,21 @@ fn emit_rust_component(def: &Def) -> String {
     out
 }
 
+fn is_language_default(ty: &str, value: &str) -> bool {
+    let compact = value.trim().replace(' ', "");
+    match ty {
+        "string" => compact == "\"\"",
+        "bool" => compact == "false",
+        "int" | "u64" => compact == "0",
+        "float" => compact == "0" || compact == "0.0",
+        "float2" => compact == "[0,0]" || compact == "[0.0,0.0]",
+        "float3" => compact == "[0,0,0]" || compact == "[0.0,0.0,0.0]",
+        "float4" => compact == "[0,0,0,0]" || compact == "[0.0,0.0,0.0,0.0]",
+        "string_array" => compact == "[]",
+        _ => false,
+    }
+}
+
 fn map_rust_type(ty: &str, optional: bool) -> String {
     let base = match ty {
         "string" => "String".into(),
@@ -66,6 +92,7 @@ fn map_rust_type(ty: &str, optional: bool) -> String {
         "float2" => "[f32; 2]".into(),
         "float3" => "[f32; 3]".into(),
         "float4" => "[f32; 4]".into(),
+        "string_array" => "Vec<String>".into(),
         "object" => "serde_json::Value".into(),
         other => other.to_pascal_case(),
     };
@@ -95,6 +122,7 @@ fn default_expr(ty: &str, default: Option<&str>, optional: bool) -> String {
                 }
             }
             "float2" | "float3" | "float4" => array_lit(d),
+            "string_array" => "Vec::new()".into(),
             _ => "Default::default()".into(),
         };
     }
@@ -107,6 +135,7 @@ fn default_expr(ty: &str, default: Option<&str>, optional: bool) -> String {
         "float2" => "[0.0, 0.0]".into(),
         "float3" => "[0.0, 0.0, 0.0]".into(),
         "float4" => "[0.0, 0.0, 0.0, 0.0]".into(),
+        "string_array" => "Vec::new()".into(),
         "object" => "serde_json::Value::Null".into(),
         _ => "Default::default()".into(),
     }
@@ -219,6 +248,7 @@ fn map_ts_type(ty: &str) -> &'static str {
         "float2" => "[number, number]",
         "float3" => "[number, number, number]",
         "float4" => "[number, number, number, number]",
+        "string_array" => "string[]",
         "object" => "Record<string, unknown>",
         _ => "unknown",
     }
@@ -262,6 +292,10 @@ fn json_type(ty: &str) -> serde_json::Value {
             m.insert("type".into(), "array".into());
             m.insert("items".into(), serde_json::json!({ "type": "number" }));
         }
+        "string_array" => {
+            m.insert("type".into(), "array".into());
+            m.insert("items".into(), serde_json::json!({ "type": "string" }));
+        }
         "object" => {
             m.insert("type".into(), "object".into());
         }
@@ -275,4 +309,22 @@ fn json_type(ty: &str) -> serde_json::Value {
 #[allow(dead_code)]
 fn _field_doc(f: &Field) -> String {
     format!("{}: {}", f.name, f.ty)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::parse::parse_idl;
+
+    #[test]
+    fn emits_typed_string_arrays_for_all_targets() {
+        let defs = parse_idl("component ListView {\nitems: string_array = []\n}").unwrap();
+        let rust = emit_rust(&defs);
+        let typescript = emit_typescript(&defs);
+        let schema = emit_json_schema(&defs);
+        assert!(rust.contains("pub items: Vec<String>"));
+        assert!(typescript.contains("items: string[]"));
+        assert!(schema.contains("\"type\": \"array\""));
+        assert!(schema.contains("\"type\": \"string\""));
+    }
 }

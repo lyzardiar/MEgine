@@ -12,7 +12,7 @@ pub enum PhysicsError {
 #[derive(Clone, Copy, Debug)]
 pub struct RigidBodyDesc {
     pub position: Vec3,
-    pub mass:     f32,
+    pub mass: f32,
     pub is_static: bool,
 }
 
@@ -30,7 +30,7 @@ impl Default for PhysicsWorld {
 impl PhysicsWorld {
     pub fn new() -> Self {
         Self {
-            ready:  false,
+            ready: false,
             bodies: Vec::new(),
         }
     }

@@ -15,6 +15,11 @@ import {
   type SpriteAsset,
 } from '../spriteLibrary';
 import { subscribePing } from '../pingBus';
+import {
+  listProjectFiles,
+  refreshProjectFiles,
+  type ProjectFileAsset,
+} from '../projectAssets';
 
 const STATIC_FOLDERS = [
   'Assets',
@@ -47,7 +52,7 @@ const STATIC_ASSETS = [
 type AssetItem = {
   folder: string;
   name: string;
-  kind: 'prefab' | 'script' | 'material' | 'scene' | 'sprite';
+  kind: 'prefab' | 'script' | 'material' | 'scene' | 'sprite' | 'spine';
   spawn: string | null;
   icon: string;
   sceneName?: string;
@@ -76,7 +81,8 @@ export function Project(props: {
   const cardRefs = useRef<Map<string, HTMLDivElement>>(new Map());
 
   useEffect(() => {
-    void Promise.all([refreshScripts(), refreshSprites()]).then(() => setLibTick((t) => t + 1));
+    void Promise.all([refreshScripts(), refreshSprites(), refreshProjectFiles()])
+      .then(() => setLibTick((t) => t + 1));
   }, [props.sceneTick]);
 
   useEffect(() => {
@@ -100,11 +106,16 @@ export function Project(props: {
   const scripts = useMemo(() => listScripts(), [libTick, props.sceneTick]);
   const sprites = useMemo(() => listSprites(), [libTick, props.sceneTick]);
   const diskFolders = useMemo(() => listAssetFolders(), [libTick, props.sceneTick]);
+  const projectFiles = useMemo(() => listProjectFiles(), [libTick, props.sceneTick]);
 
   const folders = useMemo(() => {
-    const set = new Set([...STATIC_FOLDERS, ...diskFolders]);
+    const set = new Set([
+      ...STATIC_FOLDERS,
+      ...diskFolders,
+      ...projectFiles.map((asset) => asset.folder),
+    ]);
     return [...set].sort((a, b) => a.localeCompare(b));
-  }, [diskFolders]);
+  }, [diskFolders, projectFiles]);
 
   const sceneAssets: AssetItem[] = scenes.map((s) => ({
     folder: 'Assets/Scenes',
@@ -134,7 +145,22 @@ export function Project(props: {
     thumbUrl: spriteAssetUrl(s.id),
   }));
 
-  const allAssets: AssetItem[] = [...STATIC_ASSETS, ...sceneAssets, ...scriptAssets, ...spriteAssets];
+  const spineAssets: AssetItem[] = projectFiles.map((asset: ProjectFileAsset) => ({
+    folder: asset.folder,
+    name: asset.name,
+    kind: 'spine' as const,
+    spawn: null,
+    icon: asset.kind === 'spine-atlas' ? '📚' : '🦴',
+    spriteId: asset.id,
+  }));
+
+  const allAssets: AssetItem[] = [
+    ...STATIC_ASSETS,
+    ...sceneAssets,
+    ...scriptAssets,
+    ...spriteAssets,
+    ...spineAssets,
+  ];
   const visible =
     folder === 'Assets'
       ? allAssets
@@ -253,11 +279,12 @@ export function Project(props: {
               ]
                 .filter(Boolean)
                 .join(' ')}
-              draggable={a.kind === 'sprite'}
+              draggable={a.kind === 'sprite' || a.kind === 'spine'}
               onDragStart={(e) => {
-                if (a.kind !== 'sprite') return;
+                if (a.kind !== 'sprite' && a.kind !== 'spine') return;
                 const id = a.spriteId ?? a.name;
-                e.dataTransfer.setData('text/mengine-sprite', id);
+                if (a.kind === 'sprite') e.dataTransfer.setData('text/mengine-sprite', id);
+                e.dataTransfer.setData('text/mengine-asset', id);
                 e.dataTransfer.setData('text/plain', id);
                 e.dataTransfer.effectAllowed = 'copy';
               }}
@@ -271,6 +298,8 @@ export function Project(props: {
                     ? '双击在 IDE 中打开'
                     : a.kind === 'sprite'
                       ? `拖到 Image.Sprite · ${a.spriteId}`
+                      : a.kind === 'spine'
+                        ? `拖到 Spine Skeleton 资源字段 · ${a.spriteId}`
                       : a.spawn
                         ? '双击实例化'
                         : a.name

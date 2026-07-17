@@ -16,13 +16,13 @@ pub enum EditorMode {
 }
 
 pub struct EditorSession {
-    pub edit_world:  World,
-    pub play_world:  Option<World>,
-    pub mode:        EditorMode,
-    pub undo:        UndoStack,
-    pub gizmo:       GizmoState,
-    pub scene_path:  Option<String>,
-    pub scene_name:  String,
+    pub edit_world: World,
+    pub play_world: Option<World>,
+    pub mode: EditorMode,
+    pub undo: UndoStack,
+    pub gizmo: GizmoState,
+    pub scene_path: Option<String>,
+    pub scene_name: String,
 }
 
 impl EditorSession {
@@ -30,9 +30,9 @@ impl EditorSession {
         Self {
             edit_world: World::new(),
             play_world: None,
-            mode:       EditorMode::Edit,
-            undo:       UndoStack::new(),
-            gizmo:      GizmoState::default(),
+            mode: EditorMode::Edit,
+            undo: UndoStack::new(),
+            gizmo: GizmoState::default(),
             scene_path: None,
             scene_name: "Untitled".into(),
         }
@@ -61,6 +61,14 @@ impl EditorSession {
 
     pub fn snapshot(&self) -> WorldSnapshot {
         WorldSnapshot::from_world(self.active_world())
+    }
+
+    pub fn replace_edit_snapshot(&mut self, snapshot: &WorldSnapshot) {
+        if self.mode != EditorMode::Edit {
+            self.exit_play();
+        }
+        mengine_scene::apply_snapshot(&mut self.edit_world, snapshot);
+        self.undo = UndoStack::new();
     }
 
     pub fn handle_editor_command(&mut self, cmd: EditorCommand) -> anyhow::Result<()> {
@@ -101,13 +109,25 @@ impl EditorSession {
                     }
                 }
             }
+            EditorCommand::ApplyBatch { forward, inverse } => {
+                if self.mode != EditorMode::Edit {
+                    anyhow::bail!("cannot edit the scene while play mode is active");
+                }
+                self.undo.push_group(forward.clone(), inverse);
+                for command in forward {
+                    self.edit_world.commands.push(command);
+                }
+                self.edit_world.commit();
+            }
             EditorCommand::SaveScene { path } => {
                 save_scene(Path::new(&path), &self.scene_name, &self.edit_world)?;
                 self.scene_path = Some(path);
             }
             EditorCommand::LoadScene { path } => {
-                load_scene(Path::new(&path), &mut self.edit_world)?;
+                let file = load_scene(Path::new(&path), &mut self.edit_world)?;
+                self.scene_name = file.name;
                 self.scene_path = Some(path);
+                self.undo = UndoStack::new();
             }
         }
         Ok(())
@@ -129,7 +149,7 @@ impl EditorSession {
 
     /// Apply world command in edit mode with undo inverse (SetComponent only MVP).
     pub fn apply_edit(&mut self, cmd: WorldCommand, inverse: WorldCommand) {
-        self.undo.push_simple(vec![inverse]);
+        self.undo.push_group(vec![cmd.clone()], vec![inverse]);
         self.edit_world.commands.push(cmd);
         self.edit_world.commit();
     }

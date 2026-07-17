@@ -32,6 +32,8 @@ export type UiDrawItem = {
   role: 'canvas' | 'graphic';
   rotation: number;
   pivot: [number, number];
+  opacity: number;
+  clip?: Rect;
   image?: {
     color: [number, number, number, number];
     sprite: string;
@@ -40,7 +42,116 @@ export type UiDrawItem = {
   button?: {
     interactable: boolean;
     transition: string;
+    label: string;
+    textColor: [number, number, number, number];
+    fontSize: number;
     onClick: unknown;
+  };
+  text?: {
+    text: string;
+    color: [number, number, number, number];
+    fontSize: number;
+    alignment: 'Left' | 'Center' | 'Right';
+    verticalAlign: 'Top' | 'Middle' | 'Bottom';
+    raycastTarget: boolean;
+  };
+  toggle?: {
+    isOn: boolean;
+    interactable: boolean;
+    label: string;
+    color: [number, number, number, number];
+    textColor: [number, number, number, number];
+    fontSize: number;
+    onValueChanged: unknown;
+  };
+  slider?: {
+    min: number;
+    max: number;
+    value: number;
+    wholeNumbers: boolean;
+    interactable: boolean;
+    direction: 'LeftToRight' | 'RightToLeft' | 'BottomToTop' | 'TopToBottom';
+    fillColor: [number, number, number, number];
+    backgroundColor: [number, number, number, number];
+    handleColor: [number, number, number, number];
+    onValueChanged: unknown;
+  };
+  panel?: {
+    color: [number, number, number, number];
+    borderColor: [number, number, number, number];
+    borderWidth: number;
+    raycastTarget: boolean;
+  };
+  progress?: {
+    min: number;
+    max: number;
+    value: number;
+    direction: 'LeftToRight' | 'RightToLeft' | 'BottomToTop' | 'TopToBottom';
+    backgroundColor: [number, number, number, number];
+    fillColor: [number, number, number, number];
+    textColor: [number, number, number, number];
+    showLabel: boolean;
+    fontSize: number;
+  };
+  input?: {
+    text: string;
+    placeholder: string;
+    textColor: [number, number, number, number];
+    placeholderColor: [number, number, number, number];
+    backgroundColor: [number, number, number, number];
+    fontSize: number;
+    interactable: boolean;
+    multiline: boolean;
+    characterLimit: number;
+    onValueChanged: unknown;
+    onSubmit: unknown;
+  };
+  dropdown?: {
+    options: string[];
+    selectedIndex: number;
+    expanded: boolean;
+    interactable: boolean;
+    backgroundColor: [number, number, number, number];
+    itemColor: [number, number, number, number];
+    selectedColor: [number, number, number, number];
+    textColor: [number, number, number, number];
+    fontSize: number;
+    onValueChanged: unknown;
+  };
+  list?: {
+    items: string[];
+    selectedIndex: number;
+    itemHeight: number;
+    spacing: number;
+    scrollOffset: number;
+    interactable: boolean;
+    backgroundColor: [number, number, number, number];
+    itemColor: [number, number, number, number];
+    selectedColor: [number, number, number, number];
+    textColor: [number, number, number, number];
+    fontSize: number;
+    onValueChanged: unknown;
+  };
+  scroll?: {
+    horizontal: boolean;
+    vertical: boolean;
+    normalizedPosition: [number, number];
+    scrollSensitivity: number;
+    viewportColor: [number, number, number, number];
+    showScrollbar: boolean;
+    onValueChanged: unknown;
+  };
+  tabs?: {
+    labels: string[];
+    selectedIndex: number;
+    tabHeight: number;
+    interactable: boolean;
+    backgroundColor: [number, number, number, number];
+    tabColor: [number, number, number, number];
+    selectedColor: [number, number, number, number];
+    textColor: [number, number, number, number];
+    fontSize: number;
+    onValueChanged: unknown;
   };
   selected: boolean;
   /** Projected pivot (Scene 3D). */
@@ -55,6 +166,93 @@ function color4(raw: unknown, fallback: [number, number, number, number]): [numb
     Number(raw[2]) || 0,
     Number(raw[3]) ?? 1,
   ];
+}
+
+function number(raw: unknown, fallback: number): number {
+  const value = Number(raw);
+  return Number.isFinite(value) ? value : fallback;
+}
+
+function enumValue<T extends string>(raw: unknown, values: readonly T[], fallback: T): T {
+  return typeof raw === 'string' && values.includes(raw as T) ? (raw as T) : fallback;
+}
+
+function stringArray(raw: unknown): string[] {
+  return Array.isArray(raw) ? raw.map((value) => String(value)) : [];
+}
+
+function number2(raw: unknown, fallback: [number, number]): [number, number] {
+  return Array.isArray(raw) && raw.length >= 2
+    ? [number(raw[0], fallback[0]), number(raw[1], fallback[1])]
+    : fallback;
+}
+
+function intersectRect(a: Rect, b: Rect): Rect {
+  const x = Math.max(a.x, b.x);
+  const y = Math.max(a.y, b.y);
+  const right = Math.min(a.x + a.w, b.x + b.w);
+  const bottom = Math.min(a.y + a.h, b.y + b.h);
+  return { x, y, w: Math.max(0, right - x), h: Math.max(0, bottom - y) };
+}
+
+function insetRect(rect: Rect, raw: unknown, scale: number): Rect {
+  const p = Array.isArray(raw) ? raw : [0, 0, 0, 0];
+  const left = number(p[0], 0) * scale;
+  const top = number(p[1], 0) * scale;
+  const right = number(p[2], 0) * scale;
+  const bottom = number(p[3], 0) * scale;
+  return {
+    x: rect.x + left,
+    y: rect.y + top,
+    w: Math.max(0, rect.w - left - right),
+    h: Math.max(0, rect.h - top - bottom),
+  };
+}
+
+function layoutChildRect(
+  parent: Rect,
+  group: Record<string, unknown>,
+  index: number,
+  count: number,
+  scale: number,
+): Rect {
+  const content = insetRect(parent, group.padding, scale);
+  const spacing = number2(group.spacing, [6, 6]);
+  const cell = number2(group.cell_size ?? group.cellSize, [120, 32]);
+  const sx = spacing[0] * scale;
+  const sy = spacing[1] * scale;
+  const expand = group.child_force_expand !== false && group.childForceExpand !== false;
+  const direction = String(group.direction ?? 'Vertical');
+  if (direction === 'Horizontal') {
+    const w = expand && count > 0
+      ? Math.max(0, content.w - sx * Math.max(0, count - 1)) / count
+      : cell[0] * scale;
+    return {
+      x: content.x + index * (w + sx),
+      y: content.y,
+      w,
+      h: expand ? content.h : cell[1] * scale,
+    };
+  }
+  if (direction === 'Grid') {
+    const columns = Math.max(1, Math.trunc(number(group.constraint_count ?? group.constraintCount, 1)));
+    const column = index % columns;
+    const row = Math.floor(index / columns);
+    const w = expand
+      ? Math.max(0, content.w - sx * Math.max(0, columns - 1)) / columns
+      : cell[0] * scale;
+    const h = cell[1] * scale;
+    return { x: content.x + column * (w + sx), y: content.y + row * (h + sy), w, h };
+  }
+  const h = expand && count > 0
+    ? Math.max(0, content.h - sy * Math.max(0, count - 1)) / count
+    : cell[1] * scale;
+  return {
+    x: content.x,
+    y: content.y + index * (h + sy),
+    w: expand ? content.w : cell[0] * scale,
+    h,
+  };
 }
 
 function childrenOf(entities: UiEnt[], parent: number | null): UiEnt[] {
@@ -157,18 +355,51 @@ export function layoutUiOverlay(
       };
     };
 
-    const walk = (ent: UiEnt, parentRect: Rect, depth: number, isCanvasRoot: boolean) => {
+    const walk = (
+      ent: UiEnt,
+      parentRect: Rect,
+      depth: number,
+      isCanvasRoot: boolean,
+      forcedRect?: Rect,
+      inherited = { opacity: 1, interactable: true, blocksRaycasts: true },
+      inheritedClip?: Rect,
+    ) => {
       const hasRt = !!ent.components.RectTransform;
-      const rect = hasRt
+      const rect = forcedRect ?? (hasRt
         ? solveRectTransform(parentRect, scaleRt(ent.components.RectTransform))
-        : parentRect;
+        : parentRect);
 
       const img = ent.components.Image as Record<string, unknown> | undefined;
       const btn = ent.components.Button as Record<string, unknown> | undefined;
+      const text = ent.components.Text as Record<string, unknown> | undefined;
+      const toggle = ent.components.Toggle as Record<string, unknown> | undefined;
+      const slider = ent.components.Slider as Record<string, unknown> | undefined;
+      const panel = ent.components.Panel as Record<string, unknown> | undefined;
+      const progress = ent.components.ProgressBar as Record<string, unknown> | undefined;
+      const input = ent.components.InputField as Record<string, unknown> | undefined;
+      const dropdown = ent.components.Dropdown as Record<string, unknown> | undefined;
+      const list = ent.components.ListView as Record<string, unknown> | undefined;
+      const scroll = ent.components.ScrollView as Record<string, unknown> | undefined;
+      const tabs = ent.components.TabView as Record<string, unknown> | undefined;
+      const group = ent.components.CanvasGroup as Record<string, unknown> | undefined;
+      const layout = ent.components.LayoutGroup as Record<string, unknown> | undefined;
+      const mask = ent.components.RectMask2D as Record<string, unknown> | undefined;
       const isCanvas = isCanvasRoot || !!ent.components.Canvas;
       const rt = hasRt ? readRectTransform(ent.components.RectTransform) : null;
       const rotation = rt?.local_rotation ?? 0;
       const pivot: [number, number] = rt ? ([...rt.pivot] as [number, number]) : [0.5, 0.5];
+      const state = {
+        opacity: inherited.opacity * Math.max(0, Math.min(1, number(group?.alpha, 1))),
+        interactable: inherited.interactable && group?.interactable !== false,
+        blocksRaycasts: inherited.blocksRaycasts && group?.blocks_raycasts !== false && group?.blocksRaycasts !== false,
+      };
+      const clip = inheritedClip;
+      let childClip = inheritedClip;
+      if (mask && mask.enabled !== false) {
+        const maskRect = insetRect(rect, mask.padding, scale);
+        childClip = childClip ? intersectRect(childClip, maskRect) : maskRect;
+      }
+      if (scroll || list) childClip = childClip ? intersectRect(childClip, rect) : rect;
 
       if (isCanvas) {
         out.push({
@@ -178,9 +409,11 @@ export function layoutUiOverlay(
           role: 'canvas',
           rotation: 0,
           pivot: [0.5, 0.5],
+          opacity: state.opacity,
+          clip,
           selected: selectedIds.has(ent.entity),
         });
-      } else if (img || btn) {
+      } else if (img || btn || text || toggle || slider || panel || progress || input || dropdown || list || scroll || tabs) {
         out.push({
           entity: ent.entity,
           rect,
@@ -188,6 +421,8 @@ export function layoutUiOverlay(
           role: 'graphic',
           rotation,
           pivot,
+          opacity: state.opacity,
+          clip,
           image: img
             ? {
                 color: color4(img.color, [1, 1, 1, 1]),
@@ -197,9 +432,163 @@ export function layoutUiOverlay(
             : undefined,
           button: btn
             ? {
-                interactable: btn.interactable !== false,
+                interactable: btn.interactable !== false && state.interactable,
                 transition: String(btn.transition ?? 'ColorTint'),
+                label: String(btn.label ?? 'Button'),
+                textColor: color4(btn.text_color ?? btn.textColor, [1, 1, 1, 1]),
+                fontSize: number(btn.font_size ?? btn.fontSize, 16) * scale,
                 onClick: btn.on_click ?? btn.onClick ?? null,
+              }
+            : undefined,
+          text: text
+            ? {
+                text: String(text.text ?? 'Text'),
+                color: color4(text.color, [1, 1, 1, 1]),
+                fontSize: number(text.font_size ?? text.fontSize, 16) * scale,
+                alignment: enumValue(
+                  text.alignment,
+                  ['Left', 'Center', 'Right'] as const,
+                  'Center',
+                ),
+                verticalAlign: enumValue(
+                  text.vertical_align ?? text.verticalAlign,
+                  ['Top', 'Middle', 'Bottom'] as const,
+                  'Middle',
+                ),
+                raycastTarget:
+                  text.raycast_target === true || text.raycastTarget === true,
+              }
+            : undefined,
+          toggle: toggle
+            ? {
+                isOn: toggle.is_on === true || toggle.isOn === true,
+                interactable: toggle.interactable !== false && state.interactable,
+                label: String(toggle.label ?? 'Toggle'),
+                color: color4(toggle.color, [0.2, 0.45, 0.85, 1]),
+                textColor: color4(toggle.text_color ?? toggle.textColor, [1, 1, 1, 1]),
+                fontSize: number(toggle.font_size ?? toggle.fontSize, 16) * scale,
+                onValueChanged:
+                  toggle.on_value_changed ?? toggle.onValueChanged ?? null,
+              }
+            : undefined,
+          slider: slider
+            ? {
+                min: number(slider.min_value ?? slider.minValue, 0),
+                max: number(slider.max_value ?? slider.maxValue, 1),
+                value: number(slider.value, 0.5),
+                wholeNumbers:
+                  slider.whole_numbers === true || slider.wholeNumbers === true,
+                interactable: slider.interactable !== false && state.interactable,
+                direction: enumValue(
+                  slider.direction,
+                  ['LeftToRight', 'RightToLeft', 'BottomToTop', 'TopToBottom'] as const,
+                  'LeftToRight',
+                ),
+                fillColor: color4(
+                  slider.fill_color ?? slider.fillColor,
+                  [0.2, 0.55, 1, 1],
+                ),
+                backgroundColor: color4(
+                  slider.background_color ?? slider.backgroundColor,
+                  [0.15, 0.17, 0.2, 1],
+                ),
+                handleColor: color4(
+                  slider.handle_color ?? slider.handleColor,
+                  [0.9, 0.92, 0.95, 1],
+                ),
+                onValueChanged:
+                  slider.on_value_changed ?? slider.onValueChanged ?? null,
+              }
+            : undefined,
+          panel: panel
+            ? {
+                color: color4(panel.color, [0.12, 0.14, 0.18, 0.96]),
+                borderColor: color4(panel.border_color ?? panel.borderColor, [0.32, 0.36, 0.44, 1]),
+                borderWidth: number(panel.border_width ?? panel.borderWidth, 1) * scale,
+                raycastTarget: (panel.raycast_target === true || panel.raycastTarget === true) && state.blocksRaycasts,
+              }
+            : undefined,
+          progress: progress
+            ? {
+                min: number(progress.min_value ?? progress.minValue, 0),
+                max: number(progress.max_value ?? progress.maxValue, 1),
+                value: number(progress.value, 0.5),
+                direction: enumValue(progress.direction, ['LeftToRight', 'RightToLeft', 'BottomToTop', 'TopToBottom'] as const, 'LeftToRight'),
+                backgroundColor: color4(progress.background_color ?? progress.backgroundColor, [0.12, 0.14, 0.18, 1]),
+                fillColor: color4(progress.fill_color ?? progress.fillColor, [0.2, 0.65, 0.95, 1]),
+                textColor: color4(progress.text_color ?? progress.textColor, [1, 1, 1, 1]),
+                showLabel: progress.show_label !== false && progress.showLabel !== false,
+                fontSize: number(progress.font_size ?? progress.fontSize, 14) * scale,
+              }
+            : undefined,
+          input: input
+            ? {
+                text: String(input.text ?? ''),
+                placeholder: String(input.placeholder ?? 'Enter text...'),
+                textColor: color4(input.text_color ?? input.textColor, [0.94, 0.95, 0.98, 1]),
+                placeholderColor: color4(input.placeholder_color ?? input.placeholderColor, [0.55, 0.58, 0.64, 1]),
+                backgroundColor: color4(input.background_color ?? input.backgroundColor, [0.08, 0.09, 0.12, 1]),
+                fontSize: number(input.font_size ?? input.fontSize, 16) * scale,
+                interactable: input.interactable !== false && state.interactable,
+                multiline: input.multiline === true,
+                characterLimit: Math.max(0, Math.trunc(number(input.character_limit ?? input.characterLimit, 0))),
+                onValueChanged: input.on_value_changed ?? input.onValueChanged ?? null,
+                onSubmit: input.on_submit ?? input.onSubmit ?? null,
+              }
+            : undefined,
+          dropdown: dropdown
+            ? {
+                options: stringArray(dropdown.options),
+                selectedIndex: Math.trunc(number(dropdown.selected_index ?? dropdown.selectedIndex, 0)),
+                expanded: dropdown.expanded === true,
+                interactable: dropdown.interactable !== false && state.interactable,
+                backgroundColor: color4(dropdown.background_color ?? dropdown.backgroundColor, [0.13, 0.15, 0.19, 1]),
+                itemColor: color4(dropdown.item_color ?? dropdown.itemColor, [0.16, 0.18, 0.23, 1]),
+                selectedColor: color4(dropdown.selected_color ?? dropdown.selectedColor, [0.2, 0.48, 0.85, 1]),
+                textColor: color4(dropdown.text_color ?? dropdown.textColor, [1, 1, 1, 1]),
+                fontSize: number(dropdown.font_size ?? dropdown.fontSize, 16) * scale,
+                onValueChanged: dropdown.on_value_changed ?? dropdown.onValueChanged ?? null,
+              }
+            : undefined,
+          list: list
+            ? {
+                items: stringArray(list.items),
+                selectedIndex: Math.trunc(number(list.selected_index ?? list.selectedIndex, -1)),
+                itemHeight: number(list.item_height ?? list.itemHeight, 32) * scale,
+                spacing: number(list.spacing, 2) * scale,
+                scrollOffset: number(list.scroll_offset ?? list.scrollOffset, 0) * scale,
+                interactable: list.interactable !== false && state.interactable,
+                backgroundColor: color4(list.background_color ?? list.backgroundColor, [0.08, 0.09, 0.12, 1]),
+                itemColor: color4(list.item_color ?? list.itemColor, [0.14, 0.16, 0.2, 1]),
+                selectedColor: color4(list.selected_color ?? list.selectedColor, [0.2, 0.48, 0.85, 1]),
+                textColor: color4(list.text_color ?? list.textColor, [1, 1, 1, 1]),
+                fontSize: number(list.font_size ?? list.fontSize, 15) * scale,
+                onValueChanged: list.on_value_changed ?? list.onValueChanged ?? null,
+              }
+            : undefined,
+          scroll: scroll
+            ? {
+                horizontal: scroll.horizontal === true,
+                vertical: scroll.vertical !== false,
+                normalizedPosition: number2(scroll.normalized_position ?? scroll.normalizedPosition, [0, 0]),
+                scrollSensitivity: number(scroll.scroll_sensitivity ?? scroll.scrollSensitivity, 0.08),
+                viewportColor: color4(scroll.viewport_color ?? scroll.viewportColor, [0.05, 0.06, 0.08, 0.72]),
+                showScrollbar: scroll.show_scrollbar !== false && scroll.showScrollbar !== false,
+                onValueChanged: scroll.on_value_changed ?? scroll.onValueChanged ?? null,
+              }
+            : undefined,
+          tabs: tabs
+            ? {
+                labels: stringArray(tabs.tabs),
+                selectedIndex: Math.trunc(number(tabs.selected_index ?? tabs.selectedIndex, 0)),
+                tabHeight: number(tabs.tab_height ?? tabs.tabHeight, 32) * scale,
+                interactable: tabs.interactable !== false && state.interactable,
+                backgroundColor: color4(tabs.background_color ?? tabs.backgroundColor, [0.09, 0.1, 0.13, 1]),
+                tabColor: color4(tabs.tab_color ?? tabs.tabColor, [0.15, 0.17, 0.21, 1]),
+                selectedColor: color4(tabs.selected_color ?? tabs.selectedColor, [0.2, 0.48, 0.85, 1]),
+                textColor: color4(tabs.text_color ?? tabs.textColor, [1, 1, 1, 1]),
+                fontSize: number(tabs.font_size ?? tabs.fontSize, 15) * scale,
+                onValueChanged: tabs.on_value_changed ?? tabs.onValueChanged ?? null,
               }
             : undefined,
           selected: selectedIds.has(ent.entity),
@@ -212,19 +601,40 @@ export function layoutUiOverlay(
           role: 'graphic',
           rotation,
           pivot,
+          opacity: state.opacity,
+          clip,
           selected: true,
         });
       }
 
-      for (const ch of childrenOf(entities, ent.entity)) {
-        walk(ch, rect, depth + 1, false);
+      let children = childrenOf(entities, ent.entity);
+      if (tabs && children.length) {
+        const selected = Math.max(0, Math.min(children.length - 1, Math.trunc(number(tabs.selected_index ?? tabs.selectedIndex, 0))));
+        children = [children[selected]];
       }
+      const childParent = scroll
+        ? {
+            ...rect,
+            x: rect.x - Math.max(0, Math.min(1, number2(scroll.normalized_position ?? scroll.normalizedPosition, [0, 0])[0])) * rect.w,
+            y: rect.y - Math.max(0, Math.min(1, number2(scroll.normalized_position ?? scroll.normalizedPosition, [0, 0])[1])) * rect.h,
+          }
+        : tabs
+          ? {
+              ...rect,
+              y: rect.y + Math.max(0, Math.min(rect.h, number(tabs.tab_height ?? tabs.tabHeight, 32) * scale)),
+              h: Math.max(0, rect.h - Math.max(0, Math.min(rect.h, number(tabs.tab_height ?? tabs.tabHeight, 32) * scale))),
+            }
+        : rect;
+      children.forEach((child, index) => {
+        const forced = layout ? layoutChildRect(childParent, layout, index, children.length, scale) : undefined;
+        walk(child, childParent, depth + 1, false, forced, state, childClip);
+      });
     };
 
     const canvasRt = canvas.components.RectTransform
       ? solveRectTransform(root, scaleRt(canvas.components.RectTransform))
       : root;
-    walk(canvas, canvasRt, 0, true);
+    walk(canvas, canvasRt, 0, true, undefined, undefined, root);
     depthBase += 1000;
   }
 
@@ -372,17 +782,151 @@ export function hitTestUi(items: UiDrawItem[], x: number, y: number): UiDrawItem
   for (let i = items.length - 1; i >= 0; i--) {
     const it = items[i];
     if (it.role === 'canvas') continue;
-    if (!pointInUiItem(x, y, it)) continue;
+    if (it.clip && !pointInRect(x, y, it.clip)) continue;
+    const dropdownPopup = it.dropdown?.expanded
+      && pointInRect(x, y, {
+        x: it.rect.x,
+        y: it.rect.y + it.rect.h,
+        w: it.rect.w,
+        h: it.rect.h * it.dropdown.options.length,
+      });
+    if (!pointInUiItem(x, y, it) && !dropdownPopup) continue;
     if (it.button?.interactable) return it;
+    if (it.toggle?.interactable) return it;
+    if (it.slider?.interactable) return it;
+    if (it.input?.interactable) return it;
+    if (it.dropdown?.interactable) return it;
+    if (it.list?.interactable) return it;
+    if (it.scroll) return it;
+    if (it.tabs?.interactable) return it;
+    if (it.panel?.raycastTarget) return it;
     if (it.image?.raycastTarget) return it;
+    if (it.text?.raycastTarget) return it;
   }
   return null;
+}
+
+export type UiBatch = {
+  key: string;
+  start: number;
+  end: number;
+  items: UiDrawItem[];
+};
+
+function batchKey(it: UiDrawItem): string {
+  if (it.role === 'canvas') return 'editor/canvas';
+  if (it.tabs) return 'ui/solid/tabs+text';
+  if (it.list) return 'ui/solid/list+text';
+  if (it.dropdown) return 'ui/solid/dropdown+text';
+  if (it.input) return 'ui/solid/input+text';
+  if (it.progress) return 'ui/solid/progress+text';
+  if (it.scroll) return 'ui/solid/scroll';
+  if (it.panel) return 'ui/solid/panel';
+  if (it.slider) return 'ui/solid/slider';
+  if (it.toggle) return 'ui/solid/toggle+text';
+  if (it.button) return `ui/button/${it.image?.sprite ?? 'white'}+text`;
+  if (it.text) return 'ui/text/system';
+  if (it.image) return `ui/image/${it.image.sprite}`;
+  return 'editor/selection';
+}
+
+/** Contiguous batching preserves painter order; non-adjacent items are never reordered. */
+export function buildUiBatches(items: UiDrawItem[]): UiBatch[] {
+  const batches: UiBatch[] = [];
+  for (let index = 0; index < items.length; index++) {
+    const item = items[index];
+    const key = batchKey(item);
+    const tail = batches[batches.length - 1];
+    if (tail?.key === key) {
+      tail.end = index + 1;
+      tail.items.push(item);
+    } else {
+      batches.push({ key, start: index, end: index + 1, items: [item] });
+    }
+  }
+  return batches;
+}
+
+export function sliderValueAtPoint(it: UiDrawItem, x: number, y: number): number | null {
+  const slider = it.slider;
+  if (!slider || !slider.interactable) return null;
+  const pivot = it.pivotScreen ?? rectPivot(it.rect, it.pivot);
+  const axes = rectLocalAxes(it.rotation);
+  const dx = x - pivot.x;
+  const dy = y - pivot.y;
+  const localX = dx * axes.x.dx + dy * axes.x.dy + it.rect.w * it.pivot[0];
+  const localY = dx * axes.y.dx + dy * axes.y.dy + it.rect.h * it.pivot[1];
+  let t = slider.direction === 'LeftToRight' || slider.direction === 'RightToLeft'
+    ? localX / Math.max(1, it.rect.w)
+    : localY / Math.max(1, it.rect.h);
+  if (slider.direction === 'RightToLeft' || slider.direction === 'BottomToTop') t = 1 - t;
+  t = Math.max(0, Math.min(1, t));
+  const low = Math.min(slider.min, slider.max);
+  const high = Math.max(slider.min, slider.max);
+  let value = low + (high - low) * t;
+  if (slider.wholeNumbers) value = Math.round(value);
+  return value;
+}
+
+export type UiPointAction = {
+  component: 'Dropdown' | 'ListView' | 'TabView';
+  patch: Record<string, unknown>;
+  callback: unknown;
+};
+
+/** Resolve sub-control actions such as dropdown options, list rows and tab headers. */
+export function uiPointAction(it: UiDrawItem, x: number, y: number): UiPointAction | null {
+  if (it.dropdown?.interactable) {
+    if (it.dropdown.expanded && y >= it.rect.y + it.rect.h) {
+      const index = Math.floor((y - it.rect.y - it.rect.h) / Math.max(1, it.rect.h));
+      if (x >= it.rect.x && x <= it.rect.x + it.rect.w && index >= 0 && index < it.dropdown.options.length) {
+        return {
+          component: 'Dropdown',
+          patch: { selected_index: index, expanded: false },
+          callback: it.dropdown.onValueChanged,
+        };
+      }
+    }
+    if (pointInUiItem(x, y, it)) {
+      return {
+        component: 'Dropdown',
+        patch: { expanded: !it.dropdown.expanded },
+        callback: null,
+      };
+    }
+  }
+  if (it.list?.interactable && pointInUiItem(x, y, it)) {
+    const stride = Math.max(1, it.list.itemHeight + it.list.spacing);
+    const index = Math.floor((y - it.rect.y + it.list.scrollOffset) / stride);
+    if (index >= 0 && index < it.list.items.length) {
+      return {
+        component: 'ListView',
+        patch: { selected_index: index },
+        callback: it.list.onValueChanged,
+      };
+    }
+  }
+  if (it.tabs?.interactable && pointInUiItem(x, y, it) && y <= it.rect.y + it.tabs.tabHeight) {
+    const count = Math.max(1, it.tabs.labels.length);
+    const index = Math.max(0, Math.min(count - 1, Math.floor((x - it.rect.x) / (it.rect.w / count))));
+    return {
+      component: 'TabView',
+      patch: { selected_index: index },
+      callback: it.tabs.onValueChanged,
+    };
+  }
+  return null;
+}
+
+function cssColor(color: [number, number, number, number], alpha = 1): string {
+  return `rgba(${(color[0] * 255) | 0},${(color[1] * 255) | 0},${(color[2] * 255) | 0},${Math.max(0, Math.min(1, color[3] * alpha))})`;
 }
 
 export function hitTestUiSelect(items: UiDrawItem[], x: number, y: number): UiDrawItem | null {
   for (let i = items.length - 1; i >= 0; i--) {
     const it = items[i];
     if (it.role !== 'graphic') continue;
+    if (it.clip && !pointInRect(x, y, it.clip)) continue;
     if (!pointInUiItem(x, y, it)) continue;
     return it;
   }
@@ -402,10 +946,19 @@ export function drawUiItems(
   opts?: { sceneLabel?: boolean },
 ) {
   const showLabel = !!opts?.sceneLabel;
+  const batches = buildUiBatches(items);
 
-  for (const it of items) {
+  for (const batch of batches) for (const it of batch.items) {
     const { x, y, w, h } = it.rect;
     if (w < 0.5 || h < 0.5) continue;
+
+    ctx.save();
+    ctx.globalAlpha *= Math.max(0, Math.min(1, it.opacity));
+    if (it.clip) {
+      ctx.beginPath();
+      ctx.rect(it.clip.x, it.clip.y, it.clip.w, it.clip.h);
+      ctx.clip();
+    }
 
     if (it.role === 'canvas') {
       ctx.setLineDash(showLabel ? [6, 4] : []);
@@ -418,6 +971,7 @@ export function drawUiItems(
         ctx.font = '11px sans-serif';
         ctx.fillText('Canvas', x + 8, y + 16);
       }
+      ctx.restore();
       continue;
     }
 
@@ -438,7 +992,7 @@ export function drawUiItems(
       ctx.restore();
     };
 
-    if (!it.image && !it.button) {
+    if (!it.image && !it.button && !it.text && !it.toggle && !it.slider && !it.panel && !it.progress && !it.input && !it.dropdown && !it.list && !it.scroll && !it.tabs) {
       if (it.selected) {
         withRot(() => {
           ctx.setLineDash([4, 3]);
@@ -448,6 +1002,7 @@ export function drawUiItems(
           ctx.setLineDash([]);
         });
       }
+      ctx.restore();
       continue;
     }
 
@@ -465,14 +1020,138 @@ export function drawUiItems(
     }
 
     withRot(() => {
-      const sprite = it.image?.sprite ?? 'white';
-      const tint: [number, number, number, number] = [r, g, b, a];
-      const drawn =
-        sprite !== 'white' && drawSpriteInRect(ctx, sprite, x, y, w, h, tint);
-
-      if (!drawn) {
-        ctx.fillStyle = `rgba(${(r * 255) | 0},${(g * 255) | 0},${(b * 255) | 0},${a})`;
+      if (it.panel) {
+        ctx.fillStyle = cssColor(it.panel.color);
         ctx.fillRect(x, y, w, h);
+        if (it.panel.borderWidth > 0) {
+          ctx.strokeStyle = cssColor(it.panel.borderColor);
+          ctx.lineWidth = it.panel.borderWidth;
+          ctx.strokeRect(x + it.panel.borderWidth * 0.5, y + it.panel.borderWidth * 0.5, Math.max(0, w - it.panel.borderWidth), Math.max(0, h - it.panel.borderWidth));
+        }
+      }
+
+      if (it.scroll) {
+        ctx.fillStyle = cssColor(it.scroll.viewportColor);
+        ctx.fillRect(x, y, w, h);
+        if (it.scroll.showScrollbar && it.scroll.vertical) {
+          ctx.fillStyle = 'rgba(255,255,255,0.12)';
+          ctx.fillRect(x + w - 6, y + 2, 4, Math.max(12, h * 0.28));
+        }
+      }
+
+      if (it.progress) {
+        const low = Math.min(it.progress.min, it.progress.max);
+        const high = Math.max(it.progress.min, it.progress.max);
+        const t = high > low ? Math.max(0, Math.min(1, (it.progress.value - low) / (high - low))) : 0;
+        const vertical = it.progress.direction === 'BottomToTop' || it.progress.direction === 'TopToBottom';
+        const reverse = it.progress.direction === 'RightToLeft' || it.progress.direction === 'BottomToTop';
+        ctx.fillStyle = cssColor(it.progress.backgroundColor);
+        ctx.fillRect(x, y, w, h);
+        ctx.fillStyle = cssColor(it.progress.fillColor);
+        if (vertical) {
+          const fill = h * t;
+          ctx.fillRect(x, reverse ? y + h - fill : y, w, fill);
+        } else {
+          const fill = w * t;
+          ctx.fillRect(reverse ? x + w - fill : x, y, fill, h);
+        }
+        if (it.progress.showLabel) {
+          ctx.fillStyle = cssColor(it.progress.textColor);
+          ctx.font = `600 ${Math.max(8, it.progress.fontSize)}px system-ui, sans-serif`;
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'middle';
+          ctx.fillText(`${Math.round(t * 100)}%`, x + w * 0.5, y + h * 0.5);
+        }
+      }
+
+      if (it.input) {
+        ctx.fillStyle = cssColor(it.input.backgroundColor, it.input.interactable ? 1 : 0.45);
+        ctx.fillRect(x, y, w, h);
+        ctx.strokeStyle = pressId === it.entity ? 'rgba(70,160,255,0.95)' : 'rgba(130,145,175,0.7)';
+        ctx.lineWidth = pressId === it.entity ? 2 : 1;
+        ctx.strokeRect(x + 0.5, y + 0.5, w - 1, h - 1);
+        const value = it.input.text || it.input.placeholder;
+        ctx.fillStyle = cssColor(it.input.text ? it.input.textColor : it.input.placeholderColor, it.input.interactable ? 1 : 0.45);
+        ctx.font = `${Math.max(8, it.input.fontSize)}px system-ui, sans-serif`;
+        ctx.textAlign = 'left';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(value, x + 8, y + h * 0.5, Math.max(0, w - 16));
+      }
+
+      if (it.dropdown) {
+        const dropdown = it.dropdown;
+        ctx.fillStyle = cssColor(dropdown.backgroundColor, dropdown.interactable ? 1 : 0.45);
+        ctx.fillRect(x, y, w, h);
+        ctx.fillStyle = cssColor(dropdown.textColor, dropdown.interactable ? 1 : 0.45);
+        ctx.font = `${Math.max(8, dropdown.fontSize)}px system-ui, sans-serif`;
+        ctx.textAlign = 'left';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(dropdown.options[dropdown.selectedIndex] ?? '', x + 8, y + h * 0.5, Math.max(0, w - 32));
+        ctx.textAlign = 'center';
+        ctx.fillText(dropdown.expanded ? '-' : '+', x + w - 16, y + h * 0.5);
+        if (dropdown.expanded) {
+          dropdown.options.forEach((label, index) => {
+            const iy = y + h * (index + 1);
+            ctx.fillStyle = cssColor(index === dropdown.selectedIndex ? dropdown.selectedColor : dropdown.itemColor);
+            ctx.fillRect(x, iy, w, h);
+            ctx.fillStyle = cssColor(dropdown.textColor);
+            ctx.textAlign = 'left';
+            ctx.fillText(label, x + 8, iy + h * 0.5, Math.max(0, w - 16));
+          });
+        }
+      }
+
+      if (it.list) {
+        ctx.fillStyle = cssColor(it.list.backgroundColor);
+        ctx.fillRect(x, y, w, h);
+        ctx.save();
+        ctx.beginPath();
+        ctx.rect(x, y, w, h);
+        ctx.clip();
+        const stride = it.list.itemHeight + it.list.spacing;
+        const first = Math.max(0, Math.floor(it.list.scrollOffset / Math.max(1, stride)));
+        const last = Math.min(it.list.items.length, first + Math.ceil(h / Math.max(1, stride)) + 2);
+        for (let index = first; index < last; index++) {
+          const label = it.list.items[index];
+          const iy = y + index * stride - it.list!.scrollOffset;
+          if (iy + it.list.itemHeight < y || iy > y + h) continue;
+          ctx.fillStyle = cssColor(index === it.list!.selectedIndex ? it.list!.selectedColor : it.list!.itemColor, it.list!.interactable ? 1 : 0.45);
+          ctx.fillRect(x, iy, w, it.list!.itemHeight);
+          ctx.fillStyle = cssColor(it.list!.textColor, it.list!.interactable ? 1 : 0.45);
+          ctx.font = `${Math.max(8, it.list!.fontSize)}px system-ui, sans-serif`;
+          ctx.textAlign = 'left';
+          ctx.textBaseline = 'middle';
+          ctx.fillText(label, x + 8, iy + it.list!.itemHeight * 0.5, Math.max(0, w - 16));
+        }
+        ctx.restore();
+      }
+
+      if (it.tabs) {
+        ctx.fillStyle = cssColor(it.tabs.backgroundColor);
+        ctx.fillRect(x, y, w, h);
+        const count = Math.max(1, it.tabs.labels.length);
+        const tabWidth = w / count;
+        it.tabs.labels.forEach((label, index) => {
+          ctx.fillStyle = cssColor(index === it.tabs!.selectedIndex ? it.tabs!.selectedColor : it.tabs!.tabColor, it.tabs!.interactable ? 1 : 0.45);
+          ctx.fillRect(x + index * tabWidth, y, tabWidth, it.tabs!.tabHeight);
+          ctx.fillStyle = cssColor(it.tabs!.textColor, it.tabs!.interactable ? 1 : 0.45);
+          ctx.font = `${Math.max(8, it.tabs!.fontSize)}px system-ui, sans-serif`;
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'middle';
+          ctx.fillText(label, x + (index + 0.5) * tabWidth, y + it.tabs!.tabHeight * 0.5, Math.max(0, tabWidth - 8));
+        });
+      }
+
+      if (it.image || it.button) {
+        const sprite = it.image?.sprite ?? 'white';
+        const tint: [number, number, number, number] = [r, g, b, a];
+        const drawn =
+          sprite !== 'white' && drawSpriteInRect(ctx, sprite, x, y, w, h, tint);
+
+        if (!drawn) {
+          ctx.fillStyle = `rgba(${(r * 255) | 0},${(g * 255) | 0},${(b * 255) | 0},${a})`;
+          ctx.fillRect(x, y, w, h);
+        }
       }
 
       if (it.button) {
@@ -481,11 +1160,83 @@ export function drawUiItems(
         ctx.strokeRect(x + 0.5, y + 0.5, w - 1, h - 1);
       }
 
+      if (it.button) {
+        ctx.fillStyle = cssColor(it.button.textColor, it.button.interactable ? 1 : 0.45);
+        ctx.font = `600 ${Math.max(8, it.button.fontSize)}px system-ui, sans-serif`;
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(it.button.label, x + w * 0.5, y + h * 0.5, Math.max(0, w - 12));
+      }
+
+      if (it.text) {
+        const tx = it.text.alignment === 'Left' ? x + 4 : it.text.alignment === 'Right' ? x + w - 4 : x + w * 0.5;
+        const ty = it.text.verticalAlign === 'Top' ? y + 2 : it.text.verticalAlign === 'Bottom' ? y + h - 2 : y + h * 0.5;
+        ctx.fillStyle = cssColor(it.text.color);
+        ctx.font = `${Math.max(8, it.text.fontSize)}px system-ui, sans-serif`;
+        ctx.textAlign = it.text.alignment.toLowerCase() as CanvasTextAlign;
+        ctx.textBaseline = it.text.verticalAlign === 'Top' ? 'top' : it.text.verticalAlign === 'Bottom' ? 'bottom' : 'middle';
+        ctx.fillText(it.text.text, tx, ty, Math.max(0, w - 8));
+      }
+
+      if (it.toggle) {
+        const alpha = it.toggle.interactable ? 1 : 0.45;
+        const box = Math.max(12, Math.min(h - 8, 24));
+        const bx = x + 4;
+        const by = y + (h - box) * 0.5;
+        ctx.fillStyle = 'rgba(20,22,26,0.95)';
+        ctx.fillRect(bx, by, box, box);
+        ctx.strokeStyle = 'rgba(255,255,255,0.4)';
+        ctx.strokeRect(bx + 0.5, by + 0.5, box - 1, box - 1);
+        if (it.toggle.isOn) {
+          ctx.fillStyle = cssColor(it.toggle.color, alpha);
+          ctx.fillRect(bx + 3, by + 3, box - 6, box - 6);
+          ctx.strokeStyle = 'white';
+          ctx.lineWidth = Math.max(1.5, box * 0.08);
+          ctx.beginPath();
+          ctx.moveTo(bx + box * 0.24, by + box * 0.52);
+          ctx.lineTo(bx + box * 0.43, by + box * 0.72);
+          ctx.lineTo(bx + box * 0.78, by + box * 0.28);
+          ctx.stroke();
+        }
+        ctx.fillStyle = cssColor(it.toggle.textColor, alpha);
+        ctx.font = `${Math.max(8, it.toggle.fontSize)}px system-ui, sans-serif`;
+        ctx.textAlign = 'left';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(it.toggle.label, bx + box + 8, y + h * 0.5, Math.max(0, w - box - 16));
+      }
+
+      if (it.slider) {
+        const alpha = it.slider.interactable ? 1 : 0.45;
+        const low = Math.min(it.slider.min, it.slider.max);
+        const high = Math.max(it.slider.min, it.slider.max);
+        const t = high > low ? Math.max(0, Math.min(1, (it.slider.value - low) / (high - low))) : 0;
+        const vertical = it.slider.direction === 'BottomToTop' || it.slider.direction === 'TopToBottom';
+        const reverse = it.slider.direction === 'RightToLeft' || it.slider.direction === 'BottomToTop';
+        ctx.fillStyle = cssColor(it.slider.backgroundColor, alpha);
+        ctx.fillRect(x, y, w, h);
+        ctx.fillStyle = cssColor(it.slider.fillColor, alpha);
+        if (vertical) {
+          const fill = h * t;
+          ctx.fillRect(x, reverse ? y + h - fill : y, w, fill);
+          const hy = reverse ? y + h - fill : y + fill;
+          ctx.fillStyle = cssColor(it.slider.handleColor, alpha);
+          ctx.fillRect(x - 2, hy - 3, w + 4, 6);
+        } else {
+          const fill = w * t;
+          ctx.fillRect(reverse ? x + w - fill : x, y, fill, h);
+          const hx = reverse ? x + w - fill : x + fill;
+          ctx.fillStyle = cssColor(it.slider.handleColor, alpha);
+          ctx.fillRect(hx - 3, y - 2, 6, h + 4);
+        }
+      }
+
       if (it.selected) {
         ctx.strokeStyle = 'rgba(100, 180, 255, 0.95)';
         ctx.lineWidth = 2;
         ctx.strokeRect(x - 1, y - 1, w + 2, h + 2);
       }
     });
+    ctx.restore();
   }
+  return { elements: items.filter((item) => item.role === 'graphic').length, batches: batches.length };
 }

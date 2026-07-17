@@ -12,6 +12,8 @@ function iconFor(e: EntityRec) {
   if (c.DirectionalLight) return '💡';
   if (c.MeshRenderer) return '🧊';
   if (c.SpriteRenderer) return '🎴';
+  if (c.SpineSkeleton) return '🦴';
+  if (c.ParticleEmitter2D || c.ParticleEmitter3D) return '✨';
   if ((e.name ?? '').toLowerCase().includes('light')) return '💡';
   return '○';
 }
@@ -144,34 +146,6 @@ export function Hierarchy(props: {
       case 'delete':
         s.deleteSelection();
         props.onLog('Delete');
-        break;
-      case 'createEmptyChild':
-        s.createEmptyChild();
-        props.onLog('Create Empty Child');
-        break;
-      case 'createCube':
-        s.spawnCubeChild();
-        props.onLog('Create Cube');
-        break;
-      case 'createSprite':
-        s.spawnSpriteQuad();
-        props.onLog('3D Object / Sprite Quad');
-        break;
-      case 'createCamera':
-        s.spawnCamera();
-        props.onLog('Create Camera');
-        break;
-      case 'createUiCanvas':
-        s.spawnUiCanvas();
-        props.onLog('UI / Canvas');
-        break;
-      case 'createUiImage':
-        s.spawnUiImage();
-        props.onLog('UI / Image');
-        break;
-      case 'createUiButton':
-        s.spawnUiButton();
-        props.onLog('UI / Button');
         break;
       case 'selectChildren':
         s.selectChildren();
@@ -351,7 +325,15 @@ export function Hierarchy(props: {
         <HierarchyContextMenu
           x={ctx.x}
           y={ctx.y}
-          hasSelection={props.selectedIds.length > 0}
+          hasSelection={props.store.selectedIds.length > 0}
+          menuContext={{
+            source: 'hierarchy',
+            store: props.store,
+            selectedIds: props.store.selectedIds,
+            contextEntity: ctx.id,
+            refresh: props.onRefresh,
+            log: props.onLog,
+          }}
           onAction={runAction}
           onClose={() => setCtx(null)}
         />

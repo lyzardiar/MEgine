@@ -13,12 +13,12 @@ pub enum Stage {
 impl Stage {
     pub fn order(self) -> u8 {
         match self {
-            Stage::Startup    => 0,
-            Stage::PreUpdate  => 1,
-            Stage::Update     => 2,
+            Stage::Startup => 0,
+            Stage::PreUpdate => 1,
+            Stage::Update => 2,
             Stage::PostUpdate => 3,
-            Stage::PreRender  => 4,
-            Stage::Render     => 5,
+            Stage::PreRender => 4,
+            Stage::Render => 5,
         }
     }
 
@@ -36,9 +36,9 @@ impl Stage {
 
 #[derive(Clone, Debug)]
 pub struct SystemDesc {
-    pub name:   String,
-    pub stage:  Stage,
-    pub reads:  Vec<String>,
+    pub name: String,
+    pub stage: Stage,
+    pub reads: Vec<String>,
     pub writes: Vec<String>,
 }
 
@@ -46,7 +46,7 @@ type SystemFn = Box<dyn FnMut(&mut crate::world::World) + Send>;
 
 struct RegisteredSystem {
     desc: SystemDesc,
-    run:  SystemFn,
+    run: SystemFn,
     once: bool,
     done: bool,
 }
@@ -67,7 +67,7 @@ impl Schedule {
     {
         self.systems.push(RegisteredSystem {
             desc,
-            run:  Box::new(f),
+            run: Box::new(f),
             once: false,
             done: false,
         });
@@ -79,12 +79,12 @@ impl Schedule {
     {
         self.systems.push(RegisteredSystem {
             desc: SystemDesc {
-                name:   name.to_string(),
-                stage:  Stage::Startup,
-                reads:  vec![],
+                name: name.to_string(),
+                stage: Stage::Startup,
+                reads: vec![],
                 writes: vec![],
             },
-            run:  Box::new(f),
+            run: Box::new(f),
             once: true,
             done: false,
         });
