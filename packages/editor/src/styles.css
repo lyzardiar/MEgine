@@ -964,7 +964,7 @@ button, input, select {
   width: 22px;
   height: 22px;
   border: none;
-  border-radius: 2px;
+  border-radius: 0;
   background: transparent;
   color: var(--u-muted);
   cursor: pointer;
@@ -987,7 +987,7 @@ button, input, select {
   background: var(--u-panel);
   border: 1px solid var(--u-border-2);
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
-  border-radius: 3px;
+  border-radius: 0;
 }
 
 .comp-context-item {
@@ -1007,21 +1007,16 @@ button, input, select {
   color: #fff;
 }
 
-.comp-remove {
-  width: 22px;
-  height: 22px;
-  border: none;
-  border-radius: 2px;
-  background: transparent;
+.comp-context-item:disabled {
   color: var(--u-muted);
-  cursor: pointer;
-  font-size: 14px;
-  line-height: 1;
+  background: transparent;
+  cursor: default;
 }
 
-.comp-remove:hover {
-  background: #a33;
-  color: #fff;
+.comp-context-sep {
+  height: 1px;
+  margin: 4px 8px;
+  background: var(--u-border-2);
 }
 
 .comp-body {

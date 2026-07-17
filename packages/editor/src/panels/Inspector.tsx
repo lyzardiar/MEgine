@@ -7,6 +7,11 @@ import {
 } from 'react';
 import { getBehaviour } from '@mengine/behaviour';
 import { createComponentDefaults, getComponentCatalog } from '../componentCatalog';
+import {
+  copyComponentValue,
+  pasteComponentValue,
+  type ComponentClipboard,
+} from '../componentClipboard';
 import { getBuiltinInspectorField, type InspectorOption } from '../inspectorMetadata';
 import { eulerXYZToQuat, quatToEulerXYZ } from '../math3d';
 import { readRectTransform } from '../ui/rectLayout';
@@ -133,11 +138,24 @@ function CompBlock(props: {
   children: ReactNode;
   defaultOpen?: boolean;
   onRemove?: () => void;
-  contextMenuItems?: { label: string; onClick: () => void }[];
+  contextMenuItems?: Array<{
+    label: string;
+    onClick: () => void;
+    disabled?: boolean;
+    separatorBefore?: boolean;
+  }>;
 }) {
   const [open, setOpen] = useState(props.defaultOpen ?? true);
   const [menuOpen, setMenuOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
+  const menuItems = [
+    ...(props.contextMenuItems ?? []),
+    ...(props.onRemove ? [{
+      label: 'Remove Component',
+      onClick: props.onRemove,
+      separatorBefore: true,
+    }] : []),
+  ];
 
   useEffect(() => {
     if (!menuOpen) return;
@@ -157,7 +175,7 @@ function CompBlock(props: {
           <span className="comp-title">{props.title}</span>
         </button>
         <div className="comp-head-actions" ref={menuRef}>
-          {!!props.contextMenuItems?.length && (
+          {menuItems.length > 0 && (
             <>
               <button
                 type="button"
@@ -172,41 +190,65 @@ function CompBlock(props: {
               </button>
               {menuOpen && (
                 <div className="comp-context-menu">
-                  {props.contextMenuItems.map((item) => (
-                    <button
-                      key={item.label}
-                      type="button"
-                      className="comp-context-item"
-                      onClick={() => {
-                        item.onClick();
-                        setMenuOpen(false);
-                      }}
-                    >
-                      {item.label}
-                    </button>
+                  {menuItems.map((item, index) => (
+                    <div key={`${item.label}-${index}`}>
+                      {item.separatorBefore && <div className="comp-context-sep" />}
+                      <button
+                        type="button"
+                        className="comp-context-item"
+                        disabled={item.disabled}
+                        onClick={() => {
+                          item.onClick();
+                          setMenuOpen(false);
+                        }}
+                      >
+                        {item.label}
+                      </button>
+                    </div>
                   ))}
                 </div>
               )}
             </>
-          )}
-          {props.onRemove && (
-            <button
-              type="button"
-              className="comp-remove"
-              title="Remove Component"
-              onClick={(e) => {
-                e.stopPropagation();
-                props.onRemove?.();
-              }}
-            >
-              ×
-            </button>
           )}
         </div>
       </div>
       {open && <div className="comp-body">{props.children}</div>}
     </div>
   );
+}
+
+type ComponentMenuItem = NonNullable<Parameters<typeof CompBlock>[0]['contextMenuItems']>[number];
+
+function componentEditMenu(
+  type: string,
+  value: Record<string, unknown>,
+  clipboard: ComponentClipboard | null,
+  onCopy: (next: ComponentClipboard) => void,
+  onReplace: (next: Record<string, unknown>) => void,
+  canReset = true,
+): ComponentMenuItem[] {
+  const defaults = canReset ? createComponentDefaults(type) : null;
+  return [
+    {
+      label: 'Reset',
+      disabled: defaults == null,
+      onClick: () => {
+        if (defaults) onReplace(structuredClone(defaults));
+      },
+    },
+    {
+      label: 'Copy Component',
+      onClick: () => onCopy(copyComponentValue(type, value)),
+    },
+    {
+      label: 'Paste Component Values',
+      disabled: clipboard?.type !== type,
+      onClick: () => {
+        const pasted = pasteComponentValue(clipboard, type);
+        if (pasted) onReplace(pasted);
+      },
+    },
+  ];
 }
 
 function NumField(props: {
@@ -615,6 +657,8 @@ function MultiSelectionInspector(props: {
   count: number;
   entities: Array<{ entity: number; components: Record<string, unknown> }>;
   primary: { entity: number; components: Record<string, unknown> };
+  componentClipboard: ComponentClipboard | null;
+  onCopyComponent: (next: ComponentClipboard) => void;
   onChangeTransforms?: (updates: Array<{ entity: number; transform: Transform }>) => void;
   onSetComponents?: (
     type: string,
@@ -631,6 +675,19 @@ function MultiSelectionInspector(props: {
   const primaryRect = props.primary.components.RectTransform
     ? readRectTransform(props.primary.components.RectTransform)
     : null;
+
+  const replaceTransforms = (value: Record<string, unknown>) => {
+    props.onChangeTransforms?.(transformEntities.map((entity) => ({
+      entity: entity.entity,
+      transform: structuredClone(value) as Transform,
+    })));
+  };
+  const replaceRects = (value: Record<string, unknown>) => {
+    props.onSetComponents?.('RectTransform', rectEntities.map((entity) => ({
+      entity: entity.entity,
+      value: structuredClone(value),
+    })));
+  };
 
   const setTransformAxis = (field: 'position' | 'rotation' | 'scale', axis: number, value: number) => {
     props.onChangeTransforms?.(transformEntities.map((entity) => {
@@ -683,7 +740,17 @@ function MultiSelectionInspector(props: {
           <div className="insp-tag">Editing shared values</div>
         </div>
         {allRects && primaryRect && (
-          <CompBlock title="Rect Transform (Multi)">
+          <CompBlock
+            title="Rect Transform (Multi)"
+            contextMenuItems={componentEditMenu(
+              'RectTransform',
+              primaryRect,
+              props.componentClipboard,
+              props.onCopyComponent,
+              replaceRects,
+              !rectEntities.some((entity) => entity.components.Canvas != null),
+            )}
+          >
             <div className="axis-row">
               <label>Position</label>
               {([0, 1] as const).map((axis) => (
@@ -733,7 +800,16 @@ function MultiSelectionInspector(props: {
           </CompBlock>
         )}
         {allTransforms && primaryTransform && (
-          <CompBlock title="Transform (Multi)">
+          <CompBlock
+            title="Transform (Multi)"
+            contextMenuItems={componentEditMenu(
+              'Transform',
+              primaryTransform as unknown as Record<string, unknown>,
+              props.componentClipboard,
+              props.onCopyComponent,
+              replaceTransforms,
+            )}
+          >
             {(['position', 'rotation', 'scale'] as const).map((field) => {
               const primaryValues = field === 'rotation'
                 ? quatToEulerXYZ(primaryTransform.rotation)
@@ -797,6 +873,7 @@ export function Inspector(props: {
 }) {
   const [menuOpen, setMenuOpen] = useState(false);
   const [nameDraft, setNameDraft] = useState('');
+  const [componentClipboard, setComponentClipboard] = useState<ComponentClipboard | null>(null);
   const menuRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -826,6 +903,8 @@ export function Inspector(props: {
         count={selectedEntities.length}
         entities={selectedEntities}
         primary={props.entity}
+        componentClipboard={componentClipboard}
+        onCopyComponent={setComponentClipboard}
         onChangeTransforms={props.onChangeTransforms}
         onSetComponents={props.onSetComponents}
         onBeginEditGesture={props.onBeginEditGesture}
@@ -842,6 +921,26 @@ export function Inspector(props: {
     rotation: [0, 0, 0, 1],
     scale: [1, 1, 1],
   }) as Transform;
+
+  const replaceComponent = (type: string, value: Record<string, unknown>) => {
+    if (type === 'Transform') {
+      props.onChangeTransform(entity.entity, value as Transform);
+      return;
+    }
+    props.onSetComponent(entity.entity, type, value);
+  };
+  const standardComponentMenu = (
+    type: string,
+    value: Record<string, unknown>,
+    canReset = true,
+  ) => componentEditMenu(
+    type,
+    value,
+    componentClipboard,
+    setComponentClipboard,
+    (next) => replaceComponent(type, next),
+    canReset,
+  );
 
   const setPos = (i: number, v: number) => {
     const position = [...t.position] as [number, number, number];
@@ -935,7 +1034,14 @@ export function Inspector(props: {
       </div>
 
       {hasRect && (
-        <CompBlock title="Rect Transform">
+        <CompBlock
+          title="Rect Transform"
+          contextMenuItems={standardComponentMenu(
+            'RectTransform',
+            entity.components.RectTransform as Record<string, unknown>,
+            entity.components.Canvas == null,
+          )}
+        >
           <RectTransformEditor
             data={entity.components.RectTransform}
             onChange={(next) => props.onSetComponent(entity.entity, 'RectTransform', next)}
@@ -944,7 +1050,13 @@ export function Inspector(props: {
       )}
 
       {hasTransform && (
-        <CompBlock title="Transform">
+        <CompBlock
+          title="Transform"
+          contextMenuItems={standardComponentMenu(
+            'Transform',
+            t as unknown as Record<string, unknown>,
+          )}
+        >
           <div className="axis-row">
             <label>Position</label>
             <AxisInput label="x" value={t.position[0]} onChange={(v) => setPos(0, v)} />
@@ -975,13 +1087,20 @@ export function Inspector(props: {
       {extras.map((k) => {
         const data = entity.components[k] as Record<string, unknown>;
         const behaviour = getBehaviour(k);
-        const ctxItems =
+        const behaviourItems =
           behaviour?.methods
             .filter((m) => m.contextMenu)
             .map((m) => ({
               label: m.contextMenu ?? m.label ?? m.key,
               onClick: () => props.onInvokeBehaviourMethod?.(entity.entity, k, m.key),
             })) ?? [];
+        const ctxItems: ComponentMenuItem[] = [
+          ...standardComponentMenu(k, data),
+          ...behaviourItems.map((item, index) => ({
+            ...item,
+            separatorBefore: index === 0,
+          })),
+        ];
         return (
           <CompBlock
             key={k}
