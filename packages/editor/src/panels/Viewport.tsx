@@ -75,7 +75,14 @@ import {
   type MarqueeSelectionMode,
 } from '../marqueeSelection';
 import { selectedRectRoots } from '../rectSelection';
-import { isRectMoveMode, transformGizmoMode } from '../editorTool';
+import {
+  isRectMoveMode,
+  transformGizmoMode,
+  usesLocalHandleAxes,
+  type ToolHandleOrientation,
+  type ToolPivotMode,
+} from '../editorTool';
+import { transformHandleOrigin } from '../transformSelection';
 import {
   planRectAlignment,
   type RectAlignmentCommand,
@@ -344,6 +351,8 @@ export function Viewport(props: {
   activeInHierarchy?: (id: number) => boolean;
   angle: number;
   gizmo: GizmoMode;
+  pivotMode: ToolPivotMode;
+  handleOrientation: ToolHandleOrientation;
   playing: boolean;
   sceneCamera: SceneCamera;
   gameAspect: GameAspect;
@@ -355,8 +364,14 @@ export function Viewport(props: {
   onEndGesture: () => void;
   onDuplicateRectDrag?: () => number | null;
   onTranslate: (entity: number, delta: Vec3) => void;
-  onGizmoAxis: (entity: number, axis: 'x' | 'y' | 'z', amount: number) => void;
-  onRotateWorld?: (entity: number, axis: Vec3, degrees: number) => void;
+  onGizmoScale: (
+    entity: number,
+    pivot: Vec3,
+    axis: 'x' | 'y' | 'z',
+    axisWorld: Vec3,
+    amount: number,
+  ) => void;
+  onRotateWorld?: (entity: number, pivot: Vec3, axis: Vec3, degrees: number) => void;
   onRectTranslate?: (entity: number, dx: number, dy: number) => void;
   onRectNudge?: (dx: number, dy: number) => void;
   onRectAlign?: (deltas: RectAlignmentDelta[]) => void;
@@ -559,7 +574,7 @@ export function Viewport(props: {
   // Force paint when props change
   useEffect(() => {
     setTick((t) => t + 1);
-  }, [props.tab, props.entities, props.selected, props.selectedIds, props.gizmo, props.gameAspect, props.gameOrientation, props.angle, props.playing, props.activeInHierarchy]);
+  }, [props.tab, props.entities, props.selected, props.selectedIds, props.gizmo, props.pivotMode, props.handleOrientation, props.gameAspect, props.gameOrientation, props.angle, props.playing, props.activeInHierarchy]);
 
   const paint = () => {
     const canvas = canvasRef.current;
@@ -919,13 +934,23 @@ export function Viewport(props: {
         usingRectGizmoRef.current = true;
         gizmoHitsRef.current = [];
       } else if (t) {
+        const transformMode = transformGizmoMode(p.gizmo);
+        const origin = transformHandleOrigin(
+          p.entities,
+          p.selectedIds ?? [p.selected],
+          p.selected,
+          p.pivotMode,
+        ) ?? (t.position as Vec3);
+        const handleRotation = usesLocalHandleAxes(p.gizmo, p.handleOrientation)
+          ? (t.rotation as [number, number, number, number])
+          : null;
         const gh = drawTransformGizmo(
           ctx,
           cam,
           vp,
-          t.position as Vec3,
-          t.rotation as [number, number, number, number],
-          transformGizmoMode(p.gizmo),
+          origin,
+          handleRotation,
+          transformMode,
           hoverGizmoRef.current,
           activeGizmoRef.current,
         );
@@ -1279,9 +1304,12 @@ export function Viewport(props: {
           }
 
           const tr = ent?.components.Transform as TransformData | undefined;
-          const origin: Vec3 = tr
-            ? ([...tr.position] as Vec3)
-            : [0, 0, 0];
+          const origin = transformHandleOrigin(
+            propsRef.current.entities,
+            propsRef.current.selectedIds ?? [propsRef.current.selected],
+            propsRef.current.selected,
+            propsRef.current.pivotMode,
+          ) ?? (tr ? ([...tr.position] as Vec3) : [0, 0, 0]);
           const eye = orbitEye(
             liveCam.current.pivot,
             liveCam.current.yaw,
@@ -1290,7 +1318,11 @@ export function Viewport(props: {
           );
           const cam: Camera = { eye, target: liveCam.current.pivot, fovYDeg: 60 };
           const scr = project(origin, cam, lastVpRef.current);
-          const basis = transformBasis(tr?.rotation as [number, number, number, number] | undefined);
+          const handleRotation = usesLocalHandleAxes(
+            propsRef.current.gizmo,
+            propsRef.current.handleOrientation,
+          ) ? tr?.rotation as [number, number, number, number] | undefined : null;
+          const basis = transformBasis(handleRotation);
           let axisWorld: Vec3 | undefined;
           let lastAng: number | undefined;
           const transformMode = transformGizmoMode(propsRef.current.gizmo);
@@ -1634,8 +1666,17 @@ export function Viewport(props: {
         const vp = lastVpRef.current;
         const ent = propsRef.current.entities.find((e) => e.entity === d.entity);
         const tr = ent?.components.Transform as TransformData | undefined;
-        const origin = (tr?.position as Vec3 | undefined) ?? d.origin;
-        const basis = transformBasis(tr?.rotation as [number, number, number, number] | undefined);
+        const origin = transformHandleOrigin(
+          propsRef.current.entities,
+          propsRef.current.selectedIds ?? [d.entity],
+          d.entity,
+          propsRef.current.pivotMode,
+        ) ?? (tr?.position as Vec3 | undefined) ?? d.origin;
+        const handleRotation = usesLocalHandleAxes(
+          propsRef.current.gizmo,
+          propsRef.current.handleOrientation,
+        ) ? tr?.rotation as [number, number, number, number] | undefined : null;
+        const basis = transformBasis(handleRotation);
         const gizmo = transformGizmoMode(propsRef.current.gizmo);
         const screen = { dx, dy };
 
@@ -1662,7 +1703,13 @@ export function Viewport(props: {
             d.part.axis === 'x' ? basis.right : d.part.axis === 'y' ? basis.up : basis.forward;
           const delta = worldDeltaAlongAxis(origin, axisVec, screen, cam, vp);
           const amount = delta[0] * axisVec[0] + delta[1] * axisVec[1] + delta[2] * axisVec[2];
-          propsRef.current.onGizmoAxis(d.entity, d.part.axis, amount);
+          propsRef.current.onGizmoScale(
+            d.entity,
+            d.origin,
+            d.part.axis,
+            axisVec,
+            amount,
+          );
         } else if (gizmo === 'rotate') {
           const canvas = canvasRef.current;
           if (!canvas) return;
@@ -1680,6 +1727,7 @@ export function Viewport(props: {
             d.lastAng = ang;
             propsRef.current.onRotateWorld?.(
               d.entity,
+              d.origin,
               d.axisWorld,
               (dAng * 180) / Math.PI,
             );
@@ -1701,7 +1749,12 @@ export function Viewport(props: {
             if (dAng < -Math.PI) dAng += Math.PI * 2;
             d.lastAng = ang;
             const { forward } = lookBasis(cam.eye, cam.target);
-            propsRef.current.onRotateWorld?.(d.entity, forward, (dAng * 180) / Math.PI);
+            propsRef.current.onRotateWorld?.(
+              d.entity,
+              d.origin,
+              forward,
+              (dAng * 180) / Math.PI,
+            );
           }
         }
       }

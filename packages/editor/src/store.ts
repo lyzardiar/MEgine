@@ -6,7 +6,12 @@ import {
   type TransformData,
 } from '@mengine/behaviour';
 import type { Vec3, Quat } from './math3d';
-import { add, quatAxisAngle, quatMul, quatNormalize } from './math3d';
+import {
+  add,
+  quatAxisAngle,
+  quatMul,
+  quatNormalize,
+} from './math3d';
 import {
   createComponentDefaults,
   createParticleEmitter2D,
@@ -51,6 +56,11 @@ import {
 } from './editorUndo';
 import { sceneContentFingerprint } from './sceneFingerprint';
 import type { GizmoMode } from './editorTool';
+import {
+  rotateTransformAround,
+  scaleTransformAlong,
+  selectedTransformRoots,
+} from './transformSelection';
 import './behaviours';
 
 export type EditorMode = 'edit' | 'play' | 'pause';
@@ -1074,6 +1084,74 @@ export function createEditorStore() {
         ...t,
         position: add(t.position, delta) as TransformData['position'],
       };
+    },
+    translateSelectedTransformsBy(entity: number, delta: Vec3) {
+      if (!delta.every(Number.isFinite)) return;
+      const ids = selectedTransformRoots(editEntities, selectedIds, entity);
+      for (const id of ids) {
+        const target = find(id);
+        const transform = target?.components.Transform as TransformData | undefined;
+        if (!target || !transform) continue;
+        target.components.Transform = {
+          ...transform,
+          position: add(transform.position, delta) as TransformData['position'],
+        };
+      }
+    },
+    rotateSelectedTransformsAround(
+      entity: number,
+      pivot: Vec3,
+      axis: Vec3,
+      degrees: number,
+    ) {
+      if (
+        !pivot.every(Number.isFinite)
+        || !axis.every(Number.isFinite)
+        || !Number.isFinite(degrees)
+        || Math.abs(degrees) < 1e-8
+      ) return;
+      const ids = selectedTransformRoots(editEntities, selectedIds, entity);
+      for (const id of ids) {
+        const target = find(id);
+        const transform = target?.components.Transform as TransformData | undefined;
+        if (!target || !transform) continue;
+        target.components.Transform = rotateTransformAround(transform, pivot, axis, degrees);
+      }
+    },
+    scaleSelectedTransformsAlong(
+      entity: number,
+      pivot: Vec3,
+      axis: 'x' | 'y' | 'z',
+      axisWorld: Vec3,
+      amount: number,
+    ) {
+      const primary = find(entity);
+      const primaryTransform = primary?.components.Transform as TransformData | undefined;
+      if (
+        !primaryTransform
+        || !pivot.every(Number.isFinite)
+        || !axisWorld.every(Number.isFinite)
+        || !Number.isFinite(amount)
+      ) return;
+      const component = axis === 'x' ? 0 : axis === 'y' ? 1 : 2;
+      const previous = Math.max(0.01, primaryTransform.scale[component]);
+      const next = Math.max(0.01, previous + amount);
+      const factor = next / previous;
+      if (!Number.isFinite(factor) || Math.abs(factor - 1) < 1e-8) return;
+
+      const ids = selectedTransformRoots(editEntities, selectedIds, entity);
+      for (const id of ids) {
+        const target = find(id);
+        const transform = target?.components.Transform as TransformData | undefined;
+        if (!target || !transform) continue;
+        target.components.Transform = scaleTransformAlong(
+          transform,
+          pivot,
+          component,
+          axisWorld,
+          factor,
+        );
+      }
     },
     /** Screen-space UI move → anchored_position (delta already in layout units). */
     translateRectBy(entity: number, dx: number, dy: number) {

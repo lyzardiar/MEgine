@@ -1,9 +1,14 @@
 import type { EditorMode, GizmoMode } from '../store';
+import type { ToolHandleOrientation, ToolPivotMode } from '../editorTool';
 
 export function ToolBar(props: {
   mode: EditorMode;
   gizmo: GizmoMode;
+  pivotMode: ToolPivotMode;
+  handleOrientation: ToolHandleOrientation;
   onGizmo: (m: GizmoMode) => void;
+  onPivotMode: (mode: ToolPivotMode) => void;
+  onHandleOrientation: (orientation: ToolHandleOrientation) => void;
   onPlay: () => void;
   onPause: () => void;
   onStop: () => void;
@@ -43,6 +48,25 @@ export function ToolBar(props: {
           onClick={() => props.onGizmo('rect')}
         >
           T
+        </button>
+        <span className="tool-separator" aria-hidden="true" />
+        <button
+          type="button"
+          className="tool-mode-btn"
+          title="Handle Position: Pivot / Center"
+          onClick={() => props.onPivotMode(props.pivotMode === 'pivot' ? 'center' : 'pivot')}
+        >
+          {props.pivotMode === 'pivot' ? 'Pivot' : 'Center'}
+        </button>
+        <button
+          type="button"
+          className="tool-mode-btn"
+          title="Handle Orientation: Local / Global (Scale always uses Local)"
+          onClick={() => props.onHandleOrientation(
+            props.handleOrientation === 'local' ? 'global' : 'local',
+          )}
+        >
+          {props.handleOrientation === 'local' ? 'Local' : 'Global'}
         </button>
       </div>
 

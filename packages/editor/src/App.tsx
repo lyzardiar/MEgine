@@ -36,6 +36,7 @@ import { resolveUnityAction } from './panels/uiFieldEditors';
 import { refreshSprites } from './spriteLibrary';
 import { combineMarqueeSelection } from './marqueeSelection';
 import { isDesktopEditor } from './transport/editorTransport';
+import type { ToolHandleOrientation, ToolPivotMode } from './editorTool';
 import './editorWindow'; // MenuItem side-effects
 
 function isTypingTarget(el: EventTarget | null) {
@@ -87,6 +88,8 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
   const [snap, setSnap] = useState<WorldSnapshotView & { selectedIds?: number[] }>(store.snapshot());
   const [mode, setMode] = useState<EditorMode>('edit');
   const [gizmo, setGizmo] = useState<GizmoMode>('translate');
+  const [pivotMode, setPivotMode] = useState<ToolPivotMode>('pivot');
+  const [handleOrientation, setHandleOrientation] = useState<ToolHandleOrientation>('local');
   const [viewTab, setViewTab] = useState<'scene' | 'game'>('scene');
   const [gameAspect, setGameAspect] = useState(store.gameAspect);
   const [gameOrientation, setGameOrientation] = useState(store.gameOrientation);
@@ -602,10 +605,14 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
       <ToolBar
         mode={mode}
         gizmo={gizmo}
+        pivotMode={pivotMode}
+        handleOrientation={handleOrientation}
         onGizmo={(m) => {
           store.setGizmo(m);
           refresh();
         }}
+        onPivotMode={setPivotMode}
+        onHandleOrientation={setHandleOrientation}
         onPlay={() => {
           store.play();
           setViewTab('game');
@@ -654,6 +661,8 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
               selectedIds={selectedIds}
               angle={store.viewAngle}
               gizmo={gizmo}
+              pivotMode={pivotMode}
+              handleOrientation={handleOrientation}
               playing={mode !== 'edit'}
               sceneCamera={store.sceneCamera}
               gameAspect={gameAspect}
@@ -683,15 +692,15 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
                 return duplicated;
               }}
               onTranslate={(entity, delta) => {
-                store.translateBy(entity, delta);
+                store.translateSelectedTransformsBy(entity, delta);
                 refresh();
               }}
-              onGizmoAxis={(entity, axis, amount) => {
-                store.applyTransformDelta(entity, gizmo, axis, amount);
+              onGizmoScale={(entity, pivot, axis, axisWorld, amount) => {
+                store.scaleSelectedTransformsAlong(entity, pivot, axis, axisWorld, amount);
                 refresh();
               }}
-              onRotateWorld={(entity, axis, degrees) => {
-                store.rotateByWorldAxis(entity, axis, degrees);
+              onRotateWorld={(entity, pivot, axis, degrees) => {
+                store.rotateSelectedTransformsAround(entity, pivot, axis, degrees);
                 refresh();
               }}
               onRectTranslate={(_entity, dx, dy) => {
