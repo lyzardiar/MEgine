@@ -1301,6 +1301,7 @@ fn primitive(
         color,
         pivot,
         rotation_radians,
+        uv: [0.0, 0.0, 1.0, 1.0],
         key: UiBatchKey {
             material: material.into(),
             texture: texture.into(),

@@ -431,6 +431,7 @@ fn collect_emitter(
                 color,
                 pivot: [0.5, 0.5],
                 rotation_radians: 0.0,
+                uv: [0.0, 0.0, 1.0, 1.0],
                 key: UiBatchKey {
                     material: material.into(),
                     texture: texture.clone(),

@@ -1,6 +1,16 @@
 use bytemuck::{Pod, Zeroable};
+use std::collections::HashMap;
 use std::hash::Hash;
+use thiserror::Error;
 use wgpu::util::DeviceExt;
+
+#[derive(Clone, Debug, Error, PartialEq, Eq)]
+pub enum UiTextureError {
+    #[error("texture dimensions must be greater than zero")]
+    EmptyDimensions,
+    #[error("RGBA8 texture data length mismatch: expected {expected}, got {actual}")]
+    InvalidDataLength { expected: usize, actual: usize },
+}
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
 pub enum UiBlendMode {
@@ -42,6 +52,8 @@ pub struct UiPrimitive {
     pub color: [f32; 4],
     pub pivot: [f32; 2],
     pub rotation_radians: f32,
+    /// Normalized UV rect: u, v, width, height.
+    pub uv: [f32; 4],
     pub key: UiBatchKey,
 }
 
@@ -52,6 +64,7 @@ impl UiPrimitive {
             color,
             pivot: [0.5, 0.5],
             rotation_radians: 0.0,
+            uv: [0.0, 0.0, 1.0, 1.0],
             key: UiBatchKey::default(),
         }
     }
@@ -117,6 +130,7 @@ struct UiInstance {
     rect: [f32; 4],
     color: [f32; 4],
     transform: [f32; 4],
+    uv: [f32; 4],
 }
 
 impl From<&UiPrimitive> for UiInstance {
@@ -125,6 +139,7 @@ impl From<&UiPrimitive> for UiInstance {
             rect: value.rect,
             color: value.color,
             transform: [value.rotation_radians, value.pivot[0], value.pivot[1], 0.0],
+            uv: value.uv,
         }
     }
 }
@@ -144,13 +159,23 @@ pub(crate) struct UiRenderer {
     instance_capacity: usize,
     uniform_buffer: wgpu::Buffer,
     bind_group: wgpu::BindGroup,
+    texture_bind_group_layout: wgpu::BindGroupLayout,
+    sampler: wgpu::Sampler,
+    fallback_texture: UiTextureGpu,
+    textures: HashMap<String, UiTextureGpu>,
     viewport: [u32; 2],
     stats: UiFrameStats,
+}
+
+struct UiTextureGpu {
+    _texture: wgpu::Texture,
+    bind_group: wgpu::BindGroup,
 }
 
 impl UiRenderer {
     pub fn new(
         device: &wgpu::Device,
+        queue: &wgpu::Queue,
         format: wgpu::TextureFormat,
         width: u32,
         height: u32,
@@ -211,13 +236,55 @@ impl UiRenderer {
                 resource: uniform_buffer.as_entire_binding(),
             }],
         });
+        let texture_bind_group_layout =
+            device.create_bind_group_layout(&wgpu::BindGroupLayoutDescriptor {
+                label: Some("ui_texture_bgl"),
+                entries: &[
+                    wgpu::BindGroupLayoutEntry {
+                        binding: 0,
+                        visibility: wgpu::ShaderStages::FRAGMENT,
+                        ty: wgpu::BindingType::Texture {
+                            sample_type: wgpu::TextureSampleType::Float { filterable: true },
+                            view_dimension: wgpu::TextureViewDimension::D2,
+                            multisampled: false,
+                        },
+                        count: None,
+                    },
+                    wgpu::BindGroupLayoutEntry {
+                        binding: 1,
+                        visibility: wgpu::ShaderStages::FRAGMENT,
+                        ty: wgpu::BindingType::Sampler(wgpu::SamplerBindingType::Filtering),
+                        count: None,
+                    },
+                ],
+            });
+        let sampler = device.create_sampler(&wgpu::SamplerDescriptor {
+            label: Some("ui_linear_sampler"),
+            address_mode_u: wgpu::AddressMode::ClampToEdge,
+            address_mode_v: wgpu::AddressMode::ClampToEdge,
+            address_mode_w: wgpu::AddressMode::ClampToEdge,
+            mag_filter: wgpu::FilterMode::Linear,
+            min_filter: wgpu::FilterMode::Linear,
+            mipmap_filter: wgpu::FilterMode::Nearest,
+            ..Default::default()
+        });
+        let fallback_texture = create_texture_rgba8(
+            device,
+            queue,
+            &texture_bind_group_layout,
+            &sampler,
+            "ui_white_texture",
+            1,
+            1,
+            &[255, 255, 255, 255],
+        );
         let shader = device.create_shader_module(wgpu::ShaderModuleDescriptor {
             label: Some("ui_instanced"),
             source: wgpu::ShaderSource::Wgsl(UI_WGSL.into()),
         });
         let pipeline_layout = device.create_pipeline_layout(&wgpu::PipelineLayoutDescriptor {
             label: Some("ui_pipeline_layout"),
-            bind_group_layouts: &[&bind_group_layout],
+            bind_group_layouts: &[&bind_group_layout, &texture_bind_group_layout],
             push_constant_ranges: &[],
         });
         let alpha_pipeline = device.create_render_pipeline(&wgpu::RenderPipelineDescriptor {
@@ -235,7 +302,7 @@ impl UiRenderer {
                     wgpu::VertexBufferLayout {
                         array_stride: std::mem::size_of::<UiInstance>() as u64,
                         step_mode: wgpu::VertexStepMode::Instance,
-                        attributes: &wgpu::vertex_attr_array![1 => Float32x4, 2 => Float32x4, 3 => Float32x4],
+                        attributes: &wgpu::vertex_attr_array![1 => Float32x4, 2 => Float32x4, 3 => Float32x4, 4 => Float32x4],
                     },
                 ],
                 compilation_options: Default::default(),
@@ -282,7 +349,7 @@ impl UiRenderer {
                     wgpu::VertexBufferLayout {
                         array_stride: std::mem::size_of::<UiInstance>() as u64,
                         step_mode: wgpu::VertexStepMode::Instance,
-                        attributes: &wgpu::vertex_attr_array![1 => Float32x4, 2 => Float32x4, 3 => Float32x4],
+                        attributes: &wgpu::vertex_attr_array![1 => Float32x4, 2 => Float32x4, 3 => Float32x4, 4 => Float32x4],
                     },
                 ],
                 compilation_options: Default::default(),
@@ -333,9 +400,41 @@ impl UiRenderer {
             instance_capacity,
             uniform_buffer,
             bind_group,
+            texture_bind_group_layout,
+            sampler,
+            fallback_texture,
+            textures: HashMap::new(),
             viewport: [width.max(1), height.max(1)],
             stats: UiFrameStats::default(),
         }
+    }
+
+    pub fn upload_texture_rgba8(
+        &mut self,
+        device: &wgpu::Device,
+        queue: &wgpu::Queue,
+        key: &str,
+        width: u32,
+        height: u32,
+        rgba8: &[u8],
+    ) -> Result<(), UiTextureError> {
+        validate_texture_rgba8(width, height, rgba8)?;
+        let texture = create_texture_rgba8(
+            device,
+            queue,
+            &self.texture_bind_group_layout,
+            &self.sampler,
+            key,
+            width,
+            height,
+            rgba8,
+        );
+        self.textures.insert(key.to_owned(), texture);
+        Ok(())
+    }
+
+    pub fn remove_texture(&mut self, key: &str) -> bool {
+        self.textures.remove(key).is_some()
     }
 
     pub fn resize(&mut self, queue: &wgpu::Queue, width: u32, height: u32) {
@@ -394,6 +493,11 @@ impl UiRenderer {
                 UiBlendMode::Alpha => &self.alpha_pipeline,
                 UiBlendMode::Additive => &self.additive_pipeline,
             });
+            let texture = self
+                .textures
+                .get(&batch.key.texture)
+                .unwrap_or(&self.fallback_texture);
+            pass.set_bind_group(1, &texture.bind_group, &[]);
             if let Some(clip) = batch.key.clip {
                 let x = clip.x.min(self.viewport[0]);
                 let y = clip.y.min(self.viewport[1]);
@@ -415,6 +519,81 @@ impl UiRenderer {
     }
 }
 
+fn validate_texture_rgba8(width: u32, height: u32, rgba8: &[u8]) -> Result<(), UiTextureError> {
+    if width == 0 || height == 0 {
+        return Err(UiTextureError::EmptyDimensions);
+    }
+    let expected = width as usize * height as usize * 4;
+    if rgba8.len() != expected {
+        return Err(UiTextureError::InvalidDataLength {
+            expected,
+            actual: rgba8.len(),
+        });
+    }
+    Ok(())
+}
+
+fn create_texture_rgba8(
+    device: &wgpu::Device,
+    queue: &wgpu::Queue,
+    layout: &wgpu::BindGroupLayout,
+    sampler: &wgpu::Sampler,
+    label: &str,
+    width: u32,
+    height: u32,
+    rgba8: &[u8],
+) -> UiTextureGpu {
+    let size = wgpu::Extent3d {
+        width,
+        height,
+        depth_or_array_layers: 1,
+    };
+    let texture = device.create_texture(&wgpu::TextureDescriptor {
+        label: Some(label),
+        size,
+        mip_level_count: 1,
+        sample_count: 1,
+        dimension: wgpu::TextureDimension::D2,
+        format: wgpu::TextureFormat::Rgba8UnormSrgb,
+        usage: wgpu::TextureUsages::TEXTURE_BINDING | wgpu::TextureUsages::COPY_DST,
+        view_formats: &[],
+    });
+    queue.write_texture(
+        wgpu::TexelCopyTextureInfo {
+            texture: &texture,
+            mip_level: 0,
+            origin: wgpu::Origin3d::ZERO,
+            aspect: wgpu::TextureAspect::All,
+        },
+        rgba8,
+        wgpu::TexelCopyBufferLayout {
+            offset: 0,
+            bytes_per_row: Some(width * 4),
+            rows_per_image: Some(height),
+        },
+        size,
+    );
+    let view = texture.create_view(&wgpu::TextureViewDescriptor::default());
+    let bind_group = device.create_bind_group(&wgpu::BindGroupDescriptor {
+        label: Some(&format!("{label}_bg")),
+        layout,
+        entries: &[
+            wgpu::BindGroupEntry {
+                binding: 0,
+                resource: wgpu::BindingResource::TextureView(&view),
+            },
+            wgpu::BindGroupEntry {
+                binding: 1,
+                resource: wgpu::BindingResource::Sampler(sampler),
+            },
+        ],
+    });
+    UiTextureGpu {
+        _texture: texture,
+        bind_group,
+    }
+}
+
 fn create_instance_buffer(device: &wgpu::Device, capacity: usize) -> wgpu::Buffer {
     device.create_buffer(&wgpu::BufferDescriptor {
         label: Some("ui_instances"),
@@ -430,17 +609,21 @@ struct UiFrame {
     padding: vec2<f32>,
 };
 @group(0) @binding(0) var<uniform> frame: UiFrame;
+@group(1) @binding(0) var ui_texture: texture_2d<f32>;
+@group(1) @binding(1) var ui_sampler: sampler;
 
 struct VsIn {
     @location(0) position: vec2<f32>,
     @location(1) rect: vec4<f32>,
     @location(2) color: vec4<f32>,
     @location(3) transform: vec4<f32>,
+    @location(4) uv_rect: vec4<f32>,
 };
 
 struct VsOut {
     @builtin(position) clip: vec4<f32>,
     @location(0) color: vec4<f32>,
+    @location(1) uv: vec2<f32>,
 };
 
 @vertex
@@ -455,12 +638,13 @@ fn vs_main(input: VsIn) -> VsOut {
     var output: VsOut;
     output.clip = vec4<f32>(ndc, 0.0, 1.0);
     output.color = input.color;
+    output.uv = input.uv_rect.xy + input.position * input.uv_rect.zw;
     return output;
 }
 
 @fragment
 fn fs_main(input: VsOut) -> @location(0) vec4<f32> {
-    return input.color;
+    return textureSample(ui_texture, ui_sampler, input.uv) * input.color;
 }
 "#;
 
@@ -503,5 +687,29 @@ mod tests {
         ]);
         assert_eq!(plan.batches.len(), 2);
         assert_eq!((plan.batches[1].start, plan.batches[1].end), (1, 3));
+    }
+
+    #[test]
+    fn rgba8_upload_validation_rejects_invalid_dimensions_and_lengths() {
+        assert_eq!(
+            validate_texture_rgba8(0, 1, &[]),
+            Err(UiTextureError::EmptyDimensions)
+        );
+        assert_eq!(
+            validate_texture_rgba8(2, 2, &[255; 12]),
+            Err(UiTextureError::InvalidDataLength {
+                expected: 16,
+                actual: 12,
+            })
+        );
+        assert!(validate_texture_rgba8(2, 2, &[255; 16]).is_ok());
+    }
+
+    #[test]
+    fn solid_primitives_cover_the_full_texture_by_default() {
+        assert_eq!(
+            UiPrimitive::solid([0.0; 4], [1.0; 4]).uv,
+            [0.0, 0.0, 1.0, 1.0]
+        );
     }
 }

@@ -1,6 +1,6 @@
 use crate::mesh::{MeshGpu, Vertex};
 use crate::render_graph::RenderGraph;
-use crate::ui::{UiBatchPlan, UiFrameStats, UiRenderer};
+use crate::ui::{UiBatchPlan, UiFrameStats, UiRenderer, UiTextureError};
 use crate::RhiError;
 use glam::{Mat4, Vec3, Vec4};
 use std::collections::HashMap;
@@ -291,7 +291,7 @@ impl Renderer {
         let (depth_texture, depth_view) = create_depth(&device, config.width, config.height);
         let mut meshes = HashMap::new();
         meshes.insert("cube".into(), MeshGpu::unit_cube(&device));
-        let ui = UiRenderer::new(&device, format, config.width, config.height);
+        let ui = UiRenderer::new(&device, &queue, format, config.width, config.height);
 
         Ok(Self {
             device,
@@ -458,6 +458,21 @@ impl Renderer {
 
     pub fn ui_stats(&self) -> UiFrameStats {
         self.ui.stats()
+    }
+
+    pub fn upload_ui_texture_rgba8(
+        &mut self,
+        key: &str,
+        width: u32,
+        height: u32,
+        rgba8: &[u8],
+    ) -> Result<(), UiTextureError> {
+        self.ui
+            .upload_texture_rgba8(&self.device, &self.queue, key, width, height, rgba8)
+    }
+
+    pub fn remove_ui_texture(&mut self, key: &str) -> bool {
+        self.ui.remove_texture(key)
     }
 
     pub fn aspect(&self) -> f32 {
