@@ -41,6 +41,7 @@ import { selectedHierarchyRoots } from './hierarchySelection';
 import { restoreSceneSelection } from './selectionRestore';
 import {
   captureEditorUndoState,
+  editorUndoStatesEqual,
   restoreEditorUndoState,
   type EditorUndoState,
 } from './editorUndo';
@@ -114,6 +115,8 @@ export function createEditorStore() {
     pivot: [0, 0.5, 0],
   };
   let gizmoDragging = false;
+  let editGestureDepth = 0;
+  let gestureUndoState: EditorUndoState<EntityRec> | null = null;
   let expanded = new Set<number>();
   let clipboard: ClipboardPayload | null = null;
   let renameRequestId: number | null = null;
@@ -178,22 +181,28 @@ export function createEditorStore() {
     undoStack = [];
     clipboard = null;
     gizmoDragging = false;
+    editGestureDepth = 0;
+    gestureUndoState = null;
   };
 
   buildDefaultScene();
 
   const list = () => (mode === 'edit' ? editEntities : playEntities ?? editEntities);
 
+  const captureUndoState = () => captureEditorUndoState(
+    editEntities,
+    selectedIds,
+    selectionAnchor,
+    nextId,
+    clearColor,
+  );
+
   const pushUndo = () => {
-    if (mode !== 'edit') return;
-    undoStack.push(captureEditorUndoState(
-      editEntities,
-      selectedIds,
-      selectionAnchor,
-      nextId,
-      clearColor,
-    ));
+    if (mode !== 'edit') return null;
+    const state = captureUndoState();
+    undoStack.push(state);
     if (undoStack.length > 64) undoStack.shift();
+    return state;
   };
 
   const find = (id: number) => list().find((e) => e.entity === id);
@@ -500,6 +509,9 @@ export function createEditorStore() {
     playEntities = targetMode === 'edit' ? null : structuredClone(editEntities);
     mode = targetMode;
     playSpin = 0;
+    gizmoDragging = false;
+    editGestureDepth = 0;
+    gestureUndoState = null;
   };
 
   return {
@@ -951,13 +963,25 @@ export function createEditorStore() {
       return true;
     },
     beginTransformGesture() {
-      if (!gizmoDragging) {
-        pushUndo();
+      if (editGestureDepth === 0) {
+        gestureUndoState = pushUndo();
         gizmoDragging = true;
       }
+      editGestureDepth++;
     },
     endTransformGesture() {
+      if (editGestureDepth === 0) return;
+      editGestureDepth--;
+      if (editGestureDepth > 0) return;
       gizmoDragging = false;
+      if (
+        gestureUndoState
+        && undoStack[undoStack.length - 1] === gestureUndoState
+        && editorUndoStatesEqual(gestureUndoState, captureUndoState())
+      ) {
+        undoStack.pop();
+      }
+      gestureUndoState = null;
     },
     applyTransformDelta(
       entity: number,

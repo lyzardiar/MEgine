@@ -1,6 +1,10 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { captureEditorUndoState, restoreEditorUndoState } from '../src/editorUndo.ts';
+import {
+  captureEditorUndoState,
+  editorUndoStatesEqual,
+  restoreEditorUndoState,
+} from '../src/editorUndo.ts';
 
 test('undo snapshots isolate entities and all editor state from later mutations', () => {
   const entities = [{ entity: 0, data: { value: 1 } }, { entity: 2, data: { value: 2 } }];
@@ -25,4 +29,25 @@ test('undo restoration filters stale selection and repairs nextId', () => {
   assert.deepEqual(restored.selectedIds, [5]);
   assert.equal(restored.selectionAnchor, 5);
   assert.equal(restored.nextId, 6);
+});
+
+test('undo state equality detects real edits but ignores object key order', () => {
+  const before = captureEditorUndoState(
+    [{ entity: 1, components: { Transform: { position: [0, 1, 2], scale: 1 } } }],
+    [1],
+    1,
+    2,
+    [0.1, 0.2, 0.3, 1],
+  );
+  const reordered = captureEditorUndoState(
+    [{ entity: 1, components: { Transform: { scale: 1, position: [0, 1, 2] } } }],
+    [1],
+    1,
+    2,
+    [0.1, 0.2, 0.3, 1],
+  );
+  assert.equal(editorUndoStatesEqual(before, reordered), true);
+
+  reordered.entities[0].components.Transform.position[1] = 9;
+  assert.equal(editorUndoStatesEqual(before, reordered), false);
 });

@@ -13,7 +13,11 @@ import { readRectTransform } from '../ui/rectLayout';
 import { loadSpineInspectorOptions } from '../spine/spineCanvasRuntime';
 import { SchemaFieldEditor } from './SchemaFieldEditor';
 import { RectTransformEditor } from './RectTransformEditor';
-import { InspectorGestureProvider, useInspectorGesture } from './inspectorGesture';
+import {
+  InspectorEditScope,
+  InspectorGestureProvider,
+  useInspectorGesture,
+} from './inspectorGesture';
 import {
   ColorField,
   ImageEditor,
@@ -673,7 +677,7 @@ function MultiSelectionInspector(props: {
       begin={props.onBeginEditGesture ?? (() => {})}
       end={props.onEndEditGesture ?? (() => {})}
     >
-      <div className="dock-body">
+      <InspectorEditScope>
         <div className="insp-header">
           <div className="insp-name">{props.count} selected</div>
           <div className="insp-tag">Editing shared values</div>
@@ -759,7 +763,7 @@ function MultiSelectionInspector(props: {
         {!allRects && !allTransforms && (
           <div className="empty-state">Selection has no shared Transform type</div>
         )}
-      </div>
+      </InspectorEditScope>
     </InspectorGestureProvider>
   );
 }
@@ -885,7 +889,7 @@ export function Inspector(props: {
       begin={props.onBeginEditGesture ?? (() => {})}
       end={props.onEndEditGesture ?? (() => {})}
     >
-    <div className="dock-body">
+    <InspectorEditScope>
       <div className="insp-header">
         <div className="insp-object-row">
           <input
@@ -1069,7 +1073,7 @@ export function Inspector(props: {
           </div>
         )}
       </div>
-    </div>
+    </InspectorEditScope>
     </InspectorGestureProvider>
   );
 }
