@@ -1232,6 +1232,33 @@ export function createEditorStore() {
         local_rotation: rt.local_rotation + degrees,
       };
     },
+    rotateSelectedRectsBy(deltas: Array<{
+      entity: number;
+      dx: number;
+      dy: number;
+      degrees: number;
+    }>) {
+      const roots = new Set(selectedRectRoots(editEntities, selectedIds));
+      for (const delta of deltas) {
+        if (
+          !roots.has(delta.entity)
+          || !Number.isFinite(delta.dx)
+          || !Number.isFinite(delta.dy)
+          || !Number.isFinite(delta.degrees)
+        ) continue;
+        const entity = find(delta.entity);
+        if (!entity?.components.RectTransform) continue;
+        const rt = readRectTransform(entity.components.RectTransform);
+        entity.components.RectTransform = {
+          ...rt,
+          anchored_position: [
+            rt.anchored_position[0] + delta.dx,
+            rt.anchored_position[1] + delta.dy,
+          ],
+          local_rotation: rt.local_rotation + delta.degrees,
+        };
+      }
+    },
     scaleRectBy(entity: number, axis: 'x' | 'y' | 'both', amount: number) {
       const e = find(entity);
       if (!e?.components.RectTransform) return;

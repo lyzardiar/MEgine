@@ -723,8 +723,8 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
                 store.setRectAnchors(entity, anchorMin, anchorMax, parentSize);
                 refresh();
               }}
-              onRectRotate={(entity, degrees) => {
-                store.rotateRectBy(entity, degrees);
+              onRectRotate={(deltas) => {
+                store.rotateSelectedRectsBy(deltas);
                 refresh();
               }}
               onRectScale={(entity, axis, amount) => {

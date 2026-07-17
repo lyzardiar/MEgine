@@ -111,6 +111,41 @@ export function rectLocalAxes(rotDeg: number): { x: { dx: number; dy: number }; 
   };
 }
 
+/** Handle origin for Unity's Pivot / Center toolbar toggle. */
+export function rectToolHandlePivot(
+  rect: Rect,
+  pivotPoint: { x: number; y: number },
+  pivotNorm: [number, number],
+  rotDeg: number,
+  mode: 'pivot' | 'center',
+): { x: number; y: number } {
+  if (mode === 'pivot') return { ...pivotPoint };
+  const axes = rectLocalAxes(rotDeg);
+  const localX = rect.w * (0.5 - pivotNorm[0]);
+  const localY = rect.h * (pivotNorm[1] - 0.5);
+  return {
+    x: pivotPoint.x + localX * axes.x.dx + localY * axes.y.dx,
+    y: pivotPoint.y + localX * axes.x.dy + localY * axes.y.dy,
+  };
+}
+
+/** Rotate a screen point using RectTransform's positive CCW convention. */
+export function rotateRectToolPoint(
+  point: { x: number; y: number },
+  pivot: { x: number; y: number },
+  degrees: number,
+): { x: number; y: number } {
+  const radians = (degrees * Math.PI) / 180;
+  const c = Math.cos(radians);
+  const s = Math.sin(radians);
+  const dx = point.x - pivot.x;
+  const dy = point.y - pivot.y;
+  return {
+    x: pivot.x + dx * c + dy * s,
+    y: pivot.y - dx * s + dy * c,
+  };
+}
+
 /** Corner / edge positions in screen space for a (possibly rotated) rect. */
 function sizeHandlePoints(
   rect: Rect,
@@ -155,9 +190,10 @@ export function drawRectGizmo(
   pivotNorm: [number, number] = [0.5, 0.5],
   pivotEditing = false,
   anchors?: { min: { x: number; y: number }; max: { x: number; y: number } },
+  handleRotDeg = rotDeg,
 ): RectGizmoHit[] {
   const hits: RectGizmoHit[] = [];
-  const axes = rectLocalAxes(rotDeg);
+  const axes = rectLocalAxes(handleRotDeg);
   const ox = pivot.x;
   const oy = pivot.y;
 
