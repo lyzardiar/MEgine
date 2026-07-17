@@ -170,6 +170,34 @@ export interface SphereCollider3D {
   restitution: number;
 }
 
+export interface Rigidbody2D {
+  bodyType: string;
+  mass: number;
+  gravityScale: number;
+  linearDamping: number;
+  angularDamping: number;
+  velocity: [number, number];
+  angularVelocity: number;
+  freezeRotation: boolean;
+  ccd: boolean;
+}
+
+export interface BoxCollider2D {
+  size: [number, number];
+  offset: [number, number];
+  isTrigger: boolean;
+  friction: number;
+  bounciness: number;
+}
+
+export interface CircleCollider2D {
+  radius: number;
+  offset: [number, number];
+  isTrigger: boolean;
+  friction: number;
+  bounciness: number;
+}
+
 export interface Layer {
   value: number;
 }
@@ -499,6 +527,9 @@ export type ComponentName =
   | 'RigidBody3D'
   | 'BoxCollider3D'
   | 'SphereCollider3D'
+  | 'Rigidbody2D'
+  | 'BoxCollider2D'
+  | 'CircleCollider2D'
   | 'Layer'
   | 'EditorOnly'
   | 'AutoRotate'
@@ -553,6 +584,9 @@ export const COMPONENT_NAMES = [
   'RigidBody3D',
   'BoxCollider3D',
   'SphereCollider3D',
+  'Rigidbody2D',
+  'BoxCollider2D',
+  'CircleCollider2D',
   'Layer',
   'EditorOnly',
   'AutoRotate',

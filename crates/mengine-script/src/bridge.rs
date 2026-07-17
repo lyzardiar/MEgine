@@ -141,14 +141,70 @@ impl ScriptHost {
         started: &[(u64, u64)],
         stopped: &[(u64, u64)],
     ) -> Result<(), ScriptError> {
+        self.notify_pair_events(
+            started,
+            stopped,
+            "onCollisionEnter",
+            "onCollisionExit",
+            "3d",
+        )
+    }
+
+    /// Delivers 3D sensor transitions separately from solid-body collisions.
+    pub fn notify_trigger_events(
+        &mut self,
+        started: &[(u64, u64)],
+        stopped: &[(u64, u64)],
+    ) -> Result<(), ScriptError> {
+        self.notify_pair_events(started, stopped, "onTriggerEnter", "onTriggerExit", "3d")
+    }
+
+    /// Delivers Rapier2D solid-contact transitions using Unity-style callback names.
+    pub fn notify_collision_events_2d(
+        &mut self,
+        started: &[(u64, u64)],
+        stopped: &[(u64, u64)],
+    ) -> Result<(), ScriptError> {
+        self.notify_pair_events(
+            started,
+            stopped,
+            "onCollisionEnter2D",
+            "onCollisionExit2D",
+            "2d",
+        )
+    }
+
+    /// Delivers Rapier2D sensor transitions using Unity-style callback names.
+    pub fn notify_trigger_events_2d(
+        &mut self,
+        started: &[(u64, u64)],
+        stopped: &[(u64, u64)],
+    ) -> Result<(), ScriptError> {
+        self.notify_pair_events(
+            started,
+            stopped,
+            "onTriggerEnter2D",
+            "onTriggerExit2D",
+            "2d",
+        )
+    }
+
+    fn notify_pair_events(
+        &mut self,
+        started: &[(u64, u64)],
+        stopped: &[(u64, u64)],
+        enter_callback: &str,
+        exit_callback: &str,
+        dimension: &str,
+    ) -> Result<(), ScriptError> {
         if started.is_empty() && stopped.is_empty() {
             return Ok(());
         }
-        let started = collision_events_json(started);
-        let stopped = collision_events_json(stopped);
+        let started = collision_events_json(started, dimension);
+        let stopped = collision_events_json(stopped, dimension);
         self.eval(&format!(
-            "for (const event of {started}) {{ if (typeof onCollisionEnter === 'function') onCollisionEnter(event); }}\
-             for (const event of {stopped}) {{ if (typeof onCollisionExit === 'function') onCollisionExit(event); }}"
+            "for (const event of {started}) {{ if (typeof {enter_callback} === 'function') {enter_callback}(event); }}\
+             for (const event of {stopped}) {{ if (typeof {exit_callback} === 'function') {exit_callback}(event); }}"
         ))
     }
 
@@ -192,7 +248,7 @@ impl ScriptHost {
     }
 }
 
-fn collision_events_json(pairs: &[(u64, u64)]) -> JsonValue {
+fn collision_events_json(pairs: &[(u64, u64)], dimension: &str) -> JsonValue {
     JsonValue::Array(
         pairs
             .iter()
@@ -200,6 +256,7 @@ fn collision_events_json(pairs: &[(u64, u64)]) -> JsonValue {
                 serde_json::json!({
                     "firstEntity": first.to_string(),
                     "secondEntity": second.to_string(),
+                    "dimension": dimension,
                 })
             })
             .collect(),
@@ -571,9 +628,33 @@ mod tests {
             if (entered.length !== 1 || entered[0].firstEntity !== "9007199254740993" || entered[0].secondEntity !== "42") {
               throw new Error("collision enter event lost entity precision");
             }
+            if (entered[0].dimension !== "3d") throw new Error("collision dimension missing");
             if (exited.length !== 1 || exited[0].secondEntity !== "9007199254740995") {
               throw new Error("collision exit event missing");
             }
+            "#,
+        )
+        .unwrap();
+    }
+
+    #[test]
+    fn scripts_receive_separate_2d_collision_and_trigger_hooks() {
+        let mut host = ScriptHost::new().unwrap();
+        host.eval(
+            r#"
+            var collision2D = [];
+            var trigger2D = [];
+            function onCollisionEnter2D(event) { collision2D.push(event); }
+            function onTriggerEnter2D(event) { trigger2D.push(event); }
+            "#,
+        )
+        .unwrap();
+        host.notify_collision_events_2d(&[(7, 8)], &[]).unwrap();
+        host.notify_trigger_events_2d(&[(9, 10)], &[]).unwrap();
+        host.eval(
+            r#"
+            if (collision2D.length !== 1 || collision2D[0].dimension !== "2d") throw new Error("2D collision hook missing");
+            if (trigger2D.length !== 1 || trigger2D[0].firstEntity !== "9") throw new Error("2D trigger hook missing");
             "#,
         )
         .unwrap();

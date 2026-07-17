@@ -10,7 +10,7 @@ use mengine_core::generated::{
     SpotLight, TabView, Toggle, Transform,
 };
 use mengine_core::{Entity, TransformHierarchy, World};
-use mengine_physics::PhysicsWorld;
+use mengine_physics::{PhysicsWorld, PhysicsWorld2D};
 use mengine_platform::InputState;
 use mengine_rhi::{
     look_at, orthographic, perspective, DirectionalLightData, FrameCamera, FrameLighting,
@@ -100,6 +100,7 @@ struct App {
     materials: RuntimeMaterialCache,
     meshes: RuntimeMeshCache,
     physics: PhysicsWorld,
+    physics_2d: PhysicsWorld2D,
     scenes: SceneManager,
     loaded_scene: Option<LoadedScene>,
 }
@@ -150,6 +151,7 @@ impl App {
             materials,
             meshes,
             physics: PhysicsWorld::default(),
+            physics_2d: PhysicsWorld2D::default(),
             scenes,
             loaded_scene: None,
         }
@@ -281,6 +283,7 @@ impl App {
                 self.animations = AnimationRuntime::new(self.args.project_root.clone());
                 self.audio.clear();
                 self.physics.clear();
+                self.physics_2d.clear();
                 if let Some(window) = &self.window {
                     window.set_ime_allowed(false);
                 }
@@ -1224,6 +1227,12 @@ function onTick(dt, frame) {
                 let fixed_delta = self.world.time.fixed_delta;
                 let mut collision_started = Vec::new();
                 let mut collision_stopped = Vec::new();
+                let mut trigger_started = Vec::new();
+                let mut trigger_stopped = Vec::new();
+                let mut collision_started_2d = Vec::new();
+                let mut collision_stopped_2d = Vec::new();
+                let mut trigger_started_2d = Vec::new();
+                let mut trigger_stopped_2d = Vec::new();
 
                 for _ in 0..steps {
                     self.angle += fixed_delta;
@@ -1243,6 +1252,44 @@ function onTick(dt, frame) {
                     collision_stopped.extend(
                         events
                             .stopped
+                            .into_iter()
+                            .map(|pair| (pair.first.to_u64(), pair.second.to_u64())),
+                    );
+                    trigger_started.extend(
+                        events
+                            .trigger_started
+                            .into_iter()
+                            .map(|pair| (pair.first.to_u64(), pair.second.to_u64())),
+                    );
+                    trigger_stopped.extend(
+                        events
+                            .trigger_stopped
+                            .into_iter()
+                            .map(|pair| (pair.first.to_u64(), pair.second.to_u64())),
+                    );
+
+                    let events_2d = self.physics_2d.step(&mut self.world, fixed_delta);
+                    collision_started_2d.extend(
+                        events_2d
+                            .started
+                            .into_iter()
+                            .map(|pair| (pair.first.to_u64(), pair.second.to_u64())),
+                    );
+                    collision_stopped_2d.extend(
+                        events_2d
+                            .stopped
+                            .into_iter()
+                            .map(|pair| (pair.first.to_u64(), pair.second.to_u64())),
+                    );
+                    trigger_started_2d.extend(
+                        events_2d
+                            .trigger_started
+                            .into_iter()
+                            .map(|pair| (pair.first.to_u64(), pair.second.to_u64())),
+                    );
+                    trigger_stopped_2d.extend(
+                        events_2d
+                            .trigger_stopped
                             .into_iter()
                             .map(|pair| (pair.first.to_u64(), pair.second.to_u64())),
                     );
@@ -1289,6 +1336,21 @@ function onTick(dt, frame) {
                         script.notify_collision_events(&collision_started, &collision_stopped)
                     {
                         log::error!("physics callback failed: {error}");
+                    }
+                    if let Err(error) =
+                        script.notify_trigger_events(&trigger_started, &trigger_stopped)
+                    {
+                        log::error!("3D trigger callback failed: {error}");
+                    }
+                    if let Err(error) = script
+                        .notify_collision_events_2d(&collision_started_2d, &collision_stopped_2d)
+                    {
+                        log::error!("2D physics callback failed: {error}");
+                    }
+                    if let Err(error) =
+                        script.notify_trigger_events_2d(&trigger_started_2d, &trigger_stopped_2d)
+                    {
+                        log::error!("2D trigger callback failed: {error}");
                     }
                     if let Err(error) = script.tick(&mut self.world, dt) {
                         log::error!("script tick failed: {error}");

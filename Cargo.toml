@@ -60,6 +60,7 @@ rayon      = "1"
 parking_lot = "0.12"
 uuid       = { version = "1", features = ["v4", "serde"] }
 rapier3d   = "0.34"
+rapier2d   = "0.34"
 kira       = "0.12.2"
 mint       = "0.5"
 

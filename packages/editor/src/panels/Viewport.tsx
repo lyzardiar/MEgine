@@ -18,7 +18,9 @@ import { clearModelPreview, modelPreview } from '../modelPreview';
 import {
   drawCamera2DGizmo,
   drawCameraGizmo,
+  drawBoxCollider2DGizmo,
   drawBoxColliderGizmo,
+  drawCircleCollider2DGizmo,
   drawDirectionalLightGizmo,
   drawPointLightGizmo,
   drawSphereColliderGizmo,
@@ -753,7 +755,11 @@ export function Viewport(props: {
           !!e.components.PointLight ||
           !!e.components.SpotLight ||
           (e.name ?? '').toLowerCase().includes('light');
-        const hasCollider = !!e.components.BoxCollider3D || !!e.components.SphereCollider3D;
+        const hasCollider =
+          !!e.components.BoxCollider3D ||
+          !!e.components.SphereCollider3D ||
+          !!e.components.BoxCollider2D ||
+          !!e.components.CircleCollider2D;
         if (!pr && !camComp && !isLight && !hasCollider) return null;
         return {
           e,
@@ -981,8 +987,16 @@ export function Viewport(props: {
         const sphere = e.components.SphereCollider3D as
           | { radius?: number; center?: number[]; is_trigger?: boolean }
           | undefined;
+        const box2D = e.components.BoxCollider2D as
+          | { size?: number[]; offset?: number[]; is_trigger?: boolean }
+          | undefined;
+        const circle2D = e.components.CircleCollider2D as
+          | { radius?: number; offset?: number[]; is_trigger?: boolean }
+          | undefined;
         if (box) drawBoxColliderGizmo(ctx, cam, vp, t, box);
         if (sphere) drawSphereColliderGizmo(ctx, cam, vp, t, sphere);
+        if (box2D) drawBoxCollider2DGizmo(ctx, cam, vp, t, box2D);
+        if (circle2D) drawCircleCollider2DGizmo(ctx, cam, vp, t, circle2D);
       }
     }
 

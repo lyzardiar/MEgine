@@ -184,6 +184,38 @@ component SphereCollider3D {
   restitution: float  = 0
 }
 
+/// Unity-style planar rigid body simulated by Rapier2D. angular_velocity is degrees/second.
+component Rigidbody2D {
+  /// "dynamic" | "fixed" | "kinematic"
+  body_type:        string = "dynamic"
+  mass:             float  = 1
+  gravity_scale:    float  = 1
+  linear_damping:   float  = 0.05
+  angular_damping:  float  = 0.05
+  velocity:         float2 = [0, 0]
+  angular_velocity: float  = 0
+  freeze_rotation:  bool   = false
+  ccd:              bool   = false
+}
+
+/// Local 2D box collision or trigger shape. A collider without Rigidbody2D is fixed.
+component BoxCollider2D {
+  size:        float2 = [1, 1]
+  offset:      float2 = [0, 0]
+  is_trigger:  bool   = false
+  friction:    float  = 0.5
+  bounciness:  float  = 0
+}
+
+/// Local 2D circle collision or trigger shape. A collider without Rigidbody2D is fixed.
+component CircleCollider2D {
+  radius:      float  = 0.5
+  offset:      float2 = [0, 0]
+  is_trigger:  bool   = false
+  friction:    float  = 0.5
+  bounciness:  float  = 0
+}
+
 component Layer {
   value: int = 0
 }

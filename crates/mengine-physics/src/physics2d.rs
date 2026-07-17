@@ -1,116 +1,73 @@
-//! Rapier-backed 2D and 3D rigid-body simulation synchronized with MEngine ECS components.
-
-mod physics2d;
-
-pub use physics2d::PhysicsWorld2D;
-
-use mengine_core::generated::{BoxCollider3D, RigidBody3D, SphereCollider3D, Transform};
+use super::{body_kind, pair_transitions, BodyKind, CollisionPair, PhysicsStepEvents};
+use glam::{Quat, Vec3};
+use mengine_core::generated::{BoxCollider2D, CircleCollider2D, Rigidbody2D, Transform};
 use mengine_core::{Entity, TransformHierarchy, World};
-use rapier3d::prelude::PhysicsWorld as RapierWorld;
-use rapier3d::prelude::{
+use rapier2d::prelude::PhysicsWorld as RapierWorld;
+use rapier2d::prelude::{
     ColliderBuilder, ColliderHandle, Pose, RigidBodyBuilder, RigidBodyHandle, RigidBodyType,
-    Rotation, Vec3,
+    Rotation, Vec2,
 };
 use std::collections::{HashMap, HashSet};
 
-#[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]
-pub struct CollisionPair {
-    pub first: Entity,
-    pub second: Entity,
-}
-
-impl CollisionPair {
-    fn new(left: Entity, right: Entity) -> Self {
-        if left.to_u64() <= right.to_u64() {
-            Self {
-                first: left,
-                second: right,
-            }
-        } else {
-            Self {
-                first: right,
-                second: left,
-            }
-        }
-    }
-}
-
-#[derive(Clone, Debug, Default, Eq, PartialEq)]
-pub struct PhysicsStepEvents {
-    /// Non-sensor contact pairs that started during this step.
-    pub started: Vec<CollisionPair>,
-    /// Non-sensor contact pairs that stopped during this step.
-    pub stopped: Vec<CollisionPair>,
-    /// Sensor intersection pairs that started during this step.
-    pub trigger_started: Vec<CollisionPair>,
-    /// Sensor intersection pairs that stopped during this step.
-    pub trigger_stopped: Vec<CollisionPair>,
-}
-
-#[derive(Clone, Copy, Debug, Eq, PartialEq)]
-enum BodyKind {
-    Dynamic,
-    Fixed,
-    Kinematic,
-}
-
 #[derive(Clone, Debug, PartialEq)]
-struct BodySignature {
+struct BodySignature2D {
     kind: BodyKind,
     mass: f32,
     gravity_scale: f32,
     linear_damping: f32,
     angular_damping: f32,
-    lock_rotation: bool,
+    freeze_rotation: bool,
     ccd: bool,
-    scale: [f32; 3],
-    box_collider: Option<BoxColliderSignature>,
-    sphere_collider: Option<SphereColliderSignature>,
+    scale: [f32; 2],
+    box_collider: Option<BoxColliderSignature2D>,
+    circle_collider: Option<CircleColliderSignature2D>,
 }
 
 #[derive(Clone, Debug, PartialEq)]
-struct BoxColliderSignature {
-    size: [f32; 3],
-    center: [f32; 3],
+struct BoxColliderSignature2D {
+    size: [f32; 2],
+    offset: [f32; 2],
     is_trigger: bool,
     friction: f32,
-    restitution: f32,
+    bounciness: f32,
 }
 
 #[derive(Clone, Debug, PartialEq)]
-struct SphereColliderSignature {
+struct CircleColliderSignature2D {
     radius: f32,
-    center: [f32; 3],
+    offset: [f32; 2],
     is_trigger: bool,
     friction: f32,
-    restitution: f32,
+    bounciness: f32,
 }
 
-struct BodyDefinition {
+struct BodyDefinition2D {
     transform: Transform,
-    rigid_body: Option<RigidBody3D>,
-    signature: BodySignature,
+    rigid_body: Option<Rigidbody2D>,
+    signature: BodySignature2D,
 }
 
-struct BodyEntry {
+struct BodyEntry2D {
     handle: RigidBodyHandle,
-    signature: BodySignature,
+    signature: BodySignature2D,
 }
 
-pub struct PhysicsWorld {
+/// Independent planar physics world. It reads/writes the XY plane of `Transform`,
+/// preserves world Z, and converts Unity-style angular velocity degrees to Rapier radians.
+pub struct PhysicsWorld2D {
     rapier: RapierWorld,
-    bodies: HashMap<Entity, BodyEntry>,
+    bodies: HashMap<Entity, BodyEntry2D>,
     active_collision_pairs: HashSet<CollisionPair>,
     active_trigger_pairs: HashSet<CollisionPair>,
 }
 
-impl Default for PhysicsWorld {
+impl Default for PhysicsWorld2D {
     fn default() -> Self {
         Self::new()
     }
 }
 
-impl PhysicsWorld {
+impl PhysicsWorld2D {
     pub fn new() -> Self {
         Self {
             rapier: RapierWorld::new(),
@@ -120,12 +77,8 @@ impl PhysicsWorld {
         }
     }
 
-    pub fn set_gravity(&mut self, gravity: [f32; 3]) {
-        self.rapier.gravity = Vec3::new(
-            finite_or(gravity[0], 0.0),
-            finite_or(gravity[1], -9.81),
-            finite_or(gravity[2], 0.0),
-        );
+    pub fn set_gravity(&mut self, gravity: [f32; 2]) {
+        self.rapier.gravity = Vec2::new(finite_or(gravity[0], 0.0), finite_or(gravity[1], -9.81));
     }
 
     pub fn body_count(&self) -> usize {
@@ -162,7 +115,7 @@ impl PhysicsWorld {
         self.collect_events()
     }
 
-    fn remove_stale_bodies(&mut self, definitions: &HashMap<Entity, BodyDefinition>) {
+    fn remove_stale_bodies(&mut self, definitions: &HashMap<Entity, BodyDefinition2D>) {
         let stale: Vec<_> = self
             .bodies
             .keys()
@@ -180,7 +133,7 @@ impl PhysicsWorld {
         }
     }
 
-    fn insert_body(&mut self, entity: Entity, definition: &BodyDefinition) {
+    fn insert_body(&mut self, entity: Entity, definition: &BodyDefinition2D) {
         let rigid_body = definition.rigid_body.as_ref();
         let kind = definition.signature.kind;
         let body_type = match kind {
@@ -188,18 +141,18 @@ impl PhysicsWorld {
             BodyKind::Fixed => RigidBodyType::Fixed,
             BodyKind::Kinematic => RigidBodyType::KinematicPositionBased,
         };
-        let velocity = rigid_body.map_or([0.0; 3], |body| finite_vec3(body.velocity, [0.0; 3]));
-        let angular_velocity = rigid_body.map_or([0.0; 3], |body| {
-            finite_vec3(body.angular_velocity, [0.0; 3])
-        });
+        let velocity = rigid_body.map_or([0.0; 2], |body| finite_vec2(body.velocity, [0.0; 2]));
+        let angular_velocity = if definition.signature.freeze_rotation {
+            0.0
+        } else {
+            rigid_body.map_or(0.0, |body| {
+                finite_or(body.angular_velocity, 0.0).to_radians()
+            })
+        };
         let mut builder = RigidBodyBuilder::new(body_type)
             .pose(transform_pose(&definition.transform))
-            .linvel(Vec3::new(velocity[0], velocity[1], velocity[2]))
-            .angvel(Vec3::new(
-                angular_velocity[0],
-                angular_velocity[1],
-                angular_velocity[2],
-            ))
+            .linvel(Vec2::new(velocity[0], velocity[1]))
+            .angvel(angular_velocity)
             .gravity_scale(definition.signature.gravity_scale)
             .linear_damping(definition.signature.linear_damping)
             .angular_damping(definition.signature.angular_damping)
@@ -208,66 +161,56 @@ impl PhysicsWorld {
         if kind == BodyKind::Dynamic {
             builder = builder.additional_mass(definition.signature.mass);
         }
-        if definition.signature.lock_rotation {
+        if definition.signature.freeze_rotation {
             builder = builder.lock_rotations();
         }
         let handle = self.rapier.insert_body(builder);
+
         if let Some(collider) = definition.signature.box_collider.as_ref() {
             let scale = definition.signature.scale;
             let half = [
                 (collider.size[0] * scale[0]).abs().max(0.001) * 0.5,
                 (collider.size[1] * scale[1]).abs().max(0.001) * 0.5,
-                (collider.size[2] * scale[2]).abs().max(0.001) * 0.5,
             ];
-            let center = [
-                collider.center[0] * scale[0],
-                collider.center[1] * scale[1],
-                collider.center[2] * scale[2],
-            ];
-            let collider_handle = self.rapier.insert_collider(
+            let offset = [collider.offset[0] * scale[0], collider.offset[1] * scale[1]];
+            self.rapier.insert_collider(
                 configure_collider(
-                    ColliderBuilder::cuboid(half[0], half[1], half[2]),
-                    center,
+                    ColliderBuilder::cuboid(half[0], half[1]),
+                    offset,
                     collider.is_trigger,
                     collider.friction,
-                    collider.restitution,
+                    collider.bounciness,
                     entity,
                 ),
                 Some(handle),
             );
-            let _ = collider_handle;
         }
-        if let Some(collider) = definition.signature.sphere_collider.as_ref() {
+        if let Some(collider) = definition.signature.circle_collider.as_ref() {
             let scale = definition.signature.scale;
-            let radius = collider.radius * scale[0].abs().max(scale[1].abs()).max(scale[2].abs());
-            let center = [
-                collider.center[0] * scale[0],
-                collider.center[1] * scale[1],
-                collider.center[2] * scale[2],
-            ];
-            let collider_handle = self.rapier.insert_collider(
+            let radius = collider.radius * scale[0].abs().max(scale[1].abs());
+            let offset = [collider.offset[0] * scale[0], collider.offset[1] * scale[1]];
+            self.rapier.insert_collider(
                 configure_collider(
                     ColliderBuilder::ball(radius.max(0.001)),
-                    center,
+                    offset,
                     collider.is_trigger,
                     collider.friction,
-                    collider.restitution,
+                    collider.bounciness,
                     entity,
                 ),
                 Some(handle),
             );
-            let _ = collider_handle;
         }
         self.bodies.insert(
             entity,
-            BodyEntry {
+            BodyEntry2D {
                 handle,
                 signature: definition.signature.clone(),
             },
         );
     }
 
-    fn sync_body_input(&mut self, entity: Entity, definition: &BodyDefinition) {
+    fn sync_body_input(&mut self, entity: Entity, definition: &BodyDefinition2D) {
         let Some(entry) = self.bodies.get(&entity) else {
             return;
         };
@@ -286,14 +229,17 @@ impl PhysicsWorld {
             }
             BodyKind::Dynamic => {
                 if let Some(component) = definition.rigid_body.as_ref() {
-                    let velocity = finite_vec3(component.velocity, [0.0; 3]);
-                    let velocity = Vec3::new(velocity[0], velocity[1], velocity[2]);
+                    let velocity = finite_vec2(component.velocity, [0.0; 2]);
+                    let velocity = Vec2::new(velocity[0], velocity[1]);
                     if (body.linvel() - velocity).length_squared() > 0.0000001 {
                         body.set_linvel(velocity, true);
                     }
-                    let angular = finite_vec3(component.angular_velocity, [0.0; 3]);
-                    let angular = Vec3::new(angular[0], angular[1], angular[2]);
-                    if (body.angvel() - angular).length_squared() > 0.0000001 {
+                    let angular = if definition.signature.freeze_rotation {
+                        0.0
+                    } else {
+                        finite_or(component.angular_velocity, 0.0).to_radians()
+                    };
+                    if (body.angvel() - angular).abs() > 0.0000001 {
                         body.set_angvel(angular, true);
                     }
                 }
@@ -310,18 +256,24 @@ impl PhysicsWorld {
                 continue;
             };
             let translation = body.translation();
-            let rotation = body.rotation();
+            let angle = body.rotation().angle();
+            let world_z = hierarchy
+                .get(*entity)
+                .map_or(0.0, |transform| transform.position.z);
+            let world_position = Vec3::new(translation.x, translation.y, world_z);
+            let world_rotation = Quat::from_rotation_z(angle);
             let parent_world = hierarchy.parent_world(world, *entity);
             let (local_position, local_rotation) = parent_world.map_or(
                 (
-                    [translation.x, translation.y, translation.z],
-                    [rotation.x, rotation.y, rotation.z, rotation.w],
+                    world_position.to_array(),
+                    [
+                        world_rotation.x,
+                        world_rotation.y,
+                        world_rotation.z,
+                        world_rotation.w,
+                    ],
                 ),
                 |parent| {
-                    let mut world_position = parent.position;
-                    world_position.x = translation.x;
-                    world_position.y = translation.y;
-                    world_position.z = translation.z;
                     let determinant = parent.matrix.determinant();
                     let local_position = if determinant.is_finite() && determinant.abs() > 0.000001
                     {
@@ -329,11 +281,6 @@ impl PhysicsWorld {
                     } else {
                         world_position
                     };
-                    let mut world_rotation = parent.rotation;
-                    world_rotation.x = rotation.x;
-                    world_rotation.y = rotation.y;
-                    world_rotation.z = rotation.z;
-                    world_rotation.w = rotation.w;
                     let local_rotation = (parent.rotation.conjugate() * world_rotation).normalize();
                     (
                         local_position.to_array(),
@@ -350,11 +297,10 @@ impl PhysicsWorld {
                 transform.position = local_position;
                 transform.rotation = local_rotation;
             }
-            if let Some(component) = world.get_component_mut::<RigidBody3D>(*entity) {
+            if let Some(component) = world.get_component_mut::<Rigidbody2D>(*entity) {
                 let velocity = body.linvel();
-                let angular = body.angvel();
-                component.velocity = [velocity.x, velocity.y, velocity.z];
-                component.angular_velocity = [angular.x, angular.y, angular.z];
+                component.velocity = [velocity.x, velocity.y];
+                component.angular_velocity = body.angvel().to_degrees();
             }
         }
     }
@@ -402,36 +348,24 @@ impl PhysicsWorld {
     }
 }
 
-fn pair_transitions(
-    current: &HashSet<CollisionPair>,
-    active: &mut HashSet<CollisionPair>,
-) -> (Vec<CollisionPair>, Vec<CollisionPair>) {
-    let mut started: Vec<_> = current.difference(active).copied().collect();
-    let mut stopped: Vec<_> = active.difference(current).copied().collect();
-    started.sort_by_key(|pair| (pair.first.to_u64(), pair.second.to_u64()));
-    stopped.sort_by_key(|pair| (pair.first.to_u64(), pair.second.to_u64()));
-    active.clone_from(current);
-    (started, stopped)
-}
-
 fn collect_definitions(
     world: &World,
     hierarchy: &TransformHierarchy,
-) -> HashMap<Entity, BodyDefinition> {
+) -> HashMap<Entity, BodyDefinition2D> {
     world
         .iter_entities()
         .filter_map(|entity| {
             let transform = hierarchy.get(entity)?.to_transform();
-            let rigid_body = world.get_component::<RigidBody3D>(entity).cloned();
-            let box_collider = world.get_component::<BoxCollider3D>(entity).cloned();
-            let sphere_collider = world.get_component::<SphereCollider3D>(entity).cloned();
-            if rigid_body.is_none() && box_collider.is_none() && sphere_collider.is_none() {
+            let rigid_body = world.get_component::<Rigidbody2D>(entity).cloned();
+            let box_collider = world.get_component::<BoxCollider2D>(entity).cloned();
+            let circle_collider = world.get_component::<CircleCollider2D>(entity).cloned();
+            if rigid_body.is_none() && box_collider.is_none() && circle_collider.is_none() {
                 return None;
             }
             let kind = rigid_body
                 .as_ref()
                 .map_or(BodyKind::Fixed, |body| body_kind(&body.body_type));
-            let signature = BodySignature {
+            let signature = BodySignature2D {
                 kind,
                 mass: rigid_body
                     .as_ref()
@@ -445,15 +379,15 @@ fn collect_definitions(
                 angular_damping: rigid_body
                     .as_ref()
                     .map_or(0.0, |body| finite_or(body.angular_damping, 0.05).max(0.0)),
-                lock_rotation: rigid_body.as_ref().is_some_and(|body| body.lock_rotation),
+                freeze_rotation: rigid_body.as_ref().is_some_and(|body| body.freeze_rotation),
                 ccd: rigid_body.as_ref().is_some_and(|body| body.ccd),
-                scale: finite_vec3(transform.scale, [1.0; 3]),
+                scale: finite_vec2([transform.scale[0], transform.scale[1]], [1.0; 2]),
                 box_collider: box_collider.map(normalize_box_collider),
-                sphere_collider: sphere_collider.map(normalize_sphere_collider),
+                circle_collider: circle_collider.map(normalize_circle_collider),
             };
             Some((
                 entity,
-                BodyDefinition {
+                BodyDefinition2D {
                     transform,
                     rigid_body,
                     signature,
@@ -463,63 +397,63 @@ fn collect_definitions(
         .collect()
 }
 
-fn body_kind(value: &str) -> BodyKind {
-    if value.eq_ignore_ascii_case("fixed") || value.eq_ignore_ascii_case("static") {
-        BodyKind::Fixed
-    } else if value.eq_ignore_ascii_case("kinematic") {
-        BodyKind::Kinematic
-    } else {
-        BodyKind::Dynamic
-    }
-}
-
-fn normalize_box_collider(value: BoxCollider3D) -> BoxColliderSignature {
-    BoxColliderSignature {
-        size: finite_vec3(value.size, [1.0; 3]),
-        center: finite_vec3(value.center, [0.0; 3]),
+fn normalize_box_collider(value: BoxCollider2D) -> BoxColliderSignature2D {
+    BoxColliderSignature2D {
+        size: finite_vec2(value.size, [1.0; 2]),
+        offset: finite_vec2(value.offset, [0.0; 2]),
         is_trigger: value.is_trigger,
         friction: finite_or(value.friction, 0.5).max(0.0),
-        restitution: finite_or(value.restitution, 0.0).clamp(0.0, 1.0),
+        bounciness: finite_or(value.bounciness, 0.0).clamp(0.0, 1.0),
     }
 }
 
-fn normalize_sphere_collider(value: SphereCollider3D) -> SphereColliderSignature {
-    SphereColliderSignature {
+fn normalize_circle_collider(value: CircleCollider2D) -> CircleColliderSignature2D {
+    CircleColliderSignature2D {
         radius: finite_or(value.radius, 0.5).abs().max(0.001),
-        center: finite_vec3(value.center, [0.0; 3]),
+        offset: finite_vec2(value.offset, [0.0; 2]),
         is_trigger: value.is_trigger,
         friction: finite_or(value.friction, 0.5).max(0.0),
-        restitution: finite_or(value.restitution, 0.0).clamp(0.0, 1.0),
+        bounciness: finite_or(value.bounciness, 0.0).clamp(0.0, 1.0),
     }
 }
 
 fn configure_collider(
     builder: ColliderBuilder,
-    center: [f32; 3],
+    offset: [f32; 2],
     is_trigger: bool,
     friction: f32,
-    restitution: f32,
+    bounciness: f32,
     entity: Entity,
 ) -> ColliderBuilder {
     builder
-        .translation(Vec3::new(center[0], center[1], center[2]))
+        .translation(Vec2::new(offset[0], offset[1]))
         .sensor(is_trigger)
         .friction(friction)
-        .restitution(restitution)
+        .restitution(bounciness)
         .density(0.0)
         .user_data(entity.to_u64() as u128)
 }
 
 fn transform_pose(transform: &Transform) -> Pose {
-    let position = finite_vec3(transform.position, [0.0; 3]);
-    let rotation = finite_vec4(transform.rotation, [0.0, 0.0, 0.0, 1.0]);
-    let quaternion = Rotation::from_xyzw(rotation[0], rotation[1], rotation[2], rotation[3]);
-    let rotation = if quaternion.length_squared() > 0.000001 {
-        quaternion.normalize()
-    } else {
-        Rotation::IDENTITY
-    };
-    Pose::from_parts(Vec3::new(position[0], position[1], position[2]), rotation)
+    let position = finite_vec2([transform.position[0], transform.position[1]], [0.0; 2]);
+    let angle = planar_angle(transform.rotation);
+    Pose::from_parts(Vec2::new(position[0], position[1]), Rotation::new(angle))
+}
+
+fn planar_angle(rotation: [f32; 4]) -> f32 {
+    let [x, y, z, w] = rotation.map(|value| finite_or(value, 0.0));
+    let length_squared = x * x + y * y + z * z + w * w;
+    if length_squared <= 0.000001 {
+        return 0.0;
+    }
+    let inverse_length = length_squared.sqrt().recip();
+    let (x, y, z, w) = (
+        x * inverse_length,
+        y * inverse_length,
+        z * inverse_length,
+        w * inverse_length,
+    );
+    (2.0 * (w * z + x * y)).atan2(1.0 - 2.0 * (y * y + z * z))
 }
 
 fn finite_or(value: f32, fallback: f32) -> f32 {
@@ -530,34 +464,23 @@ fn finite_or(value: f32, fallback: f32) -> f32 {
     }
 }
 
-fn finite_vec3(value: [f32; 3], fallback: [f32; 3]) -> [f32; 3] {
+fn finite_vec2(value: [f32; 2], fallback: [f32; 2]) -> [f32; 2] {
     [
         finite_or(value[0], fallback[0]),
         finite_or(value[1], fallback[1]),
-        finite_or(value[2], fallback[2]),
-    ]
-}
-
-fn finite_vec4(value: [f32; 4], fallback: [f32; 4]) -> [f32; 4] {
-    [
-        finite_or(value[0], fallback[0]),
-        finite_or(value[1], fallback[1]),
-        finite_or(value[2], fallback[2]),
-        finite_or(value[3], fallback[3]),
     ]
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
-    use mengine_core::Parent;
 
     fn spawn_body(
         world: &mut World,
         position: [f32; 3],
-        rigid_body: Option<RigidBody3D>,
-        box_collider: Option<BoxCollider3D>,
-        sphere_collider: Option<SphereCollider3D>,
+        rigid_body: Option<Rigidbody2D>,
+        box_collider: Option<BoxCollider2D>,
+        circle_collider: Option<CircleCollider2D>,
     ) -> Entity {
         let entity = world.spawn_empty();
         world.insert_component(
@@ -573,33 +496,33 @@ mod tests {
         if let Some(component) = box_collider {
             world.insert_component(entity, component);
         }
-        if let Some(component) = sphere_collider {
+        if let Some(component) = circle_collider {
             world.insert_component(entity, component);
         }
         entity
     }
 
     #[test]
-    fn dynamic_sphere_falls_and_settles_on_an_implicit_fixed_collider() {
+    fn dynamic_circle_falls_on_implicit_fixed_box_and_preserves_z() {
         let mut world = World::new();
         let ground = spawn_body(
             &mut world,
-            [0.0, -0.5, 0.0],
+            [0.0, -0.5, 4.0],
             None,
-            Some(BoxCollider3D {
-                size: [20.0, 1.0, 20.0],
-                ..BoxCollider3D::default()
+            Some(BoxCollider2D {
+                size: [20.0, 1.0],
+                ..BoxCollider2D::default()
             }),
             None,
         );
         let ball = spawn_body(
             &mut world,
-            [0.0, 3.0, 0.0],
-            Some(RigidBody3D::default()),
+            [0.0, 3.0, 4.0],
+            Some(Rigidbody2D::default()),
             None,
-            Some(SphereCollider3D::default()),
+            Some(CircleCollider2D::default()),
         );
-        let mut physics = PhysicsWorld::new();
+        let mut physics = PhysicsWorld2D::new();
         let mut collided = false;
         for _ in 0..240 {
             let events = physics.step(&mut world, 1.0 / 60.0);
@@ -612,37 +535,38 @@ mod tests {
             "{:?}",
             transform.position
         );
+        assert_eq!(transform.position[2], 4.0);
         assert_eq!(physics.body_count(), 2);
         assert_eq!(physics.collider_count(), 2);
     }
 
     #[test]
-    fn triggers_report_enter_and_exit_without_blocking_motion() {
+    fn sensor_reports_trigger_enter_and_exit_without_blocking() {
         let mut world = World::new();
         let trigger = spawn_body(
             &mut world,
-            [0.0, 0.0, 0.0],
+            [0.0; 3],
             None,
-            Some(BoxCollider3D {
-                size: [2.0; 3],
+            Some(BoxCollider2D {
+                size: [2.0; 2],
                 is_trigger: true,
-                ..BoxCollider3D::default()
+                ..BoxCollider2D::default()
             }),
             None,
         );
         let moving = spawn_body(
             &mut world,
             [-3.0, 0.0, 0.0],
-            Some(RigidBody3D {
+            Some(Rigidbody2D {
                 gravity_scale: 0.0,
-                velocity: [3.0, 0.0, 0.0],
-                ..RigidBody3D::default()
+                velocity: [3.0, 0.0],
+                ..Rigidbody2D::default()
             }),
             None,
-            Some(SphereCollider3D::default()),
+            Some(CircleCollider2D::default()),
         );
         let pair = CollisionPair::new(trigger, moving);
-        let mut physics = PhysicsWorld::new();
+        let mut physics = PhysicsWorld2D::new();
         let mut entered = false;
         let mut exited = false;
         for _ in 0..180 {
@@ -655,84 +579,69 @@ mod tests {
     }
 
     #[test]
-    fn kinematic_body_tracks_authored_transform_and_inactive_entities_are_removed() {
+    fn angular_velocity_uses_unity_degrees_and_can_be_frozen() {
         let mut world = World::new();
-        let entity = spawn_body(
+        let spinning = spawn_body(
             &mut world,
             [0.0; 3],
-            Some(RigidBody3D {
-                body_type: "kinematic".into(),
-                ..RigidBody3D::default()
+            Some(Rigidbody2D {
+                gravity_scale: 0.0,
+                angular_velocity: 180.0,
+                ..Rigidbody2D::default()
             }),
-            Some(BoxCollider3D::default()),
+            Some(BoxCollider2D::default()),
             None,
         );
-        let mut physics = PhysicsWorld::new();
-        physics.step(&mut world, 1.0 / 60.0);
-        world
-            .get_component_mut::<Transform>(entity)
-            .unwrap()
-            .position = [2.0, 1.0, 0.0];
-        physics.step(&mut world, 1.0 / 60.0);
-        assert_eq!(physics.body_count(), 1);
-        world.set_editor_state(entity, 0, false);
-        physics.step(&mut world, 1.0 / 60.0);
-        assert_eq!(physics.body_count(), 0);
-    }
-
-    #[test]
-    fn bodies_below_an_inactive_or_cyclic_hierarchy_are_not_simulated() {
-        let mut world = World::new();
-        let parent = world.spawn_empty();
-        let entity = spawn_body(
+        let frozen = spawn_body(
             &mut world,
-            [0.0; 3],
-            Some(RigidBody3D::default()),
-            Some(BoxCollider3D::default()),
+            [3.0, 0.0, 0.0],
+            Some(Rigidbody2D {
+                gravity_scale: 0.0,
+                angular_velocity: 180.0,
+                freeze_rotation: true,
+                ..Rigidbody2D::default()
+            }),
+            Some(BoxCollider2D::default()),
             None,
         );
-        world.set_parent(entity, Some(parent));
-        world.set_editor_state(parent, 0, false);
-        let mut physics = PhysicsWorld::new();
-        physics.step(&mut world, 1.0 / 60.0);
-        assert_eq!(physics.body_count(), 0);
-
-        world.set_editor_state(parent, 0, true);
-        world.insert_component(parent, Parent { entity });
-        physics.step(&mut world, 1.0 / 60.0);
-        assert_eq!(physics.body_count(), 0);
+        let mut physics = PhysicsWorld2D::new();
+        physics.step(&mut world, 0.1);
+        let spinning_rotation = world.get_component::<Transform>(spinning).unwrap().rotation;
+        let frozen_rotation = world.get_component::<Transform>(frozen).unwrap().rotation;
+        assert!(planar_angle(spinning_rotation).abs() > 0.2);
+        assert!(planar_angle(frozen_rotation).abs() < 0.001);
     }
 
     #[test]
-    fn child_rigid_bodies_simulate_in_world_space_and_write_back_local_space() {
+    fn child_body_simulates_in_world_space_and_writes_local_xy() {
         let mut world = World::new();
         let parent = world.spawn_empty();
         world.insert_component(
             parent,
             Transform {
-                position: [10.0, 0.0, 0.0],
+                position: [10.0, 0.0, 2.0],
                 ..Transform::default()
             },
         );
         spawn_body(
             &mut world,
-            [10.0, -0.5, 0.0],
+            [10.0, -0.5, 2.0],
             None,
-            Some(BoxCollider3D {
-                size: [10.0, 1.0, 10.0],
-                ..BoxCollider3D::default()
+            Some(BoxCollider2D {
+                size: [10.0, 1.0],
+                ..BoxCollider2D::default()
             }),
             None,
         );
         let child = spawn_body(
             &mut world,
             [0.0, 3.0, 0.0],
-            Some(RigidBody3D::default()),
+            Some(Rigidbody2D::default()),
             None,
-            Some(SphereCollider3D::default()),
+            Some(CircleCollider2D::default()),
         );
         world.set_parent(child, Some(parent));
-        let mut physics = PhysicsWorld::new();
+        let mut physics = PhysicsWorld2D::new();
         for _ in 0..240 {
             physics.step(&mut world, 1.0 / 60.0);
         }
@@ -743,5 +652,6 @@ mod tests {
             "{:?}",
             local.position
         );
+        assert!(local.position[2].abs() < 0.001, "{:?}", local.position);
     }
 }

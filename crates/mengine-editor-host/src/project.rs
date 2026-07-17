@@ -531,6 +531,7 @@ interface EngineApi {
 interface PhysicsCollisionInfo {
   readonly firstEntity: string;
   readonly secondEntity: string;
+  readonly dimension: '2d' | '3d';
 }
 
 interface EngineAnimationEventInfo {
@@ -547,6 +548,12 @@ declare function onTick(dt: number, frame: number): void;
 declare function onSceneLoaded(scene: EngineSceneInfo): void;
 declare function onCollisionEnter(event: PhysicsCollisionInfo): void;
 declare function onCollisionExit(event: PhysicsCollisionInfo): void;
+declare function onTriggerEnter(event: PhysicsCollisionInfo): void;
+declare function onTriggerExit(event: PhysicsCollisionInfo): void;
+declare function onCollisionEnter2D(event: PhysicsCollisionInfo): void;
+declare function onCollisionExit2D(event: PhysicsCollisionInfo): void;
+declare function onTriggerEnter2D(event: PhysicsCollisionInfo): void;
+declare function onTriggerExit2D(event: PhysicsCollisionInfo): void;
 declare function onAnimationEvent(event: EngineAnimationEventInfo): void;
 "#,
     )?;

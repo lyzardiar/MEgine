@@ -254,6 +254,39 @@
     ],
     "type": "object"
   },
+  "BoxCollider2D": {
+    "properties": {
+      "bounciness": {
+        "type": "number"
+      },
+      "friction": {
+        "type": "number"
+      },
+      "is_trigger": {
+        "type": "boolean"
+      },
+      "offset": {
+        "items": {
+          "type": "number"
+        },
+        "type": "array"
+      },
+      "size": {
+        "items": {
+          "type": "number"
+        },
+        "type": "array"
+      }
+    },
+    "required": [
+      "size",
+      "offset",
+      "is_trigger",
+      "friction",
+      "bounciness"
+    ],
+    "type": "object"
+  },
   "BoxCollider3D": {
     "properties": {
       "center": {
@@ -432,6 +465,36 @@
       "reference_resolution",
       "match_width_or_height",
       "scale_factor"
+    ],
+    "type": "object"
+  },
+  "CircleCollider2D": {
+    "properties": {
+      "bounciness": {
+        "type": "number"
+      },
+      "friction": {
+        "type": "number"
+      },
+      "is_trigger": {
+        "type": "boolean"
+      },
+      "offset": {
+        "items": {
+          "type": "number"
+        },
+        "type": "array"
+      },
+      "radius": {
+        "type": "number"
+      }
+    },
+    "required": [
+      "radius",
+      "offset",
+      "is_trigger",
+      "friction",
+      "bounciness"
     ],
     "type": "object"
   },
@@ -1436,6 +1499,52 @@
       "velocity",
       "angular_velocity",
       "lock_rotation",
+      "ccd"
+    ],
+    "type": "object"
+  },
+  "Rigidbody2D": {
+    "properties": {
+      "angular_damping": {
+        "type": "number"
+      },
+      "angular_velocity": {
+        "type": "number"
+      },
+      "body_type": {
+        "type": "string"
+      },
+      "ccd": {
+        "type": "boolean"
+      },
+      "freeze_rotation": {
+        "type": "boolean"
+      },
+      "gravity_scale": {
+        "type": "number"
+      },
+      "linear_damping": {
+        "type": "number"
+      },
+      "mass": {
+        "type": "number"
+      },
+      "velocity": {
+        "items": {
+          "type": "number"
+        },
+        "type": "array"
+      }
+    },
+    "required": [
+      "body_type",
+      "mass",
+      "gravity_scale",
+      "linear_damping",
+      "angular_damping",
+      "velocity",
+      "angular_velocity",
+      "freeze_rotation",
       "ccd"
     ],
     "type": "object"

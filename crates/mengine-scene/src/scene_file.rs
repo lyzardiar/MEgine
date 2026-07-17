@@ -471,4 +471,44 @@ mod tests {
         assert_eq!(components["TabView"]["tabs"][0], "Main");
         std::fs::remove_dir_all(dir).unwrap();
     }
+
+    #[test]
+    fn round_trips_typed_2d_physics_components() {
+        let (dir, path) = temp_scene("physics2d.mscene");
+        let mut world = World::new();
+        world.commands.push(WorldCommand::Spawn {
+            name: Some("Physics 2D".into()),
+            components: json!({
+                "Transform": {
+                    "position": [1, 2, 3], "rotation": [0, 0, 0, 1], "scale": [1, 1, 1]
+                },
+                "Rigidbody2D": {
+                    "body_type": "dynamic", "mass": 1.5, "gravity_scale": 0.5,
+                    "velocity": [2, 3], "angular_velocity": 90, "freeze_rotation": false,
+                    "ccd": true
+                },
+                "BoxCollider2D": {
+                    "size": [2, 4], "offset": [0.25, -0.5], "friction": 0.7,
+                    "bounciness": 0.2
+                },
+                "CircleCollider2D": {
+                    "radius": 1.25, "offset": [0.5, 0], "is_trigger": true,
+                    "friction": 0.3, "bounciness": 0.6
+                }
+            }),
+        });
+        world.commit();
+
+        save_scene(&path, "Physics 2D", &world).unwrap();
+        let mut loaded = World::new();
+        load_scene(&path, &mut loaded).unwrap();
+        let snapshot = WorldSnapshot::from_world(&loaded);
+        let components = &snapshot.entities[0].components;
+        assert_eq!(components["Rigidbody2D"]["velocity"], json!([2.0, 3.0]));
+        assert_eq!(components["Rigidbody2D"]["angular_velocity"], 90.0);
+        assert_eq!(components["BoxCollider2D"]["size"], json!([2.0, 4.0]));
+        assert!((components["BoxCollider2D"]["bounciness"].as_f64().unwrap() - 0.2).abs() < 0.0001);
+        assert_eq!(components["CircleCollider2D"]["is_trigger"], true);
+        std::fs::remove_dir_all(dir).unwrap();
+    }
 }

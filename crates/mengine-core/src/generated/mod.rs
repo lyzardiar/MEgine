@@ -775,6 +775,125 @@ impl Component for SphereCollider3D {
     }
 }
 
+#[derive(Clone, Debug, Serialize, Deserialize)]
+#[serde(default)]
+pub struct Rigidbody2D {
+    pub body_type: String,
+    pub mass: f32,
+    pub gravity_scale: f32,
+    pub linear_damping: f32,
+    pub angular_damping: f32,
+    pub velocity: [f32; 2],
+    pub angular_velocity: f32,
+    pub freeze_rotation: bool,
+    pub ccd: bool,
+}
+
+impl Default for Rigidbody2D {
+    fn default() -> Self {
+        Self {
+            body_type: "dynamic".into(),
+            mass: 1.0,
+            gravity_scale: 1.0,
+            linear_damping: 0.05,
+            angular_damping: 0.05,
+            velocity: [0.0, 0.0],
+            angular_velocity: 0.0,
+            freeze_rotation: false,
+            ccd: false,
+        }
+    }
+}
+
+impl Component for Rigidbody2D {
+    fn type_name() -> &'static str {
+        "Rigidbody2D"
+    }
+    fn as_any(&self) -> &dyn std::any::Any {
+        self
+    }
+    fn as_any_mut(&mut self) -> &mut dyn std::any::Any {
+        self
+    }
+    fn to_value(&self) -> serde_json::Value {
+        serde_json::to_value(self).unwrap_or(serde_json::Value::Null)
+    }
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize)]
+#[serde(default)]
+pub struct BoxCollider2D {
+    pub size: [f32; 2],
+    pub offset: [f32; 2],
+    pub is_trigger: bool,
+    pub friction: f32,
+    pub bounciness: f32,
+}
+
+impl Default for BoxCollider2D {
+    fn default() -> Self {
+        Self {
+            size: [1.0, 1.0],
+            offset: [0.0, 0.0],
+            is_trigger: false,
+            friction: 0.5,
+            bounciness: 0.0,
+        }
+    }
+}
+
+impl Component for BoxCollider2D {
+    fn type_name() -> &'static str {
+        "BoxCollider2D"
+    }
+    fn as_any(&self) -> &dyn std::any::Any {
+        self
+    }
+    fn as_any_mut(&mut self) -> &mut dyn std::any::Any {
+        self
+    }
+    fn to_value(&self) -> serde_json::Value {
+        serde_json::to_value(self).unwrap_or(serde_json::Value::Null)
+    }
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize)]
+#[serde(default)]
+pub struct CircleCollider2D {
+    pub radius: f32,
+    pub offset: [f32; 2],
+    pub is_trigger: bool,
+    pub friction: f32,
+    pub bounciness: f32,
+}
+
+impl Default for CircleCollider2D {
+    fn default() -> Self {
+        Self {
+            radius: 0.5,
+            offset: [0.0, 0.0],
+            is_trigger: false,
+            friction: 0.5,
+            bounciness: 0.0,
+        }
+    }
+}
+
+impl Component for CircleCollider2D {
+    fn type_name() -> &'static str {
+        "CircleCollider2D"
+    }
+    fn as_any(&self) -> &dyn std::any::Any {
+        self
+    }
+    fn as_any_mut(&mut self) -> &mut dyn std::any::Any {
+        self
+    }
+    fn to_value(&self) -> serde_json::Value {
+        serde_json::to_value(self).unwrap_or(serde_json::Value::Null)
+    }
+}
+
 #[derive(Clone, Debug, Default, Serialize, Deserialize)]
 #[serde(default)]
 pub struct Layer {
@@ -2038,6 +2157,9 @@ pub mod meta {
         "RigidBody3D",
         "BoxCollider3D",
         "SphereCollider3D",
+        "Rigidbody2D",
+        "BoxCollider2D",
+        "CircleCollider2D",
         "Layer",
         "EditorOnly",
         "AutoRotate",

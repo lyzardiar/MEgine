@@ -3,8 +3,10 @@ name = "mengine-physics"
 version.workspace = true
 edition.workspace = true
 license.workspace = true
-description = "MEngine Rapier 3D physics subsystem"
+description = "MEngine Rapier 2D and 3D physics subsystem"
 
 [dependencies]
 mengine-core.workspace = true
+glam.workspace = true
+rapier2d.workspace = true
 rapier3d.workspace = true

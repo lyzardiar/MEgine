@@ -3,12 +3,12 @@ use crate::component::{Component, ComponentBox, ComponentId, ComponentRegistry};
 use crate::entity::Entity;
 use crate::generated::{
     AnimatedSprite2D, AnimationPlayer, Animator, AspectRatioFitter, AudioListener, AudioMixer,
-    AudioSource, AutoRotate, BoxCollider3D, Button, Camera2D, Camera3D, Canvas, CanvasGroup,
-    CanvasScaler, ContentSizeFitter, DirectionalLight, Dropdown, EditorOnly, Image, InputField,
-    Layer, LayoutGroup, Line2D, ListView, MeshRenderer, Name, Outline, Panel, PbrMaterial,
-    PointLight, ProgressBar, RawImage, RectMask2D, RectTransform, RigidBody3D, ScrollView,
-    Scrollbar, Shadow, Slider, SphereCollider3D, SpotLight, SpriteRenderer, TabView, Text, Toggle,
-    ToggleGroup, Transform, Transform2D,
+    AudioSource, AutoRotate, BoxCollider2D, BoxCollider3D, Button, Camera2D, Camera3D, Canvas,
+    CanvasGroup, CanvasScaler, CircleCollider2D, ContentSizeFitter, DirectionalLight, Dropdown,
+    EditorOnly, Image, InputField, Layer, LayoutGroup, Line2D, ListView, MeshRenderer, Name,
+    Outline, Panel, PbrMaterial, PointLight, ProgressBar, RawImage, RectMask2D, RectTransform,
+    RigidBody3D, Rigidbody2D, ScrollView, Scrollbar, Shadow, Slider, SphereCollider3D, SpotLight,
+    SpriteRenderer, TabView, Text, Toggle, ToggleGroup, Transform, Transform2D,
 };
 use crate::hierarchy::{Children, Parent};
 use crate::schedule::Schedule;
@@ -432,6 +432,15 @@ impl World {
             "SphereCollider3D" | "sphereCollider3D" | "sphereCollider3d" => {
                 self.insert_json_component::<SphereCollider3D>(entity, value);
             }
+            "Rigidbody2D" | "rigidbody2D" | "rigidbody2d" => {
+                self.insert_json_component::<Rigidbody2D>(entity, value);
+            }
+            "BoxCollider2D" | "boxCollider2D" | "boxCollider2d" => {
+                self.insert_json_component::<BoxCollider2D>(entity, value);
+            }
+            "CircleCollider2D" | "circleCollider2D" | "circleCollider2d" => {
+                self.insert_json_component::<CircleCollider2D>(entity, value);
+            }
             "Canvas" | "canvas" => {
                 self.insert_json_component::<Canvas>(entity, value);
             }
@@ -556,6 +565,9 @@ fn canonical_component_name(component: &str) -> &str {
         "RigidBody3D" | "rigidBody3D" | "rigidBody3d" => "RigidBody3D",
         "BoxCollider3D" | "boxCollider3D" | "boxCollider3d" => "BoxCollider3D",
         "SphereCollider3D" | "sphereCollider3D" | "sphereCollider3d" => "SphereCollider3D",
+        "Rigidbody2D" | "rigidbody2D" | "rigidbody2d" => "Rigidbody2D",
+        "BoxCollider2D" | "boxCollider2D" | "boxCollider2d" => "BoxCollider2D",
+        "CircleCollider2D" | "circleCollider2D" | "circleCollider2d" => "CircleCollider2D",
         "Canvas" | "canvas" => "Canvas",
         "CanvasScaler" | "canvasScaler" => "CanvasScaler",
         "CanvasGroup" | "canvasGroup" => "CanvasGroup",

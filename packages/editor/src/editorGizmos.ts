@@ -243,6 +243,18 @@ type SphereColliderData = {
   is_trigger?: boolean;
 };
 
+type BoxCollider2DData = {
+  size?: number[];
+  offset?: number[];
+  is_trigger?: boolean;
+};
+
+type CircleCollider2DData = {
+  radius?: number;
+  offset?: number[];
+  is_trigger?: boolean;
+};
+
 function colliderOrigin(transform: TransformLike, center?: number[]): {
   origin: Vec3;
   right: Vec3;
@@ -327,6 +339,62 @@ export function drawSphereColliderGizmo(
       strokeWorldSeg(ctx, viewCam, vp, previous, current, color, 1.8);
       previous = current;
     }
+  }
+}
+
+/** Selected planar box matching the scaled Rapier2D cuboid. */
+export function drawBoxCollider2DGizmo(
+  ctx: CanvasRenderingContext2D,
+  viewCam: Camera,
+  vp: Vp,
+  transform: TransformLike,
+  collider: BoxCollider2DData,
+) {
+  const offset = collider.offset ?? [0, 0];
+  const { origin, right, up, scale3 } = colliderOrigin(transform, [offset[0] ?? 0, offset[1] ?? 0, 0]);
+  const size = collider.size ?? [1, 1];
+  const half = [
+    Math.max(0.001, Math.abs((Number(size[0]) || 0) * scale3[0])) * 0.5,
+    Math.max(0.001, Math.abs((Number(size[1]) || 0) * scale3[1])) * 0.5,
+  ];
+  const corners: Vec3[] = [
+    add(add(origin, scale(right, -half[0])), scale(up, -half[1])),
+    add(add(origin, scale(right, half[0])), scale(up, -half[1])),
+    add(add(origin, scale(right, half[0])), scale(up, half[1])),
+    add(add(origin, scale(right, -half[0])), scale(up, half[1])),
+  ];
+  const color = collider.is_trigger ? '#ffd76a' : '#68f5d0';
+  for (let i = 0; i < corners.length; i++) {
+    strokeWorldSeg(ctx, viewCam, vp, corners[i], corners[(i + 1) % corners.length], color, 2);
+  }
+}
+
+/** Selected planar circle matching the max-XY scaled Rapier2D ball. */
+export function drawCircleCollider2DGizmo(
+  ctx: CanvasRenderingContext2D,
+  viewCam: Camera,
+  vp: Vp,
+  transform: TransformLike,
+  collider: CircleCollider2DData,
+) {
+  const offset = collider.offset ?? [0, 0];
+  const { origin, right, up, scale3 } = colliderOrigin(transform, [offset[0] ?? 0, offset[1] ?? 0, 0]);
+  const authoredRadius = Number(collider.radius);
+  const radius = Math.max(
+    0.001,
+    Math.abs(Number.isFinite(authoredRadius) ? authoredRadius : 0.5)
+      * Math.max(Math.abs(scale3[0]), Math.abs(scale3[1])),
+  );
+  const color = collider.is_trigger ? '#ffd76a' : '#68f5d0';
+  let previous = add(origin, scale(right, radius));
+  for (let i = 1; i <= 40; i++) {
+    const angle = (i / 40) * Math.PI * 2;
+    const current = add(
+      origin,
+      add(scale(right, Math.cos(angle) * radius), scale(up, Math.sin(angle) * radius)),
+    );
+    strokeWorldSeg(ctx, viewCam, vp, previous, current, color, 2);
+    previous = current;
   }
 }
 

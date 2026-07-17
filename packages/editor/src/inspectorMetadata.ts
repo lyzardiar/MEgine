@@ -127,6 +127,25 @@ export const BUILTIN_INSPECTOR_FIELDS: Readonly<
     friction: { min: 0, step: 0.01 },
     restitution: { min: 0, max: 1, step: 0.01 },
   },
+  Rigidbody2D: {
+    body_type: { kind: 'enum', options: options('dynamic', 'fixed', 'kinematic') },
+    mass: { min: 0.001, step: 0.1 },
+    gravity_scale: { step: 0.1 },
+    linear_damping: { min: 0, step: 0.01 },
+    angular_damping: { min: 0, step: 0.01 },
+    angular_velocity: { label: 'Angular Velocity (deg/s)', step: 1 },
+    freeze_rotation: { label: 'Freeze Rotation' },
+    ccd: { label: 'Continuous Collision Detection' },
+  },
+  BoxCollider2D: {
+    friction: { min: 0, step: 0.01 },
+    bounciness: { min: 0, max: 1, step: 0.01 },
+  },
+  CircleCollider2D: {
+    radius: { min: 0.001, step: 0.01 },
+    friction: { min: 0, step: 0.01 },
+    bounciness: { min: 0, max: 1, step: 0.01 },
+  },
   SpriteRenderer: {
     sprite,
     pivot: { min: 0, max: 1, step: 0.01 },
