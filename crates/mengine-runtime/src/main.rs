@@ -21,6 +21,7 @@ use mengine_runtime::audio::AudioRuntime;
 use mengine_runtime::materials::RuntimeMaterialCache;
 use mengine_runtime::particles::ParticleWorld;
 use mengine_runtime::player_config::load_player_config;
+use mengine_runtime::prefabs::instantiate_project_prefab;
 use mengine_runtime::scenes::{LoadedScene, SceneManager, SceneSelector};
 use mengine_runtime::sprites::collect_world_sprites_with_hierarchy;
 use mengine_runtime::textures::RuntimeTextureCache;
@@ -231,6 +232,22 @@ impl App {
                 }
                 return;
             }
+            ScriptRuntimeRequest::InstantiatePrefab { path, parent } => {
+                match instantiate_project_prefab(
+                    self.args.project_root.as_deref(),
+                    path,
+                    *parent,
+                    &mut self.world,
+                ) {
+                    Ok(instance) => log::info!(
+                        "instantiated prefab '{path}' as entity {} ({} nodes)",
+                        instance.root,
+                        instance.entities.len()
+                    ),
+                    Err(error) => log::error!("failed to instantiate prefab '{path}': {error}"),
+                }
+                return;
+            }
             _ => {}
         }
         let selector = match request {
@@ -238,6 +255,7 @@ impl App {
             ScriptRuntimeRequest::LoadScene(reference) => SceneSelector::PathOrName(reference),
             ScriptRuntimeRequest::ReloadScene => SceneSelector::Reload,
             ScriptRuntimeRequest::SetAnimatorParameter { .. }
+            | ScriptRuntimeRequest::InstantiatePrefab { .. }
             | ScriptRuntimeRequest::PlayAnimatorState { .. }
             | ScriptRuntimeRequest::PlayAudio { .. }
             | ScriptRuntimeRequest::PauseAudio { .. }

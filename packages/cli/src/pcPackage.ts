@@ -163,8 +163,38 @@ function copyTree(source: string, destination: string): void {
   if (sourceStat.isFile()) {
     if (/\.tsx?$/i.test(source)) return;
     mkdirSync(dirname(destination), { recursive: true });
+    if (/\.mscene$/i.test(source) && copySceneWithoutEditorMetadata(source, destination)) return;
     copyFileSync(source, destination);
   }
+}
+
+/** Player scenes retain authored components but never ship editor-only `__*` metadata. */
+function copySceneWithoutEditorMetadata(source: string, destination: string): boolean {
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(readFileSync(source, 'utf8'));
+  } catch {
+    return false;
+  }
+  if (parsed == null || typeof parsed !== 'object' || Array.isArray(parsed)) return false;
+  const world = (parsed as { world?: unknown }).world;
+  if (world == null || typeof world !== 'object' || Array.isArray(world)) return false;
+  const entities = (world as { entities?: unknown }).entities;
+  if (!Array.isArray(entities)) return false;
+  let changed = false;
+  for (const entity of entities) {
+    if (entity == null || typeof entity !== 'object' || Array.isArray(entity)) continue;
+    const components = (entity as { components?: unknown }).components;
+    if (components == null || typeof components !== 'object' || Array.isArray(components)) continue;
+    for (const key of Object.keys(components)) {
+      if (!key.startsWith('__')) continue;
+      delete (components as Record<string, unknown>)[key];
+      changed = true;
+    }
+  }
+  if (!changed) return false;
+  writeFileSync(destination, `${JSON.stringify(parsed, null, 2)}\n`, 'utf8');
+  return true;
 }
 
 function collectTypeScriptFiles(directory: string, output: string[] = []): string[] {

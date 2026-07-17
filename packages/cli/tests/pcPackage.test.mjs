@@ -44,6 +44,19 @@ function fixture(name) {
 test('buildPcPackage creates a directly launchable, hashed project bundle', () => {
   const paths = fixture('success');
   try {
+    writeFileSync(join(paths.project, 'Assets', 'Scenes', 'Level2.mscene'), JSON.stringify({
+      version: 1,
+      name: 'Level2',
+      world: {
+        entities: [{
+          entity: 1,
+          components: {
+            Transform: { position: [0, 0, 0] },
+            __MEnginePrefab: { source: 'Assets/Prefabs/Enemy.prefab' },
+          },
+        }],
+      },
+    }));
     const manifest = buildPcPackage({
       projectDir: paths.project,
       outputDir: paths.output,
@@ -77,6 +90,11 @@ test('buildPcPackage creates a directly launchable, hashed project bundle', () =
       startupScript: 'Assets/Scripts/main.js',
     });
     assert.equal(readFileSync(join(paths.output, 'Assets', 'Scenes', 'Main.mscene'), 'utf8'), '{"version":1}');
+    const packagedLevel = JSON.parse(
+      readFileSync(join(paths.output, 'Assets', 'Scenes', 'Level2.mscene'), 'utf8'),
+    );
+    assert.deepEqual(packagedLevel.world.entities[0].components.Transform, { position: [0, 0, 0] });
+    assert.equal(packagedLevel.world.entities[0].components.__MEnginePrefab, undefined);
     assert.equal(readFileSync(join(paths.output, manifest.executable), 'utf8'), 'runtime-binary');
 
     const diskManifest = JSON.parse(readFileSync(join(paths.output, BUILD_MANIFEST_FILE), 'utf8'));

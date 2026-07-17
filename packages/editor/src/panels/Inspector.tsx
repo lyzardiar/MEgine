@@ -993,7 +993,7 @@ export function Inspector(props: {
   };
 
   const extras = Object.keys(entity.components).filter(
-    (k) => k !== 'Transform' && k !== 'RectTransform',
+    (k) => k !== 'Transform' && k !== 'RectTransform' && !k.startsWith('__'),
   );
   const catalog = getComponentCatalog();
   const available = catalog.filter((c) => {

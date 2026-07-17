@@ -43,6 +43,7 @@ export function Hierarchy(props: {
   onRefresh: () => void;
   onLog: (msg: string) => void;
   onFrame: () => void;
+  onInstantiatePrefab?: (path: string, parent: number | null) => void;
 }) {
   const [ctx, setCtx] = useState<{ x: number; y: number; id: number | null } | null>(null);
   const [editing, setEditing] = useState<number | null>(null);
@@ -203,6 +204,9 @@ export function Hierarchy(props: {
   const isEntityDrag = (ev: DragEvent) =>
     Array.from(ev.dataTransfer.types).includes('text/mengine-entity');
 
+  const isPrefabDrag = (ev: DragEvent) =>
+    Array.from(ev.dataTransfer.types).includes('text/mengine-prefab');
+
   const selectedDragIds = (id: number) =>
     props.selectedIds.includes(id) && props.selectedIds.length > 1
       ? props.selectedIds
@@ -245,6 +249,14 @@ export function Hierarchy(props: {
   };
 
   const onDragOver = (ev: DragEvent, id: number) => {
+    if (isPrefabDrag(ev)) {
+      ev.preventDefault();
+      ev.stopPropagation();
+      ev.dataTransfer.dropEffect = 'copy';
+      setRootDrop(false);
+      setDropTarget({ id, pos: 'into' });
+      return;
+    }
     if (!isEntityDrag(ev)) return;
     ev.preventDefault();
     ev.stopPropagation();
@@ -260,6 +272,12 @@ export function Hierarchy(props: {
   const onDrop = (ev: DragEvent, targetId: number) => {
     ev.preventDefault();
     ev.stopPropagation();
+    if (isPrefabDrag(ev)) {
+      const path = ev.dataTransfer.getData('text/mengine-prefab');
+      setDropTarget(null);
+      if (path) props.onInstantiatePrefab?.(path, targetId);
+      return;
+    }
     const pos = dropTarget?.id === targetId ? dropTarget.pos : 'into';
     const ids = draggedIds(ev);
     if (!ids.length) return;
@@ -390,6 +408,13 @@ export function Hierarchy(props: {
         onPointerUp={onPointerUp}
         onPointerCancel={clearPointerDrag}
         onDragOver={(e) => {
+          if (isPrefabDrag(e)) {
+            e.preventDefault();
+            e.dataTransfer.dropEffect = 'copy';
+            setDropTarget(null);
+            setRootDrop(true);
+            return;
+          }
           if (!isEntityDrag(e)) return;
           e.preventDefault();
           e.dataTransfer.dropEffect = 'move';
@@ -402,6 +427,13 @@ export function Hierarchy(props: {
           }
         }}
         onDrop={(e) => {
+          if (isPrefabDrag(e)) {
+            e.preventDefault();
+            const path = e.dataTransfer.getData('text/mengine-prefab');
+            setRootDrop(false);
+            if (path) props.onInstantiatePrefab?.(path, null);
+            return;
+          }
           if (!isEntityDrag(e)) return;
           e.preventDefault();
           const ids = draggedIds(e);

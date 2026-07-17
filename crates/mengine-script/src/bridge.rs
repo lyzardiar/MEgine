@@ -15,6 +15,10 @@ pub enum ScriptRuntimeRequest {
     LoadSceneByIndex(usize),
     LoadScene(String),
     ReloadScene,
+    InstantiatePrefab {
+        path: String,
+        parent: Option<u64>,
+    },
     SetAnimatorParameter {
         entity: u64,
         name: String,
@@ -322,10 +326,28 @@ fn register_engine(context: &mut Context) -> Result<(), ScriptError> {
         };
         queue_runtime_request(ScriptRuntimeRequest::StopAudio { entity })
     });
+    let instantiate_prefab = NativeFunction::from_copy_closure(|_this, args, ctx| {
+        let path = args
+            .get_or_undefined(0)
+            .to_string(ctx)?
+            .to_std_string_escaped();
+        if path.trim().is_empty() {
+            return Ok(JsValue::new(false));
+        }
+        let parent = if args.len() < 2 {
+            None
+        } else {
+            let Some(parent) = js_entity_id(args.get_or_undefined(1), ctx) else {
+                return Ok(JsValue::new(false));
+            };
+            Some(parent)
+        };
+        queue_runtime_request(ScriptRuntimeRequest::InstantiatePrefab { path, parent })
+    });
 
     context
         .eval(Source::from_bytes(
-            b"var engine = { setClearColor: null, pushCommandJson: null, loadScene: null, reloadScene: null, setAnimatorParameter: null, setAnimatorTrigger: null, playAnimatorState: null, playAudio: null, pauseAudio: null, stopAudio: null, scene: null };",
+            b"var engine = { setClearColor: null, pushCommandJson: null, loadScene: null, reloadScene: null, instantiatePrefab: null, setAnimatorParameter: null, setAnimatorTrigger: null, playAnimatorState: null, playAudio: null, pauseAudio: null, stopAudio: null, scene: null };",
         ))
         .map_err(|e| ScriptError::Js(format!("{e}")))?;
 
@@ -391,6 +413,15 @@ fn register_engine(context: &mut Context) -> Result<(), ScriptError> {
 
     engine_obj
         .set(
+            boa_engine::js_string!("instantiatePrefab"),
+            instantiate_prefab.to_js_function(context.realm()),
+            false,
+            context,
+        )
+        .map_err(|e| ScriptError::Js(format!("{e}")))?;
+
+    engine_obj
+        .set(
             boa_engine::js_string!("pushCommandJson"),
             push_cmd.to_js_function(context.realm()),
             false,
@@ -452,6 +483,7 @@ mod tests {
             engine.loadScene(1);
             engine.loadScene("Level2");
             engine.reloadScene();
+            engine.instantiatePrefab("Assets/Prefabs/Enemy.prefab", "4294967297");
             "#,
         )
         .unwrap();
@@ -461,6 +493,10 @@ mod tests {
                 ScriptRuntimeRequest::LoadSceneByIndex(1),
                 ScriptRuntimeRequest::LoadScene("Level2".into()),
                 ScriptRuntimeRequest::ReloadScene,
+                ScriptRuntimeRequest::InstantiatePrefab {
+                    path: "Assets/Prefabs/Enemy.prefab".into(),
+                    parent: Some(4_294_967_297),
+                },
             ]
         );
         host.notify_scene_loaded("Level 2", "Assets/Scenes/Level2.mscene", Some(1), 2)

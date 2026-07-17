@@ -517,6 +517,7 @@ interface EngineApi {
   pushCommandJson(json: string): void;
   loadScene(scene: string | number): boolean;
   reloadScene(): boolean;
+  instantiatePrefab(path: string, parent?: number | string): boolean;
   setAnimatorParameter(entity: number | string, name: string, value: boolean | number): boolean;
   setAnimatorTrigger(entity: number | string, name: string): boolean;
   playAnimatorState(entity: number | string, state: string): boolean;

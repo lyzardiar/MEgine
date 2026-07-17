@@ -44,6 +44,7 @@ import { EditorWindowHost } from './editorWindow';
 import { resolveUnityAction } from './panels/uiFieldEditors';
 import { refreshSprites } from './spriteLibrary';
 import { combineMarqueeSelection } from './marqueeSelection';
+import { instantiateProjectPrefab } from './prefabWorkflow';
 import { isDesktopEditor } from './transport/editorTransport';
 import type { ToolHandleOrientation, ToolPivotMode } from './editorTool';
 import './editorWindow'; // MenuItem side-effects
@@ -721,6 +722,14 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
                 store.frameSelected();
                 refresh();
               }}
+              onInstantiatePrefab={(path, parent) => {
+                void instantiateProjectPrefab(store, path, parent)
+                  .then(() => {
+                    log(`Instantiated ${path}`);
+                    refresh();
+                  })
+                  .catch((error) => log(`Prefab instantiate failed: ${String(error)}`, 'error'));
+              }}
             />
           ),
           viewport: (
@@ -981,10 +990,13 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
             <Project
               activeScene={sceneName}
               sceneTick={sceneTick}
-              onSpawnPrefab={(name) => {
-                store.spawnPrefab(name);
-                log(`Instantiated ${name}`);
-                refresh();
+              onInstantiatePrefab={(path) => {
+                void instantiateProjectPrefab(store, path)
+                  .then(() => {
+                    log(`Instantiated ${path}`);
+                    refresh();
+                  })
+                  .catch((error) => log(`Prefab instantiate failed: ${String(error)}`, 'error'));
               }}
               onOpenScene={(name) => {
                 void openSceneByName(name);

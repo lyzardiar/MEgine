@@ -67,6 +67,15 @@ import {
 import { applyAnimationPreview, type AnimationPreviewSample } from './animationPreview';
 import { assignMaterialToComponents } from './materialAssignment';
 import {
+  PREFAB_LINK_COMPONENT,
+  clonePrefabLinkedComponents,
+  createPrefabId,
+  findPrefabInstance,
+  flattenPrefabNodes,
+  readPrefabLink,
+  type PrefabAsset,
+} from './prefabAsset';
+import {
   buildWorldTransforms,
   parentWorldTransform,
   resolvedTransform,
@@ -404,6 +413,54 @@ export function createEditorStore() {
     return id;
   };
 
+  const setSiblingPosition = (id: number, parent: number | null, index: number) => {
+    const ordered = childrenOf(parent).filter((entity) => entity.entity !== id);
+    ordered.splice(Math.max(0, Math.min(index, ordered.length)), 0, find(id)!);
+    ordered.forEach((entity, siblingIndex) => {
+      entity.siblingIndex = siblingIndex;
+    });
+  };
+
+  const instantiatePrefabInternal = (
+    source: string,
+    prefab: PrefabAsset,
+    parent: number | null,
+    withUndo: boolean,
+    atIndex?: number,
+    instanceId = createPrefabId('instance'),
+  ): number => {
+    if (withUndo) pushUndo();
+    const nodes = flattenPrefabNodes(prefab);
+    const entitiesByNode = new Map<string, number>();
+    let root = -1;
+    for (const entry of nodes) {
+      const nodeParent = entry.parentNodeId == null
+        ? parent
+        : (entitiesByNode.get(entry.parentNodeId) ?? parent);
+      const components = structuredClone(entry.node.components);
+      components[PREFAB_LINK_COMPONENT] = {
+        source,
+        instance: instanceId,
+        node: entry.node.id,
+        root: entry.parentNodeId == null,
+      };
+      const id = spawnAt(entry.node.name, components, nodeParent, false);
+      const entity = find(id)!;
+      entity.active = entry.node.active;
+      entity.siblingIndex = entry.siblingIndex;
+      entitiesByNode.set(entry.node.id, id);
+      if (entry.parentNodeId == null) root = id;
+    }
+    for (const id of entitiesByNode.values()) {
+      reindexSiblings(find(id)?.parent ?? null);
+    }
+    if (root >= 0 && atIndex != null) setSiblingPosition(root, parent, atIndex);
+    selectedIds = root >= 0 ? [root] : [];
+    selectionAnchor = root >= 0 ? root : null;
+    if (root >= 0) expanded.add(root);
+    return root;
+  };
+
   const ensureUiCanvasInternal = (withUndo: boolean): number => {
     const existing = editEntities.find((e) => e.components.Canvas);
     if (existing) return existing.entity;
@@ -438,6 +495,7 @@ export function createEditorStore() {
     if (!src) return -1;
     const idMap = new Map<number, number>();
     const ids = collectSubtreeIds(rootId);
+    const clonedComponents = clonePrefabLinkedComponents(ids.map((id) => find(id)!));
 
     for (const oldId of ids) {
       idMap.set(oldId, nextId++);
@@ -464,7 +522,7 @@ export function createEditorStore() {
           siblingIndex:
             oldId === rootId ? nextSiblingIndex(newParent) : s.siblingIndex,
           active: s.active,
-          components: structuredClone(s.components),
+          components: clonedComponents.get(oldId) ?? structuredClone(s.components),
         }),
       );
       expanded.add(newId);
@@ -795,6 +853,79 @@ export function createEditorStore() {
         true,
       );
     },
+    /** Instantiate a disk prefab as one undoable hierarchy operation. */
+    instantiatePrefabAsset(source: string, prefab: PrefabAsset, parent: number | null = null) {
+      if (mode !== 'edit') return null;
+      return instantiatePrefabInternal(source, prefab, parent, true);
+    },
+    getPrefabInstance(entity = primarySelected()) {
+      if (entity == null) return null;
+      const instance = findPrefabInstance(editEntities, entity);
+      if (!instance) return null;
+      const rootEntity = find(instance.root);
+      const rootLink = readPrefabLink(rootEntity);
+      return rootLink
+        ? { root: instance.root, source: rootLink.source, instance: rootLink.instance }
+        : null;
+    },
+    /** Link the current hierarchy to a prefab after Create or Apply succeeds on disk. */
+    markPrefabInstance(root: number, source: string, nodeIds: ReadonlyMap<number, string>) {
+      if (mode !== 'edit' || !find(root)) return false;
+      const ids = collectSubtreeIds(root);
+      const existing = readPrefabLink(find(root));
+      const instanceId = existing?.instance ?? createPrefabId('instance');
+      pushUndo();
+      for (const id of ids) {
+        const entity = find(id)!;
+        const nodeId = nodeIds.get(id);
+        if (!nodeId) continue;
+        entity.components[PREFAB_LINK_COMPONENT] = {
+          source,
+          instance: instanceId,
+          node: nodeId,
+          root: id === root,
+        };
+      }
+      return true;
+    },
+    /** Replace an instance with the asset state as one undoable Revert. */
+    revertPrefabInstance(entity: number, prefab: PrefabAsset) {
+      if (mode !== 'edit') return null;
+      const instance = findPrefabInstance(editEntities, entity);
+      if (!instance) return null;
+      const rootEntity = find(instance.root);
+      const rootLink = readPrefabLink(rootEntity);
+      if (!rootEntity || !rootLink) return null;
+      const parent = rootEntity.parent ?? null;
+      const siblingIndex = rootEntity.siblingIndex;
+      pushUndo();
+      deleteIdsWithSubtree([instance.root]);
+      return instantiatePrefabInternal(
+        rootLink.source,
+        prefab,
+        parent,
+        false,
+        siblingIndex,
+        rootLink.instance,
+      );
+    },
+    /** Remove prefab metadata while preserving the authored hierarchy and components. */
+    unpackPrefabInstance(entity: number) {
+      if (mode !== 'edit') return false;
+      const instance = findPrefabInstance(editEntities, entity);
+      if (!instance) return false;
+      pushUndo();
+      for (const id of collectSubtreeIds(instance.root)) {
+        const child = find(id);
+        const link = readPrefabLink(child);
+        if (link?.source === instance.link.source && link.instance === instance.link.instance) {
+          delete child!.components[PREFAB_LINK_COMPONENT];
+        }
+      }
+      selectedIds = [instance.root];
+      selectionAnchor = instance.root;
+      return true;
+    },
     /** Extension API: create a custom UI control and ensure it has a Canvas parent. */
     createUiControl(
       name: string,
@@ -855,6 +986,9 @@ export function createEditorStore() {
       const parent = primarySelected();
       const idMap = new Map<number, number>();
       const oldIds = clipboard.roots.map((e) => e.entity);
+      const clonedComponents = clonePrefabLinkedComponents(clipboard.roots, {
+        preserveInstanceIds: clipboard.cut,
+      });
       for (const oldId of oldIds) idMap.set(oldId, nextId++);
 
       const rootOldIds = clipboard.roots
@@ -879,7 +1013,7 @@ export function createEditorStore() {
             parent: newPar,
             siblingIndex: isRoot ? nextSiblingIndex(parent) : s.siblingIndex,
             active: s.active,
-            components: structuredClone(s.components),
+            components: clonedComponents.get(s.entity) ?? structuredClone(s.components),
           }),
         );
         expanded.add(newId);

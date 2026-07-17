@@ -48,7 +48,7 @@ type AssetItem = {
 export function Project(props: {
   activeScene: string | null;
   sceneTick: number;
-  onSpawnPrefab: (name: string) => void;
+  onInstantiatePrefab: (path: string) => void;
   onOpenScene: (name: string) => void;
   onOpenMaterial: (path: string) => void;
   onOpenAnimator: (path: string) => void;
@@ -249,7 +249,10 @@ export function Project(props: {
         .catch((error) => props.onLog?.(`Audio preview failed: ${String(error)}`, 'error'));
       return;
     }
-    if (a.spawn) props.onSpawnPrefab(a.spawn);
+    if (a.kind === 'prefab' && a.spriteId) {
+      props.onInstantiatePrefab(a.spriteId);
+      return;
+    }
   };
 
   const onContext = (e: MouseEvent, a: AssetItem) => {
@@ -326,6 +329,7 @@ export function Project(props: {
                 ) return;
                 const id = a.spriteId ?? a.name;
                 if (a.kind === 'sprite') e.dataTransfer.setData('text/mengine-sprite', id);
+                if (a.kind === 'prefab') e.dataTransfer.setData('text/mengine-prefab', id);
                 e.dataTransfer.setData('text/mengine-asset', id);
                 e.dataTransfer.setData('text/plain', id);
                 e.dataTransfer.effectAllowed = 'copy';
