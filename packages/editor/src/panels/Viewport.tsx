@@ -135,12 +135,16 @@ import {
   type LinePointHit,
 } from '../line2dEditing';
 import {
+  boxTiles,
   cellLocalPosition,
   eraseTile,
+  floodFillTiles,
   localPointToCell,
+  lineTiles,
   nearestGridSettings,
   normalizeTilemapData,
   setTile,
+  tileAt,
   type TilemapData,
 } from '../tilemapModel';
 
@@ -323,6 +327,8 @@ type Ent = {
   parent?: number | null;
   components: Record<string, unknown>;
 };
+
+type TilemapTool = 'paint' | 'erase' | 'box' | 'fill' | 'picker';
 
 function rectHandlePivotForSelection(
   entities: Ent[],
@@ -554,7 +560,18 @@ export function Viewport(props: {
         entity: number;
         data: TilemapData;
         erase: boolean;
+        lastCell: [number, number];
+        lx: number;
+        ly: number;
+      }
+    | {
+        type: 'tileBox';
+        entity: number;
+        baseData: TilemapData;
+        data: TilemapData;
+        startCell: [number, number];
         lastCell: string;
+        erase: boolean;
         lx: number;
         ly: number;
       }
@@ -629,6 +646,9 @@ export function Viewport(props: {
   const [tileBrushSprite, setTileBrushSprite] = useState('white');
   const tileBrushSpriteRef = useRef(tileBrushSprite);
   tileBrushSpriteRef.current = tileBrushSprite;
+  const [tileTool, setTileTool] = useState<TilemapTool>('paint');
+  const tileToolRef = useRef(tileTool);
+  tileToolRef.current = tileTool;
   const [smartGuidesEnabled, setSmartGuidesEnabled] = useState(loadSmartGuides);
   const smartGuidesEnabledRef = useRef(smartGuidesEnabled);
   smartGuidesEnabledRef.current = smartGuidesEnabled;
@@ -1594,14 +1614,11 @@ export function Viewport(props: {
     });
   };
 
-  const paintTilemapAt = (
+  const tileCellAt = (
     entityId: number,
     x: number,
     y: number,
-    erase: boolean,
-    source: TilemapData,
-    lastCell?: string,
-  ): { data: TilemapData; cell: string } | null => {
+  ): [number, number] | null => {
     const entities = propsRef.current.entities;
     const entity = entities.find((candidate) => candidate.entity === entityId);
     if (!entity?.components.Tilemap) return null;
@@ -1621,15 +1638,28 @@ export function Viewport(props: {
       transform.scale as Vec3,
       transform.rotation as [number, number, number, number],
     );
-    const cell = localPointToCell(local, nearestGridSettings(entities, entityId));
+    return localPointToCell(local, nearestGridSettings(entities, entityId));
+  };
+
+  const paintTilemapAt = (
+    entityId: number,
+    x: number,
+    y: number,
+    erase: boolean,
+    source: TilemapData,
+    lastCell?: [number, number],
+  ): { data: TilemapData; cell: [number, number] } | null => {
+    const cell = tileCellAt(entityId, x, y);
     if (!cell) return null;
     const cellKey = `${cell[0]},${cell[1]}`;
-    if (cellKey === lastCell) return { data: source, cell: cellKey };
-    const data = erase
-      ? eraseTile(source, cell)
-      : setTile(source, cell, tileBrushSpriteRef.current);
+    if (lastCell && cellKey === `${lastCell[0]},${lastCell[1]}`) return { data: source, cell };
+    const data = lastCell
+      ? lineTiles(source, lastCell, cell, tileBrushSpriteRef.current, erase)
+      : erase
+        ? eraseTile(source, cell)
+        : setTile(source, cell, tileBrushSpriteRef.current);
     propsRef.current.onTilemapChange?.(entityId, data.cells, data.sprites);
-    return { data, cell: cellKey };
+    return { data, cell };
   };
 
   const onPointerDown = (ev: React.MouseEvent) => {
@@ -1714,8 +1744,46 @@ export function Viewport(props: {
         ) {
           const component = tilemapEntity.components.Tilemap as { cells?: unknown; sprites?: unknown };
           const source = normalizeTilemapData(component.cells, component.sprites);
+          const cell = tileCellAt(tilemapEntity.entity, x, y);
+          if (!cell) return;
+          const tool = tileToolRef.current;
+          if (tool === 'picker') {
+            const sampled = tileAt(source, cell);
+            if (sampled) setTileBrushSprite(sampled);
+            ev.preventDefault();
+            return;
+          }
+          if (tool === 'fill') {
+            propsRef.current.onBeginGesture();
+            const data = floodFillTiles(source, cell, tileBrushSpriteRef.current);
+            propsRef.current.onTilemapChange(tilemapEntity.entity, data.cells, data.sprites);
+            propsRef.current.onEndGesture();
+            ev.preventDefault();
+            return;
+          }
+          if (tool === 'box') {
+            const erase = ev.shiftKey;
+            propsRef.current.onBeginGesture();
+            const data = boxTiles(source, cell, cell, tileBrushSpriteRef.current, erase);
+            propsRef.current.onTilemapChange(tilemapEntity.entity, data.cells, data.sprites);
+            draggingRef.current = true;
+            dragRef.current = {
+              type: 'tileBox',
+              entity: tilemapEntity.entity,
+              baseData: source,
+              data,
+              startCell: cell,
+              erase,
+              lastCell: `${cell[0]},${cell[1]}`,
+              lx: ev.clientX,
+              ly: ev.clientY,
+            };
+            ev.preventDefault();
+            return;
+          }
+          const erase = tool === 'erase' || ev.shiftKey;
           propsRef.current.onBeginGesture();
-          const result = paintTilemapAt(tilemapEntity.entity, x, y, ev.shiftKey, source);
+          const result = paintTilemapAt(tilemapEntity.entity, x, y, erase, source);
           if (!result) {
             propsRef.current.onEndGesture();
             return;
@@ -1725,7 +1793,7 @@ export function Viewport(props: {
             type: 'tilePaint',
             entity: tilemapEntity.entity,
             data: result.data,
-            erase: ev.shiftKey,
+            erase,
             lastCell: result.cell,
             lx: ev.clientX,
             ly: ev.clientY,
@@ -1982,7 +2050,7 @@ export function Viewport(props: {
             );
             if (selected?.components.Tilemap) {
               hoverGizmoRef.current = null;
-              canvas.style.cursor = 'crosshair';
+              canvas.style.cursor = tileToolRef.current === 'picker' ? 'copy' : 'crosshair';
               return;
             }
           }
@@ -2039,6 +2107,32 @@ export function Viewport(props: {
               item.slider?.onValueChanged ?? item.scrollbar?.onValueChanged,
             );
           }
+        }
+        d.lx = ev.clientX;
+        d.ly = ev.clientY;
+        return;
+      }
+
+      if (d.type === 'tileBox') {
+        const rect = canvas?.getBoundingClientRect();
+        if (!rect) return;
+        const cell = tileCellAt(
+          d.entity,
+          ev.clientX - rect.left,
+          ev.clientY - rect.top,
+        );
+        if (!cell) return;
+        const cellKey = `${cell[0]},${cell[1]}`;
+        if (cellKey !== d.lastCell) {
+          d.data = boxTiles(
+            d.baseData,
+            d.startCell,
+            cell,
+            tileBrushSpriteRef.current,
+            d.erase,
+          );
+          d.lastCell = cellKey;
+          propsRef.current.onTilemapChange?.(d.entity, d.data.cells, d.data.sprites);
         }
         d.lx = ev.clientX;
         d.ly = ev.clientY;
@@ -2504,6 +2598,7 @@ export function Viewport(props: {
         || dragRef.current?.type === 'rectGizmo'
         || dragRef.current?.type === 'linePoint'
         || dragRef.current?.type === 'tilePaint'
+        || dragRef.current?.type === 'tileBox'
       ) {
         propsRef.current.onEndGesture();
       }
@@ -2862,7 +2957,7 @@ export function Viewport(props: {
             aria-label="Toggle Tilemap paint brush"
             aria-pressed={tilePaintEnabled && !!selectedTilemap && scene2D}
             disabled={!selectedTilemap || props.playing}
-            title="Paint the selected Tilemap. Hold Shift while painting to erase."
+            title="Enable Tilemap editing. Hold Shift with Paint or Box to erase."
             onClick={() => {
               if (!scene2D) applyScene2D(true);
               setTilePaintEnabled((enabled) => !enabled);
@@ -2871,18 +2966,33 @@ export function Viewport(props: {
             Tile Brush
           </button>
           {selectedTilemap && (
-            <select
-              className="tile-brush-select"
-              aria-label="Tile brush sprite"
-              title="Sprite painted into Tilemap cells"
-              value={tileBrushSprite}
-              onChange={(event) => setTileBrushSprite(event.target.value)}
-            >
-              <option value="white">White</option>
-              {tileBrushOptions.map((sprite) => (
-                <option key={sprite.id} value={sprite.id}>{sprite.name}</option>
-              ))}
-            </select>
+            <>
+              <select
+                className="tile-tool-select"
+                aria-label="Tilemap edit tool"
+                title="Tilemap edit tool"
+                value={tileTool}
+                onChange={(event) => setTileTool(event.target.value as TilemapTool)}
+              >
+                <option value="paint">Paint</option>
+                <option value="erase">Erase</option>
+                <option value="box">Box</option>
+                <option value="fill">Fill</option>
+                <option value="picker">Picker</option>
+              </select>
+              <select
+                className="tile-brush-select"
+                aria-label="Tile brush sprite"
+                title="Sprite painted into Tilemap cells"
+                value={tileBrushSprite}
+                onChange={(event) => setTileBrushSprite(event.target.value)}
+              >
+                <option value="white">White</option>
+                {tileBrushOptions.map((sprite) => (
+                  <option key={sprite.id} value={sprite.id}>{sprite.name}</option>
+                ))}
+              </select>
+            </>
           )}
           <button
             type="button"

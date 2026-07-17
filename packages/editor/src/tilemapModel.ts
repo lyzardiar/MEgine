@@ -130,6 +130,146 @@ export function eraseTile(source: TilemapData, cell: readonly [number, number]):
   return normalizeTilemapData(cells, sprites);
 }
 
+export function tileAt(source: TilemapData, cell: readonly [number, number]): string | null {
+  const key = cellKey([Math.round(cell[0]), Math.round(cell[1])]);
+  for (let index = source.cells.length - 1; index >= 0; index -= 1) {
+    if (cellKey(source.cells[index]) === key) return source.sprites[index] || 'white';
+  }
+  return null;
+}
+
+function tileMap(source: TilemapData): Map<string, { cell: [number, number]; sprite: string }> {
+  const normalized = normalizeTilemapData(source.cells, source.sprites);
+  return new Map(normalized.cells.map((cell, index) => [
+    cellKey(cell),
+    { cell, sprite: normalized.sprites[index] || 'white' },
+  ]));
+}
+
+function tileDataFromMap(
+  tiles: ReadonlyMap<string, { cell: [number, number]; sprite: string }>,
+): TilemapData {
+  return normalizeTilemapData(
+    [...tiles.values()].map((entry) => entry.cell),
+    [...tiles.values()].map((entry) => entry.sprite),
+  );
+}
+
+/** Paint or erase every cell crossed by an integer grid line, preventing fast-drag gaps. */
+export function lineTiles(
+  source: TilemapData,
+  start: readonly [number, number],
+  end: readonly [number, number],
+  sprite: string,
+  erase = false,
+  maxOperationCells = MAX_TILEMAP_TILES,
+): TilemapData {
+  const startCell = readCell(start);
+  const endCell = readCell(end);
+  if (!startCell || !endCell) return normalizeTilemapData(source.cells, source.sprites);
+  const limit = Number.isFinite(maxOperationCells)
+    ? Math.max(0, Math.min(MAX_TILEMAP_TILES, Math.trunc(maxOperationCells)))
+    : MAX_TILEMAP_TILES;
+  const tiles = tileMap(source);
+  let [x, y] = startCell;
+  const [endX, endY] = endCell;
+  const dx = Math.abs(endX - x);
+  const sx = x < endX ? 1 : -1;
+  const dy = -Math.abs(endY - y);
+  const sy = y < endY ? 1 : -1;
+  let error = dx + dy;
+  for (let visited = 0; visited < limit; visited += 1) {
+    const cell: [number, number] = [x, y];
+    const key = cellKey(cell);
+    if (erase) tiles.delete(key);
+    else if (tiles.has(key) || tiles.size < MAX_TILEMAP_TILES) {
+      tiles.set(key, { cell, sprite: sprite || 'white' });
+    }
+    if (x === endX && y === endY) break;
+    const twice = 2 * error;
+    if (twice >= dy) {
+      error += dy;
+      x += sx;
+    }
+    if (twice <= dx) {
+      error += dx;
+      y += sy;
+    }
+  }
+  return tileDataFromMap(tiles);
+}
+
+/** Paint or erase an inclusive rectangle. Work is capped even for hostile coordinates. */
+export function boxTiles(
+  source: TilemapData,
+  start: readonly [number, number],
+  end: readonly [number, number],
+  sprite: string,
+  erase = false,
+  maxOperationCells = MAX_TILEMAP_TILES,
+): TilemapData {
+  const startCell = readCell(start);
+  const endCell = readCell(end);
+  if (!startCell || !endCell) return normalizeTilemapData(source.cells, source.sprites);
+  const limit = Number.isFinite(maxOperationCells)
+    ? Math.max(0, Math.min(MAX_TILEMAP_TILES, Math.trunc(maxOperationCells)))
+    : MAX_TILEMAP_TILES;
+  const minX = Math.min(startCell[0], endCell[0]);
+  const maxX = Math.max(startCell[0], endCell[0]);
+  const minY = Math.min(startCell[1], endCell[1]);
+  const maxY = Math.max(startCell[1], endCell[1]);
+  const tiles = tileMap(source);
+  let visited = 0;
+  outer: for (let y = minY; y <= maxY; y += 1) {
+    for (let x = minX; x <= maxX; x += 1) {
+      if (visited >= limit) break outer;
+      visited += 1;
+      const cell: [number, number] = [x, y];
+      const key = cellKey(cell);
+      if (erase) tiles.delete(key);
+      else if (tiles.has(key) || tiles.size < MAX_TILEMAP_TILES) {
+        tiles.set(key, { cell, sprite: sprite || 'white' });
+      }
+    }
+  }
+  return tileDataFromMap(tiles);
+}
+
+/** Replace the four-way connected occupied region under start. Empty space is intentionally finite. */
+export function floodFillTiles(
+  source: TilemapData,
+  start: readonly [number, number],
+  sprite: string,
+  maxOperationCells = MAX_TILEMAP_TILES,
+): TilemapData {
+  const startCell = readCell(start);
+  if (!startCell) return normalizeTilemapData(source.cells, source.sprites);
+  const tiles = tileMap(source);
+  const startKey = cellKey(startCell);
+  const target = tiles.get(startKey)?.sprite ?? null;
+  if (target == null) return setTile(source, startCell, sprite);
+  const replacement = sprite || 'white';
+  if (target === replacement) return tileDataFromMap(tiles);
+  const limit = Number.isFinite(maxOperationCells)
+    ? Math.max(0, Math.min(MAX_TILEMAP_TILES, Math.trunc(maxOperationCells)))
+    : MAX_TILEMAP_TILES;
+  const queue: Array<[number, number]> = [startCell];
+  const visited = new Set<string>();
+  for (let index = 0; index < queue.length && visited.size < limit; index += 1) {
+    const cell = queue[index];
+    const key = cellKey(cell);
+    if (visited.has(key) || tiles.get(key)?.sprite !== target) continue;
+    visited.add(key);
+    tiles.set(key, { cell, sprite: replacement });
+    const [x, y] = cell;
+    for (const neighbor of [[x - 1, y], [x + 1, y], [x, y - 1], [x, y + 1]] as Array<[number, number]>) {
+      const neighborKey = cellKey(neighbor);
+      if (!visited.has(neighborKey) && tiles.get(neighborKey)?.sprite === target) queue.push(neighbor);
+    }
+  }
+  return tileDataFromMap(tiles);
+}
+
 export function cellLocalPosition(cell: readonly [number, number], grid: GridSettings): [number, number] {
   return [
     cell[0] * (grid.cellSize[0] + grid.cellGap[0]),

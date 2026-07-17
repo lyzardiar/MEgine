@@ -2,14 +2,18 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 import {
   cellLocalPosition,
+  boxTiles,
   createGridComponent,
   createTilemapComponent,
   eraseTile,
+  floodFillTiles,
   localPointToCell,
+  lineTiles,
   nearestGridSettings,
   normalizeTilemapData,
   readGridSettings,
   setTile,
+  tileAt,
 } from '../src/tilemapModel.ts';
 
 test('Grid and Tilemap creation defaults match the serialized runtime contract', () => {
@@ -50,6 +54,38 @@ test('painting and erasing a Tilemap cell are immutable', () => {
   });
   assert.deepEqual(eraseTile(source, [0.2, -0.1]), { cells: [], sprites: [] });
   assert.deepEqual(source, { cells: [[0, 0]], sprites: ['grass'] });
+});
+
+test('box painting and erasing are inclusive, bounded, and preserve unrelated cells', () => {
+  const source = { cells: [[9, 9]], sprites: ['keep'] };
+  const painted = boxTiles(source, [0, 0], [2, 1], 'grass');
+  assert.equal(painted.cells.length, 7);
+  assert.equal(tileAt(painted, [1, 1]), 'grass');
+  assert.equal(tileAt(painted, [9, 9]), 'keep');
+  assert.equal(boxTiles(source, [0, 0], [1000, 1000], 'x', false, 3).cells.length, 4);
+  const erased = boxTiles(painted, [1, 0], [2, 1], '', true);
+  assert.equal(tileAt(erased, [1, 0]), null);
+  assert.equal(tileAt(erased, [0, 1]), 'grass');
+});
+
+test('line painting rasterizes continuous fast pointer movement', () => {
+  const diagonal = lineTiles({ cells: [], sprites: [] }, [0, 0], [4, 2], 'road');
+  assert.deepEqual(diagonal.cells, [[0, 0], [1, 1], [2, 1], [3, 2], [4, 2]]);
+  assert.ok(diagonal.sprites.every((sprite) => sprite === 'road'));
+  assert.equal(lineTiles(diagonal, [0, 0], [4, 2], '', true).cells.length, 0);
+});
+
+test('flood fill replaces only the connected occupied sprite region', () => {
+  const source = normalizeTilemapData(
+    [[0, 0], [1, 0], [1, 1], [3, 0], [0, 1]],
+    ['grass', 'grass', 'grass', 'grass', 'stone'],
+  );
+  const filled = floodFillTiles(source, [0, 0], 'water');
+  assert.equal(tileAt(filled, [0, 0]), 'water');
+  assert.equal(tileAt(filled, [1, 1]), 'water');
+  assert.equal(tileAt(filled, [3, 0]), 'grass');
+  assert.equal(tileAt(filled, [0, 1]), 'stone');
+  assert.equal(tileAt(floodFillTiles(source, [8, 8], 'sand'), [8, 8]), 'sand');
 });
 
 test('grid math sanitizes settings and maps local points to cell centers', () => {
