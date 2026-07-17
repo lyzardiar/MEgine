@@ -79,9 +79,11 @@ import {
   type RectAlignmentCommand,
   type RectAlignmentDelta,
 } from '../rectAlignment';
+import { buildSceneGrid } from '../sceneGrid';
 
 const SCENE_2D_KEY = 'mengine.scene.2d';
 const SCENE_SNAP_KEY = 'mengine.scene.snap';
+const SCENE_GRID_KEY = 'mengine.scene.grid';
 
 function loadScene2D(): boolean {
   try {
@@ -105,6 +107,50 @@ function saveSceneSnap(settings: SceneSnapSettings): void {
   } catch {
     /* ignore unavailable storage */
   }
+}
+
+function loadSceneGrid(): boolean {
+  try {
+    return localStorage.getItem(SCENE_GRID_KEY) !== '0';
+  } catch {
+    return true;
+  }
+}
+
+function drawCanvasGrid(
+  ctx: CanvasRenderingContext2D,
+  rect: { x: number; y: number; w: number; h: number },
+  logicalStep: number,
+  screenScale: number,
+): void {
+  if (rect.w <= 0 || rect.h <= 0) return;
+  const grid = buildSceneGrid(rect, logicalStep, screenScale);
+  ctx.save();
+  ctx.beginPath();
+  ctx.rect(rect.x, rect.y, rect.w, rect.h);
+  ctx.clip();
+
+  for (const major of [false, true]) {
+    ctx.beginPath();
+    for (const line of grid.vertical) {
+      if (line.major !== major) continue;
+      const x = Math.round(line.position) + 0.5;
+      ctx.moveTo(x, rect.y);
+      ctx.lineTo(x, rect.y + rect.h);
+    }
+    for (const line of grid.horizontal) {
+      if (line.major !== major) continue;
+      const y = Math.round(line.position) + 0.5;
+      ctx.moveTo(rect.x, y);
+      ctx.lineTo(rect.x + rect.w, y);
+    }
+    ctx.strokeStyle = major
+      ? 'rgba(92, 177, 224, 0.24)'
+      : 'rgba(151, 181, 198, 0.11)';
+    ctx.lineWidth = 1;
+    ctx.stroke();
+  }
+  ctx.restore();
 }
 
 type RectSnapDrag = {
@@ -329,6 +375,9 @@ export function Viewport(props: {
   const [scene2D, setScene2D] = useState(loadScene2D);
   const scene2DRef = useRef(scene2D);
   scene2DRef.current = scene2D;
+  const [sceneGrid, setSceneGrid] = useState(loadSceneGrid);
+  const sceneGridRef = useRef(sceneGrid);
+  sceneGridRef.current = sceneGrid;
   const [snapSettings, setSnapSettings] = useState(loadSceneSnap);
   const snapSettingsRef = useRef(snapSettings);
   snapSettingsRef.current = snapSettings;
@@ -796,6 +845,17 @@ export function Viewport(props: {
         uiLayoutScaleRef.current = layoutScale || 1;
 
         if (uiItems.length) {
+          if (scene2DRef.current && sceneGridRef.current) {
+            for (const item of uiItems) {
+              if (item.role !== 'canvas') continue;
+              drawCanvasGrid(
+                ctx,
+                item.rect,
+                snapSettingsRef.current.move,
+                layoutScale || 1,
+              );
+            }
+          }
           drawUiItems(ctx, uiItems, null, null, { sceneLabel: true });
 
           if (usingRectGizmoRef.current && p.selected != null) {
@@ -1504,6 +1564,17 @@ export function Viewport(props: {
     saveSceneSnap(next);
   };
 
+  const toggleSceneGrid = () => {
+    const next = !sceneGridRef.current;
+    sceneGridRef.current = next;
+    setSceneGrid(next);
+    try {
+      localStorage.setItem(SCENE_GRID_KEY, next ? '1' : '0');
+    } catch {
+      /* ignore unavailable storage */
+    }
+  };
+
   const runRectAlignment = (command: RectAlignmentCommand) => {
     const current = propsRef.current;
     const roots = selectedRectRoots(
@@ -1624,6 +1695,17 @@ export function Viewport(props: {
               2D
             </button>
           </div>
+          <button
+            type="button"
+            className={`scene-grid-toggle${sceneGrid && scene2D ? ' active' : ''}`}
+            aria-label="Toggle 2D grid"
+            aria-pressed={sceneGrid && scene2D}
+            disabled={!scene2D}
+            title="Show the Canvas pixel grid using the Move Snap increment"
+            onClick={toggleSceneGrid}
+          >
+            Grid
+          </button>
           <div className="scene-snap" ref={snapSettingsElementRef}>
             <div className="scene-snap-buttons">
               <button

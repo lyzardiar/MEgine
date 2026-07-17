@@ -2112,6 +2112,34 @@ body.insp-scrubbing * {
   font-weight: 600;
 }
 
+.scene-grid-toggle {
+  height: 26px;
+  min-width: 40px;
+  padding: 0 8px;
+  border: 1px solid var(--u-border-2);
+  border-radius: 0;
+  background: var(--u-input);
+  color: var(--u-muted);
+  font: inherit;
+  font-size: 11px;
+  cursor: pointer;
+}
+
+.scene-grid-toggle:hover:not(:disabled) {
+  color: var(--u-text-bright);
+  background: #444;
+}
+
+.scene-grid-toggle.active {
+  color: #fff;
+  background: var(--u-selected);
+}
+
+.scene-grid-toggle:disabled {
+  opacity: 0.38;
+  cursor: default;
+}
+
 .scene-snap {
   position: relative;
   flex: 0 0 auto;
