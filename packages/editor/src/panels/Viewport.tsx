@@ -93,6 +93,7 @@ import {
   snapRectToGuides,
   type RectSmartGuide,
 } from '../rectSmartGuides';
+import type { RectResizeOptions, RectResizePlan } from '../rectResize';
 
 const SCENE_2D_KEY = 'mengine.scene.2d';
 const SCENE_SNAP_KEY = 'mengine.scene.snap';
@@ -376,7 +377,8 @@ export function Viewport(props: {
     handle: 'n' | 's' | 'e' | 'w' | 'ne' | 'nw' | 'se' | 'sw',
     dLocalX: number,
     dLocalY: number,
-  ) => void;
+    options: RectResizeOptions,
+  ) => RectResizePlan | null | void;
   onAspect: (a: GameAspect) => void;
   onOrientation: (o: GameOrientation) => void;
   onFrame: () => void;
@@ -1506,7 +1508,24 @@ export function Viewport(props: {
             -projectScreenDelta(dx, dy, axes.y) / scale,
             d.snap.settings.move,
           );
-          propsRef.current.onRectResize?.(d.entity, d.part.handle, alongX, alongY);
+          const plan = propsRef.current.onRectResize?.(
+            d.entity,
+            d.part.handle,
+            alongX,
+            alongY,
+            {
+              preserveAspect: ev.shiftKey,
+              aroundPivot: ev.altKey,
+              currentVisualSize: [
+                d.rectSize.w / scale,
+                d.rectSize.h / scale,
+              ],
+            },
+          );
+          if (plan) {
+            d.rectSize.w = Math.max(1, d.rectSize.w + plan.visualSizeDelta[0] * scale);
+            d.rectSize.h = Math.max(1, d.rectSize.h + plan.visualSizeDelta[1] * scale);
+          }
         } else if (isRectMoveMode(mode)) {
           if (d.part.kind === 'axis') {
             const dir = d.part.axis === 'x' ? axes.x : axes.y;

@@ -722,9 +722,10 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
                 store.scaleRectBy(entity, axis, amount);
                 refresh();
               }}
-              onRectResize={(entity, handle, dx, dy) => {
-                store.resizeRectBy(entity, handle, dx, dy);
+              onRectResize={(entity, handle, dx, dy, options) => {
+                const plan = store.resizeRectBy(entity, handle, dx, dy, options);
                 refresh();
+                return plan;
               }}
               onUiClick={(entity, onClick) => {
                 const action = resolveUnityAction(entity, onClick);

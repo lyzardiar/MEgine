@@ -36,7 +36,11 @@ import {
 } from './ui/uiLayout';
 import { planHierarchyMove } from './hierarchyMove';
 import { selectedRectRoots } from './rectSelection';
-import { planRectResize, type RectResizeHandle } from './rectResize';
+import {
+  planRectResize,
+  type RectResizeHandle,
+  type RectResizeOptions,
+} from './rectResize';
 import { selectedHierarchyRoots } from './hierarchySelection';
 import { restoreSceneSelection } from './selectionRestore';
 import {
@@ -1175,9 +1179,10 @@ export function createEditorStore() {
       handle: RectResizeHandle,
       dLocalX: number,
       dLocalY: number,
+      options: RectResizeOptions = {},
     ) {
       const e = find(entity);
-      if (!e?.components.RectTransform) return;
+      if (!e?.components.RectTransform) return null;
       const rt = readRectTransform(e.components.RectTransform);
       const plan = planRectResize(
         handle,
@@ -1186,6 +1191,7 @@ export function createEditorStore() {
         rt.local_rotation,
         dLocalX,
         dLocalY,
+        options,
       );
 
       e.components.RectTransform = {
@@ -1199,6 +1205,7 @@ export function createEditorStore() {
           rt.anchored_position[1] + plan.positionDelta[1],
         ],
       };
+      return plan;
     },
     getTransform,
     frameSelected() {

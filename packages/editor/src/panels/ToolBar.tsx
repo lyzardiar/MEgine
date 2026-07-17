@@ -39,7 +39,7 @@ export function ToolBar(props: {
         <button
           type="button"
           className={`tool-btn${props.gizmo === 'rect' ? ' active' : ''}`}
-          title="Rect Tool (T)"
+          title="Rect Tool (T) · Shift keep aspect · Alt resize around pivot"
           onClick={() => props.onGizmo('rect')}
         >
           T
