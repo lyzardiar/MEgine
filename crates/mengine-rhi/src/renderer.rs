@@ -57,7 +57,7 @@ pub fn project_world_to_viewport(
     ])
 }
 
-#[derive(Clone, Copy, Debug)]
+#[derive(Clone, Debug)]
 pub struct RenderMaterial {
     pub base_color: [f32; 4],
     pub metallic: f32,
@@ -66,6 +66,11 @@ pub struct RenderMaterial {
     pub emissive_strength: f32,
     pub unlit: bool,
     pub double_sided: bool,
+    pub transparent: bool,
+    pub alpha_cutoff: f32,
+    pub base_color_texture: String,
+    pub uv_scale: [f32; 2],
+    pub uv_offset: [f32; 2],
 }
 
 impl Default for RenderMaterial {
@@ -78,6 +83,11 @@ impl Default for RenderMaterial {
             emissive_strength: 1.0,
             unlit: false,
             double_sided: false,
+            transparent: false,
+            alpha_cutoff: 0.0,
+            base_color_texture: String::new(),
+            uv_scale: [1.0, 1.0],
+            uv_offset: [0.0, 0.0],
         }
     }
 }
@@ -165,6 +175,12 @@ struct ObjectUniforms {
     base_color: [f32; 4],
     material: [f32; 4],
     emissive: [f32; 4],
+    texture_transform: [f32; 4],
+}
+
+struct MaterialTextureGpu {
+    _texture: wgpu::Texture,
+    bind_group: wgpu::BindGroup,
 }
 
 pub struct Renderer {
@@ -174,6 +190,8 @@ pub struct Renderer {
     config: wgpu::SurfaceConfiguration,
     pipeline: wgpu::RenderPipeline,
     double_sided_pipeline: wgpu::RenderPipeline,
+    transparent_pipeline: wgpu::RenderPipeline,
+    transparent_double_sided_pipeline: wgpu::RenderPipeline,
     depth_view: wgpu::TextureView,
     depth_texture: wgpu::Texture,
     meshes: HashMap<String, MeshGpu>,
@@ -181,6 +199,10 @@ pub struct Renderer {
     global_buf: wgpu::Buffer,
     object_buf: wgpu::Buffer,
     bind_group: wgpu::BindGroup,
+    material_texture_layout: wgpu::BindGroupLayout,
+    material_sampler: wgpu::Sampler,
+    fallback_material_texture: MaterialTextureGpu,
+    material_textures: HashMap<String, MaterialTextureGpu>,
     object_stride: u64,
     object_capacity: usize,
     ui: UiRenderer,
@@ -278,10 +300,32 @@ impl Renderer {
                 },
             ],
         });
+        let material_texture_layout =
+            device.create_bind_group_layout(&wgpu::BindGroupLayoutDescriptor {
+                label: Some("material_texture_bgl"),
+                entries: &[
+                    wgpu::BindGroupLayoutEntry {
+                        binding: 0,
+                        visibility: wgpu::ShaderStages::FRAGMENT,
+                        ty: wgpu::BindingType::Texture {
+                            sample_type: wgpu::TextureSampleType::Float { filterable: true },
+                            view_dimension: wgpu::TextureViewDimension::D2,
+                            multisampled: false,
+                        },
+                        count: None,
+                    },
+                    wgpu::BindGroupLayoutEntry {
+                        binding: 1,
+                        visibility: wgpu::ShaderStages::FRAGMENT,
+                        ty: wgpu::BindingType::Sampler(wgpu::SamplerBindingType::Filtering),
+                        count: None,
+                    },
+                ],
+            });
 
         let pipeline_layout = device.create_pipeline_layout(&wgpu::PipelineLayoutDescriptor {
             label: Some("forward_pipeline_layout"),
-            bind_group_layouts: &[&bind_layout],
+            bind_group_layouts: &[&bind_layout, &material_texture_layout],
             push_constant_ranges: &[],
         });
         let pipeline = create_pipeline(
@@ -290,9 +334,20 @@ impl Renderer {
             &shader,
             &pipeline_layout,
             Some(wgpu::Face::Back),
+            false,
         );
         let double_sided_pipeline =
-            create_pipeline(&device, format, &shader, &pipeline_layout, None);
+            create_pipeline(&device, format, &shader, &pipeline_layout, None, false);
+        let transparent_pipeline = create_pipeline(
+            &device,
+            format,
+            &shader,
+            &pipeline_layout,
+            Some(wgpu::Face::Back),
+            true,
+        );
+        let transparent_double_sided_pipeline =
+            create_pipeline(&device, format, &shader, &pipeline_layout, None, true);
 
         let global_buf = device.create_buffer(&wgpu::BufferDescriptor {
             label: Some("frame_uniforms"),
@@ -307,6 +362,26 @@ impl Renderer {
         let object_capacity = 64;
         let object_buf = create_object_buffer(&device, object_stride, object_capacity);
         let bind_group = create_bind_group(&device, &bind_layout, &global_buf, &object_buf);
+        let material_sampler = device.create_sampler(&wgpu::SamplerDescriptor {
+            label: Some("material_sampler"),
+            address_mode_u: wgpu::AddressMode::Repeat,
+            address_mode_v: wgpu::AddressMode::Repeat,
+            address_mode_w: wgpu::AddressMode::Repeat,
+            mag_filter: wgpu::FilterMode::Linear,
+            min_filter: wgpu::FilterMode::Linear,
+            mipmap_filter: wgpu::FilterMode::Linear,
+            ..Default::default()
+        });
+        let fallback_material_texture = create_material_texture_rgba8(
+            &device,
+            &queue,
+            &material_texture_layout,
+            &material_sampler,
+            "material_white_texture",
+            1,
+            1,
+            &[255, 255, 255, 255],
+        );
 
         let (depth_texture, depth_view) = create_depth(&device, config.width, config.height);
         let mut meshes = HashMap::new();
@@ -320,6 +395,8 @@ impl Renderer {
             config,
             pipeline,
             double_sided_pipeline,
+            transparent_pipeline,
+            transparent_double_sided_pipeline,
             depth_view,
             depth_texture,
             meshes,
@@ -327,6 +404,10 @@ impl Renderer {
             global_buf,
             object_buf,
             bind_group,
+            material_texture_layout,
+            material_sampler,
+            fallback_material_texture,
+            material_textures: HashMap::new(),
             object_stride,
             object_capacity,
             ui,
@@ -397,6 +478,24 @@ impl Renderer {
         let empty_ui = UiBatchPlan::default();
         let ui_plan = ui.unwrap_or(&empty_ui);
         self.ui.prepare(&self.device, &self.queue, ui_plan);
+        let mut draw_order: Vec<usize> = objects
+            .iter()
+            .enumerate()
+            .filter_map(|(index, object)| (!object.material.transparent).then_some(index))
+            .collect();
+        let mut transparent_order: Vec<usize> = objects
+            .iter()
+            .enumerate()
+            .filter_map(|(index, object)| object.material.transparent.then_some(index))
+            .collect();
+        transparent_order.sort_by(|left, right| {
+            let left_distance =
+                (objects[*left].model.w_axis.truncate() - camera.position).length_squared();
+            let right_distance =
+                (objects[*right].model.w_axis.truncate() - camera.position).length_squared();
+            right_distance.total_cmp(&left_distance)
+        });
+        draw_order.extend(transparent_order);
         let frame = self.surface.get_current_texture()?;
         let view = frame
             .texture
@@ -434,20 +533,28 @@ impl Renderer {
                 ..Default::default()
             });
 
-            for (index, object) in objects.iter().enumerate() {
+            for index in draw_order {
+                let object = &objects[index];
                 let Some(mesh) = self.meshes.get(&object.mesh_key) else {
                     continue;
                 };
-                if object.material.double_sided {
-                    pass.set_pipeline(&self.double_sided_pipeline);
-                } else {
-                    pass.set_pipeline(&self.pipeline);
-                }
+                let pipeline = match (object.material.transparent, object.material.double_sided) {
+                    (true, true) => &self.transparent_double_sided_pipeline,
+                    (true, false) => &self.transparent_pipeline,
+                    (false, true) => &self.double_sided_pipeline,
+                    (false, false) => &self.pipeline,
+                };
+                pass.set_pipeline(pipeline);
                 pass.set_bind_group(
                     0,
                     &self.bind_group,
                     &[(index as u64 * self.object_stride) as u32],
                 );
+                let texture = self
+                    .material_textures
+                    .get(&object.material.base_color_texture)
+                    .unwrap_or(&self.fallback_material_texture);
+                pass.set_bind_group(1, &texture.bind_group, &[]);
                 pass.set_vertex_buffer(0, mesh.vertex_buffer.slice(..));
                 pass.set_index_buffer(mesh.index_buffer.slice(..), wgpu::IndexFormat::Uint32);
                 pass.draw_indexed(0..mesh.index_count, 0, 0..1);
@@ -493,6 +600,32 @@ impl Renderer {
 
     pub fn remove_ui_texture(&mut self, key: &str) -> bool {
         self.ui.remove_texture(key)
+    }
+
+    pub fn upload_material_texture_rgba8(
+        &mut self,
+        key: &str,
+        width: u32,
+        height: u32,
+        rgba8: &[u8],
+    ) -> Result<(), UiTextureError> {
+        validate_material_texture_rgba8(width, height, rgba8)?;
+        let texture = create_material_texture_rgba8(
+            &self.device,
+            &self.queue,
+            &self.material_texture_layout,
+            &self.material_sampler,
+            "material_texture",
+            width,
+            height,
+            rgba8,
+        );
+        self.material_textures.insert(key.to_owned(), texture);
+        Ok(())
+    }
+
+    pub fn remove_material_texture(&mut self, key: &str) -> bool {
+        self.material_textures.remove(key).is_some()
     }
 
     pub fn aspect(&self) -> f32 {
@@ -602,7 +735,7 @@ fn make_global_uniforms(camera: FrameCamera, lighting: &FrameLighting) -> Global
 }
 
 fn make_object_uniforms(object: &RenderObject) -> ObjectUniforms {
-    let material = object.material;
+    let material = &object.material;
     ObjectUniforms {
         model: object.model.to_cols_array_2d(),
         normal_matrix: object.model.inverse().transpose().to_cols_array_2d(),
@@ -617,7 +750,13 @@ fn make_object_uniforms(object: &RenderObject) -> ObjectUniforms {
             material.emissive[0],
             material.emissive[1],
             material.emissive[2],
-            0.0,
+            material.alpha_cutoff.clamp(0.0, 1.0),
+        ],
+        texture_transform: [
+            material.uv_scale[0],
+            material.uv_scale[1],
+            material.uv_offset[0],
+            material.uv_offset[1],
         ],
     }
 }
@@ -628,9 +767,15 @@ fn create_pipeline(
     shader: &wgpu::ShaderModule,
     layout: &wgpu::PipelineLayout,
     cull_mode: Option<wgpu::Face>,
+    transparent: bool,
 ) -> wgpu::RenderPipeline {
     device.create_render_pipeline(&wgpu::RenderPipelineDescriptor {
-        label: Some(if cull_mode.is_some() { "forward" } else { "forward_double_sided" }),
+        label: Some(match (transparent, cull_mode.is_none()) {
+            (false, false) => "forward",
+            (false, true) => "forward_double_sided",
+            (true, false) => "forward_transparent",
+            (true, true) => "forward_transparent_double_sided",
+        }),
         layout: Some(layout),
         vertex: wgpu::VertexState {
             module: shader,
@@ -647,7 +792,11 @@ fn create_pipeline(
             entry_point: Some("fs_main"),
             targets: &[Some(wgpu::ColorTargetState {
                 format,
-                blend: Some(wgpu::BlendState::REPLACE),
+                blend: Some(if transparent {
+                    wgpu::BlendState::ALPHA_BLENDING
+                } else {
+                    wgpu::BlendState::REPLACE
+                }),
                 write_mask: wgpu::ColorWrites::ALL,
             })],
             compilation_options: Default::default(),
@@ -661,7 +810,7 @@ fn create_pipeline(
         },
         depth_stencil: Some(wgpu::DepthStencilState {
             format: wgpu::TextureFormat::Depth32Float,
-            depth_write_enabled: true,
+            depth_write_enabled: !transparent,
             depth_compare: wgpu::CompareFunction::Less,
             stencil: Default::default(),
             bias: Default::default(),
@@ -705,6 +854,85 @@ fn create_bind_group(
             },
         ],
     })
+}
+
+fn validate_material_texture_rgba8(
+    width: u32,
+    height: u32,
+    rgba8: &[u8],
+) -> Result<(), UiTextureError> {
+    if width == 0 || height == 0 {
+        return Err(UiTextureError::EmptyDimensions);
+    }
+    let expected = width as usize * height as usize * 4;
+    if rgba8.len() != expected {
+        return Err(UiTextureError::InvalidDataLength {
+            expected,
+            actual: rgba8.len(),
+        });
+    }
+    Ok(())
+}
+
+fn create_material_texture_rgba8(
+    device: &wgpu::Device,
+    queue: &wgpu::Queue,
+    layout: &wgpu::BindGroupLayout,
+    sampler: &wgpu::Sampler,
+    label: &str,
+    width: u32,
+    height: u32,
+    rgba8: &[u8],
+) -> MaterialTextureGpu {
+    let size = wgpu::Extent3d {
+        width,
+        height,
+        depth_or_array_layers: 1,
+    };
+    let texture = device.create_texture(&wgpu::TextureDescriptor {
+        label: Some(label),
+        size,
+        mip_level_count: 1,
+        sample_count: 1,
+        dimension: wgpu::TextureDimension::D2,
+        format: wgpu::TextureFormat::Rgba8UnormSrgb,
+        usage: wgpu::TextureUsages::TEXTURE_BINDING | wgpu::TextureUsages::COPY_DST,
+        view_formats: &[],
+    });
+    queue.write_texture(
+        wgpu::TexelCopyTextureInfo {
+            texture: &texture,
+            mip_level: 0,
+            origin: wgpu::Origin3d::ZERO,
+            aspect: wgpu::TextureAspect::All,
+        },
+        rgba8,
+        wgpu::TexelCopyBufferLayout {
+            offset: 0,
+            bytes_per_row: Some(width * 4),
+            rows_per_image: Some(height),
+        },
+        size,
+    );
+    let view = texture.create_view(&wgpu::TextureViewDescriptor::default());
+    let bind_group = device.create_bind_group(&wgpu::BindGroupDescriptor {
+        label: Some("material_texture_bg"),
+        layout,
+        entries: &[
+            wgpu::BindGroupEntry {
+                binding: 0,
+                resource: wgpu::BindingResource::TextureView(&view),
+            },
+            wgpu::BindGroupEntry {
+                binding: 1,
+                resource: wgpu::BindingResource::Sampler(sampler),
+            },
+        ],
+    });
+    MaterialTextureGpu {
+        _texture: texture,
+        bind_group,
+    }
 }
 
 fn align_to(value: u64, alignment: u64) -> u64 {
@@ -781,10 +1009,13 @@ struct ObjectUniforms {
     base_color: vec4<f32>,
     material: vec4<f32>,
     emissive: vec4<f32>,
+    texture_transform: vec4<f32>,
 };
 
 @group(0) @binding(0) var<uniform> frame: GlobalUniforms;
 @group(0) @binding(1) var<uniform> object: ObjectUniforms;
+@group(1) @binding(0) var base_color_texture: texture_2d<f32>;
+@group(1) @binding(1) var base_color_sampler: sampler;
 
 struct VsIn {
     @location(0) position: vec3<f32>,
@@ -796,6 +1027,7 @@ struct VsOut {
     @builtin(position) clip: vec4<f32>,
     @location(0) world_position: vec3<f32>,
     @location(1) world_normal: vec3<f32>,
+    @location(2) uv: vec2<f32>,
 };
 
 @vertex
@@ -805,6 +1037,7 @@ fn vs_main(v: VsIn) -> VsOut {
     o.clip = frame.view_proj * world;
     o.world_position = world.xyz;
     o.world_normal = normalize((object.normal_matrix * vec4<f32>(v.normal, 0.0)).xyz);
+    o.uv = v.uv * object.texture_transform.xy + object.texture_transform.zw;
     return o;
 }
 
@@ -836,12 +1069,17 @@ fn distance_attenuation(distance: f32, range: f32) -> f32 {
 
 @fragment
 fn fs_main(i: VsOut, @builtin(front_facing) front_facing: bool) -> @location(0) vec4<f32> {
-    let base_color = max(object.base_color.rgb, vec3<f32>(0.0));
+    let sampled_color = textureSample(base_color_texture, base_color_sampler, i.uv);
+    let surface_color = object.base_color * sampled_color;
+    if object.emissive.w > 0.0 && surface_color.a < object.emissive.w {
+        discard;
+    }
+    let base_color = max(surface_color.rgb, vec3<f32>(0.0));
     let metallic = clamp(object.material.x, 0.0, 1.0);
     let roughness = clamp(object.material.y, 0.04, 1.0);
     let emissive = max(object.emissive.rgb, vec3<f32>(0.0)) * object.material.z;
     if object.material.w > 0.5 {
-        return vec4<f32>(base_color + emissive, object.base_color.a);
+        return vec4<f32>(base_color + emissive, surface_color.a);
     }
 
     let geometric_normal = normalize(i.world_normal);
@@ -890,7 +1128,7 @@ fn fs_main(i: VsOut, @builtin(front_facing) front_facing: bool) -> @location(0) 
     }
 
     color += emissive;
-    return vec4<f32>(color, object.base_color.a);
+    return vec4<f32>(color, surface_color.a);
 }
 "#;
 

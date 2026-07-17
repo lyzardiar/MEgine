@@ -15,6 +15,7 @@ use mengine_rhi::{
     PointLightData, RenderMaterial, RenderObject, Renderer, SpotLightData, UiBatchPlan,
 };
 use mengine_runtime::animation::{infer_project_root_from_scene, AnimationRuntime};
+use mengine_runtime::materials::RuntimeMaterialCache;
 use mengine_runtime::particles::ParticleWorld;
 use mengine_runtime::sprites::collect_world_sprites;
 use mengine_runtime::textures::RuntimeTextureCache;
@@ -72,6 +73,7 @@ struct App {
     particles: ParticleWorld,
     textures: RuntimeTextureCache,
     animations: AnimationRuntime,
+    materials: RuntimeMaterialCache,
 }
 
 impl App {
@@ -88,6 +90,7 @@ impl App {
         }
         let textures = RuntimeTextureCache::new(args.project_root.clone());
         let animations = AnimationRuntime::new(args.project_root.clone());
+        let materials = RuntimeMaterialCache::new(args.project_root.clone());
         Self {
             args,
             window: None,
@@ -108,6 +111,7 @@ impl App {
             particles: ParticleWorld::default(),
             textures,
             animations,
+            materials,
         }
     }
 
@@ -1066,7 +1070,7 @@ function onTick(dt, frame) {
                     r.clear = self.world.time.clear_color.into();
                     let aspect = r.aspect();
                     let camera = find_camera(&self.world, aspect);
-                    let objects = collect_objects(&self.world);
+                    let objects = collect_objects(&self.world, &mut self.materials);
                     let lighting = collect_lighting(&self.world);
                     let window_size = self
                         .window
@@ -1095,6 +1099,14 @@ function onTick(dt, frame) {
                     for failure in self.textures.sync(r, &ui.plan) {
                         log::warn!(
                             "UI texture '{}' could not be loaded from {}: {}",
+                            failure.key,
+                            failure.path.display(),
+                            failure.error
+                        );
+                    }
+                    for failure in self.textures.sync_materials(r, &objects) {
+                        log::warn!(
+                            "Material texture '{}' could not be loaded from {}: {}",
                             failure.key,
                             failure.path.display(),
                             failure.error
@@ -1194,7 +1206,7 @@ fn camera_from_components(t: &Transform, c: &Camera3D, viewport_aspect: f32) -> 
     }
 }
 
-fn collect_objects(world: &World) -> Vec<RenderObject> {
+fn collect_objects(world: &World, materials: &mut RuntimeMaterialCache) -> Vec<RenderObject> {
     let mut out = Vec::new();
     for e in world.iter_entities() {
         if let (Some(t), Some(m)) = (
@@ -1207,7 +1219,11 @@ fn collect_objects(world: &World) -> Vec<RenderObject> {
                 material: world
                     .get_component::<PbrMaterial>(e)
                     .map(render_material_from_component)
-                    .unwrap_or_else(|| material_preset(&m.material)),
+                    .unwrap_or_else(|| {
+                        materials
+                            .resolve(&m.material)
+                            .unwrap_or_else(|| material_preset(&m.material))
+                    }),
             });
         }
     }
@@ -1268,6 +1284,7 @@ fn render_material_from_component(material: &PbrMaterial) -> RenderMaterial {
         emissive_strength: material.emissive_strength,
         unlit: material.unlit,
         double_sided: material.double_sided,
+        ..Default::default()
     }
 }
 

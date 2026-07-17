@@ -1,5 +1,5 @@
 use mengine_assets::load_texture_rgba8;
-use mengine_rhi::{Renderer, UiBatchPlan};
+use mengine_rhi::{RenderObject, Renderer, UiBatchPlan};
 use std::collections::HashSet;
 use std::path::{Component, Path, PathBuf};
 
@@ -13,14 +13,16 @@ pub struct TextureLoadFailure {
 #[derive(Default)]
 pub struct RuntimeTextureCache {
     project_root: Option<PathBuf>,
-    attempted: HashSet<String>,
+    attempted_ui: HashSet<String>,
+    attempted_material: HashSet<String>,
 }
 
 impl RuntimeTextureCache {
     pub fn new(project_root: Option<PathBuf>) -> Self {
         Self {
             project_root,
-            attempted: HashSet::new(),
+            attempted_ui: HashSet::new(),
+            attempted_material: HashSet::new(),
         }
     }
 
@@ -29,11 +31,13 @@ impl RuntimeTextureCache {
             return;
         }
         self.project_root = project_root;
-        self.attempted.clear();
+        self.attempted_ui.clear();
+        self.attempted_material.clear();
     }
 
     pub fn invalidate(&mut self, key: &str) {
-        self.attempted.remove(key);
+        self.attempted_ui.remove(key);
+        self.attempted_material.remove(key);
     }
 
     pub fn sync(&mut self, renderer: &mut Renderer, plan: &UiBatchPlan) -> Vec<TextureLoadFailure> {
@@ -46,7 +50,7 @@ impl RuntimeTextureCache {
             if key.is_empty() || key.eq_ignore_ascii_case("white") {
                 continue;
             }
-            if !self.attempted.insert(key.to_owned()) {
+            if !self.attempted_ui.insert(key.to_owned()) {
                 continue;
             }
             let Some(path) = resolve_texture_path(root, key) else {
@@ -60,6 +64,56 @@ impl RuntimeTextureCache {
             match load_texture_rgba8(&path) {
                 Ok(texture) => {
                     if let Err(error) = renderer.upload_ui_texture_rgba8(
+                        key,
+                        texture.width,
+                        texture.height,
+                        &texture.pixels,
+                    ) {
+                        failures.push(TextureLoadFailure {
+                            key: key.to_owned(),
+                            path,
+                            error: error.to_string(),
+                        });
+                    }
+                }
+                Err(error) => failures.push(TextureLoadFailure {
+                    key: key.to_owned(),
+                    path,
+                    error: error.to_string(),
+                }),
+            }
+        }
+        failures
+    }
+
+    pub fn sync_materials(
+        &mut self,
+        renderer: &mut Renderer,
+        objects: &[RenderObject],
+    ) -> Vec<TextureLoadFailure> {
+        let Some(root) = self.project_root.as_deref() else {
+            return Vec::new();
+        };
+        let mut failures = Vec::new();
+        for key in objects
+            .iter()
+            .map(|object| object.material.base_color_texture.trim())
+            .filter(|key| !key.is_empty() && !key.eq_ignore_ascii_case("white"))
+        {
+            if !self.attempted_material.insert(key.to_owned()) {
+                continue;
+            }
+            let Some(path) = resolve_project_asset_path(root, key) else {
+                failures.push(TextureLoadFailure {
+                    key: key.to_owned(),
+                    path: root.to_owned(),
+                    error: "material texture must be a project-relative path without '..'".into(),
+                });
+                continue;
+            };
+            match load_texture_rgba8(&path) {
+                Ok(texture) => {
+                    if let Err(error) = renderer.upload_material_texture_rgba8(
                         key,
                         texture.width,
                         texture.height,

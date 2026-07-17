@@ -2,6 +2,7 @@
 
 mod animation;
 mod gltf_import;
+mod material;
 mod registry;
 mod texture;
 
@@ -11,6 +12,9 @@ pub use animation::{
     AnimationWrapMode,
 };
 pub use gltf_import::load_gltf_mesh_data;
+pub use material::{
+    load_material_asset, parse_material_asset, MaterialAsset, MaterialShader, MaterialSurface,
+};
 pub use registry::{AssetMeta, AssetRegistry};
 pub use texture::load_texture_rgba8;
 
