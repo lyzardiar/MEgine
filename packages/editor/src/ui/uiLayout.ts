@@ -161,6 +161,8 @@ export type UiDrawItem = {
   pivotScreen?: { x: number; y: number };
   /** Exact unrotated size in Scene screen pixels (rect is the rotated AABB). */
   unrotatedSize?: { w: number; h: number };
+  /** Parent layout rectangle used to visualize/edit anchors. */
+  anchorParentRect?: Rect;
 };
 
 function color4(raw: unknown, fallback: [number, number, number, number]): [number, number, number, number] {
@@ -430,6 +432,7 @@ export function layoutUiOverlay(
       const mask = ent.components.RectMask2D as Record<string, unknown> | undefined;
       const isCanvas = isCanvasRoot || !!ent.components.Canvas;
       const rt = hasRt ? readRectTransform(ent.components.RectTransform) : null;
+      const anchorParentRect = hasRt && !isCanvasRoot ? { ...parentRect } : undefined;
       const rotation = rt?.local_rotation ?? 0;
       const pivot: [number, number] = rt ? ([...rt.pivot] as [number, number]) : [0.5, 0.5];
       const state = {
@@ -465,6 +468,7 @@ export function layoutUiOverlay(
           role: 'graphic',
           rotation,
           pivot,
+          anchorParentRect,
           opacity: state.opacity,
           clip,
           image: img
@@ -653,6 +657,7 @@ export function layoutUiOverlay(
           role: 'graphic',
           rotation,
           pivot,
+          anchorParentRect,
           opacity: state.opacity,
           clip,
           selected: true,
@@ -788,6 +793,9 @@ export function layoutUiScene3D(
         depth: depthBase + it.depth,
         pivotScreen: pivS ? { x: pivS.x, y: pivS.y } : undefined,
         unrotatedSize: { w: it.rect.w * sceneScale, h: it.rect.h * sceneScale },
+        anchorParentRect: it.anchorParentRect
+          ? projectPixelRect(it.anchorParentRect)
+          : undefined,
       });
     }
     depthBase += 1000;

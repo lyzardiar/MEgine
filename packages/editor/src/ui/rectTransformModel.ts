@@ -100,6 +100,66 @@ export function applyPivotKeepingRect(
   };
 }
 
+export function applyAnchorsKeepingRect(
+  value: RectTransformValue,
+  anchorMin: Vec2,
+  anchorMax: Vec2,
+  parentSize: Vec2,
+): RectTransformValue {
+  const min: Vec2 = [clamp01(anchorMin[0]), clamp01(anchorMin[1])];
+  const max: Vec2 = [
+    Math.max(min[0], clamp01(anchorMax[0])),
+    Math.max(min[1], clamp01(anchorMax[1])),
+  ];
+  const next: RectTransformValue = {
+    ...value,
+    anchor_min: min,
+    anchor_max: max,
+    pivot: [...value.pivot],
+    anchored_position: [...value.anchored_position],
+    size_delta: [...value.size_delta],
+    local_scale: [...value.local_scale],
+  };
+  for (const axis of [0, 1] as const) {
+    const parent = Number.isFinite(parentSize[axis]) ? Math.max(0, parentSize[axis]) : 0;
+    const oldSpan = value.anchor_max[axis] - value.anchor_min[axis];
+    const newSpan = max[axis] - min[axis];
+    const spanDelta = (oldSpan - newSpan) * parent;
+    next.size_delta[axis] = value.size_delta[axis] + spanDelta;
+    next.anchored_position[axis] = value.anchored_position[axis]
+      + (value.anchor_min[axis] - min[axis]) * parent
+      + spanDelta * value.pivot[axis];
+  }
+  return next;
+}
+
+export function moveAnchorHandle(
+  anchorMin: Vec2,
+  anchorMax: Vec2,
+  target: 'min' | 'max' | 'both',
+  delta: Vec2,
+): { anchorMin: Vec2; anchorMax: Vec2 } {
+  let min: Vec2 = [...anchorMin];
+  let max: Vec2 = [...anchorMax];
+  if (target === 'both') {
+    const shiftX = Math.max(-min[0], Math.min(1 - max[0], delta[0]));
+    const shiftY = Math.max(-min[1], Math.min(1 - max[1], delta[1]));
+    min = [min[0] + shiftX, min[1] + shiftY];
+    max = [max[0] + shiftX, max[1] + shiftY];
+  } else if (target === 'min') {
+    min = [
+      Math.max(0, Math.min(max[0], min[0] + delta[0])),
+      Math.max(0, Math.min(max[1], min[1] + delta[1])),
+    ];
+  } else {
+    max = [
+      Math.max(min[0], Math.min(1, max[0] + delta[0])),
+      Math.max(min[1], Math.min(1, max[1] + delta[1])),
+    ];
+  }
+  return { anchorMin: min, anchorMax: max };
+}
+
 export type RectAxisFields = {
   stretched: boolean;
   firstLabel: string;

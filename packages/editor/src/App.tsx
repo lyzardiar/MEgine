@@ -586,6 +586,10 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
                 store.setRectPivot(entity, pivot);
                 refresh();
               }}
+              onRectAnchors={(entity, anchorMin, anchorMax, parentSize) => {
+                store.setRectAnchors(entity, anchorMin, anchorMax, parentSize);
+                refresh();
+              }}
               onRectRotate={(entity, degrees) => {
                 store.rotateRectBy(entity, degrees);
                 refresh();

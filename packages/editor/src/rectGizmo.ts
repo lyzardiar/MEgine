@@ -12,7 +12,8 @@ export type RectGizmoHit =
   | { kind: 'axis'; axis: 'x' | 'y'; x0: number; y0: number; x1: number; y1: number }
   | { kind: 'center'; x: number; y: number; r: number }
   | { kind: 'ring'; cx: number; cy: number; r: number }
-  | { kind: 'size'; handle: SizeHandle; x: number; y: number };
+  | { kind: 'size'; handle: SizeHandle; x: number; y: number }
+  | { kind: 'anchor'; target: 'min' | 'max' | 'both'; x: number; y: number };
 
 const AXIS_LEN = 56;
 const AXIS_GAP = 10;
@@ -34,6 +35,7 @@ function samePart(a: GizmoPart | null, b: GizmoPart): boolean {
   if (a.kind === 'axis' && b.kind === 'axis') return a.axis === b.axis;
   if (a.kind === 'center' && b.kind === 'center') return true;
   if (a.kind === 'size' && b.kind === 'size') return a.handle === b.handle;
+  if (a.kind === 'anchor' && b.kind === 'anchor') return a.target === b.target;
   return false;
 }
 
@@ -150,6 +152,7 @@ export function drawRectGizmo(
   rect?: Rect | null,
   pivotNorm: [number, number] = [0.5, 0.5],
   pivotEditing = false,
+  anchors?: { min: { x: number; y: number }; max: { x: number; y: number } },
 ): RectGizmoHit[] {
   const hits: RectGizmoHit[] = [];
   const axes = rectLocalAxes(rotDeg);
@@ -169,7 +172,7 @@ export function drawRectGizmo(
     ctx.closePath();
     ctx.stroke();
 
-    if (!pivotEditing) {
+    if (!pivotEditing && !anchors) {
       for (const handle of Object.keys(pts) as SizeHandle[]) {
         const p = pts[handle];
         const part: GizmoPart = { kind: 'size', handle };
@@ -178,6 +181,53 @@ export function drawRectGizmo(
         hits.push({ kind: 'size', handle, x: p.x, y: p.y });
       }
     }
+  }
+
+  if (anchors) {
+    const same = Math.hypot(anchors.max.x - anchors.min.x, anchors.max.y - anchors.min.y) < 4;
+    ctx.save();
+    ctx.setLineDash([4, 3]);
+    ctx.strokeStyle = 'rgba(245, 197, 66, 0.72)';
+    ctx.lineWidth = 1;
+    ctx.strokeRect(
+      Math.min(anchors.min.x, anchors.max.x),
+      Math.min(anchors.min.y, anchors.max.y),
+      Math.abs(anchors.max.x - anchors.min.x),
+      Math.abs(anchors.max.y - anchors.min.y),
+    );
+    ctx.beginPath();
+    ctx.moveTo(anchors.min.x, anchors.min.y);
+    ctx.lineTo(ox, oy);
+    if (!same) {
+      ctx.moveTo(anchors.max.x, anchors.max.y);
+      ctx.lineTo(ox, oy);
+    }
+    ctx.stroke();
+    ctx.setLineDash([]);
+
+    const drawAnchor = (point: { x: number; y: number }, target: 'min' | 'max' | 'both') => {
+      const part: GizmoPart = { kind: 'anchor', target };
+      const color = colorOf(part, hover, active, '#f5c542');
+      ctx.fillStyle = color;
+      ctx.strokeStyle = '#171717';
+      ctx.lineWidth = 1.5;
+      ctx.beginPath();
+      ctx.moveTo(point.x, point.y - 7);
+      ctx.lineTo(point.x + 7, point.y);
+      ctx.lineTo(point.x, point.y + 7);
+      ctx.lineTo(point.x - 7, point.y);
+      ctx.closePath();
+      ctx.fill();
+      ctx.stroke();
+      hits.push({ kind: 'anchor', target, x: point.x, y: point.y });
+    };
+    if (same) drawAnchor(anchors.min, 'both');
+    else {
+      drawAnchor(anchors.min, 'min');
+      drawAnchor(anchors.max, 'max');
+    }
+    ctx.restore();
+    return hits;
   }
 
   if (pivotEditing) {
@@ -264,6 +314,11 @@ export function drawRectGizmo(
 }
 
 export function hitTestRectGizmo(hits: RectGizmoHit[], x: number, y: number): GizmoPart | null {
+  for (const h of hits) {
+    if (h.kind === 'anchor' && Math.hypot(x - h.x, y - h.y) <= 11) {
+      return { kind: 'anchor', target: h.target };
+    }
+  }
   // Size handles first (precise)
   for (const h of hits) {
     if (h.kind === 'size') {
@@ -316,6 +371,7 @@ export function cursorForRectGizmo(part: GizmoPart | null, mode: GizmoMode): str
     if (h === 'ne' || h === 'sw') return 'nesw-resize';
     return 'nwse-resize';
   }
+  if (part.kind === 'anchor') return 'move';
   if (mode === 'rotate') return 'grab';
   if (part.kind === 'center') return 'move';
   if (part.kind === 'axis') return part.axis === 'x' ? 'ew-resize' : 'ns-resize';

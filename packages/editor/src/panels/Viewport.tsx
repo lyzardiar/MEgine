@@ -80,6 +80,7 @@ import {
   type RectAlignmentDelta,
 } from '../rectAlignment';
 import { buildSceneGrid } from '../sceneGrid';
+import { moveAnchorHandle } from '../ui/rectTransformModel';
 
 const SCENE_2D_KEY = 'mengine.scene.2d';
 const SCENE_SNAP_KEY = 'mengine.scene.snap';
@@ -165,6 +166,25 @@ function rectGizmoBounds(
     y: pivot.y - size.h * pivotNorm[1],
     w: size.w,
     h: size.h,
+  };
+}
+
+function rectAnchorPoints(
+  item: UiDrawItem,
+  anchorMin: [number, number],
+  anchorMax: [number, number],
+): { min: { x: number; y: number }; max: { x: number; y: number } } | undefined {
+  const parent = item.anchorParentRect;
+  if (!parent) return undefined;
+  return {
+    min: {
+      x: parent.x + parent.w * anchorMin[0],
+      y: parent.y + parent.h * anchorMin[1],
+    },
+    max: {
+      x: parent.x + parent.w * anchorMax[0],
+      y: parent.y + parent.h * anchorMax[1],
+    },
   };
 }
 
@@ -280,6 +300,12 @@ export function Viewport(props: {
   onRectNudge?: (dx: number, dy: number) => void;
   onRectAlign?: (deltas: RectAlignmentDelta[]) => void;
   onRectPivot?: (entity: number, pivot: [number, number]) => void;
+  onRectAnchors?: (
+    entity: number,
+    anchorMin: [number, number],
+    anchorMax: [number, number],
+    parentSize: [number, number],
+  ) => void;
   onRectRotate?: (entity: number, degrees: number) => void;
   onRectScale?: (entity: number, axis: 'x' | 'y' | 'both', amount: number) => void;
   onRectResize?: (
@@ -382,8 +408,12 @@ export function Viewport(props: {
         rotDeg: number;
         layoutScale: number;
         pivotEditing: boolean;
+        anchorEditing: boolean;
         pivotNorm: [number, number];
         rectSize: { w: number; h: number };
+        anchorMin: [number, number];
+        anchorMax: [number, number];
+        anchorParentSize: { w: number; h: number };
         lastAng?: number;
         snap: RectSnapDrag;
       }
@@ -400,6 +430,9 @@ export function Viewport(props: {
   const [pivotEditing, setPivotEditing] = useState(false);
   const pivotEditingRef = useRef(pivotEditing);
   pivotEditingRef.current = pivotEditing;
+  const [anchorEditing, setAnchorEditing] = useState(false);
+  const anchorEditingRef = useRef(anchorEditing);
+  anchorEditingRef.current = anchorEditing;
   const [snapSettings, setSnapSettings] = useState(loadSceneSnap);
   const snapSettingsRef = useRef(snapSettings);
   snapSettingsRef.current = snapSettings;
@@ -887,6 +920,9 @@ export function Viewport(props: {
               const rt = readRectTransform(sel.components.RectTransform);
               const pivot = item.pivotScreen ?? rectPivot(item.rect, rt.pivot);
               const gizmoRect = rectGizmoBounds(item, pivot, rt.pivot);
+              const anchors = scene2DRef.current && anchorEditingRef.current
+                ? rectAnchorPoints(item, rt.anchor_min, rt.anchor_max)
+                : undefined;
               const rh = drawRectGizmo(
                 ctx,
                 pivot,
@@ -897,6 +933,7 @@ export function Viewport(props: {
                 gizmoRect,
                 rt.pivot,
                 scene2DRef.current && pivotEditingRef.current,
+                anchors,
               );
               rectGizmoHitsRef.current = rh;
             }
@@ -1057,6 +1094,7 @@ export function Viewport(props: {
             const gizmoRect = item
               ? rectGizmoBounds(item, pivot, rt.pivot)
               : { x: pivot.x - 50, y: pivot.y - 50, w: 100, h: 100 };
+            const anchorParent = item?.anchorParentRect ?? gizmoRect;
             let lastAng: number | undefined;
             if (propsRef.current.gizmo === 'rotate') {
               lastAng = Math.atan2(y - pivot.y, x - pivot.x);
@@ -1074,8 +1112,12 @@ export function Viewport(props: {
               rotDeg: rt.local_rotation,
               layoutScale: uiLayoutScaleRef.current || 1,
               pivotEditing: scene2DRef.current && pivotEditingRef.current,
+              anchorEditing: scene2DRef.current && anchorEditingRef.current,
               pivotNorm: [...rt.pivot],
               rectSize: { w: gizmoRect.w, h: gizmoRect.h },
+              anchorMin: [...rt.anchor_min],
+              anchorMax: [...rt.anchor_max],
+              anchorParentSize: { w: anchorParent.w, h: anchorParent.h },
               lastAng,
               snap: createRectSnapDrag(
                 snapSettingsRef.current.enabled || ev.ctrlKey || ev.metaKey,
@@ -1273,7 +1315,36 @@ export function Viewport(props: {
           return next.delta;
         };
 
-        if (d.pivotEditing && d.part.kind === 'center') {
+        if (d.anchorEditing && d.part.kind === 'anchor') {
+          const deltaX = dx / Math.max(1, d.anchorParentSize.w);
+          const deltaY = dy / Math.max(1, d.anchorParentSize.h);
+          const moved = moveAnchorHandle(
+            d.anchorMin,
+            d.anchorMax,
+            d.part.target,
+            [deltaX, deltaY],
+          );
+          const nextMin = moved.anchorMin;
+          const nextMax = moved.anchorMax;
+          if (
+            nextMin[0] !== d.anchorMin[0]
+            || nextMin[1] !== d.anchorMin[1]
+            || nextMax[0] !== d.anchorMax[0]
+            || nextMax[1] !== d.anchorMax[1]
+          ) {
+            propsRef.current.onRectAnchors?.(
+              d.entity,
+              nextMin,
+              nextMax,
+              [
+                d.anchorParentSize.w / scale,
+                d.anchorParentSize.h / scale,
+              ],
+            );
+            d.anchorMin = nextMin;
+            d.anchorMax = nextMax;
+          }
+        } else if (d.pivotEditing && d.part.kind === 'center') {
           const deltaX = projectScreenDelta(dx, dy, axes.x) / Math.max(1, d.rectSize.w);
           const deltaY = -projectScreenDelta(dx, dy, axes.y) / Math.max(1, d.rectSize.h);
           const nextPivot: [number, number] = [
@@ -1759,9 +1830,28 @@ export function Viewport(props: {
             aria-pressed={pivotEditing && canEditPivot}
             disabled={!canEditPivot}
             title="Drag the selected RectTransform pivot without moving its rectangle"
-            onClick={() => setPivotEditing((editing) => !editing)}
+            onClick={() => setPivotEditing((editing) => {
+              const next = !editing;
+              if (next) setAnchorEditing(false);
+              return next;
+            })}
           >
             Pivot
+          </button>
+          <button
+            type="button"
+            className={`scene-grid-toggle${anchorEditing && canEditPivot ? ' active' : ''}`}
+            aria-label="Edit RectTransform anchors"
+            aria-pressed={anchorEditing && canEditPivot}
+            disabled={!canEditPivot}
+            title="Drag fixed or stretched anchors while preserving the rectangle"
+            onClick={() => setAnchorEditing((editing) => {
+              const next = !editing;
+              if (next) setPivotEditing(false);
+              return next;
+            })}
+          >
+            Anchors
           </button>
           <div className="scene-snap" ref={snapSettingsElementRef}>
             <div className="scene-snap-buttons">

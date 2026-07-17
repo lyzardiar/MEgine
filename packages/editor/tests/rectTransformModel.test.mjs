@@ -2,8 +2,10 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 import {
   ANCHOR_PRESETS,
+  applyAnchorsKeepingRect,
   applyAnchorPreset,
   applyPivotKeepingRect,
+  moveAnchorHandle,
   readRectAxis,
   writeRectAxis,
 } from '../src/ui/rectTransformModel.ts';
@@ -84,4 +86,56 @@ test('pivot editing preserves a stretched rectangle and clamps the handle', () =
   const next = applyPivotKeepingRect(value, [-2, 3]);
   assert.deepEqual(next.pivot, [0, 1]);
   assert.deepEqual(solveRectTransform(parent, next), before);
+});
+
+test('anchor editing preserves the rectangle while changing its layout contract', () => {
+  const value = {
+    anchor_min: [0.5, 0.5],
+    anchor_max: [0.5, 0.5],
+    pivot: [0.25, 0.75],
+    anchored_position: [20, 30],
+    size_delta: [200, 100],
+    local_rotation: 0,
+    local_scale: [1, 1],
+  };
+  const parent = { x: 10, y: 20, w: 800, h: 600 };
+  const before = solveRectTransform(parent, value);
+  const next = applyAnchorsKeepingRect(value, [0.1, 0.2], [0.9, 0.8], [800, 600]);
+  const after = solveRectTransform(parent, next);
+  for (const key of ['x', 'y', 'w', 'h']) {
+    assert.ok(Math.abs(after[key] - before[key]) < 1e-8, `${key} should remain stable`);
+  }
+  assert.deepEqual(next.anchor_min, [0.1, 0.2]);
+  assert.deepEqual(next.anchor_max, [0.9, 0.8]);
+});
+
+test('anchor editing clamps invalid ranges and remains deterministic', () => {
+  const value = {
+    anchor_min: [0, 0],
+    anchor_max: [1, 1],
+    pivot: [0.5, 0.5],
+    anchored_position: [0, 0],
+    size_delta: [0, 0],
+    local_rotation: 0,
+    local_scale: [1, 1],
+  };
+  const next = applyAnchorsKeepingRect(value, [0.8, -1], [0.2, 2], [100, 200]);
+  assert.deepEqual(next.anchor_min, [0.8, 0]);
+  assert.deepEqual(next.anchor_max, [0.8, 1]);
+  assert.deepEqual(next.size_delta, [100, 0]);
+});
+
+test('anchor handle movement preserves spans and prevents crossed ranges', () => {
+  assert.deepEqual(
+    moveAnchorHandle([0.25, 0.25], [0.5, 0.75], 'both', [1, -1]),
+    { anchorMin: [0.75, 0], anchorMax: [1, 0.5] },
+  );
+  assert.deepEqual(
+    moveAnchorHandle([0.25, 0.25], [0.5, 0.75], 'min', [1, 1]),
+    { anchorMin: [0.5, 0.75], anchorMax: [0.5, 0.75] },
+  );
+  assert.deepEqual(
+    moveAnchorHandle([0.25, 0.25], [0.5, 0.75], 'max', [-1, -1]),
+    { anchorMin: [0.25, 0.25], anchorMax: [0.25, 0.25] },
+  );
 });
