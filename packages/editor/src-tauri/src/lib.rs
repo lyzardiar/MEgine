@@ -32,6 +32,7 @@ struct ProjectSpriteInfo {
 }
 
 const MAX_RECENT_PROJECTS: usize = 12;
+const MAX_PROJECT_ASSET_BYTES: usize = 64 * 1024 * 1024;
 
 #[derive(Clone, Default, serde::Deserialize, serde::Serialize)]
 #[serde(rename_all = "camelCase")]
@@ -106,6 +107,25 @@ fn remember_recent_project(app: &tauri::AppHandle, snapshot: &ProjectSnapshot) {
     let _ = save_recent_projects(app, &projects);
 }
 
+fn project_asset_kind(name: &str) -> Option<&'static str> {
+    let lower = name.to_ascii_lowercase();
+    if lower.ends_with(".manim") {
+        Some("animation")
+    } else if lower.ends_with(".mmat") || lower.ends_with(".mat") {
+        Some("material")
+    } else if lower.ends_with(".prefab") {
+        Some("prefab")
+    } else if lower.ends_with(".atlas") {
+        Some("spine-atlas")
+    } else if lower.ends_with(".skel") {
+        Some("spine-binary")
+    } else if lower.ends_with(".json") {
+        Some("spine-json")
+    } else {
+        None
+    }
+}
+
 fn collect_project_assets(root: &Path, dir: &Path, output: &mut Vec<ProjectAssetInfo>) {
     let Ok(entries) = std::fs::read_dir(dir) else {
         return;
@@ -123,14 +143,7 @@ fn collect_project_assets(root: &Path, dir: &Path, output: &mut Vec<ProjectAsset
             collect_project_assets(root, &path, output);
             continue;
         }
-        let lower = name.to_ascii_lowercase();
-        let kind = if lower.ends_with(".atlas") {
-            "spine-atlas"
-        } else if lower.ends_with(".skel") {
-            "spine-binary"
-        } else if lower.ends_with(".json") {
-            "spine-json"
-        } else {
+        let Some(kind) = project_asset_kind(&name) else {
             continue;
         };
         let Ok(relative) = path.strip_prefix(root) else {
@@ -276,42 +289,191 @@ fn get_project_snapshot(state: State<'_, AppState>) -> Result<ProjectSnapshot, E
         .ok_or_else(no_project)
 }
 
-#[tauri::command]
-fn read_project_asset(
-    relative_path: String,
-    state: State<'_, AppState>,
-) -> Result<Vec<u8>, String> {
-    let relative = Path::new(&relative_path);
-    if relative.is_absolute()
-        || relative.components().any(|component| {
-            matches!(
-                component,
-                Component::ParentDir | Component::RootDir | Component::Prefix(_)
-            )
-        })
-        || relative.components().next() != Some(Component::Normal("Assets".as_ref()))
-    {
+fn asset_relative_tail(relative_path: &str) -> Result<PathBuf, String> {
+    let relative = Path::new(relative_path);
+    if relative.is_absolute() {
         return Err("asset path must be project-relative under Assets".into());
     }
+    let mut components = relative.components();
+    if components.next() != Some(Component::Normal("Assets".as_ref())) {
+        return Err("asset path must be project-relative under Assets".into());
+    }
+    let mut tail = PathBuf::new();
+    for component in components {
+        match component {
+            Component::Normal(value) => tail.push(value),
+            _ => return Err("asset path contains an invalid segment".into()),
+        }
+    }
+    if tail.as_os_str().is_empty() || tail.file_name().is_none() {
+        return Err("asset path must name a file under Assets".into());
+    }
+    Ok(tail)
+}
 
-    let guard = state.project.lock();
-    let session = guard.as_ref().ok_or_else(|| no_project().message)?;
-    let root = Path::new(&session.snapshot().project_root)
+fn canonical_assets_root(project_root: &Path) -> Result<PathBuf, String> {
+    let root = project_root
         .canonicalize()
         .map_err(|error| format!("project root: {error}"))?;
-    let assets_root = root.join("Assets");
-    let file = root
-        .join(relative)
+    let assets_path = root.join("Assets");
+    std::fs::create_dir_all(&assets_path).map_err(|error| error.to_string())?;
+    let assets = assets_path
+        .canonicalize()
+        .map_err(|error| format!("project Assets: {error}"))?;
+    if !assets.starts_with(&root) {
+        return Err("project Assets directory escapes project root".into());
+    }
+    Ok(assets)
+}
+
+fn project_asset_read_path(project_root: &Path, relative_path: &str) -> Result<PathBuf, String> {
+    let tail = asset_relative_tail(relative_path)?;
+    let assets_root = canonical_assets_root(project_root)?;
+    let file = assets_root
+        .join(tail)
         .canonicalize()
         .map_err(|error| format!("asset not found: {error}"))?;
     if !file.starts_with(&assets_root) || !file.is_file() {
         return Err("asset path escapes project Assets".into());
     }
+    Ok(file)
+}
+
+fn project_asset_write_path(project_root: &Path, relative_path: &str) -> Result<PathBuf, String> {
+    let tail = asset_relative_tail(relative_path)?;
+    let assets_root = canonical_assets_root(project_root)?;
+    let file_name = tail
+        .file_name()
+        .ok_or_else(|| "asset path must name a file".to_string())?;
+    let mut parent = assets_root.clone();
+    if let Some(relative_parent) = tail.parent() {
+        for component in relative_parent.components() {
+            let Component::Normal(segment) = component else {
+                return Err("asset path contains an invalid segment".into());
+            };
+            let next = parent.join(segment);
+            if next.exists() {
+                let canonical = next.canonicalize().map_err(|error| error.to_string())?;
+                if !canonical.starts_with(&assets_root) || !canonical.is_dir() {
+                    return Err("asset path escapes project Assets".into());
+                }
+                parent = canonical;
+            } else {
+                std::fs::create_dir(&next).map_err(|error| error.to_string())?;
+                parent = next.canonicalize().map_err(|error| error.to_string())?;
+                if !parent.starts_with(&assets_root) {
+                    return Err("asset path escapes project Assets".into());
+                }
+            }
+        }
+    }
+    let target = parent.join(file_name);
+    if let Ok(metadata) = std::fs::symlink_metadata(&target) {
+        if metadata.file_type().is_symlink() || !metadata.is_file() {
+            return Err("asset target must be a regular file".into());
+        }
+    }
+    Ok(target)
+}
+
+#[cfg(windows)]
+fn replace_file_atomically(source: &Path, target: &Path) -> std::io::Result<()> {
+    if !target.exists() {
+        return std::fs::rename(source, target);
+    }
+    use std::os::windows::ffi::OsStrExt;
+    use windows_sys::Win32::Storage::FileSystem::{ReplaceFileW, REPLACEFILE_WRITE_THROUGH};
+    let target_wide: Vec<u16> = target.as_os_str().encode_wide().chain(Some(0)).collect();
+    let source_wide: Vec<u16> = source.as_os_str().encode_wide().chain(Some(0)).collect();
+    let result = unsafe {
+        ReplaceFileW(
+            target_wide.as_ptr(),
+            source_wide.as_ptr(),
+            std::ptr::null(),
+            REPLACEFILE_WRITE_THROUGH,
+            std::ptr::null(),
+            std::ptr::null(),
+        )
+    };
+    if result == 0 {
+        Err(std::io::Error::last_os_error())
+    } else {
+        Ok(())
+    }
+}
+
+#[cfg(not(windows))]
+fn replace_file_atomically(source: &Path, target: &Path) -> std::io::Result<()> {
+    std::fs::rename(source, target)
+}
+
+fn write_project_asset_file(
+    project_root: &Path,
+    relative_path: &str,
+    contents: &[u8],
+) -> Result<(), String> {
+    if contents.len() > MAX_PROJECT_ASSET_BYTES {
+        return Err("asset exceeds 64 MiB editor limit".into());
+    }
+    let target = project_asset_write_path(project_root, relative_path)?;
+    let parent = target
+        .parent()
+        .ok_or_else(|| "asset target has no parent".to_string())?;
+    let name = target
+        .file_name()
+        .and_then(|value| value.to_str())
+        .unwrap_or("asset");
+    let nonce = SystemTime::now()
+        .duration_since(UNIX_EPOCH)
+        .unwrap_or_default()
+        .as_nanos();
+    let temporary = parent.join(format!(".{name}.{}.{nonce}.tmp", std::process::id()));
+    let result = (|| -> std::io::Result<()> {
+        use std::io::Write;
+        let mut file = std::fs::OpenOptions::new()
+            .write(true)
+            .create_new(true)
+            .open(&temporary)?;
+        file.write_all(contents)?;
+        file.sync_all()?;
+        drop(file);
+        replace_file_atomically(&temporary, &target)
+    })();
+    if result.is_err() {
+        let _ = std::fs::remove_file(&temporary);
+    }
+    result.map_err(|error| error.to_string())
+}
+
+#[tauri::command]
+fn read_project_asset(
+    relative_path: String,
+    state: State<'_, AppState>,
+) -> Result<Vec<u8>, String> {
+    let guard = state.project.lock();
+    let session = guard.as_ref().ok_or_else(|| no_project().message)?;
+    let file =
+        project_asset_read_path(Path::new(&session.snapshot().project_root), &relative_path)?;
     let length = file.metadata().map_err(|error| error.to_string())?.len();
-    if length > 64 * 1024 * 1024 {
+    if length > MAX_PROJECT_ASSET_BYTES as u64 {
         return Err("asset exceeds 64 MiB editor limit".into());
     }
     std::fs::read(file).map_err(|error| error.to_string())
+}
+
+#[tauri::command]
+fn write_project_asset(
+    relative_path: String,
+    contents: Vec<u8>,
+    state: State<'_, AppState>,
+) -> Result<(), String> {
+    let guard = state.project.lock();
+    let session = guard.as_ref().ok_or_else(|| no_project().message)?;
+    write_project_asset_file(
+        Path::new(&session.snapshot().project_root),
+        &relative_path,
+        &contents,
+    )
 }
 
 #[tauri::command]
@@ -412,6 +574,7 @@ pub fn run() {
             remove_recent_project,
             get_project_snapshot,
             read_project_asset,
+            write_project_asset,
             list_project_assets,
             list_project_sprites,
             open_scene,
@@ -489,5 +652,77 @@ mod tests {
         assert_eq!(sprites.len(), 1);
         assert_eq!(sprites[0].id, "Assets/UI/panel.png");
         assert_eq!(sprites[0].folder, "Assets/UI");
+    }
+
+    #[test]
+    fn project_asset_scan_classifies_real_authoring_files() {
+        let root = std::env::temp_dir().join(format!(
+            "mengine-asset-scan-{}-{}",
+            std::process::id(),
+            SystemTime::now()
+                .duration_since(UNIX_EPOCH)
+                .unwrap()
+                .as_nanos()
+        ));
+        let assets = root.join("Assets");
+        std::fs::create_dir_all(&assets).unwrap();
+        for name in [
+            "walk.manim",
+            "character.mmat",
+            "enemy.prefab",
+            "skeleton.atlas",
+            "ignored.txt",
+        ] {
+            std::fs::write(assets.join(name), []).unwrap();
+        }
+
+        let mut found = Vec::new();
+        collect_project_assets(&root, &assets, &mut found);
+        std::fs::remove_dir_all(root).unwrap();
+        found.sort_by(|left, right| left.name.cmp(&right.name));
+
+        assert_eq!(found.len(), 4);
+        assert!(found
+            .iter()
+            .any(|asset| asset.name == "walk.manim" && asset.kind == "animation"));
+        assert!(found
+            .iter()
+            .any(|asset| asset.name == "character.mmat" && asset.kind == "material"));
+        assert!(found
+            .iter()
+            .any(|asset| asset.name == "enemy.prefab" && asset.kind == "prefab"));
+    }
+
+    #[test]
+    fn project_asset_write_is_confined_atomic_and_replaceable() {
+        let root = std::env::temp_dir().join(format!(
+            "mengine-asset-write-{}-{}",
+            std::process::id(),
+            SystemTime::now()
+                .duration_since(UNIX_EPOCH)
+                .unwrap()
+                .as_nanos()
+        ));
+        std::fs::create_dir_all(root.join("Assets")).unwrap();
+
+        write_project_asset_file(&root, "Assets/Animations/walk.manim", br#"{"version":1}"#)
+            .unwrap();
+        write_project_asset_file(&root, "Assets/Animations/walk.manim", br#"{"version":2}"#)
+            .unwrap();
+        let file = root.join("Assets/Animations/walk.manim");
+        assert_eq!(std::fs::read(&file).unwrap(), br#"{"version":2}"#);
+        assert!(std::fs::read_dir(file.parent().unwrap())
+            .unwrap()
+            .all(|entry| !entry
+                .unwrap()
+                .file_name()
+                .to_string_lossy()
+                .ends_with(".tmp")));
+
+        assert!(write_project_asset_file(&root, "../outside.manim", b"bad").is_err());
+        assert!(write_project_asset_file(&root, "Assets/../outside.manim", b"bad").is_err());
+        assert!(write_project_asset_file(&root, "Assets", b"bad").is_err());
+        assert!(!root.join("outside.manim").exists());
+        std::fs::remove_dir_all(root).unwrap();
     }
 }

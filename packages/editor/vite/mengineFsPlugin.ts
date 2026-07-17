@@ -36,6 +36,25 @@ function readBody(req: Connect.IncomingMessage): Promise<string> {
   });
 }
 
+function readBodyBytes(req: Connect.IncomingMessage, maxBytes: number): Promise<Buffer> {
+  return new Promise((resolve, reject) => {
+    const chunks: Buffer[] = [];
+    let length = 0;
+    req.on('data', (chunk) => {
+      const value = Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk);
+      length += value.length;
+      if (length > maxBytes) {
+        reject(new Error(`request body exceeds ${maxBytes} bytes`));
+        req.destroy();
+        return;
+      }
+      chunks.push(value);
+    });
+    req.on('end', () => resolve(Buffer.concat(chunks)));
+    req.on('error', reject);
+  });
+}
+
 function sendJson(res: Connect.ServerResponse, status: number, data: unknown) {
   res.statusCode = status;
   res.setHeader('Content-Type', 'application/json; charset=utf-8');
@@ -115,7 +134,9 @@ export function mengineFsPlugin(opts: MengineFsOptions | string): Plugin {
   }
 
   type TextureAsset = { id: string; name: string; folder: string; relPath: string };
-  type ProjectFileAsset = TextureAsset & { kind: 'spine-json' | 'spine-binary' | 'spine-atlas' };
+  type ProjectFileAsset = TextureAsset & {
+    kind: 'animation' | 'material' | 'prefab' | 'spine-json' | 'spine-binary' | 'spine-atlas';
+  };
 
   function listTextures(): { sprites: TextureAsset[]; folders: string[] } {
     ensureDirs();
@@ -168,13 +189,19 @@ export function mengineFsPlugin(opts: MengineFsOptions | string): Plugin {
           continue;
         }
         const lower = file.toLowerCase();
-        const kind = lower.endsWith('.atlas')
-          ? 'spine-atlas'
-          : lower.endsWith('.skel')
-            ? 'spine-binary'
-            : lower.endsWith('.json')
-              ? 'spine-json'
-              : null;
+        const kind: ProjectFileAsset['kind'] | null = lower.endsWith('.manim')
+          ? 'animation'
+          : lower.endsWith('.mmat') || lower.endsWith('.mat')
+            ? 'material'
+            : lower.endsWith('.prefab')
+              ? 'prefab'
+              : lower.endsWith('.atlas')
+                ? 'spine-atlas'
+                : lower.endsWith('.skel')
+                  ? 'spine-binary'
+                  : lower.endsWith('.json')
+                    ? 'spine-json'
+                    : null;
         if (!kind) continue;
         const relPath = `Assets/${path.relative(assetsRoot, abs).replace(/\\/g, '/')}`;
         assets.push({ id: relPath, name: file, folder, relPath, kind });
@@ -184,14 +211,63 @@ export function mengineFsPlugin(opts: MengineFsOptions | string): Plugin {
     return assets.sort((a, b) => a.relPath.localeCompare(b.relPath));
   }
 
-  function resolveAssetRel(relRaw: string): string | null {
-    let rel = decodeURIComponent(relRaw).replace(/\\/g, '/').replace(/^\/+/, '');
-    if (!rel.toLowerCase().startsWith('assets/')) return null;
-    if (rel.includes('..')) return null;
-    const abs = path.resolve(projectRoot, ...rel.split('/'));
-    if (!isUnder(projectRoot, abs)) return null;
-    if (!fs.existsSync(abs) || !fs.statSync(abs).isFile()) return null;
-    return abs;
+  function normalizedAssetPath(relRaw: string): string | null {
+    const rel = decodeURIComponent(relRaw).replace(/\\/g, '/').replace(/^\/+/, '');
+    const segments = rel.split('/').filter(Boolean);
+    if (segments[0]?.toLowerCase() !== 'assets') return null;
+    if (segments.length < 2 || segments.some((segment) => segment === '.' || segment === '..')) {
+      return null;
+    }
+    const abs = path.resolve(projectRoot, ...segments);
+    return isUnder(assetsRoot, abs) ? abs : null;
+  }
+
+  function resolveAssetReadPath(relRaw: string): string | null {
+    const abs = normalizedAssetPath(relRaw);
+    if (!abs || !fs.existsSync(abs) || !fs.statSync(abs).isFile()) return null;
+    const real = fs.realpathSync(abs);
+    return isUnder(fs.realpathSync(assetsRoot), real) ? real : null;
+  }
+
+  function resolveAssetWritePath(relRaw: string): string | null {
+    const abs = normalizedAssetPath(relRaw);
+    if (!abs) return null;
+    let existing = path.dirname(abs);
+    while (!fs.existsSync(existing)) {
+      const parent = path.dirname(existing);
+      if (parent === existing) return null;
+      existing = parent;
+    }
+    const realAssets = fs.realpathSync(assetsRoot);
+    const realExisting = fs.realpathSync(existing);
+    if (!isUnder(realAssets, realExisting)) return null;
+    if (fs.existsSync(abs)) {
+      const metadata = fs.lstatSync(abs);
+      if (!metadata.isFile() || metadata.isSymbolicLink()) return null;
+    }
+    fs.mkdirSync(path.dirname(abs), { recursive: true });
+    const realParent = fs.realpathSync(path.dirname(abs));
+    return isUnder(realAssets, realParent) ? abs : null;
+  }
+
+  function writeFileAtomic(file: string, contents: Buffer): void {
+    const temporary = path.join(
+      path.dirname(file),
+      `.${path.basename(file)}.${process.pid}.${Date.now()}.tmp`,
+    );
+    try {
+      const descriptor = fs.openSync(temporary, 'wx');
+      try {
+        fs.writeFileSync(descriptor, contents);
+        fs.fsyncSync(descriptor);
+      } finally {
+        fs.closeSync(descriptor);
+      }
+      fs.renameSync(temporary, file);
+    } catch (error) {
+      if (fs.existsSync(temporary)) fs.unlinkSync(temporary);
+      throw error;
+    }
   }
 
   function contentTypeFor(file: string): string {
@@ -308,7 +384,7 @@ export function mengineFsPlugin(opts: MengineFsOptions | string): Plugin {
       // GET /__mengine/asset/Assets/...  → serve project texture
       const assetMatch = pathname.match(new RegExp(`^${API}/asset/(.+)$`));
       if (assetMatch && method === 'GET') {
-        const abs = resolveAssetRel(assetMatch[1]);
+        const abs = resolveAssetReadPath(assetMatch[1]);
         if (!abs) return sendJson(res, 404, { error: 'not found' });
         const buf = fs.readFileSync(abs);
         res.statusCode = 200;
@@ -316,6 +392,13 @@ export function mengineFsPlugin(opts: MengineFsOptions | string): Plugin {
         res.setHeader('Cache-Control', 'no-cache');
         res.end(buf);
         return;
+      }
+      if (assetMatch && method === 'PUT') {
+        const abs = resolveAssetWritePath(assetMatch[1]);
+        if (!abs) return sendJson(res, 400, { error: 'invalid asset path' });
+        const body = await readBodyBytes(req, 64 * 1024 * 1024);
+        writeFileAtomic(abs, body);
+        return sendJson(res, 200, { ok: true, bytes: body.length });
       }
 
       // POST /__mengine/open  { path | id }

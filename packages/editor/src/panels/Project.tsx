@@ -24,35 +24,17 @@ import {
 const STATIC_FOLDERS = [
   'Assets',
   'Assets/Scenes',
+  'Assets/Animations',
   'Assets/Prefabs',
   'Assets/Scripts',
   'Assets/Materials',
   'Assets/Sprites',
 ];
 
-const STATIC_ASSETS = [
-  { folder: 'Assets/Prefabs', name: 'Cube.prefab', kind: 'prefab' as const, spawn: 'Cube', icon: '🧊' },
-  { folder: 'Assets/Prefabs', name: 'Empty.prefab', kind: 'prefab' as const, spawn: 'Empty', icon: '○' },
-  { folder: 'Assets/Prefabs', name: 'Camera.prefab', kind: 'prefab' as const, spawn: 'Camera', icon: '🎥' },
-  { folder: 'Assets/Prefabs', name: 'Sprite.prefab', kind: 'prefab' as const, spawn: 'Sprite', icon: '🎴' },
-  { folder: 'Assets/Prefabs', name: 'Canvas.prefab', kind: 'prefab' as const, spawn: 'Canvas', icon: '🖼️' },
-  { folder: 'Assets/Prefabs', name: 'Image.prefab', kind: 'prefab' as const, spawn: 'Image', icon: '▭' },
-  { folder: 'Assets/Prefabs', name: 'Button.prefab', kind: 'prefab' as const, spawn: 'Button', icon: '🔘' },
-  { folder: 'Assets/Materials', name: 'Default.mat', kind: 'material' as const, spawn: null, icon: '🎨' },
-  {
-    folder: 'Assets/Sprites',
-    name: 'white.png',
-    kind: 'sprite' as const,
-    spawn: null,
-    icon: '⬜',
-    spriteId: 'white',
-  },
-];
-
 type AssetItem = {
   folder: string;
   name: string;
-  kind: 'prefab' | 'script' | 'material' | 'scene' | 'sprite' | 'spine';
+  kind: 'animation' | 'prefab' | 'script' | 'material' | 'scene' | 'sprite' | 'spine';
   spawn: string | null;
   icon: string;
   sceneName?: string;
@@ -147,21 +129,37 @@ export function Project(props: {
     thumbUrl: spriteAssetUrl(s.id),
   }));
 
-  const spineAssets: AssetItem[] = projectFiles.map((asset: ProjectFileAsset) => ({
-    folder: asset.folder,
-    name: asset.name,
-    kind: 'spine' as const,
-    spawn: null,
-    icon: asset.kind === 'spine-atlas' ? '📚' : '🦴',
-    spriteId: asset.id,
-  }));
+  const authoringAssets: AssetItem[] = projectFiles.map((asset: ProjectFileAsset) => {
+    const kind: AssetItem['kind'] = asset.kind === 'animation'
+      ? 'animation'
+      : asset.kind === 'material'
+        ? 'material'
+        : asset.kind === 'prefab'
+          ? 'prefab'
+          : 'spine';
+    return {
+      folder: asset.folder,
+      name: asset.name,
+      kind,
+      spawn: null,
+      icon: kind === 'animation'
+        ? '◆'
+        : kind === 'material'
+          ? '🎨'
+          : kind === 'prefab'
+            ? '◇'
+            : asset.kind === 'spine-atlas'
+              ? '📚'
+              : '🦴',
+      spriteId: asset.id,
+    };
+  });
 
   const allAssets: AssetItem[] = [
-    ...STATIC_ASSETS,
     ...sceneAssets,
     ...scriptAssets,
     ...spriteAssets,
-    ...spineAssets,
+    ...authoringAssets,
   ];
   const visible =
     folder === 'Assets'
@@ -281,9 +279,21 @@ export function Project(props: {
               ]
                 .filter(Boolean)
                 .join(' ')}
-              draggable={a.kind === 'sprite' || a.kind === 'spine'}
+              draggable={
+                a.kind === 'sprite'
+                || a.kind === 'spine'
+                || a.kind === 'animation'
+                || a.kind === 'material'
+                || a.kind === 'prefab'
+              }
               onDragStart={(e) => {
-                if (a.kind !== 'sprite' && a.kind !== 'spine') return;
+                if (
+                  a.kind !== 'sprite'
+                  && a.kind !== 'spine'
+                  && a.kind !== 'animation'
+                  && a.kind !== 'material'
+                  && a.kind !== 'prefab'
+                ) return;
                 const id = a.spriteId ?? a.name;
                 if (a.kind === 'sprite') e.dataTransfer.setData('text/mengine-sprite', id);
                 e.dataTransfer.setData('text/mengine-asset', id);
@@ -302,9 +312,15 @@ export function Project(props: {
                       ? `拖到 Image.Sprite · ${a.spriteId}`
                       : a.kind === 'spine'
                         ? `拖到 Spine Skeleton 资源字段 · ${a.spriteId}`
-                      : a.spawn
-                        ? '双击实例化'
-                        : a.name
+                        : a.kind === 'animation'
+                          ? `Animation Clip · ${a.spriteId}`
+                          : a.kind === 'material'
+                            ? `Material Asset · ${a.spriteId}`
+                            : a.kind === 'prefab'
+                              ? `Prefab Asset · ${a.spriteId}`
+                              : a.spawn
+                                ? '双击实例化'
+                                : a.name
               }
             >
               <div className="asset-thumb">

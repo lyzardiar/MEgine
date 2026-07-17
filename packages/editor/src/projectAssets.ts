@@ -1,5 +1,5 @@
 import { invoke } from '@tauri-apps/api/core';
-import { isDesktopEditor } from './transport/editorTransport';
+import { isDesktopEditor } from './transport/editorTransport.ts';
 
 const DEV_ASSET_API = '/__mengine/asset';
 
@@ -8,7 +8,13 @@ export type ProjectFileAsset = {
   name: string;
   folder: string;
   relPath: string;
-  kind: 'spine-json' | 'spine-binary' | 'spine-atlas';
+  kind:
+    | 'animation'
+    | 'material'
+    | 'prefab'
+    | 'spine-json'
+    | 'spine-binary'
+    | 'spine-atlas';
 };
 
 let projectFiles: ProjectFileAsset[] = [];
@@ -80,6 +86,40 @@ export async function readProjectAssetBytes(relativePath: string): Promise<Uint8
 
 export async function readProjectAssetText(relativePath: string): Promise<string> {
   return new TextDecoder().decode(await readProjectAssetBytes(relativePath));
+}
+
+export async function writeProjectAssetBytes(
+  relativePath: string,
+  contents: Uint8Array,
+): Promise<void> {
+  const normalized = normalizeProjectAssetPath(relativePath);
+  if (contents.byteLength > 64 * 1024 * 1024) {
+    throw new Error('asset exceeds 64 MiB editor limit');
+  }
+  if (isDesktopEditor()) {
+    await invoke('write_project_asset', {
+      relativePath: normalized,
+      contents: Array.from(contents),
+    });
+    return;
+  }
+  const copy = new Uint8Array(contents.byteLength);
+  copy.set(contents);
+  const response = await fetch(projectAssetUrl(normalized), {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/octet-stream' },
+    body: copy,
+  });
+  if (!response.ok) {
+    throw new Error(`${response.status} ${response.statusText}: ${normalized}`);
+  }
+}
+
+export async function writeProjectAssetText(
+  relativePath: string,
+  contents: string,
+): Promise<void> {
+  await writeProjectAssetBytes(relativePath, new TextEncoder().encode(contents));
 }
 
 export async function loadProjectImage(relativePath: string): Promise<HTMLImageElement> {
