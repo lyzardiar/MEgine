@@ -2099,6 +2099,93 @@ body.insp-scrubbing * {
   font-weight: 600;
 }
 
+.scene-snap {
+  position: relative;
+  flex: 0 0 auto;
+}
+
+.scene-snap-buttons {
+  display: inline-flex;
+  border: 1px solid var(--u-border-2);
+  background: var(--u-input);
+}
+
+.scene-snap-buttons button {
+  height: 24px;
+  padding: 0 8px;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  color: var(--u-muted);
+  font-size: 11px;
+  cursor: pointer;
+}
+
+.scene-snap-buttons button + button {
+  width: 22px;
+  padding: 0;
+  border-left: 1px solid var(--u-border-2);
+}
+
+.scene-snap-buttons button:hover {
+  color: var(--u-text-bright);
+  background: #444;
+}
+
+.scene-snap-buttons button.active {
+  color: #fff;
+  background: var(--u-selected);
+}
+
+.scene-snap-popup {
+  position: absolute;
+  z-index: 90;
+  top: 28px;
+  left: 0;
+  width: 210px;
+  padding: 8px;
+  border: 1px solid #171717;
+  box-shadow: 0 7px 18px rgba(0, 0, 0, 0.52);
+  background: #303030;
+}
+
+.scene-snap-popup strong {
+  display: block;
+  margin-bottom: 7px;
+  color: var(--u-text-bright);
+  font-size: 11px;
+}
+
+.scene-snap-popup label {
+  display: grid;
+  grid-template-columns: 58px minmax(0, 1fr) 20px;
+  gap: 6px;
+  margin: 4px 0;
+  color: var(--u-text);
+  font-size: 11px;
+}
+
+.scene-snap-popup input {
+  width: 100%;
+  min-width: 0;
+  padding: 2px 4px;
+  border: 1px solid var(--u-border-2);
+  border-radius: 0;
+  background: var(--u-input);
+  color: var(--u-text-bright);
+}
+
+.scene-snap-popup span {
+  color: var(--u-muted);
+}
+
+.scene-snap-popup small {
+  display: block;
+  margin-top: 7px;
+  color: var(--u-muted);
+  font-size: 9px;
+}
+
 .viewport-overlay {
   position: absolute;
   left: 8px;

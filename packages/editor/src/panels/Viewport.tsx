@@ -60,8 +60,16 @@ import {
   type ParticleEmitterState,
 } from '../particles/particleSystem';
 import { SpineCanvasRuntime } from '../spine/spineCanvasRuntime';
+import {
+  EMPTY_SNAP_ACCUMULATOR,
+  advanceSnap,
+  normalizeSceneSnapSettings,
+  type SceneSnapSettings,
+  type SnapAccumulator,
+} from '../sceneSnap';
 
 const SCENE_2D_KEY = 'mengine.scene.2d';
+const SCENE_SNAP_KEY = 'mengine.scene.snap';
 
 function loadScene2D(): boolean {
   try {
@@ -69,6 +77,42 @@ function loadScene2D(): boolean {
   } catch {
     return false;
   }
+}
+
+function loadSceneSnap(): SceneSnapSettings {
+  try {
+    return normalizeSceneSnapSettings(JSON.parse(localStorage.getItem(SCENE_SNAP_KEY) ?? '{}'));
+  } catch {
+    return normalizeSceneSnapSettings(null);
+  }
+}
+
+function saveSceneSnap(settings: SceneSnapSettings): void {
+  try {
+    localStorage.setItem(SCENE_SNAP_KEY, JSON.stringify(settings));
+  } catch {
+    /* ignore unavailable storage */
+  }
+}
+
+type RectSnapDrag = {
+  active: boolean;
+  settings: SceneSnapSettings;
+  x: SnapAccumulator;
+  y: SnapAccumulator;
+  rotate: SnapAccumulator;
+  scale: SnapAccumulator;
+};
+
+function createRectSnapDrag(active: boolean, settings: SceneSnapSettings): RectSnapDrag {
+  return {
+    active,
+    settings: { ...settings },
+    x: { ...EMPTY_SNAP_ACCUMULATOR },
+    y: { ...EMPTY_SNAP_ACCUMULATOR },
+    rotate: { ...EMPTY_SNAP_ACCUMULATOR },
+    scale: { ...EMPTY_SNAP_ACCUMULATOR },
+  };
 }
 
 type Ent = {
@@ -252,6 +296,7 @@ export function Viewport(props: {
         rotDeg: number;
         layoutScale: number;
         lastAng?: number;
+        snap: RectSnapDrag;
       }
   >(null);
 
@@ -260,8 +305,24 @@ export function Viewport(props: {
   const [scene2D, setScene2D] = useState(loadScene2D);
   const scene2DRef = useRef(scene2D);
   scene2DRef.current = scene2D;
+  const [snapSettings, setSnapSettings] = useState(loadSceneSnap);
+  const snapSettingsRef = useRef(snapSettings);
+  snapSettingsRef.current = snapSettings;
+  const [snapSettingsOpen, setSnapSettingsOpen] = useState(false);
+  const snapSettingsElementRef = useRef<HTMLDivElement>(null);
   /** Saved orbit angles when entering 2D (restore on exit). */
   const savedOrbitRef = useRef<{ yaw: number; pitch: number } | null>(null);
+
+  useEffect(() => {
+    if (!snapSettingsOpen) return;
+    const close = (event: PointerEvent) => {
+      if (!snapSettingsElementRef.current?.contains(event.target as Node)) {
+        setSnapSettingsOpen(false);
+      }
+    };
+    window.addEventListener('pointerdown', close);
+    return () => window.removeEventListener('pointerdown', close);
+  }, [snapSettingsOpen]);
 
   // Continuous render loop
   useEffect(() => {
@@ -877,6 +938,10 @@ export function Viewport(props: {
               rotDeg: rt.local_rotation,
               layoutScale: uiLayoutScaleRef.current || 1,
               lastAng,
+              snap: createRectSnapDrag(
+                snapSettingsRef.current.enabled || ev.ctrlKey || ev.metaKey,
+                snapSettingsRef.current,
+              ),
             };
             return;
           }
@@ -1026,36 +1091,77 @@ export function Viewport(props: {
         const mode = propsRef.current.gizmo;
         const scale = d.layoutScale > 1e-6 ? d.layoutScale : 1;
         const axes = rectLocalAxes(d.rotDeg);
+        const snapped = (
+          channel: 'x' | 'y' | 'rotate' | 'scale',
+          rawDelta: number,
+          step: number,
+        ) => {
+          const next = advanceSnap(d.snap[channel], rawDelta, step, d.snap.active);
+          d.snap[channel] = next.state;
+          return next.delta;
+        };
 
         if (d.part.kind === 'size') {
-          const alongX = projectScreenDelta(dx, dy, axes.x) / scale;
-          const alongY = -projectScreenDelta(dx, dy, axes.y) / scale;
+          const alongX = snapped(
+            'x',
+            projectScreenDelta(dx, dy, axes.x) / scale,
+            d.snap.settings.move,
+          );
+          const alongY = snapped(
+            'y',
+            -projectScreenDelta(dx, dy, axes.y) / scale,
+            d.snap.settings.move,
+          );
           propsRef.current.onRectResize?.(d.entity, d.part.handle, alongX, alongY);
         } else if (mode === 'translate') {
           if (d.part.kind === 'axis') {
             const dir = d.part.axis === 'x' ? axes.x : axes.y;
             const along = projectScreenDelta(dx, dy, dir) / scale;
             if (d.part.axis === 'x') {
-              propsRef.current.onRectTranslate?.(d.entity, along, 0);
+              propsRef.current.onRectTranslate?.(
+                d.entity,
+                snapped('x', along, d.snap.settings.move),
+                0,
+              );
             } else {
               // local Y screen points up; UI y+ is down
-              propsRef.current.onRectTranslate?.(d.entity, 0, -along);
+              propsRef.current.onRectTranslate?.(
+                d.entity,
+                0,
+                snapped('y', -along, d.snap.settings.move),
+              );
             }
           } else {
             propsRef.current.onRectTranslate?.(
               d.entity,
-              projectScreenDelta(dx, dy, axes.x) / scale,
-              -projectScreenDelta(dx, dy, axes.y) / scale,
+              snapped(
+                'x',
+                projectScreenDelta(dx, dy, axes.x) / scale,
+                d.snap.settings.move,
+              ),
+              snapped(
+                'y',
+                -projectScreenDelta(dx, dy, axes.y) / scale,
+                d.snap.settings.move,
+              ),
             );
           }
         } else if (mode === 'scale') {
           if (d.part.kind === 'axis' && (d.part.axis === 'x' || d.part.axis === 'y')) {
             const dir = d.part.axis === 'x' ? axes.x : axes.y;
             const along = projectScreenDelta(dx, dy, dir);
-            propsRef.current.onRectScale?.(d.entity, d.part.axis, along / 80);
+            propsRef.current.onRectScale?.(
+              d.entity,
+              d.part.axis,
+              snapped('scale', along / 80, d.snap.settings.scale),
+            );
           } else {
             const amount = (dx + -dy) / 160;
-            propsRef.current.onRectScale?.(d.entity, 'both', amount);
+            propsRef.current.onRectScale?.(
+              d.entity,
+              'both',
+              snapped('scale', amount, d.snap.settings.scale),
+            );
           }
         } else if (mode === 'rotate') {
           const canvas = canvasRef.current;
@@ -1072,8 +1178,13 @@ export function Viewport(props: {
           if (dAng > Math.PI) dAng -= Math.PI * 2;
           if (dAng < -Math.PI) dAng += Math.PI * 2;
           d.lastAng = ang;
-          propsRef.current.onRectRotate?.(d.entity, (-dAng * 180) / Math.PI);
-          d.rotDeg += (-dAng * 180) / Math.PI;
+          const degrees = snapped(
+            'rotate',
+            (-dAng * 180) / Math.PI,
+            d.snap.settings.rotate,
+          );
+          propsRef.current.onRectRotate?.(d.entity, degrees);
+          d.rotDeg += degrees;
         }
       } else if (d.type === 'gizmo') {
         const eye = orbitEye(
@@ -1285,6 +1396,13 @@ export function Viewport(props: {
     setTick((t) => t + 1);
   };
 
+  const updateSnapSettings = (patch: Partial<SceneSnapSettings>) => {
+    const next = normalizeSceneSnapSettings({ ...snapSettingsRef.current, ...patch });
+    snapSettingsRef.current = next;
+    setSnapSettings(next);
+    saveSceneSnap(next);
+  };
+
   useEffect(() => {
     const onKey = (ev: KeyboardEvent) => {
       const focused = focusedInputRef.current;
@@ -1336,6 +1454,67 @@ export function Viewport(props: {
             >
               2D
             </button>
+          </div>
+          <div className="scene-snap" ref={snapSettingsElementRef}>
+            <div className="scene-snap-buttons">
+              <button
+                type="button"
+                className={snapSettings.enabled ? 'active' : ''}
+                aria-label="Toggle snapping"
+                title="Snap RectTransform tools (Ctrl/Cmd enables it for one drag)"
+                onClick={() => updateSnapSettings({ enabled: !snapSettings.enabled })}
+              >
+                Snap
+              </button>
+              <button
+                type="button"
+                className={snapSettingsOpen ? 'active' : ''}
+                aria-label="Snap settings"
+                aria-expanded={snapSettingsOpen}
+                title="Snap settings"
+                onClick={() => setSnapSettingsOpen((open) => !open)}
+              >
+                ▾
+              </button>
+            </div>
+            {snapSettingsOpen && (
+              <div className="scene-snap-popup" role="dialog" aria-label="Scene Snapping">
+                <strong>RectTransform Snapping</strong>
+                <label>
+                  Move
+                  <input
+                    type="number"
+                    min="0.01"
+                    step="1"
+                    value={snapSettings.move}
+                    onChange={(event) => updateSnapSettings({ move: Number(event.target.value) })}
+                  />
+                  <span>px</span>
+                </label>
+                <label>
+                  Rotate
+                  <input
+                    type="number"
+                    min="0.1"
+                    step="1"
+                    value={snapSettings.rotate}
+                    onChange={(event) => updateSnapSettings({ rotate: Number(event.target.value) })}
+                  />
+                  <span>°</span>
+                </label>
+                <label>
+                  Scale
+                  <input
+                    type="number"
+                    min="0.01"
+                    step="0.05"
+                    value={snapSettings.scale}
+                    onChange={(event) => updateSnapSettings({ scale: Number(event.target.value) })}
+                  />
+                </label>
+                <small>Ctrl/Cmd: snap the current drag</small>
+              </div>
+            )}
           </div>
           <span className="game-hint">
             {scene2D
