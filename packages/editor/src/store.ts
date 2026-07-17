@@ -104,6 +104,7 @@ export function createEditorStore() {
   let editEntities: EntityRec[] = [];
   let playEntities: EntityRec[] | null = null;
   let undoStack: Array<EditorUndoState<EntityRec>> = [];
+  let redoStack: Array<EditorUndoState<EntityRec>> = [];
   let clearColor: [number, number, number, number] = [0.22, 0.24, 0.28, 1];
   let frame = 0;
   let gameAspect: GameAspect = '16:9';
@@ -117,6 +118,7 @@ export function createEditorStore() {
   let gizmoDragging = false;
   let editGestureDepth = 0;
   let gestureUndoState: EditorUndoState<EntityRec> | null = null;
+  let gestureRedoStack: Array<EditorUndoState<EntityRec>> | null = null;
   let expanded = new Set<number>();
   let clipboard: ClipboardPayload | null = null;
   let renameRequestId: number | null = null;
@@ -179,10 +181,12 @@ export function createEditorStore() {
     playEntities = null;
     playSpin = 0;
     undoStack = [];
+    redoStack = [];
     clipboard = null;
     gizmoDragging = false;
     editGestureDepth = 0;
     gestureUndoState = null;
+    gestureRedoStack = null;
   };
 
   buildDefaultScene();
@@ -202,7 +206,17 @@ export function createEditorStore() {
     const state = captureUndoState();
     undoStack.push(state);
     if (undoStack.length > 64) undoStack.shift();
+    redoStack = [];
     return state;
+  };
+
+  const restoreUndoSnapshot = (state: EditorUndoState<EntityRec>) => {
+    const restored = restoreEditorUndoState(state);
+    editEntities = restored.entities.map((entity) => normalizeEntity(entity));
+    selectedIds = restored.selectedIds;
+    selectionAnchor = restored.selectionAnchor;
+    nextId = restored.nextId;
+    clearColor = restored.clearColor;
   };
 
   const find = (id: number) => list().find((e) => e.entity === id);
@@ -482,6 +496,10 @@ export function createEditorStore() {
     recordUndo: boolean,
   ) => {
     if (recordUndo) pushUndo();
+    else {
+      undoStack = [];
+      redoStack = [];
+    }
     behaviourRunner.unmount();
     const data = JSON.parse(json);
     const ents = (data.world?.entities ?? data.entities ?? []) as EntityRec[];
@@ -512,6 +530,7 @@ export function createEditorStore() {
     gizmoDragging = false;
     editGestureDepth = 0;
     gestureUndoState = null;
+    gestureRedoStack = null;
   };
 
   return {
@@ -543,6 +562,12 @@ export function createEditorStore() {
     },
     get gameOrientation() {
       return gameOrientation;
+    },
+    get canUndo() {
+      return undoStack.length > 0;
+    },
+    get canRedo() {
+      return redoStack.length > 0;
     },
     setGameAspect(a: GameAspect) {
       gameAspect = a;
@@ -844,13 +869,17 @@ export function createEditorStore() {
     undo() {
       const prev = undoStack.pop();
       if (prev) {
-        const restored = restoreEditorUndoState(prev);
-        editEntities = restored.entities.map((entity) => normalizeEntity(entity));
-        selectedIds = restored.selectedIds;
-        selectionAnchor = restored.selectionAnchor;
-        nextId = restored.nextId;
-        clearColor = restored.clearColor;
+        redoStack.push(captureUndoState());
+        if (redoStack.length > 64) redoStack.shift();
+        restoreUndoSnapshot(prev);
       }
+    },
+    redo() {
+      const next = redoStack.pop();
+      if (!next) return;
+      undoStack.push(captureUndoState());
+      if (undoStack.length > 64) undoStack.shift();
+      restoreUndoSnapshot(next);
     },
     tick(dt: number) {
       frame++;
@@ -964,6 +993,7 @@ export function createEditorStore() {
     },
     beginTransformGesture() {
       if (editGestureDepth === 0) {
+        gestureRedoStack = redoStack;
         gestureUndoState = pushUndo();
         gizmoDragging = true;
       }
@@ -980,8 +1010,10 @@ export function createEditorStore() {
         && editorUndoStatesEqual(gestureUndoState, captureUndoState())
       ) {
         undoStack.pop();
+        redoStack = gestureRedoStack ?? [];
       }
       gestureUndoState = null;
+      gestureRedoStack = null;
     },
     applyTransformDelta(
       entity: number,

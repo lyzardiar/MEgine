@@ -16,6 +16,7 @@ export function MenuBar(props: {
   onSaveAs: () => void;
   onLoad: () => void;
   onUndo: () => void;
+  onRedo: () => void;
   onDuplicate: () => void;
   store: EditorStore;
   selectedIds: readonly number[];
@@ -82,8 +83,19 @@ export function MenuBar(props: {
           )}
           {name === 'Edit' && (
             <div className="menu-drop">
-              <button type="button" onClick={() => { props.onUndo(); setOpen(null); }}>
+              <button
+                type="button"
+                disabled={!props.store.canUndo}
+                onClick={() => { props.onUndo(); setOpen(null); }}
+              >
                 Undo <span className="hint">Ctrl+Z</span>
+              </button>
+              <button
+                type="button"
+                disabled={!props.store.canRedo}
+                onClick={() => { props.onRedo(); setOpen(null); }}
+              >
+                Redo <span className="hint">Ctrl+Shift+Z</span>
               </button>
               <div className="sep" />
               <button type="button" onClick={() => { props.onDuplicate(); setOpen(null); }}>

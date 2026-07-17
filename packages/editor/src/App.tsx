@@ -42,6 +42,12 @@ function isTypingTarget(el: EventTarget | null) {
   return tag === 'INPUT' || tag === 'TEXTAREA' || el.isContentEditable;
 }
 
+function allowsEditorHistoryShortcut(el: EventTarget | null) {
+  if (!isTypingTarget(el)) return true;
+  if (!(el instanceof HTMLInputElement)) return false;
+  return !['text', 'search', 'password', 'email', 'url', 'tel'].includes(el.type);
+}
+
 function askSceneName(title: string, initial: string): string | null {
   const raw = window.prompt(title, initial);
   if (raw == null) return null;
@@ -340,15 +346,25 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
-      if (isTypingTarget(e.target)) return;
       const ctrl = e.ctrlKey || e.metaKey;
 
-      if (ctrl && e.key.toLowerCase() === 'z') {
+      if (
+        allowsEditorHistoryShortcut(e.target)
+        && ctrl
+        && ((e.shiftKey && e.key.toLowerCase() === 'z') || e.key.toLowerCase() === 'y')
+      ) {
+        e.preventDefault();
+        store.redo();
+        refresh();
+        return;
+      }
+      if (allowsEditorHistoryShortcut(e.target) && ctrl && e.key.toLowerCase() === 'z') {
         e.preventDefault();
         store.undo();
         refresh();
         return;
       }
+      if (isTypingTarget(e.target)) return;
       if (ctrl && e.key.toLowerCase() === 'n') {
         e.preventDefault();
         newScene();
@@ -468,6 +484,10 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
         onLoad={openSceneDialog}
         onUndo={() => {
           store.undo();
+          refresh();
+        }}
+        onRedo={() => {
+          store.redo();
           refresh();
         }}
         onDuplicate={() => {
