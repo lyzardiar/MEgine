@@ -15,6 +15,7 @@ use mengine_rhi::{
     PointLightData, RenderMaterial, RenderObject, Renderer, SpotLightData, UiBatchPlan,
 };
 use mengine_runtime::particles::ParticleWorld;
+use mengine_runtime::sprites::collect_world_sprites;
 use mengine_runtime::textures::RuntimeTextureCache;
 use mengine_runtime::ui::{collect_ui_frame, UiControlKind, UiControlRegion};
 use mengine_script::ScriptHost;
@@ -854,16 +855,21 @@ function onTick(dt, frame) {
                         .unwrap_or(winit::dpi::PhysicalSize::new(1, 1));
                     let mut ui =
                         collect_ui_frame(&self.world, window_size.width, window_size.height);
+                    let mut world_primitives = collect_world_sprites(
+                        &self.world,
+                        camera,
+                        [window_size.width, window_size.height],
+                    );
                     let particle_primitives = self.particles.update_and_collect(
                         &self.world,
                         camera,
                         [window_size.width, window_size.height],
                         dt,
                     );
-                    if !particle_primitives.is_empty() {
-                        let mut primitives = std::mem::take(&mut ui.plan.primitives);
-                        primitives.extend(particle_primitives);
-                        ui.plan = UiBatchPlan::build(primitives);
+                    world_primitives.extend(particle_primitives);
+                    if !world_primitives.is_empty() {
+                        world_primitives.extend(std::mem::take(&mut ui.plan.primitives));
+                        ui.plan = UiBatchPlan::build(world_primitives);
                     }
                     for failure in self.textures.sync(r, &ui.plan) {
                         log::warn!(

@@ -37,6 +37,26 @@ pub struct FrameCamera {
     pub position: Vec3,
 }
 
+pub fn project_world_to_viewport(
+    position: Vec3,
+    camera: FrameCamera,
+    viewport: [u32; 2],
+) -> Option<[f32; 3]> {
+    let clip = camera.proj * camera.view * position.extend(1.0);
+    if clip.w <= 0.0001 {
+        return None;
+    }
+    let ndc = clip.truncate() / clip.w;
+    if ndc.z < -1.0 || ndc.z > 1.0 {
+        return None;
+    }
+    Some([
+        (ndc.x * 0.5 + 0.5) * viewport[0].max(1) as f32,
+        (0.5 - ndc.y * 0.5) * viewport[1].max(1) as f32,
+        ndc.z,
+    ])
+}
+
 #[derive(Clone, Copy, Debug)]
 pub struct RenderMaterial {
     pub base_color: [f32; 4],

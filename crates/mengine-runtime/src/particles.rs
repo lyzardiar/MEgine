@@ -1,7 +1,7 @@
 use glam::{Vec3, Vec4};
 use mengine_core::generated::{ParticleEmitter2D, ParticleEmitter3D, Transform};
 use mengine_core::{Entity, World};
-use mengine_rhi::{FrameCamera, UiBatchKey, UiBlendMode, UiPrimitive};
+use mengine_rhi::{project_world_to_viewport, FrameCamera, UiBatchKey, UiBlendMode, UiPrimitive};
 use std::collections::{HashMap, HashSet};
 
 const MAX_PARTICLES: usize = 100_000;
@@ -362,22 +362,6 @@ fn random_unit(state: &mut EmitterState) -> Vec3 {
     Vec3::new(radius * angle.cos(), z, radius * angle.sin())
 }
 
-fn project(position: Vec3, camera: FrameCamera, viewport: [u32; 2]) -> Option<[f32; 3]> {
-    let clip = camera.proj * camera.view * position.extend(1.0);
-    if clip.w <= 0.0001 {
-        return None;
-    }
-    let ndc = clip.truncate() / clip.w;
-    if ndc.z < -1.0 || ndc.z > 1.0 {
-        return None;
-    }
-    Some([
-        (ndc.x * 0.5 + 0.5) * viewport[0].max(1) as f32,
-        (0.5 - ndc.y * 0.5) * viewport[1].max(1) as f32,
-        ndc.z,
-    ])
-}
-
 fn collect_emitter(
     state: &EmitterState,
     emitter: &Emitter<'_>,
@@ -401,12 +385,14 @@ fn collect_emitter(
         } else {
             particle.position
         };
-        let Some(screen) = project(position, camera, viewport) else {
+        let Some(screen) = project_world_to_viewport(position, camera, viewport) else {
             continue;
         };
         let progress = (particle.age / particle.lifetime).clamp(0.0, 1.0);
         let size = particle.size_start + (particle.size_end - particle.size_start) * progress;
-        let Some(size_point) = project(position + Vec3::X * size, camera, viewport) else {
+        let Some(size_point) =
+            project_world_to_viewport(position + Vec3::X * size, camera, viewport)
+        else {
             continue;
         };
         let radius = (size_point[0] - screen[0])
