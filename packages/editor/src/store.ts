@@ -183,6 +183,27 @@ export function createEditorStore() {
 
   const find = (id: number) => list().find((e) => e.entity === id);
 
+  const translateSelectedRectRoots = (dx: number, dy: number) => {
+    if (mode !== 'edit' || !Number.isFinite(dx) || !Number.isFinite(dy)) return false;
+    if (Math.abs(dx) < 1e-8 && Math.abs(dy) < 1e-8) return false;
+    const roots = selectedRectRoots(editEntities, selectedIds);
+    if (!roots.length) return false;
+    if (!gizmoDragging) pushUndo();
+    for (const id of roots) {
+      const entity = find(id);
+      if (!entity?.components.RectTransform) continue;
+      const rt = readRectTransform(entity.components.RectTransform);
+      entity.components.RectTransform = {
+        ...rt,
+        anchored_position: [
+          rt.anchored_position[0] + dx,
+          rt.anchored_position[1] + dy,
+        ],
+      };
+    }
+    return true;
+  };
+
   const childrenOf = (parent: number | null, source = list()) =>
     source
       .filter((e) => (e.parent ?? null) === parent)
@@ -971,25 +992,11 @@ export function createEditorStore() {
         ],
       };
     },
+    translateSelectedRectsBy(dx: number, dy: number) {
+      return translateSelectedRectRoots(dx, dy);
+    },
     nudgeSelectedRects(dx: number, dy: number) {
-      if (mode !== 'edit' || !Number.isFinite(dx) || !Number.isFinite(dy)) return false;
-      if (Math.abs(dx) < 1e-8 && Math.abs(dy) < 1e-8) return false;
-      const roots = selectedRectRoots(editEntities, selectedIds);
-      if (!roots.length) return false;
-      if (!gizmoDragging) pushUndo();
-      for (const id of roots) {
-        const entity = find(id);
-        if (!entity?.components.RectTransform) continue;
-        const rt = readRectTransform(entity.components.RectTransform);
-        entity.components.RectTransform = {
-          ...rt,
-          anchored_position: [
-            rt.anchored_position[0] + dx,
-            rt.anchored_position[1] + dy,
-          ],
-        };
-      }
-      return true;
+      return translateSelectedRectRoots(dx, dy);
     },
     rotateRectBy(entity: number, degrees: number) {
       const e = find(entity);

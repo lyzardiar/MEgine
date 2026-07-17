@@ -195,7 +195,7 @@ export function Viewport(props: {
   sceneCamera: SceneCamera;
   gameAspect: GameAspect;
   gameOrientation: GameOrientation;
-  onPick: (id: number) => void;
+  onPick: (id: number, modifiers: { toggle: boolean; additive: boolean }) => void;
   onSceneCamera: (partial: Partial<SceneCamera>) => void;
   onBeginGesture: () => void;
   onEndGesture: () => void;
@@ -999,7 +999,10 @@ export function Viewport(props: {
           return;
         }
         if (hit?.kind === 'object') {
-          propsRef.current.onPick(hit.id);
+          propsRef.current.onPick(hit.id, {
+            toggle: ev.ctrlKey || ev.metaKey,
+            additive: ev.shiftKey,
+          });
         }
       }
     }
@@ -1561,7 +1564,7 @@ export function Viewport(props: {
           </div>
           <span className="game-hint">
             {scene2D
-              ? '正视 Canvas · Arrows 1px / Shift 10px · RMB/MMB 平移 · Wheel 缩放'
+              ? '正视 Canvas · Ctrl/Shift Click 多选 · Arrows 1px / Shift 10px · RMB/MMB 平移'
               : 'RMB 旋转 · MMB/Alt+LMB 平移 · Wheel 缩放 · F 聚焦'}
           </span>
         </div>

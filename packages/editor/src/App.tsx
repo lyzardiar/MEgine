@@ -540,8 +540,10 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
               gameAspect={gameAspect}
               gameOrientation={gameOrientation}
               activeInHierarchy={(id) => store.activeInHierarchy(id)}
-              onPick={(id) => {
-                store.select(id);
+              onPick={(id, modifiers) => {
+                if (modifiers.toggle) store.selectMany([id], 'toggle', id);
+                else if (modifiers.additive) store.selectMany([id], 'add', id);
+                else store.select(id);
                 refresh();
               }}
               onSceneCamera={(partial) => {
@@ -562,8 +564,8 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
                 store.rotateByWorldAxis(entity, axis, degrees);
                 refresh();
               }}
-              onRectTranslate={(entity, dx, dy) => {
-                store.translateRectBy(entity, dx, dy);
+              onRectTranslate={(_entity, dx, dy) => {
+                store.translateSelectedRectsBy(dx, dy);
                 refresh();
               }}
               onRectNudge={(dx, dy) => {
