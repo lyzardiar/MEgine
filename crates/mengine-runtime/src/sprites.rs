@@ -1,5 +1,5 @@
 use glam::{Quat, Vec3};
-use mengine_core::generated::{AnimatedSprite2D, SpriteRenderer, Transform};
+use mengine_core::generated::{AnimatedSprite2D, Line2D, SpriteRenderer, Transform};
 use mengine_core::hierarchy::Parent;
 use mengine_core::{Entity, World};
 use mengine_rhi::{project_world_to_viewport, FrameCamera, UiBatchKey, UiBlendMode, UiPrimitive};
@@ -25,6 +25,10 @@ pub fn collect_world_sprites(
         let Some(transform) = world.get_component::<Transform>(entity) else {
             continue;
         };
+        if let Some(line) = world.get_component::<Line2D>(entity) {
+            sprites.extend(project_line(transform, line, camera, viewport));
+            continue;
+        }
         let animated = world.get_component::<AnimatedSprite2D>(entity);
         let static_sprite = world.get_component::<SpriteRenderer>(entity);
         let resolved;
@@ -51,6 +55,83 @@ pub fn collect_world_sprites(
             .then_with(|| right.depth.total_cmp(&left.depth))
     });
     sprites.into_iter().map(|sprite| sprite.primitive).collect()
+}
+
+fn project_line(
+    transform: &Transform,
+    line: &Line2D,
+    camera: FrameCamera,
+    viewport: [u32; 2],
+) -> Vec<ProjectedSprite> {
+    if line.points.len() < 2 || line.width <= 0.0 || line.color[3] <= 0.0 {
+        return Vec::new();
+    }
+    let position = Vec3::from(transform.position);
+    let scale = Vec3::from(transform.scale);
+    let rotation = safe_rotation(transform.rotation);
+    let mut pairs: Vec<([f32; 2], [f32; 2])> = line
+        .points
+        .windows(2)
+        .map(|points| (points[0], points[1]))
+        .collect();
+    if line.closed && line.points.len() > 2 {
+        pairs.push((*line.points.last().unwrap(), line.points[0]));
+    }
+    pairs
+        .into_iter()
+        .filter_map(|(start, end)| {
+            let local_delta = Vec3::new(end[0] - start[0], end[1] - start[1], 0.0);
+            let local_length = local_delta.length();
+            if local_length <= 0.000001 {
+                return None;
+            }
+            let local_start = Vec3::new(start[0], start[1], 0.0) * scale;
+            let local_end = Vec3::new(end[0], end[1], 0.0) * scale;
+            let world_start = position + rotation * local_start;
+            let world_end = position + rotation * local_end;
+            let midpoint = (world_start + world_end) * 0.5;
+            let normal = Vec3::new(-local_delta.y, local_delta.x, 0.0) / local_length;
+            let normal_offset =
+                rotation * (Vec3::new(normal.x, normal.y, 0.0) * scale * (line.width * 0.5));
+            let start_screen = project_world_to_viewport(world_start, camera, viewport)?;
+            let end_screen = project_world_to_viewport(world_end, camera, viewport)?;
+            let midpoint_screen = project_world_to_viewport(midpoint, camera, viewport)?;
+            let normal_screen =
+                project_world_to_viewport(midpoint + normal_offset, camera, viewport)?;
+            let dx = end_screen[0] - start_screen[0];
+            let dy = end_screen[1] - start_screen[1];
+            let length = dx.hypot(dy);
+            let width = (2.0
+                * (normal_screen[0] - midpoint_screen[0])
+                    .hypot(normal_screen[1] - midpoint_screen[1]))
+            .max(0.5);
+            if !length.is_finite() || !width.is_finite() || length <= 0.0 {
+                return None;
+            }
+            Some(ProjectedSprite {
+                sorting_order: line.sorting_order,
+                depth: (start_screen[2] + end_screen[2]) * 0.5,
+                primitive: UiPrimitive {
+                    rect: [
+                        (start_screen[0] + end_screen[0] - length) * 0.5,
+                        (start_screen[1] + end_screen[1] - width) * 0.5,
+                        length,
+                        width,
+                    ],
+                    color: line.color,
+                    pivot: [0.5, 0.5],
+                    rotation_radians: dy.atan2(dx),
+                    uv: [0.0, 0.0, 1.0, 1.0],
+                    key: UiBatchKey {
+                        material: "line2d/default".into(),
+                        texture: "white".into(),
+                        clip: None,
+                        blend: UiBlendMode::Alpha,
+                    },
+                },
+            })
+        })
+        .collect()
 }
 
 fn animated_frame_index(animation: &AnimatedSprite2D, elapsed_seconds: f64) -> Option<usize> {
@@ -279,5 +360,32 @@ mod tests {
         world.insert_component(entity, animation);
         let sprites = collect_world_sprites(&world, camera(), [200, 100]);
         assert_eq!(sprites[0].key.texture, "idle-1");
+    }
+
+    #[test]
+    fn line2d_projects_closed_segments_as_one_batchable_material() {
+        let line = Line2D {
+            points: vec![[-1.0, 0.0], [1.0, 0.0], [1.0, 1.0]],
+            width: 0.2,
+            color: [0.2, 0.8, 1.0, 0.75],
+            closed: true,
+            sorting_order: 3,
+        };
+        let segments = project_line(&Transform::default(), &line, camera(), [200, 100]);
+        assert_eq!(segments.len(), 3);
+        assert!((segments[0].primitive.rect[2] - 20.0).abs() < 0.001);
+        assert!((segments[0].primitive.rect[3] - 2.0).abs() < 0.001);
+        assert!(segments.iter().all(|segment| {
+            segment.sorting_order == 3
+                && segment.primitive.key.material == "line2d/default"
+                && segment.primitive.color == line.color
+        }));
+        let plan = mengine_rhi::UiBatchPlan::build(
+            segments
+                .into_iter()
+                .map(|segment| segment.primitive)
+                .collect(),
+        );
+        assert_eq!(plan.batches.len(), 1);
     }
 }

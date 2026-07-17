@@ -500,6 +500,44 @@
     ],
     "type": "object"
   },
+  "Line2D": {
+    "properties": {
+      "closed": {
+        "type": "boolean"
+      },
+      "color": {
+        "items": {
+          "type": "number"
+        },
+        "type": "array"
+      },
+      "points": {
+        "items": {
+          "items": {
+            "type": "number"
+          },
+          "maxItems": 2,
+          "minItems": 2,
+          "type": "array"
+        },
+        "type": "array"
+      },
+      "sorting_order": {
+        "type": "number"
+      },
+      "width": {
+        "type": "number"
+      }
+    },
+    "required": [
+      "points",
+      "width",
+      "color",
+      "closed",
+      "sorting_order"
+    ],
+    "type": "object"
+  },
   "ListView": {
     "properties": {
       "background_color": {

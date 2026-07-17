@@ -83,6 +83,14 @@ export interface AnimatedSprite2D {
   sortingOrder: number;
 }
 
+export interface Line2D {
+  points: [number, number][];
+  width: number;
+  color: [number, number, number, number];
+  closed: boolean;
+  sortingOrder: number;
+}
+
 export interface Layer {
   value: number;
 }
@@ -403,6 +411,7 @@ export type ComponentName =
   | 'PbrMaterial'
   | 'SpriteRenderer'
   | 'AnimatedSprite2D'
+  | 'Line2D'
   | 'Layer'
   | 'EditorOnly'
   | 'AutoRotate'
@@ -448,6 +457,7 @@ export const COMPONENT_NAMES = [
   'PbrMaterial',
   'SpriteRenderer',
   'AnimatedSprite2D',
+  'Line2D',
   'Layer',
   'EditorOnly',
   'AutoRotate',

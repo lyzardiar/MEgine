@@ -543,6 +543,50 @@ export function StringListField(props: {
   );
 }
 
+export function Vector2ListField(props: {
+  label: string;
+  value: Array<[number, number]>;
+  onChange: (value: Array<[number, number]>) => void;
+}) {
+  const items = Array.isArray(props.value)
+    ? props.value.map((item) => [Number(item?.[0]) || 0, Number(item?.[1]) || 0] as [number, number])
+    : [];
+  const update = (index: number, axis: 0 | 1, raw: string) => {
+    const value = Number(raw);
+    if (!Number.isFinite(value)) return;
+    const next = items.map((item) => [...item] as [number, number]);
+    next[index][axis] = value;
+    props.onChange(next);
+  };
+  const move = (index: number, offset: number) => {
+    const target = index + offset;
+    if (target < 0 || target >= items.length) return;
+    const next = [...items];
+    [next[index], next[target]] = [next[target], next[index]];
+    props.onChange(next);
+  };
+  return (
+    <div className="field-row field-row-list">
+      <label>{props.label}</label>
+      <div className="string-list-editor vector2-list-editor">
+        {items.map((item, index) => (
+          <div className="string-list-item vector2-list-item" key={`${index}-${items.length}`}>
+            <span className="string-list-index">{index}</span>
+            <input type="number" step="0.1" value={item[0]} aria-label={`${props.label} ${index} X`} onChange={(event) => update(index, 0, event.target.value)} />
+            <input type="number" step="0.1" value={item[1]} aria-label={`${props.label} ${index} Y`} onChange={(event) => update(index, 1, event.target.value)} />
+            <button type="button" title="Move up" disabled={index === 0} onClick={() => move(index, -1)}>↑</button>
+            <button type="button" title="Move down" disabled={index === items.length - 1} onClick={() => move(index, 1)}>↓</button>
+            <button type="button" title="Remove" onClick={() => props.onChange(items.filter((_, itemIndex) => itemIndex !== index))}>×</button>
+          </div>
+        ))}
+        <button type="button" className="string-list-add" onClick={() => props.onChange([...items, [0, 0]])}>
+          + Add Point
+        </button>
+      </div>
+    </div>
+  );
+}
+
 export function parseUnityPersistentCall(raw: unknown): UnityPersistentCall {
   if (raw && typeof raw === 'object' && !Array.isArray(raw)) {
     const o = raw as Record<string, unknown>;

@@ -7,6 +7,7 @@ import {
   drawGroundGrid,
   drawSolidCube,
   drawWorldSprite,
+  drawWorldLine2D,
   lookBasis,
   orbitEye,
   project,
@@ -789,6 +790,36 @@ export function Viewport(props: {
       }
 
       if (!mesh) {
+        const line = e.components.Line2D as
+          | {
+              points?: unknown;
+              width?: number;
+              color?: number[];
+              closed?: boolean;
+            }
+          | undefined;
+        if (line && pr) {
+          const points = Array.isArray(line.points)
+            ? line.points.filter((point): point is [number, number] =>
+                Array.isArray(point) && point.length >= 2,
+              ).map((point) => [Number(point[0]) || 0, Number(point[1]) || 0] as [number, number])
+            : [];
+          const hit = drawWorldLine2D(
+            ctx,
+            cam,
+            vp,
+            t.position as Vec3,
+            t.scale as Vec3,
+            points,
+            Math.max(0, Number(line.width) || 0),
+            (line.color ?? [1, 1, 1, 1]) as [number, number, number, number],
+            line.closed === true,
+            selected,
+            t.rotation as [number, number, number, number] | undefined,
+          );
+          if (hit) hitsRef.current.push({ kind: 'object', id: e.entity, x: hit.x, y: hit.y, r: hit.r });
+          continue;
+        }
         const staticSprite = e.components.SpriteRenderer as
           | {
               sprite?: string;

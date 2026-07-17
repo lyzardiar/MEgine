@@ -166,6 +166,18 @@ const BUILTIN_CATALOG: ComponentCatalogEntry[] = [
     }),
   },
   {
+    type: 'Line2D',
+    label: 'Line 2D',
+    description: 'Godot-style world-space polyline with optional closing segment',
+    create: () => ({
+      points: [[-0.5, 0], [0.5, 0]],
+      width: 0.1,
+      color: [1, 1, 1, 1],
+      closed: false,
+      sorting_order: 0,
+    }),
+  },
+  {
     type: 'RawImage',
     label: 'Raw Image',
     description: 'Texture view with an explicit normalized UV rectangle',

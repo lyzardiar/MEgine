@@ -31,6 +31,7 @@ import {
   SpriteSlot,
   StringListField,
   UnityEventField,
+  Vector2ListField,
 } from './uiFieldEditors';
 
 type Transform = {
@@ -449,6 +450,21 @@ function GenericCompEditor(props: {
               key={key}
               label={label}
               value={Array.isArray(val) ? val.map(String) : []}
+              onChange={setValue}
+            />
+          );
+        }
+        if (meta?.kind === 'vector2-list') {
+          const points = Array.isArray(val)
+            ? val.filter((point): point is [number, number] =>
+                Array.isArray(point) && point.length >= 2,
+              )
+            : [];
+          return (
+            <Vector2ListField
+              key={key}
+              label={label}
+              value={points}
               onChange={setValue}
             />
           );

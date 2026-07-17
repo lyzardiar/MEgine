@@ -86,6 +86,15 @@ component AnimatedSprite2D {
   sorting_order: int          = 0
 }
 
+/// Godot-style world-space polyline.
+component Line2D {
+  points:        float2_array = []
+  width:         float        = 0.1
+  color:         float4       = [1, 1, 1, 1]
+  closed:        bool         = false
+  sorting_order: int          = 0
+}
+
 component Layer {
   value: int = 0
 }

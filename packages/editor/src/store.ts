@@ -1483,6 +1483,10 @@ export function createEditorStore() {
         this.spawnAnimatedSprite2D();
         return;
       }
+      if (name === 'Line 2D') {
+        this.spawnLine2D();
+        return;
+      }
       spawnAt(
         name,
         {
@@ -1654,6 +1658,23 @@ export function createEditorStore() {
             frame: 0,
             color: [1, 1, 1, 1],
             size: [1, 1],
+            sorting_order: 0,
+          },
+        },
+        null,
+        true,
+      );
+    },
+    spawnLine2D() {
+      spawnAt(
+        'Line 2D',
+        {
+          Transform: { position: [0, 0.5, 0], rotation: [0, 0, 0, 1], scale: [1, 1, 1] },
+          Line2D: {
+            points: [[-0.5, 0], [0.5, 0]],
+            width: 0.1,
+            color: [1, 1, 1, 1],
+            closed: false,
             sorting_order: 0,
           },
         },

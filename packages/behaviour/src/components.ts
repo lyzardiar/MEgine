@@ -121,6 +121,15 @@ export class AnimatedSprite2D {
   sorting_order!: number;
 }
 
+export class Line2D {
+  static readonly typeName = 'Line2D' as const;
+  points!: [number, number][];
+  width!: number;
+  color!: Color4;
+  closed!: boolean;
+  sorting_order!: number;
+}
+
 export class RawImage {
   static readonly typeName = 'RawImage' as const;
   texture!: string;
@@ -180,6 +189,7 @@ export type BuiltinComponents = {
   Transform2D: Transform2D;
   SpriteRenderer: SpriteRenderer;
   AnimatedSprite2D: AnimatedSprite2D;
+  Line2D: Line2D;
   Canvas: Canvas;
   CanvasScaler: CanvasScaler;
   RectTransform: RectTransform;

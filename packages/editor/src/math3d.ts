@@ -382,6 +382,79 @@ export function drawWorldSprite(
   return { x: c.x, y: c.y, r: Math.max(maxX - minX, maxY - minY) * 0.55 };
 }
 
+export function drawWorldLine2D(
+  ctx: CanvasRenderingContext2D,
+  cam: Camera,
+  viewport: { x: number; y: number; w: number; h: number },
+  center: Vec3,
+  scale3: Vec3,
+  points: Array<[number, number]>,
+  width: number,
+  color: [number, number, number, number],
+  closed: boolean,
+  selected: boolean,
+  rotation?: Quat | null,
+): { x: number; y: number; r: number } | null {
+  if (points.length < 2 || width <= 0 || color[3] <= 0) return null;
+  const q = rotation ? quatNormalize(rotation) : ([0, 0, 0, 1] as Quat);
+  const worldPoint = (point: [number, number]) => {
+    const local: Vec3 = [point[0] * scale3[0], point[1] * scale3[1], 0];
+    const rotated = quatRotateVec(q, local);
+    return add(center, rotated);
+  };
+  const pairs = points.slice(1).map((point, index) => [points[index], point] as const);
+  if (closed && points.length > 2) pairs.push([points[points.length - 1], points[0]]);
+  let minX = Infinity;
+  let minY = Infinity;
+  let maxX = -Infinity;
+  let maxY = -Infinity;
+  let drawn = 0;
+  for (const [start, end] of pairs) {
+    const dxLocal = end[0] - start[0];
+    const dyLocal = end[1] - start[1];
+    const localLength = Math.hypot(dxLocal, dyLocal);
+    if (localLength < 1e-6) continue;
+    const worldStart = worldPoint(start);
+    const worldEnd = worldPoint(end);
+    const midpoint = scale(add(worldStart, worldEnd), 0.5);
+    const normalLocal: Vec3 = [
+      (-dyLocal / localLength) * scale3[0] * width * 0.5,
+      (dxLocal / localLength) * scale3[1] * width * 0.5,
+      0,
+    ];
+    const normalWorld = add(midpoint, quatRotateVec(q, normalLocal));
+    const a = project(worldStart, cam, viewport);
+    const b = project(worldEnd, cam, viewport);
+    const mid = project(midpoint, cam, viewport);
+    const normal = project(normalWorld, cam, viewport);
+    if (!a || !b || !mid || !normal) continue;
+    const screenWidth = Math.max(0.5, Math.hypot(normal.x - mid.x, normal.y - mid.y) * 2);
+    ctx.beginPath();
+    ctx.moveTo(a.x, a.y);
+    ctx.lineTo(b.x, b.y);
+    ctx.lineCap = 'butt';
+    ctx.strokeStyle = `rgba(${(color[0] * 255) | 0},${(color[1] * 255) | 0},${(color[2] * 255) | 0},${color[3]})`;
+    ctx.lineWidth = screenWidth;
+    ctx.stroke();
+    if (selected) {
+      ctx.strokeStyle = 'rgba(255,224,140,0.9)';
+      ctx.lineWidth = Math.max(1, screenWidth * 0.18);
+      ctx.stroke();
+    }
+    minX = Math.min(minX, a.x, b.x);
+    minY = Math.min(minY, a.y, b.y);
+    maxX = Math.max(maxX, a.x, b.x);
+    maxY = Math.max(maxY, a.y, b.y);
+    drawn++;
+  }
+  if (!drawn) return null;
+  return {
+    x: (minX + maxX) * 0.5,
+    y: (minY + maxY) * 0.5,
+    r: Math.max(10, Math.hypot(maxX - minX, maxY - minY) * 0.5),
+  };
+}
+
 export function dragAlongAxis(
   axis: Vec3,
   screenDelta: { dx: number; dy: number },

@@ -306,6 +306,34 @@ impl Component for AnimatedSprite2D {
     }
 }
 
+#[derive(Clone, Debug, Serialize, Deserialize)]
+#[serde(default)]
+pub struct Line2D {
+    pub points: Vec<[f32; 2]>,
+    pub width: f32,
+    pub color: [f32; 4],
+    pub closed: bool,
+    pub sorting_order: i32,
+}
+
+impl Default for Line2D {
+    fn default() -> Self {
+        Self {
+            points: Vec::new(),
+            width: 0.1,
+            color: [1.0, 1.0, 1.0, 1.0],
+            closed: false,
+            sorting_order: 0,
+        }
+    }
+}
+
+impl Component for Line2D {
+    fn type_name() -> &'static str {
+        "Line2D"
+    }
+}
+
 #[derive(Clone, Debug, Default, Serialize, Deserialize)]
 #[serde(default)]
 pub struct Layer {
@@ -1281,6 +1309,7 @@ pub mod meta {
         "PbrMaterial",
         "SpriteRenderer",
         "AnimatedSprite2D",
+        "Line2D",
         "Layer",
         "EditorOnly",
         "AutoRotate",

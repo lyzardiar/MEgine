@@ -1861,6 +1861,10 @@ body.insp-scrubbing * {
   align-items: center;
 }
 
+.vector2-list-item {
+  grid-template-columns: 20px minmax(44px, 1fr) minmax(44px, 1fr) 22px 22px 22px;
+}
+
 .string-list-index {
   color: var(--u-muted);
   text-align: center;

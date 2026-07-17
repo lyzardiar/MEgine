@@ -61,6 +61,7 @@ export {
   Transform2D,
   SpriteRenderer,
   AnimatedSprite2D,
+  Line2D,
   Canvas,
   CanvasScaler,
   RectTransform,

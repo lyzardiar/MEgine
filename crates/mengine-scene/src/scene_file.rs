@@ -318,6 +318,10 @@ mod tests {
                     "fps": 8, "playing": true, "looped": true, "frame": 1,
                     "sorting_order": 3
                 },
+                "Line2D": {
+                    "points": [[-1, 0], [0, 1], [1, 0]], "width": 0.15,
+                    "color": [0.2, 0.8, 1, 1], "closed": true, "sorting_order": 4
+                },
                 "AspectRatioFitter": { "aspect_mode": "FitInParent", "aspect_ratio": 1.777778 },
                 "ContentSizeFitter": {
                     "horizontal_fit": "PreferredSize", "vertical_fit": "MinSize"
@@ -367,6 +371,8 @@ mod tests {
             "Assets/Sprites/run1.png"
         );
         assert_eq!(components["AnimatedSprite2D"]["sorting_order"], 3);
+        assert_eq!(components["Line2D"]["points"][1][1], 1.0);
+        assert_eq!(components["Line2D"]["closed"], true);
         assert_eq!(
             components["AspectRatioFitter"]["aspect_mode"],
             "FitInParent"

@@ -17,6 +17,7 @@ export type InspectorFieldMeta = {
     | 'named-reference'
     | 'event'
     | 'string-list'
+    | 'vector2-list'
     | 'multiline';
   options?: InspectorOption[];
   assetKinds?: Array<'spine-json' | 'spine-binary' | 'spine-atlas'>;
@@ -106,6 +107,10 @@ export const BUILTIN_INSPECTOR_FIELDS: Readonly<
     frames: { kind: 'string-list' },
     fps: { min: 0, step: 0.1 },
     frame: { min: 0, step: 1 },
+  },
+  Line2D: {
+    points: { kind: 'vector2-list' },
+    width: { min: 0, step: 0.01 },
   },
   Canvas: {
     render_mode: {
