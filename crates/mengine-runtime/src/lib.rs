@@ -1,6 +1,7 @@
 //! Shared runtime library (PC player binary + mobile stubs).
 
 pub mod animation;
+pub mod audio;
 pub mod materials;
 pub mod mobile_stub;
 pub mod particles;

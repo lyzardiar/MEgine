@@ -122,6 +122,37 @@ component Animator {
   parameters_json: string = "{}"
 }
 
+/// Spatial audio listener. The first active primary listener wins.
+component AudioListener {
+  primary: bool = true
+}
+
+/// Playable audio emitter. clip is a project-relative WAV, OGG, MP3, or FLAC asset.
+component AudioSource {
+  clip:             string = ""
+  play_on_awake:    bool   = true
+  playing:          bool   = true
+  looped:           bool   = false
+  volume:           float  = 1
+  pitch:            float  = 1
+  pan:              float  = 0
+  spatial_blend:    float  = 0
+  min_distance:     float  = 1
+  max_distance:     float  = 100
+  bus:              string = "SFX"
+  mute:             bool   = false
+}
+
+/// Scene-level master and category mixer. The first active component wins.
+component AudioMixer {
+  master_volume:   float = 1
+  music_volume:    float = 1
+  sfx_volume:      float = 1
+  ui_volume:       float = 1
+  ambience_volume: float = 1
+  muted:           bool  = false
+}
+
 /// 3D rigid-body simulation settings. body_type: "dynamic" | "fixed" | "kinematic".
 component RigidBody3D {
   body_type:        string = "dynamic"

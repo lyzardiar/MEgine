@@ -218,7 +218,7 @@ fn recent_project_key(path: &str) -> String {
 
 fn normalize_recent_projects(mut projects: Vec<RecentProjectInfo>) -> Vec<RecentProjectInfo> {
     projects.retain(|project| !project.name.trim().is_empty() && !project.path.trim().is_empty());
-    projects.sort_by(|left, right| right.last_opened_at.cmp(&left.last_opened_at));
+    projects.sort_by_key(|project| std::cmp::Reverse(project.last_opened_at));
     let mut seen = HashSet::new();
     projects.retain(|project| seen.insert(recent_project_key(&project.path)));
     projects.truncate(MAX_RECENT_PROJECTS);
@@ -273,6 +273,12 @@ fn project_asset_kind(name: &str) -> Option<&'static str> {
         Some("animation")
     } else if lower.ends_with(".mcontroller") {
         Some("animator-controller")
+    } else if lower.ends_with(".wav")
+        || lower.ends_with(".ogg")
+        || lower.ends_with(".mp3")
+        || lower.ends_with(".flac")
+    {
+        Some("audio")
     } else if lower.ends_with(".mmat") || lower.ends_with(".mat") {
         Some("material")
     } else if lower.ends_with(".prefab") {
@@ -426,7 +432,7 @@ fn is_primary_pointer_down() -> bool {
     {
         use windows_sys::Win32::UI::Input::KeyboardAndMouse::{GetAsyncKeyState, VK_LBUTTON};
         // GetAsyncKeyState's high bit is set while the key/button is physically down.
-        return unsafe { (GetAsyncKeyState(VK_LBUTTON as i32) as u16 & 0x8000) != 0 };
+        unsafe { (GetAsyncKeyState(VK_LBUTTON as i32) as u16 & 0x8000) != 0 }
     }
     #[cfg(not(windows))]
     false
@@ -530,7 +536,7 @@ fn list_project_scenes(state: State<'_, AppState>) -> Result<Vec<ProjectSceneInf
             json,
         });
     }
-    scenes.sort_by(|left, right| right.updated_at.cmp(&left.updated_at));
+    scenes.sort_by_key(|scene| std::cmp::Reverse(scene.updated_at));
     Ok(scenes)
 }
 
@@ -1055,6 +1061,7 @@ mod tests {
             "character.mmat",
             "enemy.prefab",
             "skeleton.atlas",
+            "theme.ogg",
             "ignored.txt",
         ] {
             std::fs::write(assets.join(name), []).unwrap();
@@ -1065,7 +1072,7 @@ mod tests {
         std::fs::remove_dir_all(root).unwrap();
         found.sort_by(|left, right| left.name.cmp(&right.name));
 
-        assert_eq!(found.len(), 5);
+        assert_eq!(found.len(), 6);
         assert!(found
             .iter()
             .any(|asset| asset.name == "walk.manim" && asset.kind == "animation"));
@@ -1078,6 +1085,9 @@ mod tests {
         assert!(found
             .iter()
             .any(|asset| asset.name == "enemy.prefab" && asset.kind == "prefab"));
+        assert!(found
+            .iter()
+            .any(|asset| asset.name == "theme.ogg" && asset.kind == "audio"));
     }
 
     #[test]

@@ -155,6 +155,37 @@ export class Animator {
   parameters_json!: string;
 }
 
+export class AudioListener {
+  static readonly typeName = 'AudioListener' as const;
+  primary!: boolean;
+}
+
+export class AudioSource {
+  static readonly typeName = 'AudioSource' as const;
+  clip!: string;
+  play_on_awake!: boolean;
+  playing!: boolean;
+  looped!: boolean;
+  volume!: number;
+  pitch!: number;
+  pan!: number;
+  spatial_blend!: number;
+  min_distance!: number;
+  max_distance!: number;
+  bus!: string;
+  mute!: boolean;
+}
+
+export class AudioMixer {
+  static readonly typeName = 'AudioMixer' as const;
+  master_volume!: number;
+  music_volume!: number;
+  sfx_volume!: number;
+  ui_volume!: number;
+  ambience_volume!: number;
+  muted!: boolean;
+}
+
 export class RawImage {
   static readonly typeName = 'RawImage' as const;
   texture!: string;
@@ -217,6 +248,9 @@ export type BuiltinComponents = {
   Line2D: Line2D;
   AnimationPlayer: AnimationPlayer;
   Animator: Animator;
+  AudioListener: AudioListener;
+  AudioSource: AudioSource;
+  AudioMixer: AudioMixer;
   Canvas: Canvas;
   CanvasScaler: CanvasScaler;
   RectTransform: RectTransform;

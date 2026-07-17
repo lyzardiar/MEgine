@@ -274,8 +274,7 @@ impl UiRenderer {
             &texture_bind_group_layout,
             &sampler,
             "ui_white_texture",
-            1,
-            1,
+            [1, 1],
             &[255, 255, 255, 255],
         );
         let shader = device.create_shader_module(wgpu::ShaderModuleDescriptor {
@@ -425,8 +424,7 @@ impl UiRenderer {
             &self.texture_bind_group_layout,
             &self.sampler,
             key,
-            width,
-            height,
+            [width, height],
             rgba8,
         );
         self.textures.insert(key.to_owned(), texture);
@@ -539,10 +537,10 @@ fn create_texture_rgba8(
     layout: &wgpu::BindGroupLayout,
     sampler: &wgpu::Sampler,
     label: &str,
-    width: u32,
-    height: u32,
+    dimensions: [u32; 2],
     rgba8: &[u8],
 ) -> UiTextureGpu {
+    let [width, height] = dimensions;
     let size = wgpu::Extent3d {
         width,
         height,

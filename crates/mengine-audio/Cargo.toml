@@ -3,8 +3,15 @@ name = "mengine-audio"
 version.workspace = true
 edition.workspace = true
 license.workspace = true
-description = "MEngine audio subsystem (stub + interface)"
+description = "MEngine game audio subsystem backed by Kira"
 
 [dependencies]
 log.workspace = true
 thiserror.workspace = true
+kira.workspace = true
+mint.workspace = true
+
+# CPAL 0.18 currently accepts windows-core 0.61 and 0.62 independently from
+# windows 0.61, which can produce ABI-incompatible duplicate COM traits.
+[target.'cfg(windows)'.dependencies]
+windows-core = "=0.61.2"

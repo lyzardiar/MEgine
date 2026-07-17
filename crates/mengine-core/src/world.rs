@@ -2,13 +2,13 @@ use crate::command::{CommandBuffer, WorldCommand};
 use crate::component::{Component, ComponentBox, ComponentId, ComponentRegistry};
 use crate::entity::Entity;
 use crate::generated::{
-    AnimatedSprite2D, AnimationPlayer, Animator, AspectRatioFitter, AutoRotate, BoxCollider3D,
-    Button, Camera2D, Camera3D, Canvas, CanvasGroup, CanvasScaler, ContentSizeFitter,
-    DirectionalLight, Dropdown, EditorOnly, Image, InputField, Layer, LayoutGroup, Line2D,
-    ListView, MeshRenderer, Name, Outline, Panel, PbrMaterial, PointLight, ProgressBar, RawImage,
-    RectMask2D, RectTransform, RigidBody3D, ScrollView, Scrollbar, Shadow, Slider,
-    SphereCollider3D, SpotLight, SpriteRenderer, TabView, Text, Toggle, ToggleGroup, Transform,
-    Transform2D,
+    AnimatedSprite2D, AnimationPlayer, Animator, AspectRatioFitter, AudioListener, AudioMixer,
+    AudioSource, AutoRotate, BoxCollider3D, Button, Camera2D, Camera3D, Canvas, CanvasGroup,
+    CanvasScaler, ContentSizeFitter, DirectionalLight, Dropdown, EditorOnly, Image, InputField,
+    Layer, LayoutGroup, Line2D, ListView, MeshRenderer, Name, Outline, Panel, PbrMaterial,
+    PointLight, ProgressBar, RawImage, RectMask2D, RectTransform, RigidBody3D, ScrollView,
+    Scrollbar, Shadow, Slider, SphereCollider3D, SpotLight, SpriteRenderer, TabView, Text, Toggle,
+    ToggleGroup, Transform, Transform2D,
 };
 use crate::hierarchy::{Children, Parent};
 use crate::schedule::Schedule;
@@ -414,6 +414,15 @@ impl World {
             "Animator" | "animator" => {
                 self.insert_json_component::<Animator>(entity, value);
             }
+            "AudioListener" | "audioListener" => {
+                self.insert_json_component::<AudioListener>(entity, value);
+            }
+            "AudioSource" | "audioSource" => {
+                self.insert_json_component::<AudioSource>(entity, value);
+            }
+            "AudioMixer" | "audioMixer" => {
+                self.insert_json_component::<AudioMixer>(entity, value);
+            }
             "RigidBody3D" | "rigidBody3D" | "rigidBody3d" => {
                 self.insert_json_component::<RigidBody3D>(entity, value);
             }
@@ -541,6 +550,9 @@ fn canonical_component_name(component: &str) -> &str {
         "Line2D" | "line2D" | "line2d" => "Line2D",
         "AnimationPlayer" | "animationPlayer" => "AnimationPlayer",
         "Animator" | "animator" => "Animator",
+        "AudioListener" | "audioListener" => "AudioListener",
+        "AudioSource" | "audioSource" => "AudioSource",
+        "AudioMixer" | "audioMixer" => "AudioMixer",
         "RigidBody3D" | "rigidBody3D" | "rigidBody3d" => "RigidBody3D",
         "BoxCollider3D" | "boxCollider3D" | "boxCollider3d" => "BoxCollider3D",
         "SphereCollider3D" | "sphereCollider3D" | "sphereCollider3d" => "SphereCollider3D",

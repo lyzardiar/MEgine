@@ -114,6 +114,34 @@ export interface Animator {
   parametersJson: string;
 }
 
+export interface AudioListener {
+  primary: boolean;
+}
+
+export interface AudioSource {
+  clip: string;
+  playOnAwake: boolean;
+  playing: boolean;
+  looped: boolean;
+  volume: number;
+  pitch: number;
+  pan: number;
+  spatialBlend: number;
+  minDistance: number;
+  maxDistance: number;
+  bus: string;
+  mute: boolean;
+}
+
+export interface AudioMixer {
+  masterVolume: number;
+  musicVolume: number;
+  sfxVolume: number;
+  uiVolume: number;
+  ambienceVolume: number;
+  muted: boolean;
+}
+
 export interface RigidBody3D {
   bodyType: string;
   mass: number;
@@ -465,6 +493,9 @@ export type ComponentName =
   | 'Line2D'
   | 'AnimationPlayer'
   | 'Animator'
+  | 'AudioListener'
+  | 'AudioSource'
+  | 'AudioMixer'
   | 'RigidBody3D'
   | 'BoxCollider3D'
   | 'SphereCollider3D'
@@ -516,6 +547,9 @@ export const COMPONENT_NAMES = [
   'Line2D',
   'AnimationPlayer',
   'Animator',
+  'AudioListener',
+  'AudioSource',
+  'AudioMixer',
   'RigidBody3D',
   'BoxCollider3D',
   'SphereCollider3D',

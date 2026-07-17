@@ -178,6 +178,7 @@ export function createEditorStore() {
         orthographic_size: 5,
         aspect: 16 / 9,
       },
+      AudioListener: { primary: true },
     }, 0),
     boot('Directional Light', {
       Transform: {
@@ -1609,6 +1610,7 @@ export function createEditorStore() {
             orthographic_size: 5,
             aspect: 16 / 9,
           },
+          AudioListener: { primary: true },
         },
         null,
         true,
@@ -1668,6 +1670,36 @@ export function createEditorStore() {
             outer_angle_degrees: 40,
           },
         },
+        null,
+        true,
+      );
+    },
+    spawnAudioSource() {
+      spawnAt(
+        'Audio Source',
+        {
+          Transform: { position: [0, 0, 0], rotation: [0, 0, 0, 1], scale: [1, 1, 1] },
+          AudioSource: createComponentDefaults('AudioSource'),
+        },
+        null,
+        true,
+      );
+    },
+    spawnAudioListener() {
+      spawnAt(
+        'Audio Listener',
+        {
+          Transform: { position: [0, 0, 0], rotation: [0, 0, 0, 1], scale: [1, 1, 1] },
+          AudioListener: createComponentDefaults('AudioListener'),
+        },
+        null,
+        true,
+      );
+    },
+    spawnAudioMixer() {
+      spawnAt(
+        'Audio Mixer',
+        { AudioMixer: createComponentDefaults('AudioMixer') },
         null,
         true,
       );

@@ -5,8 +5,9 @@ use clap::Parser;
 use glam::{Quat, Vec3, Vec4};
 use mengine_core::command::WorldCommand;
 use mengine_core::generated::{
-    Animator, Camera2D, Camera3D, DirectionalLight, Dropdown, InputField, ListView, MeshRenderer,
-    PbrMaterial, PointLight, ScrollView, Scrollbar, Slider, SpotLight, TabView, Toggle, Transform,
+    Animator, AudioSource, Camera2D, Camera3D, DirectionalLight, Dropdown, InputField, ListView,
+    MeshRenderer, PbrMaterial, PointLight, ScrollView, Scrollbar, Slider, SpotLight, TabView,
+    Toggle, Transform,
 };
 use mengine_core::{Entity, TransformHierarchy, World};
 use mengine_physics::PhysicsWorld;
@@ -16,6 +17,7 @@ use mengine_rhi::{
     PointLightData, RenderMaterial, RenderObject, Renderer, SpotLightData, UiBatchPlan,
 };
 use mengine_runtime::animation::{infer_project_root_from_scene, AnimationRuntime};
+use mengine_runtime::audio::AudioRuntime;
 use mengine_runtime::materials::RuntimeMaterialCache;
 use mengine_runtime::particles::ParticleWorld;
 use mengine_runtime::player_config::load_player_config;
@@ -90,6 +92,7 @@ struct App {
     particles: ParticleWorld,
     textures: RuntimeTextureCache,
     animations: AnimationRuntime,
+    audio: AudioRuntime,
     materials: RuntimeMaterialCache,
     physics: PhysicsWorld,
     scenes: SceneManager,
@@ -110,6 +113,7 @@ impl App {
         }
         let textures = RuntimeTextureCache::new(args.project_root.clone());
         let animations = AnimationRuntime::new(args.project_root.clone());
+        let audio = AudioRuntime::new(args.project_root.clone());
         let materials = RuntimeMaterialCache::new(args.project_root.clone());
         let scenes = SceneManager::new(
             args.project_root.clone(),
@@ -136,6 +140,7 @@ impl App {
             particles: ParticleWorld::default(),
             textures,
             animations,
+            audio,
             materials,
             physics: PhysicsWorld::default(),
             scenes,
@@ -198,6 +203,34 @@ impl App {
                 animator.playing = true;
                 return;
             }
+            ScriptRuntimeRequest::PlayAudio { entity } => {
+                let entity = Entity::from_u64(*entity);
+                if let Some(source) = self.world.get_component_mut::<AudioSource>(entity) {
+                    source.playing = true;
+                } else {
+                    log::warn!("script tried to play AudioSource on missing entity {entity:?}");
+                }
+                return;
+            }
+            ScriptRuntimeRequest::PauseAudio { entity } => {
+                let entity = Entity::from_u64(*entity);
+                if let Some(source) = self.world.get_component_mut::<AudioSource>(entity) {
+                    source.playing = false;
+                } else {
+                    log::warn!("script tried to pause AudioSource on missing entity {entity:?}");
+                }
+                return;
+            }
+            ScriptRuntimeRequest::StopAudio { entity } => {
+                let entity = Entity::from_u64(*entity);
+                self.audio.stop_source(entity);
+                if let Some(source) = self.world.get_component_mut::<AudioSource>(entity) {
+                    source.playing = false;
+                } else {
+                    log::warn!("script tried to stop AudioSource on missing entity {entity:?}");
+                }
+                return;
+            }
             _ => {}
         }
         let selector = match request {
@@ -205,7 +238,10 @@ impl App {
             ScriptRuntimeRequest::LoadScene(reference) => SceneSelector::PathOrName(reference),
             ScriptRuntimeRequest::ReloadScene => SceneSelector::Reload,
             ScriptRuntimeRequest::SetAnimatorParameter { .. }
-            | ScriptRuntimeRequest::PlayAnimatorState { .. } => unreachable!(),
+            | ScriptRuntimeRequest::PlayAnimatorState { .. }
+            | ScriptRuntimeRequest::PlayAudio { .. }
+            | ScriptRuntimeRequest::PauseAudio { .. }
+            | ScriptRuntimeRequest::StopAudio { .. } => unreachable!(),
         };
         match self.scenes.load(selector, &mut self.world) {
             Ok(loaded) => {
@@ -219,6 +255,7 @@ impl App {
                 self.last_ui_draw_calls = u32::MAX;
                 self.particles = ParticleWorld::default();
                 self.animations = AnimationRuntime::new(self.args.project_root.clone());
+                self.audio.clear();
                 self.physics.clear();
                 if let Some(window) = &self.window {
                     window.set_ime_allowed(false);
@@ -1190,6 +1227,15 @@ function onTick(dt, frame) {
                 for failure in self.animations.update(&mut self.world, dt) {
                     log::error!(
                         "Animation runtime {:?} failed to load '{}': {}",
+                        failure.entity,
+                        failure.clip,
+                        failure.error
+                    );
+                }
+
+                for failure in self.audio.update(&mut self.world) {
+                    log::error!(
+                        "Audio runtime {:?} failed to load '{}': {}",
                         failure.entity,
                         failure.clip,
                         failure.error

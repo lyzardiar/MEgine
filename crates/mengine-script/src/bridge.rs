@@ -24,11 +24,29 @@ pub enum ScriptRuntimeRequest {
         entity: u64,
         state: String,
     },
+    PlayAudio {
+        entity: u64,
+    },
+    PauseAudio {
+        entity: u64,
+    },
+    StopAudio {
+        entity: u64,
+    },
 }
 
 fn pending_runtime_requests() -> &'static Mutex<Vec<ScriptRuntimeRequest>> {
     static CELL: std::sync::OnceLock<Mutex<Vec<ScriptRuntimeRequest>>> = std::sync::OnceLock::new();
     CELL.get_or_init(|| Mutex::new(Vec::new()))
+}
+
+fn queue_runtime_request(request: ScriptRuntimeRequest) -> boa_engine::JsResult<JsValue> {
+    if let Ok(mut requests) = pending_runtime_requests().lock() {
+        requests.push(request);
+        Ok(JsValue::new(true))
+    } else {
+        Ok(JsValue::new(false))
+    }
 }
 
 /// Embeds a JS engine and exposes `engine` global for tick scripts.
@@ -286,9 +304,28 @@ fn register_engine(context: &mut Context) -> Result<(), ScriptError> {
         }
     });
 
+    let play_audio = NativeFunction::from_copy_closure(|_this, args, ctx| {
+        let Some(entity) = js_entity_id(args.get_or_undefined(0), ctx) else {
+            return Ok(JsValue::new(false));
+        };
+        queue_runtime_request(ScriptRuntimeRequest::PlayAudio { entity })
+    });
+    let pause_audio = NativeFunction::from_copy_closure(|_this, args, ctx| {
+        let Some(entity) = js_entity_id(args.get_or_undefined(0), ctx) else {
+            return Ok(JsValue::new(false));
+        };
+        queue_runtime_request(ScriptRuntimeRequest::PauseAudio { entity })
+    });
+    let stop_audio = NativeFunction::from_copy_closure(|_this, args, ctx| {
+        let Some(entity) = js_entity_id(args.get_or_undefined(0), ctx) else {
+            return Ok(JsValue::new(false));
+        };
+        queue_runtime_request(ScriptRuntimeRequest::StopAudio { entity })
+    });
+
     context
         .eval(Source::from_bytes(
-            b"var engine = { setClearColor: null, pushCommandJson: null, loadScene: null, reloadScene: null, setAnimatorParameter: null, setAnimatorTrigger: null, playAnimatorState: null, scene: null };",
+            b"var engine = { setClearColor: null, pushCommandJson: null, loadScene: null, reloadScene: null, setAnimatorParameter: null, setAnimatorTrigger: null, playAnimatorState: null, playAudio: null, pauseAudio: null, stopAudio: null, scene: null };",
         ))
         .map_err(|e| ScriptError::Js(format!("{e}")))?;
 
@@ -336,6 +373,21 @@ fn register_engine(context: &mut Context) -> Result<(), ScriptError> {
             context,
         )
         .map_err(|e| ScriptError::Js(format!("{e}")))?;
+
+    for (name, function) in [
+        ("playAudio", play_audio),
+        ("pauseAudio", pause_audio),
+        ("stopAudio", stop_audio),
+    ] {
+        engine_obj
+            .set(
+                boa_engine::JsString::from(name),
+                function.to_js_function(context.realm()),
+                false,
+                context,
+            )
+            .map_err(|e| ScriptError::Js(format!("{e}")))?;
+    }
 
     engine_obj
         .set(
@@ -463,6 +515,9 @@ mod tests {
             if (!engine.setAnimatorParameter(7, "Grounded", true)) throw new Error("bool rejected");
             if (!engine.setAnimatorTrigger("4294967297", "Jump")) throw new Error("trigger rejected");
             if (!engine.playAnimatorState("4294967297", "Land")) throw new Error("state rejected");
+            if (!engine.playAudio("4294967297")) throw new Error("audio play rejected");
+            if (!engine.pauseAudio(7)) throw new Error("audio pause rejected");
+            if (!engine.stopAudio("4294967297")) throw new Error("audio stop rejected");
             "#,
         )
         .unwrap();
@@ -487,6 +542,13 @@ mod tests {
                 ScriptRuntimeRequest::PlayAnimatorState {
                     entity: 4_294_967_297,
                     state: "Land".into(),
+                },
+                ScriptRuntimeRequest::PlayAudio {
+                    entity: 4_294_967_297,
+                },
+                ScriptRuntimeRequest::PauseAudio { entity: 7 },
+                ScriptRuntimeRequest::StopAudio {
+                    entity: 4_294_967_297,
                 },
             ]
         );

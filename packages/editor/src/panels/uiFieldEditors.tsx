@@ -479,7 +479,7 @@ export function ProjectAssetSlot(props: {
             id: asset.id,
             label: asset.name,
             sub: asset.folder,
-            icon: asset.kind === 'spine-atlas' ? 'A' : 'S',
+            icon: asset.kind === 'audio' ? '♪' : asset.kind === 'spine-atlas' ? 'A' : 'S',
           }))}
           current={hasValue ? props.value : null}
           allowNone={props.allowNone}

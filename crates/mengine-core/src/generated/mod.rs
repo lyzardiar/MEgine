@@ -541,6 +541,123 @@ impl Component for Animator {
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
 #[serde(default)]
+pub struct AudioListener {
+    pub primary: bool,
+}
+
+impl Default for AudioListener {
+    fn default() -> Self {
+        Self { primary: true }
+    }
+}
+
+impl Component for AudioListener {
+    fn type_name() -> &'static str {
+        "AudioListener"
+    }
+    fn as_any(&self) -> &dyn std::any::Any {
+        self
+    }
+    fn as_any_mut(&mut self) -> &mut dyn std::any::Any {
+        self
+    }
+    fn to_value(&self) -> serde_json::Value {
+        serde_json::to_value(self).unwrap_or(serde_json::Value::Null)
+    }
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize)]
+#[serde(default)]
+pub struct AudioSource {
+    pub clip: String,
+    pub play_on_awake: bool,
+    pub playing: bool,
+    pub looped: bool,
+    pub volume: f32,
+    pub pitch: f32,
+    pub pan: f32,
+    pub spatial_blend: f32,
+    pub min_distance: f32,
+    pub max_distance: f32,
+    pub bus: String,
+    pub mute: bool,
+}
+
+impl Default for AudioSource {
+    fn default() -> Self {
+        Self {
+            clip: "".into(),
+            play_on_awake: true,
+            playing: true,
+            looped: false,
+            volume: 1.0,
+            pitch: 1.0,
+            pan: 0.0,
+            spatial_blend: 0.0,
+            min_distance: 1.0,
+            max_distance: 100.0,
+            bus: "SFX".into(),
+            mute: false,
+        }
+    }
+}
+
+impl Component for AudioSource {
+    fn type_name() -> &'static str {
+        "AudioSource"
+    }
+    fn as_any(&self) -> &dyn std::any::Any {
+        self
+    }
+    fn as_any_mut(&mut self) -> &mut dyn std::any::Any {
+        self
+    }
+    fn to_value(&self) -> serde_json::Value {
+        serde_json::to_value(self).unwrap_or(serde_json::Value::Null)
+    }
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize)]
+#[serde(default)]
+pub struct AudioMixer {
+    pub master_volume: f32,
+    pub music_volume: f32,
+    pub sfx_volume: f32,
+    pub ui_volume: f32,
+    pub ambience_volume: f32,
+    pub muted: bool,
+}
+
+impl Default for AudioMixer {
+    fn default() -> Self {
+        Self {
+            master_volume: 1.0,
+            music_volume: 1.0,
+            sfx_volume: 1.0,
+            ui_volume: 1.0,
+            ambience_volume: 1.0,
+            muted: false,
+        }
+    }
+}
+
+impl Component for AudioMixer {
+    fn type_name() -> &'static str {
+        "AudioMixer"
+    }
+    fn as_any(&self) -> &dyn std::any::Any {
+        self
+    }
+    fn as_any_mut(&mut self) -> &mut dyn std::any::Any {
+        self
+    }
+    fn to_value(&self) -> serde_json::Value {
+        serde_json::to_value(self).unwrap_or(serde_json::Value::Null)
+    }
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize)]
+#[serde(default)]
 pub struct RigidBody3D {
     pub body_type: String,
     pub mass: f32,
@@ -1915,6 +2032,9 @@ pub mod meta {
         "Line2D",
         "AnimationPlayer",
         "Animator",
+        "AudioListener",
+        "AudioSource",
+        "AudioMixer",
         "RigidBody3D",
         "BoxCollider3D",
         "SphereCollider3D",

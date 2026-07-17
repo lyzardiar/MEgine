@@ -334,6 +334,17 @@ mod tests {
                     "play_on_awake": true, "playing": true, "speed": 0.8,
                     "current_state": "Run", "parameters_json": "{\"Speed\":1}"
                 },
+                "AudioListener": { "primary": true },
+                "AudioSource": {
+                    "clip": "Assets/Audio/theme.ogg", "play_on_awake": true,
+                    "playing": true, "looped": true, "volume": 0.75, "pitch": 1.1,
+                    "pan": -0.2, "spatial_blend": 0.5, "min_distance": 2,
+                    "max_distance": 40, "bus": "Music", "mute": false
+                },
+                "AudioMixer": {
+                    "master_volume": 0.9, "music_volume": 0.8, "sfx_volume": 0.7,
+                    "ui_volume": 0.6, "ambience_volume": 0.5, "muted": false
+                },
                 "RigidBody3D": {
                     "body_type": "dynamic", "mass": 2.5, "gravity_scale": 0.75,
                     "velocity": [1, 2, 3], "lock_rotation": true, "ccd": true
@@ -412,6 +423,19 @@ mod tests {
         );
         assert_eq!(components["Animator"]["current_state"], "Run");
         assert_eq!(components["Animator"]["parameters_json"], "{\"Speed\":1}");
+        assert_eq!(components["AudioListener"]["primary"], true);
+        assert_eq!(components["AudioSource"]["clip"], "Assets/Audio/theme.ogg");
+        assert_eq!(components["AudioSource"]["spatial_blend"], 0.5);
+        assert_eq!(components["AudioSource"]["bus"], "Music");
+        assert!((components["AudioMixer"]["master_volume"].as_f64().unwrap() - 0.9).abs() < 0.0001);
+        assert!(
+            (components["AudioMixer"]["ambience_volume"]
+                .as_f64()
+                .unwrap()
+                - 0.5)
+                .abs()
+                < 0.0001
+        );
         assert_eq!(components["RigidBody3D"]["mass"], 2.5);
         assert_eq!(
             components["RigidBody3D"]["velocity"],

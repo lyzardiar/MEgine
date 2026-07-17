@@ -43,6 +43,9 @@ createItem('Camera/Camera 2D', 201, ({ store }) => store.spawnCamera2D());
 createItem('Light/Directional', 210, ({ store }) => store.spawnDirectionalLight());
 createItem('Light/Point', 211, ({ store }) => store.spawnPointLight());
 createItem('Light/Spot', 212, ({ store }) => store.spawnSpotLight());
+createItem('Audio/Audio Source', 220, ({ store }) => store.spawnAudioSource());
+createItem('Audio/Audio Listener', 221, ({ store }) => store.spawnAudioListener());
+createItem('Audio/Audio Mixer', 222, ({ store }) => store.spawnAudioMixer());
 
 createItem('UI/Canvas', 300, ({ store }) => store.spawnUiCanvas(), { separatorBefore: true });
 createItem('UI/Image', 310, ({ store }) => store.spawnUiImage());

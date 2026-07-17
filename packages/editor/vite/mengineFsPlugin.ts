@@ -136,7 +136,7 @@ export function mengineFsPlugin(opts: MengineFsOptions | string): Plugin {
 
   type TextureAsset = { id: string; name: string; folder: string; relPath: string };
   type ProjectFileAsset = TextureAsset & {
-    kind: 'animation' | 'animator-controller' | 'material' | 'prefab' | 'spine-json' | 'spine-binary' | 'spine-atlas';
+    kind: 'animation' | 'animator-controller' | 'audio' | 'material' | 'prefab' | 'spine-json' | 'spine-binary' | 'spine-atlas';
   };
 
   function listTextures(): { sprites: TextureAsset[]; folders: string[] } {
@@ -194,6 +194,8 @@ export function mengineFsPlugin(opts: MengineFsOptions | string): Plugin {
           ? 'animation'
           : lower.endsWith('.mcontroller')
             ? 'animator-controller'
+            : /\.(wav|ogg|mp3|flac)$/.test(lower)
+              ? 'audio'
             : lower.endsWith('.mmat') || lower.endsWith('.mat')
               ? 'material'
               : lower.endsWith('.prefab')

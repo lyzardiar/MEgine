@@ -11,6 +11,7 @@ export type ProjectFileAsset = {
   kind:
     | 'animation'
     | 'animator-controller'
+    | 'audio'
     | 'material'
     | 'prefab'
     | 'spine-json'
@@ -19,6 +20,7 @@ export type ProjectFileAsset = {
 };
 
 let projectFiles: ProjectFileAsset[] = [];
+let audioPreview: { path: string; audio: HTMLAudioElement; url: string } | null = null;
 
 export function listProjectFiles(): ProjectFileAsset[] {
   return projectFiles;
@@ -87,6 +89,46 @@ export async function readProjectAssetBytes(relativePath: string): Promise<Uint8
 
 export async function readProjectAssetText(relativePath: string): Promise<string> {
   return new TextDecoder().decode(await readProjectAssetBytes(relativePath));
+}
+
+/** Double-click preview for imported audio without mutating the scene. */
+export async function toggleProjectAudioPreview(relativePath: string): Promise<'playing' | 'stopped'> {
+  const normalized = normalizeProjectAssetPath(relativePath);
+  if (audioPreview) {
+    audioPreview.audio.pause();
+    URL.revokeObjectURL(audioPreview.url);
+    const wasSame = audioPreview.path === normalized;
+    audioPreview = null;
+    if (wasSame) return 'stopped';
+  }
+  const bytes = await readProjectAssetBytes(normalized);
+  const copy = new Uint8Array(bytes.byteLength);
+  copy.set(bytes);
+  const extension = normalized.split('.').pop()?.toLowerCase();
+  const mime = extension === 'wav'
+    ? 'audio/wav'
+    : extension === 'ogg'
+      ? 'audio/ogg'
+      : extension === 'flac'
+        ? 'audio/flac'
+        : 'audio/mpeg';
+  const url = URL.createObjectURL(new Blob([copy.buffer], { type: mime }));
+  const audio = new Audio(url);
+  audioPreview = { path: normalized, audio, url };
+  const release = () => {
+    if (audioPreview?.audio !== audio) return;
+    URL.revokeObjectURL(url);
+    audioPreview = null;
+  };
+  audio.addEventListener('ended', release, { once: true });
+  audio.addEventListener('error', release, { once: true });
+  try {
+    await audio.play();
+    return 'playing';
+  } catch (error) {
+    release();
+    throw error;
+  }
 }
 
 export async function writeProjectAssetBytes(

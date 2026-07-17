@@ -135,6 +135,103 @@
     ],
     "type": "object"
   },
+  "AudioListener": {
+    "properties": {
+      "primary": {
+        "type": "boolean"
+      }
+    },
+    "required": [
+      "primary"
+    ],
+    "type": "object"
+  },
+  "AudioMixer": {
+    "properties": {
+      "ambience_volume": {
+        "type": "number"
+      },
+      "master_volume": {
+        "type": "number"
+      },
+      "music_volume": {
+        "type": "number"
+      },
+      "muted": {
+        "type": "boolean"
+      },
+      "sfx_volume": {
+        "type": "number"
+      },
+      "ui_volume": {
+        "type": "number"
+      }
+    },
+    "required": [
+      "master_volume",
+      "music_volume",
+      "sfx_volume",
+      "ui_volume",
+      "ambience_volume",
+      "muted"
+    ],
+    "type": "object"
+  },
+  "AudioSource": {
+    "properties": {
+      "bus": {
+        "type": "string"
+      },
+      "clip": {
+        "type": "string"
+      },
+      "looped": {
+        "type": "boolean"
+      },
+      "max_distance": {
+        "type": "number"
+      },
+      "min_distance": {
+        "type": "number"
+      },
+      "mute": {
+        "type": "boolean"
+      },
+      "pan": {
+        "type": "number"
+      },
+      "pitch": {
+        "type": "number"
+      },
+      "play_on_awake": {
+        "type": "boolean"
+      },
+      "playing": {
+        "type": "boolean"
+      },
+      "spatial_blend": {
+        "type": "number"
+      },
+      "volume": {
+        "type": "number"
+      }
+    },
+    "required": [
+      "clip",
+      "play_on_awake",
+      "playing",
+      "looped",
+      "volume",
+      "pitch",
+      "pan",
+      "spatial_blend",
+      "min_distance",
+      "max_distance",
+      "bus",
+      "mute"
+    ],
+    "type": "object"
+  },
   "AutoRotate": {
     "properties": {
       "angle": {

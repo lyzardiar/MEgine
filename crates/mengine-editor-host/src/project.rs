@@ -517,6 +517,12 @@ interface EngineApi {
   pushCommandJson(json: string): void;
   loadScene(scene: string | number): boolean;
   reloadScene(): boolean;
+  setAnimatorParameter(entity: number | string, name: string, value: boolean | number): boolean;
+  setAnimatorTrigger(entity: number | string, name: string): boolean;
+  playAnimatorState(entity: number | string, state: string): boolean;
+  playAudio(entity: number | string): boolean;
+  pauseAudio(entity: number | string): boolean;
+  stopAudio(entity: number | string): boolean;
   scene: EngineSceneInfo | null;
 }
 
@@ -543,7 +549,8 @@ declare function onCollisionExit(event: PhysicsCollisionInfo): void;
                     "rotation": [0.0, 0.0, 0.0, 1.0],
                     "scale": [1.0, 1.0, 1.0]
                 },
-                "Camera3D": { "primary": true }
+                "Camera3D": { "primary": true },
+                "AudioListener": { "primary": true }
             }),
         ),
         (

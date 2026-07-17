@@ -18,6 +18,7 @@ import { subscribePing } from '../pingBus';
 import {
   listProjectFiles,
   refreshProjectFiles,
+  toggleProjectAudioPreview,
   type ProjectFileAsset,
 } from '../projectAssets';
 
@@ -25,6 +26,7 @@ const STATIC_FOLDERS = [
   'Assets',
   'Assets/Scenes',
   'Assets/Animations',
+  'Assets/Audio',
   'Assets/Prefabs',
   'Assets/Scripts',
   'Assets/Materials',
@@ -34,7 +36,7 @@ const STATIC_FOLDERS = [
 type AssetItem = {
   folder: string;
   name: string;
-  kind: 'animation' | 'animator-controller' | 'prefab' | 'script' | 'material' | 'scene' | 'sprite' | 'spine';
+  kind: 'animation' | 'animator-controller' | 'audio' | 'prefab' | 'script' | 'material' | 'scene' | 'sprite' | 'spine';
   spawn: string | null;
   icon: string;
   sceneName?: string;
@@ -136,6 +138,8 @@ export function Project(props: {
       ? 'animation'
       : asset.kind === 'animator-controller'
         ? 'animator-controller'
+      : asset.kind === 'audio'
+        ? 'audio'
       : asset.kind === 'material'
         ? 'material'
         : asset.kind === 'prefab'
@@ -148,6 +152,8 @@ export function Project(props: {
       spawn: null,
       icon: kind === 'animator-controller'
         ? 'A'
+        : kind === 'audio'
+        ? '♪'
         : kind === 'animation'
         ? '◆'
         : kind === 'material'
@@ -237,6 +243,12 @@ export function Project(props: {
       props.onOpenAnimator(a.spriteId);
       return;
     }
+    if (a.kind === 'audio' && a.spriteId) {
+      void toggleProjectAudioPreview(a.spriteId)
+        .then((state) => props.onLog?.(`${state === 'playing' ? 'Previewing' : 'Stopped'} ${a.name}`))
+        .catch((error) => props.onLog?.(`Audio preview failed: ${String(error)}`, 'error'));
+      return;
+    }
     if (a.spawn) props.onSpawnPrefab(a.spawn);
   };
 
@@ -298,6 +310,7 @@ export function Project(props: {
                 || a.kind === 'spine'
                 || a.kind === 'animation'
                 || a.kind === 'animator-controller'
+                || a.kind === 'audio'
                 || a.kind === 'material'
                 || a.kind === 'prefab'
               }
@@ -307,6 +320,7 @@ export function Project(props: {
                   && a.kind !== 'spine'
                   && a.kind !== 'animation'
                   && a.kind !== 'animator-controller'
+                  && a.kind !== 'audio'
                   && a.kind !== 'material'
                   && a.kind !== 'prefab'
                 ) return;

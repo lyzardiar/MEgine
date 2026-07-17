@@ -27,6 +27,12 @@ interface EngineApi {
   pushCommandJson(json: string): void;
   loadScene(scene: string | number): boolean;
   reloadScene(): boolean;
+  setAnimatorParameter(entity: number | string, name: string, value: boolean | number): boolean;
+  setAnimatorTrigger(entity: number | string, name: string): boolean;
+  playAnimatorState(entity: number | string, state: string): boolean;
+  playAudio(entity: number | string): boolean;
+  pauseAudio(entity: number | string): boolean;
+  stopAudio(entity: number | string): boolean;
   scene: EngineSceneInfo | null;
 }
 

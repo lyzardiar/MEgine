@@ -23,6 +23,7 @@ export type InspectorFieldMeta = {
   assetKinds?: Array<
     | 'animation'
     | 'animator-controller'
+    | 'audio'
     | 'material'
     | 'prefab'
     | 'spine-json'
@@ -161,6 +162,28 @@ export const BUILTIN_INSPECTOR_FIELDS: Readonly<
     speed: { step: 0.1 },
     current_state: { label: 'Current State' },
     parameters_json: { label: 'Parameter Overrides (JSON)', kind: 'multiline' },
+  },
+  AudioSource: {
+    clip: {
+      kind: 'project-asset',
+      assetKinds: ['audio'],
+      referenceType: 'Audio Clip',
+      allowNone: true,
+    },
+    volume: { min: 0, max: 4, step: 0.01 },
+    pitch: { min: 0.05, max: 4, step: 0.01 },
+    pan: { min: -1, max: 1, step: 0.01 },
+    spatial_blend: { label: 'Spatial Blend', min: 0, max: 1, step: 0.01 },
+    min_distance: { min: 0.01, step: 0.1 },
+    max_distance: { min: 0.02, step: 1 },
+    bus: { kind: 'enum', options: options('Music', 'SFX', 'UI', 'Ambience') },
+  },
+  AudioMixer: {
+    master_volume: { min: 0, max: 1, step: 0.01 },
+    music_volume: { min: 0, max: 1, step: 0.01 },
+    sfx_volume: { min: 0, max: 1, step: 0.01 },
+    ui_volume: { min: 0, max: 1, step: 0.01 },
+    ambience_volume: { min: 0, max: 1, step: 0.01 },
   },
   Canvas: {
     render_mode: {
