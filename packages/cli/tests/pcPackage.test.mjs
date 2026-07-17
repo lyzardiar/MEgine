@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 import { createHash } from 'node:crypto';
 import {
+  existsSync,
   mkdirSync,
   readFileSync,
   rmSync,
@@ -85,6 +86,72 @@ test('buildPcPackage creates a directly launchable, hashed project bundle', () =
       assert.equal(entry.size, bytes.length);
       assert.equal(entry.sha256, createHash('sha256').update(bytes).digest('hex'));
     }
+  } finally {
+    rmSync(paths.root, { recursive: true, force: true });
+  }
+});
+
+test('buildPcPackage type-checks TypeScript and emits only runnable JavaScript', () => {
+  const paths = fixture('typescript');
+  try {
+    const projectJson = JSON.parse(readFileSync(join(paths.project, 'project.json'), 'utf8'));
+    projectJson.startupScript = 'Assets/Scripts/Main.ts';
+    writeFileSync(join(paths.project, 'project.json'), JSON.stringify(projectJson));
+    rmSync(join(paths.project, 'Assets', 'Scripts', 'main.js'));
+    writeFileSync(
+      join(paths.project, 'Assets', 'Scripts', 'mengine.d.ts'),
+      'declare const engine: { setClearColor(r: number, g: number, b: number, a?: number): void };',
+    );
+    writeFileSync(
+      join(paths.project, 'Assets', 'Scripts', 'Main.ts'),
+      'let elapsed: number = 0;\nfunction onTick(dt: number, _frame: number) { elapsed += dt; engine.setClearColor(elapsed, 0, 0, 1); }',
+    );
+
+    const manifest = buildPcPackage({
+      projectDir: paths.project,
+      outputDir: paths.output,
+      runtimePath: paths.runtime,
+      engineVersion: 'test-engine',
+      platform: 'windows',
+    });
+    assert.equal(manifest.project.startupScript, 'Assets/Scripts/Main.js');
+    assert.match(
+      readFileSync(join(paths.output, 'Assets', 'Scripts', 'Main.js'), 'utf8'),
+      /function onTick/,
+    );
+    assert.equal(existsSync(join(paths.output, 'Assets', 'Scripts', 'Main.ts')), false);
+    assert.equal(existsSync(join(paths.output, 'Assets', 'Scripts', 'mengine.d.ts')), false);
+    assert.equal(
+      JSON.parse(readFileSync(join(paths.output, PLAYER_CONFIG_FILE), 'utf8')).startupScript,
+      'Assets/Scripts/Main.js',
+    );
+    assert.equal(
+      JSON.parse(readFileSync(join(paths.output, 'project.json'), 'utf8')).startupScript,
+      'Assets/Scripts/Main.js',
+    );
+  } finally {
+    rmSync(paths.root, { recursive: true, force: true });
+  }
+});
+
+test('buildPcPackage rejects TypeScript errors without publishing a partial build', () => {
+  const paths = fixture('typescript-error');
+  try {
+    const projectJson = JSON.parse(readFileSync(join(paths.project, 'project.json'), 'utf8'));
+    projectJson.startupScript = 'Assets/Scripts/Main.ts';
+    writeFileSync(join(paths.project, 'project.json'), JSON.stringify(projectJson));
+    writeFileSync(
+      join(paths.project, 'Assets', 'Scripts', 'Main.ts'),
+      'const invalid: number = "not a number";',
+    );
+    assert.throws(() => buildPcPackage({
+      projectDir: paths.project,
+      outputDir: paths.output,
+      runtimePath: paths.runtime,
+      engineVersion: 'test-engine',
+      platform: 'windows',
+    }), /TypeScript compilation failed/);
+    assert.equal(existsSync(paths.output), false);
   } finally {
     rmSync(paths.root, { recursive: true, force: true });
   }

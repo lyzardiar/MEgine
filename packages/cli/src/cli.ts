@@ -15,6 +15,23 @@ const cliPackage = JSON.parse(
 ) as { version?: string };
 const ENGINE_VERSION = cliPackage.version ?? '0.0.0';
 const [cmd, ...rest] = process.argv.slice(2);
+const ENGINE_TYPES = `interface EngineSceneInfo {
+  readonly name: string;
+  readonly path: string;
+  readonly buildIndex: number | null;
+  readonly buildSceneCount: number;
+}
+
+interface EngineApi {
+  setClearColor(r: number, g: number, b: number, a?: number): void;
+  pushCommandJson(json: string): void;
+  loadScene(scene: string | number): boolean;
+  reloadScene(): boolean;
+  scene: EngineSceneInfo | null;
+}
+
+declare const engine: EngineApi;
+`;
 
 function help() {
   console.log(`mengine <command>
@@ -51,13 +68,14 @@ function newProject(name: string) {
       language: 'typescript',
       mainScene: 'Assets/Scenes/Main.mscene',
       buildScenes: ['Assets/Scenes/Main.mscene'],
-      startupScript: 'Assets/Scripts/main.js',
+      startupScript: 'Assets/Scripts/Main.ts',
     }, null, 2)}\n`,
   );
   writeFileSync(
-    join(root, 'Assets', 'Scripts', 'main.js'),
-    'var t = 0;\nfunction onTick(dt, frame) {\n  t += dt;\n}\n',
+    join(root, 'Assets', 'Scripts', 'Main.ts'),
+    "let elapsed = 0;\nlet loadedSceneName = '';\n\nfunction onSceneLoaded(scene: EngineSceneInfo) {\n  loadedSceneName = scene.name;\n}\n\nfunction onTick(dt: number, _frame: number) {\n  elapsed += dt;\n}\n",
   );
+  writeFileSync(join(root, 'Assets', 'Scripts', 'mengine.d.ts'), ENGINE_TYPES);
   writeFileSync(
     join(root, 'Assets', 'Scenes', 'Main.mscene'),
     `${JSON.stringify({

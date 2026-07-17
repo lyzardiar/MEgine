@@ -933,9 +933,20 @@ mod tests {
                 .as_nanos()
         ));
         std::fs::create_dir_all(root.join("Assets/Scenes")).unwrap();
+        std::fs::create_dir_all(root.join("Assets/Scripts")).unwrap();
         std::fs::write(
             root.join("project.json"),
-            r#"{"name":"Editor Build QA","version":1,"mainScene":"Assets/Scenes/Main.mscene","buildScenes":["Assets/Scenes/Main.mscene","Assets/Scenes/Level2.mscene"]}"#,
+            r#"{"name":"Editor Build QA","version":1,"language":"typescript","mainScene":"Assets/Scenes/Main.mscene","buildScenes":["Assets/Scenes/Main.mscene","Assets/Scenes/Level2.mscene"],"startupScript":"Assets/Scripts/Main.ts"}"#,
+        )
+        .unwrap();
+        std::fs::write(
+            root.join("Assets/Scripts/mengine.d.ts"),
+            "declare const engine: { readonly scene: { readonly name: string } | null };",
+        )
+        .unwrap();
+        std::fs::write(
+            root.join("Assets/Scripts/Main.ts"),
+            "let loaded = ''; function onSceneLoaded(scene: { name: string }) { loaded = scene.name; } function onTick(_dt: number, _frame: number) {}",
         )
         .unwrap();
         std::fs::write(
@@ -952,7 +963,11 @@ mod tests {
         let result = run_player_build(root.clone(), "debug".into(), true).unwrap();
         assert_eq!(result.profile, "debug");
         assert!(Path::new(&result.executable).is_file());
-        assert!(result.file_count >= 5);
+        assert!(result.file_count >= 6);
+        let output = Path::new(&result.output_dir);
+        assert!(output.join("Assets/Scripts/Main.js").is_file());
+        assert!(!output.join("Assets/Scripts/Main.ts").exists());
+        assert!(!output.join("Assets/Scripts/mengine.d.ts").exists());
         std::fs::remove_dir_all(root).unwrap();
     }
 

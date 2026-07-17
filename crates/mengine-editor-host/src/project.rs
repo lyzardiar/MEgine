@@ -24,6 +24,8 @@ pub struct ProjectManifest {
     pub build_scenes: Vec<String>,
     #[serde(default)]
     pub language: Option<String>,
+    #[serde(default, alias = "startup_script")]
+    pub startup_script: Option<String>,
     #[serde(flatten)]
     pub extra: BTreeMap<String, serde_json::Value>,
 }
@@ -484,6 +486,7 @@ fn initialize_project(root: &Path, name: &str) -> Result<(), ProjectError> {
         main_scene: Some("Assets/Scenes/Main.mscene".into()),
         build_scenes: vec!["Assets/Scenes/Main.mscene".into()],
         language: Some("typescript".into()),
+        startup_script: Some("Assets/Scripts/Main.ts".into()),
         extra: BTreeMap::new(),
     };
     let manifest_json = serde_json::to_vec_pretty(&manifest)?;
@@ -498,7 +501,27 @@ fn initialize_project(root: &Path, name: &str) -> Result<(), ProjectError> {
     write_new_synced(&root.join(".gitignore"), b".mengine/\n")?;
     write_new_synced(
         &root.join("Assets/Scripts/Main.ts"),
-        b"let elapsed = 0;\n\nfunction onTick(dt: number, frame: number) {\n  elapsed += dt;\n}\n",
+        b"let elapsed = 0;\nlet loadedSceneName = '';\n\nfunction onSceneLoaded(scene: EngineSceneInfo) {\n  loadedSceneName = scene.name;\n}\n\nfunction onTick(dt: number, _frame: number) {\n  elapsed += dt;\n}\n",
+    )?;
+    write_new_synced(
+        &root.join("Assets/Scripts/mengine.d.ts"),
+        br#"interface EngineSceneInfo {
+  readonly name: string;
+  readonly path: string;
+  readonly buildIndex: number | null;
+  readonly buildSceneCount: number;
+}
+
+interface EngineApi {
+  setClearColor(r: number, g: number, b: number, a?: number): void;
+  pushCommandJson(json: string): void;
+  loadScene(scene: string | number): boolean;
+  reloadScene(): boolean;
+  scene: EngineSceneInfo | null;
+}
+
+declare const engine: EngineApi;
+"#,
     )?;
 
     let mut world = World::new();
@@ -749,6 +772,7 @@ mod tests {
         assert!(project_root.join("project.json").is_file());
         assert!(project_root.join("Assets/Scenes/Main.mscene").is_file());
         assert!(project_root.join("Assets/Scripts/Main.ts").is_file());
+        assert!(project_root.join("Assets/Scripts/mengine.d.ts").is_file());
         assert!(project_root.join("ProjectSettings/editor.json").is_file());
         assert!(project_root.join(".mengine/Library").is_dir());
         let manifest: serde_json::Value = serde_json::from_str(
@@ -757,6 +781,7 @@ mod tests {
         .unwrap();
         assert_eq!(manifest["name"], "CreatedGame");
         assert_eq!(manifest["mainScene"], "Assets/Scenes/Main.mscene");
+        assert_eq!(manifest["startupScript"], "Assets/Scripts/Main.ts");
         assert_eq!(
             manifest["buildScenes"],
             json!(["Assets/Scenes/Main.mscene"])

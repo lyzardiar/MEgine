@@ -36,3 +36,10 @@ engine.reloadScene();                             // 原子重载当前场景
 损坏文件或白名单外请求都不会清空正在运行的场景。
 
 完整 TypeScript 声明位于 `samples/types/engine.d.ts`。
+
+## Player 构建
+
+新建工程默认使用 `Assets/Scripts/Main.ts` 作为 `startupScript`，并生成同目录的
+`mengine.d.ts`。PC Build 会对 Scripts 目录执行严格 TypeScript 检查，将启动脚本
+路径改写为对应的 `.js` 后写入 Player 配置。存在类型错误时构建失败且不会发布半成品；
+源码 `.ts` 和声明 `.d.ts` 不会进入最终 Player 内容。

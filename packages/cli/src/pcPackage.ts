@@ -12,6 +12,7 @@ import {
 } from 'node:fs';
 import { createHash } from 'node:crypto';
 import { basename, dirname, isAbsolute, join, relative, resolve, sep } from 'node:path';
+import * as ts from 'typescript';
 
 export const PLAYER_CONFIG_FILE = 'mengine-player.json';
 export const BUILD_MANIFEST_FILE = 'mengine-build.json';
@@ -102,9 +103,20 @@ export function readGameProject(projectDir: string): GameProjectManifest {
   }
   const scripts = Array.isArray(parsed.scripts) ? parsed.scripts : [];
   const startupScriptValue = parsed.startupScript ?? parsed.startup_script ?? scripts[0];
-  const startupScript = typeof startupScriptValue === 'string'
+  if (startupScriptValue != null && typeof startupScriptValue !== 'string') {
+    throw new Error('project.json startupScript must be a project-relative path');
+  }
+  let startupScript = typeof startupScriptValue === 'string'
     ? startupScriptValue.replaceAll('\\', '/')
     : undefined;
+  if (!startupScript) {
+    startupScript = [
+      'Assets/Scripts/Main.ts',
+      'Assets/Scripts/main.ts',
+      'Assets/Scripts/Main.js',
+      'Assets/Scripts/main.js',
+    ].find((candidate) => existsSync(join(root, ...candidate.split('/'))));
+  }
   const version = typeof parsed.version === 'number' || typeof parsed.version === 'string'
     ? parsed.version
     : 1;
@@ -149,9 +161,72 @@ function copyTree(source: string, destination: string): void {
     return;
   }
   if (sourceStat.isFile()) {
+    if (/\.tsx?$/i.test(source)) return;
     mkdirSync(dirname(destination), { recursive: true });
     copyFileSync(source, destination);
   }
+}
+
+function collectTypeScriptFiles(directory: string, output: string[] = []): string[] {
+  for (const entry of readdirSync(directory, { withFileTypes: true })
+    .sort((left, right) => left.name.localeCompare(right.name))) {
+    const path = join(directory, entry.name);
+    if (entry.isDirectory()) collectTypeScriptFiles(path, output);
+    else if (entry.isFile() && /\.tsx?$/i.test(entry.name)) output.push(path);
+  }
+  return output;
+}
+
+function formatTypeScriptDiagnostics(diagnostics: readonly ts.Diagnostic[]): string {
+  return ts.formatDiagnostics(diagnostics, {
+    getCanonicalFileName: (fileName) => fileName,
+    getCurrentDirectory: () => process.cwd(),
+    getNewLine: () => '\n',
+  }).trim();
+}
+
+function compileProjectTypeScript(
+  projectDir: string,
+  stageDir: string,
+  startupScript: string | undefined,
+): string | undefined {
+  if (!startupScript || !/\.tsx?$/i.test(startupScript)) return startupScript;
+  const portable = startupScript.replaceAll('\\', '/');
+  const segments = portable.split('/');
+  const scriptsIndex = segments.map((segment) => segment.toLowerCase()).lastIndexOf('scripts');
+  const sourceRootRelative = scriptsIndex >= 0
+    ? segments.slice(0, scriptsIndex + 1).join('/')
+    : segments.slice(0, -1).join('/');
+  const sourceRoot = resolveProjectPath(projectDir, sourceRootRelative, 'script root');
+  const rootNames = collectTypeScriptFiles(sourceRoot);
+  if (!rootNames.some((path) => resolve(path) === resolve(projectDir, startupScript))) {
+    throw new Error(`TypeScript startup script is outside its script root: ${startupScript}`);
+  }
+  const outputRoot = join(stageDir, ...sourceRootRelative.split('/'));
+  const options: ts.CompilerOptions = {
+    target: ts.ScriptTarget.ES2021,
+    module: ts.ModuleKind.None,
+    moduleResolution: ts.ModuleResolutionKind.Classic,
+    rootDir: sourceRoot,
+    outDir: outputRoot,
+    strict: true,
+    skipLibCheck: true,
+    noEmitOnError: true,
+    sourceMap: false,
+    declaration: false,
+    removeComments: true,
+  };
+  const program = ts.createProgram(rootNames, options);
+  const diagnostics = ts.getPreEmitDiagnostics(program);
+  const errors = diagnostics.filter((diagnostic) => diagnostic.category === ts.DiagnosticCategory.Error);
+  if (errors.length > 0) {
+    throw new Error(`TypeScript compilation failed:\n${formatTypeScriptDiagnostics(errors)}`);
+  }
+  const emitted = program.emit();
+  if (emitted.emitSkipped) {
+    throw new Error(`TypeScript emit failed:\n${formatTypeScriptDiagnostics(emitted.diagnostics)}`);
+  }
+  return portable.replace(/\.tsx?$/i, '.js');
 }
 
 function contentRoots(projectDir: string): string[] {
@@ -234,10 +309,30 @@ export function buildPcPackage(options: PcPackageOptions): PcBuildManifest {
   mkdirSync(stageDir, { recursive: true });
 
   try {
-    copyFileSync(join(projectDir, 'project.json'), join(stageDir, 'project.json'));
     for (const root of roots) {
       copyTree(root, join(stageDir, basename(root)));
     }
+    const packagedStartupScript = compileProjectTypeScript(
+      projectDir,
+      stageDir,
+      project.startupScript,
+    );
+    const packagedProject: GameProjectManifest = {
+      ...project,
+      ...(packagedStartupScript ? { startupScript: packagedStartupScript } : {}),
+    };
+    const packagedProjectJson = JSON.parse(
+      readFileSync(join(projectDir, 'project.json'), 'utf8'),
+    ) as Record<string, unknown>;
+    if (packagedStartupScript) {
+      packagedProjectJson.startupScript = packagedStartupScript;
+      delete packagedProjectJson.startup_script;
+    }
+    writeFileSync(
+      join(stageDir, 'project.json'),
+      `${JSON.stringify(packagedProjectJson, null, 2)}\n`,
+      'utf8',
+    );
 
     const platform = options.platform ?? hostBuildPlatform();
     const executable = `${safeExecutableName(project.name)}${platform === 'windows' ? '.exe' : ''}`;
@@ -250,7 +345,7 @@ export function buildPcPackage(options: PcPackageOptions): PcBuildManifest {
         projectRoot: '.',
         mainScene: project.mainScene,
         buildScenes: project.buildScenes,
-        ...(project.startupScript ? { startupScript: project.startupScript } : {}),
+        ...(packagedStartupScript ? { startupScript: packagedStartupScript } : {}),
       }, null, 2)}\n`,
       'utf8',
     );
@@ -261,7 +356,7 @@ export function buildPcPackage(options: PcPackageOptions): PcBuildManifest {
       platform,
       architecture: options.architecture ?? process.arch,
       executable,
-      project,
+      project: packagedProject,
       files: collectFiles(stageDir),
     };
     writeFileSync(
