@@ -204,6 +204,18 @@ export interface RawImage {
   raycastTarget: boolean;
 }
 
+export interface Shadow {
+  effectColor: [number, number, number, number];
+  effectDistance: [number, number];
+  useGraphicAlpha: boolean;
+}
+
+export interface Outline {
+  effectColor: [number, number, number, number];
+  effectDistance: [number, number];
+  useGraphicAlpha: boolean;
+}
+
 export interface Button {
   interactable: boolean;
   transition: string;
@@ -388,6 +400,8 @@ export type ComponentName =
   | 'ContentSizeFitter'
   | 'Image'
   | 'RawImage'
+  | 'Shadow'
+  | 'Outline'
   | 'Button'
   | 'Text'
   | 'Toggle'
@@ -429,6 +443,8 @@ export const COMPONENT_NAMES = [
   'ContentSizeFitter',
   'Image',
   'RawImage',
+  'Shadow',
+  'Outline',
   'Button',
   'Text',
   'Toggle',

@@ -117,6 +117,20 @@ export class RawImage {
   raycast_target!: boolean;
 }
 
+export class Shadow {
+  static readonly typeName = 'Shadow' as const;
+  effect_color!: Color4;
+  effect_distance!: [number, number];
+  use_graphic_alpha!: boolean;
+}
+
+export class Outline {
+  static readonly typeName = 'Outline' as const;
+  effect_color!: Color4;
+  effect_distance!: [number, number];
+  use_graphic_alpha!: boolean;
+}
+
 export class AspectRatioFitter {
   static readonly typeName = 'AspectRatioFitter' as const;
   aspect_mode!: string;
@@ -155,6 +169,8 @@ export type BuiltinComponents = {
   ContentSizeFitter: ContentSizeFitter;
   Image: Image;
   RawImage: RawImage;
+  Shadow: Shadow;
+  Outline: Outline;
   Button: UIButton;
 };
 

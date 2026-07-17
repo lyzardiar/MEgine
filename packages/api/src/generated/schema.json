@@ -574,6 +574,31 @@
     ],
     "type": "object"
   },
+  "Outline": {
+    "properties": {
+      "effect_color": {
+        "items": {
+          "type": "number"
+        },
+        "type": "array"
+      },
+      "effect_distance": {
+        "items": {
+          "type": "number"
+        },
+        "type": "array"
+      },
+      "use_graphic_alpha": {
+        "type": "boolean"
+      }
+    },
+    "required": [
+      "effect_color",
+      "effect_distance",
+      "use_graphic_alpha"
+    ],
+    "type": "object"
+  },
   "Panel": {
     "properties": {
       "border_color": {
@@ -1216,6 +1241,31 @@
     },
     "required": [
       "entity"
+    ],
+    "type": "object"
+  },
+  "Shadow": {
+    "properties": {
+      "effect_color": {
+        "items": {
+          "type": "number"
+        },
+        "type": "array"
+      },
+      "effect_distance": {
+        "items": {
+          "type": "number"
+        },
+        "type": "array"
+      },
+      "use_graphic_alpha": {
+        "type": "boolean"
+      }
+    },
+    "required": [
+      "effect_color",
+      "effect_distance",
+      "use_graphic_alpha"
     ],
     "type": "object"
   },

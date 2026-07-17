@@ -677,6 +677,54 @@ impl Component for RawImage {
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
 #[serde(default)]
+pub struct Shadow {
+    pub effect_color: [f32; 4],
+    pub effect_distance: [f32; 2],
+    pub use_graphic_alpha: bool,
+}
+
+impl Default for Shadow {
+    fn default() -> Self {
+        Self {
+            effect_color: [0.0, 0.0, 0.0, 0.5],
+            effect_distance: [1.0, -1.0],
+            use_graphic_alpha: true,
+        }
+    }
+}
+
+impl Component for Shadow {
+    fn type_name() -> &'static str {
+        "Shadow"
+    }
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize)]
+#[serde(default)]
+pub struct Outline {
+    pub effect_color: [f32; 4],
+    pub effect_distance: [f32; 2],
+    pub use_graphic_alpha: bool,
+}
+
+impl Default for Outline {
+    fn default() -> Self {
+        Self {
+            effect_color: [0.0, 0.0, 0.0, 0.5],
+            effect_distance: [1.0, -1.0],
+            use_graphic_alpha: true,
+        }
+    }
+}
+
+impl Component for Outline {
+    fn type_name() -> &'static str {
+        "Outline"
+    }
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize)]
+#[serde(default)]
 pub struct Button {
     pub interactable: bool,
     pub transition: String,
@@ -1199,6 +1247,8 @@ pub mod meta {
         "ContentSizeFitter",
         "Image",
         "RawImage",
+        "Shadow",
+        "Outline",
         "Button",
         "Text",
         "Toggle",

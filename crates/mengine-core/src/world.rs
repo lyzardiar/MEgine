@@ -4,9 +4,9 @@ use crate::entity::Entity;
 use crate::generated::{
     AspectRatioFitter, AutoRotate, Button, Camera2D, Camera3D, Canvas, CanvasGroup, CanvasScaler,
     ContentSizeFitter, DirectionalLight, Dropdown, EditorOnly, Image, InputField, Layer,
-    LayoutGroup, ListView, MeshRenderer, Name, Panel, PbrMaterial, PointLight, ProgressBar,
-    RawImage, RectMask2D, RectTransform, ScrollView, Scrollbar, Slider, SpotLight, SpriteRenderer,
-    TabView, Text, Toggle, Transform, Transform2D,
+    LayoutGroup, ListView, MeshRenderer, Name, Outline, Panel, PbrMaterial, PointLight,
+    ProgressBar, RawImage, RectMask2D, RectTransform, ScrollView, Scrollbar, Shadow, Slider,
+    SpotLight, SpriteRenderer, TabView, Text, Toggle, Transform, Transform2D,
 };
 use crate::hierarchy::{Children, Parent};
 use crate::schedule::Schedule;
@@ -399,6 +399,12 @@ impl World {
             "RawImage" | "rawImage" => {
                 self.insert_json_component::<RawImage>(entity, value);
             }
+            "Shadow" | "shadow" => {
+                self.insert_json_component::<Shadow>(entity, value);
+            }
+            "Outline" | "outline" => {
+                self.insert_json_component::<Outline>(entity, value);
+            }
             "Button" | "button" => {
                 self.insert_json_component::<Button>(entity, value);
             }
@@ -484,6 +490,8 @@ fn canonical_component_name(component: &str) -> &str {
         "LayoutGroup" | "layoutGroup" => "LayoutGroup",
         "Image" | "image" => "Image",
         "RawImage" | "rawImage" => "RawImage",
+        "Shadow" | "shadow" => "Shadow",
+        "Outline" | "outline" => "Outline",
         "Button" | "button" => "Button",
         "Text" | "text" => "Text",
         "Toggle" | "toggle" => "Toggle",

@@ -13,6 +13,7 @@ import { drawSpriteInRect, drawSpriteSlicedInRect, drawSpriteUvInRect } from '..
 import type { SpriteBorder } from './nineSlice';
 import { applyAspectRatio } from './aspectRatioFitter';
 import { applyContentSize, measureLayoutContent, type LayoutMetrics } from './contentSizeFitter';
+import { graphicEffectFilter, type UiGraphicEffect } from './graphicEffect';
 import { resolveSpriteId } from '../spriteLibrary';
 import { project, type Camera, type Vec3 } from '../math3d';
 import { rectComponentSceneScale } from '../rectSceneScale';
@@ -78,6 +79,8 @@ export type UiDrawItem = {
     uvRect: [number, number, number, number];
     raycastTarget: boolean;
   };
+  shadow?: UiGraphicEffect;
+  outline?: UiGraphicEffect;
   toggle?: {
     isOn: boolean;
     interactable: boolean;
@@ -365,6 +368,12 @@ function scaleSceneVisuals(item: UiDrawItem, scale: number): UiDrawItem {
           displayBorder: item.image.displayBorder.map((value) => value * s) as SpriteBorder,
         }
       : undefined,
+    shadow: item.shadow
+      ? { ...item.shadow, distance: item.shadow.distance.map((value) => value * s) as [number, number] }
+      : undefined,
+    outline: item.outline
+      ? { ...item.outline, distance: item.outline.distance.map((value) => value * s) as [number, number] }
+      : undefined,
     button: item.button ? { ...item.button, fontSize: font(item.button.fontSize) } : undefined,
     text: item.text
       ? {
@@ -499,6 +508,8 @@ export function layoutUiOverlay(
 
       const img = ent.components.Image as Record<string, unknown> | undefined;
       const rawImage = ent.components.RawImage as Record<string, unknown> | undefined;
+      const shadow = ent.components.Shadow as Record<string, unknown> | undefined;
+      const outline = ent.components.Outline as Record<string, unknown> | undefined;
       const btn = ent.components.Button as Record<string, unknown> | undefined;
       const text = ent.components.Text as Record<string, unknown> | undefined;
       const toggle = ent.components.Toggle as Record<string, unknown> | undefined;
@@ -587,6 +598,28 @@ export function layoutUiOverlay(
                 uvRect: number4(rawImage.uv_rect ?? rawImage.uvRect, [0, 0, 1, 1]),
                 raycastTarget:
                   rawImage.raycast_target !== false && rawImage.raycastTarget !== false,
+              }
+            : undefined,
+          shadow: shadow
+            ? {
+                color: color4(shadow.effect_color ?? shadow.effectColor, [0, 0, 0, 0.5]),
+                distance: (() => {
+                  const distance = number2(shadow.effect_distance ?? shadow.effectDistance, [1, -1]);
+                  return [distance[0] * scale, -distance[1] * scale] as [number, number];
+                })(),
+                useGraphicAlpha:
+                  shadow.use_graphic_alpha !== false && shadow.useGraphicAlpha !== false,
+              }
+            : undefined,
+          outline: outline
+            ? {
+                color: color4(outline.effect_color ?? outline.effectColor, [0, 0, 0, 0.5]),
+                distance: (() => {
+                  const distance = number2(outline.effect_distance ?? outline.effectDistance, [1, -1]);
+                  return [distance[0] * scale, -distance[1] * scale] as [number, number];
+                })(),
+                useGraphicAlpha:
+                  outline.use_graphic_alpha !== false && outline.useGraphicAlpha !== false,
               }
             : undefined,
           text: text
@@ -1313,6 +1346,7 @@ export function drawUiItems(
     }
 
     withRot(() => {
+      ctx.filter = graphicEffectFilter(it.shadow, it.outline);
       if (it.panel) {
         ctx.fillStyle = cssColor(it.panel.color);
         ctx.fillRect(x, y, w, h);
@@ -1586,6 +1620,7 @@ export function drawUiItems(
       }
 
       if (it.selected) {
+        ctx.filter = 'none';
         ctx.strokeStyle = 'rgba(100, 180, 255, 0.95)';
         ctx.lineWidth = 2;
         ctx.strokeRect(x - 1, y - 1, w + 2, h + 2);

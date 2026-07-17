@@ -60,6 +60,20 @@ component RawImage {
   raycast_target: bool   = true
 }
 
+/// Unity-style Graphic shadow effect.
+component Shadow {
+  effect_color:      float4 = [0, 0, 0, 0.5]
+  effect_distance:   float2 = [1, -1]
+  use_graphic_alpha: bool   = true
+}
+
+/// Unity-style four-direction Graphic outline effect.
+component Outline {
+  effect_color:      float4 = [0, 0, 0, 0.5]
+  effect_distance:   float2 = [1, -1]
+  use_graphic_alpha: bool   = true
+}
+
 component Button {
   interactable:    bool   = true
   /// "None" | "ColorTint"

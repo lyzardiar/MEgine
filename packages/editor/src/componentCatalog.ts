@@ -162,6 +162,26 @@ const BUILTIN_CATALOG: ComponentCatalogEntry[] = [
     }),
   },
   {
+    type: 'Shadow',
+    label: 'Shadow',
+    description: 'Unity-style offset shadow for a UI Graphic',
+    create: () => ({
+      effect_color: [0, 0, 0, 0.5],
+      effect_distance: [1, -1],
+      use_graphic_alpha: true,
+    }),
+  },
+  {
+    type: 'Outline',
+    label: 'Outline',
+    description: 'Unity-style four-direction outline for a UI Graphic',
+    create: () => ({
+      effect_color: [0, 0, 0, 0.5],
+      effect_distance: [1, -1],
+      use_graphic_alpha: true,
+    }),
+  },
+  {
     type: 'ParticleEmitter2D',
     label: 'Particle Emitter 2D',
     description: 'Deterministic world-space XY particle emitter',

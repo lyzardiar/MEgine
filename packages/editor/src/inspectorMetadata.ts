@@ -159,6 +159,16 @@ export const BUILTIN_INSPECTOR_FIELDS: Readonly<
     texture: sprite,
     uv_rect: { label: 'UV Rect' },
   },
+  Shadow: {
+    effect_color: { label: 'Effect Color' },
+    effect_distance: { label: 'Effect Distance' },
+    use_graphic_alpha: { label: 'Use Graphic Alpha' },
+  },
+  Outline: {
+    effect_color: { label: 'Effect Color' },
+    effect_distance: { label: 'Effect Distance' },
+    use_graphic_alpha: { label: 'Use Graphic Alpha' },
+  },
   Button: {
     transition: {
       kind: 'enum',

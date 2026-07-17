@@ -1,7 +1,7 @@
 use mengine_core::generated::{
     AspectRatioFitter, Button, Canvas, CanvasGroup, CanvasScaler, ContentSizeFitter, Dropdown,
-    Image, InputField, LayoutGroup, ListView, Panel, ProgressBar, RawImage, RectMask2D,
-    RectTransform, ScrollView, Scrollbar, Slider, TabView, Text, Toggle,
+    Image, InputField, LayoutGroup, ListView, Outline, Panel, ProgressBar, RawImage, RectMask2D,
+    RectTransform, ScrollView, Scrollbar, Shadow, Slider, TabView, Text, Toggle,
 };
 use mengine_core::hierarchy::Parent;
 use mengine_core::{Entity, World};
@@ -301,6 +301,7 @@ fn walk(
     }
     let image = world.get_component::<Image>(entity);
     let raw_image = world.get_component::<RawImage>(entity);
+    let graphic_start = primitives.len();
 
     if let Some(image) = image {
         if image.image_type.eq_ignore_ascii_case("sliced") {
@@ -1043,6 +1044,15 @@ fn walk(
         }
     }
 
+    apply_graphic_effects(
+        primitives,
+        graphic_start,
+        world.get_component::<Shadow>(entity),
+        world.get_component::<Outline>(entity),
+        scale,
+        state.alpha,
+    );
+
     let mut children = children_of(world, entity);
     if let Some(tab_view) = world.get_component::<TabView>(entity) {
         if !children.is_empty() {
@@ -1190,6 +1200,74 @@ fn apply_content_size(
         width: width.max(0.0),
         height: height.max(0.0),
     }
+}
+
+fn apply_graphic_effects(
+    primitives: &mut Vec<UiPrimitive>,
+    graphic_start: usize,
+    shadow: Option<&Shadow>,
+    outline: Option<&Outline>,
+    scale: f32,
+    inherited_alpha: f32,
+) {
+    if graphic_start >= primitives.len() || (shadow.is_none() && outline.is_none()) {
+        return;
+    }
+    let source: Vec<UiPrimitive> = primitives.drain(graphic_start..).collect();
+    if let Some(shadow) = shadow {
+        push_graphic_effect(
+            primitives,
+            &source,
+            shadow.effect_color,
+            [
+                shadow.effect_distance[0] * scale,
+                -shadow.effect_distance[1] * scale,
+            ],
+            shadow.use_graphic_alpha,
+            inherited_alpha,
+        );
+    }
+    if let Some(outline) = outline {
+        let dx = outline.effect_distance[0].abs() * scale;
+        let dy = outline.effect_distance[1].abs() * scale;
+        for offset in [[dx, dy], [dx, -dy], [-dx, dy], [-dx, -dy]] {
+            push_graphic_effect(
+                primitives,
+                &source,
+                outline.effect_color,
+                offset,
+                outline.use_graphic_alpha,
+                inherited_alpha,
+            );
+        }
+    }
+    primitives.extend(source);
+}
+
+fn push_graphic_effect(
+    primitives: &mut Vec<UiPrimitive>,
+    source: &[UiPrimitive],
+    color: [f32; 4],
+    offset: [f32; 2],
+    use_graphic_alpha: bool,
+    inherited_alpha: f32,
+) {
+    primitives.extend(source.iter().cloned().map(|mut primitive| {
+        primitive.rect[0] += offset[0];
+        primitive.rect[1] += offset[1];
+        primitive.color = [
+            color[0],
+            color[1],
+            color[2],
+            color[3]
+                * if use_graphic_alpha {
+                    primitive.color[3]
+                } else {
+                    inherited_alpha
+                },
+        ];
+        primitive
+    }));
 }
 
 fn control_region(
@@ -1971,6 +2049,58 @@ mod tests {
                 height: 24.0,
             }
         );
+    }
+
+    #[test]
+    fn graphic_effects_duplicate_geometry_without_breaking_batch_keys() {
+        let source = primitive(
+            UiRect {
+                x: 10.0,
+                y: 20.0,
+                width: 100.0,
+                height: 50.0,
+            },
+            [1.0, 1.0, 1.0, 0.4],
+            [0.5, 0.5],
+            0.0,
+            "ui/image",
+            "atlas",
+            UiClipRect {
+                x: 0,
+                y: 0,
+                width: 1920,
+                height: 1080,
+            },
+        );
+        let source_key = source.key.clone();
+        let mut primitives = vec![source];
+        apply_graphic_effects(
+            &mut primitives,
+            0,
+            Some(&Shadow {
+                effect_color: [0.0, 0.0, 0.0, 0.5],
+                effect_distance: [2.0, -3.0],
+                use_graphic_alpha: true,
+            }),
+            Some(&Outline {
+                effect_color: [1.0, 0.5, 0.0, 0.25],
+                effect_distance: [1.0, -2.0],
+                use_graphic_alpha: false,
+            }),
+            1.0,
+            0.8,
+        );
+
+        assert_eq!(primitives.len(), 6);
+        assert!(primitives
+            .iter()
+            .all(|primitive| primitive.key == source_key));
+        assert_eq!(primitives[0].rect[0..2], [12.0, 23.0]);
+        assert_eq!(primitives[0].color, [0.0, 0.0, 0.0, 0.2]);
+        assert_eq!(primitives[1].rect[0..2], [11.0, 22.0]);
+        assert_eq!(primitives[1].color, [1.0, 0.5, 0.0, 0.2]);
+        assert_eq!(primitives[5].rect[0..2], [10.0, 20.0]);
+        assert_eq!(UiBatchPlan::build(primitives).batches.len(), 1);
     }
 
     #[test]

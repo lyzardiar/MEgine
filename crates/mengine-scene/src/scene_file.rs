@@ -320,6 +320,12 @@ mod tests {
                 "RawImage": {
                     "texture": "Assets/UI/avatar.png", "uv_rect": [0.25, 0, 0.5, 1]
                 },
+                "Shadow": {
+                    "effect_color": [0, 0, 0, 0.4], "effect_distance": [2, -2]
+                },
+                "Outline": {
+                    "effect_color": [1, 0.5, 0, 0.75], "effect_distance": [1, -1]
+                },
                 "Text": { "text": "Saved UI" },
                 "Toggle": { "is_on": true },
                 "Slider": { "min_value": 0, "max_value": 10, "value": 7 },
@@ -359,6 +365,8 @@ mod tests {
             "PreferredSize"
         );
         assert_eq!(components["RawImage"]["uv_rect"][0], 0.25);
+        assert_eq!(components["Shadow"]["effect_distance"][0], 2.0);
+        assert_eq!(components["Outline"]["effect_color"][3], 0.75);
         assert_eq!(components["Text"]["text"], "Saved UI");
         assert_eq!(components["Toggle"]["is_on"], true);
         assert_eq!(components["Slider"]["value"], 7.0);
