@@ -1,6 +1,7 @@
 //! Asset database, handles, glTF import helpers.
 
 mod animation;
+mod animator;
 mod gltf_import;
 mod material;
 mod registry;
@@ -10,6 +11,11 @@ pub use animation::{
     load_animation_clip, parse_animation_clip, sample_track, wrapped_animation_time, AnimationClip,
     AnimationInterpolation, AnimationKeyframe, AnimationSample, AnimationTrack, AnimationValue,
     AnimationWrapMode,
+};
+pub use animator::{
+    load_animator_controller, parse_animator_controller, AnimatorCondition, AnimatorConditionMode,
+    AnimatorController, AnimatorParameter, AnimatorParameterKind, AnimatorState,
+    AnimatorTransition,
 };
 pub use gltf_import::load_gltf_mesh_data;
 pub use material::{
@@ -39,4 +45,6 @@ pub enum AssetError {
     Json(#[from] serde_json::Error),
     #[error("not found: {0}")]
     NotFound(String),
+    #[error("invalid asset: {0}")]
+    Invalid(String),
 }

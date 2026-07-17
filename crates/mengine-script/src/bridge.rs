@@ -15,6 +15,15 @@ pub enum ScriptRuntimeRequest {
     LoadSceneByIndex(usize),
     LoadScene(String),
     ReloadScene,
+    SetAnimatorParameter {
+        entity: u64,
+        name: String,
+        value: JsonValue,
+    },
+    PlayAnimatorState {
+        entity: u64,
+        state: String,
+    },
 }
 
 fn pending_runtime_requests() -> &'static Mutex<Vec<ScriptRuntimeRequest>> {
@@ -199,9 +208,87 @@ fn register_engine(context: &mut Context) -> Result<(), ScriptError> {
         }
     });
 
+    let set_animator_parameter = NativeFunction::from_copy_closure(|_this, args, ctx| {
+        let Some(entity) = js_entity_id(args.get_or_undefined(0), ctx) else {
+            return Ok(JsValue::new(false));
+        };
+        let name = args
+            .get_or_undefined(1)
+            .to_string(ctx)?
+            .to_std_string_escaped();
+        if name.trim().is_empty() {
+            return Ok(JsValue::new(false));
+        }
+        let raw = args.get_or_undefined(2);
+        let value = if let Some(value) = raw.as_boolean() {
+            JsonValue::Bool(value)
+        } else if let Some(value) = raw.as_number() {
+            if !value.is_finite() {
+                return Ok(JsValue::new(false));
+            }
+            serde_json::Number::from_f64(value)
+                .map(JsonValue::Number)
+                .unwrap_or(JsonValue::Null)
+        } else {
+            return Ok(JsValue::new(false));
+        };
+        if let Ok(mut requests) = pending_runtime_requests().lock() {
+            requests.push(ScriptRuntimeRequest::SetAnimatorParameter {
+                entity,
+                name,
+                value,
+            });
+            Ok(JsValue::new(true))
+        } else {
+            Ok(JsValue::new(false))
+        }
+    });
+
+    let set_animator_trigger = NativeFunction::from_copy_closure(|_this, args, ctx| {
+        let Some(entity) = js_entity_id(args.get_or_undefined(0), ctx) else {
+            return Ok(JsValue::new(false));
+        };
+        let name = args
+            .get_or_undefined(1)
+            .to_string(ctx)?
+            .to_std_string_escaped();
+        if name.trim().is_empty() {
+            return Ok(JsValue::new(false));
+        }
+        if let Ok(mut requests) = pending_runtime_requests().lock() {
+            requests.push(ScriptRuntimeRequest::SetAnimatorParameter {
+                entity,
+                name,
+                value: JsonValue::Bool(true),
+            });
+            Ok(JsValue::new(true))
+        } else {
+            Ok(JsValue::new(false))
+        }
+    });
+
+    let play_animator_state = NativeFunction::from_copy_closure(|_this, args, ctx| {
+        let Some(entity) = js_entity_id(args.get_or_undefined(0), ctx) else {
+            return Ok(JsValue::new(false));
+        };
+        let state = args
+            .get_or_undefined(1)
+            .to_string(ctx)?
+            .to_std_string_escaped();
+        if state.trim().is_empty() {
+            return Ok(JsValue::new(false));
+        }
+        if let Ok(mut requests) = pending_runtime_requests().lock() {
+            requests.push(ScriptRuntimeRequest::PlayAnimatorState { entity, state });
+            Ok(JsValue::new(true))
+        } else {
+            Ok(JsValue::new(false))
+        }
+    });
+
     context
         .eval(Source::from_bytes(
-            b"var engine = { setClearColor: null, pushCommandJson: null, loadScene: null, reloadScene: null, scene: null };",
+            b"var engine = { setClearColor: null, pushCommandJson: null, loadScene: null, reloadScene: null, setAnimatorParameter: null, setAnimatorTrigger: null, playAnimatorState: null, scene: null };",
         ))
         .map_err(|e| ScriptError::Js(format!("{e}")))?;
 
@@ -218,6 +305,33 @@ fn register_engine(context: &mut Context) -> Result<(), ScriptError> {
         .set(
             boa_engine::js_string!("setClearColor"),
             set_clear.to_js_function(context.realm()),
+            false,
+            context,
+        )
+        .map_err(|e| ScriptError::Js(format!("{e}")))?;
+
+    engine_obj
+        .set(
+            boa_engine::js_string!("setAnimatorParameter"),
+            set_animator_parameter.to_js_function(context.realm()),
+            false,
+            context,
+        )
+        .map_err(|e| ScriptError::Js(format!("{e}")))?;
+
+    engine_obj
+        .set(
+            boa_engine::js_string!("setAnimatorTrigger"),
+            set_animator_trigger.to_js_function(context.realm()),
+            false,
+            context,
+        )
+        .map_err(|e| ScriptError::Js(format!("{e}")))?;
+
+    engine_obj
+        .set(
+            boa_engine::js_string!("playAnimatorState"),
+            play_animator_state.to_js_function(context.realm()),
             false,
             context,
         )
@@ -253,12 +367,31 @@ fn register_engine(context: &mut Context) -> Result<(), ScriptError> {
     Ok(())
 }
 
+fn js_entity_id(value: &JsValue, context: &mut Context) -> Option<u64> {
+    if let Some(number) = value.as_number() {
+        return (number.is_finite() && number >= 0.0 && number.fract() == 0.0)
+            .then_some(number as u64);
+    }
+    value
+        .to_string(context)
+        .ok()?
+        .to_std_string_escaped()
+        .parse()
+        .ok()
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
 
+    fn request_test_guard() -> std::sync::MutexGuard<'static, ()> {
+        static LOCK: std::sync::Mutex<()> = std::sync::Mutex::new(());
+        LOCK.lock().unwrap_or_else(|poisoned| poisoned.into_inner())
+    }
+
     #[test]
     fn scripts_request_scene_changes_and_receive_scene_context() {
+        let _guard = request_test_guard();
         let mut host = ScriptHost::new().unwrap();
         host.eval(
             r#"
@@ -318,5 +451,44 @@ mod tests {
             "#,
         )
         .unwrap();
+    }
+
+    #[test]
+    fn scripts_can_drive_animator_parameters_triggers_and_states() {
+        let _guard = request_test_guard();
+        let mut host = ScriptHost::new().unwrap();
+        host.eval(
+            r#"
+            if (!engine.setAnimatorParameter("4294967297", "Speed", 1.5)) throw new Error("parameter rejected");
+            if (!engine.setAnimatorParameter(7, "Grounded", true)) throw new Error("bool rejected");
+            if (!engine.setAnimatorTrigger("4294967297", "Jump")) throw new Error("trigger rejected");
+            if (!engine.playAnimatorState("4294967297", "Land")) throw new Error("state rejected");
+            "#,
+        )
+        .unwrap();
+        assert_eq!(
+            host.take_runtime_requests(),
+            vec![
+                ScriptRuntimeRequest::SetAnimatorParameter {
+                    entity: 4_294_967_297,
+                    name: "Speed".into(),
+                    value: serde_json::json!(1.5),
+                },
+                ScriptRuntimeRequest::SetAnimatorParameter {
+                    entity: 7,
+                    name: "Grounded".into(),
+                    value: serde_json::json!(true),
+                },
+                ScriptRuntimeRequest::SetAnimatorParameter {
+                    entity: 4_294_967_297,
+                    name: "Jump".into(),
+                    value: serde_json::json!(true),
+                },
+                ScriptRuntimeRequest::PlayAnimatorState {
+                    entity: 4_294_967_297,
+                    state: "Land".into(),
+                },
+            ]
+        );
     }
 }

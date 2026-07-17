@@ -3375,3 +3375,106 @@ body.ew-dragging {
   background: transparent;
   color: inherit;
 }
+
+.animator-editor {
+  display: flex;
+  min-width: 0;
+  min-height: 0;
+  height: 100%;
+  flex-direction: column;
+  background: #292929;
+  color: #d6d6d6;
+}
+
+.animator-scroll {
+  min-height: 0;
+  overflow: auto;
+  padding: 8px;
+}
+
+.animator-section {
+  margin: 0 0 8px;
+  border: 1px solid #1c1c1c;
+  background: #333;
+  padding: 8px;
+}
+
+.animator-section h3 {
+  margin: 0;
+  color: #ddd;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.animator-section > label,
+.animator-state > label,
+.animator-row > label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+}
+
+.animator-section input,
+.animator-section select,
+.animator-section button {
+  min-width: 0;
+  border-radius: 0;
+}
+
+.animator-heading,
+.animator-row,
+.animator-state {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.animator-heading {
+  justify-content: space-between;
+  margin-bottom: 6px;
+}
+
+.animator-row,
+.animator-state {
+  min-height: 28px;
+  margin-top: 4px;
+}
+
+.animator-state {
+  border-left: 3px solid #555;
+  background: #2b2b2b;
+  padding: 5px;
+}
+
+.animator-state.default {
+  border-left-color: #54b65a;
+}
+
+.animator-state > input,
+.animator-state > select,
+.animator-row > input,
+.animator-row > select {
+  flex: 1 1 100px;
+}
+
+.animator-transition {
+  margin-top: 6px;
+  border: 1px solid #202020;
+  background: #2b2b2b;
+  padding: 5px;
+}
+
+.animator-row.condition {
+  margin-left: 18px;
+  border-left: 2px solid #3b7db5;
+  padding-left: 6px;
+}
+
+.timeline-animator-state {
+  border-bottom: 1px solid #1d1d1d;
+  background: #27313a;
+  color: #a9c8e2;
+  padding: 4px 8px;
+  font-size: 11px;
+}

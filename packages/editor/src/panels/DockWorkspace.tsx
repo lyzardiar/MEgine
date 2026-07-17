@@ -75,6 +75,7 @@ const PANEL_TITLE: Record<PanelKind, string> = {
   project: 'Project',
   console: 'Console',
   timeline: 'Timeline',
+  animator: 'Animator',
   material: 'Material',
   build: 'Build Settings',
 };

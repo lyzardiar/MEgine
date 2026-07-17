@@ -105,6 +105,15 @@ export interface AnimationPlayer {
   time: number;
 }
 
+export interface Animator {
+  controller: string;
+  playOnAwake: boolean;
+  playing: boolean;
+  speed: number;
+  currentState: string;
+  parametersJson: string;
+}
+
 export interface RigidBody3D {
   bodyType: string;
   mass: number;
@@ -455,6 +464,7 @@ export type ComponentName =
   | 'AnimatedSprite2D'
   | 'Line2D'
   | 'AnimationPlayer'
+  | 'Animator'
   | 'RigidBody3D'
   | 'BoxCollider3D'
   | 'SphereCollider3D'
@@ -505,6 +515,7 @@ export const COMPONENT_NAMES = [
   'AnimatedSprite2D',
   'Line2D',
   'AnimationPlayer',
+  'Animator',
   'RigidBody3D',
   'BoxCollider3D',
   'SphereCollider3D',

@@ -112,6 +112,16 @@ component AnimationPlayer {
   time:          float  = 0
 }
 
+/// Plays a state-machine .mcontroller asset with parameters and cross-fade transitions.
+component Animator {
+  controller:      string = ""
+  play_on_awake:   bool   = true
+  playing:         bool   = true
+  speed:           float  = 1
+  current_state:   string = ""
+  parameters_json: string = "{}"
+}
+
 /// 3D rigid-body simulation settings. body_type: "dynamic" | "fixed" | "kinematic".
 component RigidBody3D {
   body_type:        string = "dynamic"

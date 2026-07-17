@@ -145,6 +145,16 @@ export class AnimationPlayer {
   time!: number;
 }
 
+export class Animator {
+  static readonly typeName = 'Animator' as const;
+  controller!: string;
+  play_on_awake!: boolean;
+  playing!: boolean;
+  speed!: number;
+  current_state!: string;
+  parameters_json!: string;
+}
+
 export class RawImage {
   static readonly typeName = 'RawImage' as const;
   texture!: string;
@@ -206,6 +216,7 @@ export type BuiltinComponents = {
   AnimatedSprite2D: AnimatedSprite2D;
   Line2D: Line2D;
   AnimationPlayer: AnimationPlayer;
+  Animator: Animator;
   Canvas: Canvas;
   CanvasScaler: CanvasScaler;
   RectTransform: RectTransform;

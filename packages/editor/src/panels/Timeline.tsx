@@ -24,6 +24,7 @@ import {
   type AnimationTrack,
   type AnimationValue,
 } from '../animationClip';
+import { parseAnimatorController } from '../animatorController';
 import {
   listProjectFiles,
   normalizeProjectAssetPath,
@@ -47,6 +48,17 @@ function playerOf(entity: SnapshotEntity | null): AnimationPlayerData | null {
   return value != null && typeof value === 'object'
     ? value as AnimationPlayerData
     : null;
+}
+
+type AnimatorData = {
+  controller?: string;
+  current_state?: string;
+  speed?: number;
+};
+
+function animatorOf(entity: SnapshotEntity | null): AnimatorData | null {
+  const value = entity?.components.Animator;
+  return value != null && typeof value === 'object' ? value as AnimatorData : null;
 }
 
 function animationValue(value: unknown): AnimationValue | null {
@@ -211,7 +223,11 @@ export function Timeline(props: {
   onLog: (message: string, level?: 'info' | 'warn' | 'error') => void;
 }) {
   const player = playerOf(props.entity);
-  const clipPath = player?.clip?.trim() ?? '';
+  const animator = animatorOf(props.entity);
+  const [animatorClipPath, setAnimatorClipPath] = useState('');
+  const [animatorStateSpeed, setAnimatorStateSpeed] = useState(1);
+  const [animatorStateName, setAnimatorStateName] = useState('');
+  const clipPath = animator ? animatorClipPath : player?.clip?.trim() ?? '';
   const [clip, setClip] = useState<AnimationClip | null>(null);
   const [savedText, setSavedText] = useState('');
   const [time, setTime] = useState(0);
@@ -236,6 +252,32 @@ export function Timeline(props: {
     selectedTrack: number | null;
     selectedKey: { track: number; key: number } | null;
   }>());
+
+  useEffect(() => {
+    let cancelled = false;
+    const controllerPath = animator?.controller?.trim() ?? '';
+    setAnimatorClipPath('');
+    setAnimatorStateName('');
+    setAnimatorStateSpeed(1);
+    if (!controllerPath) return () => { cancelled = true; };
+    void readProjectAssetText(controllerPath)
+      .then((text) => {
+        if (cancelled) return;
+        const controller = parseAnimatorController(text);
+        const requested = animator?.current_state?.trim() ?? '';
+        const state = controller.states.find((candidate) => candidate.name === requested)
+          ?? controller.states.find((candidate) => candidate.name === controller.default_state)!;
+        setAnimatorClipPath(state.clip);
+        setAnimatorStateName(state.name);
+        setAnimatorStateSpeed(state.speed);
+      })
+      .catch((reason: unknown) => {
+        if (!cancelled) {
+          setError(`Animator Controller：${reason instanceof Error ? reason.message : String(reason)}`);
+        }
+      });
+    return () => { cancelled = true; };
+  }, [animator?.controller, animator?.current_state]);
 
   useEffect(() => {
     setNewClipName(props.entity?.name ?? 'New Animation');
@@ -338,7 +380,9 @@ export function Timeline(props: {
     const tick = (now: number) => {
       const previous = previousFrameTime.current ?? now;
       previousFrameTime.current = now;
-      const speed = Number(player?.speed ?? 1);
+      const speed = Number(animator
+        ? Number(animator.speed ?? 1) * animatorStateSpeed
+        : player?.speed ?? 1);
       setTime((current) => {
         const next = current + Math.max(0, now - previous) * 0.001 * (Number.isFinite(speed) ? speed : 1);
         if (clip.wrap_mode === 'once' && next >= clip.duration) {
@@ -355,7 +399,7 @@ export function Timeline(props: {
       playbackFrame.current = null;
       previousFrameTime.current = null;
     };
-  }, [clip, playing, player?.speed]);
+  }, [animator, animatorStateSpeed, clip, playing, player?.speed]);
 
   useEffect(() => {
     if (!recording || !clip || !props.entity) return;
@@ -404,6 +448,10 @@ export function Timeline(props: {
 
   const assignClip = (path: string) => {
     if (!props.entity) return;
+    if (animator) {
+      props.onLog('Animator 的 Clip 由 Controller State 管理，请在 Animator 面板中修改 State。', 'warn');
+      return;
+    }
     if (player) props.onPatchComponent(props.entity.entity, 'AnimationPlayer', { clip: path });
     else {
       props.onAddComponent(props.entity.entity, 'AnimationPlayer', {
@@ -644,7 +692,7 @@ export function Timeline(props: {
     return <div className="timeline-empty">选择一个 GameObject 以创建或编辑动画。</div>;
   }
 
-  if (!player || !clipPath) {
+  if ((!player && !animator) || !clipPath) {
     return (
       <div
         className="timeline-empty timeline-drop-zone"
@@ -652,7 +700,19 @@ export function Timeline(props: {
         onDrop={dropClip}
       >
         <strong>{props.entity.name ?? `Entity ${props.entity.entity}`}</strong>
-        <span>尚未绑定 Animation Clip，可创建新资源或把 Project 中的 `.manim` 拖到这里。</span>
+        <span>{animator
+          ? (error ?? 'Animator 尚未绑定有效的 Controller/State；请在 Animator 面板中配置。')
+          : '尚未绑定 Animation Clip，可创建新资源或把 Project 中的 `.manim` 拖到这里。'}
+        </span>
+        {animator && (
+          <button
+            type="button"
+            onClick={() => window.dispatchEvent(new CustomEvent('mengine:focus-panel', { detail: 'animator' }))}
+          >
+            Open Animator
+          </button>
+        )}
+        {!animator && <>
         <label className="timeline-new-name">
           Clip Name
           <input
@@ -667,6 +727,7 @@ export function Timeline(props: {
         <button type="button" onClick={() => void createClip()} disabled={saving}>
           Create Animation Clip
         </button>
+        </>}
       </div>
     );
   }
@@ -677,6 +738,11 @@ export function Timeline(props: {
       onDragOver={(event) => event.preventDefault()}
       onDrop={dropClip}
     >
+      {animator && (
+        <div className="timeline-animator-state">
+          Animator State: <strong>{animatorStateName}</strong>
+        </div>
+      )}
       <div className="timeline-toolbar">
         <button
           type="button"
@@ -702,13 +768,13 @@ export function Timeline(props: {
         }}>▶|</button>
         <span className="timeline-time">{time.toFixed(3)} s</span>
         <span className="timeline-clip-path" title={clipPath}>{clipPath}{dirty ? ' *' : ''}</span>
-        <button type="button" onClick={() => setShowNewClip((value) => !value)} disabled={saving}>New</button>
+        {!animator && <button type="button" onClick={() => setShowNewClip((value) => !value)} disabled={saving}>New</button>}
         <button type="button" onClick={() => void persist()} disabled={!dirty || saving}>
           {saving ? 'Saving…' : 'Save'}
         </button>
       </div>
 
-      {showNewClip && (
+      {showNewClip && !animator && (
         <div className="timeline-new-clip">
           <label>
             New Clip

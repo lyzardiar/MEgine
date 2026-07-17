@@ -22,6 +22,7 @@ export type InspectorFieldMeta = {
   options?: InspectorOption[];
   assetKinds?: Array<
     | 'animation'
+    | 'animator-controller'
     | 'material'
     | 'prefab'
     | 'spine-json'
@@ -149,6 +150,17 @@ export const BUILTIN_INSPECTOR_FIELDS: Readonly<
     },
     speed: { step: 0.1 },
     time: { min: 0, step: 0.01 },
+  },
+  Animator: {
+    controller: {
+      kind: 'project-asset',
+      assetKinds: ['animator-controller'],
+      referenceType: 'Animator Controller',
+      allowNone: true,
+    },
+    speed: { step: 0.1 },
+    current_state: { label: 'Current State' },
+    parameters_json: { label: 'Parameter Overrides (JSON)', kind: 'multiline' },
   },
   Canvas: {
     render_mode: {

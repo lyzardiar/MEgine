@@ -89,6 +89,37 @@
     ],
     "type": "object"
   },
+  "Animator": {
+    "properties": {
+      "controller": {
+        "type": "string"
+      },
+      "current_state": {
+        "type": "string"
+      },
+      "parameters_json": {
+        "type": "string"
+      },
+      "play_on_awake": {
+        "type": "boolean"
+      },
+      "playing": {
+        "type": "boolean"
+      },
+      "speed": {
+        "type": "number"
+      }
+    },
+    "required": [
+      "controller",
+      "play_on_awake",
+      "playing",
+      "speed",
+      "current_state",
+      "parameters_json"
+    ],
+    "type": "object"
+  },
   "AspectRatioFitter": {
     "properties": {
       "aspect_mode": {

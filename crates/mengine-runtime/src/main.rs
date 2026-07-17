@@ -5,7 +5,7 @@ use clap::Parser;
 use glam::{Quat, Vec3, Vec4};
 use mengine_core::command::WorldCommand;
 use mengine_core::generated::{
-    Camera2D, Camera3D, DirectionalLight, Dropdown, InputField, ListView, MeshRenderer,
+    Animator, Camera2D, Camera3D, DirectionalLight, Dropdown, InputField, ListView, MeshRenderer,
     PbrMaterial, PointLight, ScrollView, Scrollbar, Slider, SpotLight, TabView, Toggle, Transform,
 };
 use mengine_core::{Entity, TransformHierarchy, World};
@@ -165,11 +165,47 @@ impl App {
         }
     }
 
-    fn apply_scene_request(&mut self, request: ScriptRuntimeRequest) {
+    fn apply_runtime_request(&mut self, request: ScriptRuntimeRequest) {
+        match &request {
+            ScriptRuntimeRequest::SetAnimatorParameter {
+                entity,
+                name,
+                value,
+            } => {
+                let entity = Entity::from_u64(*entity);
+                let Some(animator) = self.world.get_component_mut::<Animator>(entity) else {
+                    log::warn!(
+                        "script tried to set Animator parameter on missing entity {entity:?}"
+                    );
+                    return;
+                };
+                let mut parameters =
+                    serde_json::from_str::<serde_json::Value>(&animator.parameters_json)
+                        .ok()
+                        .and_then(|value| value.as_object().cloned())
+                        .unwrap_or_default();
+                parameters.insert(name.clone(), value.clone());
+                animator.parameters_json = serde_json::Value::Object(parameters).to_string();
+                return;
+            }
+            ScriptRuntimeRequest::PlayAnimatorState { entity, state } => {
+                let entity = Entity::from_u64(*entity);
+                let Some(animator) = self.world.get_component_mut::<Animator>(entity) else {
+                    log::warn!("script tried to play Animator state on missing entity {entity:?}");
+                    return;
+                };
+                animator.current_state = state.clone();
+                animator.playing = true;
+                return;
+            }
+            _ => {}
+        }
         let selector = match request {
             ScriptRuntimeRequest::LoadSceneByIndex(index) => SceneSelector::Index(index),
             ScriptRuntimeRequest::LoadScene(reference) => SceneSelector::PathOrName(reference),
             ScriptRuntimeRequest::ReloadScene => SceneSelector::Reload,
+            ScriptRuntimeRequest::SetAnimatorParameter { .. }
+            | ScriptRuntimeRequest::PlayAnimatorState { .. } => unreachable!(),
         };
         match self.scenes.load(selector, &mut self.world) {
             Ok(loaded) => {
@@ -1153,14 +1189,14 @@ function onTick(dt, frame) {
 
                 for failure in self.animations.update(&mut self.world, dt) {
                     log::error!(
-                        "AnimationPlayer {:?} failed to load '{}': {}",
+                        "Animation runtime {:?} failed to load '{}': {}",
                         failure.entity,
                         failure.clip,
                         failure.error
                     );
                 }
 
-                let scene_requests = if let Some(script) = self.script.as_mut() {
+                let runtime_requests = if let Some(script) = self.script.as_mut() {
                     if let Err(error) =
                         script.notify_collision_events(&collision_started, &collision_stopped)
                     {
@@ -1173,8 +1209,8 @@ function onTick(dt, frame) {
                 } else {
                     Vec::new()
                 };
-                for request in scene_requests {
-                    self.apply_scene_request(request);
+                for request in runtime_requests {
+                    self.apply_runtime_request(request);
                 }
 
                 if let Some(r) = self.renderer.as_mut() {

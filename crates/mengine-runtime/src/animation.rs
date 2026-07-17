@@ -1,6 +1,10 @@
 use crate::textures::resolve_project_asset_path;
-use mengine_assets::{load_animation_clip, AnimationClip, AnimationValue, AnimationWrapMode};
-use mengine_core::generated::AnimationPlayer;
+use mengine_assets::{
+    load_animation_clip, load_animator_controller, AnimationClip, AnimationValue,
+    AnimationWrapMode, AnimatorCondition, AnimatorConditionMode, AnimatorController,
+    AnimatorParameterKind,
+};
+use mengine_core::generated::{AnimationPlayer, Animator};
 use mengine_core::{Entity, Parent, World};
 use serde_json::{Number, Value};
 use std::collections::{HashMap, HashSet};
@@ -21,10 +25,36 @@ struct CachedAnimation {
     result: Result<Arc<AnimationClip>, String>,
 }
 
+#[derive(Clone)]
+struct CachedController {
+    modified: Option<SystemTime>,
+    result: Result<Arc<AnimatorController>, String>,
+}
+
+#[derive(Clone, Debug)]
+struct ActiveTransition {
+    source_state: String,
+    source_time: f32,
+    destination_state: String,
+    destination_time: f32,
+    elapsed: f32,
+    duration: f32,
+}
+
+#[derive(Clone, Debug)]
+struct AnimatorInstance {
+    controller: String,
+    state: String,
+    state_time: f32,
+    transition: Option<ActiveTransition>,
+}
+
 #[derive(Default)]
 pub struct AnimationRuntime {
     project_root: Option<PathBuf>,
     clips: HashMap<PathBuf, CachedAnimation>,
+    controllers: HashMap<PathBuf, CachedController>,
+    animator_instances: HashMap<Entity, AnimatorInstance>,
     reported_failures: HashSet<(String, String)>,
 }
 
@@ -33,6 +63,8 @@ impl AnimationRuntime {
         Self {
             project_root,
             clips: HashMap::new(),
+            controllers: HashMap::new(),
+            animator_instances: HashMap::new(),
             reported_failures: HashSet::new(),
         }
     }
@@ -43,6 +75,8 @@ impl AnimationRuntime {
         }
         self.project_root = project_root;
         self.clips.clear();
+        self.controllers.clear();
+        self.animator_instances.clear();
         self.reported_failures.clear();
     }
 
@@ -52,6 +86,7 @@ impl AnimationRuntime {
         };
         if let Some(path) = resolve_project_asset_path(root, clip) {
             self.clips.remove(&path);
+            self.controllers.remove(&path);
         }
     }
 
@@ -59,9 +94,19 @@ impl AnimationRuntime {
         if !delta_seconds.is_finite() {
             return Vec::new();
         }
+        let animator_entities: HashSet<_> = world
+            .iter_entities()
+            .filter(|entity| world.get_component::<Animator>(*entity).is_some())
+            .collect();
+        self.animator_instances
+            .retain(|entity, _| animator_entities.contains(entity) && world.is_alive(*entity));
+
+        let mut failures = self.update_animators(world, delta_seconds);
         let players: Vec<_> = world
             .iter_entities()
             .filter(|entity| world.entity_active(*entity))
+            // A state machine owns animation output when both components are present.
+            .filter(|entity| !animator_entities.contains(entity))
             .filter_map(|entity| {
                 world
                     .get_component::<AnimationPlayer>(entity)
@@ -69,8 +114,6 @@ impl AnimationRuntime {
                     .map(|player| (entity, player))
             })
             .collect();
-        let mut failures = Vec::new();
-
         for (entity, player) in players {
             let clip_key = player.clip.trim();
             if !player.playing || clip_key.is_empty() {
@@ -126,6 +169,215 @@ impl AnimationRuntime {
         failures
     }
 
+    fn update_animators(
+        &mut self,
+        world: &mut World,
+        delta_seconds: f32,
+    ) -> Vec<AnimationLoadFailure> {
+        let animators: Vec<_> = world
+            .iter_entities()
+            .filter(|entity| world.entity_active(*entity))
+            .filter_map(|entity| {
+                world
+                    .get_component::<Animator>(entity)
+                    .cloned()
+                    .map(|animator| (entity, animator))
+            })
+            .collect();
+        let mut failures = Vec::new();
+
+        for (entity, mut animator) in animators {
+            let controller_key = animator.controller.trim();
+            if controller_key.is_empty() {
+                self.animator_instances.remove(&entity);
+                continue;
+            }
+            let controller = match self.load_controller(controller_key) {
+                Ok(controller) => controller,
+                Err(error) => {
+                    self.record_failure(entity, controller_key, error, &mut failures);
+                    continue;
+                }
+            };
+            self.reported_failures
+                .retain(|(reported_asset, _)| reported_asset != controller_key);
+
+            let requested_state = animator.current_state.trim();
+            let mut instance = self.animator_instances.remove(&entity).unwrap_or_else(|| {
+                let state = controller
+                    .state(requested_state)
+                    .map(|state| state.name.clone())
+                    .unwrap_or_else(|| controller.default_state.clone());
+                AnimatorInstance {
+                    controller: controller_key.to_owned(),
+                    state,
+                    state_time: 0.0,
+                    transition: None,
+                }
+            });
+            if instance.controller != controller_key {
+                instance = AnimatorInstance {
+                    controller: controller_key.to_owned(),
+                    state: controller.default_state.clone(),
+                    state_time: 0.0,
+                    transition: None,
+                };
+            } else if !requested_state.is_empty()
+                && requested_state != instance.state
+                && controller.state(requested_state).is_some()
+            {
+                instance.state = requested_state.to_owned();
+                instance.state_time = 0.0;
+                instance.transition = None;
+            }
+            animator.current_state = instance.state.clone();
+            if !animator.playing {
+                if let Some(live) = world.get_component_mut::<Animator>(entity) {
+                    live.current_state = animator.current_state;
+                }
+                self.animator_instances.insert(entity, instance);
+                continue;
+            }
+
+            let parameters = animator_parameters(&controller, &animator.parameters_json);
+            let delta = delta_seconds * animator.speed;
+            let mut consumed_triggers = Vec::new();
+
+            if let Some(active) = instance.transition.as_mut() {
+                let Some(source) = controller.state(&active.source_state) else {
+                    instance.transition = None;
+                    self.animator_instances.insert(entity, instance);
+                    continue;
+                };
+                let Some(destination) = controller.state(&active.destination_state) else {
+                    instance.transition = None;
+                    self.animator_instances.insert(entity, instance);
+                    continue;
+                };
+                active.source_time += delta * source.speed;
+                active.destination_time += delta * destination.speed;
+                active.elapsed += delta.abs();
+            } else {
+                let Some(state) = controller.state(&instance.state) else {
+                    instance.state = controller.default_state.clone();
+                    instance.state_time = 0.0;
+                    self.animator_instances.insert(entity, instance);
+                    continue;
+                };
+                instance.state_time += delta * state.speed;
+                let state_clip = match self.load_clip(&state.clip) {
+                    Ok(clip) => clip,
+                    Err(error) => {
+                        self.record_failure(entity, &state.clip, error, &mut failures);
+                        self.animator_instances.insert(entity, instance);
+                        continue;
+                    }
+                };
+                if let Some(transition) = select_transition(
+                    &controller,
+                    &instance.state,
+                    instance.state_time,
+                    state_clip.duration,
+                    &parameters,
+                    &mut consumed_triggers,
+                ) {
+                    if transition.duration <= f32::EPSILON {
+                        instance.state = transition.to.clone();
+                        instance.state_time = 0.0;
+                    } else {
+                        instance.transition = Some(ActiveTransition {
+                            source_state: instance.state.clone(),
+                            source_time: instance.state_time,
+                            destination_state: transition.to.clone(),
+                            destination_time: 0.0,
+                            elapsed: 0.0,
+                            duration: transition.duration,
+                        });
+                    }
+                }
+            }
+
+            let samples = if let Some(active) = instance.transition.as_ref() {
+                let source = controller.state(&active.source_state).unwrap();
+                let destination = controller.state(&active.destination_state).unwrap();
+                let source_clip = match self.load_clip(&source.clip) {
+                    Ok(clip) => clip,
+                    Err(error) => {
+                        self.record_failure(entity, &source.clip, error, &mut failures);
+                        self.animator_instances.insert(entity, instance);
+                        continue;
+                    }
+                };
+                let destination_clip = match self.load_clip(&destination.clip) {
+                    Ok(clip) => clip,
+                    Err(error) => {
+                        self.record_failure(entity, &destination.clip, error, &mut failures);
+                        self.animator_instances.insert(entity, instance);
+                        continue;
+                    }
+                };
+                let amount = (active.elapsed / active.duration).clamp(0.0, 1.0);
+                blend_samples(
+                    source_clip.sample(active.source_time),
+                    destination_clip.sample(active.destination_time),
+                    amount,
+                )
+            } else {
+                let state = controller.state(&instance.state).unwrap();
+                let clip = match self.load_clip(&state.clip) {
+                    Ok(clip) => clip,
+                    Err(error) => {
+                        self.record_failure(entity, &state.clip, error, &mut failures);
+                        self.animator_instances.insert(entity, instance);
+                        continue;
+                    }
+                };
+                clip.sample(instance.state_time)
+            };
+            apply_animation_samples(world, entity, samples);
+
+            if instance
+                .transition
+                .as_ref()
+                .is_some_and(|active| active.elapsed >= active.duration)
+            {
+                let active = instance.transition.take().unwrap();
+                instance.state = active.destination_state;
+                instance.state_time = active.destination_time;
+            }
+            animator.current_state = instance.state.clone();
+            if !consumed_triggers.is_empty() {
+                animator.parameters_json =
+                    consume_trigger_parameters(&animator.parameters_json, &consumed_triggers);
+            }
+            if let Some(live) = world.get_component_mut::<Animator>(entity) {
+                live.current_state = animator.current_state;
+                live.parameters_json = animator.parameters_json;
+            }
+            self.animator_instances.insert(entity, instance);
+        }
+        failures
+    }
+
+    fn record_failure(
+        &mut self,
+        entity: Entity,
+        asset: &str,
+        error: String,
+        failures: &mut Vec<AnimationLoadFailure>,
+    ) {
+        if self
+            .reported_failures
+            .insert((asset.to_owned(), error.clone()))
+        {
+            failures.push(AnimationLoadFailure {
+                entity,
+                clip: asset.to_owned(),
+                error,
+            });
+        }
+    }
+
     fn load_clip(&mut self, key: &str) -> Result<Arc<AnimationClip>, String> {
         let root = self.project_root.as_deref().ok_or_else(|| {
             "runtime requires --project-root to resolve Animation Clips".to_owned()
@@ -152,6 +404,207 @@ impl AnimationRuntime {
             .expect("animation cache inserted")
             .result
             .clone()
+    }
+
+    fn load_controller(&mut self, key: &str) -> Result<Arc<AnimatorController>, String> {
+        let root = self.project_root.as_deref().ok_or_else(|| {
+            "runtime requires --project-root to resolve Animator Controllers".to_owned()
+        })?;
+        let path = resolve_project_asset_path(root, key).ok_or_else(|| {
+            "Animator Controller path must be project-relative without '..'".to_owned()
+        })?;
+        let modified = std::fs::metadata(&path)
+            .and_then(|metadata| metadata.modified())
+            .ok();
+        let reload = self
+            .controllers
+            .get(&path)
+            .is_none_or(|cached| cached.modified != modified);
+        if reload {
+            let result = load_animator_controller(&path)
+                .map(Arc::new)
+                .map_err(|error| error.to_string());
+            self.controllers
+                .insert(path.clone(), CachedController { modified, result });
+        }
+        self.controllers
+            .get(&path)
+            .expect("animator controller cache inserted")
+            .result
+            .clone()
+    }
+}
+
+type AnimatorParameters = HashMap<String, Value>;
+
+fn animator_parameters(controller: &AnimatorController, json: &str) -> AnimatorParameters {
+    let mut values = AnimatorParameters::new();
+    for parameter in &controller.parameters {
+        let value = match parameter.kind {
+            AnimatorParameterKind::Bool | AnimatorParameterKind::Trigger => {
+                Value::Bool(parameter.default_bool)
+            }
+            AnimatorParameterKind::Float => Number::from_f64(parameter.default_float as f64)
+                .map(Value::Number)
+                .unwrap_or(Value::Null),
+            AnimatorParameterKind::Int => Value::Number(parameter.default_int.into()),
+        };
+        values.insert(parameter.name.clone(), value);
+    }
+    if let Ok(Value::Object(overrides)) = serde_json::from_str::<Value>(json) {
+        for (name, value) in overrides {
+            if controller.parameter(&name).is_some() && (value.is_boolean() || value.is_number()) {
+                values.insert(name, value);
+            }
+        }
+    }
+    values
+}
+
+fn condition_matches(condition: &AnimatorCondition, values: &AnimatorParameters) -> bool {
+    let value = values.get(&condition.parameter).unwrap_or(&Value::Null);
+    match condition.mode {
+        AnimatorConditionMode::If | AnimatorConditionMode::Trigger => {
+            value.as_bool().unwrap_or(false)
+        }
+        AnimatorConditionMode::IfNot => !value.as_bool().unwrap_or(false),
+        AnimatorConditionMode::Greater => value
+            .as_f64()
+            .is_some_and(|value| value > condition.threshold as f64),
+        AnimatorConditionMode::Less => value
+            .as_f64()
+            .is_some_and(|value| value < condition.threshold as f64),
+        AnimatorConditionMode::Equals => value
+            .as_f64()
+            .is_some_and(|value| (value - condition.threshold as f64).abs() <= f32::EPSILON as f64),
+        AnimatorConditionMode::NotEqual => value
+            .as_f64()
+            .is_some_and(|value| (value - condition.threshold as f64).abs() > f32::EPSILON as f64),
+    }
+}
+
+fn select_transition<'a>(
+    controller: &'a AnimatorController,
+    state: &str,
+    state_time: f32,
+    clip_duration: f32,
+    parameters: &AnimatorParameters,
+    consumed_triggers: &mut Vec<String>,
+) -> Option<&'a mengine_assets::AnimatorTransition> {
+    let normalized_time = if clip_duration > f32::EPSILON {
+        state_time.max(0.0) / clip_duration
+    } else {
+        0.0
+    };
+    let transition = controller.transitions.iter().find(|transition| {
+        (transition.from == state || transition.from == "*")
+            && transition.to != state
+            && (!transition.has_exit_time || normalized_time >= transition.exit_time)
+            && transition
+                .conditions
+                .iter()
+                .all(|condition| condition_matches(condition, parameters))
+    })?;
+    for condition in &transition.conditions {
+        if condition.mode == AnimatorConditionMode::Trigger {
+            consumed_triggers.push(condition.parameter.clone());
+        }
+    }
+    Some(transition)
+}
+
+fn consume_trigger_parameters(json: &str, names: &[String]) -> String {
+    let mut object = serde_json::from_str::<Value>(json)
+        .ok()
+        .and_then(|value| value.as_object().cloned())
+        .unwrap_or_default();
+    for name in names {
+        object.insert(name.clone(), Value::Bool(false));
+    }
+    Value::Object(object).to_string()
+}
+
+fn blend_animation_values(
+    left: AnimationValue,
+    right: AnimationValue,
+    amount: f32,
+) -> AnimationValue {
+    let amount = amount.clamp(0.0, 1.0);
+    match (left, right) {
+        (AnimationValue::Float(left), AnimationValue::Float(right)) => {
+            AnimationValue::Float(left + (right - left) * amount)
+        }
+        (AnimationValue::Vector(left), AnimationValue::Vector(right))
+            if left.len() == right.len() =>
+        {
+            AnimationValue::Vector(
+                left.into_iter()
+                    .zip(right)
+                    .map(|(left, right)| left + (right - left) * amount)
+                    .collect(),
+            )
+        }
+        (left, right) => {
+            if amount < 0.5 {
+                left
+            } else {
+                right
+            }
+        }
+    }
+}
+
+fn blend_samples(
+    source: Vec<mengine_assets::AnimationSample>,
+    destination: Vec<mengine_assets::AnimationSample>,
+    amount: f32,
+) -> Vec<mengine_assets::AnimationSample> {
+    let key = |sample: &mengine_assets::AnimationSample| {
+        (
+            sample.target.clone(),
+            sample.component.clone(),
+            sample.property.clone(),
+        )
+    };
+    let destination_keys: HashSet<_> = destination.iter().map(&key).collect();
+    let mut source_by_key = HashMap::new();
+    for sample in &source {
+        source_by_key.insert(key(sample), sample.value.clone());
+    }
+    let mut output: Vec<_> = source
+        .into_iter()
+        .filter(|sample| !destination_keys.contains(&key(sample)))
+        .collect();
+    for sample in destination {
+        if let Some(previous) = source_by_key.get(&key(&sample)) {
+            output.push(mengine_assets::AnimationSample {
+                target: sample.target,
+                component: sample.component,
+                property: sample.property,
+                value: blend_animation_values(previous.clone(), sample.value, amount),
+            });
+        } else {
+            output.push(sample);
+        }
+    }
+    output
+}
+
+fn apply_animation_samples(
+    world: &mut World,
+    entity: Entity,
+    samples: Vec<mengine_assets::AnimationSample>,
+) {
+    for sample in samples {
+        let Some(target) = resolve_animation_target(world, entity, &sample.target) else {
+            continue;
+        };
+        let Some(mut component) = world.component_value(target, &sample.component) else {
+            continue;
+        };
+        if set_json_property(&mut component, &sample.property, sample.value) {
+            world.set_component_value(target, &sample.component, component);
+        }
     }
 }
 
@@ -312,7 +765,7 @@ pub fn infer_project_root_from_scene(scene: &Path) -> Option<PathBuf> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use mengine_core::generated::{AnimationPlayer, Transform};
+    use mengine_core::generated::{AnimationPlayer, Animator, Transform};
     use std::fs;
 
     fn temp_project() -> PathBuf {
@@ -387,6 +840,104 @@ mod tests {
         let player = world.get_component::<AnimationPlayer>(entity).unwrap();
         assert!(!player.playing);
         assert_eq!(player.time, 1.0);
+        fs::remove_dir_all(project).unwrap();
+    }
+
+    fn write_constant_clip(project: &Path, name: &str, value: f32) {
+        fs::write(
+            project.join(format!("Assets/Animations/{name}.manim")),
+            format!(
+                r#"{{
+                  "name":"{name}","duration":1,"wrap_mode":"loop",
+                  "tracks":[{{
+                    "target":".","component":"Transform","property":"position.x",
+                    "keyframes":[{{"time":0,"value":{value}}},{{"time":1,"value":{value}}}]
+                  }}]
+                }}"#
+            ),
+        )
+        .unwrap();
+    }
+
+    #[test]
+    fn animator_transitions_blends_and_consumes_triggers() {
+        let project = temp_project();
+        write_constant_clip(&project, "idle", 0.0);
+        write_constant_clip(&project, "run", 10.0);
+        fs::write(
+            project.join("Assets/Animations/hero.mcontroller"),
+            r#"{
+              "name":"Hero","default_state":"Idle",
+              "parameters":[
+                {"name":"Speed","kind":"float"},
+                {"name":"Go","kind":"trigger"}
+              ],
+              "states":[
+                {"name":"Idle","clip":"Assets/Animations/idle.manim"},
+                {"name":"Run","clip":"Assets/Animations/run.manim"}
+              ],
+              "transitions":[{
+                "from":"Idle","to":"Run","duration":0.5,
+                "conditions":[{"parameter":"Speed","mode":"greater","threshold":0.1}]
+              }]
+            }"#,
+        )
+        .unwrap();
+
+        let mut world = World::new();
+        let entity = world.spawn_empty();
+        world.insert_component(entity, Transform::default());
+        world.insert_component(
+            entity,
+            Animator {
+                controller: "Assets/Animations/hero.mcontroller".into(),
+                parameters_json: r#"{"Speed":1,"Go":true}"#.into(),
+                ..Animator::default()
+            },
+        );
+        let mut runtime = AnimationRuntime::new(Some(project.clone()));
+
+        assert!(runtime.update(&mut world, 0.0).is_empty());
+        assert_eq!(
+            world
+                .get_component::<Animator>(entity)
+                .unwrap()
+                .current_state,
+            "Idle"
+        );
+        assert!(runtime.update(&mut world, 0.25).is_empty());
+        assert!(
+            (world.get_component::<Transform>(entity).unwrap().position[0] - 5.0).abs() < 0.001
+        );
+        assert!(runtime.update(&mut world, 0.25).is_empty());
+        assert_eq!(
+            world
+                .get_component::<Animator>(entity)
+                .unwrap()
+                .current_state,
+            "Run"
+        );
+        assert!(
+            (world.get_component::<Transform>(entity).unwrap().position[0] - 10.0).abs() < 0.001
+        );
+
+        let mut controller =
+            load_animator_controller(project.join("Assets/Animations/hero.mcontroller")).unwrap();
+        controller.transitions[0].conditions = vec![AnimatorCondition {
+            parameter: "Go".into(),
+            mode: AnimatorConditionMode::Trigger,
+            threshold: 0.0,
+        }];
+        let parameters = animator_parameters(&controller, r#"{"Go":true}"#);
+        let mut consumed = Vec::new();
+        assert!(
+            select_transition(&controller, "Idle", 0.0, 1.0, &parameters, &mut consumed,).is_some()
+        );
+        assert_eq!(consumed, ["Go"]);
+        assert_eq!(
+            consume_trigger_parameters(r#"{"Go":true}"#, &consumed),
+            r#"{"Go":false}"#
+        );
         fs::remove_dir_all(project).unwrap();
     }
 

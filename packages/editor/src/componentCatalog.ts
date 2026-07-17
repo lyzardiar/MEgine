@@ -236,6 +236,19 @@ const BUILTIN_CATALOG: ComponentCatalogEntry[] = [
     }),
   },
   {
+    type: 'Animator',
+    label: 'Animator',
+    description: 'State-machine animation with parameters, transitions, exit time and cross-fades',
+    create: () => ({
+      controller: '',
+      play_on_awake: true,
+      playing: true,
+      speed: 1,
+      current_state: '',
+      parameters_json: '{}',
+    }),
+  },
+  {
     type: 'RawImage',
     label: 'Raw Image',
     description: 'Texture view with an explicit normalized UV rectangle',

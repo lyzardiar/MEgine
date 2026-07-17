@@ -10,6 +10,7 @@ export type ProjectFileAsset = {
   relPath: string;
   kind:
     | 'animation'
+    | 'animator-controller'
     | 'material'
     | 'prefab'
     | 'spine-json'

@@ -329,6 +329,11 @@ mod tests {
                     "clip": "Assets/Animations/idle.manim", "play_on_awake": true,
                     "playing": false, "speed": 1.25, "time": 0.5
                 },
+                "Animator": {
+                    "controller": "Assets/Animations/hero.mcontroller",
+                    "play_on_awake": true, "playing": true, "speed": 0.8,
+                    "current_state": "Run", "parameters_json": "{\"Speed\":1}"
+                },
                 "RigidBody3D": {
                     "body_type": "dynamic", "mass": 2.5, "gravity_scale": 0.75,
                     "velocity": [1, 2, 3], "lock_rotation": true, "ccd": true
@@ -401,6 +406,12 @@ mod tests {
         );
         assert_eq!(components["AnimationPlayer"]["playing"], false);
         assert_eq!(components["AnimationPlayer"]["speed"], 1.25);
+        assert_eq!(
+            components["Animator"]["controller"],
+            "Assets/Animations/hero.mcontroller"
+        );
+        assert_eq!(components["Animator"]["current_state"], "Run");
+        assert_eq!(components["Animator"]["parameters_json"], "{\"Speed\":1}");
         assert_eq!(components["RigidBody3D"]["mass"], 2.5);
         assert_eq!(
             components["RigidBody3D"]["velocity"],

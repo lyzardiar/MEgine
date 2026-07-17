@@ -271,6 +271,8 @@ fn project_asset_kind(name: &str) -> Option<&'static str> {
     let lower = name.to_ascii_lowercase();
     if lower.ends_with(".manim") {
         Some("animation")
+    } else if lower.ends_with(".mcontroller") {
+        Some("animator-controller")
     } else if lower.ends_with(".mmat") || lower.ends_with(".mat") {
         Some("material")
     } else if lower.ends_with(".prefab") {
@@ -1049,6 +1051,7 @@ mod tests {
         std::fs::create_dir_all(&assets).unwrap();
         for name in [
             "walk.manim",
+            "hero.mcontroller",
             "character.mmat",
             "enemy.prefab",
             "skeleton.atlas",
@@ -1062,10 +1065,13 @@ mod tests {
         std::fs::remove_dir_all(root).unwrap();
         found.sort_by(|left, right| left.name.cmp(&right.name));
 
-        assert_eq!(found.len(), 4);
+        assert_eq!(found.len(), 5);
         assert!(found
             .iter()
             .any(|asset| asset.name == "walk.manim" && asset.kind == "animation"));
+        assert!(found.iter().any(|asset| {
+            asset.name == "hero.mcontroller" && asset.kind == "animator-controller"
+        }));
         assert!(found
             .iter()
             .any(|asset| asset.name == "character.mmat" && asset.kind == "material"));

@@ -30,6 +30,7 @@ import { Inspector } from './panels/Inspector';
 import { Project } from './panels/Project';
 import { Console } from './panels/Console';
 import { Timeline } from './panels/Timeline';
+import { AnimatorEditor, OPEN_ANIMATOR_EVENT, openAnimatorAsset } from './panels/Animator';
 import { BuildSettings } from './panels/BuildSettings';
 import {
   MaterialEditor,
@@ -108,14 +109,17 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
   const [sceneName, setSceneName] = useState<string | null>(null);
   const [materialPath, setMaterialPath] = useState<string | null>(null);
   const [materialDirty, setMaterialDirty] = useState(false);
+  const [animatorPath, setAnimatorPath] = useState<string | null>(null);
+  const [animatorDirty, setAnimatorDirty] = useState(false);
   const [animationDirty, setAnimationDirty] = useState(false);
   const [sceneDirty, setSceneDirty] = useState(false);
   const dirtyPanels = useMemo(() => {
     const dirty = new Set<PanelKind>();
     if (materialDirty) dirty.add('material');
+    if (animatorDirty) dirty.add('animator');
     if (animationDirty) dirty.add('timeline');
     return dirty;
-  }, [animationDirty, materialDirty]);
+  }, [animationDirty, animatorDirty, materialDirty]);
   const [logs, setLogs] = useState<string[]>([
     'MEngine Editor',
     '场景落盘：packages/editor/project/Assets/Scenes/*.mscene',
@@ -142,15 +146,15 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
   useEffect(() => {
     const onBeforeUnload = (event: BeforeUnloadEvent) => {
       const dirty = props.detachedPanel
-        ? materialDirty || animationDirty
-        : sceneDirty || materialDirty || animationDirty;
+        ? materialDirty || animationDirty || animatorDirty
+        : sceneDirty || materialDirty || animationDirty || animatorDirty;
       if (!dirty) return;
       event.preventDefault();
       event.returnValue = '';
     };
     window.addEventListener('beforeunload', onBeforeUnload);
     return () => window.removeEventListener('beforeunload', onBeforeUnload);
-  }, [animationDirty, materialDirty, props.detachedPanel, sceneDirty]);
+  }, [animationDirty, animatorDirty, materialDirty, props.detachedPanel, sceneDirty]);
 
   const broadcastScene = (immediate = false) => {
     const channel = syncChannel.current;
@@ -207,11 +211,17 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
       const path = (event as CustomEvent<string>).detail;
       if (typeof path === 'string' && path) setMaterialPath(path);
     };
+    const openAnimator = (event: Event) => {
+      const path = (event as CustomEvent<string>).detail;
+      if (typeof path === 'string' && path) setAnimatorPath(path);
+    };
     const assetsChanged = () => bumpScenes();
     window.addEventListener(OPEN_MATERIAL_EVENT, openMaterial);
+    window.addEventListener(OPEN_ANIMATOR_EVENT, openAnimator);
     window.addEventListener(PROJECT_ASSETS_CHANGED_EVENT, assetsChanged);
     return () => {
       window.removeEventListener(OPEN_MATERIAL_EVENT, openMaterial);
+      window.removeEventListener(OPEN_ANIMATOR_EVENT, openAnimator);
       window.removeEventListener(PROJECT_ASSETS_CHANGED_EVENT, assetsChanged);
     };
   }, []);
@@ -980,6 +990,7 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
                 void openSceneByName(name);
               }}
               onOpenMaterial={(path) => openMaterialAsset(path)}
+              onOpenAnimator={(path) => openAnimatorAsset(path)}
               onRenameScene={async (oldName, newName) => {
                 const next = await renameScene(oldName, newName);
                 if (next == null) {
@@ -1029,6 +1040,35 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
               onLog={log}
             />
           ),
+          animator: (
+            <AnimatorEditor
+              assetPath={animatorPath}
+              selectedEntity={snap.entities.find((entity) => entity.entity === selected) ?? null}
+              onOpenAsset={setAnimatorPath}
+              onAssignAnimator={(entity, path) => {
+                const current = store.authoredEntities()
+                  .find((entry) => entry.entity === entity)
+                  ?.components.Animator;
+                if (current) {
+                  store.patchComponent(entity, 'Animator', { controller: path });
+                } else {
+                  store.addComponent(entity, 'Animator', {
+                    controller: path,
+                    play_on_awake: true,
+                    playing: true,
+                    speed: 1,
+                    current_state: '',
+                    parameters_json: '{}',
+                  });
+                }
+                log(`Assigned ${path}`);
+                refresh();
+              }}
+              onAssetsChanged={bumpScenes}
+              onDirtyChange={setAnimatorDirty}
+              onLog={log}
+            />
+          ),
           material: (
             <MaterialEditor
               assetPath={materialPath}
@@ -1055,7 +1095,7 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
               sceneName={sceneName}
               sceneTick={sceneTick}
               sceneDirty={sceneDirty}
-              resourceDirty={materialDirty || animationDirty}
+              resourceDirty={materialDirty || animationDirty || animatorDirty}
               onSaveScene={saveSceneForBuild}
               onLog={log}
             />

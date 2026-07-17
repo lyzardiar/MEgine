@@ -502,6 +502,45 @@ impl Component for AnimationPlayer {
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
 #[serde(default)]
+pub struct Animator {
+    pub controller: String,
+    pub play_on_awake: bool,
+    pub playing: bool,
+    pub speed: f32,
+    pub current_state: String,
+    pub parameters_json: String,
+}
+
+impl Default for Animator {
+    fn default() -> Self {
+        Self {
+            controller: "".into(),
+            play_on_awake: true,
+            playing: true,
+            speed: 1.0,
+            current_state: "".into(),
+            parameters_json: "{}".into(),
+        }
+    }
+}
+
+impl Component for Animator {
+    fn type_name() -> &'static str {
+        "Animator"
+    }
+    fn as_any(&self) -> &dyn std::any::Any {
+        self
+    }
+    fn as_any_mut(&mut self) -> &mut dyn std::any::Any {
+        self
+    }
+    fn to_value(&self) -> serde_json::Value {
+        serde_json::to_value(self).unwrap_or(serde_json::Value::Null)
+    }
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize)]
+#[serde(default)]
 pub struct RigidBody3D {
     pub body_type: String,
     pub mass: f32,
@@ -1875,6 +1914,7 @@ pub mod meta {
         "AnimatedSprite2D",
         "Line2D",
         "AnimationPlayer",
+        "Animator",
         "RigidBody3D",
         "BoxCollider3D",
         "SphereCollider3D",

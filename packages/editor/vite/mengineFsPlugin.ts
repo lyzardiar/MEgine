@@ -136,7 +136,7 @@ export function mengineFsPlugin(opts: MengineFsOptions | string): Plugin {
 
   type TextureAsset = { id: string; name: string; folder: string; relPath: string };
   type ProjectFileAsset = TextureAsset & {
-    kind: 'animation' | 'material' | 'prefab' | 'spine-json' | 'spine-binary' | 'spine-atlas';
+    kind: 'animation' | 'animator-controller' | 'material' | 'prefab' | 'spine-json' | 'spine-binary' | 'spine-atlas';
   };
 
   function listTextures(): { sprites: TextureAsset[]; folders: string[] } {
@@ -192,17 +192,19 @@ export function mengineFsPlugin(opts: MengineFsOptions | string): Plugin {
         const lower = file.toLowerCase();
         const kind: ProjectFileAsset['kind'] | null = lower.endsWith('.manim')
           ? 'animation'
-          : lower.endsWith('.mmat') || lower.endsWith('.mat')
-            ? 'material'
-            : lower.endsWith('.prefab')
-              ? 'prefab'
-              : lower.endsWith('.atlas')
-                ? 'spine-atlas'
-                : lower.endsWith('.skel')
-                  ? 'spine-binary'
-                  : lower.endsWith('.json')
-                    ? 'spine-json'
-                    : null;
+          : lower.endsWith('.mcontroller')
+            ? 'animator-controller'
+            : lower.endsWith('.mmat') || lower.endsWith('.mat')
+              ? 'material'
+              : lower.endsWith('.prefab')
+                ? 'prefab'
+                : lower.endsWith('.atlas')
+                  ? 'spine-atlas'
+                  : lower.endsWith('.skel')
+                    ? 'spine-binary'
+                    : lower.endsWith('.json')
+                      ? 'spine-json'
+                      : null;
         if (!kind) continue;
         const relPath = `Assets/${path.relative(assetsRoot, abs).replace(/\\/g, '/')}`;
         assets.push({ id: relPath, name: file, folder, relPath, kind });
