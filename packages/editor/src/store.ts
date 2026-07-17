@@ -36,6 +36,7 @@ import {
 } from './ui/uiLayout';
 import { planHierarchyMove } from './hierarchyMove';
 import { selectedRectRoots } from './rectSelection';
+import { planRectResize, type RectResizeHandle } from './rectResize';
 import './behaviours';
 
 export type EditorMode = 'edit' | 'play' | 'pause';
@@ -1078,54 +1079,31 @@ export function createEditorStore() {
      */
     resizeRectBy(
       entity: number,
-      handle: 'n' | 's' | 'e' | 'w' | 'ne' | 'nw' | 'se' | 'sw',
+      handle: RectResizeHandle,
       dLocalX: number,
       dLocalY: number,
     ) {
       const e = find(entity);
       if (!e?.components.RectTransform) return;
       const rt = readRectTransform(e.components.RectTransform);
-      const [px, py] = rt.pivot;
-      const sx = Math.abs(rt.local_scale[0]) || 1;
-      const sy = Math.abs(rt.local_scale[1]) || 1;
-
-      // 布局空间的宽高变化（与 size_delta * local_scale 同单位）
-      let dW = 0;
-      let dH = 0;
-      // anchored_position 增量（与 ap 同单位，勿除以 local_scale）
-      let dApX = 0;
-      let dApY = 0;
-
-      // 东：左缘固定，宽度 += dLocalX，pivot 右移 dW*pivot.x
-      if (handle.includes('e')) {
-        dW += dLocalX;
-        dApX += dLocalX * px;
-      }
-      // 西：右缘固定；手柄沿 +X 移动 dLocalX → 宽度 -= dLocalX
-      if (handle.includes('w')) {
-        dW -= dLocalX;
-        dApX += dLocalX * (1 - px);
-      }
-      // 南：上缘固定
-      if (handle.includes('s')) {
-        dH += dLocalY;
-        dApY += dLocalY * py;
-      }
-      // 北：下缘固定；手柄沿 +Y(下) 移动 → 高度 -= dLocalY
-      if (handle.includes('n')) {
-        dH -= dLocalY;
-        dApY += dLocalY * (1 - py);
-      }
+      const plan = planRectResize(
+        handle,
+        rt.pivot,
+        rt.local_scale,
+        rt.local_rotation,
+        dLocalX,
+        dLocalY,
+      );
 
       e.components.RectTransform = {
         ...rt,
         size_delta: [
-          rt.size_delta[0] + dW / sx,
-          rt.size_delta[1] + dH / sy,
+          rt.size_delta[0] + plan.sizeDelta[0],
+          rt.size_delta[1] + plan.sizeDelta[1],
         ],
         anchored_position: [
-          rt.anchored_position[0] + dApX,
-          rt.anchored_position[1] + dApY,
+          rt.anchored_position[0] + plan.positionDelta[0],
+          rt.anchored_position[1] + plan.positionDelta[1],
         ],
       };
     },
