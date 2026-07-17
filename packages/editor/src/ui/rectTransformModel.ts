@@ -100,6 +100,51 @@ export function applyPivotKeepingRect(
   };
 }
 
+export function applyPivotKeepingVisualRect(
+  value: RectTransformValue,
+  pivot: Vec2,
+  parentSize: Vec2,
+): RectTransformValue {
+  const nextPivot: Vec2 = [clamp01(pivot[0]), clamp01(pivot[1])];
+  const delta: Vec2 = [
+    nextPivot[0] - value.pivot[0],
+    nextPivot[1] - value.pivot[1],
+  ];
+  const parent: Vec2 = [
+    Number.isFinite(parentSize[0]) ? Math.max(0, parentSize[0]) : 0,
+    Number.isFinite(parentSize[1]) ? Math.max(0, parentSize[1]) : 0,
+  ];
+  const anchorSpan: Vec2 = [
+    (value.anchor_max[0] - value.anchor_min[0]) * parent[0],
+    (value.anchor_max[1] - value.anchor_min[1]) * parent[1],
+  ];
+  const visualSize: Vec2 = [
+    Math.max(0, (anchorSpan[0] + value.size_delta[0]) * Math.abs(value.local_scale[0])),
+    Math.max(0, (anchorSpan[1] + value.size_delta[1]) * Math.abs(value.local_scale[1])),
+  ];
+  const localX = visualSize[0] * delta[0];
+  const localY = visualSize[1] * delta[1];
+  const radians = ((Number.isFinite(value.local_rotation) ? value.local_rotation : 0) * Math.PI) / 180;
+  const cos = Math.cos(radians);
+  const sin = Math.sin(radians);
+  const visualPivotDelta: Vec2 = [
+    localX * cos + localY * sin,
+    -localX * sin + localY * cos,
+  ];
+  return {
+    ...value,
+    anchor_min: [...value.anchor_min],
+    anchor_max: [...value.anchor_max],
+    pivot: nextPivot,
+    anchored_position: [
+      value.anchored_position[0] + visualPivotDelta[0] - anchorSpan[0] * delta[0],
+      value.anchored_position[1] + visualPivotDelta[1] - anchorSpan[1] * delta[1],
+    ],
+    size_delta: [...value.size_delta],
+    local_scale: [...value.local_scale],
+  };
+}
+
 export function applyAnchorsKeepingRect(
   value: RectTransformValue,
   anchorMin: Vec2,

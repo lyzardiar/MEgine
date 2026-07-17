@@ -28,7 +28,7 @@ import {
   createUiToggleComponents,
 } from './componentCatalog';
 import { readRectTransform } from './ui/rectLayout';
-import { applyAnchorsKeepingRect, applyPivotKeepingRect } from './ui/rectTransformModel';
+import { applyAnchorsKeepingRect, applyPivotKeepingVisualRect } from './ui/rectTransformModel';
 import {
   gameAlignedCanvasSize,
   uiEntityWorldPivot,
@@ -995,11 +995,15 @@ export function createEditorStore() {
         ],
       };
     },
-    setRectPivot(entity: number, pivot: [number, number]) {
+    setRectPivot(
+      entity: number,
+      pivot: [number, number],
+      parentSize: [number, number],
+    ) {
       const e = find(entity);
       if (!e?.components.RectTransform) return;
       const rt = readRectTransform(e.components.RectTransform);
-      e.components.RectTransform = applyPivotKeepingRect(rt, pivot);
+      e.components.RectTransform = applyPivotKeepingVisualRect(rt, pivot, parentSize);
     },
     setRectAnchors(
       entity: number,

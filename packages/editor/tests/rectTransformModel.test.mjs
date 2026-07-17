@@ -5,6 +5,7 @@ import {
   applyAnchorsKeepingRect,
   applyAnchorPreset,
   applyPivotKeepingRect,
+  applyPivotKeepingVisualRect,
   moveAnchorHandle,
   readRectAxis,
   writeRectAxis,
@@ -85,6 +86,38 @@ test('pivot editing preserves a stretched rectangle and clamps the handle', () =
   const before = solveRectTransform(parent, value);
   const next = applyPivotKeepingRect(value, [-2, 3]);
   assert.deepEqual(next.pivot, [0, 1]);
+  assert.deepEqual(solveRectTransform(parent, next), before);
+});
+
+test('visual pivot compensation includes local scale and rotation', () => {
+  const value = {
+    anchor_min: [0.5, 0.5],
+    anchor_max: [0.5, 0.5],
+    pivot: [0.5, 0.5],
+    anchored_position: [20, 30],
+    size_delta: [100, 50],
+    local_rotation: 90,
+    local_scale: [2, 1],
+  };
+  const next = applyPivotKeepingVisualRect(value, [1, 0.5], [800, 600]);
+  assert.deepEqual(next.pivot, [1, 0.5]);
+  assert.ok(Math.abs(next.anchored_position[0] - 20) < 1e-10);
+  assert.equal(next.anchored_position[1], -70);
+});
+
+test('visual pivot compensation preserves stretched scale-one layout', () => {
+  const value = {
+    anchor_min: [0, 0.25],
+    anchor_max: [1, 0.75],
+    pivot: [0.5, 0.5],
+    anchored_position: [5, 7],
+    size_delta: [-40, 20],
+    local_rotation: 0,
+    local_scale: [1, 1],
+  };
+  const parent = { x: 0, y: 0, w: 400, h: 200 };
+  const before = solveRectTransform(parent, value);
+  const next = applyPivotKeepingVisualRect(value, [1, 0], [parent.w, parent.h]);
   assert.deepEqual(solveRectTransform(parent, next), before);
 });
 

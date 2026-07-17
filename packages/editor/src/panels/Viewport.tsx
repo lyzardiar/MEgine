@@ -357,7 +357,11 @@ export function Viewport(props: {
   onRectTranslate?: (entity: number, dx: number, dy: number) => void;
   onRectNudge?: (dx: number, dy: number) => void;
   onRectAlign?: (deltas: RectAlignmentDelta[]) => void;
-  onRectPivot?: (entity: number, pivot: [number, number]) => void;
+  onRectPivot?: (
+    entity: number,
+    pivot: [number, number],
+    parentSize: [number, number],
+  ) => void;
   onRectAnchors?: (
     entity: number,
     anchorMin: [number, number],
@@ -1479,7 +1483,14 @@ export function Viewport(props: {
             Math.max(0, Math.min(1, d.pivotNorm[1] + deltaY)),
           ];
           if (nextPivot[0] !== d.pivotNorm[0] || nextPivot[1] !== d.pivotNorm[1]) {
-            propsRef.current.onRectPivot?.(d.entity, nextPivot);
+            propsRef.current.onRectPivot?.(
+              d.entity,
+              nextPivot,
+              [
+                d.anchorParentSize.w / scale,
+                d.anchorParentSize.h / scale,
+              ],
+            );
             d.pivotNorm = nextPivot;
           }
         } else if (d.part.kind === 'size') {
