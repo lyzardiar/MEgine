@@ -32,6 +32,22 @@ struct ProjectSpriteInfo {
     rel_path: String,
 }
 
+#[derive(serde::Serialize)]
+#[serde(rename_all = "camelCase")]
+struct ProjectSceneInfo {
+    name: String,
+    updated_at: u64,
+    json: String,
+}
+
+#[derive(serde::Serialize)]
+#[serde(rename_all = "camelCase")]
+struct ProjectBuildSettings {
+    main_scene: Option<String>,
+    scenes: Vec<String>,
+    available_scenes: Vec<String>,
+}
+
 #[derive(Debug, serde::Serialize)]
 #[serde(rename_all = "camelCase")]
 struct BuildPlayerResult {
@@ -349,6 +365,51 @@ fn collect_project_sprites(root: &Path, dir: &Path, output: &mut Vec<ProjectSpri
     }
 }
 
+fn collect_build_scene_paths(
+    project_root: &Path,
+    directory: &Path,
+    output: &mut Vec<String>,
+) -> Result<(), String> {
+    if !directory.is_dir() {
+        return Ok(());
+    }
+    for entry in std::fs::read_dir(directory).map_err(|error| error.to_string())? {
+        let entry = entry.map_err(|error| error.to_string())?;
+        let path = entry.path();
+        let metadata = std::fs::symlink_metadata(&path).map_err(|error| error.to_string())?;
+        if metadata.file_type().is_symlink() {
+            continue;
+        }
+        if metadata.is_dir() {
+            collect_build_scene_paths(project_root, &path, output)?;
+        } else if metadata.is_file()
+            && path
+                .extension()
+                .and_then(|value| value.to_str())
+                .is_some_and(|value| value.eq_ignore_ascii_case("mscene"))
+        {
+            let relative = path
+                .strip_prefix(project_root)
+                .map_err(|error| error.to_string())?
+                .to_string_lossy()
+                .replace('\\', "/");
+            output.push(relative);
+        }
+    }
+    Ok(())
+}
+
+fn available_build_scenes(project_root: &Path) -> Result<Vec<String>, String> {
+    let mut scenes = Vec::new();
+    collect_build_scene_paths(
+        project_root,
+        &project_root.join("Assets/Scenes"),
+        &mut scenes,
+    )?;
+    scenes.sort_by_key(|path| path.to_lowercase());
+    Ok(scenes)
+}
+
 fn no_project() -> EditorFailure {
     EditorFailure {
         code: "noProject",
@@ -431,6 +492,75 @@ fn get_project_snapshot(state: State<'_, AppState>) -> Result<ProjectSnapshot, E
         .as_ref()
         .map(ProjectSession::snapshot)
         .ok_or_else(no_project)
+}
+
+#[tauri::command]
+fn list_project_scenes(state: State<'_, AppState>) -> Result<Vec<ProjectSceneInfo>, String> {
+    let project_root = state
+        .project
+        .lock()
+        .as_ref()
+        .map(|session| session.snapshot().project_root)
+        .ok_or_else(|| no_project().message)?;
+    let root = PathBuf::from(project_root);
+    let mut scenes = Vec::new();
+    for path in available_build_scenes(&root)? {
+        let relative = Path::new(&path);
+        if relative.parent() != Some(Path::new("Assets/Scenes")) {
+            continue;
+        }
+        let absolute = root.join(relative);
+        let name = relative
+            .file_stem()
+            .and_then(|value| value.to_str())
+            .unwrap_or("Untitled")
+            .to_string();
+        let updated_at = absolute
+            .metadata()
+            .and_then(|metadata| metadata.modified())
+            .ok()
+            .and_then(|time| time.duration_since(UNIX_EPOCH).ok())
+            .map_or(0, |duration| duration.as_millis() as u64);
+        let json = std::fs::read_to_string(&absolute).map_err(|error| error.to_string())?;
+        scenes.push(ProjectSceneInfo {
+            name,
+            updated_at,
+            json,
+        });
+    }
+    scenes.sort_by(|left, right| right.updated_at.cmp(&left.updated_at));
+    Ok(scenes)
+}
+
+#[tauri::command]
+fn get_project_build_settings(state: State<'_, AppState>) -> Result<ProjectBuildSettings, String> {
+    let guard = state.project.lock();
+    let session = guard.as_ref().ok_or_else(|| no_project().message)?;
+    let scenes = session.build_scenes();
+    let available_scenes = available_build_scenes(Path::new(&session.snapshot().project_root))?;
+    Ok(ProjectBuildSettings {
+        main_scene: scenes.first().cloned(),
+        scenes,
+        available_scenes,
+    })
+}
+
+#[tauri::command]
+fn save_project_build_settings(
+    scenes: Vec<String>,
+    state: State<'_, AppState>,
+) -> Result<ProjectBuildSettings, String> {
+    let mut guard = state.project.lock();
+    let session = guard.as_mut().ok_or_else(|| no_project().message)?;
+    let scenes = session
+        .save_build_scenes(scenes)
+        .map_err(|error| error.to_string())?;
+    let available_scenes = available_build_scenes(Path::new(&session.snapshot().project_root))?;
+    Ok(ProjectBuildSettings {
+        main_scene: scenes.first().cloned(),
+        scenes,
+        available_scenes,
+    })
 }
 
 #[tauri::command]
@@ -736,6 +866,9 @@ pub fn run() {
             list_recent_projects,
             remove_recent_project,
             get_project_snapshot,
+            list_project_scenes,
+            get_project_build_settings,
+            save_project_build_settings,
             build_pc_player,
             read_project_asset,
             write_project_asset,
@@ -762,6 +895,30 @@ mod tests {
         assert!(run_player_build(root, "shipping".into(), true)
             .unwrap_err()
             .contains("unsupported build profile"));
+    }
+
+    #[test]
+    fn build_scene_scan_finds_sorted_nested_scene_assets_only() {
+        let root = std::env::temp_dir().join(format!(
+            "mengine-build-scenes-{}-{}",
+            std::process::id(),
+            SystemTime::now()
+                .duration_since(UNIX_EPOCH)
+                .unwrap()
+                .as_nanos()
+        ));
+        std::fs::create_dir_all(root.join("Assets/Scenes/Levels")).unwrap();
+        std::fs::write(root.join("Assets/Scenes/Main.mscene"), "{}").unwrap();
+        std::fs::write(root.join("Assets/Scenes/Levels/Boss.mscene"), "{}").unwrap();
+        std::fs::write(root.join("Assets/Scenes/readme.txt"), "ignored").unwrap();
+        assert_eq!(
+            available_build_scenes(&root).unwrap(),
+            vec![
+                "Assets/Scenes/Levels/Boss.mscene",
+                "Assets/Scenes/Main.mscene"
+            ]
+        );
+        std::fs::remove_dir_all(root).unwrap();
     }
 
     #[test]

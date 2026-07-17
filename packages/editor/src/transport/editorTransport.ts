@@ -47,6 +47,18 @@ export type BuildPlayerResult = {
   log: string;
 };
 
+export type ProjectSceneInfo = {
+  name: string;
+  updatedAt: number;
+  json: string;
+};
+
+export type ProjectBuildSettings = {
+  mainScene: string | null;
+  scenes: string[];
+  availableScenes: string[];
+};
+
 export type EditorOperation =
   | { op: 'select'; entity: number | null }
   | { op: 'undo' }
@@ -172,6 +184,38 @@ export async function buildPcPlayer(
     throw new Error('PC player builds require the desktop editor');
   }
   return invoke<BuildPlayerResult>('build_pc_player', { profile, clean });
+}
+
+export async function listProjectScenes(): Promise<ProjectSceneInfo[]> {
+  if (!isDesktopEditor()) return [];
+  return invoke<ProjectSceneInfo[]>('list_project_scenes');
+}
+
+export async function getProjectBuildSettings(): Promise<ProjectBuildSettings> {
+  if (isDesktopEditor()) {
+    return invoke<ProjectBuildSettings>('get_project_build_settings');
+  }
+  const response = await fetch('/__mengine/build-settings');
+  if (!response.ok) throw new Error(`cannot read build settings: ${response.status}`);
+  return response.json() as Promise<ProjectBuildSettings>;
+}
+
+export async function saveProjectBuildSettings(
+  scenes: string[],
+): Promise<ProjectBuildSettings> {
+  if (isDesktopEditor()) {
+    return invoke<ProjectBuildSettings>('save_project_build_settings', { scenes });
+  }
+  const response = await fetch('/__mengine/build-settings', {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ scenes }),
+  });
+  if (!response.ok) {
+    const detail = await response.text();
+    throw new Error(detail || `cannot save build settings: ${response.status}`);
+  }
+  return response.json() as Promise<ProjectBuildSettings>;
 }
 
 export async function openProjectScene(relativePath: string): Promise<ProjectSnapshot> {

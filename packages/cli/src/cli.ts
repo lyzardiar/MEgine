@@ -50,6 +50,7 @@ function newProject(name: string) {
       version: 1,
       language: 'typescript',
       mainScene: 'Assets/Scenes/Main.mscene',
+      buildScenes: ['Assets/Scenes/Main.mscene'],
       startupScript: 'Assets/Scripts/main.js',
     }, null, 2)}\n`,
   );

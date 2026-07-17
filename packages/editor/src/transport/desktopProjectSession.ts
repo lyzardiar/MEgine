@@ -1,6 +1,7 @@
 import {
   createProject,
   getProjectSnapshot,
+  openProjectScene,
   openProject,
   projectSnapshotAsSceneJson,
   saveProjectScene,
@@ -89,5 +90,11 @@ export async function saveDesktopScene(name: string): Promise<ProjectSnapshot> {
   currentProject = await saveProjectScene(
     currentName === name ? undefined : `Assets/Scenes/${name}.mscene`,
   );
+  return currentProject;
+}
+
+export async function openDesktopScene(name: string): Promise<ProjectSnapshot> {
+  if (!currentProject) throw new Error('no desktop project is open');
+  currentProject = await openProjectScene(`Assets/Scenes/${name}.mscene`);
   return currentProject;
 }

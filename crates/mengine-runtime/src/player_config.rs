@@ -9,6 +9,7 @@ pub struct ResolvedPlayerConfig {
     pub project_name: String,
     pub project_root: PathBuf,
     pub main_scene: PathBuf,
+    pub build_scenes: Vec<PathBuf>,
     pub startup_script: Option<PathBuf>,
 }
 
@@ -19,6 +20,8 @@ struct PlayerConfigFile {
     project_name: String,
     project_root: String,
     main_scene: String,
+    #[serde(default)]
+    build_scenes: Vec<String>,
     #[serde(default)]
     startup_script: Option<String>,
 }
@@ -43,6 +46,8 @@ pub enum PlayerConfigError {
     UnsafePath(String),
     #[error("packaged main scene does not exist: {0}")]
     MissingScene(PathBuf),
+    #[error("packaged main scene must be the first scene in build")]
+    SceneOrder,
     #[error("packaged startup script does not exist: {0}")]
     MissingScript(PathBuf),
 }
@@ -92,9 +97,23 @@ pub fn load_player_config(
     }
     let project_root = build_root.join(safe_relative_path(&file.project_root)?);
     let main_scene = safe_relative_path(&file.main_scene)?;
-    let scene_path = project_root.join(&main_scene);
-    if !scene_path.is_file() {
-        return Err(PlayerConfigError::MissingScene(scene_path));
+    let scene_values = if file.build_scenes.is_empty() {
+        vec![file.main_scene.clone()]
+    } else {
+        file.build_scenes
+    };
+    let build_scenes = scene_values
+        .iter()
+        .map(|scene| safe_relative_path(scene))
+        .collect::<Result<Vec<_>, _>>()?;
+    if build_scenes.first() != Some(&main_scene) {
+        return Err(PlayerConfigError::SceneOrder);
+    }
+    for scene in &build_scenes {
+        let scene_path = project_root.join(scene);
+        if !scene_path.is_file() {
+            return Err(PlayerConfigError::MissingScene(scene_path));
+        }
     }
     let startup_script = file
         .startup_script
@@ -111,6 +130,7 @@ pub fn load_player_config(
         project_name,
         project_root,
         main_scene,
+        build_scenes,
         startup_script,
     }))
 }
@@ -134,6 +154,7 @@ mod tests {
         std::fs::create_dir_all(root.join("Assets/Scenes")).unwrap();
         std::fs::create_dir_all(root.join("Assets/Scripts")).unwrap();
         std::fs::write(root.join("Assets/Scenes/Main.mscene"), "{}").unwrap();
+        std::fs::write(root.join("Assets/Scenes/Level2.mscene"), "{}").unwrap();
         std::fs::write(root.join("Assets/Scripts/main.js"), "function onTick() {}").unwrap();
         std::fs::write(
             root.join(PLAYER_CONFIG_FILE),
@@ -142,6 +163,10 @@ mod tests {
                 "projectName": "Packaged Game",
                 "projectRoot": ".",
                 "mainScene": "Assets/Scenes/Main.mscene",
+                "buildScenes": [
+                    "Assets/Scenes/Main.mscene",
+                    "Assets/Scenes/Level2.mscene"
+                ],
                 "startupScript": "Assets/Scripts/main.js"
             }"#,
         )
@@ -155,6 +180,13 @@ mod tests {
         assert_eq!(
             config.main_scene,
             PathBuf::from("Assets/Scenes/Main.mscene")
+        );
+        assert_eq!(
+            config.build_scenes,
+            vec![
+                PathBuf::from("Assets/Scenes/Main.mscene"),
+                PathBuf::from("Assets/Scenes/Level2.mscene")
+            ]
         );
         assert_eq!(
             config.startup_script,

@@ -1,14 +1,26 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { getDesktopProject } from '../transport/desktopProjectSession';
 import {
   buildPcPlayer,
+  getProjectBuildSettings,
   isDesktopEditor,
+  saveProjectBuildSettings,
   type BuildPlayerProfile,
   type BuildPlayerResult,
+  type ProjectBuildSettings,
 } from '../transport/editorTransport';
+
+function scenePath(name: string): string {
+  return `Assets/Scenes/${name}.mscene`;
+}
+
+function sceneLabel(path: string): string {
+  return path.split('/').pop() ?? path;
+}
 
 export function BuildSettings(props: {
   sceneName: string | null;
+  sceneTick: number;
   sceneDirty: boolean;
   resourceDirty: boolean;
   onSaveScene: () => Promise<boolean>;
@@ -18,9 +30,12 @@ export function BuildSettings(props: {
   const project = getDesktopProject();
   const [profile, setProfile] = useState<BuildPlayerProfile>('release');
   const [clean, setClean] = useState(true);
+  const [settings, setSettings] = useState<ProjectBuildSettings | null>(null);
+  const [settingsSaving, setSettingsSaving] = useState(false);
   const [building, setBuilding] = useState(false);
   const [lastBuild, setLastBuild] = useState<BuildPlayerResult | null>(null);
   const [message, setMessage] = useState<string | null>(null);
+  const [settingsError, setSettingsError] = useState<string | null>(null);
   const platform = useMemo(() => {
     const source = `${navigator.platform} ${navigator.userAgent}`.toLowerCase();
     if (source.includes('win')) return 'Windows (current host)';
@@ -28,14 +43,83 @@ export function BuildSettings(props: {
     return 'Linux (current host)';
   }, []);
 
+  useEffect(() => {
+    let cancelled = false;
+    setSettingsError(null);
+    void getProjectBuildSettings()
+      .then((value) => {
+        if (!cancelled) setSettings(value);
+      })
+      .catch((reason: unknown) => {
+        if (!cancelled) {
+          setSettingsError(reason instanceof Error ? reason.message : String(reason));
+        }
+      });
+    return () => { cancelled = true; };
+  }, [props.sceneTick]);
+
   const save = async () => {
     setMessage(null);
     const ok = await props.onSaveScene();
     setMessage(ok ? 'Scene saved. The project is ready to build.' : 'Scene save failed.');
   };
 
+  const persistScenes = async (scenes: string[]) => {
+    if (settingsSaving || scenes.length === 0) return;
+    setSettingsSaving(true);
+    setSettingsError(null);
+    try {
+      const next = await saveProjectBuildSettings(scenes);
+      setSettings(next);
+      setLastBuild(null);
+      props.onLog(`Build scenes updated: ${next.scenes.length} scene(s), entry ${sceneLabel(next.scenes[0])}`);
+    } catch (reason) {
+      const detail = reason instanceof Error ? reason.message : String(reason);
+      setSettingsError(detail);
+      props.onLog(`Build settings save failed: ${detail}`, 'error');
+    } finally {
+      setSettingsSaving(false);
+    }
+  };
+
+  const toggleScene = (path: string) => {
+    if (!settings) return;
+    const index = settings.scenes.indexOf(path);
+    if (index >= 0) {
+      if (settings.scenes.length === 1) {
+        setSettingsError('At least one scene must remain enabled.');
+        return;
+      }
+      void persistScenes(settings.scenes.filter((scene) => scene !== path));
+    } else {
+      void persistScenes([...settings.scenes, path]);
+    }
+  };
+
+  const moveScene = (index: number, direction: -1 | 1) => {
+    if (!settings) return;
+    const target = index + direction;
+    if (target < 0 || target >= settings.scenes.length) return;
+    const scenes = [...settings.scenes];
+    [scenes[index], scenes[target]] = [scenes[target], scenes[index]];
+    void persistScenes(scenes);
+  };
+
+  const addOpenScene = () => {
+    if (!props.sceneName || !settings) return;
+    const path = scenePath(props.sceneName);
+    if (!settings.scenes.includes(path)) void persistScenes([...settings.scenes, path]);
+  };
+
   const build = async () => {
-    if (!desktop || props.sceneDirty || props.resourceDirty || building) return;
+    if (
+      !desktop
+      || props.sceneDirty
+      || props.resourceDirty
+      || settingsSaving
+      || !settings?.scenes.length
+      || building
+    ) return;
     setBuilding(true);
     setLastBuild(null);
     setMessage(null);
@@ -43,7 +127,7 @@ export function BuildSettings(props: {
       const result = await buildPcPlayer(profile, clean);
       setLastBuild(result);
       setMessage(`Build completed: ${result.fileCount} packaged files.`);
-      props.onLog(`Built ${result.profile} player → ${result.outputDir}`);
+      props.onLog(`Built ${result.profile} player -> ${result.outputDir}`);
     } catch (reason) {
       const detail = reason instanceof Error ? reason.message : String(reason);
       setMessage(detail);
@@ -53,28 +137,64 @@ export function BuildSettings(props: {
     }
   };
 
+  const configured = settings?.scenes ?? [];
+  const available = settings?.availableScenes ?? [];
+  const missing = configured.filter((path) => !available.includes(path));
+  const disabled = available.filter((path) => !configured.includes(path));
+  const rows = [...configured, ...disabled];
+  const openScenePath = props.sceneName ? scenePath(props.sceneName) : null;
+
   return (
     <div className="build-settings">
       <div className="build-settings-header">
         <div>
           <strong>PC Build Settings</strong>
-          <span>Creates a self-validating standalone player from project.json.</span>
+          <span>Packages an ordered scene list into a self-validating standalone player.</span>
         </div>
-        <span className={`build-status ${building ? 'busy' : ''}`}>
-          {building ? 'BUILDING' : lastBuild ? 'SUCCEEDED' : 'READY'}
+        <span className={`build-status ${building || settingsSaving ? 'busy' : ''}`}>
+          {building ? 'BUILDING' : settingsSaving ? 'SAVING' : lastBuild ? 'SUCCEEDED' : 'READY'}
         </span>
       </div>
 
       <section className="build-section">
-        <h3>Scenes In Build</h3>
-        <div className="build-scene-row">
-          <span className="build-scene-index">0</span>
-          <span className="build-scene-check">✓</span>
-          <div>
-            <strong>{props.sceneName ? `${props.sceneName}.mscene` : 'No active scene'}</strong>
-            <small>project.json mainScene is the player entry point</small>
-          </div>
+        <div className="build-section-title">
+          <h3>Scenes In Build</h3>
+          <button
+            type="button"
+            disabled={!openScenePath || configured.includes(openScenePath) || settingsSaving}
+            onClick={addOpenScene}
+          >
+            Add Open Scene
+          </button>
         </div>
+        {!settings && !settingsError && <div className="build-empty">Loading project manifest...</div>}
+        {rows.map((path) => {
+          const index = configured.indexOf(path);
+          const enabled = index >= 0;
+          const isMissing = missing.includes(path);
+          return (
+            <div className={`build-scene-row${enabled ? ' enabled' : ''}${isMissing ? ' missing' : ''}`} key={path}>
+              <span className="build-scene-index">{enabled ? index : '-'}</span>
+              <input
+                aria-label={`Include ${sceneLabel(path)}`}
+                type="checkbox"
+                checked={enabled}
+                disabled={settingsSaving || (enabled && configured.length === 1)}
+                onChange={() => toggleScene(path)}
+              />
+              <div>
+                <strong>{sceneLabel(path)}</strong>
+                <small>{isMissing ? 'Missing scene asset' : index === 0 ? 'Player entry point' : path}</small>
+              </div>
+              <div className="build-scene-actions">
+                <button type="button" title="Move up" disabled={!enabled || index === 0 || settingsSaving} onClick={() => moveScene(index, -1)}>Up</button>
+                <button type="button" title="Move down" disabled={!enabled || index === configured.length - 1 || settingsSaving} onClick={() => moveScene(index, 1)}>Down</button>
+              </div>
+            </div>
+          );
+        })}
+        {settings && rows.length === 0 && <div className="build-empty">No .mscene assets were found under Assets/Scenes.</div>}
+        {settingsError && <div className="build-warning error">{settingsError}</div>}
         {props.sceneDirty && (
           <div className="build-warning">
             <span>Current scene has unsaved changes. Save it before building.</span>
@@ -83,7 +203,7 @@ export function BuildSettings(props: {
         )}
         {props.resourceDirty && (
           <div className="build-warning">
-            Animation or Material assets have unsaved changes. Save the active asset before building.
+            Animation or Material assets have unsaved changes. Save them before building.
           </div>
         )}
       </section>
@@ -116,14 +236,14 @@ export function BuildSettings(props: {
 
       {!desktop && (
         <div className="build-warning error">
-          Browser preview cannot execute the Rust toolchain. Open this project in the desktop editor.
+          Browser preview can edit build scenes but cannot execute the Rust toolchain. Open the desktop editor to build.
         </div>
       )}
       {message && <div className={`build-message${lastBuild ? ' success' : ''}`}>{message}</div>}
       {lastBuild && (
         <section className="build-result">
           <strong>{lastBuild.executable}</strong>
-          <span>{lastBuild.profile} · {lastBuild.fileCount} files · SHA-256 manifest</span>
+          <span>{lastBuild.profile} - {lastBuild.fileCount} files - SHA-256 manifest</span>
           {lastBuild.log && <pre>{lastBuild.log}</pre>}
         </section>
       )}
@@ -132,10 +252,18 @@ export function BuildSettings(props: {
         <button
           type="button"
           className="primary"
-          disabled={!desktop || props.sceneDirty || props.resourceDirty || building || !props.sceneName}
+          disabled={
+            !desktop
+            || props.sceneDirty
+            || props.resourceDirty
+            || settingsSaving
+            || building
+            || !settings?.scenes.length
+            || missing.length > 0
+          }
           onClick={() => void build()}
         >
-          {building ? 'Building Player…' : 'Build Player'}
+          {building ? 'Building Player...' : 'Build Player'}
         </button>
       </div>
     </div>

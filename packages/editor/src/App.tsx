@@ -1030,6 +1030,7 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
           build: (
             <BuildSettings
               sceneName={sceneName}
+              sceneTick={sceneTick}
               sceneDirty={sceneDirty}
               resourceDirty={materialDirty || animationDirty}
               onSaveScene={saveSceneForBuild}

@@ -5,6 +5,7 @@ use mengine_core::World;
 use mengine_scene::save_scene;
 use serde::{Deserialize, Serialize};
 use serde_json::json;
+use std::collections::{BTreeMap, HashSet};
 use std::fs::OpenOptions;
 use std::io::Write;
 use std::path::{Component, Path, PathBuf};
@@ -19,8 +20,12 @@ pub struct ProjectManifest {
     pub version: u32,
     #[serde(default, alias = "main_scene")]
     pub main_scene: Option<String>,
+    #[serde(default, alias = "build_scenes")]
+    pub build_scenes: Vec<String>,
     #[serde(default)]
     pub language: Option<String>,
+    #[serde(flatten)]
+    pub extra: BTreeMap<String, serde_json::Value>,
 }
 
 fn default_project_version() -> u32 {
@@ -176,11 +181,22 @@ impl ProjectSession {
                 display_path(&manifest_path)
             ))
         })?;
-        let manifest: ProjectManifest = serde_json::from_str(&manifest_text)?;
+        let mut manifest: ProjectManifest = serde_json::from_str(&manifest_text)?;
         if manifest.name.trim().is_empty() {
             return Err(ProjectError::InvalidProject(
                 "project name cannot be empty".into(),
             ));
+        }
+        if let Some(first) = manifest.build_scenes.first().cloned() {
+            match manifest.main_scene.as_deref() {
+                Some(main) if main != first.as_str() => {
+                    return Err(ProjectError::InvalidProject(
+                        "mainScene must match the first buildScenes entry".into(),
+                    ));
+                }
+                None => manifest.main_scene = Some(first),
+                _ => {}
+            }
         }
 
         Ok(Self {
@@ -221,6 +237,54 @@ impl ProjectSession {
             return Ok(None);
         };
         self.open_scene(&path).map(Some)
+    }
+
+    pub fn build_scenes(&self) -> Vec<String> {
+        if self.manifest.build_scenes.is_empty() {
+            self.manifest.main_scene.iter().cloned().collect()
+        } else {
+            self.manifest.build_scenes.clone()
+        }
+    }
+
+    pub fn save_build_scenes(&mut self, scenes: Vec<String>) -> Result<Vec<String>, ProjectError> {
+        if scenes.is_empty() {
+            return Err(ProjectError::InvalidProject(
+                "at least one scene is required in build settings".into(),
+            ));
+        }
+        let mut normalized = Vec::with_capacity(scenes.len());
+        let mut seen = HashSet::new();
+        for scene in scenes {
+            let relative = normalize_relative_path(Path::new(scene.trim()))?;
+            let mut components = relative.components();
+            let under_scenes = components.next() == Some(Component::Normal("Assets".as_ref()))
+                && components.next() == Some(Component::Normal("Scenes".as_ref()));
+            if !under_scenes
+                || !relative
+                    .extension()
+                    .and_then(|value| value.to_str())
+                    .is_some_and(|value| value.eq_ignore_ascii_case("mscene"))
+            {
+                return Err(ProjectError::InvalidPath(relative.display().to_string()));
+            }
+            self.resolve_existing(&relative)?;
+            let portable = relative.to_string_lossy().replace('\\', "/");
+            if !seen.insert(portable.to_lowercase()) {
+                return Err(ProjectError::InvalidProject(format!(
+                    "duplicate build scene: {portable}"
+                )));
+            }
+            normalized.push(portable);
+        }
+        let mut manifest = self.manifest.clone();
+        manifest.main_scene = normalized.first().cloned();
+        manifest.build_scenes = normalized.clone();
+        let mut bytes = serde_json::to_vec_pretty(&manifest)?;
+        bytes.push(b'\n');
+        write_replace_synced(&self.project_root.join("project.json"), &bytes)?;
+        self.manifest = manifest;
+        Ok(normalized)
     }
 
     pub fn open_scene(
@@ -418,7 +482,9 @@ fn initialize_project(root: &Path, name: &str) -> Result<(), ProjectError> {
         name: name.into(),
         version: default_project_version(),
         main_scene: Some("Assets/Scenes/Main.mscene".into()),
+        build_scenes: vec!["Assets/Scenes/Main.mscene".into()],
         language: Some("typescript".into()),
+        extra: BTreeMap::new(),
     };
     let manifest_json = serde_json::to_vec_pretty(&manifest)?;
     write_new_synced(&root.join("project.json"), &manifest_json)?;
@@ -486,6 +552,62 @@ fn write_new_synced(path: &Path, bytes: &[u8]) -> std::io::Result<()> {
     let mut file = OpenOptions::new().create_new(true).write(true).open(path)?;
     file.write_all(bytes)?;
     file.sync_all()
+}
+
+fn write_replace_synced(path: &Path, bytes: &[u8]) -> std::io::Result<()> {
+    let parent = path.parent().ok_or_else(|| {
+        std::io::Error::new(std::io::ErrorKind::InvalidInput, "file has no parent")
+    })?;
+    let name = path
+        .file_name()
+        .and_then(|value| value.to_str())
+        .unwrap_or("file");
+    let temporary = parent.join(format!(".{name}.{}.tmp", Uuid::new_v4()));
+    let result = (|| -> std::io::Result<()> {
+        let mut file = OpenOptions::new()
+            .create_new(true)
+            .write(true)
+            .open(&temporary)?;
+        file.write_all(bytes)?;
+        file.sync_all()?;
+        drop(file);
+        replace_file(&temporary, path)
+    })();
+    if result.is_err() {
+        let _ = std::fs::remove_file(&temporary);
+    }
+    result
+}
+
+#[cfg(windows)]
+fn replace_file(source: &Path, target: &Path) -> std::io::Result<()> {
+    if !target.exists() {
+        return std::fs::rename(source, target);
+    }
+    use std::os::windows::ffi::OsStrExt;
+    use windows_sys::Win32::Storage::FileSystem::{ReplaceFileW, REPLACEFILE_WRITE_THROUGH};
+    let target_wide: Vec<u16> = target.as_os_str().encode_wide().chain(Some(0)).collect();
+    let source_wide: Vec<u16> = source.as_os_str().encode_wide().chain(Some(0)).collect();
+    let result = unsafe {
+        ReplaceFileW(
+            target_wide.as_ptr(),
+            source_wide.as_ptr(),
+            std::ptr::null(),
+            REPLACEFILE_WRITE_THROUGH,
+            std::ptr::null(),
+            std::ptr::null(),
+        )
+    };
+    if result == 0 {
+        Err(std::io::Error::last_os_error())
+    } else {
+        Ok(())
+    }
+}
+
+#[cfg(not(windows))]
+fn replace_file(source: &Path, target: &Path) -> std::io::Result<()> {
+    std::fs::rename(source, target)
 }
 
 fn display_path(path: &Path) -> String {
@@ -635,6 +757,10 @@ mod tests {
         .unwrap();
         assert_eq!(manifest["name"], "CreatedGame");
         assert_eq!(manifest["mainScene"], "Assets/Scenes/Main.mscene");
+        assert_eq!(
+            manifest["buildScenes"],
+            json!(["Assets/Scenes/Main.mscene"])
+        );
 
         let opened = session.open_main_scene().unwrap().unwrap();
         assert_eq!(
@@ -644,6 +770,37 @@ mod tests {
         assert_eq!(opened.world.entities.len(), 3);
         assert!(!opened.project_root.starts_with(r"\\?\"));
         std::fs::remove_dir_all(location).unwrap();
+    }
+
+    #[test]
+    fn build_scene_order_updates_the_entry_point_and_preserves_unknown_manifest_fields() {
+        let root = make_project();
+        std::fs::write(root.join("Assets/Scenes/Level2.mscene"), "{}").unwrap();
+        let mut manifest: serde_json::Value =
+            serde_json::from_str(&std::fs::read_to_string(root.join("project.json")).unwrap())
+                .unwrap();
+        manifest["startupScript"] = json!("Assets/Scripts/start.js");
+        std::fs::write(
+            root.join("project.json"),
+            serde_json::to_vec_pretty(&manifest).unwrap(),
+        )
+        .unwrap();
+
+        let mut session = ProjectSession::open(&root).unwrap();
+        let scenes = session
+            .save_build_scenes(vec![
+                "Assets/Scenes/Level2.mscene".into(),
+                "Assets/Scenes/Main.mscene".into(),
+            ])
+            .unwrap();
+        assert_eq!(scenes[0], "Assets/Scenes/Level2.mscene");
+        let saved: serde_json::Value =
+            serde_json::from_str(&std::fs::read_to_string(root.join("project.json")).unwrap())
+                .unwrap();
+        assert_eq!(saved["mainScene"], "Assets/Scenes/Level2.mscene");
+        assert_eq!(saved["buildScenes"], json!(scenes));
+        assert_eq!(saved["startupScript"], "Assets/Scripts/start.js");
+        std::fs::remove_dir_all(root).unwrap();
     }
 
     #[test]

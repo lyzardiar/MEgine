@@ -3,9 +3,11 @@
 import {
   desktopProjectSceneJson,
   getDesktopProject,
+  openDesktopScene,
   replaceDesktopSceneJson,
   saveDesktopScene,
 } from './transport/desktopProjectSession';
+import { listProjectScenes } from './transport/editorTransport';
 
 export type SceneMeta = {
   name: string;
@@ -249,10 +251,20 @@ export async function initSceneLibrary(): Promise<{
     const json = desktopProjectSceneJson();
     const name =
       desktopProject.scenePath?.split('/').pop()?.replace(/\.mscene$/i, '') ?? 'Untitled';
+    const scenes = await listProjectScenes();
     _backend = 'desktop';
-    _index = [{ name, updatedAt: Date.now() }];
+    _index = sortIndex(scenes.map((scene) => ({
+      name: scene.name,
+      updatedAt: scene.updatedAt,
+    })));
     _data.clear();
-    if (json) _data.set(name, json);
+    for (const scene of scenes) _data.set(scene.name, scene.json);
+    if (json) {
+      _data.set(name, json);
+      if (!_index.some((scene) => scene.name === name)) {
+        _index = sortIndex([..._index, { name, updatedAt: Date.now() }]);
+      }
+    }
     _active = name;
     loadLocalPrefs();
     _ready = true;
@@ -281,7 +293,10 @@ export function migrateLegacyScene(): string | null {
 
 export async function setActiveSceneName(name: string | null) {
   _active = name;
-  if (_backend === 'desktop') return;
+  if (_backend === 'desktop') {
+    if (name) await openDesktopScene(name);
+    return;
+  }
   if (_backend === 'disk') {
     await fetch(`${API}/active`, {
       method: 'PUT',
@@ -322,7 +337,11 @@ export async function writeScene(name: string, json: string) {
     await replaceDesktopSceneJson(json);
     const saved = await saveDesktopScene(name);
     const savedName = saved.scenePath?.split('/').pop()?.replace(/\.mscene$/i, '') ?? name;
-    _index = [{ name: savedName, updatedAt: Date.now() }];
+    _index = sortIndex([
+      ..._index.filter((scene) => scene.name !== savedName),
+      { name: savedName, updatedAt: Date.now() },
+    ]);
+    _data.set(savedName, json);
     _active = savedName;
     return;
   }

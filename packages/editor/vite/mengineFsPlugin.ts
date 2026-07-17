@@ -124,6 +124,7 @@ export function mengineFsPlugin(opts: MengineFsOptions | string): Plugin {
   const assetsRoot = path.join(projectRoot, 'Assets');
   const behavioursDir = path.join(editorRoot, 'src', 'behaviours');
   const statePath = path.join(projectRoot, '.editor', 'state.json');
+  const manifestPath = path.join(projectRoot, 'project.json');
 
   const IMG_EXT = /\.(png|jpe?g|webp|gif)$/i;
 
@@ -300,6 +301,62 @@ export function mengineFsPlugin(opts: MengineFsOptions | string): Plugin {
       .sort((a, b) => b.updatedAt - a.updatedAt);
   }
 
+  function listBuildScenes(): string[] {
+    const scenes: string[] = [];
+    const walk = (directory: string) => {
+      if (!fs.existsSync(directory)) return;
+      for (const entry of fs.readdirSync(directory, { withFileTypes: true })) {
+        const absolute = path.join(directory, entry.name);
+        if (entry.isDirectory()) walk(absolute);
+        else if (entry.isFile() && entry.name.toLowerCase().endsWith(SCENE_EXT)) {
+          scenes.push(path.relative(projectRoot, absolute).replace(/\\/g, '/'));
+        }
+      }
+    };
+    walk(scenesDir);
+    return scenes.sort((left, right) => left.localeCompare(right));
+  }
+
+  function normalizeBuildScene(value: unknown): string | null {
+    if (typeof value !== 'string') return null;
+    const segments = value.trim().replace(/\\/g, '/').split('/').filter(Boolean);
+    if (
+      segments.length < 3
+      || segments[0] !== 'Assets'
+      || segments[1] !== 'Scenes'
+      || segments.some((segment) => segment === '.' || segment === '..')
+      || !segments.at(-1)?.toLowerCase().endsWith(SCENE_EXT)
+    ) {
+      return null;
+    }
+    return segments.join('/');
+  }
+
+  function readBuildSettings() {
+    const manifest = JSON.parse(fs.readFileSync(manifestPath, 'utf8')) as Record<string, unknown>;
+    const mainScene = normalizeBuildScene(manifest.mainScene ?? manifest.main_scene);
+    const rawScenes = manifest.buildScenes ?? manifest.build_scenes;
+    const source = Array.isArray(rawScenes) ? rawScenes : [];
+    const scenes: string[] = [];
+    const seen = new Set<string>();
+    for (const value of source) {
+      const scene = normalizeBuildScene(value);
+      if (scene && !seen.has(scene.toLowerCase())) {
+        seen.add(scene.toLowerCase());
+        scenes.push(scene);
+      }
+    }
+    if (scenes.length === 0 && mainScene) scenes.push(mainScene);
+    return {
+      manifest,
+      settings: {
+        mainScene: scenes[0] ?? null,
+        scenes,
+        availableScenes: listBuildScenes(),
+      },
+    };
+  }
+
   function collectTs(dir: string, folder: string, idPrefix: string, out: ScriptAsset[]) {
     if (!fs.existsSync(dir)) return;
     for (const f of fs.readdirSync(dir)) {
@@ -382,6 +439,42 @@ export function mengineFsPlugin(opts: MengineFsOptions | string): Plugin {
       }
 
       // GET /__mengine/asset/Assets/...  → serve project texture
+      if (pathname === `${API}/build-settings` && method === 'GET') {
+        return sendJson(res, 200, readBuildSettings().settings);
+      }
+
+      if (pathname === `${API}/build-settings` && method === 'PUT') {
+        const body = await readBody(req);
+        const parsed = JSON.parse(body || '{}') as { scenes?: unknown[] };
+        if (!Array.isArray(parsed.scenes) || parsed.scenes.length === 0) {
+          return sendJson(res, 400, { error: 'at least one build scene is required' });
+        }
+        const available = new Map(listBuildScenes().map((scene) => [scene.toLowerCase(), scene]));
+        const scenes: string[] = [];
+        const seen = new Set<string>();
+        for (const value of parsed.scenes) {
+          const scene = normalizeBuildScene(value);
+          const canonical = scene ? available.get(scene.toLowerCase()) : null;
+          if (!canonical || seen.has(canonical.toLowerCase())) {
+            return sendJson(res, 400, {
+              error: `invalid or duplicate build scene: ${String(value)}`,
+            });
+          }
+          seen.add(canonical.toLowerCase());
+          scenes.push(canonical);
+        }
+        const { manifest } = readBuildSettings();
+        manifest.mainScene = scenes[0];
+        manifest.buildScenes = scenes;
+        delete manifest.main_scene;
+        delete manifest.build_scenes;
+        writeFileAtomic(
+          manifestPath,
+          Buffer.from(`${JSON.stringify(manifest, null, 2)}\n`, 'utf8'),
+        );
+        return sendJson(res, 200, readBuildSettings().settings);
+      }
+
       const assetMatch = pathname.match(new RegExp(`^${API}/asset/(.+)$`));
       if (assetMatch && method === 'GET') {
         const abs = resolveAssetReadPath(assetMatch[1]);

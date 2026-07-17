@@ -20,6 +20,7 @@ export interface GameProjectManifest {
   name: string;
   version: number | string;
   mainScene: string;
+  buildScenes: string[];
   startupScript?: string;
 }
 
@@ -77,8 +78,28 @@ export function readGameProject(projectDir: string): GameProjectManifest {
   }
   const parsed = JSON.parse(readFileSync(manifestPath, 'utf8')) as Record<string, unknown>;
   const name = typeof parsed.name === 'string' ? parsed.name.trim() : '';
-  const mainSceneValue = parsed.mainScene ?? parsed.main_scene;
+  const rawBuildScenes = parsed.buildScenes ?? parsed.build_scenes;
+  if (rawBuildScenes != null && !Array.isArray(rawBuildScenes)) {
+    throw new Error('project.json buildScenes must be an array');
+  }
+  const buildScenes: string[] = [];
+  const seenScenes = new Set<string>();
+  for (const value of (rawBuildScenes as unknown[] | undefined) ?? []) {
+    if (typeof value !== 'string' || !value.trim()) {
+      throw new Error('project.json buildScenes entries must be non-empty paths');
+    }
+    const scene = value.replaceAll('\\', '/');
+    const key = scene.toLowerCase();
+    if (seenScenes.has(key)) throw new Error(`duplicate build scene: ${scene}`);
+    seenScenes.add(key);
+    buildScenes.push(scene);
+  }
+  const mainSceneValue = parsed.mainScene ?? parsed.main_scene ?? buildScenes[0];
   const mainScene = typeof mainSceneValue === 'string' ? mainSceneValue.replaceAll('\\', '/') : '';
+  if (buildScenes.length === 0 && mainScene) buildScenes.push(mainScene);
+  if (buildScenes[0] !== mainScene) {
+    throw new Error('project.json mainScene must match the first buildScenes entry');
+  }
   const scripts = Array.isArray(parsed.scripts) ? parsed.scripts : [];
   const startupScriptValue = parsed.startupScript ?? parsed.startup_script ?? scripts[0];
   const startupScript = typeof startupScriptValue === 'string'
@@ -89,9 +110,11 @@ export function readGameProject(projectDir: string): GameProjectManifest {
     : 1;
   if (!name) throw new Error('project.json requires a non-empty name');
   if (!mainScene) throw new Error('project.json requires mainScene');
-  const mainScenePath = resolveProjectPath(root, mainScene, 'mainScene');
-  if (!existsSync(mainScenePath) || !statSync(mainScenePath).isFile()) {
-    throw new Error(`main scene not found: ${mainScene}`);
+  for (const scene of buildScenes) {
+    const scenePath = resolveProjectPath(root, scene, 'build scene');
+    if (!existsSync(scenePath) || !statSync(scenePath).isFile()) {
+      throw new Error(`build scene not found: ${scene}`);
+    }
   }
   if (startupScript) {
     const scriptPath = resolveProjectPath(root, startupScript, 'startupScript');
@@ -99,7 +122,7 @@ export function readGameProject(projectDir: string): GameProjectManifest {
       throw new Error(`startup script not found: ${startupScript}`);
     }
   }
-  return { name, version, mainScene, ...(startupScript ? { startupScript } : {}) };
+  return { name, version, mainScene, buildScenes, ...(startupScript ? { startupScript } : {}) };
 }
 
 function safeExecutableName(name: string): string {
@@ -181,8 +204,10 @@ export function buildPcPackage(options: PcPackageOptions): PcBuildManifest {
     throw new Error(`player runtime not found: ${runtimePath}`);
   }
   const roots = contentRoots(projectDir);
-  if (!roots.some((root) => isPathInside(root, resolve(projectDir, project.mainScene)))) {
-    throw new Error(`mainScene must be stored under Assets or Scripts: ${project.mainScene}`);
+  for (const scene of project.buildScenes) {
+    if (!roots.some((root) => isPathInside(root, resolve(projectDir, scene)))) {
+      throw new Error(`buildScenes must be stored under Assets or Scripts: ${scene}`);
+    }
   }
   if (project.startupScript
     && !roots.some((root) => isPathInside(root, resolve(projectDir, project.startupScript!)))) {
@@ -224,6 +249,7 @@ export function buildPcPackage(options: PcPackageOptions): PcBuildManifest {
         projectName: project.name,
         projectRoot: '.',
         mainScene: project.mainScene,
+        buildScenes: project.buildScenes,
         ...(project.startupScript ? { startupScript: project.startupScript } : {}),
       }, null, 2)}\n`,
       'utf8',

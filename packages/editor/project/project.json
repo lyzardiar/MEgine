@@ -2,5 +2,8 @@
   "name": "MEngine Editor Sample",
   "version": 1,
   "language": "typescript",
-  "mainScene": "Assets/Scenes/MainScene.mscene"
+  "mainScene": "Assets/Scenes/MainScene.mscene",
+  "buildScenes": [
+    "Assets/Scenes/MainScene.mscene"
+  ]
 }

@@ -25,9 +25,14 @@ function fixture(name) {
     name: 'Package Test',
     version: 7,
     mainScene: 'Assets/Scenes/Main.mscene',
+    buildScenes: [
+      'Assets/Scenes/Main.mscene',
+      'Assets/Scenes/Level2.mscene',
+    ],
     startupScript: 'Assets/Scripts/main.js',
   }));
   writeFileSync(join(project, 'Assets', 'Scenes', 'Main.mscene'), '{"version":1}');
+  writeFileSync(join(project, 'Assets', 'Scenes', 'Level2.mscene'), '{"version":1,"name":"Level2"}');
   writeFileSync(join(project, 'Assets', 'Scripts', 'main.js'), 'function onTick() {}');
   writeFileSync(join(project, 'Assets', 'Textures', 'pixel.bin'), Buffer.from([1, 2, 3, 4]));
   const runtime = join(root, process.platform === 'win32' ? 'runtime.exe' : 'runtime');
@@ -51,6 +56,10 @@ test('buildPcPackage creates a directly launchable, hashed project bundle', () =
       name: 'Package Test',
       version: 7,
       mainScene: 'Assets/Scenes/Main.mscene',
+      buildScenes: [
+        'Assets/Scenes/Main.mscene',
+        'Assets/Scenes/Level2.mscene',
+      ],
       startupScript: 'Assets/Scripts/main.js',
     });
 
@@ -60,6 +69,10 @@ test('buildPcPackage creates a directly launchable, hashed project bundle', () =
       projectName: 'Package Test',
       projectRoot: '.',
       mainScene: 'Assets/Scenes/Main.mscene',
+      buildScenes: [
+        'Assets/Scenes/Main.mscene',
+        'Assets/Scenes/Level2.mscene',
+      ],
       startupScript: 'Assets/Scripts/main.js',
     });
     assert.equal(readFileSync(join(paths.output, 'Assets', 'Scenes', 'Main.mscene'), 'utf8'), '{"version":1}');
@@ -113,6 +126,23 @@ test('buildPcPackage rejects a main scene outside packaged content roots', () =>
       runtimePath: paths.runtime,
       engineVersion: 'test-engine',
     }), /Assets or Scripts/);
+  } finally {
+    rmSync(paths.root, { recursive: true, force: true });
+  }
+});
+
+test('buildPcPackage validates every configured build scene', () => {
+  const paths = fixture('missing-build-scene');
+  try {
+    const manifest = JSON.parse(readFileSync(join(paths.project, 'project.json'), 'utf8'));
+    manifest.buildScenes.push('Assets/Scenes/Missing.mscene');
+    writeFileSync(join(paths.project, 'project.json'), JSON.stringify(manifest));
+    assert.throws(() => buildPcPackage({
+      projectDir: paths.project,
+      outputDir: paths.output,
+      runtimePath: paths.runtime,
+      engineVersion: 'test-engine',
+    }), /build scene not found: Assets\/Scenes\/Missing\.mscene/);
   } finally {
     rmSync(paths.root, { recursive: true, force: true });
   }
