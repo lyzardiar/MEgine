@@ -4,7 +4,7 @@
   "version": "0.1.0",
   "description": "MEngine — cross-platform game engine (Rust core + TypeScript)",
   "scripts": {
-    "build": "npm.cmd run build --workspaces --if-present",
+    "build": "pnpm.cmd -r --if-present run build",
     "codegen": "cargo run -p mengine-idl -- --idl-dir idl --out-rust crates/mengine-core/src/generated --out-ts packages/api/src/generated",
     "build:samples": "node scripts/build-samples.js",
     "dev:editor": "npm.cmd --prefix packages/editor exec -- vite",

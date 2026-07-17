@@ -40,6 +40,21 @@ npm.cmd run dev:editor
 
 > 不要用 `pnpm`（会加载 `pnpm.ps1`）。请用 `pnpm.cmd` / `npm.cmd`。
 
+## 构建 PC 游戏
+
+```powershell
+# 编译 CLI
+npm.cmd --prefix packages/cli run build
+
+# Release 构建：编译 Rust player、复制 Assets、生成启动配置和 SHA-256 清单，最后由产物自检主场景
+node packages/cli/dist/cli.js build packages/editor/project --clean
+
+# 快速 Debug 构建
+node packages/cli/dist/cli.js build packages/editor/project --debug --clean
+```
+
+默认输出到 `<工程>/Builds/windows-x64`（其他系统使用对应平台名）。播放器无需命令行参数即可读取同目录的 `mengine-player.json` 并启动 `project.json` 指定的主场景。已有输出不会被静默覆盖，必须显式传入 `--clean`。
+
 ## Workspace
 
 | Path | Role |

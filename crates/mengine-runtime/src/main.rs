@@ -1,6 +1,6 @@
 //! MEngine PC runtime / sample player.
 
-use anyhow::Result;
+use anyhow::{bail, Result};
 use clap::Parser;
 use glam::{Quat, Vec3, Vec4};
 use mengine_core::command::WorldCommand;
@@ -17,6 +17,7 @@ use mengine_rhi::{
 use mengine_runtime::animation::{infer_project_root_from_scene, AnimationRuntime};
 use mengine_runtime::materials::RuntimeMaterialCache;
 use mengine_runtime::particles::ParticleWorld;
+use mengine_runtime::player_config::load_player_config;
 use mengine_runtime::sprites::collect_world_sprites;
 use mengine_runtime::textures::RuntimeTextureCache;
 use mengine_runtime::ui::{
@@ -51,6 +52,14 @@ struct Args {
     /// Scene file to run. Relative paths are resolved from --project-root.
     #[arg(long)]
     scene: Option<PathBuf>,
+
+    /// Override the player window title.
+    #[arg(long)]
+    title: Option<String>,
+
+    /// Validate the adjacent packaged project without creating a window.
+    #[arg(long, hide = true)]
+    validate_package: bool,
 }
 
 struct App {
@@ -889,7 +898,7 @@ impl ApplicationHandler for App {
             event_loop
                 .create_window(
                     Window::default_attributes()
-                        .with_title("MEngine Runtime")
+                        .with_title(self.args.title.as_deref().unwrap_or("MEngine Runtime"))
                         .with_inner_size(winit::dpi::LogicalSize::new(1280, 720)),
                 )
                 .expect("window"),
@@ -1339,7 +1348,57 @@ fn safe_rotation(value: [f32; 4]) -> Quat {
 
 fn main() -> Result<()> {
     env_logger::Builder::from_env(env_logger::Env::default().default_filter_or("info")).init();
-    let args = Args::parse();
+    let mut args = Args::parse();
+    if args.scene.is_none() {
+        match std::env::current_exe() {
+            Ok(executable) => match load_player_config(executable) {
+                Ok(Some(config)) => {
+                    log::info!(
+                        "starting packaged project '{}' from {}",
+                        config.project_name,
+                        config.project_root.display()
+                    );
+                    args.project_root.get_or_insert(config.project_root);
+                    args.scene = Some(config.main_scene);
+                    if args.script.is_none() {
+                        args.script = config.startup_script;
+                    }
+                    args.title.get_or_insert(config.project_name);
+                }
+                Ok(None) => {}
+                Err(error) => log::warn!("ignoring invalid packaged player config: {error}"),
+            },
+            Err(error) => {
+                log::warn!("cannot locate packaged player config: {error}");
+            }
+        }
+    }
+    if args.validate_package {
+        let Some(scene) = args.scene.as_deref() else {
+            bail!("no packaged player config or scene was found");
+        };
+        let path = if scene.is_absolute() {
+            scene.to_owned()
+        } else if let Some(project_root) = args.project_root.as_deref() {
+            project_root.join(scene)
+        } else {
+            scene.to_owned()
+        };
+        let mut world = World::new();
+        let loaded = load_scene(&path, &mut world)?;
+        if let Some(script) = args.script.as_deref() {
+            let mut host = ScriptHost::new()?;
+            host.load_file(script)?;
+        }
+        println!(
+            "validated packaged scene '{}' from {} ({} entities, script={})",
+            loaded.name,
+            path.display(),
+            world.iter_entities().count(),
+            args.script.is_some()
+        );
+        return Ok(());
+    }
     let event_loop = EventLoop::new()?;
     let mut app = App::new(args);
     event_loop.run_app(&mut app)?;

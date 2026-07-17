@@ -1,98 +1,233 @@
 #!/usr/bin/env node
-import { mkdirSync, writeFileSync, existsSync } from 'node:fs';
-import { join } from 'node:path';
+import {
+  existsSync,
+  mkdirSync,
+  readFileSync,
+  writeFileSync,
+} from 'node:fs';
+import { spawnSync } from 'node:child_process';
+import { dirname, join, resolve } from 'node:path';
+import { fileURLToPath } from 'node:url';
+import { buildPcPackage, hostBuildPlatform } from './pcPackage.js';
 
+const cliPackage = JSON.parse(
+  readFileSync(fileURLToPath(new URL('../package.json', import.meta.url)), 'utf8'),
+) as { version?: string };
+const ENGINE_VERSION = cliPackage.version ?? '0.0.0';
 const [cmd, ...rest] = process.argv.slice(2);
 
 function help() {
   console.log(`mengine <command>
 
 Commands:
-  new <name>          Create a new game project scaffold
-  export-pc <dir>     Emit PC player packaging notes / stub bundle manifest
-  codegen             Print codegen hint (run pnpm codegen from repo root)
+  new <name>                  Create a new game project scaffold
+  build <project> [options]   Build a directly runnable PC player
+  export-pc <project>         Alias of build for compatibility
+  codegen                     Print the engine codegen command
+
+Build options:
+  --out <dir>                 Output directory (default: <project>/Builds/<platform>-<arch>)
+  --runtime <file>            Use an existing mengine-runtime executable
+  --debug                     Build/use the debug runtime instead of release
+  --skip-runtime-build        Do not invoke Cargo when the runtime is missing
+  --skip-verify               Skip packaged player scene validation
+  --clean                     Replace an existing output directory
 `);
 }
 
 function newProject(name: string) {
-  const root = join(process.cwd(), name);
-  if (existsSync(root)) {
-    console.error(`exists: ${root}`);
-    process.exit(1);
+  if (!name.trim() || name === '.' || name === '..' || /[<>:"/\\|?*\u0000-\u001f]/.test(name)) {
+    throw new Error(`invalid project name: ${name}`);
   }
-  mkdirSync(join(root, 'assets'), { recursive: true });
-  mkdirSync(join(root, 'scripts'), { recursive: true });
+  const root = join(process.cwd(), name);
+  if (existsSync(root)) throw new Error(`project already exists: ${root}`);
+  mkdirSync(join(root, 'Assets', 'Scenes'), { recursive: true });
+  mkdirSync(join(root, 'Assets', 'Scripts'), { recursive: true });
   writeFileSync(
     join(root, 'project.json'),
-    JSON.stringify(
-      {
-        name,
-        version: 1,
-        mainScene: 'assets/main.mscene',
-        scripts: ['scripts/main.js'],
-      },
-      null,
-      2,
-    ),
+    `${JSON.stringify({
+      name,
+      version: 1,
+      language: 'typescript',
+      mainScene: 'Assets/Scenes/Main.mscene',
+      startupScript: 'Assets/Scripts/main.js',
+    }, null, 2)}\n`,
   );
   writeFileSync(
-    join(root, 'scripts/main.js'),
-    `var t = 0;\nfunction onTick(dt, frame) {\n  t += dt;\n}\n`,
+    join(root, 'Assets', 'Scripts', 'main.js'),
+    'var t = 0;\nfunction onTick(dt, frame) {\n  t += dt;\n}\n',
   );
   writeFileSync(
-    join(root, 'assets/main.mscene'),
-    JSON.stringify(
-      {
-        version: 1,
-        name: 'Main',
-        world: {
-          entities: [],
-          frame: 0,
-          sim_frame: 0,
-          clear_color: [0.1, 0.1, 0.14, 1],
-        },
+    join(root, 'Assets', 'Scenes', 'Main.mscene'),
+    `${JSON.stringify({
+      version: 1,
+      name: 'Main',
+      world: {
+        entities: [],
+        frame: 0,
+        sim_frame: 0,
+        clear_color: [0.1, 0.1, 0.14, 1],
       },
-      null,
-      2,
-    ),
+    }, null, 2)}\n`,
   );
-  console.log(`created ${root}`);
+  console.log(`Created project: ${root}`);
 }
 
-function exportPc(dir: string) {
-  const out = join(dir, 'export-pc');
-  mkdirSync(out, { recursive: true });
-  writeFileSync(
-    join(out, 'manifest.json'),
-    JSON.stringify(
-      {
-        platform: 'pc',
-        runtime: 'mengine-runtime',
-        note: 'Build with: cargo build -p mengine-runtime --release',
-        androidStub: 'see platforms/android/README.md',
-        iosStub: 'see platforms/ios/README.md',
-      },
-      null,
-      2,
-    ),
-  );
-  console.log(`PC export stub → ${out}`);
+interface BuildArguments {
+  projectDir: string;
+  outputDir?: string;
+  runtimePath?: string;
+  profile: 'debug' | 'release';
+  skipRuntimeBuild: boolean;
+  skipVerify: boolean;
+  clean: boolean;
 }
 
-switch (cmd) {
-  case 'new':
-    if (!rest[0]) {
-      help();
-      process.exit(1);
+function takeOption(args: string[], index: number, name: string): string {
+  const value = args[index + 1];
+  if (!value || value.startsWith('--')) throw new Error(`${name} requires a value`);
+  args.splice(index, 2);
+  return value;
+}
+
+function parseBuildArguments(values: string[]): BuildArguments {
+  const args = [...values];
+  let outputDir: string | undefined;
+  let runtimePath: string | undefined;
+  let profile: BuildArguments['profile'] = 'release';
+  let skipRuntimeBuild = false;
+  let skipVerify = false;
+  let clean = false;
+  for (let index = 0; index < args.length;) {
+    const value = args[index];
+    if (value === '--out') {
+      outputDir = takeOption(args, index, '--out');
+    } else if (value === '--runtime') {
+      runtimePath = takeOption(args, index, '--runtime');
+    } else if (value === '--debug') {
+      profile = 'debug';
+      args.splice(index, 1);
+    } else if (value === '--skip-runtime-build') {
+      skipRuntimeBuild = true;
+      args.splice(index, 1);
+    } else if (value === '--skip-verify') {
+      skipVerify = true;
+      args.splice(index, 1);
+    } else if (value === '--clean') {
+      clean = true;
+      args.splice(index, 1);
+    } else if (value.startsWith('--')) {
+      throw new Error(`unknown build option: ${value}`);
+    } else {
+      index += 1;
     }
-    newProject(rest[0]);
-    break;
-  case 'export-pc':
-    exportPc(rest[0] ?? '.');
-    break;
-  case 'codegen':
-    console.log('Run from repo root: pnpm codegen');
-    break;
-  default:
-    help();
+  }
+  if (args.length > 1) throw new Error(`unexpected build arguments: ${args.slice(1).join(' ')}`);
+  return {
+    projectDir: resolve(args[0] ?? '.'),
+    outputDir: outputDir ? resolve(outputDir) : undefined,
+    runtimePath: runtimePath ? resolve(runtimePath) : undefined,
+    profile,
+    skipRuntimeBuild,
+    skipVerify,
+    clean,
+  };
+}
+
+function findEngineRoot(start: string): string | null {
+  let current = resolve(start);
+  while (true) {
+    const cargo = join(current, 'Cargo.toml');
+    if (existsSync(cargo)) {
+      const text = readFileSync(cargo, 'utf8');
+      if (text.includes('crates/mengine-runtime')) return current;
+    }
+    const parent = dirname(current);
+    if (parent === current) return null;
+    current = parent;
+  }
+}
+
+function runtimeFileName(): string {
+  return process.platform === 'win32' ? 'mengine-runtime.exe' : 'mengine-runtime';
+}
+
+function resolveRuntime(args: BuildArguments): string {
+  if (args.runtimePath) return args.runtimePath;
+  const cliDir = dirname(fileURLToPath(import.meta.url));
+  const engineRoot = findEngineRoot(process.cwd()) ?? findEngineRoot(cliDir);
+  if (!engineRoot) {
+    throw new Error('cannot locate the MEngine source root; pass --runtime <file>');
+  }
+  const path = join(engineRoot, 'target', args.profile, runtimeFileName());
+  if (!existsSync(path) && !args.skipRuntimeBuild) {
+    console.log(`Building ${args.profile} player runtime…`);
+    const cargoArgs = ['build', '-p', 'mengine-runtime'];
+    if (args.profile === 'release') cargoArgs.push('--release');
+    const result = spawnSync('cargo', cargoArgs, { cwd: engineRoot, stdio: 'inherit' });
+    if (result.error) throw result.error;
+    if (result.status !== 0) throw new Error(`Cargo player build failed with exit code ${result.status}`);
+  }
+  if (!existsSync(path)) throw new Error(`player runtime not found: ${path}`);
+  return path;
+}
+
+function buildProject(values: string[]) {
+  const args = parseBuildArguments(values);
+  const platform = hostBuildPlatform();
+  const outputDir = args.outputDir
+    ?? join(args.projectDir, 'Builds', `${platform}-${process.arch}`);
+  const manifest = buildPcPackage({
+    projectDir: args.projectDir,
+    outputDir,
+    runtimePath: resolveRuntime(args),
+    engineVersion: ENGINE_VERSION,
+    clean: args.clean,
+    platform,
+  });
+  if (!args.skipVerify) {
+    const player = join(outputDir, manifest.executable);
+    const verification = spawnSync(player, ['--validate-package'], {
+      cwd: outputDir,
+      encoding: 'utf8',
+      windowsHide: true,
+    });
+    if (verification.error) throw verification.error;
+    if (verification.status !== 0) {
+      const detail = (verification.stderr || verification.stdout || '').trim();
+      throw new Error(`packaged player validation failed${detail ? `: ${detail}` : ''}`);
+    }
+    const summary = verification.stdout.trim();
+    if (summary) console.log(summary);
+  }
+  console.log(`Built ${manifest.project.name} → ${outputDir}`);
+  console.log(`Player: ${join(outputDir, manifest.executable)}`);
+  console.log(`Files: ${manifest.files.length} (SHA-256 manifest written)`);
+}
+
+try {
+  switch (cmd) {
+    case 'new':
+      if (!rest[0]) throw new Error('new requires a project name');
+      if (rest.length !== 1) throw new Error(`unexpected new arguments: ${rest.slice(1).join(' ')}`);
+      newProject(rest[0]);
+      break;
+    case 'build':
+    case 'export-pc':
+      buildProject(rest);
+      break;
+    case 'codegen':
+      console.log('Run from the MEngine source root: pnpm codegen');
+      break;
+    case '--help':
+    case '-h':
+    case undefined:
+      help();
+      break;
+    default:
+      throw new Error(`unknown command: ${cmd}`);
+  }
+} catch (error) {
+  console.error(error instanceof Error ? error.message : String(error));
+  process.exitCode = 1;
 }
