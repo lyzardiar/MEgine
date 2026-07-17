@@ -1,6 +1,9 @@
 export { Behaviour } from './Behaviour.js';
 export {
   SerializeField,
+  EntityReference,
+  SpriteReference,
+  AssetReference,
   HideInInspector,
   ShowInInspector,
   Label,

@@ -51,6 +51,8 @@ export type UiDrawItem = {
     text: string;
     color: [number, number, number, number];
     fontSize: number;
+    outlineColor: [number, number, number, number];
+    outlineWidth: number;
     alignment: 'Left' | 'Center' | 'Right';
     verticalAlign: 'Top' | 'Middle' | 'Bottom';
     raycastTarget: boolean;
@@ -293,6 +295,45 @@ function pixelCorners(
   ]);
 }
 
+function scaleSceneVisuals(item: UiDrawItem, scale: number): UiDrawItem {
+  const s = Math.max(0.01, scale);
+  const font = (value: number) => Math.max(10, value * s);
+  return {
+    ...item,
+    button: item.button ? { ...item.button, fontSize: font(item.button.fontSize) } : undefined,
+    text: item.text
+      ? {
+          ...item.text,
+          fontSize: font(item.text.fontSize),
+          outlineWidth: Math.max(0, item.text.outlineWidth * s),
+        }
+      : undefined,
+    toggle: item.toggle ? { ...item.toggle, fontSize: font(item.toggle.fontSize) } : undefined,
+    panel: item.panel ? { ...item.panel, borderWidth: item.panel.borderWidth * s } : undefined,
+    progress: item.progress ? { ...item.progress, fontSize: font(item.progress.fontSize) } : undefined,
+    input: item.input ? { ...item.input, fontSize: font(item.input.fontSize) } : undefined,
+    dropdown: item.dropdown
+      ? { ...item.dropdown, fontSize: font(item.dropdown.fontSize) }
+      : undefined,
+    list: item.list
+      ? {
+          ...item.list,
+          itemHeight: item.list.itemHeight * s,
+          spacing: item.list.spacing * s,
+          scrollOffset: item.list.scrollOffset * s,
+          fontSize: font(item.list.fontSize),
+        }
+      : undefined,
+    tabs: item.tabs
+      ? {
+          ...item.tabs,
+          tabHeight: item.tabs.tabHeight * s,
+          fontSize: font(item.tabs.fontSize),
+        }
+      : undefined,
+  };
+}
+
 function inCanvasTree(entities: UiEnt[], entityId: number, canvasId: number): boolean {
   let cur: number | null = entityId;
   const guard = new Set<number>();
@@ -445,6 +486,14 @@ export function layoutUiOverlay(
                 text: String(text.text ?? 'Text'),
                 color: color4(text.color, [1, 1, 1, 1]),
                 fontSize: number(text.font_size ?? text.fontSize, 16) * scale,
+                outlineColor: color4(
+                  text.outline_color ?? text.outlineColor,
+                  [0, 0, 0, 1],
+                ),
+                outlineWidth: Math.max(
+                  0,
+                  number(text.outline_width ?? text.outlineWidth, 0) * scale,
+                ),
                 alignment: enumValue(
                   text.alignment,
                   ['Left', 'Center', 'Right'] as const,
@@ -675,12 +724,33 @@ export function layoutUiScene3D(
       inCanvasTree(entities, it.entity, canvas.entity),
     );
 
+    let sceneScale = 1;
     const c0 = project(uiPixelToWorld(cw * 0.5, ch * 0.5, cw, ch), cam, viewport);
     const c1 = project(uiPixelToWorld(cw * 0.5 + 1, ch * 0.5, cw, ch), cam, viewport);
     if (c0 && c1) {
       const s = Math.hypot(c1.x - c0.x, c1.y - c0.y);
-      if (s > 1e-4) layoutScale = s;
+      if (s > 1e-4) {
+        sceneScale = s;
+        layoutScale = s;
+      }
     }
+
+    const projectPixelRect = (rect: Rect): Rect | undefined => {
+      const projected = pixelCorners(rect, 0, [0.5, 0.5])
+        .map(([px, py]) => project(uiPixelToWorld(px, py, cw, ch), cam, viewport));
+      if (projected.some((point) => !point)) return undefined;
+      const points = projected as Array<{ x: number; y: number; depth: number }>;
+      const xs = points.map((point) => point.x);
+      const ys = points.map((point) => point.y);
+      const x = Math.min(...xs);
+      const y = Math.min(...ys);
+      return {
+        x,
+        y,
+        w: Math.max(...xs) - x,
+        h: Math.max(...ys) - y,
+      };
+    };
 
     for (const it of laid) {
       const corners = pixelCorners(it.rect, it.rotation, it.pivot);
@@ -701,9 +771,11 @@ export function layoutUiScene3D(
       const pivPx = rectPivot(it.rect, it.pivot);
       const pivS = project(uiPixelToWorld(pivPx.x, pivPx.y, cw, ch), cam, viewport);
 
+      const sceneItem = scaleSceneVisuals(it, sceneScale);
       out.push({
-        ...it,
+        ...sceneItem,
         rect: { x: minX, y: minY, w: maxX - minX, h: maxY - minY },
+        clip: it.clip ? projectPixelRect(it.clip) : undefined,
         depth: depthBase + it.depth,
         pivotScreen: pivS ? { x: pivS.x, y: pivS.y } : undefined,
       });
@@ -947,6 +1019,38 @@ export function drawUiItems(
 ) {
   const showLabel = !!opts?.sceneLabel;
   const batches = buildUiBatches(items);
+  const fillReadableText = (
+    value: string,
+    x: number,
+    y: number,
+    maxWidth: number | undefined,
+    color: [number, number, number, number],
+    fontSize: number,
+    outline?: {
+      color: [number, number, number, number];
+      width: number;
+    },
+  ) => {
+    if (outline && outline.width > 0 && outline.color[3] > 0) {
+      ctx.lineJoin = 'round';
+      ctx.strokeStyle = cssColor(outline.color);
+      ctx.lineWidth = Math.max(0.25, outline.width * 2);
+      if (maxWidth == null) ctx.strokeText(value, x, y);
+      else ctx.strokeText(value, x, y, maxWidth);
+    } else if (showLabel) {
+      const [r, g, b] = color;
+      const luminance = r * 0.2126 + g * 0.7152 + b * 0.0722;
+      ctx.lineJoin = 'round';
+      ctx.strokeStyle = luminance < 0.42
+        ? 'rgba(255,255,255,0.9)'
+        : 'rgba(0,0,0,0.9)';
+      ctx.lineWidth = Math.max(2, Math.min(4, fontSize * 0.14));
+      if (maxWidth == null) ctx.strokeText(value, x, y);
+      else ctx.strokeText(value, x, y, maxWidth);
+    }
+    if (maxWidth == null) ctx.fillText(value, x, y);
+    else ctx.fillText(value, x, y, maxWidth);
+  };
 
   for (const batch of batches) for (const it of batch.items) {
     const { x, y, w, h } = it.rect;
@@ -954,25 +1058,42 @@ export function drawUiItems(
 
     ctx.save();
     ctx.globalAlpha *= Math.max(0, Math.min(1, it.opacity));
+    if (it.role === 'canvas') {
+      if (showLabel) {
+        ctx.setLineDash([]);
+        ctx.strokeStyle = 'rgba(0, 0, 0, 0.92)';
+        ctx.lineWidth = it.selected ? 5 : 4;
+        ctx.strokeRect(x, y, w, h);
+        ctx.strokeStyle = it.selected ? '#77d2ff' : '#4db6ea';
+        ctx.lineWidth = it.selected ? 2.5 : 1.5;
+        ctx.strokeRect(x, y, w, h);
+      } else {
+        ctx.setLineDash([]);
+        ctx.strokeStyle = it.selected
+          ? 'rgba(100, 200, 255, 0.95)'
+          : 'rgba(140, 160, 200, 0.55)';
+        ctx.lineWidth = it.selected ? 2 : 1.25;
+        ctx.strokeRect(x + 0.5, y + 0.5, w - 1, h - 1);
+      }
+      ctx.setLineDash([]);
+      if (showLabel) {
+        ctx.font = '600 11px system-ui, sans-serif';
+        ctx.textAlign = 'left';
+        ctx.textBaseline = 'top';
+        const labelWidth = ctx.measureText('Canvas').width + 12;
+        ctx.fillStyle = 'rgba(13, 25, 34, 0.94)';
+        ctx.fillRect(x + 1, y + 1, labelWidth, 19);
+        ctx.fillStyle = '#8edbff';
+        ctx.fillText('Canvas', x + 7, y + 4);
+      }
+      ctx.restore();
+      continue;
+    }
+
     if (it.clip) {
       ctx.beginPath();
       ctx.rect(it.clip.x, it.clip.y, it.clip.w, it.clip.h);
       ctx.clip();
-    }
-
-    if (it.role === 'canvas') {
-      ctx.setLineDash(showLabel ? [6, 4] : []);
-      ctx.strokeStyle = it.selected ? 'rgba(100, 200, 255, 0.95)' : 'rgba(140, 160, 200, 0.55)';
-      ctx.lineWidth = it.selected ? 2 : 1.25;
-      ctx.strokeRect(x + 0.5, y + 0.5, w - 1, h - 1);
-      ctx.setLineDash([]);
-      if (showLabel) {
-        ctx.fillStyle = 'rgba(180, 200, 230, 0.9)';
-        ctx.font = '11px sans-serif';
-        ctx.fillText('Canvas', x + 8, y + 16);
-      }
-      ctx.restore();
-      continue;
     }
 
     let [r, g, b, a] = it.image?.color ?? [0.85, 0.85, 0.9, 0.92];
@@ -1057,10 +1178,18 @@ export function drawUiItems(
         }
         if (it.progress.showLabel) {
           ctx.fillStyle = cssColor(it.progress.textColor);
-          ctx.font = `600 ${Math.max(8, it.progress.fontSize)}px system-ui, sans-serif`;
+          const fontSize = Math.max(8, it.progress.fontSize);
+          ctx.font = `600 ${fontSize}px system-ui, sans-serif`;
           ctx.textAlign = 'center';
           ctx.textBaseline = 'middle';
-          ctx.fillText(`${Math.round(t * 100)}%`, x + w * 0.5, y + h * 0.5);
+          fillReadableText(
+            `${Math.round(t * 100)}%`,
+            x + w * 0.5,
+            y + h * 0.5,
+            undefined,
+            it.progress.textColor,
+            fontSize,
+          );
         }
       }
 
@@ -1071,11 +1200,13 @@ export function drawUiItems(
         ctx.lineWidth = pressId === it.entity ? 2 : 1;
         ctx.strokeRect(x + 0.5, y + 0.5, w - 1, h - 1);
         const value = it.input.text || it.input.placeholder;
-        ctx.fillStyle = cssColor(it.input.text ? it.input.textColor : it.input.placeholderColor, it.input.interactable ? 1 : 0.45);
-        ctx.font = `${Math.max(8, it.input.fontSize)}px system-ui, sans-serif`;
+        const textColor = it.input.text ? it.input.textColor : it.input.placeholderColor;
+        const fontSize = Math.max(8, it.input.fontSize);
+        ctx.fillStyle = cssColor(textColor, it.input.interactable ? 1 : 0.45);
+        ctx.font = `${fontSize}px system-ui, sans-serif`;
         ctx.textAlign = 'left';
         ctx.textBaseline = 'middle';
-        ctx.fillText(value, x + 8, y + h * 0.5, Math.max(0, w - 16));
+        fillReadableText(value, x + 8, y + h * 0.5, Math.max(0, w - 16), textColor, fontSize);
       }
 
       if (it.dropdown) {
@@ -1083,12 +1214,13 @@ export function drawUiItems(
         ctx.fillStyle = cssColor(dropdown.backgroundColor, dropdown.interactable ? 1 : 0.45);
         ctx.fillRect(x, y, w, h);
         ctx.fillStyle = cssColor(dropdown.textColor, dropdown.interactable ? 1 : 0.45);
-        ctx.font = `${Math.max(8, dropdown.fontSize)}px system-ui, sans-serif`;
+        const fontSize = Math.max(8, dropdown.fontSize);
+        ctx.font = `${fontSize}px system-ui, sans-serif`;
         ctx.textAlign = 'left';
         ctx.textBaseline = 'middle';
-        ctx.fillText(dropdown.options[dropdown.selectedIndex] ?? '', x + 8, y + h * 0.5, Math.max(0, w - 32));
+        fillReadableText(dropdown.options[dropdown.selectedIndex] ?? '', x + 8, y + h * 0.5, Math.max(0, w - 32), dropdown.textColor, fontSize);
         ctx.textAlign = 'center';
-        ctx.fillText(dropdown.expanded ? '-' : '+', x + w - 16, y + h * 0.5);
+        fillReadableText(dropdown.expanded ? '-' : '+', x + w - 16, y + h * 0.5, undefined, dropdown.textColor, fontSize);
         if (dropdown.expanded) {
           dropdown.options.forEach((label, index) => {
             const iy = y + h * (index + 1);
@@ -1096,7 +1228,7 @@ export function drawUiItems(
             ctx.fillRect(x, iy, w, h);
             ctx.fillStyle = cssColor(dropdown.textColor);
             ctx.textAlign = 'left';
-            ctx.fillText(label, x + 8, iy + h * 0.5, Math.max(0, w - 16));
+            fillReadableText(label, x + 8, iy + h * 0.5, Math.max(0, w - 16), dropdown.textColor, fontSize);
           });
         }
       }
@@ -1118,10 +1250,11 @@ export function drawUiItems(
           ctx.fillStyle = cssColor(index === it.list!.selectedIndex ? it.list!.selectedColor : it.list!.itemColor, it.list!.interactable ? 1 : 0.45);
           ctx.fillRect(x, iy, w, it.list!.itemHeight);
           ctx.fillStyle = cssColor(it.list!.textColor, it.list!.interactable ? 1 : 0.45);
-          ctx.font = `${Math.max(8, it.list!.fontSize)}px system-ui, sans-serif`;
+          const fontSize = Math.max(8, it.list!.fontSize);
+          ctx.font = `${fontSize}px system-ui, sans-serif`;
           ctx.textAlign = 'left';
           ctx.textBaseline = 'middle';
-          ctx.fillText(label, x + 8, iy + it.list!.itemHeight * 0.5, Math.max(0, w - 16));
+          fillReadableText(label, x + 8, iy + it.list!.itemHeight * 0.5, Math.max(0, w - 16), it.list!.textColor, fontSize);
         }
         ctx.restore();
       }
@@ -1135,10 +1268,11 @@ export function drawUiItems(
           ctx.fillStyle = cssColor(index === it.tabs!.selectedIndex ? it.tabs!.selectedColor : it.tabs!.tabColor, it.tabs!.interactable ? 1 : 0.45);
           ctx.fillRect(x + index * tabWidth, y, tabWidth, it.tabs!.tabHeight);
           ctx.fillStyle = cssColor(it.tabs!.textColor, it.tabs!.interactable ? 1 : 0.45);
-          ctx.font = `${Math.max(8, it.tabs!.fontSize)}px system-ui, sans-serif`;
+          const fontSize = Math.max(8, it.tabs!.fontSize);
+          ctx.font = `${fontSize}px system-ui, sans-serif`;
           ctx.textAlign = 'center';
           ctx.textBaseline = 'middle';
-          ctx.fillText(label, x + (index + 0.5) * tabWidth, y + it.tabs!.tabHeight * 0.5, Math.max(0, tabWidth - 8));
+          fillReadableText(label, x + (index + 0.5) * tabWidth, y + it.tabs!.tabHeight * 0.5, Math.max(0, tabWidth - 8), it.tabs!.textColor, fontSize);
         });
       }
 
@@ -1162,20 +1296,30 @@ export function drawUiItems(
 
       if (it.button) {
         ctx.fillStyle = cssColor(it.button.textColor, it.button.interactable ? 1 : 0.45);
-        ctx.font = `600 ${Math.max(8, it.button.fontSize)}px system-ui, sans-serif`;
+        const fontSize = Math.max(8, it.button.fontSize);
+        ctx.font = `600 ${fontSize}px system-ui, sans-serif`;
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
-        ctx.fillText(it.button.label, x + w * 0.5, y + h * 0.5, Math.max(0, w - 12));
+        fillReadableText(it.button.label, x + w * 0.5, y + h * 0.5, Math.max(0, w - 12), it.button.textColor, fontSize);
       }
 
       if (it.text) {
         const tx = it.text.alignment === 'Left' ? x + 4 : it.text.alignment === 'Right' ? x + w - 4 : x + w * 0.5;
         const ty = it.text.verticalAlign === 'Top' ? y + 2 : it.text.verticalAlign === 'Bottom' ? y + h - 2 : y + h * 0.5;
+        const fontSize = Math.max(8, it.text.fontSize);
         ctx.fillStyle = cssColor(it.text.color);
-        ctx.font = `${Math.max(8, it.text.fontSize)}px system-ui, sans-serif`;
+        ctx.font = `${fontSize}px system-ui, sans-serif`;
         ctx.textAlign = it.text.alignment.toLowerCase() as CanvasTextAlign;
         ctx.textBaseline = it.text.verticalAlign === 'Top' ? 'top' : it.text.verticalAlign === 'Bottom' ? 'bottom' : 'middle';
-        ctx.fillText(it.text.text, tx, ty, Math.max(0, w - 8));
+        fillReadableText(
+          it.text.text,
+          tx,
+          ty,
+          Math.max(0, w - 8),
+          it.text.color,
+          fontSize,
+          { color: it.text.outlineColor, width: it.text.outlineWidth },
+        );
       }
 
       if (it.toggle) {
@@ -1199,10 +1343,11 @@ export function drawUiItems(
           ctx.stroke();
         }
         ctx.fillStyle = cssColor(it.toggle.textColor, alpha);
-        ctx.font = `${Math.max(8, it.toggle.fontSize)}px system-ui, sans-serif`;
+        const fontSize = Math.max(8, it.toggle.fontSize);
+        ctx.font = `${fontSize}px system-ui, sans-serif`;
         ctx.textAlign = 'left';
         ctx.textBaseline = 'middle';
-        ctx.fillText(it.toggle.label, bx + box + 8, y + h * 0.5, Math.max(0, w - box - 16));
+        fillReadableText(it.toggle.label, bx + box + 8, y + h * 0.5, Math.max(0, w - box - 16), it.toggle.textColor, fontSize);
       }
 
       if (it.slider) {

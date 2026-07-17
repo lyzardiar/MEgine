@@ -311,11 +311,13 @@ fn walk(
     }
 
     if let Some(text) = world.get_component::<Text>(entity) {
-        push_text(
+        push_text_styled(
             primitives,
             rect,
             &text.text,
             multiply_alpha(text.color, state.alpha),
+            multiply_alpha(text.outline_color, state.alpha),
+            (text.outline_width * scale).max(0.0),
             text.font_size * scale,
             &text.alignment,
             &text.vertical_align,
@@ -1227,8 +1229,34 @@ fn push_text(
     vertical_align: &str,
     clip: UiClipRect,
 ) {
+    push_text_styled(
+        primitives,
+        rect,
+        text,
+        color,
+        [0.0, 0.0, 0.0, 0.0],
+        0.0,
+        font_size,
+        alignment,
+        vertical_align,
+        clip,
+    );
+}
+
+#[allow(clippy::too_many_arguments)]
+fn push_text_styled(
+    primitives: &mut Vec<UiPrimitive>,
+    rect: UiRect,
+    text: &str,
+    color: [f32; 4],
+    outline_color: [f32; 4],
+    outline_width: f32,
+    font_size: f32,
+    alignment: &str,
+    vertical_align: &str,
+    clip: UiClipRect,
+) {
     let scale = (font_size.max(7.0) / 7.0).max(1.0);
-    let glyph_width = 5.0 * scale;
     let advance = 6.0 * scale;
     let line_height = 8.0 * scale;
     let chars: Vec<char> = text.chars().collect();
@@ -1244,9 +1272,51 @@ fn push_text(
         _ => rect.y + (rect.height - line_height) * 0.5,
     };
 
-    for (char_index, character) in chars.into_iter().enumerate() {
-        let rows = glyph_rows(character);
-        let glyph_x = start_x + char_index as f32 * advance;
+    let glyphs: Vec<(f32, [u8; 7])> = chars
+        .into_iter()
+        .enumerate()
+        .map(|(char_index, character)| {
+            (start_x + char_index as f32 * advance, glyph_rows(character))
+        })
+        .collect();
+
+    let radius = outline_width.ceil().clamp(0.0, 16.0) as i32;
+    if radius > 0 && outline_color[3] > 0.0 {
+        for (glyph_x, rows) in &glyphs {
+            for (row_index, row) in rows.iter().enumerate() {
+                for column in 0..5 {
+                    if row & (1 << (4 - column)) == 0 {
+                        continue;
+                    }
+                    for offset_y in -radius..=radius {
+                        for offset_x in -radius..=radius {
+                            if offset_x == 0 && offset_y == 0
+                                || offset_x * offset_x + offset_y * offset_y > radius * radius
+                            {
+                                continue;
+                            }
+                            primitives.push(primitive(
+                                UiRect {
+                                    x: *glyph_x + column as f32 * scale + offset_x as f32,
+                                    y: start_y + row_index as f32 * scale + offset_y as f32,
+                                    width: scale,
+                                    height: scale,
+                                },
+                                outline_color,
+                                [0.5, 0.5],
+                                0.0,
+                                "ui/text/bitmap-outline",
+                                "white",
+                                clip,
+                            ));
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    for (glyph_x, rows) in glyphs {
         for (row_index, row) in rows.iter().enumerate() {
             for column in 0..5 {
                 if row & (1 << (4 - column)) == 0 {
@@ -1269,7 +1339,6 @@ fn push_text(
             }
         }
     }
-    let _ = glyph_width;
 }
 
 fn multiply_alpha(mut color: [f32; 4], factor: f32) -> [f32; 4] {
@@ -1471,6 +1540,47 @@ mod tests {
         };
         assert_eq!(control.slider_value_at(10.0, 30.0), Some(10.0));
         assert_eq!(control.slider_value_at(110.0, 30.0), Some(0.0));
+    }
+
+    #[test]
+    fn text_outline_is_serialized_into_outline_primitives_before_glyphs() {
+        let mut primitives = Vec::new();
+        let clip = UiClipRect {
+            x: 0,
+            y: 0,
+            width: 320,
+            height: 200,
+        };
+        push_text_styled(
+            &mut primitives,
+            UiRect {
+                x: 0.0,
+                y: 0.0,
+                width: 160.0,
+                height: 40.0,
+            },
+            "A",
+            [1.0, 1.0, 1.0, 1.0],
+            [0.1, 0.2, 0.3, 0.75],
+            2.0,
+            16.0,
+            "Center",
+            "Middle",
+            clip,
+        );
+
+        let first_fill = primitives
+            .iter()
+            .position(|primitive| primitive.key.material == "ui/text/bitmap")
+            .expect("text fill primitives");
+        assert!(first_fill > 0);
+        assert!(primitives[..first_fill].iter().all(|primitive| {
+            primitive.key.material == "ui/text/bitmap-outline"
+                && primitive.color == [0.1, 0.2, 0.3, 0.75]
+        }));
+        assert!(primitives[first_fill..]
+            .iter()
+            .all(|primitive| primitive.key.material == "ui/text/bitmap"));
     }
 
     #[test]

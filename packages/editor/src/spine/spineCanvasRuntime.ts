@@ -113,6 +113,25 @@ async function loadSharedSkeleton(
   return promise;
 }
 
+export async function loadSpineInspectorOptions(args: {
+  skeleton: string;
+  atlas: string;
+  premultipliedAlpha?: boolean;
+}): Promise<{ animations: string[]; skins: string[] }> {
+  const skeleton = args.skeleton.trim();
+  const atlas = args.atlas.trim();
+  if (!skeleton || !atlas) return { animations: [], skins: [] };
+  const shared = await loadSharedSkeleton(
+    skeleton,
+    atlas,
+    args.premultipliedAlpha !== false,
+  );
+  return {
+    animations: shared.data.animations.map((animation) => animation.name),
+    skins: shared.data.skins.map((skin) => skin.name),
+  };
+}
+
 function numberValue(value: unknown, fallback: number): number {
   const result = Number(value);
   return Number.isFinite(result) ? result : fallback;

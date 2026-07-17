@@ -48,6 +48,8 @@ component Text {
   text:            string = "Text"
   color:           float4 = [1, 1, 1, 1]
   font_size:       float  = 16
+  outline_color:   float4 = [0, 0, 0, 1]
+  outline_width:   float  = 0
   /// "Left" | "Center" | "Right"
   alignment:       string = "Center"
   /// "Top" | "Middle" | "Bottom"

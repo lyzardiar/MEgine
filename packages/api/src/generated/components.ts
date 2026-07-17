@@ -198,6 +198,8 @@ export interface Text {
   text: string;
   color: [number, number, number, number];
   fontSize: number;
+  outlineColor: [number, number, number, number];
+  outlineWidth: number;
   alignment: string;
   verticalAlign: string;
   raycastTarget: boolean;

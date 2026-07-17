@@ -1031,17 +1031,42 @@ export function DockWorkspace(props: {
               void dragDetachedPanelWindow(props.detachedPanel!);
             }}
           >
-            <span className="detached-dock-grip">⠿</span>
-            <span>{PANEL_TITLE[props.detachedPanel]}</span>
+            <span className="detached-dock-tab">{PANEL_TITLE[props.detachedPanel]}</span>
           </button>
-          <button
-            type="button"
-            className="detached-dock-return"
-            title="停靠回主窗口"
-            onClick={() => requestPanelDock(props.detachedPanel!)}
-          >
-            停靠
-          </button>
+          <div className="detached-dock-controls">
+            <button
+              type="button"
+              className="detached-dock-return"
+              title="停靠回主窗口"
+              aria-label="停靠回主窗口"
+              onClick={() => requestPanelDock(props.detachedPanel!)}
+            >
+              ↙
+            </button>
+            <button
+              type="button"
+              className="detached-dock-maximize"
+              title="最大化 / 还原"
+              aria-label="最大化或还原"
+              onClick={() => {
+                if (isDesktopEditor()) void getCurrentWindow().toggleMaximize();
+              }}
+            >
+              □
+            </button>
+            <button
+              type="button"
+              className="detached-dock-close"
+              title="关闭"
+              aria-label="关闭"
+              onClick={() => {
+                if (isDesktopEditor()) void getCurrentWindow().close();
+                else window.close();
+              }}
+            >
+              ×
+            </button>
+          </div>
         </div>
         <div className="detached-panel-content">
           {panelContent(props.detachedPanel)}

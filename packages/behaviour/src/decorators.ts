@@ -21,6 +21,9 @@ type Proto = object;
 
 export type SerializeFieldOptions = {
   type?: FieldType;
+  assetKinds?: string[];
+  referenceType?: string;
+  allowNone?: boolean;
 };
 
 function field(proto: Proto, key: string, patch: Parameters<typeof patchField>[2]) {
@@ -30,7 +33,32 @@ function field(proto: Proto, key: string, patch: Parameters<typeof patchField>[2
 /** Mark a field for scene serialization + Inspector. */
 export function SerializeField(opts: SerializeFieldOptions = {}) {
   return (proto: Proto, key: string) => {
-    field(proto, key, opts.type ? { type: opts.type } : {});
+    field(proto, key, opts);
+  };
+}
+
+/** Unity-style GameObject reference, stored as an entity id or null. */
+export function EntityReference(allowNone = true) {
+  return (proto: Proto, key: string) => {
+    field(proto, key, { type: 'entity', referenceType: 'GameObject', allowNone });
+  };
+}
+
+/** Project texture/sprite reference with drag-and-drop and object picker support. */
+export function SpriteReference(allowNone = true) {
+  return (proto: Proto, key: string) => {
+    field(proto, key, { type: 'sprite', referenceType: 'Sprite', allowNone });
+  };
+}
+
+/** Generic project asset reference. */
+export function AssetReference(
+  assetKinds: string[],
+  referenceType = 'Asset',
+  allowNone = true,
+) {
+  return (proto: Proto, key: string) => {
+    field(proto, key, { type: 'asset', assetKinds, referenceType, allowNone });
   };
 }
 

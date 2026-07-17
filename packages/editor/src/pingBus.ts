@@ -1,7 +1,13 @@
 /** Ping Hierarchy / Project assets (Unity-style). */
 
 export type PingEntity = { kind: 'entity'; id: number };
-export type PingAsset = { kind: 'asset'; spriteId: string; folder?: string };
+export type PingAsset = {
+  kind: 'asset';
+  assetId: string;
+  /** Kept for callers that specifically need sprite semantics. */
+  spriteId?: string;
+  folder?: string;
+};
 export type PingEvent = PingEntity | PingAsset;
 
 type Listener = (e: PingEvent) => void;
@@ -22,7 +28,13 @@ export function pingEntity(id: number) {
 }
 
 export function pingSprite(spriteId: string, folder?: string) {
-  const e: PingAsset = { kind: 'asset', spriteId, folder };
+  const e: PingAsset = { kind: 'asset', assetId: spriteId, spriteId, folder };
+  for (const fn of _listeners) fn(e);
+  window.dispatchEvent(new CustomEvent('mengine:focus-panel', { detail: 'project' }));
+}
+
+export function pingProjectAsset(assetId: string, folder?: string) {
+  const e: PingAsset = { kind: 'asset', assetId, folder };
   for (const fn of _listeners) fn(e);
   window.dispatchEvent(new CustomEvent('mengine:focus-panel', { detail: 'project' }));
 }

@@ -89,10 +89,12 @@ export function Project(props: {
     return subscribePing((e) => {
       if (e.kind !== 'asset') return;
       const sprites = listSprites();
-      const hit = sprites.find((s) => s.id === e.spriteId);
+      const projectAsset = listProjectFiles().find((asset) => asset.id === e.assetId);
+      const hit = sprites.find((s) => s.id === (e.spriteId ?? e.assetId));
       if (hit) setFolder(hit.folder);
+      else if (projectAsset) setFolder(projectAsset.folder);
       else if (e.folder) setFolder(e.folder);
-      const key = hit?.name ?? e.spriteId.split('/').pop() ?? e.spriteId;
+      const key = hit?.name ?? projectAsset?.name ?? e.assetId.split('/').pop() ?? e.assetId;
       setSelected(key);
       setPingKey(key);
       window.setTimeout(() => setPingKey((cur) => (cur === key ? null : cur)), 900);

@@ -11,7 +11,12 @@ import {
   spriteDisplayName,
 } from '../spriteLibrary';
 import { loadSpriteNativeSize } from '../spriteDraw';
-import { pingEntity, pingSprite } from '../pingBus';
+import { pingEntity, pingProjectAsset, pingSprite } from '../pingBus';
+import {
+  listProjectFiles,
+  refreshProjectFiles,
+  type ProjectFileAsset,
+} from '../projectAssets';
 import { ObjectPicker } from './ObjectPicker';
 
 export type UnityPersistentCall = {
@@ -23,11 +28,6 @@ export type UnityPersistentCall = {
 const IMAGE_TYPES = [
   { value: 'Simple', label: 'Simple' },
   { value: 'Sliced', label: 'Sliced' },
-] as const;
-
-const BUTTON_TRANSITIONS = [
-  { value: 'None', label: 'None' },
-  { value: 'ColorTint', label: 'Color Tint' },
 ] as const;
 
 function colorToHex(c: number[]): string {
@@ -108,17 +108,20 @@ export function ColorField(props: {
   );
 }
 
-function SpriteSlot(props: {
+export function SpriteSlot(props: {
   label: string;
   value: string;
   onChange: (v: string) => void;
+  noneValue?: string;
+  noneLabel?: string;
 }) {
   const [dragOver, setDragOver] = useState(false);
   const [tick, setTick] = useState(0);
   const [pickerOpen, setPickerOpen] = useState(false);
   const [anchor, setAnchor] = useState<DOMRect | null>(null);
   const pickerBtnRef = useRef<HTMLButtonElement>(null);
-  const normalized = normalizeSpriteRef(props.value);
+  const noneValue = props.noneValue ?? 'white';
+  const normalized = props.value ? normalizeSpriteRef(props.value) : noneValue;
   const resolved = useMemo(() => {
     void tick;
     return resolveSpriteId(normalized);
@@ -151,8 +154,8 @@ function SpriteSlot(props: {
     ];
   }, [tick]);
 
-  const thumb = spriteAssetUrl(resolved);
-  const label = spriteDisplayName(resolved);
+  const thumb = resolved ? spriteAssetUrl(resolved) : null;
+  const label = resolved ? spriteDisplayName(resolved) : (props.noneLabel ?? 'None (Texture)');
 
   const acceptDrag = (dt: DataTransfer) => {
     const types = Array.from(dt.types as unknown as string[]);
@@ -220,7 +223,7 @@ function SpriteSlot(props: {
           'object-slot',
           'sprite-slot',
           dragOver ? 'drag-over' : '',
-          resolved && resolved !== 'white' ? 'filled' : '',
+          resolved && resolved !== noneValue ? 'filled' : '',
         ]
           .filter(Boolean)
           .join(' ')}
@@ -239,7 +242,7 @@ function SpriteSlot(props: {
           onClick={onPing}
           title="Ping in Project"
         >
-          {label || 'None (Sprite)'}
+          {label || props.noneLabel || 'None (Sprite)'}
         </button>
         <button
           ref={pickerBtnRef}
@@ -248,12 +251,12 @@ function SpriteSlot(props: {
           title="Select Sprite"
           onClick={openPicker}
         />
-        {resolved && resolved !== 'white' && (
+        {resolved && resolved !== noneValue && (
           <button
             type="button"
             className="object-slot-clear"
             title="Clear"
-            onClick={() => props.onChange('white')}
+            onClick={() => props.onChange(noneValue)}
           >
             ×
           </button>
@@ -263,14 +266,246 @@ function SpriteSlot(props: {
         <ObjectPicker
           title="Select Sprite"
           items={pickerItems}
-          current={resolved === 'white' ? null : resolved}
+          current={resolved === noneValue ? null : resolved}
           allowNone
-          noneLabel="None (white)"
+          noneLabel={props.noneLabel ?? (noneValue === 'white' ? 'None (white)' : 'None')}
           anchorRect={anchor}
-          onPick={(id) => props.onChange(id ?? 'white')}
+          onPick={(id) => props.onChange(id ?? noneValue)}
           onClose={() => setPickerOpen(false)}
         />
       )}
+    </div>
+  );
+}
+export function NamedReferenceField(props: {
+  label: string;
+  value: string;
+  referenceType: string;
+  options: Array<{ value: string; label: string }>;
+  allowNone?: boolean;
+  onChange: (value: string) => void;
+}) {
+  const [pickerOpen, setPickerOpen] = useState(false);
+  const [anchor, setAnchor] = useState<DOMRect | null>(null);
+  const pickerBtnRef = useRef<HTMLButtonElement>(null);
+  const selected = props.options.find((option) => option.value === props.value);
+  return (
+    <div className="field-row">
+      <label>{props.label}</label>
+      <div className={`object-slot named-reference${props.value ? ' filled' : ''}`}>
+        <div className="object-slot-thumb" aria-hidden>◆</div>
+        <button
+          type="button"
+          className="object-slot-name-btn"
+          onClick={() => {
+            setAnchor(pickerBtnRef.current?.getBoundingClientRect() ?? null);
+            setPickerOpen(true);
+          }}
+        >
+          {selected?.label ?? (props.value || `None (${props.referenceType})`)}
+        </button>
+        <button
+          ref={pickerBtnRef}
+          type="button"
+          className="object-slot-picker"
+          title={`Select ${props.referenceType}`}
+          onClick={() => {
+            setAnchor(pickerBtnRef.current?.getBoundingClientRect() ?? null);
+            setPickerOpen(true);
+          }}
+        />
+        {props.allowNone && props.value && (
+          <button
+            type="button"
+            className="object-slot-clear"
+            title="Clear"
+            onClick={() => props.onChange('')}
+          >
+            ×
+          </button>
+        )}
+      </div>
+      {pickerOpen && (
+        <ObjectPicker
+          title={`Select ${props.referenceType}`}
+          items={props.options.map((option) => ({
+            id: option.value,
+            label: option.label,
+            sub: props.referenceType,
+            icon: '◆',
+          }))}
+          current={props.value || null}
+          allowNone={props.allowNone}
+          noneLabel={`None (${props.referenceType})`}
+          anchorRect={anchor}
+          onPick={(id) => props.onChange(id ?? '')}
+          onClose={() => setPickerOpen(false)}
+        />
+      )}
+    </div>
+  );
+}
+
+export function ProjectAssetSlot(props: {
+  label: string;
+  value: string;
+  assetKinds: ProjectFileAsset['kind'][];
+  referenceType: string;
+  allowNone?: boolean;
+  onChange: (value: string) => void;
+}) {
+  const [dragOver, setDragOver] = useState(false);
+  const [pickerOpen, setPickerOpen] = useState(false);
+  const [anchor, setAnchor] = useState<DOMRect | null>(null);
+  const [revision, setRevision] = useState(0);
+  const pickerBtnRef = useRef<HTMLButtonElement>(null);
+
+  useEffect(() => {
+    void refreshProjectFiles().then(() => setRevision((value) => value + 1));
+  }, []);
+
+  const assets = useMemo(() => {
+    void revision;
+    const accepted = new Set(props.assetKinds);
+    return listProjectFiles().filter((asset) => accepted.has(asset.kind));
+  }, [props.assetKinds, revision]);
+  const selected = assets.find((asset) => asset.id === props.value);
+
+  const applyDrop = (event: DragEvent) => {
+    event.preventDefault();
+    event.stopPropagation();
+    setDragOver(false);
+    const id = event.dataTransfer.getData('text/mengine-asset')
+      || event.dataTransfer.getData('text/plain');
+    const asset = assets.find((candidate) => candidate.id === id);
+    if (asset) props.onChange(asset.id);
+  };
+
+  return (
+    <div className="field-row">
+      <label>{props.label}</label>
+      <div
+        className={`object-slot project-asset-slot${props.value ? ' filled' : ''}${dragOver ? ' drag-over' : ''}`}
+        onDragEnter={(event) => {
+          if (!Array.from(event.dataTransfer.types).includes('text/mengine-asset')) return;
+          event.preventDefault();
+          setDragOver(true);
+        }}
+        onDragOver={(event) => {
+          if (!Array.from(event.dataTransfer.types).includes('text/mengine-asset')) return;
+          event.preventDefault();
+          event.dataTransfer.dropEffect = 'copy';
+        }}
+        onDragLeave={(event) => {
+          if (!(event.currentTarget as HTMLElement).contains(event.relatedTarget as Node | null)) {
+            setDragOver(false);
+          }
+        }}
+        onDrop={applyDrop}
+      >
+        <div className="object-slot-thumb" aria-hidden>◇</div>
+        <button
+          type="button"
+          className="object-slot-name-btn"
+          title="Ping in Project"
+          onClick={() => {
+            if (props.value) pingProjectAsset(props.value, selected?.folder);
+          }}
+        >
+          {selected?.name ?? (props.value || `None (${props.referenceType})`)}
+        </button>
+        <button
+          ref={pickerBtnRef}
+          type="button"
+          className="object-slot-picker"
+          title={`Select ${props.referenceType}`}
+          onClick={() => {
+            setAnchor(pickerBtnRef.current?.getBoundingClientRect() ?? null);
+            setPickerOpen(true);
+          }}
+        />
+        {props.allowNone && props.value && (
+          <button
+            type="button"
+            className="object-slot-clear"
+            title="Clear"
+            onClick={() => props.onChange('')}
+          >
+            ×
+          </button>
+        )}
+      </div>
+      {pickerOpen && (
+        <ObjectPicker
+          title={`Select ${props.referenceType}`}
+          items={assets.map((asset) => ({
+            id: asset.id,
+            label: asset.name,
+            sub: asset.folder,
+            icon: asset.kind === 'spine-atlas' ? 'A' : 'S',
+          }))}
+          current={props.value || null}
+          allowNone={props.allowNone}
+          noneLabel={`None (${props.referenceType})`}
+          anchorRect={anchor}
+          onPick={(id) => props.onChange(id ?? '')}
+          onClose={() => setPickerOpen(false)}
+        />
+      )}
+    </div>
+  );
+}
+
+export function StringListField(props: {
+  label: string;
+  value: string[];
+  onChange: (value: string[]) => void;
+}) {
+  const items = Array.isArray(props.value) ? props.value.map(String) : [];
+  const update = (index: number, value: string) => {
+    const next = [...items];
+    next[index] = value;
+    props.onChange(next);
+  };
+  const move = (index: number, offset: number) => {
+    const target = index + offset;
+    if (target < 0 || target >= items.length) return;
+    const next = [...items];
+    [next[index], next[target]] = [next[target], next[index]];
+    props.onChange(next);
+  };
+  return (
+    <div className="field-row field-row-list">
+      <label>{props.label}</label>
+      <div className="string-list-editor">
+        {items.map((item, index) => (
+          <div className="string-list-item" key={`${index}-${items.length}`}>
+            <span className="string-list-index">{index}</span>
+            <input
+              type="text"
+              value={item}
+              aria-label={`${props.label} ${index}`}
+              onChange={(event) => update(index, event.target.value)}
+            />
+            <button type="button" title="Move up" disabled={index === 0} onClick={() => move(index, -1)}>↑</button>
+            <button type="button" title="Move down" disabled={index === items.length - 1} onClick={() => move(index, 1)}>↓</button>
+            <button
+              type="button"
+              title="Remove"
+              onClick={() => props.onChange(items.filter((_, itemIndex) => itemIndex !== index))}
+            >
+              ×
+            </button>
+          </div>
+        ))}
+        <button
+          type="button"
+          className="string-list-add"
+          onClick={() => props.onChange([...items, `Item ${items.length + 1}`])}
+        >
+          + Add Item
+        </button>
+      </div>
     </div>
   );
 }
@@ -331,13 +566,117 @@ export function resolveUnityAction(
   };
 }
 
-type EntRef = {
+export type EntRef = {
   entity: number;
   name?: string | null;
   components: Record<string, unknown>;
 };
 
-function UnityEventField(props: {
+export function EntityReferenceField(props: {
+  label: string;
+  value: number | null;
+  entities: EntRef[];
+  allowNone?: boolean;
+  onChange: (value: number | null) => void;
+}) {
+  const [dragOver, setDragOver] = useState(false);
+  const [pickerOpen, setPickerOpen] = useState(false);
+  const [anchor, setAnchor] = useState<DOMRect | null>(null);
+  const pickerBtnRef = useRef<HTMLButtonElement>(null);
+  const selected = props.value == null
+    ? null
+    : props.entities.find((entity) => entity.entity === props.value);
+
+  const bindDrop = (event: DragEvent) => {
+    event.preventDefault();
+    event.stopPropagation();
+    setDragOver(false);
+    const id = Number(
+      event.dataTransfer.getData('text/mengine-entity')
+        || event.dataTransfer.getData('text/plain'),
+    );
+    if (Number.isFinite(id) && props.entities.some((entity) => entity.entity === id)) {
+      props.onChange(id);
+    }
+  };
+
+  return (
+    <div className="field-row">
+      <label>{props.label}</label>
+      <div
+        className={`object-slot entity-slot${props.value != null ? ' filled' : ''}${dragOver ? ' drag-over' : ''}`}
+        onDragEnter={(event) => {
+          if (!Array.from(event.dataTransfer.types).includes('text/mengine-entity')) return;
+          event.preventDefault();
+          setDragOver(true);
+        }}
+        onDragOver={(event) => {
+          if (!Array.from(event.dataTransfer.types).includes('text/mengine-entity')) return;
+          event.preventDefault();
+          event.dataTransfer.dropEffect = 'copy';
+        }}
+        onDragLeave={(event) => {
+          if (!(event.currentTarget as HTMLElement).contains(event.relatedTarget as Node | null)) {
+            setDragOver(false);
+          }
+        }}
+        onDrop={bindDrop}
+      >
+        <div className="object-slot-thumb" aria-hidden>●</div>
+        <button
+          type="button"
+          className="object-slot-name-btn"
+          title="Ping in Hierarchy"
+          onClick={() => {
+            if (props.value != null) pingEntity(props.value);
+          }}
+        >
+          {selected?.name
+            ?? (props.value == null ? 'None (GameObject)' : `Missing (${props.value})`)}
+        </button>
+        <button
+          ref={pickerBtnRef}
+          type="button"
+          className="object-slot-picker"
+          title="Select GameObject"
+          onClick={() => {
+            setAnchor(pickerBtnRef.current?.getBoundingClientRect() ?? null);
+            setPickerOpen(true);
+          }}
+        />
+        {props.allowNone !== false && props.value != null && (
+          <button
+            type="button"
+            className="object-slot-clear"
+            title="Clear"
+            onClick={() => props.onChange(null)}
+          >
+            ×
+          </button>
+        )}
+      </div>
+      {pickerOpen && (
+        <ObjectPicker
+          title="Select GameObject"
+          items={props.entities.map((entity) => ({
+            id: String(entity.entity),
+            label: entity.name ?? `Entity ${entity.entity}`,
+            sub: `id ${entity.entity}`,
+            icon: '●',
+          }))}
+          current={props.value == null ? null : String(props.value)}
+          allowNone={props.allowNone !== false}
+          noneLabel="None (GameObject)"
+          anchorRect={anchor}
+          onPick={(id) => props.onChange(id == null ? null : Number(id))}
+          onClose={() => setPickerOpen(false)}
+        />
+      )}
+    </div>
+  );
+}
+
+export function UnityEventField(props: {
   label: string;
   value: unknown;
   entities: EntRef[];
@@ -641,43 +980,6 @@ export function ImageEditor(props: {
           {nativeBusy ? 'Loading…' : 'Set Native Size'}
         </button>
       </div>
-    </>
-  );
-}
-
-export function ButtonEditor(props: {
-  data: Record<string, unknown>;
-  entities: EntRef[];
-  onPatch: (patch: Record<string, unknown>) => void;
-}) {
-  const d = props.data;
-
-  return (
-    <>
-      <BoolField
-        label="Interactable"
-        value={d.interactable !== false}
-        onChange={(interactable) => props.onPatch({ interactable })}
-      />
-      <div className="field-row">
-        <label>Transition</label>
-        <select
-          value={String(d.transition ?? 'ColorTint')}
-          onChange={(e) => props.onPatch({ transition: e.target.value })}
-        >
-          {BUTTON_TRANSITIONS.map((o) => (
-            <option key={o.value} value={o.value}>
-              {o.label}
-            </option>
-          ))}
-        </select>
-      </div>
-      <UnityEventField
-        label="On Click ()"
-        value={d.on_click ?? d.onClick}
-        entities={props.entities}
-        onChange={(on_click) => props.onPatch({ on_click })}
-      />
     </>
   );
 }

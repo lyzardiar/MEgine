@@ -33,6 +33,7 @@ import {
   uiEntityWorldPivot,
   type UiEnt,
 } from './ui/uiLayout';
+import { planHierarchyMove } from './hierarchyMove';
 import './behaviours';
 
 export type EditorMode = 'edit' | 'play' | 'pause';
@@ -592,34 +593,33 @@ export function createEditorStore() {
       if (e) e.active = activeFlag;
     },
     setParent(ids: number[], parent: number | null, atIndex?: number, withUndo = true) {
+      const current = list();
+      const plan = planHierarchyMove(
+        current.map((entity) => ({
+          id: entity.entity,
+          parent: entity.parent ?? null,
+          siblingIndex: entity.siblingIndex,
+        })),
+        ids,
+        parent,
+        atIndex,
+      );
+      if (!plan) return false;
+
       if (withUndo) pushUndo();
-      const moving = ids.filter((id) => {
-        if (parent != null && (id === parent || isDescendant(id, parent))) return false;
-        return true;
+      for (const id of plan.roots) {
+        const entity = find(id);
+        if (entity) entity.parent = plan.parent;
+      }
+      plan.destinationOrder.forEach((id, index) => {
+        const entity = find(id);
+        if (entity) entity.siblingIndex = index;
       });
-      // Move roots only (skip if ancestor also in selection)
-      const roots = moving.filter((id) => {
-        const e = find(id);
-        return !e?.parent || !moving.includes(e.parent);
-      });
-      for (const id of roots) {
-        const e = find(id);
-        if (!e) continue;
-        const oldParent = e.parent ?? null;
-        e.parent = parent;
-        if (atIndex == null) {
-          e.siblingIndex = nextSiblingIndex(parent);
-        } else {
-          const siblings = childrenOf(parent).filter((s) => s.entity !== id);
-          siblings.splice(Math.max(0, Math.min(atIndex, siblings.length)), 0, e);
-          siblings.forEach((s, i) => {
-            s.siblingIndex = i;
-          });
-        }
-        reindexSiblings(oldParent);
-        if (atIndex == null) reindexSiblings(parent);
+      for (const oldParent of plan.oldParents) {
+        if (oldParent !== parent) reindexSiblings(oldParent);
       }
       if (parent != null) expanded.add(parent);
+      return true;
     },
     reorderSibling(id: number, index: number) {
       const e = find(id);

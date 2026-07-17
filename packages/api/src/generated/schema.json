@@ -1360,6 +1360,15 @@
       "font_size": {
         "type": "number"
       },
+      "outline_color": {
+        "items": {
+          "type": "number"
+        },
+        "type": "array"
+      },
+      "outline_width": {
+        "type": "number"
+      },
       "raycast_target": {
         "type": "boolean"
       },
@@ -1374,6 +1383,8 @@
       "text",
       "color",
       "font_size",
+      "outline_color",
+      "outline_width",
       "alignment",
       "vertical_align",
       "raycast_target"

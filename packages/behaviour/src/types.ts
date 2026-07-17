@@ -1,6 +1,15 @@
 import type { ComponentType } from './components.js';
 
-export type FieldType = 'number' | 'boolean' | 'string' | 'vec3' | 'enum' | 'color';
+export type FieldType =
+  | 'number'
+  | 'boolean'
+  | 'string'
+  | 'vec3'
+  | 'enum'
+  | 'color'
+  | 'entity'
+  | 'sprite'
+  | 'asset';
 
 export type EnumOption = { value: string | number; label: string };
 
@@ -19,6 +28,10 @@ export type FieldMeta = {
   textAreaMaxLines?: number;
   multilineLines?: number;
   enumOptions?: EnumOption[];
+  /** Project asset kinds accepted by an asset reference field. */
+  assetKinds?: string[];
+  referenceType?: string;
+  allowNone?: boolean;
   hideInInspector?: boolean;
   /** When false, field is not written to scene JSON. Default true if decorated. */
   serialize: boolean;

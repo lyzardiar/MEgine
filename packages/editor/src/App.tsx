@@ -669,6 +669,14 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
               entity={snap.entities.find((e) => e.entity === selected) ?? null}
               entities={snap.entities}
               selectionCount={selectedIds.length}
+              onRename={(entity, name) => {
+                store.rename(entity, name);
+                refresh();
+              }}
+              onSetActive={(entity, active) => {
+                store.setActive(entity, active);
+                refresh();
+              }}
               onChangeTransform={(entity, transform) => {
                 store.setTransform(entity, transform);
                 refresh();

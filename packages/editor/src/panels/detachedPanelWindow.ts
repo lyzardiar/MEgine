@@ -157,6 +157,7 @@ export async function detachPanelWindow(
       height,
       x: screenPosition?.x,
       y: screenPosition?.y,
+      decorations: false,
       resizable: true,
       focus: true,
     });

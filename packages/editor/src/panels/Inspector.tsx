@@ -6,11 +6,21 @@ import {
   type ReactNode,
 } from 'react';
 import { getBehaviour } from '@mengine/behaviour';
-import { getComponentCatalog } from '../componentCatalog';
+import { createComponentDefaults, getComponentCatalog } from '../componentCatalog';
+import { getBuiltinInspectorField, type InspectorOption } from '../inspectorMetadata';
 import { eulerXYZToQuat, quatToEulerXYZ } from '../math3d';
+import { loadSpineInspectorOptions } from '../spine/spineCanvasRuntime';
 import { SchemaFieldEditor } from './SchemaFieldEditor';
 import { RectTransformEditor } from './RectTransformEditor';
-import { ButtonEditor, ColorField, ImageEditor } from './uiFieldEditors';
+import {
+  ColorField,
+  ImageEditor,
+  NamedReferenceField,
+  ProjectAssetSlot,
+  SpriteSlot,
+  StringListField,
+  UnityEventField,
+} from './uiFieldEditors';
 
 type Transform = {
   position: [number, number, number];
@@ -123,8 +133,9 @@ function CompBlock(props: {
     <div className="comp">
       <div className="comp-head">
         <button type="button" className="comp-toggle" onClick={() => setOpen(!open)}>
-          <span>{open ? '▾' : '▸'}</span>
-          <span>{props.title}</span>
+          <span className="comp-foldout">{open ? '▾' : '▸'}</span>
+          <span className="comp-icon" aria-hidden>{props.title.slice(0, 1).toUpperCase()}</span>
+          <span className="comp-title">{props.title}</span>
         </button>
         <div className="comp-head-actions" ref={menuRef}>
           {!!props.contextMenuItems?.length && (
@@ -183,10 +194,16 @@ function NumField(props: {
   label: string;
   value: number;
   step?: number;
+  min?: number;
+  max?: number;
   onChange: (v: number) => void;
 }) {
   const step = props.step ?? 1;
-  const onScrub = useScrubDrag(props.value, step, props.onChange);
+  const clamp = (value: number) => Math.min(
+    props.max ?? Number.POSITIVE_INFINITY,
+    Math.max(props.min ?? Number.NEGATIVE_INFINITY, value),
+  );
+  const onScrub = useScrubDrag(props.value, step, (value) => props.onChange(clamp(value)));
   return (
     <div className="field-row">
       <label
@@ -199,8 +216,10 @@ function NumField(props: {
       <input
         type="number"
         step={step}
+        min={props.min}
+        max={props.max}
         value={Number(props.value.toFixed(3))}
-        onChange={(e) => props.onChange(parseFloat(e.target.value) || 0)}
+        onChange={(e) => props.onChange(clamp(parseFloat(e.target.value) || 0))}
       />
     </div>
   );
@@ -272,9 +291,59 @@ function Camera3DEditor(props: {
   );
 }
 
+function inspectorLabel(key: string): string {
+  return key
+    .replace(/([a-z0-9])([A-Z])/g, '$1 $2')
+    .replace(/[_-]+/g, ' ')
+    .replace(/\b\w/g, (character) => character.toUpperCase());
+}
+
+function JsonValueField(props: {
+  label: string;
+  value: unknown;
+  onChange: (value: unknown) => void;
+}) {
+  const serialized = JSON.stringify(props.value, null, 2) ?? 'null';
+  const [draft, setDraft] = useState(serialized);
+  const [invalid, setInvalid] = useState(false);
+  useEffect(() => {
+    setDraft(serialized);
+    setInvalid(false);
+  }, [serialized]);
+  const commit = () => {
+    try {
+      props.onChange(JSON.parse(draft));
+      setInvalid(false);
+    } catch {
+      setInvalid(true);
+    }
+  };
+  return (
+    <div className="field-row">
+      <label>{props.label}</label>
+      <textarea
+        className={`field-json${invalid ? ' invalid' : ''}`}
+        value={draft}
+        aria-label={`${props.label} JSON`}
+        title={invalid ? 'Invalid JSON' : 'Structured value'}
+        onChange={(event) => {
+          setDraft(event.target.value);
+          setInvalid(false);
+        }}
+        onBlur={commit}
+        onKeyDown={(event) => {
+          if ((event.ctrlKey || event.metaKey) && event.key === 'Enter') commit();
+        }}
+      />
+    </div>
+  );
+}
+
 function GenericCompEditor(props: {
   componentType?: string;
   data: Record<string, unknown>;
+  entities: Array<{ entity: number; name?: string | null; components: Record<string, unknown> }>;
+  dynamicOptions?: Record<string, InspectorOption[]>;
   onChange: (next: Record<string, unknown>) => void;
 }) {
   const isColorVector = (key: string, value: number[]) => {
@@ -284,21 +353,90 @@ function GenericCompEditor(props: {
       || normalized === 'tint'
       || /(^|_)color($|_)/.test(normalized);
   };
-  const entries = Object.entries(props.data);
+  const defaults = props.componentType
+    ? (createComponentDefaults(props.componentType) ?? {})
+    : {};
+  const viewData = { ...defaults, ...props.data };
+  const entries = Object.entries(viewData);
   if (!entries.length) {
     return <div className="field-hint">No fields</div>;
   }
   return (
     <>
       {entries.map(([key, val]) => {
+        const meta = getBuiltinInspectorField(props.componentType, key);
+        if (meta?.visibleWhen && viewData[meta.visibleWhen.field] !== meta.visibleWhen.equals) {
+          return null;
+        }
+        const label = meta?.label ?? inspectorLabel(key);
+        const setValue = (value: unknown) => props.onChange({ ...props.data, [key]: value });
+
+        if (meta?.kind === 'event') {
+          return (
+            <UnityEventField
+              key={key}
+              label={`${label} ()`}
+              value={val}
+              entities={props.entities}
+              onChange={setValue}
+            />
+          );
+        }
+        if (meta?.kind === 'string-list') {
+          return (
+            <StringListField
+              key={key}
+              label={label}
+              value={Array.isArray(val) ? val.map(String) : []}
+              onChange={setValue}
+            />
+          );
+        }
+        if (meta?.kind === 'sprite') {
+          return (
+            <SpriteSlot
+              key={key}
+              label={label}
+              value={typeof val === 'string' ? val : ''}
+              noneValue={meta.noneValue}
+              onChange={setValue}
+            />
+          );
+        }
+        if (meta?.kind === 'project-asset') {
+          return (
+            <ProjectAssetSlot
+              key={key}
+              label={label}
+              value={typeof val === 'string' ? val : ''}
+              assetKinds={meta.assetKinds ?? []}
+              referenceType={meta.referenceType ?? 'Asset'}
+              allowNone={meta.allowNone}
+              onChange={setValue}
+            />
+          );
+        }
+        if (meta?.kind === 'named-reference') {
+          return (
+            <NamedReferenceField
+              key={key}
+              label={label}
+              value={typeof val === 'string' ? val : ''}
+              referenceType={meta.referenceType ?? 'Object'}
+              options={meta.options ?? []}
+              allowNone={meta.allowNone}
+              onChange={setValue}
+            />
+          );
+        }
         if (typeof val === 'boolean') {
           return (
             <div className="field-row" key={key}>
-              <label>{key}</label>
+              <label title={key}>{label}</label>
               <input
                 type="checkbox"
                 checked={val}
-                onChange={(e) => props.onChange({ ...props.data, [key]: e.target.checked })}
+                onChange={(e) => setValue(e.target.checked)}
               />
             </div>
           );
@@ -307,47 +445,43 @@ function GenericCompEditor(props: {
           return (
             <NumField
               key={key}
-              label={key}
+              label={label}
               value={val}
-              onChange={(v) => props.onChange({ ...props.data, [key]: v })}
+              min={meta?.min}
+              max={meta?.max}
+              step={meta?.step}
+              onChange={setValue}
             />
           );
         }
         if (typeof val === 'string') {
-          const options = key === 'simulation_space'
-            ? ['world', 'local']
-            : key === 'blend_mode'
-              ? ['alpha', 'additive']
-              : key === 'shape' && props.componentType === 'ParticleEmitter2D'
-                ? ['point', 'circle', 'box']
-                : key === 'shape' && props.componentType === 'ParticleEmitter3D'
-                  ? ['point', 'sphere', 'box', 'cone']
-                  : null;
+          const selectOptions = props.dynamicOptions?.[key] ?? meta?.options;
           return (
             <div className="field-row" key={key}>
-              <label>{key}</label>
-              {options ? (
+              <label title={key}>{label}</label>
+              {selectOptions ? (
                 <select
                   value={val}
-                  onChange={(e) => props.onChange({ ...props.data, [key]: e.target.value })}
+                  onChange={(e) => setValue(e.target.value)}
                 >
-                  {options.map((option) => <option key={option} value={option}>{option}</option>)}
+                  {!selectOptions.some((option) => option.value === val) && (
+                    <option value={val}>{val || 'None'}</option>
+                  )}
+                  {selectOptions.map((option) => (
+                    <option key={option.value} value={option.value}>{option.label}</option>
+                  ))}
                 </select>
+              ) : meta?.kind === 'multiline' ? (
+                <textarea
+                  rows={3}
+                  value={val}
+                  onChange={(e) => setValue(e.target.value)}
+                />
               ) : (
                 <input
                   type="text"
                   value={val}
-                  onDragOver={(event) => {
-                    if (key === 'skeleton' || key === 'atlas') event.preventDefault();
-                  }}
-                  onDrop={(event) => {
-                    if (key !== 'skeleton' && key !== 'atlas') return;
-                    event.preventDefault();
-                    const asset = event.dataTransfer.getData('text/mengine-asset')
-                      || event.dataTransfer.getData('text/plain');
-                    if (asset) props.onChange({ ...props.data, [key]: asset });
-                  }}
-                  onChange={(e) => props.onChange({ ...props.data, [key]: e.target.value })}
+                  onChange={(e) => setValue(e.target.value)}
                 />
               )}
             </div>
@@ -359,9 +493,9 @@ function GenericCompEditor(props: {
             return (
               <ColorField
                 key={key}
-                label={key}
+                label={label}
                 value={arr}
-                onChange={(next) => props.onChange({ ...props.data, [key]: next })}
+                onChange={setValue}
               />
             );
           }
@@ -369,7 +503,7 @@ function GenericCompEditor(props: {
             const axes = (['x', 'y', 'z', 'w'] as const).slice(0, arr.length);
             return (
               <div className={`axis-row axis-${arr.length}`} key={key}>
-                <label>{key}</label>
+                <label title={key}>{label}</label>
                 {axes.map((ax, i) => (
                   <AxisInput
                     key={ax}
@@ -378,7 +512,7 @@ function GenericCompEditor(props: {
                     onChange={(v) => {
                       const next = [...arr];
                       next[i] = v;
-                      props.onChange({ ...props.data, [key]: next });
+                      setValue(next);
                     }}
                   />
                 ))}
@@ -387,18 +521,80 @@ function GenericCompEditor(props: {
           }
         }
         return (
-          <div className="field-row" key={key}>
-            <label>{key}</label>
-            <code className="field-code">{JSON.stringify(val)}</code>
-          </div>
+          <JsonValueField key={key} label={label} value={val} onChange={setValue} />
         );
       })}
     </>
   );
 }
 
+function SpineSkeletonEditor(props: {
+  data: Record<string, unknown>;
+  entities: Array<{ entity: number; name?: string | null; components: Record<string, unknown> }>;
+  onChange: (next: Record<string, unknown>) => void;
+}) {
+  const skeleton = String(props.data.skeleton ?? '');
+  const atlas = String(props.data.atlas ?? '');
+  const premultipliedAlpha = props.data.premultiplied_alpha !== false;
+  const [options, setOptions] = useState<Record<string, InspectorOption[]> | undefined>();
+  const [status, setStatus] = useState<'idle' | 'loading' | 'ready' | 'error'>('idle');
+
+  useEffect(() => {
+    let cancelled = false;
+    if (!skeleton || !atlas) {
+      setOptions(undefined);
+      setStatus('idle');
+      return () => {
+        cancelled = true;
+      };
+    }
+    setStatus('loading');
+    void loadSpineInspectorOptions({ skeleton, atlas, premultipliedAlpha })
+      .then((result) => {
+        if (cancelled) return;
+        setOptions({
+          animation: [
+            { value: '', label: 'Default / First Animation' },
+            ...result.animations.map((value) => ({ value, label: value })),
+          ],
+          skin: result.skins.map((value) => ({ value, label: value })),
+        });
+        setStatus('ready');
+      })
+      .catch(() => {
+        if (cancelled) return;
+        setOptions(undefined);
+        setStatus('error');
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [atlas, premultipliedAlpha, skeleton]);
+
+  return (
+    <>
+      <GenericCompEditor
+        componentType="SpineSkeleton"
+        data={props.data}
+        entities={props.entities}
+        dynamicOptions={options}
+        onChange={props.onChange}
+      />
+      {status === 'loading' && <div className="field-hint">Loading animations and skins…</div>}
+      {status === 'error' && (
+        <div className="field-hint field-error">Could not read Spine animations or skins.</div>
+      )}
+    </>
+  );
+}
+
 export function Inspector(props: {
-  entity: { entity: number; name?: string | null; components: Record<string, unknown> } | null;
+  entity: {
+    entity: number;
+    name?: string | null;
+    active?: boolean;
+    components: Record<string, unknown>;
+  } | null;
   entities?: Array<{ entity: number; name?: string | null; components: Record<string, unknown> }>;
   selectionCount?: number;
   onChangeTransform: (entity: number, t: Transform) => void;
@@ -408,9 +604,16 @@ export function Inspector(props: {
   /** Merge patch into existing component (avoids stale full-replace wiping fields). */
   onPatchComponent?: (entity: number, type: string, patch: Record<string, unknown>) => void;
   onInvokeBehaviourMethod?: (entity: number, type: string, method: string) => void;
+  onRename?: (entity: number, name: string) => void;
+  onSetActive?: (entity: number, active: boolean) => void;
 }) {
   const [menuOpen, setMenuOpen] = useState(false);
+  const [nameDraft, setNameDraft] = useState('');
   const menuRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    setNameDraft(props.entity?.name ?? (props.entity ? `Entity ${props.entity.entity}` : ''));
+  }, [props.entity?.entity, props.entity?.name]);
 
   useEffect(() => {
     if (!menuOpen) return;
@@ -463,6 +666,15 @@ export function Inspector(props: {
   };
 
   const euler = quatToEulerXYZ(t.rotation);
+  const commitName = () => {
+    const next = nameDraft.trim();
+    const current = entity.name ?? `Entity ${entity.entity}`;
+    if (!next) {
+      setNameDraft(current);
+      return;
+    }
+    if (next !== current) props.onRename?.(entity.entity, next);
+  };
 
   const extras = Object.keys(entity.components).filter(
     (k) => k !== 'Transform' && k !== 'RectTransform',
@@ -480,8 +692,47 @@ export function Inspector(props: {
   return (
     <div className="dock-body">
       <div className="insp-header">
-        <div className="insp-name">{entity.name ?? `Entity ${entity.entity}`}</div>
-        <div className="insp-tag">Tag: Untagged · Layer: Default</div>
+        <div className="insp-object-row">
+          <input
+            className="insp-active"
+            type="checkbox"
+            checked={entity.active !== false}
+            title="Active"
+            aria-label="Active"
+            onChange={(event) => props.onSetActive?.(entity.entity, event.target.checked)}
+          />
+          <span className={`insp-object-icon${hasRect ? ' ui' : ''}`} aria-hidden>
+            {hasRect ? '▣' : '◇'}
+          </span>
+          <input
+            className="insp-name-input"
+            value={nameDraft}
+            aria-label="GameObject name"
+            onChange={(event) => setNameDraft(event.target.value)}
+            onBlur={commitName}
+            onKeyDown={(event) => {
+              if (event.key === 'Enter') event.currentTarget.blur();
+              if (event.key === 'Escape') {
+                setNameDraft(entity.name ?? `Entity ${entity.entity}`);
+                event.currentTarget.blur();
+              }
+            }}
+          />
+        </div>
+        <div className="insp-meta-row">
+          <label>
+            <span>Tag</span>
+            <select value="Untagged" disabled aria-label="Tag">
+              <option>Untagged</option>
+            </select>
+          </label>
+          <label>
+            <span>Layer</span>
+            <select value="Default" disabled aria-label="Layer">
+              <option>Default</option>
+            </select>
+          </label>
+        </div>
       </div>
 
       {hasRect && (
@@ -544,6 +795,7 @@ export function Inspector(props: {
                 fields={behaviour.fields}
                 methods={behaviour.methods}
                 data={data}
+                entities={props.entities ?? [entity]}
                 onChange={(next) => props.onSetComponent(entity.entity, k, next)}
                 onInvokeMethod={(method) =>
                   props.onInvokeBehaviourMethod?.(entity.entity, k, method)
@@ -574,22 +826,17 @@ export function Inspector(props: {
                   }
                 }}
               />
-            ) : k === 'Button' ? (
-              <ButtonEditor
+            ) : k === 'SpineSkeleton' ? (
+              <SpineSkeletonEditor
                 data={data}
                 entities={props.entities ?? [entity]}
-                onPatch={(patch) => {
-                  if (props.onPatchComponent) {
-                    props.onPatchComponent(entity.entity, 'Button', patch);
-                  } else {
-                    props.onSetComponent(entity.entity, 'Button', { ...data, ...patch });
-                  }
-                }}
+                onChange={(next) => props.onSetComponent(entity.entity, k, next)}
               />
             ) : (
               <GenericCompEditor
                 componentType={k}
                 data={data}
+                entities={props.entities ?? [entity]}
                 onChange={(next) => props.onSetComponent(entity.entity, k, next)}
               />
             )}

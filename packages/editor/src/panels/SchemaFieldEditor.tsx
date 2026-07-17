@@ -1,5 +1,13 @@
 import { useMemo, useState, type ReactNode } from 'react';
 import type { FieldMeta, MethodMeta } from '@mengine/behaviour';
+import type { ProjectFileAsset } from '../projectAssets';
+import {
+  ColorField,
+  EntityReferenceField,
+  ProjectAssetSlot,
+  SpriteSlot,
+  type EntRef,
+} from './uiFieldEditors';
 
 function condOk(
   data: Record<string, unknown>,
@@ -23,20 +31,6 @@ function fieldEnabled(f: FieldMeta, data: Record<string, unknown>): boolean {
   if (f.enableIf && !condOk(data, f.enableIf)) return false;
   if (f.disableIf && condOk(data, f.disableIf)) return false;
   return true;
-}
-
-function colorToHex(c: number[]): string {
-  const r = Math.round(Math.min(1, Math.max(0, c[0] ?? 0)) * 255);
-  const g = Math.round(Math.min(1, Math.max(0, c[1] ?? 0)) * 255);
-  const b = Math.round(Math.min(1, Math.max(0, c[2] ?? 0)) * 255);
-  return `#${[r, g, b].map((x) => x.toString(16).padStart(2, '0')).join('')}`;
-}
-
-function hexToColor(hex: string, alpha = 1): [number, number, number, number] {
-  const m = /^#?([0-9a-f]{6})$/i.exec(hex);
-  if (!m) return [1, 1, 1, alpha];
-  const n = parseInt(m[1], 16);
-  return [((n >> 16) & 255) / 255, ((n >> 8) & 255) / 255, (n & 255) / 255, alpha];
 }
 
 type AxisInputProps = {
@@ -83,6 +77,7 @@ export function SchemaFieldEditor(props: {
   fields: FieldMeta[];
   methods?: MethodMeta[];
   data: Record<string, unknown>;
+  entities?: EntRef[];
   onChange: (next: Record<string, unknown>) => void;
   onInvokeMethod?: (methodKey: string) => void;
 }) {
@@ -107,6 +102,63 @@ export function SchemaFieldEditor(props: {
     const requiredEmpty =
       f.required &&
       (raw == null || raw === '' || (typeof raw === 'number' && Number.isNaN(raw)));
+
+    if (f.type === 'entity') {
+      const value = typeof raw === 'number'
+        ? raw
+        : typeof raw === 'string' && raw.trim() && Number.isFinite(Number(raw))
+          ? Number(raw)
+          : null;
+      return (
+        <FieldChrome key={f.key} field={f}>
+          <EntityReferenceField
+            label={label}
+            value={value}
+            entities={props.entities ?? []}
+            allowNone={f.allowNone !== false}
+            onChange={(next) => {
+              if (enabled) setKey(f, next);
+            }}
+          />
+        </FieldChrome>
+      );
+    }
+
+    if (f.type === 'sprite') {
+      return (
+        <FieldChrome key={f.key} field={f}>
+          <SpriteSlot
+            label={label}
+            value={typeof raw === 'string' ? raw : ''}
+            noneValue=""
+            onChange={(next) => {
+              if (enabled) setKey(f, next);
+            }}
+          />
+        </FieldChrome>
+      );
+    }
+
+    if (f.type === 'asset') {
+      const supportedKinds = (f.assetKinds ?? []).filter(
+        (kind): kind is ProjectFileAsset['kind'] =>
+          kind === 'spine-json' || kind === 'spine-binary' || kind === 'spine-atlas',
+      );
+      return (
+        <FieldChrome key={f.key} field={f}>
+          <ProjectAssetSlot
+            label={label}
+            value={typeof raw === 'string' ? raw : ''}
+            assetKinds={supportedKinds}
+            referenceType={f.referenceType ?? 'Asset'}
+            allowNone={f.allowNone !== false}
+            onChange={(next) => {
+              if (enabled) setKey(f, next);
+            }}
+          />
+        </FieldChrome>
+      );
+    }
 
     if (f.type === 'boolean') {
       const row = (
@@ -155,15 +207,13 @@ export function SchemaFieldEditor(props: {
       const arr = (Array.isArray(raw) && raw.length >= 3 ? raw : [1, 1, 1, 1]) as number[];
       return (
         <FieldChrome key={f.key} field={f}>
-          <div className={`field-row${requiredEmpty ? ' field-required' : ''}`} title={title}>
-            <label>{label}</label>
-            <input
-              type="color"
-              disabled={!enabled}
-              value={colorToHex(arr)}
-              onChange={(e) => setKey(f, hexToColor(e.target.value, arr[3] ?? 1))}
-            />
-          </div>
+          <ColorField
+            label={label}
+            value={arr}
+            onChange={(next) => {
+              if (enabled) setKey(f, next);
+            }}
+          />
         </FieldChrome>
       );
     }

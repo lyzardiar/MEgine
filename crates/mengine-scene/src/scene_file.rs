@@ -2,6 +2,7 @@ use crate::SceneError;
 use mengine_core::snapshot::WorldSnapshot;
 use mengine_core::World;
 use serde::{Deserialize, Serialize};
+use std::collections::HashMap;
 use std::fs::OpenOptions;
 use std::io::Write;
 use std::path::Path;
@@ -137,30 +138,29 @@ pub fn apply_snapshot(world: &mut World, snap: &WorldSnapshot) {
             components: serde_json::Value::Object(components),
         });
     }
-    world.commit();
+    // `commit` returns entities in Spawn command order. Do not rebuild this list
+    // with `iter_entities`: clearing a populated world fills the free list and
+    // subsequent spawns reuse slots in reverse order, so slot iteration no longer
+    // matches the snapshot order.
+    let spawned = world.commit();
+    let entity_map: HashMap<u64, _> = snap
+        .entities
+        .iter()
+        .zip(spawned.iter().copied())
+        .map(|(snapshot, spawned)| (snapshot.entity, spawned))
+        .collect();
 
-    // Re-apply parents in second pass (entities re-created with new ids — map by order)
-    // MVP: parent links restored by index order matching snapshot order when possible.
-    let spawned: Vec<_> = world.iter_entities().collect();
-    for (i, ent) in snap.entities.iter().enumerate() {
-        if let Some(child) = spawned.get(i) {
-            world.set_editor_state(*child, ent.sibling_index, ent.active);
-        }
-        if let (Some(parent_u64), Some(child)) = (ent.parent, spawned.get(i)) {
-            // Find parent by original id match in snapshot list
-            if let Some(pi) = snap.entities.iter().position(|e| e.entity == parent_u64) {
-                if let Some(p) = spawned.get(pi) {
-                    world.set_parent(*child, Some(*p));
-                }
-            }
+    for ent in &snap.entities {
+        let Some(&child) = entity_map.get(&ent.entity) else {
+            continue;
+        };
+        world.set_editor_state(child, ent.sibling_index, ent.active);
+        if let Some(parent) = ent.parent.and_then(|id| entity_map.get(&id)).copied() {
+            world.set_parent(child, Some(parent));
         }
     }
 
-    if let Some(sel) = snap.selected {
-        if let Some(i) = snap.entities.iter().position(|e| e.entity == sel) {
-            world.selected = spawned.get(i).copied();
-        }
-    }
+    world.selected = snap.selected.and_then(|id| entity_map.get(&id)).copied();
 }
 
 #[cfg(test)]
@@ -216,6 +216,67 @@ mod tests {
             "kept"
         );
         std::fs::remove_dir_all(dir).unwrap();
+    }
+
+    #[test]
+    fn preserves_hierarchy_when_reusing_entity_slots_in_reverse_order() {
+        let mut source = World::new();
+        for name in ["Canvas", "Panel", "Image", "Text", "Badge"] {
+            source.commands.push(WorldCommand::Spawn {
+                name: Some(name.into()),
+                components: json!({}),
+            });
+        }
+        let entities = source.commit();
+        source.set_parent(entities[1], Some(entities[0]));
+        source.set_parent(entities[2], Some(entities[1]));
+        source.set_parent(entities[3], Some(entities[1]));
+        source.set_parent(entities[4], Some(entities[2]));
+        source.set_editor_state(entities[2], 1, true);
+        source.set_editor_state(entities[3], 0, false);
+        source.selected = Some(entities[4]);
+        let snapshot = WorldSnapshot::from_world(&source);
+
+        // Populate the destination first. apply_snapshot will despawn these in
+        // ascending slot order, causing Spawn to reuse the slots in reverse.
+        let mut loaded = World::new();
+        for index in 0..8 {
+            loaded.commands.push(WorldCommand::Spawn {
+                name: Some(format!("Old {index}")),
+                components: json!({}),
+            });
+        }
+        loaded.commit();
+        apply_snapshot(&mut loaded, &snapshot);
+
+        let round_trip = WorldSnapshot::from_world(&loaded);
+        let by_name: HashMap<_, _> = round_trip
+            .entities
+            .iter()
+            .map(|entity| (entity.name.as_deref().unwrap(), entity))
+            .collect();
+        let parent_name = |name: &str| {
+            let parent_id = by_name[name].parent.expect("entity has a parent");
+            round_trip
+                .entities
+                .iter()
+                .find(|entity| entity.entity == parent_id)
+                .and_then(|entity| entity.name.as_deref())
+                .unwrap()
+        };
+
+        assert_eq!(parent_name("Panel"), "Canvas");
+        assert_eq!(parent_name("Image"), "Panel");
+        assert_eq!(parent_name("Text"), "Panel");
+        assert_eq!(parent_name("Badge"), "Image");
+        assert_eq!(by_name["Image"].sibling_index, 1);
+        assert_eq!(by_name["Text"].sibling_index, 0);
+        assert!(!by_name["Text"].active);
+        assert_eq!(
+            round_trip.selected,
+            Some(by_name["Badge"].entity),
+            "selection must follow the remapped entity id"
+        );
     }
 
     #[test]

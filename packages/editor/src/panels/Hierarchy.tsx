@@ -1,4 +1,12 @@
-import { useEffect, useMemo, useRef, useState, type DragEvent, type MouseEvent } from 'react';
+import {
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type DragEvent,
+  type MouseEvent,
+  type PointerEvent as ReactPointerEvent,
+} from 'react';
 import type { EditorStore, EntityRec, TreeNode } from '../store';
 import { HierarchyContextMenu, type CtxAction } from './HierarchyContextMenu';
 import { subscribePing } from '../pingBus';
@@ -37,8 +45,20 @@ export function Hierarchy(props: {
   const [editValue, setEditValue] = useState('');
   const [dragId, setDragId] = useState<number | null>(null);
   const [dropTarget, setDropTarget] = useState<{ id: number; pos: DropPos } | null>(null);
+  const [rootDrop, setRootDrop] = useState(false);
   const [pingId, setPingId] = useState<number | null>(null);
   const rowRefs = useRef<Map<number, HTMLDivElement>>(new Map());
+  const hierarchyBodyRef = useRef<HTMLDivElement>(null);
+  const pointerDrag = useRef<{
+    id: number;
+    pointerId: number;
+    startX: number;
+    startY: number;
+    active: boolean;
+  } | null>(null);
+  const pointerDropTarget = useRef<{ id: number; pos: DropPos } | null>(null);
+  const pointerRootDrop = useRef(false);
+  const suppressClick = useRef(false);
   const lastClick = useRef<{ id: number; t: number }>({ id: -1, t: 0 });
 
   useEffect(() => {
@@ -84,6 +104,10 @@ export function Hierarchy(props: {
   };
 
   const onRowClick = (id: number, ev: MouseEvent) => {
+    if (suppressClick.current) {
+      suppressClick.current = false;
+      return;
+    }
     if (editing === id) return;
     const now = Date.now();
     const slowDbl =
@@ -164,52 +188,169 @@ export function Hierarchy(props: {
   };
 
   const onDragStart = (ev: DragEvent, id: number) => {
+    pointerDrag.current = null;
     setDragId(id);
     // 勿在拖拽时改选中：否则 Inspector 切走，Object 槽（如 On Click）会消失
     ev.dataTransfer.setData('text/mengine-entity', String(id));
     ev.dataTransfer.setData('text/plain', String(id));
-    ev.dataTransfer.effectAllowed = 'copyMove';
+    ev.dataTransfer.effectAllowed = 'move';
+  };
+
+  const isEntityDrag = (ev: DragEvent) =>
+    Array.from(ev.dataTransfer.types).includes('text/mengine-entity');
+
+  const selectedDragIds = (id: number) =>
+    props.selectedIds.includes(id) && props.selectedIds.length > 1
+      ? props.selectedIds
+      : [id];
+
+  const draggedIds = (ev: DragEvent): number[] => {
+    const raw = Number(
+      ev.dataTransfer.getData('text/mengine-entity') ||
+        ev.dataTransfer.getData('text/plain'),
+    );
+    if (!Number.isFinite(raw)) return [];
+    return selectedDragIds(raw);
+  };
+
+  const finishDrop = (ids: number[], parent: number | null, atIndex?: number) => {
+    const changed = props.store.setParent(ids, parent, atIndex);
+    setDropTarget(null);
+    setRootDrop(false);
+    setDragId(null);
+    if (!changed) return;
+    props.onLog(parent == null ? 'Move to root' : 'Reparent');
+    props.onRefresh();
+  };
+
+  const placeAtTarget = (ids: number[], targetId: number, pos: DropPos) => {
+    const target = props.nodes.find((node) => node.entity.entity === targetId)?.entity;
+    if (!target) return;
+    if (pos === 'into') {
+      finishDrop(ids, targetId);
+      return;
+    }
+    const parent = target.parent ?? null;
+    const moving = new Set(ids);
+    const siblings = props.nodes.filter(
+      (node) => (node.entity.parent ?? null) === parent && !moving.has(node.entity.entity),
+    );
+    const index = siblings.findIndex((node) => node.entity.entity === targetId);
+    if (index < 0) return;
+    finishDrop(ids, parent, pos === 'before' ? index : index + 1);
   };
 
   const onDragOver = (ev: DragEvent, id: number) => {
+    if (!isEntityDrag(ev)) return;
     ev.preventDefault();
+    ev.stopPropagation();
     ev.dataTransfer.dropEffect = 'move';
     const rect = (ev.currentTarget as HTMLElement).getBoundingClientRect();
     const y = ev.clientY - rect.top;
     const ratio = y / rect.height;
     const pos: DropPos = ratio < 0.25 ? 'before' : ratio > 0.75 ? 'after' : 'into';
+    setRootDrop(false);
     setDropTarget({ id, pos });
   };
 
   const onDrop = (ev: DragEvent, targetId: number) => {
     ev.preventDefault();
+    ev.stopPropagation();
     const pos = dropTarget?.id === targetId ? dropTarget.pos : 'into';
-    setDropTarget(null);
-    setDragId(null);
-    const raw = Number(
-      ev.dataTransfer.getData('text/mengine-entity') ||
-        ev.dataTransfer.getData('text/plain'),
-    );
-    if (!Number.isFinite(raw)) return;
-    // 多选拖其一：整组重挂；否则只挂被拖的那个
-    const ids =
-      props.selectedIds.includes(raw) && props.selectedIds.length > 1
-        ? props.selectedIds
-        : [raw];
-    const target = props.nodes.find((n) => n.entity.entity === targetId)?.entity;
-    if (!target) return;
+    const ids = draggedIds(ev);
+    if (!ids.length) return;
+    placeAtTarget(ids, targetId, pos);
+  };
 
-    if (pos === 'into') {
-      props.store.setParent(ids, targetId);
-    } else {
-      const parent = target.parent ?? null;
-      const siblings = props.nodes.filter((n) => (n.entity.parent ?? null) === parent);
-      const idx = siblings.findIndex((n) => n.entity.entity === targetId);
-      const insertAt = pos === 'before' ? idx : idx + 1;
-      props.store.setParent(ids, parent, Math.max(0, insertAt));
+  const clearPointerDrag = () => {
+    pointerDrag.current = null;
+    pointerDropTarget.current = null;
+    pointerRootDrop.current = false;
+    setDragId(null);
+    setDropTarget(null);
+    setRootDrop(false);
+  };
+
+  const onPointerDown = (ev: ReactPointerEvent, id: number) => {
+    if (ev.button !== 0 || editing === id) return;
+    const target = ev.target as HTMLElement;
+    if (target.closest('button, input, textarea, select, .hier-icon')) return;
+    pointerDrag.current = {
+      id,
+      pointerId: ev.pointerId,
+      startX: ev.clientX,
+      startY: ev.clientY,
+      active: false,
+    };
+    ev.currentTarget.setPointerCapture(ev.pointerId);
+  };
+
+  const onPointerMove = (ev: ReactPointerEvent) => {
+    const drag = pointerDrag.current;
+    if (!drag || drag.pointerId !== ev.pointerId) return;
+    if (!drag.active) {
+      if (Math.hypot(ev.clientX - drag.startX, ev.clientY - drag.startY) < 4) return;
+      drag.active = true;
+      setDragId(drag.id);
     }
-    props.onLog('Reparent');
-    props.onRefresh();
+    ev.preventDefault();
+
+    const body = hierarchyBodyRef.current;
+    const hit = document.elementFromPoint(ev.clientX, ev.clientY) as HTMLElement | null;
+    const row = hit?.closest<HTMLElement>('.hier-row') ?? null;
+    if (row && body?.contains(row)) {
+      const targetId = Number(row.dataset.entityId);
+      if (!Number.isFinite(targetId) || targetId === drag.id) {
+        pointerDropTarget.current = null;
+        pointerRootDrop.current = false;
+        setDropTarget(null);
+        setRootDrop(false);
+        return;
+      }
+      const rect = row.getBoundingClientRect();
+      const ratio = (ev.clientY - rect.top) / rect.height;
+      const pos: DropPos = ratio < 0.25 ? 'before' : ratio > 0.75 ? 'after' : 'into';
+      pointerRootDrop.current = false;
+      pointerDropTarget.current = { id: targetId, pos };
+      setRootDrop(false);
+      setDropTarget({ id: targetId, pos });
+      return;
+    }
+    if (body && hit && body.contains(hit)) {
+      pointerDropTarget.current = null;
+      pointerRootDrop.current = true;
+      setDropTarget(null);
+      setRootDrop(true);
+      return;
+    }
+    pointerDropTarget.current = null;
+    pointerRootDrop.current = false;
+    setDropTarget(null);
+    setRootDrop(false);
+  };
+
+  const onPointerUp = (ev: ReactPointerEvent) => {
+    const drag = pointerDrag.current;
+    if (!drag || drag.pointerId !== ev.pointerId) return;
+    if (ev.currentTarget.hasPointerCapture(ev.pointerId)) {
+      ev.currentTarget.releasePointerCapture(ev.pointerId);
+    }
+    if (!drag.active) {
+      clearPointerDrag();
+      return;
+    }
+    ev.preventDefault();
+    ev.stopPropagation();
+    suppressClick.current = true;
+    window.setTimeout(() => {
+      suppressClick.current = false;
+    }, 0);
+    const ids = selectedDragIds(drag.id);
+    const target = pointerDropTarget.current;
+    const moveToRoot = pointerRootDrop.current;
+    clearPointerDrag();
+    if (target) placeAtTarget(ids, target.id, target.pos);
+    else if (moveToRoot) finishDrop(ids, null);
   };
 
   return (
@@ -234,9 +375,32 @@ export function Hierarchy(props: {
         </button>
       </div>
       <div
-        className="dock-body hier-body"
+        ref={hierarchyBodyRef}
+        className={`dock-body hier-body${rootDrop ? ' drop-root' : ''}`}
         tabIndex={0}
+        title="拖到节点中部更改父级；拖到上下边缘调整顺序；拖到空白处移到根节点"
         onContextMenu={(e) => onContext(e, null)}
+        onPointerMove={onPointerMove}
+        onPointerUp={onPointerUp}
+        onPointerCancel={clearPointerDrag}
+        onDragOver={(e) => {
+          if (!isEntityDrag(e)) return;
+          e.preventDefault();
+          e.dataTransfer.dropEffect = 'move';
+          setDropTarget(null);
+          setRootDrop(true);
+        }}
+        onDragLeave={(e) => {
+          if (!(e.currentTarget as HTMLElement).contains(e.relatedTarget as Node | null)) {
+            setRootDrop(false);
+          }
+        }}
+        onDrop={(e) => {
+          if (!isEntityDrag(e)) return;
+          e.preventDefault();
+          const ids = draggedIds(e);
+          if (ids.length) finishDrop(ids, null);
+        }}
       >
         {filtered.map((n) => {
           const id = n.entity.entity;
@@ -263,17 +427,22 @@ export function Hierarchy(props: {
                 .filter(Boolean)
                 .join(' ')}
               style={{ paddingLeft: 8 + n.depth * 14 }}
-              draggable={editing !== id}
+              data-entity-id={id}
+              data-depth={n.depth}
+              aria-selected={selected}
               onClick={(e) => onRowClick(id, e)}
               onContextMenu={(e) => onContext(e, id)}
-              onDragStart={(e) => onDragStart(e, id)}
+              onPointerDown={(e) => onPointerDown(e, id)}
+              onPointerMove={onPointerMove}
+              onPointerUp={onPointerUp}
+              onPointerCancel={clearPointerDrag}
               onDragOver={(e) => onDragOver(e, id)}
-              onDragLeave={() => setDropTarget(null)}
-              onDrop={(e) => onDrop(e, id)}
-              onDragEnd={() => {
-                setDragId(null);
-                setDropTarget(null);
+              onDragLeave={(e) => {
+                if (!(e.currentTarget as HTMLElement).contains(e.relatedTarget as Node | null)) {
+                  setDropTarget(null);
+                }
               }}
+              onDrop={(e) => onDrop(e, id)}
             >
               <button
                 type="button"
@@ -299,7 +468,15 @@ export function Hierarchy(props: {
                   props.onRefresh();
                 }}
               />
-              <span className="hier-icon">{iconFor(n.entity)}</span>
+              <span
+                className="hier-icon"
+                draggable={editing !== id}
+                title="拖动节点行调整层级；拖动图标可赋值给对象引用"
+                onDragStart={(e) => onDragStart(e, id)}
+                onDragEnd={clearPointerDrag}
+              >
+                {iconFor(n.entity)}
+              </span>
               {editing === id ? (
                 <input
                   className="hier-rename"
