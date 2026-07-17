@@ -81,6 +81,7 @@ import {
 } from '../rectAlignment';
 import { buildSceneGrid } from '../sceneGrid';
 import { moveAnchorHandle } from '../ui/rectTransformModel';
+import { distanceForSceneZoom, normalizeSceneZoom } from '../sceneZoom';
 
 const SCENE_2D_KEY = 'mengine.scene.2d';
 const SCENE_SNAP_KEY = 'mengine.scene.snap';
@@ -434,6 +435,9 @@ export function Viewport(props: {
   const [anchorEditing, setAnchorEditing] = useState(false);
   const anchorEditingRef = useRef(anchorEditing);
   anchorEditingRef.current = anchorEditing;
+  const [sceneZoomPercent, setSceneZoomPercent] = useState(100);
+  const sceneCanvasScaleRef = useRef(1);
+  const sceneZoomPercentRef = useRef(100);
   const [snapSettings, setSnapSettings] = useState(loadSceneSnap);
   const snapSettingsRef = useRef(snapSettings);
   snapSettingsRef.current = snapSettings;
@@ -899,6 +903,19 @@ export function Viewport(props: {
         );
         uiItemsRef.current = uiItems;
         uiLayoutScaleRef.current = layoutScale || 1;
+
+        if (scene2DRef.current) {
+          const canvasItem = uiItems.find((item) => item.role === 'canvas');
+          if (canvasItem && gameBox.w > 1) {
+            const nextScale = normalizeSceneZoom(canvasItem.rect.w / gameBox.w);
+            const nextPercent = Math.round(nextScale * 100);
+            sceneCanvasScaleRef.current = nextScale;
+            if (nextPercent !== sceneZoomPercentRef.current) {
+              sceneZoomPercentRef.current = nextPercent;
+              setSceneZoomPercent(nextPercent);
+            }
+          }
+        }
 
         if (uiItems.length) {
           if (scene2DRef.current && sceneGridRef.current) {
@@ -1678,6 +1695,21 @@ export function Viewport(props: {
     setTick((t) => t + 1);
   };
 
+  const applySceneZoom = (targetScale: number) => {
+    if (!scene2DRef.current) return;
+    const target = normalizeSceneZoom(targetScale);
+    liveCam.current.distance = distanceForSceneZoom(
+      liveCam.current.distance,
+      sceneCanvasScaleRef.current,
+      target,
+    );
+    sceneCanvasScaleRef.current = target;
+    const nextPercent = Math.round(target * 100);
+    sceneZoomPercentRef.current = nextPercent;
+    setSceneZoomPercent(nextPercent);
+    syncCamToStore();
+  };
+
   const updateSnapSettings = (patch: Partial<SceneSnapSettings>) => {
     const next = normalizeSceneSnapSettings({ ...snapSettingsRef.current, ...patch });
     snapSettingsRef.current = next;
@@ -1807,6 +1839,9 @@ export function Viewport(props: {
       && entity.components.RectTransform != null
       && entity.components.Canvas == null,
   );
+  const canZoomScene = scene2D && props.entities.some(
+    (entity) => entity.active !== false && entity.components.Canvas != null,
+  );
 
   return (
     <div className="viewport-wrap">
@@ -1819,6 +1854,35 @@ export function Viewport(props: {
               onClick={() => applyScene2D(!scene2D)}
             >
               2D
+            </button>
+          </div>
+          <div className="scene-zoom" aria-label="2D Scene zoom">
+            <button
+              type="button"
+              disabled={!canZoomScene}
+              aria-label="Zoom out"
+              title="Zoom out"
+              onClick={() => applySceneZoom(sceneCanvasScaleRef.current / 1.25)}
+            >
+              -
+            </button>
+            <button
+              type="button"
+              disabled={!canZoomScene}
+              className="scene-zoom-value"
+              title="Reset Canvas to 1:1 pixels"
+              onClick={() => applySceneZoom(1)}
+            >
+              {sceneZoomPercent}%
+            </button>
+            <button
+              type="button"
+              disabled={!canZoomScene}
+              aria-label="Zoom in"
+              title="Zoom in"
+              onClick={() => applySceneZoom(sceneCanvasScaleRef.current * 1.25)}
+            >
+              +
             </button>
           </div>
           <button

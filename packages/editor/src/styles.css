@@ -2140,6 +2140,45 @@ body.insp-scrubbing * {
   cursor: default;
 }
 
+.scene-zoom {
+  display: inline-flex;
+  height: 26px;
+  border: 1px solid var(--u-border-2);
+  background: var(--u-input);
+}
+
+.scene-zoom button {
+  min-width: 24px;
+  padding: 0 6px;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  color: var(--u-muted);
+  font: inherit;
+  font-size: 11px;
+  cursor: pointer;
+}
+
+.scene-zoom button + button {
+  border-left: 1px solid var(--u-border-2);
+}
+
+.scene-zoom button:hover:not(:disabled) {
+  color: #fff;
+  background: #444;
+}
+
+.scene-zoom button:disabled {
+  opacity: 0.38;
+  cursor: default;
+}
+
+.scene-zoom .scene-zoom-value {
+  min-width: 52px;
+  color: var(--u-text-bright);
+  font-variant-numeric: tabular-nums;
+}
+
 .scene-snap {
   position: relative;
   flex: 0 0 auto;
