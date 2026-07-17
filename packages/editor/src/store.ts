@@ -27,6 +27,7 @@ import {
   createUiPanelComponents,
   createUiProgressBarComponents,
   createUiScrollViewComponents,
+  createUiScrollbarComponents,
   createUiSliderComponents,
   createUiTabViewComponents,
   createUiTextComponents,
@@ -1422,6 +1423,10 @@ export function createEditorStore() {
         this.spawnUiSlider();
         return;
       }
+      if (name === 'Scrollbar') {
+        this.spawnUiScrollbar();
+        return;
+      }
       if (name === 'Panel') {
         this.spawnUiPanel();
         return;
@@ -1558,6 +1563,9 @@ export function createEditorStore() {
     },
     spawnUiSlider(parent?: number | null) {
       return spawnUiControl('Slider', createUiSliderComponents(), parent);
+    },
+    spawnUiScrollbar(parent?: number | null) {
+      return spawnUiControl('Scrollbar', createUiScrollbarComponents(), parent);
     },
     spawnUiPanel(parent?: number | null) {
       return spawnUiControl('Panel', createUiPanelComponents(), parent);

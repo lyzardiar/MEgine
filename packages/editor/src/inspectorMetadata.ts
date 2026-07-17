@@ -190,6 +190,13 @@ export const BUILTIN_INSPECTOR_FIELDS: Readonly<
     direction: { kind: 'enum', options: direction },
     on_value_changed: event,
   },
+  Scrollbar: {
+    value: { min: 0, max: 1, step: 0.01 },
+    size: { min: 0, max: 1, step: 0.01 },
+    number_of_steps: { min: 0, step: 1 },
+    direction: { kind: 'enum', options: direction },
+    on_value_changed: event,
+  },
   Panel: { border_width: { min: 0, step: 0.25 } },
   CanvasGroup: { alpha: { min: 0, max: 1, step: 0.01 } },
   LayoutGroup: {

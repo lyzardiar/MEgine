@@ -13,6 +13,13 @@ import { drawSpriteInRect } from '../spriteDraw';
 import { resolveSpriteId } from '../spriteLibrary';
 import { project, type Camera, type Vec3 } from '../math3d';
 import { rectComponentSceneScale } from '../rectSceneScale';
+import {
+  isVerticalRange,
+  normalizedRangePosition,
+  scrollbarHandleRange,
+  scrollbarValueFromPosition,
+  type UiRangeDirection,
+} from './uiRange';
 
 /** World pixels-per-unit for Scene view Overlay canvas plane. */
 export const UI_SCENE_PPU = 100;
@@ -75,6 +82,16 @@ export type UiDrawItem = {
     interactable: boolean;
     direction: 'LeftToRight' | 'RightToLeft' | 'BottomToTop' | 'TopToBottom';
     fillColor: [number, number, number, number];
+    backgroundColor: [number, number, number, number];
+    handleColor: [number, number, number, number];
+    onValueChanged: unknown;
+  };
+  scrollbar?: {
+    value: number;
+    size: number;
+    numberOfSteps: number;
+    interactable: boolean;
+    direction: UiRangeDirection;
     backgroundColor: [number, number, number, number];
     handleColor: [number, number, number, number];
     onValueChanged: unknown;
@@ -420,6 +437,7 @@ export function layoutUiOverlay(
       const text = ent.components.Text as Record<string, unknown> | undefined;
       const toggle = ent.components.Toggle as Record<string, unknown> | undefined;
       const slider = ent.components.Slider as Record<string, unknown> | undefined;
+      const scrollbar = ent.components.Scrollbar as Record<string, unknown> | undefined;
       const panel = ent.components.Panel as Record<string, unknown> | undefined;
       const progress = ent.components.ProgressBar as Record<string, unknown> | undefined;
       const input = ent.components.InputField as Record<string, unknown> | undefined;
@@ -460,7 +478,7 @@ export function layoutUiOverlay(
           clip,
           selected: selectedIds.has(ent.entity),
         });
-      } else if (img || btn || text || toggle || slider || panel || progress || input || dropdown || list || scroll || tabs) {
+      } else if (img || btn || text || toggle || slider || scrollbar || panel || progress || input || dropdown || list || scroll || tabs) {
         out.push({
           entity: ent.entity,
           rect,
@@ -554,6 +572,35 @@ export function layoutUiOverlay(
                 ),
                 onValueChanged:
                   slider.on_value_changed ?? slider.onValueChanged ?? null,
+              }
+            : undefined,
+          scrollbar: scrollbar
+            ? {
+                value: Math.max(0, Math.min(1, number(scrollbar.value, 0))),
+                size: Math.max(0, Math.min(1, number(scrollbar.size, 0.2))),
+                numberOfSteps: Math.max(
+                  0,
+                  Math.trunc(number(
+                    scrollbar.number_of_steps ?? scrollbar.numberOfSteps,
+                    0,
+                  )),
+                ),
+                interactable: scrollbar.interactable !== false && state.interactable,
+                direction: enumValue(
+                  scrollbar.direction,
+                  ['LeftToRight', 'RightToLeft', 'BottomToTop', 'TopToBottom'] as const,
+                  'BottomToTop',
+                ),
+                backgroundColor: color4(
+                  scrollbar.background_color ?? scrollbar.backgroundColor,
+                  [0.12, 0.14, 0.18, 1],
+                ),
+                handleColor: color4(
+                  scrollbar.handle_color ?? scrollbar.handleColor,
+                  [0.52, 0.58, 0.68, 1],
+                ),
+                onValueChanged:
+                  scrollbar.on_value_changed ?? scrollbar.onValueChanged ?? null,
               }
             : undefined,
           panel: panel
@@ -884,6 +931,7 @@ export function hitTestUi(items: UiDrawItem[], x: number, y: number): UiDrawItem
     if (it.button?.interactable) return it;
     if (it.toggle?.interactable) return it;
     if (it.slider?.interactable) return it;
+    if (it.scrollbar?.interactable) return it;
     if (it.input?.interactable) return it;
     if (it.dropdown?.interactable) return it;
     if (it.list?.interactable) return it;
@@ -912,6 +960,7 @@ function batchKey(it: UiDrawItem): string {
   if (it.progress) return 'ui/solid/progress+text';
   if (it.scroll) return 'ui/solid/scroll';
   if (it.panel) return 'ui/solid/panel';
+  if (it.scrollbar) return 'ui/solid/scrollbar';
   if (it.slider) return 'ui/solid/slider';
   if (it.toggle) return 'ui/solid/toggle+text';
   if (it.button) return `ui/button/${it.image?.sprite ?? 'white'}+text`;
@@ -941,14 +990,14 @@ export function sliderValueAtPoint(it: UiDrawItem, x: number, y: number): number
   const slider = it.slider;
   if (!slider || !slider.interactable) return null;
   const pivot = it.pivotScreen ?? rectPivot(it.rect, it.pivot);
-  const axes = rectLocalAxes(it.rotation);
-  const dx = x - pivot.x;
-  const dy = y - pivot.y;
-  const localX = dx * axes.x.dx + dy * axes.x.dy + it.rect.w * it.pivot[0];
-  const localY = dx * axes.y.dx + dy * axes.y.dy + it.rect.h * it.pivot[1];
-  let t = slider.direction === 'LeftToRight' || slider.direction === 'RightToLeft'
-    ? localX / Math.max(1, it.rect.w)
-    : localY / Math.max(1, it.rect.h);
+  let t = normalizedRangePosition(
+    { x, y },
+    pivot,
+    { w: it.rect.w, h: it.rect.h },
+    it.pivot,
+    it.rotation,
+    slider.direction,
+  );
   if (slider.direction === 'RightToLeft' || slider.direction === 'BottomToTop') t = 1 - t;
   t = Math.max(0, Math.min(1, t));
   const low = Math.min(slider.min, slider.max);
@@ -956,6 +1005,26 @@ export function sliderValueAtPoint(it: UiDrawItem, x: number, y: number): number
   let value = low + (high - low) * t;
   if (slider.wholeNumbers) value = Math.round(value);
   return value;
+}
+
+export function scrollbarValueAtPoint(it: UiDrawItem, x: number, y: number): number | null {
+  const scrollbar = it.scrollbar;
+  if (!scrollbar || !scrollbar.interactable) return null;
+  const pivot = it.pivotScreen ?? rectPivot(it.rect, it.pivot);
+  const normalized = normalizedRangePosition(
+    { x, y },
+    pivot,
+    { w: it.rect.w, h: it.rect.h },
+    it.pivot,
+    it.rotation,
+    scrollbar.direction,
+  );
+  return scrollbarValueFromPosition(
+    normalized,
+    scrollbar.size,
+    scrollbar.numberOfSteps,
+    scrollbar.direction,
+  );
 }
 
 export type UiPointAction = {
@@ -1131,7 +1200,7 @@ export function drawUiItems(
       ctx.restore();
     };
 
-    if (!it.image && !it.button && !it.text && !it.toggle && !it.slider && !it.panel && !it.progress && !it.input && !it.dropdown && !it.list && !it.scroll && !it.tabs) {
+    if (!it.image && !it.button && !it.text && !it.toggle && !it.slider && !it.scrollbar && !it.panel && !it.progress && !it.input && !it.dropdown && !it.list && !it.scroll && !it.tabs) {
       if (it.selected) {
         withRot(() => {
           ctx.setLineDash([4, 3]);
@@ -1390,6 +1459,29 @@ export function drawUiItems(
           const hx = reverse ? x + w - fill : x + fill;
           ctx.fillStyle = cssColor(it.slider.handleColor, alpha);
           ctx.fillRect(hx - 3, y - 2, 6, h + 4);
+        }
+      }
+
+      if (it.scrollbar) {
+        const alpha = it.scrollbar.interactable ? 1 : 0.45;
+        const vertical = isVerticalRange(it.scrollbar.direction);
+        const length = Math.max(1, vertical ? h : w);
+        const effectiveSize = Math.max(
+          it.scrollbar.size,
+          Math.min(1, 4 / length),
+        );
+        const handle = scrollbarHandleRange(
+          it.scrollbar.value,
+          effectiveSize,
+          it.scrollbar.direction,
+        );
+        ctx.fillStyle = cssColor(it.scrollbar.backgroundColor, alpha);
+        ctx.fillRect(x, y, w, h);
+        ctx.fillStyle = cssColor(it.scrollbar.handleColor, alpha);
+        if (vertical) {
+          ctx.fillRect(x, y + h * handle.start, w, h * handle.size);
+        } else {
+          ctx.fillRect(x + w * handle.start, y, w * handle.size, h);
         }
       }
 

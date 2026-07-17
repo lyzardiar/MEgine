@@ -195,6 +195,12 @@ const BUILTIN_CATALOG: ComponentCatalogEntry[] = [
     }),
   },
   {
+    type: 'Scrollbar',
+    label: 'Scrollbar',
+    description: 'Unity-style directional scrollbar with a normalized handle size',
+    create: () => createUiScrollbarComponents().Scrollbar,
+  },
+  {
     type: 'Panel',
     label: 'Panel',
     description: 'Colored UI container with an optional border',
@@ -453,6 +459,22 @@ export function createUiSliderComponents() {
       background_color: [0.15, 0.17, 0.2, 1],
       handle_color: [0.9, 0.92, 0.95, 1],
       on_value_changed: { target: null, component: '', method: '' },
+    },
+  };
+}
+
+export function createUiScrollbarComponents() {
+  return {
+    RectTransform: defaultRectTransform({ size_delta: [20, 220] }),
+    Scrollbar: {
+      value: 0,
+      size: 0.2,
+      number_of_steps: 0,
+      interactable: true,
+      direction: 'BottomToTop',
+      background_color: [0.12, 0.14, 0.18, 1],
+      handle_color: [0.52, 0.58, 0.68, 1],
+      on_value_changed: callback(),
     },
   };
 }

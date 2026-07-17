@@ -50,6 +50,7 @@ import {
   hitTestUiSelect,
   layoutUiOverlay,
   layoutUiScene3D,
+  scrollbarValueAtPoint,
   sliderValueAtPoint,
   uiPointAction,
   UI_SCENE_PPU,
@@ -454,7 +455,7 @@ export function Viewport(props: {
   onUiClick?: (entity: number, onClick: unknown) => void;
   onUiValueChange?: (
     entity: number,
-    component: 'Toggle' | 'Slider' | 'InputField' | 'Dropdown' | 'ListView' | 'ScrollView' | 'TabView',
+    component: 'Toggle' | 'Slider' | 'Scrollbar' | 'InputField' | 'Dropdown' | 'ListView' | 'ScrollView' | 'TabView',
     patch: Record<string, unknown>,
     callback: unknown,
   ) => void;
@@ -512,7 +513,13 @@ export function Viewport(props: {
     | null
     | { type: 'orbit'; lx: number; ly: number }
     | { type: 'pan'; lx: number; ly: number }
-    | { type: 'uiSlider'; lx: number; ly: number; entity: number }
+    | {
+        type: 'uiRange';
+        lx: number;
+        ly: number;
+        entity: number;
+        component: 'Slider' | 'Scrollbar';
+      }
     | {
         type: 'marquee';
         lx: number;
@@ -1234,22 +1241,26 @@ export function Viewport(props: {
     if (propsRef.current.tab === 'game') {
       if (ev.button === 0) {
         const ui = hitTestUi(uiItemsRef.current, x, y);
-        if (ui?.slider?.interactable) {
-          const value = sliderValueAtPoint(ui, x, y);
+        if (ui?.slider?.interactable || ui?.scrollbar?.interactable) {
+          const component = ui.slider ? 'Slider' : 'Scrollbar';
+          const value = component === 'Slider'
+            ? sliderValueAtPoint(ui, x, y)
+            : scrollbarValueAtPoint(ui, x, y);
           if (value != null) {
             draggingRef.current = true;
             dragRef.current = {
-              type: 'uiSlider',
+              type: 'uiRange',
               lx: ev.clientX,
               ly: ev.clientY,
               entity: ui.entity,
+              component,
             };
             propsRef.current.onBeginGesture();
             propsRef.current.onUiValueChange?.(
               ui.entity,
-              'Slider',
+              component,
               { value },
-              ui.slider.onValueChanged,
+              ui.slider?.onValueChanged ?? ui.scrollbar?.onValueChanged,
             );
           }
         } else if (
@@ -1541,21 +1552,23 @@ export function Viewport(props: {
         return;
       }
 
-      if (d.type === 'uiSlider') {
+      if (d.type === 'uiRange') {
         const canvas = canvasRef.current;
         if (!canvas) return;
         const rect = canvas.getBoundingClientRect();
         const x = ev.clientX - rect.left;
         const y = ev.clientY - rect.top;
         const item = uiItemsRef.current.find((candidate) => candidate.entity === d.entity);
-        if (item?.slider) {
-          const value = sliderValueAtPoint(item, x, y);
+        if (item?.slider || item?.scrollbar) {
+          const value = d.component === 'Slider'
+            ? sliderValueAtPoint(item, x, y)
+            : scrollbarValueAtPoint(item, x, y);
           if (value != null) {
             propsRef.current.onUiValueChange?.(
               item.entity,
-              'Slider',
+              d.component,
               { value },
-              item.slider.onValueChanged,
+              item.slider?.onValueChanged ?? item.scrollbar?.onValueChanged,
             );
           }
         }
@@ -1961,7 +1974,7 @@ export function Viewport(props: {
       if (dragRef.current?.type === 'gizmo' || dragRef.current?.type === 'rectGizmo') {
         propsRef.current.onEndGesture();
       }
-      if (dragRef.current?.type === 'uiSlider') {
+      if (dragRef.current?.type === 'uiRange') {
         propsRef.current.onEndGesture();
       }
       dragRef.current = null;
