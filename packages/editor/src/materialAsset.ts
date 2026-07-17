@@ -14,6 +14,11 @@ export type MaterialAsset = {
   double_sided: boolean;
   alpha_cutoff: number;
   base_color_texture: string;
+  normal_texture: string;
+  normal_scale: number;
+  metallic_roughness_texture: string;
+  occlusion_strength: number;
+  emissive_texture: string;
   uv_scale: [number, number];
   uv_offset: [number, number];
 };
@@ -32,6 +37,11 @@ export function createMaterialAsset(name = 'New Material'): MaterialAsset {
     double_sided: false,
     alpha_cutoff: 0.5,
     base_color_texture: '',
+    normal_texture: '',
+    normal_scale: 1,
+    metallic_roughness_texture: '',
+    occlusion_strength: 1,
+    emissive_texture: '',
     uv_scale: [1, 1],
     uv_offset: [0, 0],
   };
@@ -70,6 +80,13 @@ export function normalizeMaterialAsset(value: unknown): MaterialAsset {
     double_sided: Boolean(source.double_sided),
     alpha_cutoff: Math.max(0, Math.min(1, finite(source.alpha_cutoff, 0.5))),
     base_color_texture: String(source.base_color_texture ?? '').trim().replace(/\\/g, '/'),
+    normal_texture: String(source.normal_texture ?? '').trim().replace(/\\/g, '/'),
+    normal_scale: Math.max(0, finite(source.normal_scale, 1)),
+    metallic_roughness_texture: String(source.metallic_roughness_texture ?? '')
+      .trim()
+      .replace(/\\/g, '/'),
+    occlusion_strength: Math.max(0, Math.min(1, finite(source.occlusion_strength, 1))),
+    emissive_texture: String(source.emissive_texture ?? '').trim().replace(/\\/g, '/'),
     uv_scale: vector(source.uv_scale, 2, [1, 1]) as [number, number],
     uv_offset: vector(source.uv_offset, 2, [0, 0]) as [number, number],
   };

@@ -37,7 +37,8 @@ impl RuntimeTextureCache {
 
     pub fn invalidate(&mut self, key: &str) {
         self.attempted_ui.remove(key);
-        self.attempted_material.remove(key);
+        self.attempted_material
+            .retain(|attempt| attempt.split_once('\0').is_none_or(|(_, path)| path != key));
     }
 
     pub fn sync(&mut self, renderer: &mut Renderer, plan: &UiBatchPlan) -> Vec<TextureLoadFailure> {
@@ -95,42 +96,52 @@ impl RuntimeTextureCache {
             return Vec::new();
         };
         let mut failures = Vec::new();
-        for key in objects
-            .iter()
-            .map(|object| object.material.base_color_texture.trim())
-            .filter(|key| !key.is_empty() && !key.eq_ignore_ascii_case("white"))
-        {
-            if !self.attempted_material.insert(key.to_owned()) {
-                continue;
-            }
-            let Some(path) = resolve_project_asset_path(root, key) else {
-                failures.push(TextureLoadFailure {
-                    key: key.to_owned(),
-                    path: root.to_owned(),
-                    error: "material texture must be a project-relative path without '..'".into(),
-                });
-                continue;
-            };
-            match load_texture_rgba8(&path) {
-                Ok(texture) => {
-                    if let Err(error) = renderer.upload_material_texture_rgba8(
-                        key,
-                        texture.width,
-                        texture.height,
-                        &texture.pixels,
-                    ) {
-                        failures.push(TextureLoadFailure {
-                            key: key.to_owned(),
-                            path,
-                            error: error.to_string(),
-                        });
-                    }
+        for object in objects {
+            let material = &object.material;
+            for (key, srgb) in [
+                (material.base_color_texture.trim(), true),
+                (material.normal_texture.trim(), false),
+                (material.metallic_roughness_texture.trim(), false),
+                (material.emissive_texture.trim(), true),
+            ] {
+                if key.is_empty() || key.eq_ignore_ascii_case("white") {
+                    continue;
                 }
-                Err(error) => failures.push(TextureLoadFailure {
-                    key: key.to_owned(),
-                    path,
-                    error: error.to_string(),
-                }),
+                let attempt = format!("{}\0{key}", if srgb { "srgb" } else { "linear" });
+                if !self.attempted_material.insert(attempt) {
+                    continue;
+                }
+                let Some(path) = resolve_project_asset_path(root, key) else {
+                    failures.push(TextureLoadFailure {
+                        key: key.to_owned(),
+                        path: root.to_owned(),
+                        error: "material texture must be a project-relative path without '..'"
+                            .into(),
+                    });
+                    continue;
+                };
+                match load_texture_rgba8(&path) {
+                    Ok(texture) => {
+                        if let Err(error) = renderer.upload_material_texture_rgba8(
+                            key,
+                            texture.width,
+                            texture.height,
+                            &texture.pixels,
+                            srgb,
+                        ) {
+                            failures.push(TextureLoadFailure {
+                                key: key.to_owned(),
+                                path,
+                                error: error.to_string(),
+                            });
+                        }
+                    }
+                    Err(error) => failures.push(TextureLoadFailure {
+                        key: key.to_owned(),
+                        path,
+                        error: error.to_string(),
+                    }),
+                }
             }
         }
         failures

@@ -26,6 +26,10 @@ fn default_uv_scale() -> [f32; 2] {
     [1.0, 1.0]
 }
 
+fn default_one() -> f32 {
+    1.0
+}
+
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
 pub enum MaterialShader {
@@ -63,6 +67,16 @@ pub struct MaterialAsset {
     #[serde(default = "default_alpha_cutoff")]
     pub alpha_cutoff: f32,
     pub base_color_texture: String,
+    #[serde(default)]
+    pub normal_texture: String,
+    #[serde(default = "default_one")]
+    pub normal_scale: f32,
+    #[serde(default)]
+    pub metallic_roughness_texture: String,
+    #[serde(default = "default_one")]
+    pub occlusion_strength: f32,
+    #[serde(default)]
+    pub emissive_texture: String,
     #[serde(default = "default_uv_scale")]
     pub uv_scale: [f32; 2],
     pub uv_offset: [f32; 2],
@@ -83,6 +97,11 @@ impl Default for MaterialAsset {
             double_sided: false,
             alpha_cutoff: default_alpha_cutoff(),
             base_color_texture: String::new(),
+            normal_texture: String::new(),
+            normal_scale: default_one(),
+            metallic_roughness_texture: String::new(),
+            occlusion_strength: default_one(),
+            emissive_texture: String::new(),
             uv_scale: default_uv_scale(),
             uv_offset: [0.0; 2],
         }
@@ -112,6 +131,8 @@ impl MaterialAsset {
         self.roughness = finite_or(self.roughness, default_roughness()).clamp(0.04, 1.0);
         self.emissive_strength = finite_or(self.emissive_strength, 1.0).max(0.0);
         self.alpha_cutoff = finite_or(self.alpha_cutoff, default_alpha_cutoff()).clamp(0.0, 1.0);
+        self.normal_scale = finite_or(self.normal_scale, default_one()).max(0.0);
+        self.occlusion_strength = finite_or(self.occlusion_strength, default_one()).clamp(0.0, 1.0);
         for value in &mut self.uv_scale {
             *value = finite_or(*value, 1.0);
         }
@@ -119,6 +140,9 @@ impl MaterialAsset {
             *value = finite_or(*value, 0.0);
         }
         self.base_color_texture = self.base_color_texture.trim().replace('\\', "/");
+        self.normal_texture = self.normal_texture.trim().replace('\\', "/");
+        self.metallic_roughness_texture = self.metallic_roughness_texture.trim().replace('\\', "/");
+        self.emissive_texture = self.emissive_texture.trim().replace('\\', "/");
         self
     }
 }
@@ -153,7 +177,12 @@ mod tests {
               "base_color":[2,-1,0.5,0.25],
               "metallic":4,
               "roughness":0,
-              "base_color_texture":"Assets\\Textures\\paint.png"
+              "base_color_texture":"Assets\\Textures\\paint.png",
+              "normal_texture":"Assets\\Textures\\paint-normal.png",
+              "normal_scale":-2,
+              "metallic_roughness_texture":"Assets\\Textures\\paint-orm.png",
+              "occlusion_strength":5,
+              "emissive_texture":"Assets\\Textures\\paint-emissive.png"
             }"#,
         )
         .unwrap();
@@ -163,6 +192,41 @@ mod tests {
         assert_eq!(parsed.metallic, 1.0);
         assert_eq!(parsed.roughness, 0.04);
         assert_eq!(parsed.base_color_texture, "Assets/Textures/paint.png");
+        assert_eq!(parsed.normal_texture, "Assets/Textures/paint-normal.png");
+        assert_eq!(parsed.normal_scale, 0.0);
+        assert_eq!(
+            parsed.metallic_roughness_texture,
+            "Assets/Textures/paint-orm.png"
+        );
+        assert_eq!(parsed.occlusion_strength, 1.0);
+        assert_eq!(
+            parsed.emissive_texture,
+            "Assets/Textures/paint-emissive.png"
+        );
         assert_eq!(parsed.uv_scale, [1.0, 1.0]);
+
+        let legacy = parse_material_asset(
+            br#"{
+              "name":"Legacy",
+              "shader":"pbr",
+              "surface":"opaque",
+              "base_color":[1,1,1,1],
+              "metallic":0,
+              "roughness":0.5,
+              "emissive":[0,0,0],
+              "emissive_strength":1,
+              "double_sided":false,
+              "alpha_cutoff":0.5,
+              "base_color_texture":"",
+              "uv_scale":[1,1],
+              "uv_offset":[0,0]
+            }"#,
+        )
+        .expect("materials authored before PBR maps were added remain loadable");
+        assert_eq!(legacy.normal_texture, "");
+        assert_eq!(legacy.normal_scale, 1.0);
+        assert_eq!(legacy.metallic_roughness_texture, "");
+        assert_eq!(legacy.occlusion_strength, 1.0);
+        assert_eq!(legacy.emissive_texture, "");
     }
 }

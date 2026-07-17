@@ -69,6 +69,11 @@ pub struct RenderMaterial {
     pub transparent: bool,
     pub alpha_cutoff: f32,
     pub base_color_texture: String,
+    pub normal_texture: String,
+    pub normal_scale: f32,
+    pub metallic_roughness_texture: String,
+    pub occlusion_strength: f32,
+    pub emissive_texture: String,
     pub uv_scale: [f32; 2],
     pub uv_offset: [f32; 2],
 }
@@ -86,6 +91,11 @@ impl Default for RenderMaterial {
             transparent: false,
             alpha_cutoff: 0.0,
             base_color_texture: String::new(),
+            normal_texture: String::new(),
+            normal_scale: 1.0,
+            metallic_roughness_texture: String::new(),
+            occlusion_strength: 1.0,
+            emissive_texture: String::new(),
             uv_scale: [1.0, 1.0],
             uv_offset: [0.0, 0.0],
         }
@@ -176,11 +186,31 @@ struct ObjectUniforms {
     material: [f32; 4],
     emissive: [f32; 4],
     texture_transform: [f32; 4],
+    map_params: [f32; 4],
 }
 
 struct MaterialTextureGpu {
     _texture: wgpu::Texture,
-    bind_group: wgpu::BindGroup,
+    view: wgpu::TextureView,
+}
+
+#[derive(Clone, Debug, Eq, Hash, PartialEq)]
+struct MaterialTextureSetKey {
+    base_color: String,
+    normal: String,
+    metallic_roughness: String,
+    emissive: String,
+}
+
+impl From<&RenderMaterial> for MaterialTextureSetKey {
+    fn from(material: &RenderMaterial) -> Self {
+        Self {
+            base_color: material.base_color_texture.trim().to_owned(),
+            normal: material.normal_texture.trim().to_owned(),
+            metallic_roughness: material.metallic_roughness_texture.trim().to_owned(),
+            emissive: material.emissive_texture.trim().to_owned(),
+        }
+    }
 }
 
 pub struct Renderer {
@@ -201,8 +231,13 @@ pub struct Renderer {
     bind_group: wgpu::BindGroup,
     material_texture_layout: wgpu::BindGroupLayout,
     material_sampler: wgpu::Sampler,
-    fallback_material_texture: MaterialTextureGpu,
-    material_textures: HashMap<String, MaterialTextureGpu>,
+    fallback_base_color_texture: MaterialTextureGpu,
+    fallback_normal_texture: MaterialTextureGpu,
+    fallback_metallic_roughness_texture: MaterialTextureGpu,
+    fallback_emissive_texture: MaterialTextureGpu,
+    material_color_textures: HashMap<String, MaterialTextureGpu>,
+    material_data_textures: HashMap<String, MaterialTextureGpu>,
+    material_texture_sets: HashMap<MaterialTextureSetKey, wgpu::BindGroup>,
     object_stride: u64,
     object_capacity: usize,
     ui: UiRenderer,
@@ -317,6 +352,36 @@ impl Renderer {
                     wgpu::BindGroupLayoutEntry {
                         binding: 1,
                         visibility: wgpu::ShaderStages::FRAGMENT,
+                        ty: wgpu::BindingType::Texture {
+                            sample_type: wgpu::TextureSampleType::Float { filterable: true },
+                            view_dimension: wgpu::TextureViewDimension::D2,
+                            multisampled: false,
+                        },
+                        count: None,
+                    },
+                    wgpu::BindGroupLayoutEntry {
+                        binding: 2,
+                        visibility: wgpu::ShaderStages::FRAGMENT,
+                        ty: wgpu::BindingType::Texture {
+                            sample_type: wgpu::TextureSampleType::Float { filterable: true },
+                            view_dimension: wgpu::TextureViewDimension::D2,
+                            multisampled: false,
+                        },
+                        count: None,
+                    },
+                    wgpu::BindGroupLayoutEntry {
+                        binding: 3,
+                        visibility: wgpu::ShaderStages::FRAGMENT,
+                        ty: wgpu::BindingType::Texture {
+                            sample_type: wgpu::TextureSampleType::Float { filterable: true },
+                            view_dimension: wgpu::TextureViewDimension::D2,
+                            multisampled: false,
+                        },
+                        count: None,
+                    },
+                    wgpu::BindGroupLayoutEntry {
+                        binding: 4,
+                        visibility: wgpu::ShaderStages::FRAGMENT,
                         ty: wgpu::BindingType::Sampler(wgpu::SamplerBindingType::Filtering),
                         count: None,
                     },
@@ -372,15 +437,41 @@ impl Renderer {
             mipmap_filter: wgpu::FilterMode::Linear,
             ..Default::default()
         });
-        let fallback_material_texture = create_material_texture_rgba8(
+        let fallback_base_color_texture = create_material_texture_rgba8(
             &device,
             &queue,
-            &material_texture_layout,
-            &material_sampler,
             "material_white_texture",
             1,
             1,
             &[255, 255, 255, 255],
+            true,
+        );
+        let fallback_normal_texture = create_material_texture_rgba8(
+            &device,
+            &queue,
+            "material_flat_normal_texture",
+            1,
+            1,
+            &[128, 128, 255, 255],
+            false,
+        );
+        let fallback_metallic_roughness_texture = create_material_texture_rgba8(
+            &device,
+            &queue,
+            "material_white_orm_texture",
+            1,
+            1,
+            &[255, 255, 255, 255],
+            false,
+        );
+        let fallback_emissive_texture = create_material_texture_rgba8(
+            &device,
+            &queue,
+            "material_white_emissive_texture",
+            1,
+            1,
+            &[255, 255, 255, 255],
+            true,
         );
 
         let (depth_texture, depth_view) = create_depth(&device, config.width, config.height);
@@ -406,8 +497,13 @@ impl Renderer {
             bind_group,
             material_texture_layout,
             material_sampler,
-            fallback_material_texture,
-            material_textures: HashMap::new(),
+            fallback_base_color_texture,
+            fallback_normal_texture,
+            fallback_metallic_roughness_texture,
+            fallback_emissive_texture,
+            material_color_textures: HashMap::new(),
+            material_data_textures: HashMap::new(),
+            material_texture_sets: HashMap::new(),
             object_stride,
             object_capacity,
             ui,
@@ -496,6 +592,9 @@ impl Renderer {
             right_distance.total_cmp(&left_distance)
         });
         draw_order.extend(transparent_order);
+        for object in objects {
+            self.ensure_material_texture_set(&object.material);
+        }
         let frame = self.surface.get_current_texture()?;
         let view = frame
             .texture
@@ -550,11 +649,12 @@ impl Renderer {
                     &self.bind_group,
                     &[(index as u64 * self.object_stride) as u32],
                 );
-                let texture = self
-                    .material_textures
-                    .get(&object.material.base_color_texture)
-                    .unwrap_or(&self.fallback_material_texture);
-                pass.set_bind_group(1, &texture.bind_group, &[]);
+                let texture_key = MaterialTextureSetKey::from(&object.material);
+                let texture_set = self
+                    .material_texture_sets
+                    .get(&texture_key)
+                    .expect("material texture set prepared before render pass");
+                pass.set_bind_group(1, texture_set, &[]);
                 pass.set_vertex_buffer(0, mesh.vertex_buffer.slice(..));
                 pass.set_index_buffer(mesh.index_buffer.slice(..), wgpu::IndexFormat::Uint32);
                 pass.draw_indexed(0..mesh.index_count, 0, 0..1);
@@ -583,6 +683,56 @@ impl Renderer {
         );
     }
 
+    fn ensure_material_texture_set(&mut self, material: &RenderMaterial) {
+        let key = MaterialTextureSetKey::from(material);
+        if self.material_texture_sets.contains_key(&key) {
+            return;
+        }
+        let base_color = self
+            .material_color_textures
+            .get(&key.base_color)
+            .unwrap_or(&self.fallback_base_color_texture);
+        let normal = self
+            .material_data_textures
+            .get(&key.normal)
+            .unwrap_or(&self.fallback_normal_texture);
+        let metallic_roughness = self
+            .material_data_textures
+            .get(&key.metallic_roughness)
+            .unwrap_or(&self.fallback_metallic_roughness_texture);
+        let emissive = self
+            .material_color_textures
+            .get(&key.emissive)
+            .unwrap_or(&self.fallback_emissive_texture);
+        let bind_group = self.device.create_bind_group(&wgpu::BindGroupDescriptor {
+            label: Some("material_texture_set_bg"),
+            layout: &self.material_texture_layout,
+            entries: &[
+                wgpu::BindGroupEntry {
+                    binding: 0,
+                    resource: wgpu::BindingResource::TextureView(&base_color.view),
+                },
+                wgpu::BindGroupEntry {
+                    binding: 1,
+                    resource: wgpu::BindingResource::TextureView(&normal.view),
+                },
+                wgpu::BindGroupEntry {
+                    binding: 2,
+                    resource: wgpu::BindingResource::TextureView(&metallic_roughness.view),
+                },
+                wgpu::BindGroupEntry {
+                    binding: 3,
+                    resource: wgpu::BindingResource::TextureView(&emissive.view),
+                },
+                wgpu::BindGroupEntry {
+                    binding: 4,
+                    resource: wgpu::BindingResource::Sampler(&self.material_sampler),
+                },
+            ],
+        });
+        self.material_texture_sets.insert(key, bind_group);
+    }
+
     pub fn ui_stats(&self) -> UiFrameStats {
         self.ui.stats()
     }
@@ -608,24 +758,34 @@ impl Renderer {
         width: u32,
         height: u32,
         rgba8: &[u8],
+        srgb: bool,
     ) -> Result<(), UiTextureError> {
         validate_material_texture_rgba8(width, height, rgba8)?;
         let texture = create_material_texture_rgba8(
             &self.device,
             &self.queue,
-            &self.material_texture_layout,
-            &self.material_sampler,
             "material_texture",
             width,
             height,
             rgba8,
+            srgb,
         );
-        self.material_textures.insert(key.to_owned(), texture);
+        if srgb {
+            self.material_color_textures.insert(key.to_owned(), texture);
+        } else {
+            self.material_data_textures.insert(key.to_owned(), texture);
+        }
+        self.material_texture_sets.clear();
         Ok(())
     }
 
     pub fn remove_material_texture(&mut self, key: &str) -> bool {
-        self.material_textures.remove(key).is_some()
+        let removed = self.material_color_textures.remove(key).is_some()
+            | self.material_data_textures.remove(key).is_some();
+        if removed {
+            self.material_texture_sets.clear();
+        }
+        removed
     }
 
     pub fn aspect(&self) -> f32 {
@@ -758,6 +918,12 @@ fn make_object_uniforms(object: &RenderObject) -> ObjectUniforms {
             material.uv_offset[0],
             material.uv_offset[1],
         ],
+        map_params: [
+            material.normal_scale.max(0.0),
+            material.occlusion_strength.clamp(0.0, 1.0),
+            0.0,
+            0.0,
+        ],
     }
 }
 
@@ -877,12 +1043,11 @@ fn validate_material_texture_rgba8(
 fn create_material_texture_rgba8(
     device: &wgpu::Device,
     queue: &wgpu::Queue,
-    layout: &wgpu::BindGroupLayout,
-    sampler: &wgpu::Sampler,
     label: &str,
     width: u32,
     height: u32,
     rgba8: &[u8],
+    srgb: bool,
 ) -> MaterialTextureGpu {
     let size = wgpu::Extent3d {
         width,
@@ -895,7 +1060,11 @@ fn create_material_texture_rgba8(
         mip_level_count: 1,
         sample_count: 1,
         dimension: wgpu::TextureDimension::D2,
-        format: wgpu::TextureFormat::Rgba8UnormSrgb,
+        format: if srgb {
+            wgpu::TextureFormat::Rgba8UnormSrgb
+        } else {
+            wgpu::TextureFormat::Rgba8Unorm
+        },
         usage: wgpu::TextureUsages::TEXTURE_BINDING | wgpu::TextureUsages::COPY_DST,
         view_formats: &[],
     });
@@ -915,23 +1084,9 @@ fn create_material_texture_rgba8(
         size,
     );
     let view = texture.create_view(&wgpu::TextureViewDescriptor::default());
-    let bind_group = device.create_bind_group(&wgpu::BindGroupDescriptor {
-        label: Some("material_texture_bg"),
-        layout,
-        entries: &[
-            wgpu::BindGroupEntry {
-                binding: 0,
-                resource: wgpu::BindingResource::TextureView(&view),
-            },
-            wgpu::BindGroupEntry {
-                binding: 1,
-                resource: wgpu::BindingResource::Sampler(sampler),
-            },
-        ],
-    });
     MaterialTextureGpu {
         _texture: texture,
-        bind_group,
+        view,
     }
 }
 
@@ -1010,12 +1165,16 @@ struct ObjectUniforms {
     material: vec4<f32>,
     emissive: vec4<f32>,
     texture_transform: vec4<f32>,
+    map_params: vec4<f32>,
 };
 
 @group(0) @binding(0) var<uniform> frame: GlobalUniforms;
 @group(0) @binding(1) var<uniform> object: ObjectUniforms;
 @group(1) @binding(0) var base_color_texture: texture_2d<f32>;
-@group(1) @binding(1) var base_color_sampler: sampler;
+@group(1) @binding(1) var normal_texture: texture_2d<f32>;
+@group(1) @binding(2) var metallic_roughness_texture: texture_2d<f32>;
+@group(1) @binding(3) var emissive_texture: texture_2d<f32>;
+@group(1) @binding(4) var material_sampler: sampler;
 
 struct VsIn {
     @location(0) position: vec3<f32>,
@@ -1067,25 +1226,68 @@ fn distance_attenuation(distance: f32, range: f32) -> f32 {
     return normalized * normalized;
 }
 
+fn mapped_normal(
+    geometric_normal: vec3<f32>,
+    world_position: vec3<f32>,
+    uv: vec2<f32>,
+    encoded_normal: vec3<f32>,
+    scale: f32,
+) -> vec3<f32> {
+    let position_dx = dpdx(world_position);
+    let position_dy = dpdy(world_position);
+    let uv_dx = dpdx(uv);
+    let uv_dy = dpdy(uv);
+    let tangent_raw = cross(position_dy, geometric_normal) * uv_dx.x
+        + cross(geometric_normal, position_dx) * uv_dy.x;
+    let bitangent_raw = cross(position_dy, geometric_normal) * uv_dx.y
+        + cross(geometric_normal, position_dx) * uv_dy.y;
+    let inverse_scale = inverseSqrt(max(
+        max(dot(tangent_raw, tangent_raw), dot(bitangent_raw, bitangent_raw)),
+        0.000001,
+    ));
+    let tangent = tangent_raw * inverse_scale;
+    let bitangent = bitangent_raw * inverse_scale;
+    var tangent_normal = encoded_normal * 2.0 - vec3<f32>(1.0);
+    tangent_normal.x *= scale;
+    tangent_normal.y *= scale;
+    return normalize(
+        tangent * tangent_normal.x
+        + bitangent * tangent_normal.y
+        + geometric_normal * tangent_normal.z
+    );
+}
+
 @fragment
 fn fs_main(i: VsOut, @builtin(front_facing) front_facing: bool) -> @location(0) vec4<f32> {
-    let sampled_color = textureSample(base_color_texture, base_color_sampler, i.uv);
+    let sampled_color = textureSample(base_color_texture, material_sampler, i.uv);
+    let sampled_normal = textureSample(normal_texture, material_sampler, i.uv).rgb;
+    let sampled_orm = textureSample(metallic_roughness_texture, material_sampler, i.uv).rgb;
+    let sampled_emissive = textureSample(emissive_texture, material_sampler, i.uv).rgb;
     let surface_color = object.base_color * sampled_color;
     if object.emissive.w > 0.0 && surface_color.a < object.emissive.w {
         discard;
     }
     let base_color = max(surface_color.rgb, vec3<f32>(0.0));
-    let metallic = clamp(object.material.x, 0.0, 1.0);
-    let roughness = clamp(object.material.y, 0.04, 1.0);
-    let emissive = max(object.emissive.rgb, vec3<f32>(0.0)) * object.material.z;
+    let metallic = clamp(object.material.x * sampled_orm.b, 0.0, 1.0);
+    let roughness = clamp(object.material.y * sampled_orm.g, 0.04, 1.0);
+    let occlusion = mix(1.0, sampled_orm.r, clamp(object.map_params.y, 0.0, 1.0));
+    let emissive = max(object.emissive.rgb, vec3<f32>(0.0))
+        * object.material.z
+        * sampled_emissive;
     if object.material.w > 0.5 {
         return vec4<f32>(base_color + emissive, surface_color.a);
     }
 
-    let geometric_normal = normalize(i.world_normal);
-    let n = select(-geometric_normal, geometric_normal, front_facing);
+    let face_normal = select(-normalize(i.world_normal), normalize(i.world_normal), front_facing);
+    let n = mapped_normal(
+        face_normal,
+        i.world_position,
+        i.uv,
+        sampled_normal,
+        max(object.map_params.x, 0.0),
+    );
     let v = normalize(frame.camera_position.xyz - i.world_position);
-    var color = frame.ambient.rgb * base_color * (1.0 - metallic * 0.5);
+    var color = frame.ambient.rgb * base_color * (1.0 - metallic * 0.5) * occlusion;
 
     if frame.light_counts.x > 0u {
         let l = normalize(-frame.directional_direction.xyz);
@@ -1137,6 +1339,18 @@ mod tests {
     use super::*;
 
     #[test]
+    fn forward_shader_is_valid_wgsl() {
+        let module = naga::front::wgsl::parse_str(FORWARD_WGSL)
+            .expect("forward shader should parse as WGSL");
+        naga::valid::Validator::new(
+            naga::valid::ValidationFlags::all(),
+            naga::valid::Capabilities::all(),
+        )
+        .validate(&module)
+        .expect("forward shader should pass validation");
+    }
+
+    #[test]
     fn alignment_matches_dynamic_uniform_requirement() {
         assert_eq!(align_to(176, 256), 256);
         assert_eq!(align_to(256, 256), 256);
@@ -1163,5 +1377,31 @@ mod tests {
         };
         let uniforms = make_global_uniforms(camera, &lighting);
         assert_eq!(uniforms.light_counts[1], MAX_POINT_LIGHTS as u32);
+    }
+
+    #[test]
+    fn material_texture_roles_and_map_parameters_remain_distinct() {
+        let object = RenderObject {
+            mesh_key: "cube".into(),
+            model: Mat4::IDENTITY,
+            material: RenderMaterial {
+                base_color_texture: "base.png".into(),
+                normal_texture: "normal.png".into(),
+                normal_scale: 1.5,
+                metallic_roughness_texture: "orm.png".into(),
+                occlusion_strength: 0.65,
+                emissive_texture: "emissive.png".into(),
+                ..Default::default()
+            },
+        };
+        let key = MaterialTextureSetKey::from(&object.material);
+        assert_eq!(key.base_color, "base.png");
+        assert_eq!(key.normal, "normal.png");
+        assert_eq!(key.metallic_roughness, "orm.png");
+        assert_eq!(key.emissive, "emissive.png");
+        assert_eq!(
+            make_object_uniforms(&object).map_params,
+            [1.5, 0.65, 0.0, 0.0]
+        );
     }
 }

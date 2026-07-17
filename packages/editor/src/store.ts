@@ -65,6 +65,7 @@ import {
   selectedTransformRoots,
 } from './transformSelection';
 import { applyAnimationPreview, type AnimationPreviewSample } from './animationPreview';
+import { assignMaterialToComponents } from './materialAssignment';
 import './behaviours';
 
 export type EditorMode = 'edit' | 'play' | 'pause';
@@ -969,6 +970,24 @@ export function createEditorStore() {
       if (!e || e.components[type] == null) return;
       if (mode === 'edit' && !gizmoDragging) pushUndo();
       e.components[type] = { ...(e.components[type] as object), ...patch };
+    },
+    assignMaterial(
+      entity: number,
+      materialPath: string,
+      meshRendererValue?: Record<string, unknown>,
+    ) {
+      if (mode !== 'edit') return null;
+      const e = find(entity);
+      if (!e) return null;
+      const result = assignMaterialToComponents(
+        e.components,
+        materialPath,
+        meshRendererValue,
+      );
+      if (!result?.changed) return result;
+      pushUndo();
+      e.components = result.components;
+      return result;
     },
     setToggleValue(entity: number, isOn: boolean) {
       const patches = planToggleGroupChange(list(), entity, isOn);

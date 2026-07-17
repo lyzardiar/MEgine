@@ -933,6 +933,23 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
                 }
               }}
               onSetComponent={(entity, type, value) => {
+                if (type === 'MeshRenderer') {
+                  const current = store.authoredEntities()
+                    .find((entry) => entry.entity === entity)
+                    ?.components.MeshRenderer as Record<string, unknown> | undefined;
+                  if (current?.material !== value.material) {
+                    const result = store.assignMaterial(
+                      entity,
+                      String(value.material ?? 'default'),
+                      value,
+                    );
+                    if (result?.removedOverride) {
+                      log('Removed PbrMaterial override so the assigned material asset is active');
+                    }
+                    refresh();
+                    return;
+                  }
+                }
                 store.setComponent(entity, type, value);
                 refresh();
               }}
@@ -1018,8 +1035,14 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
               selectedEntity={snap.entities.find((entity) => entity.entity === selected) ?? null}
               onOpenAsset={setMaterialPath}
               onAssignMaterial={(entity, path) => {
-                store.patchComponent(entity, 'MeshRenderer', { material: path });
-                log(`Assigned ${path}`);
+                const result = store.assignMaterial(entity, path);
+                if (!result) {
+                  log('Cannot assign material: the selected entity has no MeshRenderer', 'warn');
+                  return;
+                }
+                log(result.removedOverride
+                  ? `Assigned ${path} and removed the PbrMaterial override`
+                  : `Assigned ${path}`);
                 refresh();
               }}
               onAssetsChanged={bumpScenes}

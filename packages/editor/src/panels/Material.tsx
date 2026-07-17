@@ -92,6 +92,27 @@ function materialName(path: string): string {
   return path.split('/').pop()?.replace(/\.(?:mmat|mat)$/i, '') ?? 'Material';
 }
 
+function MaterialTextureSlot(props: {
+  label: string;
+  hint?: string;
+  value: string;
+  onChange: (value: string) => void;
+  onDrop: (event: DragEvent<HTMLDivElement>) => void;
+}) {
+  return (
+    <div className="material-texture-slot" onDragOver={(event) => event.preventDefault()} onDrop={props.onDrop}>
+      <span title={props.hint}>{props.label}</span>
+      <input
+        aria-label={props.label}
+        value={props.value}
+        placeholder="Drop a texture from Project"
+        onChange={(event) => props.onChange(event.target.value)}
+      />
+      <button type="button" disabled={!props.value} onClick={() => props.onChange('')}>x</button>
+    </div>
+  );
+}
+
 export function MaterialEditor(props: {
   assetPath: string | null;
   selectedEntity: SnapshotEntity | null;
@@ -211,7 +232,11 @@ export function MaterialEditor(props: {
     }
   };
 
-  const dropTexture = (event: DragEvent<HTMLDivElement>) => {
+  const dropTexture = (
+    event: DragEvent<HTMLDivElement>,
+    field: 'base_color_texture' | 'normal_texture' | 'metallic_roughness_texture' | 'emissive_texture',
+    label: string,
+  ) => {
     event.preventDefault();
     const raw = event.dataTransfer.getData('text/mengine-sprite')
       || event.dataTransfer.getData('text/mengine-asset')
@@ -219,9 +244,9 @@ export function MaterialEditor(props: {
     try {
       const path = normalizeProjectAssetPath(raw);
       if (!/\.(?:png|jpe?g|webp|bmp|tga)$/i.test(path)) {
-        throw new Error('Base Color Texture 只接受图片资源');
+        throw new Error(`${label} only accepts image assets`);
       }
-      update('base_color_texture', path);
+      update(field, path);
     } catch (reason) {
       props.onLog(reason instanceof Error ? reason.message : String(reason), 'warn');
     }
@@ -293,11 +318,34 @@ export function MaterialEditor(props: {
             <label>Alpha Cutoff <input type="range" min={0} max={1} step={0.01} value={material.alpha_cutoff} onChange={(event) => update('alpha_cutoff', Number(event.target.value))} /><output>{material.alpha_cutoff.toFixed(2)}</output></label>
           )}
 
-          <div className="material-texture-slot" onDragOver={(event) => event.preventDefault()} onDrop={dropTexture}>
-            <span>Base Color Texture</span>
-            <input value={material.base_color_texture} placeholder="Drop a texture from Project" onChange={(event) => update('base_color_texture', event.target.value)} />
-            <button type="button" disabled={!material.base_color_texture} onClick={() => update('base_color_texture', '')}>×</button>
-          </div>
+          <MaterialTextureSlot
+            label="Base Color Texture"
+            value={material.base_color_texture}
+            onChange={(value) => update('base_color_texture', value)}
+            onDrop={(event) => dropTexture(event, 'base_color_texture', 'Base Color Texture')}
+          />
+          <MaterialTextureSlot
+            label="Normal Texture"
+            hint="Tangent-space normal map sampled as linear data"
+            value={material.normal_texture}
+            onChange={(value) => update('normal_texture', value)}
+            onDrop={(event) => dropTexture(event, 'normal_texture', 'Normal Texture')}
+          />
+          <label>Normal Scale <input type="number" min={0} step={0.05} value={material.normal_scale} onChange={(event) => update('normal_scale', Number(event.target.value))} /></label>
+          <MaterialTextureSlot
+            label="ORM Texture"
+            hint="Linear packed map: R = ambient occlusion, G = roughness, B = metallic"
+            value={material.metallic_roughness_texture}
+            onChange={(value) => update('metallic_roughness_texture', value)}
+            onDrop={(event) => dropTexture(event, 'metallic_roughness_texture', 'ORM Texture')}
+          />
+          <label>Occlusion Strength <input type="range" min={0} max={1} step={0.01} value={material.occlusion_strength} onChange={(event) => update('occlusion_strength', Number(event.target.value))} /><output>{material.occlusion_strength.toFixed(2)}</output></label>
+          <MaterialTextureSlot
+            label="Emissive Texture"
+            value={material.emissive_texture}
+            onChange={(value) => update('emissive_texture', value)}
+            onDrop={(event) => dropTexture(event, 'emissive_texture', 'Emissive Texture')}
+          />
           <label>UV Scale
             <span className="material-vector"><input aria-label="UV scale X" type="number" step={0.1} value={material.uv_scale[0]} onChange={(event) => update('uv_scale', [Number(event.target.value), material.uv_scale[1]])} /><input aria-label="UV scale Y" type="number" step={0.1} value={material.uv_scale[1]} onChange={(event) => update('uv_scale', [material.uv_scale[0], Number(event.target.value)])} /></span>
           </label>
@@ -307,6 +355,11 @@ export function MaterialEditor(props: {
         </div>
       </div>
       <div className="material-footer">
+        {props.selectedEntity?.components.PbrMaterial != null && (
+          <span title="PbrMaterial overrides material assets at runtime">
+            Assigning will replace the selected renderer's PBR override.
+          </span>
+        )}
         <button
           type="button"
           disabled={!canAssign}

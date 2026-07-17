@@ -107,6 +107,11 @@ pub fn render_material_from_asset(material: &MaterialAsset) -> RenderMaterial {
             0.0
         },
         base_color_texture: material.base_color_texture.clone(),
+        normal_texture: material.normal_texture.clone(),
+        normal_scale: material.normal_scale,
+        metallic_roughness_texture: material.metallic_roughness_texture.clone(),
+        occlusion_strength: material.occlusion_strength,
+        emissive_texture: material.emissive_texture.clone(),
         uv_scale: material.uv_scale,
         uv_offset: material.uv_offset,
     }
@@ -123,6 +128,11 @@ mod tests {
             surface: MaterialSurface::Cutout,
             alpha_cutoff: 0.4,
             base_color_texture: "Assets/Textures/leaves.png".into(),
+            normal_texture: "Assets/Textures/leaves-normal.png".into(),
+            normal_scale: 0.75,
+            metallic_roughness_texture: "Assets/Textures/leaves-orm.png".into(),
+            occlusion_strength: 0.6,
+            emissive_texture: "Assets/Textures/leaves-emissive.png".into(),
             uv_scale: [2.0, 3.0],
             uv_offset: [0.25, 0.5],
             ..MaterialAsset::default()
@@ -132,6 +142,14 @@ mod tests {
         assert!(!material.transparent);
         assert_eq!(material.alpha_cutoff, 0.4);
         assert_eq!(material.base_color_texture, asset.base_color_texture);
+        assert_eq!(material.normal_texture, asset.normal_texture);
+        assert_eq!(material.normal_scale, 0.75);
+        assert_eq!(
+            material.metallic_roughness_texture,
+            asset.metallic_roughness_texture
+        );
+        assert_eq!(material.occlusion_strength, 0.6);
+        assert_eq!(material.emissive_texture, asset.emissive_texture);
         assert_eq!(material.uv_scale, [2.0, 3.0]);
         assert_eq!(material.uv_offset, [0.25, 0.5]);
     }

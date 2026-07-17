@@ -15,3 +15,6 @@ bytemuck.workspace = true
 thiserror.workspace = true
 log.workspace = true
 pollster.workspace = true
+
+[dev-dependencies]
+naga = { version = "24", features = ["wgsl-in"] }
