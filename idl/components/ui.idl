@@ -44,6 +44,14 @@ component Image {
   raycast_target:  bool   = true
 }
 
+/// Unity-style texture view with an explicit normalized UV rectangle.
+component RawImage {
+  texture:        string = "white"
+  color:          float4 = [1, 1, 1, 1]
+  uv_rect:        float4 = [0, 0, 1, 1]
+  raycast_target: bool   = true
+}
+
 component Button {
   interactable:    bool   = true
   /// "None" | "ColorTint"

@@ -947,6 +947,35 @@
     ],
     "type": "object"
   },
+  "RawImage": {
+    "properties": {
+      "color": {
+        "items": {
+          "type": "number"
+        },
+        "type": "array"
+      },
+      "raycast_target": {
+        "type": "boolean"
+      },
+      "texture": {
+        "type": "string"
+      },
+      "uv_rect": {
+        "items": {
+          "type": "number"
+        },
+        "type": "array"
+      }
+    },
+    "required": [
+      "texture",
+      "color",
+      "uv_rect",
+      "raycast_target"
+    ],
+    "type": "object"
+  },
   "RectMask2D": {
     "properties": {
       "enabled": {

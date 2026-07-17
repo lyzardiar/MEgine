@@ -1,7 +1,7 @@
 use mengine_core::generated::{
     AspectRatioFitter, Button, Canvas, CanvasGroup, CanvasScaler, Dropdown, Image, InputField,
-    LayoutGroup, ListView, Panel, ProgressBar, RectMask2D, RectTransform, ScrollView, Scrollbar,
-    Slider, TabView, Text, Toggle,
+    LayoutGroup, ListView, Panel, ProgressBar, RawImage, RectMask2D, RectTransform, ScrollView,
+    Scrollbar, Slider, TabView, Text, Toggle,
 };
 use mengine_core::hierarchy::Parent;
 use mengine_core::{Entity, World};
@@ -288,6 +288,7 @@ fn walk(
         child_clip = intersect_clip(child_clip, rect);
     }
     let image = world.get_component::<Image>(entity);
+    let raw_image = world.get_component::<RawImage>(entity);
 
     if let Some(image) = image {
         if image.image_type.eq_ignore_ascii_case("sliced") {
@@ -312,6 +313,42 @@ fn walk(
                 "ui/image",
                 &image.sprite,
                 clip,
+            ));
+        }
+        if image.raycast_target && state.blocks_raycasts {
+            controls.push(control_region(
+                entity,
+                rect,
+                rotation,
+                pivot,
+                clip,
+                UiControlKind::Blocker,
+                Value::Null,
+            ));
+        }
+    }
+
+    if let Some(raw_image) = raw_image {
+        let mut output = primitive(
+            rect,
+            multiply_alpha(raw_image.color, state.alpha),
+            pivot,
+            rotation,
+            "ui/raw-image",
+            &raw_image.texture,
+            clip,
+        );
+        output.uv = raw_image.uv_rect;
+        primitives.push(output);
+        if raw_image.raycast_target && state.blocks_raycasts {
+            controls.push(control_region(
+                entity,
+                rect,
+                rotation,
+                pivot,
+                clip,
+                UiControlKind::Blocker,
+                Value::Null,
             ));
         }
     }
@@ -1729,6 +1766,40 @@ fn glyph_rows(character: char) -> [u8; 7] {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn raw_image_preserves_uv_texture_tint_and_raycast_blocking() {
+        let mut world = World::new();
+        let canvas = world.spawn_empty();
+        world.insert_component(canvas, Canvas::default());
+        world.insert_component(canvas, CanvasScaler::default());
+        let image = world.spawn_empty();
+        world.insert_component(image, RectTransform::default());
+        world.insert_component(
+            image,
+            RawImage {
+                texture: "Assets/UI/avatar.png".into(),
+                color: [0.5, 0.75, 1.0, 0.8],
+                uv_rect: [0.25, 0.0, 0.5, 1.0],
+                raycast_target: true,
+            },
+        );
+        world.set_parent(image, Some(canvas));
+
+        let frame = collect_ui_frame(&world, 1920, 1080);
+        let primitive = frame
+            .plan
+            .primitives
+            .iter()
+            .find(|primitive| primitive.key.material == "ui/raw-image")
+            .unwrap();
+        assert_eq!(primitive.key.texture, "Assets/UI/avatar.png");
+        assert_eq!(primitive.uv, [0.25, 0.0, 0.5, 1.0]);
+        assert_eq!(primitive.color, [0.5, 0.75, 1.0, 0.8]);
+        assert!(frame.controls.iter().any(|control| {
+            control.entity == image && matches!(control.kind, UiControlKind::Blocker)
+        }));
+    }
 
     #[test]
     fn aspect_ratio_modes_match_editor_layout_semantics() {

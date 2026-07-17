@@ -21,6 +21,7 @@ import {
   createUiCanvasComponents,
   createUiDropdownComponents,
   createUiImageComponents,
+  createUiRawImageComponents,
   createUiInputFieldComponents,
   createUiLayoutGroupComponents,
   createUiListViewComponents,
@@ -1562,6 +1563,9 @@ export function createEditorStore() {
     },
     spawnUiImage(parent?: number | null) {
       return spawnUiControl('Image', createUiImageComponents([1, 1, 1, 0.92]), parent);
+    },
+    spawnUiRawImage(parent?: number | null) {
+      return spawnUiControl('Raw Image', createUiRawImageComponents(), parent);
     },
     spawnUiButton(parent?: number | null) {
       return spawnUiControl('Button', createUiButtonComponents(), parent);

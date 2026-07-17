@@ -192,6 +192,13 @@ export interface Image {
   raycastTarget: boolean;
 }
 
+export interface RawImage {
+  texture: string;
+  color: [number, number, number, number];
+  uvRect: [number, number, number, number];
+  raycastTarget: boolean;
+}
+
 export interface Button {
   interactable: boolean;
   transition: string;
@@ -374,6 +381,7 @@ export type ComponentName =
   | 'RectTransform'
   | 'AspectRatioFitter'
   | 'Image'
+  | 'RawImage'
   | 'Button'
   | 'Text'
   | 'Toggle'
@@ -413,6 +421,7 @@ export const COMPONENT_NAMES = [
   'RectTransform',
   'AspectRatioFitter',
   'Image',
+  'RawImage',
   'Button',
   'Text',
   'Toggle',

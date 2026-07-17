@@ -145,6 +145,10 @@ export const BUILTIN_INSPECTOR_FIELDS: Readonly<
       visibleWhen: { field: 'image_type', equals: 'Sliced' },
     },
   },
+  RawImage: {
+    texture: sprite,
+    uv_rect: { label: 'UV Rect' },
+  },
   Button: {
     transition: {
       kind: 'enum',

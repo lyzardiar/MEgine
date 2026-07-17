@@ -314,6 +314,9 @@ mod tests {
                     "border": [8, 10, 8, 10], "source_size": [64, 64]
                 },
                 "AspectRatioFitter": { "aspect_mode": "FitInParent", "aspect_ratio": 1.777778 },
+                "RawImage": {
+                    "texture": "Assets/UI/avatar.png", "uv_rect": [0.25, 0, 0.5, 1]
+                },
                 "Text": { "text": "Saved UI" },
                 "Toggle": { "is_on": true },
                 "Slider": { "min_value": 0, "max_value": 10, "value": 7 },
@@ -348,6 +351,7 @@ mod tests {
             components["AspectRatioFitter"]["aspect_mode"],
             "FitInParent"
         );
+        assert_eq!(components["RawImage"]["uv_rect"][0], 0.25);
         assert_eq!(components["Text"]["text"], "Saved UI");
         assert_eq!(components["Toggle"]["is_on"], true);
         assert_eq!(components["Slider"]["value"], 7.0);

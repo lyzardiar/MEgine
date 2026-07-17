@@ -145,6 +145,17 @@ const BUILTIN_CATALOG: ComponentCatalogEntry[] = [
     }),
   },
   {
+    type: 'RawImage',
+    label: 'Raw Image',
+    description: 'Texture view with an explicit normalized UV rectangle',
+    create: () => ({
+      texture: 'white',
+      color: [1, 1, 1, 1],
+      uv_rect: [0, 0, 1, 1],
+      raycast_target: true,
+    }),
+  },
+  {
     type: 'ParticleEmitter2D',
     label: 'Particle Emitter 2D',
     description: 'Deterministic world-space XY particle emitter',
@@ -352,6 +363,18 @@ export function createUiButtonComponents() {
       text_color: [1, 1, 1, 1],
       font_size: 16,
       on_click: { target: null, component: '', method: '' },
+    },
+  };
+}
+
+export function createUiRawImageComponents(color: [number, number, number, number] = [1, 1, 1, 1]) {
+  return {
+    RectTransform: defaultRectTransform({ size_delta: [160, 100] }),
+    RawImage: {
+      texture: 'white',
+      color,
+      uv_rect: [0, 0, 1, 1],
+      raycast_target: true,
     },
   };
 }

@@ -136,6 +136,38 @@ export function drawSpriteSlicedInRect(
   return true;
 }
 
+export function drawSpriteUvInRect(
+  ctx: CanvasRenderingContext2D,
+  sprite: string,
+  x: number,
+  y: number,
+  w: number,
+  h: number,
+  color: [number, number, number, number],
+  uvRect: [number, number, number, number],
+): boolean {
+  const img = getSpriteImage(sprite);
+  if (!img || !img.complete || img.naturalWidth < 1 || img.naturalHeight < 1) return false;
+  const u0 = Math.max(0, Math.min(1, Number(uvRect[0]) || 0));
+  const v0 = Math.max(0, Math.min(1, Number(uvRect[1]) || 0));
+  const u1 = Math.max(0, Math.min(1, u0 + (Number(uvRect[2]) || 0)));
+  const v1 = Math.max(0, Math.min(1, v0 + (Number(uvRect[3]) || 0)));
+  if (u1 <= u0 || v1 <= v0) return false;
+  drawSpriteRegion(
+    ctx,
+    img,
+    [
+      u0 * img.naturalWidth,
+      v0 * img.naturalHeight,
+      (u1 - u0) * img.naturalWidth,
+      (v1 - v0) * img.naturalHeight,
+    ],
+    [x, y, w, h],
+    color,
+  );
+  return true;
+}
+
 function drawSpriteRegion(
   ctx: CanvasRenderingContext2D,
   img: HTMLImageElement,

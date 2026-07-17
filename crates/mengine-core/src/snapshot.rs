@@ -83,6 +83,7 @@ impl WorldSnapshot {
             capture_component!(crate::generated::RectMask2D, "RectMask2D");
             capture_component!(crate::generated::LayoutGroup, "LayoutGroup");
             capture_component!(crate::generated::Image, "Image");
+            capture_component!(crate::generated::RawImage, "RawImage");
             capture_component!(crate::generated::Button, "Button");
             capture_component!(crate::generated::Text, "Text");
             capture_component!(crate::generated::Toggle, "Toggle");

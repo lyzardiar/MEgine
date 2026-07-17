@@ -629,6 +629,32 @@ impl Component for Image {
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
 #[serde(default)]
+pub struct RawImage {
+    pub texture: String,
+    pub color: [f32; 4],
+    pub uv_rect: [f32; 4],
+    pub raycast_target: bool,
+}
+
+impl Default for RawImage {
+    fn default() -> Self {
+        Self {
+            texture: "white".into(),
+            color: [1.0, 1.0, 1.0, 1.0],
+            uv_rect: [0.0, 0.0, 1.0, 1.0],
+            raycast_target: true,
+        }
+    }
+}
+
+impl Component for RawImage {
+    fn type_name() -> &'static str {
+        "RawImage"
+    }
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize)]
+#[serde(default)]
 pub struct Button {
     pub interactable: bool,
     pub transition: String,
@@ -1149,6 +1175,7 @@ pub mod meta {
         "RectTransform",
         "AspectRatioFitter",
         "Image",
+        "RawImage",
         "Button",
         "Text",
         "Toggle",

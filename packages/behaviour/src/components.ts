@@ -109,6 +109,14 @@ export class Image {
   raycast_target!: boolean;
 }
 
+export class RawImage {
+  static readonly typeName = 'RawImage' as const;
+  texture!: string;
+  color!: Color4;
+  uv_rect!: Color4;
+  raycast_target!: boolean;
+}
+
 export class AspectRatioFitter {
   static readonly typeName = 'AspectRatioFitter' as const;
   aspect_mode!: string;
@@ -139,6 +147,7 @@ export type BuiltinComponents = {
   RectTransform: RectTransform;
   AspectRatioFitter: AspectRatioFitter;
   Image: Image;
+  RawImage: RawImage;
   Button: UIButton;
 };
 

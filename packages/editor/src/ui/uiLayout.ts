@@ -9,7 +9,7 @@ import {
   type Rect,
 } from './rectLayout';
 import { rectLocalAxes, rectPivot } from '../rectGizmo';
-import { drawSpriteInRect, drawSpriteSlicedInRect } from '../spriteDraw';
+import { drawSpriteInRect, drawSpriteSlicedInRect, drawSpriteUvInRect } from '../spriteDraw';
 import type { SpriteBorder } from './nineSlice';
 import { applyAspectRatio } from './aspectRatioFitter';
 import { resolveSpriteId } from '../spriteLibrary';
@@ -69,6 +69,12 @@ export type UiDrawItem = {
     outlineWidth: number;
     alignment: 'Left' | 'Center' | 'Right';
     verticalAlign: 'Top' | 'Middle' | 'Bottom';
+    raycastTarget: boolean;
+  };
+  rawImage?: {
+    color: [number, number, number, number];
+    texture: string;
+    uvRect: [number, number, number, number];
     raycastTarget: boolean;
   };
   toggle?: {
@@ -467,6 +473,7 @@ export function layoutUiOverlay(
       }
 
       const img = ent.components.Image as Record<string, unknown> | undefined;
+      const rawImage = ent.components.RawImage as Record<string, unknown> | undefined;
       const btn = ent.components.Button as Record<string, unknown> | undefined;
       const text = ent.components.Text as Record<string, unknown> | undefined;
       const toggle = ent.components.Toggle as Record<string, unknown> | undefined;
@@ -511,7 +518,7 @@ export function layoutUiOverlay(
           clip,
           selected: selectedIds.has(ent.entity),
         });
-      } else if (img || btn || text || toggle || slider || scrollbar || panel || progress || input || dropdown || list || scroll || tabs) {
+      } else if (img || rawImage || btn || text || toggle || slider || scrollbar || panel || progress || input || dropdown || list || scroll || tabs) {
         out.push({
           entity: ent.entity,
           rect,
@@ -547,6 +554,15 @@ export function layoutUiOverlay(
                 textColor: color4(btn.text_color ?? btn.textColor, [1, 1, 1, 1]),
                 fontSize: number(btn.font_size ?? btn.fontSize, 16) * scale,
                 onClick: btn.on_click ?? btn.onClick ?? null,
+              }
+            : undefined,
+          rawImage: rawImage
+            ? {
+                color: color4(rawImage.color, [1, 1, 1, 1]),
+                texture: resolveSpriteId(String(rawImage.texture ?? 'white')),
+                uvRect: number4(rawImage.uv_rect ?? rawImage.uvRect, [0, 0, 1, 1]),
+                raycastTarget:
+                  rawImage.raycast_target !== false && rawImage.raycastTarget !== false,
               }
             : undefined,
           text: text
@@ -982,6 +998,7 @@ export function hitTestUi(items: UiDrawItem[], x: number, y: number): UiDrawItem
     if (it.tabs?.interactable) return it;
     if (it.panel?.raycastTarget) return it;
     if (it.image?.raycastTarget) return it;
+    if (it.rawImage?.raycastTarget) return it;
     if (it.text?.raycastTarget) return it;
   }
   return null;
@@ -1009,6 +1026,7 @@ function batchKey(it: UiDrawItem): string {
   if (it.button) return `ui/button/${it.image?.sprite ?? 'white'}+text`;
   if (it.text) return 'ui/text/system';
   if (it.image) return `ui/image/${it.image.sprite}`;
+  if (it.rawImage) return `ui/raw-image/${it.rawImage.texture}`;
   return 'editor/selection';
 }
 
@@ -1226,7 +1244,7 @@ export function drawUiItems(
       ctx.clip();
     }
 
-    let [r, g, b, a] = it.image?.color ?? [0.85, 0.85, 0.9, 0.92];
+    let [r, g, b, a] = it.image?.color ?? it.rawImage?.color ?? [0.85, 0.85, 0.9, 0.92];
     const piv = it.pivotScreen ?? rectPivot(it.rect, it.pivot);
     const rotRad = (-it.rotation * Math.PI) / 180;
 
@@ -1243,7 +1261,7 @@ export function drawUiItems(
       ctx.restore();
     };
 
-    if (!it.image && !it.button && !it.text && !it.toggle && !it.slider && !it.scrollbar && !it.panel && !it.progress && !it.input && !it.dropdown && !it.list && !it.scroll && !it.tabs) {
+    if (!it.image && !it.rawImage && !it.button && !it.text && !it.toggle && !it.slider && !it.scrollbar && !it.panel && !it.progress && !it.input && !it.dropdown && !it.list && !it.scroll && !it.tabs) {
       if (it.selected) {
         withRot(() => {
           ctx.setLineDash([4, 3]);
@@ -1406,11 +1424,13 @@ export function drawUiItems(
         });
       }
 
-      if (it.image || it.button) {
-        const sprite = it.image?.sprite ?? 'white';
+      if (it.image || it.rawImage || it.button) {
+        const sprite = it.image?.sprite ?? it.rawImage?.texture ?? 'white';
         const tint: [number, number, number, number] = [r, g, b, a];
         const drawn =
-          sprite !== 'white' && (it.image?.imageType === 'Sliced'
+          sprite !== 'white' && (it.rawImage
+            ? drawSpriteUvInRect(ctx, sprite, x, y, w, h, tint, it.rawImage.uvRect)
+            : it.image?.imageType === 'Sliced'
             ? drawSpriteSlicedInRect(
                 ctx,
                 sprite,
