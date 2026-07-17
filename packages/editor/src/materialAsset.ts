@@ -1,5 +1,7 @@
 export type MaterialShader = 'pbr' | 'unlit';
 export type MaterialSurface = 'opaque' | 'transparent' | 'cutout';
+export type MaterialWrap = 'repeat' | 'clamp' | 'mirror';
+export type MaterialFilter = 'nearest' | 'linear';
 
 export type MaterialAsset = {
   version: number;
@@ -17,15 +19,20 @@ export type MaterialAsset = {
   normal_texture: string;
   normal_scale: number;
   metallic_roughness_texture: string;
+  occlusion_texture: string;
   occlusion_strength: number;
   emissive_texture: string;
   uv_scale: [number, number];
   uv_offset: [number, number];
+  uv_rotation: number;
+  wrap_u: MaterialWrap;
+  wrap_v: MaterialWrap;
+  filter: MaterialFilter;
 };
 
 export function createMaterialAsset(name = 'New Material'): MaterialAsset {
   return {
-    version: 1,
+    version: 2,
     name,
     shader: 'pbr',
     surface: 'opaque',
@@ -40,10 +47,15 @@ export function createMaterialAsset(name = 'New Material'): MaterialAsset {
     normal_texture: '',
     normal_scale: 1,
     metallic_roughness_texture: '',
+    occlusion_texture: '',
     occlusion_strength: 1,
     emissive_texture: '',
     uv_scale: [1, 1],
     uv_offset: [0, 0],
+    uv_rotation: 0,
+    wrap_u: 'repeat',
+    wrap_v: 'repeat',
+    filter: 'linear',
   };
 }
 
@@ -66,7 +78,7 @@ export function normalizeMaterialAsset(value: unknown): MaterialAsset {
   const emissive = vector(source.emissive, 3, [0, 0, 0])
     .map((part) => Math.max(0, part)) as MaterialAsset['emissive'];
   return {
-    version: Math.max(1, Math.trunc(finite(source.version, 1))),
+    version: Math.max(2, Math.trunc(finite(source.version, 2))),
     name: String(source.name ?? ''),
     shader: source.shader === 'unlit' ? 'unlit' : 'pbr',
     surface: source.surface === 'transparent' || source.surface === 'cutout'
@@ -85,10 +97,15 @@ export function normalizeMaterialAsset(value: unknown): MaterialAsset {
     metallic_roughness_texture: String(source.metallic_roughness_texture ?? '')
       .trim()
       .replace(/\\/g, '/'),
+    occlusion_texture: String(source.occlusion_texture ?? '').trim().replace(/\\/g, '/'),
     occlusion_strength: Math.max(0, Math.min(1, finite(source.occlusion_strength, 1))),
     emissive_texture: String(source.emissive_texture ?? '').trim().replace(/\\/g, '/'),
     uv_scale: vector(source.uv_scale, 2, [1, 1]) as [number, number],
     uv_offset: vector(source.uv_offset, 2, [0, 0]) as [number, number],
+    uv_rotation: ((finite(source.uv_rotation, 0) % 360) + 360) % 360,
+    wrap_u: source.wrap_u === 'clamp' || source.wrap_u === 'mirror' ? source.wrap_u : 'repeat',
+    wrap_v: source.wrap_v === 'clamp' || source.wrap_v === 'mirror' ? source.wrap_v : 'repeat',
+    filter: source.filter === 'nearest' ? 'nearest' : 'linear',
   };
 }
 

@@ -1,6 +1,9 @@
 use crate::textures::resolve_project_asset_path;
-use mengine_assets::{load_material_asset, MaterialAsset, MaterialShader, MaterialSurface};
-use mengine_rhi::RenderMaterial;
+use mengine_assets::{
+    load_material_asset, MaterialAsset, MaterialFilter as AssetMaterialFilter, MaterialShader,
+    MaterialSurface, MaterialWrap as AssetMaterialWrap,
+};
+use mengine_rhi::{MaterialFilter, MaterialWrap, RenderMaterial};
 use std::collections::{HashMap, HashSet};
 use std::path::PathBuf;
 use std::sync::Arc;
@@ -110,10 +113,26 @@ pub fn render_material_from_asset(material: &MaterialAsset) -> RenderMaterial {
         normal_texture: material.normal_texture.clone(),
         normal_scale: material.normal_scale,
         metallic_roughness_texture: material.metallic_roughness_texture.clone(),
+        occlusion_texture: material.occlusion_texture.clone(),
         occlusion_strength: material.occlusion_strength,
         emissive_texture: material.emissive_texture.clone(),
         uv_scale: material.uv_scale,
         uv_offset: material.uv_offset,
+        uv_rotation_degrees: material.uv_rotation,
+        wrap_u: render_wrap(material.wrap_u),
+        wrap_v: render_wrap(material.wrap_v),
+        filter: match material.filter {
+            AssetMaterialFilter::Nearest => MaterialFilter::Nearest,
+            AssetMaterialFilter::Linear => MaterialFilter::Linear,
+        },
+    }
+}
+
+fn render_wrap(wrap: AssetMaterialWrap) -> MaterialWrap {
+    match wrap {
+        AssetMaterialWrap::Repeat => MaterialWrap::Repeat,
+        AssetMaterialWrap::Clamp => MaterialWrap::Clamp,
+        AssetMaterialWrap::Mirror => MaterialWrap::Mirror,
     }
 }
 
@@ -131,10 +150,15 @@ mod tests {
             normal_texture: "Assets/Textures/leaves-normal.png".into(),
             normal_scale: 0.75,
             metallic_roughness_texture: "Assets/Textures/leaves-orm.png".into(),
+            occlusion_texture: "Assets/Textures/leaves-ao.png".into(),
             occlusion_strength: 0.6,
             emissive_texture: "Assets/Textures/leaves-emissive.png".into(),
             uv_scale: [2.0, 3.0],
             uv_offset: [0.25, 0.5],
+            uv_rotation: 45.0,
+            wrap_u: AssetMaterialWrap::Clamp,
+            wrap_v: AssetMaterialWrap::Mirror,
+            filter: AssetMaterialFilter::Nearest,
             ..MaterialAsset::default()
         };
         let material = render_material_from_asset(&asset);
@@ -149,8 +173,13 @@ mod tests {
             asset.metallic_roughness_texture
         );
         assert_eq!(material.occlusion_strength, 0.6);
+        assert_eq!(material.occlusion_texture, asset.occlusion_texture);
         assert_eq!(material.emissive_texture, asset.emissive_texture);
         assert_eq!(material.uv_scale, [2.0, 3.0]);
         assert_eq!(material.uv_offset, [0.25, 0.5]);
+        assert_eq!(material.uv_rotation_degrees, 45.0);
+        assert_eq!(material.wrap_u, MaterialWrap::Clamp);
+        assert_eq!(material.wrap_v, MaterialWrap::Mirror);
+        assert_eq!(material.filter, MaterialFilter::Nearest);
     }
 }

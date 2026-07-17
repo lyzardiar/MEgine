@@ -72,10 +72,30 @@ pub struct RenderMaterial {
     pub normal_texture: String,
     pub normal_scale: f32,
     pub metallic_roughness_texture: String,
+    pub occlusion_texture: String,
     pub occlusion_strength: f32,
     pub emissive_texture: String,
     pub uv_scale: [f32; 2],
     pub uv_offset: [f32; 2],
+    pub uv_rotation_degrees: f32,
+    pub wrap_u: MaterialWrap,
+    pub wrap_v: MaterialWrap,
+    pub filter: MaterialFilter,
+}
+
+#[derive(Clone, Copy, Debug, Default, Eq, Hash, PartialEq)]
+pub enum MaterialWrap {
+    #[default]
+    Repeat,
+    Clamp,
+    Mirror,
+}
+
+#[derive(Clone, Copy, Debug, Default, Eq, Hash, PartialEq)]
+pub enum MaterialFilter {
+    Nearest,
+    #[default]
+    Linear,
 }
 
 impl Default for RenderMaterial {
@@ -94,10 +114,15 @@ impl Default for RenderMaterial {
             normal_texture: String::new(),
             normal_scale: 1.0,
             metallic_roughness_texture: String::new(),
+            occlusion_texture: String::new(),
             occlusion_strength: 1.0,
             emissive_texture: String::new(),
             uv_scale: [1.0, 1.0],
             uv_offset: [0.0, 0.0],
+            uv_rotation_degrees: 0.0,
+            wrap_u: MaterialWrap::Repeat,
+            wrap_v: MaterialWrap::Repeat,
+            filter: MaterialFilter::Linear,
         }
     }
 }
@@ -199,16 +224,36 @@ struct MaterialTextureSetKey {
     base_color: String,
     normal: String,
     metallic_roughness: String,
+    occlusion: String,
     emissive: String,
+    sampler: MaterialSamplerKey,
+}
+
+#[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]
+struct MaterialSamplerKey {
+    wrap_u: MaterialWrap,
+    wrap_v: MaterialWrap,
+    filter: MaterialFilter,
 }
 
 impl From<&RenderMaterial> for MaterialTextureSetKey {
     fn from(material: &RenderMaterial) -> Self {
+        let metallic_roughness = material.metallic_roughness_texture.trim().to_owned();
         Self {
             base_color: material.base_color_texture.trim().to_owned(),
             normal: material.normal_texture.trim().to_owned(),
-            metallic_roughness: material.metallic_roughness_texture.trim().to_owned(),
+            occlusion: if material.occlusion_texture.trim().is_empty() {
+                metallic_roughness.clone()
+            } else {
+                material.occlusion_texture.trim().to_owned()
+            },
+            metallic_roughness,
             emissive: material.emissive_texture.trim().to_owned(),
+            sampler: MaterialSamplerKey {
+                wrap_u: material.wrap_u,
+                wrap_v: material.wrap_v,
+                filter: material.filter,
+            },
         }
     }
 }
@@ -230,10 +275,11 @@ pub struct Renderer {
     object_buf: wgpu::Buffer,
     bind_group: wgpu::BindGroup,
     material_texture_layout: wgpu::BindGroupLayout,
-    material_sampler: wgpu::Sampler,
+    material_samplers: HashMap<MaterialSamplerKey, wgpu::Sampler>,
     fallback_base_color_texture: MaterialTextureGpu,
     fallback_normal_texture: MaterialTextureGpu,
     fallback_metallic_roughness_texture: MaterialTextureGpu,
+    fallback_occlusion_texture: MaterialTextureGpu,
     fallback_emissive_texture: MaterialTextureGpu,
     material_color_textures: HashMap<String, MaterialTextureGpu>,
     material_data_textures: HashMap<String, MaterialTextureGpu>,
@@ -382,6 +428,16 @@ impl Renderer {
                     wgpu::BindGroupLayoutEntry {
                         binding: 4,
                         visibility: wgpu::ShaderStages::FRAGMENT,
+                        ty: wgpu::BindingType::Texture {
+                            sample_type: wgpu::TextureSampleType::Float { filterable: true },
+                            view_dimension: wgpu::TextureViewDimension::D2,
+                            multisampled: false,
+                        },
+                        count: None,
+                    },
+                    wgpu::BindGroupLayoutEntry {
+                        binding: 5,
+                        visibility: wgpu::ShaderStages::FRAGMENT,
                         ty: wgpu::BindingType::Sampler(wgpu::SamplerBindingType::Filtering),
                         count: None,
                     },
@@ -427,16 +483,6 @@ impl Renderer {
         let object_capacity = 64;
         let object_buf = create_object_buffer(&device, object_stride, object_capacity);
         let bind_group = create_bind_group(&device, &bind_layout, &global_buf, &object_buf);
-        let material_sampler = device.create_sampler(&wgpu::SamplerDescriptor {
-            label: Some("material_sampler"),
-            address_mode_u: wgpu::AddressMode::Repeat,
-            address_mode_v: wgpu::AddressMode::Repeat,
-            address_mode_w: wgpu::AddressMode::Repeat,
-            mag_filter: wgpu::FilterMode::Linear,
-            min_filter: wgpu::FilterMode::Linear,
-            mipmap_filter: wgpu::FilterMode::Linear,
-            ..Default::default()
-        });
         let fallback_base_color_texture = create_material_texture_rgba8(
             &device,
             &queue,
@@ -459,6 +505,15 @@ impl Renderer {
             &device,
             &queue,
             "material_white_orm_texture",
+            1,
+            1,
+            &[255, 255, 255, 255],
+            false,
+        );
+        let fallback_occlusion_texture = create_material_texture_rgba8(
+            &device,
+            &queue,
+            "material_white_occlusion_texture",
             1,
             1,
             &[255, 255, 255, 255],
@@ -496,10 +551,11 @@ impl Renderer {
             object_buf,
             bind_group,
             material_texture_layout,
-            material_sampler,
+            material_samplers: HashMap::new(),
             fallback_base_color_texture,
             fallback_normal_texture,
             fallback_metallic_roughness_texture,
+            fallback_occlusion_texture,
             fallback_emissive_texture,
             material_color_textures: HashMap::new(),
             material_data_textures: HashMap::new(),
@@ -688,6 +744,10 @@ impl Renderer {
         if self.material_texture_sets.contains_key(&key) {
             return;
         }
+        if !self.material_samplers.contains_key(&key.sampler) {
+            let sampler = create_material_sampler(&self.device, key.sampler);
+            self.material_samplers.insert(key.sampler, sampler);
+        }
         let base_color = self
             .material_color_textures
             .get(&key.base_color)
@@ -700,6 +760,10 @@ impl Renderer {
             .material_data_textures
             .get(&key.metallic_roughness)
             .unwrap_or(&self.fallback_metallic_roughness_texture);
+        let occlusion = self
+            .material_data_textures
+            .get(&key.occlusion)
+            .unwrap_or(&self.fallback_occlusion_texture);
         let emissive = self
             .material_color_textures
             .get(&key.emissive)
@@ -726,7 +790,15 @@ impl Renderer {
                 },
                 wgpu::BindGroupEntry {
                     binding: 4,
-                    resource: wgpu::BindingResource::Sampler(&self.material_sampler),
+                    resource: wgpu::BindingResource::TextureView(&occlusion.view),
+                },
+                wgpu::BindGroupEntry {
+                    binding: 5,
+                    resource: wgpu::BindingResource::Sampler(
+                        self.material_samplers
+                            .get(&key.sampler)
+                            .expect("material sampler inserted before bind group"),
+                    ),
                 },
             ],
         });
@@ -921,9 +993,36 @@ fn make_object_uniforms(object: &RenderObject) -> ObjectUniforms {
         map_params: [
             material.normal_scale.max(0.0),
             material.occlusion_strength.clamp(0.0, 1.0),
-            0.0,
+            material.uv_rotation_degrees.to_radians(),
             0.0,
         ],
+    }
+}
+
+fn create_material_sampler(device: &wgpu::Device, key: MaterialSamplerKey) -> wgpu::Sampler {
+    let filter = match key.filter {
+        MaterialFilter::Nearest => wgpu::FilterMode::Nearest,
+        MaterialFilter::Linear => wgpu::FilterMode::Linear,
+    };
+    device.create_sampler(&wgpu::SamplerDescriptor {
+        label: Some("material_sampler"),
+        address_mode_u: material_address_mode(key.wrap_u),
+        address_mode_v: material_address_mode(key.wrap_v),
+        address_mode_w: wgpu::AddressMode::Repeat,
+        mag_filter: filter,
+        min_filter: filter,
+        // Keep the sampler compatible with the filtering bind-group layout. Material textures
+        // currently have one mip level, so this does not soften nearest min/mag sampling.
+        mipmap_filter: wgpu::FilterMode::Linear,
+        ..Default::default()
+    })
+}
+
+fn material_address_mode(wrap: MaterialWrap) -> wgpu::AddressMode {
+    match wrap {
+        MaterialWrap::Repeat => wgpu::AddressMode::Repeat,
+        MaterialWrap::Clamp => wgpu::AddressMode::ClampToEdge,
+        MaterialWrap::Mirror => wgpu::AddressMode::MirrorRepeat,
     }
 }
 
@@ -1174,7 +1273,8 @@ struct ObjectUniforms {
 @group(1) @binding(1) var normal_texture: texture_2d<f32>;
 @group(1) @binding(2) var metallic_roughness_texture: texture_2d<f32>;
 @group(1) @binding(3) var emissive_texture: texture_2d<f32>;
-@group(1) @binding(4) var material_sampler: sampler;
+@group(1) @binding(4) var occlusion_texture: texture_2d<f32>;
+@group(1) @binding(5) var material_sampler: sampler;
 
 struct VsIn {
     @location(0) position: vec3<f32>,
@@ -1196,7 +1296,11 @@ fn vs_main(v: VsIn) -> VsOut {
     o.clip = frame.view_proj * world;
     o.world_position = world.xyz;
     o.world_normal = normalize((object.normal_matrix * vec4<f32>(v.normal, 0.0)).xyz);
-    o.uv = v.uv * object.texture_transform.xy + object.texture_transform.zw;
+    let scaled_uv = v.uv * object.texture_transform.xy;
+    let center = object.texture_transform.xy * 0.5;
+    let angle = object.map_params.z;
+    let rotation = mat2x2<f32>(cos(angle), sin(angle), -sin(angle), cos(angle));
+    o.uv = rotation * (scaled_uv - center) + center + object.texture_transform.zw;
     return o;
 }
 
@@ -1263,6 +1367,7 @@ fn fs_main(i: VsOut, @builtin(front_facing) front_facing: bool) -> @location(0) 
     let sampled_normal = textureSample(normal_texture, material_sampler, i.uv).rgb;
     let sampled_orm = textureSample(metallic_roughness_texture, material_sampler, i.uv).rgb;
     let sampled_emissive = textureSample(emissive_texture, material_sampler, i.uv).rgb;
+    let sampled_occlusion = textureSample(occlusion_texture, material_sampler, i.uv).r;
     let surface_color = object.base_color * sampled_color;
     if object.emissive.w > 0.0 && surface_color.a < object.emissive.w {
         discard;
@@ -1270,7 +1375,7 @@ fn fs_main(i: VsOut, @builtin(front_facing) front_facing: bool) -> @location(0) 
     let base_color = max(surface_color.rgb, vec3<f32>(0.0));
     let metallic = clamp(object.material.x * sampled_orm.b, 0.0, 1.0);
     let roughness = clamp(object.material.y * sampled_orm.g, 0.04, 1.0);
-    let occlusion = mix(1.0, sampled_orm.r, clamp(object.map_params.y, 0.0, 1.0));
+    let occlusion = mix(1.0, sampled_occlusion, clamp(object.map_params.y, 0.0, 1.0));
     let emissive = max(object.emissive.rgb, vec3<f32>(0.0))
         * object.material.z
         * sampled_emissive;
@@ -1389,8 +1494,13 @@ mod tests {
                 normal_texture: "normal.png".into(),
                 normal_scale: 1.5,
                 metallic_roughness_texture: "orm.png".into(),
+                occlusion_texture: "ao.png".into(),
                 occlusion_strength: 0.65,
                 emissive_texture: "emissive.png".into(),
+                uv_rotation_degrees: 90.0,
+                wrap_u: MaterialWrap::Clamp,
+                wrap_v: MaterialWrap::Mirror,
+                filter: MaterialFilter::Nearest,
                 ..Default::default()
             },
         };
@@ -1398,10 +1508,24 @@ mod tests {
         assert_eq!(key.base_color, "base.png");
         assert_eq!(key.normal, "normal.png");
         assert_eq!(key.metallic_roughness, "orm.png");
+        assert_eq!(key.occlusion, "ao.png");
         assert_eq!(key.emissive, "emissive.png");
+        assert_eq!(key.sampler.wrap_u, MaterialWrap::Clamp);
+        assert_eq!(key.sampler.wrap_v, MaterialWrap::Mirror);
+        assert_eq!(key.sampler.filter, MaterialFilter::Nearest);
         assert_eq!(
             make_object_uniforms(&object).map_params,
-            [1.5, 0.65, 0.0, 0.0]
+            [1.5, 0.65, std::f32::consts::FRAC_PI_2, 0.0]
         );
+    }
+
+    #[test]
+    fn legacy_orm_map_remains_the_occlusion_source() {
+        let material = RenderMaterial {
+            metallic_roughness_texture: "orm.png".into(),
+            ..Default::default()
+        };
+        let key = MaterialTextureSetKey::from(&material);
+        assert_eq!(key.occlusion, "orm.png");
     }
 }

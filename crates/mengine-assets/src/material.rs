@@ -3,7 +3,7 @@ use serde::{Deserialize, Serialize};
 use std::path::Path;
 
 fn default_version() -> u32 {
-    1
+    2
 }
 
 fn default_base_color() -> [f32; 4] {
@@ -47,6 +47,23 @@ pub enum MaterialSurface {
     Cutout,
 }
 
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "snake_case")]
+pub enum MaterialWrap {
+    #[default]
+    Repeat,
+    Clamp,
+    Mirror,
+}
+
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "snake_case")]
+pub enum MaterialFilter {
+    Nearest,
+    #[default]
+    Linear,
+}
+
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 #[serde(default)]
 pub struct MaterialAsset {
@@ -73,6 +90,8 @@ pub struct MaterialAsset {
     pub normal_scale: f32,
     #[serde(default)]
     pub metallic_roughness_texture: String,
+    #[serde(default)]
+    pub occlusion_texture: String,
     #[serde(default = "default_one")]
     pub occlusion_strength: f32,
     #[serde(default)]
@@ -80,6 +99,14 @@ pub struct MaterialAsset {
     #[serde(default = "default_uv_scale")]
     pub uv_scale: [f32; 2],
     pub uv_offset: [f32; 2],
+    #[serde(default)]
+    pub uv_rotation: f32,
+    #[serde(default)]
+    pub wrap_u: MaterialWrap,
+    #[serde(default)]
+    pub wrap_v: MaterialWrap,
+    #[serde(default)]
+    pub filter: MaterialFilter,
 }
 
 impl Default for MaterialAsset {
@@ -100,17 +127,22 @@ impl Default for MaterialAsset {
             normal_texture: String::new(),
             normal_scale: default_one(),
             metallic_roughness_texture: String::new(),
+            occlusion_texture: String::new(),
             occlusion_strength: default_one(),
             emissive_texture: String::new(),
             uv_scale: default_uv_scale(),
             uv_offset: [0.0; 2],
+            uv_rotation: 0.0,
+            wrap_u: MaterialWrap::Repeat,
+            wrap_v: MaterialWrap::Repeat,
+            filter: MaterialFilter::Linear,
         }
     }
 }
 
 impl MaterialAsset {
     pub fn normalized(mut self) -> Self {
-        if self.version == 0 {
+        if self.version < default_version() {
             self.version = default_version();
         }
         for value in &mut self.base_color {
@@ -139,9 +171,11 @@ impl MaterialAsset {
         for value in &mut self.uv_offset {
             *value = finite_or(*value, 0.0);
         }
+        self.uv_rotation = finite_or(self.uv_rotation, 0.0).rem_euclid(360.0);
         self.base_color_texture = self.base_color_texture.trim().replace('\\', "/");
         self.normal_texture = self.normal_texture.trim().replace('\\', "/");
         self.metallic_roughness_texture = self.metallic_roughness_texture.trim().replace('\\', "/");
+        self.occlusion_texture = self.occlusion_texture.trim().replace('\\', "/");
         self.emissive_texture = self.emissive_texture.trim().replace('\\', "/");
         self
     }
@@ -186,7 +220,7 @@ mod tests {
             }"#,
         )
         .unwrap();
-        assert_eq!(parsed.version, 1);
+        assert_eq!(parsed.version, 2);
         assert_eq!(parsed.surface, MaterialSurface::Transparent);
         assert_eq!(parsed.base_color, [1.0, 0.0, 0.5, 0.25]);
         assert_eq!(parsed.metallic, 1.0);
@@ -207,6 +241,7 @@ mod tests {
 
         let legacy = parse_material_asset(
             br#"{
+              "version":1,
               "name":"Legacy",
               "shader":"pbr",
               "surface":"opaque",
@@ -223,10 +258,37 @@ mod tests {
             }"#,
         )
         .expect("materials authored before PBR maps were added remain loadable");
+        assert_eq!(legacy.version, 2);
         assert_eq!(legacy.normal_texture, "");
         assert_eq!(legacy.normal_scale, 1.0);
         assert_eq!(legacy.metallic_roughness_texture, "");
+        assert_eq!(legacy.occlusion_texture, "");
         assert_eq!(legacy.occlusion_strength, 1.0);
         assert_eq!(legacy.emissive_texture, "");
+        assert_eq!(legacy.uv_rotation, 0.0);
+        assert_eq!(legacy.wrap_u, MaterialWrap::Repeat);
+        assert_eq!(legacy.wrap_v, MaterialWrap::Repeat);
+        assert_eq!(legacy.filter, MaterialFilter::Linear);
+    }
+
+    #[test]
+    fn version_two_sampler_and_uv_settings_are_normalized() {
+        let parsed = parse_material_asset(
+            br#"{
+              "version":2,
+              "occlusion_texture":" Assets\\Textures\\ao.png ",
+              "uv_rotation":-90,
+              "wrap_u":"clamp",
+              "wrap_v":"mirror",
+              "filter":"nearest"
+            }"#,
+        )
+        .unwrap();
+        assert_eq!(parsed.version, 2);
+        assert_eq!(parsed.occlusion_texture, "Assets/Textures/ao.png");
+        assert_eq!(parsed.uv_rotation, 270.0);
+        assert_eq!(parsed.wrap_u, MaterialWrap::Clamp);
+        assert_eq!(parsed.wrap_v, MaterialWrap::Mirror);
+        assert_eq!(parsed.filter, MaterialFilter::Nearest);
     }
 }

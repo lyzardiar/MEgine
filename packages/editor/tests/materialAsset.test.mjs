@@ -9,7 +9,7 @@ import {
 
 test('material assets have stable authoring defaults', () => {
   assert.deepEqual(createMaterialAsset('Paint'), {
-    version: 1,
+    version: 2,
     name: 'Paint',
     shader: 'pbr',
     surface: 'opaque',
@@ -24,10 +24,15 @@ test('material assets have stable authoring defaults', () => {
     normal_texture: '',
     normal_scale: 1,
     metallic_roughness_texture: '',
+    occlusion_texture: '',
     occlusion_strength: 1,
     emissive_texture: '',
     uv_scale: [1, 1],
     uv_offset: [0, 0],
+    uv_rotation: 0,
+    wrap_u: 'repeat',
+    wrap_v: 'repeat',
+    filter: 'linear',
   });
 });
 
@@ -42,8 +47,13 @@ test('material parsing normalizes ranges and texture separators', () => {
     normal_texture: 'Assets\\Textures\\glass-normal.png',
     normal_scale: -2,
     metallic_roughness_texture: 'Assets\\Textures\\glass-orm.png',
+    occlusion_texture: 'Assets\\Textures\\glass-ao.png',
     occlusion_strength: 5,
     emissive_texture: 'Assets\\Textures\\glass-emissive.png',
+    uv_rotation: -90,
+    wrap_u: 'clamp',
+    wrap_v: 'mirror',
+    filter: 'nearest',
   }));
   assert.equal(material.surface, 'transparent');
   assert.deepEqual(material.base_color, [1, 0, 0.5, 0.25]);
@@ -53,7 +63,12 @@ test('material parsing normalizes ranges and texture separators', () => {
   assert.equal(material.normal_texture, 'Assets/Textures/glass-normal.png');
   assert.equal(material.normal_scale, 0);
   assert.equal(material.metallic_roughness_texture, 'Assets/Textures/glass-orm.png');
+  assert.equal(material.occlusion_texture, 'Assets/Textures/glass-ao.png');
   assert.equal(material.occlusion_strength, 1);
   assert.equal(material.emissive_texture, 'Assets/Textures/glass-emissive.png');
+  assert.equal(material.uv_rotation, 270);
+  assert.equal(material.wrap_u, 'clamp');
+  assert.equal(material.wrap_v, 'mirror');
+  assert.equal(material.filter, 'nearest');
   assert.deepEqual(parseMaterialAsset(serializeMaterialAsset(material)), material);
 });

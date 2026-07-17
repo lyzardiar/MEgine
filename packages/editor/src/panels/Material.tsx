@@ -234,7 +234,7 @@ export function MaterialEditor(props: {
 
   const dropTexture = (
     event: DragEvent<HTMLDivElement>,
-    field: 'base_color_texture' | 'normal_texture' | 'metallic_roughness_texture' | 'emissive_texture',
+    field: 'base_color_texture' | 'normal_texture' | 'metallic_roughness_texture' | 'occlusion_texture' | 'emissive_texture',
     label: string,
   ) => {
     event.preventDefault();
@@ -334,10 +334,17 @@ export function MaterialEditor(props: {
           <label>Normal Scale <input type="number" min={0} step={0.05} value={material.normal_scale} onChange={(event) => update('normal_scale', Number(event.target.value))} /></label>
           <MaterialTextureSlot
             label="ORM Texture"
-            hint="Linear packed map: R = ambient occlusion, G = roughness, B = metallic"
+            hint="Linear packed map: G = roughness, B = metallic; R remains the AO fallback"
             value={material.metallic_roughness_texture}
             onChange={(value) => update('metallic_roughness_texture', value)}
             onDrop={(event) => dropTexture(event, 'metallic_roughness_texture', 'ORM Texture')}
+          />
+          <MaterialTextureSlot
+            label="Occlusion Texture"
+            hint="Optional linear map: R = ambient occlusion. When empty, ORM R is used for compatibility."
+            value={material.occlusion_texture}
+            onChange={(value) => update('occlusion_texture', value)}
+            onDrop={(event) => dropTexture(event, 'occlusion_texture', 'Occlusion Texture')}
           />
           <label>Occlusion Strength <input type="range" min={0} max={1} step={0.01} value={material.occlusion_strength} onChange={(event) => update('occlusion_strength', Number(event.target.value))} /><output>{material.occlusion_strength.toFixed(2)}</output></label>
           <MaterialTextureSlot
@@ -352,6 +359,23 @@ export function MaterialEditor(props: {
           <label>UV Offset
             <span className="material-vector"><input aria-label="UV offset X" type="number" step={0.1} value={material.uv_offset[0]} onChange={(event) => update('uv_offset', [Number(event.target.value), material.uv_offset[1]])} /><input aria-label="UV offset Y" type="number" step={0.1} value={material.uv_offset[1]} onChange={(event) => update('uv_offset', [material.uv_offset[0], Number(event.target.value)])} /></span>
           </label>
+          <label>UV Rotation
+            <span className="material-suffixed-input"><input aria-label="UV rotation" type="number" step={1} value={material.uv_rotation} onChange={(event) => update('uv_rotation', Number(event.target.value))} /><span>°</span></span>
+          </label>
+          <label>Wrap U <select value={material.wrap_u} onChange={(event) => update('wrap_u', event.target.value as MaterialAsset['wrap_u'])}>
+            <option value="repeat">Repeat</option>
+            <option value="clamp">Clamp</option>
+            <option value="mirror">Mirror</option>
+          </select></label>
+          <label>Wrap V <select value={material.wrap_v} onChange={(event) => update('wrap_v', event.target.value as MaterialAsset['wrap_v'])}>
+            <option value="repeat">Repeat</option>
+            <option value="clamp">Clamp</option>
+            <option value="mirror">Mirror</option>
+          </select></label>
+          <label>Filter <select value={material.filter} onChange={(event) => update('filter', event.target.value as MaterialAsset['filter'])}>
+            <option value="linear">Linear</option>
+            <option value="nearest">Nearest</option>
+          </select></label>
         </div>
       </div>
       <div className="material-footer">

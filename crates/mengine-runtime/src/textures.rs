@@ -1,7 +1,8 @@
 use mengine_assets::load_texture_rgba8;
 use mengine_rhi::{RenderObject, Renderer, UiBatchPlan};
-use std::collections::HashSet;
+use std::collections::HashMap;
 use std::path::{Component, Path, PathBuf};
+use std::time::SystemTime;
 
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct TextureLoadFailure {
@@ -13,16 +14,22 @@ pub struct TextureLoadFailure {
 #[derive(Default)]
 pub struct RuntimeTextureCache {
     project_root: Option<PathBuf>,
-    attempted_ui: HashSet<String>,
-    attempted_material: HashSet<String>,
+    attempted_ui: HashMap<String, FileStamp>,
+    attempted_material: HashMap<String, FileStamp>,
+}
+
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
+struct FileStamp {
+    modified: Option<SystemTime>,
+    length: Option<u64>,
 }
 
 impl RuntimeTextureCache {
     pub fn new(project_root: Option<PathBuf>) -> Self {
         Self {
             project_root,
-            attempted_ui: HashSet::new(),
-            attempted_material: HashSet::new(),
+            attempted_ui: HashMap::new(),
+            attempted_material: HashMap::new(),
         }
     }
 
@@ -38,7 +45,7 @@ impl RuntimeTextureCache {
     pub fn invalidate(&mut self, key: &str) {
         self.attempted_ui.remove(key);
         self.attempted_material
-            .retain(|attempt| attempt.split_once('\0').is_none_or(|(_, path)| path != key));
+            .retain(|attempt, _| attempt.split_once('\0').is_none_or(|(_, path)| path != key));
     }
 
     pub fn sync(&mut self, renderer: &mut Renderer, plan: &UiBatchPlan) -> Vec<TextureLoadFailure> {
@@ -51,17 +58,19 @@ impl RuntimeTextureCache {
             if key.is_empty() || key.eq_ignore_ascii_case("white") {
                 continue;
             }
-            if !self.attempted_ui.insert(key.to_owned()) {
-                continue;
-            }
             let Some(path) = resolve_texture_path(root, key) else {
-                failures.push(TextureLoadFailure {
-                    key: key.to_owned(),
-                    path: root.to_owned(),
-                    error: "texture key must be a project-relative path without '..'".into(),
-                });
+                if should_attempt(&mut self.attempted_ui, key, FileStamp::default()) {
+                    failures.push(TextureLoadFailure {
+                        key: key.to_owned(),
+                        path: root.to_owned(),
+                        error: "texture key must be a project-relative path without '..'".into(),
+                    });
+                }
                 continue;
             };
+            if !should_attempt(&mut self.attempted_ui, key, file_stamp(&path)) {
+                continue;
+            }
             match load_texture_rgba8(&path) {
                 Ok(texture) => {
                     if let Err(error) = renderer.upload_ui_texture_rgba8(
@@ -102,24 +111,28 @@ impl RuntimeTextureCache {
                 (material.base_color_texture.trim(), true),
                 (material.normal_texture.trim(), false),
                 (material.metallic_roughness_texture.trim(), false),
+                (material.occlusion_texture.trim(), false),
                 (material.emissive_texture.trim(), true),
             ] {
                 if key.is_empty() || key.eq_ignore_ascii_case("white") {
                     continue;
                 }
                 let attempt = format!("{}\0{key}", if srgb { "srgb" } else { "linear" });
-                if !self.attempted_material.insert(attempt) {
-                    continue;
-                }
                 let Some(path) = resolve_project_asset_path(root, key) else {
-                    failures.push(TextureLoadFailure {
-                        key: key.to_owned(),
-                        path: root.to_owned(),
-                        error: "material texture must be a project-relative path without '..'"
-                            .into(),
-                    });
+                    if should_attempt(&mut self.attempted_material, &attempt, FileStamp::default())
+                    {
+                        failures.push(TextureLoadFailure {
+                            key: key.to_owned(),
+                            path: root.to_owned(),
+                            error: "material texture must be a project-relative path without '..'"
+                                .into(),
+                        });
+                    }
                     continue;
                 };
+                if !should_attempt(&mut self.attempted_material, &attempt, file_stamp(&path)) {
+                    continue;
+                }
                 match load_texture_rgba8(&path) {
                     Ok(texture) => {
                         if let Err(error) = renderer.upload_material_texture_rgba8(
@@ -146,6 +159,24 @@ impl RuntimeTextureCache {
         }
         failures
     }
+}
+
+fn file_stamp(path: &Path) -> FileStamp {
+    match std::fs::metadata(path) {
+        Ok(metadata) => FileStamp {
+            modified: metadata.modified().ok(),
+            length: Some(metadata.len()),
+        },
+        Err(_) => FileStamp::default(),
+    }
+}
+
+fn should_attempt(cache: &mut HashMap<String, FileStamp>, key: &str, stamp: FileStamp) -> bool {
+    if cache.get(key) == Some(&stamp) {
+        return false;
+    }
+    cache.insert(key.to_owned(), stamp);
+    true
 }
 
 pub fn resolve_project_asset_path(project_root: &Path, key: &str) -> Option<PathBuf> {
@@ -187,5 +218,24 @@ mod tests {
         assert_eq!(resolve_texture_path(root, "../secret.png"), None);
         assert_eq!(resolve_texture_path(root, "C:/secret.png"), None);
         assert_eq!(resolve_texture_path(root, "/secret.png"), None);
+    }
+
+    #[test]
+    fn attempts_again_only_after_a_texture_file_stamp_changes() {
+        let mut attempts = HashMap::new();
+        let initial = FileStamp {
+            modified: None,
+            length: Some(4),
+        };
+        assert!(should_attempt(&mut attempts, "texture", initial));
+        assert!(!should_attempt(&mut attempts, "texture", initial));
+        assert!(should_attempt(
+            &mut attempts,
+            "texture",
+            FileStamp {
+                length: Some(8),
+                ..initial
+            }
+        ));
     }
 }

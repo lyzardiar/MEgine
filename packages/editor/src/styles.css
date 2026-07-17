@@ -3056,6 +3056,8 @@ body.insp-scrubbing * {
 .material-color-row { grid-template-columns: minmax(105px, 0.42fr) 52px minmax(64px, 0.35fr) !important; }
 .material-check { display: flex !important; gap: 7px !important; }
 .material-vector { display: grid; grid-template-columns: 1fr 1fr; gap: 5px; }
+.material-suffixed-input { display: grid; grid-template-columns: minmax(0, 1fr) 18px; align-items: center; }
+.material-suffixed-input > span { color: var(--u-muted); text-align: right; }
 .material-texture-slot button { width: 23px; padding: 0; }
 
 .material-footer {

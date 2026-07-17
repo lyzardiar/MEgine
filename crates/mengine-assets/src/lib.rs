@@ -19,7 +19,8 @@ pub use animator::{
 };
 pub use gltf_import::load_gltf_mesh_data;
 pub use material::{
-    load_material_asset, parse_material_asset, MaterialAsset, MaterialShader, MaterialSurface,
+    load_material_asset, parse_material_asset, MaterialAsset, MaterialFilter, MaterialShader,
+    MaterialSurface, MaterialWrap,
 };
 pub use registry::{AssetMeta, AssetRegistry};
 pub use texture::load_texture_rgba8;
