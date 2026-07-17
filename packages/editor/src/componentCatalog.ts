@@ -151,6 +151,21 @@ const BUILTIN_CATALOG: ComponentCatalogEntry[] = [
     }),
   },
   {
+    type: 'AnimatedSprite2D',
+    label: 'Animated Sprite 2D',
+    description: 'Godot-style ordered sprite frame animation in world space',
+    create: () => ({
+      frames: [],
+      fps: 12,
+      playing: true,
+      looped: true,
+      frame: 0,
+      color: [1, 1, 1, 1],
+      size: [1, 1],
+      sorting_order: 0,
+    }),
+  },
+  {
     type: 'RawImage',
     label: 'Raw Image',
     description: 'Texture view with an explicit normalized UV rectangle',

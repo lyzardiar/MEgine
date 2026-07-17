@@ -1,5 +1,5 @@
 use glam::{Quat, Vec3};
-use mengine_core::generated::{SpriteRenderer, Transform};
+use mengine_core::generated::{AnimatedSprite2D, SpriteRenderer, Transform};
 use mengine_core::hierarchy::Parent;
 use mengine_core::{Entity, World};
 use mengine_rhi::{project_world_to_viewport, FrameCamera, UiBatchKey, UiBlendMode, UiPrimitive};
@@ -22,10 +22,23 @@ pub fn collect_world_sprites(
         if !active_in_hierarchy(world, entity) {
             continue;
         }
-        let (Some(transform), Some(sprite)) = (
-            world.get_component::<Transform>(entity),
-            world.get_component::<SpriteRenderer>(entity),
-        ) else {
+        let Some(transform) = world.get_component::<Transform>(entity) else {
+            continue;
+        };
+        let animated = world.get_component::<AnimatedSprite2D>(entity);
+        let static_sprite = world.get_component::<SpriteRenderer>(entity);
+        let resolved;
+        let sprite = if let Some(animation) = animated {
+            resolved = SpriteRenderer {
+                sprite: resolve_animated_frame(animation, world.time.elapsed).into(),
+                color: animation.color,
+                size: animation.size,
+                sorting_order: animation.sorting_order,
+            };
+            &resolved
+        } else if let Some(sprite) = static_sprite {
+            sprite
+        } else {
             continue;
         };
         if let Some(projected) = project_sprite(transform, sprite, camera, viewport) {
@@ -38,6 +51,32 @@ pub fn collect_world_sprites(
             .then_with(|| right.depth.total_cmp(&left.depth))
     });
     sprites.into_iter().map(|sprite| sprite.primitive).collect()
+}
+
+fn animated_frame_index(animation: &AnimatedSprite2D, elapsed_seconds: f64) -> Option<usize> {
+    let count = animation.frames.len();
+    if count == 0 {
+        return None;
+    }
+    let base = animation.frame.clamp(0, count as i32 - 1) as usize;
+    if !animation.playing || animation.fps <= 0.0 || !elapsed_seconds.is_finite() {
+        return Some(base);
+    }
+    let advanced =
+        base.saturating_add((elapsed_seconds.max(0.0) * animation.fps as f64).floor() as usize);
+    Some(if animation.looped {
+        advanced % count
+    } else {
+        advanced.min(count - 1)
+    })
+}
+
+fn resolve_animated_frame(animation: &AnimatedSprite2D, elapsed_seconds: f64) -> &str {
+    animated_frame_index(animation, elapsed_seconds)
+        .and_then(|index| animation.frames.get(index))
+        .map(String::as_str)
+        .filter(|frame| !frame.is_empty())
+        .unwrap_or("white")
 }
 
 fn active_in_hierarchy(world: &World, entity: Entity) -> bool {
@@ -197,5 +236,48 @@ mod tests {
         assert_eq!(sprites.len(), 2);
         assert_eq!(sprites[0].key.texture, "back");
         assert_eq!(sprites[1].key.texture, "front");
+    }
+
+    #[test]
+    fn animated_sprite_resolves_playback_loop_pause_and_render_texture() {
+        let animation = AnimatedSprite2D {
+            frames: vec!["idle-0".into(), "idle-1".into(), "idle-2".into()],
+            fps: 4.0,
+            playing: true,
+            looped: true,
+            frame: 0,
+            ..Default::default()
+        };
+        assert_eq!(animated_frame_index(&animation, 0.26), Some(1));
+        assert_eq!(animated_frame_index(&animation, 0.76), Some(0));
+        assert_eq!(
+            animated_frame_index(
+                &AnimatedSprite2D {
+                    looped: false,
+                    ..animation.clone()
+                },
+                9.0
+            ),
+            Some(2)
+        );
+        assert_eq!(
+            animated_frame_index(
+                &AnimatedSprite2D {
+                    playing: false,
+                    frame: 2,
+                    ..animation.clone()
+                },
+                0.26,
+            ),
+            Some(2)
+        );
+
+        let mut world = World::new();
+        world.time.elapsed = 0.26;
+        let entity = world.spawn_empty();
+        world.insert_component(entity, Transform::default());
+        world.insert_component(entity, animation);
+        let sprites = collect_world_sprites(&world, camera(), [200, 100]);
+        assert_eq!(sprites[0].key.texture, "idle-1");
     }
 }

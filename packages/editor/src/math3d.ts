@@ -309,6 +309,7 @@ export function drawWorldSprite(
   color: [number, number, number, number],
   selected: boolean,
   rotation?: Quat | null,
+  image?: CanvasImageSource | null,
 ): { x: number; y: number; r: number } | null {
   const hx = halfSize[0];
   const hy = halfSize[1];
@@ -331,12 +332,39 @@ export function drawWorldSprite(
   if (pts.some((p) => !p)) return null;
   const P = pts as Array<{ x: number; y: number; depth: number }>;
   const [cr, cg, cb, ca] = color;
+  let textured = false;
+  const source = image as (CanvasImageSource & { naturalWidth?: number; naturalHeight?: number; width?: number; height?: number }) | null | undefined;
+  const sourceWidth = Number(source?.naturalWidth ?? source?.width ?? 0);
+  const sourceHeight = Number(source?.naturalHeight ?? source?.height ?? 0);
+  if (source && sourceWidth > 0 && sourceHeight > 0) {
+    ctx.save();
+    ctx.beginPath();
+    ctx.moveTo(P[0].x, P[0].y);
+    for (let i = 1; i < 4; i++) ctx.lineTo(P[i].x, P[i].y);
+    ctx.closePath();
+    ctx.clip();
+    ctx.globalAlpha *= Math.max(0, Math.min(1, ca));
+    // Canvas affine mapping uses top-left, top-right and bottom-left projected corners.
+    ctx.transform(
+      (P[2].x - P[3].x) / sourceWidth,
+      (P[2].y - P[3].y) / sourceWidth,
+      (P[0].x - P[3].x) / sourceHeight,
+      (P[0].y - P[3].y) / sourceHeight,
+      P[3].x,
+      P[3].y,
+    );
+    ctx.drawImage(source, 0, 0, sourceWidth, sourceHeight);
+    ctx.restore();
+    textured = true;
+  }
   ctx.beginPath();
   ctx.moveTo(P[0].x, P[0].y);
   for (let i = 1; i < 4; i++) ctx.lineTo(P[i].x, P[i].y);
   ctx.closePath();
-  ctx.fillStyle = `rgba(${(cr * 255) | 0},${(cg * 255) | 0},${(cb * 255) | 0},${ca})`;
-  ctx.fill();
+  if (!textured) {
+    ctx.fillStyle = `rgba(${(cr * 255) | 0},${(cg * 255) | 0},${(cb * 255) | 0},${ca})`;
+    ctx.fill();
+  }
   ctx.strokeStyle = selected ? 'rgba(255,224,140,0.9)' : 'rgba(0,0,0,0.35)';
   ctx.lineWidth = selected ? 1.5 : 1;
   ctx.stroke();

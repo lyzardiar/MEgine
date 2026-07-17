@@ -21,6 +21,7 @@ function iconFor(e: EntityRec) {
   if (c.DirectionalLight) return '💡';
   if (c.MeshRenderer) return '🧊';
   if (c.SpriteRenderer) return '🎴';
+  if (c.AnimatedSprite2D) return '🎞';
   if (c.SpineSkeleton) return '🦴';
   if (c.ParticleEmitter2D || c.ParticleEmitter3D) return '✨';
   if ((e.name ?? '').toLowerCase().includes('light')) return '💡';

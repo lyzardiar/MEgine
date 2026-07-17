@@ -109,6 +109,18 @@ export class Image {
   raycast_target!: boolean;
 }
 
+export class AnimatedSprite2D {
+  static readonly typeName = 'AnimatedSprite2D' as const;
+  frames!: string[];
+  fps!: number;
+  playing!: boolean;
+  looped!: boolean;
+  frame!: number;
+  color!: Color4;
+  size!: [number, number];
+  sorting_order!: number;
+}
+
 export class RawImage {
   static readonly typeName = 'RawImage' as const;
   texture!: string;
@@ -167,6 +179,7 @@ export type BuiltinComponents = {
   DirectionalLight: DirectionalLight;
   Transform2D: Transform2D;
   SpriteRenderer: SpriteRenderer;
+  AnimatedSprite2D: AnimatedSprite2D;
   Canvas: Canvas;
   CanvasScaler: CanvasScaler;
   RectTransform: RectTransform;

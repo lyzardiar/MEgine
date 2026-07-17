@@ -102,6 +102,11 @@ export const BUILTIN_INSPECTOR_FIELDS: Readonly<
     emissive_strength: { min: 0, step: 0.1 },
   },
   SpriteRenderer: { sprite },
+  AnimatedSprite2D: {
+    frames: { kind: 'string-list' },
+    fps: { min: 0, step: 0.1 },
+    frame: { min: 0, step: 1 },
+  },
   Canvas: {
     render_mode: {
       kind: 'enum',

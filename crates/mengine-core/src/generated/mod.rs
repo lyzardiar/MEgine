@@ -272,6 +272,40 @@ impl Component for SpriteRenderer {
     }
 }
 
+#[derive(Clone, Debug, Serialize, Deserialize)]
+#[serde(default)]
+pub struct AnimatedSprite2D {
+    pub frames: Vec<String>,
+    pub fps: f32,
+    pub playing: bool,
+    pub looped: bool,
+    pub frame: i32,
+    pub color: [f32; 4],
+    pub size: [f32; 2],
+    pub sorting_order: i32,
+}
+
+impl Default for AnimatedSprite2D {
+    fn default() -> Self {
+        Self {
+            frames: Vec::new(),
+            fps: 12.0,
+            playing: true,
+            looped: true,
+            frame: 0,
+            color: [1.0, 1.0, 1.0, 1.0],
+            size: [1.0, 1.0],
+            sorting_order: 0,
+        }
+    }
+}
+
+impl Component for AnimatedSprite2D {
+    fn type_name() -> &'static str {
+        "AnimatedSprite2D"
+    }
+}
+
 #[derive(Clone, Debug, Default, Serialize, Deserialize)]
 #[serde(default)]
 pub struct Layer {
@@ -1246,6 +1280,7 @@ pub mod meta {
         "MeshRenderer",
         "PbrMaterial",
         "SpriteRenderer",
+        "AnimatedSprite2D",
         "Layer",
         "EditorOnly",
         "AutoRotate",

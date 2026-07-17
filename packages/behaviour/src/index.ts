@@ -60,6 +60,7 @@ export {
   DirectionalLight,
   Transform2D,
   SpriteRenderer,
+  AnimatedSprite2D,
   Canvas,
   CanvasScaler,
   RectTransform,

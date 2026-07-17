@@ -1479,6 +1479,10 @@ export function createEditorStore() {
         this.spawnSpriteQuad();
         return;
       }
+      if (name === 'Animated Sprite') {
+        this.spawnAnimatedSprite2D();
+        return;
+      }
       spawnAt(
         name,
         {
@@ -1629,6 +1633,26 @@ export function createEditorStore() {
           SpriteRenderer: {
             sprite: 'white',
             color: [0.4, 0.75, 1, 1],
+            size: [1, 1],
+            sorting_order: 0,
+          },
+        },
+        null,
+        true,
+      );
+    },
+    spawnAnimatedSprite2D() {
+      spawnAt(
+        'Animated Sprite',
+        {
+          Transform: { position: [0, 0.5, 0], rotation: [0, 0, 0, 1], scale: [1, 1, 1] },
+          AnimatedSprite2D: {
+            frames: [],
+            fps: 12,
+            playing: true,
+            looped: true,
+            frame: 0,
+            color: [1, 1, 1, 1],
             size: [1, 1],
             sorting_order: 0,
           },

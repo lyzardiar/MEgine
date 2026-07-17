@@ -2,11 +2,11 @@ use crate::command::{CommandBuffer, WorldCommand};
 use crate::component::{Component, ComponentBox, ComponentId, ComponentRegistry};
 use crate::entity::Entity;
 use crate::generated::{
-    AspectRatioFitter, AutoRotate, Button, Camera2D, Camera3D, Canvas, CanvasGroup, CanvasScaler,
-    ContentSizeFitter, DirectionalLight, Dropdown, EditorOnly, Image, InputField, Layer,
-    LayoutGroup, ListView, MeshRenderer, Name, Outline, Panel, PbrMaterial, PointLight,
-    ProgressBar, RawImage, RectMask2D, RectTransform, ScrollView, Scrollbar, Shadow, Slider,
-    SpotLight, SpriteRenderer, TabView, Text, Toggle, ToggleGroup, Transform, Transform2D,
+    AnimatedSprite2D, AspectRatioFitter, AutoRotate, Button, Camera2D, Camera3D, Canvas,
+    CanvasGroup, CanvasScaler, ContentSizeFitter, DirectionalLight, Dropdown, EditorOnly, Image,
+    InputField, Layer, LayoutGroup, ListView, MeshRenderer, Name, Outline, Panel, PbrMaterial,
+    PointLight, ProgressBar, RawImage, RectMask2D, RectTransform, ScrollView, Scrollbar, Shadow,
+    Slider, SpotLight, SpriteRenderer, TabView, Text, Toggle, ToggleGroup, Transform, Transform2D,
 };
 use crate::hierarchy::{Children, Parent};
 use crate::schedule::Schedule;
@@ -369,6 +369,9 @@ impl World {
             "SpriteRenderer" | "spriteRenderer" => {
                 self.insert_json_component::<SpriteRenderer>(entity, value);
             }
+            "AnimatedSprite2D" | "animatedSprite2D" | "animatedSprite2d" => {
+                self.insert_json_component::<AnimatedSprite2D>(entity, value);
+            }
             "Canvas" | "canvas" => {
                 self.insert_json_component::<Canvas>(entity, value);
             }
@@ -483,6 +486,7 @@ fn canonical_component_name(component: &str) -> &str {
         "MeshRenderer" | "meshRenderer" => "MeshRenderer",
         "PbrMaterial" | "pbrMaterial" => "PbrMaterial",
         "SpriteRenderer" | "spriteRenderer" => "SpriteRenderer",
+        "AnimatedSprite2D" | "animatedSprite2D" | "animatedSprite2d" => "AnimatedSprite2D",
         "Canvas" | "canvas" => "Canvas",
         "CanvasScaler" | "canvasScaler" => "CanvasScaler",
         "CanvasGroup" | "canvasGroup" => "CanvasGroup",

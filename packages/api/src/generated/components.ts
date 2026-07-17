@@ -72,6 +72,17 @@ export interface SpriteRenderer {
   sortingOrder: number;
 }
 
+export interface AnimatedSprite2D {
+  frames: string[];
+  fps: number;
+  playing: boolean;
+  looped: boolean;
+  frame: number;
+  color: [number, number, number, number];
+  size: [number, number];
+  sortingOrder: number;
+}
+
 export interface Layer {
   value: number;
 }
@@ -391,6 +402,7 @@ export type ComponentName =
   | 'MeshRenderer'
   | 'PbrMaterial'
   | 'SpriteRenderer'
+  | 'AnimatedSprite2D'
   | 'Layer'
   | 'EditorOnly'
   | 'AutoRotate'
@@ -435,6 +447,7 @@ export const COMPONENT_NAMES = [
   'MeshRenderer',
   'PbrMaterial',
   'SpriteRenderer',
+  'AnimatedSprite2D',
   'Layer',
   'EditorOnly',
   'AutoRotate',

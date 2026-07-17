@@ -110,6 +110,8 @@ import {
 } from '../rectSmartGuides';
 import type { RectResizeOptions, RectResizePlan } from '../rectResize';
 import { nextUiSelectable, uiNavigationAction } from '../ui/uiNavigation';
+import { getSpriteImage } from '../spriteDraw';
+import { resolveAnimatedSpriteFrame } from '../animatedSprite';
 
 const SCENE_2D_KEY = 'mengine.scene.2d';
 const SCENE_SNAP_KEY = 'mengine.scene.snap';
@@ -787,13 +789,27 @@ export function Viewport(props: {
       }
 
       if (!mesh) {
-        const spr = e.components.SpriteRenderer as
+        const staticSprite = e.components.SpriteRenderer as
           | {
+              sprite?: string;
               color?: number[];
               size?: number[];
               sorting_order?: number;
             }
           | undefined;
+        const animatedSprite = e.components.AnimatedSprite2D as
+          | {
+              frames?: unknown;
+              fps?: unknown;
+              playing?: unknown;
+              looped?: unknown;
+              frame?: unknown;
+              color?: number[];
+              size?: number[];
+              sorting_order?: number;
+            }
+          | undefined;
+        const spr = animatedSprite ?? staticSprite;
         if (spr && pr) {
           const sz = spr.size ?? [1, 1];
           const half: [number, number] = [
@@ -802,6 +818,10 @@ export function Viewport(props: {
           ];
           const col = (spr.color ?? [1, 1, 1, 1]) as [number, number, number, number];
           const rot = t.rotation as [number, number, number, number] | undefined;
+          const sprite = animatedSprite
+            ? resolveAnimatedSpriteFrame(animatedSprite, performance.now() / 1000)
+            : String(staticSprite?.sprite ?? 'white');
+          const image = getSpriteImage(sprite);
           const hit = drawWorldSprite(
             ctx,
             cam,
@@ -811,6 +831,7 @@ export function Viewport(props: {
             col,
             selected,
             rot,
+            image?.complete && image.naturalWidth > 0 ? image : null,
           );
           if (hit) hitsRef.current.push({ kind: 'object', id: e.entity, x: hit.x, y: hit.y, r: hit.r });
           continue;

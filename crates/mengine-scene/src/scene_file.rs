@@ -313,6 +313,11 @@ mod tests {
                     "sprite": "Assets/UI/panel.png", "image_type": "Sliced",
                     "border": [8, 10, 8, 10], "source_size": [64, 64]
                 },
+                "AnimatedSprite2D": {
+                    "frames": ["Assets/Sprites/run0.png", "Assets/Sprites/run1.png"],
+                    "fps": 8, "playing": true, "looped": true, "frame": 1,
+                    "sorting_order": 3
+                },
                 "AspectRatioFitter": { "aspect_mode": "FitInParent", "aspect_ratio": 1.777778 },
                 "ContentSizeFitter": {
                     "horizontal_fit": "PreferredSize", "vertical_fit": "MinSize"
@@ -357,6 +362,11 @@ mod tests {
         assert_eq!(components["Image"]["image_type"], "Sliced");
         assert_eq!(components["Image"]["border"][1], 10.0);
         assert_eq!(components["Image"]["source_size"][0], 64.0);
+        assert_eq!(
+            components["AnimatedSprite2D"]["frames"][1],
+            "Assets/Sprites/run1.png"
+        );
+        assert_eq!(components["AnimatedSprite2D"]["sorting_order"], 3);
         assert_eq!(
             components["AspectRatioFitter"]["aspect_mode"],
             "FitInParent"

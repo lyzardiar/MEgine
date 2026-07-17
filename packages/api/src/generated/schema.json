@@ -1,4 +1,52 @@
 {
+  "AnimatedSprite2D": {
+    "properties": {
+      "color": {
+        "items": {
+          "type": "number"
+        },
+        "type": "array"
+      },
+      "fps": {
+        "type": "number"
+      },
+      "frame": {
+        "type": "number"
+      },
+      "frames": {
+        "items": {
+          "type": "string"
+        },
+        "type": "array"
+      },
+      "looped": {
+        "type": "boolean"
+      },
+      "playing": {
+        "type": "boolean"
+      },
+      "size": {
+        "items": {
+          "type": "number"
+        },
+        "type": "array"
+      },
+      "sorting_order": {
+        "type": "number"
+      }
+    },
+    "required": [
+      "frames",
+      "fps",
+      "playing",
+      "looped",
+      "frame",
+      "color",
+      "size",
+      "sorting_order"
+    ],
+    "type": "object"
+  },
   "AspectRatioFitter": {
     "properties": {
       "aspect_mode": {

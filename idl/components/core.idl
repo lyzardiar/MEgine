@@ -74,6 +74,18 @@ component SpriteRenderer {
   sorting_order: int = 0
 }
 
+/// Godot-style world-space animated sprite using an ordered texture frame list.
+component AnimatedSprite2D {
+  frames:        string_array = []
+  fps:           float        = 12
+  playing:       bool         = true
+  looped:        bool         = true
+  frame:         int          = 0
+  color:         float4       = [1, 1, 1, 1]
+  size:          float2       = [1, 1]
+  sorting_order: int          = 0
+}
+
 component Layer {
   value: int = 0
 }
