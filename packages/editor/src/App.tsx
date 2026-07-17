@@ -775,7 +775,11 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
                 refresh();
               }}
               onUiValueChange={(entity, component, patch, callback) => {
-                store.patchComponent(entity, component, patch);
+                if (component === 'Toggle' && typeof patch.is_on === 'boolean') {
+                  store.setToggleValue(entity, patch.is_on);
+                } else {
+                  store.patchComponent(entity, component, patch);
+                }
                 const action = resolveUnityAction(entity, callback);
                 if (action) {
                   const target = store

@@ -6,7 +6,7 @@ use crate::generated::{
     ContentSizeFitter, DirectionalLight, Dropdown, EditorOnly, Image, InputField, Layer,
     LayoutGroup, ListView, MeshRenderer, Name, Outline, Panel, PbrMaterial, PointLight,
     ProgressBar, RawImage, RectMask2D, RectTransform, ScrollView, Scrollbar, Shadow, Slider,
-    SpotLight, SpriteRenderer, TabView, Text, Toggle, Transform, Transform2D,
+    SpotLight, SpriteRenderer, TabView, Text, Toggle, ToggleGroup, Transform, Transform2D,
 };
 use crate::hierarchy::{Children, Parent};
 use crate::schedule::Schedule;
@@ -414,6 +414,9 @@ impl World {
             "Toggle" | "toggle" => {
                 self.insert_json_component::<Toggle>(entity, value);
             }
+            "ToggleGroup" | "toggleGroup" => {
+                self.insert_json_component::<ToggleGroup>(entity, value);
+            }
             "Slider" | "slider" => {
                 self.insert_json_component::<Slider>(entity, value);
             }
@@ -495,6 +498,7 @@ fn canonical_component_name(component: &str) -> &str {
         "Button" | "button" => "Button",
         "Text" | "text" => "Text",
         "Toggle" | "toggle" => "Toggle",
+        "ToggleGroup" | "toggleGroup" => "ToggleGroup",
         "Slider" | "slider" => "Slider",
         "Scrollbar" | "scrollbar" => "Scrollbar",
         "Panel" | "panel" => "Panel",

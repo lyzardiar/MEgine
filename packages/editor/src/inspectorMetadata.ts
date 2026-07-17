@@ -231,6 +231,9 @@ export const BUILTIN_INSPECTOR_FIELDS: Readonly<
     font_size: { min: 1, step: 1 },
     on_value_changed: event,
   },
+  ToggleGroup: {
+    allow_switch_off: { label: 'Allow Switch Off' },
+  },
   Slider: {
     direction: { kind: 'enum', options: direction },
     on_value_changed: event,

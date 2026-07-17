@@ -49,6 +49,7 @@ import {
   type RectResizeOptions,
 } from './rectResize';
 import { selectedHierarchyRoots } from './hierarchySelection';
+import { planToggleGroupChange } from './ui/toggleGroup';
 import { restoreSceneSelection } from './selectionRestore';
 import {
   captureEditorUndoState,
@@ -947,6 +948,20 @@ export function createEditorStore() {
       if (!e || e.components[type] == null) return;
       if (mode === 'edit' && !gizmoDragging) pushUndo();
       e.components[type] = { ...(e.components[type] as object), ...patch };
+    },
+    setToggleValue(entity: number, isOn: boolean) {
+      const patches = planToggleGroupChange(list(), entity, isOn);
+      if (!patches.length) return false;
+      if (mode === 'edit' && !gizmoDragging) pushUndo();
+      for (const patch of patches) {
+        const target = find(patch.entity);
+        if (!target?.components.Toggle) continue;
+        target.components.Toggle = {
+          ...(target.components.Toggle as object),
+          is_on: patch.isOn,
+        };
+      }
+      return true;
     },
     invokeBehaviourMethod(entity: number, type: string, method: string) {
       const e = find(entity);

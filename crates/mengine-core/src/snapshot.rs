@@ -90,6 +90,7 @@ impl WorldSnapshot {
             capture_component!(crate::generated::Button, "Button");
             capture_component!(crate::generated::Text, "Text");
             capture_component!(crate::generated::Toggle, "Toggle");
+            capture_component!(crate::generated::ToggleGroup, "ToggleGroup");
             capture_component!(crate::generated::Slider, "Slider");
             capture_component!(crate::generated::Scrollbar, "Scrollbar");
             capture_component!(crate::generated::Panel, "Panel");

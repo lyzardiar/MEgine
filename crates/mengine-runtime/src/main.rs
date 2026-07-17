@@ -18,7 +18,8 @@ use mengine_runtime::particles::ParticleWorld;
 use mengine_runtime::sprites::collect_world_sprites;
 use mengine_runtime::textures::RuntimeTextureCache;
 use mengine_runtime::ui::{
-    append_ui_focus_ring, collect_ui_frame, next_ui_focus, UiControlKind, UiControlRegion,
+    append_ui_focus_ring, collect_ui_frame, next_ui_focus, set_toggle_value, UiControlKind,
+    UiControlRegion,
 };
 use mengine_script::ScriptHost;
 use serde_json::json;
@@ -553,9 +554,12 @@ impl App {
                 );
             }
             UiControlKind::Toggle { is_on } => {
-                if let Some(toggle) = self.world.get_component_mut::<Toggle>(control.entity) {
-                    toggle.is_on = !is_on;
-                    log::info!("UI Toggle {:?} = {}", control.entity, toggle.is_on);
+                if set_toggle_value(&mut self.world, control.entity, !is_on) {
+                    let value = self
+                        .world
+                        .get_component::<Toggle>(control.entity)
+                        .is_some_and(|toggle| toggle.is_on);
+                    log::info!("UI Toggle {:?} = {}", control.entity, value);
                 }
             }
             UiControlKind::Slider { .. } => {
@@ -618,9 +622,12 @@ impl App {
             log::info!("UI Button {:?} clicked: {}", entity, control.callback);
             return true;
         }
-        if let Some(toggle) = self.world.get_component_mut::<Toggle>(entity) {
-            toggle.is_on = !toggle.is_on;
-            return true;
+        if let Some(is_on) = self
+            .world
+            .get_component::<Toggle>(entity)
+            .map(|toggle| toggle.is_on)
+        {
+            return set_toggle_value(&mut self.world, entity, !is_on);
         }
         if self.world.get_component::<InputField>(entity).is_some() {
             self.focused_input = Some(entity);

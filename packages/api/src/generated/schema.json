@@ -1611,6 +1611,17 @@
     ],
     "type": "object"
   },
+  "ToggleGroup": {
+    "properties": {
+      "allow_switch_off": {
+        "type": "boolean"
+      }
+    },
+    "required": [
+      "allow_switch_off"
+    ],
+    "type": "object"
+  },
   "Transform": {
     "properties": {
       "position": {

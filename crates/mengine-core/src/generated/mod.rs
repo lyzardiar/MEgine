@@ -819,6 +819,18 @@ impl Component for Toggle {
     }
 }
 
+#[derive(Clone, Debug, Default, Serialize, Deserialize)]
+#[serde(default)]
+pub struct ToggleGroup {
+    pub allow_switch_off: bool,
+}
+
+impl Component for ToggleGroup {
+    fn type_name() -> &'static str {
+        "ToggleGroup"
+    }
+}
+
 #[derive(Clone, Debug, Serialize, Deserialize)]
 #[serde(default)]
 pub struct Slider {
@@ -1252,6 +1264,7 @@ pub mod meta {
         "Button",
         "Text",
         "Toggle",
+        "ToggleGroup",
         "Slider",
         "Scrollbar",
         "Panel",

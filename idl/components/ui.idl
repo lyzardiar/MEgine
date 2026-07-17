@@ -108,6 +108,11 @@ component Toggle {
   on_value_changed: object
 }
 
+/// Mutual-exclusion group for descendant Toggles. The nearest ancestor group wins.
+component ToggleGroup {
+  allow_switch_off: bool = false
+}
+
 component Slider {
   min_value:        float  = 0
   max_value:        float  = 1

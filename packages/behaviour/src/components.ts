@@ -154,6 +154,11 @@ export class UIButton {
     | { target: number | null; component: string; method: string };
 }
 
+export class ToggleGroup {
+  static readonly typeName = 'ToggleGroup' as const;
+  allow_switch_off!: boolean;
+}
+
 export type BuiltinComponents = {
   Transform: Transform;
   Camera3D: Camera3D;
@@ -172,6 +177,7 @@ export type BuiltinComponents = {
   Shadow: Shadow;
   Outline: Outline;
   Button: UIButton;
+  ToggleGroup: ToggleGroup;
 };
 
 export type BuiltinComponentName = keyof BuiltinComponents;

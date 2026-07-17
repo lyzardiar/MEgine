@@ -328,6 +328,7 @@ mod tests {
                 },
                 "Text": { "text": "Saved UI" },
                 "Toggle": { "is_on": true },
+                "ToggleGroup": { "allow_switch_off": true },
                 "Slider": { "min_value": 0, "max_value": 10, "value": 7 },
                 "Scrollbar": { "value": 0.6, "size": 0.25, "number_of_steps": 5 },
                 "Panel": { "border_width": 2 },
@@ -369,6 +370,7 @@ mod tests {
         assert_eq!(components["Outline"]["effect_color"][3], 0.75);
         assert_eq!(components["Text"]["text"], "Saved UI");
         assert_eq!(components["Toggle"]["is_on"], true);
+        assert_eq!(components["ToggleGroup"]["allow_switch_off"], true);
         assert_eq!(components["Slider"]["value"], 7.0);
         assert_eq!(components["Scrollbar"]["number_of_steps"], 5);
         assert_eq!(components["Panel"]["border_width"], 2.0);

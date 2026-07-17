@@ -246,6 +246,10 @@ export interface Toggle {
   onValueChanged: Record<string, unknown>;
 }
 
+export interface ToggleGroup {
+  allowSwitchOff: boolean;
+}
+
 export interface Slider {
   minValue: number;
   maxValue: number;
@@ -405,6 +409,7 @@ export type ComponentName =
   | 'Button'
   | 'Text'
   | 'Toggle'
+  | 'ToggleGroup'
   | 'Slider'
   | 'Scrollbar'
   | 'Panel'
@@ -448,6 +453,7 @@ export const COMPONENT_NAMES = [
   'Button',
   'Text',
   'Toggle',
+  'ToggleGroup',
   'Slider',
   'Scrollbar',
   'Panel',

@@ -1,7 +1,7 @@
 use mengine_core::generated::{
     AspectRatioFitter, Button, Canvas, CanvasGroup, CanvasScaler, ContentSizeFitter, Dropdown,
     Image, InputField, LayoutGroup, ListView, Outline, Panel, ProgressBar, RawImage, RectMask2D,
-    RectTransform, ScrollView, Scrollbar, Shadow, Slider, TabView, Text, Toggle,
+    RectTransform, ScrollView, Scrollbar, Shadow, Slider, TabView, Text, Toggle, ToggleGroup,
 };
 use mengine_core::hierarchy::Parent;
 use mengine_core::{Entity, World};
@@ -244,6 +244,90 @@ pub fn append_ui_focus_ring(
         ));
     }
     *plan = UiBatchPlan::build(std::mem::take(&mut plan.primitives));
+}
+
+fn nearest_toggle_group(world: &World, entity: Entity) -> Option<Entity> {
+    let mut parent = world
+        .get_component::<Parent>(entity)
+        .map(|value| value.entity);
+    let mut guard = Vec::new();
+    while let Some(candidate) = parent {
+        if guard.contains(&candidate) {
+            return None;
+        }
+        guard.push(candidate);
+        if world.get_component::<ToggleGroup>(candidate).is_some() {
+            return Some(candidate);
+        }
+        parent = world
+            .get_component::<Parent>(candidate)
+            .map(|value| value.entity);
+    }
+    None
+}
+
+/// Apply one Toggle value atomically, enforcing the nearest ancestor ToggleGroup.
+pub fn set_toggle_value(world: &mut World, target: Entity, requested_on: bool) -> bool {
+    let Some(current) = world
+        .get_component::<Toggle>(target)
+        .map(|toggle| toggle.is_on)
+    else {
+        return false;
+    };
+    let Some(group_entity) = nearest_toggle_group(world, target) else {
+        if current == requested_on {
+            return false;
+        }
+        if let Some(toggle) = world.get_component_mut::<Toggle>(target) {
+            toggle.is_on = requested_on;
+            return true;
+        }
+        return false;
+    };
+
+    let allow_switch_off = world
+        .get_component::<ToggleGroup>(group_entity)
+        .is_some_and(|group| group.allow_switch_off);
+    let members: Vec<(Entity, bool)> = world
+        .iter_entities()
+        .filter(|entity| {
+            world.entity_active(*entity)
+                && world.get_component::<Toggle>(*entity).is_some()
+                && nearest_toggle_group(world, *entity) == Some(group_entity)
+        })
+        .filter_map(|entity| {
+            world
+                .get_component::<Toggle>(entity)
+                .map(|toggle| (entity, toggle.is_on))
+        })
+        .collect();
+    if !requested_on
+        && !allow_switch_off
+        && !members
+            .iter()
+            .any(|(entity, is_on)| *entity != target && *is_on)
+    {
+        return false;
+    }
+
+    let mut changed = false;
+    for (entity, is_on) in members {
+        let next = if requested_on {
+            entity == target
+        } else if entity == target {
+            false
+        } else {
+            is_on
+        };
+        if next == is_on {
+            continue;
+        }
+        if let Some(toggle) = world.get_component_mut::<Toggle>(entity) {
+            toggle.is_on = next;
+            changed = true;
+        }
+    }
+    changed
 }
 
 #[derive(Clone, Debug, Default)]
@@ -2260,6 +2344,61 @@ mod tests {
         assert_eq!(plan.batches.len(), 1);
         assert_eq!(plan.primitives[0].rect, [18.0, 58.0, 104.0, 2.0]);
         assert_eq!(plan.primitives[1].rect, [18.0, 120.0, 104.0, 2.0]);
+    }
+
+    #[test]
+    fn toggle_group_enforces_exclusion_switch_off_and_nested_boundaries() {
+        let mut world = World::new();
+        let group = world.spawn_empty();
+        world.insert_component(
+            group,
+            ToggleGroup {
+                allow_switch_off: false,
+            },
+        );
+        let first = world.spawn_empty();
+        world.insert_component(
+            first,
+            Toggle {
+                is_on: true,
+                ..Default::default()
+            },
+        );
+        world.set_parent(first, Some(group));
+        let second = world.spawn_empty();
+        world.insert_component(second, Toggle::default());
+        world.set_parent(second, Some(group));
+        let nested_group = world.spawn_empty();
+        world.insert_component(
+            nested_group,
+            ToggleGroup {
+                allow_switch_off: false,
+            },
+        );
+        world.set_parent(nested_group, Some(group));
+        let nested = world.spawn_empty();
+        world.insert_component(
+            nested,
+            Toggle {
+                is_on: true,
+                ..Default::default()
+            },
+        );
+        world.set_parent(nested, Some(nested_group));
+
+        assert!(set_toggle_value(&mut world, second, true));
+        assert!(!world.get_component::<Toggle>(first).unwrap().is_on);
+        assert!(world.get_component::<Toggle>(second).unwrap().is_on);
+        assert!(world.get_component::<Toggle>(nested).unwrap().is_on);
+        assert!(!set_toggle_value(&mut world, second, false));
+        assert!(world.get_component::<Toggle>(second).unwrap().is_on);
+
+        world
+            .get_component_mut::<ToggleGroup>(group)
+            .unwrap()
+            .allow_switch_off = true;
+        assert!(set_toggle_value(&mut world, second, false));
+        assert!(!world.get_component::<Toggle>(second).unwrap().is_on);
     }
 
     #[test]

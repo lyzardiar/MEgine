@@ -215,6 +215,12 @@ const BUILTIN_CATALOG: ComponentCatalogEntry[] = [
     }),
   },
   {
+    type: 'ToggleGroup',
+    label: 'Toggle Group',
+    description: 'Mutually exclusive descendant Toggles using the nearest ancestor group',
+    create: () => ({ allow_switch_off: false }),
+  },
+  {
     type: 'Toggle',
     label: 'Toggle',
     description: '布尔开关控件',
