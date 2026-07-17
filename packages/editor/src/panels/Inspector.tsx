@@ -15,7 +15,7 @@ import {
 import { getBuiltinInspectorField, type InspectorOption } from '../inspectorMetadata';
 import { eulerXYZToQuat, quatToEulerXYZ } from '../math3d';
 import { readRectTransform } from '../ui/rectLayout';
-import { loadSpineInspectorOptions } from '../spine/spineCanvasRuntime';
+import { loadSpineRuntime } from '../spine/spineRuntimeLoader';
 import { SchemaFieldEditor } from './SchemaFieldEditor';
 import { RectTransformEditor } from './RectTransformEditor';
 import {
@@ -610,7 +610,12 @@ function SpineSkeletonEditor(props: {
       };
     }
     setStatus('loading');
-    void loadSpineInspectorOptions({ skeleton, atlas, premultipliedAlpha })
+    void loadSpineRuntime()
+      .then(({ loadSpineInspectorOptions }) => loadSpineInspectorOptions({
+        skeleton,
+        atlas,
+        premultipliedAlpha,
+      }))
       .then((result) => {
         if (cancelled) return;
         setOptions({

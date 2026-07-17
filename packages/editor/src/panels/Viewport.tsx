@@ -59,7 +59,8 @@ import {
   stepParticleEmitter,
   type ParticleEmitterState,
 } from '../particles/particleSystem';
-import { SpineCanvasRuntime } from '../spine/spineCanvasRuntime';
+import { loadSpineRuntime } from '../spine/spineRuntimeLoader';
+import type { SpineCanvasRuntime, SpineDrawResult } from '../spine/spineCanvasRuntime';
 import {
   EMPTY_SNAP_ACCUMULATOR,
   advanceSnap,
@@ -402,7 +403,9 @@ export function Viewport(props: {
   const focusedInputRef = useRef<number | null>(null);
   const uiStatsRef = useRef({ elements: 0, batches: 0 });
   const particleStatesRef = useRef(new Map<number, ParticleEmitterState>());
-  const spineRuntimeRef = useRef(new SpineCanvasRuntime());
+  const spineRuntimeRef = useRef<SpineCanvasRuntime | null>(null);
+  const spineRuntimeLoadRef = useRef<Promise<void> | null>(null);
+  const spineRuntimeErrorRef = useRef<string | null>(null);
   const lastParticleFrameRef = useRef(0);
   const hoverGizmoRef = useRef<GizmoPart | null>(null);
   const activeGizmoRef = useRef<GizmoPart | null>(null);
@@ -847,6 +850,16 @@ export function Viewport(props: {
         const b = right.components.SpineSkeleton as { sorting_order?: number };
         return (a.sorting_order ?? 0) - (b.sorting_order ?? 0);
       });
+    if (spineEntities.length && !spineRuntimeRef.current && !spineRuntimeLoadRef.current) {
+      spineRuntimeLoadRef.current = loadSpineRuntime()
+        .then(({ SpineCanvasRuntime }) => {
+          spineRuntimeRef.current = new SpineCanvasRuntime();
+          spineRuntimeErrorRef.current = null;
+        })
+        .catch((reason) => {
+          spineRuntimeErrorRef.current = String(reason);
+        });
+    }
     for (const entity of spineEntities) {
       if (!isActive(entity.entity)) continue;
       const component = entity.components.SpineSkeleton as Record<string, unknown> | undefined;
@@ -860,15 +873,19 @@ export function Viewport(props: {
       const transformScale = Math.max(0.0001, Math.abs(transform.scale[0] ?? 1));
       const pixelsPerWorldUnit = (unit ? Math.max(1, Math.hypot(unit.x - screen.x, unit.y - screen.y)) : 64)
         * transformScale;
-      const result = spineRuntimeRef.current.drawEntity({
-        entity: entity.entity,
-        component,
-        context: ctx,
-        screenX: screen.x,
-        screenY: screen.y,
-        pixelsPerWorldUnit,
-        deltaSeconds: particleDelta,
-      });
+      const result: SpineDrawResult = spineRuntimeRef.current
+        ? spineRuntimeRef.current.drawEntity({
+            entity: entity.entity,
+            component,
+            context: ctx,
+            screenX: screen.x,
+            screenY: screen.y,
+            pixelsPerWorldUnit,
+            deltaSeconds: particleDelta,
+          })
+        : spineRuntimeErrorRef.current
+          ? { error: spineRuntimeErrorRef.current }
+          : 'loading';
       if (result !== 'drawn' && !isGame) {
         const message = result === 'missing'
           ? 'Spine: assign skeleton + atlas'
@@ -888,7 +905,7 @@ export function Viewport(props: {
         ctx.restore();
       }
     }
-    spineRuntimeRef.current.retainOnly(liveSpineIds);
+    spineRuntimeRef.current?.retainOnly(liveSpineIds);
 
     // Transform gizmo — 3D Transform OR RectTransform (UI)
     usingRectGizmoRef.current = false;
