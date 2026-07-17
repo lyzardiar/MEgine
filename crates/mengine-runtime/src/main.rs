@@ -18,6 +18,7 @@ use mengine_runtime::animation::{infer_project_root_from_scene, AnimationRuntime
 use mengine_runtime::materials::RuntimeMaterialCache;
 use mengine_runtime::particles::ParticleWorld;
 use mengine_runtime::player_config::load_player_config;
+use mengine_runtime::scenes::{LoadedScene, SceneManager, SceneSelector};
 use mengine_runtime::sprites::collect_world_sprites;
 use mengine_runtime::textures::RuntimeTextureCache;
 use mengine_runtime::ui::{
@@ -25,7 +26,7 @@ use mengine_runtime::ui::{
     UiControlRegion,
 };
 use mengine_scene::load_scene;
-use mengine_script::ScriptHost;
+use mengine_script::{ScriptHost, ScriptRuntimeRequest};
 use serde_json::json;
 use std::path::PathBuf;
 use std::sync::Arc;
@@ -60,6 +61,12 @@ struct Args {
     /// Validate the adjacent packaged project without creating a window.
     #[arg(long, hide = true)]
     validate_package: bool,
+
+    #[arg(skip)]
+    build_scenes: Vec<PathBuf>,
+
+    #[arg(skip)]
+    packaged: bool,
 }
 
 struct App {
@@ -83,6 +90,8 @@ struct App {
     textures: RuntimeTextureCache,
     animations: AnimationRuntime,
     materials: RuntimeMaterialCache,
+    scenes: SceneManager,
+    loaded_scene: Option<LoadedScene>,
 }
 
 impl App {
@@ -100,6 +109,11 @@ impl App {
         let textures = RuntimeTextureCache::new(args.project_root.clone());
         let animations = AnimationRuntime::new(args.project_root.clone());
         let materials = RuntimeMaterialCache::new(args.project_root.clone());
+        let scenes = SceneManager::new(
+            args.project_root.clone(),
+            args.build_scenes.clone(),
+            args.packaged,
+        );
         Self {
             args,
             window: None,
@@ -121,6 +135,8 @@ impl App {
             textures,
             animations,
             materials,
+            scenes,
+            loaded_scene: None,
         }
     }
 
@@ -128,22 +144,64 @@ impl App {
         let Some(scene) = self.args.scene.as_deref() else {
             return false;
         };
-        let path = if scene.is_absolute() {
-            scene.to_owned()
-        } else if let Some(project_root) = self.args.project_root.as_deref() {
-            project_root.join(scene)
-        } else {
-            scene.to_owned()
-        };
-        match load_scene(&path, &mut self.world) {
-            Ok(scene) => {
-                log::info!("loaded scene '{}' from {}", scene.name, path.display());
+        let scene = scene.to_owned();
+        match self.scenes.load_initial(&scene, &mut self.world) {
+            Ok(loaded) => {
+                log::info!(
+                    "loaded scene '{}' from {}",
+                    loaded.name,
+                    loaded.path.display()
+                );
+                self.loaded_scene = Some(loaded);
                 true
             }
             Err(error) => {
-                log::error!("failed to load scene {}: {error}", path.display());
+                log::error!("failed to load scene {}: {error}", scene.display());
                 false
             }
+        }
+    }
+
+    fn apply_scene_request(&mut self, request: ScriptRuntimeRequest) {
+        let selector = match request {
+            ScriptRuntimeRequest::LoadSceneByIndex(index) => SceneSelector::Index(index),
+            ScriptRuntimeRequest::LoadScene(reference) => SceneSelector::PathOrName(reference),
+            ScriptRuntimeRequest::ReloadScene => SceneSelector::Reload,
+        };
+        match self.scenes.load(selector, &mut self.world) {
+            Ok(loaded) => {
+                self.args.scene = Some(loaded.path.clone());
+                self.cube = None;
+                self.angle = 0.0;
+                self.ui_controls.clear();
+                self.active_slider = None;
+                self.focused_input = None;
+                self.focused_ui = None;
+                self.last_ui_draw_calls = u32::MAX;
+                self.particles = ParticleWorld::default();
+                self.animations = AnimationRuntime::new(self.args.project_root.clone());
+                if let Some(window) = &self.window {
+                    window.set_ime_allowed(false);
+                }
+                if let Some(script) = self.script.as_mut() {
+                    let path = loaded.path.to_string_lossy().replace('\\', "/");
+                    if let Err(error) = script.notify_scene_loaded(
+                        &loaded.name,
+                        &path,
+                        loaded.build_index,
+                        loaded.build_scene_count,
+                    ) {
+                        log::error!("onSceneLoaded failed: {error}");
+                    }
+                }
+                log::info!(
+                    "switched to scene '{}' ({})",
+                    loaded.name,
+                    loaded.path.display()
+                );
+                self.loaded_scene = Some(loaded);
+            }
+            Err(error) => log::error!("scene switch rejected: {error}"),
         }
     }
 
@@ -942,6 +1000,17 @@ function onTick(dt, frame) {
                     let _ = s.eval(default_script);
                 }
             }
+            if let Some(loaded) = self.loaded_scene.as_ref() {
+                let path = loaded.path.to_string_lossy().replace('\\', "/");
+                if let Err(error) = s.notify_scene_loaded(
+                    &loaded.name,
+                    &path,
+                    loaded.build_index,
+                    loaded.build_scene_count,
+                ) {
+                    log::error!("initial onSceneLoaded failed: {error}");
+                }
+            }
         }
         self.script = script;
         self.last = Instant::now();
@@ -1071,8 +1140,16 @@ function onTick(dt, frame) {
                     );
                 }
 
-                if let Some(script) = self.script.as_mut() {
-                    let _ = script.tick(&mut self.world, dt);
+                let scene_requests = if let Some(script) = self.script.as_mut() {
+                    if let Err(error) = script.tick(&mut self.world, dt) {
+                        log::error!("script tick failed: {error}");
+                    }
+                    script.take_runtime_requests()
+                } else {
+                    Vec::new()
+                };
+                for request in scene_requests {
+                    self.apply_scene_request(request);
                 }
 
                 if let Some(r) = self.renderer.as_mut() {
@@ -1360,6 +1437,8 @@ fn main() -> Result<()> {
                     );
                     args.project_root.get_or_insert(config.project_root);
                     args.scene = Some(config.main_scene);
+                    args.build_scenes = config.build_scenes;
+                    args.packaged = true;
                     if args.script.is_none() {
                         args.script = config.startup_script;
                     }
@@ -1377,26 +1456,41 @@ fn main() -> Result<()> {
         let Some(scene) = args.scene.as_deref() else {
             bail!("no packaged player config or scene was found");
         };
-        let path = if scene.is_absolute() {
-            scene.to_owned()
-        } else if let Some(project_root) = args.project_root.as_deref() {
-            project_root.join(scene)
+        let scenes = if args.build_scenes.is_empty() {
+            vec![scene.to_owned()]
         } else {
-            scene.to_owned()
+            args.build_scenes.clone()
         };
-        let mut world = World::new();
-        let loaded = load_scene(&path, &mut world)?;
+        let mut validated = Vec::with_capacity(scenes.len());
+        for scene in scenes {
+            let path = if scene.is_absolute() {
+                scene
+            } else if let Some(project_root) = args.project_root.as_deref() {
+                project_root.join(scene)
+            } else {
+                scene
+            };
+            let mut world = World::new();
+            let loaded = load_scene(&path, &mut world)?;
+            validated.push((loaded.name, path, world.iter_entities().count()));
+        }
         if let Some(script) = args.script.as_deref() {
             let mut host = ScriptHost::new()?;
             host.load_file(script)?;
         }
         println!(
-            "validated packaged scene '{}' from {} ({} entities, script={})",
-            loaded.name,
-            path.display(),
-            world.iter_entities().count(),
+            "validated {} packaged scene(s), script={}",
+            validated.len(),
             args.script.is_some()
         );
+        for (name, path, entities) in validated {
+            println!(
+                "  '{}' from {} ({} entities)",
+                name,
+                path.display(),
+                entities
+            );
+        }
         return Ok(());
     }
     let event_loop = EventLoop::new()?;

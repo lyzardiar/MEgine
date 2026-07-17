@@ -10,6 +10,18 @@ fn pending() -> &'static Mutex<CommandBuffer> {
     CELL.get_or_init(|| Mutex::new(CommandBuffer::new()))
 }
 
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub enum ScriptRuntimeRequest {
+    LoadSceneByIndex(usize),
+    LoadScene(String),
+    ReloadScene,
+}
+
+fn pending_runtime_requests() -> &'static Mutex<Vec<ScriptRuntimeRequest>> {
+    static CELL: std::sync::OnceLock<Mutex<Vec<ScriptRuntimeRequest>>> = std::sync::OnceLock::new();
+    CELL.get_or_init(|| Mutex::new(Vec::new()))
+}
+
 /// Embeds a JS engine and exposes `engine` global for tick scripts.
 pub struct ScriptHost {
     context: Context,
@@ -56,6 +68,31 @@ impl ScriptHost {
         self.eval(&code)
     }
 
+    pub fn take_runtime_requests(&mut self) -> Vec<ScriptRuntimeRequest> {
+        pending_runtime_requests()
+            .lock()
+            .map(|mut requests| std::mem::take(&mut *requests))
+            .unwrap_or_default()
+    }
+
+    pub fn notify_scene_loaded(
+        &mut self,
+        name: &str,
+        path: &str,
+        build_index: Option<usize>,
+        build_scene_count: usize,
+    ) -> Result<(), ScriptError> {
+        let scene = serde_json::json!({
+            "name": name,
+            "path": path,
+            "buildIndex": build_index,
+            "buildSceneCount": build_scene_count,
+        });
+        self.eval(&format!(
+            "engine.scene = {scene}; if (typeof onSceneLoaded === 'function') {{ onSceneLoaded(engine.scene); }}"
+        ))
+    }
+
     pub fn push_json_commands(world: &mut World, value: JsonValue) {
         if let JsonValue::Array(arr) = value {
             for item in arr {
@@ -99,9 +136,40 @@ fn register_engine(context: &mut Context) -> Result<(), ScriptError> {
         Ok(JsValue::undefined())
     });
 
+    let load_scene = NativeFunction::from_copy_closure(|_this, args, ctx| {
+        let value = args.get_or_undefined(0);
+        let request = if let Some(index) = value.as_number() {
+            if !index.is_finite() || index < 0.0 || index.fract() != 0.0 {
+                return Ok(JsValue::new(false));
+            }
+            ScriptRuntimeRequest::LoadSceneByIndex(index as usize)
+        } else {
+            let reference = value.to_string(ctx)?.to_std_string_escaped();
+            if reference.trim().is_empty() {
+                return Ok(JsValue::new(false));
+            }
+            ScriptRuntimeRequest::LoadScene(reference)
+        };
+        if let Ok(mut requests) = pending_runtime_requests().lock() {
+            requests.push(request);
+            Ok(JsValue::new(true))
+        } else {
+            Ok(JsValue::new(false))
+        }
+    });
+
+    let reload_scene = NativeFunction::from_copy_closure(|_this, _args, _ctx| {
+        if let Ok(mut requests) = pending_runtime_requests().lock() {
+            requests.push(ScriptRuntimeRequest::ReloadScene);
+            Ok(JsValue::new(true))
+        } else {
+            Ok(JsValue::new(false))
+        }
+    });
+
     context
         .eval(Source::from_bytes(
-            b"var engine = { setClearColor: null, pushCommandJson: null };",
+            b"var engine = { setClearColor: null, pushCommandJson: null, loadScene: null, reloadScene: null, scene: null };",
         ))
         .map_err(|e| ScriptError::Js(format!("{e}")))?;
 
@@ -132,5 +200,61 @@ fn register_engine(context: &mut Context) -> Result<(), ScriptError> {
         )
         .map_err(|e| ScriptError::Js(format!("{e}")))?;
 
+    engine_obj
+        .set(
+            boa_engine::js_string!("loadScene"),
+            load_scene.to_js_function(context.realm()),
+            false,
+            context,
+        )
+        .map_err(|e| ScriptError::Js(format!("{e}")))?;
+
+    engine_obj
+        .set(
+            boa_engine::js_string!("reloadScene"),
+            reload_scene.to_js_function(context.realm()),
+            false,
+            context,
+        )
+        .map_err(|e| ScriptError::Js(format!("{e}")))?;
+
     Ok(())
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn scripts_request_scene_changes_and_receive_scene_context() {
+        let mut host = ScriptHost::new().unwrap();
+        host.eval(
+            r#"
+            var loadedScene = null;
+            function onSceneLoaded(scene) { loadedScene = scene; }
+            engine.loadScene(1);
+            engine.loadScene("Level2");
+            engine.reloadScene();
+            "#,
+        )
+        .unwrap();
+        assert_eq!(
+            host.take_runtime_requests(),
+            vec![
+                ScriptRuntimeRequest::LoadSceneByIndex(1),
+                ScriptRuntimeRequest::LoadScene("Level2".into()),
+                ScriptRuntimeRequest::ReloadScene,
+            ]
+        );
+        host.notify_scene_loaded("Level 2", "Assets/Scenes/Level2.mscene", Some(1), 2)
+            .unwrap();
+        host.eval(
+            r#"
+            if (!loadedScene || loadedScene.name !== "Level 2" || engine.scene.buildIndex !== 1) {
+              throw new Error("scene context not delivered");
+            }
+            "#,
+        )
+        .unwrap();
+    }
 }

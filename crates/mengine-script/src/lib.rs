@@ -3,7 +3,7 @@
 
 mod bridge;
 
-pub use bridge::ScriptHost;
+pub use bridge::{ScriptHost, ScriptRuntimeRequest};
 
 use thiserror::Error;
 

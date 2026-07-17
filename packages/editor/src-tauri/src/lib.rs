@@ -935,7 +935,12 @@ mod tests {
         std::fs::create_dir_all(root.join("Assets/Scenes")).unwrap();
         std::fs::write(
             root.join("project.json"),
-            r#"{"name":"Editor Build QA","version":1,"mainScene":"Assets/Scenes/Main.mscene"}"#,
+            r#"{"name":"Editor Build QA","version":1,"mainScene":"Assets/Scenes/Main.mscene","buildScenes":["Assets/Scenes/Main.mscene","Assets/Scenes/Level2.mscene"]}"#,
+        )
+        .unwrap();
+        std::fs::write(
+            root.join("Assets/Scenes/Level2.mscene"),
+            r#"{"version":1,"name":"Level 2","world":{"entities":[],"frame":0,"sim_frame":0,"clear_color":[0.05,0.08,0.12,1]}}"#,
         )
         .unwrap();
         std::fs::write(
@@ -947,7 +952,7 @@ mod tests {
         let result = run_player_build(root.clone(), "debug".into(), true).unwrap();
         assert_eq!(result.profile, "debug");
         assert!(Path::new(&result.executable).is_file());
-        assert!(result.file_count >= 4);
+        assert!(result.file_count >= 5);
         std::fs::remove_dir_all(root).unwrap();
     }
 
