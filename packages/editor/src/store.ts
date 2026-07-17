@@ -39,6 +39,11 @@ import { selectedRectRoots } from './rectSelection';
 import { planRectResize, type RectResizeHandle } from './rectResize';
 import { selectedHierarchyRoots } from './hierarchySelection';
 import { restoreSceneSelection } from './selectionRestore';
+import {
+  captureEditorUndoState,
+  restoreEditorUndoState,
+  type EditorUndoState,
+} from './editorUndo';
 import './behaviours';
 
 export type EditorMode = 'edit' | 'play' | 'pause';
@@ -97,7 +102,7 @@ export function createEditorStore() {
   let playSpin = 0;
   let editEntities: EntityRec[] = [];
   let playEntities: EntityRec[] | null = null;
-  let undoStack: EntityRec[][] = [];
+  let undoStack: Array<EditorUndoState<EntityRec>> = [];
   let clearColor: [number, number, number, number] = [0.22, 0.24, 0.28, 1];
   let frame = 0;
   let gameAspect: GameAspect = '16:9';
@@ -181,7 +186,13 @@ export function createEditorStore() {
 
   const pushUndo = () => {
     if (mode !== 'edit') return;
-    undoStack.push(structuredClone(editEntities));
+    undoStack.push(captureEditorUndoState(
+      editEntities,
+      selectedIds,
+      selectionAnchor,
+      nextId,
+      clearColor,
+    ));
     if (undoStack.length > 64) undoStack.shift();
   };
 
@@ -821,8 +832,12 @@ export function createEditorStore() {
     undo() {
       const prev = undoStack.pop();
       if (prev) {
-        editEntities = prev.map((e) => normalizeEntity(e as EntityRec));
-        selectedIds = selectedIds.filter((id) => editEntities.some((e) => e.entity === id));
+        const restored = restoreEditorUndoState(prev);
+        editEntities = restored.entities.map((entity) => normalizeEntity(entity));
+        selectedIds = restored.selectedIds;
+        selectionAnchor = restored.selectionAnchor;
+        nextId = restored.nextId;
+        clearColor = restored.clearColor;
       }
     },
     tick(dt: number) {
