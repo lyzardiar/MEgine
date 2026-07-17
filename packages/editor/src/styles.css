@@ -2165,6 +2165,13 @@ body.insp-scrubbing * {
   cursor: default;
 }
 
+.scene-toolbar .tile-brush-select {
+  width: 132px;
+  height: 26px;
+  border-radius: 0;
+  font-size: 11px;
+}
+
 .scene-zoom {
   display: inline-flex;
   height: 26px;

@@ -167,6 +167,17 @@ export const BUILTIN_INSPECTOR_FIELDS: Readonly<
     width: { min: 0, step: 0.01 },
     sorting_layer: { label: 'Sorting Layer', kind: 'enum' },
   },
+  Grid: {
+    cell_size: { label: 'Cell Size', min: 0.0001, step: 0.1 },
+    cell_gap: { label: 'Cell Gap', step: 0.1 },
+    cell_layout: { label: 'Cell Layout', kind: 'enum', options: options('Rectangle') },
+  },
+  Tilemap: {
+    cells: { kind: 'vector2-list' },
+    sprites: { kind: 'string-list' },
+    tile_anchor: { label: 'Tile Anchor', min: 0, max: 1, step: 0.01 },
+    sorting_layer: { label: 'Sorting Layer', kind: 'enum' },
+  },
   AnimationPlayer: {
     clip: {
       kind: 'project-asset',

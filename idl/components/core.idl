@@ -107,6 +107,23 @@ component Line2D {
   sorting_order: int          = 0
 }
 
+/// Unity-style parent grid used by Tilemap children.
+component Grid {
+  cell_size:   float2 = [1, 1]
+  cell_gap:    float2 = [0, 0]
+  cell_layout: string = "Rectangle"
+}
+
+/// Sparse world-space tile layer. cells and sprites are parallel arrays.
+component Tilemap {
+  cells:         float2_array  = []
+  sprites:       string_array  = []
+  color:         float4        = [1, 1, 1, 1]
+  tile_anchor:   float2        = [0.5, 0.5]
+  sorting_layer: string        = "default"
+  sorting_order: int           = 0
+}
+
 /// Plays a versioned .manim AnimationClip on this entity hierarchy.
 component AnimationPlayer {
   clip:          string = ""

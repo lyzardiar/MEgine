@@ -612,6 +612,31 @@
     "properties": {},
     "type": "object"
   },
+  "Grid": {
+    "properties": {
+      "cell_gap": {
+        "items": {
+          "type": "number"
+        },
+        "type": "array"
+      },
+      "cell_layout": {
+        "type": "string"
+      },
+      "cell_size": {
+        "items": {
+          "type": "number"
+        },
+        "type": "array"
+      }
+    },
+    "required": [
+      "cell_size",
+      "cell_gap",
+      "cell_layout"
+    ],
+    "type": "object"
+  },
   "Image": {
     "properties": {
       "border": {
@@ -2079,6 +2104,54 @@
     },
     "required": [
       "path"
+    ],
+    "type": "object"
+  },
+  "Tilemap": {
+    "properties": {
+      "cells": {
+        "items": {
+          "items": {
+            "type": "number"
+          },
+          "maxItems": 2,
+          "minItems": 2,
+          "type": "array"
+        },
+        "type": "array"
+      },
+      "color": {
+        "items": {
+          "type": "number"
+        },
+        "type": "array"
+      },
+      "sorting_layer": {
+        "type": "string"
+      },
+      "sorting_order": {
+        "type": "number"
+      },
+      "sprites": {
+        "items": {
+          "type": "string"
+        },
+        "type": "array"
+      },
+      "tile_anchor": {
+        "items": {
+          "type": "number"
+        },
+        "type": "array"
+      }
+    },
+    "required": [
+      "cells",
+      "sprites",
+      "color",
+      "tile_anchor",
+      "sorting_layer",
+      "sorting_order"
     ],
     "type": "object"
   },

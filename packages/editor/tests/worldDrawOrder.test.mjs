@@ -31,6 +31,7 @@ test('sorting order resolves all supported world 2D renderer aliases safely', ()
   assert.equal(entity2DSortingOrder({ SpriteRenderer: { sorting_order: 2 } }), 2);
   assert.equal(entity2DSortingOrder({ AnimatedSprite2D: { sortingOrder: -3 } }), -3);
   assert.equal(entity2DSortingOrder({ Line2D: {} }), 0);
+  assert.equal(entity2DSortingOrder({ Tilemap: { sorting_order: 6 } }), 6);
   assert.deepEqual(
     entity2DSortingSettings({ ParticleEmitter2D: { sorting_layer: 'effects', sorting_order: 8 } }),
     { layer: 'effects', order: 8 },

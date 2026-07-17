@@ -523,6 +523,40 @@ mod tests {
     }
 
     #[test]
+    fn round_trips_grid_and_sparse_tilemap_components() {
+        let (dir, path) = temp_scene("tilemap.mscene");
+        let mut world = World::new();
+        world.commands.push(WorldCommand::Spawn {
+            name: Some("Ground".into()),
+            components: json!({
+                "Grid": {
+                    "cell_size": [2, 1], "cell_gap": [0.25, 0], "cell_layout": "Rectangle"
+                },
+                "Tilemap": {
+                    "cells": [[0, 0], [2, -1]],
+                    "sprites": ["Assets/Tiles/grass.png", "Assets/Tiles/stone.png"],
+                    "tile_anchor": [0.5, 0.25], "sorting_layer": "ground", "sorting_order": -2
+                }
+            }),
+        });
+        world.commit();
+
+        save_scene(&path, "Tilemap", &world).unwrap();
+        let mut loaded = World::new();
+        load_scene(&path, &mut loaded).unwrap();
+        let snapshot = WorldSnapshot::from_world(&loaded);
+        let components = &snapshot.entities[0].components;
+        assert_eq!(components["Grid"]["cell_size"], json!([2.0, 1.0]));
+        assert_eq!(components["Tilemap"]["cells"][1], json!([2.0, -1.0]));
+        assert_eq!(
+            components["Tilemap"]["sprites"][0],
+            "Assets/Tiles/grass.png"
+        );
+        assert_eq!(components["Tilemap"]["sorting_layer"], "ground");
+        std::fs::remove_dir_all(dir).unwrap();
+    }
+
+    #[test]
     fn generated_loader_restores_particle_and_spine_runtime_types() {
         let (dir, path) = temp_scene("generated-runtime-components.mscene");
         let mut world = World::new();

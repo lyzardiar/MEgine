@@ -118,6 +118,7 @@ import {
 import type { RectResizeOptions, RectResizePlan } from '../rectResize';
 import { nextUiSelectable, uiNavigationAction } from '../ui/uiNavigation';
 import { getSpriteImage } from '../spriteDraw';
+import { listSprites } from '../spriteLibrary';
 import { resolveAnimatedSpriteFrame } from '../animatedSprite';
 import {
   compareWorldDrawOrder,
@@ -133,6 +134,15 @@ import {
   readLine2DPoints,
   type LinePointHit,
 } from '../line2dEditing';
+import {
+  cellLocalPosition,
+  eraseTile,
+  localPointToCell,
+  nearestGridSettings,
+  normalizeTilemapData,
+  setTile,
+  type TilemapData,
+} from '../tilemapModel';
 
 const SCENE_2D_KEY = 'mengine.scene.2d';
 const SCENE_SNAP_KEY = 'mengine.scene.snap';
@@ -416,6 +426,11 @@ export function Viewport(props: {
     entity: number,
     points: Array<[number, number]>,
   ) => void;
+  onTilemapChange?: (
+    entity: number,
+    cells: Array<[number, number]>,
+    sprites: string[],
+  ) => void;
   onDuplicateRectDrag?: () => number | null;
   onTranslate: (entity: number, delta: Vec3) => void;
   onGizmoScale: (
@@ -492,6 +507,7 @@ export function Viewport(props: {
   const hoverGizmoRef = useRef<GizmoPart | null>(null);
   const activeGizmoRef = useRef<GizmoPart | null>(null);
   const lastVpRef = useRef({ x: 0, y: 0, w: 1, h: 1 });
+  const lastCameraRef = useRef<Camera>({ eye: [0, 0, 10], target: [0, 0, 0], fovYDeg: 60 });
   const propsRef = useRef(props);
   propsRef.current = props;
 
@@ -532,6 +548,15 @@ export function Viewport(props: {
         ly: number;
         entity: number;
         index: number;
+      }
+    | {
+        type: 'tilePaint';
+        entity: number;
+        data: TilemapData;
+        erase: boolean;
+        lastCell: string;
+        lx: number;
+        ly: number;
       }
     | {
         type: 'uiRange';
@@ -598,6 +623,12 @@ export function Viewport(props: {
   const [sceneGrid, setSceneGrid] = useState(loadSceneGrid);
   const sceneGridRef = useRef(sceneGrid);
   sceneGridRef.current = sceneGrid;
+  const [tilePaintEnabled, setTilePaintEnabled] = useState(false);
+  const tilePaintEnabledRef = useRef(tilePaintEnabled);
+  tilePaintEnabledRef.current = tilePaintEnabled;
+  const [tileBrushSprite, setTileBrushSprite] = useState('white');
+  const tileBrushSpriteRef = useRef(tileBrushSprite);
+  tileBrushSpriteRef.current = tileBrushSprite;
   const [smartGuidesEnabled, setSmartGuidesEnabled] = useState(loadSmartGuides);
   const smartGuidesEnabledRef = useRef(smartGuidesEnabled);
   smartGuidesEnabledRef.current = smartGuidesEnabled;
@@ -718,6 +749,7 @@ export function Viewport(props: {
           target: sc.pivot,
           fovYDeg: 60,
         };
+    lastCameraRef.current = cam;
 
     ctx.save();
     ctx.beginPath();
@@ -834,8 +866,9 @@ export function Viewport(props: {
           editorGizmo: boolean;
           renderKind: 'entity' | 'particle' | 'spine';
         }> = [];
-        if (pr || camComp || isLight || hasCollider) {
-          const renderer2D = (e.components.Line2D
+        if (pr || camComp || isLight || hasCollider || e.components.Tilemap) {
+          const renderer2D = (e.components.Tilemap
+            ?? e.components.Line2D
             ?? e.components.AnimatedSprite2D
             ?? e.components.SpriteRenderer) as Record<string, unknown> | undefined;
           const sorting = renderer2D ? component2DSortingSettings(renderer2D) : null;
@@ -1028,6 +1061,85 @@ export function Viewport(props: {
       }
 
       if (!mesh) {
+        const tilemap = e.components.Tilemap as
+          | {
+              cells?: unknown;
+              sprites?: unknown;
+              color?: number[];
+              tile_anchor?: number[];
+            }
+          | undefined;
+        if (tilemap) {
+          const grid = nearestGridSettings(p.entities, e.entity);
+          const stepX = grid.cellSize[0] + grid.cellGap[0];
+          const stepY = grid.cellSize[1] + grid.cellGap[1];
+          const supportedGrid = grid.cellLayout === 'Rectangle'
+            && Number.isFinite(stepX)
+            && Number.isFinite(stepY)
+            && Math.abs(stepX) > 1e-7
+            && Math.abs(stepY) > 1e-7;
+          const data = supportedGrid
+            ? normalizeTilemapData(tilemap.cells, tilemap.sprites)
+            : { cells: [], sprites: [] };
+          const color = (tilemap.color ?? [1, 1, 1, 1]) as [number, number, number, number];
+          const anchorValue = tilemap.tile_anchor ?? [0.5, 0.5];
+          const anchor: [number, number] = [
+            Number.isFinite(Number(anchorValue[0])) ? Number(anchorValue[0]) : 0.5,
+            Number.isFinite(Number(anchorValue[1])) ? Number(anchorValue[1]) : 0.5,
+          ];
+          const rotation = t.rotation as [number, number, number, number] | undefined;
+          const half: [number, number] = [
+            grid.cellSize[0] * Math.abs(t.scale[0]) * 0.5,
+            grid.cellSize[1] * Math.abs(t.scale[1]) * 0.5,
+          ];
+          if (selected && !isGame && scene2DRef.current) {
+            if (supportedGrid) {
+              ctx.save();
+              ctx.strokeStyle = 'rgba(86, 183, 208, 0.32)';
+              ctx.lineWidth = 1;
+              ctx.beginPath();
+              for (let line = -10; line <= 11; line += 1) {
+                const x = (line - 0.5) * stepX;
+                const start = project(linePointWorld([x, -10.5 * stepY], t.position as Vec3, t.scale as Vec3, rotation), cam, vp);
+                const end = project(linePointWorld([x, 10.5 * stepY], t.position as Vec3, t.scale as Vec3, rotation), cam, vp);
+                if (start && end) {
+                  ctx.moveTo(start.x, start.y);
+                  ctx.lineTo(end.x, end.y);
+                }
+                const y = (line - 0.5) * stepY;
+                const left = project(linePointWorld([-10.5 * stepX, y], t.position as Vec3, t.scale as Vec3, rotation), cam, vp);
+                const right = project(linePointWorld([10.5 * stepX, y], t.position as Vec3, t.scale as Vec3, rotation), cam, vp);
+                if (left && right) {
+                  ctx.moveTo(left.x, left.y);
+                  ctx.lineTo(right.x, right.y);
+                }
+              }
+              ctx.stroke();
+              ctx.restore();
+            }
+          }
+          data.cells.forEach((cell, index) => {
+            const local = cellLocalPosition(cell, grid);
+            const position = linePointWorld(local, t.position as Vec3, t.scale as Vec3, rotation);
+            const image = getSpriteImage(data.sprites[index] || 'white');
+            const hit = drawWorldSprite(
+              ctx,
+              cam,
+              vp,
+              position,
+              half,
+              color,
+              selected,
+              rotation,
+              image?.complete && image.naturalWidth > 0 ? image : null,
+              false,
+              false,
+              anchor,
+            );
+            if (hit) hitsRef.current.push({ kind: 'object', id: e.entity, x: hit.x, y: hit.y, r: hit.r });
+          });
+          if (data.cells.length > 0 || isGame) continue;
+        }
         const line = e.components.Line2D as
           | {
               points?: unknown;
@@ -1482,6 +1594,44 @@ export function Viewport(props: {
     });
   };
 
+  const paintTilemapAt = (
+    entityId: number,
+    x: number,
+    y: number,
+    erase: boolean,
+    source: TilemapData,
+    lastCell?: string,
+  ): { data: TilemapData; cell: string } | null => {
+    const entities = propsRef.current.entities;
+    const entity = entities.find((candidate) => candidate.entity === entityId);
+    if (!entity?.components.Tilemap) return null;
+    const transform = resolvedTransform(buildWorldTransforms(entities), entityId);
+    if (!transform) return null;
+    const origin = transform.position as Vec3;
+    const originScreen = project(origin, lastCameraRef.current, lastVpRef.current);
+    if (!originScreen) return null;
+    const worldDelta = worldDeltaViewPlane(
+      origin,
+      { dx: x - originScreen.x, dy: y - originScreen.y },
+      lastCameraRef.current,
+      lastVpRef.current,
+    );
+    const local = linePointDeltaFromWorld(
+      worldDelta,
+      transform.scale as Vec3,
+      transform.rotation as [number, number, number, number],
+    );
+    const cell = localPointToCell(local, nearestGridSettings(entities, entityId));
+    if (!cell) return null;
+    const cellKey = `${cell[0]},${cell[1]}`;
+    if (cellKey === lastCell) return { data: source, cell: cellKey };
+    const data = erase
+      ? eraseTile(source, cell)
+      : setTile(source, cell, tileBrushSpriteRef.current);
+    propsRef.current.onTilemapChange?.(entityId, data.cells, data.sprites);
+    return { data, cell: cellKey };
+  };
+
   const onPointerDown = (ev: React.MouseEvent) => {
     const { x, y } = localPos(ev);
     smartGuidesRef.current = [];
@@ -1550,6 +1700,39 @@ export function Viewport(props: {
         return;
       }
       if (ev.button === 0) {
+        const tilemapEntity = propsRef.current.selected == null
+          ? undefined
+          : propsRef.current.entities.find(
+              (entity) => entity.entity === propsRef.current.selected && entity.components.Tilemap,
+            );
+        if (
+          tilePaintEnabledRef.current
+          && tilemapEntity
+          && !propsRef.current.playing
+          && scene2DRef.current
+          && propsRef.current.onTilemapChange
+        ) {
+          const component = tilemapEntity.components.Tilemap as { cells?: unknown; sprites?: unknown };
+          const source = normalizeTilemapData(component.cells, component.sprites);
+          propsRef.current.onBeginGesture();
+          const result = paintTilemapAt(tilemapEntity.entity, x, y, ev.shiftKey, source);
+          if (!result) {
+            propsRef.current.onEndGesture();
+            return;
+          }
+          draggingRef.current = true;
+          dragRef.current = {
+            type: 'tilePaint',
+            entity: tilemapEntity.entity,
+            data: result.data,
+            erase: ev.shiftKey,
+            lastCell: result.cell,
+            lx: ev.clientX,
+            ly: ev.clientY,
+          };
+          ev.preventDefault();
+          return;
+        }
         const linePoint = hitTestLinePoint(linePointHitsRef.current, x, y);
         if (linePoint && propsRef.current.onLinePointChange) {
           draggingRef.current = true;
@@ -1793,6 +1976,16 @@ export function Viewport(props: {
               ? 'pointer'
               : 'default';
         } else if (propsRef.current.tab === 'scene' && !propsRef.current.playing) {
+          if (tilePaintEnabledRef.current && propsRef.current.selected != null) {
+            const selected = propsRef.current.entities.find(
+              (entity) => entity.entity === propsRef.current.selected,
+            );
+            if (selected?.components.Tilemap) {
+              hoverGizmoRef.current = null;
+              canvas.style.cursor = 'crosshair';
+              return;
+            }
+          }
           const linePoint = hitTestLinePoint(linePointHitsRef.current, x, y);
           if (linePoint) {
             hoverGizmoRef.current = null;
@@ -1846,6 +2039,26 @@ export function Viewport(props: {
               item.slider?.onValueChanged ?? item.scrollbar?.onValueChanged,
             );
           }
+        }
+        d.lx = ev.clientX;
+        d.ly = ev.clientY;
+        return;
+      }
+
+      if (d.type === 'tilePaint') {
+        const rect = canvas?.getBoundingClientRect();
+        if (!rect) return;
+        const result = paintTilemapAt(
+          d.entity,
+          ev.clientX - rect.left,
+          ev.clientY - rect.top,
+          d.erase,
+          d.data,
+          d.lastCell,
+        );
+        if (result) {
+          d.data = result.data;
+          d.lastCell = result.cell;
         }
         d.lx = ev.clientX;
         d.ly = ev.clientY;
@@ -2290,6 +2503,7 @@ export function Viewport(props: {
         dragRef.current?.type === 'gizmo'
         || dragRef.current?.type === 'rectGizmo'
         || dragRef.current?.type === 'linePoint'
+        || dragRef.current?.type === 'tilePaint'
       ) {
         propsRef.current.onEndGesture();
       }
@@ -2351,6 +2565,7 @@ export function Viewport(props: {
 
   const applyScene2D = (on: boolean) => {
     setScene2D(on);
+    if (!on) setTilePaintEnabled(false);
     try {
       localStorage.setItem(SCENE_2D_KEY, on ? '1' : '0');
     } catch {
@@ -2581,6 +2796,12 @@ export function Viewport(props: {
   const canZoomScene = scene2D && props.entities.some(
     (entity) => entity.active !== false && entity.components.Canvas != null,
   );
+  const selectedTilemap = props.selected == null
+    ? undefined
+    : props.entities.find(
+        (entity) => entity.entity === props.selected && entity.components.Tilemap != null,
+      );
+  const tileBrushOptions = listSprites();
 
   return (
     <div className="viewport-wrap">
@@ -2635,6 +2856,34 @@ export function Viewport(props: {
           >
             Grid
           </button>
+          <button
+            type="button"
+            className={`scene-grid-toggle${tilePaintEnabled && selectedTilemap && scene2D ? ' active' : ''}`}
+            aria-label="Toggle Tilemap paint brush"
+            aria-pressed={tilePaintEnabled && !!selectedTilemap && scene2D}
+            disabled={!selectedTilemap || props.playing}
+            title="Paint the selected Tilemap. Hold Shift while painting to erase."
+            onClick={() => {
+              if (!scene2D) applyScene2D(true);
+              setTilePaintEnabled((enabled) => !enabled);
+            }}
+          >
+            Tile Brush
+          </button>
+          {selectedTilemap && (
+            <select
+              className="tile-brush-select"
+              aria-label="Tile brush sprite"
+              title="Sprite painted into Tilemap cells"
+              value={tileBrushSprite}
+              onChange={(event) => setTileBrushSprite(event.target.value)}
+            >
+              <option value="white">White</option>
+              {tileBrushOptions.map((sprite) => (
+                <option key={sprite.id} value={sprite.id}>{sprite.name}</option>
+              ))}
+            </select>
+          )}
           <button
             type="button"
             className={`scene-grid-toggle${smartGuidesEnabled && scene2D ? ' active' : ''}`}

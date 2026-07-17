@@ -85,6 +85,7 @@ import {
   worldRotationToLocal,
   worldTransformToLocal,
 } from './worldTransform';
+import { createGridComponent, createTilemapComponent } from './tilemapModel';
 import './behaviours';
 
 export type EditorMode = 'edit' | 'play' | 'pause';
@@ -1716,6 +1717,14 @@ export function createEditorStore() {
         this.spawnLine2D();
         return;
       }
+      if (name === 'Grid') {
+        this.spawnGrid();
+        return;
+      }
+      if (name === 'Tilemap') {
+        this.spawnTilemap();
+        return;
+      }
       spawnAt(
         name,
         {
@@ -1950,6 +1959,38 @@ export function createEditorStore() {
         },
         null,
         true,
+      );
+    },
+    spawnGrid() {
+      return spawnAt(
+        'Grid',
+        {
+          Transform: { position: [0, 0, 0], rotation: [0, 0, 0, 1], scale: [1, 1, 1] },
+          Grid: createGridComponent(),
+        },
+        null,
+        true,
+      );
+    },
+    spawnTilemap() {
+      pushUndo();
+      const grid = spawnAt(
+        'Grid',
+        {
+          Transform: { position: [0, 0, 0], rotation: [0, 0, 0, 1], scale: [1, 1, 1] },
+          Grid: createGridComponent(),
+        },
+        null,
+        false,
+      );
+      return spawnAt(
+        'Tilemap',
+        {
+          Transform: { position: [0, 0, 0], rotation: [0, 0, 0, 1], scale: [1, 1, 1] },
+          Tilemap: createTilemapComponent(),
+        },
+        grid,
+        false,
       );
     },
     spawnParticleEmitter2D() {

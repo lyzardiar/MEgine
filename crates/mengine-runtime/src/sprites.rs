@@ -1,8 +1,11 @@
 use crate::sorting::{sort_world_primitives, SortingLayers, WorldPrimitive, WorldPrimitiveKind};
 use glam::{Quat, Vec3};
-use mengine_core::generated::{AnimatedSprite2D, Line2D, SpriteRenderer, Transform};
-use mengine_core::{TransformHierarchy, World};
+use mengine_core::generated::{AnimatedSprite2D, Grid, Line2D, SpriteRenderer, Tilemap, Transform};
+use mengine_core::{Entity, Parent, TransformHierarchy, World};
 use mengine_rhi::{project_world_to_viewport, FrameCamera, UiBatchKey, UiBlendMode, UiPrimitive};
+use std::collections::{BTreeMap, HashSet};
+
+const MAX_TILEMAP_TILES: usize = 100_000;
 
 pub fn collect_world_sprites(
     world: &World,
@@ -35,6 +38,16 @@ pub fn collect_world_primitives_with_hierarchy(
         let Some(transform) = hierarchy.get(entity).map(|value| value.to_transform()) else {
             continue;
         };
+        if let Some(tilemap) = world.get_component::<Tilemap>(entity) {
+            sprites.extend(project_tilemap(
+                &transform,
+                tilemap,
+                nearest_grid(world, entity),
+                camera,
+                viewport,
+            ));
+            continue;
+        }
         if let Some(line) = world.get_component::<Line2D>(entity) {
             sprites.extend(project_line(&transform, line, camera, viewport));
             continue;
@@ -64,6 +77,129 @@ pub fn collect_world_primitives_with_hierarchy(
         }
     }
     sprites
+}
+
+fn nearest_grid(world: &World, entity: Entity) -> Option<&Grid> {
+    let mut current = Some(entity);
+    let mut visited = HashSet::new();
+    while let Some(candidate) = current {
+        if !visited.insert(candidate) {
+            return None;
+        }
+        if let Some(grid) = world.get_component::<Grid>(candidate) {
+            return Some(grid);
+        }
+        current = world
+            .get_component::<Parent>(candidate)
+            .map(|parent| parent.entity);
+    }
+    None
+}
+
+fn project_tilemap(
+    transform: &Transform,
+    tilemap: &Tilemap,
+    grid: Option<&Grid>,
+    camera: FrameCamera,
+    viewport: [u32; 2],
+) -> Vec<WorldPrimitive> {
+    if tilemap.color[3] <= 0.0 {
+        return Vec::new();
+    }
+    let default_grid = Grid::default();
+    let grid = grid.unwrap_or(&default_grid);
+    if !grid.cell_layout.eq_ignore_ascii_case("rectangle") {
+        return Vec::new();
+    }
+    let cell_size = sanitize_positive_pair(grid.cell_size, [1.0, 1.0]);
+    let cell_gap = sanitize_pair(grid.cell_gap, [0.0, 0.0]);
+    let step = [cell_size[0] + cell_gap[0], cell_size[1] + cell_gap[1]];
+    if !step[0].is_finite()
+        || !step[1].is_finite()
+        || step[0].abs() <= f32::EPSILON
+        || step[1].abs() <= f32::EPSILON
+    {
+        return Vec::new();
+    }
+
+    // Sparse cells are canonicalized here as well as in the editor so hand-authored scenes
+    // cannot create duplicate overdraw or unbounded work. The last duplicate wins.
+    let mut cells = BTreeMap::new();
+    for (cell, sprite) in tilemap.cells.iter().zip(&tilemap.sprites) {
+        let Some(key) = tile_key(*cell) else {
+            continue;
+        };
+        if cells.len() >= MAX_TILEMAP_TILES && !cells.contains_key(&key) {
+            continue;
+        }
+        cells.insert(key, sprite.as_str());
+    }
+
+    let origin = Vec3::from(transform.position);
+    let scale = Vec3::from(transform.scale);
+    let rotation = safe_rotation(transform.rotation);
+    cells
+        .into_iter()
+        .filter_map(|((x, y), sprite)| {
+            let local = Vec3::new(x as f32 * step[0], y as f32 * step[1], 0.0);
+            let position = origin + rotation * (local * scale);
+            project_sprite(
+                &Transform {
+                    position: position.to_array(),
+                    rotation: transform.rotation,
+                    scale: transform.scale,
+                },
+                &SpriteRenderer {
+                    sprite: if sprite.is_empty() { "white" } else { sprite }.into(),
+                    color: tilemap.color,
+                    size: cell_size,
+                    pivot: tilemap.tile_anchor,
+                    flip_x: false,
+                    flip_y: false,
+                    sorting_layer: tilemap.sorting_layer.clone(),
+                    sorting_order: tilemap.sorting_order,
+                },
+                camera,
+                viewport,
+            )
+        })
+        .collect()
+}
+
+fn tile_key(cell: [f32; 2]) -> Option<(i32, i32)> {
+    if !cell[0].is_finite() || !cell[1].is_finite() {
+        return None;
+    }
+    let x = f64::from(cell[0]).round();
+    let y = f64::from(cell[1]).round();
+    if x < f64::from(i32::MIN)
+        || x > f64::from(i32::MAX)
+        || y < f64::from(i32::MIN)
+        || y > f64::from(i32::MAX)
+    {
+        return None;
+    }
+    Some((x as i32, y as i32))
+}
+
+fn sanitize_pair(value: [f32; 2], fallback: [f32; 2]) -> [f32; 2] {
+    [
+        if value[0].is_finite() {
+            value[0]
+        } else {
+            fallback[0]
+        },
+        if value[1].is_finite() {
+            value[1]
+        } else {
+            fallback[1]
+        },
+    ]
+}
+
+fn sanitize_positive_pair(value: [f32; 2], fallback: [f32; 2]) -> [f32; 2] {
+    let value = sanitize_pair(value, fallback);
+    [value[0].abs().max(0.0001), value[1].abs().max(0.0001)]
 }
 
 fn project_line(
@@ -415,5 +551,83 @@ mod tests {
                 .collect(),
         );
         assert_eq!(plan.batches.len(), 1);
+    }
+
+    #[test]
+    fn tilemap_uses_nearest_parent_grid_and_canonicalizes_sparse_cells() {
+        let mut world = World::new();
+        let grid_entity = world.spawn_empty();
+        world.insert_component(grid_entity, Transform::default());
+        world.insert_component(
+            grid_entity,
+            Grid {
+                cell_size: [2.0, 1.0],
+                cell_gap: [0.5, 0.0],
+                cell_layout: "Rectangle".into(),
+            },
+        );
+        let tilemap_entity = world.spawn_empty();
+        world.insert_component(tilemap_entity, Transform::default());
+        world.insert_component(
+            tilemap_entity,
+            Tilemap {
+                cells: vec![[1.0, 0.0], [0.0, 0.0], [1.2, 0.1], [f32::NAN, 2.0]],
+                sprites: vec!["old".into(), "origin".into(), "new".into(), "bad".into()],
+                sorting_order: 7,
+                ..Default::default()
+            },
+        );
+        world.set_parent(tilemap_entity, Some(grid_entity));
+
+        let sprites = collect_world_sprites(&world, camera(), [200, 100]);
+        assert_eq!(sprites.len(), 2);
+        assert_eq!(sprites[0].key.texture, "origin");
+        assert_eq!(sprites[1].key.texture, "new");
+        assert!((sprites[1].rect[0] - 115.0).abs() < 0.001);
+        assert!((sprites[1].rect[2] - 20.0).abs() < 0.001);
+    }
+
+    #[test]
+    fn tilemap_rejects_unsupported_layout_and_mismatched_parallel_entries() {
+        let tilemap = Tilemap {
+            cells: vec![[0.0, 0.0], [1.0, 0.0]],
+            sprites: vec!["only-first".into()],
+            ..Default::default()
+        };
+        assert_eq!(
+            project_tilemap(
+                &Transform::default(),
+                &tilemap,
+                Some(&Grid::default()),
+                camera(),
+                [200, 100],
+            )
+            .len(),
+            1
+        );
+        assert!(project_tilemap(
+            &Transform::default(),
+            &tilemap,
+            Some(&Grid {
+                cell_layout: "Hexagon".into(),
+                ..Default::default()
+            }),
+            camera(),
+            [200, 100],
+        )
+        .is_empty());
+        assert!(project_tilemap(
+            &Transform::default(),
+            &tilemap,
+            Some(&Grid {
+                cell_size: [f32::MAX, 1.0],
+                cell_gap: [f32::MAX, 0.0],
+                ..Default::default()
+            }),
+            camera(),
+            [200, 100],
+        )
+        .is_empty());
+        assert_eq!(tile_key([2_147_483_648.0, 0.0]), None);
     }
 }

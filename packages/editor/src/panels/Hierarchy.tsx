@@ -13,6 +13,8 @@ import { subscribePing } from '../pingBus';
 
 function iconFor(e: EntityRec) {
   const c = e.components;
+  if (c.Tilemap) return '▦';
+  if (c.Grid) return '⌗';
   if (c.AudioSource || c.AudioListener || c.AudioMixer) return '♪';
   if (c.RawImage) return '\u25a1';
   if (c.Canvas) return '🖼️';

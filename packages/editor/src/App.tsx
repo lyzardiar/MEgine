@@ -784,6 +784,10 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
                 store.patchComponent(entity, 'Line2D', { points });
                 refresh();
               }}
+              onTilemapChange={(entity, cells, sprites) => {
+                store.patchComponent(entity, 'Tilemap', { cells, sprites });
+                refresh();
+              }}
               onDuplicateRectDrag={() => {
                 const duplicated = store.duplicateSelection();
                 if (duplicated != null) log('Duplicate (Alt Drag)');

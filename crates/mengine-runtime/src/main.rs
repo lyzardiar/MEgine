@@ -5,9 +5,10 @@ use clap::Parser;
 use glam::{Quat, Vec3, Vec4};
 use mengine_core::command::WorldCommand;
 use mengine_core::generated::{
-    AnimationPlayer, Animator, AudioSource, Camera2D, Camera3D, DirectionalLight, Dropdown,
-    InputField, ListView, MeshRenderer, PbrMaterial, PointLight, ScrollView, Scrollbar, Slider,
-    SpotLight, TabView, Toggle, Transform,
+    AnimatedSprite2D, AnimationPlayer, Animator, AudioSource, Camera2D, Camera3D, DirectionalLight,
+    Dropdown, InputField, ListView, MeshRenderer, ParticleEmitter2D, ParticleEmitter3D,
+    PbrMaterial, PointLight, ScrollView, Scrollbar, Slider, SpotLight, SpriteRenderer, TabView,
+    Tilemap, Toggle, Transform,
 };
 use mengine_core::{Entity, TransformHierarchy, World};
 use mengine_physics::{PhysicsWorld, PhysicsWorld2D};
@@ -1788,6 +1789,35 @@ fn validate_world_assets(
                 }
             }
         }
+        if let Some(renderer) = world.get_component::<SpriteRenderer>(entity) {
+            validate_texture_asset(&renderer.sprite, "sprite", project_root, validated)?;
+        }
+        if let Some(renderer) = world.get_component::<AnimatedSprite2D>(entity) {
+            for frame in &renderer.frames {
+                validate_texture_asset(frame, "animated sprite frame", project_root, validated)?;
+            }
+        }
+        if let Some(tilemap) = world.get_component::<Tilemap>(entity) {
+            for sprite in tilemap.sprites.iter().take(tilemap.cells.len()) {
+                validate_texture_asset(sprite, "tile sprite", project_root, validated)?;
+            }
+        }
+        if let Some(emitter) = world.get_component::<ParticleEmitter2D>(entity) {
+            validate_texture_asset(
+                &emitter.texture,
+                "2D particle texture",
+                project_root,
+                validated,
+            )?;
+        }
+        if let Some(emitter) = world.get_component::<ParticleEmitter3D>(entity) {
+            validate_texture_asset(
+                &emitter.texture,
+                "3D particle texture",
+                project_root,
+                validated,
+            )?;
+        }
         if let Some(player) = world.get_component::<AnimationPlayer>(entity) {
             validate_animation_clip_asset(&player.clip, project_root, validated)?;
         }
@@ -1805,6 +1835,25 @@ fn validate_world_assets(
                 }
             }
         }
+    }
+    Ok(())
+}
+
+fn validate_texture_asset(
+    reference: &str,
+    kind: &str,
+    project_root: &Path,
+    validated: &mut HashSet<PathBuf>,
+) -> Result<()> {
+    let reference = reference.trim();
+    if reference.is_empty() || reference.eq_ignore_ascii_case("white") {
+        return Ok(());
+    }
+    let path = mengine_runtime::textures::resolve_project_asset_path(project_root, reference)
+        .with_context(|| format!("unsafe {kind} path: {reference}"))?;
+    if validated.insert(path.clone()) {
+        mengine_assets::load_texture_rgba8(&path)
+            .with_context(|| format!("invalid {kind} {}", path.display()))?;
     }
     Ok(())
 }
@@ -1909,6 +1958,25 @@ mod tests {
             validate_world_assets(&world, Path::new("C:/Games/Packaged"), &mut HashSet::new())
                 .expect_err("parent traversal must not reach outside packaged content");
         assert!(error.to_string().contains("unsafe model path"));
+    }
+
+    #[test]
+    fn packaged_asset_validation_scans_tilemap_sprite_dependencies() {
+        let mut world = World::new();
+        world.commands.push(WorldCommand::Spawn {
+            name: Some("Unsafe tilemap".into()),
+            components: json!({
+                "Tilemap": {
+                    "cells": [[0, 0], [1, 0]],
+                    "sprites": ["white", "../outside.png"]
+                }
+            }),
+        });
+        world.commit();
+        let error =
+            validate_world_assets(&world, Path::new("C:/Games/Packaged"), &mut HashSet::new())
+                .expect_err("tile sprites must not traverse outside packaged content");
+        assert!(error.to_string().contains("unsafe tile sprite path"));
     }
 
     #[test]

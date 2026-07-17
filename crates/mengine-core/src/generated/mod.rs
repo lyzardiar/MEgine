@@ -471,6 +471,78 @@ impl Component for Line2D {
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
 #[serde(default)]
+pub struct Grid {
+    pub cell_size: [f32; 2],
+    pub cell_gap: [f32; 2],
+    pub cell_layout: String,
+}
+
+impl Default for Grid {
+    fn default() -> Self {
+        Self {
+            cell_size: [1.0, 1.0],
+            cell_gap: [0.0, 0.0],
+            cell_layout: "Rectangle".into(),
+        }
+    }
+}
+
+impl Component for Grid {
+    fn type_name() -> &'static str {
+        "Grid"
+    }
+    fn as_any(&self) -> &dyn std::any::Any {
+        self
+    }
+    fn as_any_mut(&mut self) -> &mut dyn std::any::Any {
+        self
+    }
+    fn to_value(&self) -> serde_json::Value {
+        serde_json::to_value(self).unwrap_or(serde_json::Value::Null)
+    }
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize)]
+#[serde(default)]
+pub struct Tilemap {
+    pub cells: Vec<[f32; 2]>,
+    pub sprites: Vec<String>,
+    pub color: [f32; 4],
+    pub tile_anchor: [f32; 2],
+    pub sorting_layer: String,
+    pub sorting_order: i32,
+}
+
+impl Default for Tilemap {
+    fn default() -> Self {
+        Self {
+            cells: Vec::new(),
+            sprites: Vec::new(),
+            color: [1.0, 1.0, 1.0, 1.0],
+            tile_anchor: [0.5, 0.5],
+            sorting_layer: "default".into(),
+            sorting_order: 0,
+        }
+    }
+}
+
+impl Component for Tilemap {
+    fn type_name() -> &'static str {
+        "Tilemap"
+    }
+    fn as_any(&self) -> &dyn std::any::Any {
+        self
+    }
+    fn as_any_mut(&mut self) -> &mut dyn std::any::Any {
+        self
+    }
+    fn to_value(&self) -> serde_json::Value {
+        serde_json::to_value(self).unwrap_or(serde_json::Value::Null)
+    }
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize)]
+#[serde(default)]
 pub struct AnimationPlayer {
     pub clip: String,
     pub play_on_awake: bool,
@@ -2176,6 +2248,10 @@ pub fn component_from_value(
             .map(|component| Some(Box::new(component) as ComponentBox)),
         "Line2D" => serde_json::from_value::<Line2D>(value)
             .map(|component| Some(Box::new(component) as ComponentBox)),
+        "Grid" => serde_json::from_value::<Grid>(value)
+            .map(|component| Some(Box::new(component) as ComponentBox)),
+        "Tilemap" => serde_json::from_value::<Tilemap>(value)
+            .map(|component| Some(Box::new(component) as ComponentBox)),
         "AnimationPlayer" => serde_json::from_value::<AnimationPlayer>(value)
             .map(|component| Some(Box::new(component) as ComponentBox)),
         "Animator" => serde_json::from_value::<Animator>(value)
@@ -2279,6 +2355,8 @@ pub mod meta {
         "SpriteRenderer",
         "AnimatedSprite2D",
         "Line2D",
+        "Grid",
+        "Tilemap",
         "AnimationPlayer",
         "Animator",
         "AudioListener",

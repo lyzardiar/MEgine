@@ -42,7 +42,7 @@ export function entity2DSortingSettings(components: Record<string, unknown>): {
   layer: string;
   order: number;
 } | null {
-  for (const type of ['Line2D', 'AnimatedSprite2D', 'SpriteRenderer', 'ParticleEmitter2D', 'SpineSkeleton']) {
+  for (const type of ['Tilemap', 'Line2D', 'AnimatedSprite2D', 'SpriteRenderer', 'ParticleEmitter2D', 'SpineSkeleton']) {
     const component = components[type] as Record<string, unknown> | undefined;
     if (!component) continue;
     return component2DSortingSettings(component);

@@ -35,6 +35,8 @@ createItem(
 createItem('2D Object/Sprite', 124, ({ store }) => store.spawnSpriteQuad());
 createItem('2D Object/Animated Sprite', 125, ({ store }) => store.spawnAnimatedSprite2D());
 createItem('2D Object/Line 2D', 126, ({ store }) => store.spawnLine2D());
+createItem('2D Object/Grid', 127, ({ store }) => store.spawnGrid());
+createItem('2D Object/Tilemap/Rectangular', 128, ({ store }) => store.spawnTilemap());
 createItem('Effects/Particle System 3D', 120, ({ store }) => store.spawnParticleEmitter3D());
 createItem('Effects/Particle System 2D', 121, ({ store }) => store.spawnParticleEmitter2D());
 createItem('2D Object/Spine Skeleton', 130, ({ store }) => store.spawnSpineSkeleton());

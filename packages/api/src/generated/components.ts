@@ -100,6 +100,21 @@ export interface Line2D {
   sortingOrder: number;
 }
 
+export interface Grid {
+  cellSize: [number, number];
+  cellGap: [number, number];
+  cellLayout: string;
+}
+
+export interface Tilemap {
+  cells: [number, number][];
+  sprites: string[];
+  color: [number, number, number, number];
+  tileAnchor: [number, number];
+  sortingLayer: string;
+  sortingOrder: number;
+}
+
 export interface AnimationPlayer {
   clip: string;
   playOnAwake: boolean;
@@ -524,6 +539,8 @@ export type ComponentName =
   | 'SpriteRenderer'
   | 'AnimatedSprite2D'
   | 'Line2D'
+  | 'Grid'
+  | 'Tilemap'
   | 'AnimationPlayer'
   | 'Animator'
   | 'AudioListener'
@@ -581,6 +598,8 @@ export const COMPONENT_NAMES = [
   'SpriteRenderer',
   'AnimatedSprite2D',
   'Line2D',
+  'Grid',
+  'Tilemap',
   'AnimationPlayer',
   'Animator',
   'AudioListener',

@@ -1,5 +1,6 @@
 import { getBehaviour, listBehaviours } from '@mengine/behaviour';
 import { defaultRectTransform, stretchRectTransform } from './ui/rectLayout';
+import { createGridComponent, createTilemapComponent } from './tilemapModel';
 
 /** Built-in (non-Behaviour) components for Add Component menu. */
 export type ComponentCatalogEntry = {
@@ -265,6 +266,18 @@ const BUILTIN_CATALOG: ComponentCatalogEntry[] = [
       sorting_layer: 'default',
       sorting_order: 0,
     }),
+  },
+  {
+    type: 'Grid',
+    label: 'Grid',
+    description: 'Unity-style rectangular cell coordinate system for Tilemap children',
+    create: createGridComponent,
+  },
+  {
+    type: 'Tilemap',
+    label: 'Tilemap',
+    description: 'Sparse world-space tile layer painted on the nearest parent Grid',
+    create: createTilemapComponent,
   },
   {
     type: 'AnimationPlayer',
