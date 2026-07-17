@@ -38,6 +38,7 @@ import { planHierarchyMove } from './hierarchyMove';
 import { selectedRectRoots } from './rectSelection';
 import { planRectResize, type RectResizeHandle } from './rectResize';
 import { selectedHierarchyRoots } from './hierarchySelection';
+import { restoreSceneSelection } from './selectionRestore';
 import './behaviours';
 
 export type EditorMode = 'edit' | 'play' | 'pause';
@@ -479,13 +480,12 @@ export function createEditorStore() {
       gameOrientation = data.gameOrientation;
     }
     expanded = new Set(editEntities.map((e) => e.entity));
-    const incomingSelection = Array.isArray(data.world?.selectedIds)
-      ? data.world.selectedIds.filter((id: unknown) => typeof id === 'number')
-      : [];
-    selectedIds = incomingSelection.length
-      ? incomingSelection
-      : editEntities.length ? [editEntities[0].entity] : [];
-    selectionAnchor = selectedIds[0] ?? null;
+    selectedIds = restoreSceneSelection(
+      editEntities.map((entity) => entity.entity),
+      data.world?.selectedIds,
+      data.world?.selected,
+    );
+    selectionAnchor = selectedIds[selectedIds.length - 1] ?? null;
     playEntities = targetMode === 'edit' ? null : structuredClone(editEntities);
     mode = targetMode;
     playSpin = 0;
