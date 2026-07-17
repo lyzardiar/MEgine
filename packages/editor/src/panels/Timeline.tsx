@@ -190,6 +190,14 @@ function trackValue(
   return getProperty(target?.components[track.component], track.property);
 }
 
+function recordingTrackKey(track: AnimationTrack, index: number): string {
+  return `${index}\u0000${track.target}\u0000${track.component}\u0000${track.property}`;
+}
+
+function recordingValueToken(value: AnimationValue | null): string | null {
+  return value == null ? null : JSON.stringify(value);
+}
+
 export function Timeline(props: {
   entity: SnapshotEntity | null;
   entities: SnapshotEntity[];
@@ -208,6 +216,7 @@ export function Timeline(props: {
   const [savedText, setSavedText] = useState('');
   const [time, setTime] = useState(0);
   const [playing, setPlaying] = useState(false);
+  const [recording, setRecording] = useState(false);
   const [selectedTrack, setSelectedTrack] = useState<number | null>(null);
   const [selectedKey, setSelectedKey] = useState<{ track: number; key: number } | null>(null);
   const [loading, setLoading] = useState(false);
@@ -218,6 +227,7 @@ export function Timeline(props: {
   const [propertyPath, setPropertyPath] = useState('Transform.position');
   const playbackFrame = useRef<number | null>(null);
   const previousFrameTime = useRef<number | null>(null);
+  const recordingValues = useRef(new Map<string, string | null>());
   const loadedClipPath = useRef('');
   const drafts = useRef(new Map<string, {
     clip: AnimationClip;
@@ -250,6 +260,8 @@ export function Timeline(props: {
     }
     loadedClipPath.current = clipPath;
     setPlaying(false);
+    setRecording(false);
+    recordingValues.current.clear();
     setError(null);
     setClip(null);
     setSavedText('');
@@ -344,6 +356,49 @@ export function Timeline(props: {
       previousFrameTime.current = null;
     };
   }, [clip, playing, player?.speed]);
+
+  useEffect(() => {
+    if (!recording || !clip || !props.entity) return;
+    const authoredRoot = props.authoredEntities.find(
+      (entity) => entity.entity === props.entity!.entity,
+    );
+    if (!authoredRoot) return;
+
+    const nextValues = new Map<string, string | null>();
+    const changes: Array<{ index: number; value: AnimationValue }> = [];
+    clip.tracks.forEach((track, index) => {
+      const key = recordingTrackKey(track, index);
+      const value = trackValue(props.authoredEntities, authoredRoot, track);
+      const token = recordingValueToken(value);
+      nextValues.set(key, token);
+      if (
+        value != null
+        && recordingValues.current.has(key)
+        && recordingValues.current.get(key) !== token
+      ) {
+        changes.push({ index, value });
+      }
+    });
+    recordingValues.current = nextValues;
+    if (changes.length === 0) return;
+
+    let lastKey: { track: number; key: number } | null = null;
+    const tracks = [...clip.tracks];
+    for (const change of changes) {
+      const result = upsertAnimationKeyframe(
+        tracks[change.index],
+        time,
+        change.value,
+        clip.frame_rate,
+        clip.duration,
+      );
+      tracks[change.index] = result.track;
+      lastKey = { track: change.index, key: result.keyIndex };
+    }
+    setClip({ ...clip, tracks });
+    setSelectedTrack(lastKey!.track);
+    setSelectedKey(lastKey);
+  }, [clip, props.authoredEntities, props.entity?.entity, recording, time]);
 
   const samples = useMemo(() => clip ? sampleAnimationClip(clip, time) : [], [clip, time]);
 
@@ -503,6 +558,24 @@ export function Timeline(props: {
     setSelectedKey({ track: selectedTrack, key: result.keyIndex });
   };
 
+  const toggleRecording = () => {
+    if (!clip || !props.entity) return;
+    setPlaying(false);
+    if (recording) {
+      setRecording(false);
+      recordingValues.current.clear();
+      return;
+    }
+    const authoredRoot = props.authoredEntities.find(
+      (entity) => entity.entity === props.entity!.entity,
+    ) ?? props.entity;
+    recordingValues.current = new Map(clip.tracks.map((track, index) => [
+      recordingTrackKey(track, index),
+      recordingValueToken(trackValue(props.authoredEntities, authoredRoot, track)),
+    ]));
+    setRecording(true);
+  };
+
   const deleteTrack = () => {
     if (!clip || selectedTrack == null) return;
     const tracks = clip.tracks.filter((_track, index) => index !== selectedTrack);
@@ -605,6 +678,15 @@ export function Timeline(props: {
       onDrop={dropClip}
     >
       <div className="timeline-toolbar">
+        <button
+          type="button"
+          className={recording ? 'recording' : ''}
+          title={recording ? 'Stop recording property changes' : 'Record property changes as keyframes'}
+          disabled={!clip}
+          onClick={toggleRecording}
+        >
+          {recording ? 'Stop' : 'Record'}
+        </button>
         <button type="button" title="Previous frame" disabled={!clip} onClick={() => {
           if (!clip) return;
           setPlaying(false);
