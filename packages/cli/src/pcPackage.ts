@@ -218,7 +218,13 @@ export function validateBuildAssetDependencies(
     const components = jsonObject(componentsValue);
     if (!components) return;
     const component = (name: string) => jsonObject(components[name]);
-    enqueueMaterial(stringValue(component('MeshRenderer'), 'material'), from);
+    const meshRenderer = component('MeshRenderer');
+    const mesh = stringValue(meshRenderer, 'mesh');
+    if (mesh && mesh.toLowerCase() !== 'cube'
+      && (/\.(?:gltf|glb)$/i.test(mesh) || mesh.includes('/') || mesh.includes('\\'))) {
+      enqueue(mesh, from, '3D model');
+    }
+    enqueueMaterial(stringValue(meshRenderer, 'material'), from);
     enqueue(stringValue(component('SpriteRenderer'), 'sprite'), from, 'texture', ['white']);
     const frames = component('AnimatedSprite2D')?.frames;
     if (Array.isArray(frames)) {
@@ -335,6 +341,38 @@ export function validateBuildAssetDependencies(
       }
       if (clip.events != null && !Array.isArray(clip.events)) {
         throw new Error(`invalid animation clip ${source}: events must be an array`);
+      }
+    } else if (extension === '.gltf') {
+      const model = readJsonAsset(absolute, root, 'glTF model');
+      const enqueueUri = (value: unknown, kind: string) => {
+        const uri = stringValue(jsonObject(value), 'uri');
+        if (!uri || uri.startsWith('data:')) return;
+        if (/^[a-z]+:/i.test(uri)) {
+          throw new Error(`invalid glTF model ${source}: remote ${kind} URI is not supported: ${uri}`);
+        }
+        let decoded = uri;
+        try {
+          decoded = decodeURIComponent(uri);
+        } catch {
+          throw new Error(`invalid glTF model ${source}: malformed ${kind} URI: ${uri}`);
+        }
+        enqueue(
+          portablePath(join(dirname(pending.path), decoded)),
+          source,
+          `glTF ${kind}`,
+        );
+      };
+      if (model.buffers != null && !Array.isArray(model.buffers)) {
+        throw new Error(`invalid glTF model ${source}: buffers must be an array`);
+      }
+      if (model.images != null && !Array.isArray(model.images)) {
+        throw new Error(`invalid glTF model ${source}: images must be an array`);
+      }
+      for (const buffer of Array.isArray(model.buffers) ? model.buffers : []) {
+        enqueueUri(buffer, 'buffer');
+      }
+      for (const image of Array.isArray(model.images) ? model.images : []) {
+        enqueueUri(image, 'image');
       }
     } else if (extension === '.atlas') {
       const text = readFileSync(absolute, 'utf8');

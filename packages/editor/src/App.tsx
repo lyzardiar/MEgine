@@ -998,6 +998,11 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
                   })
                   .catch((error) => log(`Prefab instantiate failed: ${String(error)}`, 'error'));
               }}
+              onInstantiateModel={(path) => {
+                store.spawnModel(path);
+                log(`Instantiated model ${path}`);
+                refresh();
+              }}
               onOpenScene={(name) => {
                 void openSceneByName(name);
               }}

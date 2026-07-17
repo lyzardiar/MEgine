@@ -86,6 +86,7 @@ function newProject(name: string) {
   if (existsSync(root)) throw new Error(`project already exists: ${root}`);
   mkdirSync(join(root, 'Assets', 'Scenes'), { recursive: true });
   mkdirSync(join(root, 'Assets', 'Scripts'), { recursive: true });
+  mkdirSync(join(root, 'Assets', 'Models'), { recursive: true });
   writeFileSync(
     join(root, 'project.json'),
     `${JSON.stringify({

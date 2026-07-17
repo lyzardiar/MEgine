@@ -13,6 +13,7 @@ export type ProjectFileAsset = {
     | 'animator-controller'
     | 'audio'
     | 'material'
+    | 'model'
     | 'prefab'
     | 'spine-json'
     | 'spine-binary'

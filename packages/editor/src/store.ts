@@ -1995,6 +1995,18 @@ export function createEditorStore() {
         true,
       );
     },
+    spawnModel(path: string) {
+      const name = path.split('/').pop()?.replace(/\.(?:gltf|glb)$/i, '') || 'Model';
+      spawnAt(
+        name,
+        {
+          Transform: { position: [0, 0, 0], rotation: [0, 0, 0, 1], scale: [1, 1, 1] },
+          MeshRenderer: { mesh: path, material: 'default' },
+        },
+        null,
+        true,
+      );
+    },
     saveSceneJson(sceneName = 'Untitled') {
       // Always persist edit state so Play mode clones never overwrite authoring data.
       return serializeScene(sceneName, editEntities);

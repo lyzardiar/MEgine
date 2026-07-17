@@ -214,6 +214,33 @@ test('buildPcPackage validates Spine atlas pages before publishing', () => {
   }
 });
 
+test('buildPcPackage validates external glTF buffers and images', () => {
+  const paths = fixture('gltf-dependencies');
+  try {
+    mkdirSync(join(paths.project, 'Assets', 'Models'), { recursive: true });
+    writeFileSync(join(paths.project, 'Assets', 'Scenes', 'Main.mscene'), JSON.stringify({
+      world: { entities: [{ components: {
+        MeshRenderer: { mesh: 'Assets/Models/Environment.gltf', material: 'default' },
+      } }] },
+    }));
+    writeFileSync(join(paths.project, 'Assets', 'Models', 'Environment.gltf'), JSON.stringify({
+      asset: { version: '2.0' },
+      buffers: [{ uri: 'Environment.bin', byteLength: 4 }],
+      images: [{ uri: 'missing-albedo.png' }],
+    }));
+    writeFileSync(join(paths.project, 'Assets', 'Models', 'Environment.bin'), 'mesh');
+    assert.throws(() => buildPcPackage({
+      projectDir: paths.project,
+      outputDir: paths.output,
+      runtimePath: paths.runtime,
+      engineVersion: 'test-engine',
+    }), /missing glTF image: Assets\/Models\/missing-albedo\.png.*Environment\.gltf/);
+    assert.equal(existsSync(paths.output), false);
+  } finally {
+    rmSync(paths.root, { recursive: true, force: true });
+  }
+});
+
 test('buildPcPackage type-checks TypeScript and emits only runnable JavaScript', () => {
   const paths = fixture('typescript');
   try {

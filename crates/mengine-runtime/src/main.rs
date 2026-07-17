@@ -1,13 +1,13 @@
 //! MEngine PC runtime / sample player.
 
-use anyhow::{bail, Result};
+use anyhow::{bail, Context, Result};
 use clap::Parser;
 use glam::{Quat, Vec3, Vec4};
 use mengine_core::command::WorldCommand;
 use mengine_core::generated::{
-    Animator, AudioSource, Camera2D, Camera3D, DirectionalLight, Dropdown, InputField, ListView,
-    MeshRenderer, PbrMaterial, PointLight, ScrollView, Scrollbar, Slider, SpotLight, TabView,
-    Toggle, Transform,
+    AnimationPlayer, Animator, AudioSource, Camera2D, Camera3D, DirectionalLight, Dropdown,
+    InputField, ListView, MeshRenderer, PbrMaterial, PointLight, ScrollView, Scrollbar, Slider,
+    SpotLight, TabView, Toggle, Transform,
 };
 use mengine_core::{Entity, TransformHierarchy, World};
 use mengine_physics::PhysicsWorld;
@@ -19,6 +19,7 @@ use mengine_rhi::{
 use mengine_runtime::animation::{infer_project_root_from_scene, AnimationRuntime};
 use mengine_runtime::audio::AudioRuntime;
 use mengine_runtime::materials::RuntimeMaterialCache;
+use mengine_runtime::meshes::RuntimeMeshCache;
 use mengine_runtime::particles::ParticleWorld;
 use mengine_runtime::player_config::load_player_config;
 use mengine_runtime::prefabs::instantiate_project_prefab;
@@ -32,6 +33,8 @@ use mengine_runtime::ui::{
 use mengine_scene::load_scene;
 use mengine_script::{ScriptAnimationEvent, ScriptHost, ScriptRuntimeRequest};
 use serde_json::json;
+use std::collections::HashSet;
+use std::path::Path;
 use std::path::PathBuf;
 use std::sync::Arc;
 use std::time::Instant;
@@ -95,6 +98,7 @@ struct App {
     animations: AnimationRuntime,
     audio: AudioRuntime,
     materials: RuntimeMaterialCache,
+    meshes: RuntimeMeshCache,
     physics: PhysicsWorld,
     scenes: SceneManager,
     loaded_scene: Option<LoadedScene>,
@@ -116,6 +120,7 @@ impl App {
         let animations = AnimationRuntime::new(args.project_root.clone());
         let audio = AudioRuntime::new(args.project_root.clone());
         let materials = RuntimeMaterialCache::new(args.project_root.clone());
+        let meshes = RuntimeMeshCache::new(args.project_root.clone());
         let scenes = SceneManager::new(
             args.project_root.clone(),
             args.build_scenes.clone(),
@@ -143,6 +148,7 @@ impl App {
             animations,
             audio,
             materials,
+            meshes,
             physics: PhysicsWorld::default(),
             scenes,
             loaded_scene: None,
@@ -1301,6 +1307,14 @@ function onTick(dt, frame) {
                     let aspect = r.aspect();
                     let camera = find_camera(&self.world, &hierarchy, aspect);
                     let objects = collect_objects(&self.world, &hierarchy, &mut self.materials);
+                    for failure in self.meshes.sync(r, &objects) {
+                        log::warn!(
+                            "Mesh '{}' could not be loaded from {}: {}",
+                            failure.key,
+                            failure.path.display(),
+                            failure.error
+                        );
+                    }
                     let lighting = collect_lighting(&self.world, &hierarchy);
                     let window_size = self
                         .window
@@ -1445,7 +1459,7 @@ fn collect_objects(
     for e in world.iter_entities() {
         if let (Some(t), Some(m)) = (hierarchy.get(e), world.get_component::<MeshRenderer>(e)) {
             out.push(RenderObject {
-                mesh_key: m.mesh.clone(),
+                mesh_key: m.mesh.trim().replace('\\', "/"),
                 model: t.matrix,
                 material: world
                     .get_component::<PbrMaterial>(e)
@@ -1607,6 +1621,7 @@ fn main() -> Result<()> {
             args.build_scenes.clone()
         };
         let mut validated = Vec::with_capacity(scenes.len());
+        let mut validated_assets = HashSet::new();
         for scene in scenes {
             let path = if scene.is_absolute() {
                 scene
@@ -1617,6 +1632,9 @@ fn main() -> Result<()> {
             };
             let mut world = World::new();
             let loaded = load_scene(&path, &mut world)?;
+            if let Some(project_root) = args.project_root.as_deref() {
+                validate_world_assets(&world, project_root, &mut validated_assets)?;
+            }
             validated.push((loaded.name, path, world.iter_entities().count()));
         }
         if let Some(script) = args.script.as_deref() {
@@ -1624,8 +1642,9 @@ fn main() -> Result<()> {
             host.load_file(script)?;
         }
         println!(
-            "validated {} packaged scene(s), script={}",
+            "validated {} packaged scene(s), {} runtime asset(s), script={}",
             validated.len(),
+            validated_assets.len(),
             args.script.is_some()
         );
         for (name, path, entities) in validated {
@@ -1641,6 +1660,93 @@ fn main() -> Result<()> {
     let event_loop = EventLoop::new()?;
     let mut app = App::new(args);
     event_loop.run_app(&mut app)?;
+    Ok(())
+}
+
+fn validate_world_assets(
+    world: &World,
+    project_root: &Path,
+    validated: &mut HashSet<PathBuf>,
+) -> Result<()> {
+    let resolve = |reference: &str, kind: &str| -> Result<PathBuf> {
+        mengine_runtime::textures::resolve_project_asset_path(project_root, reference)
+            .with_context(|| format!("unsafe {kind} path: {reference}"))
+    };
+    for entity in world.iter_entities() {
+        if let Some(renderer) = world.get_component::<MeshRenderer>(entity) {
+            let mesh = renderer.mesh.trim();
+            if mesh.to_ascii_lowercase().ends_with(".gltf")
+                || mesh.to_ascii_lowercase().ends_with(".glb")
+            {
+                let path = resolve(mesh, "model")?;
+                if validated.insert(path.clone()) {
+                    mengine_assets::load_gltf_mesh_data(&path)
+                        .with_context(|| format!("invalid model {}", path.display()))?;
+                }
+            }
+            let material = renderer.material.trim();
+            if material.to_ascii_lowercase().ends_with(".mmat")
+                || material.to_ascii_lowercase().ends_with(".mat")
+            {
+                let path = resolve(material, "material")?;
+                if validated.insert(path.clone()) {
+                    let asset = mengine_assets::load_material_asset(&path)
+                        .with_context(|| format!("invalid material {}", path.display()))?;
+                    for texture in [
+                        asset.base_color_texture,
+                        asset.normal_texture,
+                        asset.metallic_roughness_texture,
+                        asset.occlusion_texture,
+                        asset.emissive_texture,
+                    ] {
+                        if texture.is_empty() {
+                            continue;
+                        }
+                        let texture_path = resolve(&texture, "material texture")?;
+                        if validated.insert(texture_path.clone()) {
+                            mengine_assets::load_texture_rgba8(&texture_path).with_context(
+                                || format!("invalid material texture {}", texture_path.display()),
+                            )?;
+                        }
+                    }
+                }
+            }
+        }
+        if let Some(player) = world.get_component::<AnimationPlayer>(entity) {
+            validate_animation_clip_asset(&player.clip, project_root, validated)?;
+        }
+        if let Some(animator) = world.get_component::<Animator>(entity) {
+            let reference = animator.controller.trim();
+            if reference.is_empty() {
+                continue;
+            }
+            let path = resolve(reference, "animator controller")?;
+            if validated.insert(path.clone()) {
+                let controller = mengine_assets::load_animator_controller(&path)
+                    .with_context(|| format!("invalid animator controller {}", path.display()))?;
+                for state in controller.states {
+                    validate_animation_clip_asset(&state.clip, project_root, validated)?;
+                }
+            }
+        }
+    }
+    Ok(())
+}
+
+fn validate_animation_clip_asset(
+    reference: &str,
+    project_root: &Path,
+    validated: &mut HashSet<PathBuf>,
+) -> Result<()> {
+    if reference.trim().is_empty() {
+        return Ok(());
+    }
+    let path = mengine_runtime::textures::resolve_project_asset_path(project_root, reference)
+        .with_context(|| format!("unsafe animation clip path: {reference}"))?;
+    if validated.insert(path.clone()) {
+        mengine_assets::load_animation_clip(&path)
+            .with_context(|| format!("invalid animation clip {}", path.display()))?;
+    }
     Ok(())
 }
 
@@ -1711,6 +1817,22 @@ mod tests {
         assert_eq!(material.base_color, component.base_color);
         assert_eq!(material.metallic, 0.7);
         assert!(material.unlit && material.double_sided);
+    }
+
+    #[test]
+    fn packaged_asset_validation_rejects_unsafe_model_references() {
+        let mut world = World::new();
+        world.commands.push(WorldCommand::Spawn {
+            name: Some("Unsafe model".into()),
+            components: json!({
+                "MeshRenderer": { "mesh": "../outside.gltf", "material": "default" }
+            }),
+        });
+        world.commit();
+        let error =
+            validate_world_assets(&world, Path::new("C:/Games/Packaged"), &mut HashSet::new())
+                .expect_err("parent traversal must not reach outside packaged content");
+        assert!(error.to_string().contains("unsafe model path"));
     }
 
     #[test]

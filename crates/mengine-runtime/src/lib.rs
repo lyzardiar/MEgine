@@ -3,6 +3,7 @@
 pub mod animation;
 pub mod audio;
 pub mod materials;
+pub mod meshes;
 pub mod mobile_stub;
 pub mod particles;
 pub mod player_config;

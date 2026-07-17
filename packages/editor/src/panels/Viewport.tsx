@@ -6,6 +6,7 @@ import {
   add,
   drawGroundGrid,
   drawSolidCube,
+  drawTriangleMesh,
   drawWorldSprite,
   drawWorldLine2D,
   lookBasis,
@@ -13,6 +14,7 @@ import {
   project,
   scale as vscale,
 } from '../math3d';
+import { clearModelPreview, modelPreview } from '../modelPreview';
 import {
   drawCamera2DGizmo,
   drawCameraGizmo,
@@ -634,6 +636,12 @@ export function Viewport(props: {
     return () => window.removeEventListener('pointerdown', close);
   }, [alignOpen]);
 
+  useEffect(() => {
+    const clear = () => clearModelPreview();
+    window.addEventListener('mengine:project-assets-changed', clear);
+    return () => window.removeEventListener('mengine:project-assets-changed', clear);
+  }, []);
+
   // Continuous render loop
   useEffect(() => {
     let raf = 0;
@@ -936,16 +944,31 @@ export function Viewport(props: {
       const rot = t.rotation as [number, number, number, number] | undefined;
       const material = e.components.PbrMaterial as { base_color?: number[] } | undefined;
       const materialColor = material?.base_color as [number, number, number, number] | undefined;
-      const hit = drawSolidCube(
-        ctx,
-        cam,
-        vp,
-        t.position as Vec3,
-        half,
-        selected,
-        rot,
-        materialColor,
-      );
+      const meshPath = String((mesh as Record<string, unknown>).mesh ?? 'cube');
+      const imported = /\.(?:gltf|glb)$/i.test(meshPath) ? modelPreview(meshPath) : null;
+      const hit = imported
+        ? drawTriangleMesh(
+            ctx,
+            cam,
+            vp,
+            t.position as Vec3,
+            t.scale as Vec3,
+            imported.positions,
+            imported.indices,
+            selected,
+            rot,
+            materialColor,
+          )
+        : drawSolidCube(
+            ctx,
+            cam,
+            vp,
+            t.position as Vec3,
+            half,
+            selected,
+            rot,
+            materialColor,
+          );
       if (hit) hitsRef.current.push({ kind: 'object', id: e.entity, x: hit.x, y: hit.y, r: hit.r });
     }
 

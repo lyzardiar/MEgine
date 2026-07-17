@@ -17,7 +17,7 @@ pub use animator::{
     AnimatorController, AnimatorParameter, AnimatorParameterKind, AnimatorState,
     AnimatorTransition,
 };
-pub use gltf_import::load_gltf_mesh_data;
+pub use gltf_import::{load_gltf_mesh_data, MeshData};
 pub use material::{
     load_material_asset, parse_material_asset, MaterialAsset, MaterialFilter, MaterialShader,
     MaterialSurface, MaterialWrap,

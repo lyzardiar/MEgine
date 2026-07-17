@@ -25,6 +25,7 @@ export type InspectorFieldMeta = {
     | 'animator-controller'
     | 'audio'
     | 'material'
+    | 'model'
     | 'prefab'
     | 'spine-json'
     | 'spine-binary'
@@ -58,9 +59,11 @@ export const BUILTIN_INSPECTOR_FIELDS: Readonly<
 > = {
   MeshRenderer: {
     mesh: {
-      kind: 'named-reference',
+      kind: 'project-asset',
       referenceType: 'Mesh',
-      options: [{ value: 'cube', label: 'Cube' }],
+      assetKinds: ['model'],
+      allowNone: true,
+      noneValue: 'cube',
     },
     material: {
       kind: 'project-asset',

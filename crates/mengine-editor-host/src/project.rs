@@ -470,6 +470,7 @@ fn initialize_project(root: &Path, name: &str) -> Result<(), ProjectError> {
         "Assets/Scripts",
         "Assets/Prefabs",
         "Assets/Materials",
+        "Assets/Models",
         "Assets/Textures",
         "ProjectSettings",
         ".mengine/Library",
@@ -804,6 +805,7 @@ mod tests {
         assert!(project_root.join("Assets/Scenes/Main.mscene").is_file());
         assert!(project_root.join("Assets/Scripts/Main.ts").is_file());
         assert!(project_root.join("Assets/Scripts/mengine.d.ts").is_file());
+        assert!(project_root.join("Assets/Models").is_dir());
         assert!(project_root.join("ProjectSettings/editor.json").is_file());
         assert!(project_root.join(".mengine/Library").is_dir());
         let manifest: serde_json::Value = serde_json::from_str(

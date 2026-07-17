@@ -299,6 +299,84 @@ export function drawSolidCube(
   return { x: c.x, y: c.y, r: Math.max(maxX - minX, maxY - minY) * 0.55 };
 }
 
+/** Canvas preview for imported triangle meshes. Runtime uses the full GPU mesh. */
+export function drawTriangleMesh(
+  ctx: CanvasRenderingContext2D,
+  cam: Camera,
+  viewport: { x: number; y: number; w: number; h: number },
+  center: Vec3,
+  objectScale: Vec3,
+  positions: readonly Vec3[],
+  indices: readonly number[],
+  selected: boolean,
+  rotation?: Quat | null,
+  baseColor: [number, number, number, number] = [0.77, 0.6, 0.42, 1],
+): { x: number; y: number; r: number } | null {
+  const q = rotation ? quatNormalize(rotation) : null;
+  const world = positions.map((position): Vec3 => {
+    const scaled: Vec3 = [
+      position[0] * objectScale[0],
+      position[1] * objectScale[1],
+      position[2] * objectScale[2],
+    ];
+    const point = q ? quatRotateVec(q, scaled) : scaled;
+    return add(center, point);
+  });
+  const projected = world.map((point) => project(point, cam, viewport));
+  const triangles: Array<{ indices: [number, number, number]; depth: number; shade: number }> = [];
+  const light = norm([0.35, 0.8, 0.45]);
+  // Canvas2D is an authoring preview, not the Player GPU path. Bound work per frame so importing a
+  // production mesh cannot freeze dock interaction; the standalone Player still renders all faces.
+  const triangleCount = Math.min(Math.floor(indices.length / 3), 10_000);
+  for (let triangle = 0; triangle < triangleCount; triangle += 1) {
+    const a = indices[triangle * 3];
+    const b = indices[triangle * 3 + 1];
+    const c = indices[triangle * 3 + 2];
+    const pa = projected[a], pb = projected[b], pc = projected[c];
+    if (!pa || !pb || !pc || !world[a] || !world[b] || !world[c]) continue;
+    const normal = norm(cross(sub(world[b], world[a]), sub(world[c], world[a])));
+    triangles.push({
+      indices: [a, b, c],
+      depth: (pa.depth + pb.depth + pc.depth) / 3,
+      shade: 0.35 + Math.abs(dot(normal, light)) * 0.75,
+    });
+  }
+  triangles.sort((left, right) => right.depth - left.depth);
+  let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+  for (const triangle of triangles) {
+    const a = projected[triangle.indices[0]]!;
+    const b = projected[triangle.indices[1]]!;
+    const c = projected[triangle.indices[2]]!;
+    const shade = selected ? triangle.shade * 0.9 : triangle.shade;
+    const color = selected ? [0.35, 0.65, 0.95, baseColor[3]] : baseColor;
+    ctx.beginPath();
+    ctx.moveTo(a.x, a.y);
+    ctx.lineTo(b.x, b.y);
+    ctx.lineTo(c.x, c.y);
+    ctx.closePath();
+    ctx.fillStyle = `rgba(${Math.round(Math.min(1, color[0] * shade) * 255)},${Math.round(
+      Math.min(1, color[1] * shade) * 255,
+    )},${Math.round(Math.min(1, color[2] * shade) * 255)},${color[3]})`;
+    ctx.fill();
+    ctx.strokeStyle = selected ? 'rgba(255,224,140,0.45)' : 'rgba(0,0,0,0.12)';
+    ctx.lineWidth = selected ? 1 : 0.5;
+    ctx.stroke();
+    for (const point of [a, b, c]) {
+      minX = Math.min(minX, point.x);
+      minY = Math.min(minY, point.y);
+      maxX = Math.max(maxX, point.x);
+      maxY = Math.max(maxY, point.y);
+    }
+  }
+  const projectedCenter = project(center, cam, viewport);
+  if (!projectedCenter || triangles.length === 0) return null;
+  return {
+    x: projectedCenter.x,
+    y: projectedCenter.y,
+    r: Math.max(8, Math.max(maxX - minX, maxY - minY) * 0.55),
+  };
+}
+
 export function spriteSourceAffine(
   projectedCorners: ReadonlyArray<{ x: number; y: number }>,
   sourceWidth: number,

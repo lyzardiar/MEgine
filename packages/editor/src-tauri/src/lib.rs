@@ -283,6 +283,8 @@ fn project_asset_kind(name: &str) -> Option<&'static str> {
         Some("material")
     } else if lower.ends_with(".prefab") {
         Some("prefab")
+    } else if lower.ends_with(".gltf") || lower.ends_with(".glb") {
+        Some("model")
     } else if lower.ends_with(".atlas") {
         Some("spine-atlas")
     } else if lower.ends_with(".skel") {
@@ -1060,6 +1062,8 @@ mod tests {
             "hero.mcontroller",
             "character.mmat",
             "enemy.prefab",
+            "environment.gltf",
+            "character.glb",
             "skeleton.atlas",
             "theme.ogg",
             "ignored.txt",
@@ -1072,7 +1076,7 @@ mod tests {
         std::fs::remove_dir_all(root).unwrap();
         found.sort_by(|left, right| left.name.cmp(&right.name));
 
-        assert_eq!(found.len(), 6);
+        assert_eq!(found.len(), 8);
         assert!(found
             .iter()
             .any(|asset| asset.name == "walk.manim" && asset.kind == "animation"));
@@ -1085,6 +1089,12 @@ mod tests {
         assert!(found
             .iter()
             .any(|asset| asset.name == "enemy.prefab" && asset.kind == "prefab"));
+        assert!(found
+            .iter()
+            .any(|asset| asset.name == "environment.gltf" && asset.kind == "model"));
+        assert!(found
+            .iter()
+            .any(|asset| asset.name == "character.glb" && asset.kind == "model"));
         assert!(found
             .iter()
             .any(|asset| asset.name == "theme.ogg" && asset.kind == "audio"));

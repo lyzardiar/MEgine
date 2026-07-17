@@ -23,6 +23,7 @@ test('mengine new creates a TypeScript project that is ready for the player buil
     assert.equal(manifest.startupScript, 'Assets/Scripts/Main.ts');
     assert.equal(existsSync(join(project, 'Assets', 'Scripts', 'Main.ts')), true);
     assert.equal(existsSync(join(project, 'Assets', 'Scripts', 'mengine.d.ts')), true);
+    assert.equal(existsSync(join(project, 'Assets', 'Models')), true);
     assert.match(
       readFileSync(join(project, 'Assets', 'Scripts', 'Main.ts'), 'utf8'),
       /function onSceneLoaded/,

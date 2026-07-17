@@ -136,13 +136,13 @@ export function mengineFsPlugin(opts: MengineFsOptions | string): Plugin {
 
   type TextureAsset = { id: string; name: string; folder: string; relPath: string };
   type ProjectFileAsset = TextureAsset & {
-    kind: 'animation' | 'animator-controller' | 'audio' | 'material' | 'prefab' | 'spine-json' | 'spine-binary' | 'spine-atlas';
+    kind: 'animation' | 'animator-controller' | 'audio' | 'material' | 'model' | 'prefab' | 'spine-json' | 'spine-binary' | 'spine-atlas';
   };
 
   function listTextures(): { sprites: TextureAsset[]; folders: string[] } {
     ensureDirs();
     const sprites: TextureAsset[] = [];
-    const folderSet = new Set<string>(['Assets', 'Assets/Scenes', 'Assets/Scripts', 'Assets/Prefabs', 'Assets/Materials', 'Assets/Sprites']);
+    const folderSet = new Set<string>(['Assets', 'Assets/Scenes', 'Assets/Scripts', 'Assets/Prefabs', 'Assets/Materials', 'Assets/Models', 'Assets/Sprites']);
 
     const walk = (dir: string, folder: string) => {
       if (!fs.existsSync(dir)) return;
@@ -198,6 +198,8 @@ export function mengineFsPlugin(opts: MengineFsOptions | string): Plugin {
               ? 'audio'
             : lower.endsWith('.mmat') || lower.endsWith('.mat')
               ? 'material'
+              : lower.endsWith('.gltf') || lower.endsWith('.glb')
+                ? 'model'
               : lower.endsWith('.prefab')
                 ? 'prefab'
                 : lower.endsWith('.atlas')
