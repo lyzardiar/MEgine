@@ -7,6 +7,12 @@
         },
         "type": "array"
       },
+      "flip_x": {
+        "type": "boolean"
+      },
+      "flip_y": {
+        "type": "boolean"
+      },
       "fps": {
         "type": "number"
       },
@@ -43,6 +49,8 @@
       "frame",
       "color",
       "size",
+      "flip_x",
+      "flip_y",
       "sorting_order"
     ],
     "type": "object"
@@ -1517,6 +1525,12 @@
         },
         "type": "array"
       },
+      "flip_x": {
+        "type": "boolean"
+      },
+      "flip_y": {
+        "type": "boolean"
+      },
       "size": {
         "items": {
           "type": "number"
@@ -1534,6 +1548,8 @@
       "sprite",
       "color",
       "size",
+      "flip_x",
+      "flip_y",
       "sorting_order"
     ],
     "type": "object"

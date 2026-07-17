@@ -69,6 +69,8 @@ export interface SpriteRenderer {
   sprite: string;
   color: [number, number, number, number];
   size: [number, number];
+  flipX: boolean;
+  flipY: boolean;
   sortingOrder: number;
 }
 
@@ -80,6 +82,8 @@ export interface AnimatedSprite2D {
   frame: number;
   color: [number, number, number, number];
   size: [number, number];
+  flipX: boolean;
+  flipY: boolean;
   sortingOrder: number;
 }
 

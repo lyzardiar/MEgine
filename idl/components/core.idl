@@ -70,6 +70,9 @@ component SpriteRenderer {
   color:  float4 = [1, 1, 1, 1]
   /// World-space quad half-extents (meters-ish)
   size:   float2 = [1, 1]
+  /// Mirror texture coordinates without changing Transform scale
+  flip_x: bool = false
+  flip_y: bool = false
   /// Draw order among world sprites (higher = closer / later)
   sorting_order: int = 0
 }
@@ -83,6 +86,8 @@ component AnimatedSprite2D {
   frame:         int          = 0
   color:         float4       = [1, 1, 1, 1]
   size:          float2       = [1, 1]
+  flip_x:        bool         = false
+  flip_y:        bool         = false
   sorting_order: int          = 0
 }
 

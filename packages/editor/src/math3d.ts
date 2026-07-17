@@ -299,6 +299,30 @@ export function drawSolidCube(
   return { x: c.x, y: c.y, r: Math.max(maxX - minX, maxY - minY) * 0.55 };
 }
 
+export function spriteSourceAffine(
+  projectedCorners: ReadonlyArray<{ x: number; y: number }>,
+  sourceWidth: number,
+  sourceHeight: number,
+  flipX = false,
+  flipY = false,
+): [number, number, number, number, number, number] | null {
+  if (projectedCorners.length < 4 || sourceWidth <= 0 || sourceHeight <= 0) return null;
+  const bottomLeft = projectedCorners[0];
+  const topRight = projectedCorners[2];
+  const topLeft = projectedCorners[3];
+  const x = { x: topRight.x - topLeft.x, y: topRight.y - topLeft.y };
+  const y = { x: bottomLeft.x - topLeft.x, y: bottomLeft.y - topLeft.y };
+  const cleanZero = (value: number) => value === 0 ? 0 : value;
+  return [
+    cleanZero((flipX ? -x.x : x.x) / sourceWidth),
+    cleanZero((flipX ? -x.y : x.y) / sourceWidth),
+    cleanZero((flipY ? -y.x : y.x) / sourceHeight),
+    cleanZero((flipY ? -y.y : y.y) / sourceHeight),
+    cleanZero(topLeft.x + (flipX ? x.x : 0) + (flipY ? y.x : 0)),
+    cleanZero(topLeft.y + (flipX ? x.y : 0) + (flipY ? y.y : 0)),
+  ];
+}
+
 /** World-space textured/colored quad (SpriteRenderer) — local XY plane. */
 export function drawWorldSprite(
   ctx: CanvasRenderingContext2D,
@@ -310,6 +334,8 @@ export function drawWorldSprite(
   selected: boolean,
   rotation?: Quat | null,
   image?: CanvasImageSource | null,
+  flipX = false,
+  flipY = false,
 ): { x: number; y: number; r: number } | null {
   const hx = halfSize[0];
   const hy = halfSize[1];
@@ -337,6 +363,8 @@ export function drawWorldSprite(
   const sourceWidth = Number(source?.naturalWidth ?? source?.width ?? 0);
   const sourceHeight = Number(source?.naturalHeight ?? source?.height ?? 0);
   if (source && sourceWidth > 0 && sourceHeight > 0) {
+    const affine = spriteSourceAffine(P, sourceWidth, sourceHeight, flipX, flipY);
+    if (!affine) return null;
     ctx.save();
     ctx.beginPath();
     ctx.moveTo(P[0].x, P[0].y);
@@ -345,14 +373,7 @@ export function drawWorldSprite(
     ctx.clip();
     ctx.globalAlpha *= Math.max(0, Math.min(1, ca));
     // Canvas affine mapping uses top-left, top-right and bottom-left projected corners.
-    ctx.transform(
-      (P[2].x - P[3].x) / sourceWidth,
-      (P[2].y - P[3].y) / sourceWidth,
-      (P[0].x - P[3].x) / sourceHeight,
-      (P[0].y - P[3].y) / sourceHeight,
-      P[3].x,
-      P[3].y,
-    );
+    ctx.transform(...affine);
     ctx.drawImage(source, 0, 0, sourceWidth, sourceHeight);
     ctx.restore();
     textured = true;

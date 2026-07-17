@@ -306,6 +306,9 @@ mod tests {
                     "position": [1, 2, 3], "rotation": [0, 0, 0, 1], "scale": [1, 1, 1]
                 },
                 "MeshRenderer": { "mesh": "cube", "material": "gold" },
+                "SpriteRenderer": {
+                    "sprite": "Assets/Sprites/hero.png", "flip_x": true, "flip_y": false
+                },
                 "PbrMaterial": { "base_color": [1, 0.5, 0.1, 1], "metallic": 0.8 },
                 "PointLight": { "intensity": 9, "range": 11 },
                 "SpotLight": { "inner_angle_degrees": 20, "outer_angle_degrees": 45 },
@@ -316,7 +319,7 @@ mod tests {
                 "AnimatedSprite2D": {
                     "frames": ["Assets/Sprites/run0.png", "Assets/Sprites/run1.png"],
                     "fps": 8, "playing": true, "looped": true, "frame": 1,
-                    "sorting_order": 3
+                    "flip_x": false, "flip_y": true, "sorting_order": 3
                 },
                 "Line2D": {
                     "points": [[-1, 0], [0, 1], [1, 0]], "width": 0.15,
@@ -366,11 +369,14 @@ mod tests {
         assert_eq!(components["Image"]["image_type"], "Sliced");
         assert_eq!(components["Image"]["border"][1], 10.0);
         assert_eq!(components["Image"]["source_size"][0], 64.0);
+        assert_eq!(components["SpriteRenderer"]["flip_x"], true);
+        assert_eq!(components["SpriteRenderer"]["flip_y"], false);
         assert_eq!(
             components["AnimatedSprite2D"]["frames"][1],
             "Assets/Sprites/run1.png"
         );
         assert_eq!(components["AnimatedSprite2D"]["sorting_order"], 3);
+        assert_eq!(components["AnimatedSprite2D"]["flip_y"], true);
         assert_eq!(components["Line2D"]["points"][1][1], 1.0);
         assert_eq!(components["Line2D"]["closed"], true);
         assert_eq!(

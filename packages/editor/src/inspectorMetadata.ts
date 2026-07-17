@@ -102,11 +102,17 @@ export const BUILTIN_INSPECTOR_FIELDS: Readonly<
     roughness: { min: 0, max: 1, step: 0.01 },
     emissive_strength: { min: 0, step: 0.1 },
   },
-  SpriteRenderer: { sprite },
+  SpriteRenderer: {
+    sprite,
+    flip_x: { label: 'Flip X' },
+    flip_y: { label: 'Flip Y' },
+  },
   AnimatedSprite2D: {
     frames: { kind: 'string-list' },
     fps: { min: 0, step: 0.1 },
     frame: { min: 0, step: 1 },
+    flip_x: { label: 'Flip X' },
+    flip_y: { label: 'Flip Y' },
   },
   Line2D: {
     points: { kind: 'vector2-list' },

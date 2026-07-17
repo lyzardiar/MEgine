@@ -859,6 +859,8 @@ export function Viewport(props: {
               sprite?: string;
               color?: number[];
               size?: number[];
+              flip_x?: boolean;
+              flip_y?: boolean;
               sorting_order?: number;
             }
           | undefined;
@@ -871,6 +873,8 @@ export function Viewport(props: {
               frame?: unknown;
               color?: number[];
               size?: number[];
+              flip_x?: boolean;
+              flip_y?: boolean;
               sorting_order?: number;
             }
           | undefined;
@@ -897,6 +901,8 @@ export function Viewport(props: {
             selected,
             rot,
             image?.complete && image.naturalWidth > 0 ? image : null,
+            spr.flip_x === true,
+            spr.flip_y === true,
           );
           if (hit) hitsRef.current.push({ kind: 'object', id: e.entity, x: hit.x, y: hit.y, r: hit.r });
           continue;

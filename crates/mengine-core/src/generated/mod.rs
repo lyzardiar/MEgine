@@ -252,6 +252,8 @@ pub struct SpriteRenderer {
     pub sprite: String,
     pub color: [f32; 4],
     pub size: [f32; 2],
+    pub flip_x: bool,
+    pub flip_y: bool,
     pub sorting_order: i32,
 }
 
@@ -261,6 +263,8 @@ impl Default for SpriteRenderer {
             sprite: "white".into(),
             color: [1.0, 1.0, 1.0, 1.0],
             size: [1.0, 1.0],
+            flip_x: false,
+            flip_y: false,
             sorting_order: 0,
         }
     }
@@ -282,6 +286,8 @@ pub struct AnimatedSprite2D {
     pub frame: i32,
     pub color: [f32; 4],
     pub size: [f32; 2],
+    pub flip_x: bool,
+    pub flip_y: bool,
     pub sorting_order: i32,
 }
 
@@ -295,6 +301,8 @@ impl Default for AnimatedSprite2D {
             frame: 0,
             color: [1.0, 1.0, 1.0, 1.0],
             size: [1.0, 1.0],
+            flip_x: false,
+            flip_y: false,
             sorting_order: 0,
         }
     }
