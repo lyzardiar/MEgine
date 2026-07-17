@@ -12,6 +12,7 @@ import { rectLocalAxes, rectPivot } from '../rectGizmo';
 import { drawSpriteInRect } from '../spriteDraw';
 import { resolveSpriteId } from '../spriteLibrary';
 import { project, type Camera, type Vec3 } from '../math3d';
+import { rectComponentSceneScale } from '../rectSceneScale';
 
 /** World pixels-per-unit for Scene view Overlay canvas plane. */
 export const UI_SCENE_PPU = 100;
@@ -733,8 +734,14 @@ export function layoutUiScene3D(
       const s = Math.hypot(c1.x - c0.x, c1.y - c0.y);
       if (s > 1e-4) {
         sceneScale = s;
-        layoutScale = s;
       }
+    }
+    const componentSceneScale = rectComponentSceneScale(
+      sceneScale,
+      canvasScaleFactor(canvas.components.CanvasScaler, cw, ch),
+    );
+    if (depthBase === 0 || laid.some((item) => selectedIds.has(item.entity))) {
+      layoutScale = componentSceneScale;
     }
 
     const projectPixelRect = (rect: Rect): Rect | undefined => {
