@@ -4,9 +4,25 @@ import {
   useRef,
   useState,
   type DragEvent,
+  type KeyboardEvent as ReactKeyboardEvent,
   type PointerEvent as ReactPointerEvent,
 } from 'react';
 import type { WorldSnapshotView } from '@mengine/api';
+import {
+  ChevronLeft,
+  ChevronRight,
+  Circle,
+  Crosshair,
+  PanelRightClose,
+  PanelRightOpen,
+  Pause,
+  Play,
+  Plus,
+  Save,
+  Trash2,
+  ZoomIn,
+  ZoomOut,
+} from 'lucide-react';
 import {
   advanceAnimationPreviewPhase,
   addAnimationEvent,
@@ -389,8 +405,12 @@ export function Timeline(props: {
   const [showNewClip, setShowNewClip] = useState(false);
   const [propertyPath, setPropertyPath] = useState('Transform.position');
   const [propertyBinding, setPropertyBinding] = useState('');
+  const [zoom, setZoom] = useState(1);
+  const [detailsOpen, setDetailsOpen] = useState(false);
   const [timelineDrag, setTimelineDrag] = useState<TimelineDrag | null>(null);
   const timelineDragRef = useRef<TimelineDrag | null>(null);
+  const scrubPointer = useRef<number | null>(null);
+  const workspaceRef = useRef<HTMLDivElement>(null);
   const playbackFrame = useRef<number | null>(null);
   const previousFrameTime = useRef<number | null>(null);
   const playbackPhase = useRef<number | null>(null);
@@ -786,6 +806,7 @@ export function Timeline(props: {
     setClip({ ...clip, tracks });
     setSelectedKey({ track: selectedTrack, key: result.keyIndex });
     setSelectedEvent(null);
+    setDetailsOpen(true);
   };
 
   const toggleRecording = () => {
@@ -821,6 +842,7 @@ export function Timeline(props: {
     setSelectedTrack(null);
     setSelectedKey(null);
     setSelectedEvent(result.eventIndex);
+    setDetailsOpen(true);
   };
 
   const selectedAnimationEvent = selectedEvent != null && clip
@@ -850,6 +872,7 @@ export function Timeline(props: {
   const selectedTrackData = selectedTrack != null && clip
     ? clip.tracks[selectedTrack] ?? null
     : null;
+  const rulerSteps = Math.min(80, Math.max(5, Math.round(5 * zoom)));
 
   const updateSelectedKey = (patch: Partial<AnimationKeyframe>) => {
     if (!clip || !selectedKey || !selectedKeyframe) return;
@@ -904,6 +927,19 @@ export function Timeline(props: {
     });
   };
 
+  const setPreviewTime = (next: number) => {
+    if (!clip) return;
+    const snapped = snapAnimationTime(next, clip.frame_rate, clip.duration);
+    setPlaying(false);
+    playbackPhase.current = snapped;
+    setTime(snapped);
+  };
+
+  const stepFrame = (direction: -1 | 1) => {
+    if (!clip) return;
+    setPreviewTime(time + direction / Math.max(1, clip.frame_rate));
+  };
+
   const seekAtPointer = (
     event: ReactPointerEvent<HTMLElement>,
     duration: number,
@@ -919,6 +955,57 @@ export function Timeline(props: {
     );
     playbackPhase.current = next;
     setTime(next);
+  };
+
+  const beginScrub = (event: ReactPointerEvent<HTMLDivElement>) => {
+    if (!clip) return;
+    scrubPointer.current = event.pointerId;
+    event.currentTarget.setPointerCapture(event.pointerId);
+    seekAtPointer(event, clip.duration, clip.frame_rate);
+  };
+
+  const moveScrub = (event: ReactPointerEvent<HTMLDivElement>) => {
+    if (!clip || scrubPointer.current !== event.pointerId) return;
+    seekAtPointer(event, clip.duration, clip.frame_rate);
+  };
+
+  const finishScrub = (event: ReactPointerEvent<HTMLDivElement>) => {
+    if (scrubPointer.current !== event.pointerId) return;
+    scrubPointer.current = null;
+    if (event.currentTarget.hasPointerCapture(event.pointerId)) {
+      event.currentTarget.releasePointerCapture(event.pointerId);
+    }
+  };
+
+  const handleTimelineKeyDown = (event: ReactKeyboardEvent<HTMLDivElement>) => {
+    const target = event.target as HTMLElement;
+    if (target.closest('input, select, textarea')) return;
+    if (target.closest('button') && (event.key === ' ' || event.key === 'Enter')) return;
+    if (event.key === ' ') {
+      event.preventDefault();
+      if (clip) setPlaying((value) => !value);
+      return;
+    }
+    if (event.key === 'ArrowLeft' || event.key === 'ArrowRight') {
+      event.preventDefault();
+      stepFrame(event.key === 'ArrowLeft' ? -1 : 1);
+      return;
+    }
+    if (event.key.toLowerCase() === 'k' && selectedTrack != null) {
+      event.preventDefault();
+      recordKey();
+      setDetailsOpen(true);
+      return;
+    }
+    if (event.key === 'Delete' || event.key === 'Backspace') {
+      if (selectedKey) {
+        event.preventDefault();
+        deleteSelectedKey();
+      } else if (selectedEvent != null) {
+        event.preventDefault();
+        deleteSelectedEvent();
+      }
+    }
   };
 
   const beginTimelineDrag = (
@@ -950,10 +1037,12 @@ export function Timeline(props: {
       setSelectedTrack(track);
       setSelectedKey({ track, key: index });
       setSelectedEvent(null);
+      setDetailsOpen(true);
     } else {
       setSelectedTrack(null);
       setSelectedKey(null);
       setSelectedEvent(index);
+      setDetailsOpen(true);
     }
     playbackPhase.current = authoredTime;
     setTime(authoredTime);
@@ -1063,41 +1152,130 @@ export function Timeline(props: {
         </div>
       )}
       <div className="timeline-toolbar">
+        <div className="timeline-transport" role="group" aria-label="Timeline playback">
+          <button
+            type="button"
+            className={`timeline-icon-button${recording ? ' recording' : ''}`}
+            aria-label={recording ? 'Stop recording' : 'Record animation changes'}
+            title={recording ? 'Stop recording' : 'Record animation changes'}
+            disabled={!clip}
+            onClick={toggleRecording}
+          >
+            <Circle size={12} fill="currentColor" aria-hidden="true" />
+          </button>
+          <button
+            type="button"
+            className="timeline-icon-button"
+            aria-label="Previous frame"
+            title="Previous frame (Left Arrow)"
+            disabled={!clip}
+            onClick={() => stepFrame(-1)}
+          >
+            <ChevronLeft size={15} aria-hidden="true" />
+          </button>
+          <button
+            type="button"
+            className={`timeline-icon-button timeline-play-button${playing ? ' active' : ''}`}
+            aria-label={playing ? 'Pause animation' : 'Play animation'}
+            title={playing ? 'Pause (Space)' : 'Play (Space)'}
+            disabled={!clip}
+            onClick={() => setPlaying(!playing)}
+          >
+            {playing
+              ? <Pause size={13} fill="currentColor" aria-hidden="true" />
+              : <Play size={13} fill="currentColor" aria-hidden="true" />}
+          </button>
+          <button
+            type="button"
+            className="timeline-icon-button"
+            aria-label="Next frame"
+            title="Next frame (Right Arrow)"
+            disabled={!clip}
+            onClick={() => stepFrame(1)}
+          >
+            <ChevronRight size={15} aria-hidden="true" />
+          </button>
+        </div>
+        <label className="timeline-time" title="Current animation time">
+          <input
+            aria-label="Current animation time"
+            type="number"
+            min={0}
+            max={clip?.duration ?? 0}
+            step={clip ? 1 / Math.max(1, clip.frame_rate) : 0.01}
+            value={time.toFixed(3)}
+            disabled={!clip}
+            onChange={(event) => {
+              if (Number.isFinite(event.target.valueAsNumber)) setPreviewTime(event.target.valueAsNumber);
+            }}
+          />
+          <span>s</span>
+        </label>
+        <span className="timeline-clip-path" title={clipPath}>{clipPath}{dirty ? ' *' : ''}</span>
+        <div className="timeline-zoom" role="group" aria-label="Timeline zoom">
+          <button
+            type="button"
+            className="timeline-icon-button"
+            aria-label="Zoom out"
+            title="Zoom out"
+            disabled={zoom <= 1}
+            onClick={() => setZoom((value) => Math.max(1, Number((value / 1.25).toFixed(2))))}
+          >
+            <ZoomOut size={13} aria-hidden="true" />
+          </button>
+          <span>{Math.round(zoom * 100)}%</span>
+          <button
+            type="button"
+            className="timeline-icon-button"
+            aria-label="Zoom in"
+            title="Zoom in"
+            disabled={zoom >= 8}
+            onClick={() => setZoom((value) => Math.min(8, Number((value * 1.25).toFixed(2))))}
+          >
+            <ZoomIn size={13} aria-hidden="true" />
+          </button>
+          <button
+            type="button"
+            className="timeline-icon-button"
+            aria-label="Fit timeline"
+            title="Fit entire clip"
+            disabled={zoom === 1}
+            onClick={() => setZoom(1)}
+          >
+            <Crosshair size={13} aria-hidden="true" />
+          </button>
+        </div>
         <button
           type="button"
-          className={recording ? 'recording' : ''}
-          title={recording ? 'Stop recording property changes' : 'Record property changes as keyframes'}
-          disabled={!clip}
-          onClick={toggleRecording}
+          className={`timeline-details-toggle${detailsOpen ? ' active' : ''}`}
+          aria-label={detailsOpen ? 'Hide timeline details' : 'Show timeline details'}
+          title={detailsOpen ? 'Hide details' : 'Show clip and selection details'}
+          onClick={() => setDetailsOpen((value) => !value)}
         >
-          {recording ? 'Stop' : 'Record'}
+          {detailsOpen
+            ? <PanelRightClose size={13} aria-hidden="true" />
+            : <PanelRightOpen size={13} aria-hidden="true" />}
+          <span>Details</span>
         </button>
-        <button type="button" title="Previous frame" disabled={!clip} onClick={() => {
-          if (!clip) return;
-          setPlaying(false);
-          setTime((value) => {
-            const next = Math.max(0, value - 1 / clip.frame_rate);
-            playbackPhase.current = next;
-            return next;
-          });
-        }}>◀</button>
-        <button type="button" className={playing ? 'active' : ''} disabled={!clip} onClick={() => setPlaying(!playing)}>
-          {playing ? 'Ⅱ' : '▶'}
-        </button>
-        <button type="button" title="Next frame" disabled={!clip} onClick={() => {
-          if (!clip) return;
-          setPlaying(false);
-          setTime((value) => {
-            const next = Math.min(clip.duration, value + 1 / clip.frame_rate);
-            playbackPhase.current = next;
-            return next;
-          });
-        }}>▶|</button>
-        <span className="timeline-time">{time.toFixed(3)} s</span>
-        <span className="timeline-clip-path" title={clipPath}>{clipPath}{dirty ? ' *' : ''}</span>
-        {!animator && <button type="button" onClick={() => setShowNewClip((value) => !value)} disabled={saving}>New</button>}
-        <button type="button" onClick={() => void persist()} disabled={!dirty || saving}>
-          {saving ? 'Saving…' : 'Save'}
+        {!animator && (
+          <button
+            type="button"
+            aria-label="Create new animation clip"
+            title="Create new animation clip"
+            onClick={() => setShowNewClip((value) => !value)}
+            disabled={saving}
+          >
+            <Plus size={13} aria-hidden="true" /><span>New</span>
+          </button>
+        )}
+        <button
+          type="button"
+          aria-label="Save animation clip"
+          title="Save animation clip"
+          onClick={() => void persist()}
+          disabled={!dirty || saving}
+        >
+          <Save size={13} aria-hidden="true" /><span>{saving ? 'Saving…' : 'Save'}</span>
         </button>
       </div>
 
@@ -1123,16 +1301,19 @@ export function Timeline(props: {
       {loading && <div className="timeline-message">Loading Animation Clip…</div>}
       {error && <div className="timeline-message error">{error}</div>}
       {clip && (
-        <>
-          <div className="timeline-settings">
-            <label>Name <input value={clip.name} onChange={(event) => setClip({ ...clip, name: event.target.value })} /></label>
-            <label>Duration <input type="number" min={0} step={0.1} value={clip.duration} onChange={(event) => setClip(normalizeAnimationClip({ ...clip, duration: Number(event.target.value) }))} /></label>
-            <label>FPS <input type="number" min={1} step={1} value={clip.frame_rate} onChange={(event) => setClip(normalizeAnimationClip({ ...clip, frame_rate: Number(event.target.value) }))} /></label>
-            <label>Wrap <select value={clip.wrap_mode} onChange={(event) => setClip({ ...clip, wrap_mode: event.target.value as AnimationClip['wrap_mode'] })}>
-              <option value="once">Once</option>
-              <option value="loop">Loop</option>
-              <option value="ping_pong">Ping Pong</option>
-            </select></label>
+        <div
+          className="timeline-workspace"
+          ref={workspaceRef}
+          tabIndex={0}
+          onKeyDown={handleTimelineKeyDown}
+          onPointerDown={(event) => {
+            const target = event.target as HTMLElement;
+            if (!target.closest('button, input, select, textarea')) {
+              workspaceRef.current?.focus({ preventScroll: true });
+            }
+          }}
+        >
+          <div className="timeline-track-tools">
             <select
               className="timeline-property-picker"
               aria-label="Animatable property picker"
@@ -1163,283 +1344,293 @@ export function Timeline(props: {
                 if (event.key === 'Enter') addProperty();
               }}
             />
-            <button type="button" onClick={addProperty}>+ Add Property</button>
-            <button type="button" onClick={addEvent}>+ Add Event</button>
-            <button type="button" disabled={selectedTrack == null} onClick={recordKey}>◆ Add Key</button>
-            <button type="button" disabled={selectedTrack == null} onClick={deleteTrack}>Delete Track</button>
-          </div>
-
-          {selectedTrack != null && clip.tracks[selectedTrack] && (
-            <div className="timeline-selection-editor">
-              <label>
-                Target
-                <input
-                  aria-label="Animation track target"
-                  value={clip.tracks[selectedTrack].target}
-                  onChange={(event) => setClip({
-                    ...clip,
-                    tracks: clip.tracks.map((track, index) => index === selectedTrack
-                      ? { ...track, target: event.target.value }
-                      : track),
-                  })}
-                />
-              </label>
-              <label>
-                Interpolation
-                <select
-                  aria-label="Animation track interpolation"
-                  value={clip.tracks[selectedTrack].interpolation}
-                  onChange={(event) => setClip({
-                    ...clip,
-                    tracks: clip.tracks.map((track, index) => index === selectedTrack
-                      ? { ...track, interpolation: event.target.value as AnimationTrack['interpolation'] }
-                      : track),
-                  })}
-                >
-                  <option value="step">Step</option>
-                  <option value="linear">Linear</option>
-                  <option value="smooth">Smooth</option>
-                  <option value="cubic">Cubic (Hermite)</option>
-                </select>
-              </label>
-              {selectedKeyframe ? (
-                <>
-                  <label>
-                    Key Time
-                    <input
-                      aria-label="Keyframe time"
-                      type="number"
-                      min={0}
-                      max={clip.duration}
-                      step={1 / Math.max(1, clip.frame_rate)}
-                      value={selectedKeyframe.time}
-                      onChange={(event) => {
-                        if (Number.isFinite(event.target.valueAsNumber)) {
-                          updateSelectedKey({ time: event.target.valueAsNumber });
-                        }
-                      }}
-                    />
-                  </label>
-                  <KeyframeValueEditor
-                    value={selectedKeyframe.value}
-                    onChange={(value) => updateSelectedKey({ value })}
-                  />
-                  {clip.tracks[selectedKey!.track].interpolation === 'cubic' && (() => {
-                    const track = clip.tracks[selectedKey!.track];
-                    const automatic = automaticAnimationTangent(track, selectedKey!.key);
-                    if (automatic == null) return (
-                      <span className="timeline-selection-hint">Cubic tangents require a numeric track.</span>
-                    );
-                    const inTangent = selectedKeyframe.in_tangent ?? automatic;
-                    const outTangent = selectedKeyframe.out_tangent ?? automatic;
-                    return (
-                      <div className="timeline-tangent-editors">
-                        <div>
-                          <KeyframeValueEditor
-                            label="In Tangent"
-                            value={inTangent}
-                            onChange={(value) => {
-                              if (typeof value === 'number' || Array.isArray(value)) {
-                                updateSelectedTangent('in_tangent', value);
-                              }
-                            }}
-                          />
-                          <button
-                            type="button"
-                            className={selectedKeyframe.in_tangent === undefined ? 'active' : ''}
-                            onClick={() => updateSelectedTangent('in_tangent', null)}
-                          >Auto</button>
-                        </div>
-                        <div>
-                          <KeyframeValueEditor
-                            label="Out Tangent"
-                            value={outTangent}
-                            onChange={(value) => {
-                              if (typeof value === 'number' || Array.isArray(value)) {
-                                updateSelectedTangent('out_tangent', value);
-                              }
-                            }}
-                          />
-                          <button
-                            type="button"
-                            className={selectedKeyframe.out_tangent === undefined ? 'active' : ''}
-                            onClick={() => updateSelectedTangent('out_tangent', null)}
-                          >Auto</button>
-                        </div>
-                      </div>
-                    );
-                  })()}
-                  <button type="button" className="danger" onClick={deleteSelectedKey}>Delete Key</button>
-                </>
-              ) : (
-                <span className="timeline-selection-hint">Select a diamond to edit its time and value.</span>
-              )}
-            </div>
-          )}
-
-          {selectedTrackData && (
-            <AnimationCurvePreview track={selectedTrackData} duration={clip.duration} time={time} />
-          )}
-
-          {selectedAnimationEvent && (
-            <div className="timeline-selection-editor timeline-event-editor">
-              <label>
-                Event
-                <input
-                  aria-label="Animation event function"
-                  value={selectedAnimationEvent.function}
-                  onChange={(event) => updateSelectedEvent({ function: event.target.value })}
-                />
-              </label>
-              <label>
-                Time
-                <input
-                  aria-label="Animation event time"
-                  type="number"
-                  min={0}
-                  max={clip.duration}
-                  step={1 / Math.max(1, clip.frame_rate)}
-                  value={selectedAnimationEvent.time}
-                  onChange={(event) => {
-                    if (Number.isFinite(event.target.valueAsNumber)) {
-                      updateSelectedEvent({ time: event.target.valueAsNumber });
-                    }
-                  }}
-                />
-              </label>
-              <AnimationEventParameterEditor
-                value={selectedAnimationEvent.parameter}
-                onChange={(parameter) => updateSelectedEvent({ parameter })}
-              />
-              <button type="button" className="danger" onClick={deleteSelectedEvent}>Delete Event</button>
-            </div>
-          )}
-
-          <div className="timeline-scrubber">
-            <input
-              aria-label="Animation time"
-              type="range"
-              min={0}
-              max={Math.max(0.001, clip.duration)}
-              step={1 / Math.max(1, clip.frame_rate)}
-              value={Math.min(time, clip.duration)}
-              onChange={(event) => {
-                setPlaying(false);
-                const next = Number(event.target.value);
-                playbackPhase.current = next;
-                setTime(next);
-              }}
-            />
-          </div>
-
-          <div className="timeline-grid">
-            <div className="timeline-ruler-label">Target / Property</div>
-            <div
-              className="timeline-ruler"
-              title="Click to move the playhead"
-              onPointerDown={(event) => seekAtPointer(event, clip.duration, clip.frame_rate)}
+            <button type="button" onClick={addProperty} title="Add selected property as a track">
+              <Plus size={13} aria-hidden="true" /><span>Track</span>
+            </button>
+            <button type="button" onClick={addEvent} title="Add animation event at the playhead">
+              <Plus size={13} aria-hidden="true" /><span>Event</span>
+            </button>
+            <button type="button" disabled={selectedTrack == null} onClick={recordKey} title="Add key at the playhead (K)">
+              <Plus size={13} aria-hidden="true" /><span>Key</span>
+            </button>
+            <button
+              type="button"
+              className="timeline-danger-button"
+              aria-label="Delete selected track"
+              disabled={selectedTrack == null}
+              onClick={deleteTrack}
+              title="Delete selected track"
             >
-              {Array.from({ length: 11 }, (_unused, index) => (
-                <span key={index} style={{ left: `${index * 10}%` }}>{(clip.duration * index / 10).toFixed(2)}</span>
-              ))}
-              <i style={{ left: `${clip.duration > 0 ? time / clip.duration * 100 : 0}%` }} />
-            </div>
-            <div className="timeline-ruler-value">Sample</div>
+              <Trash2 size={13} aria-hidden="true" />
+            </button>
+          </div>
 
-            <div className={`timeline-track-row timeline-event-row${selectedEvent != null ? ' selected' : ''}`}>
-              <div className="timeline-track-label">
-                <strong>Animation Events</strong>
-                <span>{clip.events.length} event{clip.events.length === 1 ? '' : 's'}</span>
-              </div>
-              <div
-                className="timeline-track-keys"
-                onPointerDown={(event) => {
-                  if ((event.target as HTMLElement).closest('.timeline-event-key')) return;
-                  seekAtPointer(event, clip.duration, clip.frame_rate);
-                }}
-              >
-                {clip.events.map((animationEvent, eventIndex) => {
-                  const displayTime = timelineDrag?.kind === 'event' && timelineDrag.index === eventIndex
-                    ? timelineDrag.time
-                    : animationEvent.time;
-                  return (
-                    <button
-                      type="button"
-                      className={`timeline-event-key${selectedEvent === eventIndex ? ' selected' : ''}${timelineDrag?.kind === 'event' && timelineDrag.index === eventIndex ? ' dragging' : ''}`}
-                      key={eventIndex}
-                      title={`${displayTime.toFixed(3)} s - ${animationEvent.function}`}
-                      style={{
-                        left: `clamp(6px, ${clip.duration > 0 ? displayTime / clip.duration * 100 : 0}%, calc(100% - 6px))`,
-                      }}
-                      onPointerDown={(event) => beginTimelineDrag(event, 'event', -1, eventIndex, animationEvent.time)}
-                      onPointerMove={moveTimelineDrag}
-                      onPointerUp={(event) => finishTimelineDrag(event, true)}
-                      onPointerCancel={(event) => finishTimelineDrag(event, false)}
-                      onClick={(event) => event.stopPropagation()}
-                    />
-                  );
-                })}
-                <i className="timeline-playhead" style={{ left: `${clip.duration > 0 ? time / clip.duration * 100 : 0}%` }} />
-              </div>
-              <div className="timeline-track-value">
-                {clip.events
-                  .filter((animationEvent) => Math.abs(animationEvent.time - time) < 0.5 / Math.max(1, clip.frame_rate))
-                  .map((animationEvent) => animationEvent.function)
-                  .join(', ') || '-'}
-              </div>
-            </div>
-
-            {clip.tracks.map((track, index) => {
-              const sample = samples.find((candidate) =>
-                candidate.target === track.target
-                && candidate.component === track.component
-                && candidate.property === track.property
-              )?.value;
-              return (
-                <div className={`timeline-track-row${selectedTrack === index ? ' selected' : ''}`} key={`${track.target}:${track.component}.${track.property}:${index}`} onClick={(event) => {
-                  if ((event.target as HTMLElement).closest('.timeline-key')) return;
-                  setSelectedTrack(index);
-                  setSelectedKey(null);
-                  setSelectedEvent(null);
-                }}>
-                  <div className="timeline-track-label">
+          <div
+            className="timeline-grid-scroll"
+            onWheel={(event) => {
+              if (!event.ctrlKey) return;
+              event.preventDefault();
+              setZoom((value) => event.deltaY < 0
+                ? Math.min(8, Number((value * 1.15).toFixed(2)))
+                : Math.max(1, Number((value / 1.15).toFixed(2))));
+            }}
+          >
+            <div className="timeline-grid">
+              <div className="timeline-labels-column">
+                <div className="timeline-ruler-label">Target / Property</div>
+                <button
+                  type="button"
+                  className={`timeline-track-label timeline-event-row${selectedEvent != null ? ' selected' : ''}`}
+                  onClick={() => {
+                    setSelectedTrack(null);
+                    setSelectedKey(null);
+                  }}
+                >
+                  <strong>Animation Events</strong>
+                  <span>{clip.events.length} event{clip.events.length === 1 ? '' : 's'}</span>
+                </button>
+                {clip.tracks.map((track, index) => (
+                  <button
+                    type="button"
+                    className={`timeline-track-label${selectedTrack === index ? ' selected' : ''}`}
+                    key={`${track.target}:${track.component}.${track.property}:${index}`}
+                    onClick={() => {
+                      setSelectedTrack(index);
+                      setSelectedKey(null);
+                      setSelectedEvent(null);
+                    }}
+                  >
                     <strong>{track.component}.{track.property}</strong>
                     <span>{track.target} · {track.interpolation}</span>
+                  </button>
+                ))}
+                {clip.tracks.length === 0 && <div className="timeline-empty-row">No property tracks</div>}
+              </div>
+
+              <div className="timeline-lanes-scroll">
+                <div className="timeline-lanes" style={{ width: `${zoom * 100}%` }}>
+                  <div
+                    className="timeline-ruler"
+                    title="Drag to move the playhead"
+                    onPointerDown={beginScrub}
+                    onPointerMove={moveScrub}
+                    onPointerUp={finishScrub}
+                    onPointerCancel={finishScrub}
+                  >
+                    {Array.from({ length: rulerSteps + 1 }, (_unused, index) => (
+                      <span key={index} style={{ left: `${index / rulerSteps * 100}%` }}>{(clip.duration * index / rulerSteps).toFixed(2)}</span>
+                    ))}
+                    <i style={{ left: `${clip.duration > 0 ? time / clip.duration * 100 : 0}%` }} />
                   </div>
                   <div
-                    className="timeline-track-keys"
+                    className={`timeline-track-keys timeline-event-row${selectedEvent != null ? ' selected' : ''}`}
                     onPointerDown={(event) => {
-                      if ((event.target as HTMLElement).closest('.timeline-key')) return;
+                      if ((event.target as HTMLElement).closest('.timeline-event-key')) return;
                       seekAtPointer(event, clip.duration, clip.frame_rate);
                     }}
                   >
-                    {track.keyframes.map((key, keyIndex) => (
-                      <button
-                        type="button"
-                        className={`timeline-key${selectedKey?.track === index && selectedKey.key === keyIndex ? ' selected' : ''}${timelineDrag?.kind === 'key' && timelineDrag.track === index && timelineDrag.index === keyIndex ? ' dragging' : ''}`}
-                        key={keyIndex}
-                        title={`${key.time.toFixed(3)} s · ${valueLabel(key.value)}`}
-                        style={{
-                          left: `clamp(6px, ${clip.duration > 0 ? (timelineDrag?.kind === 'key' && timelineDrag.track === index && timelineDrag.index === keyIndex ? timelineDrag.time : key.time) / clip.duration * 100 : 0}%, calc(100% - 6px))`,
-                        }}
-                        onPointerDown={(event) => beginTimelineDrag(event, 'key', index, keyIndex, key.time)}
-                        onPointerMove={moveTimelineDrag}
-                        onPointerUp={(event) => finishTimelineDrag(event, true)}
-                        onPointerCancel={(event) => finishTimelineDrag(event, false)}
-                        onClick={(event) => event.stopPropagation()}
-                      />
-                    ))}
+                    {clip.events.map((animationEvent, eventIndex) => {
+                      const displayTime = timelineDrag?.kind === 'event' && timelineDrag.index === eventIndex
+                        ? timelineDrag.time
+                        : animationEvent.time;
+                      return (
+                        <button
+                          type="button"
+                          className={`timeline-event-key${selectedEvent === eventIndex ? ' selected' : ''}${timelineDrag?.kind === 'event' && timelineDrag.index === eventIndex ? ' dragging' : ''}`}
+                          key={eventIndex}
+                          aria-label={`Animation event at ${displayTime.toFixed(3)} seconds`}
+                          title={`${displayTime.toFixed(3)} s - ${animationEvent.function}`}
+                          style={{ left: `clamp(6px, ${clip.duration > 0 ? displayTime / clip.duration * 100 : 0}%, calc(100% - 6px))` }}
+                          onPointerDown={(event) => beginTimelineDrag(event, 'event', -1, eventIndex, animationEvent.time)}
+                          onPointerMove={moveTimelineDrag}
+                          onPointerUp={(event) => finishTimelineDrag(event, true)}
+                          onPointerCancel={(event) => finishTimelineDrag(event, false)}
+                          onClick={(event) => {
+                            event.stopPropagation();
+                            setSelectedTrack(null);
+                            setSelectedKey(null);
+                            setSelectedEvent(eventIndex);
+                            setDetailsOpen(true);
+                          }}
+                        />
+                      );
+                    })}
                     <i className="timeline-playhead" style={{ left: `${clip.duration > 0 ? time / clip.duration * 100 : 0}%` }} />
                   </div>
-                  <div className="timeline-track-value">{sample == null ? '—' : valueLabel(sample)}</div>
+
+                  {clip.tracks.map((track, index) => (
+                    <div
+                      className={`timeline-track-keys${selectedTrack === index ? ' selected' : ''}`}
+                      key={`${track.target}:${track.component}.${track.property}:${index}`}
+                      onPointerDown={(event) => {
+                        if ((event.target as HTMLElement).closest('.timeline-key')) return;
+                        setSelectedTrack(index);
+                        setSelectedKey(null);
+                        setSelectedEvent(null);
+                        seekAtPointer(event, clip.duration, clip.frame_rate);
+                      }}
+                    >
+                      {track.keyframes.map((key, keyIndex) => {
+                        const displayTime = timelineDrag?.kind === 'key'
+                          && timelineDrag.track === index
+                          && timelineDrag.index === keyIndex
+                          ? timelineDrag.time
+                          : key.time;
+                        return (
+                          <button
+                            type="button"
+                            className={`timeline-key${selectedKey?.track === index && selectedKey.key === keyIndex ? ' selected' : ''}${timelineDrag?.kind === 'key' && timelineDrag.track === index && timelineDrag.index === keyIndex ? ' dragging' : ''}`}
+                            key={keyIndex}
+                            aria-label={`Keyframe at ${displayTime.toFixed(3)} seconds`}
+                            title={`${displayTime.toFixed(3)} s · ${valueLabel(key.value)}`}
+                            style={{ left: `clamp(6px, ${clip.duration > 0 ? displayTime / clip.duration * 100 : 0}%, calc(100% - 6px))` }}
+                            onPointerDown={(event) => beginTimelineDrag(event, 'key', index, keyIndex, key.time)}
+                            onPointerMove={moveTimelineDrag}
+                            onPointerUp={(event) => finishTimelineDrag(event, true)}
+                            onPointerCancel={(event) => finishTimelineDrag(event, false)}
+                            onClick={(event) => {
+                              event.stopPropagation();
+                              setSelectedTrack(index);
+                              setSelectedKey({ track: index, key: keyIndex });
+                              setSelectedEvent(null);
+                              setDetailsOpen(true);
+                              setPreviewTime(key.time);
+                            }}
+                          />
+                        );
+                      })}
+                      <i className="timeline-playhead" style={{ left: `${clip.duration > 0 ? time / clip.duration * 100 : 0}%` }} />
+                    </div>
+                  ))}
+                  {clip.tracks.length === 0 && (
+                    <div className="timeline-empty-row timeline-empty-lane">Choose a property above, then add a track.</div>
+                  )}
                 </div>
-              );
-            })}
-            {clip.tracks.length === 0 && (
-              <div className="timeline-no-tracks">点击 “Add Property” 创建第一条属性轨道。</div>
-            )}
+              </div>
+
+              <div className="timeline-values-column">
+                <div className="timeline-ruler-value">Sample</div>
+                <div className={`timeline-track-value timeline-event-row${selectedEvent != null ? ' selected' : ''}`}>
+                  {clip.events
+                    .filter((animationEvent) => Math.abs(animationEvent.time - time) < 0.5 / Math.max(1, clip.frame_rate))
+                    .map((animationEvent) => animationEvent.function)
+                    .join(', ') || '—'}
+                </div>
+                {clip.tracks.map((track, index) => {
+                  const sample = samples.find((candidate) => (
+                    candidate.target === track.target
+                    && candidate.component === track.component
+                    && candidate.property === track.property
+                  ))?.value;
+                  return (
+                    <div className={`timeline-track-value${selectedTrack === index ? ' selected' : ''}`} key={`${track.target}:${track.component}.${track.property}:${index}`}>
+                      {sample == null ? '—' : valueLabel(sample)}
+                    </div>
+                  );
+                })}
+                {clip.tracks.length === 0 && <div className="timeline-empty-row" />}
+              </div>
+            </div>
           </div>
-        </>
+
+          {detailsOpen && (
+            <aside className="timeline-details" aria-label="Timeline details">
+              <header>
+                <strong>Details</strong>
+                <button type="button" className="timeline-icon-button" aria-label="Close timeline details" onClick={() => setDetailsOpen(false)}>
+                  <PanelRightClose size={13} aria-hidden="true" />
+                </button>
+              </header>
+
+              <section>
+                <h3>Clip</h3>
+                <div className="timeline-details-form">
+                  <label>Name <input value={clip.name} onChange={(event) => setClip({ ...clip, name: event.target.value })} /></label>
+                  <label>Duration <input type="number" min={0} step={0.1} value={clip.duration} onChange={(event) => setClip(normalizeAnimationClip({ ...clip, duration: Number(event.target.value) }))} /></label>
+                  <label>FPS <input type="number" min={1} step={1} value={clip.frame_rate} onChange={(event) => setClip(normalizeAnimationClip({ ...clip, frame_rate: Number(event.target.value) }))} /></label>
+                  <label>Wrap <select value={clip.wrap_mode} onChange={(event) => setClip({ ...clip, wrap_mode: event.target.value as AnimationClip['wrap_mode'] })}>
+                    <option value="once">Once</option>
+                    <option value="loop">Loop</option>
+                    <option value="ping_pong">Ping Pong</option>
+                  </select></label>
+                </div>
+              </section>
+
+              {selectedTrack != null && clip.tracks[selectedTrack] && (
+                <section>
+                  <h3>Track</h3>
+                  <div className="timeline-details-form">
+                    <label>Target <input aria-label="Animation track target" value={clip.tracks[selectedTrack].target} onChange={(event) => setClip({
+                      ...clip,
+                      tracks: clip.tracks.map((track, index) => index === selectedTrack ? { ...track, target: event.target.value } : track),
+                    })} /></label>
+                    <label>Interpolation <select aria-label="Animation track interpolation" value={clip.tracks[selectedTrack].interpolation} onChange={(event) => setClip({
+                      ...clip,
+                      tracks: clip.tracks.map((track, index) => index === selectedTrack ? { ...track, interpolation: event.target.value as AnimationTrack['interpolation'] } : track),
+                    })}>
+                      <option value="step">Step</option>
+                      <option value="linear">Linear</option>
+                      <option value="smooth">Smooth</option>
+                      <option value="cubic">Cubic (Hermite)</option>
+                    </select></label>
+                  </div>
+                </section>
+              )}
+
+              {selectedKeyframe && selectedKey && (
+                <section>
+                  <h3>Keyframe</h3>
+                  <div className="timeline-details-form">
+                    <label>Time <input aria-label="Keyframe time" type="number" min={0} max={clip.duration} step={1 / Math.max(1, clip.frame_rate)} value={selectedKeyframe.time} onChange={(event) => {
+                      if (Number.isFinite(event.target.valueAsNumber)) updateSelectedKey({ time: event.target.valueAsNumber });
+                    }} /></label>
+                    <KeyframeValueEditor value={selectedKeyframe.value} onChange={(value) => updateSelectedKey({ value })} />
+                  </div>
+                  {clip.tracks[selectedKey.track].interpolation === 'cubic' && (() => {
+                    const track = clip.tracks[selectedKey.track];
+                    const automatic = automaticAnimationTangent(track, selectedKey.key);
+                    if (automatic == null) return <span className="timeline-selection-hint">Cubic tangents require a numeric track.</span>;
+                    return (
+                      <div className="timeline-tangent-editors">
+                        <div><KeyframeValueEditor label="In Tangent" value={selectedKeyframe.in_tangent ?? automatic} onChange={(value) => {
+                          if (typeof value === 'number' || Array.isArray(value)) updateSelectedTangent('in_tangent', value);
+                        }} /><button type="button" className={selectedKeyframe.in_tangent === undefined ? 'active' : ''} onClick={() => updateSelectedTangent('in_tangent', null)}>Auto</button></div>
+                        <div><KeyframeValueEditor label="Out Tangent" value={selectedKeyframe.out_tangent ?? automatic} onChange={(value) => {
+                          if (typeof value === 'number' || Array.isArray(value)) updateSelectedTangent('out_tangent', value);
+                        }} /><button type="button" className={selectedKeyframe.out_tangent === undefined ? 'active' : ''} onClick={() => updateSelectedTangent('out_tangent', null)}>Auto</button></div>
+                      </div>
+                    );
+                  })()}
+                  <button type="button" className="timeline-delete-selection" onClick={deleteSelectedKey}>
+                    <Trash2 size={13} aria-hidden="true" /> Delete Key
+                  </button>
+                </section>
+              )}
+
+              {selectedAnimationEvent && (
+                <section className="timeline-event-editor">
+                  <h3>Animation Event</h3>
+                  <div className="timeline-details-form">
+                    <label>Function <input aria-label="Animation event function" value={selectedAnimationEvent.function} onChange={(event) => updateSelectedEvent({ function: event.target.value })} /></label>
+                    <label>Time <input aria-label="Animation event time" type="number" min={0} max={clip.duration} step={1 / Math.max(1, clip.frame_rate)} value={selectedAnimationEvent.time} onChange={(event) => {
+                      if (Number.isFinite(event.target.valueAsNumber)) updateSelectedEvent({ time: event.target.valueAsNumber });
+                    }} /></label>
+                    <AnimationEventParameterEditor value={selectedAnimationEvent.parameter} onChange={(parameter) => updateSelectedEvent({ parameter })} />
+                  </div>
+                  <button type="button" className="timeline-delete-selection" onClick={deleteSelectedEvent}>
+                    <Trash2 size={13} aria-hidden="true" /> Delete Event
+                  </button>
+                </section>
+              )}
+
+              {selectedTrackData && <AnimationCurvePreview track={selectedTrackData} duration={clip.duration} time={time} />}
+              {!selectedTrackData && !selectedAnimationEvent && (
+                <div className="timeline-details-empty">Select a track, keyframe, or event to inspect it.</div>
+              )}
+              <footer>Space: Play · Arrows: Step · K: Add Key · Delete: Remove Selection</footer>
+            </aside>
+          )}
+        </div>
       )}
     </div>
   );
