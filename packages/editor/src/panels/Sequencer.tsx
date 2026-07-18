@@ -16,6 +16,7 @@ import {
   Copy,
   Link,
   Lock,
+  Magnet,
   Maximize2,
   Minus,
   Pause,
@@ -66,6 +67,7 @@ import {
   pasteSequencerClipboard,
   sequencerTicks,
   selectSequencerItem,
+  snapSequencerItemsDelta,
   trimSequencerCameraBlendIn,
   trimSequencerClip,
   type SequencerClipboard,
@@ -73,6 +75,16 @@ import {
 } from '../sequencerEditing';
 
 export const OPEN_TIMELINE_ASSET_EVENT = 'mengine:open-timeline-asset';
+const SEQUENCER_SNAPPING_KEY = 'mengine.sequencer.snapping';
+const SEQUENCER_SNAP_THRESHOLD_PX = 8;
+
+function loadSequencerSnapping(): boolean {
+  try {
+    return localStorage.getItem(SEQUENCER_SNAPPING_KEY) !== '0';
+  } catch {
+    return true;
+  }
+}
 
 export function openTimelineAsset(path: string): void {
   window.dispatchEvent(new CustomEvent(OPEN_TIMELINE_ASSET_EVENT, { detail: path }));
@@ -186,6 +198,8 @@ export function Sequencer(props: SequencerProps) {
   const [error, setError] = useState<string | null>(null);
   const [payloadInvalid, setPayloadInvalid] = useState(false);
   const [zoom, setZoom] = useState(1);
+  const [snapping, setSnapping] = useState(loadSequencerSnapping);
+  const [snapGuide, setSnapGuide] = useState<number | null>(null);
   const [tracksWidth, setTracksWidth] = useState(720);
   const [clipboard, setClipboard] = useState<SequencerClipboard | null>(null);
   const [marquee, setMarquee] = useState<SequencerMarquee | null>(null);
@@ -287,6 +301,7 @@ export function Sequencer(props: SequencerProps) {
     setSavedText('');
     replaceTime(0);
     setZoom(1);
+    setSnapGuide(null);
     applySelection(null);
     inspectorEdit.current = null;
     setError(null);
@@ -982,108 +997,133 @@ export function Sequencer(props: SequencerProps) {
     const timeBeforeDrag = time;
     const historyCheckpoint = props.undoService.checkpoint();
     let historyToken: EditorUndoToken | null = null;
-    let groupDelta = 0;
+    const snapThreshold = asset.duration / Math.max(1, bounds.width) * SEQUENCER_SNAP_THRESHOLD_PX;
+    const snapPlayhead = displayTime;
+    setSnapGuide(null);
     event.currentTarget.setPointerCapture(pointer);
     applySelection(clicked, dragItems);
     const move = (moveEvent: PointerEvent) => {
       if (moveEvent.pointerId !== pointer) return;
       const position = Math.max(0, Math.min(1, (moveEvent.clientX - bounds.left) / Math.max(1, bounds.width)));
-      const delta = position * asset.duration - pointerStartTime;
-      if (dragItems.length > 1) {
-        const moved = moveSequencerItems(asset, dragItems, delta);
+      const requestedDelta = position * asset.duration - pointerStartTime;
+      const magnetic = snapping
+        ? snapSequencerItemsDelta(
+          asset,
+          dragItems,
+          requestedDelta,
+          snapPlayhead,
+          snapThreshold,
+          trimEdge ?? 'both',
+        )
+        : { delta: requestedDelta, guideTime: null };
+      if (!trimEdge) {
+        const moved = moveSequencerItems(asset, dragItems, magnetic.delta);
         if (!moved.ok) {
+          setSnapGuide(null);
           setError(moved.error);
           return;
         }
-        groupDelta = moved.delta;
         if (!historyToken && Math.abs(moved.delta) >= 0.5 / asset.frame_rate) {
           historyToken = pushHistory(
             asset,
             selectionBeforeDrag,
             timeBeforeDrag,
             selectedItemsBeforeDrag,
-            'Move Timeline Items',
+            dragItems.length > 1 ? 'Move Timeline Items' : 'Move Timeline Item',
           );
         }
         replaceAsset(moved.asset);
+        setSnapGuide(
+          magnetic.guideTime != null
+          && Math.abs(moved.delta - magnetic.delta) < 0.5 / asset.frame_rate
+            ? magnetic.guideTime
+            : null,
+        );
         setError(null);
         return;
       }
-      if (!historyToken && Math.abs(delta) >= 0.5 / asset.frame_rate) {
+
+      if (originalTrack.type === 'signal') return;
+      const originalClip = originalTrack.clips[markerIndex];
+      if (!originalClip) return;
+      const range = trimSequencerClip(
+        originalTrack.clips,
+        markerIndex,
+        trimEdge,
+        magnetic.delta,
+        asset.duration,
+        asset.frame_rate,
+        trimEdge === 'start' && originalTrack.type === 'audio'
+          ? { offset: originalTrack.clips[markerIndex].clip_in, rate: originalTrack.clips[markerIndex].pitch }
+          : trimEdge === 'start' && originalTrack.type === 'animation'
+            ? { offset: originalTrack.clips[markerIndex].clip_in, rate: originalTrack.clips[markerIndex].speed }
+            : trimEdge === 'start' && originalTrack.type === 'particle'
+              ? { offset: originalTrack.clips[markerIndex].clip_in, rate: 1 }
+              : undefined,
+      );
+      const resolvedDuration = originalTrack.type === 'particle'
+        ? Math.min(
+          range.duration,
+          TIMELINE_MAX_PARTICLE_TIME - Math.max(
+            0,
+            originalTrack.clips[markerIndex].clip_in
+              + (trimEdge === 'start' ? range.sourceOffsetDelta : 0),
+          ),
+        )
+        : range.duration;
+      const originalEdge = trimEdge === 'start'
+        ? originalClip.start
+        : originalClip.start + originalClip.duration;
+      const movedEdge = trimEdge === 'start' ? range.start : range.start + resolvedDuration;
+      if (!historyToken && Math.abs(movedEdge - originalEdge) >= 0.5 / asset.frame_rate) {
         historyToken = pushHistory(
           asset,
           selectionBeforeDrag,
           timeBeforeDrag,
           selectedItemsBeforeDrag,
-          trimEdge ? 'Trim Timeline Clip' : 'Move Timeline Item',
+          'Trim Timeline Clip',
         );
       }
-      applyUpdate((draft) => {
-        const track = draft.tracks[trackIndex];
-        if (track.type === 'signal') {
-          if (originalTrack.type !== 'signal') return;
-          const originalMarker = originalTrack.markers[markerIndex];
-          track.markers[markerIndex].time = snapTimelineAssetTime(originalMarker.time + delta, draft);
-        } else {
-          const clip = track.clips[markerIndex];
-          if (!clip || originalTrack.type === 'signal') return;
-          if (trimEdge) {
-            const range = trimSequencerClip(
-              originalTrack.clips,
-              markerIndex,
-              trimEdge,
-              delta,
-              draft.duration,
-              draft.frame_rate,
-              trimEdge === 'start' && originalTrack.type === 'audio'
-                ? { offset: originalTrack.clips[markerIndex].clip_in, rate: originalTrack.clips[markerIndex].pitch }
-                : trimEdge === 'start' && originalTrack.type === 'animation'
-                  ? { offset: originalTrack.clips[markerIndex].clip_in, rate: originalTrack.clips[markerIndex].speed }
-                  : trimEdge === 'start' && originalTrack.type === 'particle'
-                    ? { offset: originalTrack.clips[markerIndex].clip_in, rate: 1 }
-                  : undefined,
-            );
-            clip.start = range.start;
-            clip.duration = range.duration;
-            if (trimEdge === 'start' && track.type === 'audio' && originalTrack.type === 'audio') {
-              const original = originalTrack.clips[markerIndex];
-              track.clips[markerIndex].clip_in = Math.max(0, original.clip_in + range.sourceOffsetDelta * original.pitch);
-            }
-            if (trimEdge === 'start' && track.type === 'animation' && originalTrack.type === 'animation') {
-              const original = originalTrack.clips[markerIndex];
-              track.clips[markerIndex].clip_in = Math.max(0, original.clip_in + range.sourceOffsetDelta * original.speed);
-            }
-            if (trimEdge === 'start' && track.type === 'particle' && originalTrack.type === 'particle') {
-              const original = originalTrack.clips[markerIndex];
-              track.clips[markerIndex].clip_in = Math.max(0, original.clip_in + range.sourceOffsetDelta);
-            }
-            if (track.type === 'particle') {
-              clip.duration = Math.min(clip.duration, TIMELINE_MAX_PARTICLE_TIME - track.clips[markerIndex].clip_in);
-            }
-            if (track.type === 'camera') {
-              const original = originalTrack.type === 'camera' ? originalTrack.clips[markerIndex] : null;
-              track.clips[markerIndex].blend_in = trimEdge === 'start' && original
-                ? trimSequencerCameraBlendIn(original.blend_in, clip.duration, range.sourceOffsetDelta)
-                : Math.min(track.clips[markerIndex].blend_in, clip.duration);
-            }
-          } else {
-            const range = moveSequencerClip(
-              originalTrack.clips,
-              markerIndex,
-              delta,
-              draft.duration,
-              draft.frame_rate,
-            );
-            clip.start = range.start;
-          }
-        }
-      });
+      const next = structuredClone(asset);
+      const track = next.tracks[trackIndex];
+      if (track.type === 'signal') return;
+      const clip = track.clips[markerIndex];
+      if (!clip) return;
+      clip.start = range.start;
+      clip.duration = resolvedDuration;
+      if (trimEdge === 'start' && track.type === 'audio' && originalTrack.type === 'audio') {
+        const original = originalTrack.clips[markerIndex];
+        track.clips[markerIndex].clip_in = Math.max(0, original.clip_in + range.sourceOffsetDelta * original.pitch);
+      }
+      if (trimEdge === 'start' && track.type === 'animation' && originalTrack.type === 'animation') {
+        const original = originalTrack.clips[markerIndex];
+        track.clips[markerIndex].clip_in = Math.max(0, original.clip_in + range.sourceOffsetDelta * original.speed);
+      }
+      if (trimEdge === 'start' && track.type === 'particle' && originalTrack.type === 'particle') {
+        const original = originalTrack.clips[markerIndex];
+        track.clips[markerIndex].clip_in = Math.max(0, original.clip_in + range.sourceOffsetDelta);
+      }
+      if (track.type === 'camera') {
+        const original = originalTrack.type === 'camera' ? originalTrack.clips[markerIndex] : null;
+        track.clips[markerIndex].blend_in = trimEdge === 'start' && original
+          ? trimSequencerCameraBlendIn(original.blend_in, clip.duration, range.sourceOffsetDelta)
+          : Math.min(track.clips[markerIndex].blend_in, clip.duration);
+      }
+      replaceAsset(next);
+      setSnapGuide(
+        magnetic.guideTime != null
+        && Math.abs(movedEdge - magnetic.guideTime) < 0.5 / asset.frame_rate
+          ? magnetic.guideTime
+          : null,
+      );
+      setError(null);
     };
     const finish = (finishEvent: PointerEvent) => {
       if (finishEvent.pointerId !== pointer) return;
       window.removeEventListener('pointermove', move);
       window.removeEventListener('pointerup', finish);
       window.removeEventListener('pointercancel', finish);
+      setSnapGuide(null);
       if (finishEvent.type === 'pointercancel') {
         if (historyToken && props.undoService.isUndoTop(historyToken)) {
           props.undoService.restoreCheckpoint(historyCheckpoint);
@@ -1092,10 +1132,10 @@ export function Sequencer(props: SequencerProps) {
         applySelection(selectionBeforeDrag, selectedItemsBeforeDrag);
         replaceTime(timeBeforeDrag);
       } else if (
-        dragItems.length > 1
-        && historyToken
+        historyToken
         && props.undoService.isUndoTop(historyToken)
-        && Math.abs(groupDelta) < 0.5 / asset.frame_rate
+        && assetRef.current
+        && JSON.stringify(assetRef.current) === JSON.stringify(asset)
       ) {
         props.undoService.restoreCheckpoint(historyCheckpoint);
       }
@@ -1386,6 +1426,16 @@ export function Sequencer(props: SequencerProps) {
       viewport.scrollLeft = Math.max(0, timeRatio * nextLaneWidth - anchor);
     });
   };
+  const toggleSnapping = () => {
+    const next = !snapping;
+    setSnapping(next);
+    if (!next) setSnapGuide(null);
+    try {
+      localStorage.setItem(SEQUENCER_SNAPPING_KEY, next ? '1' : '0');
+    } catch {
+      /* ignore unavailable storage */
+    }
+  };
 
   return (
     <div
@@ -1509,6 +1559,7 @@ export function Sequencer(props: SequencerProps) {
           <button type="button" aria-label="Paste at playhead" title="Paste at playhead (Ctrl+V)" disabled={!clipboard} onClick={() => pasteItem(clipboard, displayTime)}><ClipboardPaste size={13} /></button>
           <button type="button" aria-label="Delete selected items" title="Delete selected items (Delete)" disabled={selectedItems.length === 0} onClick={() => deleteSelection()}><Trash2 size={13} /></button>
           <button type="button" aria-label="Ripple delete selected clips" title="Ripple Delete per affected track (Shift+Delete)" disabled={!rippleEligible} onClick={() => deleteSelection(true)}><ChevronsLeft size={13} /></button>
+          <button type="button" className={snapping ? 'active' : ''} aria-pressed={snapping} aria-label="Toggle Timeline snapping" title={`Magnetic snapping ${snapping ? 'on' : 'off'} (${SEQUENCER_SNAP_THRESHOLD_PX}px)`} onClick={toggleSnapping}><Magnet size={13} /></button>
         </div>
         <label className="timeline-time">Time <input type="number" min={0} max={asset.duration} step={1 / asset.frame_rate} value={Number(displayTime.toFixed(4))} onChange={(event) => {
           const next = snapTimelineAssetTime(Number(event.target.value), asset);
@@ -1565,6 +1616,7 @@ export function Sequencer(props: SequencerProps) {
               scrub(snapTimelineAssetTime((event.clientX - bounds.left) / bounds.width * asset.duration, asset));
             }}>
               {ticks.map((tick) => <span key={tick.time} style={{ left: `${tick.position * 100}%` }}>{tick.time.toFixed(tick.time < 1 ? 2 : 1)}</span>)}
+              {snapGuide != null && <i className="sequencer-snap-guide ruler-guide" style={{ left: `${snapGuide / asset.duration * 100}%` }}><b>{snapGuide.toFixed(3)}s</b></i>}
               <i className="sequencer-playhead" style={{ left: `${displayTime / asset.duration * 100}%` }} />
             </div>
           </div>
@@ -1677,6 +1729,7 @@ export function Sequencer(props: SequencerProps) {
                     onPointerDown={(event) => startMarkerDrag(event, trackIndex, clipIndex)}
                   ><i className="sequencer-camera-blend" style={{ width: `${clip.blend_in / clip.duration * 100}%` }} />C {clip.target.split('/').at(-1)}</button>
                 ))}
+                {snapGuide != null && <i className="sequencer-snap-guide" style={{ left: `${snapGuide / asset.duration * 100}%` }} />}
                 <i className="sequencer-playhead" style={{ left: `${displayTime / asset.duration * 100}%` }} />
               </div>
             </div>

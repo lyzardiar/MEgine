@@ -17,6 +17,7 @@ import {
   resolveSequencerPasteTrack,
   selectSequencerItem,
   sequencerTicks,
+  snapSequencerItemsDelta,
   trimSequencerCameraBlendIn,
   trimSequencerClip,
 } from '../src/sequencerEditing.ts';
@@ -252,6 +253,43 @@ test('Sequencer group movement shares one collision bound and rejects locked tra
   ], 1);
   assert.equal(locked.ok, false);
   assert.match(locked.error, /locked/);
+});
+
+test('Sequencer magnetic snapping aligns selected edges without using selected items as targets', () => {
+  const asset = timeline();
+  asset.tracks[1].clips.push({
+    start: 4, duration: 1, clip: 'Assets/b.ogg', clip_in: 0, volume: 1, pitch: 1, looped: false,
+  });
+  assert.deepEqual(
+    snapSequencerItemsDelta(asset, [{ track: 1, marker: 0 }], 0.86, 7, 0.15),
+    { delta: 1, guideTime: 4 },
+  );
+  assert.deepEqual(
+    snapSequencerItemsDelta(asset, [{ track: 1, marker: 0 }], 0.86, 7, 0.05),
+    { delta: 0.9, guideTime: null },
+  );
+
+  asset.tracks[1].clips[1].start = 3.1;
+  asset.tracks[0].markers = [];
+  assert.deepEqual(
+    snapSequencerItemsDelta(asset, [
+      { track: 1, marker: 0 },
+      { track: 1, marker: 1 },
+    ], 0.06, 7, 0.15),
+    { delta: 0.1, guideTime: null },
+  );
+});
+
+test('Sequencer magnetic snapping supports playhead targets and individual trim edges', () => {
+  const asset = timeline();
+  assert.deepEqual(
+    snapSequencerItemsDelta(asset, [{ track: 1, marker: 0 }], 0.86, 2, 0.15, 'start'),
+    { delta: 1, guideTime: 2 },
+  );
+  assert.deepEqual(
+    snapSequencerItemsDelta(asset, [{ track: 1, marker: 0 }], -0.86, 2, 0.15, 'end'),
+    { delta: -1, guideTime: 2 },
+  );
 });
 
 test('Sequencer start trimming cannot seek before the source asset', () => {

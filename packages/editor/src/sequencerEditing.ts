@@ -58,6 +58,8 @@ export type SequencerDeleteResult =
 export type SequencerMoveResult =
   | { ok: true; asset: TimelineAsset; delta: number }
   | { ok: false; error: string };
+export type SequencerSnapEdge = SequencerTrimEdge | 'both';
+export type SequencerSnapResult = { delta: number; guideTime: number | null };
 export type SequencerCopyResult =
   | { ok: true; clipboard: SequencerClipboard }
   | { ok: false; error: string };
@@ -134,6 +136,84 @@ function snap(value: number, frameRate: number): number {
 
 function clamp(value: number, minimum: number, maximum: number): number {
   return Math.max(minimum, Math.min(maximum, value));
+}
+
+export function snapSequencerItemsDelta(
+  asset: TimelineAsset,
+  selections: readonly SequencerItemSelection[],
+  requestedDelta: number,
+  playheadTime: number,
+  thresholdSeconds: number,
+  edge: SequencerSnapEdge = 'both',
+): SequencerSnapResult {
+  const baseDelta = snap(Number.isFinite(requestedDelta) ? requestedDelta : 0, asset.frame_rate);
+  const threshold = Number.isFinite(thresholdSeconds) ? Math.max(0, thresholdSeconds) : 0;
+  if (threshold <= 0) return { delta: baseDelta, guideTime: null };
+
+  const selected = new Set<string>();
+  for (const selection of selections) {
+    if (!Number.isInteger(selection.track) || !Number.isInteger(selection.marker)) continue;
+    selected.add(`${selection.track}:${selection.marker}`);
+  }
+  const movingEdges: number[] = [];
+  const candidates = new Set<number>();
+  if (Number.isFinite(playheadTime)) candidates.add(snap(clamp(playheadTime, 0, asset.duration), asset.frame_rate));
+  candidates.add(0);
+  candidates.add(snap(asset.duration, asset.frame_rate));
+
+  asset.tracks.forEach((track, trackIndex) => {
+    if (track.type === 'signal') {
+      track.markers.forEach((marker, markerIndex) => {
+        const time = snap(marker.time, asset.frame_rate);
+        if (selected.has(`${trackIndex}:${markerIndex}`)) movingEdges.push(time);
+        else candidates.add(time);
+      });
+      return;
+    }
+    track.clips.forEach((clip, markerIndex) => {
+      const start = snap(clip.start, asset.frame_rate);
+      const end = snap(clip.start + clip.duration, asset.frame_rate);
+      if (selected.has(`${trackIndex}:${markerIndex}`)) {
+        if (edge !== 'end') movingEdges.push(start);
+        if (edge !== 'start') movingEdges.push(end);
+      } else {
+        candidates.add(start);
+        candidates.add(end);
+      }
+    });
+  });
+
+  let bestDistance = Number.POSITIVE_INFINITY;
+  let bestCorrection = 0;
+  let guideTime: number | null = null;
+  const orderedCandidates = [...candidates].sort((left, right) => left - right);
+  for (const movingEdge of movingEdges) {
+    const movedTime = snap(movingEdge + baseDelta, asset.frame_rate);
+    let low = 0;
+    let high = orderedCandidates.length;
+    while (low < high) {
+      const middle = (low + high) >>> 1;
+      if (orderedCandidates[middle] < movedTime) low = middle + 1;
+      else high = middle;
+    }
+    for (const index of [low - 1, low]) {
+      const candidate = orderedCandidates[index];
+      if (candidate == null) continue;
+      const correction = candidate - movedTime;
+      const distance = Math.abs(correction);
+      if (
+        distance > threshold + 1e-9
+        || distance > bestDistance + 1e-9
+        || (Math.abs(distance - bestDistance) <= 1e-9 && guideTime != null && candidate >= guideTime)
+      ) continue;
+      bestDistance = distance;
+      bestCorrection = correction;
+      guideTime = candidate;
+    }
+  }
+  return guideTime == null
+    ? { delta: baseDelta, guideTime: null }
+    : { delta: snap(baseDelta + bestCorrection, asset.frame_rate), guideTime };
 }
 
 function neighbors(

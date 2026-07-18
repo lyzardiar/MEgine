@@ -3832,6 +3832,31 @@ button.sequencer-track-header:hover { background: #343b42; }
   border-top: 6px solid #54b9e8;
 }
 
+.sequencer-snap-guide {
+  position: absolute;
+  z-index: 5;
+  top: 0;
+  bottom: 0;
+  width: 1px;
+  background: #f2c84b;
+  box-shadow: 0 0 0 1px #15120a99;
+  pointer-events: none;
+}
+
+.sequencer-snap-guide.ruler-guide b {
+  position: absolute;
+  z-index: 1;
+  top: 8px;
+  left: 4px;
+  padding: 1px 3px;
+  border: 1px solid #6f5b20;
+  background: #2c281a;
+  color: #f5dc82;
+  font: 9px var(--u-mono);
+  font-weight: 400;
+  white-space: nowrap;
+}
+
 .sequencer-marquee {
   position: fixed;
   z-index: 100;
