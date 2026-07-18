@@ -36,6 +36,14 @@ export interface DirectionalLight {
   shadowDistance: number;
 }
 
+export interface EnvironmentLight {
+  skyColor: [number, number, number, number];
+  equatorColor: [number, number, number, number];
+  groundColor: [number, number, number, number];
+  diffuseIntensity: number;
+  specularIntensity: number;
+}
+
 export interface PointLight {
   color: [number, number, number, number];
   intensity: number;
@@ -542,6 +550,7 @@ export type ComponentName =
   | 'Transform2D'
   | 'Camera3D'
   | 'DirectionalLight'
+  | 'EnvironmentLight'
   | 'PointLight'
   | 'SpotLight'
   | 'Camera2D'
@@ -601,6 +610,7 @@ export const COMPONENT_NAMES = [
   'Transform2D',
   'Camera3D',
   'DirectionalLight',
+  'EnvironmentLight',
   'PointLight',
   'SpotLight',
   'Camera2D',

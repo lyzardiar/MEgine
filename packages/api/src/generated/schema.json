@@ -648,6 +648,42 @@
     "properties": {},
     "type": "object"
   },
+  "EnvironmentLight": {
+    "properties": {
+      "diffuse_intensity": {
+        "type": "number"
+      },
+      "equator_color": {
+        "items": {
+          "type": "number"
+        },
+        "type": "array"
+      },
+      "ground_color": {
+        "items": {
+          "type": "number"
+        },
+        "type": "array"
+      },
+      "sky_color": {
+        "items": {
+          "type": "number"
+        },
+        "type": "array"
+      },
+      "specular_intensity": {
+        "type": "number"
+      }
+    },
+    "required": [
+      "sky_color",
+      "equator_color",
+      "ground_color",
+      "diffuse_intensity",
+      "specular_intensity"
+    ],
+    "type": "object"
+  },
   "Grid": {
     "properties": {
       "cell_gap": {

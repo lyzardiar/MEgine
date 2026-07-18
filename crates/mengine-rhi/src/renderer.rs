@@ -190,9 +190,30 @@ pub struct SpotLightData {
     pub outer_angle_degrees: f32,
 }
 
+#[derive(Clone, Copy, Debug)]
+pub struct EnvironmentLightData {
+    pub sky_color: [f32; 3],
+    pub equator_color: [f32; 3],
+    pub ground_color: [f32; 3],
+    pub diffuse_intensity: f32,
+    pub specular_intensity: f32,
+}
+
+impl Default for EnvironmentLightData {
+    fn default() -> Self {
+        Self {
+            sky_color: [0.18, 0.28, 0.5],
+            equator_color: [0.12, 0.14, 0.18],
+            ground_color: [0.035, 0.04, 0.05],
+            diffuse_intensity: 1.0,
+            specular_intensity: 1.0,
+        }
+    }
+}
+
 #[derive(Clone, Debug)]
 pub struct FrameLighting {
-    pub ambient: [f32; 3],
+    pub environment: EnvironmentLightData,
     pub directional: Option<DirectionalLightData>,
     pub points: Vec<PointLightData>,
     pub spots: Vec<SpotLightData>,
@@ -201,7 +222,7 @@ pub struct FrameLighting {
 impl Default for FrameLighting {
     fn default() -> Self {
         Self {
-            ambient: [0.08, 0.09, 0.12],
+            environment: EnvironmentLightData::default(),
             directional: Some(DirectionalLightData {
                 direction: Vec3::new(-0.4, -1.0, -0.3).normalize(),
                 color: [1.0, 1.0, 0.95],
@@ -223,7 +244,10 @@ impl Default for FrameLighting {
 struct GlobalUniforms {
     view_proj: [[f32; 4]; 4],
     camera_position: [f32; 4],
-    ambient: [f32; 4],
+    environment_sky: [f32; 4],
+    environment_equator: [f32; 4],
+    environment_ground: [f32; 4],
+    environment_params: [f32; 4],
     directional_direction: [f32; 4],
     directional_color: [f32; 4],
     point_positions: [[f32; 4]; MAX_POINT_LIGHTS],
@@ -1237,11 +1261,29 @@ fn make_global_uniforms(camera: FrameCamera, lighting: &FrameLighting) -> Global
     GlobalUniforms {
         view_proj: (camera.proj * camera.view).to_cols_array_2d(),
         camera_position: [camera.position.x, camera.position.y, camera.position.z, 1.0],
-        ambient: [
-            lighting.ambient[0],
-            lighting.ambient[1],
-            lighting.ambient[2],
+        environment_sky: [
+            lighting.environment.sky_color[0].max(0.0),
+            lighting.environment.sky_color[1].max(0.0),
+            lighting.environment.sky_color[2].max(0.0),
             1.0,
+        ],
+        environment_equator: [
+            lighting.environment.equator_color[0].max(0.0),
+            lighting.environment.equator_color[1].max(0.0),
+            lighting.environment.equator_color[2].max(0.0),
+            1.0,
+        ],
+        environment_ground: [
+            lighting.environment.ground_color[0].max(0.0),
+            lighting.environment.ground_color[1].max(0.0),
+            lighting.environment.ground_color[2].max(0.0),
+            1.0,
+        ],
+        environment_params: [
+            lighting.environment.diffuse_intensity.max(0.0),
+            lighting.environment.specular_intensity.max(0.0),
+            0.0,
+            0.0,
         ],
         directional_direction,
         directional_color,
@@ -1905,7 +1947,10 @@ const MAX_SPOT_LIGHTS: u32 = 4u;
 struct GlobalUniforms {
     view_proj: mat4x4<f32>,
     camera_position: vec4<f32>,
-    ambient: vec4<f32>,
+    environment_sky: vec4<f32>,
+    environment_equator: vec4<f32>,
+    environment_ground: vec4<f32>,
+    environment_params: vec4<f32>,
     directional_direction: vec4<f32>,
     directional_color: vec4<f32>,
     point_positions: array<vec4<f32>, 4>,
@@ -1999,6 +2044,50 @@ fn geometry_smith(n: vec3<f32>, v: vec3<f32>, l: vec3<f32>, roughness: f32) -> f
 fn fresnel_schlick(cos_theta: f32, f0: vec3<f32>) -> vec3<f32> {
     let grazing = pow(clamp(1.0 - cos_theta, 0.0, 1.0), 5.0);
     return f0 + (vec3<f32>(1.0) - f0) * grazing;
+}
+
+fn fresnel_schlick_roughness(
+    cos_theta: f32,
+    f0: vec3<f32>,
+    roughness: f32,
+) -> vec3<f32> {
+    let grazing_color = max(vec3<f32>(1.0 - roughness), f0);
+    let grazing = pow(clamp(1.0 - cos_theta, 0.0, 1.0), 5.0);
+    return f0 + (grazing_color - f0) * grazing;
+}
+
+fn environment_radiance(direction: vec3<f32>) -> vec3<f32> {
+    let vertical = clamp(direction.y, -1.0, 1.0);
+    if vertical >= 0.0 {
+        return mix(frame.environment_equator.rgb, frame.environment_sky.rgb, vertical);
+    }
+    return mix(frame.environment_equator.rgb, frame.environment_ground.rgb, -vertical);
+}
+
+fn environment_contribution(
+    n: vec3<f32>,
+    v: vec3<f32>,
+    base_color: vec3<f32>,
+    metallic: f32,
+    roughness: f32,
+    occlusion: f32,
+) -> vec3<f32> {
+    let f0 = mix(vec3<f32>(0.04), base_color, metallic);
+    let ndv = max(dot(n, v), 0.0);
+    let fresnel = fresnel_schlick_roughness(ndv, f0, roughness);
+    let diffuse_weight = (vec3<f32>(1.0) - fresnel) * (1.0 - metallic);
+    let diffuse = environment_radiance(n)
+        * diffuse_weight
+        * base_color
+        * frame.environment_params.x;
+    let reflection = reflect(-v, n);
+    let blurred_reflection = normalize(mix(reflection, n, roughness * roughness));
+    let roughness_attenuation = mix(1.0, 0.35, roughness);
+    let specular = environment_radiance(blurred_reflection)
+        * fresnel
+        * roughness_attenuation
+        * frame.environment_params.y;
+    return (diffuse + specular) * occlusion;
 }
 
 fn light_contribution(
@@ -2150,10 +2239,7 @@ fn fs_main(i: VsOut, @builtin(front_facing) front_facing: bool) -> @location(0) 
     }
 
     let v = normalize(frame.camera_position.xyz - i.world_position);
-    let ambient_f0 = mix(vec3<f32>(0.04), base_color, metallic);
-    let ambient_diffuse = base_color * (1.0 - metallic);
-    let ambient_specular = ambient_f0 * (1.0 - roughness * 0.5);
-    var color = frame.ambient.rgb * (ambient_diffuse + ambient_specular) * occlusion;
+    var color = environment_contribution(n, v, base_color, metallic, roughness, occlusion);
 
     if frame.light_counts.x > 0u {
         let l = normalize(-frame.directional_direction.xyz);
@@ -2240,6 +2326,7 @@ mod tests {
             "fn distribution_ggx",
             "fn geometry_smith",
             "fn fresnel_schlick",
+            "fn environment_contribution",
             "diffuse_weight = (vec3<f32>(1.0) - fresnel) * (1.0 - metallic)",
         ] {
             assert!(FORWARD_WGSL.contains(required), "missing {required}");

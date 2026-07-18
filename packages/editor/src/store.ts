@@ -1785,6 +1785,23 @@ export function createEditorStore() {
         true,
       );
     },
+    spawnEnvironmentLight() {
+      spawnAt(
+        'Environment Light',
+        {
+          Transform: { position: [0, 0, 0], rotation: [0, 0, 0, 1], scale: [1, 1, 1] },
+          EnvironmentLight: {
+            sky_color: [0.18, 0.28, 0.5, 1],
+            equator_color: [0.12, 0.14, 0.18, 1],
+            ground_color: [0.035, 0.04, 0.05, 1],
+            diffuse_intensity: 1,
+            specular_intensity: 1,
+          },
+        },
+        null,
+        true,
+      );
+    },
     spawnPointLight() {
       spawnAt(
         'Point Light',

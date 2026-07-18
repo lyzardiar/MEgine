@@ -35,6 +35,15 @@ component DirectionalLight {
   shadow_distance:    float  = 30
 }
 
+/// Scene-wide analytic environment lighting. The first active instance is used.
+component EnvironmentLight {
+  sky_color:          float4 = [0.18, 0.28, 0.5, 1]
+  equator_color:      float4 = [0.12, 0.14, 0.18, 1]
+  ground_color:       float4 = [0.035, 0.04, 0.05, 1]
+  diffuse_intensity:  float  = 1
+  specular_intensity: float  = 1
+}
+
 component PointLight {
   color:     float4 = [1, 1, 1, 1]
   intensity: float  = 8

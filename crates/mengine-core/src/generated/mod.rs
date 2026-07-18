@@ -175,6 +175,43 @@ impl Component for DirectionalLight {
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
 #[serde(default)]
+pub struct EnvironmentLight {
+    pub sky_color: [f32; 4],
+    pub equator_color: [f32; 4],
+    pub ground_color: [f32; 4],
+    pub diffuse_intensity: f32,
+    pub specular_intensity: f32,
+}
+
+impl Default for EnvironmentLight {
+    fn default() -> Self {
+        Self {
+            sky_color: [0.18, 0.28, 0.5, 1.0],
+            equator_color: [0.12, 0.14, 0.18, 1.0],
+            ground_color: [0.035, 0.04, 0.05, 1.0],
+            diffuse_intensity: 1.0,
+            specular_intensity: 1.0,
+        }
+    }
+}
+
+impl Component for EnvironmentLight {
+    fn type_name() -> &'static str {
+        "EnvironmentLight"
+    }
+    fn as_any(&self) -> &dyn std::any::Any {
+        self
+    }
+    fn as_any_mut(&mut self) -> &mut dyn std::any::Any {
+        self
+    }
+    fn to_value(&self) -> serde_json::Value {
+        serde_json::to_value(self).unwrap_or(serde_json::Value::Null)
+    }
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize)]
+#[serde(default)]
 pub struct PointLight {
     pub color: [f32; 4],
     pub intensity: f32,
@@ -2254,6 +2291,8 @@ pub fn component_from_value(
             .map(|component| Some(Box::new(component) as ComponentBox)),
         "DirectionalLight" => serde_json::from_value::<DirectionalLight>(value)
             .map(|component| Some(Box::new(component) as ComponentBox)),
+        "EnvironmentLight" => serde_json::from_value::<EnvironmentLight>(value)
+            .map(|component| Some(Box::new(component) as ComponentBox)),
         "PointLight" => serde_json::from_value::<PointLight>(value)
             .map(|component| Some(Box::new(component) as ComponentBox)),
         "SpotLight" => serde_json::from_value::<SpotLight>(value)
@@ -2369,6 +2408,7 @@ pub mod meta {
         "Transform2D",
         "Camera3D",
         "DirectionalLight",
+        "EnvironmentLight",
         "PointLight",
         "SpotLight",
         "Camera2D",

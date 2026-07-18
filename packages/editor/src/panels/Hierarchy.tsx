@@ -22,6 +22,7 @@ function iconFor(e: EntityRec) {
   if (c.Image) return '▭';
   if (c.Camera3D || c.Camera2D) return '🎥';
   if (c.DirectionalLight) return '💡';
+  if (c.EnvironmentLight) return '\u25c9';
   if (c.MeshRenderer) return '🧊';
   if (c.SpriteRenderer) return '🎴';
   if (c.AnimatedSprite2D) return '🎞';

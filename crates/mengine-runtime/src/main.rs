@@ -6,16 +6,17 @@ use glam::{Quat, Vec3, Vec4};
 use mengine_core::command::WorldCommand;
 use mengine_core::generated::{
     AnimatedSprite2D, AnimationPlayer, Animator, AudioSource, Camera2D, Camera3D, DirectionalLight,
-    Dropdown, InputField, ListView, MeshRenderer, ParticleEmitter2D, ParticleEmitter3D,
-    PbrMaterial, PointLight, ScrollView, Scrollbar, Slider, SpotLight, SpriteRenderer, TabView,
-    Tilemap, Toggle, Transform,
+    Dropdown, EnvironmentLight, InputField, ListView, MeshRenderer, ParticleEmitter2D,
+    ParticleEmitter3D, PbrMaterial, PointLight, ScrollView, Scrollbar, Slider, SpotLight,
+    SpriteRenderer, TabView, Tilemap, Toggle, Transform,
 };
 use mengine_core::{Entity, TransformHierarchy, World};
 use mengine_physics::{PhysicsWorld, PhysicsWorld2D};
 use mengine_platform::InputState;
 use mengine_rhi::{
-    look_at, orthographic, perspective, DirectionalLightData, FrameCamera, FrameLighting,
-    PointLightData, RenderMaterial, RenderObject, Renderer, SpotLightData, UiBatchPlan,
+    look_at, orthographic, perspective, DirectionalLightData, EnvironmentLightData, FrameCamera,
+    FrameLighting, PointLightData, RenderMaterial, RenderObject, Renderer, SpotLightData,
+    UiBatchPlan,
 };
 use mengine_runtime::animation::{infer_project_root_from_scene, AnimationRuntime};
 use mengine_runtime::audio::AudioRuntime;
@@ -1569,15 +1570,40 @@ fn collect_objects(
 
 fn collect_lighting(world: &World, hierarchy: &TransformHierarchy) -> FrameLighting {
     let mut frame = FrameLighting {
-        ambient: [0.055, 0.06, 0.08],
+        environment: EnvironmentLightData::default(),
         directional: None,
         points: Vec::new(),
         spots: Vec::new(),
     };
+    let mut environment_found = false;
     for entity in world.iter_entities() {
         let Some(transform) = hierarchy.get(entity) else {
             continue;
         };
+        if !environment_found {
+            if let Some(environment) = world.get_component::<EnvironmentLight>(entity) {
+                frame.environment = EnvironmentLightData {
+                    sky_color: [
+                        environment.sky_color[0],
+                        environment.sky_color[1],
+                        environment.sky_color[2],
+                    ],
+                    equator_color: [
+                        environment.equator_color[0],
+                        environment.equator_color[1],
+                        environment.equator_color[2],
+                    ],
+                    ground_color: [
+                        environment.ground_color[0],
+                        environment.ground_color[1],
+                        environment.ground_color[2],
+                    ],
+                    diffuse_intensity: environment.diffuse_intensity,
+                    specular_intensity: environment.specular_intensity,
+                };
+                environment_found = true;
+            }
+        }
         let rotation = transform.rotation;
         let direction = rotation * -Vec3::Z;
         if frame.directional.is_none() {
@@ -2027,6 +2053,14 @@ mod tests {
         let mut world = World::new();
         for components in [
             json!({
+                "Transform": { "position": [0, 0, 0], "rotation": [0, 0, 0, 1], "scale": [1, 1, 1] },
+                "EnvironmentLight": {
+                    "sky_color": [0.2, 0.4, 0.8, 1],
+                    "diffuse_intensity": 1.5,
+                    "specular_intensity": 2
+                }
+            }),
+            json!({
                 "Transform": { "position": [0, 2, 0], "rotation": [0, 0, 0, 1], "scale": [1, 1, 1] },
                 "DirectionalLight": { "intensity": 2 }
             }),
@@ -2047,6 +2081,9 @@ mod tests {
         world.commit();
         let hierarchy = TransformHierarchy::build(&world);
         let lights = collect_lighting(&world, &hierarchy);
+        assert_eq!(lights.environment.sky_color, [0.2, 0.4, 0.8]);
+        assert_eq!(lights.environment.diffuse_intensity, 1.5);
+        assert_eq!(lights.environment.specular_intensity, 2.0);
         assert_eq!(lights.directional.unwrap().intensity, 2.0);
         assert_eq!(lights.points[0].range, 7.0);
         assert_eq!(lights.spots[0].outer_angle_degrees, 55.0);

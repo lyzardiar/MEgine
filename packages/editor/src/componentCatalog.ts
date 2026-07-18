@@ -51,6 +51,18 @@ const BUILTIN_CATALOG: ComponentCatalogEntry[] = [
     }),
   },
   {
+    type: 'EnvironmentLight',
+    label: 'Environment Light',
+    description: 'Scene-wide sky, equator, and ground indirect lighting',
+    create: () => ({
+      sky_color: [0.18, 0.28, 0.5, 1],
+      equator_color: [0.12, 0.14, 0.18, 1],
+      ground_color: [0.035, 0.04, 0.05, 1],
+      diffuse_intensity: 1,
+      specular_intensity: 1,
+    }),
+  },
+  {
     type: 'PointLight',
     label: 'Point Light',
     description: 'Omnidirectional local light with intensity and range',

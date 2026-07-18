@@ -390,6 +390,7 @@ fn canonical_component_name(component: &str) -> &str {
         "Camera3D" | "camera3D" | "camera3d" => "Camera3D",
         "Camera2D" | "camera2D" | "camera2d" => "Camera2D",
         "DirectionalLight" | "directionalLight" => "DirectionalLight",
+        "EnvironmentLight" | "environmentLight" => "EnvironmentLight",
         "PointLight" | "pointLight" => "PointLight",
         "SpotLight" | "spotLight" => "SpotLight",
         "MeshRenderer" | "meshRenderer" => "MeshRenderer",

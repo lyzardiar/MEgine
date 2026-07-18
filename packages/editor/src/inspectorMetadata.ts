@@ -116,6 +116,10 @@ export const BUILTIN_INSPECTOR_FIELDS: Readonly<
       visibleWhen: { field: 'cast_shadows', equals: true },
     },
   },
+  EnvironmentLight: {
+    diffuse_intensity: { label: 'Diffuse Intensity', min: 0, step: 0.05 },
+    specular_intensity: { label: 'Specular Intensity', min: 0, step: 0.05 },
+  },
   PointLight: {
     intensity: { min: 0, step: 0.1 },
     range: { min: 0, step: 0.1 },
