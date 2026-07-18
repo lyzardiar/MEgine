@@ -4,6 +4,7 @@ import {
   useRef,
   useState,
   type CSSProperties,
+  type FocusEvent as ReactFocusEvent,
   type PointerEvent as ReactPointerEvent,
 } from 'react';
 import type { WorldSnapshotView } from '@mengine/api';
@@ -120,6 +121,11 @@ type HistorySnapshot = {
   selection: Selection;
   time: number;
 };
+type InspectorEditTransaction = HistorySnapshot & {
+  undo: HistorySnapshot[];
+  redo: HistorySnapshot[];
+  historyRecorded: boolean;
+};
 type Draft = {
   asset: TimelineAsset;
   savedText: string;
@@ -128,6 +134,12 @@ type Draft = {
   undo: HistorySnapshot[];
   redo: HistorySnapshot[];
 };
+
+function isSequencerEditControl(target: EventTarget): target is HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement {
+  if (target instanceof HTMLSelectElement || target instanceof HTMLTextAreaElement) return true;
+  if (!(target instanceof HTMLInputElement)) return false;
+  return !['checkbox', 'radio', 'button', 'submit', 'reset'].includes(target.type);
+}
 
 export function Sequencer(props: SequencerProps) {
   const [asset, setAsset] = useState<TimelineAsset | null>(null);
@@ -145,11 +157,14 @@ export function Sequencer(props: SequencerProps) {
   const [, setHistoryEpoch] = useState(0);
   const loadedPath = useRef('');
   const drafts = useRef(new Map<string, Draft>());
+  const assetRef = useRef<TimelineAsset | null>(null);
   const undoHistory = useRef<HistorySnapshot[]>([]);
   const redoHistory = useRef<HistorySnapshot[]>([]);
+  const inspectorEdit = useRef<InspectorEditTransaction | null>(null);
   const frame = useRef<number | null>(null);
   const previousFrame = useRef<number | null>(null);
   const tracksViewport = useRef<HTMLDivElement | null>(null);
+  assetRef.current = asset;
 
   const fingerprint = useMemo(() => asset ? JSON.stringify(asset) : '', [asset]);
   const savedFingerprint = useMemo(() => {
@@ -199,6 +214,7 @@ export function Sequencer(props: SequencerProps) {
     setSelection(null);
     undoHistory.current = [];
     redoHistory.current = [];
+    inspectorEdit.current = null;
     setHistoryEpoch((value) => value + 1);
     setError(null);
     setPayloadInvalid(false);
@@ -261,7 +277,15 @@ export function Sequencer(props: SequencerProps) {
     const next = structuredClone(asset);
     mutate(next);
     if (JSON.stringify(next) === JSON.stringify(asset)) return;
-    pushHistory(asset);
+    const transaction = inspectorEdit.current;
+    if (transaction) {
+      if (!transaction.historyRecorded) {
+        pushHistory(transaction.asset, transaction.selection, transaction.time);
+        transaction.historyRecorded = true;
+      }
+    } else {
+      pushHistory(asset);
+    }
     setAsset(next);
   };
 
@@ -281,6 +305,30 @@ export function Sequencer(props: SequencerProps) {
     setTime(Math.max(0, Math.min(snapshot.asset.duration, snapshot.time)));
     setPayloadInvalid(false);
     setError(null);
+    setHistoryEpoch((value) => value + 1);
+  };
+
+  const beginInspectorEdit = (event: ReactFocusEvent<HTMLElement>) => {
+    if (!asset || inspectorEdit.current || !isSequencerEditControl(event.target)) return;
+    inspectorEdit.current = {
+      asset: structuredClone(asset),
+      selection: selection ? { ...selection } : null,
+      time,
+      undo: structuredClone(undoHistory.current),
+      redo: structuredClone(redoHistory.current),
+      historyRecorded: false,
+    };
+  };
+
+  const endInspectorEdit = (event: ReactFocusEvent<HTMLElement>) => {
+    if (!isSequencerEditControl(event.target)) return;
+    const transaction = inspectorEdit.current;
+    inspectorEdit.current = null;
+    if (!transaction?.historyRecorded) return;
+    const current = assetRef.current;
+    if (!current || JSON.stringify(current) !== JSON.stringify(transaction.asset)) return;
+    undoHistory.current = transaction.undo;
+    redoHistory.current = transaction.redo;
     setHistoryEpoch((value) => value + 1);
   };
 
@@ -994,7 +1042,7 @@ export function Sequencer(props: SequencerProps) {
           {asset.tracks.length === 0 && <div className="sequencer-empty-track">Add a Signal, Activation, Audio, or Animation Track to begin authoring.</div>}
         </div>
 
-        <aside className="sequencer-inspector">
+        <aside className="sequencer-inspector" onFocusCapture={beginInspectorEdit} onBlurCapture={endInspectorEdit}>
           <h3>{selectedMarker ? 'Signal Marker' : selectedActivationClip ? 'Activation Clip' : selectedAudioClip ? 'Audio Clip' : selectedAnimationClip ? 'Animation Clip' : selectedTrack ? `${selectedTrack.type === 'signal' ? 'Signal' : selectedTrack.type === 'activation' ? 'Activation' : selectedTrack.type === 'audio' ? 'Audio' : 'Animation'} Track` : 'Timeline Asset'}</h3>
           {!selectedTrack && <>
             <label>Name <input value={asset.name} onChange={(event) => update((draft) => { draft.name = event.target.value; })} /></label>

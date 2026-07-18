@@ -652,7 +652,7 @@ Referenced Only 是可用的单包裁剪基础，仍不等同于完整 Addressab
 - Signal、Activation、Audio、Animation 项支持 `Ctrl/Cmd+C/X/V/D` 复制、剪切、粘贴与重复。剪贴板深拷贝 Signal Payload 和 Clip 参数；粘贴优先使用选中的同类型轨道，其次使用源轨道 ID 或第一个兼容轨道，并按播放头/片段尾部寻找不重叠空隙，失败时给出明确诊断。
 - 工具栏新增方形 Undo、Redo、Copy、Paste 图标按钮与可访问标签；`Ctrl/Cmd+Z`、`Ctrl/Cmd+Shift+Z` 和 `Ctrl/Cmd+Y` 均可恢复历史。轨道空白区和标尺会聚焦 Sequencer，按钮焦点仍响应组合快捷键；输入框、文本域与下拉框保留系统文字编辑快捷键。
 
-该切片完成的是单项选择下的基础可逆编辑。成熟 Timeline 仍需多选 Clip/Signal、跨轨道组复制、框选、Ripple Edit、吸附参考线、轨道分组、命名剪贴板、跨 Timeline Undo 服务，以及与全编辑器统一 Undo 栈的事务合并；当前每次 Inspector `onChange` 仍可能形成多个细粒度历史项，后续应按 Focus/Blur 编辑手势合并。
+该切片完成的是单项选择下的基础可逆编辑。成熟 Timeline 仍需多选 Clip/Signal、跨轨道组复制、框选、Ripple Edit、吸附参考线、轨道分组、命名剪贴板、跨 Timeline Undo 服务，以及与全编辑器统一 Undo 栈的事务合并；Inspector 的 Focus/Blur 事务合并见第 46 节。
 
 ## 45. 2026-07-19 Timeline 持久化轨道锁定与排序
 
@@ -662,3 +662,11 @@ Referenced Only 是可用的单包裁剪基础，仍不等同于完整 Addressab
 - Track Inspector 提供带边界检查的 Move Up/Move Down，排序使用纯函数生成新资产并进入同一 Undo/Redo 历史；锁定、越界和目标失效均返回明确诊断。
 
 轨道锁定解决的是单轨内容保护，不等同于成熟组织系统。后续仍需 Track Group、折叠、组级 Mute/Lock、拖拽排序、多选、Ripple Edit、吸附参考线、通用 Binding Table，以及 Camera、Particle、Animator 和嵌套 Timeline 轨道。
+
+## 46. 2026-07-19 Timeline Inspector 编辑事务
+
+- Sequencer Inspector 的文本、数字、下拉框按一次 Focus 到 Blur 手势合并历史：首次真实变化记录原始资产、选择和播放头，持续输入只更新同一事务，不再每个字符占用一个 Undo 步骤。
+- 事务开始时保留原 Undo/Redo 栈；若用户通过系统文字 Undo 或重新输入把字段改回原值，Blur 时移除空事务并恢复原 Redo 分支。Checkbox 继续作为单次原子历史，Signal Payload 继续在 Blur 完成 JSON 校验后记录一次。
+- 资产切换会明确终止正在编辑的事务；保存不会清空历史，因此保存后仍能撤销，并依据序列化指纹正确恢复 Dirty 状态。
+
+该实现先收敛 Timeline 自有历史的手势粒度。成熟编辑器仍应把场景、材质、动画、Timeline 等资源编辑统一到带事务名称、资源路径和合并键的全局 Undo 服务，并在菜单中显示下一步可撤销/重做动作。
