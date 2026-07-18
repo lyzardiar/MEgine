@@ -4484,6 +4484,50 @@ button.sequencer-track-header:hover { background: #343b42; }
 
 .build-result strong { overflow-wrap: anywhere; color: #b8dfbc; }
 .build-result span { color: #7fa785; }
+.build-content-report {
+  display: grid;
+  gap: 5px;
+  margin-top: 5px;
+  padding-top: 6px;
+  border-top: 1px solid #355439;
+}
+.build-content-report h4 {
+  margin: 0;
+  color: #b8dfbc;
+  font-size: 10px;
+  font-weight: 600;
+}
+.build-content-table {
+  max-height: 130px;
+  overflow: auto;
+  border: 1px solid #355439;
+  background: #213124;
+}
+.build-content-table.largest { max-height: 210px; }
+.build-content-row {
+  display: grid;
+  min-height: 22px;
+  align-items: center;
+  grid-template-columns: minmax(0, 1fr) 74px 78px;
+  border-bottom: 1px solid #304b34;
+}
+.build-content-row:last-child { border-bottom: 0; }
+.build-content-row > * {
+  min-width: 0;
+  padding: 3px 5px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.build-content-row strong { font-family: var(--u-mono); font-size: 9px; font-weight: 500; }
+.build-content-row span { text-align: right; }
+.build-content-report small {
+  overflow: hidden;
+  color: #739079;
+  font: 9px/1.4 var(--u-mono);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
 .build-result pre {
   max-height: 120px;
   margin: 5px 0 0;

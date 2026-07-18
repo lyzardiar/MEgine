@@ -46,6 +46,41 @@ export interface BuildFileEntry {
   path: string;
   size: number;
   sha256: string;
+  category: BuildContentCategory;
+  includedBy: BuildInclusionReason[];
+}
+
+export type BuildContentCategory =
+  | 'runtime'
+  | 'scene'
+  | 'script'
+  | 'material'
+  | 'shader'
+  | 'texture'
+  | 'model'
+  | 'animation'
+  | 'timeline'
+  | 'audio'
+  | 'prefab'
+  | 'spine'
+  | 'settings'
+  | 'metadata'
+  | 'other';
+
+export interface BuildInclusionReason {
+  kind: string;
+  from: string;
+}
+
+export interface BuildContentCategorySummary {
+  category: BuildContentCategory;
+  files: number;
+  bytes: number;
+}
+
+export interface BuildContentSummary {
+  totalBytes: number;
+  categories: BuildContentCategorySummary[];
 }
 
 export interface PcBuildManifest {
@@ -58,6 +93,7 @@ export interface PcBuildManifest {
   contentHash: string;
   project: GameProjectManifest;
   assetValidation: BuildAssetValidation;
+  contentSummary: BuildContentSummary;
   files: BuildFileEntry[];
 }
 
@@ -265,6 +301,7 @@ interface PendingAsset {
 interface BuildDependencyScan {
   validation: BuildAssetValidation;
   files: string[];
+  inclusionReasons: Map<string, BuildInclusionReason[]>;
 }
 
 function jsonObject(value: unknown): JsonObject | null {
@@ -365,6 +402,7 @@ function scanBuildAssetDependencies(
   const queue: PendingAsset[] = [];
   const visited = new Map<string, string>();
   const processed = new Set<string>();
+  const inclusionReasons = new Map<string, BuildInclusionReason[]>();
   let references = 0;
 
   const enqueue = (
@@ -1018,6 +1056,16 @@ function scanBuildAssetDependencies(
     }
     const key = process.platform === 'win32' ? absolute.toLowerCase() : absolute;
     const processKey = pending.spriteSlice ? `${key}#${pending.spriteSlice.toLowerCase()}` : key;
+    const source = portablePath(relative(root, absolute));
+    const sourceKey = process.platform === 'win32' ? source.toLowerCase() : source;
+    const reasons = inclusionReasons.get(sourceKey) ?? [];
+    if (!reasons.some((reason) => reason.kind === pending.kind && reason.from === pending.from)) {
+      reasons.push({ kind: pending.kind, from: pending.from });
+      reasons.sort((left, right) => (
+        compareFileNames(left.kind, right.kind) || compareFileNames(left.from, right.from)
+      ));
+      inclusionReasons.set(sourceKey, reasons);
+    }
     if (processed.has(processKey)) continue;
     if (!existsSync(absolute) || !statSync(absolute).isFile()) {
       throw new Error(`missing ${pending.kind}: ${pending.path} (referenced by ${pending.from})`);
@@ -1054,6 +1102,7 @@ function scanBuildAssetDependencies(
       strippedEditorEntities: 0,
     },
     files: [...visited.values()].sort(compareFileNames),
+    inclusionReasons,
   };
 }
 
@@ -1298,7 +1347,13 @@ function sha256(path: string): string {
   return createHash('sha256').update(readFileSync(path)).digest('hex');
 }
 
-function collectFiles(root: string, current = root, output: BuildFileEntry[] = []): BuildFileEntry[] {
+type RawBuildFileEntry = Pick<BuildFileEntry, 'path' | 'size' | 'sha256'>;
+
+function collectFiles(
+  root: string,
+  current = root,
+  output: RawBuildFileEntry[] = [],
+): RawBuildFileEntry[] {
   for (const entry of readdirSync(current, { withFileTypes: true })
     .sort((left, right) => compareFileNames(left.name, right.name))) {
     const absolute = join(current, entry.name);
@@ -1315,6 +1370,88 @@ function collectFiles(root: string, current = root, output: BuildFileEntry[] = [
   return output;
 }
 
+function contentCategory(
+  path: string,
+  executable: string,
+  reasons: readonly BuildInclusionReason[],
+): BuildContentCategory {
+  const lower = path.toLowerCase();
+  if (path === executable) return 'runtime';
+  if (lower.startsWith('projectsettings/')) return 'settings';
+  if (reasons.some((reason) => reason.kind.toLowerCase().includes('spine'))) return 'spine';
+  if (lower.endsWith('.mscene')) return 'scene';
+  if (/\.(?:js|mjs|cjs|wasm)$/i.test(lower)) return 'script';
+  if (/\.(?:mmat|mat)$/i.test(lower)) return 'material';
+  if (/\.(?:mshader|wgsl)$/i.test(lower)) return 'shader';
+  if (/\.(?:png|jpe?g|webp|gif|bmp|tga|tiff?|hdr|exr)$/i.test(lower)) return 'texture';
+  if (/\.(?:gltf|glb)$/i.test(lower)
+    || lower.endsWith('.bin')
+      && reasons.some((reason) => reason.kind.toLowerCase().startsWith('gltf '))) return 'model';
+  if (/\.(?:manim|mcontroller|mavatar)$/i.test(lower)) return 'animation';
+  if (lower.endsWith('.mtimeline')) return 'timeline';
+  if (/\.(?:wav|ogg|mp3|flac)$/i.test(lower)) return 'audio';
+  if (lower.endsWith('.prefab')) return 'prefab';
+  if (/\.(?:atlas|skel)$/i.test(lower)) return 'spine';
+  if (lower.endsWith('.json')) return 'metadata';
+  return 'other';
+}
+
+function generatedInclusionReason(
+  path: string,
+  executable: string,
+  project: GameProjectManifest,
+): BuildInclusionReason {
+  if (path === executable) return { kind: 'player runtime', from: 'MEngine Build SDK' };
+  if (path === 'project.json') return { kind: 'project manifest', from: 'project.json' };
+  if (path === PLAYER_CONFIG_FILE) return { kind: 'player configuration', from: 'project.json' };
+  if (path.startsWith('ProjectSettings/')) return { kind: 'project settings', from: path };
+  if (project.startupScript === path) return { kind: 'compiled startup script', from: 'project.json' };
+  if (path.startsWith('Assets/') || path.startsWith('Scripts/')) {
+    return { kind: 'all assets mode', from: 'project.json' };
+  }
+  return { kind: 'generated build content', from: 'MEngine CLI' };
+}
+
+function describeBuildFiles(
+  rawFiles: readonly RawBuildFileEntry[],
+  executable: string,
+  project: GameProjectManifest,
+  dependencyScan: BuildDependencyScan,
+): BuildFileEntry[] {
+  return rawFiles.map((file) => {
+    const key = process.platform === 'win32' ? file.path.toLowerCase() : file.path;
+    const includedBy = dependencyScan.inclusionReasons.get(key)
+      ?? [generatedInclusionReason(file.path, executable, project)];
+    return {
+      ...file,
+      category: contentCategory(file.path, executable, includedBy),
+      includedBy,
+    };
+  });
+}
+
+export function summarizeBuildContent(files: readonly BuildFileEntry[]): BuildContentSummary {
+  const grouped = new Map<BuildContentCategory, BuildContentCategorySummary>();
+  let totalBytes = 0;
+  for (const file of files) {
+    totalBytes += file.size;
+    const summary = grouped.get(file.category) ?? {
+      category: file.category,
+      files: 0,
+      bytes: 0,
+    };
+    summary.files += 1;
+    summary.bytes += file.size;
+    grouped.set(file.category, summary);
+  }
+  return {
+    totalBytes,
+    categories: [...grouped.values()].sort((left, right) => (
+      right.bytes - left.bytes || compareFileNames(left.category, right.category)
+    )),
+  };
+}
+
 function u64LittleEndian(value: bigint): Buffer {
   const bytes = Buffer.allocUnsafe(8);
   bytes.writeBigUInt64LE(value);
@@ -1322,7 +1459,9 @@ function u64LittleEndian(value: bigint): Buffer {
 }
 
 /** Deterministic aggregate fingerprint for the complete packaged payload. */
-export function buildContentHash(files: readonly BuildFileEntry[]): string {
+export function buildContentHash(
+  files: readonly Pick<BuildFileEntry, 'path' | 'size' | 'sha256'>[],
+): string {
   const digest = createHash('sha256');
   for (const file of [...files].sort((left, right) => (
     Buffer.compare(Buffer.from(left.path, 'utf8'), Buffer.from(right.path, 'utf8'))
@@ -1498,7 +1637,12 @@ export function buildPcPackage(options: PcPackageOptions): PcBuildManifest {
       'utf8',
     );
 
-    const files = collectFiles(stageDir);
+    const files = describeBuildFiles(
+      collectFiles(stageDir),
+      executable,
+      packagedProject,
+      dependencyScan,
+    );
     const manifest: PcBuildManifest = {
       schemaVersion: 1,
       engineVersion: options.engineVersion,
@@ -1509,6 +1653,7 @@ export function buildPcPackage(options: PcPackageOptions): PcBuildManifest {
       contentHash: buildContentHash(files),
       project: packagedProject,
       assetValidation,
+      contentSummary: summarizeBuildContent(files),
       files,
     };
     writeFileSync(

@@ -3,7 +3,7 @@ use mengine_editor_host::{
     BuildAssetMode, EditorFailure, EditorRequest, EditorResult, ProjectSession, ProjectSnapshot,
 };
 use parking_lot::Mutex;
-use std::collections::HashSet;
+use std::collections::{BTreeMap, HashSet};
 use std::path::{Component, Path, PathBuf};
 use std::process::Command;
 use std::time::{SystemTime, UNIX_EPOCH};
@@ -100,8 +100,28 @@ struct BuildPlayerResult {
     omitted_asset_bytes: u64,
     stripped_editor_entities: usize,
     packaged_bytes: u64,
+    manifest_path: String,
+    content_categories: Vec<BuildContentCategoryResult>,
+    largest_files: Vec<BuildContentFileResult>,
     toolchain: String,
     log: String,
+}
+
+#[derive(Debug, serde::Serialize)]
+#[serde(rename_all = "camelCase")]
+struct BuildContentCategoryResult {
+    category: String,
+    files: usize,
+    bytes: u64,
+}
+
+#[derive(Debug, serde::Serialize)]
+#[serde(rename_all = "camelCase")]
+struct BuildContentFileResult {
+    path: String,
+    size: u64,
+    category: String,
+    included_by: Vec<String>,
 }
 
 #[derive(Debug, serde::Deserialize)]
@@ -434,16 +454,108 @@ fn run_player_build(
             "build manifest does not contain a valid assetValidation.assetMode".to_string()
         })?
         .to_owned();
-    let packaged_bytes = build_manifest
+    let manifest_files = build_manifest
         .get("files")
         .and_then(serde_json::Value::as_array)
-        .map(|files| {
-            files
-                .iter()
-                .filter_map(|file| file.get("size")?.as_u64())
-                .sum()
+        .ok_or_else(|| "build manifest does not contain files".to_string())?;
+    let mut category_totals = BTreeMap::<String, (usize, u64)>::new();
+    let mut largest_files = Vec::<BuildContentFileResult>::new();
+    for file in manifest_files {
+        let path = file
+            .get("path")
+            .and_then(serde_json::Value::as_str)
+            .filter(|value| !value.is_empty())
+            .ok_or_else(|| "build manifest contains a file without path".to_string())?;
+        let size = file
+            .get("size")
+            .and_then(serde_json::Value::as_u64)
+            .ok_or_else(|| format!("build manifest file {path} does not contain size"))?;
+        let category = file
+            .get("category")
+            .and_then(serde_json::Value::as_str)
+            .filter(|value| {
+                matches!(
+                    *value,
+                    "runtime"
+                        | "scene"
+                        | "script"
+                        | "material"
+                        | "shader"
+                        | "texture"
+                        | "model"
+                        | "animation"
+                        | "timeline"
+                        | "audio"
+                        | "prefab"
+                        | "spine"
+                        | "settings"
+                        | "metadata"
+                        | "other"
+                )
+            })
+            .ok_or_else(|| format!("build manifest file {path} has an invalid category"))?;
+        let reasons = file
+            .get("includedBy")
+            .and_then(serde_json::Value::as_array)
+            .ok_or_else(|| format!("build manifest file {path} does not contain includedBy"))?;
+        let mut included_by = Vec::new();
+        for reason in reasons {
+            let kind = reason
+                .get("kind")
+                .and_then(serde_json::Value::as_str)
+                .filter(|value| !value.is_empty())
+                .ok_or_else(|| {
+                    format!("build manifest file {path} has an invalid inclusion kind")
+                })?;
+            let from = reason
+                .get("from")
+                .and_then(serde_json::Value::as_str)
+                .filter(|value| !value.is_empty())
+                .ok_or_else(|| {
+                    format!("build manifest file {path} has an invalid inclusion source")
+                })?;
+            included_by.push(format!("{kind} <- {from}"));
+        }
+        if included_by.is_empty() {
+            return Err(format!(
+                "build manifest file {path} has no inclusion reason"
+            ));
+        }
+        let total = category_totals.entry(category.to_string()).or_default();
+        total.0 += 1;
+        total.1 += size;
+        largest_files.push(BuildContentFileResult {
+            path: path.to_string(),
+            size,
+            category: category.to_string(),
+            included_by,
+        });
+    }
+    let packaged_bytes = category_totals.values().map(|(_, bytes)| bytes).sum();
+    if manifest_u64("contentSummary", "totalBytes")? != packaged_bytes {
+        return Err("build manifest contentSummary.totalBytes does not match files".to_string());
+    }
+    let mut content_categories = category_totals
+        .into_iter()
+        .map(|(category, (files, bytes))| BuildContentCategoryResult {
+            category,
+            files,
+            bytes,
         })
-        .unwrap_or(0);
+        .collect::<Vec<_>>();
+    content_categories.sort_by(|left, right| {
+        right
+            .bytes
+            .cmp(&left.bytes)
+            .then_with(|| left.category.cmp(&right.category))
+    });
+    largest_files.sort_by(|left, right| {
+        right
+            .size
+            .cmp(&left.size)
+            .then_with(|| left.path.cmp(&right.path))
+    });
+    largest_files.truncate(20);
     Ok(BuildPlayerResult {
         output_dir: output_dir.to_string_lossy().into_owned(),
         executable: output_dir.join(executable).to_string_lossy().into_owned(),
@@ -461,6 +573,9 @@ fn run_player_build(
         omitted_asset_bytes: manifest_u64("assetValidation", "omittedAssetBytes")?,
         stripped_editor_entities: manifest_count("assetValidation", "strippedEditorEntities")?,
         packaged_bytes,
+        manifest_path: build_manifest_path.to_string_lossy().into_owned(),
+        content_categories,
+        largest_files,
         toolchain,
         log: String::from_utf8_lossy(&output.stdout).trim().to_owned(),
     })
@@ -1745,6 +1860,12 @@ mod tests {
         assert_eq!(result.omitted_asset_bytes, 13);
         assert_eq!(result.stripped_editor_entities, 2);
         assert!(result.packaged_bytes > 0);
+        assert!(Path::new(&result.manifest_path).is_file());
+        assert!(!result.content_categories.is_empty());
+        assert!(result
+            .largest_files
+            .iter()
+            .all(|file| !file.included_by.is_empty()));
         assert!(Path::new(&result.executable).is_file());
         assert!(result.file_count >= 6);
         let output = Path::new(&result.output_dir);

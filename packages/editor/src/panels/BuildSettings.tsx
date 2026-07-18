@@ -399,6 +399,33 @@ export function BuildSettings(props: {
             {lastBuild.fileCount} files · {byteSize(lastBuild.packagedBytes)} · {lastBuild.toolchain}
           </span>
           <span>SHA-256 {lastBuild.contentHash}</span>
+          <div className="build-content-report">
+            <h4>Content by Category</h4>
+            <div className="build-content-table">
+              {lastBuild.contentCategories.map((group) => (
+                <div className="build-content-row" key={group.category}>
+                  <strong>{group.category}</strong>
+                  <span>{group.files} files</span>
+                  <span>{byteSize(group.bytes)}</span>
+                </div>
+              ))}
+            </div>
+            <h4>Largest Packaged Files</h4>
+            <div className="build-content-table largest">
+              {lastBuild.largestFiles.map((file) => (
+                <div
+                  className="build-content-row"
+                  key={file.path}
+                  title={file.includedBy.join('\n')}
+                >
+                  <strong>{file.path}</strong>
+                  <span>{file.category}</span>
+                  <span>{byteSize(file.size)}</span>
+                </div>
+              ))}
+            </div>
+            <small title={lastBuild.manifestPath}>Report: {lastBuild.manifestPath}</small>
+          </div>
           {lastBuild.log && <pre>{lastBuild.log}</pre>}
         </section>
       )}

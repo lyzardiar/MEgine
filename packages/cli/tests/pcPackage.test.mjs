@@ -85,6 +85,26 @@ test('buildPcPackage creates a directly launchable, hashed project bundle', () =
     assert.equal(manifest.profile, 'release');
     assert.match(manifest.contentHash, /^[0-9a-f]{64}$/);
     assert.equal(manifest.contentHash, buildContentHash(manifest.files));
+    assert.equal(
+      manifest.contentSummary.totalBytes,
+      manifest.files.reduce((total, file) => total + file.size, 0),
+    );
+    assert.equal(
+      manifest.contentSummary.categories.find((group) => group.category === 'runtime')?.files,
+      1,
+    );
+    assert.deepEqual(
+      manifest.files.find((file) => file.path === manifest.executable)?.includedBy,
+      [{ kind: 'player runtime', from: 'MEngine Build SDK' }],
+    );
+    assert.deepEqual(
+      manifest.files.find((file) => file.path === 'Assets/Textures/pixel.bin')?.includedBy,
+      [{ kind: 'all assets mode', from: 'project.json' }],
+    );
+    assert.equal(
+      manifest.files.find((file) => file.path === 'Assets/Textures/pixel.bin')?.category,
+      'other',
+    );
     assert.deepEqual(manifest.assetValidation, {
       assetMode: 'all',
       rootScenes: 2,
@@ -286,6 +306,20 @@ test('buildPcPackage referenced mode copies the validated closure and always-inc
     for (const path of ['Assets/Textures/unused.png', 'Assets/Textures/pixel.bin']) {
       assert.equal(existsSync(join(paths.output, ...path.split('/'))), false, path);
     }
+    const usedTexture = manifest.files.find((file) => file.path === 'Assets/Textures/used.png');
+    assert.equal(usedTexture?.category, 'texture');
+    assert.deepEqual(usedTexture?.includedBy, [{
+      kind: 'texture',
+      from: 'Assets/Scenes/Main.mscene',
+    }]);
+    const dynamicMaterial = manifest.files.find(
+      (file) => file.path === 'Assets/Materials/dynamic.mmat',
+    );
+    assert.equal(dynamicMaterial?.category, 'material');
+    assert.deepEqual(dynamicMaterial?.includedBy, [{
+      kind: 'material',
+      from: 'Assets/Prefabs/Dynamic.prefab',
+    }]);
   } finally {
     rmSync(paths.root, { recursive: true, force: true });
   }
@@ -955,6 +989,21 @@ test('buildPcPackage validates external glTF buffers and images', () => {
       engineVersion: 'test-engine',
     }), /missing glTF image: Assets\/Models\/missing-albedo\.png.*Environment\.gltf/);
     assert.equal(existsSync(paths.output), false);
+    writeFileSync(join(paths.project, 'Assets', 'Models', 'missing-albedo.png'), 'image');
+    const manifest = buildPcPackage({
+      projectDir: paths.project,
+      outputDir: paths.output,
+      runtimePath: paths.runtime,
+      engineVersion: 'test-engine',
+    });
+    const buffer = manifest.files.find(
+      (file) => file.path === 'Assets/Models/Environment.bin',
+    );
+    assert.equal(buffer?.category, 'model');
+    assert.deepEqual(buffer?.includedBy, [{
+      kind: 'glTF buffer',
+      from: 'Assets/Models/Environment.gltf',
+    }]);
   } finally {
     rmSync(paths.root, { recursive: true, force: true });
   }
@@ -988,6 +1037,14 @@ test('buildPcPackage type-checks TypeScript and emits only runnable JavaScript',
       platform: 'windows',
     });
     assert.equal(manifest.project.startupScript, 'Assets/Scripts/Main.js');
+    const compiledScript = manifest.files.find(
+      (file) => file.path === 'Assets/Scripts/Main.js',
+    );
+    assert.equal(compiledScript?.category, 'script');
+    assert.deepEqual(compiledScript?.includedBy, [{
+      kind: 'compiled startup script',
+      from: 'project.json',
+    }]);
     assert.match(
       readFileSync(join(paths.output, 'Assets', 'Scripts', 'Main.js'), 'utf8'),
       /function onTick/,

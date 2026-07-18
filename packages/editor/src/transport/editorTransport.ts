@@ -39,6 +39,19 @@ export type RecentProjectInfo = {
 
 export type BuildPlayerProfile = 'debug' | 'release';
 
+export type BuildContentCategoryResult = {
+  category: string;
+  files: number;
+  bytes: number;
+};
+
+export type BuildContentFileResult = {
+  path: string;
+  size: number;
+  category: string;
+  includedBy: string[];
+};
+
 export type BuildPlayerResult = {
   outputDir: string;
   executable: string;
@@ -56,6 +69,9 @@ export type BuildPlayerResult = {
   omittedAssetBytes: number;
   strippedEditorEntities: number;
   packagedBytes: number;
+  manifestPath: string;
+  contentCategories: BuildContentCategoryResult[];
+  largestFiles: BuildContentFileResult[];
   toolchain: 'bundled-sdk' | 'source-checkout';
   log: string;
 };

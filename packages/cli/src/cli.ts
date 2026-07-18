@@ -294,6 +294,11 @@ function buildProject(values: string[]) {
   console.log(`Files: ${manifest.files.length} (SHA-256 manifest written)`);
   console.log(`Content: ${manifest.contentHash}`);
   console.log(
+    `Content groups: ${manifest.contentSummary.categories
+      .map((group) => `${group.category}=${group.files} files/${group.bytes} bytes`)
+      .join(', ')}`,
+  );
+  console.log(
     `Assets (${manifest.assetValidation.assetMode}): ${manifest.assetValidation.validatedFiles} validated files, ${manifest.assetValidation.references} references`,
   );
   console.log(`EditorOnly: ${manifest.assetValidation.strippedEditorEntities} entities stripped`);

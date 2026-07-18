@@ -609,3 +609,11 @@ Referenced Only 是可用的单包裁剪基础，仍不等同于完整 Addressab
 - Runtime 将三项采样状态纳入 sampler cache key，因此具有不同 mip/各向异性设置的材质不会错误复用同一个 GPU sampler。CLI 在暂存发布前校验版本、枚举、范围与组合约束，最终 Player 仍通过 Rust v5 资产加载器复核，避免编辑器可保存但打包后静默降级。
 
 该切片补齐的是基础纹理采样质量，不代表材质系统已经成熟完备。Material Instance/Property Block、Shader 参数反射、关键字与 Variant 预热、GPU Instancing、烘焙/离线 Shader Cache、平台质量分级和渲染调试视图仍需继续实现。
+
+## 40. 2026-07-18 可追责的 Build Content Report
+
+- `mengine-build.json` 的每个 `files[]` 条目除路径、大小和 SHA-256 外，新增稳定内容类别与 `includedBy[]` 来源。依赖闭包会保留所有去重后的“依赖类型 + 引用资产”，全量模式下未被静态引用的资源明确标记为 `all assets mode <- project.json`，Player、配置、项目清单、ProjectSettings 与编译后的启动脚本也都有独立来源，不再出现无法解释的包内文件。
+- 构建阶段按 runtime、scene、script、material、shader、texture、model、animation、timeline、audio、prefab、spine、settings、metadata 和 other 汇总文件数与字节数。汇总按字节降序确定性写入；内容哈希仍只覆盖路径、大小和文件 SHA-256，因此诊断字段不会改变相同产物的内容指纹。
+- 桌面 Host 回读清单时重新汇总并核对 `contentSummary.totalBytes`，拒绝缺失类别、缺失包含原因或汇总不一致的构建结果。Build Settings 在成功结果中显示分类占用、Top 20 最大文件、悬停可见的包含原因和实际报告路径，包体优化可以从证据出发。
+
+当前报告解决单次构建的包体归因，尚未覆盖两次构建差异、资源依赖图交互浏览、重复纹理/网格检测、压缩前后体积、AssetBundle/共享组归属、增量 Patch 与远程制品追踪。这些仍是后续构建内容系统的明确工作项。
