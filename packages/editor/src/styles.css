@@ -2498,6 +2498,9 @@ body.insp-scrubbing * {
 }
 
 .project-tree .row {
+  display: flex;
+  align-items: center;
+  gap: 5px;
   padding: 4px 8px;
   cursor: pointer;
 }
@@ -2505,13 +2508,66 @@ body.insp-scrubbing * {
 .project-tree .row:hover { background: var(--u-hover); }
 .project-tree .row.active { background: var(--u-selected); color: #fff; }
 
-.project-grid {
+.project-content {
+  min-width: 0;
+  min-height: 0;
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(84px, 1fr));
+  grid-template-rows: 28px minmax(0, 1fr);
+}
+
+.project-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  padding: 3px 6px;
+  border-bottom: 1px solid var(--u-border);
+  background: var(--u-panel-2);
+}
+
+.project-import-button {
+  height: 21px;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  flex: 0 0 auto;
+}
+
+.project-folder-path {
+  min-width: 0;
+  overflow: hidden;
+  color: var(--u-muted);
+  font-size: 11px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.project-grid {
+  position: relative;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(96px, 1fr));
   gap: 8px;
   padding: 10px;
   align-content: start;
   overflow: auto;
+}
+
+.project-grid.file-drop-active {
+  outline: 1px solid var(--u-accent);
+  outline-offset: -2px;
+}
+
+.project-drop-overlay {
+  position: absolute;
+  inset: 8px;
+  z-index: 20;
+  display: grid;
+  place-items: center;
+  border: 1px dashed #75b9ed;
+  background: rgba(25, 48, 66, 0.9);
+  color: #d8efff;
+  font-size: 12px;
+  pointer-events: none;
 }
 
 .asset-card {
@@ -2570,9 +2626,16 @@ body.insp-scrubbing * {
 }
 
 .asset-name {
+  width: 100%;
+  min-height: 26px;
+  display: -webkit-box;
+  overflow: hidden;
+  line-height: 13px;
   font-size: 11px;
   color: var(--u-text);
-  word-break: break-all;
+  overflow-wrap: anywhere;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
 }
 
 .asset-rename {

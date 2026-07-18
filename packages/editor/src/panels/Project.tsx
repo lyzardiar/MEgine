@@ -1,5 +1,29 @@
-import { useEffect, useMemo, useRef, useState, type MouseEvent } from 'react';
+import {
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type DragEvent,
+  type MouseEvent,
+  type ReactNode,
+} from 'react';
 import { createPortal } from 'react-dom';
+import {
+  Bone,
+  Box,
+  FileCode2,
+  FileJson2,
+  Film,
+  Folder,
+  Image as ImageIcon,
+  Layers3,
+  Map as MapIcon,
+  Music,
+  Package,
+  Palette,
+  Upload,
+  Workflow,
+} from 'lucide-react';
 import { listScenes, sceneFileName, type SceneMeta } from '../sceneLibrary';
 import {
   listScripts,
@@ -21,6 +45,12 @@ import {
   toggleProjectAudioPreview,
   type ProjectFileAsset,
 } from '../projectAssets';
+import {
+  formatAssetImportSummary,
+  importProjectAssetFiles,
+  importProjectAssetsFromPicker,
+  setActiveAssetImportFolder,
+} from '../assetImport';
 
 const STATIC_FOLDERS = [
   'Assets',
@@ -40,7 +70,7 @@ type AssetItem = {
   name: string;
   kind: 'animation' | 'animator-controller' | 'audio' | 'model' | 'prefab' | 'script' | 'material' | 'shader' | 'scene' | 'sprite' | 'sprite-atlas' | 'texture' | 'spine';
   spawn: string | null;
-  icon: string;
+  icon: ReactNode;
   sceneName?: string;
   script?: ScriptAsset;
   spriteId?: string;
@@ -68,6 +98,8 @@ export function Project(props: {
   const [ctx, setCtx] = useState<{ x: number; y: number; sceneName: string } | null>(null);
   const [libTick, setLibTick] = useState(0);
   const [pingKey, setPingKey] = useState<string | null>(null);
+  const [importing, setImporting] = useState(false);
+  const [draggingFiles, setDraggingFiles] = useState(false);
   const lastClick = useRef<{ key: string; t: number }>({ key: '', t: 0 });
   const rootRef = useRef<HTMLDivElement>(null);
   const cardRefs = useRef<Map<string, HTMLDivElement>>(new Map());
@@ -76,6 +108,10 @@ export function Project(props: {
     void Promise.all([refreshScripts(), refreshSprites(), refreshProjectFiles()])
       .then(() => setLibTick((t) => t + 1));
   }, [props.sceneTick]);
+
+  useEffect(() => {
+    setActiveAssetImportFolder(folder);
+  }, [folder]);
 
   useEffect(() => {
     return subscribePing((e) => {
@@ -116,7 +152,7 @@ export function Project(props: {
     name: sceneFileName(s.name),
     kind: 'scene',
     spawn: null,
-    icon: '🗺️',
+    icon: <MapIcon size={24} strokeWidth={1.4} aria-hidden="true" />,
     sceneName: s.name,
   }));
 
@@ -125,7 +161,7 @@ export function Project(props: {
     name: s.name,
     kind: 'script',
     spawn: null,
-    icon: '📄',
+    icon: <FileCode2 size={24} strokeWidth={1.4} aria-hidden="true" />,
     script: s,
   }));
 
@@ -134,15 +170,18 @@ export function Project(props: {
     name: s.name,
     kind: 'sprite' as const,
     spawn: null,
-    icon: '🖼️',
+    icon: <ImageIcon size={24} strokeWidth={1.4} aria-hidden="true" />,
     spriteId: s.id,
     thumbUrl: spriteAssetUrl(s.id),
   }));
 
+  const spriteTexturePaths = new Set(
+    sprites.map((sprite) => (sprite.textureId ?? sprite.relPath).toLowerCase()),
+  );
   const authoringAssets: AssetItem[] = projectFiles
-    // Browser-decodable images already have richer Sprite cards. Float image
-    // formats need a dedicated Project card so they remain discoverable.
-    .filter((asset) => asset.kind !== 'texture' || /\.(hdr|exr)$/i.test(asset.name))
+    // Sprite textures already have richer cards. Keep every other recognized
+    // texture visible even when the browser cannot decode it as a Sprite.
+    .filter((asset) => asset.kind !== 'texture' || !spriteTexturePaths.has(asset.relPath.toLowerCase()))
     .map((asset: ProjectFileAsset) => {
     const kind: AssetItem['kind'] = asset.kind === 'animation'
       ? 'animation'
@@ -169,26 +208,26 @@ export function Project(props: {
       kind,
       spawn: null,
       icon: kind === 'texture'
-        ? 'HDR'
+        ? <ImageIcon size={24} strokeWidth={1.4} aria-hidden="true" />
         : kind === 'shader'
-        ? 'S'
+        ? <FileCode2 size={24} strokeWidth={1.4} aria-hidden="true" />
         : kind === 'animator-controller'
-        ? 'A'
+        ? <Workflow size={24} strokeWidth={1.4} aria-hidden="true" />
         : kind === 'sprite-atlas'
-        ? 'AT'
+        ? <Layers3 size={24} strokeWidth={1.4} aria-hidden="true" />
         : kind === 'audio'
-        ? '♪'
+        ? <Music size={24} strokeWidth={1.4} aria-hidden="true" />
         : kind === 'animation'
-        ? '◆'
+        ? <Film size={24} strokeWidth={1.4} aria-hidden="true" />
         : kind === 'material'
-          ? '🎨'
+          ? <Palette size={24} strokeWidth={1.4} aria-hidden="true" />
           : kind === 'model'
-            ? 'M'
+            ? <Box size={24} strokeWidth={1.4} aria-hidden="true" />
             : kind === 'prefab'
-            ? '◇'
+            ? <Package size={24} strokeWidth={1.4} aria-hidden="true" />
             : asset.kind === 'spine-atlas'
-              ? '📚'
-              : '🦴',
+              ? <FileJson2 size={24} strokeWidth={1.4} aria-hidden="true" />
+              : <Bone size={24} strokeWidth={1.4} aria-hidden="true" />,
       spriteId: asset.id,
     };
   });
@@ -305,6 +344,36 @@ export function Project(props: {
     }
   };
 
+  const completeImport = async (files?: Iterable<File>) => {
+    if (importing) return;
+    setImporting(true);
+    try {
+      const result = files
+        ? await importProjectAssetFiles(files, folder)
+        : await importProjectAssetsFromPicker(folder);
+      const summary = formatAssetImportSummary(result, folder);
+      if (summary) {
+        props.onLog?.(summary, result.rejected.length > 0 ? 'warn' : 'info');
+      }
+      if (result.imported.length > 0) setLibTick((tick) => tick + 1);
+    } catch (error) {
+      props.onLog?.(
+        `Asset import failed: ${error instanceof Error ? error.message : String(error)}`,
+        'error',
+      );
+    } finally {
+      setImporting(false);
+      setDraggingFiles(false);
+    }
+  };
+
+  const onFileDrop = (event: DragEvent<HTMLDivElement>) => {
+    if (event.dataTransfer.files.length === 0) return;
+    event.preventDefault();
+    event.stopPropagation();
+    void completeImport(Array.from(event.dataTransfer.files));
+  };
+
   return (
     <div className="project-layout" ref={rootRef} tabIndex={0}>
       <div className="project-tree">
@@ -314,25 +383,57 @@ export function Project(props: {
             className={`row${folder === f ? ' active' : ''}`}
             onClick={() => setFolder(f)}
           >
-            📁 {f.replace('Assets/', '') || 'Assets'}
+            <Folder size={13} strokeWidth={1.6} aria-hidden="true" />
+            <span>{f.replace('Assets/', '') || 'Assets'}</span>
           </div>
         ))}
       </div>
-      <div className="project-grid">
-        {visible.length === 0 && folder === 'Assets/Scenes' && (
-          <div className="project-empty">
-            还没有场景。用 File → New Scene 创建；选中后 F2 / 慢双击名称 / 右键 Rename。
-          </div>
-        )}
-        {visible.length === 0 && folder === 'Assets/Scripts' && (
-          <div className="project-empty">
-            暂无脚本。Behaviour 放在 packages/editor/src/behaviours/。
-          </div>
-        )}
-        {visible.length === 0 && (folder === 'Assets/Sprites' || folder.startsWith('Assets/')) && (
-          <div className="project-empty">此文件夹暂无资源。PNG 放到 project/Assets 下即可。</div>
-        )}
-        {visible.map((a) => {
+      <div className="project-content">
+        <div className="project-toolbar">
+          <button
+            type="button"
+            className="project-import-button"
+            disabled={importing}
+            onClick={() => void completeImport()}
+          >
+            <Upload size={13} aria-hidden="true" />
+            {importing ? 'Importing...' : 'Import'}
+          </button>
+          <span className="project-folder-path" title={folder}>{folder}</span>
+        </div>
+        <div
+          className={`project-grid${draggingFiles ? ' file-drop-active' : ''}`}
+          onDragEnter={(event) => {
+            if (event.dataTransfer.types.includes('Files')) setDraggingFiles(true);
+          }}
+          onDragOver={(event) => {
+            if (!event.dataTransfer.types.includes('Files')) return;
+            event.preventDefault();
+            event.dataTransfer.dropEffect = 'copy';
+          }}
+          onDragLeave={(event) => {
+            if (!event.currentTarget.contains(event.relatedTarget as Node | null)) {
+              setDraggingFiles(false);
+            }
+          }}
+          onDrop={onFileDrop}
+        >
+          {visible.length === 0 && folder === 'Assets/Scenes' && (
+            <div className="project-empty">
+              No scenes yet. Create one from File &gt; New Scene.
+            </div>
+          )}
+          {visible.length === 0 && folder === 'Assets/Scripts' && (
+            <div className="project-empty">
+              No scripts yet. Create a Behaviour under Assets/Scripts.
+            </div>
+          )}
+          {visible.length === 0 && folder !== 'Assets/Scenes' && folder !== 'Assets/Scripts' && (
+            <div className="project-empty">
+              Drop supported files here or use Import. Existing files are kept; name collisions receive a numeric suffix.
+            </div>
+          )}
+          {visible.map((a) => {
           const isActiveScene = a.kind === 'scene' && a.sceneName === props.activeScene;
           const isEditing = a.kind === 'scene' && a.sceneName != null && editing === a.sceneName;
           return (
@@ -447,7 +548,13 @@ export function Project(props: {
               {isActiveScene && !isEditing && <div className="asset-badge">打开中</div>}
             </div>
           );
-        })}
+          })}
+          {draggingFiles && (
+            <div className="project-drop-overlay" aria-hidden="true">
+              Drop to import into {folder}
+            </div>
+          )}
+        </div>
       </div>
 
       {ctx &&
