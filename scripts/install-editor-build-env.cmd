@@ -6,9 +6,17 @@ set "REPO_ROOT=%CD%"
 
 echo [MEngine] Installing the Windows editor build environment...
 
+set "WINGET_EXE="
 where winget.exe >nul 2>&1
-if errorlevel 1 (
+if not errorlevel 1 (
+    set "WINGET_EXE=winget.exe"
+) else if exist "%LOCALAPPDATA%\Microsoft\WindowsApps\winget.exe" (
+    set "WINGET_EXE=%LOCALAPPDATA%\Microsoft\WindowsApps\winget.exe"
+)
+
+if not defined WINGET_EXE (
     echo ERROR: winget was not found. Install Microsoft App Installer, then run this command again.
+    echo        https://apps.microsoft.com/detail/9NBLGGH4NNS1
     exit /b 1
 )
 
@@ -92,7 +100,7 @@ exit /b 0
 
 :install_package
 echo [MEngine] Ensuring %~2 is installed...
-winget.exe install --id %~1 --exact --source winget --accept-source-agreements --accept-package-agreements --silent
+"%WINGET_EXE%" install --id %~1 --exact --source winget --accept-source-agreements --accept-package-agreements --silent
 if not errorlevel 1 exit /b 0
 
 rem "Already installed" can use a non-zero winget result on some versions.
@@ -103,7 +111,7 @@ echo ERROR: Failed to install %~2 ^(%~1^).
 exit /b 1
 
 :package_is_installed
-winget.exe list --id %~1 --exact --source winget --accept-source-agreements >nul 2>&1
+"%WINGET_EXE%" list --id %~1 --exact --source winget --accept-source-agreements >nul 2>&1
 exit /b %ERRORLEVEL%
 
 :node_is_supported
@@ -130,7 +138,7 @@ call :find_vctools
 if defined VS_VCTOOLS exit /b 0
 
 echo [MEngine] Installing Visual Studio 2022 C++ Build Tools and the Windows SDK...
-winget.exe install --id Microsoft.VisualStudio.2022.BuildTools --exact --source winget --accept-source-agreements --accept-package-agreements --silent --override "--wait --passive --norestart --add Microsoft.VisualStudio.Workload.VCTools --includeRecommended"
+"%WINGET_EXE%" install --id Microsoft.VisualStudio.2022.BuildTools --exact --source winget --accept-source-agreements --accept-package-agreements --silent --override "--wait --passive --norestart --add Microsoft.VisualStudio.Workload.VCTools --includeRecommended"
 
 call :find_vctools
 if defined VS_VCTOOLS exit /b 0
