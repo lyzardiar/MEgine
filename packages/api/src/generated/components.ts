@@ -65,6 +65,16 @@ export interface SpotLight {
   outerAngleDegrees: number;
 }
 
+export interface Light2D {
+  lightType: string;
+  color: [number, number, number, number];
+  intensity: number;
+  radius: number;
+  innerRadius: number;
+  falloff: number;
+  sortingLayers: string[];
+}
+
 export interface Camera2D {
   size: number;
   primary: boolean;
@@ -562,6 +572,7 @@ export type ComponentName =
   | 'EnvironmentLight'
   | 'PointLight'
   | 'SpotLight'
+  | 'Light2D'
   | 'Camera2D'
   | 'MeshRenderer'
   | 'PbrMaterial'
@@ -622,6 +633,7 @@ export const COMPONENT_NAMES = [
   'EnvironmentLight',
   'PointLight',
   'SpotLight',
+  'Light2D',
   'Camera2D',
   'MeshRenderer',
   'PbrMaterial',

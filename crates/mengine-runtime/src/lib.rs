@@ -3,6 +3,7 @@
 pub mod animation;
 pub mod audio;
 pub mod build_manifest;
+pub mod lighting2d;
 pub mod materials;
 pub mod meshes;
 pub mod mobile_stub;

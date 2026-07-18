@@ -1836,6 +1836,26 @@ export function createEditorStore() {
         true,
       );
     },
+    spawnLight2D(lightType: 'global' | 'point' = 'point') {
+      const global = lightType === 'global';
+      spawnAt(
+        global ? 'Global Light 2D' : 'Point Light 2D',
+        {
+          Transform: { position: [0, 0, 0], rotation: [0, 0, 0, 1], scale: [1, 1, 1] },
+          Light2D: {
+            light_type: global ? 'global' : 'point',
+            color: global ? [1, 1, 1, 1] : [1, 0.86, 0.68, 1],
+            intensity: 1,
+            radius: 5,
+            inner_radius: 0,
+            falloff: 1,
+            sorting_layers: [],
+          },
+        },
+        null,
+        true,
+      );
+    },
     spawnAudioSource() {
       spawnAt(
         'Audio Source',

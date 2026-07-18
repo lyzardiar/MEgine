@@ -530,12 +530,12 @@ export function drawWorldLine2D(
   scale3: Vec3,
   points: Array<[number, number]>,
   width: number,
-  color: [number, number, number, number],
+  color: [number, number, number, number] | ((position: Vec3) => [number, number, number, number]),
   closed: boolean,
   selected: boolean,
   rotation?: Quat | null,
 ): { x: number; y: number; r: number } | null {
-  if (points.length < 2 || width <= 0 || color[3] <= 0) return null;
+  if (points.length < 2 || width <= 0) return null;
   const q = rotation ? quatNormalize(rotation) : ([0, 0, 0, 1] as Quat);
   const worldPoint = (point: [number, number]) => {
     const local: Vec3 = [point[0] * scale3[0], point[1] * scale3[1], 0];
@@ -557,6 +557,8 @@ export function drawWorldLine2D(
     const worldStart = worldPoint(start);
     const worldEnd = worldPoint(end);
     const midpoint = scale(add(worldStart, worldEnd), 0.5);
+    const segmentColor = typeof color === 'function' ? color(midpoint) : color;
+    if (segmentColor[3] <= 0) continue;
     const normalLocal: Vec3 = [
       (-dyLocal / localLength) * scale3[0] * width * 0.5,
       (dxLocal / localLength) * scale3[1] * width * 0.5,
@@ -573,7 +575,7 @@ export function drawWorldLine2D(
     ctx.moveTo(a.x, a.y);
     ctx.lineTo(b.x, b.y);
     ctx.lineCap = 'butt';
-    ctx.strokeStyle = `rgba(${(color[0] * 255) | 0},${(color[1] * 255) | 0},${(color[2] * 255) | 0},${color[3]})`;
+    ctx.strokeStyle = `rgba(${(segmentColor[0] * 255) | 0},${(segmentColor[1] * 255) | 0},${(segmentColor[2] * 255) | 0},${segmentColor[3]})`;
     ctx.lineWidth = screenWidth;
     ctx.stroke();
     if (selected) {

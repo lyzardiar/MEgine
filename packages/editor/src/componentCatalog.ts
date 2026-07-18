@@ -78,6 +78,20 @@ const BUILTIN_CATALOG: ComponentCatalogEntry[] = [
     }),
   },
   {
+    type: 'Light2D',
+    label: 'Light 2D',
+    description: 'Global or point light for world-space 2D renderers',
+    create: () => ({
+      light_type: 'point',
+      color: [1, 0.86, 0.68, 1],
+      intensity: 1,
+      radius: 5,
+      inner_radius: 0,
+      falloff: 1,
+      sorting_layers: [],
+    }),
+  },
+  {
     type: 'Camera2D',
     label: 'Camera 2D',
     description: 'Orthographic camera for 2D world rendering',

@@ -69,6 +69,19 @@ component SpotLight {
   outer_angle_degrees: float  = 40
 }
 
+/// Unity-inspired 2D light. Active lights modulate world-space 2D renderers.
+component Light2D {
+  /// "global" | "point"
+  light_type:     string       = "point"
+  color:          float4       = [1, 1, 1, 1]
+  intensity:      float        = 1
+  radius:         float        = 5
+  inner_radius:   float        = 0
+  falloff:        float        = 1
+  /// Empty means every project sorting layer.
+  sorting_layers: string_array = []
+}
+
 component Camera2D {
   size:             float  = 5
   primary:          bool   = true

@@ -258,6 +258,7 @@ fn project_line(
                 sorting_layer: line.sorting_layer.clone(),
                 sorting_order: line.sorting_order,
                 depth: (start_screen[2] + end_screen[2]) * 0.5,
+                world_position: Some([midpoint.x, midpoint.y]),
                 primitive: UiPrimitive {
                     rect: [
                         (start_screen[0] + end_screen[0] - length) * 0.5,
@@ -356,6 +357,7 @@ fn project_sprite(
         sorting_layer: sprite.sorting_layer.clone(),
         sorting_order: sprite.sorting_order,
         depth: center[2],
+        world_position: Some([position.x, position.y]),
         primitive: UiPrimitive {
             rect,
             color: sprite.color,

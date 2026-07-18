@@ -21,6 +21,7 @@ use mengine_rhi::{
 use mengine_runtime::animation::{infer_project_root_from_scene, AnimationRuntime};
 use mengine_runtime::audio::AudioRuntime;
 use mengine_runtime::build_manifest::verify_build_manifest;
+use mengine_runtime::lighting2d::apply_2d_lighting;
 use mengine_runtime::materials::RuntimeMaterialCache;
 use mengine_runtime::meshes::RuntimeMeshCache;
 use mengine_runtime::particles::ParticleWorld;
@@ -1422,6 +1423,7 @@ function onTick(dt, frame) {
                             dt,
                         );
                     world_primitives.extend(particle_primitives);
+                    apply_2d_lighting(&self.world, &hierarchy, &mut world_primitives);
                     if !world_primitives.is_empty() {
                         sort_world_primitives(&mut world_primitives, &self.sorting_layers);
                         let mut primitives = world_primitives

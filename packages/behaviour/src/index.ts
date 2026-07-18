@@ -56,8 +56,10 @@ export { invokeBehaviourMethodEdit } from './invoke.js';
 export {
   Transform,
   Camera3D,
+  Camera2D,
   MeshRenderer,
   DirectionalLight,
+  Light2D,
   Transform2D,
   SpriteRenderer,
   AnimatedSprite2D,

@@ -167,6 +167,28 @@ export const BUILTIN_INSPECTOR_FIELDS: Readonly<
     inner_angle_degrees: { label: 'Inner Angle', min: 0, max: 179, step: 1 },
     outer_angle_degrees: { label: 'Outer Angle', min: 0, max: 179, step: 1 },
   },
+  Light2D: {
+    light_type: { label: 'Light Type', kind: 'enum', options: options('global', 'point') },
+    intensity: { min: 0, step: 0.05 },
+    radius: {
+      min: 0.001,
+      step: 0.1,
+      visibleWhen: { field: 'light_type', equals: 'point' },
+    },
+    inner_radius: {
+      label: 'Inner Radius',
+      min: 0,
+      step: 0.1,
+      visibleWhen: { field: 'light_type', equals: 'point' },
+    },
+    falloff: {
+      min: 0.01,
+      max: 8,
+      step: 0.05,
+      visibleWhen: { field: 'light_type', equals: 'point' },
+    },
+    sorting_layers: { label: 'Target Sorting Layers', kind: 'string-list' },
+  },
   PbrMaterial: {
     metallic: { min: 0, max: 1, step: 0.01 },
     roughness: { min: 0, max: 1, step: 0.01 },

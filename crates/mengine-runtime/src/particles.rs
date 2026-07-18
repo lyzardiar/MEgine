@@ -160,6 +160,10 @@ impl Emitter<'_> {
         }
     }
 
+    fn is_two_dimensional(&self) -> bool {
+        matches!(self, Self::Two(_))
+    }
+
     fn gravity(&self) -> Vec3 {
         match self {
             Self::Two(value) => Vec3::new(value.gravity[0], value.gravity[1], 0.0),
@@ -448,6 +452,9 @@ fn collect_emitter(
             sorting_layer: emitter.sorting_layer().into(),
             sorting_order: emitter.sorting_order(),
             depth: screen[2],
+            world_position: emitter
+                .is_two_dimensional()
+                .then_some([position.x, position.y]),
             primitive: UiPrimitive {
                 rect: [
                     screen[0] - radius,

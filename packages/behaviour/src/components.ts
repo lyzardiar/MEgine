@@ -62,6 +62,17 @@ export class DirectionalLight {
   intensity!: number;
 }
 
+export class Light2D {
+  static readonly typeName = 'Light2D' as const;
+  light_type!: 'global' | 'point' | string;
+  color!: Color4;
+  intensity!: number;
+  radius!: number;
+  inner_radius!: number;
+  falloff!: number;
+  sorting_layers!: string[];
+}
+
 export class Transform2D {
   static readonly typeName = 'Transform2D' as const;
   position!: [number, number];
@@ -246,6 +257,7 @@ export type BuiltinComponents = {
   Camera2D: Camera2D;
   MeshRenderer: MeshRenderer;
   DirectionalLight: DirectionalLight;
+  Light2D: Light2D;
   Transform2D: Transform2D;
   SpriteRenderer: SpriteRenderer;
   AnimatedSprite2D: AnimatedSprite2D;

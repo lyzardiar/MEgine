@@ -393,6 +393,7 @@ fn canonical_component_name(component: &str) -> &str {
         "EnvironmentLight" | "environmentLight" => "EnvironmentLight",
         "PointLight" | "pointLight" => "PointLight",
         "SpotLight" | "spotLight" => "SpotLight",
+        "Light2D" | "light2D" | "light2d" => "Light2D",
         "MeshRenderer" | "meshRenderer" => "MeshRenderer",
         "PbrMaterial" | "pbrMaterial" => "PbrMaterial",
         "SpriteRenderer" | "spriteRenderer" => "SpriteRenderer",

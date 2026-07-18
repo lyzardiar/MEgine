@@ -909,6 +909,47 @@
     ],
     "type": "object"
   },
+  "Light2D": {
+    "properties": {
+      "color": {
+        "items": {
+          "type": "number"
+        },
+        "type": "array"
+      },
+      "falloff": {
+        "type": "number"
+      },
+      "inner_radius": {
+        "type": "number"
+      },
+      "intensity": {
+        "type": "number"
+      },
+      "light_type": {
+        "type": "string"
+      },
+      "radius": {
+        "type": "number"
+      },
+      "sorting_layers": {
+        "items": {
+          "type": "string"
+        },
+        "type": "array"
+      }
+    },
+    "required": [
+      "light_type",
+      "color",
+      "intensity",
+      "radius",
+      "inner_radius",
+      "falloff",
+      "sorting_layers"
+    ],
+    "type": "object"
+  },
   "Line2D": {
     "properties": {
       "closed": {

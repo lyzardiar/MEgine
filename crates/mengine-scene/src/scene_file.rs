@@ -314,6 +314,11 @@ mod tests {
                 "PbrMaterial": { "base_color": [1, 0.5, 0.1, 1], "metallic": 0.8 },
                 "PointLight": { "intensity": 9, "range": 11 },
                 "SpotLight": { "inner_angle_degrees": 20, "outer_angle_degrees": 45 },
+                "Light2D": {
+                    "light_type": "point", "color": [1, 0.5, 0.25, 1],
+                    "intensity": 1.5, "radius": 7, "inner_radius": 2,
+                    "falloff": 1.25, "sorting_layers": ["characters", "effects"]
+                },
                 "Image": {
                     "sprite": "Assets/UI/panel.png", "image_type": "Sliced",
                     "border": [8, 10, 8, 10], "source_size": [64, 64]
@@ -400,6 +405,8 @@ mod tests {
         assert!((metallic - 0.8).abs() < 0.0001);
         assert_eq!(components["PointLight"]["range"], 11.0);
         assert_eq!(components["SpotLight"]["outer_angle_degrees"], 45.0);
+        assert_eq!(components["Light2D"]["radius"], 7.0);
+        assert_eq!(components["Light2D"]["sorting_layers"][1], "effects");
         assert_eq!(components["Image"]["image_type"], "Sliced");
         assert_eq!(components["Image"]["border"][1], 10.0);
         assert_eq!(components["Image"]["source_size"][0], 64.0);

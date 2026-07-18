@@ -296,6 +296,47 @@ impl Component for SpotLight {
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
 #[serde(default)]
+pub struct Light2D {
+    pub light_type: String,
+    pub color: [f32; 4],
+    pub intensity: f32,
+    pub radius: f32,
+    pub inner_radius: f32,
+    pub falloff: f32,
+    pub sorting_layers: Vec<String>,
+}
+
+impl Default for Light2D {
+    fn default() -> Self {
+        Self {
+            light_type: "point".into(),
+            color: [1.0, 1.0, 1.0, 1.0],
+            intensity: 1.0,
+            radius: 5.0,
+            inner_radius: 0.0,
+            falloff: 1.0,
+            sorting_layers: Vec::new(),
+        }
+    }
+}
+
+impl Component for Light2D {
+    fn type_name() -> &'static str {
+        "Light2D"
+    }
+    fn as_any(&self) -> &dyn std::any::Any {
+        self
+    }
+    fn as_any_mut(&mut self) -> &mut dyn std::any::Any {
+        self
+    }
+    fn to_value(&self) -> serde_json::Value {
+        serde_json::to_value(self).unwrap_or(serde_json::Value::Null)
+    }
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize)]
+#[serde(default)]
 pub struct Camera2D {
     pub size: f32,
     pub primary: bool,
@@ -2315,6 +2356,8 @@ pub fn component_from_value(
             .map(|component| Some(Box::new(component) as ComponentBox)),
         "SpotLight" => serde_json::from_value::<SpotLight>(value)
             .map(|component| Some(Box::new(component) as ComponentBox)),
+        "Light2D" => serde_json::from_value::<Light2D>(value)
+            .map(|component| Some(Box::new(component) as ComponentBox)),
         "Camera2D" => serde_json::from_value::<Camera2D>(value)
             .map(|component| Some(Box::new(component) as ComponentBox)),
         "MeshRenderer" => serde_json::from_value::<MeshRenderer>(value)
@@ -2429,6 +2472,7 @@ pub mod meta {
         "EnvironmentLight",
         "PointLight",
         "SpotLight",
+        "Light2D",
         "Camera2D",
         "MeshRenderer",
         "PbrMaterial",

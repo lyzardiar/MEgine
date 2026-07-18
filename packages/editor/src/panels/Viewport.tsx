@@ -127,6 +127,12 @@ import {
 import { getSortingLayerRank } from '../sortingLayers';
 import { buildWorldTransforms, resolvedTransform } from '../worldTransform';
 import {
+  modulateLight2DColor,
+  prepareLight2DLights,
+  type Light2DComponent,
+  type Light2DInstance,
+} from '../light2d';
+import {
   hitTestLinePoint,
   linePointDeltaFromWorld,
   linePointWorld,
@@ -820,6 +826,16 @@ export function Viewport(props: {
     }
 
     const worldTransforms = buildWorldTransforms(p.entities);
+    const lights2D = prepareLight2DLights(p.entities.flatMap<Light2DInstance>((entity) => {
+      if (!isActive(entity.entity)) return [];
+      const component = entity.components.Light2D as Light2DComponent | undefined;
+      const transform = resolvedTransform(worldTransforms, entity.entity) ?? undefined;
+      if (!component || !transform) return [];
+      return [{
+        position: [transform.position[0], transform.position[1]],
+        component,
+      }];
+    }));
     // Game 视图不显示编辑器选中态（只能 Hierarchy / Scene 点选）
     const selSet = isGame
       ? new Set<number>()
@@ -896,6 +912,7 @@ export function Viewport(props: {
           !!e.components.DirectionalLight ||
           !!e.components.PointLight ||
           !!e.components.SpotLight ||
+          !!e.components.Light2D ||
           (e.name ?? '').toLowerCase().includes('light');
         const hasCollider =
           !!e.components.BoxCollider3D ||
@@ -996,7 +1013,15 @@ export function Viewport(props: {
             0.75,
             Math.min(96, sizePoint ? Math.hypot(sizePoint.x - screen.x, sizePoint.y - screen.y) : particle.size * 20),
           );
-          const [red, green, blue, alpha] = particle.color;
+          const particleColor = particleDraw.twoDimensional
+            ? modulateLight2DColor(
+                particle.color,
+                particle.position,
+                String(particleDraw.component.sorting_layer ?? 'default'),
+                lights2D,
+              )
+            : particle.color;
+          const [red, green, blue, alpha] = particleColor;
           ctx.fillStyle = `rgba(${Math.round(red * 255)},${Math.round(green * 255)},${Math.round(blue * 255)},${Math.max(0, Math.min(1, alpha))})`;
           ctx.beginPath();
           ctx.arc(screen.x, screen.y, radius, 0, Math.PI * 2);
@@ -1056,6 +1081,7 @@ export function Viewport(props: {
         !!dirLight ||
         !!e.components.PointLight ||
         !!e.components.SpotLight ||
+        !!e.components.Light2D ||
         (e.name ?? '').toLowerCase().includes('light');
       const selected = selSet.has(e.entity);
 
@@ -1087,7 +1113,14 @@ export function Viewport(props: {
           const spot = e.components.SpotLight as
             | { range?: number; outer_angle_degrees?: number }
             | undefined;
-          const hit = point
+          const light2D = e.components.Light2D as
+            | { light_type?: unknown; radius?: unknown }
+            | undefined;
+          const hit = light2D
+            ? String(light2D.light_type ?? 'point').toLowerCase() === 'global'
+              ? drawDirectionalLightGizmo(ctx, cam, vp, t, selected)
+              : drawPointLightGizmo(ctx, cam, vp, t, Number(light2D.radius) || 5, selected)
+            : point
             ? drawPointLightGizmo(ctx, cam, vp, t, point.range ?? 10, selected)
             : spot
               ? drawSpotLightGizmo(
@@ -1114,6 +1147,7 @@ export function Viewport(props: {
               sprites?: unknown;
               color?: number[];
               tile_anchor?: number[];
+              sorting_layer?: unknown;
             }
           | undefined;
         if (tilemap) {
@@ -1171,13 +1205,19 @@ export function Viewport(props: {
             const tileSprite = data.sprites[index] || 'white';
             const image = getSpriteImage(tileSprite);
             const imageReady = image?.complete && image.naturalWidth > 0 ? image : null;
+            const litColor = modulateLight2DColor(
+              color,
+              position,
+              String(tilemap.sorting_layer ?? 'default'),
+              lights2D,
+            );
             const hit = drawWorldSprite(
               ctx,
               cam,
               vp,
               position,
               half,
-              color,
+              litColor,
               selected,
               rotation,
               imageReady,
@@ -1196,6 +1236,7 @@ export function Viewport(props: {
               width?: number;
               color?: number[];
               closed?: boolean;
+              sorting_layer?: unknown;
             }
           | undefined;
         if (line && pr) {
@@ -1212,7 +1253,12 @@ export function Viewport(props: {
             t.scale as Vec3,
             points,
             Math.max(0, Number(line.width) || 0),
-            (line.color ?? [1, 1, 1, 1]) as [number, number, number, number],
+            (position) => modulateLight2DColor(
+              line.color ?? [1, 1, 1, 1],
+              position,
+              String(line.sorting_layer ?? 'default'),
+              lights2D,
+            ),
             line.closed === true,
             selected,
             t.rotation as [number, number, number, number] | undefined,
@@ -1228,6 +1274,7 @@ export function Viewport(props: {
               pivot?: number[];
               flip_x?: boolean;
               flip_y?: boolean;
+              sorting_layer?: unknown;
               sorting_order?: number;
             }
           | undefined;
@@ -1243,6 +1290,7 @@ export function Viewport(props: {
               pivot?: number[];
               flip_x?: boolean;
               flip_y?: boolean;
+              sorting_layer?: unknown;
               sorting_order?: number;
             }
           | undefined;
@@ -1255,7 +1303,12 @@ export function Viewport(props: {
             0.5 * (Number.isFinite(sizeX) ? Math.abs(sizeX) : 1) * Math.abs(t.scale[0]),
             0.5 * (Number.isFinite(sizeY) ? Math.abs(sizeY) : 1) * Math.abs(t.scale[1]),
           ];
-          const col = (spr.color ?? [1, 1, 1, 1]) as [number, number, number, number];
+          const col = modulateLight2DColor(
+            spr.color ?? [1, 1, 1, 1],
+            t.position,
+            String(spr.sorting_layer ?? 'default'),
+            lights2D,
+          );
           const authoredPivot = spr.pivot ?? [0.5, 0.5];
           const pivot: [number, number] = [
             Number.isFinite(Number(authoredPivot[0])) ? Number(authoredPivot[0]) : 0.5,

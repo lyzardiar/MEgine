@@ -136,6 +136,8 @@ pub struct WorldPrimitive {
     pub sorting_layer: String,
     pub sorting_order: i32,
     pub depth: f32,
+    /// World-space XY sample used by the first-stage 2D lighting path.
+    pub world_position: Option<[f32; 2]>,
     pub primitive: UiPrimitive,
 }
 
@@ -175,6 +177,7 @@ mod tests {
             sorting_layer: layer.into(),
             sorting_order: order,
             depth,
+            world_position: None,
             primitive: UiPrimitive {
                 rect: [0.0; 4],
                 color: [1.0; 4],
