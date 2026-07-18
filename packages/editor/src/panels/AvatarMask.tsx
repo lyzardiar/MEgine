@@ -1,4 +1,11 @@
-import { useEffect, useRef, useState } from 'react';
+import {
+  useEffect,
+  useRef,
+  useState,
+  type FocusEvent as ReactFocusEvent,
+  type KeyboardEvent as ReactKeyboardEvent,
+} from 'react';
+import { Redo2, Undo2 } from 'lucide-react';
 import {
   createAvatarMask,
   parseAvatarMask,
@@ -15,6 +22,11 @@ import {
   writeProjectAssetText,
 } from '../projectAssets';
 import { registerSaveAllParticipant } from '../saveAll';
+import type {
+  EditorUndoCheckpoint,
+  EditorUndoService,
+  EditorUndoToken,
+} from '../editorUndoService';
 import { PROJECT_ASSETS_CHANGED_EVENT } from './Material';
 
 function uniqueAvatarMaskPath(): string {
@@ -56,40 +68,141 @@ function fingerprint(mask: AvatarMaskAsset | null): string {
   return mask ? JSON.stringify(mask) : '';
 }
 
+type AvatarMaskDraft = {
+  mask: AvatarMaskAsset;
+  savedFingerprint: string;
+};
+
+type AvatarMaskEditTransaction = {
+  mask: AvatarMaskAsset;
+  checkpoint: EditorUndoCheckpoint;
+  token: EditorUndoToken | null;
+  label: string;
+};
+
+function avatarMaskDraftDirty(draft: AvatarMaskDraft): boolean {
+  return fingerprint(draft.mask) !== draft.savedFingerprint;
+}
+
+function isAvatarMaskEditControl(target: EventTarget): target is HTMLInputElement | HTMLTextAreaElement {
+  return target instanceof HTMLTextAreaElement
+    || (target instanceof HTMLInputElement && !['checkbox', 'radio', 'button'].includes(target.type));
+}
+
+function avatarMaskControlLabel(target: HTMLInputElement | HTMLTextAreaElement): string {
+  const explicit = target.getAttribute('aria-label')?.trim();
+  if (explicit) return `Edit ${explicit}`;
+  return 'Rename Avatar Mask';
+}
+
 export function AvatarMaskEditor(props: {
   assetPath: string | null;
   onOpenAsset: (path: string) => void;
   onAssetsChanged: () => void;
   onDirtyChange: (dirty: boolean) => void;
   onLog: (message: string, level?: 'info' | 'warn' | 'error') => void;
+  undoService: EditorUndoService;
+  onGlobalUndo: () => void;
+  onGlobalRedo: () => void;
 }) {
-  const [mask, setMask] = useState<AvatarMaskAsset | null>(null);
+  const [mask, setMaskState] = useState<AvatarMaskAsset | null>(null);
   const [savedFingerprint, setSavedFingerprint] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const loadedPath = useRef<string | null>(null);
-  const drafts = useRef(new Map<string, { mask: AvatarMaskAsset; savedFingerprint: string }>());
+  const drafts = useRef(new Map<string, AvatarMaskDraft>());
+  const [, setDraftEpoch] = useState(0);
+  const maskRef = useRef<AvatarMaskAsset | null>(null);
+  const editTransaction = useRef<AvatarMaskEditTransaction | null>(null);
+  maskRef.current = mask;
+
+  const replaceMask = (next: AvatarMaskAsset | null) => {
+    maskRef.current = next;
+    setMaskState(next);
+  };
+
+  const captureDocument = (path: string): AvatarMaskAsset => {
+    if (loadedPath.current === path && maskRef.current) return structuredClone(maskRef.current);
+    const draft = drafts.current.get(path);
+    if (!draft) throw new Error(`Avatar Mask history document '${path}' is no longer available.`);
+    return structuredClone(draft.mask);
+  };
+
+  const restoreDocument = (path: string, snapshot: AvatarMaskAsset) => {
+    const restored = structuredClone(snapshot);
+    if (loadedPath.current === path) {
+      editTransaction.current = null;
+      replaceMask(restored);
+      setError(null);
+      return;
+    }
+    const draft = drafts.current.get(path);
+    if (!draft) throw new Error(`Avatar Mask history document '${path}' is no longer available.`);
+    drafts.current.set(path, { ...draft, mask: restored });
+    setDraftEpoch((value) => value + 1);
+  };
+
+  const recordHistory = (snapshot: AvatarMaskAsset, label: string): EditorUndoToken | null => {
+    const path = loadedPath.current;
+    if (!path) return null;
+    return props.undoService.recordSnapshot({
+      scope: `avatar-mask:${path}`,
+      label,
+      state: structuredClone(snapshot),
+      capture: () => captureDocument(path),
+      restore: (state) => restoreDocument(path, state),
+    });
+  };
+
+  const beginEdit = (event: ReactFocusEvent<HTMLDivElement>) => {
+    if (editTransaction.current || !mask || !isAvatarMaskEditControl(event.target)) return;
+    editTransaction.current = {
+      mask: structuredClone(mask),
+      checkpoint: props.undoService.checkpoint(),
+      token: null,
+      label: avatarMaskControlLabel(event.target),
+    };
+  };
+
+  const endEdit = (event: ReactFocusEvent<HTMLDivElement>) => {
+    if (!isAvatarMaskEditControl(event.target)) return;
+    const transaction = editTransaction.current;
+    editTransaction.current = null;
+    if (
+      !transaction?.token
+      || !maskRef.current
+      || !props.undoService.isUndoTop(transaction.token)
+      || fingerprint(maskRef.current) !== fingerprint(transaction.mask)
+    ) return;
+    props.undoService.restoreCheckpoint(transaction.checkpoint);
+  };
 
   useEffect(() => {
     let cancelled = false;
+    const transaction = editTransaction.current;
+    if (
+      transaction?.token
+      && mask
+      && props.undoService.isUndoTop(transaction.token)
+      && fingerprint(mask) === fingerprint(transaction.mask)
+    ) {
+      props.undoService.restoreCheckpoint(transaction.checkpoint);
+    }
     const previousPath = loadedPath.current;
     if (previousPath && mask) {
-      if (fingerprint(mask) !== savedFingerprint) {
-        drafts.current.set(previousPath, { mask: structuredClone(mask), savedFingerprint });
-      } else {
-        drafts.current.delete(previousPath);
-      }
+      drafts.current.set(previousPath, { mask: structuredClone(mask), savedFingerprint });
     }
     loadedPath.current = props.assetPath;
-    setMask(null);
+    editTransaction.current = null;
+    replaceMask(null);
     setSavedFingerprint('');
     setError(null);
     if (!props.assetPath) return () => { cancelled = true; };
     const draft = drafts.current.get(props.assetPath);
     if (draft) {
       drafts.current.delete(props.assetPath);
-      setMask(structuredClone(draft.mask));
+      replaceMask(structuredClone(draft.mask));
       setSavedFingerprint(draft.savedFingerprint);
       return () => { cancelled = true; };
     }
@@ -98,7 +211,7 @@ export function AvatarMaskEditor(props: {
       .then((text) => {
         if (cancelled) return;
         const parsed = parseAvatarMaskDraft(text);
-        setMask(parsed);
+        replaceMask(parsed);
         setSavedFingerprint(fingerprint(parsed));
       })
       .catch((reason: unknown) => {
@@ -111,16 +224,26 @@ export function AvatarMaskEditor(props: {
   }, [props.assetPath]);
 
   const dirty = mask != null && fingerprint(mask) !== savedFingerprint;
-  const anyDirty = dirty || drafts.current.size > 0;
+  const anyDirty = dirty || [...drafts.current.values()].some(avatarMaskDraftDirty);
   useEffect(() => props.onDirtyChange(anyDirty), [anyDirty, props.onDirtyChange]);
 
-  const update = (mutate: (draft: AvatarMaskAsset) => void) => {
-    setMask((current) => {
-      if (!current) return current;
-      const next = structuredClone(current);
-      mutate(next);
-      return next;
-    });
+  const update = (mutate: (draft: AvatarMaskAsset) => void, label = 'Edit Avatar Mask') => {
+    const current = maskRef.current;
+    if (!current) return;
+    const next = structuredClone(current);
+    mutate(next);
+    if (fingerprint(next) === fingerprint(current)) return;
+    const transaction = editTransaction.current;
+    if (transaction) {
+      if (!transaction.token || !props.undoService.isUndoTop(transaction.token)) {
+        transaction.mask = structuredClone(current);
+        transaction.checkpoint = props.undoService.checkpoint();
+        transaction.token = recordHistory(current, transaction.label || label);
+      }
+    } else {
+      recordHistory(current, label);
+    }
+    replaceMask(next);
   };
 
   const writeMask = async (path: string, value: AvatarMaskAsset) => {
@@ -136,7 +259,7 @@ export function AvatarMaskEditor(props: {
       await writeMask(props.assetPath, mask);
       const normalized = parseAvatarMask(serializeAvatarMask(mask));
       drafts.current.delete(props.assetPath);
-      setMask(normalized);
+      replaceMask(normalized);
       setSavedFingerprint(fingerprint(normalized));
       await refreshProjectFiles();
       props.onAssetsChanged();
@@ -155,17 +278,30 @@ export function AvatarMaskEditor(props: {
   const saveAll = async () => {
     if (dirty && !await save()) throw new Error('Current Avatar Mask could not be saved');
     const failures: string[] = [];
-    for (const [path, draft] of [...drafts.current]) {
-      try {
-        await writeMask(path, draft.mask);
-        drafts.current.delete(path);
-        props.onLog(`Saved ${path}`);
-      } catch (reason) {
-        failures.push(`${path}: ${reason instanceof Error ? reason.message : String(reason)}`);
+    const dirtyDrafts = [...drafts.current].filter(([, draft]) => avatarMaskDraftDirty(draft));
+    if (dirtyDrafts.length > 0) setSaving(true);
+    try {
+      for (const [path, draft] of dirtyDrafts) {
+        try {
+          await writeMask(path, draft.mask);
+          const normalized = parseAvatarMask(serializeAvatarMask(draft.mask));
+          drafts.current.set(path, {
+            mask: normalized,
+            savedFingerprint: fingerprint(normalized),
+          });
+          props.onLog(`Saved ${path}`);
+        } catch (reason) {
+          failures.push(`${path}: ${reason instanceof Error ? reason.message : String(reason)}`);
+        }
       }
+      if (dirtyDrafts.length > 0) {
+        await refreshProjectFiles();
+        props.onAssetsChanged();
+      }
+    } finally {
+      setSaving(false);
+      if (dirtyDrafts.length > 0) setDraftEpoch((value) => value + 1);
     }
-    await refreshProjectFiles();
-    props.onAssetsChanged();
     if (failures.length > 0) throw new Error(failures.join('; '));
   };
 
@@ -195,10 +331,37 @@ export function AvatarMaskEditor(props: {
   }
 
   return (
-    <div className="animator-editor avatar-mask-editor">
+    <div
+      className="animator-editor avatar-mask-editor"
+      onFocusCapture={beginEdit}
+      onBlurCapture={endEdit}
+      onKeyDownCapture={(event: ReactKeyboardEvent<HTMLDivElement>) => {
+        const command = event.ctrlKey || event.metaKey;
+        const key = event.key.toLowerCase();
+        if (command && key === 's') {
+          event.preventDefault();
+          event.stopPropagation();
+          void save();
+          return;
+        }
+        if (!command || isAvatarMaskEditControl(event.target)) return;
+        if (key === 'z') {
+          event.preventDefault();
+          event.stopPropagation();
+          if (event.shiftKey) props.onGlobalRedo();
+          else props.onGlobalUndo();
+        } else if (key === 'y') {
+          event.preventDefault();
+          event.stopPropagation();
+          props.onGlobalRedo();
+        }
+      }}
+    >
       <div className="material-toolbar">
         <strong title={props.assetPath}>{mask.name || 'Avatar Mask'}{dirty ? ' *' : ''}</strong>
         <span className="spacer" />
+        <button type="button" aria-label="Undo" title={`Undo${props.undoService.undoLabel ? ` ${props.undoService.undoLabel}` : ''} (Ctrl+Z)`} disabled={!props.undoService.canUndo} onClick={props.onGlobalUndo}><Undo2 size={13} /></button>
+        <button type="button" aria-label="Redo" title={`Redo${props.undoService.redoLabel ? ` ${props.undoService.redoLabel}` : ''} (Ctrl+Y)`} disabled={!props.undoService.canRedo} onClick={props.onGlobalRedo}><Redo2 size={13} /></button>
         <button type="button" onClick={() => void createNew()}>New</button>
         <button type="button" disabled={!dirty || saving} onClick={() => void save()}>
           {saving ? 'Saving…' : 'Save'}
@@ -216,7 +379,7 @@ export function AvatarMaskEditor(props: {
         <section className="animator-section">
           <div className="animator-heading">
             <h3>Included Target Paths</h3>
-            <button type="button" onClick={() => update((draft) => { draft.paths.push('Rig/Spine'); })}>+ Path</button>
+            <button type="button" onClick={() => update((draft) => { draft.paths.push('Rig/Spine'); }, 'Add Avatar Mask Path')}>+ Path</button>
           </div>
           {mask.paths.length === 0 && <div className="field-hint">All animation targets are included.</div>}
           {mask.paths.map((path, index) => (
@@ -226,7 +389,7 @@ export function AvatarMaskEditor(props: {
                 value={path}
                 onChange={(event) => update((draft) => { draft.paths[index] = event.target.value; })}
               />
-              <button type="button" title="Delete path" onClick={() => update((draft) => { draft.paths.splice(index, 1); })}>×</button>
+              <button type="button" title="Delete path" onClick={() => update((draft) => { draft.paths.splice(index, 1); }, 'Delete Avatar Mask Path')}>×</button>
             </div>
           ))}
         </section>

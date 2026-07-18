@@ -757,3 +757,11 @@ Referenced Only 是可用的单包裁剪基础，仍不等同于完整 Addressab
 - 状态图拖动新增明确的 Pointer 事务：Pointer Down 捕获 Controller、选择和全局历史分支，任意数量 Pointer Move 只更新同一 `Move Animator State` 事务，Pointer Up 提交一次；拖回原位移除空历史，Pointer Cancel 同时恢复资产、选择和 Undo/Redo 分支。运行时参数、Layer Weight、Play/Start 和 Assign 仍通过 Scene Store 记录场景事务，不会被误并入 Controller 资产。
 
 这一阶段解决的是 Animator Controller 创作可靠性，不代表动画状态机已达到成熟引擎标准。仍缺 Blend Tree 与参数化 Motion、Sub-State Machine/Exit 节点、StateMachineBehaviour、Transition 中断源和有序中断、状态标签与 Any-State 细化、图框选/多选/复制粘贴/缩放、运行时断点与条件诊断、动画层性能分析，以及模型 Avatar/Root Motion 的端到端联调。`.mavatar` Avatar Mask 编辑器仍是同一 Animator 面板中的独立资产编辑器，下一切片需要单独接入路径 Scope 与后台文档；跨原生分离窗口历史仍需桌面 Host 服务。
+
+## 56. 2026-07-19 Avatar Mask 全局 Undo 与后台保存
+
+- `.mavatar` 编辑器接入共享全局历史，Scope 为 `avatar-mask:<asset path>`。Mask 重命名、路径编辑、添加与删除路径全部成为命名事务；Animator 面板切换 Controller 与 Avatar Mask 时，两类资产各自保持独立路径 Scope，却共同参与 Edit 菜单、工具栏和窗口快捷键的真实全局顺序。
+- 文本输入按 Focus 到 Blur 合并，改回原值恢复 Checkpoint；工具栏 Undo/Redo 读取全局下一动作名称，`Ctrl/Cmd+S` 保存 Mask，文本框继续保留浏览器文字 Undo。打开过的干净 Mask 也保留后台文档，支持切到 Controller 后撤销 Mask、保存后撤销和跨 Mask Redo。
+- Dirty 依据每个 Mask 与各自保存指纹计算。Save All 只写真实变化的后台 Mask，保存成功后更新并保留其基线，不再删除历史仍需捕获的文档；后台保存完整进入 `saving/try/finally` 生命周期，避免重复触发，并且没有后台变化时不再重复刷新 Project 资源列表。
+
+当前 Avatar Mask 仍是路径列表级工具，不是成熟骨骼遮罩工作流。后续需要从模型/Spine 骨架生成可搜索层级树、父子联动与部分权重、Scene/Animation 预览高亮、缺失骨骼诊断、Humanoid Body Part 快捷掩码、Mask 比较/合并，以及模型重导入后的路径迁移。跨原生分离窗口的 Mask 历史同样受独立 WebView 限制，必须由桌面 Host 的可序列化历史服务统一。

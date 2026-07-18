@@ -1365,6 +1365,9 @@ export function AnimatorEditor(props: AnimatorEditorProps) {
           onAssetsChanged={props.onAssetsChanged}
           onDirtyChange={setAvatarMaskDirty}
           onLog={props.onLog}
+          undoService={props.undoService}
+          onGlobalUndo={props.onGlobalUndo}
+          onGlobalRedo={props.onGlobalRedo}
         />
       </div>
     </>
