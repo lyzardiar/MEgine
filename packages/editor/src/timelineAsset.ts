@@ -469,6 +469,35 @@ export function timelineTrackIsMuted(asset: Pick<TimelineAsset, 'groups'>, track
   return track.muted || Boolean(timelineGroupForTrack(asset, track.id)?.muted);
 }
 
+export function assignTimelineTrackGroup(
+  groups: readonly TimelineTrackGroup[],
+  trackId: string,
+  groupId: string | null,
+): TimelineTrackGroup[] {
+  const current = groups.find((group) => group.track_ids.includes(trackId));
+  if (current?.id === groupId) {
+    return groups.map((group) => ({ ...group, track_ids: [...group.track_ids] }));
+  }
+  const target = groupId == null ? null : groups.find((group) => group.id === groupId);
+  if (groupId != null && !target) {
+    throw new Error(`Timeline group ${groupId} no longer exists`);
+  }
+  if (current?.locked) {
+    throw new Error(`Timeline group ${current.name} is locked`);
+  }
+  if (target?.locked) {
+    throw new Error(`Timeline group ${target.name} is locked`);
+  }
+  const next = groups.map((group) => ({
+    ...group,
+    track_ids: group.track_ids.filter((candidate) => candidate !== trackId),
+  }));
+  if (groupId == null) return next;
+  const nextTarget = next.find((group) => group.id === groupId);
+  nextTarget!.track_ids.push(trackId);
+  return next;
+}
+
 export function parseTimelineAsset(text: string): TimelineAsset {
   const parsed = JSON.parse(text) as Record<string, unknown>;
   if (parsed.version !== 1) throw new Error(`Unsupported Timeline version: ${String(parsed.version ?? '(missing)')}`);

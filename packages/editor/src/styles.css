@@ -3705,6 +3705,7 @@ body.insp-scrubbing * {
 }
 
 .sequencer-ruler-row,
+.sequencer-group-row,
 .sequencer-track-row {
   display: grid;
   width: calc(180px + var(--sequencer-lane-width, 360px));
@@ -3713,7 +3714,9 @@ body.insp-scrubbing * {
 }
 
 .sequencer-ruler-row { height: 32px; }
+.sequencer-group-row { height: 30px; border-top: 1px solid #151515; }
 .sequencer-track-row { height: 42px; border-top: 1px solid #151515; }
+.sequencer-group-row.selected { background: #2b3c48; box-shadow: inset 2px 0 #68a8cb; }
 .sequencer-track-row.contains-selection { box-shadow: inset 2px 0 #4d9abe; }
 .sequencer-track-row.selected { background: #263747; }
 .sequencer-track-row.locked .sequencer-lane {
@@ -3727,6 +3730,8 @@ body.insp-scrubbing * {
 .sequencer-track-row.locked .sequencer-animation-clip,
 .sequencer-track-row.locked .sequencer-particle-clip,
 .sequencer-track-row.locked .sequencer-camera-clip { cursor: not-allowed; opacity: 0.68; }
+.sequencer-track-row.effectively-muted .sequencer-lane > button { opacity: 0.48; }
+.sequencer-track-row.grouped .sequencer-track-header { padding-left: 25px; }
 
 .sequencer-track-header {
   position: sticky;
@@ -3746,6 +3751,47 @@ body.insp-scrubbing * {
 }
 
 .sequencer-ruler-row .sequencer-track-header { z-index: 9; }
+
+.sequencer-group-header {
+  z-index: 8;
+  gap: 2px;
+  padding: 0 4px;
+  background: #303338;
+}
+
+.sequencer-group-header > button {
+  min-width: 22px;
+  height: 22px;
+  padding: 0 4px;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  color: #aeb7bf;
+}
+
+.sequencer-group-header > button:hover,
+.sequencer-group-header > button.active { background: #46525b; color: #fff; }
+.sequencer-group-header .sequencer-group-name {
+  min-width: 0;
+  flex: 1 1 auto;
+  justify-content: flex-start;
+  gap: 5px;
+  overflow: hidden;
+}
+.sequencer-group-name span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.sequencer-group-lane {
+  display: flex;
+  align-items: center;
+  background: #292c30;
+  color: #78848d;
+  font: 9px var(--u-mono);
+  cursor: pointer;
+}
+.sequencer-group-lane > span { padding-left: 8px; pointer-events: none; }
+.sequencer-group-row.muted .sequencer-group-lane { color: #aa9570; }
+.sequencer-group-row.locked .sequencer-group-lane {
+  background-image: repeating-linear-gradient(-45deg, transparent 0 7px, #ffffff05 7px 8px);
+}
 
 button.sequencer-track-header { cursor: pointer; }
 button.sequencer-track-header:hover { background: #343b42; }

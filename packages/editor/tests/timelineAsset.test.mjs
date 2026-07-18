@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import {
+  assignTimelineTrackGroup,
   createTimelineAsset,
   normalizeTimelineAsset,
   parseTimelineAsset,
@@ -57,6 +58,17 @@ test('timeline track groups round trip and contribute effective mute and lock st
   assert.equal(timelineTrackIsMuted(asset, asset.tracks[0]), true);
   assert.equal(timelineTrackIsLocked(asset, asset.tracks[0]), true);
   assert.equal(timelineTrackIsMuted(asset, asset.tracks[1]), true);
+  const moved = assignTimelineTrackGroup([
+    { ...asset.groups[0], locked: false },
+    { id: 'other', name: 'Other', muted: false, locked: false, collapsed: false, track_ids: [] },
+  ], 'events', 'other');
+  assert.deepEqual(moved.map((group) => group.track_ids), [[], ['events']]);
+  assert.deepEqual(assignTimelineTrackGroup(moved, 'events', null).map((group) => group.track_ids), [[], []]);
+  assert.throws(() => assignTimelineTrackGroup(moved, 'events', 'missing'), /no longer exists/);
+  assert.throws(() => assignTimelineTrackGroup(asset.groups, 'events', null), /Presentation is locked/);
+  assert.throws(() => assignTimelineTrackGroup([
+    { id: 'other', name: 'Other', muted: false, locked: true, collapsed: false, track_ids: [] },
+  ], 'events', 'other'), /Other is locked/);
   assert.deepEqual(parseTimelineAsset(serializeTimelineAsset(asset)), asset);
 
   assert.throws(() => parseTimelineAsset(JSON.stringify({
