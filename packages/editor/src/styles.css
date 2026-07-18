@@ -3614,7 +3614,8 @@ body.insp-scrubbing * {
   min-height: 0;
 }
 
-.sequencer-panel { min-height: 0; }
+.sequencer-panel { min-height: 0; outline: 0; }
+.sequencer-panel:focus-visible { box-shadow: inset 0 0 0 1px #4b83aa; }
 .sequencer-toolbar { border-bottom: 1px solid #151515; }
 .sequencer-live-status {
   flex: 0 0 auto;
@@ -3626,6 +3627,59 @@ body.insp-scrubbing * {
   white-space: nowrap;
 }
 .sequencer-live-status.playing { border-color: #39704d; color: #8de5ab; background: #203428; }
+.sequencer-zoom-controls {
+  display: flex;
+  flex: 0 0 auto;
+  align-items: center;
+  gap: 1px;
+  padding: 0 3px;
+  border-left: 1px solid #171717;
+  border-right: 1px solid #171717;
+}
+.sequencer-toolbar .sequencer-zoom-controls button { min-width: 24px; padding: 0 4px; }
+.sequencer-zoom-controls span {
+  width: 28px;
+  color: #888;
+  font: 9px var(--u-mono);
+  text-align: right;
+}
+.sequencer-add-track { position: relative; flex: 0 0 auto; }
+.sequencer-add-track summary {
+  display: flex;
+  height: 24px;
+  align-items: center;
+  gap: 4px;
+  box-sizing: border-box;
+  padding: 0 7px;
+  border: 1px solid #181818;
+  background: #373737;
+  color: #c5c5c5;
+  cursor: pointer;
+  font-size: 10px;
+  list-style: none;
+}
+.sequencer-add-track summary::-webkit-details-marker { display: none; }
+.sequencer-add-track[open] summary,
+.sequencer-add-track summary:hover { background: #464646; color: #fff; }
+.sequencer-add-track > div {
+  position: absolute;
+  z-index: 30;
+  top: calc(100% + 2px);
+  right: 0;
+  display: grid;
+  width: 132px;
+  padding: 3px;
+  border: 1px solid #111;
+  background: #303030;
+  box-shadow: 0 5px 14px #0008;
+}
+.sequencer-toolbar .sequencer-add-track > div button {
+  justify-content: flex-start;
+  border-color: transparent;
+  background: transparent;
+  text-align: left;
+}
+.sequencer-toolbar .sequencer-add-track > div button:hover { background: #31516a; }
 .sequencer-workspace {
   min-height: 0;
   flex: 1 1 auto;
@@ -3644,8 +3698,9 @@ body.insp-scrubbing * {
 .sequencer-ruler-row,
 .sequencer-track-row {
   display: grid;
-  grid-template-columns: 180px minmax(360px, 1fr);
+  width: calc(180px + var(--sequencer-lane-width, 360px));
   min-width: 540px;
+  grid-template-columns: 180px var(--sequencer-lane-width, 360px);
 }
 
 .sequencer-ruler-row { height: 32px; }
@@ -3653,6 +3708,9 @@ body.insp-scrubbing * {
 .sequencer-track-row.selected { background: #263747; }
 
 .sequencer-track-header {
+  position: sticky;
+  z-index: 7;
+  left: 0;
   min-width: 0;
   border: 0;
   border-right: 1px solid #111;
@@ -3665,6 +3723,8 @@ body.insp-scrubbing * {
   padding: 0 8px;
   text-align: left;
 }
+
+.sequencer-ruler-row .sequencer-track-header { z-index: 9; }
 
 button.sequencer-track-header { cursor: pointer; }
 button.sequencer-track-header:hover { background: #343b42; }
@@ -3688,7 +3748,8 @@ button.sequencer-track-header:hover { background: #343b42; }
 .sequencer-ruler,
 .sequencer-lane {
   position: relative;
-  min-width: 360px;
+  width: var(--sequencer-lane-width, 360px);
+  min-width: var(--sequencer-lane-width, 360px);
   overflow: hidden;
   background: #242424;
   cursor: crosshair;
@@ -3766,7 +3827,7 @@ button.sequencer-track-header:hover { background: #343b42; }
   padding: 0 5px;
   background: #315f4d;
   color: #c9f1df;
-  cursor: ew-resize;
+  cursor: grab;
   text-align: left;
   font: 8px var(--u-mono);
   white-space: nowrap;
@@ -3788,7 +3849,7 @@ button.sequencer-track-header:hover { background: #343b42; }
   padding: 0 5px;
   background: #355b78;
   color: #d8efff;
-  cursor: ew-resize;
+  cursor: grab;
   text-align: left;
   font: 8px var(--u-mono);
   white-space: nowrap;
@@ -3809,7 +3870,7 @@ button.sequencer-track-header:hover { background: #343b42; }
   padding: 0 5px;
   background: #624d76;
   color: #f0e0ff;
-  cursor: ew-resize;
+  cursor: grab;
   text-align: left;
   font: 8px var(--u-mono);
   white-space: nowrap;
@@ -3817,6 +3878,33 @@ button.sequencer-track-header:hover { background: #343b42; }
 
 .sequencer-animation-clip:hover,
 .sequencer-animation-clip.selected { outline: 1px solid #fff; filter: brightness(1.18); }
+
+.sequencer-activation-clip:active,
+.sequencer-audio-clip:active,
+.sequencer-animation-clip:active { cursor: grabbing; }
+
+.sequencer-activation-clip::before,
+.sequencer-activation-clip::after,
+.sequencer-audio-clip::before,
+.sequencer-audio-clip::after,
+.sequencer-animation-clip::before,
+.sequencer-animation-clip::after {
+  content: '';
+  position: absolute;
+  z-index: 2;
+  top: 2px;
+  bottom: 2px;
+  width: 4px;
+  border-left: 1px solid #ffffff66;
+  border-right: 1px solid #0006;
+  cursor: ew-resize;
+}
+.sequencer-activation-clip::before,
+.sequencer-audio-clip::before,
+.sequencer-animation-clip::before { left: 1px; }
+.sequencer-activation-clip::after,
+.sequencer-audio-clip::after,
+.sequencer-animation-clip::after { right: 1px; }
 
 .sequencer-inspector {
   min-width: 0;
@@ -3848,6 +3936,24 @@ button.sequencer-track-header:hover { background: #343b42; }
 }
 
 .sequencer-inspector textarea { min-height: 92px; resize: vertical; }
+
+.sequencer-tracks,
+.sequencer-inspector {
+  scrollbar-color: #555 #1f1f1f;
+  scrollbar-width: thin;
+}
+.sequencer-tracks::-webkit-scrollbar,
+.sequencer-inspector::-webkit-scrollbar { width: 7px; height: 7px; }
+.sequencer-tracks::-webkit-scrollbar-track,
+.sequencer-inspector::-webkit-scrollbar-track { background: #1f1f1f; }
+.sequencer-tracks::-webkit-scrollbar-thumb,
+.sequencer-inspector::-webkit-scrollbar-thumb {
+  border: 1px solid #1f1f1f;
+  border-radius: 0;
+  background: #555;
+}
+.sequencer-tracks::-webkit-scrollbar-thumb:hover,
+.sequencer-inspector::-webkit-scrollbar-thumb:hover { background: #707070; }
 .sequencer-inspector .sequencer-check { display: flex; flex-direction: row; align-items: center; gap: 7px; }
 .sequencer-inspector .sequencer-check input { width: 14px; }
 .sequencer-inspector button {

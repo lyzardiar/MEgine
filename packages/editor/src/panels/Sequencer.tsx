@@ -1,6 +1,13 @@
-import { useEffect, useMemo, useRef, useState, type PointerEvent as ReactPointerEvent } from 'react';
+import {
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type CSSProperties,
+  type PointerEvent as ReactPointerEvent,
+} from 'react';
 import type { WorldSnapshotView } from '@mengine/api';
-import { Link, Pause, Play, Plus, Save, Square, Trash2, X } from 'lucide-react';
+import { Link, Maximize2, Minus, Pause, Play, Plus, Save, Square, Trash2, X } from 'lucide-react';
 import { registerMenuItem } from '../editorWindow';
 import {
   listProjectFiles,
@@ -18,6 +25,15 @@ import {
   type TimelineAsset,
 } from '../timelineAsset';
 import { PROJECT_ASSETS_CHANGED_EVENT } from './Material';
+import {
+  SEQUENCER_MAX_ZOOM,
+  SEQUENCER_MIN_ZOOM,
+  clampSequencerZoom,
+  findSequencerClipPlacement,
+  moveSequencerClip,
+  sequencerTicks,
+  trimSequencerClip,
+} from '../sequencerEditing';
 
 export const OPEN_TIMELINE_ASSET_EVENT = 'mengine:open-timeline-asset';
 
@@ -76,7 +92,12 @@ export type SequencerProps = {
 };
 
 type Selection = { track: number; marker: number | null } | null;
-type Draft = { asset: TimelineAsset; savedText: string; time: number; selection: Selection };
+type Draft = {
+  asset: TimelineAsset;
+  savedText: string;
+  time: number;
+  selection: Selection;
+};
 
 export function Sequencer(props: SequencerProps) {
   const [asset, setAsset] = useState<TimelineAsset | null>(null);
@@ -88,10 +109,13 @@ export function Sequencer(props: SequencerProps) {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [payloadInvalid, setPayloadInvalid] = useState(false);
+  const [zoom, setZoom] = useState(1);
+  const [tracksWidth, setTracksWidth] = useState(720);
   const loadedPath = useRef('');
   const drafts = useRef(new Map<string, Draft>());
   const frame = useRef<number | null>(null);
   const previousFrame = useRef<number | null>(null);
+  const tracksViewport = useRef<HTMLDivElement | null>(null);
 
   const fingerprint = useMemo(() => asset ? JSON.stringify(asset) : '', [asset]);
   const savedFingerprint = useMemo(() => {
@@ -135,6 +159,7 @@ export function Sequencer(props: SequencerProps) {
     setAsset(null);
     setSavedText('');
     setTime(0);
+    setZoom(1);
     setSelection(null);
     setError(null);
     setPayloadInvalid(false);
@@ -241,6 +266,29 @@ export function Sequencer(props: SequencerProps) {
     };
   }, [asset, playing]);
 
+  useEffect(() => {
+    const viewport = tracksViewport.current;
+    if (!viewport) return;
+    const updateWidth = () => setTracksWidth(Math.max(540, viewport.clientWidth));
+    updateWidth();
+    const observer = new ResizeObserver(updateWidth);
+    observer.observe(viewport);
+    return () => observer.disconnect();
+  }, [asset != null]);
+
+  useEffect(() => {
+    const viewport = tracksViewport.current;
+    if (!viewport || !asset || !(playing || liveDirector?.playing) || zoom <= 1) return;
+    const visibleWidth = Math.max(1, viewport.clientWidth - 180);
+    const width = Math.max(360, visibleWidth * zoom);
+    const playhead = displayTime / asset.duration * width;
+    const margin = Math.min(80, visibleWidth * 0.15);
+    if (playhead < viewport.scrollLeft + margin
+      || playhead > viewport.scrollLeft + visibleWidth - margin) {
+      viewport.scrollLeft = Math.max(0, playhead - visibleWidth * 0.35);
+    }
+  }, [asset, displayTime, liveDirector?.playing, playing, zoom]);
+
   const addSignalTrack = () => {
     if (!asset) return;
     const used = new Set(asset.tracks.map((track) => track.id));
@@ -300,47 +348,82 @@ export function Sequencer(props: SequencerProps) {
 
   const addActivationClip = (trackIndex: number, requestedTime = time) => {
     if (!asset || asset.tracks[trackIndex]?.type !== 'activation') return;
-    const minimum = Math.min(1 / asset.frame_rate, asset.duration);
-    const start = Math.min(snapTimelineAssetTime(requestedTime, asset), asset.duration - minimum);
-    const duration = Math.min(1, asset.duration - start);
     const track = asset.tracks[trackIndex];
+    const placement = findSequencerClipPlacement(
+      track.clips,
+      requestedTime,
+      Math.min(1, asset.duration),
+      asset.duration,
+      asset.frame_rate,
+    );
+    if (!placement) {
+      setError('Activation Track has no free space for another clip.');
+      return;
+    }
+    const marker = track.clips.filter((clip) => clip.start < placement.start).length;
     update((draft) => {
       const target = draft.tracks[trackIndex];
-      if (target.type === 'activation') target.clips.push({ start, duration, active: true });
+      if (target.type === 'activation') {
+        target.clips.push({ ...placement, active: true });
+        target.clips.sort((left, right) => left.start - right.start);
+      }
     });
-    setSelection({ track: trackIndex, marker: track.type === 'activation' ? track.clips.length : null });
+    setError(null);
+    setSelection({ track: trackIndex, marker });
   };
 
   const addAudioClip = (trackIndex: number, requestedTime = time) => {
     if (!asset || asset.tracks[trackIndex]?.type !== 'audio') return;
-    const minimum = Math.min(1 / asset.frame_rate, asset.duration);
-    const start = Math.min(snapTimelineAssetTime(requestedTime, asset), asset.duration - minimum);
-    const duration = Math.min(1, asset.duration - start);
     const defaultClip = listProjectFiles().find((entry) => entry.kind === 'audio')?.relPath ?? 'Assets/Audio/clip.ogg';
     const track = asset.tracks[trackIndex];
+    const placement = findSequencerClipPlacement(
+      track.clips,
+      requestedTime,
+      Math.min(1, asset.duration),
+      asset.duration,
+      asset.frame_rate,
+    );
+    if (!placement) {
+      setError('Audio Track has no free space for another clip.');
+      return;
+    }
+    const marker = track.clips.filter((clip) => clip.start < placement.start).length;
     update((draft) => {
       const target = draft.tracks[trackIndex];
       if (target.type === 'audio') target.clips.push({
-        start, duration, clip: defaultClip, clip_in: 0, volume: 1, pitch: 1, looped: false,
+        ...placement, clip: defaultClip, clip_in: 0, volume: 1, pitch: 1, looped: false,
       });
+      if (target.type === 'audio') target.clips.sort((left, right) => left.start - right.start);
     });
-    setSelection({ track: trackIndex, marker: track.clips.length });
+    setError(null);
+    setSelection({ track: trackIndex, marker });
   };
 
   const addAnimationClip = (trackIndex: number, requestedTime = time) => {
     if (!asset || asset.tracks[trackIndex]?.type !== 'animation') return;
-    const minimum = Math.min(1 / asset.frame_rate, asset.duration);
-    const start = Math.min(snapTimelineAssetTime(requestedTime, asset), asset.duration - minimum);
-    const duration = Math.min(1, asset.duration - start);
     const defaultClip = listProjectFiles().find((entry) => entry.kind === 'animation')?.relPath ?? 'Assets/Animations/clip.manim';
     const track = asset.tracks[trackIndex];
+    const placement = findSequencerClipPlacement(
+      track.clips,
+      requestedTime,
+      Math.min(1, asset.duration),
+      asset.duration,
+      asset.frame_rate,
+    );
+    if (!placement) {
+      setError('Animation Track has no free space for another clip.');
+      return;
+    }
+    const marker = track.clips.filter((clip) => clip.start < placement.start).length;
     update((draft) => {
       const target = draft.tracks[trackIndex];
       if (target.type === 'animation') target.clips.push({
-        start, duration, clip: defaultClip, clip_in: 0, speed: 1,
+        ...placement, clip: defaultClip, clip_in: 0, speed: 1,
       });
+      if (target.type === 'animation') target.clips.sort((left, right) => left.start - right.start);
     });
-    setSelection({ track: trackIndex, marker: track.clips.length });
+    setError(null);
+    setSelection({ track: trackIndex, marker });
   };
 
   const addTrackItem = (trackIndex: number, requestedTime: number) => {
@@ -362,6 +445,18 @@ export function Sequencer(props: SequencerProps) {
     const lane = event.currentTarget.parentElement;
     if (!lane) return;
     const bounds = lane.getBoundingClientRect();
+    const originalTrack = asset.tracks[trackIndex];
+    if (!originalTrack) return;
+    const targetBounds = event.currentTarget.getBoundingClientRect();
+    const edgeDistance = event.clientX - targetBounds.left;
+    const trimEdge = originalTrack.type === 'signal'
+      ? null
+      : edgeDistance <= 7
+        ? 'start'
+        : targetBounds.width - edgeDistance <= 7
+          ? 'end'
+          : null;
+    const pointerStartTime = (event.clientX - bounds.left) / Math.max(1, bounds.width) * asset.duration;
     const pointer = event.pointerId;
     event.currentTarget.setPointerCapture(pointer);
     setSelection({ track: trackIndex, marker: markerIndex });
@@ -369,14 +464,48 @@ export function Sequencer(props: SequencerProps) {
       const position = Math.max(0, Math.min(1, (moveEvent.clientX - bounds.left) / Math.max(1, bounds.width)));
       update((draft) => {
         const track = draft.tracks[trackIndex];
+        const delta = position * draft.duration - pointerStartTime;
         if (track.type === 'signal') {
-          track.markers[markerIndex].time = snapTimelineAssetTime(position * draft.duration, draft);
+          if (originalTrack.type !== 'signal') return;
+          const originalMarker = originalTrack.markers[markerIndex];
+          track.markers[markerIndex].time = snapTimelineAssetTime(originalMarker.time + delta, draft);
         } else {
           const clip = track.clips[markerIndex];
-          clip.start = Math.min(
-            snapTimelineAssetTime(position * draft.duration, draft),
-            draft.duration - clip.duration,
-          );
+          if (!clip || originalTrack.type === 'signal') return;
+          if (trimEdge) {
+            const range = trimSequencerClip(
+              originalTrack.clips,
+              markerIndex,
+              trimEdge,
+              delta,
+              draft.duration,
+              draft.frame_rate,
+              trimEdge === 'start' && originalTrack.type === 'audio'
+                ? { offset: originalTrack.clips[markerIndex].clip_in, rate: originalTrack.clips[markerIndex].pitch }
+                : trimEdge === 'start' && originalTrack.type === 'animation'
+                  ? { offset: originalTrack.clips[markerIndex].clip_in, rate: originalTrack.clips[markerIndex].speed }
+                  : undefined,
+            );
+            clip.start = range.start;
+            clip.duration = range.duration;
+            if (trimEdge === 'start' && track.type === 'audio' && originalTrack.type === 'audio') {
+              const original = originalTrack.clips[markerIndex];
+              track.clips[markerIndex].clip_in = Math.max(0, original.clip_in + range.sourceOffsetDelta * original.pitch);
+            }
+            if (trimEdge === 'start' && track.type === 'animation' && originalTrack.type === 'animation') {
+              const original = originalTrack.clips[markerIndex];
+              track.clips[markerIndex].clip_in = Math.max(0, original.clip_in + range.sourceOffsetDelta * original.speed);
+            }
+          } else {
+            const range = moveSequencerClip(
+              originalTrack.clips,
+              markerIndex,
+              delta,
+              draft.duration,
+              draft.frame_rate,
+            );
+            clip.start = range.start;
+          }
         }
       });
     };
@@ -419,16 +548,75 @@ export function Sequencer(props: SequencerProps) {
   const selectedClip = selectedActivationClip ?? selectedAudioClip ?? selectedAnimationClip;
   const audioAssets = listProjectFiles().filter((entry) => entry.kind === 'audio');
   const animationAssets = listProjectFiles().filter((entry) => entry.kind === 'animation');
-  const tickCount = Math.min(21, Math.max(2, Math.ceil(asset.duration) + 1));
-  const ticks = Array.from({ length: tickCount }, (_, index) => index / (tickCount - 1));
+  const laneViewportWidth = Math.max(360, tracksWidth - 180);
+  const laneWidth = Math.max(360, Math.round(laneViewportWidth * zoom));
+  const ticks = sequencerTicks(asset.duration, laneWidth);
   const transportPlaying = liveDirector ? Boolean(liveDirector.playing) : playing;
   const scrub = (next: number) => {
     if (liveDirector && props.selectedEntity) props.onPatchDirector(props.selectedEntity.entity, { time: next });
     else setTime(next);
   };
+  const changeZoom = (requested: number, anchorClientX?: number) => {
+    const next = clampSequencerZoom(requested);
+    const viewport = tracksViewport.current;
+    if (!viewport || next === zoom) {
+      setZoom(next);
+      return;
+    }
+    const visibleLaneWidth = Math.max(1, viewport.clientWidth - 180);
+    const viewportBounds = viewport.getBoundingClientRect();
+    const anchor = anchorClientX == null
+      ? visibleLaneWidth / 2
+      : Math.max(0, Math.min(visibleLaneWidth, anchorClientX - viewportBounds.left - 180));
+    const timeRatio = Math.max(0, viewport.scrollLeft + anchor) / Math.max(1, laneWidth);
+    setZoom(next);
+    requestAnimationFrame(() => {
+      const nextLaneWidth = Math.max(360, Math.round(visibleLaneWidth * next));
+      viewport.scrollLeft = Math.max(0, timeRatio * nextLaneWidth - anchor);
+    });
+  };
 
   return (
-    <div className="timeline-panel sequencer-panel">
+    <div
+      className="timeline-panel sequencer-panel"
+      tabIndex={0}
+      onKeyDown={(event) => {
+        if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 's') {
+          event.preventDefault();
+          event.stopPropagation();
+          void save();
+          return;
+        }
+        const tag = (event.target as HTMLElement).tagName;
+        if (['INPUT', 'TEXTAREA', 'SELECT', 'BUTTON', 'SUMMARY'].includes(tag)) return;
+        if (event.code === 'Space') {
+          event.preventDefault();
+          if (liveDirector && props.selectedEntity) {
+            props.onPatchDirector(props.selectedEntity.entity, { playing: !transportPlaying });
+          } else {
+            setPlaying((value) => !value);
+          }
+          return;
+        }
+        if ((event.key === 'Delete' || event.key === 'Backspace') && selection) {
+          event.preventDefault();
+          const selectedTrackIndex = selection.track;
+          const selectedItemIndex = selection.marker;
+          update((draft) => {
+            if (selectedItemIndex == null) {
+              draft.tracks.splice(selectedTrackIndex, 1);
+              return;
+            }
+            const track = draft.tracks[selectedTrackIndex];
+            if (track.type === 'signal') track.markers.splice(selectedItemIndex, 1);
+            else track.clips.splice(selectedItemIndex, 1);
+          });
+          setSelection(selectedItemIndex == null
+            ? null
+            : { track: selectedTrackIndex, marker: null });
+        }
+      }}
+    >
       <div className="timeline-toolbar sequencer-toolbar">
         <div className="timeline-transport">
           <button type="button" className={transportPlaying ? 'active' : ''} title={transportPlaying ? 'Pause' : 'Play'} onClick={() => {
@@ -448,28 +636,51 @@ export function Sequencer(props: SequencerProps) {
         }} /></label>
         <span className="timeline-clip-path" title={props.assetPath}>{asset.name} — {props.assetPath}{dirty ? ' *' : ''}</span>
         {liveDirector && <span className={`sequencer-live-status${liveDirector.playing ? ' playing' : ''}`}>{liveDirector.playing ? 'LIVE PLAYING' : 'LIVE PAUSED'} · {displayTime.toFixed(2)}s</span>}
-        <button type="button" onClick={addSignalTrack}><Plus size={14} /> Signal Track</button>
-        <button type="button" onClick={addActivationTrack}><Plus size={14} /> Activation Track</button>
-        <button type="button" onClick={addAudioTrack}><Plus size={14} /> Audio Track</button>
-        <button type="button" onClick={addAnimationTrack}><Plus size={14} /> Animation Track</button>
+        <div className="sequencer-zoom-controls">
+          <button type="button" title="Zoom out" disabled={zoom <= SEQUENCER_MIN_ZOOM} onClick={() => changeZoom(zoom / 1.5)}><Minus size={13} /></button>
+          <button type="button" title="Fit entire Timeline" disabled={zoom === 1} onClick={() => {
+            setZoom(1);
+            if (tracksViewport.current) tracksViewport.current.scrollLeft = 0;
+          }}><Maximize2 size={12} /> Fit</button>
+          <button type="button" title="Zoom in" disabled={zoom >= SEQUENCER_MAX_ZOOM} onClick={() => changeZoom(zoom * 1.5)}><Plus size={13} /></button>
+          <span>{zoom.toFixed(zoom < 10 ? 1 : 0)}x</span>
+        </div>
+        <details className="sequencer-add-track">
+          <summary><Plus size={14} /> Track</summary>
+          <div>
+            <button type="button" onClick={(event) => { addSignalTrack(); event.currentTarget.closest('details')?.removeAttribute('open'); }}>Signal</button>
+            <button type="button" onClick={(event) => { addActivationTrack(); event.currentTarget.closest('details')?.removeAttribute('open'); }}>Activation</button>
+            <button type="button" onClick={(event) => { addAudioTrack(); event.currentTarget.closest('details')?.removeAttribute('open'); }}>Audio</button>
+            <button type="button" onClick={(event) => { addAnimationTrack(); event.currentTarget.closest('details')?.removeAttribute('open'); }}>Animation</button>
+          </div>
+        </details>
         <button type="button" disabled={!selectedTrack} onClick={() => selectedTrack && addTrackItem(selection!.track, displayTime)}>
-          <Plus size={14} /> {selectedTrack?.type === 'activation' ? 'Activation Clip' : selectedTrack?.type === 'audio' ? 'Audio Clip' : selectedTrack?.type === 'animation' ? 'Animation Clip' : 'Signal'}
+          <Plus size={14} /> {selectedTrack?.type === 'signal' ? 'Signal' : 'Clip'}
         </button>
-        <button type="button" disabled={!props.selectedEntity} onClick={() => props.selectedEntity && props.onAssignDirector(props.selectedEntity.entity, props.assetPath!)}><Link size={14} /> Bind</button>
-        <button type="button" disabled={!dirty || saving || payloadInvalid} onClick={() => void save()}><Save size={14} /> {saving ? 'Saving…' : 'Save'}</button>
-        <button type="button" title="Back to Animation Clip editor" onClick={props.onClose}><X size={14} /></button>
+        <button type="button" className="timeline-icon-button" title="Bind selected entity" disabled={!props.selectedEntity} onClick={() => props.selectedEntity && props.onAssignDirector(props.selectedEntity.entity, props.assetPath!)}><Link size={14} /></button>
+        <button type="button" className="timeline-icon-button" title={saving ? 'Saving' : 'Save Timeline'} disabled={!dirty || saving || payloadInvalid} onClick={() => void save()}><Save size={14} /></button>
+        <button type="button" className="timeline-icon-button" title="Back to Animation Clip editor" onClick={props.onClose}><X size={14} /></button>
       </div>
 
       {error && <div className="timeline-message error">{error}</div>}
       <div className="sequencer-workspace">
-        <div className="sequencer-tracks">
+        <div
+          className="sequencer-tracks"
+          ref={tracksViewport}
+          style={{ '--sequencer-lane-width': `${laneWidth}px` } as CSSProperties}
+          onWheel={(event) => {
+            if (!event.ctrlKey && !event.metaKey) return;
+            event.preventDefault();
+            changeZoom(zoom * (event.deltaY > 0 ? 0.8 : 1.25), event.clientX);
+          }}
+        >
           <div className="sequencer-ruler-row">
             <div className="sequencer-track-header">Tracks</div>
             <div className="sequencer-ruler" onPointerDown={(event) => {
               const bounds = event.currentTarget.getBoundingClientRect();
               scrub(snapTimelineAssetTime((event.clientX - bounds.left) / bounds.width * asset.duration, asset));
             }}>
-              {ticks.map((position) => <span key={position} style={{ left: `${position * 100}%` }}>{(position * asset.duration).toFixed(1)}</span>)}
+              {ticks.map((tick) => <span key={tick.time} style={{ left: `${tick.position * 100}%` }}>{tick.time.toFixed(tick.time < 1 ? 2 : 1)}</span>)}
               <i className="sequencer-playhead" style={{ left: `${displayTime / asset.duration * 100}%` }} />
             </div>
           </div>
@@ -492,7 +703,7 @@ export function Sequencer(props: SequencerProps) {
                 scrub(snapTimelineAssetTime((event.clientX - bounds.left) / bounds.width * asset.duration, asset));
                 setSelection({ track: trackIndex, marker: null });
               }}>
-                {ticks.map((position) => <i className="sequencer-grid-line" key={position} style={{ left: `${position * 100}%` }} />)}
+                {ticks.map((tick) => <i className="sequencer-grid-line" key={tick.time} style={{ left: `${tick.position * 100}%` }} />)}
                 {track.type === 'signal' && track.markers.map((marker, markerIndex) => (
                   <button
                     type="button"
@@ -621,13 +832,28 @@ export function Sequencer(props: SequencerProps) {
               const track = draft.tracks[selection!.track];
               if (track.type === 'signal') return;
               const clip = track.clips[selection!.marker!];
-              clip.start = Math.min(snapTimelineAssetTime(Number(event.target.value), draft), draft.duration - clip.duration);
+              const range = moveSequencerClip(
+                track.clips,
+                selection!.marker!,
+                Number(event.target.value) - clip.start,
+                draft.duration,
+                draft.frame_rate,
+              );
+              clip.start = range.start;
             })} /></label>
             <label>Duration <input type="number" min={1 / asset.frame_rate} max={asset.duration - selectedClip.start} step={1 / asset.frame_rate} value={selectedClip.duration} onChange={(event) => update((draft) => {
               const track = draft.tracks[selection!.track];
               if (track.type === 'signal') return;
               const clip = track.clips[selection!.marker!];
-              clip.duration = Math.max(1 / draft.frame_rate, Math.min(Number(event.target.value) || 0, draft.duration - clip.start));
+              const range = trimSequencerClip(
+                track.clips,
+                selection!.marker!,
+                'end',
+                Number(event.target.value) - clip.duration,
+                draft.duration,
+                draft.frame_rate,
+              );
+              clip.duration = range.duration;
             })} /></label>
             {selectedActivationClip && <label className="sequencer-check"><input type="checkbox" checked={selectedActivationClip.active} onChange={(event) => update((draft) => {
               const track = draft.tracks[selection!.track];
