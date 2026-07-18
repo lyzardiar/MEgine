@@ -17,6 +17,20 @@ npm run codegen
 cargo run -p mengine-runtime -- --sample spinning-cube
 ```
 
+## Windows 编辑器 EXE 打包
+
+在新拷贝、尚未安装 Cargo 等构建环境的工程中，依次执行下面两个命令：
+
+```powershell
+# 1. 安装 Node.js、pnpm、Rust/Cargo、MSVC、WebView2 及仓库依赖
+.\scripts\install-editor-build-env.cmd
+
+# 2. 构建 Release 版本并生成 NSIS 安装 EXE
+.\scripts\build-editor-exe.cmd
+```
+
+安装包输出到 `target\release\bundle\nsis\`。环境安装只需执行一次；后续改完代码直接执行第二条命令即可。
+
 ## 样本脚本（TypeScript）
 
 ```bash
