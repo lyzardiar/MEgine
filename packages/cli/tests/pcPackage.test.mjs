@@ -174,10 +174,19 @@ test('buildPcPackage validates transitive material animator and audio dependenci
       occlusion_texture: 'Assets/Textures/hero-ao.png',
     }));
     writeFileSync(join(paths.project, 'Assets', 'Animations', 'Hero.mcontroller'), JSON.stringify({
-      version: 1,
+      version: 2,
+      default_state: 'Idle',
       states: [{ name: 'Idle', clip: 'Assets/Animations/Idle.manim' }],
+      layers: [{
+        name: 'Upper Body',
+        weight: 0.75,
+        blend_mode: 'override',
+        mask_paths: ['Rig/Spine'],
+        motions: [{ state: 'Idle', clip: 'Assets/Animations/Wave.manim' }],
+      }],
     }));
     writeFileSync(join(paths.project, 'Assets', 'Animations', 'Idle.manim'), '{}');
+    writeFileSync(join(paths.project, 'Assets', 'Animations', 'Wave.manim'), '{}');
     writeFileSync(join(paths.project, 'Assets', 'Audio', 'theme.ogg'), 'audio');
     writeFileSync(join(paths.project, 'Assets', 'Textures', 'hero.png'), 'texture');
     writeFileSync(join(paths.project, 'Assets', 'Textures', 'hero-ao.png'), 'texture');
@@ -189,8 +198,8 @@ test('buildPcPackage validates transitive material animator and audio dependenci
     });
     assert.deepEqual(manifest.assetValidation, {
       rootScenes: 2,
-      references: 8,
-      validatedFiles: 8,
+      references: 9,
+      validatedFiles: 9,
     });
   } finally {
     rmSync(paths.root, { recursive: true, force: true });

@@ -7,6 +7,7 @@ export type AnimatorConditionMode =
   | 'equals'
   | 'not_equal'
   | 'trigger';
+export type AnimatorLayerBlendMode = 'override' | 'additive';
 
 export type AnimatorParameter = {
   name: string;
@@ -38,13 +39,28 @@ export type AnimatorTransition = {
   conditions: AnimatorCondition[];
 };
 
+export type AnimatorLayerMotion = {
+  state: string;
+  clip: string;
+};
+
+export type AnimatorLayer = {
+  name: string;
+  enabled: boolean;
+  weight: number;
+  blend_mode: AnimatorLayerBlendMode;
+  mask_paths: string[];
+  motions: AnimatorLayerMotion[];
+};
+
 export type AnimatorController = {
-  version: 1;
+  version: 2;
   name: string;
   default_state: string;
   parameters: AnimatorParameter[];
   states: AnimatorState[];
   transitions: AnimatorTransition[];
+  layers: AnimatorLayer[];
 };
 
 export type AnimatorParameterValue = boolean | number;
@@ -53,6 +69,7 @@ const PARAMETER_KINDS = new Set<AnimatorParameterKind>(['bool', 'float', 'int', 
 const CONDITION_MODES = new Set<AnimatorConditionMode>([
   'if', 'if_not', 'greater', 'less', 'equals', 'not_equal', 'trigger',
 ]);
+const LAYER_BLEND_MODES = new Set<AnimatorLayerBlendMode>(['override', 'additive']);
 
 function record(value: unknown): Record<string, unknown> {
   return value != null && typeof value === 'object' && !Array.isArray(value)
@@ -90,6 +107,12 @@ function parameterOverrideObject(json: string): Record<string, unknown> {
   }
 }
 
+function normalizeMaskPath(value: unknown): string {
+  const path = String(value ?? '').trim().replace(/\\/g, '/').replace(/^\/+|\/+$/g, '');
+  if (path === '.' || path === '*') return path;
+  return path.split('/').map((segment) => segment.trim()).filter((segment) => segment && segment !== '.').join('/');
+}
+
 export function animatorParameterValues(
   controller: AnimatorController,
   json: string,
@@ -119,12 +142,13 @@ export function createAnimatorController(
   initialClip = 'Assets/Animations/New State.manim',
 ): AnimatorController {
   return {
-    version: 1,
+    version: 2,
     name,
     default_state: 'Idle',
     parameters: [],
     states: [{ name: 'Idle', clip: initialClip, speed: 1, position: [100, 90] }],
     transitions: [],
+    layers: [],
   };
 }
 
@@ -174,13 +198,36 @@ export function normalizeAnimatorController(value: unknown): AnimatorController 
       conditions,
     } satisfies AnimatorTransition;
   });
+  const layers = (Array.isArray(source.layers) ? source.layers : []).map((item) => {
+    const layer = record(item);
+    const rawBlendMode = String(layer.blend_mode ?? 'override') as AnimatorLayerBlendMode;
+    const maskPaths = [...new Set((Array.isArray(layer.mask_paths) ? layer.mask_paths : [])
+      .map(normalizeMaskPath)
+      .filter(Boolean))];
+    const motions = (Array.isArray(layer.motions) ? layer.motions : []).map((item) => {
+      const motion = record(item);
+      return {
+        state: String(motion.state ?? '').trim(),
+        clip: String(motion.clip ?? '').trim().replace(/\\/g, '/'),
+      } satisfies AnimatorLayerMotion;
+    });
+    return {
+      name: String(layer.name ?? '').trim(),
+      enabled: layer.enabled !== false,
+      weight: Math.max(0, Math.min(1, finite(layer.weight, 1))),
+      blend_mode: LAYER_BLEND_MODES.has(rawBlendMode) ? rawBlendMode : 'override',
+      mask_paths: maskPaths,
+      motions,
+    } satisfies AnimatorLayer;
+  });
   const controller: AnimatorController = {
-    version: 1,
+    version: 2,
     name: String(source.name ?? ''),
     default_state: String(source.default_state ?? '').trim(),
     parameters,
     states,
     transitions,
+    layers,
   };
   return controller;
 }
@@ -220,6 +267,23 @@ export function validateAnimatorController(controller: AnimatorController): void
           ? condition.mode === 'trigger'
           : ['greater', 'less', 'equals', 'not_equal'].includes(condition.mode);
       if (!compatible) throw new Error(`条件 ${condition.mode} 与参数 ${condition.parameter} (${parameter.kind}) 不兼容`);
+    }
+  }
+  const layerNames = new Set<string>();
+  for (const layer of controller.layers) {
+    if (!layer.name || layerNames.has(layer.name)) {
+      throw new Error(`动画层名称无效或重复：${layer.name || '(空)'}`);
+    }
+    layerNames.add(layer.name);
+    if (layer.mask_paths.some((path) => path !== '*' && path.split('/').includes('..'))) {
+      throw new Error(`动画层 ${layer.name} 包含无效的 Avatar Mask 路径`);
+    }
+    const motionStates = new Set<string>();
+    for (const motion of layer.motions) {
+      if (!stateNames.has(motion.state)) throw new Error(`动画层 ${layer.name} 引用了不存在的 State：${motion.state}`);
+      if (!motion.clip) throw new Error(`动画层 ${layer.name} 的 State ${motion.state} 必须设置 Animation Clip`);
+      if (motionStates.has(motion.state)) throw new Error(`动画层 ${layer.name} 重复覆盖 State：${motion.state}`);
+      motionStates.add(motion.state);
     }
   }
 }

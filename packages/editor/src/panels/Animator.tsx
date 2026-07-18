@@ -11,6 +11,7 @@ import {
   validateAnimatorController,
   type AnimatorConditionMode,
   type AnimatorController,
+  type AnimatorLayerBlendMode,
   type AnimatorParameterKind,
 } from '../animatorController';
 import { registerMenuItem } from '../editorWindow';
@@ -456,6 +457,91 @@ export function AnimatorEditor(props: {
           </button>
         </section>
 
+        <section className="animator-section">
+          <div className="animator-heading">
+            <h3>Layers</h3>
+            <button type="button" onClick={() => update((draft) => {
+              draft.layers.push({
+                name: nextName('Layer', new Set(draft.layers.map((layer) => layer.name))),
+                enabled: true,
+                weight: 1,
+                blend_mode: 'override',
+                mask_paths: [],
+                motions: [],
+              });
+            })}>+ Layer</button>
+          </div>
+          <div className="animator-layer base">
+            <strong>Base Layer</strong>
+            <span>State Machine · Weight 1 · All targets</span>
+          </div>
+          {controller.layers.map((layer, layerIndex) => (
+            <div className="animator-layer" key={`${layerIndex}:${layer.name}`}>
+              <div className="animator-row">
+                <input
+                  aria-label={`${layer.name} enabled`}
+                  type="checkbox"
+                  checked={layer.enabled}
+                  onChange={(event) => update((draft) => { draft.layers[layerIndex].enabled = event.target.checked; })}
+                />
+                <input
+                  aria-label="Layer name"
+                  value={layer.name}
+                  onChange={(event) => update((draft) => { draft.layers[layerIndex].name = event.target.value; })}
+                />
+                <label>Weight <input type="number" min="0" max="1" step="0.05" value={layer.weight} onChange={(event) => update((draft) => { draft.layers[layerIndex].weight = Number(event.target.value); })} /></label>
+                <select
+                  aria-label={`${layer.name} blend mode`}
+                  value={layer.blend_mode}
+                  onChange={(event) => update((draft) => { draft.layers[layerIndex].blend_mode = event.target.value as AnimatorLayerBlendMode; })}
+                >
+                  <option value="override">Override</option>
+                  <option value="additive">Additive</option>
+                </select>
+                <button type="button" title="Delete layer" onClick={() => update((draft) => { draft.layers.splice(layerIndex, 1); })}>×</button>
+              </div>
+              <label className="animator-layer-mask">
+                Avatar Mask
+                <input
+                  placeholder="Rig/Spine, Rig/Head (empty = all)"
+                  value={layer.mask_paths.join(', ')}
+                  onChange={(event) => update((draft) => {
+                    draft.layers[layerIndex].mask_paths = event.target.value.split(',').map((path) => path.trim()).filter(Boolean);
+                  })}
+                />
+              </label>
+              <div className="animator-layer-motions">
+                {controller.states.map((state) => {
+                  const motion = layer.motions.find((candidate) => candidate.state === state.name);
+                  return (
+                    <label key={state.name}>
+                      <span>{state.name}</span>
+                      <select value={motion?.clip ?? ''} onChange={(event) => update((draft) => {
+                        const targetLayer = draft.layers[layerIndex];
+                        const existing = targetLayer.motions.findIndex((candidate) => candidate.state === state.name);
+                        if (!event.target.value) {
+                          if (existing >= 0) targetLayer.motions.splice(existing, 1);
+                        } else if (existing >= 0) {
+                          targetLayer.motions[existing].clip = event.target.value;
+                        } else {
+                          targetLayer.motions.push({ state: state.name, clip: event.target.value });
+                        }
+                      })}>
+                        <option value="">No Override</option>
+                        {motion && !clips.some((clip) => clip.relPath === motion.clip) && (
+                          <option value={motion.clip}>{motion.clip} (Missing)</option>
+                        )}
+                        {clips.map((clip) => <option key={clip.id} value={clip.relPath}>{clip.name}</option>)}
+                      </select>
+                    </label>
+                  );
+                })}
+              </div>
+            </div>
+          ))}
+          <div className="field-hint">Layers reuse Base Layer state timing. Avatar Mask paths include matching descendants.</div>
+        </section>
+
         {assigned && (
           <section className="animator-section animator-instance-section">
             <div className="animator-heading">
@@ -615,6 +701,11 @@ export function AnimatorEditor(props: {
                   if (transition.from === previous) transition.from = next;
                   if (transition.to === previous) transition.to = next;
                 }
+                for (const layer of draft.layers) {
+                  for (const motion of layer.motions) {
+                    if (motion.state === previous) motion.state = next;
+                  }
+                }
               })} />
               <select value={state.clip} onChange={(event) => update((draft) => { draft.states[index].clip = event.target.value; })}>
                 {!clips.some((clip) => clip.relPath === state.clip) && <option value={state.clip}>{state.clip || 'Select Clip…'}</option>}
@@ -646,6 +737,9 @@ export function AnimatorEditor(props: {
                   const removed = draft.states[index].name;
                   draft.states.splice(index, 1);
                   draft.transitions = draft.transitions.filter((transition) => transition.from !== removed && transition.to !== removed);
+                  for (const layer of draft.layers) {
+                    layer.motions = layer.motions.filter((motion) => motion.state !== removed);
+                  }
                   if (draft.default_state === removed) draft.default_state = draft.states[0].name;
                 });
                 setSelectedState((selected) => selected == null || selected === index

@@ -61,3 +61,38 @@ test('animator instance parameter overrides preserve typed controller defaults',
   assert.deepEqual(JSON.parse(updated), { Grounded: false, Speed: 4.25 });
   assert.equal(setAnimatorParameterOverride(controller, updated, 'Missing', 1), updated);
 });
+
+test('animator controller upgrades and validates synchronized layers with target masks', () => {
+  const controller = normalizeAnimatorController({
+    version: 1,
+    default_state: 'Idle',
+    states: [
+      { name: 'Idle', clip: 'Assets/Animations/idle.manim' },
+      { name: 'Run', clip: 'Assets/Animations/run.manim' },
+    ],
+    layers: [{
+      name: ' Upper Body ',
+      enabled: true,
+      weight: 4,
+      blend_mode: 'additive',
+      mask_paths: [' Rig\\Spine ', 'Rig/Spine/', 'Rig/Spine'],
+      motions: [{ state: 'Run', clip: 'Assets\\Animations\\wave.manim' }],
+    }],
+  });
+  assert.equal(controller.version, 2);
+  assert.deepEqual(controller.layers[0], {
+    name: 'Upper Body',
+    enabled: true,
+    weight: 1,
+    blend_mode: 'additive',
+    mask_paths: ['Rig/Spine'],
+    motions: [{ state: 'Run', clip: 'Assets/Animations/wave.manim' }],
+  });
+  assert.doesNotThrow(() => serializeAnimatorController(controller));
+
+  controller.layers[0].motions[0].state = 'Missing';
+  assert.throws(() => serializeAnimatorController(controller), /Missing/);
+  controller.layers[0].motions[0].state = 'Run';
+  controller.layers[0].mask_paths = ['../Rig'];
+  assert.throws(() => serializeAnimatorController(controller), /Avatar Mask/);
+});

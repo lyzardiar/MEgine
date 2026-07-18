@@ -4426,6 +4426,57 @@ body.ew-dragging {
   padding: 5px;
 }
 
+.animator-layer {
+  margin-top: 5px;
+  border-left: 3px solid #54789b;
+  background: #2b2b2b;
+  padding: 6px;
+}
+
+.animator-layer.base {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  border-left-color: #54b65a;
+  color: #aaa;
+  font-size: 11px;
+}
+
+.animator-layer.base strong {
+  color: #ddd;
+}
+
+.animator-layer .animator-row > input[type="checkbox"] {
+  flex: 0 0 auto;
+  width: auto;
+}
+
+.animator-layer-mask {
+  display: grid;
+  grid-template-columns: 82px minmax(0, 1fr);
+  align-items: center;
+  gap: 6px;
+  margin-top: 4px;
+  font-size: 11px;
+}
+
+.animator-layer-motions {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 4px 8px;
+  margin-top: 6px;
+}
+
+.animator-layer-motions label {
+  display: grid;
+  grid-template-columns: minmax(70px, 0.7fr) minmax(110px, 1.3fr);
+  align-items: center;
+  gap: 5px;
+  min-width: 0;
+  color: #aaa;
+  font-size: 11px;
+}
+
 .animator-graph-section { padding-bottom: 6px; }
 
 .animator-runtime-status {

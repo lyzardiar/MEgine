@@ -16,8 +16,8 @@ pub use animation::{
 };
 pub use animator::{
     load_animator_controller, parse_animator_controller, AnimatorCondition, AnimatorConditionMode,
-    AnimatorController, AnimatorParameter, AnimatorParameterKind, AnimatorState,
-    AnimatorTransition,
+    AnimatorController, AnimatorLayer, AnimatorLayerBlendMode, AnimatorLayerMotion,
+    AnimatorParameter, AnimatorParameterKind, AnimatorState, AnimatorTransition,
 };
 pub use gltf_import::{load_gltf_mesh_data, MeshData};
 pub use material::{

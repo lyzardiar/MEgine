@@ -4,10 +4,14 @@ use std::collections::HashSet;
 use std::path::Path;
 
 fn default_version() -> u32 {
-    1
+    2
 }
 
 fn default_state_speed() -> f32 {
+    1.0
+}
+
+fn default_layer_weight() -> f32 {
     1.0
 }
 
@@ -98,6 +102,55 @@ pub struct AnimatorTransition {
     pub conditions: Vec<AnimatorCondition>,
 }
 
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "snake_case")]
+pub enum AnimatorLayerBlendMode {
+    #[default]
+    Override,
+    Additive,
+}
+
+#[derive(Clone, Debug, Default, PartialEq, Serialize, Deserialize)]
+#[serde(default)]
+pub struct AnimatorLayerMotion {
+    /// State in the base state machine whose motion this layer overrides.
+    pub state: String,
+    pub clip: String,
+}
+
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+#[serde(default)]
+pub struct AnimatorLayer {
+    pub name: String,
+    pub enabled: bool,
+    #[serde(default = "default_layer_weight")]
+    pub weight: f32,
+    pub blend_mode: AnimatorLayerBlendMode,
+    /// Relative target paths included by this layer. Empty means all targets.
+    pub mask_paths: Vec<String>,
+    /// Motions synchronized to states in the base state machine.
+    pub motions: Vec<AnimatorLayerMotion>,
+}
+
+impl Default for AnimatorLayer {
+    fn default() -> Self {
+        Self {
+            name: String::new(),
+            enabled: true,
+            weight: default_layer_weight(),
+            blend_mode: AnimatorLayerBlendMode::Override,
+            mask_paths: Vec::new(),
+            motions: Vec::new(),
+        }
+    }
+}
+
+impl AnimatorLayer {
+    pub fn motion(&self, state: &str) -> Option<&AnimatorLayerMotion> {
+        self.motions.iter().find(|motion| motion.state == state)
+    }
+}
+
 impl Default for AnimatorTransition {
     fn default() -> Self {
         Self {
@@ -121,6 +174,8 @@ pub struct AnimatorController {
     pub parameters: Vec<AnimatorParameter>,
     pub states: Vec<AnimatorState>,
     pub transitions: Vec<AnimatorTransition>,
+    /// Additional synchronized layers. The legacy state machine remains the base layer.
+    pub layers: Vec<AnimatorLayer>,
 }
 
 impl Default for AnimatorController {
@@ -132,13 +187,14 @@ impl Default for AnimatorController {
             parameters: Vec::new(),
             states: Vec::new(),
             transitions: Vec::new(),
+            layers: Vec::new(),
         }
     }
 }
 
 impl AnimatorController {
     pub fn normalized(mut self) -> Result<Self, AssetError> {
-        if self.version == 0 {
+        if self.version < default_version() {
             self.version = default_version();
         }
         self.name = self.name.trim().to_owned();
@@ -179,6 +235,25 @@ impl AnimatorController {
                 if !condition.threshold.is_finite() {
                     condition.threshold = 0.0;
                 }
+            }
+        }
+        for layer in &mut self.layers {
+            layer.name = layer.name.trim().to_owned();
+            layer.weight = if layer.weight.is_finite() {
+                layer.weight.clamp(0.0, 1.0)
+            } else {
+                default_layer_weight()
+            };
+            let mut masks = HashSet::new();
+            layer.mask_paths = layer
+                .mask_paths
+                .drain(..)
+                .map(|path| normalize_mask_path(&path))
+                .filter(|path| !path.is_empty() && masks.insert(path.clone()))
+                .collect();
+            for motion in &mut layer.motions {
+                motion.state = motion.state.trim().to_owned();
+                motion.clip = motion.clip.trim().replace('\\', "/");
             }
         }
         self.validate()?;
@@ -270,6 +345,46 @@ impl AnimatorController {
                 }
             }
         }
+        let mut layer_names = HashSet::new();
+        for layer in &self.layers {
+            if layer.name.is_empty() || !layer_names.insert(layer.name.as_str()) {
+                return Err(AssetError::Invalid(format!(
+                    "invalid or duplicate Animator layer '{}'",
+                    layer.name
+                )));
+            }
+            if layer
+                .mask_paths
+                .iter()
+                .any(|path| path != "*" && path.split('/').any(|segment| segment == ".."))
+            {
+                return Err(AssetError::Invalid(format!(
+                    "Animator layer '{}' contains an invalid Avatar Mask path",
+                    layer.name
+                )));
+            }
+            let mut layer_states = HashSet::new();
+            for motion in &layer.motions {
+                if !state_names.contains(motion.state.as_str()) {
+                    return Err(AssetError::Invalid(format!(
+                        "Animator layer '{}' references unknown state '{}'",
+                        layer.name, motion.state
+                    )));
+                }
+                if motion.clip.is_empty() {
+                    return Err(AssetError::Invalid(format!(
+                        "Animator layer '{}' state '{}' requires a clip",
+                        layer.name, motion.state
+                    )));
+                }
+                if !layer_states.insert(motion.state.as_str()) {
+                    return Err(AssetError::Invalid(format!(
+                        "Animator layer '{}' contains duplicate state motion '{}'",
+                        layer.name, motion.state
+                    )));
+                }
+            }
+        }
         Ok(())
     }
 
@@ -281,6 +396,20 @@ impl AnimatorController {
         self.parameters
             .iter()
             .find(|parameter| parameter.name == name)
+    }
+}
+
+fn normalize_mask_path(path: &str) -> String {
+    let path = path.trim().replace('\\', "/");
+    let path = path.trim_matches('/');
+    if path.is_empty() || path == "." || path == "*" {
+        path.to_owned()
+    } else {
+        path.split('/')
+            .map(str::trim)
+            .filter(|segment| !segment.is_empty() && *segment != ".")
+            .collect::<Vec<_>>()
+            .join("/")
     }
 }
 
@@ -301,6 +430,7 @@ mod tests {
     fn controller_normalizes_and_validates_references() {
         let controller = parse_animator_controller(
             br#"{
+              "version":1,
               "name":"Hero", "default_state":"Idle",
               "parameters":[{"name":"Speed","kind":"float"}],
               "states":[
@@ -314,7 +444,7 @@ mod tests {
             }"#,
         )
         .unwrap();
-        assert_eq!(controller.version, 1);
+        assert_eq!(controller.version, 2);
         assert_eq!(controller.states[0].clip, "Assets/Animations/idle.manim");
         assert_eq!(controller.states[0].position, [0.0, 0.0]);
         assert_eq!(controller.transitions[0].duration, 0.0);
@@ -331,5 +461,49 @@ mod tests {
         )
         .unwrap_err();
         assert!(error.to_string().contains("Missing"));
+    }
+
+    #[test]
+    fn controller_normalizes_and_validates_synced_layers() {
+        let controller = parse_animator_controller(
+            br#"{
+              "version":2,
+              "default_state":"Idle",
+              "states":[
+                {"name":"Idle","clip":"Assets/Animations/idle.manim"},
+                {"name":"Run","clip":"Assets/Animations/run.manim"}
+              ],
+              "layers":[{
+                "name":" Upper Body ","weight":4,"blend_mode":"additive",
+                "mask_paths":[" Rig\\Spine ","Rig/Spine/","Rig/Spine"],
+                "motions":[{"state":"Run","clip":"Assets\\Animations\\wave.manim"}]
+              }]
+            }"#,
+        )
+        .unwrap();
+        assert_eq!(controller.layers[0].name, "Upper Body");
+        assert_eq!(controller.layers[0].weight, 1.0);
+        assert_eq!(controller.layers[0].mask_paths, ["Rig/Spine"]);
+        assert_eq!(
+            controller.layers[0].motions[0].clip,
+            "Assets/Animations/wave.manim"
+        );
+        let mut invalid_mask = controller.clone();
+        invalid_mask.layers[0].mask_paths = vec!["../Rig".into()];
+        assert!(invalid_mask
+            .validate()
+            .unwrap_err()
+            .to_string()
+            .contains("Avatar Mask"));
+
+        let error = parse_animator_controller(
+            br#"{
+              "default_state":"Idle",
+              "states":[{"name":"Idle","clip":"idle.manim"}],
+              "layers":[{"name":"Upper","motions":[{"state":"Missing","clip":"wave.manim"}]}]
+            }"#,
+        )
+        .unwrap_err();
+        assert!(error.to_string().contains("unknown state 'Missing'"));
     }
 }

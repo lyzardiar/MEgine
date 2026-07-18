@@ -2073,8 +2073,13 @@ fn validate_world_assets(
             if validated.insert(path.clone()) {
                 let controller = mengine_assets::load_animator_controller(&path)
                     .with_context(|| format!("invalid animator controller {}", path.display()))?;
-                for state in controller.states {
+                for state in &controller.states {
                     validate_animation_clip_asset(&state.clip, project_root, validated)?;
+                }
+                for layer in &controller.layers {
+                    for motion in &layer.motions {
+                        validate_animation_clip_asset(&motion.clip, project_root, validated)?;
+                    }
                 }
             }
         }
@@ -2421,6 +2426,42 @@ mod tests {
         assert!(error
             .to_string()
             .contains("invalid material surface shader"));
+    }
+
+    #[test]
+    fn packaged_asset_validation_includes_animator_layer_motion_clips() {
+        let root = temporary_project_root("packaged-animator-layers");
+        let animations = root.join("Assets/Animations");
+        std::fs::create_dir_all(&animations).unwrap();
+        std::fs::write(animations.join("Idle.manim"), "{}").unwrap();
+        std::fs::write(animations.join("Wave.manim"), "{}").unwrap();
+        std::fs::write(
+            animations.join("Hero.mcontroller"),
+            r#"{
+              "version":2,"default_state":"Idle",
+              "states":[{"name":"Idle","clip":"Assets/Animations/Idle.manim"}],
+              "layers":[{
+                "name":"Upper Body","mask_paths":["Rig/Spine"],
+                "motions":[{"state":"Idle","clip":"Assets/Animations/Wave.manim"}]
+              }]
+            }"#,
+        )
+        .unwrap();
+        let mut world = World::new();
+        world.commands.push(WorldCommand::Spawn {
+            name: Some("Layered animator".into()),
+            components: json!({
+                "Animator": { "controller": "Assets/Animations/Hero.mcontroller" }
+            }),
+        });
+        world.commit();
+
+        let mut validated = HashSet::new();
+        let result = validate_world_assets(&world, &root, &mut validated);
+        std::fs::remove_dir_all(&root).unwrap();
+
+        result.expect("base and layer clips should pass package validation");
+        assert_eq!(validated.len(), 3);
     }
 
     #[test]

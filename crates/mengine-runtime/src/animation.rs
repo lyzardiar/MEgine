@@ -1,8 +1,9 @@
 use crate::textures::resolve_project_asset_path;
+use glam::Quat;
 use mengine_assets::{
     load_animation_clip, load_animator_controller, AnimationClip, AnimationEvent, AnimationValue,
-    AnimationWrapMode, AnimatorCondition, AnimatorConditionMode, AnimatorController,
-    AnimatorParameterKind,
+    AnimationWrapMode, AnimatorCondition, AnimatorConditionMode, AnimatorController, AnimatorLayer,
+    AnimatorLayerBlendMode, AnimatorParameterKind,
 };
 use mengine_core::generated::{AnimationPlayer, Animator};
 use mengine_core::{Entity, Parent, World};
@@ -239,6 +240,71 @@ impl AnimationRuntime {
 
     pub fn take_events(&mut self) -> Vec<RuntimeAnimationEvent> {
         std::mem::take(&mut self.pending_events)
+    }
+
+    fn sample_layer_motion(
+        &mut self,
+        controller: &AnimatorController,
+        layer: &AnimatorLayer,
+        state_name: &str,
+        state_time: f32,
+    ) -> Result<Option<Vec<mengine_assets::AnimationSample>>, (String, String)> {
+        let Some(motion) = layer.motion(state_name) else {
+            return Ok(None);
+        };
+        let Some(base_state) = controller.state(state_name) else {
+            return Ok(None);
+        };
+        let base_clip = self
+            .load_clip(&base_state.clip)
+            .map_err(|error| (base_state.clip.clone(), error))?;
+        let layer_clip = self
+            .load_clip(&motion.clip)
+            .map_err(|error| (motion.clip.clone(), error))?;
+        let normalized_time = if base_clip.duration > f32::EPSILON {
+            state_time / base_clip.duration
+        } else {
+            0.0
+        };
+        Ok(Some(
+            layer_clip.sample(normalized_time * layer_clip.duration),
+        ))
+    }
+
+    fn sample_synced_layer(
+        &mut self,
+        controller: &AnimatorController,
+        layer: &AnimatorLayer,
+        instance: &AnimatorInstance,
+    ) -> Result<(Vec<mengine_assets::AnimationSample>, f32), (String, String)> {
+        if let Some(active) = instance.transition.as_ref() {
+            let amount = (active.elapsed / active.duration.max(f32::EPSILON)).clamp(0.0, 1.0);
+            let source = self.sample_layer_motion(
+                controller,
+                layer,
+                &active.source_state,
+                active.source_time,
+            )?;
+            let destination = self.sample_layer_motion(
+                controller,
+                layer,
+                &active.destination_state,
+                active.destination_time,
+            )?;
+            return Ok(match (source, destination) {
+                (Some(source), Some(destination)) => {
+                    (blend_samples(source, destination, amount), layer.weight)
+                }
+                (Some(source), None) => (source, layer.weight * (1.0 - amount)),
+                (None, Some(destination)) => (destination, layer.weight * amount),
+                (None, None) => (Vec::new(), 0.0),
+            });
+        }
+        Ok((
+            self.sample_layer_motion(controller, layer, &instance.state, instance.state_time)?
+                .unwrap_or_default(),
+            layer.weight,
+        ))
     }
 
     fn animator_debug_values(
@@ -520,6 +586,28 @@ impl AnimationRuntime {
                 clip.sample(instance.state_time)
             };
             apply_animation_samples(world, entity, samples);
+            for layer in controller
+                .layers
+                .iter()
+                .filter(|layer| layer.enabled && layer.weight > f32::EPSILON)
+            {
+                match self.sample_synced_layer(&controller, layer, &instance) {
+                    Ok((samples, weight)) if weight > f32::EPSILON => {
+                        apply_animation_layer_samples(
+                            world,
+                            entity,
+                            samples,
+                            &layer.mask_paths,
+                            weight,
+                            layer.blend_mode,
+                        );
+                    }
+                    Ok(_) => {}
+                    Err((asset, error)) => {
+                        self.record_failure(entity, &asset, error, &mut failures);
+                    }
+                }
+            }
 
             if instance
                 .transition
@@ -745,6 +833,25 @@ fn blend_animation_values(
     }
 }
 
+fn blend_bound_animation_values(
+    left: AnimationValue,
+    right: AnimationValue,
+    amount: f32,
+    component: &str,
+    property: &str,
+) -> AnimationValue {
+    if let (AnimationValue::Vector(left), AnimationValue::Vector(right)) = (&left, &right) {
+        if left.len() == 4 && right.len() == 4 && component == "Transform" && property == "rotation"
+        {
+            let left = safe_animation_quaternion(left);
+            let right = safe_animation_quaternion(right);
+            let value = left.slerp(right, amount.clamp(0.0, 1.0)).normalize();
+            return AnimationValue::Vector(vec![value.x, value.y, value.z, value.w]);
+        }
+    }
+    blend_animation_values(left, right, amount)
+}
+
 fn blend_samples(
     source: Vec<mengine_assets::AnimationSample>,
     destination: Vec<mengine_assets::AnimationSample>,
@@ -768,11 +875,18 @@ fn blend_samples(
         .collect();
     for sample in destination {
         if let Some(previous) = source_by_key.get(&key(&sample)) {
+            let value = blend_bound_animation_values(
+                previous.clone(),
+                sample.value,
+                amount,
+                &sample.component,
+                &sample.property,
+            );
             output.push(mengine_assets::AnimationSample {
                 target: sample.target,
                 component: sample.component,
                 property: sample.property,
-                value: blend_animation_values(previous.clone(), sample.value, amount),
+                value,
             });
         } else {
             output.push(sample);
@@ -794,6 +908,113 @@ fn apply_animation_samples(
             continue;
         };
         if set_json_property(&mut component, &sample.property, sample.value) {
+            world.set_component_value(target, &sample.component, component);
+        }
+    }
+}
+
+fn target_in_avatar_mask(target: &str, mask_paths: &[String]) -> bool {
+    if mask_paths.is_empty() || mask_paths.iter().any(|path| path == "*") {
+        return true;
+    }
+    let target = target.trim().replace('\\', "/");
+    mask_paths.iter().any(|path| {
+        path == &target
+            || (path != "."
+                && target
+                    .strip_prefix(path)
+                    .is_some_and(|suffix| suffix.starts_with('/')))
+    })
+}
+
+fn additive_animation_values(
+    base: AnimationValue,
+    delta: AnimationValue,
+    weight: f32,
+    component: &str,
+    property: &str,
+) -> AnimationValue {
+    let weight = weight.clamp(0.0, 1.0);
+    if component == "Transform" && property.starts_with("rotation.") {
+        // A single quaternion channel cannot be composed additively without corrupting its norm.
+        return base;
+    }
+    match (base, delta) {
+        (AnimationValue::Float(base), AnimationValue::Float(delta)) => {
+            AnimationValue::Float(base + delta * weight)
+        }
+        (AnimationValue::Vector(base), AnimationValue::Vector(delta))
+            if base.len() == 4
+                && delta.len() == 4
+                && component == "Transform"
+                && property == "rotation" =>
+        {
+            let base = safe_animation_quaternion(&base);
+            let delta = safe_animation_quaternion(&delta);
+            let value = (base * Quat::IDENTITY.slerp(delta, weight)).normalize();
+            AnimationValue::Vector(vec![value.x, value.y, value.z, value.w])
+        }
+        (AnimationValue::Vector(base), AnimationValue::Vector(delta))
+            if base.len() == delta.len() =>
+        {
+            AnimationValue::Vector(
+                base.into_iter()
+                    .zip(delta)
+                    .map(|(base, delta)| base + delta * weight)
+                    .collect(),
+            )
+        }
+        (base, _) => base,
+    }
+}
+
+fn safe_animation_quaternion(value: &[f32]) -> Quat {
+    let quaternion = Quat::from_xyzw(value[0], value[1], value[2], value[3]);
+    if quaternion.is_finite() && quaternion.length_squared() > f32::EPSILON {
+        quaternion.normalize()
+    } else {
+        Quat::IDENTITY
+    }
+}
+
+fn apply_animation_layer_samples(
+    world: &mut World,
+    entity: Entity,
+    samples: Vec<mengine_assets::AnimationSample>,
+    mask_paths: &[String],
+    weight: f32,
+    blend_mode: AnimatorLayerBlendMode,
+) {
+    for sample in samples {
+        if !target_in_avatar_mask(&sample.target, mask_paths) {
+            continue;
+        }
+        let Some(target) = resolve_animation_target(world, entity, &sample.target) else {
+            continue;
+        };
+        let Some(mut component) = world.component_value(target, &sample.component) else {
+            continue;
+        };
+        let Some(current) = json_property_animation_value(&component, &sample.property) else {
+            continue;
+        };
+        let value = match blend_mode {
+            AnimatorLayerBlendMode::Override => blend_bound_animation_values(
+                current,
+                sample.value,
+                weight,
+                &sample.component,
+                &sample.property,
+            ),
+            AnimatorLayerBlendMode::Additive => additive_animation_values(
+                current,
+                sample.value,
+                weight,
+                &sample.component,
+                &sample.property,
+            ),
+        };
+        if set_json_property(&mut component, &sample.property, value) {
             world.set_component_value(target, &sample.component, component);
         }
     }
@@ -985,6 +1206,42 @@ fn array_index(segment: &str) -> Option<usize> {
         "z" | "b" => Some(2),
         "w" | "a" => Some(3),
         _ => segment.parse().ok(),
+    }
+}
+
+fn json_property_animation_value(root: &Value, property: &str) -> Option<AnimationValue> {
+    let segments: Vec<_> = property
+        .split('.')
+        .map(str::trim)
+        .filter(|segment| !segment.is_empty())
+        .collect();
+    if segments.is_empty()
+        || segments
+            .iter()
+            .any(|segment| matches!(*segment, "__proto__" | "constructor" | "prototype"))
+    {
+        return None;
+    }
+    let mut cursor = root;
+    for segment in segments {
+        cursor = match cursor {
+            Value::Object(object) => object.get(segment)?,
+            Value::Array(array) => array.get(array_index(segment)?)?,
+            _ => return None,
+        };
+    }
+    match cursor {
+        Value::Bool(value) => Some(AnimationValue::Bool(*value)),
+        Value::Number(value) => value
+            .as_f64()
+            .map(|value| AnimationValue::Float(value as f32)),
+        Value::String(value) => Some(AnimationValue::String(value.clone())),
+        Value::Array(values) => values
+            .iter()
+            .map(|value| value.as_f64().map(|value| value as f32))
+            .collect::<Option<Vec<_>>>()
+            .map(AnimationValue::Vector),
+        _ => None,
     }
 }
 
@@ -1419,6 +1676,155 @@ mod tests {
             ),
         )
         .unwrap();
+    }
+
+    #[test]
+    fn animator_synced_layers_apply_weight_blend_mode_and_avatar_mask() {
+        let project = temp_project();
+        write_constant_clip(&project, "idle", 0.0);
+        write_constant_clip(&project, "upper", 4.0);
+        write_constant_clip(&project, "offset", 2.0);
+        write_constant_clip(&project, "blocked", 100.0);
+        fs::write(
+            project.join("Assets/Animations/layered.mcontroller"),
+            r#"{
+              "version":2,"name":"Layered","default_state":"Idle",
+              "states":[{"name":"Idle","clip":"Assets/Animations/idle.manim"}],
+              "layers":[
+                {
+                  "name":"Upper","weight":0.5,"blend_mode":"override","mask_paths":["."],
+                  "motions":[{"state":"Idle","clip":"Assets/Animations/upper.manim"}]
+                },
+                {
+                  "name":"Offset","weight":0.5,"blend_mode":"additive","mask_paths":["."],
+                  "motions":[{"state":"Idle","clip":"Assets/Animations/offset.manim"}]
+                },
+                {
+                  "name":"Blocked","weight":1,"blend_mode":"override","mask_paths":["Child"],
+                  "motions":[{"state":"Idle","clip":"Assets/Animations/blocked.manim"}]
+                }
+              ]
+            }"#,
+        )
+        .unwrap();
+
+        let mut world = World::new();
+        let entity = world.spawn_empty();
+        world.insert_component(entity, Transform::default());
+        world.insert_component(
+            entity,
+            Animator {
+                controller: "Assets/Animations/layered.mcontroller".into(),
+                ..Animator::default()
+            },
+        );
+        let mut runtime = AnimationRuntime::new(Some(project.clone()));
+
+        assert!(runtime.update(&mut world, 0.0).is_empty());
+        assert!(
+            (world.get_component::<Transform>(entity).unwrap().position[0] - 3.0).abs() < 0.001
+        );
+        fs::remove_dir_all(project).unwrap();
+    }
+
+    #[test]
+    fn animator_synced_layers_follow_base_transition_time_and_blend() {
+        let project = temp_project();
+        write_constant_clip(&project, "idle", 0.0);
+        write_constant_clip(&project, "run", 10.0);
+        write_constant_clip(&project, "layer-idle", 4.0);
+        write_constant_clip(&project, "layer-run", 8.0);
+        fs::write(
+            project.join("Assets/Animations/layered-transition.mcontroller"),
+            r#"{
+              "version":2,"default_state":"Idle",
+              "states":[
+                {"name":"Idle","clip":"Assets/Animations/idle.manim"},
+                {"name":"Run","clip":"Assets/Animations/run.manim"}
+              ],
+              "transitions":[{"from":"Idle","to":"Run","duration":0.5}],
+              "layers":[{
+                "name":"Synced","weight":0.5,"blend_mode":"override",
+                "motions":[
+                  {"state":"Idle","clip":"Assets/Animations/layer-idle.manim"},
+                  {"state":"Run","clip":"Assets/Animations/layer-run.manim"}
+                ]
+              }]
+            }"#,
+        )
+        .unwrap();
+
+        let mut world = World::new();
+        let entity = world.spawn_empty();
+        world.insert_component(entity, Transform::default());
+        world.insert_component(
+            entity,
+            Animator {
+                controller: "Assets/Animations/layered-transition.mcontroller".into(),
+                ..Animator::default()
+            },
+        );
+        let mut runtime = AnimationRuntime::new(Some(project.clone()));
+        assert!(runtime.update(&mut world, 0.0).is_empty());
+        assert!(runtime.update(&mut world, 0.25).is_empty());
+
+        // Base transition is 0 -> 10 = 5. Synced layer is 4 -> 8 = 6, then 50% override.
+        assert!(
+            (world.get_component::<Transform>(entity).unwrap().position[0] - 5.5).abs() < 0.001
+        );
+        fs::remove_dir_all(project).unwrap();
+    }
+
+    #[test]
+    fn avatar_masks_include_descendants_and_additive_quaternions_stay_normalized() {
+        assert!(target_in_avatar_mask(
+            "Rig/Spine/Hand",
+            &["Rig/Spine".into()]
+        ));
+        assert!(!target_in_avatar_mask("Rig/Leg", &["Rig/Spine".into()]));
+        assert!(target_in_avatar_mask("Anything", &["*".into()]));
+
+        let value = additive_animation_values(
+            AnimationValue::Vector(vec![0.0, 0.0, 0.0, 1.0]),
+            AnimationValue::Vector(vec![0.0, 1.0, 0.0, 0.0]),
+            0.5,
+            "Transform",
+            "rotation",
+        );
+        let AnimationValue::Vector(value) = value else {
+            panic!("rotation remains a quaternion vector");
+        };
+        let length = value.iter().map(|value| value * value).sum::<f32>().sqrt();
+        assert!((length - 1.0).abs() < 0.0001);
+        assert!((value[1].abs() - std::f32::consts::FRAC_1_SQRT_2).abs() < 0.0001);
+
+        let blended = blend_bound_animation_values(
+            AnimationValue::Vector(vec![0.0, 0.0, 0.0, 1.0]),
+            AnimationValue::Vector(vec![0.0, 1.0, 0.0, 0.0]),
+            0.5,
+            "Transform",
+            "rotation",
+        );
+        let AnimationValue::Vector(blended) = blended else {
+            panic!("rotation blend remains a quaternion vector");
+        };
+        let length = blended
+            .iter()
+            .map(|value| value * value)
+            .sum::<f32>()
+            .sqrt();
+        assert!((length - 1.0).abs() < 0.0001);
+
+        assert_eq!(
+            additive_animation_values(
+                AnimationValue::Float(0.25),
+                AnimationValue::Float(1.0),
+                1.0,
+                "Transform",
+                "rotation.x",
+            ),
+            AnimationValue::Float(0.25)
+        );
     }
 
     #[test]

@@ -478,6 +478,53 @@ export function validateBuildAssetDependencies(
           throw new Error(`invalid animator controller ${source}: transition ${from} -> ${to} references a missing state`);
         }
       }
+      if (controller.layers != null && !Array.isArray(controller.layers)) {
+        throw new Error(`invalid animator controller ${source}: layers must be an array`);
+      }
+      const layerNames = new Set<string>();
+      for (const layerValue of Array.isArray(controller.layers) ? controller.layers : []) {
+        const layer = jsonObject(layerValue);
+        if (!layer) throw new Error(`invalid animator controller ${source}: layer must be an object`);
+        const name = strictStringValue(layer, 'name', `animator controller ${source}`);
+        if (!name || layerNames.has(name)) {
+          throw new Error(`invalid animator controller ${source}: invalid or duplicate layer ${name || '(empty)'}`);
+        }
+        layerNames.add(name);
+        if (layer.blend_mode != null && layer.blend_mode !== 'override' && layer.blend_mode !== 'additive') {
+          throw new Error(`invalid animator controller ${source}: layer ${name} has unsupported blend_mode`);
+        }
+        if (layer.weight != null
+          && (typeof layer.weight !== 'number'
+            || !Number.isFinite(layer.weight)
+            || layer.weight < 0
+            || layer.weight > 1)) {
+          throw new Error(`invalid animator controller ${source}: layer ${name} weight must be from 0 to 1`);
+        }
+        if (layer.mask_paths != null
+          && (!Array.isArray(layer.mask_paths)
+            || layer.mask_paths.some((path) => typeof path !== 'string'))) {
+          throw new Error(`invalid animator controller ${source}: layer ${name} mask_paths must be strings`);
+        }
+        if (Array.isArray(layer.mask_paths)
+          && layer.mask_paths.some((path) => String(path).replaceAll('\\', '/').split('/').includes('..'))) {
+          throw new Error(`invalid animator controller ${source}: layer ${name} has an unsafe Avatar Mask path`);
+        }
+        if (layer.motions != null && !Array.isArray(layer.motions)) {
+          throw new Error(`invalid animator controller ${source}: layer ${name} motions must be an array`);
+        }
+        const motionStates = new Set<string>();
+        for (const motionValue of Array.isArray(layer.motions) ? layer.motions : []) {
+          const motion = jsonObject(motionValue);
+          if (!motion) throw new Error(`invalid animator controller ${source}: layer motion must be an object`);
+          const state = strictStringValue(motion, 'state', `animator controller ${source}`);
+          const clip = strictStringValue(motion, 'clip', `animator controller ${source}`);
+          if (!stateNames.has(state) || !clip || motionStates.has(state)) {
+            throw new Error(`invalid animator controller ${source}: layer ${name} has invalid state motion ${state || '(empty)'}`);
+          }
+          motionStates.add(state);
+          enqueue(clip, source, `animator layer ${name} clip`);
+        }
+      }
     } else if (extension === '.manim') {
       const clip = readJsonAsset(absolute, root, 'animation clip');
       if (clip.tracks != null && !Array.isArray(clip.tracks)) {
