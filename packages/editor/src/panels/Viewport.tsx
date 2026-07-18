@@ -147,6 +147,11 @@ import {
   tileAt,
   type TilemapData,
 } from '../tilemapModel';
+import {
+  drawEnvironmentBackground,
+  invalidateEnvironmentPreviews,
+  type EnvironmentBackground,
+} from '../environmentPreview';
 
 const SCENE_2D_KEY = 'mengine.scene.2d';
 const SCENE_SNAP_KEY = 'mengine.scene.snap';
@@ -694,7 +699,10 @@ export function Viewport(props: {
   }, [alignOpen]);
 
   useEffect(() => {
-    const clear = () => clearModelPreview();
+    const clear = () => {
+      clearModelPreview();
+      invalidateEnvironmentPreviews();
+    };
     window.addEventListener('mengine:project-assets-changed', clear);
     return () => window.removeEventListener('mengine:project-assets-changed', clear);
   }, []);
@@ -770,28 +778,34 @@ export function Viewport(props: {
           fovYDeg: 60,
         };
     lastCameraRef.current = cam;
+    const isActive = (id: number) =>
+      p.activeInHierarchy ? p.activeInHierarchy(id) : true;
+    const environment = p.entities.find(
+      (entity) => isActive(entity.entity) && entity.components.EnvironmentLight,
+    )?.components.EnvironmentLight as EnvironmentBackground | undefined;
 
     ctx.save();
     ctx.beginPath();
     ctx.rect(vp.x, vp.y, vp.w, vp.h);
     ctx.clip();
 
-    if (isGame) {
+    const drewEnvironment = drawEnvironmentBackground(ctx, vp, cam, environment);
+    if (isGame && !drewEnvironment) {
       const [r, g, b] = p.clearColor;
       ctx.fillStyle = `rgb(${(r * 255) | 0},${(g * 255) | 0},${(b * 255) | 0})`;
       ctx.fillRect(vp.x, vp.y, vp.w, vp.h);
-    } else {
-      const sky = ctx.createLinearGradient(vp.x, vp.y, vp.x, vp.y + vp.h);
-      sky.addColorStop(0, '#6a8aaa');
-      sky.addColorStop(0.5, '#3d4858');
-      sky.addColorStop(1, '#2a3038');
-      ctx.fillStyle = sky;
-      ctx.fillRect(vp.x, vp.y, vp.w, vp.h);
+    } else if (!isGame) {
+      if (!drewEnvironment) {
+        const sky = ctx.createLinearGradient(vp.x, vp.y, vp.x, vp.y + vp.h);
+        sky.addColorStop(0, '#6a8aaa');
+        sky.addColorStop(0.5, '#3d4858');
+        sky.addColorStop(1, '#2a3038');
+        ctx.fillStyle = sky;
+        ctx.fillRect(vp.x, vp.y, vp.w, vp.h);
+      }
       drawGroundGrid(ctx, cam, vp, sc.pivot, sc.distance);
     }
 
-    const isActive = (id: number) =>
-      p.activeInHierarchy ? p.activeInHierarchy(id) : true;
     const worldTransforms = buildWorldTransforms(p.entities);
     // Game 视图不显示编辑器选中态（只能 Hierarchy / Scene 点选）
     const selSet = isGame
