@@ -180,6 +180,71 @@ test('buildPcPackage validates transitive material animator and audio dependenci
   }
 });
 
+test('buildPcPackage validates tilemap sprite subresources and shared import metadata', () => {
+  const paths = fixture('sprite-subresources');
+  try {
+    writeFileSync(join(paths.project, 'Assets', 'Scenes', 'Main.mscene'), JSON.stringify({
+      world: { entities: [{ components: {
+        Tilemap: {
+          cells: [[0, 0], [1, 0]],
+          sprites: [
+            'Assets/Textures/tiles.png#Grass',
+            'Assets/Textures/tiles.png#Stone',
+          ],
+        },
+      } }] },
+    }));
+    writeFileSync(join(paths.project, 'Assets', 'Textures', 'tiles.png'), 'texture');
+    writeFileSync(join(paths.project, 'Assets', 'Textures', 'tiles.png.sprite.json'), JSON.stringify({
+      version: 1,
+      mode: 'multiple',
+      slices: [
+        { name: 'Grass', rect: [0, 0, 16, 16] },
+        { name: 'Stone', rect: [16, 0, 16, 16] },
+      ],
+    }));
+    const manifest = buildPcPackage({
+      projectDir: paths.project,
+      outputDir: paths.output,
+      runtimePath: paths.runtime,
+      engineVersion: 'test-engine',
+    });
+    assert.deepEqual(manifest.assetValidation, {
+      rootScenes: 2,
+      references: 6,
+      validatedFiles: 4,
+    });
+  } finally {
+    rmSync(paths.root, { recursive: true, force: true });
+  }
+});
+
+test('buildPcPackage rejects a missing named sprite slice', () => {
+  const paths = fixture('missing-sprite-slice');
+  try {
+    writeFileSync(join(paths.project, 'Assets', 'Scenes', 'Main.mscene'), JSON.stringify({
+      world: { entities: [{ components: {
+        SpriteRenderer: { sprite: 'Assets/Textures/hero.png#Missing' },
+      } }] },
+    }));
+    writeFileSync(join(paths.project, 'Assets', 'Textures', 'hero.png'), 'texture');
+    writeFileSync(join(paths.project, 'Assets', 'Textures', 'hero.png.sprite.json'), JSON.stringify({
+      version: 1,
+      mode: 'multiple',
+      slices: [{ name: 'Idle', rect: [0, 0, 16, 16] }],
+    }));
+    assert.throws(() => buildPcPackage({
+      projectDir: paths.project,
+      outputDir: paths.output,
+      runtimePath: paths.runtime,
+      engineVersion: 'test-engine',
+    }), /missing sprite slice 'Missing'/);
+    assert.equal(existsSync(paths.output), false);
+  } finally {
+    rmSync(paths.root, { recursive: true, force: true });
+  }
+});
+
 test('buildPcPackage rejects ambiguous sorting layers before publishing output', () => {
   const paths = fixture('invalid-sorting-layers');
   try {
@@ -294,7 +359,11 @@ test('buildPcPackage type-checks TypeScript and emits only runnable JavaScript',
     );
     writeFileSync(
       join(paths.project, 'Assets', 'Scripts', 'Main.ts'),
-      'let elapsed: number = 0;\nfunction onTick(dt: number, _frame: number) { elapsed += dt; engine.setClearColor(elapsed, 0, 0, 1); }',
+      'let elapsed: number = 0;\nfunction onTick(dt: number, _frame: number) { elapsed += scaled(dt); engine.setClearColor(elapsed, 0, 0, 1); }',
+    );
+    writeFileSync(
+      join(paths.project, 'Assets', 'Scripts', 'helpers.ts'),
+      'function scaled(value: number): number { return value * 2; }',
     );
 
     const manifest = buildPcPackage({
@@ -309,6 +378,11 @@ test('buildPcPackage type-checks TypeScript and emits only runnable JavaScript',
       readFileSync(join(paths.output, 'Assets', 'Scripts', 'Main.js'), 'utf8'),
       /function onTick/,
     );
+    assert.match(
+      readFileSync(join(paths.output, 'Assets', 'Scripts', 'Main.js'), 'utf8'),
+      /function scaled/,
+    );
+    assert.equal(existsSync(join(paths.output, 'Assets', 'Scripts', 'helpers.js')), false);
     assert.equal(existsSync(join(paths.output, 'Assets', 'Scripts', 'Main.ts')), false);
     assert.equal(existsSync(join(paths.output, 'Assets', 'Scripts', 'mengine.d.ts')), false);
     assert.equal(

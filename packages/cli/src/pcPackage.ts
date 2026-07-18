@@ -189,6 +189,7 @@ interface PendingAsset {
   path: string;
   from: string;
   kind: string;
+  spriteSlice?: string;
 }
 
 function jsonObject(value: unknown): JsonObject | null {
@@ -235,13 +236,29 @@ export function validateBuildAssetDependencies(
   const roots = contentRoots(root);
   const queue: PendingAsset[] = [];
   const visited = new Set<string>();
+  const processed = new Set<string>();
   let references = 0;
 
-  const enqueue = (rawPath: string, from: string, kind: string, builtins: string[] = []) => {
+  const enqueue = (
+    rawPath: string,
+    from: string,
+    kind: string,
+    builtins: string[] = [],
+    spriteSlice?: string,
+  ) => {
     const path = rawPath.trim().replaceAll('\\', '/');
     if (!path || builtins.some((builtin) => builtin.toLowerCase() === path.toLowerCase())) return;
+    const marker = path.indexOf('#');
+    if (marker >= 0) {
+      const texture = path.slice(0, marker).trim();
+      const slice = path.slice(marker + 1).trim();
+      if (!texture || !slice) throw new Error(`invalid ${kind} subresource reference: ${path}`);
+      enqueue(texture, from, kind, builtins);
+      enqueue(`${texture}.sprite.json`, from, 'sprite import metadata', [], slice);
+      return;
+    }
     references += 1;
-    queue.push({ path, from, kind });
+    queue.push({ path, from, kind, ...(spriteSlice ? { spriteSlice } : {}) });
   };
 
   const enqueueMaterial = (rawPath: string, from: string) => {
@@ -268,6 +285,12 @@ export function validateBuildAssetDependencies(
     const frames = component('AnimatedSprite2D')?.frames;
     if (Array.isArray(frames)) {
       for (const frame of frames) if (typeof frame === 'string') enqueue(frame, from, 'texture', ['white']);
+    }
+    const tileSprites = component('Tilemap')?.sprites;
+    if (Array.isArray(tileSprites)) {
+      for (const sprite of tileSprites) {
+        if (typeof sprite === 'string') enqueue(sprite, from, 'tilemap texture', ['white']);
+      }
     }
     enqueue(stringValue(component('AnimationPlayer'), 'clip'), from, 'animation clip');
     enqueue(stringValue(component('Animator'), 'controller'), from, 'animator controller');
@@ -316,6 +339,19 @@ export function validateBuildAssetDependencies(
         && material.surface !== 'cutout') {
         throw new Error(`invalid material ${source}: surface must be opaque, transparent, or cutout`);
       }
+      if (material.blend_mode != null
+        && material.blend_mode !== 'alpha'
+        && material.blend_mode !== 'premultiplied'
+        && material.blend_mode !== 'additive'
+        && material.blend_mode !== 'multiply') {
+        throw new Error(`invalid material ${source}: unsupported blend_mode ${String(material.blend_mode)}`);
+      }
+      if (material.render_queue != null
+        && (!Number.isInteger(material.render_queue)
+          || Number(material.render_queue) < -1
+          || Number(material.render_queue) > 5000)) {
+        throw new Error(`invalid material ${source}: render_queue must be an integer from -1 to 5000`);
+      }
       for (const field of [
         'base_color_texture',
         'normal_texture',
@@ -328,6 +364,23 @@ export function validateBuildAssetDependencies(
           source,
           `material ${field}`,
         );
+      }
+    } else if (pending.path.toLowerCase().endsWith('.sprite.json')) {
+      const metadata = readJsonAsset(absolute, root, 'sprite import metadata');
+      if (metadata.version != null && metadata.version !== 1) {
+        throw new Error(`invalid sprite import metadata ${source}: unsupported version ${String(metadata.version)}`);
+      }
+      if (pending.spriteSlice) {
+        if (metadata.mode !== 'multiple' || !Array.isArray(metadata.slices)) {
+          throw new Error(`invalid sprite import metadata ${source}: slice '${pending.spriteSlice}' requires multiple mode`);
+        }
+        const matching = metadata.slices.some((value) => {
+          const slice = jsonObject(value);
+          return stringValue(slice, 'name').toLowerCase() === pending.spriteSlice!.toLowerCase();
+        });
+        if (!matching) {
+          throw new Error(`missing sprite slice '${pending.spriteSlice}' in ${source}`);
+        }
       }
     } else if (extension === '.mcontroller') {
       const controller = readJsonAsset(absolute, root, 'animator controller');
@@ -442,10 +495,12 @@ export function validateBuildAssetDependencies(
       throw new Error(`${pending.kind} must be stored under Assets or Scripts: ${pending.path} (referenced by ${pending.from})`);
     }
     const key = process.platform === 'win32' ? absolute.toLowerCase() : absolute;
-    if (visited.has(key)) continue;
+    const processKey = pending.spriteSlice ? `${key}#${pending.spriteSlice.toLowerCase()}` : key;
+    if (processed.has(processKey)) continue;
     if (!existsSync(absolute) || !statSync(absolute).isFile()) {
       throw new Error(`missing ${pending.kind}: ${pending.path} (referenced by ${pending.from})`);
     }
+    processed.add(processKey);
     visited.add(key);
     inspectJsonDependency(absolute, pending);
   }
@@ -551,13 +606,17 @@ function compileProjectTypeScript(
   if (!rootNames.some((path) => resolve(path) === resolve(projectDir, startupScript))) {
     throw new Error(`TypeScript startup script is outside its script root: ${startupScript}`);
   }
-  const outputRoot = join(stageDir, ...sourceRootRelative.split('/'));
+  const outputFile = join(
+    stageDir,
+    ...portable.replace(/\.tsx?$/i, '.js').split('/'),
+  );
+  mkdirSync(dirname(outputFile), { recursive: true });
   const options: ts.CompilerOptions = {
     target: ts.ScriptTarget.ES2021,
     module: ts.ModuleKind.None,
     moduleResolution: ts.ModuleResolutionKind.Classic,
     rootDir: sourceRoot,
-    outDir: outputRoot,
+    outFile: outputFile,
     strict: true,
     skipLibCheck: true,
     noEmitOnError: true,

@@ -19,6 +19,7 @@ use mengine_rhi::{
 };
 use mengine_runtime::animation::{infer_project_root_from_scene, AnimationRuntime};
 use mengine_runtime::audio::AudioRuntime;
+use mengine_runtime::build_manifest::verify_build_manifest;
 use mengine_runtime::materials::RuntimeMaterialCache;
 use mengine_runtime::meshes::RuntimeMeshCache;
 use mengine_runtime::particles::ParticleWorld;
@@ -1701,6 +1702,11 @@ fn main() -> Result<()> {
         }
     }
     if args.validate_package {
+        let build_root = args
+            .project_root
+            .as_deref()
+            .ok_or_else(|| anyhow::anyhow!("packaged player project root was not resolved"))?;
+        let integrity = verify_build_manifest(build_root)?;
         let Some(scene) = args.scene.as_deref() else {
             bail!("no packaged player config or scene was found");
         };
@@ -1731,7 +1737,9 @@ fn main() -> Result<()> {
             host.load_file(script)?;
         }
         println!(
-            "validated {} packaged scene(s), {} runtime asset(s), script={}",
+            "validated {} packaged file(s) ({} bytes), {} scene(s), {} runtime asset(s), script={}",
+            integrity.file_count,
+            integrity.byte_count,
             validated.len(),
             validated_assets.len(),
             args.script.is_some()
