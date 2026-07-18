@@ -87,6 +87,8 @@ pub struct AnimationRuntime {
     initialized_players: HashSet<Entity>,
     initialized_animators: HashSet<Entity>,
     active_players: HashSet<Entity>,
+    active_player_clips: HashMap<Entity, String>,
+    active_player_times: HashMap<Entity, f32>,
     active_animators: HashSet<Entity>,
     pending_events: Vec<RuntimeAnimationEvent>,
 }
@@ -104,6 +106,8 @@ impl AnimationRuntime {
             initialized_players: HashSet::new(),
             initialized_animators: HashSet::new(),
             active_players: HashSet::new(),
+            active_player_clips: HashMap::new(),
+            active_player_times: HashMap::new(),
             active_animators: HashSet::new(),
             pending_events: Vec::new(),
         }
@@ -123,6 +127,8 @@ impl AnimationRuntime {
         self.initialized_players.clear();
         self.initialized_animators.clear();
         self.active_players.clear();
+        self.active_player_clips.clear();
+        self.active_player_times.clear();
         self.active_animators.clear();
         self.pending_events.clear();
     }
@@ -142,6 +148,8 @@ impl AnimationRuntime {
     /// Used by script-driven restart/stop commands so time-zero events fire once.
     pub fn reset_player(&mut self, entity: Entity) {
         self.active_players.remove(&entity);
+        self.active_player_clips.remove(&entity);
+        self.active_player_times.remove(&entity);
     }
 
     pub fn play_animator_layer_state(&mut self, entity: Entity, layer: &str, state: &str) {
@@ -195,6 +203,10 @@ impl AnimationRuntime {
         let live_players: HashSet<_> = players.iter().map(|(entity, _)| *entity).collect();
         self.active_players
             .retain(|entity| live_players.contains(entity) && world.is_alive(*entity));
+        self.active_player_clips
+            .retain(|entity, _| live_players.contains(entity) && world.is_alive(*entity));
+        self.active_player_times
+            .retain(|entity, _| live_players.contains(entity) && world.is_alive(*entity));
         for (entity, mut player) in players {
             if self.initialized_players.insert(entity) && !player.play_on_awake {
                 player.playing = false;
@@ -205,6 +217,8 @@ impl AnimationRuntime {
             let clip_key = player.clip.trim();
             if !player.playing || clip_key.is_empty() {
                 self.active_players.remove(&entity);
+                self.active_player_clips.remove(&entity);
+                self.active_player_times.remove(&entity);
                 continue;
             }
             let clip = match self.load_clip(clip_key) {
@@ -229,6 +243,15 @@ impl AnimationRuntime {
             };
 
             let delta = delta_seconds * player.speed;
+            let previous_sample_time = self.active_player_times.get(&entity).copied();
+            let clip_changed = self
+                .active_player_clips
+                .insert(entity, clip_key.to_owned())
+                .as_deref()
+                != Some(clip_key);
+            if clip_changed {
+                self.active_players.remove(&entity);
+            }
             let just_started = self.active_players.insert(entity);
             if just_started {
                 self.pending_events.extend(events_at_sample_time(
@@ -238,6 +261,17 @@ impl AnimationRuntime {
                     None,
                     1.0,
                 ));
+            } else if player.speed.abs() <= f32::EPSILON {
+                if let Some(previous) = previous_sample_time {
+                    self.pending_events.extend(crossed_animation_events(
+                        &clip,
+                        entity,
+                        previous,
+                        player.time - previous,
+                        None,
+                        1.0,
+                    ));
+                }
             }
             self.pending_events.extend(crossed_animation_events(
                 &clip,
@@ -248,6 +282,7 @@ impl AnimationRuntime {
                 1.0,
             ));
             let next_time = advance_player_time(player.time, delta, clip.duration, clip.wrap_mode);
+            self.active_player_times.insert(entity, next_time.time);
             for sample in clip.sample(next_time.time) {
                 let Some(target) = resolve_animation_target(world, entity, &sample.target) else {
                     continue;

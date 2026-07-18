@@ -275,6 +275,18 @@ export function Sequencer(props: SequencerProps) {
     setSelection({ track: asset.tracks.length, marker: null });
   };
 
+  const addAnimationTrack = () => {
+    if (!asset) return;
+    const used = new Set(asset.tracks.map((track) => track.id));
+    let index = asset.tracks.length + 1;
+    let id = `animation-${index}`;
+    while (used.has(id)) id = `animation-${++index}`;
+    update((draft) => draft.tracks.push({
+      type: 'animation', id, name: `Animation Track ${index}`, muted: false, target: 'Animated', clips: [],
+    }));
+    setSelection({ track: asset.tracks.length, marker: null });
+  };
+
   const addMarker = (trackIndex = selection?.track ?? 0, requestedTime = time) => {
     if (!asset || asset.tracks[trackIndex]?.type !== 'signal') return;
     const markerTime = snapTimelineAssetTime(requestedTime, asset);
@@ -315,11 +327,28 @@ export function Sequencer(props: SequencerProps) {
     setSelection({ track: trackIndex, marker: track.clips.length });
   };
 
+  const addAnimationClip = (trackIndex: number, requestedTime = time) => {
+    if (!asset || asset.tracks[trackIndex]?.type !== 'animation') return;
+    const minimum = Math.min(1 / asset.frame_rate, asset.duration);
+    const start = Math.min(snapTimelineAssetTime(requestedTime, asset), asset.duration - minimum);
+    const duration = Math.min(1, asset.duration - start);
+    const defaultClip = listProjectFiles().find((entry) => entry.kind === 'animation')?.relPath ?? 'Assets/Animations/clip.manim';
+    const track = asset.tracks[trackIndex];
+    update((draft) => {
+      const target = draft.tracks[trackIndex];
+      if (target.type === 'animation') target.clips.push({
+        start, duration, clip: defaultClip, clip_in: 0, speed: 1,
+      });
+    });
+    setSelection({ track: trackIndex, marker: track.clips.length });
+  };
+
   const addTrackItem = (trackIndex: number, requestedTime: number) => {
     const track = asset?.tracks[trackIndex];
     if (track?.type === 'signal') addMarker(trackIndex, requestedTime);
     else if (track?.type === 'activation') addActivationClip(trackIndex, requestedTime);
     else if (track?.type === 'audio') addAudioClip(trackIndex, requestedTime);
+    else if (track?.type === 'animation') addAnimationClip(trackIndex, requestedTime);
   };
 
   const startMarkerDrag = (
@@ -384,8 +413,12 @@ export function Sequencer(props: SequencerProps) {
   const selectedAudioClip = selection?.marker != null && selectedTrack?.type === 'audio'
     ? selectedTrack.clips[selection.marker]
     : null;
-  const selectedClip = selectedActivationClip ?? selectedAudioClip;
+  const selectedAnimationClip = selection?.marker != null && selectedTrack?.type === 'animation'
+    ? selectedTrack.clips[selection.marker]
+    : null;
+  const selectedClip = selectedActivationClip ?? selectedAudioClip ?? selectedAnimationClip;
   const audioAssets = listProjectFiles().filter((entry) => entry.kind === 'audio');
+  const animationAssets = listProjectFiles().filter((entry) => entry.kind === 'animation');
   const tickCount = Math.min(21, Math.max(2, Math.ceil(asset.duration) + 1));
   const ticks = Array.from({ length: tickCount }, (_, index) => index / (tickCount - 1));
   const transportPlaying = liveDirector ? Boolean(liveDirector.playing) : playing;
@@ -418,8 +451,9 @@ export function Sequencer(props: SequencerProps) {
         <button type="button" onClick={addSignalTrack}><Plus size={14} /> Signal Track</button>
         <button type="button" onClick={addActivationTrack}><Plus size={14} /> Activation Track</button>
         <button type="button" onClick={addAudioTrack}><Plus size={14} /> Audio Track</button>
+        <button type="button" onClick={addAnimationTrack}><Plus size={14} /> Animation Track</button>
         <button type="button" disabled={!selectedTrack} onClick={() => selectedTrack && addTrackItem(selection!.track, displayTime)}>
-          <Plus size={14} /> {selectedTrack?.type === 'activation' ? 'Activation Clip' : selectedTrack?.type === 'audio' ? 'Audio Clip' : 'Signal'}
+          <Plus size={14} /> {selectedTrack?.type === 'activation' ? 'Activation Clip' : selectedTrack?.type === 'audio' ? 'Audio Clip' : selectedTrack?.type === 'animation' ? 'Animation Clip' : 'Signal'}
         </button>
         <button type="button" disabled={!props.selectedEntity} onClick={() => props.selectedEntity && props.onAssignDirector(props.selectedEntity.entity, props.assetPath!)}><Link size={14} /> Bind</button>
         <button type="button" disabled={!dirty || saving || payloadInvalid} onClick={() => void save()}><Save size={14} /> {saving ? 'Saving…' : 'Save'}</button>
@@ -442,7 +476,7 @@ export function Sequencer(props: SequencerProps) {
           {asset.tracks.map((track, trackIndex) => (
             <div className={`sequencer-track-row${selection?.track === trackIndex ? ' selected' : ''}`} key={track.id}>
               <button type="button" className="sequencer-track-header" onClick={() => setSelection({ track: trackIndex, marker: null })}>
-                <span className={`sequencer-track-icon ${track.type}`}>{track.type === 'signal' ? 'S' : track.type === 'activation' ? 'A' : '♪'}</span>
+                <span className={`sequencer-track-icon ${track.type}`}>{track.type === 'signal' ? 'S' : track.type === 'activation' ? 'A' : track.type === 'audio' ? '♪' : 'M'}</span>
                 <span>{track.name}</span>
                 {track.muted && <small>Muted</small>}
               </button>
@@ -495,15 +529,28 @@ export function Sequencer(props: SequencerProps) {
                     onPointerDown={(event) => startMarkerDrag(event, trackIndex, clipIndex)}
                   >♪ {clip.clip.split('/').at(-1)}</button>
                 ))}
+                {track.type === 'animation' && track.clips.map((clip, clipIndex) => (
+                  <button
+                    type="button"
+                    className={`sequencer-animation-clip${selection?.track === trackIndex && selection.marker === clipIndex ? ' selected' : ''}`}
+                    style={{
+                      left: `${clip.start / asset.duration * 100}%`,
+                      width: `${clip.duration / asset.duration * 100}%`,
+                    }}
+                    title={`${clip.clip} · ${clip.start.toFixed(3)}s + ${clip.duration.toFixed(3)}s`}
+                    key={`${clip.start}-${clip.clip}-${clipIndex}`}
+                    onPointerDown={(event) => startMarkerDrag(event, trackIndex, clipIndex)}
+                  >M {clip.clip.split('/').at(-1)}</button>
+                ))}
                 <i className="sequencer-playhead" style={{ left: `${displayTime / asset.duration * 100}%` }} />
               </div>
             </div>
           ))}
-          {asset.tracks.length === 0 && <div className="sequencer-empty-track">Add a Signal, Activation, or Audio Track to begin authoring.</div>}
+          {asset.tracks.length === 0 && <div className="sequencer-empty-track">Add a Signal, Activation, Audio, or Animation Track to begin authoring.</div>}
         </div>
 
         <aside className="sequencer-inspector">
-          <h3>{selectedMarker ? 'Signal Marker' : selectedActivationClip ? 'Activation Clip' : selectedAudioClip ? 'Audio Clip' : selectedTrack ? `${selectedTrack.type === 'signal' ? 'Signal' : selectedTrack.type === 'activation' ? 'Activation' : 'Audio'} Track` : 'Timeline Asset'}</h3>
+          <h3>{selectedMarker ? 'Signal Marker' : selectedActivationClip ? 'Activation Clip' : selectedAudioClip ? 'Audio Clip' : selectedAnimationClip ? 'Animation Clip' : selectedTrack ? `${selectedTrack.type === 'signal' ? 'Signal' : selectedTrack.type === 'activation' ? 'Activation' : selectedTrack.type === 'audio' ? 'Audio' : 'Animation'} Track` : 'Timeline Asset'}</h3>
           {!selectedTrack && <>
             <label>Name <input value={asset.name} onChange={(event) => update((draft) => { draft.name = event.target.value; })} /></label>
             <label>Duration <input type="number" min={0.001} step={0.1} value={asset.duration} onChange={(event) => update((draft) => {
@@ -525,7 +572,7 @@ export function Sequencer(props: SequencerProps) {
           {selectedTrack && !selectedMarker && !selectedClip && <>
             <label>Name <input value={selectedTrack.name} onChange={(event) => update((draft) => { draft.tracks[selection!.track].name = event.target.value; })} /></label>
             <label className="sequencer-check"><input type="checkbox" checked={selectedTrack.muted} onChange={(event) => update((draft) => { draft.tracks[selection!.track].muted = event.target.checked; })} /> Muted</label>
-            {selectedTrack.type !== 'signal' && <label>Target (child path)<input value={selectedTrack.target} placeholder={selectedTrack.type === 'audio' ? 'Audio/Music' : 'Canvas/Dialog'} onChange={(event) => update((draft) => {
+            {selectedTrack.type !== 'signal' && <label>Target (child path)<input value={selectedTrack.target} placeholder={selectedTrack.type === 'audio' ? 'Audio/Music' : selectedTrack.type === 'animation' ? 'Characters/Hero' : 'Canvas/Dialog'} onChange={(event) => update((draft) => {
               const track = draft.tracks[selection!.track];
               if (track.type !== 'signal') track.target = event.target.value.replaceAll('\\', '/');
             })} /></label>}
@@ -608,6 +655,21 @@ export function Sequencer(props: SequencerProps) {
                 const track = draft.tracks[selection!.track];
                 if (track.type === 'audio') track.clips[selection!.marker!].looped = event.target.checked;
               })} /> Loop audio inside clip</label>
+            </>}
+            {selectedAnimationClip && <>
+              <label>Animation Clip <input list="sequencer-animation-assets" value={selectedAnimationClip.clip} onChange={(event) => update((draft) => {
+                const track = draft.tracks[selection!.track];
+                if (track.type === 'animation') track.clips[selection!.marker!].clip = event.target.value.replaceAll('\\', '/');
+              })} /></label>
+              <datalist id="sequencer-animation-assets">{animationAssets.map((entry) => <option value={entry.relPath} key={entry.relPath} />)}</datalist>
+              <label>Clip In <input type="number" min={0} step={1 / asset.frame_rate} value={selectedAnimationClip.clip_in} onChange={(event) => update((draft) => {
+                const track = draft.tracks[selection!.track];
+                if (track.type === 'animation') track.clips[selection!.marker!].clip_in = Math.max(0, Number(event.target.value) || 0);
+              })} /></label>
+              <label>Speed <input type="number" min={-4} max={4} step={0.05} value={selectedAnimationClip.speed} onChange={(event) => update((draft) => {
+                const track = draft.tracks[selection!.track];
+                if (track.type === 'animation') track.clips[selection!.marker!].speed = Math.max(-4, Math.min(4, Number(event.target.value) || 0));
+              })} /></label>
             </>}
             <button type="button" className="sequencer-danger" onClick={() => {
               update((draft) => {

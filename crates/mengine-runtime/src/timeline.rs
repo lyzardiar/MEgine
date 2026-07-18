@@ -1,6 +1,6 @@
 use crate::textures::resolve_project_asset_path;
 use mengine_assets::{load_timeline_asset, TimelineAsset, TimelineTrack};
-use mengine_core::generated::{AudioSource, TimelineDirector};
+use mengine_core::generated::{AnimationPlayer, Animator, AudioSource, TimelineDirector};
 use mengine_core::{Entity, Parent, World};
 use serde_json::Value;
 use std::collections::{HashMap, HashSet};
@@ -50,6 +50,12 @@ struct AudioOverride {
     clip_pitch: f32,
 }
 
+#[derive(Clone)]
+struct AnimationOverride {
+    target: Entity,
+    original: AnimationPlayer,
+}
+
 #[derive(Default)]
 pub struct TimelineRuntime {
     project_root: Option<PathBuf>,
@@ -59,8 +65,10 @@ pub struct TimelineRuntime {
     reported_failures: HashSet<(String, String)>,
     reported_activation_failures: HashSet<(Entity, String)>,
     reported_audio_failures: HashSet<(Entity, String)>,
+    reported_animation_failures: HashSet<(Entity, String)>,
     activation_overrides: HashMap<(Entity, String), ActivationOverride>,
     audio_overrides: HashMap<(Entity, String), AudioOverride>,
+    animation_overrides: HashMap<(Entity, String), AnimationOverride>,
     pending_signals: Vec<RuntimeTimelineSignal>,
 }
 
@@ -103,6 +111,7 @@ impl TimelineRuntime {
         let mut failures = Vec::new();
         let mut applied_activation_overrides = HashSet::new();
         let mut applied_audio_overrides = HashSet::new();
+        let mut applied_animation_overrides = HashSet::new();
         for (entity, mut director) in entities {
             if self.initialized.insert(entity) && !director.play_on_awake {
                 director.playing = false;
@@ -124,6 +133,7 @@ impl TimelineRuntime {
                         entity,
                         &mut applied_activation_overrides,
                         &mut applied_audio_overrides,
+                        &mut applied_animation_overrides,
                     );
                 }
                 continue;
@@ -191,6 +201,10 @@ impl TimelineRuntime {
                 );
                 applied_audio_overrides.extend(applied);
                 failures.append(&mut audio_failures);
+                let (applied, mut animation_failures) =
+                    self.apply_animation_tracks(world, entity, asset_key, &asset, next);
+                applied_animation_overrides.extend(applied);
+                failures.append(&mut animation_failures);
             }
             if let Some(live) = world.get_component_mut::<TimelineDirector>(entity) {
                 live.time = next;
@@ -202,9 +216,12 @@ impl TimelineRuntime {
         }
         self.restore_unused_activation_overrides(world, &applied_activation_overrides);
         self.restore_unused_audio_overrides(world, &applied_audio_overrides);
+        self.restore_unused_animation_overrides(world, &applied_animation_overrides);
         self.reported_activation_failures
             .retain(|(entity, _)| world.is_alive(*entity));
         self.reported_audio_failures
+            .retain(|(entity, _)| world.is_alive(*entity));
+        self.reported_animation_failures
             .retain(|(entity, _)| world.is_alive(*entity));
         failures
     }
@@ -428,12 +445,109 @@ impl TimelineRuntime {
         (applied, failures)
     }
 
+    fn apply_animation_tracks(
+        &mut self,
+        world: &mut World,
+        director: Entity,
+        asset_key: &str,
+        asset: &TimelineAsset,
+        time: f32,
+    ) -> (HashSet<(Entity, String)>, Vec<TimelineLoadFailure>) {
+        let mut applied = HashSet::new();
+        let mut failures = Vec::new();
+        for track in &asset.tracks {
+            let TimelineTrack::Animation {
+                id,
+                name,
+                muted,
+                target,
+                clips,
+            } = track
+            else {
+                continue;
+            };
+            let key = (director, id.clone());
+            if *muted {
+                self.reported_animation_failures.remove(&key);
+                continue;
+            }
+            let Some(clip) = clips
+                .iter()
+                .find(|clip| time >= clip.start && time < clip.start + clip.duration)
+            else {
+                self.reported_animation_failures.remove(&key);
+                continue;
+            };
+            let Some(target_entity) = resolve_descendant_target(world, director, target) else {
+                if self.reported_animation_failures.insert(key) {
+                    failures.push(TimelineLoadFailure {
+                        entity: director,
+                        asset: asset_key.to_owned(),
+                        error: format!(
+                            "animation track '{name}' target '{target}' was not found below the Director entity"
+                        ),
+                    });
+                }
+                continue;
+            };
+            let Some(authored) = world
+                .get_component::<AnimationPlayer>(target_entity)
+                .cloned()
+            else {
+                if self.reported_animation_failures.insert(key) {
+                    failures.push(TimelineLoadFailure {
+                        entity: director,
+                        asset: asset_key.to_owned(),
+                        error: format!(
+                            "animation track '{name}' target '{target}' does not have an AnimationPlayer component"
+                        ),
+                    });
+                }
+                continue;
+            };
+            if world.get_component::<Animator>(target_entity).is_some() {
+                if self.reported_animation_failures.insert(key) {
+                    failures.push(TimelineLoadFailure {
+                        entity: director,
+                        asset: asset_key.to_owned(),
+                        error: format!(
+                            "animation track '{name}' target '{target}' also has an Animator; remove it or bind a dedicated AnimationPlayer"
+                        ),
+                    });
+                }
+                continue;
+            }
+            self.reported_animation_failures.remove(&key);
+            if let Some(previous) = self.animation_overrides.get(&key) {
+                if previous.target != target_entity {
+                    self.restore_animation_override(world, &key);
+                }
+            }
+            self.animation_overrides
+                .entry(key.clone())
+                .or_insert(AnimationOverride {
+                    target: target_entity,
+                    original: authored,
+                });
+            if let Some(player) = world.get_component_mut::<AnimationPlayer>(target_entity) {
+                player.clip.clone_from(&clip.clip);
+                player.play_on_awake = true;
+                player.playing = true;
+                player.speed = 0.0;
+                player.time = (clip.clip_in + (time - clip.start) * clip.speed).max(0.0);
+            }
+            applied.insert(key);
+        }
+        (applied, failures)
+    }
+
     fn retain_paused_overrides(
         &self,
         world: &mut World,
         director: Entity,
         activation: &mut HashSet<(Entity, String)>,
         audio: &mut HashSet<(Entity, String)>,
+        animation: &mut HashSet<(Entity, String)>,
     ) {
         activation.extend(
             self.activation_overrides
@@ -450,6 +564,12 @@ impl TimelineRuntime {
             }
             audio.insert(key.clone());
         }
+        animation.extend(
+            self.animation_overrides
+                .keys()
+                .filter(|(owner, _)| *owner == director)
+                .cloned(),
+        );
     }
 
     fn restore_unused_activation_overrides(
@@ -499,6 +619,31 @@ impl TimelineRuntime {
 
     fn restore_audio_override(&mut self, world: &mut World, key: &(Entity, String)) {
         let Some(previous) = self.audio_overrides.remove(key) else {
+            return;
+        };
+        if world.is_alive(previous.target) {
+            world.insert_component(previous.target, previous.original);
+        }
+    }
+
+    fn restore_unused_animation_overrides(
+        &mut self,
+        world: &mut World,
+        applied: &HashSet<(Entity, String)>,
+    ) {
+        let stale: Vec<_> = self
+            .animation_overrides
+            .keys()
+            .filter(|key| !applied.contains(*key))
+            .cloned()
+            .collect();
+        for key in stale {
+            self.restore_animation_override(world, &key);
+        }
+    }
+
+    fn restore_animation_override(&mut self, world: &mut World, key: &(Entity, String)) {
+        let Some(previous) = self.animation_overrides.remove(key) else {
             return;
         };
         if world.is_alive(previous.target) {
@@ -634,6 +779,8 @@ fn collect_crossed_signals(
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::animation::AnimationRuntime;
+    use mengine_core::generated::Transform;
     use std::fs;
 
     fn project_asset() -> (PathBuf, String) {
@@ -677,6 +824,33 @@ mod tests {
         )
         .unwrap();
         (root, relative)
+    }
+
+    fn animation_project_asset(target: &str) -> (PathBuf, String) {
+        let root = std::env::temp_dir().join(format!("mengine-timeline-{}", uuid::Uuid::new_v4()));
+        let timeline_relative = "Assets/Timelines/animation.mtimeline".to_owned();
+        let timeline_path = root.join(&timeline_relative);
+        let clip_path = root.join("Assets/Animations/move.manim");
+        fs::create_dir_all(timeline_path.parent().unwrap()).unwrap();
+        fs::create_dir_all(clip_path.parent().unwrap()).unwrap();
+        fs::write(
+            timeline_path,
+            format!(
+                r#"{{"version":1,"duration":2,"tracks":[{{"type":"animation","id":"hero","name":"Hero","target":"{target}","clips":[{{"start":0,"duration":1,"clip":"Assets/Animations/move.manim"}}]}}]}}"#
+            ),
+        )
+        .unwrap();
+        fs::write(
+            clip_path,
+            r#"{
+              "version":1,"name":"Move","duration":1,"frame_rate":60,"wrap_mode":"once",
+              "events":[{"time":0.25,"function":"Quarter"}],
+              "tracks":[{"target":".","component":"Transform","property":"position.x","interpolation":"linear",
+                "keyframes":[{"time":0,"value":0},{"time":1,"value":10}]}]
+            }"#,
+        )
+        .unwrap();
+        (root, timeline_relative)
     }
 
     #[test]
@@ -1029,6 +1203,68 @@ mod tests {
         let controlled = world.get_component::<AudioSource>(audio).unwrap();
         assert!(!controlled.playing);
         assert_eq!(controlled.time, 1.125);
+        let _ = fs::remove_dir_all(root);
+    }
+
+    #[test]
+    fn animation_tracks_sample_in_the_same_frame_and_restore_authored_players() {
+        let (root, relative) = animation_project_asset("Hero");
+        let mut world = World::new();
+        let director = world.spawn_empty();
+        let hero = world.spawn_empty();
+        world.set_component_value(hero, "Name", serde_json::json!({ "value": "Hero" }));
+        world.set_parent(hero, Some(director));
+        world.insert_component(hero, Transform::default());
+        let authored = AnimationPlayer {
+            clip: "Assets/Animations/authored.manim".into(),
+            play_on_awake: false,
+            playing: false,
+            speed: 1.0,
+            time: 0.25,
+        };
+        world.insert_component(hero, authored.clone());
+        world.insert_component(
+            director,
+            TimelineDirector {
+                asset: relative,
+                ..TimelineDirector::default()
+            },
+        );
+        let mut timeline = TimelineRuntime::new(Some(root.clone()));
+        let mut animation = AnimationRuntime::new(Some(root.clone()));
+
+        assert!(timeline.update(&mut world, 0.0).is_empty());
+        assert!(animation.update(&mut world, 0.0).is_empty());
+        assert!(animation.take_events().is_empty());
+        assert!(timeline.update(&mut world, 0.5).is_empty());
+        assert!(animation.update(&mut world, 0.0).is_empty());
+        assert_eq!(animation.take_events()[0].function, "Quarter");
+        assert_eq!(
+            world.get_component::<Transform>(hero).unwrap().position[0],
+            5.0
+        );
+        let controlled = world.get_component::<AnimationPlayer>(hero).unwrap();
+        assert_eq!(controlled.clip, "Assets/Animations/move.manim");
+        assert_eq!(controlled.speed, 0.0);
+        assert_eq!(controlled.time, 0.5);
+
+        world
+            .get_component_mut::<TimelineDirector>(director)
+            .unwrap()
+            .playing = false;
+        timeline.update(&mut world, 0.0);
+        assert_eq!(
+            world.get_component::<AnimationPlayer>(hero).unwrap().clip,
+            "Assets/Animations/move.manim"
+        );
+
+        timeline.reset_director(director);
+        timeline.update(&mut world, 0.0);
+        let restored = world.get_component::<AnimationPlayer>(hero).unwrap();
+        assert_eq!(restored.clip, authored.clip);
+        assert_eq!(restored.playing, authored.playing);
+        assert_eq!(restored.speed, authored.speed);
+        assert_eq!(restored.time, authored.time);
         let _ = fs::remove_dir_all(root);
     }
 

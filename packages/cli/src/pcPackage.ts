@@ -774,9 +774,10 @@ function scanBuildAssetDependencies(
       const trackIds = new Set<string>();
       const activationTargets = new Set<string>();
       const audioTargets = new Set<string>();
+      const animationTargets = new Set<string>();
       for (const trackValue of timeline.tracks) {
         const track = jsonObject(trackValue);
-        if (!track || (track.type !== 'signal' && track.type !== 'activation' && track.type !== 'audio')) {
+        if (!track || (track.type !== 'signal' && track.type !== 'activation' && track.type !== 'audio' && track.type !== 'animation')) {
           throw new Error(`invalid Timeline asset ${source}: unsupported track type`);
         }
         const id = strictStringValue(track, 'id', `Timeline asset ${source}`);
@@ -835,6 +836,7 @@ function scanBuildAssetDependencies(
         }
           continue;
         }
+        if (track.type === 'audio') {
         const target = strictStringValue(track, 'target', `Timeline asset ${source}`).replaceAll('\\', '/');
         if (!target || target.startsWith('/')
           || target.split('/').some((segment) => !segment || segment === '.' || segment === '..')) {
@@ -869,6 +871,42 @@ function scanBuildAssetDependencies(
         for (let index = 1; index < clips.length; index += 1) {
           if (clips[index - 1].start + clips[index - 1].duration > clips[index].start) {
             throw new Error(`invalid Timeline asset ${source}: audio clips overlap`);
+          }
+        }
+          continue;
+        }
+        const target = strictStringValue(track, 'target', `Timeline asset ${source}`).replaceAll('\\', '/');
+        if (!target || target.startsWith('/')
+          || target.split('/').some((segment) => !segment || segment === '.' || segment === '..')) {
+          throw new Error(`invalid Timeline asset ${source}: animation target must be a descendant path without '.' or '..'`);
+        }
+        if (animationTargets.has(target)) {
+          throw new Error(`invalid Timeline asset ${source}: animation target ${target} is controlled more than once`);
+        }
+        animationTargets.add(target);
+        if (track.clips != null && !Array.isArray(track.clips)) {
+          throw new Error(`invalid Timeline asset ${source}: animation clips must be an array`);
+        }
+        const clips = (Array.isArray(track.clips) ? track.clips : []).map((clipValue) => {
+          const clip = jsonObject(clipValue);
+          if (!clip) throw new Error(`invalid Timeline asset ${source}: animation clip must be an object`);
+          const clipPath = strictStringValue(clip, 'clip', `Timeline animation track ${name}`).replaceAll('\\', '/');
+          if (typeof clip.start !== 'number' || !Number.isFinite(clip.start)
+            || typeof clip.duration !== 'number' || !Number.isFinite(clip.duration)
+            || clip.start < 0 || clip.duration <= 0 || clip.start + clip.duration > timelineDuration
+            || !clipPath.toLowerCase().startsWith('assets/')
+            || clipPath.split('/').some((segment) => !segment || segment === '.' || segment === '..')
+            || !/\.manim$/i.test(clipPath)
+            || clip.clip_in != null && (typeof clip.clip_in !== 'number' || !Number.isFinite(clip.clip_in) || clip.clip_in < 0)
+            || clip.speed != null && (typeof clip.speed !== 'number' || !Number.isFinite(clip.speed) || clip.speed < -4 || clip.speed > 4)) {
+            throw new Error(`invalid Timeline asset ${source}: animation clip is invalid or outside duration`);
+          }
+          enqueue(clipPath, source, `Timeline animation track ${name} clip`);
+          return clip as { start: number; duration: number };
+        }).sort((left, right) => left.start - right.start);
+        for (let index = 1; index < clips.length; index += 1) {
+          if (clips[index - 1].start + clips[index - 1].duration > clips[index].start) {
+            throw new Error(`invalid Timeline asset ${source}: animation clips overlap`);
           }
         }
       }

@@ -1486,6 +1486,30 @@ function onTick(dt, frame) {
                     );
                 }
 
+                // Sequencer tracks author component state for this frame. Evaluate
+                // them before animation/audio consumers so scrubbing has no
+                // one-frame delay.
+                for failure in self.timelines.update(&mut self.world, dt) {
+                    log::error!(
+                        "Timeline runtime {:?} failed to load '{}': {}",
+                        failure.entity,
+                        failure.asset,
+                        failure.error
+                    );
+                }
+                let timeline_signals = self
+                    .timelines
+                    .take_signals()
+                    .into_iter()
+                    .map(|signal| ScriptTimelineSignal {
+                        entity: signal.entity.to_u64(),
+                        track: signal.track,
+                        signal: signal.signal,
+                        time: signal.time,
+                        payload: signal.payload,
+                    })
+                    .collect::<Vec<_>>();
+
                 for failure in self.animations.update(&mut self.world, dt) {
                     log::error!(
                         "Animation runtime {:?} failed to load '{}': {}",
@@ -1507,27 +1531,6 @@ function onTick(dt, frame) {
                             .and_then(|parameter| serde_json::to_value(parameter).ok()),
                         state: event.state,
                         weight: event.weight,
-                    })
-                    .collect::<Vec<_>>();
-
-                for failure in self.timelines.update(&mut self.world, dt) {
-                    log::error!(
-                        "Timeline runtime {:?} failed to load '{}': {}",
-                        failure.entity,
-                        failure.asset,
-                        failure.error
-                    );
-                }
-                let timeline_signals = self
-                    .timelines
-                    .take_signals()
-                    .into_iter()
-                    .map(|signal| ScriptTimelineSignal {
-                        entity: signal.entity.to_u64(),
-                        track: signal.track,
-                        signal: signal.signal,
-                        time: signal.time,
-                        payload: signal.payload,
                     })
                     .collect::<Vec<_>>();
 
@@ -2246,23 +2249,49 @@ fn validate_world_assets(
                     let timeline = mengine_assets::load_timeline_asset(&path)
                         .with_context(|| format!("invalid Timeline asset {}", path.display()))?;
                     for track in &timeline.tracks {
-                        if let mengine_assets::TimelineTrack::Audio { clips, .. } = track {
-                            for clip in clips {
-                                let duration = validate_audio_clip_asset(
-                                    &clip.clip,
-                                    project_root,
-                                    validated,
-                                )?
-                                .expect("Timeline audio clip paths are non-empty after validation");
-                                if clip.clip_in as f64 >= duration {
-                                    bail!(
-                                        "Timeline audio clip '{}' starts at {:.3}s, outside its {:.3}s decoded duration",
-                                        clip.clip,
-                                        clip.clip_in,
-                                        duration
+                        match track {
+                            mengine_assets::TimelineTrack::Audio { clips, .. } => {
+                                for clip in clips {
+                                    let duration = validate_audio_clip_asset(
+                                        &clip.clip,
+                                        project_root,
+                                        validated,
+                                    )?
+                                    .expect(
+                                        "Timeline audio clip paths are non-empty after validation",
                                     );
+                                    if clip.clip_in as f64 >= duration {
+                                        bail!(
+                                            "Timeline audio clip '{}' starts at {:.3}s, outside its {:.3}s decoded duration",
+                                            clip.clip,
+                                            clip.clip_in,
+                                            duration
+                                        );
+                                    }
                                 }
                             }
+                            mengine_assets::TimelineTrack::Animation { clips, .. } => {
+                                for clip in clips {
+                                    let clip_path = resolve(&clip.clip, "Timeline animation clip")?;
+                                    let animation = mengine_assets::load_animation_clip(&clip_path)
+                                        .with_context(|| {
+                                            format!(
+                                                "invalid Timeline animation clip {}",
+                                                clip_path.display()
+                                            )
+                                        })?;
+                                    validated.insert(clip_path);
+                                    if clip.clip_in > animation.duration {
+                                        bail!(
+                                            "Timeline animation clip '{}' starts at {:.3}s, outside its {:.3}s duration",
+                                            clip.clip,
+                                            clip.clip_in,
+                                            animation.duration
+                                        );
+                                    }
+                                }
+                            }
+                            _ => {}
                         }
                     }
                 }
@@ -2701,9 +2730,16 @@ mod tests {
         let root = temporary_project_root("packaged-timeline");
         let timelines = root.join("Assets/Timelines");
         let audio = root.join("Assets/Audio");
+        let animations = root.join("Assets/Animations");
         std::fs::create_dir_all(&timelines).unwrap();
         std::fs::create_dir_all(&audio).unwrap();
+        std::fs::create_dir_all(&animations).unwrap();
         write_test_wav(&audio.join("Intro.wav"));
+        std::fs::write(
+            animations.join("Hero.manim"),
+            r#"{"version":1,"name":"Hero","duration":1,"frame_rate":60,"wrap_mode":"once","tracks":[]}"#,
+        )
+        .unwrap();
         std::fs::write(
             timelines.join("Intro.mtimeline"),
             r#"{
@@ -2712,6 +2748,8 @@ mod tests {
                 {"time":1,"name":"SpawnBoss","payload":{"phase":2}}
               ]},{"type":"audio","id":"music","name":"Music","target":"Audio","clips":[
                 {"start":0,"duration":2,"clip":"Assets/Audio/Intro.wav"}
+              ]},{"type":"animation","id":"hero","name":"Hero","target":"Characters/Hero","clips":[
+                {"start":0,"duration":2,"clip":"Assets/Animations/Hero.manim","clip_in":0.25}
               ]}]
             }"#,
         )
@@ -2729,10 +2767,19 @@ mod tests {
         let mut validated = HashSet::new();
         let result = validate_world_assets(&world, &root, &mut validated);
         result.expect("Timeline assets should pass final package validation");
-        assert_eq!(validated.len(), 2);
+        assert_eq!(validated.len(), 3);
 
         let timeline_path = timelines.join("Intro.mtimeline");
         let source = std::fs::read_to_string(&timeline_path).unwrap();
+        std::fs::write(
+            &timeline_path,
+            source.replace(r#""clip_in":0.25"#, r#""clip_in":2"#),
+        )
+        .unwrap();
+        let error = validate_world_assets(&world, &root, &mut HashSet::new())
+            .expect_err("an animation in-point beyond clip duration must fail validation");
+        assert!(error.to_string().contains("Timeline animation clip"));
+
         std::fs::write(
             &timeline_path,
             source.replace(

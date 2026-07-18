@@ -51,6 +51,17 @@ pub struct TimelineAudioClip {
 }
 
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+pub struct TimelineAnimationClip {
+    pub start: f32,
+    pub duration: f32,
+    pub clip: String,
+    #[serde(default)]
+    pub clip_in: f32,
+    #[serde(default = "default_one")]
+    pub speed: f32,
+}
+
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 #[serde(tag = "type", rename_all = "snake_case")]
 pub enum TimelineTrack {
     Signal {
@@ -78,6 +89,15 @@ pub enum TimelineTrack {
         target: String,
         #[serde(default)]
         clips: Vec<TimelineAudioClip>,
+    },
+    Animation {
+        id: String,
+        name: String,
+        #[serde(default)]
+        muted: bool,
+        target: String,
+        #[serde(default)]
+        clips: Vec<TimelineAnimationClip>,
     },
 }
 
@@ -128,6 +148,7 @@ impl TimelineAsset {
         let mut track_ids = HashSet::new();
         let mut activation_targets = HashSet::new();
         let mut audio_targets = HashSet::new();
+        let mut animation_targets = HashSet::new();
         for track in &mut self.tracks {
             match track {
                 TimelineTrack::Signal {
@@ -280,6 +301,66 @@ impl TimelineAsset {
                         )));
                     }
                 }
+                TimelineTrack::Animation {
+                    id,
+                    name,
+                    target,
+                    clips,
+                    ..
+                } => {
+                    *id = id.trim().to_owned();
+                    *name = name.trim().to_owned();
+                    if id.is_empty() || !track_ids.insert(id.clone()) {
+                        return Err(AssetError::Invalid(
+                            "Timeline track ids must be non-empty and unique".into(),
+                        ));
+                    }
+                    if name.is_empty() {
+                        return Err(AssetError::Invalid(format!(
+                            "Timeline track '{id}' must have a name"
+                        )));
+                    }
+                    *target = normalize_descendant_target(target).ok_or_else(|| {
+                        AssetError::Invalid(format!(
+                            "Timeline animation track '{id}' must target a descendant path without '.' or '..'"
+                        ))
+                    })?;
+                    if !animation_targets.insert(target.clone()) {
+                        return Err(AssetError::Invalid(format!(
+                            "Timeline animation target '{target}' is controlled by more than one track"
+                        )));
+                    }
+                    for clip in clips.iter_mut() {
+                        clip.clip = normalize_animation_asset_path(&clip.clip).ok_or_else(|| {
+                            AssetError::Invalid(format!(
+                                "Timeline animation track '{id}' contains an invalid animation clip path"
+                            ))
+                        })?;
+                        if !clip.start.is_finite()
+                            || !clip.duration.is_finite()
+                            || clip.start < 0.0
+                            || clip.duration <= 0.0
+                            || clip.start + clip.duration > self.duration
+                            || !clip.clip_in.is_finite()
+                            || clip.clip_in < 0.0
+                            || !clip.speed.is_finite()
+                            || !(-4.0..=4.0).contains(&clip.speed)
+                        {
+                            return Err(AssetError::Invalid(format!(
+                                "Timeline animation track '{id}' contains an invalid or out-of-range clip"
+                            )));
+                        }
+                    }
+                    clips.sort_by(|left, right| left.start.total_cmp(&right.start));
+                    if clips
+                        .windows(2)
+                        .any(|pair| pair[0].start + pair[0].duration > pair[1].start)
+                    {
+                        return Err(AssetError::Invalid(format!(
+                            "Timeline animation track '{id}' contains overlapping clips"
+                        )));
+                    }
+                }
             }
         }
         Ok(self)
@@ -316,6 +397,21 @@ fn normalize_audio_asset_path(raw: &str) -> Option<String> {
     if ![".wav", ".ogg", ".mp3", ".flac"]
         .iter()
         .any(|extension| lower.ends_with(extension))
+    {
+        return None;
+    }
+    Some(format!("Assets/{}", segments[1..].join("/")))
+}
+
+fn normalize_animation_asset_path(raw: &str) -> Option<String> {
+    let normalized = raw.trim().replace('\\', "/");
+    let segments: Vec<_> = normalized.split('/').collect();
+    if segments.len() < 2
+        || !segments[0].eq_ignore_ascii_case("Assets")
+        || segments
+            .iter()
+            .any(|segment| segment.is_empty() || matches!(*segment, "." | ".."))
+        || !normalized.to_ascii_lowercase().ends_with(".manim")
     {
         return None;
     }
@@ -440,6 +536,44 @@ mod tests {
         .is_err());
         assert!(parse_timeline_asset(
             br#"{"version":1,"duration":2,"tracks":[{"type":"audio","id":"a","name":"A","target":"Audio","clips":[{"start":0,"duration":1,"clip":"../outside.ogg"}]}]}"#
+        )
+        .is_err());
+    }
+
+    #[test]
+    fn normalizes_animation_tracks_and_rejects_invalid_clips() {
+        let asset = parse_timeline_asset(
+            br#"{
+              "version":1,"duration":3,
+              "tracks":[{"type":"animation","id":"hero","name":" Hero ",
+                "target":"Characters\\Hero","clips":[
+                  {"start":1,"duration":1,"clip":"assets\\Animations\\Run.manim","clip_in":0.25,"speed":-1},
+                  {"start":0,"duration":1,"clip":"Assets/Animations/Idle.manim"}
+                ]}]
+            }"#,
+        )
+        .unwrap();
+        let TimelineTrack::Animation {
+            name,
+            target,
+            clips,
+            ..
+        } = &asset.tracks[0]
+        else {
+            panic!("expected animation track");
+        };
+        assert_eq!(name, "Hero");
+        assert_eq!(target, "Characters/Hero");
+        assert_eq!(clips[0].clip, "Assets/Animations/Idle.manim");
+        assert_eq!(clips[0].speed, 1.0);
+        assert_eq!(clips[1].clip, "Assets/Animations/Run.manim");
+
+        assert!(parse_timeline_asset(
+            br#"{"version":1,"duration":2,"tracks":[{"type":"animation","id":"a","name":"A","target":"Hero","clips":[{"start":0,"duration":1.5,"clip":"Assets/Animations/A.manim"},{"start":1,"duration":1,"clip":"Assets/Animations/B.manim"}]}]}"#
+        )
+        .is_err());
+        assert!(parse_timeline_asset(
+            br#"{"version":1,"duration":2,"tracks":[{"type":"animation","id":"a","name":"A","target":"Hero","clips":[{"start":0,"duration":1,"clip":"Assets/Animations/A.anim"}]}]}"#
         )
         .is_err());
     }

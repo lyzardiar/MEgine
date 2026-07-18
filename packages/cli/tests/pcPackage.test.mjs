@@ -393,10 +393,15 @@ test('buildPcPackage includes and validates TimelineDirector assets', () => {
       }, {
         type: 'audio', id: 'music', name: 'Music', target: 'Audio/Music',
         clips: [{ start: 0, duration: 3, clip: 'Assets/Audio/intro.ogg', clip_in: 0.25, volume: 0.8, pitch: 1 }],
+      }, {
+        type: 'animation', id: 'hero', name: 'Hero', target: 'Characters/Hero',
+        clips: [{ start: 0, duration: 2, clip: 'Assets/Animations/Hero.manim', clip_in: 0.1, speed: 1 }],
       }],
     }));
     mkdirSync(join(paths.project, 'Assets', 'Audio'), { recursive: true });
     writeFileSync(join(paths.project, 'Assets', 'Audio', 'intro.ogg'), 'audio');
+    mkdirSync(join(paths.project, 'Assets', 'Animations'), { recursive: true });
+    writeFileSync(join(paths.project, 'Assets', 'Animations', 'Hero.manim'), '{}');
     const manifest = buildPcPackage({
       projectDir: paths.project,
       outputDir: paths.output,
@@ -405,7 +410,8 @@ test('buildPcPackage includes and validates TimelineDirector assets', () => {
     });
     assert.equal(existsSync(join(paths.output, 'Assets', 'Timelines', 'Intro.mtimeline')), true);
     assert.equal(existsSync(join(paths.output, 'Assets', 'Audio', 'intro.ogg')), true);
-    assert.equal(manifest.assetValidation.validatedFiles, 5);
+    assert.equal(existsSync(join(paths.output, 'Assets', 'Animations', 'Hero.manim')), true);
+    assert.equal(manifest.assetValidation.validatedFiles, 6);
   } finally {
     rmSync(paths.root, { recursive: true, force: true });
   }
@@ -504,6 +510,48 @@ test('buildPcPackage rejects invalid or missing Timeline audio clips without pub
       runtimePath: paths.runtime,
       engineVersion: 'test-engine',
     }), /missing Timeline audio track Music clip/i);
+    assert.equal(existsSync(paths.output), false);
+  } finally {
+    rmSync(paths.root, { recursive: true, force: true });
+  }
+});
+
+test('buildPcPackage rejects invalid or missing Timeline animation clips without publishing output', () => {
+  const paths = fixture('invalid-timeline-animation');
+  try {
+    writeFileSync(join(paths.project, 'Assets', 'Scenes', 'Main.mscene'), JSON.stringify({
+      world: { entities: [{ components: {
+        TimelineDirector: { asset: 'Assets/Timelines/Broken.mtimeline' },
+      } }] },
+    }));
+    writeFileSync(join(paths.project, 'Assets', 'Timelines', 'Broken.mtimeline'), JSON.stringify({
+      version: 1, duration: 2,
+      tracks: [{
+        type: 'animation', id: 'hero', name: 'Hero', target: 'Characters/Hero',
+        clips: [{ start: 0, duration: 1, clip: 'Assets/Animations/missing.manim', speed: 9 }],
+      }],
+    }));
+    assert.throws(() => buildPcPackage({
+      projectDir: paths.project,
+      outputDir: paths.output,
+      runtimePath: paths.runtime,
+      engineVersion: 'test-engine',
+    }), /animation clip is invalid/);
+    assert.equal(existsSync(paths.output), false);
+
+    writeFileSync(join(paths.project, 'Assets', 'Timelines', 'Broken.mtimeline'), JSON.stringify({
+      version: 1, duration: 2,
+      tracks: [{
+        type: 'animation', id: 'hero', name: 'Hero', target: 'Characters/Hero',
+        clips: [{ start: 0, duration: 1, clip: 'Assets/Animations/missing.manim' }],
+      }],
+    }));
+    assert.throws(() => buildPcPackage({
+      projectDir: paths.project,
+      outputDir: paths.output,
+      runtimePath: paths.runtime,
+      engineVersion: 'test-engine',
+    }), /missing Timeline animation track Hero clip/i);
     assert.equal(existsSync(paths.output), false);
   } finally {
     rmSync(paths.root, { recursive: true, force: true });
