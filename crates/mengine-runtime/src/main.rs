@@ -1151,8 +1151,21 @@ function onTick(dt, frame) {
                 // Project scenes run without the sample fallback script unless explicitly requested.
             } else {
                 let mut loaded = false;
-                let sample_js = PathBuf::from(format!("samples/{}/main.js", self.args.sample));
-                let sample_ts = PathBuf::from(format!("samples/{}/main.ts", self.args.sample));
+                let sample_root = PathBuf::from(format!("samples/{}", self.args.sample));
+                let standard_js = sample_root.join("Assets/Scripts/Main.js");
+                let legacy_js = sample_root.join("main.js");
+                let standard_ts = sample_root.join("Assets/Scripts/Main.ts");
+                let legacy_ts = sample_root.join("main.ts");
+                let sample_js = if standard_js.exists() {
+                    standard_js
+                } else {
+                    legacy_js
+                };
+                let sample_ts = if standard_ts.exists() {
+                    standard_ts
+                } else {
+                    legacy_ts
+                };
                 if sample_js.exists() {
                     loaded = s.load_file(&sample_js).is_ok();
                 }

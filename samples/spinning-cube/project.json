@@ -2,7 +2,9 @@
   "name": "spinning-cube",
   "version": 1,
   "language": "typescript",
-  "mainScene": "scene.mscene",
-  "scripts": ["main.ts"],
-  "compiled": ["main.js"]
+  "mainScene": "Assets/Scenes/Main.mscene",
+  "buildScenes": [
+    "Assets/Scenes/Main.mscene"
+  ],
+  "startupScript": "Assets/Scripts/Main.ts"
 }

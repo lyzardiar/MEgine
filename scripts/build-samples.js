@@ -32,18 +32,20 @@ const samplesDir = path.join(root, 'samples');
 
 const entries = [];
 for (const name of fs.readdirSync(samplesDir)) {
-  const input = path.join(samplesDir, name, 'main.ts');
+  const projectInput = path.join(samplesDir, name, 'Assets', 'Scripts', 'Main.ts');
+  const legacyInput = path.join(samplesDir, name, 'main.ts');
+  const input = fs.existsSync(projectInput) ? projectInput : legacyInput;
   if (fs.existsSync(input)) {
     entries.push({
       name,
       input,
-      output: path.join(samplesDir, name, 'main.js'),
+      output: input.replace(/\.ts$/i, '.js'),
     });
   }
 }
 
 if (entries.length === 0) {
-  console.error('no samples/*/main.ts found');
+  console.error('no sample TypeScript entry points found');
   process.exit(1);
 }
 
@@ -66,7 +68,7 @@ for (const e of entries) {
     process.exit(1);
   }
   const banner =
-    '/** Generated from main.ts — do not edit. Run: npm run build:samples */\n';
+    `/** Generated from ${path.relative(path.join(samplesDir, e.name), e.input).replaceAll('\\', '/')} — do not edit. Run: npm run build:samples */\n`;
   fs.writeFileSync(e.output, banner + result.outputText);
   console.log('built', path.relative(root, e.output));
 }

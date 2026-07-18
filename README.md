@@ -34,7 +34,7 @@ cargo run -p mengine-runtime -- --sample spinning-cube
 ## 样本脚本（TypeScript）
 
 ```bash
-# 编辑 samples/*/main.ts，再编译给 runtime
+# 编辑 samples/*/Assets/Scripts/Main.ts（旧样例仍兼容 main.ts），再编译给 runtime
 npm run build:samples
 npm run sample:cube
 ```
