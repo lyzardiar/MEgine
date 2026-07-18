@@ -635,3 +635,12 @@ Referenced Only 是可用的单包裁剪基础，仍不等同于完整 Addressab
 - Scene View 预览采用与 Player 相同的“完整材质或旧 PbrMaterial → Property Block”优先级。为 MeshRenderer 重新分配材质资产时仍会移除会完全遮蔽资产的旧 `PbrMaterial`，但保留 Property Block，使实例级调色和粗糙度差异可跨材质替换继续工作。
 
 该切片完成的是不复制材质资产的实例参数覆盖，不等同于 GPU Instancing 或完整 Material Instance 资产系统。后续仍需 Shader 参数反射驱动任意属性、纹理属性块、材质实例继承、SRP Batcher/GPU Instancing 兼容布局、关键字与 Variant 管理、烘焙缓存和渲染调试视图；旧 `PbrMaterial` 继续作为兼容整材质替换存在，后续应提供显式迁移工具而不是静默改变其语义。
+
+## 43. 2026-07-19 Build-to-Build Content Comparison
+
+- 桌面 Host 在启动当前平台与 Debug/Release 配置构建前，读取同一输出目录中上一次已发布的 `mengine-build.json`。只接受普通目录与普通 manifest 文件，符号链接、损坏 JSON、旧格式或缺失哈希会安全跳过比较，不会阻断当前构建。
+- 当前构建完成并通过原有 manifest 回读校验后，按规范化文件路径、SHA-256 与大小比较前后清单，分别统计 Added、Removed、Changed、Unchanged 与总字节增量。同路径同大小但哈希不同仍属于 Changed，避免漏掉等尺寸二进制或压缩资源变化。
+- 差异明细按字节变化绝对值降序、路径升序确定性排列，向编辑器返回前 20 项；汇总计数不受截断影响。每项保留变化类型、内容类别、前后大小与有符号字节差，完全相同时明确显示上一构建内容哈希的 Byte-identical 结果。
+- Build Settings 在单次内容分类和最大文件列表之后显示跨构建摘要与明细。比较基线来自磁盘上的已发布清单，因此关闭并重新打开编辑器后再构建仍可比较；构建失败继续由原子发布协议保留旧输出，也不会伪造一次成功差异。
+
+当前比较解决单一平台/配置输出的相邻两次构建差异，不是完整制品历史库。长期仍需持久化多版本索引、任意两次构建选择、分类/依赖原因变化、重复资源诊断、压缩前后体积、CI 制品 URL、符号与崩溃映射、签名/安装器状态、增量 Patch 生成和远程 Build Farm 追踪。

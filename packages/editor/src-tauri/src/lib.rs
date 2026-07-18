@@ -103,6 +103,7 @@ struct BuildPlayerResult {
     manifest_path: String,
     content_categories: Vec<BuildContentCategoryResult>,
     largest_files: Vec<BuildContentFileResult>,
+    comparison: Option<BuildComparisonResult>,
     toolchain: String,
     log: String,
 }
@@ -122,6 +123,36 @@ struct BuildContentFileResult {
     size: u64,
     category: String,
     included_by: Vec<String>,
+}
+
+#[derive(Debug, serde::Serialize, PartialEq, Eq)]
+#[serde(rename_all = "camelCase")]
+struct BuildComparisonResult {
+    previous_content_hash: String,
+    added_files: usize,
+    removed_files: usize,
+    changed_files: usize,
+    unchanged_files: usize,
+    byte_delta: i64,
+    changes: Vec<BuildFileChangeResult>,
+}
+
+#[derive(Debug, serde::Serialize, PartialEq, Eq)]
+#[serde(rename_all = "camelCase")]
+struct BuildFileChangeResult {
+    path: String,
+    kind: String,
+    category: String,
+    previous_size: Option<u64>,
+    current_size: Option<u64>,
+    byte_delta: i64,
+}
+
+#[derive(Debug)]
+struct BuildFileSnapshot {
+    size: u64,
+    sha256: String,
+    category: String,
 }
 
 #[derive(Debug, serde::Deserialize)]
@@ -292,6 +323,154 @@ fn load_build_sdk(root: &Path, profile: &str) -> Result<BuildSdk, String> {
     })
 }
 
+fn read_previous_build_manifest(output_dir: &Path) -> Option<serde_json::Value> {
+    let output_metadata = std::fs::symlink_metadata(output_dir).ok()?;
+    if output_metadata.file_type().is_symlink() || !output_metadata.is_dir() {
+        return None;
+    }
+    let path = output_dir.join("mengine-build.json");
+    let metadata = std::fs::symlink_metadata(&path).ok()?;
+    if metadata.file_type().is_symlink() || !metadata.is_file() {
+        return None;
+    }
+    serde_json::from_slice(&std::fs::read(path).ok()?).ok()
+}
+
+fn build_file_snapshots(
+    manifest: &serde_json::Value,
+) -> Result<(String, BTreeMap<String, BuildFileSnapshot>), String> {
+    let content_hash = manifest
+        .get("contentHash")
+        .and_then(serde_json::Value::as_str)
+        .filter(|value| value.len() == 64 && value.bytes().all(|byte| byte.is_ascii_hexdigit()))
+        .ok_or_else(|| "build comparison manifest has an invalid contentHash".to_string())?
+        .to_ascii_lowercase();
+    let files = manifest
+        .get("files")
+        .and_then(serde_json::Value::as_array)
+        .ok_or_else(|| "build comparison manifest does not contain files".to_string())?;
+    let mut snapshots = BTreeMap::new();
+    for file in files {
+        let path = file
+            .get("path")
+            .and_then(serde_json::Value::as_str)
+            .filter(|value| !value.is_empty())
+            .ok_or_else(|| "build comparison file does not contain path".to_string())?;
+        let size = file
+            .get("size")
+            .and_then(serde_json::Value::as_u64)
+            .ok_or_else(|| format!("build comparison file {path} does not contain size"))?;
+        let sha256 = file
+            .get("sha256")
+            .and_then(serde_json::Value::as_str)
+            .filter(|value| value.len() == 64 && value.bytes().all(|byte| byte.is_ascii_hexdigit()))
+            .ok_or_else(|| format!("build comparison file {path} has an invalid sha256"))?
+            .to_ascii_lowercase();
+        let category = file
+            .get("category")
+            .and_then(serde_json::Value::as_str)
+            .filter(|value| !value.is_empty())
+            .ok_or_else(|| format!("build comparison file {path} does not contain category"))?
+            .to_string();
+        if snapshots
+            .insert(
+                path.to_string(),
+                BuildFileSnapshot {
+                    size,
+                    sha256,
+                    category,
+                },
+            )
+            .is_some()
+        {
+            return Err(format!(
+                "build comparison manifest contains duplicate path {path}"
+            ));
+        }
+    }
+    Ok((content_hash, snapshots))
+}
+
+fn signed_byte_delta(current: u64, previous: u64) -> i64 {
+    let delta = i128::from(current) - i128::from(previous);
+    delta.clamp(i128::from(i64::MIN), i128::from(i64::MAX)) as i64
+}
+
+fn compare_build_manifests(
+    previous_manifest: &serde_json::Value,
+    current_manifest: &serde_json::Value,
+) -> Result<BuildComparisonResult, String> {
+    let (previous_content_hash, mut previous) = build_file_snapshots(previous_manifest)?;
+    let (_, current) = build_file_snapshots(current_manifest)?;
+    let previous_bytes = previous
+        .values()
+        .fold(0_u64, |total, file| total.saturating_add(file.size));
+    let current_bytes = current
+        .values()
+        .fold(0_u64, |total, file| total.saturating_add(file.size));
+    let mut added_files = 0;
+    let mut changed_files = 0;
+    let mut unchanged_files = 0;
+    let mut changes = Vec::new();
+    for (path, current_file) in current {
+        if let Some(previous_file) = previous.remove(&path) {
+            if current_file.size == previous_file.size
+                && current_file.sha256 == previous_file.sha256
+            {
+                unchanged_files += 1;
+            } else {
+                changed_files += 1;
+                changes.push(BuildFileChangeResult {
+                    path,
+                    kind: "changed".into(),
+                    category: current_file.category,
+                    previous_size: Some(previous_file.size),
+                    current_size: Some(current_file.size),
+                    byte_delta: signed_byte_delta(current_file.size, previous_file.size),
+                });
+            }
+        } else {
+            added_files += 1;
+            changes.push(BuildFileChangeResult {
+                path,
+                kind: "added".into(),
+                category: current_file.category,
+                previous_size: None,
+                current_size: Some(current_file.size),
+                byte_delta: signed_byte_delta(current_file.size, 0),
+            });
+        }
+    }
+    let removed_files = previous.len();
+    for (path, previous_file) in previous {
+        changes.push(BuildFileChangeResult {
+            path,
+            kind: "removed".into(),
+            category: previous_file.category,
+            previous_size: Some(previous_file.size),
+            current_size: None,
+            byte_delta: signed_byte_delta(0, previous_file.size),
+        });
+    }
+    changes.sort_by(|left, right| {
+        right
+            .byte_delta
+            .unsigned_abs()
+            .cmp(&left.byte_delta.unsigned_abs())
+            .then_with(|| left.path.cmp(&right.path))
+    });
+    changes.truncate(20);
+    Ok(BuildComparisonResult {
+        previous_content_hash,
+        added_files,
+        removed_files,
+        changed_files,
+        unchanged_files,
+        byte_delta: signed_byte_delta(current_bytes, previous_bytes),
+        changes,
+    })
+}
+
 fn run_player_build(
     project_root: PathBuf,
     profile: String,
@@ -317,6 +496,7 @@ fn run_player_build(
         node_platform_name(),
         node_arch_name()
     ));
+    let previous_build_manifest = read_previous_build_manifest(&output_dir);
     let mut command;
     let toolchain;
     if let Some(sdk) = &sdk {
@@ -395,6 +575,9 @@ fn run_player_build(
             )
         })?)
         .map_err(|error| format!("invalid build manifest: {error}"))?;
+    let comparison = previous_build_manifest
+        .as_ref()
+        .and_then(|previous| compare_build_manifests(previous, &build_manifest).ok());
     let executable = build_manifest
         .get("executable")
         .and_then(serde_json::Value::as_str)
@@ -576,6 +759,7 @@ fn run_player_build(
         manifest_path: build_manifest_path.to_string_lossy().into_owned(),
         content_categories,
         largest_files,
+        comparison,
         toolchain,
         log: String::from_utf8_lossy(&output.stdout).trim().to_owned(),
     })
@@ -1627,6 +1811,89 @@ pub fn run() {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    fn comparison_manifest(hash: char, files: serde_json::Value) -> serde_json::Value {
+        serde_json::json!({
+            "contentHash": hash.to_string().repeat(64),
+            "files": files,
+        })
+    }
+
+    fn comparison_file(path: &str, size: u64, hash: char, category: &str) -> serde_json::Value {
+        serde_json::json!({
+            "path": path,
+            "size": size,
+            "sha256": hash.to_string().repeat(64),
+            "category": category,
+        })
+    }
+
+    #[test]
+    fn build_comparison_reports_added_removed_changed_and_unchanged_files() {
+        let previous = comparison_manifest(
+            'a',
+            serde_json::json!([
+                comparison_file("Runtime/player.exe", 10, 'a', "runtime"),
+                comparison_file("Assets/Same.bin", 5, 'b', "other"),
+                comparison_file("Assets/Changed.bin", 8, 'c', "other"),
+                comparison_file("Assets/SameSizeChanged.bin", 6, 'a', "other"),
+                comparison_file("Assets/Removed.bin", 4, 'd', "other"),
+            ]),
+        );
+        let current = comparison_manifest(
+            'e',
+            serde_json::json!([
+                comparison_file("Runtime/player.exe", 10, 'a', "runtime"),
+                comparison_file("Assets/Same.bin", 5, 'b', "other"),
+                comparison_file("Assets/Changed.bin", 12, 'f', "other"),
+                comparison_file("Assets/SameSizeChanged.bin", 6, 'b', "other"),
+                comparison_file("Assets/Added.bin", 20, 'a', "other"),
+            ]),
+        );
+
+        let comparison = compare_build_manifests(&previous, &current).unwrap();
+        assert_eq!(comparison.previous_content_hash, "a".repeat(64));
+        assert_eq!(comparison.added_files, 1);
+        assert_eq!(comparison.removed_files, 1);
+        assert_eq!(comparison.changed_files, 2);
+        assert_eq!(comparison.unchanged_files, 2);
+        assert_eq!(comparison.byte_delta, 20);
+        assert_eq!(comparison.changes.len(), 4);
+        assert_eq!(comparison.changes[0].path, "Assets/Added.bin");
+        assert_eq!(comparison.changes[0].kind, "added");
+        assert_eq!(comparison.changes[0].byte_delta, 20);
+        assert_eq!(comparison.changes[1].path, "Assets/Changed.bin");
+        assert_eq!(comparison.changes[2].path, "Assets/Removed.bin");
+        assert_eq!(comparison.changes[2].byte_delta, -4);
+        assert_eq!(comparison.changes[3].path, "Assets/SameSizeChanged.bin");
+        assert_eq!(comparison.changes[3].byte_delta, 0);
+    }
+
+    #[test]
+    fn build_comparison_recognizes_byte_identical_manifests() {
+        let previous = comparison_manifest(
+            'a',
+            serde_json::json!([
+                comparison_file("Runtime/player.exe", 10, 'b', "runtime"),
+                comparison_file("Assets/Main.mscene", 5, 'c', "scene"),
+            ]),
+        );
+        let current = comparison_manifest(
+            'a',
+            serde_json::json!([
+                comparison_file("Assets/Main.mscene", 5, 'c', "scene"),
+                comparison_file("Runtime/player.exe", 10, 'b', "runtime"),
+            ]),
+        );
+
+        let comparison = compare_build_manifests(&previous, &current).unwrap();
+        assert_eq!(comparison.added_files, 0);
+        assert_eq!(comparison.removed_files, 0);
+        assert_eq!(comparison.changed_files, 0);
+        assert_eq!(comparison.unchanged_files, 2);
+        assert_eq!(comparison.byte_delta, 0);
+        assert!(comparison.changes.is_empty());
+    }
 
     #[test]
     fn build_backend_finds_workspace_and_rejects_unknown_profiles() {

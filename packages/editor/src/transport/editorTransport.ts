@@ -52,6 +52,25 @@ export type BuildContentFileResult = {
   includedBy: string[];
 };
 
+export type BuildFileChangeResult = {
+  path: string;
+  kind: 'added' | 'removed' | 'changed';
+  category: string;
+  previousSize: number | null;
+  currentSize: number | null;
+  byteDelta: number;
+};
+
+export type BuildComparisonResult = {
+  previousContentHash: string;
+  addedFiles: number;
+  removedFiles: number;
+  changedFiles: number;
+  unchangedFiles: number;
+  byteDelta: number;
+  changes: BuildFileChangeResult[];
+};
+
 export type BuildPlayerResult = {
   outputDir: string;
   executable: string;
@@ -72,6 +91,7 @@ export type BuildPlayerResult = {
   manifestPath: string;
   contentCategories: BuildContentCategoryResult[];
   largestFiles: BuildContentFileResult[];
+  comparison: BuildComparisonResult | null;
   toolchain: 'bundled-sdk' | 'source-checkout';
   log: string;
 };

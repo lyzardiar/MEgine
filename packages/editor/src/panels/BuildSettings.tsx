@@ -32,6 +32,11 @@ function byteSize(bytes: number): string {
   return `${value >= 10 || unit === 0 ? value.toFixed(0) : value.toFixed(1)} ${units[unit]}`;
 }
 
+function signedByteSize(bytes: number): string {
+  if (!Number.isFinite(bytes) || bytes === 0) return '0 B';
+  return `${bytes > 0 ? '+' : '−'}${byteSize(Math.abs(bytes))}`;
+}
+
 export function BuildSettings(props: {
   sceneName: string | null;
   sceneTick: number;
@@ -424,6 +429,29 @@ export function BuildSettings(props: {
                 </div>
               ))}
             </div>
+            {lastBuild.comparison && <>
+              <h4>Changes vs Previous Build</h4>
+              <div className="build-comparison-summary">
+                <span className="added">+{lastBuild.comparison.addedFiles} added</span>
+                <span className="removed">−{lastBuild.comparison.removedFiles} removed</span>
+                <span className="changed">~{lastBuild.comparison.changedFiles} changed</span>
+                <span>{lastBuild.comparison.unchangedFiles} unchanged</span>
+                <strong>{signedByteSize(lastBuild.comparison.byteDelta)}</strong>
+              </div>
+              {lastBuild.comparison.changes.length > 0
+                ? <div className="build-content-table changes">
+                    {lastBuild.comparison.changes.map((file) => (
+                      <div className={`build-content-row ${file.kind}`} key={`${file.kind}:${file.path}`}>
+                        <strong title={file.path}>{file.path}</strong>
+                        <span>{file.kind}</span>
+                        <span>{signedByteSize(file.byteDelta)}</span>
+                      </div>
+                    ))}
+                  </div>
+                : <div className="build-identical">
+                    Byte-identical to {lastBuild.comparison.previousContentHash.slice(0, 12)}.
+                  </div>}
+            </>}
             <small title={lastBuild.manifestPath}>Report: {lastBuild.manifestPath}</small>
           </div>
           {lastBuild.log && <pre>{lastBuild.log}</pre>}

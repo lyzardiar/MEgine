@@ -4610,6 +4610,7 @@ button.sequencer-track-header:hover { background: #343b42; }
   background: #213124;
 }
 .build-content-table.largest { max-height: 210px; }
+.build-content-table.changes { max-height: 210px; }
 .build-content-row {
   display: grid;
   min-height: 22px;
@@ -4627,6 +4628,29 @@ button.sequencer-track-header:hover { background: #343b42; }
 }
 .build-content-row strong { font-family: var(--u-mono); font-size: 9px; font-weight: 500; }
 .build-content-row span { text-align: right; }
+.build-content-row.added span:nth-child(2) { color: #8ed59b; }
+.build-content-row.removed span:nth-child(2) { color: #e59292; }
+.build-content-row.changed span:nth-child(2) { color: #dfbf76; }
+.build-comparison-summary {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 5px 6px;
+  border: 1px solid #355439;
+  background: #213124;
+  font: 9px var(--u-mono);
+}
+.build-comparison-summary .added { color: #8ed59b; }
+.build-comparison-summary .removed { color: #e59292; }
+.build-comparison-summary .changed { color: #dfbf76; }
+.build-comparison-summary strong { margin-left: auto; color: #d7e6da; }
+.build-identical {
+  padding: 6px;
+  border: 1px solid #355439;
+  background: #213124;
+  color: #8ed59b;
+  font: 9px var(--u-mono);
+}
 .build-content-report small {
   overflow: hidden;
   color: #739079;
