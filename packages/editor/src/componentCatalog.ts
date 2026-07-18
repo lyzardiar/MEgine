@@ -35,6 +35,8 @@ const BUILTIN_CATALOG: ComponentCatalogEntry[] = [
       projection: 'perspective',
       orthographic_size: 5,
       aspect: 16 / 9,
+      clear_flags: 'scene',
+      background_color: [0.1, 0.1, 0.14, 1],
     }),
   },
   {
@@ -79,7 +81,12 @@ const BUILTIN_CATALOG: ComponentCatalogEntry[] = [
     type: 'Camera2D',
     label: 'Camera 2D',
     description: 'Orthographic camera for 2D world rendering',
-    create: () => ({ size: 5, primary: false }),
+    create: () => ({
+      size: 5,
+      primary: false,
+      clear_flags: 'solid_color',
+      background_color: [0.1, 0.1, 0.14, 1],
+    }),
   },
   {
     type: 'PbrMaterial',

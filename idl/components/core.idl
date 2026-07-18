@@ -23,6 +23,10 @@ component Camera3D {
   projection:        string = "perspective"
   orthographic_size: float  = 5
   aspect:            float  = 1.777778
+  /// "scene" preserves the scene clear/environment contract; "skybox" forces the
+  /// EnvironmentLight background; "solid_color" uses background_color.
+  clear_flags:       string = "scene"
+  background_color:  float4 = [0.1, 0.1, 0.14, 1]
 }
 
 component DirectionalLight {
@@ -66,8 +70,11 @@ component SpotLight {
 }
 
 component Camera2D {
-  size:    float = 5
-  primary: bool  = true
+  size:             float  = 5
+  primary:          bool   = true
+  /// "scene" | "skybox" | "solid_color". Scene keeps old serialized behavior.
+  clear_flags:      string = "scene"
+  background_color: float4 = [0.1, 0.1, 0.14, 1]
 }
 
 component MeshRenderer {

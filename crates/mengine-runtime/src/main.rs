@@ -1375,10 +1375,10 @@ function onTick(dt, frame) {
                 }
 
                 if let Some(r) = self.renderer.as_mut() {
-                    r.clear = self.world.time.clear_color.into();
                     let hierarchy = TransformHierarchy::build(&self.world);
                     let aspect = r.aspect();
-                    let camera = find_camera(&self.world, &hierarchy, aspect);
+                    let active_camera = find_camera(&self.world, &hierarchy, aspect);
+                    let camera = active_camera.frame;
                     let objects = collect_objects(&self.world, &hierarchy, &mut self.materials);
                     for failure in self.meshes.sync(r, &objects) {
                         log::warn!(
@@ -1388,7 +1388,13 @@ function onTick(dt, frame) {
                             failure.error
                         );
                     }
-                    let lighting = collect_lighting(&self.world, &hierarchy);
+                    let mut lighting = collect_lighting(&self.world, &hierarchy);
+                    r.clear = resolve_camera_background(
+                        &active_camera,
+                        self.world.time.clear_color,
+                        &mut lighting,
+                    )
+                    .into();
                     let window_size = self
                         .window
                         .as_ref()
@@ -1494,26 +1500,94 @@ function onTick(dt, frame) {
     }
 }
 
-fn find_camera(world: &World, hierarchy: &TransformHierarchy, viewport_aspect: f32) -> FrameCamera {
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+enum CameraClearFlags {
+    Scene,
+    Skybox,
+    SolidColor,
+}
+
+#[derive(Clone, Copy, Debug)]
+struct ActiveFrameCamera {
+    frame: FrameCamera,
+    clear_flags: CameraClearFlags,
+    background_color: [f32; 4],
+}
+
+fn find_camera(
+    world: &World,
+    hierarchy: &TransformHierarchy,
+    viewport_aspect: f32,
+) -> ActiveFrameCamera {
     for e in world.iter_entities() {
         if let (Some(t), Some(c)) = (hierarchy.get(e), world.get_component::<Camera2D>(e)) {
             if c.primary {
-                return camera2d_from_components(&t.to_transform(), c, viewport_aspect);
+                return ActiveFrameCamera {
+                    frame: camera2d_from_components(&t.to_transform(), c, viewport_aspect),
+                    clear_flags: parse_camera_clear_flags(&c.clear_flags),
+                    background_color: c.background_color,
+                };
             }
         }
     }
     for e in world.iter_entities() {
         if let (Some(t), Some(c)) = (hierarchy.get(e), world.get_component::<Camera3D>(e)) {
             if c.primary {
-                return camera_from_components(&t.to_transform(), c, viewport_aspect);
+                return ActiveFrameCamera {
+                    frame: camera_from_components(&t.to_transform(), c, viewport_aspect),
+                    clear_flags: parse_camera_clear_flags(&c.clear_flags),
+                    background_color: c.background_color,
+                };
             }
         }
     }
     let position = Vec3::new(0.0, 1.5, 4.0);
-    FrameCamera {
-        view: look_at(position, Vec3::ZERO, Vec3::Y),
-        proj: perspective(60.0, viewport_aspect.max(0.001), 0.1, 100.0),
-        position,
+    ActiveFrameCamera {
+        frame: FrameCamera {
+            view: look_at(position, Vec3::ZERO, Vec3::Y),
+            proj: perspective(60.0, viewport_aspect.max(0.001), 0.1, 100.0),
+            position,
+        },
+        clear_flags: CameraClearFlags::Scene,
+        background_color: [0.1, 0.1, 0.14, 1.0],
+    }
+}
+
+fn parse_camera_clear_flags(value: &str) -> CameraClearFlags {
+    match value.trim().to_ascii_lowercase().as_str() {
+        "skybox" => CameraClearFlags::Skybox,
+        "solid_color" | "solidcolor" | "solid" => CameraClearFlags::SolidColor,
+        _ => CameraClearFlags::Scene,
+    }
+}
+
+fn resolve_camera_background(
+    camera: &ActiveFrameCamera,
+    scene_clear: Vec4,
+    lighting: &mut FrameLighting,
+) -> Vec4 {
+    match camera.clear_flags {
+        CameraClearFlags::Scene => scene_clear,
+        CameraClearFlags::Skybox => {
+            lighting.environment.background_enabled = true;
+            scene_clear
+        }
+        CameraClearFlags::SolidColor => {
+            lighting.environment.background_enabled = false;
+            let channel = |value: f32, fallback: f32, maximum: f32| {
+                if value.is_finite() {
+                    value.clamp(0.0, maximum)
+                } else {
+                    fallback
+                }
+            };
+            Vec4::new(
+                channel(camera.background_color[0], 0.1, 1.0),
+                channel(camera.background_color[1], 0.1, 1.0),
+                channel(camera.background_color[2], 0.14, 1.0),
+                channel(camera.background_color[3], 1.0, 1.0),
+            )
+        }
     }
 }
 
@@ -2028,10 +2102,41 @@ mod tests {
         world.commit();
 
         let hierarchy = TransformHierarchy::build(&world);
-        let frame = find_camera(&world, &hierarchy, 2.0);
+        let active_camera = find_camera(&world, &hierarchy, 2.0);
+        assert_eq!(active_camera.clear_flags, CameraClearFlags::Scene);
+        let frame = active_camera.frame;
         assert_eq!(frame.position, Vec3::new(2.0, 3.0, 10.0));
         assert!((frame.proj.x_axis.x - 0.125).abs() < 0.0001);
         assert!((frame.proj.y_axis.y - 0.25).abs() < 0.0001);
+    }
+
+    #[test]
+    fn camera_clear_flags_control_environment_and_sanitize_solid_color() {
+        let frame = FrameCamera {
+            view: glam::Mat4::IDENTITY,
+            proj: glam::Mat4::IDENTITY,
+            position: Vec3::ZERO,
+        };
+        let scene_clear = Vec4::new(0.2, 0.3, 0.4, 1.0);
+        let mut lighting = FrameLighting::default();
+        lighting.environment.background_enabled = true;
+        let solid = ActiveFrameCamera {
+            frame,
+            clear_flags: CameraClearFlags::SolidColor,
+            background_color: [f32::NAN, 2.0, -3.0, 5.0],
+        };
+        let clear = resolve_camera_background(&solid, scene_clear, &mut lighting);
+        assert_eq!(clear, Vec4::new(0.1, 1.0, 0.0, 1.0));
+        assert!(!lighting.environment.background_enabled);
+
+        let skybox = ActiveFrameCamera {
+            clear_flags: CameraClearFlags::Skybox,
+            ..solid
+        };
+        let clear = resolve_camera_background(&skybox, scene_clear, &mut lighting);
+        assert_eq!(clear, scene_clear);
+        assert!(lighting.environment.background_enabled);
+        assert_eq!(parse_camera_clear_flags("unknown"), CameraClearFlags::Scene);
     }
 
     #[test]
@@ -2216,7 +2321,7 @@ mod tests {
         world.set_parent(child, Some(parent));
 
         let hierarchy = TransformHierarchy::build(&world);
-        let camera = find_camera(&world, &hierarchy, 1.0);
+        let camera = find_camera(&world, &hierarchy, 1.0).frame;
         let lights = collect_lighting(&world, &hierarchy);
         let objects = collect_objects(&world, &hierarchy, &mut RuntimeMaterialCache::new(None));
         let expected = Vec3::new(11.0, 2.0, 3.0);

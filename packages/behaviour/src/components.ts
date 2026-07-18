@@ -34,6 +34,8 @@ export class Camera3D {
   projection?: 'perspective' | 'orthographic' | string;
   orthographic_size?: number;
   aspect?: number;
+  clear_flags?: 'scene' | 'skybox' | 'solid_color' | string;
+  background_color?: Color4;
 }
 
 export type Camera3DData = Camera3D;
@@ -42,6 +44,8 @@ export class Camera2D {
   static readonly typeName = 'Camera2D' as const;
   size!: number;
   primary!: boolean;
+  clear_flags?: 'scene' | 'skybox' | 'solid_color' | string;
+  background_color?: Color4;
 }
 
 export type Camera2DData = Camera2D;

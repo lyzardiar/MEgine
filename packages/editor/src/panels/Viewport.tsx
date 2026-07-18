@@ -770,8 +770,11 @@ export function Viewport(props: {
       ctx.fillRect(0, 0, pw, ph);
     }
 
+    const gameCamera = isGame
+      ? primaryGameCamera(p.entities, p.activeInHierarchy)
+      : null;
     const cam: Camera = isGame
-      ? primaryGameCamera(p.entities, p.activeInHierarchy) ?? { eye: [0, 1.5, 4], target: [0, 0.5, 0], fovYDeg: 60 }
+      ? gameCamera ?? { eye: [0, 1.5, 4], target: [0, 0.5, 0], fovYDeg: 60 }
       : {
           eye: orbitEye(sc.pivot, sc.yaw, sc.pitch, sc.distance),
           target: sc.pivot,
@@ -789,10 +792,20 @@ export function Viewport(props: {
     ctx.rect(vp.x, vp.y, vp.w, vp.h);
     ctx.clip();
 
-    const drewEnvironment = drawEnvironmentBackground(ctx, vp, cam, environment);
-    if (isGame && !drewEnvironment) {
-      const [r, g, b] = p.clearColor;
-      ctx.fillStyle = `rgb(${(r * 255) | 0},${(g * 255) | 0},${(b * 255) | 0})`;
+    let drewEnvironment = false;
+    if (isGame && gameCamera?.clearFlags === 'solid_color') {
+      const [r, g, b, a] = gameCamera.backgroundColor;
+      ctx.fillStyle = `rgba(${Math.round(r * 255)},${Math.round(g * 255)},${Math.round(b * 255)},${a})`;
+      ctx.fillRect(vp.x, vp.y, vp.w, vp.h);
+    } else {
+      const environmentBackground = isGame && gameCamera?.clearFlags === 'skybox'
+        ? { ...(environment ?? {}), background_enabled: true }
+        : environment;
+      drewEnvironment = drawEnvironmentBackground(ctx, vp, cam, environmentBackground);
+    }
+    if (isGame && gameCamera?.clearFlags !== 'solid_color' && !drewEnvironment) {
+      const [r, g, b, a] = p.clearColor;
+      ctx.fillStyle = `rgba(${Math.round(r * 255)},${Math.round(g * 255)},${Math.round(b * 255)},${a})`;
       ctx.fillRect(vp.x, vp.y, vp.w, vp.h);
     } else if (!isGame) {
       if (!drewEnvironment) {

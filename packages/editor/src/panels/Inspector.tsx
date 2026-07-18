@@ -13,6 +13,10 @@ import {
   type ComponentClipboard,
 } from '../componentClipboard';
 import { getBuiltinInspectorField, type InspectorOption } from '../inspectorMetadata';
+import {
+  normalizeCameraBackgroundColor,
+  normalizeCameraClearFlags,
+} from '../gameCamera';
 import { eulerXYZToQuat, quatToEulerXYZ } from '../math3d';
 import { readRectTransform } from '../ui/rectLayout';
 import { loadSpineRuntime } from '../spine/spineRuntimeLoader';
@@ -299,6 +303,8 @@ function Camera3DEditor(props: {
   const d = props.data;
   const projection = String(d.projection ?? 'perspective');
   const isOrtho = projection === 'orthographic';
+  const clearFlags = normalizeCameraClearFlags(d.clear_flags);
+  const backgroundColor = normalizeCameraBackgroundColor(d.background_color);
   return (
     <>
       <div className="field-row">
@@ -345,6 +351,24 @@ function Camera3DEditor(props: {
         step={0.01}
         onChange={(aspect) => props.onChange({ ...d, aspect })}
       />
+      <div className="field-row">
+        <label>Clear Flags</label>
+        <select
+          value={clearFlags}
+          onChange={(e) => props.onChange({ ...d, clear_flags: e.target.value })}
+        >
+          <option value="scene">Scene</option>
+          <option value="skybox">Skybox</option>
+          <option value="solid_color">Solid Color</option>
+        </select>
+      </div>
+      {clearFlags === 'solid_color' && (
+        <ColorField
+          label="Background"
+          value={backgroundColor}
+          onChange={(background_color) => props.onChange({ ...d, background_color })}
+        />
+      )}
       <div className="field-row">
         <label>Primary</label>
         <input

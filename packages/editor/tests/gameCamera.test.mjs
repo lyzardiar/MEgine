@@ -1,6 +1,10 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { primaryGameCamera } from '../src/gameCamera.ts';
+import {
+  normalizeCameraBackgroundColor,
+  normalizeCameraClearFlags,
+  primaryGameCamera,
+} from '../src/gameCamera.ts';
 
 const transform = (position = [0, 0, 10]) => ({
   position,
@@ -25,6 +29,27 @@ test('primary 2D camera resolves to an orthographic Game camera', () => {
   assert.equal(camera?.orthographicSize, 8);
   assert.deepEqual(camera?.eye, [2, 3, 10]);
   assert.deepEqual(camera?.target, [2, 3, 9]);
+  assert.equal(camera?.clearFlags, 'scene');
+  assert.deepEqual(camera?.backgroundColor, [0.1, 0.1, 0.14, 1]);
+});
+
+test('Game camera resolves authored clear flags and clamps display background color', () => {
+  const camera = primaryGameCamera([{
+    entity: 1,
+    components: {
+      Transform: transform(),
+      Camera2D: {
+        size: 5,
+        primary: true,
+        clear_flags: 'solid_color',
+        background_color: [2, -1, Number.NaN, 4],
+      },
+    },
+  }]);
+  assert.equal(camera?.clearFlags, 'solid_color');
+  assert.deepEqual(camera?.backgroundColor, [1, 0, 0.14, 1]);
+  assert.equal(normalizeCameraClearFlags('unsupported'), 'scene');
+  assert.deepEqual(normalizeCameraBackgroundColor(null), [0.1, 0.1, 0.14, 1]);
 });
 
 test('primary 2D camera wins over a primary 3D camera', () => {

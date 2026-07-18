@@ -24,6 +24,8 @@ export interface Camera3D {
   projection: string;
   orthographicSize: number;
   aspect: number;
+  clearFlags: string;
+  backgroundColor: [number, number, number, number];
 }
 
 export interface DirectionalLight {
@@ -66,6 +68,8 @@ export interface SpotLight {
 export interface Camera2D {
   size: number;
   primary: boolean;
+  clearFlags: string;
+  backgroundColor: [number, number, number, number];
 }
 
 export interface MeshRenderer {

@@ -1753,6 +1753,8 @@ export function createEditorStore() {
             projection: 'perspective',
             orthographic_size: 5,
             aspect: 16 / 9,
+            clear_flags: 'scene',
+            background_color: [0.1, 0.1, 0.14, 1],
           },
           AudioListener: { primary: true },
         },
@@ -1765,7 +1767,12 @@ export function createEditorStore() {
         'Camera 2D',
         {
           Transform: { position: [0, 0, 10], rotation: [0, 0, 0, 1], scale: [1, 1, 1] },
-          Camera2D: { size: 5, primary: true },
+          Camera2D: {
+            size: 5,
+            primary: true,
+            clear_flags: 'solid_color',
+            background_color: [0.1, 0.1, 0.14, 1],
+          },
         },
         null,
         true,

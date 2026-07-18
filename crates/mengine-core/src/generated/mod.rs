@@ -101,6 +101,8 @@ pub struct Camera3D {
     pub projection: String,
     pub orthographic_size: f32,
     pub aspect: f32,
+    pub clear_flags: String,
+    pub background_color: [f32; 4],
 }
 
 impl Default for Camera3D {
@@ -113,6 +115,8 @@ impl Default for Camera3D {
             projection: "perspective".into(),
             orthographic_size: 5.0,
             aspect: 1.777778,
+            clear_flags: "scene".into(),
+            background_color: [0.1, 0.1, 0.14, 1.0],
         }
     }
 }
@@ -295,6 +299,8 @@ impl Component for SpotLight {
 pub struct Camera2D {
     pub size: f32,
     pub primary: bool,
+    pub clear_flags: String,
+    pub background_color: [f32; 4],
 }
 
 impl Default for Camera2D {
@@ -302,6 +308,8 @@ impl Default for Camera2D {
         Self {
             size: 5.0,
             primary: true,
+            clear_flags: "scene".into(),
+            background_color: [0.1, 0.1, 0.14, 1.0],
         }
     }
 }
