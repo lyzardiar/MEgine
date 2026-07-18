@@ -2096,6 +2096,37 @@ body.insp-scrubbing * {
   padding: 2px 6px;
 }
 
+.game-resolution-fields {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.game-resolution-fields label {
+  gap: 3px;
+  font-size: 10px;
+  font-weight: 700;
+}
+
+.game-resolution-fields input {
+  width: 62px;
+  height: 22px;
+  box-sizing: border-box;
+  border: 1px solid var(--u-border-2);
+  border-radius: 0;
+  background: var(--u-input);
+  color: var(--u-text-bright);
+  padding: 1px 4px;
+  font: 11px var(--u-mono);
+}
+
+.game-orientation-label {
+  min-width: 58px;
+  color: var(--u-muted);
+  font-size: 10px;
+  text-transform: capitalize;
+}
+
 .orient-toggle {
   display: inline-flex;
   border: 1px solid var(--u-border-2);

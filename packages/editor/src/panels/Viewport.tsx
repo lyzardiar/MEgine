@@ -1,5 +1,12 @@
 import { useEffect, useRef, useState } from 'react';
-import type { GameAspect, GameOrientation, GizmoMode, SceneCamera, TransformData } from '../store';
+import type { GizmoMode, SceneCamera, TransformData } from '../store';
+import {
+  GAME_RESOLUTION_PRESETS,
+  gameResolutionKey,
+  gameResolutionOrientation,
+  normalizeGameResolution,
+  type GameResolution,
+} from '../gameResolution';
 import {
   type Camera,
   type Vec3,
@@ -389,29 +396,13 @@ type Hit =
   | { kind: 'object'; id: number; x: number; y: number; r: number }
   | { kind: 'gizmo'; part: GizmoPart };
 
-const ASPECTS: Record<Exclude<GameAspect, 'free'>, number> = {
-  '16:9': 16 / 9,
-  '16:10': 16 / 10,
-  '4:3': 4 / 3,
-  '1:1': 1,
-};
-
 function letterbox(
   panelW: number,
   panelH: number,
-  aspect: GameAspect,
-  orientation: GameOrientation,
+  resolution: GameResolution | null,
 ) {
-  // Portrait with Free → treat as 9:16 so the toggle always has a visible effect
-  const effective: GameAspect =
-    aspect === 'free' && orientation === 'portrait' ? '16:9' : aspect;
-
-  if (effective === 'free') return { x: 0, y: 0, w: panelW, h: panelH };
-
-  let target = ASPECTS[effective];
-  if (orientation === 'portrait' && effective !== '1:1') {
-    target = 1 / target;
-  }
+  if (!resolution) return { x: 0, y: 0, w: panelW, h: panelH };
+  const target = resolution.width / resolution.height;
 
   const panel = panelW / Math.max(1, panelH);
   if (panel > target) {
@@ -437,8 +428,7 @@ export function Viewport(props: {
   handleOrientation: ToolHandleOrientation;
   playing: boolean;
   sceneCamera: SceneCamera;
-  gameAspect: GameAspect;
-  gameOrientation: GameOrientation;
+  gameResolution: GameResolution | null;
   onPick: (id: number, modifiers: { toggle: boolean; additive: boolean }) => void;
   onMarqueeSelect: (ids: number[], mode: MarqueeSelectionMode) => void;
   onSceneCamera: (partial: Partial<SceneCamera>) => void;
@@ -497,8 +487,7 @@ export function Viewport(props: {
     dLocalY: number,
     options: RectResizeOptions,
   ) => RectResizePlan | null | void;
-  onAspect: (a: GameAspect) => void;
-  onOrientation: (o: GameOrientation) => void;
+  onGameResolution: (resolution: GameResolution | null) => void;
   onFrame: () => void;
   onUiClick?: (entity: number, onClick: unknown) => void;
   onUiValueChange?: (
@@ -734,7 +723,7 @@ export function Viewport(props: {
   // Force paint when props change
   useEffect(() => {
     setTick((t) => t + 1);
-  }, [props.tab, props.entities, props.selected, props.selectedIds, props.gizmo, props.pivotMode, props.handleOrientation, props.gameAspect, props.gameOrientation, props.angle, props.playing, props.activeInHierarchy]);
+  }, [props.tab, props.entities, props.selected, props.selectedIds, props.gizmo, props.pivotMode, props.handleOrientation, props.gameResolution, props.angle, props.playing, props.activeInHierarchy]);
 
   const paint = () => {
     const canvas = canvasRef.current;
@@ -773,7 +762,7 @@ export function Viewport(props: {
     ctx.fillRect(0, 0, pw, ph);
 
     const vp = isGame
-      ? letterbox(pw, ph, p.gameAspect, p.gameOrientation)
+      ? letterbox(pw, ph, p.gameResolution)
       : { x: 0, y: 0, w: pw, h: ph };
     lastVpRef.current = vp;
 
@@ -1545,7 +1534,7 @@ export function Viewport(props: {
         }
       } else {
         // 与 Game 同一 letterbox 尺寸，竖屏时 Scene Canvas 也是竖图
-        const gameBox = letterbox(pw, ph, p.gameAspect, p.gameOrientation);
+        const gameBox = letterbox(pw, ph, p.gameResolution);
         const { items: uiItems, layoutScale } = layoutUiScene3D(
           p.entities,
           cam,
@@ -1637,20 +1626,21 @@ export function Viewport(props: {
       ctx.lineWidth = 2;
       ctx.strokeRect(vp.x + 1, vp.y + 1, vp.w - 2, vp.h - 2);
       ctx.fillStyle = 'rgba(0,0,0,0.55)';
-      ctx.fillRect(vp.x + 8, vp.y + 8, 170, 20);
+      ctx.fillRect(vp.x + 8, vp.y + 8, 250, 20);
       ctx.fillStyle = '#ddd';
       ctx.font = '11px sans-serif';
-      const orient =
-        p.gameOrientation === 'portrait' ? ' 竖屏' : p.gameAspect === 'free' ? '' : ' 横屏';
-      const ratioLabel =
-        p.gameAspect === 'free' && p.gameOrientation === 'portrait'
-          ? '9:16'
-          : p.gameAspect === 'free'
-            ? 'Free'
-            : p.gameOrientation === 'portrait' && p.gameAspect !== '1:1'
-              ? p.gameAspect.split(':').reverse().join(':')
-              : p.gameAspect;
-      const label = `${ratioLabel}${orient}  ${vp.w | 0}×${vp.h | 0}`;
+      const orientation = gameResolutionOrientation(p.gameResolution);
+      const orientationLabel = orientation === 'portrait'
+        ? ' · 竖屏'
+        : orientation === 'landscape'
+          ? ' · 横屏'
+          : orientation === 'square'
+            ? ' · 方形'
+            : '';
+      const resolutionLabel = p.gameResolution
+        ? `${p.gameResolution.width} × ${p.gameResolution.height}`
+        : 'Free Aspect';
+      const label = `${resolutionLabel}${orientationLabel}  ${vp.w | 0}×${vp.h | 0}`;
       ctx.fillText(`Display ${label}`, vp.x + 14, vp.y + 22);
     }
 
@@ -2772,8 +2762,7 @@ export function Viewport(props: {
       const box = letterbox(
         Math.max(1, canvasRef.current?.clientWidth ?? 800),
         Math.max(1, canvasRef.current?.clientHeight ?? 600),
-        propsRef.current.gameAspect,
-        propsRef.current.gameOrientation,
+        propsRef.current.gameResolution,
       );
       liveCam.current.pivot = [0, 0, 0];
       const worldW = box.w / UI_SCENE_PPU;
@@ -2992,6 +2981,14 @@ export function Viewport(props: {
         (entity) => entity.entity === props.selected && entity.components.Tilemap != null,
       );
   const tileBrushOptions = listSprites();
+
+  const resolutionKey = gameResolutionKey(props.gameResolution);
+  const presetResolution = GAME_RESOLUTION_PRESETS.some(
+    (preset) => gameResolutionKey(preset.resolution) === resolutionKey,
+  );
+  const selectedResolutionOption = props.gameResolution
+    ? presetResolution ? resolutionKey : 'custom'
+    : 'free';
 
   return (
     <div className="viewport-wrap">
@@ -3250,36 +3247,60 @@ export function Viewport(props: {
       {props.tab === 'game' && (
         <div className="game-toolbar">
           <label>
-            Display
+            Resolution
             <select
-              value={props.gameAspect}
-              onChange={(e) => props.onAspect(e.target.value as GameAspect)}
+              value={selectedResolutionOption}
+              onChange={(event) => {
+                if (event.target.value === 'free') {
+                  props.onGameResolution(null);
+                  return;
+                }
+                if (event.target.value === 'custom') return;
+                props.onGameResolution(normalizeGameResolution(event.target.value));
+              }}
             >
               <option value="free">Free Aspect</option>
-              <option value="16:9">16:9</option>
-              <option value="16:10">16:10</option>
-              <option value="4:3">4:3</option>
-              <option value="1:1">1:1</option>
+              {GAME_RESOLUTION_PRESETS.map((preset) => (
+                <option
+                  key={gameResolutionKey(preset.resolution)}
+                  value={gameResolutionKey(preset.resolution)}
+                >
+                  {preset.label}
+                </option>
+              ))}
+              {props.gameResolution && !presetResolution && <option value="custom">Custom</option>}
             </select>
           </label>
-          <div className="orient-toggle" title="横竖屏">
-            <button
-              type="button"
-              className={props.gameOrientation === 'landscape' ? 'active' : ''}
-              disabled={props.gameAspect === '1:1'}
-              onClick={() => props.onOrientation('landscape')}
-            >
-              横屏
-            </button>
-            <button
-              type="button"
-              className={props.gameOrientation === 'portrait' ? 'active' : ''}
-              disabled={props.gameAspect === '1:1'}
-              onClick={() => props.onOrientation('portrait')}
-            >
-              竖屏
-            </button>
-          </div>
+          {props.gameResolution && (
+            <div className="game-resolution-fields">
+              <label>W <input
+                aria-label="Game resolution width"
+                type="number"
+                min={1}
+                max={16_384}
+                value={props.gameResolution.width}
+                onChange={(event) => {
+                  const width = Math.trunc(Number(event.target.value));
+                  if (width >= 1) props.onGameResolution({ ...props.gameResolution!, width });
+                }}
+              /></label>
+              <span>×</span>
+              <label>H <input
+                aria-label="Game resolution height"
+                type="number"
+                min={1}
+                max={16_384}
+                value={props.gameResolution.height}
+                onChange={(event) => {
+                  const height = Math.trunc(Number(event.target.value));
+                  if (height >= 1) props.onGameResolution({ ...props.gameResolution!, height });
+                }}
+              /></label>
+              <span className="game-orientation-label">
+                {gameResolutionOrientation(props.gameResolution)}
+              </span>
+            </div>
+          )}
           <span className="game-hint">Uses Main Camera · no Scene gizmos</span>
           <span className="game-hint">UI {uiStats.elements} elements · {uiStats.batches} batches</span>
         </div>

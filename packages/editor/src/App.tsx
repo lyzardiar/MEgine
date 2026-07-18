@@ -4,10 +4,13 @@ import { getCurrentWindow } from '@tauri-apps/api/window';
 import {
   createEditorStore,
   type EditorMode,
-  type GameAspect,
-  type GameOrientation,
   type GizmoMode,
 } from './store';
+import {
+  legacyGameResolution,
+  normalizeGameResolution,
+  type GameResolution,
+} from './gameResolution';
 import { getBehaviour } from '@mengine/behaviour';
 import {
   getActiveSceneName,
@@ -84,16 +87,6 @@ function askSceneName(title: string, initial: string): string | null {
   return normalizeSceneName(raw);
 }
 
-const ASPECTS: GameAspect[] = ['free', '16:9', '16:10', '4:3', '1:1'];
-
-function parseGameAspect(v: unknown): GameAspect | null {
-  return typeof v === 'string' && (ASPECTS as string[]).includes(v) ? (v as GameAspect) : null;
-}
-
-function parseGameOrientation(v: unknown): GameOrientation | null {
-  return v === 'landscape' || v === 'portrait' ? v : null;
-}
-
 type WorkspaceSyncMessage =
   | { type: 'request-scene'; sender: string }
   | {
@@ -118,8 +111,7 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
   const [pivotMode, setPivotMode] = useState<ToolPivotMode>('pivot');
   const [handleOrientation, setHandleOrientation] = useState<ToolHandleOrientation>('local');
   const [viewTab, setViewTab] = useState<'scene' | 'game'>('scene');
-  const [gameAspect, setGameAspect] = useState(store.gameAspect);
-  const [gameOrientation, setGameOrientation] = useState(store.gameOrientation);
+  const [gameResolution, setGameResolution] = useState(store.gameResolution);
   const [hierFilter, setHierFilter] = useState('');
   const [pendingRenameId, setPendingRenameId] = useState<number | null>(null);
   const [treeTick, setTreeTick] = useState(0);
@@ -226,8 +218,7 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
     setGizmo(store.gizmo);
     setSelected(store.selected);
     setSelectedIds(store.selectedIds);
-    setGameAspect(store.gameAspect);
-    setGameOrientation(store.gameOrientation);
+    setGameResolution(store.gameResolution);
     setTreeTick((t) => t + 1);
     updateSceneDirty();
     if (publish) broadcastScene();
@@ -324,8 +315,7 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
         setGizmo(store.gizmo);
         setSelected(store.selected);
         setSelectedIds(store.selectedIds);
-        setGameAspect(store.gameAspect);
-        setGameOrientation(store.gameOrientation);
+        setGameResolution(store.gameResolution);
         if (Array.isArray(message.logs)) {
           logsRef.current = message.logs;
           logEnd.current = message.logs.length;
@@ -504,17 +494,20 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
     void openSceneByName(name);
   };
 
-  const applyEditorPrefs = (prefs: { gameAspect?: string; gameOrientation?: string }) => {
-    const aspect = parseGameAspect(prefs.gameAspect);
-    const orient = parseGameOrientation(prefs.gameOrientation);
-    if (aspect) store.setGameAspect(aspect);
-    if (orient) store.setGameOrientation(orient);
+  const applyEditorPrefs = (prefs: {
+    gameResolution?: GameResolution | null;
+    gameAspect?: string;
+    gameOrientation?: string;
+  }) => {
+    const resolution = Object.prototype.hasOwnProperty.call(prefs, 'gameResolution')
+      ? normalizeGameResolution(prefs.gameResolution)
+      : legacyGameResolution(prefs.gameAspect, prefs.gameOrientation);
+    store.setGameResolution(resolution);
   };
 
   const persistGameViewPrefs = () => {
     void setEditorPrefs({
-      gameAspect: store.gameAspect,
-      gameOrientation: store.gameOrientation,
+      gameResolution: store.gameResolution,
     });
   };
 
@@ -808,8 +801,7 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
               handleOrientation={handleOrientation}
               playing={mode !== 'edit'}
               sceneCamera={store.sceneCamera}
-              gameAspect={gameAspect}
-              gameOrientation={gameOrientation}
+              gameResolution={gameResolution}
               activeInHierarchy={(id) => store.activeInHierarchy(id)}
               onPick={(id, modifiers) => {
                 if (modifiers.toggle) store.selectMany([id], 'toggle', id);
@@ -958,19 +950,9 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
                 }
                 refresh();
               }}
-              onAspect={(a) => {
-                store.setGameAspect(a);
-                setGameAspect(a);
-                persistGameViewPrefs();
-                refresh();
-              }}
-              onOrientation={(o) => {
-                store.setGameOrientation(o);
-                setGameOrientation(o);
-                if (o === 'portrait' && store.gameAspect === 'free') {
-                  store.setGameAspect('16:9');
-                  setGameAspect('16:9');
-                }
+              onGameResolution={(resolution) => {
+                store.setGameResolution(resolution);
+                setGameResolution(store.gameResolution);
                 persistGameViewPrefs();
                 refresh();
               }}

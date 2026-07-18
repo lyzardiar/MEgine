@@ -17,6 +17,7 @@ type ScriptAsset = {
 /** Editor prefs in project/.editor/state.json (survives reopen without scene save). */
 type EditorStateFile = {
   activeScene?: string | null;
+  gameResolution?: { width: number; height: number } | null;
   gameAspect?: string;
   gameOrientation?: string;
 };
@@ -687,6 +688,9 @@ export function mengineFsPlugin(opts: MengineFsOptions | string): Plugin {
         const st = readEditorState();
         return sendJson(res, 200, {
           active: st.activeScene ?? null,
+          gameResolution: Object.prototype.hasOwnProperty.call(st, 'gameResolution')
+            ? st.gameResolution
+            : undefined,
           gameAspect: st.gameAspect ?? null,
           gameOrientation: st.gameOrientation ?? null,
           scenes,
@@ -709,10 +713,23 @@ export function mengineFsPlugin(opts: MengineFsOptions | string): Plugin {
       if (pathname === `${API}/prefs` && method === 'PUT') {
         const body = await readBody(req);
         const parsed = JSON.parse(body || '{}') as {
+          gameResolution?: { width: number; height: number } | null;
           gameAspect?: string;
           gameOrientation?: string;
         };
         const patch: EditorStateFile = {};
+        if (parsed.gameResolution === null) {
+          patch.gameResolution = null;
+        } else if (
+          parsed.gameResolution
+          && Number.isFinite(parsed.gameResolution.width)
+          && Number.isFinite(parsed.gameResolution.height)
+        ) {
+          patch.gameResolution = {
+            width: Math.max(1, Math.min(16_384, Math.trunc(parsed.gameResolution.width))),
+            height: Math.max(1, Math.min(16_384, Math.trunc(parsed.gameResolution.height))),
+          };
+        }
         if (typeof parsed.gameAspect === 'string') patch.gameAspect = parsed.gameAspect;
         if (typeof parsed.gameOrientation === 'string') {
           patch.gameOrientation = parsed.gameOrientation;

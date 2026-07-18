@@ -88,11 +88,15 @@ import {
 import { createGridComponent, createTilemapComponent } from './tilemapModel';
 import { createEnvironmentLightComponent } from './environmentLightModel';
 import './behaviours';
+import {
+  gameResolutionAspect,
+  legacyGameResolution,
+  normalizeGameResolution,
+  type GameResolution,
+} from './gameResolution';
 
 export type EditorMode = 'edit' | 'play' | 'pause';
 export type { GizmoMode };
-export type GameAspect = 'free' | '16:9' | '16:10' | '4:3' | '1:1';
-export type GameOrientation = 'landscape' | 'portrait';
 export type SelectMode = 'replace' | 'add' | 'toggle' | 'range';
 
 export type { TransformData };
@@ -149,8 +153,7 @@ export function createEditorStore() {
   let redoStack: Array<EditorUndoState<EntityRec>> = [];
   let clearColor: [number, number, number, number] = [0.22, 0.24, 0.28, 1];
   let frame = 0;
-  let gameAspect: GameAspect = '16:9';
-  let gameOrientation: GameOrientation = 'landscape';
+  let gameResolution: GameResolution | null = { width: 1920, height: 1080 };
   let sceneCamera: SceneCamera = {
     yaw: 35,
     pitch: 25,
@@ -214,8 +217,7 @@ export function createEditorStore() {
     selectedIds = [editEntities[2].entity];
     selectionAnchor = editEntities[2].entity;
     clearColor = [0.22, 0.24, 0.28, 1];
-    gameAspect = '16:9';
-    gameOrientation = 'landscape';
+    gameResolution = { width: 1920, height: 1080 };
     sceneCamera = {
       yaw: 35,
       pitch: 25,
@@ -582,8 +584,7 @@ export function createEditorStore() {
         selectedIds: [...selectedIds],
       },
       sceneCamera,
-      gameAspect,
-      gameOrientation,
+      gameResolution,
     },
     null,
     2,
@@ -612,10 +613,9 @@ export function createEditorStore() {
     nextId = Math.max(1, ...editEntities.map((e) => e.entity + 1), 1);
     clearColor = data.world?.clearColor ?? clearColor;
     if (data.sceneCamera) sceneCamera = data.sceneCamera;
-    if (data.gameAspect) gameAspect = data.gameAspect;
-    if (data.gameOrientation === 'landscape' || data.gameOrientation === 'portrait') {
-      gameOrientation = data.gameOrientation;
-    }
+    gameResolution = Object.prototype.hasOwnProperty.call(data, 'gameResolution')
+      ? normalizeGameResolution(data.gameResolution)
+      : legacyGameResolution(data.gameAspect, data.gameOrientation);
     expanded = new Set(editEntities.map((e) => e.entity));
     selectedIds = restoreSceneSelection(
       editEntities.map((entity) => entity.entity),
@@ -657,11 +657,8 @@ export function createEditorStore() {
     get sceneCamera() {
       return { ...sceneCamera, pivot: [...sceneCamera.pivot] as Vec3 };
     },
-    get gameAspect() {
-      return gameAspect;
-    },
-    get gameOrientation() {
-      return gameOrientation;
+    get gameResolution() {
+      return gameResolution ? { ...gameResolution } : null;
     },
     get canUndo() {
       return undoStack.length > 0;
@@ -669,11 +666,8 @@ export function createEditorStore() {
     get canRedo() {
       return redoStack.length > 0;
     },
-    setGameAspect(a: GameAspect) {
-      gameAspect = a;
-    },
-    setGameOrientation(o: GameOrientation) {
-      gameOrientation = o;
+    setGameResolution(resolution: GameResolution | null) {
+      gameResolution = normalizeGameResolution(resolution);
     },
     setGizmo(m: GizmoMode) {
       gizmo = m;
@@ -1609,22 +1603,10 @@ export function createEditorStore() {
         let walk: EntityRec | undefined = e;
         while (walk) {
           if (walk.components.Canvas) {
-            const ASPECTS: Record<string, number> = {
-              '16:9': 16 / 9,
-              '16:10': 16 / 10,
-              '4:3': 4 / 3,
-              '1:1': 1,
-            };
-            let ratio: number | null = null;
-            const effective =
-              gameAspect === 'free' && gameOrientation === 'portrait' ? '16:9' : gameAspect;
-            if (effective !== 'free') {
-              ratio = ASPECTS[effective] ?? null;
-              if (ratio != null && gameOrientation === 'portrait' && effective !== '1:1') {
-                ratio = 1 / ratio;
-              }
-            }
-            canvasSize = gameAlignedCanvasSize(walk.components.CanvasScaler, ratio);
+            canvasSize = gameAlignedCanvasSize(
+              walk.components.CanvasScaler,
+              gameResolutionAspect(gameResolution),
+            );
             break;
           }
           const pid: number | null = walk.parent ?? null;

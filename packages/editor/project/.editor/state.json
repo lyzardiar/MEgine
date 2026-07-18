@@ -1,5 +1,7 @@
 {
   "activeScene": "MainScene",
-  "gameAspect": "16:9",
-  "gameOrientation": "portrait"
+  "gameResolution": {
+    "width": 1080,
+    "height": 1920
+  }
 }

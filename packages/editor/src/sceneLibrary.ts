@@ -8,6 +8,7 @@ import {
   saveDesktopScene,
 } from './transport/desktopProjectSession';
 import { listProjectScenes } from './transport/editorTransport';
+import type { GameResolution } from './gameResolution';
 
 export type SceneMeta = {
   name: string;
@@ -15,6 +16,8 @@ export type SceneMeta = {
 };
 
 export type EditorPrefs = {
+  gameResolution?: GameResolution | null;
+  /** Legacy migration fields. */
   gameAspect?: string;
   gameOrientation?: string;
 };
@@ -218,6 +221,7 @@ async function loadFromDisk(): Promise<boolean> {
     if (!res.ok) return false;
     const body = (await res.json()) as {
       active: string | null;
+      gameResolution?: GameResolution | null;
       gameAspect?: string | null;
       gameOrientation?: string | null;
       scenes: Array<{ name: string; updatedAt: number; json: string }>;
@@ -230,6 +234,9 @@ async function loadFromDisk(): Promise<boolean> {
     }
     _active = body.active;
     _prefs = {};
+    if (Object.prototype.hasOwnProperty.call(body, 'gameResolution')) {
+      _prefs.gameResolution = body.gameResolution ?? null;
+    }
     if (typeof body.gameAspect === 'string') _prefs.gameAspect = body.gameAspect;
     if (typeof body.gameOrientation === 'string') {
       _prefs.gameOrientation = body.gameOrientation;
