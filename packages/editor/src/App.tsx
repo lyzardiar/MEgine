@@ -6,6 +6,7 @@ import {
   type EditorMode,
   type GizmoMode,
 } from './store';
+import { createEditorUndoService } from './editorUndoService';
 import {
   legacyGameResolution,
   normalizeGameResolution,
@@ -121,7 +122,9 @@ type WorkspaceSyncMessage =
 const WORKSPACE_CHANNEL = 'mengine.editor.workspace.v1';
 
 export function App(props: { detachedPanel?: PanelKind | null } = {}) {
-  const store = useMemo(() => createEditorStore(), []);
+  const undoService = useMemo(() => createEditorUndoService(), []);
+  const store = useMemo(() => createEditorStore(undoService), [undoService]);
+  const [, setUndoRevision] = useState(undoService.revision);
   const [snap, setSnap] = useState<WorldSnapshotView & { selectedIds?: number[] }>(store.snapshot());
   const [mode, setMode] = useState<EditorMode>('edit');
   const [gizmo, setGizmo] = useState<GizmoMode>('translate');
@@ -178,6 +181,8 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
   const remoteSceneDirty = useRef(false);
   const syncSender = useRef(crypto.randomUUID());
   const syncChannel = useRef<BroadcastChannel | null>(null);
+
+  useEffect(() => undoService.subscribe(() => setUndoRevision(undoService.revision)), [undoService]);
   const syncTimer = useRef<number | null>(null);
   const applyingRemote = useRef(false);
   const lastRemoteTimestamp = useRef(0);
@@ -1062,7 +1067,7 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
               entities={snap.entities}
               selectedIds={selectedIds}
               selectionCount={selectedIds.length}
-              onBeginEditGesture={() => store.beginTransformGesture()}
+              onBeginEditGesture={() => store.beginTransformGesture('Edit Inspector')}
               onEndEditGesture={() => store.endTransformGesture()}
               onRename={(entity, name) => {
                 store.rename(entity, name);

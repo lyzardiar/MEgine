@@ -709,3 +709,13 @@ Referenced Only 是可用的单包裁剪基础，仍不等同于完整 Addressab
 - 组 Cut 在复制和删除校验全部通过后才同时更新剪贴板与资产；组 Duplicate 复用同一粘贴放置器，不维护第二套碰撞规则。拖动越过半帧才写入一个 Undo 步骤，回到原位会移除空历史，Pointer Cancel 会恢复资产、选择、播放头和 Undo/Redo 栈。
 
 这一阶段补齐了多选之后最常用的组操作，但 Timeline 仍缺框选、键盘逐帧移动、吸附参考线、Ripple Insert/Move、跨轨道全局 Ripple、轨道分组/折叠和跨进程命名剪贴板。组粘贴当前只映射到已有兼容轨道，不自动创建轨道；这是为了让粘贴保持可预测，后续若增加自动建轨必须作为用户可见选项并纳入同一事务。
+
+## 51. 2026-07-19 全局命名 Undo 事务基础
+
+- 新增编辑器级 `EditorUndoService`，历史项统一包含 Scope、用户可见动作名称、旧快照、当前状态捕获器与恢复器。Undo 在恢复前捕获当前状态形成对称 Redo；新分支自动清空 Redo，默认全局容量为 128，最旧事务按顺序淘汰。
+- 服务提供按 Scope 清理，加载/新建场景只清除 `scene` 历史，不会误删后续接入的 Timeline、材质或动画事务。Checkpoint 可以完整保存 Undo/Redo 分支，场景无变化的 Transform 手势会恢复 Checkpoint，因此不会留下空 Undo，也不会破坏手势开始前已有的 Redo。
+- 捕获或恢复抛错时历史项不出栈；恢复阶段禁止嵌套 Record、再次 Undo/Redo 或清理历史，避免回调重入破坏栈顺序。订阅者异常被隔离，不会阻断其他窗口更新；App 订阅 Revision，因此历史由非场景面板写入后 Edit 菜单也能立即刷新。
+- Scene Store 已从私有 `undoStack/redoStack` 迁移到共享服务，创建、删除、重命名、激活、层级调整、Prefab、组件、材质分配、Transform/UI 手势等入口写入具体动作名称。Edit 菜单现在显示 `Undo <Action>` / `Redo <Action>`，Store 的快捷键入口作为全局历史门面，可恢复最新 Scope 的事务。
+- 场景快照仍复用经过验证的深拷贝与选择修复逻辑；这次迁移改变历史编排而不改变场景序列化。服务自身由纯 Node 单测覆盖命名、对称恢复、容量、分支、Scope、Checkpoint、失败原子性和恢复重入保护，Store 接入由完整 TypeScript/Vite 构建覆盖。
+
+这只是统一 Undo 的基础设施和第一位迁移者，不代表所有编辑器已接入。Sequencer 当前仍保留每资产本地历史以维护未保存草稿切换语义；Animation、Animator、Material、Shader、Sprite 与 Project Settings 也需要定义各自 Scope、当前状态捕获器、失活资产恢复策略和保存点 Dirty 计算后逐步迁移。迁移过程中 Edit 菜单只应展示已进入全局服务的事务，本地面板按钮仍负责其尚未迁移的历史，直到对应资产通过完整回归门禁。

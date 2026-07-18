@@ -103,14 +103,14 @@ export function MenuBar(props: {
                 disabled={!props.store.canUndo}
                 onClick={() => { props.onUndo(); setOpen(null); }}
               >
-                Undo <span className="hint">Ctrl+Z</span>
+                Undo{props.store.undoLabel ? ` ${props.store.undoLabel}` : ''} <span className="hint">Ctrl+Z</span>
               </button>
               <button
                 type="button"
                 disabled={!props.store.canRedo}
                 onClick={() => { props.onRedo(); setOpen(null); }}
               >
-                Redo <span className="hint">Ctrl+Shift+Z</span>
+                Redo{props.store.redoLabel ? ` ${props.store.redoLabel}` : ''} <span className="hint">Ctrl+Shift+Z</span>
               </button>
               <div className="sep" />
               <button type="button" onClick={() => { props.onDuplicate(); setOpen(null); }}>

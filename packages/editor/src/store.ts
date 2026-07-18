@@ -58,6 +58,12 @@ import {
   restoreEditorUndoState,
   type EditorUndoState,
 } from './editorUndo';
+import {
+  createEditorUndoService,
+  type EditorUndoCheckpoint,
+  type EditorUndoService,
+  type EditorUndoToken,
+} from './editorUndoService';
 import { sceneContentFingerprint } from './sceneFingerprint';
 import type { GizmoMode } from './editorTool';
 import {
@@ -146,7 +152,7 @@ function normalizeEntity(e: Partial<EntityRec> & { entity: number; components: R
   };
 }
 
-export function createEditorStore() {
+export function createEditorStore(undoService: EditorUndoService = createEditorUndoService()) {
   let nextId = 1;
   let mode: EditorMode = 'edit';
   let gizmo: GizmoMode = 'translate';
@@ -155,8 +161,6 @@ export function createEditorStore() {
   let playSpin = 0;
   let editEntities: EntityRec[] = [];
   let playEntities: EntityRec[] | null = null;
-  let undoStack: Array<EditorUndoState<EntityRec>> = [];
-  let redoStack: Array<EditorUndoState<EntityRec>> = [];
   let clearColor: [number, number, number, number] = [0.22, 0.24, 0.28, 1];
   let frame = 0;
   let gameResolution: GameResolution | null = { width: 1920, height: 1080 };
@@ -169,7 +173,8 @@ export function createEditorStore() {
   let gizmoDragging = false;
   let editGestureDepth = 0;
   let gestureUndoState: EditorUndoState<EntityRec> | null = null;
-  let gestureRedoStack: Array<EditorUndoState<EntityRec>> | null = null;
+  let gestureUndoToken: EditorUndoToken | null = null;
+  let gestureHistoryCheckpoint: EditorUndoCheckpoint | null = null;
   let expanded = new Set<number>();
   let clipboard: ClipboardPayload | null = null;
   let renameRequestId: number | null = null;
@@ -233,13 +238,13 @@ export function createEditorStore() {
     mode = 'edit';
     playEntities = null;
     playSpin = 0;
-    undoStack = [];
-    redoStack = [];
+    undoService.clear('scene');
     clipboard = null;
     gizmoDragging = false;
     editGestureDepth = 0;
     gestureUndoState = null;
-    gestureRedoStack = null;
+    gestureUndoToken = null;
+    gestureHistoryCheckpoint = null;
     animationPreview = null;
   };
 
@@ -255,13 +260,16 @@ export function createEditorStore() {
     clearColor,
   );
 
-  const pushUndo = () => {
+  const pushUndo = (label = 'Scene Change') => {
     if (mode !== 'edit') return null;
     const state = captureUndoState();
-    undoStack.push(state);
-    if (undoStack.length > 64) undoStack.shift();
-    redoStack = [];
-    return state;
+    return undoService.recordSnapshot({
+      scope: 'scene',
+      label,
+      state,
+      capture: captureUndoState,
+      restore: restoreUndoSnapshot,
+    });
   };
 
   const restoreUndoSnapshot = (state: EditorUndoState<EntityRec>) => {
@@ -280,7 +288,7 @@ export function createEditorStore() {
     if (Math.abs(dx) < 1e-8 && Math.abs(dy) < 1e-8) return false;
     const roots = selectedRectRoots(editEntities, selectedIds);
     if (!roots.length) return false;
-    if (!gizmoDragging) pushUndo();
+    if (!gizmoDragging) pushUndo('Move UI Selection');
     for (const id of roots) {
       const entity = find(id);
       if (!entity?.components.RectTransform) continue;
@@ -405,7 +413,7 @@ export function createEditorStore() {
     parent: number | null,
     withUndo: boolean,
   ) => {
-    if (withUndo) pushUndo();
+    if (withUndo) pushUndo(`Create ${name}`);
     const id = nextId++;
     const e = normalizeEntity({
       entity: id,
@@ -439,7 +447,7 @@ export function createEditorStore() {
     atIndex?: number,
     instanceId = createPrefabId('instance'),
   ): number => {
-    if (withUndo) pushUndo();
+    if (withUndo) pushUndo('Instantiate Prefab');
     const nodes = flattenPrefabNodes(prefab);
     const entitiesByNode = new Map<string, number>();
     let root = -1;
@@ -483,7 +491,7 @@ export function createEditorStore() {
     components: Record<string, unknown>,
     requestedParent?: number | null,
   ): number => {
-    pushUndo();
+    pushUndo(`Create ${name}`);
     let parent = requestedParent;
     if (parent === undefined) {
       const selected = primarySelected();
@@ -606,13 +614,10 @@ export function createEditorStore() {
     targetMode: EditorMode,
     recordUndo: boolean,
   ) => {
-    if (recordUndo) pushUndo();
-    else {
-      undoStack = [];
-      redoStack = [];
-    }
-    behaviourRunner.unmount();
     const data = JSON.parse(json);
+    if (recordUndo) pushUndo('Load Scene');
+    else undoService.clear('scene');
+    behaviourRunner.unmount();
     const ents = (data.world?.entities ?? data.entities ?? []) as EntityRec[];
     editEntities = ents.map((e, i) =>
       normalizeEntity({
@@ -641,7 +646,8 @@ export function createEditorStore() {
     gizmoDragging = false;
     editGestureDepth = 0;
     gestureUndoState = null;
-    gestureRedoStack = null;
+    gestureUndoToken = null;
+    gestureHistoryCheckpoint = null;
   };
 
   return {
@@ -672,10 +678,16 @@ export function createEditorStore() {
       return gameResolution ? { ...gameResolution } : null;
     },
     get canUndo() {
-      return undoStack.length > 0;
+      return undoService.canUndo;
     },
     get canRedo() {
-      return redoStack.length > 0;
+      return undoService.canRedo;
+    },
+    get undoLabel() {
+      return undoService.undoLabel;
+    },
+    get redoLabel() {
+      return undoService.redoLabel;
     },
     setGameResolution(resolution: GameResolution | null) {
       gameResolution = normalizeGameResolution(resolution);
@@ -777,14 +789,16 @@ export function createEditorStore() {
     rename(id: number, name: string) {
       const n = name.trim();
       if (!n) return;
-      pushUndo();
       const e = find(id);
-      if (e) e.name = n;
+      if (!e || e.name === n) return;
+      pushUndo('Rename GameObject');
+      e.name = n;
     },
     setActive(id: number, activeFlag: boolean) {
-      pushUndo();
       const e = find(id);
-      if (e) e.active = activeFlag;
+      if (!e || e.active === activeFlag) return;
+      pushUndo(activeFlag ? 'Activate GameObject' : 'Deactivate GameObject');
+      e.active = activeFlag;
     },
     setParent(ids: number[], parent: number | null, atIndex?: number, withUndo = true) {
       const current = list();
@@ -800,7 +814,7 @@ export function createEditorStore() {
       );
       if (!plan) return false;
 
-      if (withUndo) pushUndo();
+      if (withUndo) pushUndo('Reparent GameObject');
       const before = buildWorldTransforms(current);
       const preservedWorld = new Map(
         plan.roots.flatMap((id) => {
@@ -881,7 +895,7 @@ export function createEditorStore() {
       const ids = collectSubtreeIds(root);
       const existing = readPrefabLink(find(root));
       const instanceId = existing?.instance ?? createPrefabId('instance');
-      pushUndo();
+      pushUndo('Link Prefab Instance');
       for (const id of ids) {
         const entity = find(id)!;
         const nodeId = nodeIds.get(id);
@@ -905,7 +919,7 @@ export function createEditorStore() {
       if (!rootEntity || !rootLink) return null;
       const parent = rootEntity.parent ?? null;
       const siblingIndex = rootEntity.siblingIndex;
-      pushUndo();
+      pushUndo('Revert Prefab Instance');
       deleteIdsWithSubtree([instance.root]);
       return instantiatePrefabInternal(
         rootLink.source,
@@ -921,7 +935,7 @@ export function createEditorStore() {
       if (mode !== 'edit') return false;
       const instance = findPrefabInstance(editEntities, entity);
       if (!instance) return false;
-      pushUndo();
+      pushUndo('Unpack Prefab Instance');
       for (const id of collectSubtreeIds(instance.root)) {
         const child = find(id);
         const link = readPrefabLink(child);
@@ -951,7 +965,7 @@ export function createEditorStore() {
     },
     duplicateSelection() {
       if (!selectedIds.length || mode !== 'edit') return null;
-      if (!gizmoDragging) pushUndo();
+      if (!gizmoDragging) pushUndo('Duplicate GameObjects');
       const roots = selectedHierarchyRoots(editEntities, selectedIds);
       const newIds: number[] = [];
       for (const r of roots) {
@@ -965,7 +979,7 @@ export function createEditorStore() {
     },
     deleteSelection() {
       if (!selectedIds.length || mode !== 'edit') return;
-      pushUndo();
+      pushUndo('Delete GameObjects');
       const roots = selectedHierarchyRoots(editEntities, selectedIds);
       deleteIdsWithSubtree(roots);
     },
@@ -989,7 +1003,7 @@ export function createEditorStore() {
     },
     paste() {
       if (!clipboard || mode !== 'edit') return;
-      pushUndo();
+      pushUndo('Paste GameObjects');
       const parent = primarySelected();
       const idMap = new Map<number, number>();
       const oldIds = clipboard.roots.map((e) => e.entity);
@@ -1082,19 +1096,10 @@ export function createEditorStore() {
       mode = mode === 'play' ? 'pause' : mode === 'pause' ? 'play' : mode;
     },
     undo() {
-      const prev = undoStack.pop();
-      if (prev) {
-        redoStack.push(captureUndoState());
-        if (redoStack.length > 64) redoStack.shift();
-        restoreUndoSnapshot(prev);
-      }
+      return undoService.undo();
     },
     redo() {
-      const next = redoStack.pop();
-      if (!next) return;
-      undoStack.push(captureUndoState());
-      if (undoStack.length > 64) undoStack.shift();
-      restoreUndoSnapshot(next);
+      return undoService.redo();
     },
     tick(dt: number) {
       frame++;
@@ -1108,7 +1113,7 @@ export function createEditorStore() {
       const e = find(entity);
       if (!e) return false;
       if (e.components[type] != null) return false;
-      pushUndo();
+      pushUndo(`Add ${type}`);
       e.components[type] = value;
       // RequireComponent: auto-add missing deps
       const requirements = componentRequirements(type);
@@ -1126,20 +1131,20 @@ export function createEditorStore() {
       if (type === 'Transform') return false;
       const e = find(entity);
       if (!e || e.components[type] == null) return false;
-      pushUndo();
+      pushUndo(`Remove ${type}`);
       delete e.components[type];
       return true;
     },
     setComponent(entity: number, type: string, value: Record<string, unknown>) {
       const e = find(entity);
       if (!e) return;
-      if (mode === 'edit' && !gizmoDragging) pushUndo();
+      if (mode === 'edit' && !gizmoDragging) pushUndo(`Set ${type}`);
       e.components[type] = value;
     },
     patchComponent(entity: number, type: string, patch: Record<string, unknown>) {
       const e = find(entity);
       if (!e || e.components[type] == null) return;
-      if (mode === 'edit' && !gizmoDragging) pushUndo();
+      if (mode === 'edit' && !gizmoDragging) pushUndo(`Edit ${type}`);
       e.components[type] = { ...(e.components[type] as object), ...patch };
     },
     assignMaterial(
@@ -1156,14 +1161,14 @@ export function createEditorStore() {
         meshRendererValue,
       );
       if (!result?.changed) return result;
-      pushUndo();
+      pushUndo('Assign Material');
       e.components = result.components;
       return result;
     },
     setToggleValue(entity: number, isOn: boolean) {
       const patches = planToggleGroupChange(list(), entity, isOn);
       if (!patches.length) return false;
-      if (mode === 'edit' && !gizmoDragging) pushUndo();
+      if (mode === 'edit' && !gizmoDragging) pushUndo('Set Toggle Value');
       for (const patch of patches) {
         const target = find(patch.entity);
         if (!target?.components.Toggle) continue;
@@ -1186,12 +1191,12 @@ export function createEditorStore() {
       }
       const next = invokeBehaviourMethodEdit(type, data, method);
       if (next) {
-        pushUndo();
+        pushUndo(`${type}.${method}`);
         e.components[type] = next;
       }
     },
     applyCommands(cmds: WorldCommand[]) {
-      pushUndo();
+      pushUndo('Apply World Commands');
       for (const cmd of cmds) {
         if (cmd.op === 'spawn') {
           spawnAt(
@@ -1218,7 +1223,7 @@ export function createEditorStore() {
     setTransforms(updates: Array<{ entity: number; transform: TransformData }>) {
       const applicable = updates.filter((update) => find(update.entity)?.components.Transform != null);
       if (!applicable.length) return false;
-      if (mode === 'edit' && !gizmoDragging) pushUndo();
+      if (mode === 'edit' && !gizmoDragging) pushUndo('Set Transforms');
       for (const update of applicable) {
         const entity = find(update.entity);
         if (entity) entity.components.Transform = structuredClone(update.transform);
@@ -1231,17 +1236,18 @@ export function createEditorStore() {
     ) {
       const applicable = updates.filter((update) => find(update.entity)?.components[type] != null);
       if (!applicable.length) return false;
-      if (mode === 'edit' && !gizmoDragging) pushUndo();
+      if (mode === 'edit' && !gizmoDragging) pushUndo(`Set ${type}`);
       for (const update of applicable) {
         const entity = find(update.entity);
         if (entity) entity.components[type] = structuredClone(update.value);
       }
       return true;
     },
-    beginTransformGesture() {
+    beginTransformGesture(label = 'Transform Selection') {
       if (editGestureDepth === 0) {
-        gestureRedoStack = redoStack;
-        gestureUndoState = pushUndo();
+        gestureHistoryCheckpoint = undoService.checkpoint();
+        gestureUndoState = captureUndoState();
+        gestureUndoToken = pushUndo(label);
         gizmoDragging = true;
       }
       editGestureDepth++;
@@ -1253,14 +1259,15 @@ export function createEditorStore() {
       gizmoDragging = false;
       if (
         gestureUndoState
-        && undoStack[undoStack.length - 1] === gestureUndoState
+        && gestureUndoToken
+        && undoService.contains(gestureUndoToken)
         && editorUndoStatesEqual(gestureUndoState, captureUndoState())
       ) {
-        undoStack.pop();
-        redoStack = gestureRedoStack ?? [];
+        if (gestureHistoryCheckpoint) undoService.restoreCheckpoint(gestureHistoryCheckpoint);
       }
       gestureUndoState = null;
-      gestureRedoStack = null;
+      gestureUndoToken = null;
+      gestureHistoryCheckpoint = null;
     },
     applyTransformDelta(
       entity: number,
@@ -1461,7 +1468,7 @@ export function createEditorStore() {
         (Math.abs(delta.dx) >= 1e-8 || Math.abs(delta.dy) >= 1e-8),
       );
       if (!applicable.length) return false;
-      pushUndo();
+      pushUndo('Move UI Selection');
       for (const delta of applicable) {
         const entity = find(delta.entity);
         if (!entity?.components.RectTransform) continue;
@@ -2007,7 +2014,7 @@ export function createEditorStore() {
       );
     },
     spawnTilemap() {
-      pushUndo();
+      pushUndo('Create Tilemap');
       const grid = spawnAt(
         'Grid',
         {
