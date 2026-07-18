@@ -739,3 +739,12 @@ Referenced Only 是可用的单包裁剪基础，仍不等同于完整 Addressab
 - Material 与 Scene 事务共享全局顺序：修改材质后 Assign 会先结束材质输入事务，再记录 `Assign Material` 场景事务，连续 Undo 依次恢复场景引用和材质参数。纹理缺失诊断、Property Block 保留与旧 PbrMaterial 完整覆盖规则保持不变。
 
 这次完成的是材质资产编辑可靠性，不代表材质系统已经完备。仍缺 Shader 参数反射驱动的任意属性面板、Material Instance 继承资产、关键字/Variant 管理与预热、SRP Batcher/GPU Instancing 兼容布局、渲染状态模板、纹理导入语义、烘焙 Shader Cache、平台质量分级、材质依赖图和 Frame Debugger。当前预览球仍是 CSS 近似色块，不是 Player 同管线离屏渲染；这是下一轮材质可视化必须消除的真实性缺口。
+
+## 54. 2026-07-19 Animation Clip 全局 Undo 迁移
+
+- Animation Clip 编辑器从“仅有 Dirty 草稿、没有撤销”迁移到共享 `EditorUndoService`，Scope 为 `animation:<asset path>`。轨道创建/删除、录制关键帧、关键帧与事件增删改、组移动、曲线与切线、复制粘贴、Clip 时长/帧率/循环模式和轨道绑定字段都写入带动作名称的全局事务；Edit 菜单、窗口快捷键与动画工具栏读取同一顺序。
+- 历史快照同时保存 Clip、播放头、轨道、主关键帧、多关键帧选择和事件选择。恢复当前文档会同步 React 状态与捕获 Ref，并立即驱动 Scene 预览重新采样；恢复非当前文档则按路径更新后台草稿，因此交替编辑多个 `.manim` 后仍可按真实全局顺序 Undo/Redo。
+- 打开过的干净动画也保留后台文档作为历史捕获目标，Dirty 只逐个比较序列化内容与各自保存基线。Save All 仅写入变化的后台动画，写入后更新并保留保存基线；普通 Save 不清空历史，所以保存后撤销会重新变 Dirty，随后可再次保存。
+- 文本、数字、下拉框和关键帧值编辑按一次 Focus 到 Blur 合并；返回原值会恢复历史 Checkpoint，不产生空事务。关键帧/事件和曲线拖动只在 Pointer Up 提交一个事务，录制产生的同一批属性变化也作为一个原子步骤。面板处理的 `Ctrl/Cmd+S/Z/Y` 会阻止传播，文本输入继续保留系统文字 Undo。
+
+这次补齐的是 Animation Clip 资产编辑的基础可靠性，不代表成熟动画系统已经完备。仍缺导入模型动画的分段与重定向工作流、Humanoid/通用骨骼 Avatar、Root Motion、动画压缩与误差预览、曲线过滤、批量关键帧工具、Onion Skin/轨迹可视化、嵌套动画层和运行时性能分析；Animator Controller 仍需迁移到同一全局历史。与其他资源面板一样，原生分离窗口目前拥有独立 WebView 历史，跨窗口统一 Undo 必须下沉到桌面 Host 的可序列化命令服务。

@@ -4,6 +4,7 @@ import {
   useRef,
   useState,
   type DragEvent,
+  type FocusEvent as ReactFocusEvent,
   type KeyboardEvent as ReactKeyboardEvent,
   type PointerEvent as ReactPointerEvent,
 } from 'react';
@@ -24,6 +25,8 @@ import {
   Plus,
   Save,
   Trash2,
+  Redo2,
+  Undo2,
   X,
   ZoomIn,
   ZoomOut,
@@ -75,6 +78,11 @@ import {
   type AnimationCurvePoint,
   type AnimationCurveViewport,
 } from '../animationCurveEditing.ts';
+import type {
+  EditorUndoCheckpoint,
+  EditorUndoService,
+  EditorUndoToken,
+} from '../editorUndoService';
 import {
   clampTimelineKeyDelta,
   copyTimelineKeySelection,
@@ -845,6 +853,34 @@ function recordingValueToken(value: AnimationValue | null): string | null {
   return value == null ? null : JSON.stringify(value);
 }
 
+type AnimationHistorySnapshot = {
+  clip: AnimationClip;
+  time: number;
+  selectedTrack: number | null;
+  selectedKey: { track: number; key: number } | null;
+  selectedKeys: TimelineKeyRef[];
+  selectedEvent: number | null;
+};
+
+type AnimationDraft = AnimationHistorySnapshot & {
+  savedText: string;
+};
+
+type AnimationEditTransaction = AnimationHistorySnapshot & {
+  checkpoint: EditorUndoCheckpoint;
+  token: EditorUndoToken | null;
+};
+
+function animationDraftDirty(draft: Pick<AnimationDraft, 'clip' | 'savedText'>): boolean {
+  return serializeAnimationClip(draft.clip) !== draft.savedText;
+}
+
+function isAnimationEditControl(target: EventTarget): target is HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement {
+  if (target instanceof HTMLSelectElement || target instanceof HTMLTextAreaElement) return true;
+  if (!(target instanceof HTMLInputElement)) return false;
+  return !['checkbox', 'radio', 'button', 'submit', 'reset'].includes(target.type);
+}
+
 export function Timeline(props: {
   assetPath?: string | null;
   onCloseAsset?: () => void;
@@ -858,6 +894,9 @@ export function Timeline(props: {
   onAssetsChanged: () => void;
   onDirtyChange: (dirty: boolean) => void;
   onLog: (message: string, level?: 'info' | 'warn' | 'error') => void;
+  undoService: EditorUndoService;
+  onGlobalUndo: () => void;
+  onGlobalRedo: () => void;
 }) {
   const directAsset = props.assetPath?.trim() ?? '';
   const player = directAsset ? null : playerOf(props.entity);
@@ -866,7 +905,7 @@ export function Timeline(props: {
   const [animatorStateSpeed, setAnimatorStateSpeed] = useState(1);
   const [animatorStateName, setAnimatorStateName] = useState('');
   const clipPath = directAsset || (animator ? animatorClipPath : player?.clip?.trim() ?? '');
-  const [clip, setClip] = useState<AnimationClip | null>(null);
+  const [clip, setClipState] = useState<AnimationClip | null>(null);
   const [savedText, setSavedText] = useState('');
   const [time, setTime] = useState(0);
   const [playing, setPlaying] = useState(false);
@@ -898,15 +937,157 @@ export function Timeline(props: {
   const playbackPhase = useRef<number | null>(null);
   const recordingValues = useRef(new Map<string, string | null>());
   const loadedClipPath = useRef('');
-  const drafts = useRef(new Map<string, {
-    clip: AnimationClip;
-    savedText: string;
-    time: number;
-    selectedTrack: number | null;
-    selectedKey: { track: number; key: number } | null;
-    selectedKeys: TimelineKeyRef[];
-    selectedEvent: number | null;
-  }>());
+  const drafts = useRef(new Map<string, AnimationDraft>());
+  const [, setDraftEpoch] = useState(0);
+  const clipRef = useRef<AnimationClip | null>(null);
+  const timeRef = useRef(0);
+  const selectedTrackRef = useRef<number | null>(null);
+  const selectedKeyRef = useRef<{ track: number; key: number } | null>(null);
+  const selectedKeysRef = useRef<TimelineKeyRef[]>([]);
+  const selectedEventRef = useRef<number | null>(null);
+  const editTransaction = useRef<AnimationEditTransaction | null>(null);
+  clipRef.current = clip;
+  timeRef.current = time;
+  selectedTrackRef.current = selectedTrack;
+  selectedKeyRef.current = selectedKey;
+  selectedKeysRef.current = selectedKeys;
+  selectedEventRef.current = selectedEvent;
+
+  const replaceClip = (next: AnimationClip | null) => {
+    clipRef.current = next;
+    setClipState(next);
+  };
+
+  const captureDocument = (path: string): AnimationHistorySnapshot => {
+    if (loadedClipPath.current === path && clipRef.current) {
+      return {
+        clip: structuredClone(clipRef.current),
+        time: timeRef.current,
+        selectedTrack: selectedTrackRef.current,
+        selectedKey: selectedKeyRef.current ? { ...selectedKeyRef.current } : null,
+        selectedKeys: structuredClone(selectedKeysRef.current),
+        selectedEvent: selectedEventRef.current,
+      };
+    }
+    const draft = drafts.current.get(path);
+    if (!draft) throw new Error(`Animation history document '${path}' is no longer available.`);
+    return {
+      clip: structuredClone(draft.clip),
+      time: draft.time,
+      selectedTrack: draft.selectedTrack,
+      selectedKey: draft.selectedKey ? { ...draft.selectedKey } : null,
+      selectedKeys: structuredClone(draft.selectedKeys),
+      selectedEvent: draft.selectedEvent,
+    };
+  };
+
+  const restoreDocument = (path: string, snapshot: AnimationHistorySnapshot) => {
+    const restored = structuredClone(snapshot);
+    restored.time = Math.max(0, Math.min(restored.clip.duration, restored.time));
+    if (loadedClipPath.current === path) {
+      editTransaction.current = null;
+      replaceClip(restored.clip);
+      playbackPhase.current = restored.time;
+      timeRef.current = restored.time;
+      setTime(restored.time);
+      selectedTrackRef.current = restored.selectedTrack;
+      selectedKeyRef.current = restored.selectedKey;
+      selectedKeysRef.current = restored.selectedKeys;
+      selectedEventRef.current = restored.selectedEvent;
+      setSelectedTrack(restored.selectedTrack);
+      setSelectedKey(restored.selectedKey);
+      setSelectedKeys(restored.selectedKeys);
+      setSelectedEvent(restored.selectedEvent);
+      setError(null);
+      return;
+    }
+    const draft = drafts.current.get(path);
+    if (!draft) throw new Error(`Animation history document '${path}' is no longer available.`);
+    drafts.current.set(path, { ...draft, ...restored });
+    setDraftEpoch((value) => value + 1);
+  };
+
+  const recordHistory = (
+    snapshot: AnimationHistorySnapshot,
+    label: string,
+  ): EditorUndoToken | null => {
+    const path = loadedClipPath.current;
+    if (!path) return null;
+    return props.undoService.recordSnapshot({
+      scope: `animation:${path}`,
+      label,
+      state: structuredClone(snapshot),
+      capture: () => captureDocument(path),
+      restore: (state) => restoreDocument(path, state),
+    });
+  };
+
+  const currentHistorySnapshot = (): AnimationHistorySnapshot | null => {
+    if (!clipRef.current) return null;
+    return {
+      clip: structuredClone(clipRef.current),
+      time: timeRef.current,
+      selectedTrack: selectedTrackRef.current,
+      selectedKey: selectedKeyRef.current ? { ...selectedKeyRef.current } : null,
+      selectedKeys: structuredClone(selectedKeysRef.current),
+      selectedEvent: selectedEventRef.current,
+    };
+  };
+
+  const updateClip = (next: AnimationClip, label = 'Edit Animation Clip') => {
+    const current = clipRef.current;
+    if (!current || serializeAnimationClip(next) === serializeAnimationClip(current)) return false;
+    const transaction = editTransaction.current;
+    if (transaction) {
+      if (!transaction.token || !props.undoService.isUndoTop(transaction.token)) {
+        const snapshot: AnimationHistorySnapshot = {
+          clip: structuredClone(current),
+          time: timeRef.current,
+          selectedTrack: selectedTrackRef.current,
+          selectedKey: selectedKeyRef.current ? { ...selectedKeyRef.current } : null,
+          selectedKeys: structuredClone(selectedKeysRef.current),
+          selectedEvent: selectedEventRef.current,
+        };
+        transaction.clip = structuredClone(current);
+        transaction.time = snapshot.time;
+        transaction.selectedTrack = snapshot.selectedTrack;
+        transaction.selectedKey = snapshot.selectedKey;
+        transaction.selectedKeys = snapshot.selectedKeys;
+        transaction.selectedEvent = snapshot.selectedEvent;
+        transaction.checkpoint = props.undoService.checkpoint();
+        transaction.token = recordHistory(snapshot, label);
+      }
+    } else {
+      const snapshot = currentHistorySnapshot();
+      if (snapshot) recordHistory(snapshot, label);
+    }
+    replaceClip(next);
+    return true;
+  };
+
+  const beginEdit = (event: ReactFocusEvent<HTMLDivElement>) => {
+    if (editTransaction.current || !isAnimationEditControl(event.target)) return;
+    const snapshot = currentHistorySnapshot();
+    if (!snapshot) return;
+    editTransaction.current = {
+      ...snapshot,
+      checkpoint: props.undoService.checkpoint(),
+      token: null,
+    };
+  };
+
+  const endEdit = (event: ReactFocusEvent<HTMLDivElement>) => {
+    if (!isAnimationEditControl(event.target)) return;
+    const transaction = editTransaction.current;
+    editTransaction.current = null;
+    if (
+      !transaction?.token
+      || !clipRef.current
+      || !props.undoService.isUndoTop(transaction.token)
+      || serializeAnimationClip(clipRef.current) !== serializeAnimationClip(transaction.clip)
+    ) return;
+    props.undoService.restoreCheckpoint(transaction.checkpoint);
+  };
 
   useEffect(() => {
     let cancelled = false;
@@ -950,23 +1131,29 @@ export function Timeline(props: {
 
   useEffect(() => {
     let cancelled = false;
+    const transaction = editTransaction.current;
+    if (
+      transaction?.token
+      && clip
+      && props.undoService.isUndoTop(transaction.token)
+      && serializeAnimationClip(clip) === serializeAnimationClip(transaction.clip)
+    ) {
+      props.undoService.restoreCheckpoint(transaction.checkpoint);
+    }
     const previousPath = loadedClipPath.current;
     if (previousPath && clip) {
-      if (serializeAnimationClip(clip) !== savedText) {
-        drafts.current.set(previousPath, {
-          clip: structuredClone(clip),
-          savedText,
-          time,
-          selectedTrack,
-          selectedKey: selectedKey ? { ...selectedKey } : null,
-          selectedKeys: selectedKeys.map((ref) => ({ ...ref })),
-          selectedEvent,
-        });
-      } else {
-        drafts.current.delete(previousPath);
-      }
+      drafts.current.set(previousPath, {
+        clip: structuredClone(clip),
+        savedText,
+        time,
+        selectedTrack,
+        selectedKey: selectedKey ? { ...selectedKey } : null,
+        selectedKeys: selectedKeys.map((ref) => ({ ...ref })),
+        selectedEvent,
+      });
     }
     loadedClipPath.current = clipPath;
+    editTransaction.current = null;
     setPlaying(false);
     setRecording(false);
     timelineDragRef.current = null;
@@ -975,7 +1162,7 @@ export function Timeline(props: {
     setTimelineMarquee(null);
     recordingValues.current.clear();
     setError(null);
-    setClip(null);
+    replaceClip(null);
     setSavedText('');
     setTime(0);
     playbackPhase.current = 0;
@@ -991,7 +1178,7 @@ export function Timeline(props: {
     const draft = drafts.current.get(clipPath);
     if (draft) {
       drafts.current.delete(clipPath);
-      setClip(structuredClone(draft.clip));
+      replaceClip(structuredClone(draft.clip));
       setSavedText(draft.savedText);
       setTime(draft.time);
       setSelectedTrack(draft.selectedTrack);
@@ -1011,7 +1198,7 @@ export function Timeline(props: {
       .then((text) => {
         if (cancelled) return;
         const loaded = parseAnimationClip(text);
-        setClip(loaded);
+        replaceClip(loaded);
         setSavedText(serializeAnimationClip(loaded));
         const authoredTime = Number(player?.time ?? 0);
         playbackPhase.current = Number.isFinite(authoredTime) ? authoredTime : 0;
@@ -1019,7 +1206,7 @@ export function Timeline(props: {
       })
       .catch((reason: unknown) => {
         if (cancelled) return;
-        setClip(null);
+        replaceClip(null);
         setError(reason instanceof Error ? reason.message : String(reason));
         props.onClearPreview();
       })
@@ -1034,7 +1221,7 @@ export function Timeline(props: {
     [clip],
   );
   const dirty = Boolean(clip && serializedClip !== savedText);
-  const anyDirty = dirty || drafts.current.size > 0;
+  const anyDirty = dirty || [...drafts.current.values()].some(animationDraftDirty);
 
   useEffect(() => {
     props.onDirtyChange(anyDirty);
@@ -1134,7 +1321,7 @@ export function Timeline(props: {
       tracks[change.index] = result.track;
       lastKey = { track: change.index, key: result.keyIndex };
     }
-    setClip({ ...clip, tracks });
+    updateClip({ ...clip, tracks }, 'Record Animation Keys');
     setSelectedTrack(lastKey!.track);
     setSelectedKeys([lastKey!]);
     setSelectedKey(lastKey);
@@ -1169,7 +1356,7 @@ export function Timeline(props: {
   const persist = async (next = clip): Promise<boolean> => {
     if (!next || !clipPath) return false;
     const normalized = normalizeAnimationClip(next);
-    setClip(normalized);
+    replaceClip(normalized);
     setSaving(true);
     setError(null);
     try {
@@ -1192,13 +1379,15 @@ export function Timeline(props: {
   const persistAll = async () => {
     if (dirty && !await persist()) throw new Error('Current Animation Clip could not be saved');
     const failures: string[] = [];
-    if (drafts.current.size > 0) setSaving(true);
+    const dirtyDrafts = [...drafts.current].filter(([, draft]) => animationDraftDirty(draft));
+    if (dirtyDrafts.length > 0) setSaving(true);
     try {
-      for (const [path, draft] of [...drafts.current]) {
+      for (const [path, draft] of dirtyDrafts) {
         try {
           const normalized = normalizeAnimationClip(draft.clip);
-          await writeProjectAssetText(path, serializeAnimationClip(normalized));
-          drafts.current.delete(path);
+          const text = serializeAnimationClip(normalized);
+          await writeProjectAssetText(path, text);
+          drafts.current.set(path, { ...draft, clip: normalized, savedText: text });
           props.onLog(`Saved ${path}`);
         } catch (reason) {
           failures.push(`${path}: ${reason instanceof Error ? reason.message : String(reason)}`);
@@ -1208,6 +1397,7 @@ export function Timeline(props: {
       props.onAssetsChanged();
     } finally {
       setSaving(false);
+      if (dirtyDrafts.length > 0) setDraftEpoch((value) => value + 1);
     }
     if (failures.length > 0) throw new Error(failures.join('; '));
   };
@@ -1231,22 +1421,19 @@ export function Timeline(props: {
       await writeProjectAssetText(path, serializeAnimationClip(next));
       await refreshProjectFiles();
       if (loadedClipPath.current && clip) {
-        const currentText = serializeAnimationClip(clip);
-        if (currentText !== savedText) {
-          drafts.current.set(loadedClipPath.current, {
-            clip: structuredClone(clip),
-            savedText,
-            time,
-            selectedTrack,
-            selectedKey: selectedKey ? { ...selectedKey } : null,
-            selectedKeys: selectedKeys.map((ref) => ({ ...ref })),
-            selectedEvent,
-          });
-        }
+        drafts.current.set(loadedClipPath.current, {
+          clip: structuredClone(clip),
+          savedText,
+          time,
+          selectedTrack,
+          selectedKey: selectedKey ? { ...selectedKey } : null,
+          selectedKeys: selectedKeys.map((ref) => ({ ...ref })),
+          selectedEvent,
+        });
       }
       loadedClipPath.current = path;
       assignClip(path);
-      setClip(next);
+      replaceClip(next);
       setSavedText(serializeAnimationClip(next));
       setTime(0);
       setSelectedTrack(null);
@@ -1321,7 +1508,7 @@ export function Timeline(props: {
     setSelectedKeys([]);
     setSelectedKey(null);
     setSelectedEvent(null);
-    setClip(next);
+    updateClip(next, 'Add Animation Track');
     setPropertyBinding('');
   };
 
@@ -1347,7 +1534,7 @@ export function Timeline(props: {
     const tracks = clip.tracks.map((candidate, index) => index === selectedTrack
       ? result.track
       : candidate);
-    setClip({ ...clip, tracks });
+    updateClip({ ...clip, tracks }, 'Record Animation Key');
     const primary = { track: selectedTrack, key: result.keyIndex };
     setSelectedKeys([primary]);
     setSelectedKey(primary);
@@ -1379,13 +1566,13 @@ export function Timeline(props: {
     setSelectedTrack(null);
     setSelectedKeys([]);
     setSelectedKey(null);
-    setClip({ ...clip, tracks });
+    updateClip({ ...clip, tracks }, 'Delete Animation Track');
   };
 
   const addEvent = () => {
     if (!clip) return;
     const result = addAnimationEvent(clip, time);
-    setClip(result.clip);
+    updateClip(result.clip, 'Add Animation Event');
     setSelectedTrack(null);
     setSelectedKeys([]);
     setSelectedKey(null);
@@ -1401,7 +1588,7 @@ export function Timeline(props: {
     if (!clip || selectedEvent == null) return;
     const result = replaceAnimationEvent(clip, selectedEvent, patch);
     if (!result) return;
-    setClip(result.clip);
+    updateClip(result.clip, 'Edit Animation Event');
     setSelectedEvent(result.eventIndex);
     const next = result.clip.events[result.eventIndex].time;
     playbackPhase.current = next;
@@ -1410,7 +1597,7 @@ export function Timeline(props: {
 
   const deleteSelectedEvent = () => {
     if (!clip || selectedEvent == null) return;
-    setClip(removeAnimationEvent(clip, selectedEvent));
+    updateClip(removeAnimationEvent(clip, selectedEvent), 'Delete Animation Event');
     setSelectedEvent(null);
   };
 
@@ -1451,12 +1638,12 @@ export function Timeline(props: {
       clip.duration,
     );
     if (!result) return;
-    setClip({
+    updateClip({
       ...clip,
       tracks: clip.tracks.map((candidate, index) => (
         index === selectedKey.track ? result.track : candidate
       )),
-    });
+    }, 'Edit Animation Key');
     const primary = { track: selectedKey.track, key: result.keyIndex };
     setSelectedKeys([primary]);
     setSelectedKey(primary);
@@ -1467,7 +1654,7 @@ export function Timeline(props: {
 
   const deleteSelectedKey = () => {
     if (!clip || activeSelectedKeys.length === 0) return;
-    setClip(removeTimelineKeySelection(clip, activeSelectedKeys));
+    updateClip(removeTimelineKeySelection(clip, activeSelectedKeys), 'Delete Animation Keys');
     setSelectedKeys([]);
     setSelectedKey(null);
   };
@@ -1480,7 +1667,7 @@ export function Timeline(props: {
       frames / Math.max(1, clip.frame_rate),
     );
     if (result.appliedDelta === 0) return;
-    setClip(result.clip);
+    updateClip(result.clip, 'Move Animation Keys');
     selectKeys(result.selection, result.clip);
     const primary = result.selection[result.selection.length - 1];
     if (primary) {
@@ -1498,10 +1685,10 @@ export function Timeline(props: {
     const track = clip.tracks[selectedKey.track];
     if (!track) return;
     const next = setAnimationKeyframeTangents(track, selectedKey.key, { [side]: value });
-    setClip({
+    updateClip({
       ...clip,
       tracks: clip.tracks.map((candidate, index) => index === selectedKey.track ? next : candidate),
-    });
+    }, 'Edit Animation Tangent');
   };
 
   const updateCurveKey = (
@@ -1526,7 +1713,7 @@ export function Timeline(props: {
       tracks: clip.tracks.map((track, index) => index === selectedTrack ? result.track : track),
     };
     const primary = { track: selectedTrack, key: result.keyIndex };
-    setClip(nextClip);
+    updateClip(nextClip, 'Edit Animation Curve');
     selectKeys([primary], nextClip);
     const authoredTime = result.track.keyframes[result.keyIndex].time;
     playbackPhase.current = authoredTime;
@@ -1547,10 +1734,10 @@ export function Timeline(props: {
       channel,
       slope,
     );
-    setClip({
+    updateClip({
       ...clip,
       tracks: clip.tracks.map((track, index) => index === selectedTrack ? next : track),
-    });
+    }, 'Edit Animation Tangent');
   };
 
   const setSelectedCurveTangents = (mode: 'auto' | 'flat') => {
@@ -1560,20 +1747,20 @@ export function Timeline(props: {
     const next = mode === 'auto'
       ? setAnimationCurveTangentsAuto(track, selectedKey.key)
       : setAnimationCurveTangentsFlat(track, selectedKey.key);
-    setClip({
+    updateClip({
       ...clip,
       tracks: clip.tracks.map((candidate, index) => index === selectedKey.track ? next : candidate),
-    });
+    }, `Set Animation Tangents ${mode === 'auto' ? 'Auto' : 'Flat'}`);
   };
 
   const enableSelectedCurveCubic = () => {
     if (!clip || selectedTrack == null || !clip.tracks[selectedTrack]) return;
-    setClip({
+    updateClip({
       ...clip,
       tracks: clip.tracks.map((track, index) => index === selectedTrack
         ? { ...track, interpolation: 'cubic' }
         : track),
-    });
+    }, 'Enable Cubic Animation Curve');
   };
 
   const selectionClipboard = (): TimelineClipboard | null => {
@@ -1596,7 +1783,7 @@ export function Timeline(props: {
     if (!clip || !copied) return;
     if (copied.kind === 'event') {
       const pasted = pasteAnimationEvent(clip, copied.event, time);
-      setClip(pasted.clip);
+      updateClip(pasted.clip, 'Paste Animation Event');
       setSelectedTrack(null);
       setSelectedKeys([]);
       setSelectedKey(null);
@@ -1613,7 +1800,7 @@ export function Timeline(props: {
       );
       return;
     }
-    setClip(pasted.clip);
+    updateClip(pasted.clip, 'Paste Animation Keys');
     selectKeys(pasted.selection, pasted.clip);
     if (pasted.skipped > 0) {
       props.onLog(`Pasted ${pasted.selection.length} key(s); skipped ${pasted.skipped} unmatched key(s)`, 'warn');
@@ -1673,16 +1860,36 @@ export function Timeline(props: {
 
   const handleTimelineKeyDown = (event: ReactKeyboardEvent<HTMLDivElement>) => {
     const target = event.target as HTMLElement;
-    if (target.closest('input, select, textarea')) return;
     const command = event.ctrlKey || event.metaKey;
-    if (command && event.key.toLowerCase() === 'c') {
+    const key = event.key.toLowerCase();
+    if (command && key === 's') {
+      event.preventDefault();
+      event.stopPropagation();
+      void persist();
+      return;
+    }
+    if (target.closest('input, select, textarea')) return;
+    if (command && key === 'z') {
+      event.preventDefault();
+      event.stopPropagation();
+      if (event.shiftKey) props.onGlobalRedo();
+      else props.onGlobalUndo();
+      return;
+    }
+    if (command && key === 'y') {
+      event.preventDefault();
+      event.stopPropagation();
+      props.onGlobalRedo();
+      return;
+    }
+    if (command && key === 'c') {
       if (selectionClipboard()) {
         event.preventDefault();
         copySelection();
       }
       return;
     }
-    if (command && event.key.toLowerCase() === 'v') {
+    if (command && key === 'v') {
       if (timelineClipboard) {
         event.preventDefault();
         pasteSelection();
@@ -1823,12 +2030,12 @@ export function Timeline(props: {
     if (drag.kind === 'event') {
       const result = replaceAnimationEvent(clip, drag.index, { time: drag.time });
       if (!result) return;
-      setClip(result.clip);
+      updateClip(result.clip, 'Move Animation Event');
       setSelectedEvent(result.eventIndex);
       return;
     }
     const result = moveTimelineKeySelection(clip, drag.selection, drag.delta);
-    setClip(result.clip);
+    updateClip(result.clip, 'Move Animation Keys');
     selectKeys(result.selection, result.clip);
   };
 
@@ -1959,6 +2166,8 @@ export function Timeline(props: {
       className={`timeline-panel${maximized ? ' maximized' : ''}`}
       onDragOver={(event) => event.preventDefault()}
       onDrop={dropClip}
+      onFocusCapture={beginEdit}
+      onBlurCapture={endEdit}
     >
       {animator && (
         <div className="timeline-animator-state">
@@ -2008,6 +2217,28 @@ export function Timeline(props: {
             onClick={() => stepFrame(1)}
           >
             <ChevronRight size={15} aria-hidden="true" />
+          </button>
+        </div>
+        <div className="timeline-transport timeline-history" role="group" aria-label="Animation edit history">
+          <button
+            type="button"
+            className="timeline-icon-button"
+            aria-label="Undo"
+            title={`Undo${props.undoService.undoLabel ? ` ${props.undoService.undoLabel}` : ''} (Ctrl+Z)`}
+            disabled={!props.undoService.canUndo}
+            onClick={props.onGlobalUndo}
+          >
+            <Undo2 size={13} aria-hidden="true" />
+          </button>
+          <button
+            type="button"
+            className="timeline-icon-button"
+            aria-label="Redo"
+            title={`Redo${props.undoService.redoLabel ? ` ${props.undoService.redoLabel}` : ''} (Ctrl+Y)`}
+            disabled={!props.undoService.canRedo}
+            onClick={props.onGlobalRedo}
+          >
+            <Redo2 size={13} aria-hidden="true" />
           </button>
         </div>
         <label className="timeline-time" title="Current animation time">
@@ -2472,10 +2703,10 @@ export function Timeline(props: {
               <section>
                 <h3>Clip</h3>
                 <div className="timeline-details-form">
-                  <label>Name <input value={clip.name} onChange={(event) => setClip({ ...clip, name: event.target.value })} /></label>
-                  <label>Duration <input type="number" min={0} step={0.1} value={clip.duration} onChange={(event) => setClip(normalizeAnimationClip({ ...clip, duration: Number(event.target.value) }))} /></label>
-                  <label>FPS <input type="number" min={1} step={1} value={clip.frame_rate} onChange={(event) => setClip(normalizeAnimationClip({ ...clip, frame_rate: Number(event.target.value) }))} /></label>
-                  <label>Wrap <select value={clip.wrap_mode} onChange={(event) => setClip({ ...clip, wrap_mode: event.target.value as AnimationClip['wrap_mode'] })}>
+                  <label>Name <input value={clip.name} onChange={(event) => updateClip({ ...clip, name: event.target.value }, 'Rename Animation Clip')} /></label>
+                  <label>Duration <input type="number" min={0} step={0.1} value={clip.duration} onChange={(event) => updateClip(normalizeAnimationClip({ ...clip, duration: Number(event.target.value) }), 'Edit Animation Duration')} /></label>
+                  <label>FPS <input type="number" min={1} step={1} value={clip.frame_rate} onChange={(event) => updateClip(normalizeAnimationClip({ ...clip, frame_rate: Number(event.target.value) }), 'Edit Animation Frame Rate')} /></label>
+                  <label>Wrap <select value={clip.wrap_mode} onChange={(event) => updateClip({ ...clip, wrap_mode: event.target.value as AnimationClip['wrap_mode'] }, 'Edit Animation Wrap Mode')}>
                     <option value="once">Once</option>
                     <option value="loop">Loop</option>
                     <option value="ping_pong">Ping Pong</option>
@@ -2487,14 +2718,14 @@ export function Timeline(props: {
                 <section>
                   <h3>Track</h3>
                   <div className="timeline-details-form">
-                    <label>Target <input aria-label="Animation track target" value={clip.tracks[selectedTrack].target} onChange={(event) => setClip({
+                    <label>Target <input aria-label="Animation track target" value={clip.tracks[selectedTrack].target} onChange={(event) => updateClip({
                       ...clip,
                       tracks: clip.tracks.map((track, index) => index === selectedTrack ? { ...track, target: event.target.value } : track),
-                    })} /></label>
-                    <label>Interpolation <select aria-label="Animation track interpolation" value={clip.tracks[selectedTrack].interpolation} onChange={(event) => setClip({
+                    }, 'Edit Animation Track Target')} /></label>
+                    <label>Interpolation <select aria-label="Animation track interpolation" value={clip.tracks[selectedTrack].interpolation} onChange={(event) => updateClip({
                       ...clip,
                       tracks: clip.tracks.map((track, index) => index === selectedTrack ? { ...track, interpolation: event.target.value as AnimationTrack['interpolation'] } : track),
-                    })}>
+                    }, 'Edit Animation Interpolation')}>
                       <option value="step">Step</option>
                       <option value="linear">Linear</option>
                       <option value="smooth">Smooth</option>

@@ -1214,6 +1214,15 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
                   onAssetsChanged={bumpScenes}
                   onDirtyChange={setAnimationDirty}
                   onLog={log}
+                  undoService={undoService}
+                  onGlobalUndo={() => {
+                    store.undo();
+                    refresh();
+                  }}
+                  onGlobalRedo={() => {
+                    store.redo();
+                    refresh();
+                  }}
                 />
               </div>
               <div hidden={timelineAssetPath == null} className="panel-visibility-host">
