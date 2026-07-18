@@ -50,13 +50,14 @@ import {
   SEQUENCER_MAX_ZOOM,
   SEQUENCER_MIN_ZOOM,
   clampSequencerZoom,
-  copySequencerItem,
+  copySequencerItems,
   deleteSequencerItems,
   findSequencerClipPlacement,
   lockedSequencerContentEnd,
   moveSequencerClip,
+  moveSequencerItems,
   moveSequencerTrack,
-  pasteSequencerItem,
+  pasteSequencerClipboard,
   sequencerTicks,
   selectSequencerItem,
   trimSequencerCameraBlendIn,
@@ -692,18 +693,45 @@ export function Sequencer(props: SequencerProps) {
     else if (track?.type === 'camera') addCameraClip(trackIndex, requestedTime);
   };
 
-  const copySelectedItem = (): SequencerClipboard | null => {
+  const selectedClipboard = () => {
     if (!asset || !selection || selection.marker == null) return null;
-    if (selectedItems.length > 1) {
-      setError('Group copy is not available yet. Copy the primary item or use Delete/Ripple Delete on the selection.');
+    return copySequencerItems(asset, selectedItems, {
+      track: selection.track,
+      marker: selection.marker,
+    });
+  };
+
+  const copySelectedItem = (): SequencerClipboard | null => {
+    const copied = selectedClipboard();
+    if (!copied) return null;
+    if (!copied.ok) {
+      setError(copied.error);
       return null;
     }
-    const copied = copySequencerItem(asset, selection.track, selection.marker);
-    if (copied) {
-      setClipboard(copied);
-      setError(null);
+    setClipboard(copied.clipboard);
+    setError(null);
+    return copied.clipboard;
+  };
+
+  const cutSelectedItems = () => {
+    if (!asset || !selection || selection.marker == null) return;
+    const copied = selectedClipboard();
+    if (!copied) return;
+    if (!copied.ok) {
+      setError(copied.error);
+      return;
     }
-    return copied;
+    const deleted = deleteSequencerItems(asset, selectedItems);
+    if (!deleted.ok) {
+      setError(deleted.error);
+      return;
+    }
+    pushHistory(asset);
+    setClipboard(copied.clipboard);
+    setAsset(deleted.asset);
+    applySelection({ track: selection.track, marker: null });
+    setPayloadInvalid(false);
+    setError(null);
   };
 
   const deleteSelection = (ripple = false) => {
@@ -753,38 +781,43 @@ export function Sequencer(props: SequencerProps) {
     preferredTrack = selection?.track ?? null,
   ) => {
     if (!asset || !source) return;
-    const pasted = pasteSequencerItem(asset, preferredTrack, requestedTime, source);
+    const pasted = pasteSequencerClipboard(asset, preferredTrack, requestedTime, source);
     if (!pasted.ok) {
       setError(pasted.error);
       return;
     }
     pushHistory(asset);
     setAsset(pasted.asset);
-    applySelection({ track: pasted.trackIndex, marker: pasted.itemIndex });
-    const pastedTrack = pasted.asset.tracks[pasted.trackIndex];
+    applySelection(pasted.primary, pasted.selections);
+    const pastedTrack = pasted.asset.tracks[pasted.primary.track];
     setTime(pastedTrack.type === 'signal'
-      ? pastedTrack.markers[pasted.itemIndex].time
-      : pastedTrack.clips[pasted.itemIndex].start);
+      ? pastedTrack.markers[pasted.primary.marker].time
+      : pastedTrack.clips[pasted.primary.marker].start);
     setError(null);
   };
 
   const duplicateSelectedItem = () => {
     if (!asset || !selection || selection.marker == null) return;
-    if (selectedItems.length > 1) {
-      setError('Group duplicate is not available yet. Duplicate a single primary item.');
-      return;
-    }
-    if (asset.tracks[selection.track]?.locked) {
-      setError(`Track '${asset.tracks[selection.track].name}' is locked. Unlock it before duplicating.`);
-      return;
-    }
-    const copied = copySequencerItem(asset, selection.track, selection.marker);
+    const copied = selectedClipboard();
     if (!copied) return;
-    const track = asset.tracks[selection.track];
-    const requestedTime = track.type === 'signal'
-      ? track.markers[selection.marker].time + 1 / asset.frame_rate
-      : track.clips[selection.marker].start + track.clips[selection.marker].duration;
-    pasteItem(copied, requestedTime, selection.track);
+    if (!copied.ok) {
+      setError(copied.error);
+      return;
+    }
+    const selectedTracks = [...new Set(selectedItems.map((item) => item.track))];
+    const lockedTrack = selectedTracks.map((index) => asset.tracks[index]).find((track) => track?.locked);
+    if (lockedTrack) {
+      setError(`Track '${lockedTrack.name}' is locked. Unlock it before duplicating.`);
+      return;
+    }
+    const requestedTime = copied.clipboard.type === 'group'
+      ? Math.max(...copied.clipboard.items.map((entry) => (
+        entry.type === 'signal' ? entry.item.time : entry.item.start + entry.item.duration
+      ))) + 1 / asset.frame_rate
+      : copied.clipboard.type === 'signal'
+        ? copied.clipboard.item.time + 1 / asset.frame_rate
+        : copied.clipboard.item.start + copied.clipboard.item.duration;
+    pasteItem(copied.clipboard, requestedTime, selection.track);
   };
 
   const startMarkerDrag = (
@@ -836,9 +869,17 @@ export function Sequencer(props: SequencerProps) {
       applySelection(next.primary, next.items);
       return;
     }
-    if (originalTrack.locked) {
-      applySelection(clicked);
-      setError(`Track '${originalTrack.name}' is locked. Unlock it before moving items.`);
+    const dragItems = !trimEdge && selectedItems.length > 1 && selectedItems.some(
+      (item) => item.track === trackIndex && item.marker === markerIndex,
+    )
+      ? structuredClone(selectedItems)
+      : [clicked];
+    const lockedDragTrack = dragItems
+      .map((item) => asset.tracks[item.track])
+      .find((track) => track?.locked);
+    if (lockedDragTrack) {
+      applySelection(clicked, dragItems);
+      setError(`Track '${lockedDragTrack.name}' is locked. Unlock it before moving items.`);
       return;
     }
     const pointerStartTime = (event.clientX - bounds.left) / Math.max(1, bounds.width) * asset.duration;
@@ -849,12 +890,28 @@ export function Sequencer(props: SequencerProps) {
     const undoBeforeDrag = structuredClone(undoHistory.current);
     const redoBeforeDrag = structuredClone(redoHistory.current);
     let historyRecorded = false;
+    let groupDelta = 0;
     event.currentTarget.setPointerCapture(pointer);
-    applySelection(clicked);
+    applySelection(clicked, dragItems);
     const move = (moveEvent: PointerEvent) => {
       if (moveEvent.pointerId !== pointer) return;
       const position = Math.max(0, Math.min(1, (moveEvent.clientX - bounds.left) / Math.max(1, bounds.width)));
       const delta = position * asset.duration - pointerStartTime;
+      if (dragItems.length > 1) {
+        const moved = moveSequencerItems(asset, dragItems, delta);
+        if (!moved.ok) {
+          setError(moved.error);
+          return;
+        }
+        groupDelta = moved.delta;
+        if (!historyRecorded && Math.abs(moved.delta) >= 0.5 / asset.frame_rate) {
+          pushHistory(asset, selectionBeforeDrag, timeBeforeDrag, selectedItemsBeforeDrag);
+          historyRecorded = true;
+        }
+        setAsset(moved.asset);
+        setError(null);
+        return;
+      }
       if (!historyRecorded && Math.abs(delta) >= 0.5 / asset.frame_rate) {
         pushHistory(asset, selectionBeforeDrag, timeBeforeDrag, selectedItemsBeforeDrag);
         historyRecorded = true;
@@ -931,6 +988,10 @@ export function Sequencer(props: SequencerProps) {
         setAsset(structuredClone(asset));
         applySelection(selectionBeforeDrag, selectedItemsBeforeDrag);
         setTime(timeBeforeDrag);
+        setHistoryEpoch((value) => value + 1);
+      } else if (dragItems.length > 1 && historyRecorded && Math.abs(groupDelta) < 0.5 / asset.frame_rate) {
+        undoHistory.current = undoBeforeDrag;
+        redoHistory.current = redoBeforeDrag;
         setHistoryEpoch((value) => value + 1);
       }
     };
@@ -1058,11 +1119,7 @@ export function Sequencer(props: SequencerProps) {
         }
         if (modified && key === 'x') {
           event.preventDefault();
-          if (selectedTrack?.locked) {
-            setError(`Track '${selectedTrack.name}' is locked. Unlock it before cutting.`);
-            return;
-          }
-          if (copySelectedItem()) deleteSelection();
+          cutSelectedItems();
           return;
         }
         if (modified && key === 'v') {
@@ -1113,7 +1170,7 @@ export function Sequencer(props: SequencerProps) {
         <div className="sequencer-edit-controls">
           <button type="button" aria-label="Undo" title="Undo (Ctrl+Z)" disabled={undoHistory.current.length === 0} onClick={() => restoreHistory('undo')}><Undo2 size={13} /></button>
           <button type="button" aria-label="Redo" title="Redo (Ctrl+Y)" disabled={redoHistory.current.length === 0} onClick={() => restoreHistory('redo')}><Redo2 size={13} /></button>
-          <button type="button" aria-label="Copy selected item" title={selectedItems.length > 1 ? 'Group copy is not available in this slice' : 'Copy selected item (Ctrl+C)'} disabled={(!selectedMarker && !selectedClip) || selectedItems.length > 1} onClick={() => copySelectedItem()}><Copy size={13} /></button>
+          <button type="button" aria-label="Copy selected items" title="Copy selected items (Ctrl+C)" disabled={!selectedMarker && !selectedClip} onClick={() => copySelectedItem()}><Copy size={13} /></button>
           <button type="button" aria-label="Paste at playhead" title="Paste at playhead (Ctrl+V)" disabled={!clipboard} onClick={() => pasteItem(clipboard, displayTime)}><ClipboardPaste size={13} /></button>
           <button type="button" aria-label="Delete selected items" title="Delete selected items (Delete)" disabled={selectedItems.length === 0} onClick={() => deleteSelection()}><Trash2 size={13} /></button>
           <button type="button" aria-label="Ripple delete selected clips" title="Ripple Delete per affected track (Shift+Delete)" disabled={!rippleEligible} onClick={() => deleteSelection(true)}><ChevronsLeft size={13} /></button>
@@ -1280,7 +1337,7 @@ export function Sequencer(props: SequencerProps) {
 
         <aside className="sequencer-inspector" onFocusCapture={beginInspectorEdit} onBlurCapture={endInspectorEdit}>
           <h3>{selectedMarker ? 'Signal Marker' : selectedActivationClip ? 'Activation Clip' : selectedAudioClip ? 'Audio Clip' : selectedAnimationClip ? 'Animation Clip' : selectedParticleClip ? 'Particle Clip' : selectedCameraClip ? 'Camera Shot' : selectedTrack ? `${selectedTrack.type === 'signal' ? 'Signal' : selectedTrack.type === 'activation' ? 'Activation' : selectedTrack.type === 'audio' ? 'Audio' : selectedTrack.type === 'animation' ? 'Animation' : selectedTrack.type === 'particle' ? 'Particle' : 'Camera'} Track` : 'Timeline Asset'}</h3>
-          {selectedItems.length > 1 && <p className="sequencer-multi-selection-notice">{selectedItems.length} items selected. Inspector edits apply to the primary item; Delete and Ripple Delete apply to the full selection.</p>}
+          {selectedItems.length > 1 && <p className="sequencer-multi-selection-notice">{selectedItems.length} items selected. Inspector edits and edge trims apply to the primary item; drag, clipboard, duplicate, Delete and Ripple Delete apply to the full selection.</p>}
           {!selectedTrack && <>
             <label>Name <input value={asset.name} onChange={(event) => update((draft) => { draft.name = event.target.value; })} /></label>
             <label>Duration <input type="number" min={0.001} step={0.1} value={asset.duration} onChange={(event) => update((draft) => {

@@ -11,7 +11,7 @@ import type {
 export type SequencerClipRange = { start: number; duration: number };
 export type SequencerTrimEdge = 'start' | 'end';
 
-export type SequencerClipboard =
+export type SequencerClipboardItem =
   | { type: 'signal'; sourceTrackId: string; item: TimelineSignal }
   | { type: 'activation'; sourceTrackId: string; item: TimelineActivationClip }
   | { type: 'audio'; sourceTrackId: string; item: TimelineAudioClip }
@@ -19,8 +19,26 @@ export type SequencerClipboard =
   | { type: 'particle'; sourceTrackId: string; item: TimelineParticleClip }
   | { type: 'camera'; sourceTrackId: string; item: TimelineCameraClip };
 
+export type SequencerClipboardGroup = {
+  type: 'group';
+  anchorTime: number;
+  primary: number;
+  items: SequencerClipboardItem[];
+};
+
+export type SequencerClipboard = SequencerClipboardItem | SequencerClipboardGroup;
+
 export type SequencerPasteResult =
   | { ok: true; asset: TimelineAsset; trackIndex: number; itemIndex: number }
+  | { ok: false; error: string };
+
+export type SequencerClipboardPasteResult =
+  | {
+    ok: true;
+    asset: TimelineAsset;
+    selections: SequencerItemSelection[];
+    primary: SequencerItemSelection;
+  }
   | { ok: false; error: string };
 
 export type SequencerTrackMoveResult =
@@ -35,6 +53,12 @@ export type SequencerItemSelectionResult = {
 };
 export type SequencerDeleteResult =
   | { ok: true; asset: TimelineAsset }
+  | { ok: false; error: string };
+export type SequencerMoveResult =
+  | { ok: true; asset: TimelineAsset; delta: number }
+  | { ok: false; error: string };
+export type SequencerCopyResult =
+  | { ok: true; clipboard: SequencerClipboard }
   | { ok: false; error: string };
 
 export const SEQUENCER_MIN_ZOOM = 1;
@@ -322,11 +346,114 @@ export function deleteSequencerItems(
   return { ok: true, asset: next };
 }
 
+function sequencerItemTime(item: SequencerClipboardItem): number {
+  return item.type === 'signal' ? item.item.time : item.item.start;
+}
+
+export function copySequencerItems(
+  asset: TimelineAsset,
+  selections: readonly SequencerItemSelection[],
+  primary: SequencerItemSelection | null = selections.at(-1) ?? null,
+): SequencerCopyResult {
+  const unique = new Map<string, SequencerItemSelection>();
+  for (const selection of selections) {
+    if (!Number.isInteger(selection.track) || !Number.isInteger(selection.marker)) continue;
+    unique.set(`${selection.track}:${selection.marker}`, selection);
+  }
+  if (unique.size === 0) return { ok: false, error: 'No Timeline items are selected.' };
+  const entries: Array<{ selection: SequencerItemSelection; item: SequencerClipboardItem }> = [];
+  for (const selection of unique.values()) {
+    const item = copySequencerItem(asset, selection.track, selection.marker);
+    if (!item) return { ok: false, error: 'A selected Timeline item no longer exists.' };
+    entries.push({ selection: { ...selection }, item });
+  }
+  if (entries.length === 1) return { ok: true, clipboard: entries[0].item };
+  const anchorTime = Math.min(...entries.map((entry) => sequencerItemTime(entry.item)));
+  const primaryIndex = Math.max(0, entries.findIndex((entry) => (
+    entry.selection.track === primary?.track && entry.selection.marker === primary?.marker
+  )));
+  return {
+    ok: true,
+    clipboard: {
+      type: 'group',
+      anchorTime,
+      primary: primaryIndex,
+      items: entries.map((entry) => entry.item),
+    },
+  };
+}
+
+export function moveSequencerItems(
+  asset: TimelineAsset,
+  selections: readonly SequencerItemSelection[],
+  requestedDelta: number,
+): SequencerMoveResult {
+  const unique = new Map<string, SequencerItemSelection>();
+  for (const selection of selections) {
+    if (!Number.isInteger(selection.track) || !Number.isInteger(selection.marker)) continue;
+    unique.set(`${selection.track}:${selection.marker}`, selection);
+  }
+  if (unique.size === 0) return { ok: false, error: 'No Timeline items are selected.' };
+  const selectedByTrack = new Map<number, Set<number>>();
+  let minimumDelta = Number.NEGATIVE_INFINITY;
+  let maximumDelta = Number.POSITIVE_INFINITY;
+  for (const selection of unique.values()) {
+    const track = asset.tracks[selection.track];
+    if (!track) return { ok: false, error: 'A selected Timeline track no longer exists.' };
+    if (track.locked) return { ok: false, error: `Track '${track.name}' is locked. Unlock it before moving.` };
+    const count = track.type === 'signal' ? track.markers.length : track.clips.length;
+    if (selection.marker < 0 || selection.marker >= count) {
+      return { ok: false, error: `A selected item on track '${track.name}' no longer exists.` };
+    }
+    const indexes = selectedByTrack.get(selection.track) ?? new Set<number>();
+    indexes.add(selection.marker);
+    selectedByTrack.set(selection.track, indexes);
+    if (track.type === 'signal') {
+      const marker = track.markers[selection.marker];
+      minimumDelta = Math.max(minimumDelta, -marker.time);
+      maximumDelta = Math.min(maximumDelta, asset.duration - marker.time);
+    } else {
+      const clip = track.clips[selection.marker];
+      minimumDelta = Math.max(minimumDelta, -clip.start);
+      maximumDelta = Math.min(maximumDelta, asset.duration - clip.start - clip.duration);
+    }
+  }
+  for (const [trackIndex, selected] of selectedByTrack) {
+    const track = asset.tracks[trackIndex];
+    if (track.type === 'signal') continue;
+    for (const selectedIndex of selected) {
+      const clip = track.clips[selectedIndex];
+      const clipEnd = clip.start + clip.duration;
+      for (let otherIndex = 0; otherIndex < track.clips.length; otherIndex += 1) {
+        if (selected.has(otherIndex)) continue;
+        const other = track.clips[otherIndex];
+        const otherEnd = other.start + other.duration;
+        if (otherEnd <= clip.start + 1e-6) {
+          minimumDelta = Math.max(minimumDelta, otherEnd - clip.start);
+        } else if (other.start >= clipEnd - 1e-6) {
+          maximumDelta = Math.min(maximumDelta, other.start - clipEnd);
+        } else {
+          return { ok: false, error: `Track '${track.name}' already contains overlapping clips.` };
+        }
+      }
+    }
+  }
+  const safeDelta = Number.isFinite(requestedDelta) ? requestedDelta : 0;
+  const delta = snap(clamp(safeDelta, minimumDelta, maximumDelta), asset.frame_rate);
+  const next = structuredClone(asset);
+  for (const selection of unique.values()) {
+    const track = next.tracks[selection.track];
+    if (track.type === 'signal') track.markers[selection.marker].time = snap(track.markers[selection.marker].time + delta, next.frame_rate);
+    else track.clips[selection.marker].start = snap(track.clips[selection.marker].start + delta, next.frame_rate);
+  }
+  return { ok: true, asset: next, delta };
+}
+
 export function copySequencerItem(
   asset: TimelineAsset,
   trackIndex: number,
   itemIndex: number,
-): SequencerClipboard | null {
+): SequencerClipboardItem | null {
   const track = asset.tracks[trackIndex];
   if (!track) return null;
   if (track.type === 'signal') {
@@ -361,7 +488,7 @@ export function copySequencerItem(
 export function resolveSequencerPasteTrack(
   asset: TimelineAsset,
   preferredTrackIndex: number | null,
-  clipboard: SequencerClipboard,
+  clipboard: SequencerClipboardItem,
 ): number {
   const preferred = preferredTrackIndex == null ? null : asset.tracks[preferredTrackIndex];
   if (preferred?.type === clipboard.type && !preferred.locked) return preferredTrackIndex!;
@@ -376,7 +503,7 @@ export function pasteSequencerItem(
   asset: TimelineAsset,
   preferredTrackIndex: number | null,
   requestedTime: number,
-  clipboard: SequencerClipboard,
+  clipboard: SequencerClipboardItem,
 ): SequencerPasteResult {
   const trackIndex = resolveSequencerPasteTrack(asset, preferredTrackIndex, clipboard);
   if (trackIndex < 0) {
@@ -434,4 +561,192 @@ export function pasteSequencerItem(
     return { ok: true, asset: next, trackIndex, itemIndex: track.clips.indexOf(item) };
   }
   return { ok: false, error: 'Timeline paste target is incompatible with the copied clip.' };
+}
+
+type GroupTarget = {
+  entry: SequencerClipboardItem;
+  targetTrack: number;
+  relativeStart: number;
+};
+
+function resolveSequencerGroupTargets(
+  asset: TimelineAsset,
+  clipboard: SequencerClipboardGroup,
+  preferredTrackIndex: number | null,
+): GroupTarget[] | string {
+  const sourceGroups = new Map<string, { type: SequencerClipboardItem['type']; indexes: number[] }>();
+  for (let index = 0; index < clipboard.items.length; index += 1) {
+    const item = clipboard.items[index];
+    const existing = sourceGroups.get(item.sourceTrackId);
+    if (existing && existing.type !== item.type) {
+      return `Copied source track '${item.sourceTrackId}' contains incompatible item types.`;
+    }
+    const group = existing ?? { type: item.type, indexes: [] };
+    group.indexes.push(index);
+    sourceGroups.set(item.sourceTrackId, group);
+  }
+  const targetBySource = new Map<string, number>();
+  const usedTargets = new Set<number>();
+  for (const [sourceTrackId, source] of sourceGroups) {
+    const exact = asset.tracks.findIndex((track, index) => (
+      !usedTargets.has(index) && track.id === sourceTrackId && track.type === source.type && !track.locked
+    ));
+    if (exact >= 0) {
+      targetBySource.set(sourceTrackId, exact);
+      usedTargets.add(exact);
+    }
+  }
+  const primaryItem = clipboard.items[clipboard.primary] ?? clipboard.items[0];
+  if (primaryItem && !targetBySource.has(primaryItem.sourceTrackId) && preferredTrackIndex != null) {
+    const preferred = asset.tracks[preferredTrackIndex];
+    if (preferred && preferred.type === primaryItem.type && !preferred.locked && !usedTargets.has(preferredTrackIndex)) {
+      targetBySource.set(primaryItem.sourceTrackId, preferredTrackIndex);
+      usedTargets.add(preferredTrackIndex);
+    }
+  }
+  for (const [sourceTrackId, source] of sourceGroups) {
+    if (targetBySource.has(sourceTrackId)) continue;
+    const fallback = asset.tracks.findIndex((track, index) => (
+      !usedTargets.has(index) && track.type === source.type && !track.locked
+    ));
+    if (fallback < 0) return `Timeline has no separate unlocked ${source.type} track for copied track '${sourceTrackId}'.`;
+    targetBySource.set(sourceTrackId, fallback);
+    usedTargets.add(fallback);
+  }
+  return clipboard.items.map((entry) => ({
+    entry,
+    targetTrack: targetBySource.get(entry.sourceTrackId)!,
+    relativeStart: sequencerItemTime(entry) - clipboard.anchorTime,
+  }));
+}
+
+function groupInternalCollision(targets: readonly GroupTarget[]): string | null {
+  for (let left = 0; left < targets.length; left += 1) {
+    const first = targets[left];
+    if (first.entry.type === 'signal') continue;
+    for (let right = left + 1; right < targets.length; right += 1) {
+      const second = targets[right];
+      if (second.entry.type === 'signal' || first.targetTrack !== second.targetTrack) continue;
+      const firstEnd = first.relativeStart + first.entry.item.duration;
+      const secondEnd = second.relativeStart + second.entry.item.duration;
+      if (first.relativeStart < secondEnd - 1e-6 && firstEnd > second.relativeStart + 1e-6) {
+        return 'Copied clips overlap after their source tracks are mapped to the paste target.';
+      }
+    }
+  }
+  return null;
+}
+
+function nextGroupPasteCandidate(
+  asset: TimelineAsset,
+  targets: readonly GroupTarget[],
+  candidate: number,
+): number | null {
+  let next = candidate;
+  let collided = false;
+  for (const target of targets) {
+    if (target.entry.type === 'signal') continue;
+    const plannedStart = candidate + target.relativeStart;
+    const plannedEnd = plannedStart + target.entry.item.duration;
+    const track = asset.tracks[target.targetTrack];
+    if (track.type === 'signal') return null;
+    for (const existing of track.clips) {
+      const existingEnd = existing.start + existing.duration;
+      if (plannedStart < existingEnd - 1e-6 && plannedEnd > existing.start + 1e-6) {
+        collided = true;
+        next = Math.max(next, existingEnd - target.relativeStart);
+      }
+    }
+  }
+  return collided ? next : null;
+}
+
+function findSequencerGroupPlacement(
+  asset: TimelineAsset,
+  targets: readonly GroupTarget[],
+  requestedTime: number,
+): number | null {
+  const spanEnd = Math.max(0, ...targets.map((target) => (
+    target.entry.type === 'signal'
+      ? target.relativeStart
+      : target.relativeStart + target.entry.item.duration
+  )));
+  if (spanEnd > asset.duration + 1e-6) return null;
+  const maximum = Math.max(0, asset.duration - spanEnd);
+  const requested = clamp(snap(Number.isFinite(requestedTime) ? requestedTime : 0, asset.frame_rate), 0, maximum);
+  const frame = 1 / finitePositive(asset.frame_rate, 60);
+  const search = (start: number, end: number): number | null => {
+    let candidate = start;
+    let attempts = 0;
+    while (candidate <= end + 1e-6 && attempts < 10000) {
+      const conflict = nextGroupPasteCandidate(asset, targets, candidate);
+      if (conflict == null) return snap(candidate, asset.frame_rate);
+      candidate = snap(Math.max(candidate + frame, conflict), asset.frame_rate);
+      attempts += 1;
+    }
+    return null;
+  };
+  return search(requested, maximum) ?? (requested > 0 ? search(0, Math.min(maximum, requested - frame)) : null);
+}
+
+function insertGroupItem(
+  asset: TimelineAsset,
+  target: GroupTarget,
+  anchorTime: number,
+): { item: TimelineSignal | TimelineActivationClip | TimelineAudioClip | TimelineAnimationClip | TimelineParticleClip | TimelineCameraClip } {
+  const track = asset.tracks[target.targetTrack];
+  if (track.type === 'signal' && target.entry.type === 'signal') {
+    const item = { ...structuredClone(target.entry.item), time: snap(anchorTime + target.relativeStart, asset.frame_rate) };
+    track.markers.push(item);
+    return { item };
+  }
+  if (track.type === 'signal' || target.entry.type === 'signal' || track.type !== target.entry.type) {
+    throw new Error('Timeline group paste target became incompatible.');
+  }
+  const item = {
+    ...structuredClone(target.entry.item),
+    start: snap(anchorTime + target.relativeStart, asset.frame_rate),
+  };
+  track.clips.push(item as never);
+  return { item };
+}
+
+export function pasteSequencerClipboard(
+  asset: TimelineAsset,
+  preferredTrackIndex: number | null,
+  requestedTime: number,
+  clipboard: SequencerClipboard,
+): SequencerClipboardPasteResult {
+  if (clipboard.type !== 'group') {
+    const pasted = pasteSequencerItem(asset, preferredTrackIndex, requestedTime, clipboard);
+    if (!pasted.ok) return pasted;
+    const selection = { track: pasted.trackIndex, marker: pasted.itemIndex };
+    return { ok: true, asset: pasted.asset, selections: [selection], primary: selection };
+  }
+  if (clipboard.items.length === 0) return { ok: false, error: 'Copied Timeline group is empty.' };
+  const targets = resolveSequencerGroupTargets(asset, clipboard, preferredTrackIndex);
+  if (typeof targets === 'string') return { ok: false, error: targets };
+  const collision = groupInternalCollision(targets);
+  if (collision) return { ok: false, error: collision };
+  const anchorTime = findSequencerGroupPlacement(asset, targets, requestedTime);
+  if (anchorTime == null) return { ok: false, error: 'Timeline has no collision-free space for the copied group.' };
+  const next = structuredClone(asset);
+  const inserted = targets.map((target) => insertGroupItem(next, target, anchorTime));
+  for (const track of next.tracks) {
+    if (track.type === 'signal') track.markers.sort((left, right) => left.time - right.time);
+    else track.clips.sort((left, right) => left.start - right.start);
+  }
+  const selections = targets.map((target, index) => {
+    const track = next.tracks[target.targetTrack];
+    const marker = track.type === 'signal'
+      ? track.markers.indexOf(inserted[index].item as TimelineSignal)
+      : track.clips.indexOf(inserted[index].item as never);
+    return { track: target.targetTrack, marker };
+  });
+  return {
+    ok: true,
+    asset: next,
+    selections,
+    primary: selections[clipboard.primary] ?? selections[0],
+  };
 }

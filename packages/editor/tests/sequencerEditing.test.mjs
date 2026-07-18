@@ -4,12 +4,15 @@ import test from 'node:test';
 import {
   clampSequencerZoom,
   copySequencerItem,
+  copySequencerItems,
   deleteSequencerItems,
   findSequencerClipPlacement,
   lockedSequencerContentEnd,
   moveSequencerClip,
+  moveSequencerItems,
   moveSequencerTrack,
   pasteSequencerItem,
+  pasteSequencerClipboard,
   resolveSequencerPasteTrack,
   selectSequencerItem,
   sequencerTicks,
@@ -133,6 +136,95 @@ test('Sequencer ripple-delete closes deleted clip durations per affected track',
   const markerOnly = deleteSequencerItems(asset, [{ track: 0, marker: 0 }], true);
   assert.equal(markerOnly.ok, false);
   assert.match(markerOnly.error, /requires at least one selected clip/);
+});
+
+test('Sequencer group clipboard preserves cross-track offsets and primary selection', () => {
+  const asset = timeline();
+  const copied = copySequencerItems(asset, [
+    { track: 0, marker: 0 },
+    { track: 1, marker: 0 },
+  ], { track: 1, marker: 0 });
+  assert.equal(copied.ok, true);
+  assert.equal(copied.clipboard.type, 'group');
+  asset.tracks[0].markers[0].name = 'Changed';
+  asset.tracks[1].clips[0].volume = 0.1;
+  const pasted = pasteSequencerClipboard(asset, null, 1.04, copied.clipboard);
+  assert.equal(pasted.ok, true);
+  assert.deepEqual(pasted.selections, [
+    { track: 0, marker: 1 },
+    { track: 1, marker: 1 },
+  ]);
+  assert.deepEqual(pasted.primary, { track: 1, marker: 1 });
+  assert.equal(pasted.asset.tracks[0].markers[1].time, 3);
+  assert.equal(pasted.asset.tracks[0].markers[1].name, 'Hit');
+  assert.equal(pasted.asset.tracks[1].clips[1].start, 3);
+  assert.equal(pasted.asset.tracks[1].clips[1].volume, 0.8);
+});
+
+test('Sequencer group paste is atomic when the complete shape cannot fit', () => {
+  const source = timeline();
+  source.tracks[1].clips.push({
+    start: 4, duration: 2, clip: 'Assets/later.ogg', clip_in: 0, volume: 1, pitch: 1, looped: false,
+  });
+  const copied = copySequencerItems(source, [
+    { track: 1, marker: 0 },
+    { track: 1, marker: 1 },
+  ]);
+  assert.equal(copied.ok, true);
+  const target = timeline();
+  target.tracks[1].clips = [{
+    start: 0, duration: 8, clip: 'Assets/full.ogg', clip_in: 0, volume: 1, pitch: 1, looped: false,
+  }];
+  const pasted = pasteSequencerClipboard(target, 1, 0, copied.clipboard);
+  assert.equal(pasted.ok, false);
+  assert.match(pasted.error, /no collision-free space/);
+  assert.equal(target.tracks[1].clips.length, 1);
+});
+
+test('Sequencer group paste never collapses separate source tracks into one lane', () => {
+  const source = timeline();
+  source.tracks.push({
+    type: 'audio', id: 'dialogue', name: 'Dialogue', muted: false, locked: false, target: 'Voice',
+    clips: [{ start: 1, duration: 1, clip: 'Assets/voice.ogg', clip_in: 0, volume: 1, pitch: 1, looped: false }],
+  });
+  const copied = copySequencerItems(source, [
+    { track: 1, marker: 0 },
+    { track: 3, marker: 0 },
+  ]);
+  assert.equal(copied.ok, true);
+  const target = timeline();
+  const pasted = pasteSequencerClipboard(target, 1, 4, copied.clipboard);
+  assert.equal(pasted.ok, false);
+  assert.match(pasted.error, /no separate unlocked audio track/);
+  assert.equal(target.tracks[1].clips.length, 1);
+});
+
+test('Sequencer group movement shares one collision bound and rejects locked tracks', () => {
+  const asset = timeline();
+  asset.tracks[1].clips = [
+    { start: 0, duration: 1, clip: 'Assets/a.ogg', clip_in: 0, volume: 1, pitch: 1, looped: false },
+    { start: 2, duration: 1, clip: 'Assets/b.ogg', clip_in: 0, volume: 1, pitch: 1, looped: false },
+    { start: 4, duration: 1, clip: 'Assets/c.ogg', clip_in: 0, volume: 1, pitch: 1, looped: false },
+    { start: 6, duration: 1, clip: 'Assets/d.ogg', clip_in: 0, volume: 1, pitch: 1, looped: false },
+  ];
+  const moved = moveSequencerItems(asset, [
+    { track: 0, marker: 0 },
+    { track: 1, marker: 1 },
+    { track: 1, marker: 2 },
+  ], 10);
+  assert.equal(moved.ok, true);
+  assert.equal(moved.delta, 1);
+  assert.equal(moved.asset.tracks[0].markers[0].time, 2);
+  assert.deepEqual(moved.asset.tracks[1].clips.map((clip) => clip.start), [0, 3, 5, 6]);
+  assert.deepEqual(asset.tracks[1].clips.map((clip) => clip.start), [0, 2, 4, 6]);
+
+  asset.tracks[0].locked = true;
+  const locked = moveSequencerItems(asset, [
+    { track: 0, marker: 0 },
+    { track: 1, marker: 1 },
+  ], 1);
+  assert.equal(locked.ok, false);
+  assert.match(locked.error, /locked/);
 });
 
 test('Sequencer start trimming cannot seek before the source asset', () => {
