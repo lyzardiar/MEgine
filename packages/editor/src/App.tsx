@@ -152,7 +152,18 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
   const [timelineAssetPath, setTimelineAssetPath] = useState<string | null>(null);
   const [sequencerDirty, setSequencerDirty] = useState(false);
   const [projectSettingsDirty, setProjectSettingsDirty] = useState(false);
+  const [buildSettingsDirty, setBuildSettingsDirty] = useState(false);
   const [sceneDirty, setSceneDirty] = useState(false);
+  const resourceDirty = materialDirty
+    || shaderDirty
+    || animationDirty
+    || sequencerDirty
+    || animatorDirty
+    || spriteDirty
+    || spriteAtlasDirty
+    || projectSettingsDirty
+    || buildSettingsDirty;
+  const hasUnsavedChanges = resourceDirty || (!props.detachedPanel && sceneDirty);
   const dirtyPanels = useMemo(() => {
     const dirty = new Set<PanelKind>();
     if (materialDirty) dirty.add('material');
@@ -162,8 +173,9 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
     if (spriteAtlasDirty) dirty.add('spriteAtlas');
     if (animationDirty || sequencerDirty) dirty.add('timeline');
     if (projectSettingsDirty) dirty.add('projectSettings');
+    if (buildSettingsDirty) dirty.add('build');
     return dirty;
-  }, [animationDirty, animatorDirty, materialDirty, projectSettingsDirty, sequencerDirty, shaderDirty, spriteAtlasDirty, spriteDirty]);
+  }, [animationDirty, animatorDirty, buildSettingsDirty, materialDirty, projectSettingsDirty, sequencerDirty, shaderDirty, spriteAtlasDirty, spriteDirty]);
   const [logs, setLogs] = useState<string[]>([
     'MEngine Editor',
     '场景落盘：packages/editor/project/Assets/Scenes/*.mscene',
@@ -176,6 +188,7 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
   const booted = useRef(false);
   const sceneNameRef = useRef<string | null>(null);
   const sceneDirtyRef = useRef(false);
+  const unsavedChangesRef = useRef(false);
   const savedSceneFingerprint = useRef(store.sceneContentFingerprint());
   const remoteSceneFingerprint = useRef(savedSceneFingerprint.current);
   const remoteSceneDirty = useRef(false);
@@ -188,19 +201,17 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
   const lastRemoteTimestamp = useRef(0);
   const syncReady = useRef(!props.detachedPanel);
   sceneNameRef.current = sceneName;
+  unsavedChangesRef.current = hasUnsavedChanges;
 
   useEffect(() => {
     const onBeforeUnload = (event: BeforeUnloadEvent) => {
-      const dirty = props.detachedPanel
-        ? materialDirty || shaderDirty || animationDirty || sequencerDirty || animatorDirty || spriteDirty || spriteAtlasDirty
-        : sceneDirty || materialDirty || shaderDirty || animationDirty || sequencerDirty || animatorDirty || spriteDirty || spriteAtlasDirty;
-      if (!dirty) return;
+      if (!hasUnsavedChanges) return;
       event.preventDefault();
       event.returnValue = '';
     };
     window.addEventListener('beforeunload', onBeforeUnload);
     return () => window.removeEventListener('beforeunload', onBeforeUnload);
-  }, [animationDirty, animatorDirty, materialDirty, props.detachedPanel, sceneDirty, sequencerDirty, shaderDirty, spriteAtlasDirty, spriteDirty]);
+  }, [hasUnsavedChanges]);
 
   const broadcastScene = (immediate = false) => {
     const channel = syncChannel.current;
@@ -532,28 +543,19 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
   };
 
   useEffect(() => {
-    const title = `${sceneDirty ? '* ' : ''}${sceneName ? sceneFileName(sceneName) : 'Untitled'} — MEngine Editor`;
+    const title = `${hasUnsavedChanges ? '* ' : ''}${sceneName ? sceneFileName(sceneName) : 'Untitled'} — MEngine Editor`;
     document.title = props.detachedPanel ? `${props.detachedPanel} — ${title}` : title;
-  }, [props.detachedPanel, sceneDirty, sceneName]);
+  }, [hasUnsavedChanges, props.detachedPanel, sceneName]);
 
   useEffect(() => {
-    if (props.detachedPanel) return;
-    if (!isDesktopEditor()) {
-      const onBeforeUnload = (event: BeforeUnloadEvent) => {
-        if (!sceneDirtyRef.current) return;
-        event.preventDefault();
-        event.returnValue = '';
-      };
-      window.addEventListener('beforeunload', onBeforeUnload);
-      return () => window.removeEventListener('beforeunload', onBeforeUnload);
-    }
+    if (!isDesktopEditor()) return;
 
     let disposed = false;
     let unlisten: (() => void) | undefined;
     void getCurrentWindow().onCloseRequested((event) => {
       if (
-        sceneDirtyRef.current
-        && !window.confirm('当前场景有未保存的修改。关闭编辑器将丢失这些修改，是否继续？')
+        unsavedChangesRef.current
+        && !window.confirm('当前场景或资源有未保存的修改。关闭编辑器将丢失这些修改，是否继续？')
       ) {
         event.preventDefault();
       }
@@ -567,7 +569,7 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
       disposed = true;
       unlisten?.();
     };
-  }, [props.detachedPanel]);
+  }, []);
 
   const openSceneDialog = () => {
     const scenes = listScenes();
@@ -1369,9 +1371,10 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
               sceneName={sceneName}
               sceneTick={sceneTick}
               sceneDirty={sceneDirty}
-              resourceDirty={materialDirty || shaderDirty || animationDirty || sequencerDirty || animatorDirty || spriteDirty || spriteAtlasDirty || projectSettingsDirty}
+              resourceDirty={resourceDirty}
               onSaveScene={saveSceneForBuild}
               onSaveAll={saveEverything}
+              onDirtyChange={setBuildSettingsDirty}
               onLog={log}
             />
           ),

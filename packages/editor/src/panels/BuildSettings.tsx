@@ -1,5 +1,10 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { getDesktopProject } from '../transport/desktopProjectSession';
+import {
+  buildAssetPathsDirty,
+  parseAlwaysIncludeDraft,
+} from '../buildSettingsModel';
+import { registerSaveAllParticipant } from '../saveAll';
 import {
   buildPcPlayer,
   getProjectBuildSettings,
@@ -44,6 +49,7 @@ export function BuildSettings(props: {
   resourceDirty: boolean;
   onSaveScene: () => Promise<boolean>;
   onSaveAll: () => Promise<boolean>;
+  onDirtyChange: (dirty: boolean) => void;
   onLog: (message: string, level?: 'info' | 'warn' | 'error') => void;
 }) {
   const desktop = isDesktopEditor();
@@ -60,6 +66,13 @@ export function BuildSettings(props: {
   const [message, setMessage] = useState<string | null>(null);
   const [messageError, setMessageError] = useState(false);
   const [settingsError, setSettingsError] = useState<string | null>(null);
+  const settingsRef = useRef<ProjectBuildSettings | null>(null);
+  const alwaysIncludeDraftRef = useRef('');
+  settingsRef.current = settings;
+  alwaysIncludeDraftRef.current = alwaysIncludeDraft;
+  const assetSettingsDirty = Boolean(
+    settings && buildAssetPathsDirty(alwaysIncludeDraft, settings.alwaysInclude),
+  );
   const platform = useMemo(() => {
     const source = `${navigator.platform} ${navigator.userAgent}`.toLowerCase();
     if (source.includes('win')) return 'Windows (current host)';
@@ -73,8 +86,20 @@ export function BuildSettings(props: {
     void getProjectBuildSettings()
       .then((value) => {
         if (!cancelled) {
+          const preserveDraft = Boolean(
+            settingsRef.current
+            && buildAssetPathsDirty(
+              alwaysIncludeDraftRef.current,
+              settingsRef.current.alwaysInclude,
+            ),
+          );
+          settingsRef.current = value;
           setSettings(value);
-          setAlwaysIncludeDraft(value.alwaysInclude.join('\n'));
+          if (!preserveDraft) {
+            const nextDraft = value.alwaysInclude.join('\n');
+            alwaysIncludeDraftRef.current = nextDraft;
+            setAlwaysIncludeDraft(nextDraft);
+          }
         }
       })
       .catch((reason: unknown) => {
@@ -84,6 +109,12 @@ export function BuildSettings(props: {
       });
     return () => { cancelled = true; };
   }, [props.sceneTick]);
+
+  useEffect(() => {
+    props.onDirtyChange(assetSettingsDirty);
+  }, [assetSettingsDirty, props.onDirtyChange]);
+
+  useEffect(() => () => props.onDirtyChange(false), [props.onDirtyChange]);
 
   const save = async () => {
     setMessage(null);
@@ -126,33 +157,49 @@ export function BuildSettings(props: {
   const persistAssetSettings = async (
     assetMode: 'all' | 'referenced',
     alwaysInclude: string[],
-  ) => {
-    if (settingsSaving) return;
+  ): Promise<boolean> => {
+    if (settingsSaving) return false;
     setSettingsSaving(true);
     setSettingsError(null);
     try {
       const next = await saveProjectBuildAssetSettings(assetMode, alwaysInclude);
+      settingsRef.current = next;
       setSettings(next);
-      setAlwaysIncludeDraft(next.alwaysInclude.join('\n'));
+      const nextDraft = next.alwaysInclude.join('\n');
+      alwaysIncludeDraftRef.current = nextDraft;
+      setAlwaysIncludeDraft(nextDraft);
       setLastBuild(null);
       props.onLog(`Build asset mode updated: ${next.assetMode}, ${next.alwaysInclude.length} always-included path(s)`);
+      return true;
     } catch (reason) {
       const detail = reason instanceof Error ? reason.message : String(reason);
       setSettingsError(detail);
       props.onLog(`Build asset settings save failed: ${detail}`, 'error');
+      return false;
     } finally {
       setSettingsSaving(false);
     }
   };
 
-  const draftAlwaysInclude = () => alwaysIncludeDraft
-    .split(/\r?\n/)
-    .map((value) => value.trim())
-    .filter(Boolean);
+  const draftAlwaysInclude = () => parseAlwaysIncludeDraft(alwaysIncludeDraft);
 
   const saveAlwaysInclude = () => {
     if (settings) void persistAssetSettings(settings.assetMode, draftAlwaysInclude());
   };
+
+  useEffect(() => registerSaveAllParticipant('Build Asset Settings', () => {
+    if (!assetSettingsDirty) return null;
+    return async () => {
+      const current = settingsRef.current;
+      if (!current) throw new Error('Build settings are not loaded.');
+      if (settingsSaving) throw new Error('Build settings are already being saved.');
+      const ok = await persistAssetSettings(
+        current.assetMode,
+        parseAlwaysIncludeDraft(alwaysIncludeDraftRef.current),
+      );
+      if (!ok) throw new Error('Build asset settings could not be saved.');
+    };
+  }), [assetSettingsDirty, settingsSaving]);
 
   const toggleScene = (path: string) => {
     if (!settings) return;
@@ -207,6 +254,7 @@ export function BuildSettings(props: {
       !desktop
       || props.sceneDirty
       || props.resourceDirty
+      || assetSettingsDirty
       || settingsSaving
       || savingAll
       || !settings?.scenes.length
@@ -337,7 +385,11 @@ export function BuildSettings(props: {
               value={alwaysIncludeDraft}
               disabled={!settings || settingsSaving || building}
               placeholder={'Assets/Prefabs/Dynamic\nAssets/Localization'}
-              onChange={(event) => setAlwaysIncludeDraft(event.target.value)}
+              onChange={(event) => {
+                alwaysIncludeDraftRef.current = event.target.value;
+                setAlwaysIncludeDraft(event.target.value);
+                setLastBuild(null);
+              }}
             />
             <button
               type="button"
@@ -351,6 +403,14 @@ export function BuildSettings(props: {
         {settings?.assetMode === 'referenced' && (
           <div className="build-content-note">
             Dynamic loads must be listed above. Referenced assets, transitive dependencies, sprite metadata and build scenes are included automatically.
+          </div>
+        )}
+        {assetSettingsDirty && (
+          <div className="build-warning">
+            <span>Always Include has unapplied changes. Apply or Save All before building.</span>
+            <button type="button" disabled={settingsSaving || building} onClick={saveAlwaysInclude}>
+              {settingsSaving ? 'Applying...' : 'Apply Paths'}
+            </button>
           </div>
         )}
       </section>
@@ -474,6 +534,7 @@ export function BuildSettings(props: {
             !desktop
             || props.sceneDirty
             || props.resourceDirty
+            || assetSettingsDirty
             || settingsSaving
             || savingAll
             || building
@@ -492,6 +553,7 @@ export function BuildSettings(props: {
             !desktop
             || props.sceneDirty
             || props.resourceDirty
+            || assetSettingsDirty
             || settingsSaving
             || savingAll
             || building
