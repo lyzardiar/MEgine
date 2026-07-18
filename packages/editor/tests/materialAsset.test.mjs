@@ -11,7 +11,7 @@ import {
 
 test('material assets have stable authoring defaults', () => {
   assert.deepEqual(createMaterialAsset('Paint'), {
-    version: 4,
+    version: 5,
     name: 'Paint',
     shader: 'pbr',
     custom_shader: '',
@@ -39,6 +39,8 @@ test('material assets have stable authoring defaults', () => {
     wrap_u: 'repeat',
     wrap_v: 'repeat',
     filter: 'linear',
+    mipmap_filter: 'linear',
+    anisotropy: 1,
   });
 });
 
@@ -82,6 +84,8 @@ test('material parsing normalizes ranges and texture separators', () => {
   assert.equal(material.wrap_u, 'clamp');
   assert.equal(material.wrap_v, 'mirror');
   assert.equal(material.filter, 'nearest');
+  assert.equal(material.mipmap_filter, 'linear');
+  assert.equal(material.anisotropy, 1);
   assert.deepEqual(parseMaterialAsset(serializeMaterialAsset(material)), material);
 });
 
@@ -91,13 +95,28 @@ test('legacy material assets upgrade to safe pipeline defaults', () => {
     name: 'Legacy',
     surface: 'transparent',
   }));
-  assert.equal(legacy.version, 4);
+  assert.equal(legacy.version, 5);
   assert.equal(legacy.blend_mode, 'alpha');
   assert.equal(legacy.transparent_depth_write, false);
   assert.equal(legacy.render_queue, -1);
   assert.equal(legacy.custom_shader, '');
-  assert.throws(() => parseMaterialAsset('{"version":5}'), /Unsupported material version/);
-  assert.throws(() => parseMaterialAsset('{"version":4,"filter":"cubic"}'), /Invalid material filter/);
+  assert.equal(legacy.mipmap_filter, 'linear');
+  assert.equal(legacy.anisotropy, 1);
+  assert.throws(() => parseMaterialAsset('{"version":6}'), /Unsupported material version/);
+  assert.throws(() => parseMaterialAsset('{"version":5,"filter":"cubic"}'), /Invalid material filter/);
+  assert.throws(() => parseMaterialAsset('{"version":5,"mipmap_filter":"cubic"}'), /Invalid material mipmap_filter/);
+});
+
+test('anisotropic material sampling is bounded and forces compatible filters', () => {
+  const material = parseMaterialAsset(JSON.stringify({
+    version: 5,
+    filter: 'nearest',
+    mipmap_filter: 'nearest',
+    anisotropy: 32,
+  }));
+  assert.equal(material.anisotropy, 16);
+  assert.equal(material.filter, 'linear');
+  assert.equal(material.mipmap_filter, 'linear');
 });
 
 test('custom material shader references normalize project separators', () => {

@@ -676,7 +676,7 @@ test('buildPcPackage includes validated custom material surface shaders', () => 
   }
 });
 
-test('buildPcPackage rejects future material versions and invalid sampler modes', () => {
+test('buildPcPackage validates material v5 sampler modes and rejects invalid contracts', () => {
   const paths = fixture('invalid-material-contract');
   try {
     writeFileSync(join(paths.project, 'Assets', 'Scenes', 'Main.mscene'), JSON.stringify({
@@ -685,16 +685,16 @@ test('buildPcPackage rejects future material versions and invalid sampler modes'
       } }] },
     }));
     const materialPath = join(paths.project, 'Assets', 'Materials', 'Paint.mmat');
-    writeFileSync(materialPath, JSON.stringify({ version: 5, shader: 'pbr' }));
+    writeFileSync(materialPath, JSON.stringify({ version: 6, shader: 'pbr' }));
     assert.throws(() => buildPcPackage({
       projectDir: paths.project,
       outputDir: paths.output,
       runtimePath: paths.runtime,
       engineVersion: 'test-engine',
-    }), /unsupported version 5/);
+    }), /unsupported version 6/);
     assert.equal(existsSync(paths.output), false);
 
-    writeFileSync(materialPath, JSON.stringify({ version: 4, shader: 'pbr', wrap_u: 'border' }));
+    writeFileSync(materialPath, JSON.stringify({ version: 5, shader: 'pbr', wrap_u: 'border' }));
     assert.throws(() => buildPcPackage({
       projectDir: paths.project,
       outputDir: paths.output,
@@ -702,6 +702,36 @@ test('buildPcPackage rejects future material versions and invalid sampler modes'
       engineVersion: 'test-engine',
     }), /wrap_u must be repeat, clamp, or mirror/);
     assert.equal(existsSync(paths.output), false);
+
+    writeFileSync(materialPath, JSON.stringify({
+      version: 5,
+      shader: 'pbr',
+      filter: 'nearest',
+      mipmap_filter: 'linear',
+      anisotropy: 8,
+    }));
+    assert.throws(() => buildPcPackage({
+      projectDir: paths.project,
+      outputDir: paths.output,
+      runtimePath: paths.runtime,
+      engineVersion: 'test-engine',
+    }), /anisotropy above 1 requires linear texture and mipmap filters/);
+    assert.equal(existsSync(paths.output), false);
+
+    writeFileSync(materialPath, JSON.stringify({
+      version: 5,
+      shader: 'pbr',
+      filter: 'linear',
+      mipmap_filter: 'linear',
+      anisotropy: 8,
+    }));
+    buildPcPackage({
+      projectDir: paths.project,
+      outputDir: paths.output,
+      runtimePath: paths.runtime,
+      engineVersion: 'test-engine',
+    });
+    assert.equal(existsSync(join(paths.output, 'Assets', 'Materials', 'Paint.mmat')), true);
   } finally {
     rmSync(paths.root, { recursive: true, force: true });
   }

@@ -467,7 +467,7 @@ function scanBuildAssetDependencies(
     } else if (extension === '.mmat' || extension === '.mat') {
       const material = readJsonAsset(absolute, root, 'material');
       if (material.version != null
-        && (!Number.isInteger(material.version) || Number(material.version) < 1 || Number(material.version) > 4)) {
+        && (!Number.isInteger(material.version) || Number(material.version) < 1 || Number(material.version) > 5)) {
         throw new Error(`invalid material ${source}: unsupported version ${String(material.version)}`);
       }
       if (material.shader != null
@@ -513,6 +513,23 @@ function scanBuildAssetDependencies(
       }
       if (material.filter != null && material.filter !== 'nearest' && material.filter !== 'linear') {
         throw new Error(`invalid material ${source}: filter must be nearest or linear`);
+      }
+      if (material.mipmap_filter != null
+        && material.mipmap_filter !== 'nearest'
+        && material.mipmap_filter !== 'linear') {
+        throw new Error(`invalid material ${source}: mipmap_filter must be nearest or linear`);
+      }
+      if (material.anisotropy != null
+        && (!Number.isInteger(material.anisotropy)
+          || Number(material.anisotropy) < 1
+          || Number(material.anisotropy) > 16)) {
+        throw new Error(`invalid material ${source}: anisotropy must be an integer from 1 to 16`);
+      }
+      if (Number(material.anisotropy ?? 1) > 1
+        && (material.filter === 'nearest' || material.mipmap_filter === 'nearest')) {
+        throw new Error(
+          `invalid material ${source}: anisotropy above 1 requires linear texture and mipmap filters`,
+        );
       }
       for (const field of [
         'base_color_texture',

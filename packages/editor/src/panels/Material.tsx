@@ -587,9 +587,39 @@ export function MaterialEditor(props: {
             <option value="clamp">Clamp</option>
             <option value="mirror">Mirror</option>
           </select></label>
-          <label>Filter <select value={material.filter} onChange={(event) => update('filter', event.target.value as MaterialAsset['filter'])}>
+          <label>Texture Filter <select
+            value={material.filter}
+            disabled={material.anisotropy > 1}
+            title={material.anisotropy > 1 ? 'Anisotropic filtering requires linear texture filtering' : undefined}
+            onChange={(event) => update('filter', event.target.value as MaterialAsset['filter'])}
+          >
             <option value="linear">Linear</option>
             <option value="nearest">Nearest</option>
+          </select></label>
+          <label>Mipmap Filter <select
+            value={material.mipmap_filter}
+            disabled={material.anisotropy > 1}
+            title={material.anisotropy > 1 ? 'Anisotropic filtering requires linear mipmap filtering' : undefined}
+            onChange={(event) => update('mipmap_filter', event.target.value as MaterialAsset['mipmap_filter'])}
+          >
+            <option value="linear">Trilinear</option>
+            <option value="nearest">Bilinear</option>
+          </select></label>
+          <label>Anisotropy <select
+            value={material.anisotropy}
+            title="Improves texture clarity at grazing angles; unsupported GPUs safely fall back to 1x"
+            onChange={(event) => {
+              const anisotropy = Number(event.target.value);
+              setMaterial((current) => current ? {
+                ...current,
+                anisotropy,
+                ...(anisotropy > 1 ? { filter: 'linear', mipmap_filter: 'linear' } : {}),
+              } : current);
+            }}
+          >
+            {[1, 2, 4, 8, 16].map((value) => (
+              <option key={value} value={value}>{value}x</option>
+            ))}
           </select></label>
         </div>
       </div>

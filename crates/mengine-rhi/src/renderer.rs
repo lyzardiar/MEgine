@@ -89,6 +89,8 @@ pub struct RenderMaterial {
     pub wrap_u: MaterialWrap,
     pub wrap_v: MaterialWrap,
     pub filter: MaterialFilter,
+    pub mipmap_filter: MaterialFilter,
+    pub anisotropy: u8,
     /// Optional project-authored WGSL surface hook. The engine wraps and validates this hook
     /// against its stable forward-material interface before creating a pipeline.
     pub surface_shader: String,
@@ -146,6 +148,8 @@ impl Default for RenderMaterial {
             wrap_u: MaterialWrap::Repeat,
             wrap_v: MaterialWrap::Repeat,
             filter: MaterialFilter::Linear,
+            mipmap_filter: MaterialFilter::Linear,
+            anisotropy: 1,
             surface_shader: String::new(),
         }
     }
@@ -317,6 +321,8 @@ struct MaterialSamplerKey {
     wrap_u: MaterialWrap,
     wrap_v: MaterialWrap,
     filter: MaterialFilter,
+    mipmap_filter: MaterialFilter,
+    anisotropy: u8,
 }
 
 #[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]
@@ -373,6 +379,8 @@ impl From<&RenderMaterial> for MaterialTextureSetKey {
                 wrap_u: material.wrap_u,
                 wrap_v: material.wrap_v,
                 filter: material.filter,
+                mipmap_filter: material.mipmap_filter,
+                anisotropy: material.anisotropy.clamp(1, 16),
             },
         }
     }
@@ -411,6 +419,7 @@ pub struct Renderer {
     environment_bind_groups: HashMap<String, wgpu::BindGroup>,
     material_texture_layout: wgpu::BindGroupLayout,
     material_samplers: HashMap<MaterialSamplerKey, wgpu::Sampler>,
+    supports_anisotropy: bool,
     fallback_base_color_texture: MaterialTextureGpu,
     fallback_normal_texture: MaterialTextureGpu,
     fallback_metallic_roughness_texture: MaterialTextureGpu,
@@ -450,6 +459,10 @@ impl Renderer {
             })
             .await
             .ok_or(RhiError::NoAdapter)?;
+        let supports_anisotropy = adapter
+            .get_downlevel_capabilities()
+            .flags
+            .contains(wgpu::DownlevelFlags::ANISOTROPIC_FILTERING);
 
         let (device, queue) = adapter
             .request_device(
@@ -922,6 +935,7 @@ impl Renderer {
             environment_bind_groups: HashMap::new(),
             material_texture_layout,
             material_samplers: HashMap::new(),
+            supports_anisotropy,
             fallback_base_color_texture,
             fallback_normal_texture,
             fallback_metallic_roughness_texture,
@@ -1286,7 +1300,8 @@ impl Renderer {
             return;
         }
         if !self.material_samplers.contains_key(&key.sampler) {
-            let sampler = create_material_sampler(&self.device, key.sampler);
+            let sampler =
+                create_material_sampler(&self.device, key.sampler, self.supports_anisotropy);
             self.material_samplers.insert(key.sampler, sampler);
         }
         let base_color = self
@@ -1766,10 +1781,26 @@ fn make_object_uniforms(object: &RenderObject) -> ObjectUniforms {
     }
 }
 
-fn create_material_sampler(device: &wgpu::Device, key: MaterialSamplerKey) -> wgpu::Sampler {
+fn create_material_sampler(
+    device: &wgpu::Device,
+    key: MaterialSamplerKey,
+    supports_anisotropy: bool,
+) -> wgpu::Sampler {
     let filter = match key.filter {
         MaterialFilter::Nearest => wgpu::FilterMode::Nearest,
         MaterialFilter::Linear => wgpu::FilterMode::Linear,
+    };
+    let mipmap_filter = match key.mipmap_filter {
+        MaterialFilter::Nearest => wgpu::FilterMode::Nearest,
+        MaterialFilter::Linear => wgpu::FilterMode::Linear,
+    };
+    let anisotropy_clamp = if supports_anisotropy
+        && filter == wgpu::FilterMode::Linear
+        && mipmap_filter == wgpu::FilterMode::Linear
+    {
+        u16::from(key.anisotropy.clamp(1, 16))
+    } else {
+        1
     };
     device.create_sampler(&wgpu::SamplerDescriptor {
         label: Some("material_sampler"),
@@ -1778,7 +1809,8 @@ fn create_material_sampler(device: &wgpu::Device, key: MaterialSamplerKey) -> wg
         address_mode_w: wgpu::AddressMode::Repeat,
         mag_filter: filter,
         min_filter: filter,
-        mipmap_filter: filter,
+        mipmap_filter,
+        anisotropy_clamp,
         ..Default::default()
     })
 }
@@ -3050,6 +3082,8 @@ mod tests {
                 wrap_u: MaterialWrap::Clamp,
                 wrap_v: MaterialWrap::Mirror,
                 filter: MaterialFilter::Nearest,
+                mipmap_filter: MaterialFilter::Nearest,
+                anisotropy: 1,
                 ..Default::default()
             },
         };
@@ -3062,6 +3096,8 @@ mod tests {
         assert_eq!(key.sampler.wrap_u, MaterialWrap::Clamp);
         assert_eq!(key.sampler.wrap_v, MaterialWrap::Mirror);
         assert_eq!(key.sampler.filter, MaterialFilter::Nearest);
+        assert_eq!(key.sampler.mipmap_filter, MaterialFilter::Nearest);
+        assert_eq!(key.sampler.anisotropy, 1);
         assert_eq!(
             make_object_uniforms(&object).map_params,
             [1.5, 0.65, std::f32::consts::FRAC_PI_2, 0.0]

@@ -3,7 +3,7 @@ use serde::{Deserialize, Serialize};
 use std::path::Path;
 
 fn default_version() -> u32 {
-    4
+    5
 }
 
 fn default_base_color() -> [f32; 4] {
@@ -32,6 +32,10 @@ fn default_one() -> f32 {
 
 fn default_render_queue() -> i32 {
     -1
+}
+
+fn default_anisotropy() -> u8 {
+    1
 }
 
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq, Serialize, Deserialize)]
@@ -128,6 +132,10 @@ pub struct MaterialAsset {
     pub wrap_v: MaterialWrap,
     #[serde(default)]
     pub filter: MaterialFilter,
+    #[serde(default)]
+    pub mipmap_filter: MaterialFilter,
+    #[serde(default = "default_anisotropy")]
+    pub anisotropy: u8,
 }
 
 impl Default for MaterialAsset {
@@ -161,6 +169,8 @@ impl Default for MaterialAsset {
             wrap_u: MaterialWrap::Repeat,
             wrap_v: MaterialWrap::Repeat,
             filter: MaterialFilter::Linear,
+            mipmap_filter: MaterialFilter::Linear,
+            anisotropy: default_anisotropy(),
         }
     }
 }
@@ -198,6 +208,12 @@ impl MaterialAsset {
         }
         self.uv_rotation = finite_or(self.uv_rotation, 0.0).rem_euclid(360.0);
         self.render_queue = self.render_queue.clamp(-1, 5000);
+        self.anisotropy = self.anisotropy.clamp(1, 16);
+        if self.anisotropy > 1 {
+            // wgpu requires all sampler filters to be linear when anisotropy is enabled.
+            self.filter = MaterialFilter::Linear;
+            self.mipmap_filter = MaterialFilter::Linear;
+        }
         self.custom_shader = self.custom_shader.trim().replace('\\', "/");
         self.base_color_texture = self.base_color_texture.trim().replace('\\', "/");
         self.normal_texture = self.normal_texture.trim().replace('\\', "/");
@@ -254,7 +270,7 @@ mod tests {
             }"#,
         )
         .unwrap();
-        assert_eq!(parsed.version, 4);
+        assert_eq!(parsed.version, 5);
         assert_eq!(parsed.surface, MaterialSurface::Transparent);
         assert_eq!(parsed.base_color, [1.0, 0.0, 0.5, 0.25]);
         assert_eq!(parsed.metallic, 1.0);
@@ -292,7 +308,7 @@ mod tests {
             }"#,
         )
         .expect("materials authored before PBR maps were added remain loadable");
-        assert_eq!(legacy.version, 4);
+        assert_eq!(legacy.version, 5);
         assert_eq!(legacy.blend_mode, MaterialBlendMode::Alpha);
         assert_eq!(legacy.custom_shader, "");
         assert!(!legacy.transparent_depth_write);
@@ -307,13 +323,15 @@ mod tests {
         assert_eq!(legacy.wrap_u, MaterialWrap::Repeat);
         assert_eq!(legacy.wrap_v, MaterialWrap::Repeat);
         assert_eq!(legacy.filter, MaterialFilter::Linear);
+        assert_eq!(legacy.mipmap_filter, MaterialFilter::Linear);
+        assert_eq!(legacy.anisotropy, 1);
     }
 
     #[test]
     fn material_pipeline_and_sampler_settings_are_normalized() {
         let parsed = parse_material_asset(
             br#"{
-              "version":4,
+              "version":5,
               "shader":"custom",
               "custom_shader":" Assets\\Shaders\\toon.mshader ",
               "surface":"transparent",
@@ -328,7 +346,7 @@ mod tests {
             }"#,
         )
         .unwrap();
-        assert_eq!(parsed.version, 4);
+        assert_eq!(parsed.version, 5);
         assert_eq!(parsed.shader, MaterialShader::Custom);
         assert_eq!(parsed.custom_shader, "Assets/Shaders/toon.mshader");
         assert_eq!(parsed.blend_mode, MaterialBlendMode::Premultiplied);
@@ -339,7 +357,28 @@ mod tests {
         assert_eq!(parsed.wrap_u, MaterialWrap::Clamp);
         assert_eq!(parsed.wrap_v, MaterialWrap::Mirror);
         assert_eq!(parsed.filter, MaterialFilter::Nearest);
-        assert!(parse_material_asset(br#"{"version":5}"#).is_err());
+        assert_eq!(parsed.mipmap_filter, MaterialFilter::Linear);
+        assert_eq!(parsed.anisotropy, 1);
+        assert!(parse_material_asset(br#"{"version":6}"#).is_err());
         assert!(parse_material_asset(br#"{"version":0}"#).is_err());
+    }
+
+    #[test]
+    fn anisotropic_sampling_is_bounded_and_forces_linear_filters() {
+        let parsed = parse_material_asset(
+            br#"{
+              "version":5,
+              "filter":"nearest",
+              "mipmap_filter":"nearest",
+              "anisotropy":64
+            }"#,
+        )
+        .unwrap();
+        assert_eq!(parsed.anisotropy, 16);
+        assert_eq!(parsed.filter, MaterialFilter::Linear);
+        assert_eq!(parsed.mipmap_filter, MaterialFilter::Linear);
+
+        let disabled = parse_material_asset(br#"{"version":5,"anisotropy":0}"#).unwrap();
+        assert_eq!(disabled.anisotropy, 1);
     }
 }

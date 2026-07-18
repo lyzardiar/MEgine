@@ -210,6 +210,11 @@ pub fn render_material_from_asset(material: &MaterialAsset) -> RenderMaterial {
             AssetMaterialFilter::Nearest => MaterialFilter::Nearest,
             AssetMaterialFilter::Linear => MaterialFilter::Linear,
         },
+        mipmap_filter: match material.mipmap_filter {
+            AssetMaterialFilter::Nearest => MaterialFilter::Nearest,
+            AssetMaterialFilter::Linear => MaterialFilter::Linear,
+        },
+        anisotropy: material.anisotropy,
         surface_shader: String::new(),
     }
 }
@@ -249,6 +254,8 @@ mod tests {
             wrap_u: AssetMaterialWrap::Clamp,
             wrap_v: AssetMaterialWrap::Mirror,
             filter: AssetMaterialFilter::Nearest,
+            mipmap_filter: AssetMaterialFilter::Nearest,
+            anisotropy: 1,
             ..MaterialAsset::default()
         };
         let material = render_material_from_asset(&asset);
@@ -274,6 +281,8 @@ mod tests {
         assert_eq!(material.wrap_u, MaterialWrap::Clamp);
         assert_eq!(material.wrap_v, MaterialWrap::Mirror);
         assert_eq!(material.filter, MaterialFilter::Nearest);
+        assert_eq!(material.mipmap_filter, MaterialFilter::Nearest);
+        assert_eq!(material.anisotropy, 1);
     }
 
     #[test]

@@ -22,7 +22,7 @@ test('timeline asset normalizes signal tracks and round trips', () => {
 });
 
 test('timeline asset rejects unknown tracks and snaps to frames', () => {
-  assert.throws(() => parseTimelineAsset('{"version":1,"duration":2,"tracks":[{"type":"audio"}]}'), /Unsupported/);
+  assert.throws(() => parseTimelineAsset('{"version":1,"duration":2,"tracks":[{"type":"camera"}]}'), /Unsupported/);
   assert.throws(() => parseTimelineAsset('{"version":1,"duration":2,"tracks":[{"type":"signal","id":"same","name":"A"},{"type":"signal","id":"same","name":"B"}]}'), /unique/);
   assert.throws(() => parseTimelineAsset('{"version":1,"duration":2,"tracks":[{"type":"signal","id":"events","name":"Events","markers":[{"time":1,"name":""}]}]}'), /invalid/);
   const asset = createTimelineAsset();

@@ -48,6 +48,8 @@ export type MaterialAsset = {
   wrap_u: MaterialWrap;
   wrap_v: MaterialWrap;
   filter: MaterialFilter;
+  mipmap_filter: MaterialFilter;
+  anisotropy: number;
 };
 
 export function isMaterialTexturePath(path: string): boolean {
@@ -93,7 +95,7 @@ export function materialReferenceDiagnostics(
 
 export function createMaterialAsset(name = 'New Material'): MaterialAsset {
   return {
-    version: 4,
+    version: 5,
     name,
     shader: 'pbr',
     custom_shader: '',
@@ -121,6 +123,8 @@ export function createMaterialAsset(name = 'New Material'): MaterialAsset {
     wrap_u: 'repeat',
     wrap_v: 'repeat',
     filter: 'linear',
+    mipmap_filter: 'linear',
+    anisotropy: 1,
   };
 }
 
@@ -142,8 +146,9 @@ export function normalizeMaterialAsset(value: unknown): MaterialAsset {
     .map((part) => Math.max(0, Math.min(1, part))) as MaterialAsset['base_color'];
   const emissive = vector(source.emissive, 3, [0, 0, 0])
     .map((part) => Math.max(0, part)) as MaterialAsset['emissive'];
+  const anisotropy = Math.max(1, Math.min(16, Math.trunc(finite(source.anisotropy, 1))));
   return {
-    version: 4,
+    version: 5,
     name: String(source.name ?? ''),
     shader: source.shader === 'unlit' || source.shader === 'custom' ? source.shader : 'pbr',
     custom_shader: String(source.custom_shader ?? '').trim().replace(/\\/g, '/'),
@@ -178,7 +183,11 @@ export function normalizeMaterialAsset(value: unknown): MaterialAsset {
     uv_rotation: ((finite(source.uv_rotation, 0) % 360) + 360) % 360,
     wrap_u: source.wrap_u === 'clamp' || source.wrap_u === 'mirror' ? source.wrap_u : 'repeat',
     wrap_v: source.wrap_v === 'clamp' || source.wrap_v === 'mirror' ? source.wrap_v : 'repeat',
-    filter: source.filter === 'nearest' ? 'nearest' : 'linear',
+    filter: anisotropy > 1 ? 'linear' : source.filter === 'nearest' ? 'nearest' : 'linear',
+    mipmap_filter: anisotropy > 1
+      ? 'linear'
+      : source.mipmap_filter === 'nearest' ? 'nearest' : 'linear',
+    anisotropy,
   };
 }
 
@@ -189,7 +198,7 @@ export function parseMaterialAsset(text: string): MaterialAsset {
   }
   const source = parsed as Record<string, unknown>;
   if (source.version != null
-    && (!Number.isInteger(source.version) || Number(source.version) < 1 || Number(source.version) > 4)) {
+    && (!Number.isInteger(source.version) || Number(source.version) < 1 || Number(source.version) > 5)) {
     throw new Error(`Unsupported material version: ${String(source.version)}`);
   }
   const enumField = (field: string, allowed: readonly string[]) => {
@@ -204,10 +213,11 @@ export function parseMaterialAsset(text: string): MaterialAsset {
   enumField('wrap_u', ['repeat', 'clamp', 'mirror']);
   enumField('wrap_v', ['repeat', 'clamp', 'mirror']);
   enumField('filter', ['nearest', 'linear']);
+  enumField('mipmap_filter', ['nearest', 'linear']);
   return normalizeMaterialAsset(source);
 }
 
 export function serializeMaterialAsset(material: MaterialAsset): string {
-  if (material.version !== 4) throw new Error(`Unsupported material version: ${material.version}`);
+  if (material.version !== 5) throw new Error(`Unsupported material version: ${material.version}`);
   return `${JSON.stringify(normalizeMaterialAsset(material), null, 2)}\n`;
 }
