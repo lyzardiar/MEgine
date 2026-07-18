@@ -19,4 +19,9 @@ test('surface shader source normalizes newlines and rejects reserved entry point
     surfaceShaderDiagnostics('fn other() {}\n@fragment fn fs_main() {}').join(' '),
     /Missing.*@fragment is reserved/,
   );
+  assert.deepEqual(surfaceShaderDiagnostics(`
+    fn mengine_lit_surface_hook(
+      surface: MEngineSurface, uv: vec2<f32>, world_position: vec3<f32>
+    ) -> MEngineSurface { return surface; }
+  `), []);
 });

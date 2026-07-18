@@ -2479,12 +2479,15 @@ mod tests {
         std::fs::write(
             &shader_path,
             r#"
-                fn mengine_surface_hook(
-                    color: vec4<f32>,
+                fn mengine_lit_surface_hook(
+                    surface: MEngineSurface,
                     uv: vec2<f32>,
                     world_position: vec3<f32>,
-                    world_normal: vec3<f32>,
-                ) -> vec4<f32> { return color; }
+                ) -> MEngineSurface {
+                    var result = surface;
+                    result.metallic = uv.x;
+                    return result;
+                }
             "#,
         )
         .unwrap();

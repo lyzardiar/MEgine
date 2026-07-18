@@ -186,9 +186,9 @@ export function SurfaceShaderEditor(props: {
         <button type="button" disabled={!dirty || saving || diagnostics.length > 0} onClick={() => void save()}>{saving ? 'Saving...' : 'Save'}</button>
       </div>
       <div className="surface-shader-contract">
-        <strong>Surface Hook Contract</strong>
-        <code>fn mengine_surface_hook(color, uv, world_position, world_normal) -&gt; vec4&lt;f32&gt;</code>
-        <span>The engine owns bindings and entry points. Runtime Naga validation is authoritative.</span>
+        <strong>Lit Surface Hook Contract</strong>
+        <code>fn mengine_lit_surface_hook(surface: MEngineSurface, uv, world_position) -&gt; MEngineSurface</code>
+        <span>Fields: base_color, alpha, normal, metallic, roughness, occlusion, emissive. Legacy final-color hooks remain supported. Runtime Naga validation is authoritative.</span>
       </div>
       {loading && <div className="field-hint">Loading shader...</div>}
       {(error || diagnostics.length > 0) && (

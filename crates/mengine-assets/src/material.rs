@@ -217,7 +217,14 @@ fn finite_or(value: f32, fallback: f32) -> f32 {
 }
 
 pub fn parse_material_asset(bytes: &[u8]) -> Result<MaterialAsset, AssetError> {
-    Ok(serde_json::from_slice::<MaterialAsset>(bytes)?.normalized())
+    let material = serde_json::from_slice::<MaterialAsset>(bytes)?;
+    if material.version == 0 || material.version > default_version() {
+        return Err(AssetError::Invalid(format!(
+            "unsupported material version {}",
+            material.version
+        )));
+    }
+    Ok(material.normalized())
 }
 
 pub fn load_material_asset(path: impl AsRef<Path>) -> Result<MaterialAsset, AssetError> {
@@ -332,5 +339,7 @@ mod tests {
         assert_eq!(parsed.wrap_u, MaterialWrap::Clamp);
         assert_eq!(parsed.wrap_v, MaterialWrap::Mirror);
         assert_eq!(parsed.filter, MaterialFilter::Nearest);
+        assert!(parse_material_asset(br#"{"version":5}"#).is_err());
+        assert!(parse_material_asset(br#"{"version":0}"#).is_err());
     }
 }

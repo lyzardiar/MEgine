@@ -304,10 +304,14 @@ mod tests {
         std::fs::create_dir_all(root.join("Assets/Shaders")).unwrap();
         std::fs::write(
             root.join("Assets/Shaders/Rim.mshader"),
-            r#"fn mengine_surface_hook(
-              color: vec4<f32>, uv: vec2<f32>,
-              world_position: vec3<f32>, world_normal: vec3<f32>
-            ) -> vec4<f32> { return vec4<f32>(color.rgb + uv.x, color.a); }"#,
+            r#"fn mengine_lit_surface_hook(
+              surface: MEngineSurface, uv: vec2<f32>,
+              world_position: vec3<f32>
+            ) -> MEngineSurface {
+              var result = surface;
+              result.roughness = 0.2 + uv.x;
+              return result;
+            }"#,
         )
         .unwrap();
         std::fs::write(
@@ -318,7 +322,7 @@ mod tests {
 
         let mut cache = RuntimeMaterialCache::new(Some(root.clone()));
         let material = cache.resolve("Assets/Materials/Rim.mmat").unwrap();
-        assert!(material.surface_shader.contains("color.rgb + uv.x"));
+        assert!(material.surface_shader.contains("result.roughness"));
 
         std::fs::remove_dir_all(root).unwrap();
     }

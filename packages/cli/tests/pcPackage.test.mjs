@@ -396,10 +396,13 @@ test('buildPcPackage includes validated custom material surface shaders', () => 
       custom_shader: 'Assets/Shaders/Rim.mshader',
     }));
     writeFileSync(join(paths.project, 'Assets', 'Shaders', 'Rim.mshader'), `
-      fn mengine_surface_hook(
-        color: vec4<f32>, uv: vec2<f32>,
-        world_position: vec3<f32>, world_normal: vec3<f32>
-      ) -> vec4<f32> { return vec4<f32>(color.rgb + uv.x, color.a); }
+      fn mengine_lit_surface_hook(
+        surface: MEngineSurface, uv: vec2<f32>, world_position: vec3<f32>
+      ) -> MEngineSurface {
+        var result = surface;
+        result.roughness = 0.2 + uv.x;
+        return result;
+      }
     `);
     const manifest = buildPcPackage({
       projectDir: paths.project,
@@ -413,6 +416,37 @@ test('buildPcPackage includes validated custom material surface shaders', () => 
       references: 4,
       validatedFiles: 4,
     });
+  } finally {
+    rmSync(paths.root, { recursive: true, force: true });
+  }
+});
+
+test('buildPcPackage rejects future material versions and invalid sampler modes', () => {
+  const paths = fixture('invalid-material-contract');
+  try {
+    writeFileSync(join(paths.project, 'Assets', 'Scenes', 'Main.mscene'), JSON.stringify({
+      world: { entities: [{ components: {
+        MeshRenderer: { mesh: 'cube', material: 'Assets/Materials/Paint.mmat' },
+      } }] },
+    }));
+    const materialPath = join(paths.project, 'Assets', 'Materials', 'Paint.mmat');
+    writeFileSync(materialPath, JSON.stringify({ version: 5, shader: 'pbr' }));
+    assert.throws(() => buildPcPackage({
+      projectDir: paths.project,
+      outputDir: paths.output,
+      runtimePath: paths.runtime,
+      engineVersion: 'test-engine',
+    }), /unsupported version 5/);
+    assert.equal(existsSync(paths.output), false);
+
+    writeFileSync(materialPath, JSON.stringify({ version: 4, shader: 'pbr', wrap_u: 'border' }));
+    assert.throws(() => buildPcPackage({
+      projectDir: paths.project,
+      outputDir: paths.output,
+      runtimePath: paths.runtime,
+      engineVersion: 'test-engine',
+    }), /wrap_u must be repeat, clamp, or mirror/);
+    assert.equal(existsSync(paths.output), false);
   } finally {
     rmSync(paths.root, { recursive: true, force: true });
   }

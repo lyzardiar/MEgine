@@ -96,6 +96,8 @@ test('legacy material assets upgrade to safe pipeline defaults', () => {
   assert.equal(legacy.transparent_depth_write, false);
   assert.equal(legacy.render_queue, -1);
   assert.equal(legacy.custom_shader, '');
+  assert.throws(() => parseMaterialAsset('{"version":5}'), /Unsupported material version/);
+  assert.throws(() => parseMaterialAsset('{"version":4,"filter":"cubic"}'), /Invalid material filter/);
 });
 
 test('custom material shader references normalize project separators', () => {

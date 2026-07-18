@@ -143,7 +143,7 @@ export function normalizeMaterialAsset(value: unknown): MaterialAsset {
   const emissive = vector(source.emissive, 3, [0, 0, 0])
     .map((part) => Math.max(0, part)) as MaterialAsset['emissive'];
   return {
-    version: Math.max(4, Math.trunc(finite(source.version, 4))),
+    version: 4,
     name: String(source.name ?? ''),
     shader: source.shader === 'unlit' || source.shader === 'custom' ? source.shader : 'pbr',
     custom_shader: String(source.custom_shader ?? '').trim().replace(/\\/g, '/'),
@@ -183,9 +183,31 @@ export function normalizeMaterialAsset(value: unknown): MaterialAsset {
 }
 
 export function parseMaterialAsset(text: string): MaterialAsset {
-  return normalizeMaterialAsset(JSON.parse(text));
+  const parsed = JSON.parse(text) as unknown;
+  if (parsed == null || typeof parsed !== 'object' || Array.isArray(parsed)) {
+    throw new Error('Material root must be an object');
+  }
+  const source = parsed as Record<string, unknown>;
+  if (source.version != null
+    && (!Number.isInteger(source.version) || Number(source.version) < 1 || Number(source.version) > 4)) {
+    throw new Error(`Unsupported material version: ${String(source.version)}`);
+  }
+  const enumField = (field: string, allowed: readonly string[]) => {
+    const value = source[field];
+    if (value != null && (typeof value !== 'string' || !allowed.includes(value))) {
+      throw new Error(`Invalid material ${field}: ${String(value)}`);
+    }
+  };
+  enumField('shader', ['pbr', 'unlit', 'custom']);
+  enumField('surface', ['opaque', 'transparent', 'cutout']);
+  enumField('blend_mode', ['alpha', 'premultiplied', 'additive', 'multiply']);
+  enumField('wrap_u', ['repeat', 'clamp', 'mirror']);
+  enumField('wrap_v', ['repeat', 'clamp', 'mirror']);
+  enumField('filter', ['nearest', 'linear']);
+  return normalizeMaterialAsset(source);
 }
 
 export function serializeMaterialAsset(material: MaterialAsset): string {
+  if (material.version !== 4) throw new Error(`Unsupported material version: ${material.version}`);
   return `${JSON.stringify(normalizeMaterialAsset(material), null, 2)}\n`;
 }

@@ -1807,6 +1807,21 @@ fn surface_shader_fingerprint(source: &str) -> u64 {
 
 const SURFACE_HOOK_BEGIN: &str = "// MENGINE_SURFACE_HOOK_BEGIN";
 const SURFACE_HOOK_END: &str = "// MENGINE_SURFACE_HOOK_END";
+const LEGACY_SURFACE_HOOK_SOURCE: &str = r#"fn mengine_surface_hook(
+    color: vec4<f32>,
+    uv: vec2<f32>,
+    world_position: vec3<f32>,
+    world_normal: vec3<f32>,
+) -> vec4<f32> {
+    return color;
+}"#;
+const LIT_SURFACE_HOOK_SOURCE: &str = r#"fn mengine_lit_surface_hook(
+    surface: MEngineSurface,
+    uv: vec2<f32>,
+    world_position: vec3<f32>,
+) -> MEngineSurface {
+    return surface;
+}"#;
 
 pub fn validate_surface_shader_hook(source: &str) -> Result<(), String> {
     compose_surface_shader(source).map(|_| ())
@@ -1824,6 +1839,17 @@ fn compose_surface_shader(surface_hook: &str) -> Result<String, String> {
             ));
         }
     }
+    let compact: String = hook
+        .chars()
+        .filter(|character| !character.is_whitespace())
+        .collect();
+    let has_legacy_hook = compact.contains("fnmengine_surface_hook(");
+    let has_lit_hook = compact.contains("fnmengine_lit_surface_hook(");
+    if !has_legacy_hook && !has_lit_hook {
+        return Err(
+            "surface shader must define mengine_lit_surface_hook or mengine_surface_hook".into(),
+        );
+    }
     let start = FORWARD_WGSL
         .find(SURFACE_HOOK_BEGIN)
         .ok_or_else(|| "engine surface-hook start marker is missing".to_owned())?;
@@ -1832,10 +1858,19 @@ fn compose_surface_shader(surface_hook: &str) -> Result<String, String> {
         .map(|index| index + SURFACE_HOOK_END.len())
         .ok_or_else(|| "engine surface-hook end marker is missing".to_owned())?;
     let mut composed = FORWARD_WGSL.to_owned();
-    composed.replace_range(
-        start..end,
-        &format!("{SURFACE_HOOK_BEGIN}\n{hook}\n{SURFACE_HOOK_END}"),
-    );
+    let legacy_fallback = if has_legacy_hook {
+        ""
+    } else {
+        LEGACY_SURFACE_HOOK_SOURCE
+    };
+    let lit_fallback = if has_lit_hook {
+        ""
+    } else {
+        LIT_SURFACE_HOOK_SOURCE
+    };
+    composed.replace_range(start..end, &format!(
+        "{SURFACE_HOOK_BEGIN}\nconst MENGINE_HAS_LIT_SURFACE_HOOK: bool = {has_lit_hook};\n{hook}\n{legacy_fallback}\n{lit_fallback}\n{SURFACE_HOOK_END}"
+    ));
     let module = naga::front::wgsl::parse_str(&composed)
         .map_err(|error| format!("WGSL parse failed: {error}"))?;
     naga::valid::Validator::new(
@@ -2683,7 +2718,18 @@ fn directional_shadow_visibility(
     return mix(1.0, visibility, shadow.params.x);
 }
 
+struct MEngineSurface {
+    base_color: vec3<f32>,
+    alpha: f32,
+    normal: vec3<f32>,
+    metallic: f32,
+    roughness: f32,
+    occlusion: f32,
+    emissive: vec3<f32>,
+};
+
 // MENGINE_SURFACE_HOOK_BEGIN
+const MENGINE_HAS_LIT_SURFACE_HOOK: bool = false;
 fn mengine_surface_hook(
     color: vec4<f32>,
     uv: vec2<f32>,
@@ -2691,6 +2737,13 @@ fn mengine_surface_hook(
     world_normal: vec3<f32>,
 ) -> vec4<f32> {
     return color;
+}
+fn mengine_lit_surface_hook(
+    surface: MEngineSurface,
+    uv: vec2<f32>,
+    world_position: vec3<f32>,
+) -> MEngineSurface {
+    return surface;
 }
 // MENGINE_SURFACE_HOOK_END
 
@@ -2709,14 +2762,11 @@ fn fs_main(i: VsOut, @builtin(front_facing) front_facing: bool) -> @location(0) 
     let sampled_emissive = textureSample(emissive_texture, material_sampler, i.uv).rgb;
     let sampled_occlusion = textureSample(occlusion_texture, material_sampler, i.uv).r;
     let surface_color = object.base_color * sampled_color;
-    if object.emissive.w > 0.0 && surface_color.a < object.emissive.w {
-        discard;
-    }
-    let base_color = max(surface_color.rgb, vec3<f32>(0.0));
-    let metallic = clamp(object.material.x * sampled_orm.b, 0.0, 1.0);
-    let roughness = clamp(object.material.y * sampled_orm.g, 0.04, 1.0);
-    let occlusion = mix(1.0, sampled_occlusion, clamp(object.map_params.y, 0.0, 1.0));
-    let emissive = max(object.emissive.rgb, vec3<f32>(0.0))
+    let authored_base_color = max(surface_color.rgb, vec3<f32>(0.0));
+    let authored_metallic = clamp(object.material.x * sampled_orm.b, 0.0, 1.0);
+    let authored_roughness = clamp(object.material.y * sampled_orm.g, 0.04, 1.0);
+    let authored_occlusion = mix(1.0, sampled_occlusion, clamp(object.map_params.y, 0.0, 1.0));
+    let authored_emissive = max(object.emissive.rgb, vec3<f32>(0.0))
         * object.material.z
         * sampled_emissive;
     let face_normal = select(-normalize(i.world_normal), normalize(i.world_normal), front_facing);
@@ -2727,25 +2777,58 @@ fn fs_main(i: VsOut, @builtin(front_facing) front_facing: bool) -> @location(0) 
         sampled_normal,
         max(object.map_params.x, 0.0),
     );
+    var surface = MEngineSurface(
+        authored_base_color,
+        surface_color.a,
+        n,
+        authored_metallic,
+        authored_roughness,
+        authored_occlusion,
+        authored_emissive,
+    );
+    if MENGINE_HAS_LIT_SURFACE_HOOK {
+        surface = mengine_lit_surface_hook(surface, i.uv, i.world_position);
+    }
+    surface.base_color = max(surface.base_color, vec3<f32>(0.0));
+    surface.alpha = clamp(surface.alpha, 0.0, 1.0);
+    surface.metallic = clamp(surface.metallic, 0.0, 1.0);
+    surface.roughness = clamp(surface.roughness, 0.04, 1.0);
+    surface.occlusion = clamp(surface.occlusion, 0.0, 1.0);
+    surface.emissive = max(surface.emissive, vec3<f32>(0.0));
+    if dot(surface.normal, surface.normal) > 0.000001 {
+        surface.normal = normalize(surface.normal);
+    } else {
+        surface.normal = n;
+    }
+    if object.emissive.w > 0.0 && surface.alpha < object.emissive.w {
+        discard;
+    }
     if object.material.w > 0.5 {
-        let surface = mengine_surface_hook(
-            vec4<f32>(base_color + emissive, surface_color.a),
+        let unlit_surface = mengine_surface_hook(
+            vec4<f32>(surface.base_color + surface.emissive, surface.alpha),
             i.uv,
             i.world_position,
-            n,
+            surface.normal,
         );
-        return material_output(surface.rgb, surface.a);
+        return material_output(unlit_surface.rgb, unlit_surface.a);
     }
 
     let v = normalize(frame.camera_position.xyz - i.world_position);
-    var color = environment_contribution(n, v, base_color, metallic, roughness, occlusion);
+    var color = environment_contribution(
+        surface.normal,
+        v,
+        surface.base_color,
+        surface.metallic,
+        surface.roughness,
+        surface.occlusion,
+    );
 
     if frame.light_counts.x > 0u {
         let l = normalize(-frame.directional_direction.xyz);
-        color += directional_shadow_visibility(i.world_position, n) * light_contribution(
-            n, v, l,
+        color += directional_shadow_visibility(i.world_position, surface.normal) * light_contribution(
+            surface.normal, v, l,
             frame.directional_color.rgb * frame.directional_color.a,
-            base_color, metallic, roughness,
+            surface.base_color, surface.metallic, surface.roughness,
         );
     }
 
@@ -2755,9 +2838,9 @@ fn fs_main(i: VsOut, @builtin(front_facing) front_facing: bool) -> @location(0) 
             let distance = length(to_light);
             let attenuation = distance_attenuation(distance, frame.point_positions[index].w);
             color += light_contribution(
-                n, v, normalize(to_light),
+                surface.normal, v, normalize(to_light),
                 frame.point_colors[index].rgb * frame.point_colors[index].a * attenuation,
-                base_color, metallic, roughness,
+                surface.base_color, surface.metallic, surface.roughness,
             );
         }
     }
@@ -2773,21 +2856,21 @@ fn fs_main(i: VsOut, @builtin(front_facing) front_facing: bool) -> @location(0) 
             let cone_attenuation = smoothstep(outer_cos, inner_cos, cone);
             let attenuation = distance_attenuation(distance, frame.spot_positions[index].w) * cone_attenuation;
             color += light_contribution(
-                n, v, normalize(to_light),
+                surface.normal, v, normalize(to_light),
                 frame.spot_colors[index].rgb * frame.spot_colors[index].a * attenuation,
-                base_color, metallic, roughness,
+                surface.base_color, surface.metallic, surface.roughness,
             );
         }
     }
 
-    color += emissive;
-    let surface = mengine_surface_hook(
-        vec4<f32>(color, surface_color.a),
+    color += surface.emissive;
+    let final_surface = mengine_surface_hook(
+        vec4<f32>(color, surface.alpha),
         i.uv,
         i.world_position,
-        n,
+        surface.normal,
     );
-    return material_output(surface.rgb, surface.a);
+    return material_output(final_surface.rgb, final_surface.a);
 }
 "#;
 
@@ -2859,6 +2942,23 @@ mod tests {
         assert_eq!(surface_shader_fingerprint(""), 0);
         assert!(validate_surface_shader_hook("fn mengine_surface_hook() {}").is_err());
         assert!(validate_surface_shader_hook("@fragment fn fs_main() {}").is_err());
+
+        let lit_hook = r#"
+            fn mengine_lit_surface_hook(
+                surface: MEngineSurface,
+                uv: vec2<f32>,
+                world_position: vec3<f32>,
+            ) -> MEngineSurface {
+                var result = surface;
+                result.roughness = 0.2 + uv.x * 0.5;
+                result.emissive += vec3<f32>(world_position.y * 0.1);
+                return result;
+            }
+        "#;
+        let lit_composed = compose_surface_shader(lit_hook).unwrap();
+        assert!(lit_composed.contains("MENGINE_HAS_LIT_SURFACE_HOOK: bool = true"));
+        assert!(lit_composed.contains("result.roughness"));
+        assert!(validate_surface_shader_hook(lit_hook).is_ok());
     }
 
     #[test]

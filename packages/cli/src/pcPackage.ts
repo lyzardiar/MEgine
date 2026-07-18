@@ -357,6 +357,10 @@ export function validateBuildAssetDependencies(
       prefabNodeReferences(prefab.root ?? prefab, source);
     } else if (extension === '.mmat' || extension === '.mat') {
       const material = readJsonAsset(absolute, root, 'material');
+      if (material.version != null
+        && (!Number.isInteger(material.version) || Number(material.version) < 1 || Number(material.version) > 4)) {
+        throw new Error(`invalid material ${source}: unsupported version ${String(material.version)}`);
+      }
       if (material.shader != null
         && material.shader !== 'pbr'
         && material.shader !== 'unlit'
@@ -392,6 +396,15 @@ export function validateBuildAssetDependencies(
           || Number(material.render_queue) > 5000)) {
         throw new Error(`invalid material ${source}: render_queue must be an integer from -1 to 5000`);
       }
+      for (const field of ['wrap_u', 'wrap_v']) {
+        const value = material[field];
+        if (value != null && value !== 'repeat' && value !== 'clamp' && value !== 'mirror') {
+          throw new Error(`invalid material ${source}: ${field} must be repeat, clamp, or mirror`);
+        }
+      }
+      if (material.filter != null && material.filter !== 'nearest' && material.filter !== 'linear') {
+        throw new Error(`invalid material ${source}: filter must be nearest or linear`);
+      }
       for (const field of [
         'base_color_texture',
         'normal_texture',
@@ -410,8 +423,9 @@ export function validateBuildAssetDependencies(
       if (Buffer.byteLength(sourceText, 'utf8') > 256 * 1024) {
         throw new Error(`invalid material surface shader ${source}: file exceeds 256 KiB`);
       }
-      if (!/\bfn\s+mengine_surface_hook\s*\(/.test(sourceText)) {
-        throw new Error(`invalid material surface shader ${source}: missing fn mengine_surface_hook`);
+      if (!/\bfn\s+mengine_surface_hook\s*\(/.test(sourceText)
+        && !/\bfn\s+mengine_lit_surface_hook\s*\(/.test(sourceText)) {
+        throw new Error(`invalid material surface shader ${source}: missing fn mengine_lit_surface_hook or fn mengine_surface_hook`);
       }
       const forbidden = ['@group', '@binding', '@vertex', '@fragment', '@compute']
         .find((token) => sourceText.includes(token));

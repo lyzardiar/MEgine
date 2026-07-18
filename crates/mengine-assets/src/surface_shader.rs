@@ -2,6 +2,7 @@ use crate::AssetError;
 use std::path::Path;
 
 pub const SURFACE_SHADER_HOOK_NAME: &str = "mengine_surface_hook";
+pub const LIT_SURFACE_SHADER_HOOK_NAME: &str = "mengine_lit_surface_hook";
 const MAX_SURFACE_SHADER_BYTES: usize = 256 * 1024;
 
 pub fn parse_surface_shader(bytes: &[u8]) -> Result<String, AssetError> {
@@ -22,9 +23,15 @@ pub fn parse_surface_shader(bytes: &[u8]) -> Result<String, AssetError> {
             "surface shader contains a NUL character".into(),
         ));
     }
-    if !source.contains(&format!("fn {SURFACE_SHADER_HOOK_NAME}")) {
+    let compact: String = source
+        .chars()
+        .filter(|character| !character.is_whitespace())
+        .collect();
+    if !compact.contains(&format!("fn{SURFACE_SHADER_HOOK_NAME}("))
+        && !compact.contains(&format!("fn{LIT_SURFACE_SHADER_HOOK_NAME}("))
+    {
         return Err(AssetError::Invalid(format!(
-            "surface shader must define fn {SURFACE_SHADER_HOOK_NAME}"
+            "surface shader must define fn {SURFACE_SHADER_HOOK_NAME} or fn {LIT_SURFACE_SHADER_HOOK_NAME}"
         )));
     }
     Ok(format!("{source}\n"))
@@ -53,6 +60,15 @@ mod tests {
         .unwrap();
         assert!(source.starts_with("fn mengine_surface_hook"));
         assert!(source.ends_with('\n'));
+        let lit = parse_surface_shader(
+            br#"fn mengine_lit_surface_hook(
+                surface: MEngineSurface,
+                uv: vec2<f32>,
+                world_position: vec3<f32>,
+            ) -> MEngineSurface { return surface; }"#,
+        )
+        .unwrap();
+        assert!(lit.contains("fn mengine_lit_surface_hook"));
         assert!(parse_surface_shader(b"fn other() {}").is_err());
         assert!(parse_surface_shader(&[0xff, 0xfe]).is_err());
     }
