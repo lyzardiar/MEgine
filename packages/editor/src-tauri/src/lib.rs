@@ -322,6 +322,13 @@ fn project_asset_kind(name: &str) -> Option<&'static str> {
         Some("prefab")
     } else if lower.ends_with(".gltf") || lower.ends_with(".glb") {
         Some("model")
+    } else if [
+        ".png", ".jpg", ".jpeg", ".webp", ".gif", ".bmp", ".tga", ".tif", ".tiff", ".hdr", ".exr",
+    ]
+    .iter()
+    .any(|extension| lower.ends_with(extension))
+    {
+        Some("texture")
     } else if lower.ends_with(".atlas") {
         Some("spine-atlas")
     } else if lower.ends_with(".skel") {
@@ -1346,6 +1353,7 @@ mod tests {
             "skeleton.atlas",
             "theme.ogg",
             "ui.matlas",
+            "studio.hdr",
             "hero.png.sprite.json",
             "ignored.txt",
         ] {
@@ -1357,7 +1365,7 @@ mod tests {
         std::fs::remove_dir_all(root).unwrap();
         found.sort_by(|left, right| left.name.cmp(&right.name));
 
-        assert_eq!(found.len(), 10);
+        assert_eq!(found.len(), 11);
         assert!(found
             .iter()
             .any(|asset| asset.name == "walk.manim" && asset.kind == "animation"));
@@ -1376,6 +1384,9 @@ mod tests {
         assert!(found
             .iter()
             .any(|asset| asset.name == "environment.gltf" && asset.kind == "model"));
+        assert!(found
+            .iter()
+            .any(|asset| asset.name == "studio.hdr" && asset.kind == "texture"));
         assert!(found
             .iter()
             .any(|asset| asset.name == "character.glb" && asset.kind == "model"));

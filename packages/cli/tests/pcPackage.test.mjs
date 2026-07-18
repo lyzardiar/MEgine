@@ -217,15 +217,15 @@ test('buildPcPackage includes validated custom material surface shaders', () => 
   }
 });
 
-test('buildPcPackage includes scene environment textures', () => {
+test('buildPcPackage includes scene HDR environment textures', () => {
   const paths = fixture('environment-texture');
   try {
     writeFileSync(join(paths.project, 'Assets', 'Scenes', 'Main.mscene'), JSON.stringify({
       world: { entities: [{ components: {
-        EnvironmentLight: { texture: 'Assets/Textures/studio-environment.png' },
+        EnvironmentLight: { texture: 'Assets/Textures/studio-environment.hdr' },
       } }] },
     }));
-    writeFileSync(join(paths.project, 'Assets', 'Textures', 'studio-environment.png'), 'texture');
+    writeFileSync(join(paths.project, 'Assets', 'Textures', 'studio-environment.hdr'), 'hdr');
     buildPcPackage({
       projectDir: paths.project,
       outputDir: paths.output,
@@ -233,7 +233,7 @@ test('buildPcPackage includes scene environment textures', () => {
       engineVersion: 'test-engine',
     });
     assert.equal(
-      existsSync(join(paths.output, 'Assets', 'Textures', 'studio-environment.png')),
+      existsSync(join(paths.output, 'Assets', 'Textures', 'studio-environment.hdr')),
       true,
     );
   } finally {

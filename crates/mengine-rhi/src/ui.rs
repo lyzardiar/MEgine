@@ -8,7 +8,7 @@ use wgpu::util::DeviceExt;
 pub enum UiTextureError {
     #[error("texture dimensions must be greater than zero")]
     EmptyDimensions,
-    #[error("RGBA8 texture data length mismatch: expected {expected}, got {actual}")]
+    #[error("RGBA texture data length mismatch: expected {expected}, got {actual}")]
     InvalidDataLength { expected: usize, actual: usize },
 }
 

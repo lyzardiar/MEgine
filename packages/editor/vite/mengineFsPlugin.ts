@@ -147,7 +147,7 @@ export function mengineFsPlugin(opts: MengineFsOptions | string): Plugin {
     pixelsPerUnit?: number;
   };
   type ProjectFileAsset = TextureAsset & {
-    kind: 'animation' | 'animator-controller' | 'audio' | 'material' | 'shader' | 'model' | 'prefab' | 'sprite-atlas' | 'spine-json' | 'spine-binary' | 'spine-atlas';
+    kind: 'animation' | 'animator-controller' | 'audio' | 'material' | 'shader' | 'model' | 'prefab' | 'sprite-atlas' | 'texture' | 'spine-json' | 'spine-binary' | 'spine-atlas';
   };
 
   function listTextures(): { sprites: TextureAsset[]; folders: string[] } {
@@ -289,6 +289,8 @@ export function mengineFsPlugin(opts: MengineFsOptions | string): Plugin {
               ? 'shader'
               : lower.endsWith('.gltf') || lower.endsWith('.glb')
                 ? 'model'
+              : /\.(png|jpe?g|webp|gif|bmp|tga|tiff?|hdr|exr)$/.test(lower)
+                ? 'texture'
               : lower.endsWith('.prefab')
                 ? 'prefab'
                 : lower.endsWith('.atlas')

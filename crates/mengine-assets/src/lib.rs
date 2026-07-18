@@ -30,13 +30,24 @@ pub use sprite::{
     ResolvedSpriteSlice, SpriteImportSettings, SpriteMode, SpriteSlice,
 };
 pub use surface_shader::{load_surface_shader, parse_surface_shader, SURFACE_SHADER_HOOK_NAME};
-pub use texture::{load_texture_rgba8, texture_dimensions};
+pub use texture::{load_environment_texture, load_texture_rgba8, texture_dimensions};
 
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct TextureRgba8 {
     pub width: u32,
     pub height: u32,
     pub pixels: Vec<u8>,
+}
+
+/// Linear-light floating-point pixels used by image-based lighting.
+///
+/// Unlike regular color textures, values may exceed `1.0`; this is what keeps
+/// Radiance HDR and OpenEXR highlights intact through the runtime upload path.
+#[derive(Clone, Debug, PartialEq)]
+pub struct EnvironmentTexture {
+    pub width: u32,
+    pub height: u32,
+    pub pixels: Vec<f32>,
 }
 
 use thiserror::Error;

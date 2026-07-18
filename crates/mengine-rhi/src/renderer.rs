@@ -1326,7 +1326,7 @@ impl Renderer {
         rgba8: &[u8],
         srgb: bool,
     ) -> Result<(), UiTextureError> {
-        validate_material_texture_rgba8(width, height, rgba8)?;
+        validate_rgba_texture_data(width, height, rgba8.len())?;
         let texture = create_material_texture_rgba8(
             &self.device,
             &self.queue,
@@ -1361,13 +1361,45 @@ impl Renderer {
         height: u32,
         rgba8: &[u8],
     ) -> Result<(), UiTextureError> {
-        validate_material_texture_rgba8(width, height, rgba8)?;
+        validate_rgba_texture_data(width, height, rgba8.len())?;
         let texture = self.environment_prefilter.prefilter_rgba8(
             &self.device,
             &self.queue,
             width,
             height,
             rgba8,
+        );
+        let bind_group = create_environment_bind_group(
+            &self.device,
+            &self.environment_texture_layout,
+            &texture.view,
+            &self.environment_sampler,
+            self.brdf_lut.view(),
+            self.brdf_lut.sampler(),
+            &texture.irradiance_view,
+        );
+        self.environment_textures.insert(key.to_owned(), texture);
+        self.environment_bind_groups
+            .insert(key.to_owned(), bind_group);
+        Ok(())
+    }
+
+    /// Upload a linear-light floating-point environment map. Values above one
+    /// are retained through the Rgba16Float GGX/irradiance prefilter pipeline.
+    pub fn upload_environment_texture_rgba32f(
+        &mut self,
+        key: &str,
+        width: u32,
+        height: u32,
+        rgba32f: &[f32],
+    ) -> Result<(), UiTextureError> {
+        validate_rgba_texture_data(width, height, rgba32f.len())?;
+        let texture = self.environment_prefilter.prefilter_rgba32f(
+            &self.device,
+            &self.queue,
+            width,
+            height,
+            rgba32f,
         );
         let bind_group = create_environment_bind_group(
             &self.device,
@@ -2014,20 +2046,17 @@ fn create_environment_bind_group(
     })
 }
 
-fn validate_material_texture_rgba8(
+fn validate_rgba_texture_data(
     width: u32,
     height: u32,
-    rgba8: &[u8],
+    actual: usize,
 ) -> Result<(), UiTextureError> {
     if width == 0 || height == 0 {
         return Err(UiTextureError::EmptyDimensions);
     }
     let expected = width as usize * height as usize * 4;
-    if rgba8.len() != expected {
-        return Err(UiTextureError::InvalidDataLength {
-            expected,
-            actual: rgba8.len(),
-        });
+    if actual != expected {
+        return Err(UiTextureError::InvalidDataLength { expected, actual });
     }
     Ok(())
 }

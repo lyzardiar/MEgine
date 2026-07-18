@@ -30,6 +30,7 @@ export type InspectorFieldMeta = {
     | 'material'
     | 'model'
     | 'prefab'
+    | 'texture'
     | 'spine-json'
     | 'spine-binary'
     | 'spine-atlas'
@@ -120,7 +121,14 @@ export const BUILTIN_INSPECTOR_FIELDS: Readonly<
   EnvironmentLight: {
     diffuse_intensity: { label: 'Diffuse Intensity', min: 0, step: 0.05 },
     specular_intensity: { label: 'Specular Intensity', min: 0, step: 0.05 },
-    texture: { kind: 'texture', label: 'Environment Texture', allowNone: true, noneValue: '' },
+    texture: {
+      kind: 'project-asset',
+      label: 'Environment Texture',
+      referenceType: 'Environment Texture',
+      assetKinds: ['texture'],
+      allowNone: true,
+      noneValue: '',
+    },
     rotation_degrees: { label: 'Rotation', step: 1 },
     exposure: { label: 'Exposure (EV)', min: -16, max: 16, step: 0.1 },
   },

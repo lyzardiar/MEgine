@@ -38,7 +38,7 @@ const STATIC_FOLDERS = [
 type AssetItem = {
   folder: string;
   name: string;
-  kind: 'animation' | 'animator-controller' | 'audio' | 'model' | 'prefab' | 'script' | 'material' | 'shader' | 'scene' | 'sprite' | 'sprite-atlas' | 'spine';
+  kind: 'animation' | 'animator-controller' | 'audio' | 'model' | 'prefab' | 'script' | 'material' | 'shader' | 'scene' | 'sprite' | 'sprite-atlas' | 'texture' | 'spine';
   spawn: string | null;
   icon: string;
   sceneName?: string;
@@ -139,13 +139,19 @@ export function Project(props: {
     thumbUrl: spriteAssetUrl(s.id),
   }));
 
-  const authoringAssets: AssetItem[] = projectFiles.map((asset: ProjectFileAsset) => {
+  const authoringAssets: AssetItem[] = projectFiles
+    // Browser-decodable images already have richer Sprite cards. Float image
+    // formats need a dedicated Project card so they remain discoverable.
+    .filter((asset) => asset.kind !== 'texture' || /\.(hdr|exr)$/i.test(asset.name))
+    .map((asset: ProjectFileAsset) => {
     const kind: AssetItem['kind'] = asset.kind === 'animation'
       ? 'animation'
       : asset.kind === 'animator-controller'
         ? 'animator-controller'
       : asset.kind === 'sprite-atlas'
         ? 'sprite-atlas'
+      : asset.kind === 'texture'
+        ? 'texture'
       : asset.kind === 'audio'
         ? 'audio'
       : asset.kind === 'material'
@@ -162,7 +168,9 @@ export function Project(props: {
       name: asset.name,
       kind,
       spawn: null,
-      icon: kind === 'shader'
+      icon: kind === 'texture'
+        ? 'HDR'
+        : kind === 'shader'
         ? 'S'
         : kind === 'animator-controller'
         ? 'A'
@@ -348,6 +356,7 @@ export function Project(props: {
                 || a.kind === 'animation'
                 || a.kind === 'animator-controller'
                 || a.kind === 'sprite-atlas'
+                || a.kind === 'texture'
                 || a.kind === 'audio'
                 || a.kind === 'material'
                 || a.kind === 'shader'
@@ -361,6 +370,7 @@ export function Project(props: {
                   && a.kind !== 'animation'
                   && a.kind !== 'animator-controller'
                   && a.kind !== 'sprite-atlas'
+                  && a.kind !== 'texture'
                   && a.kind !== 'audio'
                   && a.kind !== 'material'
                   && a.kind !== 'shader'
@@ -390,6 +400,8 @@ export function Project(props: {
                           ? `Animation Clip · ${a.spriteId}`
                           : a.kind === 'sprite-atlas'
                             ? `Sprite Atlas - double-click to edit - ${a.spriteId}`
+                          : a.kind === 'texture'
+                            ? `Environment Texture - drag to Environment Light - ${a.spriteId}`
                           : a.kind === 'animator-controller'
                             ? `Animator Controller · ${a.spriteId}`
                           : a.kind === 'material'

@@ -1,6 +1,6 @@
 use mengine_assets::{
-    load_sprite_import, load_texture_rgba8, split_sprite_reference, sprite_import_path,
-    texture_dimensions,
+    load_environment_texture, load_sprite_import, load_texture_rgba8, split_sprite_reference,
+    sprite_import_path, texture_dimensions,
 };
 use mengine_rhi::{FrameLighting, RenderObject, Renderer, UiBatchPlan, UiPrimitive};
 use std::collections::HashMap;
@@ -276,9 +276,9 @@ impl RuntimeTextureCache {
         if !should_attempt(&mut self.attempted_environment, key, file_stamp(&path)) {
             return Vec::new();
         }
-        match load_texture_rgba8(&path) {
+        match load_environment_texture(&path) {
             Ok(texture) => renderer
-                .upload_environment_texture_rgba8(
+                .upload_environment_texture_rgba32f(
                     key,
                     texture.width,
                     texture.height,

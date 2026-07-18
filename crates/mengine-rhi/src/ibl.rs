@@ -218,6 +218,41 @@ impl EnvironmentPrefilter {
                 ]
             })
             .collect::<Vec<_>>();
+        self.prefilter_rgba16(device, queue, width, height, &source_pixels)
+    }
+
+    pub(crate) fn prefilter_rgba32f(
+        &self,
+        device: &wgpu::Device,
+        queue: &wgpu::Queue,
+        width: u32,
+        height: u32,
+        rgba32f: &[f32],
+    ) -> PrefilteredEnvironment {
+        debug_assert!(width > 0 && height > 0);
+        debug_assert_eq!(rgba32f.len(), width as usize * height as usize * 4);
+        let source_pixels = rgba32f
+            .chunks_exact(4)
+            .flat_map(|pixel| {
+                [
+                    encode_radiance(pixel[0]),
+                    encode_radiance(pixel[1]),
+                    encode_radiance(pixel[2]),
+                    f16::from_f32(sanitize_alpha(pixel[3])).to_bits(),
+                ]
+            })
+            .collect::<Vec<_>>();
+        self.prefilter_rgba16(device, queue, width, height, &source_pixels)
+    }
+
+    fn prefilter_rgba16(
+        &self,
+        device: &wgpu::Device,
+        queue: &wgpu::Queue,
+        width: u32,
+        height: u32,
+        source_pixels: &[u16],
+    ) -> PrefilteredEnvironment {
         let source_texture = device.create_texture(&wgpu::TextureDescriptor {
             label: Some("environment_prefilter_source"),
             size: wgpu::Extent3d {
@@ -239,7 +274,7 @@ impl EnvironmentPrefilter {
                 origin: wgpu::Origin3d::ZERO,
                 aspect: wgpu::TextureAspect::All,
             },
-            bytemuck::cast_slice(&source_pixels),
+            bytemuck::cast_slice(source_pixels),
             wgpu::TexelCopyBufferLayout {
                 offset: 0,
                 bytes_per_row: Some(width * 8),
@@ -436,6 +471,23 @@ fn srgb_to_linear(value: u8) -> f32 {
         value / 12.92
     } else {
         ((value + 0.055) / 1.055).powf(2.4)
+    }
+}
+
+fn encode_radiance(value: f32) -> u16 {
+    let value = if value.is_finite() {
+        value.clamp(0.0, 65_504.0)
+    } else {
+        0.0
+    };
+    f16::from_f32(value).to_bits()
+}
+
+fn sanitize_alpha(value: f32) -> f32 {
+    if value.is_finite() {
+        value.clamp(0.0, 1.0)
+    } else {
+        1.0
     }
 }
 
@@ -675,5 +727,9 @@ mod tests {
         assert_eq!(mip_level_count(1024, 512), 11);
         assert_eq!(mip_level_count(1, 1), 1);
         assert!((srgb_to_linear(128) - 0.21586).abs() < 0.0001);
+        assert_eq!(f16::from_bits(encode_radiance(4.0)).to_f32(), 4.0);
+        assert_eq!(f16::from_bits(encode_radiance(-2.0)).to_f32(), 0.0);
+        assert_eq!(f16::from_bits(encode_radiance(f32::NAN)).to_f32(), 0.0);
+        assert_eq!(f16::from_bits(encode_radiance(f32::INFINITY)).to_f32(), 0.0);
     }
 }

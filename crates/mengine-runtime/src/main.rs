@@ -1858,7 +1858,7 @@ fn validate_world_assets(
             if texture.contains('#') {
                 bail!("environment texture cannot reference a sprite subresource: {texture}");
             }
-            validate_texture_asset(texture, "environment texture", project_root, validated)?;
+            validate_environment_texture_asset(texture, project_root, validated)?;
         }
         if let Some(renderer) = world.get_component::<SpriteRenderer>(entity) {
             validate_texture_asset(&renderer.sprite, "sprite", project_root, validated)?;
@@ -1941,6 +1941,24 @@ fn validate_texture_asset(
                 import_path.display()
             );
         }
+    }
+    Ok(())
+}
+
+fn validate_environment_texture_asset(
+    reference: &str,
+    project_root: &Path,
+    validated: &mut HashSet<PathBuf>,
+) -> Result<()> {
+    let reference = reference.trim();
+    if reference.is_empty() {
+        return Ok(());
+    }
+    let path = mengine_runtime::textures::resolve_project_asset_path(project_root, reference)
+        .with_context(|| format!("unsafe environment texture path: {reference}"))?;
+    if validated.insert(path.clone()) {
+        mengine_assets::load_environment_texture(&path)
+            .with_context(|| format!("invalid environment texture {}", path.display()))?;
     }
     Ok(())
 }
@@ -2063,6 +2081,36 @@ mod tests {
         assert!(error
             .to_string()
             .contains("unsafe environment texture path"));
+    }
+
+    #[test]
+    fn packaged_asset_validation_accepts_real_hdr_environment_textures() {
+        let root = std::env::temp_dir().join(format!(
+            "mengine-packaged-hdr-{}-{}",
+            std::process::id(),
+            std::time::SystemTime::now()
+                .duration_since(std::time::UNIX_EPOCH)
+                .unwrap()
+                .as_nanos()
+        ));
+        let assets = root.join("Assets");
+        std::fs::create_dir_all(&assets).unwrap();
+        let hdr = assets.join("studio.hdr");
+        image::codecs::hdr::HdrEncoder::new(std::fs::File::create(&hdr).unwrap())
+            .encode(&[image::Rgb([8.0, 4.0, 2.0])], 1, 1)
+            .unwrap();
+
+        let mut world = World::new();
+        world.commands.push(WorldCommand::Spawn {
+            name: Some("HDR environment".into()),
+            components: json!({
+                "EnvironmentLight": { "texture": "Assets/studio.hdr" }
+            }),
+        });
+        world.commit();
+        let result = validate_world_assets(&world, &root, &mut HashSet::new());
+        std::fs::remove_dir_all(root).unwrap();
+        result.expect("Radiance HDR environment maps must survive package validation");
     }
 
     #[test]
