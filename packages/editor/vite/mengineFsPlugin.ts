@@ -434,6 +434,25 @@ export function mengineFsPlugin(opts: MengineFsOptions | string): Plugin {
     return segments.join('/');
   }
 
+  function normalizeAlwaysInclude(value: unknown): string | null {
+    if (typeof value !== 'string') return null;
+    const segments = value.trim().replace(/\\/g, '/').split('/');
+    if (
+      segments.length === 0
+      || (segments[0] !== 'Assets' && segments[0] !== 'Scripts')
+      || segments.some((segment) => !segment || segment === '.' || segment === '..')
+    ) {
+      return null;
+    }
+    const relative = segments.join('/');
+    const absolute = path.resolve(projectRoot, ...segments);
+    const fromRoot = path.relative(projectRoot, absolute);
+    if (fromRoot.startsWith(`..${path.sep}`) || fromRoot === '..' || !fs.existsSync(absolute)) {
+      return null;
+    }
+    return relative;
+  }
+
   function readBuildSettings() {
     const manifest = JSON.parse(fs.readFileSync(manifestPath, 'utf8')) as Record<string, unknown>;
     const mainScene = normalizeBuildScene(manifest.mainScene ?? manifest.main_scene);
@@ -449,12 +468,33 @@ export function mengineFsPlugin(opts: MengineFsOptions | string): Plugin {
       }
     }
     if (scenes.length === 0 && mainScene) scenes.push(mainScene);
+    const rawAssetMode = manifest.assetMode ?? manifest.asset_mode;
+    if (rawAssetMode != null && rawAssetMode !== 'all' && rawAssetMode !== 'referenced') {
+      throw new Error(`assetMode must be all or referenced: ${String(rawAssetMode)}`);
+    }
+    const assetMode = rawAssetMode === 'referenced' ? 'referenced' : 'all';
+    const alwaysInclude: string[] = [];
+    const seenAlwaysInclude = new Set<string>();
+    const rawAlwaysInclude = manifest.alwaysInclude ?? manifest.always_include;
+    if (rawAlwaysInclude != null && !Array.isArray(rawAlwaysInclude)) {
+      throw new Error('alwaysInclude must be an array');
+    }
+    for (const value of Array.isArray(rawAlwaysInclude) ? rawAlwaysInclude : []) {
+      const included = normalizeAlwaysInclude(value);
+      if (!included || seenAlwaysInclude.has(included.toLowerCase())) {
+        throw new Error(`invalid or duplicate alwaysInclude path: ${String(value)}`);
+      }
+      seenAlwaysInclude.add(included.toLowerCase());
+      alwaysInclude.push(included);
+    }
     return {
       manifest,
       settings: {
         mainScene: scenes[0] ?? null,
         scenes,
         availableScenes: listBuildScenes(),
+        assetMode,
+        alwaysInclude,
       },
     };
   }
@@ -612,6 +652,42 @@ export function mengineFsPlugin(opts: MengineFsOptions | string): Plugin {
         manifest.buildScenes = scenes;
         delete manifest.main_scene;
         delete manifest.build_scenes;
+        writeFileAtomic(
+          manifestPath,
+          Buffer.from(`${JSON.stringify(manifest, null, 2)}\n`, 'utf8'),
+        );
+        return sendJson(res, 200, readBuildSettings().settings);
+      }
+
+      if (pathname === `${API}/build-asset-settings` && method === 'PUT') {
+        const body = await readBody(req);
+        const parsed = JSON.parse(body || '{}') as {
+          assetMode?: unknown;
+          alwaysInclude?: unknown;
+        };
+        if (parsed.assetMode !== 'all' && parsed.assetMode !== 'referenced') {
+          return sendJson(res, 400, { error: 'assetMode must be all or referenced' });
+        }
+        if (!Array.isArray(parsed.alwaysInclude) || parsed.alwaysInclude.length > 256) {
+          return sendJson(res, 400, { error: 'alwaysInclude must contain at most 256 paths' });
+        }
+        const alwaysInclude: string[] = [];
+        const seen = new Set<string>();
+        for (const value of parsed.alwaysInclude) {
+          const included = normalizeAlwaysInclude(value);
+          if (!included || seen.has(included.toLowerCase())) {
+            return sendJson(res, 400, {
+              error: `invalid or duplicate alwaysInclude path: ${String(value)}`,
+            });
+          }
+          seen.add(included.toLowerCase());
+          alwaysInclude.push(included);
+        }
+        const { manifest } = readBuildSettings();
+        manifest.assetMode = parsed.assetMode;
+        manifest.alwaysInclude = alwaysInclude;
+        delete manifest.asset_mode;
+        delete manifest.always_include;
         writeFileAtomic(
           manifestPath,
           Buffer.from(`${JSON.stringify(manifest, null, 2)}\n`, 'utf8'),

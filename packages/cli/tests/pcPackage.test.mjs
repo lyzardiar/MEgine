@@ -86,9 +86,12 @@ test('buildPcPackage creates a directly launchable, hashed project bundle', () =
     assert.match(manifest.contentHash, /^[0-9a-f]{64}$/);
     assert.equal(manifest.contentHash, buildContentHash(manifest.files));
     assert.deepEqual(manifest.assetValidation, {
+      assetMode: 'all',
       rootScenes: 2,
-      references: 2,
-      validatedFiles: 2,
+      references: 3,
+      validatedFiles: 3,
+      omittedAssetFiles: 0,
+      omittedAssetBytes: 0,
       strippedEditorEntities: 0,
     });
     assert.deepEqual(manifest.project, {
@@ -100,6 +103,8 @@ test('buildPcPackage creates a directly launchable, hashed project bundle', () =
         'Assets/Scenes/Level2.mscene',
       ],
       startupScript: 'Assets/Scripts/main.js',
+      assetMode: 'all',
+      alwaysInclude: [],
     });
 
     const playerConfig = JSON.parse(readFileSync(join(paths.output, PLAYER_CONFIG_FILE), 'utf8'));
@@ -121,6 +126,7 @@ test('buildPcPackage creates a directly launchable, hashed project bundle', () =
     assert.deepEqual(packagedLevel.world.entities[0].components.Transform, { position: [0, 0, 0] });
     assert.equal(packagedLevel.world.entities[0].components.__MEnginePrefab, undefined);
     assert.equal(readFileSync(join(paths.output, manifest.executable), 'utf8'), 'runtime-binary');
+    assert.equal(existsSync(join(paths.output, 'Assets', 'Textures', 'pixel.bin')), true);
     assert.deepEqual(
       JSON.parse(readFileSync(join(paths.output, 'ProjectSettings', 'sorting-layers.json'), 'utf8')),
       {
@@ -199,8 +205,87 @@ test('buildPcPackage strips EditorOnly scene and prefab subtrees', () => {
     const prefab = JSON.parse(readFileSync(join(paths.output, 'Assets', 'Prefabs', 'Mixed.prefab'), 'utf8'));
     assert.deepEqual(prefab.root.children, []);
     assert.equal(existsSync(join(paths.output, 'Assets', 'Prefabs', 'Editor.prefab')), false);
-    assert.equal(manifest.assetValidation.validatedFiles, 3);
+    assert.equal(manifest.assetValidation.validatedFiles, 4);
     assert.equal(manifest.assetValidation.strippedEditorEntities, 5);
+  } finally {
+    rmSync(paths.root, { recursive: true, force: true });
+  }
+});
+
+test('buildPcPackage referenced mode copies the validated closure and always-include roots', () => {
+  const paths = fixture('referenced-assets');
+  try {
+    mkdirSync(join(paths.project, 'Assets', 'Prefabs'), { recursive: true });
+    const projectPath = join(paths.project, 'project.json');
+    const project = JSON.parse(readFileSync(projectPath, 'utf8'));
+    project.assetMode = 'referenced';
+    project.alwaysInclude = ['Assets/Prefabs'];
+    writeFileSync(projectPath, JSON.stringify(project));
+    writeFileSync(join(paths.project, 'Assets', 'Scenes', 'Main.mscene'), JSON.stringify({
+      version: 1,
+      world: {
+        entities: [{
+          entity: 1,
+          components: { SpriteRenderer: { sprite: 'Assets/Textures/used.png' } },
+        }],
+      },
+    }));
+    writeFileSync(join(paths.project, 'Assets', 'Textures', 'used.png'), 'used');
+    writeFileSync(join(paths.project, 'Assets', 'Textures', 'used.png.sprite.json'), JSON.stringify({
+      version: 1,
+      mode: 'single',
+    }));
+    writeFileSync(join(paths.project, 'Assets', 'Textures', 'dynamic.png'), 'dynamic');
+    writeFileSync(join(paths.project, 'Assets', 'Textures', 'unused.png'), 'unused');
+    writeFileSync(join(paths.project, 'Assets', 'Materials', 'dynamic.mmat'), JSON.stringify({
+      version: 4,
+      shader: 'pbr',
+      base_color_texture: 'Assets/Textures/dynamic.png',
+    }));
+    writeFileSync(join(paths.project, 'Assets', 'Prefabs', 'Dynamic.prefab'), JSON.stringify({
+      version: 2,
+      root: {
+        id: 'dynamic',
+        components: {
+          MeshRenderer: { mesh: 'cube', material: 'Assets/Materials/dynamic.mmat' },
+        },
+        children: [],
+      },
+    }));
+
+    const manifest = buildPcPackage({
+      projectDir: paths.project,
+      outputDir: paths.output,
+      runtimePath: paths.runtime,
+      engineVersion: 'test-engine',
+    });
+    assert.equal(manifest.project.assetMode, 'referenced');
+    assert.deepEqual(manifest.project.alwaysInclude, ['Assets/Prefabs']);
+    assert.deepEqual(manifest.assetValidation, {
+      assetMode: 'referenced',
+      rootScenes: 2,
+      references: 8,
+      validatedFiles: 8,
+      omittedAssetFiles: 2,
+      omittedAssetBytes: 10,
+      strippedEditorEntities: 0,
+    });
+    for (const path of [
+      'Assets/Scenes/Main.mscene',
+      'Assets/Scenes/Level2.mscene',
+      'Assets/Scripts/main.js',
+      'Assets/Textures/used.png',
+      'Assets/Textures/used.png.sprite.json',
+      'Assets/Textures/dynamic.png',
+      'Assets/Materials/dynamic.mmat',
+      'Assets/Prefabs/Dynamic.prefab',
+      'ProjectSettings/sorting-layers.json',
+    ]) {
+      assert.equal(existsSync(join(paths.output, ...path.split('/'))), true, path);
+    }
+    for (const path of ['Assets/Textures/unused.png', 'Assets/Textures/pixel.bin']) {
+      assert.equal(existsSync(join(paths.output, ...path.split('/'))), false, path);
+    }
   } finally {
     rmSync(paths.root, { recursive: true, force: true });
   }
@@ -272,9 +357,12 @@ test('buildPcPackage validates transitive material animator and audio dependenci
       engineVersion: 'test-engine',
     });
     assert.deepEqual(manifest.assetValidation, {
+      assetMode: 'all',
       rootScenes: 2,
-      references: 11,
-      validatedFiles: 11,
+      references: 12,
+      validatedFiles: 12,
+      omittedAssetFiles: 0,
+      omittedAssetBytes: 0,
       strippedEditorEntities: 0,
     });
   } finally {
@@ -311,7 +399,7 @@ test('buildPcPackage includes and validates TimelineDirector assets', () => {
       engineVersion: 'test-engine',
     });
     assert.equal(existsSync(join(paths.output, 'Assets', 'Timelines', 'Intro.mtimeline')), true);
-    assert.equal(manifest.assetValidation.validatedFiles, 3);
+    assert.equal(manifest.assetValidation.validatedFiles, 4);
   } finally {
     rmSync(paths.root, { recursive: true, force: true });
   }
@@ -476,10 +564,13 @@ test('buildPcPackage includes validated custom material surface shaders', () => 
     });
     assert.equal(existsSync(join(paths.output, 'Assets', 'Shaders', 'Rim.mshader')), true);
     assert.deepEqual(manifest.assetValidation, {
+      assetMode: 'all',
       rootScenes: 2,
-      references: 4,
-      validatedFiles: 4,
-      strippedEditorEntities: 0,
+      references: 5,
+      validatedFiles: 5,
+      omittedAssetFiles: 0,
+      omittedAssetBytes: 0,
+      strippedEditorEntities: 0
     });
   } finally {
     rmSync(paths.root, { recursive: true, force: true });
@@ -600,9 +691,12 @@ test('buildPcPackage validates tilemap sprite subresources and shared import met
       engineVersion: 'test-engine',
     });
     assert.deepEqual(manifest.assetValidation, {
+      assetMode: 'all',
       rootScenes: 2,
-      references: 6,
-      validatedFiles: 4,
+      references: 7,
+      validatedFiles: 5,
+      omittedAssetFiles: 0,
+      omittedAssetBytes: 0,
       strippedEditorEntities: 0,
     });
   } finally {

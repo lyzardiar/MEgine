@@ -17,12 +17,16 @@ import * as ts from 'typescript';
 export const PLAYER_CONFIG_FILE = 'mengine-player.json';
 export const BUILD_MANIFEST_FILE = 'mengine-build.json';
 
+export type BuildAssetMode = 'all' | 'referenced';
+
 export interface GameProjectManifest {
   name: string;
   version: number | string;
   mainScene: string;
   buildScenes: string[];
   startupScript?: string;
+  assetMode: BuildAssetMode;
+  alwaysInclude: string[];
 }
 
 export interface PcPackageOptions {
@@ -58,9 +62,12 @@ export interface PcBuildManifest {
 }
 
 export interface BuildAssetValidation {
+  assetMode: BuildAssetMode;
   rootScenes: number;
   references: number;
   validatedFiles: number;
+  omittedAssetFiles: number;
+  omittedAssetBytes: number;
   strippedEditorEntities: number;
 }
 
@@ -149,6 +156,39 @@ export function readGameProject(projectDir: string): GameProjectManifest {
   const version = typeof parsed.version === 'number' || typeof parsed.version === 'string'
     ? parsed.version
     : 1;
+  const assetModeValue = parsed.assetMode ?? parsed.asset_mode ?? 'all';
+  if (assetModeValue !== 'all' && assetModeValue !== 'referenced') {
+    throw new Error('project.json assetMode must be all or referenced');
+  }
+  const rawAlwaysInclude = parsed.alwaysInclude ?? parsed.always_include ?? [];
+  if (!Array.isArray(rawAlwaysInclude)) {
+    throw new Error('project.json alwaysInclude must be an array');
+  }
+  if (rawAlwaysInclude.length > 256) {
+    throw new Error('project.json alwaysInclude supports at most 256 paths');
+  }
+  const alwaysInclude: string[] = [];
+  const seenAlwaysInclude = new Set<string>();
+  const roots = contentRoots(root);
+  for (const value of rawAlwaysInclude) {
+    if (typeof value !== 'string' || !value.trim()) {
+      throw new Error('project.json alwaysInclude entries must be non-empty paths');
+    }
+    const segments = value.trim().replaceAll('\\', '/').split('/');
+    if (segments.some((segment) => !segment || segment === '.' || segment === '..')) {
+      throw new Error(`invalid alwaysInclude path: ${value}`);
+    }
+    const path = segments.join('/');
+    const absolute = resolveProjectPath(root, path, 'alwaysInclude');
+    if (!roots.some((contentRoot) => isPathInside(contentRoot, absolute))) {
+      throw new Error(`alwaysInclude must be stored under Assets or Scripts: ${path}`);
+    }
+    if (!existsSync(absolute)) throw new Error(`alwaysInclude path not found: ${path}`);
+    const key = process.platform === 'win32' ? absolute.toLowerCase() : absolute;
+    if (seenAlwaysInclude.has(key)) throw new Error(`duplicate alwaysInclude path: ${path}`);
+    seenAlwaysInclude.add(key);
+    alwaysInclude.push(path);
+  }
   if (!name) throw new Error('project.json requires a non-empty name');
   if (!mainScene) throw new Error('project.json requires mainScene');
   for (const scene of buildScenes) {
@@ -163,7 +203,15 @@ export function readGameProject(projectDir: string): GameProjectManifest {
       throw new Error(`startup script not found: ${startupScript}`);
     }
   }
-  return { name, version, mainScene, buildScenes, ...(startupScript ? { startupScript } : {}) };
+  return {
+    name,
+    version,
+    mainScene,
+    buildScenes,
+    ...(startupScript ? { startupScript } : {}),
+    assetMode: assetModeValue,
+    alwaysInclude,
+  };
 }
 
 function validateProjectSettings(projectDir: string): void {
@@ -212,6 +260,11 @@ interface PendingAsset {
   from: string;
   kind: string;
   spriteSlice?: string;
+}
+
+interface BuildDependencyScan {
+  validation: BuildAssetValidation;
+  files: string[];
 }
 
 function jsonObject(value: unknown): JsonObject | null {
@@ -300,17 +353,17 @@ function filterEditorOnlySceneEntities(entitiesValue: unknown): {
 }
 
 /**
- * Validates runtime asset references reachable from the configured build scenes. Dynamic assets
- * loaded by script are still copied because packaging retains the complete Assets tree.
+ * Validates runtime asset references reachable from configured roots. Dynamic paths loaded by
+ * script require alwaysInclude when the project uses referenced asset packaging.
  */
-export function validateBuildAssetDependencies(
+function scanBuildAssetDependencies(
   projectDir: string,
   project: GameProjectManifest = readGameProject(projectDir),
-): BuildAssetValidation {
+): BuildDependencyScan {
   const root = resolve(projectDir);
   const roots = contentRoots(root);
   const queue: PendingAsset[] = [];
-  const visited = new Set<string>();
+  const visited = new Map<string, string>();
   const processed = new Set<string>();
   let references = 0;
 
@@ -385,16 +438,13 @@ export function validateBuildAssetDependencies(
     enqueue(stringValue(component('RawImage'), 'texture'), from, 'UI texture', ['white']);
   };
 
-  const prefabNodeReferences = (nodeValue: unknown, from: string, rootNode = true) => {
+  const prefabNodeReferences = (nodeValue: unknown, from: string) => {
     const node = jsonObject(nodeValue);
     if (!node) return;
-    if (hasEditorOnlyComponent(node.components)) {
-      if (rootNode) throw new Error(`invalid prefab ${from}: root cannot be EditorOnly`);
-      return;
-    }
+    if (hasEditorOnlyComponent(node.components)) return;
     componentReferences(node.components, from);
     if (Array.isArray(node.children)) {
-      for (const child of node.children) prefabNodeReferences(child, from, false);
+      for (const child of node.children) prefabNodeReferences(child, from);
     }
   };
 
@@ -835,7 +885,36 @@ export function validateBuildAssetDependencies(
     }
   };
 
+  const enqueueAlwaysInclude = (path: string) => {
+    const absolute = resolveProjectPath(root, path, 'alwaysInclude');
+    const walk = (candidate: string) => {
+      const stats = lstatSync(candidate);
+      if (stats.isSymbolicLink()) {
+        throw new Error(`symbolic links are not allowed in alwaysInclude: ${portablePath(relative(root, candidate))}`);
+      }
+      if (stats.isDirectory()) {
+        for (const entry of readdirSync(candidate, { withFileTypes: true })
+          .sort((left, right) => compareFileNames(left.name, right.name))) {
+          walk(join(candidate, entry.name));
+        }
+        return;
+      }
+      if (stats.isFile() && !/\.tsx?$/i.test(candidate)) {
+        enqueue(
+          portablePath(relative(root, candidate)),
+          'project.json alwaysInclude',
+          'always included asset',
+        );
+      }
+    };
+    walk(absolute);
+  };
+
   for (const scene of project.buildScenes) enqueue(scene, 'project.json', 'build scene');
+  if (project.startupScript && !/\.tsx?$/i.test(project.startupScript)) {
+    enqueue(project.startupScript, 'project.json', 'startup script');
+  }
+  for (const path of project.alwaysInclude) enqueueAlwaysInclude(path);
   while (queue.length > 0) {
     const pending = queue.shift()!;
     const absolute = resolveProjectPath(root, pending.path, pending.kind);
@@ -849,15 +928,45 @@ export function validateBuildAssetDependencies(
       throw new Error(`missing ${pending.kind}: ${pending.path} (referenced by ${pending.from})`);
     }
     processed.add(processKey);
-    visited.add(key);
+    visited.set(key, absolute);
+    if (/\.(?:png|jpe?g|webp|bmp|gif|tga)$/i.test(absolute)) {
+      const sidecar = `${absolute}.sprite.json`;
+      if (existsSync(sidecar) && statSync(sidecar).isFile()) {
+        const sidecarPath = portablePath(relative(root, sidecar));
+        const sidecarKey = process.platform === 'win32' ? sidecar.toLowerCase() : sidecar;
+        const alreadyQueued = queue.some((candidate) => (
+          candidate.path.replaceAll('\\', '/').toLowerCase() === sidecarPath.toLowerCase()
+        ));
+        if (!visited.has(sidecarKey) && !alreadyQueued) {
+          enqueue(
+            sidecarPath,
+            portablePath(relative(root, absolute)),
+            'sprite import metadata',
+          );
+        }
+      }
+    }
     inspectJsonDependency(absolute, pending);
   }
   return {
-    rootScenes: project.buildScenes.length,
-    references,
-    validatedFiles: visited.size,
-    strippedEditorEntities: 0,
+    validation: {
+      assetMode: project.assetMode,
+      rootScenes: project.buildScenes.length,
+      references,
+      validatedFiles: visited.size,
+      omittedAssetFiles: 0,
+      omittedAssetBytes: 0,
+      strippedEditorEntities: 0,
+    },
+    files: [...visited.values()].sort(compareFileNames),
   };
+}
+
+export function validateBuildAssetDependencies(
+  projectDir: string,
+  project: GameProjectManifest = readGameProject(projectDir),
+): BuildAssetValidation {
+  return scanBuildAssetDependencies(projectDir, project).validation;
 }
 
 function safeExecutableName(name: string): string {
@@ -1074,6 +1183,22 @@ function contentRoots(projectDir: string): string[] {
   return roots;
 }
 
+function collectPackageCandidateFiles(
+  directory: string,
+  output: Array<{ path: string; size: number }> = [],
+): Array<{ path: string; size: number }> {
+  for (const entry of readdirSync(directory, { withFileTypes: true })
+    .sort((left, right) => compareFileNames(left.name, right.name))) {
+    const path = join(directory, entry.name);
+    if (entry.isSymbolicLink()) continue;
+    if (entry.isDirectory()) collectPackageCandidateFiles(path, output);
+    else if (entry.isFile() && !/\.tsx?$/i.test(entry.name)) {
+      output.push({ path, size: statSync(path).size });
+    }
+  }
+  return output;
+}
+
 function sha256(path: string): string {
   return createHash('sha256').update(readFileSync(path)).digest('hex');
 }
@@ -1192,7 +1317,20 @@ export function buildPcPackage(options: PcPackageOptions): PcBuildManifest {
     throw new Error(`build output already exists (pass --clean to replace it): ${outputDir}`);
   }
   validateProjectSettings(projectDir);
-  const assetValidation = validateBuildAssetDependencies(projectDir, project);
+  const dependencyScan = scanBuildAssetDependencies(projectDir, project);
+  const assetValidation = dependencyScan.validation;
+  if (project.assetMode === 'referenced') {
+    const included = new Set(dependencyScan.files.map((path) => (
+      process.platform === 'win32' ? path.toLowerCase() : path
+    )));
+    const omitted = roots
+      .flatMap((root) => collectPackageCandidateFiles(root))
+      .filter((entry) => !included.has(process.platform === 'win32'
+        ? entry.path.toLowerCase()
+        : entry.path));
+    assetValidation.omittedAssetFiles = omitted.length;
+    assetValidation.omittedAssetBytes = omitted.reduce((total, entry) => total + entry.size, 0);
+  }
 
   const stageDir = join(
     dirname(outputDir),
@@ -1203,9 +1341,17 @@ export function buildPcPackage(options: PcPackageOptions): PcBuildManifest {
 
   try {
     const copyStats: PlayerCopyStats = { strippedEditorEntities: 0 };
-    for (const root of roots) {
-      const copied = copyTree(root, join(stageDir, basename(root)));
-      copyStats.strippedEditorEntities += copied.strippedEditorEntities;
+    if (project.assetMode === 'all') {
+      for (const root of roots) {
+        const copied = copyTree(root, join(stageDir, basename(root)));
+        copyStats.strippedEditorEntities += copied.strippedEditorEntities;
+      }
+    } else {
+      for (const source of dependencyScan.files) {
+        const destination = join(stageDir, relative(projectDir, source));
+        const copied = copyTree(source, destination);
+        copyStats.strippedEditorEntities += copied.strippedEditorEntities;
+      }
     }
     const projectSettings = join(projectDir, 'ProjectSettings');
     if (existsSync(projectSettings)) {
@@ -1231,6 +1377,10 @@ export function buildPcPackage(options: PcPackageOptions): PcBuildManifest {
       packagedProjectJson.startupScript = packagedStartupScript;
       delete packagedProjectJson.startup_script;
     }
+    packagedProjectJson.assetMode = project.assetMode;
+    packagedProjectJson.alwaysInclude = project.alwaysInclude;
+    delete packagedProjectJson.asset_mode;
+    delete packagedProjectJson.always_include;
     writeFileSync(
       join(stageDir, 'project.json'),
       `${JSON.stringify(packagedProjectJson, null, 2)}\n`,

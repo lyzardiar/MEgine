@@ -123,6 +123,8 @@ function newProject(name: string) {
       mainScene: 'Assets/Scenes/Main.mscene',
       buildScenes: ['Assets/Scenes/Main.mscene'],
       startupScript: 'Assets/Scripts/Main.ts',
+      assetMode: 'all',
+      alwaysInclude: [],
     }, null, 2)}\n`,
   );
   writeFileSync(
@@ -291,9 +293,12 @@ function buildProject(values: string[]) {
   console.log(`Files: ${manifest.files.length} (SHA-256 manifest written)`);
   console.log(`Content: ${manifest.contentHash}`);
   console.log(
-    `Assets: ${manifest.assetValidation.validatedFiles} validated files, ${manifest.assetValidation.references} references`,
+    `Assets (${manifest.assetValidation.assetMode}): ${manifest.assetValidation.validatedFiles} validated files, ${manifest.assetValidation.references} references`,
   );
   console.log(`EditorOnly: ${manifest.assetValidation.strippedEditorEntities} entities stripped`);
+  console.log(
+    `Unused assets: ${manifest.assetValidation.omittedAssetFiles} files, ${manifest.assetValidation.omittedAssetBytes} bytes omitted`,
+  );
 }
 
 try {

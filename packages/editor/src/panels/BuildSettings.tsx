@@ -5,6 +5,7 @@ import {
   getProjectBuildSettings,
   isDesktopEditor,
   runPcPlayer,
+  saveProjectBuildAssetSettings,
   saveProjectBuildSettings,
   type BuildPlayerProfile,
   type BuildPlayerResult,
@@ -45,6 +46,7 @@ export function BuildSettings(props: {
   const [profile, setProfile] = useState<BuildPlayerProfile>('release');
   const [clean, setClean] = useState(true);
   const [settings, setSettings] = useState<ProjectBuildSettings | null>(null);
+  const [alwaysIncludeDraft, setAlwaysIncludeDraft] = useState('');
   const [settingsSaving, setSettingsSaving] = useState(false);
   const [savingAll, setSavingAll] = useState(false);
   const [building, setBuilding] = useState(false);
@@ -65,7 +67,10 @@ export function BuildSettings(props: {
     setSettingsError(null);
     void getProjectBuildSettings()
       .then((value) => {
-        if (!cancelled) setSettings(value);
+        if (!cancelled) {
+          setSettings(value);
+          setAlwaysIncludeDraft(value.alwaysInclude.join('\n'));
+        }
       })
       .catch((reason: unknown) => {
         if (!cancelled) {
@@ -111,6 +116,37 @@ export function BuildSettings(props: {
     } finally {
       setSettingsSaving(false);
     }
+  };
+
+  const persistAssetSettings = async (
+    assetMode: 'all' | 'referenced',
+    alwaysInclude: string[],
+  ) => {
+    if (settingsSaving) return;
+    setSettingsSaving(true);
+    setSettingsError(null);
+    try {
+      const next = await saveProjectBuildAssetSettings(assetMode, alwaysInclude);
+      setSettings(next);
+      setAlwaysIncludeDraft(next.alwaysInclude.join('\n'));
+      setLastBuild(null);
+      props.onLog(`Build asset mode updated: ${next.assetMode}, ${next.alwaysInclude.length} always-included path(s)`);
+    } catch (reason) {
+      const detail = reason instanceof Error ? reason.message : String(reason);
+      setSettingsError(detail);
+      props.onLog(`Build asset settings save failed: ${detail}`, 'error');
+    } finally {
+      setSettingsSaving(false);
+    }
+  };
+
+  const draftAlwaysInclude = () => alwaysIncludeDraft
+    .split(/\r?\n/)
+    .map((value) => value.trim())
+    .filter(Boolean);
+
+  const saveAlwaysInclude = () => {
+    if (settings) void persistAssetSettings(settings.assetMode, draftAlwaysInclude());
   };
 
   const toggleScene = (path: string) => {
@@ -270,6 +306,51 @@ export function BuildSettings(props: {
       </section>
 
       <section className="build-section build-options">
+        <h3>Content</h3>
+        <label>Asset Packaging
+          <select
+            value={settings?.assetMode ?? 'all'}
+            disabled={!settings || settingsSaving || building}
+            onChange={(event) => {
+              if (settings) {
+                void persistAssetSettings(
+                  event.target.value as 'all' | 'referenced',
+                  draftAlwaysInclude(),
+                );
+              }
+            }}
+          >
+            <option value="all">All Assets (compatible)</option>
+            <option value="referenced">Referenced Only</option>
+          </select>
+        </label>
+        <label className="build-asset-paths">
+          <span>Always Include</span>
+          <span className="build-asset-path-editor">
+            <textarea
+              aria-label="Always Include asset paths"
+              value={alwaysIncludeDraft}
+              disabled={!settings || settingsSaving || building}
+              placeholder={'Assets/Prefabs/Dynamic\nAssets/Localization'}
+              onChange={(event) => setAlwaysIncludeDraft(event.target.value)}
+            />
+            <button
+              type="button"
+              disabled={!settings || settingsSaving || building}
+              onClick={saveAlwaysInclude}
+            >
+              Apply Paths
+            </button>
+          </span>
+        </label>
+        {settings?.assetMode === 'referenced' && (
+          <div className="build-content-note">
+            Dynamic loads must be listed above. Referenced assets, transitive dependencies, sprite metadata and build scenes are included automatically.
+          </div>
+        )}
+      </section>
+
+      <section className="build-section build-options">
         <h3>Player</h3>
         <label>Target Platform <span className="build-readonly">{platform}</span></label>
         <label>Configuration
@@ -308,9 +389,12 @@ export function BuildSettings(props: {
             {lastBuild.platform}-{lastBuild.architecture} · {lastBuild.profile} · MEngine {lastBuild.engineVersion}
           </span>
           <span>
-            {lastBuild.sceneCount} scenes · {lastBuild.validatedAssetFiles} validated assets · {lastBuild.assetReferences} references
+            {lastBuild.sceneCount} scenes · {lastBuild.validatedAssetFiles} validated assets · {lastBuild.assetReferences} references · {lastBuild.assetMode}
           </span>
           <span>{lastBuild.strippedEditorEntities} EditorOnly entities stripped</span>
+          <span>
+            {lastBuild.omittedAssetFiles} unused asset files · {byteSize(lastBuild.omittedAssetBytes)} omitted
+          </span>
           <span>
             {lastBuild.fileCount} files · {byteSize(lastBuild.packagedBytes)} · {lastBuild.toolchain}
           </span>

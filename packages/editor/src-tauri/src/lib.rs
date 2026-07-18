@@ -1,6 +1,6 @@
 use mengine_core::snapshot::WorldSnapshot;
 use mengine_editor_host::{
-    EditorFailure, EditorRequest, EditorResult, ProjectSession, ProjectSnapshot,
+    BuildAssetMode, EditorFailure, EditorRequest, EditorResult, ProjectSession, ProjectSnapshot,
 };
 use parking_lot::Mutex;
 use std::collections::HashSet;
@@ -51,6 +51,8 @@ struct ProjectBuildSettings {
     main_scene: Option<String>,
     scenes: Vec<String>,
     available_scenes: Vec<String>,
+    asset_mode: BuildAssetMode,
+    always_include: Vec<String>,
 }
 
 #[derive(Clone, Debug, serde::Deserialize, serde::Serialize)]
@@ -93,6 +95,9 @@ struct BuildPlayerResult {
     scene_count: usize,
     validated_asset_files: usize,
     asset_references: usize,
+    asset_mode: String,
+    omitted_asset_files: usize,
+    omitted_asset_bytes: u64,
     stripped_editor_entities: usize,
     packaged_bytes: u64,
     toolchain: String,
@@ -408,11 +413,27 @@ fn run_player_build(
             .and_then(|value| usize::try_from(value).ok())
             .ok_or_else(|| format!("build manifest does not contain {parent}.{field}"))
     };
+    let manifest_u64 = |parent: &str, field: &str| -> Result<u64, String> {
+        build_manifest
+            .get(parent)
+            .and_then(|value| value.get(field))
+            .and_then(serde_json::Value::as_u64)
+            .ok_or_else(|| format!("build manifest does not contain {parent}.{field}"))
+    };
     let scene_count = build_manifest
         .get("project")
         .and_then(|value| value.get("buildScenes"))
         .and_then(serde_json::Value::as_array)
         .map_or(0, Vec::len);
+    let asset_mode = build_manifest
+        .get("assetValidation")
+        .and_then(|value| value.get("assetMode"))
+        .and_then(serde_json::Value::as_str)
+        .filter(|value| *value == "all" || *value == "referenced")
+        .ok_or_else(|| {
+            "build manifest does not contain a valid assetValidation.assetMode".to_string()
+        })?
+        .to_owned();
     let packaged_bytes = build_manifest
         .get("files")
         .and_then(serde_json::Value::as_array)
@@ -435,6 +456,9 @@ fn run_player_build(
         scene_count,
         validated_asset_files: manifest_count("assetValidation", "validatedFiles")?,
         asset_references: manifest_count("assetValidation", "references")?,
+        asset_mode,
+        omitted_asset_files: manifest_count("assetValidation", "omittedAssetFiles")?,
+        omitted_asset_bytes: manifest_u64("assetValidation", "omittedAssetBytes")?,
         stripped_editor_entities: manifest_count("assetValidation", "strippedEditorEntities")?,
         packaged_bytes,
         toolchain,
@@ -936,6 +960,8 @@ fn get_project_build_settings(state: State<'_, AppState>) -> Result<ProjectBuild
         main_scene: scenes.first().cloned(),
         scenes,
         available_scenes,
+        asset_mode: session.build_asset_mode(),
+        always_include: session.always_include(),
     })
 }
 
@@ -954,6 +980,30 @@ fn save_project_build_settings(
         main_scene: scenes.first().cloned(),
         scenes,
         available_scenes,
+        asset_mode: session.build_asset_mode(),
+        always_include: session.always_include(),
+    })
+}
+
+#[tauri::command]
+fn save_project_build_asset_settings(
+    asset_mode: BuildAssetMode,
+    always_include: Vec<String>,
+    state: State<'_, AppState>,
+) -> Result<ProjectBuildSettings, String> {
+    let mut guard = state.project.lock();
+    let session = guard.as_mut().ok_or_else(|| no_project().message)?;
+    let always_include = session
+        .save_build_asset_settings(asset_mode, always_include)
+        .map_err(|error| error.to_string())?;
+    let scenes = session.build_scenes();
+    let available_scenes = available_build_scenes(Path::new(&session.snapshot().project_root))?;
+    Ok(ProjectBuildSettings {
+        main_scene: scenes.first().cloned(),
+        scenes,
+        available_scenes,
+        asset_mode,
+        always_include,
     })
 }
 
@@ -1441,6 +1491,7 @@ pub fn run() {
             list_project_scenes,
             get_project_build_settings,
             save_project_build_settings,
+            save_project_build_asset_settings,
             get_project_sorting_layers,
             save_project_sorting_layers,
             build_pc_player,
@@ -1646,7 +1697,7 @@ mod tests {
         std::fs::create_dir_all(root.join("ProjectSettings")).unwrap();
         std::fs::write(
             root.join("project.json"),
-            r#"{"name":"Editor Build QA","version":1,"language":"typescript","mainScene":"Assets/Scenes/Main.mscene","buildScenes":["Assets/Scenes/Main.mscene","Assets/Scenes/Level2.mscene"],"startupScript":"Assets/Scripts/Main.ts"}"#,
+            r#"{"name":"Editor Build QA","version":1,"language":"typescript","mainScene":"Assets/Scenes/Main.mscene","buildScenes":["Assets/Scenes/Main.mscene","Assets/Scenes/Level2.mscene"],"startupScript":"Assets/Scripts/Main.ts","assetMode":"referenced","alwaysInclude":[]}"#,
         )
         .unwrap();
         std::fs::write(
@@ -1659,6 +1710,7 @@ mod tests {
             "let loaded = ''; function onSceneLoaded(scene: { name: string }) { loaded = scene.name; } function onTick(_dt: number, _frame: number) {}",
         )
         .unwrap();
+        std::fs::write(root.join("Assets/Unused.bin"), b"must not ship").unwrap();
         std::fs::write(
             root.join("Assets/Scenes/Level2.mscene"),
             r#"{"version":1,"name":"Level 2","world":{"entities":[],"frame":0,"sim_frame":0,"clear_color":[0.05,0.08,0.12,1]}}"#,
@@ -1688,6 +1740,9 @@ mod tests {
         assert_eq!(result.scene_count, 2);
         assert_eq!(result.validated_asset_files, 2);
         assert_eq!(result.asset_references, 2);
+        assert_eq!(result.asset_mode, "referenced");
+        assert_eq!(result.omitted_asset_files, 1);
+        assert_eq!(result.omitted_asset_bytes, 13);
         assert_eq!(result.stripped_editor_entities, 2);
         assert!(result.packaged_bytes > 0);
         assert!(Path::new(&result.executable).is_file());
@@ -1696,6 +1751,7 @@ mod tests {
         assert!(output.join("Assets/Scripts/Main.js").is_file());
         assert!(!output.join("Assets/Scripts/Main.ts").exists());
         assert!(!output.join("Assets/Scripts/mengine.d.ts").exists());
+        assert!(!output.join("Assets/Unused.bin").exists());
         assert!(output.join("ProjectSettings/sorting-layers.json").is_file());
         let packaged_scene: serde_json::Value = serde_json::from_str(
             &std::fs::read_to_string(output.join("Assets/Scenes/Main.mscene")).unwrap(),

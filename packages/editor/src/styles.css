@@ -4357,6 +4357,36 @@ button.sequencer-track-header:hover { background: #343b42; }
   color: var(--u-text);
 }
 
+.build-asset-paths { align-items: start !important; }
+.build-asset-paths > span:first-child { padding-top: 5px; }
+.build-asset-path-editor { display: flex; min-width: 0; flex-direction: column; gap: 4px; }
+.build-asset-path-editor textarea {
+  min-height: 58px;
+  resize: vertical;
+  border: 1px solid #191919;
+  border-radius: 0;
+  background: #252525;
+  color: var(--u-text);
+  font: 10px/1.4 var(--u-mono);
+}
+.build-asset-path-editor button {
+  align-self: flex-end;
+  height: 22px;
+  border: 1px solid var(--u-border-2);
+  border-radius: 0;
+  background: #444;
+  color: var(--u-text);
+  font-size: 10px;
+}
+.build-content-note {
+  padding: 6px 8px;
+  border-top: 1px solid #393939;
+  background: #302f27;
+  color: #c7bd8b;
+  font-size: 10px;
+  line-height: 1.4;
+}
+
 .build-checkbox { display: flex !important; gap: 7px !important; }
 .build-checkbox input { width: 14px; margin: 0; }
 .build-readonly {

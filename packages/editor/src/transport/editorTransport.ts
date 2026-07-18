@@ -51,6 +51,9 @@ export type BuildPlayerResult = {
   sceneCount: number;
   validatedAssetFiles: number;
   assetReferences: number;
+  assetMode: 'all' | 'referenced';
+  omittedAssetFiles: number;
+  omittedAssetBytes: number;
   strippedEditorEntities: number;
   packagedBytes: number;
   toolchain: 'bundled-sdk' | 'source-checkout';
@@ -72,6 +75,8 @@ export type ProjectBuildSettings = {
   mainScene: string | null;
   scenes: string[];
   availableScenes: string[];
+  assetMode: 'all' | 'referenced';
+  alwaysInclude: string[];
 };
 
 export type ProjectSortingLayer = {
@@ -246,6 +251,28 @@ export async function saveProjectBuildSettings(
   if (!response.ok) {
     const detail = await response.text();
     throw new Error(detail || `cannot save build settings: ${response.status}`);
+  }
+  return response.json() as Promise<ProjectBuildSettings>;
+}
+
+export async function saveProjectBuildAssetSettings(
+  assetMode: 'all' | 'referenced',
+  alwaysInclude: string[],
+): Promise<ProjectBuildSettings> {
+  if (isDesktopEditor()) {
+    return invoke<ProjectBuildSettings>('save_project_build_asset_settings', {
+      assetMode,
+      alwaysInclude,
+    });
+  }
+  const response = await fetch('/__mengine/build-asset-settings', {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ assetMode, alwaysInclude }),
+  });
+  if (!response.ok) {
+    const detail = await response.text();
+    throw new Error(detail || `cannot save build asset settings: ${response.status}`);
   }
   return response.json() as Promise<ProjectBuildSettings>;
 }

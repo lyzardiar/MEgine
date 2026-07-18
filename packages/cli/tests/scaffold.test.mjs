@@ -21,6 +21,8 @@ test('mengine new creates a TypeScript project that is ready for the player buil
     const project = join(root, name);
     const manifest = JSON.parse(readFileSync(join(project, 'project.json'), 'utf8'));
     assert.equal(manifest.startupScript, 'Assets/Scripts/Main.ts');
+    assert.equal(manifest.assetMode, 'all');
+    assert.deepEqual(manifest.alwaysInclude, []);
     assert.equal(existsSync(join(project, 'Assets', 'Scripts', 'Main.ts')), true);
     assert.equal(existsSync(join(project, 'Assets', 'Scripts', 'mengine.d.ts')), true);
     const engineTypes = readFileSync(join(project, 'Assets', 'Scripts', 'mengine.d.ts'), 'utf8');

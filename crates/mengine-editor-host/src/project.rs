@@ -12,6 +12,14 @@ use std::path::{Component, Path, PathBuf};
 use thiserror::Error;
 use uuid::Uuid;
 
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "lowercase")]
+pub enum BuildAssetMode {
+    #[default]
+    All,
+    Referenced,
+}
+
 #[derive(Clone, Debug, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct ProjectManifest {
@@ -26,6 +34,10 @@ pub struct ProjectManifest {
     pub language: Option<String>,
     #[serde(default, alias = "startup_script")]
     pub startup_script: Option<String>,
+    #[serde(default, alias = "asset_mode")]
+    pub asset_mode: BuildAssetMode,
+    #[serde(default, alias = "always_include")]
+    pub always_include: Vec<String>,
     #[serde(flatten)]
     pub extra: BTreeMap<String, serde_json::Value>,
 }
@@ -200,6 +212,8 @@ impl ProjectSession {
                 _ => {}
             }
         }
+        manifest.always_include =
+            normalize_build_asset_paths(&project_root, &manifest.always_include)?;
 
         Ok(Self {
             project_id: Uuid::new_v4(),
@@ -247,6 +261,30 @@ impl ProjectSession {
         } else {
             self.manifest.build_scenes.clone()
         }
+    }
+
+    pub fn build_asset_mode(&self) -> BuildAssetMode {
+        self.manifest.asset_mode
+    }
+
+    pub fn always_include(&self) -> Vec<String> {
+        self.manifest.always_include.clone()
+    }
+
+    pub fn save_build_asset_settings(
+        &mut self,
+        asset_mode: BuildAssetMode,
+        paths: Vec<String>,
+    ) -> Result<Vec<String>, ProjectError> {
+        let normalized = normalize_build_asset_paths(&self.project_root, &paths)?;
+        let mut manifest = self.manifest.clone();
+        manifest.asset_mode = asset_mode;
+        manifest.always_include = normalized.clone();
+        let mut bytes = serde_json::to_vec_pretty(&manifest)?;
+        bytes.push(b'\n');
+        write_replace_synced(&self.project_root.join("project.json"), &bytes)?;
+        self.manifest = manifest;
+        Ok(normalized)
     }
 
     pub fn save_build_scenes(&mut self, scenes: Vec<String>) -> Result<Vec<String>, ProjectError> {
@@ -488,6 +526,8 @@ fn initialize_project(root: &Path, name: &str) -> Result<(), ProjectError> {
         build_scenes: vec!["Assets/Scenes/Main.mscene".into()],
         language: Some("typescript".into()),
         startup_script: Some("Assets/Scripts/Main.ts".into()),
+        asset_mode: BuildAssetMode::All,
+        always_include: Vec::new(),
         extra: BTreeMap::new(),
     };
     let manifest_json = serde_json::to_vec_pretty(&manifest)?;
@@ -727,6 +767,42 @@ fn normalize_relative_path(path: &Path) -> Result<PathBuf, ProjectError> {
     Ok(normalized)
 }
 
+fn normalize_build_asset_paths(
+    project_root: &Path,
+    paths: &[String],
+) -> Result<Vec<String>, ProjectError> {
+    if paths.len() > 256 {
+        return Err(ProjectError::InvalidProject(
+            "alwaysInclude supports at most 256 paths".into(),
+        ));
+    }
+    let mut normalized = Vec::with_capacity(paths.len());
+    let mut seen = HashSet::new();
+    for path in paths {
+        let portable_input = path.trim().replace('\\', "/");
+        let relative = normalize_relative_path(Path::new(&portable_input))?;
+        let under_content = matches!(
+            relative.components().next(),
+            Some(Component::Normal(value)) if value == "Assets" || value == "Scripts"
+        );
+        if !under_content {
+            return Err(ProjectError::InvalidPath(relative.display().to_string()));
+        }
+        let absolute = std::fs::canonicalize(project_root.join(&relative))?;
+        if !absolute.starts_with(project_root) {
+            return Err(ProjectError::InvalidPath(relative.display().to_string()));
+        }
+        let portable = relative.to_string_lossy().replace('\\', "/");
+        if !seen.insert(portable.to_lowercase()) {
+            return Err(ProjectError::InvalidProject(format!(
+                "duplicate alwaysInclude path: {portable}"
+            )));
+        }
+        normalized.push(portable);
+    }
+    Ok(normalized)
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -863,6 +939,8 @@ mod tests {
         assert_eq!(manifest["name"], "CreatedGame");
         assert_eq!(manifest["mainScene"], "Assets/Scenes/Main.mscene");
         assert_eq!(manifest["startupScript"], "Assets/Scripts/Main.ts");
+        assert_eq!(manifest["assetMode"], "all");
+        assert_eq!(manifest["alwaysInclude"], json!([]));
         assert_eq!(
             manifest["buildScenes"],
             json!(["Assets/Scenes/Main.mscene"])
@@ -906,6 +984,38 @@ mod tests {
         assert_eq!(saved["mainScene"], "Assets/Scenes/Level2.mscene");
         assert_eq!(saved["buildScenes"], json!(scenes));
         assert_eq!(saved["startupScript"], "Assets/Scripts/start.js");
+        std::fs::remove_dir_all(root).unwrap();
+    }
+
+    #[test]
+    fn build_asset_settings_are_normalized_and_atomically_saved() {
+        let root = make_project();
+        std::fs::create_dir_all(root.join("Assets/Prefabs/Dynamic")).unwrap();
+        std::fs::write(root.join("Assets/Prefabs/Dynamic/Enemy.prefab"), "{}").unwrap();
+        let mut session = ProjectSession::open(&root).unwrap();
+        let paths = session
+            .save_build_asset_settings(
+                BuildAssetMode::Referenced,
+                vec!["Assets\\Prefabs\\Dynamic".into()],
+            )
+            .unwrap();
+        assert_eq!(paths, vec!["Assets/Prefabs/Dynamic"]);
+        assert_eq!(session.build_asset_mode(), BuildAssetMode::Referenced);
+        assert_eq!(session.always_include(), paths);
+        let saved: serde_json::Value =
+            serde_json::from_str(&std::fs::read_to_string(root.join("project.json")).unwrap())
+                .unwrap();
+        assert_eq!(saved["assetMode"], "referenced");
+        assert_eq!(saved["alwaysInclude"], json!(["Assets/Prefabs/Dynamic"]));
+        assert!(session
+            .save_build_asset_settings(
+                BuildAssetMode::Referenced,
+                vec![
+                    "Assets/Prefabs/Dynamic".into(),
+                    "Assets/Prefabs/Dynamic".into()
+                ],
+            )
+            .is_err());
         std::fs::remove_dir_all(root).unwrap();
     }
 
