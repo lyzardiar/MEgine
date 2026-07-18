@@ -21,6 +21,7 @@ export type SpriteAsset = {
 let _sprites: SpriteAsset[] = [];
 let _folders: string[] = [];
 let _ready = false;
+let _refreshPromise: Promise<SpriteAsset[]> | null = null;
 
 export function listSprites(): SpriteAsset[] {
   return _sprites;
@@ -31,7 +32,7 @@ export function listAssetFolders(): string[] {
   return _folders;
 }
 
-export async function refreshSprites(): Promise<SpriteAsset[]> {
+async function refreshSpritesNow(): Promise<SpriteAsset[]> {
   try {
     if (isDesktopEditor()) {
       _sprites = await invoke<SpriteAsset[]>('list_project_sprites');
@@ -59,6 +60,14 @@ export async function refreshSprites(): Promise<SpriteAsset[]> {
   }
   _ready = true;
   return _sprites;
+}
+
+export function refreshSprites(): Promise<SpriteAsset[]> {
+  if (_refreshPromise) return _refreshPromise;
+  _refreshPromise = refreshSpritesNow().finally(() => {
+    _refreshPromise = null;
+  });
+  return _refreshPromise;
 }
 
 export function isSpriteLibraryReady() {
@@ -133,6 +142,18 @@ export function resolveSpriteTextureId(raw: string): string {
 export function resolveSpriteSourceRect(raw: string): [number, number, number, number] | null {
   const rect = resolveSpriteAsset(raw)?.rect;
   return rect ? [...rect] as [number, number, number, number] : null;
+}
+
+export function resolveSpritePivot(raw: string): [number, number] {
+  const pivot = resolveSpriteAsset(raw)?.pivot;
+  return pivot ? [...pivot] as [number, number] : [0.5, 0.5];
+}
+
+export function resolveSpritePixelsPerUnit(raw: string): number {
+  const value = Number(resolveSpriteAsset(raw)?.pixelsPerUnit ?? 100);
+  return Number.isFinite(value) && value > 0
+    ? Math.max(0.01, Math.min(100_000, value))
+    : 100;
 }
 
 export function spriteAssetUrl(id: string): string | null {

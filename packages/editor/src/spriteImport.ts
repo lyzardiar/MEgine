@@ -160,3 +160,15 @@ export function uniqueSpriteSliceName(slices: readonly SpriteSlice[], base = 'Sp
   while (names.has(`${base}_${index}`.toLocaleLowerCase())) index += 1;
   return `${base}_${index}`;
 }
+
+export function spriteNativeWorldSize(
+  pixelSize: readonly [number, number],
+  pixelsPerUnit: number,
+): [number, number] {
+  const ppu = Number.isFinite(pixelsPerUnit) && pixelsPerUnit > 0
+    ? Math.max(0.01, Math.min(100_000, pixelsPerUnit))
+    : 100;
+  const width = Number.isFinite(pixelSize[0]) && pixelSize[0] > 0 ? pixelSize[0] : 1;
+  const height = Number.isFinite(pixelSize[1]) && pixelSize[1] > 0 ? pixelSize[1] : 1;
+  return [width / ppu, height / ppu];
+}

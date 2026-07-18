@@ -3832,3 +3832,65 @@ body.ew-dragging {
   border-color: #d7ad45;
   background: #5a4d2b;
 }
+
+.sprite-native-size-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin: 6px 0 1px;
+  padding: 6px 8px 0;
+  border-top: 1px solid #232323;
+  color: #999;
+  font-size: 11px;
+}
+
+.sprite-native-size-row button {
+  min-height: 22px;
+  border: 1px solid #1a1a1a;
+  border-radius: 0;
+  padding: 2px 8px;
+  color: #ddd;
+  background: #3b3b3b;
+  cursor: pointer;
+}
+
+.sprite-native-size-row .error {
+  color: #e58d8d;
+}
+
+.sprite-list-item {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 24px;
+  gap: 3px;
+  align-items: stretch;
+}
+
+.sprite-list-slot .field-row {
+  grid-template-columns: 20px minmax(0, 1fr);
+  padding: 0;
+}
+
+.sprite-list-slot .field-row > label {
+  align-self: center;
+  padding: 0;
+  text-align: center;
+  font-size: 10px;
+}
+
+.sprite-list-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.sprite-list-actions button {
+  flex: 1;
+  min-height: 14px;
+  border: 1px solid var(--u-border-2);
+  border-radius: 0;
+  padding: 0;
+  color: var(--u-text);
+  background: var(--u-panel-2);
+  font-size: 10px;
+}

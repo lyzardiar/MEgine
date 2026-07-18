@@ -399,6 +399,9 @@ fn collect_project_sprites(root: &Path, dir: &Path, output: &mut Vec<ProjectSpri
             .parent()
             .map(|parent| parent.to_string_lossy().replace('\\', "/"))
             .unwrap_or_else(|| "Assets".into());
+        let dimensions = mengine_assets::texture_dimensions(&path).ok();
+        let settings =
+            dimensions.and_then(|size| mengine_assets::load_sprite_import(&path, size).ok());
         output.push(ProjectSpriteInfo {
             id: rel_path.clone(),
             name: name.clone(),
@@ -406,14 +409,14 @@ fn collect_project_sprites(root: &Path, dir: &Path, output: &mut Vec<ProjectSpri
             rel_path: rel_path.clone(),
             texture_id: rel_path.clone(),
             slice_name: None,
-            rect: None,
-            pivot: None,
-            pixels_per_unit: None,
+            rect: dimensions.map(|size| [0, 0, size[0], size[1]]),
+            pivot: Some([0.5, 0.5]),
+            pixels_per_unit: settings
+                .as_ref()
+                .map(|settings| settings.pixels_per_unit)
+                .or(Some(100.0)),
         });
-        let Ok(dimensions) = mengine_assets::texture_dimensions(&path) else {
-            continue;
-        };
-        let Ok(settings) = mengine_assets::load_sprite_import(&path, dimensions) else {
+        let Some(settings) = settings else {
             continue;
         };
         if settings.mode != mengine_assets::SpriteMode::Multiple {

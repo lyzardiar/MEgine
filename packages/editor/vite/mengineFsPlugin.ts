@@ -172,13 +172,16 @@ export function mengineFsPlugin(opts: MengineFsOptions | string): Plugin {
         } else if (st.isFile() && IMG_EXT.test(f)) {
           const rel = path.relative(assetsRoot, abs).replace(/\\/g, '/');
           const relPath = `Assets/${rel}`;
-          sprites.push({
+          const baseAsset: TextureAsset = {
             id: relPath,
             name: f,
             folder,
             relPath,
             textureId: relPath,
-          });
+            pivot: [0.5, 0.5],
+            pixelsPerUnit: 100,
+          };
+          sprites.push(baseAsset);
           const importPath = `${abs}.sprite.json`;
           if (!fs.existsSync(importPath)) continue;
           try {
@@ -190,6 +193,9 @@ export function mengineFsPlugin(opts: MengineFsOptions | string): Plugin {
             };
             if (Number(settings.version ?? 1) !== 1 || settings.mode !== 'multiple' || !Array.isArray(settings.slices)) continue;
             const pixelsPerUnit = Number(settings.pixels_per_unit ?? 100);
+            baseAsset.pixelsPerUnit = Number.isFinite(pixelsPerUnit) && pixelsPerUnit > 0
+              ? Math.max(0.01, Math.min(100_000, pixelsPerUnit))
+              : 100;
             const seen = new Set<string>();
             for (const candidate of settings.slices.slice(0, 4096)) {
               if (!candidate || typeof candidate !== 'object') continue;

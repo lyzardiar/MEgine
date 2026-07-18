@@ -547,6 +547,51 @@ export function StringListField(props: {
   );
 }
 
+export function SpriteListField(props: {
+  label: string;
+  value: string[];
+  onChange: (value: string[]) => void;
+}) {
+  const items = Array.isArray(props.value) ? props.value.map(String) : [];
+  const move = (index: number, offset: number) => {
+    const target = index + offset;
+    if (target < 0 || target >= items.length) return;
+    const next = [...items];
+    [next[index], next[target]] = [next[target], next[index]];
+    props.onChange(next);
+  };
+  return (
+    <div className="field-row field-row-list">
+      <label>{props.label}</label>
+      <div className="string-list-editor sprite-list-editor">
+        {items.map((item, index) => (
+          <div className="sprite-list-item" key={`${index}-${items.length}`}>
+            <div className="sprite-list-slot">
+              <SpriteSlot
+                label={String(index)}
+                value={item}
+                onChange={(value) => {
+                  const next = [...items];
+                  next[index] = value;
+                  props.onChange(next);
+                }}
+              />
+            </div>
+            <div className="sprite-list-actions">
+              <button type="button" title="Move up" disabled={index === 0} onClick={() => move(index, -1)}>↑</button>
+              <button type="button" title="Move down" disabled={index === items.length - 1} onClick={() => move(index, 1)}>↓</button>
+              <button type="button" title="Remove" onClick={() => props.onChange(items.filter((_, candidate) => candidate !== index))}>×</button>
+            </div>
+          </div>
+        ))}
+        <button type="button" className="string-list-add" onClick={() => props.onChange([...items, 'white'])}>
+          + Add Sprite Frame
+        </button>
+      </div>
+    </div>
+  );
+}
+
 export function Vector2ListField(props: {
   label: string;
   value: Array<[number, number]>;

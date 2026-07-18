@@ -6,6 +6,7 @@ import {
   serializeSpriteImportSettings,
   sliceSpriteGrid,
   spriteImportPath,
+  spriteNativeWorldSize,
   spriteSliceName,
   spriteTexturePath,
   uniqueSpriteSliceName,
@@ -62,4 +63,6 @@ test('grid slicing uses deterministic row-major names, offsets, and padding', ()
     mode: 'multiple',
     slices,
   }, [36, 19])).slices.length, 4);
+  assert.deepEqual(spriteNativeWorldSize([64, 32], 32), [2, 1]);
+  assert.deepEqual(spriteNativeWorldSize([0, Number.NaN], 0), [0.01, 0.01]);
 });

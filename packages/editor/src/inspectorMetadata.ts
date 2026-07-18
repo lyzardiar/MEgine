@@ -17,6 +17,7 @@ export type InspectorFieldMeta = {
     | 'named-reference'
     | 'event'
     | 'string-list'
+    | 'sprite-list'
     | 'vector2-list'
     | 'multiline';
   options?: InspectorOption[];
@@ -154,7 +155,7 @@ export const BUILTIN_INSPECTOR_FIELDS: Readonly<
     sorting_layer: { label: 'Sorting Layer', kind: 'enum' },
   },
   AnimatedSprite2D: {
-    frames: { kind: 'string-list' },
+    frames: { kind: 'sprite-list' },
     pivot: { min: 0, max: 1, step: 0.01 },
     fps: { min: 0, step: 0.1 },
     frame: { min: 0, step: 1 },

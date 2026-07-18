@@ -17,6 +17,9 @@ import { eulerXYZToQuat, quatToEulerXYZ } from '../math3d';
 import { readRectTransform } from '../ui/rectLayout';
 import { loadSpineRuntime } from '../spine/spineRuntimeLoader';
 import { getSortingLayerOptions } from '../sortingLayers';
+import { loadSpriteNativeSize } from '../spriteDraw';
+import { resolveSpritePivot, resolveSpritePixelsPerUnit } from '../spriteLibrary';
+import { spriteNativeWorldSize } from '../spriteImport';
 import { SchemaFieldEditor } from './SchemaFieldEditor';
 import { RectTransformEditor } from './RectTransformEditor';
 import {
@@ -29,6 +32,7 @@ import {
   ImageEditor,
   NamedReferenceField,
   ProjectAssetSlot,
+  SpriteListField,
   SpriteSlot,
   StringListField,
   UnityEventField,
@@ -455,6 +459,16 @@ function GenericCompEditor(props: {
             />
           );
         }
+        if (meta?.kind === 'sprite-list') {
+          return (
+            <SpriteListField
+              key={key}
+              label={label}
+              value={Array.isArray(val) ? val.map(String) : []}
+              onChange={setValue}
+            />
+          );
+        }
         if (meta?.kind === 'vector2-list') {
           const points = Array.isArray(val)
             ? val.filter((point): point is [number, number] =>
@@ -608,6 +622,71 @@ function GenericCompEditor(props: {
           <JsonValueField key={key} label={label} value={val} onChange={setValue} />
         );
       })}
+    </>
+  );
+}
+
+function WorldSpriteEditor(props: {
+  componentType: 'SpriteRenderer' | 'AnimatedSprite2D';
+  data: Record<string, unknown>;
+  entities: Array<{ entity: number; name?: string | null; components: Record<string, unknown> }>;
+  onChange: (next: Record<string, unknown>) => void;
+}) {
+  const [sizing, setSizing] = useState(false);
+  const [nativeError, setNativeError] = useState(false);
+  const spriteFor = (data: Record<string, unknown>): string => {
+    if (props.componentType === 'SpriteRenderer') return String(data.sprite ?? 'white');
+    const frames = Array.isArray(data.frames) ? data.frames.map(String) : [];
+    if (!frames.length) return 'white';
+    const frame = Math.max(0, Math.min(frames.length - 1, Math.trunc(Number(data.frame) || 0)));
+    return frames[frame] || 'white';
+  };
+  const applyChange = (next: Record<string, unknown>) => {
+    const previousSprite = spriteFor(props.data);
+    const nextSprite = spriteFor(next);
+    props.onChange(nextSprite !== previousSprite
+      ? { ...next, pivot: resolveSpritePivot(nextSprite) }
+      : next);
+  };
+  const setNativeSize = async () => {
+    const sprite = spriteFor(props.data);
+    setSizing(true);
+    setNativeError(false);
+    try {
+      const pixels = await loadSpriteNativeSize(sprite);
+      if (!pixels) {
+        setNativeError(true);
+        return;
+      }
+      const ppu = resolveSpritePixelsPerUnit(sprite);
+      props.onChange({
+        ...props.data,
+        size: spriteNativeWorldSize([pixels.w, pixels.h], ppu),
+        pivot: resolveSpritePivot(sprite),
+      });
+    } catch {
+      setNativeError(true);
+    } finally {
+      setSizing(false);
+    }
+  };
+  const ppu = resolveSpritePixelsPerUnit(spriteFor(props.data));
+  return (
+    <>
+      <GenericCompEditor
+        componentType={props.componentType}
+        data={props.data}
+        entities={props.entities}
+        onChange={applyChange}
+      />
+      <div className="sprite-native-size-row">
+        <span className={nativeError ? 'error' : ''}>
+          {nativeError ? 'Sprite could not be read' : `Asset PPU: ${Number(ppu.toFixed(3))}`}
+        </span>
+        <button type="button" disabled={sizing} onClick={() => void setNativeSize()}>
+          {sizing ? 'Reading...' : 'Set Native Size'}
+        </button>
+      </div>
     </>
   );
 }
@@ -1174,6 +1253,13 @@ export function Inspector(props: {
               />
             ) : k === 'SpineSkeleton' ? (
               <SpineSkeletonEditor
+                data={data}
+                entities={props.entities ?? [entity]}
+                onChange={(next) => props.onSetComponent(entity.entity, k, next)}
+              />
+            ) : k === 'SpriteRenderer' || k === 'AnimatedSprite2D' ? (
+              <WorldSpriteEditor
+                componentType={k}
                 data={data}
                 entities={props.entities ?? [entity]}
                 onChange={(next) => props.onSetComponent(entity.entity, k, next)}
