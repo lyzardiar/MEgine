@@ -729,3 +729,13 @@ Referenced Only 是可用的单包裁剪基础，仍不等同于完整 Addressab
 - Timeline 内已处理的 `Ctrl/Cmd+A/C/X/V/D/Z/Y` 和 Delete 会阻止继续传播；App 的窗口级快捷键也先检查 `defaultPrevented`。这修复了过去 Timeline 操作可能同时触发场景复制、重复或删除的双派发问题，资源编辑和场景编辑现在只会产生一个全局事务。
 
 迁移后的历史是主进程 WebView 内的全局顺序；当前原生分离窗口仍有独立 JS 运行上下文，尚不能共享闭包式捕获器。要实现跨原生窗口 Undo，需要把事务状态变为可序列化命令，通过桌面 Host 的单一历史服务和窗口消息总线恢复，而不能简单同步栈标签。Material、Animation、Animator 等资产编辑器仍待迁移，下一阶段应复用同一“路径 Scope + 后台文档”适配模式。
+
+## 53. 2026-07-19 Material Editor 全局 Undo 与安全 Assign
+
+- Material Editor 从“完全没有撤销”迁移到共享全局历史，Scope 为 `material:<asset path>`。Name、Shader/Surface/Blend、颜色、PBR 标量、纹理引用、UV、Wrap/Filter、Anisotropy 等全部修改写入命名事务；Anisotropy 自动联动 Linear Filter 的多个字段保持一个原子步骤。
+- 文本、数字、颜色、滑条和下拉框按一次 Focus 到 Blur 合并，连续拖 Metallic/Roughness/Alpha/Occlusion 不再为每个浏览器 `change` 事件生成一步。Checkbox、对象选择、清空和拖放纹理作为单次事务；改回原值时恢复 Checkpoint，不留下空历史。材质工具栏新增带下一动作名称的全局 Undo/Redo。
+- 当前材质和后台材质文档都保留独立保存基线；跨材质 Undo 直接恢复非当前草稿，Dirty 状态随之刷新。Save All 仅写变化文档并保留干净后台状态作为仍在历史中的恢复目标；普通 Save 会规范化回读但不清空 Undo，因此支持保存后撤销再保存。
+- Assign 现在保证磁盘与用户看到的材质一致：当前材质 Dirty 时按钮显示 `Save & Assign`，先完成序列化、引用刷新和错误校验，成功后才给 MeshRenderer 写入场景引用。保存失败不会产生场景 Assign 事务，也不会让 Scene/Player 继续读取旧材质却显示已分配成功。
+- Material 与 Scene 事务共享全局顺序：修改材质后 Assign 会先结束材质输入事务，再记录 `Assign Material` 场景事务，连续 Undo 依次恢复场景引用和材质参数。纹理缺失诊断、Property Block 保留与旧 PbrMaterial 完整覆盖规则保持不变。
+
+这次完成的是材质资产编辑可靠性，不代表材质系统已经完备。仍缺 Shader 参数反射驱动的任意属性面板、Material Instance 继承资产、关键字/Variant 管理与预热、SRP Batcher/GPU Instancing 兼容布局、渲染状态模板、纹理导入语义、烘焙 Shader Cache、平台质量分级、材质依赖图和 Frame Debugger。当前预览球仍是 CSS 近似色块，不是 Player 同管线离屏渲染；这是下一轮材质可视化必须消除的真实性缺口。

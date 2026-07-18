@@ -5,6 +5,7 @@ import {
   useState,
   type CSSProperties,
   type DragEvent,
+  type FocusEvent as ReactFocusEvent,
 } from 'react';
 import type { WorldSnapshotView } from '@mengine/api';
 import {
@@ -27,7 +28,12 @@ import {
 import { pingProjectAsset } from '../pingBus';
 import { registerMenuItem } from '../editorWindow';
 import { registerSaveAllParticipant } from '../saveAll';
-import { ImageIcon, Search, X } from 'lucide-react';
+import type {
+  EditorUndoCheckpoint,
+  EditorUndoService,
+  EditorUndoToken,
+} from '../editorUndoService';
+import { ImageIcon, Redo2, Search, Undo2, X } from 'lucide-react';
 import { ObjectPicker } from './ObjectPicker';
 
 export const OPEN_MATERIAL_EVENT = 'mengine:open-material';
@@ -104,6 +110,20 @@ function automaticRenderQueue(surface: MaterialAsset['surface']): number {
   if (surface === 'transparent') return 3000;
   if (surface === 'cutout') return 2450;
   return 2000;
+}
+
+function materialDraftDirty(draft: { material: MaterialAsset; savedText: string }): boolean {
+  return serializeMaterialAsset(draft.material) !== draft.savedText;
+}
+
+function materialFieldLabel(field: keyof MaterialAsset): string {
+  return field.split('_').map((part) => `${part.slice(0, 1).toUpperCase()}${part.slice(1)}`).join(' ');
+}
+
+function isMaterialEditControl(target: EventTarget): target is HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement {
+  if (target instanceof HTMLSelectElement || target instanceof HTMLTextAreaElement) return true;
+  if (!(target instanceof HTMLInputElement)) return false;
+  return !['checkbox', 'radio', 'button', 'submit', 'reset'].includes(target.type);
 }
 
 function MaterialTextureSlot(props: {
@@ -205,6 +225,9 @@ export function MaterialEditor(props: {
   onAssetsChanged: () => void;
   onDirtyChange: (dirty: boolean) => void;
   onLog: (message: string, level?: 'info' | 'warn' | 'error') => void;
+  undoService: EditorUndoService;
+  onGlobalUndo: () => void;
+  onGlobalRedo: () => void;
 }) {
   const [material, setMaterial] = useState<MaterialAsset | null>(null);
   const [savedText, setSavedText] = useState('');
@@ -212,25 +235,44 @@ export function MaterialEditor(props: {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [assetRevision, setAssetRevision] = useState(0);
+  const [, setDraftEpoch] = useState(0);
   const loadedPath = useRef<string | null>(null);
   const drafts = useRef(new Map<string, { material: MaterialAsset; savedText: string }>());
+  const materialRef = useRef<MaterialAsset | null>(null);
+  const editTransaction = useRef<{
+    material: MaterialAsset;
+    checkpoint: EditorUndoCheckpoint;
+    token: EditorUndoToken | null;
+  } | null>(null);
+  materialRef.current = material;
+
+  const replaceMaterial = (next: MaterialAsset | null) => {
+    materialRef.current = next;
+    setMaterial(next);
+  };
 
   useEffect(() => {
     let cancelled = false;
+    const transaction = editTransaction.current;
+    if (
+      transaction?.token
+      && material
+      && props.undoService.isUndoTop(transaction.token)
+      && serializeMaterialAsset(material) === serializeMaterialAsset(transaction.material)
+    ) {
+      props.undoService.restoreCheckpoint(transaction.checkpoint);
+    }
     const previousPath = loadedPath.current;
     if (previousPath && material) {
-      if (serializeMaterialAsset(material) !== savedText) {
-        drafts.current.set(previousPath, {
-          material: structuredClone(material),
-          savedText,
-        });
-      } else {
-        drafts.current.delete(previousPath);
-      }
+      drafts.current.set(previousPath, {
+        material: structuredClone(material),
+        savedText,
+      });
     }
     loadedPath.current = props.assetPath;
+    editTransaction.current = null;
     setError(null);
-    setMaterial(null);
+    replaceMaterial(null);
     setSavedText('');
     setLoading(false);
     if (!props.assetPath) {
@@ -239,7 +281,7 @@ export function MaterialEditor(props: {
     const draft = drafts.current.get(props.assetPath);
     if (draft) {
       drafts.current.delete(props.assetPath);
-      setMaterial(structuredClone(draft.material));
+      replaceMaterial(structuredClone(draft.material));
       setSavedText(draft.savedText);
       setLoading(false);
       return () => { cancelled = true; };
@@ -249,13 +291,13 @@ export function MaterialEditor(props: {
       .then(([text]) => {
         if (cancelled) return;
         const parsed = parseMaterialAsset(text);
-        setMaterial(parsed);
+        replaceMaterial(parsed);
         setSavedText(serializeMaterialAsset(parsed));
         setAssetRevision((revision) => revision + 1);
       })
       .catch((reason: unknown) => {
         if (cancelled) return;
-        setMaterial(null);
+        replaceMaterial(null);
         setError(reason instanceof Error ? reason.message : String(reason));
       })
       .finally(() => {
@@ -269,7 +311,7 @@ export function MaterialEditor(props: {
     [material],
   );
   const dirty = Boolean(material && serialized !== savedText);
-  const anyDirty = dirty || drafts.current.size > 0;
+  const anyDirty = dirty || [...drafts.current.values()].some(materialDraftDirty);
   const projectAssets = useMemo(() => {
     void assetRevision;
     return listProjectFiles();
@@ -294,8 +336,86 @@ export function MaterialEditor(props: {
     && props.selectedEntity?.components.MeshRenderer,
   );
 
+  const captureDocument = (path: string): MaterialAsset => {
+    if (loadedPath.current === path && materialRef.current) {
+      return structuredClone(materialRef.current);
+    }
+    const draft = drafts.current.get(path);
+    if (!draft) throw new Error(`Material history document '${path}' is no longer available.`);
+    return structuredClone(draft.material);
+  };
+
+  const restoreDocument = (path: string, snapshot: MaterialAsset) => {
+    const restored = structuredClone(snapshot);
+    if (loadedPath.current === path) {
+      editTransaction.current = null;
+      replaceMaterial(restored);
+      setError(null);
+      return;
+    }
+    const draft = drafts.current.get(path);
+    if (!draft) throw new Error(`Material history document '${path}' is no longer available.`);
+    drafts.current.set(path, { ...draft, material: restored });
+    setDraftEpoch((value) => value + 1);
+  };
+
+  const recordHistory = (snapshot: MaterialAsset, label: string): EditorUndoToken | null => {
+    const path = loadedPath.current;
+    if (!path) return null;
+    return props.undoService.recordSnapshot({
+      scope: `material:${path}`,
+      label,
+      state: structuredClone(snapshot),
+      capture: () => captureDocument(path),
+      restore: (state) => restoreDocument(path, state),
+    });
+  };
+
+  const updateMaterial = (mutate: (current: MaterialAsset) => MaterialAsset, label: string) => {
+    const current = materialRef.current;
+    if (!current) return;
+    const next = mutate(structuredClone(current));
+    if (serializeMaterialAsset(next) === serializeMaterialAsset(current)) return;
+    const transaction = editTransaction.current;
+    if (transaction) {
+      if (!transaction.token || !props.undoService.isUndoTop(transaction.token)) {
+        transaction.material = structuredClone(current);
+        transaction.checkpoint = props.undoService.checkpoint();
+        transaction.token = recordHistory(current, label);
+      }
+    } else {
+      recordHistory(current, label);
+    }
+    replaceMaterial(next);
+  };
+
   const update = <K extends keyof MaterialAsset>(key: K, value: MaterialAsset[K]) => {
-    setMaterial((current) => current ? { ...current, [key]: value } : current);
+    updateMaterial(
+      (current) => ({ ...current, [key]: value }),
+      `Edit Material ${materialFieldLabel(key)}`,
+    );
+  };
+
+  const beginEdit = (event: ReactFocusEvent<HTMLDivElement>) => {
+    if (editTransaction.current || !material || !isMaterialEditControl(event.target)) return;
+    editTransaction.current = {
+      material: structuredClone(material),
+      checkpoint: props.undoService.checkpoint(),
+      token: null,
+    };
+  };
+
+  const endEdit = (event: ReactFocusEvent<HTMLDivElement>) => {
+    if (!isMaterialEditControl(event.target)) return;
+    const transaction = editTransaction.current;
+    editTransaction.current = null;
+    if (
+      !transaction?.token
+      || !materialRef.current
+      || !props.undoService.isUndoTop(transaction.token)
+      || serializeMaterialAsset(materialRef.current) !== serializeMaterialAsset(transaction.material)
+    ) return;
+    props.undoService.restoreCheckpoint(transaction.checkpoint);
   };
 
   const save = async (): Promise<boolean> => {
@@ -308,6 +428,7 @@ export function MaterialEditor(props: {
       await refreshProjectFiles();
       setAssetRevision((revision) => revision + 1);
       drafts.current.delete(props.assetPath);
+      replaceMaterial(parseMaterialAsset(text));
       setSavedText(text);
       props.onAssetsChanged();
       window.dispatchEvent(new CustomEvent(PROJECT_ASSETS_CHANGED_EVENT));
@@ -328,9 +449,14 @@ export function MaterialEditor(props: {
     const failures: string[] = [];
     let savedDraft = false;
     for (const [path, draft] of [...drafts.current]) {
+      if (!materialDraftDirty(draft)) continue;
       try {
-        await writeProjectAssetText(path, serializeMaterialAsset(draft.material));
-        drafts.current.delete(path);
+        const text = serializeMaterialAsset(draft.material);
+        await writeProjectAssetText(path, text);
+        drafts.current.set(path, {
+          material: parseMaterialAsset(text),
+          savedText: text,
+        });
         savedDraft = true;
         props.onLog(`Saved ${path}`);
       } catch (reason) {
@@ -342,6 +468,7 @@ export function MaterialEditor(props: {
       setAssetRevision((revision) => revision + 1);
       props.onAssetsChanged();
       window.dispatchEvent(new CustomEvent(PROJECT_ASSETS_CHANGED_EVENT));
+      setDraftEpoch((value) => value + 1);
     }
     if (failures.length > 0) throw new Error(failures.join('; '));
   };
@@ -399,6 +526,8 @@ export function MaterialEditor(props: {
   return (
     <div
       className="material-editor"
+      onFocusCapture={beginEdit}
+      onBlurCapture={endEdit}
       onKeyDownCapture={(event) => {
         if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 's') {
           event.preventDefault();
@@ -410,6 +539,8 @@ export function MaterialEditor(props: {
       <div className="material-toolbar">
         <strong title={props.assetPath}>{materialName(props.assetPath)}{dirty ? ' *' : ''}</strong>
         <span className="material-path" title={props.assetPath}>{props.assetPath}</span>
+        <button type="button" aria-label="Undo" title={`Undo${props.undoService.undoLabel ? ` ${props.undoService.undoLabel}` : ''}`} disabled={!props.undoService.canUndo} onClick={props.onGlobalUndo}><Undo2 size={13} /></button>
+        <button type="button" aria-label="Redo" title={`Redo${props.undoService.redoLabel ? ` ${props.undoService.redoLabel}` : ''}`} disabled={!props.undoService.canRedo} onClick={props.onGlobalRedo}><Redo2 size={13} /></button>
         <button type="button" onClick={() => void createNew()}>New</button>
         <button type="button" disabled={!dirty || saving} onClick={() => void save()}>
           {saving ? 'Saving…' : 'Save'}
@@ -610,11 +741,14 @@ export function MaterialEditor(props: {
             title="Improves texture clarity at grazing angles; unsupported GPUs safely fall back to 1x"
             onChange={(event) => {
               const anisotropy = Number(event.target.value);
-              setMaterial((current) => current ? {
-                ...current,
-                anisotropy,
-                ...(anisotropy > 1 ? { filter: 'linear', mipmap_filter: 'linear' } : {}),
-              } : current);
+              updateMaterial(
+                (current) => ({
+                  ...current,
+                  anisotropy,
+                  ...(anisotropy > 1 ? { filter: 'linear', mipmap_filter: 'linear' } : {}),
+                }),
+                'Edit Material Anisotropy',
+              );
             }}
           >
             {[1, 2, 4, 8, 16].map((value) => (
@@ -636,10 +770,15 @@ export function MaterialEditor(props: {
         )}
         <button
           type="button"
-          disabled={!canAssign}
-          onClick={() => props.onAssignMaterial(props.selectedEntity!.entity, props.assetPath!)}
+          disabled={!canAssign || saving}
+          onClick={() => {
+            void (async () => {
+              if (dirty && !await save()) return;
+              props.onAssignMaterial(props.selectedEntity!.entity, props.assetPath!);
+            })();
+          }}
         >
-          Assign to Selected MeshRenderer
+          {dirty ? 'Save & Assign to Selected MeshRenderer' : 'Assign to Selected MeshRenderer'}
         </button>
       </div>
     </div>
