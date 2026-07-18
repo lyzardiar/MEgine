@@ -29,6 +29,11 @@ export interface Camera3D {
 export interface DirectionalLight {
   color: [number, number, number, number];
   intensity: number;
+  castShadows: boolean;
+  shadowStrength: number;
+  shadowBias: number;
+  shadowNormalBias: number;
+  shadowDistance: number;
 }
 
 export interface PointLight {
@@ -53,6 +58,8 @@ export interface Camera2D {
 export interface MeshRenderer {
   mesh: string;
   material: string;
+  castShadows: boolean;
+  receiveShadows: boolean;
 }
 
 export interface PbrMaterial {

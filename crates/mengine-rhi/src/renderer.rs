@@ -11,6 +11,7 @@ use winit::dpi::PhysicalSize;
 
 const MAX_POINT_LIGHTS: usize = 4;
 const MAX_SPOT_LIGHTS: usize = 4;
+const DIRECTIONAL_SHADOW_MAP_SIZE: u32 = 2048;
 
 #[derive(Clone, Copy, Debug)]
 pub struct ClearColor {
@@ -152,6 +153,8 @@ pub struct RenderObject {
     pub mesh_key: String,
     pub model: Mat4,
     pub material: RenderMaterial,
+    pub cast_shadows: bool,
+    pub receive_shadows: bool,
 }
 
 #[derive(Clone, Copy, Debug)]
@@ -160,6 +163,11 @@ pub struct DirectionalLightData {
     pub direction: Vec3,
     pub color: [f32; 3],
     pub intensity: f32,
+    pub cast_shadows: bool,
+    pub shadow_strength: f32,
+    pub shadow_bias: f32,
+    pub shadow_normal_bias: f32,
+    pub shadow_distance: f32,
 }
 
 #[derive(Clone, Copy, Debug)]
@@ -198,6 +206,11 @@ impl Default for FrameLighting {
                 direction: Vec3::new(-0.4, -1.0, -0.3).normalize(),
                 color: [1.0, 1.0, 0.95],
                 intensity: 1.0,
+                cast_shadows: true,
+                shadow_strength: 1.0,
+                shadow_bias: 0.0015,
+                shadow_normal_bias: 0.02,
+                shadow_distance: 30.0,
             }),
             points: Vec::new(),
             spots: Vec::new(),
@@ -232,6 +245,15 @@ struct ObjectUniforms {
     emissive: [f32; 4],
     texture_transform: [f32; 4],
     map_params: [f32; 4],
+    shadow_params: [f32; 4],
+}
+
+#[repr(C)]
+#[derive(Clone, Copy, bytemuck::Pod, bytemuck::Zeroable)]
+struct ShadowUniforms {
+    light_view_proj: [[f32; 4]; 4],
+    params: [f32; 4],
+    texel_size: [f32; 4],
 }
 
 struct MaterialTextureGpu {
@@ -330,6 +352,14 @@ pub struct Renderer {
     global_buf: wgpu::Buffer,
     object_buf: wgpu::Buffer,
     bind_group: wgpu::BindGroup,
+    shadow_pass_layout: wgpu::BindGroupLayout,
+    shadow_pipeline: wgpu::RenderPipeline,
+    shadow_uniform_buf: wgpu::Buffer,
+    _shadow_texture: wgpu::Texture,
+    shadow_view: wgpu::TextureView,
+    _shadow_sampler: wgpu::Sampler,
+    shadow_sample_bind_group: wgpu::BindGroup,
+    shadow_pass_bind_group: wgpu::BindGroup,
     material_texture_layout: wgpu::BindGroupLayout,
     material_samplers: HashMap<MaterialSamplerKey, wgpu::Sampler>,
     fallback_base_color_texture: MaterialTextureGpu,
@@ -500,9 +530,78 @@ impl Renderer {
                 ],
             });
 
+        let shadow_sample_layout =
+            device.create_bind_group_layout(&wgpu::BindGroupLayoutDescriptor {
+                label: Some("directional_shadow_sample_bgl"),
+                entries: &[
+                    wgpu::BindGroupLayoutEntry {
+                        binding: 0,
+                        visibility: wgpu::ShaderStages::FRAGMENT,
+                        ty: wgpu::BindingType::Buffer {
+                            ty: wgpu::BufferBindingType::Uniform,
+                            has_dynamic_offset: false,
+                            min_binding_size: NonZeroU64::new(
+                                std::mem::size_of::<ShadowUniforms>() as u64,
+                            ),
+                        },
+                        count: None,
+                    },
+                    wgpu::BindGroupLayoutEntry {
+                        binding: 1,
+                        visibility: wgpu::ShaderStages::FRAGMENT,
+                        ty: wgpu::BindingType::Texture {
+                            sample_type: wgpu::TextureSampleType::Depth,
+                            view_dimension: wgpu::TextureViewDimension::D2,
+                            multisampled: false,
+                        },
+                        count: None,
+                    },
+                    wgpu::BindGroupLayoutEntry {
+                        binding: 2,
+                        visibility: wgpu::ShaderStages::FRAGMENT,
+                        ty: wgpu::BindingType::Sampler(wgpu::SamplerBindingType::Comparison),
+                        count: None,
+                    },
+                ],
+            });
+        let shadow_pass_layout =
+            device.create_bind_group_layout(&wgpu::BindGroupLayoutDescriptor {
+                label: Some("directional_shadow_pass_bgl"),
+                entries: &[
+                    wgpu::BindGroupLayoutEntry {
+                        binding: 0,
+                        visibility: wgpu::ShaderStages::VERTEX,
+                        ty: wgpu::BindingType::Buffer {
+                            ty: wgpu::BufferBindingType::Uniform,
+                            has_dynamic_offset: false,
+                            min_binding_size: NonZeroU64::new(
+                                std::mem::size_of::<ShadowUniforms>() as u64,
+                            ),
+                        },
+                        count: None,
+                    },
+                    wgpu::BindGroupLayoutEntry {
+                        binding: 1,
+                        visibility: wgpu::ShaderStages::VERTEX | wgpu::ShaderStages::FRAGMENT,
+                        ty: wgpu::BindingType::Buffer {
+                            ty: wgpu::BufferBindingType::Uniform,
+                            has_dynamic_offset: true,
+                            min_binding_size: NonZeroU64::new(
+                                std::mem::size_of::<ObjectUniforms>() as u64,
+                            ),
+                        },
+                        count: None,
+                    },
+                ],
+            });
+
         let pipeline_layout = device.create_pipeline_layout(&wgpu::PipelineLayoutDescriptor {
             label: Some("forward_pipeline_layout"),
-            bind_group_layouts: &[&bind_layout, &material_texture_layout],
+            bind_group_layouts: &[
+                &bind_layout,
+                &material_texture_layout,
+                &shadow_sample_layout,
+            ],
             push_constant_ranges: &[],
         });
         let mut material_pipelines = HashMap::new();
@@ -551,6 +650,49 @@ impl Renderer {
         let object_capacity = 64;
         let object_buf = create_object_buffer(&device, object_stride, object_capacity);
         let bind_group = create_bind_group(&device, &bind_layout, &global_buf, &object_buf);
+        let shadow_uniform_buf = device.create_buffer(&wgpu::BufferDescriptor {
+            label: Some("directional_shadow_uniforms"),
+            size: std::mem::size_of::<ShadowUniforms>() as u64,
+            usage: wgpu::BufferUsages::UNIFORM | wgpu::BufferUsages::COPY_DST,
+            mapped_at_creation: false,
+        });
+        let (shadow_texture, shadow_view) = create_shadow_map(&device, DIRECTIONAL_SHADOW_MAP_SIZE);
+        let shadow_sampler = device.create_sampler(&wgpu::SamplerDescriptor {
+            label: Some("directional_shadow_sampler"),
+            address_mode_u: wgpu::AddressMode::ClampToEdge,
+            address_mode_v: wgpu::AddressMode::ClampToEdge,
+            address_mode_w: wgpu::AddressMode::ClampToEdge,
+            mag_filter: wgpu::FilterMode::Linear,
+            min_filter: wgpu::FilterMode::Linear,
+            mipmap_filter: wgpu::FilterMode::Nearest,
+            compare: Some(wgpu::CompareFunction::LessEqual),
+            ..Default::default()
+        });
+        let shadow_sample_bind_group = create_shadow_sample_bind_group(
+            &device,
+            &shadow_sample_layout,
+            &shadow_uniform_buf,
+            &shadow_view,
+            &shadow_sampler,
+        );
+        let shadow_pass_bind_group = create_shadow_pass_bind_group(
+            &device,
+            &shadow_pass_layout,
+            &shadow_uniform_buf,
+            &object_buf,
+        );
+        let shadow_shader = device.create_shader_module(wgpu::ShaderModuleDescriptor {
+            label: Some("directional_shadow_depth"),
+            source: wgpu::ShaderSource::Wgsl(SHADOW_WGSL.into()),
+        });
+        let shadow_pipeline_layout =
+            device.create_pipeline_layout(&wgpu::PipelineLayoutDescriptor {
+                label: Some("directional_shadow_pipeline_layout"),
+                bind_group_layouts: &[&shadow_pass_layout, &material_texture_layout],
+                push_constant_ranges: &[],
+            });
+        let shadow_pipeline =
+            create_shadow_pipeline(&device, &shadow_shader, &shadow_pipeline_layout);
         let fallback_base_color_texture = create_material_texture_rgba8(
             &device,
             &queue,
@@ -617,6 +759,14 @@ impl Renderer {
             global_buf,
             object_buf,
             bind_group,
+            shadow_pass_layout,
+            shadow_pipeline,
+            shadow_uniform_buf,
+            _shadow_texture: shadow_texture,
+            shadow_view,
+            _shadow_sampler: shadow_sampler,
+            shadow_sample_bind_group,
+            shadow_pass_bind_group,
             material_texture_layout,
             material_samplers: HashMap::new(),
             fallback_base_color_texture,
@@ -681,8 +831,11 @@ impl Renderer {
     ) -> Result<(), RhiError> {
         self.ensure_object_capacity(objects.len().max(1));
         let global = make_global_uniforms(camera, lighting);
+        let shadow = make_shadow_uniforms(camera, lighting);
         self.queue
             .write_buffer(&self.global_buf, 0, bytemuck::bytes_of(&global));
+        self.queue
+            .write_buffer(&self.shadow_uniform_buf, 0, bytemuck::bytes_of(&shadow));
         if !objects.is_empty() {
             let mut packed = vec![0_u8; self.object_stride as usize * objects.len()];
             for (index, object) in objects.iter().enumerate() {
@@ -711,6 +864,48 @@ impl Renderer {
             .create_command_encoder(&wgpu::CommandEncoderDescriptor {
                 label: Some("frame"),
             });
+
+        if shadow.params[3] > 0.5 {
+            let mut pass = encoder.begin_render_pass(&wgpu::RenderPassDescriptor {
+                label: Some("directional_shadow_depth"),
+                color_attachments: &[],
+                depth_stencil_attachment: Some(wgpu::RenderPassDepthStencilAttachment {
+                    view: &self.shadow_view,
+                    depth_ops: Some(wgpu::Operations {
+                        load: wgpu::LoadOp::Clear(1.0),
+                        store: wgpu::StoreOp::Store,
+                    }),
+                    stencil_ops: None,
+                }),
+                ..Default::default()
+            });
+            pass.set_pipeline(&self.shadow_pipeline);
+            for &index in &draw_order {
+                let object = &objects[index];
+                if !object.cast_shadows
+                    || (object.material.transparent && object.material.alpha_cutoff <= 0.0)
+                {
+                    continue;
+                }
+                let Some(mesh) = self.meshes.get(&object.mesh_key) else {
+                    continue;
+                };
+                pass.set_bind_group(
+                    0,
+                    &self.shadow_pass_bind_group,
+                    &[(index as u64 * self.object_stride) as u32],
+                );
+                let texture_key = MaterialTextureSetKey::from(&object.material);
+                let texture_set = self
+                    .material_texture_sets
+                    .get(&texture_key)
+                    .expect("material texture set prepared before shadow pass");
+                pass.set_bind_group(1, texture_set, &[]);
+                pass.set_vertex_buffer(0, mesh.vertex_buffer.slice(..));
+                pass.set_index_buffer(mesh.index_buffer.slice(..), wgpu::IndexFormat::Uint32);
+                pass.draw_indexed(0..mesh.index_count, 0, 0..1);
+            }
+        }
 
         {
             let mut pass = encoder.begin_render_pass(&wgpu::RenderPassDescriptor {
@@ -767,6 +962,7 @@ impl Renderer {
                     .get(&texture_key)
                     .expect("material texture set prepared before render pass");
                 pass.set_bind_group(1, texture_set, &[]);
+                pass.set_bind_group(2, &self.shadow_sample_bind_group, &[]);
                 pass.set_vertex_buffer(0, mesh.vertex_buffer.slice(..));
                 pass.set_index_buffer(mesh.index_buffer.slice(..), wgpu::IndexFormat::Uint32);
                 pass.draw_indexed(0..mesh.index_count, 0, 0..1);
@@ -791,6 +987,12 @@ impl Renderer {
             &self.device,
             &self.bind_layout,
             &self.global_buf,
+            &self.object_buf,
+        );
+        self.shadow_pass_bind_group = create_shadow_pass_bind_group(
+            &self.device,
+            &self.shadow_pass_layout,
+            &self.shadow_uniform_buf,
             &self.object_buf,
         );
     }
@@ -1058,6 +1260,76 @@ fn make_global_uniforms(camera: FrameCamera, lighting: &FrameLighting) -> Global
     }
 }
 
+fn make_shadow_uniforms(camera: FrameCamera, lighting: &FrameLighting) -> ShadowUniforms {
+    let disabled = || ShadowUniforms {
+        light_view_proj: Mat4::IDENTITY.to_cols_array_2d(),
+        params: [0.0; 4],
+        texel_size: [
+            1.0 / DIRECTIONAL_SHADOW_MAP_SIZE as f32,
+            1.0 / DIRECTIONAL_SHADOW_MAP_SIZE as f32,
+            0.0,
+            0.0,
+        ],
+    };
+    let Some(light) = lighting.directional else {
+        return disabled();
+    };
+    let direction = light.direction.normalize_or_zero();
+    if !light.cast_shadows || light.shadow_strength <= 0.0 || direction.length_squared() < 0.5 {
+        return disabled();
+    }
+
+    let distance = light.shadow_distance.clamp(1.0, 500.0);
+    let inverse_view = camera.view.inverse();
+    let camera_forward = inverse_view.transform_vector3(-Vec3::Z).normalize_or_zero();
+    let mut center = camera.position + camera_forward * distance * 0.25;
+    let up = if direction.dot(Vec3::Y).abs() > 0.95 {
+        Vec3::X
+    } else {
+        Vec3::Y
+    };
+    let half_extent = distance * 0.65;
+    let texel_world_size = half_extent * 2.0 / DIRECTIONAL_SHADOW_MAP_SIZE as f32;
+
+    let initial_view = Mat4::look_at_rh(center - direction * distance, center, up);
+    // Quantize the light-space world position, not the view-space target (which is always zero),
+    // so sub-texel camera motion cannot make the shadow projection shimmer.
+    let center_in_light = initial_view.transform_vector3(center);
+    let snapped_in_light = Vec3::new(
+        (center_in_light.x / texel_world_size).round() * texel_world_size,
+        (center_in_light.y / texel_world_size).round() * texel_world_size,
+        center_in_light.z,
+    );
+    center += initial_view
+        .inverse()
+        .transform_vector3(snapped_in_light - center_in_light);
+
+    let light_view = Mat4::look_at_rh(center - direction * distance, center, up);
+    let light_projection = Mat4::orthographic_rh(
+        -half_extent,
+        half_extent,
+        -half_extent,
+        half_extent,
+        0.1,
+        distance * 2.5,
+    );
+    ShadowUniforms {
+        light_view_proj: (light_projection * light_view).to_cols_array_2d(),
+        params: [
+            light.shadow_strength.clamp(0.0, 1.0),
+            light.shadow_bias.clamp(0.0, 0.05),
+            light.shadow_normal_bias.clamp(0.0, 2.0),
+            1.0,
+        ],
+        texel_size: [
+            1.0 / DIRECTIONAL_SHADOW_MAP_SIZE as f32,
+            1.0 / DIRECTIONAL_SHADOW_MAP_SIZE as f32,
+            0.0,
+            0.0,
+        ],
+    }
+}
+
 fn sorted_render_indices(objects: &[RenderObject], camera_position: Vec3) -> Vec<usize> {
     let mut indices: Vec<usize> = (0..objects.len()).collect();
     indices.sort_by(|left, right| {
@@ -1126,6 +1398,12 @@ fn make_object_uniforms(object: &RenderObject) -> ObjectUniforms {
             } else {
                 0.0
             },
+        ],
+        shadow_params: [
+            if object.receive_shadows { 1.0 } else { 0.0 },
+            0.0,
+            0.0,
+            0.0,
         ],
     }
 }
@@ -1263,6 +1541,54 @@ fn create_pipeline(
     })
 }
 
+fn create_shadow_pipeline(
+    device: &wgpu::Device,
+    shader: &wgpu::ShaderModule,
+    layout: &wgpu::PipelineLayout,
+) -> wgpu::RenderPipeline {
+    device.create_render_pipeline(&wgpu::RenderPipelineDescriptor {
+        label: Some("directional_shadow_pipeline"),
+        layout: Some(layout),
+        vertex: wgpu::VertexState {
+            module: shader,
+            entry_point: Some("vs_shadow"),
+            buffers: &[wgpu::VertexBufferLayout {
+                array_stride: std::mem::size_of::<Vertex>() as wgpu::BufferAddress,
+                step_mode: wgpu::VertexStepMode::Vertex,
+                attributes: &wgpu::vertex_attr_array![0 => Float32x3, 1 => Float32x3, 2 => Float32x2],
+            }],
+            compilation_options: Default::default(),
+        },
+        fragment: Some(wgpu::FragmentState {
+            module: shader,
+            entry_point: Some("fs_shadow"),
+            targets: &[],
+            compilation_options: Default::default(),
+        }),
+        primitive: wgpu::PrimitiveState {
+            topology: wgpu::PrimitiveTopology::TriangleList,
+            strip_index_format: None,
+            front_face: wgpu::FrontFace::Ccw,
+            cull_mode: Some(wgpu::Face::Back),
+            ..Default::default()
+        },
+        depth_stencil: Some(wgpu::DepthStencilState {
+            format: wgpu::TextureFormat::Depth32Float,
+            depth_write_enabled: true,
+            depth_compare: wgpu::CompareFunction::Less,
+            stencil: Default::default(),
+            bias: wgpu::DepthBiasState {
+                constant: 2,
+                slope_scale: 2.0,
+                clamp: 0.0,
+            },
+        }),
+        multisample: wgpu::MultisampleState::default(),
+        multiview: None,
+        cache: None,
+    })
+}
+
 fn material_blend_state(blend: MaterialPipelineBlend) -> wgpu::BlendState {
     let component = |src_factor, dst_factor| wgpu::BlendComponent {
         src_factor,
@@ -1312,6 +1638,59 @@ fn create_bind_group(
             wgpu::BindGroupEntry {
                 binding: 0,
                 resource: global_buf.as_entire_binding(),
+            },
+            wgpu::BindGroupEntry {
+                binding: 1,
+                resource: wgpu::BindingResource::Buffer(wgpu::BufferBinding {
+                    buffer: object_buf,
+                    offset: 0,
+                    size: NonZeroU64::new(std::mem::size_of::<ObjectUniforms>() as u64),
+                }),
+            },
+        ],
+    })
+}
+
+fn create_shadow_sample_bind_group(
+    device: &wgpu::Device,
+    layout: &wgpu::BindGroupLayout,
+    shadow_uniform_buf: &wgpu::Buffer,
+    shadow_view: &wgpu::TextureView,
+    shadow_sampler: &wgpu::Sampler,
+) -> wgpu::BindGroup {
+    device.create_bind_group(&wgpu::BindGroupDescriptor {
+        label: Some("directional_shadow_sample_bg"),
+        layout,
+        entries: &[
+            wgpu::BindGroupEntry {
+                binding: 0,
+                resource: shadow_uniform_buf.as_entire_binding(),
+            },
+            wgpu::BindGroupEntry {
+                binding: 1,
+                resource: wgpu::BindingResource::TextureView(shadow_view),
+            },
+            wgpu::BindGroupEntry {
+                binding: 2,
+                resource: wgpu::BindingResource::Sampler(shadow_sampler),
+            },
+        ],
+    })
+}
+
+fn create_shadow_pass_bind_group(
+    device: &wgpu::Device,
+    layout: &wgpu::BindGroupLayout,
+    shadow_uniform_buf: &wgpu::Buffer,
+    object_buf: &wgpu::Buffer,
+) -> wgpu::BindGroup {
+    device.create_bind_group(&wgpu::BindGroupDescriptor {
+        label: Some("directional_shadow_pass_bg"),
+        layout,
+        entries: &[
+            wgpu::BindGroupEntry {
+                binding: 0,
+                resource: shadow_uniform_buf.as_entire_binding(),
             },
             wgpu::BindGroupEntry {
                 binding: 1,
@@ -1421,6 +1800,25 @@ fn create_depth(
     (tex, view)
 }
 
+fn create_shadow_map(device: &wgpu::Device, resolution: u32) -> (wgpu::Texture, wgpu::TextureView) {
+    let texture = device.create_texture(&wgpu::TextureDescriptor {
+        label: Some("directional_shadow_map"),
+        size: wgpu::Extent3d {
+            width: resolution.max(1),
+            height: resolution.max(1),
+            depth_or_array_layers: 1,
+        },
+        mip_level_count: 1,
+        sample_count: 1,
+        dimension: wgpu::TextureDimension::D2,
+        format: wgpu::TextureFormat::Depth32Float,
+        usage: wgpu::TextureUsages::RENDER_ATTACHMENT | wgpu::TextureUsages::TEXTURE_BINDING,
+        view_formats: &[],
+    });
+    let view = texture.create_view(&wgpu::TextureViewDescriptor::default());
+    (texture, view)
+}
+
 pub fn look_at(eye: Vec3, target: Vec3, up: Vec3) -> Mat4 {
     Mat4::look_at_rh(eye, target, up)
 }
@@ -1441,6 +1839,64 @@ pub fn orthographic(size: f32, aspect: f32, near: f32, far: f32) -> Mat4 {
         far,
     )
 }
+
+const SHADOW_WGSL: &str = r#"
+struct ShadowUniforms {
+    light_view_proj: mat4x4<f32>,
+    params: vec4<f32>,
+    texel_size: vec4<f32>,
+};
+
+struct ObjectUniforms {
+    model: mat4x4<f32>,
+    normal_matrix: mat4x4<f32>,
+    base_color: vec4<f32>,
+    material: vec4<f32>,
+    emissive: vec4<f32>,
+    texture_transform: vec4<f32>,
+    map_params: vec4<f32>,
+    shadow_params: vec4<f32>,
+};
+
+@group(0) @binding(0) var<uniform> shadow: ShadowUniforms;
+@group(0) @binding(1) var<uniform> object: ObjectUniforms;
+@group(1) @binding(0) var base_color_texture: texture_2d<f32>;
+@group(1) @binding(5) var material_sampler: sampler;
+
+struct VsIn {
+    @location(0) position: vec3<f32>,
+    @location(1) normal: vec3<f32>,
+    @location(2) uv: vec2<f32>,
+};
+
+struct ShadowOut {
+    @builtin(position) clip: vec4<f32>,
+    @location(0) uv: vec2<f32>,
+};
+
+@vertex
+fn vs_shadow(v: VsIn) -> ShadowOut {
+    var output: ShadowOut;
+    output.clip = shadow.light_view_proj * object.model * vec4<f32>(v.position, 1.0);
+    let scaled_uv = v.uv * object.texture_transform.xy;
+    let center = object.texture_transform.xy * 0.5;
+    let angle = object.map_params.z;
+    let rotation = mat2x2<f32>(cos(angle), sin(angle), -sin(angle), cos(angle));
+    output.uv = rotation * (scaled_uv - center) + center + object.texture_transform.zw;
+    return output;
+}
+
+@fragment
+fn fs_shadow(input: ShadowOut) {
+    if object.emissive.w > 0.0 {
+        let alpha = textureSample(base_color_texture, material_sampler, input.uv).a
+            * object.base_color.a;
+        if alpha < object.emissive.w {
+            discard;
+        }
+    }
+}
+"#;
 
 const FORWARD_WGSL: &str = r#"
 const MAX_POINT_LIGHTS: u32 = 4u;
@@ -1469,6 +1925,13 @@ struct ObjectUniforms {
     emissive: vec4<f32>,
     texture_transform: vec4<f32>,
     map_params: vec4<f32>,
+    shadow_params: vec4<f32>,
+};
+
+struct ShadowUniforms {
+    light_view_proj: mat4x4<f32>,
+    params: vec4<f32>,
+    texel_size: vec4<f32>,
 };
 
 @group(0) @binding(0) var<uniform> frame: GlobalUniforms;
@@ -1479,6 +1942,9 @@ struct ObjectUniforms {
 @group(1) @binding(3) var emissive_texture: texture_2d<f32>;
 @group(1) @binding(4) var occlusion_texture: texture_2d<f32>;
 @group(1) @binding(5) var material_sampler: sampler;
+@group(2) @binding(0) var<uniform> shadow: ShadowUniforms;
+@group(2) @binding(1) var directional_shadow_map: texture_depth_2d;
+@group(2) @binding(2) var directional_shadow_sampler: sampler_comparison;
 
 struct VsIn {
     @location(0) position: vec3<f32>,
@@ -1596,6 +2062,39 @@ fn mapped_normal(
     );
 }
 
+fn directional_shadow_visibility(
+    world_position: vec3<f32>,
+    world_normal: vec3<f32>,
+) -> f32 {
+    if shadow.params.w < 0.5 || object.shadow_params.x < 0.5 {
+        return 1.0;
+    }
+    let biased_position = world_position + world_normal * shadow.params.z;
+    let clip = shadow.light_view_proj * vec4<f32>(biased_position, 1.0);
+    let projected = clip.xyz / clip.w;
+    if projected.x < -1.0 || projected.x > 1.0
+        || projected.y < -1.0 || projected.y > 1.0
+        || projected.z < 0.0 || projected.z > 1.0 {
+        return 1.0;
+    }
+    let uv = projected.xy * vec2<f32>(0.5, -0.5) + vec2<f32>(0.5);
+    let reference_depth = projected.z - shadow.params.y;
+    var visibility = 0.0;
+    for (var y = -1; y <= 1; y += 1) {
+        for (var x = -1; x <= 1; x += 1) {
+            let offset = vec2<f32>(f32(x), f32(y)) * shadow.texel_size.xy;
+            visibility += textureSampleCompare(
+                directional_shadow_map,
+                directional_shadow_sampler,
+                uv + offset,
+                reference_depth,
+            );
+        }
+    }
+    visibility /= 9.0;
+    return mix(1.0, visibility, shadow.params.x);
+}
+
 // MENGINE_SURFACE_HOOK_BEGIN
 fn mengine_surface_hook(
     color: vec4<f32>,
@@ -1658,7 +2157,7 @@ fn fs_main(i: VsOut, @builtin(front_facing) front_facing: bool) -> @location(0) 
 
     if frame.light_counts.x > 0u {
         let l = normalize(-frame.directional_direction.xyz);
-        color += light_contribution(
+        color += directional_shadow_visibility(i.world_position, n) * light_contribution(
             n, v, l,
             frame.directional_color.rgb * frame.directional_color.a,
             base_color, metallic, roughness,
@@ -1721,6 +2220,18 @@ mod tests {
         )
         .validate(&module)
         .expect("forward shader should pass validation");
+    }
+
+    #[test]
+    fn directional_shadow_shader_is_valid_wgsl() {
+        let module =
+            naga::front::wgsl::parse_str(SHADOW_WGSL).expect("shadow shader should parse as WGSL");
+        naga::valid::Validator::new(
+            naga::valid::ValidationFlags::all(),
+            naga::valid::Capabilities::all(),
+        )
+        .validate(&module)
+        .expect("shadow shader should pass validation");
     }
 
     #[test]
@@ -1788,10 +2299,33 @@ mod tests {
     }
 
     #[test]
+    fn directional_shadow_uniforms_disable_and_clamp_authoring_values() {
+        let camera = FrameCamera {
+            view: Mat4::look_at_rh(Vec3::new(0.0, 2.0, 5.0), Vec3::ZERO, Vec3::Y),
+            proj: Mat4::IDENTITY,
+            position: Vec3::new(0.0, 2.0, 5.0),
+        };
+        let mut lighting = FrameLighting::default();
+        lighting.directional.as_mut().unwrap().cast_shadows = false;
+        assert_eq!(make_shadow_uniforms(camera, &lighting).params[3], 0.0);
+
+        let light = lighting.directional.as_mut().unwrap();
+        light.cast_shadows = true;
+        light.shadow_strength = 2.0;
+        light.shadow_bias = 1.0;
+        light.shadow_normal_bias = 9.0;
+        let uniforms = make_shadow_uniforms(camera, &lighting);
+        assert_eq!(uniforms.params, [1.0, 0.05, 2.0, 1.0]);
+        assert!(Mat4::from_cols_array_2d(&uniforms.light_view_proj).is_finite());
+    }
+
+    #[test]
     fn material_texture_roles_and_map_parameters_remain_distinct() {
         let object = RenderObject {
             mesh_key: "cube".into(),
             model: Mat4::IDENTITY,
+            cast_shadows: true,
+            receive_shadows: false,
             material: RenderMaterial {
                 base_color_texture: "base.png".into(),
                 normal_texture: "normal.png".into(),
@@ -1820,6 +2354,7 @@ mod tests {
             make_object_uniforms(&object).map_params,
             [1.5, 0.65, std::f32::consts::FRAC_PI_2, 0.0]
         );
+        assert_eq!(make_object_uniforms(&object).shadow_params[0], 0.0);
     }
 
     #[test]
@@ -1854,6 +2389,8 @@ mod tests {
             mesh_key: "cube".into(),
             model: Mat4::IDENTITY,
             material,
+            cast_shadows: true,
+            receive_shadows: true,
         };
         assert_eq!(make_object_uniforms(&object).map_params[3], 1.0);
     }
@@ -1863,6 +2400,8 @@ mod tests {
         let object = |queue, transparent, z| RenderObject {
             mesh_key: "cube".into(),
             model: Mat4::from_translation(Vec3::new(0.0, 0.0, z)),
+            cast_shadows: true,
+            receive_shadows: true,
             material: RenderMaterial {
                 transparent,
                 render_queue: queue,

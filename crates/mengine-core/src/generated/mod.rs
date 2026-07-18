@@ -137,6 +137,11 @@ impl Component for Camera3D {
 pub struct DirectionalLight {
     pub color: [f32; 4],
     pub intensity: f32,
+    pub cast_shadows: bool,
+    pub shadow_strength: f32,
+    pub shadow_bias: f32,
+    pub shadow_normal_bias: f32,
+    pub shadow_distance: f32,
 }
 
 impl Default for DirectionalLight {
@@ -144,6 +149,11 @@ impl Default for DirectionalLight {
         Self {
             color: [1.0, 1.0, 0.95, 1.0],
             intensity: 1.0,
+            cast_shadows: true,
+            shadow_strength: 1.0,
+            shadow_bias: 0.0015,
+            shadow_normal_bias: 0.02,
+            shadow_distance: 30.0,
         }
     }
 }
@@ -269,6 +279,8 @@ impl Component for Camera2D {
 pub struct MeshRenderer {
     pub mesh: String,
     pub material: String,
+    pub cast_shadows: bool,
+    pub receive_shadows: bool,
 }
 
 impl Default for MeshRenderer {
@@ -276,6 +288,8 @@ impl Default for MeshRenderer {
         Self {
             mesh: "cube".into(),
             material: "default".into(),
+            cast_shadows: true,
+            receive_shadows: true,
         }
     }
 }

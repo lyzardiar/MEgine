@@ -1551,6 +1551,8 @@ fn collect_objects(
             out.push(RenderObject {
                 mesh_key: m.mesh.trim().replace('\\', "/"),
                 model: t.matrix,
+                cast_shadows: m.cast_shadows,
+                receive_shadows: m.receive_shadows,
                 material: world
                     .get_component::<PbrMaterial>(e)
                     .map(render_material_from_component)
@@ -1584,6 +1586,11 @@ fn collect_lighting(world: &World, hierarchy: &TransformHierarchy) -> FrameLight
                     direction,
                     color: [light.color[0], light.color[1], light.color[2]],
                     intensity: light.intensity,
+                    cast_shadows: light.cast_shadows,
+                    shadow_strength: light.shadow_strength,
+                    shadow_bias: light.shadow_bias,
+                    shadow_normal_bias: light.shadow_normal_bias,
+                    shadow_distance: light.shadow_distance,
                 });
             }
         }

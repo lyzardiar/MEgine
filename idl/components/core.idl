@@ -26,8 +26,13 @@ component Camera3D {
 }
 
 component DirectionalLight {
-  color:     float4 = [1, 1, 0.95, 1]
-  intensity: float  = 1
+  color:              float4 = [1, 1, 0.95, 1]
+  intensity:          float  = 1
+  cast_shadows:       bool   = true
+  shadow_strength:    float  = 1
+  shadow_bias:        float  = 0.0015
+  shadow_normal_bias: float  = 0.02
+  shadow_distance:    float  = 30
 }
 
 component PointLight {
@@ -50,8 +55,10 @@ component Camera2D {
 }
 
 component MeshRenderer {
-  mesh:     string = "cube"
-  material: string = "default"
+  mesh:            string = "cube"
+  material:        string = "default"
+  cast_shadows:    bool   = true
+  receive_shadows: bool   = true
 }
 
 /// Per-renderer physically based material override.

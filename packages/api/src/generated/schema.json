@@ -546,6 +546,9 @@
   },
   "DirectionalLight": {
     "properties": {
+      "cast_shadows": {
+        "type": "boolean"
+      },
       "color": {
         "items": {
           "type": "number"
@@ -554,11 +557,28 @@
       },
       "intensity": {
         "type": "number"
+      },
+      "shadow_bias": {
+        "type": "number"
+      },
+      "shadow_distance": {
+        "type": "number"
+      },
+      "shadow_normal_bias": {
+        "type": "number"
+      },
+      "shadow_strength": {
+        "type": "number"
       }
     },
     "required": [
       "color",
-      "intensity"
+      "intensity",
+      "cast_shadows",
+      "shadow_strength",
+      "shadow_bias",
+      "shadow_normal_bias",
+      "shadow_distance"
     ],
     "type": "object"
   },
@@ -951,16 +971,24 @@
   },
   "MeshRenderer": {
     "properties": {
+      "cast_shadows": {
+        "type": "boolean"
+      },
       "material": {
         "type": "string"
       },
       "mesh": {
         "type": "string"
+      },
+      "receive_shadows": {
+        "type": "boolean"
       }
     },
     "required": [
       "mesh",
-      "material"
+      "material",
+      "cast_shadows",
+      "receive_shadows"
     ],
     "type": "object"
   },

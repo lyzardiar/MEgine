@@ -15,7 +15,12 @@ const BUILTIN_CATALOG: ComponentCatalogEntry[] = [
     type: 'MeshRenderer',
     label: 'Mesh Renderer',
     description: '渲染网格',
-    create: () => ({ mesh: 'cube', material: 'default' }),
+    create: () => ({
+      mesh: 'cube',
+      material: 'default',
+      cast_shadows: true,
+      receive_shadows: true,
+    }),
   },
   {
     type: 'Camera3D',
@@ -35,7 +40,15 @@ const BUILTIN_CATALOG: ComponentCatalogEntry[] = [
     type: 'DirectionalLight',
     label: 'Directional Light',
     description: '平行光（沿本地 -Z 照射）',
-    create: () => ({ color: [1, 1, 0.95, 1], intensity: 1 }),
+    create: () => ({
+      color: [1, 1, 0.95, 1],
+      intensity: 1,
+      cast_shadows: true,
+      shadow_strength: 1,
+      shadow_bias: 0.0015,
+      shadow_normal_bias: 0.02,
+      shadow_distance: 30,
+    }),
   },
   {
     type: 'PointLight',

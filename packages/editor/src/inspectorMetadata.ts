@@ -97,7 +97,25 @@ export const BUILTIN_INSPECTOR_FIELDS: Readonly<
   Camera2D: {
     size: { label: 'Orthographic Size', min: 0.001, step: 0.1 },
   },
-  DirectionalLight: { intensity: { min: 0, step: 0.1 } },
+  DirectionalLight: {
+    intensity: { min: 0, step: 0.1 },
+    shadow_strength: {
+      label: 'Shadow Strength', min: 0, max: 1, step: 0.01,
+      visibleWhen: { field: 'cast_shadows', equals: true },
+    },
+    shadow_bias: {
+      label: 'Shadow Bias', min: 0, max: 0.05, step: 0.0001,
+      visibleWhen: { field: 'cast_shadows', equals: true },
+    },
+    shadow_normal_bias: {
+      label: 'Normal Bias', min: 0, max: 2, step: 0.001,
+      visibleWhen: { field: 'cast_shadows', equals: true },
+    },
+    shadow_distance: {
+      label: 'Shadow Distance', min: 1, max: 500, step: 1,
+      visibleWhen: { field: 'cast_shadows', equals: true },
+    },
+  },
   PointLight: {
     intensity: { min: 0, step: 0.1 },
     range: { min: 0, step: 0.1 },
