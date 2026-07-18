@@ -96,6 +96,8 @@ struct EnvironmentPrefilterUniforms {
 }
 
 pub(crate) struct PrefilteredEnvironment {
+    pub(crate) _source_texture: wgpu::Texture,
+    pub(crate) source_view: wgpu::TextureView,
     pub(crate) _texture: wgpu::Texture,
     pub(crate) view: wgpu::TextureView,
     pub(crate) mip_level_count: u32,
@@ -440,6 +442,8 @@ impl EnvironmentPrefilter {
         queue.submit(std::iter::once(encoder.finish()));
 
         PrefilteredEnvironment {
+            _source_texture: source_texture,
+            source_view,
             _texture: target_texture,
             view: target_view,
             mip_level_count,

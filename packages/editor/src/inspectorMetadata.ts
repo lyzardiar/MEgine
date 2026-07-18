@@ -130,6 +130,13 @@ export const BUILTIN_INSPECTOR_FIELDS: Readonly<
       noneValue: '',
     },
     rotation_degrees: { label: 'Rotation', step: 1 },
+    background_enabled: { label: 'Background' },
+    background_intensity: {
+      label: 'Background Intensity',
+      min: 0,
+      step: 0.05,
+      visibleWhen: { field: 'background_enabled', equals: true },
+    },
     exposure: { label: 'Exposure (EV)', min: -16, max: 16, step: 0.1 },
   },
   PointLight: {

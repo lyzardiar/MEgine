@@ -13,6 +13,8 @@ test('environment light exposes stable HDR authoring defaults', () => {
     specular_intensity: 1,
     texture: '',
     rotation_degrees: 0,
+    background_enabled: true,
+    background_intensity: 1,
     exposure: 0,
   });
 });

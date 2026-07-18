@@ -650,6 +650,12 @@
   },
   "EnvironmentLight": {
     "properties": {
+      "background_enabled": {
+        "type": "boolean"
+      },
+      "background_intensity": {
+        "type": "number"
+      },
       "diffuse_intensity": {
         "type": "number"
       },
@@ -692,6 +698,8 @@
       "specular_intensity",
       "texture",
       "rotation_degrees",
+      "background_enabled",
+      "background_intensity",
       "exposure"
     ],
     "type": "object"

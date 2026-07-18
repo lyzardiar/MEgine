@@ -6,6 +6,8 @@ export type EnvironmentLightComponent = {
   specular_intensity: number;
   texture: string;
   rotation_degrees: number;
+  background_enabled: boolean;
+  background_intensity: number;
   exposure: number;
 };
 
@@ -19,6 +21,8 @@ export function createEnvironmentLightComponent(): EnvironmentLightComponent {
     specular_intensity: 1,
     texture: '',
     rotation_degrees: 0,
+    background_enabled: true,
+    background_intensity: 1,
     exposure: 0,
   };
 }

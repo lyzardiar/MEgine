@@ -5,6 +5,7 @@ mod mesh;
 mod post_process;
 mod render_graph;
 mod renderer;
+mod sky;
 mod ui;
 
 pub use mesh::{MeshGpu, Vertex};

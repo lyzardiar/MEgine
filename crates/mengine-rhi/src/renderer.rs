@@ -2,6 +2,7 @@ use crate::ibl::{BrdfLut, EnvironmentPrefilter, PrefilteredEnvironment};
 use crate::mesh::{MeshGpu, Vertex};
 use crate::post_process::{HdrPostProcess, HDR_COLOR_FORMAT};
 use crate::render_graph::RenderGraph;
+use crate::sky::SkyBackground;
 use crate::ui::{UiBatchPlan, UiFrameStats, UiRenderer, UiTextureError};
 use crate::RhiError;
 use glam::{Mat4, Vec3, Vec4};
@@ -201,6 +202,8 @@ pub struct EnvironmentLightData {
     pub specular_intensity: f32,
     pub texture: String,
     pub rotation_degrees: f32,
+    pub background_enabled: bool,
+    pub background_intensity: f32,
     /// Exposure compensation in photographic stops (EV).
     pub exposure: f32,
 }
@@ -215,6 +218,10 @@ impl Default for EnvironmentLightData {
             specular_intensity: 1.0,
             texture: String::new(),
             rotation_degrees: 0.0,
+            // A bare FrameLighting keeps the historical solid clear. Scene
+            // EnvironmentLight components explicitly opt into their authored background.
+            background_enabled: false,
+            background_intensity: 1.0,
             exposure: 0.0,
         }
     }
@@ -414,6 +421,7 @@ pub struct Renderer {
     material_texture_sets: HashMap<MaterialTextureSetKey, wgpu::BindGroup>,
     object_stride: u64,
     object_capacity: usize,
+    sky: SkyBackground,
     post_process: HdrPostProcess,
     ui: UiRenderer,
     pub clear: ClearColor,
@@ -683,8 +691,19 @@ impl Renderer {
                         },
                         count: None,
                     },
+                    wgpu::BindGroupLayoutEntry {
+                        binding: 5,
+                        visibility: wgpu::ShaderStages::FRAGMENT,
+                        ty: wgpu::BindingType::Texture {
+                            sample_type: wgpu::TextureSampleType::Float { filterable: true },
+                            view_dimension: wgpu::TextureViewDimension::D2,
+                            multisampled: false,
+                        },
+                        count: None,
+                    },
                 ],
             });
+        let sky = SkyBackground::new(&device, &environment_texture_layout);
 
         let pipeline_layout = device.create_pipeline_layout(&wgpu::PipelineLayoutDescriptor {
             label: Some("forward_pipeline_layout"),
@@ -809,11 +828,14 @@ impl Renderer {
         let fallback_environment_bind_group = create_environment_bind_group(
             &device,
             &environment_texture_layout,
-            &fallback_environment_texture.view,
-            &environment_sampler,
-            brdf_lut.view(),
-            brdf_lut.sampler(),
-            &fallback_environment_texture.view,
+            EnvironmentBindGroupResources {
+                specular: &fallback_environment_texture.view,
+                environment_sampler: &environment_sampler,
+                brdf_lut: brdf_lut.view(),
+                brdf_sampler: brdf_lut.sampler(),
+                irradiance: &fallback_environment_texture.view,
+                source: &fallback_environment_texture.view,
+            },
         );
         let fallback_base_color_texture = create_material_texture_rgba8(
             &device,
@@ -910,6 +932,7 @@ impl Renderer {
             material_texture_sets: HashMap::new(),
             object_stride,
             object_capacity,
+            sky,
             post_process,
             ui,
             clear: ClearColor {
@@ -1068,18 +1091,42 @@ impl Renderer {
             } else {
                 &self.fallback_environment_bind_group
             };
+            self.sky.prepare(
+                &self.queue,
+                camera,
+                &lighting.environment,
+                has_environment_texture,
+            );
+            {
+                let mut pass = encoder.begin_render_pass(&wgpu::RenderPassDescriptor {
+                    label: Some("environment_background"),
+                    color_attachments: &[Some(wgpu::RenderPassColorAttachment {
+                        view: self.post_process.hdr_view(),
+                        resolve_target: None,
+                        ops: wgpu::Operations {
+                            load: wgpu::LoadOp::Clear(wgpu::Color {
+                                r: self.clear.r,
+                                g: self.clear.g,
+                                b: self.clear.b,
+                                a: self.clear.a,
+                            }),
+                            store: wgpu::StoreOp::Store,
+                        },
+                    })],
+                    depth_stencil_attachment: None,
+                    ..Default::default()
+                });
+                if lighting.environment.background_enabled {
+                    self.sky.draw(&mut pass, environment_bind_group);
+                }
+            }
             let mut pass = encoder.begin_render_pass(&wgpu::RenderPassDescriptor {
                 label: Some("forward_hdr"),
                 color_attachments: &[Some(wgpu::RenderPassColorAttachment {
                     view: self.post_process.hdr_view(),
                     resolve_target: None,
                     ops: wgpu::Operations {
-                        load: wgpu::LoadOp::Clear(wgpu::Color {
-                            r: self.clear.r,
-                            g: self.clear.g,
-                            b: self.clear.b,
-                            a: self.clear.a,
-                        }),
+                        load: wgpu::LoadOp::Load,
                         store: wgpu::StoreOp::Store,
                     },
                 })],
@@ -1372,11 +1419,14 @@ impl Renderer {
         let bind_group = create_environment_bind_group(
             &self.device,
             &self.environment_texture_layout,
-            &texture.view,
-            &self.environment_sampler,
-            self.brdf_lut.view(),
-            self.brdf_lut.sampler(),
-            &texture.irradiance_view,
+            EnvironmentBindGroupResources {
+                specular: &texture.view,
+                environment_sampler: &self.environment_sampler,
+                brdf_lut: self.brdf_lut.view(),
+                brdf_sampler: self.brdf_lut.sampler(),
+                irradiance: &texture.irradiance_view,
+                source: &texture.source_view,
+            },
         );
         self.environment_textures.insert(key.to_owned(), texture);
         self.environment_bind_groups
@@ -1404,11 +1454,14 @@ impl Renderer {
         let bind_group = create_environment_bind_group(
             &self.device,
             &self.environment_texture_layout,
-            &texture.view,
-            &self.environment_sampler,
-            self.brdf_lut.view(),
-            self.brdf_lut.sampler(),
-            &texture.irradiance_view,
+            EnvironmentBindGroupResources {
+                specular: &texture.view,
+                environment_sampler: &self.environment_sampler,
+                brdf_lut: self.brdf_lut.view(),
+                brdf_sampler: self.brdf_lut.sampler(),
+                irradiance: &texture.irradiance_view,
+                source: &texture.source_view,
+            },
         );
         self.environment_textures.insert(key.to_owned(), texture);
         self.environment_bind_groups
@@ -2009,14 +2062,19 @@ fn create_shadow_pass_bind_group(
     })
 }
 
+struct EnvironmentBindGroupResources<'a> {
+    specular: &'a wgpu::TextureView,
+    environment_sampler: &'a wgpu::Sampler,
+    brdf_lut: &'a wgpu::TextureView,
+    brdf_sampler: &'a wgpu::Sampler,
+    irradiance: &'a wgpu::TextureView,
+    source: &'a wgpu::TextureView,
+}
+
 fn create_environment_bind_group(
     device: &wgpu::Device,
     layout: &wgpu::BindGroupLayout,
-    texture_view: &wgpu::TextureView,
-    sampler: &wgpu::Sampler,
-    brdf_lut_view: &wgpu::TextureView,
-    brdf_lut_sampler: &wgpu::Sampler,
-    irradiance_view: &wgpu::TextureView,
+    resources: EnvironmentBindGroupResources<'_>,
 ) -> wgpu::BindGroup {
     device.create_bind_group(&wgpu::BindGroupDescriptor {
         label: Some("environment_texture_bg"),
@@ -2024,23 +2082,27 @@ fn create_environment_bind_group(
         entries: &[
             wgpu::BindGroupEntry {
                 binding: 0,
-                resource: wgpu::BindingResource::TextureView(texture_view),
+                resource: wgpu::BindingResource::TextureView(resources.specular),
             },
             wgpu::BindGroupEntry {
                 binding: 1,
-                resource: wgpu::BindingResource::Sampler(sampler),
+                resource: wgpu::BindingResource::Sampler(resources.environment_sampler),
             },
             wgpu::BindGroupEntry {
                 binding: 2,
-                resource: wgpu::BindingResource::TextureView(brdf_lut_view),
+                resource: wgpu::BindingResource::TextureView(resources.brdf_lut),
             },
             wgpu::BindGroupEntry {
                 binding: 3,
-                resource: wgpu::BindingResource::Sampler(brdf_lut_sampler),
+                resource: wgpu::BindingResource::Sampler(resources.brdf_sampler),
             },
             wgpu::BindGroupEntry {
                 binding: 4,
-                resource: wgpu::BindingResource::TextureView(irradiance_view),
+                resource: wgpu::BindingResource::TextureView(resources.irradiance),
+            },
+            wgpu::BindGroupEntry {
+                binding: 5,
+                resource: wgpu::BindingResource::TextureView(resources.source),
             },
         ],
     })

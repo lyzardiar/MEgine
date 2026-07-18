@@ -28,6 +28,11 @@ impl RenderGraph {
     pub fn default_forward() -> Self {
         let mut g = Self::new();
         g.add_pass(PassDesc {
+            name: "environment_background".into(),
+            color: true,
+            depth: false,
+        });
+        g.add_pass(PassDesc {
             name: "forward_hdr".into(),
             color: true,
             depth: true,
@@ -59,10 +64,16 @@ mod tests {
                 .iter()
                 .map(|pass| pass.name.as_str())
                 .collect::<Vec<_>>(),
-            vec!["forward_hdr", "aces_tone_mapping", "ui_overlay"]
+            vec![
+                "environment_background",
+                "forward_hdr",
+                "aces_tone_mapping",
+                "ui_overlay"
+            ]
         );
-        assert!(graph.passes()[0].depth);
-        assert!(!graph.passes()[1].depth);
+        assert!(!graph.passes()[0].depth);
+        assert!(graph.passes()[1].depth);
         assert!(!graph.passes()[2].depth);
+        assert!(!graph.passes()[3].depth);
     }
 }

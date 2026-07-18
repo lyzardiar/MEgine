@@ -35,7 +35,7 @@ component DirectionalLight {
   shadow_distance:    float  = 30
 }
 
-/// Scene-wide analytic environment lighting. The first active instance is used.
+/// Scene-wide analytic or image-based environment lighting. The first active instance is used.
 component EnvironmentLight {
   sky_color:          float4 = [0.18, 0.28, 0.5, 1]
   equator_color:      float4 = [0.12, 0.14, 0.18, 1]
@@ -44,6 +44,9 @@ component EnvironmentLight {
   specular_intensity: float  = 1
   texture:            string = ""
   rotation_degrees:   float  = 0
+  /// Draw the analytic gradient or source environment map behind the scene.
+  background_enabled:   bool  = true
+  background_intensity: float = 1
   /// Photographic exposure compensation in stops (EV).
   exposure:           float  = 0
 }
