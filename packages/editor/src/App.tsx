@@ -61,7 +61,14 @@ import {
 import { DockWorkspace, type PanelKind } from './panels/DockWorkspace';
 import { EditorWindowHost } from './editorWindow';
 import { resolveUnityAction } from './panels/uiFieldEditors';
-import { refreshSprites } from './spriteLibrary';
+import {
+  refreshSprites,
+  resolveSpritePixelsPerUnit,
+  resolveSpritePivot,
+  spriteDisplayName,
+} from './spriteLibrary';
+import { loadSpriteNativeSize } from './spriteDraw';
+import { spriteNativeWorldSize } from './spriteImport';
 import { combineMarqueeSelection } from './marqueeSelection';
 import { instantiateProjectPrefab } from './prefabWorkflow';
 import { isDesktopEditor } from './transport/editorTransport';
@@ -278,6 +285,30 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
     logEnd.current = next.length;
     setLogs(next);
     broadcastScene();
+  };
+
+  const instantiateSpriteAsset = (
+    path: string,
+    options: { parent?: number | null; position?: [number, number, number] } = {},
+  ) => {
+    void loadSpriteNativeSize(path)
+      .then((pixelSize) => {
+        const size = spriteNativeWorldSize(
+          pixelSize ? [pixelSize.w, pixelSize.h] : [100, 100],
+          resolveSpritePixelsPerUnit(path),
+        );
+        const id = store.spawnSpriteAsset(path, {
+          name: spriteDisplayName(path).replace(/\.[^.]+$/, ''),
+          parent: options.parent ?? null,
+          position: options.position ?? [0, 0, 0],
+          size,
+          pivot: resolveSpritePivot(path),
+        });
+        if (options.position == null) store.frameSelected();
+        log(`Created SpriteRenderer ${path} (entity ${id})`);
+        refresh();
+      })
+      .catch((error) => log(`Sprite creation failed: ${String(error)}`, 'error'));
   };
 
   useEffect(() => {
@@ -817,6 +848,9 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
                   })
                   .catch((error) => log(`Prefab instantiate failed: ${String(error)}`, 'error'));
               }}
+              onInstantiateSprite={(path, parent) => {
+                instantiateSpriteAsset(path, { parent });
+              }}
             />
           ),
           viewport: (
@@ -991,6 +1025,9 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
                 store.frameSelected();
                 refresh();
               }}
+              onInstantiateSprite={(path, position) => {
+                instantiateSpriteAsset(path, { position });
+              }}
             />
           ),
           inspector: (
@@ -1083,6 +1120,7 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
                 log(`Instantiated model ${path}`);
                 refresh();
               }}
+              onInstantiateSprite={(path) => instantiateSpriteAsset(path)}
               onOpenScene={(name) => {
                 void openSceneByName(name);
               }}

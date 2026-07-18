@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
+import { Focus } from 'lucide-react';
 import type { GizmoMode, SceneCamera, TransformData } from '../store';
 import {
   GAME_RESOLUTION_PRESETS,
@@ -489,6 +490,7 @@ export function Viewport(props: {
   ) => RectResizePlan | null | void;
   onGameResolution: (resolution: GameResolution | null) => void;
   onFrame: () => void;
+  onInstantiateSprite: (path: string, position: Vec3) => void;
   onUiClick?: (entity: number, onClick: unknown) => void;
   onUiValueChange?: (
     entity: number,
@@ -639,6 +641,7 @@ export function Viewport(props: {
 
   const [tick, setTick] = useState(0);
   const [uiStats, setUiStats] = useState({ elements: 0, batches: 0 });
+  const [spriteDropActive, setSpriteDropActive] = useState(false);
   const [scene2D, setScene2D] = useState(loadScene2D);
   const scene2DRef = useRef(scene2D);
   scene2DRef.current = scene2D;
@@ -1697,6 +1700,21 @@ export function Viewport(props: {
       distance: liveCam.current.distance,
       pivot: [...liveCam.current.pivot] as Vec3,
     });
+  };
+
+  const sceneDropWorldPoint = (x: number, y: number): Vec3 => {
+    const origin = [...liveCam.current.pivot] as Vec3;
+    const screen = project(origin, lastCameraRef.current, lastVpRef.current);
+    if (!screen) return origin;
+    return add(
+      origin,
+      worldDeltaViewPlane(
+        origin,
+        { dx: x - screen.x, dy: y - screen.y },
+        lastCameraRef.current,
+        lastVpRef.current,
+      ),
+    );
   };
 
   const tileCellAt = (
@@ -3034,6 +3052,17 @@ export function Viewport(props: {
           </div>
           <button
             type="button"
+            className="scene-grid-toggle scene-frame-button"
+            aria-label="Frame selected"
+            disabled={props.selected == null}
+            title="Frame Selected (F)"
+            onClick={props.onFrame}
+          >
+            <Focus size={13} aria-hidden />
+            <span>Frame</span>
+          </button>
+          <button
+            type="button"
             className={`scene-grid-toggle${sceneGrid && scene2D ? ' active' : ''}`}
             aria-label="Toggle 2D grid"
             aria-pressed={sceneGrid && scene2D}
@@ -3239,7 +3268,7 @@ export function Viewport(props: {
           </div>
           <span className="game-hint">
             {scene2D
-              ? '正视 Canvas · Ctrl/Shift Click 多选 · Arrows 1px / Shift 10px · RMB/MMB 平移'
+              ? '正视 Canvas · Ctrl/Shift Click 多选 · Arrows 1px / Shift 10px · F 聚焦 · RMB/MMB 平移'
               : 'RMB 旋转 · MMB/Alt+LMB 平移 · Wheel 缩放 · F 聚焦'}
           </span>
         </div>
@@ -3316,8 +3345,52 @@ export function Viewport(props: {
         }}
         onContextMenu={(e) => e.preventDefault()}
         onWheel={onWheel}
+        onDragEnter={(event) => {
+          if (
+            props.tab !== 'scene'
+            || props.playing
+            || !Array.from(event.dataTransfer.types).includes('text/mengine-sprite')
+          ) return;
+          event.preventDefault();
+          event.stopPropagation();
+          event.dataTransfer.dropEffect = 'copy';
+          setSpriteDropActive(true);
+        }}
+        onDragOver={(event) => {
+          if (
+            props.tab !== 'scene'
+            || props.playing
+            || !Array.from(event.dataTransfer.types).includes('text/mengine-sprite')
+          ) return;
+          event.preventDefault();
+          event.stopPropagation();
+          event.dataTransfer.dropEffect = 'copy';
+          setSpriteDropActive(true);
+        }}
+        onDragLeave={(event) => {
+          event.stopPropagation();
+          setSpriteDropActive(false);
+        }}
+        onDrop={(event) => {
+          setSpriteDropActive(false);
+          if (props.tab !== 'scene' || props.playing) return;
+          const path = event.dataTransfer.getData('text/mengine-sprite');
+          if (!path) return;
+          event.preventDefault();
+          event.stopPropagation();
+          const rect = event.currentTarget.getBoundingClientRect();
+          props.onInstantiateSprite(
+            path,
+            sceneDropWorldPoint(event.clientX - rect.left, event.clientY - rect.top),
+          );
+        }}
         style={{ cursor: props.tab === 'scene' ? 'crosshair' : 'default', width: '100%', height: '100%' }}
       />
+      {props.tab === 'scene' && spriteDropActive && (
+        <div className="scene-sprite-drop-overlay" aria-hidden>
+          Drop to create SpriteRenderer
+        </div>
+      )}
       {props.tab === 'scene' && marquee && (
         <div
           className="scene-marquee"

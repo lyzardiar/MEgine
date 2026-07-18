@@ -146,10 +146,10 @@ function defaultTree(): DockNode {
         dir: 'h',
         ratio: 0.7,
         a: leaf(['scene', 'game']),
-        b: leaf(['inspector', 'material', 'shader', 'spriteEditor', 'spriteAtlas', 'build', 'projectSettings']),
+        b: leaf(['inspector', 'material', 'shader', 'build', 'projectSettings']),
       },
     },
-    b: leaf(['project', 'console', 'timeline', 'animator']),
+    b: leaf(['project', 'console', 'timeline', 'animator', 'spriteEditor', 'spriteAtlas']),
   };
 }
 
@@ -221,6 +221,47 @@ function findLeaf(n: DockNode, id: string): LeafNode | null {
 function findLeafContaining(n: DockNode, panel: PanelKind): LeafNode | null {
   if (n.kind === 'tabs') return n.panels.includes(panel) ? n : null;
   return findLeafContaining(n.a, panel) ?? findLeafContaining(n.b, panel);
+}
+
+/** Move only the old default Sprite authoring tabs; custom dock arrangements stay intact. */
+function migrateLegacySpriteAuthoringPanels(root: DockNode): DockNode {
+  const inspectorLeaf = findLeafContaining(root, 'inspector');
+  const projectLeaf = findLeafContaining(root, 'project');
+  const legacyInspectorPanels: PanelKind[] = [
+    'inspector',
+    'material',
+    'shader',
+    'spriteEditor',
+    'spriteAtlas',
+    'build',
+    'projectSettings',
+  ];
+  const legacyBottomPanels: PanelKind[] = ['project', 'console', 'timeline', 'animator'];
+  if (
+    !inspectorLeaf
+    || !projectLeaf
+    || inspectorLeaf.id === projectLeaf.id
+    || inspectorLeaf.panels.length !== legacyInspectorPanels.length
+    || !legacyInspectorPanels.every((panel, index) => inspectorLeaf.panels[index] === panel)
+    || projectLeaf.panels.length !== legacyBottomPanels.length
+    || !legacyBottomPanels.every((panel, index) => projectLeaf.panels[index] === panel)
+  ) return root;
+
+  const migrated = (['spriteEditor', 'spriteAtlas'] as PanelKind[])
+    .filter((panel) => inspectorLeaf.panels.includes(panel));
+  if (!migrated.length) return root;
+  const makeActive = inspectorLeaf.active && migrated.includes(inspectorLeaf.active)
+    ? inspectorLeaf.active
+    : null;
+  let tree = cloneNode(root);
+  for (const panel of migrated) tree = stripPanel(tree, panel) ?? tree;
+  const target = findLeafContaining(tree, 'project');
+  if (!target) return root;
+  return mapLeaf(tree, target.id, (leafNode) => ({
+    ...leafNode,
+    panels: [...leafNode.panels, ...migrated.filter((panel) => !leafNode.panels.includes(panel))],
+    active: makeActive ?? leafNode.active,
+  })) ?? root;
 }
 
 /** Apply drop: center=tab merge; edges=split relative to target leaf */
@@ -315,9 +356,9 @@ function ensureAllPanels(
   let tree: DockNode = root;
   for (const p of ALL_PANELS) {
     if (seen.has(p) || excluded.has(p)) continue;
-    const preferredLeaf = p === 'timeline'
+    const preferredLeaf = p === 'timeline' || p === 'animator' || p === 'spriteEditor' || p === 'spriteAtlas'
       ? findLeafContaining(tree, 'console')
-      : p === 'material' || p === 'shader' || p === 'spriteEditor' || p === 'spriteAtlas' || p === 'build' || p === 'projectSettings'
+      : p === 'material' || p === 'shader' || p === 'build' || p === 'projectSettings'
         ? findLeafContaining(tree, 'inspector')
         : null;
     if (preferredLeaf) {
@@ -488,7 +529,7 @@ function loadTree(): DockNode {
     if (raw) {
       const data = JSON.parse(raw) as { tree?: DockNode };
       if (data.tree) {
-        let tree: DockNode = reviveIds(data.tree);
+        let tree: DockNode = migrateLegacySpriteAuthoringPanels(reviveIds(data.tree));
         for (const panel of detached) tree = stripPanel(tree, panel) ?? leaf([]);
         return ensureAllPanels(tree, undefined, detached);
       }

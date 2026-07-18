@@ -47,6 +47,7 @@ export function Hierarchy(props: {
   onLog: (msg: string) => void;
   onFrame: () => void;
   onInstantiatePrefab?: (path: string, parent: number | null) => void;
+  onInstantiateSprite?: (path: string, parent: number | null) => void;
 }) {
   const [ctx, setCtx] = useState<{ x: number; y: number; id: number | null } | null>(null);
   const [editing, setEditing] = useState<number | null>(null);
@@ -210,6 +211,9 @@ export function Hierarchy(props: {
   const isPrefabDrag = (ev: DragEvent) =>
     Array.from(ev.dataTransfer.types).includes('text/mengine-prefab');
 
+  const isSpriteDrag = (ev: DragEvent) =>
+    Array.from(ev.dataTransfer.types).includes('text/mengine-sprite');
+
   const selectedDragIds = (id: number) =>
     props.selectedIds.includes(id) && props.selectedIds.length > 1
       ? props.selectedIds
@@ -252,7 +256,7 @@ export function Hierarchy(props: {
   };
 
   const onDragOver = (ev: DragEvent, id: number) => {
-    if (isPrefabDrag(ev)) {
+    if (isPrefabDrag(ev) || isSpriteDrag(ev)) {
       ev.preventDefault();
       ev.stopPropagation();
       ev.dataTransfer.dropEffect = 'copy';
@@ -279,6 +283,12 @@ export function Hierarchy(props: {
       const path = ev.dataTransfer.getData('text/mengine-prefab');
       setDropTarget(null);
       if (path) props.onInstantiatePrefab?.(path, targetId);
+      return;
+    }
+    if (isSpriteDrag(ev)) {
+      const path = ev.dataTransfer.getData('text/mengine-sprite');
+      setDropTarget(null);
+      if (path) props.onInstantiateSprite?.(path, targetId);
       return;
     }
     const pos = dropTarget?.id === targetId ? dropTarget.pos : 'into';
@@ -411,8 +421,9 @@ export function Hierarchy(props: {
         onPointerUp={onPointerUp}
         onPointerCancel={clearPointerDrag}
         onDragOver={(e) => {
-          if (isPrefabDrag(e)) {
+          if (isPrefabDrag(e) || isSpriteDrag(e)) {
             e.preventDefault();
+            e.stopPropagation();
             e.dataTransfer.dropEffect = 'copy';
             setDropTarget(null);
             setRootDrop(true);
@@ -432,13 +443,23 @@ export function Hierarchy(props: {
         onDrop={(e) => {
           if (isPrefabDrag(e)) {
             e.preventDefault();
+            e.stopPropagation();
             const path = e.dataTransfer.getData('text/mengine-prefab');
             setRootDrop(false);
             if (path) props.onInstantiatePrefab?.(path, null);
             return;
           }
+          if (isSpriteDrag(e)) {
+            e.preventDefault();
+            e.stopPropagation();
+            const path = e.dataTransfer.getData('text/mengine-sprite');
+            setRootDrop(false);
+            if (path) props.onInstantiateSprite?.(path, null);
+            return;
+          }
           if (!isEntityDrag(e)) return;
           e.preventDefault();
+          e.stopPropagation();
           const ids = draggedIds(e);
           if (ids.length) finishDrop(ids, null);
         }}

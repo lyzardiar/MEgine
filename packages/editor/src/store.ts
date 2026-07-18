@@ -87,6 +87,11 @@ import {
 } from './worldTransform';
 import { createGridComponent, createTilemapComponent } from './tilemapModel';
 import { createEnvironmentLightComponent } from './environmentLightModel';
+import {
+  createSpriteSpawnComponents,
+  type SpriteSpawnOptions,
+} from './spriteCreation';
+import { frameWorldSprite } from './sceneFraming';
 import './behaviours';
 import {
   gameResolutionAspect,
@@ -487,6 +492,11 @@ export function createEditorStore() {
         : ensureUiCanvasInternal(false);
     }
     return spawnAt(name, components, parent ?? null, false);
+  };
+
+  const spawnSpriteAsset = (sprite: string, options: SpriteSpawnOptions = {}): number => {
+    const spawn = createSpriteSpawnComponents(sprite, options);
+    return spawnAt(spawn.name, spawn.components, spawn.parent, true);
   };
 
   const getTransform = (entity: number): TransformData | null => {
@@ -1590,17 +1600,10 @@ export function createEditorStore() {
     frameSelected() {
       const id = primarySelected();
       if (id == null) return;
-      const t = getTransform(id);
-      if (t) {
-        sceneCamera.pivot = [...t.position] as Vec3;
-        sceneCamera.distance = Math.max(3, Math.max(...t.scale, 1) * 4);
-        return;
-      }
-      // UI RectTransform → Overlay world plane（与 Game 横竖屏对齐）
-      const e = find(id);
-      let canvasSize: { w: number; h: number } | undefined;
-      if (e) {
-        let walk: EntityRec | undefined = e;
+      const entity = find(id);
+      if (entity?.components.RectTransform) {
+        let canvasSize: { w: number; h: number } | undefined;
+        let walk: EntityRec | undefined = entity;
         while (walk) {
           if (walk.components.Canvas) {
             canvasSize = gameAlignedCanvasSize(
@@ -1609,14 +1612,35 @@ export function createEditorStore() {
             );
             break;
           }
-          const pid: number | null = walk.parent ?? null;
-          walk = pid != null ? find(pid) ?? undefined : undefined;
+          const parentId: number | null = walk.parent ?? null;
+          walk = parentId != null ? find(parentId) ?? undefined : undefined;
+        }
+        const ui = uiEntityWorldPivot(list() as UiEnt[], id, canvasSize);
+        if (ui) {
+          sceneCamera.pivot = [...ui.position] as Vec3;
+          sceneCamera.distance = Math.max(2, ui.size * 2.5);
+          return;
         }
       }
-      const ui = uiEntityWorldPivot(list() as UiEnt[], id, canvasSize);
-      if (ui) {
-        sceneCamera.pivot = [...ui.position] as Vec3;
-        sceneCamera.distance = Math.max(2, ui.size * 2.5);
+      const transform = resolvedTransform(buildWorldTransforms(list()), id);
+      if (transform) {
+        const renderer = (entity?.components.SpriteRenderer
+          ?? entity?.components.AnimatedSprite2D) as Record<string, unknown> | undefined;
+        if (renderer) {
+          const frame = frameWorldSprite(
+            transform.position,
+            transform.rotation,
+            transform.scale,
+            Array.isArray(renderer.size) ? renderer.size : [1, 1],
+            Array.isArray(renderer.pivot) ? renderer.pivot : [0.5, 0.5],
+          );
+          sceneCamera.pivot = frame.pivot;
+          sceneCamera.distance = frame.distance;
+          return;
+        }
+        sceneCamera.pivot = [...transform.position] as Vec3;
+        sceneCamera.distance = Math.max(3, Math.max(...transform.scale.map(Math.abs), 1) * 4);
+        return;
       }
     },
     spawnPrefab(name: string) {
@@ -1920,25 +1944,13 @@ export function createEditorStore() {
     spawnUiTabView(parent?: number | null) {
       return spawnUiControl('Tab View', createUiTabViewComponents(), parent);
     },
+    spawnSpriteAsset,
     spawnSpriteQuad() {
-      spawnAt(
-        'Sprite',
-        {
-          Transform: { position: [0, 0.5, 0], rotation: [0, 0, 0, 1], scale: [1, 1, 1] },
-          SpriteRenderer: {
-            sprite: 'white',
-            color: [0.4, 0.75, 1, 1],
-            size: [1, 1],
-            pivot: [0.5, 0.5],
-            flip_x: false,
-            flip_y: false,
-            sorting_layer: 'default',
-            sorting_order: 0,
-          },
-        },
-        null,
-        true,
-      );
+      return spawnSpriteAsset('white', {
+        name: 'Sprite',
+        position: [0, 0.5, 0],
+        color: [0.4, 0.75, 1, 1],
+      });
     },
     spawnAnimatedSprite2D() {
       spawnAt(

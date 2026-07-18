@@ -82,6 +82,7 @@ export function Project(props: {
   sceneTick: number;
   onInstantiatePrefab: (path: string) => void;
   onInstantiateModel: (path: string) => void;
+  onInstantiateSprite: (path: string) => void;
   onOpenScene: (name: string) => void;
   onOpenMaterial: (path: string) => void;
   onOpenShader: (path: string) => void;
@@ -95,7 +96,7 @@ export function Project(props: {
   const [selected, setSelected] = useState<string | null>(null);
   const [editing, setEditing] = useState<string | null>(null);
   const [editValue, setEditValue] = useState('');
-  const [ctx, setCtx] = useState<{ x: number; y: number; sceneName: string } | null>(null);
+  const [ctx, setCtx] = useState<{ x: number; y: number; asset: AssetItem } | null>(null);
   const [libTick, setLibTick] = useState(0);
   const [pingKey, setPingKey] = useState<string | null>(null);
   const [importing, setImporting] = useState(false);
@@ -338,10 +339,9 @@ export function Project(props: {
 
   const onContext = (e: MouseEvent, a: AssetItem) => {
     e.preventDefault();
-    if (a.kind === 'scene' && a.sceneName) {
-      setSelected(a.name);
-      setCtx({ x: e.clientX, y: e.clientY, sceneName: a.sceneName });
-    }
+    if (a.kind !== 'sprite' && a.kind !== 'scene') return;
+    setSelected(a.name);
+    setCtx({ x: e.clientX, y: e.clientY, asset: a });
   };
 
   const completeImport = async (files?: Iterable<File>) => {
@@ -451,6 +451,9 @@ export function Project(props: {
               ]
                 .filter(Boolean)
                 .join(' ')}
+              role="button"
+              tabIndex={0}
+              aria-label={`${a.name} (${a.kind})`}
               draggable={
                 a.kind === 'sprite'
                 || a.kind === 'spine'
@@ -487,6 +490,11 @@ export function Project(props: {
               }}
               onClick={(e) => onCardClick(a, e)}
               onDoubleClick={() => onCardDoubleClick(a)}
+              onKeyDown={(event) => {
+                if (event.key !== 'Enter') return;
+                event.preventDefault();
+                onCardDoubleClick(a);
+              }}
               onContextMenu={(e) => onContext(e, a)}
               title={
                 a.kind === 'scene'
@@ -494,7 +502,7 @@ export function Project(props: {
                   : a.kind === 'script'
                     ? '双击在 IDE 中打开'
                     : a.kind === 'sprite'
-                      ? `拖到 Image.Sprite · ${a.spriteId}`
+                      ? `拖到 Scene/Hierarchy 创建 SpriteRenderer · 双击编辑 · ${a.spriteId}`
                       : a.kind === 'spine'
                         ? `拖到 Spine Skeleton 资源字段 · ${a.spriteId}`
                         : a.kind === 'animation'
@@ -564,27 +572,57 @@ export function Project(props: {
             style={{ left: ctx.x, top: ctx.y }}
             onPointerDown={(e) => e.stopPropagation()}
           >
-            <button
-              type="button"
-              onPointerDown={(e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                props.onOpenScene(ctx.sceneName);
-                setCtx(null);
-              }}
-            >
-              Open
-            </button>
-            <button
-              type="button"
-              onPointerDown={(e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                beginRename(ctx.sceneName);
-              }}
-            >
-              Rename <span className="hint">F2</span>
-            </button>
+            {ctx.asset.kind === 'sprite' && ctx.asset.spriteId && (
+              <>
+                <button
+                  type="button"
+                  onPointerDown={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    props.onInstantiateSprite(ctx.asset.spriteId!);
+                    setCtx(null);
+                  }}
+                >
+                  Create Sprite in Scene
+                </button>
+                <button
+                  type="button"
+                  onPointerDown={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    props.onOpenSprite(ctx.asset.spriteId!);
+                    setCtx(null);
+                  }}
+                >
+                  Open Sprite Editor
+                </button>
+              </>
+            )}
+            {ctx.asset.kind === 'scene' && ctx.asset.sceneName && (
+              <>
+                <button
+                  type="button"
+                  onPointerDown={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    props.onOpenScene(ctx.asset.sceneName!);
+                    setCtx(null);
+                  }}
+                >
+                  Open
+                </button>
+                <button
+                  type="button"
+                  onPointerDown={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    beginRename(ctx.asset.sceneName!);
+                  }}
+                >
+                  Rename <span className="hint">F2</span>
+                </button>
+              </>
+            )}
             <div className="sep" />
             <button type="button" onPointerDown={() => setCtx(null)}>
               Cancel
