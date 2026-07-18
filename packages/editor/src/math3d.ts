@@ -1,3 +1,5 @@
+import type { MaterialPreviewAppearance } from './materialPreview.ts';
+
 /** Minimal 3D math for editor viewport (no external deps). */
 
 export type Vec3 = [number, number, number];
@@ -215,7 +217,7 @@ export function drawSolidCube(
   half: Vec3,
   selected: boolean,
   rotation?: Quat | null,
-  baseColor?: [number, number, number, number],
+  material?: MaterialPreviewAppearance,
 ): { x: number; y: number; r: number } | null {
   const hx = half[0], hy = half[1], hz = half[2];
   const local: Vec3[] = [
@@ -241,7 +243,7 @@ export function drawSolidCube(
     const c = project(center, cam, viewport);
     if (!c) return null;
     const s = Math.max(12, 120 / c.depth);
-    const [r, g, b, a] = baseColor ?? [0.77, 0.6, 0.42, 1];
+    const [r, g, b, a] = previewMaterialColor(material, 0.9);
     ctx.fillStyle = selected
       ? '#5b9bd5'
       : `rgba(${Math.round(r * 255)},${Math.round(g * 255)},${Math.round(b * 255)},${a})`;
@@ -261,13 +263,8 @@ export function drawSolidCube(
   const faceColors = selected
     ? ['#4a8ab8', '#6eb0e0', '#3d7aa8', '#7ec0f0', '#2f6288', '#8ec8f5']
     : (() => {
-        const color = baseColor ?? [0.77, 0.6, 0.42, 1];
         const shades = [0.68, 0.95, 0.58, 1.05, 0.48, 1.15];
-        return shades.map((shade) =>
-          `rgba(${Math.round(Math.min(1, color[0] * shade) * 255)},${Math.round(
-            Math.min(1, color[1] * shade) * 255,
-          )},${Math.round(Math.min(1, color[2] * shade) * 255)},${color[3]})`,
-        );
+        return shades.map((shade) => previewMaterialCss(material, shade));
       })();
 
   const faceDepth = (idx: number[]) =>
@@ -310,7 +307,7 @@ export function drawTriangleMesh(
   indices: readonly number[],
   selected: boolean,
   rotation?: Quat | null,
-  baseColor: [number, number, number, number] = [0.77, 0.6, 0.42, 1],
+  material?: MaterialPreviewAppearance,
 ): { x: number; y: number; r: number } | null {
   const q = rotation ? quatNormalize(rotation) : null;
   const world = positions.map((position): Vec3 => {
@@ -348,15 +345,18 @@ export function drawTriangleMesh(
     const b = projected[triangle.indices[1]]!;
     const c = projected[triangle.indices[2]]!;
     const shade = selected ? triangle.shade * 0.9 : triangle.shade;
-    const color = selected ? [0.35, 0.65, 0.95, baseColor[3]] : baseColor;
+    const color = selected
+      ? [0.35, 0.65, 0.95, material?.baseColor[3] ?? 1]
+      : previewMaterialColor(material, shade);
+    const displayShade = selected ? shade : 1;
     ctx.beginPath();
     ctx.moveTo(a.x, a.y);
     ctx.lineTo(b.x, b.y);
     ctx.lineTo(c.x, c.y);
     ctx.closePath();
-    ctx.fillStyle = `rgba(${Math.round(Math.min(1, color[0] * shade) * 255)},${Math.round(
-      Math.min(1, color[1] * shade) * 255,
-    )},${Math.round(Math.min(1, color[2] * shade) * 255)},${color[3]})`;
+    ctx.fillStyle = `rgba(${Math.round(Math.min(1, color[0] * displayShade) * 255)},${Math.round(
+      Math.min(1, color[1] * displayShade) * 255,
+    )},${Math.round(Math.min(1, color[2] * displayShade) * 255)},${color[3]})`;
     ctx.fill();
     ctx.strokeStyle = selected ? 'rgba(255,224,140,0.45)' : 'rgba(0,0,0,0.12)';
     ctx.lineWidth = selected ? 1 : 0.5;
@@ -375,6 +375,36 @@ export function drawTriangleMesh(
     y: projectedCenter.y,
     r: Math.max(8, Math.max(maxX - minX, maxY - minY) * 0.55),
   };
+}
+
+function previewMaterialCss(material: MaterialPreviewAppearance | undefined, shade: number): string {
+  const color = previewMaterialColor(material, shade);
+  return `rgba(${Math.round(color[0] * 255)},${Math.round(color[1] * 255)},${Math.round(color[2] * 255)},${color[3]})`;
+}
+
+function previewMaterialColor(
+  material: MaterialPreviewAppearance | undefined,
+  shade: number,
+): [number, number, number, number] {
+  const source = material ?? {
+    baseColor: [0.8, 0.8, 0.8, 1] as [number, number, number, number],
+    metallic: 0,
+    roughness: 0.5,
+    emissive: [0, 0, 0] as [number, number, number],
+    emissiveStrength: 1,
+    unlit: false,
+  };
+  const lighting = source.unlit ? 1 : Math.max(0, shade) * (1 - source.metallic * 0.25);
+  const highlight = source.unlit
+    ? 0
+    : (0.04 + source.metallic * 0.36) * (1 - source.roughness) * Math.max(0, shade - 0.45);
+  return [0, 1, 2, 3].map((channel) => {
+    if (channel === 3) return source.baseColor[3];
+    const linear = source.baseColor[channel] * lighting
+      + highlight
+      + source.emissive[channel] * source.emissiveStrength;
+    return Math.max(0, Math.min(1, linear));
+  }) as [number, number, number, number];
 }
 
 export function spriteSourceAffine(

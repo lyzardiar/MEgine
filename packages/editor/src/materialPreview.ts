@@ -1,0 +1,128 @@
+import type { MaterialAsset } from './materialAsset.ts';
+import { parseMaterialAsset } from './materialAsset.ts';
+import { readProjectAssetText } from './projectAssets.ts';
+
+export type MaterialPreviewAppearance = {
+  baseColor: [number, number, number, number];
+  metallic: number;
+  roughness: number;
+  emissive: [number, number, number];
+  emissiveStrength: number;
+  unlit: boolean;
+};
+
+type PreviewState = {
+  material: MaterialAsset | null;
+  loading: boolean;
+  error: string | null;
+};
+
+const cache = new Map<string, PreviewState>();
+
+/** Returns a cached material immediately and starts an asynchronous load on first use. */
+export function materialAssetPreview(path: string): MaterialAsset | null {
+  const normalized = path.trim().replace(/\\/g, '/');
+  if (!/\.(?:mmat|mat)$/i.test(normalized)) return null;
+  const existing = cache.get(normalized);
+  if (existing) return existing.material;
+  const state: PreviewState = { material: null, loading: true, error: null };
+  cache.set(normalized, state);
+  void readProjectAssetText(normalized)
+    .then((text) => {
+      state.material = parseMaterialAsset(text);
+      state.loading = false;
+    })
+    .catch((reason: unknown) => {
+      state.loading = false;
+      state.error = reason instanceof Error ? reason.message : String(reason);
+      console.warn(`Material preview failed for ${normalized}: ${state.error}`);
+    });
+  return null;
+}
+
+export function clearMaterialPreviews(path?: string): void {
+  if (path) cache.delete(path.trim().replace(/\\/g, '/'));
+  else cache.clear();
+}
+
+export function resolveMaterialPreviewAppearance(
+  materialPath: string,
+  asset: MaterialAsset | null,
+  override: unknown,
+): MaterialPreviewAppearance {
+  const component = record(override);
+  if (component) {
+    return appearance({
+      baseColor: component.base_color,
+      metallic: component.metallic,
+      roughness: component.roughness,
+      emissive: component.emissive,
+      emissiveStrength: component.emissive_strength,
+      unlit: component.unlit === true,
+    });
+  }
+  if (asset) {
+    return appearance({
+      baseColor: asset.base_color,
+      metallic: asset.metallic,
+      roughness: asset.roughness,
+      emissive: asset.emissive,
+      emissiveStrength: asset.emissive_strength,
+      unlit: asset.shader === 'unlit',
+    });
+  }
+  return presetAppearance(materialPath);
+}
+
+function presetAppearance(name: string): MaterialPreviewAppearance {
+  switch (name.trim().toLowerCase()) {
+    case 'gold':
+      return appearance({ baseColor: [1, 0.55, 0.08, 1], metallic: 0.9, roughness: 0.22 });
+    case 'chrome':
+    case 'metal':
+      return appearance({ baseColor: [0.62, 0.7, 0.82, 1], metallic: 1, roughness: 0.1 });
+    case 'unlit':
+      return appearance({ baseColor: [0.25, 0.7, 1, 1], unlit: true });
+    default:
+      return appearance({});
+  }
+}
+
+function appearance(source: {
+  baseColor?: unknown;
+  metallic?: unknown;
+  roughness?: unknown;
+  emissive?: unknown;
+  emissiveStrength?: unknown;
+  unlit?: boolean;
+}): MaterialPreviewAppearance {
+  return {
+    baseColor: color4(source.baseColor, [0.8, 0.8, 0.8, 1]),
+    metallic: finite(source.metallic, 0, 0, 1),
+    roughness: finite(source.roughness, 0.5, 0.04, 1),
+    emissive: color3(source.emissive, [0, 0, 0]),
+    emissiveStrength: finite(source.emissiveStrength, 1, 0, 65_504),
+    unlit: source.unlit === true,
+  };
+}
+
+function record(value: unknown): Record<string, unknown> | null {
+  return value != null && typeof value === 'object' && !Array.isArray(value)
+    ? value as Record<string, unknown>
+    : null;
+}
+
+function color4(value: unknown, fallback: [number, number, number, number]): [number, number, number, number] {
+  if (!Array.isArray(value)) return [...fallback];
+  return fallback.map((channel, index) => finite(value[index], channel, 0, 1)) as [number, number, number, number];
+}
+
+function color3(value: unknown, fallback: [number, number, number]): [number, number, number] {
+  if (!Array.isArray(value)) return [...fallback];
+  return fallback.map((channel, index) => finite(value[index], channel, 0, 65_504)) as [number, number, number];
+}
+
+function finite(value: unknown, fallback: number, minimum: number, maximum: number): number {
+  const number = Number(value);
+  return Number.isFinite(number) ? Math.max(minimum, Math.min(maximum, number)) : fallback;
+}

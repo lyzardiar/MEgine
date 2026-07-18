@@ -16,6 +16,11 @@ import {
 } from '../math3d';
 import { clearModelPreview, modelPreview } from '../modelPreview';
 import {
+  clearMaterialPreviews,
+  materialAssetPreview,
+  resolveMaterialPreviewAppearance,
+} from '../materialPreview';
+import {
   drawCamera2DGizmo,
   drawCameraGizmo,
   drawBoxCollider2DGizmo,
@@ -707,6 +712,7 @@ export function Viewport(props: {
   useEffect(() => {
     const clear = () => {
       clearModelPreview();
+      clearMaterialPreviews();
       invalidateEnvironmentPreviews();
     };
     window.addEventListener('mengine:project-assets-changed', clear);
@@ -1350,8 +1356,12 @@ export function Viewport(props: {
       if (!pr) continue;
       const half: Vec3 = [0.5 * t.scale[0], 0.5 * t.scale[1], 0.5 * t.scale[2]];
       const rot = t.rotation as [number, number, number, number] | undefined;
-      const material = e.components.PbrMaterial as { base_color?: number[] } | undefined;
-      const materialColor = material?.base_color as [number, number, number, number] | undefined;
+      const materialPath = String((mesh as Record<string, unknown>).material ?? 'default');
+      const materialAppearance = resolveMaterialPreviewAppearance(
+        materialPath,
+        materialAssetPreview(materialPath),
+        e.components.PbrMaterial,
+      );
       const meshPath = String((mesh as Record<string, unknown>).mesh ?? 'cube');
       const imported = /\.(?:gltf|glb)$/i.test(meshPath) ? modelPreview(meshPath) : null;
       const hit = imported
@@ -1365,7 +1375,7 @@ export function Viewport(props: {
             imported.indices,
             selected,
             rot,
-            materialColor,
+            materialAppearance,
           )
         : drawSolidCube(
             ctx,
@@ -1375,7 +1385,7 @@ export function Viewport(props: {
             half,
             selected,
             rot,
-            materialColor,
+            materialAppearance,
           );
       if (hit) hitsRef.current.push({ kind: 'object', id: e.entity, x: hit.x, y: hit.y, r: hit.r });
     }

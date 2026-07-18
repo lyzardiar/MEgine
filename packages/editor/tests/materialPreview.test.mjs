@@ -1,0 +1,55 @@
+import assert from 'node:assert/strict';
+import test from 'node:test';
+
+import { createMaterialAsset } from '../src/materialAsset.ts';
+import { resolveMaterialPreviewAppearance } from '../src/materialPreview.ts';
+
+test('material asset preview carries PBR and unlit authoring values', () => {
+  const material = createMaterialAsset('Neon');
+  material.shader = 'unlit';
+  material.base_color = [0.2, 0.4, 0.8, 0.7];
+  material.metallic = 0.75;
+  material.roughness = 0.2;
+  material.emissive = [2, 1, 0.5];
+  material.emissive_strength = 3;
+  assert.deepEqual(resolveMaterialPreviewAppearance('Assets/Neon.mmat', material, null), {
+    baseColor: [0.2, 0.4, 0.8, 0.7],
+    metallic: 0.75,
+    roughness: 0.2,
+    emissive: [2, 1, 0.5],
+    emissiveStrength: 3,
+    unlit: true,
+  });
+});
+
+test('per-renderer PBR component overrides a material asset preview', () => {
+  const asset = createMaterialAsset('Asset');
+  asset.base_color = [1, 0, 0, 1];
+  assert.deepEqual(resolveMaterialPreviewAppearance('Assets/Asset.mmat', asset, {
+    base_color: [0, 1, 0, 0.5],
+    metallic: 2,
+    roughness: 0,
+    emissive: [0, 0, 1],
+    emissive_strength: 2,
+    unlit: true,
+  }), {
+    baseColor: [0, 1, 0, 0.5],
+    metallic: 1,
+    roughness: 0.04,
+    emissive: [0, 0, 1],
+    emissiveStrength: 2,
+    unlit: true,
+  });
+});
+
+test('built-in material preview presets match runtime presets', () => {
+  assert.deepEqual(resolveMaterialPreviewAppearance('gold', null, null), {
+    baseColor: [1, 0.55, 0.08, 1],
+    metallic: 0.9,
+    roughness: 0.22,
+    emissive: [0, 0, 0],
+    emissiveStrength: 1,
+    unlit: false,
+  });
+  assert.equal(resolveMaterialPreviewAppearance('unlit', null, null).unlit, true);
+});

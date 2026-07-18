@@ -214,6 +214,7 @@ export function MaterialEditor(props: {
       drafts.current.delete(props.assetPath);
       setSavedText(text);
       props.onAssetsChanged();
+      window.dispatchEvent(new CustomEvent(PROJECT_ASSETS_CHANGED_EVENT));
       props.onLog(`Saved ${props.assetPath}`);
     } catch (reason) {
       const message = reason instanceof Error ? reason.message : String(reason);
