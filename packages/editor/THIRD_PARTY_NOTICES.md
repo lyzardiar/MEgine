@@ -1,5 +1,15 @@
 # Third-Party Notices
 
+## Bundled Build SDK
+
+Desktop distributions include the Node.js executable used only by the local
+Build SDK and the TypeScript compiler used to validate and emit project scripts.
+
+- Node.js is distributed under the MIT license and includes third-party
+  components documented by the Node.js project: https://github.com/nodejs/node/blob/main/LICENSE
+- TypeScript is distributed under the Apache License 2.0. Its `LICENSE.txt` and
+  `ThirdPartyNoticeText.txt` files are included inside the bundled Build SDK.
+
 ## Spine Runtimes 4.3.10
 
 This product integrates `@esotericsoftware/spine-canvas` and

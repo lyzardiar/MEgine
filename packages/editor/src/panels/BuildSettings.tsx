@@ -19,6 +19,18 @@ function sceneLabel(path: string): string {
   return path.split('/').pop() ?? path;
 }
 
+function byteSize(bytes: number): string {
+  if (!Number.isFinite(bytes) || bytes < 0) return '0 B';
+  const units = ['B', 'KiB', 'MiB', 'GiB'];
+  let value = bytes;
+  let unit = 0;
+  while (value >= 1024 && unit < units.length - 1) {
+    value /= 1024;
+    unit += 1;
+  }
+  return `${value >= 10 || unit === 0 ? value.toFixed(0) : value.toFixed(1)} ${units[unit]}`;
+}
+
 export function BuildSettings(props: {
   sceneName: string | null;
   sceneTick: number;
@@ -292,7 +304,16 @@ export function BuildSettings(props: {
       {lastBuild && (
         <section className="build-result">
           <strong>{lastBuild.executable}</strong>
-          <span>{lastBuild.profile} · {lastBuild.fileCount} files · SHA-256 {lastBuild.contentHash}</span>
+          <span>
+            {lastBuild.platform}-{lastBuild.architecture} · {lastBuild.profile} · MEngine {lastBuild.engineVersion}
+          </span>
+          <span>
+            {lastBuild.sceneCount} scenes · {lastBuild.validatedAssetFiles} validated assets · {lastBuild.assetReferences} references
+          </span>
+          <span>
+            {lastBuild.fileCount} files · {byteSize(lastBuild.packagedBytes)} · {lastBuild.toolchain}
+          </span>
+          <span>SHA-256 {lastBuild.contentHash}</span>
           {lastBuild.log && <pre>{lastBuild.log}</pre>}
         </section>
       )}

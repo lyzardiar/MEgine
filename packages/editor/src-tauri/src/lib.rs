@@ -7,7 +7,7 @@ use std::collections::HashSet;
 use std::path::{Component, Path, PathBuf};
 use std::process::Command;
 use std::time::{SystemTime, UNIX_EPOCH};
-use tauri::{Manager, State};
+use tauri::{path::BaseDirectory, Manager, State};
 
 struct AppState {
     project: Mutex<Option<ProjectSession>>,
@@ -87,7 +87,42 @@ struct BuildPlayerResult {
     file_count: usize,
     content_hash: String,
     profile: String,
+    platform: String,
+    architecture: String,
+    engine_version: String,
+    scene_count: usize,
+    validated_asset_files: usize,
+    asset_references: usize,
+    packaged_bytes: u64,
+    toolchain: String,
     log: String,
+}
+
+#[derive(Debug, serde::Deserialize)]
+#[serde(rename_all = "camelCase")]
+struct BuildSdkRuntimes {
+    debug: String,
+    release: String,
+}
+
+#[derive(Debug, serde::Deserialize)]
+#[serde(rename_all = "camelCase")]
+struct BuildSdkManifest {
+    schema_version: u32,
+    platform: String,
+    architecture: String,
+    cli_version: String,
+    node: String,
+    cli: String,
+    runtimes: BuildSdkRuntimes,
+}
+
+#[derive(Debug)]
+struct BuildSdk {
+    root: PathBuf,
+    node: PathBuf,
+    cli: PathBuf,
+    runtime: PathBuf,
 }
 
 #[derive(Debug, serde::Serialize)]
@@ -141,10 +176,101 @@ fn command_failure(label: &str, output: &std::process::Output) -> String {
     }
 }
 
+fn build_sdk_file(root: &Path, relative: &str, label: &str) -> Result<PathBuf, String> {
+    let relative_path = Path::new(relative);
+    if relative_path.is_absolute()
+        || relative_path
+            .components()
+            .any(|component| !matches!(component, Component::Normal(_)))
+    {
+        return Err(format!(
+            "Build SDK contains an unsafe {label} path: {relative}"
+        ));
+    }
+    let path = root.join(relative_path);
+    let metadata =
+        std::fs::symlink_metadata(&path).map_err(|error| format!("Build SDK {label}: {error}"))?;
+    if metadata.file_type().is_symlink() || !metadata.is_file() {
+        return Err(format!(
+            "Build SDK {label} must be a regular non-symlink file"
+        ));
+    }
+    let canonical = path
+        .canonicalize()
+        .map_err(|error| format!("Build SDK {label}: {error}"))?;
+    if !canonical.starts_with(root) {
+        return Err(format!("Build SDK {label} escapes the SDK directory"));
+    }
+    Ok(canonical)
+}
+
+fn child_process_path(path: &Path) -> PathBuf {
+    #[cfg(windows)]
+    {
+        let raw = path.to_string_lossy();
+        if let Some(relative) = raw.strip_prefix(r"\\?\UNC\") {
+            return PathBuf::from(format!(r"\\{relative}"));
+        }
+        if let Some(relative) = raw.strip_prefix(r"\\?\") {
+            return PathBuf::from(relative);
+        }
+    }
+    path.to_path_buf()
+}
+
+fn load_build_sdk(root: &Path, profile: &str) -> Result<BuildSdk, String> {
+    let canonical_root = root
+        .canonicalize()
+        .map_err(|error| format!("Build SDK directory: {error}"))?;
+    if !canonical_root.is_dir() {
+        return Err("Build SDK path must be a directory".into());
+    }
+    let manifest_path = build_sdk_file(&canonical_root, "sdk.json", "manifest")?;
+    let manifest: BuildSdkManifest = serde_json::from_slice(
+        &std::fs::read(&manifest_path)
+            .map_err(|error| format!("cannot read Build SDK manifest: {error}"))?,
+    )
+    .map_err(|error| format!("invalid Build SDK manifest: {error}"))?;
+    if manifest.schema_version != 1 {
+        return Err(format!(
+            "unsupported Build SDK schema version {}",
+            manifest.schema_version
+        ));
+    }
+    if manifest.cli_version != env!("CARGO_PKG_VERSION") {
+        return Err(format!(
+            "Build SDK version mismatch: expected {}, found {}",
+            env!("CARGO_PKG_VERSION"),
+            manifest.cli_version
+        ));
+    }
+    if manifest.platform != node_platform_name() || manifest.architecture != node_arch_name() {
+        return Err(format!(
+            "Build SDK host mismatch: expected {}-{}, found {}-{}",
+            node_platform_name(),
+            node_arch_name(),
+            manifest.platform,
+            manifest.architecture
+        ));
+    }
+    let runtime = if profile == "debug" {
+        &manifest.runtimes.debug
+    } else {
+        &manifest.runtimes.release
+    };
+    Ok(BuildSdk {
+        node: build_sdk_file(&canonical_root, &manifest.node, "Node runtime")?,
+        cli: build_sdk_file(&canonical_root, &manifest.cli, "CLI")?,
+        runtime: build_sdk_file(&canonical_root, runtime, "player runtime")?,
+        root: canonical_root,
+    })
+}
+
 fn run_player_build(
     project_root: PathBuf,
     profile: String,
     clean: bool,
+    bundled_sdk: Option<PathBuf>,
 ) -> Result<BuildPlayerResult, String> {
     if profile != "debug" && profile != "release" {
         return Err(format!("unsupported build profile: {profile}"));
@@ -153,50 +279,75 @@ fn run_player_build(
     if !manifest.is_file() {
         return Err(format!("project.json not found: {}", manifest.display()));
     }
-    let manifest_dir = Path::new(env!("CARGO_MANIFEST_DIR"));
-    let engine_root = find_engine_root(manifest_dir)
-        .or_else(|| {
-            std::env::current_exe()
-                .ok()
-                .and_then(|path| find_engine_root(&path))
-        })
-        .ok_or_else(|| {
-            "MEngine build tools were not found. Run this editor from an engine source checkout."
-                .to_string()
-        })?;
-    let cli = engine_root.join("packages/cli/dist/cli.js");
-    let npm = if cfg!(target_os = "windows") {
-        "npm.cmd"
-    } else {
-        "npm"
-    };
-    let output = Command::new(npm)
-        .current_dir(&engine_root)
-        .args(["--prefix", "packages/cli", "run", "build"])
-        .output()
-        .map_err(|error| format!("cannot start CLI build: {error}"))?;
-    if !output.status.success() {
-        return Err(command_failure("MEngine CLI build", &output));
-    }
-    if !cli.is_file() {
-        return Err(format!(
-            "MEngine CLI build completed without {}",
-            cli.display()
-        ));
-    }
+    let configured_sdk = std::env::var_os("MENGINE_BUILD_SDK")
+        .map(PathBuf::from)
+        .or(bundled_sdk);
+    let sdk = configured_sdk
+        .as_deref()
+        .map(|path| load_build_sdk(path, &profile))
+        .transpose()?;
     let output_dir = project_root.join("Builds").join(format!(
         "{}-{}-{profile}",
         node_platform_name(),
         node_arch_name()
     ));
-    let mut command = Command::new("node");
-    command
-        .current_dir(&engine_root)
-        .arg(&cli)
-        .arg("build")
-        .arg(&project_root)
-        .arg("--out")
-        .arg(&output_dir);
+    let mut command;
+    let toolchain;
+    if let Some(sdk) = &sdk {
+        command = Command::new(child_process_path(&sdk.node));
+        command
+            .current_dir(child_process_path(&sdk.root))
+            .arg(child_process_path(&sdk.cli))
+            .arg("build")
+            .arg(&project_root)
+            .arg("--out")
+            .arg(&output_dir)
+            .arg("--runtime")
+            .arg(child_process_path(&sdk.runtime))
+            .arg("--skip-runtime-build");
+        toolchain = "bundled-sdk".to_string();
+    } else {
+        let manifest_dir = Path::new(env!("CARGO_MANIFEST_DIR"));
+        let engine_root = find_engine_root(manifest_dir)
+            .or_else(|| {
+                std::env::current_exe()
+                    .ok()
+                    .and_then(|path| find_engine_root(&path))
+            })
+            .ok_or_else(|| {
+                "MEngine build tools were not found. Reinstall the editor Build SDK or set MENGINE_BUILD_SDK."
+                    .to_string()
+            })?;
+        let cli = engine_root.join("packages/cli/dist/cli.js");
+        let npm = if cfg!(target_os = "windows") {
+            "npm.cmd"
+        } else {
+            "npm"
+        };
+        let cli_build = Command::new(npm)
+            .current_dir(&engine_root)
+            .args(["--prefix", "packages/cli", "run", "build"])
+            .output()
+            .map_err(|error| format!("cannot start CLI build: {error}"))?;
+        if !cli_build.status.success() {
+            return Err(command_failure("MEngine CLI build", &cli_build));
+        }
+        if !cli.is_file() {
+            return Err(format!(
+                "MEngine CLI build completed without {}",
+                cli.display()
+            ));
+        }
+        command = Command::new("node");
+        command
+            .current_dir(&engine_root)
+            .arg(&cli)
+            .arg("build")
+            .arg(&project_root)
+            .arg("--out")
+            .arg(&output_dir);
+        toolchain = "source-checkout".to_string();
+    }
     if profile == "debug" {
         command.arg("--debug");
     }
@@ -241,12 +392,50 @@ fn run_player_build(
             "build manifest profile mismatch: expected {profile}, found {manifest_profile}"
         ));
     }
+    let manifest_string = |field: &str| -> Result<String, String> {
+        build_manifest
+            .get(field)
+            .and_then(serde_json::Value::as_str)
+            .map(str::to_owned)
+            .ok_or_else(|| format!("build manifest does not contain {field}"))
+    };
+    let manifest_count = |parent: &str, field: &str| -> Result<usize, String> {
+        build_manifest
+            .get(parent)
+            .and_then(|value| value.get(field))
+            .and_then(serde_json::Value::as_u64)
+            .and_then(|value| usize::try_from(value).ok())
+            .ok_or_else(|| format!("build manifest does not contain {parent}.{field}"))
+    };
+    let scene_count = build_manifest
+        .get("project")
+        .and_then(|value| value.get("buildScenes"))
+        .and_then(serde_json::Value::as_array)
+        .map_or(0, Vec::len);
+    let packaged_bytes = build_manifest
+        .get("files")
+        .and_then(serde_json::Value::as_array)
+        .map(|files| {
+            files
+                .iter()
+                .filter_map(|file| file.get("size")?.as_u64())
+                .sum()
+        })
+        .unwrap_or(0);
     Ok(BuildPlayerResult {
         output_dir: output_dir.to_string_lossy().into_owned(),
         executable: output_dir.join(executable).to_string_lossy().into_owned(),
         file_count,
         content_hash,
         profile,
+        platform: manifest_string("platform")?,
+        architecture: manifest_string("architecture")?,
+        engine_version: manifest_string("engineVersion")?,
+        scene_count,
+        validated_asset_files: manifest_count("assetValidation", "validatedFiles")?,
+        asset_references: manifest_count("assetValidation", "references")?,
+        packaged_bytes,
+        toolchain,
         log: String::from_utf8_lossy(&output.stdout).trim().to_owned(),
     })
 }
@@ -920,6 +1109,7 @@ fn save_project_sorting_layers(
 async fn build_pc_player(
     profile: String,
     clean: bool,
+    app: tauri::AppHandle,
     state: State<'_, AppState>,
 ) -> Result<BuildPlayerResult, String> {
     let project_root = state
@@ -928,8 +1118,13 @@ async fn build_pc_player(
         .as_ref()
         .map(|session| session.snapshot().project_root)
         .ok_or_else(|| no_project().message)?;
+    let bundled_sdk = app
+        .path()
+        .resolve("build-sdk", BaseDirectory::Resource)
+        .ok()
+        .filter(|path| path.join("sdk.json").is_file());
     tauri::async_runtime::spawn_blocking(move || {
-        run_player_build(PathBuf::from(project_root), profile, clean)
+        run_player_build(PathBuf::from(project_root), profile, clean, bundled_sdk)
     })
     .await
     .map_err(|error| format!("player build task failed: {error}"))?
@@ -1266,9 +1461,61 @@ mod tests {
         let manifest_dir = Path::new(env!("CARGO_MANIFEST_DIR"));
         let root = find_engine_root(manifest_dir).expect("workspace root");
         assert!(root.join("crates/mengine-runtime/Cargo.toml").is_file());
-        assert!(run_player_build(root, "shipping".into(), true)
+        assert!(run_player_build(root, "shipping".into(), true, None)
             .unwrap_err()
             .contains("unsupported build profile"));
+    }
+
+    #[test]
+    fn bundled_build_sdk_requires_host_matched_safe_regular_files() {
+        let root = std::env::temp_dir().join(format!(
+            "mengine-build-sdk-{}-{}",
+            std::process::id(),
+            SystemTime::now()
+                .duration_since(UNIX_EPOCH)
+                .unwrap()
+                .as_nanos()
+        ));
+        std::fs::create_dir_all(root.join("cli/dist")).unwrap();
+        std::fs::create_dir_all(root.join("runtimes/debug")).unwrap();
+        std::fs::create_dir_all(root.join("runtimes/release")).unwrap();
+        std::fs::write(root.join("node-test"), "node").unwrap();
+        std::fs::write(root.join("cli/dist/cli.js"), "cli").unwrap();
+        std::fs::write(root.join("runtimes/debug/player"), "debug").unwrap();
+        std::fs::write(root.join("runtimes/release/player"), "release").unwrap();
+        std::fs::write(
+            root.join("sdk.json"),
+            format!(
+                r#"{{"schemaVersion":1,"platform":"{}","architecture":"{}","cliVersion":"{}","node":"node-test","cli":"cli/dist/cli.js","runtimes":{{"debug":"runtimes/debug/player","release":"runtimes/release/player"}}}}"#,
+                node_platform_name(),
+                node_arch_name(),
+                env!("CARGO_PKG_VERSION")
+            ),
+        )
+        .unwrap();
+
+        let debug = load_build_sdk(&root, "debug").unwrap();
+        assert!(debug.runtime.ends_with("runtimes/debug/player"));
+        assert!(!child_process_path(&debug.cli)
+            .to_string_lossy()
+            .starts_with(r"\\?\"));
+        let release = load_build_sdk(&root, "release").unwrap();
+        assert!(release.runtime.ends_with("runtimes/release/player"));
+
+        std::fs::write(
+            root.join("sdk.json"),
+            format!(
+                r#"{{"schemaVersion":1,"platform":"{}","architecture":"{}","cliVersion":"{}","node":"../outside","cli":"cli/dist/cli.js","runtimes":{{"debug":"runtimes/debug/player","release":"runtimes/release/player"}}}}"#,
+                node_platform_name(),
+                node_arch_name(),
+                env!("CARGO_PKG_VERSION")
+            ),
+        )
+        .unwrap();
+        assert!(load_build_sdk(&root, "debug")
+            .unwrap_err()
+            .contains("unsafe Node runtime path"));
+        std::fs::remove_dir_all(root).unwrap();
     }
 
     #[test]
@@ -1422,8 +1669,20 @@ mod tests {
         )
         .unwrap();
 
-        let result = run_player_build(root.clone(), "debug".into(), true).unwrap();
+        let result = run_player_build(root.clone(), "debug".into(), true, None).unwrap();
         assert_eq!(result.profile, "debug");
+        assert_eq!(
+            result.toolchain,
+            if std::env::var_os("MENGINE_BUILD_SDK").is_some() {
+                "bundled-sdk"
+            } else {
+                "source-checkout"
+            }
+        );
+        assert_eq!(result.scene_count, 2);
+        assert_eq!(result.validated_asset_files, 2);
+        assert_eq!(result.asset_references, 2);
+        assert!(result.packaged_bytes > 0);
         assert!(Path::new(&result.executable).is_file());
         assert!(result.file_count >= 6);
         let output = Path::new(&result.output_dir);

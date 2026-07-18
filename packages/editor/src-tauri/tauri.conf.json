@@ -6,7 +6,7 @@
   "build": {
     "beforeDevCommand": "npm.cmd run dev",
     "devUrl": "http://localhost:5173",
-    "beforeBuildCommand": "pnpm.cmd --filter @mengine/api build && pnpm.cmd --filter @mengine/behaviour build && pnpm.cmd --filter @mengine/agent build && npm.cmd run build",
+    "beforeBuildCommand": "pnpm.cmd --filter @mengine/api build && pnpm.cmd --filter @mengine/behaviour build && pnpm.cmd --filter @mengine/agent build && npm.cmd run build && node ../../scripts/prepare-editor-build-sdk.mjs",
     "frontendDist": "../dist"
   },
   "app": {
@@ -27,7 +27,7 @@
   "bundle": {
     "active": true,
     "targets": "all",
-    "resources": ["../THIRD_PARTY_NOTICES.md"],
+    "resources": ["../THIRD_PARTY_NOTICES.md", "build-sdk/"],
     "icon": [
       "icons/32x32.png",
       "icons/128x128.png",

@@ -45,6 +45,14 @@ export type BuildPlayerResult = {
   fileCount: number;
   contentHash: string;
   profile: BuildPlayerProfile;
+  platform: string;
+  architecture: string;
+  engineVersion: string;
+  sceneCount: number;
+  validatedAssetFiles: number;
+  assetReferences: number;
+  packagedBytes: number;
+  toolchain: 'bundled-sdk' | 'source-checkout';
   log: string;
 };
 
