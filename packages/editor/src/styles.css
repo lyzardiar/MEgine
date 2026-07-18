@@ -3437,6 +3437,7 @@ body.insp-scrubbing * {
 
 .build-warning.error { border-color: #6d2929; background: #3c2323; color: #ff9d9d; }
 .build-message.success { border-color: #3f6845; background: #26372a; color: #9bd0a1; }
+.build-message.error { border-color: #6d2929; background: #3c2323; color: #ff9d9d; }
 
 .build-warning button,
 .build-actions button {
@@ -3473,6 +3474,7 @@ body.insp-scrubbing * {
 
 .build-actions {
   display: flex;
+  gap: 6px;
   justify-content: flex-end;
   margin-top: auto;
   padding: 8px;

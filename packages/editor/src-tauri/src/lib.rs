@@ -89,6 +89,13 @@ struct BuildPlayerResult {
     log: String,
 }
 
+#[derive(Debug, serde::Serialize)]
+#[serde(rename_all = "camelCase")]
+struct RunPlayerResult {
+    executable: String,
+    process_id: u32,
+}
+
 fn find_engine_root(start: &Path) -> Option<PathBuf> {
     let mut current = start.to_path_buf();
     loop {
@@ -219,6 +226,88 @@ fn run_player_build(
         file_count,
         profile,
         log: String::from_utf8_lossy(&output.stdout).trim().to_owned(),
+    })
+}
+
+fn validated_player_executable(project_root: &Path, requested: &Path) -> Result<PathBuf, String> {
+    let canonical_project = project_root
+        .canonicalize()
+        .map_err(|error| format!("project root: {error}"))?;
+    let builds_path = canonical_project.join("Builds");
+    let builds_metadata = std::fs::symlink_metadata(&builds_path)
+        .map_err(|error| format!("player builds directory: {error}"))?;
+    if builds_metadata.file_type().is_symlink() || !builds_metadata.is_dir() {
+        return Err("player builds directory must be a regular directory".into());
+    }
+    let canonical_builds = builds_path
+        .canonicalize()
+        .map_err(|error| format!("player builds directory: {error}"))?;
+    if !canonical_builds.starts_with(&canonical_project) {
+        return Err("player builds directory escapes the current project".into());
+    }
+
+    let requested_metadata = std::fs::symlink_metadata(requested)
+        .map_err(|error| format!("player executable: {error}"))?;
+    if requested_metadata.file_type().is_symlink() || !requested_metadata.is_file() {
+        return Err("player executable must be a regular non-symlink file".into());
+    }
+    let canonical_executable = requested
+        .canonicalize()
+        .map_err(|error| format!("player executable: {error}"))?;
+    if !canonical_executable.starts_with(&canonical_builds) {
+        return Err(
+            "player executable must be inside the current project's Builds directory".into(),
+        );
+    }
+
+    let output_dir = canonical_executable
+        .parent()
+        .ok_or_else(|| "player executable has no output directory".to_string())?;
+    let manifest_path = output_dir.join("mengine-build.json");
+    let manifest_metadata = std::fs::symlink_metadata(&manifest_path)
+        .map_err(|error| format!("player build manifest: {error}"))?;
+    if manifest_metadata.file_type().is_symlink() || !manifest_metadata.is_file() {
+        return Err("player build manifest must be a regular non-symlink file".into());
+    }
+    let manifest: serde_json::Value = serde_json::from_slice(
+        &std::fs::read(&manifest_path)
+            .map_err(|error| format!("cannot read player build manifest: {error}"))?,
+    )
+    .map_err(|error| format!("invalid player build manifest: {error}"))?;
+    let declared = manifest
+        .get("executable")
+        .and_then(serde_json::Value::as_str)
+        .ok_or_else(|| "player build manifest does not contain executable".to_string())?;
+    let declared_path = Path::new(declared);
+    if declared_path.is_absolute()
+        || declared_path
+            .components()
+            .any(|component| !matches!(component, Component::Normal(_)))
+    {
+        return Err("player build manifest contains an unsafe executable path".into());
+    }
+    let declared_executable = output_dir
+        .join(declared_path)
+        .canonicalize()
+        .map_err(|error| format!("manifest player executable: {error}"))?;
+    if declared_executable != canonical_executable {
+        return Err("requested executable does not match the player build manifest".into());
+    }
+    Ok(canonical_executable)
+}
+
+fn run_built_player(project_root: &Path, requested: &Path) -> Result<RunPlayerResult, String> {
+    let executable = validated_player_executable(project_root, requested)?;
+    let working_directory = executable
+        .parent()
+        .ok_or_else(|| "player executable has no output directory".to_string())?;
+    let child = Command::new(&executable)
+        .current_dir(working_directory)
+        .spawn()
+        .map_err(|error| format!("cannot start player: {error}"))?;
+    Ok(RunPlayerResult {
+        executable: executable.to_string_lossy().into_owned(),
+        process_id: child.id(),
     })
 }
 
@@ -824,6 +913,24 @@ async fn build_pc_player(
     .map_err(|error| format!("player build task failed: {error}"))?
 }
 
+#[tauri::command]
+async fn run_pc_player(
+    executable: String,
+    state: State<'_, AppState>,
+) -> Result<RunPlayerResult, String> {
+    let project_root = state
+        .project
+        .lock()
+        .as_ref()
+        .map(|session| session.snapshot().project_root)
+        .ok_or_else(|| no_project().message)?;
+    tauri::async_runtime::spawn_blocking(move || {
+        run_built_player(Path::new(&project_root), Path::new(&executable))
+    })
+    .await
+    .map_err(|error| format!("player launch task failed: {error}"))?
+}
+
 fn asset_relative_tail(relative_path: &str) -> Result<PathBuf, String> {
     let relative = Path::new(relative_path);
     if relative.is_absolute() {
@@ -1114,6 +1221,7 @@ pub fn run() {
             get_project_sorting_layers,
             save_project_sorting_layers,
             build_pc_player,
+            run_pc_player,
             read_project_asset,
             write_project_asset,
             list_project_assets,
@@ -1139,6 +1247,44 @@ mod tests {
         assert!(run_player_build(root, "shipping".into(), true)
             .unwrap_err()
             .contains("unsupported build profile"));
+    }
+
+    #[test]
+    fn player_launch_validation_requires_the_current_build_manifest_executable() {
+        let root = std::env::temp_dir().join(format!(
+            "mengine-player-launch-{}-{}",
+            std::process::id(),
+            SystemTime::now()
+                .duration_since(UNIX_EPOCH)
+                .unwrap()
+                .as_nanos()
+        ));
+        let output = root.join("Builds/windows-x64");
+        std::fs::create_dir_all(&output).unwrap();
+        let executable = output.join("Game.exe");
+        let other = output.join("Other.exe");
+        std::fs::write(&executable, "player").unwrap();
+        std::fs::write(&other, "other").unwrap();
+        std::fs::write(
+            output.join("mengine-build.json"),
+            r#"{"executable":"Game.exe","files":[]}"#,
+        )
+        .unwrap();
+
+        assert_eq!(
+            validated_player_executable(&root, &executable).unwrap(),
+            executable.canonicalize().unwrap()
+        );
+        assert!(validated_player_executable(&root, &other)
+            .unwrap_err()
+            .contains("does not match"));
+
+        let outside = root.join("Outside.exe");
+        std::fs::write(&outside, "outside").unwrap();
+        assert!(validated_player_executable(&root, &outside)
+            .unwrap_err()
+            .contains("inside the current project's Builds directory"));
+        std::fs::remove_dir_all(root).unwrap();
     }
 
     #[test]

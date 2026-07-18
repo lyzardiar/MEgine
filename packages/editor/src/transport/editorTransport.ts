@@ -47,6 +47,11 @@ export type BuildPlayerResult = {
   log: string;
 };
 
+export type RunPlayerResult = {
+  executable: string;
+  processId: number;
+};
+
 export type ProjectSceneInfo = {
   name: string;
   updatedAt: number;
@@ -194,6 +199,13 @@ export async function buildPcPlayer(
     throw new Error('PC player builds require the desktop editor');
   }
   return invoke<BuildPlayerResult>('build_pc_player', { profile, clean });
+}
+
+export async function runPcPlayer(executable: string): Promise<RunPlayerResult> {
+  if (!isDesktopEditor()) {
+    throw new Error('PC players can only be launched from the desktop editor');
+  }
+  return invoke<RunPlayerResult>('run_pc_player', { executable });
 }
 
 export async function listProjectScenes(): Promise<ProjectSceneInfo[]> {

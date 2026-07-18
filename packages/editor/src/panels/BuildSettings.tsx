@@ -4,6 +4,7 @@ import {
   buildPcPlayer,
   getProjectBuildSettings,
   isDesktopEditor,
+  runPcPlayer,
   saveProjectBuildSettings,
   type BuildPlayerProfile,
   type BuildPlayerResult,
@@ -33,8 +34,10 @@ export function BuildSettings(props: {
   const [settings, setSettings] = useState<ProjectBuildSettings | null>(null);
   const [settingsSaving, setSettingsSaving] = useState(false);
   const [building, setBuilding] = useState(false);
+  const [launching, setLaunching] = useState(false);
   const [lastBuild, setLastBuild] = useState<BuildPlayerResult | null>(null);
   const [message, setMessage] = useState<string | null>(null);
+  const [messageError, setMessageError] = useState(false);
   const [settingsError, setSettingsError] = useState<string | null>(null);
   const platform = useMemo(() => {
     const source = `${navigator.platform} ${navigator.userAgent}`.toLowerCase();
@@ -61,6 +64,7 @@ export function BuildSettings(props: {
   const save = async () => {
     setMessage(null);
     const ok = await props.onSaveScene();
+    setMessageError(!ok);
     setMessage(ok ? 'Scene saved. The project is ready to build.' : 'Scene save failed.');
   };
 
@@ -111,7 +115,26 @@ export function BuildSettings(props: {
     if (!settings.scenes.includes(path)) void persistScenes([...settings.scenes, path]);
   };
 
-  const build = async () => {
+  const launch = async (result: BuildPlayerResult) => {
+    if (launching) return;
+    setLaunching(true);
+    setMessage(null);
+    setMessageError(false);
+    try {
+      const launched = await runPcPlayer(result.executable);
+      setMessage(`Player started (process ${launched.processId}).`);
+      props.onLog(`Started player process ${launched.processId} -> ${launched.executable}`);
+    } catch (reason) {
+      const detail = reason instanceof Error ? reason.message : String(reason);
+      setMessageError(true);
+      setMessage(detail);
+      props.onLog(`Player launch failed: ${detail}`, 'error');
+    } finally {
+      setLaunching(false);
+    }
+  };
+
+  const build = async (runAfterBuild = false) => {
     if (
       !desktop
       || props.sceneDirty
@@ -119,17 +142,24 @@ export function BuildSettings(props: {
       || settingsSaving
       || !settings?.scenes.length
       || building
+      || launching
     ) return;
     setBuilding(true);
     setLastBuild(null);
     setMessage(null);
+    setMessageError(false);
     try {
       const result = await buildPcPlayer(profile, clean);
       setLastBuild(result);
       setMessage(`Build completed: ${result.fileCount} packaged files.`);
       props.onLog(`Built ${result.profile} player -> ${result.outputDir}`);
+      if (runAfterBuild) {
+        setBuilding(false);
+        await launch(result);
+      }
     } catch (reason) {
       const detail = reason instanceof Error ? reason.message : String(reason);
+      setMessageError(true);
       setMessage(detail);
       props.onLog(`Player build failed: ${detail}`, 'error');
     } finally {
@@ -151,8 +181,8 @@ export function BuildSettings(props: {
           <strong>PC Build Settings</strong>
           <span>Packages an ordered scene list into a self-validating standalone player.</span>
         </div>
-        <span className={`build-status ${building || settingsSaving ? 'busy' : ''}`}>
-          {building ? 'BUILDING' : settingsSaving ? 'SAVING' : lastBuild ? 'SUCCEEDED' : 'READY'}
+        <span className={`build-status ${building || launching || settingsSaving ? 'busy' : ''}`}>
+          {building ? 'BUILDING' : launching ? 'LAUNCHING' : settingsSaving ? 'SAVING' : lastBuild ? 'SUCCEEDED' : 'READY'}
         </span>
       </div>
 
@@ -239,7 +269,7 @@ export function BuildSettings(props: {
           Browser preview can edit build scenes but cannot execute the Rust toolchain. Open the desktop editor to build.
         </div>
       )}
-      {message && <div className={`build-message${lastBuild ? ' success' : ''}`}>{message}</div>}
+      {message && <div className={`build-message${messageError ? ' error' : ' success'}`}>{message}</div>}
       {lastBuild && (
         <section className="build-result">
           <strong>{lastBuild.executable}</strong>
@@ -249,6 +279,31 @@ export function BuildSettings(props: {
       )}
 
       <div className="build-actions">
+        {lastBuild && (
+          <button
+            type="button"
+            disabled={building || launching || settingsSaving}
+            onClick={() => void launch(lastBuild)}
+          >
+            {launching ? 'Starting Player...' : 'Run Player'}
+          </button>
+        )}
+        <button
+          type="button"
+          disabled={
+            !desktop
+            || props.sceneDirty
+            || props.resourceDirty
+            || settingsSaving
+            || building
+            || launching
+            || !settings?.scenes.length
+            || missing.length > 0
+          }
+          onClick={() => void build(false)}
+        >
+          {building ? 'Building Player...' : 'Build Player'}
+        </button>
         <button
           type="button"
           className="primary"
@@ -258,12 +313,13 @@ export function BuildSettings(props: {
             || props.resourceDirty
             || settingsSaving
             || building
+            || launching
             || !settings?.scenes.length
             || missing.length > 0
           }
-          onClick={() => void build()}
+          onClick={() => void build(true)}
         >
-          {building ? 'Building Player...' : 'Build Player'}
+          {building ? 'Building Player...' : launching ? 'Starting Player...' : 'Build & Run'}
         </button>
       </div>
     </div>
