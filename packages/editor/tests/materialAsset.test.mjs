@@ -3,6 +3,8 @@ import test from 'node:test';
 
 import {
   createMaterialAsset,
+  isMaterialTexturePath,
+  materialReferenceDiagnostics,
   parseMaterialAsset,
   serializeMaterialAsset,
 } from '../src/materialAsset.ts';
@@ -103,4 +105,35 @@ test('custom material shader references normalize project separators', () => {
   }));
   assert.equal(material.shader, 'custom');
   assert.equal(material.custom_shader, 'Assets/Shaders/Rim.mshader');
+});
+
+test('material references report missing and unsupported authoring assets', () => {
+  const material = createMaterialAsset('Broken');
+  material.shader = 'custom';
+  material.custom_shader = 'Assets/Shaders/Rim.mshader';
+  material.base_color_texture = 'Assets/Textures/paint.png';
+  material.normal_texture = 'Assets/Textures/paint.txt';
+  assert.deepEqual(materialReferenceDiagnostics(material, [
+    'Assets/Shaders/Other.mshader',
+    'Assets/Textures/paint.png',
+  ]), [
+    {
+      field: 'custom_shader',
+      message: 'Missing Surface Shader: Assets/Shaders/Rim.mshader',
+    },
+    {
+      field: 'normal_texture',
+      message: 'Unsupported texture asset: Assets/Textures/paint.txt',
+    },
+  ]);
+  assert.equal(isMaterialTexturePath('Assets/Textures/data.EXR'), true);
+  assert.equal(isMaterialTexturePath('Assets/Textures/data.json'), false);
+});
+
+test('custom materials require a valid surface shader reference', () => {
+  const material = createMaterialAsset('Custom');
+  material.shader = 'custom';
+  assert.match(materialReferenceDiagnostics(material, [])[0].message, /require/i);
+  material.custom_shader = 'Assets/Shaders/Rim.wgsl';
+  assert.match(materialReferenceDiagnostics(material, [])[0].message, /\.mshader/i);
 });

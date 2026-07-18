@@ -3314,6 +3314,23 @@ body.insp-scrubbing * {
   font-size: 11px;
 }
 
+.material-reference-diagnostics {
+  display: flex;
+  max-height: 86px;
+  flex: 0 0 auto;
+  flex-direction: column;
+  gap: 2px;
+  overflow: auto;
+  padding: 5px 8px;
+  border-bottom: 1px solid #6f5d25;
+  background: #3c351e;
+  color: #e3ca72;
+  font-size: 10px;
+}
+
+.material-reference-diagnostics strong { color: #f0d984; }
+.material-reference-diagnostics span { overflow-wrap: anywhere; }
+
 .material-body {
   display: flex;
   min-height: 0;
@@ -3327,7 +3344,8 @@ body.insp-scrubbing * {
 
 .material-preview {
   display: flex;
-  min-width: 160px;
+  width: 100%;
+  min-width: 0;
   min-height: 190px;
   flex: 1 1 190px;
   align-items: center;
@@ -3360,7 +3378,8 @@ body.insp-scrubbing * {
 
 .material-fields {
   display: flex;
-  min-width: 290px;
+  width: 100%;
+  min-width: 0;
   flex: 2 1 380px;
   flex-direction: column;
   border: 1px solid var(--u-border);
@@ -3371,11 +3390,44 @@ body.insp-scrubbing * {
   display: grid;
   min-height: 29px;
   align-items: center;
-  grid-template-columns: minmax(105px, 0.42fr) minmax(90px, 1fr) auto;
+  grid-template-columns: minmax(92px, 0.42fr) minmax(72px, 1fr) auto;
   gap: 6px;
   padding: 3px 6px;
   border-bottom: 1px solid #343434;
   font-size: 11px;
+}
+
+.material-texture-slot {
+  min-height: 34px;
+  grid-template-columns: minmax(92px, 0.42fr) minmax(0, 1fr);
+}
+
+.material-texture-slot.missing {
+  background: #3b2925;
+  box-shadow: inset 2px 0 #b56a45;
+}
+
+.material-texture-label {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.material-texture-label small {
+  color: #78838b;
+  font-size: 8px;
+  font-weight: 500;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.material-texture-reference {
+  display: grid;
+  min-width: 0;
+  grid-template-columns: 24px minmax(0, 1fr) 23px 23px;
+  align-items: center;
+  gap: 3px;
 }
 
 .material-fields > label:last-child { border-bottom: 0; }
@@ -3408,12 +3460,25 @@ body.insp-scrubbing * {
 .material-fields input[type='range'] { border: 0; background: transparent; }
 .material-fields output { width: 34px; color: var(--u-muted); text-align: right; }
 
-.material-color-row { grid-template-columns: minmax(105px, 0.42fr) 52px minmax(64px, 0.35fr) !important; }
+.material-color-row { grid-template-columns: minmax(92px, 0.42fr) 52px minmax(58px, 0.35fr) !important; }
 .material-check { display: flex !important; gap: 7px !important; }
 .material-vector { display: grid; grid-template-columns: 1fr 1fr; gap: 5px; }
 .material-suffixed-input { display: grid; grid-template-columns: minmax(0, 1fr) 18px; align-items: center; }
 .material-suffixed-input > span { color: var(--u-muted); text-align: right; }
 .material-texture-slot button { width: 23px; padding: 0; }
+
+.material-texture-thumb {
+  display: grid;
+  height: 23px;
+  place-items: center;
+  overflow: hidden;
+}
+
+.material-texture-thumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
 
 .material-footer {
   justify-content: flex-end;

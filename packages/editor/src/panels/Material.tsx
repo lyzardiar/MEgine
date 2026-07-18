@@ -9,6 +9,8 @@ import {
 import type { WorldSnapshotView } from '@mengine/api';
 import {
   createMaterialAsset,
+  isMaterialTexturePath,
+  materialReferenceDiagnostics,
   parseMaterialAsset,
   serializeMaterialAsset,
   type MaterialAsset,
@@ -16,11 +18,16 @@ import {
 import {
   listProjectFiles,
   normalizeProjectAssetPath,
+  projectAssetUrl,
   readProjectAssetText,
   refreshProjectFiles,
   writeProjectAssetText,
+  type ProjectFileAsset,
 } from '../projectAssets';
+import { pingProjectAsset } from '../pingBus';
 import { registerMenuItem } from '../editorWindow';
+import { ImageIcon, Search, X } from 'lucide-react';
+import { ObjectPicker } from './ObjectPicker';
 
 export const OPEN_MATERIAL_EVENT = 'mengine:open-material';
 export const PROJECT_ASSETS_CHANGED_EVENT = 'mengine:project-assets-changed';
@@ -101,20 +108,90 @@ function automaticRenderQueue(surface: MaterialAsset['surface']): number {
 function MaterialTextureSlot(props: {
   label: string;
   hint?: string;
+  colorSpace: 'sRGB' | 'Linear';
   value: string;
+  assets: ProjectFileAsset[];
+  missing: boolean;
   onChange: (value: string) => void;
   onDrop: (event: DragEvent<HTMLDivElement>) => void;
 }) {
+  const [pickerOpen, setPickerOpen] = useState(false);
+  const [anchor, setAnchor] = useState<DOMRect | null>(null);
+  const pickerButton = useRef<HTMLButtonElement>(null);
+  const current = props.assets.find(
+    (asset) => asset.relPath.toLowerCase() === props.value.replace(/\\/g, '/').toLowerCase(),
+  );
+  const items = props.assets.map((asset) => ({
+    id: asset.relPath,
+    label: asset.name,
+    sub: asset.folder,
+    thumbUrl: /\.(?:png|jpe?g|webp|gif|bmp)$/i.test(asset.relPath)
+      ? projectAssetUrl(asset.relPath)
+      : null,
+  }));
   return (
-    <div className="material-texture-slot" onDragOver={(event) => event.preventDefault()} onDrop={props.onDrop}>
-      <span title={props.hint}>{props.label}</span>
-      <input
-        aria-label={props.label}
-        value={props.value}
-        placeholder="Drop a texture from Project"
-        onChange={(event) => props.onChange(event.target.value)}
-      />
-      <button type="button" disabled={!props.value} onClick={() => props.onChange('')}>x</button>
+    <div
+      className={`material-texture-slot${props.missing ? ' missing' : ''}`}
+      onDragOver={(event) => event.preventDefault()}
+      onDrop={props.onDrop}
+    >
+      <span className="material-texture-label" title={props.hint}>
+        {props.label}
+        <small>{props.colorSpace}</small>
+      </span>
+      <div className="material-texture-reference">
+        <button
+          type="button"
+          className="material-texture-thumb"
+          disabled={!current}
+          title={current ? 'Ping texture in Project' : props.value ? 'Texture is missing' : 'No texture assigned'}
+          onClick={() => current && pingProjectAsset(current.relPath, current.folder)}
+        >
+          {current && /\.(?:png|jpe?g|webp|gif|bmp)$/i.test(current.relPath)
+            ? <img src={projectAssetUrl(current.relPath)} alt="" draggable={false} />
+            : <ImageIcon size={13} aria-hidden="true" />}
+        </button>
+        <input
+          aria-label={props.label}
+          value={props.value}
+          placeholder="None (Texture)"
+          title={props.missing ? `Missing texture: ${props.value}` : props.value}
+          onChange={(event) => props.onChange(event.target.value)}
+        />
+        <button
+          ref={pickerButton}
+          type="button"
+          title={`Select ${props.label}`}
+          aria-label={`Select ${props.label}`}
+          onClick={() => {
+            setAnchor(pickerButton.current?.getBoundingClientRect() ?? null);
+            setPickerOpen(true);
+          }}
+        >
+          <Search size={12} aria-hidden="true" />
+        </button>
+        <button
+          type="button"
+          disabled={!props.value}
+          title={`Clear ${props.label}`}
+          aria-label={`Clear ${props.label}`}
+          onClick={() => props.onChange('')}
+        >
+          <X size={12} aria-hidden="true" />
+        </button>
+      </div>
+      {pickerOpen && (
+        <ObjectPicker
+          title={`Select ${props.label}`}
+          items={items}
+          current={props.value || null}
+          allowNone
+          noneLabel="None (Texture)"
+          anchorRect={anchor}
+          onPick={(id) => props.onChange(id ?? '')}
+          onClose={() => setPickerOpen(false)}
+        />
+      )}
     </div>
   );
 }
@@ -133,6 +210,7 @@ export function MaterialEditor(props: {
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [assetRevision, setAssetRevision] = useState(0);
   const loadedPath = useRef<string | null>(null);
   const drafts = useRef(new Map<string, { material: MaterialAsset; savedText: string }>());
 
@@ -166,12 +244,13 @@ export function MaterialEditor(props: {
       return () => { cancelled = true; };
     }
     setLoading(true);
-    void readProjectAssetText(props.assetPath)
-      .then((text) => {
+    void Promise.all([readProjectAssetText(props.assetPath), refreshProjectFiles()])
+      .then(([text]) => {
         if (cancelled) return;
         const parsed = parseMaterialAsset(text);
         setMaterial(parsed);
         setSavedText(serializeMaterialAsset(parsed));
+        setAssetRevision((revision) => revision + 1);
       })
       .catch((reason: unknown) => {
         if (cancelled) return;
@@ -190,6 +269,21 @@ export function MaterialEditor(props: {
   );
   const dirty = Boolean(material && serialized !== savedText);
   const anyDirty = dirty || drafts.current.size > 0;
+  const projectAssets = useMemo(() => {
+    void assetRevision;
+    return listProjectFiles();
+  }, [assetRevision]);
+  const textureAssets = useMemo(
+    () => projectAssets.filter((asset) => asset.kind === 'texture'),
+    [projectAssets],
+  );
+  const diagnostics = useMemo(
+    () => material ? materialReferenceDiagnostics(
+      material,
+      projectAssets.map((asset) => asset.relPath),
+    ) : [],
+    [material, projectAssets],
+  );
 
   useEffect(() => {
     props.onDirtyChange(anyDirty);
@@ -211,6 +305,7 @@ export function MaterialEditor(props: {
       const text = serializeMaterialAsset(material);
       await writeProjectAssetText(props.assetPath, text);
       await refreshProjectFiles();
+      setAssetRevision((revision) => revision + 1);
       drafts.current.delete(props.assetPath);
       setSavedText(text);
       props.onAssetsChanged();
@@ -250,7 +345,7 @@ export function MaterialEditor(props: {
       || event.dataTransfer.getData('text/plain');
     try {
       const path = normalizeProjectAssetPath(raw);
-      if (!/\.(?:png|jpe?g|webp|bmp|tga)$/i.test(path)) {
+      if (!isMaterialTexturePath(path)) {
         throw new Error(`${label} only accepts image assets`);
       }
       update(field, path);
@@ -272,7 +367,16 @@ export function MaterialEditor(props: {
   const baseRgb = colorHex(material.base_color);
   const emissiveRgb = colorHex(material.emissive);
   return (
-    <div className="material-editor">
+    <div
+      className="material-editor"
+      onKeyDownCapture={(event) => {
+        if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 's') {
+          event.preventDefault();
+          event.stopPropagation();
+          void save();
+        }
+      }}
+    >
       <div className="material-toolbar">
         <strong title={props.assetPath}>{materialName(props.assetPath)}{dirty ? ' *' : ''}</strong>
         <span className="material-path" title={props.assetPath}>{props.assetPath}</span>
@@ -282,6 +386,14 @@ export function MaterialEditor(props: {
         </button>
       </div>
       {error && <div className="material-error">{error}</div>}
+      {diagnostics.length > 0 && (
+        <div className="material-reference-diagnostics" role="status">
+          <strong>{diagnostics.length} unresolved material reference{diagnostics.length === 1 ? '' : 's'}</strong>
+          {diagnostics.map((diagnostic) => (
+            <span key={`${diagnostic.field}:${diagnostic.message}`}>{diagnostic.message}</span>
+          ))}
+        </div>
+      )}
       <div className="material-body">
         <div
           className="material-preview"
@@ -308,9 +420,9 @@ export function MaterialEditor(props: {
               >
                 <option value="">Select .mshader...</option>
                 {material.custom_shader
-                  && !listProjectFiles().some((asset) => asset.kind === 'shader' && asset.relPath === material.custom_shader)
+                  && !projectAssets.some((asset) => asset.kind === 'shader' && asset.relPath === material.custom_shader)
                   && <option value={material.custom_shader}>{material.custom_shader} (missing)</option>}
-                {listProjectFiles().filter((asset) => asset.kind === 'shader').map((asset) => (
+                {projectAssets.filter((asset) => asset.kind === 'shader').map((asset) => (
                   <option key={asset.id} value={asset.relPath}>{asset.name}</option>
                 ))}
               </select>
@@ -378,14 +490,20 @@ export function MaterialEditor(props: {
 
           <MaterialTextureSlot
             label="Base Color Texture"
+            colorSpace="sRGB"
             value={material.base_color_texture}
+            assets={textureAssets}
+            missing={diagnostics.some((diagnostic) => diagnostic.field === 'base_color_texture')}
             onChange={(value) => update('base_color_texture', value)}
             onDrop={(event) => dropTexture(event, 'base_color_texture', 'Base Color Texture')}
           />
           <MaterialTextureSlot
             label="Normal Texture"
             hint="Tangent-space normal map sampled as linear data"
+            colorSpace="Linear"
             value={material.normal_texture}
+            assets={textureAssets}
+            missing={diagnostics.some((diagnostic) => diagnostic.field === 'normal_texture')}
             onChange={(value) => update('normal_texture', value)}
             onDrop={(event) => dropTexture(event, 'normal_texture', 'Normal Texture')}
           />
@@ -393,21 +511,30 @@ export function MaterialEditor(props: {
           <MaterialTextureSlot
             label="ORM Texture"
             hint="Linear packed map: G = roughness, B = metallic; R remains the AO fallback"
+            colorSpace="Linear"
             value={material.metallic_roughness_texture}
+            assets={textureAssets}
+            missing={diagnostics.some((diagnostic) => diagnostic.field === 'metallic_roughness_texture')}
             onChange={(value) => update('metallic_roughness_texture', value)}
             onDrop={(event) => dropTexture(event, 'metallic_roughness_texture', 'ORM Texture')}
           />
           <MaterialTextureSlot
             label="Occlusion Texture"
             hint="Optional linear map: R = ambient occlusion. When empty, ORM R is used for compatibility."
+            colorSpace="Linear"
             value={material.occlusion_texture}
+            assets={textureAssets}
+            missing={diagnostics.some((diagnostic) => diagnostic.field === 'occlusion_texture')}
             onChange={(value) => update('occlusion_texture', value)}
             onDrop={(event) => dropTexture(event, 'occlusion_texture', 'Occlusion Texture')}
           />
           <label>Occlusion Strength <input type="range" min={0} max={1} step={0.01} value={material.occlusion_strength} onChange={(event) => update('occlusion_strength', Number(event.target.value))} /><output>{material.occlusion_strength.toFixed(2)}</output></label>
           <MaterialTextureSlot
             label="Emissive Texture"
+            colorSpace="sRGB"
             value={material.emissive_texture}
+            assets={textureAssets}
+            missing={diagnostics.some((diagnostic) => diagnostic.field === 'emissive_texture')}
             onChange={(value) => update('emissive_texture', value)}
             onDrop={(event) => dropTexture(event, 'emissive_texture', 'Emissive Texture')}
           />

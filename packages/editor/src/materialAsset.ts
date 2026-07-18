@@ -4,6 +4,21 @@ export type MaterialBlendMode = 'alpha' | 'premultiplied' | 'additive' | 'multip
 export type MaterialWrap = 'repeat' | 'clamp' | 'mirror';
 export type MaterialFilter = 'nearest' | 'linear';
 
+export const MATERIAL_TEXTURE_FIELDS = [
+  'base_color_texture',
+  'normal_texture',
+  'metallic_roughness_texture',
+  'occlusion_texture',
+  'emissive_texture',
+] as const;
+
+export type MaterialTextureField = typeof MATERIAL_TEXTURE_FIELDS[number];
+
+export type MaterialReferenceDiagnostic = {
+  field: MaterialTextureField | 'custom_shader';
+  message: string;
+};
+
 export type MaterialAsset = {
   version: number;
   name: string;
@@ -34,6 +49,47 @@ export type MaterialAsset = {
   wrap_v: MaterialWrap;
   filter: MaterialFilter;
 };
+
+export function isMaterialTexturePath(path: string): boolean {
+  return /\.(?:png|jpe?g|webp|gif|bmp|tga|tiff?|hdr|exr)$/i.test(path.trim());
+}
+
+export function materialReferenceDiagnostics(
+  material: MaterialAsset,
+  availablePaths: readonly string[],
+): MaterialReferenceDiagnostic[] {
+  const available = new Set(availablePaths.map((path) => path.trim().replace(/\\/g, '/').toLowerCase()));
+  const diagnostics: MaterialReferenceDiagnostic[] = [];
+  if (material.shader === 'custom') {
+    if (!material.custom_shader) {
+      diagnostics.push({
+        field: 'custom_shader',
+        message: 'Custom materials require a Surface Shader asset.',
+      });
+    } else if (!material.custom_shader.toLowerCase().endsWith('.mshader')) {
+      diagnostics.push({
+        field: 'custom_shader',
+        message: 'Surface Shader must reference a .mshader asset.',
+      });
+    } else if (!available.has(material.custom_shader.toLowerCase())) {
+      diagnostics.push({
+        field: 'custom_shader',
+        message: `Missing Surface Shader: ${material.custom_shader}`,
+      });
+    }
+  }
+  for (const field of MATERIAL_TEXTURE_FIELDS) {
+    const path = material[field];
+    if (!path) continue;
+    const normalizedPath = path.trim().replace(/\\/g, '/');
+    if (!isMaterialTexturePath(normalizedPath)) {
+      diagnostics.push({ field, message: `Unsupported texture asset: ${path}` });
+    } else if (!available.has(normalizedPath.toLowerCase())) {
+      diagnostics.push({ field, message: `Missing texture asset: ${path}` });
+    }
+  }
+  return diagnostics;
+}
 
 export function createMaterialAsset(name = 'New Material'): MaterialAsset {
   return {
