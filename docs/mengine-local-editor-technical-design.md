@@ -748,3 +748,12 @@ Referenced Only 是可用的单包裁剪基础，仍不等同于完整 Addressab
 - 文本、数字、下拉框和关键帧值编辑按一次 Focus 到 Blur 合并；返回原值会恢复历史 Checkpoint，不产生空事务。关键帧/事件和曲线拖动只在 Pointer Up 提交一个事务，录制产生的同一批属性变化也作为一个原子步骤。面板处理的 `Ctrl/Cmd+S/Z/Y` 会阻止传播，文本输入继续保留系统文字 Undo。
 
 这次补齐的是 Animation Clip 资产编辑的基础可靠性，不代表成熟动画系统已经完备。仍缺导入模型动画的分段与重定向工作流、Humanoid/通用骨骼 Avatar、Root Motion、动画压缩与误差预览、曲线过滤、批量关键帧工具、Onion Skin/轨迹可视化、嵌套动画层和运行时性能分析；Animator Controller 仍需迁移到同一全局历史。与其他资源面板一样，原生分离窗口目前拥有独立 WebView 历史，跨窗口统一 Undo 必须下沉到桌面 Host 的可序列化命令服务。
+
+## 55. 2026-07-19 Animator Controller 全局 Undo 迁移
+
+- Animator Controller 的全部资产写入口统一经过共享 `EditorUndoService`，Scope 为 `animator:<asset path>`。Controller、Layer、同步/独立状态机、Motion、Parameter、State、Transition、Condition、Avatar Mask 引用和图节点位置修改不再绕过历史；工具栏、Edit 菜单与 `Ctrl/Cmd+Z/Y` 使用同一全局顺序。
+- 历史快照包含完整 Controller、当前 State 选择和 Transition 选择。非当前 Controller 也保留带独立保存基线的后台文档，因此跨 Controller Undo/Redo、保存后撤销和 Save All 后继续重做都不会因为草稿被删除而失去恢复目标；Save All 只写真实变化的后台 Controller。
+- 文本、数字和下拉框按 Focus 到 Blur 合并，字段动作名优先使用 `aria-label` 或所属 Label，例如 Name、Weight、Blend；Checkbox 与增删按钮保持单次原子事务。输入改回原值会恢复 Checkpoint，保留操作前已有的 Redo 分支；文本框继续使用系统文字 Undo，数字、下拉和面板按钮走全局历史。
+- 状态图拖动新增明确的 Pointer 事务：Pointer Down 捕获 Controller、选择和全局历史分支，任意数量 Pointer Move 只更新同一 `Move Animator State` 事务，Pointer Up 提交一次；拖回原位移除空历史，Pointer Cancel 同时恢复资产、选择和 Undo/Redo 分支。运行时参数、Layer Weight、Play/Start 和 Assign 仍通过 Scene Store 记录场景事务，不会被误并入 Controller 资产。
+
+这一阶段解决的是 Animator Controller 创作可靠性，不代表动画状态机已达到成熟引擎标准。仍缺 Blend Tree 与参数化 Motion、Sub-State Machine/Exit 节点、StateMachineBehaviour、Transition 中断源和有序中断、状态标签与 Any-State 细化、图框选/多选/复制粘贴/缩放、运行时断点与条件诊断、动画层性能分析，以及模型 Avatar/Root Motion 的端到端联调。`.mavatar` Avatar Mask 编辑器仍是同一 Animator 面板中的独立资产编辑器，下一切片需要单独接入路径 Scope 与后台文档；跨原生分离窗口历史仍需桌面 Host 服务。

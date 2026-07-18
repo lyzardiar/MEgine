@@ -1298,6 +1298,15 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
               onAssetsChanged={bumpScenes}
               onDirtyChange={setAnimatorDirty}
               onLog={log}
+              undoService={undoService}
+              onGlobalUndo={() => {
+                store.undo();
+                refresh();
+              }}
+              onGlobalRedo={() => {
+                store.redo();
+                refresh();
+              }}
             />
           ),
           material: (

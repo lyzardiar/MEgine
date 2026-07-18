@@ -1,5 +1,13 @@
-import { useEffect, useRef, useState, type PointerEvent as ReactPointerEvent } from 'react';
+import {
+  useEffect,
+  useRef,
+  useState,
+  type FocusEvent as ReactFocusEvent,
+  type KeyboardEvent as ReactKeyboardEvent,
+  type PointerEvent as ReactPointerEvent,
+} from 'react';
 import type { WorldSnapshotView } from '@mengine/api';
+import { Redo2, Undo2 } from 'lucide-react';
 import { createAnimationClip, serializeAnimationClip } from '../animationClip';
 import {
   animatorParameterValues,
@@ -25,6 +33,11 @@ import {
   writeProjectAssetText,
 } from '../projectAssets';
 import { registerSaveAllParticipant } from '../saveAll';
+import type {
+  EditorUndoCheckpoint,
+  EditorUndoService,
+  EditorUndoToken,
+} from '../editorUndoService';
 import { AvatarMaskEditor } from './AvatarMask';
 import { PROJECT_ASSETS_CHANGED_EVENT } from './Material';
 
@@ -103,6 +116,8 @@ function AnimatorStateGraph(props: {
   selectedTransition: number | null;
   onSelectState: (index: number) => void;
   onSelectTransition: (index: number) => void;
+  onBeginMove: () => void;
+  onEndMove: (cancelled: boolean) => void;
   onMoveState: (index: number, position: [number, number]) => void;
 }) {
   const viewport = useRef<HTMLDivElement | null>(null);
@@ -142,7 +157,9 @@ function AnimatorStateGraph(props: {
     ]);
   };
   const stop = (event: ReactPointerEvent<HTMLButtonElement>) => {
-    if (drag.current?.pointerId === event.pointerId) drag.current = null;
+    if (drag.current?.pointerId !== event.pointerId) return;
+    drag.current = null;
+    props.onEndMove(event.type === 'pointercancel');
   };
   const currentState = props.runtime?.current_state ?? '';
   const transitionTo = props.runtime?.transition_to ?? '';
@@ -223,6 +240,7 @@ function AnimatorStateGraph(props: {
                 if (!canvas) return;
                 const rect = canvas.getBoundingClientRect();
                 event.currentTarget.setPointerCapture(event.pointerId);
+                props.onBeginMove();
                 drag.current = {
                   pointerId: event.pointerId,
                   state: index,
@@ -258,6 +276,52 @@ function controllerFingerprint(controller: AnimatorController | null): string {
   return controller ? JSON.stringify(controller) : '';
 }
 
+type AnimatorHistorySnapshot = {
+  controller: AnimatorController;
+  selectedState: number | null;
+  selectedTransition: number | null;
+};
+
+type AnimatorDraft = AnimatorHistorySnapshot & {
+  savedFingerprint: string;
+};
+
+type AnimatorEditTransaction = AnimatorHistorySnapshot & {
+  checkpoint: EditorUndoCheckpoint;
+  token: EditorUndoToken | null;
+  label: string;
+};
+
+function animatorDraftDirty(draft: Pick<AnimatorDraft, 'controller' | 'savedFingerprint'>): boolean {
+  return controllerFingerprint(draft.controller) !== draft.savedFingerprint;
+}
+
+function isAnimatorEditControl(target: EventTarget): target is HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement {
+  if (target instanceof HTMLSelectElement || target instanceof HTMLTextAreaElement) return true;
+  if (!(target instanceof HTMLInputElement)) return false;
+  return !['checkbox', 'radio', 'button', 'submit', 'reset'].includes(target.type);
+}
+
+function animatorAllowsGlobalHistory(target: EventTarget): boolean {
+  if (!(target instanceof HTMLElement)) return true;
+  if (target instanceof HTMLTextAreaElement || target.isContentEditable) return false;
+  if (!(target instanceof HTMLInputElement)) return true;
+  return !['text', 'search', 'password', 'email', 'url', 'tel'].includes(target.type);
+}
+
+function animatorControlLabel(target: HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement): string {
+  const explicit = target.getAttribute('aria-label')?.trim();
+  if (explicit) return `Edit Animator ${explicit}`;
+  const label = target.closest('label');
+  if (label) {
+    const text = [...label.childNodes]
+      .find((node) => node.nodeType === Node.TEXT_NODE && node.textContent?.trim())
+      ?.textContent?.trim();
+    if (text) return `Edit Animator ${text}`;
+  }
+  return 'Edit Animator Controller';
+}
+
 function parameterModes(kind: AnimatorParameterKind): AnimatorConditionMode[] {
   if (kind === 'bool') return ['if', 'if_not'];
   if (kind === 'trigger') return ['trigger'];
@@ -274,6 +338,9 @@ export type AnimatorEditorProps = {
   onAssetsChanged: () => void;
   onDirtyChange: (dirty: boolean) => void;
   onLog: (message: string, level?: 'info' | 'warn' | 'error') => void;
+  undoService: EditorUndoService;
+  onGlobalUndo: () => void;
+  onGlobalRedo: () => void;
 };
 
 type AnimatorLayerRuntimeData = {
@@ -300,7 +367,7 @@ function animatorLayerRuntime(json: string, layer: string): AnimatorLayerRuntime
 }
 
 function AnimatorControllerEditor(props: AnimatorEditorProps) {
-  const [controller, setController] = useState<AnimatorController | null>(null);
+  const [controller, setControllerState] = useState<AnimatorController | null>(null);
   const [savedFingerprint, setSavedFingerprint] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
@@ -308,23 +375,137 @@ function AnimatorControllerEditor(props: AnimatorEditorProps) {
   const [selectedState, setSelectedState] = useState<number | null>(null);
   const [selectedTransition, setSelectedTransition] = useState<number | null>(null);
   const loadedPath = useRef<string | null>(null);
-  const drafts = useRef(new Map<string, { controller: AnimatorController; savedFingerprint: string }>());
+  const drafts = useRef(new Map<string, AnimatorDraft>());
+  const [, setDraftEpoch] = useState(0);
+  const controllerRef = useRef<AnimatorController | null>(null);
+  const selectedStateRef = useRef<number | null>(null);
+  const selectedTransitionRef = useRef<number | null>(null);
+  const editTransaction = useRef<AnimatorEditTransaction | null>(null);
+  controllerRef.current = controller;
+  selectedStateRef.current = selectedState;
+  selectedTransitionRef.current = selectedTransition;
+
+  const replaceController = (next: AnimatorController | null) => {
+    controllerRef.current = next;
+    setControllerState(next);
+  };
+
+  const currentHistorySnapshot = (): AnimatorHistorySnapshot | null => {
+    if (!controllerRef.current) return null;
+    return {
+      controller: structuredClone(controllerRef.current),
+      selectedState: selectedStateRef.current,
+      selectedTransition: selectedTransitionRef.current,
+    };
+  };
+
+  const captureDocument = (path: string): AnimatorHistorySnapshot => {
+    if (loadedPath.current === path) {
+      const snapshot = currentHistorySnapshot();
+      if (snapshot) return snapshot;
+    }
+    const draft = drafts.current.get(path);
+    if (!draft) throw new Error(`Animator history document '${path}' is no longer available.`);
+    return {
+      controller: structuredClone(draft.controller),
+      selectedState: draft.selectedState,
+      selectedTransition: draft.selectedTransition,
+    };
+  };
+
+  const restoreDocument = (path: string, snapshot: AnimatorHistorySnapshot) => {
+    const restored = structuredClone(snapshot);
+    if (loadedPath.current === path) {
+      editTransaction.current = null;
+      replaceController(restored.controller);
+      selectedStateRef.current = restored.selectedState;
+      selectedTransitionRef.current = restored.selectedTransition;
+      setSelectedState(restored.selectedState);
+      setSelectedTransition(restored.selectedTransition);
+      setError(null);
+      return;
+    }
+    const draft = drafts.current.get(path);
+    if (!draft) throw new Error(`Animator history document '${path}' is no longer available.`);
+    drafts.current.set(path, { ...draft, ...restored });
+    setDraftEpoch((value) => value + 1);
+  };
+
+  const recordHistory = (
+    snapshot: AnimatorHistorySnapshot,
+    label: string,
+  ): EditorUndoToken | null => {
+    const path = loadedPath.current;
+    if (!path) return null;
+    return props.undoService.recordSnapshot({
+      scope: `animator:${path}`,
+      label,
+      state: structuredClone(snapshot),
+      capture: () => captureDocument(path),
+      restore: (state) => restoreDocument(path, state),
+    });
+  };
+
+  const beginTransaction = (label = 'Edit Animator Controller') => {
+    if (editTransaction.current) return;
+    const snapshot = currentHistorySnapshot();
+    if (!snapshot) return;
+    editTransaction.current = {
+      ...snapshot,
+      checkpoint: props.undoService.checkpoint(),
+      token: null,
+      label,
+    };
+  };
+
+  const finishTransaction = (cancelled = false) => {
+    const transaction = editTransaction.current;
+    editTransaction.current = null;
+    if (!transaction?.token || !props.undoService.isUndoTop(transaction.token)) return;
+    if (cancelled) {
+      restoreDocument(loadedPath.current ?? '', transaction);
+      props.undoService.restoreCheckpoint(transaction.checkpoint);
+      return;
+    }
+    if (
+      controllerRef.current
+      && controllerFingerprint(controllerRef.current) === controllerFingerprint(transaction.controller)
+    ) {
+      props.undoService.restoreCheckpoint(transaction.checkpoint);
+    }
+  };
+
+  const beginEdit = (event: ReactFocusEvent<HTMLDivElement>) => {
+    if (isAnimatorEditControl(event.target)) beginTransaction(animatorControlLabel(event.target));
+  };
+
+  const endEdit = (event: ReactFocusEvent<HTMLDivElement>) => {
+    if (isAnimatorEditControl(event.target)) finishTransaction();
+  };
 
   useEffect(() => {
     let cancelled = false;
+    const transaction = editTransaction.current;
+    if (
+      transaction?.token
+      && controller
+      && props.undoService.isUndoTop(transaction.token)
+      && controllerFingerprint(controller) === controllerFingerprint(transaction.controller)
+    ) {
+      props.undoService.restoreCheckpoint(transaction.checkpoint);
+    }
     const previousPath = loadedPath.current;
     if (previousPath && controller) {
-      if (controllerFingerprint(controller) !== savedFingerprint) {
-        drafts.current.set(previousPath, {
-          controller: structuredClone(controller),
-          savedFingerprint,
-        });
-      } else {
-        drafts.current.delete(previousPath);
-      }
+      drafts.current.set(previousPath, {
+        controller: structuredClone(controller),
+        savedFingerprint,
+        selectedState,
+        selectedTransition,
+      });
     }
     loadedPath.current = props.assetPath;
-    setController(null);
+    editTransaction.current = null;
+    replaceController(null);
     setSavedFingerprint('');
     setError(null);
     setSelectedState(null);
@@ -333,8 +514,10 @@ function AnimatorControllerEditor(props: AnimatorEditorProps) {
     const draft = drafts.current.get(props.assetPath);
     if (draft) {
       drafts.current.delete(props.assetPath);
-      setController(structuredClone(draft.controller));
+      replaceController(structuredClone(draft.controller));
       setSavedFingerprint(draft.savedFingerprint);
+      setSelectedState(draft.selectedState);
+      setSelectedTransition(draft.selectedTransition);
       return () => { cancelled = true; };
     }
     setLoading(true);
@@ -342,7 +525,7 @@ function AnimatorControllerEditor(props: AnimatorEditorProps) {
       .then((text) => {
         if (cancelled) return;
         const parsed = parseAnimatorControllerDraft(text);
-        setController(parsed);
+        replaceController(parsed);
         setSavedFingerprint(controllerFingerprint(parsed));
       })
       .catch((reason: unknown) => {
@@ -355,19 +538,37 @@ function AnimatorControllerEditor(props: AnimatorEditorProps) {
   }, [props.assetPath]);
 
   const dirty = controllerFingerprint(controller) !== savedFingerprint && controller != null;
-  const anyDirty = dirty || drafts.current.size > 0;
+  const anyDirty = dirty || [...drafts.current.values()].some(animatorDraftDirty);
   useEffect(() => props.onDirtyChange(anyDirty), [anyDirty, props.onDirtyChange]);
 
   const clips = listProjectFiles().filter((asset) => asset.kind === 'animation');
   const avatarMasks = listProjectFiles().filter((asset) => asset.kind === 'avatar-mask');
 
-  const update = (mutate: (draft: AnimatorController) => void) => {
-    setController((current) => {
-      if (!current) return current;
-      const next = structuredClone(current);
-      mutate(next);
-      return next;
-    });
+  const update = (
+    mutate: (draft: AnimatorController) => void,
+    label = 'Edit Animator Controller',
+  ) => {
+    const current = controllerRef.current;
+    if (!current) return;
+    const next = structuredClone(current);
+    mutate(next);
+    if (controllerFingerprint(next) === controllerFingerprint(current)) return;
+    const transaction = editTransaction.current;
+    if (transaction) {
+      if (!transaction.token || !props.undoService.isUndoTop(transaction.token)) {
+        const snapshot = currentHistorySnapshot();
+        if (!snapshot) return;
+        transaction.controller = structuredClone(snapshot.controller);
+        transaction.selectedState = snapshot.selectedState;
+        transaction.selectedTransition = snapshot.selectedTransition;
+        transaction.checkpoint = props.undoService.checkpoint();
+        transaction.token = recordHistory(snapshot, transaction.label || label);
+      }
+    } else {
+      const snapshot = currentHistorySnapshot();
+      if (snapshot) recordHistory(snapshot, label);
+    }
+    replaceController(next);
   };
 
   const save = async (): Promise<boolean> => {
@@ -381,7 +582,7 @@ function AnimatorControllerEditor(props: AnimatorEditorProps) {
       await refreshProjectFiles();
       const normalized = parseAnimatorController(text);
       drafts.current.delete(props.assetPath);
-      setController(normalized);
+      replaceController(normalized);
       setSavedFingerprint(controllerFingerprint(normalized));
       props.onAssetsChanged();
       props.onLog(`Saved ${props.assetPath}`);
@@ -399,22 +600,30 @@ function AnimatorControllerEditor(props: AnimatorEditorProps) {
   const saveAll = async () => {
     if (dirty && !await save()) throw new Error('Current Animator Controller could not be saved');
     const failures: string[] = [];
-    if (drafts.current.size > 0) setSaving(true);
+    const dirtyDrafts = [...drafts.current].filter(([, draft]) => animatorDraftDirty(draft));
+    if (dirtyDrafts.length > 0) setSaving(true);
     try {
-      for (const [path, draft] of [...drafts.current]) {
+      for (const [path, draft] of dirtyDrafts) {
         try {
           validateAnimatorController(draft.controller);
-          await writeProjectAssetText(path, serializeAnimatorController(draft.controller));
-          drafts.current.delete(path);
+          const text = serializeAnimatorController(draft.controller);
+          await writeProjectAssetText(path, text);
+          const normalized = parseAnimatorController(text);
+          drafts.current.set(path, {
+            ...draft,
+            controller: normalized,
+            savedFingerprint: controllerFingerprint(normalized),
+          });
           props.onLog(`Saved ${path}`);
         } catch (reason) {
           failures.push(`${path}: ${reason instanceof Error ? reason.message : String(reason)}`);
         }
       }
-      if (drafts.current.size === 0) await refreshProjectFiles();
+      if (dirtyDrafts.length > 0) await refreshProjectFiles();
       props.onAssetsChanged();
     } finally {
       setSaving(false);
+      if (dirtyDrafts.length > 0) setDraftEpoch((value) => value + 1);
     }
     if (failures.length > 0) throw new Error(failures.join('; '));
   };
@@ -476,10 +685,37 @@ function AnimatorControllerEditor(props: AnimatorEditorProps) {
     });
   };
   return (
-    <div className="animator-editor">
+    <div
+      className="animator-editor"
+      onFocusCapture={beginEdit}
+      onBlurCapture={endEdit}
+      onKeyDownCapture={(event: ReactKeyboardEvent<HTMLDivElement>) => {
+        const command = event.ctrlKey || event.metaKey;
+        const key = event.key.toLowerCase();
+        if (command && key === 's') {
+          event.preventDefault();
+          event.stopPropagation();
+          void save();
+          return;
+        }
+        if (!command || !animatorAllowsGlobalHistory(event.target)) return;
+        if (key === 'z') {
+          event.preventDefault();
+          event.stopPropagation();
+          if (event.shiftKey) props.onGlobalRedo();
+          else props.onGlobalUndo();
+        } else if (key === 'y') {
+          event.preventDefault();
+          event.stopPropagation();
+          props.onGlobalRedo();
+        }
+      }}
+    >
       <div className="material-toolbar">
         <strong title={props.assetPath}>{controller.name || 'Animator Controller'}{dirty ? ' *' : ''}</strong>
         <span className="spacer" />
+        <button type="button" aria-label="Undo" title={`Undo${props.undoService.undoLabel ? ` ${props.undoService.undoLabel}` : ''} (Ctrl+Z)`} disabled={!props.undoService.canUndo} onClick={props.onGlobalUndo}><Undo2 size={13} /></button>
+        <button type="button" aria-label="Redo" title={`Redo${props.undoService.redoLabel ? ` ${props.undoService.redoLabel}` : ''} (Ctrl+Y)`} disabled={!props.undoService.canRedo} onClick={props.onGlobalRedo}><Redo2 size={13} /></button>
         <button type="button" onClick={() => void createNew()}>New</button>
         <button type="button" disabled={!dirty || saving} onClick={() => void save()}>
           {saving ? 'Saving…' : 'Save'}
@@ -859,9 +1095,11 @@ function AnimatorControllerEditor(props: AnimatorEditorProps) {
             setSelectedState(null);
             setSelectedTransition(index);
           }}
+          onBeginMove={() => beginTransaction('Move Animator State')}
+          onEndMove={finishTransaction}
           onMoveState={(index, position) => update((draft) => {
             if (draft.states[index]) draft.states[index].position = position;
-          })}
+          }, 'Move Animator State')}
         />
 
         <section className="animator-section">
