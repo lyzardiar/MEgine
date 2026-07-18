@@ -12,6 +12,7 @@ import {
   type AnimatorConditionMode,
   type AnimatorController,
   type AnimatorLayerBlendMode,
+  type AnimatorLayerTimingMode,
   type AnimatorParameterKind,
 } from '../animatorController';
 import { registerMenuItem } from '../editorWindow';
@@ -470,9 +471,13 @@ function AnimatorControllerEditor(props: AnimatorEditorProps) {
                 enabled: true,
                 weight: 1,
                 blend_mode: 'override',
+                timing_mode: 'synced',
                 avatar_mask: '',
                 mask_paths: [],
                 motions: [],
+                default_state: '',
+                states: [],
+                transitions: [],
               });
             })}>+ Layer</button>
           </div>
@@ -503,6 +508,22 @@ function AnimatorControllerEditor(props: AnimatorEditorProps) {
                   <option value="override">Override</option>
                   <option value="additive">Additive</option>
                 </select>
+                <select
+                  aria-label={`${layer.name} timing mode`}
+                  value={layer.timing_mode}
+                  onChange={(event) => update((draft) => {
+                    const target = draft.layers[layerIndex];
+                    target.timing_mode = event.target.value as AnimatorLayerTimingMode;
+                    if (target.timing_mode === 'independent' && target.states.length === 0) {
+                      const clip = clips[0]?.relPath ?? '';
+                      target.states.push({ name: 'State', clip, speed: 1, position: [100, 90] });
+                      target.default_state = 'State';
+                    }
+                  })}
+                >
+                  <option value="synced">Synced</option>
+                  <option value="independent">Independent</option>
+                </select>
                 <button type="button" title="Delete layer" onClick={() => update((draft) => { draft.layers.splice(layerIndex, 1); })}>×</button>
               </div>
               <label className="animator-layer-mask">
@@ -530,36 +551,146 @@ function AnimatorControllerEditor(props: AnimatorEditorProps) {
                   })}
                 />
               </label>
-              <div className="animator-layer-motions">
-                {controller.states.map((state) => {
-                  const motion = layer.motions.find((candidate) => candidate.state === state.name);
-                  return (
-                    <label key={state.name}>
-                      <span>{state.name}</span>
-                      <select value={motion?.clip ?? ''} onChange={(event) => update((draft) => {
-                        const targetLayer = draft.layers[layerIndex];
-                        const existing = targetLayer.motions.findIndex((candidate) => candidate.state === state.name);
-                        if (!event.target.value) {
-                          if (existing >= 0) targetLayer.motions.splice(existing, 1);
-                        } else if (existing >= 0) {
-                          targetLayer.motions[existing].clip = event.target.value;
-                        } else {
-                          targetLayer.motions.push({ state: state.name, clip: event.target.value });
+              {layer.timing_mode === 'synced' ? (
+                <div className="animator-layer-motions">
+                  {controller.states.map((state) => {
+                    const motion = layer.motions.find((candidate) => candidate.state === state.name);
+                    return (
+                      <label key={state.name}>
+                        <span>{state.name}</span>
+                        <select value={motion?.clip ?? ''} onChange={(event) => update((draft) => {
+                          const targetLayer = draft.layers[layerIndex];
+                          const existing = targetLayer.motions.findIndex((candidate) => candidate.state === state.name);
+                          if (!event.target.value) {
+                            if (existing >= 0) targetLayer.motions.splice(existing, 1);
+                          } else if (existing >= 0) {
+                            targetLayer.motions[existing].clip = event.target.value;
+                          } else {
+                            targetLayer.motions.push({ state: state.name, clip: event.target.value });
+                          }
+                        })}>
+                          <option value="">No Override</option>
+                          {motion && !clips.some((clip) => clip.relPath === motion.clip) && (
+                            <option value={motion.clip}>{motion.clip} (Missing)</option>
+                          )}
+                          {clips.map((clip) => <option key={clip.id} value={clip.relPath}>{clip.name}</option>)}
+                        </select>
+                      </label>
+                    );
+                  })}
+                </div>
+              ) : (
+                <div className="animator-independent-layer">
+                  <div className="animator-heading">
+                    <strong>Independent State Machine</strong>
+                    <button type="button" onClick={() => update((draft) => {
+                      const target = draft.layers[layerIndex];
+                      const name = nextName('State', new Set(target.states.map((state) => state.name)));
+                      target.states.push({ name, clip: clips[0]?.relPath ?? '', speed: 1, position: [100 + target.states.length * 170, 90] });
+                      if (!target.default_state) target.default_state = name;
+                    })}>+ State</button>
+                    <button type="button" disabled={layer.states.length < 2} onClick={() => update((draft) => {
+                      const target = draft.layers[layerIndex];
+                      target.transitions.push({
+                        from: target.states[0].name,
+                        to: target.states[1].name,
+                        duration: 0.15,
+                        has_exit_time: false,
+                        exit_time: 1,
+                        conditions: [],
+                      });
+                    })}>+ Transition</button>
+                  </div>
+                  <label>Default State
+                    <select value={layer.default_state} onChange={(event) => update((draft) => { draft.layers[layerIndex].default_state = event.target.value; })}>
+                      {layer.states.map((state) => <option key={state.name} value={state.name}>{state.name}</option>)}
+                    </select>
+                  </label>
+                  {layer.states.map((state, stateIndex) => (
+                    <div className="animator-row" key={`${stateIndex}:${state.name}`}>
+                      <input aria-label="Independent state name" value={state.name} onChange={(event) => update((draft) => {
+                        const target = draft.layers[layerIndex];
+                        const previous = target.states[stateIndex].name;
+                        const next = event.target.value;
+                        target.states[stateIndex].name = next;
+                        if (target.default_state === previous) target.default_state = next;
+                        for (const transition of target.transitions) {
+                          if (transition.from === previous) transition.from = next;
+                          if (transition.to === previous) transition.to = next;
                         }
-                      })}>
-                        <option value="">No Override</option>
-                        {motion && !clips.some((clip) => clip.relPath === motion.clip) && (
-                          <option value={motion.clip}>{motion.clip} (Missing)</option>
-                        )}
+                      })} />
+                      <select value={state.clip} onChange={(event) => update((draft) => { draft.layers[layerIndex].states[stateIndex].clip = event.target.value; })}>
+                        {state.clip && !clips.some((clip) => clip.relPath === state.clip) && <option value={state.clip}>{state.clip} (Missing)</option>}
+                        <option value="">Select Animation Clip</option>
                         {clips.map((clip) => <option key={clip.id} value={clip.relPath}>{clip.name}</option>)}
                       </select>
-                    </label>
-                  );
-                })}
-              </div>
+                      <label>Speed <input type="number" step="0.1" value={state.speed} onChange={(event) => update((draft) => { draft.layers[layerIndex].states[stateIndex].speed = Number(event.target.value); })} /></label>
+                      <button type="button" disabled={layer.states.length <= 1} title="Delete state" onClick={() => update((draft) => {
+                        const target = draft.layers[layerIndex];
+                        const removed = target.states[stateIndex].name;
+                        target.states.splice(stateIndex, 1);
+                        target.transitions = target.transitions.filter((transition) => transition.from !== removed && transition.to !== removed);
+                        if (target.default_state === removed) target.default_state = target.states[0]?.name ?? '';
+                      })}>×</button>
+                    </div>
+                  ))}
+                  {layer.transitions.map((transition, transitionIndex) => (
+                    <div className="animator-layer-transition" key={transitionIndex}>
+                      <div className="animator-row">
+                        <select aria-label="Independent transition source" value={transition.from} onChange={(event) => update((draft) => {
+                          const target = draft.layers[layerIndex].transitions[transitionIndex];
+                          target.from = event.target.value;
+                          if (target.from === target.to) {
+                            target.to = draft.layers[layerIndex].states.find((state) => state.name !== target.from)?.name ?? target.to;
+                          }
+                        })}>
+                          <option value="*">Any State</option>
+                          {layer.states.map((state) => <option key={state.name} value={state.name}>{state.name}</option>)}
+                        </select>
+                        <span>→</span>
+                        <select aria-label="Independent transition destination" value={transition.to} onChange={(event) => update((draft) => { draft.layers[layerIndex].transitions[transitionIndex].to = event.target.value; })}>
+                          {layer.states.filter((state) => state.name !== transition.from).map((state) => <option key={state.name} value={state.name}>{state.name}</option>)}
+                        </select>
+                        <label>Blend <input type="number" min="0" step="0.05" value={transition.duration} onChange={(event) => update((draft) => { draft.layers[layerIndex].transitions[transitionIndex].duration = Number(event.target.value); })} /></label>
+                        <label><input type="checkbox" checked={transition.has_exit_time} onChange={(event) => update((draft) => { draft.layers[layerIndex].transitions[transitionIndex].has_exit_time = event.target.checked; })} /> Exit Time</label>
+                        {transition.has_exit_time && <input aria-label="Independent transition exit time" type="number" min="0" step="0.05" value={transition.exit_time} onChange={(event) => update((draft) => { draft.layers[layerIndex].transitions[transitionIndex].exit_time = Number(event.target.value); })} />}
+                        <button type="button" onClick={() => update((draft) => { draft.layers[layerIndex].transitions.splice(transitionIndex, 1); })}>×</button>
+                      </div>
+                      <div className="animator-row">
+                        <button type="button" disabled={controller.parameters.length === 0} onClick={() => update((draft) => {
+                          const parameter = draft.parameters[0];
+                          if (!parameter) return;
+                          draft.layers[layerIndex].transitions[transitionIndex].conditions.push({
+                            parameter: parameter.name,
+                            mode: parameterModes(parameter.kind)[0],
+                            threshold: 0,
+                          });
+                        })}>+ Condition</button>
+                      </div>
+                      {transition.conditions.map((condition, conditionIndex) => {
+                        const parameter = controller.parameters.find((item) => item.name === condition.parameter);
+                        const modes = parameterModes(parameter?.kind ?? 'float');
+                        return (
+                          <div className="animator-row condition" key={conditionIndex}>
+                            <select value={condition.parameter} onChange={(event) => update((draft) => {
+                              const next = draft.parameters.find((item) => item.name === event.target.value)!;
+                              const target = draft.layers[layerIndex].transitions[transitionIndex].conditions[conditionIndex];
+                              target.parameter = next.name;
+                              target.mode = parameterModes(next.kind)[0];
+                            })}>{controller.parameters.map((item) => <option key={item.name} value={item.name}>{item.name}</option>)}</select>
+                            <select value={condition.mode} onChange={(event) => update((draft) => { draft.layers[layerIndex].transitions[transitionIndex].conditions[conditionIndex].mode = event.target.value as AnimatorConditionMode; })}>{modes.map((mode) => <option key={mode} value={mode}>{mode}</option>)}</select>
+                            {!['if', 'if_not', 'trigger'].includes(condition.mode) && <input type="number" step="0.1" value={condition.threshold} onChange={(event) => update((draft) => { draft.layers[layerIndex].transitions[transitionIndex].conditions[conditionIndex].threshold = Number(event.target.value); })} />}
+                            <button type="button" onClick={() => update((draft) => { draft.layers[layerIndex].transitions[transitionIndex].conditions.splice(conditionIndex, 1); })}>×</button>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
           ))}
-          <div className="field-hint">Layers reuse Base Layer state timing. External and inline Avatar Mask paths are combined, and each path includes matching descendants.</div>
+          <div className="field-hint">Synced layers follow Base timing; Independent layers own their states and transitions while sharing Controller parameters. External and inline Avatar Mask paths are combined.</div>
         </section>
 
         {assigned && (
@@ -662,6 +793,13 @@ function AnimatorControllerEditor(props: AnimatorEditorProps) {
                     if (condition.parameter === previous) condition.parameter = next;
                   }
                 }
+                for (const layer of draft.layers) {
+                  for (const transition of layer.transitions) {
+                    for (const condition of transition.conditions) {
+                      if (condition.parameter === previous) condition.parameter = next;
+                    }
+                  }
+                }
               })} />
               <select value={parameter.kind} onChange={(event) => update((draft) => {
                 const next = event.target.value as AnimatorParameterKind;
@@ -670,6 +808,15 @@ function AnimatorControllerEditor(props: AnimatorEditorProps) {
                   for (const condition of transition.conditions) {
                     if (condition.parameter === draft.parameters[index].name) {
                       condition.mode = parameterModes(next)[0];
+                    }
+                  }
+                }
+                for (const layer of draft.layers) {
+                  for (const transition of layer.transitions) {
+                    for (const condition of transition.conditions) {
+                      if (condition.parameter === draft.parameters[index].name) {
+                        condition.mode = parameterModes(next)[0];
+                      }
                     }
                   }
                 }
@@ -683,6 +830,11 @@ function AnimatorControllerEditor(props: AnimatorEditorProps) {
                 const name = draft.parameters[index].name;
                 draft.parameters.splice(index, 1);
                 for (const transition of draft.transitions) transition.conditions = transition.conditions.filter((condition) => condition.parameter !== name);
+                for (const layer of draft.layers) {
+                  for (const transition of layer.transitions) {
+                    transition.conditions = transition.conditions.filter((condition) => condition.parameter !== name);
+                  }
+                }
               })}>×</button>
             </div>
           ))}

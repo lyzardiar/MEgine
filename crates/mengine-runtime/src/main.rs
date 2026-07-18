@@ -2088,6 +2088,9 @@ fn validate_world_assets(
                     for motion in &layer.motions {
                         validate_animation_clip_asset(&motion.clip, project_root, validated)?;
                     }
+                    for state in &layer.states {
+                        validate_animation_clip_asset(&state.clip, project_root, validated)?;
+                    }
                 }
             }
         }
@@ -2443,6 +2446,7 @@ mod tests {
         std::fs::create_dir_all(&animations).unwrap();
         std::fs::write(animations.join("Idle.manim"), "{}").unwrap();
         std::fs::write(animations.join("Wave.manim"), "{}").unwrap();
+        std::fs::write(animations.join("Aim.manim"), "{}").unwrap();
         std::fs::write(
             animations.join("Upper Body.mavatar"),
             r#"{"version":1,"name":"Upper Body","paths":["Rig/Spine"]}"#,
@@ -2456,6 +2460,9 @@ mod tests {
               "layers":[{
                 "name":"Upper Body","avatar_mask":"Assets/Animations/Upper Body.mavatar",
                 "motions":[{"state":"Idle","clip":"Assets/Animations/Wave.manim"}]
+              },{
+                "name":"Independent Aim","timing_mode":"independent","default_state":"Aim",
+                "states":[{"name":"Aim","clip":"Assets/Animations/Aim.manim"}]
               }]
             }"#,
         )
@@ -2474,7 +2481,7 @@ mod tests {
         std::fs::remove_dir_all(&root).unwrap();
 
         result.expect("base and layer clips should pass package validation");
-        assert_eq!(validated.len(), 4);
+        assert_eq!(validated.len(), 5);
     }
 
     #[test]

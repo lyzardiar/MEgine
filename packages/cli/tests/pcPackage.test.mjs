@@ -183,10 +183,16 @@ test('buildPcPackage validates transitive material animator and audio dependenci
         blend_mode: 'override',
         avatar_mask: 'Assets/Animations/Upper Body.mavatar',
         motions: [{ state: 'Idle', clip: 'Assets/Animations/Wave.manim' }],
+      }, {
+        name: 'Independent Aim',
+        timing_mode: 'independent',
+        default_state: 'Aim',
+        states: [{ name: 'Aim', clip: 'Assets/Animations/Aim.manim' }],
       }],
     }));
     writeFileSync(join(paths.project, 'Assets', 'Animations', 'Idle.manim'), '{}');
     writeFileSync(join(paths.project, 'Assets', 'Animations', 'Wave.manim'), '{}');
+    writeFileSync(join(paths.project, 'Assets', 'Animations', 'Aim.manim'), '{}');
     writeFileSync(join(paths.project, 'Assets', 'Animations', 'Upper Body.mavatar'), JSON.stringify({
       version: 1,
       name: 'Upper Body',
@@ -203,8 +209,8 @@ test('buildPcPackage validates transitive material animator and audio dependenci
     });
     assert.deepEqual(manifest.assetValidation, {
       rootScenes: 2,
-      references: 10,
-      validatedFiles: 10,
+      references: 11,
+      validatedFiles: 11,
     });
   } finally {
     rmSync(paths.root, { recursive: true, force: true });
@@ -239,6 +245,46 @@ test('buildPcPackage rejects unsafe Avatar Mask paths before publishing output',
       runtimePath: paths.runtime,
       engineVersion: 'test-engine',
     }), /Avatar Mask.*cannot contain '\.\.'/);
+    assert.equal(existsSync(paths.output), false);
+  } finally {
+    rmSync(paths.root, { recursive: true, force: true });
+  }
+});
+
+test('buildPcPackage rejects incompatible independent layer conditions before publishing', () => {
+  const paths = fixture('invalid-independent-condition');
+  try {
+    writeFileSync(join(paths.project, 'Assets', 'Scenes', 'Main.mscene'), JSON.stringify({
+      world: { entities: [{ components: {
+        Animator: { controller: 'Assets/Animations/Hero.mcontroller' },
+      } }] },
+    }));
+    writeFileSync(join(paths.project, 'Assets', 'Animations', 'Hero.mcontroller'), JSON.stringify({
+      version: 4,
+      default_state: 'Idle',
+      parameters: [{ name: 'Wave', kind: 'bool' }],
+      states: [{ name: 'Idle', clip: 'Assets/Animations/Idle.manim' }],
+      layers: [{
+        name: 'Upper',
+        timing_mode: 'independent',
+        default_state: 'Rest',
+        states: [
+          { name: 'Rest', clip: 'Assets/Animations/Idle.manim' },
+          { name: 'Wave', clip: 'Assets/Animations/Idle.manim' },
+        ],
+        transitions: [{
+          from: 'Rest', to: 'Wave',
+          conditions: [{ parameter: 'Wave', mode: 'greater' }],
+        }],
+      }],
+    }));
+    writeFileSync(join(paths.project, 'Assets', 'Animations', 'Idle.manim'), '{}');
+    assert.throws(() => buildPcPackage({
+      projectDir: paths.project,
+      outputDir: paths.output,
+      runtimePath: paths.runtime,
+      engineVersion: 'test-engine',
+    }), /condition greater is incompatible with parameter Wave/);
     assert.equal(existsSync(paths.output), false);
   } finally {
     rmSync(paths.root, { recursive: true, force: true });

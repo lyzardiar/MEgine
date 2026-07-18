@@ -8,6 +8,7 @@ export type AnimatorConditionMode =
   | 'not_equal'
   | 'trigger';
 export type AnimatorLayerBlendMode = 'override' | 'additive';
+export type AnimatorLayerTimingMode = 'synced' | 'independent';
 
 export type AnimatorParameter = {
   name: string;
@@ -49,13 +50,17 @@ export type AnimatorLayer = {
   enabled: boolean;
   weight: number;
   blend_mode: AnimatorLayerBlendMode;
+  timing_mode: AnimatorLayerTimingMode;
   avatar_mask: string;
   mask_paths: string[];
   motions: AnimatorLayerMotion[];
+  default_state: string;
+  states: AnimatorState[];
+  transitions: AnimatorTransition[];
 };
 
 export type AnimatorController = {
-  version: 3;
+  version: 4;
   name: string;
   default_state: string;
   parameters: AnimatorParameter[];
@@ -71,6 +76,7 @@ const CONDITION_MODES = new Set<AnimatorConditionMode>([
   'if', 'if_not', 'greater', 'less', 'equals', 'not_equal', 'trigger',
 ]);
 const LAYER_BLEND_MODES = new Set<AnimatorLayerBlendMode>(['override', 'additive']);
+const LAYER_TIMING_MODES = new Set<AnimatorLayerTimingMode>(['synced', 'independent']);
 
 function record(value: unknown): Record<string, unknown> {
   return value != null && typeof value === 'object' && !Array.isArray(value)
@@ -143,7 +149,7 @@ export function createAnimatorController(
   initialClip = 'Assets/Animations/New State.manim',
 ): AnimatorController {
   return {
-    version: 3,
+    version: 4,
     name,
     default_state: 'Idle',
     parameters: [],
@@ -202,6 +208,7 @@ export function normalizeAnimatorController(value: unknown): AnimatorController 
   const layers = (Array.isArray(source.layers) ? source.layers : []).map((item) => {
     const layer = record(item);
     const rawBlendMode = String(layer.blend_mode ?? 'override') as AnimatorLayerBlendMode;
+    const rawTimingMode = String(layer.timing_mode ?? 'synced') as AnimatorLayerTimingMode;
     const maskPaths = [...new Set((Array.isArray(layer.mask_paths) ? layer.mask_paths : [])
       .map(normalizeMaskPath)
       .filter(Boolean))];
@@ -212,18 +219,51 @@ export function normalizeAnimatorController(value: unknown): AnimatorController 
         clip: String(motion.clip ?? '').trim().replace(/\\/g, '/'),
       } satisfies AnimatorLayerMotion;
     });
+    const layerStates = (Array.isArray(layer.states) ? layer.states : []).map((item, index) => {
+      const state = record(item);
+      const position = Array.isArray(state.position) ? state.position : [];
+      return {
+        name: String(state.name ?? '').trim(),
+        clip: String(state.clip ?? '').trim().replace(/\\/g, '/'),
+        speed: finite(state.speed, 1),
+        position: [finite(position[0], 100 + index * 170), finite(position[1], 90)],
+      } satisfies AnimatorState;
+    });
+    const layerTransitions = (Array.isArray(layer.transitions) ? layer.transitions : []).map((item) => {
+      const transition = record(item);
+      return {
+        from: String(transition.from ?? '').trim(),
+        to: String(transition.to ?? '').trim(),
+        duration: Math.max(0, finite(transition.duration, 0.15)),
+        has_exit_time: Boolean(transition.has_exit_time),
+        exit_time: Math.max(0, finite(transition.exit_time, 1)),
+        conditions: (Array.isArray(transition.conditions) ? transition.conditions : []).map((item) => {
+          const condition = record(item);
+          const rawMode = String(condition.mode ?? 'if') as AnimatorConditionMode;
+          return {
+            parameter: String(condition.parameter ?? '').trim(),
+            mode: CONDITION_MODES.has(rawMode) ? rawMode : 'if',
+            threshold: finite(condition.threshold, 0),
+          } satisfies AnimatorCondition;
+        }),
+      } satisfies AnimatorTransition;
+    });
     return {
       name: String(layer.name ?? '').trim(),
       enabled: layer.enabled !== false,
       weight: Math.max(0, Math.min(1, finite(layer.weight, 1))),
       blend_mode: LAYER_BLEND_MODES.has(rawBlendMode) ? rawBlendMode : 'override',
+      timing_mode: LAYER_TIMING_MODES.has(rawTimingMode) ? rawTimingMode : 'synced',
       avatar_mask: String(layer.avatar_mask ?? '').trim().replace(/\\/g, '/'),
       mask_paths: maskPaths,
       motions,
+      default_state: String(layer.default_state ?? '').trim(),
+      states: layerStates,
+      transitions: layerTransitions,
     } satisfies AnimatorLayer;
   });
   const controller: AnimatorController = {
-    version: 3,
+    version: 4,
     name: String(source.name ?? ''),
     default_state: String(source.default_state ?? '').trim(),
     parameters,
@@ -285,6 +325,33 @@ export function validateAnimatorController(controller: AnimatorController): void
     }
     if (layer.avatar_mask.split('/').includes('..')) {
       throw new Error(`动画层 ${layer.name} 包含不安全的 Avatar Mask 资源路径`);
+    }
+    if (layer.timing_mode === 'independent') {
+      if (layer.states.length === 0) throw new Error(`独立动画层 ${layer.name} 至少需要一个 State`);
+      const layerStateNames = new Set<string>();
+      for (const state of layer.states) {
+        if (!state.name || !state.clip) throw new Error(`独立动画层 ${layer.name} 的 State 必须设置名称和 Animation Clip`);
+        if (layerStateNames.has(state.name)) throw new Error(`独立动画层 ${layer.name} 的 State 名称重复：${state.name}`);
+        layerStateNames.add(state.name);
+      }
+      if (!layerStateNames.has(layer.default_state)) throw new Error(`独立动画层 ${layer.name} 的默认 State 不存在：${layer.default_state || '(空)'}`);
+      for (const transition of layer.transitions) {
+        if ((transition.from !== '*' && !layerStateNames.has(transition.from)) || !layerStateNames.has(transition.to)) {
+          throw new Error(`独立动画层 ${layer.name} 的过渡引用了不存在的 State：${transition.from} -> ${transition.to}`);
+        }
+        if (transition.from === transition.to) throw new Error(`独立动画层 ${layer.name} 的 State 不能过渡到自身：${transition.from}`);
+        for (const condition of transition.conditions) {
+          const parameter = controller.parameters.find((item) => item.name === condition.parameter);
+          if (!parameter) throw new Error(`独立动画层 ${layer.name} 的过渡条件引用了不存在的参数：${condition.parameter}`);
+          const compatible = parameter.kind === 'bool'
+            ? ['if', 'if_not'].includes(condition.mode)
+            : parameter.kind === 'trigger'
+              ? condition.mode === 'trigger'
+              : ['greater', 'less', 'equals', 'not_equal'].includes(condition.mode);
+          if (!compatible) throw new Error(`独立动画层 ${layer.name} 的条件 ${condition.mode} 与参数 ${condition.parameter} 不兼容`);
+        }
+      }
+      continue;
     }
     const motionStates = new Set<string>();
     for (const motion of layer.motions) {

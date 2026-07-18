@@ -462,6 +462,43 @@ export function validateBuildAssetDependencies(
       if (defaultState && !stateNames.has(defaultState)) {
         throw new Error(`invalid animator controller ${source}: default state ${defaultState} does not exist`);
       }
+      if (controller.parameters != null && !Array.isArray(controller.parameters)) {
+        throw new Error(`invalid animator controller ${source}: parameters must be an array`);
+      }
+      const parameterKinds = new Map<string, string>();
+      for (const parameterValue of Array.isArray(controller.parameters) ? controller.parameters : []) {
+        const parameter = jsonObject(parameterValue);
+        if (!parameter) throw new Error(`invalid animator controller ${source}: parameter must be an object`);
+        const parameterName = strictStringValue(parameter, 'name', `animator controller ${source}`);
+        const kind = strictStringValue(parameter, 'kind', `animator controller ${source}`) || 'bool';
+        if (!parameterName || parameterKinds.has(parameterName)
+          || !['bool', 'float', 'int', 'trigger'].includes(kind)) {
+          throw new Error(`invalid animator controller ${source}: invalid or duplicate parameter ${parameterName || '(empty)'}`);
+        }
+        parameterKinds.set(parameterName, kind);
+      }
+      const validateTransitionConditions = (transition: JsonObject, owner: string) => {
+        if (transition.conditions != null && !Array.isArray(transition.conditions)) {
+          throw new Error(`invalid animator controller ${source}: ${owner} conditions must be an array`);
+        }
+        for (const conditionValue of Array.isArray(transition.conditions) ? transition.conditions : []) {
+          const condition = jsonObject(conditionValue);
+          if (!condition) throw new Error(`invalid animator controller ${source}: ${owner} condition must be an object`);
+          const parameter = strictStringValue(condition, 'parameter', `animator controller ${source}`);
+          const mode = strictStringValue(condition, 'mode', `animator controller ${source}`) || 'if';
+          const kind = parameterKinds.get(parameter);
+          const compatible = kind === 'bool'
+            ? mode === 'if' || mode === 'if_not'
+            : kind === 'trigger'
+              ? mode === 'trigger'
+              : kind === 'float' || kind === 'int'
+                ? ['greater', 'less', 'equals', 'not_equal'].includes(mode)
+                : false;
+          if (!compatible) {
+            throw new Error(`invalid animator controller ${source}: ${owner} condition ${mode} is incompatible with parameter ${parameter || '(empty)'}`);
+          }
+        }
+      };
       if (controller.transitions != null && !Array.isArray(controller.transitions)) {
         throw new Error(`invalid animator controller ${source}: transitions must be an array`);
       }
@@ -477,6 +514,7 @@ export function validateBuildAssetDependencies(
         if ((from !== '*' && !stateNames.has(from)) || !stateNames.has(to)) {
           throw new Error(`invalid animator controller ${source}: transition ${from} -> ${to} references a missing state`);
         }
+        validateTransitionConditions(transition, `transition ${from} -> ${to}`);
       }
       if (controller.layers != null && !Array.isArray(controller.layers)) {
         throw new Error(`invalid animator controller ${source}: layers must be an array`);
@@ -500,6 +538,10 @@ export function validateBuildAssetDependencies(
             || layer.weight > 1)) {
           throw new Error(`invalid animator controller ${source}: layer ${name} weight must be from 0 to 1`);
         }
+        const timingMode = strictStringValue(layer, 'timing_mode', `animator controller ${source}`) || 'synced';
+        if (timingMode !== 'synced' && timingMode !== 'independent') {
+          throw new Error(`invalid animator controller ${source}: layer ${name} has unsupported timing_mode`);
+        }
         if (layer.mask_paths != null
           && (!Array.isArray(layer.mask_paths)
             || layer.mask_paths.some((path) => typeof path !== 'string'))) {
@@ -515,6 +557,41 @@ export function validateBuildAssetDependencies(
             throw new Error(`invalid animator controller ${source}: layer ${name} avatar_mask must reference a .mavatar asset`);
           }
           enqueue(avatarMask, source, `animator layer ${name} Avatar Mask`);
+        }
+        if (timingMode === 'independent') {
+          if (!Array.isArray(layer.states) || layer.states.length === 0) {
+            throw new Error(`invalid animator controller ${source}: independent layer ${name} states must be a non-empty array`);
+          }
+          const independentStateNames = new Set<string>();
+          for (const stateValue of layer.states) {
+            const state = jsonObject(stateValue);
+            if (!state) throw new Error(`invalid animator controller ${source}: independent layer ${name} state must be an object`);
+            const stateName = strictStringValue(state, 'name', `animator controller ${source}`);
+            const clip = strictStringValue(state, 'clip', `animator controller ${source}`);
+            if (!stateName || !clip || independentStateNames.has(stateName)) {
+              throw new Error(`invalid animator controller ${source}: independent layer ${name} has invalid state ${stateName || '(empty)'}`);
+            }
+            independentStateNames.add(stateName);
+            enqueue(clip, source, `independent animator layer ${name} clip`);
+          }
+          const independentDefault = strictStringValue(layer, 'default_state', `animator controller ${source}`);
+          if (!independentStateNames.has(independentDefault)) {
+            throw new Error(`invalid animator controller ${source}: independent layer ${name} default state ${independentDefault || '(empty)'} does not exist`);
+          }
+          if (layer.transitions != null && !Array.isArray(layer.transitions)) {
+            throw new Error(`invalid animator controller ${source}: independent layer ${name} transitions must be an array`);
+          }
+          for (const transitionValue of Array.isArray(layer.transitions) ? layer.transitions : []) {
+            const transition = jsonObject(transitionValue);
+            if (!transition) throw new Error(`invalid animator controller ${source}: independent layer ${name} transition must be an object`);
+            const from = strictStringValue(transition, 'from', `animator controller ${source}`);
+            const to = strictStringValue(transition, 'to', `animator controller ${source}`);
+            if ((from !== '*' && !independentStateNames.has(from)) || !independentStateNames.has(to) || from === to) {
+              throw new Error(`invalid animator controller ${source}: independent layer ${name} transition ${from} -> ${to} is invalid`);
+            }
+            validateTransitionConditions(transition, `independent layer ${name} transition ${from} -> ${to}`);
+          }
+          continue;
         }
         if (layer.motions != null && !Array.isArray(layer.motions)) {
           throw new Error(`invalid animator controller ${source}: layer ${name} motions must be an array`);

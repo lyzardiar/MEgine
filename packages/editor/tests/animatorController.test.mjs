@@ -80,15 +80,19 @@ test('animator controller upgrades and validates synchronized layers with target
       motions: [{ state: 'Run', clip: 'Assets\\Animations\\wave.manim' }],
     }],
   });
-  assert.equal(controller.version, 3);
+  assert.equal(controller.version, 4);
   assert.deepEqual(controller.layers[0], {
     name: 'Upper Body',
     enabled: true,
     weight: 1,
     blend_mode: 'additive',
+    timing_mode: 'synced',
     avatar_mask: 'Assets/Animations/Upper.mavatar',
     mask_paths: ['Rig/Spine'],
     motions: [{ state: 'Run', clip: 'Assets/Animations/wave.manim' }],
+    default_state: '',
+    states: [],
+    transitions: [],
   });
   assert.doesNotThrow(() => serializeAnimatorController(controller));
 
@@ -100,4 +104,28 @@ test('animator controller upgrades and validates synchronized layers with target
   controller.layers[0].mask_paths = [];
   controller.layers[0].avatar_mask = '../Outside.mavatar';
   assert.throws(() => serializeAnimatorController(controller), /不安全/);
+});
+
+test('animator controller validates independent layer state machines', () => {
+  const controller = normalizeAnimatorController({
+    default_state: 'Idle',
+    parameters: [{ name: 'Wave', kind: 'bool' }],
+    states: [{ name: 'Idle', clip: 'idle.manim' }],
+    layers: [{
+      name: 'Upper Body',
+      timing_mode: 'independent',
+      default_state: 'Rest',
+      states: [
+        { name: 'Rest', clip: 'rest.manim' },
+        { name: 'Wave', clip: 'wave.manim' },
+      ],
+      transitions: [{
+        from: 'Rest', to: 'Wave', duration: 0.2,
+        conditions: [{ parameter: 'Wave', mode: 'if' }],
+      }],
+    }],
+  });
+  assert.doesNotThrow(() => serializeAnimatorController(controller));
+  controller.layers[0].default_state = 'Missing';
+  assert.throws(() => serializeAnimatorController(controller), /默认 State 不存在/);
 });

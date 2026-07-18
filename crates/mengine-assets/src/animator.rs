@@ -4,7 +4,7 @@ use std::collections::HashSet;
 use std::path::Path;
 
 fn default_version() -> u32 {
-    3
+    4
 }
 
 fn default_state_speed() -> f32 {
@@ -110,6 +110,14 @@ pub enum AnimatorLayerBlendMode {
     Additive,
 }
 
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "snake_case")]
+pub enum AnimatorLayerTimingMode {
+    #[default]
+    Synced,
+    Independent,
+}
+
 #[derive(Clone, Debug, Default, PartialEq, Serialize, Deserialize)]
 #[serde(default)]
 pub struct AnimatorLayerMotion {
@@ -126,12 +134,17 @@ pub struct AnimatorLayer {
     #[serde(default = "default_layer_weight")]
     pub weight: f32,
     pub blend_mode: AnimatorLayerBlendMode,
+    pub timing_mode: AnimatorLayerTimingMode,
     /// Optional reusable Avatar Mask asset. Its paths are unioned with `mask_paths`.
     pub avatar_mask: String,
     /// Relative target paths included by this layer. Empty means all targets.
     pub mask_paths: Vec<String>,
     /// Motions synchronized to states in the base state machine.
     pub motions: Vec<AnimatorLayerMotion>,
+    /// State machine used when `timing_mode` is `independent`.
+    pub default_state: String,
+    pub states: Vec<AnimatorState>,
+    pub transitions: Vec<AnimatorTransition>,
 }
 
 impl Default for AnimatorLayer {
@@ -141,9 +154,13 @@ impl Default for AnimatorLayer {
             enabled: true,
             weight: default_layer_weight(),
             blend_mode: AnimatorLayerBlendMode::Override,
+            timing_mode: AnimatorLayerTimingMode::Synced,
             avatar_mask: String::new(),
             mask_paths: Vec::new(),
             motions: Vec::new(),
+            default_state: String::new(),
+            states: Vec::new(),
+            transitions: Vec::new(),
         }
     }
 }
@@ -151,6 +168,10 @@ impl Default for AnimatorLayer {
 impl AnimatorLayer {
     pub fn motion(&self, state: &str) -> Option<&AnimatorLayerMotion> {
         self.motions.iter().find(|motion| motion.state == state)
+    }
+
+    pub fn state(&self, name: &str) -> Option<&AnimatorState> {
+        self.states.iter().find(|state| state.name == name)
     }
 }
 
@@ -242,6 +263,7 @@ impl AnimatorController {
         }
         for layer in &mut self.layers {
             layer.name = layer.name.trim().to_owned();
+            layer.default_state = layer.default_state.trim().to_owned();
             layer.avatar_mask = layer.avatar_mask.trim().replace('\\', "/");
             layer.weight = if layer.weight.is_finite() {
                 layer.weight.clamp(0.0, 1.0)
@@ -258,6 +280,38 @@ impl AnimatorController {
             for motion in &mut layer.motions {
                 motion.state = motion.state.trim().to_owned();
                 motion.clip = motion.clip.trim().replace('\\', "/");
+            }
+            for state in &mut layer.states {
+                state.name = state.name.trim().to_owned();
+                state.clip = state.clip.trim().replace('\\', "/");
+                if !state.speed.is_finite() {
+                    state.speed = default_state_speed();
+                }
+                for position in &mut state.position {
+                    if !position.is_finite() {
+                        *position = 0.0;
+                    }
+                }
+            }
+            for transition in &mut layer.transitions {
+                transition.from = transition.from.trim().to_owned();
+                transition.to = transition.to.trim().to_owned();
+                transition.duration = if transition.duration.is_finite() {
+                    transition.duration.max(0.0)
+                } else {
+                    0.0
+                };
+                transition.exit_time = if transition.exit_time.is_finite() {
+                    transition.exit_time.max(0.0)
+                } else {
+                    1.0
+                };
+                for condition in &mut transition.conditions {
+                    condition.parameter = condition.parameter.trim().to_owned();
+                    if !condition.threshold.is_finite() {
+                        condition.threshold = 0.0;
+                    }
+                }
             }
         }
         self.validate()?;
@@ -320,33 +374,7 @@ impl AnimatorController {
                 )));
             }
             for condition in &transition.conditions {
-                let Some(parameter) = self.parameter(&condition.parameter) else {
-                    return Err(AssetError::Invalid(format!(
-                        "transition references unknown parameter '{}'",
-                        condition.parameter
-                    )));
-                };
-                let compatible = match condition.mode {
-                    AnimatorConditionMode::If | AnimatorConditionMode::IfNot => {
-                        parameter.kind == AnimatorParameterKind::Bool
-                    }
-                    AnimatorConditionMode::Trigger => {
-                        parameter.kind == AnimatorParameterKind::Trigger
-                    }
-                    AnimatorConditionMode::Greater
-                    | AnimatorConditionMode::Less
-                    | AnimatorConditionMode::Equals
-                    | AnimatorConditionMode::NotEqual => matches!(
-                        parameter.kind,
-                        AnimatorParameterKind::Float | AnimatorParameterKind::Int
-                    ),
-                };
-                if !compatible {
-                    return Err(AssetError::Invalid(format!(
-                        "condition mode {:?} is incompatible with parameter '{}' ({:?})",
-                        condition.mode, condition.parameter, parameter.kind
-                    )));
-                }
+                validate_condition_parameter(self, condition)?;
             }
         }
         let mut layer_names = HashSet::new();
@@ -382,6 +410,55 @@ impl AnimatorController {
                 )));
             }
             let mut layer_states = HashSet::new();
+            if layer.timing_mode == AnimatorLayerTimingMode::Independent {
+                if layer.states.is_empty() {
+                    return Err(AssetError::Invalid(format!(
+                        "independent Animator layer '{}' needs at least one state",
+                        layer.name
+                    )));
+                }
+                for state in &layer.states {
+                    if state.name.is_empty() || state.clip.is_empty() {
+                        return Err(AssetError::Invalid(format!(
+                            "independent Animator layer '{}' states require names and clips",
+                            layer.name
+                        )));
+                    }
+                    if !layer_states.insert(state.name.as_str()) {
+                        return Err(AssetError::Invalid(format!(
+                            "independent Animator layer '{}' contains duplicate state '{}'",
+                            layer.name, state.name
+                        )));
+                    }
+                }
+                if !layer_states.contains(layer.default_state.as_str()) {
+                    return Err(AssetError::Invalid(format!(
+                        "independent Animator layer '{}' default state '{}' does not exist",
+                        layer.name, layer.default_state
+                    )));
+                }
+                for transition in &layer.transitions {
+                    if (transition.from != "*" && !layer_states.contains(transition.from.as_str()))
+                        || !layer_states.contains(transition.to.as_str())
+                    {
+                        return Err(AssetError::Invalid(format!(
+                            "independent Animator layer '{}' transition '{} -> {}' references a missing state",
+                            layer.name, transition.from, transition.to
+                        )));
+                    }
+                    if transition.from == transition.to {
+                        return Err(AssetError::Invalid(format!(
+                            "independent Animator layer '{}' state '{}' cannot target itself",
+                            layer.name, transition.from
+                        )));
+                    }
+                    for condition in &transition.conditions {
+                        validate_condition_parameter(self, condition)?;
+                    }
+                }
+                continue;
+            }
+            layer_states.clear();
             for motion in &layer.motions {
                 if !state_names.contains(motion.state.as_str()) {
                     return Err(AssetError::Invalid(format!(
@@ -415,6 +492,38 @@ impl AnimatorController {
             .iter()
             .find(|parameter| parameter.name == name)
     }
+}
+
+fn validate_condition_parameter(
+    controller: &AnimatorController,
+    condition: &AnimatorCondition,
+) -> Result<(), AssetError> {
+    let Some(parameter) = controller.parameter(&condition.parameter) else {
+        return Err(AssetError::Invalid(format!(
+            "transition references unknown parameter '{}'",
+            condition.parameter
+        )));
+    };
+    let compatible = match condition.mode {
+        AnimatorConditionMode::If | AnimatorConditionMode::IfNot => {
+            parameter.kind == AnimatorParameterKind::Bool
+        }
+        AnimatorConditionMode::Trigger => parameter.kind == AnimatorParameterKind::Trigger,
+        AnimatorConditionMode::Greater
+        | AnimatorConditionMode::Less
+        | AnimatorConditionMode::Equals
+        | AnimatorConditionMode::NotEqual => matches!(
+            parameter.kind,
+            AnimatorParameterKind::Float | AnimatorParameterKind::Int
+        ),
+    };
+    if !compatible {
+        return Err(AssetError::Invalid(format!(
+            "condition mode {:?} is incompatible with parameter '{}' ({:?})",
+            condition.mode, condition.parameter, parameter.kind
+        )));
+    }
+    Ok(())
 }
 
 fn normalize_mask_path(path: &str) -> String {
@@ -462,7 +571,7 @@ mod tests {
             }"#,
         )
         .unwrap();
-        assert_eq!(controller.version, 3);
+        assert_eq!(controller.version, 4);
         assert_eq!(controller.states[0].clip, "Assets/Animations/idle.manim");
         assert_eq!(controller.states[0].position, [0.0, 0.0]);
         assert_eq!(controller.transitions[0].duration, 0.0);
@@ -530,5 +639,44 @@ mod tests {
         )
         .unwrap_err();
         assert!(error.to_string().contains("unknown state 'Missing'"));
+    }
+
+    #[test]
+    fn controller_validates_independent_layer_state_machines() {
+        let controller = parse_animator_controller(
+            br#"{
+              "version":4,"default_state":"Idle",
+              "parameters":[{"name":"Wave","kind":"bool"}],
+              "states":[{"name":"Idle","clip":"idle.manim"}],
+              "layers":[{
+                "name":"Upper","timing_mode":"independent","default_state":"Rest",
+                "states":[
+                  {"name":"Rest","clip":"rest.manim"},
+                  {"name":"Wave","clip":"wave.manim"}
+                ],
+                "transitions":[{
+                  "from":"Rest","to":"Wave","duration":0.2,
+                  "conditions":[{"parameter":"Wave","mode":"if"}]
+                }]
+              }]
+            }"#,
+        )
+        .unwrap();
+        assert_eq!(
+            controller.layers[0].timing_mode,
+            AnimatorLayerTimingMode::Independent
+        );
+        assert_eq!(
+            controller.layers[0].state("Wave").unwrap().clip,
+            "wave.manim"
+        );
+
+        let mut invalid = controller;
+        invalid.layers[0].default_state = "Missing".into();
+        assert!(invalid
+            .validate()
+            .unwrap_err()
+            .to_string()
+            .contains("default state 'Missing'"));
     }
 }

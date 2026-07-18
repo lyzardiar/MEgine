@@ -4,7 +4,7 @@ use mengine_assets::{
     load_animation_clip, load_animator_controller, load_avatar_mask, target_matches_mask,
     AnimationClip, AnimationEvent, AnimationValue, AnimationWrapMode, AnimatorCondition,
     AnimatorConditionMode, AnimatorController, AnimatorLayer, AnimatorLayerBlendMode,
-    AnimatorParameterKind, AvatarMaskAsset,
+    AnimatorLayerTimingMode, AnimatorParameterKind, AvatarMaskAsset,
 };
 use mengine_core::generated::{AnimationPlayer, Animator};
 use mengine_core::{Entity, Parent, World};
@@ -62,6 +62,14 @@ struct ActiveTransition {
 #[derive(Clone, Debug)]
 struct AnimatorInstance {
     controller: String,
+    state: String,
+    state_time: f32,
+    transition: Option<ActiveTransition>,
+    layers: HashMap<String, LayerStateMachineInstance>,
+}
+
+#[derive(Clone, Debug)]
+struct LayerStateMachineInstance {
     state: String,
     state_time: f32,
     transition: Option<ActiveTransition>,
@@ -318,6 +326,101 @@ impl AnimationRuntime {
         ))
     }
 
+    fn sample_independent_layer(
+        &mut self,
+        layer: &AnimatorLayer,
+        instance: &mut LayerStateMachineInstance,
+        delta: f32,
+        parameters: &AnimatorParameters,
+        consumed_triggers: &mut Vec<String>,
+    ) -> Result<Vec<mengine_assets::AnimationSample>, (String, String)> {
+        if let Some(active) = instance.transition.as_mut() {
+            let Some(source) = layer.state(&active.source_state) else {
+                instance.transition = None;
+                instance.state = layer.default_state.clone();
+                instance.state_time = 0.0;
+                return Ok(Vec::new());
+            };
+            let Some(destination) = layer.state(&active.destination_state) else {
+                instance.transition = None;
+                instance.state = layer.default_state.clone();
+                instance.state_time = 0.0;
+                return Ok(Vec::new());
+            };
+            active.source_time += delta * source.speed;
+            active.destination_time += delta * destination.speed;
+            active.elapsed += delta.abs();
+        } else {
+            let Some(state) = layer.state(&instance.state) else {
+                instance.state = layer.default_state.clone();
+                instance.state_time = 0.0;
+                return Ok(Vec::new());
+            };
+            instance.state_time += delta * state.speed;
+            let clip = self
+                .load_clip(&state.clip)
+                .map_err(|error| (state.clip.clone(), error))?;
+            if let Some(transition) = select_transition(
+                &layer.transitions,
+                &instance.state,
+                instance.state_time,
+                clip.duration,
+                parameters,
+                consumed_triggers,
+            ) {
+                if transition.duration <= f32::EPSILON {
+                    instance.state = transition.to.clone();
+                    instance.state_time = 0.0;
+                } else {
+                    instance.transition = Some(ActiveTransition {
+                        source_state: instance.state.clone(),
+                        source_time: instance.state_time,
+                        destination_state: transition.to.clone(),
+                        destination_time: 0.0,
+                        elapsed: 0.0,
+                        duration: transition.duration,
+                    });
+                }
+            }
+        }
+
+        let samples = if let Some(active) = instance.transition.as_ref() {
+            let source = layer
+                .state(&active.source_state)
+                .expect("validated layer state");
+            let destination = layer
+                .state(&active.destination_state)
+                .expect("validated layer state");
+            let source_clip = self
+                .load_clip(&source.clip)
+                .map_err(|error| (source.clip.clone(), error))?;
+            let destination_clip = self
+                .load_clip(&destination.clip)
+                .map_err(|error| (destination.clip.clone(), error))?;
+            blend_samples(
+                source_clip.sample(active.source_time),
+                destination_clip.sample(active.destination_time),
+                (active.elapsed / active.duration.max(f32::EPSILON)).clamp(0.0, 1.0),
+            )
+        } else {
+            let state = layer.state(&instance.state).expect("validated layer state");
+            self.load_clip(&state.clip)
+                .map_err(|error| (state.clip.clone(), error))?
+                .sample(instance.state_time)
+        };
+
+        if instance
+            .transition
+            .as_ref()
+            .is_some_and(|active| active.elapsed >= active.duration)
+        {
+            let active = instance.transition.take().expect("active transition");
+            instance.state = active.destination_state;
+            instance.state_time = active.destination_time;
+        }
+        Ok(samples)
+    }
+
     fn animator_debug_values(
         &mut self,
         controller: &AnimatorController,
@@ -413,6 +516,7 @@ impl AnimationRuntime {
                     state,
                     state_time: 0.0,
                     transition: None,
+                    layers: HashMap::new(),
                 }
             });
             if instance.controller != controller_key {
@@ -422,6 +526,7 @@ impl AnimationRuntime {
                     state: controller.default_state.clone(),
                     state_time: 0.0,
                     transition: None,
+                    layers: HashMap::new(),
                 };
             } else if !requested_state.is_empty()
                 && requested_state != instance.state
@@ -503,7 +608,7 @@ impl AnimationRuntime {
                     1.0,
                 ));
                 if let Some(transition) = select_transition(
-                    &controller,
+                    &controller.transitions,
                     &instance.state,
                     instance.state_time,
                     state_clip.duration,
@@ -597,11 +702,12 @@ impl AnimationRuntime {
                 clip.sample(instance.state_time)
             };
             apply_animation_samples(world, entity, samples);
-            for layer in controller
-                .layers
-                .iter()
-                .filter(|layer| layer.enabled && layer.weight > f32::EPSILON)
-            {
+            instance.layers.retain(|name, _| {
+                controller.layers.iter().any(|layer| {
+                    layer.name == *name && layer.timing_mode == AnimatorLayerTimingMode::Independent
+                })
+            });
+            for layer in controller.layers.iter().filter(|layer| layer.enabled) {
                 let mut mask_paths = layer.mask_paths.clone();
                 if !layer.avatar_mask.is_empty() {
                     match self.load_avatar_mask(&layer.avatar_mask) {
@@ -623,7 +729,30 @@ impl AnimationRuntime {
                         }
                     }
                 }
-                match self.sample_synced_layer(&controller, layer, &instance) {
+                let sampled = if layer.timing_mode == AnimatorLayerTimingMode::Independent {
+                    let mut layer_instance =
+                        instance.layers.remove(&layer.name).unwrap_or_else(|| {
+                            LayerStateMachineInstance {
+                                state: layer.default_state.clone(),
+                                state_time: 0.0,
+                                transition: None,
+                            }
+                        });
+                    let result = self
+                        .sample_independent_layer(
+                            layer,
+                            &mut layer_instance,
+                            delta,
+                            &parameters,
+                            &mut consumed_triggers,
+                        )
+                        .map(|samples| (samples, layer.weight));
+                    instance.layers.insert(layer.name.clone(), layer_instance);
+                    result
+                } else {
+                    self.sample_synced_layer(&controller, layer, &instance)
+                };
+                match sampled {
                     Ok((samples, weight)) if weight > f32::EPSILON => {
                         apply_animation_layer_samples(
                             world,
@@ -823,7 +952,7 @@ fn condition_matches(condition: &AnimatorCondition, values: &AnimatorParameters)
 }
 
 fn select_transition<'a>(
-    controller: &'a AnimatorController,
+    transitions: &'a [mengine_assets::AnimatorTransition],
     state: &str,
     state_time: f32,
     clip_duration: f32,
@@ -835,7 +964,7 @@ fn select_transition<'a>(
     } else {
         0.0
     };
-    let transition = controller.transitions.iter().find(|transition| {
+    let transition = transitions.iter().find(|transition| {
         (transition.from == state || transition.from == "*")
             && transition.to != state
             && (!transition.has_exit_time || normalized_time >= transition.exit_time)
@@ -1828,6 +1957,69 @@ mod tests {
     }
 
     #[test]
+    fn animator_independent_layers_advance_their_own_state_machines() {
+        let project = temp_project();
+        write_constant_clip(&project, "base", 0.0);
+        write_constant_clip(&project, "rest", 2.0);
+        write_constant_clip(&project, "wave", 10.0);
+        fs::write(
+            project.join("Assets/Animations/independent.mcontroller"),
+            r#"{
+              "version":4,"default_state":"Base",
+              "parameters":[{"name":"Wave","kind":"bool"}],
+              "states":[{"name":"Base","clip":"Assets/Animations/base.manim"}],
+              "layers":[{
+                "name":"Upper","timing_mode":"independent","weight":0.5,
+                "default_state":"Rest","mask_paths":["."],
+                "states":[
+                  {"name":"Rest","clip":"Assets/Animations/rest.manim"},
+                  {"name":"Wave","clip":"Assets/Animations/wave.manim"}
+                ],
+                "transitions":[{
+                  "from":"Rest","to":"Wave","duration":1,
+                  "conditions":[{"parameter":"Wave","mode":"if"}]
+                }]
+              }]
+            }"#,
+        )
+        .unwrap();
+
+        let mut world = World::new();
+        let entity = world.spawn_empty();
+        world.insert_component(entity, Transform::default());
+        world.insert_component(
+            entity,
+            Animator {
+                controller: "Assets/Animations/independent.mcontroller".into(),
+                ..Animator::default()
+            },
+        );
+        let mut runtime = AnimationRuntime::new(Some(project.clone()));
+
+        assert!(runtime.update(&mut world, 0.0).is_empty());
+        assert!(
+            (world.get_component::<Transform>(entity).unwrap().position[0] - 1.0).abs() < 0.001
+        );
+        world
+            .get_component_mut::<Animator>(entity)
+            .unwrap()
+            .parameters_json = r#"{"Wave":true}"#.into();
+        assert!(runtime.update(&mut world, 0.0).is_empty());
+        assert!(
+            (world.get_component::<Transform>(entity).unwrap().position[0] - 1.0).abs() < 0.001
+        );
+        assert!(runtime.update(&mut world, 0.5).is_empty());
+        assert!(
+            (world.get_component::<Transform>(entity).unwrap().position[0] - 3.0).abs() < 0.001
+        );
+        assert!(runtime.update(&mut world, 0.5).is_empty());
+        assert!(
+            (world.get_component::<Transform>(entity).unwrap().position[0] - 5.0).abs() < 0.001
+        );
+        fs::remove_dir_all(project).unwrap();
+    }
+
+    #[test]
     fn avatar_masks_include_descendants_and_additive_quaternions_stay_normalized() {
         assert!(target_matches_mask("Rig/Spine/Hand", &["Rig/Spine".into()]));
         assert!(!target_matches_mask("Rig/Leg", &["Rig/Spine".into()]));
@@ -1974,9 +2166,15 @@ mod tests {
         }];
         let parameters = animator_parameters(&controller, r#"{"Go":true}"#);
         let mut consumed = Vec::new();
-        assert!(
-            select_transition(&controller, "Idle", 0.0, 1.0, &parameters, &mut consumed,).is_some()
-        );
+        assert!(select_transition(
+            &controller.transitions,
+            "Idle",
+            0.0,
+            1.0,
+            &parameters,
+            &mut consumed,
+        )
+        .is_some());
         assert_eq!(consumed, ["Go"]);
         assert_eq!(
             consume_trigger_parameters(r#"{"Go":true}"#, &consumed),

@@ -4477,6 +4477,28 @@ body.ew-dragging {
   font-size: 11px;
 }
 
+.animator-independent-layer {
+  margin-top: 7px;
+  border-top: 1px solid #1d1d1d;
+  padding-top: 7px;
+}
+
+.animator-independent-layer > label {
+  display: grid;
+  grid-template-columns: 82px minmax(0, 1fr);
+  align-items: center;
+  gap: 6px;
+  color: #aaa;
+  font-size: 11px;
+}
+
+.animator-layer-transition {
+  margin-top: 6px;
+  border: 1px solid #202020;
+  background: #272727;
+  padding: 5px;
+}
+
 .animator-graph-section { padding-bottom: 6px; }
 
 .animator-runtime-status {
