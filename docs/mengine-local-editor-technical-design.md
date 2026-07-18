@@ -839,3 +839,13 @@ Referenced Only 是可用的单包裁剪基础，仍不等同于完整 Addressab
 - 浏览器真实交互覆盖了创建两类轨道、建组、跨组成员变更、组级 Mute/Lock、折叠/展开、锁定门禁、保存、关闭和 Project 双击重开；全新页面无控制台错误。纯函数回归覆盖唯一归属与锁定组拒绝重分配，编辑器生产构建通过。
 
 这一切片完成的是单层 Track Group 的可靠创作闭环，不代表高级 Timeline 已完备。仍缺组与轨道的拖拽排序/拖拽入组、嵌套组、Solo、组颜色与高度、数值偏移/对齐、Ripple Move/Insert、音频波形、稳定 Binding Table、嵌套 Timeline、录制模式、运行时性能分析，以及跨原生分离窗口的 Host 级统一历史。
+
+## 65. 2026-07-19 Material v6 Clear Coat 分层 PBR
+
+- `.mmat/.mat` 升级到 v6，新增 `clearcoat` 与 `clearcoat_roughness`。旧 v1–v5 资产分别补齐 0 强度和 0.1 粗糙度后安全升级；强度规范到 0–1，粗糙度规范到 0.04–1，编辑器、Rust 资产加载器和 CLI 都接受并发布同一 v6 契约，未来版本继续拒绝。
+- Forward HDR 不把 Clear Coat 当作简单增亮。环境 IBL 和方向光、点光、聚光分别计算固定 F0=0.04 的第二层 GGX 高光，并按视角 Fresnel 衰减下层 Base PBR 能量，再叠加清漆层反射；Clear Coat 为 0 时明确走原有 Base 路径，Unlit 在分层光照前返回，不被误加高光。
+- Clear Coat 参数走 Object Uniform，不进入 Pipeline/Texture Cache Key，不会为每个强度制造新 Shader Variant。现有 `MEngineSurface` Hook 结构保持不变，旧 `.mshader` 不因新增材质层而 ABI 失效；自定义 Lit Hook 继续修改下层表面，清漆层在其后以材质资产参数组合。
+- Material Inspector 为 Lit/Custom Surface 提供 Clear Coat 与条件显示的 Coat Roughness 控件，遵循原有全局 Undo、Dirty、Save All 和后台文档流程。材质球与 Scene Canvas 近似预览同步增强清漆高光，Runtime 仍以真实 GGX/IBL 为权威。
+- 回归覆盖 v1–v5 默认升级、v6 范围规范与 Round Trip、Runtime 到 RenderMaterial 的字段传递、Uniform 打包、Forward WGSL 解析/验证、Clear Coat 分层函数存在性，以及 CLI 对 v6 材质的暂存发布。CLI 测试必须先重建 `dist`，避免用陈旧 v5 产物伪造版本失败。
+
+两遍自审确认：Clear Coat 不改变透明混合、深度写入、阴影接收、贴图采样键或旧 Surface Hook ABI；0 强度保持旧材质语义。材质系统仍未完备，后续需要 Clear Coat 独立 Normal/Mask、Specular/IOR、Sheen、Transmission/Thickness、Subsurface、各层贴图 UV、Material Instance、Shader 参数反射与 Keyword/Variant、同 Player 管线的离屏材质预览、Shader Cache 预热和 Frame Debugger。

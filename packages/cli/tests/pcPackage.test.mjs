@@ -805,7 +805,7 @@ test('buildPcPackage includes validated custom material surface shaders', () => 
   }
 });
 
-test('buildPcPackage validates material v5 sampler modes and rejects invalid contracts', () => {
+test('buildPcPackage validates material v6 clearcoat and sampler contracts', () => {
   const paths = fixture('invalid-material-contract');
   try {
     writeFileSync(join(paths.project, 'Assets', 'Scenes', 'Main.mscene'), JSON.stringify({
@@ -814,16 +814,16 @@ test('buildPcPackage validates material v5 sampler modes and rejects invalid con
       } }] },
     }));
     const materialPath = join(paths.project, 'Assets', 'Materials', 'Paint.mmat');
-    writeFileSync(materialPath, JSON.stringify({ version: 6, shader: 'pbr' }));
+    writeFileSync(materialPath, JSON.stringify({ version: 7, shader: 'pbr' }));
     assert.throws(() => buildPcPackage({
       projectDir: paths.project,
       outputDir: paths.output,
       runtimePath: paths.runtime,
       engineVersion: 'test-engine',
-    }), /unsupported version 6/);
+    }), /unsupported version 7/);
     assert.equal(existsSync(paths.output), false);
 
-    writeFileSync(materialPath, JSON.stringify({ version: 5, shader: 'pbr', wrap_u: 'border' }));
+    writeFileSync(materialPath, JSON.stringify({ version: 6, shader: 'pbr', wrap_u: 'border' }));
     assert.throws(() => buildPcPackage({
       projectDir: paths.project,
       outputDir: paths.output,
@@ -833,7 +833,7 @@ test('buildPcPackage validates material v5 sampler modes and rejects invalid con
     assert.equal(existsSync(paths.output), false);
 
     writeFileSync(materialPath, JSON.stringify({
-      version: 5,
+      version: 6,
       shader: 'pbr',
       filter: 'nearest',
       mipmap_filter: 'linear',
@@ -848,8 +848,10 @@ test('buildPcPackage validates material v5 sampler modes and rejects invalid con
     assert.equal(existsSync(paths.output), false);
 
     writeFileSync(materialPath, JSON.stringify({
-      version: 5,
+      version: 6,
       shader: 'pbr',
+      clearcoat: 0.75,
+      clearcoat_roughness: 0.15,
       filter: 'linear',
       mipmap_filter: 'linear',
       anisotropy: 8,

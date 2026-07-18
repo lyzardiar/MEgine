@@ -6,6 +6,8 @@ export type MaterialPreviewAppearance = {
   baseColor: [number, number, number, number];
   metallic: number;
   roughness: number;
+  clearcoat: number;
+  clearcoatRoughness: number;
   emissive: [number, number, number];
   emissiveStrength: number;
   unlit: boolean;
@@ -57,6 +59,8 @@ export function resolveMaterialPreviewAppearance(
       baseColor: component.base_color,
       metallic: component.metallic,
       roughness: component.roughness,
+      clearcoat: 0,
+      clearcoatRoughness: 0.1,
       emissive: component.emissive,
       emissiveStrength: component.emissive_strength,
       unlit: component.unlit === true,
@@ -66,6 +70,8 @@ export function resolveMaterialPreviewAppearance(
       baseColor: asset.base_color,
       metallic: asset.metallic,
       roughness: asset.roughness,
+      clearcoat: asset.clearcoat,
+      clearcoatRoughness: asset.clearcoat_roughness,
       emissive: asset.emissive,
       emissiveStrength: asset.emissive_strength,
       unlit: asset.shader === 'unlit',
@@ -77,6 +83,8 @@ export function resolveMaterialPreviewAppearance(
     baseColor: block.override_base_color === true ? block.base_color : resolved.baseColor,
     metallic: block.override_metallic === true ? block.metallic : resolved.metallic,
     roughness: block.override_roughness === true ? block.roughness : resolved.roughness,
+    clearcoat: resolved.clearcoat,
+    clearcoatRoughness: resolved.clearcoatRoughness,
     emissive: block.override_emissive === true ? block.emissive : resolved.emissive,
     emissiveStrength: block.override_emissive_strength === true
       ? block.emissive_strength
@@ -103,6 +111,8 @@ function appearance(source: {
   baseColor?: unknown;
   metallic?: unknown;
   roughness?: unknown;
+  clearcoat?: unknown;
+  clearcoatRoughness?: unknown;
   emissive?: unknown;
   emissiveStrength?: unknown;
   unlit?: boolean;
@@ -111,6 +121,8 @@ function appearance(source: {
     baseColor: color4(source.baseColor, [0.8, 0.8, 0.8, 1]),
     metallic: finite(source.metallic, 0, 0, 1),
     roughness: finite(source.roughness, 0.5, 0.04, 1),
+    clearcoat: finite(source.clearcoat, 0, 0, 1),
+    clearcoatRoughness: finite(source.clearcoatRoughness, 0.1, 0.04, 1),
     emissive: color3(source.emissive, [0, 0, 0]),
     emissiveStrength: finite(source.emissiveStrength, 1, 0, 65_504),
     unlit: source.unlit === true,

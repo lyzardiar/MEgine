@@ -4331,7 +4331,7 @@ button.sequencer-track-header:hover { background: #343b42; }
   border: 1px solid #111;
   border-radius: 50%;
   background:
-    radial-gradient(circle at 32% 25%, rgba(255, 255, 255, 0.85), transparent 12%),
+    radial-gradient(circle at 32% 25%, var(--material-highlight, rgba(255, 255, 255, 0.2)), transparent 12%),
     radial-gradient(circle at 35% 30%, var(--material-color) 0, var(--material-color) 52%, #090909 100%);
   box-shadow: 14px 18px 22px rgba(0, 0, 0, 0.5);
 }

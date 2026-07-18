@@ -117,6 +117,8 @@ function materialDraftDirty(draft: { material: MaterialAsset; savedText: string 
 }
 
 function materialFieldLabel(field: keyof MaterialAsset): string {
+  if (field === 'clearcoat') return 'Clear Coat';
+  if (field === 'clearcoat_roughness') return 'Coat Roughness';
   return field.split('_').map((part) => `${part.slice(0, 1).toUpperCase()}${part.slice(1)}`).join(' ');
 }
 
@@ -560,10 +562,14 @@ export function MaterialEditor(props: {
           className="material-preview"
           style={{
             '--material-color': `rgba(${material.base_color.slice(0, 3).map((value) => Math.round(value * 255)).join(',')},${material.base_color[3]})`,
+            '--material-highlight': `rgba(255,255,255,${material.shader === 'unlit'
+              ? 0
+              : Math.min(0.95, 0.16 + material.metallic * (1 - material.roughness) * 0.35
+                + material.clearcoat * (1 - material.clearcoat_roughness) * 0.58)})`,
           } as CSSProperties}
         >
           <div className="material-preview-sphere" />
-          <span>{material.shader.toUpperCase()} · {material.surface}</span>
+          <span>{material.shader.toUpperCase()} · {material.surface}{material.clearcoat > 0 && material.shader !== 'unlit' ? ` · Coat ${material.clearcoat.toFixed(2)}` : ''}</span>
         </div>
 
         <div className="material-fields">
@@ -639,6 +645,10 @@ export function MaterialEditor(props: {
 
           <label>Metallic <input type="range" min={0} max={1} step={0.01} value={material.metallic} onChange={(event) => update('metallic', Number(event.target.value))} /><output>{material.metallic.toFixed(2)}</output></label>
           <label>Roughness <input type="range" min={0.04} max={1} step={0.01} value={material.roughness} onChange={(event) => update('roughness', Number(event.target.value))} /><output>{material.roughness.toFixed(2)}</output></label>
+          {material.shader !== 'unlit' && <>
+            <label>Clear Coat <input type="range" min={0} max={1} step={0.01} value={material.clearcoat} onChange={(event) => update('clearcoat', Number(event.target.value))} /><output>{material.clearcoat.toFixed(2)}</output></label>
+            {material.clearcoat > 0 && <label>Coat Roughness <input type="range" min={0.04} max={1} step={0.01} value={material.clearcoat_roughness} onChange={(event) => update('clearcoat_roughness', Number(event.target.value))} /><output>{material.clearcoat_roughness.toFixed(2)}</output></label>}
+          </>}
 
           <label className="material-color-row">Emissive
             <input type="color" value={emissiveRgb} onChange={(event) => update('emissive', parseHex(event.target.value))} />

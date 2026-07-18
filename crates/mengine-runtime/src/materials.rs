@@ -168,6 +168,8 @@ pub fn render_material_from_asset(material: &MaterialAsset) -> RenderMaterial {
         base_color: material.base_color,
         metallic: material.metallic,
         roughness: material.roughness,
+        clearcoat: material.clearcoat,
+        clearcoat_roughness: material.clearcoat_roughness,
         emissive: material.emissive,
         emissive_strength: material.emissive_strength,
         unlit: material.shader == MaterialShader::Unlit,
@@ -279,6 +281,8 @@ mod tests {
             base_color_texture: "Assets/Textures/leaves.png".into(),
             normal_texture: "Assets/Textures/leaves-normal.png".into(),
             normal_scale: 0.75,
+            clearcoat: 0.8,
+            clearcoat_roughness: 0.18,
             metallic_roughness_texture: "Assets/Textures/leaves-orm.png".into(),
             occlusion_texture: "Assets/Textures/leaves-ao.png".into(),
             occlusion_strength: 0.6,
@@ -303,6 +307,8 @@ mod tests {
         assert_eq!(material.base_color_texture, asset.base_color_texture);
         assert_eq!(material.normal_texture, asset.normal_texture);
         assert_eq!(material.normal_scale, 0.75);
+        assert_eq!(material.clearcoat, 0.8);
+        assert_eq!(material.clearcoat_roughness, 0.18);
         assert_eq!(
             material.metallic_roughness_texture,
             asset.metallic_roughness_texture

@@ -506,7 +506,7 @@ function scanBuildAssetDependencies(
     } else if (extension === '.mmat' || extension === '.mat') {
       const material = readJsonAsset(absolute, root, 'material');
       if (material.version != null
-        && (!Number.isInteger(material.version) || Number(material.version) < 1 || Number(material.version) > 5)) {
+        && (!Number.isInteger(material.version) || Number(material.version) < 1 || Number(material.version) > 6)) {
         throw new Error(`invalid material ${source}: unsupported version ${String(material.version)}`);
       }
       if (material.shader != null

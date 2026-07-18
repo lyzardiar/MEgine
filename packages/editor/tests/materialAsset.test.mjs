@@ -11,7 +11,7 @@ import {
 
 test('material assets have stable authoring defaults', () => {
   assert.deepEqual(createMaterialAsset('Paint'), {
-    version: 5,
+    version: 6,
     name: 'Paint',
     shader: 'pbr',
     custom_shader: '',
@@ -22,6 +22,8 @@ test('material assets have stable authoring defaults', () => {
     base_color: [0.8, 0.8, 0.8, 1],
     metallic: 0,
     roughness: 0.5,
+    clearcoat: 0,
+    clearcoat_roughness: 0.1,
     emissive: [0, 0, 0],
     emissive_strength: 1,
     double_sided: false,
@@ -73,6 +75,8 @@ test('material parsing normalizes ranges and texture separators', () => {
   assert.deepEqual(material.base_color, [1, 0, 0.5, 0.25]);
   assert.equal(material.metallic, 1);
   assert.equal(material.roughness, 0.04);
+  assert.equal(material.clearcoat, 0);
+  assert.equal(material.clearcoat_roughness, 0.1);
   assert.equal(material.base_color_texture, 'Assets/Textures/glass.png');
   assert.equal(material.normal_texture, 'Assets/Textures/glass-normal.png');
   assert.equal(material.normal_scale, 0);
@@ -95,21 +99,23 @@ test('legacy material assets upgrade to safe pipeline defaults', () => {
     name: 'Legacy',
     surface: 'transparent',
   }));
-  assert.equal(legacy.version, 5);
+  assert.equal(legacy.version, 6);
   assert.equal(legacy.blend_mode, 'alpha');
   assert.equal(legacy.transparent_depth_write, false);
   assert.equal(legacy.render_queue, -1);
   assert.equal(legacy.custom_shader, '');
   assert.equal(legacy.mipmap_filter, 'linear');
   assert.equal(legacy.anisotropy, 1);
-  assert.throws(() => parseMaterialAsset('{"version":6}'), /Unsupported material version/);
-  assert.throws(() => parseMaterialAsset('{"version":5,"filter":"cubic"}'), /Invalid material filter/);
-  assert.throws(() => parseMaterialAsset('{"version":5,"mipmap_filter":"cubic"}'), /Invalid material mipmap_filter/);
+  assert.equal(legacy.clearcoat, 0);
+  assert.equal(legacy.clearcoat_roughness, 0.1);
+  assert.throws(() => parseMaterialAsset('{"version":7}'), /Unsupported material version/);
+  assert.throws(() => parseMaterialAsset('{"version":6,"filter":"cubic"}'), /Invalid material filter/);
+  assert.throws(() => parseMaterialAsset('{"version":6,"mipmap_filter":"cubic"}'), /Invalid material mipmap_filter/);
 });
 
 test('anisotropic material sampling is bounded and forces compatible filters', () => {
   const material = parseMaterialAsset(JSON.stringify({
-    version: 5,
+    version: 6,
     filter: 'nearest',
     mipmap_filter: 'nearest',
     anisotropy: 32,
@@ -117,6 +123,17 @@ test('anisotropic material sampling is bounded and forces compatible filters', (
   assert.equal(material.anisotropy, 16);
   assert.equal(material.filter, 'linear');
   assert.equal(material.mipmap_filter, 'linear');
+});
+
+test('clearcoat material parameters are bounded and round trip', () => {
+  const material = parseMaterialAsset(JSON.stringify({
+    version: 6,
+    clearcoat: 2,
+    clearcoat_roughness: 0,
+  }));
+  assert.equal(material.clearcoat, 1);
+  assert.equal(material.clearcoat_roughness, 0.04);
+  assert.deepEqual(parseMaterialAsset(serializeMaterialAsset(material)), material);
 });
 
 test('custom material shader references normalize project separators', () => {

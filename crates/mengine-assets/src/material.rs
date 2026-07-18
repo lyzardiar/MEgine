@@ -3,7 +3,7 @@ use serde::{Deserialize, Serialize};
 use std::path::Path;
 
 fn default_version() -> u32 {
-    5
+    6
 }
 
 fn default_base_color() -> [f32; 4] {
@@ -12,6 +12,10 @@ fn default_base_color() -> [f32; 4] {
 
 fn default_roughness() -> f32 {
     0.5
+}
+
+fn default_clearcoat_roughness() -> f32 {
+    0.1
 }
 
 fn default_emissive_strength() -> f32 {
@@ -102,6 +106,10 @@ pub struct MaterialAsset {
     pub metallic: f32,
     #[serde(default = "default_roughness")]
     pub roughness: f32,
+    #[serde(default)]
+    pub clearcoat: f32,
+    #[serde(default = "default_clearcoat_roughness")]
+    pub clearcoat_roughness: f32,
     pub emissive: [f32; 3],
     #[serde(default = "default_emissive_strength")]
     pub emissive_strength: f32,
@@ -152,6 +160,8 @@ impl Default for MaterialAsset {
             base_color: default_base_color(),
             metallic: 0.0,
             roughness: default_roughness(),
+            clearcoat: 0.0,
+            clearcoat_roughness: default_clearcoat_roughness(),
             emissive: [0.0; 3],
             emissive_strength: default_emissive_strength(),
             double_sided: false,
@@ -196,6 +206,9 @@ impl MaterialAsset {
         }
         self.metallic = finite_or(self.metallic, 0.0).clamp(0.0, 1.0);
         self.roughness = finite_or(self.roughness, default_roughness()).clamp(0.04, 1.0);
+        self.clearcoat = finite_or(self.clearcoat, 0.0).clamp(0.0, 1.0);
+        self.clearcoat_roughness =
+            finite_or(self.clearcoat_roughness, default_clearcoat_roughness()).clamp(0.04, 1.0);
         self.emissive_strength = finite_or(self.emissive_strength, 1.0).max(0.0);
         self.alpha_cutoff = finite_or(self.alpha_cutoff, default_alpha_cutoff()).clamp(0.0, 1.0);
         self.normal_scale = finite_or(self.normal_scale, default_one()).max(0.0);
@@ -270,7 +283,7 @@ mod tests {
             }"#,
         )
         .unwrap();
-        assert_eq!(parsed.version, 5);
+        assert_eq!(parsed.version, 6);
         assert_eq!(parsed.surface, MaterialSurface::Transparent);
         assert_eq!(parsed.base_color, [1.0, 0.0, 0.5, 0.25]);
         assert_eq!(parsed.metallic, 1.0);
@@ -308,7 +321,9 @@ mod tests {
             }"#,
         )
         .expect("materials authored before PBR maps were added remain loadable");
-        assert_eq!(legacy.version, 5);
+        assert_eq!(legacy.version, 6);
+        assert_eq!(legacy.clearcoat, 0.0);
+        assert_eq!(legacy.clearcoat_roughness, 0.1);
         assert_eq!(legacy.blend_mode, MaterialBlendMode::Alpha);
         assert_eq!(legacy.custom_shader, "");
         assert!(!legacy.transparent_depth_write);
@@ -346,7 +361,7 @@ mod tests {
             }"#,
         )
         .unwrap();
-        assert_eq!(parsed.version, 5);
+        assert_eq!(parsed.version, 6);
         assert_eq!(parsed.shader, MaterialShader::Custom);
         assert_eq!(parsed.custom_shader, "Assets/Shaders/toon.mshader");
         assert_eq!(parsed.blend_mode, MaterialBlendMode::Premultiplied);
@@ -359,8 +374,22 @@ mod tests {
         assert_eq!(parsed.filter, MaterialFilter::Nearest);
         assert_eq!(parsed.mipmap_filter, MaterialFilter::Linear);
         assert_eq!(parsed.anisotropy, 1);
-        assert!(parse_material_asset(br#"{"version":6}"#).is_err());
+        assert!(parse_material_asset(br#"{"version":7}"#).is_err());
         assert!(parse_material_asset(br#"{"version":0}"#).is_err());
+    }
+
+    #[test]
+    fn clearcoat_parameters_are_bounded_and_legacy_safe() {
+        let parsed =
+            parse_material_asset(br#"{"version":6,"clearcoat":2.0,"clearcoat_roughness":0.0}"#)
+                .unwrap();
+        assert_eq!(parsed.clearcoat, 1.0);
+        assert_eq!(parsed.clearcoat_roughness, 0.04);
+
+        let legacy = parse_material_asset(br#"{"version":5}"#).unwrap();
+        assert_eq!(legacy.version, 6);
+        assert_eq!(legacy.clearcoat, 0.0);
+        assert_eq!(legacy.clearcoat_roughness, 0.1);
     }
 
     #[test]

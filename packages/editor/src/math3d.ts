@@ -390,6 +390,8 @@ function previewMaterialColor(
     baseColor: [0.8, 0.8, 0.8, 1] as [number, number, number, number],
     metallic: 0,
     roughness: 0.5,
+    clearcoat: 0,
+    clearcoatRoughness: 0.1,
     emissive: [0, 0, 0] as [number, number, number],
     emissiveStrength: 1,
     unlit: false,
@@ -397,7 +399,9 @@ function previewMaterialColor(
   const lighting = source.unlit ? 1 : Math.max(0, shade) * (1 - source.metallic * 0.25);
   const highlight = source.unlit
     ? 0
-    : (0.04 + source.metallic * 0.36) * (1 - source.roughness) * Math.max(0, shade - 0.45);
+    : ((0.04 + source.metallic * 0.36) * (1 - source.roughness)
+      + source.clearcoat * 0.24 * (1 - source.clearcoatRoughness))
+      * Math.max(0, shade - 0.45);
   return [0, 1, 2, 3].map((channel) => {
     if (channel === 3) return source.baseColor[3];
     const linear = source.baseColor[channel] * lighting

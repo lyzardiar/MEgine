@@ -67,6 +67,8 @@ pub struct RenderMaterial {
     pub base_color: [f32; 4],
     pub metallic: f32,
     pub roughness: f32,
+    pub clearcoat: f32,
+    pub clearcoat_roughness: f32,
     pub emissive: [f32; 3],
     pub emissive_strength: f32,
     pub unlit: bool,
@@ -126,6 +128,8 @@ impl Default for RenderMaterial {
             base_color: [0.8, 0.8, 0.8, 1.0],
             metallic: 0.0,
             roughness: 0.5,
+            clearcoat: 0.0,
+            clearcoat_roughness: 0.1,
             emissive: [0.0; 3],
             emissive_strength: 1.0,
             unlit: false,
@@ -290,6 +294,7 @@ struct ObjectUniforms {
     emissive: [f32; 4],
     texture_transform: [f32; 4],
     map_params: [f32; 4],
+    layer_params: [f32; 4],
     shadow_params: [f32; 4],
 }
 
@@ -1772,6 +1777,12 @@ fn make_object_uniforms(object: &RenderObject) -> ObjectUniforms {
                 0.0
             },
         ],
+        layer_params: [
+            material.clearcoat.clamp(0.0, 1.0),
+            material.clearcoat_roughness.clamp(0.04, 1.0),
+            0.0,
+            0.0,
+        ],
         shadow_params: [
             if object.receive_shadows { 1.0 } else { 0.0 },
             0.0,
@@ -2415,6 +2426,7 @@ struct ObjectUniforms {
     emissive: vec4<f32>,
     texture_transform: vec4<f32>,
     map_params: vec4<f32>,
+    layer_params: vec4<f32>,
     shadow_params: vec4<f32>,
 };
 
@@ -2489,6 +2501,7 @@ struct ObjectUniforms {
     emissive: vec4<f32>,
     texture_transform: vec4<f32>,
     map_params: vec4<f32>,
+    layer_params: vec4<f32>,
     shadow_params: vec4<f32>,
 };
 
@@ -2656,6 +2669,57 @@ fn environment_contribution(
     return (diffuse + specular) * occlusion;
 }
 
+fn clearcoat_environment_contribution(
+    n: vec3<f32>,
+    v: vec3<f32>,
+    roughness: f32,
+) -> vec3<f32> {
+    let ndv = max(dot(n, v), 0.0);
+    let f0 = vec3<f32>(0.04);
+    let fresnel = fresnel_schlick_roughness(ndv, f0, roughness);
+    let reflection = reflect(-v, n);
+    let analytic_blur = 1.0 - frame.environment_texture_params.x;
+    let specular_direction = normalize(mix(
+        reflection,
+        n,
+        roughness * roughness * analytic_blur,
+    ));
+    let integrated_brdf = textureSample(
+        brdf_lut,
+        brdf_lut_sampler,
+        vec2<f32>(ndv, roughness),
+    ).rg;
+    return environment_radiance(specular_direction, roughness)
+        * (fresnel * integrated_brdf.x + vec3<f32>(integrated_brdf.y))
+        * frame.environment_params.y;
+}
+
+fn layered_environment_contribution(
+    n: vec3<f32>,
+    v: vec3<f32>,
+    base_color: vec3<f32>,
+    metallic: f32,
+    roughness: f32,
+    occlusion: f32,
+    clearcoat: f32,
+    clearcoat_roughness: f32,
+) -> vec3<f32> {
+    let base = environment_contribution(n, v, base_color, metallic, roughness, occlusion);
+    let amount = clamp(clearcoat, 0.0, 1.0);
+    if amount <= 0.0 {
+        return base;
+    }
+    let coat_roughness = clamp(clearcoat_roughness, 0.04, 1.0);
+    let ndv = max(dot(n, v), 0.0);
+    let layer_fresnel = fresnel_schlick_roughness(
+        ndv,
+        vec3<f32>(0.04),
+        coat_roughness,
+    ).x * amount;
+    return base * (1.0 - layer_fresnel)
+        + clearcoat_environment_contribution(n, v, coat_roughness) * amount;
+}
+
 fn light_contribution(
     n: vec3<f32>,
     v: vec3<f32>,
@@ -2679,6 +2743,54 @@ fn light_contribution(
     let diffuse_weight = (vec3<f32>(1.0) - fresnel) * (1.0 - metallic);
     let diffuse = diffuse_weight * base_color / PI;
     return (diffuse + specular) * radiance * ndl;
+}
+
+fn clearcoat_light_contribution(
+    n: vec3<f32>,
+    v: vec3<f32>,
+    l: vec3<f32>,
+    radiance: vec3<f32>,
+    roughness: f32,
+) -> vec3<f32> {
+    let ndl = max(dot(n, l), 0.0);
+    let ndv = max(dot(n, v), 0.0);
+    if ndl <= 0.0 || ndv <= 0.0 {
+        return vec3<f32>(0.0);
+    }
+    let h = normalize(l + v);
+    let fresnel = fresnel_schlick(max(dot(h, v), 0.0), vec3<f32>(0.04));
+    let distribution = distribution_ggx(n, h, roughness);
+    let geometry = geometry_smith(n, v, l, roughness);
+    let specular = distribution * geometry * fresnel / max(4.0 * ndv * ndl, 0.000001);
+    return specular * radiance * ndl;
+}
+
+fn layered_light_contribution(
+    n: vec3<f32>,
+    v: vec3<f32>,
+    l: vec3<f32>,
+    radiance: vec3<f32>,
+    base_color: vec3<f32>,
+    metallic: f32,
+    roughness: f32,
+    clearcoat: f32,
+    clearcoat_roughness: f32,
+) -> vec3<f32> {
+    let base = light_contribution(n, v, l, radiance, base_color, metallic, roughness);
+    let amount = clamp(clearcoat, 0.0, 1.0);
+    let ndl = max(dot(n, l), 0.0);
+    let ndv = max(dot(n, v), 0.0);
+    if amount <= 0.0 || ndl <= 0.0 || ndv <= 0.0 {
+        return base;
+    }
+    let coat_roughness = clamp(clearcoat_roughness, 0.04, 1.0);
+    let h = normalize(l + v);
+    let layer_fresnel = fresnel_schlick(
+        max(dot(h, v), 0.0),
+        vec3<f32>(0.04),
+    ).x * amount;
+    return base * (1.0 - layer_fresnel)
+        + clearcoat_light_contribution(n, v, l, radiance, coat_roughness) * amount;
 }
 
 fn distance_attenuation(distance: f32, range: f32) -> f32 {
@@ -2846,21 +2958,26 @@ fn fs_main(i: VsOut, @builtin(front_facing) front_facing: bool) -> @location(0) 
     }
 
     let v = normalize(frame.camera_position.xyz - i.world_position);
-    var color = environment_contribution(
+    let clearcoat = clamp(object.layer_params.x, 0.0, 1.0);
+    let clearcoat_roughness = clamp(object.layer_params.y, 0.04, 1.0);
+    var color = layered_environment_contribution(
         surface.normal,
         v,
         surface.base_color,
         surface.metallic,
         surface.roughness,
         surface.occlusion,
+        clearcoat,
+        clearcoat_roughness,
     );
 
     if frame.light_counts.x > 0u {
         let l = normalize(-frame.directional_direction.xyz);
-        color += directional_shadow_visibility(i.world_position, surface.normal) * light_contribution(
+        color += directional_shadow_visibility(i.world_position, surface.normal) * layered_light_contribution(
             surface.normal, v, l,
             frame.directional_color.rgb * frame.directional_color.a,
             surface.base_color, surface.metallic, surface.roughness,
+            clearcoat, clearcoat_roughness,
         );
     }
 
@@ -2869,10 +2986,11 @@ fn fs_main(i: VsOut, @builtin(front_facing) front_facing: bool) -> @location(0) 
             let to_light = frame.point_positions[index].xyz - i.world_position;
             let distance = length(to_light);
             let attenuation = distance_attenuation(distance, frame.point_positions[index].w);
-            color += light_contribution(
+            color += layered_light_contribution(
                 surface.normal, v, normalize(to_light),
                 frame.point_colors[index].rgb * frame.point_colors[index].a * attenuation,
                 surface.base_color, surface.metallic, surface.roughness,
+                clearcoat, clearcoat_roughness,
             );
         }
     }
@@ -2887,10 +3005,11 @@ fn fs_main(i: VsOut, @builtin(front_facing) front_facing: bool) -> @location(0) 
             let outer_cos = frame.spot_params[index].y;
             let cone_attenuation = smoothstep(outer_cos, inner_cos, cone);
             let attenuation = distance_attenuation(distance, frame.spot_positions[index].w) * cone_attenuation;
-            color += light_contribution(
+            color += layered_light_contribution(
                 surface.normal, v, normalize(to_light),
                 frame.spot_colors[index].rgb * frame.spot_colors[index].a * attenuation,
                 surface.base_color, surface.metallic, surface.roughness,
+                clearcoat, clearcoat_roughness,
             );
         }
     }
@@ -2941,6 +3060,10 @@ mod tests {
             "fn geometry_smith",
             "fn fresnel_schlick",
             "fn environment_contribution",
+            "fn layered_environment_contribution",
+            "fn clearcoat_environment_contribution",
+            "fn layered_light_contribution",
+            "fn clearcoat_light_contribution",
             "fn environment_diffuse_radiance",
             "textureSampleLevel(environment_texture",
             "@group(3) @binding(2) var brdf_lut",
@@ -2997,6 +3120,11 @@ mod tests {
     fn alignment_matches_dynamic_uniform_requirement() {
         assert_eq!(align_to(176, 256), 256);
         assert_eq!(align_to(256, 256), 256);
+        assert_eq!(std::mem::size_of::<ObjectUniforms>(), 240);
+        assert_eq!(
+            align_to(std::mem::size_of::<ObjectUniforms>() as u64, 256),
+            256
+        );
     }
 
     #[test]
@@ -3077,6 +3205,8 @@ mod tests {
                 metallic_roughness_texture: "orm.png".into(),
                 occlusion_texture: "ao.png".into(),
                 occlusion_strength: 0.65,
+                clearcoat: 0.8,
+                clearcoat_roughness: 0.18,
                 emissive_texture: "emissive.png".into(),
                 uv_rotation_degrees: 90.0,
                 wrap_u: MaterialWrap::Clamp,
@@ -3102,7 +3232,11 @@ mod tests {
             make_object_uniforms(&object).map_params,
             [1.5, 0.65, std::f32::consts::FRAC_PI_2, 0.0]
         );
-        assert_eq!(make_object_uniforms(&object).shadow_params[0], 0.0);
+        assert_eq!(
+            make_object_uniforms(&object).layer_params,
+            [0.8, 0.18, 0.0, 0.0]
+        );
+        assert_eq!(make_object_uniforms(&object).shadow_params, [0.0; 4]);
     }
 
     #[test]
