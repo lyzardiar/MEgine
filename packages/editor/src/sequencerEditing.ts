@@ -47,6 +47,7 @@ export type SequencerTrackMoveResult =
 
 export type SequencerItemSelection = { track: number; marker: number };
 export type SequencerSelectionMode = 'single' | 'toggle' | 'range';
+export type SequencerMarqueeSelectionMode = 'replace' | 'add' | 'toggle';
 export type SequencerItemSelectionResult = {
   primary: SequencerItemSelection | null;
   items: SequencerItemSelection[];
@@ -91,6 +92,30 @@ export function selectSequencerItem(
   else unique.set(key, { ...clicked });
   const items = [...unique.values()];
   return { primary: items[items.length - 1] ?? null, items };
+}
+
+export function combineSequencerMarqueeSelection(
+  current: readonly SequencerItemSelection[],
+  hits: readonly SequencerItemSelection[],
+  mode: SequencerMarqueeSelectionMode,
+): SequencerItemSelection[] {
+  const normalizedHits = new Map<string, SequencerItemSelection>();
+  for (const hit of hits) {
+    if (!Number.isInteger(hit.track) || hit.track < 0 || !Number.isInteger(hit.marker) || hit.marker < 0) continue;
+    normalizedHits.set(`${hit.track}:${hit.marker}`, { ...hit });
+  }
+  if (mode === 'replace') return [...normalizedHits.values()];
+
+  const combined = new Map<string, SequencerItemSelection>();
+  for (const item of current) {
+    if (!Number.isInteger(item.track) || item.track < 0 || !Number.isInteger(item.marker) || item.marker < 0) continue;
+    combined.set(`${item.track}:${item.marker}`, { ...item });
+  }
+  for (const [key, hit] of normalizedHits) {
+    if (mode === 'toggle' && combined.has(key)) combined.delete(key);
+    else combined.set(key, hit);
+  }
+  return [...combined.values()];
 }
 
 export function clampSequencerZoom(value: number): number {

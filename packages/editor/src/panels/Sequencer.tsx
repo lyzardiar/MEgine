@@ -55,6 +55,7 @@ import {
   SEQUENCER_MAX_ZOOM,
   SEQUENCER_MIN_ZOOM,
   clampSequencerZoom,
+  combineSequencerMarqueeSelection,
   copySequencerItems,
   deleteSequencerItems,
   findSequencerClipPlacement,
@@ -141,6 +142,12 @@ type InspectorEditTransaction = HistorySnapshot & {
   historyCheckpoint: EditorUndoCheckpoint;
   historyToken: EditorUndoToken | null;
 };
+type SequencerMarquee = {
+  left: number;
+  top: number;
+  width: number;
+  height: number;
+};
 type Draft = {
   asset: TimelineAsset;
   savedText: string;
@@ -177,6 +184,7 @@ export function Sequencer(props: SequencerProps) {
   const [zoom, setZoom] = useState(1);
   const [tracksWidth, setTracksWidth] = useState(720);
   const [clipboard, setClipboard] = useState<SequencerClipboard | null>(null);
+  const [marquee, setMarquee] = useState<SequencerMarquee | null>(null);
   const [, setDraftEpoch] = useState(0);
   const loadedPath = useRef('');
   const drafts = useRef(new Map<string, Draft>());
@@ -897,7 +905,6 @@ export function Sequencer(props: SequencerProps) {
     markerIndex: number,
   ) => {
     if (!asset) return;
-    event.preventDefault();
     event.stopPropagation();
     const lane = event.currentTarget.parentElement;
     if (!lane) return;
@@ -1077,6 +1084,142 @@ export function Sequencer(props: SequencerProps) {
       ) {
         props.undoService.restoreCheckpoint(historyCheckpoint);
       }
+    };
+    window.addEventListener('pointermove', move);
+    window.addEventListener('pointerup', finish);
+    window.addEventListener('pointercancel', finish);
+  };
+
+  const startMarquee = (
+    event: ReactPointerEvent<HTMLDivElement>,
+    trackIndex: number,
+  ) => {
+    if (!asset || event.button !== 0 || event.target !== event.currentTarget) return;
+    const container = tracksViewport.current;
+    if (!container) return;
+    event.preventDefault();
+    event.stopPropagation();
+    const lane = event.currentTarget;
+    const pointer = event.pointerId;
+    const startX = event.clientX;
+    const startY = event.clientY;
+    const initialViewport = container.getBoundingClientRect();
+    const startContentX = startX - initialViewport.left + container.scrollLeft;
+    const startContentY = startY - initialViewport.top + container.scrollTop;
+    const laneBounds = lane.getBoundingClientRect();
+    const trackHeader = lane.previousElementSibling as HTMLElement | null;
+    const selectionBefore = selectionRef.current ? { ...selectionRef.current } : null;
+    const itemsBefore = structuredClone(selectedItemsRef.current);
+    const mode = event.ctrlKey || event.metaKey ? 'toggle' : event.shiftKey ? 'add' : 'replace';
+    let dragged = false;
+    let lastClientX = startX;
+    let lastClientY = startY;
+    let autoScrollFrame: number | null = null;
+    lane.setPointerCapture(pointer);
+
+    const updateMarquee = (clientX: number, clientY: number, allowScroll = true): boolean => {
+      const viewport = container.getBoundingClientRect();
+      const headerRight = trackHeader?.getBoundingClientRect().right ?? viewport.left;
+      const rulerBottom = container.querySelector<HTMLElement>('.sequencer-ruler-row')
+        ?.getBoundingClientRect().bottom ?? viewport.top;
+      const laneLeft = Math.max(viewport.left, Math.min(viewport.right, headerRight));
+      const laneTop = Math.max(viewport.top, Math.min(viewport.bottom, rulerBottom));
+      const edge = 28;
+      const scrollStep = 22;
+      const scrollLeftBefore = container.scrollLeft;
+      const scrollTopBefore = container.scrollTop;
+      if (allowScroll) {
+        if (clientX > viewport.right - edge) container.scrollLeft += scrollStep;
+        else if (clientX < laneLeft + edge) container.scrollLeft -= scrollStep;
+        if (clientY > viewport.bottom - edge) container.scrollTop += scrollStep;
+        else if (clientY < laneTop + edge) container.scrollTop -= scrollStep;
+      }
+
+      const currentX = Math.max(laneLeft, Math.min(viewport.right, clientX));
+      const currentY = Math.max(laneTop, Math.min(viewport.bottom, clientY));
+      const anchorX = viewport.left + startContentX - container.scrollLeft;
+      const anchorY = viewport.top + startContentY - container.scrollTop;
+      const selectionLeft = Math.min(anchorX, currentX);
+      const selectionTop = Math.min(anchorY, currentY);
+      const selectionRight = Math.max(anchorX, currentX);
+      const selectionBottom = Math.max(anchorY, currentY);
+      const left = Math.max(laneLeft, selectionLeft);
+      const top = Math.max(laneTop, selectionTop);
+      const right = Math.min(viewport.right, selectionRight);
+      const bottom = Math.min(viewport.bottom, selectionBottom);
+      const nextMarquee = {
+        left,
+        top,
+        width: Math.max(0, right - left),
+        height: Math.max(0, bottom - top),
+      };
+      setMarquee(nextMarquee);
+
+      const hits: SequencerItemSelection[] = [];
+      for (const element of container.querySelectorAll<HTMLElement>('[data-sequencer-item]')) {
+        const bounds = element.getBoundingClientRect();
+        if (
+          bounds.right < selectionLeft
+          || bounds.left > selectionRight
+          || bounds.bottom < selectionTop
+          || bounds.top > selectionBottom
+        ) continue;
+        const track = Number(element.dataset.track);
+        const marker = Number(element.dataset.marker);
+        if (Number.isInteger(track) && Number.isInteger(marker)) hits.push({ track, marker });
+      }
+      const nextItems = combineSequencerMarqueeSelection(itemsBefore, hits, mode);
+      const primary = nextItems.at(-1) ?? null;
+      applySelection(primary ? { ...primary } : null, nextItems);
+      return container.scrollLeft !== scrollLeftBefore || container.scrollTop !== scrollTopBefore;
+    };
+
+    const continueAutoScroll = () => {
+      autoScrollFrame = null;
+      if (!dragged) return;
+      if (updateMarquee(lastClientX, lastClientY)) {
+        autoScrollFrame = window.requestAnimationFrame(continueAutoScroll);
+      }
+    };
+
+    const move = (moveEvent: PointerEvent) => {
+      if (moveEvent.pointerId !== pointer) return;
+      lastClientX = moveEvent.clientX;
+      lastClientY = moveEvent.clientY;
+      if (!dragged && Math.hypot(moveEvent.clientX - startX, moveEvent.clientY - startY) >= 4) {
+        dragged = true;
+      }
+      if (dragged) {
+        moveEvent.preventDefault();
+        const scrolled = updateMarquee(moveEvent.clientX, moveEvent.clientY);
+        if (scrolled && autoScrollFrame == null) {
+          autoScrollFrame = window.requestAnimationFrame(continueAutoScroll);
+        }
+      }
+    };
+    const finish = (finishEvent: PointerEvent) => {
+      if (finishEvent.pointerId !== pointer) return;
+      window.removeEventListener('pointermove', move);
+      window.removeEventListener('pointerup', finish);
+      window.removeEventListener('pointercancel', finish);
+      if (autoScrollFrame != null) window.cancelAnimationFrame(autoScrollFrame);
+      if (lane.hasPointerCapture(pointer)) lane.releasePointerCapture(pointer);
+      setMarquee(null);
+      if (finishEvent.type === 'pointercancel') {
+        applySelection(selectionBefore, itemsBefore);
+        return;
+      }
+      if (dragged) {
+        updateMarquee(finishEvent.clientX, finishEvent.clientY, false);
+        setMarquee(null);
+        return;
+      }
+      const markerTime = snapTimelineAssetTime(
+        (finishEvent.clientX - laneBounds.left) / Math.max(1, laneBounds.width) * asset.duration,
+        asset,
+      );
+      scrub(markerTime);
+      applySelection({ track: trackIndex, marker: null });
     };
     window.addEventListener('pointermove', move);
     window.addEventListener('pointerup', finish);
@@ -1306,6 +1449,7 @@ export function Sequencer(props: SequencerProps) {
         <div
           className="sequencer-tracks"
           ref={tracksViewport}
+          title="Drag empty lanes to marquee-select. Shift adds; Ctrl/Cmd toggles."
           style={{ '--sequencer-lane-width': `${laneWidth}px` } as CSSProperties}
           onWheel={(event) => {
             if (!event.ctrlKey && !event.metaKey) return;
@@ -1337,16 +1481,14 @@ export function Sequencer(props: SequencerProps) {
                 const markerTime = snapTimelineAssetTime((event.clientX - bounds.left) / bounds.width * asset.duration, asset);
                 scrub(markerTime);
                 addTrackItem(trackIndex, markerTime);
-              }} onPointerDown={(event) => {
-                if (event.target !== event.currentTarget) return;
-                const bounds = event.currentTarget.getBoundingClientRect();
-                scrub(snapTimelineAssetTime((event.clientX - bounds.left) / bounds.width * asset.duration, asset));
-                applySelection({ track: trackIndex, marker: null });
-              }}>
+              }} onPointerDown={(event) => startMarquee(event, trackIndex)}>
                 {ticks.map((tick) => <i className="sequencer-grid-line" key={tick.time} style={{ left: `${tick.position * 100}%` }} />)}
                 {track.type === 'signal' && track.markers.map((marker, markerIndex) => (
                   <button
                     type="button"
+                    data-sequencer-item="true"
+                    data-track={trackIndex}
+                    data-marker={markerIndex}
                     className={`sequencer-marker${isItemSelected(trackIndex, markerIndex) ? ' selected' : ''}`}
                     style={{ left: `${marker.time / asset.duration * 100}%` }}
                     title={`${marker.name} @ ${marker.time.toFixed(3)}s`}
@@ -1357,6 +1499,9 @@ export function Sequencer(props: SequencerProps) {
                 {track.type === 'activation' && track.clips.map((clip, clipIndex) => (
                   <button
                     type="button"
+                    data-sequencer-item="true"
+                    data-track={trackIndex}
+                    data-marker={clipIndex}
                     className={`sequencer-activation-clip${isItemSelected(trackIndex, clipIndex) ? ' selected' : ''}${clip.active ? ' active-state' : ' inactive-state'}`}
                     style={{
                       left: `${clip.start / asset.duration * 100}%`,
@@ -1370,6 +1515,9 @@ export function Sequencer(props: SequencerProps) {
                 {track.type === 'audio' && track.clips.map((clip, clipIndex) => (
                   <button
                     type="button"
+                    data-sequencer-item="true"
+                    data-track={trackIndex}
+                    data-marker={clipIndex}
                     className={`sequencer-audio-clip${isItemSelected(trackIndex, clipIndex) ? ' selected' : ''}`}
                     style={{
                       left: `${clip.start / asset.duration * 100}%`,
@@ -1383,6 +1531,9 @@ export function Sequencer(props: SequencerProps) {
                 {track.type === 'animation' && track.clips.map((clip, clipIndex) => (
                   <button
                     type="button"
+                    data-sequencer-item="true"
+                    data-track={trackIndex}
+                    data-marker={clipIndex}
                     className={`sequencer-animation-clip${isItemSelected(trackIndex, clipIndex) ? ' selected' : ''}`}
                     style={{
                       left: `${clip.start / asset.duration * 100}%`,
@@ -1396,6 +1547,9 @@ export function Sequencer(props: SequencerProps) {
                 {track.type === 'particle' && track.clips.map((clip, clipIndex) => (
                   <button
                     type="button"
+                    data-sequencer-item="true"
+                    data-track={trackIndex}
+                    data-marker={clipIndex}
                     className={`sequencer-particle-clip${isItemSelected(trackIndex, clipIndex) ? ' selected' : ''}`}
                     style={{
                       left: `${clip.start / asset.duration * 100}%`,
@@ -1409,6 +1563,9 @@ export function Sequencer(props: SequencerProps) {
                 {track.type === 'camera' && track.clips.map((clip, clipIndex) => (
                   <button
                     type="button"
+                    data-sequencer-item="true"
+                    data-track={trackIndex}
+                    data-marker={clipIndex}
                     className={`sequencer-camera-clip${isItemSelected(trackIndex, clipIndex) ? ' selected' : ''}`}
                     style={{
                       left: `${clip.start / asset.duration * 100}%`,
@@ -1424,6 +1581,7 @@ export function Sequencer(props: SequencerProps) {
             </div>
           ))}
           {asset.tracks.length === 0 && <div className="sequencer-empty-track">Add a Signal, Activation, Audio, Animation, Particle, or Camera Track to begin authoring.</div>}
+          {marquee && <i className="sequencer-marquee" style={marquee} aria-hidden="true" />}
         </div>
 
         <aside className="sequencer-inspector" onFocusCapture={beginInspectorEdit} onBlurCapture={endInspectorEdit}>

@@ -792,3 +792,12 @@ Referenced Only 是可用的单包裁剪基础，仍不等同于完整 Addressab
 - Validate/Save 在启动时捕获资源路径与源码快照。若用户在异步 Naga 校验或落盘期间切到另一个 Shader，旧任务只更新旧路径的后台文档和日志，不会覆盖新编辑器的源码、保存基线或错误面板。
 
 两轮自审额外修复了“保留干净后台文档后 Save All 重写所有已打开 Shader”和“异步保存跨文档回写”两个问题。当前历史仍属于每个 WebView；分离原生窗口之间要实现单一全局历史，仍需把可序列化命令和文档仓库下沉到桌面 Host。本切片也不替代第 58 节列出的真实材质预览、参数反射与 Variant/Cache 工作。
+
+## 60. 2026-07-19 Timeline 跨轨框选与连续自动滚动
+
+- Sequencer 可从任意轨道空白区拖出方形选区，一次命中跨轨的 Signal、Activation、Audio、Animation、Particle 和 Camera 项。普通拖拽替换选择，`Shift` 添加，`Ctrl/Cmd` 按命中集切换；重复 DOM 命中和非法索引会在纯选择合并器中去重/拒绝。
+- 选区与项目使用实际布局矩形相交，因此短 Clip、Signal Marker 和缩放后的可视宽度都按用户真正看到的范围命中，不依赖重复的时间到像素近似。粘性轨道头和标尺的实际边界参与裁剪，没有把 180/32 像素布局常量写死在手势代码中。
+- 指针进入轨道视口四周 28 像素区域后，水平和垂直滚动由 `requestAnimationFrame` 持续推进；即使指针停在边缘不再移动，仍能扩展到长 Timeline 和离屏轨道。框选锚点保存为滚动内容坐标，早先经过的离屏项不会因自动滚动而错误退出选择。
+- 手势超过 4 像素才进入框选；普通单击继续移动播放头并选中轨道，空白区双击创建项的旧交互不被 `preventDefault` 破坏。`pointercancel` 恢复手势前的主选择和整组选择，不留下半完成状态。
+
+这一切片让已有的组移动、组剪贴板、Duplicate、Delete 和 Ripple Delete 有了实用的多选入口，但成熟 Timeline 仍缺可视吸附线、键盘逐帧移动、Track Group/折叠/组级 Mute/Lock、Ripple Insert/Move、稳定 Binding Table、Animator/Blend Track、嵌套 Timeline、录制模式与性能分析。框选只改变编辑器选择状态，不伪造一条资产 Undo 事务；后续组级编辑继续复用已有的单事务全局 Undo 边界。

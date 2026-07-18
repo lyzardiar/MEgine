@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 
 import {
+  combineSequencerMarqueeSelection,
   clampSequencerZoom,
   copySequencerItem,
   copySequencerItems,
@@ -89,6 +90,32 @@ test('Sequencer selection model supports toggle and anchored ranges deterministi
   const range = selectSequencerItem([], { track: 2, marker: 4 }, { track: 2, marker: 1 }, 'range');
   assert.deepEqual(range.items, [1, 2, 3, 4].map((marker) => ({ track: 2, marker })));
   assert.deepEqual(range.primary, { track: 2, marker: 1 });
+});
+
+test('Sequencer marquee selection replaces adds and toggles without duplicate items', () => {
+  const current = [
+    { track: 0, marker: 0 },
+    { track: 1, marker: 1 },
+  ];
+  const hits = [
+    { track: 1, marker: 1 },
+    { track: 2, marker: 0 },
+    { track: 2, marker: 0 },
+    { track: -1, marker: 0 },
+  ];
+  assert.deepEqual(combineSequencerMarqueeSelection(current, hits, 'replace'), [
+    { track: 1, marker: 1 },
+    { track: 2, marker: 0 },
+  ]);
+  assert.deepEqual(combineSequencerMarqueeSelection(current, hits, 'add'), [
+    { track: 0, marker: 0 },
+    { track: 1, marker: 1 },
+    { track: 2, marker: 0 },
+  ]);
+  assert.deepEqual(combineSequencerMarqueeSelection(current, hits, 'toggle'), [
+    { track: 0, marker: 0 },
+    { track: 2, marker: 0 },
+  ]);
 });
 
 test('Sequencer multi-delete is atomic across tracks and rejects locked selections', () => {
