@@ -644,3 +644,12 @@ Referenced Only 是可用的单包裁剪基础，仍不等同于完整 Addressab
 - Build Settings 在单次内容分类和最大文件列表之后显示跨构建摘要与明细。比较基线来自磁盘上的已发布清单，因此关闭并重新打开编辑器后再构建仍可比较；构建失败继续由原子发布协议保留旧输出，也不会伪造一次成功差异。
 
 当前比较解决单一平台/配置输出的相邻两次构建差异，不是完整制品历史库。长期仍需持久化多版本索引、任意两次构建选择、分类/依赖原因变化、重复资源诊断、压缩前后体积、CI 制品 URL、符号与崩溃映射、签名/安装器状态、增量 Patch 生成和远程 Build Farm 追踪。
+
+## 44. 2026-07-19 Timeline Sequencer 可逆编辑与剪贴板
+
+- Sequencer 新增每资产最多 100 步的 Undo/Redo 历史，覆盖轨道创建/删除、Signal 与 Clip 创建/删除、Inspector 字段修改、片段移动/裁剪以及粘贴。历史快照同时保存选择和播放头时间；保存后仍可撤销到已保存版本并正确恢复 Dirty 状态，未保存资产切换时历史随 draft 一起保留。
+- 拖拽采用单事务语义：跨过半帧阈值后才记录一次原始快照，后续 Pointer Move 只更新当前事务，不会为每个像素堆积 Undo；`pointercancel` 同时恢复资产、选择、时间和拖拽前的 Undo/Redo 栈。
+- Signal、Activation、Audio、Animation 项支持 `Ctrl/Cmd+C/X/V/D` 复制、剪切、粘贴与重复。剪贴板深拷贝 Signal Payload 和 Clip 参数；粘贴优先使用选中的同类型轨道，其次使用源轨道 ID 或第一个兼容轨道，并按播放头/片段尾部寻找不重叠空隙，失败时给出明确诊断。
+- 工具栏新增方形 Undo、Redo、Copy、Paste 图标按钮与可访问标签；`Ctrl/Cmd+Z`、`Ctrl/Cmd+Shift+Z` 和 `Ctrl/Cmd+Y` 均可恢复历史。轨道空白区和标尺会聚焦 Sequencer，按钮焦点仍响应组合快捷键；输入框、文本域与下拉框保留系统文字编辑快捷键。
+
+该切片完成的是单项选择下的基础可逆编辑。成熟 Timeline 仍需多选 Clip/Signal、跨轨道组复制、框选、Ripple Edit、吸附参考线、轨道锁定/分组、命名剪贴板、跨 Timeline Undo 服务，以及与全编辑器统一 Undo 栈的事务合并；当前每次 Inspector `onChange` 仍可能形成多个细粒度历史项，后续应按 Focus/Blur 编辑手势合并。

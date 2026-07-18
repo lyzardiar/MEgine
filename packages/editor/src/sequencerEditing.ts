@@ -1,5 +1,23 @@
+import type {
+  TimelineActivationClip,
+  TimelineAnimationClip,
+  TimelineAsset,
+  TimelineAudioClip,
+  TimelineSignal,
+} from './timelineAsset.ts';
+
 export type SequencerClipRange = { start: number; duration: number };
 export type SequencerTrimEdge = 'start' | 'end';
+
+export type SequencerClipboard =
+  | { type: 'signal'; sourceTrackId: string; item: TimelineSignal }
+  | { type: 'activation'; sourceTrackId: string; item: TimelineActivationClip }
+  | { type: 'audio'; sourceTrackId: string; item: TimelineAudioClip }
+  | { type: 'animation'; sourceTrackId: string; item: TimelineAnimationClip };
+
+export type SequencerPasteResult =
+  | { ok: true; asset: TimelineAsset; trackIndex: number; itemIndex: number }
+  | { ok: false; error: string };
 
 export const SEQUENCER_MIN_ZOOM = 1;
 export const SEQUENCER_MAX_ZOOM = 32;
@@ -157,4 +175,96 @@ export function sequencerTicks(
     ticks[ticks.length - 1] = { time: safeDuration, position: 1 };
   }
   return ticks;
+}
+
+export function copySequencerItem(
+  asset: TimelineAsset,
+  trackIndex: number,
+  itemIndex: number,
+): SequencerClipboard | null {
+  const track = asset.tracks[trackIndex];
+  if (!track) return null;
+  if (track.type === 'signal') {
+    const item = track.markers[itemIndex];
+    return item ? { type: 'signal', sourceTrackId: track.id, item: structuredClone(item) } : null;
+  }
+  if (track.type === 'activation') {
+    const item = track.clips[itemIndex];
+    if (!item) return null;
+    return { type: 'activation', sourceTrackId: track.id, item: structuredClone(item) };
+  }
+  if (track.type === 'audio') {
+    const item = track.clips[itemIndex];
+    if (!item) return null;
+    return { type: 'audio', sourceTrackId: track.id, item: structuredClone(item) };
+  }
+  const item = track.clips[itemIndex];
+  if (!item) return null;
+  return { type: 'animation', sourceTrackId: track.id, item: structuredClone(item) };
+}
+
+export function resolveSequencerPasteTrack(
+  asset: TimelineAsset,
+  preferredTrackIndex: number | null,
+  clipboard: SequencerClipboard,
+): number {
+  const preferred = preferredTrackIndex == null ? null : asset.tracks[preferredTrackIndex];
+  if (preferred?.type === clipboard.type) return preferredTrackIndex!;
+  const source = asset.tracks.findIndex(
+    (track) => track.id === clipboard.sourceTrackId && track.type === clipboard.type,
+  );
+  if (source >= 0) return source;
+  return asset.tracks.findIndex((track) => track.type === clipboard.type);
+}
+
+export function pasteSequencerItem(
+  asset: TimelineAsset,
+  preferredTrackIndex: number | null,
+  requestedTime: number,
+  clipboard: SequencerClipboard,
+): SequencerPasteResult {
+  const trackIndex = resolveSequencerPasteTrack(asset, preferredTrackIndex, clipboard);
+  if (trackIndex < 0) {
+    return { ok: false, error: `Timeline has no ${clipboard.type} track for this item.` };
+  }
+  const next = structuredClone(asset);
+  const track = next.tracks[trackIndex];
+  if (track.type !== clipboard.type) return { ok: false, error: 'Timeline paste target changed type.' };
+  if (track.type === 'signal' && clipboard.type === 'signal') {
+    const item = structuredClone(clipboard.item);
+    item.time = clamp(snap(Number.isFinite(requestedTime) ? requestedTime : 0, next.frame_rate), 0, next.duration);
+    track.markers.push(item);
+    track.markers.sort((left, right) => left.time - right.time);
+    return { ok: true, asset: next, trackIndex, itemIndex: track.markers.indexOf(item) };
+  }
+  if (track.type === 'signal' || clipboard.type === 'signal') {
+    return { ok: false, error: 'Signal items cannot be pasted into clip tracks.' };
+  }
+  const placement = findSequencerClipPlacement(
+    track.clips,
+    requestedTime,
+    clipboard.item.duration,
+    next.duration,
+    next.frame_rate,
+  );
+  if (!placement) return { ok: false, error: `${clipboard.type} track has no free space for this clip.` };
+  if (track.type === 'activation' && clipboard.type === 'activation') {
+    const item = { ...structuredClone(clipboard.item), ...placement };
+    track.clips.push(item);
+    track.clips.sort((left, right) => left.start - right.start);
+    return { ok: true, asset: next, trackIndex, itemIndex: track.clips.indexOf(item) };
+  }
+  if (track.type === 'audio' && clipboard.type === 'audio') {
+    const item = { ...structuredClone(clipboard.item), ...placement };
+    track.clips.push(item);
+    track.clips.sort((left, right) => left.start - right.start);
+    return { ok: true, asset: next, trackIndex, itemIndex: track.clips.indexOf(item) };
+  }
+  if (track.type === 'animation' && clipboard.type === 'animation') {
+    const item = { ...structuredClone(clipboard.item), ...placement };
+    track.clips.push(item);
+    track.clips.sort((left, right) => left.start - right.start);
+    return { ok: true, asset: next, trackIndex, itemIndex: track.clips.indexOf(item) };
+  }
+  return { ok: false, error: 'Timeline paste target is incompatible with the copied clip.' };
 }

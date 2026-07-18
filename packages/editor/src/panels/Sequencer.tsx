@@ -7,7 +7,22 @@ import {
   type PointerEvent as ReactPointerEvent,
 } from 'react';
 import type { WorldSnapshotView } from '@mengine/api';
-import { Link, Maximize2, Minus, Pause, Play, Plus, Save, Square, Trash2, X } from 'lucide-react';
+import {
+  ClipboardPaste,
+  Copy,
+  Link,
+  Maximize2,
+  Minus,
+  Pause,
+  Play,
+  Plus,
+  Redo2,
+  Save,
+  Square,
+  Trash2,
+  Undo2,
+  X,
+} from 'lucide-react';
 import { registerMenuItem } from '../editorWindow';
 import {
   listProjectFiles,
@@ -29,10 +44,13 @@ import {
   SEQUENCER_MAX_ZOOM,
   SEQUENCER_MIN_ZOOM,
   clampSequencerZoom,
+  copySequencerItem,
   findSequencerClipPlacement,
   moveSequencerClip,
+  pasteSequencerItem,
   sequencerTicks,
   trimSequencerClip,
+  type SequencerClipboard,
 } from '../sequencerEditing';
 
 export const OPEN_TIMELINE_ASSET_EVENT = 'mengine:open-timeline-asset';
@@ -92,11 +110,18 @@ export type SequencerProps = {
 };
 
 type Selection = { track: number; marker: number | null } | null;
+type HistorySnapshot = {
+  asset: TimelineAsset;
+  selection: Selection;
+  time: number;
+};
 type Draft = {
   asset: TimelineAsset;
   savedText: string;
   time: number;
   selection: Selection;
+  undo: HistorySnapshot[];
+  redo: HistorySnapshot[];
 };
 
 export function Sequencer(props: SequencerProps) {
@@ -111,8 +136,12 @@ export function Sequencer(props: SequencerProps) {
   const [payloadInvalid, setPayloadInvalid] = useState(false);
   const [zoom, setZoom] = useState(1);
   const [tracksWidth, setTracksWidth] = useState(720);
+  const [clipboard, setClipboard] = useState<SequencerClipboard | null>(null);
+  const [, setHistoryEpoch] = useState(0);
   const loadedPath = useRef('');
   const drafts = useRef(new Map<string, Draft>());
+  const undoHistory = useRef<HistorySnapshot[]>([]);
+  const redoHistory = useRef<HistorySnapshot[]>([]);
   const frame = useRef<number | null>(null);
   const previousFrame = useRef<number | null>(null);
   const tracksViewport = useRef<HTMLDivElement | null>(null);
@@ -149,6 +178,8 @@ export function Sequencer(props: SequencerProps) {
         drafts.current.set(previous, {
           asset: structuredClone(asset), savedText, time,
           selection: selection ? { ...selection } : null,
+          undo: structuredClone(undoHistory.current),
+          redo: structuredClone(redoHistory.current),
         });
       } else {
         drafts.current.delete(previous);
@@ -161,6 +192,9 @@ export function Sequencer(props: SequencerProps) {
     setTime(0);
     setZoom(1);
     setSelection(null);
+    undoHistory.current = [];
+    redoHistory.current = [];
+    setHistoryEpoch((value) => value + 1);
     setError(null);
     setPayloadInvalid(false);
     if (!props.assetPath) return () => { cancelled = true; };
@@ -171,6 +205,9 @@ export function Sequencer(props: SequencerProps) {
       setSavedText(draft.savedText);
       setTime(draft.time);
       setSelection(draft.selection ? { ...draft.selection } : null);
+      undoHistory.current = structuredClone(draft.undo);
+      redoHistory.current = structuredClone(draft.redo);
+      setHistoryEpoch((value) => value + 1);
       return () => { cancelled = true; };
     }
     setLoading(true);
@@ -190,13 +227,56 @@ export function Sequencer(props: SequencerProps) {
     return () => { cancelled = true; };
   }, [props.assetPath]);
 
-  const update = (mutate: (draft: TimelineAsset) => void) => {
+  const applyUpdate = (mutate: (draft: TimelineAsset) => void) => {
     setAsset((current) => {
       if (!current) return current;
       const next = structuredClone(current);
       mutate(next);
       return next;
     });
+  };
+
+  const pushHistory = (
+    snapshotAsset: TimelineAsset,
+    snapshotSelection: Selection = selection,
+    snapshotTime = time,
+  ) => {
+    undoHistory.current.push({
+      asset: structuredClone(snapshotAsset),
+      selection: snapshotSelection ? { ...snapshotSelection } : null,
+      time: snapshotTime,
+    });
+    if (undoHistory.current.length > 100) undoHistory.current.shift();
+    redoHistory.current = [];
+    setHistoryEpoch((value) => value + 1);
+  };
+
+  const update = (mutate: (draft: TimelineAsset) => void) => {
+    if (!asset) return;
+    const next = structuredClone(asset);
+    mutate(next);
+    if (JSON.stringify(next) === JSON.stringify(asset)) return;
+    pushHistory(asset);
+    setAsset(next);
+  };
+
+  const restoreHistory = (source: 'undo' | 'redo') => {
+    if (!asset) return;
+    const from = source === 'undo' ? undoHistory.current : redoHistory.current;
+    const to = source === 'undo' ? redoHistory.current : undoHistory.current;
+    const snapshot = from.pop();
+    if (!snapshot) return;
+    to.push({
+      asset: structuredClone(asset),
+      selection: selection ? { ...selection } : null,
+      time,
+    });
+    setAsset(structuredClone(snapshot.asset));
+    setSelection(snapshot.selection ? { ...snapshot.selection } : null);
+    setTime(Math.max(0, Math.min(snapshot.asset.duration, snapshot.time)));
+    setPayloadInvalid(false);
+    setError(null);
+    setHistoryEpoch((value) => value + 1);
   };
 
   const save = async (): Promise<boolean> => {
@@ -434,6 +514,67 @@ export function Sequencer(props: SequencerProps) {
     else if (track?.type === 'animation') addAnimationClip(trackIndex, requestedTime);
   };
 
+  const copySelectedItem = (): SequencerClipboard | null => {
+    if (!asset || !selection || selection.marker == null) return null;
+    const copied = copySequencerItem(asset, selection.track, selection.marker);
+    if (copied) {
+      setClipboard(copied);
+      setError(null);
+    }
+    return copied;
+  };
+
+  const deleteSelection = () => {
+    if (!asset || !selection) return;
+    const selectedTrackIndex = selection.track;
+    const selectedItemIndex = selection.marker;
+    update((draft) => {
+      if (selectedItemIndex == null) {
+        draft.tracks.splice(selectedTrackIndex, 1);
+        return;
+      }
+      const track = draft.tracks[selectedTrackIndex];
+      if (track.type === 'signal') track.markers.splice(selectedItemIndex, 1);
+      else track.clips.splice(selectedItemIndex, 1);
+    });
+    setPayloadInvalid(false);
+    setSelection(selectedItemIndex == null
+      ? null
+      : { track: selectedTrackIndex, marker: null });
+  };
+
+  const pasteItem = (
+    source: SequencerClipboard | null = clipboard,
+    requestedTime = time,
+    preferredTrack = selection?.track ?? null,
+  ) => {
+    if (!asset || !source) return;
+    const pasted = pasteSequencerItem(asset, preferredTrack, requestedTime, source);
+    if (!pasted.ok) {
+      setError(pasted.error);
+      return;
+    }
+    pushHistory(asset);
+    setAsset(pasted.asset);
+    setSelection({ track: pasted.trackIndex, marker: pasted.itemIndex });
+    const pastedTrack = pasted.asset.tracks[pasted.trackIndex];
+    setTime(pastedTrack.type === 'signal'
+      ? pastedTrack.markers[pasted.itemIndex].time
+      : pastedTrack.clips[pasted.itemIndex].start);
+    setError(null);
+  };
+
+  const duplicateSelectedItem = () => {
+    if (!asset || !selection || selection.marker == null) return;
+    const copied = copySequencerItem(asset, selection.track, selection.marker);
+    if (!copied) return;
+    const track = asset.tracks[selection.track];
+    const requestedTime = track.type === 'signal'
+      ? track.markers[selection.marker].time + 1 / asset.frame_rate
+      : track.clips[selection.marker].start + track.clips[selection.marker].duration;
+    pasteItem(copied, requestedTime, selection.track);
+  };
+
   const startMarkerDrag = (
     event: ReactPointerEvent<HTMLButtonElement>,
     trackIndex: number,
@@ -458,13 +599,23 @@ export function Sequencer(props: SequencerProps) {
           : null;
     const pointerStartTime = (event.clientX - bounds.left) / Math.max(1, bounds.width) * asset.duration;
     const pointer = event.pointerId;
+    const selectionBeforeDrag = selection ? { ...selection } : null;
+    const timeBeforeDrag = time;
+    const undoBeforeDrag = structuredClone(undoHistory.current);
+    const redoBeforeDrag = structuredClone(redoHistory.current);
+    let historyRecorded = false;
     event.currentTarget.setPointerCapture(pointer);
     setSelection({ track: trackIndex, marker: markerIndex });
     const move = (moveEvent: PointerEvent) => {
+      if (moveEvent.pointerId !== pointer) return;
       const position = Math.max(0, Math.min(1, (moveEvent.clientX - bounds.left) / Math.max(1, bounds.width)));
-      update((draft) => {
+      const delta = position * asset.duration - pointerStartTime;
+      if (!historyRecorded && Math.abs(delta) >= 0.5 / asset.frame_rate) {
+        pushHistory(asset, selectionBeforeDrag, timeBeforeDrag);
+        historyRecorded = true;
+      }
+      applyUpdate((draft) => {
         const track = draft.tracks[trackIndex];
-        const delta = position * draft.duration - pointerStartTime;
         if (track.type === 'signal') {
           if (originalTrack.type !== 'signal') return;
           const originalMarker = originalTrack.markers[markerIndex];
@@ -509,10 +660,19 @@ export function Sequencer(props: SequencerProps) {
         }
       });
     };
-    const finish = () => {
+    const finish = (finishEvent: PointerEvent) => {
+      if (finishEvent.pointerId !== pointer) return;
       window.removeEventListener('pointermove', move);
       window.removeEventListener('pointerup', finish);
       window.removeEventListener('pointercancel', finish);
+      if (finishEvent.type === 'pointercancel' && historyRecorded) {
+        undoHistory.current = undoBeforeDrag;
+        redoHistory.current = redoBeforeDrag;
+        setAsset(structuredClone(asset));
+        setSelection(selectionBeforeDrag);
+        setTime(timeBeforeDrag);
+        setHistoryEpoch((value) => value + 1);
+      }
     };
     window.addEventListener('pointermove', move);
     window.addEventListener('pointerup', finish);
@@ -580,15 +740,55 @@ export function Sequencer(props: SequencerProps) {
     <div
       className="timeline-panel sequencer-panel"
       tabIndex={0}
+      onPointerDownCapture={(event) => {
+        const target = event.target as HTMLElement;
+        if (!target.closest('input, textarea, select, button, summary')) {
+          event.currentTarget.focus({ preventScroll: true });
+        }
+      }}
       onKeyDown={(event) => {
-        if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 's') {
+        const modified = event.ctrlKey || event.metaKey;
+        const key = event.key.toLowerCase();
+        if (modified && key === 's') {
           event.preventDefault();
           event.stopPropagation();
           void save();
           return;
         }
-        const tag = (event.target as HTMLElement).tagName;
-        if (['INPUT', 'TEXTAREA', 'SELECT', 'BUTTON', 'SUMMARY'].includes(tag)) return;
+        const eventTarget = event.target as HTMLElement;
+        const tag = eventTarget.tagName;
+        if (['INPUT', 'TEXTAREA', 'SELECT'].includes(tag) || eventTarget.isContentEditable) return;
+        if (modified && key === 'z') {
+          event.preventDefault();
+          restoreHistory(event.shiftKey ? 'redo' : 'undo');
+          return;
+        }
+        if (modified && key === 'y') {
+          event.preventDefault();
+          restoreHistory('redo');
+          return;
+        }
+        if (modified && key === 'c') {
+          event.preventDefault();
+          copySelectedItem();
+          return;
+        }
+        if (modified && key === 'x') {
+          event.preventDefault();
+          if (copySelectedItem()) deleteSelection();
+          return;
+        }
+        if (modified && key === 'v') {
+          event.preventDefault();
+          pasteItem(clipboard, displayTime);
+          return;
+        }
+        if (modified && key === 'd') {
+          event.preventDefault();
+          duplicateSelectedItem();
+          return;
+        }
+        if (['BUTTON', 'SUMMARY'].includes(tag)) return;
         if (event.code === 'Space') {
           event.preventDefault();
           if (liveDirector && props.selectedEntity) {
@@ -600,20 +800,7 @@ export function Sequencer(props: SequencerProps) {
         }
         if ((event.key === 'Delete' || event.key === 'Backspace') && selection) {
           event.preventDefault();
-          const selectedTrackIndex = selection.track;
-          const selectedItemIndex = selection.marker;
-          update((draft) => {
-            if (selectedItemIndex == null) {
-              draft.tracks.splice(selectedTrackIndex, 1);
-              return;
-            }
-            const track = draft.tracks[selectedTrackIndex];
-            if (track.type === 'signal') track.markers.splice(selectedItemIndex, 1);
-            else track.clips.splice(selectedItemIndex, 1);
-          });
-          setSelection(selectedItemIndex == null
-            ? null
-            : { track: selectedTrackIndex, marker: null });
+          deleteSelection();
         }
       }}
     >
@@ -629,6 +816,12 @@ export function Sequencer(props: SequencerProps) {
             if (liveDirector && props.selectedEntity) props.onPatchDirector(props.selectedEntity.entity, { playing: false, time: 0 });
             else { setPlaying(false); setTime(0); }
           }}><Square size={13} /></button>
+        </div>
+        <div className="sequencer-edit-controls">
+          <button type="button" aria-label="Undo" title="Undo (Ctrl+Z)" disabled={undoHistory.current.length === 0} onClick={() => restoreHistory('undo')}><Undo2 size={13} /></button>
+          <button type="button" aria-label="Redo" title="Redo (Ctrl+Y)" disabled={redoHistory.current.length === 0} onClick={() => restoreHistory('redo')}><Redo2 size={13} /></button>
+          <button type="button" aria-label="Copy selected item" title="Copy selected item (Ctrl+C)" disabled={!selectedMarker && !selectedClip} onClick={() => copySelectedItem()}><Copy size={13} /></button>
+          <button type="button" aria-label="Paste at playhead" title="Paste at playhead (Ctrl+V)" disabled={!clipboard} onClick={() => pasteItem(clipboard, displayTime)}><ClipboardPaste size={13} /></button>
         </div>
         <label className="timeline-time">Time <input type="number" min={0} max={asset.duration} step={1 / asset.frame_rate} value={Number(displayTime.toFixed(4))} onChange={(event) => {
           const next = snapTimelineAssetTime(Number(event.target.value), asset);

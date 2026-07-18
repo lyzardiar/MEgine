@@ -3627,6 +3627,15 @@ body.insp-scrubbing * {
   white-space: nowrap;
 }
 .sequencer-live-status.playing { border-color: #39704d; color: #8de5ab; background: #203428; }
+.sequencer-edit-controls {
+  display: flex;
+  flex: 0 0 auto;
+  align-items: center;
+  gap: 1px;
+  padding-right: 3px;
+  border-right: 1px solid #171717;
+}
+.sequencer-toolbar .sequencer-edit-controls button { min-width: 24px; padding: 0 4px; }
 .sequencer-zoom-controls {
   display: flex;
   flex: 0 0 auto;

@@ -3,11 +3,28 @@ import test from 'node:test';
 
 import {
   clampSequencerZoom,
+  copySequencerItem,
   findSequencerClipPlacement,
   moveSequencerClip,
+  pasteSequencerItem,
+  resolveSequencerPasteTrack,
   sequencerTicks,
   trimSequencerClip,
 } from '../src/sequencerEditing.ts';
+
+function timeline() {
+  return {
+    version: 1,
+    name: 'Edit',
+    duration: 8,
+    frame_rate: 10,
+    tracks: [
+      { type: 'signal', id: 'signals', name: 'Signals', muted: false, markers: [{ time: 1, name: 'Hit', payload: { value: 1 } }] },
+      { type: 'audio', id: 'audio', name: 'Audio', muted: false, target: 'Audio', clips: [{ start: 1, duration: 2, clip: 'Assets/hit.ogg', clip_in: 0.5, volume: 0.8, pitch: 1, looped: false }] },
+      { type: 'animation', id: 'animation', name: 'Animation', muted: false, target: 'Actor', clips: [] },
+    ],
+  };
+}
 
 test('Sequencer clip movement preserves duration and cannot overlap neighbours', () => {
   const clips = [
@@ -76,4 +93,38 @@ test('Sequencer ticks adapt to zoom while retaining exact endpoints', () => {
   assert.equal(fractional.at(-1).time, 0.3);
   assert.equal(clampSequencerZoom(-1), 1);
   assert.equal(clampSequencerZoom(100), 32);
+});
+
+test('Sequencer clipboard preserves payloads and selects a compatible track', () => {
+  const asset = timeline();
+  const clipboard = copySequencerItem(asset, 0, 0);
+  assert.ok(clipboard);
+  asset.tracks[0].markers[0].payload.value = 9;
+  assert.deepEqual(clipboard.item.payload, { value: 1 });
+  assert.equal(resolveSequencerPasteTrack(asset, 2, clipboard), 0);
+  const pasted = pasteSequencerItem(asset, 0, 2.04, clipboard);
+  assert.equal(pasted.ok, true);
+  assert.equal(pasted.asset.tracks[0].markers[pasted.itemIndex].time, 2);
+  assert.deepEqual(pasted.asset.tracks[0].markers[pasted.itemIndex].payload, { value: 1 });
+});
+
+test('Sequencer clip paste preserves source settings and finds collision-free space', () => {
+  const asset = timeline();
+  const clipboard = copySequencerItem(asset, 1, 0);
+  assert.ok(clipboard);
+  const pasted = pasteSequencerItem(asset, 2, 1.5, clipboard);
+  assert.equal(pasted.ok, true);
+  assert.equal(pasted.trackIndex, 1);
+  assert.deepEqual(pasted.asset.tracks[1].clips[pasted.itemIndex], {
+    start: 3,
+    duration: 2,
+    clip: 'Assets/hit.ogg',
+    clip_in: 0.5,
+    volume: 0.8,
+    pitch: 1,
+    looped: false,
+  });
+  const rejected = pasteSequencerItem({ ...asset, tracks: asset.tracks.slice(0, 1) }, null, 0, clipboard);
+  assert.equal(rejected.ok, false);
+  assert.equal(rejected.error, 'Timeline has no audio track for this item.');
 });
