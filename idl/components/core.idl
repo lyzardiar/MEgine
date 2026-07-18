@@ -184,6 +184,8 @@ component Animator {
   speed:           float  = 1
   current_state:   string = ""
   parameters_json: string = "{}"
+  layer_weights_json: string = "{}"
+  layers_json:        string = "{}"
   state_time:          float  = 0
   normalized_time:     float  = 0
   transition_to:       string = ""

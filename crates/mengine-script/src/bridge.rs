@@ -28,6 +28,16 @@ pub enum ScriptRuntimeRequest {
         entity: u64,
         state: String,
     },
+    SetAnimatorLayerWeight {
+        entity: u64,
+        layer: String,
+        weight: f32,
+    },
+    PlayAnimatorLayerState {
+        entity: u64,
+        layer: String,
+        state: String,
+    },
     PlayAnimation {
         entity: u64,
         restart: bool,
@@ -417,6 +427,49 @@ fn register_engine(context: &mut Context) -> Result<(), ScriptError> {
         }
     });
 
+    let set_animator_layer_weight = NativeFunction::from_copy_closure(|_this, args, ctx| {
+        let Some(entity) = js_entity_id(args.get_or_undefined(0), ctx) else {
+            return Ok(JsValue::new(false));
+        };
+        let layer = args
+            .get_or_undefined(1)
+            .to_string(ctx)?
+            .to_std_string_escaped();
+        let Some(weight) = args.get_or_undefined(2).as_number() else {
+            return Ok(JsValue::new(false));
+        };
+        if layer.trim().is_empty() || !weight.is_finite() || !(0.0..=1.0).contains(&weight) {
+            return Ok(JsValue::new(false));
+        }
+        queue_runtime_request(ScriptRuntimeRequest::SetAnimatorLayerWeight {
+            entity,
+            layer,
+            weight: weight as f32,
+        })
+    });
+
+    let play_animator_layer_state = NativeFunction::from_copy_closure(|_this, args, ctx| {
+        let Some(entity) = js_entity_id(args.get_or_undefined(0), ctx) else {
+            return Ok(JsValue::new(false));
+        };
+        let layer = args
+            .get_or_undefined(1)
+            .to_string(ctx)?
+            .to_std_string_escaped();
+        let state = args
+            .get_or_undefined(2)
+            .to_string(ctx)?
+            .to_std_string_escaped();
+        if layer.trim().is_empty() || state.trim().is_empty() {
+            return Ok(JsValue::new(false));
+        }
+        queue_runtime_request(ScriptRuntimeRequest::PlayAnimatorLayerState {
+            entity,
+            layer,
+            state,
+        })
+    });
+
     let play_animation = NativeFunction::from_copy_closure(|_this, args, ctx| {
         let Some(entity) = js_entity_id(args.get_or_undefined(0), ctx) else {
             return Ok(JsValue::new(false));
@@ -491,7 +544,7 @@ fn register_engine(context: &mut Context) -> Result<(), ScriptError> {
 
     context
         .eval(Source::from_bytes(
-            b"var engine = { setClearColor: null, pushCommandJson: null, loadScene: null, reloadScene: null, instantiatePrefab: null, setAnimatorParameter: null, setAnimatorTrigger: null, playAnimatorState: null, playAnimation: null, pauseAnimation: null, stopAnimation: null, seekAnimation: null, playAudio: null, pauseAudio: null, stopAudio: null, scene: null };",
+            b"var engine = { setClearColor: null, pushCommandJson: null, loadScene: null, reloadScene: null, instantiatePrefab: null, setAnimatorParameter: null, setAnimatorTrigger: null, playAnimatorState: null, setAnimatorLayerWeight: null, playAnimatorLayerState: null, playAnimation: null, pauseAnimation: null, stopAnimation: null, seekAnimation: null, playAudio: null, pauseAudio: null, stopAudio: null, scene: null };",
         ))
         .map_err(|e| ScriptError::Js(format!("{e}")))?;
 
@@ -535,6 +588,24 @@ fn register_engine(context: &mut Context) -> Result<(), ScriptError> {
         .set(
             boa_engine::js_string!("playAnimatorState"),
             play_animator_state.to_js_function(context.realm()),
+            false,
+            context,
+        )
+        .map_err(|e| ScriptError::Js(format!("{e}")))?;
+
+    engine_obj
+        .set(
+            boa_engine::js_string!("setAnimatorLayerWeight"),
+            set_animator_layer_weight.to_js_function(context.realm()),
+            false,
+            context,
+        )
+        .map_err(|e| ScriptError::Js(format!("{e}")))?;
+
+    engine_obj
+        .set(
+            boa_engine::js_string!("playAnimatorLayerState"),
+            play_animator_layer_state.to_js_function(context.realm()),
             false,
             context,
         )
@@ -761,6 +832,9 @@ mod tests {
             if (!engine.setAnimatorParameter(7, "Grounded", true)) throw new Error("bool rejected");
             if (!engine.setAnimatorTrigger("4294967297", "Jump")) throw new Error("trigger rejected");
             if (!engine.playAnimatorState("4294967297", "Land")) throw new Error("state rejected");
+            if (!engine.setAnimatorLayerWeight("4294967297", "Upper", 0.35)) throw new Error("layer weight rejected");
+            if (engine.setAnimatorLayerWeight(7, "Upper", 2)) throw new Error("invalid layer weight accepted");
+            if (!engine.playAnimatorLayerState("4294967297", "Upper", "Wave")) throw new Error("layer state rejected");
             if (!engine.playAnimation("4294967297", true)) throw new Error("animation play rejected");
             if (!engine.pauseAnimation(7)) throw new Error("animation pause rejected");
             if (!engine.stopAnimation("4294967297")) throw new Error("animation stop rejected");
@@ -793,6 +867,16 @@ mod tests {
                 ScriptRuntimeRequest::PlayAnimatorState {
                     entity: 4_294_967_297,
                     state: "Land".into(),
+                },
+                ScriptRuntimeRequest::SetAnimatorLayerWeight {
+                    entity: 4_294_967_297,
+                    layer: "Upper".into(),
+                    weight: 0.35,
+                },
+                ScriptRuntimeRequest::PlayAnimatorLayerState {
+                    entity: 4_294_967_297,
+                    layer: "Upper".into(),
+                    state: "Wave".into(),
                 },
                 ScriptRuntimeRequest::PlayAnimation {
                     entity: 4_294_967_297,

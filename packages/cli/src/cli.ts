@@ -31,6 +31,8 @@ interface EngineApi {
   setAnimatorParameter(entity: number | string, name: string, value: boolean | number): boolean;
   setAnimatorTrigger(entity: number | string, name: string): boolean;
   playAnimatorState(entity: number | string, state: string): boolean;
+  setAnimatorLayerWeight(entity: number | string, layer: string, weight: number): boolean;
+  playAnimatorLayerState(entity: number | string, layer: string, state: string): boolean;
   playAnimation(entity: number | string, restart?: boolean): boolean;
   pauseAnimation(entity: number | string): boolean;
   stopAnimation(entity: number | string): boolean;

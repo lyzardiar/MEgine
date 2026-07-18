@@ -101,6 +101,12 @@
       "current_state": {
         "type": "string"
       },
+      "layer_weights_json": {
+        "type": "string"
+      },
+      "layers_json": {
+        "type": "string"
+      },
       "normalized_time": {
         "type": "number"
       },
@@ -133,6 +139,8 @@
       "speed",
       "current_state",
       "parameters_json",
+      "layer_weights_json",
+      "layers_json",
       "state_time",
       "normalized_time",
       "transition_to",

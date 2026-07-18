@@ -3,10 +3,12 @@ import type { WorldSnapshotView } from '@mengine/api';
 import { createAnimationClip, serializeAnimationClip } from '../animationClip';
 import {
   animatorParameterValues,
+  animatorLayerWeightValues,
   createAnimatorController,
   parseAnimatorController,
   parseAnimatorControllerDraft,
   setAnimatorParameterOverride,
+  setAnimatorLayerWeightOverride,
   serializeAnimatorController,
   validateAnimatorController,
   type AnimatorConditionMode,
@@ -79,6 +81,8 @@ type AnimatorRuntimeData = {
   controller?: string;
   playing?: boolean;
   parameters_json?: string;
+  layer_weights_json?: string;
+  layers_json?: string;
   current_state?: string;
   state_time?: number;
   normalized_time?: number;
@@ -272,6 +276,29 @@ export type AnimatorEditorProps = {
   onLog: (message: string, level?: 'info' | 'warn' | 'error') => void;
 };
 
+type AnimatorLayerRuntimeData = {
+  enabled?: boolean;
+  timing_mode?: string;
+  weight?: number;
+  state?: string;
+  state_time?: number;
+  normalized_time?: number;
+  transition_to?: string;
+  transition_progress?: number;
+};
+
+function animatorLayerRuntime(json: string, layer: string): AnimatorLayerRuntimeData | null {
+  try {
+    const parsed = JSON.parse(json) as Record<string, unknown>;
+    const value = parsed[layer];
+    return value != null && typeof value === 'object' && !Array.isArray(value)
+      ? value as AnimatorLayerRuntimeData
+      : null;
+  } catch {
+    return null;
+  }
+}
+
 function AnimatorControllerEditor(props: AnimatorEditorProps) {
   const [controller, setController] = useState<AnimatorController | null>(null);
   const [savedFingerprint, setSavedFingerprint] = useState('');
@@ -420,8 +447,13 @@ function AnimatorControllerEditor(props: AnimatorEditorProps) {
   const runtime = animatorRuntime(props.selectedEntity);
   const assigned = String(runtime?.controller ?? '') === props.assetPath;
   const parameterOverrides = String(runtime?.parameters_json ?? '{}');
+  const layerWeightOverrides = String(runtime?.layer_weights_json ?? '{}');
+  const layerRuntimeJson = String(runtime?.layers_json ?? '{}');
   const instanceParameterValues = assigned
     ? animatorParameterValues(controller, parameterOverrides)
+    : {};
+  const instanceLayerWeights = assigned
+    ? animatorLayerWeightValues(controller, layerWeightOverrides)
     : {};
   const patchAnimator = (patch: Record<string, unknown>) => {
     if (assigned && props.selectedEntity) {
@@ -431,6 +463,16 @@ function AnimatorControllerEditor(props: AnimatorEditorProps) {
   const setInstanceParameter = (name: string, value: unknown) => {
     patchAnimator({
       parameters_json: setAnimatorParameterOverride(controller, parameterOverrides, name, value),
+    });
+  };
+  const setInstanceLayerWeight = (name: string, value: number) => {
+    patchAnimator({
+      layer_weights_json: setAnimatorLayerWeightOverride(
+        controller,
+        layerWeightOverrides,
+        name,
+        value,
+      ),
     });
   };
   return (
@@ -692,6 +734,52 @@ function AnimatorControllerEditor(props: AnimatorEditorProps) {
           ))}
           <div className="field-hint">Synced layers follow Base timing; Independent layers own their states and transitions while sharing Controller parameters. External and inline Avatar Mask paths are combined.</div>
         </section>
+
+        {assigned && (
+          <section className="animator-section animator-instance-section">
+            <div className="animator-heading">
+              <h3>{props.playMode ? 'Live Layers' : 'Instance Layer Weights'}</h3>
+              <span className={`animator-instance-mode${props.playMode ? ' live' : ''}`}>
+                {props.playMode ? 'Play Mode' : 'Startup Values'}
+              </span>
+              <button type="button" onClick={() => patchAnimator({ layer_weights_json: '{}' })}>
+                Reset
+              </button>
+            </div>
+            {controller.layers.length === 0 && <div className="field-hint">No additional layers.</div>}
+            {controller.layers.map((layer) => {
+              const live = animatorLayerRuntime(layerRuntimeJson, layer.name);
+              const progress = Math.max(0, Math.min(1, Number(live?.transition_progress) || 0));
+              return (
+                <div className="animator-instance-layer" key={layer.name}>
+                  <strong>{layer.name}</strong>
+                  <small>{live?.timing_mode ?? layer.timing_mode}</small>
+                  <span title={live?.transition_to ? `Transition to ${live.transition_to}` : undefined}>
+                    {live?.state || (layer.timing_mode === 'independent' ? layer.default_state : controller.default_state)}
+                    {live?.transition_to ? ` → ${live.transition_to}` : ''}
+                  </span>
+                  <input
+                    aria-label={`${layer.name} instance weight`}
+                    type="number"
+                    min="0"
+                    max="1"
+                    step="0.05"
+                    value={instanceLayerWeights[layer.name] ?? layer.weight}
+                    onChange={(event) => {
+                      if (Number.isFinite(event.target.valueAsNumber)) {
+                        setInstanceLayerWeight(layer.name, event.target.valueAsNumber);
+                      }
+                    }}
+                  />
+                  <span className="animator-layer-time">
+                    {Number(live?.normalized_time ?? 0).toFixed(2)}
+                  </span>
+                  {live?.transition_to && <i className="animator-layer-live-progress" style={{ width: `${progress * 100}%` }} />}
+                </div>
+              );
+            })}
+          </section>
+        )}
 
         {assigned && (
           <section className="animator-section animator-instance-section">

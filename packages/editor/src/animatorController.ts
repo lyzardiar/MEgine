@@ -114,6 +114,33 @@ function parameterOverrideObject(json: string): Record<string, unknown> {
   }
 }
 
+export function animatorLayerWeightValues(
+  controller: AnimatorController,
+  json: string,
+): Record<string, number> {
+  const overrides = parameterOverrideObject(json);
+  return Object.fromEntries(controller.layers.map((layer) => {
+    const value = overrides[layer.name];
+    return [layer.name, typeof value === 'number' && Number.isFinite(value)
+      ? Math.max(0, Math.min(1, value))
+      : layer.weight];
+  }));
+}
+
+export function setAnimatorLayerWeightOverride(
+  controller: AnimatorController,
+  json: string,
+  layerName: string,
+  weight: number,
+): string {
+  if (!controller.layers.some((layer) => layer.name === layerName) || !Number.isFinite(weight)) {
+    return json;
+  }
+  const overrides = parameterOverrideObject(json);
+  overrides[layerName] = Math.max(0, Math.min(1, weight));
+  return JSON.stringify(overrides);
+}
+
 function normalizeMaskPath(value: unknown): string {
   const path = String(value ?? '').trim().replace(/\\/g, '/').replace(/^\/+|\/+$/g, '');
   if (path === '.' || path === '*') return path;

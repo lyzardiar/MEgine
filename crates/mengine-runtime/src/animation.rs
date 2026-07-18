@@ -82,6 +82,7 @@ pub struct AnimationRuntime {
     controllers: HashMap<PathBuf, CachedController>,
     avatar_masks: HashMap<PathBuf, CachedAvatarMask>,
     animator_instances: HashMap<Entity, AnimatorInstance>,
+    pending_layer_states: HashMap<(Entity, String), String>,
     reported_failures: HashSet<(String, String)>,
     initialized_players: HashSet<Entity>,
     initialized_animators: HashSet<Entity>,
@@ -98,6 +99,7 @@ impl AnimationRuntime {
             controllers: HashMap::new(),
             avatar_masks: HashMap::new(),
             animator_instances: HashMap::new(),
+            pending_layer_states: HashMap::new(),
             reported_failures: HashSet::new(),
             initialized_players: HashSet::new(),
             initialized_animators: HashSet::new(),
@@ -116,6 +118,7 @@ impl AnimationRuntime {
         self.controllers.clear();
         self.avatar_masks.clear();
         self.animator_instances.clear();
+        self.pending_layer_states.clear();
         self.reported_failures.clear();
         self.initialized_players.clear();
         self.initialized_animators.clear();
@@ -141,6 +144,16 @@ impl AnimationRuntime {
         self.active_players.remove(&entity);
     }
 
+    pub fn play_animator_layer_state(&mut self, entity: Entity, layer: &str, state: &str) {
+        let layer = layer.trim();
+        let state = state.trim();
+        if layer.is_empty() || state.is_empty() {
+            return;
+        }
+        self.pending_layer_states
+            .insert((entity, layer.to_owned()), state.to_owned());
+    }
+
     pub fn update(&mut self, world: &mut World, delta_seconds: f32) -> Vec<AnimationLoadFailure> {
         self.pending_events.clear();
         if !delta_seconds.is_finite() {
@@ -152,6 +165,8 @@ impl AnimationRuntime {
             .collect();
         self.animator_instances
             .retain(|entity, _| animator_entities.contains(entity) && world.is_alive(*entity));
+        self.pending_layer_states
+            .retain(|(entity, _), _| animator_entities.contains(entity) && world.is_alive(*entity));
         self.initialized_animators
             .retain(|entity| animator_entities.contains(entity) && world.is_alive(*entity));
         self.active_animators
@@ -295,6 +310,7 @@ impl AnimationRuntime {
         controller: &AnimatorController,
         layer: &AnimatorLayer,
         instance: &AnimatorInstance,
+        weight: f32,
     ) -> Result<(Vec<mengine_assets::AnimationSample>, f32), (String, String)> {
         if let Some(active) = instance.transition.as_ref() {
             let amount = (active.elapsed / active.duration.max(f32::EPSILON)).clamp(0.0, 1.0);
@@ -312,17 +328,17 @@ impl AnimationRuntime {
             )?;
             return Ok(match (source, destination) {
                 (Some(source), Some(destination)) => {
-                    (blend_samples(source, destination, amount), layer.weight)
+                    (blend_samples(source, destination, amount), weight)
                 }
-                (Some(source), None) => (source, layer.weight * (1.0 - amount)),
-                (None, Some(destination)) => (destination, layer.weight * amount),
+                (Some(source), None) => (source, weight * (1.0 - amount)),
+                (None, Some(destination)) => (destination, weight * amount),
                 (None, None) => (Vec::new(), 0.0),
             });
         }
         Ok((
             self.sample_layer_motion(controller, layer, &instance.state, instance.state_time)?
                 .unwrap_or_default(),
-            layer.weight,
+            weight,
         ))
     }
 
@@ -456,6 +472,88 @@ impl AnimationRuntime {
         )
     }
 
+    fn animator_layers_debug(
+        &mut self,
+        controller: &AnimatorController,
+        instance: &AnimatorInstance,
+        weights: &HashMap<String, f32>,
+    ) -> String {
+        let mut output = serde_json::Map::new();
+        for layer in &controller.layers {
+            let weight = weights
+                .get(&layer.name)
+                .copied()
+                .unwrap_or(layer.weight)
+                .clamp(0.0, 1.0);
+            let (state, state_time, normalized_time, transition_to, transition_progress) =
+                if layer.timing_mode == AnimatorLayerTimingMode::Independent {
+                    let state_machine = instance.layers.get(&layer.name);
+                    let state = state_machine
+                        .map(|state_machine| state_machine.state.clone())
+                        .unwrap_or_else(|| layer.default_state.clone());
+                    let (state_time, transition_to, transition_progress) = state_machine
+                        .and_then(|state_machine| state_machine.transition.as_ref())
+                        .map(|active| {
+                            (
+                                active.source_time,
+                                active.destination_state.clone(),
+                                (active.elapsed / active.duration.max(f32::EPSILON))
+                                    .clamp(0.0, 1.0),
+                            )
+                        })
+                        .unwrap_or_else(|| {
+                            (
+                                state_machine.map(|value| value.state_time).unwrap_or(0.0),
+                                String::new(),
+                                0.0,
+                            )
+                        });
+                    let normalized_time = layer
+                        .state(&state)
+                        .and_then(|state| self.load_clip(&state.clip).ok())
+                        .map(|clip| {
+                            if clip.duration > f32::EPSILON {
+                                state_time / clip.duration
+                            } else {
+                                0.0
+                            }
+                        })
+                        .unwrap_or(0.0);
+                    (
+                        state,
+                        state_time,
+                        normalized_time,
+                        transition_to,
+                        transition_progress,
+                    )
+                } else {
+                    let (state_time, normalized_time, transition_to, transition_progress) =
+                        self.animator_debug_values(controller, instance);
+                    (
+                        instance.state.clone(),
+                        state_time,
+                        normalized_time,
+                        transition_to,
+                        transition_progress,
+                    )
+                };
+            output.insert(
+                layer.name.clone(),
+                serde_json::json!({
+                    "enabled": layer.enabled,
+                    "timing_mode": if layer.timing_mode == AnimatorLayerTimingMode::Independent { "independent" } else { "synced" },
+                    "weight": weight,
+                    "state": state,
+                    "state_time": state_time,
+                    "normalized_time": normalized_time,
+                    "transition_to": transition_to,
+                    "transition_progress": transition_progress,
+                }),
+            );
+        }
+        Value::Object(output).to_string()
+    }
+
     fn update_animators(
         &mut self,
         world: &mut World,
@@ -490,6 +588,7 @@ impl AnimationRuntime {
                     live.normalized_time = 0.0;
                     live.transition_to.clear();
                     live.transition_progress = 0.0;
+                    live.layers_json = "{}".into();
                 }
                 continue;
             }
@@ -538,16 +637,20 @@ impl AnimationRuntime {
                 instance.transition = None;
             }
             animator.current_state = instance.state.clone();
+            let layer_weights = animator_layer_weights(&animator.layer_weights_json);
             if !animator.playing {
                 self.active_animators.remove(&entity);
                 let (state_time, normalized_time, transition_to, transition_progress) =
                     self.animator_debug_values(&controller, &instance);
+                let layers_json =
+                    self.animator_layers_debug(&controller, &instance, &layer_weights);
                 if let Some(live) = world.get_component_mut::<Animator>(entity) {
                     live.current_state = animator.current_state;
                     live.state_time = state_time;
                     live.normalized_time = normalized_time;
                     live.transition_to = transition_to;
                     live.transition_progress = transition_progress;
+                    live.layers_json = layers_json;
                 }
                 self.animator_instances.insert(entity, instance);
                 continue;
@@ -555,6 +658,18 @@ impl AnimationRuntime {
             entered_state |= self.active_animators.insert(entity);
 
             let parameters = animator_parameters(&controller, &animator.parameters_json);
+            let request_keys: Vec<_> = self
+                .pending_layer_states
+                .keys()
+                .filter(|(request_entity, _)| *request_entity == entity)
+                .cloned()
+                .collect();
+            let mut requested_layer_states = HashMap::new();
+            for key in request_keys {
+                if let Some(state) = self.pending_layer_states.remove(&key) {
+                    requested_layer_states.insert(key.1, state);
+                }
+            }
             let delta = delta_seconds * animator.speed;
             let mut consumed_triggers = Vec::new();
             let advanced_transition = instance.transition.is_some();
@@ -708,6 +823,11 @@ impl AnimationRuntime {
                 })
             });
             for layer in controller.layers.iter().filter(|layer| layer.enabled) {
+                let effective_weight = layer_weights
+                    .get(&layer.name)
+                    .copied()
+                    .unwrap_or(layer.weight)
+                    .clamp(0.0, 1.0);
                 let mut mask_paths = layer.mask_paths.clone();
                 if !layer.avatar_mask.is_empty() {
                     match self.load_avatar_mask(&layer.avatar_mask) {
@@ -738,6 +858,23 @@ impl AnimationRuntime {
                                 transition: None,
                             }
                         });
+                    if let Some(requested_state) = requested_layer_states.remove(&layer.name) {
+                        if layer.state(&requested_state).is_some() {
+                            layer_instance.state = requested_state;
+                            layer_instance.state_time = 0.0;
+                            layer_instance.transition = None;
+                        } else {
+                            self.record_failure(
+                                entity,
+                                controller_key,
+                                format!(
+                                    "Animator layer '{}' has no state '{}'",
+                                    layer.name, requested_state
+                                ),
+                                &mut failures,
+                            );
+                        }
+                    }
                     let result = self
                         .sample_independent_layer(
                             layer,
@@ -746,11 +883,11 @@ impl AnimationRuntime {
                             &parameters,
                             &mut consumed_triggers,
                         )
-                        .map(|samples| (samples, layer.weight));
+                        .map(|samples| (samples, effective_weight));
                     instance.layers.insert(layer.name.clone(), layer_instance);
                     result
                 } else {
-                    self.sample_synced_layer(&controller, layer, &instance)
+                    self.sample_synced_layer(&controller, layer, &instance, effective_weight)
                 };
                 match sampled {
                     Ok((samples, weight)) if weight > f32::EPSILON => {
@@ -769,6 +906,16 @@ impl AnimationRuntime {
                     }
                 }
             }
+            for (layer, state) in requested_layer_states {
+                self.record_failure(
+                    entity,
+                    controller_key,
+                    format!(
+                        "Animator has no enabled independent layer '{layer}' for state '{state}'"
+                    ),
+                    &mut failures,
+                );
+            }
 
             if instance
                 .transition
@@ -786,6 +933,7 @@ impl AnimationRuntime {
             }
             let (state_time, normalized_time, transition_to, transition_progress) =
                 self.animator_debug_values(&controller, &instance);
+            let layers_json = self.animator_layers_debug(&controller, &instance, &layer_weights);
             if let Some(live) = world.get_component_mut::<Animator>(entity) {
                 live.current_state = animator.current_state;
                 live.parameters_json = animator.parameters_json;
@@ -793,6 +941,7 @@ impl AnimationRuntime {
                 live.normalized_time = normalized_time;
                 live.transition_to = transition_to;
                 live.transition_progress = transition_progress;
+                live.layers_json = layers_json;
             }
             self.animator_instances.insert(entity, instance);
         }
@@ -904,6 +1053,24 @@ impl AnimationRuntime {
 }
 
 type AnimatorParameters = HashMap<String, Value>;
+
+fn animator_layer_weights(json: &str) -> HashMap<String, f32> {
+    serde_json::from_str::<Value>(json)
+        .ok()
+        .and_then(|value| value.as_object().cloned())
+        .map(|values| {
+            values
+                .into_iter()
+                .filter_map(|(name, value)| {
+                    value
+                        .as_f64()
+                        .filter(|value| value.is_finite())
+                        .map(|value| (name, (value as f32).clamp(0.0, 1.0)))
+                })
+                .collect()
+        })
+        .unwrap_or_default()
+}
 
 fn animator_parameters(controller: &AnimatorController, json: &str) -> AnimatorParameters {
     let mut values = AnimatorParameters::new();
@@ -2016,6 +2183,31 @@ mod tests {
         assert!(
             (world.get_component::<Transform>(entity).unwrap().position[0] - 5.0).abs() < 0.001
         );
+        let debug: Value =
+            serde_json::from_str(&world.get_component::<Animator>(entity).unwrap().layers_json)
+                .unwrap();
+        assert_eq!(debug["Upper"]["state"], "Wave");
+        assert_eq!(debug["Upper"]["weight"], 0.5);
+
+        world
+            .get_component_mut::<Animator>(entity)
+            .unwrap()
+            .layer_weights_json = r#"{"Upper":1}"#.into();
+        runtime.play_animator_layer_state(entity, "Upper", "Rest");
+        assert!(runtime.update(&mut world, 0.0).is_empty());
+        assert!(
+            (world.get_component::<Transform>(entity).unwrap().position[0] - 2.0).abs() < 0.001
+        );
+        runtime.play_animator_layer_state(entity, "Upper", "Wave");
+        assert!(runtime.update(&mut world, 0.0).is_empty());
+        assert!(
+            (world.get_component::<Transform>(entity).unwrap().position[0] - 10.0).abs() < 0.001
+        );
+        let debug: Value =
+            serde_json::from_str(&world.get_component::<Animator>(entity).unwrap().layers_json)
+                .unwrap();
+        assert_eq!(debug["Upper"]["state"], "Wave");
+        assert_eq!(debug["Upper"]["weight"], 1.0);
         fs::remove_dir_all(project).unwrap();
     }
 

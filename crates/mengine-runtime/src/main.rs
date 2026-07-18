@@ -224,6 +224,43 @@ impl App {
                 animator.playing = true;
                 return;
             }
+            ScriptRuntimeRequest::SetAnimatorLayerWeight {
+                entity,
+                layer,
+                weight,
+            } => {
+                let entity = Entity::from_u64(*entity);
+                let Some(animator) = self.world.get_component_mut::<Animator>(entity) else {
+                    log::warn!(
+                        "script tried to set Animator layer weight on missing entity {entity:?}"
+                    );
+                    return;
+                };
+                let mut weights =
+                    serde_json::from_str::<serde_json::Value>(&animator.layer_weights_json)
+                        .ok()
+                        .and_then(|value| value.as_object().cloned())
+                        .unwrap_or_default();
+                weights.insert(layer.clone(), serde_json::json!(weight.clamp(0.0, 1.0)));
+                animator.layer_weights_json = serde_json::Value::Object(weights).to_string();
+                return;
+            }
+            ScriptRuntimeRequest::PlayAnimatorLayerState {
+                entity,
+                layer,
+                state,
+            } => {
+                let entity = Entity::from_u64(*entity);
+                if self.world.get_component::<Animator>(entity).is_none() {
+                    log::warn!(
+                        "script tried to play Animator layer state on missing entity {entity:?}"
+                    );
+                    return;
+                }
+                self.animations
+                    .play_animator_layer_state(entity, layer, state);
+                return;
+            }
             ScriptRuntimeRequest::PlayAnimation { entity, restart } => {
                 let entity = Entity::from_u64(*entity);
                 if *restart {
@@ -321,8 +358,10 @@ impl App {
             ScriptRuntimeRequest::LoadScene(reference) => SceneSelector::PathOrName(reference),
             ScriptRuntimeRequest::ReloadScene => SceneSelector::Reload,
             ScriptRuntimeRequest::SetAnimatorParameter { .. }
+            | ScriptRuntimeRequest::SetAnimatorLayerWeight { .. }
             | ScriptRuntimeRequest::InstantiatePrefab { .. }
             | ScriptRuntimeRequest::PlayAnimatorState { .. }
+            | ScriptRuntimeRequest::PlayAnimatorLayerState { .. }
             | ScriptRuntimeRequest::PlayAnimation { .. }
             | ScriptRuntimeRequest::PauseAnimation { .. }
             | ScriptRuntimeRequest::StopAnimation { .. }

@@ -164,6 +164,8 @@ export interface Animator {
   speed: number;
   currentState: string;
   parametersJson: string;
+  layerWeightsJson: string;
+  layersJson: string;
   stateTime: number;
   normalizedTime: number;
   transitionTo: string;

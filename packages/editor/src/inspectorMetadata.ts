@@ -282,6 +282,8 @@ export const BUILTIN_INSPECTOR_FIELDS: Readonly<
     speed: { step: 0.1 },
     current_state: { label: 'Current State' },
     parameters_json: { label: 'Parameter Overrides (JSON)', kind: 'multiline' },
+    layer_weights_json: { label: 'Layer Weight Overrides (JSON)', kind: 'multiline' },
+    layers_json: { hidden: true },
     state_time: { hidden: true },
     normalized_time: { hidden: true },
     transition_to: { hidden: true },

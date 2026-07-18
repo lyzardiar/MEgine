@@ -4520,6 +4520,33 @@ body.ew-dragging {
   font-size: 9px;
 }
 
+.animator-instance-layer {
+  position: relative;
+  display: grid;
+  grid-template-columns: minmax(90px, 1fr) 72px minmax(110px, 1.2fr) 72px 42px;
+  align-items: center;
+  gap: 6px;
+  min-height: 30px;
+  border-bottom: 1px solid #242424;
+  overflow: hidden;
+  font-size: 11px;
+}
+
+.animator-instance-layer small,
+.animator-layer-time {
+  color: #999;
+  font-family: var(--u-mono);
+}
+
+.animator-layer-live-progress {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  height: 2px;
+  max-width: 100%;
+  background: #55a6d9;
+}
+
 .animator-instance-mode.live {
   border-color: #3f7c49;
   color: #8bd896;

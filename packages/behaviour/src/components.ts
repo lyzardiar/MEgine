@@ -168,6 +168,8 @@ export class Animator {
   speed!: number;
   current_state!: string;
   parameters_json!: string;
+  layer_weights_json!: string;
+  layers_json!: string;
 }
 
 export class AudioListener {

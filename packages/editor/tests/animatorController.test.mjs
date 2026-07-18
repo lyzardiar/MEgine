@@ -2,10 +2,12 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 import {
   animatorParameterValues,
+  animatorLayerWeightValues,
   createAnimatorController,
   normalizeAnimatorController,
   parseAnimatorController,
   setAnimatorParameterOverride,
+  setAnimatorLayerWeightOverride,
   serializeAnimatorController,
 } from '../src/animatorController.ts';
 
@@ -128,4 +130,21 @@ test('animator controller validates independent layer state machines', () => {
   assert.doesNotThrow(() => serializeAnimatorController(controller));
   controller.layers[0].default_state = 'Missing';
   assert.throws(() => serializeAnimatorController(controller), /默认 State 不存在/);
+});
+
+test('animator layer weight overrides clamp and preserve authored defaults', () => {
+  const controller = normalizeAnimatorController({
+    default_state: 'Idle',
+    states: [{ name: 'Idle', clip: 'idle.manim' }],
+    layers: [
+      { name: 'Upper', weight: 0.6 },
+      { name: 'Aim', weight: 0.25 },
+    ],
+  });
+  assert.deepEqual(animatorLayerWeightValues(controller, '{"Upper":2,"Aim":"bad"}'), {
+    Upper: 1,
+    Aim: 0.25,
+  });
+  assert.equal(setAnimatorLayerWeightOverride(controller, '{}', 'Upper', -1), '{"Upper":0}');
+  assert.equal(setAnimatorLayerWeightOverride(controller, '{}', 'Missing', 0.5), '{}');
 });
