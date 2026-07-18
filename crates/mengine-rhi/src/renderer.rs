@@ -1508,6 +1508,33 @@ fn vs_main(v: VsIn) -> VsOut {
     return o;
 }
 
+const PI: f32 = 3.141592653589793;
+
+fn distribution_ggx(n: vec3<f32>, h: vec3<f32>, roughness: f32) -> f32 {
+    let alpha = roughness * roughness;
+    let alpha_squared = alpha * alpha;
+    let ndh = max(dot(n, h), 0.0);
+    let denominator = ndh * ndh * (alpha_squared - 1.0) + 1.0;
+    return alpha_squared / max(PI * denominator * denominator, 0.000001);
+}
+
+fn geometry_schlick_ggx(ndx: f32, roughness: f32) -> f32 {
+    let radius = roughness + 1.0;
+    let k = radius * radius * 0.125;
+    return ndx / max(ndx * (1.0 - k) + k, 0.000001);
+}
+
+fn geometry_smith(n: vec3<f32>, v: vec3<f32>, l: vec3<f32>, roughness: f32) -> f32 {
+    let ndv = max(dot(n, v), 0.0);
+    let ndl = max(dot(n, l), 0.0);
+    return geometry_schlick_ggx(ndv, roughness) * geometry_schlick_ggx(ndl, roughness);
+}
+
+fn fresnel_schlick(cos_theta: f32, f0: vec3<f32>) -> vec3<f32> {
+    let grazing = pow(clamp(1.0 - cos_theta, 0.0, 1.0), 5.0);
+    return f0 + (vec3<f32>(1.0) - f0) * grazing;
+}
+
 fn light_contribution(
     n: vec3<f32>,
     v: vec3<f32>,
@@ -1518,15 +1545,19 @@ fn light_contribution(
     roughness: f32,
 ) -> vec3<f32> {
     let ndl = max(dot(n, l), 0.0);
-    if ndl <= 0.0 {
+    let ndv = max(dot(n, v), 0.0);
+    if ndl <= 0.0 || ndv <= 0.0 {
         return vec3<f32>(0.0);
     }
     let h = normalize(l + v);
-    let shininess = mix(128.0, 4.0, roughness);
-    let specular_color = mix(vec3<f32>(0.04), base_color, metallic);
-    let specular = pow(max(dot(n, h), 0.0), shininess) * specular_color;
-    let diffuse = base_color * (1.0 - metallic);
-    return (diffuse * ndl + specular * ndl) * radiance;
+    let f0 = mix(vec3<f32>(0.04), base_color, metallic);
+    let fresnel = fresnel_schlick(max(dot(h, v), 0.0), f0);
+    let distribution = distribution_ggx(n, h, roughness);
+    let geometry = geometry_smith(n, v, l, roughness);
+    let specular = distribution * geometry * fresnel / max(4.0 * ndv * ndl, 0.000001);
+    let diffuse_weight = (vec3<f32>(1.0) - fresnel) * (1.0 - metallic);
+    let diffuse = diffuse_weight * base_color / PI;
+    return (diffuse + specular) * radiance * ndl;
 }
 
 fn distance_attenuation(distance: f32, range: f32) -> f32 {
@@ -1620,7 +1651,10 @@ fn fs_main(i: VsOut, @builtin(front_facing) front_facing: bool) -> @location(0) 
     }
 
     let v = normalize(frame.camera_position.xyz - i.world_position);
-    var color = frame.ambient.rgb * base_color * (1.0 - metallic * 0.5) * occlusion;
+    let ambient_f0 = mix(vec3<f32>(0.04), base_color, metallic);
+    let ambient_diffuse = base_color * (1.0 - metallic);
+    let ambient_specular = ambient_f0 * (1.0 - roughness * 0.5);
+    var color = frame.ambient.rgb * (ambient_diffuse + ambient_specular) * occlusion;
 
     if frame.light_counts.x > 0u {
         let l = normalize(-frame.directional_direction.xyz);
@@ -1687,6 +1721,19 @@ mod tests {
         )
         .validate(&module)
         .expect("forward shader should pass validation");
+    }
+
+    #[test]
+    fn forward_shader_uses_energy_conserving_ggx_lighting() {
+        for required in [
+            "fn distribution_ggx",
+            "fn geometry_smith",
+            "fn fresnel_schlick",
+            "diffuse_weight = (vec3<f32>(1.0) - fresnel) * (1.0 - metallic)",
+        ] {
+            assert!(FORWARD_WGSL.contains(required), "missing {required}");
+        }
+        assert!(!FORWARD_WGSL.contains("let shininess ="));
     }
 
     #[test]
