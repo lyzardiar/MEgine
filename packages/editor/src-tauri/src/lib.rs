@@ -6,11 +6,40 @@ use parking_lot::Mutex;
 use std::collections::{BTreeMap, HashSet};
 use std::path::{Component, Path, PathBuf};
 use std::process::Command;
-use std::time::{SystemTime, UNIX_EPOCH};
-use tauri::{path::BaseDirectory, Manager, State};
+use std::sync::{
+    atomic::{AtomicBool, AtomicU64, Ordering},
+    Arc,
+};
+use std::time::{Instant, SystemTime, UNIX_EPOCH};
+use tauri::{path::BaseDirectory, Emitter, Manager, State};
 
 struct AppState {
     project: Mutex<Option<ProjectSession>>,
+    active_build: Arc<Mutex<Option<ActiveBuild>>>,
+    next_build_id: AtomicU64,
+}
+
+#[derive(Clone)]
+struct ActiveBuild {
+    id: u64,
+    cancelled: Arc<AtomicBool>,
+    cancel_file: PathBuf,
+}
+
+struct ActiveBuildGuard {
+    active_build: Arc<Mutex<Option<ActiveBuild>>>,
+    id: u64,
+    cancel_file: PathBuf,
+}
+
+impl Drop for ActiveBuildGuard {
+    fn drop(&mut self) {
+        let _ = std::fs::remove_file(&self.cancel_file);
+        let mut active = self.active_build.lock();
+        if active.as_ref().is_some_and(|build| build.id == self.id) {
+            *active = None;
+        }
+    }
 }
 
 #[derive(serde::Serialize)]
@@ -84,6 +113,7 @@ impl Default for ProjectSortingLayers {
 #[derive(Debug, serde::Serialize)]
 #[serde(rename_all = "camelCase")]
 struct BuildPlayerResult {
+    build_id: u64,
     output_dir: String,
     executable: String,
     file_count: usize,
@@ -104,8 +134,30 @@ struct BuildPlayerResult {
     content_categories: Vec<BuildContentCategoryResult>,
     largest_files: Vec<BuildContentFileResult>,
     comparison: Option<BuildComparisonResult>,
+    stage_timings: Vec<BuildStageTimingResult>,
+    total_duration_ms: u64,
     toolchain: String,
     log: String,
+}
+
+#[derive(Clone, Debug, serde::Serialize)]
+#[serde(rename_all = "camelCase")]
+struct BuildProgressEvent {
+    build_id: u64,
+    stage: String,
+    label: String,
+    stage_index: usize,
+    stage_count: usize,
+    status: String,
+    elapsed_ms: u64,
+}
+
+#[derive(Debug, serde::Serialize)]
+#[serde(rename_all = "camelCase")]
+struct BuildStageTimingResult {
+    stage: String,
+    label: String,
+    duration_ms: u64,
 }
 
 #[derive(Debug, serde::Serialize)]
@@ -481,12 +533,100 @@ fn compare_build_manifests(
     })
 }
 
-fn run_player_build(
+const BUILD_STAGE_COUNT: usize = 5;
+type BuildProgressSink = Arc<dyn Fn(BuildProgressEvent) + Send + Sync>;
+
+#[derive(Clone)]
+struct BuildControl {
+    build_id: u64,
+    cancelled: Arc<AtomicBool>,
+    cancel_file: Option<PathBuf>,
+    progress: Option<BuildProgressSink>,
+}
+
+impl BuildControl {
+    fn standalone() -> Self {
+        Self {
+            build_id: 0,
+            cancelled: Arc::new(AtomicBool::new(false)),
+            cancel_file: None,
+            progress: None,
+        }
+    }
+
+    fn ensure_active(&self) -> Result<(), String> {
+        if self.cancelled.load(Ordering::Acquire) {
+            Err("player build cancelled".into())
+        } else {
+            Ok(())
+        }
+    }
+
+    fn emit(&self, stage: &str, label: &str, stage_index: usize, status: &str, started: Instant) {
+        let Some(progress) = &self.progress else {
+            return;
+        };
+        progress(BuildProgressEvent {
+            build_id: self.build_id,
+            stage: stage.to_string(),
+            label: label.to_string(),
+            stage_index,
+            stage_count: BUILD_STAGE_COUNT,
+            status: status.to_string(),
+            elapsed_ms: duration_ms(started.elapsed()),
+        });
+    }
+}
+
+fn duration_ms(duration: std::time::Duration) -> u64 {
+    u64::try_from(duration.as_millis()).unwrap_or(u64::MAX)
+}
+
+fn begin_build_stage(
+    control: &BuildControl,
+    total_started: Instant,
+    stage: &str,
+    label: &str,
+    stage_index: usize,
+) -> Instant {
+    control.emit(stage, label, stage_index, "running", total_started);
+    Instant::now()
+}
+
+fn finish_build_stage(
+    control: &BuildControl,
+    total_started: Instant,
+    timings: &mut Vec<BuildStageTimingResult>,
+    stage: &str,
+    label: &str,
+    stage_index: usize,
+    started: Instant,
+) {
+    timings.push(BuildStageTimingResult {
+        stage: stage.to_string(),
+        label: label.to_string(),
+        duration_ms: duration_ms(started.elapsed()),
+    });
+    control.emit(stage, label, stage_index, "completed", total_started);
+}
+
+fn run_player_build_controlled(
     project_root: PathBuf,
     profile: String,
     clean: bool,
     bundled_sdk: Option<PathBuf>,
+    control: BuildControl,
 ) -> Result<BuildPlayerResult, String> {
+    let total_started = Instant::now();
+    let mut stage_timings = Vec::with_capacity(BUILD_STAGE_COUNT);
+    let prepare_started = begin_build_stage(
+        &control,
+        total_started,
+        "prepare",
+        "Validate project and build settings",
+        1,
+    );
+    control.ensure_active()?;
     if profile != "debug" && profile != "release" {
         return Err(format!("unsupported build profile: {profile}"));
     }
@@ -494,6 +634,30 @@ fn run_player_build(
     if !manifest.is_file() {
         return Err(format!("project.json not found: {}", manifest.display()));
     }
+    let output_dir = project_root.join("Builds").join(format!(
+        "{}-{}-{profile}",
+        node_platform_name(),
+        node_arch_name()
+    ));
+    let previous_build_manifest = read_previous_build_manifest(&output_dir);
+    finish_build_stage(
+        &control,
+        total_started,
+        &mut stage_timings,
+        "prepare",
+        "Validate project and build settings",
+        1,
+        prepare_started,
+    );
+
+    let toolchain_started = begin_build_stage(
+        &control,
+        total_started,
+        "toolchain",
+        "Resolve build toolchain",
+        2,
+    );
+    control.ensure_active()?;
     let configured_sdk = std::env::var_os("MENGINE_BUILD_SDK")
         .map(PathBuf::from)
         .or(bundled_sdk);
@@ -501,12 +665,24 @@ fn run_player_build(
         .as_deref()
         .map(|path| load_build_sdk(path, &profile))
         .transpose()?;
-    let output_dir = project_root.join("Builds").join(format!(
-        "{}-{}-{profile}",
-        node_platform_name(),
-        node_arch_name()
-    ));
-    let previous_build_manifest = read_previous_build_manifest(&output_dir);
+    finish_build_stage(
+        &control,
+        total_started,
+        &mut stage_timings,
+        "toolchain",
+        "Resolve build toolchain",
+        2,
+        toolchain_started,
+    );
+
+    let compile_started = begin_build_stage(
+        &control,
+        total_started,
+        "compile-tools",
+        "Prepare build tools",
+        3,
+    );
+    control.ensure_active()?;
     let mut command;
     let toolchain;
     if let Some(sdk) = &sdk {
@@ -548,6 +724,7 @@ fn run_player_build(
         if !cli_build.status.success() {
             return Err(command_failure("MEngine CLI build", &cli_build));
         }
+        control.ensure_active()?;
         if !cli.is_file() {
             return Err(format!(
                 "MEngine CLI build completed without {}",
@@ -564,18 +741,59 @@ fn run_player_build(
             .arg(&output_dir);
         toolchain = "source-checkout".to_string();
     }
+    finish_build_stage(
+        &control,
+        total_started,
+        &mut stage_timings,
+        "compile-tools",
+        "Prepare build tools",
+        3,
+        compile_started,
+    );
+
+    let package_started = begin_build_stage(
+        &control,
+        total_started,
+        "package-player",
+        "Build, validate, and publish Player",
+        4,
+    );
+    control.ensure_active()?;
     if profile == "debug" {
         command.arg("--debug");
     }
     if clean {
         command.arg("--clean");
     }
+    if let Some(cancel_file) = &control.cancel_file {
+        command.arg("--cancel-file").arg(cancel_file);
+    }
     let output = command
         .output()
         .map_err(|error| format!("cannot start player build: {error}"))?;
     if !output.status.success() {
+        if control.cancelled.load(Ordering::Acquire) {
+            return Err("player build cancelled".into());
+        }
         return Err(command_failure("MEngine player build", &output));
     }
+    finish_build_stage(
+        &control,
+        total_started,
+        &mut stage_timings,
+        "package-player",
+        "Build, validate, and publish Player",
+        4,
+        package_started,
+    );
+
+    let report_started = begin_build_stage(
+        &control,
+        total_started,
+        "build-report",
+        "Inspect published build report",
+        5,
+    );
     let build_manifest_path = output_dir.join("mengine-build.json");
     let build_manifest: serde_json::Value =
         serde_json::from_slice(&std::fs::read(&build_manifest_path).map_err(|error| {
@@ -749,30 +967,66 @@ fn run_player_build(
             .then_with(|| left.path.cmp(&right.path))
     });
     largest_files.truncate(20);
+    let platform = manifest_string("platform")?;
+    let architecture = manifest_string("architecture")?;
+    let engine_version = manifest_string("engineVersion")?;
+    let validated_asset_files = manifest_count("assetValidation", "validatedFiles")?;
+    let asset_references = manifest_count("assetValidation", "references")?;
+    let omitted_asset_files = manifest_count("assetValidation", "omittedAssetFiles")?;
+    let omitted_asset_bytes = manifest_u64("assetValidation", "omittedAssetBytes")?;
+    let stripped_editor_entities = manifest_count("assetValidation", "strippedEditorEntities")?;
+    finish_build_stage(
+        &control,
+        total_started,
+        &mut stage_timings,
+        "build-report",
+        "Inspect published build report",
+        5,
+        report_started,
+    );
+    let total_duration_ms = duration_ms(total_started.elapsed());
     Ok(BuildPlayerResult {
+        build_id: control.build_id,
         output_dir: output_dir.to_string_lossy().into_owned(),
         executable: output_dir.join(executable).to_string_lossy().into_owned(),
         file_count,
         content_hash,
         profile,
-        platform: manifest_string("platform")?,
-        architecture: manifest_string("architecture")?,
-        engine_version: manifest_string("engineVersion")?,
+        platform,
+        architecture,
+        engine_version,
         scene_count,
-        validated_asset_files: manifest_count("assetValidation", "validatedFiles")?,
-        asset_references: manifest_count("assetValidation", "references")?,
+        validated_asset_files,
+        asset_references,
         asset_mode,
-        omitted_asset_files: manifest_count("assetValidation", "omittedAssetFiles")?,
-        omitted_asset_bytes: manifest_u64("assetValidation", "omittedAssetBytes")?,
-        stripped_editor_entities: manifest_count("assetValidation", "strippedEditorEntities")?,
+        omitted_asset_files,
+        omitted_asset_bytes,
+        stripped_editor_entities,
         packaged_bytes,
         manifest_path: build_manifest_path.to_string_lossy().into_owned(),
         content_categories,
         largest_files,
         comparison,
+        stage_timings,
+        total_duration_ms,
         toolchain,
         log: String::from_utf8_lossy(&output.stdout).trim().to_owned(),
     })
+}
+
+fn run_player_build(
+    project_root: PathBuf,
+    profile: String,
+    clean: bool,
+    bundled_sdk: Option<PathBuf>,
+) -> Result<BuildPlayerResult, String> {
+    run_player_build_controlled(
+        project_root,
+        profile,
+        clean,
+        bundled_sdk,
+        BuildControl::standalone(),
+    )
 }
 
 fn validated_player_executable(project_root: &Path, requested: &Path) -> Result<PathBuf, String> {
@@ -1595,11 +1849,67 @@ async fn build_pc_player(
         .resolve("build-sdk", BaseDirectory::Resource)
         .ok()
         .filter(|path| path.join("sdk.json").is_file());
-    tauri::async_runtime::spawn_blocking(move || {
-        run_player_build(PathBuf::from(project_root), profile, clean, bundled_sdk)
+    let build_id = state.next_build_id.fetch_add(1, Ordering::Relaxed);
+    let cancel_file = std::env::temp_dir().join(format!(
+        "mengine-editor-build-{}-{build_id}.cancel",
+        std::process::id()
+    ));
+    let _ = std::fs::remove_file(&cancel_file);
+    let cancelled = Arc::new(AtomicBool::new(false));
+    {
+        let mut active = state.active_build.lock();
+        if active.is_some() {
+            return Err("a player build is already running".into());
+        }
+        *active = Some(ActiveBuild {
+            id: build_id,
+            cancelled: cancelled.clone(),
+            cancel_file: cancel_file.clone(),
+        });
+    }
+    let progress_app = app.clone();
+    let progress: BuildProgressSink = Arc::new(move |event| {
+        let _ = progress_app.emit("pc-build-progress", event);
+    });
+    let control = BuildControl {
+        build_id,
+        cancelled,
+        cancel_file: Some(cancel_file.clone()),
+        progress: Some(progress),
+    };
+    let cleanup = ActiveBuildGuard {
+        active_build: state.active_build.clone(),
+        id: build_id,
+        cancel_file,
+    };
+    let task = match tauri::async_runtime::spawn_blocking(move || {
+        let _cleanup = cleanup;
+        run_player_build_controlled(
+            PathBuf::from(project_root),
+            profile,
+            clean,
+            bundled_sdk,
+            control,
+        )
     })
     .await
-    .map_err(|error| format!("player build task failed: {error}"))?
+    {
+        Ok(result) => result,
+        Err(error) => Err(format!("player build task failed: {error}")),
+    };
+    task
+}
+
+#[tauri::command]
+fn cancel_pc_build(state: State<'_, AppState>) -> Result<bool, String> {
+    let active = state.active_build.lock().clone();
+    let Some(active) = active else {
+        return Ok(false);
+    };
+    active.cancelled.store(true, Ordering::Release);
+    std::fs::write(&active.cancel_file, b"cancel\n")
+        .map_err(|error| format!("cannot request player build cancellation: {error}"))?;
+    Ok(true)
 }
 
 #[tauri::command]
@@ -1919,6 +2229,8 @@ pub fn run() {
         .plugin(tauri_plugin_dialog::init())
         .manage(AppState {
             project: Mutex::new(None),
+            active_build: Arc::new(Mutex::new(None)),
+            next_build_id: AtomicU64::new(1),
         })
         .invoke_handler(tauri::generate_handler![
             create_project,
@@ -1935,6 +2247,7 @@ pub fn run() {
             get_project_sorting_layers,
             save_project_sorting_layers,
             build_pc_player,
+            cancel_pc_build,
             run_pc_player,
             verify_pc_player,
             read_project_asset,
@@ -2099,6 +2412,52 @@ mod tests {
         )
         .unwrap_err();
         assert!(error.contains("64-character SHA-256"));
+    }
+
+    #[test]
+    fn cancelled_build_control_stops_before_project_validation() {
+        let cancelled = Arc::new(AtomicBool::new(true));
+        let error = run_player_build_controlled(
+            PathBuf::from("missing-project"),
+            "release".into(),
+            true,
+            None,
+            BuildControl {
+                build_id: 7,
+                cancelled,
+                cancel_file: None,
+                progress: None,
+            },
+        )
+        .unwrap_err();
+        assert_eq!(error, "player build cancelled");
+    }
+
+    #[test]
+    fn active_build_guard_releases_task_and_cancel_file_on_drop() {
+        let cancel_file = std::env::temp_dir().join(format!(
+            "mengine-active-build-guard-{}-{}",
+            std::process::id(),
+            SystemTime::now()
+                .duration_since(UNIX_EPOCH)
+                .unwrap()
+                .as_nanos()
+        ));
+        std::fs::write(&cancel_file, b"cancel\n").unwrap();
+        let active_build = Arc::new(Mutex::new(Some(ActiveBuild {
+            id: 19,
+            cancelled: Arc::new(AtomicBool::new(false)),
+            cancel_file: cancel_file.clone(),
+        })));
+        {
+            let _guard = ActiveBuildGuard {
+                active_build: active_build.clone(),
+                id: 19,
+                cancel_file: cancel_file.clone(),
+            };
+        }
+        assert!(active_build.lock().is_none());
+        assert!(!cancel_file.exists());
     }
 
     #[test]
@@ -2315,8 +2674,23 @@ mod tests {
         )
         .unwrap();
 
-        let result = run_player_build(root.clone(), "debug".into(), true, None).unwrap();
+        let progress_events = Arc::new(Mutex::new(Vec::<BuildProgressEvent>::new()));
+        let captured_events = progress_events.clone();
+        let result = run_player_build_controlled(
+            root.clone(),
+            "debug".into(),
+            true,
+            None,
+            BuildControl {
+                build_id: 42,
+                cancelled: Arc::new(AtomicBool::new(false)),
+                cancel_file: None,
+                progress: Some(Arc::new(move |event| captured_events.lock().push(event))),
+            },
+        )
+        .unwrap();
         assert_eq!(result.profile, "debug");
+        assert_eq!(result.build_id, 42);
         assert_eq!(
             result.toolchain,
             if std::env::var_os("MENGINE_BUILD_SDK").is_some() {
@@ -2333,6 +2707,26 @@ mod tests {
         assert_eq!(result.omitted_asset_bytes, 13);
         assert_eq!(result.stripped_editor_entities, 2);
         assert!(result.packaged_bytes > 0);
+        assert_eq!(result.stage_timings.len(), BUILD_STAGE_COUNT);
+        assert_eq!(result.stage_timings[0].stage, "prepare");
+        assert_eq!(result.stage_timings[4].stage, "build-report");
+        assert!(
+            result.total_duration_ms
+                >= result
+                    .stage_timings
+                    .iter()
+                    .map(|stage| stage.duration_ms)
+                    .sum::<u64>()
+        );
+        let events = progress_events.lock();
+        assert_eq!(events.len(), BUILD_STAGE_COUNT * 2);
+        for (index, pair) in events.chunks_exact(2).enumerate() {
+            assert_eq!(pair[0].build_id, 42);
+            assert_eq!(pair[0].stage_index, index + 1);
+            assert_eq!(pair[0].status, "running");
+            assert_eq!(pair[1].stage, pair[0].stage);
+            assert_eq!(pair[1].status, "completed");
+        }
         assert!(Path::new(&result.manifest_path).is_file());
         assert!(!result.content_categories.is_empty());
         assert!(result

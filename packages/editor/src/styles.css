@@ -4771,6 +4771,25 @@ button.sequencer-track-header:hover { background: #343b42; }
 .build-message.success { border-color: #3f6845; background: #26372a; color: #9bd0a1; }
 .build-message.error { border-color: #6d2929; background: #3c2323; color: #ff9d9d; }
 
+.build-progress-panel {
+  display: grid;
+  gap: 6px;
+  margin: 8px;
+  padding: 7px;
+  border: 1px solid #385d72;
+  background: #202d34;
+}
+.build-progress-panel > div:first-child {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  font-size: 10px;
+}
+.build-progress-panel span { color: #86aabd; }
+.build-progress-track { height: 4px; overflow: hidden; background: #151d21; }
+.build-progress-track > span { display: block; height: 100%; background: #4f9bc2; transition: width 120ms linear; }
+
 .build-warning button,
 .build-actions button {
   min-height: 23px;
@@ -4814,6 +4833,7 @@ button.sequencer-track-header:hover { background: #343b42; }
 }
 .build-content-table.largest { max-height: 210px; }
 .build-content-table.changes { max-height: 210px; }
+.build-content-table.timings { max-height: none; }
 .build-content-row {
   display: grid;
   min-height: 22px;
@@ -4895,6 +4915,8 @@ button.sequencer-track-header:hover { background: #343b42; }
 
 .build-actions button.primary { min-width: 130px; border-color: #2b6d91; background: #286c8a; color: #fff; }
 .build-actions button.primary:hover:not(:disabled) { background: #337fa1; }
+.build-actions button.danger { border-color: #7b3c3c; background: #553030; color: #f2b5b5; }
+.build-actions button.danger:hover:not(:disabled) { background: #683838; }
 .build-actions button:disabled { opacity: 0.45; }
 
 /* Status */

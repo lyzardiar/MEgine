@@ -1,4 +1,5 @@
 import { invoke } from '@tauri-apps/api/core';
+import { listen, type UnlistenFn } from '@tauri-apps/api/event';
 import { open } from '@tauri-apps/plugin-dialog';
 import type { WorldCommand, WorldSnapshotView } from '@mengine/api';
 
@@ -71,7 +72,24 @@ export type BuildComparisonResult = {
   changes: BuildFileChangeResult[];
 };
 
+export type BuildStageTimingResult = {
+  stage: string;
+  label: string;
+  durationMs: number;
+};
+
+export type BuildProgressEvent = {
+  buildId: number;
+  stage: string;
+  label: string;
+  stageIndex: number;
+  stageCount: number;
+  status: 'running' | 'completed';
+  elapsedMs: number;
+};
+
 export type BuildPlayerResult = {
+  buildId: number;
   outputDir: string;
   executable: string;
   fileCount: number;
@@ -92,6 +110,8 @@ export type BuildPlayerResult = {
   contentCategories: BuildContentCategoryResult[];
   largestFiles: BuildContentFileResult[];
   comparison: BuildComparisonResult | null;
+  stageTimings: BuildStageTimingResult[];
+  totalDurationMs: number;
   toolchain: 'bundled-sdk' | 'source-checkout';
   log: string;
 };
@@ -258,6 +278,18 @@ export async function buildPcPlayer(
     throw new Error('PC player builds require the desktop editor');
   }
   return invoke<BuildPlayerResult>('build_pc_player', { profile, clean });
+}
+
+export async function cancelPcBuild(): Promise<boolean> {
+  if (!isDesktopEditor()) return false;
+  return invoke<boolean>('cancel_pc_build');
+}
+
+export async function listenToPcBuildProgress(
+  listener: (progress: BuildProgressEvent) => void,
+): Promise<UnlistenFn> {
+  if (!isDesktopEditor()) return () => {};
+  return listen<BuildProgressEvent>('pc-build-progress', (event) => listener(event.payload));
 }
 
 export async function runPcPlayer(executable: string): Promise<RunPlayerResult> {

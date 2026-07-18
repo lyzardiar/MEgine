@@ -101,6 +101,7 @@ Build options:
   --debug                     Build/use the debug runtime instead of release
   --skip-runtime-build        Reuse an existing runtime without invoking Cargo
   --skip-verify               Skip packaged player scene validation
+  --cancel-file <file>        Cooperatively cancel before atomic publish (editor use)
   --clean                     Replace an existing output directory
 `);
 }
@@ -167,6 +168,7 @@ interface BuildArguments {
   profile: 'debug' | 'release';
   skipRuntimeBuild: boolean;
   skipVerify: boolean;
+  cancelFile?: string;
   clean: boolean;
 }
 
@@ -184,6 +186,7 @@ function parseBuildArguments(values: string[]): BuildArguments {
   let profile: BuildArguments['profile'] = 'release';
   let skipRuntimeBuild = false;
   let skipVerify = false;
+  let cancelFile: string | undefined;
   let clean = false;
   for (let index = 0; index < args.length;) {
     const value = args[index];
@@ -200,6 +203,8 @@ function parseBuildArguments(values: string[]): BuildArguments {
     } else if (value === '--skip-verify') {
       skipVerify = true;
       args.splice(index, 1);
+    } else if (value === '--cancel-file') {
+      cancelFile = takeOption(args, index, '--cancel-file');
     } else if (value === '--clean') {
       clean = true;
       args.splice(index, 1);
@@ -217,6 +222,7 @@ function parseBuildArguments(values: string[]): BuildArguments {
     profile,
     skipRuntimeBuild,
     skipVerify,
+    cancelFile: cancelFile ? resolve(cancelFile) : undefined,
     clean,
   };
 }
@@ -261,19 +267,28 @@ function resolveRuntime(args: BuildArguments): string {
 
 function buildProject(values: string[]) {
   const args = parseBuildArguments(values);
+  const isCancelled = () => Boolean(args.cancelFile && existsSync(args.cancelFile));
+  const assertNotCancelled = (stage: string) => {
+    if (isCancelled()) throw new Error(`build cancelled during ${stage}`);
+  };
   const platform = hostBuildPlatform();
   const outputDir = args.outputDir
     ?? join(args.projectDir, 'Builds', `${platform}-${process.arch}-${args.profile}`);
   let verificationSummary = '';
+  assertNotCancelled('runtime preparation');
+  const runtimePath = resolveRuntime(args);
+  assertNotCancelled('runtime preparation');
   const manifest = buildPcPackage({
     projectDir: args.projectDir,
     outputDir,
-    runtimePath: resolveRuntime(args),
+    runtimePath,
     engineVersion: ENGINE_VERSION,
     clean: args.clean,
     profile: args.profile,
     platform,
+    isCancelled,
     verifyStagedBuild: args.skipVerify ? undefined : (stageDir, stagedManifest) => {
+      assertNotCancelled('staged player validation');
       const player = join(stageDir, stagedManifest.executable);
       const verification = spawnSync(player, ['--validate-package'], {
         cwd: stageDir,
@@ -285,6 +300,7 @@ function buildProject(values: string[]) {
         const detail = (verification.stderr || verification.stdout || '').trim();
         throw new Error(`packaged player validation failed${detail ? `: ${detail}` : ''}`);
       }
+      assertNotCancelled('staged player validation');
       verificationSummary = verification.stdout.trim();
     },
   });

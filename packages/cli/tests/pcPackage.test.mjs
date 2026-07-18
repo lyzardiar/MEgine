@@ -1301,6 +1301,45 @@ test('buildPcPackage preserves the previous build when replacement verification 
   }
 });
 
+test('buildPcPackage cancellation before publish preserves the previous build and removes staging', () => {
+  const paths = fixture('cancel-preserves-previous-build');
+  try {
+    buildPcPackage({
+      projectDir: paths.project,
+      outputDir: paths.output,
+      runtimePath: paths.runtime,
+      engineVersion: 'previous-engine',
+      platform: 'windows',
+    });
+    const previousManifest = readFileSync(join(paths.output, BUILD_MANIFEST_FILE), 'utf8');
+    let cancelled = false;
+
+    assert.throws(() => buildPcPackage({
+      projectDir: paths.project,
+      outputDir: paths.output,
+      runtimePath: paths.runtime,
+      engineVersion: 'replacement-engine',
+      platform: 'windows',
+      clean: true,
+      isCancelled: () => cancelled,
+      verifyStagedBuild() {
+        cancelled = true;
+      },
+    }), /build cancelled during publish/);
+
+    assert.equal(
+      readFileSync(join(paths.output, BUILD_MANIFEST_FILE), 'utf8'),
+      previousManifest,
+    );
+    assert.deepEqual(
+      readdirSync(paths.root).filter((name) => name.includes('.mengine-stage-')),
+      [],
+    );
+  } finally {
+    rmSync(paths.root, { recursive: true, force: true });
+  }
+});
+
 test('publishStagedBuild restores the previous build when the final rename fails', () => {
   const paths = fixture('publish-rollback');
   const stage = join(paths.root, '.Build.stage');

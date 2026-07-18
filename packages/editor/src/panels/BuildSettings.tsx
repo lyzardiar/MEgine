@@ -7,13 +7,16 @@ import {
 import { registerSaveAllParticipant } from '../saveAll';
 import {
   buildPcPlayer,
+  cancelPcBuild,
   getProjectBuildSettings,
   isDesktopEditor,
+  listenToPcBuildProgress,
   runPcPlayer,
   saveProjectBuildAssetSettings,
   saveProjectBuildSettings,
   verifyPcPlayer,
   type BuildPlayerProfile,
+  type BuildProgressEvent,
   type BuildPlayerResult,
   type ProjectBuildSettings,
   type VerifyPlayerResult,
@@ -44,6 +47,12 @@ function signedByteSize(bytes: number): string {
   return `${bytes > 0 ? '+' : '−'}${byteSize(Math.abs(bytes))}`;
 }
 
+function durationText(milliseconds: number): string {
+  if (!Number.isFinite(milliseconds) || milliseconds < 0) return '0 ms';
+  if (milliseconds < 1000) return `${Math.round(milliseconds)} ms`;
+  return `${(milliseconds / 1000).toFixed(milliseconds < 10000 ? 2 : 1)} s`;
+}
+
 export function BuildSettings(props: {
   sceneName: string | null;
   sceneTick: number;
@@ -65,6 +74,8 @@ export function BuildSettings(props: {
   const [building, setBuilding] = useState(false);
   const [launching, setLaunching] = useState(false);
   const [verifying, setVerifying] = useState(false);
+  const [buildProgress, setBuildProgress] = useState<BuildProgressEvent | null>(null);
+  const [cancelRequested, setCancelRequested] = useState(false);
   const [lastBuild, setLastBuild] = useState<BuildPlayerResult | null>(null);
   const [lastVerification, setLastVerification] = useState<VerifyPlayerResult | null>(null);
   const [message, setMessage] = useState<string | null>(null);
@@ -73,8 +84,10 @@ export function BuildSettings(props: {
   const settingsRef = useRef<ProjectBuildSettings | null>(null);
   const alwaysIncludeDraftRef = useRef('');
   const buildReportRevisionRef = useRef(0);
+  const onLogRef = useRef(props.onLog);
   settingsRef.current = settings;
   alwaysIncludeDraftRef.current = alwaysIncludeDraft;
+  onLogRef.current = props.onLog;
   const assetSettingsDirty = Boolean(
     settings && buildAssetPathsDirty(alwaysIncludeDraft, settings.alwaysInclude),
   );
@@ -120,6 +133,23 @@ export function BuildSettings(props: {
   }, [assetSettingsDirty, props.onDirtyChange]);
 
   useEffect(() => () => props.onDirtyChange(false), [props.onDirtyChange]);
+
+  useEffect(() => {
+    let disposed = false;
+    let unlisten: (() => void) | null = null;
+    void listenToPcBuildProgress((progress) => {
+      if (!disposed) setBuildProgress(progress);
+    }).then((dispose) => {
+      if (disposed) dispose();
+      else unlisten = dispose;
+    }).catch((reason: unknown) => {
+      if (!disposed) onLogRef.current(`Build progress listener failed: ${reason instanceof Error ? reason.message : String(reason)}`, 'warn');
+    });
+    return () => {
+      disposed = true;
+      unlisten?.();
+    };
+  }, []);
 
   const invalidateBuildReport = () => {
     buildReportRevisionRef.current += 1;
@@ -290,6 +320,30 @@ export function BuildSettings(props: {
     }
   };
 
+  const cancelBuild = async () => {
+    if (!building || cancelRequested) return;
+    setCancelRequested(true);
+    setMessage(null);
+    try {
+      const requested = await cancelPcBuild();
+      if (!requested) {
+        setCancelRequested(false);
+        setMessageError(true);
+        setMessage('No active Player build accepted the cancellation request.');
+        return;
+      }
+      setMessageError(false);
+      setMessage('Cancellation requested. Waiting for the current safe build step to finish...');
+      props.onLog('Player build cancellation requested.', 'warn');
+    } catch (reason) {
+      const detail = reason instanceof Error ? reason.message : String(reason);
+      setCancelRequested(false);
+      setMessageError(true);
+      setMessage(detail);
+      props.onLog(`Player build cancellation failed: ${detail}`, 'error');
+    }
+  };
+
   const build = async (runAfterBuild = false) => {
     if (
       !desktop
@@ -304,6 +358,8 @@ export function BuildSettings(props: {
       || verifying
     ) return;
     setBuilding(true);
+    setBuildProgress(null);
+    setCancelRequested(false);
     invalidateBuildReport();
     setMessage(null);
     setMessageError(false);
@@ -318,11 +374,16 @@ export function BuildSettings(props: {
       }
     } catch (reason) {
       const detail = reason instanceof Error ? reason.message : String(reason);
-      setMessageError(true);
-      setMessage(detail);
-      props.onLog(`Player build failed: ${detail}`, 'error');
+      const cancelled = detail.toLowerCase().includes('build cancelled');
+      setMessageError(!cancelled);
+      setMessage(cancelled ? 'Player build cancelled safely. The previous published build was preserved.' : detail);
+      props.onLog(
+        cancelled ? 'Player build cancelled safely.' : `Player build failed: ${detail}`,
+        cancelled ? 'warn' : 'error',
+      );
     } finally {
       setBuilding(false);
+      setCancelRequested(false);
     }
   };
 
@@ -341,9 +402,21 @@ export function BuildSettings(props: {
           <span>Packages an ordered scene list into a self-validating standalone player.</span>
         </div>
         <span className={`build-status ${building || launching || verifying || settingsSaving || savingAll ? 'busy' : ''}`}>
-          {building ? 'BUILDING' : launching ? 'LAUNCHING' : verifying ? 'VERIFYING' : settingsSaving || savingAll ? 'SAVING' : lastVerification ? 'VERIFIED' : lastBuild ? 'SUCCEEDED' : 'READY'}
+          {building ? (cancelRequested ? 'CANCELLING' : 'BUILDING') : launching ? 'LAUNCHING' : verifying ? 'VERIFYING' : settingsSaving || savingAll ? 'SAVING' : lastVerification ? 'VERIFIED' : lastBuild ? 'SUCCEEDED' : 'READY'}
         </span>
       </div>
+
+      {building && buildProgress && (
+        <section className="build-progress-panel">
+          <div>
+            <strong>{cancelRequested ? 'Cancelling after safe step' : buildProgress.label}</strong>
+            <span>Stage {buildProgress.stageIndex}/{buildProgress.stageCount} · {durationText(buildProgress.elapsedMs)}</span>
+          </div>
+          <div className="build-progress-track" aria-label="Player build progress">
+            <span style={{ width: `${Math.max(0, Math.min(100, ((buildProgress.stageIndex - (buildProgress.status === 'running' ? 1 : 0)) / buildProgress.stageCount) * 100))}%` }} />
+          </div>
+        </section>
+      )}
 
       <section className="build-section">
         <div className="build-section-title">
@@ -554,6 +627,16 @@ export function BuildSettings(props: {
                     Byte-identical to {lastBuild.comparison.previousContentHash.slice(0, 12)}.
                   </div>}
             </>}
+            <h4>Build Stage Timings · {durationText(lastBuild.totalDurationMs)} total</h4>
+            <div className="build-content-table timings">
+              {lastBuild.stageTimings.map((stage) => (
+                <div className="build-content-row" key={stage.stage}>
+                  <strong>{stage.label}</strong>
+                  <span>{stage.stage}</span>
+                  <span>{durationText(stage.durationMs)}</span>
+                </div>
+              ))}
+            </div>
             <small title={lastBuild.manifestPath}>Report: {lastBuild.manifestPath}</small>
           </div>
           {lastBuild.log && <pre>{lastBuild.log}</pre>}
@@ -569,6 +652,16 @@ export function BuildSettings(props: {
       )}
 
       <div className="build-actions">
+        {building && (
+          <button
+            type="button"
+            className="danger"
+            disabled={cancelRequested}
+            onClick={() => void cancelBuild()}
+          >
+            {cancelRequested ? 'Cancelling Safely...' : 'Cancel Build'}
+          </button>
+        )}
         {lastBuild && (
           <button
             type="button"

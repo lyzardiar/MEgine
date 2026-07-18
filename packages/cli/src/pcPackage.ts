@@ -39,8 +39,14 @@ export interface PcPackageOptions {
   profile?: 'debug' | 'release';
   platform?: string;
   architecture?: string;
+  /** Cooperative cancellation checked between validation, copy, compile, hash, and publish steps. */
+  isCancelled?: () => boolean;
   /** Runs against the complete staging directory before it can replace a published build. */
   verifyStagedBuild?: (stageDir: string, manifest: PcBuildManifest) => void;
+}
+
+function assertBuildNotCancelled(isCancelled: (() => boolean) | undefined, stage: string): void {
+  if (isCancelled?.()) throw new Error(`build cancelled during ${stage}`);
 }
 
 export interface BuildFileEntry {
@@ -397,6 +403,7 @@ function filterEditorOnlySceneEntities(entitiesValue: unknown): {
 function scanBuildAssetDependencies(
   projectDir: string,
   project: GameProjectManifest = readGameProject(projectDir),
+  isCancelled?: () => boolean,
 ): BuildDependencyScan {
   const root = resolve(projectDir);
   const roots = contentRoots(root);
@@ -1121,6 +1128,7 @@ function scanBuildAssetDependencies(
   const enqueueAlwaysInclude = (path: string) => {
     const absolute = resolveProjectPath(root, path, 'alwaysInclude');
     const walk = (candidate: string) => {
+      assertBuildNotCancelled(isCancelled, 'asset dependency scan');
       const stats = lstatSync(candidate);
       if (stats.isSymbolicLink()) {
         throw new Error(`symbolic links are not allowed in alwaysInclude: ${portablePath(relative(root, candidate))}`);
@@ -1149,6 +1157,7 @@ function scanBuildAssetDependencies(
   }
   for (const path of project.alwaysInclude) enqueueAlwaysInclude(path);
   while (queue.length > 0) {
+    assertBuildNotCancelled(isCancelled, 'asset dependency scan');
     const pending = queue.shift()!;
     const absolute = resolveProjectPath(root, pending.path, pending.kind);
     if (!roots.some((contentRoot) => isPathInside(contentRoot, absolute))) {
@@ -1224,7 +1233,12 @@ function safeExecutableName(name: string): string {
 
 type PlayerCopyStats = { strippedEditorEntities: number };
 
-function copyTree(source: string, destination: string): PlayerCopyStats {
+function copyTree(
+  source: string,
+  destination: string,
+  isCancelled?: () => boolean,
+): PlayerCopyStats {
+  assertBuildNotCancelled(isCancelled, 'content copy');
   const sourceStat = lstatSync(source);
   if (sourceStat.isSymbolicLink()) {
     throw new Error(`symbolic links are not allowed in player content: ${source}`);
@@ -1235,7 +1249,11 @@ function copyTree(source: string, destination: string): PlayerCopyStats {
     const entries = readdirSync(source, { withFileTypes: true })
       .sort((left, right) => compareFileNames(left.name, right.name));
     for (const entry of entries) {
-      const child = copyTree(join(source, entry.name), join(destination, entry.name));
+      const child = copyTree(
+        join(source, entry.name),
+        join(destination, entry.name),
+        isCancelled,
+      );
       stats.strippedEditorEntities += child.strippedEditorEntities;
     }
     return stats;
@@ -1347,11 +1365,16 @@ function copyPrefabForPlayer(source: string, destination: string): PlayerCopySta
   return { strippedEditorEntities: result.stripped };
 }
 
-function collectTypeScriptFiles(directory: string, output: string[] = []): string[] {
+function collectTypeScriptFiles(
+  directory: string,
+  output: string[] = [],
+  isCancelled?: () => boolean,
+): string[] {
+  assertBuildNotCancelled(isCancelled, 'script discovery');
   for (const entry of readdirSync(directory, { withFileTypes: true })
     .sort((left, right) => compareFileNames(left.name, right.name))) {
     const path = join(directory, entry.name);
-    if (entry.isDirectory()) collectTypeScriptFiles(path, output);
+    if (entry.isDirectory()) collectTypeScriptFiles(path, output, isCancelled);
     else if (entry.isFile() && /\.tsx?$/i.test(entry.name)) output.push(path);
   }
   return output;
@@ -1369,6 +1392,7 @@ function compileProjectTypeScript(
   projectDir: string,
   stageDir: string,
   startupScript: string | undefined,
+  isCancelled?: () => boolean,
 ): string | undefined {
   if (!startupScript || !/\.tsx?$/i.test(startupScript)) return startupScript;
   const portable = startupScript.replaceAll('\\', '/');
@@ -1378,7 +1402,7 @@ function compileProjectTypeScript(
     ? segments.slice(0, scriptsIndex + 1).join('/')
     : segments.slice(0, -1).join('/');
   const sourceRoot = resolveProjectPath(projectDir, sourceRootRelative, 'script root');
-  const rootNames = collectTypeScriptFiles(sourceRoot);
+  const rootNames = collectTypeScriptFiles(sourceRoot, [], isCancelled);
   if (!rootNames.some((path) => resolve(path) === resolve(projectDir, startupScript))) {
     throw new Error(`TypeScript startup script is outside its script root: ${startupScript}`);
   }
@@ -1401,12 +1425,14 @@ function compileProjectTypeScript(
     removeComments: true,
   };
   const program = ts.createProgram(rootNames, options);
+  assertBuildNotCancelled(isCancelled, 'TypeScript compilation');
   const diagnostics = ts.getPreEmitDiagnostics(program);
   const errors = diagnostics.filter((diagnostic) => diagnostic.category === ts.DiagnosticCategory.Error);
   if (errors.length > 0) {
     throw new Error(`TypeScript compilation failed:\n${formatTypeScriptDiagnostics(errors)}`);
   }
   const emitted = program.emit();
+  assertBuildNotCancelled(isCancelled, 'TypeScript emit');
   if (emitted.emitSkipped) {
     throw new Error(`TypeScript emit failed:\n${formatTypeScriptDiagnostics(emitted.diagnostics)}`);
   }
@@ -1430,12 +1456,14 @@ function contentRoots(projectDir: string): string[] {
 function collectPackageCandidateFiles(
   directory: string,
   output: Array<{ path: string; size: number }> = [],
+  isCancelled?: () => boolean,
 ): Array<{ path: string; size: number }> {
+  assertBuildNotCancelled(isCancelled, 'asset enumeration');
   for (const entry of readdirSync(directory, { withFileTypes: true })
     .sort((left, right) => compareFileNames(left.name, right.name))) {
     const path = join(directory, entry.name);
     if (entry.isSymbolicLink()) continue;
-    if (entry.isDirectory()) collectPackageCandidateFiles(path, output);
+    if (entry.isDirectory()) collectPackageCandidateFiles(path, output, isCancelled);
     else if (entry.isFile() && !/\.tsx?$/i.test(entry.name)) {
       output.push({ path, size: statSync(path).size });
     }
@@ -1453,12 +1481,14 @@ function collectFiles(
   root: string,
   current = root,
   output: RawBuildFileEntry[] = [],
+  isCancelled?: () => boolean,
 ): RawBuildFileEntry[] {
+  assertBuildNotCancelled(isCancelled, 'content hashing');
   for (const entry of readdirSync(current, { withFileTypes: true })
     .sort((left, right) => compareFileNames(left.name, right.name))) {
     const absolute = join(current, entry.name);
     if (entry.isDirectory()) {
-      collectFiles(root, absolute, output);
+      collectFiles(root, absolute, output, isCancelled);
     } else if (entry.isFile() && entry.name !== BUILD_MANIFEST_FILE) {
       output.push({
         path: portablePath(relative(root, absolute)),
@@ -1621,6 +1651,8 @@ export function hostBuildPlatform(): string {
 }
 
 export function buildPcPackage(options: PcPackageOptions): PcBuildManifest {
+  const checkCancelled = (stage: string) => assertBuildNotCancelled(options.isCancelled, stage);
+  checkCancelled('project validation');
   const projectDir = resolve(options.projectDir);
   const outputDir = resolve(options.outputDir);
   const runtimePath = resolve(options.runtimePath);
@@ -1651,14 +1683,14 @@ export function buildPcPackage(options: PcPackageOptions): PcBuildManifest {
     throw new Error(`build output already exists (pass --clean to replace it): ${outputDir}`);
   }
   validateProjectSettings(projectDir);
-  const dependencyScan = scanBuildAssetDependencies(projectDir, project);
+  const dependencyScan = scanBuildAssetDependencies(projectDir, project, options.isCancelled);
   const assetValidation = dependencyScan.validation;
   if (project.assetMode === 'referenced') {
     const included = new Set(dependencyScan.files.map((path) => (
       process.platform === 'win32' ? path.toLowerCase() : path
     )));
     const omitted = roots
-      .flatMap((root) => collectPackageCandidateFiles(root))
+      .flatMap((root) => collectPackageCandidateFiles(root, [], options.isCancelled))
       .filter((entry) => !included.has(process.platform === 'win32'
         ? entry.path.toLowerCase()
         : entry.path));
@@ -1674,16 +1706,17 @@ export function buildPcPackage(options: PcPackageOptions): PcBuildManifest {
   mkdirSync(stageDir, { recursive: true });
 
   try {
+    checkCancelled('staging');
     const copyStats: PlayerCopyStats = { strippedEditorEntities: 0 };
     if (project.assetMode === 'all') {
       for (const root of roots) {
-        const copied = copyTree(root, join(stageDir, basename(root)));
+        const copied = copyTree(root, join(stageDir, basename(root)), options.isCancelled);
         copyStats.strippedEditorEntities += copied.strippedEditorEntities;
       }
     } else {
       for (const source of dependencyScan.files) {
         const destination = join(stageDir, relative(projectDir, source));
-        const copied = copyTree(source, destination);
+        const copied = copyTree(source, destination, options.isCancelled);
         copyStats.strippedEditorEntities += copied.strippedEditorEntities;
       }
     }
@@ -1692,14 +1725,16 @@ export function buildPcPackage(options: PcPackageOptions): PcBuildManifest {
       if (!statSync(projectSettings).isDirectory()) {
         throw new Error(`ProjectSettings must be a directory: ${projectSettings}`);
       }
-      copyTree(projectSettings, join(stageDir, 'ProjectSettings'));
+      copyTree(projectSettings, join(stageDir, 'ProjectSettings'), options.isCancelled);
     }
     assetValidation.strippedEditorEntities = copyStats.strippedEditorEntities;
     const packagedStartupScript = compileProjectTypeScript(
       projectDir,
       stageDir,
       project.startupScript,
+      options.isCancelled,
     );
+    checkCancelled('player assembly');
     const packagedProject: GameProjectManifest = {
       ...project,
       ...(packagedStartupScript ? { startupScript: packagedStartupScript } : {}),
@@ -1738,7 +1773,7 @@ export function buildPcPackage(options: PcPackageOptions): PcBuildManifest {
     );
 
     const files = describeBuildFiles(
-      collectFiles(stageDir),
+      collectFiles(stageDir, stageDir, [], options.isCancelled),
       executable,
       packagedProject,
       dependencyScan,
@@ -1762,7 +1797,9 @@ export function buildPcPackage(options: PcPackageOptions): PcBuildManifest {
       'utf8',
     );
 
+    checkCancelled('staged player validation');
     options.verifyStagedBuild?.(stageDir, manifest);
+    checkCancelled('publish');
     publishStagedBuild(stageDir, outputDir);
     return manifest;
   } catch (error) {

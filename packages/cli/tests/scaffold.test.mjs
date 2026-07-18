@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import { existsSync, mkdirSync, readFileSync, rmSync } from 'node:fs';
+import { existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -38,6 +38,38 @@ test('mengine new creates a TypeScript project that is ready for the player buil
       readFileSync(join(project, 'Assets', 'Scripts', 'Main.ts'), 'utf8'),
       /function onSceneLoaded/,
     );
+  } finally {
+    rmSync(root, { recursive: true, force: true });
+  }
+});
+
+test('mengine build accepts the editor cancel marker before touching output', () => {
+  const root = join(tmpdir(), `mengine-cli-cancel-${process.pid}-${Date.now()}`);
+  const name = 'Cancelled Game';
+  try {
+    mkdirSync(root, { recursive: true });
+    const created = spawnSync(process.execPath, [cli, 'new', name], {
+      cwd: root,
+      encoding: 'utf8',
+    });
+    assert.equal(created.status, 0, created.stderr);
+    const cancelFile = join(root, 'cancel.marker');
+    const output = join(root, 'Build');
+    writeFileSync(cancelFile, 'cancel\n');
+
+    const result = spawnSync(process.execPath, [
+      cli,
+      'build',
+      join(root, name),
+      '--out', output,
+      '--cancel-file', cancelFile,
+    ], {
+      cwd: root,
+      encoding: 'utf8',
+    });
+    assert.equal(result.status, 1);
+    assert.match(result.stderr, /build cancelled during runtime preparation/);
+    assert.equal(existsSync(output), false);
   } finally {
     rmSync(root, { recursive: true, force: true });
   }
