@@ -34,9 +34,7 @@ import {
   createAnimationClip,
   normalizeAnimationClip,
   pasteAnimationEvent,
-  pasteAnimationKeyframe,
   parseAnimationClip,
-  removeAnimationKeyframe,
   removeAnimationEvent,
   replaceAnimationEvent,
   replaceAnimationKeyframe,
@@ -62,6 +60,20 @@ import {
   parseAnimationBindingKey,
 } from '../animationBindings';
 import {
+  clampTimelineKeyDelta,
+  copyTimelineKeySelection,
+  mergeTimelineKeySelection,
+  moveTimelineKeySelection,
+  normalizeTimelineKeySelection,
+  pasteTimelineKeySelection,
+  removeTimelineKeySelection,
+  timelineKeyRangeSelection,
+  timelineKeysInRange,
+  toggleTimelineKeySelection,
+  type TimelineKeyClipboardItem,
+  type TimelineKeyRef,
+} from '../timelineKeyEditing.ts';
+import {
   listProjectFiles,
   normalizeProjectAssetPath,
   readProjectAssetText,
@@ -80,23 +92,44 @@ type AnimationPlayerData = {
   time?: number;
 };
 
-type TimelineDrag = {
-  kind: 'key' | 'event';
+type TimelineKeyDrag = {
+  kind: 'key';
   pointerId: number;
-  track: number;
+  active: TimelineKeyRef;
+  activeTime: number;
+  selection: TimelineKeyRef[];
+  delta: number;
+  left: number;
+  width: number;
+};
+
+type TimelineEventDrag = {
+  kind: 'event';
+  pointerId: number;
   index: number;
   time: number;
   left: number;
   width: number;
 };
 
+type TimelineDrag = TimelineKeyDrag | TimelineEventDrag;
+
+type TimelineMarquee = {
+  pointerId: number;
+  startX: number;
+  startY: number;
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+  additive: boolean;
+  base: TimelineKeyRef[];
+};
+
 type TimelineClipboard =
   | {
-      kind: 'key';
-      target: string;
-      component: string;
-      property: string;
-      keyframe: AnimationKeyframe;
+      kind: 'keys';
+      keys: TimelineKeyClipboardItem[];
     }
   | {
       kind: 'event';
@@ -417,6 +450,7 @@ export function Timeline(props: {
   const [recording, setRecording] = useState(false);
   const [selectedTrack, setSelectedTrack] = useState<number | null>(null);
   const [selectedKey, setSelectedKey] = useState<{ track: number; key: number } | null>(null);
+  const [selectedKeys, setSelectedKeys] = useState<TimelineKeyRef[]>([]);
   const [selectedEvent, setSelectedEvent] = useState<number | null>(null);
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -431,6 +465,8 @@ export function Timeline(props: {
   const [timelineClipboard, setTimelineClipboard] = useState<TimelineClipboard | null>(null);
   const [timelineDrag, setTimelineDrag] = useState<TimelineDrag | null>(null);
   const timelineDragRef = useRef<TimelineDrag | null>(null);
+  const [timelineMarquee, setTimelineMarquee] = useState<TimelineMarquee | null>(null);
+  const timelineMarqueeRef = useRef<TimelineMarquee | null>(null);
   const scrubPointer = useRef<number | null>(null);
   const workspaceRef = useRef<HTMLDivElement>(null);
   const playbackFrame = useRef<number | null>(null);
@@ -444,6 +480,7 @@ export function Timeline(props: {
     time: number;
     selectedTrack: number | null;
     selectedKey: { track: number; key: number } | null;
+    selectedKeys: TimelineKeyRef[];
     selectedEvent: number | null;
   }>());
 
@@ -479,6 +516,15 @@ export function Timeline(props: {
   }, [props.entity?.entity]);
 
   useEffect(() => {
+    setSelectedKeys((current) => {
+      if (!selectedKey) return current.length === 0 ? current : [];
+      return current.some((ref) => ref.track === selectedKey.track && ref.key === selectedKey.key)
+        ? current
+        : [selectedKey];
+    });
+  }, [selectedKey]);
+
+  useEffect(() => {
     let cancelled = false;
     const previousPath = loadedClipPath.current;
     if (previousPath && clip) {
@@ -489,6 +535,7 @@ export function Timeline(props: {
           time,
           selectedTrack,
           selectedKey: selectedKey ? { ...selectedKey } : null,
+          selectedKeys: selectedKeys.map((ref) => ({ ...ref })),
           selectedEvent,
         });
       } else {
@@ -500,6 +547,8 @@ export function Timeline(props: {
     setRecording(false);
     timelineDragRef.current = null;
     setTimelineDrag(null);
+    timelineMarqueeRef.current = null;
+    setTimelineMarquee(null);
     recordingValues.current.clear();
     setError(null);
     setClip(null);
@@ -510,6 +559,7 @@ export function Timeline(props: {
     if (!clipPath) {
       setSelectedTrack(null);
       setSelectedKey(null);
+      setSelectedKeys([]);
       setSelectedEvent(null);
       props.onClearPreview();
       return () => { cancelled = true; };
@@ -521,6 +571,7 @@ export function Timeline(props: {
       setSavedText(draft.savedText);
       setTime(draft.time);
       setSelectedTrack(draft.selectedTrack);
+      setSelectedKeys(draft.selectedKeys.map((ref) => ({ ...ref })));
       setSelectedKey(draft.selectedKey ? { ...draft.selectedKey } : null);
       setSelectedEvent(draft.selectedEvent);
       playbackPhase.current = draft.time;
@@ -529,6 +580,7 @@ export function Timeline(props: {
     }
     setSelectedTrack(null);
     setSelectedKey(null);
+    setSelectedKeys([]);
     setSelectedEvent(null);
     setLoading(true);
     void readProjectAssetText(clipPath)
@@ -660,6 +712,7 @@ export function Timeline(props: {
     }
     setClip({ ...clip, tracks });
     setSelectedTrack(lastKey!.track);
+    setSelectedKeys([lastKey!]);
     setSelectedKey(lastKey);
   }, [clip, props.authoredEntities, props.entity?.entity, recording, time]);
 
@@ -762,6 +815,7 @@ export function Timeline(props: {
             time,
             selectedTrack,
             selectedKey: selectedKey ? { ...selectedKey } : null,
+            selectedKeys: selectedKeys.map((ref) => ({ ...ref })),
             selectedEvent,
           });
         }
@@ -771,6 +825,10 @@ export function Timeline(props: {
       setClip(next);
       setSavedText(serializeAnimationClip(next));
       setTime(0);
+      setSelectedTrack(null);
+      setSelectedKey(null);
+      setSelectedKeys([]);
+      setSelectedEvent(null);
       playbackPhase.current = 0;
       setShowNewClip(false);
       props.onAssetsChanged();
@@ -818,6 +876,7 @@ export function Timeline(props: {
     ));
     if (existing >= 0) {
       setSelectedTrack(existing);
+      setSelectedKeys([]);
       setSelectedKey(null);
       props.onLog(`${component}.${property} 已在当前 Animation Clip 中`, 'warn');
       return;
@@ -835,6 +894,7 @@ export function Timeline(props: {
       }],
     });
     setSelectedTrack(next.tracks.length - 1);
+    setSelectedKeys([]);
     setSelectedKey(null);
     setSelectedEvent(null);
     setClip(next);
@@ -864,7 +924,9 @@ export function Timeline(props: {
       ? result.track
       : candidate);
     setClip({ ...clip, tracks });
-    setSelectedKey({ track: selectedTrack, key: result.keyIndex });
+    const primary = { track: selectedTrack, key: result.keyIndex };
+    setSelectedKeys([primary]);
+    setSelectedKey(primary);
     setSelectedEvent(null);
     setDetailsOpen(true);
   };
@@ -891,6 +953,7 @@ export function Timeline(props: {
     if (!clip || selectedTrack == null) return;
     const tracks = clip.tracks.filter((_track, index) => index !== selectedTrack);
     setSelectedTrack(null);
+    setSelectedKeys([]);
     setSelectedKey(null);
     setClip({ ...clip, tracks });
   };
@@ -900,6 +963,7 @@ export function Timeline(props: {
     const result = addAnimationEvent(clip, time);
     setClip(result.clip);
     setSelectedTrack(null);
+    setSelectedKeys([]);
     setSelectedKey(null);
     setSelectedEvent(result.eventIndex);
     setDetailsOpen(true);
@@ -932,9 +996,24 @@ export function Timeline(props: {
   const selectedTrackData = selectedTrack != null && clip
     ? clip.tracks[selectedTrack] ?? null
     : null;
+  const activeSelectedKeys = clip
+    ? normalizeTimelineKeySelection(clip, selectedKeys)
+    : [];
   const rulerSteps = Math.min(80, Math.max(5, Math.round(5 * zoom)));
-  const canCopySelection = selectedKeyframe != null || selectedAnimationEvent != null;
+  const canCopySelection = activeSelectedKeys.length > 0 || selectedAnimationEvent != null;
   const canMaximizePanel = !new URLSearchParams(window.location.search).has('detachedPanel');
+
+  const selectKeys = (
+    selection: readonly TimelineKeyRef[],
+    sourceClip: AnimationClip | null = clip,
+  ) => {
+    const normalized = sourceClip ? normalizeTimelineKeySelection(sourceClip, selection) : [];
+    const primary = normalized[normalized.length - 1] ?? null;
+    setSelectedKeys(normalized);
+    setSelectedKey(primary);
+    if (primary) setSelectedTrack(primary.track);
+    setSelectedEvent(null);
+  };
 
   const updateSelectedKey = (patch: Partial<AnimationKeyframe>) => {
     if (!clip || !selectedKey || !selectedKeyframe) return;
@@ -954,25 +1033,37 @@ export function Timeline(props: {
         index === selectedKey.track ? result.track : candidate
       )),
     });
-    setSelectedKey({ track: selectedKey.track, key: result.keyIndex });
+    const primary = { track: selectedKey.track, key: result.keyIndex };
+    setSelectedKeys([primary]);
+    setSelectedKey(primary);
     const next = result.track.keyframes[result.keyIndex].time;
     playbackPhase.current = next;
     setTime(next);
   };
 
   const deleteSelectedKey = () => {
-    if (!clip || !selectedKey) return;
-    const track = clip.tracks[selectedKey.track];
-    if (!track) return;
-    setClip({
-      ...clip,
-      tracks: clip.tracks.map((candidate, index) => (
-        index === selectedKey.track
-          ? removeAnimationKeyframe(candidate, selectedKey.key)
-          : candidate
-      )),
-    });
+    if (!clip || activeSelectedKeys.length === 0) return;
+    setClip(removeTimelineKeySelection(clip, activeSelectedKeys));
+    setSelectedKeys([]);
     setSelectedKey(null);
+  };
+
+  const moveSelectedKeysByFrames = (frames: number) => {
+    if (!clip || activeSelectedKeys.length === 0 || !Number.isFinite(frames)) return;
+    const result = moveTimelineKeySelection(
+      clip,
+      activeSelectedKeys,
+      frames / Math.max(1, clip.frame_rate),
+    );
+    if (result.appliedDelta === 0) return;
+    setClip(result.clip);
+    selectKeys(result.selection, result.clip);
+    const primary = result.selection[result.selection.length - 1];
+    if (primary) {
+      const next = result.clip.tracks[primary.track].keyframes[primary.key].time;
+      playbackPhase.current = next;
+      setTime(next);
+    }
   };
 
   const updateSelectedTangent = (
@@ -990,16 +1081,9 @@ export function Timeline(props: {
   };
 
   const selectionClipboard = (): TimelineClipboard | null => {
-    if (selectedKey && selectedKeyframe && clip) {
-      const track = clip.tracks[selectedKey.track];
-      if (!track) return null;
-      return {
-        kind: 'key',
-        target: track.target,
-        component: track.component,
-        property: track.property,
-        keyframe: structuredClone(selectedKeyframe),
-      };
+    if (clip && activeSelectedKeys.length > 0) {
+      const keys = copyTimelineKeySelection(clip, activeSelectedKeys);
+      if (keys.length > 0) return { kind: 'keys', keys };
     }
     if (selectedAnimationEvent) {
       return { kind: 'event', event: structuredClone(selectedAnimationEvent) };
@@ -1018,38 +1102,26 @@ export function Timeline(props: {
       const pasted = pasteAnimationEvent(clip, copied.event, time);
       setClip(pasted.clip);
       setSelectedTrack(null);
+      setSelectedKeys([]);
       setSelectedKey(null);
       setSelectedEvent(pasted.eventIndex);
       setDetailsOpen(true);
       return;
     }
 
-    const trackIndex = clip.tracks.findIndex((track) => (
-      track.target === copied.target
-      && track.component === copied.component
-      && track.property === copied.property
-    ));
-    if (trackIndex < 0) {
+    const pasted = pasteTimelineKeySelection(clip, copied.keys, time);
+    if (pasted.selection.length === 0) {
       props.onLog(
-        `Cannot paste key: ${copied.component}.${copied.property} is not in this clip`,
+        'Cannot paste keys: none of the copied property tracks exist in this clip',
         'warn',
       );
       return;
     }
-    const edit = pasteAnimationKeyframe(
-      clip.tracks[trackIndex],
-      copied.keyframe,
-      time,
-      clip.frame_rate,
-      clip.duration,
-    );
-    setClip({
-      ...clip,
-      tracks: clip.tracks.map((track, index) => index === trackIndex ? edit.track : track),
-    });
-    setSelectedTrack(trackIndex);
-    setSelectedKey({ track: trackIndex, key: edit.keyIndex });
-    setSelectedEvent(null);
+    setClip(pasted.clip);
+    selectKeys(pasted.selection, pasted.clip);
+    if (pasted.skipped > 0) {
+      props.onLog(`Pasted ${pasted.selection.length} key(s); skipped ${pasted.skipped} unmatched key(s)`, 'warn');
+    }
     setDetailsOpen(true);
   };
 
@@ -1144,7 +1216,7 @@ export function Timeline(props: {
       return;
     }
     if (event.key === 'Delete' || event.key === 'Backspace') {
-      if (selectedKey) {
+      if (activeSelectedKeys.length > 0) {
         event.preventDefault();
         deleteSelectedKey();
       } else if (selectedEvent != null) {
@@ -1166,26 +1238,55 @@ export function Timeline(props: {
     if (!lane) return;
     const rect = lane.getBoundingClientRect();
     event.stopPropagation();
-    event.currentTarget.setPointerCapture(event.pointerId);
     setPlaying(false);
-    const drag: TimelineDrag = {
-      kind,
-      pointerId: event.pointerId,
-      track,
-      index,
-      time: authoredTime,
-      left: rect.left,
-      width: Math.max(1, rect.width),
-    };
-    timelineDragRef.current = drag;
-    setTimelineDrag(drag);
     if (kind === 'key') {
-      setSelectedTrack(track);
-      setSelectedKey({ track, key: index });
-      setSelectedEvent(null);
+      const ref = { track, key: index };
+      const command = event.ctrlKey || event.metaKey;
+      if (command) {
+        selectKeys(toggleTimelineKeySelection(clip, activeSelectedKeys, ref));
+        setDetailsOpen(true);
+        return;
+      }
+      if (event.shiftKey) {
+        const range = selectedKey
+          ? timelineKeyRangeSelection(clip, selectedKey, ref)
+          : [ref];
+        selectKeys(range);
+        setDetailsOpen(true);
+        return;
+      }
+      const selection = activeSelectedKeys.some((candidate) => (
+        candidate.track === ref.track && candidate.key === ref.key
+      )) ? activeSelectedKeys : [ref];
+      selectKeys(selection);
+      const drag: TimelineKeyDrag = {
+        kind: 'key',
+        pointerId: event.pointerId,
+        active: ref,
+        activeTime: authoredTime,
+        selection,
+        delta: 0,
+        left: rect.left,
+        width: Math.max(1, rect.width),
+      };
+      event.currentTarget.setPointerCapture(event.pointerId);
+      timelineDragRef.current = drag;
+      setTimelineDrag(drag);
       setDetailsOpen(true);
     } else {
+      const drag: TimelineEventDrag = {
+        kind: 'event',
+        pointerId: event.pointerId,
+        index,
+        time: authoredTime,
+        left: rect.left,
+        width: Math.max(1, rect.width),
+      };
+      event.currentTarget.setPointerCapture(event.pointerId);
+      timelineDragRef.current = drag;
+      setTimelineDrag(drag);
       setSelectedTrack(null);
+      setSelectedKeys([]);
       setSelectedKey(null);
       setSelectedEvent(index);
       setDetailsOpen(true);
@@ -1202,11 +1303,19 @@ export function Timeline(props: {
       clip.frame_rate,
       clip.duration,
     );
-    const updated = { ...drag, time: next };
+    const updated: TimelineDrag = drag.kind === 'event'
+      ? { ...drag, time: next }
+      : {
+          ...drag,
+          delta: clampTimelineKeyDelta(clip, drag.selection, next - drag.activeTime),
+        };
     timelineDragRef.current = updated;
     setTimelineDrag(updated);
-    playbackPhase.current = next;
-    setTime(next);
+    const previewTime = updated.kind === 'event'
+      ? updated.time
+      : updated.activeTime + updated.delta;
+    playbackPhase.current = previewTime;
+    setTime(previewTime);
   };
 
   const finishTimelineDrag = (event: ReactPointerEvent<HTMLButtonElement>, commit: boolean) => {
@@ -1222,24 +1331,87 @@ export function Timeline(props: {
       setSelectedEvent(result.eventIndex);
       return;
     }
-    const track = clip.tracks[drag.track];
-    const key = track?.keyframes[drag.index];
-    if (!track || !key) return;
-    const result = replaceAnimationKeyframe(
-      track,
-      drag.index,
-      drag.time,
-      key.value,
-      clip.frame_rate,
-      clip.duration,
-    );
-    if (!result) return;
-    setClip({
-      ...clip,
-      tracks: clip.tracks.map((candidate, index) => index === drag.track ? result.track : candidate),
-    });
-    setSelectedTrack(drag.track);
-    setSelectedKey({ track: drag.track, key: result.keyIndex });
+    const result = moveTimelineKeySelection(clip, drag.selection, drag.delta);
+    setClip(result.clip);
+    selectKeys(result.selection, result.clip);
+  };
+
+  const beginTimelineMarquee = (event: ReactPointerEvent<HTMLDivElement>) => {
+    if (!clip || event.button !== 0) return;
+    const target = event.target as HTMLElement;
+    if (target.closest('.timeline-ruler, .timeline-key, .timeline-event-key')) return;
+    const rect = event.currentTarget.getBoundingClientRect();
+    const startX = Math.max(0, Math.min(rect.width, event.clientX - rect.left));
+    const startY = Math.max(0, Math.min(rect.height, event.clientY - rect.top));
+    const additive = event.ctrlKey || event.metaKey || event.shiftKey;
+    const marquee: TimelineMarquee = {
+      pointerId: event.pointerId,
+      startX,
+      startY,
+      x: startX,
+      y: startY,
+      width: 0,
+      height: 0,
+      additive,
+      base: additive ? activeSelectedKeys : [],
+    };
+    event.currentTarget.setPointerCapture(event.pointerId);
+    setPlaying(false);
+    timelineMarqueeRef.current = marquee;
+    setTimelineMarquee(marquee);
+  };
+
+  const moveTimelineMarquee = (event: ReactPointerEvent<HTMLDivElement>) => {
+    const marquee = timelineMarqueeRef.current;
+    if (!marquee || marquee.pointerId !== event.pointerId) return;
+    const rect = event.currentTarget.getBoundingClientRect();
+    const pointerX = Math.max(0, Math.min(rect.width, event.clientX - rect.left));
+    const pointerY = Math.max(0, Math.min(rect.height, event.clientY - rect.top));
+    const updated = {
+      ...marquee,
+      x: Math.min(marquee.startX, pointerX),
+      y: Math.min(marquee.startY, pointerY),
+      width: Math.abs(pointerX - marquee.startX),
+      height: Math.abs(pointerY - marquee.startY),
+    };
+    timelineMarqueeRef.current = updated;
+    setTimelineMarquee(updated);
+  };
+
+  const finishTimelineMarquee = (event: ReactPointerEvent<HTMLDivElement>, commit: boolean) => {
+    const marquee = timelineMarqueeRef.current;
+    if (!clip || !marquee || marquee.pointerId !== event.pointerId) return;
+    timelineMarqueeRef.current = null;
+    setTimelineMarquee(null);
+    if (event.currentTarget.hasPointerCapture(event.pointerId)) {
+      event.currentTarget.releasePointerCapture(event.pointerId);
+    }
+    if (!commit) return;
+    const rect = event.currentTarget.getBoundingClientRect();
+    if (marquee.width < 4 && marquee.height < 4) {
+      const clickedTime = marquee.startX / Math.max(1, rect.width) * clip.duration;
+      setPreviewTime(clickedTime);
+      if (marquee.startY < 56) {
+        setSelectedTrack(null);
+        selectKeys([]);
+      } else {
+        const track = Math.floor((marquee.startY - 56) / 32);
+        setSelectedTrack(clip.tracks[track] ? track : null);
+        selectKeys([]);
+      }
+      setSelectedEvent(null);
+      return;
+    }
+    const firstTrack = Math.floor((marquee.y - 56) / 32);
+    const lastTrack = Math.floor((marquee.y + marquee.height - 56) / 32);
+    const firstTime = marquee.x / Math.max(1, rect.width) * clip.duration;
+    const lastTime = (marquee.x + marquee.width) / Math.max(1, rect.width) * clip.duration;
+    const boxed = timelineKeysInRange(clip, firstTrack, lastTrack, firstTime, lastTime);
+    const selection = marquee.additive
+      ? mergeTimelineKeySelection(clip, marquee.base, boxed)
+      : boxed;
+    selectKeys(selection);
+    if (selection.length > 0) setDetailsOpen(true);
   };
 
   if (!props.entity) {
@@ -1562,7 +1734,9 @@ export function Timeline(props: {
                   className={`timeline-track-label timeline-event-row${selectedEvent != null ? ' selected' : ''}`}
                   onClick={() => {
                     setSelectedTrack(null);
+                    setSelectedKeys([]);
                     setSelectedKey(null);
+                    setSelectedEvent(null);
                   }}
                 >
                   <strong>Animation Events</strong>
@@ -1575,6 +1749,7 @@ export function Timeline(props: {
                     key={`${track.target}:${track.component}.${track.property}:${index}`}
                     onClick={() => {
                       setSelectedTrack(index);
+                      setSelectedKeys([]);
                       setSelectedKey(null);
                       setSelectedEvent(null);
                     }}
@@ -1587,7 +1762,14 @@ export function Timeline(props: {
               </div>
 
               <div className="timeline-lanes-scroll">
-                <div className="timeline-lanes" style={{ width: `${zoom * 100}%` }}>
+                <div
+                  className="timeline-lanes"
+                  style={{ width: `${zoom * 100}%` }}
+                  onPointerDown={beginTimelineMarquee}
+                  onPointerMove={moveTimelineMarquee}
+                  onPointerUp={(event) => finishTimelineMarquee(event, true)}
+                  onPointerCancel={(event) => finishTimelineMarquee(event, false)}
+                >
                   <div
                     className="timeline-ruler"
                     title="Drag to move the playhead"
@@ -1601,13 +1783,7 @@ export function Timeline(props: {
                     ))}
                     <i style={{ left: `${clip.duration > 0 ? time / clip.duration * 100 : 0}%` }} />
                   </div>
-                  <div
-                    className={`timeline-track-keys timeline-event-row${selectedEvent != null ? ' selected' : ''}`}
-                    onPointerDown={(event) => {
-                      if ((event.target as HTMLElement).closest('.timeline-event-key')) return;
-                      seekAtPointer(event, clip.duration, clip.frame_rate);
-                    }}
-                  >
+                  <div className={`timeline-track-keys timeline-event-row${selectedEvent != null ? ' selected' : ''}`}>
                     {clip.events.map((animationEvent, eventIndex) => {
                       const displayTime = timelineDrag?.kind === 'event' && timelineDrag.index === eventIndex
                         ? timelineDrag.time
@@ -1627,6 +1803,7 @@ export function Timeline(props: {
                           onClick={(event) => {
                             event.stopPropagation();
                             setSelectedTrack(null);
+                            setSelectedKeys([]);
                             setSelectedKey(null);
                             setSelectedEvent(eventIndex);
                             setDetailsOpen(true);
@@ -1641,25 +1818,25 @@ export function Timeline(props: {
                     <div
                       className={`timeline-track-keys${selectedTrack === index ? ' selected' : ''}`}
                       key={`${track.target}:${track.component}.${track.property}:${index}`}
-                      onPointerDown={(event) => {
-                        if ((event.target as HTMLElement).closest('.timeline-key')) return;
-                        setSelectedTrack(index);
-                        setSelectedKey(null);
-                        setSelectedEvent(null);
-                        seekAtPointer(event, clip.duration, clip.frame_rate);
-                      }}
                     >
                       {track.keyframes.map((key, keyIndex) => {
+                        const selected = activeSelectedKeys.some((candidate) => (
+                          candidate.track === index && candidate.key === keyIndex
+                        ));
+                        const dragged = timelineDrag?.kind === 'key'
+                          && timelineDrag.selection.some((candidate) => (
+                            candidate.track === index && candidate.key === keyIndex
+                          ));
                         const displayTime = timelineDrag?.kind === 'key'
-                          && timelineDrag.track === index
-                          && timelineDrag.index === keyIndex
-                          ? timelineDrag.time
+                          && dragged
+                          ? key.time + timelineDrag.delta
                           : key.time;
                         return (
                           <button
                             type="button"
-                            className={`timeline-key${selectedKey?.track === index && selectedKey.key === keyIndex ? ' selected' : ''}${timelineDrag?.kind === 'key' && timelineDrag.track === index && timelineDrag.index === keyIndex ? ' dragging' : ''}`}
+                            className={`timeline-key${selected ? ' selected' : ''}${dragged ? ' dragging' : ''}`}
                             key={keyIndex}
+                            aria-pressed={selected}
                             aria-label={`Keyframe at ${displayTime.toFixed(3)} seconds`}
                             title={`${displayTime.toFixed(3)} s · ${valueLabel(key.value)}`}
                             style={{ left: `clamp(6px, ${clip.duration > 0 ? displayTime / clip.duration * 100 : 0}%, calc(100% - 6px))` }}
@@ -1669,9 +1846,6 @@ export function Timeline(props: {
                             onPointerCancel={(event) => finishTimelineDrag(event, false)}
                             onClick={(event) => {
                               event.stopPropagation();
-                              setSelectedTrack(index);
-                              setSelectedKey({ track: index, key: keyIndex });
-                              setSelectedEvent(null);
                               setDetailsOpen(true);
                               setPreviewTime(key.time);
                             }}
@@ -1683,6 +1857,17 @@ export function Timeline(props: {
                   ))}
                   {clip.tracks.length === 0 && (
                     <div className="timeline-empty-row timeline-empty-lane">Choose a property above, then add a track.</div>
+                  )}
+                  {timelineMarquee && (timelineMarquee.width >= 4 || timelineMarquee.height >= 4) && (
+                    <i
+                      className="timeline-marquee"
+                      style={{
+                        left: timelineMarquee.x,
+                        top: timelineMarquee.y,
+                        width: timelineMarquee.width,
+                        height: timelineMarquee.height,
+                      }}
+                    />
                   )}
                 </div>
               </div>
@@ -1758,7 +1943,12 @@ export function Timeline(props: {
 
               {selectedKeyframe && selectedKey && (
                 <section>
-                  <h3>Keyframe</h3>
+                  <h3>Keyframe{activeSelectedKeys.length > 1 ? `s · ${activeSelectedKeys.length} selected` : ''}</h3>
+                  {activeSelectedKeys.length > 1 && (
+                    <div className="timeline-multi-selection-summary">
+                      Editing values applies to the primary key. Move, copy, paste, and delete apply to the whole selection.
+                    </div>
+                  )}
                   <div className="timeline-details-form">
                     <label>Time <input aria-label="Keyframe time" type="number" min={0} max={clip.duration} step={1 / Math.max(1, clip.frame_rate)} value={selectedKeyframe.time} onChange={(event) => {
                       if (Number.isFinite(event.target.valueAsNumber)) updateSelectedKey({ time: event.target.valueAsNumber });
@@ -1780,8 +1970,12 @@ export function Timeline(props: {
                       </div>
                     );
                   })()}
+                  <div className="timeline-selection-nudge">
+                    <button type="button" onClick={() => moveSelectedKeysByFrames(-1)}>−1 Frame</button>
+                    <button type="button" onClick={() => moveSelectedKeysByFrames(1)}>+1 Frame</button>
+                  </div>
                   <button type="button" className="timeline-delete-selection" onClick={deleteSelectedKey}>
-                    <Trash2 size={13} aria-hidden="true" /> Delete Key
+                    <Trash2 size={13} aria-hidden="true" /> Delete {activeSelectedKeys.length > 1 ? `${activeSelectedKeys.length} Keys` : 'Key'}
                   </button>
                 </section>
               )}
@@ -1806,7 +2000,7 @@ export function Timeline(props: {
               {!selectedTrackData && !selectedAnimationEvent && (
                 <div className="timeline-details-empty">Select a track, keyframe, or event to inspect it.</div>
               )}
-              <footer>Space: Play · Arrows: Step · K: Add Key · Ctrl/Cmd+C/V: Copy/Paste · Shift+Space: Maximize · Delete: Remove</footer>
+              <footer>Ctrl/Shift+Click: Multi-select · Box Drag: Select · Drag: Move Selection · Ctrl/Cmd+C/V: Copy/Paste · Shift+Space: Maximize · Delete: Remove</footer>
             </aside>
           )}
         </div>

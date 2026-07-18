@@ -2980,7 +2980,9 @@ body.insp-scrubbing * {
 }
 
 .timeline-lanes {
+  position: relative;
   min-width: 100%;
+  touch-action: none;
 }
 
 .timeline-ruler-label,
@@ -3130,6 +3132,16 @@ body.insp-scrubbing * {
   filter: brightness(1.2);
 }
 
+.timeline-marquee {
+  position: absolute;
+  z-index: 6;
+  box-sizing: border-box;
+  border: 1px solid #6ca6cf;
+  background: rgba(54, 112, 154, 0.24);
+  box-shadow: inset 0 0 0 1px rgba(170, 217, 249, 0.12);
+  pointer-events: none;
+}
+
 .timeline-event-key:hover { background: #ffc36b; }
 .timeline-event-key.selected { background: #fff0a3; outline: 1px solid #fff; }
 .timeline-event-row { background-color: #292722; }
@@ -3239,6 +3251,30 @@ body.insp-scrubbing * {
 .timeline-key-vector input { width: 100%; }
 .timeline-key-bool input { width: 16px; height: 16px; }
 .timeline-selection-hint { color: var(--u-muted); font-style: italic; }
+
+.timeline-multi-selection-summary {
+  margin: 0 0 7px;
+  padding: 5px 6px;
+  border-left: 2px solid #5f93b9;
+  background: #243039;
+  color: #aebdca;
+  font-size: 10px;
+  line-height: 1.4;
+}
+
+.timeline-selection-nudge {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 4px;
+  margin-top: 7px;
+}
+
+.timeline-details .timeline-selection-nudge button {
+  height: 22px;
+  border-color: var(--u-border-2);
+  background: #333;
+  color: #c9c9c9;
+}
 
 .timeline-tangent-editors,
 .timeline-tangent-editors > div {
