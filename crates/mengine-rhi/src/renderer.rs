@@ -1778,9 +1778,7 @@ fn create_material_sampler(device: &wgpu::Device, key: MaterialSamplerKey) -> wg
         address_mode_w: wgpu::AddressMode::Repeat,
         mag_filter: filter,
         min_filter: filter,
-        // Keep the sampler compatible with the filtering bind-group layout. Material textures
-        // currently have one mip level, so this does not soften nearest min/mag sampling.
-        mipmap_filter: wgpu::FilterMode::Linear,
+        mipmap_filter: filter,
         ..Default::default()
     })
 }
@@ -2132,6 +2130,7 @@ fn create_material_texture_rgba8(
     rgba8: &[u8],
     srgb: bool,
 ) -> MaterialTextureGpu {
+    let mip_levels = build_material_mip_chain(width, height, rgba8, srgb);
     let size = wgpu::Extent3d {
         width,
         height,
@@ -2140,7 +2139,7 @@ fn create_material_texture_rgba8(
     let texture = device.create_texture(&wgpu::TextureDescriptor {
         label: Some(label),
         size,
-        mip_level_count: 1,
+        mip_level_count: mip_levels.len() as u32,
         sample_count: 1,
         dimension: wgpu::TextureDimension::D2,
         format: if srgb {
@@ -2151,26 +2150,119 @@ fn create_material_texture_rgba8(
         usage: wgpu::TextureUsages::TEXTURE_BINDING | wgpu::TextureUsages::COPY_DST,
         view_formats: &[],
     });
-    queue.write_texture(
-        wgpu::TexelCopyTextureInfo {
-            texture: &texture,
-            mip_level: 0,
-            origin: wgpu::Origin3d::ZERO,
-            aspect: wgpu::TextureAspect::All,
-        },
-        rgba8,
-        wgpu::TexelCopyBufferLayout {
-            offset: 0,
-            bytes_per_row: Some(width * 4),
-            rows_per_image: Some(height),
-        },
-        size,
-    );
+    for (mip_level, mip) in mip_levels.iter().enumerate() {
+        queue.write_texture(
+            wgpu::TexelCopyTextureInfo {
+                texture: &texture,
+                mip_level: mip_level as u32,
+                origin: wgpu::Origin3d::ZERO,
+                aspect: wgpu::TextureAspect::All,
+            },
+            &mip.pixels,
+            wgpu::TexelCopyBufferLayout {
+                offset: 0,
+                bytes_per_row: Some(mip.width * 4),
+                rows_per_image: Some(mip.height),
+            },
+            wgpu::Extent3d {
+                width: mip.width,
+                height: mip.height,
+                depth_or_array_layers: 1,
+            },
+        );
+    }
     let view = texture.create_view(&wgpu::TextureViewDescriptor::default());
     MaterialTextureGpu {
         _texture: texture,
         view,
     }
+}
+
+#[derive(Debug, PartialEq, Eq)]
+struct MaterialMipLevel {
+    width: u32,
+    height: u32,
+    pixels: Vec<u8>,
+}
+
+fn build_material_mip_chain(
+    width: u32,
+    height: u32,
+    rgba8: &[u8],
+    srgb: bool,
+) -> Vec<MaterialMipLevel> {
+    let mut levels = vec![MaterialMipLevel {
+        width,
+        height,
+        pixels: rgba8.to_vec(),
+    }];
+    while levels
+        .last()
+        .is_some_and(|level| level.width > 1 || level.height > 1)
+    {
+        let source = levels.last().expect("base mip is present");
+        let next_width = (source.width / 2).max(1);
+        let next_height = (source.height / 2).max(1);
+        let mut pixels = vec![0; next_width as usize * next_height as usize * 4];
+        for y in 0..next_height {
+            let source_y_start = y * source.height / next_height;
+            let source_y_end = ((y + 1) * source.height / next_height).max(source_y_start + 1);
+            for x in 0..next_width {
+                let source_x_start = x * source.width / next_width;
+                let source_x_end = ((x + 1) * source.width / next_width).max(source_x_start + 1);
+                let sample_count =
+                    (source_x_end - source_x_start) * (source_y_end - source_y_start);
+                let mut channels = [0.0_f32; 4];
+                for source_y in source_y_start..source_y_end {
+                    for source_x in source_x_start..source_x_end {
+                        let offset = ((source_y * source.width + source_x) * 4) as usize;
+                        for (channel, accumulator) in channels.iter_mut().enumerate() {
+                            let value = source.pixels[offset + channel];
+                            *accumulator += if srgb && channel < 3 {
+                                srgb_channel_to_linear(value)
+                            } else {
+                                value as f32 / 255.0
+                            };
+                        }
+                    }
+                }
+                let destination = ((y * next_width + x) * 4) as usize;
+                for (channel, accumulated) in channels.iter().enumerate() {
+                    let average = accumulated / sample_count as f32;
+                    pixels[destination + channel] = if srgb && channel < 3 {
+                        linear_channel_to_srgb(average)
+                    } else {
+                        (average.clamp(0.0, 1.0) * 255.0).round() as u8
+                    };
+                }
+            }
+        }
+        levels.push(MaterialMipLevel {
+            width: next_width,
+            height: next_height,
+            pixels,
+        });
+    }
+    levels
+}
+
+fn srgb_channel_to_linear(value: u8) -> f32 {
+    let value = value as f32 / 255.0;
+    if value <= 0.04045 {
+        value / 12.92
+    } else {
+        ((value + 0.055) / 1.055).powf(2.4)
+    }
+}
+
+fn linear_channel_to_srgb(value: f32) -> u8 {
+    let value = value.clamp(0.0, 1.0);
+    let encoded = if value <= 0.003_130_8 {
+        value * 12.92
+    } else {
+        1.055 * value.powf(1.0 / 2.4) - 0.055
+    };
+    (encoded.clamp(0.0, 1.0) * 255.0).round() as u8
 }
 
 fn align_to(value: u64, alignment: u64) -> u64 {
@@ -2875,6 +2967,28 @@ mod tests {
             [1.5, 0.65, std::f32::consts::FRAC_PI_2, 0.0]
         );
         assert_eq!(make_object_uniforms(&object).shadow_params[0], 0.0);
+    }
+
+    #[test]
+    fn material_mips_filter_color_in_linear_light_and_data_without_gamma() {
+        let checker = [
+            0, 0, 0, 255, 255, 255, 255, 255, 255, 255, 255, 255, 0, 0, 0, 255,
+        ];
+        let color = build_material_mip_chain(2, 2, &checker, true);
+        assert_eq!(color.len(), 2);
+        assert_eq!(color[1].pixels, vec![188, 188, 188, 255]);
+
+        let data = build_material_mip_chain(2, 2, &checker, false);
+        assert_eq!(data[1].pixels, vec![128, 128, 128, 255]);
+    }
+
+    #[test]
+    fn material_mips_cover_all_texels_of_non_power_of_two_images() {
+        let pixels = [0, 0, 0, 255, 0, 0, 0, 255, 255, 0, 0, 255];
+        let levels = build_material_mip_chain(3, 1, &pixels, false);
+        assert_eq!(levels.len(), 2);
+        assert_eq!((levels[1].width, levels[1].height), (1, 1));
+        assert_eq!(levels[1].pixels, vec![85, 0, 0, 255]);
     }
 
     #[test]
