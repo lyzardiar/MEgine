@@ -1,3 +1,4 @@
+use crate::ibl::BrdfLut;
 use crate::mesh::{MeshGpu, Vertex};
 use crate::post_process::{HdrPostProcess, HDR_COLOR_FORMAT};
 use crate::render_graph::RenderGraph;
@@ -395,6 +396,7 @@ pub struct Renderer {
     shadow_pass_bind_group: wgpu::BindGroup,
     environment_texture_layout: wgpu::BindGroupLayout,
     environment_sampler: wgpu::Sampler,
+    brdf_lut: BrdfLut,
     _fallback_environment_texture: MaterialTextureGpu,
     fallback_environment_bind_group: wgpu::BindGroup,
     environment_textures: HashMap<String, MaterialTextureGpu>,
@@ -655,6 +657,22 @@ impl Renderer {
                         ty: wgpu::BindingType::Sampler(wgpu::SamplerBindingType::Filtering),
                         count: None,
                     },
+                    wgpu::BindGroupLayoutEntry {
+                        binding: 2,
+                        visibility: wgpu::ShaderStages::FRAGMENT,
+                        ty: wgpu::BindingType::Texture {
+                            sample_type: wgpu::TextureSampleType::Float { filterable: true },
+                            view_dimension: wgpu::TextureViewDimension::D2,
+                            multisampled: false,
+                        },
+                        count: None,
+                    },
+                    wgpu::BindGroupLayoutEntry {
+                        binding: 3,
+                        visibility: wgpu::ShaderStages::FRAGMENT,
+                        ty: wgpu::BindingType::Sampler(wgpu::SamplerBindingType::Filtering),
+                        count: None,
+                    },
                 ],
             });
 
@@ -776,11 +794,14 @@ impl Renderer {
             mipmap_filter: wgpu::FilterMode::Linear,
             ..Default::default()
         });
+        let brdf_lut = BrdfLut::new(&device, &queue);
         let fallback_environment_bind_group = create_environment_bind_group(
             &device,
             &environment_texture_layout,
             &fallback_environment_texture.view,
             &environment_sampler,
+            brdf_lut.view(),
+            brdf_lut.sampler(),
         );
         let fallback_base_color_texture = create_material_texture_rgba8(
             &device,
@@ -859,6 +880,7 @@ impl Renderer {
             shadow_pass_bind_group,
             environment_texture_layout,
             environment_sampler,
+            brdf_lut,
             _fallback_environment_texture: fallback_environment_texture,
             fallback_environment_bind_group,
             environment_textures: HashMap::new(),
@@ -1335,6 +1357,8 @@ impl Renderer {
             &self.environment_texture_layout,
             &texture.view,
             &self.environment_sampler,
+            self.brdf_lut.view(),
+            self.brdf_lut.sampler(),
         );
         self.environment_textures.insert(key.to_owned(), texture);
         self.environment_bind_groups
@@ -1943,6 +1967,8 @@ fn create_environment_bind_group(
     layout: &wgpu::BindGroupLayout,
     texture_view: &wgpu::TextureView,
     sampler: &wgpu::Sampler,
+    brdf_lut_view: &wgpu::TextureView,
+    brdf_lut_sampler: &wgpu::Sampler,
 ) -> wgpu::BindGroup {
     device.create_bind_group(&wgpu::BindGroupDescriptor {
         label: Some("environment_texture_bg"),
@@ -1955,6 +1981,14 @@ fn create_environment_bind_group(
             wgpu::BindGroupEntry {
                 binding: 1,
                 resource: wgpu::BindingResource::Sampler(sampler),
+            },
+            wgpu::BindGroupEntry {
+                binding: 2,
+                resource: wgpu::BindingResource::TextureView(brdf_lut_view),
+            },
+            wgpu::BindGroupEntry {
+                binding: 3,
+                resource: wgpu::BindingResource::Sampler(brdf_lut_sampler),
             },
         ],
     })
@@ -2342,6 +2376,8 @@ struct ShadowUniforms {
 @group(2) @binding(2) var directional_shadow_sampler: sampler_comparison;
 @group(3) @binding(0) var environment_texture: texture_2d<f32>;
 @group(3) @binding(1) var environment_sampler: sampler;
+@group(3) @binding(2) var brdf_lut: texture_2d<f32>;
+@group(3) @binding(3) var brdf_lut_sampler: sampler;
 
 struct VsIn {
     @location(0) position: vec3<f32>,
@@ -2462,10 +2498,13 @@ fn environment_contribution(
         n,
         roughness * roughness * analytic_blur,
     ));
-    let roughness_attenuation = mix(1.0, 0.35, roughness);
+    let integrated_brdf = textureSample(
+        brdf_lut,
+        brdf_lut_sampler,
+        vec2<f32>(ndv, roughness),
+    ).rg;
     let specular = environment_radiance(specular_direction, roughness)
-        * fresnel
-        * roughness_attenuation
+        * (fresnel * integrated_brdf.x + vec3<f32>(integrated_brdf.y))
         * frame.environment_params.y;
     return (diffuse + specular) * occlusion;
 }
@@ -2708,11 +2747,14 @@ mod tests {
             "fn fresnel_schlick",
             "fn environment_contribution",
             "textureSampleLevel(environment_texture",
+            "@group(3) @binding(2) var brdf_lut",
+            "fresnel * integrated_brdf.x",
             "diffuse_weight = (vec3<f32>(1.0) - fresnel) * (1.0 - metallic)",
         ] {
             assert!(FORWARD_WGSL.contains(required), "missing {required}");
         }
         assert!(!FORWARD_WGSL.contains("let shininess ="));
+        assert!(!FORWARD_WGSL.contains("roughness_attenuation"));
     }
 
     #[test]

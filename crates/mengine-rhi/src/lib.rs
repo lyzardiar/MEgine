@@ -1,5 +1,6 @@
 //! wgpu-based RHI with a minimal linear render-graph.
 
+mod ibl;
 mod mesh;
 mod post_process;
 mod render_graph;

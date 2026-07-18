@@ -55,6 +55,7 @@ clap       = { version = "4", features = ["derive"] }
 walkdir    = "2"
 heck       = "0.5"
 image      = "0.25"
+half       = "2"
 gltf       = "1"
 rayon      = "1"
 parking_lot = "0.12"
