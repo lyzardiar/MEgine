@@ -39,6 +39,11 @@ import {
   PROJECT_ASSETS_CHANGED_EVENT,
   openMaterialAsset,
 } from './panels/Material';
+import {
+  OPEN_SURFACE_SHADER_EVENT,
+  SurfaceShaderEditor,
+  openSurfaceShaderAsset,
+} from './panels/SurfaceShader';
 import { Viewport } from './panels/Viewport';
 import {
   OPEN_SPRITE_EDITOR_EVENT,
@@ -122,6 +127,8 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
   const [sceneName, setSceneName] = useState<string | null>(null);
   const [materialPath, setMaterialPath] = useState<string | null>(null);
   const [materialDirty, setMaterialDirty] = useState(false);
+  const [shaderPath, setShaderPath] = useState<string | null>(null);
+  const [shaderDirty, setShaderDirty] = useState(false);
   const [animatorPath, setAnimatorPath] = useState<string | null>(null);
   const [animatorDirty, setAnimatorDirty] = useState(false);
   const [spritePath, setSpritePath] = useState<string | null>(null);
@@ -134,13 +141,14 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
   const dirtyPanels = useMemo(() => {
     const dirty = new Set<PanelKind>();
     if (materialDirty) dirty.add('material');
+    if (shaderDirty) dirty.add('shader');
     if (animatorDirty) dirty.add('animator');
     if (spriteDirty) dirty.add('spriteEditor');
     if (spriteAtlasDirty) dirty.add('spriteAtlas');
     if (animationDirty) dirty.add('timeline');
     if (projectSettingsDirty) dirty.add('projectSettings');
     return dirty;
-  }, [animationDirty, animatorDirty, materialDirty, projectSettingsDirty, spriteAtlasDirty, spriteDirty]);
+  }, [animationDirty, animatorDirty, materialDirty, projectSettingsDirty, shaderDirty, spriteAtlasDirty, spriteDirty]);
   const [logs, setLogs] = useState<string[]>([
     'MEngine Editor',
     '场景落盘：packages/editor/project/Assets/Scenes/*.mscene',
@@ -167,15 +175,15 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
   useEffect(() => {
     const onBeforeUnload = (event: BeforeUnloadEvent) => {
       const dirty = props.detachedPanel
-        ? materialDirty || animationDirty || animatorDirty || spriteDirty || spriteAtlasDirty
-        : sceneDirty || materialDirty || animationDirty || animatorDirty || spriteDirty || spriteAtlasDirty;
+        ? materialDirty || shaderDirty || animationDirty || animatorDirty || spriteDirty || spriteAtlasDirty
+        : sceneDirty || materialDirty || shaderDirty || animationDirty || animatorDirty || spriteDirty || spriteAtlasDirty;
       if (!dirty) return;
       event.preventDefault();
       event.returnValue = '';
     };
     window.addEventListener('beforeunload', onBeforeUnload);
     return () => window.removeEventListener('beforeunload', onBeforeUnload);
-  }, [animationDirty, animatorDirty, materialDirty, props.detachedPanel, sceneDirty, spriteAtlasDirty, spriteDirty]);
+  }, [animationDirty, animatorDirty, materialDirty, props.detachedPanel, sceneDirty, shaderDirty, spriteAtlasDirty, spriteDirty]);
 
   const broadcastScene = (immediate = false) => {
     const channel = syncChannel.current;
@@ -232,6 +240,10 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
       const path = (event as CustomEvent<string>).detail;
       if (typeof path === 'string' && path) setMaterialPath(path);
     };
+    const openShader = (event: Event) => {
+      const path = (event as CustomEvent<string>).detail;
+      if (typeof path === 'string' && path) setShaderPath(path);
+    };
     const openAnimator = (event: Event) => {
       const path = (event as CustomEvent<string>).detail;
       if (typeof path === 'string' && path) setAnimatorPath(path);
@@ -252,12 +264,14 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
     };
     const assetsChanged = () => bumpScenes();
     window.addEventListener(OPEN_MATERIAL_EVENT, openMaterial);
+    window.addEventListener(OPEN_SURFACE_SHADER_EVENT, openShader);
     window.addEventListener(OPEN_ANIMATOR_EVENT, openAnimator);
     window.addEventListener(OPEN_SPRITE_EDITOR_EVENT, openSprite);
     window.addEventListener(OPEN_SPRITE_ATLAS_EVENT, openSpriteAtlas);
     window.addEventListener(PROJECT_ASSETS_CHANGED_EVENT, assetsChanged);
     return () => {
       window.removeEventListener(OPEN_MATERIAL_EVENT, openMaterial);
+      window.removeEventListener(OPEN_SURFACE_SHADER_EVENT, openShader);
       window.removeEventListener(OPEN_ANIMATOR_EVENT, openAnimator);
       window.removeEventListener(OPEN_SPRITE_EDITOR_EVENT, openSprite);
       window.removeEventListener(OPEN_SPRITE_ATLAS_EVENT, openSpriteAtlas);
@@ -1060,6 +1074,7 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
                 void openSceneByName(name);
               }}
               onOpenMaterial={(path) => openMaterialAsset(path)}
+              onOpenShader={(path) => openSurfaceShaderAsset(path)}
               onOpenAnimator={(path) => openAnimatorAsset(path)}
               onOpenSprite={(path) => openSpriteAsset(path)}
               onOpenSpriteAtlas={(path) => openSpriteAtlasAsset(path)}
@@ -1166,6 +1181,15 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
               onLog={log}
             />
           ),
+          shader: (
+            <SurfaceShaderEditor
+              assetPath={shaderPath}
+              onOpenAsset={setShaderPath}
+              onAssetsChanged={bumpScenes}
+              onDirtyChange={setShaderDirty}
+              onLog={log}
+            />
+          ),
           spriteEditor: (
             <SpriteEditor
               assetPath={spritePath}
@@ -1187,7 +1211,7 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
               sceneName={sceneName}
               sceneTick={sceneTick}
               sceneDirty={sceneDirty}
-              resourceDirty={materialDirty || animationDirty || animatorDirty || spriteDirty || spriteAtlasDirty}
+              resourceDirty={materialDirty || shaderDirty || animationDirty || animatorDirty || spriteDirty || spriteAtlasDirty}
               onSaveScene={saveSceneForBuild}
               onLog={log}
             />

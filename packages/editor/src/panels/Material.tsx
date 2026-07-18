@@ -301,11 +301,26 @@ export function MaterialEditor(props: {
           </select></label>
           {material.shader === 'custom' && (
             <label>Surface Shader
-              <input
+              <select
                 value={material.custom_shader}
-                placeholder="Assets/Shaders/MySurface.mshader"
                 onChange={(event) => update('custom_shader', event.target.value)}
-              />
+              >
+                <option value="">Select .mshader...</option>
+                {material.custom_shader
+                  && !listProjectFiles().some((asset) => asset.kind === 'shader' && asset.relPath === material.custom_shader)
+                  && <option value={material.custom_shader}>{material.custom_shader} (missing)</option>}
+                {listProjectFiles().filter((asset) => asset.kind === 'shader').map((asset) => (
+                  <option key={asset.id} value={asset.relPath}>{asset.name}</option>
+                ))}
+              </select>
+              <button
+                type="button"
+                disabled={!material.custom_shader}
+                onClick={() => {
+                  window.dispatchEvent(new CustomEvent('mengine:open-surface-shader', { detail: material.custom_shader }));
+                  window.dispatchEvent(new CustomEvent('mengine:focus-panel', { detail: 'shader' }));
+                }}
+              >Open</button>
             </label>
           )}
           <label>Surface <select value={material.surface} onChange={(event) => update('surface', event.target.value as MaterialAsset['surface'])}>

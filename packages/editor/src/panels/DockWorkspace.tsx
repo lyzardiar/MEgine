@@ -77,6 +77,7 @@ const PANEL_TITLE: Record<PanelKind, string> = {
   timeline: 'Timeline',
   animator: 'Animator',
   material: 'Material',
+  shader: 'Surface Shader',
   spriteEditor: 'Sprite Editor',
   spriteAtlas: 'Sprite Atlas',
   build: 'Build Settings',
@@ -136,7 +137,7 @@ function defaultTree(): DockNode {
         dir: 'h',
         ratio: 0.7,
         a: leaf(['scene', 'game']),
-        b: leaf(['inspector', 'material', 'spriteEditor', 'spriteAtlas', 'build', 'projectSettings']),
+        b: leaf(['inspector', 'material', 'shader', 'spriteEditor', 'spriteAtlas', 'build', 'projectSettings']),
       },
     },
     b: {
@@ -314,7 +315,7 @@ function ensureAllPanels(
     if (seen.has(p) || excluded.has(p)) continue;
     const preferredLeaf = p === 'timeline'
       ? findLeafContaining(tree, 'console')
-      : p === 'material' || p === 'spriteEditor' || p === 'spriteAtlas' || p === 'build' || p === 'projectSettings'
+      : p === 'material' || p === 'shader' || p === 'spriteEditor' || p === 'spriteAtlas' || p === 'build' || p === 'projectSettings'
         ? findLeafContaining(tree, 'inspector')
         : null;
     if (preferredLeaf) {

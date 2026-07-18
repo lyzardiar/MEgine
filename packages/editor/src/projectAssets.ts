@@ -13,6 +13,7 @@ export type ProjectFileAsset = {
     | 'animator-controller'
     | 'audio'
     | 'material'
+    | 'shader'
     | 'model'
     | 'prefab'
     | 'sprite-atlas'

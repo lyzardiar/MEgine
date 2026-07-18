@@ -316,6 +316,8 @@ fn project_asset_kind(name: &str) -> Option<&'static str> {
         Some("audio")
     } else if lower.ends_with(".mmat") || lower.ends_with(".mat") {
         Some("material")
+    } else if lower.ends_with(".mshader") {
+        Some("shader")
     } else if lower.ends_with(".prefab") {
         Some("prefab")
     } else if lower.ends_with(".gltf") || lower.ends_with(".glb") {
@@ -1337,6 +1339,7 @@ mod tests {
             "walk.manim",
             "hero.mcontroller",
             "character.mmat",
+            "rim.mshader",
             "enemy.prefab",
             "environment.gltf",
             "character.glb",
@@ -1354,7 +1357,7 @@ mod tests {
         std::fs::remove_dir_all(root).unwrap();
         found.sort_by(|left, right| left.name.cmp(&right.name));
 
-        assert_eq!(found.len(), 9);
+        assert_eq!(found.len(), 10);
         assert!(found
             .iter()
             .any(|asset| asset.name == "walk.manim" && asset.kind == "animation"));
@@ -1364,6 +1367,9 @@ mod tests {
         assert!(found
             .iter()
             .any(|asset| asset.name == "character.mmat" && asset.kind == "material"));
+        assert!(found
+            .iter()
+            .any(|asset| asset.name == "rim.mshader" && asset.kind == "shader"));
         assert!(found
             .iter()
             .any(|asset| asset.name == "enemy.prefab" && asset.kind == "prefab"));

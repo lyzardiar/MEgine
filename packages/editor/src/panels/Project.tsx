@@ -30,6 +30,7 @@ const STATIC_FOLDERS = [
   'Assets/Prefabs',
   'Assets/Scripts',
   'Assets/Materials',
+  'Assets/Shaders',
   'Assets/Models',
   'Assets/Sprites',
 ];
@@ -37,7 +38,7 @@ const STATIC_FOLDERS = [
 type AssetItem = {
   folder: string;
   name: string;
-  kind: 'animation' | 'animator-controller' | 'audio' | 'model' | 'prefab' | 'script' | 'material' | 'scene' | 'sprite' | 'sprite-atlas' | 'spine';
+  kind: 'animation' | 'animator-controller' | 'audio' | 'model' | 'prefab' | 'script' | 'material' | 'shader' | 'scene' | 'sprite' | 'sprite-atlas' | 'spine';
   spawn: string | null;
   icon: string;
   sceneName?: string;
@@ -53,6 +54,7 @@ export function Project(props: {
   onInstantiateModel: (path: string) => void;
   onOpenScene: (name: string) => void;
   onOpenMaterial: (path: string) => void;
+  onOpenShader: (path: string) => void;
   onOpenAnimator: (path: string) => void;
   onOpenSprite: (path: string) => void;
   onOpenSpriteAtlas: (path: string) => void;
@@ -148,6 +150,8 @@ export function Project(props: {
         ? 'audio'
       : asset.kind === 'material'
         ? 'material'
+        : asset.kind === 'shader'
+          ? 'shader'
         : asset.kind === 'model'
           ? 'model'
         : asset.kind === 'prefab'
@@ -158,7 +162,9 @@ export function Project(props: {
       name: asset.name,
       kind,
       spawn: null,
-      icon: kind === 'animator-controller'
+      icon: kind === 'shader'
+        ? 'S'
+        : kind === 'animator-controller'
         ? 'A'
         : kind === 'sprite-atlas'
         ? 'AT'
@@ -259,6 +265,10 @@ export function Project(props: {
       props.onOpenMaterial(a.spriteId);
       return;
     }
+    if (a.kind === 'shader' && a.spriteId) {
+      props.onOpenShader(a.spriteId);
+      return;
+    }
     if (a.kind === 'animator-controller' && a.spriteId) {
       props.onOpenAnimator(a.spriteId);
       return;
@@ -340,6 +350,7 @@ export function Project(props: {
                 || a.kind === 'sprite-atlas'
                 || a.kind === 'audio'
                 || a.kind === 'material'
+                || a.kind === 'shader'
                 || a.kind === 'model'
                 || a.kind === 'prefab'
               }
@@ -352,6 +363,7 @@ export function Project(props: {
                   && a.kind !== 'sprite-atlas'
                   && a.kind !== 'audio'
                   && a.kind !== 'material'
+                  && a.kind !== 'shader'
                   && a.kind !== 'model'
                   && a.kind !== 'prefab'
                 ) return;
