@@ -101,6 +101,9 @@
       "current_state": {
         "type": "string"
       },
+      "normalized_time": {
+        "type": "number"
+      },
       "parameters_json": {
         "type": "string"
       },
@@ -112,6 +115,15 @@
       },
       "speed": {
         "type": "number"
+      },
+      "state_time": {
+        "type": "number"
+      },
+      "transition_progress": {
+        "type": "number"
+      },
+      "transition_to": {
+        "type": "string"
       }
     },
     "required": [
@@ -120,7 +132,11 @@
       "playing",
       "speed",
       "current_state",
-      "parameters_json"
+      "parameters_json",
+      "state_time",
+      "normalized_time",
+      "transition_to",
+      "transition_progress"
     ],
     "type": "object"
   },

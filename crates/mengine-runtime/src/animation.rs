@@ -214,6 +214,41 @@ impl AnimationRuntime {
         std::mem::take(&mut self.pending_events)
     }
 
+    fn animator_debug_values(
+        &mut self,
+        controller: &AnimatorController,
+        instance: &AnimatorInstance,
+    ) -> (f32, f32, String, f32) {
+        let (state_time, transition_to, transition_progress) = instance
+            .transition
+            .as_ref()
+            .map(|active| {
+                (
+                    active.source_time,
+                    active.destination_state.clone(),
+                    (active.elapsed / active.duration.max(f32::EPSILON)).clamp(0.0, 1.0),
+                )
+            })
+            .unwrap_or((instance.state_time, String::new(), 0.0));
+        let normalized_time = controller
+            .state(&instance.state)
+            .and_then(|state| self.load_clip(&state.clip).ok())
+            .map(|clip| {
+                if clip.duration > f32::EPSILON {
+                    state_time / clip.duration
+                } else {
+                    0.0
+                }
+            })
+            .unwrap_or(0.0);
+        (
+            state_time,
+            normalized_time,
+            transition_to,
+            transition_progress,
+        )
+    }
+
     fn update_animators(
         &mut self,
         world: &mut World,
@@ -236,6 +271,13 @@ impl AnimationRuntime {
             if controller_key.is_empty() {
                 self.animator_instances.remove(&entity);
                 self.active_animators.remove(&entity);
+                if let Some(live) = world.get_component_mut::<Animator>(entity) {
+                    live.current_state.clear();
+                    live.state_time = 0.0;
+                    live.normalized_time = 0.0;
+                    live.transition_to.clear();
+                    live.transition_progress = 0.0;
+                }
                 continue;
             }
             let controller = match self.load_controller(controller_key) {
@@ -283,8 +325,14 @@ impl AnimationRuntime {
             animator.current_state = instance.state.clone();
             if !animator.playing {
                 self.active_animators.remove(&entity);
+                let (state_time, normalized_time, transition_to, transition_progress) =
+                    self.animator_debug_values(&controller, &instance);
                 if let Some(live) = world.get_component_mut::<Animator>(entity) {
                     live.current_state = animator.current_state;
+                    live.state_time = state_time;
+                    live.normalized_time = normalized_time;
+                    live.transition_to = transition_to;
+                    live.transition_progress = transition_progress;
                 }
                 self.animator_instances.insert(entity, instance);
                 continue;
@@ -454,9 +502,15 @@ impl AnimationRuntime {
                 animator.parameters_json =
                     consume_trigger_parameters(&animator.parameters_json, &consumed_triggers);
             }
+            let (state_time, normalized_time, transition_to, transition_progress) =
+                self.animator_debug_values(&controller, &instance);
             if let Some(live) = world.get_component_mut::<Animator>(entity) {
                 live.current_state = animator.current_state;
                 live.parameters_json = animator.parameters_json;
+                live.state_time = state_time;
+                live.normalized_time = normalized_time;
+                live.transition_to = transition_to;
+                live.transition_progress = transition_progress;
             }
             self.animator_instances.insert(entity, instance);
         }
@@ -1257,7 +1311,18 @@ mod tests {
                 .current_state,
             "Idle"
         );
+        assert_eq!(
+            world
+                .get_component::<Animator>(entity)
+                .unwrap()
+                .transition_to,
+            "Run"
+        );
         assert!(runtime.update(&mut world, 0.25).is_empty());
+        let animator = world.get_component::<Animator>(entity).unwrap();
+        assert!((animator.state_time - 0.25).abs() < 0.001);
+        assert!((animator.normalized_time - 0.25).abs() < 0.001);
+        assert!((animator.transition_progress - 0.5).abs() < 0.001);
         assert!(
             (world.get_component::<Transform>(entity).unwrap().position[0] - 5.0).abs() < 0.001
         );
@@ -1269,9 +1334,25 @@ mod tests {
                 .current_state,
             "Run"
         );
+        let animator = world.get_component::<Animator>(entity).unwrap();
+        assert!(animator.transition_to.is_empty());
+        assert_eq!(animator.transition_progress, 0.0);
         assert!(
             (world.get_component::<Transform>(entity).unwrap().position[0] - 10.0).abs() < 0.001
         );
+
+        world
+            .get_component_mut::<Animator>(entity)
+            .unwrap()
+            .controller
+            .clear();
+        assert!(runtime.update(&mut world, 0.1).is_empty());
+        let animator = world.get_component::<Animator>(entity).unwrap();
+        assert!(animator.current_state.is_empty());
+        assert_eq!(animator.state_time, 0.0);
+        assert_eq!(animator.normalized_time, 0.0);
+        assert!(animator.transition_to.is_empty());
+        assert_eq!(animator.transition_progress, 0.0);
 
         let mut controller =
             load_animator_controller(project.join("Assets/Animations/hero.mcontroller")).unwrap();

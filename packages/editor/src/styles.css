@@ -3599,6 +3599,11 @@ body.ew-dragging {
   border-left-color: #54b65a;
 }
 
+.animator-state.selected,
+.animator-transition.selected {
+  outline: 1px solid var(--u-accent);
+}
+
 .animator-state > input,
 .animator-state > select,
 .animator-row > input,
@@ -3611,6 +3616,101 @@ body.ew-dragging {
   border: 1px solid #202020;
   background: #2b2b2b;
   padding: 5px;
+}
+
+.animator-graph-section { padding-bottom: 6px; }
+
+.animator-runtime-status {
+  color: #82d58a;
+  font-family: var(--u-mono);
+  font-size: 11px;
+}
+
+.animator-graph-viewport {
+  max-height: 430px;
+  overflow: auto;
+  border: 1px solid #171717;
+  background: #242424;
+}
+
+.animator-graph-canvas {
+  position: relative;
+  min-width: 100%;
+  background-image:
+    linear-gradient(#2c2c2c 1px, transparent 1px),
+    linear-gradient(90deg, #2c2c2c 1px, transparent 1px);
+  background-size: 20px 20px;
+}
+
+.animator-graph-canvas svg {
+  position: absolute;
+  inset: 0;
+  overflow: visible;
+}
+
+.animator-graph-edge { color: #777; }
+.animator-graph-edge line { stroke: currentColor; stroke-width: 1.5; }
+.animator-graph-edge line.hit { stroke: transparent; stroke-width: 12; cursor: pointer; }
+.animator-graph-edge.selected { color: #58a6d8; }
+.animator-graph-edge.active { color: #78d981; }
+.animator-graph-edge.active line:not(.hit) { stroke-width: 3; }
+
+.animator-graph-state,
+.animator-any-state {
+  position: absolute;
+  z-index: 2;
+  display: flex;
+  width: 140px;
+  height: 54px;
+  flex-direction: column;
+  justify-content: center;
+  overflow: hidden;
+  border: 1px solid #151515;
+  border-left: 4px solid #666;
+  border-radius: 0;
+  background: #383838;
+  color: #ddd;
+  cursor: move;
+  text-align: left;
+  touch-action: none;
+}
+
+.animator-graph-state strong,
+.animator-graph-state span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.animator-graph-state span { color: #aaa; font-size: 10px; }
+.animator-graph-state.default { border-left-color: #d59645; }
+.animator-graph-state.selected { outline: 2px solid var(--u-accent); }
+.animator-graph-state.current { border-color: #58b965; background: #31513a; }
+
+.animator-any-state {
+  left: 12px;
+  top: 21px;
+  width: 120px;
+  border-left-color: #6b8fb4;
+  cursor: pointer;
+  text-align: center;
+}
+
+.animator-transition-progress {
+  position: absolute;
+  z-index: 4;
+  right: 8px;
+  bottom: 8px;
+  width: 180px;
+  height: 4px;
+  border: 1px solid #111;
+  background: #181818;
+}
+
+.animator-transition-progress i {
+  display: block;
+  height: 100%;
+  background: #63c875;
 }
 
 .animator-row.condition {

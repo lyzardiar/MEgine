@@ -141,6 +141,10 @@ component Animator {
   speed:           float  = 1
   current_state:   string = ""
   parameters_json: string = "{}"
+  state_time:          float  = 0
+  normalized_time:     float  = 0
+  transition_to:       string = ""
+  transition_progress: float  = 0
 }
 
 /// Spatial audio listener. The first active primary listener wins.

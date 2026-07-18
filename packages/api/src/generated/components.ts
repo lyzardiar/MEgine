@@ -130,6 +130,10 @@ export interface Animator {
   speed: number;
   currentState: string;
   parametersJson: string;
+  stateTime: number;
+  normalizedTime: number;
+  transitionTo: string;
+  transitionProgress: number;
 }
 
 export interface AudioListener {

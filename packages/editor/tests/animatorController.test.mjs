@@ -15,6 +15,7 @@ test('animator controller normalizes graph values', () => {
   });
   assert.equal(controller.states[0].clip, 'Assets/Animations/idle.manim');
   assert.equal(controller.states[0].speed, 1.5);
+  assert.deepEqual(controller.states[0].position, [100, 90]);
   assert.equal(controller.parameters[0].default_float, 2);
 });
 

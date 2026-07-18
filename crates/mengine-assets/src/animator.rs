@@ -50,6 +50,7 @@ pub struct AnimatorState {
     pub clip: String,
     #[serde(default = "default_state_speed")]
     pub speed: f32,
+    pub position: [f32; 2],
 }
 
 impl Default for AnimatorState {
@@ -58,6 +59,7 @@ impl Default for AnimatorState {
             name: String::new(),
             clip: String::new(),
             speed: default_state_speed(),
+            position: [0.0, 0.0],
         }
     }
 }
@@ -152,6 +154,11 @@ impl AnimatorController {
             state.clip = state.clip.trim().replace('\\', "/");
             if !state.speed.is_finite() {
                 state.speed = default_state_speed();
+            }
+            for position in &mut state.position {
+                if !position.is_finite() {
+                    *position = 0.0;
+                }
             }
         }
         for transition in &mut self.transitions {
@@ -309,6 +316,7 @@ mod tests {
         .unwrap();
         assert_eq!(controller.version, 1);
         assert_eq!(controller.states[0].clip, "Assets/Animations/idle.manim");
+        assert_eq!(controller.states[0].position, [0.0, 0.0]);
         assert_eq!(controller.transitions[0].duration, 0.0);
     }
 

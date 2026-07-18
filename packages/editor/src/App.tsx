@@ -1131,6 +1131,10 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
                     speed: 1,
                     current_state: '',
                     parameters_json: '{}',
+                    state_time: 0,
+                    normalized_time: 0,
+                    transition_to: '',
+                    transition_progress: 0,
                   });
                 }
                 log(`Assigned ${path}`);

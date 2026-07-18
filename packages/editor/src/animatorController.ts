@@ -20,6 +20,7 @@ export type AnimatorState = {
   name: string;
   clip: string;
   speed: number;
+  position: [number, number];
 };
 
 export type AnimatorCondition = {
@@ -71,7 +72,7 @@ export function createAnimatorController(
     name,
     default_state: 'Idle',
     parameters: [],
-    states: [{ name: 'Idle', clip: initialClip, speed: 1 }],
+    states: [{ name: 'Idle', clip: initialClip, speed: 1, position: [100, 90] }],
     transitions: [],
   };
 }
@@ -89,12 +90,17 @@ export function normalizeAnimatorController(value: unknown): AnimatorController 
       default_int: Math.trunc(finite(parameter.default_int, 0)),
     } satisfies AnimatorParameter;
   });
-  const states = (Array.isArray(source.states) ? source.states : []).map((item) => {
+  const states = (Array.isArray(source.states) ? source.states : []).map((item, index) => {
     const state = record(item);
+    const position = Array.isArray(state.position) ? state.position : [];
     return {
       name: String(state.name ?? '').trim(),
       clip: String(state.clip ?? '').trim().replace(/\\/g, '/'),
       speed: finite(state.speed, 1),
+      position: [
+        finite(position[0], 100 + index % 4 * 170),
+        finite(position[1], 90 + Math.floor(index / 4) * 100),
+      ],
     } satisfies AnimatorState;
   });
   const transitions = (Array.isArray(source.transitions) ? source.transitions : []).map((item) => {

@@ -10,6 +10,7 @@ export type InspectorOption = { value: string; label: string };
 
 export type InspectorFieldMeta = {
   label?: string;
+  hidden?: boolean;
   kind?:
     | 'enum'
     | 'sprite'
@@ -199,6 +200,10 @@ export const BUILTIN_INSPECTOR_FIELDS: Readonly<
     speed: { step: 0.1 },
     current_state: { label: 'Current State' },
     parameters_json: { label: 'Parameter Overrides (JSON)', kind: 'multiline' },
+    state_time: { hidden: true },
+    normalized_time: { hidden: true },
+    transition_to: { hidden: true },
+    transition_progress: { hidden: true },
   },
   AudioSource: {
     clip: {

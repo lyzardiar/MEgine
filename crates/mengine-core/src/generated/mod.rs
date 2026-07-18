@@ -587,6 +587,10 @@ pub struct Animator {
     pub speed: f32,
     pub current_state: String,
     pub parameters_json: String,
+    pub state_time: f32,
+    pub normalized_time: f32,
+    pub transition_to: String,
+    pub transition_progress: f32,
 }
 
 impl Default for Animator {
@@ -598,6 +602,10 @@ impl Default for Animator {
             speed: 1.0,
             current_state: "".into(),
             parameters_json: "{}".into(),
+            state_time: 0.0,
+            normalized_time: 0.0,
+            transition_to: "".into(),
+            transition_progress: 0.0,
         }
     }
 }

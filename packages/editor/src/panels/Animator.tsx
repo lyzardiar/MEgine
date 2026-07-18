@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, type PointerEvent as ReactPointerEvent } from 'react';
 import type { WorldSnapshotView } from '@mengine/api';
 import { createAnimationClip, serializeAnimationClip } from '../animationClip';
 import {
@@ -69,6 +69,172 @@ registerMenuItem(
 
 type SnapshotEntity = WorldSnapshotView['entities'][number];
 
+type AnimatorRuntimeData = {
+  controller?: string;
+  current_state?: string;
+  state_time?: number;
+  normalized_time?: number;
+  transition_to?: string;
+  transition_progress?: number;
+};
+
+function animatorRuntime(entity: SnapshotEntity | null): AnimatorRuntimeData | null {
+  const value = entity?.components.Animator;
+  return value != null && typeof value === 'object' ? value as AnimatorRuntimeData : null;
+}
+
+function AnimatorStateGraph(props: {
+  controllerKey: string;
+  controller: AnimatorController;
+  runtime: AnimatorRuntimeData | null;
+  selectedState: number | null;
+  selectedTransition: number | null;
+  onSelectState: (index: number) => void;
+  onSelectTransition: (index: number) => void;
+  onMoveState: (index: number, position: [number, number]) => void;
+}) {
+  const viewport = useRef<HTMLDivElement | null>(null);
+  const drag = useRef<{
+    pointerId: number;
+    state: number;
+    offsetX: number;
+    offsetY: number;
+  } | null>(null);
+  const graphWidth = Math.max(760, ...props.controller.states.map((state) => state.position[0] + 180));
+  const graphHeight = Math.max(360, ...props.controller.states.map((state) => state.position[1] + 100));
+  const nodeCenter = (name: string): [number, number] => {
+    if (name === '*') return [72, 48];
+    const state = props.controller.states.find((candidate) => candidate.name === name);
+    return state ? [state.position[0] + 70, state.position[1] + 27] : [0, 0];
+  };
+  const edgePoint = (
+    from: [number, number],
+    to: [number, number],
+    halfWidth: number,
+    halfHeight: number,
+  ): [number, number] => {
+    const dx = to[0] - from[0];
+    const dy = to[1] - from[1];
+    const scale = 1 / Math.max(Math.abs(dx) / halfWidth, Math.abs(dy) / halfHeight, 1);
+    return [from[0] + dx * scale, from[1] + dy * scale];
+  };
+  const move = (event: ReactPointerEvent<HTMLButtonElement>) => {
+    const active = drag.current;
+    if (!active || active.pointerId !== event.pointerId) return;
+    const canvas = event.currentTarget.parentElement;
+    if (!canvas) return;
+    const rect = canvas.getBoundingClientRect();
+    props.onMoveState(active.state, [
+      Math.max(0, Math.min(graphWidth - 140, event.clientX - rect.left - active.offsetX)),
+      Math.max(0, Math.min(graphHeight - 54, event.clientY - rect.top - active.offsetY)),
+    ]);
+  };
+  const stop = (event: ReactPointerEvent<HTMLButtonElement>) => {
+    if (drag.current?.pointerId === event.pointerId) drag.current = null;
+  };
+  const currentState = props.runtime?.current_state ?? '';
+  const transitionTo = props.runtime?.transition_to ?? '';
+  const progress = Math.max(0, Math.min(1, Number(props.runtime?.transition_progress) || 0));
+  const focusedState = props.selectedState == null
+    ? props.controller.states.find((state) => state.name === (currentState || props.controller.default_state))
+    : props.controller.states[props.selectedState];
+  useEffect(() => {
+    const element = viewport.current;
+    if (!element || !focusedState) return;
+    const margin = 16;
+    const left = focusedState.position[0];
+    const right = left + 140;
+    const top = focusedState.position[1];
+    const bottom = top + 54;
+    if (left < element.scrollLeft + margin) element.scrollLeft = Math.max(0, left - margin);
+    else if (right > element.scrollLeft + element.clientWidth - margin) {
+      element.scrollLeft = Math.max(0, right - element.clientWidth + margin);
+    }
+    if (top < element.scrollTop + margin) element.scrollTop = Math.max(0, top - margin);
+    else if (bottom > element.scrollTop + element.clientHeight - margin) {
+      element.scrollTop = Math.max(0, bottom - element.clientHeight + margin);
+    }
+  }, [props.controllerKey, props.selectedState, currentState]);
+  return (
+    <section className="animator-section animator-graph-section">
+      <div className="animator-heading">
+        <h3>State Machine</h3>
+        {currentState && (
+          <span className="animator-runtime-status">
+            {currentState}{transitionTo ? ` -> ${transitionTo}` : ''}
+            {' · '}{(Number(props.runtime?.normalized_time) || 0).toFixed(2)} normalized
+          </span>
+        )}
+      </div>
+      <div className="animator-graph-viewport" ref={viewport}>
+        <div className="animator-graph-canvas" style={{ width: graphWidth, height: graphHeight }}>
+          <svg width={graphWidth} height={graphHeight} aria-label="Animator state graph">
+            <defs>
+              <marker id="animator-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+                <path d="M 0 0 L 10 5 L 0 10 z" fill="context-stroke" />
+              </marker>
+            </defs>
+            {props.controller.transitions.map((transition, index) => {
+              const source = nodeCenter(transition.from);
+              const destination = nodeCenter(transition.to);
+              const [x1, y1] = edgePoint(
+                source,
+                destination,
+                transition.from === '*' ? 60 : 70,
+                27,
+              );
+              const [x2, y2] = edgePoint(destination, source, 70, 27);
+              const active = transition.to === transitionTo
+                && (transition.from === '*' || transition.from === currentState);
+              return (
+                <g key={index} className={`animator-graph-edge${props.selectedTransition === index ? ' selected' : ''}${active ? ' active' : ''}`}>
+                  <line className="hit" x1={x1} y1={y1} x2={x2} y2={y2} onPointerDown={() => props.onSelectTransition(index)} />
+                  <line x1={x1} y1={y1} x2={x2} y2={y2} markerEnd="url(#animator-arrow)" />
+                </g>
+              );
+            })}
+          </svg>
+          {props.controller.transitions.some((transition) => transition.from === '*') && (
+            <button type="button" className="animator-any-state" onClick={() => props.onSelectTransition(props.controller.transitions.findIndex((transition) => transition.from === '*'))}>
+              Any State
+            </button>
+          )}
+          {props.controller.states.map((state, index) => (
+            <button
+              type="button"
+              key={`${index}:${state.name}`}
+              className={`animator-graph-state${state.name === props.controller.default_state ? ' default' : ''}${state.name === currentState ? ' current' : ''}${props.selectedState === index ? ' selected' : ''}`}
+              style={{ left: state.position[0], top: state.position[1] }}
+              title={state.clip}
+              onPointerDown={(event) => {
+                const canvas = event.currentTarget.parentElement;
+                if (!canvas) return;
+                const rect = canvas.getBoundingClientRect();
+                event.currentTarget.setPointerCapture(event.pointerId);
+                drag.current = {
+                  pointerId: event.pointerId,
+                  state: index,
+                  offsetX: event.clientX - rect.left - state.position[0],
+                  offsetY: event.clientY - rect.top - state.position[1],
+                };
+                props.onSelectState(index);
+              }}
+              onPointerMove={move}
+              onPointerUp={stop}
+              onPointerCancel={stop}
+              onDoubleClick={() => props.onSelectState(index)}
+            >
+              <strong>{state.name || '(Unnamed)'}</strong>
+              <span>{state.clip.split('/').pop() || 'No clip'}</span>
+            </button>
+          ))}
+          {transitionTo && <div className="animator-transition-progress"><i style={{ width: `${progress * 100}%` }} /></div>}
+        </div>
+      </div>
+    </section>
+  );
+}
+
 function nextName(base: string, used: Set<string>): string {
   if (!used.has(base)) return base;
   let index = 2;
@@ -100,6 +266,8 @@ export function AnimatorEditor(props: {
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [selectedState, setSelectedState] = useState<number | null>(null);
+  const [selectedTransition, setSelectedTransition] = useState<number | null>(null);
   const loadedPath = useRef<string | null>(null);
   const drafts = useRef(new Map<string, { controller: AnimatorController; savedFingerprint: string }>());
 
@@ -120,6 +288,8 @@ export function AnimatorEditor(props: {
     setController(null);
     setSavedFingerprint('');
     setError(null);
+    setSelectedState(null);
+    setSelectedTransition(null);
     if (!props.assetPath) return () => { cancelled = true; };
     const draft = drafts.current.get(props.assetPath);
     if (draft) {
@@ -205,7 +375,8 @@ export function AnimatorEditor(props: {
     );
   }
 
-  const assigned = String((props.selectedEntity?.components.Animator as Record<string, unknown> | undefined)?.controller ?? '') === props.assetPath;
+  const runtime = animatorRuntime(props.selectedEntity);
+  const assigned = String(runtime?.controller ?? '') === props.assetPath;
   return (
     <div className="animator-editor">
       <div className="material-toolbar">
@@ -234,6 +405,25 @@ export function AnimatorEditor(props: {
             {assigned ? 'Assigned to Selection' : 'Assign to Selection'}
           </button>
         </section>
+
+        <AnimatorStateGraph
+          controllerKey={props.assetPath}
+          controller={controller}
+          runtime={assigned ? runtime : null}
+          selectedState={selectedState}
+          selectedTransition={selectedTransition}
+          onSelectState={(index) => {
+            setSelectedState(index);
+            setSelectedTransition(null);
+          }}
+          onSelectTransition={(index) => {
+            setSelectedState(null);
+            setSelectedTransition(index);
+          }}
+          onMoveState={(index, position) => update((draft) => {
+            if (draft.states[index]) draft.states[index].position = position;
+          })}
+        />
 
         <section className="animator-section">
           <div className="animator-heading"><h3>Parameters</h3><button type="button" onClick={() => update((draft) => {
@@ -279,12 +469,29 @@ export function AnimatorEditor(props: {
         </section>
 
         <section className="animator-section">
-          <div className="animator-heading"><h3>States</h3><button type="button" onClick={() => update((draft) => {
-            const name = nextName('New State', new Set(draft.states.map((state) => state.name)));
-            draft.states.push({ name, clip: clips[0]?.relPath ?? '', speed: 1 });
-          })}>+ State</button></div>
+          <div className="animator-heading"><h3>States</h3><button type="button" onClick={() => {
+            const index = controller.states.length;
+            update((draft) => {
+              const name = nextName('New State', new Set(draft.states.map((state) => state.name)));
+              draft.states.push({
+                name,
+                clip: clips[0]?.relPath ?? '',
+                speed: 1,
+                position: [100 + index % 4 * 170, 90 + Math.floor(index / 4) * 100],
+              });
+            });
+            setSelectedState(index);
+            setSelectedTransition(null);
+          }}>+ State</button></div>
           {controller.states.map((state, index) => (
-            <div className={`animator-state${state.name === controller.default_state ? ' default' : ''}`} key={`${index}-${state.name}`}>
+            <div
+              className={`animator-state${state.name === controller.default_state ? ' default' : ''}${selectedState === index ? ' selected' : ''}`}
+              key={`${index}-${state.name}`}
+              onClick={() => {
+                setSelectedState(index);
+                setSelectedTransition(null);
+              }}
+            >
               <input value={state.name} onChange={(event) => update((draft) => {
                 const previous = draft.states[index].name;
                 const next = event.target.value;
@@ -300,23 +507,45 @@ export function AnimatorEditor(props: {
                 {clips.map((clip) => <option key={clip.id} value={clip.relPath}>{clip.name}</option>)}
               </select>
               <label>Speed <input type="number" step="0.1" value={state.speed} onChange={(event) => update((draft) => { draft.states[index].speed = Number(event.target.value); })} /></label>
-              <button type="button" disabled={controller.states.length <= 1} onClick={() => update((draft) => {
-                const removed = draft.states[index].name;
-                draft.states.splice(index, 1);
-                draft.transitions = draft.transitions.filter((transition) => transition.from !== removed && transition.to !== removed);
-                if (draft.default_state === removed) draft.default_state = draft.states[0].name;
-              })}>×</button>
+              <button type="button" disabled={controller.states.length <= 1} onClick={(event) => {
+                event.stopPropagation();
+                update((draft) => {
+                  const removed = draft.states[index].name;
+                  draft.states.splice(index, 1);
+                  draft.transitions = draft.transitions.filter((transition) => transition.from !== removed && transition.to !== removed);
+                  if (draft.default_state === removed) draft.default_state = draft.states[0].name;
+                });
+                setSelectedState((selected) => selected == null || selected === index
+                  ? null
+                  : selected > index ? selected - 1 : selected);
+                setSelectedTransition(null);
+              }}>×</button>
             </div>
           ))}
         </section>
 
         <section className="animator-section">
-          <div className="animator-heading"><h3>Transitions</h3><button type="button" disabled={controller.states.length < 2} onClick={() => update((draft) => {
-            draft.transitions.push({ from: draft.states[0].name, to: draft.states[1].name, duration: 0.15, has_exit_time: false, exit_time: 1, conditions: [] });
-          })}>+ Transition</button></div>
+          <div className="animator-heading"><h3>Transitions</h3><button type="button" disabled={controller.states.length < 2} onClick={() => {
+            const index = controller.transitions.length;
+            update((draft) => {
+              const from = selectedState != null ? draft.states[selectedState] : draft.states[0];
+              const to = draft.states.find((state) => state.name !== from?.name);
+              if (!from || !to) return;
+              draft.transitions.push({ from: from.name, to: to.name, duration: 0.15, has_exit_time: false, exit_time: 1, conditions: [] });
+            });
+            setSelectedState(null);
+            setSelectedTransition(index);
+          }}>+ Transition</button></div>
           {controller.transitions.length === 0 && <div className="field-hint">No transitions.</div>}
           {controller.transitions.map((transition, transitionIndex) => (
-            <div className="animator-transition" key={transitionIndex}>
+            <div
+              className={`animator-transition${selectedTransition === transitionIndex ? ' selected' : ''}`}
+              key={transitionIndex}
+              onClick={() => {
+                setSelectedState(null);
+                setSelectedTransition(transitionIndex);
+              }}
+            >
               <div className="animator-row">
                 <select value={transition.from} onChange={(event) => update((draft) => {
                   const target = draft.transitions[transitionIndex];
@@ -332,13 +561,27 @@ export function AnimatorEditor(props: {
                   {controller.states.filter((state) => state.name !== transition.from).map((state) => <option key={state.name} value={state.name}>{state.name}</option>)}
                 </select>
                 <label>Blend <input type="number" min="0" step="0.05" value={transition.duration} onChange={(event) => update((draft) => { draft.transitions[transitionIndex].duration = Number(event.target.value); })} /></label>
-                <button type="button" title="Higher priority" disabled={transitionIndex === 0} onClick={() => update((draft) => {
-                  [draft.transitions[transitionIndex - 1], draft.transitions[transitionIndex]] = [draft.transitions[transitionIndex], draft.transitions[transitionIndex - 1]];
-                })}>↑</button>
-                <button type="button" title="Lower priority" disabled={transitionIndex === controller.transitions.length - 1} onClick={() => update((draft) => {
-                  [draft.transitions[transitionIndex], draft.transitions[transitionIndex + 1]] = [draft.transitions[transitionIndex + 1], draft.transitions[transitionIndex]];
-                })}>↓</button>
-                <button type="button" onClick={() => update((draft) => { draft.transitions.splice(transitionIndex, 1); })}>×</button>
+                <button type="button" title="Higher priority" disabled={transitionIndex === 0} onClick={(event) => {
+                  event.stopPropagation();
+                  update((draft) => {
+                    [draft.transitions[transitionIndex - 1], draft.transitions[transitionIndex]] = [draft.transitions[transitionIndex], draft.transitions[transitionIndex - 1]];
+                  });
+                  setSelectedTransition(transitionIndex - 1);
+                }}>↑</button>
+                <button type="button" title="Lower priority" disabled={transitionIndex === controller.transitions.length - 1} onClick={(event) => {
+                  event.stopPropagation();
+                  update((draft) => {
+                    [draft.transitions[transitionIndex], draft.transitions[transitionIndex + 1]] = [draft.transitions[transitionIndex + 1], draft.transitions[transitionIndex]];
+                  });
+                  setSelectedTransition(transitionIndex + 1);
+                }}>↓</button>
+                <button type="button" onClick={(event) => {
+                  event.stopPropagation();
+                  update((draft) => { draft.transitions.splice(transitionIndex, 1); });
+                  setSelectedTransition((selected) => selected == null || selected === transitionIndex
+                    ? null
+                    : selected > transitionIndex ? selected - 1 : selected);
+                }}>×</button>
               </div>
               <div className="animator-row">
                 <label><input type="checkbox" checked={transition.has_exit_time} onChange={(event) => update((draft) => { draft.transitions[transitionIndex].has_exit_time = event.target.checked; })} /> Exit Time</label>

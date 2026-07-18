@@ -432,6 +432,7 @@ function GenericCompEditor(props: {
     <>
       {entries.map(([key, val]) => {
         const meta = getBuiltinInspectorField(props.componentType, key);
+        if (meta?.hidden) return null;
         if (meta?.visibleWhen && viewData[meta.visibleWhen.field] !== meta.visibleWhen.equals) {
           return null;
         }
