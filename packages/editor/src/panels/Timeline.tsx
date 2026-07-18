@@ -62,6 +62,7 @@ import {
   refreshProjectFiles,
   writeProjectAssetText,
 } from '../projectAssets';
+import { registerSaveAllParticipant } from '../saveAll';
 
 type SnapshotEntity = WorldSnapshotView['entities'][number];
 
@@ -678,6 +679,33 @@ export function Timeline(props: {
       setSaving(false);
     }
   };
+
+  const persistAll = async () => {
+    if (dirty && !await persist()) throw new Error('Current Animation Clip could not be saved');
+    const failures: string[] = [];
+    if (drafts.current.size > 0) setSaving(true);
+    try {
+      for (const [path, draft] of [...drafts.current]) {
+        try {
+          const normalized = normalizeAnimationClip(draft.clip);
+          await writeProjectAssetText(path, serializeAnimationClip(normalized));
+          drafts.current.delete(path);
+          props.onLog(`Saved ${path}`);
+        } catch (reason) {
+          failures.push(`${path}: ${reason instanceof Error ? reason.message : String(reason)}`);
+        }
+      }
+      await refreshProjectFiles();
+      props.onAssetsChanged();
+    } finally {
+      setSaving(false);
+    }
+    if (failures.length > 0) throw new Error(failures.join('; '));
+  };
+
+  useEffect(() => registerSaveAllParticipant('Animation Clips', () => (
+    anyDirty && !saving ? persistAll : null
+  )), [anyDirty, clip, clipPath, dirty, savedText, saving]);
 
   const createClip = async () => {
     if (!props.entity) return;

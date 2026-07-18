@@ -13,6 +13,7 @@ const MENUS = ['File', 'Edit', 'Assets', 'GameObject', 'Component', 'Window', 'H
 export function MenuBar(props: {
   onNew: () => void;
   onSave: () => void;
+  onSaveAll: () => void;
   onSaveAs: () => void;
   onLoad: () => void;
   onUndo: () => void;
@@ -71,6 +72,9 @@ export function MenuBar(props: {
               </button>
               <button type="button" onClick={() => { props.onSave(); setOpen(null); }}>
                 Save Scene <span className="hint">Ctrl+S</span>
+              </button>
+              <button type="button" onClick={() => { props.onSaveAll(); setOpen(null); }}>
+                Save All <span className="hint">Ctrl+Alt+S</span>
               </button>
               <button type="button" onClick={() => { props.onSaveAs(); setOpen(null); }}>
                 Save Scene As…

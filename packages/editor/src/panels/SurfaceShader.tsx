@@ -12,6 +12,7 @@ import {
   surfaceShaderDiagnostics,
   validateSurfaceShaderSource,
 } from '../surfaceShader';
+import { registerSaveAllParticipant } from '../saveAll';
 import { PROJECT_ASSETS_CHANGED_EVENT } from './Material';
 
 export const OPEN_SURFACE_SHADER_EVENT = 'mengine:open-surface-shader';
@@ -122,8 +123,8 @@ export function SurfaceShaderEditor(props: {
     }
   };
 
-  const save = async () => {
-    if (!props.assetPath) return;
+  const save = async (): Promise<boolean> => {
+    if (!props.assetPath) return false;
     setSaving(true);
     setError(null);
     try {
@@ -135,14 +136,42 @@ export function SurfaceShaderEditor(props: {
       drafts.current.delete(props.assetPath);
       props.onAssetsChanged();
       props.onLog(`Saved ${props.assetPath}; runtime will perform full WGSL validation.`);
+      return true;
     } catch (reason) {
       const message = reason instanceof Error ? reason.message : String(reason);
       setError(message);
       props.onLog(`Surface Shader save failed: ${message}`, 'error');
+      return false;
     } finally {
       setSaving(false);
     }
   };
+
+  const saveAll = async () => {
+    if (dirty && !await save()) throw new Error('Current Surface Shader could not be saved');
+    const failures: string[] = [];
+    if (drafts.current.size > 0) setSaving(true);
+    try {
+      for (const [path, draft] of [...drafts.current]) {
+        try {
+          validateSurfaceShaderSource(draft.source);
+          await writeProjectAssetText(path, normalizeSurfaceShaderSource(draft.source));
+          drafts.current.delete(path);
+          props.onLog(`Saved ${path}; runtime will perform full WGSL validation.`);
+        } catch (reason) {
+          failures.push(`${path}: ${reason instanceof Error ? reason.message : String(reason)}`);
+        }
+      }
+      props.onAssetsChanged();
+    } finally {
+      setSaving(false);
+    }
+    if (failures.length > 0) throw new Error(failures.join('; '));
+  };
+
+  useEffect(() => registerSaveAllParticipant('Surface Shaders', () => (
+    anyDirty && !saving ? saveAll : null
+  )), [anyDirty, dirty, props.assetPath, savedSource, saving, source]);
 
   if (!props.assetPath) {
     return <div className="material-empty"><strong>Surface Shader</strong><span>Create or double-click a .mshader asset.</span><button type="button" onClick={() => void createNew()}>Create Shader</button></div>;

@@ -18,6 +18,7 @@ import {
   type SpriteSlice,
 } from '../spriteImport';
 import { PROJECT_ASSETS_CHANGED_EVENT } from './Material';
+import { registerSaveAllParticipant } from '../saveAll';
 
 export const OPEN_SPRITE_EDITOR_EVENT = 'mengine:open-sprite-editor';
 
@@ -227,8 +228,8 @@ export function SpriteEditor(props: {
     setSelected(hit);
   };
 
-  const apply = async () => {
-    if (!settings || !basePath) return;
+  const apply = async (): Promise<boolean> => {
+    if (!settings || !basePath) return false;
     setSaving(true);
     setError(null);
     try {
@@ -241,14 +242,24 @@ export function SpriteEditor(props: {
       props.onAssetsChanged();
       window.dispatchEvent(new CustomEvent(PROJECT_ASSETS_CHANGED_EVENT));
       props.onLog(`Applied sprite import settings: ${basePath}`);
+      return true;
     } catch (reason) {
       const message = reason instanceof Error ? reason.message : String(reason);
       setError(message);
       props.onLog(`Sprite import failed: ${message}`, 'error');
+      return false;
     } finally {
       setSaving(false);
     }
   };
+
+  useEffect(() => registerSaveAllParticipant('Sprite Import Settings', () => (
+    dirty && !saving
+      ? async () => {
+        if (!await apply()) throw new Error('Sprite import settings could not be saved');
+      }
+      : null
+  )), [basePath, dirty, saving, settings]);
 
   if (!basePath) {
     return <div className="sprite-editor-empty">Double-click a texture in Project to edit its sprite import settings.</div>;

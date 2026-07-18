@@ -26,6 +26,7 @@ import {
 } from '../projectAssets';
 import { pingProjectAsset } from '../pingBus';
 import { registerMenuItem } from '../editorWindow';
+import { registerSaveAllParticipant } from '../saveAll';
 import { ImageIcon, Search, X } from 'lucide-react';
 import { ObjectPicker } from './ObjectPicker';
 
@@ -297,8 +298,8 @@ export function MaterialEditor(props: {
     setMaterial((current) => current ? { ...current, [key]: value } : current);
   };
 
-  const save = async () => {
-    if (!props.assetPath || !material) return;
+  const save = async (): Promise<boolean> => {
+    if (!props.assetPath || !material) return false;
     setSaving(true);
     setError(null);
     try {
@@ -311,14 +312,43 @@ export function MaterialEditor(props: {
       props.onAssetsChanged();
       window.dispatchEvent(new CustomEvent(PROJECT_ASSETS_CHANGED_EVENT));
       props.onLog(`Saved ${props.assetPath}`);
+      return true;
     } catch (reason) {
       const message = reason instanceof Error ? reason.message : String(reason);
       setError(message);
       props.onLog(`Material 保存失败：${message}`, 'error');
+      return false;
     } finally {
       setSaving(false);
     }
   };
+
+  const saveAll = async () => {
+    if (dirty && !await save()) throw new Error('Current Material could not be saved');
+    const failures: string[] = [];
+    let savedDraft = false;
+    for (const [path, draft] of [...drafts.current]) {
+      try {
+        await writeProjectAssetText(path, serializeMaterialAsset(draft.material));
+        drafts.current.delete(path);
+        savedDraft = true;
+        props.onLog(`Saved ${path}`);
+      } catch (reason) {
+        failures.push(`${path}: ${reason instanceof Error ? reason.message : String(reason)}`);
+      }
+    }
+    if (savedDraft) {
+      await refreshProjectFiles();
+      setAssetRevision((revision) => revision + 1);
+      props.onAssetsChanged();
+      window.dispatchEvent(new CustomEvent(PROJECT_ASSETS_CHANGED_EVENT));
+    }
+    if (failures.length > 0) throw new Error(failures.join('; '));
+  };
+
+  useEffect(() => registerSaveAllParticipant('Materials', () => (
+    anyDirty && !saving ? saveAll : null
+  )), [anyDirty, dirty, material, props.assetPath, savedText, saving]);
 
   const createNew = async () => {
     try {

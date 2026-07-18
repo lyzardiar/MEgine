@@ -67,6 +67,7 @@ import { instantiateProjectPrefab } from './prefabWorkflow';
 import { isDesktopEditor } from './transport/editorTransport';
 import type { ToolHandleOrientation, ToolPivotMode } from './editorTool';
 import { loadSortingLayers, SORTING_LAYERS_CHANGED_EVENT } from './sortingLayers';
+import { saveAllResources } from './saveAll';
 import './editorWindow'; // MenuItem side-effects
 
 function isTypingTarget(el: EventTarget | null) {
@@ -426,6 +427,30 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
     void persistScene(name);
   };
 
+  const saveEverything = async (): Promise<boolean> => {
+    const hadDirtyScene = sceneDirtyRef.current;
+    let sceneSaved = true;
+    if (hadDirtyScene) {
+      const current = sceneNameRef.current;
+      if (current) {
+        sceneSaved = await persistScene(current);
+      } else {
+        const name = askSceneName('保存场景 — 请输入名称', 'Untitled');
+        sceneSaved = Boolean(name) && await persistScene(name!);
+      }
+    }
+    const resources = await saveAllResources();
+    for (const failure of resources.failures) {
+      log(`Save All failed for ${failure.label}: ${failure.error}`, 'error');
+    }
+    if (sceneSaved && resources.failures.length === 0) {
+      const count = resources.saved.length + (hadDirtyScene ? 1 : 0);
+      log(`Save All completed${count > 0 ? ` (${count} item${count === 1 ? '' : 's'})` : ''}.`);
+      return true;
+    }
+    return false;
+  };
+
   const saveSceneAs = () => {
     const name = askSceneName('另存为 — 请输入新名称', sceneNameRef.current ?? 'Untitled');
     if (!name) return;
@@ -584,6 +609,11 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
         refresh();
         return;
       }
+      if (ctrl && e.altKey && e.key.toLowerCase() === 's') {
+        e.preventDefault();
+        void saveEverything();
+        return;
+      }
       if (isTypingTarget(e.target)) return;
       if (ctrl && e.shiftKey && e.key.toLowerCase() === 'b') {
         e.preventDefault();
@@ -708,6 +738,7 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
       <MenuBar
         onNew={newScene}
         onSave={saveScene}
+        onSaveAll={() => void saveEverything()}
         onSaveAs={saveSceneAs}
         onLoad={openSceneDialog}
         onUndo={() => {
@@ -1198,8 +1229,9 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
               sceneName={sceneName}
               sceneTick={sceneTick}
               sceneDirty={sceneDirty}
-              resourceDirty={materialDirty || shaderDirty || animationDirty || animatorDirty || spriteDirty || spriteAtlasDirty}
+              resourceDirty={materialDirty || shaderDirty || animationDirty || animatorDirty || spriteDirty || spriteAtlasDirty || projectSettingsDirty}
               onSaveScene={saveSceneForBuild}
+              onSaveAll={saveEverything}
               onLog={log}
             />
           ),

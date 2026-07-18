@@ -19,6 +19,7 @@ import {
 } from '../spriteAtlas';
 import { buildSpriteAtlas } from '../spriteAtlasBuild';
 import { PROJECT_ASSETS_CHANGED_EVENT } from './Material';
+import { registerSaveAllParticipant } from '../saveAll';
 import { SpriteListField } from './uiFieldEditors';
 
 export const OPEN_SPRITE_ATLAS_EVENT = 'mengine:open-sprite-atlas';
@@ -204,6 +205,12 @@ export function SpriteAtlasEditor(props: {
       setSaving(false);
     }
   };
+
+  useEffect(() => registerSaveAllParticipant('Sprite Atlas', () => (
+    dirty && !saving && !packing
+      ? async () => { await save(); }
+      : null
+  )), [asset, dirty, packing, props.assetPath, saving]);
 
   const pack = async () => {
     if (!asset || !props.assetPath) return;

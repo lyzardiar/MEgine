@@ -5,6 +5,7 @@ import {
   createSortingLayerId,
   type SortingLayer,
 } from '../sortingLayerModel';
+import { registerSaveAllParticipant } from '../saveAll';
 import {
   SORTING_LAYERS_CHANGED_EVENT,
   getSortingLayers,
@@ -100,8 +101,8 @@ export function ProjectSettings(props: {
     setMessage(null);
   };
 
-  const save = async () => {
-    if (error || saving) return;
+  const save = async (): Promise<boolean> => {
+    if (error || saving) return false;
     setSaving(true);
     setMessage(null);
     try {
@@ -110,14 +111,24 @@ export function ProjectSettings(props: {
       setSaved(fingerprint(next.layers));
       setMessage('Sorting layers saved. Scene and Game views now use the new order.');
       props.onLog?.(`Saved ${next.layers.length} project sorting layer(s).`);
+      return true;
     } catch (reason) {
       const detail = reason instanceof Error ? reason.message : String(reason);
       setMessage(detail);
       props.onLog?.(`Sorting layer save failed: ${detail}`, 'error');
+      return false;
     } finally {
       setSaving(false);
     }
   };
+
+  useEffect(() => registerSaveAllParticipant('Project Settings', () => (
+    dirty && !saving
+      ? async () => {
+        if (!await save()) throw new Error(error ?? 'Project Settings save failed');
+      }
+      : null
+  )), [dirty, error, layers, saving]);
 
   return (
     <div className="project-settings-panel">

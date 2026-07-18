@@ -25,6 +25,7 @@ export function BuildSettings(props: {
   sceneDirty: boolean;
   resourceDirty: boolean;
   onSaveScene: () => Promise<boolean>;
+  onSaveAll: () => Promise<boolean>;
   onLog: (message: string, level?: 'info' | 'warn' | 'error') => void;
 }) {
   const desktop = isDesktopEditor();
@@ -33,6 +34,7 @@ export function BuildSettings(props: {
   const [clean, setClean] = useState(true);
   const [settings, setSettings] = useState<ProjectBuildSettings | null>(null);
   const [settingsSaving, setSettingsSaving] = useState(false);
+  const [savingAll, setSavingAll] = useState(false);
   const [building, setBuilding] = useState(false);
   const [launching, setLaunching] = useState(false);
   const [lastBuild, setLastBuild] = useState<BuildPlayerResult | null>(null);
@@ -66,6 +68,19 @@ export function BuildSettings(props: {
     const ok = await props.onSaveScene();
     setMessageError(!ok);
     setMessage(ok ? 'Scene saved. The project is ready to build.' : 'Scene save failed.');
+  };
+
+  const saveAll = async () => {
+    if (savingAll) return;
+    setSavingAll(true);
+    setMessage(null);
+    try {
+      const ok = await props.onSaveAll();
+      setMessageError(!ok);
+      setMessage(ok ? 'All open scenes and assets were saved.' : 'Save All completed with errors.');
+    } finally {
+      setSavingAll(false);
+    }
   };
 
   const persistScenes = async (scenes: string[]) => {
@@ -140,6 +155,7 @@ export function BuildSettings(props: {
       || props.sceneDirty
       || props.resourceDirty
       || settingsSaving
+      || savingAll
       || !settings?.scenes.length
       || building
       || launching
@@ -181,8 +197,8 @@ export function BuildSettings(props: {
           <strong>PC Build Settings</strong>
           <span>Packages an ordered scene list into a self-validating standalone player.</span>
         </div>
-        <span className={`build-status ${building || launching || settingsSaving ? 'busy' : ''}`}>
-          {building ? 'BUILDING' : launching ? 'LAUNCHING' : settingsSaving ? 'SAVING' : lastBuild ? 'SUCCEEDED' : 'READY'}
+        <span className={`build-status ${building || launching || settingsSaving || savingAll ? 'busy' : ''}`}>
+          {building ? 'BUILDING' : launching ? 'LAUNCHING' : settingsSaving || savingAll ? 'SAVING' : lastBuild ? 'SUCCEEDED' : 'READY'}
         </span>
       </div>
 
@@ -233,7 +249,10 @@ export function BuildSettings(props: {
         )}
         {props.resourceDirty && (
           <div className="build-warning">
-            Animation or Material assets have unsaved changes. Save them before building.
+            <span>Project assets or settings have unsaved changes.</span>
+            <button type="button" disabled={savingAll} onClick={() => void saveAll()}>
+              {savingAll ? 'Saving All...' : 'Save All'}
+            </button>
           </div>
         )}
       </section>
@@ -295,6 +314,7 @@ export function BuildSettings(props: {
             || props.sceneDirty
             || props.resourceDirty
             || settingsSaving
+            || savingAll
             || building
             || launching
             || !settings?.scenes.length
@@ -312,6 +332,7 @@ export function BuildSettings(props: {
             || props.sceneDirty
             || props.resourceDirty
             || settingsSaving
+            || savingAll
             || building
             || launching
             || !settings?.scenes.length

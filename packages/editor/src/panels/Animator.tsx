@@ -20,6 +20,7 @@ import {
   refreshProjectFiles,
   writeProjectAssetText,
 } from '../projectAssets';
+import { registerSaveAllParticipant } from '../saveAll';
 import { PROJECT_ASSETS_CHANGED_EVENT } from './Material';
 
 export const OPEN_ANIMATOR_EVENT = 'mengine:open-animator';
@@ -336,8 +337,8 @@ export function AnimatorEditor(props: {
     });
   };
 
-  const save = async () => {
-    if (!controller || !props.assetPath) return;
+  const save = async (): Promise<boolean> => {
+    if (!controller || !props.assetPath) return false;
     setSaving(true);
     setError(null);
     try {
@@ -351,14 +352,43 @@ export function AnimatorEditor(props: {
       setSavedFingerprint(controllerFingerprint(normalized));
       props.onAssetsChanged();
       props.onLog(`Saved ${props.assetPath}`);
+      return true;
     } catch (reason) {
       const message = reason instanceof Error ? reason.message : String(reason);
       setError(message);
       props.onLog(`Animator Controller 保存失败：${message}`, 'error');
+      return false;
     } finally {
       setSaving(false);
     }
   };
+
+  const saveAll = async () => {
+    if (dirty && !await save()) throw new Error('Current Animator Controller could not be saved');
+    const failures: string[] = [];
+    if (drafts.current.size > 0) setSaving(true);
+    try {
+      for (const [path, draft] of [...drafts.current]) {
+        try {
+          validateAnimatorController(draft.controller);
+          await writeProjectAssetText(path, serializeAnimatorController(draft.controller));
+          drafts.current.delete(path);
+          props.onLog(`Saved ${path}`);
+        } catch (reason) {
+          failures.push(`${path}: ${reason instanceof Error ? reason.message : String(reason)}`);
+        }
+      }
+      if (drafts.current.size === 0) await refreshProjectFiles();
+      props.onAssetsChanged();
+    } finally {
+      setSaving(false);
+    }
+    if (failures.length > 0) throw new Error(failures.join('; '));
+  };
+
+  useEffect(() => registerSaveAllParticipant('Animator Controllers', () => (
+    anyDirty && !saving ? saveAll : null
+  )), [anyDirty, controller, dirty, props.assetPath, savedFingerprint, saving]);
 
   const createNew = async () => {
     try {
