@@ -20,6 +20,7 @@ parking_lot = "0.12"
 mengine-editor-host = { path = "../../../crates/mengine-editor-host" }
 mengine-core = { path = "../../../crates/mengine-core" }
 mengine-assets = { path = "../../../crates/mengine-assets" }
+mengine-rhi = { path = "../../../crates/mengine-rhi" }
 log = "0.4"
 
 [target.'cfg(windows)'.dependencies]

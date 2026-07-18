@@ -3364,6 +3364,7 @@ dependencies = [
  "mengine-assets",
  "mengine-core",
  "mengine-editor-host",
+ "mengine-rhi",
  "parking_lot",
  "serde",
  "serde_json",

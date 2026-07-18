@@ -313,6 +313,13 @@ export async function saveProjectBuildAssetSettings(
   return response.json() as Promise<ProjectBuildSettings>;
 }
 
+export async function validateSurfaceShaderWithRuntime(source: string): Promise<void> {
+  if (!isDesktopEditor()) {
+    throw new Error('Full Surface Shader validation requires the desktop editor.');
+  }
+  await invoke('validate_surface_shader', { source });
+}
+
 export async function getProjectSortingLayers(): Promise<ProjectSortingLayers> {
   if (isDesktopEditor()) {
     return invoke<ProjectSortingLayers>('get_project_sorting_layers');

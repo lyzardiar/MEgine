@@ -14,6 +14,10 @@ import {
 } from '../surfaceShader';
 import { registerSaveAllParticipant } from '../saveAll';
 import { PROJECT_ASSETS_CHANGED_EVENT } from './Material';
+import {
+  isDesktopEditor,
+  validateSurfaceShaderWithRuntime,
+} from '../transport/editorTransport';
 
 export const OPEN_SURFACE_SHADER_EVENT = 'mengine:open-surface-shader';
 
@@ -62,10 +66,12 @@ export function SurfaceShaderEditor(props: {
   onDirtyChange: (dirty: boolean) => void;
   onLog: (message: string, level?: 'info' | 'warn' | 'error') => void;
 }) {
+  const desktop = isDesktopEditor();
   const [source, setSource] = useState('');
   const [savedSource, setSavedSource] = useState('');
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [validating, setValidating] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const loadedPath = useRef<string | null>(null);
   const drafts = useRef(new Map<string, { source: string; savedSource: string }>());
@@ -123,19 +129,45 @@ export function SurfaceShaderEditor(props: {
     }
   };
 
+  const validateSource = async (candidate: string): Promise<string> => {
+    const normalized = normalizeSurfaceShaderSource(candidate);
+    validateSurfaceShaderSource(normalized);
+    if (desktop) await validateSurfaceShaderWithRuntime(normalized);
+    return normalized;
+  };
+
+  const validate = async (reportSuccess = true): Promise<string> => {
+    if (desktop) {
+      setValidating(true);
+    }
+    try {
+      const normalized = await validateSource(source);
+      setError(null);
+      if (reportSuccess) {
+        props.onLog(desktop
+          ? `${props.assetPath ?? 'Surface Shader'} passed the Player Forward WGSL validator.`
+          : `${props.assetPath ?? 'Surface Shader'} passed editor syntax checks; desktop Player validation is unavailable.`);
+      }
+      return normalized;
+    } finally {
+      if (desktop) setValidating(false);
+    }
+  };
+
   const save = async (): Promise<boolean> => {
     if (!props.assetPath) return false;
     setSaving(true);
     setError(null);
     try {
-      validateSurfaceShaderSource(source);
-      const normalized = normalizeSurfaceShaderSource(source);
+      const normalized = await validate(false);
       await writeProjectAssetText(props.assetPath, normalized);
       setSource(normalized);
       setSavedSource(normalized);
       drafts.current.delete(props.assetPath);
       props.onAssetsChanged();
-      props.onLog(`Saved ${props.assetPath}; runtime will perform full WGSL validation.`);
+      props.onLog(desktop
+        ? `Saved ${props.assetPath}; Player Forward WGSL validation passed.`
+        : `Saved ${props.assetPath}; desktop Player validation remains required before build.`);
       return true;
     } catch (reason) {
       const message = reason instanceof Error ? reason.message : String(reason);
@@ -154,10 +186,12 @@ export function SurfaceShaderEditor(props: {
     try {
       for (const [path, draft] of [...drafts.current]) {
         try {
-          validateSurfaceShaderSource(draft.source);
-          await writeProjectAssetText(path, normalizeSurfaceShaderSource(draft.source));
+          const normalized = await validateSource(draft.source);
+          await writeProjectAssetText(path, normalized);
           drafts.current.delete(path);
-          props.onLog(`Saved ${path}; runtime will perform full WGSL validation.`);
+          props.onLog(desktop
+            ? `Saved ${path}; Player Forward WGSL validation passed.`
+            : `Saved ${path}; desktop Player validation remains required before build.`);
         } catch (reason) {
           failures.push(`${path}: ${reason instanceof Error ? reason.message : String(reason)}`);
         }
@@ -183,12 +217,21 @@ export function SurfaceShaderEditor(props: {
         <strong title={props.assetPath}>{props.assetPath.split('/').pop()}{dirty ? ' *' : ''}</strong>
         <span className="spacer" />
         <button type="button" onClick={() => void createNew()}>New</button>
-        <button type="button" disabled={!dirty || saving || diagnostics.length > 0} onClick={() => void save()}>{saving ? 'Saving...' : 'Save'}</button>
+        <button
+          type="button"
+          disabled={saving || validating || diagnostics.length > 0}
+          onClick={() => void validate().catch((reason) => {
+            const message = reason instanceof Error ? reason.message : String(reason);
+            setError(message);
+            props.onLog(`Surface Shader validation failed: ${message}`, 'error');
+          })}
+        >{validating ? 'Validating...' : 'Validate'}</button>
+        <button type="button" disabled={!dirty || saving || validating || diagnostics.length > 0} onClick={() => void save()}>{saving ? 'Saving...' : 'Save'}</button>
       </div>
       <div className="surface-shader-contract">
         <strong>Lit Surface Hook Contract</strong>
         <code>fn mengine_lit_surface_hook(surface: MEngineSurface, uv, world_position) -&gt; MEngineSurface</code>
-        <span>Fields: base_color, alpha, normal, metallic, roughness, occlusion, emissive. Legacy final-color hooks remain supported. Runtime Naga validation is authoritative.</span>
+        <span>Fields: base_color, alpha, normal, metallic, roughness, occlusion, emissive. Legacy final-color hooks remain supported. Desktop Validate/Save composes the complete Player Forward shader and runs authoritative Naga validation.</span>
       </div>
       {loading && <div className="field-hint">Loading shader...</div>}
       {(error || diagnostics.length > 0) && (

@@ -1306,6 +1306,17 @@ fn save_project_build_asset_settings(
     })
 }
 
+fn validate_surface_shader_source(source: &str) -> Result<(), String> {
+    let normalized = mengine_assets::parse_surface_shader(source.as_bytes())
+        .map_err(|error| error.to_string())?;
+    mengine_rhi::validate_surface_shader_hook(&normalized)
+}
+
+#[tauri::command]
+fn validate_surface_shader(source: String) -> Result<(), String> {
+    validate_surface_shader_source(&source)
+}
+
 fn normalize_sorting_layers(value: ProjectSortingLayers) -> Result<ProjectSortingLayers, String> {
     if value.version != 1 {
         return Err(format!(
@@ -1791,6 +1802,7 @@ pub fn run() {
             get_project_build_settings,
             save_project_build_settings,
             save_project_build_asset_settings,
+            validate_surface_shader,
             get_project_sorting_layers,
             save_project_sorting_layers,
             build_pc_player,
@@ -1811,6 +1823,30 @@ pub fn run() {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn surface_shader_validation_uses_the_complete_player_forward_contract() {
+        let valid = r#"
+            fn mengine_lit_surface_hook(
+                surface: MEngineSurface,
+                uv: vec2<f32>,
+                world_position: vec3<f32>,
+            ) -> MEngineSurface {
+                var result = surface;
+                result.roughness = 0.25;
+                return result;
+            }
+        "#;
+        assert!(validate_surface_shader_source(valid).is_ok());
+
+        let unknown_field = valid.replace(
+            "result.roughness = 0.25;",
+            "result.not_a_material_field = 0.25;",
+        );
+        let error = validate_surface_shader_source(&unknown_field).unwrap_err();
+        assert!(error.contains("WGSL"));
+        assert!(validate_surface_shader_source("fn unrelated() {}").is_err());
+    }
 
     fn comparison_manifest(hash: char, files: serde_json::Value) -> serde_json::Value {
         serde_json::json!({

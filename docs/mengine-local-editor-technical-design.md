@@ -774,3 +774,12 @@ Referenced Only 是可用的单包裁剪基础，仍不等同于完整 Addressab
 - `Build Player` 和 `Build & Run` 在草稿 Dirty 时硬性禁用，执行入口也有二次校验，防止用户看到新路径却实际构建旧配置。修改草稿会废弃页面上的上一次构建结果，避免把旧报告误认为当前配置产物。
 
 两轮自审后，这一切片解决的是“编辑器显示值与实际打包输入一致”，不代表 Build Pipeline 已成熟。当前构建过程仍缺结构化进度、安全取消与分阶段耗时；多目标与跨编译、签名/公证/安装器、符号和崩溃映射、增量缓存与 Patch、远程 Build Farm、CI 配置锁定和长期制品索引仍是达到成熟引擎构建系统前的必做项。
+
+## 58. 2026-07-19 Surface Shader 权威编译校验
+
+- 桌面编辑器 Host 直接依赖 `mengine-rhi` 暴露的 Player Surface Shader 校验器，不在 TypeScript 中复制一份会漂移的 WGSL 契约。校验先经 `mengine-assets` 执行 UTF-8、256 KiB、NUL 和 Hook 存在性检查，再把用户 Hook 注入真实 Forward WGSL，由 Naga 执行完整解析与类型验证。
+- Surface Shader 工具栏新增 `Validate`。在桌面编辑器中，它与 `Save` 走同一权威链路；未知 `MEngineSurface` 字段、错误返回类型、语法错误或保留绑定在落盘前立即拒绝，不再等到运行 Player 或打包才暴露。
+- Save All 中未激活的 Surface Shader 草稿也逐个经过同一组合校验；任意一个失败会保留该草稿并进入 Save All 失败诊断。浏览器版因没有本地 RHI，只执行快速结构检查，界面和日志会明确说明尚需桌面/Build 校验，不伪装为已完整编译。
+- Rust 回归用例同时证明：合法 Lit Hook 可通过，而只靠函数名字符串检查无法发现的未知材质字段会被完整 Player Shader 契约拒绝。
+
+该切片前移了自定义 Shader 错误发现时机，但材质系统仍未完备。当前编辑器材质球仍是 CSS 近似，不会展示纹理、Normal/Metallic-Roughness/Occlusion、环境光、透明混合或自定义 Hook 的真实结果；同管线离屏预览、Shader 参数反射、Material Instance、Keyword/Variant 与预热、Shader Cache、GPU Instancing 和 Frame Debugger 仍需继续实现。Surface Shader 编辑器也尚未迁移到全局 Undo 服务。
