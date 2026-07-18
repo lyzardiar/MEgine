@@ -6,6 +6,8 @@ const BRDF_LUT_SIZE: u32 = 128;
 const BRDF_LUT_SAMPLES: u32 = 256;
 const ENVIRONMENT_MAX_WIDTH: u32 = 1024;
 const ENVIRONMENT_MAX_HEIGHT: u32 = 512;
+const IRRADIANCE_WIDTH: u32 = 64;
+const IRRADIANCE_HEIGHT: u32 = 32;
 
 pub(crate) struct BrdfLut {
     _texture: wgpu::Texture,
@@ -97,11 +99,14 @@ pub(crate) struct PrefilteredEnvironment {
     pub(crate) _texture: wgpu::Texture,
     pub(crate) view: wgpu::TextureView,
     pub(crate) mip_level_count: u32,
+    pub(crate) _irradiance_texture: wgpu::Texture,
+    pub(crate) irradiance_view: wgpu::TextureView,
 }
 
 pub(crate) struct EnvironmentPrefilter {
     layout: wgpu::BindGroupLayout,
-    pipeline: wgpu::ComputePipeline,
+    prefilter_pipeline: wgpu::ComputePipeline,
+    irradiance_pipeline: wgpu::ComputePipeline,
     sampler: wgpu::Sampler,
 }
 
@@ -157,14 +162,23 @@ impl EnvironmentPrefilter {
             bind_group_layouts: &[&layout],
             push_constant_ranges: &[],
         });
-        let pipeline = device.create_compute_pipeline(&wgpu::ComputePipelineDescriptor {
+        let prefilter_pipeline = device.create_compute_pipeline(&wgpu::ComputePipelineDescriptor {
             label: Some("environment_ggx_prefilter_pipeline"),
             layout: Some(&pipeline_layout),
             module: &shader,
-            entry_point: Some("cs_main"),
+            entry_point: Some("cs_prefilter"),
             compilation_options: Default::default(),
             cache: None,
         });
+        let irradiance_pipeline =
+            device.create_compute_pipeline(&wgpu::ComputePipelineDescriptor {
+                label: Some("environment_irradiance_pipeline"),
+                layout: Some(&pipeline_layout),
+                module: &shader,
+                entry_point: Some("cs_irradiance"),
+                compilation_options: Default::default(),
+                cache: None,
+            });
         let sampler = device.create_sampler(&wgpu::SamplerDescriptor {
             label: Some("environment_prefilter_sampler"),
             address_mode_u: wgpu::AddressMode::Repeat,
@@ -177,7 +191,8 @@ impl EnvironmentPrefilter {
         });
         Self {
             layout,
-            pipeline,
+            prefilter_pipeline,
+            irradiance_pipeline,
             sampler,
         }
     }
@@ -311,9 +326,81 @@ impl EnvironmentPrefilter {
                 label: Some("environment_prefilter_mip"),
                 timestamp_writes: None,
             });
-            pass.set_pipeline(&self.pipeline);
+            pass.set_pipeline(&self.prefilter_pipeline);
             pass.set_bind_group(0, &bind_group, &[]);
             pass.dispatch_workgroups(output_width.div_ceil(8), output_height.div_ceil(8), 1);
+        }
+
+        let irradiance_texture = device.create_texture(&wgpu::TextureDescriptor {
+            label: Some("environment_diffuse_irradiance"),
+            size: wgpu::Extent3d {
+                width: IRRADIANCE_WIDTH,
+                height: IRRADIANCE_HEIGHT,
+                depth_or_array_layers: 1,
+            },
+            mip_level_count: 1,
+            sample_count: 1,
+            dimension: wgpu::TextureDimension::D2,
+            format: wgpu::TextureFormat::Rgba16Float,
+            usage: wgpu::TextureUsages::TEXTURE_BINDING | wgpu::TextureUsages::STORAGE_BINDING,
+            view_formats: &[],
+        });
+        let irradiance_view =
+            irradiance_texture.create_view(&wgpu::TextureViewDescriptor::default());
+        let irradiance_storage_view =
+            irradiance_texture.create_view(&wgpu::TextureViewDescriptor {
+                label: Some("environment_irradiance_storage"),
+                format: Some(wgpu::TextureFormat::Rgba16Float),
+                dimension: Some(wgpu::TextureViewDimension::D2),
+                usage: Some(wgpu::TextureUsages::STORAGE_BINDING),
+                aspect: wgpu::TextureAspect::All,
+                base_mip_level: 0,
+                mip_level_count: Some(1),
+                base_array_layer: 0,
+                array_layer_count: Some(1),
+            });
+        let irradiance_uniform = device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
+            label: Some("environment_irradiance_uniform"),
+            contents: bytemuck::bytes_of(&EnvironmentPrefilterUniforms {
+                output_size: [IRRADIANCE_WIDTH, IRRADIANCE_HEIGHT],
+                params: [0.0, 0.0],
+            }),
+            usage: wgpu::BufferUsages::UNIFORM,
+        });
+        let irradiance_bind_group = device.create_bind_group(&wgpu::BindGroupDescriptor {
+            label: Some("environment_irradiance_bg"),
+            layout: &self.layout,
+            entries: &[
+                wgpu::BindGroupEntry {
+                    binding: 0,
+                    resource: wgpu::BindingResource::TextureView(&source_view),
+                },
+                wgpu::BindGroupEntry {
+                    binding: 1,
+                    resource: wgpu::BindingResource::Sampler(&self.sampler),
+                },
+                wgpu::BindGroupEntry {
+                    binding: 2,
+                    resource: wgpu::BindingResource::TextureView(&irradiance_storage_view),
+                },
+                wgpu::BindGroupEntry {
+                    binding: 3,
+                    resource: irradiance_uniform.as_entire_binding(),
+                },
+            ],
+        });
+        {
+            let mut pass = encoder.begin_compute_pass(&wgpu::ComputePassDescriptor {
+                label: Some("environment_diffuse_irradiance"),
+                timestamp_writes: None,
+            });
+            pass.set_pipeline(&self.irradiance_pipeline);
+            pass.set_bind_group(0, &irradiance_bind_group, &[]);
+            pass.dispatch_workgroups(
+                IRRADIANCE_WIDTH.div_ceil(8),
+                IRRADIANCE_HEIGHT.div_ceil(8),
+                1,
+            );
         }
         queue.submit(std::iter::once(encoder.finish()));
 
@@ -321,6 +408,8 @@ impl EnvironmentPrefilter {
             _texture: target_texture,
             view: target_view,
             mip_level_count,
+            _irradiance_texture: irradiance_texture,
+            irradiance_view,
         }
     }
 }
@@ -428,7 +517,8 @@ struct PrefilterUniforms {
 @group(0) @binding(3) var<uniform> settings: PrefilterUniforms;
 
 const PI: f32 = 3.141592653589793;
-const SAMPLE_COUNT: u32 = 64u;
+const PREFILTER_SAMPLE_COUNT: u32 = 64u;
+const IRRADIANCE_SAMPLE_COUNT: u32 = 128u;
 
 fn radical_inverse_vdc(bits: u32) -> f32 {
     return f32(reverseBits(bits)) * 2.3283064365386963e-10;
@@ -451,6 +541,16 @@ fn importance_sample_ggx(xi: vec2<f32>, normal: vec3<f32>, roughness: f32) -> ve
     );
 }
 
+fn cosine_sample_hemisphere(xi: vec2<f32>, normal: vec3<f32>) -> vec3<f32> {
+    let phi = 2.0 * PI * xi.x;
+    let radius = sqrt(xi.y);
+    let local = vec3<f32>(cos(phi) * radius, sin(phi) * radius, sqrt(1.0 - xi.y));
+    let up = select(vec3<f32>(0.0, 0.0, 1.0), vec3<f32>(1.0, 0.0, 0.0), abs(normal.z) > 0.999);
+    let tangent = normalize(cross(up, normal));
+    let bitangent = cross(normal, tangent);
+    return normalize(tangent * local.x + bitangent * local.y + normal * local.z);
+}
+
 fn uv_to_direction(uv: vec2<f32>) -> vec3<f32> {
     let longitude = (uv.x - 0.5) * 2.0 * PI;
     let latitude = uv.y * PI;
@@ -471,7 +571,7 @@ fn direction_to_uv(direction: vec3<f32>) -> vec2<f32> {
 }
 
 @compute @workgroup_size(8, 8, 1)
-fn cs_main(@builtin(global_invocation_id) global_id: vec3<u32>) {
+fn cs_prefilter(@builtin(global_invocation_id) global_id: vec3<u32>) {
     if any(global_id.xy >= settings.output_size) {
         return;
     }
@@ -481,8 +581,8 @@ fn cs_main(@builtin(global_invocation_id) global_id: vec3<u32>) {
     let roughness = clamp(settings.params.x, 0.001, 1.0);
     var radiance = vec3<f32>(0.0);
     var weight = 0.0;
-    for (var index = 0u; index < SAMPLE_COUNT; index = index + 1u) {
-        let xi = vec2<f32>(f32(index) / f32(SAMPLE_COUNT), radical_inverse_vdc(index));
+    for (var index = 0u; index < PREFILTER_SAMPLE_COUNT; index = index + 1u) {
+        let xi = vec2<f32>(f32(index) / f32(PREFILTER_SAMPLE_COUNT), radical_inverse_vdc(index));
         let halfway = importance_sample_ggx(xi, normal, roughness);
         let light = normalize(2.0 * dot(view, halfway) * halfway - view);
         let ndl = max(dot(normal, light), 0.0);
@@ -504,6 +604,31 @@ fn cs_main(@builtin(global_invocation_id) global_id: vec3<u32>) {
     ).rgb;
     let filtered = select(fallback, radiance / max(weight, 0.000001), weight > 0.0);
     textureStore(environment_output, vec2<i32>(global_id.xy), vec4<f32>(filtered, 1.0));
+}
+
+@compute @workgroup_size(8, 8, 1)
+fn cs_irradiance(@builtin(global_invocation_id) global_id: vec3<u32>) {
+    if any(global_id.xy >= settings.output_size) {
+        return;
+    }
+    let uv = (vec2<f32>(global_id.xy) + vec2<f32>(0.5)) / vec2<f32>(settings.output_size);
+    let normal = normalize(uv_to_direction(uv));
+    var irradiance = vec3<f32>(0.0);
+    for (var index = 0u; index < IRRADIANCE_SAMPLE_COUNT; index = index + 1u) {
+        let xi = vec2<f32>(
+            f32(index) / f32(IRRADIANCE_SAMPLE_COUNT),
+            radical_inverse_vdc(index),
+        );
+        let light = cosine_sample_hemisphere(xi, normal);
+        irradiance += textureSampleLevel(
+            environment_source,
+            environment_sampler,
+            direction_to_uv(light),
+            0.0,
+        ).rgb;
+    }
+    irradiance /= f32(IRRADIANCE_SAMPLE_COUNT);
+    textureStore(environment_output, vec2<i32>(global_id.xy), vec4<f32>(irradiance, 1.0));
 }
 "#;
 
@@ -541,6 +666,9 @@ mod tests {
         )
         .validate(&module)
         .expect("environment prefilter shader must validate");
+        assert!(ENVIRONMENT_PREFILTER_WGSL.contains("fn cs_prefilter"));
+        assert!(ENVIRONMENT_PREFILTER_WGSL.contains("fn cs_irradiance"));
+        assert!(ENVIRONMENT_PREFILTER_WGSL.contains("cosine_sample_hemisphere"));
 
         assert_eq!(prefilter_target_size(4000, 2000), [1024, 512]);
         assert_eq!(prefilter_target_size(128, 64), [128, 64]);

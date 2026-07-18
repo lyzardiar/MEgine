@@ -673,6 +673,16 @@ impl Renderer {
                         ty: wgpu::BindingType::Sampler(wgpu::SamplerBindingType::Filtering),
                         count: None,
                     },
+                    wgpu::BindGroupLayoutEntry {
+                        binding: 4,
+                        visibility: wgpu::ShaderStages::FRAGMENT,
+                        ty: wgpu::BindingType::Texture {
+                            sample_type: wgpu::TextureSampleType::Float { filterable: true },
+                            view_dimension: wgpu::TextureViewDimension::D2,
+                            multisampled: false,
+                        },
+                        count: None,
+                    },
                 ],
             });
 
@@ -803,6 +813,7 @@ impl Renderer {
             &environment_sampler,
             brdf_lut.view(),
             brdf_lut.sampler(),
+            &fallback_environment_texture.view,
         );
         let fallback_base_color_texture = create_material_texture_rgba8(
             &device,
@@ -1365,6 +1376,7 @@ impl Renderer {
             &self.environment_sampler,
             self.brdf_lut.view(),
             self.brdf_lut.sampler(),
+            &texture.irradiance_view,
         );
         self.environment_textures.insert(key.to_owned(), texture);
         self.environment_bind_groups
@@ -1972,6 +1984,7 @@ fn create_environment_bind_group(
     sampler: &wgpu::Sampler,
     brdf_lut_view: &wgpu::TextureView,
     brdf_lut_sampler: &wgpu::Sampler,
+    irradiance_view: &wgpu::TextureView,
 ) -> wgpu::BindGroup {
     device.create_bind_group(&wgpu::BindGroupDescriptor {
         label: Some("environment_texture_bg"),
@@ -1992,6 +2005,10 @@ fn create_environment_bind_group(
             wgpu::BindGroupEntry {
                 binding: 3,
                 resource: wgpu::BindingResource::Sampler(brdf_lut_sampler),
+            },
+            wgpu::BindGroupEntry {
+                binding: 4,
+                resource: wgpu::BindingResource::TextureView(irradiance_view),
             },
         ],
     })
@@ -2246,6 +2263,7 @@ struct ShadowUniforms {
 @group(3) @binding(1) var environment_sampler: sampler;
 @group(3) @binding(2) var brdf_lut: texture_2d<f32>;
 @group(3) @binding(3) var brdf_lut_sampler: sampler;
+@group(3) @binding(4) var environment_irradiance: texture_2d<f32>;
 
 struct VsIn {
     @location(0) position: vec3<f32>,
@@ -2343,6 +2361,17 @@ fn environment_radiance(direction: vec3<f32>, roughness: f32) -> vec3<f32> {
     return textureSampleLevel(environment_texture, environment_sampler, uv, lod).rgb;
 }
 
+fn environment_diffuse_radiance(direction: vec3<f32>) -> vec3<f32> {
+    let rotated = normalize(rotate_environment_direction(direction));
+    if frame.environment_texture_params.x < 0.5 {
+        return analytic_environment_radiance(rotated);
+    }
+    let longitude = atan2(rotated.z, rotated.x);
+    let latitude = acos(clamp(rotated.y, -1.0, 1.0));
+    let uv = vec2<f32>(longitude / (2.0 * PI) + 0.5, latitude / PI);
+    return textureSampleLevel(environment_irradiance, environment_sampler, uv, 0.0).rgb;
+}
+
 fn environment_contribution(
     n: vec3<f32>,
     v: vec3<f32>,
@@ -2355,7 +2384,7 @@ fn environment_contribution(
     let ndv = max(dot(n, v), 0.0);
     let fresnel = fresnel_schlick_roughness(ndv, f0, roughness);
     let diffuse_weight = (vec3<f32>(1.0) - fresnel) * (1.0 - metallic);
-    let diffuse = environment_radiance(n, 1.0)
+    let diffuse = environment_diffuse_radiance(n)
         * diffuse_weight
         * base_color
         * frame.environment_params.x;
@@ -2614,8 +2643,10 @@ mod tests {
             "fn geometry_smith",
             "fn fresnel_schlick",
             "fn environment_contribution",
+            "fn environment_diffuse_radiance",
             "textureSampleLevel(environment_texture",
             "@group(3) @binding(2) var brdf_lut",
+            "@group(3) @binding(4) var environment_irradiance",
             "fresnel * integrated_brdf.x",
             "diffuse_weight = (vec3<f32>(1.0) - fresnel) * (1.0 - metallic)",
         ] {
