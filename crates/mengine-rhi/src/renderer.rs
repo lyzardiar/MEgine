@@ -252,6 +252,7 @@ struct GlobalUniforms {
     environment_equator: [f32; 4],
     environment_ground: [f32; 4],
     environment_params: [f32; 4],
+    environment_texture_params: [f32; 4],
     directional_direction: [f32; 4],
     directional_color: [f32; 4],
     point_positions: [[f32; 4]; MAX_POINT_LIGHTS],
@@ -394,6 +395,7 @@ pub struct Renderer {
     fallback_environment_bind_group: wgpu::BindGroup,
     environment_textures: HashMap<String, MaterialTextureGpu>,
     environment_bind_groups: HashMap<String, wgpu::BindGroup>,
+    environment_mip_levels: HashMap<String, u32>,
     material_texture_layout: wgpu::BindGroupLayout,
     material_samplers: HashMap<MaterialSamplerKey, wgpu::Sampler>,
     fallback_base_color_texture: MaterialTextureGpu,
@@ -855,6 +857,7 @@ impl Renderer {
             fallback_environment_bind_group,
             environment_textures: HashMap::new(),
             environment_bind_groups: HashMap::new(),
+            environment_mip_levels: HashMap::new(),
             material_texture_layout,
             material_samplers: HashMap::new(),
             fallback_base_color_texture,
@@ -921,7 +924,21 @@ impl Renderer {
         let environment_key = lighting.environment.texture.trim();
         let has_environment_texture = !environment_key.is_empty()
             && self.environment_bind_groups.contains_key(environment_key);
-        let global = make_global_uniforms(camera, lighting, has_environment_texture);
+        let environment_max_lod = if has_environment_texture {
+            self.environment_mip_levels
+                .get(environment_key)
+                .copied()
+                .unwrap_or(1)
+                .saturating_sub(1) as f32
+        } else {
+            0.0
+        };
+        let global = make_global_uniforms(
+            camera,
+            lighting,
+            has_environment_texture,
+            environment_max_lod,
+        );
         let shadow = make_shadow_uniforms(camera, lighting);
         self.queue
             .write_buffer(&self.global_buf, 0, bytemuck::bytes_of(&global));
@@ -1261,15 +1278,8 @@ impl Renderer {
         rgba8: &[u8],
     ) -> Result<(), UiTextureError> {
         validate_material_texture_rgba8(width, height, rgba8)?;
-        let texture = create_material_texture_rgba8(
-            &self.device,
-            &self.queue,
-            "environment_texture",
-            width,
-            height,
-            rgba8,
-            true,
-        );
+        let (texture, mip_levels) =
+            create_environment_texture_rgba8(&self.device, &self.queue, width, height, rgba8);
         let bind_group = create_environment_bind_group(
             &self.device,
             &self.environment_texture_layout,
@@ -1279,11 +1289,14 @@ impl Renderer {
         self.environment_textures.insert(key.to_owned(), texture);
         self.environment_bind_groups
             .insert(key.to_owned(), bind_group);
+        self.environment_mip_levels
+            .insert(key.to_owned(), mip_levels);
         Ok(())
     }
 
     pub fn remove_environment_texture(&mut self, key: &str) -> bool {
         self.environment_bind_groups.remove(key);
+        self.environment_mip_levels.remove(key);
         self.environment_textures.remove(key).is_some()
     }
 
@@ -1305,6 +1318,7 @@ fn make_global_uniforms(
     camera: FrameCamera,
     lighting: &FrameLighting,
     has_environment_texture: bool,
+    environment_max_lod: f32,
 ) -> GlobalUniforms {
     let mut point_positions = [[0.0; 4]; MAX_POINT_LIGHTS];
     let mut point_colors = [[0.0; 4]; MAX_POINT_LIGHTS];
@@ -1404,8 +1418,14 @@ fn make_global_uniforms(
         environment_params: [
             lighting.environment.diffuse_intensity.max(0.0),
             lighting.environment.specular_intensity.max(0.0),
-            if has_environment_texture { 1.0 } else { 0.0 },
             environment_rotation,
+            0.0,
+        ],
+        environment_texture_params: [
+            if has_environment_texture { 1.0 } else { 0.0 },
+            environment_max_lod.max(0.0),
+            0.0,
+            0.0,
         ],
         directional_direction,
         directional_color,
@@ -1958,6 +1978,141 @@ fn create_material_texture_rgba8(
     }
 }
 
+#[derive(Clone, Debug, PartialEq, Eq)]
+struct Rgba8MipLevel {
+    width: u32,
+    height: u32,
+    pixels: Vec<u8>,
+}
+
+fn create_environment_texture_rgba8(
+    device: &wgpu::Device,
+    queue: &wgpu::Queue,
+    width: u32,
+    height: u32,
+    rgba8: &[u8],
+) -> (MaterialTextureGpu, u32) {
+    let mip_chain = build_environment_mip_chain(width, height, rgba8);
+    let mip_level_count = mip_chain.len().max(1) as u32;
+    let texture = device.create_texture(&wgpu::TextureDescriptor {
+        label: Some("environment_texture"),
+        size: wgpu::Extent3d {
+            width,
+            height,
+            depth_or_array_layers: 1,
+        },
+        mip_level_count,
+        sample_count: 1,
+        dimension: wgpu::TextureDimension::D2,
+        format: wgpu::TextureFormat::Rgba8UnormSrgb,
+        usage: wgpu::TextureUsages::TEXTURE_BINDING | wgpu::TextureUsages::COPY_DST,
+        view_formats: &[],
+    });
+    for (mip_level, mip) in mip_chain.iter().enumerate() {
+        queue.write_texture(
+            wgpu::TexelCopyTextureInfo {
+                texture: &texture,
+                mip_level: mip_level as u32,
+                origin: wgpu::Origin3d::ZERO,
+                aspect: wgpu::TextureAspect::All,
+            },
+            &mip.pixels,
+            wgpu::TexelCopyBufferLayout {
+                offset: 0,
+                bytes_per_row: Some(mip.width * 4),
+                rows_per_image: Some(mip.height),
+            },
+            wgpu::Extent3d {
+                width: mip.width,
+                height: mip.height,
+                depth_or_array_layers: 1,
+            },
+        );
+    }
+    let view = texture.create_view(&wgpu::TextureViewDescriptor::default());
+    (
+        MaterialTextureGpu {
+            _texture: texture,
+            view,
+        },
+        mip_level_count,
+    )
+}
+
+fn build_environment_mip_chain(width: u32, height: u32, rgba8: &[u8]) -> Vec<Rgba8MipLevel> {
+    debug_assert_eq!(rgba8.len(), width as usize * height as usize * 4);
+    let mut levels = vec![Rgba8MipLevel {
+        width,
+        height,
+        pixels: rgba8.to_vec(),
+    }];
+    while levels
+        .last()
+        .is_some_and(|level| level.width > 1 || level.height > 1)
+    {
+        let previous = levels.last().expect("base environment mip exists");
+        let next_width = (previous.width / 2).max(1);
+        let next_height = (previous.height / 2).max(1);
+        let mut pixels = vec![0_u8; next_width as usize * next_height as usize * 4];
+        for y in 0..next_height {
+            for x in 0..next_width {
+                let mut linear_rgb = [0.0_f32; 3];
+                let mut alpha = 0.0_f32;
+                let source_x_start = x * previous.width / next_width;
+                let source_x_end = ((x + 1) * previous.width / next_width)
+                    .max(source_x_start + 1)
+                    .min(previous.width);
+                let source_y_start = y * previous.height / next_height;
+                let source_y_end = ((y + 1) * previous.height / next_height)
+                    .max(source_y_start + 1)
+                    .min(previous.height);
+                let sample_count =
+                    ((source_x_end - source_x_start) * (source_y_end - source_y_start)) as f32;
+                for source_y in source_y_start..source_y_end {
+                    for source_x in source_x_start..source_x_end {
+                        let source = ((source_y * previous.width + source_x) * 4) as usize;
+                        for (channel, accumulated) in linear_rgb.iter_mut().enumerate() {
+                            *accumulated +=
+                                srgb_to_linear(previous.pixels[source + channel]) / sample_count;
+                        }
+                        alpha += previous.pixels[source + 3] as f32 / 255.0 / sample_count;
+                    }
+                }
+                let destination = ((y * next_width + x) * 4) as usize;
+                for (channel, value) in linear_rgb.iter().enumerate() {
+                    pixels[destination + channel] = linear_to_srgb(*value);
+                }
+                pixels[destination + 3] = (alpha.clamp(0.0, 1.0) * 255.0).round() as u8;
+            }
+        }
+        levels.push(Rgba8MipLevel {
+            width: next_width,
+            height: next_height,
+            pixels,
+        });
+    }
+    levels
+}
+
+fn srgb_to_linear(value: u8) -> f32 {
+    let value = value as f32 / 255.0;
+    if value <= 0.04045 {
+        value / 12.92
+    } else {
+        ((value + 0.055) / 1.055).powf(2.4)
+    }
+}
+
+fn linear_to_srgb(value: f32) -> u8 {
+    let value = value.clamp(0.0, 1.0);
+    let encoded = if value <= 0.0031308 {
+        value * 12.92
+    } else {
+        1.055 * value.powf(1.0 / 2.4) - 0.055
+    };
+    (encoded.clamp(0.0, 1.0) * 255.0).round() as u8
+}
+
 fn align_to(value: u64, alignment: u64) -> u64 {
     let alignment = alignment.max(1);
     value.div_ceil(alignment) * alignment
@@ -2095,6 +2250,7 @@ struct GlobalUniforms {
     environment_equator: vec4<f32>,
     environment_ground: vec4<f32>,
     environment_params: vec4<f32>,
+    environment_texture_params: vec4<f32>,
     directional_direction: vec4<f32>,
     directional_color: vec4<f32>,
     point_positions: array<vec4<f32>, 4>,
@@ -2211,7 +2367,7 @@ fn analytic_environment_radiance(direction: vec3<f32>) -> vec3<f32> {
 }
 
 fn rotate_environment_direction(direction: vec3<f32>) -> vec3<f32> {
-    let angle = frame.environment_params.w;
+    let angle = frame.environment_params.z;
     let sine = sin(angle);
     let cosine = cos(angle);
     return vec3<f32>(
@@ -2221,15 +2377,16 @@ fn rotate_environment_direction(direction: vec3<f32>) -> vec3<f32> {
     );
 }
 
-fn environment_radiance(direction: vec3<f32>) -> vec3<f32> {
+fn environment_radiance(direction: vec3<f32>, roughness: f32) -> vec3<f32> {
     let rotated = normalize(rotate_environment_direction(direction));
-    if frame.environment_params.z < 0.5 {
+    if frame.environment_texture_params.x < 0.5 {
         return analytic_environment_radiance(rotated);
     }
     let longitude = atan2(rotated.z, rotated.x);
     let latitude = acos(clamp(rotated.y, -1.0, 1.0));
     let uv = vec2<f32>(longitude / (2.0 * PI) + 0.5, latitude / PI);
-    return textureSample(environment_texture, environment_sampler, uv).rgb;
+    let lod = clamp(roughness, 0.0, 1.0) * frame.environment_texture_params.y;
+    return textureSampleLevel(environment_texture, environment_sampler, uv, lod).rgb;
 }
 
 fn environment_contribution(
@@ -2244,14 +2401,19 @@ fn environment_contribution(
     let ndv = max(dot(n, v), 0.0);
     let fresnel = fresnel_schlick_roughness(ndv, f0, roughness);
     let diffuse_weight = (vec3<f32>(1.0) - fresnel) * (1.0 - metallic);
-    let diffuse = environment_radiance(n)
+    let diffuse = environment_radiance(n, 1.0)
         * diffuse_weight
         * base_color
         * frame.environment_params.x;
     let reflection = reflect(-v, n);
-    let blurred_reflection = normalize(mix(reflection, n, roughness * roughness));
+    let analytic_blur = 1.0 - frame.environment_texture_params.x;
+    let specular_direction = normalize(mix(
+        reflection,
+        n,
+        roughness * roughness * analytic_blur,
+    ));
     let roughness_attenuation = mix(1.0, 0.35, roughness);
-    let specular = environment_radiance(blurred_reflection)
+    let specular = environment_radiance(specular_direction, roughness)
         * fresnel
         * roughness_attenuation
         * frame.environment_params.y;
@@ -2495,6 +2657,7 @@ mod tests {
             "fn geometry_smith",
             "fn fresnel_schlick",
             "fn environment_contribution",
+            "textureSampleLevel(environment_texture",
             "diffuse_weight = (vec3<f32>(1.0) - fresnel) * (1.0 - metallic)",
         ] {
             assert!(FORWARD_WGSL.contains(required), "missing {required}");
@@ -2549,7 +2712,7 @@ mod tests {
             ],
             ..Default::default()
         };
-        let uniforms = make_global_uniforms(camera, &lighting, false);
+        let uniforms = make_global_uniforms(camera, &lighting, false, 0.0);
         assert_eq!(uniforms.light_counts[1], MAX_POINT_LIGHTS as u32);
     }
 
@@ -2563,12 +2726,39 @@ mod tests {
         let mut lighting = FrameLighting::default();
         lighting.environment.texture = "Assets/Textures/studio.png".into();
         lighting.environment.rotation_degrees = 90.0;
-        let uniforms = make_global_uniforms(camera, &lighting, true);
-        assert_eq!(uniforms.environment_params[2], 1.0);
-        assert!((uniforms.environment_params[3] - std::f32::consts::FRAC_PI_2).abs() < 0.0001);
+        let uniforms = make_global_uniforms(camera, &lighting, true, 5.0);
+        assert_eq!(uniforms.environment_texture_params[0], 1.0);
+        assert_eq!(uniforms.environment_texture_params[1], 5.0);
+        assert!((uniforms.environment_params[2] - std::f32::consts::FRAC_PI_2).abs() < 0.0001);
         assert_eq!(
-            make_global_uniforms(camera, &lighting, false).environment_params[2],
+            make_global_uniforms(camera, &lighting, false, 0.0).environment_texture_params[0],
             0.0
+        );
+    }
+
+    #[test]
+    fn environment_mips_filter_all_pixels_in_linear_color_space() {
+        let levels =
+            build_environment_mip_chain(3, 1, &[0, 0, 0, 255, 0, 0, 0, 255, 255, 255, 255, 255]);
+        assert_eq!(
+            levels
+                .iter()
+                .map(|level| (level.width, level.height))
+                .collect::<Vec<_>>(),
+            vec![(3, 1), (1, 1)]
+        );
+        assert!(
+            (154..=157).contains(&levels[1].pixels[0]),
+            "one-third linear white should encode near sRGB 156"
+        );
+
+        let power_of_two = build_environment_mip_chain(4, 2, &[128; 4 * 2 * 4]);
+        assert_eq!(
+            power_of_two
+                .iter()
+                .map(|level| (level.width, level.height))
+                .collect::<Vec<_>>(),
+            vec![(4, 2), (2, 1), (1, 1)]
         );
     }
 
