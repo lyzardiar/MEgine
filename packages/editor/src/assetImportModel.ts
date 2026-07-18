@@ -4,7 +4,7 @@ export const ASSET_IMPORT_ACCEPT = [
   '.wav', '.ogg', '.mp3', '.flac',
   '.gltf', '.glb',
   '.atlas', '.skel', '.json',
-  '.mmat', '.mat', '.mshader', '.prefab', '.matlas', '.manim', '.mcontroller',
+  '.mmat', '.mat', '.mshader', '.prefab', '.matlas', '.manim', '.mcontroller', '.mavatar',
 ].join(',');
 
 const SUPPORTED_EXTENSIONS = new Set(ASSET_IMPORT_ACCEPT.split(','));

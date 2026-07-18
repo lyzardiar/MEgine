@@ -509,6 +509,13 @@ export function validateBuildAssetDependencies(
           && layer.mask_paths.some((path) => String(path).replaceAll('\\', '/').split('/').includes('..'))) {
           throw new Error(`invalid animator controller ${source}: layer ${name} has an unsafe Avatar Mask path`);
         }
+        const avatarMask = strictStringValue(layer, 'avatar_mask', `animator controller ${source}`);
+        if (avatarMask) {
+          if (!avatarMask.toLowerCase().endsWith('.mavatar')) {
+            throw new Error(`invalid animator controller ${source}: layer ${name} avatar_mask must reference a .mavatar asset`);
+          }
+          enqueue(avatarMask, source, `animator layer ${name} Avatar Mask`);
+        }
         if (layer.motions != null && !Array.isArray(layer.motions)) {
           throw new Error(`invalid animator controller ${source}: layer ${name} motions must be an array`);
         }
@@ -524,6 +531,17 @@ export function validateBuildAssetDependencies(
           motionStates.add(state);
           enqueue(clip, source, `animator layer ${name} clip`);
         }
+      }
+    } else if (extension === '.mavatar') {
+      const mask = readJsonAsset(absolute, root, 'Avatar Mask');
+      if (mask.version != null && (!Number.isInteger(mask.version) || Number(mask.version) < 1)) {
+        throw new Error(`invalid Avatar Mask ${source}: version must be a positive integer`);
+      }
+      if (!Array.isArray(mask.paths) || mask.paths.some((path) => typeof path !== 'string')) {
+        throw new Error(`invalid Avatar Mask ${source}: paths must be an array of strings`);
+      }
+      if (mask.paths.some((path) => String(path).replaceAll('\\', '/').split('/').includes('..'))) {
+        throw new Error(`invalid Avatar Mask ${source}: paths cannot contain '..'`);
       }
     } else if (extension === '.manim') {
       const clip = readJsonAsset(absolute, root, 'animation clip');

@@ -68,7 +68,7 @@ const STATIC_FOLDERS = [
 type AssetItem = {
   folder: string;
   name: string;
-  kind: 'animation' | 'animator-controller' | 'audio' | 'model' | 'prefab' | 'script' | 'material' | 'shader' | 'scene' | 'sprite' | 'sprite-atlas' | 'texture' | 'spine';
+  kind: 'animation' | 'animator-controller' | 'avatar-mask' | 'audio' | 'model' | 'prefab' | 'script' | 'material' | 'shader' | 'scene' | 'sprite' | 'sprite-atlas' | 'texture' | 'spine';
   spawn: string | null;
   icon: ReactNode;
   sceneName?: string;
@@ -188,6 +188,8 @@ export function Project(props: {
       ? 'animation'
       : asset.kind === 'animator-controller'
         ? 'animator-controller'
+      : asset.kind === 'avatar-mask'
+        ? 'avatar-mask'
       : asset.kind === 'sprite-atlas'
         ? 'sprite-atlas'
       : asset.kind === 'texture'
@@ -214,6 +216,8 @@ export function Project(props: {
         ? <FileCode2 size={24} strokeWidth={1.4} aria-hidden="true" />
         : kind === 'animator-controller'
         ? <Workflow size={24} strokeWidth={1.4} aria-hidden="true" />
+        : kind === 'avatar-mask'
+        ? <Bone size={24} strokeWidth={1.4} aria-hidden="true" />
         : kind === 'sprite-atlas'
         ? <Layers3 size={24} strokeWidth={1.4} aria-hidden="true" />
         : kind === 'audio'
@@ -317,7 +321,7 @@ export function Project(props: {
       props.onOpenShader(a.spriteId);
       return;
     }
-    if (a.kind === 'animator-controller' && a.spriteId) {
+    if ((a.kind === 'animator-controller' || a.kind === 'avatar-mask') && a.spriteId) {
       props.onOpenAnimator(a.spriteId);
       return;
     }
@@ -459,6 +463,7 @@ export function Project(props: {
                 || a.kind === 'spine'
                 || a.kind === 'animation'
                 || a.kind === 'animator-controller'
+                || a.kind === 'avatar-mask'
                 || a.kind === 'sprite-atlas'
                 || a.kind === 'texture'
                 || a.kind === 'audio'
@@ -473,6 +478,7 @@ export function Project(props: {
                   && a.kind !== 'spine'
                   && a.kind !== 'animation'
                   && a.kind !== 'animator-controller'
+                  && a.kind !== 'avatar-mask'
                   && a.kind !== 'sprite-atlas'
                   && a.kind !== 'texture'
                   && a.kind !== 'audio'
@@ -513,6 +519,8 @@ export function Project(props: {
                             ? `Environment Texture - drag to Environment Light - ${a.spriteId}`
                           : a.kind === 'animator-controller'
                             ? `Animator Controller · ${a.spriteId}`
+                          : a.kind === 'avatar-mask'
+                            ? `Avatar Mask - double-click to edit - ${a.spriteId}`
                           : a.kind === 'material'
                             ? `Material Asset · ${a.spriteId}`
                             : a.kind === 'model'

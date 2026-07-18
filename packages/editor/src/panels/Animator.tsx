@@ -22,6 +22,7 @@ import {
   writeProjectAssetText,
 } from '../projectAssets';
 import { registerSaveAllParticipant } from '../saveAll';
+import { AvatarMaskEditor } from './AvatarMask';
 import { PROJECT_ASSETS_CHANGED_EVENT } from './Material';
 
 export const OPEN_ANIMATOR_EVENT = 'mengine:open-animator';
@@ -258,7 +259,7 @@ function parameterModes(kind: AnimatorParameterKind): AnimatorConditionMode[] {
   return ['greater', 'less', 'equals', 'not_equal'];
 }
 
-export function AnimatorEditor(props: {
+export type AnimatorEditorProps = {
   assetPath: string | null;
   selectedEntity: SnapshotEntity | null;
   playMode: boolean;
@@ -268,7 +269,9 @@ export function AnimatorEditor(props: {
   onAssetsChanged: () => void;
   onDirtyChange: (dirty: boolean) => void;
   onLog: (message: string, level?: 'info' | 'warn' | 'error') => void;
-}) {
+};
+
+function AnimatorControllerEditor(props: AnimatorEditorProps) {
   const [controller, setController] = useState<AnimatorController | null>(null);
   const [savedFingerprint, setSavedFingerprint] = useState('');
   const [error, setError] = useState<string | null>(null);
@@ -328,6 +331,7 @@ export function AnimatorEditor(props: {
   useEffect(() => props.onDirtyChange(anyDirty), [anyDirty, props.onDirtyChange]);
 
   const clips = listProjectFiles().filter((asset) => asset.kind === 'animation');
+  const avatarMasks = listProjectFiles().filter((asset) => asset.kind === 'avatar-mask');
 
   const update = (mutate: (draft: AnimatorController) => void) => {
     setController((current) => {
@@ -466,6 +470,7 @@ export function AnimatorEditor(props: {
                 enabled: true,
                 weight: 1,
                 blend_mode: 'override',
+                avatar_mask: '',
                 mask_paths: [],
                 motions: [],
               });
@@ -501,9 +506,24 @@ export function AnimatorEditor(props: {
                 <button type="button" title="Delete layer" onClick={() => update((draft) => { draft.layers.splice(layerIndex, 1); })}>×</button>
               </div>
               <label className="animator-layer-mask">
-                Avatar Mask
+                Avatar Mask Asset
+                <select
+                  value={layer.avatar_mask}
+                  onChange={(event) => update((draft) => { draft.layers[layerIndex].avatar_mask = event.target.value; })}
+                >
+                  <option value="">None (inline paths only)</option>
+                  {layer.avatar_mask && !avatarMasks.some((mask) => mask.relPath === layer.avatar_mask) && (
+                    <option value={layer.avatar_mask}>{layer.avatar_mask} (Missing)</option>
+                  )}
+                  {avatarMasks.map((mask) => <option key={mask.id} value={mask.relPath}>{mask.name}</option>)}
+                </select>
+              </label>
+              <label className="animator-layer-mask">
+                Inline Mask Additions
                 <input
-                  placeholder="Rig/Spine, Rig/Head (empty = all)"
+                  placeholder={layer.avatar_mask
+                    ? 'Additional paths (empty = no additions)'
+                    : 'Rig/Spine, Rig/Head (empty = all)'}
                   value={layer.mask_paths.join(', ')}
                   onChange={(event) => update((draft) => {
                     draft.layers[layerIndex].mask_paths = event.target.value.split(',').map((path) => path.trim()).filter(Boolean);
@@ -539,7 +559,7 @@ export function AnimatorEditor(props: {
               </div>
             </div>
           ))}
-          <div className="field-hint">Layers reuse Base Layer state timing. Avatar Mask paths include matching descendants.</div>
+          <div className="field-hint">Layers reuse Base Layer state timing. External and inline Avatar Mask paths are combined, and each path includes matching descendants.</div>
         </section>
 
         {assigned && (
@@ -839,5 +859,36 @@ export function AnimatorEditor(props: {
         </section>
       </div>
     </div>
+  );
+}
+
+export function AnimatorEditor(props: AnimatorEditorProps) {
+  const [controllerDirty, setControllerDirty] = useState(false);
+  const [avatarMaskDirty, setAvatarMaskDirty] = useState(false);
+  const avatarMaskOpen = props.assetPath?.toLowerCase().endsWith('.mavatar') === true;
+
+  useEffect(() => {
+    props.onDirtyChange(controllerDirty || avatarMaskDirty);
+  }, [avatarMaskDirty, controllerDirty, props.onDirtyChange]);
+
+  return (
+    <>
+      <div style={{ display: avatarMaskOpen ? 'none' : 'contents' }}>
+        <AnimatorControllerEditor
+          {...props}
+          assetPath={avatarMaskOpen ? null : props.assetPath}
+          onDirtyChange={setControllerDirty}
+        />
+      </div>
+      <div style={{ display: avatarMaskOpen ? 'contents' : 'none' }}>
+        <AvatarMaskEditor
+          assetPath={avatarMaskOpen ? props.assetPath : null}
+          onOpenAsset={props.onOpenAsset}
+          onAssetsChanged={props.onAssetsChanged}
+          onDirtyChange={setAvatarMaskDirty}
+          onLog={props.onLog}
+        />
+      </div>
+    </>
   );
 }

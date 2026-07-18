@@ -169,7 +169,7 @@ test('buildPcPackage validates transitive material animator and audio dependenci
       },
     }));
     writeFileSync(join(paths.project, 'Assets', 'Materials', 'Hero.mmat'), JSON.stringify({
-      version: 2,
+      version: 3,
       base_color_texture: 'Assets/Textures/hero.png',
       occlusion_texture: 'Assets/Textures/hero-ao.png',
     }));
@@ -181,12 +181,17 @@ test('buildPcPackage validates transitive material animator and audio dependenci
         name: 'Upper Body',
         weight: 0.75,
         blend_mode: 'override',
-        mask_paths: ['Rig/Spine'],
+        avatar_mask: 'Assets/Animations/Upper Body.mavatar',
         motions: [{ state: 'Idle', clip: 'Assets/Animations/Wave.manim' }],
       }],
     }));
     writeFileSync(join(paths.project, 'Assets', 'Animations', 'Idle.manim'), '{}');
     writeFileSync(join(paths.project, 'Assets', 'Animations', 'Wave.manim'), '{}');
+    writeFileSync(join(paths.project, 'Assets', 'Animations', 'Upper Body.mavatar'), JSON.stringify({
+      version: 1,
+      name: 'Upper Body',
+      paths: ['Rig/Spine'],
+    }));
     writeFileSync(join(paths.project, 'Assets', 'Audio', 'theme.ogg'), 'audio');
     writeFileSync(join(paths.project, 'Assets', 'Textures', 'hero.png'), 'texture');
     writeFileSync(join(paths.project, 'Assets', 'Textures', 'hero-ao.png'), 'texture');
@@ -198,9 +203,43 @@ test('buildPcPackage validates transitive material animator and audio dependenci
     });
     assert.deepEqual(manifest.assetValidation, {
       rootScenes: 2,
-      references: 9,
-      validatedFiles: 9,
+      references: 10,
+      validatedFiles: 10,
     });
+  } finally {
+    rmSync(paths.root, { recursive: true, force: true });
+  }
+});
+
+test('buildPcPackage rejects unsafe Avatar Mask paths before publishing output', () => {
+  const paths = fixture('unsafe-avatar-mask');
+  try {
+    writeFileSync(join(paths.project, 'Assets', 'Scenes', 'Main.mscene'), JSON.stringify({
+      world: { entities: [{ components: {
+        Animator: { controller: 'Assets/Animations/Hero.mcontroller' },
+      } }] },
+    }));
+    writeFileSync(join(paths.project, 'Assets', 'Animations', 'Hero.mcontroller'), JSON.stringify({
+      version: 3,
+      default_state: 'Idle',
+      states: [{ name: 'Idle', clip: 'Assets/Animations/Idle.manim' }],
+      layers: [{
+        name: 'Upper Body',
+        avatar_mask: 'Assets/Animations/Upper.mavatar',
+      }],
+    }));
+    writeFileSync(join(paths.project, 'Assets', 'Animations', 'Idle.manim'), '{}');
+    writeFileSync(join(paths.project, 'Assets', 'Animations', 'Upper.mavatar'), JSON.stringify({
+      version: 1,
+      paths: ['../Outside'],
+    }));
+    assert.throws(() => buildPcPackage({
+      projectDir: paths.project,
+      outputDir: paths.output,
+      runtimePath: paths.runtime,
+      engineVersion: 'test-engine',
+    }), /Avatar Mask.*cannot contain '\.\.'/);
+    assert.equal(existsSync(paths.output), false);
   } finally {
     rmSync(paths.root, { recursive: true, force: true });
   }

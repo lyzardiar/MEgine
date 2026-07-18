@@ -26,6 +26,7 @@ export type InspectorFieldMeta = {
   assetKinds?: Array<
     | 'animation'
     | 'animator-controller'
+    | 'avatar-mask'
     | 'audio'
     | 'material'
     | 'model'

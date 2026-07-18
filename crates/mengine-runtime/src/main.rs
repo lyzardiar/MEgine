@@ -2077,6 +2077,14 @@ fn validate_world_assets(
                     validate_animation_clip_asset(&state.clip, project_root, validated)?;
                 }
                 for layer in &controller.layers {
+                    if !layer.avatar_mask.is_empty() {
+                        let mask_path = resolve(&layer.avatar_mask, "Avatar Mask")?;
+                        if validated.insert(mask_path.clone()) {
+                            mengine_assets::load_avatar_mask(&mask_path).with_context(|| {
+                                format!("invalid Avatar Mask {}", mask_path.display())
+                            })?;
+                        }
+                    }
                     for motion in &layer.motions {
                         validate_animation_clip_asset(&motion.clip, project_root, validated)?;
                     }
@@ -2436,12 +2444,17 @@ mod tests {
         std::fs::write(animations.join("Idle.manim"), "{}").unwrap();
         std::fs::write(animations.join("Wave.manim"), "{}").unwrap();
         std::fs::write(
+            animations.join("Upper Body.mavatar"),
+            r#"{"version":1,"name":"Upper Body","paths":["Rig/Spine"]}"#,
+        )
+        .unwrap();
+        std::fs::write(
             animations.join("Hero.mcontroller"),
             r#"{
-              "version":2,"default_state":"Idle",
+              "version":3,"default_state":"Idle",
               "states":[{"name":"Idle","clip":"Assets/Animations/Idle.manim"}],
               "layers":[{
-                "name":"Upper Body","mask_paths":["Rig/Spine"],
+                "name":"Upper Body","avatar_mask":"Assets/Animations/Upper Body.mavatar",
                 "motions":[{"state":"Idle","clip":"Assets/Animations/Wave.manim"}]
               }]
             }"#,
@@ -2461,7 +2474,7 @@ mod tests {
         std::fs::remove_dir_all(&root).unwrap();
 
         result.expect("base and layer clips should pass package validation");
-        assert_eq!(validated.len(), 3);
+        assert_eq!(validated.len(), 4);
     }
 
     #[test]

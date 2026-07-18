@@ -49,12 +49,13 @@ export type AnimatorLayer = {
   enabled: boolean;
   weight: number;
   blend_mode: AnimatorLayerBlendMode;
+  avatar_mask: string;
   mask_paths: string[];
   motions: AnimatorLayerMotion[];
 };
 
 export type AnimatorController = {
-  version: 2;
+  version: 3;
   name: string;
   default_state: string;
   parameters: AnimatorParameter[];
@@ -142,7 +143,7 @@ export function createAnimatorController(
   initialClip = 'Assets/Animations/New State.manim',
 ): AnimatorController {
   return {
-    version: 2,
+    version: 3,
     name,
     default_state: 'Idle',
     parameters: [],
@@ -216,12 +217,13 @@ export function normalizeAnimatorController(value: unknown): AnimatorController 
       enabled: layer.enabled !== false,
       weight: Math.max(0, Math.min(1, finite(layer.weight, 1))),
       blend_mode: LAYER_BLEND_MODES.has(rawBlendMode) ? rawBlendMode : 'override',
+      avatar_mask: String(layer.avatar_mask ?? '').trim().replace(/\\/g, '/'),
       mask_paths: maskPaths,
       motions,
     } satisfies AnimatorLayer;
   });
   const controller: AnimatorController = {
-    version: 2,
+    version: 3,
     name: String(source.name ?? ''),
     default_state: String(source.default_state ?? '').trim(),
     parameters,
@@ -277,6 +279,12 @@ export function validateAnimatorController(controller: AnimatorController): void
     layerNames.add(layer.name);
     if (layer.mask_paths.some((path) => path !== '*' && path.split('/').includes('..'))) {
       throw new Error(`动画层 ${layer.name} 包含无效的 Avatar Mask 路径`);
+    }
+    if (layer.avatar_mask && !layer.avatar_mask.toLowerCase().endsWith('.mavatar')) {
+      throw new Error(`动画层 ${layer.name} 的 Avatar Mask 必须使用 .mavatar 扩展名`);
+    }
+    if (layer.avatar_mask.split('/').includes('..')) {
+      throw new Error(`动画层 ${layer.name} 包含不安全的 Avatar Mask 资源路径`);
     }
     const motionStates = new Set<string>();
     for (const motion of layer.motions) {

@@ -4,7 +4,7 @@ use std::collections::HashSet;
 use std::path::Path;
 
 fn default_version() -> u32 {
-    2
+    3
 }
 
 fn default_state_speed() -> f32 {
@@ -126,6 +126,8 @@ pub struct AnimatorLayer {
     #[serde(default = "default_layer_weight")]
     pub weight: f32,
     pub blend_mode: AnimatorLayerBlendMode,
+    /// Optional reusable Avatar Mask asset. Its paths are unioned with `mask_paths`.
+    pub avatar_mask: String,
     /// Relative target paths included by this layer. Empty means all targets.
     pub mask_paths: Vec<String>,
     /// Motions synchronized to states in the base state machine.
@@ -139,6 +141,7 @@ impl Default for AnimatorLayer {
             enabled: true,
             weight: default_layer_weight(),
             blend_mode: AnimatorLayerBlendMode::Override,
+            avatar_mask: String::new(),
             mask_paths: Vec::new(),
             motions: Vec::new(),
         }
@@ -239,6 +242,7 @@ impl AnimatorController {
         }
         for layer in &mut self.layers {
             layer.name = layer.name.trim().to_owned();
+            layer.avatar_mask = layer.avatar_mask.trim().replace('\\', "/");
             layer.weight = if layer.weight.is_finite() {
                 layer.weight.clamp(0.0, 1.0)
             } else {
@@ -363,6 +367,20 @@ impl AnimatorController {
                     layer.name
                 )));
             }
+            if !layer.avatar_mask.is_empty()
+                && !layer.avatar_mask.to_ascii_lowercase().ends_with(".mavatar")
+            {
+                return Err(AssetError::Invalid(format!(
+                    "Animator layer '{}' Avatar Mask must use the .mavatar extension",
+                    layer.name
+                )));
+            }
+            if layer.avatar_mask.split('/').any(|segment| segment == "..") {
+                return Err(AssetError::Invalid(format!(
+                    "Animator layer '{}' contains an unsafe Avatar Mask asset path",
+                    layer.name
+                )));
+            }
             let mut layer_states = HashSet::new();
             for motion in &layer.motions {
                 if !state_names.contains(motion.state.as_str()) {
@@ -444,7 +462,7 @@ mod tests {
             }"#,
         )
         .unwrap();
-        assert_eq!(controller.version, 2);
+        assert_eq!(controller.version, 3);
         assert_eq!(controller.states[0].clip, "Assets/Animations/idle.manim");
         assert_eq!(controller.states[0].position, [0.0, 0.0]);
         assert_eq!(controller.transitions[0].duration, 0.0);
@@ -495,6 +513,13 @@ mod tests {
             .unwrap_err()
             .to_string()
             .contains("Avatar Mask"));
+        let mut invalid_asset = controller.clone();
+        invalid_asset.layers[0].avatar_mask = "../Outside.mavatar".into();
+        assert!(invalid_asset
+            .validate()
+            .unwrap_err()
+            .to_string()
+            .contains("unsafe Avatar Mask"));
 
         let error = parse_animator_controller(
             br#"{

@@ -1,9 +1,10 @@
 use crate::textures::resolve_project_asset_path;
 use glam::Quat;
 use mengine_assets::{
-    load_animation_clip, load_animator_controller, AnimationClip, AnimationEvent, AnimationValue,
-    AnimationWrapMode, AnimatorCondition, AnimatorConditionMode, AnimatorController, AnimatorLayer,
-    AnimatorLayerBlendMode, AnimatorParameterKind,
+    load_animation_clip, load_animator_controller, load_avatar_mask, target_matches_mask,
+    AnimationClip, AnimationEvent, AnimationValue, AnimationWrapMode, AnimatorCondition,
+    AnimatorConditionMode, AnimatorController, AnimatorLayer, AnimatorLayerBlendMode,
+    AnimatorParameterKind, AvatarMaskAsset,
 };
 use mengine_core::generated::{AnimationPlayer, Animator};
 use mengine_core::{Entity, Parent, World};
@@ -42,6 +43,12 @@ struct CachedController {
     result: Result<Arc<AnimatorController>, String>,
 }
 
+#[derive(Clone)]
+struct CachedAvatarMask {
+    modified: Option<SystemTime>,
+    result: Result<Arc<AvatarMaskAsset>, String>,
+}
+
 #[derive(Clone, Debug)]
 struct ActiveTransition {
     source_state: String,
@@ -65,6 +72,7 @@ pub struct AnimationRuntime {
     project_root: Option<PathBuf>,
     clips: HashMap<PathBuf, CachedAnimation>,
     controllers: HashMap<PathBuf, CachedController>,
+    avatar_masks: HashMap<PathBuf, CachedAvatarMask>,
     animator_instances: HashMap<Entity, AnimatorInstance>,
     reported_failures: HashSet<(String, String)>,
     initialized_players: HashSet<Entity>,
@@ -80,6 +88,7 @@ impl AnimationRuntime {
             project_root,
             clips: HashMap::new(),
             controllers: HashMap::new(),
+            avatar_masks: HashMap::new(),
             animator_instances: HashMap::new(),
             reported_failures: HashSet::new(),
             initialized_players: HashSet::new(),
@@ -97,6 +106,7 @@ impl AnimationRuntime {
         self.project_root = project_root;
         self.clips.clear();
         self.controllers.clear();
+        self.avatar_masks.clear();
         self.animator_instances.clear();
         self.reported_failures.clear();
         self.initialized_players.clear();
@@ -113,6 +123,7 @@ impl AnimationRuntime {
         if let Some(path) = resolve_project_asset_path(root, clip) {
             self.clips.remove(&path);
             self.controllers.remove(&path);
+            self.avatar_masks.remove(&path);
         }
     }
 
@@ -591,13 +602,34 @@ impl AnimationRuntime {
                 .iter()
                 .filter(|layer| layer.enabled && layer.weight > f32::EPSILON)
             {
+                let mut mask_paths = layer.mask_paths.clone();
+                if !layer.avatar_mask.is_empty() {
+                    match self.load_avatar_mask(&layer.avatar_mask) {
+                        Ok(mask) => {
+                            if mask.paths.is_empty() || mask.paths.iter().any(|path| path == "*") {
+                                mask_paths.clear();
+                                mask_paths.push("*".into());
+                            } else {
+                                for path in &mask.paths {
+                                    if !mask_paths.contains(path) {
+                                        mask_paths.push(path.clone());
+                                    }
+                                }
+                            }
+                        }
+                        Err(error) => {
+                            self.record_failure(entity, &layer.avatar_mask, error, &mut failures);
+                            continue;
+                        }
+                    }
+                }
                 match self.sample_synced_layer(&controller, layer, &instance) {
                     Ok((samples, weight)) if weight > f32::EPSILON => {
                         apply_animation_layer_samples(
                             world,
                             entity,
                             samples,
-                            &layer.mask_paths,
+                            &mask_paths,
                             weight,
                             layer.blend_mode,
                         );
@@ -709,6 +741,34 @@ impl AnimationRuntime {
         self.controllers
             .get(&path)
             .expect("animator controller cache inserted")
+            .result
+            .clone()
+    }
+
+    fn load_avatar_mask(&mut self, key: &str) -> Result<Arc<AvatarMaskAsset>, String> {
+        let root = self
+            .project_root
+            .as_deref()
+            .ok_or_else(|| "runtime requires --project-root to resolve Avatar Masks".to_owned())?;
+        let path = resolve_project_asset_path(root, key)
+            .ok_or_else(|| "Avatar Mask path must be project-relative without '..'".to_owned())?;
+        let modified = std::fs::metadata(&path)
+            .and_then(|metadata| metadata.modified())
+            .ok();
+        let reload = self
+            .avatar_masks
+            .get(&path)
+            .is_none_or(|cached| cached.modified != modified);
+        if reload {
+            let result = load_avatar_mask(&path)
+                .map(Arc::new)
+                .map_err(|error| error.to_string());
+            self.avatar_masks
+                .insert(path.clone(), CachedAvatarMask { modified, result });
+        }
+        self.avatar_masks
+            .get(&path)
+            .expect("avatar mask cache inserted")
             .result
             .clone()
     }
@@ -913,20 +973,6 @@ fn apply_animation_samples(
     }
 }
 
-fn target_in_avatar_mask(target: &str, mask_paths: &[String]) -> bool {
-    if mask_paths.is_empty() || mask_paths.iter().any(|path| path == "*") {
-        return true;
-    }
-    let target = target.trim().replace('\\', "/");
-    mask_paths.iter().any(|path| {
-        path == &target
-            || (path != "."
-                && target
-                    .strip_prefix(path)
-                    .is_some_and(|suffix| suffix.starts_with('/')))
-    })
-}
-
 fn additive_animation_values(
     base: AnimationValue,
     delta: AnimationValue,
@@ -986,7 +1032,7 @@ fn apply_animation_layer_samples(
     blend_mode: AnimatorLayerBlendMode,
 ) {
     for sample in samples {
-        if !target_in_avatar_mask(&sample.target, mask_paths) {
+        if !target_matches_mask(&sample.target, mask_paths) {
             continue;
         }
         let Some(target) = resolve_animation_target(world, entity, &sample.target) else {
@@ -1686,13 +1732,19 @@ mod tests {
         write_constant_clip(&project, "offset", 2.0);
         write_constant_clip(&project, "blocked", 100.0);
         fs::write(
+            project.join("Assets/Animations/root.mavatar"),
+            r#"{"name":"Root","paths":["."]}"#,
+        )
+        .unwrap();
+        fs::write(
             project.join("Assets/Animations/layered.mcontroller"),
             r#"{
-              "version":2,"name":"Layered","default_state":"Idle",
+              "version":3,"name":"Layered","default_state":"Idle",
               "states":[{"name":"Idle","clip":"Assets/Animations/idle.manim"}],
               "layers":[
                 {
-                  "name":"Upper","weight":0.5,"blend_mode":"override","mask_paths":["."],
+                  "name":"Upper","weight":0.5,"blend_mode":"override",
+                  "avatar_mask":"Assets/Animations/root.mavatar",
                   "motions":[{"state":"Idle","clip":"Assets/Animations/upper.manim"}]
                 },
                 {
@@ -1777,12 +1829,9 @@ mod tests {
 
     #[test]
     fn avatar_masks_include_descendants_and_additive_quaternions_stay_normalized() {
-        assert!(target_in_avatar_mask(
-            "Rig/Spine/Hand",
-            &["Rig/Spine".into()]
-        ));
-        assert!(!target_in_avatar_mask("Rig/Leg", &["Rig/Spine".into()]));
-        assert!(target_in_avatar_mask("Anything", &["*".into()]));
+        assert!(target_matches_mask("Rig/Spine/Hand", &["Rig/Spine".into()]));
+        assert!(!target_matches_mask("Rig/Leg", &["Rig/Spine".into()]));
+        assert!(target_matches_mask("Anything", &["*".into()]));
 
         let value = additive_animation_values(
             AnimationValue::Vector(vec![0.0, 0.0, 0.0, 1.0]),

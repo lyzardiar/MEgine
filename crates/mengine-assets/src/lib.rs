@@ -2,6 +2,7 @@
 
 mod animation;
 mod animator;
+mod avatar_mask;
 mod gltf_import;
 mod material;
 mod registry;
@@ -19,6 +20,7 @@ pub use animator::{
     AnimatorController, AnimatorLayer, AnimatorLayerBlendMode, AnimatorLayerMotion,
     AnimatorParameter, AnimatorParameterKind, AnimatorState, AnimatorTransition,
 };
+pub use avatar_mask::{load_avatar_mask, parse_avatar_mask, target_matches_mask, AvatarMaskAsset};
 pub use gltf_import::{load_gltf_mesh_data, MeshData};
 pub use material::{
     load_material_asset, parse_material_asset, MaterialAsset, MaterialBlendMode, MaterialFilter,

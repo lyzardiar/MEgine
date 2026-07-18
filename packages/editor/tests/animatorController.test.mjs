@@ -75,16 +75,18 @@ test('animator controller upgrades and validates synchronized layers with target
       enabled: true,
       weight: 4,
       blend_mode: 'additive',
+      avatar_mask: ' Assets\\Animations\\Upper.mavatar ',
       mask_paths: [' Rig\\Spine ', 'Rig/Spine/', 'Rig/Spine'],
       motions: [{ state: 'Run', clip: 'Assets\\Animations\\wave.manim' }],
     }],
   });
-  assert.equal(controller.version, 2);
+  assert.equal(controller.version, 3);
   assert.deepEqual(controller.layers[0], {
     name: 'Upper Body',
     enabled: true,
     weight: 1,
     blend_mode: 'additive',
+    avatar_mask: 'Assets/Animations/Upper.mavatar',
     mask_paths: ['Rig/Spine'],
     motions: [{ state: 'Run', clip: 'Assets/Animations/wave.manim' }],
   });
@@ -95,4 +97,7 @@ test('animator controller upgrades and validates synchronized layers with target
   controller.layers[0].motions[0].state = 'Run';
   controller.layers[0].mask_paths = ['../Rig'];
   assert.throws(() => serializeAnimatorController(controller), /Avatar Mask/);
+  controller.layers[0].mask_paths = [];
+  controller.layers[0].avatar_mask = '../Outside.mavatar';
+  assert.throws(() => serializeAnimatorController(controller), /不安全/);
 });
