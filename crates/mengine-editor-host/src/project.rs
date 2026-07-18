@@ -582,6 +582,7 @@ interface EngineApi {
   playAudio(entity: number | string): boolean;
   pauseAudio(entity: number | string): boolean;
   stopAudio(entity: number | string): boolean;
+  seekAudio(entity: number | string, time: number): boolean;
   scene: EngineSceneInfo | null;
 }
 
@@ -920,6 +921,7 @@ mod tests {
         assert!(engine_types.contains("seekAnimation(entity:"));
         assert!(engine_types.contains("playTimeline(entity:"));
         assert!(engine_types.contains("seekTimeline(entity:"));
+        assert!(engine_types.contains("seekAudio(entity:"));
         assert!(project_root.join("Assets/Models").is_dir());
         assert!(project_root.join("ProjectSettings/editor.json").is_file());
         assert!(project_root

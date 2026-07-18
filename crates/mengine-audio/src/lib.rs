@@ -80,6 +80,7 @@ impl AudioMixerSettings {
 pub struct AudioSourceSettings {
     pub clip: PathBuf,
     pub playing: bool,
+    pub time: f32,
     pub looped: bool,
     pub volume: f32,
     pub pitch: f32,
@@ -113,11 +114,11 @@ struct SourceRestartKey {
     max_distance_bits: u32,
 }
 
-#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+#[derive(Clone, Copy, Debug, PartialEq)]
 pub enum SourceSyncStatus {
-    Playing,
-    Paused,
-    Finished,
+    Playing { position: f32 },
+    Paused { position: f32 },
+    Finished { position: f32 },
 }
 
 struct LiveSource {
@@ -125,6 +126,7 @@ struct LiveSource {
     spatial_track: Option<SpatialTrackHandle>,
     restart_key: SourceRestartKey,
     desired_playing: bool,
+    reported_position: f32,
 }
 
 struct BackendState {
@@ -240,18 +242,30 @@ impl AudioEngine {
             self.stop_source(id);
         }
 
-        if !self.sources.contains_key(&id) {
+        let starting = !self.sources.contains_key(&id);
+        if starting {
             if !settings.playing {
-                return Ok(SourceSyncStatus::Paused);
+                return Ok(SourceSyncStatus::Paused {
+                    position: settings.time,
+                });
             }
             let source = self.start_source(&settings)?;
             self.sources.insert(id, source);
         }
 
         let source = self.sources.get_mut(&id).expect("source inserted above");
+        let mut position = if starting {
+            settings.time
+        } else {
+            finite_playback_position(source.sound.position(), source.reported_position)
+        };
         if source.sound.state() == PlaybackState::Stopped {
             self.sources.remove(&id);
-            return Ok(SourceSyncStatus::Finished);
+            return Ok(SourceSyncStatus::Finished { position });
+        }
+        if !starting && (settings.time - source.reported_position).abs() > 0.001 {
+            source.sound.seek_to(settings.time as f64);
+            position = settings.time;
         }
 
         let volume = if settings.muted {
@@ -280,10 +294,11 @@ impl AudioEngine {
             source.sound.pause(Tween::default());
         }
         source.desired_playing = settings.playing;
+        source.reported_position = position;
         Ok(if settings.playing {
-            SourceSyncStatus::Playing
+            SourceSyncStatus::Playing { position }
         } else {
-            SourceSyncStatus::Paused
+            SourceSyncStatus::Paused { position }
         })
     }
 
@@ -301,6 +316,19 @@ impl AudioEngine {
         if let Some(mut source) = self.sources.remove(&id) {
             source.sound.stop(Tween::default());
         }
+    }
+
+    /// Seeks an already-live source. The requested position is retained by the
+    /// ECS component when the source has not started yet, so absence is not an
+    /// error and the next sync will still begin at the requested time.
+    pub fn seek_source(&mut self, id: u64, time: f32) -> bool {
+        let time = finite_clamp(time, 0.0, f32::MAX, 0.0);
+        let Some(source) = self.sources.get_mut(&id) else {
+            return false;
+        };
+        source.sound.seek_to(time as f64);
+        source.reported_position = time;
+        true
     }
 
     pub fn clear(&mut self) {
@@ -340,6 +368,7 @@ impl AudioEngine {
     fn start_source(&mut self, settings: &AudioSourceSettings) -> Result<LiveSource, AudioError> {
         let mut data = self.load_clip(&settings.clip)?;
         data = data
+            .start_position(settings.time as f64)
             .volume(if settings.muted {
                 Decibels::SILENCE
             } else {
@@ -382,6 +411,7 @@ impl AudioEngine {
             spatial_track,
             restart_key: settings.restart_key(),
             desired_playing: true,
+            reported_position: settings.time,
         })
     }
 }
@@ -396,6 +426,7 @@ fn sanitize_mixer(mut settings: AudioMixerSettings) -> AudioMixerSettings {
 }
 
 fn sanitize_source(settings: &mut AudioSourceSettings) {
+    settings.time = finite_clamp(settings.time, 0.0, f32::MAX, 0.0);
     settings.volume = finite_clamp(settings.volume, 0.0, 4.0, 1.0);
     settings.pitch = finite_clamp(settings.pitch, 0.05, 4.0, 1.0);
     settings.pan = finite_clamp(settings.pan, -1.0, 1.0, 0.0);
@@ -408,6 +439,14 @@ fn sanitize_source(settings: &mut AudioSourceSettings) {
         settings.min_distance.max(1.0) + 100.0,
     );
     settings.position = finite_position(settings.position).into();
+}
+
+fn finite_playback_position(value: f64, fallback: f32) -> f32 {
+    if value.is_finite() && value >= 0.0 && value <= f32::MAX as f64 {
+        value as f32
+    } else {
+        fallback
+    }
 }
 
 fn finite_clamp(value: f32, min: f32, max: f32, fallback: f32) -> f32 {
@@ -470,6 +509,7 @@ mod tests {
         let mut source = AudioSourceSettings {
             clip: "test.wav".into(),
             playing: true,
+            time: f32::NAN,
             looped: false,
             volume: f32::NAN,
             pitch: 0.0,
@@ -482,6 +522,7 @@ mod tests {
             position: [f32::NAN, 2.0, 3.0],
         };
         sanitize_source(&mut source);
+        assert_eq!(source.time, 0.0);
         assert_eq!(source.volume, 1.0);
         assert_eq!(source.pitch, 0.05);
         assert_eq!(source.pan, 1.0);

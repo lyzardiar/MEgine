@@ -189,6 +189,7 @@ export interface AudioSource {
   clip: string;
   playOnAwake: boolean;
   playing: boolean;
+  time: number;
   looped: boolean;
   volume: number;
   pitch: number;

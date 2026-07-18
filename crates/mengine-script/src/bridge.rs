@@ -75,6 +75,10 @@ pub enum ScriptRuntimeRequest {
     StopAudio {
         entity: u64,
     },
+    SeekAudio {
+        entity: u64,
+        time: f32,
+    },
 }
 
 #[derive(Clone, Debug, PartialEq)]
@@ -608,6 +612,21 @@ fn register_engine(context: &mut Context) -> Result<(), ScriptError> {
         };
         queue_runtime_request(ScriptRuntimeRequest::StopAudio { entity })
     });
+    let seek_audio = NativeFunction::from_copy_closure(|_this, args, ctx| {
+        let Some(entity) = js_entity_id(args.get_or_undefined(0), ctx) else {
+            return Ok(JsValue::new(false));
+        };
+        let Some(time) = args.get_or_undefined(1).as_number() else {
+            return Ok(JsValue::new(false));
+        };
+        if !time.is_finite() || time < 0.0 || time > f32::MAX as f64 {
+            return Ok(JsValue::new(false));
+        }
+        queue_runtime_request(ScriptRuntimeRequest::SeekAudio {
+            entity,
+            time: time as f32,
+        })
+    });
     let instantiate_prefab = NativeFunction::from_copy_closure(|_this, args, ctx| {
         let path = args
             .get_or_undefined(0)
@@ -629,7 +648,7 @@ fn register_engine(context: &mut Context) -> Result<(), ScriptError> {
 
     context
         .eval(Source::from_bytes(
-            b"var engine = { setClearColor: null, pushCommandJson: null, loadScene: null, reloadScene: null, instantiatePrefab: null, setAnimatorParameter: null, setAnimatorTrigger: null, playAnimatorState: null, setAnimatorLayerWeight: null, playAnimatorLayerState: null, playAnimation: null, pauseAnimation: null, stopAnimation: null, seekAnimation: null, playTimeline: null, pauseTimeline: null, stopTimeline: null, seekTimeline: null, playAudio: null, pauseAudio: null, stopAudio: null, scene: null };",
+            b"var engine = { setClearColor: null, pushCommandJson: null, loadScene: null, reloadScene: null, instantiatePrefab: null, setAnimatorParameter: null, setAnimatorTrigger: null, playAnimatorState: null, setAnimatorLayerWeight: null, playAnimatorLayerState: null, playAnimation: null, pauseAnimation: null, stopAnimation: null, seekAnimation: null, playTimeline: null, pauseTimeline: null, stopTimeline: null, seekTimeline: null, playAudio: null, pauseAudio: null, stopAudio: null, seekAudio: null, scene: null };",
         ))
         .map_err(|e| ScriptError::Js(format!("{e}")))?;
 
@@ -732,6 +751,7 @@ fn register_engine(context: &mut Context) -> Result<(), ScriptError> {
         ("playAudio", play_audio),
         ("pauseAudio", pause_audio),
         ("stopAudio", stop_audio),
+        ("seekAudio", seek_audio),
     ] {
         engine_obj
             .set(
@@ -974,6 +994,8 @@ mod tests {
             if (!engine.playAudio("4294967297")) throw new Error("audio play rejected");
             if (!engine.pauseAudio(7)) throw new Error("audio pause rejected");
             if (!engine.stopAudio("4294967297")) throw new Error("audio stop rejected");
+            if (!engine.seekAudio("4294967297", 3.75)) throw new Error("audio seek rejected");
+            if (engine.seekAudio(7, -1)) throw new Error("negative audio time accepted");
             "#,
         )
         .unwrap();
@@ -1039,6 +1061,10 @@ mod tests {
                 ScriptRuntimeRequest::PauseAudio { entity: 7 },
                 ScriptRuntimeRequest::StopAudio {
                     entity: 4_294_967_297,
+                },
+                ScriptRuntimeRequest::SeekAudio {
+                    entity: 4_294_967_297,
+                    time: 3.75,
                 },
             ]
         );

@@ -15,6 +15,7 @@ interface EngineApi {
   playAudio(entity: number | string): boolean;
   pauseAudio(entity: number | string): boolean;
   stopAudio(entity: number | string): boolean;
+  seekAudio(entity: number | string, time: number): boolean;
   scene: EngineSceneInfo | null;
 }
 

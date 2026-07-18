@@ -240,6 +240,9 @@
       "spatial_blend": {
         "type": "number"
       },
+      "time": {
+        "type": "number"
+      },
       "volume": {
         "type": "number"
       }
@@ -248,6 +251,7 @@
       "clip",
       "play_on_awake",
       "playing",
+      "time",
       "looped",
       "volume",
       "pitch",

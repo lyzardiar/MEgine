@@ -212,6 +212,7 @@ component AudioSource {
   clip:             string = ""
   play_on_awake:    bool   = true
   playing:          bool   = true
+  time:             float  = 0
   looped:           bool   = false
   volume:           float  = 1
   pitch:            float  = 1

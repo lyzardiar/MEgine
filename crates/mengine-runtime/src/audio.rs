@@ -61,6 +61,10 @@ impl AudioRuntime {
         self.engine.stop_source(entity.to_u64());
     }
 
+    pub fn seek_source(&mut self, entity: Entity, time: f32) {
+        self.engine.seek_source(entity.to_u64(), time);
+    }
+
     pub fn update(&mut self, world: &mut World) -> Vec<AudioLoadFailure> {
         let hierarchy = TransformHierarchy::build(world);
         self.sync_mixer(world, &hierarchy);
@@ -126,6 +130,7 @@ impl AudioRuntime {
             let settings = AudioSourceSettings {
                 clip: path,
                 playing: source.playing,
+                time: source.time,
                 looped: source.looped,
                 volume: source.volume,
                 pitch: source.pitch,
@@ -138,12 +143,18 @@ impl AudioRuntime {
                 position,
             };
             match self.engine.sync_source(entity.to_u64(), settings) {
-                Ok(SourceSyncStatus::Finished) => {
+                Ok(SourceSyncStatus::Finished { position }) => {
                     if let Some(live) = world.get_component_mut::<AudioSource>(entity) {
                         live.playing = false;
+                        live.time = position;
                     }
                 }
-                Ok(_) => {
+                Ok(
+                    SourceSyncStatus::Playing { position } | SourceSyncStatus::Paused { position },
+                ) => {
+                    if let Some(live) = world.get_component_mut::<AudioSource>(entity) {
+                        live.time = position;
+                    }
                     self.reported_failures
                         .retain(|(failed_entity, failed_clip, _)| {
                             *failed_entity != entity || failed_clip != clip_key

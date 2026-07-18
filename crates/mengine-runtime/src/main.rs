@@ -390,8 +390,19 @@ impl App {
                 self.audio.stop_source(entity);
                 if let Some(source) = self.world.get_component_mut::<AudioSource>(entity) {
                     source.playing = false;
+                    source.time = 0.0;
                 } else {
                     log::warn!("script tried to stop AudioSource on missing entity {entity:?}");
+                }
+                return;
+            }
+            ScriptRuntimeRequest::SeekAudio { entity, time } => {
+                let entity = Entity::from_u64(*entity);
+                self.audio.seek_source(entity, *time);
+                if let Some(source) = self.world.get_component_mut::<AudioSource>(entity) {
+                    source.time = *time;
+                } else {
+                    log::warn!("script tried to seek AudioSource on missing entity {entity:?}");
                 }
                 return;
             }
@@ -432,7 +443,8 @@ impl App {
             | ScriptRuntimeRequest::SeekTimeline { .. }
             | ScriptRuntimeRequest::PlayAudio { .. }
             | ScriptRuntimeRequest::PauseAudio { .. }
-            | ScriptRuntimeRequest::StopAudio { .. } => unreachable!(),
+            | ScriptRuntimeRequest::StopAudio { .. }
+            | ScriptRuntimeRequest::SeekAudio { .. } => unreachable!(),
         };
         match self.scenes.load(selector, &mut self.world) {
             Ok(loaded) => {
