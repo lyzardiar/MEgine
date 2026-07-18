@@ -80,7 +80,7 @@ Commands:
   codegen                     Print the engine codegen command
 
 Build options:
-  --out <dir>                 Output directory (default: <project>/Builds/<platform>-<arch>)
+  --out <dir>                 Output directory (default: <project>/Builds/<platform>-<arch>-<profile>)
   --runtime <file>            Use an existing mengine-runtime executable
   --debug                     Build/use the debug runtime instead of release
   --skip-runtime-build        Reuse an existing runtime without invoking Cargo
@@ -245,13 +245,14 @@ function buildProject(values: string[]) {
   const args = parseBuildArguments(values);
   const platform = hostBuildPlatform();
   const outputDir = args.outputDir
-    ?? join(args.projectDir, 'Builds', `${platform}-${process.arch}`);
+    ?? join(args.projectDir, 'Builds', `${platform}-${process.arch}-${args.profile}`);
   const manifest = buildPcPackage({
     projectDir: args.projectDir,
     outputDir,
     runtimePath: resolveRuntime(args),
     engineVersion: ENGINE_VERSION,
     clean: args.clean,
+    profile: args.profile,
     platform,
   });
   if (!args.skipVerify) {
@@ -272,6 +273,7 @@ function buildProject(values: string[]) {
   console.log(`Built ${manifest.project.name} → ${outputDir}`);
   console.log(`Player: ${join(outputDir, manifest.executable)}`);
   console.log(`Files: ${manifest.files.length} (SHA-256 manifest written)`);
+  console.log(`Content: ${manifest.contentHash}`);
   console.log(
     `Assets: ${manifest.assetValidation.validatedFiles} validated files, ${manifest.assetValidation.references} references`,
   );

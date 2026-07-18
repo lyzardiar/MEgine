@@ -151,7 +151,7 @@ export function BuildSettings(props: {
     try {
       const result = await buildPcPlayer(profile, clean);
       setLastBuild(result);
-      setMessage(`Build completed: ${result.fileCount} packaged files.`);
+      setMessage(`Build completed: ${result.fileCount} packaged files · ${result.contentHash.slice(0, 12)}.`);
       props.onLog(`Built ${result.profile} player -> ${result.outputDir}`);
       if (runAfterBuild) {
         setBuilding(false);
@@ -273,7 +273,7 @@ export function BuildSettings(props: {
       {lastBuild && (
         <section className="build-result">
           <strong>{lastBuild.executable}</strong>
-          <span>{lastBuild.profile} - {lastBuild.fileCount} files - SHA-256 manifest</span>
+          <span>{lastBuild.profile} · {lastBuild.fileCount} files · SHA-256 {lastBuild.contentHash}</span>
           {lastBuild.log && <pre>{lastBuild.log}</pre>}
         </section>
       )}

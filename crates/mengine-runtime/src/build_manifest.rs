@@ -11,6 +11,8 @@ pub const BUILD_MANIFEST_FILE: &str = "mengine-build.json";
 #[serde(rename_all = "camelCase")]
 struct BuildManifest {
     schema_version: u32,
+    #[serde(default)]
+    content_hash: Option<String>,
     files: Vec<BuildFile>,
 }
 
@@ -47,6 +49,10 @@ pub enum BuildManifestError {
     DuplicatePath(String),
     #[error("invalid SHA-256 for build file {path}: {value}")]
     InvalidHash { path: String, value: String },
+    #[error("invalid packaged content SHA-256: {0}")]
+    InvalidContentHash(String),
+    #[error("packaged content fingerprint mismatch: expected {expected}, found {actual}")]
+    ContentHash { expected: String, actual: String },
     #[error("packaged build file is missing or not a regular file: {0}")]
     MissingFile(PathBuf),
     #[error("packaged build file size mismatch for {path}: expected {expected}, found {actual}")]
@@ -157,6 +163,35 @@ fn sha256(path: &Path) -> Result<String, BuildManifestError> {
     Ok(format!("{:x}", digest.finalize()))
 }
 
+fn decode_sha256(value: &str) -> Option<[u8; 32]> {
+    if value.len() != 64 || !value.bytes().all(|byte| byte.is_ascii_hexdigit()) {
+        return None;
+    }
+    let mut decoded = [0_u8; 32];
+    for (index, output) in decoded.iter_mut().enumerate() {
+        let offset = index * 2;
+        *output = u8::from_str_radix(&value[offset..offset + 2], 16).ok()?;
+    }
+    Some(decoded)
+}
+
+fn build_content_hash(files: &[BuildFile]) -> Result<String, BuildManifestError> {
+    let mut files = files.iter().collect::<Vec<_>>();
+    files.sort_by(|left, right| left.path.as_bytes().cmp(right.path.as_bytes()));
+    let mut digest = Sha256::new();
+    for entry in files {
+        let hash = decode_sha256(&entry.sha256).ok_or_else(|| BuildManifestError::InvalidHash {
+            path: entry.path.clone(),
+            value: entry.sha256.clone(),
+        })?;
+        digest.update((entry.path.len() as u64).to_le_bytes());
+        digest.update(entry.path.as_bytes());
+        digest.update(entry.size.to_le_bytes());
+        digest.update(hash);
+    }
+    Ok(format!("{:x}", digest.finalize()))
+}
+
 pub fn verify_build_manifest(
     build_root: impl AsRef<Path>,
 ) -> Result<BuildIntegrity, BuildManifestError> {
@@ -188,7 +223,7 @@ pub fn verify_build_manifest(
         if !paths.insert(key) {
             return Err(BuildManifestError::DuplicatePath(entry.path.clone()));
         }
-        if entry.sha256.len() != 64 || !entry.sha256.bytes().all(|byte| byte.is_ascii_hexdigit()) {
+        if decode_sha256(&entry.sha256).is_none() {
             return Err(BuildManifestError::InvalidHash {
                 path: entry.path.clone(),
                 value: entry.sha256.clone(),
@@ -211,6 +246,18 @@ pub fn verify_build_manifest(
             return Err(BuildManifestError::Hash(path));
         }
         byte_count = byte_count.saturating_add(entry.size);
+    }
+    if let Some(expected) = manifest.content_hash.as_deref() {
+        if decode_sha256(expected).is_none() {
+            return Err(BuildManifestError::InvalidContentHash(expected.to_owned()));
+        }
+        let actual = build_content_hash(&manifest.files)?;
+        if actual != expected.to_lowercase() {
+            return Err(BuildManifestError::ContentHash {
+                expected: expected.to_lowercase(),
+                actual,
+            });
+        }
     }
     verify_no_unlisted_files(build_root, build_root, &paths)?;
     Ok(BuildIntegrity {
@@ -262,6 +309,42 @@ mod tests {
         assert!(matches!(
             verify_build_manifest(&root),
             Err(BuildManifestError::Hash(_))
+        ));
+        std::fs::remove_dir_all(root).unwrap();
+    }
+
+    #[test]
+    fn validates_aggregate_packaged_content_fingerprint() {
+        let root = test_root("content-hash");
+        std::fs::create_dir_all(root.join("Assets")).unwrap();
+        let bytes = b"scene";
+        let path = "Assets/Main.mscene";
+        let file_hash = format!("{:x}", Sha256::digest(bytes));
+        std::fs::write(root.join(path), bytes).unwrap();
+        let files = vec![BuildFile {
+            path: path.into(),
+            size: bytes.len() as u64,
+            sha256: file_hash.clone(),
+        }];
+        let content_hash = build_content_hash(&files).unwrap();
+        std::fs::write(
+            root.join(BUILD_MANIFEST_FILE),
+            format!(
+                r#"{{"schemaVersion":1,"contentHash":"{content_hash}","files":[{{"path":"{path}","size":{},"sha256":"{file_hash}"}}]}}"#,
+                bytes.len()
+            ),
+        )
+        .unwrap();
+        assert!(verify_build_manifest(&root).is_ok());
+
+        let invalid = "0".repeat(64);
+        let text = std::fs::read_to_string(root.join(BUILD_MANIFEST_FILE))
+            .unwrap()
+            .replace(&content_hash, &invalid);
+        std::fs::write(root.join(BUILD_MANIFEST_FILE), text).unwrap();
+        assert!(matches!(
+            verify_build_manifest(&root),
+            Err(BuildManifestError::ContentHash { .. })
         ));
         std::fs::remove_dir_all(root).unwrap();
     }

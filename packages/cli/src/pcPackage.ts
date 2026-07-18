@@ -31,6 +31,7 @@ export interface PcPackageOptions {
   runtimePath: string;
   engineVersion: string;
   clean?: boolean;
+  profile?: 'debug' | 'release';
   platform?: string;
   architecture?: string;
 }
@@ -46,7 +47,9 @@ export interface PcBuildManifest {
   engineVersion: string;
   platform: string;
   architecture: string;
+  profile: 'debug' | 'release';
   executable: string;
+  contentHash: string;
   project: GameProjectManifest;
   assetValidation: BuildAssetValidation;
   files: BuildFileEntry[];
@@ -719,6 +722,27 @@ function collectFiles(root: string, current = root, output: BuildFileEntry[] = [
   return output;
 }
 
+function u64LittleEndian(value: bigint): Buffer {
+  const bytes = Buffer.allocUnsafe(8);
+  bytes.writeBigUInt64LE(value);
+  return bytes;
+}
+
+/** Deterministic aggregate fingerprint for the complete packaged payload. */
+export function buildContentHash(files: readonly BuildFileEntry[]): string {
+  const digest = createHash('sha256');
+  for (const file of [...files].sort((left, right) => (
+    Buffer.compare(Buffer.from(left.path, 'utf8'), Buffer.from(right.path, 'utf8'))
+  ))) {
+    const path = Buffer.from(file.path, 'utf8');
+    digest.update(u64LittleEndian(BigInt(path.byteLength)));
+    digest.update(path);
+    digest.update(u64LittleEndian(BigInt(file.size)));
+    digest.update(Buffer.from(file.sha256, 'hex'));
+  }
+  return digest.digest('hex');
+}
+
 /** Atomically replaces a completed build while restoring the previous build on publish failure. */
 export function publishStagedBuild(
   stageDir: string,
@@ -853,15 +877,18 @@ export function buildPcPackage(options: PcPackageOptions): PcBuildManifest {
       'utf8',
     );
 
+    const files = collectFiles(stageDir);
     const manifest: PcBuildManifest = {
       schemaVersion: 1,
       engineVersion: options.engineVersion,
       platform,
       architecture: options.architecture ?? process.arch,
+      profile: options.profile ?? 'release',
       executable,
+      contentHash: buildContentHash(files),
       project: packagedProject,
       assetValidation,
-      files: collectFiles(stageDir),
+      files,
     };
     writeFileSync(
       join(stageDir, BUILD_MANIFEST_FILE),

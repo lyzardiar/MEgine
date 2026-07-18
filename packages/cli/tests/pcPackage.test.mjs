@@ -15,6 +15,7 @@ import test from 'node:test';
 import {
   BUILD_MANIFEST_FILE,
   PLAYER_CONFIG_FILE,
+  buildContentHash,
   buildPcPackage,
   publishStagedBuild,
 } from '../dist/pcPackage.js';
@@ -80,6 +81,9 @@ test('buildPcPackage creates a directly launchable, hashed project bundle', () =
       architecture: 'x64',
     });
     assert.equal(manifest.executable, 'Package Test.exe');
+    assert.equal(manifest.profile, 'release');
+    assert.match(manifest.contentHash, /^[0-9a-f]{64}$/);
+    assert.equal(manifest.contentHash, buildContentHash(manifest.files));
     assert.deepEqual(manifest.assetValidation, {
       rootScenes: 2,
       references: 2,
@@ -136,6 +140,16 @@ test('buildPcPackage creates a directly launchable, hashed project bundle', () =
   } finally {
     rmSync(paths.root, { recursive: true, force: true });
   }
+});
+
+test('build content fingerprint is deterministic and covers paths sizes and hashes', () => {
+  const first = { path: 'Assets/a.bin', size: 1, sha256: '01'.repeat(32) };
+  const second = { path: 'Assets/b.bin', size: 2, sha256: '02'.repeat(32) };
+  const expected = buildContentHash([first, second]);
+  assert.equal(buildContentHash([second, first]), expected);
+  assert.notEqual(buildContentHash([{ ...first, size: 2 }, second]), expected);
+  assert.notEqual(buildContentHash([{ ...first, path: 'Assets/c.bin' }, second]), expected);
+  assert.notEqual(buildContentHash([{ ...first, sha256: '03'.repeat(32) }, second]), expected);
 });
 
 test('buildPcPackage validates transitive material animator and audio dependencies', () => {

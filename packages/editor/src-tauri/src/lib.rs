@@ -85,6 +85,7 @@ struct BuildPlayerResult {
     output_dir: String,
     executable: String,
     file_count: usize,
+    content_hash: String,
     profile: String,
     log: String,
 }
@@ -164,25 +165,30 @@ fn run_player_build(
                 .to_string()
         })?;
     let cli = engine_root.join("packages/cli/dist/cli.js");
-    if !cli.is_file() {
-        let npm = if cfg!(target_os = "windows") {
-            "npm.cmd"
-        } else {
-            "npm"
-        };
-        let output = Command::new(npm)
-            .current_dir(&engine_root)
-            .args(["--prefix", "packages/cli", "run", "build"])
-            .output()
-            .map_err(|error| format!("cannot start CLI build: {error}"))?;
-        if !output.status.success() {
-            return Err(command_failure("MEngine CLI build", &output));
-        }
+    let npm = if cfg!(target_os = "windows") {
+        "npm.cmd"
+    } else {
+        "npm"
+    };
+    let output = Command::new(npm)
+        .current_dir(&engine_root)
+        .args(["--prefix", "packages/cli", "run", "build"])
+        .output()
+        .map_err(|error| format!("cannot start CLI build: {error}"))?;
+    if !output.status.success() {
+        return Err(command_failure("MEngine CLI build", &output));
     }
-    let output_dir =
-        project_root
-            .join("Builds")
-            .join(format!("{}-{}", node_platform_name(), node_arch_name()));
+    if !cli.is_file() {
+        return Err(format!(
+            "MEngine CLI build completed without {}",
+            cli.display()
+        ));
+    }
+    let output_dir = project_root.join("Builds").join(format!(
+        "{}-{}-{profile}",
+        node_platform_name(),
+        node_arch_name()
+    ));
     let mut command = Command::new("node");
     command
         .current_dir(&engine_root)
@@ -220,10 +226,26 @@ fn run_player_build(
         .get("files")
         .and_then(serde_json::Value::as_array)
         .map_or(0, Vec::len);
+    let content_hash = build_manifest
+        .get("contentHash")
+        .and_then(serde_json::Value::as_str)
+        .filter(|value| value.len() == 64 && value.bytes().all(|byte| byte.is_ascii_hexdigit()))
+        .ok_or_else(|| "build manifest does not contain a valid contentHash".to_string())?
+        .to_ascii_lowercase();
+    let manifest_profile = build_manifest
+        .get("profile")
+        .and_then(serde_json::Value::as_str)
+        .ok_or_else(|| "build manifest does not contain a profile".to_string())?;
+    if manifest_profile != profile {
+        return Err(format!(
+            "build manifest profile mismatch: expected {profile}, found {manifest_profile}"
+        ));
+    }
     Ok(BuildPlayerResult {
         output_dir: output_dir.to_string_lossy().into_owned(),
         executable: output_dir.join(executable).to_string_lossy().into_owned(),
         file_count,
+        content_hash,
         profile,
         log: String::from_utf8_lossy(&output.stdout).trim().to_owned(),
     })

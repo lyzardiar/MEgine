@@ -43,6 +43,7 @@ export type BuildPlayerResult = {
   outputDir: string;
   executable: string;
   fileCount: number;
+  contentHash: string;
   profile: BuildPlayerProfile;
   log: string;
 };
