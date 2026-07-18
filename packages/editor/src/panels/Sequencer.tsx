@@ -56,6 +56,7 @@ import {
   moveSequencerTrack,
   pasteSequencerItem,
   sequencerTicks,
+  trimSequencerCameraBlendIn,
   trimSequencerClip,
   type SequencerClipboard,
 } from '../sequencerEditing';
@@ -481,6 +482,22 @@ export function Sequencer(props: SequencerProps) {
     setSelection({ track: asset.tracks.length, marker: null });
   };
 
+  const addCameraTrack = () => {
+    if (!asset) return;
+    if (asset.tracks.some((track) => track.type === 'camera')) {
+      setError('A Timeline asset can contain only one Camera Track.');
+      return;
+    }
+    const used = new Set(asset.tracks.map((track) => track.id));
+    let index = asset.tracks.length + 1;
+    let id = `camera-${index}`;
+    while (used.has(id)) id = `camera-${++index}`;
+    update((draft) => draft.tracks.push({
+      type: 'camera', id, name: `Camera Track ${index}`, muted: false, locked: false, clips: [],
+    }));
+    setSelection({ track: asset.tracks.length, marker: null });
+  };
+
   const addMarker = (trackIndex = selection?.track ?? 0, requestedTime = time) => {
     if (!asset || asset.tracks[trackIndex]?.type !== 'signal') return;
     const markerTime = snapTimelineAssetTime(requestedTime, asset);
@@ -598,6 +615,37 @@ export function Sequencer(props: SequencerProps) {
     setSelection({ track: trackIndex, marker });
   };
 
+  const addCameraClip = (trackIndex: number, requestedTime = time) => {
+    if (!asset || asset.tracks[trackIndex]?.type !== 'camera') return;
+    const track = asset.tracks[trackIndex];
+    const placement = findSequencerClipPlacement(
+      track.clips,
+      requestedTime,
+      Math.min(1, asset.duration),
+      asset.duration,
+      asset.frame_rate,
+    );
+    if (!placement) {
+      setError('Camera Track has no free space for another shot.');
+      return;
+    }
+    const marker = track.clips.filter((clip) => clip.start < placement.start).length;
+    update((draft) => {
+      const target = draft.tracks[trackIndex];
+      if (target.type === 'camera') {
+        target.clips.push({
+          ...placement,
+          target: 'Cameras/Main Camera',
+          blend_in: 0,
+          blend_curve: 'ease_in_out',
+        });
+        target.clips.sort((left, right) => left.start - right.start);
+      }
+    });
+    setError(null);
+    setSelection({ track: trackIndex, marker });
+  };
+
   const addTrackItem = (trackIndex: number, requestedTime: number) => {
     const track = asset?.tracks[trackIndex];
     if (track?.locked) {
@@ -609,6 +657,7 @@ export function Sequencer(props: SequencerProps) {
     else if (track?.type === 'audio') addAudioClip(trackIndex, requestedTime);
     else if (track?.type === 'animation') addAnimationClip(trackIndex, requestedTime);
     else if (track?.type === 'particle') addParticleClip(trackIndex, requestedTime);
+    else if (track?.type === 'camera') addCameraClip(trackIndex, requestedTime);
   };
 
   const copySelectedItem = (): SequencerClipboard | null => {
@@ -780,6 +829,12 @@ export function Sequencer(props: SequencerProps) {
             if (track.type === 'particle') {
               clip.duration = Math.min(clip.duration, TIMELINE_MAX_PARTICLE_TIME - track.clips[markerIndex].clip_in);
             }
+            if (track.type === 'camera') {
+              const original = originalTrack.type === 'camera' ? originalTrack.clips[markerIndex] : null;
+              track.clips[markerIndex].blend_in = trimEdge === 'start' && original
+                ? trimSequencerCameraBlendIn(original.blend_in, clip.duration, range.sourceOffsetDelta)
+                : Math.min(track.clips[markerIndex].blend_in, clip.duration);
+            }
           } else {
             const range = moveSequencerClip(
               originalTrack.clips,
@@ -841,7 +896,10 @@ export function Sequencer(props: SequencerProps) {
   const selectedParticleClip = selection?.marker != null && selectedTrack?.type === 'particle'
     ? selectedTrack.clips[selection.marker]
     : null;
-  const selectedClip = selectedActivationClip ?? selectedAudioClip ?? selectedAnimationClip ?? selectedParticleClip;
+  const selectedCameraClip = selection?.marker != null && selectedTrack?.type === 'camera'
+    ? selectedTrack.clips[selection.marker]
+    : null;
+  const selectedClip = selectedActivationClip ?? selectedAudioClip ?? selectedAnimationClip ?? selectedParticleClip ?? selectedCameraClip;
   const audioAssets = listProjectFiles().filter((entry) => entry.kind === 'audio');
   const animationAssets = listProjectFiles().filter((entry) => entry.kind === 'animation');
   const laneViewportWidth = Math.max(360, tracksWidth - 180);
@@ -986,6 +1044,7 @@ export function Sequencer(props: SequencerProps) {
             <button type="button" onClick={(event) => { addAudioTrack(); event.currentTarget.closest('details')?.removeAttribute('open'); }}>Audio</button>
             <button type="button" onClick={(event) => { addAnimationTrack(); event.currentTarget.closest('details')?.removeAttribute('open'); }}>Animation</button>
             <button type="button" onClick={(event) => { addParticleTrack(); event.currentTarget.closest('details')?.removeAttribute('open'); }}>Particle</button>
+            <button type="button" disabled={asset.tracks.some((track) => track.type === 'camera')} onClick={(event) => { addCameraTrack(); event.currentTarget.closest('details')?.removeAttribute('open'); }}>Camera</button>
           </div>
         </details>
         <button type="button" disabled={!selectedTrack || selectedTrack.locked} title={selectedTrack?.locked ? 'Unlock the track to add items' : undefined} onClick={() => selectedTrack && addTrackItem(selection!.track, displayTime)}>
@@ -1021,7 +1080,7 @@ export function Sequencer(props: SequencerProps) {
           {asset.tracks.map((track, trackIndex) => (
             <div className={`sequencer-track-row${selection?.track === trackIndex ? ' selected' : ''}${track.locked ? ' locked' : ''}`} key={track.id}>
               <button type="button" className="sequencer-track-header" onClick={() => setSelection({ track: trackIndex, marker: null })}>
-                <span className={`sequencer-track-icon ${track.type}`}>{track.type === 'signal' ? 'S' : track.type === 'activation' ? 'A' : track.type === 'audio' ? '♪' : track.type === 'animation' ? 'M' : 'P'}</span>
+                <span className={`sequencer-track-icon ${track.type}`}>{track.type === 'signal' ? 'S' : track.type === 'activation' ? 'A' : track.type === 'audio' ? '♪' : track.type === 'animation' ? 'M' : track.type === 'particle' ? 'P' : 'C'}</span>
                 <span>{track.name}</span>
                 {track.muted && <small>Muted</small>}
                 {track.locked && <Lock className="sequencer-track-lock" size={11} aria-label="Locked" />}
@@ -1101,15 +1160,28 @@ export function Sequencer(props: SequencerProps) {
                     onPointerDown={(event) => startMarkerDrag(event, trackIndex, clipIndex)}
                   >P PARTICLES</button>
                 ))}
+                {track.type === 'camera' && track.clips.map((clip, clipIndex) => (
+                  <button
+                    type="button"
+                    className={`sequencer-camera-clip${selection?.track === trackIndex && selection.marker === clipIndex ? ' selected' : ''}`}
+                    style={{
+                      left: `${clip.start / asset.duration * 100}%`,
+                      width: `${clip.duration / asset.duration * 100}%`,
+                    }}
+                    title={`${clip.target} · ${clip.start.toFixed(3)}s + ${clip.duration.toFixed(3)}s · blend ${clip.blend_in.toFixed(3)}s`}
+                    key={`${clip.start}-${clip.target}-${clipIndex}`}
+                    onPointerDown={(event) => startMarkerDrag(event, trackIndex, clipIndex)}
+                  ><i className="sequencer-camera-blend" style={{ width: `${clip.blend_in / clip.duration * 100}%` }} />C {clip.target.split('/').at(-1)}</button>
+                ))}
                 <i className="sequencer-playhead" style={{ left: `${displayTime / asset.duration * 100}%` }} />
               </div>
             </div>
           ))}
-          {asset.tracks.length === 0 && <div className="sequencer-empty-track">Add a Signal, Activation, Audio, Animation, or Particle Track to begin authoring.</div>}
+          {asset.tracks.length === 0 && <div className="sequencer-empty-track">Add a Signal, Activation, Audio, Animation, Particle, or Camera Track to begin authoring.</div>}
         </div>
 
         <aside className="sequencer-inspector" onFocusCapture={beginInspectorEdit} onBlurCapture={endInspectorEdit}>
-          <h3>{selectedMarker ? 'Signal Marker' : selectedActivationClip ? 'Activation Clip' : selectedAudioClip ? 'Audio Clip' : selectedAnimationClip ? 'Animation Clip' : selectedParticleClip ? 'Particle Clip' : selectedTrack ? `${selectedTrack.type === 'signal' ? 'Signal' : selectedTrack.type === 'activation' ? 'Activation' : selectedTrack.type === 'audio' ? 'Audio' : selectedTrack.type === 'animation' ? 'Animation' : 'Particle'} Track` : 'Timeline Asset'}</h3>
+          <h3>{selectedMarker ? 'Signal Marker' : selectedActivationClip ? 'Activation Clip' : selectedAudioClip ? 'Audio Clip' : selectedAnimationClip ? 'Animation Clip' : selectedParticleClip ? 'Particle Clip' : selectedCameraClip ? 'Camera Shot' : selectedTrack ? `${selectedTrack.type === 'signal' ? 'Signal' : selectedTrack.type === 'activation' ? 'Activation' : selectedTrack.type === 'audio' ? 'Audio' : selectedTrack.type === 'animation' ? 'Animation' : selectedTrack.type === 'particle' ? 'Particle' : 'Camera'} Track` : 'Timeline Asset'}</h3>
           {!selectedTrack && <>
             <label>Name <input value={asset.name} onChange={(event) => update((draft) => { draft.name = event.target.value; })} /></label>
             <label>Duration <input type="number" min={0.001} step={0.1} value={asset.duration} onChange={(event) => update((draft) => {
@@ -1129,6 +1201,9 @@ export function Sequencer(props: SequencerProps) {
                     clip.start = Math.min(clip.start, draft.duration - minimum);
                     clip.duration = Math.max(minimum, Math.min(clip.duration, draft.duration - clip.start));
                   }
+                  if (track.type === 'camera') {
+                    for (const clip of track.clips) clip.blend_in = Math.min(clip.blend_in, clip.duration);
+                  }
                 }
               }
             })} /></label>
@@ -1140,9 +1215,9 @@ export function Sequencer(props: SequencerProps) {
             {selectedTrack.locked && <p className="sequencer-lock-notice"><Lock size={12} /> Content editing is disabled for this track.</p>}
             <fieldset className="sequencer-inspector-fields" disabled={selectedTrack.locked}>
               <label>Name <input value={selectedTrack.name} onChange={(event) => update((draft) => { draft.tracks[selection!.track].name = event.target.value; })} /></label>
-              {selectedTrack.type !== 'signal' && <label>Target (child path)<input value={selectedTrack.target} placeholder={selectedTrack.type === 'audio' ? 'Audio/Music' : selectedTrack.type === 'animation' ? 'Characters/Hero' : selectedTrack.type === 'particle' ? 'Effects/Burst' : 'Canvas/Dialog'} onChange={(event) => update((draft) => {
+              {selectedTrack.type !== 'signal' && selectedTrack.type !== 'camera' && <label>Target (child path)<input value={selectedTrack.target} placeholder={selectedTrack.type === 'audio' ? 'Audio/Music' : selectedTrack.type === 'animation' ? 'Characters/Hero' : selectedTrack.type === 'particle' ? 'Effects/Burst' : 'Canvas/Dialog'} onChange={(event) => update((draft) => {
                 const track = draft.tracks[selection!.track];
-                if (track.type !== 'signal') track.target = event.target.value.replaceAll('\\', '/');
+                if (track.type !== 'signal' && track.type !== 'camera') track.target = event.target.value.replaceAll('\\', '/');
               })} /></label>}
               <div className="sequencer-track-order">
                 <button type="button" disabled={selection!.track === 0} onClick={() => moveSelectedTrack(-1)}><ArrowUp size={13} /> Move Up</button>
@@ -1225,6 +1300,12 @@ export function Sequencer(props: SequencerProps) {
                 );
               } else {
                 clip.duration = range.duration;
+                if (track.type === 'camera') {
+                  track.clips[selection!.marker!].blend_in = Math.min(
+                    track.clips[selection!.marker!].blend_in,
+                    range.duration,
+                  );
+                }
               }
             })} /></label>
             {selectedActivationClip && <label className="sequencer-check"><input type="checkbox" checked={selectedActivationClip.active} onChange={(event) => update((draft) => {
@@ -1278,6 +1359,27 @@ export function Sequencer(props: SequencerProps) {
                 }
               })} /></label>
               <p className="sequencer-field-help">Particle state is rebuilt deterministically from this local simulation time when entering or seeking the clip.</p>
+            </>}
+            {selectedCameraClip && <>
+              <label>Camera (child path)<input value={selectedCameraClip.target} placeholder="Cameras/Main Camera" onChange={(event) => update((draft) => {
+                const track = draft.tracks[selection!.track];
+                if (track.type === 'camera') track.clips[selection!.marker!].target = event.target.value.replaceAll('\\', '/');
+              })} /></label>
+              <label>Blend In <input type="number" min={0} max={selectedCameraClip.duration} step={1 / asset.frame_rate} value={selectedCameraClip.blend_in} onChange={(event) => update((draft) => {
+                const track = draft.tracks[selection!.track];
+                if (track.type === 'camera') {
+                  const clip = track.clips[selection!.marker!];
+                  clip.blend_in = Math.max(0, Math.min(clip.duration, Number(event.target.value) || 0));
+                }
+              })} /></label>
+              <label>Blend Curve <select value={selectedCameraClip.blend_curve} onChange={(event) => update((draft) => {
+                const track = draft.tracks[selection!.track];
+                if (track.type === 'camera') track.clips[selection!.marker!].blend_curve = event.target.value as 'linear' | 'ease_in_out';
+              })}>
+                <option value="ease_in_out">Ease In / Out</option>
+                <option value="linear">Linear</option>
+              </select></label>
+              <p className="sequencer-field-help">Blend uses the adjacent previous shot, or the authored primary camera. Incompatible perspective/orthographic projections switch at the blend midpoint.</p>
             </>}
             <button type="button" className="sequencer-danger" onClick={() => {
               update((draft) => {

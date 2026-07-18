@@ -3724,7 +3724,8 @@ body.insp-scrubbing * {
 .sequencer-track-row.locked .sequencer-activation-clip,
 .sequencer-track-row.locked .sequencer-audio-clip,
 .sequencer-track-row.locked .sequencer-animation-clip,
-.sequencer-track-row.locked .sequencer-particle-clip { cursor: not-allowed; opacity: 0.68; }
+.sequencer-track-row.locked .sequencer-particle-clip,
+.sequencer-track-row.locked .sequencer-camera-clip { cursor: not-allowed; opacity: 0.68; }
 
 .sequencer-track-header {
   position: sticky;
@@ -3766,6 +3767,7 @@ button.sequencer-track-header:hover { background: #343b42; }
 .sequencer-track-icon.audio { background: #3d5872; color: #d7edff; }
 .sequencer-track-icon.animation { background: #66517a; color: #f0ddff; }
 .sequencer-track-icon.particle { background: #7a5b2e; color: #fff0c8; }
+.sequencer-track-icon.camera { background: #2e617a; color: #d9f4ff; }
 
 .sequencer-ruler,
 .sequencer-lane {
@@ -3921,10 +3923,38 @@ button.sequencer-track-header:hover { background: #343b42; }
 .sequencer-particle-clip:hover,
 .sequencer-particle-clip.selected { outline: 1px solid #fff; filter: brightness(1.18); }
 
+.sequencer-camera-clip {
+  position: absolute;
+  z-index: 3;
+  top: 7px;
+  bottom: 7px;
+  overflow: hidden;
+  border: 1px solid #2d718e;
+  border-radius: 0;
+  background: #20495d;
+  color: #d9f4ff;
+  padding: 0 7px;
+  text-align: left;
+  font: 8px var(--u-mono);
+  white-space: nowrap;
+}
+.sequencer-camera-clip:hover,
+.sequencer-camera-clip.selected { outline: 1px solid #fff; filter: brightness(1.18); }
+.sequencer-camera-blend {
+  position: absolute;
+  inset: 0 auto 0 0;
+  z-index: 0;
+  border-right: 1px solid #8fd8f5;
+  background: linear-gradient(90deg, #132b36 0%, #2d718e 100%);
+  opacity: 0.55;
+  pointer-events: none;
+}
+
 .sequencer-activation-clip:active,
 .sequencer-audio-clip:active,
 .sequencer-animation-clip:active,
-.sequencer-particle-clip:active { cursor: grabbing; }
+.sequencer-particle-clip:active,
+.sequencer-camera-clip:active { cursor: grabbing; }
 
 .sequencer-activation-clip::before,
 .sequencer-activation-clip::after,
@@ -3933,7 +3963,9 @@ button.sequencer-track-header:hover { background: #343b42; }
 .sequencer-animation-clip::before,
 .sequencer-animation-clip::after,
 .sequencer-particle-clip::before,
-.sequencer-particle-clip::after {
+.sequencer-particle-clip::after,
+.sequencer-camera-clip::before,
+.sequencer-camera-clip::after {
   content: '';
   position: absolute;
   z-index: 2;
@@ -3947,11 +3979,13 @@ button.sequencer-track-header:hover { background: #343b42; }
 .sequencer-activation-clip::before,
 .sequencer-audio-clip::before,
 .sequencer-animation-clip::before,
-.sequencer-particle-clip::before { left: 1px; }
+.sequencer-particle-clip::before,
+.sequencer-camera-clip::before { left: 1px; }
 .sequencer-activation-clip::after,
 .sequencer-audio-clip::after,
 .sequencer-animation-clip::after,
-.sequencer-particle-clip::after { right: 1px; }
+.sequencer-particle-clip::after,
+.sequencer-camera-clip::after { right: 1px; }
 
 .sequencer-inspector {
   min-width: 0;

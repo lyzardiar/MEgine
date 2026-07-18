@@ -22,6 +22,10 @@ fn default_one() -> f32 {
     1.0
 }
 
+fn default_camera_blend_curve() -> String {
+    "ease_in_out".to_owned()
+}
+
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 pub struct TimelineSignal {
     pub time: f32,
@@ -69,6 +73,17 @@ pub struct TimelineParticleClip {
     pub duration: f32,
     #[serde(default)]
     pub clip_in: f32,
+}
+
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+pub struct TimelineCameraClip {
+    pub start: f32,
+    pub duration: f32,
+    pub target: String,
+    #[serde(default)]
+    pub blend_in: f32,
+    #[serde(default = "default_camera_blend_curve")]
+    pub blend_curve: String,
 }
 
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
@@ -128,6 +143,16 @@ pub enum TimelineTrack {
         #[serde(default)]
         clips: Vec<TimelineParticleClip>,
     },
+    Camera {
+        id: String,
+        name: String,
+        #[serde(default)]
+        muted: bool,
+        #[serde(default)]
+        locked: bool,
+        #[serde(default)]
+        clips: Vec<TimelineCameraClip>,
+    },
 }
 
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
@@ -179,6 +204,7 @@ impl TimelineAsset {
         let mut audio_targets = HashSet::new();
         let mut animation_targets = HashSet::new();
         let mut particle_targets = HashSet::new();
+        let mut camera_track_seen = false;
         for track in &mut self.tracks {
             match track {
                 TimelineTrack::Signal {
@@ -445,6 +471,58 @@ impl TimelineAsset {
                         )));
                     }
                 }
+                TimelineTrack::Camera {
+                    id, name, clips, ..
+                } => {
+                    *id = id.trim().to_owned();
+                    *name = name.trim().to_owned();
+                    if id.is_empty() || !track_ids.insert(id.clone()) {
+                        return Err(AssetError::Invalid(
+                            "Timeline track ids must be non-empty and unique".into(),
+                        ));
+                    }
+                    if name.is_empty() {
+                        return Err(AssetError::Invalid(format!(
+                            "Timeline track '{id}' must have a name"
+                        )));
+                    }
+                    if camera_track_seen {
+                        return Err(AssetError::Invalid(
+                            "Timeline assets may contain only one camera track".into(),
+                        ));
+                    }
+                    camera_track_seen = true;
+                    for clip in clips.iter_mut() {
+                        clip.target = normalize_descendant_target(&clip.target).ok_or_else(|| {
+                            AssetError::Invalid(format!(
+                                "Timeline camera track '{id}' contains an invalid descendant camera target"
+                            ))
+                        })?;
+                        clip.blend_curve = clip.blend_curve.trim().to_ascii_lowercase();
+                        if !clip.start.is_finite()
+                            || !clip.duration.is_finite()
+                            || clip.start < 0.0
+                            || clip.duration <= 0.0
+                            || clip.start + clip.duration > self.duration
+                            || !clip.blend_in.is_finite()
+                            || !(0.0..=clip.duration).contains(&clip.blend_in)
+                            || !matches!(clip.blend_curve.as_str(), "linear" | "ease_in_out")
+                        {
+                            return Err(AssetError::Invalid(format!(
+                                "Timeline camera track '{id}' contains an invalid or out-of-range clip"
+                            )));
+                        }
+                    }
+                    clips.sort_by(|left, right| left.start.total_cmp(&right.start));
+                    if clips
+                        .windows(2)
+                        .any(|pair| pair[0].start + pair[0].duration > pair[1].start)
+                    {
+                        return Err(AssetError::Invalid(format!(
+                            "Timeline camera track '{id}' contains overlapping clips"
+                        )));
+                    }
+                }
             }
         }
         Ok(self)
@@ -707,6 +785,41 @@ mod tests {
         .is_err());
         assert!(parse_timeline_asset(
             br#"{"version":1,"duration":2,"tracks":[{"type":"particle","id":"fx","name":"FX","target":"Burst","clips":[{"start":0,"duration":1,"clip_in":300}]}]}"#
+        )
+        .is_err());
+    }
+
+    #[test]
+    fn normalizes_camera_tracks_and_rejects_invalid_blends() {
+        let asset = parse_timeline_asset(
+            br#"{
+              "version":1,"duration":4,
+              "tracks":[{"type":"camera","id":"shots","name":" Shots ","clips":[
+                {"start":2,"duration":1,"target":"Cameras\\Close","blend_in":0.25,"blend_curve":"LINEAR"},
+                {"start":0,"duration":2,"target":"Cameras/Wide"}
+              ]}]
+            }"#,
+        )
+        .unwrap();
+        let TimelineTrack::Camera { name, clips, .. } = &asset.tracks[0] else {
+            panic!("expected camera track");
+        };
+        assert_eq!(name, "Shots");
+        assert_eq!(clips[0].target, "Cameras/Wide");
+        assert_eq!(clips[0].blend_curve, "ease_in_out");
+        assert_eq!(clips[1].target, "Cameras/Close");
+        assert_eq!(clips[1].blend_curve, "linear");
+
+        assert!(parse_timeline_asset(
+            br#"{"version":1,"duration":2,"tracks":[{"type":"camera","id":"a","name":"A","clips":[{"start":0,"duration":1,"target":"../Outside"}]}]}"#
+        )
+        .is_err());
+        assert!(parse_timeline_asset(
+            br#"{"version":1,"duration":2,"tracks":[{"type":"camera","id":"a","name":"A","clips":[{"start":0,"duration":1,"target":"Camera","blend_in":1.1}]}]}"#
+        )
+        .is_err());
+        assert!(parse_timeline_asset(
+            br#"{"version":1,"duration":2,"tracks":[{"type":"camera","id":"a","name":"A"},{"type":"camera","id":"b","name":"B"}]}"#
         )
         .is_err());
     }

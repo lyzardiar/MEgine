@@ -433,6 +433,12 @@ test('buildPcPackage includes and validates TimelineDirector assets', () => {
       }, {
         type: 'particle', id: 'fx', name: 'FX', target: 'Effects/Burst', locked: true,
         clips: [{ start: 0.5, duration: 1, clip_in: 0.25 }],
+      }, {
+        type: 'camera', id: 'shots', name: 'Shots',
+        clips: [
+          { start: 0, duration: 1.5, target: 'Cameras/Wide' },
+          { start: 1.5, duration: 1.5, target: 'Cameras/Close', blend_in: 0.5, blend_curve: ' EASE_IN_OUT ' },
+        ],
       }],
     }));
     mkdirSync(join(paths.project, 'Assets', 'Audio'), { recursive: true });
@@ -529,6 +535,33 @@ test('buildPcPackage rejects invalid Timeline particle clips without publishing 
       runtimePath: paths.runtime,
       engineVersion: 'test-engine',
     }), /particle clip is invalid/);
+    assert.equal(existsSync(paths.output), false);
+  } finally {
+    rmSync(paths.root, { recursive: true, force: true });
+  }
+});
+
+test('buildPcPackage rejects invalid Timeline camera blends without publishing output', () => {
+  const paths = fixture('invalid-timeline-camera');
+  try {
+    writeFileSync(join(paths.project, 'Assets', 'Scenes', 'Main.mscene'), JSON.stringify({
+      world: { entities: [{ components: {
+        TimelineDirector: { asset: 'Assets/Timelines/Broken.mtimeline' },
+      } }] },
+    }));
+    writeFileSync(join(paths.project, 'Assets', 'Timelines', 'Broken.mtimeline'), JSON.stringify({
+      version: 1, duration: 2,
+      tracks: [{
+        type: 'camera', id: 'shots', name: 'Shots',
+        clips: [{ start: 0, duration: 1, target: 'Cameras/Main', blend_in: 1.5 }],
+      }],
+    }));
+    assert.throws(() => buildPcPackage({
+      projectDir: paths.project,
+      outputDir: paths.output,
+      runtimePath: paths.runtime,
+      engineVersion: 'test-engine',
+    }), /camera clip is invalid/);
     assert.equal(existsSync(paths.output), false);
   } finally {
     rmSync(paths.root, { recursive: true, force: true });

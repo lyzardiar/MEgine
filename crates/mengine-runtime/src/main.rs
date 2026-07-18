@@ -31,7 +31,7 @@ use mengine_runtime::scenes::{LoadedScene, SceneManager, SceneSelector};
 use mengine_runtime::sorting::{sort_world_primitives, SortingLayers};
 use mengine_runtime::sprites::collect_world_primitives_with_hierarchy;
 use mengine_runtime::textures::RuntimeTextureCache;
-use mengine_runtime::timeline::{RuntimeParticleCommand, TimelineRuntime};
+use mengine_runtime::timeline::{RuntimeCameraOverride, RuntimeParticleCommand, TimelineRuntime};
 use mengine_runtime::ui::{
     append_ui_focus_ring, collect_ui_frame_with_hierarchy, next_ui_focus, set_toggle_value,
     UiControlKind, UiControlRegion,
@@ -1601,7 +1601,12 @@ function onTick(dt, frame) {
                 if let Some(r) = self.renderer.as_mut() {
                     let hierarchy = TransformHierarchy::build(&self.world);
                     let aspect = r.aspect();
-                    let active_camera = find_camera(&self.world, &hierarchy, aspect);
+                    let active_camera = find_camera(
+                        &self.world,
+                        &hierarchy,
+                        aspect,
+                        self.timelines.camera_override(),
+                    );
                     let camera = active_camera.frame;
                     let objects = collect_objects(&self.world, &hierarchy, &mut self.materials);
                     for failure in self.meshes.sync(r, &objects) {
@@ -1739,42 +1744,220 @@ struct ActiveFrameCamera {
     background_color: [f32; 4],
 }
 
+#[derive(Clone, Copy, Debug)]
+enum CameraProjection {
+    Perspective { fov: f32, near: f32, far: f32 },
+    Orthographic { size: f32, near: f32, far: f32 },
+}
+
+#[derive(Clone, Copy, Debug)]
+struct CameraDefinition {
+    entity: Option<Entity>,
+    position: Vec3,
+    rotation: Quat,
+    projection: CameraProjection,
+    clear_flags: CameraClearFlags,
+    background_color: [f32; 4],
+}
+
+impl CameraDefinition {
+    fn active(self, viewport_aspect: f32) -> ActiveFrameCamera {
+        let forward = self.rotation * -Vec3::Z;
+        let up = self.rotation * Vec3::Y;
+        let aspect = viewport_aspect.max(0.001);
+        let proj = match self.projection {
+            CameraProjection::Perspective { fov, near, far } => {
+                perspective(fov.clamp(1.0, 179.0), aspect, near, far)
+            }
+            CameraProjection::Orthographic { size, near, far } => {
+                orthographic(size.max(0.001), aspect, near, far)
+            }
+        };
+        ActiveFrameCamera {
+            frame: FrameCamera {
+                view: look_at(self.position, self.position + forward, up),
+                proj,
+                position: self.position,
+            },
+            clear_flags: self.clear_flags,
+            background_color: self.background_color,
+        }
+    }
+}
+
 fn find_camera(
     world: &World,
     hierarchy: &TransformHierarchy,
     viewport_aspect: f32,
+    timeline: Option<RuntimeCameraOverride>,
 ) -> ActiveFrameCamera {
-    for e in world.iter_entities() {
-        if let (Some(t), Some(c)) = (hierarchy.get(e), world.get_component::<Camera2D>(e)) {
-            if c.primary {
-                return ActiveFrameCamera {
-                    frame: camera2d_from_components(&t.to_transform(), c, viewport_aspect),
-                    clear_flags: parse_camera_clear_flags(&c.clear_flags),
-                    background_color: c.background_color,
-                };
+    if let Some(timeline) = timeline {
+        if let Some(target) = camera_definition(world, hierarchy, timeline.target) {
+            let source = timeline
+                .source
+                .and_then(|entity| camera_definition(world, hierarchy, entity))
+                .or_else(|| primary_camera_definition(world, hierarchy))
+                .unwrap_or_else(default_camera_definition);
+            return blend_camera_definitions(source, target, timeline.weight)
+                .active(viewport_aspect);
+        }
+    }
+    primary_camera_definition(world, hierarchy)
+        .unwrap_or_else(default_camera_definition)
+        .active(viewport_aspect)
+}
+
+fn primary_camera_definition(
+    world: &World,
+    hierarchy: &TransformHierarchy,
+) -> Option<CameraDefinition> {
+    for entity in world.iter_entities() {
+        if world
+            .get_component::<Camera2D>(entity)
+            .is_some_and(|camera| camera.primary)
+        {
+            if let Some(camera) = camera_definition(world, hierarchy, entity) {
+                return Some(camera);
             }
         }
     }
-    for e in world.iter_entities() {
-        if let (Some(t), Some(c)) = (hierarchy.get(e), world.get_component::<Camera3D>(e)) {
-            if c.primary {
-                return ActiveFrameCamera {
-                    frame: camera_from_components(&t.to_transform(), c, viewport_aspect),
-                    clear_flags: parse_camera_clear_flags(&c.clear_flags),
-                    background_color: c.background_color,
-                };
+    for entity in world.iter_entities() {
+        if world
+            .get_component::<Camera3D>(entity)
+            .is_some_and(|camera| camera.primary)
+        {
+            if let Some(camera) = camera_definition(world, hierarchy, entity) {
+                return Some(camera);
             }
         }
     }
-    let position = Vec3::new(0.0, 1.5, 4.0);
-    ActiveFrameCamera {
-        frame: FrameCamera {
-            view: look_at(position, Vec3::ZERO, Vec3::Y),
-            proj: perspective(60.0, viewport_aspect.max(0.001), 0.1, 100.0),
+    None
+}
+
+fn camera_definition(
+    world: &World,
+    hierarchy: &TransformHierarchy,
+    entity: Entity,
+) -> Option<CameraDefinition> {
+    let transform = hierarchy.get(entity)?.to_transform();
+    let position = Vec3::from(transform.position);
+    let rotation = safe_rotation(transform.rotation);
+    if let Some(camera) = world.get_component::<Camera2D>(entity) {
+        return Some(CameraDefinition {
+            entity: Some(entity),
             position,
+            rotation,
+            projection: CameraProjection::Orthographic {
+                size: camera.size.max(0.001),
+                near: 0.01,
+                far: 1000.0,
+            },
+            clear_flags: parse_camera_clear_flags(&camera.clear_flags),
+            background_color: camera.background_color,
+        });
+    }
+    let camera = world.get_component::<Camera3D>(entity)?;
+    let near = camera.near.max(0.001);
+    let far = camera.far.max(near + 0.001);
+    let projection = if camera.projection.eq_ignore_ascii_case("orthographic") {
+        CameraProjection::Orthographic {
+            size: camera.orthographic_size.max(0.001),
+            near,
+            far,
+        }
+    } else {
+        CameraProjection::Perspective {
+            fov: camera.fov_y_degrees.clamp(1.0, 179.0),
+            near,
+            far,
+        }
+    };
+    Some(CameraDefinition {
+        entity: Some(entity),
+        position,
+        rotation,
+        projection,
+        clear_flags: parse_camera_clear_flags(&camera.clear_flags),
+        background_color: camera.background_color,
+    })
+}
+
+fn default_camera_definition() -> CameraDefinition {
+    CameraDefinition {
+        entity: None,
+        position: Vec3::new(0.0, 1.5, 4.0),
+        rotation: Quat::from_rotation_x(-0.35877067),
+        projection: CameraProjection::Perspective {
+            fov: 60.0,
+            near: 0.1,
+            far: 100.0,
         },
         clear_flags: CameraClearFlags::Scene,
         background_color: [0.1, 0.1, 0.14, 1.0],
+    }
+}
+
+fn blend_camera_definitions(
+    source: CameraDefinition,
+    target: CameraDefinition,
+    weight: f32,
+) -> CameraDefinition {
+    let weight = weight.clamp(0.0, 1.0);
+    let projection = match (source.projection, target.projection) {
+        (
+            CameraProjection::Perspective {
+                fov: source_fov,
+                near: source_near,
+                far: source_far,
+            },
+            CameraProjection::Perspective {
+                fov: target_fov,
+                near: target_near,
+                far: target_far,
+            },
+        ) => CameraProjection::Perspective {
+            fov: source_fov + (target_fov - source_fov) * weight,
+            near: source_near + (target_near - source_near) * weight,
+            far: source_far + (target_far - source_far) * weight,
+        },
+        (
+            CameraProjection::Orthographic {
+                size: source_size,
+                near: source_near,
+                far: source_far,
+            },
+            CameraProjection::Orthographic {
+                size: target_size,
+                near: target_near,
+                far: target_far,
+            },
+        ) => CameraProjection::Orthographic {
+            size: source_size + (target_size - source_size) * weight,
+            near: source_near + (target_near - source_near) * weight,
+            far: source_far + (target_far - source_far) * weight,
+        },
+        _ => return if weight < 0.5 { source } else { target },
+    };
+    let mut background_color = [0.0; 4];
+    for (index, channel) in background_color.iter_mut().enumerate() {
+        *channel = source.background_color[index]
+            + (target.background_color[index] - source.background_color[index]) * weight;
+    }
+    CameraDefinition {
+        entity: if weight < 0.5 {
+            source.entity
+        } else {
+            target.entity
+        },
+        position: source.position.lerp(target.position, weight),
+        rotation: source.rotation.slerp(target.rotation, weight),
+        projection,
+        clear_flags: if weight < 0.5 {
+            source.clear_flags
+        } else {
+            target.clear_flags
+        },
+        background_color,
     }
 }
 
@@ -1816,18 +1999,7 @@ fn resolve_camera_background(
     }
 }
 
-fn camera2d_from_components(t: &Transform, c: &Camera2D, viewport_aspect: f32) -> FrameCamera {
-    let position = Vec3::from(t.position);
-    let rotation = safe_rotation(t.rotation);
-    let forward = rotation * -Vec3::Z;
-    let up = rotation * Vec3::Y;
-    FrameCamera {
-        view: look_at(position, position + forward, up),
-        proj: orthographic(c.size.max(0.001), viewport_aspect.max(0.001), 0.01, 1000.0),
-        position,
-    }
-}
-
+#[cfg(test)]
 fn camera_from_components(t: &Transform, c: &Camera3D, viewport_aspect: f32) -> FrameCamera {
     let position = Vec3::from(t.position);
     let rotation = safe_rotation(t.rotation);
@@ -2496,12 +2668,78 @@ mod tests {
         world.commit();
 
         let hierarchy = TransformHierarchy::build(&world);
-        let active_camera = find_camera(&world, &hierarchy, 2.0);
+        let active_camera = find_camera(&world, &hierarchy, 2.0, None);
         assert_eq!(active_camera.clear_flags, CameraClearFlags::Scene);
         let frame = active_camera.frame;
         assert_eq!(frame.position, Vec3::new(2.0, 3.0, 10.0));
         assert!((frame.proj.x_axis.x - 0.125).abs() < 0.0001);
         assert!((frame.proj.y_axis.y - 0.25).abs() < 0.0001);
+    }
+
+    #[test]
+    fn timeline_camera_override_blends_compatible_camera_pose_and_projection() {
+        let mut world = World::new();
+        let director = world.spawn_empty();
+        let source = world.spawn_empty();
+        world.insert_component(
+            source,
+            Transform {
+                position: [0.0, 0.0, 5.0],
+                ..Transform::default()
+            },
+        );
+        world.insert_component(
+            source,
+            Camera3D {
+                fov_y_degrees: 40.0,
+                primary: true,
+                ..Camera3D::default()
+            },
+        );
+        let target = world.spawn_empty();
+        world.insert_component(
+            target,
+            Transform {
+                position: [10.0, 0.0, 5.0],
+                ..Transform::default()
+            },
+        );
+        world.insert_component(
+            target,
+            Camera3D {
+                fov_y_degrees: 80.0,
+                primary: false,
+                ..Camera3D::default()
+            },
+        );
+        let hierarchy = TransformHierarchy::build(&world);
+        let active = find_camera(
+            &world,
+            &hierarchy,
+            1.0,
+            Some(RuntimeCameraOverride {
+                director,
+                source: Some(source),
+                target,
+                weight: 0.5,
+            }),
+        );
+        assert!((active.frame.position.x - 5.0).abs() < 0.0001);
+        let expected_y = 1.0 / (30.0_f32.to_radians().tan());
+        assert!((active.frame.proj.y_axis.y - expected_y).abs() < 0.0001);
+
+        let authored_target = find_camera(
+            &world,
+            &hierarchy,
+            1.0,
+            Some(RuntimeCameraOverride {
+                director,
+                source: None,
+                target: source,
+                weight: 0.0,
+            }),
+        );
+        assert_eq!(authored_target.frame.position, Vec3::new(0.0, 0.0, 5.0));
     }
 
     #[test]
@@ -2980,7 +3218,7 @@ mod tests {
         world.set_parent(child, Some(parent));
 
         let hierarchy = TransformHierarchy::build(&world);
-        let camera = find_camera(&world, &hierarchy, 1.0).frame;
+        let camera = find_camera(&world, &hierarchy, 1.0, None).frame;
         let lights = collect_lighting(&world, &hierarchy);
         let objects = collect_objects(&world, &hierarchy, &mut RuntimeMaterialCache::new(None));
         let expected = Vec3::new(11.0, 2.0, 3.0);

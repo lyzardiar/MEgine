@@ -832,9 +832,10 @@ function scanBuildAssetDependencies(
       const audioTargets = new Set<string>();
       const animationTargets = new Set<string>();
       const particleTargets = new Set<string>();
+      let cameraTrackSeen = false;
       for (const trackValue of timeline.tracks) {
         const track = jsonObject(trackValue);
-        if (!track || (track.type !== 'signal' && track.type !== 'activation' && track.type !== 'audio' && track.type !== 'animation' && track.type !== 'particle')) {
+        if (!track || (track.type !== 'signal' && track.type !== 'activation' && track.type !== 'audio' && track.type !== 'animation' && track.type !== 'particle' && track.type !== 'camera')) {
           throw new Error(`invalid Timeline asset ${source}: unsupported track type`);
         }
         const id = strictStringValue(track, 'id', `Timeline asset ${source}`);
@@ -862,6 +863,37 @@ function scanBuildAssetDependencies(
             const time = marker.time;
             if (!markerName || typeof time !== 'number' || !Number.isFinite(time) || time < 0 || time > timelineDuration) {
               throw new Error(`invalid Timeline asset ${source}: signal marker is invalid or outside duration`);
+            }
+          }
+          continue;
+        }
+        if (track.type === 'camera') {
+          if (cameraTrackSeen) {
+            throw new Error(`invalid Timeline asset ${source}: only one camera track is allowed`);
+          }
+          cameraTrackSeen = true;
+          if (track.clips != null && !Array.isArray(track.clips)) {
+            throw new Error(`invalid Timeline asset ${source}: camera clips must be an array`);
+          }
+          const clips = (Array.isArray(track.clips) ? track.clips : []).map((clipValue) => {
+            const clip = jsonObject(clipValue);
+            if (!clip) throw new Error(`invalid Timeline asset ${source}: camera clip must be an object`);
+            const target = strictStringValue(clip, 'target', `Timeline camera track ${name}`).replaceAll('\\', '/');
+            if (typeof clip.start !== 'number' || !Number.isFinite(clip.start)
+              || typeof clip.duration !== 'number' || !Number.isFinite(clip.duration)
+              || clip.start < 0 || clip.duration <= 0 || clip.start + clip.duration > timelineDuration
+              || !target || target.startsWith('/')
+              || target.split('/').some((segment) => !segment || segment === '.' || segment === '..')
+              || clip.blend_in != null && (typeof clip.blend_in !== 'number' || !Number.isFinite(clip.blend_in) || clip.blend_in < 0 || clip.blend_in > clip.duration)
+              || clip.blend_curve != null && (typeof clip.blend_curve !== 'string'
+                || !['linear', 'ease_in_out'].includes(clip.blend_curve.trim().toLowerCase()))) {
+              throw new Error(`invalid Timeline asset ${source}: camera clip is invalid or outside duration`);
+            }
+            return clip as { start: number; duration: number };
+          }).sort((left, right) => left.start - right.start);
+          for (let index = 1; index < clips.length; index += 1) {
+            if (clips[index - 1].start + clips[index - 1].duration > clips[index].start) {
+              throw new Error(`invalid Timeline asset ${source}: camera clips overlap`);
             }
           }
           continue;

@@ -2,7 +2,8 @@ use crate::particles::MAX_INCREMENTAL_DELTA;
 use crate::textures::resolve_project_asset_path;
 use mengine_assets::{load_timeline_asset, TimelineAsset, TimelineTrack};
 use mengine_core::generated::{
-    AnimationPlayer, Animator, AudioSource, ParticleEmitter2D, ParticleEmitter3D, TimelineDirector,
+    AnimationPlayer, Animator, AudioSource, Camera2D, Camera3D, ParticleEmitter2D,
+    ParticleEmitter3D, TimelineDirector,
 };
 use mengine_core::{Entity, Parent, World};
 use serde_json::Value;
@@ -33,6 +34,14 @@ pub struct RuntimeTimelineSignal {
 pub enum RuntimeParticleCommand {
     Seek { entity: Entity, time: f32 },
     Reset { entity: Entity },
+}
+
+#[derive(Clone, Copy, Debug, PartialEq)]
+pub struct RuntimeCameraOverride {
+    pub director: Entity,
+    pub source: Option<Entity>,
+    pub target: Entity,
+    pub weight: f32,
 }
 
 #[derive(Clone)]
@@ -92,10 +101,12 @@ pub struct TimelineRuntime {
     reported_audio_failures: HashSet<(Entity, String)>,
     reported_animation_failures: HashSet<(Entity, String)>,
     reported_particle_failures: HashSet<(Entity, String)>,
+    reported_camera_failures: HashSet<(Entity, String)>,
     activation_overrides: HashMap<(Entity, String), ActivationOverride>,
     audio_overrides: HashMap<(Entity, String), AudioOverride>,
     animation_overrides: HashMap<(Entity, String), AnimationOverride>,
     particle_overrides: HashMap<(Entity, String), ParticleOverride>,
+    camera_overrides: HashMap<(Entity, String), RuntimeCameraOverride>,
     pending_signals: Vec<RuntimeTimelineSignal>,
     pending_particle_commands: Vec<RuntimeParticleCommand>,
 }
@@ -144,6 +155,7 @@ impl TimelineRuntime {
         let mut applied_audio_overrides = HashSet::new();
         let mut applied_animation_overrides = HashSet::new();
         let mut applied_particle_overrides = HashSet::new();
+        let mut applied_camera_overrides = HashSet::new();
         for (entity, mut director) in entities {
             if self.initialized.insert(entity) && !director.play_on_awake {
                 director.playing = false;
@@ -178,6 +190,7 @@ impl TimelineRuntime {
                         &mut applied_audio_overrides,
                         &mut applied_animation_overrides,
                         &mut applied_particle_overrides,
+                        &mut applied_camera_overrides,
                     );
                     continue;
                 }
@@ -240,6 +253,10 @@ impl TimelineRuntime {
                 );
                 applied_particle_overrides.extend(applied);
                 failures.append(&mut particle_failures);
+                let (applied, mut camera_failures) =
+                    self.apply_camera_tracks(world, entity, asset_key, &asset, paused_time);
+                applied_camera_overrides.extend(applied);
+                failures.append(&mut camera_failures);
                 self.evaluated_directors
                     .insert(entity, (asset_key.to_owned(), paused_time));
                 if let Some(live) = world.get_component_mut::<TimelineDirector>(entity) {
@@ -305,6 +322,10 @@ impl TimelineRuntime {
                 );
                 applied_particle_overrides.extend(applied);
                 failures.append(&mut particle_failures);
+                let (applied, mut camera_failures) =
+                    self.apply_camera_tracks(world, entity, asset_key, &asset, next);
+                applied_camera_overrides.extend(applied);
+                failures.append(&mut camera_failures);
             }
             if let Some(live) = world.get_component_mut::<TimelineDirector>(entity) {
                 live.time = next;
@@ -320,6 +341,7 @@ impl TimelineRuntime {
         self.restore_unused_audio_overrides(world, &applied_audio_overrides);
         self.restore_unused_animation_overrides(world, &applied_animation_overrides);
         self.restore_unused_particle_overrides(world, &applied_particle_overrides);
+        self.restore_unused_camera_overrides(&applied_camera_overrides);
         self.reported_activation_failures
             .retain(|(entity, _)| world.is_alive(*entity));
         self.reported_audio_failures
@@ -327,6 +349,8 @@ impl TimelineRuntime {
         self.reported_animation_failures
             .retain(|(entity, _)| world.is_alive(*entity));
         self.reported_particle_failures
+            .retain(|(entity, _)| world.is_alive(*entity));
+        self.reported_camera_failures
             .retain(|(entity, _)| world.is_alive(*entity));
         failures
     }
@@ -349,6 +373,13 @@ impl TimelineRuntime {
 
     pub fn take_particle_commands(&mut self) -> Vec<RuntimeParticleCommand> {
         std::mem::take(&mut self.pending_particle_commands)
+    }
+
+    pub fn camera_override(&self) -> Option<RuntimeCameraOverride> {
+        self.camera_overrides
+            .values()
+            .copied()
+            .min_by_key(|value| value.director.to_u64())
     }
 
     fn load(&mut self, key: &str) -> Result<Arc<TimelineAsset>, String> {
@@ -797,6 +828,104 @@ impl TimelineRuntime {
         (applied, failures)
     }
 
+    fn apply_camera_tracks(
+        &mut self,
+        world: &World,
+        director: Entity,
+        asset_key: &str,
+        asset: &TimelineAsset,
+        time: f32,
+    ) -> (HashSet<(Entity, String)>, Vec<TimelineLoadFailure>) {
+        let mut applied = HashSet::new();
+        let mut failures = Vec::new();
+        for track in &asset.tracks {
+            let TimelineTrack::Camera {
+                id,
+                name,
+                muted,
+                clips,
+                ..
+            } = track
+            else {
+                continue;
+            };
+            let key = (director, id.clone());
+            if *muted {
+                self.reported_camera_failures.remove(&key);
+                continue;
+            }
+            let Some((clip_index, clip)) = clips
+                .iter()
+                .enumerate()
+                .find(|(_, clip)| time >= clip.start && time < clip.start + clip.duration)
+            else {
+                self.reported_camera_failures.remove(&key);
+                continue;
+            };
+            let Some(target) = resolve_descendant_target(world, director, &clip.target) else {
+                if self.reported_camera_failures.insert(key) {
+                    failures.push(TimelineLoadFailure {
+                        entity: director,
+                        asset: asset_key.to_owned(),
+                        error: format!(
+                            "camera track '{name}' target '{}' was not found below the Director entity",
+                            clip.target
+                        ),
+                    });
+                }
+                continue;
+            };
+            if !has_exactly_one_camera(world, target) {
+                if self.reported_camera_failures.insert(key) {
+                    failures.push(TimelineLoadFailure {
+                        entity: director,
+                        asset: asset_key.to_owned(),
+                        error: format!(
+                            "camera track '{name}' target '{}' must have exactly one Camera2D or Camera3D component",
+                            clip.target
+                        ),
+                    });
+                }
+                continue;
+            }
+            self.reported_camera_failures.remove(&key);
+
+            let local_time = (time - clip.start).max(0.0);
+            let linear_weight = if clip.blend_in <= f32::EPSILON {
+                1.0
+            } else {
+                (local_time / clip.blend_in).clamp(0.0, 1.0)
+            };
+            let weight = if clip.blend_curve == "linear" {
+                linear_weight
+            } else {
+                linear_weight * linear_weight * (3.0 - 2.0 * linear_weight)
+            };
+            let source = if weight < 1.0 && clip_index > 0 {
+                let previous = &clips[clip_index - 1];
+                let adjacent = (previous.start + previous.duration - clip.start).abs() <= 0.001;
+                adjacent
+                    .then(|| resolve_descendant_target(world, director, &previous.target))
+                    .flatten()
+                    .filter(|entity| has_exactly_one_camera(world, *entity))
+            } else {
+                None
+            };
+            self.camera_overrides.insert(
+                key.clone(),
+                RuntimeCameraOverride {
+                    director,
+                    source,
+                    target,
+                    weight,
+                },
+            );
+            applied.insert(key);
+        }
+        (applied, failures)
+    }
+
+    #[allow(clippy::too_many_arguments)]
     fn retain_paused_overrides(
         &self,
         world: &mut World,
@@ -805,6 +934,7 @@ impl TimelineRuntime {
         audio: &mut HashSet<(Entity, String)>,
         animation: &mut HashSet<(Entity, String)>,
         particle: &mut HashSet<(Entity, String)>,
+        camera: &mut HashSet<(Entity, String)>,
     ) {
         activation.extend(
             self.activation_overrides
@@ -839,6 +969,12 @@ impl TimelineRuntime {
             }
             particle.insert(key.clone());
         }
+        camera.extend(
+            self.camera_overrides
+                .keys()
+                .filter(|(owner, _)| *owner == director)
+                .cloned(),
+        );
     }
 
     fn restore_unused_activation_overrides(
@@ -936,6 +1072,10 @@ impl TimelineRuntime {
         }
     }
 
+    fn restore_unused_camera_overrides(&mut self, applied: &HashSet<(Entity, String)>) {
+        self.camera_overrides.retain(|key, _| applied.contains(key));
+    }
+
     fn restore_particle_override(&mut self, world: &mut World, key: &(Entity, String)) {
         let Some(previous) = self.particle_overrides.remove(key) else {
             return;
@@ -956,6 +1096,11 @@ impl TimelineRuntime {
             }
         }
     }
+}
+
+fn has_exactly_one_camera(world: &World, entity: Entity) -> bool {
+    world.get_component::<Camera2D>(entity).is_some()
+        ^ world.get_component::<Camera3D>(entity).is_some()
 }
 
 fn resolve_descendant_target(world: &World, root: Entity, target: &str) -> Option<Entity> {
@@ -1169,6 +1314,19 @@ mod tests {
             format!(
                 r#"{{"version":1,"duration":2,"tracks":[{{"type":"particle","id":"fx","name":"FX","target":"{target}","clips":[{{"start":0,"duration":1.5,"clip_in":0.25}}]}}]}}"#
             ),
+        )
+        .unwrap();
+        (root, relative)
+    }
+
+    fn camera_project_asset() -> (PathBuf, String) {
+        let root = std::env::temp_dir().join(format!("mengine-timeline-{}", uuid::Uuid::new_v4()));
+        let relative = "Assets/Timelines/cameras.mtimeline".to_owned();
+        let path = root.join(&relative);
+        fs::create_dir_all(path.parent().unwrap()).unwrap();
+        fs::write(
+            path,
+            r#"{"version":1,"duration":3,"tracks":[{"type":"camera","id":"shots","name":"Shots","clips":[{"start":0,"duration":1,"target":"Cameras/Wide"},{"start":1,"duration":1,"target":"Cameras/Close","blend_in":1,"blend_curve":"ease_in_out"},{"start":2,"duration":1,"target":"Cameras/Close","blend_in":1,"blend_curve":"linear"}]}]}"#,
         )
         .unwrap();
         (root, relative)
@@ -1720,6 +1878,106 @@ mod tests {
             runtime.take_particle_commands(),
             vec![RuntimeParticleCommand::Reset { entity: fx }]
         );
+        let _ = fs::remove_dir_all(root);
+    }
+
+    #[test]
+    fn camera_tracks_cut_blend_pause_and_release_without_mutating_primary_flags() {
+        let (root, relative) = camera_project_asset();
+        let mut world = World::new();
+        let director = world.spawn_empty();
+        let cameras = world.spawn_empty();
+        world.set_component_value(cameras, "Name", serde_json::json!({ "value": "Cameras" }));
+        world.set_parent(cameras, Some(director));
+        let wide = world.spawn_empty();
+        world.set_component_value(wide, "Name", serde_json::json!({ "value": "Wide" }));
+        world.set_parent(wide, Some(cameras));
+        world.insert_component(
+            wide,
+            Camera3D {
+                primary: true,
+                ..Camera3D::default()
+            },
+        );
+        let close = world.spawn_empty();
+        world.set_component_value(close, "Name", serde_json::json!({ "value": "Close" }));
+        world.set_parent(close, Some(cameras));
+        world.insert_component(
+            close,
+            Camera3D {
+                primary: false,
+                ..Camera3D::default()
+            },
+        );
+        world.insert_component(
+            director,
+            TimelineDirector {
+                asset: relative,
+                ..TimelineDirector::default()
+            },
+        );
+        let mut runtime = TimelineRuntime::new(Some(root.clone()));
+
+        assert!(runtime.update(&mut world, 0.0).is_empty());
+        assert_eq!(
+            runtime.camera_override(),
+            Some(RuntimeCameraOverride {
+                director,
+                source: None,
+                target: wide,
+                weight: 1.0,
+            })
+        );
+        runtime.update(&mut world, 1.0);
+        assert_eq!(
+            runtime.camera_override(),
+            Some(RuntimeCameraOverride {
+                director,
+                source: Some(wide),
+                target: close,
+                weight: 0.0,
+            })
+        );
+        runtime.update(&mut world, 0.5);
+        assert_eq!(runtime.camera_override().unwrap().weight, 0.5);
+
+        world
+            .get_component_mut::<TimelineDirector>(director)
+            .unwrap()
+            .playing = false;
+        runtime.update(&mut world, 0.0);
+        assert_eq!(runtime.camera_override().unwrap().weight, 0.5);
+        assert!(world.get_component::<Camera3D>(wide).unwrap().primary);
+        assert!(!world.get_component::<Camera3D>(close).unwrap().primary);
+
+        {
+            let live = world
+                .get_component_mut::<TimelineDirector>(director)
+                .unwrap();
+            live.playing = true;
+            live.time = 2.0;
+        }
+        runtime.update(&mut world, 0.0);
+        assert_eq!(
+            runtime.camera_override(),
+            Some(RuntimeCameraOverride {
+                director,
+                source: Some(close),
+                target: close,
+                weight: 0.0,
+            })
+        );
+
+        {
+            let live = world
+                .get_component_mut::<TimelineDirector>(director)
+                .unwrap();
+            live.playing = false;
+            live.time = 0.0;
+        }
+        runtime.reset_director(director);
+        runtime.update(&mut world, 0.0);
+        assert_eq!(runtime.camera_override(), None);
         let _ = fs::remove_dir_all(root);
     }
 

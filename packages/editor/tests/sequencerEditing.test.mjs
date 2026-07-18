@@ -11,6 +11,7 @@ import {
   pasteSequencerItem,
   resolveSequencerPasteTrack,
   sequencerTicks,
+  trimSequencerCameraBlendIn,
   trimSequencerClip,
 } from '../src/sequencerEditing.ts';
 
@@ -60,6 +61,12 @@ test('Sequencer clip trimming snaps, preserves the opposite edge and reports sou
     duration: 0.10000000000000009,
     sourceOffsetDelta: 1.9,
   });
+});
+
+test('Sequencer camera start trim preserves the absolute blend end', () => {
+  assert.equal(trimSequencerCameraBlendIn(0.75, 1.5, 0.25), 0.5);
+  assert.equal(trimSequencerCameraBlendIn(0.75, 2.5, -0.5), 1.25);
+  assert.equal(trimSequencerCameraBlendIn(0.75, 0.25, -1), 0.25);
 });
 
 test('Sequencer start trimming cannot seek before the source asset', () => {
@@ -191,6 +198,27 @@ test('Sequencer particle clipboard preserves prewarm and collision-safe placemen
     start: 2.5,
     duration: 1.5,
     clip_in: 0.75,
+  });
+  assert.equal(asset.tracks[3].clips.length, 1);
+});
+
+test('Sequencer camera clipboard preserves binding and blend settings', () => {
+  const asset = timeline();
+  asset.tracks.push({
+    type: 'camera', id: 'shots', name: 'Shots', muted: false, locked: false,
+    clips: [{ start: 0, duration: 1, target: 'Cameras/Wide', blend_in: 0.25, blend_curve: 'ease_in_out' }],
+  });
+  const clipboard = copySequencerItem(asset, 3, 0);
+  assert.ok(clipboard);
+  assert.equal(clipboard.type, 'camera');
+  const pasted = pasteSequencerItem(asset, 3, 1, clipboard);
+  assert.equal(pasted.ok, true);
+  assert.deepEqual(pasted.asset.tracks[3].clips[pasted.itemIndex], {
+    start: 1,
+    duration: 1,
+    target: 'Cameras/Wide',
+    blend_in: 0.25,
+    blend_curve: 'ease_in_out',
   });
   assert.equal(asset.tracks[3].clips.length, 1);
 });

@@ -36,8 +36,8 @@ pub use sprite::{
 pub use surface_shader::{load_surface_shader, parse_surface_shader, SURFACE_SHADER_HOOK_NAME};
 pub use texture::{load_environment_texture, load_texture_rgba8, texture_dimensions};
 pub use timeline::{
-    load_timeline_asset, parse_timeline_asset, TimelineAsset, TimelineParticleClip, TimelineSignal,
-    TimelineTrack, MAX_TIMELINE_PARTICLE_TIME,
+    load_timeline_asset, parse_timeline_asset, TimelineAsset, TimelineCameraClip,
+    TimelineParticleClip, TimelineSignal, TimelineTrack, MAX_TIMELINE_PARTICLE_TIME,
 };
 
 #[derive(Clone, Debug, PartialEq, Eq)]

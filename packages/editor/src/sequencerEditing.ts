@@ -3,6 +3,7 @@ import type {
   TimelineAnimationClip,
   TimelineAsset,
   TimelineAudioClip,
+  TimelineCameraClip,
   TimelineParticleClip,
   TimelineSignal,
 } from './timelineAsset.ts';
@@ -15,7 +16,8 @@ export type SequencerClipboard =
   | { type: 'activation'; sourceTrackId: string; item: TimelineActivationClip }
   | { type: 'audio'; sourceTrackId: string; item: TimelineAudioClip }
   | { type: 'animation'; sourceTrackId: string; item: TimelineAnimationClip }
-  | { type: 'particle'; sourceTrackId: string; item: TimelineParticleClip };
+  | { type: 'particle'; sourceTrackId: string; item: TimelineParticleClip }
+  | { type: 'camera'; sourceTrackId: string; item: TimelineCameraClip };
 
 export type SequencerPasteResult =
   | { ok: true; asset: TimelineAsset; trackIndex: number; itemIndex: number }
@@ -125,6 +127,17 @@ export function trimSequencerClip(
     duration: end - clip.start,
     sourceOffsetDelta: 0,
   };
+}
+
+export function trimSequencerCameraBlendIn(
+  originalBlendIn: number,
+  trimmedDuration: number,
+  sourceOffsetDelta: number,
+): number {
+  const duration = Math.max(0, Number.isFinite(trimmedDuration) ? trimmedDuration : 0);
+  const blend = Number.isFinite(originalBlendIn) ? originalBlendIn : 0;
+  const offset = Number.isFinite(sourceOffsetDelta) ? sourceOffsetDelta : 0;
+  return clamp(blend - offset, 0, duration);
 }
 
 export function findSequencerClipPlacement(
@@ -240,9 +253,14 @@ export function copySequencerItem(
     if (!item) return null;
     return { type: 'animation', sourceTrackId: track.id, item: structuredClone(item) };
   }
+  if (track.type === 'particle') {
+    const item = track.clips[itemIndex];
+    if (!item) return null;
+    return { type: 'particle', sourceTrackId: track.id, item: structuredClone(item) };
+  }
   const item = track.clips[itemIndex];
   if (!item) return null;
-  return { type: 'particle', sourceTrackId: track.id, item: structuredClone(item) };
+  return { type: 'camera', sourceTrackId: track.id, item: structuredClone(item) };
 }
 
 export function resolveSequencerPasteTrack(
@@ -309,6 +327,12 @@ export function pasteSequencerItem(
     return { ok: true, asset: next, trackIndex, itemIndex: track.clips.indexOf(item) };
   }
   if (track.type === 'particle' && clipboard.type === 'particle') {
+    const item = { ...structuredClone(clipboard.item), ...placement };
+    track.clips.push(item);
+    track.clips.sort((left, right) => left.start - right.start);
+    return { ok: true, asset: next, trackIndex, itemIndex: track.clips.indexOf(item) };
+  }
+  if (track.type === 'camera' && clipboard.type === 'camera') {
     const item = { ...structuredClone(clipboard.item), ...placement };
     track.clips.push(item);
     track.clips.sort((left, right) => left.start - right.start);

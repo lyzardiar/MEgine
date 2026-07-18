@@ -661,7 +661,7 @@ Referenced Only 是可用的单包裁剪基础，仍不等同于完整 Addressab
 - 全局 Duration 缩短不会再暗中裁剪锁定内容：锁定 Marker/Clip 的最晚结束时间成为合法最小时长，实际收缩只调整未锁定轨道。轨道列表以条纹、锁图标和禁止光标明确反馈状态。
 - Track Inspector 提供带边界检查的 Move Up/Move Down，排序使用纯函数生成新资产并进入同一 Undo/Redo 历史；锁定、越界和目标失效均返回明确诊断。
 
-轨道锁定解决的是单轨内容保护，不等同于成熟组织系统。后续仍需 Track Group、折叠、组级 Mute/Lock、拖拽排序、多选、Ripple Edit、吸附参考线、通用 Binding Table，以及 Camera、Animator 和嵌套 Timeline 轨道。
+轨道锁定解决的是单轨内容保护，不等同于成熟组织系统。后续仍需 Track Group、折叠、组级 Mute/Lock、拖拽排序、多选、Ripple Edit、吸附参考线、通用 Binding Table，以及 Animator 和嵌套 Timeline 轨道；Camera Track 的第一阶段实现见第 48 节。
 
 ## 46. 2026-07-19 Timeline Inspector 编辑事务
 
@@ -680,3 +680,12 @@ Referenced Only 是可用的单包裁剪基础，仍不等同于完整 Addressab
 - Editor、CLI 与 Rust 资产解析共享 300 秒的单片段最大确定性模拟时间（`clip_in + duration`），同时由 `ParticleWorld` 入口兜底，防止异常资产产生无界重建。PC Build 会接受并校验 Particle Track、锁定字段、绑定路径、范围与重叠。
 
 当前 Particle Track 是基础发射控制，不是 Unity Particle System Timeline 的完整替代：尚缺 Burst/Emission Curve、颜色和尺寸曲线、Sub Emitter、碰撞、Trails、GPU 粒子、独立 Time Scale、片段混合和缓存快照。世界空间粒子 Seek 使用目标当帧 Transform 重建，不能还原过去每一帧移动发射器的历史轨迹；后续需引入模拟缓存或可采样的 Transform 历史。恢复 authored 组件时会重置瞬时粒子而非恢复进入 Timeline 前的粒子快照。
+
+## 48. 2026-07-19 Timeline Camera Cut 与 Blend
+
+- `.mtimeline` 新增单一 `camera` 轨道，每个 Shot 片段保存 Director 后代 Camera 路径、Blend In 和 Linear/Ease In-Out 曲线。资产层、Sequencer 和 PC Build 共同校验单轨约束、后代路径、片段范围、非重叠、Blend 范围和曲线枚举。
+- Timeline Runtime 不改写 `Camera2D/Camera3D.primary`，而是生成当前帧临时相机覆盖；Pause/Scrub 保留或重采样覆盖，Mute、空隙、Stop 和 Director 失活自动释放。多个 Director 同时控制相机时按 Director 实体 ID 稳定仲裁，结果不依赖 HashMap 遍历顺序。
+- 相邻 Shot 的 Blend 从上一台 Camera 过渡；首个或非相邻 Shot 从 authored primary Camera 过渡。兼容的透视相机插值世界位置、旋转、FOV、Near/Far，兼容的正交相机插值姿态、Size、Near/Far，同时平滑背景颜色；透视与正交投影不做矩阵硬插值，而在中点执行明确 Cut。
+- Sequencer 支持创建 Camera Track/Shot、拖动和裁剪、片段级 Camera 绑定、Blend In/Curve、锁定、Undo/Redo、复制粘贴和可视化 Blend 区域。轨道资产最多一个，避免多个 Camera Track 的未定义混合优先级。
+
+当前实现是稳定的基础 Camera Cut/Blend，不等同于 Cinemachine：尚缺 Virtual Camera 状态、LookAt/Follow、阻尼、构图器、镜头碰撞、噪声、路径 Dolly、Target Group、镜头事件、Blend Preset 资产和 Scene View Shot Preview。跨透视/正交采用 Cut 是显式限制；后续如需跨投影过渡，应设计投影变形模型，而不是线性插值投影矩阵。

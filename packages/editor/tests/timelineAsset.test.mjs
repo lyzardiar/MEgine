@@ -23,7 +23,7 @@ test('timeline asset normalizes signal tracks and round trips', () => {
 });
 
 test('timeline asset rejects unknown tracks and snaps to frames', () => {
-  assert.throws(() => parseTimelineAsset('{"version":1,"duration":2,"tracks":[{"type":"camera"}]}'), /Unsupported/);
+  assert.throws(() => parseTimelineAsset('{"version":1,"duration":2,"tracks":[{"type":"unknown"}]}'), /Unsupported/);
   assert.throws(() => parseTimelineAsset('{"version":1,"duration":2,"tracks":[{"type":"signal","id":"same","name":"A"},{"type":"signal","id":"same","name":"B"}]}'), /unique/);
   assert.throws(() => parseTimelineAsset('{"version":1,"duration":2,"tracks":[{"type":"signal","id":"events","name":"Events","markers":[{"time":1,"name":""}]}]}'), /invalid/);
   const asset = createTimelineAsset();
@@ -96,4 +96,38 @@ test('timeline particle tracks normalize prewarm and reject invalid clips', () =
       clips: [{ start: 0, duration: 1, clip_in: 300 }],
     }],
   })), /invalid/);
+});
+
+test('timeline camera tracks normalize shots and reject invalid blends', () => {
+  const asset = parseTimelineAsset(JSON.stringify({
+    version: 1,
+    name: 'Shots',
+    duration: 4,
+    tracks: [{
+      type: 'camera', id: 'shots', name: 'Shots', locked: true,
+      clips: [
+        { start: 2, duration: 2, target: 'Cameras\\Close', blend_in: 0.5, blend_curve: ' LINEAR ' },
+        { start: 0, duration: 2, target: 'Cameras/Wide' },
+      ],
+    }],
+  }));
+  assert.deepEqual(asset.tracks[0].clips, [
+    { start: 0, duration: 2, target: 'Cameras/Wide', blend_in: 0, blend_curve: 'ease_in_out' },
+    { start: 2, duration: 2, target: 'Cameras/Close', blend_in: 0.5, blend_curve: 'linear' },
+  ]);
+  assert.deepEqual(parseTimelineAsset(serializeTimelineAsset(asset)), asset);
+  assert.throws(() => parseTimelineAsset(JSON.stringify({
+    version: 1, duration: 2,
+    tracks: [{
+      type: 'camera', id: 'shots', name: 'Shots',
+      clips: [{ start: 0, duration: 1, target: 'Camera', blend_in: 1.1 }],
+    }],
+  })), /invalid/);
+  assert.throws(() => parseTimelineAsset(JSON.stringify({
+    version: 1, duration: 2,
+    tracks: [
+      { type: 'camera', id: 'a', name: 'A' },
+      { type: 'camera', id: 'b', name: 'B' },
+    ],
+  })), /only one/);
 });
