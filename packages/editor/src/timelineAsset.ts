@@ -102,12 +102,22 @@ export type TimelineCameraTrack = {
 
 export type TimelineTrack = TimelineSignalTrack | TimelineActivationTrack | TimelineAudioTrack | TimelineAnimationTrack | TimelineParticleTrack | TimelineCameraTrack;
 
+export type TimelineTrackGroup = {
+  id: string;
+  name: string;
+  muted: boolean;
+  locked: boolean;
+  collapsed: boolean;
+  track_ids: string[];
+};
+
 export type TimelineAsset = {
   version: 1;
   name: string;
   duration: number;
   frame_rate: number;
   tracks: TimelineTrack[];
+  groups: TimelineTrackGroup[];
 };
 
 export const TIMELINE_MAX_PARTICLE_TIME = 300;
@@ -162,6 +172,7 @@ export function createTimelineAsset(name = 'New Timeline'): TimelineAsset {
     name: name.trim() || 'New Timeline',
     duration: 5,
     frame_rate: 60,
+    groups: [],
     tracks: [{
       type: 'signal',
       id: 'signals',
@@ -311,12 +322,39 @@ export function normalizeTimelineAsset(value: unknown): TimelineAsset {
       tracks.push({ type, id, name, muted: Boolean(track.muted), locked: Boolean(track.locked), clips });
     }
   }
+  const groups: TimelineTrackGroup[] = [];
+  const usedGroupIds = new Set<string>();
+  const groupedTrackIds = new Set<string>();
+  for (const [index, candidate] of (Array.isArray(raw.groups) ? raw.groups : []).entries()) {
+    const group = object(candidate);
+    const baseId = String(group.id ?? `group-${index + 1}`).trim() || `group-${index + 1}`;
+    let id = baseId;
+    let suffix = 1;
+    while (usedGroupIds.has(id)) id = `${baseId}-${++suffix}`;
+    usedGroupIds.add(id);
+    const trackIds: string[] = [];
+    for (const value of Array.isArray(group.track_ids) ? group.track_ids : []) {
+      const trackId = String(value ?? '').trim();
+      if (!trackId || !usedIds.has(trackId) || groupedTrackIds.has(trackId)) continue;
+      groupedTrackIds.add(trackId);
+      trackIds.push(trackId);
+    }
+    groups.push({
+      id,
+      name: String(group.name ?? '').trim() || `Group ${index + 1}`,
+      muted: Boolean(group.muted),
+      locked: Boolean(group.locked),
+      collapsed: Boolean(group.collapsed),
+      track_ids: trackIds,
+    });
+  }
   return {
     version: 1,
     name: String(raw.name ?? '').trim() || 'Timeline',
     duration,
     frame_rate: Math.max(1, Math.min(240, finite(raw.frame_rate, 60))),
     tracks,
+    groups,
   };
 }
 
@@ -405,6 +443,30 @@ export function validateTimelineAsset(asset: TimelineAsset): void {
       }
     }
   }
+  const groupIds = new Set<string>();
+  const groupedTrackIds = new Set<string>();
+  for (const group of asset.groups) {
+    if (!group.id.trim() || groupIds.has(group.id)) throw new Error('Timeline group IDs must be non-empty and unique');
+    groupIds.add(group.id);
+    if (!group.name.trim()) throw new Error(`Timeline group ${group.id} must have a name`);
+    for (const trackId of group.track_ids) {
+      if (!ids.has(trackId)) throw new Error(`Timeline group ${group.name} references missing track ${trackId}`);
+      if (groupedTrackIds.has(trackId)) throw new Error(`Timeline track ${trackId} belongs to more than one group`);
+      groupedTrackIds.add(trackId);
+    }
+  }
+}
+
+export function timelineGroupForTrack(asset: Pick<TimelineAsset, 'groups'>, trackId: string): TimelineTrackGroup | null {
+  return (asset.groups ?? []).find((group) => group.track_ids.includes(trackId)) ?? null;
+}
+
+export function timelineTrackIsLocked(asset: Pick<TimelineAsset, 'groups'>, track: TimelineTrack): boolean {
+  return track.locked || Boolean(timelineGroupForTrack(asset, track.id)?.locked);
+}
+
+export function timelineTrackIsMuted(asset: Pick<TimelineAsset, 'groups'>, track: TimelineTrack): boolean {
+  return track.muted || Boolean(timelineGroupForTrack(asset, track.id)?.muted);
 }
 
 export function parseTimelineAsset(text: string): TimelineAsset {
@@ -506,6 +568,26 @@ export function parseTimelineAsset(text: string): TimelineAsset {
     }).sort((left, right) => left.start - right.start);
     if (clips.some((clip, index) => index > 0 && clips[index - 1].start + clips[index - 1].duration > clip.start)) {
       throw new Error(`${label} track ${track.id} contains overlapping clips`);
+    }
+  }
+  if (parsed.groups != null && !Array.isArray(parsed.groups)) throw new Error('Timeline groups must be an array');
+  const groupIds = new Set<string>();
+  const groupedTrackIds = new Set<string>();
+  for (const groupValue of Array.isArray(parsed.groups) ? parsed.groups : []) {
+    const group = object(groupValue);
+    if (typeof group.id !== 'string' || !group.id.trim() || groupIds.has(group.id.trim())) {
+      throw new Error('Timeline group IDs must be non-empty strings and unique');
+    }
+    groupIds.add(group.id.trim());
+    if (typeof group.name !== 'string' || !group.name.trim()) throw new Error(`Timeline group ${group.id} must have a name`);
+    if (group.muted != null && typeof group.muted !== 'boolean') throw new Error(`Timeline group ${group.id} muted must be boolean`);
+    if (group.locked != null && typeof group.locked !== 'boolean') throw new Error(`Timeline group ${group.id} locked must be boolean`);
+    if (group.collapsed != null && typeof group.collapsed !== 'boolean') throw new Error(`Timeline group ${group.id} collapsed must be boolean`);
+    if (group.track_ids != null && !Array.isArray(group.track_ids)) throw new Error(`Timeline group ${group.id} track_ids must be an array`);
+    for (const trackId of Array.isArray(group.track_ids) ? group.track_ids : []) {
+      if (typeof trackId !== 'string' || !ids.has(trackId)) throw new Error(`Timeline group ${group.id} references a missing track`);
+      if (groupedTrackIds.has(trackId)) throw new Error(`Timeline track ${trackId} belongs to more than one group`);
+      groupedTrackIds.add(trackId);
     }
   }
   const asset = normalizeTimelineAsset(parsed);

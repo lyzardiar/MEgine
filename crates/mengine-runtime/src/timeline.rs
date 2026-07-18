@@ -418,7 +418,6 @@ impl TimelineRuntime {
             let TimelineTrack::Activation {
                 id,
                 name,
-                muted,
                 target,
                 clips,
                 ..
@@ -427,7 +426,7 @@ impl TimelineRuntime {
                 continue;
             };
             let key = (director, id.clone());
-            if *muted {
+            if asset.track_is_muted(track) {
                 self.reported_activation_failures.remove(&key);
                 continue;
             }
@@ -491,7 +490,6 @@ impl TimelineRuntime {
             let TimelineTrack::Audio {
                 id,
                 name,
-                muted,
                 target,
                 clips,
                 ..
@@ -500,7 +498,7 @@ impl TimelineRuntime {
                 continue;
             };
             let key = (director, id.clone());
-            if *muted {
+            if asset.track_is_muted(track) {
                 self.reported_audio_failures.remove(&key);
                 continue;
             }
@@ -608,7 +606,6 @@ impl TimelineRuntime {
             let TimelineTrack::Animation {
                 id,
                 name,
-                muted,
                 target,
                 clips,
                 ..
@@ -617,7 +614,7 @@ impl TimelineRuntime {
                 continue;
             };
             let key = (director, id.clone());
-            if *muted {
+            if asset.track_is_muted(track) {
                 self.reported_animation_failures.remove(&key);
                 continue;
             }
@@ -709,7 +706,6 @@ impl TimelineRuntime {
             let TimelineTrack::Particle {
                 id,
                 name,
-                muted,
                 target,
                 clips,
                 ..
@@ -718,7 +714,7 @@ impl TimelineRuntime {
                 continue;
             };
             let key = (director, id.clone());
-            if *muted {
+            if asset.track_is_muted(track) {
                 self.reported_particle_failures.remove(&key);
                 continue;
             }
@@ -842,7 +838,6 @@ impl TimelineRuntime {
             let TimelineTrack::Camera {
                 id,
                 name,
-                muted,
                 clips,
                 ..
             } = track
@@ -850,7 +845,7 @@ impl TimelineRuntime {
                 continue;
             };
             let key = (director, id.clone());
-            if *muted {
+            if asset.track_is_muted(track) {
                 self.reported_camera_failures.remove(&key);
                 continue;
             }
@@ -1125,14 +1120,13 @@ fn collect_signals_at(
     for track in &asset.tracks {
         let TimelineTrack::Signal {
             name,
-            muted,
             markers,
             ..
         } = track
         else {
             continue;
         };
-        if *muted {
+        if asset.track_is_muted(track) {
             continue;
         }
         for marker in markers {
@@ -1169,14 +1163,13 @@ fn collect_crossed_signals(
     for track in &asset.tracks {
         let TimelineTrack::Signal {
             name,
-            muted,
             markers,
             ..
         } = track
         else {
             continue;
         };
-        if *muted {
+        if asset.track_is_muted(track) {
             continue;
         }
         for marker in markers {

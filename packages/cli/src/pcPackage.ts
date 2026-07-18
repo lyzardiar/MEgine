@@ -1033,6 +1033,38 @@ function scanBuildAssetDependencies(
           }
         }
       }
+      if (timeline.groups != null && !Array.isArray(timeline.groups)) {
+        throw new Error(`invalid Timeline asset ${source}: groups must be an array`);
+      }
+      const groupIds = new Set<string>();
+      const groupedTrackIds = new Set<string>();
+      for (const groupValue of Array.isArray(timeline.groups) ? timeline.groups : []) {
+        const group = jsonObject(groupValue);
+        if (!group) throw new Error(`invalid Timeline asset ${source}: group must be an object`);
+        const id = strictStringValue(group, 'id', `Timeline asset ${source}`);
+        const name = strictStringValue(group, 'name', `Timeline asset ${source}`);
+        if (!id || !name || groupIds.has(id)) {
+          throw new Error(`invalid Timeline asset ${source}: group ids and names must be non-empty and ids unique`);
+        }
+        groupIds.add(id);
+        if (group.muted != null && typeof group.muted !== 'boolean'
+          || group.locked != null && typeof group.locked !== 'boolean'
+          || group.collapsed != null && typeof group.collapsed !== 'boolean') {
+          throw new Error(`invalid Timeline asset ${source}: group flags must be boolean`);
+        }
+        if (group.track_ids != null && !Array.isArray(group.track_ids)) {
+          throw new Error(`invalid Timeline asset ${source}: group track_ids must be an array`);
+        }
+        for (const trackId of Array.isArray(group.track_ids) ? group.track_ids : []) {
+          if (typeof trackId !== 'string' || !trackIds.has(trackId)) {
+            throw new Error(`invalid Timeline asset ${source}: group references a missing track`);
+          }
+          if (groupedTrackIds.has(trackId)) {
+            throw new Error(`invalid Timeline asset ${source}: track ${trackId} belongs to more than one group`);
+          }
+          groupedTrackIds.add(trackId);
+        }
+      }
     } else if (extension === '.gltf') {
       const model = readJsonAsset(absolute, root, 'glTF model');
       const enqueueUri = (value: unknown, kind: string) => {

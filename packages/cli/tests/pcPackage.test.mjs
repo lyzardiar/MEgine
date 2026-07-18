@@ -440,6 +440,10 @@ test('buildPcPackage includes and validates TimelineDirector assets', () => {
           { start: 1.5, duration: 1.5, target: 'Cameras/Close', blend_in: 0.5, blend_curve: ' EASE_IN_OUT ' },
         ],
       }],
+      groups: [{
+        id: 'presentation', name: 'Presentation', muted: false, locked: false, collapsed: true,
+        track_ids: ['dialog', 'music', 'shots'],
+      }],
     }));
     mkdirSync(join(paths.project, 'Assets', 'Audio'), { recursive: true });
     writeFileSync(join(paths.project, 'Assets', 'Audio', 'intro.ogg'), 'audio');
@@ -455,6 +459,34 @@ test('buildPcPackage includes and validates TimelineDirector assets', () => {
     assert.equal(existsSync(join(paths.output, 'Assets', 'Audio', 'intro.ogg')), true);
     assert.equal(existsSync(join(paths.output, 'Assets', 'Animations', 'Hero.manim')), true);
     assert.equal(manifest.assetValidation.validatedFiles, 6);
+  } finally {
+    rmSync(paths.root, { recursive: true, force: true });
+  }
+});
+
+test('buildPcPackage rejects Timeline groups with missing or duplicate track membership', () => {
+  const paths = fixture('invalid-timeline-groups');
+  try {
+    writeFileSync(join(paths.project, 'Assets', 'Scenes', 'Main.mscene'), JSON.stringify({
+      world: { entities: [{ components: {
+        TimelineDirector: { asset: 'Assets/Timelines/Broken.mtimeline' },
+      } }] },
+    }));
+    writeFileSync(join(paths.project, 'Assets', 'Timelines', 'Broken.mtimeline'), JSON.stringify({
+      version: 1, duration: 1,
+      tracks: [{ type: 'signal', id: 'signals', name: 'Signals' }],
+      groups: [
+        { id: 'a', name: 'A', track_ids: ['signals'] },
+        { id: 'b', name: 'B', track_ids: ['signals', 'missing'] },
+      ],
+    }));
+    assert.throws(() => buildPcPackage({
+      projectDir: paths.project,
+      outputDir: paths.output,
+      runtimePath: paths.runtime,
+      engineVersion: 'test-engine',
+    }), /more than one group|missing track/);
+    assert.equal(existsSync(paths.output), false);
   } finally {
     rmSync(paths.root, { recursive: true, force: true });
   }

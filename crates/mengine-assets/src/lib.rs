@@ -37,7 +37,8 @@ pub use surface_shader::{load_surface_shader, parse_surface_shader, SURFACE_SHAD
 pub use texture::{load_environment_texture, load_texture_rgba8, texture_dimensions};
 pub use timeline::{
     load_timeline_asset, parse_timeline_asset, TimelineAsset, TimelineCameraClip,
-    TimelineParticleClip, TimelineSignal, TimelineTrack, MAX_TIMELINE_PARTICLE_TIME,
+    TimelineParticleClip, TimelineSignal, TimelineTrack, TimelineTrackGroup,
+    MAX_TIMELINE_PARTICLE_TIME,
 };
 
 #[derive(Clone, Debug, PartialEq, Eq)]

@@ -820,3 +820,12 @@ Referenced Only 是可用的单包裁剪基础，仍不等同于完整 Addressab
 - 吸附候选先按时间排序，每个移动边通过二分查找最近候选，避免大量 Clip/多选拖动时在每个 Pointer Move 做选中边与全部候选的平方比较。纯函数测试覆盖边吸附、阈值外不吸附、排除选中项和单边裁剪。
 
 该切片仍不是完整的高级 Timeline 编辑体验。数值偏移/对齐对话框、临时按键反转吸附、用户可调阈值、Ripple Move/Insert、音频波形、Track Group、嵌套 Timeline 和录制模式仍需继续实现；本次仅改变编辑器手势与偏好，不修改 `.mtimeline`、Runtime 或构建格式。
+
+## 63. 2026-07-19 Timeline Track Group 资产与 Runtime 契约
+
+- `.mtimeline` 在保持 `version: 1` 向后兼容的前提下新增可选顶层 `groups`。每组用稳定 `id`、显示名、Mute/Lock/Collapsed 状态和 `track_ids` 记录成员；旧资产缺少字段时规范化为空数组，轨道改名不会破坏引用。
+- TypeScript 编辑器解析、Rust `mengine-assets` 和 CLI 打包器共同校验：组 ID/名称非空、组 ID 唯一、成员轨道必须存在，并且同一轨道只能属于一个组。非法关系在编辑保存、Player 加载和发布构建三条路径都会失败，不允许编辑器能开、打包后才静默变义。
+- Rust Player 的 Signal、Activation、Audio、Animation、Particle、Camera 六类调度统一读取有效 Mute：轨道自身 Mute 或所属组 Mute 任一开启就停止该轨道。编辑器的删除、移动、轨道排序、粘贴目标选择和锁定内容边界也统一读取有效 Group Lock，不能通过快捷键或剪贴板绕过组锁。
+- Group Lock 只影响创作权限，不影响 Player；Collapsed 只影响编辑器显示；Group Mute 属于明确的 Runtime 语义。跨语言回归覆盖旧资产升级、Round Trip、组 Mute、缺失成员、重复成员、组锁编辑门禁和构建校验。
+
+这一提交先固定数据和运行契约，尚未把组行、折叠、成员编辑和组级 Inspector 接入 Sequencer；下一切片将在不再改动 Runtime 语义的基础上完成编辑器工作流。

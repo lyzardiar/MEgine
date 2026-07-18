@@ -155,6 +155,44 @@ pub enum TimelineTrack {
     },
 }
 
+impl TimelineTrack {
+    pub fn id(&self) -> &str {
+        match self {
+            Self::Signal { id, .. }
+            | Self::Activation { id, .. }
+            | Self::Audio { id, .. }
+            | Self::Animation { id, .. }
+            | Self::Particle { id, .. }
+            | Self::Camera { id, .. } => id,
+        }
+    }
+
+    pub fn is_muted(&self) -> bool {
+        match self {
+            Self::Signal { muted, .. }
+            | Self::Activation { muted, .. }
+            | Self::Audio { muted, .. }
+            | Self::Animation { muted, .. }
+            | Self::Particle { muted, .. }
+            | Self::Camera { muted, .. } => *muted,
+        }
+    }
+}
+
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+pub struct TimelineTrackGroup {
+    pub id: String,
+    pub name: String,
+    #[serde(default)]
+    pub muted: bool,
+    #[serde(default)]
+    pub locked: bool,
+    #[serde(default)]
+    pub collapsed: bool,
+    #[serde(default)]
+    pub track_ids: Vec<String>,
+}
+
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 pub struct TimelineAsset {
     pub version: u32,
@@ -165,6 +203,8 @@ pub struct TimelineAsset {
     pub frame_rate: f32,
     #[serde(default)]
     pub tracks: Vec<TimelineTrack>,
+    #[serde(default)]
+    pub groups: Vec<TimelineTrackGroup>,
 }
 
 impl Default for TimelineAsset {
@@ -175,6 +215,7 @@ impl Default for TimelineAsset {
             duration: default_duration(),
             frame_rate: default_frame_rate(),
             tracks: Vec::new(),
+            groups: Vec::new(),
         }
     }
 }
@@ -525,7 +566,51 @@ impl TimelineAsset {
                 }
             }
         }
+        let mut group_ids = HashSet::new();
+        let mut grouped_track_ids = HashSet::new();
+        for group in &mut self.groups {
+            group.id = group.id.trim().to_owned();
+            group.name = group.name.trim().to_owned();
+            if group.id.is_empty() || !group_ids.insert(group.id.clone()) {
+                return Err(AssetError::Invalid(
+                    "Timeline group ids must be non-empty and unique".into(),
+                ));
+            }
+            if group.name.is_empty() {
+                return Err(AssetError::Invalid(format!(
+                    "Timeline group '{}' must have a name",
+                    group.id
+                )));
+            }
+            for track_id in &mut group.track_ids {
+                *track_id = track_id.trim().to_owned();
+                if !track_ids.contains(track_id) {
+                    return Err(AssetError::Invalid(format!(
+                        "Timeline group '{}' references missing track '{}'",
+                        group.id, track_id
+                    )));
+                }
+                if !grouped_track_ids.insert(track_id.clone()) {
+                    return Err(AssetError::Invalid(format!(
+                        "Timeline track '{track_id}' belongs to more than one group"
+                    )));
+                }
+            }
+        }
         Ok(self)
+    }
+
+    pub fn group_for_track(&self, track_id: &str) -> Option<&TimelineTrackGroup> {
+        self.groups
+            .iter()
+            .find(|group| group.track_ids.iter().any(|candidate| candidate == track_id))
+    }
+
+    pub fn track_is_muted(&self, track: &TimelineTrack) -> bool {
+        track.is_muted()
+            || self
+                .group_for_track(track.id())
+                .is_some_and(|group| group.muted)
     }
 }
 
@@ -633,6 +718,33 @@ mod tests {
         .is_err());
         assert!(parse_timeline_asset(br#"{"version":2,"duration":1}"#).is_err());
         assert!(parse_timeline_asset(br#"{"name":"Missing contract"}"#).is_err());
+    }
+
+    #[test]
+    fn validates_track_groups_and_resolves_effective_mute() {
+        let asset = parse_timeline_asset(
+            br#"{
+              "version":1,"duration":2,
+              "tracks":[
+                {"type":"signal","id":"events","name":"Events"},
+                {"type":"signal","id":"dialogue","name":"Dialogue","muted":true}
+              ],
+              "groups":[{"id":"presentation","name":" Presentation ","muted":true,"locked":true,"collapsed":true,"track_ids":["events"]}]
+            }"#,
+        )
+        .unwrap();
+        assert_eq!(asset.groups[0].name, "Presentation");
+        assert_eq!(asset.group_for_track("events"), Some(&asset.groups[0]));
+        assert!(asset.track_is_muted(&asset.tracks[0]));
+        assert!(asset.track_is_muted(&asset.tracks[1]));
+        assert!(parse_timeline_asset(
+            br#"{"version":1,"duration":1,"tracks":[{"type":"signal","id":"events","name":"Events"}],"groups":[{"id":"a","name":"A","track_ids":["events"]},{"id":"b","name":"B","track_ids":["events"]}]}"#
+        )
+        .is_err());
+        assert!(parse_timeline_asset(
+            br#"{"version":1,"duration":1,"tracks":[],"groups":[{"id":"a","name":"A","track_ids":["missing"]}]}"#
+        )
+        .is_err());
     }
 
     #[test]

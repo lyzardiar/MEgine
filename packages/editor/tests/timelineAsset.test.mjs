@@ -6,6 +6,9 @@ import {
   parseTimelineAsset,
   serializeTimelineAsset,
   snapTimelineAssetTime,
+  timelineGroupForTrack,
+  timelineTrackIsLocked,
+  timelineTrackIsMuted,
 } from '../src/timelineAsset.ts';
 
 test('timeline asset normalizes signal tracks and round trips', () => {
@@ -30,6 +33,42 @@ test('timeline asset rejects unknown tracks and snaps to frames', () => {
   asset.frame_rate = 10;
   assert.equal(snapTimelineAssetTime(0.26, asset), 0.3);
   assert.equal(snapTimelineAssetTime(99, asset), asset.duration);
+});
+
+test('timeline track groups round trip and contribute effective mute and lock state', () => {
+  const asset = parseTimelineAsset(JSON.stringify({
+    version: 1,
+    name: 'Grouped',
+    duration: 2,
+    tracks: [
+      { type: 'signal', id: 'events', name: 'Events' },
+      { type: 'signal', id: 'dialogue', name: 'Dialogue', muted: true },
+    ],
+    groups: [{
+      id: 'presentation', name: ' Presentation ', muted: true, locked: true, collapsed: true,
+      track_ids: ['events'],
+    }],
+  }));
+  assert.deepEqual(asset.groups, [{
+    id: 'presentation', name: 'Presentation', muted: true, locked: true, collapsed: true,
+    track_ids: ['events'],
+  }]);
+  assert.equal(timelineGroupForTrack(asset, 'events')?.id, 'presentation');
+  assert.equal(timelineTrackIsMuted(asset, asset.tracks[0]), true);
+  assert.equal(timelineTrackIsLocked(asset, asset.tracks[0]), true);
+  assert.equal(timelineTrackIsMuted(asset, asset.tracks[1]), true);
+  assert.deepEqual(parseTimelineAsset(serializeTimelineAsset(asset)), asset);
+
+  assert.throws(() => parseTimelineAsset(JSON.stringify({
+    version: 1, duration: 1,
+    tracks: [{ type: 'signal', id: 'events', name: 'Events' }],
+    groups: [{ id: 'a', name: 'A', track_ids: ['events'] }, { id: 'b', name: 'B', track_ids: ['events'] }],
+  })), /more than one group/);
+  assert.throws(() => parseTimelineAsset(JSON.stringify({
+    version: 1, duration: 1,
+    tracks: [{ type: 'signal', id: 'events', name: 'Events' }],
+    groups: [{ id: 'a', name: 'A', track_ids: ['missing'] }],
+  })), /missing track/);
 });
 
 test('timeline activation tracks normalize bindings and reject ambiguous clips', () => {

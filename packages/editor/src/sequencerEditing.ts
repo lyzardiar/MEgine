@@ -1,11 +1,12 @@
-import type {
-  TimelineActivationClip,
-  TimelineAnimationClip,
-  TimelineAsset,
-  TimelineAudioClip,
-  TimelineCameraClip,
-  TimelineParticleClip,
-  TimelineSignal,
+import {
+  timelineTrackIsLocked,
+  type TimelineActivationClip,
+  type TimelineAnimationClip,
+  type TimelineAsset,
+  type TimelineAudioClip,
+  type TimelineCameraClip,
+  type TimelineParticleClip,
+  type TimelineSignal,
 } from './timelineAsset.ts';
 
 export type SequencerClipRange = { start: number; duration: number };
@@ -367,7 +368,7 @@ export function sequencerTicks(
 export function lockedSequencerContentEnd(asset: TimelineAsset): number {
   let end = 0;
   for (const track of asset.tracks) {
-    if (!track.locked) continue;
+    if (!timelineTrackIsLocked(asset, track)) continue;
     if (track.type === 'signal') {
       for (const marker of track.markers) end = Math.max(end, marker.time);
     } else {
@@ -384,7 +385,7 @@ export function moveSequencerTrack(
 ): SequencerTrackMoveResult {
   const track = asset.tracks[trackIndex];
   if (!track) return { ok: false, error: 'Timeline track no longer exists.' };
-  if (track.locked) return { ok: false, error: `Track '${track.name}' is locked. Unlock it before reordering.` };
+  if (timelineTrackIsLocked(asset, track)) return { ok: false, error: `Track '${track.name}' is locked. Unlock it before reordering.` };
   const nextIndex = trackIndex + direction;
   if (nextIndex < 0 || nextIndex >= asset.tracks.length) {
     return { ok: false, error: `Track '${track.name}' is already at the ${direction < 0 ? 'top' : 'bottom'}.` };
@@ -411,7 +412,7 @@ export function deleteSequencerItems(
   for (const selection of unique.values()) {
     const track = asset.tracks[selection.track];
     if (!track) return { ok: false, error: 'A selected Timeline track no longer exists.' };
-    if (track.locked) return { ok: false, error: `Track '${track.name}' is locked. Unlock it before deleting.` };
+    if (timelineTrackIsLocked(asset, track)) return { ok: false, error: `Track '${track.name}' is locked. Unlock it before deleting.` };
     const itemCount = track.type === 'signal' ? track.markers.length : track.clips.length;
     if (selection.marker < 0 || selection.marker >= itemCount) {
       return { ok: false, error: `A selected item on track '${track.name}' no longer exists.` };
@@ -505,7 +506,7 @@ export function moveSequencerItems(
   for (const selection of unique.values()) {
     const track = asset.tracks[selection.track];
     if (!track) return { ok: false, error: 'A selected Timeline track no longer exists.' };
-    if (track.locked) return { ok: false, error: `Track '${track.name}' is locked. Unlock it before moving.` };
+    if (timelineTrackIsLocked(asset, track)) return { ok: false, error: `Track '${track.name}' is locked. Unlock it before moving.` };
     const count = track.type === 'signal' ? track.markers.length : track.clips.length;
     if (selection.marker < 0 || selection.marker >= count) {
       return { ok: false, error: `A selected item on track '${track.name}' no longer exists.` };
@@ -596,12 +597,12 @@ export function resolveSequencerPasteTrack(
   clipboard: SequencerClipboardItem,
 ): number {
   const preferred = preferredTrackIndex == null ? null : asset.tracks[preferredTrackIndex];
-  if (preferred?.type === clipboard.type && !preferred.locked) return preferredTrackIndex!;
+  if (preferred?.type === clipboard.type && !timelineTrackIsLocked(asset, preferred)) return preferredTrackIndex!;
   const source = asset.tracks.findIndex(
-    (track) => track.id === clipboard.sourceTrackId && track.type === clipboard.type && !track.locked,
+    (track) => track.id === clipboard.sourceTrackId && track.type === clipboard.type && !timelineTrackIsLocked(asset, track),
   );
   if (source >= 0) return source;
-  return asset.tracks.findIndex((track) => track.type === clipboard.type && !track.locked);
+  return asset.tracks.findIndex((track) => track.type === clipboard.type && !timelineTrackIsLocked(asset, track));
 }
 
 export function pasteSequencerItem(
@@ -616,7 +617,7 @@ export function pasteSequencerItem(
   }
   const next = structuredClone(asset);
   const track = next.tracks[trackIndex];
-  if (track.type !== clipboard.type || track.locked) return { ok: false, error: 'Timeline paste target is no longer editable.' };
+  if (track.type !== clipboard.type || timelineTrackIsLocked(next, track)) return { ok: false, error: 'Timeline paste target is no longer editable.' };
   if (track.type === 'signal' && clipboard.type === 'signal') {
     const item = structuredClone(clipboard.item);
     item.time = clamp(snap(Number.isFinite(requestedTime) ? requestedTime : 0, next.frame_rate), 0, next.duration);
@@ -694,7 +695,7 @@ function resolveSequencerGroupTargets(
   const usedTargets = new Set<number>();
   for (const [sourceTrackId, source] of sourceGroups) {
     const exact = asset.tracks.findIndex((track, index) => (
-      !usedTargets.has(index) && track.id === sourceTrackId && track.type === source.type && !track.locked
+      !usedTargets.has(index) && track.id === sourceTrackId && track.type === source.type && !timelineTrackIsLocked(asset, track)
     ));
     if (exact >= 0) {
       targetBySource.set(sourceTrackId, exact);
@@ -704,7 +705,7 @@ function resolveSequencerGroupTargets(
   const primaryItem = clipboard.items[clipboard.primary] ?? clipboard.items[0];
   if (primaryItem && !targetBySource.has(primaryItem.sourceTrackId) && preferredTrackIndex != null) {
     const preferred = asset.tracks[preferredTrackIndex];
-    if (preferred && preferred.type === primaryItem.type && !preferred.locked && !usedTargets.has(preferredTrackIndex)) {
+    if (preferred && preferred.type === primaryItem.type && !timelineTrackIsLocked(asset, preferred) && !usedTargets.has(preferredTrackIndex)) {
       targetBySource.set(primaryItem.sourceTrackId, preferredTrackIndex);
       usedTargets.add(preferredTrackIndex);
     }
@@ -712,7 +713,7 @@ function resolveSequencerGroupTargets(
   for (const [sourceTrackId, source] of sourceGroups) {
     if (targetBySource.has(sourceTrackId)) continue;
     const fallback = asset.tracks.findIndex((track, index) => (
-      !usedTargets.has(index) && track.type === source.type && !track.locked
+      !usedTargets.has(index) && track.type === source.type && !timelineTrackIsLocked(asset, track)
     ));
     if (fallback < 0) return `Timeline has no separate unlocked ${source.type} track for copied track '${sourceTrackId}'.`;
     targetBySource.set(sourceTrackId, fallback);

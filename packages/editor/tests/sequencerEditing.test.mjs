@@ -28,6 +28,7 @@ function timeline() {
     name: 'Edit',
     duration: 8,
     frame_rate: 10,
+    groups: [],
     tracks: [
       { type: 'signal', id: 'signals', name: 'Signals', muted: false, locked: false, markers: [{ time: 1, name: 'Hit', payload: { value: 1 } }] },
       { type: 'audio', id: 'audio', name: 'Audio', muted: false, locked: false, target: 'Audio', clips: [{ start: 1, duration: 2, clip: 'Assets/hit.ogg', clip_in: 0.5, volume: 0.8, pitch: 1, looped: false }] },
@@ -253,6 +254,15 @@ test('Sequencer group movement shares one collision bound and rejects locked tra
   ], 1);
   assert.equal(locked.ok, false);
   assert.match(locked.error, /locked/);
+
+  asset.tracks[0].locked = false;
+  asset.groups = [{
+    id: 'locked-group', name: 'Locked Group', muted: false, locked: true, collapsed: false,
+    track_ids: ['signals'],
+  }];
+  const groupLocked = moveSequencerItems(asset, [{ track: 0, marker: 0 }], 1);
+  assert.equal(groupLocked.ok, false);
+  assert.match(groupLocked.error, /locked/);
 });
 
 test('Sequencer magnetic snapping aligns selected edges without using selected items as targets', () => {
