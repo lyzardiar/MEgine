@@ -142,6 +142,10 @@ type InspectorEditTransaction = HistorySnapshot & {
   historyCheckpoint: EditorUndoCheckpoint;
   historyToken: EditorUndoToken | null;
 };
+type KeyboardNudgeTransaction = HistorySnapshot & {
+  historyCheckpoint: EditorUndoCheckpoint;
+  historyToken: EditorUndoToken | null;
+};
 type SequencerMarquee = {
   left: number;
   top: number;
@@ -193,6 +197,7 @@ export function Sequencer(props: SequencerProps) {
   const selectedItemsRef = useRef<SequencerItemSelection[]>([]);
   const timeRef = useRef(0);
   const inspectorEdit = useRef<InspectorEditTransaction | null>(null);
+  const keyboardNudge = useRef<KeyboardNudgeTransaction | null>(null);
   const frame = useRef<number | null>(null);
   const previousFrame = useRef<number | null>(null);
   const tracksViewport = useRef<HTMLDivElement | null>(null);
@@ -258,6 +263,16 @@ export function Sequencer(props: SequencerProps) {
     ) {
       props.undoService.restoreCheckpoint(activeTransaction.historyCheckpoint);
     }
+    const activeNudge = keyboardNudge.current;
+    if (
+      activeNudge?.historyToken
+      && asset
+      && props.undoService.isUndoTop(activeNudge.historyToken)
+      && JSON.stringify(asset) === JSON.stringify(activeNudge.asset)
+    ) {
+      props.undoService.restoreCheckpoint(activeNudge.historyCheckpoint);
+    }
+    keyboardNudge.current = null;
     const previous = loadedPath.current;
     if (previous && asset) {
       drafts.current.set(previous, {
@@ -1226,6 +1241,82 @@ export function Sequencer(props: SequencerProps) {
     window.addEventListener('pointercancel', finish);
   };
 
+  const finishKeyboardNudge = () => {
+    const transaction = keyboardNudge.current;
+    keyboardNudge.current = null;
+    if (
+      !transaction?.historyToken
+      || !props.undoService.isUndoTop(transaction.historyToken)
+      || !assetRef.current
+      || JSON.stringify(assetRef.current) !== JSON.stringify(transaction.asset)
+    ) return;
+    props.undoService.restoreCheckpoint(transaction.historyCheckpoint);
+  };
+
+  const nudgeSelectedItems = (frames: number) => {
+    const current = assetRef.current;
+    const items = selectedItemsRef.current;
+    if (!current || items.length === 0) return false;
+    const activeTransaction = keyboardNudge.current;
+    if (
+      activeTransaction
+      && (
+        (activeTransaction.historyToken != null && !props.undoService.isUndoTop(activeTransaction.historyToken))
+        || JSON.stringify(activeTransaction.selectedItems) !== JSON.stringify(items)
+      )
+    ) {
+      finishKeyboardNudge();
+    }
+    const requestedDelta = frames / current.frame_rate;
+    const moved = moveSequencerItems(current, items, requestedDelta);
+    if (!moved.ok) {
+      setError(moved.error);
+      return true;
+    }
+    if (Math.abs(moved.delta) < 0.5 / current.frame_rate) {
+      setError(`Selected Timeline items cannot move any farther ${frames < 0 ? 'left' : 'right'}.`);
+      return true;
+    }
+    let transaction = keyboardNudge.current;
+    if (!transaction) {
+      transaction = {
+        asset: structuredClone(current),
+        selection: selectionRef.current ? { ...selectionRef.current } : null,
+        selectedItems: structuredClone(items),
+        time: timeRef.current,
+        historyCheckpoint: props.undoService.checkpoint(),
+        historyToken: null,
+      };
+      keyboardNudge.current = transaction;
+    }
+    if (!transaction.historyToken) {
+      transaction.historyToken = pushHistory(
+        transaction.asset,
+        transaction.selection,
+        transaction.time,
+        transaction.selectedItems,
+        'Nudge Timeline Items',
+      );
+    }
+    replaceAsset(moved.asset);
+    setError(null);
+    return true;
+  };
+
+  useEffect(() => {
+    const finish = (event: KeyboardEvent) => {
+      if (event.key === 'ArrowLeft' || event.key === 'ArrowRight') finishKeyboardNudge();
+    };
+    const cancel = () => finishKeyboardNudge();
+    window.addEventListener('keyup', finish);
+    window.addEventListener('blur', cancel);
+    return () => {
+      window.removeEventListener('keyup', finish);
+      window.removeEventListener('blur', cancel);
+      finishKeyboardNudge();
+    };
+  }, [props.undoService]);
+
   if (!props.assetPath) return null;
   if (!asset) {
     return (
@@ -1301,6 +1392,7 @@ export function Sequencer(props: SequencerProps) {
       className="timeline-panel sequencer-panel"
       tabIndex={0}
       onPointerDownCapture={(event) => {
+        finishKeyboardNudge();
         const target = event.target as HTMLElement;
         if (!target.closest('input, textarea, select, button, summary')) {
           event.currentTarget.focus({ preventScroll: true });
@@ -1381,6 +1473,15 @@ export function Sequencer(props: SequencerProps) {
           }
           return;
         }
+        if (!modified && (event.key === 'ArrowLeft' || event.key === 'ArrowRight')) {
+          event.preventDefault();
+          event.stopPropagation();
+          const frames = (event.key === 'ArrowLeft' ? -1 : 1) * (event.shiftKey ? 10 : 1);
+          if (!nudgeSelectedItems(frames)) {
+            scrub(snapTimelineAssetTime(displayTime + frames / asset.frame_rate, asset));
+          }
+          return;
+        }
         if ((event.key === 'Delete' || event.key === 'Backspace') && selection) {
           event.preventDefault();
           event.stopPropagation();
@@ -1414,7 +1515,7 @@ export function Sequencer(props: SequencerProps) {
           scrub(next);
         }} /></label>
         <span className="timeline-clip-path" title={props.assetPath}>{asset.name} — {props.assetPath}{dirty ? ' *' : ''}</span>
-        {selectedItems.length > 1 && <span className="sequencer-selection-count">{selectedItems.length} selected</span>}
+          {selectedItems.length > 0 && <span className="sequencer-selection-count" title="Arrow keys nudge by one frame; Shift+Arrow nudges by ten frames.">{selectedItems.length} selected</span>}
         {liveDirector && <span className={`sequencer-live-status${liveDirector.playing ? ' playing' : ''}`}>{liveDirector.playing ? 'LIVE PLAYING' : 'LIVE PAUSED'} · {displayTime.toFixed(2)}s</span>}
         <div className="sequencer-zoom-controls">
           <button type="button" title="Zoom out" disabled={zoom <= SEQUENCER_MIN_ZOOM} onClick={() => changeZoom(zoom / 1.5)}><Minus size={13} /></button>

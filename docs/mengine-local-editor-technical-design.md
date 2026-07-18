@@ -801,3 +801,12 @@ Referenced Only 是可用的单包裁剪基础，仍不等同于完整 Addressab
 - 手势超过 4 像素才进入框选；普通单击继续移动播放头并选中轨道，空白区双击创建项的旧交互不被 `preventDefault` 破坏。`pointercancel` 恢复手势前的主选择和整组选择，不留下半完成状态。
 
 这一切片让已有的组移动、组剪贴板、Duplicate、Delete 和 Ripple Delete 有了实用的多选入口，但成熟 Timeline 仍缺可视吸附线、键盘逐帧移动、Track Group/折叠/组级 Mute/Lock、Ripple Insert/Move、稳定 Binding Table、Animator/Blend Track、嵌套 Timeline、录制模式与性能分析。框选只改变编辑器选择状态，不伪造一条资产 Undo 事务；后续组级编辑继续复用已有的单事务全局 Undo 边界。
+
+## 61. 2026-07-19 Timeline 键盘逐帧组移动
+
+- Sequencer 获得焦点且已选中一个或多个项时，`Left/Right` 将整组左右移动一帧，`Shift+Left/Right` 移动十帧。跨 Signal/Clip 轨道选择仍使用同一个 `moveSequencerItems` 解算器，统一经过帧吸附、Timeline 边界、未选 Clip 碰撞和轨道 Lock 校验，没有为键盘另写一套绕过规则的移动逻辑。
+- 按住方向键的任意数量操作系统 Repeat 只生成一个 `Nudge Timeline Items` 全局 Undo 事务。Key Up、窗口失焦、鼠标接管或资产切换会封口手势；同一手势移回原位时恢复 Checkpoint，不留空历史。
+- 键盘手势保存开始时的 Asset、主选择、整组选择和播放头。若按键重复期间全局历史 Token 已不在栈顶，或选择集被 `Ctrl/Cmd+A`、框选等操作更换，旧事务立即封口，后续移动以新状态建立事务，不向失效历史追加修改。
+- 选中项到达最左/最右或相邻 Clip 边界时显示明确诊断，不移动播放头。没有选中项时，相同快捷键改为按一/十帧步进播放头，Play Mode 中仍通过已绑定 Director 的 Scrub 通道。
+
+这一阶段完成了逐帧精调的基础交互，但可视 Snap Guide、吸附开关/阈值、数值偏移对话框、Ripple Move 和音频波形仍未实现。键盘移动不改变 `.mtimeline` 格式或 Runtime 语义，保持现有 Player/Build 契约。
