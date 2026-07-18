@@ -235,6 +235,9 @@ test('buildPcPackage includes and validates TimelineDirector assets', () => {
       tracks: [{
         type: 'signal', id: 'gameplay', name: 'Gameplay',
         markers: [{ time: 1.5, name: 'SpawnBoss', payload: { phase: 2 } }],
+      }, {
+        type: 'activation', id: 'dialog', name: 'Dialog Visibility', target: 'Canvas/Dialog',
+        clips: [{ start: 0.5, duration: 1, active: true }],
       }],
     }));
     const manifest = buildPcPackage({
@@ -268,6 +271,36 @@ test('buildPcPackage rejects invalid Timeline markers without publishing output'
       runtimePath: paths.runtime,
       engineVersion: 'test-engine',
     }), /outside duration/);
+    assert.equal(existsSync(paths.output), false);
+  } finally {
+    rmSync(paths.root, { recursive: true, force: true });
+  }
+});
+
+test('buildPcPackage rejects overlapping Timeline activation clips without publishing output', () => {
+  const paths = fixture('invalid-timeline-activation');
+  try {
+    writeFileSync(join(paths.project, 'Assets', 'Scenes', 'Main.mscene'), JSON.stringify({
+      world: { entities: [{ components: {
+        TimelineDirector: { asset: 'Assets/Timelines/Broken.mtimeline' },
+      } }] },
+    }));
+    writeFileSync(join(paths.project, 'Assets', 'Timelines', 'Broken.mtimeline'), JSON.stringify({
+      version: 1, duration: 2,
+      tracks: [{
+        type: 'activation', id: 'visibility', name: 'Visibility', target: 'Canvas/Dialog',
+        clips: [
+          { start: 0, duration: 1.5, active: true },
+          { start: 1, duration: 1, active: false },
+        ],
+      }],
+    }));
+    assert.throws(() => buildPcPackage({
+      projectDir: paths.project,
+      outputDir: paths.output,
+      runtimePath: paths.runtime,
+      engineVersion: 'test-engine',
+    }), /activation clips overlap/);
     assert.equal(existsSync(paths.output), false);
   } finally {
     rmSync(paths.root, { recursive: true, force: true });

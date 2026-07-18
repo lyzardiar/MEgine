@@ -1,7 +1,7 @@
 use crate::textures::resolve_project_asset_path;
 use mengine_assets::{load_timeline_asset, TimelineAsset, TimelineTrack};
 use mengine_core::generated::TimelineDirector;
-use mengine_core::{Entity, World};
+use mengine_core::{Entity, Parent, World};
 use serde_json::Value;
 use std::collections::{HashMap, HashSet};
 use std::path::PathBuf;
@@ -32,6 +32,13 @@ struct CachedTimeline {
     result: Result<Arc<TimelineAsset>, String>,
 }
 
+#[derive(Clone, Copy)]
+struct ActivationOverride {
+    target: Entity,
+    original_active: bool,
+    sibling_index: i32,
+}
+
 #[derive(Default)]
 pub struct TimelineRuntime {
     project_root: Option<PathBuf>,
@@ -39,6 +46,8 @@ pub struct TimelineRuntime {
     initialized: HashSet<Entity>,
     active: HashSet<Entity>,
     reported_failures: HashSet<(String, String)>,
+    reported_activation_failures: HashSet<(Entity, String)>,
+    activation_overrides: HashMap<(Entity, String), ActivationOverride>,
     pending_signals: Vec<RuntimeTimelineSignal>,
 }
 
@@ -52,9 +61,11 @@ impl TimelineRuntime {
 
     pub fn update(&mut self, world: &mut World, delta_seconds: f32) -> Vec<TimelineLoadFailure> {
         self.pending_signals.clear();
-        if !delta_seconds.is_finite() {
-            return Vec::new();
-        }
+        let delta_seconds = if delta_seconds.is_finite() {
+            delta_seconds
+        } else {
+            0.0
+        };
         let all_entities: HashSet<_> = world
             .iter_entities()
             .filter(|entity| world.get_component::<TimelineDirector>(*entity).is_some())
@@ -77,6 +88,7 @@ impl TimelineRuntime {
             .retain(|entity| active_entities.contains(entity) && world.is_alive(*entity));
 
         let mut failures = Vec::new();
+        let mut applied_activation_overrides = HashSet::new();
         for (entity, mut director) in entities {
             if self.initialized.insert(entity) && !director.play_on_awake {
                 director.playing = false;
@@ -134,6 +146,12 @@ impl TimelineRuntime {
                     delta > 0.0 && raw_next >= asset.duration || delta < 0.0 && raw_next <= 0.0;
                 (next, finished)
             };
+            if !finished {
+                let (applied, mut activation_failures) =
+                    self.apply_activation_tracks(world, entity, asset_key, &asset, next);
+                applied_activation_overrides.extend(applied);
+                failures.append(&mut activation_failures);
+            }
             if let Some(live) = world.get_component_mut::<TimelineDirector>(entity) {
                 live.time = next;
                 if finished {
@@ -142,6 +160,9 @@ impl TimelineRuntime {
                 }
             }
         }
+        self.restore_unused_activation_overrides(world, &applied_activation_overrides);
+        self.reported_activation_failures
+            .retain(|(entity, _)| world.is_alive(*entity));
         failures
     }
 
@@ -175,6 +196,116 @@ impl TimelineRuntime {
         }
         self.assets[&path].result.clone()
     }
+
+    fn apply_activation_tracks(
+        &mut self,
+        world: &mut World,
+        director: Entity,
+        asset_key: &str,
+        asset: &TimelineAsset,
+        time: f32,
+    ) -> (HashSet<(Entity, String)>, Vec<TimelineLoadFailure>) {
+        let mut applied = HashSet::new();
+        let mut failures = Vec::new();
+        for track in &asset.tracks {
+            let TimelineTrack::Activation {
+                id,
+                name,
+                muted,
+                target,
+                clips,
+            } = track
+            else {
+                continue;
+            };
+            let key = (director, id.clone());
+            if *muted {
+                self.reported_activation_failures.remove(&key);
+                continue;
+            }
+            let Some(clip) = clips
+                .iter()
+                .find(|clip| time >= clip.start && time < clip.start + clip.duration)
+            else {
+                self.reported_activation_failures.remove(&key);
+                continue;
+            };
+            let Some(target_entity) = resolve_activation_target(world, director, target) else {
+                if self.reported_activation_failures.insert(key) {
+                    failures.push(TimelineLoadFailure {
+                        entity: director,
+                        asset: asset_key.to_owned(),
+                        error: format!(
+                            "activation track '{name}' target '{target}' was not found below the Director entity"
+                        ),
+                    });
+                }
+                continue;
+            };
+            self.reported_activation_failures.remove(&key);
+            if let Some(previous) = self.activation_overrides.get(&key).copied() {
+                if previous.target != target_entity {
+                    self.restore_activation_override(world, &key);
+                }
+            }
+            self.activation_overrides
+                .entry(key.clone())
+                .or_insert_with(|| ActivationOverride {
+                    target: target_entity,
+                    original_active: world.entity_active(target_entity),
+                    sibling_index: world.sibling_index(target_entity),
+                });
+            world.set_editor_state(
+                target_entity,
+                world.sibling_index(target_entity),
+                clip.active,
+            );
+            applied.insert(key);
+        }
+        (applied, failures)
+    }
+
+    fn restore_unused_activation_overrides(
+        &mut self,
+        world: &mut World,
+        applied: &HashSet<(Entity, String)>,
+    ) {
+        let stale: Vec<_> = self
+            .activation_overrides
+            .keys()
+            .filter(|key| !applied.contains(*key))
+            .cloned()
+            .collect();
+        for key in stale {
+            self.restore_activation_override(world, &key);
+        }
+    }
+
+    fn restore_activation_override(&mut self, world: &mut World, key: &(Entity, String)) {
+        let Some(previous) = self.activation_overrides.remove(key) else {
+            return;
+        };
+        if world.is_alive(previous.target) {
+            world.set_editor_state(
+                previous.target,
+                previous.sibling_index,
+                previous.original_active,
+            );
+        }
+    }
+}
+
+fn resolve_activation_target(world: &World, root: Entity, target: &str) -> Option<Entity> {
+    let mut current = root;
+    for segment in target.split('/') {
+        current = world.iter_entities().find(|candidate| {
+            world
+                .get_component::<Parent>(*candidate)
+                .is_some_and(|parent| parent.entity == current)
+                && world.entity_name(*candidate) == Some(segment)
+        })?;
+    }
+    Some(current)
 }
 
 fn collect_signals_at(
@@ -189,7 +320,10 @@ fn collect_signals_at(
             muted,
             markers,
             ..
-        } = track;
+        } = track
+        else {
+            continue;
+        };
         if *muted {
             continue;
         }
@@ -230,7 +364,10 @@ fn collect_crossed_signals(
             muted,
             markers,
             ..
-        } = track;
+        } = track
+        else {
+            continue;
+        };
         if *muted {
             continue;
         }
@@ -295,6 +432,21 @@ mod tests {
         fs::write(
             path,
             r#"{"version":1,"name":"Intro","duration":2,"tracks":[{"type":"signal","id":"signals","name":"Signals","markers":[{"time":0,"name":"Start"},{"time":0.5,"name":"Beat","payload":3},{"time":1.5,"name":"End"}]}]}"#,
+        )
+        .unwrap();
+        (root, relative)
+    }
+
+    fn activation_project_asset(target: &str) -> (PathBuf, String) {
+        let root = std::env::temp_dir().join(format!("mengine-timeline-{}", uuid::Uuid::new_v4()));
+        let relative = "Assets/Timelines/activation.mtimeline".to_owned();
+        let path = root.join(&relative);
+        fs::create_dir_all(path.parent().unwrap()).unwrap();
+        fs::write(
+            path,
+            format!(
+                r#"{{"version":1,"duration":2,"tracks":[{{"type":"activation","id":"visibility","name":"Visibility","target":"{target}","clips":[{{"start":0,"duration":0.5,"active":false}},{{"start":1,"duration":0.5,"active":false}}]}}]}}"#
+            ),
         )
         .unwrap();
         (root, relative)
@@ -458,6 +610,96 @@ mod tests {
         runtime.reset_director(entity);
         runtime.update(&mut world, 0.0);
         assert_eq!(runtime.take_signals()[0].signal, "Start");
+        let _ = fs::remove_dir_all(root);
+    }
+
+    #[test]
+    fn activation_tracks_apply_and_restore_authored_state() {
+        let (root, relative) = activation_project_asset("Panel");
+        let mut world = World::new();
+        let director = world.spawn_empty();
+        let panel = world.spawn_empty();
+        world.set_component_value(panel, "Name", serde_json::json!({ "value": "Panel" }));
+        world.set_parent(panel, Some(director));
+        world.insert_component(
+            director,
+            TimelineDirector {
+                asset: relative,
+                ..TimelineDirector::default()
+            },
+        );
+        let mut runtime = TimelineRuntime::new(Some(root.clone()));
+
+        assert!(runtime.update(&mut world, 0.0).is_empty());
+        assert!(!world.entity_active(panel));
+        runtime.update(&mut world, 0.75);
+        assert!(world.entity_active(panel));
+        runtime.update(&mut world, 0.3);
+        assert!(!world.entity_active(panel));
+        world
+            .get_component_mut::<TimelineDirector>(director)
+            .unwrap()
+            .playing = false;
+        runtime.update(&mut world, 0.0);
+        assert!(world.entity_active(panel));
+
+        {
+            let live = world
+                .get_component_mut::<TimelineDirector>(director)
+                .unwrap();
+            live.playing = true;
+            live.speed = -1.0;
+            live.time = 0.25;
+        }
+        runtime.update(&mut world, 0.0);
+        assert!(!world.entity_active(panel));
+        runtime.update(&mut world, 0.5);
+        assert!(world.entity_active(panel));
+        assert!(
+            !world
+                .get_component::<TimelineDirector>(director)
+                .unwrap()
+                .playing
+        );
+
+        {
+            let live = world
+                .get_component_mut::<TimelineDirector>(director)
+                .unwrap();
+            live.playing = true;
+            live.speed = 1.0;
+            live.time = 0.0;
+        }
+        runtime.reset_director(director);
+        runtime.update(&mut world, 0.0);
+        assert!(!world.entity_active(panel));
+        world
+            .get_component_mut::<TimelineDirector>(director)
+            .unwrap()
+            .playing = false;
+        runtime.update(&mut world, f32::NAN);
+        assert!(world.entity_active(panel));
+        let _ = fs::remove_dir_all(root);
+    }
+
+    #[test]
+    fn missing_activation_target_is_reported_once() {
+        let (root, relative) = activation_project_asset("Missing");
+        let mut world = World::new();
+        let director = world.spawn_empty();
+        world.insert_component(
+            director,
+            TimelineDirector {
+                asset: relative,
+                ..TimelineDirector::default()
+            },
+        );
+        let mut runtime = TimelineRuntime::new(Some(root.clone()));
+
+        let failures = runtime.update(&mut world, 0.0);
+        assert_eq!(failures.len(), 1);
+        assert!(failures[0].error.contains("Missing"));
+        assert!(runtime.update(&mut world, 0.0).is_empty());
         let _ = fs::remove_dir_all(root);
     }
 }

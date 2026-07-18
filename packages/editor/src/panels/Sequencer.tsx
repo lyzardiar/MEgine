@@ -241,7 +241,7 @@ export function Sequencer(props: SequencerProps) {
     };
   }, [asset, playing]);
 
-  const addTrack = () => {
+  const addSignalTrack = () => {
     if (!asset) return;
     const used = new Set(asset.tracks.map((track) => track.id));
     let index = asset.tracks.length + 1;
@@ -251,11 +251,46 @@ export function Sequencer(props: SequencerProps) {
     setSelection({ track: asset.tracks.length, marker: null });
   };
 
+  const addActivationTrack = () => {
+    if (!asset) return;
+    const used = new Set(asset.tracks.map((track) => track.id));
+    let index = asset.tracks.length + 1;
+    let id = `activation-${index}`;
+    while (used.has(id)) id = `activation-${++index}`;
+    update((draft) => draft.tracks.push({
+      type: 'activation', id, name: `Activation Track ${index}`, muted: false, target: 'Child', clips: [],
+    }));
+    setSelection({ track: asset.tracks.length, marker: null });
+  };
+
   const addMarker = (trackIndex = selection?.track ?? 0, requestedTime = time) => {
-    if (!asset || !asset.tracks[trackIndex]) return;
+    if (!asset || asset.tracks[trackIndex]?.type !== 'signal') return;
     const markerTime = snapTimelineAssetTime(requestedTime, asset);
-    update((draft) => draft.tracks[trackIndex].markers.push({ time: markerTime, name: 'Signal' }));
-    setSelection({ track: trackIndex, marker: asset.tracks[trackIndex].markers.length });
+    update((draft) => {
+      const track = draft.tracks[trackIndex];
+      if (track.type === 'signal') track.markers.push({ time: markerTime, name: 'Signal' });
+    });
+    const track = asset.tracks[trackIndex];
+    setSelection({ track: trackIndex, marker: track.type === 'signal' ? track.markers.length : null });
+  };
+
+  const addActivationClip = (trackIndex: number, requestedTime = time) => {
+    if (!asset || asset.tracks[trackIndex]?.type !== 'activation') return;
+    const minimum = Math.min(1 / asset.frame_rate, asset.duration);
+    const start = Math.min(snapTimelineAssetTime(requestedTime, asset), asset.duration - minimum);
+    const duration = Math.min(1, asset.duration - start);
+    const track = asset.tracks[trackIndex];
+    update((draft) => {
+      const target = draft.tracks[trackIndex];
+      if (target.type === 'activation') target.clips.push({ start, duration, active: true });
+    });
+    setSelection({ track: trackIndex, marker: track.type === 'activation' ? track.clips.length : null });
+  };
+
+  const addTrackItem = (trackIndex: number, requestedTime: number) => {
+    const track = asset?.tracks[trackIndex];
+    if (track?.type === 'signal') addMarker(trackIndex, requestedTime);
+    else if (track?.type === 'activation') addActivationClip(trackIndex, requestedTime);
   };
 
   const startMarkerDrag = (
@@ -275,7 +310,16 @@ export function Sequencer(props: SequencerProps) {
     const move = (moveEvent: PointerEvent) => {
       const position = Math.max(0, Math.min(1, (moveEvent.clientX - bounds.left) / Math.max(1, bounds.width)));
       update((draft) => {
-        draft.tracks[trackIndex].markers[markerIndex].time = snapTimelineAssetTime(position * draft.duration, draft);
+        const track = draft.tracks[trackIndex];
+        if (track.type === 'signal') {
+          track.markers[markerIndex].time = snapTimelineAssetTime(position * draft.duration, draft);
+        } else {
+          const clip = track.clips[markerIndex];
+          clip.start = Math.min(
+            snapTimelineAssetTime(position * draft.duration, draft),
+            draft.duration - clip.duration,
+          );
+        }
       });
     };
     const finish = () => {
@@ -302,7 +346,12 @@ export function Sequencer(props: SequencerProps) {
   }
 
   const selectedTrack = selection ? asset.tracks[selection.track] : null;
-  const selectedMarker = selection?.marker != null ? selectedTrack?.markers[selection.marker] : null;
+  const selectedMarker = selection?.marker != null && selectedTrack?.type === 'signal'
+    ? selectedTrack.markers[selection.marker]
+    : null;
+  const selectedClip = selection?.marker != null && selectedTrack?.type === 'activation'
+    ? selectedTrack.clips[selection.marker]
+    : null;
   const tickCount = Math.min(21, Math.max(2, Math.ceil(asset.duration) + 1));
   const ticks = Array.from({ length: tickCount }, (_, index) => index / (tickCount - 1));
   const transportPlaying = liveDirector ? Boolean(liveDirector.playing) : playing;
@@ -332,8 +381,11 @@ export function Sequencer(props: SequencerProps) {
         }} /></label>
         <span className="timeline-clip-path" title={props.assetPath}>{asset.name} — {props.assetPath}{dirty ? ' *' : ''}</span>
         {liveDirector && <span className={`sequencer-live-status${liveDirector.playing ? ' playing' : ''}`}>{liveDirector.playing ? 'LIVE PLAYING' : 'LIVE PAUSED'} · {displayTime.toFixed(2)}s</span>}
-        <button type="button" onClick={addTrack}><Plus size={14} /> Signal Track</button>
-        <button type="button" disabled={asset.tracks.length === 0} onClick={() => addMarker(selection?.track ?? 0, displayTime)}><Plus size={14} /> Signal</button>
+        <button type="button" onClick={addSignalTrack}><Plus size={14} /> Signal Track</button>
+        <button type="button" onClick={addActivationTrack}><Plus size={14} /> Activation Track</button>
+        <button type="button" disabled={!selectedTrack} onClick={() => selectedTrack && addTrackItem(selection!.track, displayTime)}>
+          <Plus size={14} /> {selectedTrack?.type === 'activation' ? 'Activation Clip' : 'Signal'}
+        </button>
         <button type="button" disabled={!props.selectedEntity} onClick={() => props.selectedEntity && props.onAssignDirector(props.selectedEntity.entity, props.assetPath!)}><Link size={14} /> Bind</button>
         <button type="button" disabled={!dirty || saving || payloadInvalid} onClick={() => void save()}><Save size={14} /> {saving ? 'Saving…' : 'Save'}</button>
         <button type="button" title="Back to Animation Clip editor" onClick={props.onClose}><X size={14} /></button>
@@ -355,15 +407,16 @@ export function Sequencer(props: SequencerProps) {
           {asset.tracks.map((track, trackIndex) => (
             <div className={`sequencer-track-row${selection?.track === trackIndex ? ' selected' : ''}`} key={track.id}>
               <button type="button" className="sequencer-track-header" onClick={() => setSelection({ track: trackIndex, marker: null })}>
-                <span className="sequencer-track-icon">S</span>
+                <span className={`sequencer-track-icon ${track.type}`}>{track.type === 'signal' ? 'S' : 'A'}</span>
                 <span>{track.name}</span>
                 {track.muted && <small>Muted</small>}
               </button>
               <div className="sequencer-lane" onDoubleClick={(event) => {
+                if (event.target !== event.currentTarget) return;
                 const bounds = event.currentTarget.getBoundingClientRect();
                 const markerTime = snapTimelineAssetTime((event.clientX - bounds.left) / bounds.width * asset.duration, asset);
                 scrub(markerTime);
-                addMarker(trackIndex, markerTime);
+                addTrackItem(trackIndex, markerTime);
               }} onPointerDown={(event) => {
                 if (event.target !== event.currentTarget) return;
                 const bounds = event.currentTarget.getBoundingClientRect();
@@ -371,7 +424,7 @@ export function Sequencer(props: SequencerProps) {
                 setSelection({ track: trackIndex, marker: null });
               }}>
                 {ticks.map((position) => <i className="sequencer-grid-line" key={position} style={{ left: `${position * 100}%` }} />)}
-                {track.markers.map((marker, markerIndex) => (
+                {track.type === 'signal' && track.markers.map((marker, markerIndex) => (
                   <button
                     type="button"
                     className={`sequencer-marker${selection?.track === trackIndex && selection.marker === markerIndex ? ' selected' : ''}`}
@@ -381,39 +434,74 @@ export function Sequencer(props: SequencerProps) {
                     onPointerDown={(event) => startMarkerDrag(event, trackIndex, markerIndex)}
                   />
                 ))}
+                {track.type === 'activation' && track.clips.map((clip, clipIndex) => (
+                  <button
+                    type="button"
+                    className={`sequencer-activation-clip${selection?.track === trackIndex && selection.marker === clipIndex ? ' selected' : ''}${clip.active ? ' active-state' : ' inactive-state'}`}
+                    style={{
+                      left: `${clip.start / asset.duration * 100}%`,
+                      width: `${clip.duration / asset.duration * 100}%`,
+                    }}
+                    title={`${clip.active ? 'Active' : 'Inactive'} · ${clip.start.toFixed(3)}s + ${clip.duration.toFixed(3)}s`}
+                    key={`${clip.start}-${clipIndex}`}
+                    onPointerDown={(event) => startMarkerDrag(event, trackIndex, clipIndex)}
+                  >{clip.active ? 'ACTIVE' : 'INACTIVE'}</button>
+                ))}
                 <i className="sequencer-playhead" style={{ left: `${displayTime / asset.duration * 100}%` }} />
               </div>
             </div>
           ))}
-          {asset.tracks.length === 0 && <div className="sequencer-empty-track">Add a Signal Track to begin authoring.</div>}
+          {asset.tracks.length === 0 && <div className="sequencer-empty-track">Add a Signal or Activation Track to begin authoring.</div>}
         </div>
 
         <aside className="sequencer-inspector">
-          <h3>{selectedMarker ? 'Signal Marker' : selectedTrack ? 'Signal Track' : 'Timeline Asset'}</h3>
+          <h3>{selectedMarker ? 'Signal Marker' : selectedClip ? 'Activation Clip' : selectedTrack ? `${selectedTrack.type === 'signal' ? 'Signal' : 'Activation'} Track` : 'Timeline Asset'}</h3>
           {!selectedTrack && <>
             <label>Name <input value={asset.name} onChange={(event) => update((draft) => { draft.name = event.target.value; })} /></label>
             <label>Duration <input type="number" min={0.001} step={0.1} value={asset.duration} onChange={(event) => update((draft) => {
               draft.duration = Math.max(0.001, Number(event.target.value) || 0.001);
-              for (const track of draft.tracks) for (const marker of track.markers) marker.time = Math.min(marker.time, draft.duration);
+              for (const track of draft.tracks) {
+                if (track.type === 'signal') {
+                  for (const marker of track.markers) marker.time = Math.min(marker.time, draft.duration);
+                } else {
+                  const minimum = Math.min(1 / draft.frame_rate, draft.duration);
+                  for (const clip of track.clips) {
+                    clip.start = Math.min(clip.start, draft.duration - minimum);
+                    clip.duration = Math.max(minimum, Math.min(clip.duration, draft.duration - clip.start));
+                  }
+                }
+              }
             })} /></label>
             <label>Frame Rate <input type="number" min={1} max={240} step={1} value={asset.frame_rate} onChange={(event) => update((draft) => { draft.frame_rate = Math.max(1, Math.min(240, Number(event.target.value) || 1)); })} /></label>
           </>}
-          {selectedTrack && !selectedMarker && <>
+          {selectedTrack && !selectedMarker && !selectedClip && <>
             <label>Name <input value={selectedTrack.name} onChange={(event) => update((draft) => { draft.tracks[selection!.track].name = event.target.value; })} /></label>
             <label className="sequencer-check"><input type="checkbox" checked={selectedTrack.muted} onChange={(event) => update((draft) => { draft.tracks[selection!.track].muted = event.target.checked; })} /> Muted</label>
+            {selectedTrack.type === 'activation' && <label>Target (child path)<input value={selectedTrack.target} placeholder="Canvas/Dialog" onChange={(event) => update((draft) => {
+              const track = draft.tracks[selection!.track];
+              if (track.type === 'activation') track.target = event.target.value.replaceAll('\\', '/');
+            })} /></label>}
             <button type="button" className="sequencer-danger" onClick={() => {
               update((draft) => { draft.tracks.splice(selection!.track, 1); });
               setSelection(null);
             }}><Trash2 size={14} /> Delete Track</button>
           </>}
           {selectedMarker && <>
-            <label>Name <input value={selectedMarker.name} onChange={(event) => update((draft) => { draft.tracks[selection!.track].markers[selection!.marker!].name = event.target.value; })} /></label>
-            <label>Time <input type="number" min={0} max={asset.duration} step={1 / asset.frame_rate} value={selectedMarker.time} onChange={(event) => update((draft) => { draft.tracks[selection!.track].markers[selection!.marker!].time = snapTimelineAssetTime(Number(event.target.value), draft); })} /></label>
+            <label>Name <input value={selectedMarker.name} onChange={(event) => update((draft) => {
+              const track = draft.tracks[selection!.track];
+              if (track.type === 'signal') track.markers[selection!.marker!].name = event.target.value;
+            })} /></label>
+            <label>Time <input type="number" min={0} max={asset.duration} step={1 / asset.frame_rate} value={selectedMarker.time} onChange={(event) => update((draft) => {
+              const track = draft.tracks[selection!.track];
+              if (track.type === 'signal') track.markers[selection!.marker!].time = snapTimelineAssetTime(Number(event.target.value), draft);
+            })} /></label>
             <label>Payload (JSON)<textarea key={`${selection!.track}-${selection!.marker}`} defaultValue={selectedMarker.payload === undefined ? '' : JSON.stringify(selectedMarker.payload, null, 2)} onBlur={(event) => {
               try {
                 const text = event.target.value.trim();
                 update((draft) => {
-                  const marker = draft.tracks[selection!.track].markers[selection!.marker!];
+                  const track = draft.tracks[selection!.track];
+                  if (track.type !== 'signal') return;
+                  const marker = track.markers[selection!.marker!];
                   if (text) marker.payload = JSON.parse(text);
                   else delete marker.payload;
                 });
@@ -425,10 +513,38 @@ export function Sequencer(props: SequencerProps) {
               }
             }} /></label>
             <button type="button" className="sequencer-danger" onClick={() => {
-              update((draft) => { draft.tracks[selection!.track].markers.splice(selection!.marker!, 1); });
+              update((draft) => {
+                const track = draft.tracks[selection!.track];
+                if (track.type === 'signal') track.markers.splice(selection!.marker!, 1);
+              });
               setPayloadInvalid(false);
               setSelection({ track: selection!.track, marker: null });
             }}><Trash2 size={14} /> Delete Signal</button>
+          </>}
+          {selectedClip && <>
+            <label>Start <input type="number" min={0} max={asset.duration - selectedClip.duration} step={1 / asset.frame_rate} value={selectedClip.start} onChange={(event) => update((draft) => {
+              const track = draft.tracks[selection!.track];
+              if (track.type !== 'activation') return;
+              const clip = track.clips[selection!.marker!];
+              clip.start = Math.min(snapTimelineAssetTime(Number(event.target.value), draft), draft.duration - clip.duration);
+            })} /></label>
+            <label>Duration <input type="number" min={1 / asset.frame_rate} max={asset.duration - selectedClip.start} step={1 / asset.frame_rate} value={selectedClip.duration} onChange={(event) => update((draft) => {
+              const track = draft.tracks[selection!.track];
+              if (track.type !== 'activation') return;
+              const clip = track.clips[selection!.marker!];
+              clip.duration = Math.max(1 / draft.frame_rate, Math.min(Number(event.target.value) || 0, draft.duration - clip.start));
+            })} /></label>
+            <label className="sequencer-check"><input type="checkbox" checked={selectedClip.active} onChange={(event) => update((draft) => {
+              const track = draft.tracks[selection!.track];
+              if (track.type === 'activation') track.clips[selection!.marker!].active = event.target.checked;
+            })} /> Target active inside clip</label>
+            <button type="button" className="sequencer-danger" onClick={() => {
+              update((draft) => {
+                const track = draft.tracks[selection!.track];
+                if (track.type === 'activation') track.clips.splice(selection!.marker!, 1);
+              });
+              setSelection({ track: selection!.track, marker: null });
+            }}><Trash2 size={14} /> Delete Clip</button>
           </>}
         </aside>
       </div>

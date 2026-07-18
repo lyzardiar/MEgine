@@ -4,6 +4,12 @@ export type TimelineSignal = {
   payload?: unknown;
 };
 
+export type TimelineActivationClip = {
+  start: number;
+  duration: number;
+  active: boolean;
+};
+
 export type TimelineSignalTrack = {
   type: 'signal';
   id: string;
@@ -12,7 +18,16 @@ export type TimelineSignalTrack = {
   markers: TimelineSignal[];
 };
 
-export type TimelineTrack = TimelineSignalTrack;
+export type TimelineActivationTrack = {
+  type: 'activation';
+  id: string;
+  name: string;
+  muted: boolean;
+  target: string;
+  clips: TimelineActivationClip[];
+};
+
+export type TimelineTrack = TimelineSignalTrack | TimelineActivationTrack;
 
 export type TimelineAsset = {
   version: 1;
@@ -31,6 +46,16 @@ function object(value: unknown): Record<string, unknown> {
 function finite(value: unknown, fallback: number): number {
   const parsed = Number(value);
   return Number.isFinite(parsed) ? parsed : fallback;
+}
+
+function activationTarget(value: unknown): string {
+  return String(value ?? '').trim().replaceAll('\\', '/');
+}
+
+function targetIsPortable(target: string): boolean {
+  return target.length > 0
+    && !target.startsWith('/')
+    && target.split('/').every((segment) => segment.length > 0 && segment !== '.' && segment !== '..');
 }
 
 export function createTimelineAsset(name = 'New Timeline'): TimelineAsset {
@@ -56,29 +81,48 @@ export function normalizeTimelineAsset(value: unknown): TimelineAsset {
   const tracks: TimelineTrack[] = [];
   for (const [index, candidate] of (Array.isArray(raw.tracks) ? raw.tracks : []).entries()) {
     const track = object(candidate);
-    if (String(track.type ?? 'signal') !== 'signal') continue;
-    const baseId = String(track.id ?? `signal-${index + 1}`).trim() || `signal-${index + 1}`;
+    const type = String(track.type ?? 'signal');
+    if (type !== 'signal' && type !== 'activation') continue;
+    const baseId = String(track.id ?? `${type}-${index + 1}`).trim() || `${type}-${index + 1}`;
     let id = baseId;
     let suffix = 1;
     while (usedIds.has(id)) id = `${baseId}-${++suffix}`;
     usedIds.add(id);
-    const markers = (Array.isArray(track.markers) ? track.markers : [])
-      .map((markerValue) => {
-        const marker = object(markerValue);
-        return {
-          time: Math.max(0, Math.min(duration, finite(marker.time, 0))),
-          name: String(marker.name ?? '').trim(),
-          ...(Object.hasOwn(marker, 'payload') ? { payload: structuredClone(marker.payload) } : {}),
-        } satisfies TimelineSignal;
-      })
-      .sort((left, right) => left.time - right.time || left.name.localeCompare(right.name));
-    tracks.push({
-      type: 'signal',
-      id,
-      name: String(track.name ?? '').trim() || `Signal Track ${index + 1}`,
-      muted: Boolean(track.muted),
-      markers,
-    });
+    const name = String(track.name ?? '').trim()
+      || `${type === 'signal' ? 'Signal' : 'Activation'} Track ${index + 1}`;
+    if (type === 'signal') {
+      const markers = (Array.isArray(track.markers) ? track.markers : [])
+        .map((markerValue) => {
+          const marker = object(markerValue);
+          return {
+            time: Math.max(0, Math.min(duration, finite(marker.time, 0))),
+            name: String(marker.name ?? '').trim(),
+            ...(Object.hasOwn(marker, 'payload') ? { payload: structuredClone(marker.payload) } : {}),
+          } satisfies TimelineSignal;
+        })
+        .sort((left, right) => left.time - right.time || left.name.localeCompare(right.name));
+      tracks.push({ type, id, name, muted: Boolean(track.muted), markers });
+    } else {
+      const clips = (Array.isArray(track.clips) ? track.clips : [])
+        .map((clipValue) => {
+          const clip = object(clipValue);
+          const start = Math.max(0, Math.min(duration, finite(clip.start, 0)));
+          return {
+            start,
+            duration: Math.max(0.001, Math.min(duration - start, finite(clip.duration, 1))),
+            active: clip.active !== false,
+          } satisfies TimelineActivationClip;
+        })
+        .sort((left, right) => left.start - right.start);
+      tracks.push({
+        type,
+        id,
+        name,
+        muted: Boolean(track.muted),
+        target: activationTarget(track.target),
+        clips,
+      });
+    }
   }
   return {
     version: 1,
@@ -90,20 +134,44 @@ export function normalizeTimelineAsset(value: unknown): TimelineAsset {
 }
 
 export function validateTimelineAsset(asset: TimelineAsset): void {
-  if (asset.version !== 1) throw new Error('Timeline 版本必须为 1');
-  if (!asset.name.trim()) throw new Error('Timeline 名称不能为空');
-  if (!Number.isFinite(asset.duration) || asset.duration <= 0) throw new Error('Timeline 时长必须大于 0');
-  if (!Number.isFinite(asset.frame_rate) || asset.frame_rate <= 0) throw new Error('Timeline 帧率必须大于 0');
+  if (asset.version !== 1) throw new Error('Timeline version must be 1');
+  if (!asset.name.trim()) throw new Error('Timeline name cannot be empty');
+  if (!Number.isFinite(asset.duration) || asset.duration <= 0) throw new Error('Timeline duration must be positive');
+  if (!Number.isFinite(asset.frame_rate) || asset.frame_rate <= 0 || asset.frame_rate > 240) throw new Error('Timeline frame rate must be between 0 and 240');
   const ids = new Set<string>();
+  const activationTargets = new Set<string>();
   for (const track of asset.tracks) {
-    if (track.type !== 'signal') throw new Error(`不支持的 Timeline 轨道类型：${String((track as { type?: unknown }).type)}`);
-    if (!track.id.trim() || ids.has(track.id)) throw new Error('轨道 ID 必须非空且唯一');
+    if (!track.id.trim() || ids.has(track.id)) throw new Error('Timeline track IDs must be non-empty and unique');
     ids.add(track.id);
-    if (!track.name.trim()) throw new Error(`轨道 ${track.id} 名称不能为空`);
-    for (const marker of track.markers) {
-      if (!marker.name.trim()) throw new Error(`轨道 ${track.name} 包含未命名信号`);
-      if (!Number.isFinite(marker.time) || marker.time < 0 || marker.time > asset.duration) {
-        throw new Error(`信号 ${marker.name} 超出 Timeline 时长`);
+    if (!track.name.trim()) throw new Error(`Timeline track ${track.id} must have a name`);
+    if (track.type === 'signal') {
+      for (const marker of track.markers) {
+        if (!marker.name.trim()) throw new Error(`Signal track ${track.name} contains an unnamed signal`);
+        if (!Number.isFinite(marker.time) || marker.time < 0 || marker.time > asset.duration) {
+          throw new Error(`Signal ${marker.name} is outside the Timeline duration`);
+        }
+      }
+      continue;
+    }
+    if (track.type !== 'activation') {
+      throw new Error(`Unsupported Timeline track type: ${String((track as { type?: unknown }).type)}`);
+    }
+    const target = activationTarget(track.target);
+    if (!targetIsPortable(target)) {
+      throw new Error(`Activation track ${track.name} requires a descendant target path without '.' or '..'`);
+    }
+    if (activationTargets.has(target)) {
+      throw new Error(`Activation target ${target} is controlled by more than one track`);
+    }
+    activationTargets.add(target);
+    const sorted = [...track.clips].sort((left, right) => left.start - right.start);
+    for (const [index, clip] of sorted.entries()) {
+      if (!Number.isFinite(clip.start) || !Number.isFinite(clip.duration)
+        || clip.start < 0 || clip.duration <= 0 || clip.start + clip.duration > asset.duration) {
+        throw new Error(`Activation track ${track.name} contains a clip outside the Timeline duration`);
+      }
+      if (index > 0 && sorted[index - 1].start + sorted[index - 1].duration > clip.start) {
+        throw new Error(`Activation track ${track.name} contains overlapping clips`);
       }
     }
   }
@@ -111,32 +179,58 @@ export function validateTimelineAsset(asset: TimelineAsset): void {
 
 export function parseTimelineAsset(text: string): TimelineAsset {
   const parsed = JSON.parse(text) as Record<string, unknown>;
-  if (parsed.version !== 1) throw new Error(`不支持的 Timeline 版本：${String(parsed.version ?? '(missing)')}`);
+  if (parsed.version !== 1) throw new Error(`Unsupported Timeline version: ${String(parsed.version ?? '(missing)')}`);
   if (typeof parsed.duration !== 'number' || !Number.isFinite(parsed.duration) || parsed.duration <= 0) {
-    throw new Error('Timeline 时长必须大于 0');
+    throw new Error('Timeline duration must be positive');
   }
+  const parsedDuration = parsed.duration;
   if (parsed.frame_rate != null
-    && (typeof parsed.frame_rate !== 'number' || !Number.isFinite(parsed.frame_rate) || parsed.frame_rate <= 0)) {
-    throw new Error('Timeline 帧率必须大于 0');
+    && (typeof parsed.frame_rate !== 'number' || !Number.isFinite(parsed.frame_rate) || parsed.frame_rate <= 0 || parsed.frame_rate > 240)) {
+    throw new Error('Timeline frame rate must be between 0 and 240');
   }
-  if (!Array.isArray(parsed.tracks)) throw new Error('Timeline tracks 必须是数组');
+  if (!Array.isArray(parsed.tracks)) throw new Error('Timeline tracks must be an array');
   const ids = new Set<string>();
+  const activationTargets = new Set<string>();
   for (const trackValue of parsed.tracks) {
     const track = object(trackValue);
-    if (track.type !== 'signal') throw new Error(`不支持的 Timeline 轨道类型：${String(track.type)}`);
-    const id = String(track.id ?? '').trim();
-    if (!id || ids.has(id)) throw new Error('轨道 ID 必须非空且唯一');
-    ids.add(id);
-    if (!String(track.name ?? '').trim()) throw new Error(`轨道 ${id} 名称不能为空`);
-    if (track.muted != null && typeof track.muted !== 'boolean') throw new Error(`轨道 ${id} muted 必须是布尔值`);
-    if (track.markers != null && !Array.isArray(track.markers)) throw new Error(`轨道 ${id} markers 必须是数组`);
-    for (const markerValue of Array.isArray(track.markers) ? track.markers : []) {
-      const marker = object(markerValue);
-      const markerTime = Number(marker.time);
-      if (!String(marker.name ?? '').trim()) throw new Error(`轨道 ${id} 包含未命名信号`);
-      if (!Number.isFinite(markerTime) || markerTime < 0 || markerTime > Number(parsed.duration)) {
-        throw new Error(`轨道 ${id} 包含超出 Timeline 时长的信号`);
+    if (track.type !== 'signal' && track.type !== 'activation') throw new Error(`Unsupported Timeline track type: ${String(track.type)}`);
+    if (typeof track.id !== 'string' || !track.id.trim() || ids.has(track.id.trim())) {
+      throw new Error('Timeline track IDs must be non-empty strings and unique');
+    }
+    ids.add(track.id.trim());
+    if (typeof track.name !== 'string' || !track.name.trim()) throw new Error(`Timeline track ${track.id} must have a name`);
+    if (track.muted != null && typeof track.muted !== 'boolean') throw new Error(`Timeline track ${track.id} muted must be boolean`);
+    if (track.type === 'signal') {
+      if (track.markers != null && !Array.isArray(track.markers)) throw new Error(`Signal track ${track.id} markers must be an array`);
+      for (const markerValue of Array.isArray(track.markers) ? track.markers : []) {
+        const marker = object(markerValue);
+        if (typeof marker.name !== 'string' || !marker.name.trim()
+          || typeof marker.time !== 'number' || !Number.isFinite(marker.time)
+          || marker.time < 0 || marker.time > parsedDuration) {
+          throw new Error(`Signal track ${track.id} contains an invalid or out-of-range signal`);
+        }
       }
+      continue;
+    }
+    if (typeof track.target !== 'string' || !targetIsPortable(activationTarget(track.target))) {
+      throw new Error(`Activation track ${track.id} requires a descendant target path without '.' or '..'`);
+    }
+    const target = activationTarget(track.target);
+    if (activationTargets.has(target)) throw new Error(`Activation target ${target} is controlled by more than one track`);
+    activationTargets.add(target);
+    if (track.clips != null && !Array.isArray(track.clips)) throw new Error(`Activation track ${track.id} clips must be an array`);
+    const clips = (Array.isArray(track.clips) ? track.clips : []).map((clipValue) => {
+      const clip = object(clipValue);
+      if (typeof clip.start !== 'number' || !Number.isFinite(clip.start)
+        || typeof clip.duration !== 'number' || !Number.isFinite(clip.duration)
+        || typeof clip.active !== 'boolean' || clip.start < 0 || clip.duration <= 0
+        || clip.start + clip.duration > parsedDuration) {
+        throw new Error(`Activation track ${track.id} contains an invalid or out-of-range clip`);
+      }
+      return { start: clip.start, duration: clip.duration };
+    }).sort((left, right) => left.start - right.start);
+    if (clips.some((clip, index) => index > 0 && clips[index - 1].start + clips[index - 1].duration > clip.start)) {
+      throw new Error(`Activation track ${track.id} contains overlapping clips`);
     }
   }
   const asset = normalizeTimelineAsset(parsed);

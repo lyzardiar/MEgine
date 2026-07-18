@@ -637,19 +637,22 @@ export function validateBuildAssetDependencies(
       if (typeof timeline.duration !== 'number' || !Number.isFinite(timeline.duration) || timeline.duration <= 0) {
         throw new Error(`invalid Timeline asset ${source}: duration must be positive`);
       }
+      const timelineDuration = timeline.duration;
       if (timeline.frame_rate != null
         && (typeof timeline.frame_rate !== 'number'
           || !Number.isFinite(timeline.frame_rate)
-          || timeline.frame_rate <= 0)) {
-        throw new Error(`invalid Timeline asset ${source}: frame_rate must be positive`);
+          || timeline.frame_rate <= 0
+          || timeline.frame_rate > 240)) {
+        throw new Error(`invalid Timeline asset ${source}: frame_rate must be between 0 and 240`);
       }
       if (!Array.isArray(timeline.tracks)) {
         throw new Error(`invalid Timeline asset ${source}: tracks must be an array`);
       }
       const trackIds = new Set<string>();
+      const activationTargets = new Set<string>();
       for (const trackValue of timeline.tracks) {
         const track = jsonObject(trackValue);
-        if (!track || track.type !== 'signal') {
+        if (!track || (track.type !== 'signal' && track.type !== 'activation')) {
           throw new Error(`invalid Timeline asset ${source}: unsupported track type`);
         }
         const id = strictStringValue(track, 'id', `Timeline asset ${source}`);
@@ -661,18 +664,48 @@ export function validateBuildAssetDependencies(
         if (track.muted != null && typeof track.muted !== 'boolean') {
           throw new Error(`invalid Timeline asset ${source}: track muted must be boolean`);
         }
-        if (track.markers != null && !Array.isArray(track.markers)) {
-          throw new Error(`invalid Timeline asset ${source}: signal markers must be an array`);
-        }
-        for (const markerValue of Array.isArray(track.markers) ? track.markers : []) {
-          const marker = jsonObject(markerValue);
-          if (!marker) {
-            throw new Error(`invalid Timeline asset ${source}: signal marker must be an object`);
+        if (track.type === 'signal') {
+          if (track.markers != null && !Array.isArray(track.markers)) {
+            throw new Error(`invalid Timeline asset ${source}: signal markers must be an array`);
           }
-          const markerName = strictStringValue(marker, 'name', `Timeline asset ${source}`);
-          const time = marker.time;
-          if (!markerName || typeof time !== 'number' || !Number.isFinite(time) || time < 0 || time > timeline.duration) {
-            throw new Error(`invalid Timeline asset ${source}: signal marker is invalid or outside duration`);
+          for (const markerValue of Array.isArray(track.markers) ? track.markers : []) {
+            const marker = jsonObject(markerValue);
+            if (!marker) {
+              throw new Error(`invalid Timeline asset ${source}: signal marker must be an object`);
+            }
+            const markerName = strictStringValue(marker, 'name', `Timeline asset ${source}`);
+            const time = marker.time;
+            if (!markerName || typeof time !== 'number' || !Number.isFinite(time) || time < 0 || time > timelineDuration) {
+              throw new Error(`invalid Timeline asset ${source}: signal marker is invalid or outside duration`);
+            }
+          }
+          continue;
+        }
+        const target = strictStringValue(track, 'target', `Timeline asset ${source}`).replaceAll('\\', '/');
+        if (!target || target.startsWith('/')
+          || target.split('/').some((segment) => !segment || segment === '.' || segment === '..')) {
+          throw new Error(`invalid Timeline asset ${source}: activation target must be a descendant path without '.' or '..'`);
+        }
+        if (activationTargets.has(target)) {
+          throw new Error(`invalid Timeline asset ${source}: activation target ${target} is controlled more than once`);
+        }
+        activationTargets.add(target);
+        if (track.clips != null && !Array.isArray(track.clips)) {
+          throw new Error(`invalid Timeline asset ${source}: activation clips must be an array`);
+        }
+        const clips = (Array.isArray(track.clips) ? track.clips : []).map((clipValue) => {
+          const clip = jsonObject(clipValue);
+          if (!clip || typeof clip.start !== 'number' || !Number.isFinite(clip.start)
+            || typeof clip.duration !== 'number' || !Number.isFinite(clip.duration)
+            || clip.start < 0 || clip.duration <= 0 || clip.start + clip.duration > timelineDuration
+            || typeof clip.active !== 'boolean') {
+            throw new Error(`invalid Timeline asset ${source}: activation clip is invalid or outside duration`);
+          }
+          return clip as { start: number; duration: number };
+        }).sort((left, right) => left.start - right.start);
+        for (let index = 1; index < clips.length; index += 1) {
+          if (clips[index - 1].start + clips[index - 1].duration > clips[index].start) {
+            throw new Error(`invalid Timeline asset ${source}: activation clips overlap`);
           }
         }
       }

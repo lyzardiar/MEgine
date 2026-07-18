@@ -3681,6 +3681,7 @@ button.sequencer-track-header:hover { background: #343b42; }
   font-size: 10px;
   font-weight: 700;
 }
+.sequencer-track-icon.activation { background: #356b58; color: #d9fff0; }
 
 .sequencer-ruler,
 .sequencer-lane {
@@ -3750,6 +3751,28 @@ button.sequencer-track-header:hover { background: #343b42; }
 
 .sequencer-marker:hover,
 .sequencer-marker.selected { background: #ffd37e; outline: 1px solid #fff; }
+
+.sequencer-activation-clip {
+  position: absolute;
+  z-index: 3;
+  top: 7px;
+  bottom: 7px;
+  min-width: 3px;
+  overflow: hidden;
+  border: 1px solid #18241f;
+  border-radius: 0;
+  padding: 0 5px;
+  background: #315f4d;
+  color: #c9f1df;
+  cursor: ew-resize;
+  text-align: left;
+  font: 8px var(--u-mono);
+  white-space: nowrap;
+}
+
+.sequencer-activation-clip.inactive-state { background: #553b3b; border-color: #2c2020; color: #edb5b5; }
+.sequencer-activation-clip:hover,
+.sequencer-activation-clip.selected { outline: 1px solid #fff; filter: brightness(1.18); }
 
 .sequencer-inspector {
   min-width: 0;

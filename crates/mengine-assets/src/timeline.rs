@@ -25,6 +25,13 @@ pub struct TimelineSignal {
 }
 
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+pub struct TimelineActivationClip {
+    pub start: f32,
+    pub duration: f32,
+    pub active: bool,
+}
+
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 #[serde(tag = "type", rename_all = "snake_case")]
 pub enum TimelineTrack {
     Signal {
@@ -34,6 +41,15 @@ pub enum TimelineTrack {
         muted: bool,
         #[serde(default)]
         markers: Vec<TimelineSignal>,
+    },
+    Activation {
+        id: String,
+        name: String,
+        #[serde(default)]
+        muted: bool,
+        target: String,
+        #[serde(default)]
+        clips: Vec<TimelineActivationClip>,
     },
 }
 
@@ -75,13 +91,14 @@ impl TimelineAsset {
                 "Timeline duration must be a finite positive number".into(),
             ));
         }
-        if !self.frame_rate.is_finite() || self.frame_rate <= 0.0 {
+        if !self.frame_rate.is_finite() || self.frame_rate <= 0.0 || self.frame_rate > 240.0 {
             return Err(AssetError::Invalid(
-                "Timeline frame_rate must be a finite positive number".into(),
+                "Timeline frame_rate must be finite and no greater than 240".into(),
             ));
         }
 
         let mut track_ids = HashSet::new();
+        let mut activation_targets = HashSet::new();
         for track in &mut self.tracks {
             match track {
                 TimelineTrack::Signal {
@@ -121,10 +138,76 @@ impl TimelineAsset {
                             .then_with(|| left.name.cmp(&right.name))
                     });
                 }
+                TimelineTrack::Activation {
+                    id,
+                    name,
+                    target,
+                    clips,
+                    ..
+                } => {
+                    *id = id.trim().to_owned();
+                    *name = name.trim().to_owned();
+                    if id.is_empty() || !track_ids.insert(id.clone()) {
+                        return Err(AssetError::Invalid(
+                            "Timeline track ids must be non-empty and unique".into(),
+                        ));
+                    }
+                    if name.is_empty() {
+                        return Err(AssetError::Invalid(format!(
+                            "Timeline track '{id}' must have a name"
+                        )));
+                    }
+                    *target = normalize_activation_target(target).ok_or_else(|| {
+                        AssetError::Invalid(format!(
+                            "Timeline activation track '{id}' must target a descendant path without '.' or '..'"
+                        ))
+                    })?;
+                    if !activation_targets.insert(target.clone()) {
+                        return Err(AssetError::Invalid(format!(
+                            "Timeline activation target '{target}' is controlled by more than one track"
+                        )));
+                    }
+                    for clip in clips.iter() {
+                        if !clip.start.is_finite()
+                            || !clip.duration.is_finite()
+                            || clip.start < 0.0
+                            || clip.duration <= 0.0
+                            || clip.start + clip.duration > self.duration
+                        {
+                            return Err(AssetError::Invalid(format!(
+                                "Timeline activation track '{id}' contains a clip outside its duration"
+                            )));
+                        }
+                    }
+                    clips.sort_by(|left, right| left.start.total_cmp(&right.start));
+                    if clips
+                        .windows(2)
+                        .any(|pair| pair[0].start + pair[0].duration > pair[1].start)
+                    {
+                        return Err(AssetError::Invalid(format!(
+                            "Timeline activation track '{id}' contains overlapping clips"
+                        )));
+                    }
+                }
             }
         }
         Ok(self)
     }
+}
+
+fn normalize_activation_target(raw: &str) -> Option<String> {
+    let normalized = raw.trim().replace('\\', "/");
+    if normalized.is_empty() || normalized.starts_with('/') {
+        return None;
+    }
+    let segments: Vec<_> = normalized.split('/').collect();
+    if segments
+        .iter()
+        .any(|segment| segment.is_empty() || matches!(*segment, "." | ".."))
+    {
+        return None;
+    }
+    Some(segments.join("/"))
 }
 
 pub fn parse_timeline_asset(bytes: &[u8]) -> Result<TimelineAsset, AssetError> {
@@ -153,7 +236,9 @@ mod tests {
         )
         .unwrap();
         assert_eq!(asset.name, "Intro");
-        let TimelineTrack::Signal { name, markers, .. } = &asset.tracks[0];
+        let TimelineTrack::Signal { name, markers, .. } = &asset.tracks[0] else {
+            panic!("expected signal track");
+        };
         assert_eq!(name, "Gameplay");
         assert_eq!(markers[0].name, "Start");
         assert_eq!(markers[1].payload, Some(serde_json::json!({"score": 10})));
@@ -171,5 +256,41 @@ mod tests {
         .is_err());
         assert!(parse_timeline_asset(br#"{"version":2,"duration":1}"#).is_err());
         assert!(parse_timeline_asset(br#"{"name":"Missing contract"}"#).is_err());
+    }
+
+    #[test]
+    fn normalizes_activation_tracks_and_rejects_overlaps() {
+        let asset = parse_timeline_asset(
+            br#"{
+              "version":1,"duration":3,
+              "tracks":[{"type":"activation","id":"visibility","name":" Visibility ",
+                "target":"Canvas\\Dialog","clips":[
+                  {"start":1,"duration":0.5,"active":true},
+                  {"start":0,"duration":0.5,"active":false}
+                ]}]
+            }"#,
+        )
+        .unwrap();
+        let TimelineTrack::Activation {
+            name,
+            target,
+            clips,
+            ..
+        } = &asset.tracks[0]
+        else {
+            panic!("expected activation track");
+        };
+        assert_eq!(name, "Visibility");
+        assert_eq!(target, "Canvas/Dialog");
+        assert_eq!(clips[0].start, 0.0);
+
+        assert!(parse_timeline_asset(
+            br#"{"version":1,"duration":2,"tracks":[{"type":"activation","id":"a","name":"A","target":"Child","clips":[{"start":0,"duration":1.5,"active":true},{"start":1,"duration":1,"active":false}]}]}"#
+        )
+        .is_err());
+        assert!(parse_timeline_asset(
+            br#"{"version":1,"duration":2,"tracks":[{"type":"activation","id":"a","name":"A","target":"../Sibling"}]}"#
+        )
+        .is_err());
     }
 }
