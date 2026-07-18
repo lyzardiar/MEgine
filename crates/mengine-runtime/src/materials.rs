@@ -4,6 +4,7 @@ use mengine_assets::{
     MaterialBlendMode as AssetMaterialBlendMode, MaterialFilter as AssetMaterialFilter,
     MaterialShader, MaterialSurface, MaterialWrap as AssetMaterialWrap,
 };
+use mengine_core::generated::MaterialPropertyBlock;
 use mengine_rhi::{
     validate_surface_shader_hook, MaterialBlendMode, MaterialFilter, MaterialWrap, RenderMaterial,
 };
@@ -219,6 +220,40 @@ pub fn render_material_from_asset(material: &MaterialAsset) -> RenderMaterial {
     }
 }
 
+pub fn apply_material_property_block(
+    mut material: RenderMaterial,
+    block: &MaterialPropertyBlock,
+) -> RenderMaterial {
+    if block.override_base_color {
+        material.base_color = sanitize_color4(block.base_color);
+    }
+    if block.override_metallic {
+        material.metallic = finite_or(block.metallic, 0.0).clamp(0.0, 1.0);
+    }
+    if block.override_roughness {
+        material.roughness = finite_or(block.roughness, 0.5).clamp(0.04, 1.0);
+    }
+    if block.override_emissive {
+        material.emissive = block.emissive.map(|value| finite_or(value, 0.0).max(0.0));
+    }
+    if block.override_emissive_strength {
+        material.emissive_strength = finite_or(block.emissive_strength, 1.0).max(0.0);
+    }
+    material
+}
+
+fn sanitize_color4(color: [f32; 4]) -> [f32; 4] {
+    color.map(|value| finite_or(value, 1.0).clamp(0.0, 1.0))
+}
+
+fn finite_or(value: f32, fallback: f32) -> f32 {
+    if value.is_finite() {
+        value
+    } else {
+        fallback
+    }
+}
+
 fn render_wrap(wrap: AssetMaterialWrap) -> MaterialWrap {
     match wrap {
         AssetMaterialWrap::Repeat => MaterialWrap::Repeat,
@@ -304,6 +339,46 @@ mod tests {
         });
         assert!(cutout.depth_write);
         assert_eq!(cutout.render_queue, 2450);
+    }
+
+    #[test]
+    fn property_blocks_override_enabled_values_and_preserve_pipeline_state() {
+        let source = RenderMaterial {
+            base_color: [0.2, 0.3, 0.4, 1.0],
+            metallic: 0.7,
+            roughness: 0.6,
+            emissive: [1.0, 2.0, 3.0],
+            emissive_strength: 4.0,
+            transparent: true,
+            render_queue: 3100,
+            base_color_texture: "Assets/Textures/paint.png".into(),
+            surface_shader: "fn mengine_lit_surface_hook() {}".into(),
+            ..RenderMaterial::default()
+        };
+        let result = apply_material_property_block(
+            source,
+            &MaterialPropertyBlock {
+                override_base_color: true,
+                base_color: [2.0, 0.5, -1.0, f32::NAN],
+                override_metallic: false,
+                metallic: 0.1,
+                override_roughness: true,
+                roughness: 0.0,
+                override_emissive: false,
+                emissive: [9.0; 3],
+                override_emissive_strength: true,
+                emissive_strength: 2.0,
+            },
+        );
+        assert_eq!(result.base_color, [1.0, 0.5, 0.0, 1.0]);
+        assert_eq!(result.metallic, 0.7);
+        assert_eq!(result.roughness, 0.04);
+        assert_eq!(result.emissive, [1.0, 2.0, 3.0]);
+        assert_eq!(result.emissive_strength, 2.0);
+        assert!(result.transparent);
+        assert_eq!(result.render_queue, 3100);
+        assert_eq!(result.base_color_texture, "Assets/Textures/paint.png");
+        assert!(!result.surface_shader.is_empty());
     }
 
     #[test]

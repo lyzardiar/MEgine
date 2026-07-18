@@ -626,3 +626,12 @@ Referenced Only 是可用的单包裁剪基础，仍不等同于完整 Addressab
 - 工具栏将四个大号“Add Track”按钮收敛为方形弹出菜单，保存、绑定和关闭使用带提示的图标按钮；轨道区与 Inspector 使用窄方形滚动条。`Ctrl/Cmd+S`、Space 和 Delete/Backspace 分别覆盖保存、播放/暂停和删除选中项，输入控件保持文字编辑优先级。
 
 这一切片把现有 Signal、Activation、Audio、Animation 四类轨道推进到基础可编辑状态，但成熟 Timeline 仍需多选/复制粘贴、Undo/Redo、轨道分组与锁定、稳定 Binding Table、片段混合/淡入淡出、Camera/Particle/Animator 轨道、嵌套 Timeline、录制模式和运行时性能分析。后续轨道类型应建立在统一绑定与混合契约上，避免重复实现各自的生命周期。
+
+## 42. 2026-07-19 Material Property Block
+
+- 新增引擎级 `MaterialPropertyBlock` 组件，为 Base Color、Metallic、Roughness、Emissive 与 Emissive Strength 分别提供显式覆盖开关。默认所有开关关闭，因此组件加入旧场景或通过缺省字段反序列化时不会改变渲染结果。
+- Player 先完整解析 MeshRenderer 的 `.mmat/.mat`、自定义 Surface Shader 或内置材质预设，再应用 Property Block。覆盖只修改启用的数值参数，材质的纹理、Shader、透明/裁剪模式、混合、深度写入、渲染队列、UV 与采样器状态保持不变；非法数值在运行时边界执行有限值与物理范围清理。
+- IDL、Rust 组件工厂、TypeScript API 与 JSON Schema 由同一代码生成源同步。Inspector 只在对应覆盖开关启用时显示数值字段；Add Component 将 Property Block 声明为依赖 MeshRenderer，缺少时自动补齐，避免产生静默无效组件。
+- Scene View 预览采用与 Player 相同的“完整材质或旧 PbrMaterial → Property Block”优先级。为 MeshRenderer 重新分配材质资产时仍会移除会完全遮蔽资产的旧 `PbrMaterial`，但保留 Property Block，使实例级调色和粗糙度差异可跨材质替换继续工作。
+
+该切片完成的是不复制材质资产的实例参数覆盖，不等同于 GPU Instancing 或完整 Material Instance 资产系统。后续仍需 Shader 参数反射驱动任意属性、纹理属性块、材质实例继承、SRP Batcher/GPU Instancing 兼容布局、关键字与 Variant 管理、烘焙缓存和渲染调试视图；旧 `PbrMaterial` 继续作为兼容整材质替换存在，后续应提供显式迁移工具而不是静默改变其语义。

@@ -8,6 +8,7 @@ test('material assignment atomically removes the per-renderer PBR override', () 
     Transform: { position: [0, 0, 0] },
     MeshRenderer: { mesh: 'cube', material: 'default' },
     PbrMaterial: { metallic: 1 },
+    MaterialPropertyBlock: { override_metallic: true, metallic: 0.25 },
   };
   const result = assignMaterialToComponents(components, 'Assets/Materials/Metal.mmat');
 
@@ -18,6 +19,10 @@ test('material assignment atomically removes the per-renderer PBR override', () 
     material: 'Assets/Materials/Metal.mmat',
   });
   assert.equal(Object.hasOwn(result?.components ?? {}, 'PbrMaterial'), false);
+  assert.deepEqual(result?.components.MaterialPropertyBlock, {
+    override_metallic: true,
+    metallic: 0.25,
+  });
   assert.equal(Object.hasOwn(components, 'PbrMaterial'), true);
 });
 

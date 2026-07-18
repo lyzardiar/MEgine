@@ -1353,6 +1353,7 @@ export function Viewport(props: {
         materialPath,
         materialAssetPreview(materialPath),
         e.components.PbrMaterial,
+        e.components.MaterialPropertyBlock,
       );
       const meshPath = String((mesh as Record<string, unknown>).mesh ?? 'cube');
       const imported = /\.(?:gltf|glb)$/i.test(meshPath) ? modelPreview(meshPath) : null;

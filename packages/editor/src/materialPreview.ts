@@ -48,30 +48,41 @@ export function clearMaterialPreviews(path?: string): void {
 export function resolveMaterialPreviewAppearance(
   materialPath: string,
   asset: MaterialAsset | null,
-  override: unknown,
+  legacyOverride: unknown,
+  propertyBlock?: unknown,
 ): MaterialPreviewAppearance {
-  const component = record(override);
-  if (component) {
-    return appearance({
+  const component = record(legacyOverride);
+  const resolved = component
+    ? appearance({
       baseColor: component.base_color,
       metallic: component.metallic,
       roughness: component.roughness,
       emissive: component.emissive,
       emissiveStrength: component.emissive_strength,
       unlit: component.unlit === true,
-    });
-  }
-  if (asset) {
-    return appearance({
+    })
+    : asset
+      ? appearance({
       baseColor: asset.base_color,
       metallic: asset.metallic,
       roughness: asset.roughness,
       emissive: asset.emissive,
       emissiveStrength: asset.emissive_strength,
       unlit: asset.shader === 'unlit',
-    });
-  }
-  return presetAppearance(materialPath);
+      })
+      : presetAppearance(materialPath);
+  const block = record(propertyBlock);
+  if (!block) return resolved;
+  return appearance({
+    baseColor: block.override_base_color === true ? block.base_color : resolved.baseColor,
+    metallic: block.override_metallic === true ? block.metallic : resolved.metallic,
+    roughness: block.override_roughness === true ? block.roughness : resolved.roughness,
+    emissive: block.override_emissive === true ? block.emissive : resolved.emissive,
+    emissiveStrength: block.override_emissive_strength === true
+      ? block.emissive_strength
+      : resolved.emissiveStrength,
+    unlit: resolved.unlit,
+  });
 }
 
 function presetAppearance(name: string): MaterialPreviewAppearance {

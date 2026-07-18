@@ -108,6 +108,21 @@ component PbrMaterial {
   double_sided:      bool   = false
 }
 
+/// Per-renderer parameter overrides applied after the material asset is resolved.
+/// Unlike PbrMaterial, this preserves textures, shader, surface, and pipeline state.
+component MaterialPropertyBlock {
+  override_base_color:        bool   = false
+  base_color:                 float4 = [1, 1, 1, 1]
+  override_metallic:          bool   = false
+  metallic:                   float  = 0
+  override_roughness:         bool   = false
+  roughness:                  float  = 0.5
+  override_emissive:          bool   = false
+  emissive:                   float3 = [0, 0, 0]
+  override_emissive_strength: bool   = false
+  emissive_strength:          float  = 1
+}
+
 component SpriteRenderer {
   sprite: string = "white"
   color:  float4 = [1, 1, 1, 1]

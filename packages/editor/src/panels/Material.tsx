@@ -629,6 +629,11 @@ export function MaterialEditor(props: {
             Assigning will replace the selected renderer's PBR override.
           </span>
         )}
+        {props.selectedEntity?.components.MaterialPropertyBlock != null && (
+          <span title="Material Property Block is applied after the assigned material asset">
+            Property Block overrides are preserved when assigning.
+          </span>
+        )}
         <button
           type="button"
           disabled={!canAssign}

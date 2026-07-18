@@ -9,6 +9,7 @@ export type ComponentCatalogEntry = {
   label: string;
   description: string;
   create: () => Record<string, unknown>;
+  requires?: string[];
 };
 
 const BUILTIN_CATALOG: ComponentCatalogEntry[] = [
@@ -105,7 +106,7 @@ const BUILTIN_CATALOG: ComponentCatalogEntry[] = [
   {
     type: 'PbrMaterial',
     label: 'PBR Material',
-    description: 'Base color, metallic, roughness and emissive surface parameters',
+    description: 'Legacy complete material replacement without asset textures or shader state',
     create: () => ({
       base_color: [0.8, 0.8, 0.8, 1],
       metallic: 0,
@@ -114,6 +115,24 @@ const BUILTIN_CATALOG: ComponentCatalogEntry[] = [
       emissive_strength: 1,
       unlit: false,
       double_sided: false,
+    }),
+  },
+  {
+    type: 'MaterialPropertyBlock',
+    label: 'Material Property Block',
+    description: 'Override selected renderer parameters while preserving its material asset',
+    requires: ['MeshRenderer'],
+    create: () => ({
+      override_base_color: false,
+      base_color: [1, 1, 1, 1],
+      override_metallic: false,
+      metallic: 0,
+      override_roughness: false,
+      roughness: 0.5,
+      override_emissive: false,
+      emissive: [0, 0, 0],
+      override_emissive_strength: false,
+      emissive_strength: 1,
     }),
   },
   {
@@ -580,6 +599,7 @@ export function getComponentCatalog(): ComponentCatalogEntry[] {
       label: b.label,
       description: b.description,
       create: () => b.defaults(),
+      requires: [...b.requires],
     }));
   return [...behaviours, ...BUILTIN_CATALOG];
 }
@@ -596,6 +616,12 @@ export function createComponentDefaults(type: string): Record<string, unknown> |
   if (behaviour) return behaviour.defaults();
   const builtin = BUILTIN_CATALOG.find((c) => c.type === type);
   return builtin ? builtin.create() : null;
+}
+
+export function componentRequirements(type: string): readonly string[] {
+  const behaviour = getBehaviour(type);
+  if (behaviour) return behaviour.requires;
+  return BUILTIN_CATALOG.find((entry) => entry.type === type)?.requires ?? [];
 }
 
 export function createUiCanvasComponents(): Record<string, unknown> {

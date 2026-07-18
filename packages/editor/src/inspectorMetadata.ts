@@ -196,6 +196,33 @@ export const BUILTIN_INSPECTOR_FIELDS: Readonly<
     roughness: { min: 0, max: 1, step: 0.01 },
     emissive_strength: { min: 0, step: 0.1 },
   },
+  MaterialPropertyBlock: {
+    override_base_color: { label: 'Override Base Color' },
+    base_color: { label: 'Base Color', visibleWhen: { field: 'override_base_color', equals: true } },
+    override_metallic: { label: 'Override Metallic' },
+    metallic: {
+      min: 0,
+      max: 1,
+      step: 0.01,
+      visibleWhen: { field: 'override_metallic', equals: true },
+    },
+    override_roughness: { label: 'Override Roughness' },
+    roughness: {
+      min: 0.04,
+      max: 1,
+      step: 0.01,
+      visibleWhen: { field: 'override_roughness', equals: true },
+    },
+    override_emissive: { label: 'Override Emissive' },
+    emissive: { visibleWhen: { field: 'override_emissive', equals: true } },
+    override_emissive_strength: { label: 'Override Emissive Strength' },
+    emissive_strength: {
+      label: 'Emissive Strength',
+      min: 0,
+      step: 0.1,
+      visibleWhen: { field: 'override_emissive_strength', equals: true },
+    },
+  },
   RigidBody3D: {
     body_type: { kind: 'enum', options: options('dynamic', 'fixed', 'kinematic') },
     mass: { min: 0.001, step: 0.1 },

@@ -6,9 +6,9 @@ use glam::{Quat, Vec3, Vec4};
 use mengine_core::command::WorldCommand;
 use mengine_core::generated::{
     AnimatedSprite2D, AnimationPlayer, Animator, AudioSource, Camera2D, Camera3D, DirectionalLight,
-    Dropdown, EnvironmentLight, InputField, ListView, MeshRenderer, ParticleEmitter2D,
-    ParticleEmitter3D, PbrMaterial, PointLight, ScrollView, Scrollbar, Slider, SpotLight,
-    SpriteRenderer, TabView, Tilemap, TimelineDirector, Toggle, Transform,
+    Dropdown, EnvironmentLight, InputField, ListView, MaterialPropertyBlock, MeshRenderer,
+    ParticleEmitter2D, ParticleEmitter3D, PbrMaterial, PointLight, ScrollView, Scrollbar, Slider,
+    SpotLight, SpriteRenderer, TabView, Tilemap, TimelineDirector, Toggle, Transform,
 };
 use mengine_core::{Entity, TransformHierarchy, World};
 use mengine_physics::{PhysicsWorld, PhysicsWorld2D};
@@ -22,7 +22,7 @@ use mengine_runtime::animation::{infer_project_root_from_scene, AnimationRuntime
 use mengine_runtime::audio::AudioRuntime;
 use mengine_runtime::build_manifest::verify_build_manifest;
 use mengine_runtime::lighting2d::apply_2d_lighting;
-use mengine_runtime::materials::RuntimeMaterialCache;
+use mengine_runtime::materials::{apply_material_property_block, RuntimeMaterialCache};
 use mengine_runtime::meshes::RuntimeMeshCache;
 use mengine_runtime::particles::ParticleWorld;
 use mengine_runtime::player_config::load_player_config;
@@ -1839,19 +1839,23 @@ fn collect_objects(
     let mut out = Vec::new();
     for e in world.iter_entities() {
         if let (Some(t), Some(m)) = (hierarchy.get(e), world.get_component::<MeshRenderer>(e)) {
+            let mut material = world
+                .get_component::<PbrMaterial>(e)
+                .map(render_material_from_component)
+                .unwrap_or_else(|| {
+                    materials
+                        .resolve(&m.material)
+                        .unwrap_or_else(|| material_preset(&m.material))
+                });
+            if let Some(block) = world.get_component::<MaterialPropertyBlock>(e) {
+                material = apply_material_property_block(material, block);
+            }
             out.push(RenderObject {
                 mesh_key: m.mesh.trim().replace('\\', "/"),
                 model: t.matrix,
                 cast_shadows: m.cast_shadows,
                 receive_shadows: m.receive_shadows,
-                material: world
-                    .get_component::<PbrMaterial>(e)
-                    .map(render_material_from_component)
-                    .unwrap_or_else(|| {
-                        materials
-                            .resolve(&m.material)
-                            .unwrap_or_else(|| material_preset(&m.material))
-                    }),
+                material,
             });
         }
     }
@@ -2527,6 +2531,35 @@ mod tests {
         assert_eq!(material.base_color, component.base_color);
         assert_eq!(material.metallic, 0.7);
         assert!(material.unlit && material.double_sided);
+    }
+
+    #[test]
+    fn material_property_block_is_applied_by_render_object_collection() {
+        let mut world = World::new();
+        let entity = world.spawn_empty();
+        world.insert_component(entity, Transform::default());
+        world.insert_component(
+            entity,
+            MeshRenderer {
+                material: "gold".into(),
+                ..MeshRenderer::default()
+            },
+        );
+        world.insert_component(
+            entity,
+            MaterialPropertyBlock {
+                override_roughness: true,
+                roughness: 0.8,
+                ..MaterialPropertyBlock::default()
+            },
+        );
+
+        let hierarchy = TransformHierarchy::build(&world);
+        let objects = collect_objects(&world, &hierarchy, &mut RuntimeMaterialCache::new(None));
+        assert_eq!(objects.len(), 1);
+        assert_eq!(objects[0].material.base_color, [1.0, 0.55, 0.08, 1.0]);
+        assert_eq!(objects[0].material.metallic, 0.9);
+        assert_eq!(objects[0].material.roughness, 0.8);
     }
 
     #[test]

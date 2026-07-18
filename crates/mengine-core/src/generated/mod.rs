@@ -448,6 +448,53 @@ impl Component for PbrMaterial {
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
 #[serde(default)]
+pub struct MaterialPropertyBlock {
+    pub override_base_color: bool,
+    pub base_color: [f32; 4],
+    pub override_metallic: bool,
+    pub metallic: f32,
+    pub override_roughness: bool,
+    pub roughness: f32,
+    pub override_emissive: bool,
+    pub emissive: [f32; 3],
+    pub override_emissive_strength: bool,
+    pub emissive_strength: f32,
+}
+
+impl Default for MaterialPropertyBlock {
+    fn default() -> Self {
+        Self {
+            override_base_color: false,
+            base_color: [1.0, 1.0, 1.0, 1.0],
+            override_metallic: false,
+            metallic: 0.0,
+            override_roughness: false,
+            roughness: 0.5,
+            override_emissive: false,
+            emissive: [0.0, 0.0, 0.0],
+            override_emissive_strength: false,
+            emissive_strength: 1.0,
+        }
+    }
+}
+
+impl Component for MaterialPropertyBlock {
+    fn type_name() -> &'static str {
+        "MaterialPropertyBlock"
+    }
+    fn as_any(&self) -> &dyn std::any::Any {
+        self
+    }
+    fn as_any_mut(&mut self) -> &mut dyn std::any::Any {
+        self
+    }
+    fn to_value(&self) -> serde_json::Value {
+        serde_json::to_value(self).unwrap_or(serde_json::Value::Null)
+    }
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize)]
+#[serde(default)]
 pub struct SpriteRenderer {
     pub sprite: String,
     pub color: [f32; 4],
@@ -2409,6 +2456,8 @@ pub fn component_from_value(
             .map(|component| Some(Box::new(component) as ComponentBox)),
         "PbrMaterial" => serde_json::from_value::<PbrMaterial>(value)
             .map(|component| Some(Box::new(component) as ComponentBox)),
+        "MaterialPropertyBlock" => serde_json::from_value::<MaterialPropertyBlock>(value)
+            .map(|component| Some(Box::new(component) as ComponentBox)),
         "SpriteRenderer" => serde_json::from_value::<SpriteRenderer>(value)
             .map(|component| Some(Box::new(component) as ComponentBox)),
         "AnimatedSprite2D" => serde_json::from_value::<AnimatedSprite2D>(value)
@@ -2523,6 +2572,7 @@ pub mod meta {
         "Camera2D",
         "MeshRenderer",
         "PbrMaterial",
+        "MaterialPropertyBlock",
         "SpriteRenderer",
         "AnimatedSprite2D",
         "Line2D",

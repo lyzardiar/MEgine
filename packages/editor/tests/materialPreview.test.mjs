@@ -42,6 +42,35 @@ test('per-renderer PBR component overrides a material asset preview', () => {
   });
 });
 
+test('material property block overrides only enabled asset parameters', () => {
+  const asset = createMaterialAsset('Asset');
+  asset.shader = 'unlit';
+  asset.base_color = [0.2, 0.3, 0.4, 1];
+  asset.metallic = 0.7;
+  asset.roughness = 0.6;
+  asset.emissive = [1, 2, 3];
+  asset.emissive_strength = 4;
+  assert.deepEqual(resolveMaterialPreviewAppearance('Assets/Asset.mmat', asset, null, {
+    override_base_color: true,
+    base_color: [1, 0.5, 0.25, 0.75],
+    override_metallic: false,
+    metallic: 0.1,
+    override_roughness: true,
+    roughness: 0,
+    override_emissive: false,
+    emissive: [9, 9, 9],
+    override_emissive_strength: true,
+    emissive_strength: 2,
+  }), {
+    baseColor: [1, 0.5, 0.25, 0.75],
+    metallic: 0.7,
+    roughness: 0.04,
+    emissive: [1, 2, 3],
+    emissiveStrength: 2,
+    unlit: true,
+  });
+});
+
 test('built-in material preview presets match runtime presets', () => {
   assert.deepEqual(resolveMaterialPreviewAppearance('gold', null, null), {
     baseColor: [1, 0.55, 0.08, 1],

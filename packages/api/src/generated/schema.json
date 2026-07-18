@@ -1089,6 +1089,59 @@
     ],
     "type": "object"
   },
+  "MaterialPropertyBlock": {
+    "properties": {
+      "base_color": {
+        "items": {
+          "type": "number"
+        },
+        "type": "array"
+      },
+      "emissive": {
+        "items": {
+          "type": "number"
+        },
+        "type": "array"
+      },
+      "emissive_strength": {
+        "type": "number"
+      },
+      "metallic": {
+        "type": "number"
+      },
+      "override_base_color": {
+        "type": "boolean"
+      },
+      "override_emissive": {
+        "type": "boolean"
+      },
+      "override_emissive_strength": {
+        "type": "boolean"
+      },
+      "override_metallic": {
+        "type": "boolean"
+      },
+      "override_roughness": {
+        "type": "boolean"
+      },
+      "roughness": {
+        "type": "number"
+      }
+    },
+    "required": [
+      "override_base_color",
+      "base_color",
+      "override_metallic",
+      "metallic",
+      "override_roughness",
+      "roughness",
+      "override_emissive",
+      "emissive",
+      "override_emissive_strength",
+      "emissive_strength"
+    ],
+    "type": "object"
+  },
   "Mesh": {
     "properties": {
       "path": {

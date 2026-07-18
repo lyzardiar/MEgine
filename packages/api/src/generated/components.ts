@@ -99,6 +99,19 @@ export interface PbrMaterial {
   doubleSided: boolean;
 }
 
+export interface MaterialPropertyBlock {
+  overrideBaseColor: boolean;
+  baseColor: [number, number, number, number];
+  overrideMetallic: boolean;
+  metallic: number;
+  overrideRoughness: boolean;
+  roughness: number;
+  overrideEmissive: boolean;
+  emissive: [number, number, number];
+  overrideEmissiveStrength: boolean;
+  emissiveStrength: number;
+}
+
 export interface SpriteRenderer {
   sprite: string;
   color: [number, number, number, number];
@@ -588,6 +601,7 @@ export type ComponentName =
   | 'Camera2D'
   | 'MeshRenderer'
   | 'PbrMaterial'
+  | 'MaterialPropertyBlock'
   | 'SpriteRenderer'
   | 'AnimatedSprite2D'
   | 'Line2D'
@@ -650,6 +664,7 @@ export const COMPONENT_NAMES = [
   'Camera2D',
   'MeshRenderer',
   'PbrMaterial',
+  'MaterialPropertyBlock',
   'SpriteRenderer',
   'AnimatedSprite2D',
   'Line2D',

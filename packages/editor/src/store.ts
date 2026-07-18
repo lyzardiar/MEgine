@@ -13,6 +13,7 @@ import {
   quatNormalize,
 } from './math3d';
 import {
+  componentRequirements,
   createComponentDefaults,
   createParticleEmitter2D,
   createParticleEmitter3D,
@@ -1107,12 +1108,12 @@ export function createEditorStore() {
       const e = find(entity);
       if (!e) return false;
       if (e.components[type] != null) return false;
-      const entry = getBehaviour(type);
       pushUndo();
       e.components[type] = value;
       // RequireComponent: auto-add missing deps
-      if (entry?.requires?.length) {
-        for (const dep of entry.requires) {
+      const requirements = componentRequirements(type);
+      if (requirements.length) {
+        for (const dep of requirements) {
           if (e.components[dep] != null) continue;
           const defaults = createComponentDefaults(dep);
           if (defaults) e.components[dep] = defaults;
