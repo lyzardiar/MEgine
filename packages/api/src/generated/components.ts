@@ -172,6 +172,15 @@ export interface Animator {
   transitionProgress: number;
 }
 
+export interface TimelineDirector {
+  asset: string;
+  playOnAwake: boolean;
+  playing: boolean;
+  speed: number;
+  time: number;
+  wrapMode: string;
+}
+
 export interface AudioListener {
   primary: boolean;
 }
@@ -585,6 +594,7 @@ export type ComponentName =
   | 'Tilemap'
   | 'AnimationPlayer'
   | 'Animator'
+  | 'TimelineDirector'
   | 'AudioListener'
   | 'AudioSource'
   | 'AudioMixer'
@@ -646,6 +656,7 @@ export const COMPONENT_NAMES = [
   'Tilemap',
   'AnimationPlayer',
   'Animator',
+  'TimelineDirector',
   'AudioListener',
   'AudioSource',
   'AudioMixer',

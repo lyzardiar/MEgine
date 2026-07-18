@@ -320,6 +320,7 @@ export function validateBuildAssetDependencies(
     }
     enqueue(stringValue(component('AnimationPlayer'), 'clip'), from, 'animation clip');
     enqueue(stringValue(component('Animator'), 'controller'), from, 'animator controller');
+    enqueue(stringValue(component('TimelineDirector'), 'asset'), from, 'Timeline asset');
     enqueue(stringValue(component('AudioSource'), 'clip'), from, 'audio clip');
     for (const name of ['ParticleEmitter2D', 'ParticleEmitter3D']) {
       enqueue(stringValue(component(name), 'texture'), from, 'particle texture', ['white']);
@@ -627,6 +628,53 @@ export function validateBuildAssetDependencies(
       }
       if (clip.events != null && !Array.isArray(clip.events)) {
         throw new Error(`invalid animation clip ${source}: events must be an array`);
+      }
+    } else if (extension === '.mtimeline') {
+      const timeline = readJsonAsset(absolute, root, 'Timeline asset');
+      if (timeline.version !== 1) {
+        throw new Error(`invalid Timeline asset ${source}: version must be 1`);
+      }
+      if (typeof timeline.duration !== 'number' || !Number.isFinite(timeline.duration) || timeline.duration <= 0) {
+        throw new Error(`invalid Timeline asset ${source}: duration must be positive`);
+      }
+      if (timeline.frame_rate != null
+        && (typeof timeline.frame_rate !== 'number'
+          || !Number.isFinite(timeline.frame_rate)
+          || timeline.frame_rate <= 0)) {
+        throw new Error(`invalid Timeline asset ${source}: frame_rate must be positive`);
+      }
+      if (!Array.isArray(timeline.tracks)) {
+        throw new Error(`invalid Timeline asset ${source}: tracks must be an array`);
+      }
+      const trackIds = new Set<string>();
+      for (const trackValue of timeline.tracks) {
+        const track = jsonObject(trackValue);
+        if (!track || track.type !== 'signal') {
+          throw new Error(`invalid Timeline asset ${source}: unsupported track type`);
+        }
+        const id = strictStringValue(track, 'id', `Timeline asset ${source}`);
+        const name = strictStringValue(track, 'name', `Timeline asset ${source}`);
+        if (!id || !name || trackIds.has(id)) {
+          throw new Error(`invalid Timeline asset ${source}: track ids and names must be non-empty and ids unique`);
+        }
+        trackIds.add(id);
+        if (track.muted != null && typeof track.muted !== 'boolean') {
+          throw new Error(`invalid Timeline asset ${source}: track muted must be boolean`);
+        }
+        if (track.markers != null && !Array.isArray(track.markers)) {
+          throw new Error(`invalid Timeline asset ${source}: signal markers must be an array`);
+        }
+        for (const markerValue of Array.isArray(track.markers) ? track.markers : []) {
+          const marker = jsonObject(markerValue);
+          if (!marker) {
+            throw new Error(`invalid Timeline asset ${source}: signal marker must be an object`);
+          }
+          const markerName = strictStringValue(marker, 'name', `Timeline asset ${source}`);
+          const time = marker.time;
+          if (!markerName || typeof time !== 'number' || !Number.isFinite(time) || time < 0 || time > timeline.duration) {
+            throw new Error(`invalid Timeline asset ${source}: signal marker is invalid or outside duration`);
+          }
+        }
       }
     } else if (extension === '.gltf') {
       const model = readJsonAsset(absolute, root, 'glTF model');

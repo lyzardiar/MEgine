@@ -610,6 +610,8 @@ fn project_asset_kind(name: &str) -> Option<&'static str> {
         Some("animator-controller")
     } else if lower.ends_with(".mavatar") {
         Some("avatar-mask")
+    } else if lower.ends_with(".mtimeline") {
+        Some("timeline")
     } else if lower.ends_with(".wav")
         || lower.ends_with(".ogg")
         || lower.ends_with(".mp3")
@@ -1775,6 +1777,7 @@ mod tests {
             "walk.manim",
             "hero.mcontroller",
             "upper-body.mavatar",
+            "intro.mtimeline",
             "character.mmat",
             "rim.mshader",
             "enemy.prefab",
@@ -1795,7 +1798,7 @@ mod tests {
         std::fs::remove_dir_all(root).unwrap();
         found.sort_by(|left, right| left.name.cmp(&right.name));
 
-        assert_eq!(found.len(), 12);
+        assert_eq!(found.len(), 13);
         assert!(found
             .iter()
             .any(|asset| asset.name == "walk.manim" && asset.kind == "animation"));
@@ -1805,6 +1808,9 @@ mod tests {
         assert!(found
             .iter()
             .any(|asset| asset.name == "upper-body.mavatar" && asset.kind == "avatar-mask"));
+        assert!(found
+            .iter()
+            .any(|asset| asset.name == "intro.mtimeline" && asset.kind == "timeline"));
         assert!(found
             .iter()
             .any(|asset| asset.name == "character.mmat" && asset.kind == "material"));

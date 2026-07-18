@@ -3607,6 +3607,191 @@ body.insp-scrubbing * {
   inset: -6px;
 }
 
+.panel-visibility-host {
+  width: 100%;
+  height: 100%;
+  min-width: 0;
+  min-height: 0;
+}
+
+.sequencer-panel { min-height: 0; }
+.sequencer-toolbar { border-bottom: 1px solid #151515; }
+.sequencer-workspace {
+  min-height: 0;
+  flex: 1 1 auto;
+  display: grid;
+  grid-template-columns: minmax(320px, 1fr) 240px;
+  overflow: hidden;
+  background: #202020;
+}
+
+.sequencer-tracks {
+  min-width: 0;
+  overflow: auto;
+  border-right: 1px solid #111;
+}
+
+.sequencer-ruler-row,
+.sequencer-track-row {
+  display: grid;
+  grid-template-columns: 180px minmax(360px, 1fr);
+  min-width: 540px;
+}
+
+.sequencer-ruler-row { height: 32px; }
+.sequencer-track-row { height: 42px; border-top: 1px solid #151515; }
+.sequencer-track-row.selected { background: #263747; }
+
+.sequencer-track-header {
+  min-width: 0;
+  border: 0;
+  border-right: 1px solid #111;
+  border-radius: 0;
+  background: #2b2b2b;
+  color: #c8c8c8;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 0 8px;
+  text-align: left;
+}
+
+button.sequencer-track-header { cursor: pointer; }
+button.sequencer-track-header:hover { background: #343b42; }
+.sequencer-track-header > span:not(.sequencer-track-icon) { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.sequencer-track-header small { margin-left: auto; color: #b79a70; font-size: 9px; text-transform: uppercase; }
+.sequencer-track-icon {
+  width: 18px;
+  height: 18px;
+  flex: 0 0 18px;
+  display: grid;
+  place-items: center;
+  background: #8b612e;
+  color: #fff2d7;
+  font-size: 10px;
+  font-weight: 700;
+}
+
+.sequencer-ruler,
+.sequencer-lane {
+  position: relative;
+  min-width: 360px;
+  overflow: hidden;
+  background: #242424;
+  cursor: crosshair;
+}
+
+.sequencer-ruler { background: #303030; border-bottom: 1px solid #111; }
+.sequencer-ruler span {
+  position: absolute;
+  top: 3px;
+  transform: translateX(-50%);
+  color: #8d8d8d;
+  font-family: var(--u-mono);
+  font-size: 9px;
+  pointer-events: none;
+}
+
+.sequencer-ruler span::after,
+.sequencer-grid-line {
+  content: '';
+  position: absolute;
+  top: 15px;
+  bottom: -30px;
+  width: 1px;
+  background: #3c3c3c;
+  pointer-events: none;
+}
+
+.sequencer-grid-line { top: 0; bottom: 0; }
+.sequencer-playhead {
+  position: absolute;
+  z-index: 4;
+  top: 0;
+  bottom: 0;
+  width: 1px;
+  background: #54b9e8;
+  pointer-events: none;
+}
+
+.sequencer-playhead::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -4px;
+  border-left: 4px solid transparent;
+  border-right: 4px solid transparent;
+  border-top: 6px solid #54b9e8;
+}
+
+.sequencer-marker {
+  position: absolute;
+  z-index: 3;
+  top: 10px;
+  width: 12px;
+  height: 18px;
+  transform: translateX(-6px);
+  border: 1px solid #1a1a1a;
+  border-radius: 0;
+  background: #d9953f;
+  cursor: ew-resize;
+  clip-path: polygon(50% 0, 100% 28%, 100% 100%, 0 100%, 0 28%);
+}
+
+.sequencer-marker:hover,
+.sequencer-marker.selected { background: #ffd37e; outline: 1px solid #fff; }
+
+.sequencer-inspector {
+  min-width: 0;
+  overflow: auto;
+  padding: 10px;
+  background: #292929;
+  color: #bbb;
+}
+
+.sequencer-inspector h3 {
+  margin: 0 0 10px;
+  color: #ddd;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.sequencer-inspector label { display: grid; gap: 4px; margin-bottom: 9px; font-size: 10px; color: #999; }
+.sequencer-inspector input,
+.sequencer-inspector textarea {
+  box-sizing: border-box;
+  width: 100%;
+  min-width: 0;
+  border: 1px solid #151515;
+  border-radius: 0;
+  background: #1d1d1d;
+  color: #ddd;
+  padding: 5px 6px;
+  font: 11px var(--u-mono);
+}
+
+.sequencer-inspector textarea { min-height: 92px; resize: vertical; }
+.sequencer-inspector .sequencer-check { display: flex; flex-direction: row; align-items: center; gap: 7px; }
+.sequencer-inspector .sequencer-check input { width: 14px; }
+.sequencer-inspector button {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  border: 1px solid #151515;
+  border-radius: 0;
+  background: #373737;
+  color: #ccc;
+  padding: 5px 8px;
+}
+
+.sequencer-inspector button.sequencer-danger { color: #ff9b9b; background: #402727; }
+.sequencer-empty-track { padding: 20px; color: #777; font-size: 11px; }
+
+@media (max-width: 760px) {
+  .sequencer-workspace { grid-template-columns: minmax(280px, 1fr); }
+  .sequencer-inspector { display: none; }
+}
+
 @container (max-width: 700px) {
   .timeline-toolbar > button span,
   .timeline-details-toggle span,

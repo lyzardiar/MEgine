@@ -192,6 +192,16 @@ component Animator {
   transition_progress: float  = 0
 }
 
+/// Plays a versioned .mtimeline Sequencer asset and emits its track events.
+component TimelineDirector {
+  asset:         string = ""
+  play_on_awake: bool   = true
+  playing:       bool   = true
+  speed:         float  = 1
+  time:          float  = 0
+  wrap_mode:     string = "Hold"
+}
+
 /// Spatial audio listener. The first active primary listener wins.
 component AudioListener {
   primary: bool = true

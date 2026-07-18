@@ -56,6 +56,7 @@ const STATIC_FOLDERS = [
   'Assets',
   'Assets/Scenes',
   'Assets/Animations',
+  'Assets/Timelines',
   'Assets/Audio',
   'Assets/Prefabs',
   'Assets/Scripts',
@@ -68,7 +69,7 @@ const STATIC_FOLDERS = [
 type AssetItem = {
   folder: string;
   name: string;
-  kind: 'animation' | 'animator-controller' | 'avatar-mask' | 'audio' | 'model' | 'prefab' | 'script' | 'material' | 'shader' | 'scene' | 'sprite' | 'sprite-atlas' | 'texture' | 'spine';
+  kind: 'animation' | 'animator-controller' | 'avatar-mask' | 'timeline' | 'audio' | 'model' | 'prefab' | 'script' | 'material' | 'shader' | 'scene' | 'sprite' | 'sprite-atlas' | 'texture' | 'spine';
   spawn: string | null;
   icon: ReactNode;
   sceneName?: string;
@@ -87,6 +88,8 @@ export function Project(props: {
   onOpenMaterial: (path: string) => void;
   onOpenShader: (path: string) => void;
   onOpenAnimator: (path: string) => void;
+  onOpenAnimation: (path: string) => void;
+  onOpenTimeline: (path: string) => void;
   onOpenSprite: (path: string) => void;
   onOpenSpriteAtlas: (path: string) => void;
   onRenameScene: (oldName: string, newName: string) => boolean | Promise<boolean>;
@@ -190,6 +193,8 @@ export function Project(props: {
         ? 'animator-controller'
       : asset.kind === 'avatar-mask'
         ? 'avatar-mask'
+      : asset.kind === 'timeline'
+        ? 'timeline'
       : asset.kind === 'sprite-atlas'
         ? 'sprite-atlas'
       : asset.kind === 'texture'
@@ -218,6 +223,8 @@ export function Project(props: {
         ? <Workflow size={24} strokeWidth={1.4} aria-hidden="true" />
         : kind === 'avatar-mask'
         ? <Bone size={24} strokeWidth={1.4} aria-hidden="true" />
+        : kind === 'timeline'
+        ? <Film size={24} strokeWidth={1.4} aria-hidden="true" />
         : kind === 'sprite-atlas'
         ? <Layers3 size={24} strokeWidth={1.4} aria-hidden="true" />
         : kind === 'audio'
@@ -323,6 +330,14 @@ export function Project(props: {
     }
     if ((a.kind === 'animator-controller' || a.kind === 'avatar-mask') && a.spriteId) {
       props.onOpenAnimator(a.spriteId);
+      return;
+    }
+    if (a.kind === 'animation' && a.spriteId) {
+      props.onOpenAnimation(a.spriteId);
+      return;
+    }
+    if (a.kind === 'timeline' && a.spriteId) {
+      props.onOpenTimeline(a.spriteId);
       return;
     }
     if (a.kind === 'audio' && a.spriteId) {
@@ -464,6 +479,7 @@ export function Project(props: {
                 || a.kind === 'animation'
                 || a.kind === 'animator-controller'
                 || a.kind === 'avatar-mask'
+                || a.kind === 'timeline'
                 || a.kind === 'sprite-atlas'
                 || a.kind === 'texture'
                 || a.kind === 'audio'
@@ -479,6 +495,7 @@ export function Project(props: {
                   && a.kind !== 'animation'
                   && a.kind !== 'animator-controller'
                   && a.kind !== 'avatar-mask'
+                  && a.kind !== 'timeline'
                   && a.kind !== 'sprite-atlas'
                   && a.kind !== 'texture'
                   && a.kind !== 'audio'
@@ -521,6 +538,8 @@ export function Project(props: {
                             ? `Animator Controller · ${a.spriteId}`
                           : a.kind === 'avatar-mask'
                             ? `Avatar Mask - double-click to edit - ${a.spriteId}`
+                          : a.kind === 'timeline'
+                            ? `Timeline Sequencer - double-click to edit - ${a.spriteId}`
                           : a.kind === 'material'
                             ? `Material Asset · ${a.spriteId}`
                             : a.kind === 'model'

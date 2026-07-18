@@ -32,7 +32,16 @@ import { Hierarchy } from './panels/Hierarchy';
 import { Inspector } from './panels/Inspector';
 import { Project } from './panels/Project';
 import { Console } from './panels/Console';
-import { Timeline } from './panels/Timeline';
+import {
+  OPEN_ANIMATION_CLIP_EVENT,
+  Timeline,
+  openAnimationClipAsset,
+} from './panels/Timeline';
+import {
+  OPEN_TIMELINE_ASSET_EVENT,
+  Sequencer,
+  openTimelineAsset,
+} from './panels/Sequencer';
 import { AnimatorEditor, OPEN_ANIMATOR_EVENT, openAnimatorAsset } from './panels/Animator';
 import { BuildSettings } from './panels/BuildSettings';
 import { ProjectSettings } from './panels/ProjectSettings';
@@ -136,6 +145,9 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
   const [spriteAtlasPath, setSpriteAtlasPath] = useState<string | null>(null);
   const [spriteAtlasDirty, setSpriteAtlasDirty] = useState(false);
   const [animationDirty, setAnimationDirty] = useState(false);
+  const [animationAssetPath, setAnimationAssetPath] = useState<string | null>(null);
+  const [timelineAssetPath, setTimelineAssetPath] = useState<string | null>(null);
+  const [sequencerDirty, setSequencerDirty] = useState(false);
   const [projectSettingsDirty, setProjectSettingsDirty] = useState(false);
   const [sceneDirty, setSceneDirty] = useState(false);
   const dirtyPanels = useMemo(() => {
@@ -145,10 +157,10 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
     if (animatorDirty) dirty.add('animator');
     if (spriteDirty) dirty.add('spriteEditor');
     if (spriteAtlasDirty) dirty.add('spriteAtlas');
-    if (animationDirty) dirty.add('timeline');
+    if (animationDirty || sequencerDirty) dirty.add('timeline');
     if (projectSettingsDirty) dirty.add('projectSettings');
     return dirty;
-  }, [animationDirty, animatorDirty, materialDirty, projectSettingsDirty, shaderDirty, spriteAtlasDirty, spriteDirty]);
+  }, [animationDirty, animatorDirty, materialDirty, projectSettingsDirty, sequencerDirty, shaderDirty, spriteAtlasDirty, spriteDirty]);
   const [logs, setLogs] = useState<string[]>([
     'MEngine Editor',
     '场景落盘：packages/editor/project/Assets/Scenes/*.mscene',
@@ -175,15 +187,15 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
   useEffect(() => {
     const onBeforeUnload = (event: BeforeUnloadEvent) => {
       const dirty = props.detachedPanel
-        ? materialDirty || shaderDirty || animationDirty || animatorDirty || spriteDirty || spriteAtlasDirty
-        : sceneDirty || materialDirty || shaderDirty || animationDirty || animatorDirty || spriteDirty || spriteAtlasDirty;
+        ? materialDirty || shaderDirty || animationDirty || sequencerDirty || animatorDirty || spriteDirty || spriteAtlasDirty
+        : sceneDirty || materialDirty || shaderDirty || animationDirty || sequencerDirty || animatorDirty || spriteDirty || spriteAtlasDirty;
       if (!dirty) return;
       event.preventDefault();
       event.returnValue = '';
     };
     window.addEventListener('beforeunload', onBeforeUnload);
     return () => window.removeEventListener('beforeunload', onBeforeUnload);
-  }, [animationDirty, animatorDirty, materialDirty, props.detachedPanel, sceneDirty, shaderDirty, spriteAtlasDirty, spriteDirty]);
+  }, [animationDirty, animatorDirty, materialDirty, props.detachedPanel, sceneDirty, sequencerDirty, shaderDirty, spriteAtlasDirty, spriteDirty]);
 
   const broadcastScene = (immediate = false) => {
     const channel = syncChannel.current;
@@ -247,6 +259,16 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
       const path = (event as CustomEvent<string>).detail;
       if (typeof path === 'string' && path) setAnimatorPath(path);
     };
+    const openTimeline = (event: Event) => {
+      const path = (event as CustomEvent<string>).detail;
+      if (typeof path === 'string' && path) setTimelineAssetPath(path);
+    };
+    const openAnimation = (event: Event) => {
+      const path = (event as CustomEvent<string>).detail;
+      if (typeof path !== 'string' || !path) return;
+      setAnimationAssetPath(path);
+      setTimelineAssetPath(null);
+    };
     const openSprite = (event: Event) => {
       const path = (event as CustomEvent<string>).detail;
       if (typeof path !== 'string' || !path) return;
@@ -265,6 +287,8 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
     window.addEventListener(OPEN_MATERIAL_EVENT, openMaterial);
     window.addEventListener(OPEN_SURFACE_SHADER_EVENT, openShader);
     window.addEventListener(OPEN_ANIMATOR_EVENT, openAnimator);
+    window.addEventListener(OPEN_TIMELINE_ASSET_EVENT, openTimeline);
+    window.addEventListener(OPEN_ANIMATION_CLIP_EVENT, openAnimation);
     window.addEventListener(OPEN_SPRITE_EDITOR_EVENT, openSprite);
     window.addEventListener(OPEN_SPRITE_ATLAS_EVENT, openSpriteAtlas);
     window.addEventListener(PROJECT_ASSETS_CHANGED_EVENT, assetsChanged);
@@ -272,6 +296,8 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
       window.removeEventListener(OPEN_MATERIAL_EVENT, openMaterial);
       window.removeEventListener(OPEN_SURFACE_SHADER_EVENT, openShader);
       window.removeEventListener(OPEN_ANIMATOR_EVENT, openAnimator);
+      window.removeEventListener(OPEN_TIMELINE_ASSET_EVENT, openTimeline);
+      window.removeEventListener(OPEN_ANIMATION_CLIP_EVENT, openAnimation);
       window.removeEventListener(OPEN_SPRITE_EDITOR_EVENT, openSprite);
       window.removeEventListener(OPEN_SPRITE_ATLAS_EVENT, openSpriteAtlas);
       window.removeEventListener(PROJECT_ASSETS_CHANGED_EVENT, assetsChanged);
@@ -1127,6 +1153,8 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
               onOpenMaterial={(path) => openMaterialAsset(path)}
               onOpenShader={(path) => openSurfaceShaderAsset(path)}
               onOpenAnimator={(path) => openAnimatorAsset(path)}
+              onOpenAnimation={(path) => openAnimationClipAsset(path)}
+              onOpenTimeline={(path) => openTimelineAsset(path)}
               onOpenSprite={(path) => openSpriteAsset(path)}
               onOpenSpriteAtlas={(path) => openSpriteAtlasAsset(path)}
               onRenameScene={async (oldName, newName) => {
@@ -1153,30 +1181,55 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
             />
           ),
           timeline: (
-            <Timeline
-              entity={snap.entities.find((entity) => entity.entity === selected) ?? null}
-              entities={snap.entities}
-              authoredEntities={store.authoredEntities()}
-              onAddComponent={(entity, type, value) => {
-                if (store.addComponent(entity, type, value)) {
-                  log(`Added ${type}`);
-                  refresh();
-                }
-              }}
-              onPatchComponent={(entity, type, patch) => {
-                store.patchComponent(entity, type, patch);
-                refresh();
-              }}
-              onPreview={(entity, samples) => {
-                if (store.setAnimationPreview(entity, samples)) refresh(false);
-              }}
-              onClearPreview={() => {
-                if (store.clearAnimationPreview()) refresh(false);
-              }}
-              onAssetsChanged={bumpScenes}
-              onDirtyChange={setAnimationDirty}
-              onLog={log}
-            />
+            <>
+              <div hidden={timelineAssetPath != null} className="panel-visibility-host">
+                <Timeline
+                  assetPath={animationAssetPath}
+                  onCloseAsset={() => setAnimationAssetPath(null)}
+                  entity={snap.entities.find((entity) => entity.entity === selected) ?? null}
+                  entities={snap.entities}
+                  authoredEntities={store.authoredEntities()}
+                  onAddComponent={(entity, type, value) => {
+                    if (store.addComponent(entity, type, value)) {
+                      log(`Added ${type}`);
+                      refresh();
+                    }
+                  }}
+                  onPatchComponent={(entity, type, patch) => {
+                    store.patchComponent(entity, type, patch);
+                    refresh();
+                  }}
+                  onPreview={(entity, samples) => {
+                    if (store.setAnimationPreview(entity, samples)) refresh(false);
+                  }}
+                  onClearPreview={() => {
+                    if (store.clearAnimationPreview()) refresh(false);
+                  }}
+                  onAssetsChanged={bumpScenes}
+                  onDirtyChange={setAnimationDirty}
+                  onLog={log}
+                />
+              </div>
+              <div hidden={timelineAssetPath == null} className="panel-visibility-host">
+                <Sequencer
+                  assetPath={timelineAssetPath}
+                  selectedEntity={snap.entities.find((entity) => entity.entity === selected) ?? null}
+                  onClose={() => setTimelineAssetPath(null)}
+                  onAssignDirector={(entity, path) => {
+                    const current = store.authoredEntities().find((entry) => entry.entity === entity)?.components.TimelineDirector;
+                    if (current) store.patchComponent(entity, 'TimelineDirector', { asset: path });
+                    else store.addComponent(entity, 'TimelineDirector', {
+                      asset: path, play_on_awake: true, playing: true, speed: 1, time: 0, wrap_mode: 'Hold',
+                    });
+                    log(`Bound ${path} to TimelineDirector`);
+                    refresh();
+                  }}
+                  onAssetsChanged={bumpScenes}
+                  onDirtyChange={setSequencerDirty}
+                  onLog={log}
+                />
+              </div>
+            </>
           ),
           animator: (
             <AnimatorEditor
@@ -1269,7 +1322,7 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
               sceneName={sceneName}
               sceneTick={sceneTick}
               sceneDirty={sceneDirty}
-              resourceDirty={materialDirty || shaderDirty || animationDirty || animatorDirty || spriteDirty || spriteAtlasDirty || projectSettingsDirty}
+              resourceDirty={materialDirty || shaderDirty || animationDirty || sequencerDirty || animatorDirty || spriteDirty || spriteAtlasDirty || projectSettingsDirty}
               onSaveScene={saveSceneForBuild}
               onSaveAll={saveEverything}
               onLog={log}

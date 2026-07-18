@@ -14,6 +14,7 @@ pub mod scenes;
 pub mod sorting;
 pub mod sprites;
 pub mod textures;
+pub mod timeline;
 pub mod ui;
 
 pub use mobile_stub::{mengine_mobile_boot, mengine_mobile_version};

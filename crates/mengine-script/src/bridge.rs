@@ -73,6 +73,15 @@ pub struct ScriptAnimationEvent {
     pub weight: f32,
 }
 
+#[derive(Clone, Debug, PartialEq)]
+pub struct ScriptTimelineSignal {
+    pub entity: u64,
+    pub track: String,
+    pub signal: String,
+    pub time: f32,
+    pub payload: Option<JsonValue>,
+}
+
 fn pending_runtime_requests() -> &'static Mutex<Vec<ScriptRuntimeRequest>> {
     static CELL: std::sync::OnceLock<Mutex<Vec<ScriptRuntimeRequest>>> = std::sync::OnceLock::new();
     CELL.get_or_init(|| Mutex::new(Vec::new()))
@@ -257,6 +266,33 @@ impl ScriptHost {
         );
         self.eval(&format!(
             "for (const event of {events}) {{ if (typeof onAnimationEvent === 'function') onAnimationEvent(event); }}"
+        ))
+    }
+
+    /// Delivers Sequencer signal markers after timeline evaluation and before `onTick`.
+    pub fn notify_timeline_signals(
+        &mut self,
+        signals: &[ScriptTimelineSignal],
+    ) -> Result<(), ScriptError> {
+        if signals.is_empty() {
+            return Ok(());
+        }
+        let signals = JsonValue::Array(
+            signals
+                .iter()
+                .map(|signal| {
+                    serde_json::json!({
+                        "entity": signal.entity.to_string(),
+                        "track": signal.track,
+                        "signal": signal.signal,
+                        "time": signal.time,
+                        "payload": signal.payload,
+                    })
+                })
+                .collect(),
+        );
+        self.eval(&format!(
+            "for (const event of {signals}) {{ if (typeof onTimelineSignal === 'function') onTimelineSignal(event); }}"
         ))
     }
 
@@ -816,6 +852,31 @@ mod tests {
             const event = animationEvents[0];
             if (event.entity !== "9007199254740993" || event.function !== "Footstep" || event.parameter !== "left" || event.state !== "Run" || event.weight !== 0.75) {
               throw new Error("animation event payload mismatch");
+            }
+            "#,
+        )
+        .unwrap();
+    }
+
+    #[test]
+    fn scripts_receive_timeline_signals_with_json_payloads() {
+        let mut host = ScriptHost::new().unwrap();
+        host.eval("var timelineSignals = []; function onTimelineSignal(event) { timelineSignals.push(event); }")
+            .unwrap();
+        host.notify_timeline_signals(&[ScriptTimelineSignal {
+            entity: 9_007_199_254_740_993,
+            track: "Gameplay".into(),
+            signal: "SpawnBoss".into(),
+            time: 1.25,
+            payload: Some(serde_json::json!({"phase": 2})),
+        }])
+        .unwrap();
+        host.eval(
+            r#"
+            if (timelineSignals.length !== 1) throw new Error("timeline signal missing");
+            const event = timelineSignals[0];
+            if (event.entity !== "9007199254740993" || event.track !== "Gameplay" || event.signal !== "SpawnBoss" || event.payload.phase !== 2) {
+              throw new Error("timeline signal payload mismatch");
             }
             "#,
         )

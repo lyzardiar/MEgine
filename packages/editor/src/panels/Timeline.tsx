@@ -24,6 +24,7 @@ import {
   Plus,
   Save,
   Trash2,
+  X,
   ZoomIn,
   ZoomOut,
 } from 'lucide-react';
@@ -88,6 +89,7 @@ import {
   type TimelineKeyClipboardItem,
   type TimelineKeyRef,
 } from '../timelineKeyEditing.ts';
+import { registerMenuItem } from '../editorWindow';
 import {
   listProjectFiles,
   normalizeProjectAssetPath,
@@ -98,6 +100,13 @@ import {
 import { registerSaveAllParticipant } from '../saveAll';
 
 type SnapshotEntity = WorldSnapshotView['entities'][number];
+
+export const OPEN_ANIMATION_CLIP_EVENT = 'mengine:open-animation-clip';
+
+export function openAnimationClipAsset(path: string): void {
+  window.dispatchEvent(new CustomEvent(OPEN_ANIMATION_CLIP_EVENT, { detail: path }));
+  window.dispatchEvent(new CustomEvent('mengine:focus-panel', { detail: 'timeline' }));
+}
 
 type AnimationPlayerData = {
   clip?: string;
@@ -796,6 +805,29 @@ function uniqueClipPath(name: string): string {
   return path;
 }
 
+export async function createProjectAnimationClip(name = 'New Animation'): Promise<string> {
+  await refreshProjectFiles();
+  const safe = safeClipName(name) || 'New Animation';
+  const path = uniqueClipPath(safe);
+  await writeProjectAssetText(path, serializeAnimationClip(createAnimationClip(safe)));
+  await refreshProjectFiles();
+  window.dispatchEvent(new CustomEvent('mengine:project-assets-changed'));
+  openAnimationClipAsset(path);
+  return path;
+}
+
+registerMenuItem(
+  'Assets/Create/Animation Clip',
+  async (context) => {
+    try {
+      context.log(`Created ${await createProjectAnimationClip()}`);
+    } catch (reason) {
+      context.log(`Animation Clip 创建失败：${reason instanceof Error ? reason.message : String(reason)}`);
+    }
+  },
+  { priority: 205 },
+);
+
 function trackValue(
   entities: SnapshotEntity[],
   root: SnapshotEntity,
@@ -814,6 +846,8 @@ function recordingValueToken(value: AnimationValue | null): string | null {
 }
 
 export function Timeline(props: {
+  assetPath?: string | null;
+  onCloseAsset?: () => void;
   entity: SnapshotEntity | null;
   entities: SnapshotEntity[];
   authoredEntities: SnapshotEntity[];
@@ -825,12 +859,13 @@ export function Timeline(props: {
   onDirtyChange: (dirty: boolean) => void;
   onLog: (message: string, level?: 'info' | 'warn' | 'error') => void;
 }) {
-  const player = playerOf(props.entity);
-  const animator = animatorOf(props.entity);
+  const directAsset = props.assetPath?.trim() ?? '';
+  const player = directAsset ? null : playerOf(props.entity);
+  const animator = directAsset ? null : animatorOf(props.entity);
   const [animatorClipPath, setAnimatorClipPath] = useState('');
   const [animatorStateSpeed, setAnimatorStateSpeed] = useState(1);
   const [animatorStateName, setAnimatorStateName] = useState('');
-  const clipPath = animator ? animatorClipPath : player?.clip?.trim() ?? '';
+  const clipPath = directAsset || (animator ? animatorClipPath : player?.clip?.trim() ?? '');
   const [clip, setClip] = useState<AnimationClip | null>(null);
   const [savedText, setSavedText] = useState('');
   const [time, setTime] = useState(0);
@@ -1875,18 +1910,18 @@ export function Timeline(props: {
     if (selection.length > 0) setDetailsOpen(true);
   };
 
-  if (!props.entity) {
+  if (!props.entity && !directAsset) {
     return <div className="timeline-empty">选择一个 GameObject 以创建或编辑动画。</div>;
   }
 
-  if ((!player && !animator) || !clipPath) {
+  if ((!player && !animator && !directAsset) || !clipPath) {
     return (
       <div
         className="timeline-empty timeline-drop-zone"
         onDragOver={(event) => event.preventDefault()}
         onDrop={dropClip}
       >
-        <strong>{props.entity.name ?? `Entity ${props.entity.entity}`}</strong>
+        <strong>{props.entity?.name ?? (directAsset ? 'Animation Clip' : 'No Selection')}</strong>
         <span>{animator
           ? (error ?? 'Animator 尚未绑定有效的 Controller/State；请在 Animator 面板中配置。')
           : '尚未绑定 Animation Clip，可创建新资源或把 Project 中的 `.manim` 拖到这里。'}
@@ -1991,6 +2026,11 @@ export function Timeline(props: {
           <span>s</span>
         </label>
         <span className="timeline-clip-path" title={clipPath}>{clipPath}{dirty ? ' *' : ''}</span>
+        {directAsset && props.onCloseAsset && (
+          <button type="button" className="timeline-icon-button" title="Close asset" onClick={props.onCloseAsset}>
+            <X size={14} aria-hidden="true" />
+          </button>
+        )}
         <div className="timeline-view-modes" role="group" aria-label="Timeline view mode">
           <button
             type="button"

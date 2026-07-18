@@ -12,6 +12,7 @@ export type ProjectFileAsset = {
     | 'animation'
     | 'animator-controller'
     | 'avatar-mask'
+    | 'timeline'
     | 'audio'
     | 'material'
     | 'shader'

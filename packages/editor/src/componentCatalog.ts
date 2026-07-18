@@ -352,6 +352,19 @@ const BUILTIN_CATALOG: ComponentCatalogEntry[] = [
     }),
   },
   {
+    type: 'TimelineDirector',
+    label: 'Timeline Director',
+    description: 'Play a .mtimeline Sequencer asset and emit track events',
+    create: () => ({
+      asset: '',
+      play_on_awake: true,
+      playing: true,
+      speed: 1,
+      time: 0,
+      wrap_mode: 'Hold',
+    }),
+  },
+  {
     type: 'AudioListener',
     label: 'Audio Listener',
     description: 'Spatial audio listener; the first active primary listener wins',

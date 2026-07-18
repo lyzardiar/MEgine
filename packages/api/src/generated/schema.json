@@ -2326,6 +2326,37 @@
     ],
     "type": "object"
   },
+  "TimelineDirector": {
+    "properties": {
+      "asset": {
+        "type": "string"
+      },
+      "play_on_awake": {
+        "type": "boolean"
+      },
+      "playing": {
+        "type": "boolean"
+      },
+      "speed": {
+        "type": "number"
+      },
+      "time": {
+        "type": "number"
+      },
+      "wrap_mode": {
+        "type": "string"
+      }
+    },
+    "required": [
+      "asset",
+      "play_on_awake",
+      "playing",
+      "speed",
+      "time",
+      "wrap_mode"
+    ],
+    "type": "object"
+  },
   "Toggle": {
     "properties": {
       "color": {

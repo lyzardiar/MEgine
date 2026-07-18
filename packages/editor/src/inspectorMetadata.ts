@@ -27,6 +27,7 @@ export type InspectorFieldMeta = {
     | 'animation'
     | 'animator-controller'
     | 'avatar-mask'
+    | 'timeline'
     | 'audio'
     | 'material'
     | 'model'
@@ -288,6 +289,21 @@ export const BUILTIN_INSPECTOR_FIELDS: Readonly<
     normalized_time: { hidden: true },
     transition_to: { hidden: true },
     transition_progress: { hidden: true },
+  },
+  TimelineDirector: {
+    asset: {
+      kind: 'project-asset',
+      assetKinds: ['timeline'],
+      referenceType: 'Timeline Asset',
+      allowNone: true,
+    },
+    speed: { step: 0.1 },
+    time: { min: 0, step: 0.01 },
+    wrap_mode: {
+      label: 'Wrap Mode',
+      kind: 'enum',
+      options: options('Hold', 'Loop'),
+    },
   },
   AudioSource: {
     clip: {

@@ -9,6 +9,7 @@ mod registry;
 mod sprite;
 mod surface_shader;
 mod texture;
+mod timeline;
 
 pub use animation::{
     load_animation_clip, parse_animation_clip, sample_track, wrapped_animation_time, AnimationClip,
@@ -34,6 +35,9 @@ pub use sprite::{
 };
 pub use surface_shader::{load_surface_shader, parse_surface_shader, SURFACE_SHADER_HOOK_NAME};
 pub use texture::{load_environment_texture, load_texture_rgba8, texture_dimensions};
+pub use timeline::{
+    load_timeline_asset, parse_timeline_asset, TimelineAsset, TimelineSignal, TimelineTrack,
+};
 
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct TextureRgba8 {

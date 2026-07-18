@@ -8,7 +8,7 @@ use mengine_core::generated::{
     AnimatedSprite2D, AnimationPlayer, Animator, AudioSource, Camera2D, Camera3D, DirectionalLight,
     Dropdown, EnvironmentLight, InputField, ListView, MeshRenderer, ParticleEmitter2D,
     ParticleEmitter3D, PbrMaterial, PointLight, ScrollView, Scrollbar, Slider, SpotLight,
-    SpriteRenderer, TabView, Tilemap, Toggle, Transform,
+    SpriteRenderer, TabView, Tilemap, TimelineDirector, Toggle, Transform,
 };
 use mengine_core::{Entity, TransformHierarchy, World};
 use mengine_physics::{PhysicsWorld, PhysicsWorld2D};
@@ -31,12 +31,15 @@ use mengine_runtime::scenes::{LoadedScene, SceneManager, SceneSelector};
 use mengine_runtime::sorting::{sort_world_primitives, SortingLayers};
 use mengine_runtime::sprites::collect_world_primitives_with_hierarchy;
 use mengine_runtime::textures::RuntimeTextureCache;
+use mengine_runtime::timeline::TimelineRuntime;
 use mengine_runtime::ui::{
     append_ui_focus_ring, collect_ui_frame_with_hierarchy, next_ui_focus, set_toggle_value,
     UiControlKind, UiControlRegion,
 };
 use mengine_scene::load_scene;
-use mengine_script::{ScriptAnimationEvent, ScriptHost, ScriptRuntimeRequest};
+use mengine_script::{
+    ScriptAnimationEvent, ScriptHost, ScriptRuntimeRequest, ScriptTimelineSignal,
+};
 use serde_json::json;
 use std::collections::HashSet;
 use std::path::Path;
@@ -102,6 +105,7 @@ struct App {
     sorting_layers: SortingLayers,
     textures: RuntimeTextureCache,
     animations: AnimationRuntime,
+    timelines: TimelineRuntime,
     audio: AudioRuntime,
     materials: RuntimeMaterialCache,
     meshes: RuntimeMeshCache,
@@ -125,6 +129,7 @@ impl App {
         }
         let textures = RuntimeTextureCache::new(args.project_root.clone());
         let animations = AnimationRuntime::new(args.project_root.clone());
+        let timelines = TimelineRuntime::new(args.project_root.clone());
         let audio = AudioRuntime::new(args.project_root.clone());
         let materials = RuntimeMaterialCache::new(args.project_root.clone());
         let meshes = RuntimeMeshCache::new(args.project_root.clone());
@@ -159,6 +164,7 @@ impl App {
             sorting_layers,
             textures,
             animations,
+            timelines,
             audio,
             materials,
             meshes,
@@ -382,6 +388,7 @@ impl App {
                 self.last_ui_draw_calls = u32::MAX;
                 self.particles = ParticleWorld::default();
                 self.animations = AnimationRuntime::new(self.args.project_root.clone());
+                self.timelines = TimelineRuntime::new(self.args.project_root.clone());
                 self.audio.clear();
                 self.physics.clear();
                 self.physics_2d.clear();
@@ -1433,6 +1440,27 @@ function onTick(dt, frame) {
                     })
                     .collect::<Vec<_>>();
 
+                for failure in self.timelines.update(&mut self.world, dt) {
+                    log::error!(
+                        "Timeline runtime {:?} failed to load '{}': {}",
+                        failure.entity,
+                        failure.asset,
+                        failure.error
+                    );
+                }
+                let timeline_signals = self
+                    .timelines
+                    .take_signals()
+                    .into_iter()
+                    .map(|signal| ScriptTimelineSignal {
+                        entity: signal.entity.to_u64(),
+                        track: signal.track,
+                        signal: signal.signal,
+                        time: signal.time,
+                        payload: signal.payload,
+                    })
+                    .collect::<Vec<_>>();
+
                 for failure in self.audio.update(&mut self.world) {
                     log::error!(
                         "Audio runtime {:?} failed to load '{}': {}",
@@ -1445,6 +1473,9 @@ function onTick(dt, frame) {
                 let runtime_requests = if let Some(script) = self.script.as_mut() {
                     if let Err(error) = script.notify_animation_events(&animation_events) {
                         log::error!("animation event callback failed: {error}");
+                    }
+                    if let Err(error) = script.notify_timeline_signals(&timeline_signals) {
+                        log::error!("timeline signal callback failed: {error}");
                     }
                     if let Err(error) =
                         script.notify_collision_events(&collision_started, &collision_stopped)
@@ -2105,31 +2136,42 @@ fn validate_world_assets(
         }
         if let Some(animator) = world.get_component::<Animator>(entity) {
             let reference = animator.controller.trim();
-            if reference.is_empty() {
-                continue;
-            }
-            let path = resolve(reference, "animator controller")?;
-            if validated.insert(path.clone()) {
-                let controller = mengine_assets::load_animator_controller(&path)
-                    .with_context(|| format!("invalid animator controller {}", path.display()))?;
-                for state in &controller.states {
-                    validate_animation_clip_asset(&state.clip, project_root, validated)?;
-                }
-                for layer in &controller.layers {
-                    if !layer.avatar_mask.is_empty() {
-                        let mask_path = resolve(&layer.avatar_mask, "Avatar Mask")?;
-                        if validated.insert(mask_path.clone()) {
-                            mengine_assets::load_avatar_mask(&mask_path).with_context(|| {
-                                format!("invalid Avatar Mask {}", mask_path.display())
-                            })?;
-                        }
-                    }
-                    for motion in &layer.motions {
-                        validate_animation_clip_asset(&motion.clip, project_root, validated)?;
-                    }
-                    for state in &layer.states {
+            if !reference.is_empty() {
+                let path = resolve(reference, "animator controller")?;
+                if validated.insert(path.clone()) {
+                    let controller =
+                        mengine_assets::load_animator_controller(&path).with_context(|| {
+                            format!("invalid animator controller {}", path.display())
+                        })?;
+                    for state in &controller.states {
                         validate_animation_clip_asset(&state.clip, project_root, validated)?;
                     }
+                    for layer in &controller.layers {
+                        if !layer.avatar_mask.is_empty() {
+                            let mask_path = resolve(&layer.avatar_mask, "Avatar Mask")?;
+                            if validated.insert(mask_path.clone()) {
+                                mengine_assets::load_avatar_mask(&mask_path).with_context(
+                                    || format!("invalid Avatar Mask {}", mask_path.display()),
+                                )?;
+                            }
+                        }
+                        for motion in &layer.motions {
+                            validate_animation_clip_asset(&motion.clip, project_root, validated)?;
+                        }
+                        for state in &layer.states {
+                            validate_animation_clip_asset(&state.clip, project_root, validated)?;
+                        }
+                    }
+                }
+            }
+        }
+        if let Some(director) = world.get_component::<TimelineDirector>(entity) {
+            let reference = director.asset.trim();
+            if !reference.is_empty() {
+                let path = resolve(reference, "Timeline asset")?;
+                if validated.insert(path.clone()) {
+                    mengine_assets::load_timeline_asset(&path)
+                        .with_context(|| format!("invalid Timeline asset {}", path.display()))?;
                 }
             }
         }
@@ -2521,6 +2563,39 @@ mod tests {
 
         result.expect("base and layer clips should pass package validation");
         assert_eq!(validated.len(), 5);
+    }
+
+    #[test]
+    fn packaged_asset_validation_loads_timeline_director_assets() {
+        let root = temporary_project_root("packaged-timeline");
+        let timelines = root.join("Assets/Timelines");
+        std::fs::create_dir_all(&timelines).unwrap();
+        std::fs::write(
+            timelines.join("Intro.mtimeline"),
+            r#"{
+              "version":1,"name":"Intro","duration":2,"frame_rate":30,
+              "tracks":[{"type":"signal","id":"gameplay","name":"Gameplay","markers":[
+                {"time":1,"name":"SpawnBoss","payload":{"phase":2}}
+              ]}]
+            }"#,
+        )
+        .unwrap();
+        let mut world = World::new();
+        world.commands.push(WorldCommand::Spawn {
+            name: Some("Timeline director".into()),
+            components: json!({
+                "Animator": {},
+                "TimelineDirector": { "asset": "Assets/Timelines/Intro.mtimeline" }
+            }),
+        });
+        world.commit();
+
+        let mut validated = HashSet::new();
+        let result = validate_world_assets(&world, &root, &mut validated);
+        std::fs::remove_dir_all(&root).unwrap();
+
+        result.expect("Timeline assets should pass final package validation");
+        assert_eq!(validated.len(), 1);
     }
 
     #[test]

@@ -28,6 +28,7 @@ function fixture(name) {
   mkdirSync(join(project, 'Assets', 'Textures'), { recursive: true });
   mkdirSync(join(project, 'Assets', 'Materials'), { recursive: true });
   mkdirSync(join(project, 'Assets', 'Animations'), { recursive: true });
+  mkdirSync(join(project, 'Assets', 'Timelines'), { recursive: true });
   mkdirSync(join(project, 'Assets', 'Audio'), { recursive: true });
   mkdirSync(join(project, 'ProjectSettings'), { recursive: true });
   writeFileSync(join(project, 'project.json'), JSON.stringify({
@@ -212,6 +213,62 @@ test('buildPcPackage validates transitive material animator and audio dependenci
       references: 11,
       validatedFiles: 11,
     });
+  } finally {
+    rmSync(paths.root, { recursive: true, force: true });
+  }
+});
+
+test('buildPcPackage includes and validates TimelineDirector assets', () => {
+  const paths = fixture('timeline-dependency');
+  try {
+    writeFileSync(join(paths.project, 'Assets', 'Scenes', 'Main.mscene'), JSON.stringify({
+      version: 1,
+      world: { entities: [{ entity: 1, components: {
+        TimelineDirector: { asset: 'Assets/Timelines/Intro.mtimeline' },
+      } }] },
+    }));
+    writeFileSync(join(paths.project, 'Assets', 'Timelines', 'Intro.mtimeline'), JSON.stringify({
+      version: 1,
+      name: 'Intro',
+      duration: 3,
+      frame_rate: 30,
+      tracks: [{
+        type: 'signal', id: 'gameplay', name: 'Gameplay',
+        markers: [{ time: 1.5, name: 'SpawnBoss', payload: { phase: 2 } }],
+      }],
+    }));
+    const manifest = buildPcPackage({
+      projectDir: paths.project,
+      outputDir: paths.output,
+      runtimePath: paths.runtime,
+      engineVersion: 'test-engine',
+    });
+    assert.equal(existsSync(join(paths.output, 'Assets', 'Timelines', 'Intro.mtimeline')), true);
+    assert.equal(manifest.assetValidation.validatedFiles, 3);
+  } finally {
+    rmSync(paths.root, { recursive: true, force: true });
+  }
+});
+
+test('buildPcPackage rejects invalid Timeline markers without publishing output', () => {
+  const paths = fixture('invalid-timeline');
+  try {
+    writeFileSync(join(paths.project, 'Assets', 'Scenes', 'Main.mscene'), JSON.stringify({
+      world: { entities: [{ components: {
+        TimelineDirector: { asset: 'Assets/Timelines/Broken.mtimeline' },
+      } }] },
+    }));
+    writeFileSync(join(paths.project, 'Assets', 'Timelines', 'Broken.mtimeline'), JSON.stringify({
+      version: 1, duration: 1,
+      tracks: [{ type: 'signal', id: 'signals', name: 'Signals', markers: [{ time: 2, name: 'Late' }] }],
+    }));
+    assert.throws(() => buildPcPackage({
+      projectDir: paths.project,
+      outputDir: paths.output,
+      runtimePath: paths.runtime,
+      engineVersion: 'test-engine',
+    }), /outside duration/);
+    assert.equal(existsSync(paths.output), false);
   } finally {
     rmSync(paths.root, { recursive: true, force: true });
   }

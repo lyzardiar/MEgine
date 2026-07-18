@@ -3,7 +3,7 @@
 
 mod bridge;
 
-pub use bridge::{ScriptAnimationEvent, ScriptHost, ScriptRuntimeRequest};
+pub use bridge::{ScriptAnimationEvent, ScriptHost, ScriptRuntimeRequest, ScriptTimelineSignal};
 
 use thiserror::Error;
 

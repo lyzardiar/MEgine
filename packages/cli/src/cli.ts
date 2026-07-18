@@ -58,6 +58,14 @@ interface EngineAnimationEventInfo {
   readonly weight: number;
 }
 
+interface EngineTimelineSignalInfo {
+  readonly entity: string;
+  readonly track: string;
+  readonly signal: string;
+  readonly time: number;
+  readonly payload: unknown;
+}
+
 declare const engine: EngineApi;
 declare function onTick(dt: number, frame: number): void;
 declare function onSceneLoaded(scene: EngineSceneInfo): void;
@@ -70,6 +78,7 @@ declare function onCollisionExit2D(event: PhysicsCollisionInfo): void;
 declare function onTriggerEnter2D(event: PhysicsCollisionInfo): void;
 declare function onTriggerExit2D(event: PhysicsCollisionInfo): void;
 declare function onAnimationEvent(event: EngineAnimationEventInfo): void;
+declare function onTimelineSignal(event: EngineTimelineSignalInfo): void;
 `;
 
 function help() {
