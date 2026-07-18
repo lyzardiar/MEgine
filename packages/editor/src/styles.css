@@ -2887,6 +2887,27 @@ body.insp-scrubbing * {
   white-space: nowrap;
 }
 
+.timeline-view-modes {
+  display: inline-flex;
+  flex: 0 0 auto;
+  height: 22px;
+  padding: 1px;
+  border: 1px solid #1b1b1b;
+  background: #202020;
+}
+
+.timeline-toolbar .timeline-view-modes button {
+  min-height: 18px;
+  padding: 0 7px;
+  color: #999;
+  font-size: 10px;
+}
+
+.timeline-toolbar .timeline-view-modes button.active {
+  background: #3f4c57;
+  color: #fff;
+}
+
 .timeline-zoom {
   display: inline-flex;
   flex: 0 0 auto;
@@ -2924,6 +2945,13 @@ body.insp-scrubbing * {
 .timeline-track-tools .timeline-property-picker {
   width: min(280px, 34%);
   min-width: 150px;
+}
+
+.timeline-track-tools .timeline-curve-track-picker {
+  width: min(260px, 32%);
+  min-width: 150px;
+  border-color: #4d687d;
+  background: #24303a;
 }
 
 .timeline-track-tools .timeline-property-path {
@@ -3351,6 +3379,168 @@ body.insp-scrubbing * {
 
 .timeline-curve-midline { stroke: #383838; stroke-width: 1; }
 .timeline-curve-playhead { stroke: var(--u-accent); stroke-width: 1; }
+
+.timeline-curve-workspace {
+  display: flex;
+  flex: 1;
+  min-width: 0;
+  min-height: 0;
+  flex-direction: column;
+  overflow: hidden;
+  background: #191919;
+}
+
+.timeline-curve-workspace > header {
+  display: flex;
+  min-height: 31px;
+  flex: 0 0 31px;
+  align-items: center;
+  gap: 9px;
+  padding: 3px 6px;
+  box-sizing: border-box;
+  border-bottom: 1px solid #101010;
+  background: #292929;
+}
+
+.timeline-curve-title {
+  display: flex;
+  min-width: 150px;
+  flex: 1;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.timeline-curve-title strong,
+.timeline-curve-title span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.timeline-curve-title strong { color: #d3d3d3; font-weight: 500; }
+.timeline-curve-title span { color: #777; font-family: var(--u-mono); font-size: 9px; }
+
+.timeline-curve-legend,
+.timeline-curve-tangent-tools {
+  display: inline-flex;
+  flex: 0 0 auto;
+  align-items: center;
+  gap: 2px;
+}
+
+.timeline-curve-workspace header button {
+  display: inline-flex;
+  height: 22px;
+  min-height: 22px;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  padding: 0 6px;
+  border: 1px solid transparent;
+  border-radius: 0;
+  background: transparent;
+  color: #aaa;
+  font: inherit;
+}
+
+.timeline-curve-workspace header button:hover:not(:disabled),
+.timeline-curve-workspace header button.active {
+  background: #414141;
+  color: #fff;
+}
+
+.timeline-curve-workspace header button:disabled { opacity: 0.35; }
+
+.timeline-curve-legend i {
+  width: 7px;
+  height: 7px;
+  border: 1px solid #111;
+}
+
+.timeline-curve-tangent-tools {
+  padding-left: 7px;
+  border-left: 1px solid #171717;
+}
+
+.timeline-curve-tangent-tools > span {
+  max-width: 185px;
+  overflow: hidden;
+  color: #777;
+  font-size: 10px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.timeline-curve-workspace > svg {
+  display: block;
+  width: 100%;
+  min-height: 180px;
+  flex: 1;
+  touch-action: none;
+  background: #181818;
+  cursor: crosshair;
+}
+
+.timeline-curve-plot {
+  fill: #1d1d1d;
+  stroke: #0e0e0e;
+  stroke-width: 1;
+  vector-effect: non-scaling-stroke;
+}
+
+.timeline-curve-grid-line {
+  stroke: #303030;
+  stroke-width: 1;
+  vector-effect: non-scaling-stroke;
+}
+
+.timeline-curve-axis-label {
+  fill: #666;
+  font-family: var(--u-mono);
+  font-size: 10px;
+  pointer-events: none;
+}
+
+.timeline-curve-key {
+  stroke: #161616;
+  stroke-width: 1.5;
+  vector-effect: non-scaling-stroke;
+  cursor: move;
+}
+
+.timeline-curve-key:hover,
+.timeline-curve-key.selected {
+  stroke: #fff;
+  stroke-width: 2;
+  filter: drop-shadow(0 0 3px rgba(255, 255, 255, 0.42));
+}
+
+.timeline-curve-tangent-line {
+  stroke: #aaa;
+  stroke-width: 1;
+  vector-effect: non-scaling-stroke;
+  pointer-events: none;
+}
+
+.timeline-curve-tangent {
+  fill: #d8d8d8;
+  stroke: #1a1a1a;
+  stroke-width: 1.5;
+  vector-effect: non-scaling-stroke;
+  cursor: move;
+}
+
+.timeline-curve-tangent:hover { fill: #fff; stroke: var(--u-accent); }
+
+.timeline-curve-workspace-empty {
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  color: #777;
+  text-align: center;
+}
+
+.timeline-curve-workspace-empty strong { color: #c5c5c5; }
 
 .timeline-panel.maximized {
   position: fixed;

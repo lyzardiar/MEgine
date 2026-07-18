@@ -60,6 +60,21 @@ import {
   parseAnimationBindingKey,
 } from '../animationBindings';
 import {
+  animationCurveChannelCount,
+  animationCurveCoordinates,
+  animationCurvePoint,
+  animationCurveSlopeFromPoint,
+  animationCurveTangentHandle,
+  animationCurveValueBounds,
+  curveNumericChannels,
+  moveAnimationCurveKey,
+  setAnimationCurveTangentChannel,
+  setAnimationCurveTangentsAuto,
+  setAnimationCurveTangentsFlat,
+  type AnimationCurvePoint,
+  type AnimationCurveViewport,
+} from '../animationCurveEditing.ts';
+import {
   clampTimelineKeyDelta,
   copyTimelineKeySelection,
   mergeTimelineKeySelection,
@@ -113,6 +128,8 @@ type TimelineEventDrag = {
 };
 
 type TimelineDrag = TimelineKeyDrag | TimelineEventDrag;
+
+type TimelineViewMode = 'dope_sheet' | 'curves';
 
 type TimelineMarquee = {
   pointerId: number;
@@ -204,25 +221,19 @@ function valueLabel(value: AnimationValue): string {
 
 const CURVE_COLORS = ['#f06b6b', '#6fd36f', '#64a8ff', '#f0cf61'];
 
-function numericChannels(value: AnimationValue | null): number[] | null {
-  if (typeof value === 'number') return [value];
-  if (Array.isArray(value)) return value;
-  return null;
-}
-
 function AnimationCurvePreview(props: {
   track: AnimationTrack;
   duration: number;
   time: number;
 }) {
-  const first = numericChannels(props.track.keyframes[0]?.value ?? null);
+  const first = curveNumericChannels(props.track.keyframes[0]?.value ?? null);
   if (!first) return null;
   const width = 640;
   const height = 128;
   const duration = Math.max(props.duration, Number.EPSILON);
   const samples = Array.from({ length: 129 }, (_unused, index) => {
     const sampleTime = duration * index / 128;
-    return { time: sampleTime, channels: numericChannels(sampleAnimationTrack(props.track, sampleTime)) };
+    return { time: sampleTime, channels: curveNumericChannels(sampleAnimationTrack(props.track, sampleTime)) };
   });
   const values = samples.flatMap((sample) => sample.channels?.slice(0, CURVE_COLORS.length) ?? []);
   let minimum = Math.min(...values);
@@ -255,7 +266,7 @@ function AnimationCurvePreview(props: {
           />
         ))}
         {props.track.keyframes.flatMap((key, keyIndex) => (
-          (numericChannels(key.value) ?? []).slice(0, CURVE_COLORS.length).map((value, channel) => (
+          (curveNumericChannels(key.value) ?? []).slice(0, CURVE_COLORS.length).map((value, channel) => (
             <circle
               key={`${keyIndex}:${channel}`}
               cx={key.time / duration * width}
@@ -273,6 +284,383 @@ function AnimationCurvePreview(props: {
           x2={props.time / duration * width}
           y2={height}
         />
+      </svg>
+    </div>
+  );
+}
+
+type AnimationCurveWorkspaceDrag =
+  | {
+      kind: 'key';
+      pointerId: number;
+      keyIndex: number;
+      channel: number;
+      time: number;
+      value: number;
+    }
+  | {
+      kind: 'tangent';
+      pointerId: number;
+      keyIndex: number;
+      channel: number;
+      side: 'in_tangent' | 'out_tangent';
+      slope: number;
+      point: AnimationCurvePoint;
+    };
+
+const CURVE_VIEW_WIDTH = 1000;
+const CURVE_VIEW_HEIGHT = 420;
+
+function AnimationCurveWorkspace(props: {
+  track: AnimationTrack | null;
+  trackIndex: number | null;
+  duration: number;
+  frameRate: number;
+  time: number;
+  zoom: number;
+  selectedKey: TimelineKeyRef | null;
+  onSelectKey: (key: TimelineKeyRef) => void;
+  onPreviewTime: (time: number) => void;
+  onCommitKey: (keyIndex: number, channel: number, time: number, value: number) => void;
+  onCommitTangent: (
+    keyIndex: number,
+    channel: number,
+    side: 'in_tangent' | 'out_tangent',
+    slope: number,
+  ) => void;
+  onSetTangents: (mode: 'auto' | 'flat') => void;
+  onEnableCubic: () => void;
+}) {
+  const [selectedChannel, setSelectedChannel] = useState(0);
+  const [drag, setDrag] = useState<AnimationCurveWorkspaceDrag | null>(null);
+  const [viewCenter, setViewCenter] = useState(props.time);
+  const dragRef = useRef<AnimationCurveWorkspaceDrag | null>(null);
+  const track = props.track;
+  const channelCount = track ? animationCurveChannelCount(track) : 0;
+
+  useEffect(() => {
+    setSelectedChannel((channel) => Math.max(0, Math.min(channelCount - 1, channel)));
+    dragRef.current = null;
+    setDrag(null);
+  }, [props.trackIndex, channelCount]);
+
+  useEffect(() => {
+    if (!dragRef.current) setViewCenter(props.time);
+  }, [props.time, props.trackIndex]);
+
+  if (!track || props.trackIndex == null || channelCount === 0) {
+    return (
+      <div className="timeline-curve-workspace timeline-curve-workspace-empty">
+        <strong>Curve View</strong>
+        <span>Select a numeric property track to edit its animation curves.</span>
+      </div>
+    );
+  }
+
+  const safeDuration = Math.max(props.duration, 1 / Math.max(1, props.frameRate));
+  const visibleSpan = Math.max(1 / Math.max(1, props.frameRate), safeDuration / Math.max(1, props.zoom));
+  const timeStart = Math.max(0, Math.min(safeDuration - visibleSpan, viewCenter - visibleSpan / 2));
+  const timeEnd = timeStart + visibleSpan;
+  const bounds = animationCurveValueBounds(track, timeStart, timeEnd);
+  if (!bounds) {
+    return (
+      <div className="timeline-curve-workspace timeline-curve-workspace-empty">
+        <strong>Curve View</strong>
+        <span>This track does not contain editable numeric keyframes.</span>
+      </div>
+    );
+  }
+
+  const viewport: AnimationCurveViewport = {
+    ...bounds,
+    timeStart,
+    timeEnd,
+    width: CURVE_VIEW_WIDTH,
+    height: CURVE_VIEW_HEIGHT,
+    paddingLeft: 48,
+    paddingRight: 14,
+    paddingTop: 14,
+    paddingBottom: 28,
+  };
+  const channels = curveNumericChannels(track.keyframes[0]?.value ?? null)?.slice(0, CURVE_COLORS.length) ?? [];
+  const samples = Array.from({ length: 241 }, (_unused, index) => {
+    const sampleTime = timeStart + visibleSpan * index / 240;
+    return {
+      time: sampleTime,
+      channels: curveNumericChannels(sampleAnimationTrack(track, sampleTime)),
+    };
+  });
+  const selectedKeyIndex = props.selectedKey?.track === props.trackIndex
+    ? props.selectedKey.key
+    : null;
+  const selectedKeyframe = selectedKeyIndex == null ? null : track.keyframes[selectedKeyIndex] ?? null;
+  const selectedValues = curveNumericChannels(selectedKeyframe?.value ?? null);
+  const keyPoint = selectedKeyframe && selectedValues?.[selectedChannel] != null
+    ? animationCurvePoint(viewport, selectedKeyframe.time, selectedValues[selectedChannel])
+    : null;
+  const tangentHandles = keyPoint && selectedKeyIndex != null && track.interpolation === 'cubic'
+    ? (['in_tangent', 'out_tangent'] as const).map((side) => {
+        if (side === 'in_tangent' && selectedKeyIndex === 0) return null;
+        if (side === 'out_tangent' && selectedKeyIndex === track.keyframes.length - 1) return null;
+        const authored = animationCurveTangentHandle(
+          track,
+          selectedKeyIndex,
+          side,
+          selectedChannel,
+          viewport,
+        );
+        const preview = drag?.kind === 'tangent'
+          && drag.keyIndex === selectedKeyIndex
+          && drag.channel === selectedChannel
+          && drag.side === side
+          ? drag.point
+          : authored;
+        return preview ? { side, point: preview } : null;
+      }).filter((handle): handle is { side: 'in_tangent' | 'out_tangent'; point: AnimationCurvePoint } => handle != null)
+    : [];
+
+  const pointerCoordinates = (
+    clientX: number,
+    clientY: number,
+    svg: SVGSVGElement,
+  ) => {
+    const rect = svg.getBoundingClientRect();
+    return animationCurveCoordinates(
+      viewport,
+      (clientX - rect.left) / Math.max(1, rect.width) * CURVE_VIEW_WIDTH,
+      (clientY - rect.top) / Math.max(1, rect.height) * CURVE_VIEW_HEIGHT,
+    );
+  };
+
+  const beginKeyDrag = (
+    event: ReactPointerEvent<SVGCircleElement>,
+    keyIndex: number,
+    channel: number,
+    time: number,
+    value: number,
+  ) => {
+    event.stopPropagation();
+    event.currentTarget.setPointerCapture(event.pointerId);
+    setSelectedChannel(channel);
+    props.onSelectKey({ track: props.trackIndex!, key: keyIndex });
+    props.onPreviewTime(time);
+    const next: AnimationCurveWorkspaceDrag = {
+      kind: 'key',
+      pointerId: event.pointerId,
+      keyIndex,
+      channel,
+      time,
+      value,
+    };
+    dragRef.current = next;
+    setDrag(next);
+  };
+
+  const beginTangentDrag = (
+    event: ReactPointerEvent<SVGCircleElement>,
+    side: 'in_tangent' | 'out_tangent',
+    point: AnimationCurvePoint,
+  ) => {
+    if (selectedKeyIndex == null || !selectedKeyframe || !selectedValues) return;
+    const slope = animationCurveSlopeFromPoint(
+      selectedKeyframe.time,
+      selectedValues[selectedChannel],
+      animationCurveCoordinates(viewport, point.x, point.y).time,
+      animationCurveCoordinates(viewport, point.x, point.y).value,
+    );
+    if (slope == null) return;
+    event.stopPropagation();
+    event.currentTarget.setPointerCapture(event.pointerId);
+    const next: AnimationCurveWorkspaceDrag = {
+      kind: 'tangent',
+      pointerId: event.pointerId,
+      keyIndex: selectedKeyIndex,
+      channel: selectedChannel,
+      side,
+      slope,
+      point,
+    };
+    dragRef.current = next;
+    setDrag(next);
+  };
+
+  const moveCurveDrag = (event: ReactPointerEvent<SVGCircleElement>) => {
+    const current = dragRef.current;
+    const svg = event.currentTarget.ownerSVGElement;
+    if (!current || !svg || current.pointerId !== event.pointerId) return;
+    const coordinates = pointerCoordinates(event.clientX, event.clientY, svg);
+    if (current.kind === 'key') {
+      const next: AnimationCurveWorkspaceDrag = {
+        ...current,
+        time: snapAnimationTime(coordinates.time, props.frameRate, props.duration),
+        value: coordinates.value,
+      };
+      dragRef.current = next;
+      setDrag(next);
+      props.onPreviewTime(next.time);
+      return;
+    }
+    if (!selectedKeyframe || selectedValues?.[current.channel] == null) return;
+    const slope = animationCurveSlopeFromPoint(
+      selectedKeyframe.time,
+      selectedValues[current.channel],
+      coordinates.time,
+      coordinates.value,
+    );
+    if (slope == null) return;
+    const next: AnimationCurveWorkspaceDrag = {
+      ...current,
+      slope,
+      point: animationCurvePoint(viewport, coordinates.time, coordinates.value),
+    };
+    dragRef.current = next;
+    setDrag(next);
+  };
+
+  const finishCurveDrag = (event: ReactPointerEvent<SVGCircleElement>, commit: boolean) => {
+    const current = dragRef.current;
+    if (!current || current.pointerId !== event.pointerId) return;
+    if (event.currentTarget.hasPointerCapture(event.pointerId)) {
+      event.currentTarget.releasePointerCapture(event.pointerId);
+    }
+    dragRef.current = null;
+    setDrag(null);
+    if (!commit) return;
+    if (current.kind === 'key') {
+      setViewCenter(current.time);
+      props.onCommitKey(current.keyIndex, current.channel, current.time, current.value);
+    } else {
+      props.onCommitTangent(current.keyIndex, current.channel, current.side, current.slope);
+    }
+  };
+
+  return (
+    <div className="timeline-curve-workspace">
+      <header>
+        <div className="timeline-curve-title">
+          <strong>{track.component}.{track.property}</strong>
+          <span>{timeStart.toFixed(3)}–{timeEnd.toFixed(3)} s · {bounds.minimum.toFixed(3)}–{bounds.maximum.toFixed(3)}</span>
+        </div>
+        <div className="timeline-curve-legend" aria-label="Curve channels">
+          {channels.map((_value, channel) => (
+            <button
+              type="button"
+              key={channel}
+              className={selectedChannel === channel ? 'active' : ''}
+              aria-pressed={selectedChannel === channel}
+              onClick={() => setSelectedChannel(channel)}
+            >
+              <i style={{ background: CURVE_COLORS[channel] }} />{['X', 'Y', 'Z', 'W'][channel] ?? channel + 1}
+            </button>
+          ))}
+        </div>
+        <div className="timeline-curve-tangent-tools">
+          <span>{track.interpolation === 'cubic' ? 'Tangents' : `${track.interpolation} interpolation`}</span>
+          {track.interpolation === 'cubic' ? <>
+            <button type="button" disabled={selectedKeyIndex == null} onClick={() => props.onSetTangents('auto')}>Auto</button>
+            <button type="button" disabled={selectedKeyIndex == null} onClick={() => props.onSetTangents('flat')}>Flat</button>
+          </> : (
+            <button type="button" onClick={props.onEnableCubic}>Use Cubic</button>
+          )}
+        </div>
+      </header>
+      <svg
+        viewBox={`0 0 ${CURVE_VIEW_WIDTH} ${CURVE_VIEW_HEIGHT}`}
+        preserveAspectRatio="none"
+        aria-label="Editable animation curve"
+        onPointerDown={(event) => {
+          const target = event.target as SVGElement;
+          if (target.closest('.timeline-curve-key, .timeline-curve-tangent')) return;
+          const coordinates = pointerCoordinates(event.clientX, event.clientY, event.currentTarget);
+          props.onPreviewTime(snapAnimationTime(coordinates.time, props.frameRate, props.duration));
+        }}
+      >
+        <rect className="timeline-curve-plot" x={viewport.paddingLeft} y={viewport.paddingTop} width={CURVE_VIEW_WIDTH - viewport.paddingLeft - viewport.paddingRight} height={CURVE_VIEW_HEIGHT - viewport.paddingTop - viewport.paddingBottom} />
+        {Array.from({ length: 11 }, (_unused, index) => {
+          const x = viewport.paddingLeft + (CURVE_VIEW_WIDTH - viewport.paddingLeft - viewport.paddingRight) * index / 10;
+          const labelTime = timeStart + visibleSpan * index / 10;
+          return <g key={`time:${index}`}><line className="timeline-curve-grid-line" x1={x} y1={viewport.paddingTop} x2={x} y2={CURVE_VIEW_HEIGHT - viewport.paddingBottom} /><text className="timeline-curve-axis-label" x={x + 3} y={CURVE_VIEW_HEIGHT - 8}>{labelTime.toFixed(2)}</text></g>;
+        })}
+        {Array.from({ length: 9 }, (_unused, index) => {
+          const y = viewport.paddingTop + (CURVE_VIEW_HEIGHT - viewport.paddingTop - viewport.paddingBottom) * index / 8;
+          const labelValue = bounds.maximum - (bounds.maximum - bounds.minimum) * index / 8;
+          return <g key={`value:${index}`}><line className="timeline-curve-grid-line" x1={viewport.paddingLeft} y1={y} x2={CURVE_VIEW_WIDTH - viewport.paddingRight} y2={y} /><text className="timeline-curve-axis-label" x="4" y={y + 4}>{labelValue.toFixed(2)}</text></g>;
+        })}
+        {channels.map((_value, channel) => (
+          <polyline
+            key={channel}
+            fill="none"
+            stroke={CURVE_COLORS[channel]}
+            strokeWidth={selectedChannel === channel ? 2.5 : 1.5}
+            opacity={selectedChannel === channel ? 1 : 0.72}
+            vectorEffect="non-scaling-stroke"
+            points={samples.map((sample) => {
+              const value = sample.channels?.[channel] ?? 0;
+              const point = animationCurvePoint(viewport, sample.time, value);
+              return `${point.x},${point.y}`;
+            }).join(' ')}
+          />
+        ))}
+        {tangentHandles.map((handle) => (
+          <g key={handle.side}>
+            <line className="timeline-curve-tangent-line" x1={keyPoint!.x} y1={keyPoint!.y} x2={handle.point.x} y2={handle.point.y} />
+            <circle
+              role="button"
+              tabIndex={0}
+              aria-label={`${handle.side === 'in_tangent' ? 'In' : 'Out'} tangent handle`}
+              className="timeline-curve-tangent"
+              cx={handle.point.x}
+              cy={handle.point.y}
+              r="5"
+              onPointerDown={(event) => beginTangentDrag(event, handle.side, handle.point)}
+              onPointerMove={moveCurveDrag}
+              onPointerUp={(event) => finishCurveDrag(event, true)}
+              onPointerCancel={(event) => finishCurveDrag(event, false)}
+            />
+          </g>
+        ))}
+        {track.keyframes.flatMap((key, keyIndex) => {
+          if (key.time < timeStart || key.time > timeEnd) return [];
+          const values = curveNumericChannels(key.value) ?? [];
+          const displayTime = drag?.kind === 'key' && drag.keyIndex === keyIndex ? drag.time : key.time;
+          return values.slice(0, CURVE_COLORS.length).map((value, channel) => {
+            const displayValue = drag?.kind === 'key' && drag.keyIndex === keyIndex && drag.channel === channel
+              ? drag.value
+              : value;
+            const point = animationCurvePoint(viewport, displayTime, displayValue);
+            const selected = selectedKeyIndex === keyIndex && selectedChannel === channel;
+            return (
+              <circle
+                role="button"
+                tabIndex={0}
+                aria-pressed={selected}
+                aria-label={`Curve key ${keyIndex + 1} channel ${channel + 1} at ${displayTime.toFixed(3)} seconds`}
+                className={`timeline-curve-key${selected ? ' selected' : ''}`}
+                key={`${keyIndex}:${channel}`}
+                cx={point.x}
+                cy={point.y}
+                r={selected ? 6 : 4.5}
+                fill={CURVE_COLORS[channel]}
+                onPointerDown={(event) => beginKeyDrag(event, keyIndex, channel, key.time, value)}
+                onPointerMove={moveCurveDrag}
+                onPointerUp={(event) => finishCurveDrag(event, true)}
+                onPointerCancel={(event) => finishCurveDrag(event, false)}
+                onKeyDown={(event) => {
+                  if (event.key === 'Enter' || event.key === ' ') {
+                    event.preventDefault();
+                    setSelectedChannel(channel);
+                    props.onSelectKey({ track: props.trackIndex!, key: keyIndex });
+                    props.onPreviewTime(key.time);
+                  }
+                }}
+              />
+            );
+          });
+        })}
+        {props.time >= timeStart && props.time <= timeEnd && (() => {
+          const point = animationCurvePoint(viewport, props.time, bounds.minimum);
+          return <line className="timeline-curve-playhead" x1={point.x} y1={viewport.paddingTop} x2={point.x} y2={CURVE_VIEW_HEIGHT - viewport.paddingBottom} />;
+        })()}
       </svg>
     </div>
   );
@@ -460,6 +848,7 @@ export function Timeline(props: {
   const [propertyPath, setPropertyPath] = useState('Transform.position');
   const [propertyBinding, setPropertyBinding] = useState('');
   const [zoom, setZoom] = useState(1);
+  const [viewMode, setViewMode] = useState<TimelineViewMode>('dope_sheet');
   const [detailsOpen, setDetailsOpen] = useState(false);
   const [maximized, setMaximized] = useState(false);
   const [timelineClipboard, setTimelineClipboard] = useState<TimelineClipboard | null>(null);
@@ -1080,6 +1469,78 @@ export function Timeline(props: {
     });
   };
 
+  const updateCurveKey = (
+    keyIndex: number,
+    channel: number,
+    nextTime: number,
+    nextValue: number,
+  ) => {
+    if (!clip || selectedTrack == null) return;
+    const result = moveAnimationCurveKey(
+      clip.tracks[selectedTrack],
+      keyIndex,
+      channel,
+      nextTime,
+      nextValue,
+      clip.frame_rate,
+      clip.duration,
+    );
+    if (!result) return;
+    const nextClip = {
+      ...clip,
+      tracks: clip.tracks.map((track, index) => index === selectedTrack ? result.track : track),
+    };
+    const primary = { track: selectedTrack, key: result.keyIndex };
+    setClip(nextClip);
+    selectKeys([primary], nextClip);
+    const authoredTime = result.track.keyframes[result.keyIndex].time;
+    playbackPhase.current = authoredTime;
+    setTime(authoredTime);
+  };
+
+  const updateCurveTangent = (
+    keyIndex: number,
+    channel: number,
+    side: 'in_tangent' | 'out_tangent',
+    slope: number,
+  ) => {
+    if (!clip || selectedTrack == null) return;
+    const next = setAnimationCurveTangentChannel(
+      clip.tracks[selectedTrack],
+      keyIndex,
+      side,
+      channel,
+      slope,
+    );
+    setClip({
+      ...clip,
+      tracks: clip.tracks.map((track, index) => index === selectedTrack ? next : track),
+    });
+  };
+
+  const setSelectedCurveTangents = (mode: 'auto' | 'flat') => {
+    if (!clip || !selectedKey) return;
+    const track = clip.tracks[selectedKey.track];
+    if (!track || track.interpolation !== 'cubic') return;
+    const next = mode === 'auto'
+      ? setAnimationCurveTangentsAuto(track, selectedKey.key)
+      : setAnimationCurveTangentsFlat(track, selectedKey.key);
+    setClip({
+      ...clip,
+      tracks: clip.tracks.map((candidate, index) => index === selectedKey.track ? next : candidate),
+    });
+  };
+
+  const enableSelectedCurveCubic = () => {
+    if (!clip || selectedTrack == null || !clip.tracks[selectedTrack]) return;
+    setClip({
+      ...clip,
+      tracks: clip.tracks.map((track, index) => index === selectedTrack
+        ? { ...track, interpolation: 'cubic' }
+        : track),
+    });
+  };
+
   const selectionClipboard = (): TimelineClipboard | null => {
     if (clip && activeSelectedKeys.length > 0) {
       const keys = copyTimelineKeySelection(clip, activeSelectedKeys);
@@ -1530,6 +1991,24 @@ export function Timeline(props: {
           <span>s</span>
         </label>
         <span className="timeline-clip-path" title={clipPath}>{clipPath}{dirty ? ' *' : ''}</span>
+        <div className="timeline-view-modes" role="group" aria-label="Timeline view mode">
+          <button
+            type="button"
+            className={viewMode === 'dope_sheet' ? 'active' : ''}
+            aria-pressed={viewMode === 'dope_sheet'}
+            onClick={() => setViewMode('dope_sheet')}
+          >
+            Dope Sheet
+          </button>
+          <button
+            type="button"
+            className={viewMode === 'curves' ? 'active' : ''}
+            aria-pressed={viewMode === 'curves'}
+            onClick={() => setViewMode('curves')}
+          >
+            Curves
+          </button>
+        </div>
         <div className="timeline-zoom" role="group" aria-label="Timeline zoom">
           <button
             type="button"
@@ -1645,6 +2124,27 @@ export function Timeline(props: {
           }}
         >
           <div className="timeline-track-tools">
+            {viewMode === 'curves' && (
+              <select
+                className="timeline-curve-track-picker"
+                aria-label="Curve property track"
+                value={selectedTrack ?? ''}
+                onChange={(event) => {
+                  const index = Number(event.target.value);
+                  setSelectedTrack(Number.isInteger(index) && clip.tracks[index] ? index : null);
+                  setSelectedKeys([]);
+                  setSelectedKey(null);
+                  setSelectedEvent(null);
+                }}
+              >
+                <option value="">Select curve track...</option>
+                {clip.tracks.map((track, index) => (
+                  <option key={`${track.target}:${track.component}.${track.property}:${index}`} value={index} disabled={animationCurveChannelCount(track) === 0}>
+                    {track.component}.{track.property}{animationCurveChannelCount(track) === 0 ? ' (discrete)' : ''}
+                  </option>
+                ))}
+              </select>
+            )}
             <select
               className="timeline-property-picker"
               aria-label="Animatable property picker"
@@ -1718,6 +2218,7 @@ export function Timeline(props: {
 
           <div
             className="timeline-grid-scroll"
+            hidden={viewMode === 'curves'}
             onWheel={(event) => {
               if (!event.ctrlKey) return;
               event.preventDefault();
@@ -1897,6 +2398,28 @@ export function Timeline(props: {
             </div>
           </div>
 
+          {viewMode === 'curves' && (
+            <AnimationCurveWorkspace
+              key={selectedTrack ?? 'no-track'}
+              track={selectedTrackData}
+              trackIndex={selectedTrack}
+              duration={clip.duration}
+              frameRate={clip.frame_rate}
+              time={time}
+              zoom={zoom}
+              selectedKey={selectedKey}
+              onSelectKey={(key) => {
+                selectKeys([key]);
+                setDetailsOpen(true);
+              }}
+              onPreviewTime={setPreviewTime}
+              onCommitKey={updateCurveKey}
+              onCommitTangent={updateCurveTangent}
+              onSetTangents={setSelectedCurveTangents}
+              onEnableCubic={enableSelectedCurveCubic}
+            />
+          )}
+
           {detailsOpen && (
             <aside className="timeline-details" aria-label="Timeline details">
               <header>
@@ -1996,7 +2519,7 @@ export function Timeline(props: {
                 </section>
               )}
 
-              {selectedTrackData && <AnimationCurvePreview track={selectedTrackData} duration={clip.duration} time={time} />}
+              {selectedTrackData && viewMode === 'dope_sheet' && <AnimationCurvePreview track={selectedTrackData} duration={clip.duration} time={time} />}
               {!selectedTrackData && !selectedAnimationEvent && (
                 <div className="timeline-details-empty">Select a track, keyframe, or event to inspect it.</div>
               )}

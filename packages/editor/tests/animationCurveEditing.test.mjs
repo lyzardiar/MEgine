@@ -1,0 +1,91 @@
+import assert from 'node:assert/strict';
+import test from 'node:test';
+import { normalizeAnimationClip } from '../src/animationClip.ts';
+import {
+  animationCurveCoordinates,
+  animationCurvePoint,
+  animationCurveSlopeFromPoint,
+  animationCurveTangentChannel,
+  animationCurveTangentHandle,
+  animationCurveValueBounds,
+  moveAnimationCurveKey,
+  setAnimationCurveTangentChannel,
+  setAnimationCurveTangentsAuto,
+  setAnimationCurveTangentsFlat,
+} from '../src/animationCurveEditing.ts';
+
+function track() {
+  return normalizeAnimationClip({
+    name: 'Curve',
+    duration: 2,
+    frame_rate: 10,
+    tracks: [{
+      target: '.',
+      component: 'Transform',
+      property: 'position',
+      interpolation: 'cubic',
+      keyframes: [
+        { time: 0, value: [0, 2] },
+        { time: 1, value: [2, 4] },
+        { time: 2, value: [0, 6] },
+      ],
+    }],
+  }).tracks[0];
+}
+
+function viewport() {
+  return {
+    timeStart: 0,
+    timeEnd: 2,
+    minimum: 0,
+    maximum: 10,
+    width: 1000,
+    height: 500,
+    paddingLeft: 50,
+    paddingRight: 50,
+    paddingTop: 20,
+    paddingBottom: 30,
+  };
+}
+
+test('Curve viewport coordinates round trip and clamp to the plot', () => {
+  const view = viewport();
+  const point = animationCurvePoint(view, 0.5, 7.5);
+  assert.deepEqual(point, { x: 275, y: 132.5 });
+  assert.deepEqual(animationCurveCoordinates(view, point.x, point.y), { time: 0.5, value: 7.5 });
+  assert.deepEqual(animationCurveCoordinates(view, -100, 900), { time: 0, value: 0 });
+});
+
+test('Curve value bounds include sampled channels and stable padding', () => {
+  assert.deepEqual(animationCurveValueBounds(track(), 0, 2, 20), {
+    minimum: -0.48,
+    maximum: 6.48,
+  });
+  const constant = { ...track(), keyframes: [{ time: 0, value: 2 }, { time: 2, value: 2 }] };
+  assert.deepEqual(animationCurveValueBounds(constant, 0, 2), { minimum: 1.5, maximum: 2.5 });
+});
+
+test('Curve key movement updates one channel, snaps time and preserves tangents', () => {
+  const source = setAnimationCurveTangentChannel(track(), 1, 'out_tangent', 0, 3);
+  const moved = moveAnimationCurveKey(source, 1, 1, 1.26, 8, 10, 2);
+  assert.ok(moved);
+  assert.equal(moved.keyIndex, 1);
+  assert.equal(moved.track.keyframes[1].time, 1.3);
+  assert.deepEqual(moved.track.keyframes[1].value, [2, 8]);
+  assert.deepEqual(moved.track.keyframes[1].out_tangent, [3, 2]);
+});
+
+test('Curve tangent handles support authored, flat and automatic modes', () => {
+  let source = setAnimationCurveTangentChannel(track(), 1, 'out_tangent', 0, 4);
+  assert.equal(animationCurveTangentChannel(source, 1, 'out_tangent', 0), 4);
+  const handle = animationCurveTangentHandle(source, 1, 'out_tangent', 0, viewport(), 0.25);
+  assert.deepEqual(handle, animationCurvePoint(viewport(), 1.25, 3));
+  assert.equal(animationCurveSlopeFromPoint(1, 2, 1.25, 3), 4);
+
+  source = setAnimationCurveTangentsFlat(source, 1);
+  assert.deepEqual(source.keyframes[1].in_tangent, [0, 0]);
+  assert.deepEqual(source.keyframes[1].out_tangent, [0, 0]);
+  source = setAnimationCurveTangentsAuto(source, 1);
+  assert.equal(source.keyframes[1].in_tangent, undefined);
+  assert.equal(source.keyframes[1].out_tangent, undefined);
+});
