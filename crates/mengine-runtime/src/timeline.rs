@@ -274,6 +274,7 @@ impl TimelineRuntime {
                 muted,
                 target,
                 clips,
+                ..
             } = track
             else {
                 continue;
@@ -346,6 +347,7 @@ impl TimelineRuntime {
                 muted,
                 target,
                 clips,
+                ..
             } = track
             else {
                 continue;
@@ -462,6 +464,7 @@ impl TimelineRuntime {
                 muted,
                 target,
                 clips,
+                ..
             } = track
             else {
                 continue;

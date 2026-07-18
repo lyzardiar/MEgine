@@ -70,6 +70,8 @@ pub enum TimelineTrack {
         #[serde(default)]
         muted: bool,
         #[serde(default)]
+        locked: bool,
+        #[serde(default)]
         markers: Vec<TimelineSignal>,
     },
     Activation {
@@ -77,6 +79,8 @@ pub enum TimelineTrack {
         name: String,
         #[serde(default)]
         muted: bool,
+        #[serde(default)]
+        locked: bool,
         target: String,
         #[serde(default)]
         clips: Vec<TimelineActivationClip>,
@@ -86,6 +90,8 @@ pub enum TimelineTrack {
         name: String,
         #[serde(default)]
         muted: bool,
+        #[serde(default)]
+        locked: bool,
         target: String,
         #[serde(default)]
         clips: Vec<TimelineAudioClip>,
@@ -95,6 +101,8 @@ pub enum TimelineTrack {
         name: String,
         #[serde(default)]
         muted: bool,
+        #[serde(default)]
+        locked: bool,
         target: String,
         #[serde(default)]
         clips: Vec<TimelineAnimationClip>,
@@ -436,7 +444,7 @@ mod tests {
         let asset = parse_timeline_asset(
             br#"{
               "version":1,"name":" Intro ","duration":3,"frame_rate":30,
-              "tracks":[{"type":"signal","id":"gameplay","name":" Gameplay ","markers":[
+              "tracks":[{"type":"signal","id":"gameplay","name":" Gameplay ","locked":true,"markers":[
                 {"time":2,"name":"End","payload":{"score":10}},
                 {"time":0.5,"name":" Start "}
               ]}]
@@ -444,10 +452,17 @@ mod tests {
         )
         .unwrap();
         assert_eq!(asset.name, "Intro");
-        let TimelineTrack::Signal { name, markers, .. } = &asset.tracks[0] else {
+        let TimelineTrack::Signal {
+            name,
+            locked,
+            markers,
+            ..
+        } = &asset.tracks[0]
+        else {
             panic!("expected signal track");
         };
         assert_eq!(name, "Gameplay");
+        assert!(*locked);
         assert_eq!(markers[0].name, "Start");
         assert_eq!(markers[1].payload, Some(serde_json::json!({"score": 10})));
     }

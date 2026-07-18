@@ -33,6 +33,7 @@ export type TimelineSignalTrack = {
   id: string;
   name: string;
   muted: boolean;
+  locked: boolean;
   markers: TimelineSignal[];
 };
 
@@ -41,6 +42,7 @@ export type TimelineActivationTrack = {
   id: string;
   name: string;
   muted: boolean;
+  locked: boolean;
   target: string;
   clips: TimelineActivationClip[];
 };
@@ -50,6 +52,7 @@ export type TimelineAudioTrack = {
   id: string;
   name: string;
   muted: boolean;
+  locked: boolean;
   target: string;
   clips: TimelineAudioClip[];
 };
@@ -59,6 +62,7 @@ export type TimelineAnimationTrack = {
   id: string;
   name: string;
   muted: boolean;
+  locked: boolean;
   target: string;
   clips: TimelineAnimationClip[];
 };
@@ -128,6 +132,7 @@ export function createTimelineAsset(name = 'New Timeline'): TimelineAsset {
       id: 'signals',
       name: 'Signals',
       muted: false,
+      locked: false,
       markers: [],
     }],
   };
@@ -160,7 +165,7 @@ export function normalizeTimelineAsset(value: unknown): TimelineAsset {
           } satisfies TimelineSignal;
         })
         .sort((left, right) => left.time - right.time || left.name.localeCompare(right.name));
-      tracks.push({ type, id, name, muted: Boolean(track.muted), markers });
+      tracks.push({ type, id, name, muted: Boolean(track.muted), locked: Boolean(track.locked), markers });
     } else if (type === 'activation') {
       const clips = (Array.isArray(track.clips) ? track.clips : [])
         .map((clipValue) => {
@@ -178,6 +183,7 @@ export function normalizeTimelineAsset(value: unknown): TimelineAsset {
         id,
         name,
         muted: Boolean(track.muted),
+        locked: Boolean(track.locked),
         target: activationTarget(track.target),
         clips,
       });
@@ -202,6 +208,7 @@ export function normalizeTimelineAsset(value: unknown): TimelineAsset {
         id,
         name,
         muted: Boolean(track.muted),
+        locked: Boolean(track.locked),
         target: activationTarget(track.target),
         clips,
       });
@@ -224,6 +231,7 @@ export function normalizeTimelineAsset(value: unknown): TimelineAsset {
         id,
         name,
         muted: Boolean(track.muted),
+        locked: Boolean(track.locked),
         target: activationTarget(track.target),
         clips,
       });
@@ -322,6 +330,7 @@ export function parseTimelineAsset(text: string): TimelineAsset {
     ids.add(track.id.trim());
     if (typeof track.name !== 'string' || !track.name.trim()) throw new Error(`Timeline track ${track.id} must have a name`);
     if (track.muted != null && typeof track.muted !== 'boolean') throw new Error(`Timeline track ${track.id} muted must be boolean`);
+    if (track.locked != null && typeof track.locked !== 'boolean') throw new Error(`Timeline track ${track.id} locked must be boolean`);
     if (track.type === 'signal') {
       if (track.markers != null && !Array.isArray(track.markers)) throw new Error(`Signal track ${track.id} markers must be an array`);
       for (const markerValue of Array.isArray(track.markers) ? track.markers : []) {

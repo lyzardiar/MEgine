@@ -19,6 +19,10 @@ export type SequencerPasteResult =
   | { ok: true; asset: TimelineAsset; trackIndex: number; itemIndex: number }
   | { ok: false; error: string };
 
+export type SequencerTrackMoveResult =
+  | { ok: true; asset: TimelineAsset; trackIndex: number }
+  | { ok: false; error: string };
+
 export const SEQUENCER_MIN_ZOOM = 1;
 export const SEQUENCER_MAX_ZOOM = 32;
 
@@ -177,6 +181,37 @@ export function sequencerTicks(
   return ticks;
 }
 
+export function lockedSequencerContentEnd(asset: TimelineAsset): number {
+  let end = 0;
+  for (const track of asset.tracks) {
+    if (!track.locked) continue;
+    if (track.type === 'signal') {
+      for (const marker of track.markers) end = Math.max(end, marker.time);
+    } else {
+      for (const clip of track.clips) end = Math.max(end, clip.start + clip.duration);
+    }
+  }
+  return end;
+}
+
+export function moveSequencerTrack(
+  asset: TimelineAsset,
+  trackIndex: number,
+  direction: -1 | 1,
+): SequencerTrackMoveResult {
+  const track = asset.tracks[trackIndex];
+  if (!track) return { ok: false, error: 'Timeline track no longer exists.' };
+  if (track.locked) return { ok: false, error: `Track '${track.name}' is locked. Unlock it before reordering.` };
+  const nextIndex = trackIndex + direction;
+  if (nextIndex < 0 || nextIndex >= asset.tracks.length) {
+    return { ok: false, error: `Track '${track.name}' is already at the ${direction < 0 ? 'top' : 'bottom'}.` };
+  }
+  const next = structuredClone(asset);
+  const [moved] = next.tracks.splice(trackIndex, 1);
+  next.tracks.splice(nextIndex, 0, moved);
+  return { ok: true, asset: next, trackIndex: nextIndex };
+}
+
 export function copySequencerItem(
   asset: TimelineAsset,
   trackIndex: number,
@@ -209,12 +244,12 @@ export function resolveSequencerPasteTrack(
   clipboard: SequencerClipboard,
 ): number {
   const preferred = preferredTrackIndex == null ? null : asset.tracks[preferredTrackIndex];
-  if (preferred?.type === clipboard.type) return preferredTrackIndex!;
+  if (preferred?.type === clipboard.type && !preferred.locked) return preferredTrackIndex!;
   const source = asset.tracks.findIndex(
-    (track) => track.id === clipboard.sourceTrackId && track.type === clipboard.type,
+    (track) => track.id === clipboard.sourceTrackId && track.type === clipboard.type && !track.locked,
   );
   if (source >= 0) return source;
-  return asset.tracks.findIndex((track) => track.type === clipboard.type);
+  return asset.tracks.findIndex((track) => track.type === clipboard.type && !track.locked);
 }
 
 export function pasteSequencerItem(
@@ -225,11 +260,11 @@ export function pasteSequencerItem(
 ): SequencerPasteResult {
   const trackIndex = resolveSequencerPasteTrack(asset, preferredTrackIndex, clipboard);
   if (trackIndex < 0) {
-    return { ok: false, error: `Timeline has no ${clipboard.type} track for this item.` };
+    return { ok: false, error: `Timeline has no unlocked ${clipboard.type} track for this item.` };
   }
   const next = structuredClone(asset);
   const track = next.tracks[trackIndex];
-  if (track.type !== clipboard.type) return { ok: false, error: 'Timeline paste target changed type.' };
+  if (track.type !== clipboard.type || track.locked) return { ok: false, error: 'Timeline paste target is no longer editable.' };
   if (track.type === 'signal' && clipboard.type === 'signal') {
     const item = structuredClone(clipboard.item);
     item.time = clamp(snap(Number.isFinite(requestedTime) ? requestedTime : 0, next.frame_rate), 0, next.duration);

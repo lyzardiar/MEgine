@@ -5,7 +5,9 @@ import {
   clampSequencerZoom,
   copySequencerItem,
   findSequencerClipPlacement,
+  lockedSequencerContentEnd,
   moveSequencerClip,
+  moveSequencerTrack,
   pasteSequencerItem,
   resolveSequencerPasteTrack,
   sequencerTicks,
@@ -19,9 +21,9 @@ function timeline() {
     duration: 8,
     frame_rate: 10,
     tracks: [
-      { type: 'signal', id: 'signals', name: 'Signals', muted: false, markers: [{ time: 1, name: 'Hit', payload: { value: 1 } }] },
-      { type: 'audio', id: 'audio', name: 'Audio', muted: false, target: 'Audio', clips: [{ start: 1, duration: 2, clip: 'Assets/hit.ogg', clip_in: 0.5, volume: 0.8, pitch: 1, looped: false }] },
-      { type: 'animation', id: 'animation', name: 'Animation', muted: false, target: 'Actor', clips: [] },
+      { type: 'signal', id: 'signals', name: 'Signals', muted: false, locked: false, markers: [{ time: 1, name: 'Hit', payload: { value: 1 } }] },
+      { type: 'audio', id: 'audio', name: 'Audio', muted: false, locked: false, target: 'Audio', clips: [{ start: 1, duration: 2, clip: 'Assets/hit.ogg', clip_in: 0.5, volume: 0.8, pitch: 1, looped: false }] },
+      { type: 'animation', id: 'animation', name: 'Animation', muted: false, locked: false, target: 'Actor', clips: [] },
     ],
   };
 }
@@ -126,5 +128,50 @@ test('Sequencer clip paste preserves source settings and finds collision-free sp
   });
   const rejected = pasteSequencerItem({ ...asset, tracks: asset.tracks.slice(0, 1) }, null, 0, clipboard);
   assert.equal(rejected.ok, false);
-  assert.equal(rejected.error, 'Timeline has no audio track for this item.');
+  assert.equal(rejected.error, 'Timeline has no unlocked audio track for this item.');
+});
+
+test('Sequencer paste never mutates locked tracks and falls back to an unlocked match', () => {
+  const asset = timeline();
+  const clipboard = copySequencerItem(asset, 0, 0);
+  assert.ok(clipboard);
+  asset.tracks[0].locked = true;
+  asset.tracks.push({
+    type: 'signal', id: 'secondary', name: 'Secondary', muted: false, locked: false, markers: [],
+  });
+  assert.equal(resolveSequencerPasteTrack(asset, 0, clipboard), 3);
+  const pasted = pasteSequencerItem(asset, 0, 2, clipboard);
+  assert.equal(pasted.ok, true);
+  assert.equal(pasted.trackIndex, 3);
+  assert.equal(asset.tracks[0].markers.length, 1);
+  asset.tracks[3].locked = true;
+  const rejected = pasteSequencerItem(asset, 0, 2, clipboard);
+  assert.equal(rejected.ok, false);
+  assert.match(rejected.error, /no unlocked signal track/);
+});
+
+test('Sequencer locked content constrains global duration without considering editable tracks', () => {
+  const asset = timeline();
+  assert.equal(lockedSequencerContentEnd(asset), 0);
+  asset.tracks[0].locked = true;
+  asset.tracks[1].locked = true;
+  assert.equal(lockedSequencerContentEnd(asset), 3);
+  asset.tracks[2].locked = true;
+  asset.tracks[2].clips.push({ start: 6, duration: 1.5, clip: 'Assets/Animations/Run.manim', clip_in: 0, speed: 1 });
+  assert.equal(lockedSequencerContentEnd(asset), 7.5);
+});
+
+test('Sequencer track ordering is immutable and rejects locked or boundary moves', () => {
+  const asset = timeline();
+  const moved = moveSequencerTrack(asset, 1, -1);
+  assert.equal(moved.ok, true);
+  assert.deepEqual(moved.asset.tracks.map((track) => track.id), ['audio', 'signals', 'animation']);
+  assert.deepEqual(asset.tracks.map((track) => track.id), ['signals', 'audio', 'animation']);
+  asset.tracks[1].locked = true;
+  const locked = moveSequencerTrack(asset, 1, 1);
+  assert.equal(locked.ok, false);
+  assert.match(locked.error, /locked/);
+  const boundary = moveSequencerTrack(asset, 0, -1);
+  assert.equal(boundary.ok, false);
+  assert.match(boundary.error, /already at the top/);
 });

@@ -8,9 +8,12 @@ import {
 } from 'react';
 import type { WorldSnapshotView } from '@mengine/api';
 import {
+  ArrowDown,
+  ArrowUp,
   ClipboardPaste,
   Copy,
   Link,
+  Lock,
   Maximize2,
   Minus,
   Pause,
@@ -46,7 +49,9 @@ import {
   clampSequencerZoom,
   copySequencerItem,
   findSequencerClipPlacement,
+  lockedSequencerContentEnd,
   moveSequencerClip,
+  moveSequencerTrack,
   pasteSequencerItem,
   sequencerTicks,
   trimSequencerClip,
@@ -375,7 +380,7 @@ export function Sequencer(props: SequencerProps) {
     let index = asset.tracks.length + 1;
     let id = `signals-${index}`;
     while (used.has(id)) id = `signals-${++index}`;
-    update((draft) => draft.tracks.push({ type: 'signal', id, name: `Signal Track ${index}`, muted: false, markers: [] }));
+    update((draft) => draft.tracks.push({ type: 'signal', id, name: `Signal Track ${index}`, muted: false, locked: false, markers: [] }));
     setSelection({ track: asset.tracks.length, marker: null });
   };
 
@@ -386,7 +391,7 @@ export function Sequencer(props: SequencerProps) {
     let id = `activation-${index}`;
     while (used.has(id)) id = `activation-${++index}`;
     update((draft) => draft.tracks.push({
-      type: 'activation', id, name: `Activation Track ${index}`, muted: false, target: 'Child', clips: [],
+      type: 'activation', id, name: `Activation Track ${index}`, muted: false, locked: false, target: 'Child', clips: [],
     }));
     setSelection({ track: asset.tracks.length, marker: null });
   };
@@ -398,7 +403,7 @@ export function Sequencer(props: SequencerProps) {
     let id = `audio-${index}`;
     while (used.has(id)) id = `audio-${++index}`;
     update((draft) => draft.tracks.push({
-      type: 'audio', id, name: `Audio Track ${index}`, muted: false, target: 'AudioSource', clips: [],
+      type: 'audio', id, name: `Audio Track ${index}`, muted: false, locked: false, target: 'AudioSource', clips: [],
     }));
     setSelection({ track: asset.tracks.length, marker: null });
   };
@@ -410,7 +415,7 @@ export function Sequencer(props: SequencerProps) {
     let id = `animation-${index}`;
     while (used.has(id)) id = `animation-${++index}`;
     update((draft) => draft.tracks.push({
-      type: 'animation', id, name: `Animation Track ${index}`, muted: false, target: 'Animated', clips: [],
+      type: 'animation', id, name: `Animation Track ${index}`, muted: false, locked: false, target: 'Animated', clips: [],
     }));
     setSelection({ track: asset.tracks.length, marker: null });
   };
@@ -508,6 +513,10 @@ export function Sequencer(props: SequencerProps) {
 
   const addTrackItem = (trackIndex: number, requestedTime: number) => {
     const track = asset?.tracks[trackIndex];
+    if (track?.locked) {
+      setError(`Track '${track.name}' is locked. Unlock it before adding items.`);
+      return;
+    }
     if (track?.type === 'signal') addMarker(trackIndex, requestedTime);
     else if (track?.type === 'activation') addActivationClip(trackIndex, requestedTime);
     else if (track?.type === 'audio') addAudioClip(trackIndex, requestedTime);
@@ -528,6 +537,11 @@ export function Sequencer(props: SequencerProps) {
     if (!asset || !selection) return;
     const selectedTrackIndex = selection.track;
     const selectedItemIndex = selection.marker;
+    const track = asset.tracks[selectedTrackIndex];
+    if (!track || track.locked) {
+      if (track) setError(`Track '${track.name}' is locked. Unlock it before deleting.`);
+      return;
+    }
     update((draft) => {
       if (selectedItemIndex == null) {
         draft.tracks.splice(selectedTrackIndex, 1);
@@ -541,6 +555,19 @@ export function Sequencer(props: SequencerProps) {
     setSelection(selectedItemIndex == null
       ? null
       : { track: selectedTrackIndex, marker: null });
+  };
+
+  const moveSelectedTrack = (direction: -1 | 1) => {
+    if (!asset || !selection) return;
+    const moved = moveSequencerTrack(asset, selection.track, direction);
+    if (!moved.ok) {
+      setError(moved.error);
+      return;
+    }
+    pushHistory(asset);
+    setAsset(moved.asset);
+    setSelection({ track: moved.trackIndex, marker: selection.marker });
+    setError(null);
   };
 
   const pasteItem = (
@@ -566,6 +593,10 @@ export function Sequencer(props: SequencerProps) {
 
   const duplicateSelectedItem = () => {
     if (!asset || !selection || selection.marker == null) return;
+    if (asset.tracks[selection.track]?.locked) {
+      setError(`Track '${asset.tracks[selection.track].name}' is locked. Unlock it before duplicating.`);
+      return;
+    }
     const copied = copySequencerItem(asset, selection.track, selection.marker);
     if (!copied) return;
     const track = asset.tracks[selection.track];
@@ -588,6 +619,11 @@ export function Sequencer(props: SequencerProps) {
     const bounds = lane.getBoundingClientRect();
     const originalTrack = asset.tracks[trackIndex];
     if (!originalTrack) return;
+    if (originalTrack.locked) {
+      setSelection({ track: trackIndex, marker: markerIndex });
+      setError(`Track '${originalTrack.name}' is locked. Unlock it before moving items.`);
+      return;
+    }
     const targetBounds = event.currentTarget.getBoundingClientRect();
     const edgeDistance = event.clientX - targetBounds.left;
     const trimEdge = originalTrack.type === 'signal'
@@ -775,6 +811,10 @@ export function Sequencer(props: SequencerProps) {
         }
         if (modified && key === 'x') {
           event.preventDefault();
+          if (selectedTrack?.locked) {
+            setError(`Track '${selectedTrack.name}' is locked. Unlock it before cutting.`);
+            return;
+          }
           if (copySelectedItem()) deleteSelection();
           return;
         }
@@ -847,7 +887,7 @@ export function Sequencer(props: SequencerProps) {
             <button type="button" onClick={(event) => { addAnimationTrack(); event.currentTarget.closest('details')?.removeAttribute('open'); }}>Animation</button>
           </div>
         </details>
-        <button type="button" disabled={!selectedTrack} onClick={() => selectedTrack && addTrackItem(selection!.track, displayTime)}>
+        <button type="button" disabled={!selectedTrack || selectedTrack.locked} title={selectedTrack?.locked ? 'Unlock the track to add items' : undefined} onClick={() => selectedTrack && addTrackItem(selection!.track, displayTime)}>
           <Plus size={14} /> {selectedTrack?.type === 'signal' ? 'Signal' : 'Clip'}
         </button>
         <button type="button" className="timeline-icon-button" title="Bind selected entity" disabled={!props.selectedEntity} onClick={() => props.selectedEntity && props.onAssignDirector(props.selectedEntity.entity, props.assetPath!)}><Link size={14} /></button>
@@ -878,11 +918,12 @@ export function Sequencer(props: SequencerProps) {
             </div>
           </div>
           {asset.tracks.map((track, trackIndex) => (
-            <div className={`sequencer-track-row${selection?.track === trackIndex ? ' selected' : ''}`} key={track.id}>
+            <div className={`sequencer-track-row${selection?.track === trackIndex ? ' selected' : ''}${track.locked ? ' locked' : ''}`} key={track.id}>
               <button type="button" className="sequencer-track-header" onClick={() => setSelection({ track: trackIndex, marker: null })}>
                 <span className={`sequencer-track-icon ${track.type}`}>{track.type === 'signal' ? 'S' : track.type === 'activation' ? 'A' : track.type === 'audio' ? '♪' : 'M'}</span>
                 <span>{track.name}</span>
                 {track.muted && <small>Muted</small>}
+                {track.locked && <Lock className="sequencer-track-lock" size={11} aria-label="Locked" />}
               </button>
               <div className="sequencer-lane" onDoubleClick={(event) => {
                 if (event.target !== event.currentTarget) return;
@@ -958,8 +999,14 @@ export function Sequencer(props: SequencerProps) {
           {!selectedTrack && <>
             <label>Name <input value={asset.name} onChange={(event) => update((draft) => { draft.name = event.target.value; })} /></label>
             <label>Duration <input type="number" min={0.001} step={0.1} value={asset.duration} onChange={(event) => update((draft) => {
-              draft.duration = Math.max(0.001, Number(event.target.value) || 0.001);
+              const requested = Math.max(0.001, Number(event.target.value) || 0.001);
+              const lockedEnd = lockedSequencerContentEnd(draft);
+              draft.duration = Math.max(requested, lockedEnd);
+              if (lockedEnd > requested) {
+                setError(`Timeline duration cannot be shorter than locked content ending at ${lockedEnd.toFixed(3)}s.`);
+              }
               for (const track of draft.tracks) {
+                if (track.locked) continue;
                 if (track.type === 'signal') {
                   for (const marker of track.markers) marker.time = Math.min(marker.time, draft.duration);
                 } else {
@@ -974,18 +1021,27 @@ export function Sequencer(props: SequencerProps) {
             <label>Frame Rate <input type="number" min={1} max={240} step={1} value={asset.frame_rate} onChange={(event) => update((draft) => { draft.frame_rate = Math.max(1, Math.min(240, Number(event.target.value) || 1)); })} /></label>
           </>}
           {selectedTrack && !selectedMarker && !selectedClip && <>
-            <label>Name <input value={selectedTrack.name} onChange={(event) => update((draft) => { draft.tracks[selection!.track].name = event.target.value; })} /></label>
             <label className="sequencer-check"><input type="checkbox" checked={selectedTrack.muted} onChange={(event) => update((draft) => { draft.tracks[selection!.track].muted = event.target.checked; })} /> Muted</label>
-            {selectedTrack.type !== 'signal' && <label>Target (child path)<input value={selectedTrack.target} placeholder={selectedTrack.type === 'audio' ? 'Audio/Music' : selectedTrack.type === 'animation' ? 'Characters/Hero' : 'Canvas/Dialog'} onChange={(event) => update((draft) => {
-              const track = draft.tracks[selection!.track];
-              if (track.type !== 'signal') track.target = event.target.value.replaceAll('\\', '/');
-            })} /></label>}
-            <button type="button" className="sequencer-danger" onClick={() => {
-              update((draft) => { draft.tracks.splice(selection!.track, 1); });
-              setSelection(null);
-            }}><Trash2 size={14} /> Delete Track</button>
+            <label className="sequencer-check"><input type="checkbox" checked={selectedTrack.locked} onChange={(event) => update((draft) => { draft.tracks[selection!.track].locked = event.target.checked; })} /> Locked</label>
+            {selectedTrack.locked && <p className="sequencer-lock-notice"><Lock size={12} /> Content editing is disabled for this track.</p>}
+            <fieldset className="sequencer-inspector-fields" disabled={selectedTrack.locked}>
+              <label>Name <input value={selectedTrack.name} onChange={(event) => update((draft) => { draft.tracks[selection!.track].name = event.target.value; })} /></label>
+              {selectedTrack.type !== 'signal' && <label>Target (child path)<input value={selectedTrack.target} placeholder={selectedTrack.type === 'audio' ? 'Audio/Music' : selectedTrack.type === 'animation' ? 'Characters/Hero' : 'Canvas/Dialog'} onChange={(event) => update((draft) => {
+                const track = draft.tracks[selection!.track];
+                if (track.type !== 'signal') track.target = event.target.value.replaceAll('\\', '/');
+              })} /></label>}
+              <div className="sequencer-track-order">
+                <button type="button" disabled={selection!.track === 0} onClick={() => moveSelectedTrack(-1)}><ArrowUp size={13} /> Move Up</button>
+                <button type="button" disabled={selection!.track === asset.tracks.length - 1} onClick={() => moveSelectedTrack(1)}><ArrowDown size={13} /> Move Down</button>
+              </div>
+              <button type="button" className="sequencer-danger" onClick={() => {
+                update((draft) => { draft.tracks.splice(selection!.track, 1); });
+                setSelection(null);
+              }}><Trash2 size={14} /> Delete Track</button>
+            </fieldset>
           </>}
-          {selectedMarker && <>
+          {selectedMarker && <fieldset className="sequencer-inspector-fields" disabled={selectedTrack?.locked}>
+            {selectedTrack?.locked && <p className="sequencer-lock-notice"><Lock size={12} /> Unlock the track to edit this signal.</p>}
             <label>Name <input value={selectedMarker.name} onChange={(event) => update((draft) => {
               const track = draft.tracks[selection!.track];
               if (track.type === 'signal') track.markers[selection!.marker!].name = event.target.value;
@@ -1019,8 +1075,9 @@ export function Sequencer(props: SequencerProps) {
               setPayloadInvalid(false);
               setSelection({ track: selection!.track, marker: null });
             }}><Trash2 size={14} /> Delete Signal</button>
-          </>}
-          {selectedClip && <>
+          </fieldset>}
+          {selectedClip && <fieldset className="sequencer-inspector-fields" disabled={selectedTrack?.locked}>
+            {selectedTrack?.locked && <p className="sequencer-lock-notice"><Lock size={12} /> Unlock the track to edit this clip.</p>}
             <label>Start <input type="number" min={0} max={asset.duration - selectedClip.duration} step={1 / asset.frame_rate} value={selectedClip.start} onChange={(event) => update((draft) => {
               const track = draft.tracks[selection!.track];
               if (track.type === 'signal') return;
@@ -1097,7 +1154,7 @@ export function Sequencer(props: SequencerProps) {
               });
               setSelection({ track: selection!.track, marker: null });
             }}><Trash2 size={14} /> Delete Clip</button>
-          </>}
+          </fieldset>}
         </aside>
       </div>
     </div>

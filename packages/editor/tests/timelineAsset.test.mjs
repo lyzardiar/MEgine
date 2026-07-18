@@ -17,6 +17,7 @@ test('timeline asset normalizes signal tracks and round trips', () => {
     ] }],
   });
   assert.equal(asset.name, 'Intro');
+  assert.equal(asset.tracks[0].locked, false);
   assert.deepEqual(asset.tracks[0].markers.map((marker) => marker.name), ['Start', 'End']);
   assert.deepEqual(parseTimelineAsset(serializeTimelineAsset(asset)), asset);
 });
@@ -38,7 +39,7 @@ test('timeline activation tracks normalize bindings and reject ambiguous clips',
     duration: 3,
     frame_rate: 30,
     tracks: [{
-      type: 'activation', id: 'dialog', name: 'Dialog', target: 'Canvas\\Dialog',
+      type: 'activation', id: 'dialog', name: 'Dialog', target: 'Canvas\\Dialog', locked: true,
       clips: [
         { start: 1, duration: 0.5, active: true },
         { start: 0, duration: 0.5, active: false },
@@ -46,6 +47,7 @@ test('timeline activation tracks normalize bindings and reject ambiguous clips',
     }],
   }));
   assert.equal(asset.tracks[0].target, 'Canvas/Dialog');
+  assert.equal(asset.tracks[0].locked, true);
   assert.deepEqual(asset.tracks[0].clips.map((clip) => clip.start), [0, 1]);
   assert.throws(() => parseTimelineAsset(JSON.stringify({
     version: 1, duration: 2,
@@ -61,4 +63,8 @@ test('timeline activation tracks normalize bindings and reject ambiguous clips',
     version: 1, duration: 2,
     tracks: [{ type: 'activation', id: 'dialog', name: 'Dialog', target: '../Dialog', clips: [] }],
   })), /descendant/);
+  assert.throws(() => parseTimelineAsset(JSON.stringify({
+    version: 1, duration: 2,
+    tracks: [{ type: 'signal', id: 'events', name: 'Events', locked: 'yes' }],
+  })), /locked must be boolean/);
 });

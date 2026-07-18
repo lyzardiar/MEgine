@@ -652,4 +652,13 @@ Referenced Only 是可用的单包裁剪基础，仍不等同于完整 Addressab
 - Signal、Activation、Audio、Animation 项支持 `Ctrl/Cmd+C/X/V/D` 复制、剪切、粘贴与重复。剪贴板深拷贝 Signal Payload 和 Clip 参数；粘贴优先使用选中的同类型轨道，其次使用源轨道 ID 或第一个兼容轨道，并按播放头/片段尾部寻找不重叠空隙，失败时给出明确诊断。
 - 工具栏新增方形 Undo、Redo、Copy、Paste 图标按钮与可访问标签；`Ctrl/Cmd+Z`、`Ctrl/Cmd+Shift+Z` 和 `Ctrl/Cmd+Y` 均可恢复历史。轨道空白区和标尺会聚焦 Sequencer，按钮焦点仍响应组合快捷键；输入框、文本域与下拉框保留系统文字编辑快捷键。
 
-该切片完成的是单项选择下的基础可逆编辑。成熟 Timeline 仍需多选 Clip/Signal、跨轨道组复制、框选、Ripple Edit、吸附参考线、轨道锁定/分组、命名剪贴板、跨 Timeline Undo 服务，以及与全编辑器统一 Undo 栈的事务合并；当前每次 Inspector `onChange` 仍可能形成多个细粒度历史项，后续应按 Focus/Blur 编辑手势合并。
+该切片完成的是单项选择下的基础可逆编辑。成熟 Timeline 仍需多选 Clip/Signal、跨轨道组复制、框选、Ripple Edit、吸附参考线、轨道分组、命名剪贴板、跨 Timeline Undo 服务，以及与全编辑器统一 Undo 栈的事务合并；当前每次 Inspector `onChange` 仍可能形成多个细粒度历史项，后续应按 Focus/Blur 编辑手势合并。
+
+## 45. 2026-07-19 Timeline 持久化轨道锁定与排序
+
+- 四类 Timeline Track 统一新增向后兼容的 `locked` 编辑元数据；旧资产缺省为 `false`，TypeScript 与 Rust 解析器、规范化和序列化保持同一契约。Lock 不影响 Player 求值和打包播放，只保护创作内容。
+- 锁定轨道禁止新增、剪切、重复、删除、粘贴、片段移动/裁剪及 Inspector 内容修改；复制、Mute 和解除锁定仍可使用。粘贴算法只解析未锁定的兼容目标轨道，并保持源资产不可变。
+- 全局 Duration 缩短不会再暗中裁剪锁定内容：锁定 Marker/Clip 的最晚结束时间成为合法最小时长，实际收缩只调整未锁定轨道。轨道列表以条纹、锁图标和禁止光标明确反馈状态。
+- Track Inspector 提供带边界检查的 Move Up/Move Down，排序使用纯函数生成新资产并进入同一 Undo/Redo 历史；锁定、越界和目标失效均返回明确诊断。
+
+轨道锁定解决的是单轨内容保护，不等同于成熟组织系统。后续仍需 Track Group、折叠、组级 Mute/Lock、拖拽排序、多选、Ripple Edit、吸附参考线、通用 Binding Table，以及 Camera、Particle、Animator 和嵌套 Timeline 轨道。

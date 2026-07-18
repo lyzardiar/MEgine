@@ -3715,6 +3715,15 @@ body.insp-scrubbing * {
 .sequencer-ruler-row { height: 32px; }
 .sequencer-track-row { height: 42px; border-top: 1px solid #151515; }
 .sequencer-track-row.selected { background: #263747; }
+.sequencer-track-row.locked .sequencer-lane {
+  background-color: #202020;
+  background-image: repeating-linear-gradient(-45deg, transparent 0 7px, #ffffff05 7px 8px);
+  cursor: default;
+}
+.sequencer-track-row.locked .sequencer-marker,
+.sequencer-track-row.locked .sequencer-activation-clip,
+.sequencer-track-row.locked .sequencer-audio-clip,
+.sequencer-track-row.locked .sequencer-animation-clip { cursor: not-allowed; opacity: 0.68; }
 
 .sequencer-track-header {
   position: sticky;
@@ -3739,6 +3748,8 @@ button.sequencer-track-header { cursor: pointer; }
 button.sequencer-track-header:hover { background: #343b42; }
 .sequencer-track-header > span:not(.sequencer-track-icon) { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .sequencer-track-header small { margin-left: auto; color: #b79a70; font-size: 9px; text-transform: uppercase; }
+.sequencer-track-lock { flex: 0 0 auto; margin-left: auto; color: #d0a95f; }
+.sequencer-track-header small + .sequencer-track-lock { margin-left: 0; }
 .sequencer-track-icon {
   width: 18px;
   height: 18px;
@@ -3965,6 +3976,25 @@ button.sequencer-track-header:hover { background: #343b42; }
 .sequencer-inspector::-webkit-scrollbar-thumb:hover { background: #707070; }
 .sequencer-inspector .sequencer-check { display: flex; flex-direction: row; align-items: center; gap: 7px; }
 .sequencer-inspector .sequencer-check input { width: 14px; }
+.sequencer-inspector-fields {
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+.sequencer-inspector-fields:disabled { opacity: 0.62; }
+.sequencer-lock-notice {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: 0 0 9px;
+  padding: 6px 7px;
+  border-left: 2px solid #b68a45;
+  background: #342f24;
+  color: #d8bd89;
+  font-size: 10px;
+}
+.sequencer-track-order { display: grid; grid-template-columns: 1fr 1fr; gap: 4px; margin-bottom: 8px; }
 .sequencer-inspector button {
   display: inline-flex;
   align-items: center;
