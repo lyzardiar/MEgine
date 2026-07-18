@@ -3723,7 +3723,8 @@ body.insp-scrubbing * {
 .sequencer-track-row.locked .sequencer-marker,
 .sequencer-track-row.locked .sequencer-activation-clip,
 .sequencer-track-row.locked .sequencer-audio-clip,
-.sequencer-track-row.locked .sequencer-animation-clip { cursor: not-allowed; opacity: 0.68; }
+.sequencer-track-row.locked .sequencer-animation-clip,
+.sequencer-track-row.locked .sequencer-particle-clip { cursor: not-allowed; opacity: 0.68; }
 
 .sequencer-track-header {
   position: sticky;
@@ -3764,6 +3765,7 @@ button.sequencer-track-header:hover { background: #343b42; }
 .sequencer-track-icon.activation { background: #356b58; color: #d9fff0; }
 .sequencer-track-icon.audio { background: #3d5872; color: #d7edff; }
 .sequencer-track-icon.animation { background: #66517a; color: #f0ddff; }
+.sequencer-track-icon.particle { background: #7a5b2e; color: #fff0c8; }
 
 .sequencer-ruler,
 .sequencer-lane {
@@ -3899,16 +3901,39 @@ button.sequencer-track-header:hover { background: #343b42; }
 .sequencer-animation-clip:hover,
 .sequencer-animation-clip.selected { outline: 1px solid #fff; filter: brightness(1.18); }
 
+.sequencer-particle-clip {
+  position: absolute;
+  z-index: 3;
+  top: 7px;
+  bottom: 7px;
+  min-width: 3px;
+  overflow: hidden;
+  border: 1px solid #493619;
+  border-radius: 0;
+  padding: 0 5px;
+  background: #80602d;
+  color: #fff0c7;
+  cursor: grab;
+  text-align: left;
+  font: 8px var(--u-mono);
+  white-space: nowrap;
+}
+.sequencer-particle-clip:hover,
+.sequencer-particle-clip.selected { outline: 1px solid #fff; filter: brightness(1.18); }
+
 .sequencer-activation-clip:active,
 .sequencer-audio-clip:active,
-.sequencer-animation-clip:active { cursor: grabbing; }
+.sequencer-animation-clip:active,
+.sequencer-particle-clip:active { cursor: grabbing; }
 
 .sequencer-activation-clip::before,
 .sequencer-activation-clip::after,
 .sequencer-audio-clip::before,
 .sequencer-audio-clip::after,
 .sequencer-animation-clip::before,
-.sequencer-animation-clip::after {
+.sequencer-animation-clip::after,
+.sequencer-particle-clip::before,
+.sequencer-particle-clip::after {
   content: '';
   position: absolute;
   z-index: 2;
@@ -3921,10 +3946,12 @@ button.sequencer-track-header:hover { background: #343b42; }
 }
 .sequencer-activation-clip::before,
 .sequencer-audio-clip::before,
-.sequencer-animation-clip::before { left: 1px; }
+.sequencer-animation-clip::before,
+.sequencer-particle-clip::before { left: 1px; }
 .sequencer-activation-clip::after,
 .sequencer-audio-clip::after,
-.sequencer-animation-clip::after { right: 1px; }
+.sequencer-animation-clip::after,
+.sequencer-particle-clip::after { right: 1px; }
 
 .sequencer-inspector {
   min-width: 0;
@@ -3995,6 +4022,7 @@ button.sequencer-track-header:hover { background: #343b42; }
   font-size: 10px;
 }
 .sequencer-track-order { display: grid; grid-template-columns: 1fr 1fr; gap: 4px; margin-bottom: 8px; }
+.sequencer-field-help { margin: -3px 0 9px; color: #858585; font-size: 9px; line-height: 1.45; }
 .sequencer-inspector button {
   display: inline-flex;
   align-items: center;

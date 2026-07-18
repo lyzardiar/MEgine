@@ -1,6 +1,9 @@
+use crate::particles::MAX_INCREMENTAL_DELTA;
 use crate::textures::resolve_project_asset_path;
 use mengine_assets::{load_timeline_asset, TimelineAsset, TimelineTrack};
-use mengine_core::generated::{AnimationPlayer, Animator, AudioSource, TimelineDirector};
+use mengine_core::generated::{
+    AnimationPlayer, Animator, AudioSource, ParticleEmitter2D, ParticleEmitter3D, TimelineDirector,
+};
 use mengine_core::{Entity, Parent, World};
 use serde_json::Value;
 use std::collections::{HashMap, HashSet};
@@ -24,6 +27,12 @@ pub struct RuntimeTimelineSignal {
     pub signal: String,
     pub time: f32,
     pub payload: Option<Value>,
+}
+
+#[derive(Clone, Debug, PartialEq)]
+pub enum RuntimeParticleCommand {
+    Seek { entity: Entity, time: f32 },
+    Reset { entity: Entity },
 }
 
 #[derive(Clone)]
@@ -56,20 +65,39 @@ struct AnimationOverride {
     original: AnimationPlayer,
 }
 
+#[derive(Clone)]
+enum AuthoredParticleEmitter {
+    Two(ParticleEmitter2D),
+    Three(ParticleEmitter3D),
+}
+
+#[derive(Clone)]
+struct ParticleOverride {
+    target: Entity,
+    original: AuthoredParticleEmitter,
+    last_timeline_time: f32,
+    clip_start: f32,
+    clip_in: f32,
+}
+
 #[derive(Default)]
 pub struct TimelineRuntime {
     project_root: Option<PathBuf>,
     assets: HashMap<PathBuf, CachedTimeline>,
     initialized: HashSet<Entity>,
     active: HashSet<Entity>,
+    evaluated_directors: HashMap<Entity, (String, f32)>,
     reported_failures: HashSet<(String, String)>,
     reported_activation_failures: HashSet<(Entity, String)>,
     reported_audio_failures: HashSet<(Entity, String)>,
     reported_animation_failures: HashSet<(Entity, String)>,
+    reported_particle_failures: HashSet<(Entity, String)>,
     activation_overrides: HashMap<(Entity, String), ActivationOverride>,
     audio_overrides: HashMap<(Entity, String), AudioOverride>,
     animation_overrides: HashMap<(Entity, String), AnimationOverride>,
+    particle_overrides: HashMap<(Entity, String), ParticleOverride>,
     pending_signals: Vec<RuntimeTimelineSignal>,
+    pending_particle_commands: Vec<RuntimeParticleCommand>,
 }
 
 impl TimelineRuntime {
@@ -82,6 +110,7 @@ impl TimelineRuntime {
 
     pub fn update(&mut self, world: &mut World, delta_seconds: f32) -> Vec<TimelineLoadFailure> {
         self.pending_signals.clear();
+        self.pending_particle_commands.clear();
         let delta_seconds = if delta_seconds.is_finite() {
             delta_seconds
         } else {
@@ -105,6 +134,8 @@ impl TimelineRuntime {
             })
             .collect();
         let active_entities: HashSet<_> = entities.iter().map(|(entity, _)| *entity).collect();
+        self.evaluated_directors
+            .retain(|entity, _| active_entities.contains(entity) && world.is_alive(*entity));
         self.active
             .retain(|entity| active_entities.contains(entity) && world.is_alive(*entity));
 
@@ -112,6 +143,7 @@ impl TimelineRuntime {
         let mut applied_activation_overrides = HashSet::new();
         let mut applied_audio_overrides = HashSet::new();
         let mut applied_animation_overrides = HashSet::new();
+        let mut applied_particle_overrides = HashSet::new();
         for (entity, mut director) in entities {
             if self.initialized.insert(entity) && !director.play_on_awake {
                 director.playing = false;
@@ -122,21 +154,33 @@ impl TimelineRuntime {
             let asset_key = director.asset.trim();
             if asset_key.is_empty() {
                 self.active.remove(&entity);
+                self.evaluated_directors.remove(&entity);
                 continue;
             }
             if !director.playing {
                 if director.time <= 0.0 {
                     self.active.remove(&entity);
-                } else if self.active.contains(&entity) {
+                    self.evaluated_directors.remove(&entity);
+                    continue;
+                }
+                let Some((evaluated_asset, evaluated_time)) = self.evaluated_directors.get(&entity)
+                else {
+                    self.active.remove(&entity);
+                    continue;
+                };
+                let unchanged = evaluated_asset == asset_key
+                    && (director.time - *evaluated_time).abs() <= 0.001;
+                if unchanged {
                     self.retain_paused_overrides(
                         world,
                         entity,
                         &mut applied_activation_overrides,
                         &mut applied_audio_overrides,
                         &mut applied_animation_overrides,
+                        &mut applied_particle_overrides,
                     );
+                    continue;
                 }
-                continue;
             }
             let asset = match self.load(asset_key) {
                 Ok(asset) => {
@@ -146,6 +190,7 @@ impl TimelineRuntime {
                 }
                 Err(error) => {
                     self.active.remove(&entity);
+                    self.evaluated_directors.remove(&entity);
                     if self
                         .reported_failures
                         .insert((asset_key.to_owned(), error.clone()))
@@ -159,6 +204,49 @@ impl TimelineRuntime {
                     continue;
                 }
             };
+
+            if !director.playing {
+                let paused_time = director.time.clamp(0.0, asset.duration);
+                self.active.insert(entity);
+                let (applied, mut activation_failures) =
+                    self.apply_activation_tracks(world, entity, asset_key, &asset, paused_time);
+                applied_activation_overrides.extend(applied);
+                failures.append(&mut activation_failures);
+                let (applied, mut audio_failures) = self.apply_audio_tracks(
+                    world,
+                    entity,
+                    asset_key,
+                    &asset,
+                    paused_time,
+                    paused_time,
+                    0.0,
+                    true,
+                );
+                applied_audio_overrides.extend(applied);
+                failures.append(&mut audio_failures);
+                let (applied, mut animation_failures) =
+                    self.apply_animation_tracks(world, entity, asset_key, &asset, paused_time);
+                applied_animation_overrides.extend(applied);
+                failures.append(&mut animation_failures);
+                let (applied, mut particle_failures) = self.apply_particle_tracks(
+                    world,
+                    entity,
+                    asset_key,
+                    &asset,
+                    paused_time,
+                    paused_time,
+                    0.0,
+                    true,
+                );
+                applied_particle_overrides.extend(applied);
+                failures.append(&mut particle_failures);
+                self.evaluated_directors
+                    .insert(entity, (asset_key.to_owned(), paused_time));
+                if let Some(live) = world.get_component_mut::<TimelineDirector>(entity) {
+                    live.time = paused_time;
+                }
+                continue;
+            }
 
             let looped = director.wrap_mode.eq_ignore_ascii_case("loop");
             let just_started = self.active.insert(entity);
@@ -205,6 +293,18 @@ impl TimelineRuntime {
                     self.apply_animation_tracks(world, entity, asset_key, &asset, next);
                 applied_animation_overrides.extend(applied);
                 failures.append(&mut animation_failures);
+                let (applied, mut particle_failures) = self.apply_particle_tracks(
+                    world,
+                    entity,
+                    asset_key,
+                    &asset,
+                    start,
+                    next,
+                    director.speed,
+                    just_started,
+                );
+                applied_particle_overrides.extend(applied);
+                failures.append(&mut particle_failures);
             }
             if let Some(live) = world.get_component_mut::<TimelineDirector>(entity) {
                 live.time = next;
@@ -213,15 +313,20 @@ impl TimelineRuntime {
                     self.active.remove(&entity);
                 }
             }
+            self.evaluated_directors
+                .insert(entity, (asset_key.to_owned(), next));
         }
         self.restore_unused_activation_overrides(world, &applied_activation_overrides);
         self.restore_unused_audio_overrides(world, &applied_audio_overrides);
         self.restore_unused_animation_overrides(world, &applied_animation_overrides);
+        self.restore_unused_particle_overrides(world, &applied_particle_overrides);
         self.reported_activation_failures
             .retain(|(entity, _)| world.is_alive(*entity));
         self.reported_audio_failures
             .retain(|(entity, _)| world.is_alive(*entity));
         self.reported_animation_failures
+            .retain(|(entity, _)| world.is_alive(*entity));
+        self.reported_particle_failures
             .retain(|(entity, _)| world.is_alive(*entity));
         failures
     }
@@ -229,10 +334,21 @@ impl TimelineRuntime {
     /// Re-enters a director on its next playing update so time-zero signals fire once.
     pub fn reset_director(&mut self, entity: Entity) {
         self.active.remove(&entity);
+        self.evaluated_directors.remove(&entity);
+    }
+
+    pub fn seek_director(&mut self, entity: Entity) {
+        self.active.remove(&entity);
+        self.evaluated_directors
+            .insert(entity, (String::new(), f32::NAN));
     }
 
     pub fn take_signals(&mut self) -> Vec<RuntimeTimelineSignal> {
         std::mem::take(&mut self.pending_signals)
+    }
+
+    pub fn take_particle_commands(&mut self) -> Vec<RuntimeParticleCommand> {
+        std::mem::take(&mut self.pending_particle_commands)
     }
 
     fn load(&mut self, key: &str) -> Result<Arc<TimelineAsset>, String> {
@@ -544,6 +660,143 @@ impl TimelineRuntime {
         (applied, failures)
     }
 
+    #[allow(clippy::too_many_arguments)]
+    fn apply_particle_tracks(
+        &mut self,
+        world: &mut World,
+        director: Entity,
+        asset_key: &str,
+        asset: &TimelineAsset,
+        start: f32,
+        time: f32,
+        director_speed: f32,
+        just_started: bool,
+    ) -> (HashSet<(Entity, String)>, Vec<TimelineLoadFailure>) {
+        let mut applied = HashSet::new();
+        let mut failures = Vec::new();
+        for track in &asset.tracks {
+            let TimelineTrack::Particle {
+                id,
+                name,
+                muted,
+                target,
+                clips,
+                ..
+            } = track
+            else {
+                continue;
+            };
+            let key = (director, id.clone());
+            if *muted {
+                self.reported_particle_failures.remove(&key);
+                continue;
+            }
+            let Some(clip) = clips
+                .iter()
+                .find(|clip| time >= clip.start && time < clip.start + clip.duration)
+            else {
+                self.reported_particle_failures.remove(&key);
+                continue;
+            };
+            let Some(target_entity) = resolve_descendant_target(world, director, target) else {
+                if self.reported_particle_failures.insert(key) {
+                    failures.push(TimelineLoadFailure {
+                        entity: director,
+                        asset: asset_key.to_owned(),
+                        error: format!(
+                            "particle track '{name}' target '{target}' was not found below the Director entity"
+                        ),
+                    });
+                }
+                continue;
+            };
+            let two = world
+                .get_component::<ParticleEmitter2D>(target_entity)
+                .cloned();
+            let three = world
+                .get_component::<ParticleEmitter3D>(target_entity)
+                .cloned();
+            let authored = match (two, three) {
+                (Some(value), None) => AuthoredParticleEmitter::Two(value),
+                (None, Some(value)) => AuthoredParticleEmitter::Three(value),
+                (None, None) => {
+                    if self.reported_particle_failures.insert(key) {
+                        failures.push(TimelineLoadFailure {
+                            entity: director,
+                            asset: asset_key.to_owned(),
+                            error: format!(
+                                "particle track '{name}' target '{target}' does not have a ParticleEmitter2D or ParticleEmitter3D component"
+                            ),
+                        });
+                    }
+                    continue;
+                }
+                (Some(_), Some(_)) => {
+                    if self.reported_particle_failures.insert(key) {
+                        failures.push(TimelineLoadFailure {
+                            entity: director,
+                            asset: asset_key.to_owned(),
+                            error: format!(
+                                "particle track '{name}' target '{target}' has both 2D and 3D emitters; bind a dedicated emitter"
+                            ),
+                        });
+                    }
+                    continue;
+                }
+            };
+            self.reported_particle_failures.remove(&key);
+            if self
+                .particle_overrides
+                .get(&key)
+                .is_some_and(|previous| previous.target != target_entity)
+            {
+                self.restore_particle_override(world, &key);
+            }
+            self.particle_overrides
+                .entry(key.clone())
+                .or_insert(ParticleOverride {
+                    target: target_entity,
+                    original: authored,
+                    last_timeline_time: start,
+                    clip_start: clip.start,
+                    clip_in: clip.clip_in,
+                });
+
+            let previous = self
+                .particle_overrides
+                .get(&key)
+                .expect("particle override inserted above");
+            let can_increment = (director_speed - 1.0).abs() <= 0.0001;
+            let discontinuity = just_started
+                || !can_increment
+                || time - start > MAX_INCREMENTAL_DELTA
+                || (start - previous.last_timeline_time).abs() > 0.001
+                || time < start
+                || previous.clip_start != clip.start
+                || previous.clip_in != clip.clip_in;
+            if let Some(emitter) = world.get_component_mut::<ParticleEmitter2D>(target_entity) {
+                emitter.playing = can_increment;
+            }
+            if let Some(emitter) = world.get_component_mut::<ParticleEmitter3D>(target_entity) {
+                emitter.playing = can_increment;
+            }
+            if discontinuity {
+                self.pending_particle_commands
+                    .push(RuntimeParticleCommand::Seek {
+                        entity: target_entity,
+                        time: clip.clip_in + (time - clip.start).max(0.0),
+                    });
+            }
+            if let Some(state) = self.particle_overrides.get_mut(&key) {
+                state.last_timeline_time = time;
+                state.clip_start = clip.start;
+                state.clip_in = clip.clip_in;
+            }
+            applied.insert(key);
+        }
+        (applied, failures)
+    }
+
     fn retain_paused_overrides(
         &self,
         world: &mut World,
@@ -551,6 +804,7 @@ impl TimelineRuntime {
         activation: &mut HashSet<(Entity, String)>,
         audio: &mut HashSet<(Entity, String)>,
         animation: &mut HashSet<(Entity, String)>,
+        particle: &mut HashSet<(Entity, String)>,
     ) {
         activation.extend(
             self.activation_overrides
@@ -573,6 +827,18 @@ impl TimelineRuntime {
                 .filter(|(owner, _)| *owner == director)
                 .cloned(),
         );
+        for (key, state) in &self.particle_overrides {
+            if key.0 != director || !world.is_alive(state.target) {
+                continue;
+            }
+            if let Some(emitter) = world.get_component_mut::<ParticleEmitter2D>(state.target) {
+                emitter.playing = false;
+            }
+            if let Some(emitter) = world.get_component_mut::<ParticleEmitter3D>(state.target) {
+                emitter.playing = false;
+            }
+            particle.insert(key.clone());
+        }
     }
 
     fn restore_unused_activation_overrides(
@@ -651,6 +917,43 @@ impl TimelineRuntime {
         };
         if world.is_alive(previous.target) {
             world.insert_component(previous.target, previous.original);
+        }
+    }
+
+    fn restore_unused_particle_overrides(
+        &mut self,
+        world: &mut World,
+        applied: &HashSet<(Entity, String)>,
+    ) {
+        let stale: Vec<_> = self
+            .particle_overrides
+            .keys()
+            .filter(|key| !applied.contains(*key))
+            .cloned()
+            .collect();
+        for key in stale {
+            self.restore_particle_override(world, &key);
+        }
+    }
+
+    fn restore_particle_override(&mut self, world: &mut World, key: &(Entity, String)) {
+        let Some(previous) = self.particle_overrides.remove(key) else {
+            return;
+        };
+        self.pending_particle_commands
+            .push(RuntimeParticleCommand::Reset {
+                entity: previous.target,
+            });
+        if !world.is_alive(previous.target) {
+            return;
+        }
+        match previous.original {
+            AuthoredParticleEmitter::Two(component) => {
+                world.insert_component(previous.target, component)
+            }
+            AuthoredParticleEmitter::Three(component) => {
+                world.insert_component(previous.target, component)
+            }
         }
     }
 }
@@ -783,7 +1086,7 @@ fn collect_crossed_signals(
 mod tests {
     use super::*;
     use crate::animation::AnimationRuntime;
-    use mengine_core::generated::Transform;
+    use mengine_core::generated::{ParticleEmitter2D, Transform};
     use std::fs;
 
     fn project_asset() -> (PathBuf, String) {
@@ -854,6 +1157,21 @@ mod tests {
         )
         .unwrap();
         (root, timeline_relative)
+    }
+
+    fn particle_project_asset(target: &str) -> (PathBuf, String) {
+        let root = std::env::temp_dir().join(format!("mengine-timeline-{}", uuid::Uuid::new_v4()));
+        let relative = "Assets/Timelines/particle.mtimeline".to_owned();
+        let path = root.join(&relative);
+        fs::create_dir_all(path.parent().unwrap()).unwrap();
+        fs::write(
+            path,
+            format!(
+                r#"{{"version":1,"duration":2,"tracks":[{{"type":"particle","id":"fx","name":"FX","target":"{target}","clips":[{{"start":0,"duration":1.5,"clip_in":0.25}}]}}]}}"#
+            ),
+        )
+        .unwrap();
+        (root, relative)
     }
 
     #[test]
@@ -1044,6 +1362,18 @@ mod tests {
             .get_component_mut::<TimelineDirector>(director)
             .unwrap()
             .playing = false;
+        runtime.update(&mut world, 0.0);
+        assert!(!world.entity_active(panel));
+        world
+            .get_component_mut::<TimelineDirector>(director)
+            .unwrap()
+            .time = 0.75;
+        runtime.update(&mut world, 0.0);
+        assert!(world.entity_active(panel));
+        world
+            .get_component_mut::<TimelineDirector>(director)
+            .unwrap()
+            .time = 1.25;
         runtime.update(&mut world, 0.0);
         assert!(!world.entity_active(panel));
         runtime.reset_director(director);
@@ -1268,6 +1598,128 @@ mod tests {
         assert_eq!(restored.playing, authored.playing);
         assert_eq!(restored.speed, authored.speed);
         assert_eq!(restored.time, authored.time);
+        let _ = fs::remove_dir_all(root);
+    }
+
+    #[test]
+    fn particle_tracks_seek_pause_reverse_and_restore_authored_emitters() {
+        let (root, relative) = particle_project_asset("FX");
+        let mut world = World::new();
+        let director = world.spawn_empty();
+        let fx = world.spawn_empty();
+        world.set_component_value(fx, "Name", serde_json::json!({ "value": "FX" }));
+        world.set_parent(fx, Some(director));
+        let authored = ParticleEmitter2D {
+            playing: false,
+            rate_over_time: 42.0,
+            ..ParticleEmitter2D::default()
+        };
+        world.insert_component(fx, authored.clone());
+        world.insert_component(
+            director,
+            TimelineDirector {
+                asset: relative,
+                ..TimelineDirector::default()
+            },
+        );
+        let mut runtime = TimelineRuntime::new(Some(root.clone()));
+
+        assert!(runtime.update(&mut world, 0.0).is_empty());
+        assert!(
+            world
+                .get_component::<ParticleEmitter2D>(fx)
+                .unwrap()
+                .playing
+        );
+        assert_eq!(
+            runtime.take_particle_commands(),
+            vec![RuntimeParticleCommand::Seek {
+                entity: fx,
+                time: 0.25,
+            }]
+        );
+
+        runtime.update(&mut world, 0.25);
+        assert!(runtime.take_particle_commands().is_empty());
+        runtime.update(&mut world, 0.5);
+        assert_eq!(
+            runtime.take_particle_commands(),
+            vec![RuntimeParticleCommand::Seek {
+                entity: fx,
+                time: 1.0,
+            }]
+        );
+        world
+            .get_component_mut::<TimelineDirector>(director)
+            .unwrap()
+            .playing = false;
+        runtime.update(&mut world, 0.0);
+        assert!(
+            !world
+                .get_component::<ParticleEmitter2D>(fx)
+                .unwrap()
+                .playing
+        );
+        assert!(runtime.take_particle_commands().is_empty());
+
+        world
+            .get_component_mut::<TimelineDirector>(director)
+            .unwrap()
+            .time = 1.0;
+        runtime.update(&mut world, 0.0);
+        assert!(
+            !world
+                .get_component::<ParticleEmitter2D>(fx)
+                .unwrap()
+                .playing
+        );
+        assert_eq!(
+            runtime.take_particle_commands(),
+            vec![RuntimeParticleCommand::Seek {
+                entity: fx,
+                time: 1.25,
+            }]
+        );
+
+        {
+            let live = world
+                .get_component_mut::<TimelineDirector>(director)
+                .unwrap();
+            live.playing = true;
+            live.speed = -1.0;
+            live.time = 0.5;
+        }
+        runtime.update(&mut world, 0.1);
+        assert!(
+            !world
+                .get_component::<ParticleEmitter2D>(fx)
+                .unwrap()
+                .playing
+        );
+        let commands = runtime.take_particle_commands();
+        assert_eq!(commands.len(), 1);
+        let RuntimeParticleCommand::Seek { entity, time } = commands[0] else {
+            panic!("expected particle seek");
+        };
+        assert_eq!(entity, fx);
+        assert!((time - 0.65).abs() < 0.0001);
+
+        {
+            let live = world
+                .get_component_mut::<TimelineDirector>(director)
+                .unwrap();
+            live.playing = false;
+            live.time = 0.0;
+        }
+        runtime.reset_director(director);
+        runtime.update(&mut world, 0.0);
+        let restored = world.get_component::<ParticleEmitter2D>(fx).unwrap();
+        assert_eq!(restored.playing, authored.playing);
+        assert_eq!(restored.rate_over_time, authored.rate_over_time);
+        assert_eq!(
+            runtime.take_particle_commands(),
+            vec![RuntimeParticleCommand::Reset { entity: fx }]
+        );
         let _ = fs::remove_dir_all(root);
     }
 

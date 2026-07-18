@@ -1,5 +1,6 @@
 use crate::sorting::{sort_world_primitives, SortingLayers, WorldPrimitive, WorldPrimitiveKind};
 use glam::{Vec3, Vec4};
+use mengine_assets::MAX_TIMELINE_PARTICLE_TIME;
 use mengine_core::generated::{ParticleEmitter2D, ParticleEmitter3D};
 use mengine_core::{Entity, TransformHierarchy, World};
 use mengine_rhi::{project_world_to_viewport, FrameCamera, UiBatchKey, UiBlendMode, UiPrimitive};
@@ -7,6 +8,7 @@ use std::collections::{HashMap, HashSet};
 
 const MAX_PARTICLES: usize = 100_000;
 const MAX_STEP: f32 = 1.0 / 30.0;
+pub(crate) const MAX_INCREMENTAL_DELTA: f32 = 0.25;
 
 #[derive(Clone, Debug)]
 struct Particle {
@@ -213,9 +215,47 @@ impl Emitter<'_> {
 #[derive(Default)]
 pub struct ParticleWorld {
     emitters: HashMap<Entity, EmitterState>,
+    skip_step_once: HashSet<Entity>,
 }
 
 impl ParticleWorld {
+    pub fn reset_entity(&mut self, entity: Entity) {
+        self.emitters.remove(&entity);
+        self.skip_step_once.remove(&entity);
+    }
+
+    pub fn seek_entity(&mut self, world: &World, entity: Entity, time: f32) -> bool {
+        if !time.is_finite() || !(0.0..=MAX_TIMELINE_PARTICLE_TIME).contains(&time) {
+            return false;
+        }
+        let hierarchy = TransformHierarchy::build(world);
+        let Some(transform) = hierarchy.get(entity) else {
+            return false;
+        };
+        let emitter = if let Some(component) = world.get_component::<ParticleEmitter2D>(entity) {
+            Emitter::Two(component)
+        } else if let Some(component) = world.get_component::<ParticleEmitter3D>(entity) {
+            Emitter::Three(component)
+        } else {
+            return false;
+        };
+        let seed = if emitter.seed() == 0 {
+            1
+        } else {
+            emitter.seed()
+        };
+        let state = self.emitters.entry(entity).or_default();
+        state.reset(seed);
+        let mut remaining = time;
+        while remaining > 0.0 {
+            let delta = remaining.min(MAX_STEP);
+            step_subframe(state, &emitter, transform.position, delta);
+            remaining -= delta;
+        }
+        self.skip_step_once.insert(entity);
+        true
+    }
+
     pub fn update_and_collect(
         &mut self,
         world: &World,
@@ -270,7 +310,9 @@ impl ParticleWorld {
             };
             live.insert(entity);
             let state = self.emitters.entry(entity).or_default();
-            step_emitter(state, &emitter, transform.position, delta_seconds);
+            if !self.skip_step_once.remove(&entity) {
+                step_emitter(state, &emitter, transform.position, delta_seconds);
+            }
             collect_emitter(
                 state,
                 &emitter,
@@ -281,6 +323,7 @@ impl ParticleWorld {
             );
         }
         self.emitters.retain(|entity, _| live.contains(entity));
+        self.skip_step_once.retain(|entity| live.contains(entity));
         output
     }
 }
@@ -297,7 +340,7 @@ fn step_emitter(state: &mut EmitterState, emitter: &Emitter<'_>, origin: Vec3, d
     if !emitter.playing() {
         return;
     }
-    let mut remaining = delta.clamp(0.0, 0.25);
+    let mut remaining = delta.clamp(0.0, MAX_INCREMENTAL_DELTA);
     while remaining > 0.0 {
         let dt = remaining.min(MAX_STEP);
         step_subframe(state, emitter, origin, dt);
@@ -523,6 +566,41 @@ mod tests {
         let mut state = EmitterState::default();
         step_emitter(&mut state, &Emitter::Three(&emitter), Vec3::ZERO, 1.0);
         assert_eq!(state.particles.len(), 8);
+    }
+
+    #[test]
+    fn timeline_seek_rebuilds_deterministically_and_skips_duplicate_frame_step() {
+        let mut world = World::new();
+        let entity = world.spawn_empty();
+        world.insert_component(entity, Transform::default());
+        world.insert_component(
+            entity,
+            ParticleEmitter2D {
+                playing: false,
+                rate_over_time: 60.0,
+                lifetime_min: 10.0,
+                lifetime_max: 10.0,
+                ..ParticleEmitter2D::default()
+            },
+        );
+        let mut particles = ParticleWorld::default();
+        assert!(particles.seek_entity(&world, entity, 0.5));
+        assert_eq!(particles.emitters[&entity].particles.len(), 30);
+        assert!((particles.emitters[&entity].elapsed - 0.5).abs() < 0.0001);
+
+        world
+            .get_component_mut::<ParticleEmitter2D>(entity)
+            .unwrap()
+            .playing = true;
+        particles.update_and_collect(&world, camera(), [200, 200], 0.1);
+        assert_eq!(particles.emitters[&entity].particles.len(), 30);
+        particles.update_and_collect(&world, camera(), [200, 200], 0.1);
+        assert_eq!(particles.emitters[&entity].particles.len(), 36);
+
+        particles.reset_entity(entity);
+        assert!(!particles.emitters.contains_key(&entity));
+        assert!(!particles.seek_entity(&world, entity, 300.01));
+        assert!(!particles.emitters.contains_key(&entity));
     }
 
     #[test]

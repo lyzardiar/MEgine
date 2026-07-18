@@ -16,6 +16,7 @@ import * as ts from 'typescript';
 
 export const PLAYER_CONFIG_FILE = 'mengine-player.json';
 export const BUILD_MANIFEST_FILE = 'mengine-build.json';
+const MAX_TIMELINE_PARTICLE_TIME = 300;
 
 export type BuildAssetMode = 'all' | 'referenced';
 
@@ -830,9 +831,10 @@ function scanBuildAssetDependencies(
       const activationTargets = new Set<string>();
       const audioTargets = new Set<string>();
       const animationTargets = new Set<string>();
+      const particleTargets = new Set<string>();
       for (const trackValue of timeline.tracks) {
         const track = jsonObject(trackValue);
-        if (!track || (track.type !== 'signal' && track.type !== 'activation' && track.type !== 'audio' && track.type !== 'animation')) {
+        if (!track || (track.type !== 'signal' && track.type !== 'activation' && track.type !== 'audio' && track.type !== 'animation' && track.type !== 'particle')) {
           throw new Error(`invalid Timeline asset ${source}: unsupported track type`);
         }
         const id = strictStringValue(track, 'id', `Timeline asset ${source}`);
@@ -843,6 +845,9 @@ function scanBuildAssetDependencies(
         trackIds.add(id);
         if (track.muted != null && typeof track.muted !== 'boolean') {
           throw new Error(`invalid Timeline asset ${source}: track muted must be boolean`);
+        }
+        if (track.locked != null && typeof track.locked !== 'boolean') {
+          throw new Error(`invalid Timeline asset ${source}: track locked must be boolean`);
         }
         if (track.type === 'signal') {
           if (track.markers != null && !Array.isArray(track.markers)) {
@@ -926,6 +931,37 @@ function scanBuildAssetDependencies(
         for (let index = 1; index < clips.length; index += 1) {
           if (clips[index - 1].start + clips[index - 1].duration > clips[index].start) {
             throw new Error(`invalid Timeline asset ${source}: audio clips overlap`);
+          }
+        }
+          continue;
+        }
+        if (track.type === 'particle') {
+        const target = strictStringValue(track, 'target', `Timeline asset ${source}`).replaceAll('\\', '/');
+        if (!target || target.startsWith('/')
+          || target.split('/').some((segment) => !segment || segment === '.' || segment === '..')) {
+          throw new Error(`invalid Timeline asset ${source}: particle target must be a descendant path without '.' or '..'`);
+        }
+        if (particleTargets.has(target)) {
+          throw new Error(`invalid Timeline asset ${source}: particle target ${target} is controlled more than once`);
+        }
+        particleTargets.add(target);
+        if (track.clips != null && !Array.isArray(track.clips)) {
+          throw new Error(`invalid Timeline asset ${source}: particle clips must be an array`);
+        }
+        const clips = (Array.isArray(track.clips) ? track.clips : []).map((clipValue) => {
+          const clip = jsonObject(clipValue);
+          if (!clip || typeof clip.start !== 'number' || !Number.isFinite(clip.start)
+            || typeof clip.duration !== 'number' || !Number.isFinite(clip.duration)
+            || clip.start < 0 || clip.duration <= 0 || clip.start + clip.duration > timelineDuration
+            || clip.clip_in != null && (typeof clip.clip_in !== 'number' || !Number.isFinite(clip.clip_in) || clip.clip_in < 0)
+            || (typeof clip.clip_in === 'number' ? clip.clip_in : 0) + clip.duration > MAX_TIMELINE_PARTICLE_TIME) {
+            throw new Error(`invalid Timeline asset ${source}: particle clip is invalid or outside duration`);
+          }
+          return clip as { start: number; duration: number };
+        }).sort((left, right) => left.start - right.start);
+        for (let index = 1; index < clips.length; index += 1) {
+          if (clips[index - 1].start + clips[index - 1].duration > clips[index].start) {
+            throw new Error(`invalid Timeline asset ${source}: particle clips overlap`);
           }
         }
           continue;

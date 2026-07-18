@@ -3,6 +3,7 @@ import type {
   TimelineAnimationClip,
   TimelineAsset,
   TimelineAudioClip,
+  TimelineParticleClip,
   TimelineSignal,
 } from './timelineAsset.ts';
 
@@ -13,7 +14,8 @@ export type SequencerClipboard =
   | { type: 'signal'; sourceTrackId: string; item: TimelineSignal }
   | { type: 'activation'; sourceTrackId: string; item: TimelineActivationClip }
   | { type: 'audio'; sourceTrackId: string; item: TimelineAudioClip }
-  | { type: 'animation'; sourceTrackId: string; item: TimelineAnimationClip };
+  | { type: 'animation'; sourceTrackId: string; item: TimelineAnimationClip }
+  | { type: 'particle'; sourceTrackId: string; item: TimelineParticleClip };
 
 export type SequencerPasteResult =
   | { ok: true; asset: TimelineAsset; trackIndex: number; itemIndex: number }
@@ -233,9 +235,14 @@ export function copySequencerItem(
     if (!item) return null;
     return { type: 'audio', sourceTrackId: track.id, item: structuredClone(item) };
   }
+  if (track.type === 'animation') {
+    const item = track.clips[itemIndex];
+    if (!item) return null;
+    return { type: 'animation', sourceTrackId: track.id, item: structuredClone(item) };
+  }
   const item = track.clips[itemIndex];
   if (!item) return null;
-  return { type: 'animation', sourceTrackId: track.id, item: structuredClone(item) };
+  return { type: 'particle', sourceTrackId: track.id, item: structuredClone(item) };
 }
 
 export function resolveSequencerPasteTrack(
@@ -296,6 +303,12 @@ export function pasteSequencerItem(
     return { ok: true, asset: next, trackIndex, itemIndex: track.clips.indexOf(item) };
   }
   if (track.type === 'animation' && clipboard.type === 'animation') {
+    const item = { ...structuredClone(clipboard.item), ...placement };
+    track.clips.push(item);
+    track.clips.sort((left, right) => left.start - right.start);
+    return { ok: true, asset: next, trackIndex, itemIndex: track.clips.indexOf(item) };
+  }
+  if (track.type === 'particle' && clipboard.type === 'particle') {
     const item = { ...structuredClone(clipboard.item), ...placement };
     track.clips.push(item);
     track.clips.sort((left, right) => left.start - right.start);

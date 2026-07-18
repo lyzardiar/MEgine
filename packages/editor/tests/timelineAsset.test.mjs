@@ -68,3 +68,32 @@ test('timeline activation tracks normalize bindings and reject ambiguous clips',
     tracks: [{ type: 'signal', id: 'events', name: 'Events', locked: 'yes' }],
   })), /locked must be boolean/);
 });
+
+test('timeline particle tracks normalize prewarm and reject invalid clips', () => {
+  const asset = parseTimelineAsset(JSON.stringify({
+    version: 1,
+    name: 'Particles',
+    duration: 4,
+    frame_rate: 30,
+    tracks: [{
+      type: 'particle', id: 'fx', name: 'FX', target: 'Effects\\Burst',
+      clips: [
+        { start: 2, duration: 1, clip_in: 0.5 },
+        { start: 0, duration: 1 },
+      ],
+    }],
+  }));
+  assert.equal(asset.tracks[0].target, 'Effects/Burst');
+  assert.deepEqual(asset.tracks[0].clips, [
+    { start: 0, duration: 1, clip_in: 0 },
+    { start: 2, duration: 1, clip_in: 0.5 },
+  ]);
+  assert.deepEqual(parseTimelineAsset(serializeTimelineAsset(asset)), asset);
+  assert.throws(() => parseTimelineAsset(JSON.stringify({
+    version: 1, duration: 2,
+    tracks: [{
+      type: 'particle', id: 'fx', name: 'FX', target: 'Burst',
+      clips: [{ start: 0, duration: 1, clip_in: 300 }],
+    }],
+  })), /invalid/);
+});

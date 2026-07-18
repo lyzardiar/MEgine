@@ -430,6 +430,9 @@ test('buildPcPackage includes and validates TimelineDirector assets', () => {
       }, {
         type: 'animation', id: 'hero', name: 'Hero', target: 'Characters/Hero',
         clips: [{ start: 0, duration: 2, clip: 'Assets/Animations/Hero.manim', clip_in: 0.1, speed: 1 }],
+      }, {
+        type: 'particle', id: 'fx', name: 'FX', target: 'Effects/Burst', locked: true,
+        clips: [{ start: 0.5, duration: 1, clip_in: 0.25 }],
       }],
     }));
     mkdirSync(join(paths.project, 'Assets', 'Audio'), { recursive: true });
@@ -499,6 +502,33 @@ test('buildPcPackage rejects overlapping Timeline activation clips without publi
       runtimePath: paths.runtime,
       engineVersion: 'test-engine',
     }), /activation clips overlap/);
+    assert.equal(existsSync(paths.output), false);
+  } finally {
+    rmSync(paths.root, { recursive: true, force: true });
+  }
+});
+
+test('buildPcPackage rejects invalid Timeline particle clips without publishing output', () => {
+  const paths = fixture('invalid-timeline-particle');
+  try {
+    writeFileSync(join(paths.project, 'Assets', 'Scenes', 'Main.mscene'), JSON.stringify({
+      world: { entities: [{ components: {
+        TimelineDirector: { asset: 'Assets/Timelines/Broken.mtimeline' },
+      } }] },
+    }));
+    writeFileSync(join(paths.project, 'Assets', 'Timelines', 'Broken.mtimeline'), JSON.stringify({
+      version: 1, duration: 2,
+      tracks: [{
+        type: 'particle', id: 'fx', name: 'FX', target: 'Effects/Burst',
+        clips: [{ start: 0, duration: 1, clip_in: 300 }],
+      }],
+    }));
+    assert.throws(() => buildPcPackage({
+      projectDir: paths.project,
+      outputDir: paths.output,
+      runtimePath: paths.runtime,
+      engineVersion: 'test-engine',
+    }), /particle clip is invalid/);
     assert.equal(existsSync(paths.output), false);
   } finally {
     rmSync(paths.root, { recursive: true, force: true });

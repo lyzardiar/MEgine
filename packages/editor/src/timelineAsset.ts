@@ -28,6 +28,12 @@ export type TimelineAnimationClip = {
   speed: number;
 };
 
+export type TimelineParticleClip = {
+  start: number;
+  duration: number;
+  clip_in: number;
+};
+
 export type TimelineSignalTrack = {
   type: 'signal';
   id: string;
@@ -67,7 +73,17 @@ export type TimelineAnimationTrack = {
   clips: TimelineAnimationClip[];
 };
 
-export type TimelineTrack = TimelineSignalTrack | TimelineActivationTrack | TimelineAudioTrack | TimelineAnimationTrack;
+export type TimelineParticleTrack = {
+  type: 'particle';
+  id: string;
+  name: string;
+  muted: boolean;
+  locked: boolean;
+  target: string;
+  clips: TimelineParticleClip[];
+};
+
+export type TimelineTrack = TimelineSignalTrack | TimelineActivationTrack | TimelineAudioTrack | TimelineAnimationTrack | TimelineParticleTrack;
 
 export type TimelineAsset = {
   version: 1;
@@ -76,6 +92,8 @@ export type TimelineAsset = {
   frame_rate: number;
   tracks: TimelineTrack[];
 };
+
+export const TIMELINE_MAX_PARTICLE_TIME = 300;
 
 function object(value: unknown): Record<string, unknown> {
   return value != null && typeof value === 'object' && !Array.isArray(value)
@@ -112,7 +130,7 @@ function animationAssetIsPortable(path: string): boolean {
 }
 
 function trackLabel(type: TimelineTrack['type']): string {
-  return type === 'signal' ? 'Signal' : type === 'activation' ? 'Activation' : type === 'audio' ? 'Audio' : 'Animation';
+  return type === 'signal' ? 'Signal' : type === 'activation' ? 'Activation' : type === 'audio' ? 'Audio' : type === 'animation' ? 'Animation' : 'Particle';
 }
 
 function targetIsPortable(target: string): boolean {
@@ -146,7 +164,7 @@ export function normalizeTimelineAsset(value: unknown): TimelineAsset {
   for (const [index, candidate] of (Array.isArray(raw.tracks) ? raw.tracks : []).entries()) {
     const track = object(candidate);
     const type = String(track.type ?? 'signal');
-    if (type !== 'signal' && type !== 'activation' && type !== 'audio' && type !== 'animation') continue;
+    if (type !== 'signal' && type !== 'activation' && type !== 'audio' && type !== 'animation' && type !== 'particle') continue;
     const baseId = String(track.id ?? `${type}-${index + 1}`).trim() || `${type}-${index + 1}`;
     let id = baseId;
     let suffix = 1;
@@ -212,7 +230,7 @@ export function normalizeTimelineAsset(value: unknown): TimelineAsset {
         target: activationTarget(track.target),
         clips,
       });
-    } else {
+    } else if (type === 'animation') {
       const clips = (Array.isArray(track.clips) ? track.clips : [])
         .map((clipValue) => {
           const clip = object(clipValue);
@@ -224,6 +242,28 @@ export function normalizeTimelineAsset(value: unknown): TimelineAsset {
             clip_in: Math.max(0, finite(clip.clip_in, 0)),
             speed: Math.max(-4, Math.min(4, finite(clip.speed, 1))),
           } satisfies TimelineAnimationClip;
+        })
+        .sort((left, right) => left.start - right.start);
+      tracks.push({
+        type,
+        id,
+        name,
+        muted: Boolean(track.muted),
+        locked: Boolean(track.locked),
+        target: activationTarget(track.target),
+        clips,
+      });
+    } else {
+      const clips = (Array.isArray(track.clips) ? track.clips : [])
+        .map((clipValue) => {
+          const clip = object(clipValue);
+          const start = Math.max(0, Math.min(duration, finite(clip.start, 0)));
+          const clipDuration = Math.max(0.001, Math.min(duration - start, finite(clip.duration, 1)));
+          return {
+            start,
+            duration: clipDuration,
+            clip_in: Math.max(0, Math.min(TIMELINE_MAX_PARTICLE_TIME - clipDuration, finite(clip.clip_in, 0))),
+          } satisfies TimelineParticleClip;
         })
         .sort((left, right) => left.start - right.start);
       tracks.push({
@@ -255,6 +295,7 @@ export function validateTimelineAsset(asset: TimelineAsset): void {
   const activationTargets = new Set<string>();
   const audioTargets = new Set<string>();
   const animationTargets = new Set<string>();
+  const particleTargets = new Set<string>();
   for (const track of asset.tracks) {
     if (!track.id.trim() || ids.has(track.id)) throw new Error('Timeline track IDs must be non-empty and unique');
     ids.add(track.id);
@@ -270,7 +311,13 @@ export function validateTimelineAsset(asset: TimelineAsset): void {
     }
     const target = activationTarget(track.target);
     if (!targetIsPortable(target)) throw new Error(`${trackLabel(track.type)} track ${track.name} requires a descendant target path without '.' or '..'`);
-    const targets = track.type === 'activation' ? activationTargets : track.type === 'audio' ? audioTargets : animationTargets;
+    const targets = track.type === 'activation'
+      ? activationTargets
+      : track.type === 'audio'
+        ? audioTargets
+        : track.type === 'animation'
+          ? animationTargets
+          : particleTargets;
     if (targets.has(target)) throw new Error(`${trackLabel(track.type)} target ${target} is controlled by more than one track`);
     targets.add(target);
     if (track.type === 'audio') {
@@ -289,6 +336,14 @@ export function validateTimelineAsset(asset: TimelineAsset): void {
           || !Number.isFinite(clip.clip_in) || clip.clip_in < 0
           || !Number.isFinite(clip.speed) || clip.speed < -4 || clip.speed > 4) {
           throw new Error(`Animation track ${track.name} contains invalid clip settings`);
+        }
+      }
+    }
+    if (track.type === 'particle') {
+      for (const clip of track.clips) {
+        if (!Number.isFinite(clip.clip_in) || clip.clip_in < 0
+          || clip.clip_in + clip.duration > TIMELINE_MAX_PARTICLE_TIME) {
+          throw new Error(`Particle track ${track.name} contains invalid clip settings`);
         }
       }
     }
@@ -321,9 +376,10 @@ export function parseTimelineAsset(text: string): TimelineAsset {
   const activationTargets = new Set<string>();
   const audioTargets = new Set<string>();
   const animationTargets = new Set<string>();
+  const particleTargets = new Set<string>();
   for (const trackValue of parsed.tracks) {
     const track = object(trackValue);
-    if (track.type !== 'signal' && track.type !== 'activation' && track.type !== 'audio' && track.type !== 'animation') throw new Error(`Unsupported Timeline track type: ${String(track.type)}`);
+    if (track.type !== 'signal' && track.type !== 'activation' && track.type !== 'audio' && track.type !== 'animation' && track.type !== 'particle') throw new Error(`Unsupported Timeline track type: ${String(track.type)}`);
     if (typeof track.id !== 'string' || !track.id.trim() || ids.has(track.id.trim())) {
       throw new Error('Timeline track IDs must be non-empty strings and unique');
     }
@@ -343,10 +399,16 @@ export function parseTimelineAsset(text: string): TimelineAsset {
       }
       continue;
     }
-    const label = track.type === 'activation' ? 'Activation' : track.type === 'audio' ? 'Audio' : 'Animation';
+    const label = track.type === 'activation' ? 'Activation' : track.type === 'audio' ? 'Audio' : track.type === 'animation' ? 'Animation' : 'Particle';
     if (typeof track.target !== 'string' || !targetIsPortable(activationTarget(track.target))) throw new Error(`${label} track ${track.id} requires a descendant target path without '.' or '..'`);
     const target = activationTarget(track.target);
-    const targets = track.type === 'activation' ? activationTargets : track.type === 'audio' ? audioTargets : animationTargets;
+    const targets = track.type === 'activation'
+      ? activationTargets
+      : track.type === 'audio'
+        ? audioTargets
+        : track.type === 'animation'
+          ? animationTargets
+          : particleTargets;
     if (targets.has(target)) throw new Error(`${label} target ${target} is controlled by more than one track`);
     targets.add(target);
     if (track.clips != null && !Array.isArray(track.clips)) throw new Error(`${label} track ${track.id} clips must be an array`);
@@ -363,6 +425,9 @@ export function parseTimelineAsset(text: string): TimelineAsset {
         || track.type === 'animation' && (typeof clip.clip !== 'string' || !animationAssetIsPortable(audioAssetPath(clip.clip))
           || clip.clip_in != null && (typeof clip.clip_in !== 'number' || !Number.isFinite(clip.clip_in) || clip.clip_in < 0)
           || clip.speed != null && (typeof clip.speed !== 'number' || !Number.isFinite(clip.speed) || clip.speed < -4 || clip.speed > 4))
+        || track.type === 'particle' && clip.clip_in != null
+          && (typeof clip.clip_in !== 'number' || !Number.isFinite(clip.clip_in) || clip.clip_in < 0
+            || clip.clip_in + clip.duration > TIMELINE_MAX_PARTICLE_TIME)
         || clip.start < 0 || clip.duration <= 0
         || clip.start + clip.duration > parsedDuration) {
         throw new Error(`${label} track ${track.id} contains an invalid or out-of-range clip`);

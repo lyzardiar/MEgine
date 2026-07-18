@@ -661,7 +661,7 @@ Referenced Only 是可用的单包裁剪基础，仍不等同于完整 Addressab
 - 全局 Duration 缩短不会再暗中裁剪锁定内容：锁定 Marker/Clip 的最晚结束时间成为合法最小时长，实际收缩只调整未锁定轨道。轨道列表以条纹、锁图标和禁止光标明确反馈状态。
 - Track Inspector 提供带边界检查的 Move Up/Move Down，排序使用纯函数生成新资产并进入同一 Undo/Redo 历史；锁定、越界和目标失效均返回明确诊断。
 
-轨道锁定解决的是单轨内容保护，不等同于成熟组织系统。后续仍需 Track Group、折叠、组级 Mute/Lock、拖拽排序、多选、Ripple Edit、吸附参考线、通用 Binding Table，以及 Camera、Particle、Animator 和嵌套 Timeline 轨道。
+轨道锁定解决的是单轨内容保护，不等同于成熟组织系统。后续仍需 Track Group、折叠、组级 Mute/Lock、拖拽排序、多选、Ripple Edit、吸附参考线、通用 Binding Table，以及 Camera、Animator 和嵌套 Timeline 轨道。
 
 ## 46. 2026-07-19 Timeline Inspector 编辑事务
 
@@ -670,3 +670,13 @@ Referenced Only 是可用的单包裁剪基础，仍不等同于完整 Addressab
 - 资产切换会明确终止正在编辑的事务；保存不会清空历史，因此保存后仍能撤销，并依据序列化指纹正确恢复 Dirty 状态。
 
 该实现先收敛 Timeline 自有历史的手势粒度。成熟编辑器仍应把场景、材质、动画、Timeline 等资源编辑统一到带事务名称、资源路径和合并键的全局 Undo 服务，并在菜单中显示下一步可撤销/重做动作。
+
+## 47. 2026-07-19 Timeline Particle Track 闭环
+
+- `.mtimeline` 新增第五类 `particle` 轨道，使用 Director 后代路径绑定 `ParticleEmitter2D` 或 `ParticleEmitter3D`。片段保存 Start、Duration 与 Clip In/Prewarm；同一资产禁止多条 Particle Track 控制同一路径，片段禁止重叠。
+- `ParticleWorld` 新增实体级确定性 Seek 与 Reset。进入片段、暂停 Scrub、循环跳转、倒放、非 1 倍速或单帧跨度超过增量模拟安全上限时，从固定 Seed 按运行时相同子步重建到片段本地时间，并跳过当帧普通更新，避免重复推进或卡顿帧失步；连续 1 倍速正向播放继续使用增量模拟。
+- 暂停 Timeline 的播放头变更现在按“资产路径 + 上次求值时间”检测并重采样所有 Activation、Audio、Animation 与 Particle Track，不触发 Signal、也不推进 Director 时间。显式 Stop/Reset 与 Seek 使用独立入口，Stop 仍恢复 authored 状态，Seek 才强制重新求值。
+- Pause 冻结现有粒子；离开片段、Mute、Stop、绑定失效或 Director 失活时恢复 authored 粒子组件并清空 Timeline 瞬时粒子。Sequencer 支持创建轨道/片段、拖动和两侧裁剪、Prewarm、Undo/Redo、锁定、复制粘贴与碰撞安全放置。
+- Editor、CLI 与 Rust 资产解析共享 300 秒的单片段最大确定性模拟时间（`clip_in + duration`），同时由 `ParticleWorld` 入口兜底，防止异常资产产生无界重建。PC Build 会接受并校验 Particle Track、锁定字段、绑定路径、范围与重叠。
+
+当前 Particle Track 是基础发射控制，不是 Unity Particle System Timeline 的完整替代：尚缺 Burst/Emission Curve、颜色和尺寸曲线、Sub Emitter、碰撞、Trails、GPU 粒子、独立 Time Scale、片段混合和缓存快照。世界空间粒子 Seek 使用目标当帧 Transform 重建，不能还原过去每一帧移动发射器的历史轨迹；后续需引入模拟缓存或可采样的 Transform 历史。恢复 authored 组件时会重置瞬时粒子而非恢复进入 Timeline 前的粒子快照。

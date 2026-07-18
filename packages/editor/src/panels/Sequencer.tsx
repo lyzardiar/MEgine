@@ -40,6 +40,7 @@ import {
   parseTimelineAsset,
   serializeTimelineAsset,
   snapTimelineAssetTime,
+  TIMELINE_MAX_PARTICLE_TIME,
   validateTimelineAsset,
   type TimelineAsset,
 } from '../timelineAsset';
@@ -468,6 +469,18 @@ export function Sequencer(props: SequencerProps) {
     setSelection({ track: asset.tracks.length, marker: null });
   };
 
+  const addParticleTrack = () => {
+    if (!asset) return;
+    const used = new Set(asset.tracks.map((track) => track.id));
+    let index = asset.tracks.length + 1;
+    let id = `particle-${index}`;
+    while (used.has(id)) id = `particle-${++index}`;
+    update((draft) => draft.tracks.push({
+      type: 'particle', id, name: `Particle Track ${index}`, muted: false, locked: false, target: 'Particles', clips: [],
+    }));
+    setSelection({ track: asset.tracks.length, marker: null });
+  };
+
   const addMarker = (trackIndex = selection?.track ?? 0, requestedTime = time) => {
     if (!asset || asset.tracks[trackIndex]?.type !== 'signal') return;
     const markerTime = snapTimelineAssetTime(requestedTime, asset);
@@ -559,6 +572,32 @@ export function Sequencer(props: SequencerProps) {
     setSelection({ track: trackIndex, marker });
   };
 
+  const addParticleClip = (trackIndex: number, requestedTime = time) => {
+    if (!asset || asset.tracks[trackIndex]?.type !== 'particle') return;
+    const track = asset.tracks[trackIndex];
+    const placement = findSequencerClipPlacement(
+      track.clips,
+      requestedTime,
+      Math.min(1, asset.duration),
+      asset.duration,
+      asset.frame_rate,
+    );
+    if (!placement) {
+      setError('Particle Track has no free space for another clip.');
+      return;
+    }
+    const marker = track.clips.filter((clip) => clip.start < placement.start).length;
+    update((draft) => {
+      const target = draft.tracks[trackIndex];
+      if (target.type === 'particle') {
+        target.clips.push({ ...placement, clip_in: 0 });
+        target.clips.sort((left, right) => left.start - right.start);
+      }
+    });
+    setError(null);
+    setSelection({ track: trackIndex, marker });
+  };
+
   const addTrackItem = (trackIndex: number, requestedTime: number) => {
     const track = asset?.tracks[trackIndex];
     if (track?.locked) {
@@ -569,6 +608,7 @@ export function Sequencer(props: SequencerProps) {
     else if (track?.type === 'activation') addActivationClip(trackIndex, requestedTime);
     else if (track?.type === 'audio') addAudioClip(trackIndex, requestedTime);
     else if (track?.type === 'animation') addAnimationClip(trackIndex, requestedTime);
+    else if (track?.type === 'particle') addParticleClip(trackIndex, requestedTime);
   };
 
   const copySelectedItem = (): SequencerClipboard | null => {
@@ -719,6 +759,8 @@ export function Sequencer(props: SequencerProps) {
                 ? { offset: originalTrack.clips[markerIndex].clip_in, rate: originalTrack.clips[markerIndex].pitch }
                 : trimEdge === 'start' && originalTrack.type === 'animation'
                   ? { offset: originalTrack.clips[markerIndex].clip_in, rate: originalTrack.clips[markerIndex].speed }
+                  : trimEdge === 'start' && originalTrack.type === 'particle'
+                    ? { offset: originalTrack.clips[markerIndex].clip_in, rate: 1 }
                   : undefined,
             );
             clip.start = range.start;
@@ -730,6 +772,13 @@ export function Sequencer(props: SequencerProps) {
             if (trimEdge === 'start' && track.type === 'animation' && originalTrack.type === 'animation') {
               const original = originalTrack.clips[markerIndex];
               track.clips[markerIndex].clip_in = Math.max(0, original.clip_in + range.sourceOffsetDelta * original.speed);
+            }
+            if (trimEdge === 'start' && track.type === 'particle' && originalTrack.type === 'particle') {
+              const original = originalTrack.clips[markerIndex];
+              track.clips[markerIndex].clip_in = Math.max(0, original.clip_in + range.sourceOffsetDelta);
+            }
+            if (track.type === 'particle') {
+              clip.duration = Math.min(clip.duration, TIMELINE_MAX_PARTICLE_TIME - track.clips[markerIndex].clip_in);
             }
           } else {
             const range = moveSequencerClip(
@@ -789,7 +838,10 @@ export function Sequencer(props: SequencerProps) {
   const selectedAnimationClip = selection?.marker != null && selectedTrack?.type === 'animation'
     ? selectedTrack.clips[selection.marker]
     : null;
-  const selectedClip = selectedActivationClip ?? selectedAudioClip ?? selectedAnimationClip;
+  const selectedParticleClip = selection?.marker != null && selectedTrack?.type === 'particle'
+    ? selectedTrack.clips[selection.marker]
+    : null;
+  const selectedClip = selectedActivationClip ?? selectedAudioClip ?? selectedAnimationClip ?? selectedParticleClip;
   const audioAssets = listProjectFiles().filter((entry) => entry.kind === 'audio');
   const animationAssets = listProjectFiles().filter((entry) => entry.kind === 'animation');
   const laneViewportWidth = Math.max(360, tracksWidth - 180);
@@ -933,6 +985,7 @@ export function Sequencer(props: SequencerProps) {
             <button type="button" onClick={(event) => { addActivationTrack(); event.currentTarget.closest('details')?.removeAttribute('open'); }}>Activation</button>
             <button type="button" onClick={(event) => { addAudioTrack(); event.currentTarget.closest('details')?.removeAttribute('open'); }}>Audio</button>
             <button type="button" onClick={(event) => { addAnimationTrack(); event.currentTarget.closest('details')?.removeAttribute('open'); }}>Animation</button>
+            <button type="button" onClick={(event) => { addParticleTrack(); event.currentTarget.closest('details')?.removeAttribute('open'); }}>Particle</button>
           </div>
         </details>
         <button type="button" disabled={!selectedTrack || selectedTrack.locked} title={selectedTrack?.locked ? 'Unlock the track to add items' : undefined} onClick={() => selectedTrack && addTrackItem(selection!.track, displayTime)}>
@@ -968,7 +1021,7 @@ export function Sequencer(props: SequencerProps) {
           {asset.tracks.map((track, trackIndex) => (
             <div className={`sequencer-track-row${selection?.track === trackIndex ? ' selected' : ''}${track.locked ? ' locked' : ''}`} key={track.id}>
               <button type="button" className="sequencer-track-header" onClick={() => setSelection({ track: trackIndex, marker: null })}>
-                <span className={`sequencer-track-icon ${track.type}`}>{track.type === 'signal' ? 'S' : track.type === 'activation' ? 'A' : track.type === 'audio' ? '♪' : 'M'}</span>
+                <span className={`sequencer-track-icon ${track.type}`}>{track.type === 'signal' ? 'S' : track.type === 'activation' ? 'A' : track.type === 'audio' ? '♪' : track.type === 'animation' ? 'M' : 'P'}</span>
                 <span>{track.name}</span>
                 {track.muted && <small>Muted</small>}
                 {track.locked && <Lock className="sequencer-track-lock" size={11} aria-label="Locked" />}
@@ -1035,15 +1088,28 @@ export function Sequencer(props: SequencerProps) {
                     onPointerDown={(event) => startMarkerDrag(event, trackIndex, clipIndex)}
                   >M {clip.clip.split('/').at(-1)}</button>
                 ))}
+                {track.type === 'particle' && track.clips.map((clip, clipIndex) => (
+                  <button
+                    type="button"
+                    className={`sequencer-particle-clip${selection?.track === trackIndex && selection.marker === clipIndex ? ' selected' : ''}`}
+                    style={{
+                      left: `${clip.start / asset.duration * 100}%`,
+                      width: `${clip.duration / asset.duration * 100}%`,
+                    }}
+                    title={`Particle simulation · ${clip.start.toFixed(3)}s + ${clip.duration.toFixed(3)}s · prewarm ${clip.clip_in.toFixed(3)}s`}
+                    key={`${clip.start}-${clip.clip_in}-${clipIndex}`}
+                    onPointerDown={(event) => startMarkerDrag(event, trackIndex, clipIndex)}
+                  >P PARTICLES</button>
+                ))}
                 <i className="sequencer-playhead" style={{ left: `${displayTime / asset.duration * 100}%` }} />
               </div>
             </div>
           ))}
-          {asset.tracks.length === 0 && <div className="sequencer-empty-track">Add a Signal, Activation, Audio, or Animation Track to begin authoring.</div>}
+          {asset.tracks.length === 0 && <div className="sequencer-empty-track">Add a Signal, Activation, Audio, Animation, or Particle Track to begin authoring.</div>}
         </div>
 
         <aside className="sequencer-inspector" onFocusCapture={beginInspectorEdit} onBlurCapture={endInspectorEdit}>
-          <h3>{selectedMarker ? 'Signal Marker' : selectedActivationClip ? 'Activation Clip' : selectedAudioClip ? 'Audio Clip' : selectedAnimationClip ? 'Animation Clip' : selectedTrack ? `${selectedTrack.type === 'signal' ? 'Signal' : selectedTrack.type === 'activation' ? 'Activation' : selectedTrack.type === 'audio' ? 'Audio' : 'Animation'} Track` : 'Timeline Asset'}</h3>
+          <h3>{selectedMarker ? 'Signal Marker' : selectedActivationClip ? 'Activation Clip' : selectedAudioClip ? 'Audio Clip' : selectedAnimationClip ? 'Animation Clip' : selectedParticleClip ? 'Particle Clip' : selectedTrack ? `${selectedTrack.type === 'signal' ? 'Signal' : selectedTrack.type === 'activation' ? 'Activation' : selectedTrack.type === 'audio' ? 'Audio' : selectedTrack.type === 'animation' ? 'Animation' : 'Particle'} Track` : 'Timeline Asset'}</h3>
           {!selectedTrack && <>
             <label>Name <input value={asset.name} onChange={(event) => update((draft) => { draft.name = event.target.value; })} /></label>
             <label>Duration <input type="number" min={0.001} step={0.1} value={asset.duration} onChange={(event) => update((draft) => {
@@ -1074,7 +1140,7 @@ export function Sequencer(props: SequencerProps) {
             {selectedTrack.locked && <p className="sequencer-lock-notice"><Lock size={12} /> Content editing is disabled for this track.</p>}
             <fieldset className="sequencer-inspector-fields" disabled={selectedTrack.locked}>
               <label>Name <input value={selectedTrack.name} onChange={(event) => update((draft) => { draft.tracks[selection!.track].name = event.target.value; })} /></label>
-              {selectedTrack.type !== 'signal' && <label>Target (child path)<input value={selectedTrack.target} placeholder={selectedTrack.type === 'audio' ? 'Audio/Music' : selectedTrack.type === 'animation' ? 'Characters/Hero' : 'Canvas/Dialog'} onChange={(event) => update((draft) => {
+              {selectedTrack.type !== 'signal' && <label>Target (child path)<input value={selectedTrack.target} placeholder={selectedTrack.type === 'audio' ? 'Audio/Music' : selectedTrack.type === 'animation' ? 'Characters/Hero' : selectedTrack.type === 'particle' ? 'Effects/Burst' : 'Canvas/Dialog'} onChange={(event) => update((draft) => {
                 const track = draft.tracks[selection!.track];
                 if (track.type !== 'signal') track.target = event.target.value.replaceAll('\\', '/');
               })} /></label>}
@@ -1139,7 +1205,7 @@ export function Sequencer(props: SequencerProps) {
               );
               clip.start = range.start;
             })} /></label>
-            <label>Duration <input type="number" min={1 / asset.frame_rate} max={asset.duration - selectedClip.start} step={1 / asset.frame_rate} value={selectedClip.duration} onChange={(event) => update((draft) => {
+            <label>Duration <input type="number" min={1 / asset.frame_rate} max={selectedParticleClip ? Math.min(asset.duration - selectedClip.start, TIMELINE_MAX_PARTICLE_TIME - selectedParticleClip.clip_in) : asset.duration - selectedClip.start} step={1 / asset.frame_rate} value={selectedClip.duration} onChange={(event) => update((draft) => {
               const track = draft.tracks[selection!.track];
               if (track.type === 'signal') return;
               const clip = track.clips[selection!.marker!];
@@ -1151,7 +1217,15 @@ export function Sequencer(props: SequencerProps) {
                 draft.duration,
                 draft.frame_rate,
               );
-              clip.duration = range.duration;
+              if (track.type === 'particle') {
+                const particleClip = track.clips[selection!.marker!];
+                particleClip.duration = Math.min(
+                  range.duration,
+                  TIMELINE_MAX_PARTICLE_TIME - particleClip.clip_in,
+                );
+              } else {
+                clip.duration = range.duration;
+              }
             })} /></label>
             {selectedActivationClip && <label className="sequencer-check"><input type="checkbox" checked={selectedActivationClip.active} onChange={(event) => update((draft) => {
               const track = draft.tracks[selection!.track];
@@ -1194,6 +1268,16 @@ export function Sequencer(props: SequencerProps) {
                 const track = draft.tracks[selection!.track];
                 if (track.type === 'animation') track.clips[selection!.marker!].speed = Math.max(-4, Math.min(4, Number(event.target.value) || 0));
               })} /></label>
+            </>}
+            {selectedParticleClip && <>
+              <label>Prewarm / Clip In <input type="number" min={0} max={TIMELINE_MAX_PARTICLE_TIME - selectedParticleClip.duration} step={1 / asset.frame_rate} value={selectedParticleClip.clip_in} onChange={(event) => update((draft) => {
+                const track = draft.tracks[selection!.track];
+                if (track.type === 'particle') {
+                  const clip = track.clips[selection!.marker!];
+                  clip.clip_in = Math.max(0, Math.min(TIMELINE_MAX_PARTICLE_TIME - clip.duration, Number(event.target.value) || 0));
+                }
+              })} /></label>
+              <p className="sequencer-field-help">Particle state is rebuilt deterministically from this local simulation time when entering or seeking the clip.</p>
             </>}
             <button type="button" className="sequencer-danger" onClick={() => {
               update((draft) => {

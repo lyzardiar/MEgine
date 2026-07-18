@@ -31,7 +31,7 @@ use mengine_runtime::scenes::{LoadedScene, SceneManager, SceneSelector};
 use mengine_runtime::sorting::{sort_world_primitives, SortingLayers};
 use mengine_runtime::sprites::collect_world_primitives_with_hierarchy;
 use mengine_runtime::textures::RuntimeTextureCache;
-use mengine_runtime::timeline::TimelineRuntime;
+use mengine_runtime::timeline::{RuntimeParticleCommand, TimelineRuntime};
 use mengine_runtime::ui::{
     append_ui_focus_ring, collect_ui_frame_with_hierarchy, next_ui_focus, set_toggle_value,
     UiControlKind, UiControlRegion,
@@ -359,7 +359,7 @@ impl App {
                 let entity = Entity::from_u64(*entity);
                 if let Some(director) = self.world.get_component_mut::<TimelineDirector>(entity) {
                     director.time = *time;
-                    self.timelines.reset_director(entity);
+                    self.timelines.seek_director(entity);
                 } else {
                     log::warn!(
                         "script tried to seek TimelineDirector on missing entity {entity:?}"
@@ -1497,6 +1497,7 @@ function onTick(dt, frame) {
                         failure.error
                     );
                 }
+                let particle_commands = self.timelines.take_particle_commands();
                 let timeline_signals = self
                     .timelines
                     .take_signals()
@@ -1517,6 +1518,22 @@ function onTick(dt, frame) {
                         failure.clip,
                         failure.error
                     );
+                }
+                for command in particle_commands {
+                    match command {
+                        RuntimeParticleCommand::Seek { entity, time } => {
+                            if !self.particles.seek_entity(&self.world, entity, time) {
+                                log::error!(
+                                    "Timeline particle seek failed for {:?} at {:.3}s",
+                                    entity,
+                                    time
+                                );
+                            }
+                        }
+                        RuntimeParticleCommand::Reset { entity } => {
+                            self.particles.reset_entity(entity);
+                        }
+                    }
                 }
                 let animation_events = self
                     .animations

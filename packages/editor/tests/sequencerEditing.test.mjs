@@ -175,3 +175,22 @@ test('Sequencer track ordering is immutable and rejects locked or boundary moves
   assert.equal(boundary.ok, false);
   assert.match(boundary.error, /already at the top/);
 });
+
+test('Sequencer particle clipboard preserves prewarm and collision-safe placement', () => {
+  const asset = timeline();
+  asset.tracks.push({
+    type: 'particle', id: 'fx', name: 'FX', muted: false, locked: false, target: 'Effects/Burst',
+    clips: [{ start: 1, duration: 1.5, clip_in: 0.75 }],
+  });
+  const clipboard = copySequencerItem(asset, 3, 0);
+  assert.ok(clipboard);
+  assert.equal(clipboard.type, 'particle');
+  const pasted = pasteSequencerItem(asset, 3, 1.5, clipboard);
+  assert.equal(pasted.ok, true);
+  assert.deepEqual(pasted.asset.tracks[3].clips[pasted.itemIndex], {
+    start: 2.5,
+    duration: 1.5,
+    clip_in: 0.75,
+  });
+  assert.equal(asset.tracks[3].clips.length, 1);
+});
