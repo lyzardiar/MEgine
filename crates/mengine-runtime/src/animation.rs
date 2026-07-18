@@ -66,6 +66,8 @@ pub struct AnimationRuntime {
     controllers: HashMap<PathBuf, CachedController>,
     animator_instances: HashMap<Entity, AnimatorInstance>,
     reported_failures: HashSet<(String, String)>,
+    initialized_players: HashSet<Entity>,
+    initialized_animators: HashSet<Entity>,
     active_players: HashSet<Entity>,
     active_animators: HashSet<Entity>,
     pending_events: Vec<RuntimeAnimationEvent>,
@@ -79,6 +81,8 @@ impl AnimationRuntime {
             controllers: HashMap::new(),
             animator_instances: HashMap::new(),
             reported_failures: HashSet::new(),
+            initialized_players: HashSet::new(),
+            initialized_animators: HashSet::new(),
             active_players: HashSet::new(),
             active_animators: HashSet::new(),
             pending_events: Vec::new(),
@@ -94,6 +98,8 @@ impl AnimationRuntime {
         self.controllers.clear();
         self.animator_instances.clear();
         self.reported_failures.clear();
+        self.initialized_players.clear();
+        self.initialized_animators.clear();
         self.active_players.clear();
         self.active_animators.clear();
         self.pending_events.clear();
@@ -120,15 +126,24 @@ impl AnimationRuntime {
             .collect();
         self.animator_instances
             .retain(|entity, _| animator_entities.contains(entity) && world.is_alive(*entity));
+        self.initialized_animators
+            .retain(|entity| animator_entities.contains(entity) && world.is_alive(*entity));
         self.active_animators
             .retain(|entity| animator_entities.contains(entity) && world.is_alive(*entity));
 
         let mut failures = self.update_animators(world, delta_seconds);
-        let players: Vec<_> = world
+        let all_player_entities: Vec<_> = world
             .iter_entities()
-            .filter(|entity| world.entity_active(*entity))
             // A state machine owns animation output when both components are present.
             .filter(|entity| !animator_entities.contains(entity))
+            .filter(|entity| world.get_component::<AnimationPlayer>(*entity).is_some())
+            .collect();
+        let player_entity_set: HashSet<_> = all_player_entities.iter().copied().collect();
+        self.initialized_players
+            .retain(|entity| player_entity_set.contains(entity) && world.is_alive(*entity));
+        let players: Vec<_> = all_player_entities
+            .into_iter()
+            .filter(|entity| world.entity_active(*entity))
             .filter_map(|entity| {
                 world
                     .get_component::<AnimationPlayer>(entity)
@@ -139,7 +154,13 @@ impl AnimationRuntime {
         let live_players: HashSet<_> = players.iter().map(|(entity, _)| *entity).collect();
         self.active_players
             .retain(|entity| live_players.contains(entity) && world.is_alive(*entity));
-        for (entity, player) in players {
+        for (entity, mut player) in players {
+            if self.initialized_players.insert(entity) && !player.play_on_awake {
+                player.playing = false;
+                if let Some(live) = world.get_component_mut::<AnimationPlayer>(entity) {
+                    live.playing = false;
+                }
+            }
             let clip_key = player.clip.trim();
             if !player.playing || clip_key.is_empty() {
                 self.active_players.remove(&entity);
@@ -267,6 +288,12 @@ impl AnimationRuntime {
         let mut failures = Vec::new();
 
         for (entity, mut animator) in animators {
+            if self.initialized_animators.insert(entity) && !animator.play_on_awake {
+                animator.playing = false;
+                if let Some(live) = world.get_component_mut::<Animator>(entity) {
+                    live.playing = false;
+                }
+            }
             let controller_key = animator.controller.trim();
             if controller_key.is_empty() {
                 self.animator_instances.remove(&entity);
@@ -1131,6 +1158,129 @@ mod tests {
                 0.5,
             )),
             ["Late", "Late"]
+        );
+    }
+
+    #[test]
+    fn first_update_honors_animation_play_on_awake_false() {
+        let mut world = World::new();
+        let player_entity = world.spawn_empty();
+        world.insert_component(
+            player_entity,
+            AnimationPlayer {
+                play_on_awake: false,
+                playing: true,
+                ..AnimationPlayer::default()
+            },
+        );
+        let animator_entity = world.spawn_empty();
+        world.insert_component(
+            animator_entity,
+            Animator {
+                play_on_awake: false,
+                playing: true,
+                ..Animator::default()
+            },
+        );
+
+        let mut runtime = AnimationRuntime::new(None);
+        assert!(runtime.update(&mut world, 0.0).is_empty());
+        assert!(
+            !world
+                .get_component::<AnimationPlayer>(player_entity)
+                .unwrap()
+                .playing
+        );
+        assert!(
+            !world
+                .get_component::<Animator>(animator_entity)
+                .unwrap()
+                .playing
+        );
+    }
+
+    #[test]
+    fn reactivation_does_not_repeat_animation_play_on_awake() {
+        let mut world = World::new();
+        let player_entity = world.spawn_empty();
+        world.insert_component(
+            player_entity,
+            AnimationPlayer {
+                play_on_awake: false,
+                playing: true,
+                ..AnimationPlayer::default()
+            },
+        );
+        let animator_entity = world.spawn_empty();
+        world.insert_component(
+            animator_entity,
+            Animator {
+                play_on_awake: false,
+                playing: true,
+                ..Animator::default()
+            },
+        );
+
+        let mut runtime = AnimationRuntime::new(None);
+        runtime.update(&mut world, 0.0);
+        world
+            .get_component_mut::<AnimationPlayer>(player_entity)
+            .unwrap()
+            .playing = true;
+        world
+            .get_component_mut::<Animator>(animator_entity)
+            .unwrap()
+            .playing = true;
+        world.set_editor_state(player_entity, 0, false);
+        world.set_editor_state(animator_entity, 0, false);
+        runtime.update(&mut world, 0.0);
+        world.set_editor_state(player_entity, 0, true);
+        world.set_editor_state(animator_entity, 0, true);
+        runtime.update(&mut world, 0.0);
+
+        assert!(
+            world
+                .get_component::<AnimationPlayer>(player_entity)
+                .unwrap()
+                .playing
+        );
+        assert!(
+            world
+                .get_component::<Animator>(animator_entity)
+                .unwrap()
+                .playing
+        );
+    }
+
+    #[test]
+    fn delayed_activation_honors_animation_play_on_awake_once() {
+        let mut world = World::new();
+        let entity = world.spawn_empty();
+        world.insert_component(
+            entity,
+            AnimationPlayer {
+                play_on_awake: false,
+                playing: true,
+                ..AnimationPlayer::default()
+            },
+        );
+        world.set_editor_state(entity, 0, false);
+        let mut runtime = AnimationRuntime::new(None);
+        runtime.update(&mut world, 0.0);
+        assert!(
+            world
+                .get_component::<AnimationPlayer>(entity)
+                .unwrap()
+                .playing
+        );
+
+        world.set_editor_state(entity, 0, true);
+        runtime.update(&mut world, 0.0);
+        assert!(
+            !world
+                .get_component::<AnimationPlayer>(entity)
+                .unwrap()
+                .playing
         );
     }
 
