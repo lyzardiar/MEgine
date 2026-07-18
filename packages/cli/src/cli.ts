@@ -293,6 +293,7 @@ function buildProject(values: string[]) {
   console.log(
     `Assets: ${manifest.assetValidation.validatedFiles} validated files, ${manifest.assetValidation.references} references`,
   );
+  console.log(`EditorOnly: ${manifest.assetValidation.strippedEditorEntities} entities stripped`);
 }
 
 try {

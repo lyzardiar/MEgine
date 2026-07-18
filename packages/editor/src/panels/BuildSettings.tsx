@@ -310,6 +310,7 @@ export function BuildSettings(props: {
           <span>
             {lastBuild.sceneCount} scenes · {lastBuild.validatedAssetFiles} validated assets · {lastBuild.assetReferences} references
           </span>
+          <span>{lastBuild.strippedEditorEntities} EditorOnly entities stripped</span>
           <span>
             {lastBuild.fileCount} files · {byteSize(lastBuild.packagedBytes)} · {lastBuild.toolchain}
           </span>

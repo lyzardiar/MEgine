@@ -51,6 +51,7 @@ export type BuildPlayerResult = {
   sceneCount: number;
   validatedAssetFiles: number;
   assetReferences: number;
+  strippedEditorEntities: number;
   packagedBytes: number;
   toolchain: 'bundled-sdk' | 'source-checkout';
   log: string;

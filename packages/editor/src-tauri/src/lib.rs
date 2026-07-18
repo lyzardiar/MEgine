@@ -93,6 +93,7 @@ struct BuildPlayerResult {
     scene_count: usize,
     validated_asset_files: usize,
     asset_references: usize,
+    stripped_editor_entities: usize,
     packaged_bytes: u64,
     toolchain: String,
     log: String,
@@ -434,6 +435,7 @@ fn run_player_build(
         scene_count,
         validated_asset_files: manifest_count("assetValidation", "validatedFiles")?,
         asset_references: manifest_count("assetValidation", "references")?,
+        stripped_editor_entities: manifest_count("assetValidation", "strippedEditorEntities")?,
         packaged_bytes,
         toolchain,
         log: String::from_utf8_lossy(&output.stdout).trim().to_owned(),
@@ -1664,7 +1666,7 @@ mod tests {
         .unwrap();
         std::fs::write(
             root.join("Assets/Scenes/Main.mscene"),
-            r#"{"version":1,"name":"Main","world":{"entities":[],"frame":0,"sim_frame":0,"clear_color":[0.1,0.1,0.14,1]}}"#,
+            r#"{"version":1,"name":"Main","world":{"entities":[{"entity":1,"name":"Runtime","parent":null,"siblingIndex":0,"active":true,"components":{}},{"entity":2,"name":"Editor Root","parent":null,"siblingIndex":1,"active":true,"components":{"EditorOnly":{}}},{"entity":3,"name":"Editor Child","parent":2,"siblingIndex":0,"active":true,"components":{}}],"frame":0,"sim_frame":0,"clear_color":[0.1,0.1,0.14,1],"selected":3}}"#,
         )
         .unwrap();
         std::fs::write(
@@ -1686,6 +1688,7 @@ mod tests {
         assert_eq!(result.scene_count, 2);
         assert_eq!(result.validated_asset_files, 2);
         assert_eq!(result.asset_references, 2);
+        assert_eq!(result.stripped_editor_entities, 2);
         assert!(result.packaged_bytes > 0);
         assert!(Path::new(&result.executable).is_file());
         assert!(result.file_count >= 6);
@@ -1694,6 +1697,18 @@ mod tests {
         assert!(!output.join("Assets/Scripts/Main.ts").exists());
         assert!(!output.join("Assets/Scripts/mengine.d.ts").exists());
         assert!(output.join("ProjectSettings/sorting-layers.json").is_file());
+        let packaged_scene: serde_json::Value = serde_json::from_str(
+            &std::fs::read_to_string(output.join("Assets/Scenes/Main.mscene")).unwrap(),
+        )
+        .unwrap();
+        assert_eq!(
+            packaged_scene["world"]["entities"]
+                .as_array()
+                .unwrap()
+                .len(),
+            1
+        );
+        assert!(packaged_scene["world"]["selected"].is_null());
         std::fs::remove_dir_all(root).unwrap();
     }
 

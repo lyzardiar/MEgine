@@ -61,6 +61,7 @@ export interface BuildAssetValidation {
   rootScenes: number;
   references: number;
   validatedFiles: number;
+  strippedEditorEntities: number;
 }
 
 export interface DirectoryPublishOperations {
@@ -245,6 +246,59 @@ function strictStringValue(object: JsonObject, field: string, source: string): s
   return value.trim();
 }
 
+function hasEditorOnlyComponent(componentsValue: unknown): boolean {
+  const components = jsonObject(componentsValue);
+  return Boolean(components && Object.keys(components)
+    .some((name) => name.toLowerCase() === 'editoronly'));
+}
+
+function entityReferenceKey(value: unknown): string | null {
+  if (typeof value === 'string' && value.length > 0) return `s:${value}`;
+  if (typeof value === 'number' && Number.isFinite(value)) return `n:${value}`;
+  return null;
+}
+
+function filterEditorOnlySceneEntities(entitiesValue: unknown): {
+  entities: JsonObject[];
+  removedIds: Set<string>;
+  stripped: number;
+} {
+  const entities = (Array.isArray(entitiesValue) ? entitiesValue : [])
+    .map(jsonObject)
+    .filter((entity): entity is JsonObject => entity != null);
+  const removedIds = new Set<string>();
+  const removedWithoutId = new Set<JsonObject>();
+  for (const entity of entities) {
+    if (!hasEditorOnlyComponent(entity.components)) continue;
+    const id = entityReferenceKey(entity.entity);
+    if (id) removedIds.add(id);
+    else removedWithoutId.add(entity);
+  }
+  let changed = true;
+  while (changed) {
+    changed = false;
+    for (const entity of entities) {
+      const id = entityReferenceKey(entity.entity);
+      if (!id || removedIds.has(id)) continue;
+      const parent = entityReferenceKey(entity.parent);
+      if (parent && removedIds.has(parent)) {
+        removedIds.add(id);
+        changed = true;
+      }
+    }
+  }
+  const playerEntities = entities.filter((entity) => {
+    if (removedWithoutId.has(entity)) return false;
+    const id = entityReferenceKey(entity.entity);
+    return !id || !removedIds.has(id);
+  });
+  return {
+    entities: playerEntities,
+    removedIds,
+    stripped: entities.length - playerEntities.length,
+  };
+}
+
 /**
  * Validates runtime asset references reachable from the configured build scenes. Dynamic assets
  * loaded by script are still copied because packaging retains the complete Assets tree.
@@ -331,12 +385,16 @@ export function validateBuildAssetDependencies(
     enqueue(stringValue(component('RawImage'), 'texture'), from, 'UI texture', ['white']);
   };
 
-  const prefabNodeReferences = (nodeValue: unknown, from: string) => {
+  const prefabNodeReferences = (nodeValue: unknown, from: string, rootNode = true) => {
     const node = jsonObject(nodeValue);
     if (!node) return;
+    if (hasEditorOnlyComponent(node.components)) {
+      if (rootNode) throw new Error(`invalid prefab ${from}: root cannot be EditorOnly`);
+      return;
+    }
     componentReferences(node.components, from);
     if (Array.isArray(node.children)) {
-      for (const child of node.children) prefabNodeReferences(child, from);
+      for (const child of node.children) prefabNodeReferences(child, from, false);
     }
   };
 
@@ -349,8 +407,9 @@ export function validateBuildAssetDependencies(
       if (world?.entities != null && !Array.isArray(world.entities)) {
         throw new Error(`invalid scene ${source}: world.entities must be an array`);
       }
-      for (const entity of Array.isArray(world?.entities) ? world.entities : []) {
-        componentReferences(jsonObject(entity)?.components, source);
+      const playerScene = filterEditorOnlySceneEntities(world?.entities);
+      for (const entity of playerScene.entities) {
+        componentReferences(entity.components, source);
       }
     } else if (extension === '.prefab') {
       const prefab = readJsonAsset(absolute, root, 'prefab');
@@ -797,6 +856,7 @@ export function validateBuildAssetDependencies(
     rootScenes: project.buildScenes.length,
     references,
     validatedFiles: visited.size,
+    strippedEditorEntities: 0,
   };
 }
 
@@ -809,55 +869,129 @@ function safeExecutableName(name: string): string {
   return cleaned || 'MEngineGame';
 }
 
-function copyTree(source: string, destination: string): void {
+type PlayerCopyStats = { strippedEditorEntities: number };
+
+function copyTree(source: string, destination: string): PlayerCopyStats {
   const sourceStat = lstatSync(source);
   if (sourceStat.isSymbolicLink()) {
     throw new Error(`symbolic links are not allowed in player content: ${source}`);
   }
   if (sourceStat.isDirectory()) {
     mkdirSync(destination, { recursive: true });
+    const stats: PlayerCopyStats = { strippedEditorEntities: 0 };
     const entries = readdirSync(source, { withFileTypes: true })
       .sort((left, right) => compareFileNames(left.name, right.name));
     for (const entry of entries) {
-      copyTree(join(source, entry.name), join(destination, entry.name));
+      const child = copyTree(join(source, entry.name), join(destination, entry.name));
+      stats.strippedEditorEntities += child.strippedEditorEntities;
     }
-    return;
+    return stats;
   }
   if (sourceStat.isFile()) {
-    if (/\.tsx?$/i.test(source)) return;
+    if (/\.tsx?$/i.test(source)) return { strippedEditorEntities: 0 };
     mkdirSync(dirname(destination), { recursive: true });
-    if (/\.mscene$/i.test(source) && copySceneWithoutEditorMetadata(source, destination)) return;
+    if (/\.mscene$/i.test(source)) {
+      const scene = copySceneForPlayer(source, destination);
+      if (scene) return scene;
+    }
+    if (/\.prefab$/i.test(source)) {
+      const prefab = copyPrefabForPlayer(source, destination);
+      if (prefab) return prefab;
+    }
     copyFileSync(source, destination);
   }
+  return { strippedEditorEntities: 0 };
 }
 
-/** Player scenes retain authored components but never ship editor-only `__*` metadata. */
-function copySceneWithoutEditorMetadata(source: string, destination: string): boolean {
+function stripEditorMetadata(componentsValue: unknown): boolean {
+  const components = jsonObject(componentsValue);
+  if (!components) return false;
+  let changed = false;
+  for (const key of Object.keys(components)) {
+    if (!key.startsWith('__')) continue;
+    delete components[key];
+    changed = true;
+  }
+  return changed;
+}
+
+/** Player scenes retain authored components but never ship editor-only entities or `__*` metadata. */
+function copySceneForPlayer(source: string, destination: string): PlayerCopyStats | null {
   let parsed: unknown;
   try {
     parsed = JSON.parse(readFileSync(source, 'utf8'));
   } catch {
-    return false;
+    return null;
   }
-  if (parsed == null || typeof parsed !== 'object' || Array.isArray(parsed)) return false;
-  const world = (parsed as { world?: unknown }).world;
-  if (world == null || typeof world !== 'object' || Array.isArray(world)) return false;
-  const entities = (world as { entities?: unknown }).entities;
-  if (!Array.isArray(entities)) return false;
-  let changed = false;
-  for (const entity of entities) {
-    if (entity == null || typeof entity !== 'object' || Array.isArray(entity)) continue;
-    const components = (entity as { components?: unknown }).components;
-    if (components == null || typeof components !== 'object' || Array.isArray(components)) continue;
-    for (const key of Object.keys(components)) {
-      if (!key.startsWith('__')) continue;
-      delete (components as Record<string, unknown>)[key];
-      changed = true;
-    }
+  const scene = jsonObject(parsed);
+  const world = jsonObject(scene?.world);
+  if (!scene || !world || !Array.isArray(world.entities)) return null;
+  const filtered = filterEditorOnlySceneEntities(world.entities);
+  let changed = filtered.stripped > 0;
+  world.entities = filtered.entities;
+  const selected = entityReferenceKey(world.selected);
+  if (selected && filtered.removedIds.has(selected)) {
+    world.selected = null;
+    changed = true;
   }
-  if (!changed) return false;
+  for (const entity of filtered.entities) changed = stripEditorMetadata(entity.components) || changed;
+  if (!changed) return null;
   writeFileSync(destination, `${JSON.stringify(parsed, null, 2)}\n`, 'utf8');
-  return true;
+  return { strippedEditorEntities: filtered.stripped };
+}
+
+function stripPrefabNodeForPlayer(nodeValue: unknown, rootNode: boolean): {
+  node: JsonObject | null;
+  stripped: number;
+  changed: boolean;
+} {
+  const node = jsonObject(nodeValue);
+  if (!node) return { node: null, stripped: 0, changed: false };
+  if (hasEditorOnlyComponent(node.components)) {
+    return { node: null, stripped: countPrefabNodes(node), changed: true };
+  }
+  let changed = stripEditorMetadata(node.components);
+  let stripped = 0;
+  if (Array.isArray(node.children)) {
+    const children: JsonObject[] = [];
+    for (const childValue of node.children) {
+      const child = stripPrefabNodeForPlayer(childValue, false);
+      stripped += child.stripped;
+      changed = changed || child.changed;
+      if (child.node) children.push(child.node);
+    }
+    if (children.length !== node.children.length) changed = true;
+    node.children = children;
+  }
+  return { node, stripped, changed: changed || (!rootNode && stripped > 0) };
+}
+
+function countPrefabNodes(nodeValue: unknown): number {
+  const node = jsonObject(nodeValue);
+  if (!node) return 0;
+  return 1 + (Array.isArray(node.children)
+    ? node.children.reduce((total, child) => total + countPrefabNodes(child), 0)
+    : 0);
+}
+
+/** EditorOnly prefab roots are authoring assets and are omitted from Player content. */
+function copyPrefabForPlayer(source: string, destination: string): PlayerCopyStats | null {
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(readFileSync(source, 'utf8'));
+  } catch {
+    return null;
+  }
+  const asset = jsonObject(parsed);
+  if (!asset) return null;
+  const wrapped = Object.hasOwn(asset, 'root');
+  const result = stripPrefabNodeForPlayer(wrapped ? asset.root : asset, true);
+  if (!result.changed) return null;
+  if (!result.node) return { strippedEditorEntities: result.stripped };
+  if (wrapped) asset.root = result.node;
+  else parsed = result.node;
+  writeFileSync(destination, `${JSON.stringify(parsed, null, 2)}\n`, 'utf8');
+  return { strippedEditorEntities: result.stripped };
 }
 
 function collectTypeScriptFiles(directory: string, output: string[] = []): string[] {
@@ -1068,8 +1202,10 @@ export function buildPcPackage(options: PcPackageOptions): PcBuildManifest {
   mkdirSync(stageDir, { recursive: true });
 
   try {
+    const copyStats: PlayerCopyStats = { strippedEditorEntities: 0 };
     for (const root of roots) {
-      copyTree(root, join(stageDir, basename(root)));
+      const copied = copyTree(root, join(stageDir, basename(root)));
+      copyStats.strippedEditorEntities += copied.strippedEditorEntities;
     }
     const projectSettings = join(projectDir, 'ProjectSettings');
     if (existsSync(projectSettings)) {
@@ -1078,6 +1214,7 @@ export function buildPcPackage(options: PcPackageOptions): PcBuildManifest {
       }
       copyTree(projectSettings, join(stageDir, 'ProjectSettings'));
     }
+    assetValidation.strippedEditorEntities = copyStats.strippedEditorEntities;
     const packagedStartupScript = compileProjectTypeScript(
       projectDir,
       stageDir,

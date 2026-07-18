@@ -89,6 +89,7 @@ test('buildPcPackage creates a directly launchable, hashed project bundle', () =
       rootScenes: 2,
       references: 2,
       validatedFiles: 2,
+      strippedEditorEntities: 0,
     });
     assert.deepEqual(manifest.project, {
       name: 'Package Test',
@@ -138,6 +139,68 @@ test('buildPcPackage creates a directly launchable, hashed project bundle', () =
       assert.equal(entry.size, bytes.length);
       assert.equal(entry.sha256, createHash('sha256').update(bytes).digest('hex'));
     }
+  } finally {
+    rmSync(paths.root, { recursive: true, force: true });
+  }
+});
+
+test('buildPcPackage strips EditorOnly scene and prefab subtrees', () => {
+  const paths = fixture('editor-only');
+  try {
+    mkdirSync(join(paths.project, 'Assets', 'Prefabs'), { recursive: true });
+    for (const name of ['runtime.png', 'editor.png', 'editor-child.png']) {
+      writeFileSync(join(paths.project, 'Assets', 'Textures', name), name);
+    }
+    writeFileSync(join(paths.project, 'Assets', 'Scenes', 'Main.mscene'), JSON.stringify({
+      version: 1,
+      name: 'Main',
+      world: {
+        selected: 3,
+        entities: [
+          { entity: 1, name: 'Runtime', components: {
+            SpriteRenderer: { sprite: 'Assets/Textures/runtime.png' },
+            __Selection: { color: 'blue' },
+          } },
+          { entity: 2, name: 'Editor Root', components: {
+            EditorOnly: {},
+            SpriteRenderer: { sprite: 'Assets/Textures/editor.png' },
+          } },
+          { entity: 3, parent: 2, name: 'Editor Child', components: {
+            SpriteRenderer: { sprite: 'Assets/Textures/editor-child.png' },
+          } },
+        ],
+      },
+    }));
+    writeFileSync(join(paths.project, 'Assets', 'Prefabs', 'Mixed.prefab'), JSON.stringify({
+      version: 2,
+      root: {
+        id: 'root', components: {}, children: [{
+          id: 'editor', components: { EditorOnly: {} }, children: [{
+            id: 'editor-child', components: {}, children: [],
+          }],
+        }],
+      },
+    }));
+    writeFileSync(join(paths.project, 'Assets', 'Prefabs', 'Editor.prefab'), JSON.stringify({
+      version: 2,
+      root: { id: 'editor-root', components: { EditorOnly: {} }, children: [] },
+    }));
+
+    const manifest = buildPcPackage({
+      projectDir: paths.project,
+      outputDir: paths.output,
+      runtimePath: paths.runtime,
+      engineVersion: 'test-engine',
+    });
+    const scene = JSON.parse(readFileSync(join(paths.output, 'Assets', 'Scenes', 'Main.mscene'), 'utf8'));
+    assert.deepEqual(scene.world.entities.map((entity) => entity.entity), [1]);
+    assert.equal(scene.world.selected, null);
+    assert.equal(Object.hasOwn(scene.world.entities[0].components, '__Selection'), false);
+    const prefab = JSON.parse(readFileSync(join(paths.output, 'Assets', 'Prefabs', 'Mixed.prefab'), 'utf8'));
+    assert.deepEqual(prefab.root.children, []);
+    assert.equal(existsSync(join(paths.output, 'Assets', 'Prefabs', 'Editor.prefab')), false);
+    assert.equal(manifest.assetValidation.validatedFiles, 3);
+    assert.equal(manifest.assetValidation.strippedEditorEntities, 5);
   } finally {
     rmSync(paths.root, { recursive: true, force: true });
   }
@@ -212,6 +275,7 @@ test('buildPcPackage validates transitive material animator and audio dependenci
       rootScenes: 2,
       references: 11,
       validatedFiles: 11,
+      strippedEditorEntities: 0,
     });
   } finally {
     rmSync(paths.root, { recursive: true, force: true });
@@ -415,6 +479,7 @@ test('buildPcPackage includes validated custom material surface shaders', () => 
       rootScenes: 2,
       references: 4,
       validatedFiles: 4,
+      strippedEditorEntities: 0,
     });
   } finally {
     rmSync(paths.root, { recursive: true, force: true });
@@ -538,6 +603,7 @@ test('buildPcPackage validates tilemap sprite subresources and shared import met
       rootScenes: 2,
       references: 6,
       validatedFiles: 4,
+      strippedEditorEntities: 0,
     });
   } finally {
     rmSync(paths.root, { recursive: true, force: true });
