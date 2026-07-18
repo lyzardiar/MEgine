@@ -549,6 +549,97 @@ test('buildPcPackage protects existing output until clean is explicit', () => {
   }
 });
 
+test('buildPcPackage verifies the complete staging directory before first publish', () => {
+  const paths = fixture('verify-before-publish');
+  try {
+    let verificationCalls = 0;
+    const manifest = buildPcPackage({
+      projectDir: paths.project,
+      outputDir: paths.output,
+      runtimePath: paths.runtime,
+      engineVersion: 'test-engine',
+      platform: 'windows',
+      verifyStagedBuild(stageDir, stagedManifest) {
+        verificationCalls += 1;
+        assert.equal(existsSync(paths.output), false);
+        assert.equal(readFileSync(join(stageDir, stagedManifest.executable), 'utf8'), 'runtime-binary');
+        assert.deepEqual(
+          JSON.parse(readFileSync(join(stageDir, BUILD_MANIFEST_FILE), 'utf8')),
+          stagedManifest,
+        );
+      },
+    });
+
+    assert.equal(verificationCalls, 1);
+    assert.equal(existsSync(join(paths.output, manifest.executable)), true);
+  } finally {
+    rmSync(paths.root, { recursive: true, force: true });
+  }
+});
+
+test('buildPcPackage removes a rejected first build without publishing partial output', () => {
+  const paths = fixture('verify-rejects-first-build');
+  try {
+    assert.throws(() => buildPcPackage({
+      projectDir: paths.project,
+      outputDir: paths.output,
+      runtimePath: paths.runtime,
+      engineVersion: 'test-engine',
+      platform: 'windows',
+      verifyStagedBuild() {
+        throw new Error('injected packaged player validation failure');
+      },
+    }), /injected packaged player validation failure/);
+
+    assert.equal(existsSync(paths.output), false);
+    assert.deepEqual(
+      readdirSync(paths.root).filter((name) => name.includes('.mengine-stage-')),
+      [],
+    );
+  } finally {
+    rmSync(paths.root, { recursive: true, force: true });
+  }
+});
+
+test('buildPcPackage preserves the previous build when replacement verification fails', () => {
+  const paths = fixture('verify-preserves-previous-build');
+  try {
+    buildPcPackage({
+      projectDir: paths.project,
+      outputDir: paths.output,
+      runtimePath: paths.runtime,
+      engineVersion: 'previous-engine',
+      platform: 'windows',
+    });
+    const previousManifest = readFileSync(join(paths.output, BUILD_MANIFEST_FILE), 'utf8');
+    writeFileSync(join(paths.output, 'published-marker.txt'), 'previous');
+
+    assert.throws(() => buildPcPackage({
+      projectDir: paths.project,
+      outputDir: paths.output,
+      runtimePath: paths.runtime,
+      engineVersion: 'replacement-engine',
+      platform: 'windows',
+      clean: true,
+      verifyStagedBuild() {
+        throw new Error('replacement validation failed');
+      },
+    }), /replacement validation failed/);
+
+    assert.equal(
+      readFileSync(join(paths.output, BUILD_MANIFEST_FILE), 'utf8'),
+      previousManifest,
+    );
+    assert.equal(readFileSync(join(paths.output, 'published-marker.txt'), 'utf8'), 'previous');
+    assert.deepEqual(
+      readdirSync(paths.root).filter((name) => name.includes('.mengine-stage-')),
+      [],
+    );
+  } finally {
+    rmSync(paths.root, { recursive: true, force: true });
+  }
+});
+
 test('publishStagedBuild restores the previous build when the final rename fails', () => {
   const paths = fixture('publish-rollback');
   const stage = join(paths.root, '.Build.stage');

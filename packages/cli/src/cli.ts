@@ -246,6 +246,7 @@ function buildProject(values: string[]) {
   const platform = hostBuildPlatform();
   const outputDir = args.outputDir
     ?? join(args.projectDir, 'Builds', `${platform}-${process.arch}-${args.profile}`);
+  let verificationSummary = '';
   const manifest = buildPcPackage({
     projectDir: args.projectDir,
     outputDir,
@@ -254,22 +255,22 @@ function buildProject(values: string[]) {
     clean: args.clean,
     profile: args.profile,
     platform,
+    verifyStagedBuild: args.skipVerify ? undefined : (stageDir, stagedManifest) => {
+      const player = join(stageDir, stagedManifest.executable);
+      const verification = spawnSync(player, ['--validate-package'], {
+        cwd: stageDir,
+        encoding: 'utf8',
+        windowsHide: true,
+      });
+      if (verification.error) throw verification.error;
+      if (verification.status !== 0) {
+        const detail = (verification.stderr || verification.stdout || '').trim();
+        throw new Error(`packaged player validation failed${detail ? `: ${detail}` : ''}`);
+      }
+      verificationSummary = verification.stdout.trim();
+    },
   });
-  if (!args.skipVerify) {
-    const player = join(outputDir, manifest.executable);
-    const verification = spawnSync(player, ['--validate-package'], {
-      cwd: outputDir,
-      encoding: 'utf8',
-      windowsHide: true,
-    });
-    if (verification.error) throw verification.error;
-    if (verification.status !== 0) {
-      const detail = (verification.stderr || verification.stdout || '').trim();
-      throw new Error(`packaged player validation failed${detail ? `: ${detail}` : ''}`);
-    }
-    const summary = verification.stdout.trim();
-    if (summary) console.log(summary);
-  }
+  if (verificationSummary) console.log(verificationSummary);
   console.log(`Built ${manifest.project.name} → ${outputDir}`);
   console.log(`Player: ${join(outputDir, manifest.executable)}`);
   console.log(`Files: ${manifest.files.length} (SHA-256 manifest written)`);

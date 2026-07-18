@@ -34,6 +34,8 @@ export interface PcPackageOptions {
   profile?: 'debug' | 'release';
   platform?: string;
   architecture?: string;
+  /** Runs against the complete staging directory before it can replace a published build. */
+  verifyStagedBuild?: (stageDir: string, manifest: PcBuildManifest) => void;
 }
 
 export interface BuildFileEntry {
@@ -896,6 +898,7 @@ export function buildPcPackage(options: PcPackageOptions): PcBuildManifest {
       'utf8',
     );
 
+    options.verifyStagedBuild?.(stageDir, manifest);
     publishStagedBuild(stageDir, outputDir);
     return manifest;
   } catch (error) {
