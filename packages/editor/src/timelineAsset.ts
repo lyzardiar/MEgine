@@ -10,6 +10,16 @@ export type TimelineActivationClip = {
   active: boolean;
 };
 
+export type TimelineAudioClip = {
+  start: number;
+  duration: number;
+  clip: string;
+  clip_in: number;
+  volume: number;
+  pitch: number;
+  looped: boolean;
+};
+
 export type TimelineSignalTrack = {
   type: 'signal';
   id: string;
@@ -27,7 +37,16 @@ export type TimelineActivationTrack = {
   clips: TimelineActivationClip[];
 };
 
-export type TimelineTrack = TimelineSignalTrack | TimelineActivationTrack;
+export type TimelineAudioTrack = {
+  type: 'audio';
+  id: string;
+  name: string;
+  muted: boolean;
+  target: string;
+  clips: TimelineAudioClip[];
+};
+
+export type TimelineTrack = TimelineSignalTrack | TimelineActivationTrack | TimelineAudioTrack;
 
 export type TimelineAsset = {
   version: 1;
@@ -50,6 +69,19 @@ function finite(value: unknown, fallback: number): number {
 
 function activationTarget(value: unknown): string {
   return String(value ?? '').trim().replaceAll('\\', '/');
+}
+
+function audioAssetPath(value: unknown): string {
+  const normalized = String(value ?? '').trim().replaceAll('\\', '/');
+  const segments = normalized.split('/');
+  if (segments[0]?.toLowerCase() === 'assets') segments[0] = 'Assets';
+  return segments.join('/');
+}
+
+function audioAssetIsPortable(path: string): boolean {
+  return path.toLowerCase().startsWith('assets/')
+    && targetIsPortable(path)
+    && /\.(?:wav|ogg|mp3|flac)$/i.test(path);
 }
 
 function targetIsPortable(target: string): boolean {
@@ -82,14 +114,14 @@ export function normalizeTimelineAsset(value: unknown): TimelineAsset {
   for (const [index, candidate] of (Array.isArray(raw.tracks) ? raw.tracks : []).entries()) {
     const track = object(candidate);
     const type = String(track.type ?? 'signal');
-    if (type !== 'signal' && type !== 'activation') continue;
+    if (type !== 'signal' && type !== 'activation' && type !== 'audio') continue;
     const baseId = String(track.id ?? `${type}-${index + 1}`).trim() || `${type}-${index + 1}`;
     let id = baseId;
     let suffix = 1;
     while (usedIds.has(id)) id = `${baseId}-${++suffix}`;
     usedIds.add(id);
     const name = String(track.name ?? '').trim()
-      || `${type === 'signal' ? 'Signal' : 'Activation'} Track ${index + 1}`;
+      || `${type === 'signal' ? 'Signal' : type === 'activation' ? 'Activation' : 'Audio'} Track ${index + 1}`;
     if (type === 'signal') {
       const markers = (Array.isArray(track.markers) ? track.markers : [])
         .map((markerValue) => {
@@ -102,7 +134,7 @@ export function normalizeTimelineAsset(value: unknown): TimelineAsset {
         })
         .sort((left, right) => left.time - right.time || left.name.localeCompare(right.name));
       tracks.push({ type, id, name, muted: Boolean(track.muted), markers });
-    } else {
+    } else if (type === 'activation') {
       const clips = (Array.isArray(track.clips) ? track.clips : [])
         .map((clipValue) => {
           const clip = object(clipValue);
@@ -112,6 +144,30 @@ export function normalizeTimelineAsset(value: unknown): TimelineAsset {
             duration: Math.max(0.001, Math.min(duration - start, finite(clip.duration, 1))),
             active: clip.active !== false,
           } satisfies TimelineActivationClip;
+        })
+        .sort((left, right) => left.start - right.start);
+      tracks.push({
+        type,
+        id,
+        name,
+        muted: Boolean(track.muted),
+        target: activationTarget(track.target),
+        clips,
+      });
+    } else {
+      const clips = (Array.isArray(track.clips) ? track.clips : [])
+        .map((clipValue) => {
+          const clip = object(clipValue);
+          const start = Math.max(0, Math.min(duration, finite(clip.start, 0)));
+          return {
+            start,
+            duration: Math.max(0.001, Math.min(duration - start, finite(clip.duration, 1))),
+            clip: audioAssetPath(clip.clip),
+            clip_in: Math.max(0, finite(clip.clip_in, 0)),
+            volume: Math.max(0, Math.min(4, finite(clip.volume, 1))),
+            pitch: Math.max(0.05, Math.min(4, finite(clip.pitch, 1))),
+            looped: Boolean(clip.looped),
+          } satisfies TimelineAudioClip;
         })
         .sort((left, right) => left.start - right.start);
       tracks.push({
@@ -140,6 +196,7 @@ export function validateTimelineAsset(asset: TimelineAsset): void {
   if (!Number.isFinite(asset.frame_rate) || asset.frame_rate <= 0 || asset.frame_rate > 240) throw new Error('Timeline frame rate must be between 0 and 240');
   const ids = new Set<string>();
   const activationTargets = new Set<string>();
+  const audioTargets = new Set<string>();
   for (const track of asset.tracks) {
     if (!track.id.trim() || ids.has(track.id)) throw new Error('Timeline track IDs must be non-empty and unique');
     ids.add(track.id);
@@ -153,25 +210,29 @@ export function validateTimelineAsset(asset: TimelineAsset): void {
       }
       continue;
     }
-    if (track.type !== 'activation') {
-      throw new Error(`Unsupported Timeline track type: ${String((track as { type?: unknown }).type)}`);
-    }
     const target = activationTarget(track.target);
-    if (!targetIsPortable(target)) {
-      throw new Error(`Activation track ${track.name} requires a descendant target path without '.' or '..'`);
+    if (!targetIsPortable(target)) throw new Error(`${track.type === 'activation' ? 'Activation' : 'Audio'} track ${track.name} requires a descendant target path without '.' or '..'`);
+    const targets = track.type === 'activation' ? activationTargets : audioTargets;
+    if (targets.has(target)) throw new Error(`${track.type === 'activation' ? 'Activation' : 'Audio'} target ${target} is controlled by more than one track`);
+    targets.add(target);
+    if (track.type === 'audio') {
+      for (const clip of track.clips) {
+        if (!audioAssetIsPortable(audioAssetPath(clip.clip))
+          || !Number.isFinite(clip.clip_in) || clip.clip_in < 0
+          || !Number.isFinite(clip.volume) || clip.volume < 0 || clip.volume > 4
+          || !Number.isFinite(clip.pitch) || clip.pitch < 0.05 || clip.pitch > 4) {
+          throw new Error(`Audio track ${track.name} contains invalid clip settings`);
+        }
+      }
     }
-    if (activationTargets.has(target)) {
-      throw new Error(`Activation target ${target} is controlled by more than one track`);
-    }
-    activationTargets.add(target);
     const sorted = [...track.clips].sort((left, right) => left.start - right.start);
     for (const [index, clip] of sorted.entries()) {
       if (!Number.isFinite(clip.start) || !Number.isFinite(clip.duration)
         || clip.start < 0 || clip.duration <= 0 || clip.start + clip.duration > asset.duration) {
-        throw new Error(`Activation track ${track.name} contains a clip outside the Timeline duration`);
+        throw new Error(`${track.type === 'activation' ? 'Activation' : 'Audio'} track ${track.name} contains a clip outside the Timeline duration`);
       }
       if (index > 0 && sorted[index - 1].start + sorted[index - 1].duration > clip.start) {
-        throw new Error(`Activation track ${track.name} contains overlapping clips`);
+        throw new Error(`${track.type === 'activation' ? 'Activation' : 'Audio'} track ${track.name} contains overlapping clips`);
       }
     }
   }
@@ -191,9 +252,10 @@ export function parseTimelineAsset(text: string): TimelineAsset {
   if (!Array.isArray(parsed.tracks)) throw new Error('Timeline tracks must be an array');
   const ids = new Set<string>();
   const activationTargets = new Set<string>();
+  const audioTargets = new Set<string>();
   for (const trackValue of parsed.tracks) {
     const track = object(trackValue);
-    if (track.type !== 'signal' && track.type !== 'activation') throw new Error(`Unsupported Timeline track type: ${String(track.type)}`);
+    if (track.type !== 'signal' && track.type !== 'activation' && track.type !== 'audio') throw new Error(`Unsupported Timeline track type: ${String(track.type)}`);
     if (typeof track.id !== 'string' || !track.id.trim() || ids.has(track.id.trim())) {
       throw new Error('Timeline track IDs must be non-empty strings and unique');
     }
@@ -212,25 +274,30 @@ export function parseTimelineAsset(text: string): TimelineAsset {
       }
       continue;
     }
-    if (typeof track.target !== 'string' || !targetIsPortable(activationTarget(track.target))) {
-      throw new Error(`Activation track ${track.id} requires a descendant target path without '.' or '..'`);
-    }
+    if (typeof track.target !== 'string' || !targetIsPortable(activationTarget(track.target))) throw new Error(`${track.type === 'activation' ? 'Activation' : 'Audio'} track ${track.id} requires a descendant target path without '.' or '..'`);
     const target = activationTarget(track.target);
-    if (activationTargets.has(target)) throw new Error(`Activation target ${target} is controlled by more than one track`);
-    activationTargets.add(target);
-    if (track.clips != null && !Array.isArray(track.clips)) throw new Error(`Activation track ${track.id} clips must be an array`);
+    const targets = track.type === 'activation' ? activationTargets : audioTargets;
+    if (targets.has(target)) throw new Error(`${track.type === 'activation' ? 'Activation' : 'Audio'} target ${target} is controlled by more than one track`);
+    targets.add(target);
+    if (track.clips != null && !Array.isArray(track.clips)) throw new Error(`${track.type === 'activation' ? 'Activation' : 'Audio'} track ${track.id} clips must be an array`);
     const clips = (Array.isArray(track.clips) ? track.clips : []).map((clipValue) => {
       const clip = object(clipValue);
       if (typeof clip.start !== 'number' || !Number.isFinite(clip.start)
         || typeof clip.duration !== 'number' || !Number.isFinite(clip.duration)
-        || typeof clip.active !== 'boolean' || clip.start < 0 || clip.duration <= 0
+        || track.type === 'activation' && typeof clip.active !== 'boolean'
+        || track.type === 'audio' && (typeof clip.clip !== 'string' || !audioAssetIsPortable(audioAssetPath(clip.clip))
+          || clip.clip_in != null && (typeof clip.clip_in !== 'number' || !Number.isFinite(clip.clip_in) || clip.clip_in < 0)
+          || clip.volume != null && (typeof clip.volume !== 'number' || !Number.isFinite(clip.volume) || clip.volume < 0 || clip.volume > 4)
+          || clip.pitch != null && (typeof clip.pitch !== 'number' || !Number.isFinite(clip.pitch) || clip.pitch < 0.05 || clip.pitch > 4)
+          || clip.looped != null && typeof clip.looped !== 'boolean')
+        || clip.start < 0 || clip.duration <= 0
         || clip.start + clip.duration > parsedDuration) {
-        throw new Error(`Activation track ${track.id} contains an invalid or out-of-range clip`);
+        throw new Error(`${track.type === 'activation' ? 'Activation' : 'Audio'} track ${track.id} contains an invalid or out-of-range clip`);
       }
       return { start: clip.start, duration: clip.duration };
     }).sort((left, right) => left.start - right.start);
     if (clips.some((clip, index) => index > 0 && clips[index - 1].start + clips[index - 1].duration > clip.start)) {
-      throw new Error(`Activation track ${track.id} contains overlapping clips`);
+      throw new Error(`${track.type === 'activation' ? 'Activation' : 'Audio'} track ${track.id} contains overlapping clips`);
     }
   }
   const asset = normalizeTimelineAsset(parsed);

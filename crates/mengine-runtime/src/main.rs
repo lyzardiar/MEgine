@@ -2235,18 +2235,58 @@ fn validate_world_assets(
                 }
             }
         }
+        if let Some(source) = world.get_component::<AudioSource>(entity) {
+            let _ = validate_audio_clip_asset(&source.clip, project_root, validated)?;
+        }
         if let Some(director) = world.get_component::<TimelineDirector>(entity) {
             let reference = director.asset.trim();
             if !reference.is_empty() {
                 let path = resolve(reference, "Timeline asset")?;
                 if validated.insert(path.clone()) {
-                    mengine_assets::load_timeline_asset(&path)
+                    let timeline = mengine_assets::load_timeline_asset(&path)
                         .with_context(|| format!("invalid Timeline asset {}", path.display()))?;
+                    for track in &timeline.tracks {
+                        if let mengine_assets::TimelineTrack::Audio { clips, .. } = track {
+                            for clip in clips {
+                                let duration = validate_audio_clip_asset(
+                                    &clip.clip,
+                                    project_root,
+                                    validated,
+                                )?
+                                .expect("Timeline audio clip paths are non-empty after validation");
+                                if clip.clip_in as f64 >= duration {
+                                    bail!(
+                                        "Timeline audio clip '{}' starts at {:.3}s, outside its {:.3}s decoded duration",
+                                        clip.clip,
+                                        clip.clip_in,
+                                        duration
+                                    );
+                                }
+                            }
+                        }
+                    }
                 }
             }
         }
     }
     Ok(())
+}
+
+fn validate_audio_clip_asset(
+    reference: &str,
+    project_root: &Path,
+    validated: &mut HashSet<PathBuf>,
+) -> Result<Option<f64>> {
+    let reference = reference.trim();
+    if reference.is_empty() {
+        return Ok(None);
+    }
+    let path = mengine_runtime::textures::resolve_project_asset_path(project_root, reference)
+        .with_context(|| format!("unsafe audio clip path: {reference}"))?;
+    let duration = mengine_audio::validate_audio_clip(&path)
+        .with_context(|| format!("invalid audio clip {}", path.display()))?;
+    validated.insert(path);
+    Ok(Some(duration))
 }
 
 fn validate_texture_asset(
@@ -2332,6 +2372,24 @@ mod tests {
                 .unwrap()
                 .as_nanos()
         ))
+    }
+
+    fn write_test_wav(path: &Path) {
+        let mut wav = b"RIFF".to_vec();
+        wav.extend_from_slice(&40u32.to_le_bytes());
+        wav.extend_from_slice(b"WAVEfmt ");
+        wav.extend_from_slice(&16u32.to_le_bytes());
+        wav.extend_from_slice(&1u16.to_le_bytes());
+        wav.extend_from_slice(&1u16.to_le_bytes());
+        wav.extend_from_slice(&8_000u32.to_le_bytes());
+        wav.extend_from_slice(&16_000u32.to_le_bytes());
+        wav.extend_from_slice(&2u16.to_le_bytes());
+        wav.extend_from_slice(&16u16.to_le_bytes());
+        wav.extend_from_slice(b"data");
+        wav.extend_from_slice(&4u32.to_le_bytes());
+        wav.extend_from_slice(&0i16.to_le_bytes());
+        wav.extend_from_slice(&1_000i16.to_le_bytes());
+        std::fs::write(path, wav).unwrap();
     }
 
     fn world_with_material(reference: &str) -> World {
@@ -2642,13 +2700,18 @@ mod tests {
     fn packaged_asset_validation_loads_timeline_director_assets() {
         let root = temporary_project_root("packaged-timeline");
         let timelines = root.join("Assets/Timelines");
+        let audio = root.join("Assets/Audio");
         std::fs::create_dir_all(&timelines).unwrap();
+        std::fs::create_dir_all(&audio).unwrap();
+        write_test_wav(&audio.join("Intro.wav"));
         std::fs::write(
             timelines.join("Intro.mtimeline"),
             r#"{
               "version":1,"name":"Intro","duration":2,"frame_rate":30,
               "tracks":[{"type":"signal","id":"gameplay","name":"Gameplay","markers":[
                 {"time":1,"name":"SpawnBoss","payload":{"phase":2}}
+              ]},{"type":"audio","id":"music","name":"Music","target":"Audio","clips":[
+                {"start":0,"duration":2,"clip":"Assets/Audio/Intro.wav"}
               ]}]
             }"#,
         )
@@ -2665,10 +2728,28 @@ mod tests {
 
         let mut validated = HashSet::new();
         let result = validate_world_assets(&world, &root, &mut validated);
-        std::fs::remove_dir_all(&root).unwrap();
-
         result.expect("Timeline assets should pass final package validation");
-        assert_eq!(validated.len(), 1);
+        assert_eq!(validated.len(), 2);
+
+        let timeline_path = timelines.join("Intro.mtimeline");
+        let source = std::fs::read_to_string(&timeline_path).unwrap();
+        std::fs::write(
+            &timeline_path,
+            source.replace(
+                r#""clip":"Assets/Audio/Intro.wav""#,
+                r#""clip":"Assets/Audio/Intro.wav","clip_in":1"#,
+            ),
+        )
+        .unwrap();
+        let error = validate_world_assets(&world, &root, &mut HashSet::new())
+            .expect_err("an audio in-point beyond decoded duration must fail validation");
+        assert!(error.to_string().contains("outside its"));
+
+        std::fs::write(audio.join("Intro.wav"), "not audio").unwrap();
+        let error = validate_world_assets(&world, &root, &mut HashSet::new())
+            .expect_err("corrupt Timeline audio must fail final package validation");
+        std::fs::remove_dir_all(&root).unwrap();
+        assert!(error.to_string().contains("invalid audio clip"));
     }
 
     #[test]

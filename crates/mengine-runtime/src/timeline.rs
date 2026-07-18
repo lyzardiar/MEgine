@@ -1,6 +1,6 @@
 use crate::textures::resolve_project_asset_path;
 use mengine_assets::{load_timeline_asset, TimelineAsset, TimelineTrack};
-use mengine_core::generated::TimelineDirector;
+use mengine_core::generated::{AudioSource, TimelineDirector};
 use mengine_core::{Entity, Parent, World};
 use serde_json::Value;
 use std::collections::{HashMap, HashSet};
@@ -39,6 +39,17 @@ struct ActivationOverride {
     sibling_index: i32,
 }
 
+#[derive(Clone)]
+struct AudioOverride {
+    target: Entity,
+    original: AudioSource,
+    last_timeline_time: f32,
+    clip_start: f32,
+    clip_path: String,
+    clip_in: f32,
+    clip_pitch: f32,
+}
+
 #[derive(Default)]
 pub struct TimelineRuntime {
     project_root: Option<PathBuf>,
@@ -47,7 +58,9 @@ pub struct TimelineRuntime {
     active: HashSet<Entity>,
     reported_failures: HashSet<(String, String)>,
     reported_activation_failures: HashSet<(Entity, String)>,
+    reported_audio_failures: HashSet<(Entity, String)>,
     activation_overrides: HashMap<(Entity, String), ActivationOverride>,
+    audio_overrides: HashMap<(Entity, String), AudioOverride>,
     pending_signals: Vec<RuntimeTimelineSignal>,
 }
 
@@ -89,6 +102,7 @@ impl TimelineRuntime {
 
         let mut failures = Vec::new();
         let mut applied_activation_overrides = HashSet::new();
+        let mut applied_audio_overrides = HashSet::new();
         for (entity, mut director) in entities {
             if self.initialized.insert(entity) && !director.play_on_awake {
                 director.playing = false;
@@ -97,8 +111,21 @@ impl TimelineRuntime {
                 }
             }
             let asset_key = director.asset.trim();
-            if !director.playing || asset_key.is_empty() {
+            if asset_key.is_empty() {
                 self.active.remove(&entity);
+                continue;
+            }
+            if !director.playing {
+                if director.time <= 0.0 {
+                    self.active.remove(&entity);
+                } else if self.active.contains(&entity) {
+                    self.retain_paused_overrides(
+                        world,
+                        entity,
+                        &mut applied_activation_overrides,
+                        &mut applied_audio_overrides,
+                    );
+                }
                 continue;
             }
             let asset = match self.load(asset_key) {
@@ -108,6 +135,7 @@ impl TimelineRuntime {
                     asset
                 }
                 Err(error) => {
+                    self.active.remove(&entity);
                     if self
                         .reported_failures
                         .insert((asset_key.to_owned(), error.clone()))
@@ -151,6 +179,18 @@ impl TimelineRuntime {
                     self.apply_activation_tracks(world, entity, asset_key, &asset, next);
                 applied_activation_overrides.extend(applied);
                 failures.append(&mut activation_failures);
+                let (applied, mut audio_failures) = self.apply_audio_tracks(
+                    world,
+                    entity,
+                    asset_key,
+                    &asset,
+                    start,
+                    next,
+                    director.speed,
+                    just_started,
+                );
+                applied_audio_overrides.extend(applied);
+                failures.append(&mut audio_failures);
             }
             if let Some(live) = world.get_component_mut::<TimelineDirector>(entity) {
                 live.time = next;
@@ -161,7 +201,10 @@ impl TimelineRuntime {
             }
         }
         self.restore_unused_activation_overrides(world, &applied_activation_overrides);
+        self.restore_unused_audio_overrides(world, &applied_audio_overrides);
         self.reported_activation_failures
+            .retain(|(entity, _)| world.is_alive(*entity));
+        self.reported_audio_failures
             .retain(|(entity, _)| world.is_alive(*entity));
         failures
     }
@@ -230,7 +273,7 @@ impl TimelineRuntime {
                 self.reported_activation_failures.remove(&key);
                 continue;
             };
-            let Some(target_entity) = resolve_activation_target(world, director, target) else {
+            let Some(target_entity) = resolve_descendant_target(world, director, target) else {
                 if self.reported_activation_failures.insert(key) {
                     failures.push(TimelineLoadFailure {
                         entity: director,
@@ -265,6 +308,150 @@ impl TimelineRuntime {
         (applied, failures)
     }
 
+    #[allow(clippy::too_many_arguments)]
+    fn apply_audio_tracks(
+        &mut self,
+        world: &mut World,
+        director: Entity,
+        asset_key: &str,
+        asset: &TimelineAsset,
+        start: f32,
+        time: f32,
+        director_speed: f32,
+        just_started: bool,
+    ) -> (HashSet<(Entity, String)>, Vec<TimelineLoadFailure>) {
+        let mut applied = HashSet::new();
+        let mut failures = Vec::new();
+        for track in &asset.tracks {
+            let TimelineTrack::Audio {
+                id,
+                name,
+                muted,
+                target,
+                clips,
+            } = track
+            else {
+                continue;
+            };
+            let key = (director, id.clone());
+            if *muted {
+                self.reported_audio_failures.remove(&key);
+                continue;
+            }
+            let Some(clip) = clips
+                .iter()
+                .find(|clip| time >= clip.start && time < clip.start + clip.duration)
+            else {
+                self.reported_audio_failures.remove(&key);
+                continue;
+            };
+            let Some(target_entity) = resolve_descendant_target(world, director, target) else {
+                if self.reported_audio_failures.insert(key) {
+                    failures.push(TimelineLoadFailure {
+                        entity: director,
+                        asset: asset_key.to_owned(),
+                        error: format!(
+                            "audio track '{name}' target '{target}' was not found below the Director entity"
+                        ),
+                    });
+                }
+                continue;
+            };
+            let Some(authored) = world.get_component::<AudioSource>(target_entity).cloned() else {
+                if self.reported_audio_failures.insert(key) {
+                    failures.push(TimelineLoadFailure {
+                        entity: director,
+                        asset: asset_key.to_owned(),
+                        error: format!(
+                            "audio track '{name}' target '{target}' does not have an AudioSource component"
+                        ),
+                    });
+                }
+                continue;
+            };
+            self.reported_audio_failures.remove(&key);
+            if let Some(previous) = self.audio_overrides.get(&key) {
+                if previous.target != target_entity {
+                    self.restore_audio_override(world, &key);
+                }
+            }
+            self.audio_overrides
+                .entry(key.clone())
+                .or_insert_with(|| AudioOverride {
+                    target: target_entity,
+                    original: authored,
+                    last_timeline_time: start,
+                    clip_start: clip.start,
+                    clip_path: String::new(),
+                    clip_in: clip.clip_in,
+                    clip_pitch: clip.pitch,
+                });
+
+            let previous = self
+                .audio_overrides
+                .get(&key)
+                .expect("audio override inserted above");
+            let discontinuity = just_started
+                || (start - previous.last_timeline_time).abs() > 0.001
+                || director_speed > 0.0 && time < start
+                || director_speed < 0.0 && time > start
+                || previous.clip_start != clip.start
+                || previous.clip_path != clip.clip
+                || previous.clip_in != clip.clip_in
+                || previous.clip_pitch != clip.pitch;
+            let expected_time = clip.clip_in + (time - clip.start).max(0.0) * clip.pitch;
+            let effective_pitch = clip.pitch * director_speed;
+            let audible = effective_pitch.is_finite() && (0.05..=4.0).contains(&effective_pitch);
+            if let Some(source) = world.get_component_mut::<AudioSource>(target_entity) {
+                source.clip.clone_from(&clip.clip);
+                source.play_on_awake = true;
+                source.playing = audible;
+                source.looped = clip.looped;
+                source.volume = clip.volume;
+                source.pitch = if audible { effective_pitch } else { clip.pitch };
+                if discontinuity
+                    || !audible
+                    || !clip.looped && (source.time - expected_time).abs() > 0.1
+                {
+                    source.time = expected_time;
+                }
+            }
+            if let Some(state) = self.audio_overrides.get_mut(&key) {
+                state.last_timeline_time = time;
+                state.clip_start = clip.start;
+                state.clip_path.clone_from(&clip.clip);
+                state.clip_in = clip.clip_in;
+                state.clip_pitch = clip.pitch;
+            }
+            applied.insert(key);
+        }
+        (applied, failures)
+    }
+
+    fn retain_paused_overrides(
+        &self,
+        world: &mut World,
+        director: Entity,
+        activation: &mut HashSet<(Entity, String)>,
+        audio: &mut HashSet<(Entity, String)>,
+    ) {
+        activation.extend(
+            self.activation_overrides
+                .keys()
+                .filter(|(owner, _)| *owner == director)
+                .cloned(),
+        );
+        for (key, state) in &self.audio_overrides {
+            if key.0 != director || !world.is_alive(state.target) {
+                continue;
+            }
+            if let Some(source) = world.get_component_mut::<AudioSource>(state.target) {
+                source.playing = false;
+            }
+            audio.insert(key.clone());
+        }
+    }
+
     fn restore_unused_activation_overrides(
         &mut self,
         world: &mut World,
@@ -293,9 +480,34 @@ impl TimelineRuntime {
             );
         }
     }
+
+    fn restore_unused_audio_overrides(
+        &mut self,
+        world: &mut World,
+        applied: &HashSet<(Entity, String)>,
+    ) {
+        let stale: Vec<_> = self
+            .audio_overrides
+            .keys()
+            .filter(|key| !applied.contains(*key))
+            .cloned()
+            .collect();
+        for key in stale {
+            self.restore_audio_override(world, &key);
+        }
+    }
+
+    fn restore_audio_override(&mut self, world: &mut World, key: &(Entity, String)) {
+        let Some(previous) = self.audio_overrides.remove(key) else {
+            return;
+        };
+        if world.is_alive(previous.target) {
+            world.insert_component(previous.target, previous.original);
+        }
+    }
 }
 
-fn resolve_activation_target(world: &World, root: Entity, target: &str) -> Option<Entity> {
+fn resolve_descendant_target(world: &World, root: Entity, target: &str) -> Option<Entity> {
     let mut current = root;
     for segment in target.split('/') {
         current = world.iter_entities().find(|candidate| {
@@ -446,6 +658,21 @@ mod tests {
             path,
             format!(
                 r#"{{"version":1,"duration":2,"tracks":[{{"type":"activation","id":"visibility","name":"Visibility","target":"{target}","clips":[{{"start":0,"duration":0.5,"active":false}},{{"start":1,"duration":0.5,"active":false}}]}}]}}"#
+            ),
+        )
+        .unwrap();
+        (root, relative)
+    }
+
+    fn audio_project_asset(target: &str) -> (PathBuf, String) {
+        let root = std::env::temp_dir().join(format!("mengine-timeline-{}", uuid::Uuid::new_v4()));
+        let relative = "Assets/Timelines/audio.mtimeline".to_owned();
+        let path = root.join(&relative);
+        fs::create_dir_all(path.parent().unwrap()).unwrap();
+        fs::write(
+            path,
+            format!(
+                r#"{{"version":1,"duration":2,"tracks":[{{"type":"audio","id":"music","name":"Music","target":"{target}","clips":[{{"start":0,"duration":2,"clip":"Assets/Audio/timeline.ogg","clip_in":0.5,"volume":0.8,"pitch":1.25}}]}}]}}"#
             ),
         )
         .unwrap();
@@ -641,6 +868,9 @@ mod tests {
             .unwrap()
             .playing = false;
         runtime.update(&mut world, 0.0);
+        assert!(!world.entity_active(panel));
+        runtime.reset_director(director);
+        runtime.update(&mut world, 0.0);
         assert!(world.entity_active(panel));
 
         {
@@ -679,6 +909,126 @@ mod tests {
             .playing = false;
         runtime.update(&mut world, f32::NAN);
         assert!(world.entity_active(panel));
+        let _ = fs::remove_dir_all(root);
+    }
+
+    #[test]
+    fn audio_tracks_apply_pause_seek_and_restore_authored_sources() {
+        let (root, relative) = audio_project_asset("Audio/Music");
+        let mut world = World::new();
+        let director = world.spawn_empty();
+        let audio = world.spawn_empty();
+        let music = world.spawn_empty();
+        world.set_component_value(audio, "Name", serde_json::json!({ "value": "Audio" }));
+        world.set_component_value(music, "Name", serde_json::json!({ "value": "Music" }));
+        world.set_parent(audio, Some(director));
+        world.set_parent(music, Some(audio));
+        let authored = AudioSource {
+            clip: "Assets/Audio/authored.ogg".into(),
+            play_on_awake: false,
+            playing: false,
+            time: 0.25,
+            volume: 0.4,
+            ..AudioSource::default()
+        };
+        world.insert_component(music, authored.clone());
+        world.insert_component(
+            director,
+            TimelineDirector {
+                asset: relative,
+                ..TimelineDirector::default()
+            },
+        );
+        let mut runtime = TimelineRuntime::new(Some(root.clone()));
+
+        assert!(runtime.update(&mut world, 0.0).is_empty());
+        let controlled = world.get_component::<AudioSource>(music).unwrap();
+        assert_eq!(controlled.clip, "Assets/Audio/timeline.ogg");
+        assert!(controlled.playing);
+        assert_eq!(controlled.time, 0.5);
+        assert_eq!(controlled.volume, 0.8);
+        assert_eq!(controlled.pitch, 1.25);
+
+        runtime.update(&mut world, 0.1);
+
+        world
+            .get_component_mut::<TimelineDirector>(director)
+            .unwrap()
+            .playing = false;
+        runtime.update(&mut world, 0.0);
+        let paused = world.get_component::<AudioSource>(music).unwrap();
+        assert_eq!(paused.clip, "Assets/Audio/timeline.ogg");
+        assert!(!paused.playing);
+
+        world
+            .get_component_mut::<TimelineDirector>(director)
+            .unwrap()
+            .playing = true;
+        runtime.update(&mut world, 0.0);
+        assert!(world.get_component::<AudioSource>(music).unwrap().playing);
+
+        world
+            .get_component_mut::<TimelineDirector>(director)
+            .unwrap()
+            .wrap_mode = "Loop".into();
+        runtime.update(&mut world, 1.9);
+        assert_eq!(world.get_component::<AudioSource>(music).unwrap().time, 0.5);
+        world.get_component_mut::<AudioSource>(music).unwrap().time = 99.0;
+        runtime.update(&mut world, 0.2);
+        assert_eq!(
+            world.get_component::<AudioSource>(music).unwrap().time,
+            0.75
+        );
+
+        runtime.reset_director(director);
+        world
+            .get_component_mut::<TimelineDirector>(director)
+            .unwrap()
+            .playing = false;
+        runtime.update(&mut world, 0.0);
+        let restored = world.get_component::<AudioSource>(music).unwrap();
+        assert_eq!(restored.clip, authored.clip);
+        assert_eq!(restored.play_on_awake, authored.play_on_awake);
+        assert_eq!(restored.playing, authored.playing);
+        assert_eq!(restored.time, authored.time);
+        assert_eq!(restored.volume, authored.volume);
+        let _ = fs::remove_dir_all(root);
+    }
+
+    #[test]
+    fn audio_tracks_report_missing_bindings_once_and_do_not_fake_reverse_playback() {
+        let (root, relative) = audio_project_asset("Audio");
+        let mut world = World::new();
+        let director = world.spawn_empty();
+        world.insert_component(
+            director,
+            TimelineDirector {
+                asset: relative.clone(),
+                ..TimelineDirector::default()
+            },
+        );
+        let mut runtime = TimelineRuntime::new(Some(root.clone()));
+        let failures = runtime.update(&mut world, 0.0);
+        assert_eq!(failures.len(), 1);
+        assert!(failures[0].error.contains("Audio"));
+        assert!(runtime.update(&mut world, 0.0).is_empty());
+
+        let audio = world.spawn_empty();
+        world.set_component_value(audio, "Name", serde_json::json!({ "value": "Audio" }));
+        world.set_parent(audio, Some(director));
+        world.insert_component(audio, AudioSource::default());
+        {
+            let live = world
+                .get_component_mut::<TimelineDirector>(director)
+                .unwrap();
+            live.speed = -1.0;
+            live.time = 0.5;
+        }
+        runtime.reset_director(director);
+        assert!(runtime.update(&mut world, 0.0).is_empty());
+        let controlled = world.get_component::<AudioSource>(audio).unwrap();
+        assert!(!controlled.playing);
+        assert_eq!(controlled.time, 1.125);
         let _ = fs::remove_dir_all(root);
     }
 

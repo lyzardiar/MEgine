@@ -20,6 +20,19 @@ pub enum AudioError {
     Resource(String),
 }
 
+/// Decodes an audio asset without opening an output device. Build validation
+/// uses the same Kira decoder as runtime playback so corrupt files cannot pass
+/// packaging merely because their extension is supported.
+pub fn validate_audio_clip(path: impl AsRef<Path>) -> Result<f64, AudioError> {
+    let path = path.as_ref();
+    StaticSoundData::from_file(path)
+        .map(|data| data.duration().as_secs_f64())
+        .map_err(|error| AudioError::Clip {
+            path: path.to_path_buf(),
+            message: error.to_string(),
+        })
+}
+
 #[derive(Clone, Copy, Debug, Default, Eq, Hash, PartialEq)]
 pub enum AudioBus {
     Music,

@@ -773,9 +773,10 @@ function scanBuildAssetDependencies(
       }
       const trackIds = new Set<string>();
       const activationTargets = new Set<string>();
+      const audioTargets = new Set<string>();
       for (const trackValue of timeline.tracks) {
         const track = jsonObject(trackValue);
-        if (!track || (track.type !== 'signal' && track.type !== 'activation')) {
+        if (!track || (track.type !== 'signal' && track.type !== 'activation' && track.type !== 'audio')) {
           throw new Error(`invalid Timeline asset ${source}: unsupported track type`);
         }
         const id = strictStringValue(track, 'id', `Timeline asset ${source}`);
@@ -804,6 +805,7 @@ function scanBuildAssetDependencies(
           }
           continue;
         }
+        if (track.type === 'activation') {
         const target = strictStringValue(track, 'target', `Timeline asset ${source}`).replaceAll('\\', '/');
         if (!target || target.startsWith('/')
           || target.split('/').some((segment) => !segment || segment === '.' || segment === '..')) {
@@ -829,6 +831,44 @@ function scanBuildAssetDependencies(
         for (let index = 1; index < clips.length; index += 1) {
           if (clips[index - 1].start + clips[index - 1].duration > clips[index].start) {
             throw new Error(`invalid Timeline asset ${source}: activation clips overlap`);
+          }
+        }
+          continue;
+        }
+        const target = strictStringValue(track, 'target', `Timeline asset ${source}`).replaceAll('\\', '/');
+        if (!target || target.startsWith('/')
+          || target.split('/').some((segment) => !segment || segment === '.' || segment === '..')) {
+          throw new Error(`invalid Timeline asset ${source}: audio target must be a descendant path without '.' or '..'`);
+        }
+        if (audioTargets.has(target)) {
+          throw new Error(`invalid Timeline asset ${source}: audio target ${target} is controlled more than once`);
+        }
+        audioTargets.add(target);
+        if (track.clips != null && !Array.isArray(track.clips)) {
+          throw new Error(`invalid Timeline asset ${source}: audio clips must be an array`);
+        }
+        const clips = (Array.isArray(track.clips) ? track.clips : []).map((clipValue) => {
+          const clip = jsonObject(clipValue);
+          if (!clip) throw new Error(`invalid Timeline asset ${source}: audio clip must be an object`);
+          const clipPath = strictStringValue(clip, 'clip', `Timeline audio track ${name}`).replaceAll('\\', '/');
+          if (typeof clip.start !== 'number' || !Number.isFinite(clip.start)
+            || typeof clip.duration !== 'number' || !Number.isFinite(clip.duration)
+            || clip.start < 0 || clip.duration <= 0 || clip.start + clip.duration > timelineDuration
+            || !clipPath.toLowerCase().startsWith('assets/')
+            || clipPath.split('/').some((segment) => !segment || segment === '.' || segment === '..')
+            || !/\.(?:wav|ogg|mp3|flac)$/i.test(clipPath)
+            || clip.clip_in != null && (typeof clip.clip_in !== 'number' || !Number.isFinite(clip.clip_in) || clip.clip_in < 0)
+            || clip.volume != null && (typeof clip.volume !== 'number' || !Number.isFinite(clip.volume) || clip.volume < 0 || clip.volume > 4)
+            || clip.pitch != null && (typeof clip.pitch !== 'number' || !Number.isFinite(clip.pitch) || clip.pitch < 0.05 || clip.pitch > 4)
+            || clip.looped != null && typeof clip.looped !== 'boolean') {
+            throw new Error(`invalid Timeline asset ${source}: audio clip is invalid or outside duration`);
+          }
+          enqueue(clipPath, source, `Timeline audio track ${name} clip`);
+          return clip as { start: number; duration: number };
+        }).sort((left, right) => left.start - right.start);
+        for (let index = 1; index < clips.length; index += 1) {
+          if (clips[index - 1].start + clips[index - 1].duration > clips[index].start) {
+            throw new Error(`invalid Timeline asset ${source}: audio clips overlap`);
           }
         }
       }

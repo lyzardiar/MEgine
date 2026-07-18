@@ -312,6 +312,7 @@ export const BUILTIN_INSPECTOR_FIELDS: Readonly<
       referenceType: 'Audio Clip',
       allowNone: true,
     },
+    time: { min: 0, step: 0.01 },
     volume: { min: 0, max: 4, step: 0.01 },
     pitch: { min: 0.05, max: 4, step: 0.01 },
     pan: { min: -1, max: 1, step: 0.01 },

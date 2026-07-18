@@ -16,6 +16,10 @@ fn default_frame_rate() -> f32 {
     60.0
 }
 
+fn default_one() -> f32 {
+    1.0
+}
+
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 pub struct TimelineSignal {
     pub time: f32,
@@ -29,6 +33,21 @@ pub struct TimelineActivationClip {
     pub start: f32,
     pub duration: f32,
     pub active: bool,
+}
+
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+pub struct TimelineAudioClip {
+    pub start: f32,
+    pub duration: f32,
+    pub clip: String,
+    #[serde(default)]
+    pub clip_in: f32,
+    #[serde(default = "default_one")]
+    pub volume: f32,
+    #[serde(default = "default_one")]
+    pub pitch: f32,
+    #[serde(default)]
+    pub looped: bool,
 }
 
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
@@ -50,6 +69,15 @@ pub enum TimelineTrack {
         target: String,
         #[serde(default)]
         clips: Vec<TimelineActivationClip>,
+    },
+    Audio {
+        id: String,
+        name: String,
+        #[serde(default)]
+        muted: bool,
+        target: String,
+        #[serde(default)]
+        clips: Vec<TimelineAudioClip>,
     },
 }
 
@@ -99,6 +127,7 @@ impl TimelineAsset {
 
         let mut track_ids = HashSet::new();
         let mut activation_targets = HashSet::new();
+        let mut audio_targets = HashSet::new();
         for track in &mut self.tracks {
             match track {
                 TimelineTrack::Signal {
@@ -157,7 +186,7 @@ impl TimelineAsset {
                             "Timeline track '{id}' must have a name"
                         )));
                     }
-                    *target = normalize_activation_target(target).ok_or_else(|| {
+                    *target = normalize_descendant_target(target).ok_or_else(|| {
                         AssetError::Invalid(format!(
                             "Timeline activation track '{id}' must target a descendant path without '.' or '..'"
                         ))
@@ -189,13 +218,75 @@ impl TimelineAsset {
                         )));
                     }
                 }
+                TimelineTrack::Audio {
+                    id,
+                    name,
+                    target,
+                    clips,
+                    ..
+                } => {
+                    *id = id.trim().to_owned();
+                    *name = name.trim().to_owned();
+                    if id.is_empty() || !track_ids.insert(id.clone()) {
+                        return Err(AssetError::Invalid(
+                            "Timeline track ids must be non-empty and unique".into(),
+                        ));
+                    }
+                    if name.is_empty() {
+                        return Err(AssetError::Invalid(format!(
+                            "Timeline track '{id}' must have a name"
+                        )));
+                    }
+                    *target = normalize_descendant_target(target).ok_or_else(|| {
+                        AssetError::Invalid(format!(
+                            "Timeline audio track '{id}' must target a descendant path without '.' or '..'"
+                        ))
+                    })?;
+                    if !audio_targets.insert(target.clone()) {
+                        return Err(AssetError::Invalid(format!(
+                            "Timeline audio target '{target}' is controlled by more than one track"
+                        )));
+                    }
+                    for clip in clips.iter_mut() {
+                        clip.clip = normalize_audio_asset_path(&clip.clip).ok_or_else(|| {
+                            AssetError::Invalid(format!(
+                                "Timeline audio track '{id}' contains an invalid audio clip path"
+                            ))
+                        })?;
+                        if !clip.start.is_finite()
+                            || !clip.duration.is_finite()
+                            || clip.start < 0.0
+                            || clip.duration <= 0.0
+                            || clip.start + clip.duration > self.duration
+                            || !clip.clip_in.is_finite()
+                            || clip.clip_in < 0.0
+                            || !clip.volume.is_finite()
+                            || !(0.0..=4.0).contains(&clip.volume)
+                            || !clip.pitch.is_finite()
+                            || !(0.05..=4.0).contains(&clip.pitch)
+                        {
+                            return Err(AssetError::Invalid(format!(
+                                "Timeline audio track '{id}' contains an invalid or out-of-range clip"
+                            )));
+                        }
+                    }
+                    clips.sort_by(|left, right| left.start.total_cmp(&right.start));
+                    if clips
+                        .windows(2)
+                        .any(|pair| pair[0].start + pair[0].duration > pair[1].start)
+                    {
+                        return Err(AssetError::Invalid(format!(
+                            "Timeline audio track '{id}' contains overlapping clips"
+                        )));
+                    }
+                }
             }
         }
         Ok(self)
     }
 }
 
-fn normalize_activation_target(raw: &str) -> Option<String> {
+fn normalize_descendant_target(raw: &str) -> Option<String> {
     let normalized = raw.trim().replace('\\', "/");
     if normalized.is_empty() || normalized.starts_with('/') {
         return None;
@@ -208,6 +299,27 @@ fn normalize_activation_target(raw: &str) -> Option<String> {
         return None;
     }
     Some(segments.join("/"))
+}
+
+fn normalize_audio_asset_path(raw: &str) -> Option<String> {
+    let normalized = raw.trim().replace('\\', "/");
+    let segments: Vec<_> = normalized.split('/').collect();
+    if segments.len() < 2
+        || !segments[0].eq_ignore_ascii_case("Assets")
+        || segments
+            .iter()
+            .any(|segment| segment.is_empty() || matches!(*segment, "." | ".."))
+    {
+        return None;
+    }
+    let lower = normalized.to_ascii_lowercase();
+    if ![".wav", ".ogg", ".mp3", ".flac"]
+        .iter()
+        .any(|extension| lower.ends_with(extension))
+    {
+        return None;
+    }
+    Some(format!("Assets/{}", segments[1..].join("/")))
 }
 
 pub fn parse_timeline_asset(bytes: &[u8]) -> Result<TimelineAsset, AssetError> {
@@ -290,6 +402,44 @@ mod tests {
         .is_err());
         assert!(parse_timeline_asset(
             br#"{"version":1,"duration":2,"tracks":[{"type":"activation","id":"a","name":"A","target":"../Sibling"}]}"#
+        )
+        .is_err());
+    }
+
+    #[test]
+    fn normalizes_audio_tracks_and_rejects_invalid_clips() {
+        let asset = parse_timeline_asset(
+            br#"{
+              "version":1,"duration":4,
+              "tracks":[{"type":"audio","id":"music","name":" Music ",
+                "target":"Audio\\Music","clips":[
+                  {"start":2,"duration":1,"clip":"assets\\Audio\\theme.OGG","clip_in":0.5,"volume":0.8,"pitch":1.25},
+                  {"start":0,"duration":1,"clip":"Assets/Audio/intro.wav"}
+                ]}]
+            }"#,
+        )
+        .unwrap();
+        let TimelineTrack::Audio {
+            name,
+            target,
+            clips,
+            ..
+        } = &asset.tracks[0]
+        else {
+            panic!("expected audio track");
+        };
+        assert_eq!(name, "Music");
+        assert_eq!(target, "Audio/Music");
+        assert_eq!(clips[0].clip, "Assets/Audio/intro.wav");
+        assert_eq!(clips[0].volume, 1.0);
+        assert_eq!(clips[1].clip, "Assets/Audio/theme.OGG");
+
+        assert!(parse_timeline_asset(
+            br#"{"version":1,"duration":2,"tracks":[{"type":"audio","id":"a","name":"A","target":"Audio","clips":[{"start":0,"duration":1.5,"clip":"Assets/Audio/a.ogg"},{"start":1,"duration":1,"clip":"Assets/Audio/b.ogg"}]}]}"#
+        )
+        .is_err());
+        assert!(parse_timeline_asset(
+            br#"{"version":1,"duration":2,"tracks":[{"type":"audio","id":"a","name":"A","target":"Audio","clips":[{"start":0,"duration":1,"clip":"../outside.ogg"}]}]}"#
         )
         .is_err());
     }
