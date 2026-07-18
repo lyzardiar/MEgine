@@ -10,7 +10,7 @@ import {
   statSync,
   writeFileSync,
 } from 'node:fs';
-import { createHash } from 'node:crypto';
+import { createHash, randomUUID } from 'node:crypto';
 import { basename, dirname, extname, isAbsolute, join, relative, resolve, sep } from 'node:path';
 import * as ts from 'typescript';
 
@@ -56,6 +56,22 @@ export interface BuildAssetValidation {
   rootScenes: number;
   references: number;
   validatedFiles: number;
+}
+
+export interface DirectoryPublishOperations {
+  exists(path: string): boolean;
+  rename(from: string, to: string): void;
+  remove(path: string): void;
+}
+
+const directoryPublishOperations: DirectoryPublishOperations = {
+  exists: existsSync,
+  rename: renameSync,
+  remove: (path) => rmSync(path, { recursive: true, force: true, maxRetries: 3, retryDelay: 50 }),
+};
+
+function compareFileNames(left: string, right: string): number {
+  return left < right ? -1 : left > right ? 1 : 0;
 }
 
 function portablePath(path: string): string {
@@ -559,7 +575,7 @@ function copyTree(source: string, destination: string): void {
   if (sourceStat.isDirectory()) {
     mkdirSync(destination, { recursive: true });
     const entries = readdirSync(source, { withFileTypes: true })
-      .sort((left, right) => left.name.localeCompare(right.name));
+      .sort((left, right) => compareFileNames(left.name, right.name));
     for (const entry of entries) {
       copyTree(join(source, entry.name), join(destination, entry.name));
     }
@@ -604,7 +620,7 @@ function copySceneWithoutEditorMetadata(source: string, destination: string): bo
 
 function collectTypeScriptFiles(directory: string, output: string[] = []): string[] {
   for (const entry of readdirSync(directory, { withFileTypes: true })
-    .sort((left, right) => left.name.localeCompare(right.name))) {
+    .sort((left, right) => compareFileNames(left.name, right.name))) {
     const path = join(directory, entry.name);
     if (entry.isDirectory()) collectTypeScriptFiles(path, output);
     else if (entry.isFile() && /\.tsx?$/i.test(entry.name)) output.push(path);
@@ -688,7 +704,7 @@ function sha256(path: string): string {
 
 function collectFiles(root: string, current = root, output: BuildFileEntry[] = []): BuildFileEntry[] {
   for (const entry of readdirSync(current, { withFileTypes: true })
-    .sort((left, right) => left.name.localeCompare(right.name))) {
+    .sort((left, right) => compareFileNames(left.name, right.name))) {
     const absolute = join(current, entry.name);
     if (entry.isDirectory()) {
       collectFiles(root, absolute, output);
@@ -701,6 +717,45 @@ function collectFiles(root: string, current = root, output: BuildFileEntry[] = [
     }
   }
   return output;
+}
+
+/** Atomically replaces a completed build while restoring the previous build on publish failure. */
+export function publishStagedBuild(
+  stageDir: string,
+  outputDir: string,
+  operations: DirectoryPublishOperations = directoryPublishOperations,
+): void {
+  mkdirSync(dirname(outputDir), { recursive: true });
+  if (!operations.exists(outputDir)) {
+    operations.rename(stageDir, outputDir);
+    return;
+  }
+
+  const backupDir = join(
+    dirname(outputDir),
+    `.${basename(outputDir)}.mengine-backup-${randomUUID()}`,
+  );
+  operations.rename(outputDir, backupDir);
+  try {
+    operations.rename(stageDir, outputDir);
+  } catch (publishError) {
+    try {
+      operations.rename(backupDir, outputDir);
+    } catch (restoreError) {
+      const publishDetail = publishError instanceof Error ? publishError.message : String(publishError);
+      const restoreDetail = restoreError instanceof Error ? restoreError.message : String(restoreError);
+      throw new Error(
+        `player publish failed (${publishDetail}); the previous build remains at ${backupDir}, but automatic restore failed (${restoreDetail})`,
+      );
+    }
+    throw publishError;
+  }
+
+  try {
+    operations.remove(backupDir);
+  } catch {
+    // The new build is already published atomically. A locked hidden backup is safe to remove later.
+  }
 }
 
 export function hostBuildPlatform(): string {
@@ -744,7 +799,7 @@ export function buildPcPackage(options: PcPackageOptions): PcBuildManifest {
 
   const stageDir = join(
     dirname(outputDir),
-    `.${basename(outputDir)}.mengine-stage-${process.pid}-${Date.now()}`,
+    `.${basename(outputDir)}.mengine-stage-${process.pid}-${randomUUID()}`,
   );
   rmSync(stageDir, { recursive: true, force: true });
   mkdirSync(stageDir, { recursive: true });
@@ -814,9 +869,7 @@ export function buildPcPackage(options: PcPackageOptions): PcBuildManifest {
       'utf8',
     );
 
-    if (existsSync(outputDir)) rmSync(outputDir, { recursive: true, force: true });
-    mkdirSync(dirname(outputDir), { recursive: true });
-    renameSync(stageDir, outputDir);
+    publishStagedBuild(stageDir, outputDir);
     return manifest;
   } catch (error) {
     rmSync(stageDir, { recursive: true, force: true });

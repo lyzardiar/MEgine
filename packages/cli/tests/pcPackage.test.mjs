@@ -3,7 +3,9 @@ import { createHash } from 'node:crypto';
 import {
   existsSync,
   mkdirSync,
+  readdirSync,
   readFileSync,
+  renameSync,
   rmSync,
   writeFileSync,
 } from 'node:fs';
@@ -14,6 +16,7 @@ import {
   BUILD_MANIFEST_FILE,
   PLAYER_CONFIG_FILE,
   buildPcPackage,
+  publishStagedBuild,
 } from '../dist/pcPackage.js';
 
 function fixture(name) {
@@ -527,6 +530,62 @@ test('buildPcPackage protects existing output until clean is explicit', () => {
     const manifest = buildPcPackage({ ...options, clean: true });
     assert.equal(manifest.project.name, 'Package Test');
     assert.throws(() => readFileSync(join(paths.output, 'keep.txt')), /ENOENT/);
+  } finally {
+    rmSync(paths.root, { recursive: true, force: true });
+  }
+});
+
+test('publishStagedBuild restores the previous build when the final rename fails', () => {
+  const paths = fixture('publish-rollback');
+  const stage = join(paths.root, '.Build.stage');
+  try {
+    mkdirSync(paths.output, { recursive: true });
+    mkdirSync(stage, { recursive: true });
+    writeFileSync(join(paths.output, 'version.txt'), 'previous');
+    writeFileSync(join(stage, 'version.txt'), 'next');
+
+    assert.throws(() => publishStagedBuild(stage, paths.output, {
+      exists: existsSync,
+      rename(from, to) {
+        if (from === stage && to === paths.output) throw new Error('injected final rename failure');
+        renameSync(from, to);
+      },
+      remove(path) {
+        rmSync(path, { recursive: true, force: true });
+      },
+    }), /injected final rename failure/);
+
+    assert.equal(readFileSync(join(paths.output, 'version.txt'), 'utf8'), 'previous');
+    assert.equal(readFileSync(join(stage, 'version.txt'), 'utf8'), 'next');
+    assert.deepEqual(
+      readdirSync(paths.root).filter((name) => name.includes('.mengine-backup-')),
+      [],
+    );
+  } finally {
+    rmSync(paths.root, { recursive: true, force: true });
+  }
+});
+
+test('buildPcPackage produces byte-identical manifests from identical inputs', () => {
+  const paths = fixture('reproducible');
+  const secondOutput = join(paths.root, 'Build-again');
+  try {
+    writeFileSync(join(paths.project, 'Assets', 'Textures', 'z-last.bin'), 'z');
+    writeFileSync(join(paths.project, 'Assets', 'Textures', 'A-first.bin'), 'a');
+    const options = {
+      projectDir: paths.project,
+      runtimePath: paths.runtime,
+      engineVersion: 'test-engine',
+      platform: 'windows',
+      architecture: 'x64',
+    };
+    buildPcPackage({ ...options, outputDir: paths.output });
+    buildPcPackage({ ...options, outputDir: secondOutput });
+
+    assert.equal(
+      readFileSync(join(paths.output, BUILD_MANIFEST_FILE), 'utf8'),
+      readFileSync(join(secondOutput, BUILD_MANIFEST_FILE), 'utf8'),
+    );
   } finally {
     rmSync(paths.root, { recursive: true, force: true });
   }
