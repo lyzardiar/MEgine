@@ -145,6 +145,11 @@ impl TimelineRuntime {
         failures
     }
 
+    /// Re-enters a director on its next playing update so time-zero signals fire once.
+    pub fn reset_director(&mut self, entity: Entity) {
+        self.active.remove(&entity);
+    }
+
     pub fn take_signals(&mut self) -> Vec<RuntimeTimelineSignal> {
         std::mem::take(&mut self.pending_signals)
     }
@@ -429,5 +434,30 @@ mod tests {
                 .unwrap()
                 .playing
         );
+    }
+
+    #[test]
+    fn reset_director_rearms_zero_time_signals() {
+        let (root, relative) = project_asset();
+        let mut world = World::new();
+        let entity = world.spawn_empty();
+        world.insert_component(
+            entity,
+            TimelineDirector {
+                asset: relative,
+                ..TimelineDirector::default()
+            },
+        );
+        let mut runtime = TimelineRuntime::new(Some(root.clone()));
+
+        runtime.update(&mut world, 0.0);
+        assert_eq!(runtime.take_signals()[0].signal, "Start");
+        runtime.update(&mut world, 0.0);
+        assert!(runtime.take_signals().is_empty());
+
+        runtime.reset_director(entity);
+        runtime.update(&mut world, 0.0);
+        assert_eq!(runtime.take_signals()[0].signal, "Start");
+        let _ = fs::remove_dir_all(root);
     }
 }

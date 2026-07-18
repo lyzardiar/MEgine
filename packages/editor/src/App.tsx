@@ -1214,6 +1214,7 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
                 <Sequencer
                   assetPath={timelineAssetPath}
                   selectedEntity={snap.entities.find((entity) => entity.entity === selected) ?? null}
+                  playMode={mode !== 'edit'}
                   onClose={() => setTimelineAssetPath(null)}
                   onAssignDirector={(entity, path) => {
                     const current = store.authoredEntities().find((entry) => entry.entity === entity)?.components.TimelineDirector;
@@ -1222,6 +1223,10 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
                       asset: path, play_on_awake: true, playing: true, speed: 1, time: 0, wrap_mode: 'Hold',
                     });
                     log(`Bound ${path} to TimelineDirector`);
+                    refresh();
+                  }}
+                  onPatchDirector={(entity, patch) => {
+                    store.patchComponent(entity, 'TimelineDirector', patch);
                     refresh();
                   }}
                   onAssetsChanged={bumpScenes}

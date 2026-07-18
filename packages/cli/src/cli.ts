@@ -37,6 +37,10 @@ interface EngineApi {
   pauseAnimation(entity: number | string): boolean;
   stopAnimation(entity: number | string): boolean;
   seekAnimation(entity: number | string, time: number): boolean;
+  playTimeline(entity: number | string, restart?: boolean): boolean;
+  pauseTimeline(entity: number | string): boolean;
+  stopTimeline(entity: number | string): boolean;
+  seekTimeline(entity: number | string, time: number): boolean;
   playAudio(entity: number | string): boolean;
   pauseAudio(entity: number | string): boolean;
   stopAudio(entity: number | string): boolean;

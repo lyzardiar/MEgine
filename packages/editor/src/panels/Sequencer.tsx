@@ -66,8 +66,10 @@ type SnapshotEntity = WorldSnapshotView['entities'][number];
 export type SequencerProps = {
   assetPath: string | null;
   selectedEntity: SnapshotEntity | null;
+  playMode: boolean;
   onClose: () => void;
   onAssignDirector: (entity: number, path: string) => void;
+  onPatchDirector: (entity: number, patch: Record<string, unknown>) => void;
   onAssetsChanged: () => void;
   onDirtyChange: (dirty: boolean) => void;
   onLog: (message: string, level?: 'info' | 'warn' | 'error') => void;
@@ -102,6 +104,14 @@ export function Sequencer(props: SequencerProps) {
   }, [savedText]);
   const dirty = Boolean(asset && fingerprint !== savedFingerprint);
   const anyDirty = dirty || drafts.current.size > 0;
+  const directorValue = props.selectedEntity?.components.TimelineDirector;
+  const director = directorValue != null && typeof directorValue === 'object'
+    ? directorValue as { asset?: string; playing?: boolean; time?: number }
+    : null;
+  const liveDirector = props.playMode && director?.asset === props.assetPath ? director : null;
+  const displayTime = liveDirector && Number.isFinite(Number(liveDirector.time))
+    ? Math.max(0, Math.min(asset?.duration ?? 0, Number(liveDirector.time)))
+    : time;
 
   useEffect(() => {
     props.onDirtyChange(anyDirty);
@@ -295,20 +305,35 @@ export function Sequencer(props: SequencerProps) {
   const selectedMarker = selection?.marker != null ? selectedTrack?.markers[selection.marker] : null;
   const tickCount = Math.min(21, Math.max(2, Math.ceil(asset.duration) + 1));
   const ticks = Array.from({ length: tickCount }, (_, index) => index / (tickCount - 1));
+  const transportPlaying = liveDirector ? Boolean(liveDirector.playing) : playing;
+  const scrub = (next: number) => {
+    if (liveDirector && props.selectedEntity) props.onPatchDirector(props.selectedEntity.entity, { time: next });
+    else setTime(next);
+  };
 
   return (
     <div className="timeline-panel sequencer-panel">
       <div className="timeline-toolbar sequencer-toolbar">
         <div className="timeline-transport">
-          <button type="button" className={playing ? 'active' : ''} title={playing ? 'Pause' : 'Play'} onClick={() => setPlaying((value) => !value)}>
-            {playing ? <Pause size={14} /> : <Play size={14} />}
+          <button type="button" className={transportPlaying ? 'active' : ''} title={transportPlaying ? 'Pause' : 'Play'} onClick={() => {
+            if (liveDirector && props.selectedEntity) props.onPatchDirector(props.selectedEntity.entity, { playing: !transportPlaying });
+            else setPlaying((value) => !value);
+          }}>
+            {transportPlaying ? <Pause size={14} /> : <Play size={14} />}
           </button>
-          <button type="button" title="Stop" onClick={() => { setPlaying(false); setTime(0); }}><Square size={13} /></button>
+          <button type="button" title="Stop" onClick={() => {
+            if (liveDirector && props.selectedEntity) props.onPatchDirector(props.selectedEntity.entity, { playing: false, time: 0 });
+            else { setPlaying(false); setTime(0); }
+          }}><Square size={13} /></button>
         </div>
-        <label className="timeline-time">Time <input type="number" min={0} max={asset.duration} step={1 / asset.frame_rate} value={Number(time.toFixed(4))} onChange={(event) => setTime(snapTimelineAssetTime(Number(event.target.value), asset))} /></label>
+        <label className="timeline-time">Time <input type="number" min={0} max={asset.duration} step={1 / asset.frame_rate} value={Number(displayTime.toFixed(4))} onChange={(event) => {
+          const next = snapTimelineAssetTime(Number(event.target.value), asset);
+          scrub(next);
+        }} /></label>
         <span className="timeline-clip-path" title={props.assetPath}>{asset.name} — {props.assetPath}{dirty ? ' *' : ''}</span>
+        {liveDirector && <span className={`sequencer-live-status${liveDirector.playing ? ' playing' : ''}`}>{liveDirector.playing ? 'LIVE PLAYING' : 'LIVE PAUSED'} · {displayTime.toFixed(2)}s</span>}
         <button type="button" onClick={addTrack}><Plus size={14} /> Signal Track</button>
-        <button type="button" disabled={asset.tracks.length === 0} onClick={() => addMarker()}><Plus size={14} /> Signal</button>
+        <button type="button" disabled={asset.tracks.length === 0} onClick={() => addMarker(selection?.track ?? 0, displayTime)}><Plus size={14} /> Signal</button>
         <button type="button" disabled={!props.selectedEntity} onClick={() => props.selectedEntity && props.onAssignDirector(props.selectedEntity.entity, props.assetPath!)}><Link size={14} /> Bind</button>
         <button type="button" disabled={!dirty || saving || payloadInvalid} onClick={() => void save()}><Save size={14} /> {saving ? 'Saving…' : 'Save'}</button>
         <button type="button" title="Back to Animation Clip editor" onClick={props.onClose}><X size={14} /></button>
@@ -321,10 +346,10 @@ export function Sequencer(props: SequencerProps) {
             <div className="sequencer-track-header">Tracks</div>
             <div className="sequencer-ruler" onPointerDown={(event) => {
               const bounds = event.currentTarget.getBoundingClientRect();
-              setTime(snapTimelineAssetTime((event.clientX - bounds.left) / bounds.width * asset.duration, asset));
+              scrub(snapTimelineAssetTime((event.clientX - bounds.left) / bounds.width * asset.duration, asset));
             }}>
               {ticks.map((position) => <span key={position} style={{ left: `${position * 100}%` }}>{(position * asset.duration).toFixed(1)}</span>)}
-              <i className="sequencer-playhead" style={{ left: `${time / asset.duration * 100}%` }} />
+              <i className="sequencer-playhead" style={{ left: `${displayTime / asset.duration * 100}%` }} />
             </div>
           </div>
           {asset.tracks.map((track, trackIndex) => (
@@ -337,12 +362,12 @@ export function Sequencer(props: SequencerProps) {
               <div className="sequencer-lane" onDoubleClick={(event) => {
                 const bounds = event.currentTarget.getBoundingClientRect();
                 const markerTime = snapTimelineAssetTime((event.clientX - bounds.left) / bounds.width * asset.duration, asset);
-                setTime(markerTime);
+                scrub(markerTime);
                 addMarker(trackIndex, markerTime);
               }} onPointerDown={(event) => {
                 if (event.target !== event.currentTarget) return;
                 const bounds = event.currentTarget.getBoundingClientRect();
-                setTime(snapTimelineAssetTime((event.clientX - bounds.left) / bounds.width * asset.duration, asset));
+                scrub(snapTimelineAssetTime((event.clientX - bounds.left) / bounds.width * asset.duration, asset));
                 setSelection({ track: trackIndex, marker: null });
               }}>
                 {ticks.map((position) => <i className="sequencer-grid-line" key={position} style={{ left: `${position * 100}%` }} />)}
@@ -356,7 +381,7 @@ export function Sequencer(props: SequencerProps) {
                     onPointerDown={(event) => startMarkerDrag(event, trackIndex, markerIndex)}
                   />
                 ))}
-                <i className="sequencer-playhead" style={{ left: `${time / asset.duration * 100}%` }} />
+                <i className="sequencer-playhead" style={{ left: `${displayTime / asset.duration * 100}%` }} />
               </div>
             </div>
           ))}

@@ -313,6 +313,60 @@ impl App {
                 }
                 return;
             }
+            ScriptRuntimeRequest::PlayTimeline { entity, restart } => {
+                let entity = Entity::from_u64(*entity);
+                if *restart {
+                    self.timelines.reset_director(entity);
+                }
+                let Some(director) = self.world.get_component_mut::<TimelineDirector>(entity)
+                else {
+                    log::warn!(
+                        "script tried to play TimelineDirector on missing entity {entity:?}"
+                    );
+                    return;
+                };
+                if *restart {
+                    director.time = 0.0;
+                }
+                director.playing = true;
+                return;
+            }
+            ScriptRuntimeRequest::PauseTimeline { entity } => {
+                let entity = Entity::from_u64(*entity);
+                if let Some(director) = self.world.get_component_mut::<TimelineDirector>(entity) {
+                    director.playing = false;
+                } else {
+                    log::warn!(
+                        "script tried to pause TimelineDirector on missing entity {entity:?}"
+                    );
+                }
+                return;
+            }
+            ScriptRuntimeRequest::StopTimeline { entity } => {
+                let entity = Entity::from_u64(*entity);
+                self.timelines.reset_director(entity);
+                if let Some(director) = self.world.get_component_mut::<TimelineDirector>(entity) {
+                    director.playing = false;
+                    director.time = 0.0;
+                } else {
+                    log::warn!(
+                        "script tried to stop TimelineDirector on missing entity {entity:?}"
+                    );
+                }
+                return;
+            }
+            ScriptRuntimeRequest::SeekTimeline { entity, time } => {
+                let entity = Entity::from_u64(*entity);
+                if let Some(director) = self.world.get_component_mut::<TimelineDirector>(entity) {
+                    director.time = *time;
+                    self.timelines.reset_director(entity);
+                } else {
+                    log::warn!(
+                        "script tried to seek TimelineDirector on missing entity {entity:?}"
+                    );
+                }
+                return;
+            }
             ScriptRuntimeRequest::PlayAudio { entity } => {
                 let entity = Entity::from_u64(*entity);
                 if let Some(source) = self.world.get_component_mut::<AudioSource>(entity) {
@@ -372,6 +426,10 @@ impl App {
             | ScriptRuntimeRequest::PauseAnimation { .. }
             | ScriptRuntimeRequest::StopAnimation { .. }
             | ScriptRuntimeRequest::SeekAnimation { .. }
+            | ScriptRuntimeRequest::PlayTimeline { .. }
+            | ScriptRuntimeRequest::PauseTimeline { .. }
+            | ScriptRuntimeRequest::StopTimeline { .. }
+            | ScriptRuntimeRequest::SeekTimeline { .. }
             | ScriptRuntimeRequest::PlayAudio { .. }
             | ScriptRuntimeRequest::PauseAudio { .. }
             | ScriptRuntimeRequest::StopAudio { .. } => unreachable!(),

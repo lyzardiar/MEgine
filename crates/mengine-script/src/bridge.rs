@@ -52,6 +52,20 @@ pub enum ScriptRuntimeRequest {
         entity: u64,
         time: f32,
     },
+    PlayTimeline {
+        entity: u64,
+        restart: bool,
+    },
+    PauseTimeline {
+        entity: u64,
+    },
+    StopTimeline {
+        entity: u64,
+    },
+    SeekTimeline {
+        entity: u64,
+        time: f32,
+    },
     PlayAudio {
         entity: u64,
     },
@@ -541,6 +555,41 @@ fn register_engine(context: &mut Context) -> Result<(), ScriptError> {
         })
     });
 
+    let play_timeline = NativeFunction::from_copy_closure(|_this, args, ctx| {
+        let Some(entity) = js_entity_id(args.get_or_undefined(0), ctx) else {
+            return Ok(JsValue::new(false));
+        };
+        let restart = args.get_or_undefined(1).as_boolean().unwrap_or(false);
+        queue_runtime_request(ScriptRuntimeRequest::PlayTimeline { entity, restart })
+    });
+    let pause_timeline = NativeFunction::from_copy_closure(|_this, args, ctx| {
+        let Some(entity) = js_entity_id(args.get_or_undefined(0), ctx) else {
+            return Ok(JsValue::new(false));
+        };
+        queue_runtime_request(ScriptRuntimeRequest::PauseTimeline { entity })
+    });
+    let stop_timeline = NativeFunction::from_copy_closure(|_this, args, ctx| {
+        let Some(entity) = js_entity_id(args.get_or_undefined(0), ctx) else {
+            return Ok(JsValue::new(false));
+        };
+        queue_runtime_request(ScriptRuntimeRequest::StopTimeline { entity })
+    });
+    let seek_timeline = NativeFunction::from_copy_closure(|_this, args, ctx| {
+        let Some(entity) = js_entity_id(args.get_or_undefined(0), ctx) else {
+            return Ok(JsValue::new(false));
+        };
+        let Some(time) = args.get_or_undefined(1).as_number() else {
+            return Ok(JsValue::new(false));
+        };
+        if !time.is_finite() || time < 0.0 || time > f32::MAX as f64 {
+            return Ok(JsValue::new(false));
+        }
+        queue_runtime_request(ScriptRuntimeRequest::SeekTimeline {
+            entity,
+            time: time as f32,
+        })
+    });
+
     let play_audio = NativeFunction::from_copy_closure(|_this, args, ctx| {
         let Some(entity) = js_entity_id(args.get_or_undefined(0), ctx) else {
             return Ok(JsValue::new(false));
@@ -580,7 +629,7 @@ fn register_engine(context: &mut Context) -> Result<(), ScriptError> {
 
     context
         .eval(Source::from_bytes(
-            b"var engine = { setClearColor: null, pushCommandJson: null, loadScene: null, reloadScene: null, instantiatePrefab: null, setAnimatorParameter: null, setAnimatorTrigger: null, playAnimatorState: null, setAnimatorLayerWeight: null, playAnimatorLayerState: null, playAnimation: null, pauseAnimation: null, stopAnimation: null, seekAnimation: null, playAudio: null, pauseAudio: null, stopAudio: null, scene: null };",
+            b"var engine = { setClearColor: null, pushCommandJson: null, loadScene: null, reloadScene: null, instantiatePrefab: null, setAnimatorParameter: null, setAnimatorTrigger: null, playAnimatorState: null, setAnimatorLayerWeight: null, playAnimatorLayerState: null, playAnimation: null, pauseAnimation: null, stopAnimation: null, seekAnimation: null, playTimeline: null, pauseTimeline: null, stopTimeline: null, seekTimeline: null, playAudio: null, pauseAudio: null, stopAudio: null, scene: null };",
         ))
         .map_err(|e| ScriptError::Js(format!("{e}")))?;
 
@@ -652,6 +701,22 @@ fn register_engine(context: &mut Context) -> Result<(), ScriptError> {
         ("pauseAnimation", pause_animation),
         ("stopAnimation", stop_animation),
         ("seekAnimation", seek_animation),
+    ] {
+        engine_obj
+            .set(
+                boa_engine::JsString::from(name),
+                function.to_js_function(context.realm()),
+                false,
+                context,
+            )
+            .map_err(|e| ScriptError::Js(format!("{e}")))?;
+    }
+
+    for (name, function) in [
+        ("playTimeline", play_timeline),
+        ("pauseTimeline", pause_timeline),
+        ("stopTimeline", stop_timeline),
+        ("seekTimeline", seek_timeline),
     ] {
         engine_obj
             .set(
@@ -901,6 +966,11 @@ mod tests {
             if (!engine.stopAnimation("4294967297")) throw new Error("animation stop rejected");
             if (!engine.seekAnimation("4294967297", 1.25)) throw new Error("animation seek rejected");
             if (engine.seekAnimation(7, -1)) throw new Error("negative animation time accepted");
+            if (!engine.playTimeline("4294967297", true)) throw new Error("timeline play rejected");
+            if (!engine.pauseTimeline(7)) throw new Error("timeline pause rejected");
+            if (!engine.stopTimeline("4294967297")) throw new Error("timeline stop rejected");
+            if (!engine.seekTimeline("4294967297", 2.5)) throw new Error("timeline seek rejected");
+            if (engine.seekTimeline(7, -1)) throw new Error("negative timeline time accepted");
             if (!engine.playAudio("4294967297")) throw new Error("audio play rejected");
             if (!engine.pauseAudio(7)) throw new Error("audio pause rejected");
             if (!engine.stopAudio("4294967297")) throw new Error("audio stop rejected");
@@ -950,6 +1020,18 @@ mod tests {
                 ScriptRuntimeRequest::SeekAnimation {
                     entity: 4_294_967_297,
                     time: 1.25,
+                },
+                ScriptRuntimeRequest::PlayTimeline {
+                    entity: 4_294_967_297,
+                    restart: true,
+                },
+                ScriptRuntimeRequest::PauseTimeline { entity: 7 },
+                ScriptRuntimeRequest::StopTimeline {
+                    entity: 4_294_967_297,
+                },
+                ScriptRuntimeRequest::SeekTimeline {
+                    entity: 4_294_967_297,
+                    time: 2.5,
                 },
                 ScriptRuntimeRequest::PlayAudio {
                     entity: 4_294_967_297,

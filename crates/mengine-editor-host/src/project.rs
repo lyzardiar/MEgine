@@ -535,6 +535,10 @@ interface EngineApi {
   pauseAnimation(entity: number | string): boolean;
   stopAnimation(entity: number | string): boolean;
   seekAnimation(entity: number | string, time: number): boolean;
+  playTimeline(entity: number | string, restart?: boolean): boolean;
+  pauseTimeline(entity: number | string): boolean;
+  stopTimeline(entity: number | string): boolean;
+  seekTimeline(entity: number | string, time: number): boolean;
   playAudio(entity: number | string): boolean;
   pauseAudio(entity: number | string): boolean;
   stopAudio(entity: number | string): boolean;
@@ -838,6 +842,8 @@ mod tests {
             std::fs::read_to_string(project_root.join("Assets/Scripts/mengine.d.ts")).unwrap();
         assert!(engine_types.contains("playAnimation(entity:"));
         assert!(engine_types.contains("seekAnimation(entity:"));
+        assert!(engine_types.contains("playTimeline(entity:"));
+        assert!(engine_types.contains("seekTimeline(entity:"));
         assert!(project_root.join("Assets/Models").is_dir());
         assert!(project_root.join("ProjectSettings/editor.json").is_file());
         assert!(project_root

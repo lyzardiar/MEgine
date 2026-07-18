@@ -3616,6 +3616,16 @@ body.insp-scrubbing * {
 
 .sequencer-panel { min-height: 0; }
 .sequencer-toolbar { border-bottom: 1px solid #151515; }
+.sequencer-live-status {
+  flex: 0 0 auto;
+  padding: 3px 6px;
+  border: 1px solid #4f4631;
+  color: #c5ad77;
+  background: #302c24;
+  font: 9px var(--u-mono);
+  white-space: nowrap;
+}
+.sequencer-live-status.playing { border-color: #39704d; color: #8de5ab; background: #203428; }
 .sequencer-workspace {
   min-height: 0;
   flex: 1 1 auto;
