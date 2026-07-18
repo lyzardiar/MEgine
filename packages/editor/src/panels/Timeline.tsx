@@ -12,7 +12,11 @@ import {
   ChevronLeft,
   ChevronRight,
   Circle,
+  ClipboardPaste,
+  Copy,
   Crosshair,
+  Maximize2,
+  Minimize2,
   PanelRightClose,
   PanelRightOpen,
   Pause,
@@ -29,6 +33,8 @@ import {
   automaticAnimationTangent,
   createAnimationClip,
   normalizeAnimationClip,
+  pasteAnimationEvent,
+  pasteAnimationKeyframe,
   parseAnimationClip,
   removeAnimationKeyframe,
   removeAnimationEvent,
@@ -83,6 +89,19 @@ type TimelineDrag = {
   left: number;
   width: number;
 };
+
+type TimelineClipboard =
+  | {
+      kind: 'key';
+      target: string;
+      component: string;
+      property: string;
+      keyframe: AnimationKeyframe;
+    }
+  | {
+      kind: 'event';
+      event: AnimationEvent;
+    };
 
 function playerOf(entity: SnapshotEntity | null): AnimationPlayerData | null {
   const value = entity?.components.AnimationPlayer;
@@ -408,6 +427,8 @@ export function Timeline(props: {
   const [propertyBinding, setPropertyBinding] = useState('');
   const [zoom, setZoom] = useState(1);
   const [detailsOpen, setDetailsOpen] = useState(false);
+  const [maximized, setMaximized] = useState(false);
+  const [timelineClipboard, setTimelineClipboard] = useState<TimelineClipboard | null>(null);
   const [timelineDrag, setTimelineDrag] = useState<TimelineDrag | null>(null);
   const timelineDragRef = useRef<TimelineDrag | null>(null);
   const scrubPointer = useRef<number | null>(null);
@@ -544,6 +565,17 @@ export function Timeline(props: {
   }, [anyDirty, props.onDirtyChange]);
 
   useEffect(() => () => props.onClearPreview(), [props.entity?.entity]);
+
+  useEffect(() => {
+    if (!maximized) return;
+    const close = (event: KeyboardEvent) => {
+      if (event.key !== 'Escape') return;
+      event.preventDefault();
+      setMaximized(false);
+    };
+    window.addEventListener('keydown', close);
+    return () => window.removeEventListener('keydown', close);
+  }, [maximized]);
 
   useEffect(() => {
     if (!props.entity || !clip) {
@@ -901,6 +933,8 @@ export function Timeline(props: {
     ? clip.tracks[selectedTrack] ?? null
     : null;
   const rulerSteps = Math.min(80, Math.max(5, Math.round(5 * zoom)));
+  const canCopySelection = selectedKeyframe != null || selectedAnimationEvent != null;
+  const canMaximizePanel = !new URLSearchParams(window.location.search).has('detachedPanel');
 
   const updateSelectedKey = (patch: Partial<AnimationKeyframe>) => {
     if (!clip || !selectedKey || !selectedKeyframe) return;
@@ -953,6 +987,70 @@ export function Timeline(props: {
       ...clip,
       tracks: clip.tracks.map((candidate, index) => index === selectedKey.track ? next : candidate),
     });
+  };
+
+  const selectionClipboard = (): TimelineClipboard | null => {
+    if (selectedKey && selectedKeyframe && clip) {
+      const track = clip.tracks[selectedKey.track];
+      if (!track) return null;
+      return {
+        kind: 'key',
+        target: track.target,
+        component: track.component,
+        property: track.property,
+        keyframe: structuredClone(selectedKeyframe),
+      };
+    }
+    if (selectedAnimationEvent) {
+      return { kind: 'event', event: structuredClone(selectedAnimationEvent) };
+    }
+    return null;
+  };
+
+  const copySelection = () => {
+    const copied = selectionClipboard();
+    if (copied) setTimelineClipboard(copied);
+  };
+
+  const pasteSelection = (copied = timelineClipboard) => {
+    if (!clip || !copied) return;
+    if (copied.kind === 'event') {
+      const pasted = pasteAnimationEvent(clip, copied.event, time);
+      setClip(pasted.clip);
+      setSelectedTrack(null);
+      setSelectedKey(null);
+      setSelectedEvent(pasted.eventIndex);
+      setDetailsOpen(true);
+      return;
+    }
+
+    const trackIndex = clip.tracks.findIndex((track) => (
+      track.target === copied.target
+      && track.component === copied.component
+      && track.property === copied.property
+    ));
+    if (trackIndex < 0) {
+      props.onLog(
+        `Cannot paste key: ${copied.component}.${copied.property} is not in this clip`,
+        'warn',
+      );
+      return;
+    }
+    const edit = pasteAnimationKeyframe(
+      clip.tracks[trackIndex],
+      copied.keyframe,
+      time,
+      clip.frame_rate,
+      clip.duration,
+    );
+    setClip({
+      ...clip,
+      tracks: clip.tracks.map((track, index) => index === trackIndex ? edit.track : track),
+    });
+    setSelectedTrack(trackIndex);
+    setSelectedKey({ track: trackIndex, key: edit.keyIndex });
+    setSelectedEvent(null);
+    setDetailsOpen(true);
   };
 
   const setPreviewTime = (next: number) => {
@@ -1008,6 +1106,26 @@ export function Timeline(props: {
   const handleTimelineKeyDown = (event: ReactKeyboardEvent<HTMLDivElement>) => {
     const target = event.target as HTMLElement;
     if (target.closest('input, select, textarea')) return;
+    const command = event.ctrlKey || event.metaKey;
+    if (command && event.key.toLowerCase() === 'c') {
+      if (selectionClipboard()) {
+        event.preventDefault();
+        copySelection();
+      }
+      return;
+    }
+    if (command && event.key.toLowerCase() === 'v') {
+      if (timelineClipboard) {
+        event.preventDefault();
+        pasteSelection();
+      }
+      return;
+    }
+    if (event.shiftKey && event.key === ' ') {
+      event.preventDefault();
+      setMaximized((value) => !value);
+      return;
+    }
     if (target.closest('button') && (event.key === ' ' || event.key === 'Enter')) return;
     if (event.key === ' ') {
       event.preventDefault();
@@ -1170,7 +1288,7 @@ export function Timeline(props: {
 
   return (
     <div
-      className="timeline-panel"
+      className={`timeline-panel${maximized ? ' maximized' : ''}`}
       onDragOver={(event) => event.preventDefault()}
       onDrop={dropClip}
     >
@@ -1273,6 +1391,19 @@ export function Timeline(props: {
             <Crosshair size={13} aria-hidden="true" />
           </button>
         </div>
+        {canMaximizePanel && (
+          <button
+            type="button"
+            className="timeline-icon-button timeline-maximize-button"
+            aria-label={maximized ? 'Restore Timeline panel' : 'Maximize Timeline panel'}
+            title={maximized ? 'Restore Timeline (Shift+Space)' : 'Maximize Timeline (Shift+Space)'}
+            onClick={() => setMaximized((value) => !value)}
+          >
+            {maximized
+              ? <Minimize2 size={13} aria-hidden="true" />
+              : <Maximize2 size={13} aria-hidden="true" />}
+          </button>
+        )}
         <button
           type="button"
           className={`timeline-details-toggle${detailsOpen ? ' active' : ''}`}
@@ -1330,7 +1461,7 @@ export function Timeline(props: {
       {error && <div className="timeline-message error">{error}</div>}
       {clip && (
         <div
-          className="timeline-workspace"
+          className={`timeline-workspace${detailsOpen ? ' details-open' : ''}`}
           ref={workspaceRef}
           tabIndex={0}
           onKeyDown={handleTimelineKeyDown}
@@ -1380,6 +1511,26 @@ export function Timeline(props: {
             </button>
             <button type="button" disabled={selectedTrack == null} onClick={recordKey} title="Add key at the playhead (K)">
               <Plus size={13} aria-hidden="true" /><span>Key</span>
+            </button>
+            <button
+              type="button"
+              className="timeline-selection-command"
+              aria-label="Copy selected key or event"
+              disabled={!canCopySelection}
+              onClick={copySelection}
+              title="Copy selected key or event (Ctrl/Cmd+C)"
+            >
+              <Copy size={13} aria-hidden="true" /><span>Copy</span>
+            </button>
+            <button
+              type="button"
+              className="timeline-selection-command"
+              aria-label="Paste key or event at the playhead"
+              disabled={!timelineClipboard}
+              onClick={() => pasteSelection()}
+              title="Paste key or event at the playhead (Ctrl/Cmd+V)"
+            >
+              <ClipboardPaste size={13} aria-hidden="true" /><span>Paste</span>
             </button>
             <button
               type="button"
@@ -1655,7 +1806,7 @@ export function Timeline(props: {
               {!selectedTrackData && !selectedAnimationEvent && (
                 <div className="timeline-details-empty">Select a track, keyframe, or event to inspect it.</div>
               )}
-              <footer>Space: Play · Arrows: Step · K: Add Key · Delete: Remove Selection</footer>
+              <footer>Space: Play · Arrows: Step · K: Add Key · Ctrl/Cmd+C/V: Copy/Paste · Shift+Space: Maximize · Delete: Remove</footer>
             </aside>
           )}
         </div>

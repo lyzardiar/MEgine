@@ -269,6 +269,23 @@ export function setAnimationKeyframeTangents(
   };
 }
 
+export function pasteAnimationKeyframe(
+  track: AnimationTrack,
+  source: AnimationKeyframe,
+  time: number,
+  frameRate: number,
+  duration = Number.POSITIVE_INFINITY,
+): AnimationKeyframeEdit {
+  const edit = upsertAnimationKeyframe(track, time, source.value, frameRate, duration);
+  return {
+    keyIndex: edit.keyIndex,
+    track: setAnimationKeyframeTangents(edit.track, edit.keyIndex, {
+      in_tangent: source.in_tangent ?? null,
+      out_tangent: source.out_tangent ?? null,
+    }),
+  };
+}
+
 export function addAnimationEvent(
   clip: AnimationClip,
   time: number,
@@ -300,6 +317,17 @@ export function replaceAnimationEvent(
   events.push(next);
   events.sort((left, right) => left.time - right.time || left.function.localeCompare(right.function));
   return { clip: { ...clip, events }, eventIndex: events.indexOf(next) };
+}
+
+export function pasteAnimationEvent(
+  clip: AnimationClip,
+  source: AnimationEvent,
+  time: number,
+): { clip: AnimationClip; eventIndex: number } {
+  const added = addAnimationEvent(clip, time, source.function);
+  return replaceAnimationEvent(added.clip, added.eventIndex, {
+    parameter: structuredClone(source.parameter),
+  }) ?? added;
 }
 
 export function removeAnimationEvent(clip: AnimationClip, eventIndex: number): AnimationClip {

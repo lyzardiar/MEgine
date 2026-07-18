@@ -5,6 +5,8 @@ import {
   addAnimationEvent,
   automaticAnimationTangent,
   normalizeAnimationClip,
+  pasteAnimationEvent,
+  pasteAnimationKeyframe,
   parseAnimationClip,
   removeAnimationKeyframe,
   removeAnimationEvent,
@@ -197,6 +199,47 @@ test('AnimationClip keyframe editing snaps replaces moves and removes on frame b
     { time: 0, value: 0 },
     { time: 2, value: 10 },
   ]);
+});
+
+test('Timeline copy and paste preserves key tangents and event payloads at the playhead', () => {
+  const sourceKey = {
+    time: 0.25,
+    value: [2, 4],
+    in_tangent: [1, 2],
+    out_tangent: [3, 4],
+  };
+  const pastedKey = pasteAnimationKeyframe({
+    target: '.',
+    component: 'Transform',
+    property: 'position',
+    interpolation: 'cubic',
+    keyframes: [{ time: 0, value: [0, 0] }],
+  }, sourceKey, 0.51, 10, 2);
+  assert.equal(pastedKey.keyIndex, 1);
+  assert.deepEqual(pastedKey.track.keyframes[1], {
+    time: 0.5,
+    value: [2, 4],
+    in_tangent: [1, 2],
+    out_tangent: [3, 4],
+  });
+
+  const clip = normalizeAnimationClip({
+    name: 'Events',
+    duration: 2,
+    frame_rate: 10,
+    events: [],
+    tracks: [],
+  });
+  const pastedEvent = pasteAnimationEvent(clip, {
+    time: 0.1,
+    function: 'Spawn',
+    parameter: [7, 8],
+  }, 1.04);
+  assert.deepEqual(pastedEvent.clip.events, [{
+    time: 1,
+    function: 'Spawn',
+    parameter: [7, 8],
+  }]);
 });
 
 test('Animation events normalize, snap, edit, and remain backward compatible', () => {
