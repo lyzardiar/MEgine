@@ -36,6 +36,11 @@ import {
   writeProjectAssetText,
 } from '../projectAssets';
 import { registerSaveAllParticipant } from '../saveAll';
+import type {
+  EditorUndoCheckpoint,
+  EditorUndoService,
+  EditorUndoToken,
+} from '../editorUndoService';
 import {
   createTimelineAsset,
   parseTimelineAsset,
@@ -120,6 +125,9 @@ export type SequencerProps = {
   onAssetsChanged: () => void;
   onDirtyChange: (dirty: boolean) => void;
   onLog: (message: string, level?: 'info' | 'warn' | 'error') => void;
+  undoService: EditorUndoService;
+  onGlobalUndo: () => void;
+  onGlobalRedo: () => void;
 };
 
 type Selection = { track: number; marker: number | null } | null;
@@ -130,9 +138,8 @@ type HistorySnapshot = {
   time: number;
 };
 type InspectorEditTransaction = HistorySnapshot & {
-  undo: HistorySnapshot[];
-  redo: HistorySnapshot[];
-  historyRecorded: boolean;
+  historyCheckpoint: EditorUndoCheckpoint;
+  historyToken: EditorUndoToken | null;
 };
 type Draft = {
   asset: TimelineAsset;
@@ -140,14 +147,20 @@ type Draft = {
   time: number;
   selection: Selection;
   selectedItems: SequencerItemSelection[];
-  undo: HistorySnapshot[];
-  redo: HistorySnapshot[];
 };
 
 function isSequencerEditControl(target: EventTarget): target is HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement {
   if (target instanceof HTMLSelectElement || target instanceof HTMLTextAreaElement) return true;
   if (!(target instanceof HTMLInputElement)) return false;
   return !['checkbox', 'radio', 'button', 'submit', 'reset'].includes(target.type);
+}
+
+function sequencerDraftDirty(draft: Pick<Draft, 'asset' | 'savedText'>): boolean {
+  try {
+    return JSON.stringify(draft.asset) !== JSON.stringify(parseTimelineAsset(draft.savedText));
+  } catch {
+    return true;
+  }
 }
 
 export function Sequencer(props: SequencerProps) {
@@ -164,25 +177,42 @@ export function Sequencer(props: SequencerProps) {
   const [zoom, setZoom] = useState(1);
   const [tracksWidth, setTracksWidth] = useState(720);
   const [clipboard, setClipboard] = useState<SequencerClipboard | null>(null);
-  const [, setHistoryEpoch] = useState(0);
+  const [, setDraftEpoch] = useState(0);
   const loadedPath = useRef('');
   const drafts = useRef(new Map<string, Draft>());
   const assetRef = useRef<TimelineAsset | null>(null);
-  const undoHistory = useRef<HistorySnapshot[]>([]);
-  const redoHistory = useRef<HistorySnapshot[]>([]);
+  const selectionRef = useRef<Selection>(null);
+  const selectedItemsRef = useRef<SequencerItemSelection[]>([]);
+  const timeRef = useRef(0);
   const inspectorEdit = useRef<InspectorEditTransaction | null>(null);
   const frame = useRef<number | null>(null);
   const previousFrame = useRef<number | null>(null);
   const tracksViewport = useRef<HTMLDivElement | null>(null);
   assetRef.current = asset;
+  selectionRef.current = selection;
+  selectedItemsRef.current = selectedItems;
+  timeRef.current = time;
 
   const applySelection = (primary: Selection, items?: readonly SequencerItemSelection[]) => {
-    setSelection(primary);
-    setSelectedItems(items
+    const nextItems = items
       ? items.map((item) => ({ ...item }))
       : primary?.marker != null
         ? [{ track: primary.track, marker: primary.marker }]
-        : []);
+        : [];
+    selectionRef.current = primary ? { ...primary } : null;
+    selectedItemsRef.current = nextItems;
+    setSelection(primary);
+    setSelectedItems(nextItems);
+  };
+
+  const replaceAsset = (next: TimelineAsset | null) => {
+    assetRef.current = next;
+    setAsset(next);
+  };
+
+  const replaceTime = (next: number) => {
+    timeRef.current = next;
+    setTime(next);
   };
 
   const fingerprint = useMemo(() => asset ? JSON.stringify(asset) : '', [asset]);
@@ -195,7 +225,7 @@ export function Sequencer(props: SequencerProps) {
     }
   }, [savedText]);
   const dirty = Boolean(asset && fingerprint !== savedFingerprint);
-  const anyDirty = dirty || drafts.current.size > 0;
+  const anyDirty = dirty || [...drafts.current.values()].some(sequencerDraftDirty);
   const directorValue = props.selectedEntity?.components.TimelineDirector;
   const director = directorValue != null && typeof directorValue === 'object'
     ? directorValue as { asset?: string; playing?: boolean; time?: number }
@@ -211,47 +241,45 @@ export function Sequencer(props: SequencerProps) {
 
   useEffect(() => {
     let cancelled = false;
+    const activeTransaction = inspectorEdit.current;
+    if (
+      activeTransaction?.historyToken
+      && asset
+      && props.undoService.isUndoTop(activeTransaction.historyToken)
+      && JSON.stringify(asset) === JSON.stringify(activeTransaction.asset)
+    ) {
+      props.undoService.restoreCheckpoint(activeTransaction.historyCheckpoint);
+    }
     const previous = loadedPath.current;
     if (previous && asset) {
-      if (JSON.stringify(asset) !== savedFingerprint) {
-        drafts.current.set(previous, {
-          asset: structuredClone(asset), savedText, time,
-          selection: selection ? { ...selection } : null,
-          selectedItems: structuredClone(selectedItems),
-          undo: structuredClone(undoHistory.current),
-          redo: structuredClone(redoHistory.current),
-        });
-      } else {
-        drafts.current.delete(previous);
-      }
+      drafts.current.set(previous, {
+        asset: structuredClone(asset), savedText, time,
+        selection: selection ? { ...selection } : null,
+        selectedItems: structuredClone(selectedItems),
+      });
     }
     loadedPath.current = props.assetPath ?? '';
     setPlaying(false);
-    setAsset(null);
+    replaceAsset(null);
     setSavedText('');
-    setTime(0);
+    replaceTime(0);
     setZoom(1);
     applySelection(null);
-    undoHistory.current = [];
-    redoHistory.current = [];
     inspectorEdit.current = null;
-    setHistoryEpoch((value) => value + 1);
     setError(null);
     setPayloadInvalid(false);
     if (!props.assetPath) return () => { cancelled = true; };
     const draft = drafts.current.get(props.assetPath);
     if (draft) {
       drafts.current.delete(props.assetPath);
-      setAsset(structuredClone(draft.asset));
+      const restoredAsset = structuredClone(draft.asset);
+      replaceAsset(restoredAsset);
       setSavedText(draft.savedText);
-      setTime(draft.time);
+      replaceTime(draft.time);
       applySelection(
         draft.selection ? { ...draft.selection } : null,
         draft.selectedItems ?? [],
       );
-      undoHistory.current = structuredClone(draft.undo);
-      redoHistory.current = structuredClone(draft.redo);
-      setHistoryEpoch((value) => value + 1);
       return () => { cancelled = true; };
     }
     setLoading(true);
@@ -259,7 +287,7 @@ export function Sequencer(props: SequencerProps) {
       .then((text) => {
         if (cancelled) return;
         const loaded = parseTimelineAsset(text);
-        setAsset(loaded);
+        replaceAsset(loaded);
         setSavedText(serializeTimelineAsset(loaded));
       })
       .catch((reason: unknown) => {
@@ -276,8 +304,53 @@ export function Sequencer(props: SequencerProps) {
       if (!current) return current;
       const next = structuredClone(current);
       mutate(next);
+      assetRef.current = next;
       return next;
     });
+  };
+
+  const captureDocument = (path: string): HistorySnapshot => {
+    if (loadedPath.current === path && assetRef.current) {
+      return {
+        asset: structuredClone(assetRef.current),
+        selection: selectionRef.current ? { ...selectionRef.current } : null,
+        selectedItems: structuredClone(selectedItemsRef.current),
+        time: timeRef.current,
+      };
+    }
+    const draft = drafts.current.get(path);
+    if (!draft) throw new Error(`Timeline history document '${path}' is no longer available.`);
+    return {
+      asset: structuredClone(draft.asset),
+      selection: draft.selection ? { ...draft.selection } : null,
+      selectedItems: structuredClone(draft.selectedItems),
+      time: draft.time,
+    };
+  };
+
+  const restoreDocument = (path: string, snapshot: HistorySnapshot) => {
+    const restoredAsset = structuredClone(snapshot.asset);
+    const restoredSelection = snapshot.selection ? { ...snapshot.selection } : null;
+    const restoredItems = structuredClone(snapshot.selectedItems);
+    const restoredTime = Math.max(0, Math.min(restoredAsset.duration, snapshot.time));
+    if (loadedPath.current === path) {
+      replaceAsset(restoredAsset);
+      applySelection(restoredSelection, restoredItems);
+      replaceTime(restoredTime);
+      setPayloadInvalid(false);
+      setError(null);
+      return;
+    }
+    const draft = drafts.current.get(path);
+    if (!draft) throw new Error(`Timeline history document '${path}' is no longer available.`);
+    drafts.current.set(path, {
+      ...draft,
+      asset: restoredAsset,
+      selection: restoredSelection,
+      selectedItems: restoredItems,
+      time: restoredTime,
+    });
+    setDraftEpoch((value) => value + 1);
   };
 
   const pushHistory = (
@@ -285,61 +358,49 @@ export function Sequencer(props: SequencerProps) {
     snapshotSelection: Selection = selection,
     snapshotTime = time,
     snapshotItems: readonly SequencerItemSelection[] = selectedItems,
+    label = 'Edit Timeline',
   ) => {
-    undoHistory.current.push({
-      asset: structuredClone(snapshotAsset),
-      selection: snapshotSelection ? { ...snapshotSelection } : null,
-      selectedItems: snapshotItems.map((item) => ({ ...item })),
-      time: snapshotTime,
+    const path = loadedPath.current;
+    if (!path) return null;
+    return props.undoService.recordSnapshot({
+      scope: `timeline:${path}`,
+      label,
+      state: {
+        asset: structuredClone(snapshotAsset),
+        selection: snapshotSelection ? { ...snapshotSelection } : null,
+        selectedItems: snapshotItems.map((item) => ({ ...item })),
+        time: snapshotTime,
+      },
+      capture: () => captureDocument(path),
+      restore: (snapshot) => restoreDocument(path, snapshot),
     });
-    if (undoHistory.current.length > 100) undoHistory.current.shift();
-    redoHistory.current = [];
-    setHistoryEpoch((value) => value + 1);
   };
 
-  const update = (mutate: (draft: TimelineAsset) => void) => {
+  const update = (mutate: (draft: TimelineAsset) => void, label = 'Edit Timeline') => {
     if (!asset) return;
     const next = structuredClone(asset);
     mutate(next);
     if (JSON.stringify(next) === JSON.stringify(asset)) return;
     const transaction = inspectorEdit.current;
     if (transaction) {
-      if (!transaction.historyRecorded) {
-        pushHistory(
+      if (!transaction.historyToken) {
+        transaction.historyToken = pushHistory(
           transaction.asset,
           transaction.selection,
           transaction.time,
           transaction.selectedItems,
+          'Edit Timeline Inspector',
         );
-        transaction.historyRecorded = true;
       }
     } else {
-      pushHistory(asset);
+      pushHistory(asset, selection, time, selectedItems, label);
     }
-    setAsset(next);
+    replaceAsset(next);
   };
 
   const restoreHistory = (source: 'undo' | 'redo') => {
-    if (!asset) return;
-    const from = source === 'undo' ? undoHistory.current : redoHistory.current;
-    const to = source === 'undo' ? redoHistory.current : undoHistory.current;
-    const snapshot = from.pop();
-    if (!snapshot) return;
-    to.push({
-      asset: structuredClone(asset),
-      selection: selection ? { ...selection } : null,
-      selectedItems: structuredClone(selectedItems),
-      time,
-    });
-    setAsset(structuredClone(snapshot.asset));
-    applySelection(
-      snapshot.selection ? { ...snapshot.selection } : null,
-      snapshot.selectedItems ?? [],
-    );
-    setTime(Math.max(0, Math.min(snapshot.asset.duration, snapshot.time)));
-    setPayloadInvalid(false);
-    setError(null);
-    setHistoryEpoch((value) => value + 1);
+    if (source === 'undo') props.onGlobalUndo();
+    else props.onGlobalRedo();
   };
 
   const beginInspectorEdit = (event: ReactFocusEvent<HTMLElement>) => {
@@ -349,9 +410,8 @@ export function Sequencer(props: SequencerProps) {
       selection: selection ? { ...selection } : null,
       selectedItems: structuredClone(selectedItems),
       time,
-      undo: structuredClone(undoHistory.current),
-      redo: structuredClone(redoHistory.current),
-      historyRecorded: false,
+      historyCheckpoint: props.undoService.checkpoint(),
+      historyToken: null,
     };
   };
 
@@ -359,12 +419,14 @@ export function Sequencer(props: SequencerProps) {
     if (!isSequencerEditControl(event.target)) return;
     const transaction = inspectorEdit.current;
     inspectorEdit.current = null;
-    if (!transaction?.historyRecorded) return;
+    if (!transaction?.historyToken) return;
     const current = assetRef.current;
-    if (!current || JSON.stringify(current) !== JSON.stringify(transaction.asset)) return;
-    undoHistory.current = transaction.undo;
-    redoHistory.current = transaction.redo;
-    setHistoryEpoch((value) => value + 1);
+    if (
+      !current
+      || JSON.stringify(current) !== JSON.stringify(transaction.asset)
+      || !props.undoService.isUndoTop(transaction.historyToken)
+    ) return;
+    props.undoService.restoreCheckpoint(transaction.historyCheckpoint);
   };
 
   const save = async (): Promise<boolean> => {
@@ -379,7 +441,7 @@ export function Sequencer(props: SequencerProps) {
       validateTimelineAsset(asset);
       const text = serializeTimelineAsset(asset);
       await writeProjectAssetText(props.assetPath, text);
-      setAsset(parseTimelineAsset(text));
+      replaceAsset(parseTimelineAsset(text));
       setSavedText(text);
       drafts.current.delete(props.assetPath);
       await refreshProjectFiles();
@@ -401,10 +463,17 @@ export function Sequencer(props: SequencerProps) {
     return async () => {
       if (dirty && !await save()) throw new Error('Current Timeline could not be saved');
       for (const [path, draft] of [...drafts.current]) {
+        if (!sequencerDraftDirty(draft)) continue;
         validateTimelineAsset(draft.asset);
-        await writeProjectAssetText(path, serializeTimelineAsset(draft.asset));
-        drafts.current.delete(path);
+        const text = serializeTimelineAsset(draft.asset);
+        await writeProjectAssetText(path, text);
+        drafts.current.set(path, {
+          ...draft,
+          asset: parseTimelineAsset(text),
+          savedText: text,
+        });
       }
+      setDraftEpoch((value) => value + 1);
       await refreshProjectFiles();
       props.onAssetsChanged();
     };
@@ -419,8 +488,10 @@ export function Sequencer(props: SequencerProps) {
         const next = current + Math.min(0.1, Math.max(0, (now - previous) / 1000));
         if (next >= asset.duration) {
           setPlaying(false);
+          timeRef.current = asset.duration;
           return asset.duration;
         }
+        timeRef.current = next;
         return next;
       });
       frame.current = requestAnimationFrame(tick);
@@ -726,9 +797,9 @@ export function Sequencer(props: SequencerProps) {
       setError(deleted.error);
       return;
     }
-    pushHistory(asset);
+    pushHistory(asset, selection, time, selectedItems, 'Cut Timeline Items');
     setClipboard(copied.clipboard);
-    setAsset(deleted.asset);
+    replaceAsset(deleted.asset);
     applySelection({ track: selection.track, marker: null });
     setPayloadInvalid(false);
     setError(null);
@@ -742,8 +813,8 @@ export function Sequencer(props: SequencerProps) {
         setError(deleted.error);
         return;
       }
-      pushHistory(asset);
-      setAsset(deleted.asset);
+      pushHistory(asset, selection, time, selectedItems, ripple ? 'Ripple Delete Timeline Items' : 'Delete Timeline Items');
+      replaceAsset(deleted.asset);
       applySelection({ track: selection.track, marker: null });
       setPayloadInvalid(false);
       setError(null);
@@ -769,8 +840,8 @@ export function Sequencer(props: SequencerProps) {
       setError(moved.error);
       return;
     }
-    pushHistory(asset);
-    setAsset(moved.asset);
+    pushHistory(asset, selection, time, selectedItems, 'Reorder Timeline Track');
+    replaceAsset(moved.asset);
     applySelection({ track: moved.trackIndex, marker: selection.marker });
     setError(null);
   };
@@ -786,11 +857,11 @@ export function Sequencer(props: SequencerProps) {
       setError(pasted.error);
       return;
     }
-    pushHistory(asset);
-    setAsset(pasted.asset);
+    pushHistory(asset, selection, time, selectedItems, source.type === 'group' ? 'Paste Timeline Items' : 'Paste Timeline Item');
+    replaceAsset(pasted.asset);
     applySelection(pasted.primary, pasted.selections);
     const pastedTrack = pasted.asset.tracks[pasted.primary.track];
-    setTime(pastedTrack.type === 'signal'
+    replaceTime(pastedTrack.type === 'signal'
       ? pastedTrack.markers[pasted.primary.marker].time
       : pastedTrack.clips[pasted.primary.marker].start);
     setError(null);
@@ -887,9 +958,8 @@ export function Sequencer(props: SequencerProps) {
     const selectionBeforeDrag = selection ? { ...selection } : null;
     const selectedItemsBeforeDrag = structuredClone(selectedItems);
     const timeBeforeDrag = time;
-    const undoBeforeDrag = structuredClone(undoHistory.current);
-    const redoBeforeDrag = structuredClone(redoHistory.current);
-    let historyRecorded = false;
+    const historyCheckpoint = props.undoService.checkpoint();
+    let historyToken: EditorUndoToken | null = null;
     let groupDelta = 0;
     event.currentTarget.setPointerCapture(pointer);
     applySelection(clicked, dragItems);
@@ -904,17 +974,27 @@ export function Sequencer(props: SequencerProps) {
           return;
         }
         groupDelta = moved.delta;
-        if (!historyRecorded && Math.abs(moved.delta) >= 0.5 / asset.frame_rate) {
-          pushHistory(asset, selectionBeforeDrag, timeBeforeDrag, selectedItemsBeforeDrag);
-          historyRecorded = true;
+        if (!historyToken && Math.abs(moved.delta) >= 0.5 / asset.frame_rate) {
+          historyToken = pushHistory(
+            asset,
+            selectionBeforeDrag,
+            timeBeforeDrag,
+            selectedItemsBeforeDrag,
+            'Move Timeline Items',
+          );
         }
-        setAsset(moved.asset);
+        replaceAsset(moved.asset);
         setError(null);
         return;
       }
-      if (!historyRecorded && Math.abs(delta) >= 0.5 / asset.frame_rate) {
-        pushHistory(asset, selectionBeforeDrag, timeBeforeDrag, selectedItemsBeforeDrag);
-        historyRecorded = true;
+      if (!historyToken && Math.abs(delta) >= 0.5 / asset.frame_rate) {
+        historyToken = pushHistory(
+          asset,
+          selectionBeforeDrag,
+          timeBeforeDrag,
+          selectedItemsBeforeDrag,
+          trimEdge ? 'Trim Timeline Clip' : 'Move Timeline Item',
+        );
       }
       applyUpdate((draft) => {
         const track = draft.tracks[trackIndex];
@@ -982,17 +1062,20 @@ export function Sequencer(props: SequencerProps) {
       window.removeEventListener('pointermove', move);
       window.removeEventListener('pointerup', finish);
       window.removeEventListener('pointercancel', finish);
-      if (finishEvent.type === 'pointercancel' && historyRecorded) {
-        undoHistory.current = undoBeforeDrag;
-        redoHistory.current = redoBeforeDrag;
-        setAsset(structuredClone(asset));
+      if (finishEvent.type === 'pointercancel') {
+        if (historyToken && props.undoService.isUndoTop(historyToken)) {
+          props.undoService.restoreCheckpoint(historyCheckpoint);
+        }
+        replaceAsset(structuredClone(asset));
         applySelection(selectionBeforeDrag, selectedItemsBeforeDrag);
-        setTime(timeBeforeDrag);
-        setHistoryEpoch((value) => value + 1);
-      } else if (dragItems.length > 1 && historyRecorded && Math.abs(groupDelta) < 0.5 / asset.frame_rate) {
-        undoHistory.current = undoBeforeDrag;
-        redoHistory.current = redoBeforeDrag;
-        setHistoryEpoch((value) => value + 1);
+        replaceTime(timeBeforeDrag);
+      } else if (
+        dragItems.length > 1
+        && historyToken
+        && props.undoService.isUndoTop(historyToken)
+        && Math.abs(groupDelta) < 0.5 / asset.frame_rate
+      ) {
+        props.undoService.restoreCheckpoint(historyCheckpoint);
       }
     };
     window.addEventListener('pointermove', move);
@@ -1048,7 +1131,7 @@ export function Sequencer(props: SequencerProps) {
   const transportPlaying = liveDirector ? Boolean(liveDirector.playing) : playing;
   const scrub = (next: number) => {
     if (liveDirector && props.selectedEntity) props.onPatchDirector(props.selectedEntity.entity, { time: next });
-    else setTime(next);
+    else replaceTime(next);
   };
   const changeZoom = (requested: number, anchorClientX?: number) => {
     const next = clampSequencerZoom(requested);
@@ -1094,16 +1177,19 @@ export function Sequencer(props: SequencerProps) {
         if (['INPUT', 'TEXTAREA', 'SELECT'].includes(tag) || eventTarget.isContentEditable) return;
         if (modified && key === 'z') {
           event.preventDefault();
+          event.stopPropagation();
           restoreHistory(event.shiftKey ? 'redo' : 'undo');
           return;
         }
         if (modified && key === 'y') {
           event.preventDefault();
+          event.stopPropagation();
           restoreHistory('redo');
           return;
         }
         if (modified && key === 'a') {
           event.preventDefault();
+          event.stopPropagation();
           const items = asset.tracks.flatMap((track, trackIndex) => {
             const count = track.type === 'signal' ? track.markers.length : track.clips.length;
             return Array.from({ length: count }, (_, marker) => ({ track: trackIndex, marker }));
@@ -1114,21 +1200,25 @@ export function Sequencer(props: SequencerProps) {
         }
         if (modified && key === 'c') {
           event.preventDefault();
+          event.stopPropagation();
           copySelectedItem();
           return;
         }
         if (modified && key === 'x') {
           event.preventDefault();
+          event.stopPropagation();
           cutSelectedItems();
           return;
         }
         if (modified && key === 'v') {
           event.preventDefault();
+          event.stopPropagation();
           pasteItem(clipboard, displayTime);
           return;
         }
         if (modified && key === 'd') {
           event.preventDefault();
+          event.stopPropagation();
           duplicateSelectedItem();
           return;
         }
@@ -1150,6 +1240,7 @@ export function Sequencer(props: SequencerProps) {
         }
         if ((event.key === 'Delete' || event.key === 'Backspace') && selection) {
           event.preventDefault();
+          event.stopPropagation();
           deleteSelection(event.shiftKey);
         }
       }}
@@ -1164,12 +1255,12 @@ export function Sequencer(props: SequencerProps) {
           </button>
           <button type="button" title="Stop" onClick={() => {
             if (liveDirector && props.selectedEntity) props.onPatchDirector(props.selectedEntity.entity, { playing: false, time: 0 });
-            else { setPlaying(false); setTime(0); }
+            else { setPlaying(false); replaceTime(0); }
           }}><Square size={13} /></button>
         </div>
         <div className="sequencer-edit-controls">
-          <button type="button" aria-label="Undo" title="Undo (Ctrl+Z)" disabled={undoHistory.current.length === 0} onClick={() => restoreHistory('undo')}><Undo2 size={13} /></button>
-          <button type="button" aria-label="Redo" title="Redo (Ctrl+Y)" disabled={redoHistory.current.length === 0} onClick={() => restoreHistory('redo')}><Redo2 size={13} /></button>
+          <button type="button" aria-label="Undo" title={`Undo${props.undoService.undoLabel ? ` ${props.undoService.undoLabel}` : ''} (Ctrl+Z)`} disabled={!props.undoService.canUndo} onClick={() => restoreHistory('undo')}><Undo2 size={13} /></button>
+          <button type="button" aria-label="Redo" title={`Redo${props.undoService.redoLabel ? ` ${props.undoService.redoLabel}` : ''} (Ctrl+Y)`} disabled={!props.undoService.canRedo} onClick={() => restoreHistory('redo')}><Redo2 size={13} /></button>
           <button type="button" aria-label="Copy selected items" title="Copy selected items (Ctrl+C)" disabled={!selectedMarker && !selectedClip} onClick={() => copySelectedItem()}><Copy size={13} /></button>
           <button type="button" aria-label="Paste at playhead" title="Paste at playhead (Ctrl+V)" disabled={!clipboard} onClick={() => pasteItem(clipboard, displayTime)}><ClipboardPaste size={13} /></button>
           <button type="button" aria-label="Delete selected items" title="Delete selected items (Delete)" disabled={selectedItems.length === 0} onClick={() => deleteSelection()}><Trash2 size={13} /></button>

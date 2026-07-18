@@ -653,6 +653,7 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
+      if (e.defaultPrevented) return;
       const ctrl = e.ctrlKey || e.metaKey;
 
       if (
@@ -1237,6 +1238,15 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
                   onAssetsChanged={bumpScenes}
                   onDirtyChange={setSequencerDirty}
                   onLog={log}
+                  undoService={undoService}
+                  onGlobalUndo={() => {
+                    store.undo();
+                    refresh();
+                  }}
+                  onGlobalRedo={() => {
+                    store.redo();
+                    refresh();
+                  }}
                 />
               </div>
             </>

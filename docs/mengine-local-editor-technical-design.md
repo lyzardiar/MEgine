@@ -719,3 +719,13 @@ Referenced Only 是可用的单包裁剪基础，仍不等同于完整 Addressab
 - 场景快照仍复用经过验证的深拷贝与选择修复逻辑；这次迁移改变历史编排而不改变场景序列化。服务自身由纯 Node 单测覆盖命名、对称恢复、容量、分支、Scope、Checkpoint、失败原子性和恢复重入保护，Store 接入由完整 TypeScript/Vite 构建覆盖。
 
 这只是统一 Undo 的基础设施和第一位迁移者，不代表所有编辑器已接入。Sequencer 当前仍保留每资产本地历史以维护未保存草稿切换语义；Animation、Animator、Material、Shader、Sprite 与 Project Settings 也需要定义各自 Scope、当前状态捕获器、失活资产恢复策略和保存点 Dirty 计算后逐步迁移。迁移过程中 Edit 菜单只应展示已进入全局服务的事务，本地面板按钮仍负责其尚未迁移的历史，直到对应资产通过完整回归门禁。
+
+## 52. 2026-07-19 Sequencer 全局 Undo 迁移
+
+- Sequencer 删除每资产私有 `undo/redo` 数组，所有创建、Inspector 合并编辑、删除/Ripple、剪切粘贴、轨道排序、单项/组拖动和裁剪都写入共享 `EditorUndoService`，Scope 为 `timeline:<asset path>`。Edit 菜单、全局 `Ctrl/Cmd+Z/Y` 与 Sequencer 工具栏读取同一栈和同一动作名称，不再出现本地已撤销但全局菜单仍指向旧场景事务的双历史漂移。
+- Timeline 文档快照包含资产、主选择、多选集合和播放头。恢复器按路径判断目标是否正在显示：当前文档直接更新 React 状态与同步 Ref，非当前文档更新后台草稿；因此按 A、B 两个 Timeline 交替编辑后，可以在仍显示 B 时撤销 A，随后打开 A 会看到正确结果。
+- 后台文档不再只缓存 Dirty 资产；打开过的干净文档也保留轻量状态，作为仍在全局历史中的捕获/恢复目标。Dirty 计算逐个比较资产与各自保存基线，Save All 只写入真正变化的后台文档，并更新而不是删除其保存基线，使“保存后撤销”“跨资产撤销后再保存”保持一致。
+- Inspector Focus/Blur 事务和 Pointer Drag 使用共享 Checkpoint：连续输入或拖动只产生一个命名步骤，回到原值、组拖回原位或 Pointer Cancel 恢复操作前的 Undo/Redo 分支。加载新文档不会清除其他 Timeline/Scene Scope，保存也不清空历史。
+- Timeline 内已处理的 `Ctrl/Cmd+A/C/X/V/D/Z/Y` 和 Delete 会阻止继续传播；App 的窗口级快捷键也先检查 `defaultPrevented`。这修复了过去 Timeline 操作可能同时触发场景复制、重复或删除的双派发问题，资源编辑和场景编辑现在只会产生一个全局事务。
+
+迁移后的历史是主进程 WebView 内的全局顺序；当前原生分离窗口仍有独立 JS 运行上下文，尚不能共享闭包式捕获器。要实现跨原生窗口 Undo，需要把事务状态变为可序列化命令，通过桌面 Host 的单一历史服务和窗口消息总线恢复，而不能简单同步栈标签。Material、Animation、Animator 等资产编辑器仍待迁移，下一阶段应复用同一“路径 Scope + 后台文档”适配模式。

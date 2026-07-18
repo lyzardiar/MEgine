@@ -1260,7 +1260,7 @@ export function createEditorStore(undoService: EditorUndoService = createEditorU
       if (
         gestureUndoState
         && gestureUndoToken
-        && undoService.contains(gestureUndoToken)
+        && undoService.isUndoTop(gestureUndoToken)
         && editorUndoStatesEqual(gestureUndoState, captureUndoState())
       ) {
         if (gestureHistoryCheckpoint) undoService.restoreCheckpoint(gestureHistoryCheckpoint);

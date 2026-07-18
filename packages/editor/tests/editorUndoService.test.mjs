@@ -58,6 +58,14 @@ test('scope clearing and checkpoints preserve unrelated ordered history', () => 
     scope: 'scene', label: 'Scene', state: 0,
     capture: scene.capture, restore: scene.restore,
   });
+  const sceneToken = service.recordSnapshot({
+    scope: 'scene', label: 'Scene Top', state: 0,
+    capture: scene.capture, restore: scene.restore,
+  });
+  assert.equal(service.isUndoTop(sceneToken), true);
+  service.undo();
+  assert.equal(service.isUndoTop(sceneToken), false);
+  service.redo();
   scene.value = 1;
   const checkpoint = service.checkpoint();
   service.recordSnapshot({
@@ -66,7 +74,7 @@ test('scope clearing and checkpoints preserve unrelated ordered history', () => 
   });
   timeline.value = 1;
   service.restoreCheckpoint(checkpoint);
-  assert.equal(service.undoLabel, 'Scene');
+  assert.equal(service.undoLabel, 'Scene Top');
   service.recordSnapshot({
     scope: 'timeline:a', label: 'Timeline', state: 0,
     capture: timeline.capture, restore: timeline.restore,
@@ -113,4 +121,40 @@ test('restore callbacks cannot record a nested transaction', () => {
   assert.equal(service.undoLabel, 'Outer');
   assert.equal(service.redoDepth, 0);
   assert.equal(service.isRestoring, false);
+});
+
+test('global ordering can restore an inactive asset document by scope', () => {
+  const service = createEditorUndoService();
+  const documents = new Map();
+  let activePath = 'Assets/A.mtimeline';
+  let activeValue = 0;
+  const capture = (path) => activePath === path ? activeValue : documents.get(path);
+  const restore = (path, value) => {
+    if (activePath === path) activeValue = value;
+    else documents.set(path, value);
+  };
+  service.recordSnapshot({
+    scope: `timeline:${activePath}`, label: 'Edit A', state: 0,
+    capture: () => capture('Assets/A.mtimeline'),
+    restore: (value) => restore('Assets/A.mtimeline', value),
+  });
+  activeValue = 1;
+  documents.set(activePath, activeValue);
+  activePath = 'Assets/B.mtimeline';
+  activeValue = 10;
+  service.recordSnapshot({
+    scope: `timeline:${activePath}`, label: 'Edit B', state: 10,
+    capture: () => capture('Assets/B.mtimeline'),
+    restore: (value) => restore('Assets/B.mtimeline', value),
+  });
+  activeValue = 11;
+
+  service.undo();
+  assert.equal(activeValue, 10);
+  service.undo();
+  assert.equal(documents.get('Assets/A.mtimeline'), 0);
+  service.redo();
+  assert.equal(documents.get('Assets/A.mtimeline'), 1);
+  service.redo();
+  assert.equal(activeValue, 11);
 });

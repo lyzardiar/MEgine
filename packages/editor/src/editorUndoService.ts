@@ -113,15 +113,15 @@ export function createEditorUndoService(limit = 128) {
       return { undo: [...undoStack], redo: [...redoStack] };
     },
     restoreCheckpoint(checkpoint: EditorUndoCheckpoint) {
+      if (restoring) throw new Error('Cannot restore an editor history checkpoint while history is restoring.');
       undoStack = [...checkpoint.undo];
       redoStack = [...checkpoint.redo];
       trim(undoStack);
       trim(redoStack);
       notify();
     },
-    contains(token: EditorUndoToken) {
-      return undoStack.some((entry) => entry.id === token.id)
-        || redoStack.some((entry) => entry.id === token.id);
+    isUndoTop(token: EditorUndoToken) {
+      return undoStack.at(-1)?.id === token.id;
     },
     subscribe(listener: () => void) {
       listeners.add(listener);
