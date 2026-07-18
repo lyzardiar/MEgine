@@ -67,6 +67,9 @@ pub struct RenderMaterial {
     pub unlit: bool,
     pub double_sided: bool,
     pub transparent: bool,
+    pub blend_mode: MaterialBlendMode,
+    pub depth_write: bool,
+    pub render_queue: i32,
     pub alpha_cutoff: f32,
     pub base_color_texture: String,
     pub normal_texture: String,
@@ -98,6 +101,15 @@ pub enum MaterialFilter {
     Linear,
 }
 
+#[derive(Clone, Copy, Debug, Default, Eq, Hash, PartialEq)]
+pub enum MaterialBlendMode {
+    #[default]
+    Alpha,
+    Premultiplied,
+    Additive,
+    Multiply,
+}
+
 impl Default for RenderMaterial {
     fn default() -> Self {
         Self {
@@ -109,6 +121,9 @@ impl Default for RenderMaterial {
             unlit: false,
             double_sided: false,
             transparent: false,
+            blend_mode: MaterialBlendMode::Alpha,
+            depth_write: true,
+            render_queue: 2000,
             alpha_cutoff: 0.0,
             base_color_texture: String::new(),
             normal_texture: String::new(),
@@ -236,6 +251,41 @@ struct MaterialSamplerKey {
     filter: MaterialFilter,
 }
 
+#[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]
+enum MaterialPipelineBlend {
+    Replace,
+    Alpha,
+    Premultiplied,
+    Additive,
+    Multiply,
+}
+
+#[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]
+struct MaterialPipelineKey {
+    blend: MaterialPipelineBlend,
+    double_sided: bool,
+    depth_write: bool,
+}
+
+impl From<&RenderMaterial> for MaterialPipelineKey {
+    fn from(material: &RenderMaterial) -> Self {
+        Self {
+            blend: if !material.transparent {
+                MaterialPipelineBlend::Replace
+            } else {
+                match material.blend_mode {
+                    MaterialBlendMode::Alpha => MaterialPipelineBlend::Alpha,
+                    MaterialBlendMode::Premultiplied => MaterialPipelineBlend::Premultiplied,
+                    MaterialBlendMode::Additive => MaterialPipelineBlend::Additive,
+                    MaterialBlendMode::Multiply => MaterialPipelineBlend::Multiply,
+                }
+            },
+            double_sided: material.double_sided,
+            depth_write: !material.transparent || material.depth_write,
+        }
+    }
+}
+
 impl From<&RenderMaterial> for MaterialTextureSetKey {
     fn from(material: &RenderMaterial) -> Self {
         let metallic_roughness = material.metallic_roughness_texture.trim().to_owned();
@@ -263,10 +313,7 @@ pub struct Renderer {
     pub queue: wgpu::Queue,
     surface: wgpu::Surface<'static>,
     config: wgpu::SurfaceConfiguration,
-    pipeline: wgpu::RenderPipeline,
-    double_sided_pipeline: wgpu::RenderPipeline,
-    transparent_pipeline: wgpu::RenderPipeline,
-    transparent_double_sided_pipeline: wgpu::RenderPipeline,
+    material_pipelines: HashMap<MaterialPipelineKey, wgpu::RenderPipeline>,
     depth_view: wgpu::TextureView,
     depth_texture: wgpu::Texture,
     meshes: HashMap<String, MeshGpu>,
@@ -449,26 +496,36 @@ impl Renderer {
             bind_group_layouts: &[&bind_layout, &material_texture_layout],
             push_constant_ranges: &[],
         });
-        let pipeline = create_pipeline(
-            &device,
-            format,
-            &shader,
-            &pipeline_layout,
-            Some(wgpu::Face::Back),
-            false,
-        );
-        let double_sided_pipeline =
-            create_pipeline(&device, format, &shader, &pipeline_layout, None, false);
-        let transparent_pipeline = create_pipeline(
-            &device,
-            format,
-            &shader,
-            &pipeline_layout,
-            Some(wgpu::Face::Back),
-            true,
-        );
-        let transparent_double_sided_pipeline =
-            create_pipeline(&device, format, &shader, &pipeline_layout, None, true);
+        let mut material_pipelines = HashMap::new();
+        for double_sided in [false, true] {
+            let opaque = MaterialPipelineKey {
+                blend: MaterialPipelineBlend::Replace,
+                double_sided,
+                depth_write: true,
+            };
+            material_pipelines.insert(
+                opaque,
+                create_pipeline(&device, format, &shader, &pipeline_layout, opaque),
+            );
+            for blend in [
+                MaterialPipelineBlend::Alpha,
+                MaterialPipelineBlend::Premultiplied,
+                MaterialPipelineBlend::Additive,
+                MaterialPipelineBlend::Multiply,
+            ] {
+                for depth_write in [false, true] {
+                    let key = MaterialPipelineKey {
+                        blend,
+                        double_sided,
+                        depth_write,
+                    };
+                    material_pipelines.insert(
+                        key,
+                        create_pipeline(&device, format, &shader, &pipeline_layout, key),
+                    );
+                }
+            }
+        }
 
         let global_buf = device.create_buffer(&wgpu::BufferDescriptor {
             label: Some("frame_uniforms"),
@@ -539,10 +596,7 @@ impl Renderer {
             queue,
             surface,
             config,
-            pipeline,
-            double_sided_pipeline,
-            transparent_pipeline,
-            transparent_double_sided_pipeline,
+            material_pipelines,
             depth_view,
             depth_texture,
             meshes,
@@ -630,24 +684,7 @@ impl Renderer {
         let empty_ui = UiBatchPlan::default();
         let ui_plan = ui.unwrap_or(&empty_ui);
         self.ui.prepare(&self.device, &self.queue, ui_plan);
-        let mut draw_order: Vec<usize> = objects
-            .iter()
-            .enumerate()
-            .filter_map(|(index, object)| (!object.material.transparent).then_some(index))
-            .collect();
-        let mut transparent_order: Vec<usize> = objects
-            .iter()
-            .enumerate()
-            .filter_map(|(index, object)| object.material.transparent.then_some(index))
-            .collect();
-        transparent_order.sort_by(|left, right| {
-            let left_distance =
-                (objects[*left].model.w_axis.truncate() - camera.position).length_squared();
-            let right_distance =
-                (objects[*right].model.w_axis.truncate() - camera.position).length_squared();
-            right_distance.total_cmp(&left_distance)
-        });
-        draw_order.extend(transparent_order);
+        let draw_order = sorted_render_indices(objects, camera.position);
         for object in objects {
             self.ensure_material_texture_set(&object.material);
         }
@@ -693,12 +730,11 @@ impl Renderer {
                 let Some(mesh) = self.meshes.get(&object.mesh_key) else {
                     continue;
                 };
-                let pipeline = match (object.material.transparent, object.material.double_sided) {
-                    (true, true) => &self.transparent_double_sided_pipeline,
-                    (true, false) => &self.transparent_pipeline,
-                    (false, true) => &self.double_sided_pipeline,
-                    (false, false) => &self.pipeline,
-                };
+                let pipeline_key = MaterialPipelineKey::from(&object.material);
+                let pipeline = self
+                    .material_pipelines
+                    .get(&pipeline_key)
+                    .expect("all material pipeline variants are created at startup");
                 pass.set_pipeline(pipeline);
                 pass.set_bind_group(
                     0,
@@ -966,6 +1002,36 @@ fn make_global_uniforms(camera: FrameCamera, lighting: &FrameLighting) -> Global
     }
 }
 
+fn sorted_render_indices(objects: &[RenderObject], camera_position: Vec3) -> Vec<usize> {
+    let mut indices: Vec<usize> = (0..objects.len()).collect();
+    indices.sort_by(|left, right| {
+        let left_object = &objects[*left];
+        let right_object = &objects[*right];
+        left_object
+            .material
+            .render_queue
+            .cmp(&right_object.material.render_queue)
+            .then_with(|| {
+                left_object
+                    .material
+                    .transparent
+                    .cmp(&right_object.material.transparent)
+            })
+            .then_with(|| {
+                if !left_object.material.transparent || !right_object.material.transparent {
+                    return left.cmp(right);
+                }
+                let left_distance =
+                    (left_object.model.w_axis.truncate() - camera_position).length_squared();
+                let right_distance =
+                    (right_object.model.w_axis.truncate() - camera_position).length_squared();
+                right_distance.total_cmp(&left_distance)
+            })
+            .then_with(|| left.cmp(right))
+    });
+    indices
+}
+
 fn make_object_uniforms(object: &RenderObject) -> ObjectUniforms {
     let material = &object.material;
     ObjectUniforms {
@@ -994,7 +1060,16 @@ fn make_object_uniforms(object: &RenderObject) -> ObjectUniforms {
             material.normal_scale.max(0.0),
             material.occlusion_strength.clamp(0.0, 1.0),
             material.uv_rotation_degrees.to_radians(),
-            0.0,
+            if material.transparent {
+                match material.blend_mode {
+                    MaterialBlendMode::Alpha => 0.0,
+                    MaterialBlendMode::Premultiplied => 1.0,
+                    MaterialBlendMode::Additive => 2.0,
+                    MaterialBlendMode::Multiply => 3.0,
+                }
+            } else {
+                0.0
+            },
         ],
     }
 }
@@ -1031,16 +1106,10 @@ fn create_pipeline(
     format: wgpu::TextureFormat,
     shader: &wgpu::ShaderModule,
     layout: &wgpu::PipelineLayout,
-    cull_mode: Option<wgpu::Face>,
-    transparent: bool,
+    key: MaterialPipelineKey,
 ) -> wgpu::RenderPipeline {
     device.create_render_pipeline(&wgpu::RenderPipelineDescriptor {
-        label: Some(match (transparent, cull_mode.is_none()) {
-            (false, false) => "forward",
-            (false, true) => "forward_double_sided",
-            (true, false) => "forward_transparent",
-            (true, true) => "forward_transparent_double_sided",
-        }),
+        label: Some("forward_material_pipeline"),
         layout: Some(layout),
         vertex: wgpu::VertexState {
             module: shader,
@@ -1057,11 +1126,7 @@ fn create_pipeline(
             entry_point: Some("fs_main"),
             targets: &[Some(wgpu::ColorTargetState {
                 format,
-                blend: Some(if transparent {
-                    wgpu::BlendState::ALPHA_BLENDING
-                } else {
-                    wgpu::BlendState::REPLACE
-                }),
+                blend: Some(material_blend_state(key.blend)),
                 write_mask: wgpu::ColorWrites::ALL,
             })],
             compilation_options: Default::default(),
@@ -1070,12 +1135,12 @@ fn create_pipeline(
             topology: wgpu::PrimitiveTopology::TriangleList,
             strip_index_format: None,
             front_face: wgpu::FrontFace::Ccw,
-            cull_mode,
+            cull_mode: (!key.double_sided).then_some(wgpu::Face::Back),
             ..Default::default()
         },
         depth_stencil: Some(wgpu::DepthStencilState {
             format: wgpu::TextureFormat::Depth32Float,
-            depth_write_enabled: !transparent,
+            depth_write_enabled: key.depth_write,
             depth_compare: wgpu::CompareFunction::Less,
             stencil: Default::default(),
             bias: Default::default(),
@@ -1084,6 +1149,33 @@ fn create_pipeline(
         multiview: None,
         cache: None,
     })
+}
+
+fn material_blend_state(blend: MaterialPipelineBlend) -> wgpu::BlendState {
+    let component = |src_factor, dst_factor| wgpu::BlendComponent {
+        src_factor,
+        dst_factor,
+        operation: wgpu::BlendOperation::Add,
+    };
+    match blend {
+        MaterialPipelineBlend::Replace => wgpu::BlendState::REPLACE,
+        MaterialPipelineBlend::Alpha => wgpu::BlendState::ALPHA_BLENDING,
+        MaterialPipelineBlend::Premultiplied => wgpu::BlendState {
+            color: component(wgpu::BlendFactor::One, wgpu::BlendFactor::OneMinusSrcAlpha),
+            alpha: component(wgpu::BlendFactor::One, wgpu::BlendFactor::OneMinusSrcAlpha),
+        },
+        MaterialPipelineBlend::Additive => wgpu::BlendState {
+            color: component(wgpu::BlendFactor::SrcAlpha, wgpu::BlendFactor::One),
+            alpha: component(wgpu::BlendFactor::One, wgpu::BlendFactor::One),
+        },
+        MaterialPipelineBlend::Multiply => wgpu::BlendState {
+            color: component(wgpu::BlendFactor::Dst, wgpu::BlendFactor::Zero),
+            alpha: component(
+                wgpu::BlendFactor::SrcAlpha,
+                wgpu::BlendFactor::OneMinusSrcAlpha,
+            ),
+        },
+    }
 }
 
 fn create_object_buffer(device: &wgpu::Device, stride: u64, capacity: usize) -> wgpu::Buffer {
@@ -1361,6 +1453,13 @@ fn mapped_normal(
     );
 }
 
+fn material_output(color: vec3<f32>, alpha: f32) -> vec4<f32> {
+    if object.map_params.w > 0.5 && object.map_params.w < 1.5 {
+        return vec4<f32>(color * alpha, alpha);
+    }
+    return vec4<f32>(color, alpha);
+}
+
 @fragment
 fn fs_main(i: VsOut, @builtin(front_facing) front_facing: bool) -> @location(0) vec4<f32> {
     let sampled_color = textureSample(base_color_texture, material_sampler, i.uv);
@@ -1380,7 +1479,7 @@ fn fs_main(i: VsOut, @builtin(front_facing) front_facing: bool) -> @location(0) 
         * object.material.z
         * sampled_emissive;
     if object.material.w > 0.5 {
-        return vec4<f32>(base_color + emissive, surface_color.a);
+        return material_output(base_color + emissive, surface_color.a);
     }
 
     let face_normal = select(-normalize(i.world_normal), normalize(i.world_normal), front_facing);
@@ -1435,7 +1534,7 @@ fn fs_main(i: VsOut, @builtin(front_facing) front_facing: bool) -> @location(0) 
     }
 
     color += emissive;
-    return vec4<f32>(color, surface_color.a);
+    return material_output(color, surface_color.a);
 }
 "#;
 
@@ -1527,5 +1626,53 @@ mod tests {
         };
         let key = MaterialTextureSetKey::from(&material);
         assert_eq!(key.occlusion, "orm.png");
+    }
+
+    #[test]
+    fn material_pipeline_key_preserves_blend_depth_and_culling_state() {
+        let material = RenderMaterial {
+            transparent: true,
+            blend_mode: MaterialBlendMode::Premultiplied,
+            depth_write: false,
+            double_sided: true,
+            ..Default::default()
+        };
+        assert_eq!(
+            MaterialPipelineKey::from(&material),
+            MaterialPipelineKey {
+                blend: MaterialPipelineBlend::Premultiplied,
+                double_sided: true,
+                depth_write: false,
+            }
+        );
+        let object = RenderObject {
+            mesh_key: "cube".into(),
+            model: Mat4::IDENTITY,
+            material,
+        };
+        assert_eq!(make_object_uniforms(&object).map_params[3], 1.0);
+    }
+
+    #[test]
+    fn render_queue_precedes_transparent_distance_sorting() {
+        let object = |queue, transparent, z| RenderObject {
+            mesh_key: "cube".into(),
+            model: Mat4::from_translation(Vec3::new(0.0, 0.0, z)),
+            material: RenderMaterial {
+                transparent,
+                render_queue: queue,
+                ..Default::default()
+            },
+        };
+        let objects = vec![
+            object(3000, true, 2.0),
+            object(2000, false, 10.0),
+            object(3000, true, 8.0),
+            object(2450, false, 0.0),
+        ];
+        assert_eq!(
+            sorted_render_indices(&objects, Vec3::ZERO),
+            vec![1, 3, 2, 0]
+        );
     }
 }

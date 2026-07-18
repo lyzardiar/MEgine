@@ -92,6 +92,12 @@ function materialName(path: string): string {
   return path.split('/').pop()?.replace(/\.(?:mmat|mat)$/i, '') ?? 'Material';
 }
 
+function automaticRenderQueue(surface: MaterialAsset['surface']): number {
+  if (surface === 'transparent') return 3000;
+  if (surface === 'cutout') return 2450;
+  return 2000;
+}
+
 function MaterialTextureSlot(props: {
   label: string;
   hint?: string;
@@ -297,6 +303,32 @@ export function MaterialEditor(props: {
             <option value="transparent">Transparent</option>
             <option value="cutout">Alpha Cutout</option>
           </select></label>
+          {material.surface === 'transparent' && (
+            <>
+              <label>Blend <select value={material.blend_mode} onChange={(event) => update('blend_mode', event.target.value as MaterialAsset['blend_mode'])}>
+                <option value="alpha">Alpha</option>
+                <option value="premultiplied">Premultiplied Alpha</option>
+                <option value="additive">Additive</option>
+                <option value="multiply">Multiply</option>
+              </select></label>
+              <label className="material-check"><input type="checkbox" checked={material.transparent_depth_write} onChange={(event) => update('transparent_depth_write', event.target.checked)} /> Depth Write</label>
+            </>
+          )}
+          <label>Render Queue
+            <span className="material-suffixed-input">
+              <input
+                aria-label="Material render queue"
+                type="number"
+                min={-1}
+                max={5000}
+                step={1}
+                value={material.render_queue}
+                title="-1 uses the surface default"
+                onChange={(event) => update('render_queue', Number(event.target.value))}
+              />
+              <span>{material.render_queue < 0 ? `Auto (${automaticRenderQueue(material.surface)})` : 'Custom'}</span>
+            </span>
+          </label>
 
           <label className="material-color-row">Base Color
             <input type="color" value={baseRgb} onChange={(event) => {

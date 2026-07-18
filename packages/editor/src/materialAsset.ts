@@ -1,5 +1,6 @@
 export type MaterialShader = 'pbr' | 'unlit';
 export type MaterialSurface = 'opaque' | 'transparent' | 'cutout';
+export type MaterialBlendMode = 'alpha' | 'premultiplied' | 'additive' | 'multiply';
 export type MaterialWrap = 'repeat' | 'clamp' | 'mirror';
 export type MaterialFilter = 'nearest' | 'linear';
 
@@ -8,6 +9,9 @@ export type MaterialAsset = {
   name: string;
   shader: MaterialShader;
   surface: MaterialSurface;
+  blend_mode: MaterialBlendMode;
+  transparent_depth_write: boolean;
+  render_queue: number;
   base_color: [number, number, number, number];
   metallic: number;
   roughness: number;
@@ -32,10 +36,13 @@ export type MaterialAsset = {
 
 export function createMaterialAsset(name = 'New Material'): MaterialAsset {
   return {
-    version: 2,
+    version: 3,
     name,
     shader: 'pbr',
     surface: 'opaque',
+    blend_mode: 'alpha',
+    transparent_depth_write: false,
+    render_queue: -1,
     base_color: [0.8, 0.8, 0.8, 1],
     metallic: 0,
     roughness: 0.5,
@@ -78,12 +85,19 @@ export function normalizeMaterialAsset(value: unknown): MaterialAsset {
   const emissive = vector(source.emissive, 3, [0, 0, 0])
     .map((part) => Math.max(0, part)) as MaterialAsset['emissive'];
   return {
-    version: Math.max(2, Math.trunc(finite(source.version, 2))),
+    version: Math.max(3, Math.trunc(finite(source.version, 3))),
     name: String(source.name ?? ''),
     shader: source.shader === 'unlit' ? 'unlit' : 'pbr',
     surface: source.surface === 'transparent' || source.surface === 'cutout'
       ? source.surface
       : 'opaque',
+    blend_mode: source.blend_mode === 'premultiplied'
+      || source.blend_mode === 'additive'
+      || source.blend_mode === 'multiply'
+      ? source.blend_mode
+      : 'alpha',
+    transparent_depth_write: Boolean(source.transparent_depth_write),
+    render_queue: Math.max(-1, Math.min(5000, Math.trunc(finite(source.render_queue, -1)))),
     base_color: baseColor,
     metallic: Math.max(0, Math.min(1, finite(source.metallic, 0))),
     roughness: Math.max(0.04, Math.min(1, finite(source.roughness, 0.5))),

@@ -1,9 +1,10 @@
 use crate::textures::resolve_project_asset_path;
 use mengine_assets::{
-    load_material_asset, MaterialAsset, MaterialFilter as AssetMaterialFilter, MaterialShader,
-    MaterialSurface, MaterialWrap as AssetMaterialWrap,
+    load_material_asset, MaterialAsset, MaterialBlendMode as AssetMaterialBlendMode,
+    MaterialFilter as AssetMaterialFilter, MaterialShader, MaterialSurface,
+    MaterialWrap as AssetMaterialWrap,
 };
-use mengine_rhi::{MaterialFilter, MaterialWrap, RenderMaterial};
+use mengine_rhi::{MaterialBlendMode, MaterialFilter, MaterialWrap, RenderMaterial};
 use std::collections::{HashMap, HashSet};
 use std::path::PathBuf;
 use std::sync::Arc;
@@ -104,6 +105,23 @@ pub fn render_material_from_asset(material: &MaterialAsset) -> RenderMaterial {
         unlit: material.shader == MaterialShader::Unlit,
         double_sided: material.double_sided,
         transparent: material.surface == MaterialSurface::Transparent,
+        blend_mode: match material.blend_mode {
+            AssetMaterialBlendMode::Alpha => MaterialBlendMode::Alpha,
+            AssetMaterialBlendMode::Premultiplied => MaterialBlendMode::Premultiplied,
+            AssetMaterialBlendMode::Additive => MaterialBlendMode::Additive,
+            AssetMaterialBlendMode::Multiply => MaterialBlendMode::Multiply,
+        },
+        depth_write: material.surface != MaterialSurface::Transparent
+            || material.transparent_depth_write,
+        render_queue: if material.render_queue >= 0 {
+            material.render_queue
+        } else {
+            match material.surface {
+                MaterialSurface::Opaque => 2000,
+                MaterialSurface::Cutout => 2450,
+                MaterialSurface::Transparent => 3000,
+            }
+        },
         alpha_cutoff: if material.surface == MaterialSurface::Cutout {
             material.alpha_cutoff
         } else {
@@ -145,6 +163,9 @@ mod tests {
         let asset = MaterialAsset {
             shader: MaterialShader::Unlit,
             surface: MaterialSurface::Cutout,
+            blend_mode: AssetMaterialBlendMode::Premultiplied,
+            transparent_depth_write: true,
+            render_queue: 2600,
             alpha_cutoff: 0.4,
             base_color_texture: "Assets/Textures/leaves.png".into(),
             normal_texture: "Assets/Textures/leaves-normal.png".into(),
@@ -164,6 +185,9 @@ mod tests {
         let material = render_material_from_asset(&asset);
         assert!(material.unlit);
         assert!(!material.transparent);
+        assert_eq!(material.blend_mode, MaterialBlendMode::Premultiplied);
+        assert!(material.depth_write);
+        assert_eq!(material.render_queue, 2600);
         assert_eq!(material.alpha_cutoff, 0.4);
         assert_eq!(material.base_color_texture, asset.base_color_texture);
         assert_eq!(material.normal_texture, asset.normal_texture);
@@ -181,5 +205,26 @@ mod tests {
         assert_eq!(material.wrap_u, MaterialWrap::Clamp);
         assert_eq!(material.wrap_v, MaterialWrap::Mirror);
         assert_eq!(material.filter, MaterialFilter::Nearest);
+    }
+
+    #[test]
+    fn automatic_render_queues_and_transparent_depth_are_surface_aware() {
+        let transparent = render_material_from_asset(&MaterialAsset {
+            surface: MaterialSurface::Transparent,
+            blend_mode: AssetMaterialBlendMode::Additive,
+            transparent_depth_write: false,
+            ..MaterialAsset::default()
+        });
+        assert!(transparent.transparent);
+        assert_eq!(transparent.blend_mode, MaterialBlendMode::Additive);
+        assert!(!transparent.depth_write);
+        assert_eq!(transparent.render_queue, 3000);
+
+        let cutout = render_material_from_asset(&MaterialAsset {
+            surface: MaterialSurface::Cutout,
+            ..MaterialAsset::default()
+        });
+        assert!(cutout.depth_write);
+        assert_eq!(cutout.render_queue, 2450);
     }
 }

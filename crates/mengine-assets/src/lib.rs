@@ -20,8 +20,8 @@ pub use animator::{
 };
 pub use gltf_import::{load_gltf_mesh_data, MeshData};
 pub use material::{
-    load_material_asset, parse_material_asset, MaterialAsset, MaterialFilter, MaterialShader,
-    MaterialSurface, MaterialWrap,
+    load_material_asset, parse_material_asset, MaterialAsset, MaterialBlendMode, MaterialFilter,
+    MaterialShader, MaterialSurface, MaterialWrap,
 };
 pub use registry::{AssetMeta, AssetRegistry};
 pub use sprite::{

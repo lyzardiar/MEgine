@@ -3,7 +3,7 @@ use serde::{Deserialize, Serialize};
 use std::path::Path;
 
 fn default_version() -> u32 {
-    2
+    3
 }
 
 fn default_base_color() -> [f32; 4] {
@@ -30,6 +30,10 @@ fn default_one() -> f32 {
     1.0
 }
 
+fn default_render_queue() -> i32 {
+    -1
+}
+
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
 pub enum MaterialShader {
@@ -45,6 +49,16 @@ pub enum MaterialSurface {
     Opaque,
     Transparent,
     Cutout,
+}
+
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "snake_case")]
+pub enum MaterialBlendMode {
+    #[default]
+    Alpha,
+    Premultiplied,
+    Additive,
+    Multiply,
 }
 
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq, Serialize, Deserialize)]
@@ -72,6 +86,10 @@ pub struct MaterialAsset {
     pub name: String,
     pub shader: MaterialShader,
     pub surface: MaterialSurface,
+    pub blend_mode: MaterialBlendMode,
+    pub transparent_depth_write: bool,
+    #[serde(default = "default_render_queue")]
+    pub render_queue: i32,
     #[serde(default = "default_base_color")]
     pub base_color: [f32; 4],
     pub metallic: f32,
@@ -116,6 +134,9 @@ impl Default for MaterialAsset {
             name: String::new(),
             shader: MaterialShader::Pbr,
             surface: MaterialSurface::Opaque,
+            blend_mode: MaterialBlendMode::Alpha,
+            transparent_depth_write: false,
+            render_queue: default_render_queue(),
             base_color: default_base_color(),
             metallic: 0.0,
             roughness: default_roughness(),
@@ -172,6 +193,7 @@ impl MaterialAsset {
             *value = finite_or(*value, 0.0);
         }
         self.uv_rotation = finite_or(self.uv_rotation, 0.0).rem_euclid(360.0);
+        self.render_queue = self.render_queue.clamp(-1, 5000);
         self.base_color_texture = self.base_color_texture.trim().replace('\\', "/");
         self.normal_texture = self.normal_texture.trim().replace('\\', "/");
         self.metallic_roughness_texture = self.metallic_roughness_texture.trim().replace('\\', "/");
@@ -220,7 +242,7 @@ mod tests {
             }"#,
         )
         .unwrap();
-        assert_eq!(parsed.version, 2);
+        assert_eq!(parsed.version, 3);
         assert_eq!(parsed.surface, MaterialSurface::Transparent);
         assert_eq!(parsed.base_color, [1.0, 0.0, 0.5, 0.25]);
         assert_eq!(parsed.metallic, 1.0);
@@ -258,7 +280,10 @@ mod tests {
             }"#,
         )
         .expect("materials authored before PBR maps were added remain loadable");
-        assert_eq!(legacy.version, 2);
+        assert_eq!(legacy.version, 3);
+        assert_eq!(legacy.blend_mode, MaterialBlendMode::Alpha);
+        assert!(!legacy.transparent_depth_write);
+        assert_eq!(legacy.render_queue, -1);
         assert_eq!(legacy.normal_texture, "");
         assert_eq!(legacy.normal_scale, 1.0);
         assert_eq!(legacy.metallic_roughness_texture, "");
@@ -272,10 +297,14 @@ mod tests {
     }
 
     #[test]
-    fn version_two_sampler_and_uv_settings_are_normalized() {
+    fn material_pipeline_and_sampler_settings_are_normalized() {
         let parsed = parse_material_asset(
             br#"{
-              "version":2,
+              "version":3,
+              "surface":"transparent",
+              "blend_mode":"premultiplied",
+              "transparent_depth_write":true,
+              "render_queue":9999,
               "occlusion_texture":" Assets\\Textures\\ao.png ",
               "uv_rotation":-90,
               "wrap_u":"clamp",
@@ -284,7 +313,10 @@ mod tests {
             }"#,
         )
         .unwrap();
-        assert_eq!(parsed.version, 2);
+        assert_eq!(parsed.version, 3);
+        assert_eq!(parsed.blend_mode, MaterialBlendMode::Premultiplied);
+        assert!(parsed.transparent_depth_write);
+        assert_eq!(parsed.render_queue, 5000);
         assert_eq!(parsed.occlusion_texture, "Assets/Textures/ao.png");
         assert_eq!(parsed.uv_rotation, 270.0);
         assert_eq!(parsed.wrap_u, MaterialWrap::Clamp);
