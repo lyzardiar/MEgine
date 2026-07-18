@@ -14,9 +14,9 @@ use mengine_core::{Entity, TransformHierarchy, World};
 use mengine_physics::{PhysicsWorld, PhysicsWorld2D};
 use mengine_platform::InputState;
 use mengine_rhi::{
-    look_at, orthographic, perspective, DirectionalLightData, EnvironmentLightData, FrameCamera,
-    FrameLighting, PointLightData, RenderMaterial, RenderObject, Renderer, SpotLightData,
-    UiBatchPlan,
+    look_at, orthographic, perspective, validate_surface_shader_hook, DirectionalLightData,
+    EnvironmentLightData, FrameCamera, FrameLighting, PointLightData, RenderMaterial, RenderObject,
+    Renderer, SpotLightData, UiBatchPlan,
 };
 use mengine_runtime::animation::{infer_project_root_from_scene, AnimationRuntime};
 use mengine_runtime::audio::AudioRuntime;
@@ -1961,6 +1961,37 @@ fn validate_world_assets(
                 if validated.insert(path.clone()) {
                     let asset = mengine_assets::load_material_asset(&path)
                         .with_context(|| format!("invalid material {}", path.display()))?;
+                    if asset.shader == mengine_assets::MaterialShader::Custom {
+                        let shader = asset.custom_shader.trim();
+                        if shader.is_empty() {
+                            bail!(
+                                "invalid material {}: custom material requires a .mshader asset",
+                                path.display()
+                            );
+                        }
+                        if !shader.to_ascii_lowercase().ends_with(".mshader") {
+                            bail!(
+                                "invalid material {}: custom shader path must end with .mshader",
+                                path.display()
+                            );
+                        }
+                        let shader_path = resolve(shader, "material surface shader")?;
+                        if validated.insert(shader_path.clone()) {
+                            let source = mengine_assets::load_surface_shader(&shader_path)
+                                .with_context(|| {
+                                    format!(
+                                        "invalid material surface shader {}",
+                                        shader_path.display()
+                                    )
+                                })?;
+                            validate_surface_shader_hook(&source).map_err(|error| {
+                                anyhow::anyhow!(
+                                    "invalid material surface shader {}: {error}",
+                                    shader_path.display()
+                                )
+                            })?;
+                        }
+                    }
                     for texture in [
                         asset.base_color_texture,
                         asset.normal_texture,
@@ -2112,6 +2143,29 @@ fn validate_animation_clip_asset(
 mod tests {
     use super::*;
 
+    fn temporary_project_root(label: &str) -> PathBuf {
+        std::env::temp_dir().join(format!(
+            "mengine-{label}-{}-{}",
+            std::process::id(),
+            std::time::SystemTime::now()
+                .duration_since(std::time::UNIX_EPOCH)
+                .unwrap()
+                .as_nanos()
+        ))
+    }
+
+    fn world_with_material(reference: &str) -> World {
+        let mut world = World::new();
+        world.commands.push(WorldCommand::Spawn {
+            name: Some("Material validation".into()),
+            components: json!({
+                "MeshRenderer": { "mesh": "cube", "material": reference }
+            }),
+        });
+        world.commit();
+        world
+    }
+
     #[test]
     fn camera_uses_transform_rotation_and_orthographic_projection() {
         let transform = Transform {
@@ -2240,6 +2294,120 @@ mod tests {
         assert!(error
             .to_string()
             .contains("unsafe environment texture path"));
+    }
+
+    #[test]
+    fn packaged_asset_validation_includes_custom_material_surface_shaders() {
+        let root = temporary_project_root("packaged-custom-material");
+        let material_path = root.join("Assets/Materials/Rim.mmat");
+        let shader_path = root.join("Assets/Shaders/Rim.mshader");
+        std::fs::create_dir_all(material_path.parent().unwrap()).unwrap();
+        std::fs::create_dir_all(shader_path.parent().unwrap()).unwrap();
+        std::fs::write(
+            &material_path,
+            r#"{"shader":"custom","custom_shader":"Assets/Shaders/Rim.mshader"}"#,
+        )
+        .unwrap();
+        std::fs::write(
+            &shader_path,
+            r#"
+                fn mengine_surface_hook(
+                    color: vec4<f32>,
+                    uv: vec2<f32>,
+                    world_position: vec3<f32>,
+                    world_normal: vec3<f32>,
+                ) -> vec4<f32> { return color; }
+            "#,
+        )
+        .unwrap();
+
+        let mut validated = HashSet::new();
+        let result = validate_world_assets(
+            &world_with_material("Assets/Materials/Rim.mmat"),
+            &root,
+            &mut validated,
+        );
+        std::fs::remove_dir_all(&root).unwrap();
+
+        result.expect("custom material and shader should pass package validation");
+        assert_eq!(validated.len(), 2);
+        assert!(validated.contains(&material_path));
+        assert!(validated.contains(&shader_path));
+    }
+
+    #[test]
+    fn packaged_asset_validation_rejects_unsafe_custom_shader_references() {
+        let root = temporary_project_root("packaged-unsafe-custom-material");
+        let material_path = root.join("Assets/Materials/Rim.mmat");
+        std::fs::create_dir_all(material_path.parent().unwrap()).unwrap();
+        std::fs::write(
+            &material_path,
+            r#"{"shader":"custom","custom_shader":"../outside.mshader"}"#,
+        )
+        .unwrap();
+
+        let error = validate_world_assets(
+            &world_with_material("Assets/Materials/Rim.mmat"),
+            &root,
+            &mut HashSet::new(),
+        )
+        .expect_err("custom shader paths must stay inside packaged content");
+        std::fs::remove_dir_all(&root).unwrap();
+
+        assert!(error
+            .to_string()
+            .contains("unsafe material surface shader path"));
+    }
+
+    #[test]
+    fn packaged_asset_validation_rejects_missing_custom_surface_shaders() {
+        let root = temporary_project_root("packaged-missing-custom-material");
+        let material_path = root.join("Assets/Materials/Rim.mmat");
+        std::fs::create_dir_all(material_path.parent().unwrap()).unwrap();
+        std::fs::write(
+            &material_path,
+            r#"{"shader":"custom","custom_shader":"Assets/Shaders/Missing.mshader"}"#,
+        )
+        .unwrap();
+
+        let error = validate_world_assets(
+            &world_with_material("Assets/Materials/Rim.mmat"),
+            &root,
+            &mut HashSet::new(),
+        )
+        .expect_err("missing custom shaders must fail package validation");
+        std::fs::remove_dir_all(&root).unwrap();
+
+        assert!(error
+            .to_string()
+            .contains("invalid material surface shader"));
+    }
+
+    #[test]
+    fn packaged_asset_validation_rejects_invalid_custom_surface_shaders() {
+        let root = temporary_project_root("packaged-invalid-custom-material");
+        let material_path = root.join("Assets/Materials/Rim.mmat");
+        let shader_path = root.join("Assets/Shaders/Rim.mshader");
+        std::fs::create_dir_all(material_path.parent().unwrap()).unwrap();
+        std::fs::create_dir_all(shader_path.parent().unwrap()).unwrap();
+        std::fs::write(
+            &material_path,
+            r#"{"shader":"custom","custom_shader":"Assets/Shaders/Rim.mshader"}"#,
+        )
+        .unwrap();
+        std::fs::write(&shader_path, "fn mengine_surface_hook() {}").unwrap();
+
+        let error = validate_world_assets(
+            &world_with_material("Assets/Materials/Rim.mmat"),
+            &root,
+            &mut HashSet::new(),
+        )
+        .expect_err("invalid WGSL hooks must fail package validation");
+        std::fs::remove_dir_all(&root).unwrap();
+
+        assert!(error
+            .to_string()
+            .contains("invalid material surface shader"));
     }
 
     #[test]
