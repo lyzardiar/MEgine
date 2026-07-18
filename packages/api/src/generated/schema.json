@@ -659,6 +659,9 @@
         },
         "type": "array"
       },
+      "exposure": {
+        "type": "number"
+      },
       "ground_color": {
         "items": {
           "type": "number"
@@ -688,7 +691,8 @@
       "diffuse_intensity",
       "specular_intensity",
       "texture",
-      "rotation_degrees"
+      "rotation_degrees",
+      "exposure"
     ],
     "type": "object"
   },

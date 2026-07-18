@@ -1610,6 +1610,7 @@ fn collect_lighting(world: &World, hierarchy: &TransformHierarchy) -> FrameLight
                     specular_intensity: environment.specular_intensity,
                     texture: environment.texture.trim().replace('\\', "/"),
                     rotation_degrees: environment.rotation_degrees,
+                    exposure: environment.exposure,
                 };
                 environment_found = true;
             }
@@ -2094,7 +2095,8 @@ mod tests {
                     "diffuse_intensity": 1.5,
                     "specular_intensity": 2,
                     "texture": "Assets\\Textures\\studio.png",
-                    "rotation_degrees": 45
+                    "rotation_degrees": 45,
+                    "exposure": 1.25
                 }
             }),
             json!({
@@ -2123,6 +2125,7 @@ mod tests {
         assert_eq!(lights.environment.specular_intensity, 2.0);
         assert_eq!(lights.environment.texture, "Assets/Textures/studio.png");
         assert_eq!(lights.environment.rotation_degrees, 45.0);
+        assert_eq!(lights.environment.exposure, 1.25);
         assert_eq!(lights.directional.unwrap().intensity, 2.0);
         assert_eq!(lights.points[0].range, 7.0);
         assert_eq!(lights.spots[0].outer_angle_degrees, 55.0);

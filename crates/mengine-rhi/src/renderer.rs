@@ -1,4 +1,5 @@
 use crate::mesh::{MeshGpu, Vertex};
+use crate::post_process::{HdrPostProcess, HDR_COLOR_FORMAT};
 use crate::render_graph::RenderGraph;
 use crate::ui::{UiBatchPlan, UiFrameStats, UiRenderer, UiTextureError};
 use crate::RhiError;
@@ -199,6 +200,8 @@ pub struct EnvironmentLightData {
     pub specular_intensity: f32,
     pub texture: String,
     pub rotation_degrees: f32,
+    /// Exposure compensation in photographic stops (EV).
+    pub exposure: f32,
 }
 
 impl Default for EnvironmentLightData {
@@ -211,6 +214,7 @@ impl Default for EnvironmentLightData {
             specular_intensity: 1.0,
             texture: String::new(),
             rotation_degrees: 0.0,
+            exposure: 0.0,
         }
     }
 }
@@ -408,6 +412,7 @@ pub struct Renderer {
     material_texture_sets: HashMap<MaterialTextureSetKey, wgpu::BindGroup>,
     object_stride: u64,
     object_capacity: usize,
+    post_process: HdrPostProcess,
     ui: UiRenderer,
     pub clear: ClearColor,
     pub graph: RenderGraph,
@@ -673,7 +678,7 @@ impl Renderer {
             };
             material_pipelines.insert(
                 opaque,
-                create_pipeline(&device, format, &shader, &pipeline_layout, opaque),
+                create_pipeline(&device, HDR_COLOR_FORMAT, &shader, &pipeline_layout, opaque),
             );
             for blend in [
                 MaterialPipelineBlend::Alpha,
@@ -690,7 +695,7 @@ impl Renderer {
                     };
                     material_pipelines.insert(
                         key,
-                        create_pipeline(&device, format, &shader, &pipeline_layout, key),
+                        create_pipeline(&device, HDR_COLOR_FORMAT, &shader, &pipeline_layout, key),
                     );
                 }
             }
@@ -826,6 +831,7 @@ impl Renderer {
         let (depth_texture, depth_view) = create_depth(&device, config.width, config.height);
         let mut meshes = HashMap::new();
         meshes.insert("cube".into(), MeshGpu::unit_cube(&device));
+        let post_process = HdrPostProcess::new(&device, format, config.width, config.height);
         let ui = UiRenderer::new(&device, &queue, format, config.width, config.height);
 
         Ok(Self {
@@ -870,6 +876,7 @@ impl Renderer {
             material_texture_sets: HashMap::new(),
             object_stride,
             object_capacity,
+            post_process,
             ui,
             clear: ClearColor {
                 r: 0.1,
@@ -893,6 +900,8 @@ impl Renderer {
         let (tex, view) = create_depth(&self.device, new_size.width, new_size.height);
         self.depth_texture = tex;
         self.depth_view = view;
+        self.post_process
+            .resize(&self.device, new_size.width, new_size.height);
         self.ui.resize(&self.queue, new_size.width, new_size.height);
     }
 
@@ -944,6 +953,8 @@ impl Renderer {
             .write_buffer(&self.global_buf, 0, bytemuck::bytes_of(&global));
         self.queue
             .write_buffer(&self.shadow_uniform_buf, 0, bytemuck::bytes_of(&shadow));
+        self.post_process
+            .write_exposure(&self.queue, lighting.environment.exposure);
         if !objects.is_empty() {
             let mut packed = vec![0_u8; self.object_stride as usize * objects.len()];
             for (index, object) in objects.iter().enumerate() {
@@ -1024,9 +1035,9 @@ impl Renderer {
                 &self.fallback_environment_bind_group
             };
             let mut pass = encoder.begin_render_pass(&wgpu::RenderPassDescriptor {
-                label: Some("forward_opaque"),
+                label: Some("forward_hdr"),
                 color_attachments: &[Some(wgpu::RenderPassColorAttachment {
-                    view: &view,
+                    view: self.post_process.hdr_view(),
                     resolve_target: None,
                     ops: wgpu::Operations {
                         load: wgpu::LoadOp::Clear(wgpu::Color {
@@ -1083,7 +1094,46 @@ impl Renderer {
                 pass.set_index_buffer(mesh.index_buffer.slice(..), wgpu::IndexFormat::Uint32);
                 pass.draw_indexed(0..mesh.index_count, 0, 0..1);
             }
+        }
 
+        {
+            let mut pass = encoder.begin_render_pass(&wgpu::RenderPassDescriptor {
+                label: Some("aces_tone_mapping"),
+                color_attachments: &[Some(wgpu::RenderPassColorAttachment {
+                    view: &view,
+                    resolve_target: None,
+                    ops: wgpu::Operations {
+                        load: wgpu::LoadOp::Clear(wgpu::Color::BLACK),
+                        store: wgpu::StoreOp::Store,
+                    },
+                })],
+                depth_stencil_attachment: None,
+                ..Default::default()
+            });
+            self.post_process.draw(&mut pass);
+        }
+
+        if !ui_plan.is_empty() {
+            let mut pass = encoder.begin_render_pass(&wgpu::RenderPassDescriptor {
+                label: Some("ui_overlay"),
+                color_attachments: &[Some(wgpu::RenderPassColorAttachment {
+                    view: &view,
+                    resolve_target: None,
+                    ops: wgpu::Operations {
+                        load: wgpu::LoadOp::Load,
+                        store: wgpu::StoreOp::Store,
+                    },
+                })],
+                depth_stencil_attachment: Some(wgpu::RenderPassDepthStencilAttachment {
+                    view: &self.depth_view,
+                    depth_ops: Some(wgpu::Operations {
+                        load: wgpu::LoadOp::Load,
+                        store: wgpu::StoreOp::Store,
+                    }),
+                    stencil_ops: None,
+                }),
+                ..Default::default()
+            });
             self.ui.draw(&mut pass, ui_plan);
         }
 
@@ -1141,7 +1191,7 @@ impl Renderer {
             key,
             create_pipeline(
                 &self.device,
-                self.config.format,
+                HDR_COLOR_FORMAT,
                 &shader,
                 &self.pipeline_layout,
                 key,

@@ -183,6 +183,7 @@ pub struct EnvironmentLight {
     pub specular_intensity: f32,
     pub texture: String,
     pub rotation_degrees: f32,
+    pub exposure: f32,
 }
 
 impl Default for EnvironmentLight {
@@ -195,6 +196,7 @@ impl Default for EnvironmentLight {
             specular_intensity: 1.0,
             texture: "".into(),
             rotation_degrees: 0.0,
+            exposure: 0.0,
         }
     }
 }

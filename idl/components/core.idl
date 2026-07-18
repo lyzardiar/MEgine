@@ -44,6 +44,8 @@ component EnvironmentLight {
   specular_intensity: float  = 1
   texture:            string = ""
   rotation_degrees:   float  = 0
+  /// Photographic exposure compensation in stops (EV).
+  exposure:           float  = 0
 }
 
 component PointLight {

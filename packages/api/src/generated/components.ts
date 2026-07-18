@@ -44,6 +44,7 @@ export interface EnvironmentLight {
   specularIntensity: number;
   texture: string;
   rotationDegrees: number;
+  exposure: number;
 }
 
 export interface PointLight {

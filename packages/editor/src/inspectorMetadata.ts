@@ -122,6 +122,7 @@ export const BUILTIN_INSPECTOR_FIELDS: Readonly<
     specular_intensity: { label: 'Specular Intensity', min: 0, step: 0.05 },
     texture: { kind: 'texture', label: 'Environment Texture', allowNone: true, noneValue: '' },
     rotation_degrees: { label: 'Rotation', step: 1 },
+    exposure: { label: 'Exposure (EV)', min: -16, max: 16, step: 0.1 },
   },
   PointLight: {
     intensity: { min: 0, step: 0.1 },
