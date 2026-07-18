@@ -12,9 +12,11 @@ import {
   runPcPlayer,
   saveProjectBuildAssetSettings,
   saveProjectBuildSettings,
+  verifyPcPlayer,
   type BuildPlayerProfile,
   type BuildPlayerResult,
   type ProjectBuildSettings,
+  type VerifyPlayerResult,
 } from '../transport/editorTransport';
 
 function scenePath(name: string): string {
@@ -62,12 +64,15 @@ export function BuildSettings(props: {
   const [savingAll, setSavingAll] = useState(false);
   const [building, setBuilding] = useState(false);
   const [launching, setLaunching] = useState(false);
+  const [verifying, setVerifying] = useState(false);
   const [lastBuild, setLastBuild] = useState<BuildPlayerResult | null>(null);
+  const [lastVerification, setLastVerification] = useState<VerifyPlayerResult | null>(null);
   const [message, setMessage] = useState<string | null>(null);
   const [messageError, setMessageError] = useState(false);
   const [settingsError, setSettingsError] = useState<string | null>(null);
   const settingsRef = useRef<ProjectBuildSettings | null>(null);
   const alwaysIncludeDraftRef = useRef('');
+  const buildReportRevisionRef = useRef(0);
   settingsRef.current = settings;
   alwaysIncludeDraftRef.current = alwaysIncludeDraft;
   const assetSettingsDirty = Boolean(
@@ -116,6 +121,12 @@ export function BuildSettings(props: {
 
   useEffect(() => () => props.onDirtyChange(false), [props.onDirtyChange]);
 
+  const invalidateBuildReport = () => {
+    buildReportRevisionRef.current += 1;
+    setLastBuild(null);
+    setLastVerification(null);
+  };
+
   const save = async () => {
     setMessage(null);
     const ok = await props.onSaveScene();
@@ -143,7 +154,7 @@ export function BuildSettings(props: {
     try {
       const next = await saveProjectBuildSettings(scenes);
       setSettings(next);
-      setLastBuild(null);
+      invalidateBuildReport();
       props.onLog(`Build scenes updated: ${next.scenes.length} scene(s), entry ${sceneLabel(next.scenes[0])}`);
     } catch (reason) {
       const detail = reason instanceof Error ? reason.message : String(reason);
@@ -168,7 +179,7 @@ export function BuildSettings(props: {
       const nextDraft = next.alwaysInclude.join('\n');
       alwaysIncludeDraftRef.current = nextDraft;
       setAlwaysIncludeDraft(nextDraft);
-      setLastBuild(null);
+      invalidateBuildReport();
       props.onLog(`Build asset mode updated: ${next.assetMode}, ${next.alwaysInclude.length} always-included path(s)`);
       return true;
     } catch (reason) {
@@ -249,6 +260,36 @@ export function BuildSettings(props: {
     }
   };
 
+  const verify = async (result: BuildPlayerResult) => {
+    if (verifying || building || launching) return;
+    const reportRevision = buildReportRevisionRef.current;
+    setVerifying(true);
+    setLastVerification(null);
+    setMessage(null);
+    setMessageError(false);
+    try {
+      const verification = await verifyPcPlayer(result.executable, result.contentHash);
+      if (buildReportRevisionRef.current !== reportRevision) {
+        props.onLog(`Verified superseded published player -> ${verification.executable}`, 'warn');
+        return;
+      }
+      setLastVerification(verification);
+      setMessage(`Published build verified: ${verification.fileCount} files · ${verification.contentHash.slice(0, 12)}.`);
+      props.onLog(`Verified published player -> ${verification.executable}`);
+    } catch (reason) {
+      const detail = reason instanceof Error ? reason.message : String(reason);
+      if (buildReportRevisionRef.current !== reportRevision) {
+        props.onLog(`Superseded published player verification failed: ${detail}`, 'warn');
+        return;
+      }
+      setMessageError(true);
+      setMessage(`Published build verification failed: ${detail}`);
+      props.onLog(`Published player verification failed: ${detail}`, 'error');
+    } finally {
+      setVerifying(false);
+    }
+  };
+
   const build = async (runAfterBuild = false) => {
     if (
       !desktop
@@ -260,9 +301,10 @@ export function BuildSettings(props: {
       || !settings?.scenes.length
       || building
       || launching
+      || verifying
     ) return;
     setBuilding(true);
-    setLastBuild(null);
+    invalidateBuildReport();
     setMessage(null);
     setMessageError(false);
     try {
@@ -298,8 +340,8 @@ export function BuildSettings(props: {
           <strong>PC Build Settings</strong>
           <span>Packages an ordered scene list into a self-validating standalone player.</span>
         </div>
-        <span className={`build-status ${building || launching || settingsSaving || savingAll ? 'busy' : ''}`}>
-          {building ? 'BUILDING' : launching ? 'LAUNCHING' : settingsSaving || savingAll ? 'SAVING' : lastBuild ? 'SUCCEEDED' : 'READY'}
+        <span className={`build-status ${building || launching || verifying || settingsSaving || savingAll ? 'busy' : ''}`}>
+          {building ? 'BUILDING' : launching ? 'LAUNCHING' : verifying ? 'VERIFYING' : settingsSaving || savingAll ? 'SAVING' : lastVerification ? 'VERIFIED' : lastBuild ? 'SUCCEEDED' : 'READY'}
         </span>
       </div>
 
@@ -388,7 +430,7 @@ export function BuildSettings(props: {
               onChange={(event) => {
                 alwaysIncludeDraftRef.current = event.target.value;
                 setAlwaysIncludeDraft(event.target.value);
-                setLastBuild(null);
+                invalidateBuildReport();
               }}
             />
             <button
@@ -515,6 +557,14 @@ export function BuildSettings(props: {
             <small title={lastBuild.manifestPath}>Report: {lastBuild.manifestPath}</small>
           </div>
           {lastBuild.log && <pre>{lastBuild.log}</pre>}
+          {lastVerification && (
+            <div className="build-verification">
+              <strong>Published artifact verified</strong>
+              <span>{lastVerification.fileCount} files · {byteSize(lastVerification.packagedBytes)}</span>
+              <span>SHA-256 {lastVerification.contentHash}</span>
+              {lastVerification.log && <pre>{lastVerification.log}</pre>}
+            </div>
+          )}
         </section>
       )}
 
@@ -522,7 +572,16 @@ export function BuildSettings(props: {
         {lastBuild && (
           <button
             type="button"
-            disabled={building || launching || settingsSaving}
+            disabled={building || launching || verifying || settingsSaving}
+            onClick={() => void verify(lastBuild)}
+          >
+            {verifying ? 'Verifying Published Build...' : lastVerification ? 'Verify Again' : 'Verify Published Build'}
+          </button>
+        )}
+        {lastBuild && (
+          <button
+            type="button"
+            disabled={building || launching || verifying || settingsSaving}
             onClick={() => void launch(lastBuild)}
           >
             {launching ? 'Starting Player...' : 'Run Player'}
@@ -539,6 +598,7 @@ export function BuildSettings(props: {
             || savingAll
             || building
             || launching
+            || verifying
             || !settings?.scenes.length
             || missing.length > 0
           }
@@ -558,6 +618,7 @@ export function BuildSettings(props: {
             || savingAll
             || building
             || launching
+            || verifying
             || !settings?.scenes.length
             || missing.length > 0
           }

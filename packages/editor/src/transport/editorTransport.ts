@@ -101,6 +101,14 @@ export type RunPlayerResult = {
   processId: number;
 };
 
+export type VerifyPlayerResult = {
+  executable: string;
+  contentHash: string;
+  fileCount: number;
+  packagedBytes: number;
+  log: string;
+};
+
 export type ProjectSceneInfo = {
   name: string;
   updatedAt: number;
@@ -257,6 +265,16 @@ export async function runPcPlayer(executable: string): Promise<RunPlayerResult> 
     throw new Error('PC players can only be launched from the desktop editor');
   }
   return invoke<RunPlayerResult>('run_pc_player', { executable });
+}
+
+export async function verifyPcPlayer(
+  executable: string,
+  expectedContentHash: string,
+): Promise<VerifyPlayerResult> {
+  if (!isDesktopEditor()) {
+    throw new Error('Published player builds can only be verified from the desktop editor');
+  }
+  return invoke<VerifyPlayerResult>('verify_pc_player', { executable, expectedContentHash });
 }
 
 export async function listProjectScenes(): Promise<ProjectSceneInfo[]> {

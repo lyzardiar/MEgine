@@ -189,6 +189,16 @@ struct RunPlayerResult {
     process_id: u32,
 }
 
+#[derive(Debug, serde::Serialize)]
+#[serde(rename_all = "camelCase")]
+struct VerifyPlayerResult {
+    executable: String,
+    content_hash: String,
+    file_count: usize,
+    packaged_bytes: u64,
+    log: String,
+}
+
 fn find_engine_root(start: &Path) -> Option<PathBuf> {
     let mut current = start.to_path_buf();
     loop {
@@ -830,6 +840,102 @@ fn validated_player_executable(project_root: &Path, requested: &Path) -> Result<
         return Err("requested executable does not match the player build manifest".into());
     }
     Ok(canonical_executable)
+}
+
+fn published_build_identity(output_dir: &Path) -> Result<(String, usize, u64), String> {
+    let manifest_path = output_dir.join("mengine-build.json");
+    let manifest_metadata = std::fs::symlink_metadata(&manifest_path)
+        .map_err(|error| format!("player build manifest: {error}"))?;
+    if manifest_metadata.file_type().is_symlink() || !manifest_metadata.is_file() {
+        return Err("player build manifest must be a regular non-symlink file".into());
+    }
+    let manifest: serde_json::Value = serde_json::from_slice(
+        &std::fs::read(&manifest_path)
+            .map_err(|error| format!("cannot read player build manifest: {error}"))?,
+    )
+    .map_err(|error| format!("invalid player build manifest: {error}"))?;
+    let content_hash = manifest
+        .get("contentHash")
+        .and_then(serde_json::Value::as_str)
+        .filter(|value| value.len() == 64 && value.bytes().all(|byte| byte.is_ascii_hexdigit()))
+        .ok_or_else(|| "player build manifest does not contain a valid contentHash".to_string())?
+        .to_ascii_lowercase();
+    let files = manifest
+        .get("files")
+        .and_then(serde_json::Value::as_array)
+        .ok_or_else(|| "player build manifest does not contain files".to_string())?;
+    let packaged_bytes = files.iter().try_fold(0_u64, |total, file| {
+        file.get("size")
+            .and_then(serde_json::Value::as_u64)
+            .and_then(|size| total.checked_add(size))
+            .ok_or_else(|| "player build manifest contains an invalid file size".to_string())
+    })?;
+    Ok((content_hash, files.len(), packaged_bytes))
+}
+
+fn verify_built_player(
+    project_root: &Path,
+    requested: &Path,
+    expected_content_hash: &str,
+) -> Result<VerifyPlayerResult, String> {
+    let expected_content_hash = expected_content_hash.trim().to_ascii_lowercase();
+    if expected_content_hash.len() != 64
+        || !expected_content_hash
+            .bytes()
+            .all(|byte| byte.is_ascii_hexdigit())
+    {
+        return Err("expected build content hash must be a 64-character SHA-256 value".into());
+    }
+    let executable = validated_player_executable(project_root, requested)?;
+    let output_dir = executable
+        .parent()
+        .ok_or_else(|| "player executable has no output directory".to_string())?;
+    let (content_hash_before, _, _) = published_build_identity(output_dir)?;
+    if content_hash_before != expected_content_hash {
+        return Err(format!(
+            "published build identity changed: expected {expected_content_hash}, found {content_hash_before}"
+        ));
+    }
+
+    let mut command = Command::new(&executable);
+    command.current_dir(output_dir).arg("--validate-package");
+    #[cfg(windows)]
+    {
+        use std::os::windows::process::CommandExt;
+        const CREATE_NO_WINDOW: u32 = 0x0800_0000;
+        command.creation_flags(CREATE_NO_WINDOW);
+    }
+    let output = command
+        .output()
+        .map_err(|error| format!("cannot start published build verification: {error}"))?;
+    if !output.status.success() {
+        return Err(command_failure(
+            "Published MEngine player verification",
+            &output,
+        ));
+    }
+
+    let (content_hash, file_count, packaged_bytes) = published_build_identity(output_dir)?;
+    if content_hash != expected_content_hash {
+        return Err(format!(
+            "published build identity changed during verification: expected {expected_content_hash}, found {content_hash}"
+        ));
+    }
+    let stdout = String::from_utf8_lossy(&output.stdout).trim().to_owned();
+    let stderr = String::from_utf8_lossy(&output.stderr).trim().to_owned();
+    let log = match (stdout.is_empty(), stderr.is_empty()) {
+        (false, false) => format!("{stdout}\n{stderr}"),
+        (false, true) => stdout,
+        (true, false) => stderr,
+        (true, true) => String::new(),
+    };
+    Ok(VerifyPlayerResult {
+        executable: executable.to_string_lossy().into_owned(),
+        content_hash,
+        file_count,
+        packaged_bytes,
+        log,
+    })
 }
 
 fn run_built_player(project_root: &Path, requested: &Path) -> Result<RunPlayerResult, String> {
@@ -1514,6 +1620,29 @@ async fn run_pc_player(
     .map_err(|error| format!("player launch task failed: {error}"))?
 }
 
+#[tauri::command]
+async fn verify_pc_player(
+    executable: String,
+    expected_content_hash: String,
+    state: State<'_, AppState>,
+) -> Result<VerifyPlayerResult, String> {
+    let project_root = state
+        .project
+        .lock()
+        .as_ref()
+        .map(|session| session.snapshot().project_root)
+        .ok_or_else(|| no_project().message)?;
+    tauri::async_runtime::spawn_blocking(move || {
+        verify_built_player(
+            Path::new(&project_root),
+            Path::new(&executable),
+            &expected_content_hash,
+        )
+    })
+    .await
+    .map_err(|error| format!("published build verification task failed: {error}"))?
+}
+
 fn asset_relative_tail(relative_path: &str) -> Result<PathBuf, String> {
     let relative = Path::new(relative_path);
     if relative.is_absolute() {
@@ -1807,6 +1936,7 @@ pub fn run() {
             save_project_sorting_layers,
             build_pc_player,
             run_pc_player,
+            verify_pc_player,
             read_project_asset,
             write_project_asset,
             list_project_assets,
@@ -1929,6 +2059,46 @@ mod tests {
         assert_eq!(comparison.unchanged_files, 2);
         assert_eq!(comparison.byte_delta, 0);
         assert!(comparison.changes.is_empty());
+    }
+
+    #[test]
+    fn published_build_identity_normalizes_hash_and_sums_manifest_files() {
+        let root = std::env::temp_dir().join(format!(
+            "mengine-published-build-identity-{}-{}",
+            std::process::id(),
+            SystemTime::now()
+                .duration_since(UNIX_EPOCH)
+                .unwrap()
+                .as_nanos()
+        ));
+        std::fs::create_dir_all(&root).unwrap();
+        std::fs::write(
+            root.join("mengine-build.json"),
+            serde_json::to_vec(&serde_json::json!({
+                "contentHash": "A".repeat(64),
+                "files": [
+                    { "path": "Runtime/player.exe", "size": 9 },
+                    { "path": "Assets/Main.mscene", "size": 15 }
+                ]
+            }))
+            .unwrap(),
+        )
+        .unwrap();
+
+        let identity = published_build_identity(&root).unwrap();
+        assert_eq!(identity, ("a".repeat(64), 2, 24));
+        std::fs::remove_dir_all(root).unwrap();
+    }
+
+    #[test]
+    fn published_build_verification_rejects_invalid_expected_hash_before_launch() {
+        let error = verify_built_player(
+            Path::new("missing-project"),
+            Path::new("missing-player"),
+            "not-a-sha256",
+        )
+        .unwrap_err();
+        assert!(error.contains("64-character SHA-256"));
     }
 
     #[test]
@@ -2172,6 +2342,13 @@ mod tests {
         assert!(Path::new(&result.executable).is_file());
         assert!(result.file_count >= 6);
         let output = Path::new(&result.output_dir);
+        let verification =
+            verify_built_player(&root, Path::new(&result.executable), &result.content_hash)
+                .unwrap();
+        assert_eq!(verification.content_hash, result.content_hash);
+        assert_eq!(verification.file_count, result.file_count);
+        assert_eq!(verification.packaged_bytes, result.packaged_bytes);
+        assert!(verification.log.contains("validated"));
         assert!(output.join("Assets/Scripts/Main.js").is_file());
         assert!(!output.join("Assets/Scripts/Main.ts").exists());
         assert!(!output.join("Assets/Scripts/mengine.d.ts").exists());
@@ -2189,6 +2366,10 @@ mod tests {
             1
         );
         assert!(packaged_scene["world"]["selected"].is_null());
+        std::fs::write(output.join("tampered-after-publish.bin"), b"tampered").unwrap();
+        let error = verify_built_player(&root, Path::new(&result.executable), &result.content_hash)
+            .unwrap_err();
+        assert!(error.contains("unlisted file"));
         std::fs::remove_dir_all(root).unwrap();
     }
 

@@ -849,3 +849,13 @@ Referenced Only 是可用的单包裁剪基础，仍不等同于完整 Addressab
 - 回归覆盖 v1–v5 默认升级、v6 范围规范与 Round Trip、Runtime 到 RenderMaterial 的字段传递、Uniform 打包、Forward WGSL 解析/验证、Clear Coat 分层函数存在性，以及 CLI 对 v6 材质的暂存发布。CLI 测试必须先重建 `dist`，避免用陈旧 v5 产物伪造版本失败。
 
 两遍自审确认：Clear Coat 不改变透明混合、深度写入、阴影接收、贴图采样键或旧 Surface Hook ABI；0 强度保持旧材质语义。材质系统仍未完备，后续需要 Clear Coat 独立 Normal/Mask、Specular/IOR、Sheen、Transmission/Thickness、Subsurface、各层贴图 UV、Material Instance、Shader 参数反射与 Keyword/Variant、同 Player 管线的离屏材质预览、Shader Cache 预热和 Frame Debugger。
+
+## 66. 2026-07-19 发布构建成品验真
+
+- Build Settings 在成功构建后新增 `Verify Published Build`。它不是读取编辑器缓存或只检查文件是否存在，而是直接从最终发布目录启动该 Player 的 `--validate-package`，复用 Runtime 对构建清单 SHA-256、全部 Build Scene、脚本加载和场景引用资源的权威校验。
+- 验证入口只能接受当前工程正规 `Builds` 目录中的非符号链接可执行文件，并要求它与同目录 `mengine-build.json` 声明完全一致。编辑器把刚构建报告中的预期 Content Hash 一起提交；清单被替换为另一个合法构建时也会因身份不一致而拒绝。
+- 后端在运行 Player 前后各读取一次构建身份。验证过程中清单发生切换会作为失败返回；成功结果回传最终 SHA-256、文件数、总字节和 Runtime 验证日志，Build Settings 显示独立的 `VERIFIED` 状态并允许再次验证。
+- 构建报告带有仅在编辑器内维护的修订号；构建场景、资源收集设置或新构建使旧报告失效后，在途验证即使成功返回也只能写日志，不能把新配置错误标成已验证。验证失败保留原构建报告，便于修复最终目录后直接重试。
+- 该能力覆盖暂存验证之后的风险：发布目录被人工覆盖、同步工具漏文件、磁盘内容损坏或后处理破坏资源引用时，不必启动到具体关卡才发现。构建阶段原有“暂存包先验证、成功后发布”仍保留，成品验真是第二道可重复执行的交付门禁。
+
+两遍自审确认：成品验证不会信任前端传入任意路径，不会把验证失败误标成可运行成功，也不会用编辑器侧较弱的重复实现取代 Runtime。它仍不是完整的成熟构建系统；下一阶段必须继续补结构化阶段进度与安全取消、阶段耗时、增量缓存、Patch、符号/崩溃映射、签名/公证/安装器、多目标/跨编译、CI 配置锁和长期制品索引。
