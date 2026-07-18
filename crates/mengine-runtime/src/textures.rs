@@ -2,7 +2,7 @@ use mengine_assets::{
     load_sprite_import, load_texture_rgba8, split_sprite_reference, sprite_import_path,
     texture_dimensions,
 };
-use mengine_rhi::{RenderObject, Renderer, UiBatchPlan, UiPrimitive};
+use mengine_rhi::{FrameLighting, RenderObject, Renderer, UiBatchPlan, UiPrimitive};
 use std::collections::HashMap;
 use std::path::{Component, Path, PathBuf};
 use std::time::SystemTime;
@@ -19,6 +19,7 @@ pub struct RuntimeTextureCache {
     project_root: Option<PathBuf>,
     attempted_ui: HashMap<String, FileStamp>,
     attempted_material: HashMap<String, FileStamp>,
+    attempted_environment: HashMap<String, FileStamp>,
     sprite_regions: HashMap<String, CachedSpriteRegion>,
 }
 
@@ -48,6 +49,7 @@ impl RuntimeTextureCache {
             project_root,
             attempted_ui: HashMap::new(),
             attempted_material: HashMap::new(),
+            attempted_environment: HashMap::new(),
             sprite_regions: HashMap::new(),
         }
     }
@@ -59,6 +61,7 @@ impl RuntimeTextureCache {
         self.project_root = project_root;
         self.attempted_ui.clear();
         self.attempted_material.clear();
+        self.attempted_environment.clear();
         self.sprite_regions.clear();
     }
 
@@ -66,6 +69,7 @@ impl RuntimeTextureCache {
         self.attempted_ui.remove(key);
         self.attempted_material
             .retain(|attempt, _| attempt.split_once('\0').is_none_or(|(_, path)| path != key));
+        self.attempted_environment.remove(key);
         self.sprite_regions.clear();
     }
 
@@ -243,6 +247,63 @@ impl RuntimeTextureCache {
             }
         }
         failures
+    }
+
+    pub fn sync_environment(
+        &mut self,
+        renderer: &mut Renderer,
+        lighting: &FrameLighting,
+    ) -> Vec<TextureLoadFailure> {
+        let key = lighting.environment.texture.trim();
+        if key.is_empty() {
+            return Vec::new();
+        }
+        let Some(root) = self.project_root.as_deref() else {
+            return Vec::new();
+        };
+        let Some(path) = resolve_project_asset_path(root, key) else {
+            if should_attempt(&mut self.attempted_environment, key, FileStamp::default()) {
+                renderer.remove_environment_texture(key);
+                return vec![TextureLoadFailure {
+                    key: key.to_owned(),
+                    path: root.to_owned(),
+                    error: "environment texture must be a project-relative path without '..'"
+                        .into(),
+                }];
+            }
+            return Vec::new();
+        };
+        if !should_attempt(&mut self.attempted_environment, key, file_stamp(&path)) {
+            return Vec::new();
+        }
+        match load_texture_rgba8(&path) {
+            Ok(texture) => renderer
+                .upload_environment_texture_rgba8(
+                    key,
+                    texture.width,
+                    texture.height,
+                    &texture.pixels,
+                )
+                .err()
+                .map(|error| {
+                    renderer.remove_environment_texture(key);
+                    TextureLoadFailure {
+                        key: key.to_owned(),
+                        path,
+                        error: error.to_string(),
+                    }
+                })
+                .into_iter()
+                .collect(),
+            Err(error) => {
+                renderer.remove_environment_texture(key);
+                vec![TextureLoadFailure {
+                    key: key.to_owned(),
+                    path,
+                    error: error.to_string(),
+                }]
+            }
+        }
     }
 }
 

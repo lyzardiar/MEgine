@@ -1453,6 +1453,14 @@ function onTick(dt, frame) {
                             failure.error
                         );
                     }
+                    for failure in self.textures.sync_environment(r, &lighting) {
+                        log::warn!(
+                            "Environment texture '{}' could not be loaded from {}: {}",
+                            failure.key,
+                            failure.path.display(),
+                            failure.error
+                        );
+                    }
                     self.ui_controls = ui.controls;
                     if let Err(e) = r.render_lit_frame(camera, &objects, &lighting, Some(&ui.plan))
                     {
@@ -1600,6 +1608,8 @@ fn collect_lighting(world: &World, hierarchy: &TransformHierarchy) -> FrameLight
                     ],
                     diffuse_intensity: environment.diffuse_intensity,
                     specular_intensity: environment.specular_intensity,
+                    texture: environment.texture.trim().replace('\\', "/"),
+                    rotation_degrees: environment.rotation_degrees,
                 };
                 environment_found = true;
             }
@@ -1842,6 +1852,13 @@ fn validate_world_assets(
                 }
             }
         }
+        if let Some(environment) = world.get_component::<EnvironmentLight>(entity) {
+            let texture = environment.texture.trim();
+            if texture.contains('#') {
+                bail!("environment texture cannot reference a sprite subresource: {texture}");
+            }
+            validate_texture_asset(texture, "environment texture", project_root, validated)?;
+        }
         if let Some(renderer) = world.get_component::<SpriteRenderer>(entity) {
             validate_texture_asset(&renderer.sprite, "sprite", project_root, validated)?;
         }
@@ -2030,6 +2047,24 @@ mod tests {
     }
 
     #[test]
+    fn packaged_asset_validation_rejects_unsafe_environment_textures() {
+        let mut world = World::new();
+        world.commands.push(WorldCommand::Spawn {
+            name: Some("Unsafe environment".into()),
+            components: json!({
+                "EnvironmentLight": { "texture": "../outside.png" }
+            }),
+        });
+        world.commit();
+        let error =
+            validate_world_assets(&world, Path::new("C:/Games/Packaged"), &mut HashSet::new())
+                .expect_err("environment paths must stay inside packaged content");
+        assert!(error
+            .to_string()
+            .contains("unsafe environment texture path"));
+    }
+
+    #[test]
     fn packaged_asset_validation_scans_tilemap_sprite_dependencies() {
         let mut world = World::new();
         world.commands.push(WorldCommand::Spawn {
@@ -2057,7 +2092,9 @@ mod tests {
                 "EnvironmentLight": {
                     "sky_color": [0.2, 0.4, 0.8, 1],
                     "diffuse_intensity": 1.5,
-                    "specular_intensity": 2
+                    "specular_intensity": 2,
+                    "texture": "Assets\\Textures\\studio.png",
+                    "rotation_degrees": 45
                 }
             }),
             json!({
@@ -2084,6 +2121,8 @@ mod tests {
         assert_eq!(lights.environment.sky_color, [0.2, 0.4, 0.8]);
         assert_eq!(lights.environment.diffuse_intensity, 1.5);
         assert_eq!(lights.environment.specular_intensity, 2.0);
+        assert_eq!(lights.environment.texture, "Assets/Textures/studio.png");
+        assert_eq!(lights.environment.rotation_degrees, 45.0);
         assert_eq!(lights.directional.unwrap().intensity, 2.0);
         assert_eq!(lights.points[0].range, 7.0);
         assert_eq!(lights.spots[0].outer_angle_degrees, 55.0);

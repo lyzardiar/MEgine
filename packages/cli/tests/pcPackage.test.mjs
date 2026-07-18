@@ -217,6 +217,30 @@ test('buildPcPackage includes validated custom material surface shaders', () => 
   }
 });
 
+test('buildPcPackage includes scene environment textures', () => {
+  const paths = fixture('environment-texture');
+  try {
+    writeFileSync(join(paths.project, 'Assets', 'Scenes', 'Main.mscene'), JSON.stringify({
+      world: { entities: [{ components: {
+        EnvironmentLight: { texture: 'Assets/Textures/studio-environment.png' },
+      } }] },
+    }));
+    writeFileSync(join(paths.project, 'Assets', 'Textures', 'studio-environment.png'), 'texture');
+    buildPcPackage({
+      projectDir: paths.project,
+      outputDir: paths.output,
+      runtimePath: paths.runtime,
+      engineVersion: 'test-engine',
+    });
+    assert.equal(
+      existsSync(join(paths.output, 'Assets', 'Textures', 'studio-environment.png')),
+      true,
+    );
+  } finally {
+    rmSync(paths.root, { recursive: true, force: true });
+  }
+});
+
 test('buildPcPackage rejects custom shaders that declare engine entry points', () => {
   const paths = fixture('invalid-custom-surface-shader');
   try {

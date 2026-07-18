@@ -42,6 +42,8 @@ component EnvironmentLight {
   ground_color:       float4 = [0.035, 0.04, 0.05, 1]
   diffuse_intensity:  float  = 1
   specular_intensity: float  = 1
+  texture:            string = ""
+  rotation_degrees:   float  = 0
 }
 
 component PointLight {

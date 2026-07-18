@@ -485,13 +485,14 @@ function GenericCompEditor(props: {
             />
           );
         }
-        if (meta?.kind === 'sprite') {
+        if (meta?.kind === 'sprite' || meta?.kind === 'texture') {
           return (
             <SpriteSlot
               key={key}
               label={label}
               value={typeof val === 'string' ? val : ''}
               noneValue={meta.noneValue}
+              baseTextureOnly={meta.kind === 'texture'}
               onChange={setValue}
             />
           );

@@ -14,6 +14,7 @@ export type InspectorFieldMeta = {
   kind?:
     | 'enum'
     | 'sprite'
+    | 'texture'
     | 'project-asset'
     | 'named-reference'
     | 'event'
@@ -119,6 +120,8 @@ export const BUILTIN_INSPECTOR_FIELDS: Readonly<
   EnvironmentLight: {
     diffuse_intensity: { label: 'Diffuse Intensity', min: 0, step: 0.05 },
     specular_intensity: { label: 'Specular Intensity', min: 0, step: 0.05 },
+    texture: { kind: 'texture', label: 'Environment Texture', allowNone: true, noneValue: '' },
+    rotation_degrees: { label: 'Rotation', step: 1 },
   },
   PointLight: {
     intensity: { min: 0, step: 0.1 },

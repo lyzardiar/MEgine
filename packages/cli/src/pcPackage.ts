@@ -281,6 +281,11 @@ export function validateBuildAssetDependencies(
       enqueue(mesh, from, '3D model');
     }
     enqueueMaterial(stringValue(meshRenderer, 'material'), from);
+    enqueue(
+      stringValue(component('EnvironmentLight'), 'texture'),
+      from,
+      'environment texture',
+    );
     enqueue(stringValue(component('SpriteRenderer'), 'sprite'), from, 'texture', ['white']);
     const frames = component('AnimatedSprite2D')?.frames;
     if (Array.isArray(frames)) {

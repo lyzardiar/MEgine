@@ -42,6 +42,8 @@ export interface EnvironmentLight {
   groundColor: [number, number, number, number];
   diffuseIntensity: number;
   specularIntensity: number;
+  texture: string;
+  rotationDegrees: number;
 }
 
 export interface PointLight {

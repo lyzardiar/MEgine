@@ -114,6 +114,7 @@ export function SpriteSlot(props: {
   onChange: (v: string) => void;
   noneValue?: string;
   noneLabel?: string;
+  baseTextureOnly?: boolean;
 }) {
   const [dragOver, setDragOver] = useState(false);
   const [tick, setTick] = useState(0);
@@ -121,11 +122,16 @@ export function SpriteSlot(props: {
   const [anchor, setAnchor] = useState<DOMRect | null>(null);
   const pickerBtnRef = useRef<HTMLButtonElement>(null);
   const noneValue = props.noneValue ?? 'white';
-  const normalized = props.value ? normalizeSpriteRef(props.value) : noneValue;
+  const normalizeSelection = (value: string) => {
+    const normalizedValue = normalizeSpriteRef(value);
+    return props.baseTextureOnly ? normalizedValue.split('#', 1)[0] : normalizedValue;
+  };
+  const normalized = props.value ? normalizeSelection(props.value) : noneValue;
   const resolved = useMemo(() => {
     void tick;
+    if (!normalized && !noneValue) return '';
     return resolveSpriteId(normalized);
-  }, [tick, normalized]);
+  }, [noneValue, normalized, tick]);
 
   useEffect(() => {
     void refreshSprites().then(() => setTick((t) => t + 1));
@@ -134,25 +140,33 @@ export function SpriteSlot(props: {
   // 仅在路径可规范成 Assets/... 时写回；用 resolve 避免只存文件名
   useEffect(() => {
     if (!props.value) return;
-    const canon = resolveSpriteId(props.value);
+    const canon = normalizeSelection(resolveSpriteId(props.value));
     if (canon !== props.value) props.onChange(canon);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [normalized]);
 
   const pickerItems = useMemo(() => {
     void tick;
-    const disk = listSprites().map((s) => ({
-      id: s.id,
-      label: s.name,
-      sub: s.folder,
-      thumbUrl: spriteAssetUrl(s.id),
-      icon: '🖼️',
-    }));
+    const seen = new Set<string>();
+    const disk = listSprites().flatMap((sprite) => {
+      const id = props.baseTextureOnly ? sprite.id.split('#', 1)[0] : sprite.id;
+      if (seen.has(id)) return [];
+      seen.add(id);
+      return [{
+        id,
+        label: props.baseTextureOnly ? (id.split('/').pop() || id) : sprite.name,
+        sub: sprite.folder,
+        thumbUrl: spriteAssetUrl(id),
+        icon: '🖼️',
+      }];
+    });
     return [
-      { id: 'white', label: 'white', sub: 'Builtin', icon: '⬜', thumbUrl: null as string | null },
+      ...(noneValue === 'white'
+        ? [{ id: 'white', label: 'white', sub: 'Builtin', icon: '⬜', thumbUrl: null as string | null }]
+        : []),
       ...disk,
     ];
-  }, [tick]);
+  }, [noneValue, props.baseTextureOnly, tick]);
 
   const thumb = resolved ? spriteAssetUrl(resolved) : null;
   const label = resolved ? spriteDisplayName(resolved) : (props.noneLabel ?? 'None (Texture)');
@@ -182,7 +196,7 @@ export function SpriteSlot(props: {
   };
 
   const applyRaw = (raw: string) => {
-    const id = resolveSpriteId(raw);
+    const id = normalizeSelection(resolveSpriteId(raw));
     if (id) props.onChange(id);
   };
 
@@ -248,7 +262,7 @@ export function SpriteSlot(props: {
           ref={pickerBtnRef}
           type="button"
           className="object-slot-picker"
-          title="Select Sprite"
+          title={props.baseTextureOnly ? 'Select Texture' : 'Select Sprite'}
           onClick={openPicker}
         />
         {resolved && resolved !== noneValue && (
@@ -264,7 +278,7 @@ export function SpriteSlot(props: {
       </div>
       {pickerOpen && (
         <ObjectPicker
-          title="Select Sprite"
+          title={props.baseTextureOnly ? 'Select Texture' : 'Select Sprite'}
           items={pickerItems}
           current={resolved === noneValue ? null : resolved}
           allowNone

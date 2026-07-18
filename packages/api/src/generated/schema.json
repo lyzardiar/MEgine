@@ -665,6 +665,9 @@
         },
         "type": "array"
       },
+      "rotation_degrees": {
+        "type": "number"
+      },
       "sky_color": {
         "items": {
           "type": "number"
@@ -673,6 +676,9 @@
       },
       "specular_intensity": {
         "type": "number"
+      },
+      "texture": {
+        "type": "string"
       }
     },
     "required": [
@@ -680,7 +686,9 @@
       "equator_color",
       "ground_color",
       "diffuse_intensity",
-      "specular_intensity"
+      "specular_intensity",
+      "texture",
+      "rotation_degrees"
     ],
     "type": "object"
   },

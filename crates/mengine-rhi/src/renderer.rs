@@ -190,13 +190,15 @@ pub struct SpotLightData {
     pub outer_angle_degrees: f32,
 }
 
-#[derive(Clone, Copy, Debug)]
+#[derive(Clone, Debug)]
 pub struct EnvironmentLightData {
     pub sky_color: [f32; 3],
     pub equator_color: [f32; 3],
     pub ground_color: [f32; 3],
     pub diffuse_intensity: f32,
     pub specular_intensity: f32,
+    pub texture: String,
+    pub rotation_degrees: f32,
 }
 
 impl Default for EnvironmentLightData {
@@ -207,6 +209,8 @@ impl Default for EnvironmentLightData {
             ground_color: [0.035, 0.04, 0.05],
             diffuse_intensity: 1.0,
             specular_intensity: 1.0,
+            texture: String::new(),
+            rotation_degrees: 0.0,
         }
     }
 }
@@ -384,6 +388,12 @@ pub struct Renderer {
     _shadow_sampler: wgpu::Sampler,
     shadow_sample_bind_group: wgpu::BindGroup,
     shadow_pass_bind_group: wgpu::BindGroup,
+    environment_texture_layout: wgpu::BindGroupLayout,
+    environment_sampler: wgpu::Sampler,
+    _fallback_environment_texture: MaterialTextureGpu,
+    fallback_environment_bind_group: wgpu::BindGroup,
+    environment_textures: HashMap<String, MaterialTextureGpu>,
+    environment_bind_groups: HashMap<String, wgpu::BindGroup>,
     material_texture_layout: wgpu::BindGroupLayout,
     material_samplers: HashMap<MaterialSamplerKey, wgpu::Sampler>,
     fallback_base_color_texture: MaterialTextureGpu,
@@ -618,6 +628,28 @@ impl Renderer {
                     },
                 ],
             });
+        let environment_texture_layout =
+            device.create_bind_group_layout(&wgpu::BindGroupLayoutDescriptor {
+                label: Some("environment_texture_bgl"),
+                entries: &[
+                    wgpu::BindGroupLayoutEntry {
+                        binding: 0,
+                        visibility: wgpu::ShaderStages::FRAGMENT,
+                        ty: wgpu::BindingType::Texture {
+                            sample_type: wgpu::TextureSampleType::Float { filterable: true },
+                            view_dimension: wgpu::TextureViewDimension::D2,
+                            multisampled: false,
+                        },
+                        count: None,
+                    },
+                    wgpu::BindGroupLayoutEntry {
+                        binding: 1,
+                        visibility: wgpu::ShaderStages::FRAGMENT,
+                        ty: wgpu::BindingType::Sampler(wgpu::SamplerBindingType::Filtering),
+                        count: None,
+                    },
+                ],
+            });
 
         let pipeline_layout = device.create_pipeline_layout(&wgpu::PipelineLayoutDescriptor {
             label: Some("forward_pipeline_layout"),
@@ -625,6 +657,7 @@ impl Renderer {
                 &bind_layout,
                 &material_texture_layout,
                 &shadow_sample_layout,
+                &environment_texture_layout,
             ],
             push_constant_ranges: &[],
         });
@@ -717,6 +750,31 @@ impl Renderer {
             });
         let shadow_pipeline =
             create_shadow_pipeline(&device, &shadow_shader, &shadow_pipeline_layout);
+        let fallback_environment_texture = create_material_texture_rgba8(
+            &device,
+            &queue,
+            "fallback_environment_texture",
+            1,
+            1,
+            &[128, 128, 128, 255],
+            true,
+        );
+        let environment_sampler = device.create_sampler(&wgpu::SamplerDescriptor {
+            label: Some("environment_sampler"),
+            address_mode_u: wgpu::AddressMode::Repeat,
+            address_mode_v: wgpu::AddressMode::ClampToEdge,
+            address_mode_w: wgpu::AddressMode::ClampToEdge,
+            mag_filter: wgpu::FilterMode::Linear,
+            min_filter: wgpu::FilterMode::Linear,
+            mipmap_filter: wgpu::FilterMode::Linear,
+            ..Default::default()
+        });
+        let fallback_environment_bind_group = create_environment_bind_group(
+            &device,
+            &environment_texture_layout,
+            &fallback_environment_texture.view,
+            &environment_sampler,
+        );
         let fallback_base_color_texture = create_material_texture_rgba8(
             &device,
             &queue,
@@ -791,6 +849,12 @@ impl Renderer {
             _shadow_sampler: shadow_sampler,
             shadow_sample_bind_group,
             shadow_pass_bind_group,
+            environment_texture_layout,
+            environment_sampler,
+            _fallback_environment_texture: fallback_environment_texture,
+            fallback_environment_bind_group,
+            environment_textures: HashMap::new(),
+            environment_bind_groups: HashMap::new(),
             material_texture_layout,
             material_samplers: HashMap::new(),
             fallback_base_color_texture,
@@ -854,7 +918,10 @@ impl Renderer {
         ui: Option<&UiBatchPlan>,
     ) -> Result<(), RhiError> {
         self.ensure_object_capacity(objects.len().max(1));
-        let global = make_global_uniforms(camera, lighting);
+        let environment_key = lighting.environment.texture.trim();
+        let has_environment_texture = !environment_key.is_empty()
+            && self.environment_bind_groups.contains_key(environment_key);
+        let global = make_global_uniforms(camera, lighting, has_environment_texture);
         let shadow = make_shadow_uniforms(camera, lighting);
         self.queue
             .write_buffer(&self.global_buf, 0, bytemuck::bytes_of(&global));
@@ -932,6 +999,13 @@ impl Renderer {
         }
 
         {
+            let environment_bind_group = if has_environment_texture {
+                self.environment_bind_groups
+                    .get(environment_key)
+                    .expect("environment texture availability checked before render pass")
+            } else {
+                &self.fallback_environment_bind_group
+            };
             let mut pass = encoder.begin_render_pass(&wgpu::RenderPassDescriptor {
                 label: Some("forward_opaque"),
                 color_attachments: &[Some(wgpu::RenderPassColorAttachment {
@@ -987,6 +1061,7 @@ impl Renderer {
                     .expect("material texture set prepared before render pass");
                 pass.set_bind_group(1, texture_set, &[]);
                 pass.set_bind_group(2, &self.shadow_sample_bind_group, &[]);
+                pass.set_bind_group(3, environment_bind_group, &[]);
                 pass.set_vertex_buffer(0, mesh.vertex_buffer.slice(..));
                 pass.set_index_buffer(mesh.index_buffer.slice(..), wgpu::IndexFormat::Uint32);
                 pass.draw_indexed(0..mesh.index_count, 0, 0..1);
@@ -1178,6 +1253,40 @@ impl Renderer {
         removed
     }
 
+    pub fn upload_environment_texture_rgba8(
+        &mut self,
+        key: &str,
+        width: u32,
+        height: u32,
+        rgba8: &[u8],
+    ) -> Result<(), UiTextureError> {
+        validate_material_texture_rgba8(width, height, rgba8)?;
+        let texture = create_material_texture_rgba8(
+            &self.device,
+            &self.queue,
+            "environment_texture",
+            width,
+            height,
+            rgba8,
+            true,
+        );
+        let bind_group = create_environment_bind_group(
+            &self.device,
+            &self.environment_texture_layout,
+            &texture.view,
+            &self.environment_sampler,
+        );
+        self.environment_textures.insert(key.to_owned(), texture);
+        self.environment_bind_groups
+            .insert(key.to_owned(), bind_group);
+        Ok(())
+    }
+
+    pub fn remove_environment_texture(&mut self, key: &str) -> bool {
+        self.environment_bind_groups.remove(key);
+        self.environment_textures.remove(key).is_some()
+    }
+
     pub fn aspect(&self) -> f32 {
         self.config.width as f32 / self.config.height.max(1) as f32
     }
@@ -1192,7 +1301,11 @@ impl Renderer {
     }
 }
 
-fn make_global_uniforms(camera: FrameCamera, lighting: &FrameLighting) -> GlobalUniforms {
+fn make_global_uniforms(
+    camera: FrameCamera,
+    lighting: &FrameLighting,
+    has_environment_texture: bool,
+) -> GlobalUniforms {
     let mut point_positions = [[0.0; 4]; MAX_POINT_LIGHTS];
     let mut point_colors = [[0.0; 4]; MAX_POINT_LIGHTS];
     for (index, light) in lighting.points.iter().take(MAX_POINT_LIGHTS).enumerate() {
@@ -1257,6 +1370,15 @@ fn make_global_uniforms(camera: FrameCamera, lighting: &FrameLighting) -> Global
         } else {
             ([0.0; 4], [0.0; 4], 0)
         };
+    let environment_rotation = if lighting.environment.rotation_degrees.is_finite() {
+        lighting
+            .environment
+            .rotation_degrees
+            .rem_euclid(360.0)
+            .to_radians()
+    } else {
+        0.0
+    };
 
     GlobalUniforms {
         view_proj: (camera.proj * camera.view).to_cols_array_2d(),
@@ -1282,8 +1404,8 @@ fn make_global_uniforms(camera: FrameCamera, lighting: &FrameLighting) -> Global
         environment_params: [
             lighting.environment.diffuse_intensity.max(0.0),
             lighting.environment.specular_intensity.max(0.0),
-            0.0,
-            0.0,
+            if has_environment_texture { 1.0 } else { 0.0 },
+            environment_rotation,
         ],
         directional_direction,
         directional_color,
@@ -1746,6 +1868,28 @@ fn create_shadow_pass_bind_group(
     })
 }
 
+fn create_environment_bind_group(
+    device: &wgpu::Device,
+    layout: &wgpu::BindGroupLayout,
+    texture_view: &wgpu::TextureView,
+    sampler: &wgpu::Sampler,
+) -> wgpu::BindGroup {
+    device.create_bind_group(&wgpu::BindGroupDescriptor {
+        label: Some("environment_texture_bg"),
+        layout,
+        entries: &[
+            wgpu::BindGroupEntry {
+                binding: 0,
+                resource: wgpu::BindingResource::TextureView(texture_view),
+            },
+            wgpu::BindGroupEntry {
+                binding: 1,
+                resource: wgpu::BindingResource::Sampler(sampler),
+            },
+        ],
+    })
+}
+
 fn validate_material_texture_rgba8(
     width: u32,
     height: u32,
@@ -1990,6 +2134,8 @@ struct ShadowUniforms {
 @group(2) @binding(0) var<uniform> shadow: ShadowUniforms;
 @group(2) @binding(1) var directional_shadow_map: texture_depth_2d;
 @group(2) @binding(2) var directional_shadow_sampler: sampler_comparison;
+@group(3) @binding(0) var environment_texture: texture_2d<f32>;
+@group(3) @binding(1) var environment_sampler: sampler;
 
 struct VsIn {
     @location(0) position: vec3<f32>,
@@ -2056,12 +2202,34 @@ fn fresnel_schlick_roughness(
     return f0 + (grazing_color - f0) * grazing;
 }
 
-fn environment_radiance(direction: vec3<f32>) -> vec3<f32> {
+fn analytic_environment_radiance(direction: vec3<f32>) -> vec3<f32> {
     let vertical = clamp(direction.y, -1.0, 1.0);
     if vertical >= 0.0 {
         return mix(frame.environment_equator.rgb, frame.environment_sky.rgb, vertical);
     }
     return mix(frame.environment_equator.rgb, frame.environment_ground.rgb, -vertical);
+}
+
+fn rotate_environment_direction(direction: vec3<f32>) -> vec3<f32> {
+    let angle = frame.environment_params.w;
+    let sine = sin(angle);
+    let cosine = cos(angle);
+    return vec3<f32>(
+        cosine * direction.x + sine * direction.z,
+        direction.y,
+        -sine * direction.x + cosine * direction.z,
+    );
+}
+
+fn environment_radiance(direction: vec3<f32>) -> vec3<f32> {
+    let rotated = normalize(rotate_environment_direction(direction));
+    if frame.environment_params.z < 0.5 {
+        return analytic_environment_radiance(rotated);
+    }
+    let longitude = atan2(rotated.z, rotated.x);
+    let latitude = acos(clamp(rotated.y, -1.0, 1.0));
+    let uv = vec2<f32>(longitude / (2.0 * PI) + 0.5, latitude / PI);
+    return textureSample(environment_texture, environment_sampler, uv).rgb;
 }
 
 fn environment_contribution(
@@ -2381,8 +2549,27 @@ mod tests {
             ],
             ..Default::default()
         };
-        let uniforms = make_global_uniforms(camera, &lighting);
+        let uniforms = make_global_uniforms(camera, &lighting, false);
         assert_eq!(uniforms.light_counts[1], MAX_POINT_LIGHTS as u32);
+    }
+
+    #[test]
+    fn environment_uniforms_enable_uploaded_maps_and_convert_rotation() {
+        let camera = FrameCamera {
+            view: Mat4::IDENTITY,
+            proj: Mat4::IDENTITY,
+            position: Vec3::ZERO,
+        };
+        let mut lighting = FrameLighting::default();
+        lighting.environment.texture = "Assets/Textures/studio.png".into();
+        lighting.environment.rotation_degrees = 90.0;
+        let uniforms = make_global_uniforms(camera, &lighting, true);
+        assert_eq!(uniforms.environment_params[2], 1.0);
+        assert!((uniforms.environment_params[3] - std::f32::consts::FRAC_PI_2).abs() < 0.0001);
+        assert_eq!(
+            make_global_uniforms(camera, &lighting, false).environment_params[2],
+            0.0
+        );
     }
 
     #[test]

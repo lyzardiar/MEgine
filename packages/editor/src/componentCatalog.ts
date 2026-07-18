@@ -60,6 +60,8 @@ const BUILTIN_CATALOG: ComponentCatalogEntry[] = [
       ground_color: [0.035, 0.04, 0.05, 1],
       diffuse_intensity: 1,
       specular_intensity: 1,
+      texture: '',
+      rotation_degrees: 0,
     }),
   },
   {
