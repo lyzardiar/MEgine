@@ -6,6 +6,7 @@ mod gltf_import;
 mod material;
 mod registry;
 mod sprite;
+mod surface_shader;
 mod texture;
 
 pub use animation::{
@@ -28,6 +29,7 @@ pub use sprite::{
     load_sprite_import, parse_sprite_import, split_sprite_reference, sprite_import_path,
     ResolvedSpriteSlice, SpriteImportSettings, SpriteMode, SpriteSlice,
 };
+pub use surface_shader::{load_surface_shader, parse_surface_shader, SURFACE_SHADER_HOOK_NAME};
 pub use texture::{load_texture_rgba8, texture_dimensions};
 
 #[derive(Clone, Debug, PartialEq, Eq)]

@@ -8,9 +8,10 @@ mod ui;
 pub use mesh::{MeshGpu, Vertex};
 pub use render_graph::{PassDesc, RenderGraph};
 pub use renderer::{
-    look_at, orthographic, perspective, project_world_to_viewport, ClearColor,
-    DirectionalLightData, FrameCamera, FrameLighting, MaterialBlendMode, MaterialFilter,
-    MaterialWrap, PointLightData, RenderMaterial, RenderObject, Renderer, SpotLightData,
+    look_at, orthographic, perspective, project_world_to_viewport, validate_surface_shader_hook,
+    ClearColor, DirectionalLightData, FrameCamera, FrameLighting, MaterialBlendMode,
+    MaterialFilter, MaterialWrap, PointLightData, RenderMaterial, RenderObject, Renderer,
+    SpotLightData,
 };
 pub use ui::{
     UiBatch, UiBatchKey, UiBatchPlan, UiBlendMode, UiClipRect, UiFrameStats, UiPrimitive,

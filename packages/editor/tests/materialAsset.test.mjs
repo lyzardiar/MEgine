@@ -9,9 +9,10 @@ import {
 
 test('material assets have stable authoring defaults', () => {
   assert.deepEqual(createMaterialAsset('Paint'), {
-    version: 3,
+    version: 4,
     name: 'Paint',
     shader: 'pbr',
+    custom_shader: '',
     surface: 'opaque',
     blend_mode: 'alpha',
     transparent_depth_write: false,
@@ -88,8 +89,18 @@ test('legacy material assets upgrade to safe pipeline defaults', () => {
     name: 'Legacy',
     surface: 'transparent',
   }));
-  assert.equal(legacy.version, 3);
+  assert.equal(legacy.version, 4);
   assert.equal(legacy.blend_mode, 'alpha');
   assert.equal(legacy.transparent_depth_write, false);
   assert.equal(legacy.render_queue, -1);
+  assert.equal(legacy.custom_shader, '');
+});
+
+test('custom material shader references normalize project separators', () => {
+  const material = parseMaterialAsset(JSON.stringify({
+    shader: 'custom',
+    custom_shader: ' Assets\\Shaders\\Rim.mshader ',
+  }));
+  assert.equal(material.shader, 'custom');
+  assert.equal(material.custom_shader, 'Assets/Shaders/Rim.mshader');
 });

@@ -180,6 +180,72 @@ test('buildPcPackage validates transitive material animator and audio dependenci
   }
 });
 
+test('buildPcPackage includes validated custom material surface shaders', () => {
+  const paths = fixture('custom-surface-shader');
+  try {
+    mkdirSync(join(paths.project, 'Assets', 'Shaders'), { recursive: true });
+    writeFileSync(join(paths.project, 'Assets', 'Scenes', 'Main.mscene'), JSON.stringify({
+      world: { entities: [{ components: {
+        MeshRenderer: { mesh: 'cube', material: 'Assets/Materials/Rim.mmat' },
+      } }] },
+    }));
+    writeFileSync(join(paths.project, 'Assets', 'Materials', 'Rim.mmat'), JSON.stringify({
+      version: 4,
+      shader: 'custom',
+      custom_shader: 'Assets/Shaders/Rim.mshader',
+    }));
+    writeFileSync(join(paths.project, 'Assets', 'Shaders', 'Rim.mshader'), `
+      fn mengine_surface_hook(
+        color: vec4<f32>, uv: vec2<f32>,
+        world_position: vec3<f32>, world_normal: vec3<f32>
+      ) -> vec4<f32> { return vec4<f32>(color.rgb + uv.x, color.a); }
+    `);
+    const manifest = buildPcPackage({
+      projectDir: paths.project,
+      outputDir: paths.output,
+      runtimePath: paths.runtime,
+      engineVersion: 'test-engine',
+    });
+    assert.equal(existsSync(join(paths.output, 'Assets', 'Shaders', 'Rim.mshader')), true);
+    assert.deepEqual(manifest.assetValidation, {
+      rootScenes: 2,
+      references: 4,
+      validatedFiles: 4,
+    });
+  } finally {
+    rmSync(paths.root, { recursive: true, force: true });
+  }
+});
+
+test('buildPcPackage rejects custom shaders that declare engine entry points', () => {
+  const paths = fixture('invalid-custom-surface-shader');
+  try {
+    mkdirSync(join(paths.project, 'Assets', 'Shaders'), { recursive: true });
+    writeFileSync(join(paths.project, 'Assets', 'Scenes', 'Main.mscene'), JSON.stringify({
+      world: { entities: [{ components: {
+        MeshRenderer: { mesh: 'cube', material: 'Assets/Materials/Broken.mmat' },
+      } }] },
+    }));
+    writeFileSync(join(paths.project, 'Assets', 'Materials', 'Broken.mmat'), JSON.stringify({
+      shader: 'custom',
+      custom_shader: 'Assets/Shaders/Broken.mshader',
+    }));
+    writeFileSync(join(paths.project, 'Assets', 'Shaders', 'Broken.mshader'), `
+      fn mengine_surface_hook() {}
+      @fragment fn fs_main() {}
+    `);
+    assert.throws(() => buildPcPackage({
+      projectDir: paths.project,
+      outputDir: paths.output,
+      runtimePath: paths.runtime,
+      engineVersion: 'test-engine',
+    }), /@fragment is reserved by the engine/);
+    assert.equal(existsSync(paths.output), false);
+  } finally {
+    rmSync(paths.root, { recursive: true, force: true });
+  }
+});
+
 test('buildPcPackage validates tilemap sprite subresources and shared import metadata', () => {
   const paths = fixture('sprite-subresources');
   try {

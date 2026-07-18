@@ -297,7 +297,17 @@ export function MaterialEditor(props: {
           <label>Shader <select value={material.shader} onChange={(event) => update('shader', event.target.value as MaterialAsset['shader'])}>
             <option value="pbr">PBR</option>
             <option value="unlit">Unlit</option>
+            <option value="custom">Custom Surface</option>
           </select></label>
+          {material.shader === 'custom' && (
+            <label>Surface Shader
+              <input
+                value={material.custom_shader}
+                placeholder="Assets/Shaders/MySurface.mshader"
+                onChange={(event) => update('custom_shader', event.target.value)}
+              />
+            </label>
+          )}
           <label>Surface <select value={material.surface} onChange={(event) => update('surface', event.target.value as MaterialAsset['surface'])}>
             <option value="opaque">Opaque</option>
             <option value="transparent">Transparent</option>

@@ -330,8 +330,21 @@ export function validateBuildAssetDependencies(
       prefabNodeReferences(prefab.root ?? prefab, source);
     } else if (extension === '.mmat' || extension === '.mat') {
       const material = readJsonAsset(absolute, root, 'material');
-      if (material.shader != null && material.shader !== 'pbr' && material.shader !== 'unlit') {
-        throw new Error(`invalid material ${source}: shader must be pbr or unlit`);
+      if (material.shader != null
+        && material.shader !== 'pbr'
+        && material.shader !== 'unlit'
+        && material.shader !== 'custom') {
+        throw new Error(`invalid material ${source}: shader must be pbr, unlit, or custom`);
+      }
+      const customShader = strictStringValue(material, 'custom_shader', `material ${source}`);
+      if (material.shader === 'custom') {
+        if (!customShader) {
+          throw new Error(`invalid material ${source}: custom shader requires custom_shader`);
+        }
+        if (!customShader.toLowerCase().endsWith('.mshader')) {
+          throw new Error(`invalid material ${source}: custom_shader must reference a .mshader asset`);
+        }
+        enqueue(customShader, source, 'material surface shader');
       }
       if (material.surface != null
         && material.surface !== 'opaque'
@@ -364,6 +377,19 @@ export function validateBuildAssetDependencies(
           source,
           `material ${field}`,
         );
+      }
+    } else if (extension === '.mshader') {
+      const sourceText = readFileSync(absolute, 'utf8');
+      if (Buffer.byteLength(sourceText, 'utf8') > 256 * 1024) {
+        throw new Error(`invalid material surface shader ${source}: file exceeds 256 KiB`);
+      }
+      if (!/\bfn\s+mengine_surface_hook\s*\(/.test(sourceText)) {
+        throw new Error(`invalid material surface shader ${source}: missing fn mengine_surface_hook`);
+      }
+      const forbidden = ['@group', '@binding', '@vertex', '@fragment', '@compute']
+        .find((token) => sourceText.includes(token));
+      if (forbidden) {
+        throw new Error(`invalid material surface shader ${source}: ${forbidden} is reserved by the engine`);
       }
     } else if (pending.path.toLowerCase().endsWith('.sprite.json')) {
       const metadata = readJsonAsset(absolute, root, 'sprite import metadata');

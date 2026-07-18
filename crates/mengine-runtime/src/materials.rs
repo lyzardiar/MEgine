@@ -1,10 +1,12 @@
 use crate::textures::resolve_project_asset_path;
 use mengine_assets::{
-    load_material_asset, MaterialAsset, MaterialBlendMode as AssetMaterialBlendMode,
-    MaterialFilter as AssetMaterialFilter, MaterialShader, MaterialSurface,
-    MaterialWrap as AssetMaterialWrap,
+    load_material_asset, load_surface_shader, MaterialAsset,
+    MaterialBlendMode as AssetMaterialBlendMode, MaterialFilter as AssetMaterialFilter,
+    MaterialShader, MaterialSurface, MaterialWrap as AssetMaterialWrap,
 };
-use mengine_rhi::{MaterialBlendMode, MaterialFilter, MaterialWrap, RenderMaterial};
+use mengine_rhi::{
+    validate_surface_shader_hook, MaterialBlendMode, MaterialFilter, MaterialWrap, RenderMaterial,
+};
 use std::collections::{HashMap, HashSet};
 use std::path::PathBuf;
 use std::sync::Arc;
@@ -16,10 +18,17 @@ struct CachedMaterial {
     result: Result<Arc<MaterialAsset>, String>,
 }
 
+#[derive(Clone)]
+struct CachedSurfaceShader {
+    modified: Option<SystemTime>,
+    result: Result<Arc<String>, String>,
+}
+
 #[derive(Default)]
 pub struct RuntimeMaterialCache {
     project_root: Option<PathBuf>,
     materials: HashMap<PathBuf, CachedMaterial>,
+    surface_shaders: HashMap<PathBuf, CachedSurfaceShader>,
     reported_failures: HashSet<(String, String)>,
 }
 
@@ -28,6 +37,7 @@ impl RuntimeMaterialCache {
         Self {
             project_root,
             materials: HashMap::new(),
+            surface_shaders: HashMap::new(),
             reported_failures: HashSet::new(),
         }
     }
@@ -43,7 +53,25 @@ impl RuntimeMaterialCache {
             Ok(material) => {
                 self.reported_failures
                     .retain(|(reported_key, _)| reported_key != normalized);
-                Some(render_material_from_asset(&material))
+                let mut render = render_material_from_asset(&material);
+                if material.shader == MaterialShader::Custom {
+                    match self.load_custom_shader(&material.custom_shader) {
+                        Ok(source) => render.surface_shader = (*source).clone(),
+                        Err(error) => {
+                            if self
+                                .reported_failures
+                                .insert((material.custom_shader.clone(), error.clone()))
+                            {
+                                log::warn!(
+                                    "custom shader '{}' could not be loaded: {}",
+                                    material.custom_shader,
+                                    error
+                                );
+                            }
+                        }
+                    }
+                }
+                Some(render)
             }
             Err(error) => {
                 if self
@@ -63,6 +91,7 @@ impl RuntimeMaterialCache {
         };
         if let Some(path) = resolve_project_asset_path(root, key) {
             self.materials.remove(&path);
+            self.surface_shaders.remove(&path);
         }
     }
 
@@ -90,6 +119,44 @@ impl RuntimeMaterialCache {
         self.materials
             .get(&path)
             .expect("material cache inserted")
+            .result
+            .clone()
+    }
+
+    fn load_custom_shader(&mut self, key: &str) -> Result<Arc<String>, String> {
+        let normalized = key.trim();
+        if normalized.is_empty() {
+            return Err("custom material requires a .mshader asset".into());
+        }
+        if !normalized.to_ascii_lowercase().ends_with(".mshader") {
+            return Err("custom shader path must end with .mshader".into());
+        }
+        let root = self
+            .project_root
+            .as_deref()
+            .ok_or_else(|| "runtime requires --project-root to resolve shaders".to_owned())?;
+        let path = resolve_project_asset_path(root, normalized)
+            .ok_or_else(|| "shader path must be project-relative without '..'".to_owned())?;
+        let modified = std::fs::metadata(&path)
+            .and_then(|metadata| metadata.modified())
+            .ok();
+        let reload = self
+            .surface_shaders
+            .get(&path)
+            .is_none_or(|cached| cached.modified != modified);
+        if reload {
+            let result = load_surface_shader(&path)
+                .map_err(|error| error.to_string())
+                .and_then(|source| {
+                    validate_surface_shader_hook(&source)?;
+                    Ok(Arc::new(source))
+                });
+            self.surface_shaders
+                .insert(path.clone(), CachedSurfaceShader { modified, result });
+        }
+        self.surface_shaders
+            .get(&path)
+            .expect("surface shader cache inserted")
             .result
             .clone()
     }
@@ -143,6 +210,7 @@ pub fn render_material_from_asset(material: &MaterialAsset) -> RenderMaterial {
             AssetMaterialFilter::Nearest => MaterialFilter::Nearest,
             AssetMaterialFilter::Linear => MaterialFilter::Linear,
         },
+        surface_shader: String::new(),
     }
 }
 
@@ -157,6 +225,7 @@ fn render_wrap(wrap: AssetMaterialWrap) -> MaterialWrap {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use uuid::Uuid;
 
     #[test]
     fn converts_surface_shader_texture_and_uv_settings() {
@@ -226,5 +295,31 @@ mod tests {
         });
         assert!(cutout.depth_write);
         assert_eq!(cutout.render_queue, 2450);
+    }
+
+    #[test]
+    fn custom_surface_shader_is_loaded_validated_and_attached_to_material() {
+        let root = std::env::temp_dir().join(format!("mengine-surface-{}", Uuid::new_v4()));
+        std::fs::create_dir_all(root.join("Assets/Materials")).unwrap();
+        std::fs::create_dir_all(root.join("Assets/Shaders")).unwrap();
+        std::fs::write(
+            root.join("Assets/Shaders/Rim.mshader"),
+            r#"fn mengine_surface_hook(
+              color: vec4<f32>, uv: vec2<f32>,
+              world_position: vec3<f32>, world_normal: vec3<f32>
+            ) -> vec4<f32> { return vec4<f32>(color.rgb + uv.x, color.a); }"#,
+        )
+        .unwrap();
+        std::fs::write(
+            root.join("Assets/Materials/Rim.mmat"),
+            r#"{"shader":"custom","custom_shader":"Assets/Shaders/Rim.mshader"}"#,
+        )
+        .unwrap();
+
+        let mut cache = RuntimeMaterialCache::new(Some(root.clone()));
+        let material = cache.resolve("Assets/Materials/Rim.mmat").unwrap();
+        assert!(material.surface_shader.contains("color.rgb + uv.x"));
+
+        std::fs::remove_dir_all(root).unwrap();
     }
 }

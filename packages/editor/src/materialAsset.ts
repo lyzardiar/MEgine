@@ -1,4 +1,4 @@
-export type MaterialShader = 'pbr' | 'unlit';
+export type MaterialShader = 'pbr' | 'unlit' | 'custom';
 export type MaterialSurface = 'opaque' | 'transparent' | 'cutout';
 export type MaterialBlendMode = 'alpha' | 'premultiplied' | 'additive' | 'multiply';
 export type MaterialWrap = 'repeat' | 'clamp' | 'mirror';
@@ -8,6 +8,7 @@ export type MaterialAsset = {
   version: number;
   name: string;
   shader: MaterialShader;
+  custom_shader: string;
   surface: MaterialSurface;
   blend_mode: MaterialBlendMode;
   transparent_depth_write: boolean;
@@ -36,9 +37,10 @@ export type MaterialAsset = {
 
 export function createMaterialAsset(name = 'New Material'): MaterialAsset {
   return {
-    version: 3,
+    version: 4,
     name,
     shader: 'pbr',
+    custom_shader: '',
     surface: 'opaque',
     blend_mode: 'alpha',
     transparent_depth_write: false,
@@ -85,9 +87,10 @@ export function normalizeMaterialAsset(value: unknown): MaterialAsset {
   const emissive = vector(source.emissive, 3, [0, 0, 0])
     .map((part) => Math.max(0, part)) as MaterialAsset['emissive'];
   return {
-    version: Math.max(3, Math.trunc(finite(source.version, 3))),
+    version: Math.max(4, Math.trunc(finite(source.version, 4))),
     name: String(source.name ?? ''),
-    shader: source.shader === 'unlit' ? 'unlit' : 'pbr',
+    shader: source.shader === 'unlit' || source.shader === 'custom' ? source.shader : 'pbr',
+    custom_shader: String(source.custom_shader ?? '').trim().replace(/\\/g, '/'),
     surface: source.surface === 'transparent' || source.surface === 'cutout'
       ? source.surface
       : 'opaque',

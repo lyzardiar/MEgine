@@ -3,7 +3,8 @@ use crate::render_graph::RenderGraph;
 use crate::ui::{UiBatchPlan, UiFrameStats, UiRenderer, UiTextureError};
 use crate::RhiError;
 use glam::{Mat4, Vec3, Vec4};
-use std::collections::HashMap;
+use std::collections::{hash_map::DefaultHasher, HashMap, HashSet};
+use std::hash::{Hash, Hasher};
 use std::num::NonZeroU64;
 use std::sync::Arc;
 use winit::dpi::PhysicalSize;
@@ -84,6 +85,9 @@ pub struct RenderMaterial {
     pub wrap_u: MaterialWrap,
     pub wrap_v: MaterialWrap,
     pub filter: MaterialFilter,
+    /// Optional project-authored WGSL surface hook. The engine wraps and validates this hook
+    /// against its stable forward-material interface before creating a pipeline.
+    pub surface_shader: String,
 }
 
 #[derive(Clone, Copy, Debug, Default, Eq, Hash, PartialEq)]
@@ -138,6 +142,7 @@ impl Default for RenderMaterial {
             wrap_u: MaterialWrap::Repeat,
             wrap_v: MaterialWrap::Repeat,
             filter: MaterialFilter::Linear,
+            surface_shader: String::new(),
         }
     }
 }
@@ -265,6 +270,7 @@ struct MaterialPipelineKey {
     blend: MaterialPipelineBlend,
     double_sided: bool,
     depth_write: bool,
+    shader_fingerprint: u64,
 }
 
 impl From<&RenderMaterial> for MaterialPipelineKey {
@@ -282,6 +288,7 @@ impl From<&RenderMaterial> for MaterialPipelineKey {
             },
             double_sided: material.double_sided,
             depth_write: !material.transparent || material.depth_write,
+            shader_fingerprint: surface_shader_fingerprint(&material.surface_shader),
         }
     }
 }
@@ -314,10 +321,12 @@ pub struct Renderer {
     surface: wgpu::Surface<'static>,
     config: wgpu::SurfaceConfiguration,
     material_pipelines: HashMap<MaterialPipelineKey, wgpu::RenderPipeline>,
+    invalid_surface_shaders: HashSet<u64>,
     depth_view: wgpu::TextureView,
     depth_texture: wgpu::Texture,
     meshes: HashMap<String, MeshGpu>,
     bind_layout: wgpu::BindGroupLayout,
+    pipeline_layout: wgpu::PipelineLayout,
     global_buf: wgpu::Buffer,
     object_buf: wgpu::Buffer,
     bind_group: wgpu::BindGroup,
@@ -502,6 +511,7 @@ impl Renderer {
                 blend: MaterialPipelineBlend::Replace,
                 double_sided,
                 depth_write: true,
+                shader_fingerprint: 0,
             };
             material_pipelines.insert(
                 opaque,
@@ -518,6 +528,7 @@ impl Renderer {
                         blend,
                         double_sided,
                         depth_write,
+                        shader_fingerprint: 0,
                     };
                     material_pipelines.insert(
                         key,
@@ -597,10 +608,12 @@ impl Renderer {
             surface,
             config,
             material_pipelines,
+            invalid_surface_shaders: HashSet::new(),
             depth_view,
             depth_texture,
             meshes,
             bind_layout,
+            pipeline_layout,
             global_buf,
             object_buf,
             bind_group,
@@ -686,6 +699,7 @@ impl Renderer {
         self.ui.prepare(&self.device, &self.queue, ui_plan);
         let draw_order = sorted_render_indices(objects, camera.position);
         for object in objects {
+            self.ensure_material_pipeline(&object.material);
             self.ensure_material_texture_set(&object.material);
         }
         let frame = self.surface.get_current_texture()?;
@@ -734,7 +748,13 @@ impl Renderer {
                 let pipeline = self
                     .material_pipelines
                     .get(&pipeline_key)
-                    .expect("all material pipeline variants are created at startup");
+                    .or_else(|| {
+                        self.material_pipelines.get(&MaterialPipelineKey {
+                            shader_fingerprint: 0,
+                            ..pipeline_key
+                        })
+                    })
+                    .expect("built-in material pipeline variants are created at startup");
                 pass.set_pipeline(pipeline);
                 pass.set_bind_group(
                     0,
@@ -772,6 +792,42 @@ impl Renderer {
             &self.bind_layout,
             &self.global_buf,
             &self.object_buf,
+        );
+    }
+
+    fn ensure_material_pipeline(&mut self, material: &RenderMaterial) {
+        let key = MaterialPipelineKey::from(material);
+        if key.shader_fingerprint == 0
+            || self.material_pipelines.contains_key(&key)
+            || self
+                .invalid_surface_shaders
+                .contains(&key.shader_fingerprint)
+        {
+            return;
+        }
+        let source = match compose_surface_shader(&material.surface_shader) {
+            Ok(source) => source,
+            Err(error) => {
+                log::warn!("surface shader rejected: {error}");
+                self.invalid_surface_shaders.insert(key.shader_fingerprint);
+                return;
+            }
+        };
+        let shader = self
+            .device
+            .create_shader_module(wgpu::ShaderModuleDescriptor {
+                label: Some("custom_surface_material"),
+                source: wgpu::ShaderSource::Wgsl(source.into()),
+            });
+        self.material_pipelines.insert(
+            key,
+            create_pipeline(
+                &self.device,
+                self.config.format,
+                &shader,
+                &self.pipeline_layout,
+                key,
+            ),
         );
     }
 
@@ -1099,6 +1155,62 @@ fn material_address_mode(wrap: MaterialWrap) -> wgpu::AddressMode {
         MaterialWrap::Clamp => wgpu::AddressMode::ClampToEdge,
         MaterialWrap::Mirror => wgpu::AddressMode::MirrorRepeat,
     }
+}
+
+fn surface_shader_fingerprint(source: &str) -> u64 {
+    if source.trim().is_empty() {
+        return 0;
+    }
+    let mut hasher = DefaultHasher::new();
+    source.hash(&mut hasher);
+    let value = hasher.finish();
+    if value == 0 {
+        1
+    } else {
+        value
+    }
+}
+
+const SURFACE_HOOK_BEGIN: &str = "// MENGINE_SURFACE_HOOK_BEGIN";
+const SURFACE_HOOK_END: &str = "// MENGINE_SURFACE_HOOK_END";
+
+pub fn validate_surface_shader_hook(source: &str) -> Result<(), String> {
+    compose_surface_shader(source).map(|_| ())
+}
+
+fn compose_surface_shader(surface_hook: &str) -> Result<String, String> {
+    let hook = surface_hook.trim();
+    if hook.is_empty() {
+        return Ok(FORWARD_WGSL.to_owned());
+    }
+    for forbidden in ["@group", "@binding", "@vertex", "@fragment", "@compute"] {
+        if hook.contains(forbidden) {
+            return Err(format!(
+                "surface hook cannot declare engine bindings or entry points ({forbidden})"
+            ));
+        }
+    }
+    let start = FORWARD_WGSL
+        .find(SURFACE_HOOK_BEGIN)
+        .ok_or_else(|| "engine surface-hook start marker is missing".to_owned())?;
+    let end = FORWARD_WGSL
+        .find(SURFACE_HOOK_END)
+        .map(|index| index + SURFACE_HOOK_END.len())
+        .ok_or_else(|| "engine surface-hook end marker is missing".to_owned())?;
+    let mut composed = FORWARD_WGSL.to_owned();
+    composed.replace_range(
+        start..end,
+        &format!("{SURFACE_HOOK_BEGIN}\n{hook}\n{SURFACE_HOOK_END}"),
+    );
+    let module = naga::front::wgsl::parse_str(&composed)
+        .map_err(|error| format!("WGSL parse failed: {error}"))?;
+    naga::valid::Validator::new(
+        naga::valid::ValidationFlags::all(),
+        naga::valid::Capabilities::all(),
+    )
+    .validate(&module)
+    .map_err(|error| format!("WGSL validation failed: {error}"))?;
+    Ok(composed)
 }
 
 fn create_pipeline(
@@ -1453,6 +1565,17 @@ fn mapped_normal(
     );
 }
 
+// MENGINE_SURFACE_HOOK_BEGIN
+fn mengine_surface_hook(
+    color: vec4<f32>,
+    uv: vec2<f32>,
+    world_position: vec3<f32>,
+    world_normal: vec3<f32>,
+) -> vec4<f32> {
+    return color;
+}
+// MENGINE_SURFACE_HOOK_END
+
 fn material_output(color: vec3<f32>, alpha: f32) -> vec4<f32> {
     if object.map_params.w > 0.5 && object.map_params.w < 1.5 {
         return vec4<f32>(color * alpha, alpha);
@@ -1478,10 +1601,6 @@ fn fs_main(i: VsOut, @builtin(front_facing) front_facing: bool) -> @location(0) 
     let emissive = max(object.emissive.rgb, vec3<f32>(0.0))
         * object.material.z
         * sampled_emissive;
-    if object.material.w > 0.5 {
-        return material_output(base_color + emissive, surface_color.a);
-    }
-
     let face_normal = select(-normalize(i.world_normal), normalize(i.world_normal), front_facing);
     let n = mapped_normal(
         face_normal,
@@ -1490,6 +1609,16 @@ fn fs_main(i: VsOut, @builtin(front_facing) front_facing: bool) -> @location(0) 
         sampled_normal,
         max(object.map_params.x, 0.0),
     );
+    if object.material.w > 0.5 {
+        let surface = mengine_surface_hook(
+            vec4<f32>(base_color + emissive, surface_color.a),
+            i.uv,
+            i.world_position,
+            n,
+        );
+        return material_output(surface.rgb, surface.a);
+    }
+
     let v = normalize(frame.camera_position.xyz - i.world_position);
     var color = frame.ambient.rgb * base_color * (1.0 - metallic * 0.5) * occlusion;
 
@@ -1534,7 +1663,13 @@ fn fs_main(i: VsOut, @builtin(front_facing) front_facing: bool) -> @location(0) 
     }
 
     color += emissive;
-    return material_output(color, surface_color.a);
+    let surface = mengine_surface_hook(
+        vec4<f32>(color, surface_color.a),
+        i.uv,
+        i.world_position,
+        n,
+    );
+    return material_output(surface.rgb, surface.a);
 }
 "#;
 
@@ -1552,6 +1687,28 @@ mod tests {
         )
         .validate(&module)
         .expect("forward shader should pass validation");
+    }
+
+    #[test]
+    fn custom_surface_hooks_are_composed_validated_and_fingerprinted() {
+        let hook = r#"
+            fn mengine_surface_hook(
+                color: vec4<f32>,
+                uv: vec2<f32>,
+                world_position: vec3<f32>,
+                world_normal: vec3<f32>,
+            ) -> vec4<f32> {
+                let rim = pow(1.0 - abs(world_normal.z), 2.0);
+                return vec4<f32>(color.rgb + vec3<f32>(rim * uv.x), color.a);
+            }
+        "#;
+        let composed = compose_surface_shader(hook).unwrap();
+        assert!(composed.contains("let rim ="));
+        assert!(!composed.contains("return color;\n}\n// MENGINE_SURFACE_HOOK_END"));
+        assert_ne!(surface_shader_fingerprint(hook), 0);
+        assert_eq!(surface_shader_fingerprint(""), 0);
+        assert!(validate_surface_shader_hook("fn mengine_surface_hook() {}").is_err());
+        assert!(validate_surface_shader_hook("@fragment fn fs_main() {}").is_err());
     }
 
     #[test]
@@ -1643,6 +1800,7 @@ mod tests {
                 blend: MaterialPipelineBlend::Premultiplied,
                 double_sided: true,
                 depth_write: false,
+                shader_fingerprint: 0,
             }
         );
         let object = RenderObject {

@@ -3,7 +3,7 @@ use serde::{Deserialize, Serialize};
 use std::path::Path;
 
 fn default_version() -> u32 {
-    3
+    4
 }
 
 fn default_base_color() -> [f32; 4] {
@@ -40,6 +40,7 @@ pub enum MaterialShader {
     #[default]
     Pbr,
     Unlit,
+    Custom,
 }
 
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq, Serialize, Deserialize)]
@@ -85,6 +86,8 @@ pub struct MaterialAsset {
     pub version: u32,
     pub name: String,
     pub shader: MaterialShader,
+    #[serde(default)]
+    pub custom_shader: String,
     pub surface: MaterialSurface,
     pub blend_mode: MaterialBlendMode,
     pub transparent_depth_write: bool,
@@ -133,6 +136,7 @@ impl Default for MaterialAsset {
             version: default_version(),
             name: String::new(),
             shader: MaterialShader::Pbr,
+            custom_shader: String::new(),
             surface: MaterialSurface::Opaque,
             blend_mode: MaterialBlendMode::Alpha,
             transparent_depth_write: false,
@@ -194,6 +198,7 @@ impl MaterialAsset {
         }
         self.uv_rotation = finite_or(self.uv_rotation, 0.0).rem_euclid(360.0);
         self.render_queue = self.render_queue.clamp(-1, 5000);
+        self.custom_shader = self.custom_shader.trim().replace('\\', "/");
         self.base_color_texture = self.base_color_texture.trim().replace('\\', "/");
         self.normal_texture = self.normal_texture.trim().replace('\\', "/");
         self.metallic_roughness_texture = self.metallic_roughness_texture.trim().replace('\\', "/");
@@ -242,7 +247,7 @@ mod tests {
             }"#,
         )
         .unwrap();
-        assert_eq!(parsed.version, 3);
+        assert_eq!(parsed.version, 4);
         assert_eq!(parsed.surface, MaterialSurface::Transparent);
         assert_eq!(parsed.base_color, [1.0, 0.0, 0.5, 0.25]);
         assert_eq!(parsed.metallic, 1.0);
@@ -280,8 +285,9 @@ mod tests {
             }"#,
         )
         .expect("materials authored before PBR maps were added remain loadable");
-        assert_eq!(legacy.version, 3);
+        assert_eq!(legacy.version, 4);
         assert_eq!(legacy.blend_mode, MaterialBlendMode::Alpha);
+        assert_eq!(legacy.custom_shader, "");
         assert!(!legacy.transparent_depth_write);
         assert_eq!(legacy.render_queue, -1);
         assert_eq!(legacy.normal_texture, "");
@@ -300,7 +306,9 @@ mod tests {
     fn material_pipeline_and_sampler_settings_are_normalized() {
         let parsed = parse_material_asset(
             br#"{
-              "version":3,
+              "version":4,
+              "shader":"custom",
+              "custom_shader":" Assets\\Shaders\\toon.mshader ",
               "surface":"transparent",
               "blend_mode":"premultiplied",
               "transparent_depth_write":true,
@@ -313,7 +321,9 @@ mod tests {
             }"#,
         )
         .unwrap();
-        assert_eq!(parsed.version, 3);
+        assert_eq!(parsed.version, 4);
+        assert_eq!(parsed.shader, MaterialShader::Custom);
+        assert_eq!(parsed.custom_shader, "Assets/Shaders/toon.mshader");
         assert_eq!(parsed.blend_mode, MaterialBlendMode::Premultiplied);
         assert!(parsed.transparent_depth_write);
         assert_eq!(parsed.render_queue, 5000);
