@@ -4,12 +4,14 @@ import test from 'node:test';
 import {
   clampSequencerZoom,
   copySequencerItem,
+  deleteSequencerItems,
   findSequencerClipPlacement,
   lockedSequencerContentEnd,
   moveSequencerClip,
   moveSequencerTrack,
   pasteSequencerItem,
   resolveSequencerPasteTrack,
+  selectSequencerItem,
   sequencerTicks,
   trimSequencerCameraBlendIn,
   trimSequencerClip,
@@ -67,6 +69,70 @@ test('Sequencer camera start trim preserves the absolute blend end', () => {
   assert.equal(trimSequencerCameraBlendIn(0.75, 1.5, 0.25), 0.5);
   assert.equal(trimSequencerCameraBlendIn(0.75, 2.5, -0.5), 1.25);
   assert.equal(trimSequencerCameraBlendIn(0.75, 0.25, -1), 0.25);
+});
+
+test('Sequencer selection model supports toggle and anchored ranges deterministically', () => {
+  const first = selectSequencerItem([], null, { track: 1, marker: 2 }, 'single');
+  assert.deepEqual(first, {
+    primary: { track: 1, marker: 2 },
+    items: [{ track: 1, marker: 2 }],
+  });
+  const added = selectSequencerItem(first.items, first.primary, { track: 3, marker: 1 }, 'toggle');
+  assert.deepEqual(added.items, [{ track: 1, marker: 2 }, { track: 3, marker: 1 }]);
+  assert.deepEqual(added.primary, { track: 3, marker: 1 });
+  const removed = selectSequencerItem(added.items, added.primary, { track: 3, marker: 1 }, 'toggle');
+  assert.deepEqual(removed.items, [{ track: 1, marker: 2 }]);
+  assert.deepEqual(removed.primary, { track: 1, marker: 2 });
+  const range = selectSequencerItem([], { track: 2, marker: 4 }, { track: 2, marker: 1 }, 'range');
+  assert.deepEqual(range.items, [1, 2, 3, 4].map((marker) => ({ track: 2, marker })));
+  assert.deepEqual(range.primary, { track: 2, marker: 1 });
+});
+
+test('Sequencer multi-delete is atomic across tracks and rejects locked selections', () => {
+  const asset = timeline();
+  asset.tracks[0].markers.push({ time: 3, name: 'Later' });
+  asset.tracks[1].clips.push({
+    start: 4, duration: 1, clip: 'Assets/later.ogg', clip_in: 0, volume: 1, pitch: 1, looped: false,
+  });
+  const deleted = deleteSequencerItems(asset, [
+    { track: 0, marker: 0 },
+    { track: 1, marker: 0 },
+  ]);
+  assert.equal(deleted.ok, true);
+  assert.deepEqual(deleted.asset.tracks[0].markers.map((marker) => marker.name), ['Later']);
+  assert.deepEqual(deleted.asset.tracks[1].clips.map((clip) => clip.start), [4]);
+  assert.equal(asset.tracks[0].markers.length, 2);
+  assert.equal(asset.tracks[1].clips.length, 2);
+
+  asset.tracks[1].locked = true;
+  const locked = deleteSequencerItems(asset, [
+    { track: 0, marker: 0 },
+    { track: 1, marker: 0 },
+  ]);
+  assert.equal(locked.ok, false);
+  assert.match(locked.error, /locked/);
+});
+
+test('Sequencer ripple-delete closes deleted clip durations per affected track', () => {
+  const asset = timeline();
+  asset.tracks[1].clips = [
+    { start: 0, duration: 1, clip: 'Assets/a.ogg', clip_in: 0, volume: 1, pitch: 1, looped: false },
+    { start: 2, duration: 1, clip: 'Assets/b.ogg', clip_in: 0, volume: 1, pitch: 1, looped: false },
+    { start: 4, duration: 1, clip: 'Assets/c.ogg', clip_in: 0, volume: 1, pitch: 1, looped: false },
+    { start: 6, duration: 1, clip: 'Assets/d.ogg', clip_in: 0, volume: 1, pitch: 1, looped: false },
+  ];
+  const deleted = deleteSequencerItems(asset, [
+    { track: 1, marker: 0 },
+    { track: 1, marker: 2 },
+  ], true);
+  assert.equal(deleted.ok, true);
+  assert.deepEqual(deleted.asset.tracks[1].clips.map((clip) => [clip.clip, clip.start]), [
+    ['Assets/b.ogg', 1],
+    ['Assets/d.ogg', 4],
+  ]);
+  const markerOnly = deleteSequencerItems(asset, [{ track: 0, marker: 0 }], true);
+  assert.equal(markerOnly.ok, false);
+  assert.match(markerOnly.error, /requires at least one selected clip/);
 });
 
 test('Sequencer start trimming cannot seek before the source asset', () => {

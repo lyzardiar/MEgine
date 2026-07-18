@@ -27,8 +27,47 @@ export type SequencerTrackMoveResult =
   | { ok: true; asset: TimelineAsset; trackIndex: number }
   | { ok: false; error: string };
 
+export type SequencerItemSelection = { track: number; marker: number };
+export type SequencerSelectionMode = 'single' | 'toggle' | 'range';
+export type SequencerItemSelectionResult = {
+  primary: SequencerItemSelection | null;
+  items: SequencerItemSelection[];
+};
+export type SequencerDeleteResult =
+  | { ok: true; asset: TimelineAsset }
+  | { ok: false; error: string };
+
 export const SEQUENCER_MIN_ZOOM = 1;
 export const SEQUENCER_MAX_ZOOM = 32;
+
+export function selectSequencerItem(
+  current: readonly SequencerItemSelection[],
+  anchor: SequencerItemSelection | null,
+  clicked: SequencerItemSelection,
+  mode: SequencerSelectionMode,
+): SequencerItemSelectionResult {
+  if (mode === 'single') return { primary: clicked, items: [{ ...clicked }] };
+  if (mode === 'range') {
+    const from = anchor?.track === clicked.track ? anchor.marker : clicked.marker;
+    const first = Math.min(from, clicked.marker);
+    const last = Math.max(from, clicked.marker);
+    return {
+      primary: clicked,
+      items: Array.from(
+        { length: last - first + 1 },
+        (_, offset) => ({ track: clicked.track, marker: first + offset }),
+      ),
+    };
+  }
+  const key = `${clicked.track}:${clicked.marker}`;
+  const unique = new Map<string, SequencerItemSelection>(
+    current.map((item) => [`${item.track}:${item.marker}`, { ...item }] as const),
+  );
+  if (unique.has(key)) unique.delete(key);
+  else unique.set(key, { ...clicked });
+  const items = [...unique.values()];
+  return { primary: items[items.length - 1] ?? null, items };
+}
 
 export function clampSequencerZoom(value: number): number {
   if (!Number.isFinite(value)) return SEQUENCER_MIN_ZOOM;
@@ -225,6 +264,62 @@ export function moveSequencerTrack(
   const [moved] = next.tracks.splice(trackIndex, 1);
   next.tracks.splice(nextIndex, 0, moved);
   return { ok: true, asset: next, trackIndex: nextIndex };
+}
+
+export function deleteSequencerItems(
+  asset: TimelineAsset,
+  selections: readonly SequencerItemSelection[],
+  ripple = false,
+): SequencerDeleteResult {
+  const unique = new Map<string, SequencerItemSelection>();
+  for (const selection of selections) {
+    if (!Number.isInteger(selection.track) || !Number.isInteger(selection.marker)) continue;
+    unique.set(`${selection.track}:${selection.marker}`, selection);
+  }
+  if (unique.size === 0) return { ok: false, error: 'No Timeline items are selected.' };
+
+  const grouped = new Map<number, number[]>();
+  for (const selection of unique.values()) {
+    const track = asset.tracks[selection.track];
+    if (!track) return { ok: false, error: 'A selected Timeline track no longer exists.' };
+    if (track.locked) return { ok: false, error: `Track '${track.name}' is locked. Unlock it before deleting.` };
+    const itemCount = track.type === 'signal' ? track.markers.length : track.clips.length;
+    if (selection.marker < 0 || selection.marker >= itemCount) {
+      return { ok: false, error: `A selected item on track '${track.name}' no longer exists.` };
+    }
+    const markers = grouped.get(selection.track) ?? [];
+    markers.push(selection.marker);
+    grouped.set(selection.track, markers);
+  }
+  if (ripple && [...grouped.keys()].every((trackIndex) => asset.tracks[trackIndex].type === 'signal')) {
+    return { ok: false, error: 'Ripple Delete requires at least one selected clip.' };
+  }
+
+  const next = structuredClone(asset);
+  for (const [trackIndex, markerIndexes] of grouped) {
+    const track = next.tracks[trackIndex];
+    const selected = new Set(markerIndexes);
+    if (track.type === 'signal') {
+      track.markers = track.markers.filter((_, index) => !selected.has(index));
+      continue;
+    }
+    const removed = track.clips
+      .filter((_, index) => selected.has(index))
+      .map((clip) => ({ end: clip.start + clip.duration, duration: clip.duration }));
+    for (const markerIndex of [...selected].sort((left, right) => right - left)) {
+      track.clips.splice(markerIndex, 1);
+    }
+    if (ripple) {
+      for (const clip of track.clips) {
+        const shift = removed.reduce(
+          (total, range) => total + (range.end <= clip.start + 1e-6 ? range.duration : 0),
+          0,
+        );
+        clip.start = snap(Math.max(0, clip.start - shift), next.frame_rate);
+      }
+    }
+  }
+  return { ok: true, asset: next };
 }
 
 export function copySequencerItem(

@@ -11,6 +11,7 @@ import type { WorldSnapshotView } from '@mengine/api';
 import {
   ArrowDown,
   ArrowUp,
+  ChevronsLeft,
   ClipboardPaste,
   Copy,
   Link,
@@ -50,15 +51,18 @@ import {
   SEQUENCER_MIN_ZOOM,
   clampSequencerZoom,
   copySequencerItem,
+  deleteSequencerItems,
   findSequencerClipPlacement,
   lockedSequencerContentEnd,
   moveSequencerClip,
   moveSequencerTrack,
   pasteSequencerItem,
   sequencerTicks,
+  selectSequencerItem,
   trimSequencerCameraBlendIn,
   trimSequencerClip,
   type SequencerClipboard,
+  type SequencerItemSelection,
 } from '../sequencerEditing';
 
 export const OPEN_TIMELINE_ASSET_EVENT = 'mengine:open-timeline-asset';
@@ -121,6 +125,7 @@ type Selection = { track: number; marker: number | null } | null;
 type HistorySnapshot = {
   asset: TimelineAsset;
   selection: Selection;
+  selectedItems: SequencerItemSelection[];
   time: number;
 };
 type InspectorEditTransaction = HistorySnapshot & {
@@ -133,6 +138,7 @@ type Draft = {
   savedText: string;
   time: number;
   selection: Selection;
+  selectedItems: SequencerItemSelection[];
   undo: HistorySnapshot[];
   redo: HistorySnapshot[];
 };
@@ -149,6 +155,7 @@ export function Sequencer(props: SequencerProps) {
   const [time, setTime] = useState(0);
   const [playing, setPlaying] = useState(false);
   const [selection, setSelection] = useState<Selection>(null);
+  const [selectedItems, setSelectedItems] = useState<SequencerItemSelection[]>([]);
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -167,6 +174,15 @@ export function Sequencer(props: SequencerProps) {
   const previousFrame = useRef<number | null>(null);
   const tracksViewport = useRef<HTMLDivElement | null>(null);
   assetRef.current = asset;
+
+  const applySelection = (primary: Selection, items?: readonly SequencerItemSelection[]) => {
+    setSelection(primary);
+    setSelectedItems(items
+      ? items.map((item) => ({ ...item }))
+      : primary?.marker != null
+        ? [{ track: primary.track, marker: primary.marker }]
+        : []);
+  };
 
   const fingerprint = useMemo(() => asset ? JSON.stringify(asset) : '', [asset]);
   const savedFingerprint = useMemo(() => {
@@ -200,6 +216,7 @@ export function Sequencer(props: SequencerProps) {
         drafts.current.set(previous, {
           asset: structuredClone(asset), savedText, time,
           selection: selection ? { ...selection } : null,
+          selectedItems: structuredClone(selectedItems),
           undo: structuredClone(undoHistory.current),
           redo: structuredClone(redoHistory.current),
         });
@@ -213,7 +230,7 @@ export function Sequencer(props: SequencerProps) {
     setSavedText('');
     setTime(0);
     setZoom(1);
-    setSelection(null);
+    applySelection(null);
     undoHistory.current = [];
     redoHistory.current = [];
     inspectorEdit.current = null;
@@ -227,7 +244,10 @@ export function Sequencer(props: SequencerProps) {
       setAsset(structuredClone(draft.asset));
       setSavedText(draft.savedText);
       setTime(draft.time);
-      setSelection(draft.selection ? { ...draft.selection } : null);
+      applySelection(
+        draft.selection ? { ...draft.selection } : null,
+        draft.selectedItems ?? [],
+      );
       undoHistory.current = structuredClone(draft.undo);
       redoHistory.current = structuredClone(draft.redo);
       setHistoryEpoch((value) => value + 1);
@@ -263,10 +283,12 @@ export function Sequencer(props: SequencerProps) {
     snapshotAsset: TimelineAsset,
     snapshotSelection: Selection = selection,
     snapshotTime = time,
+    snapshotItems: readonly SequencerItemSelection[] = selectedItems,
   ) => {
     undoHistory.current.push({
       asset: structuredClone(snapshotAsset),
       selection: snapshotSelection ? { ...snapshotSelection } : null,
+      selectedItems: snapshotItems.map((item) => ({ ...item })),
       time: snapshotTime,
     });
     if (undoHistory.current.length > 100) undoHistory.current.shift();
@@ -282,7 +304,12 @@ export function Sequencer(props: SequencerProps) {
     const transaction = inspectorEdit.current;
     if (transaction) {
       if (!transaction.historyRecorded) {
-        pushHistory(transaction.asset, transaction.selection, transaction.time);
+        pushHistory(
+          transaction.asset,
+          transaction.selection,
+          transaction.time,
+          transaction.selectedItems,
+        );
         transaction.historyRecorded = true;
       }
     } else {
@@ -300,10 +327,14 @@ export function Sequencer(props: SequencerProps) {
     to.push({
       asset: structuredClone(asset),
       selection: selection ? { ...selection } : null,
+      selectedItems: structuredClone(selectedItems),
       time,
     });
     setAsset(structuredClone(snapshot.asset));
-    setSelection(snapshot.selection ? { ...snapshot.selection } : null);
+    applySelection(
+      snapshot.selection ? { ...snapshot.selection } : null,
+      snapshot.selectedItems ?? [],
+    );
     setTime(Math.max(0, Math.min(snapshot.asset.duration, snapshot.time)));
     setPayloadInvalid(false);
     setError(null);
@@ -315,6 +346,7 @@ export function Sequencer(props: SequencerProps) {
     inspectorEdit.current = {
       asset: structuredClone(asset),
       selection: selection ? { ...selection } : null,
+      selectedItems: structuredClone(selectedItems),
       time,
       undo: structuredClone(undoHistory.current),
       redo: structuredClone(redoHistory.current),
@@ -431,7 +463,7 @@ export function Sequencer(props: SequencerProps) {
     let id = `signals-${index}`;
     while (used.has(id)) id = `signals-${++index}`;
     update((draft) => draft.tracks.push({ type: 'signal', id, name: `Signal Track ${index}`, muted: false, locked: false, markers: [] }));
-    setSelection({ track: asset.tracks.length, marker: null });
+    applySelection({ track: asset.tracks.length, marker: null });
   };
 
   const addActivationTrack = () => {
@@ -443,7 +475,7 @@ export function Sequencer(props: SequencerProps) {
     update((draft) => draft.tracks.push({
       type: 'activation', id, name: `Activation Track ${index}`, muted: false, locked: false, target: 'Child', clips: [],
     }));
-    setSelection({ track: asset.tracks.length, marker: null });
+    applySelection({ track: asset.tracks.length, marker: null });
   };
 
   const addAudioTrack = () => {
@@ -455,7 +487,7 @@ export function Sequencer(props: SequencerProps) {
     update((draft) => draft.tracks.push({
       type: 'audio', id, name: `Audio Track ${index}`, muted: false, locked: false, target: 'AudioSource', clips: [],
     }));
-    setSelection({ track: asset.tracks.length, marker: null });
+    applySelection({ track: asset.tracks.length, marker: null });
   };
 
   const addAnimationTrack = () => {
@@ -467,7 +499,7 @@ export function Sequencer(props: SequencerProps) {
     update((draft) => draft.tracks.push({
       type: 'animation', id, name: `Animation Track ${index}`, muted: false, locked: false, target: 'Animated', clips: [],
     }));
-    setSelection({ track: asset.tracks.length, marker: null });
+    applySelection({ track: asset.tracks.length, marker: null });
   };
 
   const addParticleTrack = () => {
@@ -479,7 +511,7 @@ export function Sequencer(props: SequencerProps) {
     update((draft) => draft.tracks.push({
       type: 'particle', id, name: `Particle Track ${index}`, muted: false, locked: false, target: 'Particles', clips: [],
     }));
-    setSelection({ track: asset.tracks.length, marker: null });
+    applySelection({ track: asset.tracks.length, marker: null });
   };
 
   const addCameraTrack = () => {
@@ -495,7 +527,7 @@ export function Sequencer(props: SequencerProps) {
     update((draft) => draft.tracks.push({
       type: 'camera', id, name: `Camera Track ${index}`, muted: false, locked: false, clips: [],
     }));
-    setSelection({ track: asset.tracks.length, marker: null });
+    applySelection({ track: asset.tracks.length, marker: null });
   };
 
   const addMarker = (trackIndex = selection?.track ?? 0, requestedTime = time) => {
@@ -506,7 +538,7 @@ export function Sequencer(props: SequencerProps) {
       if (track.type === 'signal') track.markers.push({ time: markerTime, name: 'Signal' });
     });
     const track = asset.tracks[trackIndex];
-    setSelection({ track: trackIndex, marker: track.type === 'signal' ? track.markers.length : null });
+    applySelection({ track: trackIndex, marker: track.type === 'signal' ? track.markers.length : null });
   };
 
   const addActivationClip = (trackIndex: number, requestedTime = time) => {
@@ -532,7 +564,7 @@ export function Sequencer(props: SequencerProps) {
       }
     });
     setError(null);
-    setSelection({ track: trackIndex, marker });
+    applySelection({ track: trackIndex, marker });
   };
 
   const addAudioClip = (trackIndex: number, requestedTime = time) => {
@@ -559,7 +591,7 @@ export function Sequencer(props: SequencerProps) {
       if (target.type === 'audio') target.clips.sort((left, right) => left.start - right.start);
     });
     setError(null);
-    setSelection({ track: trackIndex, marker });
+    applySelection({ track: trackIndex, marker });
   };
 
   const addAnimationClip = (trackIndex: number, requestedTime = time) => {
@@ -586,7 +618,7 @@ export function Sequencer(props: SequencerProps) {
       if (target.type === 'animation') target.clips.sort((left, right) => left.start - right.start);
     });
     setError(null);
-    setSelection({ track: trackIndex, marker });
+    applySelection({ track: trackIndex, marker });
   };
 
   const addParticleClip = (trackIndex: number, requestedTime = time) => {
@@ -612,7 +644,7 @@ export function Sequencer(props: SequencerProps) {
       }
     });
     setError(null);
-    setSelection({ track: trackIndex, marker });
+    applySelection({ track: trackIndex, marker });
   };
 
   const addCameraClip = (trackIndex: number, requestedTime = time) => {
@@ -643,7 +675,7 @@ export function Sequencer(props: SequencerProps) {
       }
     });
     setError(null);
-    setSelection({ track: trackIndex, marker });
+    applySelection({ track: trackIndex, marker });
   };
 
   const addTrackItem = (trackIndex: number, requestedTime: number) => {
@@ -662,6 +694,10 @@ export function Sequencer(props: SequencerProps) {
 
   const copySelectedItem = (): SequencerClipboard | null => {
     if (!asset || !selection || selection.marker == null) return null;
+    if (selectedItems.length > 1) {
+      setError('Group copy is not available yet. Copy the primary item or use Delete/Ripple Delete on the selection.');
+      return null;
+    }
     const copied = copySequencerItem(asset, selection.track, selection.marker);
     if (copied) {
       setClipboard(copied);
@@ -670,28 +706,32 @@ export function Sequencer(props: SequencerProps) {
     return copied;
   };
 
-  const deleteSelection = () => {
+  const deleteSelection = (ripple = false) => {
     if (!asset || !selection) return;
+    if (selectedItems.length > 0) {
+      const deleted = deleteSequencerItems(asset, selectedItems, ripple);
+      if (!deleted.ok) {
+        setError(deleted.error);
+        return;
+      }
+      pushHistory(asset);
+      setAsset(deleted.asset);
+      applySelection({ track: selection.track, marker: null });
+      setPayloadInvalid(false);
+      setError(null);
+      return;
+    }
     const selectedTrackIndex = selection.track;
-    const selectedItemIndex = selection.marker;
     const track = asset.tracks[selectedTrackIndex];
     if (!track || track.locked) {
       if (track) setError(`Track '${track.name}' is locked. Unlock it before deleting.`);
       return;
     }
     update((draft) => {
-      if (selectedItemIndex == null) {
-        draft.tracks.splice(selectedTrackIndex, 1);
-        return;
-      }
-      const track = draft.tracks[selectedTrackIndex];
-      if (track.type === 'signal') track.markers.splice(selectedItemIndex, 1);
-      else track.clips.splice(selectedItemIndex, 1);
+      draft.tracks.splice(selectedTrackIndex, 1);
     });
     setPayloadInvalid(false);
-    setSelection(selectedItemIndex == null
-      ? null
-      : { track: selectedTrackIndex, marker: null });
+    applySelection(null);
   };
 
   const moveSelectedTrack = (direction: -1 | 1) => {
@@ -703,7 +743,7 @@ export function Sequencer(props: SequencerProps) {
     }
     pushHistory(asset);
     setAsset(moved.asset);
-    setSelection({ track: moved.trackIndex, marker: selection.marker });
+    applySelection({ track: moved.trackIndex, marker: selection.marker });
     setError(null);
   };
 
@@ -720,7 +760,7 @@ export function Sequencer(props: SequencerProps) {
     }
     pushHistory(asset);
     setAsset(pasted.asset);
-    setSelection({ track: pasted.trackIndex, marker: pasted.itemIndex });
+    applySelection({ track: pasted.trackIndex, marker: pasted.itemIndex });
     const pastedTrack = pasted.asset.tracks[pasted.trackIndex];
     setTime(pastedTrack.type === 'signal'
       ? pastedTrack.markers[pasted.itemIndex].time
@@ -730,6 +770,10 @@ export function Sequencer(props: SequencerProps) {
 
   const duplicateSelectedItem = () => {
     if (!asset || !selection || selection.marker == null) return;
+    if (selectedItems.length > 1) {
+      setError('Group duplicate is not available yet. Duplicate a single primary item.');
+      return;
+    }
     if (asset.tracks[selection.track]?.locked) {
       setError(`Track '${asset.tracks[selection.track].name}' is locked. Unlock it before duplicating.`);
       return;
@@ -756,11 +800,6 @@ export function Sequencer(props: SequencerProps) {
     const bounds = lane.getBoundingClientRect();
     const originalTrack = asset.tracks[trackIndex];
     if (!originalTrack) return;
-    if (originalTrack.locked) {
-      setSelection({ track: trackIndex, marker: markerIndex });
-      setError(`Track '${originalTrack.name}' is locked. Unlock it before moving items.`);
-      return;
-    }
     const targetBounds = event.currentTarget.getBoundingClientRect();
     const edgeDistance = event.clientX - targetBounds.left;
     const trimEdge = originalTrack.type === 'signal'
@@ -770,21 +809,54 @@ export function Sequencer(props: SequencerProps) {
         : targetBounds.width - edgeDistance <= 7
           ? 'end'
           : null;
+    const clicked = { track: trackIndex, marker: markerIndex };
+    const selectionAnchor = selection?.marker != null
+      ? { track: selection.track, marker: selection.marker }
+      : null;
+    if (!trimEdge && (event.ctrlKey || event.metaKey)) {
+      const next = selectSequencerItem(
+        selectedItems,
+        selectionAnchor,
+        clicked,
+        'toggle',
+      );
+      applySelection(
+        next.primary ? { ...next.primary } : { track: trackIndex, marker: null },
+        next.items,
+      );
+      return;
+    }
+    if (!trimEdge && event.shiftKey) {
+      const next = selectSequencerItem(
+        selectedItems,
+        selectionAnchor,
+        clicked,
+        'range',
+      );
+      applySelection(next.primary, next.items);
+      return;
+    }
+    if (originalTrack.locked) {
+      applySelection(clicked);
+      setError(`Track '${originalTrack.name}' is locked. Unlock it before moving items.`);
+      return;
+    }
     const pointerStartTime = (event.clientX - bounds.left) / Math.max(1, bounds.width) * asset.duration;
     const pointer = event.pointerId;
     const selectionBeforeDrag = selection ? { ...selection } : null;
+    const selectedItemsBeforeDrag = structuredClone(selectedItems);
     const timeBeforeDrag = time;
     const undoBeforeDrag = structuredClone(undoHistory.current);
     const redoBeforeDrag = structuredClone(redoHistory.current);
     let historyRecorded = false;
     event.currentTarget.setPointerCapture(pointer);
-    setSelection({ track: trackIndex, marker: markerIndex });
+    applySelection(clicked);
     const move = (moveEvent: PointerEvent) => {
       if (moveEvent.pointerId !== pointer) return;
       const position = Math.max(0, Math.min(1, (moveEvent.clientX - bounds.left) / Math.max(1, bounds.width)));
       const delta = position * asset.duration - pointerStartTime;
       if (!historyRecorded && Math.abs(delta) >= 0.5 / asset.frame_rate) {
-        pushHistory(asset, selectionBeforeDrag, timeBeforeDrag);
+        pushHistory(asset, selectionBeforeDrag, timeBeforeDrag, selectedItemsBeforeDrag);
         historyRecorded = true;
       }
       applyUpdate((draft) => {
@@ -857,7 +929,7 @@ export function Sequencer(props: SequencerProps) {
         undoHistory.current = undoBeforeDrag;
         redoHistory.current = redoBeforeDrag;
         setAsset(structuredClone(asset));
-        setSelection(selectionBeforeDrag);
+        applySelection(selectionBeforeDrag, selectedItemsBeforeDrag);
         setTime(timeBeforeDrag);
         setHistoryEpoch((value) => value + 1);
       }
@@ -900,6 +972,13 @@ export function Sequencer(props: SequencerProps) {
     ? selectedTrack.clips[selection.marker]
     : null;
   const selectedClip = selectedActivationClip ?? selectedAudioClip ?? selectedAnimationClip ?? selectedParticleClip ?? selectedCameraClip;
+  const isItemSelected = (track: number, marker: number) => selectedItems.some(
+    (item) => item.track === track && item.marker === marker,
+  );
+  const rippleEligible = selectedItems.some((item) => {
+    const track = asset.tracks[item.track];
+    return Boolean(track && track.type !== 'signal');
+  });
   const audioAssets = listProjectFiles().filter((entry) => entry.kind === 'audio');
   const animationAssets = listProjectFiles().filter((entry) => entry.kind === 'animation');
   const laneViewportWidth = Math.max(360, tracksWidth - 180);
@@ -962,6 +1041,16 @@ export function Sequencer(props: SequencerProps) {
           restoreHistory('redo');
           return;
         }
+        if (modified && key === 'a') {
+          event.preventDefault();
+          const items = asset.tracks.flatMap((track, trackIndex) => {
+            const count = track.type === 'signal' ? track.markers.length : track.clips.length;
+            return Array.from({ length: count }, (_, marker) => ({ track: trackIndex, marker }));
+          });
+          const primary = items[items.length - 1] ?? null;
+          applySelection(primary, items);
+          return;
+        }
         if (modified && key === 'c') {
           event.preventDefault();
           copySelectedItem();
@@ -987,6 +1076,12 @@ export function Sequencer(props: SequencerProps) {
           return;
         }
         if (['BUTTON', 'SUMMARY'].includes(tag)) return;
+        if (event.key === 'Escape') {
+          event.preventDefault();
+          applySelection(null);
+          setError(null);
+          return;
+        }
         if (event.code === 'Space') {
           event.preventDefault();
           if (liveDirector && props.selectedEntity) {
@@ -998,7 +1093,7 @@ export function Sequencer(props: SequencerProps) {
         }
         if ((event.key === 'Delete' || event.key === 'Backspace') && selection) {
           event.preventDefault();
-          deleteSelection();
+          deleteSelection(event.shiftKey);
         }
       }}
     >
@@ -1018,14 +1113,17 @@ export function Sequencer(props: SequencerProps) {
         <div className="sequencer-edit-controls">
           <button type="button" aria-label="Undo" title="Undo (Ctrl+Z)" disabled={undoHistory.current.length === 0} onClick={() => restoreHistory('undo')}><Undo2 size={13} /></button>
           <button type="button" aria-label="Redo" title="Redo (Ctrl+Y)" disabled={redoHistory.current.length === 0} onClick={() => restoreHistory('redo')}><Redo2 size={13} /></button>
-          <button type="button" aria-label="Copy selected item" title="Copy selected item (Ctrl+C)" disabled={!selectedMarker && !selectedClip} onClick={() => copySelectedItem()}><Copy size={13} /></button>
+          <button type="button" aria-label="Copy selected item" title={selectedItems.length > 1 ? 'Group copy is not available in this slice' : 'Copy selected item (Ctrl+C)'} disabled={(!selectedMarker && !selectedClip) || selectedItems.length > 1} onClick={() => copySelectedItem()}><Copy size={13} /></button>
           <button type="button" aria-label="Paste at playhead" title="Paste at playhead (Ctrl+V)" disabled={!clipboard} onClick={() => pasteItem(clipboard, displayTime)}><ClipboardPaste size={13} /></button>
+          <button type="button" aria-label="Delete selected items" title="Delete selected items (Delete)" disabled={selectedItems.length === 0} onClick={() => deleteSelection()}><Trash2 size={13} /></button>
+          <button type="button" aria-label="Ripple delete selected clips" title="Ripple Delete per affected track (Shift+Delete)" disabled={!rippleEligible} onClick={() => deleteSelection(true)}><ChevronsLeft size={13} /></button>
         </div>
         <label className="timeline-time">Time <input type="number" min={0} max={asset.duration} step={1 / asset.frame_rate} value={Number(displayTime.toFixed(4))} onChange={(event) => {
           const next = snapTimelineAssetTime(Number(event.target.value), asset);
           scrub(next);
         }} /></label>
         <span className="timeline-clip-path" title={props.assetPath}>{asset.name} — {props.assetPath}{dirty ? ' *' : ''}</span>
+        {selectedItems.length > 1 && <span className="sequencer-selection-count">{selectedItems.length} selected</span>}
         {liveDirector && <span className={`sequencer-live-status${liveDirector.playing ? ' playing' : ''}`}>{liveDirector.playing ? 'LIVE PLAYING' : 'LIVE PAUSED'} · {displayTime.toFixed(2)}s</span>}
         <div className="sequencer-zoom-controls">
           <button type="button" title="Zoom out" disabled={zoom <= SEQUENCER_MIN_ZOOM} onClick={() => changeZoom(zoom / 1.5)}><Minus size={13} /></button>
@@ -1078,8 +1176,8 @@ export function Sequencer(props: SequencerProps) {
             </div>
           </div>
           {asset.tracks.map((track, trackIndex) => (
-            <div className={`sequencer-track-row${selection?.track === trackIndex ? ' selected' : ''}${track.locked ? ' locked' : ''}`} key={track.id}>
-              <button type="button" className="sequencer-track-header" onClick={() => setSelection({ track: trackIndex, marker: null })}>
+            <div className={`sequencer-track-row${selection?.track === trackIndex ? ' selected' : ''}${selectedItems.some((item) => item.track === trackIndex) ? ' contains-selection' : ''}${track.locked ? ' locked' : ''}`} key={track.id}>
+              <button type="button" className="sequencer-track-header" onClick={() => applySelection({ track: trackIndex, marker: null })}>
                 <span className={`sequencer-track-icon ${track.type}`}>{track.type === 'signal' ? 'S' : track.type === 'activation' ? 'A' : track.type === 'audio' ? '♪' : track.type === 'animation' ? 'M' : track.type === 'particle' ? 'P' : 'C'}</span>
                 <span>{track.name}</span>
                 {track.muted && <small>Muted</small>}
@@ -1095,13 +1193,13 @@ export function Sequencer(props: SequencerProps) {
                 if (event.target !== event.currentTarget) return;
                 const bounds = event.currentTarget.getBoundingClientRect();
                 scrub(snapTimelineAssetTime((event.clientX - bounds.left) / bounds.width * asset.duration, asset));
-                setSelection({ track: trackIndex, marker: null });
+                applySelection({ track: trackIndex, marker: null });
               }}>
                 {ticks.map((tick) => <i className="sequencer-grid-line" key={tick.time} style={{ left: `${tick.position * 100}%` }} />)}
                 {track.type === 'signal' && track.markers.map((marker, markerIndex) => (
                   <button
                     type="button"
-                    className={`sequencer-marker${selection?.track === trackIndex && selection.marker === markerIndex ? ' selected' : ''}`}
+                    className={`sequencer-marker${isItemSelected(trackIndex, markerIndex) ? ' selected' : ''}`}
                     style={{ left: `${marker.time / asset.duration * 100}%` }}
                     title={`${marker.name} @ ${marker.time.toFixed(3)}s`}
                     key={`${marker.name}-${markerIndex}`}
@@ -1111,7 +1209,7 @@ export function Sequencer(props: SequencerProps) {
                 {track.type === 'activation' && track.clips.map((clip, clipIndex) => (
                   <button
                     type="button"
-                    className={`sequencer-activation-clip${selection?.track === trackIndex && selection.marker === clipIndex ? ' selected' : ''}${clip.active ? ' active-state' : ' inactive-state'}`}
+                    className={`sequencer-activation-clip${isItemSelected(trackIndex, clipIndex) ? ' selected' : ''}${clip.active ? ' active-state' : ' inactive-state'}`}
                     style={{
                       left: `${clip.start / asset.duration * 100}%`,
                       width: `${clip.duration / asset.duration * 100}%`,
@@ -1124,7 +1222,7 @@ export function Sequencer(props: SequencerProps) {
                 {track.type === 'audio' && track.clips.map((clip, clipIndex) => (
                   <button
                     type="button"
-                    className={`sequencer-audio-clip${selection?.track === trackIndex && selection.marker === clipIndex ? ' selected' : ''}`}
+                    className={`sequencer-audio-clip${isItemSelected(trackIndex, clipIndex) ? ' selected' : ''}`}
                     style={{
                       left: `${clip.start / asset.duration * 100}%`,
                       width: `${clip.duration / asset.duration * 100}%`,
@@ -1137,7 +1235,7 @@ export function Sequencer(props: SequencerProps) {
                 {track.type === 'animation' && track.clips.map((clip, clipIndex) => (
                   <button
                     type="button"
-                    className={`sequencer-animation-clip${selection?.track === trackIndex && selection.marker === clipIndex ? ' selected' : ''}`}
+                    className={`sequencer-animation-clip${isItemSelected(trackIndex, clipIndex) ? ' selected' : ''}`}
                     style={{
                       left: `${clip.start / asset.duration * 100}%`,
                       width: `${clip.duration / asset.duration * 100}%`,
@@ -1150,7 +1248,7 @@ export function Sequencer(props: SequencerProps) {
                 {track.type === 'particle' && track.clips.map((clip, clipIndex) => (
                   <button
                     type="button"
-                    className={`sequencer-particle-clip${selection?.track === trackIndex && selection.marker === clipIndex ? ' selected' : ''}`}
+                    className={`sequencer-particle-clip${isItemSelected(trackIndex, clipIndex) ? ' selected' : ''}`}
                     style={{
                       left: `${clip.start / asset.duration * 100}%`,
                       width: `${clip.duration / asset.duration * 100}%`,
@@ -1163,7 +1261,7 @@ export function Sequencer(props: SequencerProps) {
                 {track.type === 'camera' && track.clips.map((clip, clipIndex) => (
                   <button
                     type="button"
-                    className={`sequencer-camera-clip${selection?.track === trackIndex && selection.marker === clipIndex ? ' selected' : ''}`}
+                    className={`sequencer-camera-clip${isItemSelected(trackIndex, clipIndex) ? ' selected' : ''}`}
                     style={{
                       left: `${clip.start / asset.duration * 100}%`,
                       width: `${clip.duration / asset.duration * 100}%`,
@@ -1182,6 +1280,7 @@ export function Sequencer(props: SequencerProps) {
 
         <aside className="sequencer-inspector" onFocusCapture={beginInspectorEdit} onBlurCapture={endInspectorEdit}>
           <h3>{selectedMarker ? 'Signal Marker' : selectedActivationClip ? 'Activation Clip' : selectedAudioClip ? 'Audio Clip' : selectedAnimationClip ? 'Animation Clip' : selectedParticleClip ? 'Particle Clip' : selectedCameraClip ? 'Camera Shot' : selectedTrack ? `${selectedTrack.type === 'signal' ? 'Signal' : selectedTrack.type === 'activation' ? 'Activation' : selectedTrack.type === 'audio' ? 'Audio' : selectedTrack.type === 'animation' ? 'Animation' : selectedTrack.type === 'particle' ? 'Particle' : 'Camera'} Track` : 'Timeline Asset'}</h3>
+          {selectedItems.length > 1 && <p className="sequencer-multi-selection-notice">{selectedItems.length} items selected. Inspector edits apply to the primary item; Delete and Ripple Delete apply to the full selection.</p>}
           {!selectedTrack && <>
             <label>Name <input value={asset.name} onChange={(event) => update((draft) => { draft.name = event.target.value; })} /></label>
             <label>Duration <input type="number" min={0.001} step={0.1} value={asset.duration} onChange={(event) => update((draft) => {
@@ -1225,7 +1324,7 @@ export function Sequencer(props: SequencerProps) {
               </div>
               <button type="button" className="sequencer-danger" onClick={() => {
                 update((draft) => { draft.tracks.splice(selection!.track, 1); });
-                setSelection(null);
+                applySelection(null);
               }}><Trash2 size={14} /> Delete Track</button>
             </fieldset>
           </>}
@@ -1256,14 +1355,7 @@ export function Sequencer(props: SequencerProps) {
                 setError(`Payload JSON 无效：${reason instanceof Error ? reason.message : String(reason)}`);
               }
             }} /></label>
-            <button type="button" className="sequencer-danger" onClick={() => {
-              update((draft) => {
-                const track = draft.tracks[selection!.track];
-                if (track.type === 'signal') track.markers.splice(selection!.marker!, 1);
-              });
-              setPayloadInvalid(false);
-              setSelection({ track: selection!.track, marker: null });
-            }}><Trash2 size={14} /> Delete Signal</button>
+            <button type="button" className="sequencer-danger" onClick={() => deleteSelection()}><Trash2 size={14} /> Delete {selectedItems.length > 1 ? `${selectedItems.length} Items` : 'Signal'}</button>
           </fieldset>}
           {selectedClip && <fieldset className="sequencer-inspector-fields" disabled={selectedTrack?.locked}>
             {selectedTrack?.locked && <p className="sequencer-lock-notice"><Lock size={12} /> Unlock the track to edit this clip.</p>}
@@ -1381,13 +1473,7 @@ export function Sequencer(props: SequencerProps) {
               </select></label>
               <p className="sequencer-field-help">Blend uses the adjacent previous shot, or the authored primary camera. Incompatible perspective/orthographic projections switch at the blend midpoint.</p>
             </>}
-            <button type="button" className="sequencer-danger" onClick={() => {
-              update((draft) => {
-                const track = draft.tracks[selection!.track];
-                if (track.type !== 'signal') track.clips.splice(selection!.marker!, 1);
-              });
-              setSelection({ track: selection!.track, marker: null });
-            }}><Trash2 size={14} /> Delete Clip</button>
+            <button type="button" className="sequencer-danger" onClick={() => deleteSelection()}><Trash2 size={14} /> Delete {selectedItems.length > 1 ? `${selectedItems.length} Items` : 'Clip'}</button>
           </fieldset>}
         </aside>
       </div>

@@ -689,3 +689,13 @@ Referenced Only 是可用的单包裁剪基础，仍不等同于完整 Addressab
 - Sequencer 支持创建 Camera Track/Shot、拖动和裁剪、片段级 Camera 绑定、Blend In/Curve、锁定、Undo/Redo、复制粘贴和可视化 Blend 区域。轨道资产最多一个，避免多个 Camera Track 的未定义混合优先级。
 
 当前实现是稳定的基础 Camera Cut/Blend，不等同于 Cinemachine：尚缺 Virtual Camera 状态、LookAt/Follow、阻尼、构图器、镜头碰撞、噪声、路径 Dolly、Target Group、镜头事件、Blend Preset 资产和 Scene View Shot Preview。跨透视/正交采用 Cut 是显式限制；后续如需跨投影过渡，应设计投影变形模型，而不是线性插值投影矩阵。
+
+## 49. 2026-07-19 Timeline 多选与 Ripple Delete
+
+- Sequencer 以统一的 `track + item index` 选择模型支持跨轨道多选：`Ctrl/Cmd+Click` 切换单项，`Shift+Click` 在同一轨道内连续范围选择，`Ctrl/Cmd+A` 选择全部项目，`Escape` 清空选择。普通点击与开始单项拖动会收敛为单选，避免旧的单项拖动代码意外移动整组。
+- 多选状态与主选择同时进入草稿、Undo/Redo 快照和 Inspector 编辑事务；切换未保存 Timeline 后仍能恢复整组选择。轨道、片段和 Signal 分别显示清晰的选中反馈，工具栏显示选择数量，Inspector 明确提示属性只编辑主选择项。
+- 普通 Delete 对所有选中项目执行一次原子事务。删除前先校验全部轨道和索引，只要其中一条轨道锁定或选择失效就整体拒绝，不产生部分删除；成功后只写入一个 Undo 步骤。轨道标题选择仍保留原有整轨删除语义。
+- `Shift+Delete` 与工具栏 Ripple Delete 对所有涉及的 Clip 轨道执行逐轨道闭合：删除选中片段后，后续片段按已完全位于其前方的删除时长累计左移，并按 Timeline 帧率吸附。Signal Marker 不参与时长闭合，但可与 Clip 在同一原子操作中删除；仅选 Marker 时明确拒绝 Ripple，Timeline 总时长保持不变。
+- 锁定项目可以被纳入多选以便审查和复制语义保持一致，但任何包含锁定轨道的删除都会原子失败。当前组复制、剪切与重复尚未提供可靠的落点/碰撞契约，因此多选时会显示明确错误，而不是静默只处理主选择项。
+
+这一阶段完成的是可撤销的基础多选删除和逐轨道 Ripple Delete。成熟 Timeline 仍需框选、组拖动、组复制/粘贴/重复、Ripple Insert/Move、跨轨道全局 Ripple、吸附参考线、轨道分组与跨资产命名剪贴板；这些能力必须继续建立在同一选择模型和事务边界上，不能为每种手势各自维护一套隐式状态。

@@ -3714,6 +3714,7 @@ body.insp-scrubbing * {
 
 .sequencer-ruler-row { height: 32px; }
 .sequencer-track-row { height: 42px; border-top: 1px solid #151515; }
+.sequencer-track-row.contains-selection { box-shadow: inset 2px 0 #4d9abe; }
 .sequencer-track-row.selected { background: #263747; }
 .sequencer-track-row.locked .sequencer-lane {
   background-color: #202020;
@@ -3768,6 +3769,15 @@ button.sequencer-track-header:hover { background: #343b42; }
 .sequencer-track-icon.animation { background: #66517a; color: #f0ddff; }
 .sequencer-track-icon.particle { background: #7a5b2e; color: #fff0c8; }
 .sequencer-track-icon.camera { background: #2e617a; color: #d9f4ff; }
+
+.sequencer-selection-count {
+  flex: 0 0 auto;
+  border-left: 1px solid #4d5964;
+  padding-left: 8px;
+  color: #9ed9f1;
+  font: 10px var(--u-mono);
+  text-transform: uppercase;
+}
 
 .sequencer-ruler,
 .sequencer-lane {
@@ -3993,6 +4003,16 @@ button.sequencer-track-header:hover { background: #343b42; }
   padding: 10px;
   background: #292929;
   color: #bbb;
+}
+
+.sequencer-multi-selection-notice {
+  margin: 0 0 8px;
+  border-left: 2px solid #4d9abe;
+  background: #202a30;
+  padding: 6px 8px;
+  color: #b9d8e6;
+  font-size: 11px;
+  line-height: 1.35;
 }
 
 .sequencer-inspector h3 {
