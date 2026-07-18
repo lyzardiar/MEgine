@@ -2686,6 +2686,7 @@ body.insp-scrubbing * {
 .timeline-settings label:first-child input { width: 128px; }
 .timeline-settings select { width: 90px; }
 .timeline-settings .timeline-property-path { width: 150px; }
+.timeline-settings .timeline-property-picker { width: 240px; }
 
 .timeline-message {
   padding: 5px 8px;
@@ -2806,7 +2807,7 @@ body.insp-scrubbing * {
   border: 1px solid #111;
   border-radius: 0;
   background: #e5d060;
-  cursor: pointer;
+  cursor: ew-resize;
 }
 
 .timeline-key:hover { background: #fff39a; }
@@ -2831,7 +2832,13 @@ body.insp-scrubbing * {
   border-radius: 0;
   background: #d58a31;
   clip-path: polygon(0 0, 100% 0, 100% 65%, 50% 100%, 0 65%);
-  cursor: pointer;
+  cursor: ew-resize;
+}
+
+.timeline-key.dragging,
+.timeline-event-key.dragging {
+  z-index: 5;
+  filter: brightness(1.2);
 }
 
 .timeline-event-key:hover { background: #ffc36b; }
