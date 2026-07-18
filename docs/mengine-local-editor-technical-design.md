@@ -782,4 +782,13 @@ Referenced Only 是可用的单包裁剪基础，仍不等同于完整 Addressab
 - Save All 中未激活的 Surface Shader 草稿也逐个经过同一组合校验；任意一个失败会保留该草稿并进入 Save All 失败诊断。浏览器版因没有本地 RHI，只执行快速结构检查，界面和日志会明确说明尚需桌面/Build 校验，不伪装为已完整编译。
 - Rust 回归用例同时证明：合法 Lit Hook 可通过，而只靠函数名字符串检查无法发现的未知材质字段会被完整 Player Shader 契约拒绝。
 
-该切片前移了自定义 Shader 错误发现时机，但材质系统仍未完备。当前编辑器材质球仍是 CSS 近似，不会展示纹理、Normal/Metallic-Roughness/Occlusion、环境光、透明混合或自定义 Hook 的真实结果；同管线离屏预览、Shader 参数反射、Material Instance、Keyword/Variant 与预热、Shader Cache、GPU Instancing 和 Frame Debugger 仍需继续实现。Surface Shader 编辑器也尚未迁移到全局 Undo 服务。
+该切片前移了自定义 Shader 错误发现时机，但材质系统仍未完备。当前编辑器材质球仍是 CSS 近似，不会展示纹理、Normal/Metallic-Roughness/Occlusion、环境光、透明混合或自定义 Hook 的真实结果；同管线离屏预览、Shader 参数反射、Material Instance、Keyword/Variant 与预热、Shader Cache、GPU Instancing 和 Frame Debugger 仍需继续实现。
+
+## 59. 2026-07-19 Surface Shader 全局 Undo 与异步文档安全
+
+- Surface Shader 文本编辑迁移到共享 `EditorUndoService`，Scope 为 `surface-shader:<asset path>`。Edit 菜单、全局顺序和 Shader 工具栏的 Undo/Redo 指向同一个命名事务，不再出现材质可撤销、Shader 不可撤销的编辑器断层。
+- 一次 Textarea Focus 到 Blur 只生成一个 `Edit Surface Shader` 事务；输入回原文会恢复 Checkpoint，不留空历史也不破坏旧 Redo 分支。`Ctrl/Cmd+S` 会先封口当前文本事务，保存不清理历史，因此保存后撤销会正确重新进入 Dirty。
+- 打开过的干净 Shader 也作为轻量后台文档保留，使全局历史能在当前显示 B 时撤销 A。Dirty 只比较源文本与各自保存基线；Save All 仅写入真实变化的后台文档，保存成功后保留干净文档作为历史恢复目标。
+- Validate/Save 在启动时捕获资源路径与源码快照。若用户在异步 Naga 校验或落盘期间切到另一个 Shader，旧任务只更新旧路径的后台文档和日志，不会覆盖新编辑器的源码、保存基线或错误面板。
+
+两轮自审额外修复了“保留干净后台文档后 Save All 重写所有已打开 Shader”和“异步保存跨文档回写”两个问题。当前历史仍属于每个 WebView；分离原生窗口之间要实现单一全局历史，仍需把可序列化命令和文档仓库下沉到桌面 Host。本切片也不替代第 58 节列出的真实材质预览、参数反射与 Variant/Cache 工作。

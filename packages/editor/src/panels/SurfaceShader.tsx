@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
+import { Redo2, Undo2 } from 'lucide-react';
 import { registerMenuItem } from '../editorWindow';
 import {
   listProjectFiles,
@@ -18,6 +19,11 @@ import {
   isDesktopEditor,
   validateSurfaceShaderWithRuntime,
 } from '../transport/editorTransport';
+import type {
+  EditorUndoCheckpoint,
+  EditorUndoService,
+  EditorUndoToken,
+} from '../editorUndoService';
 
 export const OPEN_SURFACE_SHADER_EVENT = 'mengine:open-surface-shader';
 
@@ -65,6 +71,9 @@ export function SurfaceShaderEditor(props: {
   onAssetsChanged: () => void;
   onDirtyChange: (dirty: boolean) => void;
   onLog: (message: string, level?: 'info' | 'warn' | 'error') => void;
+  undoService: EditorUndoService;
+  onGlobalUndo: () => void;
+  onGlobalRedo: () => void;
 }) {
   const desktop = isDesktopEditor();
   const [source, setSource] = useState('');
@@ -73,28 +82,52 @@ export function SurfaceShaderEditor(props: {
   const [saving, setSaving] = useState(false);
   const [validating, setValidating] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [, setDraftEpoch] = useState(0);
   const loadedPath = useRef<string | null>(null);
   const drafts = useRef(new Map<string, { source: string; savedSource: string }>());
+  const sourceRef = useRef('');
+  const editTransaction = useRef<{
+    source: string;
+    checkpoint: EditorUndoCheckpoint;
+    token: EditorUndoToken | null;
+  } | null>(null);
   const lineNumbers = useRef<HTMLDivElement | null>(null);
+  sourceRef.current = source;
+
+  const replaceSource = (next: string) => {
+    sourceRef.current = next;
+    setSource(next);
+  };
 
   useEffect(() => {
     let cancelled = false;
+    const transaction = editTransaction.current;
+    if (
+      transaction?.token
+      && props.undoService.isUndoTop(transaction.token)
+      && source === transaction.source
+    ) {
+      props.undoService.restoreCheckpoint(transaction.checkpoint);
+    }
+    editTransaction.current = null;
     const previous = loadedPath.current;
-    if (previous) {
-      if (source !== savedSource) drafts.current.set(previous, { source, savedSource });
-      else drafts.current.delete(previous);
+    if (previous && !loading) {
+      drafts.current.set(previous, { source, savedSource });
     }
     loadedPath.current = props.assetPath;
     setError(null);
     if (!props.assetPath) {
-      setSource('');
+      replaceSource('');
       setSavedSource('');
+      setLoading(false);
       return () => { cancelled = true; };
     }
     const draft = drafts.current.get(props.assetPath);
     if (draft) {
-      setSource(draft.source);
+      drafts.current.delete(props.assetPath);
+      replaceSource(draft.source);
       setSavedSource(draft.savedSource);
+      setLoading(false);
       return () => { cancelled = true; };
     }
     setLoading(true);
@@ -102,7 +135,7 @@ export function SurfaceShaderEditor(props: {
       .then((text) => {
         if (cancelled) return;
         const normalized = normalizeSurfaceShaderSource(text);
-        setSource(normalized);
+        replaceSource(normalized);
         setSavedSource(normalized);
       })
       .catch((reason) => {
@@ -113,10 +146,80 @@ export function SurfaceShaderEditor(props: {
   }, [props.assetPath]);
 
   const dirty = source !== savedSource && props.assetPath != null;
-  const anyDirty = dirty || drafts.current.size > 0;
+  const anyDirty = dirty || [...drafts.current.values()].some(
+    (draft) => draft.source !== draft.savedSource,
+  );
   useEffect(() => props.onDirtyChange(anyDirty), [anyDirty, props.onDirtyChange]);
   const diagnostics = useMemo(() => surfaceShaderDiagnostics(source), [source]);
   const lines = useMemo(() => Math.max(1, source.split('\n').length - 1), [source]);
+
+  const captureDocument = (path: string): string => {
+    if (loadedPath.current === path) return sourceRef.current;
+    const draft = drafts.current.get(path);
+    if (!draft) throw new Error(`Surface Shader history document '${path}' is no longer available.`);
+    return draft.source;
+  };
+
+  const restoreDocument = (path: string, snapshot: string) => {
+    if (loadedPath.current === path) {
+      editTransaction.current = null;
+      replaceSource(snapshot);
+      setError(null);
+      return;
+    }
+    const draft = drafts.current.get(path);
+    if (!draft) throw new Error(`Surface Shader history document '${path}' is no longer available.`);
+    drafts.current.set(path, { ...draft, source: snapshot });
+    setDraftEpoch((value) => value + 1);
+  };
+
+  const recordHistory = (snapshot: string): EditorUndoToken | null => {
+    const path = loadedPath.current;
+    if (!path) return null;
+    return props.undoService.recordSnapshot({
+      scope: `surface-shader:${path}`,
+      label: 'Edit Surface Shader',
+      state: snapshot,
+      capture: () => captureDocument(path),
+      restore: (state) => restoreDocument(path, state),
+    });
+  };
+
+  const updateSource = (next: string) => {
+    const current = sourceRef.current;
+    if (next === current) return;
+    const transaction = editTransaction.current;
+    if (transaction) {
+      if (!transaction.token || !props.undoService.isUndoTop(transaction.token)) {
+        transaction.source = current;
+        transaction.checkpoint = props.undoService.checkpoint();
+        transaction.token = recordHistory(current);
+      }
+    } else {
+      recordHistory(current);
+    }
+    replaceSource(next);
+  };
+
+  const beginEdit = () => {
+    if (editTransaction.current || !loadedPath.current) return;
+    editTransaction.current = {
+      source: sourceRef.current,
+      checkpoint: props.undoService.checkpoint(),
+      token: null,
+    };
+  };
+
+  const endEdit = () => {
+    const transaction = editTransaction.current;
+    editTransaction.current = null;
+    if (
+      !transaction?.token
+      || !props.undoService.isUndoTop(transaction.token)
+      || sourceRef.current !== transaction.source
+    ) return;
+    props.undoService.restoreCheckpoint(transaction.checkpoint);
+  };
 
   const createNew = async () => {
     try {
@@ -136,17 +239,21 @@ export function SurfaceShaderEditor(props: {
     return normalized;
   };
 
-  const validate = async (reportSuccess = true): Promise<string> => {
+  const validate = async (
+    reportSuccess = true,
+    candidate = sourceRef.current,
+    path = loadedPath.current,
+  ): Promise<string> => {
     if (desktop) {
       setValidating(true);
     }
     try {
-      const normalized = await validateSource(source);
-      setError(null);
+      const normalized = await validateSource(candidate);
+      if (loadedPath.current === path) setError(null);
       if (reportSuccess) {
         props.onLog(desktop
-          ? `${props.assetPath ?? 'Surface Shader'} passed the Player Forward WGSL validator.`
-          : `${props.assetPath ?? 'Surface Shader'} passed editor syntax checks; desktop Player validation is unavailable.`);
+          ? `${path ?? 'Surface Shader'} passed the Player Forward WGSL validator.`
+          : `${path ?? 'Surface Shader'} passed editor syntax checks; desktop Player validation is unavailable.`);
       }
       return normalized;
     } finally {
@@ -155,24 +262,35 @@ export function SurfaceShaderEditor(props: {
   };
 
   const save = async (): Promise<boolean> => {
-    if (!props.assetPath) return false;
+    const path = loadedPath.current;
+    if (!path) return false;
+    const candidate = sourceRef.current;
+    endEdit();
     setSaving(true);
     setError(null);
     try {
-      const normalized = await validate(false);
-      await writeProjectAssetText(props.assetPath, normalized);
-      setSource(normalized);
-      setSavedSource(normalized);
-      drafts.current.delete(props.assetPath);
+      const normalized = await validate(false, candidate, path);
+      await writeProjectAssetText(path, normalized);
+      if (loadedPath.current === path) {
+        replaceSource(normalized);
+        setSavedSource(normalized);
+        drafts.current.delete(path);
+      } else {
+        drafts.current.set(path, {
+          source: normalized,
+          savedSource: normalized,
+        });
+        setDraftEpoch((value) => value + 1);
+      }
       props.onAssetsChanged();
       props.onLog(desktop
-        ? `Saved ${props.assetPath}; Player Forward WGSL validation passed.`
-        : `Saved ${props.assetPath}; desktop Player validation remains required before build.`);
+        ? `Saved ${path}; Player Forward WGSL validation passed.`
+        : `Saved ${path}; desktop Player validation remains required before build.`);
       return true;
     } catch (reason) {
       const message = reason instanceof Error ? reason.message : String(reason);
-      setError(message);
-      props.onLog(`Surface Shader save failed: ${message}`, 'error');
+      if (loadedPath.current === path) setError(message);
+      props.onLog(`Surface Shader save failed for ${path}: ${message}`, 'error');
       return false;
     } finally {
       setSaving(false);
@@ -182,13 +300,19 @@ export function SurfaceShaderEditor(props: {
   const saveAll = async () => {
     if (dirty && !await save()) throw new Error('Current Surface Shader could not be saved');
     const failures: string[] = [];
-    if (drafts.current.size > 0) setSaving(true);
+    const dirtyDrafts = [...drafts.current].filter(
+      ([, draft]) => draft.source !== draft.savedSource,
+    );
+    if (dirtyDrafts.length > 0) setSaving(true);
     try {
-      for (const [path, draft] of [...drafts.current]) {
+      for (const [path, draft] of dirtyDrafts) {
         try {
           const normalized = await validateSource(draft.source);
           await writeProjectAssetText(path, normalized);
-          drafts.current.delete(path);
+          drafts.current.set(path, {
+            source: normalized,
+            savedSource: normalized,
+          });
           props.onLog(desktop
             ? `Saved ${path}; Player Forward WGSL validation passed.`
             : `Saved ${path}; desktop Player validation remains required before build.`);
@@ -216,15 +340,20 @@ export function SurfaceShaderEditor(props: {
       <div className="material-toolbar">
         <strong title={props.assetPath}>{props.assetPath.split('/').pop()}{dirty ? ' *' : ''}</strong>
         <span className="spacer" />
+        <button type="button" aria-label="Undo" title={`Undo${props.undoService.undoLabel ? ` ${props.undoService.undoLabel}` : ''}`} disabled={!props.undoService.canUndo || saving || validating} onClick={props.onGlobalUndo}><Undo2 size={13} /></button>
+        <button type="button" aria-label="Redo" title={`Redo${props.undoService.redoLabel ? ` ${props.undoService.redoLabel}` : ''}`} disabled={!props.undoService.canRedo || saving || validating} onClick={props.onGlobalRedo}><Redo2 size={13} /></button>
         <button type="button" onClick={() => void createNew()}>New</button>
         <button
           type="button"
           disabled={saving || validating || diagnostics.length > 0}
-          onClick={() => void validate().catch((reason) => {
-            const message = reason instanceof Error ? reason.message : String(reason);
-            setError(message);
-            props.onLog(`Surface Shader validation failed: ${message}`, 'error');
-          })}
+          onClick={() => {
+            const path = loadedPath.current;
+            void validate(true, sourceRef.current, path).catch((reason) => {
+              const message = reason instanceof Error ? reason.message : String(reason);
+              if (loadedPath.current === path) setError(message);
+              props.onLog(`Surface Shader validation failed for ${path ?? 'unknown asset'}: ${message}`, 'error');
+            });
+          }}
         >{validating ? 'Validating...' : 'Validate'}</button>
         <button type="button" disabled={!dirty || saving || validating || diagnostics.length > 0} onClick={() => void save()}>{saving ? 'Saving...' : 'Save'}</button>
       </div>
@@ -245,8 +374,11 @@ export function SurfaceShaderEditor(props: {
         <textarea
           aria-label="Surface Shader source"
           value={source}
+          disabled={saving || validating}
           spellCheck={false}
-          onChange={(event) => setSource(event.target.value)}
+          onFocus={beginEdit}
+          onBlur={endEdit}
+          onChange={(event) => updateSource(event.target.value)}
           onScroll={(event) => { if (lineNumbers.current) lineNumbers.current.scrollTop = event.currentTarget.scrollTop; }}
           onKeyDown={(event) => {
             if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 's') {
