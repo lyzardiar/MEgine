@@ -1,4 +1,4 @@
-use crate::ibl::BrdfLut;
+use crate::ibl::{BrdfLut, EnvironmentPrefilter, PrefilteredEnvironment};
 use crate::mesh::{MeshGpu, Vertex};
 use crate::post_process::{HdrPostProcess, HDR_COLOR_FORMAT};
 use crate::render_graph::RenderGraph;
@@ -397,11 +397,11 @@ pub struct Renderer {
     environment_texture_layout: wgpu::BindGroupLayout,
     environment_sampler: wgpu::Sampler,
     brdf_lut: BrdfLut,
+    environment_prefilter: EnvironmentPrefilter,
     _fallback_environment_texture: MaterialTextureGpu,
     fallback_environment_bind_group: wgpu::BindGroup,
-    environment_textures: HashMap<String, MaterialTextureGpu>,
+    environment_textures: HashMap<String, PrefilteredEnvironment>,
     environment_bind_groups: HashMap<String, wgpu::BindGroup>,
-    environment_mip_levels: HashMap<String, u32>,
     material_texture_layout: wgpu::BindGroupLayout,
     material_samplers: HashMap<MaterialSamplerKey, wgpu::Sampler>,
     fallback_base_color_texture: MaterialTextureGpu,
@@ -795,6 +795,7 @@ impl Renderer {
             ..Default::default()
         });
         let brdf_lut = BrdfLut::new(&device, &queue);
+        let environment_prefilter = EnvironmentPrefilter::new(&device);
         let fallback_environment_bind_group = create_environment_bind_group(
             &device,
             &environment_texture_layout,
@@ -881,11 +882,11 @@ impl Renderer {
             environment_texture_layout,
             environment_sampler,
             brdf_lut,
+            environment_prefilter,
             _fallback_environment_texture: fallback_environment_texture,
             fallback_environment_bind_group,
             environment_textures: HashMap::new(),
             environment_bind_groups: HashMap::new(),
-            environment_mip_levels: HashMap::new(),
             material_texture_layout,
             material_samplers: HashMap::new(),
             fallback_base_color_texture,
@@ -956,9 +957,9 @@ impl Renderer {
         let has_environment_texture = !environment_key.is_empty()
             && self.environment_bind_groups.contains_key(environment_key);
         let environment_max_lod = if has_environment_texture {
-            self.environment_mip_levels
+            self.environment_textures
                 .get(environment_key)
-                .copied()
+                .map(|texture| texture.mip_level_count)
                 .unwrap_or(1)
                 .saturating_sub(1) as f32
         } else {
@@ -1350,8 +1351,13 @@ impl Renderer {
         rgba8: &[u8],
     ) -> Result<(), UiTextureError> {
         validate_material_texture_rgba8(width, height, rgba8)?;
-        let (texture, mip_levels) =
-            create_environment_texture_rgba8(&self.device, &self.queue, width, height, rgba8);
+        let texture = self.environment_prefilter.prefilter_rgba8(
+            &self.device,
+            &self.queue,
+            width,
+            height,
+            rgba8,
+        );
         let bind_group = create_environment_bind_group(
             &self.device,
             &self.environment_texture_layout,
@@ -1363,14 +1369,11 @@ impl Renderer {
         self.environment_textures.insert(key.to_owned(), texture);
         self.environment_bind_groups
             .insert(key.to_owned(), bind_group);
-        self.environment_mip_levels
-            .insert(key.to_owned(), mip_levels);
         Ok(())
     }
 
     pub fn remove_environment_texture(&mut self, key: &str) -> bool {
         self.environment_bind_groups.remove(key);
-        self.environment_mip_levels.remove(key);
         self.environment_textures.remove(key).is_some()
     }
 
@@ -2062,141 +2065,6 @@ fn create_material_texture_rgba8(
     }
 }
 
-#[derive(Clone, Debug, PartialEq, Eq)]
-struct Rgba8MipLevel {
-    width: u32,
-    height: u32,
-    pixels: Vec<u8>,
-}
-
-fn create_environment_texture_rgba8(
-    device: &wgpu::Device,
-    queue: &wgpu::Queue,
-    width: u32,
-    height: u32,
-    rgba8: &[u8],
-) -> (MaterialTextureGpu, u32) {
-    let mip_chain = build_environment_mip_chain(width, height, rgba8);
-    let mip_level_count = mip_chain.len().max(1) as u32;
-    let texture = device.create_texture(&wgpu::TextureDescriptor {
-        label: Some("environment_texture"),
-        size: wgpu::Extent3d {
-            width,
-            height,
-            depth_or_array_layers: 1,
-        },
-        mip_level_count,
-        sample_count: 1,
-        dimension: wgpu::TextureDimension::D2,
-        format: wgpu::TextureFormat::Rgba8UnormSrgb,
-        usage: wgpu::TextureUsages::TEXTURE_BINDING | wgpu::TextureUsages::COPY_DST,
-        view_formats: &[],
-    });
-    for (mip_level, mip) in mip_chain.iter().enumerate() {
-        queue.write_texture(
-            wgpu::TexelCopyTextureInfo {
-                texture: &texture,
-                mip_level: mip_level as u32,
-                origin: wgpu::Origin3d::ZERO,
-                aspect: wgpu::TextureAspect::All,
-            },
-            &mip.pixels,
-            wgpu::TexelCopyBufferLayout {
-                offset: 0,
-                bytes_per_row: Some(mip.width * 4),
-                rows_per_image: Some(mip.height),
-            },
-            wgpu::Extent3d {
-                width: mip.width,
-                height: mip.height,
-                depth_or_array_layers: 1,
-            },
-        );
-    }
-    let view = texture.create_view(&wgpu::TextureViewDescriptor::default());
-    (
-        MaterialTextureGpu {
-            _texture: texture,
-            view,
-        },
-        mip_level_count,
-    )
-}
-
-fn build_environment_mip_chain(width: u32, height: u32, rgba8: &[u8]) -> Vec<Rgba8MipLevel> {
-    debug_assert_eq!(rgba8.len(), width as usize * height as usize * 4);
-    let mut levels = vec![Rgba8MipLevel {
-        width,
-        height,
-        pixels: rgba8.to_vec(),
-    }];
-    while levels
-        .last()
-        .is_some_and(|level| level.width > 1 || level.height > 1)
-    {
-        let previous = levels.last().expect("base environment mip exists");
-        let next_width = (previous.width / 2).max(1);
-        let next_height = (previous.height / 2).max(1);
-        let mut pixels = vec![0_u8; next_width as usize * next_height as usize * 4];
-        for y in 0..next_height {
-            for x in 0..next_width {
-                let mut linear_rgb = [0.0_f32; 3];
-                let mut alpha = 0.0_f32;
-                let source_x_start = x * previous.width / next_width;
-                let source_x_end = ((x + 1) * previous.width / next_width)
-                    .max(source_x_start + 1)
-                    .min(previous.width);
-                let source_y_start = y * previous.height / next_height;
-                let source_y_end = ((y + 1) * previous.height / next_height)
-                    .max(source_y_start + 1)
-                    .min(previous.height);
-                let sample_count =
-                    ((source_x_end - source_x_start) * (source_y_end - source_y_start)) as f32;
-                for source_y in source_y_start..source_y_end {
-                    for source_x in source_x_start..source_x_end {
-                        let source = ((source_y * previous.width + source_x) * 4) as usize;
-                        for (channel, accumulated) in linear_rgb.iter_mut().enumerate() {
-                            *accumulated +=
-                                srgb_to_linear(previous.pixels[source + channel]) / sample_count;
-                        }
-                        alpha += previous.pixels[source + 3] as f32 / 255.0 / sample_count;
-                    }
-                }
-                let destination = ((y * next_width + x) * 4) as usize;
-                for (channel, value) in linear_rgb.iter().enumerate() {
-                    pixels[destination + channel] = linear_to_srgb(*value);
-                }
-                pixels[destination + 3] = (alpha.clamp(0.0, 1.0) * 255.0).round() as u8;
-            }
-        }
-        levels.push(Rgba8MipLevel {
-            width: next_width,
-            height: next_height,
-            pixels,
-        });
-    }
-    levels
-}
-
-fn srgb_to_linear(value: u8) -> f32 {
-    let value = value as f32 / 255.0;
-    if value <= 0.04045 {
-        value / 12.92
-    } else {
-        ((value + 0.055) / 1.055).powf(2.4)
-    }
-}
-
-fn linear_to_srgb(value: f32) -> u8 {
-    let value = value.clamp(0.0, 1.0);
-    let encoded = if value <= 0.0031308 {
-        value * 12.92
-    } else {
-        1.055 * value.powf(1.0 / 2.4) - 0.055
-    };
-    (encoded.clamp(0.0, 1.0) * 255.0).round() as u8
-}
-
 fn align_to(value: u64, alignment: u64) -> u64 {
     let alignment = alignment.max(1);
     value.div_ceil(alignment) * alignment
@@ -2825,32 +2693,6 @@ mod tests {
         assert_eq!(
             make_global_uniforms(camera, &lighting, false, 0.0).environment_texture_params[0],
             0.0
-        );
-    }
-
-    #[test]
-    fn environment_mips_filter_all_pixels_in_linear_color_space() {
-        let levels =
-            build_environment_mip_chain(3, 1, &[0, 0, 0, 255, 0, 0, 0, 255, 255, 255, 255, 255]);
-        assert_eq!(
-            levels
-                .iter()
-                .map(|level| (level.width, level.height))
-                .collect::<Vec<_>>(),
-            vec![(3, 1), (1, 1)]
-        );
-        assert!(
-            (154..=157).contains(&levels[1].pixels[0]),
-            "one-third linear white should encode near sRGB 156"
-        );
-
-        let power_of_two = build_environment_mip_chain(4, 2, &[128; 4 * 2 * 4]);
-        assert_eq!(
-            power_of_two
-                .iter()
-                .map(|level| (level.width, level.height))
-                .collect::<Vec<_>>(),
-            vec![(4, 2), (2, 1), (1, 1)]
         );
     }
 
