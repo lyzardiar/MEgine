@@ -1113,6 +1113,7 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
             <AnimatorEditor
               assetPath={animatorPath}
               selectedEntity={snap.entities.find((entity) => entity.entity === selected) ?? null}
+              playMode={mode !== 'edit'}
               onOpenAsset={setAnimatorPath}
               onAssignAnimator={(entity, path) => {
                 const current = store.authoredEntities()
@@ -1135,6 +1136,10 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
                   });
                 }
                 log(`Assigned ${path}`);
+                refresh();
+              }}
+              onPatchAnimator={(entity, patch) => {
+                store.patchComponent(entity, 'Animator', patch);
                 refresh();
               }}
               onAssetsChanged={bumpScenes}

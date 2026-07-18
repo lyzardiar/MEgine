@@ -1,9 +1,11 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import {
+  animatorParameterValues,
   createAnimatorController,
   normalizeAnimatorController,
   parseAnimatorController,
+  setAnimatorParameterOverride,
   serializeAnimatorController,
 } from '../src/animatorController.ts';
 
@@ -30,4 +32,32 @@ test('animator controller rejects broken transition references', () => {
 test('new animator controller round trips', () => {
   const controller = createAnimatorController('Hero', 'Assets/Animations/idle.manim');
   assert.deepEqual(normalizeAnimatorController(JSON.parse(serializeAnimatorController(controller))), controller);
+});
+
+test('animator instance parameter overrides preserve typed controller defaults', () => {
+  const controller = normalizeAnimatorController({
+    default_state: 'Idle',
+    parameters: [
+      { name: 'Grounded', kind: 'bool', default_bool: true },
+      { name: 'Speed', kind: 'float', default_float: 1.5 },
+      { name: 'Direction', kind: 'int', default_int: -1 },
+      { name: 'Jump', kind: 'trigger' },
+    ],
+    states: [{ name: 'Idle', clip: 'Assets/Animations/idle.manim' }],
+  });
+  assert.deepEqual(animatorParameterValues(controller, '{"Grounded":false,"Speed":2,"Direction":3.8,"Jump":true}'), {
+    Grounded: false,
+    Speed: 2,
+    Direction: 3,
+    Jump: true,
+  });
+  assert.deepEqual(animatorParameterValues(controller, '{"Speed":"fast","Jump":1}'), {
+    Grounded: true,
+    Speed: 1.5,
+    Direction: -1,
+    Jump: false,
+  });
+  const updated = setAnimatorParameterOverride(controller, '{"Grounded":false}', 'Speed', 4.25);
+  assert.deepEqual(JSON.parse(updated), { Grounded: false, Speed: 4.25 });
+  assert.equal(setAnimatorParameterOverride(controller, updated, 'Missing', 1), updated);
 });

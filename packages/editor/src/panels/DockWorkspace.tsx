@@ -149,7 +149,7 @@ function defaultTree(): DockNode {
         b: leaf(['inspector', 'material', 'shader', 'spriteEditor', 'spriteAtlas', 'build', 'projectSettings']),
       },
     },
-    b: leaf(['project', 'console', 'timeline']),
+    b: leaf(['project', 'console', 'timeline', 'animator']),
   };
 }
 

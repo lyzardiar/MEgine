@@ -47,6 +47,8 @@ export type AnimatorController = {
   transitions: AnimatorTransition[];
 };
 
+export type AnimatorParameterValue = boolean | number;
+
 const PARAMETER_KINDS = new Set<AnimatorParameterKind>(['bool', 'float', 'int', 'trigger']);
 const CONDITION_MODES = new Set<AnimatorConditionMode>([
   'if', 'if_not', 'greater', 'less', 'equals', 'not_equal', 'trigger',
@@ -61,6 +63,55 @@ function record(value: unknown): Record<string, unknown> {
 function finite(value: unknown, fallback: number): number {
   const number = Number(value);
   return Number.isFinite(number) ? number : fallback;
+}
+
+function parameterDefault(parameter: AnimatorParameter): AnimatorParameterValue {
+  if (parameter.kind === 'bool' || parameter.kind === 'trigger') return parameter.default_bool;
+  if (parameter.kind === 'int') return parameter.default_int;
+  return parameter.default_float;
+}
+
+function parameterValue(parameter: AnimatorParameter, value: unknown): AnimatorParameterValue {
+  if (parameter.kind === 'bool' || parameter.kind === 'trigger') {
+    return typeof value === 'boolean' ? value : parameterDefault(parameter);
+  }
+  if (typeof value !== 'number' || !Number.isFinite(value)) return parameterDefault(parameter);
+  return parameter.kind === 'int' ? Math.trunc(value) : value;
+}
+
+function parameterOverrideObject(json: string): Record<string, unknown> {
+  try {
+    const value = JSON.parse(json);
+    return value != null && typeof value === 'object' && !Array.isArray(value)
+      ? value as Record<string, unknown>
+      : {};
+  } catch {
+    return {};
+  }
+}
+
+export function animatorParameterValues(
+  controller: AnimatorController,
+  json: string,
+): Record<string, AnimatorParameterValue> {
+  const overrides = parameterOverrideObject(json);
+  return Object.fromEntries(controller.parameters.map((parameter) => [
+    parameter.name,
+    parameterValue(parameter, overrides[parameter.name]),
+  ]));
+}
+
+export function setAnimatorParameterOverride(
+  controller: AnimatorController,
+  json: string,
+  name: string,
+  value: unknown,
+): string {
+  const parameter = controller.parameters.find((candidate) => candidate.name === name);
+  if (!parameter) return json;
+  const overrides = parameterOverrideObject(json);
+  overrides[name] = parameterValue(parameter, value);
+  return JSON.stringify(overrides);
 }
 
 export function createAnimatorController(

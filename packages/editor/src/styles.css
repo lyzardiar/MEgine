@@ -3980,6 +3980,72 @@ body.ew-dragging {
   font-size: 11px;
 }
 
+.animator-instance-section .animator-heading {
+  justify-content: flex-start;
+}
+
+.animator-instance-section .animator-heading > button { margin-left: auto; }
+
+.animator-instance-mode {
+  padding: 1px 5px;
+  border: 1px solid #555;
+  color: var(--u-muted);
+  font-size: 9px;
+}
+
+.animator-instance-mode.live {
+  border-color: #3f7c49;
+  color: #8bd896;
+}
+
+.animator-playing-toggle {
+  width: max-content;
+  margin: 3px 0 5px;
+  color: var(--u-muted);
+}
+
+.animator-instance-parameter {
+  display: grid;
+  min-height: 27px;
+  grid-template-columns: minmax(90px, 1fr) 52px minmax(92px, 0.8fr);
+  align-items: center;
+  gap: 6px;
+  padding: 3px 5px;
+  border-top: 1px solid #292929;
+  background: #2d2d2d;
+}
+
+.animator-instance-parameter > span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.animator-instance-parameter > small {
+  color: #777;
+  text-transform: uppercase;
+}
+
+.animator-instance-parameter > input[type='number'],
+.animator-instance-parameter > button {
+  width: 100%;
+  height: 22px;
+  border: 1px solid var(--u-border-2);
+  background: var(--u-input);
+  color: var(--u-text);
+}
+
+.animator-instance-parameter > input[type='checkbox'] {
+  width: 16px;
+  height: 16px;
+}
+
+.animator-instance-parameter > button.active {
+  border-color: #b47739;
+  background: #5a3b20;
+  color: #ffd09b;
+}
+
 .animator-graph-viewport {
   max-height: 430px;
   overflow: auto;

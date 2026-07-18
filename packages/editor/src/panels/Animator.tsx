@@ -2,9 +2,11 @@ import { useEffect, useRef, useState, type PointerEvent as ReactPointerEvent } f
 import type { WorldSnapshotView } from '@mengine/api';
 import { createAnimationClip, serializeAnimationClip } from '../animationClip';
 import {
+  animatorParameterValues,
   createAnimatorController,
   parseAnimatorController,
   parseAnimatorControllerDraft,
+  setAnimatorParameterOverride,
   serializeAnimatorController,
   validateAnimatorController,
   type AnimatorConditionMode,
@@ -71,6 +73,8 @@ type SnapshotEntity = WorldSnapshotView['entities'][number];
 
 type AnimatorRuntimeData = {
   controller?: string;
+  playing?: boolean;
+  parameters_json?: string;
   current_state?: string;
   state_time?: number;
   normalized_time?: number;
@@ -255,8 +259,10 @@ function parameterModes(kind: AnimatorParameterKind): AnimatorConditionMode[] {
 export function AnimatorEditor(props: {
   assetPath: string | null;
   selectedEntity: SnapshotEntity | null;
+  playMode: boolean;
   onOpenAsset: (path: string) => void;
   onAssignAnimator: (entity: number, path: string) => void;
+  onPatchAnimator: (entity: number, patch: Record<string, unknown>) => void;
   onAssetsChanged: () => void;
   onDirtyChange: (dirty: boolean) => void;
   onLog: (message: string, level?: 'info' | 'warn' | 'error') => void;
@@ -377,6 +383,20 @@ export function AnimatorEditor(props: {
 
   const runtime = animatorRuntime(props.selectedEntity);
   const assigned = String(runtime?.controller ?? '') === props.assetPath;
+  const parameterOverrides = String(runtime?.parameters_json ?? '{}');
+  const instanceParameterValues = assigned
+    ? animatorParameterValues(controller, parameterOverrides)
+    : {};
+  const patchAnimator = (patch: Record<string, unknown>) => {
+    if (assigned && props.selectedEntity) {
+      props.onPatchAnimator(props.selectedEntity.entity, patch);
+    }
+  };
+  const setInstanceParameter = (name: string, value: unknown) => {
+    patchAnimator({
+      parameters_json: setAnimatorParameterOverride(controller, parameterOverrides, name, value),
+    });
+  };
   return (
     <div className="animator-editor">
       <div className="material-toolbar">
@@ -405,6 +425,70 @@ export function AnimatorEditor(props: {
             {assigned ? 'Assigned to Selection' : 'Assign to Selection'}
           </button>
         </section>
+
+        {assigned && (
+          <section className="animator-section animator-instance-section">
+            <div className="animator-heading">
+              <h3>{props.playMode ? 'Live Parameters' : 'Instance Parameters'}</h3>
+              <span className={`animator-instance-mode${props.playMode ? ' live' : ''}`}>
+                {props.playMode ? 'Play Mode' : 'Startup Values'}
+              </span>
+              <button type="button" onClick={() => patchAnimator({ parameters_json: '{}' })}>
+                Reset
+              </button>
+            </div>
+            <label className="animator-playing-toggle">
+              <input
+                type="checkbox"
+                checked={runtime?.playing !== false}
+                onChange={(event) => patchAnimator({ playing: event.target.checked })}
+              />
+              Playing
+            </label>
+            {controller.parameters.length === 0 && (
+              <div className="field-hint">Add Controller parameters to drive transitions.</div>
+            )}
+            {controller.parameters.map((parameter) => {
+              const value = instanceParameterValues[parameter.name];
+              return (
+                <div className="animator-instance-parameter" key={parameter.name}>
+                  <span title={parameter.kind}>{parameter.name}</span>
+                  <small>{parameter.kind}</small>
+                  {parameter.kind === 'bool' && (
+                    <input
+                      aria-label={`${parameter.name} instance value`}
+                      type="checkbox"
+                      checked={value === true}
+                      onChange={(event) => setInstanceParameter(parameter.name, event.target.checked)}
+                    />
+                  )}
+                  {parameter.kind === 'trigger' && (
+                    <button
+                      type="button"
+                      className={value === true ? 'active' : ''}
+                      onClick={() => setInstanceParameter(parameter.name, true)}
+                    >
+                      {value === true ? 'Pending' : 'Set Trigger'}
+                    </button>
+                  )}
+                  {(parameter.kind === 'float' || parameter.kind === 'int') && (
+                    <input
+                      aria-label={`${parameter.name} instance value`}
+                      type="number"
+                      step={parameter.kind === 'int' ? 1 : 0.1}
+                      value={typeof value === 'number' ? value : 0}
+                      onChange={(event) => {
+                        if (Number.isFinite(event.target.valueAsNumber)) {
+                          setInstanceParameter(parameter.name, event.target.valueAsNumber);
+                        }
+                      }}
+                    />
+                  )}
+                </div>
+              );
+            })}
+          </section>
+        )}
 
         <AnimatorStateGraph
           controllerKey={props.assetPath}
@@ -507,6 +591,25 @@ export function AnimatorEditor(props: {
                 {clips.map((clip) => <option key={clip.id} value={clip.relPath}>{clip.name}</option>)}
               </select>
               <label>Speed <input type="number" step="0.1" value={state.speed} onChange={(event) => update((draft) => { draft.states[index].speed = Number(event.target.value); })} /></label>
+              {assigned && props.selectedEntity && (
+                <button
+                  type="button"
+                  title={props.playMode ? 'Play this state now' : 'Use this state when play starts'}
+                  onClick={(event) => {
+                    event.stopPropagation();
+                    patchAnimator({
+                      playing: true,
+                      current_state: state.name,
+                      state_time: 0,
+                      normalized_time: 0,
+                      transition_to: '',
+                      transition_progress: 0,
+                    });
+                  }}
+                >
+                  {props.playMode ? 'Play' : 'Start'}
+                </button>
+              )}
               <button type="button" disabled={controller.states.length <= 1} onClick={(event) => {
                 event.stopPropagation();
                 update((draft) => {
