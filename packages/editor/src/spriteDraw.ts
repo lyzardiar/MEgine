@@ -12,6 +12,14 @@ import { planNineSlice, type SpriteBorder } from './ui/nineSlice';
 
 const _cache = new Map<string, HTMLImageElement>();
 
+export function invalidateSpriteImage(sprite: string): void {
+  const id = resolveSpriteTextureId(sprite);
+  if (!id || id === 'white') return;
+  _cache.delete(`desktop:${id}`);
+  const url = spriteAssetUrl(id);
+  if (url) _cache.delete(url);
+}
+
 export function getSpriteImage(sprite: string): HTMLImageElement | null {
   const id = resolveSpriteTextureId(sprite);
   if (!id || id === 'white') return null;

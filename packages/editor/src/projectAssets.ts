@@ -15,6 +15,7 @@ export type ProjectFileAsset = {
     | 'material'
     | 'model'
     | 'prefab'
+    | 'sprite-atlas'
     | 'spine-json'
     | 'spine-binary'
     | 'spine-atlas';

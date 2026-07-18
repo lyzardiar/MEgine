@@ -302,6 +302,8 @@ fn project_asset_kind(name: &str) -> Option<&'static str> {
     let lower = name.to_ascii_lowercase();
     if lower.ends_with(".sprite.json") {
         None
+    } else if lower.ends_with(".matlas") {
+        Some("sprite-atlas")
     } else if lower.ends_with(".manim") {
         Some("animation")
     } else if lower.ends_with(".mcontroller") {
@@ -1340,6 +1342,7 @@ mod tests {
             "character.glb",
             "skeleton.atlas",
             "theme.ogg",
+            "ui.matlas",
             "hero.png.sprite.json",
             "ignored.txt",
         ] {
@@ -1351,7 +1354,7 @@ mod tests {
         std::fs::remove_dir_all(root).unwrap();
         found.sort_by(|left, right| left.name.cmp(&right.name));
 
-        assert_eq!(found.len(), 8);
+        assert_eq!(found.len(), 9);
         assert!(found
             .iter()
             .any(|asset| asset.name == "walk.manim" && asset.kind == "animation"));
@@ -1373,6 +1376,9 @@ mod tests {
         assert!(found
             .iter()
             .any(|asset| asset.name == "theme.ogg" && asset.kind == "audio"));
+        assert!(found
+            .iter()
+            .any(|asset| asset.name == "ui.matlas" && asset.kind == "sprite-atlas"));
     }
 
     #[test]

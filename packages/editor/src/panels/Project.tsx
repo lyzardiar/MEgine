@@ -37,7 +37,7 @@ const STATIC_FOLDERS = [
 type AssetItem = {
   folder: string;
   name: string;
-  kind: 'animation' | 'animator-controller' | 'audio' | 'model' | 'prefab' | 'script' | 'material' | 'scene' | 'sprite' | 'spine';
+  kind: 'animation' | 'animator-controller' | 'audio' | 'model' | 'prefab' | 'script' | 'material' | 'scene' | 'sprite' | 'sprite-atlas' | 'spine';
   spawn: string | null;
   icon: string;
   sceneName?: string;
@@ -55,6 +55,7 @@ export function Project(props: {
   onOpenMaterial: (path: string) => void;
   onOpenAnimator: (path: string) => void;
   onOpenSprite: (path: string) => void;
+  onOpenSpriteAtlas: (path: string) => void;
   onRenameScene: (oldName: string, newName: string) => boolean | Promise<boolean>;
   onLog?: (msg: string, level?: 'info' | 'warn' | 'error') => void;
 }) {
@@ -141,6 +142,8 @@ export function Project(props: {
       ? 'animation'
       : asset.kind === 'animator-controller'
         ? 'animator-controller'
+      : asset.kind === 'sprite-atlas'
+        ? 'sprite-atlas'
       : asset.kind === 'audio'
         ? 'audio'
       : asset.kind === 'material'
@@ -157,6 +160,8 @@ export function Project(props: {
       spawn: null,
       icon: kind === 'animator-controller'
         ? 'A'
+        : kind === 'sprite-atlas'
+        ? 'AT'
         : kind === 'audio'
         ? '♪'
         : kind === 'animation'
@@ -246,6 +251,10 @@ export function Project(props: {
       props.onOpenSprite(a.spriteId);
       return;
     }
+    if (a.kind === 'sprite-atlas' && a.spriteId) {
+      props.onOpenSpriteAtlas(a.spriteId);
+      return;
+    }
     if (a.kind === 'material' && a.spriteId) {
       props.onOpenMaterial(a.spriteId);
       return;
@@ -328,6 +337,7 @@ export function Project(props: {
                 || a.kind === 'spine'
                 || a.kind === 'animation'
                 || a.kind === 'animator-controller'
+                || a.kind === 'sprite-atlas'
                 || a.kind === 'audio'
                 || a.kind === 'material'
                 || a.kind === 'model'
@@ -339,6 +349,7 @@ export function Project(props: {
                   && a.kind !== 'spine'
                   && a.kind !== 'animation'
                   && a.kind !== 'animator-controller'
+                  && a.kind !== 'sprite-atlas'
                   && a.kind !== 'audio'
                   && a.kind !== 'material'
                   && a.kind !== 'model'
@@ -365,6 +376,8 @@ export function Project(props: {
                         ? `拖到 Spine Skeleton 资源字段 · ${a.spriteId}`
                         : a.kind === 'animation'
                           ? `Animation Clip · ${a.spriteId}`
+                          : a.kind === 'sprite-atlas'
+                            ? `Sprite Atlas - double-click to edit - ${a.spriteId}`
                           : a.kind === 'animator-controller'
                             ? `Animator Controller · ${a.spriteId}`
                           : a.kind === 'material'

@@ -45,6 +45,11 @@ import {
   SpriteEditor,
   openSpriteAsset,
 } from './panels/SpriteEditor';
+import {
+  OPEN_SPRITE_ATLAS_EVENT,
+  SpriteAtlasEditor,
+  openSpriteAtlasAsset,
+} from './panels/SpriteAtlasEditor';
 import { DockWorkspace, type PanelKind } from './panels/DockWorkspace';
 import { EditorWindowHost } from './editorWindow';
 import { resolveUnityAction } from './panels/uiFieldEditors';
@@ -121,6 +126,8 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
   const [animatorDirty, setAnimatorDirty] = useState(false);
   const [spritePath, setSpritePath] = useState<string | null>(null);
   const [spriteDirty, setSpriteDirty] = useState(false);
+  const [spriteAtlasPath, setSpriteAtlasPath] = useState<string | null>(null);
+  const [spriteAtlasDirty, setSpriteAtlasDirty] = useState(false);
   const [animationDirty, setAnimationDirty] = useState(false);
   const [projectSettingsDirty, setProjectSettingsDirty] = useState(false);
   const [sceneDirty, setSceneDirty] = useState(false);
@@ -129,10 +136,11 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
     if (materialDirty) dirty.add('material');
     if (animatorDirty) dirty.add('animator');
     if (spriteDirty) dirty.add('spriteEditor');
+    if (spriteAtlasDirty) dirty.add('spriteAtlas');
     if (animationDirty) dirty.add('timeline');
     if (projectSettingsDirty) dirty.add('projectSettings');
     return dirty;
-  }, [animationDirty, animatorDirty, materialDirty, projectSettingsDirty, spriteDirty]);
+  }, [animationDirty, animatorDirty, materialDirty, projectSettingsDirty, spriteAtlasDirty, spriteDirty]);
   const [logs, setLogs] = useState<string[]>([
     'MEngine Editor',
     '场景落盘：packages/editor/project/Assets/Scenes/*.mscene',
@@ -159,15 +167,15 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
   useEffect(() => {
     const onBeforeUnload = (event: BeforeUnloadEvent) => {
       const dirty = props.detachedPanel
-        ? materialDirty || animationDirty || animatorDirty || spriteDirty
-        : sceneDirty || materialDirty || animationDirty || animatorDirty || spriteDirty;
+        ? materialDirty || animationDirty || animatorDirty || spriteDirty || spriteAtlasDirty
+        : sceneDirty || materialDirty || animationDirty || animatorDirty || spriteDirty || spriteAtlasDirty;
       if (!dirty) return;
       event.preventDefault();
       event.returnValue = '';
     };
     window.addEventListener('beforeunload', onBeforeUnload);
     return () => window.removeEventListener('beforeunload', onBeforeUnload);
-  }, [animationDirty, animatorDirty, materialDirty, props.detachedPanel, sceneDirty, spriteDirty]);
+  }, [animationDirty, animatorDirty, materialDirty, props.detachedPanel, sceneDirty, spriteAtlasDirty, spriteDirty]);
 
   const broadcastScene = (immediate = false) => {
     const channel = syncChannel.current;
@@ -235,18 +243,27 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
         && !window.confirm('Sprite import settings have unsaved changes. Discard them and open another texture?')) return;
       setSpritePath(path);
     };
+    const openSpriteAtlas = (event: Event) => {
+      const path = (event as CustomEvent<string>).detail;
+      if (typeof path !== 'string' || !path) return;
+      if (spriteAtlasDirty && path !== spriteAtlasPath
+        && !window.confirm('Sprite Atlas has unsaved changes. Discard them and open another atlas?')) return;
+      setSpriteAtlasPath(path);
+    };
     const assetsChanged = () => bumpScenes();
     window.addEventListener(OPEN_MATERIAL_EVENT, openMaterial);
     window.addEventListener(OPEN_ANIMATOR_EVENT, openAnimator);
     window.addEventListener(OPEN_SPRITE_EDITOR_EVENT, openSprite);
+    window.addEventListener(OPEN_SPRITE_ATLAS_EVENT, openSpriteAtlas);
     window.addEventListener(PROJECT_ASSETS_CHANGED_EVENT, assetsChanged);
     return () => {
       window.removeEventListener(OPEN_MATERIAL_EVENT, openMaterial);
       window.removeEventListener(OPEN_ANIMATOR_EVENT, openAnimator);
       window.removeEventListener(OPEN_SPRITE_EDITOR_EVENT, openSprite);
+      window.removeEventListener(OPEN_SPRITE_ATLAS_EVENT, openSpriteAtlas);
       window.removeEventListener(PROJECT_ASSETS_CHANGED_EVENT, assetsChanged);
     };
-  }, [spriteDirty, spritePath]);
+  }, [spriteAtlasDirty, spriteAtlasPath, spriteDirty, spritePath]);
 
   const log = (msg: string, level: 'info' | 'warn' | 'error' = 'info') => {
     const prefix = level === 'info' ? '' : level === 'warn' ? '[Warn] ' : '[Error] ';
@@ -1045,6 +1062,7 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
               onOpenMaterial={(path) => openMaterialAsset(path)}
               onOpenAnimator={(path) => openAnimatorAsset(path)}
               onOpenSprite={(path) => openSpriteAsset(path)}
+              onOpenSpriteAtlas={(path) => openSpriteAtlasAsset(path)}
               onRenameScene={async (oldName, newName) => {
                 const next = await renameScene(oldName, newName);
                 if (next == null) {
@@ -1152,12 +1170,20 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
               onLog={log}
             />
           ),
+          spriteAtlas: (
+            <SpriteAtlasEditor
+              assetPath={spriteAtlasPath}
+              onAssetsChanged={bumpScenes}
+              onDirtyChange={setSpriteAtlasDirty}
+              onLog={log}
+            />
+          ),
           build: (
             <BuildSettings
               sceneName={sceneName}
               sceneTick={sceneTick}
               sceneDirty={sceneDirty}
-              resourceDirty={materialDirty || animationDirty || animatorDirty || spriteDirty}
+              resourceDirty={materialDirty || animationDirty || animatorDirty || spriteDirty || spriteAtlasDirty}
               onSaveScene={saveSceneForBuild}
               onLog={log}
             />
