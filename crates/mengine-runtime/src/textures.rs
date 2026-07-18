@@ -86,7 +86,7 @@ impl RuntimeTextureCache {
             };
             let Some(texture_path) = resolve_texture_path(&root, texture_reference) else {
                 failures.push(TextureLoadFailure {
-                    key: original.into(),
+                    key: original,
                     path: root.clone(),
                     error: "sprite texture must be a project-relative path without '..'".into(),
                 });

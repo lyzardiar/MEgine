@@ -2889,6 +2889,60 @@ body.insp-scrubbing * {
 .timeline-key-bool input { width: 16px; height: 16px; }
 .timeline-selection-hint { color: var(--u-muted); font-style: italic; }
 
+.timeline-tangent-editors,
+.timeline-tangent-editors > div {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.timeline-tangent-editors {
+  gap: 8px;
+  padding-left: 8px;
+  border-left: 1px solid var(--u-border-2);
+}
+
+.timeline-selection-editor .timeline-tangent-editors button {
+  border-color: var(--u-border-2);
+  background: #333;
+  color: var(--u-muted);
+}
+
+.timeline-selection-editor .timeline-tangent-editors button.active {
+  border-color: var(--u-accent);
+  color: var(--u-text);
+}
+
+.timeline-curve-editor {
+  flex: 0 0 158px;
+  padding: 4px 6px 6px;
+  border-bottom: 1px solid var(--u-border);
+  background: #1d1d1d;
+}
+
+.timeline-curve-editor header {
+  display: flex;
+  height: 20px;
+  align-items: center;
+  justify-content: space-between;
+  color: var(--u-muted);
+  font-family: var(--u-mono);
+  font-size: 11px;
+}
+
+.timeline-curve-editor svg {
+  display: block;
+  width: 100%;
+  height: 128px;
+  border: 1px solid #111;
+  background:
+    linear-gradient(to right, transparent 49.8%, #303030 50%, transparent 50.2%),
+    linear-gradient(to bottom, transparent 49.5%, #303030 50%, transparent 50.5%);
+}
+
+.timeline-curve-midline { stroke: #383838; stroke-width: 1; }
+.timeline-curve-playhead { stroke: var(--u-accent); stroke-width: 1; }
+
 .timeline-track-value {
   padding: 9px 8px 0;
   overflow: hidden;

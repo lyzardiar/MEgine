@@ -1,10 +1,13 @@
 export type AnimationWrapMode = 'once' | 'loop' | 'ping_pong';
-export type AnimationInterpolation = 'step' | 'linear' | 'smooth';
+export type AnimationInterpolation = 'step' | 'linear' | 'smooth' | 'cubic';
 export type AnimationValue = boolean | number | number[] | string;
+export type AnimationTangent = number | number[];
 
 export type AnimationKeyframe = {
   time: number;
   value: AnimationValue;
+  in_tangent?: AnimationTangent;
+  out_tangent?: AnimationTangent;
 };
 
 export type AnimationTrack = {
@@ -70,8 +73,20 @@ function animationValue(value: unknown): AnimationValue | null {
   return null;
 }
 
+function animationTangent(value: unknown, keyValue: AnimationValue): AnimationTangent | undefined {
+  if (typeof keyValue === 'number') {
+    return typeof value === 'number' && Number.isFinite(value) ? value : undefined;
+  }
+  if (Array.isArray(keyValue) && Array.isArray(value) && value.length === keyValue.length) {
+    return value.every((part) => typeof part === 'number' && Number.isFinite(part))
+      ? value as number[]
+      : undefined;
+  }
+  return undefined;
+}
+
 function interpolation(value: unknown): AnimationInterpolation {
-  return value === 'step' || value === 'smooth' ? value : 'linear';
+  return value === 'step' || value === 'smooth' || value === 'cubic' ? value : 'linear';
 }
 
 function wrapMode(value: unknown): AnimationWrapMode {
@@ -94,7 +109,14 @@ export function normalizeAnimationClip(value: unknown): AnimationClip {
       const parsedValue = animationValue(key.value);
       if (!Number.isFinite(time) || parsedValue == null) continue;
       const safeTime = Math.max(0, time);
-      byTime.set(safeTime, { time: safeTime, value: parsedValue });
+      const inTangent = animationTangent(key.in_tangent ?? key.inTangent, parsedValue);
+      const outTangent = animationTangent(key.out_tangent ?? key.outTangent, parsedValue);
+      byTime.set(safeTime, {
+        time: safeTime,
+        value: parsedValue,
+        ...(inTangent === undefined ? {} : { in_tangent: inTangent }),
+        ...(outTangent === undefined ? {} : { out_tangent: outTangent }),
+      });
       maxTime = Math.max(maxTime, safeTime);
     }
     tracks.push({
@@ -169,10 +191,20 @@ function writeAnimationKeyframe(
   const epsilon = 0.5 / (Number.isFinite(frameRate) && frameRate > 0
     ? frameRate
     : DEFAULT_FRAME_RATE);
+  const preserved = excludedIndex == null
+    ? track.keyframes.find((key) => Math.abs(key.time - keyTime) <= epsilon)
+    : track.keyframes[excludedIndex];
   const keyframes = track.keyframes.filter((key, index) => (
     index !== excludedIndex && Math.abs(key.time - keyTime) > epsilon
   ));
-  keyframes.push({ time: keyTime, value: structuredClone(value) });
+  const inTangent = animationTangent(preserved?.in_tangent, value);
+  const outTangent = animationTangent(preserved?.out_tangent, value);
+  keyframes.push({
+    time: keyTime,
+    value: structuredClone(value),
+    ...(inTangent === undefined ? {} : { in_tangent: structuredClone(inTangent) }),
+    ...(outTangent === undefined ? {} : { out_tangent: structuredClone(outTangent) }),
+  });
   keyframes.sort((left, right) => left.time - right.time);
   return {
     track: { ...track, keyframes },
@@ -210,6 +242,30 @@ export function removeAnimationKeyframe(
   return {
     ...track,
     keyframes: track.keyframes.filter((_key, index) => index !== keyIndex),
+  };
+}
+
+export function setAnimationKeyframeTangents(
+  track: AnimationTrack,
+  keyIndex: number,
+  patch: { in_tangent?: AnimationTangent | null; out_tangent?: AnimationTangent | null },
+): AnimationTrack {
+  const current = track.keyframes[keyIndex];
+  if (!current) return track;
+  const next = { ...current };
+  if ('in_tangent' in patch) {
+    const value = animationTangent(patch.in_tangent, current.value);
+    if (value === undefined || patch.in_tangent == null) delete next.in_tangent;
+    else next.in_tangent = structuredClone(value);
+  }
+  if ('out_tangent' in patch) {
+    const value = animationTangent(patch.out_tangent, current.value);
+    if (value === undefined || patch.out_tangent == null) delete next.out_tangent;
+    else next.out_tangent = structuredClone(value);
+  }
+  return {
+    ...track,
+    keyframes: track.keyframes.map((key, index) => index === keyIndex ? next : key),
   };
 }
 
@@ -310,6 +366,74 @@ function interpolateValue(
   return structuredClone(left);
 }
 
+function numericSlope(
+  left: AnimationValue,
+  right: AnimationValue,
+  span: number,
+): AnimationTangent | null {
+  if (!(span > Number.EPSILON)) return null;
+  if (typeof left === 'number' && typeof right === 'number') return (right - left) / span;
+  if (Array.isArray(left) && Array.isArray(right) && left.length === right.length) {
+    return left.map((value, index) => (right[index] - value) / span);
+  }
+  return null;
+}
+
+export function automaticAnimationTangent(
+  track: AnimationTrack,
+  keyIndex: number,
+): AnimationTangent | null {
+  const key = track.keyframes[keyIndex];
+  if (!key || (typeof key.value !== 'number' && !Array.isArray(key.value))) return null;
+  const left = track.keyframes[Math.max(0, keyIndex - 1)];
+  const right = track.keyframes[Math.min(track.keyframes.length - 1, keyIndex + 1)];
+  if (left === right) {
+    return typeof key.value === 'number' ? 0 : key.value.map(() => 0);
+  }
+  return numericSlope(left.value, right.value, right.time - left.time);
+}
+
+function cubicInterpolateValue(
+  left: AnimationValue,
+  right: AnimationValue,
+  outTangent: AnimationTangent,
+  inTangent: AnimationTangent,
+  span: number,
+  amount: number,
+): AnimationValue {
+  const amount2 = amount * amount;
+  const amount3 = amount2 * amount;
+  const h00 = 2 * amount3 - 3 * amount2 + 1;
+  const h10 = amount3 - 2 * amount2 + amount;
+  const h01 = -2 * amount3 + 3 * amount2;
+  const h11 = amount3 - amount2;
+  if (
+    typeof left === 'number'
+    && typeof right === 'number'
+    && typeof outTangent === 'number'
+    && typeof inTangent === 'number'
+  ) {
+    return h00 * left + h10 * span * outTangent + h01 * right + h11 * span * inTangent;
+  }
+  if (
+    Array.isArray(left)
+    && Array.isArray(right)
+    && Array.isArray(outTangent)
+    && Array.isArray(inTangent)
+    && left.length === right.length
+    && left.length === outTangent.length
+    && left.length === inTangent.length
+  ) {
+    return left.map((value, index) => (
+      h00 * value
+      + h10 * span * outTangent[index]
+      + h01 * right[index]
+      + h11 * span * inTangent[index]
+    ));
+  }
+  return structuredClone(left);
+}
+
 export function sampleAnimationTrack(
   track: AnimationTrack,
   time: number,
@@ -328,6 +452,18 @@ export function sampleAnimationTrack(
     if (amount >= 1) return structuredClone(right.value);
     if (track.interpolation === 'step') amount = 0;
     else if (track.interpolation === 'smooth') amount = amount * amount * (3 - 2 * amount);
+    else if (track.interpolation === 'cubic') {
+      const fallback = numericSlope(left.value, right.value, span);
+      const outTangent = animationTangent(left.out_tangent, left.value)
+        ?? automaticAnimationTangent(track, index - 1)
+        ?? fallback;
+      const inTangent = animationTangent(right.in_tangent, right.value)
+        ?? automaticAnimationTangent(track, index)
+        ?? fallback;
+      if (outTangent != null && inTangent != null) {
+        return cubicInterpolateValue(left.value, right.value, outTangent, inTangent, span, amount);
+      }
+    }
     return interpolateValue(left.value, right.value, amount);
   }
   return structuredClone(track.keyframes[track.keyframes.length - 1].value);

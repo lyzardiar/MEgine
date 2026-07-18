@@ -10,6 +10,7 @@ import type { WorldSnapshotView } from '@mengine/api';
 import {
   advanceAnimationPreviewPhase,
   addAnimationEvent,
+  automaticAnimationTangent,
   createAnimationClip,
   normalizeAnimationClip,
   parseAnimationClip,
@@ -18,7 +19,9 @@ import {
   replaceAnimationEvent,
   replaceAnimationKeyframe,
   sampleAnimationClip,
+  sampleAnimationTrack,
   serializeAnimationClip,
+  setAnimationKeyframeTangents,
   snapAnimationTime,
   upsertAnimationKeyframe,
   wrappedAnimationTime,
@@ -26,6 +29,7 @@ import {
   type AnimationEvent,
   type AnimationKeyframe,
   type AnimationSample,
+  type AnimationTangent,
   type AnimationTrack,
   type AnimationValue,
 } from '../animationClip';
@@ -129,16 +133,95 @@ function valueLabel(value: AnimationValue): string {
   return String(value);
 }
 
+const CURVE_COLORS = ['#f06b6b', '#6fd36f', '#64a8ff', '#f0cf61'];
+
+function numericChannels(value: AnimationValue | null): number[] | null {
+  if (typeof value === 'number') return [value];
+  if (Array.isArray(value)) return value;
+  return null;
+}
+
+function AnimationCurvePreview(props: {
+  track: AnimationTrack;
+  duration: number;
+  time: number;
+}) {
+  const first = numericChannels(props.track.keyframes[0]?.value ?? null);
+  if (!first) return null;
+  const width = 640;
+  const height = 128;
+  const duration = Math.max(props.duration, Number.EPSILON);
+  const samples = Array.from({ length: 129 }, (_unused, index) => {
+    const sampleTime = duration * index / 128;
+    return { time: sampleTime, channels: numericChannels(sampleAnimationTrack(props.track, sampleTime)) };
+  });
+  const values = samples.flatMap((sample) => sample.channels?.slice(0, CURVE_COLORS.length) ?? []);
+  let minimum = Math.min(...values);
+  let maximum = Math.max(...values);
+  if (!Number.isFinite(minimum) || !Number.isFinite(maximum)) return null;
+  if (Math.abs(maximum - minimum) < 1e-6) {
+    minimum -= 0.5;
+    maximum += 0.5;
+  }
+  const y = (value: number) => height - (value - minimum) / (maximum - minimum) * height;
+  return (
+    <div className="timeline-curve-editor">
+      <header>
+        <strong>Curve</strong>
+        <span>{minimum.toFixed(3)} to {maximum.toFixed(3)}</span>
+      </header>
+      <svg viewBox={`0 0 ${width} ${height}`} preserveAspectRatio="none" aria-label="Animation curve preview">
+        <line className="timeline-curve-midline" x1="0" y1={height / 2} x2={width} y2={height / 2} />
+        {first.slice(0, CURVE_COLORS.length).map((_channel, channel) => (
+          <polyline
+            key={channel}
+            fill="none"
+            stroke={CURVE_COLORS[channel]}
+            strokeWidth="2"
+            vectorEffect="non-scaling-stroke"
+            points={samples.map((sample) => {
+              const value = sample.channels?.[channel] ?? 0;
+              return `${sample.time / duration * width},${y(value)}`;
+            }).join(' ')}
+          />
+        ))}
+        {props.track.keyframes.flatMap((key, keyIndex) => (
+          (numericChannels(key.value) ?? []).slice(0, CURVE_COLORS.length).map((value, channel) => (
+            <circle
+              key={`${keyIndex}:${channel}`}
+              cx={key.time / duration * width}
+              cy={y(value)}
+              r="3"
+              fill={CURVE_COLORS[channel]}
+              vectorEffect="non-scaling-stroke"
+            />
+          ))
+        ))}
+        <line
+          className="timeline-curve-playhead"
+          x1={props.time / duration * width}
+          y1="0"
+          x2={props.time / duration * width}
+          y2={height}
+        />
+      </svg>
+    </div>
+  );
+}
+
 function KeyframeValueEditor(props: {
   value: AnimationValue;
   onChange: (value: AnimationValue) => void;
+  label?: string;
 }) {
+  const label = props.label ?? 'Value';
+  const ariaLabel = label === 'Value' ? 'Keyframe value' : `Keyframe ${label.toLowerCase()}`;
   if (typeof props.value === 'boolean') {
     return (
       <label className="timeline-key-bool">
-        Value
+        {label}
         <input
-          aria-label="Keyframe value"
+          aria-label={ariaLabel}
           type="checkbox"
           checked={props.value}
           onChange={(event) => props.onChange(event.target.checked)}
@@ -150,12 +233,12 @@ function KeyframeValueEditor(props: {
     const values = props.value;
     return (
       <label className="timeline-key-vector">
-        Value
+        {label}
         <span>
           {values.map((part, index) => (
             <input
               key={index}
-              aria-label={`Keyframe value ${index + 1}`}
+              aria-label={`${ariaLabel} ${index + 1}`}
               type="number"
               step="any"
               value={part}
@@ -173,9 +256,9 @@ function KeyframeValueEditor(props: {
   }
   return (
     <label>
-      Value
+      {label}
       <input
-        aria-label="Keyframe value"
+        aria-label={ariaLabel}
         type={typeof props.value === 'number' ? 'number' : 'text'}
         step={typeof props.value === 'number' ? 'any' : undefined}
         value={props.value}
@@ -764,6 +847,9 @@ export function Timeline(props: {
   const selectedKeyframe = selectedKey && clip
     ? clip.tracks[selectedKey.track]?.keyframes[selectedKey.key] ?? null
     : null;
+  const selectedTrackData = selectedTrack != null && clip
+    ? clip.tracks[selectedTrack] ?? null
+    : null;
 
   const updateSelectedKey = (patch: Partial<AnimationKeyframe>) => {
     if (!clip || !selectedKey || !selectedKeyframe) return;
@@ -802,6 +888,20 @@ export function Timeline(props: {
       )),
     });
     setSelectedKey(null);
+  };
+
+  const updateSelectedTangent = (
+    side: 'in_tangent' | 'out_tangent',
+    value: AnimationTangent | null,
+  ) => {
+    if (!clip || !selectedKey) return;
+    const track = clip.tracks[selectedKey.track];
+    if (!track) return;
+    const next = setAnimationKeyframeTangents(track, selectedKey.key, { [side]: value });
+    setClip({
+      ...clip,
+      tracks: clip.tracks.map((candidate, index) => index === selectedKey.track ? next : candidate),
+    });
   };
 
   const seekAtPointer = (
@@ -1099,6 +1199,7 @@ export function Timeline(props: {
                   <option value="step">Step</option>
                   <option value="linear">Linear</option>
                   <option value="smooth">Smooth</option>
+                  <option value="cubic">Cubic (Hermite)</option>
                 </select>
               </label>
               {selectedKeyframe ? (
@@ -1123,12 +1224,61 @@ export function Timeline(props: {
                     value={selectedKeyframe.value}
                     onChange={(value) => updateSelectedKey({ value })}
                   />
+                  {clip.tracks[selectedKey!.track].interpolation === 'cubic' && (() => {
+                    const track = clip.tracks[selectedKey!.track];
+                    const automatic = automaticAnimationTangent(track, selectedKey!.key);
+                    if (automatic == null) return (
+                      <span className="timeline-selection-hint">Cubic tangents require a numeric track.</span>
+                    );
+                    const inTangent = selectedKeyframe.in_tangent ?? automatic;
+                    const outTangent = selectedKeyframe.out_tangent ?? automatic;
+                    return (
+                      <div className="timeline-tangent-editors">
+                        <div>
+                          <KeyframeValueEditor
+                            label="In Tangent"
+                            value={inTangent}
+                            onChange={(value) => {
+                              if (typeof value === 'number' || Array.isArray(value)) {
+                                updateSelectedTangent('in_tangent', value);
+                              }
+                            }}
+                          />
+                          <button
+                            type="button"
+                            className={selectedKeyframe.in_tangent === undefined ? 'active' : ''}
+                            onClick={() => updateSelectedTangent('in_tangent', null)}
+                          >Auto</button>
+                        </div>
+                        <div>
+                          <KeyframeValueEditor
+                            label="Out Tangent"
+                            value={outTangent}
+                            onChange={(value) => {
+                              if (typeof value === 'number' || Array.isArray(value)) {
+                                updateSelectedTangent('out_tangent', value);
+                              }
+                            }}
+                          />
+                          <button
+                            type="button"
+                            className={selectedKeyframe.out_tangent === undefined ? 'active' : ''}
+                            onClick={() => updateSelectedTangent('out_tangent', null)}
+                          >Auto</button>
+                        </div>
+                      </div>
+                    );
+                  })()}
                   <button type="button" className="danger" onClick={deleteSelectedKey}>Delete Key</button>
                 </>
               ) : (
                 <span className="timeline-selection-hint">Select a diamond to edit its time and value.</span>
               )}
             </div>
+          )}
+
+          {selectedTrackData && (
+            <AnimationCurvePreview track={selectedTrackData} duration={clip.duration} time={time} />
           )}
 
           {selectedAnimationEvent && (

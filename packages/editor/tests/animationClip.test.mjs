@@ -3,6 +3,7 @@ import test from 'node:test';
 import {
   advanceAnimationPreviewPhase,
   addAnimationEvent,
+  automaticAnimationTangent,
   normalizeAnimationClip,
   parseAnimationClip,
   removeAnimationKeyframe,
@@ -12,6 +13,7 @@ import {
   sampleAnimationClip,
   sampleAnimationTrack,
   serializeAnimationClip,
+  setAnimationKeyframeTangents,
   snapAnimationTime,
   upsertAnimationKeyframe,
   wrappedAnimationTime,
@@ -69,6 +71,55 @@ test('AnimationClip scalar vector and discrete interpolation is deterministic', 
   assert.equal(sampleAnimationTrack(discrete, 1), true);
 });
 
+test('AnimationClip cubic interpolation supports automatic and authored Hermite tangents', () => {
+  const automatic = {
+    ...floatTrack('cubic'),
+    keyframes: [
+      { time: 0, value: 0 },
+      { time: 1, value: 1 },
+      { time: 2, value: 0 },
+    ],
+  };
+  assert.equal(automaticAnimationTangent(automatic, 0), 1);
+  assert.equal(automaticAnimationTangent(automatic, 1), 0);
+  assert.equal(sampleAnimationTrack(automatic, 0.5), 0.625);
+
+  const flat = setAnimationKeyframeTangents(
+    setAnimationKeyframeTangents(automatic, 0, { out_tangent: 0 }),
+    1,
+    { in_tangent: 0 },
+  );
+  assert.equal(sampleAnimationTrack(flat, 0.5), 0.5);
+  const reset = setAnimationKeyframeTangents(flat, 0, { out_tangent: null });
+  assert.equal(reset.keyframes[0].out_tangent, undefined);
+
+  const vector = {
+    ...floatTrack('cubic'),
+    keyframes: [
+      { time: 0, value: [0, 2], out_tangent: [0, 0] },
+      { time: 1, value: [2, 4], in_tangent: [0, 0] },
+    ],
+  };
+  assert.deepEqual(sampleAnimationTrack(vector, 0.5), [1, 3]);
+});
+
+test('AnimationClip keeps valid tangents while moving and replacing keys', () => {
+  const track = {
+    ...floatTrack('cubic'),
+    keyframes: [
+      { time: 0, value: 0, out_tangent: 2 },
+      { time: 2, value: 10, in_tangent: 3 },
+    ],
+  };
+  const moved = replaceAnimationKeyframe(track, 0, 0.5, 1, 10, 2);
+  assert.ok(moved);
+  assert.equal(moved.track.keyframes[0].out_tangent, 2);
+  const overwritten = upsertAnimationKeyframe(moved.track, 0.51, 4, 10, 2);
+  assert.equal(overwritten.track.keyframes[0].out_tangent, 2);
+  const changedShape = replaceAnimationKeyframe(overwritten.track, 0, 0.5, [1, 2], 10, 2);
+  assert.equal(changedShape.track.keyframes[0].out_tangent, undefined);
+});
+
 test('AnimationClip parsing normalizes metadata key ordering and duplicate times', () => {
   const clip = parseAnimationClip(JSON.stringify({
     version: 0,
@@ -98,6 +149,27 @@ test('AnimationClip parsing normalizes metadata key ordering and duplicate times
   ]);
   assert.deepEqual(sampleAnimationClip(clip, 2)[0].value, 3);
   assert.deepEqual(normalizeAnimationClip(JSON.parse(serializeAnimationClip(clip))), clip);
+});
+
+test('AnimationClip serializes cubic tangents and ignores invalid tangent shapes', () => {
+  const clip = normalizeAnimationClip({
+    name: 'Curve',
+    duration: 1,
+    tracks: [{
+      target: '.',
+      component: 'Transform',
+      property: 'position',
+      interpolation: 'cubic',
+      keyframes: [
+        { time: 0, value: [0, 0], out_tangent: [1, 2] },
+        { time: 1, value: [2, 3], in_tangent: [0] },
+      ],
+    }],
+  });
+  assert.equal(clip.tracks[0].interpolation, 'cubic');
+  assert.deepEqual(clip.tracks[0].keyframes[0].out_tangent, [1, 2]);
+  assert.equal(clip.tracks[0].keyframes[1].in_tangent, undefined);
+  assert.deepEqual(parseAnimationClip(serializeAnimationClip(clip)), clip);
 });
 
 test('AnimationClip keyframe editing snaps replaces moves and removes on frame boundaries', () => {

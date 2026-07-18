@@ -26,6 +26,7 @@ pub enum AnimationInterpolation {
     #[default]
     Linear,
     Smooth,
+    Cubic,
 }
 
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
@@ -63,12 +64,82 @@ impl AnimationValue {
             _ => self.clone(),
         }
     }
+
+    fn is_tangent_for(&self, value: &Self) -> bool {
+        match (self, value) {
+            (Self::Float(tangent), Self::Float(_)) => tangent.is_finite(),
+            (Self::Vector(tangent), Self::Vector(value)) => {
+                tangent.len() == value.len() && tangent.iter().all(|part| part.is_finite())
+            }
+            _ => false,
+        }
+    }
+
+    fn slope(left: &Self, right: &Self, span: f32) -> Option<Self> {
+        if !span.is_finite() || span <= f32::EPSILON {
+            return None;
+        }
+        match (left, right) {
+            (Self::Float(left), Self::Float(right)) => Some(Self::Float((right - left) / span)),
+            (Self::Vector(left), Self::Vector(right)) if left.len() == right.len() => {
+                Some(Self::Vector(
+                    left.iter()
+                        .zip(right)
+                        .map(|(left, right)| (right - left) / span)
+                        .collect(),
+                ))
+            }
+            _ => None,
+        }
+    }
+
+    fn cubic(
+        &self,
+        next: &Self,
+        out_tangent: &Self,
+        in_tangent: &Self,
+        span: f32,
+        amount: f32,
+    ) -> Self {
+        let amount2 = amount * amount;
+        let amount3 = amount2 * amount;
+        let h00 = 2.0 * amount3 - 3.0 * amount2 + 1.0;
+        let h10 = amount3 - 2.0 * amount2 + amount;
+        let h01 = -2.0 * amount3 + 3.0 * amount2;
+        let h11 = amount3 - amount2;
+        match (self, next, out_tangent, in_tangent) {
+            (Self::Float(left), Self::Float(right), Self::Float(out), Self::Float(input)) => {
+                Self::Float(h00 * left + h10 * span * out + h01 * right + h11 * span * input)
+            }
+            (Self::Vector(left), Self::Vector(right), Self::Vector(out), Self::Vector(input))
+                if left.len() == right.len()
+                    && left.len() == out.len()
+                    && left.len() == input.len() =>
+            {
+                Self::Vector(
+                    left.iter()
+                        .zip(right)
+                        .zip(out)
+                        .zip(input)
+                        .map(|(((left, right), out), input)| {
+                            h00 * left + h10 * span * out + h01 * right + h11 * span * input
+                        })
+                        .collect(),
+                )
+            }
+            _ => self.clone(),
+        }
+    }
 }
 
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 pub struct AnimationKeyframe {
     pub time: f32,
     pub value: AnimationValue,
+    #[serde(default, skip_serializing_if = "Option::is_none", alias = "inTangent")]
+    pub in_tangent: Option<AnimationValue>,
+    #[serde(default, skip_serializing_if = "Option::is_none", alias = "outTangent")]
+    pub out_tangent: Option<AnimationValue>,
 }
 
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
@@ -177,6 +248,14 @@ impl AnimationClip {
                 .retain(|key| key.time.is_finite() && key.value.is_valid());
             for key in &mut track.keyframes {
                 key.time = key.time.max(0.0);
+                key.in_tangent = key
+                    .in_tangent
+                    .take()
+                    .filter(|tangent| tangent.is_tangent_for(&key.value));
+                key.out_tangent = key
+                    .out_tangent
+                    .take()
+                    .filter(|tangent| tangent.is_tangent_for(&key.value));
             }
             track
                 .keyframes
@@ -249,7 +328,7 @@ pub fn sample_track(track: &AnimationTrack, time: f32) -> Option<AnimationValue>
     if time <= first.time {
         return Some(first.value.clone());
     }
-    for pair in track.keyframes.windows(2) {
+    for (pair_index, pair) in track.keyframes.windows(2).enumerate() {
         let left = &pair[0];
         let right = &pair[1];
         if time > right.time {
@@ -268,10 +347,55 @@ pub fn sample_track(track: &AnimationTrack, time: f32) -> Option<AnimationValue>
             AnimationInterpolation::Step => 0.0,
             AnimationInterpolation::Linear => amount,
             AnimationInterpolation::Smooth => amount * amount * (3.0 - 2.0 * amount),
+            AnimationInterpolation::Cubic => {
+                let fallback = AnimationValue::slope(&left.value, &right.value, span);
+                let out_tangent = left
+                    .out_tangent
+                    .as_ref()
+                    .filter(|tangent| tangent.is_tangent_for(&left.value))
+                    .cloned()
+                    .or_else(|| automatic_tangent(track, pair_index))
+                    .or_else(|| fallback.clone());
+                let in_tangent = right
+                    .in_tangent
+                    .as_ref()
+                    .filter(|tangent| tangent.is_tangent_for(&right.value))
+                    .cloned()
+                    .or_else(|| automatic_tangent(track, pair_index + 1))
+                    .or(fallback);
+                if let (Some(out_tangent), Some(in_tangent)) = (out_tangent, in_tangent) {
+                    return Some(left.value.cubic(
+                        &right.value,
+                        &out_tangent,
+                        &in_tangent,
+                        span,
+                        amount,
+                    ));
+                }
+                amount
+            }
         };
         return Some(left.value.interpolate(&right.value, amount));
     }
     track.keyframes.last().map(|key| key.value.clone())
+}
+
+fn automatic_tangent(track: &AnimationTrack, key_index: usize) -> Option<AnimationValue> {
+    let key = track.keyframes.get(key_index)?;
+    match &key.value {
+        AnimationValue::Float(_) | AnimationValue::Vector(_) => {}
+        AnimationValue::Bool(_) | AnimationValue::String(_) => return None,
+    }
+    let left = &track.keyframes[key_index.saturating_sub(1)];
+    let right = &track.keyframes[(key_index + 1).min(track.keyframes.len() - 1)];
+    if std::ptr::eq(left, right) {
+        return match &key.value {
+            AnimationValue::Float(_) => Some(AnimationValue::Float(0.0)),
+            AnimationValue::Vector(value) => Some(AnimationValue::Vector(vec![0.0; value.len()])),
+            AnimationValue::Bool(_) | AnimationValue::String(_) => None,
+        };
+    }
+    AnimationValue::slope(&left.value, &right.value, right.time - left.time)
 }
 
 pub fn parse_animation_clip(bytes: &[u8]) -> Result<AnimationClip, AssetError> {
@@ -297,10 +421,14 @@ mod tests {
                 AnimationKeyframe {
                     time: 0.0,
                     value: AnimationValue::Float(0.0),
+                    in_tangent: None,
+                    out_tangent: None,
                 },
                 AnimationKeyframe {
                     time: 2.0,
                     value: AnimationValue::Float(10.0),
+                    in_tangent: None,
+                    out_tangent: None,
                 },
             ],
         }
@@ -350,10 +478,14 @@ mod tests {
                 AnimationKeyframe {
                     time: 0.0,
                     value: AnimationValue::Vector(vec![0.0, 2.0]),
+                    in_tangent: None,
+                    out_tangent: None,
                 },
                 AnimationKeyframe {
                     time: 1.0,
                     value: AnimationValue::Vector(vec![2.0, 4.0]),
+                    in_tangent: None,
+                    out_tangent: None,
                 },
             ],
             ..float_track(AnimationInterpolation::Linear)
@@ -368,10 +500,14 @@ mod tests {
                 AnimationKeyframe {
                     time: 0.0,
                     value: AnimationValue::Bool(false),
+                    in_tangent: None,
+                    out_tangent: None,
                 },
                 AnimationKeyframe {
                     time: 1.0,
                     value: AnimationValue::Bool(true),
+                    in_tangent: None,
+                    out_tangent: None,
                 },
             ],
             ..float_track(AnimationInterpolation::Linear)
@@ -383,6 +519,61 @@ mod tests {
         assert_eq!(
             sample_track(&discrete, 1.0),
             Some(AnimationValue::Bool(true))
+        );
+    }
+
+    #[test]
+    fn cubic_tracks_support_automatic_and_authored_hermite_tangents() {
+        let mut track = float_track(AnimationInterpolation::Cubic);
+        track.keyframes = vec![
+            AnimationKeyframe {
+                time: 0.0,
+                value: AnimationValue::Float(0.0),
+                in_tangent: None,
+                out_tangent: None,
+            },
+            AnimationKeyframe {
+                time: 1.0,
+                value: AnimationValue::Float(1.0),
+                in_tangent: None,
+                out_tangent: None,
+            },
+            AnimationKeyframe {
+                time: 2.0,
+                value: AnimationValue::Float(0.0),
+                in_tangent: None,
+                out_tangent: None,
+            },
+        ];
+        assert_eq!(
+            sample_track(&track, 0.5),
+            Some(AnimationValue::Float(0.625))
+        );
+        track.keyframes[0].out_tangent = Some(AnimationValue::Float(0.0));
+        track.keyframes[1].in_tangent = Some(AnimationValue::Float(0.0));
+        assert_eq!(sample_track(&track, 0.5), Some(AnimationValue::Float(0.5)));
+
+        let vector = AnimationTrack {
+            interpolation: AnimationInterpolation::Cubic,
+            keyframes: vec![
+                AnimationKeyframe {
+                    time: 0.0,
+                    value: AnimationValue::Vector(vec![0.0, 2.0]),
+                    in_tangent: None,
+                    out_tangent: Some(AnimationValue::Vector(vec![0.0, 0.0])),
+                },
+                AnimationKeyframe {
+                    time: 1.0,
+                    value: AnimationValue::Vector(vec![2.0, 4.0]),
+                    in_tangent: Some(AnimationValue::Vector(vec![0.0, 0.0])),
+                    out_tangent: None,
+                },
+            ],
+            ..float_track(AnimationInterpolation::Linear)
+        };
+        assert_eq!(
+            sample_track(&vector, 0.5),
+            Some(AnimationValue::Vector(vec![1.0, 3.0]))
         );
     }
 
@@ -408,7 +599,7 @@ mod tests {
                 "keyframes": [
                     {"time": 2, "value": 2},
                     {"time": 0, "value": 0},
-                    {"time": 2, "value": 3}
+                    {"time": 2, "value": 3, "in_tangent": [4]}
                 ]
             }]
         }"#,
@@ -431,5 +622,6 @@ mod tests {
             clip.tracks[0].keyframes[1].value,
             AnimationValue::Float(3.0)
         );
+        assert_eq!(clip.tracks[0].keyframes[1].in_tangent, None);
     }
 }
