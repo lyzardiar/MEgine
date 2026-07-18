@@ -14,6 +14,10 @@
   --u-input: #242424;
   --u-play: #5a5a5a;
   --u-play-on: #3d8f4a;
+  --u-focus: #6aa6d1;
+  --u-scroll-track: #202020;
+  --u-scroll-thumb: #555;
+  --u-scroll-thumb-hover: #696969;
   --u-x: #f14c4c;
   --u-y: #6bbf4e;
   --u-z: #4c8ff1;
@@ -26,7 +30,46 @@
   font-size: 12px;
 }
 
-* { box-sizing: border-box; }
+* {
+  box-sizing: border-box;
+  scrollbar-width: thin;
+  scrollbar-color: var(--u-scroll-thumb) var(--u-scroll-track);
+}
+
+*::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+*::-webkit-scrollbar-track {
+  border-left: 1px solid #191919;
+  border-top: 1px solid #191919;
+  background: var(--u-scroll-track);
+}
+
+*::-webkit-scrollbar-thumb {
+  min-width: 28px;
+  min-height: 28px;
+  border: 1px solid var(--u-scroll-track);
+  border-radius: 0;
+  background: var(--u-scroll-thumb);
+}
+
+*::-webkit-scrollbar-thumb:hover { background: var(--u-scroll-thumb-hover); }
+*::-webkit-scrollbar-corner { background: var(--u-scroll-track); }
+
+button,
+input,
+select,
+textarea { font: inherit; }
+
+button:focus-visible,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible {
+  outline: 1px solid var(--u-focus);
+  outline-offset: -1px;
+}
 
 html, body, #root {
   margin: 0;
@@ -338,7 +381,7 @@ button, input, select {
 .menu-item {
   position: relative;
   padding: 2px 8px;
-  border-radius: 2px;
+  border-radius: 0;
   cursor: default;
   color: var(--u-text-bright);
 }
@@ -500,7 +543,7 @@ button, input, select {
   width: 28px;
   height: 24px;
   border: 1px solid transparent;
-  border-radius: 3px;
+  border-radius: 0;
   background: transparent;
   color: var(--u-text);
   cursor: pointer;
@@ -511,7 +554,11 @@ button, input, select {
   font-weight: 600;
 }
 
-.tool-btn:hover { background: var(--u-hover); }
+.tool-btn:hover {
+  border-color: #555;
+  background: #444;
+  color: #fff;
+}
 .tool-btn.active {
   background: var(--u-selected);
   border-color: #1a3a55;
@@ -546,13 +593,16 @@ button, input, select {
   width: 30px;
   height: 24px;
   border: 1px solid var(--u-border-2);
-  border-radius: 3px;
-  background: var(--u-play);
+  border-radius: 0;
+  background: #353535;
   color: var(--u-text-bright);
   cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
 }
 
-.play-btn:hover { filter: brightness(1.1); }
+.play-btn:hover { border-color: #666; background: #424242; }
 .play-btn.on {
   background: var(--u-play-on);
   border-color: #2f6b38;
@@ -622,7 +672,7 @@ button, input, select {
   flex: 1;
   background: var(--u-input);
   border: 1px solid var(--u-border-2);
-  border-radius: 2px;
+  border-radius: 0;
   padding: 3px 6px;
   color: var(--u-text);
   outline: none;
@@ -663,7 +713,7 @@ button, input, select {
   border: 1px solid var(--u-border-2);
   background: var(--u-input);
   color: var(--u-text);
-  border-radius: 2px;
+  border-radius: 0;
   cursor: pointer;
   line-height: 1;
 }
@@ -2130,7 +2180,7 @@ body.insp-scrubbing * {
 .orient-toggle {
   display: inline-flex;
   border: 1px solid var(--u-border-2);
-  border-radius: 3px;
+  border-radius: 0;
   overflow: hidden;
 }
 

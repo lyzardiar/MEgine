@@ -1,5 +1,14 @@
 import type { EditorMode, GizmoMode } from '../store';
 import type { ToolHandleOrientation, ToolPivotMode } from '../editorTool';
+import {
+  Move,
+  Pause,
+  Play,
+  RotateCw,
+  Scan,
+  Scaling,
+  Square,
+} from 'lucide-react';
 
 export function ToolBar(props: {
   mode: EditorMode;
@@ -20,34 +29,38 @@ export function ToolBar(props: {
         <button
           type="button"
           className={`tool-btn${props.gizmo === 'translate' ? ' active' : ''}`}
+          aria-label="Move tool"
           title="Move (W)"
           onClick={() => props.onGizmo('translate')}
         >
-          W
+          <Move size={14} aria-hidden="true" />
         </button>
         <button
           type="button"
           className={`tool-btn${props.gizmo === 'rotate' ? ' active' : ''}`}
+          aria-label="Rotate tool"
           title="Rotate (E)"
           onClick={() => props.onGizmo('rotate')}
         >
-          E
+          <RotateCw size={14} aria-hidden="true" />
         </button>
         <button
           type="button"
           className={`tool-btn${props.gizmo === 'scale' ? ' active' : ''}`}
+          aria-label="Scale tool"
           title="Scale (R)"
           onClick={() => props.onGizmo('scale')}
         >
-          R
+          <Scaling size={14} aria-hidden="true" />
         </button>
         <button
           type="button"
           className={`tool-btn${props.gizmo === 'rect' ? ' active' : ''}`}
+          aria-label="Rect tool"
           title="Rect Tool (T) · Shift keep aspect · Alt resize around pivot"
           onClick={() => props.onGizmo('rect')}
         >
-          T
+          <Scan size={14} aria-hidden="true" />
         </button>
         <span className="tool-separator" aria-hidden="true" />
         <button
@@ -74,16 +87,17 @@ export function ToolBar(props: {
         <button
           type="button"
           className={`play-btn${props.mode === 'play' ? ' on' : ''}`}
+          aria-label="Play"
           title="Play"
           onClick={props.onPlay}
         >
-          ▶
+          <Play size={14} fill="currentColor" aria-hidden="true" />
         </button>
-        <button type="button" className="play-btn" title="Pause" onClick={props.onPause}>
-          ⏸
+        <button type="button" className="play-btn" aria-label="Pause" title="Pause" onClick={props.onPause}>
+          <Pause size={14} fill="currentColor" aria-hidden="true" />
         </button>
-        <button type="button" className="play-btn" title="Stop" onClick={props.onStop}>
-          ■
+        <button type="button" className="play-btn" aria-label="Stop" title="Stop" onClick={props.onStop}>
+          <Square size={12} fill="currentColor" aria-hidden="true" />
         </button>
       </div>
 

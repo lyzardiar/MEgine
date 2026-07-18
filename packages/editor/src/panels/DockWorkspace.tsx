@@ -59,6 +59,7 @@ type DragPayload = { panel: PanelKind; fromId: string };
 type DropTarget = { leafId: string; zone: DropZone };
 
 const DOCK_DRAG_TYPE = 'text/mengine-dock';
+const RESET_DOCK_LAYOUT_EVENT = 'mengine:reset-dock-layout';
 
 export type DockPanelContents = Omit<Record<PanelKind, ReactNode>, 'scene' | 'game'> & {
   /** Legacy authoring element; Dock clones it with an independent Scene/Game tab prop. */
@@ -97,6 +98,14 @@ CORE_PANEL_IDS.forEach((panel, index) => {
 });
 
 registerMenuItem(
+  'Window/Layout/Reset Default Layout',
+  () => {
+    window.dispatchEvent(new CustomEvent(RESET_DOCK_LAYOUT_EVENT));
+  },
+  { priority: 850 },
+);
+
+registerMenuItem(
   'Edit/Project Settings...',
   () => {
     window.dispatchEvent(new CustomEvent('mengine:focus-panel', { detail: 'projectSettings' }));
@@ -124,7 +133,7 @@ function defaultTree(): DockNode {
     kind: 'split',
     id: nextId('root'),
     dir: 'v',
-    ratio: 0.72,
+    ratio: 0.68,
     a: {
       kind: 'split',
       id: nextId('row'),
@@ -140,14 +149,7 @@ function defaultTree(): DockNode {
         b: leaf(['inspector', 'material', 'shader', 'spriteEditor', 'spriteAtlas', 'build', 'projectSettings']),
       },
     },
-    b: {
-      kind: 'split',
-      id: nextId('row'),
-      dir: 'h',
-      ratio: 0.62,
-      a: leaf(['project']),
-      b: leaf(['console', 'timeline']),
-    },
+    b: leaf(['project', 'console', 'timeline']),
   };
 }
 
@@ -893,6 +895,16 @@ export function DockWorkspace(props: {
   }, [props.detachedPanel, tree]);
 
   useEffect(() => {
+    if (props.detachedPanel) return;
+    const resetLayout = () => {
+      void closeAllDetachedPanelWindows();
+      setTree(defaultTree());
+    };
+    window.addEventListener(RESET_DOCK_LAYOUT_EVENT, resetLayout);
+    return () => window.removeEventListener(RESET_DOCK_LAYOUT_EVENT, resetLayout);
+  }, [props.detachedPanel]);
+
+  useEffect(() => {
     const channel = createPanelChannel();
     if (!channel) return;
     if (props.detachedPanel) {
@@ -1188,18 +1200,6 @@ export function DockWorkspace(props: {
         onDetach={(panel, position) => void detach(panel, position)}
       />
 
-      <button
-        type="button"
-        className="dock-reset"
-        title="恢复默认布局"
-        onClick={() => {
-          void closeAllDetachedPanelWindows();
-          const t = defaultTree();
-          setTree(t);
-        }}
-      >
-        重置布局
-      </button>
     </div>
   );
 }
