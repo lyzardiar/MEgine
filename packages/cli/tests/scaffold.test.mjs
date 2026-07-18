@@ -23,6 +23,9 @@ test('mengine new creates a TypeScript project that is ready for the player buil
     assert.equal(manifest.startupScript, 'Assets/Scripts/Main.ts');
     assert.equal(existsSync(join(project, 'Assets', 'Scripts', 'Main.ts')), true);
     assert.equal(existsSync(join(project, 'Assets', 'Scripts', 'mengine.d.ts')), true);
+    const engineTypes = readFileSync(join(project, 'Assets', 'Scripts', 'mengine.d.ts'), 'utf8');
+    assert.match(engineTypes, /playAnimation\(entity:/);
+    assert.match(engineTypes, /seekAnimation\(entity:/);
     assert.equal(existsSync(join(project, 'Assets', 'Models')), true);
     assert.deepEqual(
       JSON.parse(readFileSync(join(project, 'ProjectSettings', 'sorting-layers.json'), 'utf8')),

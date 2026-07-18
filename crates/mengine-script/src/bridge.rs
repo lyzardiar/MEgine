@@ -10,7 +10,7 @@ fn pending() -> &'static Mutex<CommandBuffer> {
     CELL.get_or_init(|| Mutex::new(CommandBuffer::new()))
 }
 
-#[derive(Clone, Debug, Eq, PartialEq)]
+#[derive(Clone, Debug, PartialEq)]
 pub enum ScriptRuntimeRequest {
     LoadSceneByIndex(usize),
     LoadScene(String),
@@ -27,6 +27,20 @@ pub enum ScriptRuntimeRequest {
     PlayAnimatorState {
         entity: u64,
         state: String,
+    },
+    PlayAnimation {
+        entity: u64,
+        restart: bool,
+    },
+    PauseAnimation {
+        entity: u64,
+    },
+    StopAnimation {
+        entity: u64,
+    },
+    SeekAnimation {
+        entity: u64,
+        time: f32,
     },
     PlayAudio {
         entity: u64,
@@ -403,6 +417,41 @@ fn register_engine(context: &mut Context) -> Result<(), ScriptError> {
         }
     });
 
+    let play_animation = NativeFunction::from_copy_closure(|_this, args, ctx| {
+        let Some(entity) = js_entity_id(args.get_or_undefined(0), ctx) else {
+            return Ok(JsValue::new(false));
+        };
+        let restart = args.get_or_undefined(1).as_boolean().unwrap_or(false);
+        queue_runtime_request(ScriptRuntimeRequest::PlayAnimation { entity, restart })
+    });
+    let pause_animation = NativeFunction::from_copy_closure(|_this, args, ctx| {
+        let Some(entity) = js_entity_id(args.get_or_undefined(0), ctx) else {
+            return Ok(JsValue::new(false));
+        };
+        queue_runtime_request(ScriptRuntimeRequest::PauseAnimation { entity })
+    });
+    let stop_animation = NativeFunction::from_copy_closure(|_this, args, ctx| {
+        let Some(entity) = js_entity_id(args.get_or_undefined(0), ctx) else {
+            return Ok(JsValue::new(false));
+        };
+        queue_runtime_request(ScriptRuntimeRequest::StopAnimation { entity })
+    });
+    let seek_animation = NativeFunction::from_copy_closure(|_this, args, ctx| {
+        let Some(entity) = js_entity_id(args.get_or_undefined(0), ctx) else {
+            return Ok(JsValue::new(false));
+        };
+        let Some(time) = args.get_or_undefined(1).as_number() else {
+            return Ok(JsValue::new(false));
+        };
+        if !time.is_finite() || time < 0.0 || time > f32::MAX as f64 {
+            return Ok(JsValue::new(false));
+        }
+        queue_runtime_request(ScriptRuntimeRequest::SeekAnimation {
+            entity,
+            time: time as f32,
+        })
+    });
+
     let play_audio = NativeFunction::from_copy_closure(|_this, args, ctx| {
         let Some(entity) = js_entity_id(args.get_or_undefined(0), ctx) else {
             return Ok(JsValue::new(false));
@@ -442,7 +491,7 @@ fn register_engine(context: &mut Context) -> Result<(), ScriptError> {
 
     context
         .eval(Source::from_bytes(
-            b"var engine = { setClearColor: null, pushCommandJson: null, loadScene: null, reloadScene: null, instantiatePrefab: null, setAnimatorParameter: null, setAnimatorTrigger: null, playAnimatorState: null, playAudio: null, pauseAudio: null, stopAudio: null, scene: null };",
+            b"var engine = { setClearColor: null, pushCommandJson: null, loadScene: null, reloadScene: null, instantiatePrefab: null, setAnimatorParameter: null, setAnimatorTrigger: null, playAnimatorState: null, playAnimation: null, pauseAnimation: null, stopAnimation: null, seekAnimation: null, playAudio: null, pauseAudio: null, stopAudio: null, scene: null };",
         ))
         .map_err(|e| ScriptError::Js(format!("{e}")))?;
 
@@ -490,6 +539,22 @@ fn register_engine(context: &mut Context) -> Result<(), ScriptError> {
             context,
         )
         .map_err(|e| ScriptError::Js(format!("{e}")))?;
+
+    for (name, function) in [
+        ("playAnimation", play_animation),
+        ("pauseAnimation", pause_animation),
+        ("stopAnimation", stop_animation),
+        ("seekAnimation", seek_animation),
+    ] {
+        engine_obj
+            .set(
+                boa_engine::JsString::from(name),
+                function.to_js_function(context.realm()),
+                false,
+                context,
+            )
+            .map_err(|e| ScriptError::Js(format!("{e}")))?;
+    }
 
     for (name, function) in [
         ("playAudio", play_audio),
@@ -696,6 +761,11 @@ mod tests {
             if (!engine.setAnimatorParameter(7, "Grounded", true)) throw new Error("bool rejected");
             if (!engine.setAnimatorTrigger("4294967297", "Jump")) throw new Error("trigger rejected");
             if (!engine.playAnimatorState("4294967297", "Land")) throw new Error("state rejected");
+            if (!engine.playAnimation("4294967297", true)) throw new Error("animation play rejected");
+            if (!engine.pauseAnimation(7)) throw new Error("animation pause rejected");
+            if (!engine.stopAnimation("4294967297")) throw new Error("animation stop rejected");
+            if (!engine.seekAnimation("4294967297", 1.25)) throw new Error("animation seek rejected");
+            if (engine.seekAnimation(7, -1)) throw new Error("negative animation time accepted");
             if (!engine.playAudio("4294967297")) throw new Error("audio play rejected");
             if (!engine.pauseAudio(7)) throw new Error("audio pause rejected");
             if (!engine.stopAudio("4294967297")) throw new Error("audio stop rejected");
@@ -723,6 +793,18 @@ mod tests {
                 ScriptRuntimeRequest::PlayAnimatorState {
                     entity: 4_294_967_297,
                     state: "Land".into(),
+                },
+                ScriptRuntimeRequest::PlayAnimation {
+                    entity: 4_294_967_297,
+                    restart: true,
+                },
+                ScriptRuntimeRequest::PauseAnimation { entity: 7 },
+                ScriptRuntimeRequest::StopAnimation {
+                    entity: 4_294_967_297,
+                },
+                ScriptRuntimeRequest::SeekAnimation {
+                    entity: 4_294_967_297,
+                    time: 1.25,
                 },
                 ScriptRuntimeRequest::PlayAudio {
                     entity: 4_294_967_297,

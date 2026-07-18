@@ -224,6 +224,52 @@ impl App {
                 animator.playing = true;
                 return;
             }
+            ScriptRuntimeRequest::PlayAnimation { entity, restart } => {
+                let entity = Entity::from_u64(*entity);
+                if *restart {
+                    self.animations.reset_player(entity);
+                }
+                let Some(player) = self.world.get_component_mut::<AnimationPlayer>(entity) else {
+                    log::warn!("script tried to play AnimationPlayer on missing entity {entity:?}");
+                    return;
+                };
+                if *restart {
+                    player.time = 0.0;
+                }
+                player.playing = true;
+                return;
+            }
+            ScriptRuntimeRequest::PauseAnimation { entity } => {
+                let entity = Entity::from_u64(*entity);
+                if let Some(player) = self.world.get_component_mut::<AnimationPlayer>(entity) {
+                    player.playing = false;
+                } else {
+                    log::warn!(
+                        "script tried to pause AnimationPlayer on missing entity {entity:?}"
+                    );
+                }
+                return;
+            }
+            ScriptRuntimeRequest::StopAnimation { entity } => {
+                let entity = Entity::from_u64(*entity);
+                self.animations.reset_player(entity);
+                if let Some(player) = self.world.get_component_mut::<AnimationPlayer>(entity) {
+                    player.playing = false;
+                    player.time = 0.0;
+                } else {
+                    log::warn!("script tried to stop AnimationPlayer on missing entity {entity:?}");
+                }
+                return;
+            }
+            ScriptRuntimeRequest::SeekAnimation { entity, time } => {
+                let entity = Entity::from_u64(*entity);
+                if let Some(player) = self.world.get_component_mut::<AnimationPlayer>(entity) {
+                    player.time = *time;
+                } else {
+                    log::warn!("script tried to seek AnimationPlayer on missing entity {entity:?}");
+                }
+                return;
+            }
             ScriptRuntimeRequest::PlayAudio { entity } => {
                 let entity = Entity::from_u64(*entity);
                 if let Some(source) = self.world.get_component_mut::<AudioSource>(entity) {
@@ -277,6 +323,10 @@ impl App {
             ScriptRuntimeRequest::SetAnimatorParameter { .. }
             | ScriptRuntimeRequest::InstantiatePrefab { .. }
             | ScriptRuntimeRequest::PlayAnimatorState { .. }
+            | ScriptRuntimeRequest::PlayAnimation { .. }
+            | ScriptRuntimeRequest::PauseAnimation { .. }
+            | ScriptRuntimeRequest::StopAnimation { .. }
+            | ScriptRuntimeRequest::SeekAnimation { .. }
             | ScriptRuntimeRequest::PlayAudio { .. }
             | ScriptRuntimeRequest::PauseAudio { .. }
             | ScriptRuntimeRequest::StopAudio { .. } => unreachable!(),

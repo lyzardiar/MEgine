@@ -531,6 +531,10 @@ interface EngineApi {
   setAnimatorParameter(entity: number | string, name: string, value: boolean | number): boolean;
   setAnimatorTrigger(entity: number | string, name: string): boolean;
   playAnimatorState(entity: number | string, state: string): boolean;
+  playAnimation(entity: number | string, restart?: boolean): boolean;
+  pauseAnimation(entity: number | string): boolean;
+  stopAnimation(entity: number | string): boolean;
+  seekAnimation(entity: number | string, time: number): boolean;
   playAudio(entity: number | string): boolean;
   pauseAudio(entity: number | string): boolean;
   stopAudio(entity: number | string): boolean;
@@ -821,6 +825,10 @@ mod tests {
         assert!(project_root.join("Assets/Scenes/Main.mscene").is_file());
         assert!(project_root.join("Assets/Scripts/Main.ts").is_file());
         assert!(project_root.join("Assets/Scripts/mengine.d.ts").is_file());
+        let engine_types =
+            std::fs::read_to_string(project_root.join("Assets/Scripts/mengine.d.ts")).unwrap();
+        assert!(engine_types.contains("playAnimation(entity:"));
+        assert!(engine_types.contains("seekAnimation(entity:"));
         assert!(project_root.join("Assets/Models").is_dir());
         assert!(project_root.join("ProjectSettings/editor.json").is_file());
         assert!(project_root

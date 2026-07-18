@@ -31,6 +31,10 @@ interface EngineApi {
   setAnimatorParameter(entity: number | string, name: string, value: boolean | number): boolean;
   setAnimatorTrigger(entity: number | string, name: string): boolean;
   playAnimatorState(entity: number | string, state: string): boolean;
+  playAnimation(entity: number | string, restart?: boolean): boolean;
+  pauseAnimation(entity: number | string): boolean;
+  stopAnimation(entity: number | string): boolean;
+  seekAnimation(entity: number | string, time: number): boolean;
   playAudio(entity: number | string): boolean;
   pauseAudio(entity: number | string): boolean;
   stopAudio(entity: number | string): boolean;

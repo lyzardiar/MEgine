@@ -115,6 +115,12 @@ impl AnimationRuntime {
         }
     }
 
+    /// Makes the next playing update enter the clip from its current authored time.
+    /// Used by script-driven restart/stop commands so time-zero events fire once.
+    pub fn reset_player(&mut self, entity: Entity) {
+        self.active_players.remove(&entity);
+    }
+
     pub fn update(&mut self, world: &mut World, delta_seconds: f32) -> Vec<AnimationLoadFailure> {
         self.pending_events.clear();
         if !delta_seconds.is_finite() {
