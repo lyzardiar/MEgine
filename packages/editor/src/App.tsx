@@ -1,4 +1,4 @@
-import { lazy, useEffect, useMemo, useRef, useState } from 'react';
+import { lazy, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { WorldSnapshotView } from '@mengine/api';
 import { getCurrentWindow } from '@tauri-apps/api/window';
 import {
@@ -143,6 +143,9 @@ type WorkspaceSyncMessage =
     };
 
 const WORKSPACE_CHANNEL = 'mengine.editor.workspace.v1';
+const WORKSPACE_HEARTBEAT_MS = 2_000;
+const WORKSPACE_PEER_TIMEOUT_MS = 5_000;
+const WORKSPACE_PEER_CHECK_MS = 1_000;
 
 export function App(props: { detachedPanel?: PanelKind | null } = {}) {
   const undoService = useMemo(() => createEditorUndoService(), []);
@@ -177,6 +180,19 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
   const [projectSettingsDirty, setProjectSettingsDirty] = useState(false);
   const [buildSettingsDirty, setBuildSettingsDirty] = useState(false);
   const [sceneDirty, setSceneDirty] = useState(false);
+  const [visiblePanels, setVisiblePanels] = useState<ReadonlySet<PanelKind>>(
+    () => new Set(props.detachedPanel
+      ? [props.detachedPanel]
+      : ['hierarchy', 'scene', 'inspector', 'project']),
+  );
+  const updateVisiblePanels = useCallback((panels: ReadonlySet<PanelKind>) => {
+    setVisiblePanels((current) => {
+      if (current.size === panels.size && [...current].every((panel) => panels.has(panel))) {
+        return current;
+      }
+      return new Set(panels);
+    });
+  }, []);
   const [assetReloadEpoch, setAssetReloadEpoch] = useState({
     animation: 0,
     sequencer: 0,
@@ -227,7 +243,11 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
   const syncSender = useRef(crypto.randomUUID());
   const syncChannel = useRef<BroadcastChannel | null>(null);
   const localTimelinePreview = useRef<TimelineScenePreview | null>(null);
-  const remoteTimelinePreview = useRef<{ sender: string; preview: TimelineScenePreview } | null>(null);
+  const remoteTimelinePreview = useRef<{
+    sender: string;
+    preview: TimelineScenePreview;
+    lastSeenAt: number;
+  } | null>(null);
   const workspaceDirtyRef = useRef(false);
   const timelineAssetPathRef = useRef<string | null>(timelineAssetPath);
   const remoteDirtyPeers = useRef(new Map<string, {
@@ -347,6 +367,13 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
     } satisfies WorkspaceSyncMessage);
   };
 
+  const requestRemoteTimelinePreview = () => {
+    syncChannel.current?.postMessage({
+      type: 'request-timeline-preview',
+      sender: syncSender.current,
+    } satisfies WorkspaceSyncMessage);
+  };
+
   const applyLocalTimelinePreview = (preview: TimelineScenePreview) => {
     localTimelinePreview.current = structuredClone(preview);
     if (store.setTimelinePreview(preview)) refresh(false);
@@ -362,6 +389,7 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
       : store.clearTimelinePreview();
     if (changed) refresh(false);
     postTimelinePreview(null);
+    requestRemoteTimelinePreview();
   };
 
   const bumpScenes = () => setSceneTick((t) => t + 1);
@@ -716,6 +744,7 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
           remoteTimelinePreview.current = {
             sender: message.sender,
             preview: structuredClone(message.preview),
+            lastSeenAt: Date.now(),
           };
           if (store.setTimelinePreview(message.preview)) setSnap(store.snapshot());
         } else if (remoteTimelinePreview.current?.sender === message.sender) {
@@ -730,6 +759,9 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
           panel: message.panel,
           dirty: message.dirty,
         });
+        if (remoteTimelinePreview.current?.sender === message.sender) {
+          remoteTimelinePreview.current.lastSeenAt = Date.now();
+        }
         return;
       }
       if (message.type === 'window-closing') {
@@ -737,6 +769,7 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
         if (!localTimelinePreview.current && remoteTimelinePreview.current?.sender === message.sender) {
           remoteTimelinePreview.current = null;
           if (store.clearTimelinePreview()) setSnap(store.snapshot());
+          requestRemoteTimelinePreview();
         }
         return;
       }
@@ -791,18 +824,30 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
         sender: syncSender.current,
       } satisfies WorkspaceSyncMessage);
     }
-    channel.postMessage({
-      type: 'request-timeline-preview',
-      sender: syncSender.current,
-    } satisfies WorkspaceSyncMessage);
+    requestRemoteTimelinePreview();
     postWorkspaceDirtyState();
-    const heartbeat = window.setInterval(postWorkspaceDirtyState, 2_000);
+    const heartbeat = window.setInterval(postWorkspaceDirtyState, WORKSPACE_HEARTBEAT_MS);
+    const peerLease = window.setInterval(() => {
+      const remote = remoteTimelinePreview.current;
+      if (
+        localTimelinePreview.current
+        || !remote
+        || (
+          Number.isFinite(remote.lastSeenAt)
+          && Date.now() - remote.lastSeenAt <= WORKSPACE_PEER_TIMEOUT_MS
+        )
+      ) return;
+      remoteTimelinePreview.current = null;
+      if (store.clearTimelinePreview()) setSnap(store.snapshot());
+      requestRemoteTimelinePreview();
+    }, WORKSPACE_PEER_CHECK_MS);
     const fallback = window.setTimeout(() => {
       syncReady.current = true;
     }, 1500);
     return () => {
       window.clearTimeout(fallback);
       window.clearInterval(heartbeat);
+      window.clearInterval(peerLease);
       if (syncTimer.current != null) window.clearTimeout(syncTimer.current);
       if (localTimelinePreview.current) {
         channel.postMessage({
@@ -1255,7 +1300,8 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
 
   const treeNodes = useMemo(() => store.getVisibleFlat(), [store, snap, treeTick]);
   const snapshotWorldTransforms = useMemo(() => buildWorldTransforms(snap.entities), [snap.entities]);
-  const authoredInspectorEntities = mode === 'edit' && timelineAssetPath != null
+  const timelinePreviewActive = store.timelinePreviewActive();
+  const authoredInspectorEntities = timelinePreviewActive
     ? store.authoredEntities()
     : snap.entities;
 
@@ -1319,6 +1365,7 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
       <DockWorkspace
         detachedPanel={props.detachedPanel}
         dirtyPanels={dirtyPanels}
+        onVisiblePanelsChange={updateVisiblePanels}
         panels={{
           hierarchy: (
             <Hierarchy
@@ -1363,6 +1410,7 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
               sceneCamera={store.sceneCamera}
               gameResolution={gameResolution}
               timelineCameraPreview={store.timelineCameraPreview()}
+              timelineParticlePreviews={store.timelineParticlePreviews()}
               activeInHierarchy={(id) => snapshotWorldTransforms.get(id)?.active === true}
               onPick={(id, modifiers) => {
                 if (modifiers.toggle) store.selectMany([id], 'toggle', id);
@@ -1530,7 +1578,7 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
             <Inspector
               entity={authoredInspectorEntities.find((e) => e.entity === selected) ?? null}
               entities={authoredInspectorEntities}
-              previewNotice={mode === 'edit' && timelineAssetPath != null
+              previewNotice={timelinePreviewActive
                 ? 'Timeline Preview is active. Inspector fields show and edit authored values.'
                 : undefined}
               selectedIds={selectedIds}
@@ -1774,7 +1822,7 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
                 <Timeline
                   key={`animation:${assetReloadEpoch.animation}`}
                   assetPath={animationAssetPath}
-                  previewEnabled={timelineAssetPath == null}
+                  previewEnabled={visiblePanels.has('timeline') && timelineAssetPath == null}
                   onCloseAsset={() => setAnimationAssetPath(null)}
                   entity={snap.entities.find((entity) => entity.entity === selected) ?? null}
                   entities={snap.entities}
@@ -1816,6 +1864,7 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
                   selectedEntity={snap.entities.find((entity) => entity.entity === selected) ?? null}
                   entities={snap.entities}
                   playMode={mode !== 'edit'}
+                  previewEnabled={visiblePanels.has('timeline')}
                   onClose={() => setTimelineAssetPath(null)}
                   onAssignDirector={(entity, path) => {
                     const current = store.authoredEntities().find((entry) => entry.entity === entity)?.components.TimelineDirector;

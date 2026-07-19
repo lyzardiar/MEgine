@@ -1455,3 +1455,14 @@ Camera Shot 的基础闭环已经形成，但 Timeline 仍不完备：编辑器 
 第一遍自省从热路径和多窗口边界反查，发现初稿把每帧变化的 Audio 游标放进 Scene Preview，会让纯音频 Timeline 以 60Hz 刷新 Store 和 `BroadcastChannel`，同时把 WebAudio Controller 拉进主包；现已把音频命令留在 `TimelineScenePreviewBuild` 的本地结果中，并拆分纯模型与懒加载控制器。第二遍自省从暂停态编辑和失效状态反查，补齐 active/mute/pan 签名、父层级激活过滤、只保留当前 Clip 诊断、异步旧请求失效以及公共快照字段。真实页面继续发现 React StrictMode 的开发期 effect 清理会永久 dispose 同一 Controller；最终增加可重入 activate/dispose 契约和专门回归。1280×720 页面在 0.5 秒 Scrub 精确报告 `404 Assets/Audio/Missing.wav`，本地播放头推进至约 0.996 秒后 Stop 回到 0，Timeline Pause 和 AUDIO 状态均释放；343 项编辑器测试、全工作区 TypeScript/Vite 生产构建和 6 项 Runtime 音频契约回归全部通过，验证场景、Timeline、metadata 和状态已清理。
 
 这仍不是完整 DAW 或成熟引擎音频工具链。当前编辑态试听故意使用 2D pan，不模拟 AudioListener、距离衰减、3D spatial blend、Doppler、Mixer Bus/Effect、Streaming/Decompression 策略或平台编解码差异；也尚无波形多级缓存、节拍/采样级标尺、录音、音频事件、Submix 自动化和原生 Runtime Transport 的同一主时钟。下一批先实现可重复的 Particle Timeline Seek/Prewarm/反向拖动，再回到统一编辑器/Runtime Transport 和 Mixer 可视化。
+
+## 123. 2026-07-20 Timeline Particle 确定性编辑态预览
+
+- Particle Track 现在参与 Sequencer 的非破坏编辑态预览。Clip 仍采用 Runtime 相同的半开区间、`clip_in + localTime` 预热时间、Track/Group Mute 与 Solo、稳定 Director Binding/子路径解析，以及“目标必须且只能拥有一个 ParticleEmitter2D 或 ParticleEmitter3D”的组件约束。Timeline 控制期间即使 authored `playing=false` 也能预览发射；离开 Clip、关闭或隐藏 Timeline、切换资源、进入 Play Mode 后恢复 authored 发射器，不把粒子状态写入 Scene、Undo 或 Inspector。
+- Canvas 粒子模拟器增加有上限的确定性 Seek：按配置 Seed 重置，以固定 1/30 秒子步重建，300 秒上限与 Runtime/资产校验一致；发射余数的整数边界 epsilon、速度上下限、生命周期和最大粒子数规范也与 Runtime 契约对齐。暂停游标保持当前状态不继续老化；短距离正向播放只增量推进，反向拖动、跨 Clip、组件变更或大于 250ms 的跳转重新从 Seed 构建，避免每帧从零预热，也避免反向播放沿错误历史倒推。
+- Timeline 预览所有权从“组件仍挂载”收紧为“Dock 当前可见”：隐藏在同一 Tab Group 后立即停止 RAF、音频和粒子控制，Scene 恢复 authored 状态。分离 Timeline 继续通过 Workspace Channel 驱动主窗口；远端预览增加 2 秒心跳与 5 秒租约，正常关闭立即释放，WebView/标签页被强制销毁而未触发 unload 时也会自动清除幽灵预览并请求其他存活窗口接管。Inspector 的 authored-value 提示现在依赖实际预览所有权，不再仅因打开过 `.mtimeline` 就长期显示。
+- 真实页面验证覆盖 authored `playing=false` 的 2 秒预热、0.5→1.5→0.5 秒反向拖动的整页 PNG 字节级一致、暂停 500ms 无变化、Timeline 切到 Project 后粒子和 Inspector 提示立即释放、分离 Timeline 驱动主 Scene，以及强制关闭分离页后租约超时恢复。回归结果为编辑器 347 项测试全部通过、5 个工作区包 TypeScript/Vite 生产构建通过、Runtime 粒子契约 6 项测试通过；临时场景、Timeline、metadata、状态与预览服务均已清理。
+
+第一遍自省沿 Runtime 的 Particle Track 与 `ParticleWorld::seek_entity` 逐项核对，修正速度 `max < min`、发射整数边界和 authored `playing=false` 预热，确认 Clip 时间、激活层级、重复目标与 300 秒门禁在 Editor/Asset/Runtime 三端闭合。第二遍自省从真实 Dock 生命周期和性能反查，发现隐藏 Sequencer 仍会控制 Scene、强制销毁分离窗口会留下远端预览，现分别用可见面板所有权与有界租约修复；同时把连续正向帧保留为增量推进，仅在不连续游标上重建。
+
+这仍不是成熟粒子系统。编辑器 Canvas 预览与原生 wgpu 的浮点精度、投影和纹理采样不保证逐像素一致；长时间 Seek 仍是线性重建，尚无检查点缓存。粒子模块还缺 Burst、Curve/Gradient、Noise、Collision、Trigger、Sub Emitter、Trail、Mesh/Billboard 变体、GPU Simulation、LOD/Culling、容量与显存预算、模块化 Inspector、可视化 Bounds 和 Player Profiler 统计。下一阶段应建立版本化粒子模块资产和 CPU/GPU 后端一致性测试，再把 Timeline 检查点、录制与性能预算接入统一 Transport。

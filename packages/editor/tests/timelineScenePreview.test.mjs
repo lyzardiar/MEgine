@@ -98,7 +98,7 @@ test('uses stable director bindings and restores authored state outside clips', 
   assert.equal(bound[3].components.Transform.position[0], 5);
 
   const outside = buildTimelineScenePreview(asset, entities, 1, bindings, 1.5, clips);
-  assert.deepEqual(outside.preview, { activations: [], animations: [], camera: null });
+  assert.deepEqual(outside.preview, { activations: [], animations: [], camera: null, particles: [] });
   assert.deepEqual(applyTimelineScenePreview(entities, outside.preview), entities);
 });
 
@@ -122,7 +122,7 @@ test('honors mute and Solo filtering and reports invalid preview dependencies', 
   assert.match(missing.diagnostics[0], /Missing\.manim.*not loaded/);
 
   const invalid = buildTimelineScenePreview(asset, entities, 1, '{', 0.25, clips);
-  assert.deepEqual(invalid.preview, { activations: [], animations: [], camera: null });
+  assert.deepEqual(invalid.preview, { activations: [], animations: [], camera: null, particles: [] });
   assert.match(invalid.diagnostics[0], /bindings are invalid/i);
 });
 
@@ -261,4 +261,53 @@ test('builds Runtime-compatible audio preview commands and respects activation h
   const invalid = buildTimelineScenePreview(audioAsset, missingSource, 1, '{}', 0.75, new Map());
   assert.deepEqual(invalid.audio, []);
   assert.match(invalid.diagnostics.join(' '), /does not have an AudioSource/);
+});
+
+test('builds deterministic particle seek commands and rejects ambiguous emitters', () => {
+  const particleEntities = [
+    ...entities,
+    {
+      entity: 5,
+      name: 'Fx',
+      parent: 2,
+      active: true,
+      components: { ParticleEmitter2D: { playing: false, seed: 7 } },
+    },
+  ];
+  const particleAsset = parseTimelineAsset(JSON.stringify({
+    version: 1,
+    duration: 2,
+    tracks: [
+      {
+        type: 'particle', id: 'fx', name: 'FX', target: 'Panel/Fx',
+        clips: [{ start: 0, duration: 2, clip_in: 2 }],
+      },
+      {
+        type: 'activation', id: 'panel', name: 'Panel', target: 'Panel',
+        clips: [{ start: 0, duration: 0.5, active: false }],
+      },
+    ],
+  }));
+
+  const hidden = buildTimelineScenePreview(particleAsset, particleEntities, 1, '{}', 0.25, new Map());
+  assert.deepEqual(hidden.preview.particles, []);
+  assert.match(hidden.diagnostics.join(' '), /inactive in the preview hierarchy/);
+
+  const visible = buildTimelineScenePreview(particleAsset, particleEntities, 1, '{}', 0.75, new Map());
+  assert.deepEqual(visible.preview.particles, [{
+    key: 'fx',
+    label: 'FX',
+    target: 5,
+    targetPath: 'Panel/Fx',
+    clipStart: 0,
+    clipIn: 2,
+    time: 2.75,
+    dimension: 2,
+  }]);
+
+  const ambiguous = structuredClone(particleEntities);
+  ambiguous[4].components.ParticleEmitter3D = {};
+  const invalid = buildTimelineScenePreview(particleAsset, ambiguous, 1, '{}', 0.75, new Map());
+  assert.deepEqual(invalid.preview.particles, []);
+  assert.match(invalid.diagnostics.join(' '), /both 2D and 3D emitters/);
 });

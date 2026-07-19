@@ -176,6 +176,7 @@ function timelinePreviewEntitySignature(entity: SnapshotEntity): string {
     + `\0${entity.active === false ? '0' : '1'}`
     + `\0${entity.components.AnimationPlayer ? 'P' : ''}${entity.components.Animator ? 'A' : ''}`
     + `${entity.components.Camera2D ? '2' : ''}${entity.components.Camera3D ? '3' : ''}`
+    + `${entity.components.ParticleEmitter2D ? 'E2' : ''}${entity.components.ParticleEmitter3D ? 'E3' : ''}`
     + `${audio ? `U${audio.mute ? '1' : '0'}:${Number(audio.pan) || 0}` : ''}`;
 }
 
@@ -184,6 +185,7 @@ export type SequencerProps = {
   selectedEntity: SnapshotEntity | null;
   entities: readonly SnapshotEntity[];
   playMode: boolean;
+  previewEnabled: boolean;
   onClose: () => void;
   onAssignDirector: (entity: number, path: string) => void;
   onPatchDirector: (entity: number, patch: Record<string, unknown>) => void;
@@ -368,7 +370,7 @@ export function Sequencer(props: SequencerProps) {
     .map(timelinePreviewEntitySignature)
     .join('\n');
   const previewBuild = useMemo(() => {
-    if (!asset || props.playMode || !directorEntity) return null;
+    if (!asset || props.playMode || !props.previewEnabled || !directorEntity) return null;
     return buildTimelineScenePreview(
       asset,
       props.entities,
@@ -384,6 +386,7 @@ export function Sequencer(props: SequencerProps) {
     loadedPreviewAnimationClips,
     previewHierarchyKey,
     props.playMode,
+    props.previewEnabled,
     time,
   ]);
   const previewClipFailuresKey = loadedPreviewClipFailures.join('\n');
@@ -741,7 +744,7 @@ export function Sequencer(props: SequencerProps) {
   }), [anyDirty, asset, dirty, payloadInvalid, props.assetPath, savedText]);
 
   useEffect(() => {
-    if (!playing || !asset) return;
+    if (!props.previewEnabled || !playing || !asset) return;
     const tick = (now: number) => {
       const previous = previousFrame.current ?? now;
       previousFrame.current = now;
@@ -764,7 +767,7 @@ export function Sequencer(props: SequencerProps) {
       frame.current = null;
       previousFrame.current = null;
     };
-  }, [asset, playing]);
+  }, [asset, playing, props.previewEnabled]);
 
   useEffect(() => {
     const viewport = tracksViewport.current;
@@ -2022,7 +2025,7 @@ export function Sequencer(props: SequencerProps) {
         <span className="timeline-clip-path" title={props.assetPath}>{asset.name} — {props.assetPath}{dirty ? ' *' : ''}</span>
           {selectedItems.length > 0 && <span className="sequencer-selection-count" title="Arrow keys nudge by one frame; Shift+Arrow nudges by ten frames.">{selectedItems.length} selected</span>}
         {liveDirector && <span className={`sequencer-live-status${liveDirector.playing ? ' playing' : ''}`}>{liveDirector.playing ? 'LIVE PLAYING' : 'LIVE PAUSED'} · {displayTime.toFixed(2)}s</span>}
-        {!props.playMode && directorEntity && <span className="sequencer-live-status edit-preview">EDIT PREVIEW · Activation + Animation + Camera + Audio</span>}
+        {!props.playMode && props.previewEnabled && directorEntity && <span className="sequencer-live-status edit-preview">EDIT PREVIEW · Activation + Animation + Camera + Audio + Particle</span>}
         {!props.playMode && audioPreviewStatus.mode !== 'idle' && <span className="sequencer-live-status edit-preview">AUDIO {audioPreviewStatus.mode.toUpperCase()}{audioPreviewStatus.voices ? ` · ${audioPreviewStatus.voices}` : ''}</span>}
         <div className="sequencer-zoom-controls">
           <button type="button" title="Zoom out" disabled={zoom <= SEQUENCER_MIN_ZOOM} onClick={() => changeZoom(zoom / 1.5)}><Minus size={13} /></button>

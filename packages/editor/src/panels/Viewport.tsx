@@ -54,7 +54,10 @@ import {
   type Camera3DData,
 } from '../editorGizmos';
 import { timelineGameCamera } from '../gameCamera';
-import type { TimelineCameraPreview } from '../timelineScenePreview';
+import type {
+  TimelineCameraPreview,
+  TimelineParticlePreview,
+} from '../timelineScenePreview';
 import {
   angleAroundWorldAxis,
   cursorForGizmoPart,
@@ -95,6 +98,8 @@ import { canvasScaleFactor, readRectTransform } from '../ui/rectLayout';
 import {
   collectParticleDrawItems,
   createParticleEmitterState,
+  resetParticleEmitterState,
+  seekParticleEmitter,
   stepParticleEmitter,
   type ParticleEmitterState,
 } from '../particles/particleSystem';
@@ -443,6 +448,7 @@ export function Viewport(props: {
   sceneCamera: SceneCamera;
   gameResolution: GameResolution | null;
   timelineCameraPreview?: TimelineCameraPreview | null;
+  timelineParticlePreviews?: readonly TimelineParticlePreview[];
   onPick: (id: number, modifiers: { toggle: boolean; additive: boolean }) => void;
   onMarqueeSelect: (ids: number[], mode: MarqueeSelectionMode) => void;
   onSceneCamera: (partial: Partial<SceneCamera>) => void;
@@ -526,6 +532,14 @@ export function Viewport(props: {
   const focusedUiRef = useRef<number | null>(null);
   const uiStatsRef = useRef({ elements: 0, batches: 0 });
   const particleStatesRef = useRef(new Map<number, ParticleEmitterState>());
+  const particleTimelineStateRef = useRef(new Map<number, {
+    key: string;
+    clipStart: number;
+    clipIn: number;
+    time: number;
+    dimension: 2 | 3;
+    componentSignature: string;
+  }>());
   const spineRuntimeRef = useRef<SpineCanvasRuntime | null>(null);
   const spineRuntimeLoadRef = useRef<Promise<void> | null>(null);
   const spineRuntimeErrorRef = useRef<string | null>(null);
@@ -740,7 +754,7 @@ export function Viewport(props: {
   // Force paint when props change
   useEffect(() => {
     setTick((t) => t + 1);
-  }, [props.tab, props.entities, props.selected, props.selectedIds, props.gizmo, props.pivotMode, props.handleOrientation, props.gameResolution, props.timelineCameraPreview, props.angle, props.playing, props.activeInHierarchy]);
+  }, [props.tab, props.entities, props.selected, props.selectedIds, props.gizmo, props.pivotMode, props.handleOrientation, props.gameResolution, props.timelineCameraPreview, props.timelineParticlePreviews, props.angle, props.playing, props.activeInHierarchy]);
 
   const paint = () => {
     const paintStartedAt = performance.now();
@@ -875,6 +889,9 @@ export function Viewport(props: {
       twoDimensional: boolean;
       component: Record<string, unknown>;
     }>();
+    const timelineParticleByEntity = new Map(
+      (p.timelineParticlePreviews ?? []).map((preview) => [preview.target, preview]),
+    );
     for (const entity of p.entities) {
       if (!isActive(entity.entity)) continue;
       const transform = resolvedTransform(worldTransforms, entity.entity) ?? undefined;
@@ -890,7 +907,54 @@ export function Viewport(props: {
         particleStatesRef.current.set(entity.entity, state);
       }
       const emitterPosition = transform.position as Vec3;
-      stepParticleEmitter(emitter2D ? 2 : 3, emitter, state, particleDelta, emitterPosition);
+      const dimension = emitter2D ? 2 : 3;
+      const timelineParticle = timelineParticleByEntity.get(entity.entity);
+      const previousTimeline = particleTimelineStateRef.current.get(entity.entity);
+      if (timelineParticle) {
+        const componentSignature = JSON.stringify([dimension, emitter]);
+        const delta = timelineParticle.time - (previousTimeline?.time ?? timelineParticle.time);
+        const discontinuity = !previousTimeline
+          || previousTimeline.key !== timelineParticle.key
+          || previousTimeline.clipStart !== timelineParticle.clipStart
+          || previousTimeline.clipIn !== timelineParticle.clipIn
+          || previousTimeline.dimension !== dimension
+          || previousTimeline.componentSignature !== componentSignature
+          || delta < 0
+          || delta > 0.25;
+        if (discontinuity) {
+          if (!seekParticleEmitter(
+            dimension,
+            emitter,
+            state,
+            timelineParticle.time,
+            emitterPosition,
+          )) {
+            resetParticleEmitterState(state, Number(emitter.seed) || 1);
+          }
+        } else if (delta > 1e-6) {
+          stepParticleEmitter(
+            dimension,
+            { ...emitter, playing: true },
+            state,
+            delta,
+            emitterPosition,
+          );
+        }
+        particleTimelineStateRef.current.set(entity.entity, {
+          key: timelineParticle.key,
+          clipStart: timelineParticle.clipStart,
+          clipIn: timelineParticle.clipIn,
+          time: timelineParticle.time,
+          dimension,
+          componentSignature,
+        });
+      } else {
+        if (previousTimeline) {
+          resetParticleEmitterState(state, Number(emitter.seed) || 1);
+          particleTimelineStateRef.current.delete(entity.entity);
+        }
+        stepParticleEmitter(dimension, emitter, state, particleDelta, emitterPosition);
+      }
       particleDrawByEntity.set(entity.entity, {
         items: collectParticleDrawItems(state, emitterPosition, emitter.simulation_space),
         additive: String(emitter.blend_mode).toLowerCase() === 'additive',
@@ -899,7 +963,10 @@ export function Viewport(props: {
       });
     }
     for (const entityId of particleStatesRef.current.keys()) {
-      if (!liveEmitterIds.has(entityId)) particleStatesRef.current.delete(entityId);
+      if (!liveEmitterIds.has(entityId)) {
+        particleStatesRef.current.delete(entityId);
+        particleTimelineStateRef.current.delete(entityId);
+      }
     }
 
     const liveSpineIds = new Set<number>();

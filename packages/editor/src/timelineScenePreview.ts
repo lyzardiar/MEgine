@@ -32,12 +32,24 @@ export type TimelineScenePreview = {
   activations: TimelineActivationPreview[];
   animations: AnimationPreviewLayer[];
   camera: TimelineCameraPreview | null;
+  particles: TimelineParticlePreview[];
 };
 
 export type TimelineCameraPreview = {
   source: number | null;
   target: number;
   weight: number;
+};
+
+export type TimelineParticlePreview = {
+  key: string;
+  label: string;
+  target: number;
+  targetPath: string;
+  clipStart: number;
+  clipIn: number;
+  time: number;
+  dimension: 2 | 3;
 };
 
 export type TimelineScenePreviewBuild = {
@@ -82,6 +94,7 @@ export function buildTimelineScenePreview(
     activations: [],
     animations: [],
     camera: null,
+    particles: [],
   };
   let audio: TimelineAudioPreviewItem[] = [];
   const diagnostics: string[] = [];
@@ -206,6 +219,38 @@ export function buildTimelineScenePreview(
       });
       continue;
     }
+    if (track.type === 'particle') {
+      const clip = track.clips.find((candidate) => sampleTime >= candidate.start
+        && sampleTime < candidate.start + candidate.duration);
+      if (!clip) continue;
+      const target = resolveTrackTarget(track.target);
+      if (target == null) {
+        diagnostics.push(`Particle track '${track.name}' target '${track.target}' is not resolved.`);
+        continue;
+      }
+      const targetEntity = entities.find((candidate) => candidate.entity === target);
+      const has2D = Boolean(targetEntity?.components.ParticleEmitter2D);
+      const has3D = Boolean(targetEntity?.components.ParticleEmitter3D);
+      if (!has2D && !has3D) {
+        diagnostics.push(`Particle track '${track.name}' target '${track.target}' does not have a ParticleEmitter2D or ParticleEmitter3D component.`);
+        continue;
+      }
+      if (has2D && has3D) {
+        diagnostics.push(`Particle track '${track.name}' target '${track.target}' has both 2D and 3D emitters; bind a dedicated emitter.`);
+        continue;
+      }
+      preview.particles.push({
+        key: track.id,
+        label: track.name,
+        target,
+        targetPath: track.target,
+        clipStart: clip.start,
+        clipIn: clip.clip_in,
+        time: clip.clip_in + Math.max(0, sampleTime - clip.start),
+        dimension: has2D ? 2 : 3,
+      });
+      continue;
+    }
     if (track.type !== 'animation') continue;
     const timelineClip = track.clips.find((candidate) => sampleTime >= candidate.start
       && sampleTime < candidate.start + candidate.duration);
@@ -240,11 +285,11 @@ export function buildTimelineScenePreview(
     if (previous >= 0) preview.animations[previous] = layer;
     else preview.animations.push(layer);
   }
-  if (audio.length) {
+  if (audio.length || preview.particles.length) {
     const byId = new Map(entities.map((entity) => [entity.entity, entity]));
     const activation = new Map(preview.activations.map((entry) => [entry.entity, entry.active]));
-    audio = audio.filter((item) => {
-      let current: number | null = item.target;
+    const activeInHierarchy = (target: number) => {
+      let current: number | null = target;
       const visited = new Set<number>();
       while (current != null) {
         if (visited.has(current)) return false;
@@ -255,6 +300,12 @@ export function buildTimelineScenePreview(
         current = entity.parent ?? null;
       }
       return true;
+    };
+    audio = audio.filter((item) => activeInHierarchy(item.target));
+    preview.particles = preview.particles.filter((item) => {
+      if (activeInHierarchy(item.target)) return true;
+      diagnostics.push(`Particle track '${item.label}' target '${item.targetPath}' is inactive in the preview hierarchy.`);
+      return false;
     });
   }
   return { preview, audio, diagnostics };

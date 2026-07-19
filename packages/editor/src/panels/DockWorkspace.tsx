@@ -173,6 +173,16 @@ function collectPanels(n: DockNode, out: Set<PanelKind> = new Set()): Set<PanelK
   return out;
 }
 
+function collectActivePanels(n: DockNode, out: Set<PanelKind> = new Set()): Set<PanelKind> {
+  if (n.kind === 'tabs') {
+    if (n.active) out.add(n.active);
+    return out;
+  }
+  collectActivePanels(n.a, out);
+  collectActivePanels(n.b, out);
+  return out;
+}
+
 function mapLeaf(
   n: DockNode,
   leafId: string,
@@ -886,6 +896,7 @@ export function DockWorkspace(props: {
   panels: DockPanelContents;
   detachedPanel?: PanelKind | null;
   dirtyPanels?: ReadonlySet<PanelKind>;
+  onVisiblePanelsChange?: (panels: ReadonlySet<PanelKind>) => void;
 }) {
   const boot = useRef(loadTree());
   const [tree, setTree] = useState<DockNode>(boot.current);
@@ -894,6 +905,12 @@ export function DockWorkspace(props: {
   const [dragging, setDragging] = useState(false);
   const [drop, setDrop] = useState<DropTarget | null>(null);
   const [externalDragging, setExternalDragging] = useState<PanelKind | null>(null);
+
+  useEffect(() => {
+    props.onVisiblePanelsChange?.(props.detachedPanel
+      ? new Set([props.detachedPanel])
+      : collectActivePanels(tree));
+  }, [props.detachedPanel, props.onVisiblePanelsChange, tree]);
 
   const panelContent = useCallback((panel: PanelKind): ReactNode => {
     if (panel === 'scene' || panel === 'game') {

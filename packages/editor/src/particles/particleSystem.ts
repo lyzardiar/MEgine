@@ -29,6 +29,7 @@ export type ParticleDrawItem = {
 
 const MAX_PARTICLES = 100_000;
 const MAX_STEP_SECONDS = 1 / 30;
+const MAX_SEEK_SECONDS = 300;
 
 function finite(value: unknown, fallback: number): number {
   const parsed = Number(value);
@@ -104,11 +105,8 @@ function spawn2D(component: Record<string, unknown>, state: ParticleEmitterState
   const baseAngle = Math.atan2(direction[1], direction[0]);
   const spread = finite(component.spread_degrees, 35) * Math.PI / 180;
   const angle = baseAngle + (nextRandom(state) - 0.5) * spread;
-  const speed = randomRange(
-    state,
-    Math.max(0, finite(component.speed_min, 0.5)),
-    Math.max(0, finite(component.speed_max, 2)),
-  );
+  const speedMin = Math.max(0, finite(component.speed_min, 0.5));
+  const speed = randomRange(state, speedMin, Math.max(speedMin, finite(component.speed_max, 2)));
   return createParticle(component, [x, y, 0], [Math.cos(angle) * speed, Math.sin(angle) * speed, 0], state);
 }
 
@@ -141,11 +139,8 @@ function spawn3D(component: Record<string, unknown>, state: ParticleEmitterState
     direction[1] + random[1] * spread,
     direction[2] + random[2] * spread,
   ]);
-  const speed = randomRange(
-    state,
-    Math.max(0, finite(component.speed_min, 0.8)),
-    Math.max(0, finite(component.speed_max, 3)),
-  );
+  const speedMin = Math.max(0, finite(component.speed_min, 0.8));
+  const speed = randomRange(state, speedMin, Math.max(speedMin, finite(component.speed_max, 3)));
   return createParticle(
     component,
     position,
@@ -200,6 +195,26 @@ export function stepParticleEmitter(
   }
 }
 
+/** Rebuild an emitter from its configured seed using the same fixed substeps as Runtime seek. */
+export function seekParticleEmitter(
+  dimension: 2 | 3,
+  component: Record<string, unknown>,
+  state: ParticleEmitterState,
+  timeSeconds: number,
+  emitterPosition: Vec3 = [0, 0, 0],
+): boolean {
+  const time = Number(timeSeconds);
+  if (!Number.isFinite(time) || time < 0 || time > MAX_SEEK_SECONDS) return false;
+  resetParticleEmitterState(state, finite(component.seed, 1));
+  let remaining = time;
+  while (remaining > 0) {
+    const dt = Math.min(MAX_STEP_SECONDS, remaining);
+    stepSubframe(dimension, component, state, dt, emitterPosition);
+    remaining -= dt;
+  }
+  return true;
+}
+
 function stepSubframe(
   dimension: 2 | 3,
   component: Record<string, unknown>,
@@ -229,8 +244,8 @@ function stepSubframe(
   const maxParticles = Math.min(MAX_PARTICLES, Math.max(0, finite(component.max_particles, 1000) | 0));
   const rate = Math.max(0, finite(component.rate_over_time, 20));
   state.emissionRemainder += rate * dt;
-  const requested = Math.floor(state.emissionRemainder);
-  state.emissionRemainder -= requested;
+  const requested = Math.floor(state.emissionRemainder + 1e-5);
+  state.emissionRemainder = Math.max(0, state.emissionRemainder - requested);
   const count = Math.min(requested, Math.max(0, maxParticles - state.particles.length));
   for (let index = 0; index < count; index += 1) {
     const particle = dimension === 2 ? spawn2D(component, state) : spawn3D(component, state);
