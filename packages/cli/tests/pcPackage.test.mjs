@@ -826,7 +826,7 @@ test('buildPcPackage includes validated custom material surface shaders', () => 
   }
 });
 
-test('buildPcPackage validates material v6 clearcoat and sampler contracts', () => {
+test('buildPcPackage validates material v7 IOR, clearcoat, and sampler contracts', () => {
   const paths = fixture('invalid-material-contract');
   try {
     writeFileSync(join(paths.project, 'Assets', 'Scenes', 'Main.mscene'), JSON.stringify({
@@ -835,16 +835,25 @@ test('buildPcPackage validates material v6 clearcoat and sampler contracts', () 
       } }] },
     }));
     const materialPath = join(paths.project, 'Assets', 'Materials', 'Paint.mmat');
-    writeFileSync(materialPath, JSON.stringify({ version: 7, shader: 'pbr' }));
+    writeFileSync(materialPath, JSON.stringify({ version: 8, shader: 'pbr' }));
     assert.throws(() => buildPcPackage({
       projectDir: paths.project,
       outputDir: paths.output,
       runtimePath: paths.runtime,
       engineVersion: 'test-engine',
-    }), /unsupported version 7/);
+    }), /unsupported version 8/);
     assert.equal(existsSync(paths.output), false);
 
-    writeFileSync(materialPath, JSON.stringify({ version: 6, shader: 'pbr', wrap_u: 'border' }));
+    writeFileSync(materialPath, JSON.stringify({ version: 7, shader: 'pbr', ior: 3 }));
+    assert.throws(() => buildPcPackage({
+      projectDir: paths.project,
+      outputDir: paths.output,
+      runtimePath: paths.runtime,
+      engineVersion: 'test-engine',
+    }), /ior must be a finite number from 1 to 2.5/);
+    assert.equal(existsSync(paths.output), false);
+
+    writeFileSync(materialPath, JSON.stringify({ version: 7, shader: 'pbr', wrap_u: 'border' }));
     assert.throws(() => buildPcPackage({
       projectDir: paths.project,
       outputDir: paths.output,
@@ -854,7 +863,7 @@ test('buildPcPackage validates material v6 clearcoat and sampler contracts', () 
     assert.equal(existsSync(paths.output), false);
 
     writeFileSync(materialPath, JSON.stringify({
-      version: 6,
+      version: 7,
       shader: 'pbr',
       filter: 'nearest',
       mipmap_filter: 'linear',
@@ -869,8 +878,9 @@ test('buildPcPackage validates material v6 clearcoat and sampler contracts', () 
     assert.equal(existsSync(paths.output), false);
 
     writeFileSync(materialPath, JSON.stringify({
-      version: 6,
+      version: 7,
       shader: 'pbr',
+      ior: 1.33,
       clearcoat: 0.75,
       clearcoat_roughness: 0.15,
       filter: 'linear',

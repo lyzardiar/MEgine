@@ -390,16 +390,18 @@ function previewMaterialColor(
     baseColor: [0.8, 0.8, 0.8, 1] as [number, number, number, number],
     metallic: 0,
     roughness: 0.5,
+    ior: 1.5,
     clearcoat: 0,
     clearcoatRoughness: 0.1,
     emissive: [0, 0, 0] as [number, number, number],
     emissiveStrength: 1,
     unlit: false,
   };
+  const dielectricF0 = ((source.ior - 1) / (source.ior + 1)) ** 2;
   const lighting = source.unlit ? 1 : Math.max(0, shade) * (1 - source.metallic * 0.25);
   const highlight = source.unlit
     ? 0
-    : ((0.04 + source.metallic * 0.36) * (1 - source.roughness)
+    : ((dielectricF0 + source.metallic * (0.4 - dielectricF0)) * (1 - source.roughness)
       + source.clearcoat * 0.24 * (1 - source.clearcoatRoughness))
       * Math.max(0, shade - 0.45);
   return [0, 1, 2, 3].map((channel) => {

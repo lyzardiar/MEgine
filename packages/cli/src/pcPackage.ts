@@ -526,7 +526,7 @@ function scanBuildAssetDependencies(
     } else if (extension === '.mmat' || extension === '.mat') {
       const material = readJsonAsset(absolute, root, 'material');
       if (material.version != null
-        && (!Number.isInteger(material.version) || Number(material.version) < 1 || Number(material.version) > 6)) {
+        && (!Number.isInteger(material.version) || Number(material.version) < 1 || Number(material.version) > 7)) {
         throw new Error(`invalid material ${source}: unsupported version ${String(material.version)}`);
       }
       if (material.shader != null
@@ -563,6 +563,13 @@ function scanBuildAssetDependencies(
           || Number(material.render_queue) < -1
           || Number(material.render_queue) > 5000)) {
         throw new Error(`invalid material ${source}: render_queue must be an integer from -1 to 5000`);
+      }
+      if (material.ior != null
+        && (typeof material.ior !== 'number'
+          || !Number.isFinite(material.ior)
+          || material.ior < 1
+          || material.ior > 2.5)) {
+        throw new Error(`invalid material ${source}: ior must be a finite number from 1 to 2.5`);
       }
       for (const field of ['wrap_u', 'wrap_v']) {
         const value = material[field];

@@ -67,6 +67,7 @@ pub struct RenderMaterial {
     pub base_color: [f32; 4],
     pub metallic: f32,
     pub roughness: f32,
+    pub ior: f32,
     pub clearcoat: f32,
     pub clearcoat_roughness: f32,
     pub emissive: [f32; 3],
@@ -128,6 +129,7 @@ impl Default for RenderMaterial {
             base_color: [0.8, 0.8, 0.8, 1.0],
             metallic: 0.0,
             roughness: 0.5,
+            ior: 1.5,
             clearcoat: 0.0,
             clearcoat_roughness: 0.1,
             emissive: [0.0; 3],
@@ -1780,7 +1782,7 @@ fn make_object_uniforms(object: &RenderObject) -> ObjectUniforms {
         layer_params: [
             material.clearcoat.clamp(0.0, 1.0),
             material.clearcoat_roughness.clamp(0.04, 1.0),
-            0.0,
+            dielectric_f0_from_ior(material.ior),
             0.0,
         ],
         shadow_params: [
@@ -1790,6 +1792,16 @@ fn make_object_uniforms(object: &RenderObject) -> ObjectUniforms {
             0.0,
         ],
     }
+}
+
+fn dielectric_f0_from_ior(ior: f32) -> f32 {
+    let ior = if ior.is_finite() {
+        ior.clamp(1.0, 2.5)
+    } else {
+        1.5
+    };
+    let ratio = (ior - 1.0) / (ior + 1.0);
+    ratio * ratio
 }
 
 fn create_material_sampler(
@@ -2642,8 +2654,9 @@ fn environment_contribution(
     metallic: f32,
     roughness: f32,
     occlusion: f32,
+    dielectric_f0: f32,
 ) -> vec3<f32> {
-    let f0 = mix(vec3<f32>(0.04), base_color, metallic);
+    let f0 = mix(vec3<f32>(dielectric_f0), base_color, metallic);
     let ndv = max(dot(n, v), 0.0);
     let fresnel = fresnel_schlick_roughness(ndv, f0, roughness);
     let diffuse_weight = (vec3<f32>(1.0) - fresnel) * (1.0 - metallic);
@@ -2701,10 +2714,13 @@ fn layered_environment_contribution(
     metallic: f32,
     roughness: f32,
     occlusion: f32,
+    dielectric_f0: f32,
     clearcoat: f32,
     clearcoat_roughness: f32,
 ) -> vec3<f32> {
-    let base = environment_contribution(n, v, base_color, metallic, roughness, occlusion);
+    let base = environment_contribution(
+        n, v, base_color, metallic, roughness, occlusion, dielectric_f0,
+    );
     let amount = clamp(clearcoat, 0.0, 1.0);
     if amount <= 0.0 {
         return base;
@@ -2728,6 +2744,7 @@ fn light_contribution(
     base_color: vec3<f32>,
     metallic: f32,
     roughness: f32,
+    dielectric_f0: f32,
 ) -> vec3<f32> {
     let ndl = max(dot(n, l), 0.0);
     let ndv = max(dot(n, v), 0.0);
@@ -2735,7 +2752,7 @@ fn light_contribution(
         return vec3<f32>(0.0);
     }
     let h = normalize(l + v);
-    let f0 = mix(vec3<f32>(0.04), base_color, metallic);
+    let f0 = mix(vec3<f32>(dielectric_f0), base_color, metallic);
     let fresnel = fresnel_schlick(max(dot(h, v), 0.0), f0);
     let distribution = distribution_ggx(n, h, roughness);
     let geometry = geometry_smith(n, v, l, roughness);
@@ -2773,10 +2790,13 @@ fn layered_light_contribution(
     base_color: vec3<f32>,
     metallic: f32,
     roughness: f32,
+    dielectric_f0: f32,
     clearcoat: f32,
     clearcoat_roughness: f32,
 ) -> vec3<f32> {
-    let base = light_contribution(n, v, l, radiance, base_color, metallic, roughness);
+    let base = light_contribution(
+        n, v, l, radiance, base_color, metallic, roughness, dielectric_f0,
+    );
     let amount = clamp(clearcoat, 0.0, 1.0);
     let ndl = max(dot(n, l), 0.0);
     let ndv = max(dot(n, v), 0.0);
@@ -2960,6 +2980,7 @@ fn fs_main(i: VsOut, @builtin(front_facing) front_facing: bool) -> @location(0) 
     let v = normalize(frame.camera_position.xyz - i.world_position);
     let clearcoat = clamp(object.layer_params.x, 0.0, 1.0);
     let clearcoat_roughness = clamp(object.layer_params.y, 0.04, 1.0);
+    let dielectric_f0 = clamp(object.layer_params.z, 0.0, 1.0);
     var color = layered_environment_contribution(
         surface.normal,
         v,
@@ -2967,6 +2988,7 @@ fn fs_main(i: VsOut, @builtin(front_facing) front_facing: bool) -> @location(0) 
         surface.metallic,
         surface.roughness,
         surface.occlusion,
+        dielectric_f0,
         clearcoat,
         clearcoat_roughness,
     );
@@ -2977,6 +2999,7 @@ fn fs_main(i: VsOut, @builtin(front_facing) front_facing: bool) -> @location(0) 
             surface.normal, v, l,
             frame.directional_color.rgb * frame.directional_color.a,
             surface.base_color, surface.metallic, surface.roughness,
+            dielectric_f0,
             clearcoat, clearcoat_roughness,
         );
     }
@@ -2990,6 +3013,7 @@ fn fs_main(i: VsOut, @builtin(front_facing) front_facing: bool) -> @location(0) 
                 surface.normal, v, normalize(to_light),
                 frame.point_colors[index].rgb * frame.point_colors[index].a * attenuation,
                 surface.base_color, surface.metallic, surface.roughness,
+                dielectric_f0,
                 clearcoat, clearcoat_roughness,
             );
         }
@@ -3009,6 +3033,7 @@ fn fs_main(i: VsOut, @builtin(front_facing) front_facing: bool) -> @location(0) 
                 surface.normal, v, normalize(to_light),
                 frame.spot_colors[index].rgb * frame.spot_colors[index].a * attenuation,
                 surface.base_color, surface.metallic, surface.roughness,
+                dielectric_f0,
                 clearcoat, clearcoat_roughness,
             );
         }
@@ -3060,6 +3085,7 @@ mod tests {
             "fn geometry_smith",
             "fn fresnel_schlick",
             "fn environment_contribution",
+            "let dielectric_f0 = clamp(object.layer_params.z, 0.0, 1.0)",
             "fn layered_environment_contribution",
             "fn clearcoat_environment_contribution",
             "fn layered_light_contribution",
@@ -3207,6 +3233,7 @@ mod tests {
                 occlusion_strength: 0.65,
                 clearcoat: 0.8,
                 clearcoat_roughness: 0.18,
+                ior: 1.33,
                 emissive_texture: "emissive.png".into(),
                 uv_rotation_degrees: 90.0,
                 wrap_u: MaterialWrap::Clamp,
@@ -3232,10 +3259,10 @@ mod tests {
             make_object_uniforms(&object).map_params,
             [1.5, 0.65, std::f32::consts::FRAC_PI_2, 0.0]
         );
-        assert_eq!(
-            make_object_uniforms(&object).layer_params,
-            [0.8, 0.18, 0.0, 0.0]
-        );
+        let layers = make_object_uniforms(&object).layer_params;
+        assert_eq!([layers[0], layers[1], layers[3]], [0.8, 0.18, 0.0]);
+        assert!((layers[2] - 0.020_059_312).abs() < 0.000_001);
+        assert!((dielectric_f0_from_ior(f32::NAN) - 0.04).abs() < 0.000_001);
         assert_eq!(make_object_uniforms(&object).shadow_params, [0.0; 4]);
     }
 

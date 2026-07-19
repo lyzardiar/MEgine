@@ -31,6 +31,7 @@ export type MaterialAsset = {
   base_color: [number, number, number, number];
   metallic: number;
   roughness: number;
+  ior: number;
   clearcoat: number;
   clearcoat_roughness: number;
   emissive: [number, number, number];
@@ -97,7 +98,7 @@ export function materialReferenceDiagnostics(
 
 export function createMaterialAsset(name = 'New Material'): MaterialAsset {
   return {
-    version: 6,
+    version: 7,
     name,
     shader: 'pbr',
     custom_shader: '',
@@ -108,6 +109,7 @@ export function createMaterialAsset(name = 'New Material'): MaterialAsset {
     base_color: [0.8, 0.8, 0.8, 1],
     metallic: 0,
     roughness: 0.5,
+    ior: 1.5,
     clearcoat: 0,
     clearcoat_roughness: 0.1,
     emissive: [0, 0, 0],
@@ -152,7 +154,7 @@ export function normalizeMaterialAsset(value: unknown): MaterialAsset {
     .map((part) => Math.max(0, part)) as MaterialAsset['emissive'];
   const anisotropy = Math.max(1, Math.min(16, Math.trunc(finite(source.anisotropy, 1))));
   return {
-    version: 6,
+    version: 7,
     name: String(source.name ?? ''),
     shader: source.shader === 'unlit' || source.shader === 'custom' ? source.shader : 'pbr',
     custom_shader: String(source.custom_shader ?? '').trim().replace(/\\/g, '/'),
@@ -169,6 +171,7 @@ export function normalizeMaterialAsset(value: unknown): MaterialAsset {
     base_color: baseColor,
     metallic: Math.max(0, Math.min(1, finite(source.metallic, 0))),
     roughness: Math.max(0.04, Math.min(1, finite(source.roughness, 0.5))),
+    ior: Math.max(1, Math.min(2.5, finite(source.ior, 1.5))),
     clearcoat: Math.max(0, Math.min(1, finite(source.clearcoat, 0))),
     clearcoat_roughness: Math.max(0.04, Math.min(1, finite(source.clearcoat_roughness, 0.1))),
     emissive,
@@ -204,7 +207,7 @@ export function parseMaterialAsset(text: string): MaterialAsset {
   }
   const source = parsed as Record<string, unknown>;
   if (source.version != null
-    && (!Number.isInteger(source.version) || Number(source.version) < 1 || Number(source.version) > 6)) {
+    && (!Number.isInteger(source.version) || Number(source.version) < 1 || Number(source.version) > 7)) {
     throw new Error(`Unsupported material version: ${String(source.version)}`);
   }
   const enumField = (field: string, allowed: readonly string[]) => {
@@ -224,6 +227,6 @@ export function parseMaterialAsset(text: string): MaterialAsset {
 }
 
 export function serializeMaterialAsset(material: MaterialAsset): string {
-  if (material.version !== 6) throw new Error(`Unsupported material version: ${material.version}`);
+  if (material.version !== 7) throw new Error(`Unsupported material version: ${material.version}`);
   return `${JSON.stringify(normalizeMaterialAsset(material), null, 2)}\n`;
 }

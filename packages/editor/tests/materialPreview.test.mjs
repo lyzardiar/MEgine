@@ -10,6 +10,7 @@ test('material asset preview carries PBR and unlit authoring values', () => {
   material.base_color = [0.2, 0.4, 0.8, 0.7];
   material.metallic = 0.75;
   material.roughness = 0.2;
+  material.ior = 1.33;
   material.clearcoat = 0.8;
   material.clearcoat_roughness = 0.12;
   material.emissive = [2, 1, 0.5];
@@ -18,6 +19,7 @@ test('material asset preview carries PBR and unlit authoring values', () => {
     baseColor: [0.2, 0.4, 0.8, 0.7],
     metallic: 0.75,
     roughness: 0.2,
+    ior: 1.33,
     clearcoat: 0.8,
     clearcoatRoughness: 0.12,
     emissive: [2, 1, 0.5],
@@ -40,6 +42,7 @@ test('per-renderer PBR component overrides a material asset preview', () => {
     baseColor: [0, 1, 0, 0.5],
     metallic: 1,
     roughness: 0.04,
+    ior: 1.5,
     clearcoat: 0,
     clearcoatRoughness: 0.1,
     emissive: [0, 0, 1],
@@ -71,6 +74,7 @@ test('material property block overrides only enabled asset parameters', () => {
     baseColor: [1, 0.5, 0.25, 0.75],
     metallic: 0.7,
     roughness: 0.04,
+    ior: 1.5,
     clearcoat: 0,
     clearcoatRoughness: 0.1,
     emissive: [1, 2, 3],
@@ -84,6 +88,7 @@ test('built-in material preview presets match runtime presets', () => {
     baseColor: [1, 0.55, 0.08, 1],
     metallic: 0.9,
     roughness: 0.22,
+    ior: 1.5,
     clearcoat: 0,
     clearcoatRoughness: 0.1,
     emissive: [0, 0, 0],

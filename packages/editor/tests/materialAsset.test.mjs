@@ -11,7 +11,7 @@ import {
 
 test('material assets have stable authoring defaults', () => {
   assert.deepEqual(createMaterialAsset('Paint'), {
-    version: 6,
+    version: 7,
     name: 'Paint',
     shader: 'pbr',
     custom_shader: '',
@@ -22,6 +22,7 @@ test('material assets have stable authoring defaults', () => {
     base_color: [0.8, 0.8, 0.8, 1],
     metallic: 0,
     roughness: 0.5,
+    ior: 1.5,
     clearcoat: 0,
     clearcoat_roughness: 0.1,
     emissive: [0, 0, 0],
@@ -75,6 +76,7 @@ test('material parsing normalizes ranges and texture separators', () => {
   assert.deepEqual(material.base_color, [1, 0, 0.5, 0.25]);
   assert.equal(material.metallic, 1);
   assert.equal(material.roughness, 0.04);
+  assert.equal(material.ior, 1.5);
   assert.equal(material.clearcoat, 0);
   assert.equal(material.clearcoat_roughness, 0.1);
   assert.equal(material.base_color_texture, 'Assets/Textures/glass.png');
@@ -99,7 +101,7 @@ test('legacy material assets upgrade to safe pipeline defaults', () => {
     name: 'Legacy',
     surface: 'transparent',
   }));
-  assert.equal(legacy.version, 6);
+  assert.equal(legacy.version, 7);
   assert.equal(legacy.blend_mode, 'alpha');
   assert.equal(legacy.transparent_depth_write, false);
   assert.equal(legacy.render_queue, -1);
@@ -108,7 +110,8 @@ test('legacy material assets upgrade to safe pipeline defaults', () => {
   assert.equal(legacy.anisotropy, 1);
   assert.equal(legacy.clearcoat, 0);
   assert.equal(legacy.clearcoat_roughness, 0.1);
-  assert.throws(() => parseMaterialAsset('{"version":7}'), /Unsupported material version/);
+  assert.equal(legacy.ior, 1.5);
+  assert.throws(() => parseMaterialAsset('{"version":8}'), /Unsupported material version/);
   assert.throws(() => parseMaterialAsset('{"version":6,"filter":"cubic"}'), /Invalid material filter/);
   assert.throws(() => parseMaterialAsset('{"version":6,"mipmap_filter":"cubic"}'), /Invalid material mipmap_filter/);
 });
@@ -134,6 +137,15 @@ test('clearcoat material parameters are bounded and round trip', () => {
   assert.equal(material.clearcoat, 1);
   assert.equal(material.clearcoat_roughness, 0.04);
   assert.deepEqual(parseMaterialAsset(serializeMaterialAsset(material)), material);
+});
+
+test('material v7 index of refraction is bounded and round trips', () => {
+  const low = parseMaterialAsset('{"version":7,"ior":0.5}');
+  const high = parseMaterialAsset('{"version":7,"ior":4}');
+  assert.equal(low.ior, 1);
+  assert.equal(high.ior, 2.5);
+  high.ior = 1.33;
+  assert.deepEqual(parseMaterialAsset(serializeMaterialAsset(high)), high);
 });
 
 test('custom material shader references normalize project separators', () => {

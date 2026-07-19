@@ -3,7 +3,7 @@ use serde::{Deserialize, Serialize};
 use std::path::Path;
 
 fn default_version() -> u32 {
-    6
+    7
 }
 
 fn default_base_color() -> [f32; 4] {
@@ -16,6 +16,10 @@ fn default_roughness() -> f32 {
 
 fn default_clearcoat_roughness() -> f32 {
     0.1
+}
+
+fn default_ior() -> f32 {
+    1.5
 }
 
 fn default_emissive_strength() -> f32 {
@@ -106,6 +110,8 @@ pub struct MaterialAsset {
     pub metallic: f32,
     #[serde(default = "default_roughness")]
     pub roughness: f32,
+    #[serde(default = "default_ior")]
+    pub ior: f32,
     #[serde(default)]
     pub clearcoat: f32,
     #[serde(default = "default_clearcoat_roughness")]
@@ -160,6 +166,7 @@ impl Default for MaterialAsset {
             base_color: default_base_color(),
             metallic: 0.0,
             roughness: default_roughness(),
+            ior: default_ior(),
             clearcoat: 0.0,
             clearcoat_roughness: default_clearcoat_roughness(),
             emissive: [0.0; 3],
@@ -206,6 +213,7 @@ impl MaterialAsset {
         }
         self.metallic = finite_or(self.metallic, 0.0).clamp(0.0, 1.0);
         self.roughness = finite_or(self.roughness, default_roughness()).clamp(0.04, 1.0);
+        self.ior = finite_or(self.ior, default_ior()).clamp(1.0, 2.5);
         self.clearcoat = finite_or(self.clearcoat, 0.0).clamp(0.0, 1.0);
         self.clearcoat_roughness =
             finite_or(self.clearcoat_roughness, default_clearcoat_roughness()).clamp(0.04, 1.0);
@@ -283,11 +291,12 @@ mod tests {
             }"#,
         )
         .unwrap();
-        assert_eq!(parsed.version, 6);
+        assert_eq!(parsed.version, 7);
         assert_eq!(parsed.surface, MaterialSurface::Transparent);
         assert_eq!(parsed.base_color, [1.0, 0.0, 0.5, 0.25]);
         assert_eq!(parsed.metallic, 1.0);
         assert_eq!(parsed.roughness, 0.04);
+        assert_eq!(parsed.ior, 1.5);
         assert_eq!(parsed.base_color_texture, "Assets/Textures/paint.png");
         assert_eq!(parsed.normal_texture, "Assets/Textures/paint-normal.png");
         assert_eq!(parsed.normal_scale, 0.0);
@@ -321,7 +330,8 @@ mod tests {
             }"#,
         )
         .expect("materials authored before PBR maps were added remain loadable");
-        assert_eq!(legacy.version, 6);
+        assert_eq!(legacy.version, 7);
+        assert_eq!(legacy.ior, 1.5);
         assert_eq!(legacy.clearcoat, 0.0);
         assert_eq!(legacy.clearcoat_roughness, 0.1);
         assert_eq!(legacy.blend_mode, MaterialBlendMode::Alpha);
@@ -361,7 +371,7 @@ mod tests {
             }"#,
         )
         .unwrap();
-        assert_eq!(parsed.version, 6);
+        assert_eq!(parsed.version, 7);
         assert_eq!(parsed.shader, MaterialShader::Custom);
         assert_eq!(parsed.custom_shader, "Assets/Shaders/toon.mshader");
         assert_eq!(parsed.blend_mode, MaterialBlendMode::Premultiplied);
@@ -374,7 +384,7 @@ mod tests {
         assert_eq!(parsed.filter, MaterialFilter::Nearest);
         assert_eq!(parsed.mipmap_filter, MaterialFilter::Linear);
         assert_eq!(parsed.anisotropy, 1);
-        assert!(parse_material_asset(br#"{"version":7}"#).is_err());
+        assert!(parse_material_asset(br#"{"version":8}"#).is_err());
         assert!(parse_material_asset(br#"{"version":0}"#).is_err());
     }
 
@@ -387,9 +397,21 @@ mod tests {
         assert_eq!(parsed.clearcoat_roughness, 0.04);
 
         let legacy = parse_material_asset(br#"{"version":5}"#).unwrap();
-        assert_eq!(legacy.version, 6);
+        assert_eq!(legacy.version, 7);
         assert_eq!(legacy.clearcoat, 0.0);
         assert_eq!(legacy.clearcoat_roughness, 0.1);
+    }
+
+    #[test]
+    fn index_of_refraction_is_bounded_and_legacy_safe() {
+        let low = parse_material_asset(br#"{"version":7,"ior":0.5}"#).unwrap();
+        let high = parse_material_asset(br#"{"version":7,"ior":4.0}"#).unwrap();
+        assert_eq!(low.ior, 1.0);
+        assert_eq!(high.ior, 2.5);
+
+        let legacy = parse_material_asset(br#"{"version":6}"#).unwrap();
+        assert_eq!(legacy.version, 7);
+        assert_eq!(legacy.ior, 1.5);
     }
 
     #[test]
