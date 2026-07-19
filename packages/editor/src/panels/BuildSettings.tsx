@@ -792,7 +792,10 @@ export function BuildSettings(props: {
                   </span>
                   <span className="build-history-size">
                     <strong>{byteSize(entry.packagedBytes)}</strong>
-                    <small>{entry.fileCount} files · {durationText(entry.totalDurationMs)}</small>
+                    <small>
+                      {entry.fileCount} files · {durationText(entry.totalDurationMs)} ·{' '}
+                      {entry.contentAvailable ? 'content archived' : 'manifest only'}
+                    </small>
                   </span>
                   <code>{entry.contentHash.slice(0, 12)}</code>
                   {entry.published && <em>CURRENT</em>}

@@ -22,6 +22,7 @@ mengine-core = { path = "../../../crates/mengine-core" }
 mengine-assets = { path = "../../../crates/mengine-assets" }
 mengine-rhi = { path = "../../../crates/mengine-rhi" }
 log = "0.4"
+sha2.workspace = true
 
 [target.'cfg(windows)'.dependencies]
 windows-sys = { version = "0.61", features = [

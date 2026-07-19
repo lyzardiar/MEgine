@@ -6,6 +6,7 @@ use mengine_editor_host::{
     EditorResult, ProjectSession, ProjectSnapshot, SceneRecoveryInfo,
 };
 use parking_lot::Mutex;
+use sha2::{Digest, Sha256};
 use std::collections::{BTreeMap, HashSet};
 use std::path::{Component, Path, PathBuf};
 use std::process::Command;
@@ -215,6 +216,7 @@ struct BuildHistoryEntry {
     published: bool,
     total_duration_ms: u64,
     toolchain: String,
+    content_available: bool,
 }
 
 #[derive(Debug, serde::Serialize)]
@@ -234,9 +236,20 @@ struct BuildHistoryRecord {
     total_duration_ms: u64,
     toolchain: String,
     manifest: serde_json::Value,
+    #[serde(default)]
+    content_store: Option<BuildHistoryContentStore>,
 }
 
-const BUILD_HISTORY_SCHEMA_VERSION: u32 = 1;
+#[derive(Debug, serde::Deserialize, serde::Serialize)]
+#[serde(rename_all = "camelCase")]
+struct BuildHistoryContentStore {
+    schema_version: u32,
+    file_count: usize,
+    total_bytes: u64,
+}
+
+const BUILD_HISTORY_SCHEMA_VERSION: u32 = 2;
+const BUILD_CONTENT_STORE_SCHEMA_VERSION: u32 = 1;
 const MAX_BUILD_HISTORY_ENTRIES: usize = 50;
 
 #[derive(Clone, Debug, serde::Deserialize, serde::Serialize, PartialEq, Eq)]
@@ -842,7 +855,7 @@ fn read_build_history_record(path: &Path, expected_id: &str) -> Result<BuildHist
             .map_err(|error| format!("cannot read build history record: {error}"))?,
     )
     .map_err(|error| format!("invalid build history record: {error}"))?;
-    if record.schema_version != BUILD_HISTORY_SCHEMA_VERSION {
+    if !(1..=BUILD_HISTORY_SCHEMA_VERSION).contains(&record.schema_version) {
         return Err(format!(
             "unsupported build history schema version: {}",
             record.schema_version
@@ -909,6 +922,18 @@ fn build_history_entry(
     if declared_bytes != packaged_bytes {
         return Err("build history manifest contentSummary.totalBytes does not match files".into());
     }
+    let content_available = match &record.content_store {
+        Some(content_store) => {
+            if content_store.schema_version != BUILD_CONTENT_STORE_SCHEMA_VERSION
+                || content_store.file_count != files.len()
+                || content_store.total_bytes != packaged_bytes
+            {
+                return Err("build history content store summary does not match files".into());
+            }
+            build_content_files_available(project_root, &files)?
+        }
+        None => false,
+    };
     Ok(BuildHistoryEntry {
         id: record.id.clone(),
         recorded_at_ms: record.recorded_at_ms,
@@ -932,6 +957,7 @@ fn build_history_entry(
         published: false,
         total_duration_ms: record.total_duration_ms,
         toolchain: record.toolchain.clone(),
+        content_available,
     })
 }
 
@@ -1048,8 +1074,329 @@ fn prune_build_history(project_root: &Path, retained_entries: usize) -> Result<(
     Ok(())
 }
 
+fn build_content_store_dir(project_root: &Path, create: bool) -> Result<Option<PathBuf>, String> {
+    let engine_dir = project_root.join(".mengine");
+    let content_dir = engine_dir.join("build-content");
+    let sha_dir = content_dir.join("sha256");
+    for directory in [&engine_dir, &content_dir, &sha_dir] {
+        match std::fs::symlink_metadata(directory) {
+            Ok(metadata) => {
+                if metadata.file_type().is_symlink() || !metadata.is_dir() {
+                    return Err(format!(
+                        "build content store must use regular directories: {}",
+                        directory.display()
+                    ));
+                }
+            }
+            Err(error) if error.kind() == std::io::ErrorKind::NotFound && create => {
+                std::fs::create_dir(directory).map_err(|error| {
+                    format!(
+                        "cannot create build content store directory {}: {error}",
+                        directory.display()
+                    )
+                })?;
+            }
+            Err(error) if error.kind() == std::io::ErrorKind::NotFound => return Ok(None),
+            Err(error) => {
+                return Err(format!(
+                    "cannot inspect build content store directory {}: {error}",
+                    directory.display()
+                ));
+            }
+        }
+    }
+    Ok(Some(sha_dir))
+}
+
+fn build_content_files_available(
+    project_root: &Path,
+    files: &BTreeMap<String, BuildFileSnapshot>,
+) -> Result<bool, String> {
+    let Some(store_root) = build_content_store_dir(project_root, false)? else {
+        return Ok(false);
+    };
+    for file in files.values() {
+        let path = store_root.join(&file.sha256[..2]).join(&file.sha256);
+        match std::fs::symlink_metadata(&path) {
+            Ok(metadata)
+                if !metadata.file_type().is_symlink()
+                    && metadata.is_file()
+                    && metadata.len() == file.size => {}
+            Ok(_) => return Ok(false),
+            Err(error) if error.kind() == std::io::ErrorKind::NotFound => return Ok(false),
+            Err(error) => {
+                return Err(format!(
+                    "cannot inspect archived build content {}: {error}",
+                    path.display()
+                ));
+            }
+        }
+    }
+    Ok(true)
+}
+
+fn sha256_file(path: &Path) -> Result<String, String> {
+    use std::io::Read;
+    let mut file = std::fs::File::open(path)
+        .map_err(|error| format!("cannot open {} for hashing: {error}", path.display()))?;
+    let mut digest = Sha256::new();
+    let mut buffer = [0_u8; 64 * 1024];
+    loop {
+        let read = file
+            .read(&mut buffer)
+            .map_err(|error| format!("cannot hash {}: {error}", path.display()))?;
+        if read == 0 {
+            break;
+        }
+        digest.update(&buffer[..read]);
+    }
+    Ok(format!("{:x}", digest.finalize()))
+}
+
+fn safe_build_content_path(path: &str) -> Result<&Path, String> {
+    if path.is_empty()
+        || path.contains('\\')
+        || path
+            .split('/')
+            .any(|segment| segment.is_empty() || segment == "." || segment == "..")
+    {
+        return Err(format!("unsafe build history content path: {path}"));
+    }
+    let relative = Path::new(path);
+    if relative.is_absolute()
+        || relative
+            .components()
+            .any(|component| !matches!(component, Component::Normal(_)))
+    {
+        return Err(format!("unsafe build history content path: {path}"));
+    }
+    Ok(relative)
+}
+
+fn store_build_content_blob(
+    store_root: &Path,
+    source: &Path,
+    expected_size: u64,
+    expected_hash: &str,
+) -> Result<(), String> {
+    let shard = store_root.join(&expected_hash[..2]);
+    match std::fs::symlink_metadata(&shard) {
+        Ok(metadata) if metadata.file_type().is_symlink() || !metadata.is_dir() => {
+            return Err(format!(
+                "build content shard must be a regular directory: {}",
+                shard.display()
+            ));
+        }
+        Ok(_) => {}
+        Err(error) if error.kind() == std::io::ErrorKind::NotFound => {
+            std::fs::create_dir(&shard).map_err(|error| {
+                format!(
+                    "cannot create build content shard {}: {error}",
+                    shard.display()
+                )
+            })?;
+        }
+        Err(error) => {
+            return Err(format!(
+                "cannot inspect build content shard {}: {error}",
+                shard.display()
+            ));
+        }
+    }
+    let target = shard.join(expected_hash);
+    if let Ok(metadata) = std::fs::symlink_metadata(&target) {
+        if metadata.file_type().is_symlink() || !metadata.is_file() {
+            return Err(format!(
+                "build content blob must be a regular file: {}",
+                target.display()
+            ));
+        }
+        if metadata.len() == expected_size && sha256_file(&target)? == expected_hash {
+            if sha256_file(source)? != expected_hash {
+                return Err(format!(
+                    "published build file hash does not match manifest: {}",
+                    source.display()
+                ));
+            }
+            return Ok(());
+        }
+    }
+
+    use std::io::{Read, Write};
+    let nonce = SystemTime::now()
+        .duration_since(UNIX_EPOCH)
+        .unwrap_or_default()
+        .as_nanos();
+    let temporary = shard.join(format!(
+        ".{expected_hash}.{}.{nonce}.tmp",
+        std::process::id()
+    ));
+    let result = (|| -> Result<(), String> {
+        let mut input = std::fs::File::open(source)
+            .map_err(|error| format!("cannot open build content {}: {error}", source.display()))?;
+        let mut output = std::fs::OpenOptions::new()
+            .write(true)
+            .create_new(true)
+            .open(&temporary)
+            .map_err(|error| {
+                format!(
+                    "cannot create build content blob {}: {error}",
+                    temporary.display()
+                )
+            })?;
+        let mut digest = Sha256::new();
+        let mut total = 0_u64;
+        let mut buffer = [0_u8; 64 * 1024];
+        loop {
+            let read = input
+                .read(&mut buffer)
+                .map_err(|error| format!("cannot read build content: {error}"))?;
+            if read == 0 {
+                break;
+            }
+            output
+                .write_all(&buffer[..read])
+                .map_err(|error| format!("cannot write build content blob: {error}"))?;
+            digest.update(&buffer[..read]);
+            total = total.saturating_add(read as u64);
+        }
+        let actual_hash = format!("{:x}", digest.finalize());
+        if total != expected_size || actual_hash != expected_hash {
+            return Err(format!(
+                "published build content changed while archiving: {}",
+                source.display()
+            ));
+        }
+        output
+            .sync_all()
+            .map_err(|error| format!("cannot sync build content blob: {error}"))?;
+        drop(output);
+        replace_file_atomically(&temporary, &target)
+            .map_err(|error| format!("cannot publish build content blob: {error}"))
+    })();
+    if result.is_err() {
+        let _ = std::fs::remove_file(&temporary);
+    }
+    result
+}
+
+fn archive_build_content(
+    project_root: &Path,
+    output_dir: &Path,
+    manifest: &serde_json::Value,
+) -> Result<BuildHistoryContentStore, String> {
+    let store_root = build_content_store_dir(project_root, true)?
+        .ok_or_else(|| "build content store is unavailable".to_string())?;
+    let output_metadata = std::fs::symlink_metadata(output_dir)
+        .map_err(|error| format!("cannot inspect published build: {error}"))?;
+    if output_metadata.file_type().is_symlink() || !output_metadata.is_dir() {
+        return Err("published build must be a regular non-symlink directory".into());
+    }
+    let canonical_output = output_dir
+        .canonicalize()
+        .map_err(|error| format!("cannot resolve published build: {error}"))?;
+    let (_, files) = build_file_snapshots(manifest)?;
+    let mut seen = HashSet::new();
+    let mut total_bytes = 0_u64;
+    for (path, file) in &files {
+        let key = path.to_ascii_lowercase();
+        if !seen.insert(key) {
+            return Err(format!(
+                "build history contains a case-insensitive duplicate: {path}"
+            ));
+        }
+        let relative = safe_build_content_path(path)?;
+        let source = output_dir.join(relative);
+        let metadata = std::fs::symlink_metadata(&source)
+            .map_err(|error| format!("cannot inspect published build file {path}: {error}"))?;
+        if metadata.file_type().is_symlink() || !metadata.is_file() || metadata.len() != file.size {
+            return Err(format!("published build file has invalid metadata: {path}"));
+        }
+        let canonical_source = source
+            .canonicalize()
+            .map_err(|error| format!("cannot resolve published build file {path}: {error}"))?;
+        if !canonical_source.starts_with(&canonical_output) {
+            return Err(format!("published build file escapes output: {path}"));
+        }
+        store_build_content_blob(&store_root, &source, file.size, &file.sha256)?;
+        total_bytes = total_bytes.saturating_add(file.size);
+    }
+    Ok(BuildHistoryContentStore {
+        schema_version: BUILD_CONTENT_STORE_SCHEMA_VERSION,
+        file_count: files.len(),
+        total_bytes,
+    })
+}
+
+fn prune_build_content_store(project_root: &Path) -> Result<(), String> {
+    let Some(store_root) = build_content_store_dir(project_root, false)? else {
+        return Ok(());
+    };
+    let mut retained = HashSet::new();
+    if let Some(history_dir) = build_history_dir(project_root, false)? {
+        for item in std::fs::read_dir(history_dir)
+            .map_err(|error| format!("cannot scan build history for content retention: {error}"))?
+        {
+            let Ok(item) = item else { continue };
+            let path = item.path();
+            if path.extension().and_then(|value| value.to_str()) != Some("json") {
+                continue;
+            }
+            let Some(id) = path.file_stem().and_then(|value| value.to_str()) else {
+                continue;
+            };
+            let Ok(record) = read_build_history_record(&path, id) else {
+                continue;
+            };
+            if record.content_store.is_none() {
+                continue;
+            }
+            if let Ok((_, files)) = build_file_snapshots(&record.manifest) {
+                retained.extend(files.into_values().map(|file| file.sha256));
+            }
+        }
+    }
+    for shard in std::fs::read_dir(&store_root)
+        .map_err(|error| format!("cannot scan build content store: {error}"))?
+    {
+        let shard = shard.map_err(|error| format!("cannot read build content shard: {error}"))?;
+        let shard_path = shard.path();
+        let metadata = std::fs::symlink_metadata(&shard_path)
+            .map_err(|error| format!("cannot inspect build content shard: {error}"))?;
+        if metadata.file_type().is_symlink() || !metadata.is_dir() {
+            return Err("build content store contains an invalid shard".into());
+        }
+        for blob in std::fs::read_dir(&shard_path)
+            .map_err(|error| format!("cannot scan build content shard: {error}"))?
+        {
+            let blob = blob.map_err(|error| format!("cannot read build content blob: {error}"))?;
+            let path = blob.path();
+            let metadata = std::fs::symlink_metadata(&path)
+                .map_err(|error| format!("cannot inspect build content blob: {error}"))?;
+            let name = blob.file_name().to_string_lossy().into_owned();
+            if metadata.file_type().is_symlink() || !metadata.is_file() {
+                return Err("build content store contains an invalid blob".into());
+            }
+            if !retained.contains(&name) {
+                std::fs::remove_file(&path)
+                    .map_err(|error| format!("cannot remove unreferenced build blob: {error}"))?;
+            }
+        }
+        if std::fs::read_dir(&shard_path)
+            .map_err(|error| format!("cannot inspect build content shard: {error}"))?
+            .next()
+            .is_none()
+        {
+            std::fs::remove_dir(&shard_path)
+                .map_err(|error| format!("cannot remove empty build content shard: {error}"))?;
+        }
+    }
+    Ok(())
+}
+
 fn archive_build_history(
     project_root: &Path,
+    published_output: Option<&Path>,
     manifest: &serde_json::Value,
     total_duration_ms: u64,
     toolchain: &str,
@@ -1057,6 +1404,9 @@ fn archive_build_history(
     let history_dir = build_history_dir(project_root, true)?
         .ok_or_else(|| "build history directory is unavailable".to_string())?;
     let content_hash = build_file_snapshots(manifest)?.0;
+    let content_store = published_output
+        .map(|output| archive_build_content(project_root, output, manifest))
+        .transpose()?;
     let recorded_at = SystemTime::now()
         .duration_since(UNIX_EPOCH)
         .unwrap_or_default();
@@ -1083,12 +1433,28 @@ fn archive_build_history(
         total_duration_ms,
         toolchain: toolchain.to_string(),
         manifest: manifest.clone(),
+        content_store,
     };
-    let mut entry = build_history_entry(project_root, &path, &record)?;
+    let mut entry = match build_history_entry(project_root, &path, &record) {
+        Ok(entry) => entry,
+        Err(error) => {
+            let _ = prune_build_content_store(project_root);
+            return Err(error);
+        }
+    };
     entry.published = published_build_hash(Path::new(&entry.output_dir))
         .is_some_and(|published_hash| published_hash == entry.content_hash.as_str());
-    prune_build_history(project_root, MAX_BUILD_HISTORY_ENTRIES.saturating_sub(1))?;
-    write_build_history_record(&path, &record)?;
+    if let Err(error) =
+        prune_build_history(project_root, MAX_BUILD_HISTORY_ENTRIES.saturating_sub(1))
+    {
+        let _ = prune_build_content_store(project_root);
+        return Err(error);
+    }
+    if let Err(error) = write_build_history_record(&path, &record) {
+        let _ = prune_build_content_store(project_root);
+        return Err(error);
+    }
+    prune_build_content_store(project_root)?;
     Ok(entry)
 }
 
@@ -1596,6 +1962,7 @@ fn run_player_build_controlled(
     let (build_cache, incremental_patch, mut build_log) = extract_build_reports(&output.stdout);
     let history_entry = match archive_build_history(
         &project_root,
+        Some(&output_dir),
         &build_manifest,
         total_duration_ms,
         &toolchain,
@@ -1606,7 +1973,7 @@ fn run_player_build_controlled(
                 build_log.push('\n');
             }
             build_log.push_str(&format!(
-                "warning: player was published, but its build history record could not be saved: {error}"
+                "warning: player was published, but build history archival or maintenance failed: {error}"
             ));
             None
         }
@@ -3442,8 +3809,10 @@ mod tests {
             serde_json::to_vec(&previous).unwrap(),
         )
         .unwrap();
-        let previous_entry = archive_build_history(&root, &previous, 1250, "bundled-sdk").unwrap();
+        let previous_entry =
+            archive_build_history(&root, None, &previous, 1250, "bundled-sdk").unwrap();
         assert!(previous_entry.published);
+        assert!(!previous_entry.content_available);
         assert_eq!(previous_entry.packaged_bytes, 15);
         assert_eq!(previous_entry.project_version, "7");
 
@@ -3467,12 +3836,13 @@ mod tests {
         )
         .unwrap();
         let current_entry =
-            archive_build_history(&root, &current, 2500, "source-checkout").unwrap();
+            archive_build_history(&root, None, &current, 2500, "source-checkout").unwrap();
 
         let history = list_build_history(&root).unwrap();
         assert_eq!(history.len(), 2);
         assert_eq!(history[0].id, current_entry.id);
         assert!(history[0].published);
+        assert!(!history[0].content_available);
         assert!(history[0].artifact_signed);
         assert_eq!(history[0].artifact_signing_key_id, Some("d".repeat(64)));
         assert_eq!(history[0].toolchain, "source-checkout");
@@ -3495,6 +3865,127 @@ mod tests {
         let scan = scan_build_history(&root).unwrap();
         assert_eq!(scan.entries.len(), 2);
         assert_eq!(scan.invalid_records, 1);
+        std::fs::remove_dir_all(root).unwrap();
+    }
+
+    #[test]
+    fn build_history_content_store_deduplicates_validates_and_collects_blobs() {
+        let root = std::env::temp_dir().join(format!(
+            "mengine-build-content-{}-{}",
+            std::process::id(),
+            SystemTime::now()
+                .duration_since(UNIX_EPOCH)
+                .unwrap()
+                .as_nanos()
+        ));
+        let output_dir = root.join("Builds/windows-x86_64-release");
+        let runtime_path = output_dir.join("Runtime/MEnginePlayer.exe");
+        let scene_path = output_dir.join("Assets/Main.mscene");
+        std::fs::create_dir_all(runtime_path.parent().unwrap()).unwrap();
+        std::fs::create_dir_all(scene_path.parent().unwrap()).unwrap();
+        let runtime = b"shared-runtime";
+        let previous_scene = b"previous-scene";
+        let current_scene = b"current-scene-with-changes";
+        std::fs::write(&runtime_path, runtime).unwrap();
+        std::fs::write(&scene_path, previous_scene).unwrap();
+        let runtime_hash = sha256_file(&runtime_path).unwrap();
+        let previous_scene_hash = sha256_file(&scene_path).unwrap();
+        let previous = history_manifest(
+            'a',
+            serde_json::json!([
+                {
+                    "path": "Runtime/MEnginePlayer.exe",
+                    "size": runtime.len(),
+                    "sha256": runtime_hash.clone(),
+                    "category": "runtime"
+                },
+                {
+                    "path": "Assets/Main.mscene",
+                    "size": previous_scene.len(),
+                    "sha256": previous_scene_hash.clone(),
+                    "category": "scene"
+                }
+            ]),
+        );
+        std::fs::write(
+            output_dir.join("mengine-build.json"),
+            serde_json::to_vec(&previous).unwrap(),
+        )
+        .unwrap();
+        let previous_entry =
+            archive_build_history(&root, Some(&output_dir), &previous, 10, "bundled-sdk").unwrap();
+        assert!(previous_entry.content_available);
+
+        std::fs::write(&scene_path, current_scene).unwrap();
+        let current_scene_hash = sha256_file(&scene_path).unwrap();
+        let current = history_manifest(
+            'b',
+            serde_json::json!([
+                {
+                    "path": "Runtime/MEnginePlayer.exe",
+                    "size": runtime.len(),
+                    "sha256": runtime_hash.clone(),
+                    "category": "runtime"
+                },
+                {
+                    "path": "Assets/Main.mscene",
+                    "size": current_scene.len(),
+                    "sha256": current_scene_hash.clone(),
+                    "category": "scene"
+                }
+            ]),
+        );
+        std::fs::write(
+            output_dir.join("mengine-build.json"),
+            serde_json::to_vec(&current).unwrap(),
+        )
+        .unwrap();
+        let current_entry =
+            archive_build_history(&root, Some(&output_dir), &current, 20, "bundled-sdk").unwrap();
+        assert!(current_entry.content_available);
+
+        let store = build_content_store_dir(&root, false).unwrap().unwrap();
+        let blob_count = std::fs::read_dir(&store)
+            .unwrap()
+            .map(|shard| std::fs::read_dir(shard.unwrap().path()).unwrap().count())
+            .sum::<usize>();
+        assert_eq!(blob_count, 3);
+        let runtime_blob = store.join(&runtime_hash[..2]).join(&runtime_hash);
+        let previous_scene_blob = store
+            .join(&previous_scene_hash[..2])
+            .join(&previous_scene_hash);
+        let current_scene_blob = store
+            .join(&current_scene_hash[..2])
+            .join(&current_scene_hash);
+        assert_eq!(std::fs::read(&runtime_blob).unwrap(), runtime);
+        assert_eq!(std::fs::read(&previous_scene_blob).unwrap(), previous_scene);
+        assert_eq!(std::fs::read(&current_scene_blob).unwrap(), current_scene);
+
+        std::fs::remove_file(&previous_entry.record_path).unwrap();
+        prune_build_content_store(&root).unwrap();
+        assert!(runtime_blob.is_file());
+        assert!(!previous_scene_blob.exists());
+        assert!(current_scene_blob.is_file());
+
+        let stale_manifest = history_manifest(
+            'c',
+            serde_json::json!([{
+                "path": "Assets/Main.mscene",
+                "size": current_scene.len(),
+                "sha256": previous_scene_hash.clone(),
+                "category": "scene"
+            }]),
+        );
+        let error =
+            archive_build_history(&root, Some(&output_dir), &stale_manifest, 30, "bundled-sdk")
+                .unwrap_err();
+        assert!(error.contains("changed while archiving"));
+
+        std::fs::remove_file(&current_scene_blob).unwrap();
+        let history = list_build_history(&root).unwrap();
+        assert_eq!(history.len(), 1);
+        assert_eq!(history[0].id, current_entry.id);
+        assert!(!history[0].content_available);
         std::fs::remove_dir_all(root).unwrap();
     }
 
@@ -3523,7 +4014,7 @@ mod tests {
                     "other"
                 )]),
             );
-            archive_build_history(&root, &manifest, index as u64, "bundled-sdk").unwrap();
+            archive_build_history(&root, None, &manifest, index as u64, "bundled-sdk").unwrap();
         }
         assert_eq!(
             list_build_history(&root).unwrap().len(),

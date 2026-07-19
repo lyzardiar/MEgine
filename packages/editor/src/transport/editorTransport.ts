@@ -138,6 +138,7 @@ export type BuildHistoryEntry = {
   manifestPath: string;
   recordPath: string;
   published: boolean;
+  contentAvailable: boolean;
   totalDurationMs: number;
   toolchain: 'bundled-sdk' | 'source-checkout';
 };
