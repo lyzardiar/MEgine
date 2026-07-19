@@ -1,5 +1,7 @@
 import {
+  assignTimelineTrackGroup,
   timelineAnimationClipLayoutIsValid,
+  timelineGroupForTrack,
   timelineTrackIsLocked,
   type TimelineActivationClip,
   type TimelineAnimationClip,
@@ -45,6 +47,15 @@ export type SequencerClipboardPasteResult =
 
 export type SequencerTrackMoveResult =
   | { ok: true; asset: TimelineAsset; trackIndex: number }
+  | { ok: false; error: string };
+
+export type SequencerTrackDropTarget =
+  | { kind: 'track'; trackId: string; edge: 'before' | 'after' }
+  | { kind: 'group'; groupId: string }
+  | { kind: 'root' };
+
+export type SequencerTrackPlacementResult =
+  | { ok: true; asset: TimelineAsset; trackIndex: number; changed: boolean }
   | { ok: false; error: string };
 
 export type SequencerItemSelection = { track: number; marker: number };
@@ -665,6 +676,80 @@ export function moveSequencerTrack(
   const [moved] = next.tracks.splice(trackIndex, 1);
   next.tracks.splice(nextIndex, 0, moved);
   return { ok: true, asset: next, trackIndex: nextIndex };
+}
+
+export function placeSequencerTrack(
+  asset: TimelineAsset,
+  trackId: string,
+  target: SequencerTrackDropTarget,
+): SequencerTrackPlacementResult {
+  const sourceIndex = asset.tracks.findIndex((track) => track.id === trackId);
+  const source = asset.tracks[sourceIndex];
+  if (!source) return { ok: false, error: 'Timeline track no longer exists.' };
+  if (timelineTrackIsLocked(asset, source)) {
+    return { ok: false, error: `Track '${source.name}' is locked. Unlock it before moving.` };
+  }
+
+  let destinationGroupId: string | null = null;
+  if (target.kind === 'track') {
+    if (target.trackId === trackId) {
+      return { ok: true, asset: structuredClone(asset), trackIndex: sourceIndex, changed: false };
+    }
+    const targetTrack = asset.tracks.find((track) => track.id === target.trackId);
+    if (!targetTrack) return { ok: false, error: 'Timeline drop target no longer exists.' };
+    destinationGroupId = timelineGroupForTrack(asset, targetTrack.id)?.id ?? null;
+  } else if (target.kind === 'group') {
+    const group = asset.groups.find((candidate) => candidate.id === target.groupId);
+    if (!group) return { ok: false, error: 'Timeline drop group no longer exists.' };
+    destinationGroupId = group.id;
+  }
+
+  const currentGroup = timelineGroupForTrack(asset, source.id);
+  const destinationGroup = destinationGroupId == null
+    ? null
+    : asset.groups.find((group) => group.id === destinationGroupId) ?? null;
+  if (currentGroup?.locked) {
+    return { ok: false, error: `Timeline group '${currentGroup.name}' is locked.` };
+  }
+  if (destinationGroup?.locked) {
+    return { ok: false, error: `Timeline group '${destinationGroup.name}' is locked.` };
+  }
+
+  const next = structuredClone(asset);
+  const [moved] = next.tracks.splice(sourceIndex, 1);
+  let insertionIndex = next.tracks.length;
+  if (target.kind === 'track') {
+    const targetIndex = next.tracks.findIndex((track) => track.id === target.trackId);
+    if (targetIndex < 0) return { ok: false, error: 'Timeline drop target no longer exists.' };
+    insertionIndex = targetIndex + (target.edge === 'after' ? 1 : 0);
+  } else if (target.kind === 'group') {
+    const memberIds = new Set(
+      next.groups.find((group) => group.id === target.groupId)?.track_ids ?? [],
+    );
+    for (let index = 0; index < next.tracks.length; index += 1) {
+      if (memberIds.has(next.tracks[index].id)) insertionIndex = index + 1;
+    }
+  }
+  next.tracks.splice(insertionIndex, 0, moved);
+
+  try {
+    next.groups = assignTimelineTrackGroup(next.groups, moved.id, destinationGroupId);
+  } catch (reason) {
+    return { ok: false, error: reason instanceof Error ? reason.message : String(reason) };
+  }
+  const rank = new Map(next.tracks.map((track, index) => [track.id, index]));
+  next.groups = next.groups.map((group) => ({
+    ...group,
+    track_ids: [...new Set(group.track_ids)]
+      .filter((id) => rank.has(id))
+      .sort((left, right) => rank.get(left)! - rank.get(right)!),
+  }));
+  return {
+    ok: true,
+    asset: next,
+    trackIndex: insertionIndex,
+    changed: JSON.stringify(next) !== JSON.stringify(asset),
+  };
 }
 
 export function deleteSequencerItems(

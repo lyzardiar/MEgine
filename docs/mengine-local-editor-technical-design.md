@@ -1650,3 +1650,15 @@ Camera Shot 的基础闭环已经形成，但 Timeline 仍不完备：编辑器 
 第二遍自省从真实低缩放命中和指针生命周期反查：全高 12px 手柄在 360px、5 秒、60 FPS 下会因最小区间仅约 1.2px 而重叠，后绘制的 Out 遮住 In；改为上下半区分离后，两个端点即使相邻也可独立抓取。页面验证还发现 `overflow: hidden` 让 Ruler 成为可滚动容器，聚焦 0 秒手柄后内部悄悄产生 5px `scrollLeft`，现改用 Clip 并主动按 Sticky Header 后的有效宽度恢复外层视口。手柄拖动时切入 Play Mode 又会卸载 Edit 控件，不能依赖浏览器一定在卸载前派发 `pointercancel` 或 `lostpointercapture`；现由 Play Mode effect 主动清除拖动态，资产切换也同步复位，常规完成、取消与丢失捕获共用结束路径。工作区间依然只是本地视图状态，不进入 Timeline Dirty/Undo 或 Runtime Director，避免一次 UI 导航手势污染作者数据。
 
 这一批补齐了单个本地工作区间的直接操控，但还不是 Unity Timeline 的完整 Range/Marker 系统：仍缺拖动区间主体整体平移、命名书签与范围、多区间管理、区间缩放/导出、Overview 导航和可序列化的作者播放区间。下一阶段继续补轨道拖拽排序与跨组归属，让轨道组织从按钮式移动升级为直接操控，并保持锁定组、Undo 和跨窗口状态契约。
+
+## 140. 2026-07-20 Sequencer 轨道拖拽排序与 Group 归属
+
+- 每条可编辑轨道的头部新增 16px 零圆角抓手，超过 4px 才进入拖拽，普通按下只选择轨道。轨道行上半区/下半区分别显示 2px Before/After 落点线并继承目标轨道的 Group；Group 行用整行描边表示追加进组；拖拽期间底部显示 `Move to root · place at end`，用于显式脱组并移到全局轨道末尾。源轨道降至 48% 透明度，整个 Sequencer 使用 grabbing 光标；目标 Group 锁定时落点变红，最终仍由模型层原子拒绝。
+- 新的 `placeSequencerTrack` 在一个不可变事务中同时更新 `tracks[]` 全局顺序和 `group.track_ids` 归属，并按最终视觉顺序去重、过滤和重排组成员。拖到轨道会读取目标组，拖到 Group 会放在其最后一个成员之后，拖到 Root 会取消归属并放到末尾；源轨道、源组或目标组锁定、目标消失都会返回结构化错误。相邻原位和拖回自身识别为 No-op，不写 Dirty/Undo。
+- Pointer 手势使用 Capture 加 Window 级 Move/Up/Cancel，接近轨道视口上下边缘时以 RAF 连续纵向滚动，`Escape` 和 `pointercancel` 恢复拖前选择。成功落点只写入一次 `Move Timeline Track` Undo，随后以新的全局索引选择轨道；资产切换与组件卸载会主动移除全局监听和 RAF，不让旧 Dock 留下拖拽状态。
+
+第一遍自省从资产模型反查：Group 并不拥有独立的子轨道数组，真正的求值和视觉顺序仍来自全局 `tracks[]`；只调用旧的 `assignTimelineTrackGroup` 会让成员逻辑入组却散落在其他轨道之间。现由单一放置函数同步顺序与成员列表，回归覆盖跨组加入、同组重排、脱组、空/非空 Group 追加、锁定拒绝、源资产不变和相邻 No-op。
+
+第二遍自省从真实 Dock 手势、遮挡和历史边界反查：初次页面测试在很矮的底部 Dock 中直接读取了滚出裁剪区的元素坐标，实际命中的是工具栏 Undo 图标；扩大 Dock 后按可见命中点重新验证，Audio 入组使成员从 1 变 2，Signals 拖到 Audio 上方得到 `Animation → Signals → Audio`，拖到底部 Root 后变为未分组末轨。每次 Move 的 Undo/Redo 都一步往返；锁定 Group 拒绝后成员仍为 2，Undo 栈顶部仍是 `Lock Timeline Track Group`，证明失败路径没有写入历史。
+
+当前直接操控仍以单轨道为单位，Group 本身还不能整组拖拽排序，也没有多选轨道拖动、组间缩进树线、拖拽悬停自动展开折叠组、键盘无鼠标重排或跨 Timeline 复制轨道。下一阶段应补 Group 整体移动和多轨道选择，再推进嵌套 Timeline/Control Track；不能把单轨道拖放等同于完整的 Unity Timeline 轨道树。

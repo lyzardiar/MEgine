@@ -17,6 +17,7 @@ import {
   normalizeSequencerPreviewRange,
   pasteSequencerItem,
   pasteSequencerClipboard,
+  placeSequencerTrack,
   resolveSequencerPasteTrack,
   rippleMoveSequencerItems,
   resizeSequencerAnimationBlend,
@@ -657,6 +658,50 @@ test('Sequencer track ordering is immutable and rejects locked or boundary moves
   const boundary = moveSequencerTrack(asset, 0, -1);
   assert.equal(boundary.ok, false);
   assert.match(boundary.error, /already at the top/);
+});
+
+test('Sequencer direct track placement reorders and synchronizes group membership atomically', () => {
+  const asset = timeline();
+  asset.groups = [{ id: 'actors', name: 'Actors', collapsed: false, muted: false, solo: false, locked: false, track_ids: ['animation'] }];
+  const joined = placeSequencerTrack(asset, 'signals', { kind: 'track', trackId: 'animation', edge: 'before' });
+  assert.equal(joined.ok, true);
+  assert.equal(joined.changed, true);
+  assert.deepEqual(joined.asset.tracks.map((track) => track.id), ['audio', 'signals', 'animation']);
+  assert.deepEqual(joined.asset.groups[0].track_ids, ['signals', 'animation']);
+  assert.deepEqual(asset.tracks.map((track) => track.id), ['signals', 'audio', 'animation']);
+
+  const rooted = placeSequencerTrack(joined.asset, 'signals', { kind: 'root' });
+  assert.equal(rooted.ok, true);
+  assert.deepEqual(rooted.asset.tracks.map((track) => track.id), ['audio', 'animation', 'signals']);
+  assert.deepEqual(rooted.asset.groups[0].track_ids, ['animation']);
+
+  const appended = placeSequencerTrack(rooted.asset, 'audio', { kind: 'group', groupId: 'actors' });
+  assert.equal(appended.ok, true);
+  assert.deepEqual(appended.asset.tracks.map((track) => track.id), ['animation', 'audio', 'signals']);
+  assert.deepEqual(appended.asset.groups[0].track_ids, ['animation', 'audio']);
+
+  const reordered = placeSequencerTrack(appended.asset, 'audio', { kind: 'track', trackId: 'animation', edge: 'before' });
+  assert.equal(reordered.ok, true);
+  assert.deepEqual(reordered.asset.tracks.map((track) => track.id), ['audio', 'animation', 'signals']);
+  assert.deepEqual(reordered.asset.groups[0].track_ids, ['audio', 'animation']);
+
+  const stable = placeSequencerTrack(reordered.asset, 'audio', { kind: 'track', trackId: 'animation', edge: 'before' });
+  assert.equal(stable.ok, true);
+  assert.equal(stable.changed, false);
+});
+
+test('Sequencer direct track placement rejects locked groups and detects no-op drops', () => {
+  const asset = timeline();
+  asset.groups = [{ id: 'locked', name: 'Locked', collapsed: true, muted: false, solo: false, locked: true, track_ids: ['animation'] }];
+  const rejected = placeSequencerTrack(asset, 'audio', { kind: 'group', groupId: 'locked' });
+  assert.equal(rejected.ok, false);
+  assert.match(rejected.error, /locked/);
+  const lockedSource = placeSequencerTrack(asset, 'animation', { kind: 'root' });
+  assert.equal(lockedSource.ok, false);
+  assert.match(lockedSource.error, /locked/);
+  const noOp = placeSequencerTrack(asset, 'signals', { kind: 'track', trackId: 'signals', edge: 'after' });
+  assert.equal(noOp.ok, true);
+  assert.equal(noOp.changed, false);
 });
 
 test('Sequencer particle clipboard preserves prewarm and collision-safe placement', () => {
