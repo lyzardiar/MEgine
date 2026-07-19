@@ -1561,3 +1561,15 @@ Camera Shot 的基础闭环已经形成，但 Timeline 仍不完备：编辑器 
 第二遍自省从已有重叠资产的二次编辑反查，发现只放开主拖拽仍不完整：旧的通用 Start/Trim 会把重叠 Clip 弹回无重叠接缝，组复制也会把合法 Crossfade 当碰撞拒绝；继续检查又发现 Ripple 移动会拒绝已有重叠，起点裁剪可能越过后一段，末尾缩短可能小于既有入场重叠。最终增加 Animation 专用裁剪边界、Inspector 轨道级移动、Ripple Crossfade 边界、完整布局回检和重叠组粘贴规则。全量验证为编辑器 354/354、CLI 56/56、mengine-assets 51/51、mengine-runtime library 96/96、runtime main 23/23；相关工作区生产构建与 Rust workspace 检查继续作为提交门禁。
 
 这仍不是成熟的动画剪辑与 Timeline 系统。当前只支持同一目标的两路覆盖混合，Animation Event 仍只由目标 Clip 发出；尚缺多层/加法混合、Avatar Mask 轨道覆盖、Root Motion、外推模式、Clip Ease Out、嵌套 Timeline/Control Track、录制、IK/约束、Humanoid Retargeting、音频与动画统一时钟，以及混合姿态缓存和 Profiler 成本统计。下一阶段应先把 Crossfade 扩展成显式可视化过渡区与 Ease In/Out 双边手柄，再建设嵌套控制、录制和 Root Motion 契约。
+
+## 133. 2026-07-20 Sequencer 自动 Crossfade 与可视化手柄
+
+- Animation Clip 普通拖动、键盘移动、Inspector Start 修改和 Ripple 移动现在会按最终实际重叠自动生成或扩展后一段的 `blend_in`，不再要求用户先猜测重叠时长、填写 Blend In、再进行第二次拖动。移动前后仍保持 Clip 起点顺序，自动重叠最多覆盖后一段完整时长，整轨校验继续拒绝同起点和三段同时激活；拖离重叠区时只保留用户原先显式设置的 Blend In，不把拖动过程中的最大临时重叠永久残留。
+- 自动过渡也覆盖“向右移动前一段、与未选中的后一段相交”和 Ripple 后缀边界；若需要修改后一段这一未选中邻居，其 Blend In 与所选 Clip 的位置变化进入同一个 Timeline Undo 事务，取消指针手势会一起恢复。多选内部相对位置不变，只在移动组与外部相邻片段的边界生成过渡。
+- 选中的 Animation Clip 在 Blend In 终点显示方形高对比度手柄；拖动手柄按 Timeline 帧率吸附，最小值为当前真实重叠、最大值为 Clip 时长，锁定 Track/Group 时拒绝编辑。Inspector 数值输入继续提供键盘与精确输入路径，因此手柄不引入嵌套焦点控件；覆盖层、手柄和 Clip 标签采用独立层级，标签不会截获拖拽。
+
+第一遍自省从完整指针往返反查，发现初稿把“接近原始 Blend In”直接视为无操作：用户先拉大、再拉回原值时会停留在中间状态。现只在尚未创建 Undo 事务时用半帧阈值过滤抖动；事务建立后每个采样都写入，包括准确回到原值，Pointer Cancel 与回到原状态的空事务也会清理历史。
+
+第二遍自省从未选中邻居、Ripple 和多选边界反查，确认自动 Crossfade 不能只修改被拖动 Clip：向右推前一段时真正的入场参数属于后一段。现统一对最终轨道副本按开始时间扩展入场 Blend，再执行两路布局校验，并用普通移动、Ripple、组复制与 Blend 手柄回归固定原子性。编辑器测试增至 355 项；严格 TypeScript/Vite 构建继续验证手柄事件、联合类型和懒加载 Sequencer Chunk。
+
+当前自动化仍只生成单一入场曲线，尚未提供独立 Ease Out 权重、过渡曲线图、双边切线、对齐/匹配上一帧姿态或 Motion Matching。下一批应把可视区域升级为明确的重叠交叉纹理，并引入兼容旧资产的 `blend_out`/Ease Out 契约，使非对称过渡可在 Editor、Runtime 和 CLI 三端一致表达。

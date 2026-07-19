@@ -5065,6 +5065,23 @@ body.insp-scrubbing * {
   pointer-events: none;
 }
 
+.sequencer-animation-blend-handle {
+  position: absolute;
+  z-index: 3;
+  top: 0;
+  bottom: 0;
+  width: 7px;
+  transform: translateX(-50%);
+  border-left: 1px solid #f3dcff;
+  border-right: 1px solid #2d2237;
+  background: #d7b9ef44;
+  cursor: ew-resize;
+}
+
+.sequencer-animation-blend-handle:hover {
+  background: #f3dcff77;
+}
+
 .sequencer-particle-clip {
   position: absolute;
   z-index: 3;

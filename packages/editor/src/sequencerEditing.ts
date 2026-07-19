@@ -69,6 +69,17 @@ export type SequencerCopyResult =
 export const SEQUENCER_MIN_ZOOM = 1;
 export const SEQUENCER_MAX_ZOOM = 32;
 
+function growAnimationCrossfades(clips: TimelineAnimationClip[]): boolean {
+  const ordered = [...clips].sort((left, right) => left.start - right.start);
+  for (let index = 1; index < ordered.length; index += 1) {
+    const previous = ordered[index - 1];
+    const current = ordered[index];
+    const overlap = previous.start + previous.duration - current.start;
+    if (overlap > 0) current.blend_in = Math.min(current.duration, Math.max(current.blend_in, overlap));
+  }
+  return timelineAnimationClipLayoutIsValid(ordered);
+}
+
 export function selectSequencerItem(
   current: readonly SequencerItemSelection[],
   anchor: SequencerItemSelection | null,
@@ -391,6 +402,22 @@ export function trimSequencerAnimationClip(
   };
 }
 
+export function resizeSequencerAnimationBlend(
+  clips: readonly TimelineAnimationClip[],
+  index: number,
+  requestedBlendIn: number,
+  frameRate: number,
+): number {
+  const clip = clips[index];
+  if (!clip) return 0;
+  const previous = clips[index - 1];
+  const required = previous
+    ? Math.max(0, previous.start + previous.duration - clip.start)
+    : 0;
+  const requested = Number.isFinite(requestedBlendIn) ? requestedBlendIn : clip.blend_in;
+  return clamp(snap(requested, frameRate), required, clip.duration);
+}
+
 export function trimSequencerCameraBlendIn(
   originalBlendIn: number,
   trimmedDuration: number,
@@ -632,14 +659,14 @@ export function moveSequencerItems(
         const other = track.clips[otherIndex];
         const otherEnd = other.start + other.duration;
         if (other.start < clip.start - 1e-6) {
-          const allowedOverlap = track.type === 'animation' ? (clip as TimelineAnimationClip).blend_in : 0;
+          const allowedOverlap = track.type === 'animation' ? clip.duration : 0;
           minimumDelta = Math.max(
             minimumDelta,
             otherEnd - clip.start - allowedOverlap,
             other.start + frame - clip.start,
           );
         } else if (other.start > clip.start + 1e-6) {
-          const allowedOverlap = track.type === 'animation' ? (other as TimelineAnimationClip).blend_in : 0;
+          const allowedOverlap = track.type === 'animation' ? other.duration : 0;
           maximumDelta = Math.min(
             maximumDelta,
             other.start + allowedOverlap - clipEnd,
@@ -660,7 +687,7 @@ export function moveSequencerItems(
       const clips = track.clips.map((clip, index) => (
         selected.has(index) ? { ...clip, start: clip.start + candidate } : clip
       ));
-      if (!timelineAnimationClipLayoutIsValid(clips)) return false;
+      if (!growAnimationCrossfades(clips)) return false;
     }
     return true;
   };
@@ -682,6 +709,12 @@ export function moveSequencerItems(
     const track = next.tracks[selection.track];
     if (track.type === 'signal') track.markers[selection.marker].time = snap(track.markers[selection.marker].time + delta, next.frame_rate);
     else track.clips[selection.marker].start = snap(track.clips[selection.marker].start + delta, next.frame_rate);
+  }
+  for (const trackIndex of selectedByTrack.keys()) {
+    const track = next.tracks[trackIndex];
+    if (track.type === 'animation' && !growAnimationCrossfades(track.clips)) {
+      return { ok: false, error: `Track '${track.name}' cannot form a valid two-clip crossfade at that position.` };
+    }
   }
   return { ok: true, asset: next, delta };
 }
@@ -743,7 +776,7 @@ export function rippleMoveSequencerItems(
       minimumDelta = Math.max(
         minimumDelta,
         previous
-          ? previousEnd - rippleStart - (incoming as TimelineAnimationClip).blend_in
+          ? previousEnd - rippleStart - incoming.duration
           : -rippleStart,
         previous ? previous.start + frame - rippleStart : -rippleStart,
         twoBefore ? twoBefore.start + twoBefore.duration - rippleStart : -rippleStart,
@@ -769,6 +802,9 @@ export function rippleMoveSequencerItems(
     for (const clip of track.clips) {
       if (clip.start >= rippleStart - 1e-6) clip.start = snap(clip.start + delta, next.frame_rate);
       contentEnd = Math.max(contentEnd, clip.start + clip.duration);
+    }
+    if (track.type === 'animation' && !growAnimationCrossfades(track.clips)) {
+      return { ok: false, error: `Track '${track.name}' cannot form a valid two-clip crossfade at that position.` };
     }
   }
   next.duration = Math.max(next.duration, contentEnd);

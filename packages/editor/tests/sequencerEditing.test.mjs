@@ -17,6 +17,7 @@ import {
   pasteSequencerClipboard,
   resolveSequencerPasteTrack,
   rippleMoveSequencerItems,
+  resizeSequencerAnimationBlend,
   selectSequencerItem,
   sequencerTicks,
   snapSequencerItemsDelta,
@@ -103,6 +104,16 @@ test('Sequencer Animation trimming preserves and bounds crossfade overlap', () =
   assert.equal(shortTrim.start + shortTrim.duration, 1);
   const crossedStart = trimSequencerAnimationClip(clips, 1, 'start', 2, 4, 10);
   assert.equal(crossedStart.start, 1.7);
+});
+
+test('Sequencer Animation blend handle snaps without breaking live overlap', () => {
+  const clips = [
+    { start: 0, duration: 1, clip: 'A', clip_in: 0, speed: 1, blend_in: 0, blend_curve: 'linear' },
+    { start: 0.8, duration: 1, clip: 'B', clip_in: 0, speed: 1, blend_in: 0.2, blend_curve: 'linear' },
+  ];
+  assert.ok(Math.abs(resizeSequencerAnimationBlend(clips, 1, 0, 10) - 0.2) < 1e-9);
+  assert.equal(resizeSequencerAnimationBlend(clips, 1, 0.46, 10), 0.5);
+  assert.equal(resizeSequencerAnimationBlend(clips, 1, 5, 10), 1);
 });
 
 test('Sequencer selection model supports toggle and anchored ranges deterministically', () => {
@@ -316,7 +327,7 @@ test('Sequencer group movement shares one collision bound and rejects locked tra
   assert.match(groupLocked.error, /locked/);
 });
 
-test('Sequencer movement authors bounded two-clip Animation crossfades', () => {
+test('Sequencer movement automatically authors bounded two-clip Animation crossfades', () => {
   const asset = timeline();
   asset.tracks[2].clips = [
     {
@@ -325,13 +336,14 @@ test('Sequencer movement authors bounded two-clip Animation crossfades', () => {
     },
     {
       start: 1.5, duration: 1, clip: 'Assets/B.manim', clip_in: 0,
-      speed: 1, blend_in: 0.25, blend_curve: 'linear',
+      speed: 1, blend_in: 0, blend_curve: 'linear',
     },
   ];
   const crossed = moveSequencerItems(asset, [{ track: 2, marker: 1 }], -1);
   assert.equal(crossed.ok, true);
-  assert.equal(crossed.delta, -0.7);
-  assert.deepEqual(crossed.asset.tracks[2].clips.map((clip) => clip.start), [0, 0.8]);
+  assert.equal(crossed.delta, -1);
+  assert.deepEqual(crossed.asset.tracks[2].clips.map((clip) => clip.start), [0, 0.5]);
+  assert.equal(crossed.asset.tracks[2].clips[1].blend_in, 0.5);
 
   asset.tracks[2].clips.push({
     start: 2.8, duration: 1, clip: 'Assets/C.manim', clip_in: 0,
@@ -405,8 +417,9 @@ test('Sequencer ripple movement preserves a valid Animation crossfade boundary',
   ];
   const moved = rippleMoveSequencerItems(asset, [{ track: 2, marker: 1 }], -1);
   assert.equal(moved.ok, true);
-  assert.equal(moved.delta, -0.2);
-  assert.deepEqual(moved.asset.tracks[2].clips.map((clip) => clip.start), [0, 0.6, 1.8]);
+  assert.equal(moved.delta, -0.7);
+  assert.deepEqual(moved.asset.tracks[2].clips.map((clip) => clip.start), [0, 0.1, 1.3]);
+  assert.equal(moved.asset.tracks[2].clips[1].blend_in, 0.9);
 });
 
 test('Sequencer ripple movement closes time but preserves the previous clip boundary', () => {

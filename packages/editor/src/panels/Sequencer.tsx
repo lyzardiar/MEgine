@@ -100,6 +100,7 @@ import {
   moveSequencerItems,
   moveSequencerTrack,
   pasteSequencerClipboard,
+  resizeSequencerAnimationBlend,
   rippleMoveSequencerItems,
   sequencerTicks,
   selectSequencerItem,
@@ -1223,6 +1224,83 @@ export function Sequencer(props: SequencerProps) {
     pasteItem(copied.clipboard, requestedTime, selection.track);
   };
 
+  const startAnimationBlendDrag = (
+    event: ReactPointerEvent<HTMLElement>,
+    trackIndex: number,
+    clipIndex: number,
+  ) => {
+    if (!asset || event.button !== 0) return;
+    const track = asset.tracks[trackIndex];
+    if (track?.type !== 'animation') return;
+    if (timelineTrackIsLocked(asset, track)) {
+      setError(`Track '${track.name}' is locked. Unlock it before editing the crossfade.`);
+      return;
+    }
+    const lane = event.currentTarget.parentElement?.parentElement;
+    const clip = track.clips[clipIndex];
+    if (!lane || !clip) return;
+    event.preventDefault();
+    event.stopPropagation();
+    const bounds = lane.getBoundingClientRect();
+    const pointer = event.pointerId;
+    const historyCheckpoint = props.undoService.checkpoint();
+    const selectionBeforeDrag = selection ? { ...selection } : null;
+    const selectedItemsBeforeDrag = structuredClone(selectedItems);
+    const timeBeforeDrag = time;
+    let historyToken: EditorUndoToken | null = null;
+    applySelection({ track: trackIndex, marker: clipIndex }, [{ track: trackIndex, marker: clipIndex }]);
+    const move = (moveEvent: PointerEvent) => {
+      if (moveEvent.pointerId !== pointer) return;
+      const pointerTime = (moveEvent.clientX - bounds.left) / Math.max(1, bounds.width) * asset.duration;
+      const blendIn = resizeSequencerAnimationBlend(
+        track.clips,
+        clipIndex,
+        pointerTime - clip.start,
+        asset.frame_rate,
+      );
+      if (!historyToken && Math.abs(blendIn - clip.blend_in) < 0.5 / asset.frame_rate) return;
+      if (!historyToken) {
+        historyToken = pushHistory(
+          asset,
+          selectionBeforeDrag,
+          timeBeforeDrag,
+          selectedItemsBeforeDrag,
+          'Resize Timeline Animation Crossfade',
+        );
+      }
+      const next = structuredClone(asset);
+      const nextTrack = next.tracks[trackIndex];
+      if (nextTrack.type !== 'animation' || !nextTrack.clips[clipIndex]) return;
+      nextTrack.clips[clipIndex].blend_in = blendIn;
+      replaceAsset(next);
+      setError(null);
+    };
+    const finish = (finishEvent: PointerEvent) => {
+      if (finishEvent.pointerId !== pointer) return;
+      window.removeEventListener('pointermove', move);
+      window.removeEventListener('pointerup', finish);
+      window.removeEventListener('pointercancel', finish);
+      if (finishEvent.type === 'pointercancel') {
+        if (historyToken && props.undoService.isUndoTop(historyToken)) {
+          props.undoService.restoreCheckpoint(historyCheckpoint);
+        }
+        replaceAsset(structuredClone(asset));
+        applySelection(selectionBeforeDrag, selectedItemsBeforeDrag);
+        replaceTime(timeBeforeDrag);
+      } else if (
+        historyToken
+        && props.undoService.isUndoTop(historyToken)
+        && assetRef.current
+        && JSON.stringify(assetRef.current) === JSON.stringify(asset)
+      ) {
+        props.undoService.restoreCheckpoint(historyCheckpoint);
+      }
+    };
+    window.addEventListener('pointermove', move);
+    window.addEventListener('pointerup', finish);
+    window.addEventListener('pointercancel', finish);
+  };
+
   const startMarkerDrag = (
     event: ReactPointerEvent<HTMLButtonElement>,
     trackIndex: number,
@@ -2252,7 +2330,16 @@ export function Sequencer(props: SequencerProps) {
                     title={`${clip.clip} · ${clip.start.toFixed(3)}s + ${clip.duration.toFixed(3)}s · blend ${clip.blend_in.toFixed(3)}s`}
                     key={`${clip.start}-${clip.clip}-${clipIndex}`}
                     onPointerDown={(event) => startMarkerDrag(event, trackIndex, clipIndex)}
-                  ><i className="sequencer-animation-blend" style={{ width: `${clip.blend_in / clip.duration * 100}%` }} /><span className="sequencer-clip-label">M {clip.clip.split('/').at(-1)}</span></button>
+                  >
+                    <i className="sequencer-animation-blend" style={{ width: `${clip.blend_in / clip.duration * 100}%` }} />
+                    {isItemSelected(trackIndex, clipIndex) && <span
+                      className="sequencer-animation-blend-handle"
+                      style={{ left: `${clip.blend_in / clip.duration * 100}%` }}
+                      title={`Drag Blend In handle · ${clip.blend_in.toFixed(3)}s`}
+                      onPointerDown={(event) => startAnimationBlendDrag(event, trackIndex, clipIndex)}
+                    />}
+                    <span className="sequencer-clip-label">M {clip.clip.split('/').at(-1)}</span>
+                  </button>
                 ))}
                 {track.type === 'particle' && track.clips.map((clip, clipIndex) => (
                   <button
