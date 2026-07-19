@@ -246,6 +246,21 @@ struct BuildHistoryListResult {
     retention_limit: usize,
 }
 
+#[derive(Debug, serde::Serialize, PartialEq, Eq)]
+#[serde(rename_all = "camelCase")]
+struct RestoreBuildHistoryResult {
+    history_id: String,
+    output_dir: String,
+    manifest_path: String,
+    content_hash: String,
+    file_count: usize,
+    packaged_bytes: u64,
+    signing_key_id: String,
+    replaced_existing: bool,
+    cleanup_warning: Option<String>,
+    log: String,
+}
+
 #[derive(Clone, Debug, serde::Serialize, PartialEq, Eq)]
 #[serde(rename_all = "camelCase")]
 struct BuildHistoryPatchResult {
@@ -629,20 +644,11 @@ fn read_previous_build_manifest(output_dir: &Path) -> Option<serde_json::Value> 
     }
     let path = output_dir.join("mengine-build.json");
     let metadata = std::fs::symlink_metadata(&path).ok()?;
-    if metadata.file_type().is_symlink() || !metadata.is_file() {
+    if metadata.file_type().is_symlink() || !metadata.is_file() || metadata.len() > 64 * 1024 * 1024
+    {
         return None;
     }
     serde_json::from_slice(&std::fs::read(path).ok()?).ok()
-}
-
-fn published_build_hash(output_dir: &Path) -> Option<String> {
-    read_previous_build_manifest(output_dir).and_then(|manifest| {
-        manifest
-            .get("contentHash")
-            .and_then(serde_json::Value::as_str)
-            .filter(|value| value.len() == 64 && value.bytes().all(|byte| byte.is_ascii_hexdigit()))
-            .map(str::to_ascii_lowercase)
-    })
 }
 
 fn build_file_snapshots(
@@ -1035,6 +1041,7 @@ fn scan_build_history(project_root: &Path) -> Result<BuildHistoryListResult, Str
         });
     };
     let mut entries = Vec::new();
+    let mut published_manifests = BTreeMap::<String, Option<serde_json::Value>>::new();
     let mut invalid_records = 0;
     for item in std::fs::read_dir(&history_dir)
         .map_err(|error| format!("cannot read build history directory: {error}"))?
@@ -1060,33 +1067,33 @@ fn scan_build_history(project_root: &Path) -> Result<BuildHistoryListResult, Str
             continue;
         };
         match build_history_entry(project_root, &path, &record) {
-            Ok(entry) => entries.push(entry),
+            Ok(entry) => {
+                let published_manifest = published_manifests
+                    .entry(entry.output_dir.clone())
+                    .or_insert_with(|| read_previous_build_manifest(Path::new(&entry.output_dir)));
+                let matches_published = published_manifest
+                    .as_ref()
+                    .is_some_and(|manifest| manifest == &record.manifest);
+                entries.push((entry, matches_published));
+            }
             Err(_) => invalid_records += 1,
         }
     }
-    entries.sort_by(|left, right| {
+    entries.sort_by(|(left, _), (right, _)| {
         right
             .recorded_at_ms
             .cmp(&left.recorded_at_ms)
             .then_with(|| right.id.cmp(&left.id))
     });
-    let mut published_hashes = BTreeMap::<String, Option<String>>::new();
     let mut published_targets = HashSet::<String>::new();
-    for entry in &mut entries {
-        let published_hash = published_hashes
-            .entry(entry.output_dir.clone())
-            .or_insert_with(|| published_build_hash(Path::new(&entry.output_dir)));
-        if !published_targets.contains(&entry.output_dir)
-            && published_hash
-                .as_ref()
-                .is_some_and(|published_hash| published_hash == &entry.content_hash)
-        {
+    for (entry, matches_published) in &mut entries {
+        if !published_targets.contains(&entry.output_dir) && *matches_published {
             entry.published = true;
             published_targets.insert(entry.output_dir.clone());
         }
     }
     Ok(BuildHistoryListResult {
-        entries,
+        entries: entries.into_iter().map(|(entry, _)| entry).collect(),
         invalid_records,
         retention_limit: MAX_BUILD_HISTORY_ENTRIES,
     })
@@ -1512,8 +1519,8 @@ fn archive_build_history(
             return Err(error);
         }
     };
-    entry.published = published_build_hash(Path::new(&entry.output_dir))
-        .is_some_and(|published_hash| published_hash == entry.content_hash.as_str());
+    entry.published = read_previous_build_manifest(Path::new(&entry.output_dir))
+        .is_some_and(|published_manifest| published_manifest == *manifest);
     if let Err(error) =
         prune_build_history(project_root, MAX_BUILD_HISTORY_ENTRIES.saturating_sub(1))
     {
@@ -1549,10 +1556,17 @@ fn create_owned_temporary_directory(label: &str) -> Result<OwnedTemporaryDirecto
     let parent = std::env::temp_dir()
         .canonicalize()
         .map_err(|error| format!("cannot resolve temporary directory: {error}"))?;
+    create_owned_directory_in(&parent, label)
+}
+
+fn create_owned_directory_in(
+    parent: &Path,
+    label: &str,
+) -> Result<OwnedTemporaryDirectory, String> {
     let metadata = std::fs::symlink_metadata(&parent)
-        .map_err(|error| format!("cannot inspect temporary directory: {error}"))?;
-    if !metadata.is_dir() {
-        return Err("temporary directory is not a directory".into());
+        .map_err(|error| format!("cannot inspect temporary directory parent: {error}"))?;
+    if metadata.file_type().is_symlink() || !metadata.is_dir() {
+        return Err("temporary directory parent must be a regular non-symlink directory".into());
     }
     let nonce = SystemTime::now()
         .duration_since(UNIX_EPOCH)
@@ -1568,12 +1582,12 @@ fn create_owned_temporary_directory(label: &str) -> Result<OwnedTemporaryDirecto
             Err(error) if error.kind() == std::io::ErrorKind::AlreadyExists => continue,
             Err(error) => {
                 return Err(format!(
-                    "cannot create temporary build history directory: {error}"
+                    "cannot create temporary build artifact directory: {error}"
                 ));
             }
         }
     }
-    Err("cannot allocate a unique temporary build history directory".into())
+    Err("cannot allocate a unique temporary build artifact directory".into())
 }
 
 fn copy_verified_build_blob(
@@ -1634,6 +1648,37 @@ fn copy_verified_build_blob(
     Ok(())
 }
 
+fn restore_build_executable_permissions(
+    destination: &Path,
+    manifest: &serde_json::Value,
+) -> Result<(), String> {
+    let executable = manifest
+        .get("executable")
+        .and_then(serde_json::Value::as_str)
+        .filter(|value| !value.is_empty())
+        .ok_or_else(|| "build history manifest does not contain executable".to_string())?;
+    let relative = safe_build_content_path(executable)?;
+    let (_, files) = build_file_snapshots(manifest)?;
+    if !files.contains_key(executable) {
+        return Err("build history executable is not declared in files".into());
+    }
+    let path = destination.join(relative);
+    let metadata = std::fs::symlink_metadata(&path)
+        .map_err(|error| format!("cannot inspect restored build executable: {error}"))?;
+    if metadata.file_type().is_symlink() || !metadata.is_file() {
+        return Err("restored build executable must be a regular non-symlink file".into());
+    }
+    #[cfg(unix)]
+    {
+        use std::os::unix::fs::PermissionsExt;
+        let mut permissions = metadata.permissions();
+        permissions.set_mode(0o755);
+        std::fs::set_permissions(&path, permissions)
+            .map_err(|error| format!("cannot make restored Player executable: {error}"))?;
+    }
+    Ok(())
+}
+
 fn restore_build_history_artifact(
     project_root: &Path,
     record_path: &Path,
@@ -1649,7 +1694,7 @@ fn restore_build_history_artifact(
     }
     if !entry.artifact_signed {
         return Err(format!(
-            "build history {} is unsigned and cannot be used for a trusted patch",
+            "build history {} is unsigned and cannot be used as a trusted artifact",
             record.id
         ));
     }
@@ -1690,7 +1735,239 @@ fn restore_build_history_artifact(
         .and_then(|_| manifest_file.write_all(b"\n"))
         .and_then(|_| manifest_file.sync_all())
         .map_err(|error| format!("cannot write restored build manifest: {error}"))?;
+    restore_build_executable_permissions(destination, &record.manifest)?;
     Ok(entry)
+}
+
+fn unique_build_directory_path(parent: &Path, label: &str) -> Result<PathBuf, String> {
+    let nonce = SystemTime::now()
+        .duration_since(UNIX_EPOCH)
+        .unwrap_or_default()
+        .as_nanos();
+    for suffix in 0..32_u32 {
+        let path = parent.join(format!(
+            ".mengine-{label}-{}-{nonce}-{suffix}",
+            std::process::id()
+        ));
+        match std::fs::symlink_metadata(&path) {
+            Err(error) if error.kind() == std::io::ErrorKind::NotFound => return Ok(path),
+            Ok(_) => continue,
+            Err(error) => {
+                return Err(format!(
+                    "cannot inspect build artifact staging path: {error}"
+                ));
+            }
+        }
+    }
+    Err("cannot allocate a unique build artifact staging path".into())
+}
+
+fn canonical_builds_directory(project_root: &Path) -> Result<PathBuf, String> {
+    let canonical_project = project_root
+        .canonicalize()
+        .map_err(|error| format!("cannot resolve project directory: {error}"))?;
+    let project_metadata = std::fs::symlink_metadata(&canonical_project)
+        .map_err(|error| format!("cannot inspect project directory: {error}"))?;
+    if project_metadata.file_type().is_symlink() || !project_metadata.is_dir() {
+        return Err("project root must be a regular non-symlink directory".into());
+    }
+    let builds = canonical_project.join("Builds");
+    match std::fs::symlink_metadata(&builds) {
+        Ok(metadata) if metadata.file_type().is_symlink() || !metadata.is_dir() => {
+            return Err("project Builds path must be a regular non-symlink directory".into());
+        }
+        Ok(_) => {}
+        Err(error) if error.kind() == std::io::ErrorKind::NotFound => {
+            std::fs::create_dir(&builds)
+                .map_err(|error| format!("cannot create project Builds directory: {error}"))?;
+        }
+        Err(error) => return Err(format!("cannot inspect project Builds directory: {error}")),
+    }
+    let canonical_builds = builds
+        .canonicalize()
+        .map_err(|error| format!("cannot resolve project Builds directory: {error}"))?;
+    if !canonical_builds.starts_with(&canonical_project) {
+        return Err("project Builds directory escapes the project root".into());
+    }
+    Ok(canonical_builds)
+}
+
+fn validate_restored_build_identity(
+    output_dir: &Path,
+    expected_manifest: &serde_json::Value,
+    expected: &BuildHistoryEntry,
+) -> Result<(), String> {
+    let manifest = read_previous_build_manifest(output_dir)
+        .ok_or_else(|| "restored build manifest is missing or unsafe".to_string())?;
+    if manifest != *expected_manifest {
+        return Err("restored build manifest does not match the selected history record".into());
+    }
+    let (content_hash, file_count, packaged_bytes) = published_build_identity(output_dir)?;
+    if content_hash != expected.content_hash
+        || file_count != expected.file_count
+        || packaged_bytes != expected.packaged_bytes
+    {
+        return Err("restored build identity does not match the selected history record".into());
+    }
+    Ok(())
+}
+
+fn publish_restored_build_directory(
+    staged: &Path,
+    output_dir: &Path,
+    expected_manifest: &serde_json::Value,
+    expected: &BuildHistoryEntry,
+) -> Result<(bool, Option<String>), String> {
+    let parent = output_dir
+        .parent()
+        .ok_or_else(|| "restored build output has no parent directory".to_string())?;
+    let replaced_existing = match std::fs::symlink_metadata(output_dir) {
+        Ok(metadata) if metadata.file_type().is_symlink() || !metadata.is_dir() => {
+            return Err("published build target must be a regular non-symlink directory".into());
+        }
+        Ok(_) => true,
+        Err(error) if error.kind() == std::io::ErrorKind::NotFound => false,
+        Err(error) => return Err(format!("cannot inspect published build target: {error}")),
+    };
+    let backup = unique_build_directory_path(parent, "restore-backup")?;
+    if replaced_existing {
+        std::fs::rename(output_dir, &backup)
+            .map_err(|error| format!("cannot move the current published build aside: {error}"))?;
+    }
+    if let Err(error) = std::fs::rename(staged, output_dir) {
+        if replaced_existing {
+            if let Err(rollback_error) = std::fs::rename(&backup, output_dir) {
+                return Err(format!(
+                    "cannot publish restored build: {error}; rollback also failed: {rollback_error}; previous build remains at {}",
+                    backup.display()
+                ));
+            }
+        }
+        return Err(format!("cannot publish restored build: {error}"));
+    }
+    if let Err(validation_error) =
+        validate_restored_build_identity(output_dir, expected_manifest, expected)
+    {
+        let quarantine = staged;
+        if let Err(error) = std::fs::rename(output_dir, quarantine) {
+            return Err(if replaced_existing {
+                format!(
+                    "restored build failed post-publish validation: {validation_error}; cannot quarantine it: {error}; previous build remains at {}",
+                    backup.display()
+                )
+            } else {
+                format!(
+                    "restored build failed post-publish validation: {validation_error}; cannot quarantine it: {error}; no previous published build existed"
+                )
+            });
+        }
+        if replaced_existing {
+            if let Err(error) = std::fs::rename(&backup, output_dir) {
+                return Err(format!(
+                    "restored build failed post-publish validation: {validation_error}; rollback failed: {error}; previous build remains at {}",
+                    backup.display()
+                ));
+            }
+        }
+        return Err(if replaced_existing {
+            format!(
+                "restored build failed post-publish validation and the previous build was preserved: {validation_error}"
+            )
+        } else {
+            format!(
+                "restored build failed post-publish validation; the invalid output was removed and no previous build existed: {validation_error}"
+            )
+        });
+    }
+    let cleanup_warning = if replaced_existing {
+        std::fs::remove_dir_all(&backup).err().map(|error| {
+            format!(
+                "restored build was published, but the previous build backup could not be removed: {} ({error})",
+                backup.display()
+            )
+        })
+    } else {
+        None
+    };
+    Ok((replaced_existing, cleanup_warning))
+}
+
+fn restore_build_history_as_published_with_verifier<F>(
+    project_root: &Path,
+    history_id: &str,
+    verifier: F,
+) -> Result<RestoreBuildHistoryResult, String>
+where
+    F: FnOnce(&Path, &str) -> Result<String, String>,
+{
+    let history_dir = build_history_dir(project_root, false)?
+        .ok_or_else(|| "build history is empty".to_string())?;
+    let record_path = build_history_record_path(&history_dir, history_id)?;
+    let record = read_build_history_record(&record_path, history_id)?;
+    let entry = build_history_entry(project_root, &record_path, &record)?;
+    let signing_key_id = entry
+        .artifact_signing_key_id
+        .clone()
+        .ok_or_else(|| "selected build history is unsigned and cannot be restored".to_string())?;
+    let builds = canonical_builds_directory(project_root)?;
+    let output_dir = builds.join(format!(
+        "{}-{}-{}",
+        entry.platform, entry.architecture, entry.profile
+    ));
+    let staged_path = unique_build_directory_path(&builds, "restore-stage")?;
+    let staged = OwnedTemporaryDirectory {
+        path: staged_path.clone(),
+    };
+    restore_build_history_artifact(project_root, &record_path, &record, &staged.path)?;
+    let log = verifier(&staged.path, &entry.profile)?;
+    validate_restored_build_identity(&staged.path, &record.manifest, &entry)?;
+    let (replaced_existing, cleanup_warning) =
+        publish_restored_build_directory(&staged.path, &output_dir, &record.manifest, &entry)?;
+    Ok(RestoreBuildHistoryResult {
+        history_id: entry.id,
+        output_dir: output_dir.to_string_lossy().into_owned(),
+        manifest_path: output_dir
+            .join("mengine-build.json")
+            .to_string_lossy()
+            .into_owned(),
+        content_hash: entry.content_hash,
+        file_count: entry.file_count,
+        packaged_bytes: entry.packaged_bytes,
+        signing_key_id,
+        replaced_existing,
+        cleanup_warning,
+        log,
+    })
+}
+
+fn restore_build_history_as_published(
+    project_root: &Path,
+    history_id: &str,
+    public_key_path: &Path,
+    bundled_sdk: Option<PathBuf>,
+) -> Result<RestoreBuildHistoryResult, String> {
+    let public_key = trusted_public_key_path(public_key_path)?;
+    restore_build_history_as_published_with_verifier(project_root, history_id, |staged, profile| {
+        let mut command = history_patch_command(bundled_sdk, profile)?;
+        let output = command
+            .arg("verify-build")
+            .arg(staged)
+            .arg("--public-key")
+            .arg(&public_key)
+            .output()
+            .map_err(|error| format!("cannot start historical build verification: {error}"))?;
+        if !output.status.success() {
+            return Err(command_failure("historical build verification", &output));
+        }
+        let stdout = String::from_utf8_lossy(&output.stdout).trim().to_owned();
+        let stderr = String::from_utf8_lossy(&output.stderr).trim().to_owned();
+        Ok(match (stdout.is_empty(), stderr.is_empty()) {
+            (false, false) => format!("{stdout}\n{stderr}"),
+            (false, true) => stdout,
+            (true, false) => stderr,
+            (true, true) => String::new(),
+        })
+    })
 }
 
 fn build_patch_store_root(project_root: &Path, create: bool) -> Result<Option<PathBuf>, String> {
@@ -2701,8 +2978,11 @@ fn validated_player_executable(project_root: &Path, requested: &Path) -> Result<
     let manifest_path = output_dir.join("mengine-build.json");
     let manifest_metadata = std::fs::symlink_metadata(&manifest_path)
         .map_err(|error| format!("player build manifest: {error}"))?;
-    if manifest_metadata.file_type().is_symlink() || !manifest_metadata.is_file() {
-        return Err("player build manifest must be a regular non-symlink file".into());
+    if manifest_metadata.file_type().is_symlink()
+        || !manifest_metadata.is_file()
+        || manifest_metadata.len() > 64 * 1024 * 1024
+    {
+        return Err("player build manifest must be a regular non-symlink file under 64 MiB".into());
     }
     let manifest: serde_json::Value = serde_json::from_slice(
         &std::fs::read(&manifest_path)
@@ -3679,6 +3959,62 @@ async fn create_pc_build_history_patch(
 }
 
 #[tauri::command]
+async fn restore_pc_build_history(
+    history_id: String,
+    public_key_path: String,
+    app: tauri::AppHandle,
+    state: State<'_, AppState>,
+) -> Result<RestoreBuildHistoryResult, String> {
+    let project_root = state
+        .project
+        .lock()
+        .as_ref()
+        .map(|session| session.snapshot().project_root)
+        .ok_or_else(|| no_project().message)?;
+    let bundled_sdk = app
+        .path()
+        .resolve("build-sdk", BaseDirectory::Resource)
+        .ok()
+        .filter(|path| path.join("sdk.json").is_file());
+    let operation_id = state.next_build_id.fetch_add(1, Ordering::Relaxed);
+    let cancel_file = std::env::temp_dir().join(format!(
+        "mengine-editor-history-restore-{}-{operation_id}.cancel",
+        std::process::id()
+    ));
+    {
+        let mut active = state.active_build.lock();
+        if active.is_some() {
+            return Err("another build artifact operation is already running".into());
+        }
+        *active = Some(ActiveBuild {
+            id: operation_id,
+            cancelled: Arc::new(AtomicBool::new(false)),
+            cancel_file: cancel_file.clone(),
+            cancellable: false,
+        });
+    }
+    let cleanup = ActiveBuildGuard {
+        active_build: state.active_build.clone(),
+        id: operation_id,
+        cancel_file,
+    };
+    match tauri::async_runtime::spawn_blocking(move || {
+        let _cleanup = cleanup;
+        restore_build_history_as_published(
+            Path::new(&project_root),
+            &history_id,
+            Path::new(&public_key_path),
+            bundled_sdk,
+        )
+    })
+    .await
+    {
+        Ok(result) => result,
+        Err(error) => Err(format!("historical build restore task failed: {error}")),
+    }
+}
+
+#[tauri::command]
 async fn verify_pc_build_patch(
     patch_id: String,
     public_key_path: String,
@@ -4309,6 +4645,7 @@ pub fn run() {
             list_pc_build_patches,
             compare_pc_build_history,
             create_pc_build_history_patch,
+            restore_pc_build_history,
             verify_pc_build_patch,
             build_pc_player,
             cancel_pc_build,
@@ -4643,6 +4980,69 @@ mod tests {
     }
 
     #[test]
+    fn build_history_marks_only_the_exact_published_manifest_current() {
+        let root = std::env::temp_dir().join(format!(
+            "mengine-build-history-identity-{}-{}",
+            std::process::id(),
+            SystemTime::now()
+                .duration_since(UNIX_EPOCH)
+                .unwrap()
+                .as_nanos()
+        ));
+        let output_dir = root.join("Builds/windows-x86_64-release");
+        std::fs::create_dir_all(&output_dir).unwrap();
+        let mut first = history_manifest(
+            'a',
+            serde_json::json!([comparison_file(
+                "Runtime/MEnginePlayer.exe",
+                10,
+                'b',
+                "runtime"
+            )]),
+        );
+        first["signature"] = serde_json::json!({
+            "schemaVersion": 1,
+            "algorithm": "ed25519",
+            "keyId": "c".repeat(64),
+            "value": format!("{}==", "A".repeat(86))
+        });
+        std::fs::write(
+            output_dir.join("mengine-build.json"),
+            serde_json::to_vec(&first).unwrap(),
+        )
+        .unwrap();
+        let first_entry = archive_build_history(&root, None, &first, 10, "bundled-sdk").unwrap();
+
+        let mut second = first.clone();
+        second["project"]["version"] = serde_json::json!(8);
+        std::fs::write(
+            output_dir.join("mengine-build.json"),
+            serde_json::to_vec(&second).unwrap(),
+        )
+        .unwrap();
+        let second_entry = archive_build_history(&root, None, &second, 20, "bundled-sdk").unwrap();
+
+        assert_eq!(first_entry.content_hash, second_entry.content_hash);
+        let history = list_build_history(&root).unwrap();
+        assert_eq!(history.len(), 2);
+        assert!(
+            history
+                .iter()
+                .find(|entry| entry.id == second_entry.id)
+                .unwrap()
+                .published
+        );
+        assert!(
+            !history
+                .iter()
+                .find(|entry| entry.id == first_entry.id)
+                .unwrap()
+                .published
+        );
+        std::fs::remove_dir_all(root).unwrap();
+    }
+
+    #[test]
     fn build_history_content_store_deduplicates_validates_and_collects_blobs() {
         let root = std::env::temp_dir().join(format!(
             "mengine-build-content-{}-{}",
@@ -4653,7 +5053,7 @@ mod tests {
                 .as_nanos()
         ));
         let output_dir = root.join("Builds/windows-x86_64-release");
-        let runtime_path = output_dir.join("Runtime/MEnginePlayer.exe");
+        let runtime_path = output_dir.join("MEnginePlayer.exe");
         let scene_path = output_dir.join("Assets/Main.mscene");
         std::fs::create_dir_all(runtime_path.parent().unwrap()).unwrap();
         std::fs::create_dir_all(scene_path.parent().unwrap()).unwrap();
@@ -4668,7 +5068,7 @@ mod tests {
             'a',
             serde_json::json!([
                 {
-                    "path": "Runtime/MEnginePlayer.exe",
+                    "path": "MEnginePlayer.exe",
                     "size": runtime.len(),
                     "sha256": runtime_hash.clone(),
                     "category": "runtime"
@@ -4702,7 +5102,7 @@ mod tests {
             'b',
             serde_json::json!([
                 {
-                    "path": "Runtime/MEnginePlayer.exe",
+                    "path": "MEnginePlayer.exe",
                     "size": runtime.len(),
                     "sha256": runtime_hash.clone(),
                     "category": "runtime"
@@ -4781,7 +5181,7 @@ mod tests {
         .unwrap();
         assert!(restored_entry.artifact_signed);
         assert_eq!(
-            std::fs::read(restored_dir.join("Runtime/MEnginePlayer.exe")).unwrap(),
+            std::fs::read(restored_dir.join("MEnginePlayer.exe")).unwrap(),
             runtime
         );
         assert_eq!(
@@ -4835,6 +5235,119 @@ mod tests {
         assert_eq!(history.len(), 1);
         assert_eq!(history[0].id, current_entry.id);
         assert!(!history[0].content_available);
+        std::fs::remove_dir_all(root).unwrap();
+    }
+
+    #[test]
+    fn trusted_history_restore_replaces_atomically_and_preserves_on_failure() {
+        let root = std::env::temp_dir().join(format!(
+            "mengine-build-history-restore-{}-{}",
+            std::process::id(),
+            SystemTime::now()
+                .duration_since(UNIX_EPOCH)
+                .unwrap()
+                .as_nanos()
+        ));
+        let output_dir = root.join("Builds/windows-x86_64-release");
+        let player_path = output_dir.join("MEnginePlayer.exe");
+        std::fs::create_dir_all(player_path.parent().unwrap()).unwrap();
+        let player = b"trusted-history-player";
+        std::fs::write(&player_path, player).unwrap();
+        let player_hash = sha256_file(&player_path).unwrap();
+        let mut manifest = history_manifest(
+            'a',
+            serde_json::json!([{
+                "path": "MEnginePlayer.exe",
+                "size": player.len(),
+                "sha256": player_hash,
+                "category": "runtime"
+            }]),
+        );
+        manifest["signature"] = serde_json::json!({
+            "schemaVersion": 1,
+            "algorithm": "ed25519",
+            "keyId": "d".repeat(64),
+            "value": format!("{}==", "A".repeat(86))
+        });
+        std::fs::write(
+            output_dir.join("mengine-build.json"),
+            serde_json::to_vec(&manifest).unwrap(),
+        )
+        .unwrap();
+        let history =
+            archive_build_history(&root, Some(&output_dir), &manifest, 15, "bundled-sdk").unwrap();
+
+        std::fs::write(output_dir.join("keep-current.txt"), b"previous build").unwrap();
+        std::fs::write(&player_path, b"newer unarchived player").unwrap();
+        let restored = restore_build_history_as_published_with_verifier(
+            &root,
+            &history.id,
+            |staged, profile| {
+                assert_eq!(profile, "release");
+                assert_eq!(
+                    std::fs::read(staged.join("MEnginePlayer.exe")).unwrap(),
+                    player
+                );
+                Ok("trusted verifier passed".into())
+            },
+        )
+        .unwrap();
+        assert!(restored.replaced_existing);
+        assert_eq!(restored.log, "trusted verifier passed");
+        assert_eq!(restored.signing_key_id, "d".repeat(64));
+        assert!(!output_dir.join("keep-current.txt").exists());
+        assert_eq!(std::fs::read(&player_path).unwrap(), player);
+        assert!(
+            list_build_history(&root)
+                .unwrap()
+                .iter()
+                .find(|entry| entry.id == history.id)
+                .unwrap()
+                .published
+        );
+
+        std::fs::write(output_dir.join("keep-current.txt"), b"preserve me").unwrap();
+        let error = restore_build_history_as_published_with_verifier(
+            &root,
+            &history.id,
+            |_staged, _profile| Err("independent trust check failed".into()),
+        )
+        .unwrap_err();
+        assert!(error.contains("independent trust check failed"));
+        assert_eq!(
+            std::fs::read(output_dir.join("keep-current.txt")).unwrap(),
+            b"preserve me"
+        );
+
+        let record =
+            read_build_history_record(Path::new(&history.record_path), &history.id).unwrap();
+        let expected =
+            build_history_entry(&root, Path::new(&history.record_path), &record).unwrap();
+        let invalid_stage = root.join("Builds/invalid-restore-stage");
+        std::fs::create_dir(&invalid_stage).unwrap();
+        std::fs::write(invalid_stage.join("mengine-build.json"), b"{}").unwrap();
+        let error = publish_restored_build_directory(
+            &invalid_stage,
+            &output_dir,
+            &record.manifest,
+            &expected,
+        )
+        .unwrap_err();
+        assert!(error.contains("previous build was preserved"));
+        assert_eq!(
+            std::fs::read(output_dir.join("keep-current.txt")).unwrap(),
+            b"preserve me"
+        );
+
+        std::fs::remove_dir_all(&output_dir).unwrap();
+        let restored_without_previous = restore_build_history_as_published_with_verifier(
+            &root,
+            &history.id,
+            |_staged, _profile| Ok("trusted verifier passed again".into()),
+        )
+        .unwrap();
+        assert!(!restored_without_previous.replaced_existing);
+        assert_eq!(std::fs::read(&player_path).unwrap(), player);
         std::fs::remove_dir_all(root).unwrap();
     }
 

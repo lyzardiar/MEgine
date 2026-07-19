@@ -16,6 +16,7 @@ import {
   listPcBuildHistory,
   listPcBuildPatches,
   listenToPcBuildProgress,
+  restorePcBuildHistory,
   runPcPlayer,
   saveProjectBuildAssetSettings,
   saveProjectBuildSettings,
@@ -25,6 +26,7 @@ import {
   type BuildHistoryEntry,
   type BuildHistoryPatchResult,
   type BuildPatchInventoryEntry,
+  type RestoreBuildHistoryResult,
   type VerifyBuildPatchResult,
   type BuildPlayerProfile,
   type BuildProgressEvent,
@@ -137,6 +139,8 @@ export function BuildSettings(props: {
   const [historyComparing, setHistoryComparing] = useState(false);
   const [historyPatching, setHistoryPatching] = useState(false);
   const [historyPatch, setHistoryPatch] = useState<BuildHistoryPatchResult | null>(null);
+  const [historyRestoringId, setHistoryRestoringId] = useState<string | null>(null);
+  const [historyRestore, setHistoryRestore] = useState<RestoreBuildHistoryResult | null>(null);
   const [historyError, setHistoryError] = useState<string | null>(null);
   const [buildPatches, setBuildPatches] = useState<BuildPatchInventoryEntry[]>([]);
   const [invalidBuildPatches, setInvalidBuildPatches] = useState(0);
@@ -177,6 +181,19 @@ export function BuildSettings(props: {
     && selectedHistoryEntries[0].platform === selectedHistoryEntries[1].platform
     && selectedHistoryEntries[0].architecture === selectedHistoryEntries[1].architecture
     && selectedHistoryEntries[0].profile === selectedHistoryEntries[1].profile;
+  const selectedRestoreEntry = selectedHistoryEntries.length === 1
+    ? selectedHistoryEntries[0]
+    : null;
+  const historyRestoreEligible = Boolean(
+    selectedRestoreEntry
+      && selectedRestoreEntry.contentAvailable
+      && selectedRestoreEntry.artifactSigned
+      && !selectedRestoreEntry.published,
+  );
+  const buildArtifactBusy = building
+    || historyPatching
+    || Boolean(historyRestoringId)
+    || Boolean(patchVerifyingId);
 
   const refreshBuildHistory = useCallback(async (reportFailure = true) => {
     const revision = historyLoadRevisionRef.current + 1;
@@ -532,10 +549,11 @@ export function BuildSettings(props: {
     ));
     setHistoryComparison(null);
     setHistoryPatch(null);
+    setHistoryRestore(null);
   };
 
   const compareSelectedHistory = async () => {
-    if (historySelection.length !== 2 || historyComparing || historyPatching) return;
+    if (historySelection.length !== 2 || historyComparing || buildArtifactBusy) return;
     const selected = selectedHistoryEntries;
     if (selected.length !== 2) return;
     setHistoryComparing(true);
@@ -554,7 +572,7 @@ export function BuildSettings(props: {
   };
 
   const createSelectedHistoryPatch = async () => {
-    if (!historyPatchEligible || historyPatching) return;
+    if (!historyPatchEligible || buildArtifactBusy) return;
     const [previous, current] = selectedHistoryEntries;
     setHistoryPatching(true);
     setHistoryError(null);
@@ -577,9 +595,59 @@ export function BuildSettings(props: {
     }
   };
 
+  const restoreSelectedHistory = async () => {
+    if (!historyRestoreEligible || buildArtifactBusy || !selectedRestoreEntry) return;
+    let publicKeyPath: string | null;
+    try {
+      publicKeyPath = await chooseBuildPublicKey();
+    } catch (reason) {
+      const detail = reason instanceof Error ? reason.message : String(reason);
+      setHistoryError(detail);
+      props.onLog(`Trusted public key selection failed: ${detail}`, 'error');
+      return;
+    }
+    if (!publicKeyPath) return;
+    const confirmed = window.confirm(
+      `Restore build ${selectedRestoreEntry.id} as the published ${selectedRestoreEntry.platform}-${selectedRestoreEntry.architecture}-${selectedRestoreEntry.profile} Player?\n\n`
+      + `The archived artifact will be reconstructed and verified with the selected Ed25519 public key before it atomically replaces:\n${selectedRestoreEntry.outputDir}\n\n`
+      + 'The previous published build is preserved automatically if validation or replacement fails.',
+    );
+    if (!confirmed) return;
+    setHistoryRestoringId(selectedRestoreEntry.id);
+    setHistoryError(null);
+    setHistoryRestore(null);
+    try {
+      const result = await restorePcBuildHistory(selectedRestoreEntry.id, publicKeyPath);
+      setHistoryRestore(result);
+      setLastBuild(null);
+      setLastVerification(null);
+      setMessageError(false);
+      setMessage(`Trusted build restored: ${result.contentHash.slice(0, 12)} · ${byteSize(result.packagedBytes)}.`);
+      props.onLog(`Restored verified build history ${result.historyId} -> ${result.outputDir}`);
+      if (result.cleanupWarning) props.onLog(result.cleanupWarning, 'warn');
+      await refreshBuildHistory(false);
+    } catch (reason) {
+      const detail = reason instanceof Error ? reason.message : String(reason);
+      setHistoryError(detail);
+      setMessageError(true);
+      setMessage(detail);
+      props.onLog(`Historical build restore failed: ${detail}`, 'error');
+    } finally {
+      setHistoryRestoringId(null);
+    }
+  };
+
   const verifyBuildPatch = async (patch: BuildPatchInventoryEntry) => {
-    if (patchVerifyingId || historyPatching || !patch.baseAvailable) return;
-    const publicKeyPath = await chooseBuildPublicKey();
+    if (buildArtifactBusy || !patch.baseAvailable) return;
+    let publicKeyPath: string | null;
+    try {
+      publicKeyPath = await chooseBuildPublicKey();
+    } catch (reason) {
+      const detail = reason instanceof Error ? reason.message : String(reason);
+      setPatchInventoryError(detail);
+      props.onLog(`Trusted public key selection failed: ${detail}`, 'error');
+      return;
+    }
     if (!publicKeyPath) return;
     setPatchVerifyingId(patch.id);
     setPatchInventoryError(null);
@@ -612,6 +680,7 @@ export function BuildSettings(props: {
       || !settings?.scenes.length
       || building
       || historyPatching
+      || historyRestoringId
       || patchVerifyingId
       || launching
       || verifying
@@ -675,8 +744,8 @@ export function BuildSettings(props: {
           <strong>PC Build Settings</strong>
           <span>Packages an ordered scene list into a self-validating standalone player.</span>
         </div>
-        <span className={`build-status ${building || historyPatching || patchVerifyingId || launching || verifying || settingsSaving || savingAll ? 'busy' : ''}`}>
-          {building ? (cancelRequested ? 'CANCELLING' : 'BUILDING') : historyPatching ? 'PATCHING' : patchVerifyingId ? 'VERIFYING PATCH' : launching ? 'LAUNCHING' : verifying ? 'VERIFYING' : settingsSaving || savingAll ? 'SAVING' : lastVerification ? 'VERIFIED' : lastBuild ? 'SUCCEEDED' : 'READY'}
+        <span className={`build-status ${buildArtifactBusy || launching || verifying || settingsSaving || savingAll ? 'busy' : ''}`}>
+          {building ? (cancelRequested ? 'CANCELLING' : 'BUILDING') : historyPatching ? 'PATCHING' : historyRestoringId ? 'RESTORING' : patchVerifyingId ? 'VERIFYING PATCH' : launching ? 'LAUNCHING' : verifying ? 'VERIFYING' : settingsSaving || savingAll ? 'SAVING' : lastVerification ? 'VERIFIED' : lastBuild ? 'SUCCEEDED' : 'READY'}
         </span>
       </div>
 
@@ -870,27 +939,37 @@ export function BuildSettings(props: {
               <span>{buildHistory.length}/{historyRetentionLimit} retained</span>
               <button
                 type="button"
-                disabled={historyLoading || historyComparing || historyPatching || Boolean(patchVerifyingId)}
+                disabled={historyLoading || historyComparing || buildArtifactBusy}
                 onClick={() => void refreshBuildHistory()}
               >
                 {historyLoading ? 'Refreshing...' : 'Refresh'}
               </button>
               <button
                 type="button"
-                disabled={historySelection.length !== 2 || historyComparing || historyPatching || Boolean(patchVerifyingId)}
+                disabled={historySelection.length !== 2 || historyComparing || buildArtifactBusy}
                 onClick={() => void compareSelectedHistory()}
               >
                 {historyComparing ? 'Comparing...' : 'Compare Selected'}
               </button>
               <button
                 type="button"
-                disabled={!historyPatchEligible || historyPatching || historyComparing || Boolean(patchVerifyingId)}
+                disabled={!historyPatchEligible || buildArtifactBusy || historyComparing}
                 title={historyPatchEligible
                   ? 'Rebuild both archived artifacts, then create and verify a signed patch.'
                   : 'Select two content-archived builds signed by the same key.'}
                 onClick={() => void createSelectedHistoryPatch()}
               >
                 {historyPatching ? 'Creating Patch...' : 'Create Signed Patch'}
+              </button>
+              <button
+                type="button"
+                disabled={!historyRestoreEligible || buildArtifactBusy || historyComparing}
+                title={historyRestoreEligible
+                  ? 'Choose an independent trusted Ed25519 public key, verify the archived artifact, then atomically replace the published build.'
+                  : 'Select one signed, content-archived build that is not already current.'}
+                onClick={() => void restoreSelectedHistory()}
+              >
+                {historyRestoringId ? 'Restoring...' : 'Restore Selected...'}
               </button>
             </div>
           </div>
@@ -909,7 +988,7 @@ export function BuildSettings(props: {
                   <input
                     type="checkbox"
                     checked={selected}
-                    disabled={!selected && historySelection.length >= 2}
+                    disabled={buildArtifactBusy || (!selected && historySelection.length >= 2)}
                     onChange={() => toggleHistoryEntry(entry.id)}
                   />
                   <span className="build-history-main">
@@ -965,6 +1044,21 @@ export function BuildSettings(props: {
               <code>{historyPatch.outputDir}</code>
             </div>
           )}
+          {historyRestore && (
+            <div className="build-history-restore" title={historyRestore.manifestPath}>
+              <h4>Trusted historical build restored</h4>
+              <span>
+                {historyRestore.fileCount} files · {byteSize(historyRestore.packagedBytes)} · key{' '}
+                {historyRestore.signingKeyId.slice(0, 12)}
+              </span>
+              <span>
+                {historyRestore.replacedExisting ? 'Previous published build replaced atomically.' : 'Published build created.'}
+              </span>
+              <code>{historyRestore.outputDir}</code>
+              {historyRestore.cleanupWarning && <small>{historyRestore.cleanupWarning}</small>}
+              {historyRestore.log && <pre>{historyRestore.log}</pre>}
+            </div>
+          )}
         </section>
       )}
       {desktop && (
@@ -975,7 +1069,7 @@ export function BuildSettings(props: {
               <span>{buildPatches.length} patches</span>
               <button
                 type="button"
-                disabled={patchInventoryLoading || historyPatching || Boolean(patchVerifyingId)}
+                disabled={patchInventoryLoading || buildArtifactBusy}
                 onClick={() => void refreshBuildPatches()}
               >
                 {patchInventoryLoading ? 'Refreshing...' : 'Refresh'}
@@ -1005,7 +1099,7 @@ export function BuildSettings(props: {
                   {verified && <em className="verified">VERIFIED</em>}
                   <button
                     type="button"
-                    disabled={!patch.baseAvailable || Boolean(patchVerifyingId) || historyPatching}
+                    disabled={!patch.baseAvailable || buildArtifactBusy}
                     title={patch.baseAvailable
                       ? 'Choose an independent trusted Ed25519 public key and verify the complete patch chain.'
                       : 'The exact archived base is no longer available for verification.'}
@@ -1177,7 +1271,7 @@ export function BuildSettings(props: {
         {lastBuild && (
           <button
             type="button"
-            disabled={building || launching || verifying || settingsSaving}
+            disabled={buildArtifactBusy || launching || verifying || settingsSaving}
             onClick={() => void verify(lastBuild)}
           >
             {verifying ? 'Verifying Published Build...' : lastVerification ? 'Verify Again' : 'Verify Published Build'}
@@ -1186,7 +1280,7 @@ export function BuildSettings(props: {
         {lastBuild && (
           <button
             type="button"
-            disabled={building || launching || verifying || settingsSaving}
+            disabled={buildArtifactBusy || launching || verifying || settingsSaving}
             onClick={() => void launch(lastBuild)}
           >
             {launching ? 'Starting Player...' : 'Run Player'}
@@ -1203,6 +1297,7 @@ export function BuildSettings(props: {
             || savingAll
             || building
             || historyPatching
+            || Boolean(historyRestoringId)
             || Boolean(patchVerifyingId)
             || launching
             || verifying
@@ -1225,6 +1320,7 @@ export function BuildSettings(props: {
             || savingAll
             || building
             || historyPatching
+            || Boolean(historyRestoringId)
             || Boolean(patchVerifyingId)
             || launching
             || verifying

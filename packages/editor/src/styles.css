@@ -6243,6 +6243,35 @@ body.insp-scrubbing * {
   text-overflow: ellipsis;
   white-space: nowrap;
 }
+.build-history-restore {
+  display: grid;
+  gap: 4px;
+  padding: 7px;
+  border-top: 1px solid #45644c;
+  background: #26352b;
+  color: #b8c8bb;
+  font-size: 10px;
+}
+.build-history-restore h4 { margin: 0; color: #9dd3a5; font: 10px var(--u-mono); }
+.build-history-restore code {
+  overflow: hidden;
+  color: #9eb8c4;
+  font: 9px var(--u-mono);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.build-history-restore small { color: #e3c774; }
+.build-history-restore pre {
+  max-height: 96px;
+  margin: 2px 0 0;
+  padding: 5px;
+  overflow: auto;
+  border: 1px solid #3f5444;
+  background: #202722;
+  color: #a9c6ae;
+  font: 9px/1.4 var(--u-mono);
+  white-space: pre-wrap;
+}
 .build-patch-list { max-height: 220px; overflow: auto; }
 .build-patch-row {
   display: grid;

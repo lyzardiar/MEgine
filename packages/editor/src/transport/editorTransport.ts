@@ -149,6 +149,19 @@ export type BuildHistoryListResult = {
   retentionLimit: number;
 };
 
+export type RestoreBuildHistoryResult = {
+  historyId: string;
+  outputDir: string;
+  manifestPath: string;
+  contentHash: string;
+  fileCount: number;
+  packagedBytes: number;
+  signingKeyId: string;
+  replacedExisting: boolean;
+  cleanupWarning: string | null;
+  log: string;
+};
+
 export type BuildHistoryPatchResult = {
   outputDir: string;
   manifestPath: string;
@@ -439,6 +452,19 @@ export async function chooseBuildPublicKey(): Promise<string | null> {
     filters: [{ name: 'PEM public key', extensions: ['pem', 'pub'] }],
   });
   return typeof selected === 'string' ? selected : null;
+}
+
+export async function restorePcBuildHistory(
+  historyId: string,
+  publicKeyPath: string,
+): Promise<RestoreBuildHistoryResult> {
+  if (!isDesktopEditor()) {
+    throw new Error('Build history restore requires the desktop editor');
+  }
+  return invoke<RestoreBuildHistoryResult>('restore_pc_build_history', {
+    historyId,
+    publicKeyPath,
+  });
 }
 
 export async function verifyPcBuildPatch(

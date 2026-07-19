@@ -101,7 +101,10 @@ fn create_asset_sidecar(path: &Path, sidecar: &AssetSidecar) -> Result<(), Strin
     let parent = path
         .parent()
         .ok_or_else(|| "asset metadata has no parent directory".to_string())?;
-    let name = path.file_name().and_then(|name| name.to_str()).unwrap_or("asset.meta");
+    let name = path
+        .file_name()
+        .and_then(|name| name.to_str())
+        .unwrap_or("asset.meta");
     let temporary = parent.join(format!(".{name}.{}.tmp", Uuid::new_v4()));
     let result = (|| -> Result<(), String> {
         let mut file = std::fs::OpenOptions::new()

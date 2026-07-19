@@ -1587,3 +1587,16 @@ Camera Shot 的基础闭环已经形成，但 Timeline 仍不完备：编辑器 
 第二遍自省沿“所有资源失败是否真的可见”反查，发现已有白色/平面法线后备纹理同时承担“作者主动留空”和“声明路径加载失败”，后者仍可能看似正常。现明确区分空槽与非空未驻留引用，并检查内置和自定义槽的颜色空间缓存；单元测试固定只有非空且不可用的引用触发错误回退。验证覆盖 RHI 错误 WGSL、错误 Pipeline 状态归一、材质/Shader 修复、编辑器错误外观和严格前端构建。
 
 这一批解决了静默回退和基础诊断，但还不是完整 Shader 工具链。wgpu 的设备/驱动专属异步 Pipeline 创建错误尚未纳入同步错误作用域，编辑器 Canvas 仍不执行真实 WGSL，也没有在 Inspector/Project 图标上聚合依赖诊断；缺少离线多后端编译、源位置映射、Include、Shader Graph、Render Pass/Frame Debugger、PSO 持久缓存、平台 Feature 门禁和 CI 编译耗时预算。下一阶段应让构建产物携带按平台编译的 Shader Artifact 与源映射，并把 Runtime/RHI 诊断通过版本化 Editor Profiler 协议回传，而不是依赖日志文本。
+
+## 135. 2026-07-20 构建历史可信恢复与原子回滚
+
+- Build Settings 的 Build History 新增 `Restore Selected...`。入口只对一条完整内容归档、带 Ed25519 签名且并非当前发布版本的记录开放；用户必须通过系统文件选择器提供独立 SPKI PEM 公钥，并在明确显示目标目录的二次确认后才能执行。恢复、Player 构建、历史补丁生成和补丁可信验证共用 Tauri Host 的制品操作互斥，独立 Dock 或重复点击不能并发替换同一发布目录。
+- Host 不信任历史记录、自报 key id 或内容仓库文件名。它先从 `.mengine/build-content/sha256` 逐文件重建到 `Builds` 下同卷隐藏暂存目录，每个 Blob 都重新检查普通文件、大小并流式计算 SHA-256；随后恢复受签名保护的完整 `mengine-build.json`，验证 Manifest 声明的 Player executable 是包内已声明普通文件，并在 Unix/macOS 恢复 `0755`。只有 CLI `verify-build --public-key` 完整验证文件集合、聚合内容哈希和 Ed25519 签名后，暂存才有资格发布；恢复过程从不执行历史 Player。
+- 发布采用同卷目录重命名事务。现有目标必须是普通非符号链接目录，先移动到唯一隐藏备份，再把已验证暂存重命名为规范的 `<platform>-<architecture>-<profile>` 输出；发布后再次核对完整 Manifest、内容哈希、文件数和字节数。替换或发布后核对失败会把新目录隔离回暂存路径并恢复旧目录；旧目录清理失败不撤销已经成功的发布，而是作为可见警告保留备份路径。目标原本不存在时也使用同一暂存发布路径，并准确区分“已恢复旧包”和“没有旧包可恢复”。
+- Build History 的 `CURRENT` 不再只比较 payload `contentHash`，而是比较解析后的完整 Manifest；读取入口统一拒绝符号链接、非普通文件和超过 64 MiB 的 Manifest。文件字节相同但工程版本、构建元数据、Shader Variant 清单或签名不同的两个制品，不会再同时或错误显示为当前版本；完全相同的重复记录只标记最新一条。恢复成功后列表立即刷新，旧的 `lastBuild`/Player 验证状态会被清除，避免 Run/Verify 继续引用已被替换的可执行文件。
+
+第一遍自省从“恢复后哪个 History 才是当前版本”反查，发现原列表只按 `contentHash` 判断，会把同 payload、不同完整签名 Manifest 的记录混为一体；现改为完整 Manifest 等价，并用相同内容哈希、不同工程版本的回归固定唯一 CURRENT。随后从失败窗口逐步推演暂存、旧包备份、新包发布和发布后核对，补齐替换失败回滚、发布后失败回滚、备份清理降级警告，以及信任验证失败绝不触碰当前包。
+
+第二遍自省从跨平台可运行性和编辑器状态反查，发现内容寻址仓库只保存字节，初稿恢复出的 Linux/macOS Player 会丢失 executable bit；现按 Manifest executable 恢复权限后再验签。UI 同时把恢复纳入 Build/History/Patch/Run/Verify 的统一忙状态，恢复成功清空旧构建引用，并为公钥选择失败提供结构化错误；回滚消息也区分原本是否存在发布包。回归覆盖可信重建、验签失败保留当前目录、发布后核对失败恢复旧目录、无旧包首次发布、完整 Manifest CURRENT 判定和 Unix 权限契约；编辑器 356/356、Tauri Host 26/26 常规测试通过，生产前端构建与 Rust workspace 检查继续作为提交门禁。
+
+这一批补上了本地历史制品的人工回退闭环，但仍不是成熟 Release Management。历史与 Blob 仍只有单进程内互斥，没有跨编辑器/CI 的文件锁、恢复审计日志、受保护版本 Pin、磁盘配额、删除审批、可信 keyring/密钥轮换与撤销、渠道/灰度指针、远端制品仓库、版本 DAG 或一键选择最短补丁链；备份清理失败也需要后续库存面板提供可审计的人工处理入口。下一阶段应把 Build History/Patch Inventory 拆成独立 Release Dock，以不可变 Artifact ID 建立版本图、Pin/Retention 和恢复记录，再接远端对象存储、CI 发布身份与平台代码签名/公证。
