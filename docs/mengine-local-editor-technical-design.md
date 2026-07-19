@@ -979,3 +979,14 @@ Referenced Only 是可用的单包裁剪基础，仍不等同于完整 Addressab
 第一遍真实自审在 60 FPS 同轨选区中验证 0 / 0.2 / 0.7 秒均分为 0 / 0.35 / 0.7 秒，反转为 0 / 0.5 / 0.7 秒；两项分别只生成 `Distribute Animation Keys` 和 `Reverse Animation Keys` 一条 Undo，同轨 Align 正确禁用。第二遍使用 `Transform.position` 与 `Transform.scale` 跨轨选择 0.2 / 0.4 秒关键帧，Start 对齐得到 0.2 / 0.2 秒，恢复后以 Step 5 偏移得到 0.283 / 0.483 秒；普通 Dock 的 319px Details 和最大化的 311px Details 均满足 `scrollWidth === clientWidth`，四命令工具栏没有横向溢出。审计 Clip、状态差异与本地服务在全量回归前全部清理。
 
 这一切片补齐了常用批量时间变换，但成熟 Timeline 仍需碰撞覆盖预览与 Keep/Overwrite/Merge 策略、Selection Pivot/Center 缩放、Loop/Repeat、可配置 Snap、关键帧标签与颜色、曲线视图框选和批量切线模式、Onion Skin、运动轨迹、音频波形、模型动画切片与重定向、Root Motion、动画层混合，以及和 `.mtimeline` Sequencer 共享时间选择与命令体系。
+
+## 78. 2026-07-19 Timeline 关键帧碰撞预检与原子保护
+
+- 统一关键帧重排内核新增显式碰撞结果：在删除任何源关键帧之前，按 `track + frame` 检查目标位置已有且不属于当前选区的关键帧，返回稳定排序的轨道、键索引和目标帧。选区内部关键帧互换或整体移动不会被误报为外部碰撞；同轨选中键折叠仍作为另一类非法变换提前拒绝。
+- Details 新增 `Conflicts` 策略，`Overwrite` 保留动画编辑器常见的目标键覆盖语义并明确报告覆盖数量，`Protect Existing` 则在发现任意冲突时原子取消整次操作，不允许只移动一部分选区。策略覆盖按钮 Offset、键盘微调、真实指针拖拽、Retime、Reverse、Align、Distribute 和关键帧 Paste；所有路径共用同一预检，而不是只在某个按钮外围做提示。
+- 拖拽期间使用纯函数预检当前帧偏移；存在冲突时贯穿轨道的帧导引切换为红色，并在帧范围/偏移后显示 `N overwrite` 或 `N blocked`。落点后，Overwrite 生成正常具名 Undo 并重映射剩余选区；Protect 恢复拖拽前播放头和选区，不改变 Clip、不设置 Dirty，也不增加空 Undo。
+- 碰撞结果在详情区以紧凑状态条反馈，并同步写入 Console 警告。连续按键重复撞到同一受保护目标时对相同消息去重；切换策略、切换 Clip、Undo/Redo 恢复文档或后续无碰撞操作会清理旧提示，避免把上一资源或上一历史状态的警告留在当前编辑上下文。
+
+第一遍真实自审在 60 FPS 的 0 / 0.5 / 1.0 秒三关键帧轨道中选择 0 秒键，以 Step 30 和 Protect 向前移动：三键时间完全不变，状态为 `Protected 1 existing key; move cancelled.`，Undo 标题仍停留在此前的 `Record Animation Key`；同一策略下粘贴到 0.5 秒和真实指针拖到 0.5 秒也保持原子取消。第二遍切到 Overwrite 后向前移动 30 帧，轨道变为 0.5 / 1.0 秒并报告覆盖一个目标键，Undo 标题为 `Move Animation Keys`，一次撤销恢复三键及原选区。319px Details 和 303px 策略控件均满足 `scrollWidth === clientWidth`；审计 Clip、状态差异与本地服务已清理。
+
+本阶段的 `Protect Existing` 等价于非破坏性的 Keep/Abort，而不是删除冲突源键后保留目标键；后者会静默改变组选区形状，因此没有伪装成“Merge”。后续若加入 Merge，必须先定义数值、离散值、Cubic 切线和事件载荷的逐类型合并契约，并提供冲突目标列表、逐项覆盖选择与操作前 Ghost 预览。Timeline 仍需曲线框选联动、批量切线模式、Selection Pivot 缩放、Loop/Repeat、可配置 Snap、Onion Skin、运动轨迹、音频波形和模型动画工作流。

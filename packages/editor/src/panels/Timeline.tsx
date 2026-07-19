@@ -104,6 +104,7 @@ import {
   moveTimelineKeySelection,
   normalizeTimelineKeySelection,
   pasteTimelineKeySelection,
+  previewTimelineKeySelectionMove,
   retimeTimelineKeySelection,
   reverseTimelineKeySelection,
   removeTimelineKeySelection,
@@ -114,6 +115,8 @@ import {
   timelineKeysInRange,
   toggleTimelineKeySelection,
   type TimelineKeyClipboardItem,
+  type TimelineKeyCollision,
+  type TimelineKeyCollisionPolicy,
   type TimelineKeyRef,
   type TimelineKeyTransformResult,
 } from '../timelineKeyEditing.ts';
@@ -166,6 +169,11 @@ type TimelineEventDrag = {
 };
 
 type TimelineDrag = TimelineKeyDrag | TimelineEventDrag;
+
+type TimelineCollisionNotice = {
+  blocked: boolean;
+  text: string;
+};
 
 type TimelineViewMode = 'dope_sheet' | 'curves';
 
@@ -954,8 +962,12 @@ export function Timeline(props: {
   const [maximized, setMaximized] = useState(false);
   const [timelineClipboard, setTimelineClipboard] = useState<TimelineClipboard | null>(null);
   const [selectionMoveStep, setSelectionMoveStep] = useState(1);
+  const [collisionPolicy, setCollisionPolicy] = useState<TimelineKeyCollisionPolicy>('overwrite');
+  const [collisionNotice, setCollisionNotice] = useState<TimelineCollisionNotice | null>(null);
   const [timelineDrag, setTimelineDrag] = useState<TimelineDrag | null>(null);
   const timelineDragRef = useRef<TimelineDrag | null>(null);
+  const collisionPolicyRef = useRef<TimelineKeyCollisionPolicy>('overwrite');
+  const collisionNoticeRef = useRef<TimelineCollisionNotice | null>(null);
   const [timelineMarquee, setTimelineMarquee] = useState<TimelineMarquee | null>(null);
   const timelineMarqueeRef = useRef<TimelineMarquee | null>(null);
   const scrubPointer = useRef<number | null>(null);
@@ -986,6 +998,7 @@ export function Timeline(props: {
   selectedKeyRef.current = selectedKey;
   selectedKeysRef.current = selectedKeys;
   selectedEventRef.current = selectedEvent;
+  collisionPolicyRef.current = collisionPolicy;
 
   const replaceClip = (next: AnimationClip | null) => {
     clipRef.current = next;
@@ -1032,6 +1045,8 @@ export function Timeline(props: {
       setSelectedKey(restored.selectedKey);
       setSelectedKeys(restored.selectedKeys);
       setSelectedEvent(restored.selectedEvent);
+      collisionNoticeRef.current = null;
+      setCollisionNotice(null);
       setError(null);
       return;
     }
@@ -1216,6 +1231,8 @@ export function Timeline(props: {
     setTimelineMarquee(null);
     keyboardNudgeKey.current = null;
     recordingValues.current.clear();
+    collisionNoticeRef.current = null;
+    setCollisionNotice(null);
     setError(null);
     replaceClip(null);
     setSavedText('');
@@ -1820,18 +1837,29 @@ export function Timeline(props: {
           return {
             time: timelineDrag.time,
             label: `Event ${Math.round(timelineDrag.time * frameRate)}f`,
+            collisionCount: 0,
           };
         }
         const range = timelineKeySelectionFrameRange(clip, timelineDrag.selection);
         const deltaFrames = Math.round(timelineDrag.delta * frameRate);
         const activeTime = timelineDrag.activeTime + timelineDrag.delta;
-        if (!range) return { time: activeTime, label: `${Math.round(activeTime * frameRate)}f` };
+        const preview = previewTimelineKeySelectionMove(clip, timelineDrag.selection, timelineDrag.delta);
+        const collisionCount = preview.collisions.length;
+        const collision = collisionCount === 0
+          ? ''
+          : ` | ${collisionCount} ${collisionPolicy === 'protect' ? 'blocked' : 'overwrite'}`;
+        if (!range) return {
+          time: activeTime,
+          label: `${Math.round(activeTime * frameRate)}f${collision}`,
+          collisionCount,
+        };
         const start = range.startFrame + deltaFrames;
         const end = range.endFrame + deltaFrames;
         const moved = deltaFrames === 0 ? '' : ` | ${deltaFrames > 0 ? '+' : ''}${deltaFrames}f`;
         return {
           time: activeTime,
-          label: `${start === end ? `${start}f` : `${start}-${end}f`}${moved}`,
+          label: `${start === end ? `${start}f` : `${start}-${end}f`}${moved}${collision}`,
+          collisionCount,
         };
       })()
     : null;
@@ -1905,6 +1933,28 @@ export function Timeline(props: {
     setSelectedKey(null);
   };
 
+  const reportTimelineKeyCollisions = (
+    collisions: readonly TimelineKeyCollision[],
+    action: string,
+    blocked: boolean,
+  ) => {
+    if (collisions.length === 0) {
+      collisionNoticeRef.current = null;
+      setCollisionNotice(null);
+      return;
+    }
+    const count = collisions.length;
+    const text = blocked
+      ? `Protected ${count} existing key${count === 1 ? '' : 's'}; ${action} cancelled.`
+      : `Overwrote ${count} existing key${count === 1 ? '' : 's'} while ${action}.`;
+    const notice = { blocked, text };
+    const duplicate = collisionNoticeRef.current?.blocked === blocked
+      && collisionNoticeRef.current.text === text;
+    collisionNoticeRef.current = notice;
+    setCollisionNotice(notice);
+    if (!duplicate) props.onLog(text, 'warn');
+  };
+
   const moveSelectedKeysByFrames = (frames: number) => {
     const sourceClip = clipRef.current;
     if (!sourceClip || !Number.isFinite(frames)) return;
@@ -1914,10 +1964,16 @@ export function Timeline(props: {
       sourceClip,
       selection,
       frames / Math.max(1, sourceClip.frame_rate),
+      collisionPolicy,
     );
+    if (result.blocked) {
+      reportTimelineKeyCollisions(result.collisions, 'move', true);
+      return;
+    }
     if (result.appliedDelta === 0) return;
     updateClip(result.clip, 'Move Animation Keys');
     selectKeys(result.selection, result.clip);
+    reportTimelineKeyCollisions(result.collisions, 'moving keys', false);
     const primary = result.selection[result.selection.length - 1];
     if (primary) {
       const next = result.clip.tracks[primary.track].keyframes[primary.key].time;
@@ -1933,11 +1989,18 @@ export function Timeline(props: {
     action: string,
   ) => {
     if (!result.ok) {
-      props.onLog(`Cannot ${action}: ${result.error}`, 'warn');
+      if (result.collisions.length > 0) {
+        reportTimelineKeyCollisions(result.collisions, action, true);
+      } else {
+        collisionNoticeRef.current = null;
+        setCollisionNotice(null);
+        props.onLog(`Cannot ${action}: ${result.error}`, 'warn');
+      }
       return;
     }
     if (!updateClip(result.clip, label)) return;
     selectKeys(result.selection, result.clip);
+    reportTimelineKeyCollisions(result.collisions, action, false);
     const primary = result.selection[result.selection.length - 1];
     if (!primary) return;
     const next = result.clip.tracks[primary.track].keyframes[primary.key].time;
@@ -1951,7 +2014,7 @@ export function Timeline(props: {
     if (!sourceClip) return;
     const selection = normalizeTimelineKeySelection(sourceClip, selectedKeysRef.current);
     commitSelectedKeyTransform(
-      retimeTimelineKeySelection(sourceClip, selection, startFrame, endFrame),
+      retimeTimelineKeySelection(sourceClip, selection, startFrame, endFrame, collisionPolicy),
       'Retime Animation Keys',
       'retime animation keys',
     );
@@ -1962,7 +2025,7 @@ export function Timeline(props: {
     if (!sourceClip) return;
     const selection = normalizeTimelineKeySelection(sourceClip, selectedKeysRef.current);
     commitSelectedKeyTransform(
-      reverseTimelineKeySelection(sourceClip, selection),
+      reverseTimelineKeySelection(sourceClip, selection, collisionPolicy),
       'Reverse Animation Keys',
       'reverse animation keys',
     );
@@ -1979,6 +2042,7 @@ export function Timeline(props: {
         sourceClip,
         selection,
         edge === 'start' ? range.startFrame : range.endFrame,
+        collisionPolicy,
       ),
       `Align Animation Keys ${edge === 'start' ? 'Start' : 'End'}`,
       `align animation keys to the ${edge}`,
@@ -1990,7 +2054,7 @@ export function Timeline(props: {
     if (!sourceClip) return;
     const selection = normalizeTimelineKeySelection(sourceClip, selectedKeysRef.current);
     commitSelectedKeyTransform(
-      distributeTimelineKeySelection(sourceClip, selection),
+      distributeTimelineKeySelection(sourceClip, selection, collisionPolicy),
       'Distribute Animation Keys',
       'distribute animation keys',
     );
@@ -2101,6 +2165,7 @@ export function Timeline(props: {
   const pasteSelection = (copied = timelineClipboard) => {
     if (!clip || !copied) return;
     if (copied.kind === 'event') {
+      reportTimelineKeyCollisions([], 'pasting event', false);
       const pasted = pasteAnimationEvent(clip, copied.event, time);
       updateClip(pasted.clip, 'Paste Animation Event');
       setSelectedTrack(null);
@@ -2111,8 +2176,13 @@ export function Timeline(props: {
       return;
     }
 
-    const pasted = pasteTimelineKeySelection(clip, copied.keys, time);
+    const pasted = pasteTimelineKeySelection(clip, copied.keys, time, collisionPolicy);
+    if (pasted.blocked) {
+      reportTimelineKeyCollisions(pasted.collisions, 'paste', true);
+      return;
+    }
     if (pasted.selection.length === 0) {
+      reportTimelineKeyCollisions([], 'paste', false);
       props.onLog(
         'Cannot paste keys: none of the copied property tracks exist in this clip',
         'warn',
@@ -2121,6 +2191,7 @@ export function Timeline(props: {
     }
     updateClip(pasted.clip, 'Paste Animation Keys');
     selectKeys(pasted.selection, pasted.clip);
+    reportTimelineKeyCollisions(pasted.collisions, 'pasting keys', false);
     if (pasted.skipped > 0) {
       props.onLog(`Pasted ${pasted.selection.length} key(s); skipped ${pasted.skipped} unmatched key(s)`, 'warn');
     }
@@ -2398,9 +2469,22 @@ export function Timeline(props: {
       setSelectedEvent(result.eventIndex);
       return;
     }
-    const result = moveTimelineKeySelection(sourceClip, drag.selection, drag.delta);
+    const result = moveTimelineKeySelection(
+      sourceClip,
+      drag.selection,
+      drag.delta,
+      collisionPolicyRef.current,
+    );
+    if (result.blocked) {
+      reportTimelineKeyCollisions(result.collisions, 'drag move', true);
+      playbackPhase.current = drag.activeTime;
+      timeRef.current = drag.activeTime;
+      setTime(drag.activeTime);
+      return;
+    }
     updateClip(result.clip, 'Move Animation Keys');
     selectKeys(result.selection, result.clip);
+    reportTimelineKeyCollisions(result.collisions, 'dragging keys', false);
   };
 
   const finishTimelineDrag = (event: ReactPointerEvent<HTMLButtonElement>, commit: boolean) => {
@@ -3158,7 +3242,7 @@ export function Timeline(props: {
                   )}
                   {timelineDragFeedback && (
                     <div
-                      className={`timeline-drag-frame-guide${timelineDragFeedback.time > clip.duration * 0.82 ? ' edge' : ''}`}
+                      className={`timeline-drag-frame-guide${timelineDragFeedback.time > clip.duration * 0.82 ? ' edge' : ''}${timelineDragFeedback.collisionCount > 0 ? ' collision' : ''}`}
                       style={{ left: `${clip.duration > 0 ? timelineDragFeedback.time / clip.duration * 100 : 0}%` }}
                       aria-hidden="true"
                     >
@@ -3291,6 +3375,33 @@ export function Timeline(props: {
                         : `${selectedKeyFrameRange.spanFrames}f span`}</span>
                     </div>
                   )}
+                  <div className="timeline-collision-control">
+                    <label>
+                      Conflicts
+                      <select
+                        data-animation-history="ignore"
+                        aria-label="Keyframe collision policy"
+                        title="Choose whether time edits overwrite destination keys or cancel atomically"
+                        value={collisionPolicy}
+                        onChange={(event) => {
+                          setCollisionPolicy(event.target.value as TimelineKeyCollisionPolicy);
+                          collisionNoticeRef.current = null;
+                          setCollisionNotice(null);
+                        }}
+                      >
+                        <option value="overwrite">Overwrite</option>
+                        <option value="protect">Protect Existing</option>
+                      </select>
+                    </label>
+                    {collisionNotice && (
+                      <div
+                        className={`timeline-collision-notice${collisionNotice.blocked ? ' blocked' : ''}`}
+                        role="status"
+                      >
+                        {collisionNotice.text}
+                      </div>
+                    )}
+                  </div>
                   <div className="timeline-selection-offset" aria-label="Offset selected keyframes">
                     <label>
                       Step

@@ -24,6 +24,18 @@ export type TimelineKeyEditResult = {
   selection: TimelineKeyRef[];
 };
 
+export type TimelineKeyCollisionPolicy = 'overwrite' | 'protect';
+
+export type TimelineKeyCollision = {
+  track: number;
+  key: number;
+  frame: number;
+};
+
+type TimelineKeyCollisionResult = {
+  collisions: TimelineKeyCollision[];
+};
+
 export type TimelineKeySelectionFrameRange = {
   count: number;
   startFrame: number;
@@ -31,7 +43,7 @@ export type TimelineKeySelectionFrameRange = {
   spanFrames: number;
 };
 
-export type TimelineKeyRetimeResult = TimelineKeyEditResult & (
+export type TimelineKeyRetimeResult = TimelineKeyEditResult & TimelineKeyCollisionResult & (
   | {
       ok: true;
       startFrame: number;
@@ -43,7 +55,7 @@ export type TimelineKeyRetimeResult = TimelineKeyEditResult & (
     }
 );
 
-export type TimelineKeyTransformResult = TimelineKeyEditResult & (
+export type TimelineKeyTransformResult = TimelineKeyEditResult & TimelineKeyCollisionResult & (
   | { ok: true }
   | { ok: false; error: string }
 );
@@ -58,6 +70,23 @@ type TimelineKeyFrameEdit = {
   ref: TimelineKeyRef;
   keyframe: AnimationKeyframe;
   targetFrame: number;
+};
+
+export type TimelineKeyMovePreview = TimelineKeyCollisionResult & {
+  appliedDelta: number;
+};
+
+export type TimelineKeyMoveResult = TimelineKeyEditResult & TimelineKeyCollisionResult & {
+  appliedDelta: number;
+  requestedDelta: number;
+  blocked: boolean;
+  error?: string;
+};
+
+export type TimelineKeyPasteResult = TimelineKeyEditResult & TimelineKeyCollisionResult & {
+  skipped: number;
+  blocked: boolean;
+  error?: string;
 };
 
 function refToken(ref: TimelineKeyRef): string {
@@ -104,13 +133,36 @@ export function timelineKeySelectionFrameRange(
   };
 }
 
+function timelineKeyFrameCollisions(
+  clip: AnimationClip,
+  selection: readonly TimelineKeyRef[],
+  targets: readonly { track: number; targetFrame: number }[],
+): TimelineKeyCollision[] {
+  const selected = new Set(normalizeTimelineKeySelection(clip, selection).map(refToken));
+  const frameRate = Number.isFinite(clip.frame_rate) && clip.frame_rate > 0 ? clip.frame_rate : 60;
+  const collisions = new Map<string, TimelineKeyCollision>();
+  for (const target of targets) {
+    const track = clip.tracks[target.track];
+    if (!track) continue;
+    const key = track.keyframes.findIndex((candidate, index) => (
+      !selected.has(refToken({ track: target.track, key: index }))
+      && Math.round(candidate.time * frameRate) === target.targetFrame
+    ));
+    if (key < 0) continue;
+    const collision = { track: target.track, key, frame: target.targetFrame };
+    collisions.set(`${collision.track}:${collision.frame}`, collision);
+  }
+  return [...collisions.values()].sort((left, right) => left.track - right.track || left.frame - right.frame);
+}
+
 function applyTimelineKeyFrameEdits(
   clip: AnimationClip,
   refs: readonly TimelineKeyRef[],
   edits: readonly TimelineKeyFrameEdit[],
+  collisionPolicy: TimelineKeyCollisionPolicy = 'overwrite',
 ): TimelineKeyTransformResult {
   if (refs.length === 0 || edits.length !== refs.length) {
-    return { ok: false, clip, selection: [...refs], error: 'No animation keys are selected.' };
+    return { ok: false, clip, selection: [...refs], collisions: [], error: 'No animation keys are selected.' };
   }
   const frameRate = Number.isFinite(clip.frame_rate) && clip.frame_rate > 0 ? clip.frame_rate : 60;
   const occupiedByTrack = new Map<number, Set<number>>();
@@ -121,11 +173,26 @@ function applyTimelineKeyFrameEdits(
         ok: false,
         clip,
         selection: [...refs],
+        collisions: [],
         error: 'The requested key transformation collapses selected keys onto the same frame of one track.',
       };
     }
     occupied.add(edit.targetFrame);
     occupiedByTrack.set(edit.ref.track, occupied);
+  }
+
+  const collisions = timelineKeyFrameCollisions(clip, refs, edits.map((edit) => ({
+    track: edit.ref.track,
+    targetFrame: edit.targetFrame,
+  })));
+  if (collisionPolicy === 'protect' && collisions.length > 0) {
+    return {
+      ok: false,
+      clip,
+      selection: [...refs],
+      collisions,
+      error: `${collisions.length} existing key${collisions.length === 1 ? '' : 's'} protected from overwrite.`,
+    };
   }
 
   const tracks = [...clip.tracks];
@@ -170,6 +237,7 @@ function applyTimelineKeyFrameEdits(
     ok: true,
     clip: next,
     selection: normalizeTimelineKeySelection(next, nextSelection),
+    collisions,
   };
 }
 
@@ -206,14 +274,15 @@ export function retimeTimelineKeySelection(
   selection: readonly TimelineKeyRef[],
   requestedStartFrame: number,
   requestedEndFrame: number,
+  collisionPolicy: TimelineKeyCollisionPolicy = 'overwrite',
 ): TimelineKeyRetimeResult {
   const refs = normalizeTimelineKeySelection(clip, selection);
   const range = timelineKeySelectionFrameRange(clip, refs);
   if (!range) {
-    return { ok: false, clip, selection: refs, error: 'No animation keys are selected.' };
+    return { ok: false, clip, selection: refs, collisions: [], error: 'No animation keys are selected.' };
   }
   if (!Number.isFinite(requestedStartFrame) || !Number.isFinite(requestedEndFrame)) {
-    return { ok: false, clip, selection: refs, error: 'Animation key frames must be finite numbers.' };
+    return { ok: false, clip, selection: refs, collisions: [], error: 'Animation key frames must be finite numbers.' };
   }
 
   const frameRate = Number.isFinite(clip.frame_rate) && clip.frame_rate > 0 ? clip.frame_rate : 60;
@@ -227,6 +296,7 @@ export function retimeTimelineKeySelection(
       ok: false,
       clip,
       selection: refs,
+      collisions: [],
       error: 'The selection end frame cannot be before its start frame.',
     };
   }
@@ -243,12 +313,13 @@ export function retimeTimelineKeySelection(
     return { ref, keyframe, targetFrame };
   });
 
-  const transformed = applyTimelineKeyFrameEdits(clip, refs, edits);
+  const transformed = applyTimelineKeyFrameEdits(clip, refs, edits, collisionPolicy);
   if (!transformed.ok) return transformed;
   return {
     ok: true,
     clip: transformed.clip,
     selection: transformed.selection,
+    collisions: transformed.collisions,
     startFrame,
     endFrame,
   };
@@ -257,11 +328,12 @@ export function retimeTimelineKeySelection(
 export function reverseTimelineKeySelection(
   clip: AnimationClip,
   selection: readonly TimelineKeyRef[],
+  collisionPolicy: TimelineKeyCollisionPolicy = 'overwrite',
 ): TimelineKeyTransformResult {
   const refs = normalizeTimelineKeySelection(clip, selection);
   const range = timelineKeySelectionFrameRange(clip, refs);
   if (!range || refs.length < 2 || range.spanFrames === 0) {
-    return { ok: false, clip, selection: refs, error: 'Select keys across at least two different frames to reverse them.' };
+    return { ok: false, clip, selection: refs, collisions: [], error: 'Select keys across at least two different frames to reverse them.' };
   }
   const frameRate = Number.isFinite(clip.frame_rate) && clip.frame_rate > 0 ? clip.frame_rate : 60;
   const edits = refs.map((ref) => {
@@ -273,22 +345,23 @@ export function reverseTimelineKeySelection(
       targetFrame: range.startFrame + range.endFrame - sourceFrame,
     };
   });
-  return applyTimelineKeyFrameEdits(clip, refs, edits);
+  return applyTimelineKeyFrameEdits(clip, refs, edits, collisionPolicy);
 }
 
 export function alignTimelineKeySelection(
   clip: AnimationClip,
   selection: readonly TimelineKeyRef[],
   requestedFrame: number,
+  collisionPolicy: TimelineKeyCollisionPolicy = 'overwrite',
 ): TimelineKeyTransformResult {
   const refs = normalizeTimelineKeySelection(clip, selection);
   if (refs.length < 2 || !Number.isFinite(requestedFrame)) {
-    return { ok: false, clip, selection: refs, error: 'Select at least two keys and provide a valid alignment frame.' };
+    return { ok: false, clip, selection: refs, collisions: [], error: 'Select at least two keys and provide a valid alignment frame.' };
   }
   const tracks = new Set<number>();
   for (const ref of refs) {
     if (tracks.has(ref.track)) {
-      return { ok: false, clip, selection: refs, error: 'Time alignment supports one selected key per track to avoid destructive collisions.' };
+      return { ok: false, clip, selection: refs, collisions: [], error: 'Time alignment supports one selected key per track to avoid destructive collisions.' };
     }
     tracks.add(ref.track);
   }
@@ -299,12 +372,13 @@ export function alignTimelineKeySelection(
     ref,
     keyframe: structuredClone(clip.tracks[ref.track].keyframes[ref.key]),
     targetFrame,
-  })));
+  })), collisionPolicy);
 }
 
 export function distributeTimelineKeySelection(
   clip: AnimationClip,
   selection: readonly TimelineKeyRef[],
+  collisionPolicy: TimelineKeyCollisionPolicy = 'overwrite',
 ): TimelineKeyTransformResult {
   const refs = normalizeTimelineKeySelection(clip, selection);
   const grouped = new Map<number, TimelineKeyRef[]>();
@@ -314,7 +388,7 @@ export function distributeTimelineKeySelection(
     grouped.set(ref.track, entries);
   }
   if (![...grouped.values()].some((entries) => entries.length >= 3)) {
-    return { ok: false, clip, selection: refs, error: 'Select at least three keys on one track to distribute them.' };
+    return { ok: false, clip, selection: refs, collisions: [], error: 'Select at least three keys on one track to distribute them.' };
   }
 
   const frameRate = Number.isFinite(clip.frame_rate) && clip.frame_rate > 0 ? clip.frame_rate : 60;
@@ -337,7 +411,7 @@ export function distributeTimelineKeySelection(
     ref,
     keyframe: structuredClone(clip.tracks[ref.track].keyframes[ref.key]),
     targetFrame: targetFrames.get(refToken(ref))!,
-  })));
+  })), collisionPolicy);
   if (!transformed.ok) return transformed;
   const remapped = new Map(distributedRefs.map((ref, index) => (
     [refToken(ref), transformed.selection[index]] as const
@@ -345,6 +419,7 @@ export function distributeTimelineKeySelection(
   return {
     ok: true,
     clip: transformed.clip,
+    collisions: transformed.collisions,
     selection: normalizeTimelineKeySelection(
       transformed.clip,
       refs.map((ref) => remapped.get(refToken(ref)) ?? ref),
@@ -446,7 +521,8 @@ export function pasteTimelineKeySelection(
   clip: AnimationClip,
   clipboard: readonly TimelineKeyClipboardItem[],
   time: number,
-): TimelineKeyEditResult & { skipped: number } {
+  collisionPolicy: TimelineKeyCollisionPolicy = 'overwrite',
+): TimelineKeyPasteResult {
   const valid = clipboard.filter((item) => (
     Number.isFinite(item.offset)
     && item.offset >= 0
@@ -454,9 +530,16 @@ export function pasteTimelineKeySelection(
     && item.component.length > 0
     && item.property.length > 0
   ));
-  if (valid.length === 0) return { clip, selection: [], skipped: clipboard.length };
+  if (valid.length === 0) return {
+    clip,
+    selection: [],
+    skipped: clipboard.length,
+    collisions: [],
+    blocked: false,
+  };
 
-  const anchor = snapAnimationTime(time, clip.frame_rate);
+  const frameRate = Number.isFinite(clip.frame_rate) && clip.frame_rate > 0 ? clip.frame_rate : 60;
+  const anchor = snapAnimationTime(time, frameRate);
   const matched = valid.flatMap((item) => {
     const track = clip.tracks.findIndex((candidate) => (
       candidate.target === item.target
@@ -465,21 +548,47 @@ export function pasteTimelineKeySelection(
     ));
     return track < 0 ? [] : [{ item, track }];
   });
-  if (matched.length === 0) return { clip, selection: [], skipped: valid.length };
+  if (matched.length === 0) return {
+    clip,
+    selection: [],
+    skipped: valid.length,
+    collisions: [],
+    blocked: false,
+  };
 
   const duration = Math.max(
     clip.duration,
     ...matched.map(({ item }) => anchor + item.offset),
   );
+  const targets = matched.map(({ item, track }) => ({
+    track,
+    targetFrame: Math.round(snapAnimationTime(
+      anchor + item.offset,
+      frameRate,
+      duration,
+    ) * frameRate),
+  }));
+  const collisions = timelineKeyFrameCollisions(clip, [], targets);
+  const skipped = valid.length - matched.length + (clipboard.length - valid.length);
+  if (collisionPolicy === 'protect' && collisions.length > 0) {
+    return {
+      clip,
+      selection: [],
+      skipped,
+      collisions,
+      blocked: true,
+      error: `${collisions.length} existing key${collisions.length === 1 ? '' : 's'} protected from paste overwrite.`,
+    };
+  }
   const tracks = [...clip.tracks];
   const pastedTimes: Array<{ track: number; time: number }> = [];
   for (const { item, track } of matched) {
-    const keyTime = snapAnimationTime(anchor + item.offset, clip.frame_rate, duration);
+    const keyTime = snapAnimationTime(anchor + item.offset, frameRate, duration);
     const edit = pasteAnimationKeyframe(
       tracks[track],
       item.keyframe,
       keyTime,
-      clip.frame_rate,
+      frameRate,
       duration,
     );
     tracks[track] = edit.track;
@@ -493,7 +602,9 @@ export function pasteTimelineKeySelection(
   return {
     clip: next,
     selection: normalizeTimelineKeySelection(next, selection),
-    skipped: valid.length - matched.length + (clipboard.length - valid.length),
+    skipped,
+    collisions,
+    blocked: false,
   };
 }
 
@@ -515,55 +626,72 @@ export function clampTimelineKeyDelta(
   return frames === 0 ? 0 : frames / frameRate;
 }
 
+export function previewTimelineKeySelectionMove(
+  clip: AnimationClip,
+  selection: readonly TimelineKeyRef[],
+  delta: number,
+): TimelineKeyMovePreview {
+  const refs = normalizeTimelineKeySelection(clip, selection);
+  const appliedDelta = clampTimelineKeyDelta(clip, refs, delta);
+  if (refs.length === 0 || appliedDelta === 0) {
+    return { appliedDelta, collisions: [] };
+  }
+  const frameRate = Number.isFinite(clip.frame_rate) && clip.frame_rate > 0 ? clip.frame_rate : 60;
+  const deltaFrames = Math.round(appliedDelta * frameRate);
+  const targets = refs.map((ref) => ({
+    track: ref.track,
+    targetFrame: Math.round(clip.tracks[ref.track].keyframes[ref.key].time * frameRate) + deltaFrames,
+  }));
+  return {
+    appliedDelta,
+    collisions: timelineKeyFrameCollisions(clip, refs, targets),
+  };
+}
+
 export function moveTimelineKeySelection(
   clip: AnimationClip,
   selection: readonly TimelineKeyRef[],
   delta: number,
-): TimelineKeyEditResult & { appliedDelta: number } {
+  collisionPolicy: TimelineKeyCollisionPolicy = 'overwrite',
+): TimelineKeyMoveResult {
   const refs = normalizeTimelineKeySelection(clip, selection);
-  const appliedDelta = clampTimelineKeyDelta(clip, refs, delta);
-  if (refs.length === 0 || appliedDelta === 0) {
-    return { clip, selection: refs, appliedDelta };
-  }
-
-  const grouped = new Map<number, Array<{ key: number; keyframe: AnimationKeyframe }>>();
-  for (const ref of refs) {
-    const entries = grouped.get(ref.track) ?? [];
-    entries.push({ key: ref.key, keyframe: structuredClone(clip.tracks[ref.track].keyframes[ref.key]) });
-    grouped.set(ref.track, entries);
-  }
-
-  const tracks = [...clip.tracks];
-  const movedTimes: Array<{ track: number; time: number }> = [];
-  for (const [trackIndex, entries] of grouped) {
-    const selectedIndices = new Set(entries.map((entry) => entry.key));
-    let track = {
-      ...tracks[trackIndex],
-      keyframes: tracks[trackIndex].keyframes.filter((_keyframe, index) => !selectedIndices.has(index)),
+  const preview = previewTimelineKeySelectionMove(clip, refs, delta);
+  if (refs.length === 0 || preview.appliedDelta === 0) {
+    return {
+      clip,
+      selection: refs,
+      appliedDelta: preview.appliedDelta,
+      requestedDelta: preview.appliedDelta,
+      collisions: preview.collisions,
+      blocked: false,
     };
-    for (const entry of entries.sort((left, right) => left.keyframe.time - right.keyframe.time)) {
-      const edit = pasteAnimationKeyframe(
-        track,
-        entry.keyframe,
-        entry.keyframe.time + appliedDelta,
-        clip.frame_rate,
-        clip.duration,
-      );
-      track = edit.track;
-      movedTimes.push({ track: trackIndex, time: track.keyframes[edit.keyIndex].time });
-    }
-    tracks[trackIndex] = track;
   }
 
-  const next = { ...clip, tracks };
-  const nextSelection = movedTimes.flatMap(({ track, time: movedTime }) => {
-    const key = next.tracks[track].keyframes.findIndex((candidate) => candidate.time === movedTime);
-    return key < 0 ? [] : [{ track, key }];
-  });
+  const frameRate = Number.isFinite(clip.frame_rate) && clip.frame_rate > 0 ? clip.frame_rate : 60;
+  const deltaFrames = Math.round(preview.appliedDelta * frameRate);
+  const transformed = applyTimelineKeyFrameEdits(clip, refs, refs.map((ref) => ({
+    ref,
+    keyframe: structuredClone(clip.tracks[ref.track].keyframes[ref.key]),
+    targetFrame: Math.round(clip.tracks[ref.track].keyframes[ref.key].time * frameRate) + deltaFrames,
+  })), collisionPolicy);
+  if (!transformed.ok) {
+    return {
+      clip,
+      selection: refs,
+      appliedDelta: 0,
+      requestedDelta: preview.appliedDelta,
+      collisions: transformed.collisions,
+      blocked: true,
+      error: transformed.error,
+    };
+  }
   return {
-    clip: next,
-    selection: normalizeTimelineKeySelection(next, nextSelection),
-    appliedDelta,
+    clip: transformed.clip,
+    selection: transformed.selection,
+    appliedDelta: preview.appliedDelta,
+    requestedDelta: preview.appliedDelta,
+    collisions: transformed.collisions,
+    blocked: false,
   };
 }
 

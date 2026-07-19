@@ -10,6 +10,7 @@ import {
   moveTimelineKeySelection,
   normalizeTimelineKeySelection,
   pasteTimelineKeySelection,
+  previewTimelineKeySelectionMove,
   retimeTimelineKeySelection,
   reverseTimelineKeySelection,
   removeTimelineKeySelection,
@@ -92,6 +93,17 @@ test('Timeline key group copy and paste preserves offsets tangents and extends d
     in_tangent: [3, 4],
   });
   assert.deepEqual(pasted.clip.tracks[1].keyframes[2], { time: 2.3, value: [2, 2] });
+
+  const collisionClipboard = copyTimelineKeySelection(source, [{ track: 0, key: 0 }]);
+  const protectedPaste = pasteTimelineKeySelection(source, collisionClipboard, 0.5, 'protect');
+  assert.equal(protectedPaste.blocked, true);
+  assert.equal(protectedPaste.clip, source);
+  assert.deepEqual(protectedPaste.collisions, [{ track: 0, key: 1, frame: 5 }]);
+
+  const overwrittenPaste = pasteTimelineKeySelection(source, collisionClipboard, 0.5, 'overwrite');
+  assert.equal(overwrittenPaste.blocked, false);
+  assert.deepEqual(overwrittenPaste.collisions, [{ track: 0, key: 1, frame: 5 }]);
+  assert.deepEqual(overwrittenPaste.clip.tracks[0].keyframes[1].value, [0, 0]);
 });
 
 test('Timeline key group movement stays frame aligned clamps bounds and overwrites collisions', () => {
@@ -102,9 +114,33 @@ test('Timeline key group movement stays frame aligned clamps bounds and overwrit
 
   const moved = moveTimelineKeySelection(source, selection, 0.49);
   assert.equal(moved.appliedDelta, 0.5);
+  assert.deepEqual(moved.collisions, []);
   assert.deepEqual(moved.clip.tracks[0].keyframes.map((key) => key.time), [0.5, 1, 2]);
   assert.deepEqual(moved.selection, [{ track: 0, key: 0 }, { track: 0, key: 1 }]);
   assert.deepEqual(moved.clip.tracks[0].keyframes[1].in_tangent, [3, 4]);
+});
+
+test('Timeline key collision preview supports atomic protect and explicit overwrite', () => {
+  const source = clip();
+  const selection = [{ track: 0, key: 0 }];
+  assert.deepEqual(previewTimelineKeySelectionMove(source, selection, 0.5), {
+    appliedDelta: 0.5,
+    collisions: [{ track: 0, key: 1, frame: 5 }],
+  });
+
+  const protectedMove = moveTimelineKeySelection(source, selection, 0.5, 'protect');
+  assert.equal(protectedMove.blocked, true);
+  assert.equal(protectedMove.appliedDelta, 0);
+  assert.equal(protectedMove.requestedDelta, 0.5);
+  assert.equal(protectedMove.clip, source);
+  assert.deepEqual(protectedMove.selection, selection);
+  assert.deepEqual(protectedMove.collisions, [{ track: 0, key: 1, frame: 5 }]);
+
+  const overwritten = moveTimelineKeySelection(source, selection, 0.5, 'overwrite');
+  assert.equal(overwritten.blocked, false);
+  assert.deepEqual(overwritten.collisions, [{ track: 0, key: 1, frame: 5 }]);
+  assert.deepEqual(overwritten.clip.tracks[0].keyframes.map((key) => key.time), [0.5, 2]);
+  assert.deepEqual(overwritten.clip.tracks[0].keyframes[0].value, [0, 0]);
 });
 
 test('Timeline key selection exposes frame ranges and deterministic nudge shortcuts', () => {
@@ -209,6 +245,15 @@ test('Timeline key alignment is cross-track safe and rejects same-track collapse
   const rejected = alignTimelineKeySelection(source, destructive, 8);
   assert.equal(rejected.ok, false);
   assert.match(rejected.ok ? '' : rejected.error, /one selected key per track/i);
+
+  const protectedCollision = alignTimelineKeySelection(source, [
+    { track: 0, key: 1 },
+    { track: 1, key: 0 },
+  ], 10, 'protect');
+  assert.equal(protectedCollision.ok, false);
+  assert.equal(protectedCollision.clip, source);
+  assert.deepEqual(protectedCollision.collisions, [{ track: 1, key: 1, frame: 10 }]);
+  assert.match(protectedCollision.ok ? '' : protectedCollision.error, /protected/i);
 });
 
 test('Timeline key distribution spaces each eligible track independently', () => {
