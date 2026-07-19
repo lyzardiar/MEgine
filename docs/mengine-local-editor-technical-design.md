@@ -1233,3 +1233,13 @@ Rust workspace 检查现在零警告通过；Tauri Host 17/17 常规测试与 1/
 - 第二遍自省补齐了相对模块依赖、独立 Dock 脏文档互斥、中文/非 UTF-8 路径 sidecar 拼接、预检后 metadata/Sprite Import 被外部替换，以及开发桥成功后清理备份失败的语义。Host 回归固定了 GUID/metadata/Import sidecar/Prefab/Manifest 联动迁移和 stale dependency 零副作用边界，前端回归固定 JSON 格式保持、Slice、glTF、Spine、损坏 JSON 与 TypeScript 相对 import 行列定位。
 
 本批完成的是通用资源 Rename/Move 的安全闭环，不等于完整 Asset Database 生命周期。下一步仍需基于同一依赖图实现带回收站和引用阻断的 Delete、保留/新建 GUID 规则明确的 Duplicate、文件夹级批量事务、Missing Reference 修复、版本控制 checkout/lock、二进制导入器依赖声明与语言服务级脚本重构；在这些完成前不会把永久删除和目录批量移动包装成“已成熟”。
+
+## 103. 2026-07-19 通用资源 Duplicate 与新 GUID 规则
+
+- 健康 GUID 的非 Scene 主资源在 Project 右键菜单新增 `Duplicate`。默认目标在同目录使用 `Copy / Copy 2...` 无冲突名称，用户也可输入新的 `Assets/...` 路径完成跨目录复制；Scene 继续通过 Save As 保持内部场景名和 Build Settings 语义，Sprite Slice 与 `.sprite.json` 不能独立复制。预览和提交复用 Rename 的 Save All、独立 Dock 脏文档互斥、扩展名/路径/符号链接/普通文件校验与二次 Revision 门禁。
+- Duplicate 不修改任何入站引用：现有 Scene、Prefab、Material 等继续指向原资源。副本 metadata 会保留 importer、第三方插件字段和未知扩展字段，只把顶层 `guid/uuid` 及 `mengine.guid` 身份位统一替换为同一个新 UUID，避免复制 sidecar 造成重复 GUID；纹理的 Sprite Import sidecar 原样复制，因此 Slice、pivot、PPU 等导入配置继续存在，但 Project 选择键与未来引用身份属于新资产。
+- JSON 副本只改写副本文件内部对源资产的自引用；跨目录复制 glTF 时按新模型目录调整 `buffers/images[].uri`，跨目录复制 Spine Atlas 时调整 Page 相对纹理路径。`.glb`、图片、音频、Spine Binary 等二进制资产由 Host 流式复制，不经过 UTF-8/JSON 转换。脚本同目录复制保持原 relative import；跨目录复制只列出副本自身的出站 `import/export/require/dynamic import` 人工审查，不把其他脚本对原文件的入站 import 错改为副本。
+- Rust Host 与 Vite 桥都先创建并落盘同步资产、metadata、Sprite Import 三类临时文件，再使用 no-overwrite hard-link 安装；目标任一文件已存在或安装中发生竞争都会删除已经安装的部分、清理临时文件和新建空目录。源资产正文、metadata 和 Sprite Import 分别固定 Revision 并在暂存后复验，复制期间任何外部修改都使整个计划过期；主资产限制 512 MiB，前端重写正文限制 32 MiB，超限时不会把整文件塞进 JSON IPC。
+- 第一遍自省补上 metadata importer 扩展字段与 Sprite Import 的独立 Revision；否则主资产未变时仍可能复制到旧导入配置。第二遍自省修正 `.glb` 被当作 JSON、Host `canonicalize` 先解析符号链接导致请求路径本身未被验证，以及连续 Duplicate 默认名称冲突的问题；Rename 的源文件和每个引用更新源也统一改为请求路径 `lstat` 普通非链接文件后再解析真实路径。
+
+本批完成了单资产 Duplicate 的身份和落盘闭环，但还没有文件夹/多选 Duplicate、Prefab Variant、跨资源内部 GUID 引用重映射、导入器生成子资产 GUID 规则或跨卷大文件流式进度。下一阶段优先实现引用阻断、可恢复回收站与 Restore，再开放通用 Delete；永久删除仍不直接暴露给普通 Project 菜单。

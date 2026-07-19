@@ -585,6 +585,14 @@ export function mengineFsPlugin(opts: MengineFsOptions | string): Plugin {
     updates: AssetRenameUpdate[];
   };
 
+  type AssetDuplicateRequest = {
+    sourcePath: string;
+    destinationPath: string;
+    expectedSourceRevision: string;
+    expectedGuid: string;
+    contents: string | null;
+  };
+
   function validAssetSegment(segment: string): boolean {
     if (
       !segment
@@ -909,6 +917,183 @@ export function mengineFsPlugin(opts: MengineFsOptions | string): Plugin {
     };
   }
 
+  function duplicateMetadata(sourceMetadata: string): { guid: string; contents: Buffer } {
+    const value = JSON.parse(fs.readFileSync(sourceMetadata, 'utf8')) as Record<string, unknown>;
+    if (!value || typeof value !== 'object' || Array.isArray(value)) {
+      throw new Error('asset metadata root must be an object');
+    }
+    const guid = randomUUID().toLowerCase();
+    let replaced = false;
+    for (const key of ['guid', 'uuid']) {
+      if (Object.prototype.hasOwnProperty.call(value, key)) {
+        value[key] = guid;
+        replaced = true;
+      }
+    }
+    if (value.mengine && typeof value.mengine === 'object' && !Array.isArray(value.mengine)) {
+      const mengine = value.mengine as Record<string, unknown>;
+      if (Object.prototype.hasOwnProperty.call(mengine, 'guid')) {
+        mengine.guid = guid;
+        replaced = true;
+      }
+    }
+    if (!replaced) value.guid = guid;
+    return { guid, contents: Buffer.from(`${JSON.stringify(value, null, 2)}\n`, 'utf8') };
+  }
+
+  function stageDuplicateFile(source: string | null, target: string, contents: Buffer | null): string {
+    const temporary = path.join(
+      path.dirname(target),
+      `.${path.basename(target)}.duplicate.${randomUUID()}.tmp`,
+    );
+    try {
+      if (contents) {
+        const descriptor = fs.openSync(temporary, 'wx');
+        try {
+          fs.writeFileSync(descriptor, contents);
+          fs.fsyncSync(descriptor);
+        } finally {
+          fs.closeSync(descriptor);
+        }
+      } else if (source) {
+        fs.copyFileSync(source, temporary, fs.constants.COPYFILE_EXCL);
+        const descriptor = fs.openSync(temporary, 'r');
+        try { fs.fsyncSync(descriptor); } finally { fs.closeSync(descriptor); }
+      } else {
+        throw new Error('duplicate stage has no source or contents');
+      }
+      return temporary;
+    } catch (error) {
+      try { if (fs.existsSync(temporary)) fs.unlinkSync(temporary); } catch { /* best effort */ }
+      throw error;
+    }
+  }
+
+  function duplicateProjectAsset(request: AssetDuplicateRequest) {
+    const source = normalizedRenameAssetPath(request.sourcePath);
+    const destination = normalizedRenameAssetPath(request.destinationPath);
+    if (source.relative.toLocaleLowerCase() === destination.relative.toLocaleLowerCase()) {
+      throw new Error('duplicate destination must differ from the source');
+    }
+    if (path.extname(source.relative).toLocaleLowerCase() !== path.extname(destination.relative).toLocaleLowerCase()) {
+      throw new Error('asset duplication must preserve the file extension');
+    }
+    if (path.extname(source.relative).toLocaleLowerCase() === SCENE_EXT) {
+      throw new Error('scenes must use Save As instead of generic duplication');
+    }
+    const sourceStat = fs.lstatSync(source.absolute);
+    if (!sourceStat.isFile() || sourceStat.isSymbolicLink()) throw new Error('source asset must be a regular file');
+    if (sourceStat.size > 512 * 1024 * 1024) throw new Error('source asset exceeds the 512 MiB duplication limit');
+    if (assetFileRevision(sourceStat) !== request.expectedSourceRevision) {
+      throw new Error(`asset changed on disk since duplicate preview: ${source.relative}`);
+    }
+    if (request.contents != null && Buffer.byteLength(request.contents) > 32 * 1024 * 1024) {
+      throw new Error('duplicate rewritten contents exceed 32 MiB');
+    }
+    const sourceInfo = listProjectAssets().find(
+      (asset) => asset.relPath.toLocaleLowerCase() === source.relative.toLocaleLowerCase(),
+    );
+    if (!sourceInfo || sourceInfo.metaStatus !== 'ready' || sourceInfo.guid !== request.expectedGuid.toLocaleLowerCase()) {
+      throw new Error(`asset identity changed on disk since duplicate preview: ${source.relative}`);
+    }
+    const sourceMetadata = `${source.absolute}.meta`;
+    const destinationMetadata = `${destination.absolute}.meta`;
+    const sourceSpriteImport = `${source.absolute}.sprite.json`;
+    const destinationSpriteImport = `${destination.absolute}.sprite.json`;
+    const copiesSpriteImport = fs.existsSync(sourceSpriteImport);
+    const sourceMetadataRevision = assetFileRevision(fs.lstatSync(sourceMetadata));
+    const spriteImportRevision = copiesSpriteImport
+      ? assetFileRevision(fs.lstatSync(sourceSpriteImport))
+      : null;
+    if (copiesSpriteImport) {
+      const stat = fs.lstatSync(sourceSpriteImport);
+      if (!stat.isFile() || stat.isSymbolicLink()) throw new Error('sprite import sidecar must be a regular file');
+    }
+    for (const target of [destination.absolute, destinationMetadata, destinationSpriteImport]) {
+      if (fs.existsSync(target)) throw new Error(`duplicate target already exists: ${target}`);
+    }
+    const metadata = duplicateMetadata(sourceMetadata);
+    const createdDirectories: string[] = [];
+    let directory = path.dirname(destination.absolute);
+    const missing: string[] = [];
+    while (!fs.existsSync(directory)) {
+      missing.push(directory);
+      directory = path.dirname(directory);
+    }
+    if (!isUnder(fs.realpathSync(assetsRoot), fs.realpathSync(directory))) {
+      throw new Error('duplicate destination escapes Assets');
+    }
+    try {
+      for (const candidate of missing.reverse()) {
+        fs.mkdirSync(candidate);
+        createdDirectories.push(candidate);
+      }
+    } catch (error) {
+      for (const candidate of [...createdDirectories].reverse()) {
+        try { fs.rmdirSync(candidate); } catch { /* best effort */ }
+      }
+      throw error;
+    }
+    const targets = [destination.absolute, destinationMetadata];
+    const staged: string[] = [];
+    const installed: string[] = [];
+    try {
+      staged.push(stageDuplicateFile(
+        request.contents == null ? source.absolute : null,
+        destination.absolute,
+        request.contents == null ? null : Buffer.from(request.contents, 'utf8'),
+      ));
+      staged.push(stageDuplicateFile(null, destinationMetadata, metadata.contents));
+      if (copiesSpriteImport) {
+        targets.push(destinationSpriteImport);
+        staged.push(stageDuplicateFile(sourceSpriteImport, destinationSpriteImport, null));
+      }
+      if (assetFileRevision(fs.lstatSync(source.absolute)) !== request.expectedSourceRevision) {
+        throw new Error(`asset changed while duplicate was being prepared: ${source.relative}`);
+      }
+      const currentSource = listProjectAssets().find(
+        (asset) => asset.relPath.toLocaleLowerCase() === source.relative.toLocaleLowerCase(),
+      );
+      if (!currentSource || currentSource.metaStatus !== 'ready' || currentSource.guid !== request.expectedGuid.toLocaleLowerCase()) {
+        throw new Error(`asset identity changed while duplicate was being prepared: ${source.relative}`);
+      }
+      if (assetFileRevision(fs.lstatSync(sourceMetadata)) !== sourceMetadataRevision) {
+        throw new Error(`asset metadata changed while duplicate was being prepared: ${source.relative}`);
+      }
+      if (
+        copiesSpriteImport
+        && assetFileRevision(fs.lstatSync(sourceSpriteImport)) !== spriteImportRevision
+      ) throw new Error(`sprite import sidecar changed while duplicate was being prepared: ${source.relative}`);
+      for (let index = 0; index < staged.length; index += 1) {
+        fs.linkSync(staged[index], targets[index]);
+        installed.push(targets[index]);
+      }
+    } catch (error) {
+      const rollbackErrors: string[] = [];
+      for (const target of [...installed].reverse()) {
+        try { fs.unlinkSync(target); } catch (rollback) { rollbackErrors.push(`${target}: ${String(rollback)}`); }
+      }
+      for (const temporary of staged) {
+        try { if (fs.existsSync(temporary)) fs.unlinkSync(temporary); } catch { /* best effort */ }
+      }
+      for (const candidate of [...createdDirectories].reverse()) {
+        try { fs.rmdirSync(candidate); } catch { /* best effort */ }
+      }
+      if (rollbackErrors.length > 0) {
+        throw new Error(`${String(error)}; rollback also failed: ${rollbackErrors.join(', ')}`);
+      }
+      throw error;
+    }
+    for (const temporary of staged) {
+      try { if (fs.existsSync(temporary)) fs.unlinkSync(temporary); } catch { /* committed copy remains valid */ }
+    }
+    return {
+      sourcePath: source.relative,
+      destinationPath: destination.relative,
+      guid: metadata.guid,
+    };
+  }
+
   function normalizeBuildScene(value: unknown): string | null {
     if (typeof value !== 'string') return null;
     const segments = value.trim().replace(/\\/g, '/').split('/').filter(Boolean);
@@ -1117,6 +1302,12 @@ export function mengineFsPlugin(opts: MengineFsOptions | string): Plugin {
         const body = await readBodyBytes(req, 40 * 1024 * 1024);
         const request = JSON.parse(body.toString('utf8') || '{}') as AssetRenameRequest;
         return sendJson(res, 200, renameProjectAsset(request));
+      }
+
+      if (pathname === `${API}/assets/duplicate` && method === 'POST') {
+        const body = await readBodyBytes(req, 34 * 1024 * 1024);
+        const request = JSON.parse(body.toString('utf8') || '{}') as AssetDuplicateRequest;
+        return sendJson(res, 200, duplicateProjectAsset(request));
       }
 
       // GET /__mengine/asset/Assets/...  → serve project texture

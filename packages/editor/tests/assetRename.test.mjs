@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { buildAssetRenamePlan } from '../src/assetRename.ts';
+import { buildAssetDuplicatePlan, buildAssetRenamePlan } from '../src/assetRename.ts';
 
 const sourceAsset = {
   relPath: 'Assets/Textures/Hero.png',
@@ -169,4 +169,94 @@ test('script module imports are manual for inbound references and moved source d
     ['Assets/Scripts/Hero.ts', '1:25', './Items/Weapon'],
     ['Assets/Scripts/Spawner.ts', '1:23', './Hero'],
   ]);
+});
+
+test('asset duplicate rewrites only its own self and relative dependencies', () => {
+  const model = {
+    relPath: 'Assets/Models/Hero.gltf',
+    revision: 'model-revision',
+    guid: sourceAsset.guid,
+    metaStatus: 'ready',
+    size: 100,
+    kind: 'model',
+  };
+  const plan = buildAssetDuplicatePlan(
+    model.relPath,
+    'Assets/Characters/Hero Copy.gltf',
+    model,
+    [{
+      relPath: model.relPath,
+      kind: 'model',
+      revision: model.revision,
+      text: '{"extras":{"source":"Assets/Models/Hero.gltf"},"buffers":[{"uri":"Hero.bin"}]}',
+    }, {
+      relPath: 'Assets/Prefabs/Hero.prefab',
+      kind: 'prefab',
+      revision: 'prefab-revision',
+      text: '{"model":"Assets/Models/Hero.gltf"}',
+    }],
+  );
+  assert.equal(
+    plan.contents,
+    '{"extras":{"source":"Assets/Characters/Hero Copy.gltf"},"buffers":[{"uri":"../Models/Hero.bin"}]}',
+  );
+  assert.equal(plan.manualReferences.length, 0);
+});
+
+test('binary glb duplicate never enters the JSON rewrite path', () => {
+  const model = {
+    relPath: 'Assets/Models/Hero.glb',
+    revision: 'model-revision',
+    guid: sourceAsset.guid,
+    metaStatus: 'ready',
+    size: 512,
+    kind: 'model',
+  };
+  const plan = buildAssetDuplicatePlan(
+    model.relPath,
+    'Assets/Characters/Hero Copy.glb',
+    model,
+    [{
+      relPath: model.relPath,
+      kind: 'model',
+      revision: model.revision,
+      text: '{"buffers":[{"uri":"must-not-be-rewritten.bin"}]}',
+    }],
+  );
+  assert.equal(plan.contents, null);
+  assert.equal(plan.copiedBytes, model.size);
+});
+
+test('cross-directory script duplicate reviews only outbound relative imports', () => {
+  const script = {
+    relPath: 'Assets/Scripts/Hero.ts',
+    revision: 'hero-revision',
+    guid: sourceAsset.guid,
+    metaStatus: 'ready',
+    size: 50,
+    kind: 'script',
+  };
+  const plan = buildAssetDuplicatePlan(
+    script.relPath,
+    'Assets/Scripts/Characters/Hero.ts',
+    script,
+    [{
+      relPath: script.relPath,
+      kind: 'script',
+      revision: script.revision,
+      text: 'import { weapon } from "./Items/Weapon";',
+    }, {
+      relPath: 'Assets/Scripts/Spawner.ts',
+      kind: 'script',
+      revision: 'spawner-revision',
+      text: 'import { hero } from "./Hero";',
+    }, {
+      relPath: 'Assets/Scripts/Items/Weapon.ts',
+      kind: 'script',
+      revision: 'weapon-revision',
+      text: 'export const weapon = 1;',
+    }],
+  );
+  assert.deepEqual(plan.manualReferences.map((reference) => reference.sourcePath), [script.relPath]);
+  assert.equal(plan.contents, null);
 });

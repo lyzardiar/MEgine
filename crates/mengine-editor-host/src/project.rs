@@ -18,6 +18,7 @@ const SCENE_RECOVERY_PATH: &str = ".mengine/Recovery/scene.recovery.json";
 const MAX_SCENE_RECOVERY_BYTES: u64 = 64 * 1024 * 1024;
 const MAX_ASSET_RENAME_UPDATES: usize = 256;
 const MAX_ASSET_RENAME_UPDATE_BYTES: usize = 32 * 1024 * 1024;
+const MAX_ASSET_DUPLICATE_BYTES: u64 = 512 * 1024 * 1024;
 
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "lowercase")]
@@ -102,6 +103,24 @@ pub struct AssetRenameResult {
     pub source_path: String,
     pub destination_path: String,
     pub updated_paths: Vec<String>,
+}
+
+#[derive(Clone, Debug, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct AssetDuplicateRequest {
+    pub source_path: String,
+    pub destination_path: String,
+    pub expected_source_revision: String,
+    pub expected_guid: Uuid,
+    pub contents: Option<String>,
+}
+
+#[derive(Clone, Debug, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct AssetDuplicateResult {
+    pub source_path: String,
+    pub destination_path: String,
+    pub guid: Uuid,
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
@@ -626,7 +645,7 @@ impl ProjectSession {
             ));
         }
 
-        let source = self.resolve_existing(&source_relative)?;
+        let source = self.resolve_regular_asset(&source_relative)?;
         let source_revision = scene_file_revision(&source)?.ok_or_else(|| {
             ProjectError::AssetTransaction(format!("asset not found: {source_portable}"))
         })?;
@@ -702,7 +721,7 @@ impl ProjectSession {
                     "asset update targets a transaction-owned path: {portable}"
                 )));
             }
-            let path = self.resolve_existing(&relative)?;
+            let path = self.resolve_regular_asset(&relative)?;
             let revision = scene_file_revision(&path)?.ok_or_else(|| {
                 ProjectError::AssetTransaction(format!("update source is missing: {portable}"))
             })?;
@@ -915,6 +934,214 @@ impl ProjectSession {
             source_path: source_portable,
             destination_path: destination_portable,
             updated_paths,
+        })
+    }
+
+    pub fn duplicate_asset(
+        &mut self,
+        request: AssetDuplicateRequest,
+    ) -> Result<AssetDuplicateResult, ProjectError> {
+        let source_relative = normalize_asset_file_path(Path::new(&request.source_path))?;
+        let destination_relative = normalize_asset_file_path(Path::new(&request.destination_path))?;
+        let source_portable = portable_path(&source_relative);
+        let destination_portable = portable_path(&destination_relative);
+        if source_portable.eq_ignore_ascii_case(&destination_portable) {
+            return Err(ProjectError::AssetTransaction(
+                "duplicate destination must differ from the source".into(),
+            ));
+        }
+        if source_relative
+            .extension()
+            .and_then(|value| value.to_str())
+            .is_some_and(|value| value.eq_ignore_ascii_case("mscene"))
+        {
+            return Err(ProjectError::AssetTransaction(
+                "scenes must use Save As instead of generic duplication".into(),
+            ));
+        }
+        if !same_asset_extension(&source_relative, &destination_relative) {
+            return Err(ProjectError::AssetTransaction(
+                "asset duplication must preserve the file extension".into(),
+            ));
+        }
+        if request
+            .contents
+            .as_ref()
+            .is_some_and(|contents| contents.len() > MAX_ASSET_RENAME_UPDATE_BYTES)
+        {
+            return Err(ProjectError::AssetTransaction(
+                "duplicate rewritten contents exceed 32 MiB".into(),
+            ));
+        }
+
+        let source = self.resolve_regular_asset(&source_relative)?;
+        let source_metadata = std::fs::symlink_metadata(&source)?;
+        if source_metadata.len() > MAX_ASSET_DUPLICATE_BYTES {
+            return Err(ProjectError::AssetTransaction(
+                "source asset exceeds the 512 MiB duplication limit".into(),
+            ));
+        }
+        if scene_file_revision(&source)?.as_deref() != Some(&request.expected_source_revision) {
+            return Err(ProjectError::AssetTransaction(format!(
+                "asset changed on disk since duplicate preview: {source_portable}"
+            )));
+        }
+        let sidecar = mengine_assets::read_asset_sidecar(&source, "asset")
+            .map_err(ProjectError::AssetTransaction)?;
+        if sidecar.guid.0 != request.expected_guid {
+            return Err(ProjectError::AssetTransaction(format!(
+                "asset identity changed on disk since duplicate preview: {source_portable}"
+            )));
+        }
+        let source_sidecar = mengine_assets::asset_sidecar_path(&source);
+        let source_sidecar_revision = scene_file_revision(&source_sidecar)?.ok_or_else(|| {
+            ProjectError::AssetTransaction("source asset metadata disappeared".into())
+        })?;
+        let (new_guid, duplicated_sidecar) = duplicate_sidecar_bytes(&source_sidecar)?;
+
+        let (destination, created_directories) =
+            self.prepare_asset_destination(&destination_relative)?;
+        let destination_sidecar = mengine_assets::asset_sidecar_path(&destination);
+        let source_sprite_import = path_with_suffix(&source, ".sprite.json");
+        let destination_sprite_import = path_with_suffix(&destination, ".sprite.json");
+        for target in [
+            &destination,
+            &destination_sidecar,
+            &destination_sprite_import,
+        ] {
+            match std::fs::symlink_metadata(target) {
+                Ok(_) => {
+                    return Err(ProjectError::AssetTransaction(format!(
+                        "duplicate target already exists: {}",
+                        display_path(target)
+                    )));
+                }
+                Err(error) if error.kind() == std::io::ErrorKind::NotFound => {}
+                Err(error) => return Err(ProjectError::Io(error)),
+            }
+        }
+        let sprite_import_revision = match std::fs::symlink_metadata(&source_sprite_import) {
+            Ok(metadata) if metadata.file_type().is_symlink() || !metadata.is_file() => {
+                return Err(ProjectError::AssetTransaction(format!(
+                    "sprite import sidecar must be a regular file: {}",
+                    display_path(&source_sprite_import)
+                )));
+            }
+            Ok(metadata) if metadata.len() > MAX_ASSET_DUPLICATE_BYTES => {
+                return Err(ProjectError::AssetTransaction(
+                    "sprite import sidecar exceeds the duplication limit".into(),
+                ));
+            }
+            Ok(_) => scene_file_revision(&source_sprite_import)?,
+            Err(error) if error.kind() == std::io::ErrorKind::NotFound => None,
+            Err(error) => return Err(ProjectError::Io(error)),
+        };
+        let copies_sprite_import = sprite_import_revision.is_some();
+
+        let create_directories = (|| -> Result<(), ProjectError> {
+            for directory in &created_directories {
+                std::fs::create_dir(directory)?;
+                self.ensure_under_root(std::fs::canonicalize(directory)?)?;
+            }
+            Ok(())
+        })();
+        if let Err(error) = create_directories {
+            remove_empty_directories(&created_directories);
+            return Err(error);
+        }
+
+        let mut staged = Vec::new();
+        let prepared = (|| -> Result<(), ProjectError> {
+            staged.push(if let Some(contents) = &request.contents {
+                stage_synced_file(&destination, contents.as_bytes())?
+            } else {
+                stage_synced_copy(&source, &destination)?
+            });
+            staged.push(stage_synced_file(
+                &destination_sidecar,
+                &duplicated_sidecar,
+            )?);
+            if copies_sprite_import {
+                staged.push(stage_synced_copy(
+                    &source_sprite_import,
+                    &destination_sprite_import,
+                )?);
+            }
+            if scene_file_revision(&source)?.as_deref() != Some(&request.expected_source_revision) {
+                return Err(ProjectError::AssetTransaction(format!(
+                    "asset changed while duplicate was being prepared: {source_portable}"
+                )));
+            }
+            let current_sidecar = mengine_assets::read_asset_sidecar(&source, "asset")
+                .map_err(ProjectError::AssetTransaction)?;
+            if current_sidecar.guid.0 != request.expected_guid {
+                return Err(ProjectError::AssetTransaction(format!(
+                    "asset identity changed while duplicate was being prepared: {source_portable}"
+                )));
+            }
+            if scene_file_revision(&source_sidecar)?.as_deref() != Some(&source_sidecar_revision) {
+                return Err(ProjectError::AssetTransaction(
+                    "asset metadata changed while duplicate was being prepared".into(),
+                ));
+            }
+            if copies_sprite_import {
+                let metadata = std::fs::symlink_metadata(&source_sprite_import)?;
+                if metadata.file_type().is_symlink() || !metadata.is_file() {
+                    return Err(ProjectError::AssetTransaction(
+                        "sprite import sidecar changed while duplicate was being prepared".into(),
+                    ));
+                }
+                if scene_file_revision(&source_sprite_import)? != sprite_import_revision {
+                    return Err(ProjectError::AssetTransaction(
+                        "sprite import sidecar changed while duplicate was being prepared".into(),
+                    ));
+                }
+            }
+            Ok(())
+        })();
+        if let Err(error) = prepared {
+            cleanup_paths(&staged);
+            remove_empty_directories(&created_directories);
+            return Err(error);
+        }
+
+        let targets = if copies_sprite_import {
+            vec![
+                destination.clone(),
+                destination_sidecar.clone(),
+                destination_sprite_import,
+            ]
+        } else {
+            vec![destination.clone(), destination_sidecar]
+        };
+        let mut installed: Vec<PathBuf> = Vec::new();
+        for (temporary, target) in staged.iter().zip(&targets) {
+            if let Err(error) = install_staged_new(temporary, target) {
+                let mut rollback_errors = Vec::new();
+                for installed_path in installed.iter().rev() {
+                    if let Err(rollback) = std::fs::remove_file(installed_path) {
+                        rollback_errors
+                            .push(format!("{}: {rollback}", display_path(installed_path)));
+                    }
+                }
+                cleanup_paths(&staged);
+                remove_empty_directories(&created_directories);
+                if rollback_errors.is_empty() {
+                    return Err(ProjectError::Io(error));
+                }
+                return Err(ProjectError::AssetTransaction(format!(
+                    "duplicate install failed ({error}); rollback also failed: {}",
+                    rollback_errors.join(", ")
+                )));
+            }
+            installed.push(target.to_path_buf());
+        }
+        cleanup_paths(&staged);
+        self.revision = self.revision.saturating_add(1);
+        Ok(AssetDuplicateResult {
+            source_path: source_portable,
+            destination_path: destination_portable,
+            guid: new_guid,
         })
     }
 
@@ -1163,6 +1390,15 @@ impl ProjectSession {
     fn resolve_existing(&self, relative: &Path) -> Result<PathBuf, ProjectError> {
         let candidate = std::fs::canonicalize(self.project_root.join(relative))?;
         self.ensure_under_root(candidate)
+    }
+
+    fn resolve_regular_asset(&self, relative: &Path) -> Result<PathBuf, ProjectError> {
+        let requested = self.project_root.join(relative);
+        let metadata = std::fs::symlink_metadata(&requested)?;
+        if metadata.file_type().is_symlink() || !metadata.is_file() {
+            return Err(ProjectError::InvalidPath(portable_path(relative)));
+        }
+        self.resolve_existing(relative)
     }
 
     fn resolve_for_write(&self, relative: &Path) -> Result<PathBuf, ProjectError> {
@@ -1431,6 +1667,84 @@ fn stage_synced_file(target: &Path, contents: &[u8]) -> std::io::Result<PathBuf>
         return Err(error);
     }
     Ok(temporary)
+}
+
+fn stage_synced_copy(source: &Path, target: &Path) -> std::io::Result<PathBuf> {
+    let parent = target.parent().ok_or_else(|| {
+        std::io::Error::new(
+            std::io::ErrorKind::InvalidInput,
+            "duplicate target has no parent",
+        )
+    })?;
+    let name = target
+        .file_name()
+        .and_then(|value| value.to_str())
+        .unwrap_or("asset");
+    let temporary = parent.join(format!(".{name}.duplicate.{}.tmp", Uuid::new_v4()));
+    let result = (|| -> std::io::Result<()> {
+        let mut input = std::fs::File::open(source)?;
+        let mut output = OpenOptions::new()
+            .create_new(true)
+            .write(true)
+            .open(&temporary)?;
+        std::io::copy(&mut input, &mut output)?;
+        output.sync_all()
+    })();
+    if let Err(error) = result {
+        let _ = std::fs::remove_file(&temporary);
+        return Err(error);
+    }
+    Ok(temporary)
+}
+
+fn install_staged_new(temporary: &Path, target: &Path) -> std::io::Result<()> {
+    std::fs::hard_link(temporary, target)?;
+    let _ = std::fs::remove_file(temporary);
+    Ok(())
+}
+
+fn cleanup_paths(paths: &[PathBuf]) {
+    for path in paths {
+        let _ = std::fs::remove_file(path);
+    }
+}
+
+fn duplicate_sidecar_bytes(path: &Path) -> Result<(Uuid, Vec<u8>), ProjectError> {
+    let metadata = std::fs::symlink_metadata(path)?;
+    if metadata.file_type().is_symlink() || !metadata.is_file() || metadata.len() > 1024 * 1024 {
+        return Err(ProjectError::AssetTransaction(format!(
+            "asset metadata cannot be duplicated: {}",
+            display_path(path)
+        )));
+    }
+    let mut value: serde_json::Value = serde_json::from_slice(&std::fs::read(path)?)?;
+    let object = value.as_object_mut().ok_or_else(|| {
+        ProjectError::AssetTransaction("asset metadata root must be an object".into())
+    })?;
+    let new_guid = Uuid::new_v4();
+    let identity = serde_json::Value::String(new_guid.to_string());
+    let mut replaced = false;
+    for key in ["guid", "uuid"] {
+        if object.contains_key(key) {
+            object.insert(key.into(), identity.clone());
+            replaced = true;
+        }
+    }
+    if let Some(mengine) = object
+        .get_mut("mengine")
+        .and_then(serde_json::Value::as_object_mut)
+    {
+        if mengine.contains_key("guid") {
+            mengine.insert("guid".into(), identity.clone());
+            replaced = true;
+        }
+    }
+    if !replaced {
+        object.insert("guid".into(), identity);
+    }
+    let mut bytes = serde_json::to_vec_pretty(&value)?;
+    bytes.push(b'\n');
+    Ok((new_guid, bytes))
 }
 
 fn cleanup_staged_updates(updates: &[PreparedAssetUpdate]) {
@@ -2447,6 +2761,66 @@ mod tests {
         assert!(mengine_assets::asset_sidecar_path(&source).is_file());
         assert_eq!(std::fs::read(&dependent).unwrap(), original_dependent);
         assert!(!root.join("Assets/Renamed").exists());
+        std::fs::remove_dir_all(root).unwrap();
+    }
+
+    #[test]
+    fn asset_duplicate_copies_import_data_and_assigns_a_new_stable_identity() {
+        let root = make_project();
+        std::fs::create_dir_all(root.join("Assets/Models")).unwrap();
+        let source = root.join("Assets/Models/Hero.gltf");
+        let source_import = root.join("Assets/Models/Hero.gltf.sprite.json");
+        std::fs::write(&source, br#"{"buffers":[{"uri":"Hero.bin"}]}"#).unwrap();
+        std::fs::write(&source_import, br#"{"version":1,"custom":true}"#).unwrap();
+        let original_guid = mengine_assets::ensure_asset_sidecar(&source, "model")
+            .unwrap()
+            .guid
+            .0;
+        let source_sidecar = mengine_assets::asset_sidecar_path(&source);
+        let mut metadata: serde_json::Value =
+            serde_json::from_slice(&std::fs::read(&source_sidecar).unwrap()).unwrap();
+        metadata["pluginSettings"] = json!({ "quality": "high" });
+        std::fs::write(
+            &source_sidecar,
+            serde_json::to_vec_pretty(&metadata).unwrap(),
+        )
+        .unwrap();
+        let mut session = ProjectSession::open(&root).unwrap();
+        let result = session
+            .duplicate_asset(AssetDuplicateRequest {
+                source_path: "Assets/Models/Hero.gltf".into(),
+                destination_path: "Assets/Characters/Hero Copy.gltf".into(),
+                expected_source_revision: scene_file_revision(&source).unwrap().unwrap(),
+                expected_guid: original_guid,
+                contents: Some(r#"{"buffers":[{"uri":"../Models/Hero.bin"}]}"#.into()),
+            })
+            .unwrap();
+        let destination = root.join("Assets/Characters/Hero Copy.gltf");
+        assert!(source.is_file());
+        assert_eq!(
+            std::fs::read_to_string(&destination).unwrap(),
+            r#"{"buffers":[{"uri":"../Models/Hero.bin"}]}"#
+        );
+        assert_ne!(result.guid, original_guid);
+        assert_eq!(
+            mengine_assets::read_asset_sidecar(&destination, "model")
+                .unwrap()
+                .guid
+                .0,
+            result.guid
+        );
+        let duplicate_metadata: serde_json::Value = serde_json::from_slice(
+            &std::fs::read(mengine_assets::asset_sidecar_path(&destination)).unwrap(),
+        )
+        .unwrap();
+        assert_eq!(
+            duplicate_metadata["pluginSettings"],
+            json!({ "quality": "high" })
+        );
+        assert_eq!(
+            std::fs::read(root.join("Assets/Characters/Hero Copy.gltf.sprite.json")).unwrap(),
+            std::fs::read(source_import).unwrap()
+        );
         std::fs::remove_dir_all(root).unwrap();
     }
 

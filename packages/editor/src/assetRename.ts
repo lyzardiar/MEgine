@@ -59,6 +59,22 @@ export type AssetRenameResult = {
   updatedPaths: string[];
 };
 
+export type AssetDuplicatePlan = {
+  sourcePath: string;
+  destinationPath: string;
+  sourceRevision: string;
+  sourceGuid: string;
+  contents: string | null;
+  manualReferences: AssetReference[];
+  copiedBytes: number;
+};
+
+export type AssetDuplicateResult = {
+  sourcePath: string;
+  destinationPath: string;
+  guid: string;
+};
+
 type RenameSource = AssetReferenceSource & { revision: string };
 
 function portable(value: string): string {
@@ -456,6 +472,138 @@ export async function applyProjectAssetRename(plan: AssetRenamePlan): Promise<As
       throw new Error(body.error ?? `${response.status} ${response.statusText}`);
     }
     result = await response.json() as AssetRenameResult;
+  }
+  await resetProjectAssetWatchBaseline();
+  return result;
+}
+
+export function buildAssetDuplicatePlan(
+  sourcePathRaw: string,
+  destinationPathRaw: string,
+  sourceAsset: Pick<ProjectFileAsset, 'relPath' | 'revision' | 'guid' | 'metaStatus' | 'size' | 'kind'>,
+  sources: readonly RenameSource[],
+): AssetDuplicatePlan {
+  const sourcePath = normalizeProjectAssetPath(sourcePathRaw);
+  const destinationPath = normalizeProjectAssetPath(destinationPathRaw);
+  if (sourceAsset.metaStatus !== 'ready' || !sourceAsset.guid) {
+    throw new Error('asset metadata must be healthy before duplication');
+  }
+  if (!samePath(sourceAsset.relPath, sourcePath)) throw new Error('source asset is stale');
+  if (samePath(sourcePath, destinationPath)) throw new Error('duplicate destination must be different');
+  const sourceDot = sourcePath.lastIndexOf('.');
+  const destinationDot = destinationPath.lastIndexOf('.');
+  if (
+    sourceDot < 0
+    || destinationDot < 0
+    || sourcePath.slice(sourceDot).toLocaleLowerCase()
+      !== destinationPath.slice(destinationDot).toLocaleLowerCase()
+  ) throw new Error('asset duplication must preserve the file extension');
+
+  const source = sources.find((candidate) => samePath(candidate.relPath, sourcePath));
+  let contents: string | null = null;
+  const manualReferences: AssetReference[] = [];
+  if (source?.kind === 'spine-atlas') {
+    const rewritten = rewriteSpineAtlasSource(source, sourcePath, destinationPath);
+    if (rewritten !== source.text) contents = rewritten;
+  } else if (
+    source
+    && JSON_KINDS.has(source.kind)
+    && (source.kind !== 'model' || sourcePath.toLocaleLowerCase().endsWith('.gltf'))
+  ) {
+    try {
+      const rewritten = rewriteJsonSource(source, sourcePath, destinationPath);
+      if (rewritten !== source.text) contents = rewritten;
+    } catch {
+      throw new Error(`cannot safely duplicate invalid JSON asset: ${sourcePath}`);
+    }
+  } else if (source?.kind === 'script') {
+    const scriptPaths = new Map(
+      sources
+        .filter((candidate) => candidate.kind === 'script')
+        .map((candidate) => [candidate.relPath.toLocaleLowerCase(), candidate.relPath]),
+    );
+    manualReferences.push(...scanScriptModuleReferences(
+      source,
+      sourcePath,
+      destinationPath,
+      scriptPaths,
+    ).filter((reference) => samePath(reference.sourcePath, sourcePath)));
+  }
+  return {
+    sourcePath,
+    destinationPath,
+    sourceRevision: sourceAsset.revision,
+    sourceGuid: sourceAsset.guid,
+    contents,
+    manualReferences,
+    copiedBytes: contents == null
+      ? sourceAsset.size
+      : new TextEncoder().encode(contents).byteLength,
+  };
+}
+
+export async function prepareProjectAssetDuplicate(
+  sourcePathRaw: string,
+  destinationPathRaw: string,
+): Promise<AssetDuplicatePlan> {
+  const sourcePath = normalizeProjectAssetPath(sourcePathRaw);
+  const destinationPath = normalizeProjectAssetPath(destinationPathRaw);
+  const files = await refreshProjectFiles();
+  const sourceAsset = files.find((asset) => samePath(asset.relPath, sourcePath));
+  if (!sourceAsset) throw new Error(`asset not found: ${sourcePath}`);
+  if (sourceAsset.kind === 'scene') throw new Error('scenes use Save As instead of generic duplication');
+  if (sourceAsset.kind === 'sprite-import') throw new Error('sprite import metadata duplicates with its texture');
+  if (files.some((asset) => samePath(asset.relPath, destinationPath))) {
+    throw new Error(`destination asset already exists: ${destinationPath}`);
+  }
+  const candidates = files.filter((asset) => (
+    asset.kind === 'script'
+    || samePath(asset.relPath, sourcePath)
+  )).filter((asset) => (
+    TEXT_KINDS.has(asset.kind)
+    && asset.size <= MAX_SOURCE_BYTES
+    && (asset.kind !== 'model' || asset.relPath.toLocaleLowerCase().endsWith('.gltf'))
+  ));
+  const sources: RenameSource[] = [];
+  for (let offset = 0; offset < candidates.length; offset += 8) {
+    const loaded = await Promise.all(candidates.slice(offset, offset + 8).map(async (asset) => ({
+      relPath: asset.relPath,
+      kind: asset.kind,
+      revision: asset.revision,
+      text: await readProjectAssetText(asset.relPath),
+    })));
+    sources.push(...loaded);
+  }
+  if (TEXT_KINDS.has(sourceAsset.kind) && sourceAsset.size > MAX_SOURCE_BYTES) {
+    throw new Error('text asset exceeds the 8 MiB safe duplication preview limit');
+  }
+  return buildAssetDuplicatePlan(sourcePath, destinationPath, sourceAsset, sources);
+}
+
+export async function applyProjectAssetDuplicate(
+  plan: AssetDuplicatePlan,
+): Promise<AssetDuplicateResult> {
+  const payload = {
+    sourcePath: plan.sourcePath,
+    destinationPath: plan.destinationPath,
+    expectedSourceRevision: plan.sourceRevision,
+    expectedGuid: plan.sourceGuid,
+    contents: plan.contents,
+  };
+  let result: AssetDuplicateResult;
+  if (isDesktopEditor()) {
+    result = await invoke<AssetDuplicateResult>('duplicate_project_asset', { request: payload });
+  } else {
+    const response = await fetch('/__mengine/assets/duplicate', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+    });
+    if (!response.ok) {
+      const body = await response.json().catch(() => ({})) as { error?: string };
+      throw new Error(body.error ?? `${response.status} ${response.statusText}`);
+    }
+    result = await response.json() as AssetDuplicateResult;
   }
   await resetProjectAssetWatchBaseline();
   return result;

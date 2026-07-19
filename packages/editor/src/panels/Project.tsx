@@ -56,8 +56,11 @@ import {
   type AssetReferenceReport,
 } from '../assetReferences';
 import {
+  applyProjectAssetDuplicate,
   applyProjectAssetRename,
+  prepareProjectAssetDuplicate,
   prepareProjectAssetRename,
+  type AssetDuplicatePlan,
   type AssetRenamePlan,
 } from '../assetRename';
 import { PROJECT_ASSETS_CHANGED_EVENT } from '../assetEditorEvents';
@@ -146,11 +149,21 @@ export function Project(props: {
     manualConfirmed: boolean;
     error: string | null;
   } | null>(null);
+  const [assetDuplicate, setAssetDuplicate] = useState<{
+    asset: AssetItem;
+    destinationPath: string;
+    loading: boolean;
+    applying: boolean;
+    plan: AssetDuplicatePlan | null;
+    manualConfirmed: boolean;
+    error: string | null;
+  } | null>(null);
   const lastClick = useRef<{ key: string; t: number }>({ key: '', t: 0 });
   const rootRef = useRef<HTMLDivElement>(null);
   const cardRefs = useRef<Map<string, HTMLDivElement>>(new Map());
   const referenceRequest = useRef(0);
   const renameRequest = useRef(0);
+  const duplicateRequest = useRef(0);
 
   useEffect(() => {
     void Promise.all([refreshScripts(), refreshSprites(), refreshProjectFiles()])
@@ -602,6 +615,103 @@ export function Project(props: {
     }
   };
 
+  const defaultDuplicatePath = (assetPath: string): string => {
+    const marker = assetPath.lastIndexOf('/');
+    const folderPath = marker >= 0 ? assetPath.slice(0, marker + 1) : '';
+    const file = marker >= 0 ? assetPath.slice(marker + 1) : assetPath;
+    const dot = file.lastIndexOf('.');
+    const stem = dot > 0 ? file.slice(0, dot) : file;
+    const extension = dot > 0 ? file.slice(dot) : '';
+    const used = new Set(listProjectFiles().map((asset) => asset.relPath.toLocaleLowerCase()));
+    for (let suffix = 1; suffix < 10_000; suffix += 1) {
+      const label = suffix === 1 ? ' Copy' : ` Copy ${suffix}`;
+      const candidate = `${folderPath}${stem}${label}${extension}`;
+      if (!used.has(candidate.toLocaleLowerCase())) return candidate;
+    }
+    return `${folderPath}${stem} Copy ${crypto.randomUUID().slice(0, 8)}${extension}`;
+  };
+
+  const requestAssetDuplicate = (asset: AssetItem) => {
+    if (!canRenameAsset(asset) || !asset.assetPath) return;
+    duplicateRequest.current += 1;
+    setCtx(null);
+    setAssetDuplicate({
+      asset,
+      destinationPath: defaultDuplicatePath(asset.assetPath),
+      loading: false,
+      applying: false,
+      plan: null,
+      manualConfirmed: false,
+      error: null,
+    });
+  };
+
+  const closeAssetDuplicate = () => {
+    duplicateRequest.current += 1;
+    setAssetDuplicate(null);
+  };
+
+  const previewAssetDuplicate = async () => {
+    if (!assetDuplicate?.asset.assetPath || assetDuplicate.loading || assetDuplicate.applying) return;
+    const request = ++duplicateRequest.current;
+    setAssetDuplicate((current) => current && ({
+      ...current,
+      loading: true,
+      plan: null,
+      manualConfirmed: false,
+      error: null,
+    }));
+    try {
+      if (!await props.onPrepareAssetTransaction()) {
+        if (duplicateRequest.current === request) {
+          setAssetDuplicate((current) => current && ({ ...current, loading: false }));
+        }
+        return;
+      }
+      const plan = await prepareProjectAssetDuplicate(
+        assetDuplicate.asset.assetPath,
+        assetDuplicate.destinationPath,
+      );
+      if (duplicateRequest.current !== request) return;
+      setAssetDuplicate((current) => current && ({ ...current, loading: false, plan }));
+    } catch (error) {
+      if (duplicateRequest.current !== request) return;
+      setAssetDuplicate((current) => current && ({
+        ...current,
+        loading: false,
+        error: error instanceof Error ? error.message : String(error),
+      }));
+    }
+  };
+
+  const commitAssetDuplicate = async () => {
+    const state = assetDuplicate;
+    if (!state?.plan || state.loading || state.applying) return;
+    if (state.plan.manualReferences.length > 0 && !state.manualConfirmed) return;
+    const request = ++duplicateRequest.current;
+    setAssetDuplicate((current) => current && ({ ...current, applying: true, error: null }));
+    try {
+      if (!await props.onPrepareAssetTransaction()) {
+        if (duplicateRequest.current === request) {
+          setAssetDuplicate((current) => current && ({ ...current, applying: false }));
+        }
+        return;
+      }
+      const result = await applyProjectAssetDuplicate(state.plan);
+      if (duplicateRequest.current !== request) return;
+      window.dispatchEvent(new CustomEvent(PROJECT_ASSETS_CHANGED_EVENT, { detail: result }));
+      setLibTick((tick) => tick + 1);
+      props.onLog?.(`Duplicated ${result.sourcePath} to ${result.destinationPath} with new GUID ${result.guid}.`);
+      closeAssetDuplicate();
+      pingProjectAsset(result.destinationPath);
+    } catch (error) {
+      if (duplicateRequest.current !== request) return;
+      const message = error instanceof Error ? error.message : String(error);
+      setAssetDuplicate((current) => current && ({ ...current, applying: false, error: message }));
+      props.onLog?.(`Asset duplicate failed: ${message}`, 'error');
+    }
+  };
+
   const completeImport = async (files?: Iterable<File>) => {
     if (importing) return;
     setImporting(true);
@@ -926,16 +1036,28 @@ export function Project(props: {
               </>
             )}
             {canRenameAsset(ctx.asset) && (
-              <button
-                type="button"
-                onPointerDown={(e) => {
-                  e.preventDefault();
-                  e.stopPropagation();
-                  requestAssetRename(ctx.asset);
-                }}
-              >
-                Rename / Move <span className="hint">F2</span>
-              </button>
+              <>
+                <button
+                  type="button"
+                  onPointerDown={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    requestAssetRename(ctx.asset);
+                  }}
+                >
+                  Rename / Move <span className="hint">F2</span>
+                </button>
+                <button
+                  type="button"
+                  onPointerDown={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    requestAssetDuplicate(ctx.asset);
+                  }}
+                >
+                  Duplicate
+                </button>
+              </>
             )}
             {ctx.asset.assetPath && (
               <button
@@ -1163,6 +1285,147 @@ export function Project(props: {
                   onClick={() => void commitAssetRename()}
                 >
                   {assetRename.applying ? 'Committing...' : 'Commit Rename'}
+                </button>
+              )}
+            </footer>
+          </section>
+        </div>,
+        document.body,
+      )}
+      {assetDuplicate && createPortal(
+        <div
+          className="asset-reference-backdrop"
+          role="presentation"
+          onPointerDown={() => {
+            if (!assetDuplicate.applying) closeAssetDuplicate();
+          }}
+        >
+          <section
+            className="asset-reference-dialog asset-rename-dialog"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="asset-duplicate-title"
+            onKeyDown={(event) => {
+              if (event.key === 'Escape' && !assetDuplicate.applying) closeAssetDuplicate();
+            }}
+            onPointerDown={(event) => event.stopPropagation()}
+          >
+            <header>
+              <div>
+                <strong id="asset-duplicate-title">Duplicate Asset</strong>
+                <span>{assetDuplicate.asset.assetPath}</span>
+              </div>
+              <button
+                type="button"
+                aria-label="Close asset duplicate"
+                disabled={assetDuplicate.applying}
+                onClick={closeAssetDuplicate}
+              >×</button>
+            </header>
+            <div className="asset-rename-form">
+              <label htmlFor="asset-duplicate-destination">Duplicate path</label>
+              <input
+                id="asset-duplicate-destination"
+                autoFocus
+                spellCheck={false}
+                value={assetDuplicate.destinationPath}
+                disabled={assetDuplicate.loading || assetDuplicate.applying}
+                onChange={(event) => setAssetDuplicate((current) => current && ({
+                  ...current,
+                  destinationPath: event.target.value,
+                  plan: null,
+                  manualConfirmed: false,
+                  error: null,
+                }))}
+                onKeyDown={(event) => {
+                  if (event.key === 'Enter' && !assetDuplicate.plan) {
+                    event.preventDefault();
+                    void previewAssetDuplicate();
+                  }
+                }}
+              />
+              <span>The duplicate keeps importer settings but receives a new stable GUID. The extension cannot change.</span>
+            </div>
+            {assetDuplicate.loading && (
+              <div className="asset-reference-summary">Saving open documents and preparing a revision-locked copy...</div>
+            )}
+            {assetDuplicate.error && (
+              <div className="asset-reference-summary asset-rename-error">{assetDuplicate.error}</div>
+            )}
+            {assetDuplicate.plan && (
+              <div className="asset-rename-plan">
+                <div className="asset-reference-summary">
+                  {(assetDuplicate.plan.copiedBytes / 1024).toFixed(1)} KiB asset · new GUID · {' '}
+                  {assetDuplicate.plan.manualReferences.length} manual checks
+                </div>
+                <div className="asset-rename-section">
+                  <strong>Copy transaction</strong>
+                  <span>
+                    Source bytes, importer metadata and Sprite Import settings are staged before no-overwrite installation.
+                    Existing inbound references remain on the original asset.
+                  </span>
+                  <div className="asset-rename-files">
+                    <code>{assetDuplicate.plan.destinationPath}</code>
+                    <code>{assetDuplicate.plan.destinationPath}.meta (new GUID)</code>
+                  </div>
+                </div>
+                {assetDuplicate.plan.manualReferences.length > 0 && (
+                  <div className="asset-rename-section asset-rename-manual">
+                    <strong>Relative script imports need review</strong>
+                    <span>Cross-directory script copies are not rewritten without a TypeScript language service.</span>
+                    <div className="asset-reference-list">
+                      {assetDuplicate.plan.manualReferences.map((reference, index) => (
+                        <button
+                          type="button"
+                          className="asset-reference-row"
+                          key={`${reference.sourcePath}:${reference.location}:${index}`}
+                          onClick={() => pingProjectAsset(reference.sourcePath)}
+                        >
+                          <div>
+                            <strong>{reference.sourcePath}</strong>
+                            <span>{reference.location}</span>
+                          </div>
+                          <code>{reference.snippet}</code>
+                        </button>
+                      ))}
+                    </div>
+                    <label className="asset-rename-confirm">
+                      <input
+                        type="checkbox"
+                        checked={assetDuplicate.manualConfirmed}
+                        onChange={(event) => setAssetDuplicate((current) => current && ({
+                          ...current,
+                          manualConfirmed: event.target.checked,
+                        }))}
+                      />
+                      I reviewed these imports and will repair the duplicate manually.
+                    </label>
+                  </div>
+                )}
+              </div>
+            )}
+            <footer className="asset-rename-actions">
+              <button type="button" disabled={assetDuplicate.applying} onClick={closeAssetDuplicate}>Cancel</button>
+              {!assetDuplicate.plan ? (
+                <button
+                  type="button"
+                  className="primary"
+                  disabled={assetDuplicate.loading || assetDuplicate.applying}
+                  onClick={() => void previewAssetDuplicate()}
+                >
+                  {assetDuplicate.loading ? 'Preparing...' : 'Save All & Preview'}
+                </button>
+              ) : (
+                <button
+                  type="button"
+                  className="primary"
+                  disabled={
+                    assetDuplicate.applying
+                    || (assetDuplicate.plan.manualReferences.length > 0 && !assetDuplicate.manualConfirmed)
+                  }
+                  onClick={() => void commitAssetDuplicate()}
+                >
+                  {assetDuplicate.applying ? 'Duplicating...' : 'Commit Duplicate'}
                 </button>
               )}
             </footer>
