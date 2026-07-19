@@ -11,6 +11,7 @@ import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import {
   BUILD_CACHE_REPORT_PREFIX,
+  BUILD_PATCH_REPORT_PREFIX,
   PATCH_MANIFEST_FILE,
   applyPcPatchPackage,
   buildPcPackage,
@@ -19,6 +20,7 @@ import {
   verifyPcBuildDirectory,
   verifyPcPatchDirectory,
   type BuildCacheStats,
+  type BuildPatchStats,
 } from './pcPackage.js';
 
 const cliPackage = JSON.parse(
@@ -118,6 +120,7 @@ Build options:
   --skip-verify               Skip packaged player scene validation
   --cancel-file <file>        Cooperatively cancel before atomic publish (editor use)
   --sign-key <pem>            Sign the artifact manifest with an external Ed25519 PKCS#8 key
+  --patch-root <dir>          Store signed previous-to-current patches here
   --clean                     Replace an existing output directory
 
 Verify options:
@@ -324,6 +327,7 @@ interface BuildArguments {
   skipVerify: boolean;
   cancelFile?: string;
   signingPrivateKeyPath?: string;
+  patchOutputRoot?: string;
   clean: boolean;
 }
 
@@ -343,6 +347,7 @@ function parseBuildArguments(values: string[]): BuildArguments {
   let skipVerify = false;
   let cancelFile: string | undefined;
   let signingPrivateKeyPath: string | undefined;
+  let patchOutputRoot: string | undefined;
   let clean = false;
   for (let index = 0; index < args.length;) {
     const value = args[index];
@@ -363,6 +368,8 @@ function parseBuildArguments(values: string[]): BuildArguments {
       cancelFile = takeOption(args, index, '--cancel-file');
     } else if (value === '--sign-key') {
       signingPrivateKeyPath = takeOption(args, index, '--sign-key');
+    } else if (value === '--patch-root') {
+      patchOutputRoot = takeOption(args, index, '--patch-root');
     } else if (value === '--clean') {
       clean = true;
       args.splice(index, 1);
@@ -382,6 +389,7 @@ function parseBuildArguments(values: string[]): BuildArguments {
     skipVerify,
     cancelFile: cancelFile ? resolve(cancelFile) : undefined,
     signingPrivateKeyPath: signingPrivateKeyPath ? resolve(signingPrivateKeyPath) : undefined,
+    patchOutputRoot: patchOutputRoot ? resolve(patchOutputRoot) : undefined,
     clean,
   };
 }
@@ -440,6 +448,15 @@ function buildProject(values: string[]) {
   const signingPrivateKeyPath = args.signingPrivateKeyPath
     ?? (process.env.MENGINE_SIGNING_KEY ? resolve(process.env.MENGINE_SIGNING_KEY) : undefined);
   let buildCacheStats: BuildCacheStats | null = null;
+  let buildPatchStats: BuildPatchStats | null = null;
+  const patchOutputRoot = signingPrivateKeyPath
+    ? (args.patchOutputRoot ?? join(
+        args.projectDir,
+        '.mengine',
+        'build-patches',
+        `${platform}-${process.arch}-${args.profile}`,
+      ))
+    : undefined;
   const manifest = buildPcPackage({
     projectDir: args.projectDir,
     outputDir,
@@ -449,8 +466,10 @@ function buildProject(values: string[]) {
     profile: args.profile,
     platform,
     signingPrivateKeyPath,
+    patchOutputRoot,
     isCancelled,
     onBuildCacheStats: (stats) => { buildCacheStats = stats; },
+    onBuildPatchStats: (stats) => { buildPatchStats = stats; },
     verifyStagedBuild: args.skipVerify ? undefined : (stageDir, stagedManifest) => {
       assertNotCancelled('staged player validation');
       const player = join(stageDir, stagedManifest.executable);
@@ -471,6 +490,9 @@ function buildProject(values: string[]) {
   if (verificationSummary) console.log(verificationSummary);
   if (buildCacheStats) {
     console.log(`${BUILD_CACHE_REPORT_PREFIX}${JSON.stringify(buildCacheStats)}`);
+  }
+  if (buildPatchStats) {
+    console.log(`${BUILD_PATCH_REPORT_PREFIX}${JSON.stringify(buildPatchStats)}`);
   }
   console.log(`Built ${manifest.project.name} → ${outputDir}`);
   console.log(`Player: ${join(outputDir, manifest.executable)}`);

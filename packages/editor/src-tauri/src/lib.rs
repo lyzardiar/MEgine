@@ -175,6 +175,7 @@ struct BuildPlayerResult {
     largest_files: Vec<BuildContentFileResult>,
     comparison: Option<BuildComparisonResult>,
     build_cache: Option<BuildCacheResult>,
+    incremental_patch: Option<BuildPatchResult>,
     stage_timings: Vec<BuildStageTimingResult>,
     total_duration_ms: u64,
     toolchain: String,
@@ -250,23 +251,52 @@ struct BuildCacheResult {
     failures: usize,
 }
 
-const BUILD_CACHE_REPORT_PREFIX: &str = "MENGINE_BUILD_CACHE ";
+#[derive(Clone, Debug, serde::Deserialize, serde::Serialize, PartialEq, Eq)]
+#[serde(rename_all = "camelCase")]
+struct BuildPatchResult {
+    generated: bool,
+    output_dir: Option<String>,
+    manifest_path: Option<String>,
+    from_content_hash: Option<String>,
+    to_content_hash: Option<String>,
+    changed_files: Option<usize>,
+    removed_files: Option<usize>,
+    payload_bytes: Option<u64>,
+    reused_bytes: Option<u64>,
+    reason: Option<String>,
+    error: Option<String>,
+}
 
-fn extract_build_cache_report(stdout: &[u8]) -> (Option<BuildCacheResult>, String) {
+const BUILD_CACHE_REPORT_PREFIX: &str = "MENGINE_BUILD_CACHE ";
+const BUILD_PATCH_REPORT_PREFIX: &str = "MENGINE_BUILD_PATCH ";
+
+fn extract_build_reports(
+    stdout: &[u8],
+) -> (Option<BuildCacheResult>, Option<BuildPatchResult>, String) {
     let stdout = String::from_utf8_lossy(stdout);
-    let mut report = None;
+    let mut cache_report = None;
+    let mut patch_report = None;
     let mut log_lines = Vec::new();
     for line in stdout.lines() {
-        let Some(json) = line.strip_prefix(BUILD_CACHE_REPORT_PREFIX) else {
+        if let Some(json) = line.strip_prefix(BUILD_CACHE_REPORT_PREFIX) {
+            match serde_json::from_str::<BuildCacheResult>(json) {
+                Ok(parsed) => cache_report = Some(parsed),
+                Err(_) => log_lines.push(line),
+            }
+        } else if let Some(json) = line.strip_prefix(BUILD_PATCH_REPORT_PREFIX) {
+            match serde_json::from_str::<BuildPatchResult>(json) {
+                Ok(parsed) => patch_report = Some(parsed),
+                Err(_) => log_lines.push(line),
+            }
+        } else {
             log_lines.push(line);
-            continue;
-        };
-        match serde_json::from_str::<BuildCacheResult>(json) {
-            Ok(parsed) => report = Some(parsed),
-            Err(_) => log_lines.push(line),
         }
     }
-    (report, log_lines.join("\n").trim().to_owned())
+    (
+        cache_report,
+        patch_report,
+        log_lines.join("\n").trim().to_owned(),
+    )
 }
 
 #[derive(Clone, Debug, serde::Serialize)]
@@ -1563,7 +1593,7 @@ fn run_player_build_controlled(
         report_started,
     );
     let total_duration_ms = duration_ms(total_started.elapsed());
-    let (build_cache, mut build_log) = extract_build_cache_report(&output.stdout);
+    let (build_cache, incremental_patch, mut build_log) = extract_build_reports(&output.stdout);
     let history_entry = match archive_build_history(
         &project_root,
         &build_manifest,
@@ -1614,6 +1644,7 @@ fn run_player_build_controlled(
         largest_files,
         comparison,
         build_cache,
+        incremental_patch,
         stage_timings,
         total_duration_ms,
         toolchain,
@@ -3248,9 +3279,9 @@ mod tests {
     }
 
     #[test]
-    fn build_cache_report_is_parsed_without_polluting_user_log() {
-        let output = b"validated package\nMENGINE_BUILD_CACHE {\"enabled\":true,\"hits\":3,\"misses\":1,\"reusedBytes\":120,\"storedBytes\":40,\"recoveredEntries\":1,\"failures\":0}\nBuilt Game\n";
-        let (report, log) = extract_build_cache_report(output);
+    fn build_reports_are_parsed_without_polluting_user_log() {
+        let output = b"validated package\nMENGINE_BUILD_CACHE {\"enabled\":true,\"hits\":3,\"misses\":1,\"reusedBytes\":120,\"storedBytes\":40,\"recoveredEntries\":1,\"failures\":0}\nMENGINE_BUILD_PATCH {\"generated\":true,\"outputDir\":\"Patches/one\",\"payloadBytes\":40,\"reusedBytes\":120}\nBuilt Game\n";
+        let (report, patch, log) = extract_build_reports(output);
         assert_eq!(
             report,
             Some(BuildCacheResult {
@@ -3263,11 +3294,28 @@ mod tests {
                 failures: 0,
             })
         );
+        assert_eq!(
+            patch,
+            Some(BuildPatchResult {
+                generated: true,
+                output_dir: Some("Patches/one".into()),
+                manifest_path: None,
+                from_content_hash: None,
+                to_content_hash: None,
+                changed_files: None,
+                removed_files: None,
+                payload_bytes: Some(40),
+                reused_bytes: Some(120),
+                reason: None,
+                error: None,
+            })
+        );
         assert_eq!(log, "validated package\nBuilt Game");
 
-        let (report, log) =
-            extract_build_cache_report(b"MENGINE_BUILD_CACHE {broken}\nlegacy sdk output\n");
+        let (report, patch, log) =
+            extract_build_reports(b"MENGINE_BUILD_CACHE {broken}\nlegacy sdk output\n");
         assert!(report.is_none());
+        assert!(patch.is_none());
         assert!(log.contains("{broken}"));
         assert!(log.contains("legacy sdk output"));
     }

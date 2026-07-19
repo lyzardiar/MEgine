@@ -1506,3 +1506,13 @@ Camera Shot 的基础闭环已经形成，但 Timeline 仍不完备：编辑器 
 第一遍自省从失败回滚边界反查，发现最初的输出检查只拒绝符号链接，`--clean` 仍可能把同名普通文件备份并替换为目录；现把 Player Build、Patch Build 和 Patch Apply 统一到“已存在输出必须是普通非符号链接目录”的契约，并回归固定原文件保持不变。第二遍自省从制品身份反查，发现只绑定 payload `contentHash` 会把“文件完全相同但 Engine Version、Manifest 元数据或签名不同”的两个构建误认为同一基线；现增加完整已签名 Manifest 的 `fromArtifactHash/toArtifactHash`，同内容不同 Manifest 的基线会明确拒绝。定向回归覆盖 changed/added/removed、未变化 Runtime 不进 payload、篡改拒绝、错误内容基线、错误制品基线、CLI 验证/应用、新目录应用与原地原子升级；全量验证为 CLI 53/53、编辑器 350/350、Rust workspace 检查与 5 个前端工作区包生产构建通过。
 
 这仍不是成熟 CDN/商店分发系统。当前补丁以目录形式携带完整变更文件，尚无固定大小或内容定义分块、块级去重、压缩包、断点续传、下载优先级、差分二进制算法、补丁链压缩/合并、密钥轮换与撤销、渠道/区域发布环、回滚索引、带宽预算和编辑器可视化发布工作流；同一补丁要求 Base、Target 与 Patch 使用同一信任密钥。下一阶段应先把该安全补丁内核接入 Build Settings/Build History，允许从保留制品生成并展示下载/复用比例，再建设内容块仓库与版本图，最后接平台安装器、代码签名和 macOS 公证。
+
+## 128. 2026-07-20 编辑器连续版本补丁发布
+
+- 签名 Player 构建现在默认把补丁目录设为项目 `.mengine/build-patches/<platform>-<arch>-<profile>`；当目标输出中存在同平台、同架构、同配置且由当前密钥签名的上一版时，CLI 在替换 Player 前生成并完整验证 previous → current 补丁暂存。补丁目录使用 Base/Target 完整制品哈希各 16 位组成稳定名称；字节完全相同且完整 Manifest 身份也相同的重建不会产生空补丁。
+- 双制品发布顺序是“验证 Player 暂存和 Patch 暂存 → 原子发布 Player → 原子发布 Patch”。Player 发布失败会清理仍未公开的补丁暂存；Patch 发布失败不会回滚已经验证并成功发布的完整 Player，而是通过 `MENGINE_BUILD_PATCH` 机器报告返回 `failed + error`。首次启用签名、上一版未签名/密钥不匹配、上一版损坏等迁移场景因此不会阻断完整包发布，但不会伪装成已有可用增量包。
+- Tauri Host 同时解析 Build Cache 与 Build Patch 机器报告，并从用户日志中移除协议行；`BuildPlayerResult.incrementalPatch` 向前端传递输出目录、清单、Base/Target 内容哈希、变化/删除文件数、payload/reused 字节或 identical/unavailable/failed 原因。Build Settings 的 Player 配置明确说明自动补丁条件；结果区显示实际下载体积和复用量，失败以警告呈现并把详细路径/错误放入提示，Console 同步记录补丁成功或失败。
+
+第一遍自省从 Player 与 Patch 的发布顺序反查，发现“先发布补丁、再替换 Player”会在 Player 最终重命名失败时留下指向未发布目标的孤儿补丁；现抽出只写临时目录的补丁阶段，确保 Player 成功后才对外发布补丁，取消或 Player 失败会清理暂存。第二遍自省覆盖签名迁移边界：上一版 unsigned、当前版首次 signed 时，补丁验证必然拒绝旧 Base，但完整 signed Player 必须继续发布；新增回归固定 `generated=false/reason=failed`、无残留 patch-stage 且新 Player 仍通过可信公钥验证。CLI 定向回归现为 55/55，Host 报告解析、Editor TypeScript/Vite 构建通过。
+
+编辑器补丁工作流仍有明显缺口：Build History 目前只保存历史 Manifest，而不是长期保留每版完整 payload 或内容块，所以只能自动生成“当前输出的相邻版本”补丁，不能任意选择两个旧 History 重新生成；也没有补丁列表、删除/保留策略、打开目录、独立验证按钮、渠道发布和下载模拟。下一步应把完整文件内容迁移到按 SHA-256 寻址的共享块仓库，让历史记录持有块引用和引用计数；随后 Build History 才能安全生成任意版本边、清理无引用块，并在编辑器中展示补丁版本图与累计下载成本。

@@ -28,6 +28,7 @@ export const BUILD_MANIFEST_FILE = 'mengine-build.json';
 export const PATCH_MANIFEST_FILE = 'mengine-patch.json';
 export const PATCH_PAYLOAD_DIR = 'payload';
 export const BUILD_CACHE_REPORT_PREFIX = 'MENGINE_BUILD_CACHE ';
+export const BUILD_PATCH_REPORT_PREFIX = 'MENGINE_BUILD_PATCH ';
 const MAX_TIMELINE_PARTICLE_TIME = 300;
 const MAX_SURFACE_SHADER_PARAMETERS = 16;
 const MAX_SURFACE_SHADER_KEYWORDS = 16;
@@ -80,6 +81,10 @@ export interface PcPackageOptions {
   onBuildCacheStats?: (stats: BuildCacheStats) => void;
   /** Optional project-external Ed25519 PKCS#8 PEM used to sign the deterministic artifact identity. */
   signingPrivateKeyPath?: string;
+  /** Optional directory where a signed previous -> current patch is published after the Player. */
+  patchOutputRoot?: string;
+  /** Operational patch diagnostics kept outside the reproducible published manifest. */
+  onBuildPatchStats?: (stats: BuildPatchStats) => void;
 }
 
 function assertBuildNotCancelled(isCancelled: (() => boolean) | undefined, stage: string): void {
@@ -235,6 +240,20 @@ export interface BuildCacheStats {
   storedBytes: number;
   recoveredEntries: number;
   failures: number;
+}
+
+export interface BuildPatchStats {
+  generated: boolean;
+  outputDir?: string;
+  manifestPath?: string;
+  fromContentHash?: string;
+  toContentHash?: string;
+  changedFiles?: number;
+  removedFiles?: number;
+  payloadBytes?: number;
+  reusedBytes?: number;
+  reason?: 'identical' | 'unavailable' | 'failed';
+  error?: string;
 }
 
 export interface DirectoryPublishOperations {
@@ -3544,20 +3563,12 @@ function copyDeclaredFile(sourceRoot: string, destinationRoot: string, path: str
   copyFileSync(source, destination);
 }
 
-/** Creates a deterministic, signed directory patch containing only added and changed bytes. */
-export function createPcPatchPackage(options: PcPatchPackageOptions): PcPatchManifest {
-  const baseDir = resolve(options.baseDir);
-  const targetDir = resolve(options.targetDir);
-  const outputDir = resolve(options.outputDir);
-  assertSeparatedDirectory(outputDir, [baseDir, targetDir], 'patch output');
-  assertReplaceableDirectory(outputDir, 'patch output');
-  if (existsSync(outputDir) && !options.clean) {
-    throw new Error(`patch output already exists (pass --clean to replace it): ${outputDir}`);
-  }
-  const signingPrivateKey = readArtifactSigningPrivateKey(
-    [baseDir, targetDir, outputDir],
-    options.signingPrivateKeyPath,
-  );
+function writePcPatchStage(
+  baseDir: string,
+  targetDir: string,
+  stageDir: string,
+  signingPrivateKey: KeyObject,
+): PcPatchManifest {
   const publicKey = ed25519PublicKey(signingPrivateKey);
   const baseManifest = verifyPcBuildDirectory(baseDir, publicKey);
   const targetManifest = verifyPcBuildDirectory(targetDir, publicKey);
@@ -3581,23 +3592,40 @@ export function createPcPatchPackage(options: PcPatchPackageOptions): PcPatchMan
     targetManifest,
   };
   manifest.signature = signPcPatchManifest(manifest, signingPrivateKey);
+  rmSync(stageDir, { recursive: true, force: true });
+  mkdirSync(join(stageDir, PATCH_PAYLOAD_DIR), { recursive: true });
+  for (const file of manifest.files) {
+    copyDeclaredFile(targetDir, join(stageDir, PATCH_PAYLOAD_DIR), file.path);
+  }
+  writeFileSync(
+    join(stageDir, PATCH_MANIFEST_FILE),
+    `${JSON.stringify(manifest, null, 2)}\n`,
+    'utf8',
+  );
+  verifyPcPatchDirectory(stageDir, baseDir, publicKey);
+  return manifest;
+}
 
+/** Creates a deterministic, signed directory patch containing only added and changed bytes. */
+export function createPcPatchPackage(options: PcPatchPackageOptions): PcPatchManifest {
+  const baseDir = resolve(options.baseDir);
+  const targetDir = resolve(options.targetDir);
+  const outputDir = resolve(options.outputDir);
+  assertSeparatedDirectory(outputDir, [baseDir, targetDir], 'patch output');
+  assertReplaceableDirectory(outputDir, 'patch output');
+  if (existsSync(outputDir) && !options.clean) {
+    throw new Error(`patch output already exists (pass --clean to replace it): ${outputDir}`);
+  }
+  const signingPrivateKey = readArtifactSigningPrivateKey(
+    [baseDir, targetDir, outputDir],
+    options.signingPrivateKeyPath,
+  );
   const stageDir = join(
     dirname(outputDir),
     `.${basename(outputDir)}.mengine-patch-stage-${process.pid}-${randomUUID()}`,
   );
-  rmSync(stageDir, { recursive: true, force: true });
-  mkdirSync(join(stageDir, PATCH_PAYLOAD_DIR), { recursive: true });
   try {
-    for (const file of manifest.files) {
-      copyDeclaredFile(targetDir, join(stageDir, PATCH_PAYLOAD_DIR), file.path);
-    }
-    writeFileSync(
-      join(stageDir, PATCH_MANIFEST_FILE),
-      `${JSON.stringify(manifest, null, 2)}\n`,
-      'utf8',
-    );
-    verifyPcPatchDirectory(stageDir, baseDir, publicKey);
+    const manifest = writePcPatchStage(baseDir, targetDir, stageDir, signingPrivateKey);
     publishStagedBuild(stageDir, outputDir);
     return manifest;
   } catch (error) {
@@ -3731,8 +3759,19 @@ export function buildPcPackage(options: PcPackageOptions): PcBuildManifest {
     throw new Error(`build output cannot contain the project directory: ${outputDir}`);
   }
   assertReplaceableDirectory(outputDir, 'build output');
+  const previousBuildAvailable = existsSync(outputDir);
   if (existsSync(outputDir) && !options.clean) {
     throw new Error(`build output already exists (pass --clean to replace it): ${outputDir}`);
+  }
+  const patchOutputRoot = options.patchOutputRoot ? resolve(options.patchOutputRoot) : undefined;
+  if (patchOutputRoot) {
+    if (isPathInside(outputDir, patchOutputRoot) || isPathInside(patchOutputRoot, outputDir)) {
+      throw new Error('patch output root must not overlap the Player build output');
+    }
+    if (roots.some((root) => isPathInside(root, patchOutputRoot))) {
+      throw new Error('patch output root must not be stored under packaged project content');
+    }
+    assertReplaceableDirectory(patchOutputRoot, 'patch output root');
   }
   validateProjectSettings(projectDir);
   const dependencyScan = scanBuildAssetDependencies(projectDir, project, options.isCancelled);
@@ -3757,6 +3796,13 @@ export function buildPcPackage(options: PcPackageOptions): PcBuildManifest {
   );
   rmSync(stageDir, { recursive: true, force: true });
   mkdirSync(stageDir, { recursive: true });
+
+  let pendingPatch: {
+    stageDir: string;
+    outputDir: string;
+    manifest: PcPatchManifest;
+  } | undefined;
+  let patchStats: BuildPatchStats | undefined;
 
   try {
     checkCancelled('staging');
@@ -3870,16 +3916,77 @@ export function buildPcPackage(options: PcPackageOptions): PcBuildManifest {
 
     checkCancelled('staged player validation');
     options.verifyStagedBuild?.(stageDir, manifest);
+    if (patchOutputRoot && signingPrivateKey && previousBuildAvailable) {
+      checkCancelled('incremental patch');
+      const patchStageDir = join(
+        patchOutputRoot,
+        `.mengine-patch-stage-${process.pid}-${randomUUID()}`,
+      );
+      try {
+        const patch = writePcPatchStage(outputDir, stageDir, patchStageDir, signingPrivateKey);
+        if (patch.fromArtifactHash === patch.toArtifactHash) {
+          rmSync(patchStageDir, { recursive: true, force: true });
+          patchStats = { generated: false, reason: 'identical' };
+        } else {
+          const patchOutputDir = join(
+            patchOutputRoot,
+            `${patch.fromArtifactHash.slice(0, 16)}-${patch.toArtifactHash.slice(0, 16)}`,
+          );
+          assertReplaceableDirectory(patchOutputDir, 'patch output');
+          pendingPatch = { stageDir: patchStageDir, outputDir: patchOutputDir, manifest: patch };
+        }
+      } catch (error) {
+        rmSync(patchStageDir, { recursive: true, force: true });
+        patchStats = {
+          generated: false,
+          reason: 'failed',
+          error: error instanceof Error ? error.message : String(error),
+        };
+      }
+    } else if (patchOutputRoot) {
+      patchStats = { generated: false, reason: 'unavailable' };
+    }
     checkCancelled('publish');
     publishStagedBuild(stageDir, outputDir);
+    if (pendingPatch) {
+      try {
+        publishStagedBuild(pendingPatch.stageDir, pendingPatch.outputDir);
+        patchStats = {
+          generated: true,
+          outputDir: pendingPatch.outputDir,
+          manifestPath: join(pendingPatch.outputDir, PATCH_MANIFEST_FILE),
+          fromContentHash: pendingPatch.manifest.fromContentHash,
+          toContentHash: pendingPatch.manifest.toContentHash,
+          changedFiles: pendingPatch.manifest.files.length,
+          removedFiles: pendingPatch.manifest.removedFiles.length,
+          payloadBytes: pendingPatch.manifest.payloadBytes,
+          reusedBytes: pendingPatch.manifest.reusedBytes,
+        };
+      } catch (error) {
+        rmSync(pendingPatch.stageDir, { recursive: true, force: true });
+        patchStats = {
+          generated: false,
+          reason: 'failed',
+          error: error instanceof Error ? error.message : String(error),
+        };
+      }
+    }
     try {
       options.onBuildCacheStats?.({ ...buildCache.stats });
     } catch {
       // Diagnostics must never turn a successfully published build into a failure.
     }
+    if (patchStats) {
+      try {
+        options.onBuildPatchStats?.({ ...patchStats });
+      } catch {
+        // Diagnostics must never turn a successfully published build into a failure.
+      }
+    }
     return manifest;
   } catch (error) {
     rmSync(stageDir, { recursive: true, force: true });
+    if (pendingPatch) rmSync(pendingPatch.stageDir, { recursive: true, force: true });
     throw error;
   }
 }

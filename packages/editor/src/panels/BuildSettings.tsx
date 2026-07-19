@@ -508,8 +508,21 @@ export function BuildSettings(props: {
       const result = await buildPcPlayer(profile, clean);
       setLastBuild(result);
       void refreshBuildHistory(false);
-      setMessage(`Build completed: ${result.fileCount} packaged files · ${result.contentHash.slice(0, 12)}.`);
+      const patchMessage = result.incrementalPatch?.generated
+        ? ` Incremental patch: ${byteSize(result.incrementalPatch.payloadBytes ?? 0)}.`
+        : '';
+      setMessage(`Build completed: ${result.fileCount} packaged files · ${result.contentHash.slice(0, 12)}.${patchMessage}`);
       props.onLog(`Built ${result.profile} player -> ${result.outputDir}`);
+      if (result.incrementalPatch?.generated) {
+        props.onLog(
+          `Built signed incremental patch -> ${result.incrementalPatch.outputDir}`,
+        );
+      } else if (result.incrementalPatch?.reason === 'failed') {
+        props.onLog(
+          `Player published, but incremental patch generation failed: ${result.incrementalPatch.error ?? 'unknown error'}`,
+          'warn',
+        );
+      }
       if (runAfterBuild) {
         setBuilding(false);
         await launch(result);
@@ -719,6 +732,9 @@ export function BuildSettings(props: {
         </label>
         <label>Project <span className="build-readonly" title={project?.projectRoot}>{project?.projectName ?? 'Browser preview'}</span></label>
         <label>Output <span className="build-readonly">{project ? `${project.projectRoot}\\Builds` : 'Desktop editor only'}</span></label>
+        <div className="build-content-note">
+          When MENGINE_SIGNING_KEY is configured, replacing a compatible signed build also publishes a verified incremental patch under .mengine/build-patches.
+        </div>
       </section>
 
       {!desktop && (
@@ -833,6 +849,20 @@ export function BuildSettings(props: {
               {lastBuild.buildCache.failures > 0
                 ? ` · ${lastBuild.buildCache.failures} cache I/O fallbacks`
                 : ''}
+            </span>
+          )}
+          {lastBuild.incrementalPatch && (
+            <span
+              className={lastBuild.incrementalPatch.reason === 'failed' ? 'build-warning' : undefined}
+              title={lastBuild.incrementalPatch.manifestPath ?? lastBuild.incrementalPatch.error ?? undefined}
+            >
+              Incremental patch · {lastBuild.incrementalPatch.generated
+                ? `${lastBuild.incrementalPatch.changedFiles ?? 0} changed · ${lastBuild.incrementalPatch.removedFiles ?? 0} removed · ${byteSize(lastBuild.incrementalPatch.payloadBytes ?? 0)} payload · ${byteSize(lastBuild.incrementalPatch.reusedBytes ?? 0)} reused`
+                : lastBuild.incrementalPatch.reason === 'identical'
+                  ? 'not emitted (artifact is identical)'
+                  : lastBuild.incrementalPatch.reason === 'unavailable'
+                    ? 'not emitted (no compatible signed previous build)'
+                    : `failed (${lastBuild.incrementalPatch.error ?? 'unknown error'})`}
             </span>
           )}
           <span>SHA-256 {lastBuild.contentHash}</span>

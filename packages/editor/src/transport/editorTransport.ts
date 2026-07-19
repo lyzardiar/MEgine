@@ -96,6 +96,20 @@ export type BuildCacheResult = {
   failures: number;
 };
 
+export type BuildPatchResult = {
+  generated: boolean;
+  outputDir: string | null;
+  manifestPath: string | null;
+  fromContentHash: string | null;
+  toContentHash: string | null;
+  changedFiles: number | null;
+  removedFiles: number | null;
+  payloadBytes: number | null;
+  reusedBytes: number | null;
+  reason: 'identical' | 'unavailable' | 'failed' | null;
+  error: string | null;
+};
+
 export type BuildProgressEvent = {
   buildId: number;
   stage: string;
@@ -173,6 +187,7 @@ export type BuildPlayerResult = {
   largestFiles: BuildContentFileResult[];
   comparison: BuildComparisonResult | null;
   buildCache: BuildCacheResult | null;
+  incrementalPatch: BuildPatchResult | null;
   stageTimings: BuildStageTimingResult[];
   totalDurationMs: number;
   toolchain: 'bundled-sdk' | 'source-checkout';

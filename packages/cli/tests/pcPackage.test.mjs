@@ -297,6 +297,106 @@ test('signed incremental patches carry only changed bytes and apply through veri
   }
 });
 
+test('signed Player replacement publishes a consecutive patch report without losing atomic build output', () => {
+  const paths = fixture('automatic-patch');
+  try {
+    const { privateKey, publicKey } = generateKeyPairSync('ed25519');
+    const privateKeyPath = join(paths.root, 'automatic-private.pem');
+    const publicKeyValue = publicKey.export({ format: 'pem', type: 'spki' });
+    writeFileSync(privateKeyPath, privateKey.export({ format: 'pem', type: 'pkcs8' }));
+    const baseReference = join(paths.root, 'BaseReference');
+    const patchRoot = join(paths.root, 'Patches');
+    const options = {
+      projectDir: paths.project,
+      runtimePath: paths.runtime,
+      engineVersion: 'test-engine',
+      platform: 'windows',
+      architecture: 'x64',
+      signingPrivateKeyPath: privateKeyPath,
+    };
+    const base = buildPcPackage({ ...options, outputDir: paths.output });
+    buildPcPackage({ ...options, outputDir: baseReference });
+    writeFileSync(join(paths.project, 'Assets', 'Scripts', 'main.js'), 'function onTick() { return 3; }');
+    let report;
+    const target = buildPcPackage({
+      ...options,
+      outputDir: paths.output,
+      clean: true,
+      patchOutputRoot: patchRoot,
+      onBuildPatchStats(value) { report = value; },
+    });
+    assert.equal(report?.generated, true);
+    assert.equal(report?.fromContentHash, base.contentHash);
+    assert.equal(report?.toContentHash, target.contentHash);
+    assert.equal(report?.changedFiles, 1);
+    assert.ok(report?.payloadBytes > 0);
+    assert.ok(report?.reusedBytes > report?.payloadBytes);
+    assert.equal(existsSync(report.outputDir), true);
+    assert.equal(
+      verifyPcPatchDirectory(report.outputDir, baseReference, publicKeyValue).toContentHash,
+      target.contentHash,
+    );
+    assert.equal(verifyPcBuildDirectory(paths.output, publicKeyValue).contentHash, target.contentHash);
+
+    let identicalReport;
+    buildPcPackage({
+      ...options,
+      outputDir: paths.output,
+      clean: true,
+      patchOutputRoot: patchRoot,
+      onBuildPatchStats(value) { identicalReport = value; },
+    });
+    assert.deepEqual(identicalReport, { generated: false, reason: 'identical' });
+  } finally {
+    rmSync(paths.root, { recursive: true, force: true });
+  }
+});
+
+test('first signed Player after an unsigned build reports patch unavailability without blocking publication', () => {
+  const paths = fixture('patch-signing-migration');
+  try {
+    const { privateKey, publicKey } = generateKeyPairSync('ed25519');
+    const privateKeyPath = join(paths.root, 'migration-private.pem');
+    const publicKeyValue = publicKey.export({ format: 'pem', type: 'spki' });
+    writeFileSync(privateKeyPath, privateKey.export({ format: 'pem', type: 'pkcs8' }));
+    buildPcPackage({
+      projectDir: paths.project,
+      outputDir: paths.output,
+      runtimePath: paths.runtime,
+      engineVersion: 'unsigned-engine',
+      platform: 'windows',
+      architecture: 'x64',
+    });
+    writeFileSync(join(paths.project, 'Assets', 'Scripts', 'main.js'), 'function onTick() { return 4; }');
+    let report;
+    const signed = buildPcPackage({
+      projectDir: paths.project,
+      outputDir: paths.output,
+      runtimePath: paths.runtime,
+      engineVersion: 'signed-engine',
+      platform: 'windows',
+      architecture: 'x64',
+      signingPrivateKeyPath: privateKeyPath,
+      patchOutputRoot: join(paths.root, 'Patches'),
+      clean: true,
+      onBuildPatchStats(value) { report = value; },
+    });
+    assert.equal(report?.generated, false);
+    assert.equal(report?.reason, 'failed');
+    assert.match(report?.error ?? '', /build manifest is not signed/);
+    assert.equal(verifyPcBuildDirectory(paths.output, publicKeyValue).contentHash, signed.contentHash);
+    const patchRoot = join(paths.root, 'Patches');
+    assert.deepEqual(
+      existsSync(patchRoot)
+        ? readdirSync(patchRoot).filter((name) => name.includes('patch-stage'))
+        : [],
+      [],
+    );
+  } finally {
+    rmSync(paths.root, { recursive: true, force: true });
+  }
+});
+
 test('buildPcPackage creates a directly launchable, hashed project bundle', () => {
   const paths = fixture('success');
   try {
