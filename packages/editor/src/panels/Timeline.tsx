@@ -145,7 +145,11 @@ import {
   type TimelineKeyRef,
   type TimelineKeyTransformResult,
 } from '../timelineKeyEditing.ts';
-import { revealTimelineTimeScroll } from '../timelineViewport.ts';
+import {
+  advanceTimelineEdgeAutoScroll,
+  revealTimelineTimeScroll,
+  timelinePointerTime,
+} from '../timelineViewport.ts';
 import { registerMenuItem } from '../editorWindow';
 import {
   listProjectFiles,
@@ -180,8 +184,6 @@ type TimelineKeyDrag = {
   activeTime: number;
   selection: TimelineKeyRef[];
   delta: number;
-  left: number;
-  width: number;
 };
 
 type TimelineEventDrag = {
@@ -190,8 +192,6 @@ type TimelineEventDrag = {
   index: number;
   authoredTime: number;
   time: number;
-  left: number;
-  width: number;
 };
 
 type TimelineDrag = TimelineKeyDrag | TimelineEventDrag;
@@ -1444,6 +1444,10 @@ export function Timeline(props: {
   const scrubPointer = useRef<number | null>(null);
   const workspaceRef = useRef<HTMLDivElement>(null);
   const dopeSheetLanesRef = useRef<HTMLDivElement>(null);
+  const dopeSheetContentRef = useRef<HTMLDivElement>(null);
+  const timelineAutoScrollFrame = useRef<number | null>(null);
+  const timelineAutoScrollPointerX = useRef<number | null>(null);
+  const timelineAutoScrollPreviousTime = useRef<number | null>(null);
   const propertyPickerRef = useRef<HTMLDivElement>(null);
   const propertyPopupRef = useRef<HTMLDivElement>(null);
   const propertySearchRef = useRef<HTMLInputElement>(null);
@@ -2767,9 +2771,19 @@ export function Timeline(props: {
     setPreviewTime(time + direction / Math.max(1, clip.frame_rate));
   };
 
+  const stopTimelineAutoScroll = () => {
+    if (timelineAutoScrollFrame.current != null) {
+      window.cancelAnimationFrame(timelineAutoScrollFrame.current);
+    }
+    timelineAutoScrollFrame.current = null;
+    timelineAutoScrollPointerX.current = null;
+    timelineAutoScrollPreviousTime.current = null;
+  };
+
   const cancelTimelineDrag = () => {
     const drag = timelineDragRef.current;
     if (!drag) return false;
+    stopTimelineAutoScroll();
     timelineDragRef.current = null;
     setTimelineDrag(null);
     const restoredTime = drag.kind === 'event' ? drag.authoredTime : drag.activeTime;
@@ -2918,11 +2932,10 @@ export function Timeline(props: {
     authoredTime: number,
   ) => {
     if (!clip) return;
-    const lane = event.currentTarget.parentElement;
-    if (!lane) return;
-    const rect = lane.getBoundingClientRect();
+    if (!dopeSheetContentRef.current) return;
     event.stopPropagation();
     setPlaying(false);
+    stopTimelineAutoScroll();
     if (kind === 'key') {
       const ref = { track, key: index };
       const command = event.ctrlKey || event.metaKey;
@@ -2950,8 +2963,6 @@ export function Timeline(props: {
         activeTime: authoredTime,
         selection,
         delta: 0,
-        left: rect.left,
-        width: Math.max(1, rect.width),
       };
       event.currentTarget.setPointerCapture(event.pointerId);
       timelineDragRef.current = drag;
@@ -2964,8 +2975,6 @@ export function Timeline(props: {
         index,
         authoredTime,
         time: authoredTime,
-        left: rect.left,
-        width: Math.max(1, rect.width),
       };
       event.currentTarget.setPointerCapture(event.pointerId);
       timelineDragRef.current = drag;
@@ -2981,20 +2990,27 @@ export function Timeline(props: {
     setTime(authoredTime);
   };
 
-  const moveTimelineDrag = (event: ReactPointerEvent<HTMLButtonElement>) => {
+  const updateTimelineDragAtPointer = (clientX: number) => {
     const drag = timelineDragRef.current;
-    if (!clip || !drag || drag.pointerId !== event.pointerId) return;
+    const sourceClip = clipRef.current;
+    const content = dopeSheetContentRef.current;
+    if (!sourceClip || !drag || !content || !Number.isFinite(clientX)) return;
+    const rect = content.getBoundingClientRect();
+    if (!(rect.width > 0)) return;
     const next = snapAnimationTime(
-      (event.clientX - drag.left) / drag.width * clip.duration,
-      clip.frame_rate,
-      clip.duration,
+      timelinePointerTime(clientX, rect.left, rect.width, sourceClip.duration),
+      sourceClip.frame_rate,
+      sourceClip.duration,
     );
-    const updated: TimelineDrag = drag.kind === 'event'
-      ? { ...drag, time: next }
-      : {
-          ...drag,
-          delta: clampTimelineKeyDelta(clip, drag.selection, next - drag.activeTime),
-        };
+    let updated: TimelineDrag;
+    if (drag.kind === 'event') {
+      if (next === drag.time) return;
+      updated = { ...drag, time: next };
+    } else {
+      const delta = clampTimelineKeyDelta(sourceClip, drag.selection, next - drag.activeTime);
+      if (delta === drag.delta) return;
+      updated = { ...drag, delta };
+    }
     timelineDragRef.current = updated;
     setTimelineDrag(updated);
     const previewTime = updated.kind === 'event'
@@ -3005,10 +3021,56 @@ export function Timeline(props: {
     setTime(previewTime);
   };
 
+  const continueTimelineAutoScroll = (now: number) => {
+    timelineAutoScrollFrame.current = null;
+    const lanes = dopeSheetLanesRef.current;
+    const pointerClientX = timelineAutoScrollPointerX.current;
+    if (!timelineDragRef.current || !lanes || pointerClientX == null) {
+      stopTimelineAutoScroll();
+      return;
+    }
+    const bounds = lanes.getBoundingClientRect();
+    const previous = timelineAutoScrollPreviousTime.current ?? now;
+    timelineAutoScrollPreviousTime.current = now;
+    const result = advanceTimelineEdgeAutoScroll(
+      lanes.scrollLeft,
+      lanes.clientWidth,
+      lanes.scrollWidth,
+      pointerClientX,
+      bounds.left,
+      now - previous,
+    );
+    if (Math.abs(result.scrollLeft - lanes.scrollLeft) > 0.01) {
+      lanes.scrollLeft = result.scrollLeft;
+      updateTimelineDragAtPointer(pointerClientX);
+    }
+    if (result.active) {
+      timelineAutoScrollFrame.current = window.requestAnimationFrame(continueTimelineAutoScroll);
+    } else {
+      timelineAutoScrollPointerX.current = null;
+      timelineAutoScrollPreviousTime.current = null;
+    }
+  };
+
+  const beginTimelineAutoScroll = (clientX: number) => {
+    timelineAutoScrollPointerX.current = clientX;
+    if (timelineAutoScrollFrame.current != null) return;
+    timelineAutoScrollPreviousTime.current = performance.now();
+    timelineAutoScrollFrame.current = window.requestAnimationFrame(continueTimelineAutoScroll);
+  };
+
+  const moveTimelineDrag = (event: ReactPointerEvent<HTMLButtonElement>) => {
+    const drag = timelineDragRef.current;
+    if (!drag || drag.pointerId !== event.pointerId) return;
+    updateTimelineDragAtPointer(event.clientX);
+    beginTimelineAutoScroll(event.clientX);
+  };
+
   const completeTimelineDrag = (pointerId: number, commit: boolean) => {
     const drag = timelineDragRef.current;
     const sourceClip = clipRef.current;
     if (!sourceClip || !drag || drag.pointerId !== pointerId) return;
+    stopTimelineAutoScroll();
     timelineDragRef.current = null;
     setTimelineDrag(null);
     if (!commit) {
@@ -3061,6 +3123,7 @@ export function Timeline(props: {
       window.removeEventListener('pointerup', finishPointerDrag, true);
       window.removeEventListener('mouseup', finishMouseDrag, true);
       window.removeEventListener('blur', cancelWindowDrag);
+      stopTimelineAutoScroll();
     };
   }, [clipPath, props.undoService]);
 
@@ -3697,6 +3760,7 @@ export function Timeline(props: {
               >
                 <div
                   className="timeline-lanes"
+                  ref={dopeSheetContentRef}
                   style={{ width: `${zoom * 100}%` }}
                   onPointerDown={beginTimelineMarquee}
                   onPointerMove={moveTimelineMarquee}
