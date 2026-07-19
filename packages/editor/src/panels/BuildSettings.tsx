@@ -731,7 +731,10 @@ export function BuildSettings(props: {
                   />
                   <span className="build-history-main">
                     <strong>{buildTimestamp(entry.recordedAtMs)}</strong>
-                    <small>{entry.platform}-{entry.architecture} · {entry.profile} · MEngine {entry.engineVersion}</small>
+                    <small>
+                      {entry.platform}-{entry.architecture} · {entry.profile} · MEngine {entry.engineVersion}
+                      {' · '}{entry.artifactSigned ? `signed ${entry.artifactSigningKeyId?.slice(0, 12)}` : 'unsigned'}
+                    </small>
                   </span>
                   <span className="build-history-size">
                     <strong>{byteSize(entry.packagedBytes)}</strong>
@@ -795,6 +798,11 @@ export function BuildSettings(props: {
             </span>
           )}
           <span>SHA-256 {lastBuild.contentHash}</span>
+          <span className={lastBuild.artifactSigned ? undefined : 'build-warning'}>
+            Artifact signature · {lastBuild.artifactSigned
+              ? `Ed25519 · key ${lastBuild.artifactSigningKeyId}`
+              : 'unsigned (set MENGINE_SIGNING_KEY for release publishing)'}
+          </span>
           <div className="build-content-report">
             <h4>Content by Category</h4>
             <div className="build-content-table">

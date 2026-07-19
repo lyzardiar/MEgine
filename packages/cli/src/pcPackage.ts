@@ -10,7 +10,15 @@ import {
   statSync,
   writeFileSync,
 } from 'node:fs';
-import { createHash, randomUUID } from 'node:crypto';
+import {
+  createHash,
+  createPrivateKey,
+  createPublicKey,
+  randomUUID,
+  sign as cryptoSign,
+  verify as cryptoVerify,
+  type KeyObject,
+} from 'node:crypto';
 import { basename, dirname, extname, isAbsolute, join, relative, resolve, sep } from 'node:path';
 import * as ts from 'typescript';
 
@@ -62,6 +70,8 @@ export interface PcPackageOptions {
   verifyStagedBuild?: (stageDir: string, manifest: PcBuildManifest) => void;
   /** Operational diagnostics kept outside the reproducible published manifest. */
   onBuildCacheStats?: (stats: BuildCacheStats) => void;
+  /** Optional project-external Ed25519 PKCS#8 PEM used to sign the deterministic artifact identity. */
+  signingPrivateKeyPath?: string;
 }
 
 function assertBuildNotCancelled(isCancelled: (() => boolean) | undefined, stage: string): void {
@@ -117,10 +127,18 @@ export interface PcBuildManifest {
   profile: 'debug' | 'release';
   executable: string;
   contentHash: string;
+  signature?: BuildArtifactSignature;
   project: GameProjectManifest;
   assetValidation: BuildAssetValidation;
   contentSummary: BuildContentSummary;
   files: BuildFileEntry[];
+}
+
+export interface BuildArtifactSignature {
+  schemaVersion: 1;
+  algorithm: 'ed25519';
+  keyId: string;
+  value: string;
 }
 
 export interface BuildAssetValidation {
@@ -2342,7 +2360,7 @@ function collectFiles(
     const absolute = join(current, entry.name);
     if (entry.isDirectory()) {
       collectFiles(root, absolute, output, isCancelled);
-    } else if (entry.isFile() && entry.name !== BUILD_MANIFEST_FILE) {
+    } else if (entry.isFile()) {
       output.push({
         path: portablePath(relative(root, absolute)),
         size: statSync(absolute).size,
@@ -2458,6 +2476,218 @@ export function buildContentHash(
   return digest.digest('hex');
 }
 
+function canonicalSignatureJson(value: unknown): string {
+  if (value === null) return 'null';
+  if (typeof value === 'string' || typeof value === 'boolean') return JSON.stringify(value);
+  if (typeof value === 'number') {
+    if (!Number.isFinite(value)) throw new Error('build manifest contains a non-finite number');
+    return JSON.stringify(value);
+  }
+  if (Array.isArray(value)) return `[${value.map(canonicalSignatureJson).join(',')}]`;
+  if (typeof value === 'object') {
+    const record = value as Record<string, unknown>;
+    return `{${Object.keys(record)
+      .filter((key) => record[key] !== undefined)
+      .sort()
+      .map((key) => `${JSON.stringify(key)}:${canonicalSignatureJson(record[key])}`)
+      .join(',')}}`;
+  }
+  throw new Error(`build manifest contains an unsupported ${typeof value} value`);
+}
+
+function artifactSignaturePayload(manifest: PcBuildManifest): Buffer {
+  if (!/^[0-9a-f]{64}$/i.test(manifest.contentHash)) {
+    throw new Error('build content hash is not a valid SHA-256 value');
+  }
+  const { signature: _signature, ...unsignedManifest } = manifest;
+  return Buffer.from(
+    `MENGINE_BUILD_SIGNATURE_V1\0${canonicalSignatureJson(unsignedManifest)}`,
+    'utf8',
+  );
+}
+
+function ed25519PublicKey(value: string | Buffer | KeyObject): KeyObject {
+  const key = typeof value === 'string' || Buffer.isBuffer(value)
+    ? createPublicKey(value)
+    : (value.type === 'public' ? value : createPublicKey(value));
+  if (key.asymmetricKeyType !== 'ed25519') {
+    throw new Error(`artifact signing key must be Ed25519, found ${key.asymmetricKeyType ?? 'unknown'}`);
+  }
+  return key;
+}
+
+function signingKeyId(publicKey: KeyObject): string {
+  return createHash('sha256')
+    .update(publicKey.export({ type: 'spki', format: 'der' }))
+    .digest('hex');
+}
+
+export function signPcBuildManifest(
+  manifest: PcBuildManifest,
+  privateKeyValue: string | Buffer | KeyObject,
+): BuildArtifactSignature {
+  const privateKey = typeof privateKeyValue === 'string' || Buffer.isBuffer(privateKeyValue)
+    ? createPrivateKey(privateKeyValue)
+    : privateKeyValue;
+  if (privateKey.type !== 'private' || privateKey.asymmetricKeyType !== 'ed25519') {
+    throw new Error('artifact signing key must be an Ed25519 private key');
+  }
+  const publicKey = ed25519PublicKey(privateKey);
+  const payload = artifactSignaturePayload(manifest);
+  const signature = cryptoSign(null, payload, privateKey);
+  if (!cryptoVerify(null, payload, publicKey, signature)) {
+    throw new Error('generated artifact signature did not verify');
+  }
+  return {
+    schemaVersion: 1,
+    algorithm: 'ed25519',
+    keyId: signingKeyId(publicKey),
+    value: signature.toString('base64'),
+  };
+}
+
+export function verifyPcBuildManifestSignature(
+  manifest: PcBuildManifest,
+  publicKeyValue: string | Buffer | KeyObject,
+): void {
+  const signature = manifest.signature;
+  if (!signature) throw new Error('build manifest is not signed');
+  if (signature.schemaVersion !== 1 || signature.algorithm !== 'ed25519') {
+    throw new Error('build manifest has an unsupported artifact signature');
+  }
+  const publicKey = ed25519PublicKey(publicKeyValue);
+  const expectedKeyId = signingKeyId(publicKey);
+  if (signature.keyId !== expectedKeyId) {
+    throw new Error(`artifact signature key mismatch: expected ${expectedKeyId}, found ${signature.keyId}`);
+  }
+  if (!/^[A-Za-z0-9+/]{86}==$/.test(signature.value)) {
+    throw new Error('build manifest artifact signature is not valid Ed25519 base64');
+  }
+  const value = Buffer.from(signature.value, 'base64');
+  if (value.length !== 64 || !cryptoVerify(null, artifactSignaturePayload(manifest), publicKey, value)) {
+    throw new Error('build manifest artifact signature verification failed');
+  }
+}
+
+function collectBuildVerificationFiles(
+  root: string,
+  current = root,
+  output: RawBuildFileEntry[] = [],
+): RawBuildFileEntry[] {
+  for (const entry of readdirSync(current, { withFileTypes: true })
+    .sort((left, right) => compareFileNames(left.name, right.name))) {
+    const absolute = join(current, entry.name);
+    const path = portablePath(relative(root, absolute));
+    if (entry.isSymbolicLink()) {
+      throw new Error(`build contains a symbolic link: ${path}`);
+    }
+    if (entry.isDirectory()) {
+      collectBuildVerificationFiles(root, absolute, output);
+    } else if (!entry.isFile()) {
+      throw new Error(`build contains an unsupported filesystem entry: ${path}`);
+    } else if (path.toLowerCase() !== BUILD_MANIFEST_FILE.toLowerCase()) {
+      output.push({ path, size: statSync(absolute).size, sha256: sha256(absolute) });
+    } else if (path !== BUILD_MANIFEST_FILE) {
+      throw new Error(`build contains an ambiguously named manifest: ${path}`);
+    }
+  }
+  return output;
+}
+
+/** Verifies a published payload and its signed identity against a caller-trusted public key. */
+export function verifyPcBuildDirectory(
+  outputDir: string,
+  publicKeyValue: string | Buffer | KeyObject,
+): PcBuildManifest {
+  const root = resolve(outputDir);
+  const rootMetadata = lstatSync(root);
+  if (rootMetadata.isSymbolicLink() || !rootMetadata.isDirectory()) {
+    throw new Error(`build root must be a regular non-symlink directory: ${root}`);
+  }
+  const manifestPath = join(root, BUILD_MANIFEST_FILE);
+  const manifestMetadata = lstatSync(manifestPath);
+  if (manifestMetadata.isSymbolicLink() || !manifestMetadata.isFile()) {
+    throw new Error(`build manifest must be a regular non-symlink file: ${manifestPath}`);
+  }
+  if (manifestMetadata.size === 0 || manifestMetadata.size > 32 * 1024 * 1024) {
+    throw new Error(`build manifest has an invalid size: ${manifestPath}`);
+  }
+  const manifest = JSON.parse(readFileSync(manifestPath, 'utf8')) as PcBuildManifest;
+  if (manifest.schemaVersion !== 1 || !Array.isArray(manifest.files)) {
+    throw new Error('build manifest has an unsupported schema');
+  }
+  const expected = new Map<string, BuildFileEntry>();
+  for (const file of manifest.files) {
+    if (!file || typeof file.path !== 'string'
+      || !file.path || file.path.includes('\\') || isAbsolute(file.path)
+      || file.path.split('/').some((part) => !part || part === '.' || part === '..')) {
+      throw new Error('build manifest contains an unsafe file path');
+    }
+    if (!Number.isSafeInteger(file.size) || file.size < 0 || !/^[0-9a-f]{64}$/.test(file.sha256)) {
+      throw new Error(`build manifest contains invalid metadata for ${file.path}`);
+    }
+    const absolute = resolve(root, file.path);
+    if (!isPathInside(root, absolute) || file.path.toLowerCase() === BUILD_MANIFEST_FILE.toLowerCase()) {
+      throw new Error(`build manifest contains an unsafe file path: ${file.path}`);
+    }
+    const key = file.path.toLowerCase();
+    if (expected.has(key)) throw new Error(`build manifest contains a duplicate path: ${file.path}`);
+    expected.set(key, file);
+  }
+  const actual = collectBuildVerificationFiles(root);
+  if (actual.length !== expected.size) {
+    throw new Error(`build file count mismatch: expected ${expected.size}, found ${actual.length}`);
+  }
+  for (const file of actual) {
+    const declared = expected.get(file.path.toLowerCase());
+    if (!declared) throw new Error(`build contains an unlisted file: ${file.path}`);
+    if (declared.path !== file.path) {
+      throw new Error(`build file path case mismatch: expected ${declared.path}, found ${file.path}`);
+    }
+    if (declared.size !== file.size) throw new Error(`build file size mismatch: ${file.path}`);
+    if (declared.sha256 !== file.sha256) throw new Error(`build file hash mismatch: ${file.path}`);
+  }
+  const contentHash = buildContentHash(manifest.files);
+  if (manifest.contentHash !== contentHash) {
+    throw new Error(`build content hash mismatch: expected ${manifest.contentHash}, found ${contentHash}`);
+  }
+  verifyPcBuildManifestSignature(manifest, publicKeyValue);
+  return manifest;
+}
+
+function readArtifactSigningPrivateKey(projectDir: string, path: string): KeyObject {
+  const absolute = resolve(path);
+  if (isPathInside(projectDir, absolute)) {
+    throw new Error('artifact signing key must be stored outside the project directory');
+  }
+  let metadata;
+  try {
+    metadata = lstatSync(absolute);
+  } catch (error) {
+    const detail = error instanceof Error ? error.message : String(error);
+    throw new Error(`cannot read artifact signing key: ${absolute}: ${detail}`);
+  }
+  if (metadata.isSymbolicLink() || !metadata.isFile()) {
+    throw new Error(`artifact signing key must be a regular non-symlink file: ${absolute}`);
+  }
+  if (metadata.size === 0 || metadata.size > 64 * 1024) {
+    throw new Error(`artifact signing key has an invalid size: ${absolute}`);
+  }
+  const pem = readFileSync(absolute);
+  try {
+    const key = createPrivateKey(pem);
+    if (key.type !== 'private' || key.asymmetricKeyType !== 'ed25519') {
+      throw new Error('key is not an Ed25519 private key');
+    }
+    return key;
+  } catch (error) {
+    const detail = error instanceof Error ? error.message : String(error);
+    throw new Error(`invalid artifact signing key ${absolute}: ${detail}`);
+  } finally {
+    pem.fill(0);
+  }
+}
+
 /** Atomically replaces a completed build while restoring the previous build on publish failure. */
 export function publishStagedBuild(
   stageDir: string,
@@ -2510,6 +2740,9 @@ export function buildPcPackage(options: PcPackageOptions): PcBuildManifest {
   const outputDir = resolve(options.outputDir);
   const runtimePath = resolve(options.runtimePath);
   const project = readGameProject(projectDir);
+  const signingPrivateKey = options.signingPrivateKeyPath
+    ? readArtifactSigningPrivateKey(projectDir, options.signingPrivateKeyPath)
+    : undefined;
   if (!existsSync(runtimePath) || !statSync(runtimePath).isFile()) {
     throw new Error(`player runtime not found: ${runtimePath}`);
   }
@@ -2656,6 +2889,10 @@ export function buildPcPackage(options: PcPackageOptions): PcBuildManifest {
       contentSummary: summarizeBuildContent(files),
       files,
     };
+    if (signingPrivateKey) {
+      checkCancelled('artifact signing');
+      manifest.signature = signPcBuildManifest(manifest, signingPrivateKey);
+    }
     writeFileSync(
       join(stageDir, BUILD_MANIFEST_FILE),
       `${JSON.stringify(manifest, null, 2)}\n`,

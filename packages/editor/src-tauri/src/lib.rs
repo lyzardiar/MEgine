@@ -147,6 +147,8 @@ struct BuildPlayerResult {
     executable: String,
     file_count: usize,
     content_hash: String,
+    artifact_signed: bool,
+    artifact_signing_key_id: Option<String>,
     profile: String,
     platform: String,
     architecture: String,
@@ -182,6 +184,8 @@ struct BuildHistoryEntry {
     id: String,
     recorded_at_ms: u64,
     content_hash: String,
+    artifact_signed: bool,
+    artifact_signing_key_id: Option<String>,
     profile: String,
     platform: String,
     architecture: String,
@@ -730,6 +734,49 @@ fn history_project_version(manifest: &serde_json::Value) -> Result<String, Strin
     }
 }
 
+fn build_artifact_signature_key_id(manifest: &serde_json::Value) -> Result<Option<String>, String> {
+    let Some(signature) = manifest.get("signature") else {
+        return Ok(None);
+    };
+    let signature = signature
+        .as_object()
+        .ok_or_else(|| "build manifest signature must be an object".to_string())?;
+    if signature
+        .get("schemaVersion")
+        .and_then(serde_json::Value::as_u64)
+        != Some(1)
+        || signature
+            .get("algorithm")
+            .and_then(serde_json::Value::as_str)
+            != Some("ed25519")
+    {
+        return Err("build manifest has an unsupported artifact signature".into());
+    }
+    let key_id = signature
+        .get("keyId")
+        .and_then(serde_json::Value::as_str)
+        .filter(|value| {
+            value.len() == 64
+                && value
+                    .bytes()
+                    .all(|byte| byte.is_ascii_hexdigit() && !byte.is_ascii_uppercase())
+        })
+        .ok_or_else(|| "build manifest signature has an invalid keyId".to_string())?;
+    let value = signature
+        .get("value")
+        .and_then(serde_json::Value::as_str)
+        .filter(|value| {
+            value.len() == 88
+                && value.ends_with("==")
+                && value[..86]
+                    .bytes()
+                    .all(|byte| byte.is_ascii_alphanumeric() || byte == b'+' || byte == b'/')
+        })
+        .ok_or_else(|| "build manifest signature has an invalid Ed25519 value".to_string())?;
+    debug_assert_eq!(value.len(), 88);
+    Ok(Some(key_id.to_string()))
+}
+
 fn build_history_record_path(history_dir: &Path, id: &str) -> Result<PathBuf, String> {
     if !valid_build_history_id(id) {
         return Err("invalid build history id".into());
@@ -775,6 +822,7 @@ fn build_history_entry(
         return Err("build history record contains an invalid toolchain".into());
     }
     let (content_hash, files) = build_file_snapshots(&record.manifest)?;
+    let artifact_signing_key_id = build_artifact_signature_key_id(&record.manifest)?;
     let profile = safe_build_segment(
         &history_manifest_string(&record.manifest, "profile")?,
         "profile",
@@ -821,6 +869,8 @@ fn build_history_entry(
         id: record.id.clone(),
         recorded_at_ms: record.recorded_at_ms,
         content_hash,
+        artifact_signed: artifact_signing_key_id.is_some(),
+        artifact_signing_key_id,
         profile,
         platform,
         architecture,
@@ -1293,6 +1343,7 @@ fn run_player_build_controlled(
         .filter(|value| value.len() == 64 && value.bytes().all(|byte| byte.is_ascii_hexdigit()))
         .ok_or_else(|| "build manifest does not contain a valid contentHash".to_string())?
         .to_ascii_lowercase();
+    let artifact_signing_key_id = build_artifact_signature_key_id(&build_manifest)?;
     let manifest_profile = build_manifest
         .get("profile")
         .and_then(serde_json::Value::as_str)
@@ -1487,6 +1538,8 @@ fn run_player_build_controlled(
         executable: output_dir.join(executable).to_string_lossy().into_owned(),
         file_count,
         content_hash,
+        artifact_signed: artifact_signing_key_id.is_some(),
+        artifact_signing_key_id,
         profile,
         platform,
         architecture,
@@ -3164,6 +3217,37 @@ mod tests {
     }
 
     #[test]
+    fn artifact_signature_metadata_is_strict_and_unsigned_builds_remain_compatible() {
+        let unsigned = serde_json::json!({ "contentHash": "a".repeat(64) });
+        assert_eq!(build_artifact_signature_key_id(&unsigned).unwrap(), None);
+
+        let signed = serde_json::json!({
+            "contentHash": "a".repeat(64),
+            "signature": {
+                "schemaVersion": 1,
+                "algorithm": "ed25519",
+                "keyId": "b".repeat(64),
+                "value": format!("{}==", "A".repeat(86))
+            }
+        });
+        assert_eq!(
+            build_artifact_signature_key_id(&signed).unwrap(),
+            Some("b".repeat(64))
+        );
+
+        let mut malformed = signed.clone();
+        malformed["signature"]["keyId"] = serde_json::Value::String("B".repeat(64));
+        assert!(build_artifact_signature_key_id(&malformed)
+            .unwrap_err()
+            .contains("keyId"));
+        malformed = signed;
+        malformed["signature"]["value"] = serde_json::Value::String("not-base64".into());
+        assert!(build_artifact_signature_key_id(&malformed)
+            .unwrap_err()
+            .contains("Ed25519"));
+    }
+
+    #[test]
     fn build_comparison_reports_added_removed_changed_and_unchanged_files() {
         let previous = comparison_manifest(
             'a',
@@ -3259,7 +3343,7 @@ mod tests {
         assert_eq!(previous_entry.packaged_bytes, 15);
         assert_eq!(previous_entry.project_version, "7");
 
-        let current = history_manifest(
+        let mut current = history_manifest(
             'c',
             serde_json::json!([
                 comparison_file("Runtime/MEnginePlayer.exe", 10, 'a', "runtime"),
@@ -3267,6 +3351,12 @@ mod tests {
                 comparison_file("Assets/New.bin", 3, 'd', "other")
             ]),
         );
+        current["signature"] = serde_json::json!({
+            "schemaVersion": 1,
+            "algorithm": "ed25519",
+            "keyId": "d".repeat(64),
+            "value": format!("{}==", "A".repeat(86))
+        });
         std::fs::write(
             output_dir.join("mengine-build.json"),
             serde_json::to_vec(&current).unwrap(),
@@ -3279,8 +3369,11 @@ mod tests {
         assert_eq!(history.len(), 2);
         assert_eq!(history[0].id, current_entry.id);
         assert!(history[0].published);
+        assert!(history[0].artifact_signed);
+        assert_eq!(history[0].artifact_signing_key_id, Some("d".repeat(64)));
         assert_eq!(history[0].toolchain, "source-checkout");
         assert!(!history[1].published);
+        assert!(!history[1].artifact_signed);
         assert_eq!(history[1].id, previous_entry.id);
 
         let comparison =

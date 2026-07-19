@@ -110,6 +110,8 @@ export type BuildHistoryEntry = {
   id: string;
   recordedAtMs: number;
   contentHash: string;
+  artifactSigned: boolean;
+  artifactSigningKeyId: string | null;
   profile: BuildPlayerProfile;
   platform: string;
   architecture: string;
@@ -138,6 +140,8 @@ export type BuildPlayerResult = {
   executable: string;
   fileCount: number;
   contentHash: string;
+  artifactSigned: boolean;
+  artifactSigningKeyId: string | null;
   profile: BuildPlayerProfile;
   platform: string;
   architecture: string;

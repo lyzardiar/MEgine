@@ -1336,3 +1336,14 @@ Rust workspace 检查现在零警告通过；Tauri Host 17/17 常规测试与 1/
 第一遍自省否决了“复制完成后再扫一遍材质文件”的方案：那会发生在 staging 已产生之后，也无法自然追踪 Material Instance 父链和 Shader 依赖。最终审计在 staging 之前进入现有队列，所有失败继续保持原子发布语义。第二遍自省删除了上一批为 all 模式单独编写的 Scene/Prefab 二次枚举，并给审计根增加不计引用的入口；否则同一文件会有两套校验路径，审计覆盖越大反而让 `references` 指标失真。
 
 当前“全资产”指引擎已有确定 Schema 的结构化资产；未引用 PNG/HDR/音频/二进制 Spine Skeleton 目前只做文件与发布清单完整性检查，不会在 CLI 中完整解码。下一阶段应建立统一 Import Artifact 数据库，把纹理、音频、模型和 Shader 编译产物在导入期生成可缓存的目标平台制品，构建阶段只验证内容哈希和导入器版本；同时补签名/公证、符号与崩溃映射、安装器、Patch/Chunk 和远程 Build Farm。
+
+## 112. 2026-07-19 Player 制品 Ed25519 签名与离线可信验证
+
+- PC 构建支持 `--sign-key <pem>` 或进程环境变量 `MENGINE_SIGNING_KEY` 指定 Ed25519 PKCS#8 私钥。密钥路径不会写入 `project.json`、构建 Manifest 或历史报告；文件必须位于工程外、是普通非符号链接文件且不超过 64 KiB，避免私钥被工程扫描、版本控制或 Player 打包带走。桌面编辑器启动的构建进程会继承同一环境变量，因此本地安全存储或 CI Secret 可在进程边界注入密钥。
+- 签名载荷使用固定域分隔 `MENGINE_BUILD_SIGNATURE_V1`，对移除 `signature` 后的完整 Manifest 执行递归键排序的规范化 JSON 编码，因此项目/目标元数据、资源审计、分类、文件表和引入原因都受签名保护。`contentHash` 又以长度分隔的路径、文件大小与 SHA-256 提交整个发布内容；Ed25519 对同一密钥和同一内容生成确定性签名，不破坏可复现构建。Manifest 记录算法、SPKI 公钥 SHA-256 `keyId` 与 Base64 签名，旧无签名构建仍可读取但明确标记为 `unsigned`。
+- 新增 `mengine verify-build <build-dir> --public-key <pem>` 作为发布流水线的离线验证入口。它不只验证 Manifest 签名，还重新枚举目录，拒绝符号链接、非普通条目、危险/重复/大小写不一致路径、缺失或额外文件，并逐个核对大小、SHA-256 和聚合 `contentHash`；调用者提供的 SPKI 公钥才是信任锚，Manifest 自报 `keyId` 仅用于匹配和诊断。任意 Payload 或 Manifest 元数据修改都会让验证失败。
+- 构建阶段先生成签名并用派生公钥自检，再写入 staging Manifest、执行完整 Player 校验并原子发布；无效或错误类型密钥不会替换旧成功构建。Build Settings 和构建历史显示 `signed/unsigned` 与 key id，历史读取严格验证签名元数据形状，但编辑器在未配置可信公钥时不会把“存在签名”描述成“签名可信”。
+
+第一遍自省发现最初只有签名生成函数和内部自检，没有面向发布系统的可信公钥验证入口；这只能证明代码刚生成的签名可解码，不能发现分发目录被替换。最终增加完整目录离线验证、CLI 命令以及内容篡改、错误公钥、确定性签名回归，并修正 Node `KeyObject` 的运行期/类型边界。第二遍自省进一步收紧密钥与信任模型：私钥强制工程外、拒绝符号链接，UI 把“签名存在”和“可信验证通过”分开；同时把签名载荷从少量身份字段扩展为规范化的完整 Manifest，避免项目名、资源审计或文件分类等重复元数据被修改后仍显示有效签名。Manifest 内自报 key id 只用于匹配，攻击者不能用自己的 key id 取代调用方固定的信任锚。
+
+这仍是 MEngine 自身的制品身份签名，不是操作系统分发签名。Windows Authenticode、macOS codesign/notarization、安装器签名、证书轮换/吊销、HSM/KMS 接入、签名透明日志、渠道密钥策略与 Runtime 内置公钥/启动时强制验证尚未完成；这些平台能力应在安装器与发布管线阶段接入，不能用 Ed25519 Manifest 签名冒充系统信誉和商店公证。

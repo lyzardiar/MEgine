@@ -1,5 +1,6 @@
 import assert from 'node:assert/strict';
-import { createHash } from 'node:crypto';
+import { spawnSync } from 'node:child_process';
+import { createHash, generateKeyPairSync } from 'node:crypto';
 import {
   existsSync,
   mkdirSync,
@@ -9,16 +10,21 @@ import {
   rmSync,
   writeFileSync,
 } from 'node:fs';
-import { join } from 'node:path';
+import { dirname, join } from 'node:path';
 import { tmpdir } from 'node:os';
 import test from 'node:test';
+import { fileURLToPath } from 'node:url';
 import {
   BUILD_MANIFEST_FILE,
   PLAYER_CONFIG_FILE,
   buildContentHash,
   buildPcPackage,
   publishStagedBuild,
+  verifyPcBuildDirectory,
+  verifyPcBuildManifestSignature,
 } from '../dist/pcPackage.js';
+
+const cli = join(dirname(fileURLToPath(import.meta.url)), '..', 'dist', 'cli.js');
 
 function fixture(name) {
   const root = join(tmpdir(), `mengine-pc-package-${name}-${process.pid}-${Date.now()}`);
@@ -56,6 +62,84 @@ function fixture(name) {
   writeFileSync(runtime, 'runtime-binary');
   return { root, project, runtime, output: join(root, 'Build') };
 }
+
+test('buildPcPackage signs the deterministic artifact identity with an external Ed25519 key', () => {
+  const paths = fixture('artifact-signature');
+  try {
+    const { privateKey, publicKey } = generateKeyPairSync('ed25519');
+    const keyPath = join(paths.root, 'release-signing-key.pem');
+    writeFileSync(keyPath, privateKey.export({ format: 'pem', type: 'pkcs8' }));
+    const options = {
+      projectDir: paths.project,
+      outputDir: paths.output,
+      runtimePath: paths.runtime,
+      engineVersion: 'test-engine',
+      platform: 'windows',
+      architecture: 'x64',
+      signingPrivateKeyPath: keyPath,
+    };
+    const manifest = buildPcPackage(options);
+    assert.equal(manifest.signature?.schemaVersion, 1);
+    assert.equal(manifest.signature?.algorithm, 'ed25519');
+    assert.match(manifest.signature?.keyId ?? '', /^[0-9a-f]{64}$/);
+    assert.match(manifest.signature?.value ?? '', /^[A-Za-z0-9+/]{86}==$/);
+    const publicPem = publicKey.export({ format: 'pem', type: 'spki' });
+    const publicKeyPath = join(paths.root, 'release-signing-public.pem');
+    writeFileSync(publicKeyPath, publicPem);
+    assert.doesNotThrow(() => verifyPcBuildManifestSignature(manifest, publicPem));
+    assert.equal(verifyPcBuildDirectory(paths.output, publicPem).contentHash, manifest.contentHash);
+    const cliVerification = spawnSync(process.execPath, [
+      cli,
+      'verify-build',
+      paths.output,
+      '--public-key',
+      publicKeyPath,
+    ], { encoding: 'utf8', windowsHide: true });
+    assert.equal(cliVerification.status, 0, cliVerification.stderr);
+    assert.match(cliVerification.stdout, /Verified signed build/);
+    assert.deepEqual(
+      JSON.parse(readFileSync(join(paths.output, BUILD_MANIFEST_FILE), 'utf8')).signature,
+      manifest.signature,
+    );
+
+    const second = buildPcPackage({
+      ...options,
+      outputDir: join(paths.root, 'Build2'),
+    });
+    assert.equal(second.contentHash, manifest.contentHash);
+    assert.deepEqual(second.signature, manifest.signature);
+    writeFileSync(join(paths.root, 'Build2', second.executable), 'tampered-runtime');
+    assert.throws(
+      () => verifyPcBuildDirectory(join(paths.root, 'Build2'), publicPem),
+      /size mismatch|hash mismatch/,
+    );
+
+    assert.throws(() => verifyPcBuildManifestSignature({
+      ...manifest,
+      contentHash: '0'.repeat(64),
+    }, publicPem), /verification failed/);
+    assert.throws(() => verifyPcBuildManifestSignature({
+      ...manifest,
+      project: { ...manifest.project, name: 'Imposter' },
+    }, publicPem), /verification failed/);
+    const wrongKey = generateKeyPairSync('ed25519').publicKey.export({ format: 'pem', type: 'spki' });
+    assert.throws(
+      () => verifyPcBuildManifestSignature(manifest, wrongKey),
+      /key mismatch/,
+    );
+
+    const projectKeyPath = join(paths.project, 'private-key.pem');
+    writeFileSync(projectKeyPath, privateKey.export({ format: 'pem', type: 'pkcs8' }));
+    assert.throws(() => buildPcPackage({
+      ...options,
+      outputDir: join(paths.root, 'Build3'),
+      signingPrivateKeyPath: projectKeyPath,
+    }), /outside the project directory/);
+    assert.equal(existsSync(join(paths.root, 'Build3')), false);
+  } finally {
+    rmSync(paths.root, { recursive: true, force: true });
+  }
+});
 
 test('buildPcPackage creates a directly launchable, hashed project bundle', () => {
   const paths = fixture('success');

@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 import {
   existsSync,
+  lstatSync,
   mkdirSync,
   readFileSync,
   writeFileSync,
@@ -12,6 +13,7 @@ import {
   BUILD_CACHE_REPORT_PREFIX,
   buildPcPackage,
   hostBuildPlatform,
+  verifyPcBuildDirectory,
   type BuildCacheStats,
 } from './pcPackage.js';
 
@@ -98,6 +100,7 @@ Commands:
   new <name>                  Create a new game project scaffold
   build <project> [options]   Build a directly runnable PC player
   export-pc <project>         Alias of build for compatibility
+  verify-build <dir>          Verify payload hashes and its Ed25519 signature
   codegen                     Print the engine codegen command
 
 Build options:
@@ -107,8 +110,40 @@ Build options:
   --skip-runtime-build        Reuse an existing runtime without invoking Cargo
   --skip-verify               Skip packaged player scene validation
   --cancel-file <file>        Cooperatively cancel before atomic publish (editor use)
+  --sign-key <pem>            Sign the artifact manifest with an external Ed25519 PKCS#8 key
   --clean                     Replace an existing output directory
+
+Verify options:
+  --public-key <pem>          Trusted Ed25519 SPKI public key for verify-build
+
+Environment:
+  MENGINE_SIGNING_KEY         Default path for --sign-key (never stored in project.json)
 `);
+}
+
+function verifyBuild(values: string[]) {
+  const args = [...values];
+  let publicKeyPath: string | undefined;
+  for (let index = 0; index < args.length;) {
+    if (args[index] === '--public-key') {
+      publicKeyPath = resolve(takeOption(args, index, '--public-key'));
+    } else if (args[index].startsWith('--')) {
+      throw new Error(`unknown verify-build option: ${args[index]}`);
+    } else {
+      index += 1;
+    }
+  }
+  if (args.length !== 1) throw new Error('verify-build requires one build directory');
+  if (!publicKeyPath) throw new Error('verify-build requires --public-key <pem>');
+  const metadata = lstatSync(publicKeyPath);
+  if (metadata.isSymbolicLink() || !metadata.isFile() || metadata.size === 0 || metadata.size > 64 * 1024) {
+    throw new Error(`public key must be a regular non-symlink PEM file: ${publicKeyPath}`);
+  }
+  const manifest = verifyPcBuildDirectory(resolve(args[0]), readFileSync(publicKeyPath));
+  console.log(`Verified signed build: ${resolve(args[0])}`);
+  console.log(`Content: ${manifest.contentHash}`);
+  console.log(`Artifact signature: Ed25519 ${manifest.signature?.keyId}`);
+  console.log(`Files: ${manifest.files.length}`);
 }
 
 function newProject(name: string) {
@@ -174,6 +209,7 @@ interface BuildArguments {
   skipRuntimeBuild: boolean;
   skipVerify: boolean;
   cancelFile?: string;
+  signingPrivateKeyPath?: string;
   clean: boolean;
 }
 
@@ -192,6 +228,7 @@ function parseBuildArguments(values: string[]): BuildArguments {
   let skipRuntimeBuild = false;
   let skipVerify = false;
   let cancelFile: string | undefined;
+  let signingPrivateKeyPath: string | undefined;
   let clean = false;
   for (let index = 0; index < args.length;) {
     const value = args[index];
@@ -210,6 +247,8 @@ function parseBuildArguments(values: string[]): BuildArguments {
       args.splice(index, 1);
     } else if (value === '--cancel-file') {
       cancelFile = takeOption(args, index, '--cancel-file');
+    } else if (value === '--sign-key') {
+      signingPrivateKeyPath = takeOption(args, index, '--sign-key');
     } else if (value === '--clean') {
       clean = true;
       args.splice(index, 1);
@@ -228,6 +267,7 @@ function parseBuildArguments(values: string[]): BuildArguments {
     skipRuntimeBuild,
     skipVerify,
     cancelFile: cancelFile ? resolve(cancelFile) : undefined,
+    signingPrivateKeyPath: signingPrivateKeyPath ? resolve(signingPrivateKeyPath) : undefined,
     clean,
   };
 }
@@ -283,6 +323,8 @@ function buildProject(values: string[]) {
   assertNotCancelled('runtime preparation');
   const runtimePath = resolveRuntime(args);
   assertNotCancelled('runtime preparation');
+  const signingPrivateKeyPath = args.signingPrivateKeyPath
+    ?? (process.env.MENGINE_SIGNING_KEY ? resolve(process.env.MENGINE_SIGNING_KEY) : undefined);
   let buildCacheStats: BuildCacheStats | null = null;
   const manifest = buildPcPackage({
     projectDir: args.projectDir,
@@ -292,6 +334,7 @@ function buildProject(values: string[]) {
     clean: args.clean,
     profile: args.profile,
     platform,
+    signingPrivateKeyPath,
     isCancelled,
     onBuildCacheStats: (stats) => { buildCacheStats = stats; },
     verifyStagedBuild: args.skipVerify ? undefined : (stageDir, stagedManifest) => {
@@ -319,6 +362,9 @@ function buildProject(values: string[]) {
   console.log(`Player: ${join(outputDir, manifest.executable)}`);
   console.log(`Files: ${manifest.files.length} (SHA-256 manifest written)`);
   console.log(`Content: ${manifest.contentHash}`);
+  console.log(manifest.signature
+    ? `Artifact signature: Ed25519 ${manifest.signature.keyId}`
+    : 'Artifact signature: unsigned');
   console.log(
     `Content groups: ${manifest.contentSummary.categories
       .map((group) => `${group.category}=${group.files} files/${group.bytes} bytes`)
@@ -346,6 +392,9 @@ try {
     case 'build':
     case 'export-pc':
       buildProject(rest);
+      break;
+    case 'verify-build':
+      verifyBuild(rest);
       break;
     case 'codegen':
       console.log('Run from the MEngine source root: pnpm codegen');
