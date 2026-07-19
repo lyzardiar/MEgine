@@ -2291,6 +2291,7 @@ fn validate_world_assets(
         mengine_runtime::textures::resolve_project_asset_path(project_root, reference)
             .with_context(|| format!("unsafe {kind} path: {reference}"))
     };
+    let mut material_cache = RuntimeMaterialCache::new(Some(project_root.to_path_buf()));
     for entity in world.iter_entities() {
         if let Some(renderer) = world.get_component::<MeshRenderer>(entity) {
             let mesh = renderer.mesh.trim();
@@ -2306,11 +2307,13 @@ fn validate_world_assets(
             let material = renderer.material.trim();
             if material.to_ascii_lowercase().ends_with(".mmat")
                 || material.to_ascii_lowercase().ends_with(".mat")
+                || material.to_ascii_lowercase().ends_with(".minst")
             {
                 let path = resolve(material, "material")?;
                 if validated.insert(path.clone()) {
-                    let asset = mengine_assets::load_material_asset(&path)
-                        .with_context(|| format!("invalid material {}", path.display()))?;
+                    let asset = material_cache.resolve_asset(material).map_err(|error| {
+                        anyhow::anyhow!("invalid material {}: {error}", path.display())
+                    })?;
                     if asset.shader == mengine_assets::MaterialShader::Custom {
                         let shader = asset.custom_shader.trim();
                         if shader.is_empty() {
@@ -2921,6 +2924,50 @@ mod tests {
         assert_eq!(validated.len(), 2);
         assert!(validated.contains(&material_path));
         assert!(validated.contains(&shader_path));
+    }
+
+    #[test]
+    fn packaged_asset_validation_resolves_material_instances_and_rejects_cycles() {
+        let root = temporary_project_root("packaged-material-instance");
+        let materials = root.join("Assets/Materials");
+        std::fs::create_dir_all(&materials).unwrap();
+        std::fs::write(
+            materials.join("Base.mmat"),
+            r#"{"version":7,"roughness":0.8}"#,
+        )
+        .unwrap();
+        let instance_path = materials.join("Wet.minst");
+        std::fs::write(
+            &instance_path,
+            r#"{"version":1,"parent":"Assets/Materials/Base.mmat","overrides":{"roughness":0.2}}"#,
+        )
+        .unwrap();
+
+        validate_world_assets(
+            &world_with_material("Assets/Materials/Wet.minst"),
+            &root,
+            &mut HashSet::new(),
+        )
+        .expect("material instance parent chain should pass package validation");
+
+        std::fs::write(
+            &instance_path,
+            r#"{"version":1,"parent":"Assets/Materials/Loop.minst"}"#,
+        )
+        .unwrap();
+        std::fs::write(
+            materials.join("Loop.minst"),
+            r#"{"version":1,"parent":"Assets/Materials/Wet.minst"}"#,
+        )
+        .unwrap();
+        let error = validate_world_assets(
+            &world_with_material("Assets/Materials/Wet.minst"),
+            &root,
+            &mut HashSet::new(),
+        )
+        .expect_err("material instance cycles must fail final package validation");
+        std::fs::remove_dir_all(&root).unwrap();
+        assert!(error.to_string().contains("inheritance cycle"), "{error}");
     }
 
     #[test]

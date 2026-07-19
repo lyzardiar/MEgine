@@ -5,6 +5,7 @@ mod animator;
 mod avatar_mask;
 mod gltf_import;
 mod material;
+mod material_instance;
 mod registry;
 mod sprite;
 mod surface_shader;
@@ -27,6 +28,10 @@ pub use gltf_import::{load_gltf_mesh_data, MeshData};
 pub use material::{
     load_material_asset, parse_material_asset, MaterialAsset, MaterialBlendMode, MaterialFilter,
     MaterialShader, MaterialSurface, MaterialWrap,
+};
+pub use material_instance::{
+    load_material_instance_asset, parse_material_instance_asset, MaterialInstanceAsset,
+    MaterialInstanceOverrides,
 };
 pub use registry::{AssetMeta, AssetRegistry};
 pub use sprite::{

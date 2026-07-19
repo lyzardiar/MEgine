@@ -899,6 +899,68 @@ test('buildPcPackage validates material v7 IOR, clearcoat, and sampler contracts
   }
 });
 
+test('buildPcPackage resolves material instance parents and rejects invalid inheritance graphs', () => {
+  const paths = fixture('material-instance');
+  try {
+    writeFileSync(join(paths.project, 'Assets', 'Scenes', 'Main.mscene'), JSON.stringify({
+      world: { entities: [{ components: {
+        MeshRenderer: { mesh: 'cube', material: 'Assets/Materials/Ocean.minst' },
+      } }] },
+    }));
+    const base = join(paths.project, 'Assets', 'Materials', 'Base.mmat');
+    const ocean = join(paths.project, 'Assets', 'Materials', 'Ocean.minst');
+    const wet = join(paths.project, 'Assets', 'Materials', 'Wet.minst');
+    writeFileSync(base, JSON.stringify({ version: 7, shader: 'pbr', roughness: 0.8 }));
+
+    writeFileSync(ocean, JSON.stringify({
+      version: 1,
+      parent: 'Assets/Materials/Base.mmat',
+      overrides: { ior: 4 },
+    }));
+    assert.throws(() => buildPcPackage({
+      projectDir: paths.project,
+      outputDir: paths.output,
+      runtimePath: paths.runtime,
+      engineVersion: 'test-engine',
+    }), /ior must be from 1 to 2.5/);
+    assert.equal(existsSync(paths.output), false);
+
+    writeFileSync(ocean, JSON.stringify({ version: 1, parent: 'Assets/Materials/Wet.minst' }));
+    writeFileSync(wet, JSON.stringify({ version: 1, parent: 'Assets/Materials/Ocean.minst' }));
+    assert.throws(() => buildPcPackage({
+      projectDir: paths.project,
+      outputDir: paths.output,
+      runtimePath: paths.runtime,
+      engineVersion: 'test-engine',
+    }), /material instance inheritance cycle/);
+    assert.equal(existsSync(paths.output), false);
+
+    writeFileSync(wet, JSON.stringify({
+      version: 1,
+      name: 'Wet',
+      parent: 'Assets/Materials/Base.mmat',
+      overrides: { roughness: 0.2, clearcoat: 0.7 },
+    }));
+    writeFileSync(ocean, JSON.stringify({
+      version: 1,
+      name: 'Ocean',
+      parent: 'Assets/Materials/Wet.minst',
+      overrides: { base_color: [0, 0.2, 0.8, 1], ior: 1.33 },
+    }));
+    buildPcPackage({
+      projectDir: paths.project,
+      outputDir: paths.output,
+      runtimePath: paths.runtime,
+      engineVersion: 'test-engine',
+    });
+    assert.equal(existsSync(join(paths.output, 'Assets', 'Materials', 'Base.mmat')), true);
+    assert.equal(existsSync(join(paths.output, 'Assets', 'Materials', 'Wet.minst')), true);
+    assert.equal(existsSync(join(paths.output, 'Assets', 'Materials', 'Ocean.minst')), true);
+  } finally {
+    rmSync(paths.root, { recursive: true, force: true });
+  }
+});
+
 test('buildPcPackage includes scene HDR environment textures', () => {
   const paths = fixture('environment-texture');
   try {

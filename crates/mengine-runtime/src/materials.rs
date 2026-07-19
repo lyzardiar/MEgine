@@ -1,8 +1,8 @@
 use crate::textures::resolve_project_asset_path;
 use mengine_assets::{
-    load_material_asset, load_surface_shader, MaterialAsset,
+    load_material_asset, load_material_instance_asset, load_surface_shader, MaterialAsset,
     MaterialBlendMode as AssetMaterialBlendMode, MaterialFilter as AssetMaterialFilter,
-    MaterialShader, MaterialSurface, MaterialWrap as AssetMaterialWrap,
+    MaterialInstanceAsset, MaterialShader, MaterialSurface, MaterialWrap as AssetMaterialWrap,
 };
 use mengine_core::generated::MaterialPropertyBlock;
 use mengine_rhi::{
@@ -25,10 +25,17 @@ struct CachedSurfaceShader {
     result: Result<Arc<String>, String>,
 }
 
+#[derive(Clone)]
+struct CachedMaterialInstance {
+    modified: Option<SystemTime>,
+    result: Result<Arc<MaterialInstanceAsset>, String>,
+}
+
 #[derive(Default)]
 pub struct RuntimeMaterialCache {
     project_root: Option<PathBuf>,
     materials: HashMap<PathBuf, CachedMaterial>,
+    instances: HashMap<PathBuf, CachedMaterialInstance>,
     surface_shaders: HashMap<PathBuf, CachedSurfaceShader>,
     reported_failures: HashSet<(String, String)>,
 }
@@ -38,6 +45,7 @@ impl RuntimeMaterialCache {
         Self {
             project_root,
             materials: HashMap::new(),
+            instances: HashMap::new(),
             surface_shaders: HashMap::new(),
             reported_failures: HashSet::new(),
         }
@@ -45,12 +53,10 @@ impl RuntimeMaterialCache {
 
     pub fn resolve(&mut self, key: &str) -> Option<RenderMaterial> {
         let normalized = key.trim();
-        if !normalized.to_ascii_lowercase().ends_with(".mmat")
-            && !normalized.to_ascii_lowercase().ends_with(".mat")
-        {
+        if !is_material_path(normalized) {
             return None;
         }
-        match self.load(normalized) {
+        match self.resolve_asset(normalized) {
             Ok(material) => {
                 self.reported_failures
                     .retain(|(reported_key, _)| reported_key != normalized);
@@ -92,8 +98,54 @@ impl RuntimeMaterialCache {
         };
         if let Some(path) = resolve_project_asset_path(root, key) {
             self.materials.remove(&path);
+            self.instances.remove(&path);
             self.surface_shaders.remove(&path);
         }
+    }
+
+    pub fn resolve_asset(&mut self, key: &str) -> Result<MaterialAsset, String> {
+        let mut chain = Vec::new();
+        self.resolve_asset_inner(key.trim(), &mut chain)
+    }
+
+    fn resolve_asset_inner(
+        &mut self,
+        key: &str,
+        chain: &mut Vec<PathBuf>,
+    ) -> Result<MaterialAsset, String> {
+        if chain.len() >= 32 {
+            return Err("material instance inheritance exceeds 32 levels".into());
+        }
+        let root = self
+            .project_root
+            .as_deref()
+            .ok_or_else(|| "runtime requires --project-root to resolve materials".to_owned())?;
+        let path = resolve_project_asset_path(root, key)
+            .ok_or_else(|| "material path must be project-relative without '..'".to_owned())?;
+        if let Some(index) = chain.iter().position(|ancestor| ancestor == &path) {
+            let mut cycle = chain[index..]
+                .iter()
+                .map(|entry| entry.display().to_string())
+                .collect::<Vec<_>>();
+            cycle.push(path.display().to_string());
+            return Err(format!(
+                "material instance inheritance cycle: {}",
+                cycle.join(" -> ")
+            ));
+        }
+        chain.push(path);
+        let lower = key.to_ascii_lowercase();
+        let resolved = if lower.ends_with(".minst") {
+            let instance = self.load_instance(key)?;
+            let parent = self.resolve_asset_inner(&instance.parent, chain)?;
+            instance.apply_to(parent)
+        } else if lower.ends_with(".mmat") || lower.ends_with(".mat") {
+            (*self.load(key)?).clone()
+        } else {
+            return Err("material path must end with .mmat, .mat, or .minst".into());
+        };
+        chain.pop();
+        Ok(resolved)
     }
 
     fn load(&mut self, key: &str) -> Result<Arc<MaterialAsset>, String> {
@@ -120,6 +172,35 @@ impl RuntimeMaterialCache {
         self.materials
             .get(&path)
             .expect("material cache inserted")
+            .result
+            .clone()
+    }
+
+    fn load_instance(&mut self, key: &str) -> Result<Arc<MaterialInstanceAsset>, String> {
+        let root = self
+            .project_root
+            .as_deref()
+            .ok_or_else(|| "runtime requires --project-root to resolve materials".to_owned())?;
+        let path = resolve_project_asset_path(root, key).ok_or_else(|| {
+            "material instance path must be project-relative without '..'".to_owned()
+        })?;
+        let modified = std::fs::metadata(&path)
+            .and_then(|metadata| metadata.modified())
+            .ok();
+        let reload = self
+            .instances
+            .get(&path)
+            .is_none_or(|cached| cached.modified != modified);
+        if reload {
+            let result = load_material_instance_asset(&path)
+                .map(Arc::new)
+                .map_err(|error| error.to_string());
+            self.instances
+                .insert(path.clone(), CachedMaterialInstance { modified, result });
+        }
+        self.instances
+            .get(&path)
+            .expect("material instance cache inserted")
             .result
             .clone()
     }
@@ -161,6 +242,11 @@ impl RuntimeMaterialCache {
             .result
             .clone()
     }
+}
+
+fn is_material_path(key: &str) -> bool {
+    let lower = key.to_ascii_lowercase();
+    lower.ends_with(".mmat") || lower.ends_with(".mat") || lower.ends_with(".minst")
 }
 
 pub fn render_material_from_asset(material: &MaterialAsset) -> RenderMaterial {
@@ -424,6 +510,70 @@ mod tests {
         let material = cache.resolve("Assets/Materials/Rim.mmat").unwrap();
         assert!(material.surface_shader.contains("result.roughness"));
 
+        std::fs::remove_dir_all(root).unwrap();
+    }
+
+    #[test]
+    fn material_instances_resolve_nested_overrides_and_parent_hot_reload() {
+        let root = std::env::temp_dir().join(format!("mengine-instance-{}", Uuid::new_v4()));
+        let materials = root.join("Assets/Materials");
+        std::fs::create_dir_all(&materials).unwrap();
+        let parent = materials.join("Base.mmat");
+        std::fs::write(
+            &parent,
+            r#"{"version":7,"name":"Base","base_color":[1,0,0,1],"roughness":0.8}"#,
+        )
+        .unwrap();
+        std::fs::write(
+            materials.join("Wet.minst"),
+            r#"{"version":1,"name":"Wet","parent":"Assets/Materials/Base.mmat","overrides":{"roughness":0.2,"clearcoat":0.7}}"#,
+        )
+        .unwrap();
+        std::fs::write(
+            materials.join("Ocean.minst"),
+            r#"{"version":1,"name":"Ocean","parent":"Assets/Materials/Wet.minst","overrides":{"base_color":[0,0.2,0.8,1],"ior":1.33}}"#,
+        )
+        .unwrap();
+
+        let mut cache = RuntimeMaterialCache::new(Some(root.clone()));
+        let first = cache.resolve_asset("Assets/Materials/Ocean.minst").unwrap();
+        assert_eq!(first.name, "Ocean");
+        assert_eq!(first.base_color, [0.0, 0.2, 0.8, 1.0]);
+        assert_eq!(first.roughness, 0.2);
+        assert_eq!(first.clearcoat, 0.7);
+        assert_eq!(first.ior, 1.33);
+
+        std::thread::sleep(std::time::Duration::from_millis(20));
+        std::fs::write(
+            &parent,
+            r#"{"version":7,"name":"Base","base_color":[1,0,0,1],"roughness":0.8,"emissive_strength":4}"#,
+        )
+        .unwrap();
+        let reloaded = cache.resolve_asset("Assets/Materials/Ocean.minst").unwrap();
+        assert_eq!(reloaded.emissive_strength, 4.0);
+
+        std::fs::remove_dir_all(root).unwrap();
+    }
+
+    #[test]
+    fn material_instances_reject_cycles_instead_of_falling_back_silently() {
+        let root = std::env::temp_dir().join(format!("mengine-instance-cycle-{}", Uuid::new_v4()));
+        let materials = root.join("Assets/Materials");
+        std::fs::create_dir_all(&materials).unwrap();
+        std::fs::write(
+            materials.join("A.minst"),
+            r#"{"version":1,"parent":"Assets/Materials/B.minst"}"#,
+        )
+        .unwrap();
+        std::fs::write(
+            materials.join("B.minst"),
+            r#"{"version":1,"parent":"Assets/Materials/A.minst"}"#,
+        )
+        .unwrap();
+        let error = RuntimeMaterialCache::new(Some(root.clone()))
+            .resolve_asset("Assets/Materials/A.minst")
+            .unwrap_err();
+        assert!(error.contains("inheritance cycle"), "{error}");
         std::fs::remove_dir_all(root).unwrap();
     }
 }

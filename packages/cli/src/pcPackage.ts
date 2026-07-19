@@ -424,6 +424,7 @@ function scanBuildAssetDependencies(
   const visited = new Map<string, string>();
   const processed = new Set<string>();
   const inclusionReasons = new Map<string, BuildInclusionReason[]>();
+  const materialInstanceParents = new Map<string, string>();
   let references = 0;
 
   const enqueue = (
@@ -452,7 +453,7 @@ function scanBuildAssetDependencies(
     const path = rawPath.trim();
     if (!path || ['default', 'gold', 'chrome', 'metal', 'unlit']
       .some((builtin) => builtin === path.toLowerCase())) return;
-    if (/\.(?:mmat|mat)$/i.test(path) || path.includes('/') || path.includes('\\')) {
+    if (/\.(?:mmat|mat|minst)$/i.test(path) || path.includes('/') || path.includes('\\')) {
       enqueue(path, from, 'material');
     }
   };
@@ -523,6 +524,58 @@ function scanBuildAssetDependencies(
     } else if (extension === '.prefab') {
       const prefab = readJsonAsset(absolute, root, 'prefab');
       prefabNodeReferences(prefab.root ?? prefab, source);
+    } else if (extension === '.minst') {
+      const instance = readJsonAsset(absolute, root, 'material instance');
+      if (instance.version !== 1) {
+        throw new Error(`invalid material instance ${source}: unsupported version ${String(instance.version)}`);
+      }
+      if (instance.name != null && typeof instance.name !== 'string') {
+        throw new Error(`invalid material instance ${source}: name must be a string`);
+      }
+      const parent = strictStringValue(instance, 'parent', `material instance ${source}`)
+        .replaceAll('\\', '/');
+      if (!parent.startsWith('Assets/')
+        || !/\.(?:mmat|mat|minst)$/i.test(parent)
+        || parent.split('/').some((segment) => !segment || segment === '.' || segment === '..')) {
+        throw new Error(`invalid material instance ${source}: parent must reference a safe Assets .mmat, .mat, or .minst file`);
+      }
+      const overrides = instance.overrides == null ? {} : jsonObject(instance.overrides);
+      if (!overrides) {
+        throw new Error(`invalid material instance ${source}: overrides must be an object`);
+      }
+      const allowed = new Set([
+        'base_color', 'metallic', 'roughness', 'ior', 'clearcoat', 'clearcoat_roughness',
+        'emissive', 'emissive_strength',
+      ]);
+      const unknown = Object.keys(overrides).find((field) => !allowed.has(field));
+      if (unknown) {
+        throw new Error(`invalid material instance ${source}: unsupported override ${unknown}`);
+      }
+      const finiteRange = (field: string, minimum: number, maximum: number) => {
+        const value = overrides[field];
+        if (value != null && (typeof value !== 'number' || !Number.isFinite(value)
+          || value < minimum || value > maximum)) {
+          throw new Error(`invalid material instance ${source}: ${field} must be from ${minimum} to ${maximum}`);
+        }
+      };
+      const finiteVector = (field: string, length: number, minimum: number, maximum: number) => {
+        const value = overrides[field];
+        if (value != null && (!Array.isArray(value) || value.length !== length
+          || value.some((part) => typeof part !== 'number' || !Number.isFinite(part)
+            || part < minimum || part > maximum))) {
+          throw new Error(`invalid material instance ${source}: ${field} must contain ${length} finite values from ${minimum} to ${maximum}`);
+        }
+      };
+      finiteVector('base_color', 4, 0, 1);
+      finiteRange('metallic', 0, 1);
+      finiteRange('roughness', 0.04, 1);
+      finiteRange('ior', 1, 2.5);
+      finiteRange('clearcoat', 0, 1);
+      finiteRange('clearcoat_roughness', 0.04, 1);
+      finiteVector('emissive', 3, 0, Number.MAX_VALUE);
+      finiteRange('emissive_strength', 0, Number.MAX_VALUE);
+      materialInstanceParents.set(source.toLowerCase(), parent.toLowerCase());
+      enqueue(parent, source, 'material instance parent');
     } else if (extension === '.mmat' || extension === '.mat') {
       const material = readJsonAsset(absolute, root, 'material');
       if (material.version != null
@@ -1254,6 +1307,24 @@ function scanBuildAssetDependencies(
     }
     inspectJsonDependency(absolute, pending);
   }
+  for (const start of materialInstanceParents.keys()) {
+    const seen = new Map<string, number>();
+    const chain: string[] = [];
+    let current: string | undefined = start;
+    while (current && materialInstanceParents.has(current)) {
+      const cycleIndex = seen.get(current);
+      if (cycleIndex != null) {
+        const cycle = [...chain.slice(cycleIndex), current];
+        throw new Error(`invalid material instance inheritance cycle: ${cycle.join(' -> ')}`);
+      }
+      if (chain.length >= 32) {
+        throw new Error(`invalid material instance ${start}: inheritance exceeds 32 levels`);
+      }
+      seen.set(current, chain.length);
+      chain.push(current);
+      current = materialInstanceParents.get(current);
+    }
+  }
   return {
     validation: {
       assetMode: project.assetMode,
@@ -1898,7 +1969,7 @@ function contentCategory(
   if (reasons.some((reason) => reason.kind.toLowerCase().includes('spine'))) return 'spine';
   if (lower.endsWith('.mscene')) return 'scene';
   if (/\.(?:js|mjs|cjs|wasm)$/i.test(lower)) return 'script';
-  if (/\.(?:mmat|mat)$/i.test(lower)) return 'material';
+  if (/\.(?:mmat|mat|minst)$/i.test(lower)) return 'material';
   if (/\.(?:mshader|wgsl)$/i.test(lower)) return 'shader';
   if (/\.(?:png|jpe?g|webp|gif|bmp|tga|tiff?|hdr|exr)$/i.test(lower)) return 'texture';
   if (/\.(?:gltf|glb)$/i.test(lower)

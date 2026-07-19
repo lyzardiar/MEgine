@@ -1122,3 +1122,13 @@ Rust workspace 检查现在零警告通过；Tauri Host 17/17 常规测试与 1/
 - 第一遍自审发现 IOR 资产与 Renderer 覆盖语义不完整；第二遍自审核对生成 API 兼容边界、恢复生成 Rust 文件格式，并增加旧 JSON 默认升级、Legacy PBR、Property Block、RenderObject 收集与 Scene 预览回归。全量编辑器测试 283/283、Runtime lib 82/82、Runtime player 19/19、编辑器生产构建和 Rust workspace 零警告检查通过。
 
 这一步是 Material Instance 的参数覆盖前置契约，不等于实例系统完成。实例资产仍需父材质依赖闭包、覆盖字段集合、循环/深度检测、父级热重载传播、编辑器继承值显示、原子 Undo/保存以及 CLI 与 Player 双重构建校验。
+
+## 92. 2026-07-19 Material Instance 运行与构建基础
+
+- 新增 `.minst` v1 资产，包含稳定版本、名称、必填父材质和显式 PBR 参数覆盖。v1 支持 Base Color、Metallic、Roughness、IOR、Clear Coat、Coat Roughness、Emissive 与 Emission Strength；Shader、纹理、采样器、透明/深度、Render Queue 等管线状态从父级继承，避免实例无意制造 Pipeline Variant。
+- 父级可为 `.mmat/.mat` 或另一个 `.minst`，必须使用安全的 `Assets/` 工程路径。Rust 资产层负责格式、版本和路径校验；Runtime 递归合并最多 32 层，按完整父链检测循环。每次解析都会核对链上每个源文件的 mtime，因此只修改父材质也会让未变化的子实例在下一帧解析时得到新值。
+- CLI 的 referenced asset 扫描把实例父级加入发布闭包，并独立维护父图。普通队列去重不再能够掩盖 A→B→A：循环和超过 32 层都会在发布前失败；未知 Override、非法向量、越界数值、错误版本与不安全父路径同样拒绝，构建失败不产生输出目录。Build Content 把 `.minst` 归类为 Material。
+- 最终 Player `--validate-package` 不只相信 CLI。MeshRenderer 引用 `.minst` 时复用 Runtime 递归解析器，再对最终继承出的 Custom Shader 与全部纹理执行原有验证；缺父级和循环链在最终成品校验再次失败。
+- 第一遍自审发现单文件缓存无法传播父级热重载，CLI 的 processed 去重会掩盖循环；两处均改为显式父链语义。第二遍自审补最终 Player 实例解析与循环用例，并确认实例只改变 Object Uniform 数据，不扩大 Uniform、不新增 RHI Pipeline Key。回归结果：Assets 35/35、Runtime lib 84/84、Runtime Player 20/20、CLI 42/42，Rust workspace 零警告检查通过。
+
+本批先固定可运行、可发布、可热重载的底层契约；Material Instance 编辑器仍未完成。下一批必须接入 Project 资源识别、Assets/Create、父材质选择、继承值预览、逐参数 Override、Dirty/Undo/Save All、Scene 预览与 MeshRenderer 赋值，不能让用户依赖手写 JSON。
