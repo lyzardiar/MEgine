@@ -26,6 +26,8 @@ import {
   Minus,
   MoveHorizontal,
   Pause,
+  PanelRightClose,
+  PanelRightOpen,
   Play,
   Plus,
   Redo2,
@@ -103,7 +105,9 @@ import {
   pasteSequencerClipboard,
   resizeSequencerAnimationBlend,
   rippleMoveSequencerItems,
+  sequencerPanScrollLeft,
   sequencerSelectionTimeRange,
+  sequencerShiftWheelDelta,
   sequencerSliderToZoom,
   sequencerTicks,
   sequencerZoomToSlider,
@@ -118,6 +122,7 @@ import {
 
 const SEQUENCER_SNAPPING_KEY = 'mengine.sequencer.snapping';
 const SEQUENCER_RIPPLE_KEY = 'mengine.sequencer.ripple';
+const SEQUENCER_INSPECTOR_KEY = 'mengine.sequencer.inspector';
 const SEQUENCER_SNAP_THRESHOLD_PX = 8;
 const EMPTY_PREVIEW_ANIMATION_CLIPS: ReadonlyMap<string, AnimationClip> = new Map();
 const EMPTY_PREVIEW_CLIP_FAILURES: readonly string[] = [];
@@ -145,6 +150,14 @@ function loadSequencerRipple(): boolean {
     return localStorage.getItem(SEQUENCER_RIPPLE_KEY) === '1';
   } catch {
     return false;
+  }
+}
+
+function loadSequencerInspector(): boolean {
+  try {
+    return localStorage.getItem(SEQUENCER_INSPECTOR_KEY) !== '0';
+  } catch {
+    return true;
   }
 }
 
@@ -265,6 +278,8 @@ export function Sequencer(props: SequencerProps) {
   const [zoom, setZoom] = useState(1);
   const [snapping, setSnapping] = useState(loadSequencerSnapping);
   const [rippleMode, setRippleMode] = useState(loadSequencerRipple);
+  const [inspectorOpen, setInspectorOpen] = useState(loadSequencerInspector);
+  const [panning, setPanning] = useState(false);
   const [snapGuide, setSnapGuide] = useState<number | null>(null);
   const [tracksWidth, setTracksWidth] = useState(720);
   const [clipboard, setClipboard] = useState<SequencerClipboard | null>(null);
@@ -287,6 +302,7 @@ export function Sequencer(props: SequencerProps) {
   const previousFrame = useRef<number | null>(null);
   const tracksViewport = useRef<HTMLDivElement | null>(null);
   const rulerScrubPointer = useRef<number | null>(null);
+  const panDrag = useRef<{ pointerId: number; clientX: number; scrollLeft: number } | null>(null);
   const audioPreviewController = useMemo(
     () => new TimelineAudioPreviewController(setAudioPreviewStatus),
     [],
@@ -685,8 +701,7 @@ export function Sequencer(props: SequencerProps) {
     };
   };
 
-  const endInspectorEdit = (event: ReactFocusEvent<HTMLElement>) => {
-    if (!isSequencerEditControl(event.target)) return;
+  const finishInspectorEdit = () => {
     const transaction = inspectorEdit.current;
     inspectorEdit.current = null;
     if (!transaction?.historyToken) return;
@@ -697,6 +712,11 @@ export function Sequencer(props: SequencerProps) {
       || !props.undoService.isUndoTop(transaction.historyToken)
     ) return;
     props.undoService.restoreCheckpoint(transaction.historyCheckpoint);
+  };
+
+  const endInspectorEdit = (event: ReactFocusEvent<HTMLElement>) => {
+    if (!isSequencerEditControl(event.target)) return;
+    finishInspectorEdit();
   };
 
   const save = async (): Promise<boolean> => {
@@ -1963,6 +1983,51 @@ export function Sequencer(props: SequencerProps) {
       /* ignore unavailable storage */
     }
   };
+  const toggleInspector = () => {
+    const next = !inspectorOpen;
+    if (!next) finishInspectorEdit();
+    setInspectorOpen(next);
+    try {
+      localStorage.setItem(SEQUENCER_INSPECTOR_KEY, next ? '1' : '0');
+    } catch {
+      /* ignore unavailable storage */
+    }
+  };
+  const beginTrackPan = (event: ReactPointerEvent<HTMLDivElement>) => {
+    if (event.button !== 1) return;
+    event.preventDefault();
+    event.stopPropagation();
+    finishKeyboardNudge();
+    panDrag.current = {
+      pointerId: event.pointerId,
+      clientX: event.clientX,
+      scrollLeft: event.currentTarget.scrollLeft,
+    };
+    setPanning(true);
+    event.currentTarget.setPointerCapture(event.pointerId);
+  };
+  const moveTrackPan = (event: ReactPointerEvent<HTMLDivElement>) => {
+    const drag = panDrag.current;
+    if (!drag || drag.pointerId !== event.pointerId) return;
+    event.preventDefault();
+    event.currentTarget.scrollLeft = sequencerPanScrollLeft(
+      drag.scrollLeft,
+      drag.clientX,
+      event.clientX,
+      event.currentTarget.scrollWidth,
+      event.currentTarget.clientWidth,
+    );
+  };
+  const finishTrackPan = (event: ReactPointerEvent<HTMLDivElement>) => {
+    const drag = panDrag.current;
+    if (!drag || drag.pointerId !== event.pointerId) return;
+    event.preventDefault();
+    panDrag.current = null;
+    setPanning(false);
+    if (event.currentTarget.hasPointerCapture(event.pointerId)) {
+      event.currentTarget.releasePointerCapture(event.pointerId);
+    }
+  };
   const renderGroupRow = (group: TimelineTrackGroup) => {
     const selectedCount = selectedItems.filter((item) => {
       const trackId = asset.tracks[item.track]?.id;
@@ -2155,6 +2220,9 @@ export function Sequencer(props: SequencerProps) {
           {liveDirector && <span className={`sequencer-live-status${liveDirector.playing ? ' playing' : ''}`}>{liveDirector.playing ? 'LIVE PLAYING' : 'LIVE PAUSED'} · {displayTime.toFixed(2)}s</span>}
           {!props.playMode && props.previewEnabled && directorEntity && <span className="sequencer-live-status edit-preview">EDIT PREVIEW · Activation + Animation + Camera + Audio + Particle</span>}
           {!props.playMode && audioPreviewStatus.mode !== 'idle' && <span className="sequencer-live-status edit-preview">AUDIO {audioPreviewStatus.mode.toUpperCase()}{audioPreviewStatus.voices ? ` · ${audioPreviewStatus.voices}` : ''}</span>}
+          <button type="button" className={`timeline-icon-button sequencer-inspector-toggle${inspectorOpen ? ' active' : ''}`} aria-label={inspectorOpen ? 'Hide Timeline Inspector' : 'Show Timeline Inspector'} title={inspectorOpen ? 'Hide Timeline Inspector' : 'Show Timeline Inspector'} onClick={toggleInspector}>
+            {inspectorOpen ? <PanelRightClose size={13} /> : <PanelRightOpen size={13} />}
+          </button>
           <button type="button" className="timeline-icon-button" aria-label="Save Timeline" title={saving ? 'Saving' : 'Save Timeline (Ctrl+S)'} disabled={!dirty || saving || payloadInvalid} onClick={() => void save()}><Save size={14} /></button>
           <button type="button" className="timeline-icon-button" aria-label="Back to Animation Clip editor" title="Back to Animation Clip editor" onClick={props.onClose}><X size={14} /></button>
         </div>
@@ -2218,16 +2286,30 @@ export function Sequencer(props: SequencerProps) {
 
       {error && <div className="timeline-message error">{error}</div>}
       {previewWarning && !props.playMode && <div className="timeline-message warning">Edit Preview: {previewWarning}</div>}
-      <div className="sequencer-workspace">
+      <div className={`sequencer-workspace${inspectorOpen ? ' inspector-open' : ''}`}>
         <div
-          className="sequencer-tracks"
+          className={`sequencer-tracks${panning ? ' panning' : ''}`}
           ref={tracksViewport}
-          title="Drag empty lanes to marquee-select. Shift adds; Ctrl/Cmd toggles."
+          title="Drag empty lanes to marquee-select. Shift adds; Ctrl/Cmd toggles. Middle-drag pans horizontally."
           style={{ '--sequencer-lane-width': `${laneWidth}px` } as CSSProperties}
           onWheel={(event) => {
-            if (!event.ctrlKey && !event.metaKey) return;
-            event.preventDefault();
-            changeZoom(zoom * (event.deltaY > 0 ? 0.8 : 1.25), event.clientX);
+            if (event.ctrlKey || event.metaKey) {
+              event.preventDefault();
+              changeZoom(zoom * (event.deltaY > 0 ? 0.8 : 1.25), event.clientX);
+              return;
+            }
+            if (event.shiftKey) {
+              event.preventDefault();
+              event.currentTarget.scrollLeft += sequencerShiftWheelDelta(event.deltaX, event.deltaY);
+            }
+          }}
+          onPointerDownCapture={beginTrackPan}
+          onPointerMoveCapture={moveTrackPan}
+          onPointerUpCapture={finishTrackPan}
+          onPointerCancelCapture={finishTrackPan}
+          onLostPointerCapture={finishTrackPan}
+          onAuxClick={(event) => {
+            if (event.button === 1) event.preventDefault();
           }}
         >
           <div className="sequencer-ruler-row">
@@ -2434,7 +2516,7 @@ export function Sequencer(props: SequencerProps) {
           {marquee && <i className="sequencer-marquee" style={marquee} aria-hidden="true" />}
         </div>
 
-        <aside className="sequencer-inspector" onFocusCapture={beginInspectorEdit} onBlurCapture={endInspectorEdit}>
+        {inspectorOpen && <aside className="sequencer-inspector" onFocusCapture={beginInspectorEdit} onBlurCapture={endInspectorEdit}>
           <h3>{selectedMarker ? 'Signal Marker' : selectedActivationClip ? 'Activation Clip' : selectedAudioClip ? 'Audio Clip' : selectedAnimationClip ? 'Animation Clip' : selectedParticleClip ? 'Particle Clip' : selectedCameraClip ? 'Camera Shot' : selectedTrack ? `${selectedTrack.type === 'signal' ? 'Signal' : selectedTrack.type === 'activation' ? 'Activation' : selectedTrack.type === 'audio' ? 'Audio' : selectedTrack.type === 'animation' ? 'Animation' : selectedTrack.type === 'particle' ? 'Particle' : 'Camera'} Track` : selectedGroup ? 'Track Group' : 'Timeline Asset'}</h3>
           {selectedItems.length > 1 && <p className="sequencer-multi-selection-notice">{selectedItems.length} items selected. Inspector edits and edge trims apply to the primary item; drag, clipboard, duplicate, Delete and Ripple Delete apply to the full selection.</p>}
           {!selectedTrack && !selectedGroup && <>
@@ -2727,7 +2809,7 @@ export function Sequencer(props: SequencerProps) {
             </>}
             <button type="button" className="sequencer-danger" onClick={() => deleteSelection()}><Trash2 size={14} /> Delete {selectedItems.length > 1 ? `${selectedItems.length} Items` : 'Clip'}</button>
           </fieldset>}
-        </aside>
+        </aside>}
       </div>
     </div>
   );

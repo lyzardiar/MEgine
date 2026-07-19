@@ -19,7 +19,9 @@ import {
   rippleMoveSequencerItems,
   resizeSequencerAnimationBlend,
   selectSequencerItem,
+  sequencerPanScrollLeft,
   sequencerSelectionTimeRange,
+  sequencerShiftWheelDelta,
   sequencerSliderToZoom,
   sequencerTicks,
   sequencerZoomToSlider,
@@ -48,6 +50,16 @@ test('Sequencer selection range covers markers and complete clips', () => {
   ]), { start: 1, end: 3 });
   assert.deepEqual(sequencerSelectionTimeRange(asset, [{ track: 0, marker: 0 }]), { start: 1, end: 1 });
   assert.equal(sequencerSelectionTimeRange(asset, [{ track: 99, marker: 0 }]), null);
+});
+
+test('Sequencer viewport panning and shifted wheel navigation stay bounded', () => {
+  assert.equal(sequencerShiftWheelDelta(4, 20), 20);
+  assert.equal(sequencerShiftWheelDelta(-40, 10), -40);
+  assert.equal(sequencerShiftWheelDelta(Number.NaN, 12), 12);
+  assert.equal(sequencerPanScrollLeft(300, 500, 450, 1600, 800), 350);
+  assert.equal(sequencerPanScrollLeft(20, 500, 800, 1600, 800), 0);
+  assert.equal(sequencerPanScrollLeft(780, 500, 300, 1600, 800), 800);
+  assert.equal(sequencerPanScrollLeft(Number.NaN, 0, Number.NaN, 400, 800), 0);
 });
 
 function timeline() {

@@ -227,6 +227,27 @@ function clamp(value: number, minimum: number, maximum: number): number {
   return Math.max(minimum, Math.min(maximum, value));
 }
 
+export function sequencerShiftWheelDelta(deltaX: number, deltaY: number): number {
+  const horizontal = Number.isFinite(deltaX) ? deltaX : 0;
+  const vertical = Number.isFinite(deltaY) ? deltaY : 0;
+  return Math.abs(horizontal) > Math.abs(vertical) ? horizontal : vertical;
+}
+
+export function sequencerPanScrollLeft(
+  startScrollLeft: number,
+  startClientX: number,
+  currentClientX: number,
+  scrollWidth: number,
+  clientWidth: number,
+): number {
+  const origin = Number.isFinite(startScrollLeft) ? Math.max(0, startScrollLeft) : 0;
+  const start = Number.isFinite(startClientX) ? startClientX : 0;
+  const current = Number.isFinite(currentClientX) ? currentClientX : start;
+  const content = Number.isFinite(scrollWidth) ? Math.max(0, scrollWidth) : 0;
+  const viewport = Number.isFinite(clientWidth) ? Math.max(0, clientWidth) : 0;
+  return clamp(origin - (current - start), 0, Math.max(0, content - viewport));
+}
+
 export function snapSequencerItemsDelta(
   asset: TimelineAsset,
   selections: readonly SequencerItemSelection[],

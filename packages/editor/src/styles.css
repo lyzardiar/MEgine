@@ -4738,15 +4738,21 @@ body.insp-scrubbing * {
   min-height: 0;
   flex: 1 1 auto;
   display: grid;
-  grid-template-columns: minmax(320px, 1fr) 240px;
+  grid-template-columns: minmax(320px, 1fr);
   overflow: hidden;
   background: #202020;
 }
+.sequencer-workspace.inspector-open { grid-template-columns: minmax(320px, 1fr) 240px; }
 
 .sequencer-tracks {
   min-width: 0;
   overflow: auto;
   border-right: 1px solid #111;
+}
+.sequencer-tracks.panning,
+.sequencer-tracks.panning * {
+  cursor: grabbing !important;
+  user-select: none;
 }
 
 .sequencer-ruler-row,
@@ -5336,9 +5342,11 @@ body.insp-scrubbing * {
 .sequencer-inspector button.sequencer-danger { color: #ff9b9b; background: #402727; }
 .sequencer-empty-track { padding: 20px; color: #777; font-size: 11px; }
 
-@media (max-width: 760px) {
-  .sequencer-workspace { grid-template-columns: minmax(280px, 1fr); }
-  .sequencer-inspector { display: none; }
+@container (max-width: 520px) {
+  .sequencer-workspace,
+  .sequencer-workspace.inspector-open { grid-template-columns: minmax(280px, 1fr); }
+  .sequencer-inspector,
+  .sequencer-inspector-toggle { display: none; }
 }
 
 @container (max-width: 900px) {

@@ -1614,3 +1614,15 @@ Camera Shot 的基础闭环已经形成，但 Timeline 仍不完备：编辑器 
 第二遍自省从失败路径和窄 Dock 反查：发现初稿把 Sequence 入口错误嵌在 `!animator` 分支，且非 Animator 空状态不会显示创建失败；现把入口提升为两种动画工作流共用，并补齐内联错误。继续按 900px/700px 容器边界检查，增加工具组换行、Director 弹性宽度和 Preview 状态截断。最终编辑器测试 358/358、严格 TypeScript/Vite 生产构建和 Rust workspace 检查通过；生产构建仍报告主入口 518.56kB 的既有 Chunk 预算警告，应作为后续启动性能切片继续拆分。
 
 这批解决的是 Timeline 的进入、导航和基础操作密度，不代表成熟动画制作系统已经完备。仍缺嵌套 Timeline/Control Track、录制模式、模型动画导入与 Humanoid Retargeting、Root Motion、Animation Layer/Avatar Mask 混合、Onion Skin/运动轨迹、长时间轴虚拟化、统一 Marker/Clip 标签、运行时 Timeline Profiler 关联和真正的音视频采样时钟；后续应优先补 Timeline 录制与嵌套控制，再把 Animation Clip、Animator 和 Sequencer 的选择与时间域收敛为共享编辑内核。
+
+## 137. 2026-07-20 Sequencer 长时间轴导航与空间管理
+
+- Sequencer Inspector 新增方形显隐按钮并把偏好保存为 `mengine.sequencer.inspector`；关闭后轨道区立即占满 Dock，重新打开恢复 240px 属性列。Inspector 不再是永久占用编辑宽度的固定附属栏，选择、Dirty、Undo 和当前时间均不因布局切换改变；520px 以下的极窄容器自动只保留轨道区并隐藏无效开关。
+- 轨道视口新增 `Shift + Wheel` 确定性横向滚动和鼠标中键抓取平移。滚轮统一选择横纵增量中的主轴，中键手势从按下时的 `scrollLeft/clientX` 计算绝对结果，并显式钳制到 `0..scrollWidth-clientWidth`；浏览器自动滚动行为被抑制，拖动期间所有子项切换为 `grabbing`，不会误触 Marker/Clip 主按钮或开启一次编辑事务。
+- 视口数学收敛为无 DOM 纯函数，覆盖正反向移动、左右边界、内容小于视口和非有限输入。原有 `Ctrl/Cmd + Wheel` 指针锚定缩放保持不变，因此缩放、F 框选、Shift 滚动、中键抓取和底部滚动条形成互补导航，不争用同一手势。
+
+第一遍自省从响应式状态一致性反查：初稿沿用旧的 760px 媒体规则，会在 Inspector 状态仍为开启时直接隐藏属性列，按钮却继续显示“Hide”，用户点击后还会把不可见状态持久化。现改为 Timeline 容器自身的 520px 下限，同时隐藏属性列和开关；常见 600–760px 分离 Dock 仍可由用户自行决定是否保留 Inspector。
+
+第二遍自省从输入事务生命周期反查：如果焦点停在 Inspector 输入框上直接点击关闭，React 卸载不应依赖浏览器一定派发 Blur，否则 `inspectorEdit` 可能残留并把下次编辑合并进旧 Undo 手势。现提取显式 `finishInspectorEdit`，关闭前封口并清理空历史；普通 Blur 复用同一路径。中键手势则只在 `button===1` 时于 Capture 阶段接管，Clip/Marker 的左键拖拽、Alt Ripple 反转和右键菜单均保持原语义。
+
+这一批完成的是长时间轴的基础浏览闭环，仍缺轨道头宽度与 Inspector 宽度拖拽、滚动惯性/触控板缩放偏好、迷你时间轴 Overview、书签、工作区间、播放范围、虚拟化和大资产性能预算。下一阶段可在同一视口内核上增加可视范围模型与工作区间，再支持 Loop Preview 和局部导出，而不是继续堆叠互相独立的滚动状态。
