@@ -31,6 +31,16 @@ pub struct RuntimeAnimationEvent {
     pub weight: f32,
 }
 
+#[derive(Clone, Debug, PartialEq)]
+pub struct RuntimeAnimationBlend {
+    pub entity: Entity,
+    pub source_clip: String,
+    pub source_time: f32,
+    pub destination_clip: String,
+    pub destination_time: f32,
+    pub weight: f32,
+}
+
 #[derive(Clone)]
 struct CachedAnimation {
     modified: Option<SystemTime>,
@@ -316,6 +326,49 @@ impl AnimationRuntime {
             }
         }
 
+        failures
+    }
+
+    /// Apply Timeline seam blends after ordinary AnimationPlayer sampling for the frame.
+    pub fn apply_timeline_blends(
+        &mut self,
+        world: &mut World,
+        blends: &[RuntimeAnimationBlend],
+    ) -> Vec<AnimationLoadFailure> {
+        let mut failures = Vec::new();
+        for blend in blends {
+            if !world.is_alive(blend.entity) || !world.entity_active(blend.entity) {
+                continue;
+            }
+            let source = match self.load_clip(&blend.source_clip) {
+                Ok(clip) => clip,
+                Err(error) => {
+                    self.record_failure(blend.entity, &blend.source_clip, error, &mut failures);
+                    continue;
+                }
+            };
+            let destination = match self.load_clip(&blend.destination_clip) {
+                Ok(clip) => clip,
+                Err(error) => {
+                    self.record_failure(
+                        blend.entity,
+                        &blend.destination_clip,
+                        error,
+                        &mut failures,
+                    );
+                    continue;
+                }
+            };
+            self.reported_failures.retain(|(asset, _)| {
+                asset != &blend.source_clip && asset != &blend.destination_clip
+            });
+            let samples = blend_samples(
+                source.sample(blend.source_time),
+                destination.sample(blend.destination_time),
+                blend.weight,
+            );
+            apply_animation_samples(world, blend.entity, samples);
+        }
         failures
     }
 
@@ -1901,6 +1954,79 @@ mod tests {
                 finished: true
             }
         );
+    }
+
+    #[test]
+    fn timeline_seam_blend_samples_two_clips_after_player_evaluation() {
+        let root = temp_project();
+        let clip_json = |start: f32, end: f32, source_only: bool| {
+            let mut tracks = vec![serde_json::json!({
+                "target": ".",
+                "component": "Transform",
+                "property": "position.x",
+                "interpolation": "linear",
+                "keyframes": [{ "time": 0, "value": start }, { "time": 1, "value": end }]
+            })];
+            if source_only {
+                tracks.push(serde_json::json!({
+                    "target": ".",
+                    "component": "Transform",
+                    "property": "position.y",
+                    "interpolation": "step",
+                    "keyframes": [{ "time": 0, "value": 4 }]
+                }));
+            }
+            serde_json::json!({
+                "version": 1,
+                "duration": 1,
+                "frame_rate": 30,
+                "wrap_mode": "once",
+                "tracks": tracks
+            })
+            .to_string()
+        };
+        fs::write(
+            root.join("Assets/Animations/Out.manim"),
+            clip_json(0.0, 10.0, true),
+        )
+        .unwrap();
+        fs::write(
+            root.join("Assets/Animations/In.manim"),
+            clip_json(20.0, 30.0, false),
+        )
+        .unwrap();
+        let mut world = World::new();
+        let entity = world.spawn_empty();
+        world.insert_component(entity, Transform::default());
+        let mut runtime = AnimationRuntime::new(Some(root.clone()));
+        let blend = RuntimeAnimationBlend {
+            entity,
+            source_clip: "Assets/Animations/Out.manim".into(),
+            source_time: 1.0,
+            destination_clip: "Assets/Animations/In.manim".into(),
+            destination_time: 0.5,
+            weight: 0.5,
+        };
+        let failures = runtime.apply_timeline_blends(&mut world, std::slice::from_ref(&blend));
+        assert!(failures.is_empty(), "{failures:?}");
+        assert_eq!(
+            world.get_component::<Transform>(entity).unwrap().position[0],
+            17.5
+        );
+        assert_eq!(
+            world.get_component::<Transform>(entity).unwrap().position[1],
+            4.0
+        );
+        let mut completed = blend;
+        completed.weight = 1.0;
+        assert!(runtime
+            .apply_timeline_blends(&mut world, &[completed])
+            .is_empty());
+        assert_eq!(
+            world.get_component::<Transform>(entity).unwrap().position[1],
+            4.0
+        );
+        let _ = fs::remove_dir_all(root);
     }
 
     #[test]

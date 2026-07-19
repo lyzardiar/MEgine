@@ -1466,3 +1466,13 @@ Camera Shot 的基础闭环已经形成，但 Timeline 仍不完备：编辑器 
 第一遍自省沿 Runtime 的 Particle Track 与 `ParticleWorld::seek_entity` 逐项核对，修正速度 `max < min`、发射整数边界和 authored `playing=false` 预热，确认 Clip 时间、激活层级、重复目标与 300 秒门禁在 Editor/Asset/Runtime 三端闭合。第二遍自省从真实 Dock 生命周期和性能反查，发现隐藏 Sequencer 仍会控制 Scene、强制销毁分离窗口会留下远端预览，现分别用可见面板所有权与有界租约修复；同时把连续正向帧保留为增量推进，仅在不连续游标上重建。
 
 这仍不是成熟粒子系统。编辑器 Canvas 预览与原生 wgpu 的浮点精度、投影和纹理采样不保证逐像素一致；长时间 Seek 仍是线性重建，尚无检查点缓存。粒子模块还缺 Burst、Curve/Gradient、Noise、Collision、Trigger、Sub Emitter、Trail、Mesh/Billboard 变体、GPU Simulation、LOD/Culling、容量与显存预算、模块化 Inspector、可视化 Bounds 和 Player Profiler 统计。下一阶段应建立版本化粒子模块资产和 CPU/GPU 后端一致性测试，再把 Timeline 检查点、录制与性能预算接入统一 Transport。
+
+## 124. 2026-07-20 Timeline Animation Clip 接缝混合
+
+- Animation Track Clip 新增可选 `blend_in` 与 `blend_curve`，缺省分别为 0 和 `ease_in_out`，并继续兼容 Timeline v1。编辑器提供 Blend In 数值与 Linear/Ease In Out 曲线选择、Clip 左侧混合覆盖层和提示；新建、时长编辑与裁剪都会把混合时长限制在 Clip 内，Undo/Redo 和保存走现有资产事务。TypeScript、Rust 资产加载器与 CLI 构建校验使用同一范围和枚举约束，非法值会在编辑或打包阶段明确失败。
+- Runtime 先让普通 AnimationPlayer 求出当前 Clip 结果，再执行 Timeline 的接缝覆盖。只有与当前 Clip 无间隙相邻的上一段动画可作为源，源动画保持在末帧，目标动画按自身 `clip_in + localTime × speed` 采样；标量与向量线性插值、Quaternion 使用最短路径 Slerp、Bool/String 等离散值在 0.5 切换。间隙、无上一段或零混合时长保持硬切，Animation Event 只由目标 AnimationPlayer 发出，避免两段事件重复。
+- Timeline Runtime 为每个 Director/Track 保留确定性的混合命令状态，而不是只在时间变化的单帧临时发出，因此暂停、单步和直接 Seek 得到相同姿态。进入混合后命令会持续到当前 Clip 结束，即使权重已经到 1，也继续保持只存在于源 Clip 的绑定；这样稀疏轨道不会因“从播放走到该帧”或“直接跳到该帧”而产生不同结果。离开 Clip、Mute/Solo 过滤、失活、绑定变化、停止或恢复 authored AnimationPlayer 时都会清除对应命令，源或目标资源加载失败进入统一诊断。
+
+第一遍自省从暂停和状态生命周期反查，发现最初把混合命令当作逐帧临时队列，Timeline 时间不变时只会混合第一帧，随后普通 AnimationPlayer 会覆盖姿态；现改为按 Director/Track 持久保存并在每个 Runtime 帧执行。第二遍自省从稀疏绑定和直接 Seek 反查，发现权重达到 1 后过早删除命令会让源 Clip 独占字段依赖播放历史；现把权重 1 的接缝覆盖保留到当前 Clip 结束，并用 source-only 绑定回归固定该语义。全量验证为编辑器 350/350、CLI 52/52、mengine-assets 51/51、mengine-runtime library 93/93、runtime main 22/22，5 个工作区包 TypeScript/Vite 生产构建通过。
+
+这仍不是成熟的 Timeline 动画混合器。当前是“上一段末帧保持 → 当前段运动”的接缝过渡，不是两段同时运动的真实重叠 Crossfade；只存在于目标 Clip 的绑定会立即进入，尚没有 authored/base pose 作为第三路输入。后续仍需 Clip Ease In/Out 与重叠编辑、外推模式、Root Motion、Humanoid Retargeting、IK、嵌套 Timeline/Control Track、录制、运动轨迹、Onion Skin、统一 Animation/Animator/Timeline Transport，以及混合成本与姿态缓存的 Profiler 统计。

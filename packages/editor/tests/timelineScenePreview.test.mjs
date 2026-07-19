@@ -85,6 +85,63 @@ test('builds activation and sampled animation state without mutating authored en
   assert.deepEqual(entities[2].components.Transform.position, [0, 1, 2]);
 });
 
+test('blends an adjacent previous Animation clip final pose without mutating authored state', () => {
+  const outgoing = parseAnimationClip(JSON.stringify({
+    version: 1, duration: 1, frame_rate: 30, wrap_mode: 'once',
+    tracks: [{
+      target: '.', component: 'Transform', property: 'position.x', interpolation: 'linear',
+      keyframes: [{ time: 0, value: 0 }, { time: 1, value: 10 }],
+    }],
+  }));
+  const incoming = parseAnimationClip(JSON.stringify({
+    version: 1, duration: 1, frame_rate: 30, wrap_mode: 'once',
+    tracks: [{
+      target: '.', component: 'Transform', property: 'position.x', interpolation: 'linear',
+      keyframes: [{ time: 0, value: 20 }, { time: 1, value: 30 }],
+    }],
+  }));
+  const blendAsset = parseTimelineAsset(JSON.stringify({
+    version: 1, duration: 2,
+    tracks: [{
+      type: 'animation', id: 'actor', name: 'Actor Motion', target: 'Actor',
+      clips: [
+        { start: 0, duration: 1, clip: 'Assets/Animations/Out.manim' },
+        { start: 1, duration: 1, clip: 'Assets/Animations/In.manim', blend_in: 0.25, blend_curve: 'linear' },
+      ],
+    }],
+  }));
+  const blendClips = new Map([
+    ['assets/animations/out.manim', outgoing],
+    ['assets/animations/in.manim', incoming],
+  ]);
+  const atSeam = applyTimelineScenePreview(
+    entities,
+    buildTimelineScenePreview(blendAsset, entities, 1, '{}', 1, blendClips).preview,
+  );
+  assert.ok(Math.abs(atSeam[2].components.Transform.position[0] - 10) < 1e-4);
+  const halfway = applyTimelineScenePreview(
+    entities,
+    buildTimelineScenePreview(blendAsset, entities, 1, '{}', 1.125, blendClips).preview,
+  );
+  assert.ok(Math.abs(halfway[2].components.Transform.position[0] - 15.625) < 1e-4);
+  const afterBlend = applyTimelineScenePreview(
+    entities,
+    buildTimelineScenePreview(blendAsset, entities, 1, '{}', 1.5, blendClips).preview,
+  );
+  assert.equal(afterBlend[2].components.Transform.position[0], 25);
+  assert.equal(entities[2].components.Transform.position[0], 0);
+
+  const missingPrevious = buildTimelineScenePreview(
+    blendAsset,
+    entities,
+    1,
+    '{}',
+    1.125,
+    new Map([['assets/animations/in.manim', incoming]]),
+  );
+  assert.match(missingPrevious.diagnostics.join(' '), /previous blend clip.*Out\.manim.*not loaded/);
+});
+
 test('uses stable director bindings and restores authored state outside clips', () => {
   const bindings = JSON.stringify({
     version: 1,

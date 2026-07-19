@@ -1,3 +1,4 @@
+use crate::animation::RuntimeAnimationBlend;
 use crate::particles::MAX_INCREMENTAL_DELTA;
 use crate::textures::resolve_project_asset_path;
 use mengine_assets::{
@@ -39,6 +40,22 @@ fn timeline_audio_gain(clip: &TimelineAudioClip, time: f32) -> f32 {
         1.0
     };
     fade_in.min(fade_out).clamp(0.0, 1.0)
+}
+
+fn timeline_animation_blend_factor(curve: &str, value: f32) -> f32 {
+    let value = value.clamp(0.0, 1.0);
+    if curve == "ease_in_out" {
+        value * value * (3.0 - 2.0 * value)
+    } else {
+        value
+    }
+}
+
+fn outgoing_animation_sample_time(clip: &mengine_assets::TimelineAnimationClip) -> f32 {
+    let epsilon = (clip.duration.abs() * f32::EPSILON)
+        .max(f32::EPSILON)
+        .min(clip.duration);
+    (clip.clip_in + (clip.duration - epsilon).max(0.0) * clip.speed).max(0.0)
 }
 
 #[derive(Clone, Debug, PartialEq, Eq)]
@@ -135,6 +152,7 @@ pub struct TimelineRuntime {
     animation_overrides: HashMap<(Entity, String), AnimationOverride>,
     particle_overrides: HashMap<(Entity, String), ParticleOverride>,
     camera_overrides: HashMap<(Entity, String), RuntimeCameraOverride>,
+    animation_blends: HashMap<(Entity, String), RuntimeAnimationBlend>,
     pending_signals: Vec<RuntimeTimelineSignal>,
     pending_particle_commands: Vec<RuntimeParticleCommand>,
 }
@@ -456,6 +474,18 @@ impl TimelineRuntime {
         std::mem::take(&mut self.pending_signals)
     }
 
+    pub fn animation_blends(&self) -> Vec<RuntimeAnimationBlend> {
+        let mut blends = self.animation_blends.values().cloned().collect::<Vec<_>>();
+        blends.sort_by(|left, right| {
+            left.entity
+                .to_u64()
+                .cmp(&right.entity.to_u64())
+                .then_with(|| left.destination_clip.cmp(&right.destination_clip))
+                .then_with(|| left.source_clip.cmp(&right.source_clip))
+        });
+        blends
+    }
+
     pub fn take_particle_commands(&mut self) -> Vec<RuntimeParticleCommand> {
         std::mem::take(&mut self.pending_particle_commands)
     }
@@ -707,13 +737,15 @@ impl TimelineRuntime {
                 continue;
             };
             let key = (director, id.clone());
+            self.animation_blends.remove(&key);
             if asset.track_is_muted_with_solo(track, has_solo) {
                 self.reported_animation_failures.remove(&key);
                 continue;
             }
-            let Some(clip) = clips
+            let Some((clip_index, clip)) = clips
                 .iter()
-                .find(|clip| time >= clip.start && time < clip.start + clip.duration)
+                .enumerate()
+                .find(|(_, clip)| time >= clip.start && time < clip.start + clip.duration)
             else {
                 self.reported_animation_failures.remove(&key);
                 continue;
@@ -770,12 +802,37 @@ impl TimelineRuntime {
                     target: target_entity,
                     original: authored,
                 });
+            let destination_time = (clip.clip_in + (time - clip.start) * clip.speed).max(0.0);
             if let Some(player) = world.get_component_mut::<AnimationPlayer>(target_entity) {
                 player.clip.clone_from(&clip.clip);
                 player.play_on_awake = true;
                 player.playing = true;
                 player.speed = 0.0;
-                player.time = (clip.clip_in + (time - clip.start) * clip.speed).max(0.0);
+                player.time = destination_time;
+            }
+            let local_time = (time - clip.start).max(0.0);
+            let linear_weight = if clip.blend_in <= f32::EPSILON {
+                1.0
+            } else {
+                (local_time / clip.blend_in).clamp(0.0, 1.0)
+            };
+            let weight = timeline_animation_blend_factor(&clip.blend_curve, linear_weight);
+            if clip.blend_in > f32::EPSILON && clip_index > 0 {
+                let previous = &clips[clip_index - 1];
+                let adjacent = (previous.start + previous.duration - clip.start).abs() <= 0.001;
+                if adjacent {
+                    self.animation_blends.insert(
+                        key.clone(),
+                        RuntimeAnimationBlend {
+                            entity: target_entity,
+                            source_clip: previous.clip.clone(),
+                            source_time: outgoing_animation_sample_time(previous),
+                            destination_clip: clip.clip.clone(),
+                            destination_time,
+                            weight,
+                        },
+                    );
+                }
             }
             applied.insert(key);
         }
@@ -1176,6 +1233,7 @@ impl TimelineRuntime {
     }
 
     fn restore_animation_override(&mut self, world: &mut World, key: &(Entity, String)) {
+        self.animation_blends.remove(key);
         let Some(previous) = self.animation_overrides.remove(key) else {
             return;
         };
@@ -1467,6 +1525,44 @@ mod tests {
         )
         .unwrap();
         (root, timeline_relative)
+    }
+
+    fn animation_blend_project_asset(target: &str) -> (PathBuf, String) {
+        let root = std::env::temp_dir().join(format!(
+            "mengine-timeline-animation-blend-{}",
+            uuid::Uuid::new_v4()
+        ));
+        let relative = "Assets/Timelines/animation-blend.mtimeline".to_owned();
+        let timeline_path = root.join(&relative);
+        let animation_root = root.join("Assets/Animations");
+        fs::create_dir_all(timeline_path.parent().unwrap()).unwrap();
+        fs::create_dir_all(&animation_root).unwrap();
+        fs::write(
+            timeline_path,
+            format!(
+                r#"{{"version":1,"duration":2,"tracks":[{{"type":"animation","id":"hero","name":"Hero","target":"{target}","clips":[{{"start":0,"duration":1,"clip":"Assets/Animations/Out.manim"}},{{"start":1,"duration":1,"clip":"Assets/Animations/In.manim","blend_in":0.25,"blend_curve":"linear"}}]}}]}}"#
+            ),
+        )
+        .unwrap();
+        let clip_json = |start: f32, end: f32| {
+            serde_json::json!({
+                "version": 1,
+                "duration": 1,
+                "frame_rate": 30,
+                "wrap_mode": "once",
+                "tracks": [{
+                    "target": ".",
+                    "component": "Transform",
+                    "property": "position.x",
+                    "interpolation": "linear",
+                    "keyframes": [{ "time": 0, "value": start }, { "time": 1, "value": end }]
+                }]
+            })
+            .to_string()
+        };
+        fs::write(animation_root.join("Out.manim"), clip_json(0.0, 10.0)).unwrap();
+        fs::write(animation_root.join("In.manim"), clip_json(20.0, 30.0)).unwrap();
+        (root, relative)
     }
 
     fn particle_project_asset(target: &str) -> (PathBuf, String) {
@@ -2039,6 +2135,61 @@ mod tests {
         assert_eq!(restored.playing, authored.playing);
         assert_eq!(restored.speed, authored.speed);
         assert_eq!(restored.time, authored.time);
+        let _ = fs::remove_dir_all(root);
+    }
+
+    #[test]
+    fn animation_tracks_emit_and_apply_adjacent_seam_blends() {
+        let (root, relative) = animation_blend_project_asset("Hero");
+        let mut world = World::new();
+        let director = world.spawn_empty();
+        let hero = world.spawn_empty();
+        world.set_component_value(hero, "Name", serde_json::json!({ "value": "Hero" }));
+        world.set_parent(hero, Some(director));
+        world.insert_component(hero, Transform::default());
+        world.insert_component(hero, AnimationPlayer::default());
+        world.insert_component(
+            director,
+            TimelineDirector {
+                asset: relative,
+                time: 1.125,
+                speed: 0.0,
+                ..TimelineDirector::default()
+            },
+        );
+        let mut timeline = TimelineRuntime::new(Some(root.clone()));
+        let mut animation = AnimationRuntime::new(Some(root.clone()));
+        assert!(timeline.update(&mut world, 0.0).is_empty());
+        let blends = timeline.animation_blends();
+        assert_eq!(blends.len(), 1);
+        assert_eq!(blends[0].entity, hero);
+        assert!((blends[0].weight - 0.5).abs() < 0.0001);
+        assert!(animation.update(&mut world, 0.0).is_empty());
+        assert!(animation
+            .apply_timeline_blends(&mut world, &blends)
+            .is_empty());
+        assert!(
+            (world.get_component::<Transform>(hero).unwrap().position[0] - 15.625).abs() < 0.0001
+        );
+        world
+            .get_component_mut::<TimelineDirector>(director)
+            .unwrap()
+            .playing = false;
+        assert!(timeline.update(&mut world, 0.0).is_empty());
+        assert_eq!(timeline.animation_blends(), blends);
+        world
+            .get_component_mut::<TimelineDirector>(director)
+            .unwrap()
+            .time = 1.5;
+        assert!(timeline.update(&mut world, 0.0).is_empty());
+        assert_eq!(timeline.animation_blends().len(), 1);
+        assert!((timeline.animation_blends()[0].weight - 1.0).abs() < 0.0001);
+        world
+            .get_component_mut::<TimelineDirector>(director)
+            .unwrap()
+            .time = 0.5;
+        assert!(timeline.update(&mut world, 0.0).is_empty());
+        assert!(timeline.animation_blends().is_empty());
         let _ = fs::remove_dir_all(root);
     }
 

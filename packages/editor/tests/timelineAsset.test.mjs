@@ -205,6 +205,46 @@ test('timeline audio clips normalize fades and reject invalid envelopes', () => 
   })), /invalid/);
 });
 
+test('timeline animation clips normalize seam blends and reject invalid curves', () => {
+  const asset = parseTimelineAsset(JSON.stringify({
+    version: 1,
+    name: 'Animation Blend',
+    duration: 3,
+    tracks: [{
+      type: 'animation', id: 'hero', name: 'Hero', target: 'Characters\\Hero',
+      clips: [
+        { start: 1, duration: 1, clip: 'Assets/Animations/Run.manim', blend_in: 0.4, blend_curve: ' LINEAR ' },
+        { start: 0, duration: 1, clip: 'Assets/Animations/Idle.manim' },
+      ],
+    }],
+  }));
+  assert.deepEqual(asset.tracks[0].clips, [
+    {
+      start: 0, duration: 1, clip: 'Assets/Animations/Idle.manim', clip_in: 0,
+      speed: 1, blend_in: 0, blend_curve: 'ease_in_out',
+    },
+    {
+      start: 1, duration: 1, clip: 'Assets/Animations/Run.manim', clip_in: 0,
+      speed: 1, blend_in: 0.4, blend_curve: 'linear',
+    },
+  ]);
+  assert.deepEqual(parseTimelineAsset(serializeTimelineAsset(asset)), asset);
+  assert.throws(() => parseTimelineAsset(JSON.stringify({
+    version: 1, duration: 2,
+    tracks: [{
+      type: 'animation', id: 'hero', name: 'Hero', target: 'Hero',
+      clips: [{ start: 0, duration: 1, clip: 'Assets/Animations/A.manim', blend_in: 1.1 }],
+    }],
+  })), /invalid/);
+  assert.throws(() => parseTimelineAsset(JSON.stringify({
+    version: 1, duration: 2,
+    tracks: [{
+      type: 'animation', id: 'hero', name: 'Hero', target: 'Hero',
+      clips: [{ start: 0, duration: 1, clip: 'Assets/Animations/A.manim', blend_curve: 'bounce' }],
+    }],
+  })), /invalid/);
+});
+
 test('timeline particle tracks normalize prewarm and reject invalid clips', () => {
   const asset = parseTimelineAsset(JSON.stringify({
     version: 1,

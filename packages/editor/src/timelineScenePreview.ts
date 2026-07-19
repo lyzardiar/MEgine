@@ -4,6 +4,7 @@ import {
 } from './animationClip.ts';
 import {
   applyAnimationPreviews,
+  blendAnimationPreviewSamples,
   type AnimationPreviewEntity,
   type AnimationPreviewLayer,
 } from './animationPreview.ts';
@@ -22,6 +23,16 @@ import {
 } from './timelineAudioPreview.ts';
 
 const F32_EPSILON = 1.1920928955078125e-7;
+
+function blendCurveFactor(curve: 'linear' | 'ease_in_out', value: number): number {
+  const linear = Math.max(0, Math.min(1, Number.isFinite(value) ? value : 0));
+  return curve === 'linear' ? linear : linear * linear * (3 - 2 * linear);
+}
+
+function outgoingAnimationSampleTime(clip: { clip_in: number; duration: number; speed: number }): number {
+  const epsilon = Math.min(clip.duration, Math.max(F32_EPSILON, clip.duration * F32_EPSILON));
+  return Math.max(0, clip.clip_in + Math.max(0, clip.duration - epsilon) * clip.speed);
+}
 
 export type TimelineActivationPreview = {
   entity: number;
@@ -153,9 +164,7 @@ export function buildTimelineScenePreview(
       const linearWeight = clip.blend_in <= F32_EPSILON
         ? 1
         : Math.max(0, Math.min(1, localTime / clip.blend_in));
-      const weight = clip.blend_curve === 'linear'
-        ? linearWeight
-        : linearWeight * linearWeight * (3 - 2 * linearWeight);
+      const weight = blendCurveFactor(clip.blend_curve, linearWeight);
       let source: number | null = null;
       if (weight < 1 && entry > 0) {
         const previous = track.clips[entry - 1];
@@ -252,9 +261,10 @@ export function buildTimelineScenePreview(
       continue;
     }
     if (track.type !== 'animation') continue;
-    const timelineClip = track.clips.find((candidate) => sampleTime >= candidate.start
+    const clipIndex = track.clips.findIndex((candidate) => sampleTime >= candidate.start
       && sampleTime < candidate.start + candidate.duration);
-    if (!timelineClip) continue;
+    if (clipIndex < 0) continue;
+    const timelineClip = track.clips[clipIndex];
     const target = resolveTrackTarget(track.target);
     if (target == null) {
       diagnostics.push(`Animation track '${track.name}' target '${track.target}' is not resolved.`);
@@ -280,7 +290,32 @@ export function buildTimelineScenePreview(
     }
     const localTime = Math.max(0, timelineClip.clip_in
       + (sampleTime - timelineClip.start) * timelineClip.speed);
-    const layer = { root: target, samples: sampleAnimationClip(clip, localTime) };
+    let samples = sampleAnimationClip(clip, localTime);
+    const linearWeight = timelineClip.blend_in <= F32_EPSILON
+      ? 1
+      : Math.max(0, Math.min(1, (sampleTime - timelineClip.start) / timelineClip.blend_in));
+    const weight = blendCurveFactor(timelineClip.blend_curve, linearWeight);
+    if (timelineClip.blend_in > F32_EPSILON && clipIndex > 0) {
+      const previousTimelineClip = track.clips[clipIndex - 1];
+      const adjacent = Math.abs(
+        previousTimelineClip.start + previousTimelineClip.duration - timelineClip.start,
+      ) <= 0.001;
+      if (adjacent) {
+        const previousClip = animationClips.get(clipKey(previousTimelineClip.clip));
+        if (!previousClip) {
+          diagnostics.push(`Animation track '${track.name}' previous blend clip '${previousTimelineClip.clip}' is not loaded.`);
+        } else if (previousTimelineClip.clip_in > previousClip.duration) {
+          diagnostics.push(`Animation track '${track.name}' previous blend clip-in exceeds '${previousTimelineClip.clip}' duration.`);
+        } else {
+          samples = blendAnimationPreviewSamples(
+            sampleAnimationClip(previousClip, outgoingAnimationSampleTime(previousTimelineClip)),
+            samples,
+            weight,
+          );
+        }
+      }
+    }
+    const layer = { root: target, samples };
     const previous = preview.animations.findIndex((candidate) => candidate.root === target);
     if (previous >= 0) preview.animations[previous] = layer;
     else preview.animations.push(layer);

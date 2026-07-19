@@ -801,7 +801,10 @@ test('buildPcPackage includes and validates TimelineDirector assets', () => {
         }],
       }, {
         type: 'animation', id: 'hero', name: 'Hero', target: 'Characters/Hero',
-        clips: [{ start: 0, duration: 2, clip: 'Assets/Animations/Hero.manim', clip_in: 0.1, speed: 1 }],
+        clips: [{
+          start: 0, duration: 2, clip: 'Assets/Animations/Hero.manim', clip_in: 0.1,
+          speed: 1, blend_in: 0.25, blend_curve: ' EASE_IN_OUT ',
+        }],
       }, {
         type: 'particle', id: 'fx', name: 'FX', target: 'Effects/Burst', locked: true,
         clips: [{ start: 0.5, duration: 1, clip_in: 0.25 }],
@@ -1079,6 +1082,24 @@ test('buildPcPackage rejects invalid or missing Timeline animation clips without
       tracks: [{
         type: 'animation', id: 'hero', name: 'Hero', target: 'Characters/Hero',
         clips: [{ start: 0, duration: 1, clip: 'Assets/Animations/missing.manim', speed: 9 }],
+      }],
+    }));
+    assert.throws(() => buildPcPackage({
+      projectDir: paths.project,
+      outputDir: paths.output,
+      runtimePath: paths.runtime,
+      engineVersion: 'test-engine',
+    }), /animation clip is invalid/);
+    assert.equal(existsSync(paths.output), false);
+
+    writeFileSync(join(paths.project, 'Assets', 'Timelines', 'Broken.mtimeline'), JSON.stringify({
+      version: 1, duration: 2,
+      tracks: [{
+        type: 'animation', id: 'hero', name: 'Hero', target: 'Characters/Hero',
+        clips: [{
+          start: 0, duration: 1, clip: 'Assets/Animations/missing.manim',
+          blend_in: 1.1, blend_curve: 'bounce',
+        }],
       }],
     }));
     assert.throws(() => buildPcPackage({

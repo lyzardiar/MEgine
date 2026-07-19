@@ -1500,6 +1500,7 @@ function onTick(dt, frame) {
                         failure.error
                     );
                 }
+                let animation_blends = self.timelines.animation_blends();
                 let particle_commands = self.timelines.take_particle_commands();
                 let timeline_signals = self
                     .timelines
@@ -1517,6 +1518,17 @@ function onTick(dt, frame) {
                 for failure in self.animations.update(&mut self.world, dt) {
                     log::error!(
                         "Animation runtime {:?} failed to load '{}': {}",
+                        failure.entity,
+                        failure.clip,
+                        failure.error
+                    );
+                }
+                for failure in self
+                    .animations
+                    .apply_timeline_blends(&mut self.world, &animation_blends)
+                {
+                    log::error!(
+                        "Timeline animation blend {:?} failed to load '{}': {}",
                         failure.entity,
                         failure.clip,
                         failure.error

@@ -1,3 +1,5 @@
+import { quatSlerp, type Quat } from './math3d.ts';
+
 export type AnimationPreviewSample = {
   target: string;
   component: string;
@@ -16,6 +18,59 @@ export type AnimationPreviewLayer = {
   root: number;
   samples: readonly AnimationPreviewSample[];
 };
+
+function previewSampleKey(sample: AnimationPreviewSample): string {
+  return JSON.stringify([sample.target, sample.component, sample.property]);
+}
+
+function blendPreviewValue(
+  source: AnimationPreviewSample['value'],
+  destination: AnimationPreviewSample['value'],
+  amount: number,
+  component: string,
+  property: string,
+): AnimationPreviewSample['value'] {
+  const weight = Math.max(0, Math.min(1, Number.isFinite(amount) ? amount : 0));
+  if (typeof source === 'number' && typeof destination === 'number') {
+    return source + (destination - source) * weight;
+  }
+  if (Array.isArray(source) && Array.isArray(destination) && source.length === destination.length) {
+    if (source.length === 4 && component === 'Transform' && property === 'rotation') {
+      return quatSlerp(source as Quat, destination as Quat, weight);
+    }
+    return source.map((value, index) => value + (destination[index] - value) * weight);
+  }
+  return structuredClone(weight < 0.5 ? source : destination);
+}
+
+/** Blend two sampled clips by binding, matching Runtime transition semantics. */
+export function blendAnimationPreviewSamples(
+  source: readonly AnimationPreviewSample[],
+  destination: readonly AnimationPreviewSample[],
+  amount: number,
+): AnimationPreviewSample[] {
+  const destinationKeys = new Set(destination.map(previewSampleKey));
+  const sourceByKey = new Map(source.map((sample) => [previewSampleKey(sample), sample.value]));
+  const output = source
+    .filter((sample) => !destinationKeys.has(previewSampleKey(sample)))
+    .map((sample) => structuredClone(sample));
+  for (const sample of destination) {
+    const previous = sourceByKey.get(previewSampleKey(sample));
+    output.push(previous === undefined
+      ? structuredClone(sample)
+      : {
+          ...sample,
+          value: blendPreviewValue(
+            previous,
+            sample.value,
+            amount,
+            sample.component,
+            sample.property,
+          ),
+        });
+  }
+  return output;
+}
 
 function arrayIndex(segment: string): number | null {
   if (/^\d+$/.test(segment)) return Number(segment);

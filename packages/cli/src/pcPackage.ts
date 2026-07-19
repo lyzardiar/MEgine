@@ -1752,7 +1752,10 @@ function scanBuildAssetDependencies(
             || clipPath.split('/').some((segment) => !segment || segment === '.' || segment === '..')
             || !/\.manim$/i.test(clipPath)
             || clip.clip_in != null && (typeof clip.clip_in !== 'number' || !Number.isFinite(clip.clip_in) || clip.clip_in < 0)
-            || clip.speed != null && (typeof clip.speed !== 'number' || !Number.isFinite(clip.speed) || clip.speed < -4 || clip.speed > 4)) {
+            || clip.speed != null && (typeof clip.speed !== 'number' || !Number.isFinite(clip.speed) || clip.speed < -4 || clip.speed > 4)
+            || clip.blend_in != null && (typeof clip.blend_in !== 'number' || !Number.isFinite(clip.blend_in) || clip.blend_in < 0 || clip.blend_in > clip.duration)
+            || clip.blend_curve != null && (typeof clip.blend_curve !== 'string'
+              || !['linear', 'ease_in_out'].includes(clip.blend_curve.trim().toLowerCase()))) {
             throw new Error(`invalid Timeline asset ${source}: animation clip is invalid or outside duration`);
           }
           enqueue(clipPath, source, `Timeline animation track ${name} clip`);

@@ -50,10 +50,10 @@ pub use surface_shader::{
 pub use texture::{load_environment_texture, load_texture_rgba8, texture_dimensions};
 pub use timeline::{
     load_timeline_asset, normalize_timeline_target, parse_timeline_asset,
-    parse_timeline_binding_table, serialize_timeline_binding_table, TimelineAsset,
-    TimelineAudioClip, TimelineBindingTable, TimelineCameraClip, TimelineEntityBinding,
-    TimelineParticleClip, TimelineSignal, TimelineTrack, TimelineTrackGroup, MAX_TIMELINE_BINDINGS,
-    MAX_TIMELINE_PARTICLE_TIME,
+    parse_timeline_binding_table, serialize_timeline_binding_table, TimelineAnimationClip,
+    TimelineAsset, TimelineAudioClip, TimelineBindingTable, TimelineCameraClip,
+    TimelineEntityBinding, TimelineParticleClip, TimelineSignal, TimelineTrack, TimelineTrackGroup,
+    MAX_TIMELINE_BINDINGS, MAX_TIMELINE_PARTICLE_TIME,
 };
 
 #[derive(Clone, Debug, PartialEq, Eq)]

@@ -31,6 +31,8 @@ export type TimelineAnimationClip = {
   clip: string;
   clip_in: number;
   speed: number;
+  blend_in: number;
+  blend_curve: 'linear' | 'ease_in_out';
 };
 
 export type TimelineParticleClip = {
@@ -288,12 +290,16 @@ export function normalizeTimelineAsset(value: unknown): TimelineAsset {
         .map((clipValue) => {
           const clip = object(clipValue);
           const start = Math.max(0, Math.min(duration, finite(clip.start, 0)));
+          const clipDuration = Math.max(0.001, Math.min(duration - start, finite(clip.duration, 1)));
+          const curve = String(clip.blend_curve ?? 'ease_in_out').trim().toLowerCase();
           return {
             start,
-            duration: Math.max(0.001, Math.min(duration - start, finite(clip.duration, 1))),
+            duration: clipDuration,
             clip: audioAssetPath(clip.clip),
             clip_in: Math.max(0, finite(clip.clip_in, 0)),
             speed: Math.max(-4, Math.min(4, finite(clip.speed, 1))),
+            blend_in: Math.max(0, Math.min(clipDuration, finite(clip.blend_in, 0))),
+            blend_curve: curve === 'linear' ? 'linear' : 'ease_in_out',
           } satisfies TimelineAnimationClip;
         })
         .sort((left, right) => left.start - right.start);
@@ -449,7 +455,9 @@ export function validateTimelineAsset(asset: TimelineAsset): void {
       for (const clip of track.clips) {
         if (!animationAssetIsPortable(audioAssetPath(clip.clip))
           || !Number.isFinite(clip.clip_in) || clip.clip_in < 0
-          || !Number.isFinite(clip.speed) || clip.speed < -4 || clip.speed > 4) {
+          || !Number.isFinite(clip.speed) || clip.speed < -4 || clip.speed > 4
+          || !Number.isFinite(clip.blend_in) || clip.blend_in < 0 || clip.blend_in > clip.duration
+          || clip.blend_curve !== 'linear' && clip.blend_curve !== 'ease_in_out') {
           throw new Error(`Animation track ${track.name} contains invalid clip settings`);
         }
       }
@@ -638,7 +646,10 @@ export function parseTimelineAsset(text: string): TimelineAsset {
             || !['linear', 'ease_in_out'].includes(clip.fade_curve.trim().toLowerCase())))
         || track.type === 'animation' && (typeof clip.clip !== 'string' || !animationAssetIsPortable(audioAssetPath(clip.clip))
           || clip.clip_in != null && (typeof clip.clip_in !== 'number' || !Number.isFinite(clip.clip_in) || clip.clip_in < 0)
-          || clip.speed != null && (typeof clip.speed !== 'number' || !Number.isFinite(clip.speed) || clip.speed < -4 || clip.speed > 4))
+          || clip.speed != null && (typeof clip.speed !== 'number' || !Number.isFinite(clip.speed) || clip.speed < -4 || clip.speed > 4)
+          || clip.blend_in != null && (typeof clip.blend_in !== 'number' || !Number.isFinite(clip.blend_in) || clip.blend_in < 0 || clip.blend_in > clip.duration)
+          || clip.blend_curve != null && (typeof clip.blend_curve !== 'string'
+            || !['linear', 'ease_in_out'].includes(clip.blend_curve.trim().toLowerCase())))
         || track.type === 'particle' && clip.clip_in != null
           && (typeof clip.clip_in !== 'number' || !Number.isFinite(clip.clip_in) || clip.clip_in < 0
             || clip.clip_in + clip.duration > TIMELINE_MAX_PARTICLE_TIME)

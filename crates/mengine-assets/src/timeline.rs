@@ -24,7 +24,7 @@ fn default_one() -> f32 {
     1.0
 }
 
-fn default_camera_blend_curve() -> String {
+fn default_blend_curve() -> String {
     "ease_in_out".to_owned()
 }
 
@@ -189,6 +189,10 @@ pub struct TimelineAnimationClip {
     pub clip_in: f32,
     #[serde(default = "default_one")]
     pub speed: f32,
+    #[serde(default)]
+    pub blend_in: f32,
+    #[serde(default = "default_blend_curve")]
+    pub blend_curve: String,
 }
 
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
@@ -206,7 +210,7 @@ pub struct TimelineCameraClip {
     pub target: String,
     #[serde(default)]
     pub blend_in: f32,
-    #[serde(default = "default_camera_blend_curve")]
+    #[serde(default = "default_blend_curve")]
     pub blend_curve: String,
 }
 
@@ -597,9 +601,17 @@ impl TimelineAsset {
                             || clip.clip_in < 0.0
                             || !clip.speed.is_finite()
                             || !(-4.0..=4.0).contains(&clip.speed)
+                            || !clip.blend_in.is_finite()
+                            || !(0.0..=clip.duration).contains(&clip.blend_in)
                         {
                             return Err(AssetError::Invalid(format!(
                                 "Timeline animation track '{id}' contains an invalid or out-of-range clip"
+                            )));
+                        }
+                        clip.blend_curve = clip.blend_curve.trim().to_ascii_lowercase();
+                        if !matches!(clip.blend_curve.as_str(), "linear" | "ease_in_out") {
+                            return Err(AssetError::Invalid(format!(
+                                "Timeline animation track '{id}' contains an invalid blend curve"
                             )));
                         }
                     }
@@ -1081,7 +1093,7 @@ mod tests {
               "version":1,"duration":3,
               "tracks":[{"type":"animation","id":"hero","name":" Hero ",
                 "target":"Characters\\Hero","clips":[
-                  {"start":1,"duration":1,"clip":"assets\\Animations\\Run.manim","clip_in":0.25,"speed":-1},
+                  {"start":1,"duration":1,"clip":"assets\\Animations\\Run.manim","clip_in":0.25,"speed":-1,"blend_in":0.4,"blend_curve":" LINEAR "},
                   {"start":0,"duration":1,"clip":"Assets/Animations/Idle.manim"}
                 ]}]
             }"#,
@@ -1100,7 +1112,11 @@ mod tests {
         assert_eq!(target, "Characters/Hero");
         assert_eq!(clips[0].clip, "Assets/Animations/Idle.manim");
         assert_eq!(clips[0].speed, 1.0);
+        assert_eq!(clips[0].blend_in, 0.0);
+        assert_eq!(clips[0].blend_curve, "ease_in_out");
         assert_eq!(clips[1].clip, "Assets/Animations/Run.manim");
+        assert_eq!(clips[1].blend_in, 0.4);
+        assert_eq!(clips[1].blend_curve, "linear");
 
         assert!(parse_timeline_asset(
             br#"{"version":1,"duration":2,"tracks":[{"type":"animation","id":"a","name":"A","target":"Hero","clips":[{"start":0,"duration":1.5,"clip":"Assets/Animations/A.manim"},{"start":1,"duration":1,"clip":"Assets/Animations/B.manim"}]}]}"#
@@ -1108,6 +1124,14 @@ mod tests {
         .is_err());
         assert!(parse_timeline_asset(
             br#"{"version":1,"duration":2,"tracks":[{"type":"animation","id":"a","name":"A","target":"Hero","clips":[{"start":0,"duration":1,"clip":"Assets/Animations/A.anim"}]}]}"#
+        )
+        .is_err());
+        assert!(parse_timeline_asset(
+            br#"{"version":1,"duration":2,"tracks":[{"type":"animation","id":"a","name":"A","target":"Hero","clips":[{"start":0,"duration":1,"clip":"Assets/Animations/A.manim","blend_in":1.1}]}]}"#
+        )
+        .is_err());
+        assert!(parse_timeline_asset(
+            br#"{"version":1,"duration":2,"tracks":[{"type":"animation","id":"a","name":"A","target":"Hero","clips":[{"start":0,"duration":1,"clip":"Assets/Animations/A.manim","blend_curve":"bounce"}]}]}"#
         )
         .is_err());
     }

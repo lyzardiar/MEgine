@@ -3,6 +3,7 @@ import test from 'node:test';
 
 import {
   applyAnimationPreview,
+  blendAnimationPreviewSamples,
   resolveAnimationTarget,
 } from '../src/animationPreview.ts';
 
@@ -52,4 +53,31 @@ test('ignores missing components and unsafe property paths', () => {
   ]);
   assert.deepEqual(preview, entities);
   assert.equal({}.polluted, undefined);
+});
+
+test('blends matching scalar vector quaternion and discrete samples like Runtime', () => {
+  const source = [
+    { target: '.', component: 'Transform', property: 'position', value: [0, 0, 0] },
+    { target: '.', component: 'Transform', property: 'rotation', value: [0, 0, 0, 1] },
+    { target: '.', component: 'State', property: 'visible', value: false },
+    { target: '.', component: 'Transform', property: 'scale', value: [2, 2, 2] },
+  ];
+  const destination = [
+    { target: '.', component: 'Transform', property: 'position', value: [10, 4, 2] },
+    { target: '.', component: 'Transform', property: 'rotation', value: [0, 0, 1, 0] },
+    { target: '.', component: 'State', property: 'visible', value: true },
+    { target: '.', component: 'State', property: 'label', value: 'Run' },
+  ];
+  const blended = blendAnimationPreviewSamples(source, destination, 0.5);
+  assert.deepEqual(blended.find((sample) => sample.property === 'position').value, [5, 2, 1]);
+  const rotation = blended.find((sample) => sample.property === 'rotation').value;
+  assert.ok(Math.abs(rotation[2] - Math.SQRT1_2) < 1e-6);
+  assert.ok(Math.abs(rotation[3] - Math.SQRT1_2) < 1e-6);
+  assert.equal(blended.find((sample) => sample.property === 'visible').value, true);
+  assert.deepEqual(blended.find((sample) => sample.property === 'scale').value, [2, 2, 2]);
+  assert.equal(blended.find((sample) => sample.property === 'label').value, 'Run');
+  assert.deepEqual(blendAnimationPreviewSamples(source, destination, 1)
+    .find((sample) => sample.property === 'scale').value, [2, 2, 2]);
+  assert.equal(blendAnimationPreviewSamples(source, destination, 0.49)
+    .find((sample) => sample.property === 'visible').value, false);
 });
