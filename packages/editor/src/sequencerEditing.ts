@@ -121,6 +121,38 @@ export function combineSequencerMarqueeSelection(
   return [...combined.values()];
 }
 
+export function expandSequencerRippleSelection(
+  asset: TimelineAsset,
+  selections: readonly SequencerItemSelection[],
+): SequencerItemSelection[] {
+  const starts = new Map<number, number>();
+  for (const selection of selections) {
+    if (!Number.isInteger(selection.track) || !Number.isInteger(selection.marker)) continue;
+    const track = asset.tracks[selection.track];
+    if (!track) continue;
+    const item = track.type === 'signal'
+      ? track.markers[selection.marker]
+      : track.clips[selection.marker];
+    if (!item) continue;
+    const time = track.type === 'signal'
+      ? (item as TimelineSignal).time
+      : (item as SequencerClipRange).start;
+    starts.set(selection.track, Math.min(starts.get(selection.track) ?? Number.POSITIVE_INFINITY, time));
+  }
+  const expanded: SequencerItemSelection[] = [];
+  for (const [trackIndex, start] of starts) {
+    const track = asset.tracks[trackIndex];
+    const items = track.type === 'signal' ? track.markers : track.clips;
+    items.forEach((item, marker) => {
+      const time = track.type === 'signal'
+        ? (item as TimelineSignal).time
+        : (item as SequencerClipRange).start;
+      if (time >= start - 1e-6) expanded.push({ track: trackIndex, marker });
+    });
+  }
+  return expanded.sort((left, right) => left.track - right.track || left.marker - right.marker);
+}
+
 export function clampSequencerZoom(value: number): number {
   if (!Number.isFinite(value)) return SEQUENCER_MIN_ZOOM;
   return Math.max(SEQUENCER_MIN_ZOOM, Math.min(SEQUENCER_MAX_ZOOM, value));
@@ -552,6 +584,80 @@ export function moveSequencerItems(
     if (track.type === 'signal') track.markers[selection.marker].time = snap(track.markers[selection.marker].time + delta, next.frame_rate);
     else track.clips[selection.marker].start = snap(track.clips[selection.marker].start + delta, next.frame_rate);
   }
+  return { ok: true, asset: next, delta };
+}
+
+/**
+ * Moves the selected item and every item at or after it on each affected track.
+ * Positive deltas insert time and extend the Timeline when necessary; negative
+ * deltas close time but stop at the previous unshifted clip boundary.
+ */
+export function rippleMoveSequencerItems(
+  asset: TimelineAsset,
+  selections: readonly SequencerItemSelection[],
+  requestedDelta: number,
+): SequencerMoveResult {
+  const unique = new Map<string, SequencerItemSelection>();
+  for (const selection of selections) {
+    if (!Number.isInteger(selection.track) || !Number.isInteger(selection.marker)) continue;
+    unique.set(`${selection.track}:${selection.marker}`, selection);
+  }
+  if (unique.size === 0) return { ok: false, error: 'No Timeline items are selected.' };
+
+  const selectedByTrack = new Map<number, number[]>();
+  for (const selection of unique.values()) {
+    const track = asset.tracks[selection.track];
+    if (!track) return { ok: false, error: 'A selected Timeline track no longer exists.' };
+    if (timelineTrackIsLocked(asset, track)) {
+      return { ok: false, error: `Track '${track.name}' is locked. Unlock it before ripple moving.` };
+    }
+    const count = track.type === 'signal' ? track.markers.length : track.clips.length;
+    if (selection.marker < 0 || selection.marker >= count) {
+      return { ok: false, error: `A selected item on track '${track.name}' no longer exists.` };
+    }
+    const indexes = selectedByTrack.get(selection.track) ?? [];
+    indexes.push(selection.marker);
+    selectedByTrack.set(selection.track, indexes);
+  }
+
+  let minimumDelta = Number.NEGATIVE_INFINITY;
+  const rippleStarts = new Map<number, number>();
+  for (const [trackIndex, selectedIndexes] of selectedByTrack) {
+    const track = asset.tracks[trackIndex];
+    const rippleStart = track.type === 'signal'
+      ? Math.min(...selectedIndexes.map((index) => track.markers[index].time))
+      : Math.min(...selectedIndexes.map((index) => track.clips[index].start));
+    rippleStarts.set(trackIndex, rippleStart);
+    minimumDelta = Math.max(minimumDelta, -rippleStart);
+    if (track.type === 'signal') continue;
+    const previousEnd = track.clips.reduce((end, clip) => (
+      clip.start < rippleStart - 1e-6 ? Math.max(end, clip.start + clip.duration) : end
+    ), 0);
+    if (previousEnd > rippleStart + 1e-6) {
+      return { ok: false, error: `Track '${track.name}' already contains overlapping clips.` };
+    }
+    minimumDelta = Math.max(minimumDelta, previousEnd - rippleStart);
+  }
+
+  const safeDelta = Number.isFinite(requestedDelta) ? requestedDelta : 0;
+  const delta = snap(Math.max(safeDelta, minimumDelta), asset.frame_rate);
+  const next = structuredClone(asset);
+  let contentEnd = next.duration;
+  for (const [trackIndex, rippleStart] of rippleStarts) {
+    const track = next.tracks[trackIndex];
+    if (track.type === 'signal') {
+      for (const marker of track.markers) {
+        if (marker.time >= rippleStart - 1e-6) marker.time = snap(marker.time + delta, next.frame_rate);
+        contentEnd = Math.max(contentEnd, marker.time);
+      }
+      continue;
+    }
+    for (const clip of track.clips) {
+      if (clip.start >= rippleStart - 1e-6) clip.start = snap(clip.start + delta, next.frame_rate);
+      contentEnd = Math.max(contentEnd, clip.start + clip.duration);
+    }
+  }
+  next.duration = Math.max(next.duration, contentEnd);
   return { ok: true, asset: next, delta };
 }
 

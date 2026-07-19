@@ -1142,3 +1142,12 @@ Rust workspace 检查现在零警告通过；Tauri Host 17/17 常规测试与 1/
 - 两遍自审额外处理了两个非表面功能：第一遍把前端递归解析抽成可注入读取器，用嵌套实例与大小写循环测试固定语义；第二遍修复普通材质和实例共有的异步保存竞态。保存期间继续编辑只推进保存基线而不覆盖新输入，保存期间切换文档只更新原路径后台草稿，不会把旧任务结果写进新资产面板。
 
 这一批完成的是可日常使用的固定 PBR Override 实例工作流，仍不代表材质系统完备。下一阶段需要把 CSS 近似球替换为 Player 同管线离屏预览，并实现 Shader 参数反射驱动的任意属性/纹理 Override、Keyword 与 Variant 管理和预热、Shader Cache、GPU Instancing/SRP Batcher 兼容布局、材质依赖图、Frame Debugger，以及 Transmission/Thickness、Sheen、Subsurface 和 Clear Coat Normal/Mask 等高级模型。
+
+## 94. 2026-07-19 Sequencer Ripple Move 与时间插入
+
+- `.mtimeline` Sequencer 工具栏新增可持久化 Ripple Move 模式。开启后拖动或方向键微调一个/多个项目，不再只移动显式选择，而是按每条受影响轨道从最早选择时间开始整体平移后缀；向右等价于插入时间并在必要时扩展 Timeline，向左关闭空隙但不会穿过前一个未移动 Clip。Signal、Activation、Audio、Animation、Particle 和 Camera 使用同一求解器。
+- Ripple 仍遵守 Track 与 Track Group Lock，多轨选择共享同一个帧对齐 Delta，源资产保持不可变。鼠标拖动、方向键及系统 Key Repeat 分别合并为单次全局 Undo；同一次键盘事务若切换 Ripple 语义会先封口，避免普通 Move 和 Ripple Move 被错误合并。`Alt` 可在一次拖动或微调中临时反转当前模式，不必频繁改持久偏好。
+- 磁吸不再只排除显式选择。编辑器先展开每条受影响轨道的真实 Ripple 后缀，再把完整移动集合交给磁吸求解器，因此即将一起移动的后续 Clip/Marker 不会被误当成静止目标；Snap Guide、最终 Delta 与实际落点保持一致。Timeline 起止、播放头和其他未移动轨道仍可作为合法磁吸目标。
+- 第一遍自审发现后缀项目会造成自吸附与假 Guide，已用“实际移动集合”修复并补回归；第二遍自审核对了向左边界、向右时长扩展、跨轨 Signal/Clip、锁定、资产不可变、临时模式反转和键盘事务封口。该功能只改变编辑器时间布局，不修改 `.mtimeline` v1 格式或 Runtime 调度语义。
+
+这一切片补齐了长时间轴插入/收紧时间的核心操作，但 Timeline 仍未完备。下一阶段仍需音频波形、稳定 Binding Table、Animator/Blend Track、嵌套 Timeline、录制模式、轨道拖拽排序/入组、Solo、组颜色与高度、运行时性能分析，以及 Animation Clip Timeline 与 Sequencer 之间更统一的时间域和快捷键。

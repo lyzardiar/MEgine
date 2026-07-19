@@ -7,6 +7,7 @@ import {
   copySequencerItem,
   copySequencerItems,
   deleteSequencerItems,
+  expandSequencerRippleSelection,
   findSequencerClipPlacement,
   lockedSequencerContentEnd,
   moveSequencerClip,
@@ -15,6 +16,7 @@ import {
   pasteSequencerItem,
   pasteSequencerClipboard,
   resolveSequencerPasteTrack,
+  rippleMoveSequencerItems,
   selectSequencerItem,
   sequencerTicks,
   snapSequencerItemsDelta,
@@ -263,6 +265,64 @@ test('Sequencer group movement shares one collision bound and rejects locked tra
   const groupLocked = moveSequencerItems(asset, [{ track: 0, marker: 0 }], 1);
   assert.equal(groupLocked.ok, false);
   assert.match(groupLocked.error, /locked/);
+});
+
+test('Sequencer ripple movement shifts each affected suffix and extends duration', () => {
+  const asset = timeline();
+  asset.tracks[1].clips = [
+    { start: 0, duration: 1, clip: 'Assets/a.ogg', clip_in: 0, volume: 1, pitch: 1, looped: false },
+    { start: 2, duration: 1, clip: 'Assets/b.ogg', clip_in: 0, volume: 1, pitch: 1, looped: false },
+    { start: 4, duration: 1, clip: 'Assets/c.ogg', clip_in: 0, volume: 1, pitch: 1, looped: false },
+    { start: 6, duration: 1, clip: 'Assets/d.ogg', clip_in: 0, volume: 1, pitch: 1, looped: false },
+  ];
+  const moved = rippleMoveSequencerItems(asset, [
+    { track: 0, marker: 0 },
+    { track: 1, marker: 1 },
+  ], 2);
+  assert.equal(moved.ok, true);
+  assert.equal(moved.delta, 2);
+  assert.equal(moved.asset.duration, 9);
+  assert.deepEqual(moved.asset.tracks[0].markers.map((marker) => marker.time), [3]);
+  assert.deepEqual(moved.asset.tracks[1].clips.map((clip) => clip.start), [0, 4, 6, 8]);
+  assert.deepEqual(asset.tracks[1].clips.map((clip) => clip.start), [0, 2, 4, 6]);
+  assert.deepEqual(expandSequencerRippleSelection(asset, [
+    { track: 0, marker: 0 },
+    { track: 1, marker: 1 },
+  ]), [
+    { track: 0, marker: 0 },
+    { track: 1, marker: 1 },
+    { track: 1, marker: 2 },
+    { track: 1, marker: 3 },
+  ]);
+  assert.deepEqual(
+    snapSequencerItemsDelta(
+      asset,
+      expandSequencerRippleSelection(asset, [{ track: 1, marker: 1 }]),
+      0.86,
+      0,
+      0.15,
+    ),
+    { delta: 1, guideTime: 8 },
+  );
+});
+
+test('Sequencer ripple movement closes time but preserves the previous clip boundary', () => {
+  const asset = timeline();
+  asset.tracks[1].clips = [
+    { start: 0, duration: 1, clip: 'Assets/a.ogg', clip_in: 0, volume: 1, pitch: 1, looped: false },
+    { start: 2, duration: 1, clip: 'Assets/b.ogg', clip_in: 0, volume: 1, pitch: 1, looped: false },
+    { start: 4, duration: 1, clip: 'Assets/c.ogg', clip_in: 0, volume: 1, pitch: 1, looped: false },
+  ];
+  const moved = rippleMoveSequencerItems(asset, [{ track: 1, marker: 1 }], -99);
+  assert.equal(moved.ok, true);
+  assert.equal(moved.delta, -1);
+  assert.deepEqual(moved.asset.tracks[1].clips.map((clip) => clip.start), [0, 1, 3]);
+  assert.equal(moved.asset.duration, 8);
+
+  asset.tracks[1].locked = true;
+  const locked = rippleMoveSequencerItems(asset, [{ track: 1, marker: 1 }], 1);
+  assert.equal(locked.ok, false);
+  assert.match(locked.error, /locked/);
 });
 
 test('Sequencer magnetic snapping aligns selected edges without using selected items as targets', () => {

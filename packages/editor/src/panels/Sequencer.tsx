@@ -23,6 +23,7 @@ import {
   Magnet,
   Maximize2,
   Minus,
+  MoveHorizontal,
   Pause,
   Play,
   Plus,
@@ -70,12 +71,14 @@ import {
   combineSequencerMarqueeSelection,
   copySequencerItems,
   deleteSequencerItems,
+  expandSequencerRippleSelection,
   findSequencerClipPlacement,
   lockedSequencerContentEnd,
   moveSequencerClip,
   moveSequencerItems,
   moveSequencerTrack,
   pasteSequencerClipboard,
+  rippleMoveSequencerItems,
   sequencerTicks,
   selectSequencerItem,
   snapSequencerItemsDelta,
@@ -86,6 +89,7 @@ import {
 } from '../sequencerEditing';
 
 const SEQUENCER_SNAPPING_KEY = 'mengine.sequencer.snapping';
+const SEQUENCER_RIPPLE_KEY = 'mengine.sequencer.ripple';
 const SEQUENCER_SNAP_THRESHOLD_PX = 8;
 
 function loadSequencerSnapping(): boolean {
@@ -93,6 +97,14 @@ function loadSequencerSnapping(): boolean {
     return localStorage.getItem(SEQUENCER_SNAPPING_KEY) !== '0';
   } catch {
     return true;
+  }
+}
+
+function loadSequencerRipple(): boolean {
+  try {
+    return localStorage.getItem(SEQUENCER_RIPPLE_KEY) === '1';
+  } catch {
+    return false;
   }
 }
 
@@ -150,6 +162,7 @@ type InspectorEditTransaction = HistorySnapshot & {
 type KeyboardNudgeTransaction = HistorySnapshot & {
   historyCheckpoint: EditorUndoCheckpoint;
   historyToken: EditorUndoToken | null;
+  ripple: boolean;
 };
 type SequencerMarquee = {
   left: number;
@@ -192,6 +205,7 @@ export function Sequencer(props: SequencerProps) {
   const [payloadInvalid, setPayloadInvalid] = useState(false);
   const [zoom, setZoom] = useState(1);
   const [snapping, setSnapping] = useState(loadSequencerSnapping);
+  const [rippleMode, setRippleMode] = useState(loadSequencerRipple);
   const [snapGuide, setSnapGuide] = useState<number | null>(null);
   const [tracksWidth, setTracksWidth] = useState(720);
   const [clipboard, setClipboard] = useState<SequencerClipboard | null>(null);
@@ -996,6 +1010,7 @@ export function Sequencer(props: SequencerProps) {
         : targetBounds.width - edgeDistance <= 7
           ? 'end'
           : null;
+    const rippleGesture = rippleMode !== event.altKey;
     const clicked = { track: trackIndex, marker: markerIndex };
     const selectionAnchor = selection?.marker != null
       ? { track: selection.track, marker: selection.marker }
@@ -1052,10 +1067,13 @@ export function Sequencer(props: SequencerProps) {
       if (moveEvent.pointerId !== pointer) return;
       const position = Math.max(0, Math.min(1, (moveEvent.clientX - bounds.left) / Math.max(1, bounds.width)));
       const requestedDelta = position * asset.duration - pointerStartTime;
+      const snappingItems = rippleGesture && !trimEdge
+        ? expandSequencerRippleSelection(asset, dragItems)
+        : dragItems;
       const magnetic = snapping
         ? snapSequencerItemsDelta(
           asset,
-          dragItems,
+          snappingItems,
           requestedDelta,
           snapPlayhead,
           snapThreshold,
@@ -1063,7 +1081,9 @@ export function Sequencer(props: SequencerProps) {
         )
         : { delta: requestedDelta, guideTime: null };
       if (!trimEdge) {
-        const moved = moveSequencerItems(asset, dragItems, magnetic.delta);
+        const moved = rippleGesture
+          ? rippleMoveSequencerItems(asset, dragItems, magnetic.delta)
+          : moveSequencerItems(asset, dragItems, magnetic.delta);
         if (!moved.ok) {
           setSnapGuide(null);
           setError(moved.error);
@@ -1075,7 +1095,9 @@ export function Sequencer(props: SequencerProps) {
             selectionBeforeDrag,
             timeBeforeDrag,
             selectedItemsBeforeDrag,
-            dragItems.length > 1 ? 'Move Timeline Items' : 'Move Timeline Item',
+            rippleGesture
+              ? (dragItems.length > 1 ? 'Ripple Move Timeline Items' : 'Ripple Move Timeline Item')
+              : (dragItems.length > 1 ? 'Move Timeline Items' : 'Move Timeline Item'),
           );
         }
         replaceAsset(moved.asset);
@@ -1339,7 +1361,7 @@ export function Sequencer(props: SequencerProps) {
     props.undoService.restoreCheckpoint(transaction.historyCheckpoint);
   };
 
-  const nudgeSelectedItems = (frames: number) => {
+  const nudgeSelectedItems = (frames: number, useRipple = rippleMode) => {
     const current = assetRef.current;
     const items = selectedItemsRef.current;
     if (!current || items.length === 0) return false;
@@ -1349,12 +1371,15 @@ export function Sequencer(props: SequencerProps) {
       && (
         (activeTransaction.historyToken != null && !props.undoService.isUndoTop(activeTransaction.historyToken))
         || JSON.stringify(activeTransaction.selectedItems) !== JSON.stringify(items)
+        || activeTransaction.ripple !== useRipple
       )
     ) {
       finishKeyboardNudge();
     }
     const requestedDelta = frames / current.frame_rate;
-    const moved = moveSequencerItems(current, items, requestedDelta);
+    const moved = useRipple
+      ? rippleMoveSequencerItems(current, items, requestedDelta)
+      : moveSequencerItems(current, items, requestedDelta);
     if (!moved.ok) {
       setError(moved.error);
       return true;
@@ -1372,6 +1397,7 @@ export function Sequencer(props: SequencerProps) {
         time: timeRef.current,
         historyCheckpoint: props.undoService.checkpoint(),
         historyToken: null,
+        ripple: useRipple,
       };
       keyboardNudge.current = transaction;
     }
@@ -1381,7 +1407,7 @@ export function Sequencer(props: SequencerProps) {
         transaction.selection,
         transaction.time,
         transaction.selectedItems,
-        'Nudge Timeline Items',
+        useRipple ? 'Ripple Nudge Timeline Items' : 'Nudge Timeline Items',
       );
     }
     replaceAsset(moved.asset);
@@ -1489,6 +1515,16 @@ export function Sequencer(props: SequencerProps) {
     if (!next) setSnapGuide(null);
     try {
       localStorage.setItem(SEQUENCER_SNAPPING_KEY, next ? '1' : '0');
+    } catch {
+      /* ignore unavailable storage */
+    }
+  };
+  const toggleRippleMode = () => {
+    finishKeyboardNudge();
+    const next = !rippleMode;
+    setRippleMode(next);
+    try {
+      localStorage.setItem(SEQUENCER_RIPPLE_KEY, next ? '1' : '0');
     } catch {
       /* ignore unavailable storage */
     }
@@ -1634,7 +1670,7 @@ export function Sequencer(props: SequencerProps) {
           event.preventDefault();
           event.stopPropagation();
           const frames = (event.key === 'ArrowLeft' ? -1 : 1) * (event.shiftKey ? 10 : 1);
-          if (!nudgeSelectedItems(frames)) {
+          if (!nudgeSelectedItems(frames, rippleMode !== event.altKey)) {
             scrub(snapTimelineAssetTime(displayTime + frames / asset.frame_rate, asset));
           }
           return;
@@ -1666,6 +1702,7 @@ export function Sequencer(props: SequencerProps) {
           <button type="button" aria-label="Paste at playhead" title="Paste at playhead (Ctrl+V)" disabled={!clipboard} onClick={() => pasteItem(clipboard, displayTime)}><ClipboardPaste size={13} /></button>
           <button type="button" aria-label="Delete Timeline selection" title="Delete selected group, track, or items (Delete)" disabled={!selection} onClick={() => deleteSelection()}><Trash2 size={13} /></button>
           <button type="button" aria-label="Ripple delete selected clips" title="Ripple Delete per affected track (Shift+Delete)" disabled={!rippleEligible} onClick={() => deleteSelection(true)}><ChevronsLeft size={13} /></button>
+          <button type="button" className={rippleMode ? 'active' : ''} aria-pressed={rippleMode} aria-label="Toggle Timeline Ripple Move" title={`Ripple Move ${rippleMode ? 'on' : 'off'} · shifts the affected track suffix · Alt temporarily inverts`} onClick={toggleRippleMode}><MoveHorizontal size={13} /></button>
           <button type="button" className={snapping ? 'active' : ''} aria-pressed={snapping} aria-label="Toggle Timeline snapping" title={`Magnetic snapping ${snapping ? 'on' : 'off'} (${SEQUENCER_SNAP_THRESHOLD_PX}px)`} onClick={toggleSnapping}><Magnet size={13} /></button>
         </div>
         <label className="timeline-time">Time <input type="number" min={0} max={asset.duration} step={1 / asset.frame_rate} value={Number(displayTime.toFixed(4))} onChange={(event) => {
