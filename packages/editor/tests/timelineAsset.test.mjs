@@ -7,9 +7,11 @@ import {
   parseTimelineAsset,
   serializeTimelineAsset,
   snapTimelineAssetTime,
+  timelineHasSolo,
   timelineGroupForTrack,
   timelineTrackIsLocked,
   timelineTrackIsMuted,
+  timelineTrackIsSolo,
 } from '../src/timelineAsset.ts';
 
 test('timeline asset normalizes signal tracks and round trips', () => {
@@ -21,6 +23,7 @@ test('timeline asset normalizes signal tracks and round trips', () => {
     ] }],
   });
   assert.equal(asset.name, 'Intro');
+  assert.equal(asset.tracks[0].solo, false);
   assert.equal(asset.tracks[0].locked, false);
   assert.deepEqual(asset.tracks[0].markers.map((marker) => marker.name), ['Start', 'End']);
   assert.deepEqual(parseTimelineAsset(serializeTimelineAsset(asset)), asset);
@@ -51,7 +54,7 @@ test('timeline track groups round trip and contribute effective mute and lock st
     }],
   }));
   assert.deepEqual(asset.groups, [{
-    id: 'presentation', name: 'Presentation', muted: true, locked: true, collapsed: true,
+    id: 'presentation', name: 'Presentation', solo: false, muted: true, locked: true, collapsed: true,
     track_ids: ['events'],
   }]);
   assert.equal(timelineGroupForTrack(asset, 'events')?.id, 'presentation');
@@ -81,6 +84,47 @@ test('timeline track groups round trip and contribute effective mute and lock st
     tracks: [{ type: 'signal', id: 'events', name: 'Events' }],
     groups: [{ id: 'a', name: 'A', track_ids: ['missing'] }],
   })), /missing track/);
+});
+
+test('timeline Solo filters non-solo tracks while mute remains authoritative', () => {
+  const asset = parseTimelineAsset(JSON.stringify({
+    version: 1,
+    name: 'Solo',
+    duration: 2,
+    tracks: [
+      { type: 'signal', id: 'events', name: 'Events' },
+      { type: 'signal', id: 'dialogue', name: 'Dialogue', solo: true },
+      { type: 'signal', id: 'muted', name: 'Muted', solo: true, muted: true },
+      { type: 'signal', id: 'grouped', name: 'Grouped' },
+    ],
+    groups: [{ id: 'presentation', name: 'Presentation', solo: true, track_ids: ['grouped'] }],
+  }));
+  assert.equal(timelineTrackIsSolo(asset, asset.tracks[0]), false);
+  assert.equal(timelineTrackIsMuted(asset, asset.tracks[0]), true);
+  assert.equal(timelineTrackIsSolo(asset, asset.tracks[1]), true);
+  assert.equal(timelineTrackIsMuted(asset, asset.tracks[1]), false);
+  assert.equal(timelineTrackIsMuted(asset, asset.tracks[2]), true);
+  assert.equal(timelineTrackIsSolo(asset, asset.tracks[3]), true);
+  assert.equal(timelineTrackIsMuted(asset, asset.tracks[3]), false);
+  assert.deepEqual(parseTimelineAsset(serializeTimelineAsset(asset)), asset);
+
+  const emptyGroup = parseTimelineAsset(JSON.stringify({
+    version: 1, duration: 1,
+    tracks: [{ type: 'signal', id: 'events', name: 'Events' }],
+    groups: [{ id: 'empty', name: 'Empty', solo: true, track_ids: [] }],
+  }));
+  assert.equal(timelineHasSolo(emptyGroup), false);
+  assert.equal(timelineTrackIsMuted(emptyGroup, emptyGroup.tracks[0]), false);
+
+  assert.throws(() => parseTimelineAsset(JSON.stringify({
+    version: 1, duration: 1,
+    tracks: [{ type: 'signal', id: 'events', name: 'Events', solo: 'yes' }],
+  })), /solo must be boolean/);
+  assert.throws(() => parseTimelineAsset(JSON.stringify({
+    version: 1, duration: 1,
+    tracks: [{ type: 'signal', id: 'events', name: 'Events' }],
+    groups: [{ id: 'group', name: 'Group', solo: 'yes', track_ids: ['events'] }],
+  })), /solo must be boolean/);
 });
 
 test('timeline activation tracks normalize bindings and reject ambiguous clips', () => {

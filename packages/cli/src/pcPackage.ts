@@ -1568,6 +1568,9 @@ function scanBuildAssetDependencies(
           throw new Error(`invalid Timeline asset ${source}: track ids and names must be non-empty and ids unique`);
         }
         trackIds.add(id);
+        if (track.solo != null && typeof track.solo !== 'boolean') {
+          throw new Error(`invalid Timeline asset ${source}: track solo must be boolean`);
+        }
         if (track.muted != null && typeof track.muted !== 'boolean') {
           throw new Error(`invalid Timeline asset ${source}: track muted must be boolean`);
         }
@@ -1775,7 +1778,8 @@ function scanBuildAssetDependencies(
           throw new Error(`invalid Timeline asset ${source}: group ids and names must be non-empty and ids unique`);
         }
         groupIds.add(id);
-        if (group.muted != null && typeof group.muted !== 'boolean'
+        if (group.solo != null && typeof group.solo !== 'boolean'
+          || group.muted != null && typeof group.muted !== 'boolean'
           || group.locked != null && typeof group.locked !== 'boolean'
           || group.collapsed != null && typeof group.collapsed !== 'boolean') {
           throw new Error(`invalid Timeline asset ${source}: group flags must be boolean`);

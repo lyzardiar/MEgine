@@ -788,7 +788,7 @@ test('buildPcPackage includes and validates TimelineDirector assets', () => {
       duration: 3,
       frame_rate: 30,
       tracks: [{
-        type: 'signal', id: 'gameplay', name: 'Gameplay',
+        type: 'signal', id: 'gameplay', name: 'Gameplay', solo: true,
         markers: [{ time: 1.5, name: 'SpawnBoss', payload: { phase: 2 } }],
       }, {
         type: 'activation', id: 'dialog', name: 'Dialog Visibility', target: 'Canvas/Dialog',
@@ -813,7 +813,7 @@ test('buildPcPackage includes and validates TimelineDirector assets', () => {
         ],
       }],
       groups: [{
-        id: 'presentation', name: 'Presentation', muted: false, locked: false, collapsed: true,
+        id: 'presentation', name: 'Presentation', solo: true, muted: false, locked: false, collapsed: true,
         track_ids: ['dialog', 'music', 'shots'],
       }],
     }));
@@ -831,6 +831,37 @@ test('buildPcPackage includes and validates TimelineDirector assets', () => {
     assert.equal(existsSync(join(paths.output, 'Assets', 'Audio', 'intro.ogg')), true);
     assert.equal(existsSync(join(paths.output, 'Assets', 'Animations', 'Hero.manim')), true);
     assert.equal(manifest.assetValidation.validatedFiles, 6);
+  } finally {
+    rmSync(paths.root, { recursive: true, force: true });
+  }
+});
+
+test('buildPcPackage rejects non-boolean Timeline Solo flags', () => {
+  const paths = fixture('invalid-timeline-solo');
+  try {
+    writeFileSync(join(paths.project, 'Assets', 'Scenes', 'Main.mscene'), JSON.stringify({
+      world: { entities: [{ components: {
+        TimelineDirector: { asset: 'Assets/Timelines/Broken.mtimeline' },
+      } }] },
+    }));
+    const build = () => buildPcPackage({
+      projectDir: paths.project,
+      outputDir: paths.output,
+      runtimePath: paths.runtime,
+      engineVersion: 'test-engine',
+    });
+    writeFileSync(join(paths.project, 'Assets', 'Timelines', 'Broken.mtimeline'), JSON.stringify({
+      version: 1, duration: 1,
+      tracks: [{ type: 'signal', id: 'signals', name: 'Signals', solo: 'yes' }],
+    }));
+    assert.throws(build, /track solo must be boolean/);
+    writeFileSync(join(paths.project, 'Assets', 'Timelines', 'Broken.mtimeline'), JSON.stringify({
+      version: 1, duration: 1,
+      tracks: [{ type: 'signal', id: 'signals', name: 'Signals' }],
+      groups: [{ id: 'group', name: 'Group', solo: 'yes', track_ids: ['signals'] }],
+    }));
+    assert.throws(build, /group flags must be boolean/);
+    assert.equal(existsSync(paths.output), false);
   } finally {
     rmSync(paths.root, { recursive: true, force: true });
   }

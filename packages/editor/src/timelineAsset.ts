@@ -51,6 +51,7 @@ export type TimelineSignalTrack = {
   type: 'signal';
   id: string;
   name: string;
+  solo: boolean;
   muted: boolean;
   locked: boolean;
   markers: TimelineSignal[];
@@ -60,6 +61,7 @@ export type TimelineActivationTrack = {
   type: 'activation';
   id: string;
   name: string;
+  solo: boolean;
   muted: boolean;
   locked: boolean;
   target: string;
@@ -70,6 +72,7 @@ export type TimelineAudioTrack = {
   type: 'audio';
   id: string;
   name: string;
+  solo: boolean;
   muted: boolean;
   locked: boolean;
   target: string;
@@ -80,6 +83,7 @@ export type TimelineAnimationTrack = {
   type: 'animation';
   id: string;
   name: string;
+  solo: boolean;
   muted: boolean;
   locked: boolean;
   target: string;
@@ -90,6 +94,7 @@ export type TimelineParticleTrack = {
   type: 'particle';
   id: string;
   name: string;
+  solo: boolean;
   muted: boolean;
   locked: boolean;
   target: string;
@@ -100,6 +105,7 @@ export type TimelineCameraTrack = {
   type: 'camera';
   id: string;
   name: string;
+  solo: boolean;
   muted: boolean;
   locked: boolean;
   clips: TimelineCameraClip[];
@@ -110,6 +116,7 @@ export type TimelineTrack = TimelineSignalTrack | TimelineActivationTrack | Time
 export type TimelineTrackGroup = {
   id: string;
   name: string;
+  solo: boolean;
   muted: boolean;
   locked: boolean;
   collapsed: boolean;
@@ -188,6 +195,7 @@ export function createTimelineAsset(name = 'New Timeline'): TimelineAsset {
       type: 'signal',
       id: 'signals',
       name: 'Signals',
+      solo: false,
       muted: false,
       locked: false,
       markers: [],
@@ -222,7 +230,7 @@ export function normalizeTimelineAsset(value: unknown): TimelineAsset {
           } satisfies TimelineSignal;
         })
         .sort((left, right) => left.time - right.time || left.name.localeCompare(right.name));
-      tracks.push({ type, id, name, muted: Boolean(track.muted), locked: Boolean(track.locked), markers });
+      tracks.push({ type, id, name, solo: Boolean(track.solo), muted: Boolean(track.muted), locked: Boolean(track.locked), markers });
     } else if (type === 'activation') {
       const clips = (Array.isArray(track.clips) ? track.clips : [])
         .map((clipValue) => {
@@ -239,6 +247,7 @@ export function normalizeTimelineAsset(value: unknown): TimelineAsset {
         type,
         id,
         name,
+        solo: Boolean(track.solo),
         muted: Boolean(track.muted),
         locked: Boolean(track.locked),
         target: activationTarget(track.target),
@@ -268,6 +277,7 @@ export function normalizeTimelineAsset(value: unknown): TimelineAsset {
         type,
         id,
         name,
+        solo: Boolean(track.solo),
         muted: Boolean(track.muted),
         locked: Boolean(track.locked),
         target: activationTarget(track.target),
@@ -291,6 +301,7 @@ export function normalizeTimelineAsset(value: unknown): TimelineAsset {
         type,
         id,
         name,
+        solo: Boolean(track.solo),
         muted: Boolean(track.muted),
         locked: Boolean(track.locked),
         target: activationTarget(track.target),
@@ -313,6 +324,7 @@ export function normalizeTimelineAsset(value: unknown): TimelineAsset {
         type,
         id,
         name,
+        solo: Boolean(track.solo),
         muted: Boolean(track.muted),
         locked: Boolean(track.locked),
         target: activationTarget(track.target),
@@ -334,7 +346,7 @@ export function normalizeTimelineAsset(value: unknown): TimelineAsset {
           } satisfies TimelineCameraClip;
         })
         .sort((left, right) => left.start - right.start);
-      tracks.push({ type, id, name, muted: Boolean(track.muted), locked: Boolean(track.locked), clips });
+      tracks.push({ type, id, name, solo: Boolean(track.solo), muted: Boolean(track.muted), locked: Boolean(track.locked), clips });
     }
   }
   const groups: TimelineTrackGroup[] = [];
@@ -357,6 +369,7 @@ export function normalizeTimelineAsset(value: unknown): TimelineAsset {
     groups.push({
       id,
       name: String(group.name ?? '').trim() || `Group ${index + 1}`,
+      solo: Boolean(group.solo),
       muted: Boolean(group.muted),
       locked: Boolean(group.locked),
       collapsed: Boolean(group.collapsed),
@@ -483,8 +496,25 @@ export function timelineTrackIsLocked(asset: Pick<TimelineAsset, 'groups'>, trac
   return track.locked || Boolean(timelineGroupForTrack(asset, track.id)?.locked);
 }
 
-export function timelineTrackIsMuted(asset: Pick<TimelineAsset, 'groups'>, track: TimelineTrack): boolean {
-  return track.muted || Boolean(timelineGroupForTrack(asset, track.id)?.muted);
+export function timelineTrackIsSolo(asset: Pick<TimelineAsset, 'groups'>, track: TimelineTrack): boolean {
+  return track.solo || Boolean(timelineGroupForTrack(asset, track.id)?.solo);
+}
+
+export function timelineHasSolo(asset: Pick<TimelineAsset, 'groups' | 'tracks'>): boolean {
+  if (asset.tracks.some((candidate) => candidate.solo)) return true;
+  const trackIds = new Set(asset.tracks.map((candidate) => candidate.id));
+  return asset.groups.some((candidate) => candidate.solo
+    && candidate.track_ids.some((trackId) => trackIds.has(trackId)));
+}
+
+export function timelineTrackIsMuted(
+  asset: Pick<TimelineAsset, 'groups' | 'tracks'>,
+  track: TimelineTrack,
+  hasSolo = timelineHasSolo(asset),
+): boolean {
+  const group = timelineGroupForTrack(asset, track.id);
+  if (track.muted || group?.muted) return true;
+  return hasSolo && !track.solo && !group?.solo;
 }
 
 export function assignTimelineTrackGroup(
@@ -542,6 +572,7 @@ export function parseTimelineAsset(text: string): TimelineAsset {
     }
     ids.add(track.id.trim());
     if (typeof track.name !== 'string' || !track.name.trim()) throw new Error(`Timeline track ${track.id} must have a name`);
+    if (track.solo != null && typeof track.solo !== 'boolean') throw new Error(`Timeline track ${track.id} solo must be boolean`);
     if (track.muted != null && typeof track.muted !== 'boolean') throw new Error(`Timeline track ${track.id} muted must be boolean`);
     if (track.locked != null && typeof track.locked !== 'boolean') throw new Error(`Timeline track ${track.id} locked must be boolean`);
     if (track.type === 'signal') {
@@ -631,6 +662,7 @@ export function parseTimelineAsset(text: string): TimelineAsset {
     }
     groupIds.add(group.id.trim());
     if (typeof group.name !== 'string' || !group.name.trim()) throw new Error(`Timeline group ${group.id} must have a name`);
+    if (group.solo != null && typeof group.solo !== 'boolean') throw new Error(`Timeline group ${group.id} solo must be boolean`);
     if (group.muted != null && typeof group.muted !== 'boolean') throw new Error(`Timeline group ${group.id} muted must be boolean`);
     if (group.locked != null && typeof group.locked !== 'boolean') throw new Error(`Timeline group ${group.id} locked must be boolean`);
     if (group.collapsed != null && typeof group.collapsed !== 'boolean') throw new Error(`Timeline group ${group.id} collapsed must be boolean`);

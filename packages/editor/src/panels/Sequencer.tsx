@@ -53,9 +53,11 @@ import {
   serializeTimelineAsset,
   snapTimelineAssetTime,
   TIMELINE_MAX_PARTICLE_TIME,
+  timelineHasSolo,
   timelineGroupForTrack,
   timelineTrackIsLocked,
   timelineTrackIsMuted,
+  timelineTrackIsSolo,
   validateTimelineAsset,
   type TimelineAsset,
   type TimelineAudioClip,
@@ -623,7 +625,7 @@ export function Sequencer(props: SequencerProps) {
     let index = asset.tracks.length + 1;
     let id = `signals-${index}`;
     while (used.has(id)) id = `signals-${++index}`;
-    update((draft) => draft.tracks.push({ type: 'signal', id, name: `Signal Track ${index}`, muted: false, locked: false, markers: [] }));
+    update((draft) => draft.tracks.push({ type: 'signal', id, name: `Signal Track ${index}`, solo: false, muted: false, locked: false, markers: [] }));
     applySelection({ track: asset.tracks.length, marker: null });
   };
 
@@ -634,7 +636,7 @@ export function Sequencer(props: SequencerProps) {
     let id = `activation-${index}`;
     while (used.has(id)) id = `activation-${++index}`;
     update((draft) => draft.tracks.push({
-      type: 'activation', id, name: `Activation Track ${index}`, muted: false, locked: false, target: 'Child', clips: [],
+      type: 'activation', id, name: `Activation Track ${index}`, solo: false, muted: false, locked: false, target: 'Child', clips: [],
     }));
     applySelection({ track: asset.tracks.length, marker: null });
   };
@@ -646,7 +648,7 @@ export function Sequencer(props: SequencerProps) {
     let id = `audio-${index}`;
     while (used.has(id)) id = `audio-${++index}`;
     update((draft) => draft.tracks.push({
-      type: 'audio', id, name: `Audio Track ${index}`, muted: false, locked: false, target: 'AudioSource', clips: [],
+      type: 'audio', id, name: `Audio Track ${index}`, solo: false, muted: false, locked: false, target: 'AudioSource', clips: [],
     }));
     applySelection({ track: asset.tracks.length, marker: null });
   };
@@ -658,7 +660,7 @@ export function Sequencer(props: SequencerProps) {
     let id = `animation-${index}`;
     while (used.has(id)) id = `animation-${++index}`;
     update((draft) => draft.tracks.push({
-      type: 'animation', id, name: `Animation Track ${index}`, muted: false, locked: false, target: 'Animated', clips: [],
+      type: 'animation', id, name: `Animation Track ${index}`, solo: false, muted: false, locked: false, target: 'Animated', clips: [],
     }));
     applySelection({ track: asset.tracks.length, marker: null });
   };
@@ -670,7 +672,7 @@ export function Sequencer(props: SequencerProps) {
     let id = `particle-${index}`;
     while (used.has(id)) id = `particle-${++index}`;
     update((draft) => draft.tracks.push({
-      type: 'particle', id, name: `Particle Track ${index}`, muted: false, locked: false, target: 'Particles', clips: [],
+      type: 'particle', id, name: `Particle Track ${index}`, solo: false, muted: false, locked: false, target: 'Particles', clips: [],
     }));
     applySelection({ track: asset.tracks.length, marker: null });
   };
@@ -686,7 +688,7 @@ export function Sequencer(props: SequencerProps) {
     let id = `camera-${index}`;
     while (used.has(id)) id = `camera-${++index}`;
     update((draft) => draft.tracks.push({
-      type: 'camera', id, name: `Camera Track ${index}`, muted: false, locked: false, clips: [],
+      type: 'camera', id, name: `Camera Track ${index}`, solo: false, muted: false, locked: false, clips: [],
     }));
     applySelection({ track: asset.tracks.length, marker: null });
   };
@@ -719,6 +721,7 @@ export function Sequencer(props: SequencerProps) {
       draft.groups.push({
         id,
         name: `Group ${index}`,
+        solo: false,
         muted: false,
         locked: false,
         collapsed: false,
@@ -1500,6 +1503,7 @@ export function Sequencer(props: SequencerProps) {
     : null;
   const selectedTrack = selection && selection.track >= 0 ? asset.tracks[selection.track] : null;
   const selectedTrackLocked = Boolean(selectedTrack && timelineTrackIsLocked(asset, selectedTrack));
+  const hasSolo = timelineHasSolo(asset);
   const groupByTrackId = new Map<string, TimelineTrackGroup>();
   const firstTrackByGroupId = new Map<string, number>();
   for (const group of asset.groups) {
@@ -1647,7 +1651,7 @@ export function Sequencer(props: SequencerProps) {
       return Boolean(trackId && group.track_ids.includes(trackId));
     }).length;
     return <div
-      className={`sequencer-group-row${selection?.groupId === group.id ? ' selected' : ''}${group.muted ? ' muted' : ''}${group.locked ? ' locked' : ''}`}
+      className={`sequencer-group-row${selection?.groupId === group.id ? ' selected' : ''}${group.solo ? ' solo' : ''}${group.muted ? ' muted' : ''}${group.locked ? ' locked' : ''}`}
       key={`group-${group.id}`}
     >
       <div className="sequencer-track-header sequencer-group-header">
@@ -1663,6 +1667,16 @@ export function Sequencer(props: SequencerProps) {
         <button type="button" className="sequencer-group-name" onClick={() => applySelection({ track: -1, marker: null, groupId: group.id })}>
           <FolderTree size={13} /> <span>{group.name}</span>
         </button>
+        <button
+          type="button"
+          className={group.solo ? 'active solo' : ''}
+          aria-pressed={group.solo}
+          title={`${group.solo ? 'Disable' : 'Enable'} group Solo`}
+          onClick={() => update((draft) => {
+            const target = draft.groups.find((candidate) => candidate.id === group.id);
+            if (target) target.solo = !target.solo;
+          }, group.solo ? 'Disable Timeline Track Group Solo' : 'Solo Timeline Track Group')}
+        >S</button>
         <button
           type="button"
           className={group.muted ? 'active' : ''}
@@ -1685,7 +1699,7 @@ export function Sequencer(props: SequencerProps) {
         ><Lock size={11} /></button>
       </div>
       <div className="sequencer-lane sequencer-group-lane" onClick={() => applySelection({ track: -1, marker: null, groupId: group.id })}>
-        <span>{group.track_ids.length} track{group.track_ids.length === 1 ? '' : 's'}{selectedCount > 0 ? ` · ${selectedCount} selected` : ''}{group.muted ? ' · MUTED' : ''}{group.locked ? ' · LOCKED' : ''}</span>
+        <span>{group.track_ids.length} track{group.track_ids.length === 1 ? '' : 's'}{selectedCount > 0 ? ` · ${selectedCount} selected` : ''}{group.solo ? ' · SOLO' : ''}{group.muted ? ' · MUTED' : ''}{group.locked ? ' · LOCKED' : ''}</span>
         {snapGuide != null && <i className="sequencer-snap-guide" style={{ left: `${snapGuide / asset.duration * 100}%` }} />}
         <i className="sequencer-playhead" style={{ left: `${displayTime / asset.duration * 100}%` }} />
       </div>
@@ -1888,16 +1902,40 @@ export function Sequencer(props: SequencerProps) {
           {asset.tracks.map((track, trackIndex) => {
             const group = groupByTrackId.get(track.id) ?? null;
             const effectivelyLocked = timelineTrackIsLocked(asset, track);
-            const effectivelyMuted = timelineTrackIsMuted(asset, track);
+            const effectivelyMuted = timelineTrackIsMuted(asset, track, hasSolo);
+            const effectivelySolo = timelineTrackIsSolo(asset, track);
+            const effectiveMuteLabel = track.muted
+              ? 'Muted'
+              : group?.muted
+                ? 'Group Muted'
+                : effectivelyMuted
+                  ? 'Solo Filter'
+                  : null;
             return <Fragment key={track.id}>
               {group && firstTrackByGroupId.get(group.id) === trackIndex && renderGroupRow(group)}
-              {!group?.collapsed && <div className={`sequencer-track-row${group ? ' grouped' : ''}${selection?.track === trackIndex ? ' selected' : ''}${selectedItems.some((item) => item.track === trackIndex) ? ' contains-selection' : ''}${effectivelyLocked ? ' locked' : ''}${effectivelyMuted ? ' effectively-muted' : ''}`}>
-              <button type="button" className="sequencer-track-header" onClick={() => applySelection({ track: trackIndex, marker: null })}>
-                <span className={`sequencer-track-icon ${track.type}`}>{track.type === 'signal' ? 'S' : track.type === 'activation' ? 'A' : track.type === 'audio' ? '♪' : track.type === 'animation' ? 'M' : track.type === 'particle' ? 'P' : 'C'}</span>
-                <span>{track.name}</span>
-                {effectivelyMuted && <small>{track.muted ? 'Muted' : 'Group Muted'}</small>}
-                {effectivelyLocked && <Lock className="sequencer-track-lock" size={11} aria-label={track.locked ? 'Locked' : 'Group locked'} />}
-              </button>
+              {!group?.collapsed && <div className={`sequencer-track-row${group ? ' grouped' : ''}${selection?.track === trackIndex ? ' selected' : ''}${selectedItems.some((item) => item.track === trackIndex) ? ' contains-selection' : ''}${effectivelyLocked ? ' locked' : ''}${effectivelySolo ? ' effectively-solo' : ''}${effectivelyMuted ? ' effectively-muted' : ''}`}>
+              <div className="sequencer-track-header">
+                <button type="button" className="sequencer-track-select" onClick={() => applySelection({ track: trackIndex, marker: null })}>
+                  <span className={`sequencer-track-icon ${track.type}`}>{track.type === 'signal' ? 'S' : track.type === 'activation' ? 'A' : track.type === 'audio' ? '♪' : track.type === 'animation' ? 'M' : track.type === 'particle' ? 'P' : 'C'}</span>
+                  <span>{track.name}</span>
+                  {effectiveMuteLabel && <small>{effectiveMuteLabel}</small>}
+                  {effectivelyLocked && <Lock className="sequencer-track-lock" size={11} aria-label={track.locked ? 'Locked' : 'Group locked'} />}
+                </button>
+                <button
+                  type="button"
+                  className={`sequencer-track-state${track.solo ? ' active solo' : ''}${!track.solo && group?.solo ? ' inherited' : ''}`}
+                  aria-pressed={track.solo}
+                  title={group?.solo && !track.solo ? 'Solo inherited from group' : `${track.solo ? 'Disable' : 'Enable'} track Solo`}
+                  onClick={() => update((draft) => { draft.tracks[trackIndex].solo = !draft.tracks[trackIndex].solo; }, track.solo ? 'Disable Timeline Track Solo' : 'Solo Timeline Track')}
+                >S</button>
+                <button
+                  type="button"
+                  className={`sequencer-track-state${track.muted ? ' active muted' : ''}${!track.muted && group?.muted ? ' inherited' : ''}`}
+                  aria-pressed={track.muted}
+                  title={group?.muted && !track.muted ? 'Mute inherited from group' : `${track.muted ? 'Unmute' : 'Mute'} track`}
+                  onClick={() => update((draft) => { draft.tracks[trackIndex].muted = !draft.tracks[trackIndex].muted; }, track.muted ? 'Unmute Timeline Track' : 'Mute Timeline Track')}
+                >M</button>
+              </div>
               <div className="sequencer-lane" onDoubleClick={(event) => {
                 if (event.target !== event.currentTarget) return;
                 const bounds = event.currentTarget.getBoundingClientRect();
@@ -2065,6 +2103,10 @@ export function Sequencer(props: SequencerProps) {
               const group = draft.groups.find((candidate) => candidate.id === selectedGroup.id);
               if (group) group.name = event.target.value;
             })} /></label>
+            <label className="sequencer-check"><input type="checkbox" checked={selectedGroup.solo} onChange={(event) => update((draft) => {
+              const group = draft.groups.find((candidate) => candidate.id === selectedGroup.id);
+              if (group) group.solo = event.target.checked;
+            })} /> Solo all member tracks</label>
             <label className="sequencer-check"><input type="checkbox" checked={selectedGroup.muted} onChange={(event) => update((draft) => {
               const group = draft.groups.find((candidate) => candidate.id === selectedGroup.id);
               if (group) group.muted = event.target.checked;
@@ -2097,6 +2139,7 @@ export function Sequencer(props: SequencerProps) {
             <button type="button" className="sequencer-danger" disabled={selectedGroup.locked} onClick={() => deleteSelection()}><Trash2 size={14} /> Delete Group (Keep Tracks)</button>
           </>}
           {selectedTrack && !selectedMarker && !selectedClip && <>
+            <label className="sequencer-check"><input type="checkbox" checked={selectedTrack.solo} onChange={(event) => update((draft) => { draft.tracks[selection!.track].solo = event.target.checked; })} /> Solo</label>
             <label className="sequencer-check"><input type="checkbox" checked={selectedTrack.muted} onChange={(event) => update((draft) => { draft.tracks[selection!.track].muted = event.target.checked; })} /> Muted</label>
             <label className="sequencer-check"><input type="checkbox" checked={selectedTrack.locked} onChange={(event) => update((draft) => { draft.tracks[selection!.track].locked = event.target.checked; })} /> Locked</label>
             <label>Group <select disabled={selectedTrackLocked} value={timelineGroupForTrack(asset, selectedTrack.id)?.id ?? ''} onChange={(event) => update((draft) => {

@@ -217,6 +217,8 @@ pub enum TimelineTrack {
         id: String,
         name: String,
         #[serde(default)]
+        solo: bool,
+        #[serde(default)]
         muted: bool,
         #[serde(default)]
         locked: bool,
@@ -226,6 +228,8 @@ pub enum TimelineTrack {
     Activation {
         id: String,
         name: String,
+        #[serde(default)]
+        solo: bool,
         #[serde(default)]
         muted: bool,
         #[serde(default)]
@@ -238,6 +242,8 @@ pub enum TimelineTrack {
         id: String,
         name: String,
         #[serde(default)]
+        solo: bool,
+        #[serde(default)]
         muted: bool,
         #[serde(default)]
         locked: bool,
@@ -248,6 +254,8 @@ pub enum TimelineTrack {
     Animation {
         id: String,
         name: String,
+        #[serde(default)]
+        solo: bool,
         #[serde(default)]
         muted: bool,
         #[serde(default)]
@@ -260,6 +268,8 @@ pub enum TimelineTrack {
         id: String,
         name: String,
         #[serde(default)]
+        solo: bool,
+        #[serde(default)]
         muted: bool,
         #[serde(default)]
         locked: bool,
@@ -270,6 +280,8 @@ pub enum TimelineTrack {
     Camera {
         id: String,
         name: String,
+        #[serde(default)]
+        solo: bool,
         #[serde(default)]
         muted: bool,
         #[serde(default)]
@@ -301,12 +313,25 @@ impl TimelineTrack {
             | Self::Camera { muted, .. } => *muted,
         }
     }
+
+    pub fn is_solo(&self) -> bool {
+        match self {
+            Self::Signal { solo, .. }
+            | Self::Activation { solo, .. }
+            | Self::Audio { solo, .. }
+            | Self::Animation { solo, .. }
+            | Self::Particle { solo, .. }
+            | Self::Camera { solo, .. } => *solo,
+        }
+    }
 }
 
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 pub struct TimelineTrackGroup {
     pub id: String,
     pub name: String,
+    #[serde(default)]
+    pub solo: bool,
     #[serde(default)]
     pub muted: bool,
     #[serde(default)]
@@ -739,11 +764,24 @@ impl TimelineAsset {
         })
     }
 
-    pub fn track_is_muted(&self, track: &TimelineTrack) -> bool {
-        track.is_muted()
+    pub fn has_solo_tracks(&self) -> bool {
+        self.tracks.iter().any(TimelineTrack::is_solo)
             || self
-                .group_for_track(track.id())
-                .is_some_and(|group| group.muted)
+                .groups
+                .iter()
+                .any(|candidate| candidate.solo && !candidate.track_ids.is_empty())
+    }
+
+    pub fn track_is_muted_with_solo(&self, track: &TimelineTrack, has_solo: bool) -> bool {
+        let group = self.group_for_track(track.id());
+        if track.is_muted() || group.is_some_and(|candidate| candidate.muted) {
+            return true;
+        }
+        has_solo && !track.is_solo() && !group.is_some_and(|candidate| candidate.solo)
+    }
+
+    pub fn track_is_muted(&self, track: &TimelineTrack) -> bool {
+        self.track_is_muted_with_solo(track, self.has_solo_tracks())
     }
 }
 
@@ -913,6 +951,37 @@ mod tests {
         .is_err());
         assert!(parse_timeline_asset(
             br#"{"version":1,"duration":1,"tracks":[],"groups":[{"id":"a","name":"A","track_ids":["missing"]}]}"#
+        )
+        .is_err());
+    }
+
+    #[test]
+    fn solo_filters_non_solo_tracks_without_overriding_mute() {
+        let asset = parse_timeline_asset(
+            br#"{
+              "version":1,"duration":2,
+              "tracks":[
+                {"type":"signal","id":"events","name":"Events"},
+                {"type":"signal","id":"dialogue","name":"Dialogue","solo":true},
+                {"type":"signal","id":"muted","name":"Muted","solo":true,"muted":true},
+                {"type":"signal","id":"grouped","name":"Grouped"}
+              ],
+              "groups":[{"id":"presentation","name":"Presentation","solo":true,"track_ids":["grouped"]}]
+            }"#,
+        )
+        .unwrap();
+        assert!(asset.track_is_muted(&asset.tracks[0]));
+        assert!(!asset.track_is_muted(&asset.tracks[1]));
+        assert!(asset.track_is_muted(&asset.tracks[2]));
+        assert!(!asset.track_is_muted(&asset.tracks[3]));
+        let empty_group = parse_timeline_asset(
+            br#"{"version":1,"duration":1,"tracks":[{"type":"signal","id":"events","name":"Events"}],"groups":[{"id":"empty","name":"Empty","solo":true,"track_ids":[]}]}"#,
+        )
+        .unwrap();
+        assert!(!empty_group.has_solo_tracks());
+        assert!(!empty_group.track_is_muted(&empty_group.tracks[0]));
+        assert!(parse_timeline_asset(
+            br#"{"version":1,"duration":1,"tracks":[{"type":"signal","id":"events","name":"Events","solo":"yes"}]}"#
         )
         .is_err());
     }

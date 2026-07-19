@@ -500,6 +500,7 @@ impl TimelineRuntime {
     ) -> (HashSet<(Entity, String)>, Vec<TimelineLoadFailure>) {
         let mut applied = HashSet::new();
         let mut failures = Vec::new();
+        let has_solo = asset.has_solo_tracks();
         for track in &asset.tracks {
             let TimelineTrack::Activation {
                 id,
@@ -512,7 +513,7 @@ impl TimelineRuntime {
                 continue;
             };
             let key = (director, id.clone());
-            if asset.track_is_muted(track) {
+            if asset.track_is_muted_with_solo(track, has_solo) {
                 self.reported_activation_failures.remove(&key);
                 continue;
             }
@@ -574,6 +575,7 @@ impl TimelineRuntime {
     ) -> (HashSet<(Entity, String)>, Vec<TimelineLoadFailure>) {
         let mut applied = HashSet::new();
         let mut failures = Vec::new();
+        let has_solo = asset.has_solo_tracks();
         for track in &asset.tracks {
             let TimelineTrack::Audio {
                 id,
@@ -586,7 +588,7 @@ impl TimelineRuntime {
                 continue;
             };
             let key = (director, id.clone());
-            if asset.track_is_muted(track) {
+            if asset.track_is_muted_with_solo(track, has_solo) {
                 self.reported_audio_failures.remove(&key);
                 continue;
             }
@@ -692,6 +694,7 @@ impl TimelineRuntime {
     ) -> (HashSet<(Entity, String)>, Vec<TimelineLoadFailure>) {
         let mut applied = HashSet::new();
         let mut failures = Vec::new();
+        let has_solo = asset.has_solo_tracks();
         for track in &asset.tracks {
             let TimelineTrack::Animation {
                 id,
@@ -704,7 +707,7 @@ impl TimelineRuntime {
                 continue;
             };
             let key = (director, id.clone());
-            if asset.track_is_muted(track) {
+            if asset.track_is_muted_with_solo(track, has_solo) {
                 self.reported_animation_failures.remove(&key);
                 continue;
             }
@@ -794,6 +797,7 @@ impl TimelineRuntime {
     ) -> (HashSet<(Entity, String)>, Vec<TimelineLoadFailure>) {
         let mut applied = HashSet::new();
         let mut failures = Vec::new();
+        let has_solo = asset.has_solo_tracks();
         for track in &asset.tracks {
             let TimelineTrack::Particle {
                 id,
@@ -806,7 +810,7 @@ impl TimelineRuntime {
                 continue;
             };
             let key = (director, id.clone());
-            if asset.track_is_muted(track) {
+            if asset.track_is_muted_with_solo(track, has_solo) {
                 self.reported_particle_failures.remove(&key);
                 continue;
             }
@@ -928,6 +932,7 @@ impl TimelineRuntime {
     ) -> (HashSet<(Entity, String)>, Vec<TimelineLoadFailure>) {
         let mut applied = HashSet::new();
         let mut failures = Vec::new();
+        let has_solo = asset.has_solo_tracks();
         for track in &asset.tracks {
             let TimelineTrack::Camera {
                 id, name, clips, ..
@@ -936,7 +941,7 @@ impl TimelineRuntime {
                 continue;
             };
             let key = (director, id.clone());
-            if asset.track_is_muted(track) {
+            if asset.track_is_muted_with_solo(track, has_solo) {
                 self.reported_camera_failures.remove(&key);
                 continue;
             }
@@ -1292,11 +1297,12 @@ fn collect_signals_at(
     time: f32,
     output: &mut Vec<RuntimeTimelineSignal>,
 ) {
+    let has_solo = asset.has_solo_tracks();
     for track in &asset.tracks {
         let TimelineTrack::Signal { name, markers, .. } = track else {
             continue;
         };
-        if asset.track_is_muted(track) {
+        if asset.track_is_muted_with_solo(track, has_solo) {
             continue;
         }
         for marker in markers {
@@ -1330,11 +1336,12 @@ fn collect_crossed_signals(
         (start + delta).clamp(0.0, asset.duration)
     };
     let mut crossed = Vec::new();
+    let has_solo = asset.has_solo_tracks();
     for track in &asset.tracks {
         let TimelineTrack::Signal { name, markers, .. } = track else {
             continue;
         };
-        if asset.track_is_muted(track) {
+        if asset.track_is_muted_with_solo(track, has_solo) {
             continue;
         }
         for marker in markers {
@@ -1733,6 +1740,38 @@ mod tests {
         runtime.update(&mut world, f32::NAN);
         assert!(world.entity_active(panel));
         let _ = fs::remove_dir_all(root);
+    }
+
+    #[test]
+    fn solo_gate_skips_real_activation_track_evaluation() {
+        let asset = mengine_assets::parse_timeline_asset(
+            br#"{
+              "version":1,"duration":1,
+              "tracks":[
+                {"type":"signal","id":"focus","name":"Focus","solo":true},
+                {"type":"activation","id":"visibility","name":"Visibility","target":"Panel","clips":[{"start":0,"duration":1,"active":false}]}
+              ]
+            }"#,
+        )
+        .unwrap();
+        let mut world = World::new();
+        let director = world.spawn_empty();
+        let panel = world.spawn_empty();
+        world.set_component_value(panel, "Name", serde_json::json!({ "value": "Panel" }));
+        world.set_parent(panel, Some(director));
+        let mut runtime = TimelineRuntime::new(None);
+
+        let (applied, failures) = runtime.apply_activation_tracks(
+            &mut world,
+            director,
+            "Assets/Timelines/solo.mtimeline",
+            &asset,
+            &TimelineBindingTable::default(),
+            0.0,
+        );
+        assert!(failures.is_empty());
+        assert!(applied.is_empty());
+        assert!(world.entity_active(panel));
     }
 
     #[test]

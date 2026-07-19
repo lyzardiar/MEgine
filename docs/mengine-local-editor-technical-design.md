@@ -1415,3 +1415,11 @@ Rust workspace 检查现在零警告通过；Tauri Host 17/17 常规测试与 1/
 第一遍自省发现隐藏后重开的视口会把旧聚合窗口跨越整个不可见时段，且 Scene/Game 共用总容量会在多窗口同时可见时把彼此历史挤掉；现已用零帧间隔重置源窗口并按源独立限额。第二遍自省通过真实页面数据发现 UI Batch 包含 Canvas/裁剪等绘制项，而最初分母只统计 Graphic，产生小于 1 的误导性“elements/batch”；现改为同一批次规划器的全部 UI Primitives，并把 Scene 中包含 Gizmo/Particle/Spine 项的 `Visible Renderers` 更名为准确的 `Draw Items`。同时补了隐藏 Profiler 解除订阅和工具栏对比度。
 
 这不是 Player Profiler。当前数据只覆盖 Editor Canvas 预览 CPU，不包含原生 wgpu GPU Timestamp Query、Render Pass/Draw Call、Pipeline/Bind Group 命中、显存与纹理驻留、脚本/物理/动画/音频分区、GC/堆快照、调用栈采样、Marker API、深度帧捕获、网络或构建性能；编辑器明确显示边界，不用 Canvas 批次冒充 Player GPU 证据。下一阶段应定义跨 Runtime Sidecar 的版本化 Profiler 协议和低开销环形缓冲，先接入 CPU Marker、RHI Pass/Draw/Pipeline 计数及 GPU 时间，再做 Timeline 帧关联、Profiler Module、导出与回归预算门禁。
+## 119. 2026-07-19 Timeline Track/Group Solo 闭环
+
+- `.mtimeline` v1 在六类轨道和轨道分组上增加向后兼容的可选 `solo` 布尔字段；旧资产缺省为 `false`，编辑器规范化与序列化始终写出稳定值。只要任意轨道或含成员的分组进入 Solo，未被轨道 Solo 或所属分组 Solo 覆盖的轨道就停止求值；显式 Track/Group Mute 始终优先，Solo 不会意外重新启用已静音内容。
+- Sequencer 的分组头和每条轨道头提供方形 `S/M` 快速按钮，继承自分组的 Solo/Mute 使用独立视觉状态，Inspector 同步提供 Track/Group Solo 开关。所有切换都进入现有 Timeline Undo/Redo、Dirty、Save All、外部修改冲突和 Dock 草稿生命周期，不创建只存在于 React 状态、保存后丢失的临时 Solo。
+- Rust `mengine-assets` 负责同一有效轨道规则，Runtime 的 Activation、Audio、Animation、Particle、Camera 和 Signal 求值器继续统一调用该规则，因此编辑器保存的 Solo 会真实进入 Player；CLI 在创建 staging 目录前严格拒绝非布尔 Track/Group Solo，打包不能把编辑器可接受但 Player 含义不确定的资产发布出去。
+- 第一遍自省从兼容性和热路径反查：没有提升 Timeline 版本，所有新字段使用缺省值；同时修正空 Solo 分组意外静音整条 Timeline，并让 Runtime/Editor 每轮只预计算一次有效 Solo，避免逐轨扫描退化为平方复杂度。第二遍自省从语义冲突反查：采用“Mute 优先、多个 Solo 求并集、Group Solo 传递成员、Track Solo 可跨组加入并集”的确定规则，并用编辑器/Rust/CLI 回归固定显式 Mute、Solo 过滤、分组继承和非法类型边界。
+
+这一批补齐的是复杂序列调试所需的隔离控制，不代表 Timeline 已完备。当前编辑模式下本地 Transport 仍主要驱动时间尺，完整的 Scene 非破坏式预览、音频 Scrub、粒子重建、Camera Shot 预览、录制模式、子 Timeline、Control Track、混合/外推和运行时 Timeline Profiler 仍需继续建设。
