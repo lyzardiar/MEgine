@@ -325,6 +325,12 @@ pub fn apply_material_property_block(
     if block.override_ior {
         material.ior = finite_or(block.ior, 1.5).clamp(1.0, 2.5);
     }
+    if block.override_clearcoat {
+        material.clearcoat = finite_or(block.clearcoat, 0.0).clamp(0.0, 1.0);
+    }
+    if block.override_clearcoat_roughness {
+        material.clearcoat_roughness = finite_or(block.clearcoat_roughness, 0.1).clamp(0.04, 1.0);
+    }
     if block.override_emissive {
         material.emissive = block.emissive.map(|value| finite_or(value, 0.0).max(0.0));
     }
@@ -465,6 +471,10 @@ mod tests {
                 roughness: 0.0,
                 override_ior: true,
                 ior: 4.0,
+                override_clearcoat: true,
+                clearcoat: 2.0,
+                override_clearcoat_roughness: true,
+                clearcoat_roughness: 0.0,
                 override_emissive: false,
                 emissive: [9.0; 3],
                 override_emissive_strength: true,
@@ -475,6 +485,8 @@ mod tests {
         assert_eq!(result.metallic, 0.7);
         assert_eq!(result.roughness, 0.04);
         assert_eq!(result.ior, 2.5);
+        assert_eq!(result.clearcoat, 1.0);
+        assert_eq!(result.clearcoat_roughness, 0.04);
         assert_eq!(result.emissive, [1.0, 2.0, 3.0]);
         assert_eq!(result.emissive_strength, 2.0);
         assert!(result.transparent);

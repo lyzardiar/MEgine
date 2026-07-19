@@ -1097,6 +1097,12 @@
         },
         "type": "array"
       },
+      "clearcoat": {
+        "type": "number"
+      },
+      "clearcoat_roughness": {
+        "type": "number"
+      },
       "emissive": {
         "items": {
           "type": "number"
@@ -1113,6 +1119,12 @@
         "type": "number"
       },
       "override_base_color": {
+        "type": "boolean"
+      },
+      "override_clearcoat": {
+        "type": "boolean"
+      },
+      "override_clearcoat_roughness": {
         "type": "boolean"
       },
       "override_emissive": {
@@ -1143,6 +1155,10 @@
       "roughness",
       "override_ior",
       "ior",
+      "override_clearcoat",
+      "clearcoat",
+      "override_clearcoat_roughness",
+      "clearcoat_roughness",
       "override_emissive",
       "emissive",
       "override_emissive_strength",

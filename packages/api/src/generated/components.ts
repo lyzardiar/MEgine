@@ -109,6 +109,10 @@ export interface MaterialPropertyBlock {
   roughness: number;
   overrideIor: boolean;
   ior: number;
+  overrideClearcoat: boolean;
+  clearcoat: number;
+  overrideClearcoatRoughness: boolean;
+  clearcoatRoughness: number;
   overrideEmissive: boolean;
   emissive: [number, number, number];
   overrideEmissiveStrength: boolean;

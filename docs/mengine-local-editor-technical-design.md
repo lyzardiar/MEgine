@@ -1290,3 +1290,14 @@ Rust workspace 检查现在零警告通过；Tauri Host 17/17 常规测试与 1/
 第一遍自省纠正了“Player 剥离会删除 Behaviour 内部引用字段表”的初始判断：现有剥离只删除组件表顶层的 `__*` 编辑器组件，嵌套在 Behaviour 数据内的字段表本来就会保留，因此撤回了无意义的缓存版本升级和放宽剥离规则。同时测试发现旧测试资产存在无 ID 匿名实体，最终选择兼容其作为不可引用组件载体，而不是把本次引用门禁扩张成不兼容的全 Scene Schema 升级。第二遍自省补齐了两个相反边界：会被 all 模式打包的未引用 Prefab 必须审计，而 referenced 模式明确省略的资产不应阻断；并增加旧 Prefab 裸实体号拒绝用例，防止仅覆盖新 token 格式而漏掉碰撞绑定风险。
 
 本批完成的是单个 Player 内容闭包内的构建阻断，并不等于全局对象引用系统已经完备。跨 Scene/Additive Scene 仍需要 Scene GUID 与加载域规则，Prefab 外部引用仍需要实例 Override，Inspector 仍缺少 Missing Reference 汇总与批量修复器；内建引用字段注册目前在 TypeScript/Rust/CLI 三处保持同值，后续应由 IDL/codegen 生成以消除协议漂移。构建报告也应增加独立的引用审计数量与结构化诊断，而不只在失败时返回首个错误。
+
+## 108. 2026-07-19 MaterialPropertyBlock Clear Coat 实例覆盖
+
+- `MaterialPropertyBlock` 补齐 `override_clearcoat/clearcoat` 与 `override_clearcoat_roughness/clearcoat_roughness`，由 IDL 单一事实源重新生成 Rust Component、TypeScript API 和 JSON Schema。旧 Scene 缺少字段时分别保持 `false/0` 与 `false/0.1`，不会让已有对象突然出现清漆层。
+- Runtime 在材质资产、Material Instance 或旧 PbrMaterial 完成解析后再应用 Property Block；只有对应 Override 开启时才修改 Clear Coat，强度规范到 0–1、粗糙度规范到 0.04–1，保持材质的纹理、自定义 Shader、透明混合、Render Queue、深度写入与 Pipeline 状态不变。参数继续进入已有 Object Uniform，不为每个 Renderer 创建 Shader Variant。
+- 通用 Inspector 根据 Override 条件显示两个数值控件，组件目录新建值与生成默认值一致。Scene Canvas 的材质近似预览也在 Property Block 阶段应用这两项，避免 Player 已变化但编辑器仍显示父材质清漆外观。
+- 回归覆盖旧 JSON 默认值、真实 RenderObject 收集、越界数值规范、只覆盖已启用字段、Scene 预览一致性、IDL codegen 与编辑器生产构建。
+
+第一遍自省确认 Clear Coat Override 必须位于材质资产/实例解析之后，否则 Material Instance 会把每对象覆盖重新盖掉；最终复用现有 `apply_material_property_block` 的唯一顺序边界。第二遍自省确认 Clear Coat 仍是纯 Object Uniform 数据，不进入 Material Pipeline Key 或 Texture Set Key，并补上旧场景反序列化默认值，避免把一次参数补全变成 Shader Variant 膨胀或场景迁移事故。
+
+这只是材质实例化语义的一处缺口修复。自定义 `.mshader` 仍没有声明式参数反射、Material Inspector 自动控件、稳定参数打包和 Keyword/Variant 契约；MaterialPropertyBlock 也尚不支持自定义参数与纹理覆盖。下一批继续建立跨编辑器、CLI、Runtime 的 Surface Shader 参数 Schema，而不是在 Inspector 中硬编码某个 Shader 的字段。

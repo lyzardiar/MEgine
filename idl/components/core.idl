@@ -120,6 +120,10 @@ component MaterialPropertyBlock {
   roughness:                  float  = 0.5
   override_ior:               bool   = false
   ior:                        float  = 1.5
+  override_clearcoat:         bool   = false
+  clearcoat:                  float  = 0
+  override_clearcoat_roughness: bool = false
+  clearcoat_roughness:        float  = 0.1
   override_emissive:          bool   = false
   emissive:                   float3 = [0, 0, 0]
   override_emissive_strength: bool   = false

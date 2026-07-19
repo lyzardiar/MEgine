@@ -86,8 +86,10 @@ export function resolveMaterialPreviewAppearance(
     metallic: block.override_metallic === true ? block.metallic : resolved.metallic,
     roughness: block.override_roughness === true ? block.roughness : resolved.roughness,
     ior: block.override_ior === true ? block.ior : resolved.ior,
-    clearcoat: resolved.clearcoat,
-    clearcoatRoughness: resolved.clearcoatRoughness,
+    clearcoat: block.override_clearcoat === true ? block.clearcoat : resolved.clearcoat,
+    clearcoatRoughness: block.override_clearcoat_roughness === true
+      ? block.clearcoat_roughness
+      : resolved.clearcoatRoughness,
     emissive: block.override_emissive === true ? block.emissive : resolved.emissive,
     emissiveStrength: block.override_emissive_strength === true
       ? block.emissive_strength

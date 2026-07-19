@@ -2800,6 +2800,10 @@ mod tests {
         .unwrap();
         assert!(!legacy_block.override_ior);
         assert_eq!(legacy_block.ior, 1.5);
+        assert!(!legacy_block.override_clearcoat);
+        assert_eq!(legacy_block.clearcoat, 0.0);
+        assert!(!legacy_block.override_clearcoat_roughness);
+        assert_eq!(legacy_block.clearcoat_roughness, 0.1);
 
         let component = PbrMaterial {
             base_color: [0.2, 0.3, 0.4, 1.0],
@@ -2837,6 +2841,10 @@ mod tests {
                 roughness: 0.8,
                 override_ior: true,
                 ior: 1.33,
+                override_clearcoat: true,
+                clearcoat: 0.75,
+                override_clearcoat_roughness: true,
+                clearcoat_roughness: 0.2,
                 ..MaterialPropertyBlock::default()
             },
         );
@@ -2848,6 +2856,8 @@ mod tests {
         assert_eq!(objects[0].material.metallic, 0.9);
         assert_eq!(objects[0].material.roughness, 0.8);
         assert_eq!(objects[0].material.ior, 1.33);
+        assert_eq!(objects[0].material.clearcoat, 0.75);
+        assert_eq!(objects[0].material.clearcoat_roughness, 0.2);
     }
 
     #[test]
