@@ -1,4 +1,8 @@
-use crate::{scene_file::atomic_write, SceneError};
+use crate::{
+    entity_reference::{resolve_prefab_entity_references, validate_prefab_entity_references},
+    scene_file::atomic_write,
+    SceneError,
+};
 use mengine_core::command::WorldCommand;
 use mengine_core::World;
 use serde::{Deserialize, Serialize};
@@ -144,7 +148,16 @@ impl Prefab {
             Ok(())
         }
 
-        visit(&self.root, 0, &mut 0, &mut HashSet::new())
+        let mut node_ids = HashSet::new();
+        visit(&self.root, 0, &mut 0, &mut node_ids)?;
+        fn validate_references(node: &PrefabNode, ids: &HashSet<String>) -> Result<(), SceneError> {
+            validate_prefab_entity_references(&node.components, ids)?;
+            for child in &node.children {
+                validate_references(child, ids)?;
+            }
+            Ok(())
+        }
+        validate_references(&self.root, &node_ids)
     }
 }
 
@@ -220,6 +233,20 @@ pub fn instantiate_prefab(
             world.set_parent(entity, Some(spawned[parent]));
         }
     }
+    let node_entities = pending
+        .iter()
+        .zip(spawned.iter().copied())
+        .map(|(entry, entity)| (entry.node.id.clone(), entity))
+        .collect();
+    for (entry, entity) in pending.iter().zip(spawned.iter().copied()) {
+        let mut components = entry.node.components.clone();
+        resolve_prefab_entity_references(&mut components, &node_entities)?;
+        if let Some(components) = components.as_object() {
+            for (name, value) in components {
+                world.set_component_value(entity, name, value.clone());
+            }
+        }
+    }
     let entities = spawned
         .iter()
         .map(|entity| entity.to_u64())
@@ -250,7 +277,18 @@ mod tests {
                 id: "root".into(),
                 name: "Button".into(),
                 active: true,
-                components: json!({ "RectTransform": { "size_delta": [160, 40] } }),
+                components: json!({
+                    "RectTransform": { "size_delta": [160, 40] },
+                    "Button": {
+                        "on_click": {
+                            "target": {
+                                "$mengine_entity_ref": { "kind": "prefab_node", "node": "label" }
+                            },
+                            "component": "Menu",
+                            "method": "Open"
+                        }
+                    }
+                }),
                 children: vec![PrefabNode {
                     id: "label".into(),
                     name: "Label".into(),
@@ -287,6 +325,15 @@ mod tests {
             .unwrap();
         assert_eq!(label.parent, Some(root.entity));
         assert!(!label.active);
+        assert_eq!(
+            snapshot
+                .entities
+                .iter()
+                .find(|entity| entity.entity == instance.root)
+                .unwrap()
+                .components["Button"]["on_click"]["target"],
+            label.entity.to_string()
+        );
         std::fs::remove_dir_all(dir).unwrap();
     }
 

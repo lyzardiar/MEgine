@@ -6,6 +6,7 @@ import type {
   FieldType,
   MethodMeta,
 } from './types.js';
+import { ENTITY_REFERENCE_FIELDS_KEY } from './types.js';
 
 const registry = new Map<string, BehaviourEntry>();
 
@@ -118,6 +119,10 @@ export function buildDefaults(ctor: BehaviourCtor, fields: FieldMeta[]): Record<
     if (!f.serialize) continue;
     out[f.key] = cloneDefault(sample[f.key]);
   }
+  const entityReferences = fields
+    .filter((field) => field.serialize && field.type === 'entity')
+    .map((field) => field.key);
+  if (entityReferences.length) out[ENTITY_REFERENCE_FIELDS_KEY] = entityReferences;
   return out;
 }
 

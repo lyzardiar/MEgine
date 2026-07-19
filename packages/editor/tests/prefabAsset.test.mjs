@@ -123,3 +123,20 @@ test('cloning rekeys complete instances and unpacks partial prefab subtrees', ()
   const moved = clonePrefabLinkedComponents(linked, { preserveInstanceIds: true });
   assert.equal(moved.get(10)[PREFAB_LINK_COMPONENT].instance, 'original');
 });
+
+test('capture stores internal persistent-call targets as stable prefab node references', () => {
+  const linked = structuredClone(entities);
+  linked[0].components.Button = {
+    on_click: { target: 11, component: 'Menu', method: 'Open' },
+  };
+  const captured = capturePrefabAsset('Panel', linked, 10, {
+    createNodeId: (() => {
+      let id = 0;
+      return () => `stable-${++id}`;
+    })(),
+  });
+  assert.deepEqual(captured.asset.root.components.Button.on_click.target, {
+    $mengine_entity_ref: { kind: 'prefab_node', node: captured.nodeIds.get(11) },
+  });
+  assert.deepEqual(parsePrefabAsset(serializePrefabAsset(captured.asset)), captured.asset);
+});

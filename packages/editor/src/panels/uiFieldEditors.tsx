@@ -18,9 +18,11 @@ import {
   type ProjectFileAsset,
 } from '../projectAssets';
 import { ObjectPicker } from './ObjectPicker';
+import { parseSerializedEntityReference } from '../entityReferences';
 
 export type UnityPersistentCall = {
   target: number | null;
+  missingTarget?: string | null;
   component: string;
   method: string;
 };
@@ -653,14 +655,10 @@ export function Vector2ListField(props: {
 export function parseUnityPersistentCall(raw: unknown): UnityPersistentCall {
   if (raw && typeof raw === 'object' && !Array.isArray(raw)) {
     const o = raw as Record<string, unknown>;
-    const target =
-      typeof o.target === 'number'
-        ? o.target
-        : typeof o.target === 'string' && o.target !== ''
-          ? Number(o.target)
-          : null;
+    const target = parseSerializedEntityReference(o.target);
     return {
-      target: target != null && !Number.isNaN(target) ? target : null,
+      target: target.entity,
+      missingTarget: target.missing,
       component: String(o.component ?? ''),
       method: String(o.method ?? o.methodName ?? ''),
     };
@@ -715,6 +713,7 @@ export type EntRef = {
 export function EntityReferenceField(props: {
   label: string;
   value: number | null;
+  missingValue?: string | null;
   entities: EntRef[];
   allowNone?: boolean;
   onChange: (value: number | null) => void;
@@ -744,7 +743,7 @@ export function EntityReferenceField(props: {
     <div className="field-row">
       <label>{props.label}</label>
       <div
-        className={`object-slot entity-slot${props.value != null ? ' filled' : ''}${dragOver ? ' drag-over' : ''}`}
+        className={`object-slot entity-slot${props.value != null || props.missingValue ? ' filled' : ''}${dragOver ? ' drag-over' : ''}`}
         onDragEnter={(event) => {
           if (!Array.from(event.dataTransfer.types).includes('text/mengine-entity')) return;
           event.preventDefault();
@@ -772,7 +771,11 @@ export function EntityReferenceField(props: {
           }}
         >
           {selected?.name
-            ?? (props.value == null ? 'None (GameObject)' : `Missing (${props.value})`)}
+            ?? (props.value != null
+              ? `Missing (${props.value})`
+              : props.missingValue
+                ? `Missing (${props.missingValue})`
+                : 'None (GameObject)')}
         </button>
         <button
           ref={pickerBtnRef}
@@ -784,7 +787,7 @@ export function EntityReferenceField(props: {
             setPickerOpen(true);
           }}
         />
-        {props.allowNone !== false && props.value != null && (
+        {props.allowNone !== false && (props.value != null || props.missingValue) && (
           <button
             type="button"
             className="object-slot-clear"
@@ -920,7 +923,9 @@ export function UnityEventField(props: {
     ? (targetEnt.name ?? `Entity ${targetEnt.entity}`)
     : call.target != null
       ? `Missing (${call.target})`
-      : 'None (GameObject)';
+      : call.missingTarget
+        ? `Missing (${call.missingTarget})`
+        : 'None (GameObject)';
 
   const entityItems = useMemo(
     () =>
@@ -942,7 +947,7 @@ export function UnityEventField(props: {
             className={[
               'object-slot',
               'entity-slot',
-              call.target != null ? 'filled' : '',
+              call.target != null || call.missingTarget ? 'filled' : '',
               dragOver ? 'drag-over' : '',
             ]
               .filter(Boolean)
@@ -976,7 +981,7 @@ export function UnityEventField(props: {
                 setPickerOpen(true);
               }}
             />
-            {call.target != null && (
+            {(call.target != null || call.missingTarget) && (
               <button
                 type="button"
                 className="object-slot-clear"

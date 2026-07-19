@@ -100,6 +100,11 @@ import {
 } from './spriteCreation';
 import { frameWorldSprite } from './sceneFraming';
 import { resetTimelineBindingsOnAssetChange } from './timelineBindings';
+import {
+  ENTITY_REFERENCE_FIELDS_KEY,
+  remapComponentEntityReferences,
+  resolvePrefabEntityReferences,
+} from './entityReferences';
 import './behaviours';
 import {
   gameResolutionAspect,
@@ -408,6 +413,35 @@ export function createEditorStore(undoService: EditorUndoService = createEditorU
     if (selectedIds.length === 0) selectionAnchor = null;
   };
 
+  const withEntityReferenceMetadata = (
+    type: string,
+    value: Record<string, unknown>,
+  ): Record<string, unknown> => {
+    const fields = getBehaviour(type)?.fields
+      .filter((field) => field.serialize && field.type === 'entity')
+      .map((field) => field.key) ?? [];
+    if (!fields.length) return value;
+    const existing = Array.isArray(value[ENTITY_REFERENCE_FIELDS_KEY])
+      ? value[ENTITY_REFERENCE_FIELDS_KEY]
+        .filter((field): field is string => typeof field === 'string' && field.length > 0)
+      : [];
+    return {
+      ...value,
+      [ENTITY_REFERENCE_FIELDS_KEY]: [...new Set([...existing, ...fields])],
+    };
+  };
+
+  const withAllEntityReferenceMetadata = (
+    source: Record<string, unknown>,
+  ): Record<string, unknown> => Object.fromEntries(
+    Object.entries(source).map(([type, value]) => [
+      type,
+      value != null && typeof value === 'object' && !Array.isArray(value)
+        ? withEntityReferenceMetadata(type, value as Record<string, unknown>)
+        : value,
+    ]),
+  );
+
   const spawnAt = (
     name: string,
     components: Record<string, unknown>,
@@ -422,7 +456,7 @@ export function createEditorStore(undoService: EditorUndoService = createEditorU
       parent,
       siblingIndex: nextSiblingIndex(parent),
       active: true,
-      components,
+      components: withAllEntityReferenceMetadata(components),
     });
     editEntities.push(e);
     expanded.add(id);
@@ -470,6 +504,11 @@ export function createEditorStore(undoService: EditorUndoService = createEditorU
       entitiesByNode.set(entry.node.id, id);
       if (entry.parentNodeId == null) root = id;
     }
+    for (const entry of nodes) {
+      const id = entitiesByNode.get(entry.node.id)!;
+      const entity = find(id)!;
+      entity.components = resolvePrefabEntityReferences(entity.components, entitiesByNode);
+    }
     for (const id of entitiesByNode.values()) {
       reindexSiblings(find(id)?.parent ?? null);
     }
@@ -514,11 +553,15 @@ export function createEditorStore(undoService: EditorUndoService = createEditorU
     return (e?.components.Transform as TransformData) ?? null;
   };
 
-  const deepCloneSubtree = (rootId: number, newParent: number | null): number => {
-    const src = find(rootId);
-    if (!src) return -1;
+  const deepCloneRoots = (
+    rootIds: readonly number[],
+    rootParentOverrides: ReadonlyMap<number, number | null> = new Map(),
+  ): number[] => {
+    const roots = rootIds.filter((rootId) => find(rootId) != null);
+    if (!roots.length) return [];
+    const rootSet = new Set(roots);
     const idMap = new Map<number, number>();
-    const ids = collectSubtreeIds(rootId);
+    const ids = roots.flatMap((rootId) => collectSubtreeIds(rootId));
     const clonedComponents = clonePrefabLinkedComponents(ids.map((id) => find(id)!));
 
     for (const oldId of ids) {
@@ -526,16 +569,24 @@ export function createEditorStore(undoService: EditorUndoService = createEditorU
     }
 
     for (const oldId of ids) {
+      clonedComponents.set(
+        oldId,
+        remapComponentEntityReferences(clonedComponents.get(oldId)!, idMap),
+      );
+    }
+
+    for (const oldId of ids) {
       const s = find(oldId)!;
       const newId = idMap.get(oldId)!;
+      const isRoot = rootSet.has(oldId);
       const newPar =
-        oldId === rootId
-          ? newParent
+        isRoot
+          ? (rootParentOverrides.has(oldId) ? rootParentOverrides.get(oldId)! : s.parent ?? null)
           : s.parent != null
             ? (idMap.get(s.parent) ?? null)
             : null;
       const name =
-        oldId === rootId
+        isRoot
           ? `${s.name ?? 'GameObject'} (1)`
           : (s.name ?? 'GameObject');
       editEntities.push(
@@ -544,15 +595,23 @@ export function createEditorStore(undoService: EditorUndoService = createEditorU
           name,
           parent: newPar,
           siblingIndex:
-            oldId === rootId ? nextSiblingIndex(newParent) : s.siblingIndex,
+            isRoot ? nextSiblingIndex(newPar) : s.siblingIndex,
           active: s.active,
           components: clonedComponents.get(oldId) ?? structuredClone(s.components),
         }),
       );
       expanded.add(newId);
     }
-    reindexSiblings(newParent);
-    return idMap.get(rootId)!;
+    for (const parent of new Set(roots.map((root) => (
+      rootParentOverrides.has(root) ? rootParentOverrides.get(root)! : find(root)?.parent ?? null
+    )))) {
+      reindexSiblings(parent);
+    }
+    return roots.map((root) => idMap.get(root)!);
+  };
+
+  const deepCloneSubtree = (rootId: number, newParent: number | null): number => {
+    return deepCloneRoots([rootId], new Map([[rootId, newParent]]))[0] ?? -1;
   };
 
   const deleteIdsWithSubtree = (roots: number[]) => {
@@ -623,6 +682,7 @@ export function createEditorStore(undoService: EditorUndoService = createEditorU
     editEntities = ents.map((e, i) =>
       normalizeEntity({
         ...e,
+        components: withAllEntityReferenceMetadata(e.components ?? {}),
         siblingIndex: e.siblingIndex ?? i,
         active: e.active ?? true,
       }),
@@ -968,12 +1028,7 @@ export function createEditorStore(undoService: EditorUndoService = createEditorU
       if (!selectedIds.length || mode !== 'edit') return null;
       if (!gizmoDragging) pushUndo('Duplicate GameObjects');
       const roots = selectedHierarchyRoots(editEntities, selectedIds);
-      const newIds: number[] = [];
-      for (const r of roots) {
-        const parent = find(r)?.parent ?? null;
-        const nid = deepCloneSubtree(r, parent);
-        if (nid >= 0) newIds.push(nid);
-      }
+      const newIds = deepCloneRoots(roots);
       selectedIds = newIds;
       selectionAnchor = newIds[newIds.length - 1] ?? null;
       return primarySelected();
@@ -1004,21 +1059,32 @@ export function createEditorStore(undoService: EditorUndoService = createEditorU
     },
     paste() {
       if (!clipboard || mode !== 'edit') return;
-      pushUndo('Paste GameObjects');
       const parent = primarySelected();
-      const idMap = new Map<number, number>();
       const oldIds = clipboard.roots.map((e) => e.entity);
-      const clonedComponents = clonePrefabLinkedComponents(clipboard.roots, {
-        preserveInstanceIds: clipboard.cut,
-      });
-      for (const oldId of oldIds) idMap.set(oldId, nextId++);
-
-      const rootOldIds = clipboard.roots
-        .filter((e) => e.parent == null || !idMap.has(e.parent) || !oldIds.includes(e.parent))
-        .map((e) => e.entity);
-      // Fix: roots are those whose parent is not in clipboard set
       const clipSet = new Set(oldIds);
       const actualRoots = clipboard.roots.filter((e) => e.parent == null || !clipSet.has(e.parent));
+      if (clipboard.cut) {
+        const roots = actualRoots.map((root) => root.entity);
+        if (this.setParent(roots, parent)) {
+          clipboard = null;
+          selectedIds = roots;
+          selectionAnchor = roots[roots.length - 1] ?? null;
+        }
+        return;
+      }
+
+      pushUndo('Paste GameObjects');
+      const idMap = new Map<number, number>();
+      const clonedComponents = clonePrefabLinkedComponents(clipboard.roots, {
+        preserveInstanceIds: false,
+      });
+      for (const oldId of oldIds) idMap.set(oldId, nextId++);
+      for (const oldId of oldIds) {
+        clonedComponents.set(
+          oldId,
+          remapComponentEntityReferences(clonedComponents.get(oldId)!, idMap),
+        );
+      }
 
       for (const s of clipboard.roots) {
         const newId = idMap.get(s.entity)!;
@@ -1043,14 +1109,8 @@ export function createEditorStore(undoService: EditorUndoService = createEditorU
       reindexSiblings(parent);
       if (parent != null) expanded.add(parent);
 
-      if (clipboard.cut) {
-        deleteIdsWithSubtree(actualRoots.map((r) => r.entity));
-        clipboard = null;
-      }
-
       selectedIds = actualRoots.map((r) => idMap.get(r.entity)!);
       selectionAnchor = selectedIds[selectedIds.length - 1] ?? null;
-      void rootOldIds;
     },
     navigateVisible(delta: number) {
       const flat = getVisibleFlat().map((n) => n.entity.entity);
@@ -1140,9 +1200,10 @@ export function createEditorStore(undoService: EditorUndoService = createEditorU
       const e = find(entity);
       if (!e) return;
       if (mode === 'edit' && !gizmoDragging) pushUndo(`Set ${type}`);
+      const normalizedValue = withEntityReferenceMetadata(type, value);
       e.components[type] = type === 'TimelineDirector'
-        ? resetTimelineBindingsOnAssetChange(e.components[type], value)
-        : value;
+        ? resetTimelineBindingsOnAssetChange(e.components[type], normalizedValue)
+        : normalizedValue;
     },
     patchComponent(entity: number, type: string, patch: Record<string, unknown>) {
       const e = find(entity);
@@ -1151,7 +1212,10 @@ export function createEditorStore(undoService: EditorUndoService = createEditorU
       const safePatch = type === 'TimelineDirector'
         ? resetTimelineBindingsOnAssetChange(e.components[type], patch)
         : patch;
-      e.components[type] = { ...(e.components[type] as object), ...safePatch };
+      e.components[type] = withEntityReferenceMetadata(type, {
+        ...(e.components[type] as object),
+        ...safePatch,
+      });
     },
     assignMaterial(
       entity: number,

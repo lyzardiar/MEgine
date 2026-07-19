@@ -1,4 +1,4 @@
-use crate::SceneError;
+use crate::{entity_reference::remap_scene_entity_references, SceneError};
 use mengine_assets::{parse_timeline_binding_table, serialize_timeline_binding_table};
 use mengine_core::generated::TimelineDirector;
 use mengine_core::snapshot::WorldSnapshot;
@@ -160,6 +160,25 @@ pub fn apply_snapshot(world: &mut World, snap: &WorldSnapshot) {
         if let Some(parent) = ent.parent.and_then(|id| entity_map.get(&id)).copied() {
             world.set_parent(child, Some(parent));
         }
+        let mut components = serde_json::Value::Object(
+            ent.components
+                .iter()
+                .map(|(name, value)| (name.clone(), value.clone()))
+                .collect(),
+        );
+        match remap_scene_entity_references(&mut components, &entity_map) {
+            Ok(()) => {
+                if let Some(components) = components.as_object() {
+                    for (name, value) in components {
+                        world.set_component_value(child, name, value.clone());
+                    }
+                }
+            }
+            Err(error) => log::warn!(
+                "scene entity references on {} could not be remapped: {error}",
+                ent.entity
+            ),
+        }
         if let Some(director) = world.get_component_mut::<TimelineDirector>(child) {
             if let Ok(mut bindings) = parse_timeline_binding_table(&director.bindings_json) {
                 bindings.remap_entities(&entity_map);
@@ -177,7 +196,7 @@ pub fn apply_snapshot(world: &mut World, snap: &WorldSnapshot) {
 mod tests {
     use super::*;
     use mengine_core::command::WorldCommand;
-    use mengine_core::generated::{ParticleEmitter2D, ParticleEmitter3D, SpineSkeleton};
+    use mengine_core::generated::{Button, ParticleEmitter2D, ParticleEmitter3D, SpineSkeleton};
     use mengine_core::snapshot::EntitySnapshot;
     use serde_json::json;
 
@@ -691,5 +710,75 @@ mod tests {
         assert_eq!(table.bindings["Hero"].resolved_entity().unwrap(), hero);
         assert!(table.bindings["Ghost"].missing);
         assert!(world.is_alive(table.bindings["Ghost"].resolved_entity().unwrap()));
+    }
+
+    #[test]
+    fn snapshot_rebuild_remaps_persistent_ui_targets_without_id_reuse() {
+        let mut world = World::new();
+        for _ in 0..4 {
+            world.spawn_empty();
+        }
+        let snapshot = WorldSnapshot {
+            entities: vec![
+                EntitySnapshot {
+                    entity: 10,
+                    name: Some("Button".into()),
+                    parent: None,
+                    sibling_index: 0,
+                    active: true,
+                    components: HashMap::from([(
+                        "Button".into(),
+                        json!({
+                            "on_click": { "target": 20, "component": "Menu", "method": "Open" }
+                        }),
+                    )]),
+                },
+                EntitySnapshot {
+                    entity: 20,
+                    name: Some("Target".into()),
+                    parent: None,
+                    sibling_index: 1,
+                    active: true,
+                    components: HashMap::new(),
+                },
+                EntitySnapshot {
+                    entity: 30,
+                    name: Some("Missing Button".into()),
+                    parent: None,
+                    sibling_index: 2,
+                    active: true,
+                    components: HashMap::from([(
+                        "Button".into(),
+                        json!({
+                            "on_click": { "target": 999, "component": "Menu", "method": "Gone" }
+                        }),
+                    )]),
+                },
+            ],
+            ..WorldSnapshot::default()
+        };
+
+        apply_snapshot(&mut world, &snapshot);
+        let button = world
+            .iter_entities()
+            .find(|entity| world.entity_name(*entity) == Some("Button"))
+            .unwrap();
+        let target = world
+            .iter_entities()
+            .find(|entity| world.entity_name(*entity) == Some("Target"))
+            .unwrap();
+        let missing = world
+            .iter_entities()
+            .find(|entity| world.entity_name(*entity) == Some("Missing Button"))
+            .unwrap();
+        assert_eq!(
+            world.get_component::<Button>(button).unwrap().on_click["target"],
+            target.to_u64().to_string()
+        );
+        assert_eq!(
+            world.get_component::<Button>(missing).unwrap().on_click["target"]
+                ["$mengine_entity_ref"]["kind"],
+            "missing"
+        );
     }
 }

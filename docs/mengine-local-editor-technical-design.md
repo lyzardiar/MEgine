@@ -1266,3 +1266,15 @@ Rust workspace 检查现在零警告通过；Tauri Host 17/17 常规测试与 1/
 第一遍自省否决了“直接把编辑器当前实体 ID 写进组件就完成”的实现，因为 `apply_snapshot` 在重开场景和进入 Play Mode 时会重建 Entity；最终把加载期重映射纳入同一契约，并用字符串跨越 JS 的 53 位整数边界，同时补上损坏表重置入口，避免诊断后只能手工改 Scene JSON。第二遍自省发现 Sequencer 原先把“当前层级选择”同时当作 Director，用户一旦选择轨道目标就失去播放控制和绑定上下文；因此增加显式 Director 选择器，并修正所有实时 Transport 操作使用该上下文。最后一轮路径审计又处理了已删除旧 ID 恰好被 allocator 新实体复用、Camera Blend 上一镜头 stale 时静默退回主摄像机，以及手动 Director 下拉选择被层级选择覆盖；这些情况现在都保持显式 missing/stale 并停止错误求值。
 
 当前稳定表覆盖 Scene/Play 快照生命周期，但 Prefab 捕获仍没有把场景 Entity 引用转换为稳定 Prefab Node ID，也没有跨 additive scene 的全局对象 GUID；因此本批不宣称 Timeline 绑定系统已经完备。下一阶段必须建立通用 Serialized Entity Reference：Scene Object GUID、Prefab Node/Instance 重映射、Duplicate/Apply/Revert 引用迁移、Missing Reference 修复和构建期全场景引用校验。在此之前，Sequencer 稳定绑定应限定为当前场景对象，Prefab 内部绑定需要显式重新绑定并由后续校验阻止错误发布。
+
+## 106. 2026-07-19 序列化实体引用与 Prefab 重映射基础
+
+- 引擎新增统一的组件实体引用注册约定。内建 UI 持久事件覆盖 Button、Toggle、Slider、Scrollbar、InputField、Dropdown、ListView、ScrollView 和 TabView；用户 Behaviour 的 `@EntityReference` 字段会随组件写入隐藏的 `__mengine_entity_reference_fields` 描述，使 TypeScript 编辑器、Rust Scene Loader 和原生 Prefab 实例化共享同一重映射语义，而不是分别按字段名猜测。
+- Scene/Play World 从快照重建后，旧实体号通过本次加载的完整映射改写为新 `Entity::to_u64()` 十进制字符串。目标已经删除时写入显式 `$mengine_entity_ref/missing` 标记，不保留可能与 allocator 新对象碰撞的裸 ID；Inspector 会显示 Missing，而不是把它解释成 `None` 或静默调用错误对象。
+- Prefab 捕获把子树内部引用转换为稳定 `prefab_node` token，外部场景引用转换为 missing token；Prefab 完整性校验拒绝损坏 token 和不存在的 node。Web 编辑器与 Rust Player 都在所有实例实体分配完成后才把 node token 解析为该实例的新实体，因此重命名、重新排序、重复实例化和 allocator 槽位复用不影响引用。
+- Duplicate、Copy/Paste 使用一次性 ID 映射重写被复制集合内部的引用，集合外部引用保持外部引用语义。多根 Duplicate 不再逐棵处理，而是一次建立全局映射，所以两个同级根节点互相引用时会共同指向两个副本；完整 Prefab 实例仍获得新的 instance identity，局部 Prefab 子树仍按既有规则自动 Unpack。
+- Cut/Paste 不再伪装成“复制新 ID 后删除旧节点”，而是复用层级移动事务、防循环检查和世界变换保持逻辑；被剪切对象的实体 ID 不变，因此场景中未参与剪切的其他组件仍能保持对它的引用。目标位于被剪切子树内部时操作原子拒绝且保留剪贴板，不产生半完成层级或空 Undo。
+
+第一遍自省发现旧递归 Prefab 分支绕过 node-token 校验，以及多根 Duplicate 的逐棵映射无法处理跨根引用，现已统一修正。第二遍自省把原方案从“仅修 UI 事件”扩展到用户 Behaviour 的 `@EntityReference` 元数据，否则自定义脚本仍会在场景重开和 Prefab 实例化后失效；同时旧 Prefab 中遗留的裸实体号在实例化时只会转成 Missing，不允许碰撞绑定。
+
+本阶段仍不是完整的全局对象引用系统：跨 Scene/Additive Scene 引用需要稳定 Scene GUID，Prefab 外部引用需要 Override 层而不是永久 Missing，资源构建还需要在发布前汇总 Missing Reference 并阻止错误 Player；嵌套 Prefab、Prefab Variant、Apply/Revert 的属性级 Override 也尚未完成。下一阶段应基于当前 token/metadata 契约增加构建期引用审计，而不是再次引入另一套实体引用格式。

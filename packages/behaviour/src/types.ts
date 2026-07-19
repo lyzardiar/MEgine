@@ -1,5 +1,8 @@
 import type { ComponentType } from './components.js';
 
+/** Serialized with custom Behaviour data so native scene/Prefab code can remap entity fields. */
+export const ENTITY_REFERENCE_FIELDS_KEY = '__mengine_entity_reference_fields';
+
 export type FieldType =
   | 'number'
   | 'boolean'

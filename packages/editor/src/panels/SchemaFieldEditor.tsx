@@ -1,6 +1,8 @@
 import { useMemo, useState, type ReactNode } from 'react';
 import type { FieldMeta, MethodMeta } from '@mengine/behaviour';
+import { ENTITY_REFERENCE_FIELDS_KEY } from '@mengine/behaviour';
 import type { ProjectFileAsset } from '../projectAssets';
+import { parseSerializedEntityReference } from '../entityReferences';
 import {
   ColorField,
   EntityReferenceField,
@@ -90,6 +92,12 @@ export function SchemaFieldEditor(props: {
 
   const setKey = (f: FieldMeta, value: unknown) => {
     const next = { ...props.data, [f.key]: value };
+    if (f.type === 'entity') {
+      const current = Array.isArray(next[ENTITY_REFERENCE_FIELDS_KEY])
+        ? next[ENTITY_REFERENCE_FIELDS_KEY].filter((key): key is string => typeof key === 'string')
+        : [];
+      next[ENTITY_REFERENCE_FIELDS_KEY] = [...new Set([...current, f.key])];
+    }
     props.onChange(next);
     if (f.onValueChanged) props.onInvokeMethod?.(f.onValueChanged);
   };
@@ -104,16 +112,13 @@ export function SchemaFieldEditor(props: {
       (raw == null || raw === '' || (typeof raw === 'number' && Number.isNaN(raw)));
 
     if (f.type === 'entity') {
-      const value = typeof raw === 'number'
-        ? raw
-        : typeof raw === 'string' && raw.trim() && Number.isFinite(Number(raw))
-          ? Number(raw)
-          : null;
+      const reference = parseSerializedEntityReference(raw);
       return (
         <FieldChrome key={f.key} field={f}>
           <EntityReferenceField
             label={label}
-            value={value}
+            value={reference.entity}
+            missingValue={reference.missing}
             entities={props.entities ?? []}
             allowNone={f.allowNone !== false}
             onChange={(next) => {

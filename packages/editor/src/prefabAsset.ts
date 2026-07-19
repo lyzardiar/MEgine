@@ -1,4 +1,8 @@
 import { normalizeProjectAssetPath } from './projectAssets.ts';
+import {
+  localizePrefabEntityReferences,
+  validatePrefabEntityReferences,
+} from './entityReferences.ts';
 
 export const PREFAB_VERSION = 1;
 export const PREFAB_LINK_COMPONENT = '__MEnginePrefab';
@@ -92,21 +96,37 @@ function legacyNode(value: unknown, path: number[]): PrefabNode {
   };
 }
 
+function validateReferenceTokens(prefab: PrefabAsset): PrefabAsset {
+  const nodeIds = new Set<string>();
+  const collect = (node: PrefabNode) => {
+    nodeIds.add(node.id);
+    node.children.forEach(collect);
+  };
+  const validate = (node: PrefabNode) => {
+    validatePrefabEntityReferences(node.components, nodeIds);
+    node.children.forEach(validate);
+  };
+  collect(prefab.root);
+  validate(prefab.root);
+  return prefab;
+}
+
 export function normalizePrefabAsset(value: unknown): PrefabAsset {
   const raw = objectValue(value, 'prefab');
   const version = Number(raw.version ?? PREFAB_VERSION);
   if (version !== PREFAB_VERSION) throw new Error(`unsupported prefab version: ${version}`);
   if (raw.root == null) {
     const root = legacyNode(raw, []);
-    return { version: PREFAB_VERSION, name: root.name, root };
+    return validateReferenceTokens({ version: PREFAB_VERSION, name: root.name, root });
   }
   const name = String(raw.name ?? '').trim();
   if (!name) throw new Error('prefab name is empty');
-  return {
+  const prefab = {
     version: PREFAB_VERSION,
     name,
     root: normalizeNode(raw.root, 'root', new Set(), { value: 0 }),
   };
+  return validateReferenceTokens(prefab);
 }
 
 export function parsePrefabAsset(text: string): PrefabAsset {
@@ -213,6 +233,7 @@ export function capturePrefabAsset(
   const normalizedSource = options.source ? normalizeProjectAssetPath(options.source) : null;
   const createNodeId = options.createNodeId ?? (() => createPrefabId('node'));
   const nodeIds = new Map<number, string>();
+  const capturedNodes = new Map<number, PrefabNode>();
   const usedNodeIds = new Set<string>();
   const visiting = new Set<number>();
 
@@ -234,11 +255,19 @@ export function capturePrefabAsset(
       components,
       children: (childrenByParent.get(entityId) ?? []).map((child) => capture(child.entity)),
     };
+    capturedNodes.set(entityId, node);
     visiting.delete(entityId);
     return node;
   };
 
   const root = capture(rootEntity);
+  for (const [entity, node] of capturedNodes) {
+    node.components = localizePrefabEntityReferences(
+      entityById.get(entity)!.components,
+      nodeIds,
+    );
+    delete node.components[PREFAB_LINK_COMPONENT];
+  }
   return {
     asset: normalizePrefabAsset({ version: PREFAB_VERSION, name: name.trim() || root.name, root }),
     nodeIds,

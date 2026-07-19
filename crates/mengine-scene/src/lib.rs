@@ -1,5 +1,6 @@
 //! Scene / prefab serialization (*.mscene JSON + version header).
 
+mod entity_reference;
 mod prefab;
 mod scene_file;
 

@@ -93,3 +93,4 @@ export type {
   ComponentType,
 } from './components.js';
 export type { BehaviourRunner, BehaviourInstance, EntityLike } from './runner.js';
+export { ENTITY_REFERENCE_FIELDS_KEY } from './types.js';
