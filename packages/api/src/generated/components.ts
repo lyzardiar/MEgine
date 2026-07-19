@@ -93,6 +93,7 @@ export interface PbrMaterial {
   baseColor: [number, number, number, number];
   metallic: number;
   roughness: number;
+  ior: number;
   emissive: [number, number, number];
   emissiveStrength: number;
   unlit: boolean;
@@ -106,6 +107,8 @@ export interface MaterialPropertyBlock {
   metallic: number;
   overrideRoughness: boolean;
   roughness: number;
+  overrideIor: boolean;
+  ior: number;
   overrideEmissive: boolean;
   emissive: [number, number, number];
   overrideEmissiveStrength: boolean;

@@ -1113,3 +1113,12 @@ Rust workspace 检查现在零警告通过；Tauri Host 17/17 常规测试与 1/
 这仍不代表材质系统完备。后续高价值缺口包括 Transmission/Thickness、Sheen、Subsurface、Clear Coat Normal/Mask、各层独立纹理与 UV、Material Instance/参数继承、Shader 参数反射、Keyword/Variant 管理、离屏 Player 同管线预览、Shader Cache 预热、Frame Debugger 与材质性能诊断。
 
 本批全量编辑器测试 283/283、CLI 打包测试 41/41、`mengine-assets`/`mengine-rhi`/`mengine-runtime` 140/140 通过；编辑器 TypeScript/Vite 生产构建与 Rust workspace 零警告检查通过。前端主入口仍为按需加载后的 443.17kB，Material 维持独立动态 Chunk。
+
+## 91. 2026-07-19 Per-renderer IOR Override
+
+- `PbrMaterial` 与 `MaterialPropertyBlock` 的 IDL 契约补齐 IOR。Legacy `PbrMaterial` 可直接指定 `ior`；推荐的 Property Block 使用 `override_ior + ior`，只覆盖介质 Fresnel，不替换材质纹理、Shader、透明/深度状态、Render Queue 或 Clear Coat。
+- IDL 重新生成 Rust Component、TypeScript API 与 JSON Schema。旧场景依靠 `#[serde(default)]` 自动得到 `PbrMaterial.ior=1.5`、`MaterialPropertyBlock.override_ior=false` 和 `ior=1.5`，不会因为新增字段加载失败；Behaviour 写入继续使用 `Partial<T>`，World Command 仍接受动态组件记录。
+- Inspector 为两种组件提供 1.0–2.5 的 IOR 数值范围；Property Block 只在 Override IOR 开启时显示输入。Scene Canvas 预览与 Runtime 统一遵守 override flag，运行时将非有限值回退为 1.5 并钳制范围，随后复用 Material v7 的 CPU F0 与 Forward WGSL 路径。
+- 第一遍自审发现 IOR 资产与 Renderer 覆盖语义不完整；第二遍自审核对生成 API 兼容边界、恢复生成 Rust 文件格式，并增加旧 JSON 默认升级、Legacy PBR、Property Block、RenderObject 收集与 Scene 预览回归。全量编辑器测试 283/283、Runtime lib 82/82、Runtime player 19/19、编辑器生产构建和 Rust workspace 零警告检查通过。
+
+这一步是 Material Instance 的参数覆盖前置契约，不等于实例系统完成。实例资产仍需父材质依赖闭包、覆盖字段集合、循环/深度检测、父级热重载传播、编辑器继承值显示、原子 Undo/保存以及 CLI 与 Player 双重构建校验。

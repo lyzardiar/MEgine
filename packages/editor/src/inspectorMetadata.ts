@@ -194,6 +194,7 @@ export const BUILTIN_INSPECTOR_FIELDS: Readonly<
   PbrMaterial: {
     metallic: { min: 0, max: 1, step: 0.01 },
     roughness: { min: 0, max: 1, step: 0.01 },
+    ior: { label: 'Index Of Refraction', min: 1, max: 2.5, step: 0.01 },
     emissive_strength: { min: 0, step: 0.1 },
   },
   MaterialPropertyBlock: {
@@ -212,6 +213,14 @@ export const BUILTIN_INSPECTOR_FIELDS: Readonly<
       max: 1,
       step: 0.01,
       visibleWhen: { field: 'override_roughness', equals: true },
+    },
+    override_ior: { label: 'Override IOR' },
+    ior: {
+      label: 'Index Of Refraction',
+      min: 1,
+      max: 2.5,
+      step: 0.01,
+      visibleWhen: { field: 'override_ior', equals: true },
     },
     override_emissive: { label: 'Override Emissive' },
     emissive: { visibleWhen: { field: 'override_emissive', equals: true } },

@@ -2136,6 +2136,7 @@ fn render_material_from_component(material: &PbrMaterial) -> RenderMaterial {
         base_color: material.base_color,
         metallic: material.metallic,
         roughness: material.roughness,
+        ior: material.ior,
         emissive: material.emissive,
         emissive_strength: material.emissive_strength,
         unlit: material.unlit,
@@ -2783,10 +2784,25 @@ mod tests {
 
     #[test]
     fn material_component_overrides_named_preset() {
+        let legacy: PbrMaterial = serde_json::from_value(json!({
+            "metallic": 0.4,
+            "roughness": 0.7
+        }))
+        .unwrap();
+        assert_eq!(legacy.ior, 1.5);
+        let legacy_block: MaterialPropertyBlock = serde_json::from_value(json!({
+            "override_roughness": true,
+            "roughness": 0.8
+        }))
+        .unwrap();
+        assert!(!legacy_block.override_ior);
+        assert_eq!(legacy_block.ior, 1.5);
+
         let component = PbrMaterial {
             base_color: [0.2, 0.3, 0.4, 1.0],
             metallic: 0.7,
             roughness: 0.25,
+            ior: 1.33,
             emissive: [0.1, 0.0, 0.2],
             emissive_strength: 3.0,
             unlit: true,
@@ -2795,6 +2811,7 @@ mod tests {
         let material = render_material_from_component(&component);
         assert_eq!(material.base_color, component.base_color);
         assert_eq!(material.metallic, 0.7);
+        assert_eq!(material.ior, 1.33);
         assert!(material.unlit && material.double_sided);
     }
 
@@ -2815,6 +2832,8 @@ mod tests {
             MaterialPropertyBlock {
                 override_roughness: true,
                 roughness: 0.8,
+                override_ior: true,
+                ior: 1.33,
                 ..MaterialPropertyBlock::default()
             },
         );
@@ -2825,6 +2844,7 @@ mod tests {
         assert_eq!(objects[0].material.base_color, [1.0, 0.55, 0.08, 1.0]);
         assert_eq!(objects[0].material.metallic, 0.9);
         assert_eq!(objects[0].material.roughness, 0.8);
+        assert_eq!(objects[0].material.ior, 1.33);
     }
 
     #[test]

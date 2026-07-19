@@ -1106,6 +1106,9 @@
       "emissive_strength": {
         "type": "number"
       },
+      "ior": {
+        "type": "number"
+      },
       "metallic": {
         "type": "number"
       },
@@ -1116,6 +1119,9 @@
         "type": "boolean"
       },
       "override_emissive_strength": {
+        "type": "boolean"
+      },
+      "override_ior": {
         "type": "boolean"
       },
       "override_metallic": {
@@ -1135,6 +1141,8 @@
       "metallic",
       "override_roughness",
       "roughness",
+      "override_ior",
+      "ior",
       "override_emissive",
       "emissive",
       "override_emissive_strength",
@@ -1509,6 +1517,9 @@
       "emissive_strength": {
         "type": "number"
       },
+      "ior": {
+        "type": "number"
+      },
       "metallic": {
         "type": "number"
       },
@@ -1523,6 +1534,7 @@
       "base_color",
       "metallic",
       "roughness",
+      "ior",
       "emissive",
       "emissive_strength",
       "unlit",

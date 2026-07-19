@@ -102,6 +102,7 @@ component PbrMaterial {
   base_color:        float4 = [0.8, 0.8, 0.8, 1]
   metallic:          float  = 0
   roughness:         float  = 0.5
+  ior:               float  = 1.5
   emissive:          float3 = [0, 0, 0]
   emissive_strength: float  = 1
   unlit:             bool   = false
@@ -117,6 +118,8 @@ component MaterialPropertyBlock {
   metallic:                   float  = 0
   override_roughness:         bool   = false
   roughness:                  float  = 0.5
+  override_ior:               bool   = false
+  ior:                        float  = 1.5
   override_emissive:          bool   = false
   emissive:                   float3 = [0, 0, 0]
   override_emissive_strength: bool   = false
