@@ -150,6 +150,15 @@ import {
   revealTimelineTimeScroll,
   timelinePointerTime,
 } from '../timelineViewport.ts';
+import {
+  formatTimelineTimeInput,
+  formatTimelineTimeLabel,
+  formatTimelineTimeTooltip,
+  timelineFrameAtTime,
+  timelineRulerStepCount,
+  timelineTimeFromDisplayValue,
+  type TimelineTimeDisplayMode,
+} from '../timelineTimeDisplay.ts';
 import { registerMenuItem } from '../editorWindow';
 import {
   listProjectFiles,
@@ -202,6 +211,16 @@ type TimelineCollisionNotice = {
 };
 
 type TimelineViewMode = 'dope_sheet' | 'curves';
+
+const TIMELINE_TIME_DISPLAY_KEY = 'mengine.timeline.time_display';
+
+function loadTimelineTimeDisplayMode(): TimelineTimeDisplayMode {
+  try {
+    return localStorage.getItem(TIMELINE_TIME_DISPLAY_KEY) === 'seconds' ? 'seconds' : 'frames';
+  } catch {
+    return 'frames';
+  }
+}
 
 type TimelineMarquee = {
   pointerId: number;
@@ -416,6 +435,7 @@ function AnimationCurveWorkspace(props: {
   trackIndex: number | null;
   duration: number;
   frameRate: number;
+  timeDisplayMode: TimelineTimeDisplayMode;
   time: number;
   zoom: number;
   selectedKey: TimelineKeyRef | null;
@@ -507,6 +527,7 @@ function AnimationCurveWorkspace(props: {
   const safeDuration = Math.max(props.duration, 1 / Math.max(1, props.frameRate));
   const maximumZoom = animationCurveMaximumZoom(safeDuration, props.frameRate, TIMELINE_MAX_ZOOM);
   const visibleSpan = Math.max(1 / Math.max(1, props.frameRate), safeDuration / Math.max(1, props.zoom));
+  const timeGridSteps = timelineRulerStepCount(10, visibleSpan, props.frameRate, props.timeDisplayMode);
   const timeStart = Math.max(0, Math.min(safeDuration - visibleSpan, viewCenter - visibleSpan / 2));
   const timeEnd = timeStart + visibleSpan;
   const automaticBounds = animationCurveValueBounds(track, timeStart, timeEnd);
@@ -1083,11 +1104,11 @@ function AnimationCurveWorkspace(props: {
         }}
       >
         <rect className="timeline-curve-plot" x={viewport.paddingLeft} y={viewport.paddingTop} width={CURVE_VIEW_WIDTH - viewport.paddingLeft - viewport.paddingRight} height={CURVE_VIEW_HEIGHT - viewport.paddingTop - viewport.paddingBottom} />
-        {Array.from({ length: 11 }, (_unused, index) => {
-          const x = viewport.paddingLeft + (CURVE_VIEW_WIDTH - viewport.paddingLeft - viewport.paddingRight) * index / 10;
-          const labelTime = timeStart + visibleSpan * index / 10;
-          const textAnchor = index === 0 ? 'start' : index === 10 ? 'end' : 'middle';
-          return <g key={`time:${index}`}><line className="timeline-curve-grid-line" x1={x} y1={viewport.paddingTop} x2={x} y2={CURVE_VIEW_HEIGHT - viewport.paddingBottom} /><text className="timeline-curve-axis-label" x={x} y={CURVE_VIEW_HEIGHT - 8} textAnchor={textAnchor}>{labelTime.toFixed(2)}</text></g>;
+        {Array.from({ length: timeGridSteps + 1 }, (_unused, index) => {
+          const x = viewport.paddingLeft + (CURVE_VIEW_WIDTH - viewport.paddingLeft - viewport.paddingRight) * index / timeGridSteps;
+          const labelTime = timeStart + visibleSpan * index / timeGridSteps;
+          const textAnchor = index === 0 ? 'start' : index === timeGridSteps ? 'end' : 'middle';
+          return <g key={`time:${index}`}><line className="timeline-curve-grid-line" x1={x} y1={viewport.paddingTop} x2={x} y2={CURVE_VIEW_HEIGHT - viewport.paddingBottom} /><text className="timeline-curve-axis-label" x={x} y={CURVE_VIEW_HEIGHT - 8} textAnchor={textAnchor}>{formatTimelineTimeLabel(labelTime, props.frameRate, props.timeDisplayMode, visibleSpan / timeGridSteps)}</text></g>;
         })}
         {Array.from({ length: 9 }, (_unused, index) => {
           const y = viewport.paddingTop + (CURVE_VIEW_HEIGHT - viewport.paddingTop - viewport.paddingBottom) * index / 8;
@@ -1145,7 +1166,7 @@ function AnimationCurveWorkspace(props: {
                 role="button"
                 tabIndex={0}
                 aria-pressed={selected}
-                aria-label={`Curve key ${keyIndex + 1} channel ${channel + 1} at ${displayTime.toFixed(3)} seconds`}
+                aria-label={`Curve key ${keyIndex + 1} channel ${channel + 1} at ${formatTimelineTimeTooltip(displayTime, props.frameRate)}`}
                 className={`timeline-curve-key${selected ? ' selected' : ''}`}
                 key={`${keyIndex}:${channel}`}
                 cx={point.x}
@@ -1429,6 +1450,7 @@ export function Timeline(props: {
   const [activePropertyBindingKey, setActivePropertyBindingKey] = useState<string | null>(null);
   const [zoom, setZoom] = useState(1);
   const [viewMode, setViewMode] = useState<TimelineViewMode>('dope_sheet');
+  const [timeDisplayMode, setTimeDisplayMode] = useState<TimelineTimeDisplayMode>(loadTimelineTimeDisplayMode);
   const [detailsOpen, setDetailsOpen] = useState(false);
   const [maximized, setMaximized] = useState(false);
   const [timelineClipboard, setTimelineClipboard] = useState<TimelineClipboard | null>(null);
@@ -2382,6 +2404,9 @@ export function Timeline(props: {
     ? animationCurveMaximumZoom(clip.duration, clip.frame_rate, TIMELINE_MAX_ZOOM)
     : TIMELINE_MAX_ZOOM;
   const rulerSteps = Math.min(80, Math.max(5, Math.round(5 * zoom)));
+  const displayRulerSteps = clip
+    ? timelineRulerStepCount(rulerSteps, clip.duration, clip.frame_rate, timeDisplayMode)
+    : rulerSteps;
   const canCopySelection = activeSelectedKeys.length > 0 || selectedAnimationEvent != null;
   const canMaximizePanel = !new URLSearchParams(window.location.search).has('detachedPanel');
 
@@ -2769,6 +2794,16 @@ export function Timeline(props: {
   const stepFrame = (direction: -1 | 1) => {
     if (!clip) return;
     setPreviewTime(time + direction / Math.max(1, clip.frame_rate));
+  };
+
+  const toggleTimelineTimeDisplayMode = () => {
+    const next = timeDisplayMode === 'frames' ? 'seconds' : 'frames';
+    setTimeDisplayMode(next);
+    try {
+      localStorage.setItem(TIMELINE_TIME_DISPLAY_KEY, next);
+    } catch {
+      /* ignore unavailable preference storage */
+    }
   };
 
   const stopTimelineAutoScroll = () => {
@@ -3334,21 +3369,43 @@ export function Timeline(props: {
             <Redo2 size={13} aria-hidden="true" />
           </button>
         </div>
-        <label className="timeline-time" title="Current animation time">
+        <div
+          className="timeline-time"
+          title={clip ? `Current animation time: ${formatTimelineTimeTooltip(time, clip.frame_rate)}` : 'Current animation time'}
+        >
           <input
-            aria-label="Current animation time"
+            aria-label={timeDisplayMode === 'frames' ? 'Current animation frame' : 'Current animation time in seconds'}
             type="number"
             min={0}
-            max={clip?.duration ?? 0}
-            step={clip ? 1 / Math.max(1, clip.frame_rate) : 0.01}
-            value={time.toFixed(3)}
+            max={clip
+              ? timeDisplayMode === 'frames'
+                ? timelineFrameAtTime(clip.duration, clip.frame_rate)
+                : clip.duration
+              : 0}
+            step={timeDisplayMode === 'frames' ? 1 : clip ? 1 / Math.max(1, clip.frame_rate) : 0.01}
+            value={formatTimelineTimeInput(time, clip?.frame_rate ?? 60, timeDisplayMode)}
             disabled={!clip}
             onChange={(event) => {
-              if (Number.isFinite(event.target.valueAsNumber)) setPreviewTime(event.target.valueAsNumber);
+              if (clip && Number.isFinite(event.target.valueAsNumber)) {
+                setPreviewTime(timelineTimeFromDisplayValue(
+                  event.target.valueAsNumber,
+                  clip.frame_rate,
+                  timeDisplayMode,
+                  clip.duration,
+                ));
+              }
             }}
           />
-          <span>s</span>
-        </label>
+          <button
+            type="button"
+            className="timeline-time-unit"
+            aria-label={timeDisplayMode === 'frames' ? 'Display timeline time in seconds' : 'Display timeline time in frames'}
+            title={timeDisplayMode === 'frames' ? 'Showing frames; switch to seconds' : 'Showing seconds; switch to frames'}
+            onClick={toggleTimelineTimeDisplayMode}
+          >
+            {timeDisplayMode === 'frames' ? 'f' : 's'}
+          </button>
+        </div>
         <span className="timeline-clip-path" title={clipPath}>{clipPath}{dirty ? ' *' : ''}</span>
         {directAsset && props.onCloseAsset && (
           <button type="button" className="timeline-icon-button" title="Close asset" onClick={props.onCloseAsset}>
@@ -3775,12 +3832,17 @@ export function Timeline(props: {
                     onPointerUp={finishScrub}
                     onPointerCancel={finishScrub}
                   >
-                    {Array.from({ length: rulerSteps + 1 }, (_unused, index) => (
+                    {Array.from({ length: displayRulerSteps + 1 }, (_unused, index) => (
                       <span
                         key={index}
-                        style={{ left: `clamp(12px, ${index / rulerSteps * 100}%, calc(100% - 12px))` }}
+                        style={{ left: `clamp(12px, ${index / displayRulerSteps * 100}%, calc(100% - 12px))` }}
                       >
-                        {(clip.duration * index / rulerSteps).toFixed(2)}
+                        {formatTimelineTimeLabel(
+                          clip.duration * index / displayRulerSteps,
+                          clip.frame_rate,
+                          timeDisplayMode,
+                          clip.duration / displayRulerSteps,
+                        )}
                       </span>
                     ))}
                     <i style={{ left: `${clip.duration > 0 ? time / clip.duration * 100 : 0}%` }} />
@@ -3795,8 +3857,8 @@ export function Timeline(props: {
                           type="button"
                           className={`timeline-event-key${selectedEvent === eventIndex ? ' selected' : ''}${timelineDrag?.kind === 'event' && timelineDrag.index === eventIndex ? ' dragging' : ''}`}
                           key={eventIndex}
-                          aria-label={`Animation event at ${displayTime.toFixed(3)} seconds`}
-                          title={`${displayTime.toFixed(3)} s - ${animationEvent.function}`}
+                          aria-label={`Animation event at ${formatTimelineTimeTooltip(displayTime, clip.frame_rate)}`}
+                          title={`${formatTimelineTimeTooltip(displayTime, clip.frame_rate)} · ${animationEvent.function}`}
                           style={{ left: `clamp(6px, ${clip.duration > 0 ? displayTime / clip.duration * 100 : 0}%, calc(100% - 6px))` }}
                           onPointerDown={(event) => beginTimelineDrag(event, 'event', -1, eventIndex, animationEvent.time)}
                           onPointerMove={moveTimelineDrag}
@@ -3840,8 +3902,8 @@ export function Timeline(props: {
                             className={`timeline-key${selected ? ' selected' : ''}${dragged ? ' dragging' : ''}`}
                             key={keyIndex}
                             aria-pressed={selected}
-                            aria-label={`Keyframe at ${displayTime.toFixed(3)} seconds`}
-                            title={`${displayTime.toFixed(3)} s · ${valueLabel(key.value)}`}
+                            aria-label={`Keyframe at ${formatTimelineTimeTooltip(displayTime, clip.frame_rate)}`}
+                            title={`${formatTimelineTimeTooltip(displayTime, clip.frame_rate)} · ${valueLabel(key.value)}`}
                             style={{ left: `clamp(6px, ${clip.duration > 0 ? displayTime / clip.duration * 100 : 0}%, calc(100% - 6px))` }}
                             onPointerDown={(event) => beginTimelineDrag(event, 'key', index, keyIndex, key.time)}
                             onPointerMove={moveTimelineDrag}
@@ -3916,6 +3978,7 @@ export function Timeline(props: {
               trackIndex={selectedTrack}
               duration={clip.duration}
               frameRate={clip.frame_rate}
+              timeDisplayMode={timeDisplayMode}
               time={time}
               zoom={zoom}
               selectedKey={selectedKey}

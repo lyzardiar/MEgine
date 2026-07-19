@@ -2907,9 +2907,26 @@ body.insp-scrubbing * {
   text-align: right;
 }
 
-.timeline-time span {
-  padding-right: 4px;
+.timeline-toolbar .timeline-time-unit {
+  flex: 0 0 20px;
+  width: 20px;
+  min-width: 20px;
+  height: 20px;
+  min-height: 20px;
+  padding: 0;
+  border: 0;
+  border-left: 1px solid #343434;
+  background: #292929;
   color: var(--u-muted);
+  font-family: var(--u-mono);
+  font-size: 10px;
+  text-transform: uppercase;
+}
+
+.timeline-toolbar .timeline-time-unit:hover:not(:disabled) {
+  border-left-color: #46525c;
+  background: #38434c;
+  color: #fff;
 }
 
 .timeline-clip-path {
