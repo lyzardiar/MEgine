@@ -22,6 +22,7 @@ const MAX_ASSET_DUPLICATE_BYTES: u64 = 512 * 1024 * 1024;
 const ASSET_TRASH_SCHEMA_VERSION: u32 = 1;
 const ASSET_TRASH_ROOT: &str = ".mengine/Trash";
 const MAX_ASSET_TRASH_RECORD_BYTES: u64 = 1024 * 1024;
+const MAX_SHADER_VARIANT_LIMIT: u32 = 65_536;
 
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "lowercase")]
@@ -49,12 +50,21 @@ pub struct ProjectManifest {
     pub asset_mode: BuildAssetMode,
     #[serde(default, alias = "always_include")]
     pub always_include: Vec<String>,
+    #[serde(
+        default = "default_shader_variant_limit",
+        alias = "shader_variant_limit"
+    )]
+    pub shader_variant_limit: u32,
     #[serde(flatten)]
     pub extra: BTreeMap<String, serde_json::Value>,
 }
 
 fn default_project_version() -> u32 {
     1
+}
+
+fn default_shader_variant_limit() -> u32 {
+    256
 }
 
 #[derive(Clone, Debug, Serialize)]
@@ -364,6 +374,11 @@ impl ProjectSession {
                 "project name cannot be empty".into(),
             ));
         }
+        if !(1..=MAX_SHADER_VARIANT_LIMIT).contains(&manifest.shader_variant_limit) {
+            return Err(ProjectError::InvalidProject(format!(
+                "shaderVariantLimit must be from 1 to {MAX_SHADER_VARIANT_LIMIT}"
+            )));
+        }
         if let Some(first) = manifest.build_scenes.first().cloned() {
             match manifest.main_scene.as_deref() {
                 Some(main) if main != first.as_str() => {
@@ -435,15 +450,26 @@ impl ProjectSession {
         self.manifest.always_include.clone()
     }
 
+    pub fn shader_variant_limit(&self) -> u32 {
+        self.manifest.shader_variant_limit
+    }
+
     pub fn save_build_asset_settings(
         &mut self,
         asset_mode: BuildAssetMode,
         paths: Vec<String>,
+        shader_variant_limit: u32,
     ) -> Result<Vec<String>, ProjectError> {
+        if !(1..=MAX_SHADER_VARIANT_LIMIT).contains(&shader_variant_limit) {
+            return Err(ProjectError::InvalidProject(format!(
+                "shaderVariantLimit must be from 1 to {MAX_SHADER_VARIANT_LIMIT}"
+            )));
+        }
         let normalized = normalize_build_asset_paths(&self.project_root, &paths)?;
         let mut manifest = self.manifest.clone();
         manifest.asset_mode = asset_mode;
         manifest.always_include = normalized.clone();
+        manifest.shader_variant_limit = shader_variant_limit;
         let mut bytes = serde_json::to_vec_pretty(&manifest)?;
         bytes.push(b'\n');
         write_replace_synced(&self.project_root.join("project.json"), &bytes)?;
@@ -2762,6 +2788,7 @@ fn initialize_project(root: &Path, name: &str) -> Result<(), ProjectError> {
         startup_script: Some("Assets/Scripts/Main.ts".into()),
         asset_mode: BuildAssetMode::All,
         always_include: Vec::new(),
+        shader_variant_limit: default_shader_variant_limit(),
         extra: BTreeMap::new(),
     };
     let manifest_json = serde_json::to_vec_pretty(&manifest)?;
@@ -3420,6 +3447,7 @@ mod tests {
         assert_eq!(manifest["startupScript"], "Assets/Scripts/Main.ts");
         assert_eq!(manifest["assetMode"], "all");
         assert_eq!(manifest["alwaysInclude"], json!([]));
+        assert_eq!(manifest["shaderVariantLimit"], 256);
         assert_eq!(
             manifest["buildScenes"],
             json!(["Assets/Scenes/Main.mscene"])
@@ -3872,6 +3900,7 @@ mod tests {
             .save_build_asset_settings(
                 BuildAssetMode::Referenced,
                 vec!["Assets\\Prefabs\\Dynamic".into()],
+                512,
             )
             .unwrap();
         assert_eq!(paths, vec!["Assets/Prefabs/Dynamic"]);
@@ -3882,6 +3911,11 @@ mod tests {
                 .unwrap();
         assert_eq!(saved["assetMode"], "referenced");
         assert_eq!(saved["alwaysInclude"], json!(["Assets/Prefabs/Dynamic"]));
+        assert_eq!(saved["shaderVariantLimit"], 512);
+        assert_eq!(session.shader_variant_limit(), 512);
+        assert!(session
+            .save_build_asset_settings(BuildAssetMode::Referenced, paths.clone(), 0)
+            .is_err());
         assert!(session
             .save_build_asset_settings(
                 BuildAssetMode::Referenced,
@@ -3889,13 +3923,15 @@ mod tests {
                     "Assets/Prefabs/Dynamic".into(),
                     "Assets/Prefabs/Dynamic".into()
                 ],
+                512,
             )
             .is_err());
         std::fs::write(root.join("Assets/Prefabs/Dynamic/Enemy.prefab.meta"), "{}").unwrap();
         assert!(session
             .save_build_asset_settings(
                 BuildAssetMode::Referenced,
-                vec!["Assets/Prefabs/Dynamic/Enemy.prefab.meta".into()]
+                vec!["Assets/Prefabs/Dynamic/Enemy.prefab.meta".into()],
+                512,
             )
             .unwrap_err()
             .to_string()

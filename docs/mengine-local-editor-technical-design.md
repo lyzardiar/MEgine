@@ -1370,3 +1370,14 @@ Rust workspace 检查现在零警告通过；Tauri Host 17/17 常规测试与 1/
 第一遍自省发现按“扫描到的每个 Material 文件”统计会把 referenced 模式中仅作为 Instance 父层的 Base Material 误算为独立运行时 Variant；最终单独记录直接材质、alwaysInclude 和 all 模式审计根，父链只参与合并，避免预热口径从一开始就虚高。第二遍自省否决了只序列化 `enabled_keywords: string[]` 的方案：它无法表示“关闭默认开启 Keyword”，在多层实例继承中也分不清未覆盖与显式 false；最终采用名称到布尔值的稀疏覆盖映射，并补齐默认 true、父层 true、子层 false、陈旧名称和 Pipeline Key 分离回归。
 
 这一批建立的是 Keyword/Variant 契约和运行时内存缓存基础，还不是完整的离线 Shader 系统。当前 Variant 在首次绘制时由 wgpu 编译，没有构建期目标平台二进制预热包、持久化 Pipeline Cache、编译耗时/命中诊断、全局与局部 Keyword 作用域、互斥 Keyword Enum、平台/质量级条件、Variant 使用清单导出或 CI 预算门禁；helper 是可常量折叠的静态分支，不是允许条件声明任意 WGSL 符号的预处理器。材质系统还缺自定义纹理参数/实例覆盖、GPU Instancing 兼容材质缓冲、真实 Player 同管线离屏预览、Shader Graph、Frame Debugger，以及 Transmission、Sheen、Subsurface 等高级光照模型。
+
+## 115. 2026-07-19 Surface Shader Variant 清单与构建预算
+
+- `project.json` 新增 `shaderVariantLimit`，默认 256，合法范围 1–65536。CLI 新建工程、桌面 Host 新建工程、Tauri Build Settings 与浏览器开发桥使用同一字段和范围；旧工程缺失字段时兼容默认值，读取到 0、非整数或越界值会在打开工程或构建验证阶段明确失败。Build Settings 提供常用预算档位并保留 JSON 中的合法自定义值，不会在打开设置时偷偷改写工程。
+- 依赖扫描把上一节得到的实际组合写入顶层 `surfaceShaderVariants`，每项包含保持真实大小写的工程 Shader 路径和按 Schema 声明顺序排列的启用 Keyword。清单先按 Shader 与 Keyword 组合确定性排序并去重，再进入完整 Manifest 的规范化签名载荷；同一输入产生字节一致报告，发布审计可以从数量追到具体组合，而不再只有一个无法解释的计数。
+- 实际组合超过预算时，CLI 在创建 staging 目录之前阻止构建，错误同时给出总数、预算和 Variant 数最多的前五个 Shader。既有发布目录不会被替换，也不会留下半成品 Build；回归固定了超预算输出目录不存在。预算统计继续遵守 all/referenced/alwaysInclude 的真实 Root 语义，继承链中的父材质只提供数据，不额外虚增组合。
+- CLI 输出 `used/limit` 和逐 Shader 数量。桌面构建桥严格核对 Manifest 中清单长度、审计计数和预算范围，Build Settings 显示 `used/limit` 及 Keyword 明细。签名 Manifest 始终保存完整列表；为避免允许 65536 的合法报告一次创建数万 DOM 节点，编辑器只渲染前 512 项并明确提示完整数量和 Manifest 位置。
+
+第一遍自省发现内部为 Windows 路径去重使用的小写 Key 被直接写进报告，会让资源审计失去作者实际路径；最终分离比较 Key 与展示路径，Manifest 保持规范大小写。第二遍自省从失败原子性和编辑器负载反查实现：确认预算门禁位于 staging 创建之前并补回归断言，同时限制 UI 明细渲染而不截断受签名保护的完整清单；Tauri 还会拒绝 0 或越界预算，不能把异常 SDK 报告当作成功构建展示。
+
+这一批完成的是可观察、可控制的 Variant 数量门禁，不等于离线 Shader 编译与预热。当前所有 Variant 权重相同，预算没有按目标平台、质量档、Pass 或 Shader 分组，也没有记录实际 WGSL 编译耗时、Pipeline 创建耗时和运行期命中；构建仍未输出平台专用 Shader 二进制、PSO/驱动缓存或预热顺序。下一阶段应建立 Import Artifact/Shader Compiler 服务，以 Shader 源、Keyword、Pass、目标后端和编译器版本形成稳定 Key，生成可缓存制品与编译诊断，再让 CI 按平台预算、增量变化和首次帧卡顿风险执行门禁。

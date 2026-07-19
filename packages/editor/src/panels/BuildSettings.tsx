@@ -26,6 +26,9 @@ import {
   type VerifyPlayerResult,
 } from '../transport/editorTransport';
 
+const SHADER_VARIANT_LIMIT_OPTIONS = [64, 128, 256, 512, 1024, 2048, 4096, 8192];
+const MAX_RENDERED_SHADER_VARIANTS = 512;
+
 function scenePath(name: string): string {
   return `Assets/Scenes/${name}.mscene`;
 }
@@ -293,19 +296,24 @@ export function BuildSettings(props: {
   const persistAssetSettings = async (
     assetMode: 'all' | 'referenced',
     alwaysInclude: string[],
+    shaderVariantLimit: number,
   ): Promise<boolean> => {
     if (settingsSaving) return false;
     setSettingsSaving(true);
     setSettingsError(null);
     try {
-      const next = await saveProjectBuildAssetSettings(assetMode, alwaysInclude);
+      const next = await saveProjectBuildAssetSettings(
+        assetMode,
+        alwaysInclude,
+        shaderVariantLimit,
+      );
       settingsRef.current = next;
       setSettings(next);
       const nextDraft = next.alwaysInclude.join('\n');
       alwaysIncludeDraftRef.current = nextDraft;
       setAlwaysIncludeDraft(nextDraft);
       invalidateBuildReport();
-      props.onLog(`Build asset mode updated: ${next.assetMode}, ${next.alwaysInclude.length} always-included path(s)`);
+      props.onLog(`Build content settings updated: ${next.assetMode}, ${next.alwaysInclude.length} always-included path(s), ${next.shaderVariantLimit} shader variants`);
       return true;
     } catch (reason) {
       const detail = reason instanceof Error ? reason.message : String(reason);
@@ -320,7 +328,13 @@ export function BuildSettings(props: {
   const draftAlwaysInclude = () => parseAlwaysIncludeDraft(alwaysIncludeDraft);
 
   const saveAlwaysInclude = () => {
-    if (settings) void persistAssetSettings(settings.assetMode, draftAlwaysInclude());
+    if (settings) {
+      void persistAssetSettings(
+        settings.assetMode,
+        draftAlwaysInclude(),
+        settings.shaderVariantLimit,
+      );
+    }
   };
 
   useEffect(() => registerSaveAllParticipant('Build Asset Settings', () => {
@@ -332,6 +346,7 @@ export function BuildSettings(props: {
       const ok = await persistAssetSettings(
         current.assetMode,
         parseAlwaysIncludeDraft(alwaysIncludeDraftRef.current),
+        current.shaderVariantLimit,
       );
       if (!ok) throw new Error('Build asset settings could not be saved.');
     };
@@ -611,12 +626,35 @@ export function BuildSettings(props: {
                 void persistAssetSettings(
                   event.target.value as 'all' | 'referenced',
                   draftAlwaysInclude(),
+                  settings.shaderVariantLimit,
                 );
               }
             }}
           >
             <option value="all">All Assets (compatible)</option>
             <option value="referenced">Referenced Only</option>
+          </select>
+        </label>
+        <label>Shader Variant Budget
+          <select
+            value={settings?.shaderVariantLimit ?? 256}
+            disabled={!settings || settingsSaving || building}
+            onChange={(event) => {
+              if (settings) {
+                void persistAssetSettings(
+                  settings.assetMode,
+                  draftAlwaysInclude(),
+                  Number(event.target.value),
+                );
+              }
+            }}
+          >
+            {settings && !SHADER_VARIANT_LIMIT_OPTIONS.includes(settings.shaderVariantLimit) && (
+              <option value={settings.shaderVariantLimit}>{settings.shaderVariantLimit} variants (custom)</option>
+            )}
+            {SHADER_VARIANT_LIMIT_OPTIONS.map((limit) => (
+              <option key={limit} value={limit}>{limit} variants</option>
+            ))}
           </select>
         </label>
         <label className="build-asset-paths">
@@ -775,7 +813,7 @@ export function BuildSettings(props: {
             {lastBuild.sceneCount} scenes · {lastBuild.validatedAssetFiles} validated assets · {lastBuild.assetReferences} references · {lastBuild.assetMode}
           </span>
           <span>
-            Authoring audit · {lastBuild.auditedScenes} scenes · {lastBuild.auditedPrefabs} prefabs · {lastBuild.auditedMaterials} materials · {lastBuild.auditedMaterialInstances} instances · {lastBuild.auditedSurfaceShaders} shaders · {lastBuild.shaderVariants} variants
+            Authoring audit · {lastBuild.auditedScenes} scenes · {lastBuild.auditedPrefabs} prefabs · {lastBuild.auditedMaterials} materials · {lastBuild.auditedMaterialInstances} instances · {lastBuild.auditedSurfaceShaders} shaders · {lastBuild.shaderVariants}/{lastBuild.shaderVariantLimit} variants
           </span>
           <span>{lastBuild.strippedEditorEntities} EditorOnly entities stripped</span>
           <span>
@@ -828,6 +866,28 @@ export function BuildSettings(props: {
                 </div>
               ))}
             </div>
+            <h4>Surface Shader Variants · {lastBuild.shaderVariants}/{lastBuild.shaderVariantLimit}</h4>
+            {lastBuild.surfaceShaderVariants.length > 0
+              ? <div className="build-content-table">
+                  {lastBuild.surfaceShaderVariants
+                    .slice(0, MAX_RENDERED_SHADER_VARIANTS)
+                    .map((variant) => (
+                    <div
+                      className="build-content-row"
+                      key={`${variant.shader}\0${variant.enabledKeywords.join('\0')}`}
+                    >
+                      <strong>{variant.shader}</strong>
+                      <span>{variant.enabledKeywords.length} keywords</span>
+                      <span>{variant.enabledKeywords.join(', ') || 'Default'}</span>
+                    </div>
+                    ))}
+                </div>
+              : <div className="build-empty">No custom Surface Shader variants were collected.</div>}
+            {lastBuild.surfaceShaderVariants.length > MAX_RENDERED_SHADER_VARIANTS && (
+              <small>
+                Showing the first {MAX_RENDERED_SHADER_VARIANTS} variants. The signed build Manifest contains all {lastBuild.surfaceShaderVariants.length} entries.
+              </small>
+            )}
             {lastBuild.comparison && <>
               <h4>Changes vs Previous Build</h4>
               <BuildComparisonReport

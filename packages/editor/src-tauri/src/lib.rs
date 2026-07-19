@@ -111,6 +111,7 @@ struct ProjectBuildSettings {
     available_scenes: Vec<String>,
     asset_mode: BuildAssetMode,
     always_include: Vec<String>,
+    shader_variant_limit: u32,
 }
 
 #[derive(Clone, Debug, serde::Deserialize, serde::Serialize)]
@@ -162,6 +163,8 @@ struct BuildPlayerResult {
     audited_material_instances: usize,
     audited_surface_shaders: usize,
     shader_variants: usize,
+    shader_variant_limit: usize,
+    surface_shader_variants: Vec<BuildShaderVariantResult>,
     asset_mode: String,
     omitted_asset_files: usize,
     omitted_asset_bytes: u64,
@@ -177,6 +180,13 @@ struct BuildPlayerResult {
     toolchain: String,
     history_entry: Option<BuildHistoryEntry>,
     log: String,
+}
+
+#[derive(Clone, Debug, serde::Deserialize, serde::Serialize)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+struct BuildShaderVariantResult {
+    shader: String,
+    enabled_keywords: Vec<String>,
 }
 
 #[derive(Clone, Debug, serde::Serialize, PartialEq, Eq)]
@@ -1503,6 +1513,28 @@ fn run_player_build_controlled(
     let audited_material_instances = manifest_count("assetValidation", "auditedMaterialInstances")?;
     let audited_surface_shaders = manifest_count("assetValidation", "auditedSurfaceShaders")?;
     let shader_variants = manifest_count("assetValidation", "shaderVariants")?;
+    let shader_variant_limit = manifest_count("project", "shaderVariantLimit")?;
+    if !(1..=65_536).contains(&shader_variant_limit) {
+        return Err(
+            "build manifest project.shaderVariantLimit must be from 1 to 65536".to_string(),
+        );
+    }
+    let surface_shader_variants = serde_json::from_value::<Vec<BuildShaderVariantResult>>(
+        build_manifest
+            .get("surfaceShaderVariants")
+            .cloned()
+            .ok_or_else(|| "build manifest does not contain surfaceShaderVariants".to_string())?,
+    )
+    .map_err(|error| format!("build manifest contains invalid Surface Shader variants: {error}"))?;
+    if surface_shader_variants.len() != shader_variants {
+        return Err(
+            "build manifest Surface Shader variant count does not match asset validation"
+                .to_string(),
+        );
+    }
+    if shader_variants > shader_variant_limit {
+        return Err("build manifest exceeds its Surface Shader variant limit".to_string());
+    }
     let omitted_asset_files = manifest_count("assetValidation", "omittedAssetFiles")?;
     let omitted_asset_bytes = manifest_u64("assetValidation", "omittedAssetBytes")?;
     let stripped_editor_entities = manifest_count("assetValidation", "strippedEditorEntities")?;
@@ -1555,6 +1587,8 @@ fn run_player_build_controlled(
         audited_material_instances,
         audited_surface_shaders,
         shader_variants,
+        shader_variant_limit,
+        surface_shader_variants,
         asset_mode,
         omitted_asset_files,
         omitted_asset_bytes,
@@ -2280,6 +2314,7 @@ fn get_project_build_settings(state: State<'_, AppState>) -> Result<ProjectBuild
         available_scenes,
         asset_mode: session.build_asset_mode(),
         always_include: session.always_include(),
+        shader_variant_limit: session.shader_variant_limit(),
     })
 }
 
@@ -2300,6 +2335,7 @@ fn save_project_build_settings(
         available_scenes,
         asset_mode: session.build_asset_mode(),
         always_include: session.always_include(),
+        shader_variant_limit: session.shader_variant_limit(),
     })
 }
 
@@ -2307,12 +2343,13 @@ fn save_project_build_settings(
 fn save_project_build_asset_settings(
     asset_mode: BuildAssetMode,
     always_include: Vec<String>,
+    shader_variant_limit: u32,
     state: State<'_, AppState>,
 ) -> Result<ProjectBuildSettings, String> {
     let mut guard = state.project.lock();
     let session = guard.as_mut().ok_or_else(|| no_project().message)?;
     let always_include = session
-        .save_build_asset_settings(asset_mode, always_include)
+        .save_build_asset_settings(asset_mode, always_include, shader_variant_limit)
         .map_err(|error| error.to_string())?;
     let scenes = session.build_scenes();
     let available_scenes = available_build_scenes(Path::new(&session.snapshot().project_root))?;
@@ -2322,6 +2359,7 @@ fn save_project_build_asset_settings(
         available_scenes,
         asset_mode,
         always_include,
+        shader_variant_limit,
     })
 }
 

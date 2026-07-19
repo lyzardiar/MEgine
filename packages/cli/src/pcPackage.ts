@@ -28,6 +28,8 @@ export const BUILD_CACHE_REPORT_PREFIX = 'MENGINE_BUILD_CACHE ';
 const MAX_TIMELINE_PARTICLE_TIME = 300;
 const MAX_SURFACE_SHADER_PARAMETERS = 16;
 const MAX_SURFACE_SHADER_KEYWORDS = 16;
+const DEFAULT_SHADER_VARIANT_LIMIT = 256;
+const MAX_SHADER_VARIANT_LIMIT = 65_536;
 const SURFACE_SHADER_PARAMETERS_MARKER = '/* MENGINE_PARAMETERS';
 const ENTITY_REFERENCE_TOKEN = '$mengine_entity_ref';
 const ENTITY_REFERENCE_FIELDS_KEY = '__mengine_entity_reference_fields';
@@ -54,6 +56,7 @@ export interface GameProjectManifest {
   startupScript?: string;
   assetMode: BuildAssetMode;
   alwaysInclude: string[];
+  shaderVariantLimit: number;
 }
 
 export interface PcPackageOptions {
@@ -131,8 +134,14 @@ export interface PcBuildManifest {
   signature?: BuildArtifactSignature;
   project: GameProjectManifest;
   assetValidation: BuildAssetValidation;
+  surfaceShaderVariants: BuildShaderVariant[];
   contentSummary: BuildContentSummary;
   files: BuildFileEntry[];
+}
+
+export interface BuildShaderVariant {
+  shader: string;
+  enabledKeywords: string[];
 }
 
 export interface BuildArtifactSignature {
@@ -293,6 +302,17 @@ export function readGameProject(projectDir: string): GameProjectManifest {
     seenAlwaysInclude.add(key);
     alwaysInclude.push(path);
   }
+  const shaderVariantLimitValue = parsed.shaderVariantLimit
+    ?? parsed.shader_variant_limit
+    ?? DEFAULT_SHADER_VARIANT_LIMIT;
+  if (typeof shaderVariantLimitValue !== 'number'
+    || !Number.isInteger(shaderVariantLimitValue)
+    || shaderVariantLimitValue < 1
+    || shaderVariantLimitValue > MAX_SHADER_VARIANT_LIMIT) {
+    throw new Error(
+      `project.json shaderVariantLimit must be an integer from 1 to ${MAX_SHADER_VARIANT_LIMIT}`,
+    );
+  }
   if (!name) throw new Error('project.json requires a non-empty name');
   if (!mainScene) throw new Error('project.json requires mainScene');
   for (const scene of buildScenes) {
@@ -315,6 +335,7 @@ export function readGameProject(projectDir: string): GameProjectManifest {
     ...(startupScript ? { startupScript } : {}),
     assetMode: assetModeValue,
     alwaysInclude,
+    shaderVariantLimit: shaderVariantLimitValue,
   };
 }
 
@@ -370,6 +391,7 @@ interface BuildDependencyScan {
   validation: BuildAssetValidation;
   files: string[];
   inclusionReasons: Map<string, BuildInclusionReason[]>;
+  surfaceShaderVariants: BuildShaderVariant[];
 }
 
 function jsonObject(value: unknown): JsonObject | null {
@@ -766,6 +788,7 @@ function scanBuildAssetDependencies(
   const materialBaseShaders = new Map<string, string | null>();
   const materialBaseKeywordOverrides = new Map<string, Map<string, boolean>>();
   const surfaceShaderSchemas = new Map<string, SurfaceShaderBuildSchema>();
+  const surfaceShaderCanonicalPaths = new Map<string, string>();
   const customMaterialParameterBindings: Array<{
     material: string;
     shader: string;
@@ -1114,6 +1137,7 @@ function scanBuildAssetDependencies(
         throw new Error(`invalid material surface shader ${source}: ${forbidden} is reserved by the engine`);
       }
       surfaceShaderSchemas.set(source.toLowerCase(), surfaceShaderSchema(sourceText, source));
+      surfaceShaderCanonicalPaths.set(source.toLowerCase(), source);
     } else if (pending.path.toLowerCase().endsWith('.sprite.json')) {
       const metadata = readJsonAsset(absolute, root, 'sprite import metadata');
       if (metadata.version != null && metadata.version !== 1) {
@@ -1871,10 +1895,34 @@ function scanBuildAssetDependencies(
       enabled: [...schema.keywords.keys()].filter((name) => state.get(name) === true),
     };
   };
-  const variants = new Set<string>();
+  const variants = new Map<string, BuildShaderVariant>();
   for (const material of materialVariantRoots) {
     const variant = resolveKeywordVariant(material);
-    if (variant) variants.add(JSON.stringify([variant.shader, variant.enabled]));
+    if (variant) {
+      const entry = {
+        shader: surfaceShaderCanonicalPaths.get(variant.shader) ?? variant.shader,
+        enabledKeywords: variant.enabled,
+      };
+      variants.set(JSON.stringify([variant.shader, entry.enabledKeywords]), entry);
+    }
+  }
+  const surfaceShaderVariants = [...variants.values()].sort((left, right) => (
+    compareFileNames(left.shader, right.shader)
+    || compareFileNames(left.enabledKeywords.join('\0'), right.enabledKeywords.join('\0'))
+  ));
+  if (surfaceShaderVariants.length > project.shaderVariantLimit) {
+    const perShader = new Map<string, number>();
+    for (const variant of surfaceShaderVariants) {
+      perShader.set(variant.shader, (perShader.get(variant.shader) ?? 0) + 1);
+    }
+    const largest = [...perShader]
+      .sort((left, right) => right[1] - left[1] || compareFileNames(left[0], right[0]))
+      .slice(0, 5)
+      .map(([shader, count]) => `${shader}=${count}`)
+      .join(', ');
+    throw new Error(
+      `Surface Shader variant budget exceeded: ${surfaceShaderVariants.length} > ${project.shaderVariantLimit}${largest ? ` (${largest})` : ''}`,
+    );
   }
   return {
     validation: {
@@ -1887,13 +1935,14 @@ function scanBuildAssetDependencies(
       auditedMaterials,
       auditedMaterialInstances,
       auditedSurfaceShaders,
-      shaderVariants: variants.size,
+      shaderVariants: surfaceShaderVariants.length,
       omittedAssetFiles: 0,
       omittedAssetBytes: 0,
       strippedEditorEntities: 0,
     },
     files: [...visited.values()].sort(compareFileNames),
     inclusionReasons,
+    surfaceShaderVariants,
   };
 }
 
@@ -2992,8 +3041,10 @@ export function buildPcPackage(options: PcPackageOptions): PcBuildManifest {
     }
     packagedProjectJson.assetMode = project.assetMode;
     packagedProjectJson.alwaysInclude = project.alwaysInclude;
+    packagedProjectJson.shaderVariantLimit = project.shaderVariantLimit;
     delete packagedProjectJson.asset_mode;
     delete packagedProjectJson.always_include;
+    delete packagedProjectJson.shader_variant_limit;
     writeFileSync(
       join(stageDir, 'project.json'),
       `${JSON.stringify(packagedProjectJson, null, 2)}\n`,
@@ -3032,6 +3083,7 @@ export function buildPcPackage(options: PcPackageOptions): PcBuildManifest {
       contentHash: buildContentHash(files),
       project: packagedProject,
       assetValidation,
+      surfaceShaderVariants: dependencyScan.surfaceShaderVariants,
       contentSummary: summarizeBuildContent(files),
       files,
     };

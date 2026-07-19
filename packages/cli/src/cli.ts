@@ -167,6 +167,7 @@ function newProject(name: string) {
       startupScript: 'Assets/Scripts/Main.ts',
       assetMode: 'all',
       alwaysInclude: [],
+      shaderVariantLimit: 256,
     }, null, 2)}\n`,
   );
   writeFileSync(
@@ -376,7 +377,18 @@ function buildProject(values: string[]) {
   console.log(
     `Audited authoring assets: ${manifest.assetValidation.auditedScenes} scenes, ${manifest.assetValidation.auditedPrefabs} prefabs, ${manifest.assetValidation.auditedMaterials} materials, ${manifest.assetValidation.auditedMaterialInstances} material instances, ${manifest.assetValidation.auditedSurfaceShaders} surface shaders`,
   );
-  console.log(`Collected Surface Shader variants: ${manifest.assetValidation.shaderVariants}`);
+  console.log(
+    `Collected Surface Shader variants: ${manifest.assetValidation.shaderVariants}/${manifest.project.shaderVariantLimit}`,
+  );
+  const variantsByShader = new Map<string, number>();
+  for (const variant of manifest.surfaceShaderVariants) {
+    variantsByShader.set(variant.shader, (variantsByShader.get(variant.shader) ?? 0) + 1);
+  }
+  if (variantsByShader.size > 0) {
+    console.log(`Variant groups: ${[...variantsByShader]
+      .map(([shader, count]) => `${shader}=${count}`)
+      .join(', ')}`);
+  }
   console.log(`EditorOnly: ${manifest.assetValidation.strippedEditorEntities} entities stripped`);
   console.log(
     `Unused assets: ${manifest.assetValidation.omittedAssetFiles} files, ${manifest.assetValidation.omittedAssetBytes} bytes omitted`,

@@ -1670,6 +1670,13 @@ export function mengineFsPlugin(opts: MengineFsOptions | string): Plugin {
       throw new Error(`assetMode must be all or referenced: ${String(rawAssetMode)}`);
     }
     const assetMode = rawAssetMode === 'referenced' ? 'referenced' : 'all';
+    const rawShaderVariantLimit = manifest.shaderVariantLimit ?? manifest.shader_variant_limit ?? 256;
+    if (typeof rawShaderVariantLimit !== 'number'
+      || !Number.isInteger(rawShaderVariantLimit)
+      || rawShaderVariantLimit < 1
+      || rawShaderVariantLimit > 65_536) {
+      throw new Error('shaderVariantLimit must be an integer from 1 to 65536');
+    }
     const alwaysInclude: string[] = [];
     const seenAlwaysInclude = new Set<string>();
     const rawAlwaysInclude = manifest.alwaysInclude ?? manifest.always_include;
@@ -1692,6 +1699,7 @@ export function mengineFsPlugin(opts: MengineFsOptions | string): Plugin {
         availableScenes: listBuildScenes(),
         assetMode,
         alwaysInclude,
+        shaderVariantLimit: rawShaderVariantLimit,
       },
     };
   }
@@ -1896,12 +1904,19 @@ export function mengineFsPlugin(opts: MengineFsOptions | string): Plugin {
         const parsed = JSON.parse(body || '{}') as {
           assetMode?: unknown;
           alwaysInclude?: unknown;
+          shaderVariantLimit?: unknown;
         };
         if (parsed.assetMode !== 'all' && parsed.assetMode !== 'referenced') {
           return sendJson(res, 400, { error: 'assetMode must be all or referenced' });
         }
         if (!Array.isArray(parsed.alwaysInclude) || parsed.alwaysInclude.length > 256) {
           return sendJson(res, 400, { error: 'alwaysInclude must contain at most 256 paths' });
+        }
+        if (typeof parsed.shaderVariantLimit !== 'number'
+          || !Number.isInteger(parsed.shaderVariantLimit)
+          || parsed.shaderVariantLimit < 1
+          || parsed.shaderVariantLimit > 65_536) {
+          return sendJson(res, 400, { error: 'shaderVariantLimit must be an integer from 1 to 65536' });
         }
         const alwaysInclude: string[] = [];
         const seen = new Set<string>();
@@ -1918,8 +1933,10 @@ export function mengineFsPlugin(opts: MengineFsOptions | string): Plugin {
         const { manifest } = readBuildSettings();
         manifest.assetMode = parsed.assetMode;
         manifest.alwaysInclude = alwaysInclude;
+        manifest.shaderVariantLimit = parsed.shaderVariantLimit;
         delete manifest.asset_mode;
         delete manifest.always_include;
+        delete manifest.shader_variant_limit;
         writeFileAtomic(
           manifestPath,
           Buffer.from(`${JSON.stringify(manifest, null, 2)}\n`, 'utf8'),

@@ -219,6 +219,7 @@ test('buildPcPackage creates a directly launchable, hashed project bundle', () =
       startupScript: 'Assets/Scripts/main.js',
       assetMode: 'all',
       alwaysInclude: [],
+      shaderVariantLimit: 256,
     });
 
     const playerConfig = JSON.parse(readFileSync(join(paths.output, PLAYER_CONFIG_FILE), 'utf8'));
@@ -1215,8 +1216,22 @@ test('buildPcPackage includes validated custom material surface shaders', () => 
       omittedAssetBytes: 0,
       strippedEditorEntities: 0
     });
+    assert.deepEqual(manifest.surfaceShaderVariants, [
+      { shader: 'Assets/Shaders/Rim.mshader', enabledKeywords: [] },
+      { shader: 'Assets/Shaders/Rim.mshader', enabledKeywords: ['USE_RIM'] },
+    ]);
     const projectPath = join(paths.project, 'project.json');
     const project = JSON.parse(readFileSync(projectPath, 'utf8'));
+    project.shaderVariantLimit = 1;
+    writeFileSync(projectPath, JSON.stringify(project));
+    const overBudgetOutput = join(paths.root, 'BuildOverBudget');
+    assert.throws(() => buildPcPackage({
+      projectDir: paths.project,
+      outputDir: overBudgetOutput,
+      runtimePath: paths.runtime,
+      engineVersion: 'test-engine',
+    }), /variant budget exceeded: 2 > 1.*rim\.mshader=2/i);
+    assert.equal(existsSync(overBudgetOutput), false);
     project.assetMode = 'referenced';
     writeFileSync(projectPath, JSON.stringify(project));
     const referencedOutput = join(paths.root, 'BuildReferenced');

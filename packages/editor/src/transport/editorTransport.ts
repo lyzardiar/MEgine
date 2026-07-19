@@ -155,6 +155,8 @@ export type BuildPlayerResult = {
   auditedMaterialInstances: number;
   auditedSurfaceShaders: number;
   shaderVariants: number;
+  shaderVariantLimit: number;
+  surfaceShaderVariants: Array<{ shader: string; enabledKeywords: string[] }>;
   assetMode: 'all' | 'referenced';
   omittedAssetFiles: number;
   omittedAssetBytes: number;
@@ -197,6 +199,7 @@ export type ProjectBuildSettings = {
   availableScenes: string[];
   assetMode: 'all' | 'referenced';
   alwaysInclude: string[];
+  shaderVariantLimit: number;
 };
 
 export type ProjectSortingLayer = {
@@ -428,17 +431,19 @@ export async function saveProjectBuildSettings(
 export async function saveProjectBuildAssetSettings(
   assetMode: 'all' | 'referenced',
   alwaysInclude: string[],
+  shaderVariantLimit: number,
 ): Promise<ProjectBuildSettings> {
   if (isDesktopEditor()) {
     return invoke<ProjectBuildSettings>('save_project_build_asset_settings', {
       assetMode,
       alwaysInclude,
+      shaderVariantLimit,
     });
   }
   const response = await fetch('/__mengine/build-asset-settings', {
     method: 'PUT',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ assetMode, alwaysInclude }),
+    body: JSON.stringify({ assetMode, alwaysInclude, shaderVariantLimit }),
   });
   if (!response.ok) {
     const detail = await response.text();
