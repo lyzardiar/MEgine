@@ -2730,6 +2730,11 @@ body.insp-scrubbing * {
   font-size: 11px;
 }
 
+.timeline-panel:not(.maximized) {
+  height: 100%;
+  max-height: 100%;
+}
+
 .timeline-empty {
   display: flex;
   flex: 1;
@@ -2966,6 +2971,15 @@ body.insp-scrubbing * {
 }
 
 .timeline-workspace:focus-visible { box-shadow: inset 0 0 0 1px #4f7698; }
+
+@container (min-width: 760px) {
+  .timeline-workspace.details-open {
+    box-sizing: border-box;
+    padding-right: 330px;
+  }
+
+  .timeline-workspace.details-open .timeline-details { top: 0; }
+}
 
 .timeline-track-tools {
   position: relative;
@@ -3780,12 +3794,23 @@ body.insp-scrubbing * {
 .timeline-curve-title strong { color: #d3d3d3; font-weight: 500; }
 .timeline-curve-title span { color: #777; font-family: var(--u-mono); font-size: 9px; }
 
+.timeline-curve-view-tools,
 .timeline-curve-legend,
 .timeline-curve-tangent-tools {
   display: inline-flex;
   flex: 0 0 auto;
   align-items: center;
   gap: 2px;
+}
+
+.timeline-curve-view-tools {
+  padding-right: 5px;
+  border-right: 1px solid #171717;
+}
+
+.timeline-curve-view-tools button {
+  width: 22px;
+  padding: 0;
 }
 
 .timeline-curve-workspace header button {
@@ -3843,12 +3868,20 @@ body.insp-scrubbing * {
 .timeline-curve-workspace > svg {
   display: block;
   width: 100%;
-  min-height: 180px;
+  min-height: 0;
   flex: 1;
   touch-action: none;
   background: #181818;
   cursor: crosshair;
+  outline: none;
 }
+
+.timeline-curve-workspace > svg:focus-visible {
+  box-shadow: inset 0 0 0 1px #396f94;
+}
+
+.timeline-curve-workspace > svg.is-pan { cursor: grabbing; }
+.timeline-curve-workspace > svg.is-zoom { cursor: nwse-resize; }
 
 .timeline-curve-plot {
   fill: #1d1d1d;
@@ -3930,6 +3963,8 @@ body.insp-scrubbing * {
 .timeline-panel.maximized .timeline-grid {
   grid-template-columns: minmax(180px, 230px) minmax(360px, 1fr) minmax(110px, 160px);
 }
+
+.timeline-panel.maximized .timeline-curve-workspace > svg { min-height: 180px; }
 
 .timeline-panel.maximized .timeline-track-tools .timeline-property-picker {
   width: min(360px, 38%);

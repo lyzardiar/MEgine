@@ -1001,3 +1001,14 @@ Referenced Only 是可用的单包裁剪基础，仍不等同于完整 Addressab
 第一遍真实自审在 Button 的 `Transform.position` 曲线中框选 0.25 / 0.75 秒两个当前通道点，切到 Dope Sheet 后两键保持选中，再切回 Curves 仍完整恢复；启用 Cubic 后批量 Flat 只生成 `Set 2 Animation Tangents Flat` 一条 Undo，保存回读确认两键入/出切线均为零。第二遍真实拖动将两键整体从 0.25 / 0.75 移到 0.30 / 0.80 秒，Undo 一次恢复原时间与双选，Redo 再次恢复目标时间；期间发现 Pointer Capture 事件落在子 SVG 节点导致根级拖动未提交，改为根 SVG 统一路由后复测通过。审计动画、编辑器状态差异与本地服务在全量回归前全部清理。
 
 当前选择仍是关键帧级而非“关键帧 × 通道”独立选区，这是为了先保持 Dope Sheet 与 Curve View 的确定性同步；批量拖动因此修改所有已选键的时间、只修改活动通道的值。成熟 Curve Editor 仍需通道级选择模型、Broken/Free/Weighted tangent、切线锁定与复制、纵向 Fit/Pan/Zoom、框选缩放手柄、Ghost 碰撞预览、可配置 Snap、曲线降噪/简化、Euler 过滤、Onion Skin、运动轨迹、Root Motion 与动画层混合。
+
+## 80. 2026-07-19 Curve View 导航与 Dock 视口约束
+
+- Curve View 新增独立的视口导航模型。工具栏提供 Frame All 与 Frame Selection，后者支持 `F` 快捷键并按当前活动通道框定选中关键帧；单点至少保留四帧上下文，空选区的 `F` 回退到完整曲线。视口时间、数值范围和缩放均由无 DOM 纯函数计算，非法数值、反向范围、Clip 边界与重复关键帧引用会被确定性规整。
+- 鼠标滚轮以指针为锚同时缩放时间轴和值轴，Shift 仅缩放时间轴，Alt 仅缩放值轴，Alt+Shift 恢复双轴缩放；中键或 Alt+左键平移，Alt+右键二维缩放。视口手势使用 Pointer Capture，Escape 或窗口失焦恢复手势前范围；导航不修改 Clip、不设置 Dirty，也不产生 Undo，关键帧拖动与切线拖动仍保留原有资产事务边界。
+- 最大时间缩放不再使用固定的 8 倍或盲目的 64 倍：上限为 `min(64, duration × frameRate)`，因此任何 Clip 都不能缩到小于一帧。1 秒、60 FPS 的真实编辑器实例在 6000% 自动禁用 Zoom In；Fit 恢复 100%，指针缩放和顶部命令共享同一上限与钳制逻辑。
+- 普通 Dock 中 Timeline 面板现在严格继承宿主槽高度，Curve SVG 可以收缩到剩余空间；最大化模式再恢复 180px 最小绘图区。Details 打开时在足够宽的容器内占据独立右列，而不是以绝对层覆盖 Curve 工具栏和曲线；普通 Dope Sheet、普通 Curve、最大化 Curve 都不再横向溢出。时间轴首尾标签使用 start/end 锚点，最右侧时间不再被 SVG 或 Details 边界裁掉。
+
+第一遍真实自审在 1280×720 普通 Dock 中发现 Timeline 面板实际高 492px、宿主仅 179px，Curve 工具栏又被 Details 从 x=950 开始覆盖；约束面板高度并建立 950px Curve + 330px Details 分栏后，面板与宿主同为 179px，Curve 与 Details 的 `scrollWidth === clientWidth`。选择 0.25 / 0.75 秒两键后按 F 得到 0.190–0.810 秒、-6.800–11.800 的视口，滚轮缩放到 0.355–0.695 秒时选区和 Undo 标题均保持不变。第二遍使用全新编辑器文档排除热更新残留，验证 1 秒、60 FPS 在 19 次 Zoom In 后稳定停在 6000%；最大化后 Curve 为 958×577、SVG 为 958×546、Details 为 322×608，均处于 1280×720 可视区且无横向溢出。最终截图复核发现 1.00 秒尾标签被裁切，改为首尾锚点后完整显示；纯函数测试覆盖选区框定、指针锚定缩放、边界平移、异常范围回退和一帧缩放上限。
+
+这一切片补齐的是成熟 Curve Editor 的基础导航，不代表动画系统已经完备。后续仍需通道级选择、框选变换手柄、独立轴数值输入、Broken/Free/Weighted tangent 与切线权重、曲线复制/粘贴和降噪、可配置 Snap、Euler 过滤、Onion Skin、运动轨迹、Root Motion、Avatar 重定向、动画压缩、录制冲突诊断和动画层混合；Timeline 还要继续统一 Animation Clip、`.mtimeline` Sequencer 与 Animator 的时间域、选择模型和快捷键。

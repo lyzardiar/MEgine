@@ -8,6 +8,7 @@ import {
   type FocusEvent as ReactFocusEvent,
   type KeyboardEvent as ReactKeyboardEvent,
   type PointerEvent as ReactPointerEvent,
+  type WheelEvent as ReactWheelEvent,
 } from 'react';
 import { createPortal } from 'react-dom';
 import type { WorldSnapshotView } from '@mengine/api';
@@ -79,17 +80,24 @@ import {
   animationCurveChannelCount,
   animationCurveCoordinates,
   animationCurveKeysInRect,
+  animationCurveMaximumZoom,
   animationCurvePoint,
+  animationCurveSelectionBounds,
   animationCurveSlopeFromPoint,
   animationCurveTangentHandle,
   animationCurveValueBounds,
   curveNumericChannels,
   offsetAnimationCurveKeyValues,
+  panAnimationCurveView,
   setAnimationCurveTangentChannel,
   setAnimationCurveTangentsAuto,
   setAnimationCurveTangentsFlat,
+  zoomAnimationCurveView,
+  type AnimationCurveCoordinates,
   type AnimationCurvePoint,
   type AnimationCurveRect,
+  type AnimationCurveValueBounds,
+  type AnimationCurveViewBounds,
   type AnimationCurveViewport,
 } from '../animationCurveEditing.ts';
 import type {
@@ -359,6 +367,14 @@ type AnimationCurveWorkspaceDrag =
       side: 'in_tangent' | 'out_tangent';
       slope: number;
       point: AnimationCurvePoint;
+    }
+  | {
+      kind: 'view';
+      mode: 'pan' | 'zoom';
+      pointerId: number;
+      start: AnimationCurvePoint;
+      source: AnimationCurveViewBounds;
+      anchor: AnimationCurveCoordinates;
     };
 
 type AnimationCurveWorkspaceMarquee = AnimationCurveRect & {
@@ -371,6 +387,13 @@ type AnimationCurveWorkspaceMarquee = AnimationCurveRect & {
 
 const CURVE_VIEW_WIDTH = 1000;
 const CURVE_VIEW_HEIGHT = 420;
+const TIMELINE_MAX_ZOOM = 64;
+
+function clampTimelineZoom(value: number, maximum: number): number {
+  const safeMaximum = Math.max(1, Number.isFinite(maximum) ? maximum : TIMELINE_MAX_ZOOM);
+  const clamped = Math.max(1, Math.min(safeMaximum, Number.isFinite(value) ? value : 1));
+  return safeMaximum - clamped < 1e-2 ? safeMaximum : Number(clamped.toFixed(4));
+}
 
 function AnimationCurveWorkspace(props: {
   track: AnimationTrack | null;
@@ -383,6 +406,7 @@ function AnimationCurveWorkspace(props: {
   selectedKeys: readonly TimelineKeyRef[];
   onSelectKeys: (keys: readonly TimelineKeyRef[]) => void;
   onPreviewTime: (time: number) => void;
+  onZoomChange: (zoom: number) => void;
   onPreviewKeyMove: (keys: readonly TimelineKeyRef[], delta: number) => TimelineKeyMovePreview;
   onCommitKeys: (
     keys: readonly TimelineKeyRef[],
@@ -403,6 +427,7 @@ function AnimationCurveWorkspace(props: {
   const [drag, setDrag] = useState<AnimationCurveWorkspaceDrag | null>(null);
   const [marquee, setMarquee] = useState<AnimationCurveWorkspaceMarquee | null>(null);
   const [viewCenter, setViewCenter] = useState(props.time);
+  const [valueView, setValueView] = useState<AnimationCurveValueBounds | null>(null);
   const dragRef = useRef<AnimationCurveWorkspaceDrag | null>(null);
   const marqueeRef = useRef<AnimationCurveWorkspaceMarquee | null>(null);
   const track = props.track;
@@ -414,6 +439,7 @@ function AnimationCurveWorkspace(props: {
     setDrag(null);
     marqueeRef.current = null;
     setMarquee(null);
+    setValueView(null);
   }, [props.trackIndex, channelCount]);
 
   useEffect(() => {
@@ -430,6 +456,14 @@ function AnimationCurveWorkspace(props: {
         event.stopPropagation();
       }
       if (current?.kind === 'key') props.onPreviewTime(current.sourceTime);
+      if (current?.kind === 'view') {
+        setViewCenter((current.source.timeStart + current.source.timeEnd) / 2);
+        setValueView({ minimum: current.source.minimum, maximum: current.source.maximum });
+        const span = Math.max(Number.EPSILON, current.source.timeEnd - current.source.timeStart);
+        const maximum = animationCurveMaximumZoom(props.duration, props.frameRate, TIMELINE_MAX_ZOOM);
+        const duration = Math.max(props.duration, 1 / Math.max(1, props.frameRate));
+        props.onZoomChange(clampTimelineZoom(duration / span, maximum));
+      }
       dragRef.current = null;
       marqueeRef.current = null;
       setDrag(null);
@@ -442,7 +476,7 @@ function AnimationCurveWorkspace(props: {
       window.removeEventListener('keydown', cancelGesture, true);
       window.removeEventListener('blur', cancelOnBlur);
     };
-  }, [props.onPreviewTime, props.trackIndex]);
+  }, [props.duration, props.frameRate, props.onPreviewTime, props.onZoomChange, props.trackIndex]);
 
   if (!track || props.trackIndex == null || channelCount === 0) {
     return (
@@ -454,11 +488,12 @@ function AnimationCurveWorkspace(props: {
   }
 
   const safeDuration = Math.max(props.duration, 1 / Math.max(1, props.frameRate));
+  const maximumZoom = animationCurveMaximumZoom(safeDuration, props.frameRate, TIMELINE_MAX_ZOOM);
   const visibleSpan = Math.max(1 / Math.max(1, props.frameRate), safeDuration / Math.max(1, props.zoom));
   const timeStart = Math.max(0, Math.min(safeDuration - visibleSpan, viewCenter - visibleSpan / 2));
   const timeEnd = timeStart + visibleSpan;
-  const bounds = animationCurveValueBounds(track, timeStart, timeEnd);
-  if (!bounds) {
+  const automaticBounds = animationCurveValueBounds(track, timeStart, timeEnd);
+  if (!automaticBounds) {
     return (
       <div className="timeline-curve-workspace timeline-curve-workspace-empty">
         <strong>Curve View</strong>
@@ -466,6 +501,7 @@ function AnimationCurveWorkspace(props: {
       </div>
     );
   }
+  const bounds = valueView ?? automaticBounds;
 
   const viewport: AnimationCurveViewport = {
     ...bounds,
@@ -487,6 +523,39 @@ function AnimationCurveWorkspace(props: {
     };
   });
   const selectedTrackKeys = props.selectedKeys.filter((ref) => ref.track === props.trackIndex);
+  const currentView: AnimationCurveViewBounds = {
+    timeStart,
+    timeEnd,
+    minimum: bounds.minimum,
+    maximum: bounds.maximum,
+  };
+  const minimumTimeSpan = Math.max(
+    1 / Math.max(1, props.frameRate),
+    safeDuration / maximumZoom,
+  );
+  const applyCurveView = (next: AnimationCurveViewBounds) => {
+    const span = Math.max(Number.EPSILON, next.timeEnd - next.timeStart);
+    setViewCenter((next.timeStart + next.timeEnd) / 2);
+    setValueView({ minimum: next.minimum, maximum: next.maximum });
+    props.onZoomChange(clampTimelineZoom(safeDuration / span, maximumZoom));
+  };
+  const frameAllCurves = () => {
+    setViewCenter(safeDuration / 2);
+    setValueView(null);
+    props.onZoomChange(1);
+  };
+  const framedSelection = animationCurveSelectionBounds(
+    track,
+    selectedTrackKeys.map((ref) => ref.key),
+    selectedChannel,
+    safeDuration,
+    props.frameRate,
+    maximumZoom,
+  );
+  const frameSelectedCurves = () => {
+    if (framedSelection) applyCurveView(framedSelection);
+    else frameAllCurves();
+  };
   const marqueeKeys = marquee
     ? animationCurveKeysInRect(track, selectedChannel, viewport, marquee)
       .map((key) => ({ track: props.trackIndex!, key }))
@@ -553,6 +622,62 @@ function AnimationCurveWorkspace(props: {
     };
   };
 
+  const beginCurveViewGesture = (event: ReactPointerEvent<SVGSVGElement>): boolean => {
+    const mode = event.button === 1 || (event.button === 0 && event.altKey)
+      ? 'pan'
+      : event.button === 2 && event.altKey ? 'zoom' : null;
+    if (!mode) return false;
+    event.preventDefault();
+    event.stopPropagation();
+    event.currentTarget.focus({ preventScroll: true });
+    event.currentTarget.setPointerCapture(event.pointerId);
+    const next: AnimationCurveWorkspaceDrag = {
+      kind: 'view',
+      mode,
+      pointerId: event.pointerId,
+      start: pointerViewPoint(event.clientX, event.clientY, event.currentTarget),
+      source: currentView,
+      anchor: pointerCoordinates(event.clientX, event.clientY, event.currentTarget),
+    };
+    dragRef.current = next;
+    setDrag(next);
+    return true;
+  };
+
+  const zoomCurveAtPointer = (
+    clientX: number,
+    clientY: number,
+    svg: SVGSVGElement,
+    timeScale: number,
+    valueScale: number,
+  ) => {
+    const anchor = pointerCoordinates(clientX, clientY, svg);
+    applyCurveView(zoomAnimationCurveView(
+      currentView,
+      anchor,
+      timeScale,
+      valueScale,
+      safeDuration,
+      minimumTimeSpan,
+    ));
+  };
+
+  const handleCurveWheel = (event: ReactWheelEvent<SVGSVGElement>) => {
+    const wheelDelta = event.deltaY !== 0 ? event.deltaY : event.deltaX;
+    if (!Number.isFinite(wheelDelta) || wheelDelta === 0) return;
+    event.preventDefault();
+    event.stopPropagation();
+    event.currentTarget.focus({ preventScroll: true });
+    const factor = Math.exp(Math.max(-240, Math.min(240, wheelDelta)) * 0.0025);
+    zoomCurveAtPointer(
+      event.clientX,
+      event.clientY,
+      event.currentTarget,
+      event.altKey && !event.shiftKey ? 1 : factor,
+      event.shiftKey && !event.altKey ? 1 : factor,
+    );
+  };
+
   const beginKeyDrag = (
     event: ReactPointerEvent<SVGCircleElement>,
     keyIndex: number,
@@ -560,6 +685,7 @@ function AnimationCurveWorkspace(props: {
     time: number,
     value: number,
   ) => {
+    if (event.button !== 0 || event.altKey) return;
     event.stopPropagation();
     setSelectedChannel(channel);
     const ref = { track: props.trackIndex!, key: keyIndex };
@@ -610,6 +736,7 @@ function AnimationCurveWorkspace(props: {
     side: 'in_tangent' | 'out_tangent',
     point: AnimationCurvePoint,
   ) => {
+    if (event.button !== 0 || event.altKey) return;
     if (selectedKeyIndex == null || !selectedKeyframe || !selectedValues) return;
     const slope = animationCurveSlopeFromPoint(
       selectedKeyframe.time,
@@ -656,6 +783,33 @@ function AnimationCurveWorkspace(props: {
       props.onPreviewTime(current.sourceTime + next.timeDelta);
       return;
     }
+    if (current.kind === 'view') {
+      const point = pointerViewPoint(event.clientX, event.clientY, svg);
+      const deltaX = point.x - current.start.x;
+      const deltaY = point.y - current.start.y;
+      if (current.mode === 'pan') {
+        const timeSpan = current.source.timeEnd - current.source.timeStart;
+        const valueSpan = current.source.maximum - current.source.minimum;
+        applyCurveView(panAnimationCurveView(
+          current.source,
+          -deltaX / Math.max(1, CURVE_VIEW_WIDTH - viewport.paddingLeft - viewport.paddingRight) * timeSpan,
+          deltaY / Math.max(1, CURVE_VIEW_HEIGHT - viewport.paddingTop - viewport.paddingBottom) * valueSpan,
+          safeDuration,
+        ));
+      } else {
+        const timeScale = Math.exp(Math.max(-500, Math.min(500, -deltaX)) * 0.006);
+        const valueScale = Math.exp(Math.max(-500, Math.min(500, deltaY)) * 0.006);
+        applyCurveView(zoomAnimationCurveView(
+          current.source,
+          current.anchor,
+          timeScale,
+          valueScale,
+          safeDuration,
+          minimumTimeSpan,
+        ));
+      }
+      return;
+    }
     if (!selectedKeyframe || selectedValues?.[current.channel] == null) return;
     const slope = animationCurveSlopeFromPoint(
       selectedKeyframe.time,
@@ -683,6 +837,7 @@ function AnimationCurveWorkspace(props: {
     setDrag(null);
     if (!commit) {
       if (current.kind === 'key') props.onPreviewTime(current.sourceTime);
+      if (current.kind === 'view') applyCurveView(current.source);
       return;
     }
     if (current.kind === 'key') {
@@ -694,7 +849,7 @@ function AnimationCurveWorkspace(props: {
       )) {
         setViewCenter(current.sourceTime + current.timeDelta);
       }
-    } else {
+    } else if (current.kind === 'tangent') {
       props.onCommitTangent(current.keyIndex, current.channel, current.side, current.slope);
     }
   };
@@ -768,6 +923,26 @@ function AnimationCurveWorkspace(props: {
           <strong>{track.component}.{track.property}</strong>
           <span>{timeStart.toFixed(3)}–{timeEnd.toFixed(3)} s · {bounds.minimum.toFixed(3)}–{bounds.maximum.toFixed(3)}</span>
         </div>
+        <div className="timeline-curve-view-tools" role="group" aria-label="Curve framing">
+          <button
+            type="button"
+            aria-label="Frame all curves"
+            title="Frame all curves"
+            onClick={frameAllCurves}
+          >
+            <Crosshair size={12} aria-hidden="true" />
+          </button>
+          <button
+            type="button"
+            aria-label="Frame selected curve keys"
+            aria-keyshortcuts="F"
+            title="Frame selected keys (F)"
+            disabled={!framedSelection}
+            onClick={frameSelectedCurves}
+          >
+            <Maximize2 size={12} aria-hidden="true" />
+          </button>
+        </div>
         <div className="timeline-curve-legend" aria-label="Curve channels">
           {channels.map((_value, channel) => (
             <button
@@ -797,10 +972,15 @@ function AnimationCurveWorkspace(props: {
         </div>
       </header>
       <svg
+        className={drag?.kind === 'view' ? `is-${drag.mode}` : undefined}
         viewBox={`0 0 ${CURVE_VIEW_WIDTH} ${CURVE_VIEW_HEIGHT}`}
         preserveAspectRatio="none"
         aria-label="Editable animation curve"
-        onPointerDown={beginCurveMarquee}
+        aria-keyshortcuts="F"
+        tabIndex={0}
+        onPointerDown={(event) => {
+          if (!beginCurveViewGesture(event)) beginCurveMarquee(event);
+        }}
         onPointerMove={(event) => {
           if (dragRef.current) moveCurveDrag(event);
           else moveCurveMarquee(event);
@@ -817,12 +997,23 @@ function AnimationCurveWorkspace(props: {
           if (dragRef.current) finishCurveDrag(event, true);
           else finishCurveMarquee(event, true);
         }}
+        onWheel={handleCurveWheel}
+        onContextMenu={(event) => {
+          if (event.altKey) event.preventDefault();
+        }}
+        onKeyDown={(event) => {
+          if (event.key.toLowerCase() !== 'f' || event.ctrlKey || event.metaKey || event.altKey) return;
+          event.preventDefault();
+          event.stopPropagation();
+          frameSelectedCurves();
+        }}
       >
         <rect className="timeline-curve-plot" x={viewport.paddingLeft} y={viewport.paddingTop} width={CURVE_VIEW_WIDTH - viewport.paddingLeft - viewport.paddingRight} height={CURVE_VIEW_HEIGHT - viewport.paddingTop - viewport.paddingBottom} />
         {Array.from({ length: 11 }, (_unused, index) => {
           const x = viewport.paddingLeft + (CURVE_VIEW_WIDTH - viewport.paddingLeft - viewport.paddingRight) * index / 10;
           const labelTime = timeStart + visibleSpan * index / 10;
-          return <g key={`time:${index}`}><line className="timeline-curve-grid-line" x1={x} y1={viewport.paddingTop} x2={x} y2={CURVE_VIEW_HEIGHT - viewport.paddingBottom} /><text className="timeline-curve-axis-label" x={x + 3} y={CURVE_VIEW_HEIGHT - 8}>{labelTime.toFixed(2)}</text></g>;
+          const textAnchor = index === 0 ? 'start' : index === 10 ? 'end' : 'middle';
+          return <g key={`time:${index}`}><line className="timeline-curve-grid-line" x1={x} y1={viewport.paddingTop} x2={x} y2={CURVE_VIEW_HEIGHT - viewport.paddingBottom} /><text className="timeline-curve-axis-label" x={x} y={CURVE_VIEW_HEIGHT - 8} textAnchor={textAnchor}>{labelTime.toFixed(2)}</text></g>;
         })}
         {Array.from({ length: 9 }, (_unused, index) => {
           const y = viewport.paddingTop + (CURVE_VIEW_HEIGHT - viewport.paddingTop - viewport.paddingBottom) * index / 8;
@@ -1354,6 +1545,12 @@ export function Timeline(props: {
     }
     if (isAnimationEditControl(event.target)) finishHistoryTransaction();
   };
+
+  useEffect(() => {
+    if (!clip) return;
+    const maximum = animationCurveMaximumZoom(clip.duration, clip.frame_rate, TIMELINE_MAX_ZOOM);
+    setZoom((value) => clampTimelineZoom(value, maximum));
+  }, [clip?.duration, clip?.frame_rate]);
 
   useEffect(() => {
     let cancelled = false;
@@ -2083,6 +2280,9 @@ export function Timeline(props: {
     && activeSelectedKeys.length > 0
     && clampTimelineKeyDelta(clip, activeSelectedKeys, selectedKeyFrameStep) > 0,
   );
+  const maximumTimelineZoom = clip
+    ? animationCurveMaximumZoom(clip.duration, clip.frame_rate, TIMELINE_MAX_ZOOM)
+    : TIMELINE_MAX_ZOOM;
   const rulerSteps = Math.min(80, Math.max(5, Math.round(5 * zoom)));
   const canCopySelection = activeSelectedKeys.length > 0 || selectedAnimationEvent != null;
   const canMaximizePanel = !new URLSearchParams(window.location.search).has('detachedPanel');
@@ -3001,8 +3201,8 @@ export function Timeline(props: {
             className="timeline-icon-button"
             aria-label="Zoom in"
             title="Zoom in"
-            disabled={zoom >= 8}
-            onClick={() => setZoom((value) => Math.min(8, Number((value * 1.25).toFixed(2))))}
+            disabled={zoom >= maximumTimelineZoom - 1e-2}
+            onClick={() => setZoom((value) => Math.min(maximumTimelineZoom, Number((value * 1.25).toFixed(2))))}
           >
             <ZoomIn size={13} aria-hidden="true" />
           </button>
@@ -3314,7 +3514,7 @@ export function Timeline(props: {
               if (event.ctrlKey) {
                 event.preventDefault();
                 setZoom((value) => event.deltaY < 0
-                  ? Math.min(8, Number((value * 1.15).toFixed(2)))
+                  ? Math.min(maximumTimelineZoom, Number((value * 1.15).toFixed(2)))
                   : Math.max(1, Number((value / 1.15).toFixed(2))));
                 return;
               }
@@ -3534,6 +3734,7 @@ export function Timeline(props: {
                 if (keys.length > 0) setDetailsOpen(true);
               }}
               onPreviewTime={setPreviewTime}
+              onZoomChange={(value) => setZoom(clampTimelineZoom(value, maximumTimelineZoom))}
               onPreviewKeyMove={(keys, delta) => previewTimelineKeySelectionMove(clip, keys, delta)}
               onCommitKeys={updateCurveKeys}
               onCommitTangent={updateCurveTangent}

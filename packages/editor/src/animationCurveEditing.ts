@@ -14,6 +14,11 @@ export type AnimationCurveValueBounds = {
   maximum: number;
 };
 
+export type AnimationCurveViewBounds = AnimationCurveValueBounds & {
+  timeStart: number;
+  timeEnd: number;
+};
+
 export type AnimationCurveViewport = AnimationCurveValueBounds & {
   timeStart: number;
   timeEnd: number;
@@ -24,6 +29,17 @@ export type AnimationCurveViewport = AnimationCurveValueBounds & {
   paddingTop: number;
   paddingBottom: number;
 };
+
+export function animationCurveMaximumZoom(
+  duration: number,
+  frameRate: number,
+  maximumZoom = 64,
+): number {
+  const safeFrameRate = Number.isFinite(frameRate) && frameRate > 0 ? frameRate : 60;
+  const safeDuration = Math.max(1 / safeFrameRate, Number.isFinite(duration) ? duration : 0);
+  const safeMaximum = Math.max(1, Number.isFinite(maximumZoom) ? maximumZoom : 64);
+  return Math.max(1, Math.min(safeMaximum, safeDuration * safeFrameRate));
+}
 
 export type AnimationCurvePoint = {
   x: number;
@@ -104,6 +120,143 @@ export function animationCurveValueBounds(
     maximum += padding;
   }
   return { minimum, maximum };
+}
+
+function animationCurveTimeRange(
+  timeStart: number,
+  timeEnd: number,
+  duration: number,
+  minimumSpan: number,
+): Pick<AnimationCurveViewBounds, 'timeStart' | 'timeEnd'> {
+  const safeDuration = Math.max(Number.EPSILON, Number.isFinite(duration) ? duration : 0);
+  const safeMinimum = Math.max(
+    Number.EPSILON,
+    Math.min(safeDuration, Number.isFinite(minimumSpan) ? minimumSpan : Number.EPSILON),
+  );
+  const first = Number.isFinite(timeStart) ? timeStart : 0;
+  const last = Number.isFinite(timeEnd) ? timeEnd : safeDuration;
+  const requestedSpan = Math.max(safeMinimum, Math.abs(last - first));
+  const span = Math.min(safeDuration, requestedSpan);
+  const center = Number.isFinite(first + last) ? (first + last) / 2 : safeDuration / 2;
+  const start = Math.max(0, Math.min(safeDuration - span, center - span / 2));
+  return { timeStart: start, timeEnd: start + span };
+}
+
+export function animationCurveSelectionBounds(
+  track: AnimationTrack,
+  keyIndices: readonly number[],
+  channel: number,
+  duration: number,
+  frameRate: number,
+  maximumZoom = 64,
+): AnimationCurveViewBounds | null {
+  if (!Number.isInteger(channel) || channel < 0) return null;
+  const selected = new Set(keyIndices.filter((key) => Number.isInteger(key) && key >= 0));
+  const points = [...selected].flatMap((keyIndex) => {
+    const key = track.keyframes[keyIndex];
+    const value = curveNumericChannels(key?.value ?? null)?.[channel];
+    return key && value != null ? [{ time: key.time, value }] : [];
+  });
+  if (points.length === 0) return null;
+
+  const safeFrameRate = Number.isFinite(frameRate) && frameRate > 0 ? frameRate : 60;
+  const frameTime = 1 / safeFrameRate;
+  const safeDuration = Math.max(frameTime, Number.isFinite(duration) ? duration : frameTime);
+  const safeMaximumZoom = Math.max(1, Number.isFinite(maximumZoom) ? maximumZoom : 64);
+  const firstTime = Math.min(...points.map((point) => point.time));
+  const lastTime = Math.max(...points.map((point) => point.time));
+  const timePadding = Math.max(frameTime, (lastTime - firstTime) * 0.12);
+  const time = animationCurveTimeRange(
+    firstTime - timePadding,
+    lastTime + timePadding,
+    safeDuration,
+    Math.max(frameTime * 4, safeDuration / safeMaximumZoom),
+  );
+
+  const minimumValue = Math.min(...points.map((point) => point.value));
+  const maximumValue = Math.max(...points.map((point) => point.value));
+  const valueSpan = maximumValue - minimumValue;
+  const valuePadding = valueSpan < 1e-6
+    ? Math.max(0.5, Math.abs(minimumValue) * 0.1)
+    : valueSpan * 0.12;
+  return {
+    ...time,
+    minimum: minimumValue - valuePadding,
+    maximum: maximumValue + valuePadding,
+  };
+}
+
+export function zoomAnimationCurveView(
+  view: AnimationCurveViewBounds,
+  anchor: AnimationCurveCoordinates,
+  timeScale: number,
+  valueScale: number,
+  duration: number,
+  minimumTimeSpan = Number.EPSILON,
+): AnimationCurveViewBounds {
+  const safeDuration = Math.max(Number.EPSILON, Number.isFinite(duration) ? duration : 0);
+  const sourceTime = animationCurveTimeRange(
+    view.timeStart,
+    view.timeEnd,
+    safeDuration,
+    minimumTimeSpan,
+  );
+  const sourceTimeSpan = sourceTime.timeEnd - sourceTime.timeStart;
+  const safeTimeScale = Math.max(0.02, Math.min(50, Number.isFinite(timeScale) ? timeScale : 1));
+  const nextTimeSpan = Math.max(
+    Math.min(safeDuration, Math.max(Number.EPSILON, minimumTimeSpan)),
+    Math.min(safeDuration, sourceTimeSpan * safeTimeScale),
+  );
+  const timeAnchor = Number.isFinite(anchor.time) ? anchor.time : (sourceTime.timeStart + sourceTime.timeEnd) / 2;
+  const timeRatio = Math.max(0, Math.min(1, (timeAnchor - sourceTime.timeStart) / sourceTimeSpan));
+  const timeStart = Math.max(0, Math.min(safeDuration - nextTimeSpan, timeAnchor - timeRatio * nextTimeSpan));
+
+  const sourceMinimum = Number.isFinite(view.minimum) ? view.minimum : 0;
+  const sourceMaximum = Number.isFinite(view.maximum) && view.maximum > sourceMinimum
+    ? view.maximum
+    : sourceMinimum + 1;
+  const sourceValueSpan = sourceMaximum - sourceMinimum;
+  const safeValueScale = Math.max(0.02, Math.min(50, Number.isFinite(valueScale) ? valueScale : 1));
+  const valueAnchor = Number.isFinite(anchor.value) ? anchor.value : (sourceMinimum + sourceMaximum) / 2;
+  const minimumValueSpan = Math.max(1e-6, Math.abs(valueAnchor) * 1e-9);
+  const nextValueSpan = Math.max(minimumValueSpan, Math.min(1e12, sourceValueSpan * safeValueScale));
+  const valueRatio = Math.max(0, Math.min(1, (valueAnchor - sourceMinimum) / sourceValueSpan));
+  const minimum = valueAnchor - valueRatio * nextValueSpan;
+  return {
+    timeStart,
+    timeEnd: timeStart + nextTimeSpan,
+    minimum,
+    maximum: minimum + nextValueSpan,
+  };
+}
+
+export function panAnimationCurveView(
+  view: AnimationCurveViewBounds,
+  timeDelta: number,
+  valueDelta: number,
+  duration: number,
+): AnimationCurveViewBounds {
+  const safeDuration = Math.max(Number.EPSILON, Number.isFinite(duration) ? duration : 0);
+  const sourceTime = animationCurveTimeRange(
+    view.timeStart,
+    view.timeEnd,
+    safeDuration,
+    Number.EPSILON,
+  );
+  const timeSpan = sourceTime.timeEnd - sourceTime.timeStart;
+  const requestedTime = sourceTime.timeStart + (Number.isFinite(timeDelta) ? timeDelta : 0);
+  const timeStart = Math.max(0, Math.min(safeDuration - timeSpan, requestedTime));
+  const safeValueDelta = Number.isFinite(valueDelta) ? valueDelta : 0;
+  const sourceMinimum = Number.isFinite(view.minimum) ? view.minimum : 0;
+  const sourceMaximum = Number.isFinite(view.maximum) && view.maximum > sourceMinimum
+    ? view.maximum
+    : sourceMinimum + 1;
+  return {
+    timeStart,
+    timeEnd: timeStart + timeSpan,
+    minimum: sourceMinimum + safeValueDelta,
+    maximum: sourceMaximum + safeValueDelta,
+  };
 }
 
 function plotWidth(viewport: AnimationCurveViewport): number {

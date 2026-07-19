@@ -4,16 +4,20 @@ import { normalizeAnimationClip } from '../src/animationClip.ts';
 import {
   animationCurveCoordinates,
   animationCurveKeysInRect,
+  animationCurveMaximumZoom,
   animationCurvePoint,
+  animationCurveSelectionBounds,
   animationCurveSlopeFromPoint,
   animationCurveTangentChannel,
   animationCurveTangentHandle,
   animationCurveValueBounds,
   moveAnimationCurveKey,
   offsetAnimationCurveKeyValues,
+  panAnimationCurveView,
   setAnimationCurveTangentChannel,
   setAnimationCurveTangentsAuto,
   setAnimationCurveTangentsFlat,
+  zoomAnimationCurveView,
 } from '../src/animationCurveEditing.ts';
 
 function track() {
@@ -65,6 +69,53 @@ test('Curve value bounds include sampled channels and stable padding', () => {
   });
   const constant = { ...track(), keyframes: [{ time: 0, value: 2 }, { time: 2, value: 2 }] };
   assert.deepEqual(animationCurveValueBounds(constant, 0, 2), { minimum: 1.5, maximum: 2.5 });
+});
+
+test('Curve framing, cursor zoom and panning preserve stable view bounds', () => {
+  assert.equal(animationCurveMaximumZoom(1, 60), 60);
+  assert.equal(animationCurveMaximumZoom(2, 60), 64);
+  assert.equal(animationCurveMaximumZoom(0.01, 60), 1);
+  assert.equal(animationCurveMaximumZoom(Number.NaN, Number.NaN), 1);
+
+  const single = animationCurveSelectionBounds(track(), [1, 1, 99], 0, 2, 10);
+  assert.ok(single);
+  assert.equal(single.timeStart, 0.8);
+  assert.ok(Math.abs(single.timeEnd - 1.2) < 1e-9);
+  assert.deepEqual({ minimum: single.minimum, maximum: single.maximum }, {
+    minimum: 1.5,
+    maximum: 2.5,
+  });
+  assert.deepEqual(animationCurveSelectionBounds(track(), [0, 2], 1, 2, 10), {
+    timeStart: 0,
+    timeEnd: 2,
+    minimum: 1.52,
+    maximum: 6.48,
+  });
+
+  const zoomed = zoomAnimationCurveView(viewport(), { time: 0.5, value: 7.5 }, 0.5, 0.5, 2, 0.1);
+  assert.deepEqual(zoomed, {
+    timeStart: 0.25,
+    timeEnd: 1.25,
+    minimum: 3.75,
+    maximum: 8.75,
+  });
+  assert.deepEqual(panAnimationCurveView(zoomed, 2, 2, 2), {
+    timeStart: 1,
+    timeEnd: 2,
+    minimum: 5.75,
+    maximum: 10.75,
+  });
+  assert.deepEqual(panAnimationCurveView({
+    timeStart: 0,
+    timeEnd: 1,
+    minimum: 10,
+    maximum: Number.NaN,
+  }, 0, 0, 2), {
+    timeStart: 0,
+    timeEnd: 1,
+    minimum: 10,
+    maximum: 11,
+  });
 });
 
 test('Curve key movement updates one channel, snaps time and preserves tangents', () => {
