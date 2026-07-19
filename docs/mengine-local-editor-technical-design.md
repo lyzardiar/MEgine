@@ -1476,3 +1476,13 @@ Camera Shot 的基础闭环已经形成，但 Timeline 仍不完备：编辑器 
 第一遍自省从暂停和状态生命周期反查，发现最初把混合命令当作逐帧临时队列，Timeline 时间不变时只会混合第一帧，随后普通 AnimationPlayer 会覆盖姿态；现改为按 Director/Track 持久保存并在每个 Runtime 帧执行。第二遍自省从稀疏绑定和直接 Seek 反查，发现权重达到 1 后过早删除命令会让源 Clip 独占字段依赖播放历史；现把权重 1 的接缝覆盖保留到当前 Clip 结束，并用 source-only 绑定回归固定该语义。全量验证为编辑器 350/350、CLI 52/52、mengine-assets 51/51、mengine-runtime library 93/93、runtime main 22/22，5 个工作区包 TypeScript/Vite 生产构建通过。
 
 这仍不是成熟的 Timeline 动画混合器。当前是“上一段末帧保持 → 当前段运动”的接缝过渡，不是两段同时运动的真实重叠 Crossfade；只存在于目标 Clip 的绑定会立即进入，尚没有 authored/base pose 作为第三路输入。后续仍需 Clip Ease In/Out 与重叠编辑、外推模式、Root Motion、Humanoid Retargeting、IK、嵌套 Timeline/Control Track、录制、运动轨迹、Onion Skin、统一 Animation/Animator/Timeline Transport，以及混合成本与姿态缓存的 Profiler 统计。
+
+## 125. 2026-07-20 Surface Shader Pipeline 变体收集与 Player 预热
+
+- 构建期 Surface Shader 变体从“Shader 路径 + 关键词集合”升级为真实 GPU Pipeline 键：额外包含 Replace/Alpha/Premultiplied/Additive/Multiply 混合、双面剔除状态与深度写入。材质实例继承基础材质的固定管线状态，参数、纹理和 MaterialPropertyBlock 不制造无意义的 Pipeline；同一关键词集合但透明/双面状态不同的材质会计为两条真实变体，`shaderVariantLimit` 因此限制实际可能创建的自定义 Pipeline，而不是低估后的关键词组合数。CLI 同时补齐 `double_sided` 与 `transparent_depth_write` 的严格布尔校验。
+- `mengine-build.json` 现在持久化完整变体并进入现有确定性 Manifest、签名和构建报告。Runtime 会校验 Shader 必须是已列入包内容的安全 `Assets/*.mshader`、关键词名称合法且无重复、Replace 必须开启深度写入，并以“规范化路径 + 排序后的关键词集合 + 固定渲染状态”拒绝语义重复项；旧 schema 1 Manifest 缺少变体数组时仍按空预热清单兼容。Build Settings 报告直接显示每条变体的混合、剔除、深度与关键词，便于定位预算来源。
+- Packaged Player 在首帧前读取精确变体清单，复用 RHI 的 Surface Shader 组合/校验路径创建 Pipeline；不会枚举所有关键词和固定状态的笛卡尔积。相同 Shader 的多条变体只读盘、解析反射元数据和分配 WGSL 一次，材质通过 `Arc` 共享源代码。初始场景也在首帧前预热，覆盖开发运行或旧构建清单；未知的运行时动态材质仍可走原有按需创建。RHI 暴露 requested/created/cached/built-in/rejected 预热报告与 built-in/custom/rejected 缓存统计，Player 在启动和缓存变化时写入日志，不再只能从首帧卡顿猜测编译发生过。
+
+第一遍自省从 256 变体规模反查启动热路径，发现初稿为每条变体重复读取、解析并复制同一份 Shader 源；现改成按规范化 Shader 路径缓存声明表和共享 `Arc<str>`，并用双变体共享指针回归固定。第二遍自省从 Build 与 RHI 对“同一变体”的定义反查，发现 JSON 原样去重可被路径大小写/斜杠和关键词顺序绕过，而 RHI 指纹会把它们归为同一 Pipeline；现改为语义规范化去重，并增加跨路径表示、反向关键词顺序的拒绝测试。
+
+这仍不是成熟的全平台 Shader/材质编译系统。当前预热创建的是本次运行图形后端的内存 Pipeline，没有 Vulkan/D3D12/Metal 后端离线二进制、驱动级持久化 Pipeline Cache、异步编译队列、分帧预热、平台能力分层、Shader Graph、HLSL/GLSL 到 WGSL 的编译链，也尚未对开发态热重载后不再使用的旧 Pipeline 和材质纹理做 LRU/预算回收。后续应先补 Pipeline/纹理缓存的代际回收与 Profiler 内存统计，再建设按目标平台生成和签名的 Shader Library；构建系统还需继续补跨平台工具链、安装包、平台签名/公证和补丁分块，不能把“当前宿主可执行文件 + 完整 Manifest”视为成熟发布系统。

@@ -143,6 +143,9 @@ export interface PcBuildManifest {
 export interface BuildShaderVariant {
   shader: string;
   enabledKeywords: string[];
+  blend: 'replace' | 'alpha' | 'premultiplied' | 'additive' | 'multiply';
+  doubleSided: boolean;
+  depthWrite: boolean;
 }
 
 export interface BuildArtifactSignature {
@@ -849,6 +852,7 @@ function scanBuildAssetDependencies(
   const materialBaseShaders = new Map<string, string | null>();
   const materialBaseKeywordOverrides = new Map<string, Map<string, boolean>>();
   const materialBaseCustomTextures = new Map<string, Map<string, string>>();
+  const materialBasePipelineStates = new Map<string, Pick<BuildShaderVariant, 'blend' | 'doubleSided' | 'depthWrite'>>();
   const surfaceShaderSchemas = new Map<string, SurfaceShaderBuildSchema>();
   const surfaceShaderCanonicalPaths = new Map<string, string>();
   const customMaterialParameterBindings: Array<{
@@ -1217,6 +1221,19 @@ function scanBuildAssetDependencies(
         && material.blend_mode !== 'multiply') {
         throw new Error(`invalid material ${source}: unsupported blend_mode ${String(material.blend_mode)}`);
       }
+      for (const field of ['double_sided', 'transparent_depth_write'] as const) {
+        if (material[field] != null && typeof material[field] !== 'boolean') {
+          throw new Error(`invalid material ${source}: ${field} must be a boolean`);
+        }
+      }
+      const transparent = material.surface === 'transparent';
+      materialBasePipelineStates.set(source.toLowerCase(), {
+        blend: transparent
+          ? (material.blend_mode as BuildShaderVariant['blend'] | undefined) ?? 'alpha'
+          : 'replace',
+        doubleSided: material.double_sided === true,
+        depthWrite: transparent ? material.transparent_depth_write === true : true,
+      });
       if (material.render_queue != null
         && (!Number.isInteger(material.render_queue)
           || Number(material.render_queue) < -1
@@ -2125,7 +2142,13 @@ function scanBuildAssetDependencies(
     }
   }
   drainQueue();
-  const resolveKeywordVariant = (start: string): { shader: string; enabled: string[] } | null => {
+  const resolveKeywordVariant = (start: string): {
+    shader: string;
+    enabled: string[];
+    blend: BuildShaderVariant['blend'];
+    doubleSided: boolean;
+    depthWrite: boolean;
+  } | null => {
     const layers: Array<{ source: string; values: Map<string, boolean> }> = [];
     let base = start;
     for (let depth = 0; depth <= 32 && materialInstanceParents.has(base); depth += 1) {
@@ -2165,6 +2188,11 @@ function scanBuildAssetDependencies(
     return {
       shader,
       enabled: [...schema.keywords.keys()].filter((name) => state.get(name) === true),
+      ...(materialBasePipelineStates.get(base) ?? {
+        blend: 'replace' as const,
+        doubleSided: false,
+        depthWrite: true,
+      }),
     };
   };
   const variants = new Map<string, BuildShaderVariant>();
@@ -2174,13 +2202,25 @@ function scanBuildAssetDependencies(
       const entry = {
         shader: surfaceShaderCanonicalPaths.get(variant.shader) ?? variant.shader,
         enabledKeywords: variant.enabled,
+        blend: variant.blend,
+        doubleSided: variant.doubleSided,
+        depthWrite: variant.depthWrite,
       };
-      variants.set(JSON.stringify([variant.shader, entry.enabledKeywords]), entry);
+      variants.set(JSON.stringify([
+        variant.shader,
+        entry.enabledKeywords,
+        entry.blend,
+        entry.doubleSided,
+        entry.depthWrite,
+      ]), entry);
     }
   }
   const surfaceShaderVariants = [...variants.values()].sort((left, right) => (
     compareFileNames(left.shader, right.shader)
     || compareFileNames(left.enabledKeywords.join('\0'), right.enabledKeywords.join('\0'))
+    || compareFileNames(left.blend, right.blend)
+    || Number(left.doubleSided) - Number(right.doubleSided)
+    || Number(left.depthWrite) - Number(right.depthWrite)
   ));
   if (surfaceShaderVariants.length > project.shaderVariantLimit) {
     const perShader = new Map<string, number>();

@@ -1233,7 +1233,11 @@ test('buildPcPackage includes validated custom material surface shaders', () => 
       version: 10,
       shader: 'custom',
       custom_shader: 'Assets/Shaders/Rim.mshader',
-      custom_keywords: { USE_RIM: false },
+      custom_keywords: { USE_RIM: true },
+      surface: 'transparent',
+      blend_mode: 'premultiplied',
+      transparent_depth_write: true,
+      double_sided: true,
     }));
     writeFileSync(join(paths.project, 'Assets', 'Textures', 'detail.png'), 'detail');
     writeFileSync(join(paths.project, 'Assets', 'Textures', 'default-detail.png'), 'default-detail');
@@ -1282,8 +1286,20 @@ test('buildPcPackage includes validated custom material surface shaders', () => 
       strippedEditorEntities: 0
     });
     assert.deepEqual(manifest.surfaceShaderVariants, [
-      { shader: 'Assets/Shaders/Rim.mshader', enabledKeywords: [] },
-      { shader: 'Assets/Shaders/Rim.mshader', enabledKeywords: ['USE_RIM'] },
+      {
+        shader: 'Assets/Shaders/Rim.mshader',
+        enabledKeywords: ['USE_RIM'],
+        blend: 'premultiplied',
+        doubleSided: true,
+        depthWrite: true,
+      },
+      {
+        shader: 'Assets/Shaders/Rim.mshader',
+        enabledKeywords: ['USE_RIM'],
+        blend: 'replace',
+        doubleSided: false,
+        depthWrite: true,
+      },
     ]);
     const projectPath = join(paths.project, 'project.json');
     const project = JSON.parse(readFileSync(projectPath, 'utf8'));

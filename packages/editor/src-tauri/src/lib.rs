@@ -187,6 +187,9 @@ struct BuildPlayerResult {
 struct BuildShaderVariantResult {
     shader: String,
     enabled_keywords: Vec<String>,
+    blend: String,
+    double_sided: bool,
+    depth_write: bool,
 }
 
 #[derive(Clone, Debug, serde::Serialize, PartialEq, Eq)]
@@ -1531,6 +1534,18 @@ fn run_player_build_controlled(
             "build manifest Surface Shader variant count does not match asset validation"
                 .to_string(),
         );
+    }
+    if let Some(invalid) = surface_shader_variants.iter().find(|variant| {
+        variant.shader.trim().is_empty()
+            || !matches!(
+                variant.blend.as_str(),
+                "replace" | "alpha" | "premultiplied" | "additive" | "multiply"
+            )
+    }) {
+        return Err(format!(
+            "build manifest contains invalid Surface Shader pipeline variant for {}",
+            invalid.shader
+        ));
     }
     if shader_variants > shader_variant_limit {
         return Err("build manifest exceeds its Surface Shader variant limit".to_string());

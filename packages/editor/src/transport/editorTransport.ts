@@ -156,7 +156,13 @@ export type BuildPlayerResult = {
   auditedSurfaceShaders: number;
   shaderVariants: number;
   shaderVariantLimit: number;
-  surfaceShaderVariants: Array<{ shader: string; enabledKeywords: string[] }>;
+  surfaceShaderVariants: Array<{
+    shader: string;
+    enabledKeywords: string[];
+    blend: 'replace' | 'alpha' | 'premultiplied' | 'additive' | 'multiply';
+    doubleSided: boolean;
+    depthWrite: boolean;
+  }>;
   assetMode: 'all' | 'referenced';
   omittedAssetFiles: number;
   omittedAssetBytes: number;

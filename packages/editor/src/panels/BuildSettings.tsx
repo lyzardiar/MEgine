@@ -874,11 +874,11 @@ export function BuildSettings(props: {
                     .map((variant) => (
                     <div
                       className="build-content-row"
-                      key={`${variant.shader}\0${variant.enabledKeywords.join('\0')}`}
+                      key={`${variant.shader}\0${variant.enabledKeywords.join('\0')}\0${variant.blend}\0${variant.doubleSided}\0${variant.depthWrite}`}
                     >
                       <strong>{variant.shader}</strong>
-                      <span>{variant.enabledKeywords.length} keywords</span>
-                      <span>{variant.enabledKeywords.join(', ') || 'Default'}</span>
+                      <span>{variant.blend} · {variant.doubleSided ? 'two-sided' : 'back-face cull'} · depth {variant.depthWrite ? 'write' : 'read'}</span>
+                      <span>{variant.enabledKeywords.join(', ') || 'Default keywords'}</span>
                     </div>
                     ))}
                 </div>

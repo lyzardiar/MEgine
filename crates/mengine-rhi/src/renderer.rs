@@ -150,6 +150,22 @@ pub enum MaterialBlendMode {
     Multiply,
 }
 
+#[derive(Clone, Copy, Debug, Default, Eq, PartialEq)]
+pub struct MaterialPipelineStats {
+    pub built_in: usize,
+    pub custom: usize,
+    pub rejected: usize,
+}
+
+#[derive(Clone, Copy, Debug, Default, Eq, PartialEq)]
+pub struct MaterialPipelinePrewarmReport {
+    pub requested: usize,
+    pub created: usize,
+    pub cached: usize,
+    pub built_in: usize,
+    pub rejected: usize,
+}
+
 impl Default for RenderMaterial {
     fn default() -> Self {
         Self {
@@ -383,6 +399,14 @@ struct MaterialPipelineKey {
     double_sided: bool,
     depth_write: bool,
     shader_fingerprint: u64,
+}
+
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+enum MaterialPipelinePrepareResult {
+    BuiltIn,
+    Cached,
+    Created,
+    Rejected,
 }
 
 impl From<&RenderMaterial> for MaterialPipelineKey {
@@ -1346,15 +1370,22 @@ impl Renderer {
         );
     }
 
-    fn ensure_material_pipeline(&mut self, material: &RenderMaterial) {
+    fn ensure_material_pipeline(
+        &mut self,
+        material: &RenderMaterial,
+    ) -> MaterialPipelinePrepareResult {
         let key = MaterialPipelineKey::from(material);
-        if key.shader_fingerprint == 0
-            || self.material_pipelines.contains_key(&key)
-            || self
-                .invalid_surface_shaders
-                .contains(&key.shader_fingerprint)
+        if key.shader_fingerprint == 0 {
+            return MaterialPipelinePrepareResult::BuiltIn;
+        }
+        if self.material_pipelines.contains_key(&key) {
+            return MaterialPipelinePrepareResult::Cached;
+        }
+        if self
+            .invalid_surface_shaders
+            .contains(&key.shader_fingerprint)
         {
-            return;
+            return MaterialPipelinePrepareResult::Rejected;
         }
         let source = match compose_surface_shader(
             &material.surface_shader,
@@ -1364,7 +1395,7 @@ impl Renderer {
             Err(error) => {
                 log::warn!("surface shader rejected: {error}");
                 self.invalid_surface_shaders.insert(key.shader_fingerprint);
-                return;
+                return MaterialPipelinePrepareResult::Rejected;
             }
         };
         let shader = self
@@ -1383,6 +1414,7 @@ impl Renderer {
                 key,
             ),
         );
+        MaterialPipelinePrepareResult::Created
     }
 
     fn ensure_material_texture_set(&mut self, material: &RenderMaterial) {
@@ -1476,6 +1508,44 @@ impl Renderer {
 
     pub fn ui_stats(&self) -> UiFrameStats {
         self.ui.stats()
+    }
+
+    pub fn material_pipeline_stats(&self) -> MaterialPipelineStats {
+        MaterialPipelineStats {
+            built_in: self
+                .material_pipelines
+                .keys()
+                .filter(|key| key.shader_fingerprint == 0)
+                .count(),
+            custom: self
+                .material_pipelines
+                .keys()
+                .filter(|key| key.shader_fingerprint != 0)
+                .count(),
+            rejected: self.invalid_surface_shaders.len(),
+        }
+    }
+
+    /// Creates every supplied custom material pipeline before the first render that uses it.
+    /// Build manifests provide exact keyword and fixed-function states, so this avoids compiling
+    /// a combinatorial superset while still moving packaged-player work out of gameplay frames.
+    pub fn prewarm_material_pipelines(
+        &mut self,
+        materials: &[RenderMaterial],
+    ) -> MaterialPipelinePrewarmReport {
+        let mut report = MaterialPipelinePrewarmReport {
+            requested: materials.len(),
+            ..Default::default()
+        };
+        for material in materials {
+            match self.ensure_material_pipeline(material) {
+                MaterialPipelinePrepareResult::BuiltIn => report.built_in += 1,
+                MaterialPipelinePrepareResult::Cached => report.cached += 1,
+                MaterialPipelinePrepareResult::Created => report.created += 1,
+                MaterialPipelinePrepareResult::Rejected => report.rejected += 1,
+            }
+        }
+        report
     }
 
     pub fn upload_ui_texture_rgba8(

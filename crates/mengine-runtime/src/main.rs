@@ -15,12 +15,14 @@ use mengine_physics::{PhysicsWorld, PhysicsWorld2D};
 use mengine_platform::InputState;
 use mengine_rhi::{
     look_at, orthographic, perspective, validate_surface_shader_hook, DirectionalLightData,
-    EnvironmentLightData, FrameCamera, FrameLighting, PointLightData, RenderMaterial, RenderObject,
-    Renderer, SpotLightData, UiBatchPlan,
+    EnvironmentLightData, FrameCamera, FrameLighting, MaterialBlendMode, MaterialPipelineStats,
+    PointLightData, RenderMaterial, RenderObject, Renderer, SpotLightData, UiBatchPlan,
 };
 use mengine_runtime::animation::{infer_project_root_from_scene, AnimationRuntime};
 use mengine_runtime::audio::AudioRuntime;
-use mengine_runtime::build_manifest::verify_build_manifest;
+use mengine_runtime::build_manifest::{
+    load_build_surface_shader_variants, verify_build_manifest, BuildSurfaceShaderBlend,
+};
 use mengine_runtime::lighting2d::apply_2d_lighting;
 use mengine_runtime::materials::{
     apply_material_property_block, resolve_surface_shader_material,
@@ -44,7 +46,7 @@ use mengine_script::{
     ScriptAnimationEvent, ScriptHost, ScriptRuntimeRequest, ScriptTimelineSignal,
 };
 use serde_json::json;
-use std::collections::HashSet;
+use std::collections::{HashMap, HashSet};
 use std::path::Path;
 use std::path::PathBuf;
 use std::sync::Arc;
@@ -104,6 +106,7 @@ struct App {
     focused_ui: Option<Entity>,
     modifiers: ModifiersState,
     last_ui_draw_calls: u32,
+    last_material_pipeline_stats: Option<MaterialPipelineStats>,
     particles: ParticleWorld,
     sorting_layers: SortingLayers,
     textures: RuntimeTextureCache,
@@ -163,6 +166,7 @@ impl App {
             focused_ui: None,
             modifiers: ModifiersState::empty(),
             last_ui_draw_calls: u32::MAX,
+            last_material_pipeline_stats: None,
             particles: ParticleWorld::default(),
             sorting_layers,
             textures,
@@ -1246,11 +1250,49 @@ impl ApplicationHandler for App {
                 )
                 .expect("window"),
         );
-        let renderer = pollster::block_on(Renderer::new(window.clone())).expect("renderer");
+        let mut renderer = pollster::block_on(Renderer::new(window.clone())).expect("renderer");
+        if self.args.packaged {
+            match packaged_surface_shader_materials(
+                self.args
+                    .project_root
+                    .as_deref()
+                    .expect("packaged project root resolved before App creation"),
+            ) {
+                Ok(materials) => {
+                    let report = renderer.prewarm_material_pipelines(&materials);
+                    log::info!(
+                        "packaged material pipeline prewarm: requested={}, created={}, cached={}, rejected={}",
+                        report.requested,
+                        report.created,
+                        report.cached,
+                        report.rejected
+                    );
+                }
+                Err(error) => log::error!("packaged material pipeline prewarm rejected: {error}"),
+            }
+        }
         self.window = Some(window);
         self.renderer = Some(renderer);
         if !self.load_requested_scene() {
             self.bootstrap_sample();
+        }
+        let hierarchy = TransformHierarchy::build(&self.world);
+        let objects = collect_objects(&self.world, &hierarchy, &mut self.materials);
+        if let Some(renderer) = self.renderer.as_mut() {
+            let materials = objects
+                .iter()
+                .map(|object| object.material.clone())
+                .collect::<Vec<_>>();
+            let report = renderer.prewarm_material_pipelines(&materials);
+            log::info!(
+                "initial scene material pipeline prewarm: requested={}, created={}, cached={}, built_in={}, rejected={}",
+                report.requested,
+                report.created,
+                report.cached,
+                report.built_in,
+                report.rejected
+            );
+            self.last_material_pipeline_stats = Some(renderer.material_pipeline_stats());
         }
 
         let mut script = ScriptHost::new().ok();
@@ -1716,6 +1758,16 @@ function onTick(dt, frame) {
                     if let Err(e) = r.render_lit_frame(camera, &objects, &lighting, Some(&ui.plan))
                     {
                         log::warn!("render: {e}");
+                    }
+                    let pipeline_stats = r.material_pipeline_stats();
+                    if self.last_material_pipeline_stats != Some(pipeline_stats) {
+                        log::info!(
+                            "material pipeline cache: built_in={}, custom={}, rejected={}",
+                            pipeline_stats.built_in,
+                            pipeline_stats.custom,
+                            pipeline_stats.rejected
+                        );
+                        self.last_material_pipeline_stats = Some(pipeline_stats);
                     }
                     let stats = r.ui_stats();
                     if stats.draw_calls != self.last_ui_draw_calls {
@@ -2207,6 +2259,71 @@ fn safe_rotation(value: [f32; 4]) -> Quat {
     } else {
         Quat::IDENTITY
     }
+}
+
+fn packaged_surface_shader_materials(project_root: &Path) -> Result<Vec<RenderMaterial>> {
+    let variants = load_build_surface_shader_variants(project_root)?;
+    let mut materials = Vec::with_capacity(variants.len());
+    let mut shaders = HashMap::<String, (Arc<str>, HashSet<String>)>::new();
+    for variant in variants {
+        let shader_key = variant.shader.replace('\\', "/").to_ascii_lowercase();
+        if !shaders.contains_key(&shader_key) {
+            let path = mengine_runtime::textures::resolve_project_asset_path(
+                project_root,
+                &variant.shader,
+            )
+            .with_context(|| format!("unsafe Surface Shader path: {}", variant.shader))?;
+            let source = mengine_assets::load_surface_shader(&path).with_context(|| {
+                format!("cannot load packaged Surface Shader {}", path.display())
+            })?;
+            let schema = mengine_core::surface_shader::parse_surface_shader_schema(&source)
+                .map_err(|error| {
+                    anyhow::anyhow!("invalid Surface Shader {}: {error}", path.display())
+                })?;
+            shaders.insert(
+                shader_key.clone(),
+                (
+                    Arc::from(source),
+                    schema
+                        .keywords
+                        .into_iter()
+                        .map(|keyword| keyword.name)
+                        .collect(),
+                ),
+            );
+        }
+        let (source, declared_keywords) = shaders
+            .get(&shader_key)
+            .expect("packaged Surface Shader cache inserted");
+        if let Some(keyword) = variant
+            .enabled_keywords
+            .iter()
+            .find(|name| !declared_keywords.contains(name.as_str()))
+        {
+            bail!(
+                "packaged Surface Shader variant {} uses undeclared keyword '{}'",
+                variant.shader,
+                keyword
+            );
+        }
+        let (transparent, blend_mode) = match variant.blend {
+            BuildSurfaceShaderBlend::Replace => (false, MaterialBlendMode::Alpha),
+            BuildSurfaceShaderBlend::Alpha => (true, MaterialBlendMode::Alpha),
+            BuildSurfaceShaderBlend::Premultiplied => (true, MaterialBlendMode::Premultiplied),
+            BuildSurfaceShaderBlend::Additive => (true, MaterialBlendMode::Additive),
+            BuildSurfaceShaderBlend::Multiply => (true, MaterialBlendMode::Multiply),
+        };
+        materials.push(RenderMaterial {
+            transparent,
+            blend_mode,
+            depth_write: variant.depth_write,
+            double_sided: variant.double_sided,
+            surface_shader: Arc::clone(source),
+            surface_keywords: variant.enabled_keywords,
+            ..Default::default()
+        });
+    }
+    Ok(materials)
 }
 
 fn main() -> Result<()> {
@@ -3513,5 +3630,61 @@ mod tests {
             -1.0
         );
         assert_eq!(range_navigation_sign("LeftToRight", WinitKey::ArrowUp), 0.0);
+    }
+
+    #[test]
+    fn packaged_surface_shader_variants_recreate_exact_pipeline_state() {
+        let root = temporary_project_root("packaged-surface-pipeline-prewarm");
+        let shader_path = root.join("Assets/Shaders/Rim.mshader");
+        std::fs::create_dir_all(shader_path.parent().unwrap()).unwrap();
+        std::fs::write(
+            &shader_path,
+            r#"/* MENGINE_PARAMETERS
+            {"keywords":[{"name":"USE_RIM","default":false}]}
+            */
+            fn mengine_lit_surface_hook(
+              surface: MEngineSurface, uv: vec2<f32>, world_position: vec3<f32>
+            ) -> MEngineSurface { return surface; }"#,
+        )
+        .unwrap();
+        std::fs::write(
+            root.join(mengine_runtime::build_manifest::BUILD_MANIFEST_FILE),
+            r#"{
+              "schemaVersion":1,
+              "surfaceShaderVariants":[{
+                "shader":"Assets/Shaders/Rim.mshader",
+                "enabledKeywords":["USE_RIM"],
+                "blend":"multiply",
+                "doubleSided":true,
+                "depthWrite":false
+              },{
+                "shader":"Assets/Shaders/Rim.mshader",
+                "enabledKeywords":[],
+                "blend":"replace",
+                "doubleSided":false,
+                "depthWrite":true
+              }],
+              "files":[{
+                "path":"Assets/Shaders/Rim.mshader",
+                "size":0,
+                "sha256":"0000000000000000000000000000000000000000000000000000000000000000"
+              }]
+            }"#,
+        )
+        .unwrap();
+
+        let materials = packaged_surface_shader_materials(&root).unwrap();
+        std::fs::remove_dir_all(root).unwrap();
+        assert_eq!(materials.len(), 2);
+        let material = &materials[0];
+        assert!(material.transparent);
+        assert_eq!(material.blend_mode, MaterialBlendMode::Multiply);
+        assert!(material.double_sided);
+        assert!(!material.depth_write);
+        assert_eq!(material.surface_keywords, ["USE_RIM"]);
+        assert!(Arc::ptr_eq(
+            &materials[0].surface_shader,
+            &materials[1].surface_shader
+        ));
     }
 }

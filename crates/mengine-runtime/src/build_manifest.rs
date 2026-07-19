@@ -13,7 +13,29 @@ struct BuildManifest {
     schema_version: u32,
     #[serde(default)]
     content_hash: Option<String>,
+    #[serde(default)]
+    surface_shader_variants: Vec<BuildSurfaceShaderVariant>,
     files: Vec<BuildFile>,
+}
+
+#[derive(Clone, Copy, Debug, Deserialize, Eq, Hash, PartialEq)]
+#[serde(rename_all = "snake_case")]
+pub enum BuildSurfaceShaderBlend {
+    Replace,
+    Alpha,
+    Premultiplied,
+    Additive,
+    Multiply,
+}
+
+#[derive(Clone, Debug, Deserialize, Eq, Hash, PartialEq)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+pub struct BuildSurfaceShaderVariant {
+    pub shader: String,
+    pub enabled_keywords: Vec<String>,
+    pub blend: BuildSurfaceShaderBlend,
+    pub double_sided: bool,
+    pub depth_write: bool,
 }
 
 #[derive(Debug, Deserialize)]
@@ -75,6 +97,8 @@ pub enum BuildManifestError {
     },
     #[error("packaged build contains an unlisted file: {0}")]
     UnlistedFile(PathBuf),
+    #[error("invalid packaged Surface Shader pipeline variant: {0}")]
+    ShaderVariant(String),
 }
 
 fn safe_relative_path(value: &str) -> Result<PathBuf, BuildManifestError> {
@@ -192,10 +216,66 @@ fn build_content_hash(files: &[BuildFile]) -> Result<String, BuildManifestError>
     Ok(format!("{:x}", digest.finalize()))
 }
 
-pub fn verify_build_manifest(
-    build_root: impl AsRef<Path>,
-) -> Result<BuildIntegrity, BuildManifestError> {
-    let build_root = build_root.as_ref();
+fn valid_shader_keyword(value: &str) -> bool {
+    let mut bytes = value.bytes();
+    matches!(bytes.next(), Some(first) if first.is_ascii_alphabetic())
+        && value.len() <= 48
+        && bytes.all(|byte| byte.is_ascii_alphanumeric() || byte == b'_')
+}
+
+fn validate_surface_shader_variants(
+    variants: &[BuildSurfaceShaderVariant],
+    listed_paths: &HashSet<String>,
+) -> Result<(), BuildManifestError> {
+    let mut unique = HashSet::new();
+    for variant in variants {
+        safe_relative_path(&variant.shader)?;
+        let normalized = variant.shader.replace('\\', "/");
+        if !normalized.starts_with("Assets/")
+            || !normalized.to_ascii_lowercase().ends_with(".mshader")
+            || !listed_paths.contains(&normalized.to_ascii_lowercase())
+        {
+            return Err(BuildManifestError::ShaderVariant(format!(
+                "shader must reference a listed Assets .mshader file: {}",
+                variant.shader
+            )));
+        }
+        if variant.blend == BuildSurfaceShaderBlend::Replace && !variant.depth_write {
+            return Err(BuildManifestError::ShaderVariant(format!(
+                "replace pipeline must enable depth writes for {}",
+                variant.shader
+            )));
+        }
+        let mut keywords = HashSet::new();
+        if let Some(keyword) = variant
+            .enabled_keywords
+            .iter()
+            .find(|keyword| !valid_shader_keyword(keyword) || !keywords.insert(keyword.as_str()))
+        {
+            return Err(BuildManifestError::ShaderVariant(format!(
+                "invalid or duplicate keyword '{}' for {}",
+                keyword, variant.shader
+            )));
+        }
+        let mut canonical_keywords = variant.enabled_keywords.clone();
+        canonical_keywords.sort();
+        if !unique.insert((
+            normalized.to_ascii_lowercase(),
+            canonical_keywords,
+            variant.blend,
+            variant.double_sided,
+            variant.depth_write,
+        )) {
+            return Err(BuildManifestError::ShaderVariant(format!(
+                "duplicate pipeline variant for {}",
+                variant.shader
+            )));
+        }
+    }
+    Ok(())
+}
+
+fn read_build_manifest(build_root: &Path) -> Result<BuildManifest, BuildManifestError> {
     let manifest_path = build_root.join(BUILD_MANIFEST_FILE);
     let text = std::fs::read_to_string(&manifest_path).map_err(|source| {
         BuildManifestError::ReadManifest {
@@ -203,14 +283,36 @@ pub fn verify_build_manifest(
             source,
         }
     })?;
-    let manifest: BuildManifest =
-        serde_json::from_str(&text).map_err(|source| BuildManifestError::Json {
+    let manifest = serde_json::from_str::<BuildManifest>(&text).map_err(|source| {
+        BuildManifestError::Json {
             path: manifest_path,
             source,
-        })?;
+        }
+    })?;
     if manifest.schema_version != 1 {
         return Err(BuildManifestError::Schema(manifest.schema_version));
     }
+    Ok(manifest)
+}
+
+pub fn load_build_surface_shader_variants(
+    build_root: impl AsRef<Path>,
+) -> Result<Vec<BuildSurfaceShaderVariant>, BuildManifestError> {
+    let manifest = read_build_manifest(build_root.as_ref())?;
+    let listed_paths = manifest
+        .files
+        .iter()
+        .map(|entry| entry.path.replace('\\', "/").to_ascii_lowercase())
+        .collect::<HashSet<_>>();
+    validate_surface_shader_variants(&manifest.surface_shader_variants, &listed_paths)?;
+    Ok(manifest.surface_shader_variants)
+}
+
+pub fn verify_build_manifest(
+    build_root: impl AsRef<Path>,
+) -> Result<BuildIntegrity, BuildManifestError> {
+    let build_root = build_root.as_ref();
+    let manifest = read_build_manifest(build_root)?;
 
     let mut paths = HashSet::new();
     let mut byte_count = 0_u64;
@@ -247,6 +349,7 @@ pub fn verify_build_manifest(
         }
         byte_count = byte_count.saturating_add(entry.size);
     }
+    validate_surface_shader_variants(&manifest.surface_shader_variants, &paths)?;
     if let Some(expected) = manifest.content_hash.as_deref() {
         if decode_sha256(expected).is_none() {
             return Err(BuildManifestError::InvalidContentHash(expected.to_owned()));
@@ -378,6 +481,78 @@ mod tests {
         assert!(matches!(
             verify_build_manifest(&root),
             Err(BuildManifestError::UnsafePath(_))
+        ));
+        std::fs::remove_dir_all(root).unwrap();
+    }
+
+    #[test]
+    fn loads_and_validates_packaged_surface_shader_pipeline_variants() {
+        let root = test_root("surface-variants");
+        let shader_path = root.join("Assets/Shaders/Rim.mshader");
+        std::fs::create_dir_all(shader_path.parent().unwrap()).unwrap();
+        let bytes = b"fn mengine_lit_surface_hook() {}";
+        std::fs::write(&shader_path, bytes).unwrap();
+        let hash = format!("{:x}", Sha256::digest(bytes));
+        let manifest = |keywords: &str| {
+            format!(
+                r#"{{"schemaVersion":1,"surfaceShaderVariants":[{{"shader":"Assets/Shaders/Rim.mshader","enabledKeywords":{keywords},"blend":"alpha","doubleSided":true,"depthWrite":false}}],"files":[{{"path":"Assets/Shaders/Rim.mshader","size":{},"sha256":"{hash}"}}]}}"#,
+                bytes.len()
+            )
+        };
+        std::fs::write(root.join(BUILD_MANIFEST_FILE), manifest(r#"["USE_RIM"]"#)).unwrap();
+        assert_eq!(
+            load_build_surface_shader_variants(&root).unwrap(),
+            vec![BuildSurfaceShaderVariant {
+                shader: "Assets/Shaders/Rim.mshader".into(),
+                enabled_keywords: vec!["USE_RIM".into()],
+                blend: BuildSurfaceShaderBlend::Alpha,
+                double_sided: true,
+                depth_write: false,
+            }]
+        );
+        assert!(verify_build_manifest(&root).is_ok());
+
+        std::fs::write(
+            root.join(BUILD_MANIFEST_FILE),
+            manifest(r#"["USE_RIM","USE_RIM"]"#),
+        )
+        .unwrap();
+        assert!(matches!(
+            load_build_surface_shader_variants(&root),
+            Err(BuildManifestError::ShaderVariant(_))
+        ));
+        std::fs::write(
+            root.join(BUILD_MANIFEST_FILE),
+            serde_json::json!({
+                "schemaVersion": 1,
+                "surfaceShaderVariants": [
+                    {
+                        "shader": "Assets/Shaders/Rim.mshader",
+                        "enabledKeywords": ["USE_RIM", "USE_DETAIL"],
+                        "blend": "alpha",
+                        "doubleSided": true,
+                        "depthWrite": false
+                    },
+                    {
+                        "shader": "Assets\\Shaders\\Rim.mshader",
+                        "enabledKeywords": ["USE_DETAIL", "USE_RIM"],
+                        "blend": "alpha",
+                        "doubleSided": true,
+                        "depthWrite": false
+                    }
+                ],
+                "files": [{
+                    "path": "Assets/Shaders/Rim.mshader",
+                    "size": bytes.len(),
+                    "sha256": hash
+                }]
+            })
+            .to_string(),
+        )
+        .unwrap();
+        assert!(matches!(
+            load_build_surface_shader_variants(&root),
+            Err(BuildManifestError::ShaderVariant(_))
         ));
         std::fs::remove_dir_all(root).unwrap();
     }
