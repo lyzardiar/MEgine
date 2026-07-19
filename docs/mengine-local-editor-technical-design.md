@@ -946,3 +946,14 @@ Referenced Only 是可用的单包裁剪基础，仍不等同于完整 Addressab
 第一遍真实自审在 Button 的十条 `transform` 结果中验证 ArrowDown、首尾滚动可见性，并用 `transform pos`、ArrowDown、Enter 创建 `Transform.position` 与 0s/1s 两个关键帧；随后发现裸 Home/End 与文本编辑语义冲突、分组标题暴露 Banner、状态栏重复包含快捷键提示，均在第二遍前修正。第二遍在 Cube 的 18 条结果中用 PageDown 从首项跳到第 11 项 `is_trigger`，活动项完整位于 Listbox 可视范围且焦点仍在 Combobox；无匹配结果按 Enter 不建轨、不播放，分组不再出现 Banner，440px 弹窗和底栏 `scrollWidth === clientWidth`。测试 Clip 与编辑器状态差异在全量回归前全部清理。
 
 这一切片完成的是单属性发现和创建的键盘闭环，不等同于成熟动画属性管理器。后续仍需真正虚拟化、分组折叠、多选批量添加、最近使用/收藏、类型与当前值预览、丢失 Binding 修复与重映射；Timeline 本体还需要框选后的键盘移动/缩放、轨道层级、录制冲突诊断、Onion Skin、运动轨迹、模型骨骼与 Root Motion 工作流。
+
+## 75. 2026-07-19 Timeline 关键帧精确微调与历史隔离
+
+- Timeline 工作区新增与普通播放头方向键不冲突的精确移动契约：选中关键帧后，Alt+Left/Right 整体移动一帧，增加 Shift 时整体移动十帧；无关键帧选择时 Left/Right 继续只逐帧移动播放头。快捷键映射抽为纯函数并与现有 `moveTimelineKeySelection` 共用同一帧吸附、Clip 边界钳制、同轨碰撞覆盖和选区重映射语义，不在 UI 复制第二套移动算法。
+- 详情面板显示权威帧范围：单选展示 Frame 与秒值，多选展示首尾帧和 Span；`−1f/+1f` 改为带 Chevron 的紧凑方形命令，暴露 `aria-keyshortcuts`、完整 Title，并依据整组选区能否继续移动实时禁用。帧范围计算同样是无 DOM 纯函数，覆盖跨轨选择、失效引用与帧率换算。
+- 选择 Keyframe 或 Event 后，详情滚动容器自动把对应 Section 定位到可见区域；帧范围和微调命令排在值/切线编辑器之前。由此普通底部 Dock 只有约 90px 详情高度时，也不会先显示 Clip/Track 而把当前选择操作藏在折叠区下方。
+- Property Popup 搜索框与高级手工 Binding 输入显式标记为非 Animation 资产字段，提交 Binding 前也防御性结束瞬态编辑事务。它们不再因为 React Portal 的 Focus 事件冒泡而把“Add Animation Track”和后续关键帧移动错误合并成同一 Undo 步骤；属性建轨、每次微调和后续编辑恢复为独立的全局历史顺序。
+
+第一遍真实自审在 Button 的 `Transform.position` 轨道选择 0 帧：向左按钮正确禁用，Alt+Right 移到 1 帧，Shift+Alt+Right 再移到 11 帧；但 Undo 直接删除了轨道。追踪确认搜索 Combobox 在 Portal 中仍向 Timeline 冒泡 Focus，遗留的输入事务吞并了后续移动。修复后第二遍在 Cube 上验证 Undo 标题为 `Move Animation Keys`，撤销只把 1 帧恢复到 0 帧且轨道保留，Redo 回到 1 帧；进一步选择 15–30 帧，十帧整体移动到 25–40 帧后一次 Undo 同时恢复两个关键帧和多选状态。最终 1280×720 小高度 Dock 中详情范围位于 y=605.8–629.8、微调命令位于 y=635.8–657.8，均完整处于 y=578.8–668.8 的详情视口内。测试 Clip、状态差异和本地服务在回归前全部清理。
+
+这一切片解决的是帧级定位、可发现性和 Undo 正确性，不代表 Timeline 关键帧工具已经成熟。后续仍需按住快捷键时合并连续 Repeat 为单一手势、可配置 Nudge 步长、数值/时间批量 Offset、Scale/Reverse/Retiming、碰撞覆盖预览、关键帧标签与颜色、切线批处理、曲线框选联动，以及 Onion Skin、运动轨迹、音频波形和 Root Motion 诊断。

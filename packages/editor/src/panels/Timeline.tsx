@@ -100,6 +100,8 @@ import {
   pasteTimelineKeySelection,
   removeTimelineKeySelection,
   timelineKeyRangeSelection,
+  timelineKeyNudgeFrames,
+  timelineKeySelectionFrameRange,
   timelineKeysInRange,
   toggleTimelineKeySelection,
   type TimelineKeyClipboardItem,
@@ -884,6 +886,7 @@ function animationDraftDirty(draft: Pick<AnimationDraft, 'clip' | 'savedText'>):
 }
 
 function isAnimationEditControl(target: EventTarget): target is HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement {
+  if (!(target instanceof HTMLElement) || target.closest('[data-animation-history="ignore"]')) return false;
   if (target instanceof HTMLSelectElement || target instanceof HTMLTextAreaElement) return true;
   if (!(target instanceof HTMLInputElement)) return false;
   return !['checkbox', 'radio', 'button', 'submit', 'reset'].includes(target.type);
@@ -949,6 +952,7 @@ export function Timeline(props: {
   const propertyPopupRef = useRef<HTMLDivElement>(null);
   const propertySearchRef = useRef<HTMLInputElement>(null);
   const propertyOptionRefs = useRef(new Map<string, HTMLButtonElement>());
+  const selectionDetailsRef = useRef<HTMLElement | null>(null);
   const playbackFrame = useRef<number | null>(null);
   const previousFrameTime = useRef<number | null>(null);
   const playbackPhase = useRef<number | null>(null);
@@ -1145,6 +1149,14 @@ export function Timeline(props: {
         : [selectedKey];
     });
   }, [selectedKey]);
+
+  useEffect(() => {
+    if (!detailsOpen || (!selectedKey && selectedEvent == null)) return;
+    const frame = window.requestAnimationFrame(() => {
+      selectionDetailsRef.current?.scrollIntoView({ block: 'start' });
+    });
+    return () => window.cancelAnimationFrame(frame);
+  }, [detailsOpen, selectedEvent, selectedKey?.key, selectedKey?.track]);
 
   useEffect(() => {
     let cancelled = false;
@@ -1630,12 +1642,18 @@ export function Timeline(props: {
   const selectPropertyBinding = (bindingKey: string): boolean => {
     const binding = parseAnimationBindingKey(bindingKey);
     if (!binding) return false;
+    editTransaction.current = null;
     setPropertyPath(`${binding.component}.${binding.property}`);
     if (!addProperty(bindingKey)) return false;
     setPropertyPickerOpen(false);
     setPropertySearch('');
     setActivePropertyBindingKey(null);
     return true;
+  };
+
+  const addManualProperty = (): boolean => {
+    editTransaction.current = null;
+    return addProperty();
   };
 
   const handlePropertySearchKeyDown = (event: ReactKeyboardEvent<HTMLInputElement>) => {
@@ -1766,6 +1784,20 @@ export function Timeline(props: {
   const activeSelectedKeys = clip
     ? normalizeTimelineKeySelection(clip, selectedKeys)
     : [];
+  const selectedKeyFrameRange = clip
+    ? timelineKeySelectionFrameRange(clip, activeSelectedKeys)
+    : null;
+  const selectedKeyFrameStep = clip ? 1 / Math.max(1, clip.frame_rate) : 0;
+  const canNudgeSelectedKeysBackward = Boolean(
+    clip
+    && activeSelectedKeys.length > 0
+    && clampTimelineKeyDelta(clip, activeSelectedKeys, -selectedKeyFrameStep) < 0,
+  );
+  const canNudgeSelectedKeysForward = Boolean(
+    clip
+    && activeSelectedKeys.length > 0
+    && clampTimelineKeyDelta(clip, activeSelectedKeys, selectedKeyFrameStep) > 0,
+  );
   const rulerSteps = Math.min(80, Math.max(5, Math.round(5 * zoom)));
   const canCopySelection = activeSelectedKeys.length > 0 || selectedAnimationEvent != null;
   const canMaximizePanel = !new URLSearchParams(window.location.search).has('detachedPanel');
@@ -2061,6 +2093,13 @@ export function Timeline(props: {
     if (event.key === ' ') {
       event.preventDefault();
       if (clip) setPlaying((value) => !value);
+      return;
+    }
+    const nudgeFrames = timelineKeyNudgeFrames(event.key, event.altKey, event.shiftKey);
+    if (nudgeFrames !== 0 && activeSelectedKeys.length > 0) {
+      event.preventDefault();
+      event.stopPropagation();
+      moveSelectedKeysByFrames(nudgeFrames);
       return;
     }
     if (event.key === 'ArrowLeft' || event.key === 'ArrowRight') {
@@ -2613,6 +2652,7 @@ export function Timeline(props: {
                     <input
                       ref={propertySearchRef}
                       type="search"
+                      data-animation-history="ignore"
                       role="combobox"
                       aria-label="Search animated properties"
                       aria-autocomplete="list"
@@ -2702,12 +2742,13 @@ export function Timeline(props: {
             {manualPropertyOpen && <>
               <input
                 className="timeline-property-path"
+                data-animation-history="ignore"
                 aria-label="Property track"
                 title="Component.property，例如 Transform.position"
                 value={propertyPath}
                 onChange={(event) => setPropertyPath(event.target.value)}
                 onKeyDown={(event) => {
-                  if (event.key === 'Enter' && addProperty()) setManualPropertyOpen(false);
+                  if (event.key === 'Enter' && addManualProperty()) setManualPropertyOpen(false);
                   if (event.key === 'Escape') setManualPropertyOpen(false);
                 }}
               />
@@ -2717,7 +2758,7 @@ export function Timeline(props: {
                 aria-label="Add manual property track"
                 title="Add manual property track"
                 onClick={() => {
-                  if (addProperty()) setManualPropertyOpen(false);
+                  if (addManualProperty()) setManualPropertyOpen(false);
                 }}
               >
                 <Plus size={13} aria-hidden="true" />
@@ -3029,8 +3070,48 @@ export function Timeline(props: {
               )}
 
               {selectedKeyframe && selectedKey && (
-                <section>
+                <section ref={selectionDetailsRef}>
                   <h3>Keyframe{activeSelectedKeys.length > 1 ? `s · ${activeSelectedKeys.length} selected` : ''}</h3>
+                  {selectedKeyFrameRange && (
+                    <div
+                      className="timeline-selection-frame-range"
+                      aria-label={selectedKeyFrameRange.startFrame === selectedKeyFrameRange.endFrame
+                        ? `Selected frame ${selectedKeyFrameRange.startFrame}`
+                        : `Selected frames ${selectedKeyFrameRange.startFrame} through ${selectedKeyFrameRange.endFrame}`}
+                    >
+                      <span>{selectedKeyFrameRange.count === 1 ? 'Frame' : 'Range'}</span>
+                      <strong>
+                        {selectedKeyFrameRange.startFrame === selectedKeyFrameRange.endFrame
+                          ? selectedKeyFrameRange.startFrame
+                          : `${selectedKeyFrameRange.startFrame}–${selectedKeyFrameRange.endFrame}`}
+                      </strong>
+                      <span>{selectedKeyFrameRange.count === 1
+                        ? `${selectedKeyframe.time.toFixed(3)}s`
+                        : `${selectedKeyFrameRange.spanFrames}f span`}</span>
+                    </div>
+                  )}
+                  <div className="timeline-selection-nudge">
+                    <button
+                      type="button"
+                      aria-label="Move selected keys back one frame"
+                      aria-keyshortcuts="Alt+ArrowLeft"
+                      title="Move selected keys back 1 frame (Alt+Left; add Shift for 10 frames)"
+                      disabled={!canNudgeSelectedKeysBackward}
+                      onClick={() => moveSelectedKeysByFrames(-1)}
+                    >
+                      <ChevronLeft size={12} aria-hidden="true" /> −1f
+                    </button>
+                    <button
+                      type="button"
+                      aria-label="Move selected keys forward one frame"
+                      aria-keyshortcuts="Alt+ArrowRight"
+                      title="Move selected keys forward 1 frame (Alt+Right; add Shift for 10 frames)"
+                      disabled={!canNudgeSelectedKeysForward}
+                      onClick={() => moveSelectedKeysByFrames(1)}
+                    >
+                      +1f <ChevronRight size={12} aria-hidden="true" />
+                    </button>
+                  </div>
                   {activeSelectedKeys.length > 1 && (
                     <div className="timeline-multi-selection-summary">
                       Editing values applies to the primary key. Move, copy, paste, and delete apply to the whole selection.
@@ -3057,10 +3138,6 @@ export function Timeline(props: {
                       </div>
                     );
                   })()}
-                  <div className="timeline-selection-nudge">
-                    <button type="button" onClick={() => moveSelectedKeysByFrames(-1)}>−1 Frame</button>
-                    <button type="button" onClick={() => moveSelectedKeysByFrames(1)}>+1 Frame</button>
-                  </div>
                   <button type="button" className="timeline-delete-selection" onClick={deleteSelectedKey}>
                     <Trash2 size={13} aria-hidden="true" /> Delete {activeSelectedKeys.length > 1 ? `${activeSelectedKeys.length} Keys` : 'Key'}
                   </button>
@@ -3068,7 +3145,7 @@ export function Timeline(props: {
               )}
 
               {selectedAnimationEvent && (
-                <section className="timeline-event-editor">
+                <section ref={selectionDetailsRef} className="timeline-event-editor">
                   <h3>Animation Event</h3>
                   <div className="timeline-details-form">
                     <label>Function <input aria-label="Animation event function" value={selectedAnimationEvent.function} onChange={(event) => updateSelectedEvent({ function: event.target.value })} /></label>
@@ -3087,7 +3164,7 @@ export function Timeline(props: {
               {!selectedTrackData && !selectedAnimationEvent && (
                 <div className="timeline-details-empty">Select a track, keyframe, or event to inspect it.</div>
               )}
-              <footer>Ctrl/Shift+Click: Multi-select · Box Drag: Select · Drag: Move Selection · Ctrl/Cmd+C/V: Copy/Paste · Shift+Space: Maximize · Delete: Remove</footer>
+              <footer>Ctrl/Shift+Click: Multi-select · Box Drag: Select · Drag: Move · Alt+←/→: Nudge 1f · Add Shift: 10f · Ctrl/Cmd+C/V: Copy/Paste · Delete: Remove</footer>
             </aside>
           )}
         </div>

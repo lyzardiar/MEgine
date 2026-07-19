@@ -23,6 +23,13 @@ export type TimelineKeyEditResult = {
   selection: TimelineKeyRef[];
 };
 
+export type TimelineKeySelectionFrameRange = {
+  count: number;
+  startFrame: number;
+  endFrame: number;
+  spanFrames: number;
+};
+
 function refToken(ref: TimelineKeyRef): string {
   return `${ref.track}:${ref.key}`;
 }
@@ -45,6 +52,36 @@ export function normalizeTimelineKeySelection(
       && Boolean(seen.add(refToken(ref)))
     ))
     .map((ref) => ({ ...ref }));
+}
+
+export function timelineKeySelectionFrameRange(
+  clip: AnimationClip,
+  selection: readonly TimelineKeyRef[],
+): TimelineKeySelectionFrameRange | null {
+  const refs = normalizeTimelineKeySelection(clip, selection);
+  if (refs.length === 0) return null;
+  const frameRate = Number.isFinite(clip.frame_rate) && clip.frame_rate > 0 ? clip.frame_rate : 60;
+  const frames = refs.map((ref) => Math.round(
+    clip.tracks[ref.track].keyframes[ref.key].time * frameRate,
+  ));
+  const startFrame = Math.min(...frames);
+  const endFrame = Math.max(...frames);
+  return {
+    count: refs.length,
+    startFrame,
+    endFrame,
+    spanFrames: endFrame - startFrame,
+  };
+}
+
+export function timelineKeyNudgeFrames(
+  key: string,
+  altKey: boolean,
+  shiftKey: boolean,
+): number {
+  if (!altKey || (key !== 'ArrowLeft' && key !== 'ArrowRight')) return 0;
+  const magnitude = shiftKey ? 10 : 1;
+  return key === 'ArrowLeft' ? -magnitude : magnitude;
 }
 
 export function mergeTimelineKeySelection(

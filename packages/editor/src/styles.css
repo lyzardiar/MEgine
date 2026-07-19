@@ -3471,18 +3471,55 @@ body.insp-scrubbing * {
   line-height: 1.4;
 }
 
+.timeline-selection-frame-range {
+  display: flex;
+  height: 24px;
+  align-items: center;
+  gap: 6px;
+  margin: 0 0 6px;
+  padding: 0 6px;
+  border: 1px solid #202020;
+  background: #292929;
+  color: #858585;
+  font-family: var(--u-mono);
+  font-size: 10px;
+}
+
+.timeline-selection-frame-range strong {
+  color: #d4d4d4;
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.timeline-selection-frame-range > span:last-child {
+  min-width: 0;
+  margin-left: auto;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 .timeline-selection-nudge {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 4px;
-  margin-top: 7px;
+  margin: 0 0 7px;
 }
 
 .timeline-details .timeline-selection-nudge button {
+  display: inline-flex;
   height: 22px;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
   border-color: var(--u-border-2);
   background: #333;
   color: #c9c9c9;
+}
+
+.timeline-details .timeline-selection-nudge button:disabled {
+  color: #666;
+  background: #292929;
 }
 
 .timeline-tangent-editors,

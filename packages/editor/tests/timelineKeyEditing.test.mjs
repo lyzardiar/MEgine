@@ -10,6 +10,8 @@ import {
   pasteTimelineKeySelection,
   removeTimelineKeySelection,
   timelineKeyRangeSelection,
+  timelineKeyNudgeFrames,
+  timelineKeySelectionFrameRange,
   timelineKeysInRange,
   toggleTimelineKeySelection,
 } from '../src/timelineKeyEditing.ts';
@@ -98,6 +100,26 @@ test('Timeline key group movement stays frame aligned clamps bounds and overwrit
   assert.deepEqual(moved.clip.tracks[0].keyframes.map((key) => key.time), [0.5, 1, 2]);
   assert.deepEqual(moved.selection, [{ track: 0, key: 0 }, { track: 0, key: 1 }]);
   assert.deepEqual(moved.clip.tracks[0].keyframes[1].in_tangent, [3, 4]);
+});
+
+test('Timeline key selection exposes frame ranges and deterministic nudge shortcuts', () => {
+  const source = clip();
+  assert.deepEqual(timelineKeySelectionFrameRange(source, [
+    { track: 0, key: 1 },
+    { track: 1, key: 1 },
+  ]), {
+    count: 2,
+    startFrame: 5,
+    endFrame: 10,
+    spanFrames: 5,
+  });
+  assert.equal(timelineKeySelectionFrameRange(source, [{ track: 8, key: 8 }]), null);
+  assert.equal(timelineKeyNudgeFrames('ArrowLeft', true, false), -1);
+  assert.equal(timelineKeyNudgeFrames('ArrowRight', true, false), 1);
+  assert.equal(timelineKeyNudgeFrames('ArrowLeft', true, true), -10);
+  assert.equal(timelineKeyNudgeFrames('ArrowRight', true, true), 10);
+  assert.equal(timelineKeyNudgeFrames('ArrowRight', false, true), 0);
+  assert.equal(timelineKeyNudgeFrames('ArrowUp', true, true), 0);
 });
 
 test('Timeline group delete removes every selected key without shifting mistakes', () => {
