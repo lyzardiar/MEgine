@@ -571,6 +571,344 @@ export function mengineFsPlugin(opts: MengineFsOptions | string): Plugin {
     }
   }
 
+  type AssetRenameUpdate = {
+    sourcePath: string;
+    expectedRevision: string;
+    contents: string;
+  };
+
+  type AssetRenameRequest = {
+    sourcePath: string;
+    destinationPath: string;
+    expectedSourceRevision: string;
+    expectedGuid: string;
+    updates: AssetRenameUpdate[];
+  };
+
+  function validAssetSegment(segment: string): boolean {
+    if (
+      !segment
+      || segment.startsWith('.')
+      || /[. ]$/.test(segment)
+      || [...segment].length > 240
+      || /[\x00-\x1f<>:"/\\|?*]/.test(segment)
+    ) return false;
+    const stem = segment.split('.')[0].toLocaleUpperCase();
+    return !/^(?:CON|PRN|AUX|NUL|COM[1-9]|LPT[1-9])$/.test(stem);
+  }
+
+  function normalizedRenameAssetPath(value: unknown): { absolute: string; relative: string } {
+    if (typeof value !== 'string') throw new Error('asset path must be a string');
+    const relative = decodeURIComponent(value).trim().replace(/\\/g, '/').replace(/^\/+/, '');
+    const segments = relative.split('/');
+    if (
+      segments.length < 2
+      || segments[0] !== 'Assets'
+      || segments.slice(1).some((segment) => !validAssetSegment(segment))
+      || relative.toLocaleLowerCase().endsWith('.meta')
+      || relative.toLocaleLowerCase().endsWith('.sprite.json')
+      || !path.extname(relative)
+    ) throw new Error(`invalid asset path: ${relative}`);
+    const absolute = path.resolve(projectRoot, ...segments);
+    if (!isUnder(assetsRoot, absolute)) throw new Error(`asset path escapes Assets: ${relative}`);
+    return { absolute, relative };
+  }
+
+  function rewriteAssetReference(value: string, source: string, destination: string): string {
+    const marker = value.indexOf('#');
+    const end = marker < 0 ? value.length : marker;
+    return value.slice(0, end).replace(/\\/g, '/').toLocaleLowerCase() === source.toLocaleLowerCase()
+      ? `${destination}${value.slice(end)}`
+      : value;
+  }
+
+  function rewriteManifestReferences(
+    value: unknown,
+    source: string,
+    destination: string,
+  ): { value: unknown; changed: boolean } {
+    if (typeof value === 'string') {
+      const next = rewriteAssetReference(value, source, destination);
+      return { value: next, changed: next !== value };
+    }
+    if (Array.isArray(value)) {
+      let changed = false;
+      const output = value.map((entry) => {
+        const rewritten = rewriteManifestReferences(entry, source, destination);
+        changed ||= rewritten.changed;
+        return rewritten.value;
+      });
+      return { value: output, changed };
+    }
+    if (value && typeof value === 'object') {
+      let changed = false;
+      const output: Record<string, unknown> = {};
+      for (const [key, entry] of Object.entries(value as Record<string, unknown>)) {
+        const rewritten = rewriteManifestReferences(entry, source, destination);
+        changed ||= rewritten.changed;
+        output[key] = rewritten.value;
+      }
+      return { value: output, changed };
+    }
+    return { value, changed: false };
+  }
+
+  type PreparedRenameUpdate = {
+    label: string;
+    originalPath: string;
+    targetPath: string;
+    expectedRevision: string;
+    contents: Buffer;
+    stagedPath: string | null;
+    backupPath: string | null;
+    committed: boolean;
+  };
+
+  function stageRenameUpdate(update: PreparedRenameUpdate): void {
+    const temporary = path.join(
+      path.dirname(update.targetPath),
+      `.${path.basename(update.targetPath)}.rename.${randomUUID()}.tmp`,
+    );
+    try {
+      const descriptor = fs.openSync(temporary, 'wx');
+      try {
+        fs.writeFileSync(descriptor, update.contents);
+        fs.fsyncSync(descriptor);
+      } finally {
+        fs.closeSync(descriptor);
+      }
+      update.stagedPath = temporary;
+    } catch (error) {
+      try { if (fs.existsSync(temporary)) fs.unlinkSync(temporary); } catch { /* best effort */ }
+      throw error;
+    }
+  }
+
+  function commitRenameUpdate(update: PreparedRenameUpdate): void {
+    if (!update.stagedPath) throw new Error(`update was not staged: ${update.label}`);
+    const backup = path.join(
+      path.dirname(update.targetPath),
+      `.${path.basename(update.targetPath)}.rollback.${randomUUID()}.tmp`,
+    );
+    fs.renameSync(update.targetPath, backup);
+    update.backupPath = backup;
+    try {
+      fs.renameSync(update.stagedPath, update.targetPath);
+      update.stagedPath = null;
+      update.committed = true;
+    } catch (error) {
+      fs.renameSync(backup, update.targetPath);
+      update.backupPath = null;
+      throw error;
+    }
+  }
+
+  function rollbackRenameUpdate(update: PreparedRenameUpdate): void {
+    if (!update.committed || !update.backupPath) return;
+    if (fs.existsSync(update.targetPath)) fs.unlinkSync(update.targetPath);
+    fs.renameSync(update.backupPath, update.targetPath);
+    update.backupPath = null;
+    update.committed = false;
+  }
+
+  function cleanupRenameUpdates(updates: PreparedRenameUpdate[]): void {
+    for (const update of updates) {
+      try {
+        if (update.stagedPath && fs.existsSync(update.stagedPath)) fs.unlinkSync(update.stagedPath);
+      } catch { /* cleanup failure must not reverse a committed transaction */ }
+      try {
+        if (update.backupPath && fs.existsSync(update.backupPath)) fs.unlinkSync(update.backupPath);
+      } catch { /* the rollback copy is safer to retain than a false failure report */ }
+    }
+  }
+
+  function renameProjectAsset(request: AssetRenameRequest) {
+    const source = normalizedRenameAssetPath(request.sourcePath);
+    const destination = normalizedRenameAssetPath(request.destinationPath);
+    if (source.relative === destination.relative) throw new Error('source and destination are identical');
+    if (path.extname(source.relative).toLocaleLowerCase() !== path.extname(destination.relative).toLocaleLowerCase()) {
+      throw new Error('asset rename must preserve the file extension');
+    }
+    if (path.extname(source.relative).toLocaleLowerCase() === SCENE_EXT) {
+      throw new Error('scenes must use the scene-aware rename command');
+    }
+    if (!fs.existsSync(source.absolute)) throw new Error(`asset not found: ${source.relative}`);
+    const sourceStat = fs.lstatSync(source.absolute);
+    if (!sourceStat.isFile() || sourceStat.isSymbolicLink()) throw new Error('source asset must be a regular file');
+    if (assetFileRevision(sourceStat) !== request.expectedSourceRevision) {
+      throw new Error(`asset changed on disk since preview: ${source.relative}`);
+    }
+    const sourceKind = listProjectAssets().find(
+      (asset) => asset.relPath.toLocaleLowerCase() === source.relative.toLocaleLowerCase(),
+    );
+    if (!sourceKind || sourceKind.metaStatus !== 'ready' || sourceKind.guid !== request.expectedGuid.toLocaleLowerCase()) {
+      throw new Error(`asset identity changed on disk since preview: ${source.relative}`);
+    }
+    if (fs.existsSync(destination.absolute) && !sameExistingFile(source.absolute, destination.absolute)) {
+      throw new Error(`destination asset already exists: ${destination.relative}`);
+    }
+    const sourceMetadata = `${source.absolute}.meta`;
+    const destinationMetadata = `${destination.absolute}.meta`;
+    if (fs.existsSync(destinationMetadata) && !sameExistingFile(sourceMetadata, destinationMetadata)) {
+      throw new Error(`destination metadata already exists: ${destination.relative}.meta`);
+    }
+    const sourceSpriteImport = `${source.absolute}.sprite.json`;
+    const destinationSpriteImport = `${destination.absolute}.sprite.json`;
+    const movesSpriteImport = fs.existsSync(sourceSpriteImport);
+    if (movesSpriteImport) {
+      const stat = fs.lstatSync(sourceSpriteImport);
+      if (!stat.isFile() || stat.isSymbolicLink()) throw new Error('sprite import sidecar must be a regular file');
+      if (fs.existsSync(destinationSpriteImport) && !sameExistingFile(sourceSpriteImport, destinationSpriteImport)) {
+        throw new Error(`destination sprite import sidecar already exists: ${destination.relative}.sprite.json`);
+      }
+    }
+    if (!Array.isArray(request.updates) || request.updates.length > 256) {
+      throw new Error('asset rename may update at most 256 files');
+    }
+    const updateBytes = request.updates.reduce((total, update) => total + Buffer.byteLength(update.contents ?? ''), 0);
+    if (updateBytes > 32 * 1024 * 1024) throw new Error('asset rename updates exceed 32 MiB');
+    const seen = new Set<string>();
+    const updates: PreparedRenameUpdate[] = request.updates.map((update) => {
+      const candidate = normalizedRenameAssetPath(update.sourcePath);
+      const key = candidate.relative.toLocaleLowerCase();
+      if (seen.has(key)) throw new Error(`duplicate asset update: ${candidate.relative}`);
+      seen.add(key);
+      if (
+        key === `${source.relative}.sprite.json`.toLocaleLowerCase()
+        || key === destination.relative.toLocaleLowerCase()
+      ) throw new Error(`asset update targets a transaction-owned path: ${candidate.relative}`);
+      const stat = fs.lstatSync(candidate.absolute);
+      if (!stat.isFile() || stat.isSymbolicLink()) throw new Error(`asset update must be a regular file: ${candidate.relative}`);
+      if (assetFileRevision(stat) !== update.expectedRevision) {
+        throw new Error(`referencing asset changed on disk since preview: ${candidate.relative}`);
+      }
+      return {
+        label: candidate.relative,
+        originalPath: candidate.absolute,
+        targetPath: key === source.relative.toLocaleLowerCase() ? destination.absolute : candidate.absolute,
+        expectedRevision: update.expectedRevision,
+        contents: Buffer.from(update.contents, 'utf8'),
+        stagedPath: null,
+        backupPath: null,
+        committed: false,
+      };
+    });
+
+    const manifestOriginal = fs.readFileSync(manifestPath);
+    const manifestRevision = assetFileRevision(fs.lstatSync(manifestPath));
+    const rewrittenManifest = rewriteManifestReferences(
+      JSON.parse(manifestOriginal.toString('utf8')),
+      source.relative,
+      destination.relative,
+    );
+    if (rewrittenManifest.changed) {
+      updates.push({
+        label: 'project.json',
+        originalPath: manifestPath,
+        targetPath: manifestPath,
+        expectedRevision: manifestRevision,
+        contents: Buffer.from(`${JSON.stringify(rewrittenManifest.value, null, 2)}\n`, 'utf8'),
+        stagedPath: null,
+        backupPath: null,
+        committed: false,
+      });
+    }
+
+    const createdDirectories: string[] = [];
+    let directory = path.dirname(destination.absolute);
+    const missing: string[] = [];
+    while (!fs.existsSync(directory)) {
+      missing.push(directory);
+      directory = path.dirname(directory);
+    }
+    const existing = fs.realpathSync(directory);
+    if (!isUnder(fs.realpathSync(assetsRoot), existing)) throw new Error('destination escapes Assets');
+    try {
+      for (const candidate of missing.reverse()) {
+        fs.mkdirSync(candidate);
+        createdDirectories.push(candidate);
+        if (!isUnder(fs.realpathSync(assetsRoot), fs.realpathSync(candidate))) {
+          throw new Error('destination directory escapes Assets');
+        }
+      }
+    } catch (error) {
+      for (const candidate of [...createdDirectories].reverse()) {
+        try { fs.rmdirSync(candidate); } catch { /* keep any directory that is no longer empty */ }
+      }
+      throw error;
+    }
+
+    let assetMoved = false;
+    let metadataMoved = false;
+    let spriteImportMoved = false;
+    try {
+      for (const update of updates) stageRenameUpdate(update);
+      if (assetFileRevision(fs.lstatSync(source.absolute)) !== request.expectedSourceRevision) {
+        throw new Error(`asset changed while rename was being prepared: ${source.relative}`);
+      }
+      const currentSource = listProjectAssets().find(
+        (asset) => asset.relPath.toLocaleLowerCase() === source.relative.toLocaleLowerCase(),
+      );
+      if (
+        !currentSource
+        || currentSource.metaStatus !== 'ready'
+        || currentSource.guid !== request.expectedGuid.toLocaleLowerCase()
+      ) throw new Error(`asset identity changed while rename was being prepared: ${source.relative}`);
+      if (movesSpriteImport) {
+        const stat = fs.lstatSync(sourceSpriteImport);
+        if (!stat.isFile() || stat.isSymbolicLink()) {
+          throw new Error(`sprite import sidecar changed while rename was being prepared: ${source.relative}`);
+        }
+      }
+      for (const update of updates) {
+        const actual = assetFileRevision(fs.lstatSync(update.originalPath));
+        if (actual !== update.expectedRevision) throw new Error(`${update.label} changed while rename was being prepared`);
+      }
+      renameFileCaseAware(source.absolute, destination.absolute);
+      assetMoved = true;
+      renameFileCaseAware(sourceMetadata, destinationMetadata);
+      metadataMoved = true;
+      if (movesSpriteImport) {
+        renameFileCaseAware(sourceSpriteImport, destinationSpriteImport);
+        spriteImportMoved = true;
+      }
+      for (const update of updates) commitRenameUpdate(update);
+    } catch (error) {
+      const rollbackErrors: string[] = [];
+      for (const update of [...updates].reverse()) {
+        try { rollbackRenameUpdate(update); } catch (rollback) { rollbackErrors.push(`${update.label}: ${String(rollback)}`); }
+      }
+      if (spriteImportMoved) {
+        try { renameFileCaseAware(destinationSpriteImport, sourceSpriteImport); } catch (rollback) { rollbackErrors.push(`sprite import: ${String(rollback)}`); }
+      }
+      if (metadataMoved) {
+        try { renameFileCaseAware(destinationMetadata, sourceMetadata); } catch (rollback) { rollbackErrors.push(`metadata: ${String(rollback)}`); }
+      }
+      if (assetMoved) {
+        try { renameFileCaseAware(destination.absolute, source.absolute); } catch (rollback) { rollbackErrors.push(`asset: ${String(rollback)}`); }
+      }
+      cleanupRenameUpdates(updates);
+      for (const candidate of [...createdDirectories].reverse()) {
+        try { fs.rmdirSync(candidate); } catch { /* keep non-empty directories after a failed rollback */ }
+      }
+      if (rollbackErrors.length > 0) {
+        throw new Error(`${String(error)}; rollback also failed: ${rollbackErrors.join(', ')}`);
+      }
+      throw error;
+    }
+    cleanupRenameUpdates(updates);
+    const updatedPaths = updates
+      .map((update) => update.label.toLocaleLowerCase() === source.relative.toLocaleLowerCase()
+        ? destination.relative
+        : update.label)
+      .sort();
+    return {
+      sourcePath: source.relative,
+      destinationPath: destination.relative,
+      updatedPaths,
+    };
+  }
+
   function normalizeBuildScene(value: unknown): string | null {
     if (typeof value !== 'string') return null;
     const segments = value.trim().replace(/\\/g, '/').split('/').filter(Boolean);
@@ -773,6 +1111,12 @@ export function mengineFsPlugin(opts: MengineFsOptions | string): Plugin {
       // GET /__mengine/assets → Spine authoring assets visible in Project.
       if (pathname === `${API}/assets` && method === 'GET') {
         return sendJson(res, 200, { assets: listProjectAssets() });
+      }
+
+      if (pathname === `${API}/assets/rename` && method === 'POST') {
+        const body = await readBodyBytes(req, 40 * 1024 * 1024);
+        const request = JSON.parse(body.toString('utf8') || '{}') as AssetRenameRequest;
+        return sendJson(res, 200, renameProjectAsset(request));
       }
 
       // GET /__mengine/asset/Assets/...  → serve project texture

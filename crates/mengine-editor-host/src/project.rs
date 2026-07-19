@@ -16,6 +16,8 @@ use uuid::Uuid;
 const SCENE_RECOVERY_SCHEMA_VERSION: u32 = 1;
 const SCENE_RECOVERY_PATH: &str = ".mengine/Recovery/scene.recovery.json";
 const MAX_SCENE_RECOVERY_BYTES: u64 = 64 * 1024 * 1024;
+const MAX_ASSET_RENAME_UPDATES: usize = 256;
+const MAX_ASSET_RENAME_UPDATE_BYTES: usize = 32 * 1024 * 1024;
 
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "lowercase")]
@@ -75,6 +77,33 @@ pub struct SceneRecoveryInfo {
     pub entity_count: usize,
 }
 
+#[derive(Clone, Debug, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct AssetRenameUpdate {
+    pub source_path: String,
+    pub expected_revision: String,
+    pub contents: String,
+}
+
+#[derive(Clone, Debug, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct AssetRenameRequest {
+    pub source_path: String,
+    pub destination_path: String,
+    pub expected_source_revision: String,
+    pub expected_guid: Uuid,
+    #[serde(default)]
+    pub updates: Vec<AssetRenameUpdate>,
+}
+
+#[derive(Clone, Debug, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct AssetRenameResult {
+    pub source_path: String,
+    pub destination_path: String,
+    pub updated_paths: Vec<String>,
+}
+
 #[derive(Clone, Debug, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 struct SceneRecoveryRecord {
@@ -130,6 +159,8 @@ pub enum ProjectError {
     UnsafeSceneCommand,
     #[error("scene changed on disk since it was opened: {0}; reload it before saving")]
     ExternalSceneModification(String),
+    #[error("asset transaction failed: {0}")]
+    AssetTransaction(String),
     #[error("io: {0}")]
     Io(#[from] std::io::Error),
     #[error("json: {0}")]
@@ -151,6 +182,7 @@ impl ProjectError {
             ProjectError::ProjectMismatch => "projectMismatch",
             ProjectError::UnsafeSceneCommand => "unsafeSceneCommand",
             ProjectError::ExternalSceneModification(_) => "externalSceneModification",
+            ProjectError::AssetTransaction(_) => "assetTransaction",
             ProjectError::Io(_) => "io",
             ProjectError::Json(_) => "json",
             ProjectError::Editor(_) => "editor",
@@ -549,6 +581,343 @@ impl ProjectSession {
         Ok(self.snapshot())
     }
 
+    pub fn rename_asset(
+        &mut self,
+        request: AssetRenameRequest,
+    ) -> Result<AssetRenameResult, ProjectError> {
+        let source_relative = normalize_asset_file_path(Path::new(&request.source_path))?;
+        let destination_relative = normalize_asset_file_path(Path::new(&request.destination_path))?;
+        let source_portable = portable_path(&source_relative);
+        let destination_portable = portable_path(&destination_relative);
+        if source_portable == destination_portable {
+            return Err(ProjectError::AssetTransaction(
+                "source and destination paths are identical".into(),
+            ));
+        }
+        if source_relative
+            .extension()
+            .and_then(|value| value.to_str())
+            .is_some_and(|value| value.eq_ignore_ascii_case("mscene"))
+        {
+            return Err(ProjectError::AssetTransaction(
+                "scenes must use the scene-aware rename command".into(),
+            ));
+        }
+        if !same_asset_extension(&source_relative, &destination_relative) {
+            return Err(ProjectError::AssetTransaction(
+                "asset rename must preserve the file extension".into(),
+            ));
+        }
+        if request.updates.len() > MAX_ASSET_RENAME_UPDATES {
+            return Err(ProjectError::AssetTransaction(format!(
+                "asset rename affects more than {MAX_ASSET_RENAME_UPDATES} files"
+            )));
+        }
+        let update_bytes = request
+            .updates
+            .iter()
+            .try_fold(0usize, |total, update| {
+                total.checked_add(update.contents.len())
+            })
+            .ok_or_else(|| ProjectError::AssetTransaction("update size overflow".into()))?;
+        if update_bytes > MAX_ASSET_RENAME_UPDATE_BYTES {
+            return Err(ProjectError::AssetTransaction(
+                "asset rename updates exceed 32 MiB".into(),
+            ));
+        }
+
+        let source = self.resolve_existing(&source_relative)?;
+        let source_revision = scene_file_revision(&source)?.ok_or_else(|| {
+            ProjectError::AssetTransaction(format!("asset not found: {source_portable}"))
+        })?;
+        if source_revision != request.expected_source_revision {
+            return Err(ProjectError::AssetTransaction(format!(
+                "asset changed on disk since preview: {source_portable}"
+            )));
+        }
+        let source_sidecar = mengine_assets::asset_sidecar_path(&source);
+        let sidecar = mengine_assets::read_asset_sidecar(&source, "asset")
+            .map_err(ProjectError::AssetTransaction)?;
+        if sidecar.guid.0 != request.expected_guid {
+            return Err(ProjectError::AssetTransaction(format!(
+                "asset identity changed on disk since preview: {source_portable}"
+            )));
+        }
+
+        let (destination, created_directories) =
+            self.prepare_asset_destination(&destination_relative)?;
+        if destination.exists() && !same_existing_file(&source, &destination)? {
+            return Err(ProjectError::AssetTransaction(format!(
+                "destination asset already exists: {destination_portable}"
+            )));
+        }
+        let destination_sidecar = mengine_assets::asset_sidecar_path(&destination);
+        if destination_sidecar.exists()
+            && !same_existing_file(&source_sidecar, &destination_sidecar)?
+        {
+            return Err(ProjectError::AssetTransaction(format!(
+                "destination metadata already exists: {}",
+                display_path(&destination_sidecar)
+            )));
+        }
+        let source_sprite_import = path_with_suffix(&source, ".sprite.json");
+        let destination_sprite_import = path_with_suffix(&destination, ".sprite.json");
+        let moves_sprite_import = match std::fs::symlink_metadata(&source_sprite_import) {
+            Ok(metadata) if metadata.file_type().is_symlink() || !metadata.is_file() => {
+                return Err(ProjectError::AssetTransaction(format!(
+                    "sprite import sidecar must be a regular file: {}",
+                    display_path(&source_sprite_import)
+                )));
+            }
+            Ok(_) => true,
+            Err(error) if error.kind() == std::io::ErrorKind::NotFound => false,
+            Err(error) => return Err(ProjectError::Io(error)),
+        };
+        if moves_sprite_import
+            && destination_sprite_import.exists()
+            && !same_existing_file(&source_sprite_import, &destination_sprite_import)?
+        {
+            return Err(ProjectError::AssetTransaction(format!(
+                "destination sprite import sidecar already exists: {}",
+                display_path(&destination_sprite_import)
+            )));
+        }
+
+        let mut seen_updates = HashSet::new();
+        let mut prepared_updates = Vec::with_capacity(request.updates.len() + 1);
+        for update in request.updates {
+            let relative = normalize_asset_file_path(Path::new(&update.source_path))?;
+            let portable = portable_path(&relative);
+            let key = portable.to_lowercase();
+            if !seen_updates.insert(key) {
+                return Err(ProjectError::AssetTransaction(format!(
+                    "duplicate asset update: {portable}"
+                )));
+            }
+            if portable.to_lowercase().ends_with(".meta")
+                || portable.eq_ignore_ascii_case(&format!("{source_portable}.sprite.json"))
+                || portable.eq_ignore_ascii_case(&destination_portable)
+            {
+                return Err(ProjectError::AssetTransaction(format!(
+                    "asset update targets a transaction-owned path: {portable}"
+                )));
+            }
+            let path = self.resolve_existing(&relative)?;
+            let revision = scene_file_revision(&path)?.ok_or_else(|| {
+                ProjectError::AssetTransaction(format!("update source is missing: {portable}"))
+            })?;
+            if revision != update.expected_revision {
+                return Err(ProjectError::AssetTransaction(format!(
+                    "referencing asset changed on disk since preview: {portable}"
+                )));
+            }
+            let target = if portable.eq_ignore_ascii_case(&source_portable) {
+                destination.clone()
+            } else {
+                path.clone()
+            };
+            prepared_updates.push(PreparedAssetUpdate {
+                portable,
+                original_path: path,
+                target_path: target,
+                expected_revision: Some(update.expected_revision),
+                contents: update.contents.into_bytes(),
+                original_contents: Vec::new(),
+                staged_path: None,
+                committed: false,
+            });
+        }
+
+        let manifest_path = self.project_root.join("project.json");
+        let manifest_revision = scene_file_revision(&manifest_path)?.ok_or_else(|| {
+            ProjectError::AssetTransaction("project.json disappeared during rename".into())
+        })?;
+        let manifest_original = std::fs::read(&manifest_path)?;
+        let mut manifest: ProjectManifest = serde_json::from_slice(&manifest_original)?;
+        let manifest_changed = rewrite_manifest_asset_references(
+            &mut manifest,
+            &source_portable,
+            &destination_portable,
+        );
+        let manifest_contents = if manifest_changed {
+            let mut bytes = serde_json::to_vec_pretty(&manifest)?;
+            bytes.push(b'\n');
+            Some(bytes)
+        } else {
+            None
+        };
+
+        let create_destination_directories = (|| -> Result<(), ProjectError> {
+            for directory in &created_directories {
+                std::fs::create_dir(directory)?;
+                let canonical = std::fs::canonicalize(directory)?;
+                self.ensure_under_root(canonical)?;
+            }
+            Ok(())
+        })();
+        if let Err(error) = create_destination_directories {
+            remove_empty_directories(&created_directories);
+            return Err(error);
+        }
+
+        let prepared = (|| -> Result<(), ProjectError> {
+            for update in &mut prepared_updates {
+                update.original_contents = std::fs::read(&update.original_path)?;
+                update.staged_path =
+                    Some(stage_synced_file(&update.target_path, &update.contents)?);
+            }
+            if let Some(contents) = &manifest_contents {
+                prepared_updates.push(PreparedAssetUpdate {
+                    portable: "project.json".into(),
+                    original_path: manifest_path.clone(),
+                    target_path: manifest_path.clone(),
+                    expected_revision: Some(manifest_revision.clone()),
+                    contents: contents.clone(),
+                    original_contents: manifest_original.clone(),
+                    staged_path: Some(stage_synced_file(&manifest_path, contents)?),
+                    committed: false,
+                });
+            }
+            if scene_file_revision(&source)?.as_deref() != Some(&request.expected_source_revision) {
+                return Err(ProjectError::AssetTransaction(format!(
+                    "asset changed while rename was being prepared: {source_portable}"
+                )));
+            }
+            let current_sidecar = mengine_assets::read_asset_sidecar(&source, "asset")
+                .map_err(ProjectError::AssetTransaction)?;
+            if current_sidecar.guid.0 != request.expected_guid {
+                return Err(ProjectError::AssetTransaction(format!(
+                    "asset identity changed while rename was being prepared: {source_portable}"
+                )));
+            }
+            if moves_sprite_import {
+                let metadata = std::fs::symlink_metadata(&source_sprite_import)?;
+                if metadata.file_type().is_symlink() || !metadata.is_file() {
+                    return Err(ProjectError::AssetTransaction(format!(
+                        "sprite import sidecar changed while rename was being prepared: {}",
+                        display_path(&source_sprite_import)
+                    )));
+                }
+            }
+            for update in &prepared_updates {
+                if update.portable == "project.json" {
+                    if scene_file_revision(&manifest_path)?.as_deref()
+                        != update.expected_revision.as_deref()
+                    {
+                        return Err(ProjectError::AssetTransaction(
+                            "project.json changed while rename was being prepared".into(),
+                        ));
+                    }
+                } else if !update.portable.eq_ignore_ascii_case(&source_portable)
+                    && scene_file_revision(&update.original_path)?.as_deref()
+                        != update.expected_revision.as_deref()
+                {
+                    return Err(ProjectError::AssetTransaction(format!(
+                        "referencing asset changed while rename was being prepared: {}",
+                        update.portable
+                    )));
+                }
+            }
+            Ok(())
+        })();
+        if let Err(error) = prepared {
+            cleanup_staged_updates(&prepared_updates);
+            remove_empty_directories(&created_directories);
+            return Err(error);
+        }
+
+        let mut asset_moved = false;
+        let mut metadata_moved = false;
+        let mut sprite_import_moved = false;
+        let committed = (|| -> Result<(), ProjectError> {
+            rename_file_case_aware(&source, &destination)?;
+            asset_moved = true;
+            rename_file_case_aware(&source_sidecar, &destination_sidecar)?;
+            metadata_moved = true;
+            if moves_sprite_import {
+                rename_file_case_aware(&source_sprite_import, &destination_sprite_import)?;
+                sprite_import_moved = true;
+            }
+            for update in &mut prepared_updates {
+                let staged = update.staged_path.as_ref().ok_or_else(|| {
+                    ProjectError::AssetTransaction("asset update was not staged".into())
+                })?;
+                replace_file(staged, &update.target_path)?;
+                update.committed = true;
+            }
+            Ok(())
+        })();
+
+        if let Err(error) = committed {
+            let mut rollback_errors = Vec::new();
+            for update in prepared_updates
+                .iter()
+                .rev()
+                .filter(|update| update.committed)
+            {
+                if let Err(rollback) =
+                    write_replace_synced(&update.target_path, &update.original_contents)
+                {
+                    rollback_errors.push(format!("{}: {rollback}", update.portable));
+                }
+            }
+            if sprite_import_moved {
+                if let Err(rollback) =
+                    rename_file_case_aware(&destination_sprite_import, &source_sprite_import)
+                {
+                    rollback_errors.push(format!("sprite import: {rollback}"));
+                }
+            }
+            if metadata_moved {
+                if let Err(rollback) = rename_file_case_aware(&destination_sidecar, &source_sidecar)
+                {
+                    rollback_errors.push(format!("metadata: {rollback}"));
+                }
+            }
+            if asset_moved {
+                if let Err(rollback) = rename_file_case_aware(&destination, &source) {
+                    rollback_errors.push(format!("asset: {rollback}"));
+                }
+            }
+            cleanup_staged_updates(&prepared_updates);
+            remove_empty_directories(&created_directories);
+            if rollback_errors.is_empty() {
+                return Err(error);
+            }
+            return Err(ProjectError::AssetTransaction(format!(
+                "{error}; rollback also failed: {}",
+                rollback_errors.join(", ")
+            )));
+        }
+
+        cleanup_staged_updates(&prepared_updates);
+        if manifest_changed {
+            self.manifest = manifest;
+        }
+        self.revision = self.revision.saturating_add(1);
+        let mut updated_paths = prepared_updates
+            .iter()
+            .filter(|update| update.portable != "project.json")
+            .map(|update| {
+                if update.portable.eq_ignore_ascii_case(&source_portable) {
+                    destination_portable.clone()
+                } else {
+                    update.portable.clone()
+                }
+            })
+            .collect::<Vec<_>>();
+        if manifest_changed {
+            updated_paths.push("project.json".into());
+        }
+        updated_paths.sort();
+        updated_paths.dedup();
+        Ok(AssetRenameResult {
+            source_path: source_portable,
+            destination_path: destination_portable,
+            updated_paths,
+        })
+    }
+
     pub fn open_scene(
         &mut self,
         relative_path: impl AsRef<Path>,
@@ -843,6 +1212,238 @@ impl ProjectSession {
         } else {
             Err(ProjectError::InvalidPath(candidate.display().to_string()))
         }
+    }
+
+    fn prepare_asset_destination(
+        &self,
+        relative: &Path,
+    ) -> Result<(PathBuf, Vec<PathBuf>), ProjectError> {
+        let parent = relative
+            .parent()
+            .ok_or_else(|| ProjectError::InvalidPath(relative.display().to_string()))?;
+        let mut current = self.project_root.clone();
+        let mut created = Vec::new();
+        for component in parent.components() {
+            let Component::Normal(segment) = component else {
+                return Err(ProjectError::InvalidPath(relative.display().to_string()));
+            };
+            current.push(segment);
+            match std::fs::symlink_metadata(&current) {
+                Ok(metadata) if metadata.file_type().is_symlink() || !metadata.is_dir() => {
+                    return Err(ProjectError::InvalidPath(display_path(&current)));
+                }
+                Ok(_) => {
+                    self.ensure_under_root(std::fs::canonicalize(&current)?)?;
+                }
+                Err(error) if error.kind() == std::io::ErrorKind::NotFound => {
+                    created.push(current.clone());
+                }
+                Err(error) => return Err(ProjectError::Io(error)),
+            }
+        }
+        let target = self.project_root.join(relative);
+        match std::fs::symlink_metadata(&target) {
+            Ok(metadata) if metadata.file_type().is_symlink() || !metadata.is_file() => {
+                Err(ProjectError::InvalidPath(display_path(&target)))
+            }
+            Ok(_) => Ok((target, created)),
+            Err(error) if error.kind() == std::io::ErrorKind::NotFound => Ok((target, created)),
+            Err(error) => Err(ProjectError::Io(error)),
+        }
+    }
+}
+
+struct PreparedAssetUpdate {
+    portable: String,
+    original_path: PathBuf,
+    target_path: PathBuf,
+    expected_revision: Option<String>,
+    contents: Vec<u8>,
+    original_contents: Vec<u8>,
+    staged_path: Option<PathBuf>,
+    committed: bool,
+}
+
+fn portable_path(path: &Path) -> String {
+    path.to_string_lossy().replace('\\', "/")
+}
+
+fn path_with_suffix(path: &Path, suffix: &str) -> PathBuf {
+    let mut value = path.as_os_str().to_owned();
+    value.push(suffix);
+    PathBuf::from(value)
+}
+
+fn valid_asset_segment(segment: &str) -> bool {
+    if segment.is_empty()
+        || segment.starts_with('.')
+        || segment.ends_with(['.', ' '])
+        || segment.chars().count() > 240
+        || segment
+            .chars()
+            .any(|value| value.is_control() || r#"<>:"/\|?*"#.contains(value))
+    {
+        return false;
+    }
+    let stem = segment
+        .split('.')
+        .next()
+        .unwrap_or(segment)
+        .to_ascii_uppercase();
+    !matches!(
+        stem.as_str(),
+        "CON"
+            | "PRN"
+            | "AUX"
+            | "NUL"
+            | "COM1"
+            | "COM2"
+            | "COM3"
+            | "COM4"
+            | "COM5"
+            | "COM6"
+            | "COM7"
+            | "COM8"
+            | "COM9"
+            | "LPT1"
+            | "LPT2"
+            | "LPT3"
+            | "LPT4"
+            | "LPT5"
+            | "LPT6"
+            | "LPT7"
+            | "LPT8"
+            | "LPT9"
+    )
+}
+
+fn normalize_asset_file_path(path: &Path) -> Result<PathBuf, ProjectError> {
+    let normalized = normalize_relative_path(path)?;
+    let mut components = normalized.components();
+    if components.next() != Some(Component::Normal("Assets".as_ref())) {
+        return Err(ProjectError::InvalidPath(normalized.display().to_string()));
+    }
+    let mut count = 1usize;
+    for component in components {
+        let Component::Normal(value) = component else {
+            return Err(ProjectError::InvalidPath(normalized.display().to_string()));
+        };
+        let Some(segment) = value.to_str() else {
+            return Err(ProjectError::InvalidPath(normalized.display().to_string()));
+        };
+        if !valid_asset_segment(segment) {
+            return Err(ProjectError::InvalidPath(normalized.display().to_string()));
+        }
+        count += 1;
+    }
+    let portable = portable_path(&normalized);
+    if count < 2
+        || portable.to_ascii_lowercase().ends_with(".meta")
+        || portable.to_ascii_lowercase().ends_with(".sprite.json")
+        || normalized.extension().is_none()
+    {
+        return Err(ProjectError::InvalidPath(portable));
+    }
+    Ok(normalized)
+}
+
+fn same_asset_extension(left: &Path, right: &Path) -> bool {
+    match (
+        left.extension().and_then(|value| value.to_str()),
+        right.extension().and_then(|value| value.to_str()),
+    ) {
+        (Some(left), Some(right)) => left.eq_ignore_ascii_case(right),
+        _ => false,
+    }
+}
+
+fn rewrite_asset_reference(value: &mut String, source: &str, destination: &str) -> bool {
+    let marker = value.find('#').unwrap_or(value.len());
+    if !value[..marker]
+        .replace('\\', "/")
+        .eq_ignore_ascii_case(source)
+    {
+        return false;
+    }
+    *value = format!("{destination}{}", &value[marker..]);
+    true
+}
+
+fn rewrite_manifest_extra(value: &mut serde_json::Value, source: &str, destination: &str) -> bool {
+    match value {
+        serde_json::Value::String(value) => rewrite_asset_reference(value, source, destination),
+        serde_json::Value::Array(values) => {
+            let mut changed = false;
+            for value in values {
+                changed |= rewrite_manifest_extra(value, source, destination);
+            }
+            changed
+        }
+        serde_json::Value::Object(values) => {
+            let mut changed = false;
+            for value in values.values_mut() {
+                changed |= rewrite_manifest_extra(value, source, destination);
+            }
+            changed
+        }
+        _ => false,
+    }
+}
+
+fn rewrite_manifest_asset_references(
+    manifest: &mut ProjectManifest,
+    source: &str,
+    destination: &str,
+) -> bool {
+    let mut changed = false;
+    if let Some(path) = &mut manifest.main_scene {
+        changed |= rewrite_asset_reference(path, source, destination);
+    }
+    for path in &mut manifest.build_scenes {
+        changed |= rewrite_asset_reference(path, source, destination);
+    }
+    if let Some(path) = &mut manifest.startup_script {
+        changed |= rewrite_asset_reference(path, source, destination);
+    }
+    for path in &mut manifest.always_include {
+        changed |= rewrite_asset_reference(path, source, destination);
+    }
+    for value in manifest.extra.values_mut() {
+        changed |= rewrite_manifest_extra(value, source, destination);
+    }
+    changed
+}
+
+fn stage_synced_file(target: &Path, contents: &[u8]) -> std::io::Result<PathBuf> {
+    let parent = target.parent().ok_or_else(|| {
+        std::io::Error::new(
+            std::io::ErrorKind::InvalidInput,
+            "asset update has no parent",
+        )
+    })?;
+    let name = target
+        .file_name()
+        .and_then(|value| value.to_str())
+        .unwrap_or("asset");
+    let temporary = parent.join(format!(".{name}.rename.{}.tmp", Uuid::new_v4()));
+    if let Err(error) = write_new_synced(&temporary, contents) {
+        let _ = std::fs::remove_file(&temporary);
+        return Err(error);
+    }
+    Ok(temporary)
+}
+
+fn cleanup_staged_updates(updates: &[PreparedAssetUpdate]) {
+    for update in updates {
+        if let Some(path) = &update.staged_path {
+            let _ = std::fs::remove_file(path);
+        }
+    }
+}
+
+fn remove_empty_directories(directories: &[PathBuf]) {
+    for directory in directories.iter().rev() {
+        let _ = std::fs::remove_dir(directory);
     }
 }
 
@@ -1745,6 +2346,111 @@ mod tests {
     }
 
     #[test]
+    fn asset_rename_moves_identity_sidecars_and_updates_references_atomically() {
+        let root = make_project();
+        std::fs::create_dir_all(root.join("Assets/Sprites")).unwrap();
+        std::fs::create_dir_all(root.join("Assets/Prefabs")).unwrap();
+        let source = root.join("Assets/Sprites/Hero.png");
+        let sprite_import = root.join("Assets/Sprites/Hero.png.sprite.json");
+        let prefab = root.join("Assets/Prefabs/Hero.prefab");
+        std::fs::write(&source, b"image-bytes").unwrap();
+        std::fs::write(&sprite_import, br#"{"version":1,"mode":"single"}"#).unwrap();
+        std::fs::write(&prefab, br#"{"sprite":"Assets/Sprites/Hero.png#Idle"}"#).unwrap();
+        let guid = mengine_assets::ensure_asset_sidecar(&source, "texture")
+            .unwrap()
+            .guid
+            .0;
+        let mut manifest: serde_json::Value =
+            serde_json::from_slice(&std::fs::read(root.join("project.json")).unwrap()).unwrap();
+        manifest["alwaysInclude"] = json!(["Assets/Sprites/Hero.png"]);
+        std::fs::write(
+            root.join("project.json"),
+            serde_json::to_vec_pretty(&manifest).unwrap(),
+        )
+        .unwrap();
+        let mut session = ProjectSession::open(&root).unwrap();
+        let result = session
+            .rename_asset(AssetRenameRequest {
+                source_path: "Assets/Sprites/Hero.png".into(),
+                destination_path: "Assets/Characters/Hero/Hero.png".into(),
+                expected_source_revision: scene_file_revision(&source).unwrap().unwrap(),
+                expected_guid: guid,
+                updates: vec![AssetRenameUpdate {
+                    source_path: "Assets/Prefabs/Hero.prefab".into(),
+                    expected_revision: scene_file_revision(&prefab).unwrap().unwrap(),
+                    contents: r#"{"sprite":"Assets/Characters/Hero/Hero.png#Idle"}"#.into(),
+                }],
+            })
+            .unwrap();
+        let destination = root.join("Assets/Characters/Hero/Hero.png");
+        assert_eq!(result.destination_path, "Assets/Characters/Hero/Hero.png");
+        assert!(!source.exists());
+        assert!(!mengine_assets::asset_sidecar_path(&source).exists());
+        assert!(!sprite_import.exists());
+        assert_eq!(std::fs::read(&destination).unwrap(), b"image-bytes");
+        assert_eq!(
+            mengine_assets::read_asset_sidecar(&destination, "texture")
+                .unwrap()
+                .guid
+                .0,
+            guid
+        );
+        assert!(root
+            .join("Assets/Characters/Hero/Hero.png.sprite.json")
+            .is_file());
+        assert_eq!(
+            std::fs::read_to_string(&prefab).unwrap(),
+            r#"{"sprite":"Assets/Characters/Hero/Hero.png#Idle"}"#
+        );
+        let saved_manifest: serde_json::Value =
+            serde_json::from_slice(&std::fs::read(root.join("project.json")).unwrap()).unwrap();
+        assert_eq!(
+            saved_manifest["alwaysInclude"],
+            json!(["Assets/Characters/Hero/Hero.png"])
+        );
+        assert_eq!(
+            session.always_include(),
+            vec!["Assets/Characters/Hero/Hero.png"]
+        );
+        std::fs::remove_dir_all(root).unwrap();
+    }
+
+    #[test]
+    fn asset_rename_rejects_stale_dependencies_without_partial_moves() {
+        let root = make_project();
+        std::fs::create_dir_all(root.join("Assets/Materials")).unwrap();
+        let source = root.join("Assets/Materials/Hero.mmat");
+        let dependent = root.join("Assets/Materials/Hero.minst");
+        std::fs::write(&source, b"{}").unwrap();
+        std::fs::write(&dependent, br#"{"parent":"Assets/Materials/Hero.mmat"}"#).unwrap();
+        let guid = mengine_assets::ensure_asset_sidecar(&source, "material")
+            .unwrap()
+            .guid
+            .0;
+        let original_dependent = std::fs::read(&dependent).unwrap();
+        let mut session = ProjectSession::open(&root).unwrap();
+        let error = session
+            .rename_asset(AssetRenameRequest {
+                source_path: "Assets/Materials/Hero.mmat".into(),
+                destination_path: "Assets/Renamed/Hero.mmat".into(),
+                expected_source_revision: scene_file_revision(&source).unwrap().unwrap(),
+                expected_guid: guid,
+                updates: vec![AssetRenameUpdate {
+                    source_path: "Assets/Materials/Hero.minst".into(),
+                    expected_revision: "stale".into(),
+                    contents: "{}".into(),
+                }],
+            })
+            .unwrap_err();
+        assert!(error.to_string().contains("changed on disk since preview"));
+        assert!(source.is_file());
+        assert!(mengine_assets::asset_sidecar_path(&source).is_file());
+        assert_eq!(std::fs::read(&dependent).unwrap(), original_dependent);
+        assert!(!root.join("Assets/Renamed").exists());
+        std::fs::remove_dir_all(root).unwrap();
+    }
+
+    #[test]
     fn build_asset_settings_are_normalized_and_atomically_saved() {
         let root = make_project();
         std::fs::create_dir_all(root.join("Assets/Prefabs/Dynamic")).unwrap();
@@ -1773,11 +2479,7 @@ mod tests {
                 ],
             )
             .is_err());
-        std::fs::write(
-            root.join("Assets/Prefabs/Dynamic/Enemy.prefab.meta"),
-            "{}",
-        )
-        .unwrap();
+        std::fs::write(root.join("Assets/Prefabs/Dynamic/Enemy.prefab.meta"), "{}").unwrap();
         assert!(session
             .save_build_asset_settings(
                 BuildAssetMode::Referenced,

@@ -1222,3 +1222,14 @@ Rust workspace 检查现在零警告通过；Tauri Host 17/17 常规测试与 1/
 第一遍自省删除了最初“排除目标文件自身”的错误捷径，并把 10000 条上限变成显式截断状态；否则自引用会在未来 Rename 迁移中漏改，超大依赖图会被误判完整。第二遍自省补齐键盘焦点/Escape、结果回 Project 定位，以及 Scene/Script/Sprite 专用卡片的 Ping 映射；同时保留无效 JSON 回退、路径边界和具体 Slice 隔离回归。
 
 当前查询是只读的编辑器时刻快照，尚不是可提交的 Rename 事务：多文件扫描期间外部工具仍可能继续修改，文本命中也可能来自注释或普通用户字符串。下一阶段要在 Host 侧用每个来源 Revision 固化预览，生成 exact/subresource 修改计划，用户确认后对源资产、`.meta`、Sprite Import sidecar、所有引用文件和 `project.json` 执行统一乐观并发检查、暂存、原子发布与完整回滚；无法自动迁移的脚本/Shader 文本必须单列人工审查，不能静默替换。
+
+## 102. 2026-07-19 通用资源 Rename / Move 安全事务
+
+- Project 中拥有健康 GUID 的非 Scene 主资源新增 `Rename / Move`，F2 与右键菜单共用同一入口；Sprite Slice 与 `.sprite.json` 辅助导入数据不能脱离主纹理独立改名，Scene 继续走已有的 Scene 专用事务。目标使用 `Assets/...` 完整工程路径，因此同一界面同时覆盖改名和跨目录移动；扩展名、Windows 保留名、隐藏/尾随点空格、父级穿越、符号链接、非普通文件、目标资产/metadata/导入 sidecar 冲突均在提交前拒绝。
+- 点击 `Save All & Preview` 会先保存当前场景、Build/Project Settings 及所有已打开/隐藏的资源草稿，再读取最新磁盘 Revision 构建迁移计划。独立 Dock WebView 通过工作区 BroadcastChannel 发布脏状态并响应即时查询；其他窗口仍有未保存修改时事务明确阻止，避免主窗口只保存自己的文档后覆盖外部窗口草稿。提交前会再次执行相同门禁；预览后发生的新保存会使 Revision 失效并要求重新生成预览。
+- 合法 JSON 使用字符串 token 原位替换，保持原文件缩进、换行和未命中内容逐字节不变；基础纹理引用同时迁移 `#Slice`。glTF 的 `buffers/images[].uri` 按源模型目录解析 URL 编码相对路径，移动 glTF 自身时会重写全部相对 URI 以保持依赖目标不变；Spine Atlas Page 行采用同一相对路径约束。脚本、Shader 和损坏 JSON 不做盲目字符串替换，作为人工审查结果展示；TypeScript `import/export from/require/dynamic import` 的相对模块引用也会定位，移动脚本目录时其出站依赖与所有入站 import 都必须确认。
+- Rust `ProjectSession::rename_asset` 是桌面权威事务边界，Tauri 只持有 Project 锁转发；Vite 本地桥实现相同契约。请求固定源 GUID、源 Revision、每个自动更新文件的 Revision 和 32 MiB/256 文件上限；全部内容先写入并同步临时文件，随后联动移动资产、`.meta`、Sprite Import sidecar，更新引用文件及 `project.json` 的 main/build/startup/alwaysInclude/扩展字段。任一步失败会反向恢复已替换内容和所有移动路径，并清理新建空目录；成功后打开的 Material/Shader/Animator/Timeline/Sprite 等文档按新路径重新装载，旧 Undo scope 被清除，Project 选择仍由同一 GUID 保持。
+- 第一遍自省修正了“预览时保存、提交时不再检查”的竞态、事务已经成功但 Project 索引刷新失败却向用户报告失败，以及 Vite 创建嵌套目标目录中途失败留下空目录的问题。索引短暂失败现在只让下一次轮询重建基线；提交前再次保存会由后端 Revision 门禁安全拒绝过期计划。
+- 第二遍自省补齐了相对模块依赖、独立 Dock 脏文档互斥、中文/非 UTF-8 路径 sidecar 拼接、预检后 metadata/Sprite Import 被外部替换，以及开发桥成功后清理备份失败的语义。Host 回归固定了 GUID/metadata/Import sidecar/Prefab/Manifest 联动迁移和 stale dependency 零副作用边界，前端回归固定 JSON 格式保持、Slice、glTF、Spine、损坏 JSON 与 TypeScript 相对 import 行列定位。
+
+本批完成的是通用资源 Rename/Move 的安全闭环，不等于完整 Asset Database 生命周期。下一步仍需基于同一依赖图实现带回收站和引用阻断的 Delete、保留/新建 GUID 规则明确的 Duplicate、文件夹级批量事务、Missing Reference 修复、版本控制 checkout/lock、二进制导入器依赖声明与语言服务级脚本重构；在这些完成前不会把永久删除和目录批量移动包装成“已成熟”。

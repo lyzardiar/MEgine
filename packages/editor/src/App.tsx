@@ -114,6 +114,15 @@ function askSceneName(title: string, initial: string): string | null {
 
 type WorkspaceSyncMessage =
   | { type: 'request-scene'; sender: string }
+  | { type: 'request-dirty-state'; sender: string }
+  | { type: 'window-closing'; sender: string }
+  | {
+      type: 'dirty-state';
+      sender: string;
+      timestamp: number;
+      panel: string;
+      dirty: boolean;
+    }
   | {
       type: 'scene-state';
       sender: string;
@@ -210,6 +219,12 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
   const remoteSceneDirty = useRef(false);
   const syncSender = useRef(crypto.randomUUID());
   const syncChannel = useRef<BroadcastChannel | null>(null);
+  const workspaceDirtyRef = useRef(false);
+  const remoteDirtyPeers = useRef(new Map<string, {
+    timestamp: number;
+    panel: string;
+    dirty: boolean;
+  }>());
   const recoveryTimer = useRef<number | null>(null);
   const lastRecoveryError = useRef<string | null>(null);
   const lastAssetPollError = useRef<string | null>(null);
@@ -223,6 +238,37 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
   const syncReady = useRef(!props.detachedPanel);
   sceneNameRef.current = sceneName;
   unsavedChangesRef.current = hasUnsavedChanges;
+  workspaceDirtyRef.current = hasUnsavedChanges;
+
+  const postWorkspaceDirtyState = () => {
+    syncChannel.current?.postMessage({
+      type: 'dirty-state',
+      sender: syncSender.current,
+      timestamp: Date.now(),
+      panel: props.detachedPanel ?? 'main window',
+      dirty: workspaceDirtyRef.current,
+    } satisfies WorkspaceSyncMessage);
+  };
+
+  const queryRemoteDirtyPanels = async (): Promise<string[]> => {
+    const channel = syncChannel.current;
+    if (!channel) return [];
+    channel.postMessage({
+      type: 'request-dirty-state',
+      sender: syncSender.current,
+    } satisfies WorkspaceSyncMessage);
+    await new Promise((resolve) => window.setTimeout(resolve, 120));
+    const cutoff = Date.now() - 5_000;
+    const dirty = new Set<string>();
+    for (const [sender, peer] of remoteDirtyPeers.current) {
+      if (peer.timestamp < cutoff) {
+        remoteDirtyPeers.current.delete(sender);
+      } else if (peer.dirty) {
+        dirty.add(peer.panel);
+      }
+    }
+    return [...dirty].sort();
+  };
 
   useEffect(() => {
     const onBeforeUnload = (event: BeforeUnloadEvent) => {
@@ -578,6 +624,22 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
     channel.onmessage = (event: MessageEvent<WorkspaceSyncMessage>) => {
       const message = event.data;
       if (!message || message.sender === syncSender.current) return;
+      if (message.type === 'request-dirty-state') {
+        postWorkspaceDirtyState();
+        return;
+      }
+      if (message.type === 'dirty-state') {
+        remoteDirtyPeers.current.set(message.sender, {
+          timestamp: message.timestamp,
+          panel: message.panel,
+          dirty: message.dirty,
+        });
+        return;
+      }
+      if (message.type === 'window-closing') {
+        remoteDirtyPeers.current.delete(message.sender);
+        return;
+      }
       if (message.type === 'request-scene') {
         broadcastScene(true);
         return;
@@ -626,16 +688,27 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
         sender: syncSender.current,
       } satisfies WorkspaceSyncMessage);
     }
+    postWorkspaceDirtyState();
+    const heartbeat = window.setInterval(postWorkspaceDirtyState, 2_000);
     const fallback = window.setTimeout(() => {
       syncReady.current = true;
     }, 1500);
     return () => {
       window.clearTimeout(fallback);
+      window.clearInterval(heartbeat);
       if (syncTimer.current != null) window.clearTimeout(syncTimer.current);
+      channel.postMessage({
+        type: 'window-closing',
+        sender: syncSender.current,
+      } satisfies WorkspaceSyncMessage);
       syncChannel.current = null;
       channel.close();
     };
   }, [props.detachedPanel, store]);
+
+  useEffect(() => {
+    postWorkspaceDirtyState();
+  }, [hasUnsavedChanges, props.detachedPanel]);
 
   const confirmDiscardSceneChanges = (action: string) => (
     !sceneDirtyRef.current
@@ -1468,6 +1541,66 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
                   bumpScenes();
                   return false;
                 }
+              }}
+              onPrepareAssetTransaction={async () => {
+                if (hasUnsavedChanges) {
+                  if (!window.confirm(
+                    'Renaming an asset migrates references on disk. Save the current scene and all resource documents before continuing?',
+                  )) return false;
+                  if (!await saveEverything()) return false;
+                  workspaceDirtyRef.current = false;
+                  // Scene state and dirty-state messages share an ordered
+                  // channel, so detached windows see the clean checkpoint
+                  // before answering the query below.
+                  broadcastScene(true);
+                  postWorkspaceDirtyState();
+                }
+                const remoteDirty = await queryRemoteDirtyPanels();
+                if (remoteDirty.length > 0) {
+                  const panels = remoteDirty.join(', ');
+                  log(`Asset rename blocked by unsaved changes in detached window(s): ${panels}.`, 'warn');
+                  window.alert(`Save or discard changes in the detached window(s) before renaming assets:\n\n${panels}`);
+                  return false;
+                }
+                return true;
+              }}
+              onAssetRenamed={(sourcePath, destinationPath) => {
+                const remap = (value: string | null): string | null => {
+                  if (!value) return value;
+                  const marker = value.indexOf('#');
+                  const file = marker < 0 ? value : value.slice(0, marker);
+                  const fragment = marker < 0 ? '' : value.slice(marker);
+                  return file.replace(/\\/g, '/').toLocaleLowerCase()
+                    === sourcePath.toLocaleLowerCase()
+                    ? `${destinationPath}${fragment}`
+                    : value;
+                };
+                setMaterialPath(remap);
+                setShaderPath(remap);
+                setAnimatorPath(remap);
+                setSpritePath(remap);
+                setSpriteAtlasPath(remap);
+                setAnimationAssetPath(remap);
+                setTimelineAssetPath(remap);
+                for (const scope of [
+                  'animation',
+                  'timeline',
+                  'animator',
+                  'avatar-mask',
+                  'material',
+                  'material-instance',
+                  'surface-shader',
+                ]) undoService.clear(`${scope}:${sourcePath}`);
+                setAssetReloadEpoch((current) => ({
+                  animation: current.animation + 1,
+                  sequencer: current.sequencer + 1,
+                  animator: current.animator + 1,
+                  material: current.material + 1,
+                  shader: current.shader + 1,
+                  sprite: current.sprite + 1,
+                  spriteAtlas: current.spriteAtlas + 1,
+                }));
+                bumpScenes();
               }}
               onLog={log}
             />

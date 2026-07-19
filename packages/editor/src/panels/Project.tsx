@@ -55,6 +55,12 @@ import {
   findProjectAssetReferences,
   type AssetReferenceReport,
 } from '../assetReferences';
+import {
+  applyProjectAssetRename,
+  prepareProjectAssetRename,
+  type AssetRenamePlan,
+} from '../assetRename';
+import { PROJECT_ASSETS_CHANGED_EVENT } from '../assetEditorEvents';
 
 const STATIC_FOLDERS = [
   'Assets',
@@ -112,6 +118,8 @@ export function Project(props: {
   onOpenSpriteAtlas: (path: string) => void;
   onRenameScene: (oldName: string, newName: string) => boolean | Promise<boolean>;
   onDeleteScene: (name: string) => boolean | Promise<boolean>;
+  onPrepareAssetTransaction: () => boolean | Promise<boolean>;
+  onAssetRenamed: (sourcePath: string, destinationPath: string) => void;
   onLog?: (msg: string, level?: 'info' | 'warn' | 'error') => void;
 }) {
   const [folder, setFolder] = useState('Assets/Scenes');
@@ -129,10 +137,20 @@ export function Project(props: {
     report: AssetReferenceReport | null;
     error: string | null;
   } | null>(null);
+  const [assetRename, setAssetRename] = useState<{
+    asset: AssetItem;
+    destinationPath: string;
+    loading: boolean;
+    applying: boolean;
+    plan: AssetRenamePlan | null;
+    manualConfirmed: boolean;
+    error: string | null;
+  } | null>(null);
   const lastClick = useRef<{ key: string; t: number }>({ key: '', t: 0 });
   const rootRef = useRef<HTMLDivElement>(null);
   const cardRefs = useRef<Map<string, HTMLDivElement>>(new Map());
   const referenceRequest = useRef(0);
+  const renameRequest = useRef(0);
 
   useEffect(() => {
     void Promise.all([refreshScripts(), refreshSprites(), refreshProjectFiles()])
@@ -493,6 +511,97 @@ export function Project(props: {
     setReferenceReport(null);
   };
 
+  const canRenameAsset = (asset: AssetItem): boolean => Boolean(
+    asset.assetPath
+    && !asset.assetPath.includes('#')
+    && asset.kind !== 'scene'
+    && asset.metaStatus === 'ready',
+  );
+
+  const requestAssetRename = (asset: AssetItem) => {
+    if (!canRenameAsset(asset) || !asset.assetPath) return;
+    renameRequest.current += 1;
+    setCtx(null);
+    setAssetRename({
+      asset,
+      destinationPath: asset.assetPath,
+      loading: false,
+      applying: false,
+      plan: null,
+      manualConfirmed: false,
+      error: null,
+    });
+  };
+
+  const closeAssetRename = () => {
+    renameRequest.current += 1;
+    setAssetRename(null);
+  };
+
+  const previewAssetRename = async () => {
+    if (!assetRename?.asset.assetPath || assetRename.loading || assetRename.applying) return;
+    const request = ++renameRequest.current;
+    setAssetRename((current) => current && ({
+      ...current,
+      loading: true,
+      plan: null,
+      manualConfirmed: false,
+      error: null,
+    }));
+    try {
+      if (!await props.onPrepareAssetTransaction()) {
+        if (renameRequest.current === request) {
+          setAssetRename((current) => current && ({ ...current, loading: false }));
+        }
+        return;
+      }
+      const plan = await prepareProjectAssetRename(
+        assetRename.asset.assetPath,
+        assetRename.destinationPath,
+      );
+      if (renameRequest.current !== request) return;
+      setAssetRename((current) => current && ({ ...current, loading: false, plan }));
+    } catch (error) {
+      if (renameRequest.current !== request) return;
+      setAssetRename((current) => current && ({
+        ...current,
+        loading: false,
+        error: error instanceof Error ? error.message : String(error),
+      }));
+    }
+  };
+
+  const commitAssetRename = async () => {
+    const state = assetRename;
+    if (!state?.plan || state.loading || state.applying) return;
+    if (state.plan.manualReferences.length > 0 && !state.manualConfirmed) return;
+    const request = ++renameRequest.current;
+    setAssetRename((current) => current && ({ ...current, applying: true, error: null }));
+    try {
+      if (!await props.onPrepareAssetTransaction()) {
+        if (renameRequest.current === request) {
+          setAssetRename((current) => current && ({ ...current, applying: false }));
+        }
+        return;
+      }
+      const result = await applyProjectAssetRename(state.plan);
+      if (renameRequest.current !== request) return;
+      props.onAssetRenamed(result.sourcePath, result.destinationPath);
+      window.dispatchEvent(new CustomEvent(PROJECT_ASSETS_CHANGED_EVENT, { detail: result }));
+      setSelected(state.asset.assetKey);
+      setLibTick((tick) => tick + 1);
+      props.onLog?.(
+        `Renamed ${result.sourcePath} to ${result.destinationPath}; updated ${result.updatedPaths.length} dependent file${result.updatedPaths.length === 1 ? '' : 's'}.`,
+      );
+      closeAssetRename();
+    } catch (error) {
+      if (renameRequest.current !== request) return;
+      const message = error instanceof Error ? error.message : String(error);
+      setAssetRename((current) => current && ({ ...current, applying: false, error: message }));
+      props.onLog?.(`Asset rename failed: ${message}`, 'error');
+    }
+  };
+
   const completeImport = async (files?: Iterable<File>) => {
     if (importing) return;
     setImporting(true);
@@ -649,6 +758,7 @@ export function Project(props: {
                   event.preventDefault();
                   event.stopPropagation();
                   if (a.kind === 'scene' && a.sceneName) beginRename(a.sceneName);
+                  else requestAssetRename(a);
                   return;
                 }
                 if (event.key === 'Delete' || event.key === 'Backspace') {
@@ -815,6 +925,18 @@ export function Project(props: {
                 </button>
               </>
             )}
+            {canRenameAsset(ctx.asset) && (
+              <button
+                type="button"
+                onPointerDown={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  requestAssetRename(ctx.asset);
+                }}
+              >
+                Rename / Move <span className="hint">F2</span>
+              </button>
+            )}
             {ctx.asset.assetPath && (
               <button
                 type="button"
@@ -902,6 +1024,148 @@ export function Project(props: {
                 </div>
               )}
             </div>
+          </section>
+        </div>,
+        document.body,
+      )}
+      {assetRename && createPortal(
+        <div
+          className="asset-reference-backdrop"
+          role="presentation"
+          onPointerDown={() => {
+            if (!assetRename.applying) closeAssetRename();
+          }}
+        >
+          <section
+            className="asset-reference-dialog asset-rename-dialog"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="asset-rename-title"
+            onKeyDown={(event) => {
+              if (event.key === 'Escape' && !assetRename.applying) closeAssetRename();
+            }}
+            onPointerDown={(event) => event.stopPropagation()}
+          >
+            <header>
+              <div>
+                <strong id="asset-rename-title">Rename / Move Asset</strong>
+                <span>{assetRename.asset.assetPath}</span>
+              </div>
+              <button
+                type="button"
+                aria-label="Close asset rename"
+                disabled={assetRename.applying}
+                onClick={closeAssetRename}
+              >×</button>
+            </header>
+            <div className="asset-rename-form">
+              <label htmlFor="asset-rename-destination">Destination path</label>
+              <input
+                id="asset-rename-destination"
+                autoFocus
+                spellCheck={false}
+                value={assetRename.destinationPath}
+                disabled={assetRename.loading || assetRename.applying}
+                onChange={(event) => setAssetRename((current) => current && ({
+                  ...current,
+                  destinationPath: event.target.value,
+                  plan: null,
+                  manualConfirmed: false,
+                  error: null,
+                }))}
+                onKeyDown={(event) => {
+                  if (event.key === 'Enter' && !assetRename.plan) {
+                    event.preventDefault();
+                    void previewAssetRename();
+                  }
+                }}
+              />
+              <span>Use a project-relative file path under Assets. The extension must stay unchanged.</span>
+            </div>
+            {assetRename.loading && (
+              <div className="asset-reference-summary">Saving open documents and building a revision-locked migration preview...</div>
+            )}
+            {assetRename.error && (
+              <div className="asset-reference-summary asset-rename-error">{assetRename.error}</div>
+            )}
+            {assetRename.plan && (
+              <div className="asset-rename-plan">
+                <div className="asset-reference-summary">
+                  {assetRename.plan.automaticUpdates.length} files update automatically · {' '}
+                  {assetRename.plan.manualReferences.length} manual references · {' '}
+                  {assetRename.plan.scannedFiles} scanned · {assetRename.plan.skippedFiles} skipped · {' '}
+                  {(assetRename.plan.updateBytes / 1024).toFixed(1)} KiB staged
+                </div>
+                <div className="asset-rename-section">
+                  <strong>Automatic transaction</strong>
+                  <span>The asset, stable metadata, Sprite Import sidecar, project manifest and these serialized references commit together.</span>
+                  <div className="asset-rename-files">
+                    {assetRename.plan.automaticUpdates.length === 0 && <em>No serialized files need content changes.</em>}
+                    {assetRename.plan.automaticUpdates.map((update) => (
+                      <code key={update.sourcePath}>{update.sourcePath}</code>
+                    ))}
+                  </div>
+                </div>
+                {assetRename.plan.manualReferences.length > 0 && (
+                  <div className="asset-rename-section asset-rename-manual">
+                    <strong>Manual review required</strong>
+                    <span>Scripts, shaders, or invalid JSON are never replaced blindly. Open each result and update it manually after the rename.</span>
+                    <div className="asset-reference-list">
+                      {assetRename.plan.manualReferences.map((reference, index) => (
+                        <button
+                          type="button"
+                          className="asset-reference-row"
+                          key={`${reference.sourcePath}:${reference.location}:${index}`}
+                          onClick={() => pingProjectAsset(reference.sourcePath)}
+                        >
+                          <div>
+                            <strong>{reference.sourcePath}</strong>
+                            <span>{reference.location}</span>
+                          </div>
+                          <code title={reference.snippet}>{reference.snippet}</code>
+                        </button>
+                      ))}
+                    </div>
+                    <label className="asset-rename-confirm">
+                      <input
+                        type="checkbox"
+                        checked={assetRename.manualConfirmed}
+                        onChange={(event) => setAssetRename((current) => current && ({
+                          ...current,
+                          manualConfirmed: event.target.checked,
+                        }))}
+                      />
+                      I reviewed these references and will repair them manually.
+                    </label>
+                  </div>
+                )}
+              </div>
+            )}
+            <footer className="asset-rename-actions">
+              <button type="button" disabled={assetRename.applying} onClick={closeAssetRename}>Cancel</button>
+              {!assetRename.plan ? (
+                <button
+                  type="button"
+                  className="primary"
+                  disabled={assetRename.loading || assetRename.applying}
+                  onClick={() => void previewAssetRename()}
+                >
+                  {assetRename.loading ? 'Preparing...' : 'Save All & Preview'}
+                </button>
+              ) : (
+                <button
+                  type="button"
+                  className="primary danger"
+                  disabled={
+                    assetRename.applying
+                    || (assetRename.plan.manualReferences.length > 0 && !assetRename.manualConfirmed)
+                  }
+                  onClick={() => void commitAssetRename()}
+                >
+                  {assetRename.applying ? 'Committing...' : 'Commit Rename'}
+                </button>
+              )}
+            </footer>
           </section>
         </div>,
         document.body,

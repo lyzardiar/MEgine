@@ -1,7 +1,7 @@
 use mengine_core::snapshot::WorldSnapshot;
 use mengine_editor_host::{
-    BuildAssetMode, EditorFailure, EditorRequest, EditorResult, ProjectSession, ProjectSnapshot,
-    SceneRecoveryInfo,
+    AssetRenameRequest, AssetRenameResult, BuildAssetMode, EditorFailure, EditorRequest,
+    EditorResult, ProjectSession, ProjectSnapshot, SceneRecoveryInfo,
 };
 use parking_lot::Mutex;
 use std::collections::{BTreeMap, HashSet};
@@ -2769,6 +2769,18 @@ fn write_project_asset(
 }
 
 #[tauri::command]
+fn rename_project_asset(
+    request: AssetRenameRequest,
+    state: State<'_, AppState>,
+) -> Result<AssetRenameResult, String> {
+    let mut guard = state.project.lock();
+    let session = guard.as_mut().ok_or_else(|| no_project().message)?;
+    session
+        .rename_asset(request)
+        .map_err(|error| error.to_string())
+}
+
+#[tauri::command]
 fn list_project_assets(state: State<'_, AppState>) -> Result<Vec<ProjectAssetInfo>, String> {
     let project_root = state
         .project
@@ -2949,6 +2961,7 @@ pub fn run() {
             verify_pc_player,
             read_project_asset,
             write_project_asset,
+            rename_project_asset,
             list_project_assets,
             list_project_sprites,
             open_scene,

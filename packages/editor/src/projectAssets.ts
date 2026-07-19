@@ -126,6 +126,22 @@ export async function refreshProjectFiles(): Promise<ProjectFileAsset[]> {
   return projectFiles;
 }
 
+/** Accepts an editor-owned multi-file transaction as the new watcher baseline. */
+export async function resetProjectAssetWatchBaseline(): Promise<ProjectFileAsset[]> {
+  try {
+    projectFiles = await fetchProjectFiles();
+    watchedProjectFiles = projectFiles;
+    watchBaselineInitialized = true;
+  } catch {
+    // The disk transaction already committed. Suppress one future diff instead
+    // of reporting failure or misclassifying our rename as an external delete.
+    watchBaselineInitialized = false;
+  }
+  writeBaselines.clear();
+  acknowledgedRevisions.clear();
+  return projectFiles;
+}
+
 export function diffProjectFiles(
   previous: readonly ProjectFileAsset[],
   current: readonly ProjectFileAsset[],
