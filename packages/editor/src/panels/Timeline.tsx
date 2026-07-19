@@ -2133,6 +2133,11 @@ export function Timeline(props: {
           ? (error ?? 'Animator 尚未绑定有效的 Controller/State；请在 Animator 面板中配置。')
           : '尚未绑定 Animation Clip，可创建新资源或把 Project 中的 `.manim` 拖到这里。'}
         </span>
+        {!animator && (
+          <span className="timeline-empty-help">
+            新建资源会保存到 Assets/Animations，并自动为当前对象添加或更新 Animation Player。
+          </span>
+        )}
         {animator && (
           <button
             type="button"
@@ -2491,11 +2496,20 @@ export function Timeline(props: {
             className="timeline-grid-scroll"
             hidden={viewMode === 'curves'}
             onWheel={(event) => {
-              if (!event.ctrlKey) return;
-              event.preventDefault();
-              setZoom((value) => event.deltaY < 0
-                ? Math.min(8, Number((value * 1.15).toFixed(2)))
-                : Math.max(1, Number((value / 1.15).toFixed(2))));
+              if (event.ctrlKey) {
+                event.preventDefault();
+                setZoom((value) => event.deltaY < 0
+                  ? Math.min(8, Number((value * 1.15).toFixed(2)))
+                  : Math.max(1, Number((value / 1.15).toFixed(2))));
+                return;
+              }
+              if (event.shiftKey && event.deltaY !== 0) {
+                const lanes = event.currentTarget.querySelector<HTMLElement>('.timeline-lanes-scroll');
+                if (lanes && lanes.scrollWidth > lanes.clientWidth) {
+                  event.preventDefault();
+                  lanes.scrollLeft += event.deltaY;
+                }
+              }
             }}
           >
             <div className="timeline-grid">
@@ -2533,7 +2547,12 @@ export function Timeline(props: {
                 {clip.tracks.length === 0 && <div className="timeline-empty-row">No property tracks</div>}
               </div>
 
-              <div className="timeline-lanes-scroll">
+              <div
+                className="timeline-lanes-scroll"
+                role="region"
+                aria-label="Animation dope sheet"
+                title="Ctrl + Wheel to zoom · Shift + Wheel to scroll horizontally"
+              >
                 <div
                   className="timeline-lanes"
                   style={{ width: `${zoom * 100}%` }}
@@ -2551,7 +2570,12 @@ export function Timeline(props: {
                     onPointerCancel={finishScrub}
                   >
                     {Array.from({ length: rulerSteps + 1 }, (_unused, index) => (
-                      <span key={index} style={{ left: `${index / rulerSteps * 100}%` }}>{(clip.duration * index / rulerSteps).toFixed(2)}</span>
+                      <span
+                        key={index}
+                        style={{ left: `clamp(12px, ${index / rulerSteps * 100}%, calc(100% - 12px))` }}
+                      >
+                        {(clip.duration * index / rulerSteps).toFixed(2)}
+                      </span>
                     ))}
                     <i style={{ left: `${clip.duration > 0 ? time / clip.duration * 100 : 0}%` }} />
                   </div>

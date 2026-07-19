@@ -892,3 +892,14 @@ Referenced Only 是可用的单包裁剪基础，仍不等同于完整 Addressab
 - 命中/未命中、复用/写入字节、损坏恢复和 I/O 回退作为独立 CLI 诊断传给桌面 Host，并在 Build Settings 显示。它们不进入 `mengine-build.json`，因此同一输入在冷缓存与热缓存下仍产生字节一致的发布 Manifest 和 Content Hash；旧 Build SDK 没有该诊断时编辑器保持兼容并隐藏缓存行。
 
 第一遍自审修复了缓存恢复阶段吞掉取消信号和符号链接目录可能越出缓存根的问题；第二遍验证冷缓存、热缓存、对象损坏重建和脚本内容变更四条路径都保持原子发布与 Manifest 可复现。当前仍是本地中间产物缓存基础：后续必须增加容量配额/LRU 与显式清理、纹理/模型导入产物、Shader 编译与 Variant Cache、Runtime 编译指纹、跨平台命名空间、远程共享缓存、命中原因明细和 CI Cache 协议。
+
+## 70. 2026-07-19 Animation Timeline 可视区域与滚动交互修复
+
+- Animation Timeline 的 Dope Sheet 网格现在至少撑满可用编辑区域。最大化面板且只有少量轨道时，轨道区不再停在内容高度后留下大片不可交互空白，水平滚动条固定在工作区底部；普通 Dock 和大量轨道仍由外层统一纵向滚动，标签、轨道和值列保持同一行高。
+- 100% Fit 下不再因为时间尺两端标签和关键帧命中热区溢出数个像素而生成伪横向滚动。时间标签在首尾使用可视范围钳制，Lane 自身裁剪命中热区的视觉溢出；只有 Zoom 大于 100% 且内容确实超过视口时才出现横向滚动。
+- Timeline 横向滚动条改为有明确深色轨道和方形 Thumb 的工具型样式，不使用圆角或透明悬浮细条；纵向滚动条与 Details 面板统一为可辨识的 8px 方形样式。放大后支持原生横向滚动，并补充 `Shift + Wheel` 横向浏览和 `Ctrl + Wheel` 缩放提示。
+- 尚未绑定 Animation Clip 时明确说明新资源写入 `Assets/Animations`，并会自动添加或更新当前对象的 Animation Player，减少用户面对 Create 按钮时对保存位置和绑定副作用的猜测。Dope Sheet 增加可访问 Region 名称，自动化与辅助技术可以稳定定位真实轨道区域。
+
+第一遍自审在真实 1280×720 编辑器中创建 Clip、添加 `Transform.position` 轨道并最大化 Timeline：修复前网格只有 98px、剩余近 480px 为空区，修复后网格完整占用 577px；100% 时 Lane 的 `scrollWidth` 与 `clientWidth` 都为 890px，不再有伪滚动条。第二遍恢复普通 Dock 并执行 Zoom In、横向滚动和 Fit：156% 时内容宽 1388px、横向滚动可到 180px，Fit 后普通 Dock 的宽度重新严格一致；252 项 Editor 测试与生产构建全部通过。
+
+本切片解决的是 Animation Clip Dope Sheet 的基础可见性和导航阻塞，不代表 Timeline/动画系统已经完备。后续仍需音频波形与 Onion Skin/运动轨迹、模型动画切片与 Avatar 重定向、Root Motion、批量关键帧工具、稳定 Binding Table、录制冲突诊断、嵌套 Timeline、运行时性能分析，以及把 Animation Timeline 与 `.mtimeline` Sequencer 的快捷键和选择语义进一步统一。
