@@ -23,7 +23,8 @@ use mengine_runtime::audio::AudioRuntime;
 use mengine_runtime::build_manifest::verify_build_manifest;
 use mengine_runtime::lighting2d::apply_2d_lighting;
 use mengine_runtime::materials::{
-    apply_material_property_block, pack_surface_shader_parameters, RuntimeMaterialCache,
+    apply_material_property_block, pack_surface_shader_parameters, resolve_surface_shader_keywords,
+    RuntimeMaterialCache,
 };
 use mengine_runtime::meshes::RuntimeMeshCache;
 use mengine_runtime::particles::ParticleWorld;
@@ -2343,6 +2344,9 @@ fn validate_world_assets(
                             )
                         })?;
                         pack_surface_shader_parameters(&asset, &source).map_err(|error| {
+                            anyhow::anyhow!("invalid material {}: {error}", path.display())
+                        })?;
+                        resolve_surface_shader_keywords(&asset, &source).map_err(|error| {
                             anyhow::anyhow!("invalid material {}: {error}", path.display())
                         })?;
                     }

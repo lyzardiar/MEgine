@@ -1358,3 +1358,15 @@ Rust workspace 检查现在零警告通过；Tauri Host 17/17 常规测试与 1/
 第一遍自省确认 Fade 必须以 Timeline 时间而不是音频采样时间累计，否则 Seek、反向播放、Director Speed 和 Loop 边界会得到不同结果；最终使用绝对时间函数，并让 Fade 乘在用户 Volume 之后。第二遍自省覆盖编辑端所有会缩短 Clip 的入口与旧资产升级，同时明确允许 `fade_in + fade_out > duration`：两段重叠时取较小增益，形成全程不达到满音量的短促包络，而不是隐式重写用户输入或产生大于 1 的叠加。
 
 当前仍是单 AudioSource、单 Clip 的基础包络，不是成熟 DAW/Mixer。相同 AudioSource 仍不允许两个轨道重叠，因此尚无真正 Crossfade；后续需要多 Voice 调度、音频资源真实时长门禁、可拖拽 Fade Handle 与精确曲线图、编辑器音频预听、Bus/Mixer/空间音频轨道、响度/Peak 检查、字幕/口型标记、平台转码和无爆音的 Sample-accurate 调度。
+
+## 114. 2026-07-19 Surface Shader Keyword 与实际 Variant 收集
+
+- 现有 `/* MENGINE_PARAMETERS ... */` Schema 在保持旧资产兼容的前提下增加可选 `keywords` 数组，每个 Keyword 包含 ASCII 标识符、可选显示名和布尔默认值，最多 16 项。Surface Hook 通过 `mengine_keyword_NAME() -> bool` 使用开关，不接触引擎私有绑定；Rust 共享解析器、编辑器 TypeScript 解析器与 CLI 构建审计统一拒绝未知字段、重复/非法名称、错误默认值和超限声明。
+- `.mmat/.mat` 升级到 v9，增加 `custom_keywords: { name: boolean }`；`.minst` 升级到 v3，增加 `overrides.custom_keywords`。旧 Material v1–v8、Instance v1–v2 和无版本资产继续读取并规范化到新版本。这里保存的是“相对 Shader 默认值或父层的显式覆盖”，而不是仅保存启用集合，因此默认开启的 Keyword 也能在材质或任意子实例中明确关闭；嵌套实例从 Base Material 到最末子实例逐名称覆盖，非 Custom 父链和 Shader 未声明名称会在保存、构建及 Player 启动前失败。
+- Material 与 Material Instance Inspector 根据 Shader Schema 自动生成 Keyword 控件。Material 行显示最终值并允许 Reset 回 Shader 默认；Instance 行把 `Inherited/Override` 与开关值分离，关闭 Override 会恢复父层值而不是写入一个伪继承值。Shader 切换会同时清空旧数值参数和 Keyword 覆盖，`Remove Stale Values` 也会一起清理当前资产中已从 Schema 删除的两类字段。
+- Runtime 先解析最终 Material Instance 继承结果，再按声明顺序得到启用 Keyword 集合。RHI 为每个声明生成返回字面量布尔值的 WGSL helper，Shader 源与规范化 Keyword 集合共同生成 `MaterialPipelineKey`；普通数值参数仍只进入 Object Uniform，不制造 Variant。不同 Keyword 组合建立不同内存 Pipeline Cache 项，同一组合不因材质数值或 Keyword 输入顺序重复编译。
+- 构建依赖扫描沿 Material/Instance→Base→Shader 图合并默认值和每层覆盖，校验所有声明并把实际组合去重写入 `assetValidation.shaderVariants`。`assetMode: all` 把全部可发布材质作为 Variant Root；`referenced` 只使用场景/Prefab 直接材质和 `alwaysInclude` 材质作为 Root，父材质仅提供继承数据，不会因为是实例依赖就额外制造一个未使用 Variant。CLI 与 Build Settings 都显示收集数量，回归覆盖同一 Shader 的两个组合以及 referenced 模式剥离未引用组合。
+
+第一遍自省发现按“扫描到的每个 Material 文件”统计会把 referenced 模式中仅作为 Instance 父层的 Base Material 误算为独立运行时 Variant；最终单独记录直接材质、alwaysInclude 和 all 模式审计根，父链只参与合并，避免预热口径从一开始就虚高。第二遍自省否决了只序列化 `enabled_keywords: string[]` 的方案：它无法表示“关闭默认开启 Keyword”，在多层实例继承中也分不清未覆盖与显式 false；最终采用名称到布尔值的稀疏覆盖映射，并补齐默认 true、父层 true、子层 false、陈旧名称和 Pipeline Key 分离回归。
+
+这一批建立的是 Keyword/Variant 契约和运行时内存缓存基础，还不是完整的离线 Shader 系统。当前 Variant 在首次绘制时由 wgpu 编译，没有构建期目标平台二进制预热包、持久化 Pipeline Cache、编译耗时/命中诊断、全局与局部 Keyword 作用域、互斥 Keyword Enum、平台/质量级条件、Variant 使用清单导出或 CI 预算门禁；helper 是可常量折叠的静态分支，不是允许条件声明任意 WGSL 符号的预处理器。材质系统还缺自定义纹理参数/实例覆盖、GPU Instancing 兼容材质缓冲、真实 Player 同管线离屏预览、Shader Graph、Frame Debugger，以及 Transmission、Sheen、Subsurface 等高级光照模型。

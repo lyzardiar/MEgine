@@ -203,6 +203,7 @@ test('buildPcPackage creates a directly launchable, hashed project bundle', () =
       auditedMaterials: 0,
       auditedMaterialInstances: 0,
       auditedSurfaceShaders: 0,
+      shaderVariants: 0,
       omittedAssetFiles: 0,
       omittedAssetBytes: 0,
       strippedEditorEntities: 0,
@@ -625,6 +626,7 @@ test('buildPcPackage referenced mode copies the validated closure and always-inc
       auditedMaterials: 1,
       auditedMaterialInstances: 0,
       auditedSurfaceShaders: 0,
+      shaderVariants: 0,
       omittedAssetFiles: 2,
       omittedAssetBytes: 10,
       strippedEditorEntities: 0,
@@ -750,6 +752,7 @@ test('buildPcPackage validates transitive material animator and audio dependenci
       auditedMaterials: 1,
       auditedMaterialInstances: 0,
       auditedSurfaceShaders: 0,
+      shaderVariants: 0,
       omittedAssetFiles: 0,
       omittedAssetBytes: 0,
       strippedEditorEntities: 0,
@@ -1157,27 +1160,36 @@ test('buildPcPackage includes validated custom material surface shaders', () => 
       } }] },
     }));
     writeFileSync(join(paths.project, 'Assets', 'Materials', 'Rim.mmat'), JSON.stringify({
-      version: 8,
+      version: 9,
       shader: 'custom',
       custom_shader: 'Assets/Shaders/Rim.mshader',
+      custom_keywords: { USE_RIM: true },
       custom_parameters: {
         rim_color: [0.2, 0.5, 1, 1],
         rim_power: [3, 0, 0, 0],
       },
+    }));
+    writeFileSync(join(paths.project, 'Assets', 'Materials', 'RimOff.mmat'), JSON.stringify({
+      version: 9,
+      shader: 'custom',
+      custom_shader: 'Assets/Shaders/Rim.mshader',
+      custom_keywords: { USE_RIM: false },
     }));
     writeFileSync(join(paths.project, 'Assets', 'Shaders', 'Rim.mshader'), `
       /* MENGINE_PARAMETERS
       {"parameters":[
         {"name":"rim_color","type":"color","default":[1,1,1,1]},
         {"name":"rim_power","type":"float","default":2,"min":0,"max":8}
-      ]}
+      ],"keywords":[{"name":"USE_RIM","default":false}]}
       */
       fn mengine_lit_surface_hook(
         surface: MEngineSurface, uv: vec2<f32>, world_position: vec3<f32>
       ) -> MEngineSurface {
         var result = surface;
         result.roughness = 0.2 + uv.x;
-        result.emissive = mengine_param_rim_color().xyz * mengine_param_rim_power();
+        if (mengine_keyword_USE_RIM()) {
+          result.emissive = mengine_param_rim_color().xyz * mengine_param_rim_power();
+        }
         return result;
       }
     `);
@@ -1191,17 +1203,31 @@ test('buildPcPackage includes validated custom material surface shaders', () => 
     assert.deepEqual(manifest.assetValidation, {
       assetMode: 'all',
       rootScenes: 2,
-      references: 5,
-      validatedFiles: 5,
+      references: 6,
+      validatedFiles: 6,
       auditedScenes: 2,
       auditedPrefabs: 0,
-      auditedMaterials: 1,
+      auditedMaterials: 2,
       auditedMaterialInstances: 0,
       auditedSurfaceShaders: 1,
+      shaderVariants: 2,
       omittedAssetFiles: 0,
       omittedAssetBytes: 0,
       strippedEditorEntities: 0
     });
+    const projectPath = join(paths.project, 'project.json');
+    const project = JSON.parse(readFileSync(projectPath, 'utf8'));
+    project.assetMode = 'referenced';
+    writeFileSync(projectPath, JSON.stringify(project));
+    const referencedOutput = join(paths.root, 'BuildReferenced');
+    const referenced = buildPcPackage({
+      projectDir: paths.project,
+      outputDir: referencedOutput,
+      runtimePath: paths.runtime,
+      engineVersion: 'test-engine',
+    });
+    assert.equal(referenced.assetValidation.shaderVariants, 1);
+    assert.equal(existsSync(join(referencedOutput, 'Assets', 'Materials', 'RimOff.mmat')), false);
   } finally {
     rmSync(paths.root, { recursive: true, force: true });
   }
@@ -1328,7 +1354,7 @@ test('all-assets mode audits unreferenced material graphs while referenced mode 
   }
 });
 
-test('buildPcPackage validates material v8 IOR, clearcoat, sampler, and parameter contracts', () => {
+test('buildPcPackage validates material v9 IOR, clearcoat, sampler, parameter, and keyword contracts', () => {
   const paths = fixture('invalid-material-contract');
   try {
     writeFileSync(join(paths.project, 'Assets', 'Scenes', 'Main.mscene'), JSON.stringify({
@@ -1337,13 +1363,13 @@ test('buildPcPackage validates material v8 IOR, clearcoat, sampler, and paramete
       } }] },
     }));
     const materialPath = join(paths.project, 'Assets', 'Materials', 'Paint.mmat');
-    writeFileSync(materialPath, JSON.stringify({ version: 9, shader: 'pbr' }));
+    writeFileSync(materialPath, JSON.stringify({ version: 10, shader: 'pbr' }));
     assert.throws(() => buildPcPackage({
       projectDir: paths.project,
       outputDir: paths.output,
       runtimePath: paths.runtime,
       engineVersion: 'test-engine',
-    }), /unsupported version 9/);
+    }), /unsupported version 10/);
     assert.equal(existsSync(paths.output), false);
 
     writeFileSync(materialPath, JSON.stringify({ version: 7, shader: 'pbr', ior: 3 }));
@@ -1612,6 +1638,7 @@ test('buildPcPackage validates tilemap sprite subresources and shared import met
       auditedMaterials: 0,
       auditedMaterialInstances: 0,
       auditedSurfaceShaders: 0,
+      shaderVariants: 0,
       omittedAssetFiles: 0,
       omittedAssetBytes: 0,
       strippedEditorEntities: 0,

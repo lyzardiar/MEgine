@@ -6,9 +6,7 @@ use crate::sky::SkyBackground;
 use crate::ui::{UiBatchPlan, UiFrameStats, UiRenderer, UiTextureError};
 use crate::RhiError;
 use glam::{Mat4, Vec3, Vec4};
-use mengine_core::surface_shader::{
-    parse_surface_shader_parameters, MAX_SURFACE_SHADER_PARAMETERS,
-};
+use mengine_core::surface_shader::{parse_surface_shader_schema, MAX_SURFACE_SHADER_PARAMETERS};
 use std::collections::{hash_map::DefaultHasher, HashMap, HashSet};
 use std::hash::{Hash, Hasher};
 use std::num::NonZeroU64;
@@ -100,6 +98,9 @@ pub struct RenderMaterial {
     /// Optional project-authored WGSL surface hook. The engine wraps and validates this hook
     /// against its stable forward-material interface before creating a pipeline.
     pub surface_shader: String,
+    /// Final enabled Surface Shader keyword set after material-instance inheritance. Keywords
+    /// specialize WGSL source and therefore participate in the material pipeline cache key.
+    pub surface_keywords: Vec<String>,
     /// Reflected Surface Shader values packed in declaration order. Each parameter owns one
     /// vec4 slot so adding one parameter never shifts the components of another parameter.
     pub custom_parameters: [[f32; 4]; MAX_SURFACE_SHADER_PARAMETERS],
@@ -163,6 +164,7 @@ impl Default for RenderMaterial {
             mipmap_filter: MaterialFilter::Linear,
             anisotropy: 1,
             surface_shader: String::new(),
+            surface_keywords: Vec::new(),
             custom_parameters: [[0.0; 4]; MAX_SURFACE_SHADER_PARAMETERS],
         }
     }
@@ -372,7 +374,10 @@ impl From<&RenderMaterial> for MaterialPipelineKey {
             },
             double_sided: material.double_sided,
             depth_write: !material.transparent || material.depth_write,
-            shader_fingerprint: surface_shader_fingerprint(&material.surface_shader),
+            shader_fingerprint: surface_shader_fingerprint(
+                &material.surface_shader,
+                &material.surface_keywords,
+            ),
         }
     }
 }
@@ -1283,7 +1288,10 @@ impl Renderer {
         {
             return;
         }
-        let source = match compose_surface_shader(&material.surface_shader) {
+        let source = match compose_surface_shader(
+            &material.surface_shader,
+            Some(&material.surface_keywords),
+        ) {
             Ok(source) => source,
             Err(error) => {
                 log::warn!("surface shader rejected: {error}");
@@ -1855,12 +1863,16 @@ fn material_address_mode(wrap: MaterialWrap) -> wgpu::AddressMode {
     }
 }
 
-fn surface_shader_fingerprint(source: &str) -> u64 {
+fn surface_shader_fingerprint(source: &str, keywords: &[String]) -> u64 {
     if source.trim().is_empty() {
         return 0;
     }
     let mut hasher = DefaultHasher::new();
     source.hash(&mut hasher);
+    let mut canonical_keywords = keywords.to_vec();
+    canonical_keywords.sort();
+    canonical_keywords.dedup();
+    canonical_keywords.hash(&mut hasher);
     let value = hasher.finish();
     if value == 0 {
         1
@@ -1888,10 +1900,13 @@ const LIT_SURFACE_HOOK_SOURCE: &str = r#"fn mengine_lit_surface_hook(
 }"#;
 
 pub fn validate_surface_shader_hook(source: &str) -> Result<(), String> {
-    compose_surface_shader(source).map(|_| ())
+    compose_surface_shader(source, None).map(|_| ())
 }
 
-fn compose_surface_shader(surface_hook: &str) -> Result<String, String> {
+fn compose_surface_shader(
+    surface_hook: &str,
+    active_keywords: Option<&[String]>,
+) -> Result<String, String> {
     let hook = surface_hook.trim();
     if hook.is_empty() {
         return Ok(FORWARD_WGSL.to_owned());
@@ -1932,7 +1947,35 @@ fn compose_surface_shader(surface_hook: &str) -> Result<String, String> {
     } else {
         LIT_SURFACE_HOOK_SOURCE
     };
-    let parameter_helpers = parse_surface_shader_parameters(hook)?
+    let schema = parse_surface_shader_schema(hook)?;
+    let enabled_keywords = if let Some(active_keywords) = active_keywords {
+        let declared = schema
+            .keywords
+            .iter()
+            .map(|keyword| keyword.name.as_str())
+            .collect::<HashSet<_>>();
+        let mut enabled = HashSet::new();
+        for keyword in active_keywords {
+            if !declared.contains(keyword.as_str()) {
+                return Err(format!(
+                    "material keyword '{keyword}' is not declared by its Surface Shader"
+                ));
+            }
+            if !enabled.insert(keyword.clone()) {
+                return Err(format!("duplicate enabled material keyword '{keyword}'"));
+            }
+        }
+        enabled
+    } else {
+        schema
+            .keywords
+            .iter()
+            .filter(|keyword| keyword.default)
+            .map(|keyword| keyword.name.clone())
+            .collect::<HashSet<_>>()
+    };
+    let parameter_helpers = schema
+        .parameters
         .iter()
         .enumerate()
         .map(|(index, parameter)| {
@@ -1946,8 +1989,20 @@ fn compose_surface_shader(surface_hook: &str) -> Result<String, String> {
         })
         .collect::<Vec<_>>()
         .join("\n");
+    let keyword_helpers = schema
+        .keywords
+        .iter()
+        .map(|keyword| {
+            format!(
+                "fn mengine_keyword_{}() -> bool {{ return {}; }}",
+                keyword.name,
+                enabled_keywords.contains(&keyword.name)
+            )
+        })
+        .collect::<Vec<_>>()
+        .join("\n");
     composed.replace_range(start..end, &format!(
-        "{SURFACE_HOOK_BEGIN}\nconst MENGINE_HAS_LIT_SURFACE_HOOK: bool = {has_lit_hook};\n{parameter_helpers}\n{hook}\n{legacy_fallback}\n{lit_fallback}\n{SURFACE_HOOK_END}"
+        "{SURFACE_HOOK_BEGIN}\nconst MENGINE_HAS_LIT_SURFACE_HOOK: bool = {has_lit_hook};\n{parameter_helpers}\n{keyword_helpers}\n{hook}\n{legacy_fallback}\n{lit_fallback}\n{SURFACE_HOOK_END}"
     ));
     let module = naga::front::wgsl::parse_str(&composed)
         .map_err(|error| format!("WGSL parse failed: {error}"))?;
@@ -3141,11 +3196,11 @@ mod tests {
                 return vec4<f32>(color.rgb + vec3<f32>(rim * uv.x), color.a);
             }
         "#;
-        let composed = compose_surface_shader(hook).unwrap();
+        let composed = compose_surface_shader(hook, None).unwrap();
         assert!(composed.contains("let rim ="));
         assert!(!composed.contains("return color;\n}\n// MENGINE_SURFACE_HOOK_END"));
-        assert_ne!(surface_shader_fingerprint(hook), 0);
-        assert_eq!(surface_shader_fingerprint(""), 0);
+        assert_ne!(surface_shader_fingerprint(hook, &[]), 0);
+        assert_eq!(surface_shader_fingerprint("", &[]), 0);
         assert!(validate_surface_shader_hook("fn mengine_surface_hook() {}").is_err());
         assert!(validate_surface_shader_hook("@fragment fn fs_main() {}").is_err());
 
@@ -3169,12 +3224,42 @@ mod tests {
                 return result;
             }
         "#;
-        let lit_composed = compose_surface_shader(lit_hook).unwrap();
+        let lit_composed = compose_surface_shader(lit_hook, None).unwrap();
         assert!(lit_composed.contains("MENGINE_HAS_LIT_SURFACE_HOOK: bool = true"));
         assert!(lit_composed.contains("fn mengine_param_rim_color() -> vec4<f32>"));
         assert!(lit_composed.contains("object.custom_parameters[1u].x"));
         assert!(lit_composed.contains("result.roughness"));
         assert!(validate_surface_shader_hook(lit_hook).is_ok());
+
+        let keyword_hook = r#"
+            /* MENGINE_PARAMETERS
+            {"keywords":[
+              {"name":"USE_RIM","default":false},
+              {"name":"USE_DETAIL","default":true}
+            ]}
+            */
+            fn mengine_lit_surface_hook(
+                surface: MEngineSurface,
+                uv: vec2<f32>,
+                world_position: vec3<f32>,
+            ) -> MEngineSurface {
+                var result = surface;
+                if (mengine_keyword_USE_RIM()) { result.emissive += vec3<f32>(1.0); }
+                if (mengine_keyword_USE_DETAIL()) { result.roughness = uv.x; }
+                return result;
+            }
+        "#;
+        let defaults = compose_surface_shader(keyword_hook, None).unwrap();
+        assert!(defaults.contains("fn mengine_keyword_USE_RIM() -> bool { return false; }"));
+        assert!(defaults.contains("fn mengine_keyword_USE_DETAIL() -> bool { return true; }"));
+        let rim = compose_surface_shader(keyword_hook, Some(&["USE_RIM".into()])).unwrap();
+        assert!(rim.contains("fn mengine_keyword_USE_RIM() -> bool { return true; }"));
+        assert!(rim.contains("fn mengine_keyword_USE_DETAIL() -> bool { return false; }"));
+        assert!(compose_surface_shader(keyword_hook, Some(&["UNKNOWN".into()])).is_err());
+        assert_ne!(
+            surface_shader_fingerprint(keyword_hook, &[]),
+            surface_shader_fingerprint(keyword_hook, &["USE_RIM".into()])
+        );
     }
 
     #[test]

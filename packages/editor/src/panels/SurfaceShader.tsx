@@ -345,7 +345,7 @@ export function SurfaceShaderEditor(props: {
       <div className="surface-shader-contract">
         <strong>Lit Surface Hook Contract</strong>
         <code>fn mengine_lit_surface_hook(surface: MEngineSurface, uv, world_position) -&gt; MEngineSurface</code>
-        <span>Fields: base_color, alpha, normal, metallic, roughness, occlusion, emissive. An optional /* MENGINE_PARAMETERS {'{'}"parameters":[...]{'}'} */ block reflects up to 16 float/vector/color values as mengine_param_name() helpers. Legacy final-color hooks remain supported. Desktop Validate/Save composes the complete Player Forward shader and runs authoritative Naga validation.</span>
+        <span>Fields: base_color, alpha, normal, metallic, roughness, occlusion, emissive. An optional /* MENGINE_PARAMETERS {'{'}"parameters":[...], "keywords":[...]{'}'} */ block reflects up to 16 numeric values as mengine_param_name() helpers and 16 static switches as mengine_keyword_NAME(). Legacy final-color hooks remain supported. Desktop Validate/Save composes the complete Player Forward shader and runs authoritative Naga validation.</span>
       </div>
       {loading && <div className="field-hint">Loading shader...</div>}
       {(error || diagnostics.length > 0) && (

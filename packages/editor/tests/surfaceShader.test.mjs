@@ -5,6 +5,7 @@ import {
   DEFAULT_SURFACE_SHADER,
   normalizeSurfaceShaderParameterValue,
   normalizeSurfaceShaderSource,
+  parseSurfaceShaderKeywords,
   parseSurfaceShaderParameters,
   surfaceShaderDiagnostics,
   validateSurfaceShaderSource,
@@ -51,6 +52,19 @@ test('surface shader parameter schema rejects drift-prone declarations', () => {
   assert.match(surfaceShaderDiagnostics(wrap('{"parameters":[{"name":"tint","type":"color","default":[1,1,1,1],"min":2}]}')).join(' '), /invalid range/);
   assert.match(surfaceShaderDiagnostics(wrap('{"parameters":[{"name":"tint","type":"color","default":[1,1,1,1],"max":2}]}')).join(' '), /invalid range/);
   assert.match(surfaceShaderDiagnostics(`${wrap('{"parameters":[]}')}\n${wrap('{"parameters":[]}')}`).join(' '), /only one parameter block/);
+});
+
+test('surface shader keyword schema reflects stable defaults and rejects drift', () => {
+  const wrap = (json) => `/* MENGINE_PARAMETERS\n${json}\n*/\n${DEFAULT_SURFACE_SHADER}`;
+  const source = wrap('{"keywords":[{"name":"USE_RIM","label":"Use Rim","default":true},{"name":"USE_DETAIL"}]}');
+  assert.deepEqual(parseSurfaceShaderKeywords(source), [
+    { name: 'USE_RIM', label: 'Use Rim', default: true },
+    { name: 'USE_DETAIL', label: 'USE DETAIL', default: false },
+  ]);
+  assert.deepEqual(surfaceShaderDiagnostics(source), []);
+  assert.match(surfaceShaderDiagnostics(wrap('{"keywords":[{"name":"BAD-NAME"}]}')).join(' '), /ASCII identifier/);
+  assert.match(surfaceShaderDiagnostics(wrap('{"keywords":[{"name":"DUP"},{"name":"DUP"}]}')).join(' '), /Duplicate/);
+  assert.match(surfaceShaderDiagnostics(wrap('{"keywords":[{"name":"FLAG","default":1}]}')).join(' '), /boolean/);
 });
 
 test('surface shader source normalizes newlines and rejects reserved entry points', () => {

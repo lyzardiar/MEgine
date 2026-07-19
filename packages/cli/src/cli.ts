@@ -376,6 +376,7 @@ function buildProject(values: string[]) {
   console.log(
     `Audited authoring assets: ${manifest.assetValidation.auditedScenes} scenes, ${manifest.assetValidation.auditedPrefabs} prefabs, ${manifest.assetValidation.auditedMaterials} materials, ${manifest.assetValidation.auditedMaterialInstances} material instances, ${manifest.assetValidation.auditedSurfaceShaders} surface shaders`,
   );
+  console.log(`Collected Surface Shader variants: ${manifest.assetValidation.shaderVariants}`);
   console.log(`EditorOnly: ${manifest.assetValidation.strippedEditorEntities} entities stripped`);
   console.log(
     `Unused assets: ${manifest.assetValidation.omittedAssetFiles} files, ${manifest.assetValidation.omittedAssetBytes} bytes omitted`,

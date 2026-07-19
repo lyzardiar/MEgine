@@ -161,6 +161,7 @@ struct BuildPlayerResult {
     audited_materials: usize,
     audited_material_instances: usize,
     audited_surface_shaders: usize,
+    shader_variants: usize,
     asset_mode: String,
     omitted_asset_files: usize,
     omitted_asset_bytes: u64,
@@ -1501,6 +1502,7 @@ fn run_player_build_controlled(
     let audited_materials = manifest_count("assetValidation", "auditedMaterials")?;
     let audited_material_instances = manifest_count("assetValidation", "auditedMaterialInstances")?;
     let audited_surface_shaders = manifest_count("assetValidation", "auditedSurfaceShaders")?;
+    let shader_variants = manifest_count("assetValidation", "shaderVariants")?;
     let omitted_asset_files = manifest_count("assetValidation", "omittedAssetFiles")?;
     let omitted_asset_bytes = manifest_u64("assetValidation", "omittedAssetBytes")?;
     let stripped_editor_entities = manifest_count("assetValidation", "strippedEditorEntities")?;
@@ -1552,6 +1554,7 @@ fn run_player_build_controlled(
         audited_materials,
         audited_material_instances,
         audited_surface_shaders,
+        shader_variants,
         asset_mode,
         omitted_asset_files,
         omitted_asset_bytes,

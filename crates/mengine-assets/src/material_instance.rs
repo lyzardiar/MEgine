@@ -3,7 +3,7 @@ use serde::{Deserialize, Serialize};
 use std::collections::BTreeMap;
 use std::path::Path;
 
-const MATERIAL_INSTANCE_VERSION: u32 = 2;
+const MATERIAL_INSTANCE_VERSION: u32 = 3;
 
 fn default_version() -> u32 {
     MATERIAL_INSTANCE_VERSION
@@ -21,6 +21,7 @@ pub struct MaterialInstanceOverrides {
     pub emissive: Option<[f32; 3]>,
     pub emissive_strength: Option<f32>,
     pub custom_parameters: BTreeMap<String, [f32; 4]>,
+    pub custom_keywords: BTreeMap<String, bool>,
 }
 
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
@@ -93,6 +94,26 @@ impl MaterialInstanceAsset {
                 )));
             }
         }
+        if self.overrides.custom_keywords.len()
+            > mengine_core::surface_shader::MAX_SURFACE_SHADER_KEYWORDS
+        {
+            return Err(AssetError::Invalid(format!(
+                "material instance declares more than {} custom keywords",
+                mengine_core::surface_shader::MAX_SURFACE_SHADER_KEYWORDS
+            )));
+        }
+        for name in self.overrides.custom_keywords.keys() {
+            let mut characters = name.chars();
+            if !matches!(characters.next(), Some(first) if first.is_ascii_alphabetic())
+                || !characters
+                    .all(|character| character.is_ascii_alphanumeric() || character == '_')
+                || name.len() > 48
+            {
+                return Err(AssetError::Invalid(format!(
+                    "invalid custom material instance keyword '{name}'"
+                )));
+            }
+        }
         Ok(self)
     }
 
@@ -131,6 +152,19 @@ impl MaterialInstanceAsset {
             parent.custom_parameters.extend(
                 self.overrides
                     .custom_parameters
+                    .iter()
+                    .map(|(name, value)| (name.clone(), *value)),
+            );
+        }
+        if !self.overrides.custom_keywords.is_empty() {
+            if parent.shader != MaterialShader::Custom {
+                return Err(AssetError::Invalid(
+                    "custom material instance keywords require a custom parent material".into(),
+                ));
+            }
+            parent.custom_keywords.extend(
+                self.overrides
+                    .custom_keywords
                     .iter()
                     .map(|(name, value)| (name.clone(), *value)),
             );
@@ -179,7 +213,7 @@ mod tests {
         )
         .unwrap();
         assert_eq!(instance.parent, "Assets/Materials/Glass.mmat");
-        assert_eq!(instance.version, 2);
+        assert_eq!(instance.version, 3);
         let material = instance.apply_to(MaterialAsset::default()).unwrap();
         assert_eq!(material.name, "Ocean Glass");
         assert_eq!(material.base_color, [0.1, 0.3, 1.0, 0.8]);
@@ -192,7 +226,7 @@ mod tests {
     #[test]
     fn instance_rejects_future_versions_and_unsafe_or_missing_parents() {
         assert!(
-            parse_material_instance_asset(br#"{"version":3,"parent":"Assets/A.mmat"}"#).is_err()
+            parse_material_instance_asset(br#"{"version":4,"parent":"Assets/A.mmat"}"#).is_err()
         );
         assert!(parse_material_instance_asset(br#"{"version":1}"#).is_err());
         assert!(
@@ -205,7 +239,7 @@ mod tests {
             parse_material_instance_asset(br#"{"parent":"Assets/A.mmat"}"#)
                 .unwrap()
                 .version,
-            2
+            3
         );
     }
 
@@ -215,7 +249,7 @@ mod tests {
             br#"{"version":1,"parent":"Assets/Base.mmat","overrides":{"custom_parameters":{"rim_power":[3,0,0,0]}}}"#,
         )
         .unwrap();
-        assert_eq!(instance.version, 2);
+        assert_eq!(instance.version, 3);
         let mut parent = MaterialAsset {
             shader: MaterialShader::Custom,
             ..MaterialAsset::default()
@@ -226,6 +260,25 @@ mod tests {
         let resolved = instance.apply_to(parent).unwrap();
         assert_eq!(resolved.custom_parameters["rim_power"][0], 3.0);
         assert_eq!(resolved.custom_parameters["rim_color"][1], 0.5);
+        assert!(instance.apply_to(MaterialAsset::default()).is_err());
+    }
+
+    #[test]
+    fn instance_custom_keywords_upgrade_merge_and_require_a_custom_parent() {
+        let instance = parse_material_instance_asset(
+            br#"{"version":2,"parent":"Assets/Base.mmat","overrides":{"custom_keywords":{"USE_RIM":false}}}"#,
+        )
+        .unwrap();
+        assert_eq!(instance.version, 3);
+        let mut parent = MaterialAsset {
+            shader: MaterialShader::Custom,
+            ..MaterialAsset::default()
+        };
+        parent.custom_keywords.insert("USE_RIM".into(), true);
+        parent.custom_keywords.insert("USE_DETAIL".into(), true);
+        let resolved = instance.apply_to(parent).unwrap();
+        assert!(!resolved.custom_keywords["USE_RIM"]);
+        assert!(resolved.custom_keywords["USE_DETAIL"]);
         assert!(instance.apply_to(MaterialAsset::default()).is_err());
     }
 }

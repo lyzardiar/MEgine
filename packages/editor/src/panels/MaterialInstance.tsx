@@ -43,9 +43,12 @@ import {
 import type { MaterialEditorProps } from './Material';
 import {
   normalizeSurfaceShaderParameterValue,
+  parseSurfaceShaderKeywords,
   parseSurfaceShaderParameters,
   surfaceShaderParameterComponents,
+  validateSurfaceShaderKeywordValues,
   validateSurfaceShaderParameterValues,
+  type SurfaceShaderKeyword,
   type SurfaceShaderParameter,
 } from '../surfaceShader';
 
@@ -143,6 +146,7 @@ export function MaterialInstanceEditor(props: MaterialEditorProps) {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [shaderParameters, setShaderParameters] = useState<SurfaceShaderParameter[]>([]);
+  const [shaderKeywords, setShaderKeywords] = useState<SurfaceShaderKeyword[]>([]);
   const [shaderParameterError, setShaderParameterError] = useState<string | null>(null);
   const [assetRevision, setAssetRevision] = useState(0);
   const [draftEpoch, setDraftEpoch] = useState(0);
@@ -264,6 +268,7 @@ export function MaterialInstanceEditor(props: MaterialEditorProps) {
   useEffect(() => {
     let cancelled = false;
     setShaderParameters([]);
+    setShaderKeywords([]);
     setShaderParameterError(null);
     if (effective?.shader !== 'custom' || !effective.custom_shader) {
       return () => { cancelled = true; };
@@ -272,6 +277,7 @@ export function MaterialInstanceEditor(props: MaterialEditorProps) {
       .then((source) => {
         if (cancelled) return;
         setShaderParameters(parseSurfaceShaderParameters(source));
+        setShaderKeywords(parseSurfaceShaderKeywords(source));
       })
       .catch((reason) => {
         if (!cancelled) {
@@ -285,11 +291,12 @@ export function MaterialInstanceEditor(props: MaterialEditorProps) {
     if (!effective || shaderParameterError || effective.shader !== 'custom') return null;
     try {
       validateSurfaceShaderParameterValues(shaderParameters, effective.custom_parameters);
+      validateSurfaceShaderKeywordValues(shaderKeywords, effective.custom_keywords);
       return null;
     } catch (reason) {
       return reason instanceof Error ? reason.message : String(reason);
     }
-  }, [effective, shaderParameterError, shaderParameters]);
+  }, [effective, shaderKeywords, shaderParameterError, shaderParameters]);
 
   const serialized = useMemo(
     () => instance ? serializeMaterialInstanceAsset(instance) : '',
@@ -425,13 +432,40 @@ export function MaterialInstanceEditor(props: MaterialEditorProps) {
     }, `${enabled ? 'Enable' : 'Disable'} ${parameter.label} Override`);
   };
 
+  const setCustomKeyword = (name: string, value: boolean) => updateInstance((current) => ({
+    ...current,
+    overrides: {
+      ...current.overrides,
+      custom_keywords: {
+        ...current.overrides.custom_keywords,
+        [name]: value,
+      },
+    },
+  }), `Edit Material Instance ${name}`);
+
+  const toggleCustomKeyword = (keyword: SurfaceShaderKeyword, enabled: boolean) => {
+    updateInstance((current) => {
+      const custom_keywords = { ...current.overrides.custom_keywords };
+      if (enabled) {
+        custom_keywords[keyword.name] = effective?.custom_keywords[keyword.name] ?? keyword.default;
+      } else {
+        delete custom_keywords[keyword.name];
+      }
+      const overrides = { ...current.overrides };
+      if (Object.keys(custom_keywords).length > 0) overrides.custom_keywords = custom_keywords;
+      else delete overrides.custom_keywords;
+      return { ...current, overrides };
+    }, `${enabled ? 'Enable' : 'Disable'} ${keyword.label} Override`);
+  };
+
   const validateResolvedCustomParameters = async (material: MaterialAsset) => {
     if (material.shader !== 'custom') return;
     if (!material.custom_shader) throw new Error('Custom materials require a Surface Shader asset');
-    const parameters = parseSurfaceShaderParameters(
-      await readProjectAssetText(material.custom_shader),
-    );
+    const source = await readProjectAssetText(material.custom_shader);
+    const parameters = parseSurfaceShaderParameters(source);
+    const keywords = parseSurfaceShaderKeywords(source);
     validateSurfaceShaderParameterValues(parameters, material.custom_parameters);
+    validateSurfaceShaderKeywordValues(keywords, material.custom_keywords);
   };
 
   const beginEdit = (event: ReactFocusEvent<HTMLDivElement>) => {
@@ -573,9 +607,11 @@ export function MaterialInstanceEditor(props: MaterialEditorProps) {
   const displayed = effective ?? createMaterialAsset(instance.name);
   const reflectedParameterError = shaderParameterError ?? shaderBindingError;
   const ownCustomParameters = instance.overrides.custom_parameters ?? {};
-  const customOverrideCount = Object.keys(ownCustomParameters).length;
+  const ownCustomKeywords = instance.overrides.custom_keywords ?? {};
+  const customOverrideCount = Object.keys(ownCustomParameters).length
+    + Object.keys(ownCustomKeywords).length;
   const standardOverrideCount = Object.keys(instance.overrides)
-    .filter((field) => field !== 'custom_parameters').length;
+    .filter((field) => field !== 'custom_parameters' && field !== 'custom_keywords').length;
   const dielectricF0 = ((displayed.ior - 1) / (displayed.ior + 1)) ** 2;
   const parentMissing = !materialAssets.some(
     (asset) => asset.relPath.toLowerCase() === instance.parent.toLowerCase(),
@@ -698,9 +734,11 @@ export function MaterialInstanceEditor(props: MaterialEditorProps) {
           {displayed.shader === 'custom' && reflectedParameterError && (
             <div className="material-parameter-error">
               <span>{reflectedParameterError}</span>
-              {shaderParameters.length > 0 && Object.keys(ownCustomParameters).some(
+              {(Object.keys(ownCustomParameters).some(
                 (name) => !shaderParameters.some((parameter) => parameter.name === name),
-              ) && (
+              ) || Object.keys(ownCustomKeywords).some(
+                (name) => !shaderKeywords.some((keyword) => keyword.name === name),
+              )) && (
                 <button type="button" onClick={() => {
                   updateInstance((current) => {
                     const custom_parameters = Object.fromEntries(Object.entries(
@@ -714,10 +752,47 @@ export function MaterialInstanceEditor(props: MaterialEditorProps) {
                     } else {
                       delete overrides.custom_parameters;
                     }
+                    const custom_keywords = Object.fromEntries(Object.entries(
+                      current.overrides.custom_keywords ?? {},
+                    ).filter(([name]) => shaderKeywords.some(
+                      (keyword) => keyword.name === name,
+                    )));
+                    if (Object.keys(custom_keywords).length > 0) {
+                      overrides.custom_keywords = custom_keywords;
+                    } else {
+                      delete overrides.custom_keywords;
+                    }
                     return { ...current, overrides };
-                  }, 'Remove Stale Material Instance Parameters');
+                  }, 'Remove Stale Material Instance Shader Values');
                 }}>Remove Stale Values</button>
               )}
+            </div>
+          )}
+          {displayed.shader === 'custom' && shaderKeywords.length > 0 && (
+            <div className="material-custom-parameters material-instance-custom-parameters material-custom-keywords">
+              <strong>Surface Shader Keywords</strong>
+              {shaderKeywords.map((keyword) => {
+                const isOverridden = Object.hasOwn(ownCustomKeywords, keyword.name);
+                const enabled = displayed.custom_keywords[keyword.name] ?? keyword.default;
+                return (
+                  <label key={keyword.name} className={isOverridden ? '' : 'inherited'}>
+                    <input
+                      aria-label={`Override ${keyword.label}`}
+                      type="checkbox"
+                      checked={isOverridden}
+                      onChange={(event) => toggleCustomKeyword(keyword, event.target.checked)}
+                    />
+                    <span>{keyword.label}<small>{isOverridden ? 'Override' : 'Inherited'}</small></span>
+                    <input
+                      aria-label={keyword.label}
+                      type="checkbox"
+                      checked={enabled}
+                      disabled={!isOverridden}
+                      onChange={(event) => setCustomKeyword(keyword.name, event.target.checked)}
+                    />
+                  </label>
+                );
+              })}
             </div>
           )}
           {displayed.shader === 'custom' && shaderParameters.length > 0 && (

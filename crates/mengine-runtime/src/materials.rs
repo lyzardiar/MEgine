@@ -5,9 +5,7 @@ use mengine_assets::{
     MaterialInstanceAsset, MaterialShader, MaterialSurface, MaterialWrap as AssetMaterialWrap,
 };
 use mengine_core::generated::MaterialPropertyBlock;
-use mengine_core::surface_shader::{
-    parse_surface_shader_parameters, MAX_SURFACE_SHADER_PARAMETERS,
-};
+use mengine_core::surface_shader::{parse_surface_shader_schema, MAX_SURFACE_SHADER_PARAMETERS};
 use mengine_rhi::{
     validate_surface_shader_hook, MaterialBlendMode, MaterialFilter, MaterialWrap, RenderMaterial,
 };
@@ -68,8 +66,25 @@ impl RuntimeMaterialCache {
                     match self.load_custom_shader(&material.custom_shader) {
                         Ok(source) => match pack_surface_shader_parameters(&material, &source) {
                             Ok(parameters) => {
-                                render.surface_shader = (*source).clone();
-                                render.custom_parameters = parameters;
+                                match resolve_surface_shader_keywords(&material, &source) {
+                                    Ok(keywords) => {
+                                        render.surface_shader = (*source).clone();
+                                        render.surface_keywords = keywords;
+                                        render.custom_parameters = parameters;
+                                    }
+                                    Err(error) => {
+                                        if self
+                                            .reported_failures
+                                            .insert((material.custom_shader.clone(), error.clone()))
+                                        {
+                                            log::warn!(
+                                                "custom shader keywords for '{}' are invalid: {}",
+                                                material.custom_shader,
+                                                error
+                                            );
+                                        }
+                                    }
+                                }
                             }
                             Err(error) => {
                                 if self
@@ -275,7 +290,7 @@ pub fn pack_surface_shader_parameters(
     material: &MaterialAsset,
     shader_source: &str,
 ) -> Result<[[f32; 4]; MAX_SURFACE_SHADER_PARAMETERS], String> {
-    let schema = parse_surface_shader_parameters(shader_source)?;
+    let schema = parse_surface_shader_schema(shader_source)?.parameters;
     if let Some(unknown) = material.custom_parameters.keys().find(|name| {
         !schema
             .iter()
@@ -307,6 +322,33 @@ pub fn pack_surface_shader_parameters(
         packed[index] = value;
     }
     Ok(packed)
+}
+
+pub fn resolve_surface_shader_keywords(
+    material: &MaterialAsset,
+    shader_source: &str,
+) -> Result<Vec<String>, String> {
+    let schema = parse_surface_shader_schema(shader_source)?.keywords;
+    if let Some(unknown) = material.custom_keywords.keys().find(|name| {
+        !schema
+            .iter()
+            .any(|keyword| keyword.name.as_str() == name.as_str())
+    }) {
+        return Err(format!(
+            "material keyword '{unknown}' is not declared by its Surface Shader"
+        ));
+    }
+    Ok(schema
+        .iter()
+        .filter(|keyword| {
+            material
+                .custom_keywords
+                .get(&keyword.name)
+                .copied()
+                .unwrap_or(keyword.default)
+        })
+        .map(|keyword| keyword.name.clone())
+        .collect())
 }
 
 pub fn render_material_from_asset(material: &MaterialAsset) -> RenderMaterial {
@@ -366,6 +408,7 @@ pub fn render_material_from_asset(material: &MaterialAsset) -> RenderMaterial {
         },
         anisotropy: material.anisotropy,
         surface_shader: String::new(),
+        surface_keywords: Vec::new(),
         custom_parameters: [[0.0; 4]; MAX_SURFACE_SHADER_PARAMETERS],
     }
 }
@@ -622,6 +665,37 @@ mod tests {
             .custom_parameters
             .insert("removed".into(), [1.0, 0.0, 0.0, 0.0]);
         assert!(pack_surface_shader_parameters(&material, shader)
+            .unwrap_err()
+            .contains("not declared"));
+    }
+
+    #[test]
+    fn surface_shader_keywords_resolve_defaults_and_material_overrides() {
+        let shader = r#"/* MENGINE_PARAMETERS
+        {"keywords":[
+          {"name":"USE_RIM","default":true},
+          {"name":"USE_DETAIL","default":false}
+        ]}
+        */
+        fn mengine_lit_surface_hook(
+          surface: MEngineSurface, uv: vec2<f32>, world_position: vec3<f32>
+        ) -> MEngineSurface { return surface; }"#;
+        let mut material = MaterialAsset {
+            shader: MaterialShader::Custom,
+            ..MaterialAsset::default()
+        };
+        assert_eq!(
+            resolve_surface_shader_keywords(&material, shader).unwrap(),
+            vec!["USE_RIM"]
+        );
+        material.custom_keywords.insert("USE_RIM".into(), false);
+        material.custom_keywords.insert("USE_DETAIL".into(), true);
+        assert_eq!(
+            resolve_surface_shader_keywords(&material, shader).unwrap(),
+            vec!["USE_DETAIL"]
+        );
+        material.custom_keywords.insert("STALE".into(), true);
+        assert!(resolve_surface_shader_keywords(&material, shader)
             .unwrap_err()
             .contains("not declared"));
     }

@@ -43,9 +43,12 @@ import {
 import { MaterialInstanceEditor } from './MaterialInstance';
 import {
   normalizeSurfaceShaderParameterValue,
+  parseSurfaceShaderKeywords,
   parseSurfaceShaderParameters,
   surfaceShaderParameterComponents,
+  validateSurfaceShaderKeywordValues,
   validateSurfaceShaderParameterValues,
+  type SurfaceShaderKeyword,
   type SurfaceShaderParameter,
 } from '../surfaceShader';
 
@@ -230,6 +233,7 @@ function BaseMaterialEditor(props: MaterialEditorProps) {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [shaderParameters, setShaderParameters] = useState<SurfaceShaderParameter[]>([]);
+  const [shaderKeywords, setShaderKeywords] = useState<SurfaceShaderKeyword[]>([]);
   const [shaderParameterError, setShaderParameterError] = useState<string | null>(null);
   const [assetRevision, setAssetRevision] = useState(0);
   const [, setDraftEpoch] = useState(0);
@@ -328,6 +332,7 @@ function BaseMaterialEditor(props: MaterialEditorProps) {
   useEffect(() => {
     let cancelled = false;
     setShaderParameters([]);
+    setShaderKeywords([]);
     setShaderParameterError(null);
     if (material?.shader !== 'custom' || !material.custom_shader) {
       return () => { cancelled = true; };
@@ -336,8 +341,11 @@ function BaseMaterialEditor(props: MaterialEditorProps) {
       .then((source) => {
         if (cancelled) return;
         const parameters = parseSurfaceShaderParameters(source);
+        const keywords = parseSurfaceShaderKeywords(source);
         setShaderParameters(parameters);
+        setShaderKeywords(keywords);
         validateSurfaceShaderParameterValues(parameters, material.custom_parameters);
+        validateSurfaceShaderKeywordValues(keywords, material.custom_keywords);
       })
       .catch((reason) => {
         if (!cancelled) {
@@ -449,10 +457,11 @@ function BaseMaterialEditor(props: MaterialEditorProps) {
   const validateCustomParameters = async (candidate: MaterialAsset) => {
     if (candidate.shader !== 'custom') return;
     if (!candidate.custom_shader) throw new Error('Custom materials require a Surface Shader asset');
-    const parameters = parseSurfaceShaderParameters(
-      await readProjectAssetText(candidate.custom_shader),
-    );
+    const source = await readProjectAssetText(candidate.custom_shader);
+    const parameters = parseSurfaceShaderParameters(source);
+    const keywords = parseSurfaceShaderKeywords(source);
     validateSurfaceShaderParameterValues(parameters, candidate.custom_parameters);
+    validateSurfaceShaderKeywordValues(keywords, candidate.custom_keywords);
   };
 
   const save = async (): Promise<boolean> => {
@@ -630,7 +639,7 @@ function BaseMaterialEditor(props: MaterialEditorProps) {
               (current) => ({
                 ...current,
                 shader,
-                ...(shader === 'custom' ? {} : { custom_parameters: {} }),
+                ...(shader === 'custom' ? {} : { custom_parameters: {}, custom_keywords: {} }),
               }),
               'Edit Material Shader',
             );
@@ -649,6 +658,9 @@ function BaseMaterialEditor(props: MaterialEditorProps) {
                     custom_shader: event.target.value,
                     custom_parameters: event.target.value === current.custom_shader
                       ? current.custom_parameters
+                      : {},
+                    custom_keywords: event.target.value === current.custom_shader
+                      ? current.custom_keywords
                       : {},
                   }),
                   'Edit Material Surface Shader',
@@ -674,19 +686,57 @@ function BaseMaterialEditor(props: MaterialEditorProps) {
           {material.shader === 'custom' && shaderParameterError && (
             <div className="material-parameter-error">
               <span>{shaderParameterError}</span>
-              {shaderParameters.length > 0 && (
+              {(shaderParameters.length > 0 || shaderKeywords.length > 0) && (
                 <button type="button" onClick={() => {
                   updateMaterial(
                     (current) => ({
                       ...current,
                       custom_parameters: Object.fromEntries(Object.entries(current.custom_parameters)
                         .filter(([name]) => shaderParameters.some((parameter) => parameter.name === name))),
+                      custom_keywords: Object.fromEntries(Object.entries(current.custom_keywords)
+                        .filter(([name]) => shaderKeywords.some((keyword) => keyword.name === name))),
                     }),
                     'Remove Stale Material Parameters',
                   );
                   setShaderParameterError(null);
                 }}>Remove Stale Values</button>
               )}
+            </div>
+          )}
+          {material.shader === 'custom' && shaderKeywords.length > 0 && (
+            <div className="material-custom-parameters material-custom-keywords">
+              <strong>Surface Shader Keywords</strong>
+              {shaderKeywords.map((keyword) => {
+                const overridden = Object.hasOwn(material.custom_keywords, keyword.name);
+                const enabled = material.custom_keywords[keyword.name] ?? keyword.default;
+                return (
+                  <label key={keyword.name}>
+                    {keyword.label}
+                    <input
+                      type="checkbox"
+                      checked={enabled}
+                      onChange={(event) => updateMaterial(
+                        (current) => ({
+                          ...current,
+                          custom_keywords: {
+                            ...current.custom_keywords,
+                            [keyword.name]: event.target.checked,
+                          },
+                        }),
+                        `Edit Material ${keyword.label}`,
+                      )}
+                    />
+                    <button type="button" disabled={!overridden} onClick={() => updateMaterial(
+                      (current) => {
+                        const custom_keywords = { ...current.custom_keywords };
+                        delete custom_keywords[keyword.name];
+                        return { ...current, custom_keywords };
+                      },
+                      `Reset Material ${keyword.label}`,
+                    )}>Reset</button>
+                  </label>
+                );
+              })}
             </div>
           )}
           {material.shader === 'custom' && shaderParameters.length > 0 && (

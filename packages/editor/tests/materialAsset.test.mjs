@@ -11,11 +11,12 @@ import {
 
 test('material assets have stable authoring defaults', () => {
   assert.deepEqual(createMaterialAsset('Paint'), {
-    version: 8,
+    version: 9,
     name: 'Paint',
     shader: 'pbr',
     custom_shader: '',
     custom_parameters: {},
+    custom_keywords: {},
     surface: 'opaque',
     blend_mode: 'alpha',
     transparent_depth_write: false,
@@ -102,7 +103,7 @@ test('legacy material assets upgrade to safe pipeline defaults', () => {
     name: 'Legacy',
     surface: 'transparent',
   }));
-  assert.equal(legacy.version, 8);
+  assert.equal(legacy.version, 9);
   assert.equal(legacy.blend_mode, 'alpha');
   assert.equal(legacy.transparent_depth_write, false);
   assert.equal(legacy.render_queue, -1);
@@ -112,7 +113,7 @@ test('legacy material assets upgrade to safe pipeline defaults', () => {
   assert.equal(legacy.clearcoat, 0);
   assert.equal(legacy.clearcoat_roughness, 0.1);
   assert.equal(legacy.ior, 1.5);
-  assert.throws(() => parseMaterialAsset('{"version":9}'), /Unsupported material version/);
+  assert.throws(() => parseMaterialAsset('{"version":10}'), /Unsupported material version/);
   assert.throws(() => parseMaterialAsset('{"version":6,"filter":"cubic"}'), /Invalid material filter/);
   assert.throws(() => parseMaterialAsset('{"version":6,"mipmap_filter":"cubic"}'), /Invalid material mipmap_filter/);
 });
@@ -158,7 +159,7 @@ test('custom material shader references normalize project separators', () => {
   assert.equal(material.custom_shader, 'Assets/Shaders/Rim.mshader');
 });
 
-test('material v8 stores bounded reflected shader values', () => {
+test('material v9 upgrades reflected values and stores keyword overrides', () => {
   const material = parseMaterialAsset(JSON.stringify({
     version: 8,
     shader: 'custom',
@@ -167,11 +168,13 @@ test('material v8 stores bounded reflected shader values', () => {
       rim_power: [2, 0, 0, 0],
       rim_color: [1, 0.5, 0, 1],
     },
+    custom_keywords: { USE_RIM: true, USE_DETAIL: false },
   }));
   assert.deepEqual(material.custom_parameters, {
     rim_color: [1, 0.5, 0, 1],
     rim_power: [2, 0, 0, 0],
   });
+  assert.deepEqual(material.custom_keywords, { USE_DETAIL: false, USE_RIM: true });
   assert.deepEqual(parseMaterialAsset(serializeMaterialAsset(material)), material);
   assert.throws(() => parseMaterialAsset(JSON.stringify({
     version: 8,
@@ -183,6 +186,11 @@ test('material v8 stores bounded reflected shader values', () => {
     shader: 'custom',
     custom_parameters: { 'bad-name': [2, 0, 0, 0] },
   })), /Invalid custom material parameter name/);
+  assert.throws(() => parseMaterialAsset(JSON.stringify({
+    version: 9,
+    shader: 'custom',
+    custom_keywords: { USE_RIM: 1 },
+  })), /must be a boolean/);
 });
 
 test('material references report missing and unsupported authoring assets', () => {

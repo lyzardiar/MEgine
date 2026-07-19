@@ -154,6 +154,7 @@ export type BuildPlayerResult = {
   auditedMaterials: number;
   auditedMaterialInstances: number;
   auditedSurfaceShaders: number;
+  shaderVariants: number;
   assetMode: 'all' | 'referenced';
   omittedAssetFiles: number;
   omittedAssetBytes: number;

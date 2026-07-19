@@ -1,9 +1,11 @@
 import {
   normalizeMaterialAsset,
+  normalizeMaterialCustomKeywords,
   normalizeMaterialCustomParameters,
   parseMaterialAsset,
   type MaterialAsset,
   type MaterialCustomParameters,
+  type MaterialCustomKeywords,
 } from './materialAsset.ts';
 import { normalizeProjectAssetPath, readProjectAssetText } from './projectAssets.ts';
 
@@ -17,15 +19,19 @@ export const MATERIAL_INSTANCE_OVERRIDE_FIELDS = [
   'emissive',
   'emissive_strength',
   'custom_parameters',
+  'custom_keywords',
 ] as const;
 
 export type MaterialInstanceOverrideField = typeof MATERIAL_INSTANCE_OVERRIDE_FIELDS[number];
 export type MaterialInstanceOverrides = Partial<
-  Pick<MaterialAsset, Exclude<MaterialInstanceOverrideField, 'custom_parameters'>>
-> & { custom_parameters?: MaterialCustomParameters };
+  Pick<MaterialAsset, Exclude<MaterialInstanceOverrideField, 'custom_parameters' | 'custom_keywords'>>
+> & {
+  custom_parameters?: MaterialCustomParameters;
+  custom_keywords?: MaterialCustomKeywords;
+};
 
 export type MaterialInstanceAsset = {
-  version: 2;
+  version: 3;
   name: string;
   parent: string;
   overrides: MaterialInstanceOverrides;
@@ -35,7 +41,7 @@ export function createMaterialInstanceAsset(
   name = 'New Material Instance',
   parent = '',
 ): MaterialInstanceAsset {
-  return { version: 2, name, parent, overrides: {} };
+  return { version: 3, name, parent, overrides: {} };
 }
 
 function finite(value: unknown, fallback: number, minimum: number, maximum: number): number {
@@ -83,9 +89,13 @@ export function normalizeMaterialInstanceAsset(value: unknown): MaterialInstance
     const values = normalizeMaterialCustomParameters(input.custom_parameters);
     if (Object.keys(values).length > 0) overrides.custom_parameters = values;
   }
+  if (input.custom_keywords != null) {
+    const values = normalizeMaterialCustomKeywords(input.custom_keywords);
+    if (Object.keys(values).length > 0) overrides.custom_keywords = values;
+  }
   let parent = String(source.parent ?? '').trim().replace(/\\/g, '/');
   if (parent) parent = normalizeProjectAssetPath(parent);
-  return { version: 2, name: String(source.name ?? ''), parent, overrides };
+  return { version: 3, name: String(source.name ?? ''), parent, overrides };
 }
 
 export function parseMaterialInstanceAsset(text: string): MaterialInstanceAsset {
@@ -94,7 +104,7 @@ export function parseMaterialInstanceAsset(text: string): MaterialInstanceAsset 
     throw new Error('Material Instance root must be an object');
   }
   const source = parsed as Record<string, unknown>;
-  if (source.version != null && source.version !== 1 && source.version !== 2) {
+  if (source.version != null && source.version !== 1 && source.version !== 2 && source.version !== 3) {
     throw new Error(`Unsupported material instance version: ${String(source.version)}`);
   }
   if (typeof source.parent !== 'string' || !source.parent.trim()) {
@@ -115,7 +125,7 @@ export function parseMaterialInstanceAsset(text: string): MaterialInstanceAsset 
 }
 
 export function serializeMaterialInstanceAsset(instance: MaterialInstanceAsset): string {
-  if (instance.version !== 2) {
+  if (instance.version !== 3) {
     throw new Error(`Unsupported material instance version: ${instance.version}`);
   }
   const normalized = normalizeMaterialInstanceAsset(instance);
@@ -130,12 +140,17 @@ export function applyMaterialInstance(
   const customParameters = instance.overrides.custom_parameters == null
     ? parent.custom_parameters
     : { ...parent.custom_parameters, ...instance.overrides.custom_parameters };
+  const customKeywords = instance.overrides.custom_keywords == null
+    ? parent.custom_keywords
+    : { ...parent.custom_keywords, ...instance.overrides.custom_keywords };
   const overrides = structuredClone(instance.overrides);
   delete overrides.custom_parameters;
+  delete overrides.custom_keywords;
   return normalizeMaterialAsset({
     ...structuredClone(parent),
     ...structuredClone(overrides),
     custom_parameters: customParameters,
+    custom_keywords: customKeywords,
     name: instance.name,
   });
 }

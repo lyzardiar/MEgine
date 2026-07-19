@@ -20,6 +20,7 @@ export type MaterialReferenceDiagnostic = {
 };
 
 export type MaterialCustomParameters = Record<string, [number, number, number, number]>;
+export type MaterialCustomKeywords = Record<string, boolean>;
 
 export type MaterialAsset = {
   version: number;
@@ -27,6 +28,7 @@ export type MaterialAsset = {
   shader: MaterialShader;
   custom_shader: string;
   custom_parameters: MaterialCustomParameters;
+  custom_keywords: MaterialCustomKeywords;
   surface: MaterialSurface;
   blend_mode: MaterialBlendMode;
   transparent_depth_write: boolean;
@@ -101,11 +103,12 @@ export function materialReferenceDiagnostics(
 
 export function createMaterialAsset(name = 'New Material'): MaterialAsset {
   return {
-    version: 8,
+    version: 9,
     name,
     shader: 'pbr',
     custom_shader: '',
     custom_parameters: {},
+    custom_keywords: {},
     surface: 'opaque',
     blend_mode: 'alpha',
     transparent_depth_write: false,
@@ -169,6 +172,26 @@ export function normalizeMaterialCustomParameters(value: unknown): MaterialCusto
   return result;
 }
 
+export function normalizeMaterialCustomKeywords(value: unknown): MaterialCustomKeywords {
+  if (value == null) return {};
+  if (typeof value !== 'object' || Array.isArray(value)) {
+    throw new Error('Material custom_keywords must be an object');
+  }
+  const entries = Object.entries(value as Record<string, unknown>);
+  if (entries.length > 16) throw new Error('Material cannot contain more than 16 custom keywords');
+  const result: MaterialCustomKeywords = {};
+  for (const [name, raw] of entries.sort(([left], [right]) => left.localeCompare(right))) {
+    if (!/^[A-Za-z][A-Za-z0-9_]{0,47}$/.test(name)) {
+      throw new Error(`Invalid custom material keyword name: ${name}`);
+    }
+    if (typeof raw !== 'boolean') {
+      throw new Error(`Custom material keyword '${name}' must be a boolean`);
+    }
+    result[name] = raw;
+  }
+  return result;
+}
+
 export function normalizeMaterialAsset(value: unknown): MaterialAsset {
   const source = value != null && typeof value === 'object' && !Array.isArray(value)
     ? value as Record<string, unknown>
@@ -182,15 +205,18 @@ export function normalizeMaterialAsset(value: unknown): MaterialAsset {
     ? source.shader
     : 'pbr';
   const reflectedParameters = normalizeMaterialCustomParameters(source.custom_parameters);
-  if (shader !== 'custom' && Object.keys(reflectedParameters).length > 0) {
-    throw new Error('Only custom materials can contain custom_parameters');
+  const reflectedKeywords = normalizeMaterialCustomKeywords(source.custom_keywords);
+  if (shader !== 'custom'
+    && (Object.keys(reflectedParameters).length > 0 || Object.keys(reflectedKeywords).length > 0)) {
+    throw new Error('Only custom materials can contain custom_parameters or custom_keywords');
   }
   return {
-    version: 8,
+    version: 9,
     name: String(source.name ?? ''),
     shader,
     custom_shader: String(source.custom_shader ?? '').trim().replace(/\\/g, '/'),
     custom_parameters: reflectedParameters,
+    custom_keywords: reflectedKeywords,
     surface: source.surface === 'transparent' || source.surface === 'cutout'
       ? source.surface
       : 'opaque',
@@ -240,7 +266,7 @@ export function parseMaterialAsset(text: string): MaterialAsset {
   }
   const source = parsed as Record<string, unknown>;
   if (source.version != null
-    && (!Number.isInteger(source.version) || Number(source.version) < 1 || Number(source.version) > 8)) {
+    && (!Number.isInteger(source.version) || Number(source.version) < 1 || Number(source.version) > 9)) {
     throw new Error(`Unsupported material version: ${String(source.version)}`);
   }
   const enumField = (field: string, allowed: readonly string[]) => {
@@ -260,10 +286,14 @@ export function parseMaterialAsset(text: string): MaterialAsset {
     && Object.keys(normalizeMaterialCustomParameters(source.custom_parameters)).length > 0) {
     throw new Error('Only custom materials can contain custom_parameters');
   }
+  if (source.shader !== 'custom' && source.custom_keywords != null
+    && Object.keys(normalizeMaterialCustomKeywords(source.custom_keywords)).length > 0) {
+    throw new Error('Only custom materials can contain custom_keywords');
+  }
   return normalizeMaterialAsset(source);
 }
 
 export function serializeMaterialAsset(material: MaterialAsset): string {
-  if (material.version !== 8) throw new Error(`Unsupported material version: ${material.version}`);
+  if (material.version !== 9) throw new Error(`Unsupported material version: ${material.version}`);
   return `${JSON.stringify(normalizeMaterialAsset(material), null, 2)}\n`;
 }

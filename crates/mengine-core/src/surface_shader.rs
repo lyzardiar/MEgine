@@ -4,6 +4,7 @@ use std::collections::HashSet;
 
 pub const SURFACE_SHADER_PARAMETERS_MARKER: &str = "/* MENGINE_PARAMETERS";
 pub const MAX_SURFACE_SHADER_PARAMETERS: usize = 16;
+pub const MAX_SURFACE_SHADER_KEYWORDS: usize = 16;
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum SurfaceShaderParameterType {
@@ -53,10 +54,26 @@ pub struct SurfaceShaderParameter {
     pub max: Option<f32>,
 }
 
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub struct SurfaceShaderKeyword {
+    pub name: String,
+    pub label: String,
+    pub default: bool,
+}
+
+#[derive(Clone, Debug, Default, PartialEq)]
+pub struct SurfaceShaderSchema {
+    pub parameters: Vec<SurfaceShaderParameter>,
+    pub keywords: Vec<SurfaceShaderKeyword>,
+}
+
 #[derive(Deserialize)]
 #[serde(deny_unknown_fields)]
 struct RawSchema {
+    #[serde(default)]
     parameters: Vec<RawParameter>,
+    #[serde(default)]
+    keywords: Vec<RawKeyword>,
 }
 
 #[derive(Deserialize)]
@@ -72,6 +89,16 @@ struct RawParameter {
     min: Option<f32>,
     #[serde(default)]
     max: Option<f32>,
+}
+
+#[derive(Deserialize)]
+#[serde(deny_unknown_fields)]
+struct RawKeyword {
+    name: String,
+    #[serde(default)]
+    label: String,
+    #[serde(default)]
+    default: bool,
 }
 
 fn valid_identifier(name: &str) -> bool {
@@ -133,11 +160,9 @@ fn parameter_default(
     Ok(packed)
 }
 
-pub fn parse_surface_shader_parameters(
-    source: &str,
-) -> Result<Vec<SurfaceShaderParameter>, String> {
+pub fn parse_surface_shader_schema(source: &str) -> Result<SurfaceShaderSchema, String> {
     let Some(marker_start) = source.find(SURFACE_SHADER_PARAMETERS_MARKER) else {
-        return Ok(Vec::new());
+        return Ok(SurfaceShaderSchema::default());
     };
     let json_start = marker_start + SURFACE_SHADER_PARAMETERS_MARKER.len();
     let block_end = source[json_start..]
@@ -154,8 +179,14 @@ pub fn parse_surface_shader_parameters(
             "Surface Shader declares more than {MAX_SURFACE_SHADER_PARAMETERS} parameters"
         ));
     }
+    if raw.keywords.len() > MAX_SURFACE_SHADER_KEYWORDS {
+        return Err(format!(
+            "Surface Shader declares more than {MAX_SURFACE_SHADER_KEYWORDS} keywords"
+        ));
+    }
     let mut names = HashSet::new();
-    raw.parameters
+    let parameters = raw
+        .parameters
         .into_iter()
         .map(|parameter| {
             let name = parameter.name.trim().to_owned();
@@ -213,7 +244,52 @@ pub fn parse_surface_shader_parameters(
                 max: maximum,
             })
         })
-        .collect()
+        .collect::<Result<Vec<_>, _>>()?;
+    let mut keyword_names = HashSet::new();
+    let keywords = raw
+        .keywords
+        .into_iter()
+        .map(|keyword| {
+            let name = keyword.name.trim().to_owned();
+            if !valid_identifier(&name) {
+                return Err(format!(
+                    "Surface Shader keyword name '{name}' must be an ASCII identifier of at most 48 characters"
+                ));
+            }
+            if !keyword_names.insert(name.clone()) {
+                return Err(format!("duplicate Surface Shader keyword '{name}'"));
+            }
+            let label = if keyword.label.trim().is_empty() {
+                name.replace('_', " ")
+            } else {
+                keyword.label.trim().to_owned()
+            };
+            if label.len() > 64 {
+                return Err(format!(
+                    "Surface Shader keyword '{name}' label exceeds 64 characters"
+                ));
+            }
+            Ok(SurfaceShaderKeyword {
+                name,
+                label,
+                default: keyword.default,
+            })
+        })
+        .collect::<Result<Vec<_>, String>>()?;
+    Ok(SurfaceShaderSchema {
+        parameters,
+        keywords,
+    })
+}
+
+pub fn parse_surface_shader_parameters(
+    source: &str,
+) -> Result<Vec<SurfaceShaderParameter>, String> {
+    Ok(parse_surface_shader_schema(source)?.parameters)
+}
+
+pub fn parse_surface_shader_keywords(source: &str) -> Result<Vec<SurfaceShaderKeyword>, String> {
+    Ok(parse_surface_shader_schema(source)?.keywords)
 }
 
 #[cfg(test)]
@@ -263,6 +339,31 @@ mod tests {
         assert!(parse_surface_shader_parameters(&wrap(
             r#"{"parameters":[{"name":"tint","type":"color","default":[1,1,1,1],"max":2}]}"#
         ))
+        .is_err());
+    }
+
+    #[test]
+    fn parses_and_validates_shader_keywords() {
+        let schema = parse_surface_shader_schema(
+            r#"/* MENGINE_PARAMETERS
+            {"parameters":[],"keywords":[
+              {"name":"USE_RIM","label":"Use Rim","default":true},
+              {"name":"USE_DETAIL"}
+            ]}
+            */"#,
+        )
+        .unwrap();
+        assert_eq!(schema.keywords.len(), 2);
+        assert_eq!(schema.keywords[0].label, "Use Rim");
+        assert!(schema.keywords[0].default);
+        assert!(!schema.keywords[1].default);
+        assert!(parse_surface_shader_schema(
+            r#"/* MENGINE_PARAMETERS {"keywords":[{"name":"BAD-NAME"}]} */"#
+        )
+        .is_err());
+        assert!(parse_surface_shader_schema(
+            r#"/* MENGINE_PARAMETERS {"keywords":[{"name":"DUP"},{"name":"DUP"}]} */"#
+        )
         .is_err());
     }
 }

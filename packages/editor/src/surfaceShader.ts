@@ -1,6 +1,7 @@
 export const SURFACE_SHADER_HOOK_NAME = 'mengine_surface_hook';
 export const LIT_SURFACE_SHADER_HOOK_NAME = 'mengine_lit_surface_hook';
 export const MAX_SURFACE_SHADER_PARAMETERS = 16;
+export const MAX_SURFACE_SHADER_KEYWORDS = 16;
 export const SURFACE_SHADER_PARAMETERS_MARKER = '/* MENGINE_PARAMETERS';
 
 export type SurfaceShaderParameterType = 'float' | 'vector2' | 'vector3' | 'vector4' | 'color';
@@ -11,6 +12,11 @@ export type SurfaceShaderParameter = {
   default: [number, number, number, number];
   min: number | null;
   max: number | null;
+};
+export type SurfaceShaderKeyword = {
+  name: string;
+  label: string;
+  default: boolean;
 };
 
 export const DEFAULT_SURFACE_SHADER = `fn mengine_lit_surface_hook(
@@ -33,9 +39,12 @@ export function surfaceShaderParameterComponents(type: SurfaceShaderParameterTyp
   return 4;
 }
 
-export function parseSurfaceShaderParameters(source: string): SurfaceShaderParameter[] {
+function parseSurfaceShaderSchemaRoot(source: string): {
+  parameters: unknown[];
+  keywords: unknown[];
+} {
   const marker = source.indexOf(SURFACE_SHADER_PARAMETERS_MARKER);
-  if (marker < 0) return [];
+  if (marker < 0) return { parameters: [], keywords: [] };
   const jsonStart = marker + SURFACE_SHADER_PARAMETERS_MARKER.length;
   const relativeEnd = source.slice(jsonStart).indexOf('*/');
   if (relativeEnd < 0) throw new Error('Surface Shader parameter block is not terminated.');
@@ -52,9 +61,19 @@ export function parseSurfaceShaderParameters(source: string): SurfaceShaderParam
   const root = parsed != null && typeof parsed === 'object' && !Array.isArray(parsed)
     ? parsed as Record<string, unknown>
     : null;
-  if (!root || Object.keys(root).some((key) => key !== 'parameters') || !Array.isArray(root.parameters)) {
-    throw new Error('Surface Shader parameter block must contain only a parameters array.');
+  if (!root || Object.keys(root).some((key) => key !== 'parameters' && key !== 'keywords')
+    || (root.parameters != null && !Array.isArray(root.parameters))
+    || (root.keywords != null && !Array.isArray(root.keywords))) {
+    throw new Error('Surface Shader parameter block may contain only parameters and keywords arrays.');
   }
+  return {
+    parameters: (root.parameters ?? []) as unknown[],
+    keywords: (root.keywords ?? []) as unknown[],
+  };
+}
+
+export function parseSurfaceShaderParameters(source: string): SurfaceShaderParameter[] {
+  const root = parseSurfaceShaderSchemaRoot(source);
   if (root.parameters.length > MAX_SURFACE_SHADER_PARAMETERS) {
     throw new Error(`Surface Shader declares more than ${MAX_SURFACE_SHADER_PARAMETERS} parameters.`);
   }
@@ -112,6 +131,39 @@ export function parseSurfaceShaderParameters(source: string): SurfaceShaderParam
   });
 }
 
+export function parseSurfaceShaderKeywords(source: string): SurfaceShaderKeyword[] {
+  const root = parseSurfaceShaderSchemaRoot(source);
+  if (root.keywords.length > MAX_SURFACE_SHADER_KEYWORDS) {
+    throw new Error(`Surface Shader declares more than ${MAX_SURFACE_SHADER_KEYWORDS} keywords.`);
+  }
+  const names = new Set<string>();
+  return root.keywords.map((value, index) => {
+    const keyword = value != null && typeof value === 'object' && !Array.isArray(value)
+      ? value as Record<string, unknown>
+      : null;
+    if (!keyword || Object.keys(keyword).some((key) => !['name', 'label', 'default'].includes(key))) {
+      throw new Error(`Surface Shader keyword ${index + 1} contains unsupported fields.`);
+    }
+    const name = typeof keyword.name === 'string' ? keyword.name.trim() : '';
+    if (!/^[A-Za-z][A-Za-z0-9_]{0,47}$/.test(name)) {
+      throw new Error(`Surface Shader keyword name '${name}' must be an ASCII identifier of at most 48 characters.`);
+    }
+    if (names.has(name)) throw new Error(`Duplicate Surface Shader keyword '${name}'.`);
+    names.add(name);
+    if (keyword.label != null && typeof keyword.label !== 'string') {
+      throw new Error(`Surface Shader keyword '${name}' label must be a string.`);
+    }
+    if (keyword.default != null && typeof keyword.default !== 'boolean') {
+      throw new Error(`Surface Shader keyword '${name}' default must be a boolean.`);
+    }
+    const label = typeof keyword.label === 'string' && keyword.label.trim()
+      ? keyword.label.trim()
+      : name.replaceAll('_', ' ');
+    if (label.length > 64) throw new Error(`Surface Shader keyword '${name}' label exceeds 64 characters.`);
+    return { name, label, default: keyword.default === true };
+  });
+}
+
 export function normalizeSurfaceShaderParameterValue(
   parameter: SurfaceShaderParameter,
   value: unknown,
@@ -139,11 +191,23 @@ export function validateSurfaceShaderParameterValues(
   }
 }
 
+export function validateSurfaceShaderKeywordValues(
+  keywords: readonly SurfaceShaderKeyword[],
+  values: Readonly<Record<string, boolean>>,
+): void {
+  const declared = new Set(keywords.map((keyword) => keyword.name));
+  const unknown = Object.keys(values).find((name) => !declared.has(name));
+  if (unknown) {
+    throw new Error(`Material keyword '${unknown}' is not declared by its Surface Shader.`);
+  }
+}
+
 export function surfaceShaderDiagnostics(source: string): string[] {
   const normalized = normalizeSurfaceShaderSource(source);
   const diagnostics: string[] = [];
   try {
     parseSurfaceShaderParameters(normalized);
+    parseSurfaceShaderKeywords(normalized);
   } catch (reason) {
     diagnostics.push(reason instanceof Error ? reason.message : String(reason));
   }
