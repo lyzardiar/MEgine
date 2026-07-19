@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 
 import {
+  advanceSequencerPreviewTime,
   combineSequencerMarqueeSelection,
   clampSequencerZoom,
   copySequencerItem,
@@ -13,6 +14,7 @@ import {
   moveSequencerClip,
   moveSequencerItems,
   moveSequencerTrack,
+  normalizeSequencerPreviewRange,
   pasteSequencerItem,
   pasteSequencerClipboard,
   resolveSequencerPasteTrack,
@@ -60,6 +62,16 @@ test('Sequencer viewport panning and shifted wheel navigation stay bounded', () 
   assert.equal(sequencerPanScrollLeft(20, 500, 800, 1600, 800), 0);
   assert.equal(sequencerPanScrollLeft(780, 500, 300, 1600, 800), 800);
   assert.equal(sequencerPanScrollLeft(Number.NaN, 0, Number.NaN, 400, 800), 0);
+});
+
+test('Sequencer preview range snaps and playback stops or loops deterministically', () => {
+  assert.deepEqual(normalizeSequencerPreviewRange({ start: 1.04, end: 4.96 }, 8, 10), { start: 1, end: 5 });
+  assert.deepEqual(normalizeSequencerPreviewRange({ start: 9, end: -2 }, 8, 10), { start: 7.9, end: 8 });
+  assert.deepEqual(normalizeSequencerPreviewRange({ start: 9, end: 9 }, 1.05, 10), { start: 0.9, end: 1.05 });
+  assert.deepEqual(advanceSequencerPreviewTime(2, 1, { start: 1, end: 4 }, false), { time: 3, playing: true });
+  assert.deepEqual(advanceSequencerPreviewTime(3.5, 1, { start: 1, end: 4 }, false), { time: 4, playing: false });
+  assert.deepEqual(advanceSequencerPreviewTime(3.5, 1, { start: 1, end: 4 }, true), { time: 1.5, playing: true });
+  assert.deepEqual(advanceSequencerPreviewTime(1, 7, { start: 1, end: 4 }, true), { time: 2, playing: true });
 });
 
 function timeline() {

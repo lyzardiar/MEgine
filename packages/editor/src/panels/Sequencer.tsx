@@ -31,6 +31,7 @@ import {
   Play,
   Plus,
   Redo2,
+  Repeat2,
   Save,
   Square,
   Trash2,
@@ -93,6 +94,7 @@ import {
 import {
   SEQUENCER_MAX_ZOOM,
   SEQUENCER_MIN_ZOOM,
+  advanceSequencerPreviewTime,
   clampSequencerZoom,
   combineSequencerMarqueeSelection,
   copySequencerItems,
@@ -102,6 +104,7 @@ import {
   lockedSequencerContentEnd,
   moveSequencerItems,
   moveSequencerTrack,
+  normalizeSequencerPreviewRange,
   pasteSequencerClipboard,
   resizeSequencerAnimationBlend,
   rippleMoveSequencerItems,
@@ -118,11 +121,13 @@ import {
   trimSequencerClip,
   type SequencerClipboard,
   type SequencerItemSelection,
+  type SequencerPreviewRange,
 } from '../sequencerEditing';
 
 const SEQUENCER_SNAPPING_KEY = 'mengine.sequencer.snapping';
 const SEQUENCER_RIPPLE_KEY = 'mengine.sequencer.ripple';
 const SEQUENCER_INSPECTOR_KEY = 'mengine.sequencer.inspector';
+const SEQUENCER_LOOP_PREVIEW_KEY = 'mengine.sequencer.loop_preview';
 const SEQUENCER_SNAP_THRESHOLD_PX = 8;
 const EMPTY_PREVIEW_ANIMATION_CLIPS: ReadonlyMap<string, AnimationClip> = new Map();
 const EMPTY_PREVIEW_CLIP_FAILURES: readonly string[] = [];
@@ -158,6 +163,14 @@ function loadSequencerInspector(): boolean {
     return localStorage.getItem(SEQUENCER_INSPECTOR_KEY) !== '0';
   } catch {
     return true;
+  }
+}
+
+function loadSequencerLoopPreview(): boolean {
+  try {
+    return localStorage.getItem(SEQUENCER_LOOP_PREVIEW_KEY) === '1';
+  } catch {
+    return false;
   }
 }
 
@@ -246,6 +259,7 @@ type Draft = {
   time: number;
   selection: Selection;
   selectedItems: SequencerItemSelection[];
+  previewRange?: SequencerPreviewRange;
 };
 
 function isSequencerEditControl(target: EventTarget): target is HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement {
@@ -279,6 +293,8 @@ export function Sequencer(props: SequencerProps) {
   const [snapping, setSnapping] = useState(loadSequencerSnapping);
   const [rippleMode, setRippleMode] = useState(loadSequencerRipple);
   const [inspectorOpen, setInspectorOpen] = useState(loadSequencerInspector);
+  const [loopPreview, setLoopPreview] = useState(loadSequencerLoopPreview);
+  const [previewRange, setPreviewRange] = useState<SequencerPreviewRange>({ start: 0, end: 5 });
   const [panning, setPanning] = useState(false);
   const [snapGuide, setSnapGuide] = useState<number | null>(null);
   const [tracksWidth, setTracksWidth] = useState(720);
@@ -303,6 +319,7 @@ export function Sequencer(props: SequencerProps) {
   const tracksViewport = useRef<HTMLDivElement | null>(null);
   const rulerScrubPointer = useRef<number | null>(null);
   const panDrag = useRef<{ pointerId: number; clientX: number; scrollLeft: number } | null>(null);
+  const previewDuration = useRef(5);
   const audioPreviewController = useMemo(
     () => new TimelineAudioPreviewController(setAudioPreviewStatus),
     [],
@@ -541,6 +558,7 @@ export function Sequencer(props: SequencerProps) {
         asset: structuredClone(asset), savedText, time,
         selection: selection ? { ...selection } : null,
         selectedItems: structuredClone(selectedItems),
+        previewRange: { ...previewRange },
       });
     }
     loadedPath.current = props.assetPath ?? '';
@@ -548,6 +566,8 @@ export function Sequencer(props: SequencerProps) {
     replaceAsset(null);
     setSavedText('');
     replaceTime(0);
+    previewDuration.current = 1;
+    setPreviewRange({ start: 0, end: 1 });
     setZoom(1);
     setSnapGuide(null);
     applySelection(null);
@@ -562,6 +582,12 @@ export function Sequencer(props: SequencerProps) {
       replaceAsset(restoredAsset);
       setSavedText(draft.savedText);
       replaceTime(draft.time);
+      previewDuration.current = restoredAsset.duration;
+      setPreviewRange(normalizeSequencerPreviewRange(
+        draft.previewRange ?? { start: 0, end: restoredAsset.duration },
+        restoredAsset.duration,
+        restoredAsset.frame_rate,
+      ));
       applySelection(
         draft.selection ? { ...draft.selection } : null,
         draft.selectedItems ?? [],
@@ -575,6 +601,8 @@ export function Sequencer(props: SequencerProps) {
         const loaded = parseTimelineAsset(text);
         replaceAsset(loaded);
         setSavedText(serializeTimelineAsset(loaded));
+        previewDuration.current = loaded.duration;
+        setPreviewRange({ start: 0, end: loaded.duration });
       })
       .catch((reason: unknown) => {
         if (!cancelled) setError(reason instanceof Error ? reason.message : String(reason));
@@ -584,6 +612,22 @@ export function Sequencer(props: SequencerProps) {
       });
     return () => { cancelled = true; };
   }, [props.assetPath]);
+
+  useEffect(() => {
+    if (!asset) return;
+    const previous = previewDuration.current;
+    setPreviewRange((current) => normalizeSequencerPreviewRange({
+      start: current.start,
+      end: Math.abs(current.end - previous) <= 1e-6 ? asset.duration : current.end,
+    }, asset.duration, asset.frame_rate));
+    previewDuration.current = asset.duration;
+  }, [asset?.duration, asset?.frame_rate]);
+
+  useEffect(() => {
+    if (!asset || (timeRef.current >= previewRange.start && timeRef.current <= previewRange.end)) return;
+    setPlaying(false);
+    replaceTime(Math.max(previewRange.start, Math.min(previewRange.end, timeRef.current)));
+  }, [asset?.duration, previewRange.end, previewRange.start]);
 
   const applyUpdate = (mutate: (draft: TimelineAsset) => void) => {
     setAsset((current) => {
@@ -775,14 +819,15 @@ export function Sequencer(props: SequencerProps) {
       const previous = previousFrame.current ?? now;
       previousFrame.current = now;
       setTime((current) => {
-        const next = current + Math.min(0.1, Math.max(0, (now - previous) / 1000));
-        if (next >= asset.duration) {
-          setPlaying(false);
-          timeRef.current = asset.duration;
-          return asset.duration;
-        }
-        timeRef.current = next;
-        return next;
+        const advanced = advanceSequencerPreviewTime(
+          current,
+          Math.min(0.1, Math.max(0, (now - previous) / 1000)),
+          previewRange,
+          loopPreview,
+        );
+        if (!advanced.playing) setPlaying(false);
+        timeRef.current = advanced.time;
+        return advanced.time;
       });
       frame.current = requestAnimationFrame(tick);
     };
@@ -793,7 +838,7 @@ export function Sequencer(props: SequencerProps) {
       frame.current = null;
       previousFrame.current = null;
     };
-  }, [asset, playing, props.previewEnabled]);
+  }, [asset, loopPreview, playing, previewRange, props.previewEnabled]);
 
   useEffect(() => {
     const viewport = tracksViewport.current;
@@ -1909,9 +1954,29 @@ export function Sequencer(props: SequencerProps) {
       setAudioAuditionRevision((value) => value + 1);
     }
   };
+  const changePreviewRange = (next: SequencerPreviewRange) => {
+    if (!asset || props.playMode) return;
+    const normalized = normalizeSequencerPreviewRange(next, asset.duration, asset.frame_rate);
+    setPlaying(false);
+    setPreviewRange(normalized);
+    if (timeRef.current < normalized.start || timeRef.current > normalized.end) {
+      scrub(Math.max(normalized.start, Math.min(normalized.end, timeRef.current)));
+    }
+  };
+  const toggleLoopPreview = () => {
+    const next = !loopPreview;
+    setLoopPreview(next);
+    try {
+      localStorage.setItem(SEQUENCER_LOOP_PREVIEW_KEY, next ? '1' : '0');
+    } catch {
+      /* ignore unavailable storage */
+    }
+  };
   const toggleEditPlayback = () => {
     void audioPreviewController.unlock();
-    if (!playing && asset && timeRef.current >= asset.duration) replaceTime(0);
+    if (!playing && asset && (timeRef.current < previewRange.start || timeRef.current >= previewRange.end)) {
+      replaceTime(previewRange.start);
+    }
     setPlaying((value) => !value);
   };
   const scrubRulerPointer = (event: ReactPointerEvent<HTMLDivElement>) => {
@@ -2208,7 +2273,7 @@ export function Sequencer(props: SequencerProps) {
             </button>
             <button type="button" title="Stop" onClick={() => {
               if (liveDirector && directorEntity) props.onPatchDirector(directorEntity.entity, { playing: false, time: 0 });
-              else { setPlaying(false); replaceTime(0); }
+              else { setPlaying(false); replaceTime(previewRange.start); }
             }}><Square size={13} /></button>
           </div>
           <label className="timeline-time">Time <input type="number" min={0} max={asset.duration} step={1 / asset.frame_rate} value={Number(displayTime.toFixed(4))} onChange={(event) => {
@@ -2237,6 +2302,12 @@ export function Sequencer(props: SequencerProps) {
             <button type="button" className={rippleMode ? 'active' : ''} aria-pressed={rippleMode} aria-label="Toggle Timeline Ripple Move" title={`Ripple Move ${rippleMode ? 'on' : 'off'} · shifts the affected track suffix · Alt temporarily inverts`} onClick={toggleRippleMode}><MoveHorizontal size={13} /></button>
             <button type="button" className={snapping ? 'active' : ''} aria-pressed={snapping} aria-label="Toggle Timeline snapping" title={`Magnetic snapping ${snapping ? 'on' : 'off'} (${SEQUENCER_SNAP_THRESHOLD_PX}px)`} onClick={toggleSnapping}><Magnet size={13} /></button>
           </div>
+          {!props.playMode && <div className="sequencer-preview-range" role="group" aria-label="Edit preview range">
+            <button type="button" className={loopPreview ? 'active' : ''} aria-pressed={loopPreview} aria-label="Toggle preview loop" title={`Loop Edit Preview ${loopPreview ? 'on' : 'off'}`} onClick={toggleLoopPreview}><Repeat2 size={13} /></button>
+            <label>In<input type="number" min={0} max={previewRange.end} step={1 / asset.frame_rate} value={Number(previewRange.start.toFixed(4))} onChange={(event) => changePreviewRange({ ...previewRange, start: Number(event.target.value) })} /></label>
+            <label>Out<input type="number" min={previewRange.start} max={asset.duration} step={1 / asset.frame_rate} value={Number(previewRange.end.toFixed(4))} onChange={(event) => changePreviewRange({ ...previewRange, end: Number(event.target.value) })} /></label>
+            <button type="button" aria-label="Reset preview range" title="Reset Edit Preview to the complete Timeline" disabled={previewRange.start === 0 && previewRange.end === asset.duration} onClick={() => changePreviewRange({ start: 0, end: asset.duration })}>All</button>
+          </div>}
           <div className="sequencer-zoom-controls">
             <button type="button" aria-label="Zoom out" title="Zoom out" disabled={zoom <= SEQUENCER_MIN_ZOOM} onClick={() => changeZoom(zoom / 1.5)}><Minus size={13} /></button>
             <input
@@ -2336,6 +2407,7 @@ export function Sequencer(props: SequencerProps) {
                 if (rulerScrubPointer.current === event.pointerId) rulerScrubPointer.current = null;
               }}
             >
+              {!props.playMode && <i className="sequencer-preview-range-band" style={{ left: `${previewRange.start / asset.duration * 100}%`, width: `${(previewRange.end - previewRange.start) / asset.duration * 100}%` }} />}
               {ticks.map((tick) => <span key={tick.time} style={{ left: `${tick.position * 100}%` }}>{tick.time.toFixed(tick.time < 1 ? 2 : 1)}</span>)}
               {snapGuide != null && <i className="sequencer-snap-guide ruler-guide" style={{ left: `${snapGuide / asset.duration * 100}%` }}><b>{snapGuide.toFixed(3)}s</b></i>}
               <i className="sequencer-playhead" style={{ left: `${displayTime / asset.duration * 100}%` }} />

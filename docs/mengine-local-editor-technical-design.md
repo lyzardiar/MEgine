@@ -1626,3 +1626,15 @@ Camera Shot 的基础闭环已经形成，但 Timeline 仍不完备：编辑器 
 第二遍自省从输入事务生命周期反查：如果焦点停在 Inspector 输入框上直接点击关闭，React 卸载不应依赖浏览器一定派发 Blur，否则 `inspectorEdit` 可能残留并把下次编辑合并进旧 Undo 手势。现提取显式 `finishInspectorEdit`，关闭前封口并清理空历史；普通 Blur 复用同一路径。中键手势则只在 `button===1` 时于 Capture 阶段接管，Clip/Marker 的左键拖拽、Alt Ripple 反转和右键菜单均保持原语义。
 
 这一批完成的是长时间轴的基础浏览闭环，仍缺轨道头宽度与 Inspector 宽度拖拽、滚动惯性/触控板缩放偏好、迷你时间轴 Overview、书签、工作区间、播放范围、虚拟化和大资产性能预算。下一阶段可在同一视口内核上增加可视范围模型与工作区间，再支持 Loop Preview 和局部导出，而不是继续堆叠互相独立的滚动状态。
+
+## 138. 2026-07-20 Sequencer Edit Preview 工作区间与循环
+
+- Edit Mode Sequencer 工具栏新增 `In/Out` 工作区间、`All` 重置和 Loop 按钮；数值按 Timeline FPS 吸附，始终保持至少一帧且位于资产时长内。标尺底部用 3px 方形蓝色带显示当前区间，用户不必靠记忆判断局部预览范围。工作区间是编辑器视图状态，不写入 `.mtimeline`、不产生 Dirty/Undo，也不改变 Player 的 `TimelineDirector.wrap_mode`。
+- 本地 Transport 从整条资产播放改为工作区间播放：从区间外或 Out 端开始 Play 会先回到 In；Stop 返回 In；非循环到 Out 精确停止，循环模式跨 Out 后保留超出的 Delta 并模进区间，低帧率或单帧卡顿不会每圈丢失时间。切换资产时区间随未保存 Draft 保留，新资产默认覆盖完整时长；Loop 偏好保存为 `mengine.sequencer.loop_preview`。
+- Play Mode 继续只服从真实 Director 的时间、Stop 与 Wrap Mode，不显示也不接受本地 In/Out/Loop 控件，避免把编辑器 Preview 状态伪装成运行时行为。资产 Duration/FPS 改动会重新规范化区间；若当前播放头落到新区间外，立即停止并夹取回边界。
+
+第一遍自省从非整帧资产时长反查：初稿先把起点夹到 `duration - oneFrame` 再四舍五入，在 `1.05s@10fps` 这类尾端不足一帧的资产上可能把 In 吸附到 1.0、最小 Out 推到 1.1，越过真实 Duration。现把最大起点先向下取整到合法帧，Out 最终再次以 Duration 为硬上限；回归固定该例得到 `0.9–1.05s`。
+
+第二遍自省从 Edit/Play 模式边界和热编辑反查：本地区间若在 Play Mode 仍显示，即使禁用也会让标尺暗示 Director 受其控制；现整组控件和区间带只在 Edit Mode 出现。继续补齐 Duration 缩短、FPS 改变、资产切换和 Draft 恢复时的范围/播放头夹取，循环推进则用无 DOM 纯函数覆盖普通推进、精确停止、多圈跨越、非法范围与非有限输入。
+
+当前工作区间只控制编辑器本地预览，不是可序列化的 Playback Range、Timeline Section 或构建裁剪区间；也没有可拖拽的 In/Out 标尺手柄、范围书签、区间导出和多个命名 Range。后续若把 Range 写入资产，必须先区分“作者运行时播放范围”和“个人编辑视图偏好”，并同步 Runtime、CLI 校验、构建依赖裁剪与多人版本控制语义，不能直接复用本地状态字段。

@@ -4639,6 +4639,37 @@ body.insp-scrubbing * {
   border-right: 1px solid #171717;
 }
 .sequencer-toolbar .sequencer-edit-controls button { min-width: 24px; padding: 0 4px; }
+.sequencer-preview-range {
+  display: flex;
+  flex: 0 0 auto;
+  height: 24px;
+  align-items: center;
+  gap: 1px;
+  padding: 0 3px;
+  border-left: 1px solid #171717;
+  border-right: 1px solid #171717;
+}
+.sequencer-preview-range label {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  color: #858585;
+  font: 9px var(--u-mono);
+  text-transform: uppercase;
+}
+.sequencer-preview-range input {
+  width: 42px;
+  height: 20px;
+  box-sizing: border-box;
+  padding: 0 2px;
+  border: 1px solid #1a1a1a;
+  border-radius: 0;
+  background: #202020;
+  color: #bbb;
+  font: 9px var(--u-mono);
+  text-align: right;
+}
+.sequencer-toolbar .sequencer-preview-range button { min-width: 24px; padding: 0 4px; }
 .sequencer-director-select {
   width: 116px;
   min-width: 72px;
@@ -4919,6 +4950,15 @@ body.insp-scrubbing * {
 }
 
 .sequencer-ruler { background: #303030; border-bottom: 1px solid #111; }
+.sequencer-preview-range-band {
+  position: absolute;
+  z-index: 2;
+  bottom: 0;
+  height: 3px;
+  background: #5aa5cf;
+  box-shadow: inset 1px 0 #c2e6fa, inset -1px 0 #c2e6fa;
+  pointer-events: none;
+}
 .sequencer-ruler span {
   position: absolute;
   top: 3px;

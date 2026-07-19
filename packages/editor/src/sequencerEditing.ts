@@ -74,6 +74,12 @@ export type SequencerTimeRange = {
   end: number;
 };
 
+export type SequencerPreviewRange = SequencerTimeRange;
+export type SequencerPreviewAdvance = {
+  time: number;
+  playing: boolean;
+};
+
 function growAnimationCrossfades(clips: TimelineAnimationClip[]): boolean {
   const ordered = [...clips].sort((left, right) => left.start - right.start);
   for (let index = 1; index < ordered.length; index += 1) {
@@ -246,6 +252,39 @@ export function sequencerPanScrollLeft(
   const content = Number.isFinite(scrollWidth) ? Math.max(0, scrollWidth) : 0;
   const viewport = Number.isFinite(clientWidth) ? Math.max(0, clientWidth) : 0;
   return clamp(origin - (current - start), 0, Math.max(0, content - viewport));
+}
+
+export function normalizeSequencerPreviewRange(
+  range: SequencerPreviewRange,
+  duration: number,
+  frameRate: number,
+): SequencerPreviewRange {
+  const endLimit = finitePositive(duration, 1);
+  const rate = finitePositive(frameRate, 60);
+  const minimumLength = Math.min(endLimit, 1 / rate);
+  const maximumStart = Math.max(0, Math.floor((endLimit - minimumLength) * rate + 1e-9) / rate);
+  const start = clamp(snap(Number.isFinite(range.start) ? range.start : 0, rate), 0, maximumStart);
+  const minimumEnd = Math.min(endLimit, start + minimumLength);
+  const end = clamp(snap(Number.isFinite(range.end) ? range.end : endLimit, rate), minimumEnd, endLimit);
+  return { start, end };
+}
+
+export function advanceSequencerPreviewTime(
+  currentTime: number,
+  deltaSeconds: number,
+  range: SequencerPreviewRange,
+  loop: boolean,
+): SequencerPreviewAdvance {
+  const start = Number.isFinite(range.start) ? Math.max(0, range.start) : 0;
+  const end = Number.isFinite(range.end) ? Math.max(start, range.end) : start;
+  const duration = end - start;
+  if (duration <= 0) return { time: start, playing: false };
+  const current = Number.isFinite(currentTime) ? clamp(currentTime, start, end) : start;
+  const delta = Number.isFinite(deltaSeconds) ? Math.max(0, deltaSeconds) : 0;
+  const next = current + delta;
+  if (next < end) return { time: next, playing: true };
+  if (!loop) return { time: end, playing: false };
+  return { time: start + ((next - start) % duration), playing: true };
 }
 
 export function snapSequencerItemsDelta(
