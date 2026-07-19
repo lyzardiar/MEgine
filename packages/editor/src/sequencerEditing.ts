@@ -75,6 +75,7 @@ export type SequencerTimeRange = {
 };
 
 export type SequencerPreviewRange = SequencerTimeRange;
+export type SequencerPreviewRangeEdge = 'start' | 'end';
 export type SequencerPreviewAdvance = {
   time: number;
   playing: boolean;
@@ -254,6 +255,24 @@ export function sequencerPanScrollLeft(
   return clamp(origin - (current - start), 0, Math.max(0, content - viewport));
 }
 
+export function sequencerRevealScrollLeft(
+  currentScrollLeft: number,
+  targetOffset: number,
+  contentWidth: number,
+  viewportWidth: number,
+  requestedMargin = 12,
+): number {
+  const content = finitePositive(contentWidth, 1);
+  const viewport = finitePositive(viewportWidth, content);
+  const maximum = Math.max(0, content - viewport);
+  const current = clamp(Number.isFinite(currentScrollLeft) ? currentScrollLeft : 0, 0, maximum);
+  const target = clamp(Number.isFinite(targetOffset) ? targetOffset : 0, 0, content);
+  const margin = clamp(Number.isFinite(requestedMargin) ? requestedMargin : 0, 0, viewport / 2);
+  if (target < current + margin) return clamp(target - margin, 0, maximum);
+  if (target > current + viewport - margin) return clamp(target - viewport + margin, 0, maximum);
+  return current;
+}
+
 export function normalizeSequencerPreviewRange(
   range: SequencerPreviewRange,
   duration: number,
@@ -267,6 +286,34 @@ export function normalizeSequencerPreviewRange(
   const minimumEnd = Math.min(endLimit, start + minimumLength);
   const end = clamp(snap(Number.isFinite(range.end) ? range.end : endLimit, rate), minimumEnd, endLimit);
   return { start, end };
+}
+
+export function resizeSequencerPreviewRange(
+  range: SequencerPreviewRange,
+  edge: SequencerPreviewRangeEdge,
+  requestedTime: number,
+  duration: number,
+  frameRate: number,
+): SequencerPreviewRange {
+  const endLimit = finitePositive(duration, 1);
+  const rate = finitePositive(frameRate, 60);
+  const minimumLength = Math.min(endLimit, 1 / rate);
+  const normalized = normalizeSequencerPreviewRange(range, endLimit, rate);
+  const fallback = edge === 'start' ? normalized.start : normalized.end;
+  const requested = Number.isFinite(requestedTime) ? requestedTime : fallback;
+  if (edge === 'start') {
+    const lastFrameBeforeEnd = Math.floor((normalized.end - minimumLength) * rate + 1e-9) / rate;
+    const maximumStart = Math.max(0, Number(lastFrameBeforeEnd.toFixed(9)));
+    return {
+      start: clamp(snap(requested, rate), 0, maximumStart),
+      end: normalized.end,
+    };
+  }
+  const minimumEnd = Math.min(endLimit, snap(normalized.start + minimumLength, rate));
+  return {
+    start: normalized.start,
+    end: clamp(snap(requested, rate), minimumEnd, endLimit),
+  };
 }
 
 export function advanceSequencerPreviewTime(

@@ -20,8 +20,10 @@ import {
   resolveSequencerPasteTrack,
   rippleMoveSequencerItems,
   resizeSequencerAnimationBlend,
+  resizeSequencerPreviewRange,
   selectSequencerItem,
   sequencerPanScrollLeft,
+  sequencerRevealScrollLeft,
   sequencerSelectionTimeRange,
   sequencerShiftWheelDelta,
   sequencerSliderToZoom,
@@ -62,6 +64,11 @@ test('Sequencer viewport panning and shifted wheel navigation stay bounded', () 
   assert.equal(sequencerPanScrollLeft(20, 500, 800, 1600, 800), 0);
   assert.equal(sequencerPanScrollLeft(780, 500, 300, 1600, 800), 800);
   assert.equal(sequencerPanScrollLeft(Number.NaN, 0, Number.NaN, 400, 800), 0);
+  assert.equal(sequencerRevealScrollLeft(300, 100, 1600, 800), 88);
+  assert.equal(sequencerRevealScrollLeft(300, 700, 1600, 800), 300);
+  assert.equal(sequencerRevealScrollLeft(300, 1200, 1600, 800), 412);
+  assert.equal(sequencerRevealScrollLeft(900, 1600, 1600, 800), 800);
+  assert.equal(sequencerRevealScrollLeft(Number.NaN, Number.NaN, 400, 800), 0);
 });
 
 test('Sequencer preview range snaps and playback stops or loops deterministically', () => {
@@ -72,6 +79,15 @@ test('Sequencer preview range snaps and playback stops or loops deterministicall
   assert.deepEqual(advanceSequencerPreviewTime(3.5, 1, { start: 1, end: 4 }, false), { time: 4, playing: false });
   assert.deepEqual(advanceSequencerPreviewTime(3.5, 1, { start: 1, end: 4 }, true), { time: 1.5, playing: true });
   assert.deepEqual(advanceSequencerPreviewTime(1, 7, { start: 1, end: 4 }, true), { time: 2, playing: true });
+});
+
+test('Sequencer preview range handles keep the opposite edge fixed and one frame apart', () => {
+  assert.deepEqual(resizeSequencerPreviewRange({ start: 1, end: 4 }, 'start', 2.06, 8, 10), { start: 2.1, end: 4 });
+  assert.deepEqual(resizeSequencerPreviewRange({ start: 1, end: 4 }, 'start', 7, 8, 10), { start: 3.9, end: 4 });
+  assert.deepEqual(resizeSequencerPreviewRange({ start: 1, end: 4 }, 'end', 2.04, 8, 10), { start: 1, end: 2 });
+  assert.deepEqual(resizeSequencerPreviewRange({ start: 1, end: 4 }, 'end', -2, 8, 10), { start: 1, end: 1.1 });
+  assert.deepEqual(resizeSequencerPreviewRange({ start: 0.9, end: 1.05 }, 'end', 9, 1.05, 10), { start: 0.9, end: 1.05 });
+  assert.deepEqual(resizeSequencerPreviewRange({ start: 0.9, end: 1.05 }, 'start', Number.NaN, 1.05, 10), { start: 0.9, end: 1.05 });
 });
 
 function timeline() {

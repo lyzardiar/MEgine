@@ -6,6 +6,7 @@ import {
   useState,
   type CSSProperties,
   type FocusEvent as ReactFocusEvent,
+  type KeyboardEvent as ReactKeyboardEvent,
   type PointerEvent as ReactPointerEvent,
 } from 'react';
 import type { WorldSnapshotView } from '@mengine/api';
@@ -107,8 +108,10 @@ import {
   normalizeSequencerPreviewRange,
   pasteSequencerClipboard,
   resizeSequencerAnimationBlend,
+  resizeSequencerPreviewRange,
   rippleMoveSequencerItems,
   sequencerPanScrollLeft,
+  sequencerRevealScrollLeft,
   sequencerSelectionTimeRange,
   sequencerShiftWheelDelta,
   sequencerSliderToZoom,
@@ -122,6 +125,7 @@ import {
   type SequencerClipboard,
   type SequencerItemSelection,
   type SequencerPreviewRange,
+  type SequencerPreviewRangeEdge,
 } from '../sequencerEditing';
 
 const SEQUENCER_SNAPPING_KEY = 'mengine.sequencer.snapping';
@@ -295,6 +299,7 @@ export function Sequencer(props: SequencerProps) {
   const [inspectorOpen, setInspectorOpen] = useState(loadSequencerInspector);
   const [loopPreview, setLoopPreview] = useState(loadSequencerLoopPreview);
   const [previewRange, setPreviewRange] = useState<SequencerPreviewRange>({ start: 0, end: 5 });
+  const [draggingPreviewEdge, setDraggingPreviewEdge] = useState<SequencerPreviewRangeEdge | null>(null);
   const [panning, setPanning] = useState(false);
   const [snapGuide, setSnapGuide] = useState<number | null>(null);
   const [tracksWidth, setTracksWidth] = useState(720);
@@ -312,12 +317,14 @@ export function Sequencer(props: SequencerProps) {
   const selectionRef = useRef<Selection>(null);
   const selectedItemsRef = useRef<SequencerItemSelection[]>([]);
   const timeRef = useRef(0);
+  const previewRangeRef = useRef<SequencerPreviewRange>({ start: 0, end: 5 });
   const inspectorEdit = useRef<InspectorEditTransaction | null>(null);
   const keyboardNudge = useRef<KeyboardNudgeTransaction | null>(null);
   const frame = useRef<number | null>(null);
   const previousFrame = useRef<number | null>(null);
   const tracksViewport = useRef<HTMLDivElement | null>(null);
   const rulerScrubPointer = useRef<number | null>(null);
+  const previewRangeDrag = useRef<{ pointerId: number; edge: SequencerPreviewRangeEdge } | null>(null);
   const panDrag = useRef<{ pointerId: number; clientX: number; scrollLeft: number } | null>(null);
   const previewDuration = useRef(5);
   const audioPreviewController = useMemo(
@@ -328,6 +335,7 @@ export function Sequencer(props: SequencerProps) {
   selectionRef.current = selection;
   selectedItemsRef.current = selectedItems;
   timeRef.current = time;
+  previewRangeRef.current = previewRange;
 
   const applySelection = (primary: Selection, items?: readonly SequencerItemSelection[]) => {
     const nextItems = items
@@ -349,6 +357,10 @@ export function Sequencer(props: SequencerProps) {
   const replaceTime = (next: number) => {
     timeRef.current = next;
     setTime(next);
+  };
+  const replacePreviewRange = (next: SequencerPreviewRange) => {
+    previewRangeRef.current = next;
+    setPreviewRange(next);
   };
 
   const fingerprint = useMemo(() => asset ? JSON.stringify(asset) : '', [asset]);
@@ -567,7 +579,9 @@ export function Sequencer(props: SequencerProps) {
     setSavedText('');
     replaceTime(0);
     previewDuration.current = 1;
-    setPreviewRange({ start: 0, end: 1 });
+    replacePreviewRange({ start: 0, end: 1 });
+    previewRangeDrag.current = null;
+    setDraggingPreviewEdge(null);
     setZoom(1);
     setSnapGuide(null);
     applySelection(null);
@@ -583,7 +597,7 @@ export function Sequencer(props: SequencerProps) {
       setSavedText(draft.savedText);
       replaceTime(draft.time);
       previewDuration.current = restoredAsset.duration;
-      setPreviewRange(normalizeSequencerPreviewRange(
+      replacePreviewRange(normalizeSequencerPreviewRange(
         draft.previewRange ?? { start: 0, end: restoredAsset.duration },
         restoredAsset.duration,
         restoredAsset.frame_rate,
@@ -602,7 +616,7 @@ export function Sequencer(props: SequencerProps) {
         replaceAsset(loaded);
         setSavedText(serializeTimelineAsset(loaded));
         previewDuration.current = loaded.duration;
-        setPreviewRange({ start: 0, end: loaded.duration });
+        replacePreviewRange({ start: 0, end: loaded.duration });
       })
       .catch((reason: unknown) => {
         if (!cancelled) setError(reason instanceof Error ? reason.message : String(reason));
@@ -616,7 +630,8 @@ export function Sequencer(props: SequencerProps) {
   useEffect(() => {
     if (!asset) return;
     const previous = previewDuration.current;
-    setPreviewRange((current) => normalizeSequencerPreviewRange({
+    const current = previewRangeRef.current;
+    replacePreviewRange(normalizeSequencerPreviewRange({
       start: current.start,
       end: Math.abs(current.end - previous) <= 1e-6 ? asset.duration : current.end,
     }, asset.duration, asset.frame_rate));
@@ -628,6 +643,12 @@ export function Sequencer(props: SequencerProps) {
     setPlaying(false);
     replaceTime(Math.max(previewRange.start, Math.min(previewRange.end, timeRef.current)));
   }, [asset?.duration, previewRange.end, previewRange.start]);
+
+  useEffect(() => {
+    if (!props.playMode) return;
+    previewRangeDrag.current = null;
+    setDraggingPreviewEdge(null);
+  }, [props.playMode]);
 
   const applyUpdate = (mutate: (draft: TimelineAsset) => void) => {
     setAsset((current) => {
@@ -1886,6 +1907,20 @@ export function Sequencer(props: SequencerProps) {
   const laneViewportWidth = Math.max(360, tracksWidth - 180);
   const laneWidth = Math.max(360, Math.round(laneViewportWidth * zoom));
   const ticks = sequencerTicks(asset.duration, laneWidth);
+  const previewRangeStartMaximum = resizeSequencerPreviewRange(
+    previewRange,
+    'start',
+    asset.duration,
+    asset.duration,
+    asset.frame_rate,
+  ).start;
+  const previewRangeEndMinimum = resizeSequencerPreviewRange(
+    previewRange,
+    'end',
+    0,
+    asset.duration,
+    asset.frame_rate,
+  ).end;
   const transportPlaying = liveDirector ? Boolean(liveDirector.playing) : playing;
   const bindingsJson = director?.bindings_json ?? '{}';
   const renderBindingEditor = (target: string) => {
@@ -1958,10 +1993,91 @@ export function Sequencer(props: SequencerProps) {
     if (!asset || props.playMode) return;
     const normalized = normalizeSequencerPreviewRange(next, asset.duration, asset.frame_rate);
     setPlaying(false);
-    setPreviewRange(normalized);
+    replacePreviewRange(normalized);
     if (timeRef.current < normalized.start || timeRef.current > normalized.end) {
       scrub(Math.max(normalized.start, Math.min(normalized.end, timeRef.current)));
     }
+  };
+  const changePreviewRangeEdge = (edge: SequencerPreviewRangeEdge, requestedTime: number) => {
+    if (!asset || props.playMode) return;
+    changePreviewRange(resizeSequencerPreviewRange(
+      previewRangeRef.current,
+      edge,
+      requestedTime,
+      asset.duration,
+      asset.frame_rate,
+    ));
+  };
+  const previewRangeTimeAtPointer = (event: ReactPointerEvent<HTMLButtonElement>) => {
+    if (!asset) return null;
+    const ruler = event.currentTarget.closest<HTMLElement>('.sequencer-ruler');
+    if (!ruler) return null;
+    const bounds = ruler.getBoundingClientRect();
+    if (bounds.width <= 0) return null;
+    return (event.clientX - bounds.left) / bounds.width * asset.duration;
+  };
+  const beginPreviewRangeDrag = (
+    event: ReactPointerEvent<HTMLButtonElement>,
+    edge: SequencerPreviewRangeEdge,
+  ) => {
+    if (event.button !== 0 || props.playMode) return;
+    event.preventDefault();
+    event.stopPropagation();
+    previewRangeDrag.current = { pointerId: event.pointerId, edge };
+    setDraggingPreviewEdge(edge);
+    setPlaying(false);
+    event.currentTarget.setPointerCapture(event.pointerId);
+  };
+  const movePreviewRangeDrag = (event: ReactPointerEvent<HTMLButtonElement>) => {
+    const drag = previewRangeDrag.current;
+    if (!drag || drag.pointerId !== event.pointerId) return;
+    event.preventDefault();
+    event.stopPropagation();
+    const requestedTime = previewRangeTimeAtPointer(event);
+    if (requestedTime != null) changePreviewRangeEdge(drag.edge, requestedTime);
+  };
+  const finishPreviewRangeDrag = (event: ReactPointerEvent<HTMLButtonElement>) => {
+    const drag = previewRangeDrag.current;
+    if (!drag || drag.pointerId !== event.pointerId) return;
+    event.preventDefault();
+    event.stopPropagation();
+    previewRangeDrag.current = null;
+    setDraggingPreviewEdge(null);
+    if (event.currentTarget.hasPointerCapture(event.pointerId)) {
+      event.currentTarget.releasePointerCapture(event.pointerId);
+    }
+  };
+  const revealPreviewRangeEdge = (edge: SequencerPreviewRangeEdge) => {
+    requestAnimationFrame(() => {
+      const viewport = tracksViewport.current;
+      if (!viewport || !assetRef.current) return;
+      const targetTime = edge === 'start' ? previewRangeRef.current.start : previewRangeRef.current.end;
+      const visibleLaneWidth = Math.max(1, viewport.clientWidth - 180);
+      viewport.scrollLeft = sequencerRevealScrollLeft(
+        viewport.scrollLeft,
+        targetTime / assetRef.current.duration * laneWidth,
+        laneWidth,
+        visibleLaneWidth,
+      );
+    });
+  };
+  const previewRangeHandleKeyDown = (
+    event: ReactKeyboardEvent<HTMLButtonElement>,
+    edge: SequencerPreviewRangeEdge,
+  ) => {
+    if (!asset || props.playMode) return;
+    const current = edge === 'start' ? previewRangeRef.current.start : previewRangeRef.current.end;
+    const frames = event.shiftKey ? 10 : 1;
+    let requested: number | null = null;
+    if (event.key === 'ArrowLeft') requested = current - frames / asset.frame_rate;
+    else if (event.key === 'ArrowRight') requested = current + frames / asset.frame_rate;
+    else if (event.key === 'Home') requested = 0;
+    else if (event.key === 'End') requested = asset.duration;
+    if (requested == null) return;
+    event.preventDefault();
+    event.stopPropagation();
+    changePreviewRangeEdge(edge, requested);
+    revealPreviewRangeEdge(edge);
   };
   const toggleLoopPreview = () => {
     const next = !loopPreview;
@@ -2304,8 +2420,8 @@ export function Sequencer(props: SequencerProps) {
           </div>
           {!props.playMode && <div className="sequencer-preview-range" role="group" aria-label="Edit preview range">
             <button type="button" className={loopPreview ? 'active' : ''} aria-pressed={loopPreview} aria-label="Toggle preview loop" title={`Loop Edit Preview ${loopPreview ? 'on' : 'off'}`} onClick={toggleLoopPreview}><Repeat2 size={13} /></button>
-            <label>In<input type="number" min={0} max={previewRange.end} step={1 / asset.frame_rate} value={Number(previewRange.start.toFixed(4))} onChange={(event) => changePreviewRange({ ...previewRange, start: Number(event.target.value) })} /></label>
-            <label>Out<input type="number" min={previewRange.start} max={asset.duration} step={1 / asset.frame_rate} value={Number(previewRange.end.toFixed(4))} onChange={(event) => changePreviewRange({ ...previewRange, end: Number(event.target.value) })} /></label>
+            <label>In<input type="number" min={0} max={previewRangeStartMaximum} step={1 / asset.frame_rate} value={Number(previewRange.start.toFixed(4))} onChange={(event) => changePreviewRangeEdge('start', Number(event.target.value))} /></label>
+            <label>Out<input type="number" min={previewRangeEndMinimum} max={asset.duration} step={1 / asset.frame_rate} value={Number(previewRange.end.toFixed(4))} onChange={(event) => changePreviewRangeEdge('end', Number(event.target.value))} /></label>
             <button type="button" aria-label="Reset preview range" title="Reset Edit Preview to the complete Timeline" disabled={previewRange.start === 0 && previewRange.end === asset.duration} onClick={() => changePreviewRange({ start: 0, end: asset.duration })}>All</button>
           </div>}
           <div className="sequencer-zoom-controls">
@@ -2408,6 +2524,46 @@ export function Sequencer(props: SequencerProps) {
               }}
             >
               {!props.playMode && <i className="sequencer-preview-range-band" style={{ left: `${previewRange.start / asset.duration * 100}%`, width: `${(previewRange.end - previewRange.start) / asset.duration * 100}%` }} />}
+              {!props.playMode && <>
+                <button
+                  type="button"
+                  role="slider"
+                  className={`sequencer-preview-range-handle start${previewRange.start <= 1e-9 ? ' boundary' : ''}${draggingPreviewEdge === 'start' ? ' dragging' : ''}`}
+                  aria-label="Edit preview in point"
+                  aria-valuemin={0}
+                  aria-valuemax={previewRangeStartMaximum}
+                  aria-valuenow={previewRange.start}
+                  aria-valuetext={`${previewRange.start.toFixed(3)} seconds`}
+                  title={`Preview In · ${previewRange.start.toFixed(3)}s · drag or use arrows (Shift = 10 frames)`}
+                  style={{ left: `${previewRange.start / asset.duration * 100}%` }}
+                  onPointerDown={(event) => beginPreviewRangeDrag(event, 'start')}
+                  onPointerMove={movePreviewRangeDrag}
+                  onPointerUp={finishPreviewRangeDrag}
+                  onPointerCancel={finishPreviewRangeDrag}
+                  onLostPointerCapture={finishPreviewRangeDrag}
+                  onKeyDown={(event) => previewRangeHandleKeyDown(event, 'start')}
+                  onFocus={() => revealPreviewRangeEdge('start')}
+                />
+                <button
+                  type="button"
+                  role="slider"
+                  className={`sequencer-preview-range-handle end${Math.abs(previewRange.end - asset.duration) <= 1e-9 ? ' boundary' : ''}${draggingPreviewEdge === 'end' ? ' dragging' : ''}`}
+                  aria-label="Edit preview out point"
+                  aria-valuemin={previewRangeEndMinimum}
+                  aria-valuemax={asset.duration}
+                  aria-valuenow={previewRange.end}
+                  aria-valuetext={`${previewRange.end.toFixed(3)} seconds`}
+                  title={`Preview Out · ${previewRange.end.toFixed(3)}s · drag or use arrows (Shift = 10 frames)`}
+                  style={{ left: `${previewRange.end / asset.duration * 100}%` }}
+                  onPointerDown={(event) => beginPreviewRangeDrag(event, 'end')}
+                  onPointerMove={movePreviewRangeDrag}
+                  onPointerUp={finishPreviewRangeDrag}
+                  onPointerCancel={finishPreviewRangeDrag}
+                  onLostPointerCapture={finishPreviewRangeDrag}
+                  onKeyDown={(event) => previewRangeHandleKeyDown(event, 'end')}
+                  onFocus={() => revealPreviewRangeEdge('end')}
+                />
+              </>}
               {ticks.map((tick) => <span key={tick.time} style={{ left: `${tick.position * 100}%` }}>{tick.time.toFixed(tick.time < 1 ? 2 : 1)}</span>)}
               {snapGuide != null && <i className="sequencer-snap-guide ruler-guide" style={{ left: `${snapGuide / asset.duration * 100}%` }}><b>{snapGuide.toFixed(3)}s</b></i>}
               <i className="sequencer-playhead" style={{ left: `${displayTime / asset.duration * 100}%` }} />
