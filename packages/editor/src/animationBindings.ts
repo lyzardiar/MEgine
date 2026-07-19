@@ -18,6 +18,12 @@ export type AnimationPropertyBindingGroup = {
   bindings: AnimationPropertyBinding[];
 };
 
+export type AnimationPropertyBindingSearchResult = {
+  bindings: AnimationPropertyBinding[];
+  matchCount: number;
+  truncated: boolean;
+};
+
 function animatablePaths(value: unknown, prefix = '', output: string[] = []): string[] {
   if (output.length >= 2048) return output;
   if (typeof value === 'number' || typeof value === 'boolean' || typeof value === 'string') {
@@ -113,6 +119,29 @@ export function groupAnimationPropertyBindings(
     group.bindings.push(binding);
   }
   return [...groups.values()];
+}
+
+export function searchAnimationPropertyBindings(
+  bindings: readonly AnimationPropertyBinding[],
+  query: string,
+  limit = 240,
+): AnimationPropertyBindingSearchResult {
+  const tokens = query.trim().toLowerCase().split(/\s+/).filter(Boolean);
+  const safeLimit = Number.isFinite(limit) ? Math.max(1, Math.trunc(limit)) : 240;
+  const results: AnimationPropertyBinding[] = [];
+  let matchCount = 0;
+  for (const binding of bindings) {
+    const haystack = `${binding.label} ${binding.target} ${binding.component} ${binding.property}`
+      .toLowerCase();
+    if (tokens.some((token) => !haystack.includes(token))) continue;
+    matchCount += 1;
+    if (results.length < safeLimit) results.push(binding);
+  }
+  return {
+    bindings: results,
+    matchCount,
+    truncated: matchCount > results.length,
+  };
 }
 
 export function parseAnimationBindingKey(value: string): AnimationPropertyBinding | null {

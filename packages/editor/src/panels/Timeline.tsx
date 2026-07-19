@@ -3,15 +3,18 @@ import {
   useMemo,
   useRef,
   useState,
+  type CSSProperties,
   type DragEvent,
   type FocusEvent as ReactFocusEvent,
   type KeyboardEvent as ReactKeyboardEvent,
   type PointerEvent as ReactPointerEvent,
 } from 'react';
+import { createPortal } from 'react-dom';
 import type { WorldSnapshotView } from '@mengine/api';
 import {
   ChevronLeft,
   ChevronRight,
+  ChevronDown,
   Circle,
   ClipboardPaste,
   Code2,
@@ -25,6 +28,7 @@ import {
   Play,
   Plus,
   Save,
+  Search,
   Trash2,
   Redo2,
   Undo2,
@@ -64,6 +68,7 @@ import {
   groupAnimationPropertyBindings,
   listAnimationPropertyBindings,
   parseAnimationBindingKey,
+  searchAnimationPropertyBindings,
 } from '../animationBindings';
 import {
   animationCurveChannelCount,
@@ -923,6 +928,10 @@ export function Timeline(props: {
   const [showNewClip, setShowNewClip] = useState(false);
   const [propertyPath, setPropertyPath] = useState('Transform.position');
   const [manualPropertyOpen, setManualPropertyOpen] = useState(false);
+  const [propertyPickerOpen, setPropertyPickerOpen] = useState(false);
+  const [propertyPopupPlacement, setPropertyPopupPlacement] = useState<'above' | 'below'>('below');
+  const [propertyPopupStyle, setPropertyPopupStyle] = useState<CSSProperties>({});
+  const [propertySearch, setPropertySearch] = useState('');
   const [zoom, setZoom] = useState(1);
   const [viewMode, setViewMode] = useState<TimelineViewMode>('dope_sheet');
   const [detailsOpen, setDetailsOpen] = useState(false);
@@ -934,6 +943,9 @@ export function Timeline(props: {
   const timelineMarqueeRef = useRef<TimelineMarquee | null>(null);
   const scrubPointer = useRef<number | null>(null);
   const workspaceRef = useRef<HTMLDivElement>(null);
+  const propertyPickerRef = useRef<HTMLDivElement>(null);
+  const propertyPopupRef = useRef<HTMLDivElement>(null);
+  const propertySearchRef = useRef<HTMLInputElement>(null);
   const playbackFrame = useRef<number | null>(null);
   const previousFrameTime = useRef<number | null>(null);
   const playbackPhase = useRef<number | null>(null);
@@ -1344,10 +1356,69 @@ export function Timeline(props: {
     ))),
     [clip, propertyBindings],
   );
-  const propertyBindingGroups = useMemo(
-    () => groupAnimationPropertyBindings(addablePropertyBindings),
-    [addablePropertyBindings],
+  const propertySearchResult = useMemo(
+    () => searchAnimationPropertyBindings(addablePropertyBindings, propertySearch),
+    [addablePropertyBindings, propertySearch],
   );
+  const propertyBindingGroups = useMemo(
+    () => groupAnimationPropertyBindings(propertySearchResult.bindings),
+    [propertySearchResult.bindings],
+  );
+
+  const positionPropertyPopup = () => {
+    const rect = propertyPickerRef.current?.getBoundingClientRect();
+    if (!rect) return;
+    const padding = 8;
+    const gap = 4;
+    const preferredHeight = Math.min(430, window.innerHeight * 0.68);
+    const spaceAbove = Math.max(0, rect.top - gap - padding);
+    const spaceBelow = Math.max(0, window.innerHeight - rect.bottom - gap - padding);
+    const placement = spaceBelow >= preferredHeight || spaceBelow >= spaceAbove ? 'below' : 'above';
+    const availableHeight = placement === 'below' ? spaceBelow : spaceAbove;
+    const width = Math.min(440, Math.max(120, window.innerWidth - padding * 2));
+    const left = Math.min(
+      Math.max(padding, rect.left),
+      Math.max(padding, window.innerWidth - width - padding),
+    );
+    const style: CSSProperties = {
+      left,
+      width,
+      maxHeight: Math.max(48, Math.min(preferredHeight, availableHeight)),
+    };
+    if (placement === 'below') style.top = rect.bottom + gap;
+    else style.bottom = window.innerHeight - rect.top + gap;
+    setPropertyPopupPlacement(placement);
+    setPropertyPopupStyle(style);
+  };
+
+  useEffect(() => {
+    if (!propertyPickerOpen) return;
+    const focusFrame = window.requestAnimationFrame(() => propertySearchRef.current?.focus());
+    const closeOutside = (event: PointerEvent) => {
+      const target = event.target as Node | null;
+      if (
+        target
+        && !propertyPickerRef.current?.contains(target)
+        && !propertyPopupRef.current?.contains(target)
+      ) setPropertyPickerOpen(false);
+    };
+    const closeWithEscape = (event: KeyboardEvent) => {
+      if (event.key !== 'Escape') return;
+      event.preventDefault();
+      event.stopPropagation();
+      setPropertyPickerOpen(false);
+    };
+    const reposition = () => positionPropertyPopup();
+    document.addEventListener('pointerdown', closeOutside);
+    window.addEventListener('keydown', closeWithEscape, true);
+    window.addEventListener('resize', reposition);
+    return () => {
+      window.cancelAnimationFrame(focusFrame);
+      document.removeEventListener('pointerdown', closeOutside);
+      window.removeEventListener('keydown', closeWithEscape, true);
+      window.removeEventListener('resize', reposition);
+    };
+  }, [propertyPickerOpen]);
 
   const assignClip = (path: string) => {
     if (!props.entity) return;
@@ -2436,39 +2507,90 @@ export function Timeline(props: {
                 ))}
               </select>
             )}
-            <select
-              className="timeline-property-picker"
-              aria-label="Add animated property"
-              value=""
-              disabled={addablePropertyBindings.length === 0}
-              onChange={(event) => {
-                const bindingKey = event.target.value;
-                const binding = parseAnimationBindingKey(bindingKey);
-                if (!binding) return;
-                setPropertyPath(`${binding.component}.${binding.property}`);
-                addProperty(bindingKey);
-              }}
-            >
-              <option value="">
-                {addablePropertyBindings.length > 0 ? 'Add Property...' : 'All properties added'}
-              </option>
-              {propertyBindingGroups.map((group) => (
-                <optgroup key={group.key} label={group.label}>
-                  {group.bindings.map((binding) => (
-                    <option key={animationBindingKey(binding)} value={animationBindingKey(binding)}>
-                      {binding.property}
-                    </option>
-                  ))}
-                </optgroup>
-              ))}
-            </select>
+            <div className="timeline-property-picker" ref={propertyPickerRef}>
+              <button
+                type="button"
+                className={`timeline-property-picker-button${propertyPickerOpen ? ' active' : ''}`}
+                aria-label="Add animated property"
+                aria-haspopup="dialog"
+                aria-expanded={propertyPickerOpen}
+                disabled={addablePropertyBindings.length === 0}
+                title={addablePropertyBindings.length > 0 ? 'Add an animated property track' : 'All available properties have tracks'}
+                onClick={() => {
+                  setManualPropertyOpen(false);
+                  setPropertySearch('');
+                  if (!propertyPickerOpen) positionPropertyPopup();
+                  setPropertyPickerOpen(!propertyPickerOpen);
+                }}
+              >
+                <Plus size={13} aria-hidden="true" />
+                <span>{addablePropertyBindings.length > 0 ? 'Add Property' : 'All Properties Added'}</span>
+                <ChevronDown className="timeline-property-chevron" size={12} aria-hidden="true" />
+              </button>
+              {propertyPickerOpen && createPortal(
+                <div
+                  ref={propertyPopupRef}
+                  className={`timeline-property-popup open-${propertyPopupPlacement}`}
+                  role="dialog"
+                  aria-label="Add Animated Property"
+                  style={propertyPopupStyle}
+                >
+                  <label className="timeline-property-search">
+                    <Search size={13} aria-hidden="true" />
+                    <input
+                      ref={propertySearchRef}
+                      type="search"
+                      aria-label="Search animated properties"
+                      placeholder="Search target, component, or property..."
+                      value={propertySearch}
+                      onChange={(event) => setPropertySearch(event.target.value)}
+                    />
+                  </label>
+                  <div className="timeline-property-results">
+                    {propertyBindingGroups.map((group) => (
+                      <section key={group.key} className="timeline-property-group">
+                        <header>{group.label}</header>
+                        {group.bindings.map((binding) => (
+                          <button
+                            type="button"
+                            key={animationBindingKey(binding)}
+                            title={binding.label}
+                            onClick={() => {
+                              setPropertyPath(`${binding.component}.${binding.property}`);
+                              if (addProperty(animationBindingKey(binding))) {
+                                setPropertyPickerOpen(false);
+                                setPropertySearch('');
+                              }
+                            }}
+                          >
+                            {binding.property}
+                          </button>
+                        ))}
+                      </section>
+                    ))}
+                    {propertySearchResult.matchCount === 0 && (
+                      <div className="timeline-property-empty">No matching properties</div>
+                    )}
+                  </div>
+                  <footer>
+                    {propertySearchResult.truncated
+                      ? `Showing ${propertySearchResult.bindings.length} of ${propertySearchResult.matchCount}. Refine the search to see more.`
+                      : `${propertySearchResult.matchCount} ${propertySearchResult.matchCount === 1 ? 'property' : 'properties'}`}
+                  </footer>
+                </div>,
+                document.body,
+              )}
+            </div>
             <button
               type="button"
               className={`timeline-icon-button timeline-manual-binding-toggle${manualPropertyOpen ? ' active' : ''}`}
               aria-label={manualPropertyOpen ? 'Hide manual property path' : 'Add property by path'}
               aria-expanded={manualPropertyOpen}
               title="Advanced: add a Component.property path"
-              onClick={() => setManualPropertyOpen((open) => !open)}
+              onClick={() => {
+                setPropertyPickerOpen(false);
+                setManualPropertyOpen((open) => !open);
+              }}
             >
               <Code2 size={13} aria-hidden="true" />
             </button>

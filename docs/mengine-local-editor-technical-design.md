@@ -924,3 +924,14 @@ Referenced Only 是可用的单包裁剪基础，仍不等同于完整 Addressab
 第一遍真实运行自审创建 `Button.manim` 后检查六个组件分组，选择 `Button / Transform / position` 即刻得到 `Transform.position` 与 0s/1s 两个关键帧，候选列表同步移除 position。第二遍验证高级路径展开/Escape、Undo/Redo 与候选恢复；工具栏保持 31px 单行、340px 属性选择区且 `scrollWidth === clientWidth`。测试资产和编辑器状态差异在提交前全部清理。
 
 这次消除了 Animation Clip 最常见建轨动作中的一次多余确认，但成熟动画编辑器仍需可搜索的虚拟化 Property Popup、多属性批量添加、属性收藏、Binding 丢失修复、模型动画曲线映射、Onion Skin/运动轨迹和录制冲突诊断。HTML Select 在超大层级下不是最终形态，后续应升级为键盘可导航、按目标/组件折叠且支持模糊搜索的专用菜单。
+
+## 73. 2026-07-19 Animation Timeline 可搜索 Property Popup
+
+- `Add Property` 从原生 HTML Select 升级为专用搜索弹窗。搜索同时覆盖目标路径、组件名、属性路径与完整标签，空格分隔的多个 Token 必须全部命中；结果继续按“目标 / 组件”分组，最多渲染 240 条并明确显示总命中数与截断提示，避免超大场景一次生成无上限 DOM。
+- 弹窗打开后自动聚焦搜索框，支持 Escape、点击外部关闭；选择属性仍然一步创建轨道并自动关闭。已存在的完整 Binding 从权威 Clip 实时排除，因此筛选结果、Undo、Redo 与轨道列表不会维护相互漂移的第二份状态。高级手工路径入口与搜索弹窗互斥，避免两个创建面板同时占用工具栏。
+- Property Popup 使用 `createPortal` 挂载到 `document.body`，固定定位在 Add Property 锚点附近，并根据上下可用空间自动选择方向；宽度、最大高度和左右位置都按当前视口钳制，窗口调整尺寸时重新定位。它不再受 Timeline Dock 的 overflow、局部层叠上下文或相邻 Scene/Inspector/Animator 面板遮挡。
+- 搜索器抽为纯函数，确定性使用 Unicode 小写匹配并保留原候选顺序；单测覆盖多 Token AND 匹配、空查询顺序、结果上限、真实命中数与截断状态。弹窗保留稳定的 dialog/searchbox/button 辅助语义，视觉继续使用零圆角、方形滚动条和紧凑工具风格。
+
+第一遍自审在 1280×720 的底部 Timeline Dock 中发现原绝对定位弹窗从 y=579.8 延伸到视口外；修正方向计算后向上展开为 y=119.8–549.8，搜索框自动聚焦。第二遍继续执行真实点击，发现局部 `z-index` 下弹窗虽可见但点击会穿透并误切到 Animator；改为全局 Portal 后，底部 Dock 向上、最大化 Timeline 向下的弹窗都挂在 `BODY` 且完整处于视口内。随后以 `transform pos` 精确筛出一项、创建 `Transform.position` 与 0s/1s 关键帧、确认重复候选消失，并验证 Escape、点击外部、Undo/Redo。测试 Clip 与编辑器状态差异在回归前全部清理。
+
+这一切片补齐了大量属性下的基础发现与可点击可靠性，但仍不是成熟动画 Binding 工作流。后续需要方向键/Enter 的完整 roving-focus 导航、真正虚拟化列表、分组折叠、多选批量添加、最近使用与收藏、丢失 Binding 修复/重映射、属性类型和当前值预览，以及模型骨骼层级、Onion Skin、运动轨迹和录制冲突诊断。

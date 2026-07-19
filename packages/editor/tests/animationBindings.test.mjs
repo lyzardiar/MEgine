@@ -5,6 +5,7 @@ import {
   groupAnimationPropertyBindings,
   listAnimationPropertyBindings,
   parseAnimationBindingKey,
+  searchAnimationPropertyBindings,
 } from '../src/animationBindings.ts';
 
 test('animation property picker enumerates root and descendant scalar/vector properties', () => {
@@ -48,4 +49,22 @@ test('animation property picker groups bindings by target and component', () => 
     { label: 'Arm / Transform', properties: ['rotation'] },
     { label: 'Arm / SpriteRenderer', properties: ['color'] },
   ]);
+});
+
+test('animation property search matches all tokens and reports truncated results', () => {
+  const bindings = [
+    { target: '.', component: 'Transform', property: 'position', label: 'Root / Transform.position' },
+    { target: '.', component: 'Transform', property: 'scale', label: 'Root / Transform.scale' },
+    { target: 'Arm', component: 'Transform', property: 'position', label: 'Arm / Transform.position' },
+    { target: 'Arm', component: 'SpriteRenderer', property: 'color', label: 'Arm / SpriteRenderer.color' },
+  ];
+  const filtered = searchAnimationPropertyBindings(bindings, 'arm trans');
+  assert.deepEqual(filtered.bindings.map((binding) => binding.label), ['Arm / Transform.position']);
+  assert.equal(filtered.matchCount, 1);
+  assert.equal(filtered.truncated, false);
+
+  const limited = searchAnimationPropertyBindings(bindings, '', 2);
+  assert.deepEqual(limited.bindings, bindings.slice(0, 2));
+  assert.equal(limited.matchCount, 4);
+  assert.equal(limited.truncated, true);
 });
