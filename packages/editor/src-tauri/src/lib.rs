@@ -138,8 +138,53 @@ struct BuildPlayerResult {
     stage_timings: Vec<BuildStageTimingResult>,
     total_duration_ms: u64,
     toolchain: String,
+    history_entry: Option<BuildHistoryEntry>,
     log: String,
 }
+
+#[derive(Clone, Debug, serde::Serialize, PartialEq, Eq)]
+#[serde(rename_all = "camelCase")]
+struct BuildHistoryEntry {
+    id: String,
+    recorded_at_ms: u64,
+    content_hash: String,
+    profile: String,
+    platform: String,
+    architecture: String,
+    engine_version: String,
+    project_name: String,
+    project_version: String,
+    file_count: usize,
+    packaged_bytes: u64,
+    output_dir: String,
+    manifest_path: String,
+    record_path: String,
+    published: bool,
+    total_duration_ms: u64,
+    toolchain: String,
+}
+
+#[derive(Debug, serde::Serialize)]
+#[serde(rename_all = "camelCase")]
+struct BuildHistoryListResult {
+    entries: Vec<BuildHistoryEntry>,
+    invalid_records: usize,
+    retention_limit: usize,
+}
+
+#[derive(Debug, serde::Deserialize, serde::Serialize)]
+#[serde(rename_all = "camelCase")]
+struct BuildHistoryRecord {
+    schema_version: u32,
+    id: String,
+    recorded_at_ms: u64,
+    total_duration_ms: u64,
+    toolchain: String,
+    manifest: serde_json::Value,
+}
+
+const BUILD_HISTORY_SCHEMA_VERSION: u32 = 1;
+const MAX_BUILD_HISTORY_ENTRIES: usize = 50;
 
 #[derive(Clone, Debug, serde::Deserialize, serde::Serialize, PartialEq, Eq)]
 #[serde(rename_all = "camelCase")]
@@ -430,6 +475,16 @@ fn read_previous_build_manifest(output_dir: &Path) -> Option<serde_json::Value> 
     serde_json::from_slice(&std::fs::read(path).ok()?).ok()
 }
 
+fn published_build_hash(output_dir: &Path) -> Option<String> {
+    read_previous_build_manifest(output_dir).and_then(|manifest| {
+        manifest
+            .get("contentHash")
+            .and_then(serde_json::Value::as_str)
+            .filter(|value| value.len() == 64 && value.bytes().all(|byte| byte.is_ascii_hexdigit()))
+            .map(str::to_ascii_lowercase)
+    })
+}
+
 fn build_file_snapshots(
     manifest: &serde_json::Value,
 ) -> Result<(String, BTreeMap<String, BuildFileSnapshot>), String> {
@@ -563,6 +618,367 @@ fn compare_build_manifests(
         byte_delta: signed_byte_delta(current_bytes, previous_bytes),
         changes,
     })
+}
+
+fn build_history_dir(project_root: &Path, create: bool) -> Result<Option<PathBuf>, String> {
+    let engine_dir = project_root.join(".mengine");
+    let history_dir = engine_dir.join("build-history");
+    for directory in [&engine_dir, &history_dir] {
+        match std::fs::symlink_metadata(directory) {
+            Ok(metadata) => {
+                if metadata.file_type().is_symlink() || !metadata.is_dir() {
+                    return Err(format!(
+                        "build history directory must be a regular directory: {}",
+                        directory.display()
+                    ));
+                }
+            }
+            Err(error) if error.kind() == std::io::ErrorKind::NotFound && create => {
+                std::fs::create_dir(directory).map_err(|error| {
+                    format!(
+                        "cannot create build history directory {}: {error}",
+                        directory.display()
+                    )
+                })?;
+            }
+            Err(error) if error.kind() == std::io::ErrorKind::NotFound => return Ok(None),
+            Err(error) => {
+                return Err(format!(
+                    "cannot inspect build history directory {}: {error}",
+                    directory.display()
+                ));
+            }
+        }
+    }
+    Ok(Some(history_dir))
+}
+
+fn valid_build_history_id(id: &str) -> bool {
+    !id.is_empty()
+        && id.len() <= 128
+        && id
+            .bytes()
+            .all(|byte| byte.is_ascii_alphanumeric() || byte == b'-' || byte == b'_')
+}
+
+fn safe_build_segment(value: &str, label: &str) -> Result<String, String> {
+    if value.is_empty()
+        || value.len() > 64
+        || !value
+            .bytes()
+            .all(|byte| byte.is_ascii_alphanumeric() || byte == b'-' || byte == b'_')
+    {
+        return Err(format!(
+            "build history manifest contains an invalid {label}"
+        ));
+    }
+    Ok(value.to_string())
+}
+
+fn history_manifest_string(manifest: &serde_json::Value, field: &str) -> Result<String, String> {
+    manifest
+        .get(field)
+        .and_then(serde_json::Value::as_str)
+        .filter(|value| !value.is_empty())
+        .map(str::to_owned)
+        .ok_or_else(|| format!("build history manifest does not contain {field}"))
+}
+
+fn history_project_version(manifest: &serde_json::Value) -> Result<String, String> {
+    let version = manifest
+        .get("project")
+        .and_then(|project| project.get("version"))
+        .ok_or_else(|| "build history manifest does not contain project.version".to_string())?;
+    match version {
+        serde_json::Value::String(value) if !value.is_empty() => Ok(value.clone()),
+        serde_json::Value::Number(value) => Ok(value.to_string()),
+        _ => Err("build history manifest has an invalid project.version".into()),
+    }
+}
+
+fn build_history_record_path(history_dir: &Path, id: &str) -> Result<PathBuf, String> {
+    if !valid_build_history_id(id) {
+        return Err("invalid build history id".into());
+    }
+    Ok(history_dir.join(format!("{id}.json")))
+}
+
+fn read_build_history_record(path: &Path, expected_id: &str) -> Result<BuildHistoryRecord, String> {
+    let metadata = std::fs::symlink_metadata(path)
+        .map_err(|error| format!("cannot inspect build history record: {error}"))?;
+    if metadata.file_type().is_symlink() || !metadata.is_file() {
+        return Err("build history record must be a regular non-symlink file".into());
+    }
+    if metadata.len() > 32 * 1024 * 1024 {
+        return Err("build history record exceeds 32 MiB".into());
+    }
+    let record: BuildHistoryRecord = serde_json::from_slice(
+        &std::fs::read(path)
+            .map_err(|error| format!("cannot read build history record: {error}"))?,
+    )
+    .map_err(|error| format!("invalid build history record: {error}"))?;
+    if record.schema_version != BUILD_HISTORY_SCHEMA_VERSION {
+        return Err(format!(
+            "unsupported build history schema version: {}",
+            record.schema_version
+        ));
+    }
+    if record.id != expected_id || !valid_build_history_id(&record.id) {
+        return Err("build history record id does not match its file name".into());
+    }
+    if !matches!(record.toolchain.as_str(), "bundled-sdk" | "source-checkout") {
+        return Err("build history record contains an invalid toolchain".into());
+    }
+    Ok(record)
+}
+
+fn build_history_entry(
+    project_root: &Path,
+    record_path: &Path,
+    record: &BuildHistoryRecord,
+) -> Result<BuildHistoryEntry, String> {
+    if !matches!(record.toolchain.as_str(), "bundled-sdk" | "source-checkout") {
+        return Err("build history record contains an invalid toolchain".into());
+    }
+    let (content_hash, files) = build_file_snapshots(&record.manifest)?;
+    let profile = safe_build_segment(
+        &history_manifest_string(&record.manifest, "profile")?,
+        "profile",
+    )?;
+    if !matches!(profile.as_str(), "debug" | "release") {
+        return Err("build history manifest contains an unsupported profile".into());
+    }
+    let platform = safe_build_segment(
+        &history_manifest_string(&record.manifest, "platform")?,
+        "platform",
+    )?;
+    let architecture = safe_build_segment(
+        &history_manifest_string(&record.manifest, "architecture")?,
+        "architecture",
+    )?;
+    let output_dir = project_root
+        .join("Builds")
+        .join(format!("{platform}-{architecture}-{profile}"));
+    let project = record
+        .manifest
+        .get("project")
+        .ok_or_else(|| "build history manifest does not contain project".to_string())?;
+    let project_name = project
+        .get("name")
+        .and_then(serde_json::Value::as_str)
+        .filter(|value| !value.is_empty())
+        .map(str::to_owned)
+        .ok_or_else(|| "build history manifest does not contain project.name".to_string())?;
+    let packaged_bytes = files
+        .values()
+        .fold(0_u64, |total, file| total.saturating_add(file.size));
+    let declared_bytes = record
+        .manifest
+        .get("contentSummary")
+        .and_then(|summary| summary.get("totalBytes"))
+        .and_then(serde_json::Value::as_u64)
+        .ok_or_else(|| {
+            "build history manifest does not contain contentSummary.totalBytes".to_string()
+        })?;
+    if declared_bytes != packaged_bytes {
+        return Err("build history manifest contentSummary.totalBytes does not match files".into());
+    }
+    Ok(BuildHistoryEntry {
+        id: record.id.clone(),
+        recorded_at_ms: record.recorded_at_ms,
+        content_hash,
+        profile,
+        platform,
+        architecture,
+        engine_version: history_manifest_string(&record.manifest, "engineVersion")?,
+        project_name,
+        project_version: history_project_version(&record.manifest)?,
+        file_count: files.len(),
+        packaged_bytes,
+        manifest_path: output_dir
+            .join("mengine-build.json")
+            .to_string_lossy()
+            .into_owned(),
+        output_dir: output_dir.to_string_lossy().into_owned(),
+        record_path: record_path.to_string_lossy().into_owned(),
+        published: false,
+        total_duration_ms: record.total_duration_ms,
+        toolchain: record.toolchain.clone(),
+    })
+}
+
+fn scan_build_history(project_root: &Path) -> Result<BuildHistoryListResult, String> {
+    let Some(history_dir) = build_history_dir(project_root, false)? else {
+        return Ok(BuildHistoryListResult {
+            entries: Vec::new(),
+            invalid_records: 0,
+            retention_limit: MAX_BUILD_HISTORY_ENTRIES,
+        });
+    };
+    let mut entries = Vec::new();
+    let mut invalid_records = 0;
+    for item in std::fs::read_dir(&history_dir)
+        .map_err(|error| format!("cannot read build history directory: {error}"))?
+    {
+        let Ok(item) = item else {
+            invalid_records += 1;
+            continue;
+        };
+        let path = item.path();
+        if path.extension().and_then(|value| value.to_str()) != Some("json") {
+            continue;
+        }
+        let Some(id) = path.file_stem().and_then(|value| value.to_str()) else {
+            invalid_records += 1;
+            continue;
+        };
+        if !valid_build_history_id(id) {
+            invalid_records += 1;
+            continue;
+        }
+        let Ok(record) = read_build_history_record(&path, id) else {
+            invalid_records += 1;
+            continue;
+        };
+        match build_history_entry(project_root, &path, &record) {
+            Ok(entry) => entries.push(entry),
+            Err(_) => invalid_records += 1,
+        }
+    }
+    entries.sort_by(|left, right| {
+        right
+            .recorded_at_ms
+            .cmp(&left.recorded_at_ms)
+            .then_with(|| right.id.cmp(&left.id))
+    });
+    let mut published_hashes = BTreeMap::<String, Option<String>>::new();
+    let mut published_targets = HashSet::<String>::new();
+    for entry in &mut entries {
+        let published_hash = published_hashes
+            .entry(entry.output_dir.clone())
+            .or_insert_with(|| published_build_hash(Path::new(&entry.output_dir)));
+        if !published_targets.contains(&entry.output_dir)
+            && published_hash
+                .as_ref()
+                .is_some_and(|published_hash| published_hash == &entry.content_hash)
+        {
+            entry.published = true;
+            published_targets.insert(entry.output_dir.clone());
+        }
+    }
+    Ok(BuildHistoryListResult {
+        entries,
+        invalid_records,
+        retention_limit: MAX_BUILD_HISTORY_ENTRIES,
+    })
+}
+
+fn list_build_history(project_root: &Path) -> Result<Vec<BuildHistoryEntry>, String> {
+    Ok(scan_build_history(project_root)?.entries)
+}
+
+fn write_build_history_record(path: &Path, record: &BuildHistoryRecord) -> Result<(), String> {
+    let contents = serde_json::to_vec_pretty(record).map_err(|error| error.to_string())?;
+    let parent = path
+        .parent()
+        .ok_or_else(|| "build history record has no parent".to_string())?;
+    let nonce = SystemTime::now()
+        .duration_since(UNIX_EPOCH)
+        .unwrap_or_default()
+        .as_nanos();
+    let temporary = parent.join(format!(".build-history.{}.{nonce}.tmp", std::process::id()));
+    let result = (|| -> std::io::Result<()> {
+        use std::io::Write;
+        let mut file = std::fs::OpenOptions::new()
+            .write(true)
+            .create_new(true)
+            .open(&temporary)?;
+        file.write_all(&contents)?;
+        file.write_all(b"\n")?;
+        file.sync_all()?;
+        drop(file);
+        replace_file_atomically(&temporary, path)
+    })();
+    if result.is_err() {
+        let _ = std::fs::remove_file(&temporary);
+    }
+    result.map_err(|error| format!("cannot write build history record: {error}"))
+}
+
+fn prune_build_history(project_root: &Path, retained_entries: usize) -> Result<(), String> {
+    let entries = list_build_history(project_root)?;
+    for entry in entries.iter().skip(retained_entries) {
+        let path = Path::new(&entry.record_path);
+        let metadata = std::fs::symlink_metadata(path)
+            .map_err(|error| format!("cannot inspect old build history record: {error}"))?;
+        if metadata.file_type().is_symlink() || !metadata.is_file() {
+            return Err("old build history record is not a regular file".into());
+        }
+        std::fs::remove_file(path)
+            .map_err(|error| format!("cannot remove old build history record: {error}"))?;
+    }
+    Ok(())
+}
+
+fn archive_build_history(
+    project_root: &Path,
+    manifest: &serde_json::Value,
+    total_duration_ms: u64,
+    toolchain: &str,
+) -> Result<BuildHistoryEntry, String> {
+    let history_dir = build_history_dir(project_root, true)?
+        .ok_or_else(|| "build history directory is unavailable".to_string())?;
+    let content_hash = build_file_snapshots(manifest)?.0;
+    let recorded_at = SystemTime::now()
+        .duration_since(UNIX_EPOCH)
+        .unwrap_or_default();
+    let recorded_at_ms = recorded_at.as_millis().try_into().unwrap_or(u64::MAX);
+    let sub_millisecond = recorded_at.as_nanos() % 1_000_000;
+    let base_id = format!(
+        "{recorded_at_ms}-{sub_millisecond:06}-{}",
+        &content_hash[..12]
+    );
+    let mut id = base_id.clone();
+    let mut suffix = 2_u32;
+    let path = loop {
+        let candidate = build_history_record_path(&history_dir, &id)?;
+        if !candidate.exists() {
+            break candidate;
+        }
+        id = format!("{base_id}-{suffix}");
+        suffix = suffix.saturating_add(1);
+    };
+    let record = BuildHistoryRecord {
+        schema_version: BUILD_HISTORY_SCHEMA_VERSION,
+        id,
+        recorded_at_ms,
+        total_duration_ms,
+        toolchain: toolchain.to_string(),
+        manifest: manifest.clone(),
+    };
+    let mut entry = build_history_entry(project_root, &path, &record)?;
+    entry.published = published_build_hash(Path::new(&entry.output_dir))
+        .is_some_and(|published_hash| published_hash == entry.content_hash.as_str());
+    prune_build_history(project_root, MAX_BUILD_HISTORY_ENTRIES.saturating_sub(1))?;
+    write_build_history_record(&path, &record)?;
+    Ok(entry)
+}
+
+fn compare_build_history(
+    project_root: &Path,
+    previous_id: &str,
+    current_id: &str,
+) -> Result<BuildComparisonResult, String> {
+    if previous_id == current_id {
+        return Err("select two different build history entries".into());
+    }
+    let history_dir = build_history_dir(project_root, false)?
+        .ok_or_else(|| "build history is empty".to_string())?;
+    let previous_path = build_history_record_path(&history_dir, previous_id)?;
+    let current_path = build_history_record_path(&history_dir, current_id)?;
+    let previous = read_build_history_record(&previous_path, previous_id)?;
+    let current = read_build_history_record(&current_path, current_id)?;
+    compare_build_manifests(&previous.manifest, &current.manifest)
 }
 
 const BUILD_STAGE_COUNT: usize = 5;
@@ -1008,7 +1424,24 @@ fn run_player_build_controlled(
         report_started,
     );
     let total_duration_ms = duration_ms(total_started.elapsed());
-    let (build_cache, build_log) = extract_build_cache_report(&output.stdout);
+    let (build_cache, mut build_log) = extract_build_cache_report(&output.stdout);
+    let history_entry = match archive_build_history(
+        &project_root,
+        &build_manifest,
+        total_duration_ms,
+        &toolchain,
+    ) {
+        Ok(entry) => Some(entry),
+        Err(error) => {
+            if !build_log.is_empty() {
+                build_log.push('\n');
+            }
+            build_log.push_str(&format!(
+                "warning: player was published, but its build history record could not be saved: {error}"
+            ));
+            None
+        }
+    };
     Ok(BuildPlayerResult {
         build_id: control.build_id,
         output_dir: output_dir.to_string_lossy().into_owned(),
@@ -1035,6 +1468,7 @@ fn run_player_build_controlled(
         stage_timings,
         total_duration_ms,
         toolchain,
+        history_entry,
         log: build_log,
     })
 }
@@ -1842,6 +2276,32 @@ fn save_project_sorting_layers(
 }
 
 #[tauri::command]
+fn list_pc_build_history(state: State<'_, AppState>) -> Result<BuildHistoryListResult, String> {
+    let project_root = state
+        .project
+        .lock()
+        .as_ref()
+        .map(|session| session.snapshot().project_root)
+        .ok_or_else(|| no_project().message)?;
+    scan_build_history(Path::new(&project_root))
+}
+
+#[tauri::command]
+fn compare_pc_build_history(
+    previous_id: String,
+    current_id: String,
+    state: State<'_, AppState>,
+) -> Result<BuildComparisonResult, String> {
+    let project_root = state
+        .project
+        .lock()
+        .as_ref()
+        .map(|session| session.snapshot().project_root)
+        .ok_or_else(|| no_project().message)?;
+    compare_build_history(Path::new(&project_root), &previous_id, &current_id)
+}
+
+#[tauri::command]
 async fn build_pc_player(
     profile: String,
     clean: bool,
@@ -2256,6 +2716,8 @@ pub fn run() {
             validate_surface_shader,
             get_project_sorting_layers,
             save_project_sorting_layers,
+            list_pc_build_history,
+            compare_pc_build_history,
             build_pc_player,
             cancel_pc_build,
             run_pc_player,
@@ -2314,6 +2776,43 @@ mod tests {
             "size": size,
             "sha256": hash.to_string().repeat(64),
             "category": category,
+        })
+    }
+
+    fn history_manifest(hash: char, files: serde_json::Value) -> serde_json::Value {
+        let total_bytes = files
+            .as_array()
+            .into_iter()
+            .flatten()
+            .filter_map(|file| file.get("size").and_then(serde_json::Value::as_u64))
+            .sum::<u64>();
+        serde_json::json!({
+            "schemaVersion": 1,
+            "engineVersion": "0.1.0-test",
+            "platform": "windows",
+            "architecture": "x86_64",
+            "profile": "release",
+            "executable": "MEnginePlayer.exe",
+            "contentHash": hash.to_string().repeat(64),
+            "project": {
+                "name": "History Test",
+                "version": 7,
+                "mainScene": "Assets/Scenes/Main.mscene",
+                "buildScenes": ["Assets/Scenes/Main.mscene"],
+                "assetMode": "all",
+                "alwaysInclude": []
+            },
+            "assetValidation": {
+                "assetMode": "all",
+                "rootScenes": 1,
+                "references": 0,
+                "validatedFiles": 1,
+                "omittedAssetFiles": 0,
+                "omittedAssetBytes": 0,
+                "strippedEditorEntities": 0
+            },
+            "contentSummary": { "totalBytes": total_bytes, "categories": [] },
+            "files": files
         })
     }
 
@@ -2407,6 +2906,111 @@ mod tests {
         assert_eq!(comparison.unchanged_files, 2);
         assert_eq!(comparison.byte_delta, 0);
         assert!(comparison.changes.is_empty());
+    }
+
+    #[test]
+    fn build_history_archives_lists_and_compares_durable_reports() {
+        let root = std::env::temp_dir().join(format!(
+            "mengine-build-history-{}-{}",
+            std::process::id(),
+            SystemTime::now()
+                .duration_since(UNIX_EPOCH)
+                .unwrap()
+                .as_nanos()
+        ));
+        let output_dir = root.join("Builds/windows-x86_64-release");
+        std::fs::create_dir_all(&output_dir).unwrap();
+        let previous = history_manifest(
+            'a',
+            serde_json::json!([
+                comparison_file("Runtime/MEnginePlayer.exe", 10, 'a', "runtime"),
+                comparison_file("Assets/Main.mscene", 5, 'b', "scene")
+            ]),
+        );
+        std::fs::write(
+            output_dir.join("mengine-build.json"),
+            serde_json::to_vec(&previous).unwrap(),
+        )
+        .unwrap();
+        let previous_entry = archive_build_history(&root, &previous, 1250, "bundled-sdk").unwrap();
+        assert!(previous_entry.published);
+        assert_eq!(previous_entry.packaged_bytes, 15);
+        assert_eq!(previous_entry.project_version, "7");
+
+        let current = history_manifest(
+            'c',
+            serde_json::json!([
+                comparison_file("Runtime/MEnginePlayer.exe", 10, 'a', "runtime"),
+                comparison_file("Assets/Main.mscene", 9, 'c', "scene"),
+                comparison_file("Assets/New.bin", 3, 'd', "other")
+            ]),
+        );
+        std::fs::write(
+            output_dir.join("mengine-build.json"),
+            serde_json::to_vec(&current).unwrap(),
+        )
+        .unwrap();
+        let current_entry =
+            archive_build_history(&root, &current, 2500, "source-checkout").unwrap();
+
+        let history = list_build_history(&root).unwrap();
+        assert_eq!(history.len(), 2);
+        assert_eq!(history[0].id, current_entry.id);
+        assert!(history[0].published);
+        assert_eq!(history[0].toolchain, "source-checkout");
+        assert!(!history[1].published);
+        assert_eq!(history[1].id, previous_entry.id);
+
+        let comparison =
+            compare_build_history(&root, &previous_entry.id, &current_entry.id).unwrap();
+        assert_eq!(comparison.added_files, 1);
+        assert_eq!(comparison.changed_files, 1);
+        assert_eq!(comparison.byte_delta, 7);
+        assert!(compare_build_history(&root, "../escape", &current_entry.id).is_err());
+
+        std::fs::write(
+            root.join(".mengine/build-history/corrupt.json"),
+            b"not json",
+        )
+        .unwrap();
+        let scan = scan_build_history(&root).unwrap();
+        assert_eq!(scan.entries.len(), 2);
+        assert_eq!(scan.invalid_records, 1);
+        std::fs::remove_dir_all(root).unwrap();
+    }
+
+    #[test]
+    fn build_history_retains_only_the_newest_fifty_valid_reports() {
+        let root = std::env::temp_dir().join(format!(
+            "mengine-build-history-retention-{}-{}",
+            std::process::id(),
+            SystemTime::now()
+                .duration_since(UNIX_EPOCH)
+                .unwrap()
+                .as_nanos()
+        ));
+        std::fs::create_dir_all(&root).unwrap();
+        let hashes = [
+            '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'a', 'b', 'c', 'd', 'e', 'f',
+        ];
+        for index in 0..(MAX_BUILD_HISTORY_ENTRIES + 3) {
+            let hash = hashes[index % hashes.len()];
+            let manifest = history_manifest(
+                hash,
+                serde_json::json!([comparison_file(
+                    &format!("Assets/{index}.bin"),
+                    index as u64,
+                    hash,
+                    "other"
+                )]),
+            );
+            archive_build_history(&root, &manifest, index as u64, "bundled-sdk").unwrap();
+        }
+        assert_eq!(
+            list_build_history(&root).unwrap().len(),
+            MAX_BUILD_HISTORY_ENTRIES
+        );
+        std::fs::remove_dir_all(root).unwrap();
     }
 
     #[test]
@@ -2753,6 +3357,12 @@ mod tests {
         assert_eq!(result.omitted_asset_bytes, 13);
         assert_eq!(result.stripped_editor_entities, 2);
         assert!(result.packaged_bytes > 0);
+        let first_history = result
+            .history_entry
+            .as_ref()
+            .expect("successful player builds archive their report");
+        assert!(first_history.published);
+        assert!(Path::new(&first_history.record_path).is_file());
         if result.toolchain == "source-checkout" {
             let cache = result
                 .build_cache
@@ -2839,6 +3449,21 @@ mod tests {
             assert_eq!(cache.misses, 0);
             assert!(cache.reused_bytes > 0);
         }
+        let cached_history = cached
+            .history_entry
+            .as_ref()
+            .expect("cached player builds also archive their report");
+        let history = scan_build_history(&root).unwrap();
+        assert_eq!(history.entries.len(), 2);
+        assert_eq!(history.entries[0].id, cached_history.id);
+        assert_eq!(
+            history
+                .entries
+                .iter()
+                .filter(|entry| entry.published)
+                .count(),
+            1
+        );
         std::fs::write(output.join("tampered-after-publish.bin"), b"tampered").unwrap();
         let error = verify_built_player(&root, Path::new(&result.executable), &result.content_hash)
             .unwrap_err();

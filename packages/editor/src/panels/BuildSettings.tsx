@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { getDesktopProject } from '../transport/desktopProjectSession';
 import {
   buildAssetPathsDirty,
@@ -8,13 +8,17 @@ import { registerSaveAllParticipant } from '../saveAll';
 import {
   buildPcPlayer,
   cancelPcBuild,
+  comparePcBuildHistory,
   getProjectBuildSettings,
   isDesktopEditor,
+  listPcBuildHistory,
   listenToPcBuildProgress,
   runPcPlayer,
   saveProjectBuildAssetSettings,
   saveProjectBuildSettings,
   verifyPcPlayer,
+  type BuildComparisonResult,
+  type BuildHistoryEntry,
   type BuildPlayerProfile,
   type BuildProgressEvent,
   type BuildPlayerResult,
@@ -53,6 +57,38 @@ function durationText(milliseconds: number): string {
   return `${(milliseconds / 1000).toFixed(milliseconds < 10000 ? 2 : 1)} s`;
 }
 
+function buildTimestamp(milliseconds: number): string {
+  if (!Number.isFinite(milliseconds) || milliseconds <= 0) return 'Unknown time';
+  return new Date(milliseconds).toLocaleString();
+}
+
+function BuildComparisonReport(props: {
+  comparison: BuildComparisonResult;
+  identicalLabel: string;
+}) {
+  const { comparison } = props;
+  return <>
+    <div className="build-comparison-summary">
+      <span className="added">+{comparison.addedFiles} added</span>
+      <span className="removed">−{comparison.removedFiles} removed</span>
+      <span className="changed">~{comparison.changedFiles} changed</span>
+      <span>{comparison.unchangedFiles} unchanged</span>
+      <strong>{signedByteSize(comparison.byteDelta)}</strong>
+    </div>
+    {comparison.changes.length > 0
+      ? <div className="build-content-table changes">
+          {comparison.changes.map((file) => (
+            <div className={`build-content-row ${file.kind}`} key={`${file.kind}:${file.path}`}>
+              <strong title={file.path}>{file.path}</strong>
+              <span>{file.kind}</span>
+              <span>{signedByteSize(file.byteDelta)}</span>
+            </div>
+          ))}
+        </div>
+      : <div className="build-identical">{props.identicalLabel}</div>}
+  </>;
+}
+
 export function BuildSettings(props: {
   sceneName: string | null;
   sceneTick: number;
@@ -78,12 +114,25 @@ export function BuildSettings(props: {
   const [cancelRequested, setCancelRequested] = useState(false);
   const [lastBuild, setLastBuild] = useState<BuildPlayerResult | null>(null);
   const [lastVerification, setLastVerification] = useState<VerifyPlayerResult | null>(null);
+  const [buildHistory, setBuildHistory] = useState<BuildHistoryEntry[]>([]);
+  const [invalidHistoryRecords, setInvalidHistoryRecords] = useState(0);
+  const [historyRetentionLimit, setHistoryRetentionLimit] = useState(50);
+  const [historySelection, setHistorySelection] = useState<string[]>([]);
+  const [historyComparison, setHistoryComparison] = useState<{
+    previous: BuildHistoryEntry;
+    current: BuildHistoryEntry;
+    comparison: BuildComparisonResult;
+  } | null>(null);
+  const [historyLoading, setHistoryLoading] = useState(false);
+  const [historyComparing, setHistoryComparing] = useState(false);
+  const [historyError, setHistoryError] = useState<string | null>(null);
   const [message, setMessage] = useState<string | null>(null);
   const [messageError, setMessageError] = useState(false);
   const [settingsError, setSettingsError] = useState<string | null>(null);
   const settingsRef = useRef<ProjectBuildSettings | null>(null);
   const alwaysIncludeDraftRef = useRef('');
   const buildReportRevisionRef = useRef(0);
+  const historyLoadRevisionRef = useRef(0);
   const onLogRef = useRef(props.onLog);
   settingsRef.current = settings;
   alwaysIncludeDraftRef.current = alwaysIncludeDraft;
@@ -97,6 +146,52 @@ export function BuildSettings(props: {
     if (source.includes('mac')) return 'macOS (current host)';
     return 'Linux (current host)';
   }, []);
+
+  const refreshBuildHistory = useCallback(async (reportFailure = true) => {
+    const revision = historyLoadRevisionRef.current + 1;
+    historyLoadRevisionRef.current = revision;
+    if (!desktop) {
+      setBuildHistory([]);
+      setInvalidHistoryRecords(0);
+      setHistoryRetentionLimit(50);
+      setHistorySelection([]);
+      setHistoryComparison(null);
+      setHistoryError(null);
+      return;
+    }
+    setHistoryLoading(true);
+    if (reportFailure) setHistoryError(null);
+    try {
+      const result = await listPcBuildHistory();
+      if (historyLoadRevisionRef.current !== revision) return;
+      const entries = result.entries;
+      const ids = new Set(entries.map((entry) => entry.id));
+      setBuildHistory(entries);
+      setInvalidHistoryRecords(result.invalidRecords);
+      setHistoryRetentionLimit(result.retentionLimit);
+      setHistorySelection((selected) => selected.filter((id) => ids.has(id)));
+      setHistoryComparison((current) => (
+        current && ids.has(current.previous.id) && ids.has(current.current.id) ? current : null
+      ));
+      setHistoryError(null);
+    } catch (reason) {
+      if (historyLoadRevisionRef.current !== revision) return;
+      const detail = reason instanceof Error ? reason.message : String(reason);
+      if (reportFailure) {
+        setHistoryError(detail);
+        onLogRef.current(`Build history load failed: ${detail}`, 'warn');
+      }
+    } finally {
+      if (historyLoadRevisionRef.current === revision) setHistoryLoading(false);
+    }
+  }, [desktop, project?.projectRoot]);
+
+  useEffect(() => {
+    void refreshBuildHistory();
+    return () => {
+      historyLoadRevisionRef.current += 1;
+    };
+  }, [refreshBuildHistory]);
 
   useEffect(() => {
     let cancelled = false;
@@ -344,6 +439,37 @@ export function BuildSettings(props: {
     }
   };
 
+  const toggleHistoryEntry = (id: string) => {
+    setHistorySelection((selected) => (
+      selected.includes(id)
+        ? selected.filter((entryId) => entryId !== id)
+        : selected.length < 2 ? [...selected, id] : selected
+    ));
+    setHistoryComparison(null);
+  };
+
+  const compareSelectedHistory = async () => {
+    if (historySelection.length !== 2 || historyComparing) return;
+    const selected = historySelection
+      .map((id) => buildHistory.find((entry) => entry.id === id))
+      .filter((entry): entry is BuildHistoryEntry => Boolean(entry))
+      .sort((left, right) => left.recordedAtMs - right.recordedAtMs || left.id.localeCompare(right.id));
+    if (selected.length !== 2) return;
+    setHistoryComparing(true);
+    setHistoryError(null);
+    try {
+      const comparison = await comparePcBuildHistory(selected[0].id, selected[1].id);
+      setHistoryComparison({ previous: selected[0], current: selected[1], comparison });
+    } catch (reason) {
+      const detail = reason instanceof Error ? reason.message : String(reason);
+      setHistoryComparison(null);
+      setHistoryError(detail);
+      props.onLog(`Build history comparison failed: ${detail}`, 'error');
+    } finally {
+      setHistoryComparing(false);
+    }
+  };
+
   const build = async (runAfterBuild = false) => {
     if (
       !desktop
@@ -366,6 +492,7 @@ export function BuildSettings(props: {
     try {
       const result = await buildPcPlayer(profile, clean);
       setLastBuild(result);
+      void refreshBuildHistory(false);
       setMessage(`Build completed: ${result.fileCount} packaged files · ${result.contentHash.slice(0, 12)}.`);
       props.onLog(`Built ${result.profile} player -> ${result.outputDir}`);
       if (runAfterBuild) {
@@ -562,6 +689,79 @@ export function BuildSettings(props: {
         </div>
       )}
       {message && <div className={`build-message${messageError ? ' error' : ' success'}`}>{message}</div>}
+      {desktop && (
+        <section className="build-section build-history-section">
+          <div className="build-section-title">
+            <h3>Build History</h3>
+            <div className="build-history-toolbar">
+              <span>{buildHistory.length}/{historyRetentionLimit} retained</span>
+              <button
+                type="button"
+                disabled={historyLoading || historyComparing}
+                onClick={() => void refreshBuildHistory()}
+              >
+                {historyLoading ? 'Refreshing...' : 'Refresh'}
+              </button>
+              <button
+                type="button"
+                disabled={historySelection.length !== 2 || historyComparing}
+                onClick={() => void compareSelectedHistory()}
+              >
+                {historyComparing ? 'Comparing...' : 'Compare Selected'}
+              </button>
+            </div>
+          </div>
+          {buildHistory.length === 0 && !historyLoading && !historyError && (
+            <div className="build-empty">Successful Player builds will be retained here for comparison.</div>
+          )}
+          <div className="build-history-list">
+            {buildHistory.map((entry) => {
+              const selected = historySelection.includes(entry.id);
+              return (
+                <label
+                  className={`build-history-row${selected ? ' selected' : ''}${entry.published ? ' published' : ''}`}
+                  key={entry.id}
+                  title={entry.recordPath}
+                >
+                  <input
+                    type="checkbox"
+                    checked={selected}
+                    disabled={!selected && historySelection.length >= 2}
+                    onChange={() => toggleHistoryEntry(entry.id)}
+                  />
+                  <span className="build-history-main">
+                    <strong>{buildTimestamp(entry.recordedAtMs)}</strong>
+                    <small>{entry.platform}-{entry.architecture} · {entry.profile} · MEngine {entry.engineVersion}</small>
+                  </span>
+                  <span className="build-history-size">
+                    <strong>{byteSize(entry.packagedBytes)}</strong>
+                    <small>{entry.fileCount} files · {durationText(entry.totalDurationMs)}</small>
+                  </span>
+                  <code>{entry.contentHash.slice(0, 12)}</code>
+                  {entry.published && <em>CURRENT</em>}
+                </label>
+              );
+            })}
+          </div>
+          {invalidHistoryRecords > 0 && (
+            <div className="build-warning">
+              {invalidHistoryRecords} unreadable build history record{invalidHistoryRecords === 1 ? '' : 's'} ignored. Valid reports remain available.
+            </div>
+          )}
+          {historyError && <div className="build-warning error">{historyError}</div>}
+          {historyComparison && (
+            <div className="build-history-comparison">
+              <h4>
+                {historyComparison.previous.contentHash.slice(0, 12)} → {historyComparison.current.contentHash.slice(0, 12)}
+              </h4>
+              <BuildComparisonReport
+                comparison={historyComparison.comparison}
+                identicalLabel="The selected build artifacts are byte-identical."
+              />
+            </div>
+          )}
+        </section>
+      )}
       {lastBuild && (
         <section className="build-result">
           <strong>{lastBuild.executable}</strong>
@@ -619,26 +819,10 @@ export function BuildSettings(props: {
             </div>
             {lastBuild.comparison && <>
               <h4>Changes vs Previous Build</h4>
-              <div className="build-comparison-summary">
-                <span className="added">+{lastBuild.comparison.addedFiles} added</span>
-                <span className="removed">−{lastBuild.comparison.removedFiles} removed</span>
-                <span className="changed">~{lastBuild.comparison.changedFiles} changed</span>
-                <span>{lastBuild.comparison.unchangedFiles} unchanged</span>
-                <strong>{signedByteSize(lastBuild.comparison.byteDelta)}</strong>
-              </div>
-              {lastBuild.comparison.changes.length > 0
-                ? <div className="build-content-table changes">
-                    {lastBuild.comparison.changes.map((file) => (
-                      <div className={`build-content-row ${file.kind}`} key={`${file.kind}:${file.path}`}>
-                        <strong title={file.path}>{file.path}</strong>
-                        <span>{file.kind}</span>
-                        <span>{signedByteSize(file.byteDelta)}</span>
-                      </div>
-                    ))}
-                  </div>
-                : <div className="build-identical">
-                    Byte-identical to {lastBuild.comparison.previousContentHash.slice(0, 12)}.
-                  </div>}
+              <BuildComparisonReport
+                comparison={lastBuild.comparison}
+                identicalLabel={`Byte-identical to ${lastBuild.comparison.previousContentHash.slice(0, 12)}.`}
+              />
             </>}
             <h4>Build Stage Timings · {durationText(lastBuild.totalDurationMs)} total</h4>
             <div className="build-content-table timings">

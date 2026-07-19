@@ -98,6 +98,32 @@ export type BuildProgressEvent = {
   elapsedMs: number;
 };
 
+export type BuildHistoryEntry = {
+  id: string;
+  recordedAtMs: number;
+  contentHash: string;
+  profile: BuildPlayerProfile;
+  platform: string;
+  architecture: string;
+  engineVersion: string;
+  projectName: string;
+  projectVersion: string;
+  fileCount: number;
+  packagedBytes: number;
+  outputDir: string;
+  manifestPath: string;
+  recordPath: string;
+  published: boolean;
+  totalDurationMs: number;
+  toolchain: 'bundled-sdk' | 'source-checkout';
+};
+
+export type BuildHistoryListResult = {
+  entries: BuildHistoryEntry[];
+  invalidRecords: number;
+  retentionLimit: number;
+};
+
 export type BuildPlayerResult = {
   buildId: number;
   outputDir: string;
@@ -124,6 +150,7 @@ export type BuildPlayerResult = {
   stageTimings: BuildStageTimingResult[];
   totalDurationMs: number;
   toolchain: 'bundled-sdk' | 'source-checkout';
+  historyEntry: BuildHistoryEntry | null;
   log: string;
 };
 
@@ -289,6 +316,21 @@ export async function buildPcPlayer(
     throw new Error('PC player builds require the desktop editor');
   }
   return invoke<BuildPlayerResult>('build_pc_player', { profile, clean });
+}
+
+export async function listPcBuildHistory(): Promise<BuildHistoryListResult> {
+  if (!isDesktopEditor()) return { entries: [], invalidRecords: 0, retentionLimit: 50 };
+  return invoke<BuildHistoryListResult>('list_pc_build_history');
+}
+
+export async function comparePcBuildHistory(
+  previousId: string,
+  currentId: string,
+): Promise<BuildComparisonResult> {
+  if (!isDesktopEditor()) {
+    throw new Error('Build history comparison requires the desktop editor');
+  }
+  return invoke<BuildComparisonResult>('compare_pc_build_history', { previousId, currentId });
 }
 
 export async function cancelPcBuild(): Promise<boolean> {
