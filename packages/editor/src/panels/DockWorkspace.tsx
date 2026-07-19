@@ -1,6 +1,7 @@
 import {
   cloneElement,
   isValidElement,
+  Suspense,
   useCallback,
   useEffect,
   useRef,
@@ -24,6 +25,7 @@ import {
   type PanelWindowMessage,
 } from './detachedPanelWindow';
 import { isDesktopEditor } from '../transport/editorTransport';
+import { dockPanelShouldMount } from '../dockPanelMounting';
 import { registerMenuItem } from '../editorWindow';
 import './dock.css';
 
@@ -638,6 +640,9 @@ function DockLeaf(props: {
 }) {
   const { node } = props;
   const active = node.active;
+  const [mountedPanels, setMountedPanels] = useState<ReadonlySet<PanelKind>>(
+    () => new Set(active ? [active] : []),
+  );
   const isDropHere = props.drop?.leafId === node.id;
   const zone = isDropHere ? props.drop!.zone : null;
   const frameRef = useRef<HTMLDivElement>(null);
@@ -649,6 +654,14 @@ function DockLeaf(props: {
     started: boolean;
   } | null>(null);
   const suppressClick = useRef(false);
+
+  useEffect(() => {
+    if (!active) return;
+    setMountedPanels((current) => {
+      if (current.has(active)) return current;
+      return new Set([...current, active]);
+    });
+  }, [active]);
 
   return (
     <div
@@ -770,14 +783,16 @@ function DockLeaf(props: {
         </div>
         <div className="dock-content">
           {node.panels.map((panel) => {
-            if (active !== panel && (panel === 'scene' || panel === 'game')) return null;
+            if (!dockPanelShouldMount(panel, active, mountedPanels)) return null;
             return (
               <div
                 key={panel}
                 className={`dock-panel-slot${active === panel ? '' : ' hidden'}`}
                 aria-hidden={active !== panel}
               >
-                {props.panelContent(panel)}
+                <Suspense fallback={<div className="dock-panel-loading">Loading {PANEL_TITLE[panel]}…</div>}>
+                  {props.panelContent(panel)}
+                </Suspense>
               </div>
             );
           })}
@@ -1208,7 +1223,9 @@ export function DockWorkspace(props: {
           </div>
         </div>
         <div className="detached-panel-content">
-          {panelContent(props.detachedPanel)}
+          <Suspense fallback={<div className="dock-panel-loading">Loading {PANEL_TITLE[props.detachedPanel]}…</div>}>
+            {panelContent(props.detachedPanel)}
+          </Suspense>
         </div>
       </div>
     );

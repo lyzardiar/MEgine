@@ -17,15 +17,8 @@ import {
   type SpriteImportSettings,
   type SpriteSlice,
 } from '../spriteImport';
-import { PROJECT_ASSETS_CHANGED_EVENT } from './Material';
+import { PROJECT_ASSETS_CHANGED_EVENT } from '../assetEditorEvents';
 import { registerSaveAllParticipant } from '../saveAll';
-
-export const OPEN_SPRITE_EDITOR_EVENT = 'mengine:open-sprite-editor';
-
-export function openSpriteAsset(path: string): void {
-  window.dispatchEvent(new CustomEvent(OPEN_SPRITE_EDITOR_EVENT, { detail: path }));
-  window.dispatchEvent(new CustomEvent('mengine:focus-panel', { detail: 'spriteEditor' }));
-}
 
 type TextureSize = [number, number];
 

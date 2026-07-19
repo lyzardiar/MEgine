@@ -33,7 +33,6 @@ import {
   Undo2,
   X,
 } from 'lucide-react';
-import { registerMenuItem } from '../editorWindow';
 import {
   listProjectFiles,
   readProjectAssetText,
@@ -60,7 +59,10 @@ import {
   type TimelineAsset,
   type TimelineTrackGroup,
 } from '../timelineAsset';
-import { PROJECT_ASSETS_CHANGED_EVENT } from './Material';
+import {
+  openTimelineAsset,
+  PROJECT_ASSETS_CHANGED_EVENT,
+} from '../assetEditorEvents';
 import {
   SEQUENCER_MAX_ZOOM,
   SEQUENCER_MIN_ZOOM,
@@ -83,7 +85,6 @@ import {
   type SequencerItemSelection,
 } from '../sequencerEditing';
 
-export const OPEN_TIMELINE_ASSET_EVENT = 'mengine:open-timeline-asset';
 const SEQUENCER_SNAPPING_KEY = 'mengine.sequencer.snapping';
 const SEQUENCER_SNAP_THRESHOLD_PX = 8;
 
@@ -93,11 +94,6 @@ function loadSequencerSnapping(): boolean {
   } catch {
     return true;
   }
-}
-
-export function openTimelineAsset(path: string): void {
-  window.dispatchEvent(new CustomEvent(OPEN_TIMELINE_ASSET_EVENT, { detail: path }));
-  window.dispatchEvent(new CustomEvent('mengine:focus-panel', { detail: 'timeline' }));
 }
 
 function safeName(raw: string): string {
@@ -122,18 +118,6 @@ export async function createProjectTimeline(name = 'New Timeline'): Promise<stri
   openTimelineAsset(path);
   return path;
 }
-
-registerMenuItem(
-  'Assets/Create/Timeline',
-  async (context) => {
-    try {
-      context.log(`Created ${await createProjectTimeline()}`);
-    } catch (reason) {
-      context.log(`Timeline 创建失败：${reason instanceof Error ? reason.message : String(reason)}`);
-    }
-  },
-  { priority: 215 },
-);
 
 type SnapshotEntity = WorldSnapshotView['entities'][number];
 

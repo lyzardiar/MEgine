@@ -25,6 +25,7 @@ export { RegisteredEditorWindowHost } from './RegisteredEditorWindowHost';
 
 /** Side-effect: register Window menu items */
 import './windows/DecoratorGalleryWindow';
+import './assetMenuItems';
 import './assetImportMenuItem';
 import './gameObjectMenuItems';
 import './prefabMenuItems';

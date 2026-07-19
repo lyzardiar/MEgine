@@ -25,7 +25,6 @@ import {
   type AnimatorLayerTimingMode,
   type AnimatorParameterKind,
 } from '../animatorController';
-import { registerMenuItem } from '../editorWindow';
 import {
   listProjectFiles,
   readProjectAssetText,
@@ -39,14 +38,10 @@ import type {
   EditorUndoToken,
 } from '../editorUndoService';
 import { AvatarMaskEditor } from './AvatarMask';
-import { PROJECT_ASSETS_CHANGED_EVENT } from './Material';
-
-export const OPEN_ANIMATOR_EVENT = 'mengine:open-animator';
-
-export function openAnimatorAsset(path: string): void {
-  window.dispatchEvent(new CustomEvent(OPEN_ANIMATOR_EVENT, { detail: path }));
-  window.dispatchEvent(new CustomEvent('mengine:focus-panel', { detail: 'animator' }));
-}
+import {
+  openAnimatorAsset,
+  PROJECT_ASSETS_CHANGED_EVENT,
+} from '../assetEditorEvents';
 
 function uniquePath(extension: '.mcontroller' | '.manim', baseName: string): string {
   const used = new Set(listProjectFiles().map((asset) => asset.relPath.toLowerCase()));
@@ -75,18 +70,6 @@ export async function createProjectAnimatorController(): Promise<string> {
   openAnimatorAsset(controllerPath);
   return controllerPath;
 }
-
-registerMenuItem(
-  'Assets/Create/Animator Controller',
-  async (context) => {
-    try {
-      context.log(`Created ${await createProjectAnimatorController()}`);
-    } catch (reason) {
-      context.log(`Animator Controller 创建失败：${reason instanceof Error ? reason.message : String(reason)}`);
-    }
-  },
-  { priority: 210 },
-);
 
 type SnapshotEntity = WorldSnapshotView['entities'][number];
 

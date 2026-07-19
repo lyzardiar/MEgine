@@ -165,7 +165,10 @@ import {
   snapTimelineEventTime,
   snapTimelineKeySelectionDelta,
 } from '../timelineSnapping.ts';
-import { registerMenuItem } from '../editorWindow';
+import {
+  openAnimationClipAsset,
+  PROJECT_ASSETS_CHANGED_EVENT,
+} from '../assetEditorEvents';
 import {
   listProjectFiles,
   normalizeProjectAssetPath,
@@ -176,13 +179,6 @@ import {
 import { registerSaveAllParticipant } from '../saveAll';
 
 type SnapshotEntity = WorldSnapshotView['entities'][number];
-
-export const OPEN_ANIMATION_CLIP_EVENT = 'mengine:open-animation-clip';
-
-export function openAnimationClipAsset(path: string): void {
-  window.dispatchEvent(new CustomEvent(OPEN_ANIMATION_CLIP_EVENT, { detail: path }));
-  window.dispatchEvent(new CustomEvent('mengine:focus-panel', { detail: 'timeline' }));
-}
 
 type AnimationPlayerData = {
   clip?: string;
@@ -1358,22 +1354,10 @@ export async function createProjectAnimationClip(name = 'New Animation'): Promis
   const path = uniqueClipPath(safe);
   await writeProjectAssetText(path, serializeAnimationClip(createAnimationClip(safe)));
   await refreshProjectFiles();
-  window.dispatchEvent(new CustomEvent('mengine:project-assets-changed'));
+  window.dispatchEvent(new CustomEvent(PROJECT_ASSETS_CHANGED_EVENT));
   openAnimationClipAsset(path);
   return path;
 }
-
-registerMenuItem(
-  'Assets/Create/Animation Clip',
-  async (context) => {
-    try {
-      context.log(`Created ${await createProjectAnimationClip()}`);
-    } catch (reason) {
-      context.log(`Animation Clip 创建失败：${reason instanceof Error ? reason.message : String(reason)}`);
-    }
-  },
-  { priority: 205 },
-);
 
 function trackValue(
   entities: SnapshotEntity[],

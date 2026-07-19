@@ -26,7 +26,6 @@ import {
   type ProjectFileAsset,
 } from '../projectAssets';
 import { pingProjectAsset } from '../pingBus';
-import { registerMenuItem } from '../editorWindow';
 import { registerSaveAllParticipant } from '../saveAll';
 import type {
   EditorUndoCheckpoint,
@@ -35,14 +34,11 @@ import type {
 } from '../editorUndoService';
 import { ImageIcon, Redo2, Search, Undo2, X } from 'lucide-react';
 import { ObjectPicker } from './ObjectPicker';
-
-export const OPEN_MATERIAL_EVENT = 'mengine:open-material';
-export const PROJECT_ASSETS_CHANGED_EVENT = 'mengine:project-assets-changed';
-
-export function openMaterialAsset(path: string): void {
-  window.dispatchEvent(new CustomEvent(OPEN_MATERIAL_EVENT, { detail: path }));
-  window.dispatchEvent(new CustomEvent('mengine:focus-panel', { detail: 'material' }));
-}
+import {
+  openMaterialAsset,
+  openSurfaceShaderAsset,
+  PROJECT_ASSETS_CHANGED_EVENT,
+} from '../assetEditorEvents';
 
 function uniqueMaterialPath(baseName = 'New Material'): string {
   const used = new Set(listProjectFiles().map((asset) => asset.relPath.toLowerCase()));
@@ -65,21 +61,6 @@ export async function createProjectMaterial(): Promise<string> {
   openMaterialAsset(path);
   return path;
 }
-
-registerMenuItem(
-  'Assets/Create/Material',
-  async (context) => {
-    try {
-      const path = await createProjectMaterial();
-      context.log(`Created ${path}`);
-    } catch (reason) {
-      context.log(
-        `Material 创建失败：${reason instanceof Error ? reason.message : String(reason)}`,
-      );
-    }
-  },
-  { priority: 200 },
-);
 
 type SnapshotEntity = WorldSnapshotView['entities'][number];
 
@@ -597,8 +578,7 @@ export function MaterialEditor(props: {
                 type="button"
                 disabled={!material.custom_shader}
                 onClick={() => {
-                  window.dispatchEvent(new CustomEvent('mengine:open-surface-shader', { detail: material.custom_shader }));
-                  window.dispatchEvent(new CustomEvent('mengine:focus-panel', { detail: 'shader' }));
+                  openSurfaceShaderAsset(material.custom_shader);
                 }}
               >Open</button>
             </label>

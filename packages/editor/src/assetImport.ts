@@ -5,6 +5,7 @@ import {
 } from './projectAssets.ts';
 import { listSprites, refreshSprites } from './spriteLibrary.ts';
 import { pingProjectAsset } from './pingBus.ts';
+import { PROJECT_ASSETS_CHANGED_EVENT } from './assetEditorEvents.ts';
 import {
   ASSET_IMPORT_ACCEPT,
   ASSET_IMPORT_MAX_BYTES,
@@ -29,8 +30,6 @@ export type {
   AssetImportResult,
   ImportableAssetFile,
 } from './assetImportModel.ts';
-
-const PROJECT_ASSETS_CHANGED_EVENT = 'mengine:project-assets-changed';
 
 let activeImportFolder = 'Assets';
 

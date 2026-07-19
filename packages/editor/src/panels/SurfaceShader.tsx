@@ -1,6 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Redo2, Undo2 } from 'lucide-react';
-import { registerMenuItem } from '../editorWindow';
 import {
   listProjectFiles,
   readProjectAssetText,
@@ -14,7 +13,10 @@ import {
   validateSurfaceShaderSource,
 } from '../surfaceShader';
 import { registerSaveAllParticipant } from '../saveAll';
-import { PROJECT_ASSETS_CHANGED_EVENT } from './Material';
+import {
+  openSurfaceShaderAsset,
+  PROJECT_ASSETS_CHANGED_EVENT,
+} from '../assetEditorEvents';
 import {
   isDesktopEditor,
   validateSurfaceShaderWithRuntime,
@@ -24,13 +26,6 @@ import type {
   EditorUndoService,
   EditorUndoToken,
 } from '../editorUndoService';
-
-export const OPEN_SURFACE_SHADER_EVENT = 'mengine:open-surface-shader';
-
-export function openSurfaceShaderAsset(path: string): void {
-  window.dispatchEvent(new CustomEvent(OPEN_SURFACE_SHADER_EVENT, { detail: path }));
-  window.dispatchEvent(new CustomEvent('mengine:focus-panel', { detail: 'shader' }));
-}
 
 function uniqueSurfaceShaderPath(baseName = 'New Surface Shader'): string {
   const used = new Set(listProjectFiles().map((asset) => asset.relPath.toLowerCase()));
@@ -52,18 +47,6 @@ export async function createProjectSurfaceShader(): Promise<string> {
   openSurfaceShaderAsset(path);
   return path;
 }
-
-registerMenuItem(
-  'Assets/Create/Surface Shader',
-  async (context) => {
-    try {
-      context.log(`Created ${await createProjectSurfaceShader()}`);
-    } catch (reason) {
-      context.log(`Surface Shader creation failed: ${reason instanceof Error ? reason.message : String(reason)}`);
-    }
-  },
-  { priority: 205 },
-);
 
 export function SurfaceShaderEditor(props: {
   assetPath: string | null;

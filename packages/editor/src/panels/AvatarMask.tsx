@@ -14,7 +14,6 @@ import {
   validateAvatarMask,
   type AvatarMaskAsset,
 } from '../avatarMask';
-import { registerMenuItem } from '../editorWindow';
 import {
   listProjectFiles,
   readProjectAssetText,
@@ -27,7 +26,10 @@ import type {
   EditorUndoService,
   EditorUndoToken,
 } from '../editorUndoService';
-import { PROJECT_ASSETS_CHANGED_EVENT } from './Material';
+import {
+  openAnimatorAsset,
+  PROJECT_ASSETS_CHANGED_EVENT,
+} from '../assetEditorEvents';
 
 function uniqueAvatarMaskPath(): string {
   const used = new Set(listProjectFiles().map((asset) => asset.relPath.toLowerCase()));
@@ -47,22 +49,9 @@ export async function createProjectAvatarMask(): Promise<string> {
   await writeProjectAssetText(path, serializeAvatarMask(createAvatarMask(name)));
   await refreshProjectFiles();
   window.dispatchEvent(new CustomEvent(PROJECT_ASSETS_CHANGED_EVENT));
-  window.dispatchEvent(new CustomEvent('mengine:open-animator', { detail: path }));
-  window.dispatchEvent(new CustomEvent('mengine:focus-panel', { detail: 'animator' }));
+  openAnimatorAsset(path);
   return path;
 }
-
-registerMenuItem(
-  'Assets/Create/Avatar Mask',
-  async (context) => {
-    try {
-      context.log(`Created ${await createProjectAvatarMask()}`);
-    } catch (reason) {
-      context.log(`Avatar Mask 创建失败：${reason instanceof Error ? reason.message : String(reason)}`);
-    }
-  },
-  { priority: 211 },
-);
 
 function fingerprint(mask: AvatarMaskAsset | null): string {
   return mask ? JSON.stringify(mask) : '';

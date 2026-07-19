@@ -1084,3 +1084,12 @@ Timeline 仍未达到成熟编辑器标准：后续还需可配置 Snap、关键
 - 第一遍自审发现逐轨道三次全选区扫描和活动键直接叠加原始 Delta 的问题，改为 Track/引用索引；第二遍自审以旧子帧关键帧交叉验证预览与提交，确保二者共享帧量化语义。真实 1280×720 编辑器中创建 `Transform.position` 轨道，完成 0f→59f 拖动及 59f→60f 覆盖，最终仅保留一个 60f 关键帧；同时复核 Game 视图从 1080×1920 切换到 1920×1080 后仅由分辨率派生 portrait/landscape，界面不存在方向切换按钮，控制台无警告或错误。测试资产和编辑器状态在回归前已清理。
 
 本批全量编辑器测试为 280/280，编辑器 TypeScript/Vite 生产构建与 Rust workspace 检查通过。现有前端主 chunk 774.38kB 超过 500kB，以及 Tauri `BuildControl::standalone`、`run_player_build` dead-code 警告仍待后续模块拆分与构建链清理；Ghost 之后仍需 Curve View 拖拽对齐、可配置碰撞策略快捷切换、关键帧标签/颜色、Onion Skin、运动轨迹、音频波形与长时间轴虚拟化。
+
+## 88. 2026-07-19 编辑器面板按需加载与启动包拆分
+
+- `App` 不再静态引入 Timeline、Sequencer、Animator、Material、Surface Shader、Sprite Editor、Sprite Atlas、Build Settings 和 Project Settings。每个重面板拥有独立动态 Chunk；默认工作区只下载当前需要的核心 Hierarchy、Viewport、Inspector、Project 与 Console，打开页签或直接启动分离窗口时才加载对应编辑器。
+- Dock 从“所有非活动页签启动时全部挂载”改为“首次激活时挂载、访问后继续隐藏保活”。因此未访问面板不会触发动态 import，已访问面板的草稿、Undo 事务和滚动位置仍能跨页签切换保留；Scene/Game 继续只挂载当前视图，遵循原有共享 Viewport 契约。主窗口页签与原生分离窗口分别提供方形工具风格的 Suspense Loading 边界。
+- 资产打开事件与 Project Assets Changed 事件从各面板拆到轻量 `assetEditorEvents`，Project 双击资源可以先更新 App 状态并聚焦目标 Dock，再异步加载面板。Assets/Create 注册同样从重面板迁出：菜单入口随编辑器启动立即存在，真正执行 Material、Animation Clip、Animator Controller、Avatar Mask、Timeline、Surface Shader 或 Sprite Atlas 创建时才下载实现 Chunk。
+- 第一遍自审确认仅添加 `React.lazy` 无效：旧 Dock 会渲染所有隐藏槽，且 App 为菜单事件静态引用面板模块；这两个边界都已拆除。第二遍自审补上分离 Dock 的 Suspense，避免直接打开独立 Timeline/Material 窗口时在首包加载期间失去内容，并用纯函数回归锁定“未访问不挂载、访问后保活、Scene/Game 不后台保活”语义。菜单注册测试覆盖全部七个延迟资产命令。
+
+生产入口由 774.38kB（gzip 224.28kB）降为 443.03kB（gzip 135.98kB），降低 42.8%，原 500kB 主 Chunk 警告消失；`index.html` 只预加载 React 与 Tauri Runtime，112.55kB Timeline、83.15kB Sequencer、36.55kB Animator 等模块均未进入启动预加载。全量编辑器测试为 282/282，TypeScript/Vite 生产构建与 Rust workspace 检查通过。Tauri `BuildControl::standalone` 与 `run_player_build` 两处 dead-code 仍是后续构建链清理项；CSS 仍为单一 112.23kB 入口，后续可在样式依赖稳定后评估面板级 CSS 拆分，不能以牺牲 Dock 热切换稳定性换取数字下降。

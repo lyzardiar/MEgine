@@ -1,5 +1,4 @@
 import { useEffect, useMemo, useRef, useState, type DragEvent } from 'react';
-import { registerMenuItem } from '../editorWindow';
 import {
   listProjectFiles,
   loadProjectImage,
@@ -18,16 +17,12 @@ import {
   type SpriteAtlasPlan,
 } from '../spriteAtlas';
 import { buildSpriteAtlas } from '../spriteAtlasBuild';
-import { PROJECT_ASSETS_CHANGED_EVENT } from './Material';
+import {
+  openSpriteAtlasAsset,
+  PROJECT_ASSETS_CHANGED_EVENT,
+} from '../assetEditorEvents';
 import { registerSaveAllParticipant } from '../saveAll';
 import { SpriteListField } from './uiFieldEditors';
-
-export const OPEN_SPRITE_ATLAS_EVENT = 'mengine:open-sprite-atlas';
-
-export function openSpriteAtlasAsset(path: string): void {
-  window.dispatchEvent(new CustomEvent(OPEN_SPRITE_ATLAS_EVENT, { detail: path }));
-  window.dispatchEvent(new CustomEvent('mengine:focus-panel', { detail: 'spriteAtlas' }));
-}
 
 function uniqueAtlasPath(): string {
   const used = new Set(listProjectFiles().map((asset) => asset.relPath.toLocaleLowerCase()));
@@ -50,18 +45,6 @@ export async function createProjectSpriteAtlas(): Promise<string> {
   openSpriteAtlasAsset(path);
   return path;
 }
-
-registerMenuItem(
-  'Assets/Create/Sprite Atlas',
-  async (context) => {
-    try {
-      context.log(`Created ${await createProjectSpriteAtlas()}`);
-    } catch (reason) {
-      context.log(`Sprite Atlas creation failed: ${reason instanceof Error ? reason.message : String(reason)}`);
-    }
-  },
-  { priority: 210 },
-);
 
 function cloneAsset(asset: SpriteAtlasAsset): SpriteAtlasAsset {
   return structuredClone(asset);

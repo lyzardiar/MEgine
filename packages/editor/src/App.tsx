@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { lazy, useEffect, useMemo, useRef, useState } from 'react';
 import type { WorldSnapshotView } from '@mengine/api';
 import { getCurrentWindow } from '@tauri-apps/api/window';
 import {
@@ -35,39 +35,22 @@ import { Project } from './panels/Project';
 import { Console } from './panels/Console';
 import {
   OPEN_ANIMATION_CLIP_EVENT,
-  Timeline,
   openAnimationClipAsset,
-} from './panels/Timeline';
-import {
   OPEN_TIMELINE_ASSET_EVENT,
-  Sequencer,
   openTimelineAsset,
-} from './panels/Sequencer';
-import { AnimatorEditor, OPEN_ANIMATOR_EVENT, openAnimatorAsset } from './panels/Animator';
-import { BuildSettings } from './panels/BuildSettings';
-import { ProjectSettings } from './panels/ProjectSettings';
-import {
-  MaterialEditor,
+  OPEN_ANIMATOR_EVENT,
+  openAnimatorAsset,
   OPEN_MATERIAL_EVENT,
   PROJECT_ASSETS_CHANGED_EVENT,
   openMaterialAsset,
-} from './panels/Material';
-import {
   OPEN_SURFACE_SHADER_EVENT,
-  SurfaceShaderEditor,
   openSurfaceShaderAsset,
-} from './panels/SurfaceShader';
-import { Viewport } from './panels/Viewport';
-import {
   OPEN_SPRITE_EDITOR_EVENT,
-  SpriteEditor,
   openSpriteAsset,
-} from './panels/SpriteEditor';
-import {
   OPEN_SPRITE_ATLAS_EVENT,
-  SpriteAtlasEditor,
   openSpriteAtlasAsset,
-} from './panels/SpriteAtlasEditor';
+} from './assetEditorEvents';
+import { Viewport } from './panels/Viewport';
 import { DockWorkspace, type PanelKind } from './panels/DockWorkspace';
 import { EditorWindowHost } from './editorWindow';
 import { resolveUnityAction } from './panels/uiFieldEditors';
@@ -86,6 +69,16 @@ import type { ToolHandleOrientation, ToolPivotMode } from './editorTool';
 import { loadSortingLayers, SORTING_LAYERS_CHANGED_EVENT } from './sortingLayers';
 import { saveAllResources } from './saveAll';
 import './editorWindow'; // MenuItem side-effects
+
+const Timeline = lazy(async () => ({ default: (await import('./panels/Timeline')).Timeline }));
+const Sequencer = lazy(async () => ({ default: (await import('./panels/Sequencer')).Sequencer }));
+const AnimatorEditor = lazy(async () => ({ default: (await import('./panels/Animator')).AnimatorEditor }));
+const MaterialEditor = lazy(async () => ({ default: (await import('./panels/Material')).MaterialEditor }));
+const SurfaceShaderEditor = lazy(async () => ({ default: (await import('./panels/SurfaceShader')).SurfaceShaderEditor }));
+const SpriteEditor = lazy(async () => ({ default: (await import('./panels/SpriteEditor')).SpriteEditor }));
+const SpriteAtlasEditor = lazy(async () => ({ default: (await import('./panels/SpriteAtlasEditor')).SpriteAtlasEditor }));
+const BuildSettings = lazy(async () => ({ default: (await import('./panels/BuildSettings')).BuildSettings }));
+const ProjectSettings = lazy(async () => ({ default: (await import('./panels/ProjectSettings')).ProjectSettings }));
 
 function isTypingTarget(el: EventTarget | null) {
   if (!(el instanceof HTMLElement)) return false;
