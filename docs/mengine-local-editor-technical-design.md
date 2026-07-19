@@ -1434,3 +1434,13 @@ Rust workspace 检查现在零警告通过；Tauri Host 17/17 常规测试与 1/
 第一遍自省从 Runtime 一致性和异步资源生命周期反查，修正了加载中短暂使用旧 Clip、资源成功前闪烁“未加载”、无 AnimationPlayer 仍可预览，以及非法重复目标可能被误表现为动画层混合的问题。第二遍自省从多编辑器共存、作者值污染和真实渲染路径反查：发现 hidden 只隐藏 DOM、不卸载 Animation Clip 编辑器，旧 RAF 因此可能覆盖 Sequencer；Inspector 直接使用预览实体会在编辑另一字段时写回采样值；Viewport 的层级激活回调仍读取 authored store，使 Activation 已求值却继续绘制。现已分别用可见预览所有权、Inspector authored 基线和 snapshot world-active 结果修正，并把 AnimationPlayer/Animator 能力纳入稳定签名。1280×720 真实页面在 0.5 秒只绘制动画 Actor、隐藏 Marker，工具栏/工作区均满足 `scrollWidth === clientWidth`；332 项编辑器测试、TypeScript 生产构建和专门的非破坏性、绑定、Solo/Mute、依赖失败、运行时组件约束回归均通过。
 
 这仍只是 Timeline 编辑预览的第一条闭环。Audio Scrub 需要独立于 Play Mode 的低延迟音频游标与停止/拖动消抖；Particle 需要可重复的确定性重建、预热和反向拖动策略；Camera Track 需要 Scene/Game 预览相机、Blend 和退出时恢复编辑相机。后续还需补子 Timeline、Control/Playable Track、Clip 混合与外推、Root Motion、Timeline 录制、Marker/Signal 预览策略和运行时 Profiler 关联，不能把 Activation + Animation 标签解释为整个 Timeline 已完备。
+
+## 121. 2026-07-19 Timeline Camera Shot 编辑态预览
+
+- Sequencer 的 Camera Track 现在会在编辑态非破坏预览中求值当前 Shot，并只覆盖 Game 视图的虚拟相机；Scene 视图继续使用编辑相机，Camera2D/Camera3D 组件、Primary 标记、Transform、场景 Dirty 和 Undo 历史均不被改写。Clip 使用 Runtime 相同的半开时间区间、稳定绑定/Director 子路径、Track/Group Mute 与 Solo、相邻上一镜头和 `0.001s` 接缝判定；`blend_in <= f32::EPSILON` 立即切镜，Linear 与 Smoothstep 权重均与 Runtime 一致，目标或上一镜头缺失、失活、同时挂载两类 Camera 时明确诊断并安全回退。
+- Game 相机解析补齐世界层级旋转和 roll：位置线性插值、四元数最短路径 Slerp、FOV/Orthographic Size、near/far、背景色连续混合，投影类型和 Clear Flags 在 0.5 权重点按 Runtime 切换。无 Primary 源时使用 Runtime 的默认相机姿态和裁剪面；Camera3D 的 FOV、near/far 及 Camera2D size 保留 authored 零值后执行同一夹取规则，`solid_color/solidcolor/solid` 兼容别名也统一到运行时语义。Canvas 投影现在使用相机 up 向量和 near/far，不再丢失镜头 roll 或继续绘制远裁剪面外对象。
+- Timeline 预览和当前 `.mtimeline` 资源进入版本化 Workspace `BroadcastChannel` 同步。Timeline 拖成独立原生 Dock 窗口后仍可驱动主窗口 Game 视图，新窗口会请求当前资源和预览；场景快照同步后会重新叠加当前非破坏预览。单一窗口拥有本地预览，远端预览不会反向覆盖本地操作；资源切换、面板卸载、窗口关闭和发送方退出会显式释放所有权并恢复 authored 相机，避免独立窗口留下幽灵镜头。
+
+第一遍自省沿 Runtime 相机实现逐字段核对，发现初稿遗漏了 Camera2D/Camera3D 能力签名、默认相机精确四元数、`f32::EPSILON`、roll/up、near/far 和 authored 零值夹取；这些差异会造成编辑器可见结果与 Player 不同，现已逐项修正并由 Runtime 现有相机测试交叉验证。第二遍自省从真实 Dock 边界反查，发现独立 Sequencer 只同步场景、不传播当前 Timeline 资源和预览帧，导致主窗口看不到 Camera Shot；现已补齐请求、所有权、关闭清理和场景重载重放协议。1280×720 双窗口真实页面验证中，独立 Timeline 自动打开 `CameraPreview.mtimeline`，在 0.7667 秒驱动主窗口立方体随混合镜头向左偏移，独立窗口卸载后恢复 authored 主相机中心构图；临时场景、资源、metadata 与编辑器状态均在提交前清理。337 项编辑器测试、TypeScript/Vite 全工作区生产构建和 6 项 Runtime 相机契约回归全部通过。
+
+Camera Shot 的基础闭环已经形成，但 Timeline 仍不完备：编辑器 Canvas 预览不是原生 wgpu 的逐像素 FrameCamera，尚未提供 Cinemachine 类跟随/注视/轨道/抖动镜头、镜头叠加和 Preview Monitor；Audio Scrub、确定性 Particle 重建、子 Timeline、Control/Playable Track、录制、混合/外推和 Timeline Profiler 也仍需继续实现。下一批优先补 Audio 的编辑态 seek/停止生命周期，再建设可重复的粒子预热与反向拖动。

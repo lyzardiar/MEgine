@@ -53,7 +53,8 @@ import {
   type Camera2DData,
   type Camera3DData,
 } from '../editorGizmos';
-import { primaryGameCamera } from '../gameCamera';
+import { timelineGameCamera } from '../gameCamera';
+import type { TimelineCameraPreview } from '../timelineScenePreview';
 import {
   angleAroundWorldAxis,
   cursorForGizmoPart,
@@ -441,6 +442,7 @@ export function Viewport(props: {
   playing: boolean;
   sceneCamera: SceneCamera;
   gameResolution: GameResolution | null;
+  timelineCameraPreview?: TimelineCameraPreview | null;
   onPick: (id: number, modifiers: { toggle: boolean; additive: boolean }) => void;
   onMarqueeSelect: (ids: number[], mode: MarqueeSelectionMode) => void;
   onSceneCamera: (partial: Partial<SceneCamera>) => void;
@@ -738,7 +740,7 @@ export function Viewport(props: {
   // Force paint when props change
   useEffect(() => {
     setTick((t) => t + 1);
-  }, [props.tab, props.entities, props.selected, props.selectedIds, props.gizmo, props.pivotMode, props.handleOrientation, props.gameResolution, props.angle, props.playing, props.activeInHierarchy]);
+  }, [props.tab, props.entities, props.selected, props.selectedIds, props.gizmo, props.pivotMode, props.handleOrientation, props.gameResolution, props.timelineCameraPreview, props.angle, props.playing, props.activeInHierarchy]);
 
   const paint = () => {
     const paintStartedAt = performance.now();
@@ -799,7 +801,7 @@ export function Viewport(props: {
     }
 
     const gameCamera = isGame
-      ? primaryGameCamera(p.entities, p.activeInHierarchy)
+      ? timelineGameCamera(p.entities, p.timelineCameraPreview, p.activeInHierarchy)
       : null;
     const cam: Camera = isGame
       ? gameCamera ?? { eye: [0, 1.5, 4], target: [0, 0.5, 0], fovYDeg: 60 }

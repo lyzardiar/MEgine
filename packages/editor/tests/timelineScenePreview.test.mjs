@@ -98,7 +98,7 @@ test('uses stable director bindings and restores authored state outside clips', 
   assert.equal(bound[3].components.Transform.position[0], 5);
 
   const outside = buildTimelineScenePreview(asset, entities, 1, bindings, 1.5, clips);
-  assert.deepEqual(outside.preview, { activations: [], animations: [] });
+  assert.deepEqual(outside.preview, { activations: [], animations: [], camera: null });
   assert.deepEqual(applyTimelineScenePreview(entities, outside.preview), entities);
 });
 
@@ -122,7 +122,7 @@ test('honors mute and Solo filtering and reports invalid preview dependencies', 
   assert.match(missing.diagnostics[0], /Missing\.manim.*not loaded/);
 
   const invalid = buildTimelineScenePreview(asset, entities, 1, '{', 0.25, clips);
-  assert.deepEqual(invalid.preview, { activations: [], animations: [] });
+  assert.deepEqual(invalid.preview, { activations: [], animations: [], camera: null });
   assert.match(invalid.diagnostics[0], /bindings are invalid/i);
 });
 
@@ -153,4 +153,51 @@ test('matches runtime animation ownership and component requirements', () => {
   const conflict = buildTimelineScenePreview(asset, animatorConflict, 1, '{}', 0.5, clips);
   assert.deepEqual(conflict.preview.animations, []);
   assert.match(conflict.diagnostics.join(' '), /also has an Animator/);
+});
+
+test('builds adjacent Camera shot blends with runtime-compatible weighting', () => {
+  const cameraEntities = [
+    ...entities,
+    {
+      entity: 5,
+      name: 'CameraA',
+      parent: 1,
+      active: true,
+      components: { Transform: { position: [0, 0, 5] }, Camera3D: { primary: true } },
+    },
+    {
+      entity: 6,
+      name: 'CameraB',
+      parent: 1,
+      active: true,
+      components: { Transform: { position: [10, 0, 5] }, Camera3D: { primary: false } },
+    },
+  ];
+  const cameraAsset = parseTimelineAsset(JSON.stringify({
+    version: 1,
+    duration: 2,
+    tracks: [{
+      type: 'camera', id: 'shots', name: 'Shots',
+      clips: [
+        { start: 0, duration: 1, target: 'CameraA', blend_in: 0 },
+        { start: 1, duration: 1, target: 'CameraB', blend_in: 1, blend_curve: 'ease_in_out' },
+      ],
+    }],
+  }));
+  const first = buildTimelineScenePreview(cameraAsset, cameraEntities, 1, '{}', 0.5, new Map());
+  assert.deepEqual(first.preview.camera, { source: null, target: 5, weight: 1 });
+  const blend = buildTimelineScenePreview(cameraAsset, cameraEntities, 1, '{}', 1.5, new Map());
+  assert.deepEqual(blend.preview.camera, { source: 5, target: 6, weight: 0.5 });
+  const eased = buildTimelineScenePreview(cameraAsset, cameraEntities, 1, '{}', 1.25, new Map());
+  assert.deepEqual(eased.preview.camera, { source: 5, target: 6, weight: 0.15625 });
+
+  const invalidCameras = structuredClone(cameraEntities);
+  invalidCameras[5].components.Camera2D = { primary: false };
+  const invalid = buildTimelineScenePreview(cameraAsset, invalidCameras, 1, '{}', 1.5, new Map());
+  assert.equal(invalid.preview.camera, null);
+  assert.match(invalid.diagnostics.join(' '), /exactly one Camera2D or Camera3D/);
+
+  const tinyBlend = structuredClone(cameraAsset);
+  tinyBlend.tracks[0].clips[0].blend_in = 1e-8;
+  assert.equal(buildTimelineScenePreview(tinyBlend, cameraEntities, 1, '{}', 0, new Map()).preview.camera.weight, 1);
 });

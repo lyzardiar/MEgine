@@ -338,7 +338,8 @@ export function Sequencer(props: SequencerProps) {
     : EMPTY_PREVIEW_CLIP_FAILURES;
   const previewHierarchyKey = props.entities
     .map((entity) => `${entity.entity}\0${entity.parent ?? ''}\0${entity.name ?? ''}`
-      + `\0${entity.components.AnimationPlayer ? 'P' : ''}${entity.components.Animator ? 'A' : ''}`)
+      + `\0${entity.components.AnimationPlayer ? 'P' : ''}${entity.components.Animator ? 'A' : ''}`
+      + `${entity.components.Camera2D ? '2' : ''}${entity.components.Camera3D ? '3' : ''}`)
     .join('\n');
   const previewBuild = useMemo(() => {
     if (!asset || props.playMode || !directorEntity) return null;
@@ -1952,7 +1953,7 @@ export function Sequencer(props: SequencerProps) {
         <span className="timeline-clip-path" title={props.assetPath}>{asset.name} — {props.assetPath}{dirty ? ' *' : ''}</span>
           {selectedItems.length > 0 && <span className="sequencer-selection-count" title="Arrow keys nudge by one frame; Shift+Arrow nudges by ten frames.">{selectedItems.length} selected</span>}
         {liveDirector && <span className={`sequencer-live-status${liveDirector.playing ? ' playing' : ''}`}>{liveDirector.playing ? 'LIVE PLAYING' : 'LIVE PAUSED'} · {displayTime.toFixed(2)}s</span>}
-        {!props.playMode && directorEntity && <span className="sequencer-live-status edit-preview">EDIT PREVIEW · Activation + Animation</span>}
+        {!props.playMode && directorEntity && <span className="sequencer-live-status edit-preview">EDIT PREVIEW · Activation + Animation + Camera</span>}
         <div className="sequencer-zoom-controls">
           <button type="button" title="Zoom out" disabled={zoom <= SEQUENCER_MIN_ZOOM} onClick={() => changeZoom(zoom / 1.5)}><Minus size={13} /></button>
           <button type="button" title="Fit entire Timeline" disabled={zoom === 1} onClick={() => {

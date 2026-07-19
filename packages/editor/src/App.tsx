@@ -83,6 +83,7 @@ import type { ToolHandleOrientation, ToolPivotMode } from './editorTool';
 import { loadSortingLayers, SORTING_LAYERS_CHANGED_EVENT } from './sortingLayers';
 import { saveAllResources } from './saveAll';
 import { buildWorldTransforms } from './worldTransform';
+import type { TimelineScenePreview } from './timelineScenePreview';
 import './editorWindow'; // MenuItem side-effects
 
 const Timeline = lazy(async () => ({ default: (await import('./panels/Timeline')).Timeline }));
@@ -117,6 +118,8 @@ function askSceneName(title: string, initial: string): string | null {
 
 type WorkspaceSyncMessage =
   | { type: 'request-scene'; sender: string }
+  | { type: 'request-timeline-preview'; sender: string }
+  | { type: 'timeline-preview'; sender: string; preview: TimelineScenePreview | null }
   | { type: 'request-dirty-state'; sender: string }
   | { type: 'window-closing'; sender: string }
   | {
@@ -136,6 +139,7 @@ type WorkspaceSyncMessage =
       selectedIds: number[];
       logs: string[];
       dirty: boolean;
+      timelineAssetPath?: string | null;
     };
 
 const WORKSPACE_CHANNEL = 'mengine.editor.workspace.v1';
@@ -222,7 +226,10 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
   const remoteSceneDirty = useRef(false);
   const syncSender = useRef(crypto.randomUUID());
   const syncChannel = useRef<BroadcastChannel | null>(null);
+  const localTimelinePreview = useRef<TimelineScenePreview | null>(null);
+  const remoteTimelinePreview = useRef<{ sender: string; preview: TimelineScenePreview } | null>(null);
   const workspaceDirtyRef = useRef(false);
+  const timelineAssetPathRef = useRef<string | null>(timelineAssetPath);
   const remoteDirtyPeers = useRef(new Map<string, {
     timestamp: number;
     panel: string;
@@ -242,6 +249,7 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
   sceneNameRef.current = sceneName;
   unsavedChangesRef.current = hasUnsavedChanges;
   workspaceDirtyRef.current = hasUnsavedChanges;
+  timelineAssetPathRef.current = timelineAssetPath;
 
   const postWorkspaceDirtyState = () => {
     syncChannel.current?.postMessage({
@@ -298,6 +306,7 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
         selectedIds: store.selectedIds,
         logs: logsRef.current,
         dirty: sceneDirtyRef.current,
+        timelineAssetPath: timelineAssetPathRef.current,
       } satisfies WorkspaceSyncMessage);
     };
     if (immediate) {
@@ -328,6 +337,31 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
     setTreeTick((t) => t + 1);
     updateSceneDirty();
     if (publish) broadcastScene();
+  };
+
+  const postTimelinePreview = (preview: TimelineScenePreview | null) => {
+    syncChannel.current?.postMessage({
+      type: 'timeline-preview',
+      sender: syncSender.current,
+      preview,
+    } satisfies WorkspaceSyncMessage);
+  };
+
+  const applyLocalTimelinePreview = (preview: TimelineScenePreview) => {
+    localTimelinePreview.current = structuredClone(preview);
+    if (store.setTimelinePreview(preview)) refresh(false);
+    postTimelinePreview(preview);
+  };
+
+  const clearLocalTimelinePreview = () => {
+    if (!localTimelinePreview.current) return;
+    localTimelinePreview.current = null;
+    const fallback = remoteTimelinePreview.current?.preview ?? null;
+    const changed = fallback
+      ? store.setTimelinePreview(fallback)
+      : store.clearTimelinePreview();
+    if (changed) refresh(false);
+    postTimelinePreview(null);
   };
 
   const bumpScenes = () => setSceneTick((t) => t + 1);
@@ -672,6 +706,24 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
         postWorkspaceDirtyState();
         return;
       }
+      if (message.type === 'request-timeline-preview') {
+        if (localTimelinePreview.current) postTimelinePreview(localTimelinePreview.current);
+        return;
+      }
+      if (message.type === 'timeline-preview') {
+        if (localTimelinePreview.current) return;
+        if (message.preview) {
+          remoteTimelinePreview.current = {
+            sender: message.sender,
+            preview: structuredClone(message.preview),
+          };
+          if (store.setTimelinePreview(message.preview)) setSnap(store.snapshot());
+        } else if (remoteTimelinePreview.current?.sender === message.sender) {
+          remoteTimelinePreview.current = null;
+          if (store.clearTimelinePreview()) setSnap(store.snapshot());
+        }
+        return;
+      }
       if (message.type === 'dirty-state') {
         remoteDirtyPeers.current.set(message.sender, {
           timestamp: message.timestamp,
@@ -682,6 +734,10 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
       }
       if (message.type === 'window-closing') {
         remoteDirtyPeers.current.delete(message.sender);
+        if (!localTimelinePreview.current && remoteTimelinePreview.current?.sender === message.sender) {
+          remoteTimelinePreview.current = null;
+          if (store.clearTimelinePreview()) setSnap(store.snapshot());
+        }
         return;
       }
       if (message.type === 'request-scene') {
@@ -695,6 +751,8 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
         lastRemoteTimestamp.current = message.timestamp;
         store.loadRemoteSceneJson(message.sceneJson, message.mode);
         store.selectMany(message.selectedIds, 'replace');
+        const preview = localTimelinePreview.current ?? remoteTimelinePreview.current?.preview ?? null;
+        if (preview && message.mode === 'edit') store.setTimelinePreview(preview);
         const remoteFingerprint = store.sceneContentFingerprint();
         if (props.detachedPanel) {
           remoteSceneFingerprint.current = remoteFingerprint;
@@ -708,6 +766,7 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
           setSceneDirty(dirty);
         }
         setSceneName(message.sceneName);
+        if ('timelineAssetPath' in message) setTimelineAssetPath(message.timelineAssetPath ?? null);
         setSnap(store.snapshot());
         setMode(store.mode);
         setGizmo(store.gizmo);
@@ -732,6 +791,10 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
         sender: syncSender.current,
       } satisfies WorkspaceSyncMessage);
     }
+    channel.postMessage({
+      type: 'request-timeline-preview',
+      sender: syncSender.current,
+    } satisfies WorkspaceSyncMessage);
     postWorkspaceDirtyState();
     const heartbeat = window.setInterval(postWorkspaceDirtyState, 2_000);
     const fallback = window.setTimeout(() => {
@@ -741,6 +804,13 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
       window.clearTimeout(fallback);
       window.clearInterval(heartbeat);
       if (syncTimer.current != null) window.clearTimeout(syncTimer.current);
+      if (localTimelinePreview.current) {
+        channel.postMessage({
+          type: 'timeline-preview',
+          sender: syncSender.current,
+          preview: null,
+        } satisfies WorkspaceSyncMessage);
+      }
       channel.postMessage({
         type: 'window-closing',
         sender: syncSender.current,
@@ -753,6 +823,10 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
   useEffect(() => {
     postWorkspaceDirtyState();
   }, [hasUnsavedChanges, props.detachedPanel]);
+
+  useEffect(() => {
+    if (booted.current) broadcastScene(true);
+  }, [timelineAssetPath]);
 
   const confirmDiscardSceneChanges = (action: string) => (
     !sceneDirtyRef.current
@@ -1288,6 +1362,7 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
               playing={mode !== 'edit'}
               sceneCamera={store.sceneCamera}
               gameResolution={gameResolution}
+              timelineCameraPreview={store.timelineCameraPreview()}
               activeInHierarchy={(id) => snapshotWorldTransforms.get(id)?.active === true}
               onPick={(id, modifiers) => {
                 if (modifiers.toggle) store.selectMany([id], 'toggle', id);
@@ -1762,12 +1837,8 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
                     store.patchComponent(entity, 'TimelineDirector', patch);
                     refresh();
                   }}
-                  onPreview={(preview) => {
-                    if (store.setTimelinePreview(preview)) refresh(false);
-                  }}
-                  onClearPreview={() => {
-                    if (store.clearTimelinePreview()) refresh(false);
-                  }}
+                  onPreview={applyLocalTimelinePreview}
+                  onClearPreview={clearLocalTimelinePreview}
                   onAssetsChanged={bumpScenes}
                   onDirtyChange={setSequencerDirty}
                   onLog={log}

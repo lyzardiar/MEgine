@@ -17,6 +17,8 @@ import {
   type TimelineBindingTable,
 } from './timelineBindings.ts';
 
+const F32_EPSILON = 1.1920928955078125e-7;
+
 export type TimelineActivationPreview = {
   entity: number;
   active: boolean;
@@ -25,6 +27,13 @@ export type TimelineActivationPreview = {
 export type TimelineScenePreview = {
   activations: TimelineActivationPreview[];
   animations: AnimationPreviewLayer[];
+  camera: TimelineCameraPreview | null;
+};
+
+export type TimelineCameraPreview = {
+  source: number | null;
+  target: number;
+  weight: number;
 };
 
 export type TimelineScenePreviewBuild = {
@@ -64,7 +73,7 @@ export function buildTimelineScenePreview(
   time: number,
   animationClips: ReadonlyMap<string, AnimationClip>,
 ): TimelineScenePreviewBuild {
-  const preview: TimelineScenePreview = { activations: [], animations: [] };
+  const preview: TimelineScenePreview = { activations: [], animations: [], camera: null };
   const diagnostics: string[] = [];
   let bindings: TimelineBindingTable;
   try {
@@ -96,6 +105,56 @@ export function buildTimelineScenePreview(
         continue;
       }
       preview.activations.push({ entity: target, active: clip.active });
+      continue;
+    }
+    if (track.type === 'camera') {
+      const entry = track.clips.findIndex((candidate) => sampleTime >= candidate.start
+        && sampleTime < candidate.start + candidate.duration);
+      if (entry < 0) continue;
+      const clip = track.clips[entry];
+      const target = resolveTrackTarget(clip.target);
+      const targetEntity = target == null
+        ? null
+        : entities.find((candidate) => candidate.entity === target);
+      const targetCameraCount = Number(Boolean(targetEntity?.components.Camera2D))
+        + Number(Boolean(targetEntity?.components.Camera3D));
+      if (target == null) {
+        diagnostics.push(`Camera track '${track.name}' target '${clip.target}' is not resolved.`);
+        continue;
+      }
+      if (targetCameraCount !== 1) {
+        diagnostics.push(`Camera track '${track.name}' target '${clip.target}' must have exactly one Camera2D or Camera3D component.`);
+        continue;
+      }
+      const localTime = Math.max(0, sampleTime - clip.start);
+      const linearWeight = clip.blend_in <= F32_EPSILON
+        ? 1
+        : Math.max(0, Math.min(1, localTime / clip.blend_in));
+      const weight = clip.blend_curve === 'linear'
+        ? linearWeight
+        : linearWeight * linearWeight * (3 - 2 * linearWeight);
+      let source: number | null = null;
+      if (weight < 1 && entry > 0) {
+        const previous = track.clips[entry - 1];
+        const adjacent = Math.abs(previous.start + previous.duration - clip.start) <= 0.001;
+        if (adjacent) {
+          source = resolveTrackTarget(previous.target);
+          const sourceEntity = source == null
+            ? null
+            : entities.find((candidate) => candidate.entity === source);
+          const sourceCameraCount = Number(Boolean(sourceEntity?.components.Camera2D))
+            + Number(Boolean(sourceEntity?.components.Camera3D));
+          if (source == null) {
+            diagnostics.push(`Camera track '${track.name}' previous blend source '${previous.target}' is not resolved.`);
+            continue;
+          }
+          if (sourceCameraCount !== 1) {
+            diagnostics.push(`Camera track '${track.name}' previous blend source '${previous.target}' must have exactly one Camera2D or Camera3D component.`);
+            continue;
+          }
+        }
+      }
+      preview.camera = { source, target, weight };
       continue;
     }
     if (track.type !== 'animation') continue;

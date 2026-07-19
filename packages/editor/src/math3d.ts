@@ -49,10 +49,14 @@ export function orbitEye(pivot: Vec3, yawDeg: number, pitchDeg: number, distance
   ];
 }
 
-export function lookBasis(eye: Vec3, target: Vec3): { forward: Vec3; right: Vec3; up: Vec3 } {
+export function lookBasis(
+  eye: Vec3,
+  target: Vec3,
+  preferredUp: Vec3 = [0, 1, 0],
+): { forward: Vec3; right: Vec3; up: Vec3 } {
   const forward = norm(sub(target, eye));
   // Stable right vector when looking nearly straight up/down
-  let right = cross(forward, [0, 1, 0]);
+  let right = cross(forward, norm(preferredUp));
   if (len(right) < 1e-4) {
     right = cross(forward, [0, 0, 1]);
   }
@@ -64,9 +68,12 @@ export function lookBasis(eye: Vec3, target: Vec3): { forward: Vec3; right: Vec3
 export type Camera = {
   eye: Vec3;
   target: Vec3;
+  up?: Vec3;
   fovYDeg: number;
   projection?: 'perspective' | 'orthographic';
   orthographicSize?: number;
+  near?: number;
+  far?: number;
 };
 
 export function project(
@@ -74,11 +81,13 @@ export function project(
   cam: Camera,
   viewport: { x: number; y: number; w: number; h: number },
 ): { x: number; y: number; depth: number } | null {
-  const { forward, right, up } = lookBasis(cam.eye, cam.target);
+  const { forward, right, up } = lookBasis(cam.eye, cam.target, cam.up);
   if (len(right) < 1e-6) return null;
   const rel = sub(world, cam.eye);
   const z = dot(rel, forward);
-  if (z <= 0.08) return null;
+  const near = Math.max(0.000001, cam.near ?? 0.08);
+  const far = Math.max(near, cam.far ?? Number.POSITIVE_INFINITY);
+  if (z <= near || z > far) return null;
   const x = dot(rel, right);
   const y = dot(rel, up);
   const aspect = viewport.w / Math.max(1, viewport.h);
@@ -730,6 +739,36 @@ export function quatMul(q: Quat, r: Quat): Quat {
 export function quatNormalize(q: Quat): Quat {
   const l = Math.hypot(q[0], q[1], q[2], q[3]) || 1;
   return [q[0] / l, q[1] / l, q[2] / l, q[3] / l];
+}
+
+/** Shortest-path normalized quaternion interpolation, matching runtime glam::Quat::slerp. */
+export function quatSlerp(left: Quat, right: Quat, amount: number): Quat {
+  const a = quatNormalize(left);
+  let b = quatNormalize(right);
+  const t = Math.max(0, Math.min(1, Number.isFinite(amount) ? amount : 0));
+  let cosine = a[0] * b[0] + a[1] * b[1] + a[2] * b[2] + a[3] * b[3];
+  if (cosine < 0) {
+    b = [-b[0], -b[1], -b[2], -b[3]];
+    cosine = -cosine;
+  }
+  if (cosine > 0.9995) {
+    return quatNormalize([
+      a[0] + (b[0] - a[0]) * t,
+      a[1] + (b[1] - a[1]) * t,
+      a[2] + (b[2] - a[2]) * t,
+      a[3] + (b[3] - a[3]) * t,
+    ]);
+  }
+  const angle = Math.acos(Math.max(-1, Math.min(1, cosine)));
+  const denominator = Math.sin(angle);
+  const leftWeight = Math.sin((1 - t) * angle) / denominator;
+  const rightWeight = Math.sin(t * angle) / denominator;
+  return quatNormalize([
+    a[0] * leftWeight + b[0] * rightWeight,
+    a[1] * leftWeight + b[1] * rightWeight,
+    a[2] * leftWeight + b[2] * rightWeight,
+    a[3] * leftWeight + b[3] * rightWeight,
+  ]);
 }
 
 /** Rotate vector by quaternion (q * v * q^-1). */

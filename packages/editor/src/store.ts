@@ -813,6 +813,9 @@ export function createEditorStore(undoService: EditorUndoService = createEditorU
       timelinePreview = null;
       return true;
     },
+    timelineCameraPreview() {
+      return mode === 'edit' ? timelinePreview?.camera ?? null : null;
+    },
     getVisibleFlat,
     activeInHierarchy,
     isExpanded(id: number) {
