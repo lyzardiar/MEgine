@@ -25,6 +25,7 @@ import {
   Copy,
   Crosshair,
   FlipHorizontal2,
+  Magnet,
   Maximize2,
   Minus,
   Minimize2,
@@ -159,6 +160,10 @@ import {
   timelineTimeFromDisplayValue,
   type TimelineTimeDisplayMode,
 } from '../timelineTimeDisplay.ts';
+import {
+  snapTimelineEventTime,
+  snapTimelineKeySelectionDelta,
+} from '../timelineSnapping.ts';
 import { registerMenuItem } from '../editorWindow';
 import {
   listProjectFiles,
@@ -191,6 +196,7 @@ type TimelineKeyDrag = {
   pointerId: number;
   active: TimelineKeyRef;
   activeTime: number;
+  snapPlayheadTime: number;
   selection: TimelineKeyRef[];
   delta: number;
 };
@@ -200,6 +206,7 @@ type TimelineEventDrag = {
   pointerId: number;
   index: number;
   authoredTime: number;
+  snapPlayheadTime: number;
   time: number;
 };
 
@@ -213,12 +220,22 @@ type TimelineCollisionNotice = {
 type TimelineViewMode = 'dope_sheet' | 'curves';
 
 const TIMELINE_TIME_DISPLAY_KEY = 'mengine.timeline.time_display';
+const TIMELINE_SNAPPING_KEY = 'mengine.timeline.snapping';
+const TIMELINE_SNAP_THRESHOLD_PX = 8;
 
 function loadTimelineTimeDisplayMode(): TimelineTimeDisplayMode {
   try {
     return localStorage.getItem(TIMELINE_TIME_DISPLAY_KEY) === 'seconds' ? 'seconds' : 'frames';
   } catch {
     return 'frames';
+  }
+}
+
+function loadTimelineSnapping(): boolean {
+  try {
+    return localStorage.getItem(TIMELINE_SNAPPING_KEY) !== '0';
+  } catch {
+    return true;
   }
 }
 
@@ -1451,6 +1468,8 @@ export function Timeline(props: {
   const [zoom, setZoom] = useState(1);
   const [viewMode, setViewMode] = useState<TimelineViewMode>('dope_sheet');
   const [timeDisplayMode, setTimeDisplayMode] = useState<TimelineTimeDisplayMode>(loadTimelineTimeDisplayMode);
+  const [snapping, setSnapping] = useState(loadTimelineSnapping);
+  const [snapGuide, setSnapGuide] = useState<number | null>(null);
   const [detailsOpen, setDetailsOpen] = useState(false);
   const [maximized, setMaximized] = useState(false);
   const [timelineClipboard, setTimelineClipboard] = useState<TimelineClipboard | null>(null);
@@ -2385,6 +2404,12 @@ export function Timeline(props: {
         };
       })()
     : null;
+  const timelineDragSnapped = Boolean(
+    clip
+    && timelineDragFeedback
+    && snapGuide != null
+    && Math.abs(timelineDragFeedback.time - snapGuide) < 0.5 / Math.max(1, clip.frame_rate),
+  );
   const selectionMoveFrames = Math.max(1, Math.round(selectionMoveStep));
   const selectedKeyFrameStep = clip ? selectionMoveFrames / Math.max(1, clip.frame_rate) : 0;
   const selectedKeyBatchCapabilities = clip
@@ -2806,6 +2831,17 @@ export function Timeline(props: {
     }
   };
 
+  const toggleTimelineSnapping = () => {
+    const next = !snapping;
+    setSnapping(next);
+    if (!next) setSnapGuide(null);
+    try {
+      localStorage.setItem(TIMELINE_SNAPPING_KEY, next ? '1' : '0');
+    } catch {
+      /* ignore unavailable preference storage */
+    }
+  };
+
   const stopTimelineAutoScroll = () => {
     if (timelineAutoScrollFrame.current != null) {
       window.cancelAnimationFrame(timelineAutoScrollFrame.current);
@@ -2819,6 +2855,7 @@ export function Timeline(props: {
     const drag = timelineDragRef.current;
     if (!drag) return false;
     stopTimelineAutoScroll();
+    setSnapGuide(null);
     timelineDragRef.current = null;
     setTimelineDrag(null);
     const restoredTime = drag.kind === 'event' ? drag.authoredTime : drag.activeTime;
@@ -2971,6 +3008,7 @@ export function Timeline(props: {
     event.stopPropagation();
     setPlaying(false);
     stopTimelineAutoScroll();
+    setSnapGuide(null);
     if (kind === 'key') {
       const ref = { track, key: index };
       const command = event.ctrlKey || event.metaKey;
@@ -2996,6 +3034,7 @@ export function Timeline(props: {
         pointerId: event.pointerId,
         active: ref,
         activeTime: authoredTime,
+        snapPlayheadTime: timeRef.current,
         selection,
         delta: 0,
       };
@@ -3009,6 +3048,7 @@ export function Timeline(props: {
         pointerId: event.pointerId,
         index,
         authoredTime,
+        snapPlayheadTime: timeRef.current,
         time: authoredTime,
       };
       event.currentTarget.setPointerCapture(event.pointerId);
@@ -3032,17 +3072,48 @@ export function Timeline(props: {
     if (!sourceClip || !drag || !content || !Number.isFinite(clientX)) return;
     const rect = content.getBoundingClientRect();
     if (!(rect.width > 0)) return;
-    const next = snapAnimationTime(
-      timelinePointerTime(clientX, rect.left, rect.width, sourceClip.duration),
+    const pointerTime = timelinePointerTime(clientX, rect.left, rect.width, sourceClip.duration);
+    const frameTime = snapAnimationTime(
+      pointerTime,
       sourceClip.frame_rate,
       sourceClip.duration,
     );
+    const thresholdSeconds = sourceClip.duration / rect.width * TIMELINE_SNAP_THRESHOLD_PX;
+    const frameRate = Number.isFinite(sourceClip.frame_rate) && sourceClip.frame_rate > 0
+      ? sourceClip.frame_rate
+      : 60;
     let updated: TimelineDrag;
+    let nextGuide: number | null;
     if (drag.kind === 'event') {
-      if (next === drag.time) return;
-      updated = { ...drag, time: next };
+      const magnetic = snapping
+        ? snapTimelineEventTime(
+            sourceClip,
+            drag.index,
+            pointerTime,
+            drag.snapPlayheadTime,
+            thresholdSeconds,
+          )
+        : { time: frameTime, guideTime: null };
+      nextGuide = magnetic.guideTime;
+      setSnapGuide(nextGuide);
+      if (magnetic.time === drag.time) return;
+      updated = { ...drag, time: magnetic.time };
     } else {
-      const delta = clampTimelineKeyDelta(sourceClip, drag.selection, next - drag.activeTime);
+      const magnetic = snapping
+        ? snapTimelineKeySelectionDelta(
+            sourceClip,
+            drag.selection,
+            frameTime - drag.activeTime,
+            drag.snapPlayheadTime,
+            thresholdSeconds,
+          )
+        : { delta: frameTime - drag.activeTime, guideTime: null };
+      const delta = clampTimelineKeyDelta(sourceClip, drag.selection, magnetic.delta);
+      nextGuide = magnetic.guideTime != null
+        && Math.abs(delta - magnetic.delta) < 0.5 / frameRate
+          ? magnetic.guideTime
+          : null;
+      setSnapGuide(nextGuide);
       if (delta === drag.delta) return;
       updated = { ...drag, delta };
     }
@@ -3106,6 +3177,7 @@ export function Timeline(props: {
     const sourceClip = clipRef.current;
     if (!sourceClip || !drag || drag.pointerId !== pointerId) return;
     stopTimelineAutoScroll();
+    setSnapGuide(null);
     timelineDragRef.current = null;
     setTimelineDrag(null);
     if (!commit) {
@@ -3369,6 +3441,16 @@ export function Timeline(props: {
             <Redo2 size={13} aria-hidden="true" />
           </button>
         </div>
+        <button
+          type="button"
+          className={`timeline-icon-button${snapping ? ' active' : ''}`}
+          aria-pressed={snapping}
+          aria-label="Toggle magnetic animation snapping"
+          title={`Magnetic snapping ${snapping ? 'on' : 'off'} (${TIMELINE_SNAP_THRESHOLD_PX}px)`}
+          onClick={toggleTimelineSnapping}
+        >
+          <Magnet size={13} aria-hidden="true" />
+        </button>
         <div
           className="timeline-time"
           title={clip ? `Current animation time: ${formatTimelineTimeTooltip(time, clip.frame_rate)}` : 'Current animation time'}
@@ -3923,13 +4005,22 @@ export function Timeline(props: {
                   {clip.tracks.length === 0 && (
                     <div className="timeline-empty-row timeline-empty-lane">Choose a property above, then add a track.</div>
                   )}
+                  {snapGuide != null && !timelineDragSnapped && (
+                    <i
+                      className={`timeline-snap-guide${snapGuide > clip.duration * 0.82 ? ' edge' : ''}`}
+                      style={{ left: `${clip.duration > 0 ? snapGuide / clip.duration * 100 : 0}%` }}
+                      aria-hidden="true"
+                    >
+                      <b>{formatTimelineTimeLabel(snapGuide, clip.frame_rate, timeDisplayMode)}</b>
+                    </i>
+                  )}
                   {timelineDragFeedback && (
                     <div
-                      className={`timeline-drag-frame-guide${timelineDragFeedback.time > clip.duration * 0.82 ? ' edge' : ''}${timelineDragFeedback.collisionCount > 0 ? ' collision' : ''}`}
+                      className={`timeline-drag-frame-guide${timelineDragFeedback.time > clip.duration * 0.82 ? ' edge' : ''}${timelineDragFeedback.collisionCount > 0 ? ' collision' : ''}${timelineDragSnapped ? ' snapped' : ''}`}
                       style={{ left: `${clip.duration > 0 ? timelineDragFeedback.time / clip.duration * 100 : 0}%` }}
                       aria-hidden="true"
                     >
-                      <span>{timelineDragFeedback.label}</span>
+                      <span>{timelineDragFeedback.label}{timelineDragSnapped ? ' | Snap' : ''}</span>
                     </div>
                   )}
                   {timelineMarquee && (timelineMarquee.width >= 4 || timelineMarquee.height >= 4) && (

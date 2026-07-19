@@ -3382,6 +3382,35 @@ body.insp-scrubbing * {
   pointer-events: none;
 }
 
+.timeline-snap-guide {
+  position: absolute;
+  z-index: 6;
+  top: 0;
+  bottom: 0;
+  width: 1px;
+  border-left: 1px solid #e4bb49;
+  background: rgba(228, 187, 73, 0.12);
+  pointer-events: none;
+}
+
+.timeline-snap-guide b {
+  position: absolute;
+  top: 3px;
+  left: 4px;
+  padding: 1px 3px;
+  border: 1px solid #6f5b20;
+  background: #2c281a;
+  color: #f5dc82;
+  font: 9px var(--u-mono);
+  font-weight: 400;
+  white-space: nowrap;
+}
+
+.timeline-snap-guide.edge b {
+  right: 4px;
+  left: auto;
+}
+
 .timeline-drag-frame-guide {
   position: absolute;
   z-index: 7;
@@ -3421,6 +3450,28 @@ body.insp-scrubbing * {
 }
 
 .timeline-drag-frame-guide.collision span {
+  border-color: #522b25;
+  background: #6b352b;
+  color: #ffe8e2;
+}
+
+.timeline-drag-frame-guide.snapped {
+  border-left-color: #e4bb49;
+  background: rgba(228, 187, 73, 0.12);
+}
+
+.timeline-drag-frame-guide.snapped span {
+  border-color: #6f5b20;
+  background: #594817;
+  color: #fff0ae;
+}
+
+.timeline-drag-frame-guide.collision.snapped {
+  border-left-color: #df7d69;
+  background: rgba(184, 75, 54, 0.16);
+}
+
+.timeline-drag-frame-guide.collision.snapped span {
   border-color: #522b25;
   background: #6b352b;
   color: #ffe8e2;
