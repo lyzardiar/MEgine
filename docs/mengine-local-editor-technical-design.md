@@ -1324,4 +1324,15 @@ Rust workspace 检查现在零警告通过；Tauri Host 17/17 常规测试与 1/
 
 第一遍自省发现直接把实例的 `custom_parameters` 展开到父材质会整体替换父映射，导致父实例设置的其他 Shader 参数丢失；最终改为逐名称合并并用嵌套链回归固定语义。第二遍自省发现只在 CLI 校验实例 JSON 形状不足以判断字段是否合法，因为 Shader 位于任意深度的 Base Material；因此增加 Instance→Parent→Base→Shader 图追踪，并在 Player 端对解析后的最终材质再次打包校验。UI 复核还避免了每次普通 PBR 数值输入都重新读取 `.mshader`，Schema 只随 Shader/资产修订重载，字段值校验在内存中完成。
 
-材质实例现在覆盖标量、颜色与自定义数值参数，但还不能覆盖纹理/采样器、Shader Keyword、Render State 或自定义纹理参数；MaterialPropertyBlock 也仍缺通用自定义字段。下一阶段材质工作应先定义纹理参数和 Keyword/Variant 的稳定 Schema、构建期 Variant 收集/剥离与缓存，而不是继续向固定 Object Uniform 塞字段。构建系统则应补齐 `assetMode: all` 的全复制资产审计和结构化验证报告。
+材质实例现在覆盖标量、颜色与自定义数值参数，但还不能覆盖纹理/采样器、Shader Keyword、Render State 或自定义纹理参数；MaterialPropertyBlock 也仍缺通用自定义字段。下一阶段材质工作应先定义纹理参数和 Keyword/Variant 的稳定 Schema、构建期 Variant 收集/剥离与缓存，而不是继续向固定 Object Uniform 塞字段。`assetMode: all` 的全复制结构化资产审计与报告由下一节补齐。
+
+## 111. 2026-07-19 Player all 模式全结构化资产审计
+
+- `assetMode: all` 不再只复制全部内容、却仅校验场景可达闭包。CLI 会在依赖扫描开始前枚举 Assets/Scripts 下实际可发布的 Scene、Prefab、Material、Material Instance、Surface Shader、Animator Controller、Avatar Mask、Animation Clip、Timeline、glTF、Spine Atlas 与 Sprite Import Metadata，把它们作为“审计根”送入同一依赖队列；因此未被任何 Build Scene 引用但仍会进入 Player 的损坏资产同样阻止发布。
+- 审计根复用原有的路径安全、JSON/Schema、EditorOnly、实体引用、资源子引用和继承图校验。未引用 `.minst` 会继续解析到 Base Material 与 `.mshader`，未引用 glTF 会检查外部 Buffer/Image，未引用 Atlas 会检查页纹理，未引用 Timeline/Animator 会检查其 Clip、Audio、Mask 与参数契约；不再维护一套只验证 Scene/Prefab 引用、另一套只验证材质字段的漂移逻辑。
+- `assetMode: referenced` 保持闭包语义：明确省略的损坏资产不阻断构建，也不会被复制。all 模式审计根本身不计入 `references`，只有资产内部真实依赖边才增加引用数；这样扩大审计覆盖不会伪造运行时耦合度。被审计根发现的依赖仍进入构建清单 `includedBy`，可追溯到 `project.json assetMode=all`。
+- `assetValidation` 新增 `auditedScenes`、`auditedPrefabs`、`auditedMaterials`、`auditedMaterialInstances` 与 `auditedSurfaceShaders`。CLI 输出独立 Authoring Audit 摘要，桌面 Build 窗口也显示五类数量；`validatedFiles` 继续表示实际经过依赖扫描的文件总数。回归证明 all 模式拒绝未引用但陈旧的 Material→Shader 参数绑定，而同一工程切到 referenced 模式会省略该资产并成功发布。
+
+第一遍自省否决了“复制完成后再扫一遍材质文件”的方案：那会发生在 staging 已产生之后，也无法自然追踪 Material Instance 父链和 Shader 依赖。最终审计在 staging 之前进入现有队列，所有失败继续保持原子发布语义。第二遍自省删除了上一批为 all 模式单独编写的 Scene/Prefab 二次枚举，并给审计根增加不计引用的入口；否则同一文件会有两套校验路径，审计覆盖越大反而让 `references` 指标失真。
+
+当前“全资产”指引擎已有确定 Schema 的结构化资产；未引用 PNG/HDR/音频/二进制 Spine Skeleton 目前只做文件与发布清单完整性检查，不会在 CLI 中完整解码。下一阶段应建立统一 Import Artifact 数据库，把纹理、音频、模型和 Shader 编译产物在导入期生成可缓存的目标平台制品，构建阶段只验证内容哈希和导入器版本；同时补签名/公证、符号与崩溃映射、安装器、Patch/Chunk 和远程 Build Farm。

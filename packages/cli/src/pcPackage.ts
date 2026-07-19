@@ -128,6 +128,11 @@ export interface BuildAssetValidation {
   rootScenes: number;
   references: number;
   validatedFiles: number;
+  auditedScenes: number;
+  auditedPrefabs: number;
+  auditedMaterials: number;
+  auditedMaterialInstances: number;
+  auditedSurfaceShaders: number;
   omittedAssetFiles: number;
   omittedAssetBytes: number;
   strippedEditorEntities: number;
@@ -688,13 +693,17 @@ function scanBuildAssetDependencies(
   const materialInstanceParents = new Map<string, string>();
   const materialInstanceCustomParameters = new Map<string, string[]>();
   const materialBaseShaders = new Map<string, string | null>();
-  const entityReferenceAudits = new Set<string>();
   const surfaceShaderSchemas = new Map<string, Set<string>>();
   const customMaterialParameterBindings: Array<{
     material: string;
     shader: string;
     parameters: string[];
   }> = [];
+  let auditedScenes = 0;
+  let auditedPrefabs = 0;
+  let auditedMaterials = 0;
+  let auditedMaterialInstances = 0;
+  let auditedSurfaceShaders = 0;
   let references = 0;
 
   const enqueue = (
@@ -703,6 +712,7 @@ function scanBuildAssetDependencies(
     kind: string,
     builtins: string[] = [],
     spriteSlice?: string,
+    countReference = true,
   ) => {
     const path = rawPath.trim().replaceAll('\\', '/');
     if (!path || builtins.some((builtin) => builtin.toLowerCase() === path.toLowerCase())) return;
@@ -715,7 +725,7 @@ function scanBuildAssetDependencies(
       enqueue(`${texture}.sprite.json`, from, 'sprite import metadata', [], slice);
       return;
     }
-    references += 1;
+    if (countReference) references += 1;
     queue.push({ path, from, kind, ...(spriteSlice ? { spriteSlice } : {}) });
   };
 
@@ -782,20 +792,21 @@ function scanBuildAssetDependencies(
     const extension = extname(pending.path).toLowerCase();
     const source = portablePath(relative(root, absolute));
     if (extension === '.mscene') {
+      auditedScenes += 1;
       const scene = readJsonAsset(absolute, root, 'scene');
       validateSceneEntityReferences(scene, source);
-      entityReferenceAudits.add(process.platform === 'win32' ? absolute.toLowerCase() : absolute);
       const world = jsonObject(scene.world);
       const playerScene = filterEditorOnlySceneEntities(world?.entities);
       for (const entity of playerScene.entities) {
         componentReferences(entity.components, source);
       }
     } else if (extension === '.prefab') {
+      auditedPrefabs += 1;
       const prefab = readJsonAsset(absolute, root, 'prefab');
       validatePrefabEntityReferences(prefab, source);
-      entityReferenceAudits.add(process.platform === 'win32' ? absolute.toLowerCase() : absolute);
       prefabNodeReferences(prefab.root ?? prefab, source);
     } else if (extension === '.minst') {
+      auditedMaterialInstances += 1;
       const instance = readJsonAsset(absolute, root, 'material instance');
       if (instance.version != null && instance.version !== 1 && instance.version !== 2) {
         throw new Error(`invalid material instance ${source}: unsupported version ${String(instance.version)}`);
@@ -869,6 +880,7 @@ function scanBuildAssetDependencies(
       materialInstanceCustomParameters.set(sourceKey, reflectedNames);
       enqueue(parent, source, 'material instance parent');
     } else if (extension === '.mmat' || extension === '.mat') {
+      auditedMaterials += 1;
       const material = readJsonAsset(absolute, root, 'material');
       if (material.version != null
         && (!Number.isInteger(material.version) || Number(material.version) < 1 || Number(material.version) > 8)) {
@@ -987,6 +999,7 @@ function scanBuildAssetDependencies(
         );
       }
     } else if (extension === '.mshader') {
+      auditedSurfaceShaders += 1;
       const sourceText = readFileSync(absolute, 'utf8');
       if (Buffer.byteLength(sourceText, 'utf8') > 256 * 1024) {
         throw new Error(`invalid material surface shader ${source}: file exceeds 256 KiB`);
@@ -1587,6 +1600,22 @@ function scanBuildAssetDependencies(
     enqueue(project.startupScript, 'project.json', 'startup script');
   }
   for (const path of project.alwaysInclude) enqueueAlwaysInclude(path);
+  if (project.assetMode === 'all') {
+    for (const contentRoot of roots) {
+      for (const candidate of collectPackageCandidateFiles(contentRoot, [], isCancelled)) {
+        if (!/\.(?:mscene|prefab|mmat|mat|minst|mshader|mcontroller|mavatar|manim|mtimeline|gltf|atlas)$/i.test(candidate.path)
+          && !/\.sprite\.json$/i.test(candidate.path)) continue;
+        enqueue(
+          portablePath(relative(root, candidate.path)),
+          'project.json assetMode=all',
+          'all-mode structured asset audit',
+          [],
+          undefined,
+          false,
+        );
+      }
+    }
+  }
   while (queue.length > 0) {
     assertBuildNotCancelled(isCancelled, 'asset dependency scan');
     const pending = queue.shift()!;
@@ -1630,22 +1659,6 @@ function scanBuildAssetDependencies(
       }
     }
     inspectJsonDependency(absolute, pending);
-  }
-  if (project.assetMode === 'all') {
-    for (const contentRoot of roots) {
-      for (const candidate of collectPackageCandidateFiles(contentRoot, [], isCancelled)) {
-        if (!/\.(?:mscene|prefab)$/i.test(candidate.path)) continue;
-        const key = process.platform === 'win32' ? candidate.path.toLowerCase() : candidate.path;
-        if (entityReferenceAudits.has(key)) continue;
-        const source = portablePath(relative(root, candidate.path));
-        if (/\.mscene$/i.test(candidate.path)) {
-          validateSceneEntityReferences(readJsonAsset(candidate.path, root, 'scene'), source);
-        } else {
-          validatePrefabEntityReferences(readJsonAsset(candidate.path, root, 'prefab'), source);
-        }
-        entityReferenceAudits.add(key);
-      }
-    }
   }
   for (const binding of customMaterialParameterBindings) {
     const schema = surfaceShaderSchemas.get(binding.shader);
@@ -1706,6 +1719,11 @@ function scanBuildAssetDependencies(
       rootScenes: project.buildScenes.length,
       references,
       validatedFiles: visited.size,
+      auditedScenes,
+      auditedPrefabs,
+      auditedMaterials,
+      auditedMaterialInstances,
+      auditedSurfaceShaders,
       omittedAssetFiles: 0,
       omittedAssetBytes: 0,
       strippedEditorEntities: 0,

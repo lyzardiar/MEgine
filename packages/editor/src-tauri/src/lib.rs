@@ -154,6 +154,11 @@ struct BuildPlayerResult {
     scene_count: usize,
     validated_asset_files: usize,
     asset_references: usize,
+    audited_scenes: usize,
+    audited_prefabs: usize,
+    audited_materials: usize,
+    audited_material_instances: usize,
+    audited_surface_shaders: usize,
     asset_mode: String,
     omitted_asset_files: usize,
     omitted_asset_bytes: u64,
@@ -1440,6 +1445,11 @@ fn run_player_build_controlled(
     let engine_version = manifest_string("engineVersion")?;
     let validated_asset_files = manifest_count("assetValidation", "validatedFiles")?;
     let asset_references = manifest_count("assetValidation", "references")?;
+    let audited_scenes = manifest_count("assetValidation", "auditedScenes")?;
+    let audited_prefabs = manifest_count("assetValidation", "auditedPrefabs")?;
+    let audited_materials = manifest_count("assetValidation", "auditedMaterials")?;
+    let audited_material_instances = manifest_count("assetValidation", "auditedMaterialInstances")?;
+    let audited_surface_shaders = manifest_count("assetValidation", "auditedSurfaceShaders")?;
     let omitted_asset_files = manifest_count("assetValidation", "omittedAssetFiles")?;
     let omitted_asset_bytes = manifest_u64("assetValidation", "omittedAssetBytes")?;
     let stripped_editor_entities = manifest_count("assetValidation", "strippedEditorEntities")?;
@@ -1484,6 +1494,11 @@ fn run_player_build_controlled(
         scene_count,
         validated_asset_files,
         asset_references,
+        audited_scenes,
+        audited_prefabs,
+        audited_materials,
+        audited_material_instances,
+        audited_surface_shaders,
         asset_mode,
         omitted_asset_files,
         omitted_asset_bytes,

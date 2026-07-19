@@ -114,6 +114,11 @@ test('buildPcPackage creates a directly launchable, hashed project bundle', () =
       rootScenes: 2,
       references: 3,
       validatedFiles: 3,
+      auditedScenes: 2,
+      auditedPrefabs: 0,
+      auditedMaterials: 0,
+      auditedMaterialInstances: 0,
+      auditedSurfaceShaders: 0,
       omittedAssetFiles: 0,
       omittedAssetBytes: 0,
       strippedEditorEntities: 0,
@@ -253,7 +258,9 @@ test('buildPcPackage strips EditorOnly scene and prefab subtrees', () => {
     const prefab = JSON.parse(readFileSync(join(paths.output, 'Assets', 'Prefabs', 'Mixed.prefab'), 'utf8'));
     assert.deepEqual(prefab.root.children, []);
     assert.equal(existsSync(join(paths.output, 'Assets', 'Prefabs', 'Editor.prefab')), false);
-    assert.equal(manifest.assetValidation.validatedFiles, 4);
+    assert.equal(manifest.assetValidation.validatedFiles, 6);
+    assert.equal(manifest.assetValidation.auditedScenes, 2);
+    assert.equal(manifest.assetValidation.auditedPrefabs, 2);
     assert.equal(manifest.assetValidation.strippedEditorEntities, 5);
   } finally {
     rmSync(paths.root, { recursive: true, force: true });
@@ -529,6 +536,11 @@ test('buildPcPackage referenced mode copies the validated closure and always-inc
       rootScenes: 2,
       references: 8,
       validatedFiles: 8,
+      auditedScenes: 2,
+      auditedPrefabs: 1,
+      auditedMaterials: 1,
+      auditedMaterialInstances: 0,
+      auditedSurfaceShaders: 0,
       omittedAssetFiles: 2,
       omittedAssetBytes: 10,
       strippedEditorEntities: 0,
@@ -649,6 +661,11 @@ test('buildPcPackage validates transitive material animator and audio dependenci
       rootScenes: 2,
       references: 13,
       validatedFiles: 13,
+      auditedScenes: 2,
+      auditedPrefabs: 0,
+      auditedMaterials: 1,
+      auditedMaterialInstances: 0,
+      auditedSurfaceShaders: 0,
       omittedAssetFiles: 0,
       omittedAssetBytes: 0,
       strippedEditorEntities: 0,
@@ -1071,6 +1088,11 @@ test('buildPcPackage includes validated custom material surface shaders', () => 
       rootScenes: 2,
       references: 5,
       validatedFiles: 5,
+      auditedScenes: 2,
+      auditedPrefabs: 0,
+      auditedMaterials: 1,
+      auditedMaterialInstances: 0,
+      auditedSurfaceShaders: 1,
       omittedAssetFiles: 0,
       omittedAssetBytes: 0,
       strippedEditorEntities: 0
@@ -1152,6 +1174,50 @@ test('buildPcPackage rejects stale or corrupt reflected material parameters', ()
       engineVersion: 'test-engine',
     }), /parameter 'tint' has an invalid range/);
     assert.equal(existsSync(paths.output), false);
+  } finally {
+    rmSync(paths.root, { recursive: true, force: true });
+  }
+});
+
+test('all-assets mode audits unreferenced material graphs while referenced mode omits them', () => {
+  const paths = fixture('unreferenced-material-audit');
+  try {
+    mkdirSync(join(paths.project, 'Assets', 'Shaders'), { recursive: true });
+    writeFileSync(join(paths.project, 'Assets', 'Materials', 'Orphan.mmat'), JSON.stringify({
+      version: 8,
+      shader: 'custom',
+      custom_shader: 'Assets/Shaders/Orphan.mshader',
+      custom_parameters: { removed: [1, 0, 0, 0] },
+    }));
+    writeFileSync(join(paths.project, 'Assets', 'Shaders', 'Orphan.mshader'), `
+      /* MENGINE_PARAMETERS
+      {"parameters":[{"name":"power","type":"float","default":2}]}
+      */
+      fn mengine_lit_surface_hook(
+        surface: MEngineSurface, uv: vec2<f32>, world_position: vec3<f32>
+      ) -> MEngineSurface { return surface; }
+    `);
+    assert.throws(() => buildPcPackage({
+      projectDir: paths.project,
+      outputDir: paths.output,
+      runtimePath: paths.runtime,
+      engineVersion: 'test-engine',
+    }), /parameter 'removed' is not declared/);
+    assert.equal(existsSync(paths.output), false);
+
+    const projectPath = join(paths.project, 'project.json');
+    const project = JSON.parse(readFileSync(projectPath, 'utf8'));
+    project.assetMode = 'referenced';
+    writeFileSync(projectPath, JSON.stringify(project));
+    const manifest = buildPcPackage({
+      projectDir: paths.project,
+      outputDir: paths.output,
+      runtimePath: paths.runtime,
+      engineVersion: 'test-engine',
+    });
+    assert.equal(manifest.assetValidation.auditedMaterials, 0);
+    assert.equal(manifest.assetValidation.auditedSurfaceShaders, 0);
+    assert.equal(existsSync(join(paths.output, 'Assets', 'Materials', 'Orphan.mmat')), false);
   } finally {
     rmSync(paths.root, { recursive: true, force: true });
   }
@@ -1436,6 +1502,11 @@ test('buildPcPackage validates tilemap sprite subresources and shared import met
       rootScenes: 2,
       references: 7,
       validatedFiles: 5,
+      auditedScenes: 2,
+      auditedPrefabs: 0,
+      auditedMaterials: 0,
+      auditedMaterialInstances: 0,
+      auditedSurfaceShaders: 0,
       omittedAssetFiles: 0,
       omittedAssetBytes: 0,
       strippedEditorEntities: 0,

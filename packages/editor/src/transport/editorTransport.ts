@@ -145,6 +145,11 @@ export type BuildPlayerResult = {
   sceneCount: number;
   validatedAssetFiles: number;
   assetReferences: number;
+  auditedScenes: number;
+  auditedPrefabs: number;
+  auditedMaterials: number;
+  auditedMaterialInstances: number;
+  auditedSurfaceShaders: number;
   assetMode: 'all' | 'referenced';
   omittedAssetFiles: number;
   omittedAssetBytes: number;

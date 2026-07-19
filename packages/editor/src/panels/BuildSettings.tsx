@@ -771,6 +771,9 @@ export function BuildSettings(props: {
           <span>
             {lastBuild.sceneCount} scenes · {lastBuild.validatedAssetFiles} validated assets · {lastBuild.assetReferences} references · {lastBuild.assetMode}
           </span>
+          <span>
+            Authoring audit · {lastBuild.auditedScenes} scenes · {lastBuild.auditedPrefabs} prefabs · {lastBuild.auditedMaterials} materials · {lastBuild.auditedMaterialInstances} instances · {lastBuild.auditedSurfaceShaders} shaders
+          </span>
           <span>{lastBuild.strippedEditorEntities} EditorOnly entities stripped</span>
           <span>
             {lastBuild.omittedAssetFiles} unused asset files · {byteSize(lastBuild.omittedAssetBytes)} omitted
