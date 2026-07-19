@@ -935,3 +935,14 @@ Referenced Only 是可用的单包裁剪基础，仍不等同于完整 Addressab
 第一遍自审在 1280×720 的底部 Timeline Dock 中发现原绝对定位弹窗从 y=579.8 延伸到视口外；修正方向计算后向上展开为 y=119.8–549.8，搜索框自动聚焦。第二遍继续执行真实点击，发现局部 `z-index` 下弹窗虽可见但点击会穿透并误切到 Animator；改为全局 Portal 后，底部 Dock 向上、最大化 Timeline 向下的弹窗都挂在 `BODY` 且完整处于视口内。随后以 `transform pos` 精确筛出一项、创建 `Transform.position` 与 0s/1s 关键帧、确认重复候选消失，并验证 Escape、点击外部、Undo/Redo。测试 Clip 与编辑器状态差异在回归前全部清理。
 
 这一切片补齐了大量属性下的基础发现与可点击可靠性，但仍不是成熟动画 Binding 工作流。后续需要方向键/Enter 的完整 roving-focus 导航、真正虚拟化列表、分组折叠、多选批量添加、最近使用与收藏、丢失 Binding 修复/重映射、属性类型和当前值预览，以及模型骨骼层级、Onion Skin、运动轨迹和录制冲突诊断。
+
+## 74. 2026-07-19 Animation Property Popup 全键盘导航
+
+- 搜索输入升级为可编辑 Combobox，结果区使用 Listbox、Group 与 Option 语义；输入焦点始终保留在搜索框，通过 `aria-activedescendant` 指向唯一活动属性。筛选变化会保留仍然有效的活动 Binding，否则选择第一条结果；鼠标悬停与键盘活动项共用同一状态，不维护两套高亮。
+- ArrowUp/ArrowDown 在结果首尾循环，PageUp/PageDown 按十项跳转并在边界钳制；活动项变化后使用 `scrollIntoView({ block: 'nearest' })` 保证长列表中的选择可见。Enter 一步创建活动 Binding，空结果时不产生轨道也不触发 Timeline 播放；Escape 继续关闭弹窗。裸 Home/End 保留给可编辑搜索框的文本光标，不用列表导航破坏浏览器原生编辑约定。
+- 键盘索引迁移抽成无 DOM 的纯函数，显式处理无结果、无当前项、首尾循环、分页钳制与 First/Last 基础命令。结果按钮保留鼠标点击能力但退出 Tab 顺序，避免键盘用户在搜索框和数百个属性之间逐项 Tab；底栏显示紧凑快捷键提示，实时状态区域只播报结果数量。
+- 分组标题从会被辅助技术误识别为页面 Banner 的 `header` 改为由 Group 引用的普通标签；选项暴露稳定的 selected 状态，弹窗关闭后不会残留活动 Binding。样式以同一方形蓝灰高亮覆盖 Hover 与 Keyboard Active，不新增圆角或浏览器默认焦点噪声。
+
+第一遍真实自审在 Button 的十条 `transform` 结果中验证 ArrowDown、首尾滚动可见性，并用 `transform pos`、ArrowDown、Enter 创建 `Transform.position` 与 0s/1s 两个关键帧；随后发现裸 Home/End 与文本编辑语义冲突、分组标题暴露 Banner、状态栏重复包含快捷键提示，均在第二遍前修正。第二遍在 Cube 的 18 条结果中用 PageDown 从首项跳到第 11 项 `is_trigger`，活动项完整位于 Listbox 可视范围且焦点仍在 Combobox；无匹配结果按 Enter 不建轨、不播放，分组不再出现 Banner，440px 弹窗和底栏 `scrollWidth === clientWidth`。测试 Clip 与编辑器状态差异在全量回归前全部清理。
+
+这一切片完成的是单属性发现和创建的键盘闭环，不等同于成熟动画属性管理器。后续仍需真正虚拟化、分组折叠、多选批量添加、最近使用/收藏、类型与当前值预览、丢失 Binding 修复与重映射；Timeline 本体还需要框选后的键盘移动/缩放、轨道层级、录制冲突诊断、Onion Skin、运动轨迹、模型骨骼与 Root Motion 工作流。

@@ -4,6 +4,7 @@ import {
   animationBindingKey,
   groupAnimationPropertyBindings,
   listAnimationPropertyBindings,
+  navigateAnimationPropertyBindingIndex,
   parseAnimationBindingKey,
   searchAnimationPropertyBindings,
 } from '../src/animationBindings.ts';
@@ -67,4 +68,18 @@ test('animation property search matches all tokens and reports truncated results
   assert.deepEqual(limited.bindings, bindings.slice(0, 2));
   assert.equal(limited.matchCount, 4);
   assert.equal(limited.truncated, true);
+});
+
+test('animation property keyboard navigation wraps arrows and clamps page movement', () => {
+  assert.equal(navigateAnimationPropertyBindingIndex(0, -1, 'next'), -1);
+  assert.equal(navigateAnimationPropertyBindingIndex(5, -1, 'next'), 0);
+  assert.equal(navigateAnimationPropertyBindingIndex(5, -1, 'previous'), 4);
+  assert.equal(navigateAnimationPropertyBindingIndex(5, 4, 'next'), 0);
+  assert.equal(navigateAnimationPropertyBindingIndex(5, 0, 'previous'), 4);
+  assert.equal(navigateAnimationPropertyBindingIndex(20, 4, 'page_next', 10), 14);
+  assert.equal(navigateAnimationPropertyBindingIndex(20, 14, 'page_next', 10), 19);
+  assert.equal(navigateAnimationPropertyBindingIndex(20, 14, 'page_previous', 10), 4);
+  assert.equal(navigateAnimationPropertyBindingIndex(20, 4, 'page_previous', 10), 0);
+  assert.equal(navigateAnimationPropertyBindingIndex(5, 2, 'first'), 0);
+  assert.equal(navigateAnimationPropertyBindingIndex(5, 2, 'last'), 4);
 });

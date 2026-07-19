@@ -3044,7 +3044,7 @@ body.insp-scrubbing * {
   scrollbar-color: #50555a #181818;
 }
 
-.timeline-property-group > header {
+.timeline-property-group-label {
   position: sticky;
   z-index: 1;
   top: 0;
@@ -3074,7 +3074,8 @@ body.insp-scrubbing * {
   text-overflow: ellipsis;
 }
 
-.timeline-property-group > button:hover {
+.timeline-property-group > button:hover,
+.timeline-property-group > button.active {
   background: #36536b;
   color: #fff;
 }
@@ -3086,12 +3087,32 @@ body.insp-scrubbing * {
 }
 
 .timeline-property-popup > footer {
+  display: flex;
   flex: 0 0 auto;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
   padding: 4px 7px;
   border-top: 1px solid #171717;
   color: #777;
   background: #242424;
   font-size: 9px;
+}
+
+.timeline-property-result-status,
+.timeline-property-keyboard-hint {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.timeline-property-result-status { flex: 1 1 auto; }
+
+.timeline-property-keyboard-hint {
+  flex: 0 1 auto;
+  color: #929292;
+  text-align: right;
 }
 
 .timeline-track-tools .timeline-curve-track-picker {

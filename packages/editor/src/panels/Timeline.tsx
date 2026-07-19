@@ -67,6 +67,7 @@ import {
   animationBindingKey,
   groupAnimationPropertyBindings,
   listAnimationPropertyBindings,
+  navigateAnimationPropertyBindingIndex,
   parseAnimationBindingKey,
   searchAnimationPropertyBindings,
 } from '../animationBindings';
@@ -932,6 +933,7 @@ export function Timeline(props: {
   const [propertyPopupPlacement, setPropertyPopupPlacement] = useState<'above' | 'below'>('below');
   const [propertyPopupStyle, setPropertyPopupStyle] = useState<CSSProperties>({});
   const [propertySearch, setPropertySearch] = useState('');
+  const [activePropertyBindingKey, setActivePropertyBindingKey] = useState<string | null>(null);
   const [zoom, setZoom] = useState(1);
   const [viewMode, setViewMode] = useState<TimelineViewMode>('dope_sheet');
   const [detailsOpen, setDetailsOpen] = useState(false);
@@ -946,6 +948,7 @@ export function Timeline(props: {
   const propertyPickerRef = useRef<HTMLDivElement>(null);
   const propertyPopupRef = useRef<HTMLDivElement>(null);
   const propertySearchRef = useRef<HTMLInputElement>(null);
+  const propertyOptionRefs = useRef(new Map<string, HTMLButtonElement>());
   const playbackFrame = useRef<number | null>(null);
   const previousFrameTime = useRef<number | null>(null);
   const playbackPhase = useRef<number | null>(null);
@@ -1364,6 +1367,15 @@ export function Timeline(props: {
     () => groupAnimationPropertyBindings(propertySearchResult.bindings),
     [propertySearchResult.bindings],
   );
+  const propertyBindingIndexByKey = useMemo(() => new Map(
+    propertySearchResult.bindings.map((binding, index) => [animationBindingKey(binding), index]),
+  ), [propertySearchResult.bindings]);
+  const activePropertyBindingIndex = activePropertyBindingKey == null
+    ? -1
+    : (propertyBindingIndexByKey.get(activePropertyBindingKey) ?? -1);
+  const activePropertyBindingId = activePropertyBindingIndex < 0
+    ? undefined
+    : `timeline-property-option-${activePropertyBindingIndex}`;
 
   const positionPropertyPopup = () => {
     const rect = propertyPickerRef.current?.getBoundingClientRect();
@@ -1419,6 +1431,23 @@ export function Timeline(props: {
       window.removeEventListener('resize', reposition);
     };
   }, [propertyPickerOpen]);
+
+  useEffect(() => {
+    if (!propertyPickerOpen) return;
+    setActivePropertyBindingKey((current) => {
+      if (current && propertyBindingIndexByKey.has(current)) return current;
+      const first = propertySearchResult.bindings[0];
+      return first ? animationBindingKey(first) : null;
+    });
+  }, [propertyBindingIndexByKey, propertyPickerOpen, propertySearchResult.bindings]);
+
+  useEffect(() => {
+    if (!propertyPickerOpen || !activePropertyBindingKey) return;
+    const frame = window.requestAnimationFrame(() => {
+      propertyOptionRefs.current.get(activePropertyBindingKey)?.scrollIntoView({ block: 'nearest' });
+    });
+    return () => window.cancelAnimationFrame(frame);
+  }, [activePropertyBindingKey, propertyPickerOpen]);
 
   const assignClip = (path: string) => {
     if (!props.entity) return;
@@ -1596,6 +1625,47 @@ export function Timeline(props: {
     setSelectedEvent(null);
     updateClip(next, 'Add Animation Track');
     return true;
+  };
+
+  const selectPropertyBinding = (bindingKey: string): boolean => {
+    const binding = parseAnimationBindingKey(bindingKey);
+    if (!binding) return false;
+    setPropertyPath(`${binding.component}.${binding.property}`);
+    if (!addProperty(bindingKey)) return false;
+    setPropertyPickerOpen(false);
+    setPropertySearch('');
+    setActivePropertyBindingKey(null);
+    return true;
+  };
+
+  const handlePropertySearchKeyDown = (event: ReactKeyboardEvent<HTMLInputElement>) => {
+    if (event.key === 'Enter') {
+      const binding = propertySearchResult.bindings[activePropertyBindingIndex];
+      if (!binding) return;
+      event.preventDefault();
+      event.stopPropagation();
+      selectPropertyBinding(animationBindingKey(binding));
+      return;
+    }
+    const command = event.key === 'ArrowDown'
+      ? 'next'
+      : event.key === 'ArrowUp'
+        ? 'previous'
+        : event.key === 'PageDown'
+          ? 'page_next'
+          : event.key === 'PageUp'
+            ? 'page_previous'
+            : null;
+    if (command == null) return;
+    event.preventDefault();
+    event.stopPropagation();
+    const nextIndex = navigateAnimationPropertyBindingIndex(
+      propertySearchResult.bindings.length,
+      activePropertyBindingIndex,
+      command,
+    );
+    const nextBinding = propertySearchResult.bindings[nextIndex];
+    setActivePropertyBindingKey(nextBinding ? animationBindingKey(nextBinding) : null);
   };
 
   const recordKey = () => {
@@ -2519,6 +2589,9 @@ export function Timeline(props: {
                 onClick={() => {
                   setManualPropertyOpen(false);
                   setPropertySearch('');
+                  setActivePropertyBindingKey(
+                    addablePropertyBindings[0] ? animationBindingKey(addablePropertyBindings[0]) : null,
+                  );
                   if (!propertyPickerOpen) positionPropertyPopup();
                   setPropertyPickerOpen(!propertyPickerOpen);
                 }}
@@ -2540,28 +2613,57 @@ export function Timeline(props: {
                     <input
                       ref={propertySearchRef}
                       type="search"
+                      role="combobox"
                       aria-label="Search animated properties"
+                      aria-autocomplete="list"
+                      aria-controls="timeline-property-results"
+                      aria-expanded="true"
+                      aria-activedescendant={activePropertyBindingId}
                       placeholder="Search target, component, or property..."
                       value={propertySearch}
-                      onChange={(event) => setPropertySearch(event.target.value)}
+                      onChange={(event) => {
+                        setPropertySearch(event.target.value);
+                        setActivePropertyBindingKey(null);
+                      }}
+                      onKeyDown={handlePropertySearchKeyDown}
                     />
                   </label>
-                  <div className="timeline-property-results">
-                    {propertyBindingGroups.map((group) => (
-                      <section key={group.key} className="timeline-property-group">
-                        <header>{group.label}</header>
+                  <div
+                    id="timeline-property-results"
+                    className="timeline-property-results"
+                    role="listbox"
+                    aria-label="Animated properties"
+                  >
+                    {propertyBindingGroups.map((group, groupIndex) => (
+                      <section
+                        key={group.key}
+                        className="timeline-property-group"
+                        role="group"
+                        aria-labelledby={`timeline-property-group-${groupIndex}`}
+                      >
+                        <div
+                          id={`timeline-property-group-${groupIndex}`}
+                          className="timeline-property-group-label"
+                        >
+                          {group.label}
+                        </div>
                         {group.bindings.map((binding) => (
                           <button
                             type="button"
+                            role="option"
+                            id={`timeline-property-option-${propertyBindingIndexByKey.get(animationBindingKey(binding))}`}
                             key={animationBindingKey(binding)}
-                            title={binding.label}
-                            onClick={() => {
-                              setPropertyPath(`${binding.component}.${binding.property}`);
-                              if (addProperty(animationBindingKey(binding))) {
-                                setPropertyPickerOpen(false);
-                                setPropertySearch('');
-                              }
+                            ref={(element) => {
+                              const key = animationBindingKey(binding);
+                              if (element) propertyOptionRefs.current.set(key, element);
+                              else propertyOptionRefs.current.delete(key);
                             }}
+                            className={activePropertyBindingKey === animationBindingKey(binding) ? 'active' : ''}
+                            aria-selected={activePropertyBindingKey === animationBindingKey(binding)}
+                            tabIndex={-1}
+                            title={binding.label}
+                            onPointerEnter={() => setActivePropertyBindingKey(animationBindingKey(binding))}
+                            onClick={() => selectPropertyBinding(animationBindingKey(binding))}
                           >
                             {binding.property}
                           </button>
@@ -2573,9 +2675,12 @@ export function Timeline(props: {
                     )}
                   </div>
                   <footer>
-                    {propertySearchResult.truncated
-                      ? `Showing ${propertySearchResult.bindings.length} of ${propertySearchResult.matchCount}. Refine the search to see more.`
-                      : `${propertySearchResult.matchCount} ${propertySearchResult.matchCount === 1 ? 'property' : 'properties'}`}
+                    <span className="timeline-property-result-status" role="status" aria-live="polite">
+                      {propertySearchResult.truncated
+                        ? `Showing ${propertySearchResult.bindings.length} of ${propertySearchResult.matchCount}. Refine the search to see more.`
+                        : `${propertySearchResult.matchCount} ${propertySearchResult.matchCount === 1 ? 'property' : 'properties'}`}
+                    </span>
+                    <span className="timeline-property-keyboard-hint">↑↓ Navigate · PgUp/PgDn Jump · Enter Add · Esc Close</span>
                   </footer>
                 </div>,
                 document.body,

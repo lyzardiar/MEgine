@@ -24,6 +24,14 @@ export type AnimationPropertyBindingSearchResult = {
   truncated: boolean;
 };
 
+export type AnimationPropertyBindingNavigationCommand =
+  | 'first'
+  | 'last'
+  | 'next'
+  | 'previous'
+  | 'page_next'
+  | 'page_previous';
+
 function animatablePaths(value: unknown, prefix = '', output: string[] = []): string[] {
   if (output.length >= 2048) return output;
   if (typeof value === 'number' || typeof value === 'boolean' || typeof value === 'string') {
@@ -142,6 +150,26 @@ export function searchAnimationPropertyBindings(
     matchCount,
     truncated: matchCount > results.length,
   };
+}
+
+export function navigateAnimationPropertyBindingIndex(
+  itemCount: number,
+  currentIndex: number,
+  command: AnimationPropertyBindingNavigationCommand,
+  pageSize = 10,
+): number {
+  const count = Number.isFinite(itemCount) ? Math.max(0, Math.trunc(itemCount)) : 0;
+  if (count === 0) return -1;
+  const current = Number.isInteger(currentIndex) && currentIndex >= 0 && currentIndex < count
+    ? currentIndex
+    : -1;
+  const page = Number.isFinite(pageSize) ? Math.max(1, Math.trunc(pageSize)) : 10;
+  if (command === 'first') return 0;
+  if (command === 'last') return count - 1;
+  if (command === 'next') return current < 0 ? 0 : (current + 1) % count;
+  if (command === 'previous') return current < 0 ? count - 1 : (current - 1 + count) % count;
+  if (command === 'page_next') return current < 0 ? 0 : Math.min(count - 1, current + page);
+  return current < 0 ? count - 1 : Math.max(0, current - page);
 }
 
 export function parseAnimationBindingKey(value: string): AnimationPropertyBinding | null {
