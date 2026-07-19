@@ -1188,3 +1188,14 @@ Rust workspace 检查现在零警告通过；Tauri Host 17/17 常规测试与 1/
 - 第一遍自省修复 Undo 回干净状态仍遗留旧恢复点、打开场景成功却因恢复清理失败被误报失败，以及自动恢复与保存并发的问题。第二遍自省补齐超大文件门禁、已删除场景重建、无操作快照、符号链接写入边界，并把 Scene Library 改为后端成功后再提交内存缓存，磁盘失败不再显示成已保存。
 
 这一批守住的是场景文档的崩溃恢复底线，尚未覆盖材质、Shader、Animator、Sprite、Timeline、Project/Build Settings 等多文档草稿，也不是完整 Session Restore。后续需要统一 Document Service、每类资产恢复记录、编辑器布局与打开文档会话恢复、外部文件变更监听/三方合并、可恢复回收站、恢复点轮转，以及崩溃报告和符号服务器联动。
+
+## 99. 2026-07-19 外部文件变化检测与乐观并发保存
+
+- 主编辑窗口建立工程文件 Revision 索引，桌面 Host 使用“修改时间纳秒 + 文件大小”，浏览器开发后端使用微秒级 mtime + 大小；每 2 秒仅在窗口可见时扫描，窗口重新获得焦点会立即检查。新增、修改、删除和大小写路径变化形成结构化差异事件，Project、Sprite/材质/模型预览、音频波形等现有缓存统一收到资产变化广播；短暂扫描失败保留最后一次有效索引，不会把整个 Project 误报成已删除。
+- 监听范围包含 Scene、TypeScript/JavaScript、Sprite Import sidecar 和全部已支持作者资源，但 Scene/Script/sidecar 继续由原有专用卡片显示，不在 Project 中重复出现。扫描使用 `lstat/symlink_metadata`，目录递归明确跳过符号链接；最多 10000 条的原有资源上限保持不变。工程 attach/open/create 会清空文件索引、音频预览和写入基线，旧工程相同相对路径不会污染新工程。
+- 资产读取返回与内容同一版本的 Revision：Rust 与 Vite 后端都执行“读前元数据—读取—读后元数据”稳定校验，连续变化则要求重试。每个文档保存携带它最后实际读取的 Revision；后端在原子替换前执行乐观并发比较，外部修改、删除或抢先创建都会拒绝保存，而不是静默覆盖。编辑器自身成功写入立即返回新 Revision 和资源信息，因此下一次轮询不会把自己的 Save/Create/Import 误报成外部变化。
+- 当前打开且干净的 Animation、Sequencer、Animator/Avatar Mask、Material/Material Instance、Surface Shader、Sprite/Sprite Atlas 会自动从磁盘重载；重载前清除对应全局 Undo scope，旧历史不能把新磁盘版本写回来。存在本地草稿时弹出明确冲突决策：可丢弃该编辑器窗口草稿并重载，或保留草稿；选择保留后底层 Revision 门禁仍会阻止 Ctrl+S/Save All 覆盖外部版本。外部删除干净文档会关闭，Sprite Import sidecar 删除只重载默认 Import 设置，不会误关纹理。
+- Scene 使用独立的 `scene_disk_revision`。Open 执行稳定读取，Ctrl+S 和当前场景重命名在落盘前核对打开时 Revision；外部修改或删除会返回 `externalSceneModification` 并保持外部文件原样。干净场景外部修改后自动重载并广播到所有 Dock；有未保存修改时由用户选择磁盘版或内存版，选择内存版后直接保存仍被禁止；外部删除则保留内存 Scene 并引导 Save As。
+- 第一遍自省补齐稳定读、上传完成后再检查、clean 重载前清理 Undo，以及独立 Dock/Save All 仍必须受 Host Revision 门禁。第二遍自省补齐工程切换基线隔离、Scene/Script/sidecar 漏扫、Sprite slice/sidecar 路径映射、场景保存冲突和可执行的冲突决策，而不是只在 Console 打一条警告。
+
+这一批完成的是本地单用户工程的外部编辑安全底线，还不是完整 Asset Database。轮询后续应升级为原生 Watcher + 事件合并，并继续实现 ProjectSettings/project.json 监听、统一 Document Service 冲突栏、文本三方合并/差异视图、二进制资产重新导入队列、GUID/Meta、依赖图失效传播、批量移动/重命名修复引用、版本控制状态和可恢复回收站。

@@ -10,6 +10,12 @@ import {
 } from './transport/desktopProjectSession';
 import { listProjectScenes } from './transport/editorTransport';
 import type { GameResolution } from './gameResolution';
+import {
+  acknowledgeProjectFileWrite,
+  beginInternalProjectFileWrite,
+  endInternalProjectFileWrite,
+  refreshProjectFiles,
+} from './projectAssets';
 
 export type SceneMeta = {
   name: string;
@@ -337,63 +343,107 @@ export async function setEditorPrefs(partial: EditorPrefs) {
 }
 
 export async function writeScene(name: string, json: string) {
-  if (_backend === 'desktop') {
-    const saved = await persistDesktopScene(json, name);
-    const savedName = saved.scenePath?.split('/').pop()?.replace(/\.mscene$/i, '') ?? name;
-    _index = sortIndex([
-      ..._index.filter((scene) => scene.name !== savedName),
-      { name: savedName, updatedAt: Date.now() },
-    ]);
-    _data.set(savedName, json);
-    _active = savedName;
-    return;
-  }
+  const trackedPath = `Assets/Scenes/${sceneFileName(name)}`;
+  beginInternalProjectFileWrite(trackedPath);
+  try {
+    if (_backend === 'desktop') {
+      const saved = await persistDesktopScene(json, name);
+      const savedName = saved.scenePath?.split('/').pop()?.replace(/\.mscene$/i, '') ?? name;
+      _index = sortIndex([
+        ..._index.filter((scene) => scene.name !== savedName),
+        { name: savedName, updatedAt: Date.now() },
+      ]);
+      _data.set(savedName, json);
+      _active = savedName;
+      await refreshProjectFiles();
+      acknowledgeProjectFileWrite(`Assets/Scenes/${sceneFileName(savedName)}`);
+      return;
+    }
 
-  if (_backend === 'disk') {
-    const res = await fetch(`${API}/scenes/${encodeURIComponent(name)}`, {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
-      body: json,
-    });
-    if (!res.ok) throw new Error(`disk write failed: ${res.status}`);
-    const out = (await res.json()) as { updatedAt?: number };
+    if (_backend === 'disk') {
+      const res = await fetch(`${API}/scenes/${encodeURIComponent(name)}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: json,
+      });
+      if (!res.ok) throw new Error(`disk write failed: ${res.status}`);
+      const out = (await res.json()) as { updatedAt?: number };
+      _data.set(name, json);
+      _index = sortIndex([
+        ..._index.filter((s) => s.name !== name),
+        { name, updatedAt: out.updatedAt ?? Date.now() },
+      ]);
+      _active = name;
+      await refreshProjectFiles();
+      acknowledgeProjectFileWrite(trackedPath);
+      return;
+    }
+
+    localStorage.setItem(dataKey(name), json);
+    const nextIndex = sortIndex([
+      ..._index.filter((scene) => scene.name !== name),
+      { name, updatedAt: Date.now() },
+    ]);
+    localStorage.setItem(SCENES_INDEX_KEY, JSON.stringify(nextIndex));
+    localStorage.setItem(SCENES_ACTIVE_KEY, name);
+    _data.set(name, json);
+    _index = nextIndex;
+    _active = name;
+  } finally {
+    endInternalProjectFileWrite(trackedPath);
+  }
+}
+
+export async function reloadSceneFromBackend(name: string): Promise<string> {
+  if (_backend === 'desktop') {
+    await openDesktopScene(name);
+    const json = desktopProjectSceneJson();
+    if (!json) throw new Error(`desktop host did not return ${sceneFileName(name)}`);
     _data.set(name, json);
     _index = sortIndex([
-      ..._index.filter((s) => s.name !== name),
-      { name, updatedAt: out.updatedAt ?? Date.now() },
+      ..._index.filter((scene) => scene.name.toLocaleLowerCase() !== name.toLocaleLowerCase()),
+      { name, updatedAt: Date.now() },
     ]);
     _active = name;
-    return;
+    return json;
   }
-
-  localStorage.setItem(dataKey(name), json);
-  const nextIndex = sortIndex([
-    ..._index.filter((scene) => scene.name !== name),
-    { name, updatedAt: Date.now() },
-  ]);
-  localStorage.setItem(SCENES_INDEX_KEY, JSON.stringify(nextIndex));
-  localStorage.setItem(SCENES_ACTIVE_KEY, name);
-  _data.set(name, json);
-  _index = nextIndex;
+  if (_backend === 'disk') {
+    if (!await loadFromDisk()) throw new Error('scene library could not be refreshed from disk');
+  } else {
+    loadFromLocalStorage();
+  }
+  const json = readSceneJson(name);
+  if (!json) throw new Error(`scene not found: ${sceneFileName(name)}`);
   _active = name;
+  return json;
 }
 
 export async function deleteScene(name: string) {
-  if (_backend === 'desktop') {
-    await deleteDesktopScene(name);
-  } else if (_backend === 'disk') {
-    const response = await fetch(`${API}/scenes/${encodeURIComponent(name)}`, { method: 'DELETE' });
-    if (!response.ok) throw new Error(`disk delete failed: ${response.status}`);
-  } else {
-    localStorage.removeItem(dataKey(name));
-    if (localStorage.getItem(SCENES_ACTIVE_KEY) === name) {
-      localStorage.removeItem(SCENES_ACTIVE_KEY);
+  const trackedPath = `Assets/Scenes/${sceneFileName(name)}`;
+  beginInternalProjectFileWrite(trackedPath);
+  try {
+    if (_backend === 'desktop') {
+      await deleteDesktopScene(name);
+    } else if (_backend === 'disk') {
+      const response = await fetch(`${API}/scenes/${encodeURIComponent(name)}`, { method: 'DELETE' });
+      if (!response.ok) throw new Error(`disk delete failed: ${response.status}`);
+    } else {
+      localStorage.removeItem(dataKey(name));
+      if (localStorage.getItem(SCENES_ACTIVE_KEY) === name) {
+        localStorage.removeItem(SCENES_ACTIVE_KEY);
+      }
     }
+    _data.delete(name);
+    _index = _index.filter((s) => s.name !== name);
+    if (_active === name) _active = null;
+    if (_backend === 'local') applyLocalIndex(_index);
+    else {
+      await refreshProjectFiles();
+      acknowledgeProjectFileWrite(trackedPath);
+    }
+  } finally {
+    endInternalProjectFileWrite(trackedPath);
   }
-  _data.delete(name);
-  _index = _index.filter((s) => s.name !== name);
-  if (_active === name) _active = null;
-  if (_backend === 'local') applyLocalIndex(_index);
 }
 
 /** Rename scene asset. Returns null on failure; oldName if unchanged; newName on success. */
@@ -407,40 +457,55 @@ export async function renameScene(oldName: string, newNameRaw: string): Promise<
     return null;
   }
 
-  if (_backend === 'desktop') {
-    await renameDesktopScene(oldName, newName);
-  } else if (_backend === 'disk') {
-    const res = await fetch(`${API}/scenes/rename`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ from: oldName, to: newName }),
-    });
-    if (!res.ok) return null;
-  }
-
-  const json = readSceneJson(oldName)!;
-  let payload = json;
+  const oldPath = `Assets/Scenes/${sceneFileName(oldName)}`;
+  const newPath = `Assets/Scenes/${sceneFileName(newName)}`;
+  beginInternalProjectFileWrite(oldPath);
+  beginInternalProjectFileWrite(newPath);
   try {
-    const data = JSON.parse(json);
-    data.name = newName;
-    payload = JSON.stringify(data, null, 2);
-  } catch {
-    /* keep raw */
+
+    if (_backend === 'desktop') {
+      await renameDesktopScene(oldName, newName);
+    } else if (_backend === 'disk') {
+      const res = await fetch(`${API}/scenes/rename`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ from: oldName, to: newName }),
+      });
+      if (!res.ok) return null;
+    }
+
+    const json = readSceneJson(oldName)!;
+    let payload = json;
+    try {
+      const data = JSON.parse(json);
+      data.name = newName;
+      payload = JSON.stringify(data, null, 2);
+    } catch {
+      /* keep raw */
+    }
+    if (_backend === 'local') {
+      localStorage.setItem(dataKey(newName), payload);
+      localStorage.removeItem(dataKey(oldName));
+    }
+    _data.set(newName, payload);
+    _data.delete(oldName);
+    _index = sortIndex([
+      ..._index.filter((s) => s.name !== oldName && s.name !== newName),
+      { name: newName, updatedAt: Date.now() },
+    ]);
+    if (_active === oldName) {
+      _active = newName;
+      if (_backend === 'local') localStorage.setItem(SCENES_ACTIVE_KEY, newName);
+    }
+    if (_backend === 'local') applyLocalIndex(_index);
+    else {
+      await refreshProjectFiles();
+      acknowledgeProjectFileWrite(oldPath);
+      acknowledgeProjectFileWrite(newPath);
+    }
+    return newName;
+  } finally {
+    endInternalProjectFileWrite(oldPath);
+    endInternalProjectFileWrite(newPath);
   }
-  if (_backend === 'local') {
-    localStorage.setItem(dataKey(newName), payload);
-    localStorage.removeItem(dataKey(oldName));
-  }
-  _data.set(newName, payload);
-  _data.delete(oldName);
-  _index = sortIndex([
-    ..._index.filter((s) => s.name !== oldName && s.name !== newName),
-    { name: newName, updatedAt: Date.now() },
-  ]);
-  if (_active === oldName) {
-    _active = newName;
-    if (_backend === 'local') localStorage.setItem(SCENES_ACTIVE_KEY, newName);
-  }
-  if (_backend === 'local') applyLocalIndex(_index);
-  return newName;
 }

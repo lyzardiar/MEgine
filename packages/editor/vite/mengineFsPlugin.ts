@@ -148,8 +148,14 @@ export function mengineFsPlugin(opts: MengineFsOptions | string): Plugin {
     pixelsPerUnit?: number;
   };
   type ProjectFileAsset = TextureAsset & {
-    kind: 'animation' | 'animator-controller' | 'avatar-mask' | 'timeline' | 'audio' | 'material' | 'shader' | 'model' | 'prefab' | 'sprite-atlas' | 'texture' | 'spine-json' | 'spine-binary' | 'spine-atlas';
+    kind: 'animation' | 'animator-controller' | 'avatar-mask' | 'timeline' | 'audio' | 'material' | 'shader' | 'model' | 'prefab' | 'sprite-atlas' | 'texture' | 'spine-json' | 'spine-binary' | 'spine-atlas' | 'scene' | 'script' | 'sprite-import';
+    revision: string;
+    size: number;
   };
+
+  function assetFileRevision(stat: fs.Stats): string {
+    return `${Math.round(stat.mtimeMs * 1_000).toString(16)}-${stat.size.toString(16)}`;
+  }
 
   function listTextures(): { sprites: TextureAsset[]; folders: string[] } {
     ensureDirs();
@@ -268,14 +274,19 @@ export function mengineFsPlugin(opts: MengineFsOptions | string): Plugin {
       for (const file of fs.readdirSync(dir)) {
         if (file.startsWith('.') || file.endsWith('.meta')) continue;
         const abs = path.join(dir, file);
-        const stat = fs.statSync(abs);
+        const stat = fs.lstatSync(abs);
+        if (stat.isSymbolicLink()) continue;
         if (stat.isDirectory()) {
           walk(abs, `${folder}/${file}`);
           continue;
         }
         const lower = file.toLowerCase();
         const kind: ProjectFileAsset['kind'] | null = lower.endsWith('.sprite.json')
-          ? null
+          ? 'sprite-import'
+          : lower.endsWith('.mscene')
+            ? 'scene'
+          : /\.(m?js|ts)$/.test(lower)
+            ? 'script'
           : lower.endsWith('.matlas')
             ? 'sprite-atlas'
           : lower.endsWith('.manim')
@@ -307,7 +318,15 @@ export function mengineFsPlugin(opts: MengineFsOptions | string): Plugin {
                       : null;
         if (!kind) continue;
         const relPath = `Assets/${path.relative(assetsRoot, abs).replace(/\\/g, '/')}`;
-        assets.push({ id: relPath, name: file, folder, relPath, kind });
+        assets.push({
+          id: relPath,
+          name: file,
+          folder,
+          relPath,
+          kind,
+          revision: assetFileRevision(stat),
+          size: stat.size,
+        });
       }
     };
     walk(assetsRoot, 'Assets');
@@ -714,19 +733,48 @@ export function mengineFsPlugin(opts: MengineFsOptions | string): Plugin {
       if (assetMatch && method === 'GET') {
         const abs = resolveAssetReadPath(assetMatch[1]);
         if (!abs) return sendJson(res, 404, { error: 'not found' });
-        const buf = fs.readFileSync(abs);
+        let buf: Buffer | null = null;
+        let revision = '';
+        for (let attempt = 0; attempt < 2; attempt += 1) {
+          const before = assetFileRevision(fs.statSync(abs));
+          const candidate = fs.readFileSync(abs);
+          const after = assetFileRevision(fs.statSync(abs));
+          if (before === after) {
+            buf = candidate;
+            revision = after;
+            break;
+          }
+        }
+        if (!buf) return sendJson(res, 409, { error: 'asset changed repeatedly while it was being read; retry' });
         res.statusCode = 200;
         res.setHeader('Content-Type', contentTypeFor(abs));
         res.setHeader('Cache-Control', 'no-cache');
+        res.setHeader('X-MEngine-Asset-Revision', revision);
         res.end(buf);
         return;
       }
       if (assetMatch && method === 'PUT') {
         const abs = resolveAssetWritePath(assetMatch[1]);
         if (!abs) return sendJson(res, 400, { error: 'invalid asset path' });
+        const expectedHeader = req.headers['x-mengine-expected-revision'];
+        const expectedValue = Array.isArray(expectedHeader) ? expectedHeader[0] : expectedHeader;
+        const expectedRevision = expectedValue === '__missing__' ? null : (expectedValue ?? null);
         const body = await readBodyBytes(req, 64 * 1024 * 1024);
+        const actualRevision = fs.existsSync(abs) ? assetFileRevision(fs.lstatSync(abs)) : null;
+        if (actualRevision !== expectedRevision) {
+          return sendJson(res, 409, {
+            error: `asset changed on disk since it was loaded: ${assetMatch[1]}; reload it before saving`,
+          });
+        }
         writeFileAtomic(abs, body);
-        return sendJson(res, 200, { ok: true, bytes: body.length });
+        const relPath = `Assets/${path.relative(assetsRoot, abs).replace(/\\/g, '/')}`;
+        const asset = listProjectAssets().find((candidate) => candidate.relPath === relPath) ?? null;
+        return sendJson(res, 200, {
+          ok: true,
+          bytes: body.length,
+          revision: assetFileRevision(fs.statSync(abs)),
+          asset,
+        });
       }
 
       // POST /__mengine/open  { path | id }

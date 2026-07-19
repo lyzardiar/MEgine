@@ -14,6 +14,7 @@ import {
   type ProjectSnapshot,
 } from './editorTransport';
 import { invoke } from '@tauri-apps/api/core';
+import { resetProjectAssetState } from '../projectAssets';
 
 let currentProject: ProjectSnapshot | null = null;
 let sessionQueue: Promise<void> = Promise.resolve();
@@ -31,6 +32,7 @@ export function getDesktopProject(): ProjectSnapshot | null {
 /** Attach a newly-created WebView to the project already owned by the Rust host. */
 export async function attachDesktopProject(): Promise<ProjectSnapshot> {
   return enqueueSessionOperation(async () => {
+    resetProjectAssetState();
     currentProject = await getProjectSnapshot();
     return currentProject;
   });
@@ -38,6 +40,7 @@ export async function attachDesktopProject(): Promise<ProjectSnapshot> {
 
 export async function startDesktopProject(root: string): Promise<ProjectSnapshot> {
   return enqueueSessionOperation(async () => {
+    resetProjectAssetState();
     currentProject = await openProject(root);
     return currentProject;
   });
@@ -48,6 +51,7 @@ export async function createDesktopProject(
   name: string,
 ): Promise<ProjectSnapshot> {
   return enqueueSessionOperation(async () => {
+    resetProjectAssetState();
     currentProject = await createProject(parent, name);
     return currentProject;
   });

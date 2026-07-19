@@ -21,6 +21,7 @@ import {
   listScenes,
   normalizeSceneName,
   readSceneJson,
+  reloadSceneFromBackend,
   renameScene,
   sceneExists,
   sceneFileName,
@@ -43,6 +44,7 @@ import {
   openAnimatorAsset,
   OPEN_MATERIAL_EVENT,
   PROJECT_ASSETS_CHANGED_EVENT,
+  PROJECT_ASSETS_EXTERNAL_CHANGE_EVENT,
   openMaterialAsset,
   OPEN_SURFACE_SHADER_EVENT,
   openSurfaceShaderAsset,
@@ -51,6 +53,11 @@ import {
   OPEN_SPRITE_ATLAS_EVENT,
   openSpriteAtlasAsset,
 } from './assetEditorEvents';
+import {
+  pollProjectFileChanges,
+  refreshProjectFiles,
+  type ProjectAssetChange,
+} from './projectAssets';
 import { Viewport } from './panels/Viewport';
 import { DockWorkspace, type PanelKind } from './panels/DockWorkspace';
 import { EditorWindowHost } from './editorWindow';
@@ -154,6 +161,15 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
   const [projectSettingsDirty, setProjectSettingsDirty] = useState(false);
   const [buildSettingsDirty, setBuildSettingsDirty] = useState(false);
   const [sceneDirty, setSceneDirty] = useState(false);
+  const [assetReloadEpoch, setAssetReloadEpoch] = useState({
+    animation: 0,
+    sequencer: 0,
+    animator: 0,
+    material: 0,
+    shader: 0,
+    sprite: 0,
+    spriteAtlas: 0,
+  });
   const resourceDirty = materialDirty
     || shaderDirty
     || animationDirty
@@ -196,6 +212,7 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
   const syncChannel = useRef<BroadcastChannel | null>(null);
   const recoveryTimer = useRef<number | null>(null);
   const lastRecoveryError = useRef<string | null>(null);
+  const lastAssetPollError = useRef<string | null>(null);
   const recoveryReady = useRef(false);
   const recoveryCheckpointActive = useRef(false);
 
@@ -324,6 +341,116 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
     };
   }, [spriteAtlasDirty, spriteAtlasPath, spriteDirty, spritePath]);
 
+  useEffect(() => {
+    const onExternalChange = (event: Event) => {
+      const detail = (event as CustomEvent<{
+        changes?: ProjectAssetChange[];
+      }>).detail;
+      const changes = detail?.changes ?? [];
+      const changed = new Map(changes.map((change) => [change.relPath.toLocaleLowerCase(), change]));
+      const reload = (
+        panel: keyof typeof assetReloadEpoch,
+        path: string | null,
+        dirty: boolean,
+        setPath: (path: string | null) => void,
+      ) => {
+        if (!path) return;
+        const hashIndex = path.indexOf('#');
+        const filePath = hashIndex >= 0 ? path.slice(0, hashIndex) : path;
+        const fragment = hashIndex >= 0 ? path.slice(hashIndex) : '';
+        const change = changed.get(filePath.toLocaleLowerCase())
+          ?? (panel === 'sprite'
+            ? changed.get(`${filePath}.sprite.json`.toLocaleLowerCase())
+            : undefined);
+        if (!change) return;
+        if (dirty) {
+          const discard = window.confirm(
+            `${path} 已在磁盘外部变化，并与本地未保存草稿冲突。\n\n`
+            + '确定：丢弃该编辑器窗口中的未保存草稿并加载磁盘版本。\n'
+            + '取消：保留本地草稿（保存会被阻止，避免覆盖外部版本）。',
+          );
+          if (!discard) {
+            log(`${path} 的本地草稿已保留；保存会被阻止，直到重新加载磁盘版本。`, 'warn');
+            return;
+          }
+          log(`已按用户选择丢弃本地草稿，准备重载 ${path}。`, 'warn');
+        }
+        for (const scope of [
+          'animation',
+          'timeline',
+          'animator',
+          'avatar-mask',
+          'material',
+          'material-instance',
+          'surface-shader',
+        ]) {
+          undoService.clear(`${scope}:${filePath}`);
+        }
+        const deletedPrimaryAsset = change.relPath.toLocaleLowerCase() === filePath.toLocaleLowerCase();
+        if (change.type === 'deleted' && deletedPrimaryAsset) {
+          setPath(null);
+          log(`${path} 已在磁盘外部删除，已关闭对应编辑文档。`, 'warn');
+          return;
+        }
+        const changedPath = change.current?.relPath;
+        const canonicalFilePath = changedPath?.toLocaleLowerCase().endsWith('.sprite.json')
+          ? filePath
+          : (changedPath ?? filePath);
+        const canonicalPath = `${canonicalFilePath}${fragment}`;
+        if (canonicalPath !== path) setPath(canonicalPath);
+        setAssetReloadEpoch((current) => ({ ...current, [panel]: current[panel] + 1 }));
+        log(`已从磁盘重新加载 ${canonicalPath}`);
+      };
+      reload('animation', animationAssetPath, animationDirty, setAnimationAssetPath);
+      reload('sequencer', timelineAssetPath, sequencerDirty, setTimelineAssetPath);
+      reload('animator', animatorPath, animatorDirty, setAnimatorPath);
+      reload('material', materialPath, materialDirty, setMaterialPath);
+      reload('shader', shaderPath, shaderDirty, setShaderPath);
+      reload('sprite', spritePath, spriteDirty, setSpritePath);
+      reload('spriteAtlas', spriteAtlasPath, spriteAtlasDirty, setSpriteAtlasPath);
+
+      const currentSceneName = sceneNameRef.current;
+      if (currentSceneName) {
+        const currentScenePath = `Assets/Scenes/${sceneFileName(currentSceneName)}`;
+        const sceneChange = changed.get(currentScenePath.toLocaleLowerCase());
+        if (sceneChange) {
+          if (sceneChange.type === 'deleted') {
+            savedSceneFingerprint.current = `deleted:${crypto.randomUUID()}`;
+            sceneDirtyRef.current = true;
+            setSceneDirty(true);
+            log(`${currentScenePath} 已在磁盘外部删除。内存场景仍保留，请使用 Save As 保存到新文件。`, 'warn');
+          } else {
+            const nextPath = sceneChange.current?.relPath ?? currentScenePath;
+            const nextName = nextPath.split('/').pop()?.replace(/\.mscene$/i, '') ?? currentSceneName;
+            if (sceneDirtyRef.current && !window.confirm(
+              `${currentScenePath} 已在磁盘外部修改，并与当前未保存场景冲突。\n\n`
+              + '确定：丢弃当前未保存修改并加载磁盘版本。\n'
+              + '取消：保留内存场景（直接保存会被阻止）。',
+            )) {
+              log(`${currentScenePath} 的内存修改已保留；直接保存会被阻止。`, 'warn');
+              return;
+            }
+            void reloadSceneFromBackend(nextName)
+              .then((json) => {
+                store.loadSceneJson(json);
+                const fingerprint = store.sceneContentFingerprint();
+                savedSceneFingerprint.current = fingerprint;
+                sceneNameRef.current = nextName;
+                setSceneName(nextName);
+                sceneDirtyRef.current = false;
+                setSceneDirty(false);
+                refresh();
+                log(`已从磁盘重新加载 ${sceneFileName(nextName)}`);
+              })
+              .catch((reason) => log(`场景外部变化重载失败: ${String(reason)}`, 'error'));
+          }
+        }
+      }
+    };
+    window.addEventListener(PROJECT_ASSETS_EXTERNAL_CHANGE_EVENT, onExternalChange);
+    return () => window.removeEventListener(PROJECT_ASSETS_EXTERNAL_CHANGE_EVENT, onExternalChange);
+  }, [animationAssetPath, animationDirty, animatorDirty, animatorPath, materialDirty, materialPath, sequencerDirty, shaderDirty, shaderPath, spriteAtlasDirty, spriteAtlasPath, spriteDirty, spritePath, timelineAssetPath]);
+
   const log = (msg: string, level: 'info' | 'warn' | 'error' = 'info') => {
     const prefix = level === 'info' ? '' : level === 'warn' ? '[Warn] ' : '[Error] ';
     const next = [...logsRef.current, `${prefix}${msg}`].slice(-300);
@@ -371,6 +498,54 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
       }
     };
   }, [props.detachedPanel, sceneDirty, sceneName, treeTick, store]);
+
+  useEffect(() => {
+    if (props.detachedPanel) return;
+    let disposed = false;
+    let polling = false;
+    const check = async () => {
+      if (disposed || polling || document.visibilityState === 'hidden') return;
+      polling = true;
+      try {
+        const changes = await pollProjectFileChanges();
+        lastAssetPollError.current = null;
+        if (!disposed && changes.length > 0) {
+          const detail = { changes, detectedAt: Date.now() };
+          window.dispatchEvent(new CustomEvent(PROJECT_ASSETS_EXTERNAL_CHANGE_EVENT, { detail }));
+          window.dispatchEvent(new CustomEvent(PROJECT_ASSETS_CHANGED_EVENT, { detail }));
+          const counts = changes.reduce((result, change) => {
+            result[change.type] += 1;
+            return result;
+          }, { added: 0, modified: 0, deleted: 0 });
+          const examples = changes.slice(0, 3).map((change) => change.relPath).join(', ');
+          log(
+            `检测到工程外部文件变化：新增 ${counts.added}、修改 ${counts.modified}、删除 ${counts.deleted}`
+            + `${examples ? `（${examples}${changes.length > 3 ? '…' : ''}）` : ''}`,
+            'warn',
+          );
+        }
+      } catch (reason) {
+        const message = String(reason);
+        if (lastAssetPollError.current !== message) {
+          lastAssetPollError.current = message;
+          log(`工程文件变化检查失败: ${message}`, 'warn');
+        }
+      } finally {
+        polling = false;
+      }
+    };
+    void refreshProjectFiles().then(() => {
+      if (!disposed) void check();
+    });
+    const interval = window.setInterval(() => void check(), 2000);
+    const onFocus = () => void check();
+    window.addEventListener('focus', onFocus);
+    return () => {
+      disposed = true;
+      window.clearInterval(interval);
+      window.removeEventListener('focus', onFocus);
+    };
+  }, [props.detachedPanel]);
 
   const instantiateSpriteAsset = (
     path: string,
@@ -1301,6 +1476,7 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
             <>
               <div hidden={timelineAssetPath != null} className="panel-visibility-host">
                 <Timeline
+                  key={`animation:${assetReloadEpoch.animation}`}
                   assetPath={animationAssetPath}
                   onCloseAsset={() => setAnimationAssetPath(null)}
                   entity={snap.entities.find((entity) => entity.entity === selected) ?? null}
@@ -1338,6 +1514,7 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
               </div>
               <div hidden={timelineAssetPath == null} className="panel-visibility-host">
                 <Sequencer
+                  key={`sequencer:${assetReloadEpoch.sequencer}`}
                   assetPath={timelineAssetPath}
                   selectedEntity={snap.entities.find((entity) => entity.entity === selected) ?? null}
                   playMode={mode !== 'edit'}
@@ -1373,6 +1550,7 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
           ),
           animator: (
             <AnimatorEditor
+              key={`animator:${assetReloadEpoch.animator}`}
               assetPath={animatorPath}
               selectedEntity={snap.entities.find((entity) => entity.entity === selected) ?? null}
               playMode={mode !== 'edit'}
@@ -1422,6 +1600,7 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
           ),
           material: (
             <MaterialEditor
+              key={`material:${assetReloadEpoch.material}`}
               assetPath={materialPath}
               selectedEntity={snap.entities.find((entity) => entity.entity === selected) ?? null}
               onOpenAsset={setMaterialPath}
@@ -1452,6 +1631,7 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
           ),
           shader: (
             <SurfaceShaderEditor
+              key={`shader:${assetReloadEpoch.shader}`}
               assetPath={shaderPath}
               onOpenAsset={setShaderPath}
               onAssetsChanged={bumpScenes}
@@ -1470,6 +1650,7 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
           ),
           spriteEditor: (
             <SpriteEditor
+              key={`sprite:${assetReloadEpoch.sprite}`}
               assetPath={spritePath}
               onAssetsChanged={bumpScenes}
               onDirtyChange={setSpriteDirty}
@@ -1478,6 +1659,7 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
           ),
           spriteAtlas: (
             <SpriteAtlasEditor
+              key={`sprite-atlas:${assetReloadEpoch.spriteAtlas}`}
               assetPath={spriteAtlasPath}
               onAssetsChanged={bumpScenes}
               onDirtyChange={setSpriteAtlasDirty}

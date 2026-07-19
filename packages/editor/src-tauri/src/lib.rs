@@ -51,6 +51,22 @@ struct ProjectAssetInfo {
     folder: String,
     rel_path: String,
     kind: String,
+    revision: String,
+    size: u64,
+}
+
+#[derive(serde::Serialize)]
+#[serde(rename_all = "camelCase")]
+struct ProjectAssetReadResult {
+    contents: Vec<u8>,
+    revision: String,
+}
+
+#[derive(serde::Serialize)]
+#[serde(rename_all = "camelCase")]
+struct ProjectAssetWriteResult {
+    revision: String,
+    asset: Option<ProjectAssetInfo>,
 }
 
 #[derive(serde::Serialize)]
@@ -1738,7 +1754,11 @@ fn remember_recent_project(app: &tauri::AppHandle, snapshot: &ProjectSnapshot) {
 fn project_asset_kind(name: &str) -> Option<&'static str> {
     let lower = name.to_ascii_lowercase();
     if lower.ends_with(".sprite.json") {
-        None
+        Some("sprite-import")
+    } else if lower.ends_with(".mscene") {
+        Some("scene")
+    } else if lower.ends_with(".ts") || lower.ends_with(".js") || lower.ends_with(".mjs") {
+        Some("script")
     } else if lower.ends_with(".matlas") {
         Some("sprite-atlas")
     } else if lower.ends_with(".manim") {
@@ -1794,28 +1814,72 @@ fn collect_project_assets(root: &Path, dir: &Path, output: &mut Vec<ProjectAsset
         if name.starts_with('.') || name.ends_with(".meta") {
             continue;
         }
-        if path.is_dir() {
+        let Ok(file_type) = entry.file_type() else {
+            continue;
+        };
+        if file_type.is_symlink() {
+            continue;
+        }
+        if file_type.is_dir() {
             collect_project_assets(root, &path, output);
             continue;
         }
-        let Some(kind) = project_asset_kind(&name) else {
-            continue;
-        };
-        let Ok(relative) = path.strip_prefix(root) else {
-            continue;
-        };
-        let rel_path = relative.to_string_lossy().replace('\\', "/");
-        let folder = relative
-            .parent()
-            .map(|parent| parent.to_string_lossy().replace('\\', "/"))
-            .unwrap_or_else(|| "Assets".into());
-        output.push(ProjectAssetInfo {
-            id: rel_path.clone(),
-            name,
-            folder,
-            rel_path,
-            kind: kind.into(),
-        });
+        if let Some(asset) = project_asset_info(root, &path) {
+            output.push(asset);
+        }
+    }
+}
+
+fn project_asset_info(root: &Path, path: &Path) -> Option<ProjectAssetInfo> {
+    let metadata = std::fs::symlink_metadata(path).ok()?;
+    if metadata.file_type().is_symlink() || !metadata.is_file() {
+        return None;
+    }
+    let name = path.file_name()?.to_string_lossy().into_owned();
+    let kind = project_asset_kind(&name)?;
+    let relative = path.strip_prefix(root).ok()?;
+    let rel_path = relative.to_string_lossy().replace('\\', "/");
+    let folder = relative
+        .parent()
+        .map(|parent| parent.to_string_lossy().replace('\\', "/"))
+        .unwrap_or_else(|| "Assets".into());
+    Some(ProjectAssetInfo {
+        id: rel_path.clone(),
+        name,
+        folder,
+        rel_path,
+        kind: kind.into(),
+        revision: project_file_revision(&metadata),
+        size: metadata.len(),
+    })
+}
+
+fn project_file_revision(metadata: &std::fs::Metadata) -> String {
+    let modified_ns = metadata
+        .modified()
+        .ok()
+        .and_then(|modified| modified.duration_since(UNIX_EPOCH).ok())
+        .map(|duration| duration.as_nanos())
+        .unwrap_or_default();
+    format!("{modified_ns:x}-{:x}", metadata.len())
+}
+
+fn require_project_asset_revision(
+    target: &Path,
+    expected_revision: Option<&str>,
+) -> Result<(), String> {
+    let actual_revision = match std::fs::symlink_metadata(target) {
+        Ok(metadata) if metadata.file_type().is_symlink() || !metadata.is_file() => {
+            return Err("asset target must be a regular file".into());
+        }
+        Ok(metadata) => Some(project_file_revision(&metadata)),
+        Err(error) if error.kind() == std::io::ErrorKind::NotFound => None,
+        Err(error) => return Err(error.to_string()),
+    };
+    if actual_revision.as_deref() == expected_revision {
+        Ok(())
+    } else {
+        Err("asset changed on disk since it was loaded; reload it before saving".into())
     }
 }
 
@@ -2619,31 +2683,47 @@ fn write_project_asset_file(
 fn read_project_asset(
     relative_path: String,
     state: State<'_, AppState>,
-) -> Result<Vec<u8>, String> {
+) -> Result<ProjectAssetReadResult, String> {
     let guard = state.project.lock();
     let session = guard.as_ref().ok_or_else(|| no_project().message)?;
-    let file =
-        project_asset_read_path(Path::new(&session.snapshot().project_root), &relative_path)?;
-    let length = file.metadata().map_err(|error| error.to_string())?.len();
-    if length > MAX_PROJECT_ASSET_BYTES as u64 {
-        return Err("asset exceeds 64 MiB editor limit".into());
+    let project_root = session.snapshot().project_root;
+    let file = project_asset_read_path(Path::new(&project_root), &relative_path)?;
+    for _ in 0..2 {
+        let before = file.metadata().map_err(|error| error.to_string())?;
+        if before.len() > MAX_PROJECT_ASSET_BYTES as u64 {
+            return Err("asset exceeds 64 MiB editor limit".into());
+        }
+        let revision = project_file_revision(&before);
+        let contents = std::fs::read(&file).map_err(|error| error.to_string())?;
+        let after = file.metadata().map_err(|error| error.to_string())?;
+        if revision == project_file_revision(&after) {
+            return Ok(ProjectAssetReadResult { contents, revision });
+        }
     }
-    std::fs::read(file).map_err(|error| error.to_string())
+    Err("asset changed repeatedly while it was being read; retry".into())
 }
 
 #[tauri::command]
 fn write_project_asset(
     relative_path: String,
     contents: Vec<u8>,
+    expected_revision: Option<String>,
     state: State<'_, AppState>,
-) -> Result<(), String> {
+) -> Result<ProjectAssetWriteResult, String> {
     let guard = state.project.lock();
     let session = guard.as_ref().ok_or_else(|| no_project().message)?;
-    write_project_asset_file(
-        Path::new(&session.snapshot().project_root),
-        &relative_path,
-        &contents,
-    )
+    let project_root = session.snapshot().project_root;
+    let root = Path::new(&project_root);
+    let target = project_asset_write_path(root, &relative_path)?;
+    require_project_asset_revision(&target, expected_revision.as_deref())
+        .map_err(|error| format!("{error}: {relative_path}"))?;
+    write_project_asset_file(root, &relative_path, &contents)?;
+    let file = project_asset_read_path(root, &relative_path)?;
+    let metadata = file.metadata().map_err(|error| error.to_string())?;
+    Ok(ProjectAssetWriteResult {
+        revision: project_file_revision(&metadata),
+        asset: project_asset_info(root, &file),
+    })
 }
 
 #[tauri::command]
@@ -3670,6 +3750,8 @@ mod tests {
             "ui.matlas",
             "studio.hdr",
             "hero.png.sprite.json",
+            "Main.mscene",
+            "Main.ts",
             "ignored.txt",
         ] {
             std::fs::write(assets.join(name), []).unwrap();
@@ -3680,7 +3762,7 @@ mod tests {
         std::fs::remove_dir_all(root).unwrap();
         found.sort_by(|left, right| left.name.cmp(&right.name));
 
-        assert_eq!(found.len(), 14);
+        assert_eq!(found.len(), 17);
         assert!(found
             .iter()
             .any(|asset| asset.name == "walk.manim" && asset.kind == "animation"));
@@ -3720,6 +3802,16 @@ mod tests {
         assert!(found
             .iter()
             .any(|asset| asset.name == "ui.matlas" && asset.kind == "sprite-atlas"));
+        assert!(found.iter().any(|asset| {
+            asset.name == "hero.png.sprite.json" && asset.kind == "sprite-import"
+        }));
+        assert!(found
+            .iter()
+            .any(|asset| asset.name == "Main.mscene" && asset.kind == "scene"));
+        assert!(found
+            .iter()
+            .any(|asset| asset.name == "Main.ts" && asset.kind == "script"));
+        assert!(found.iter().all(|asset| !asset.revision.is_empty()));
     }
 
     #[test]
@@ -3752,6 +3844,31 @@ mod tests {
         assert!(write_project_asset_file(&root, "Assets/../outside.manim", b"bad").is_err());
         assert!(write_project_asset_file(&root, "Assets", b"bad").is_err());
         assert!(!root.join("outside.manim").exists());
+        std::fs::remove_dir_all(root).unwrap();
+    }
+
+    #[test]
+    fn project_asset_revision_guard_blocks_external_overwrites() {
+        let root = std::env::temp_dir().join(format!(
+            "mengine-asset-revision-{}-{}",
+            std::process::id(),
+            SystemTime::now()
+                .duration_since(UNIX_EPOCH)
+                .unwrap()
+                .as_nanos()
+        ));
+        std::fs::create_dir_all(root.join("Assets")).unwrap();
+        let path = root.join("Assets/value.mmat");
+        assert!(require_project_asset_revision(&path, None).is_ok());
+        std::fs::write(&path, b"first").unwrap();
+        assert!(require_project_asset_revision(&path, None).is_err());
+        let baseline = project_file_revision(&path.metadata().unwrap());
+        assert!(require_project_asset_revision(&path, Some(&baseline)).is_ok());
+
+        std::fs::write(&path, b"externally changed and longer").unwrap();
+        assert!(require_project_asset_revision(&path, Some(&baseline)).is_err());
+        let current = project_file_revision(&path.metadata().unwrap());
+        assert!(require_project_asset_revision(&path, Some(&current)).is_ok());
         std::fs::remove_dir_all(root).unwrap();
     }
 }

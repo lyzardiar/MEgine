@@ -128,6 +128,8 @@ pub enum ProjectError {
     ProjectMismatch,
     #[error("scene load/save commands must use the scoped project APIs")]
     UnsafeSceneCommand,
+    #[error("scene changed on disk since it was opened: {0}; reload it before saving")]
+    ExternalSceneModification(String),
     #[error("io: {0}")]
     Io(#[from] std::io::Error),
     #[error("json: {0}")]
@@ -148,6 +150,7 @@ impl ProjectError {
             ProjectError::StaleRevision { .. } => "staleRevision",
             ProjectError::ProjectMismatch => "projectMismatch",
             ProjectError::UnsafeSceneCommand => "unsafeSceneCommand",
+            ProjectError::ExternalSceneModification(_) => "externalSceneModification",
             ProjectError::Io(_) => "io",
             ProjectError::Json(_) => "json",
             ProjectError::Editor(_) => "editor",
@@ -170,6 +173,7 @@ pub struct ProjectSession {
     document_revision: u64,
     save_revision: u64,
     scene_relative_path: Option<PathBuf>,
+    scene_disk_revision: Option<String>,
 }
 
 impl ProjectSession {
@@ -249,6 +253,7 @@ impl ProjectSession {
             document_revision: 0,
             save_revision: 0,
             scene_relative_path: None,
+            scene_disk_revision: None,
         })
     }
 
@@ -362,6 +367,13 @@ impl ProjectSession {
         if old_relative == new_relative {
             return Ok(self.snapshot());
         }
+        let old_portable = old_relative.to_string_lossy().replace('\\', "/");
+        let renaming_active_scene = self.scene_relative_path.as_ref().is_some_and(|scene| {
+            scene
+                .to_string_lossy()
+                .replace('\\', "/")
+                .eq_ignore_ascii_case(&old_portable)
+        });
 
         let source_metadata = std::fs::symlink_metadata(self.project_root.join(&old_relative))?;
         if source_metadata.file_type().is_symlink() || !source_metadata.is_file() {
@@ -370,6 +382,9 @@ impl ProjectSession {
             ));
         }
         let source = self.resolve_existing(&old_relative)?;
+        if renaming_active_scene && scene_file_revision(&source)? != self.scene_disk_revision {
+            return Err(ProjectError::ExternalSceneModification(old_portable));
+        }
         let target = self.resolve_for_write(&new_relative)?;
         if target.exists() {
             if !same_existing_file(&source, &target)? {
@@ -400,7 +415,6 @@ impl ProjectSession {
         let mut renamed_scene_bytes = serde_json::to_vec_pretty(&renamed_scene)?;
         renamed_scene_bytes.push(b'\n');
 
-        let old_portable = old_relative.to_string_lossy().replace('\\', "/");
         let new_portable = new_relative.to_string_lossy().replace('\\', "/");
         let mut manifest = self.manifest.clone();
         if manifest
@@ -449,13 +463,9 @@ impl ProjectSession {
             }
             self.manifest = manifest;
         }
-        if self.scene_relative_path.as_ref().is_some_and(|scene| {
-            scene
-                .to_string_lossy()
-                .replace('\\', "/")
-                .eq_ignore_ascii_case(&old_portable)
-        }) {
+        if renaming_active_scene {
             self.scene_relative_path = Some(new_relative);
+            self.scene_disk_revision = scene_file_revision(&target)?;
         }
         self.revision = self.revision.saturating_add(1);
         Ok(self.snapshot())
@@ -502,11 +512,30 @@ impl ProjectSession {
     ) -> Result<ProjectSnapshot, ProjectError> {
         let relative = normalize_relative_path(relative_path.as_ref())?;
         let absolute = self.resolve_existing(&relative)?;
-        self.editor
-            .handle_editor_command(EditorCommand::LoadScene {
-                path: absolute.to_string_lossy().into_owned(),
+        let mut disk_revision = None;
+        for attempt in 0..2 {
+            let before = scene_file_revision(&absolute)?.ok_or_else(|| {
+                ProjectError::InvalidPath(relative.to_string_lossy().into_owned())
             })?;
+            self.editor
+                .handle_editor_command(EditorCommand::LoadScene {
+                    path: absolute.to_string_lossy().into_owned(),
+                })?;
+            let after = scene_file_revision(&absolute)?.ok_or_else(|| {
+                ProjectError::InvalidPath(relative.to_string_lossy().into_owned())
+            })?;
+            if before == after {
+                disk_revision = Some(after);
+                break;
+            }
+            if attempt == 1 {
+                return Err(ProjectError::ExternalSceneModification(
+                    relative.to_string_lossy().replace('\\', "/"),
+                ));
+            }
+        }
         self.scene_relative_path = Some(relative);
+        self.scene_disk_revision = disk_revision;
         self.revision = self.revision.saturating_add(1);
         self.document_revision = 0;
         self.save_revision = 0;
@@ -546,6 +575,16 @@ impl ProjectSession {
             })?,
         };
         let absolute = self.resolve_for_write(&relative)?;
+        let saving_active_scene = self.scene_relative_path.as_ref().is_some_and(|current| {
+            current
+                .to_string_lossy()
+                .eq_ignore_ascii_case(&relative.to_string_lossy())
+        });
+        if saving_active_scene && scene_file_revision(&absolute)? != self.scene_disk_revision {
+            return Err(ProjectError::ExternalSceneModification(
+                relative.to_string_lossy().replace('\\', "/"),
+            ));
+        }
         let scene_name = relative
             .file_stem()
             .and_then(|value| value.to_str())
@@ -559,6 +598,7 @@ impl ProjectSession {
             return Err(ProjectError::Editor(error));
         }
         self.scene_relative_path = Some(relative);
+        self.scene_disk_revision = scene_file_revision(&absolute)?;
         self.revision = self.revision.saturating_add(1);
         self.save_revision = self.document_revision;
         // The scene is already durable at this point. A stale recovery file is
@@ -622,6 +662,7 @@ impl ProjectSession {
             .to_string();
         self.editor.scene_path = Some(absolute.to_string_lossy().into_owned());
         self.scene_relative_path = Some(relative);
+        self.scene_disk_revision = scene_file_revision(&absolute)?;
         self.revision = self.revision.saturating_add(1);
         self.document_revision = record
             .document_revision
@@ -774,6 +815,24 @@ fn scene_recovery_info(record: &SceneRecoveryRecord) -> SceneRecoveryInfo {
         document_revision: record.document_revision,
         entity_count: record.world.entities.len(),
     }
+}
+
+fn scene_file_revision(path: &Path) -> Result<Option<String>, ProjectError> {
+    let metadata = match std::fs::symlink_metadata(path) {
+        Ok(metadata) => metadata,
+        Err(error) if error.kind() == std::io::ErrorKind::NotFound => return Ok(None),
+        Err(error) => return Err(ProjectError::Io(error)),
+    };
+    if metadata.file_type().is_symlink() || !metadata.is_file() {
+        return Err(ProjectError::InvalidPath(display_path(path)));
+    }
+    let modified_ns = metadata
+        .modified()
+        .ok()
+        .and_then(|modified| modified.duration_since(UNIX_EPOCH).ok())
+        .map(|duration| duration.as_nanos())
+        .unwrap_or_default();
+    Ok(Some(format!("{modified_ns:x}-{:x}", metadata.len())))
 }
 
 fn validate_project_name(name: &str) -> Result<&str, ProjectError> {
@@ -1292,6 +1351,48 @@ mod tests {
         )
         .unwrap();
         assert_eq!(file["name"], "CopiedScene");
+        std::fs::remove_dir_all(root).unwrap();
+    }
+
+    #[test]
+    fn scene_save_refuses_to_overwrite_an_external_change() {
+        let root = make_project();
+        let main = root.join("Assets/Scenes/Main.mscene");
+        let mut session = ProjectSession::open(&root).unwrap();
+        let opened = session.open_main_scene().unwrap().unwrap();
+        let mut changed = opened.world;
+        changed.clear_color = [0.8, 0.3, 0.1, 1.0];
+        session.replace_snapshot(opened.revision, changed).unwrap();
+
+        let external = br#"{
+            "version": 1,
+            "name": "External",
+            "world": {
+                "entities": [],
+                "frame": 0,
+                "sim_frame": 0,
+                "clear_color": [0.2, 0.8, 0.3, 1.0],
+                "selected": null
+            }
+        }"#;
+        std::fs::write(&main, external).unwrap();
+        assert!(matches!(
+            session
+                .rename_scene(
+                    "Assets/Scenes/Main.mscene",
+                    "Assets/Scenes/RenamedExternallyChanged.mscene"
+                )
+                .unwrap_err(),
+            ProjectError::ExternalSceneModification(_)
+        ));
+        assert!(main.is_file());
+        let error = session.save_scene(None).unwrap_err();
+        assert!(matches!(error, ProjectError::ExternalSceneModification(_)));
+        assert_eq!(std::fs::read(&main).unwrap(), external);
+
+        let reloaded = session.open_main_scene().unwrap().unwrap();
+        assert_eq!(reloaded.world.clear_color, [0.2, 0.8, 0.3, 1.0]);
+        session.save_scene(None).unwrap();
         std::fs::remove_dir_all(root).unwrap();
     }
 

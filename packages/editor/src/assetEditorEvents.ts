@@ -6,6 +6,7 @@ export const OPEN_SURFACE_SHADER_EVENT = 'mengine:open-surface-shader';
 export const OPEN_SPRITE_EDITOR_EVENT = 'mengine:open-sprite-editor';
 export const OPEN_SPRITE_ATLAS_EVENT = 'mengine:open-sprite-atlas';
 export const PROJECT_ASSETS_CHANGED_EVENT = 'mengine:project-assets-changed';
+export const PROJECT_ASSETS_EXTERNAL_CHANGE_EVENT = 'mengine:project-assets-external-change';
 
 function openAsset(eventName: string, panel: string, path: string): void {
   window.dispatchEvent(new CustomEvent(eventName, { detail: path }));

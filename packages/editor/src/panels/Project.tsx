@@ -184,6 +184,7 @@ export function Project(props: {
     sprites.map((sprite) => (sprite.textureId ?? sprite.relPath).toLowerCase()),
   );
   const authoringAssets: AssetItem[] = projectFiles
+    .filter((asset) => !['scene', 'script', 'sprite-import'].includes(asset.kind))
     // Sprite textures already have richer cards. Keep every other recognized
     // texture visible even when the browser cannot decode it as a Sprite.
     .filter((asset) => asset.kind !== 'texture' || !spriteTexturePaths.has(asset.relPath.toLowerCase()))
