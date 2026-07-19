@@ -1,4 +1,5 @@
 import {
+  chmodSync,
   copyFileSync,
   existsSync,
   lstatSync,
@@ -24,6 +25,8 @@ import * as ts from 'typescript';
 
 export const PLAYER_CONFIG_FILE = 'mengine-player.json';
 export const BUILD_MANIFEST_FILE = 'mengine-build.json';
+export const PATCH_MANIFEST_FILE = 'mengine-patch.json';
+export const PATCH_PAYLOAD_DIR = 'payload';
 export const BUILD_CACHE_REPORT_PREFIX = 'MENGINE_BUILD_CACHE ';
 const MAX_TIMELINE_PARTICLE_TIME = 300;
 const MAX_SURFACE_SHADER_PARAMETERS = 16;
@@ -155,6 +158,59 @@ export interface BuildArtifactSignature {
   value: string;
 }
 
+export interface PcPatchFileEntry extends BuildFileEntry {
+  kind: 'added' | 'changed';
+  previousPath?: string;
+  previousSize?: number;
+  previousSha256?: string;
+}
+
+export interface PcPatchRemovedFileEntry {
+  path: string;
+  size: number;
+  sha256: string;
+}
+
+export interface PcPatchManifest {
+  schemaVersion: 1;
+  engineVersion: string;
+  platform: string;
+  architecture: string;
+  profile: 'debug' | 'release';
+  project: {
+    name: string;
+    fromVersion: number | string;
+    toVersion: number | string;
+  };
+  fromContentHash: string;
+  toContentHash: string;
+  fromArtifactHash: string;
+  toArtifactHash: string;
+  payloadBytes: number;
+  reusedBytes: number;
+  unchangedFiles: number;
+  files: PcPatchFileEntry[];
+  removedFiles: PcPatchRemovedFileEntry[];
+  targetManifest: PcBuildManifest;
+  signature?: BuildArtifactSignature;
+}
+
+export interface PcPatchPackageOptions {
+  baseDir: string;
+  targetDir: string;
+  outputDir: string;
+  clean?: boolean;
+  signingPrivateKeyPath: string;
+}
+
+export interface PcPatchApplyOptions {
+  baseDir: string;
+  patchDir: string;
+  outputDir: string;
+  publicKeyValue: string | Buffer | KeyObject;
+  clean?: boolean;
+}
+
 export interface BuildAssetValidation {
   assetMode: BuildAssetMode;
   rootScenes: number;
@@ -208,6 +264,14 @@ function isEditorAssetMetadata(path: string): boolean {
 function isPathInside(parent: string, candidate: string): boolean {
   const rel = relative(resolve(parent), resolve(candidate));
   return rel === '' || (!rel.startsWith(`..${sep}`) && rel !== '..' && !isAbsolute(rel));
+}
+
+function assertReplaceableDirectory(path: string, label: string): void {
+  if (!existsSync(path)) return;
+  const metadata = lstatSync(path);
+  if (metadata.isSymbolicLink() || !metadata.isDirectory()) {
+    throw new Error(`${label} must be a regular non-symlink directory: ${path}`);
+  }
 }
 
 function resolveProjectPath(projectDir: string, path: string, label: string): string {
@@ -3101,11 +3165,44 @@ function collectBuildVerificationFiles(
   return output;
 }
 
-/** Verifies a published payload and its signed identity against a caller-trusted public key. */
-export function verifyPcBuildDirectory(
-  outputDir: string,
-  publicKeyValue: string | Buffer | KeyObject,
-): PcBuildManifest {
+function validateBuildManifestDescription(manifest: PcBuildManifest): Map<string, BuildFileEntry> {
+  if (manifest.schemaVersion !== 1 || !Array.isArray(manifest.files)) {
+    throw new Error('build manifest has an unsupported schema');
+  }
+  if (typeof manifest.executable !== 'string' || !manifest.executable
+    || manifest.executable.includes('\\') || isAbsolute(manifest.executable)
+    || manifest.executable.split('/').some((part) => !part || part === '.' || part === '..')) {
+    throw new Error('build manifest contains an unsafe executable path');
+  }
+  const expected = new Map<string, BuildFileEntry>();
+  for (const file of manifest.files) {
+    if (!file || typeof file.path !== 'string'
+      || !file.path || file.path.includes('\\') || isAbsolute(file.path)
+      || file.path.split('/').some((part) => !part || part === '.' || part === '..')) {
+      throw new Error('build manifest contains an unsafe file path');
+    }
+    if (!Number.isSafeInteger(file.size) || file.size < 0 || !/^[0-9a-f]{64}$/.test(file.sha256)) {
+      throw new Error(`build manifest contains invalid metadata for ${file.path}`);
+    }
+    if (file.path.toLowerCase() === BUILD_MANIFEST_FILE.toLowerCase()) {
+      throw new Error(`build manifest contains an unsafe file path: ${file.path}`);
+    }
+    const key = file.path.toLowerCase();
+    if (expected.has(key)) throw new Error(`build manifest contains a duplicate path: ${file.path}`);
+    expected.set(key, file);
+  }
+  const executable = expected.get(manifest.executable.toLowerCase());
+  if (!executable || executable.path !== manifest.executable) {
+    throw new Error(`build manifest executable is not a listed file: ${manifest.executable}`);
+  }
+  const contentHash = buildContentHash(manifest.files);
+  if (manifest.contentHash !== contentHash) {
+    throw new Error(`build content hash mismatch: expected ${manifest.contentHash}, found ${contentHash}`);
+  }
+  return expected;
+}
+
+function verifyPcBuildDirectoryContent(outputDir: string): PcBuildManifest {
   const root = resolve(outputDir);
   const rootMetadata = lstatSync(root);
   if (rootMetadata.isSymbolicLink() || !rootMetadata.isDirectory()) {
@@ -3120,26 +3217,12 @@ export function verifyPcBuildDirectory(
     throw new Error(`build manifest has an invalid size: ${manifestPath}`);
   }
   const manifest = JSON.parse(readFileSync(manifestPath, 'utf8')) as PcBuildManifest;
-  if (manifest.schemaVersion !== 1 || !Array.isArray(manifest.files)) {
-    throw new Error('build manifest has an unsupported schema');
-  }
-  const expected = new Map<string, BuildFileEntry>();
+  const expected = validateBuildManifestDescription(manifest);
   for (const file of manifest.files) {
-    if (!file || typeof file.path !== 'string'
-      || !file.path || file.path.includes('\\') || isAbsolute(file.path)
-      || file.path.split('/').some((part) => !part || part === '.' || part === '..')) {
-      throw new Error('build manifest contains an unsafe file path');
-    }
-    if (!Number.isSafeInteger(file.size) || file.size < 0 || !/^[0-9a-f]{64}$/.test(file.sha256)) {
-      throw new Error(`build manifest contains invalid metadata for ${file.path}`);
-    }
     const absolute = resolve(root, file.path);
-    if (!isPathInside(root, absolute) || file.path.toLowerCase() === BUILD_MANIFEST_FILE.toLowerCase()) {
+    if (!isPathInside(root, absolute)) {
       throw new Error(`build manifest contains an unsafe file path: ${file.path}`);
     }
-    const key = file.path.toLowerCase();
-    if (expected.has(key)) throw new Error(`build manifest contains a duplicate path: ${file.path}`);
-    expected.set(key, file);
   }
   const actual = collectBuildVerificationFiles(root);
   if (actual.length !== expected.size) {
@@ -3154,18 +3237,23 @@ export function verifyPcBuildDirectory(
     if (declared.size !== file.size) throw new Error(`build file size mismatch: ${file.path}`);
     if (declared.sha256 !== file.sha256) throw new Error(`build file hash mismatch: ${file.path}`);
   }
-  const contentHash = buildContentHash(manifest.files);
-  if (manifest.contentHash !== contentHash) {
-    throw new Error(`build content hash mismatch: expected ${manifest.contentHash}, found ${contentHash}`);
-  }
+  return manifest;
+}
+
+/** Verifies a published payload and its signed identity against a caller-trusted public key. */
+export function verifyPcBuildDirectory(
+  outputDir: string,
+  publicKeyValue: string | Buffer | KeyObject,
+): PcBuildManifest {
+  const manifest = verifyPcBuildDirectoryContent(outputDir);
   verifyPcBuildManifestSignature(manifest, publicKeyValue);
   return manifest;
 }
 
-function readArtifactSigningPrivateKey(projectDir: string, path: string): KeyObject {
+function readArtifactSigningPrivateKey(forbiddenRoots: readonly string[], path: string): KeyObject {
   const absolute = resolve(path);
-  if (isPathInside(projectDir, absolute)) {
-    throw new Error('artifact signing key must be stored outside the project directory');
+  if (forbiddenRoots.some((root) => isPathInside(root, absolute))) {
+    throw new Error('artifact signing key must be stored outside the project directory and build payload directories');
   }
   let metadata;
   try {
@@ -3192,6 +3280,379 @@ function readArtifactSigningPrivateKey(projectDir: string, path: string): KeyObj
     throw new Error(`invalid artifact signing key ${absolute}: ${detail}`);
   } finally {
     pem.fill(0);
+  }
+}
+
+type PcPatchPlan = Pick<
+  PcPatchManifest,
+  'payloadBytes' | 'reusedBytes' | 'unchangedFiles' | 'files' | 'removedFiles'
+>;
+
+function assertPatchCompatible(base: PcBuildManifest, target: PcBuildManifest): void {
+  for (const field of ['platform', 'architecture', 'profile'] as const) {
+    if (base[field] !== target[field]) {
+      throw new Error(`patch ${field} mismatch: ${base[field]} -> ${target[field]}`);
+    }
+  }
+  if (base.project.name !== target.project.name) {
+    throw new Error(`patch project mismatch: ${base.project.name} -> ${target.project.name}`);
+  }
+}
+
+function planPcPatch(base: PcBuildManifest, target: PcBuildManifest): PcPatchPlan {
+  assertPatchCompatible(base, target);
+  const previous = new Map(base.files.map((file) => [file.path.toLowerCase(), file]));
+  const files: PcPatchFileEntry[] = [];
+  let reusedBytes = 0;
+  let unchangedFiles = 0;
+  for (const file of [...target.files].sort((left, right) => compareFileNames(left.path, right.path))) {
+    const key = file.path.toLowerCase();
+    const previousFile = previous.get(key);
+    previous.delete(key);
+    if (previousFile
+      && previousFile.path === file.path
+      && previousFile.size === file.size
+      && previousFile.sha256 === file.sha256) {
+      unchangedFiles += 1;
+      reusedBytes += file.size;
+      continue;
+    }
+    files.push({
+      ...file,
+      kind: previousFile ? 'changed' : 'added',
+      ...(previousFile ? {
+        previousPath: previousFile.path,
+        previousSize: previousFile.size,
+        previousSha256: previousFile.sha256,
+      } : {}),
+    });
+  }
+  const removedFiles = [...previous.values()]
+    .sort((left, right) => compareFileNames(left.path, right.path))
+    .map(({ path, size, sha256 }) => ({ path, size, sha256 }));
+  return {
+    payloadBytes: files.reduce((total, file) => total + file.size, 0),
+    reusedBytes,
+    unchangedFiles,
+    files,
+    removedFiles,
+  };
+}
+
+function patchSignaturePayload(manifest: PcPatchManifest): Buffer {
+  if (!/^[0-9a-f]{64}$/.test(manifest.fromContentHash)
+    || !/^[0-9a-f]{64}$/.test(manifest.toContentHash)
+    || !/^[0-9a-f]{64}$/.test(manifest.fromArtifactHash)
+    || !/^[0-9a-f]{64}$/.test(manifest.toArtifactHash)) {
+    throw new Error('patch content and artifact hashes must be valid SHA-256 values');
+  }
+  const { signature: _signature, ...unsignedManifest } = manifest;
+  return Buffer.from(
+    `MENGINE_PATCH_SIGNATURE_V1\0${canonicalSignatureJson(unsignedManifest)}`,
+    'utf8',
+  );
+}
+
+/** Deterministic identity of the complete signed build manifest, not only its payload bytes. */
+export function buildArtifactHash(manifest: PcBuildManifest): string {
+  return createHash('sha256')
+    .update('MENGINE_BUILD_ARTIFACT_V1\0', 'utf8')
+    .update(canonicalSignatureJson(manifest), 'utf8')
+    .digest('hex');
+}
+
+export function signPcPatchManifest(
+  manifest: PcPatchManifest,
+  privateKeyValue: string | Buffer | KeyObject,
+): BuildArtifactSignature {
+  const privateKey = typeof privateKeyValue === 'string' || Buffer.isBuffer(privateKeyValue)
+    ? createPrivateKey(privateKeyValue)
+    : privateKeyValue;
+  if (privateKey.type !== 'private' || privateKey.asymmetricKeyType !== 'ed25519') {
+    throw new Error('patch signing key must be an Ed25519 private key');
+  }
+  const publicKey = ed25519PublicKey(privateKey);
+  const payload = patchSignaturePayload(manifest);
+  const signature = cryptoSign(null, payload, privateKey);
+  if (!cryptoVerify(null, payload, publicKey, signature)) {
+    throw new Error('generated patch signature did not verify');
+  }
+  return {
+    schemaVersion: 1,
+    algorithm: 'ed25519',
+    keyId: signingKeyId(publicKey),
+    value: signature.toString('base64'),
+  };
+}
+
+export function verifyPcPatchManifestSignature(
+  manifest: PcPatchManifest,
+  publicKeyValue: string | Buffer | KeyObject,
+): void {
+  const signature = manifest.signature;
+  if (!signature) throw new Error('patch manifest is not signed');
+  if (signature.schemaVersion !== 1 || signature.algorithm !== 'ed25519') {
+    throw new Error('patch manifest has an unsupported artifact signature');
+  }
+  const publicKey = ed25519PublicKey(publicKeyValue);
+  const expectedKeyId = signingKeyId(publicKey);
+  if (signature.keyId !== expectedKeyId) {
+    throw new Error(`patch signature key mismatch: expected ${expectedKeyId}, found ${signature.keyId}`);
+  }
+  if (!/^[A-Za-z0-9+/]{86}==$/.test(signature.value)) {
+    throw new Error('patch manifest signature is not valid Ed25519 base64');
+  }
+  const value = Buffer.from(signature.value, 'base64');
+  if (value.length !== 64 || !cryptoVerify(null, patchSignaturePayload(manifest), publicKey, value)) {
+    throw new Error('patch manifest signature verification failed');
+  }
+}
+
+function assertSeparatedDirectory(outputDir: string, protectedDirs: readonly string[], label: string): void {
+  for (const protectedDir of protectedDirs) {
+    if (outputDir === protectedDir
+      || isPathInside(protectedDir, outputDir)
+      || isPathInside(outputDir, protectedDir)) {
+      throw new Error(`${label} must not overlap ${protectedDir}`);
+    }
+  }
+}
+
+function patchManifestFromDisk(patchDir: string): PcPatchManifest {
+  const root = resolve(patchDir);
+  const metadata = lstatSync(root);
+  if (metadata.isSymbolicLink() || !metadata.isDirectory()) {
+    throw new Error(`patch root must be a regular non-symlink directory: ${root}`);
+  }
+  const manifestPath = join(root, PATCH_MANIFEST_FILE);
+  const manifestMetadata = lstatSync(manifestPath);
+  if (manifestMetadata.isSymbolicLink() || !manifestMetadata.isFile()
+    || manifestMetadata.size === 0 || manifestMetadata.size > 64 * 1024 * 1024) {
+    throw new Error(`patch manifest must be a regular bounded file: ${manifestPath}`);
+  }
+  const parsed = JSON.parse(readFileSync(manifestPath, 'utf8')) as unknown;
+  if (!parsed || typeof parsed !== 'object') throw new Error('patch manifest must be an object');
+  const manifest = parsed as PcPatchManifest;
+  if (manifest.schemaVersion !== 1
+    || !Array.isArray(manifest.files)
+    || !Array.isArray(manifest.removedFiles)
+    || !manifest.targetManifest
+    || typeof manifest.targetManifest !== 'object') {
+    throw new Error('patch manifest has an unsupported schema');
+  }
+  return manifest;
+}
+
+function validatePatchDescription(
+  manifest: PcPatchManifest,
+  baseManifest: PcBuildManifest,
+  publicKeyValue: string | Buffer | KeyObject,
+): PcPatchPlan {
+  validateBuildManifestDescription(manifest.targetManifest);
+  verifyPcBuildManifestSignature(manifest.targetManifest, publicKeyValue);
+  const target = manifest.targetManifest;
+  if (manifest.fromContentHash !== baseManifest.contentHash) {
+    throw new Error(
+      `patch base content mismatch: expected ${manifest.fromContentHash}, found ${baseManifest.contentHash}`,
+    );
+  }
+  if (manifest.toContentHash !== target.contentHash) {
+    throw new Error('patch target content hash does not match its target manifest');
+  }
+  const baseArtifactHash = buildArtifactHash(baseManifest);
+  const targetArtifactHash = buildArtifactHash(target);
+  if (manifest.fromArtifactHash !== baseArtifactHash) {
+    throw new Error(
+      `patch base artifact mismatch: expected ${manifest.fromArtifactHash}, found ${baseArtifactHash}`,
+    );
+  }
+  if (manifest.toArtifactHash !== targetArtifactHash) {
+    throw new Error('patch target artifact hash does not match its target manifest');
+  }
+  if (manifest.engineVersion !== target.engineVersion
+    || manifest.platform !== target.platform
+    || manifest.architecture !== target.architecture
+    || manifest.profile !== target.profile
+    || manifest.project.name !== target.project.name
+    || manifest.project.fromVersion !== baseManifest.project.version
+    || manifest.project.toVersion !== target.project.version) {
+    throw new Error('patch metadata does not match its base and target manifests');
+  }
+  const expected = planPcPatch(baseManifest, target);
+  for (const field of ['payloadBytes', 'reusedBytes', 'unchangedFiles'] as const) {
+    if (!Number.isSafeInteger(manifest[field]) || manifest[field] < 0
+      || manifest[field] !== expected[field]) {
+      throw new Error(`patch ${field} does not match its file operations`);
+    }
+  }
+  if (canonicalSignatureJson(manifest.files) !== canonicalSignatureJson(expected.files)
+    || canonicalSignatureJson(manifest.removedFiles)
+      !== canonicalSignatureJson(expected.removedFiles)) {
+    throw new Error('patch file operations do not match the base and target manifests');
+  }
+  return expected;
+}
+
+/** Verifies the complete signed base -> patch -> target trust and payload chain. */
+export function verifyPcPatchDirectory(
+  patchDir: string,
+  baseDir: string,
+  publicKeyValue: string | Buffer | KeyObject,
+): PcPatchManifest {
+  const root = resolve(patchDir);
+  const baseManifest = verifyPcBuildDirectory(baseDir, publicKeyValue);
+  const manifest = patchManifestFromDisk(root);
+  const plan = validatePatchDescription(manifest, baseManifest, publicKeyValue);
+  verifyPcPatchManifestSignature(manifest, publicKeyValue);
+
+  const rootEntries = readdirSync(root, { withFileTypes: true });
+  for (const entry of rootEntries) {
+    if (entry.isSymbolicLink()
+      || (entry.name !== PATCH_MANIFEST_FILE && entry.name !== PATCH_PAYLOAD_DIR)) {
+      throw new Error(`patch contains an unexpected root entry: ${entry.name}`);
+    }
+  }
+  const payloadRoot = join(root, PATCH_PAYLOAD_DIR);
+  const payloadMetadata = lstatSync(payloadRoot);
+  if (payloadMetadata.isSymbolicLink() || !payloadMetadata.isDirectory()) {
+    throw new Error(`patch payload must be a regular directory: ${payloadRoot}`);
+  }
+  const actual = collectBuildVerificationFiles(payloadRoot);
+  const expected = new Map(plan.files.map((file) => [file.path.toLowerCase(), file]));
+  if (actual.length !== expected.size) {
+    throw new Error(`patch payload file count mismatch: expected ${expected.size}, found ${actual.length}`);
+  }
+  for (const file of actual) {
+    const declared = expected.get(file.path.toLowerCase());
+    if (!declared) throw new Error(`patch payload contains an unlisted file: ${file.path}`);
+    if (declared.path !== file.path) {
+      throw new Error(`patch payload path case mismatch: expected ${declared.path}, found ${file.path}`);
+    }
+    if (declared.size !== file.size) throw new Error(`patch payload file size mismatch: ${file.path}`);
+    if (declared.sha256 !== file.sha256) throw new Error(`patch payload file hash mismatch: ${file.path}`);
+  }
+  return manifest;
+}
+
+function copyDeclaredFile(sourceRoot: string, destinationRoot: string, path: string): void {
+  const source = resolve(sourceRoot, path);
+  const destination = resolve(destinationRoot, path);
+  if (!isPathInside(sourceRoot, source) || !isPathInside(destinationRoot, destination)) {
+    throw new Error(`cannot copy unsafe patch path: ${path}`);
+  }
+  mkdirSync(dirname(destination), { recursive: true });
+  copyFileSync(source, destination);
+}
+
+/** Creates a deterministic, signed directory patch containing only added and changed bytes. */
+export function createPcPatchPackage(options: PcPatchPackageOptions): PcPatchManifest {
+  const baseDir = resolve(options.baseDir);
+  const targetDir = resolve(options.targetDir);
+  const outputDir = resolve(options.outputDir);
+  assertSeparatedDirectory(outputDir, [baseDir, targetDir], 'patch output');
+  assertReplaceableDirectory(outputDir, 'patch output');
+  if (existsSync(outputDir) && !options.clean) {
+    throw new Error(`patch output already exists (pass --clean to replace it): ${outputDir}`);
+  }
+  const signingPrivateKey = readArtifactSigningPrivateKey(
+    [baseDir, targetDir, outputDir],
+    options.signingPrivateKeyPath,
+  );
+  const publicKey = ed25519PublicKey(signingPrivateKey);
+  const baseManifest = verifyPcBuildDirectory(baseDir, publicKey);
+  const targetManifest = verifyPcBuildDirectory(targetDir, publicKey);
+  const plan = planPcPatch(baseManifest, targetManifest);
+  const manifest: PcPatchManifest = {
+    schemaVersion: 1,
+    engineVersion: targetManifest.engineVersion,
+    platform: targetManifest.platform,
+    architecture: targetManifest.architecture,
+    profile: targetManifest.profile,
+    project: {
+      name: targetManifest.project.name,
+      fromVersion: baseManifest.project.version,
+      toVersion: targetManifest.project.version,
+    },
+    fromContentHash: baseManifest.contentHash,
+    toContentHash: targetManifest.contentHash,
+    fromArtifactHash: buildArtifactHash(baseManifest),
+    toArtifactHash: buildArtifactHash(targetManifest),
+    ...plan,
+    targetManifest,
+  };
+  manifest.signature = signPcPatchManifest(manifest, signingPrivateKey);
+
+  const stageDir = join(
+    dirname(outputDir),
+    `.${basename(outputDir)}.mengine-patch-stage-${process.pid}-${randomUUID()}`,
+  );
+  rmSync(stageDir, { recursive: true, force: true });
+  mkdirSync(join(stageDir, PATCH_PAYLOAD_DIR), { recursive: true });
+  try {
+    for (const file of manifest.files) {
+      copyDeclaredFile(targetDir, join(stageDir, PATCH_PAYLOAD_DIR), file.path);
+    }
+    writeFileSync(
+      join(stageDir, PATCH_MANIFEST_FILE),
+      `${JSON.stringify(manifest, null, 2)}\n`,
+      'utf8',
+    );
+    verifyPcPatchDirectory(stageDir, baseDir, publicKey);
+    publishStagedBuild(stageDir, outputDir);
+    return manifest;
+  } catch (error) {
+    rmSync(stageDir, { recursive: true, force: true });
+    throw error;
+  }
+}
+
+/** Applies a signed patch through a fully verified staging directory and atomic replacement. */
+export function applyPcPatchPackage(options: PcPatchApplyOptions): PcBuildManifest {
+  const baseDir = resolve(options.baseDir);
+  const patchDir = resolve(options.patchDir);
+  const outputDir = resolve(options.outputDir);
+  if (outputDir !== baseDir) {
+    assertSeparatedDirectory(outputDir, [baseDir, patchDir], 'patched build output');
+  } else if (isPathInside(baseDir, patchDir) || isPathInside(patchDir, baseDir)) {
+    throw new Error('patch directory must not overlap an in-place build');
+  }
+  assertReplaceableDirectory(outputDir, 'patched build output');
+  if (outputDir !== baseDir && existsSync(outputDir) && !options.clean) {
+    throw new Error(`patched build output already exists (pass --clean to replace it): ${outputDir}`);
+  }
+  const patch = verifyPcPatchDirectory(patchDir, baseDir, options.publicKeyValue);
+  const baseManifest = verifyPcBuildDirectory(baseDir, options.publicKeyValue);
+  const stageDir = join(
+    dirname(outputDir),
+    `.${basename(outputDir)}.mengine-apply-stage-${process.pid}-${randomUUID()}`,
+  );
+  rmSync(stageDir, { recursive: true, force: true });
+  mkdirSync(stageDir, { recursive: true });
+  try {
+    for (const file of baseManifest.files) copyDeclaredFile(baseDir, stageDir, file.path);
+    for (const file of patch.removedFiles) {
+      rmSync(resolve(stageDir, file.path), { force: true });
+    }
+    for (const file of patch.files) {
+      if (file.kind === 'changed' && file.previousPath && file.previousPath !== file.path) {
+        rmSync(resolve(stageDir, file.previousPath), { force: true });
+      }
+      copyDeclaredFile(join(patchDir, PATCH_PAYLOAD_DIR), stageDir, file.path);
+    }
+    writeFileSync(
+      join(stageDir, BUILD_MANIFEST_FILE),
+      `${JSON.stringify(patch.targetManifest, null, 2)}\n`,
+      'utf8',
+    );
+    if (process.platform !== 'win32') {
+      chmodSync(resolve(stageDir, patch.targetManifest.executable), 0o755);
+    }
+    const verified = verifyPcBuildDirectory(stageDir, options.publicKeyValue);
+    publishStagedBuild(stageDir, outputDir);
+    return verified;
+  } catch (error) {
+    rmSync(stageDir, { recursive: true, force: true });
+    throw error;
   }
 }
 
@@ -3248,7 +3709,7 @@ export function buildPcPackage(options: PcPackageOptions): PcBuildManifest {
   const runtimePath = resolve(options.runtimePath);
   const project = readGameProject(projectDir);
   const signingPrivateKey = options.signingPrivateKeyPath
-    ? readArtifactSigningPrivateKey(projectDir, options.signingPrivateKeyPath)
+    ? readArtifactSigningPrivateKey([projectDir], options.signingPrivateKeyPath)
     : undefined;
   if (!existsSync(runtimePath) || !statSync(runtimePath).isFile()) {
     throw new Error(`player runtime not found: ${runtimePath}`);
@@ -3269,9 +3730,7 @@ export function buildPcPackage(options: PcPackageOptions): PcBuildManifest {
   if (isPathInside(outputDir, projectDir)) {
     throw new Error(`build output cannot contain the project directory: ${outputDir}`);
   }
-  if (existsSync(outputDir) && lstatSync(outputDir).isSymbolicLink()) {
-    throw new Error(`build output cannot be a symbolic link: ${outputDir}`);
-  }
+  assertReplaceableDirectory(outputDir, 'build output');
   if (existsSync(outputDir) && !options.clean) {
     throw new Error(`build output already exists (pass --clean to replace it): ${outputDir}`);
   }

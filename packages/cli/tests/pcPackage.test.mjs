@@ -16,12 +16,18 @@ import test from 'node:test';
 import { fileURLToPath } from 'node:url';
 import {
   BUILD_MANIFEST_FILE,
+  PATCH_MANIFEST_FILE,
+  PATCH_PAYLOAD_DIR,
   PLAYER_CONFIG_FILE,
+  applyPcPatchPackage,
+  buildArtifactHash,
   buildContentHash,
   buildPcPackage,
+  createPcPatchPackage,
   publishStagedBuild,
   verifyPcBuildDirectory,
   verifyPcBuildManifestSignature,
+  verifyPcPatchDirectory,
 } from '../dist/pcPackage.js';
 
 const cli = join(dirname(fileURLToPath(import.meta.url)), '..', 'dist', 'cli.js');
@@ -136,6 +142,156 @@ test('buildPcPackage signs the deterministic artifact identity with an external 
       signingPrivateKeyPath: projectKeyPath,
     }), /outside the project directory/);
     assert.equal(existsSync(join(paths.root, 'Build3')), false);
+  } finally {
+    rmSync(paths.root, { recursive: true, force: true });
+  }
+});
+
+test('signed incremental patches carry only changed bytes and apply through verified staging', () => {
+  const paths = fixture('signed-patch');
+  try {
+    const { privateKey, publicKey } = generateKeyPairSync('ed25519');
+    const privateKeyPath = join(paths.root, 'patch-private.pem');
+    const publicKeyPath = join(paths.root, 'patch-public.pem');
+    const publicKeyValue = publicKey.export({ format: 'pem', type: 'spki' });
+    writeFileSync(privateKeyPath, privateKey.export({ format: 'pem', type: 'pkcs8' }));
+    writeFileSync(publicKeyPath, publicKeyValue);
+    const baseDir = join(paths.root, 'Base');
+    const targetDir = join(paths.root, 'Target');
+    const metadataVariantDir = join(paths.root, 'MetadataVariant');
+    const patchDir = join(paths.root, 'Patch');
+    const appliedDir = join(paths.root, 'Applied');
+    const cliAppliedDir = join(paths.root, 'CliApplied');
+    const options = {
+      projectDir: paths.project,
+      runtimePath: paths.runtime,
+      engineVersion: 'test-engine',
+      platform: 'windows',
+      architecture: 'x64',
+      signingPrivateKeyPath: privateKeyPath,
+    };
+    const base = buildPcPackage({ ...options, outputDir: baseDir });
+    const metadataVariant = buildPcPackage({
+      ...options,
+      outputDir: metadataVariantDir,
+      engineVersion: 'metadata-only-engine-change',
+    });
+    assert.equal(metadataVariant.contentHash, base.contentHash);
+    assert.notEqual(buildArtifactHash(metadataVariant), buildArtifactHash(base));
+    const project = JSON.parse(readFileSync(join(paths.project, 'project.json'), 'utf8'));
+    project.version = 8;
+    writeFileSync(join(paths.project, 'project.json'), JSON.stringify(project));
+    writeFileSync(join(paths.project, 'Assets', 'Scripts', 'main.js'), 'function onTick() { return 2; }');
+    rmSync(join(paths.project, 'Assets', 'Textures', 'pixel.bin'));
+    writeFileSync(join(paths.project, 'Assets', 'Textures', 'new.bin'), 'new-content');
+    const target = buildPcPackage({ ...options, outputDir: targetDir });
+
+    const patch = createPcPatchPackage({
+      baseDir,
+      targetDir,
+      outputDir: patchDir,
+      signingPrivateKeyPath: privateKeyPath,
+    });
+    assert.equal(patch.fromContentHash, base.contentHash);
+    assert.equal(patch.toContentHash, target.contentHash);
+    assert.equal(patch.fromArtifactHash, buildArtifactHash(base));
+    assert.equal(patch.toArtifactHash, buildArtifactHash(target));
+    assert.equal(patch.project.fromVersion, 7);
+    assert.equal(patch.project.toVersion, 8);
+    assert.deepEqual(
+      patch.files.map((file) => [file.path, file.kind]),
+      [
+        ['Assets/Scripts/main.js', 'changed'],
+        ['Assets/Textures/new.bin', 'added'],
+        ['project.json', 'changed'],
+      ],
+    );
+    assert.deepEqual(
+      patch.removedFiles.map((file) => file.path),
+      ['Assets/Textures/pixel.bin'],
+    );
+    assert.equal(
+      patch.payloadBytes,
+      patch.files.reduce((total, file) => total + file.size, 0),
+    );
+    assert.ok(patch.payloadBytes < target.contentSummary.totalBytes);
+    assert.equal(existsSync(join(patchDir, PATCH_MANIFEST_FILE)), true);
+    assert.equal(existsSync(join(patchDir, PATCH_PAYLOAD_DIR, target.executable)), false);
+    assert.equal(
+      verifyPcPatchDirectory(patchDir, baseDir, publicKeyValue).toContentHash,
+      target.contentHash,
+    );
+    assert.throws(
+      () => verifyPcPatchDirectory(patchDir, metadataVariantDir, publicKeyValue),
+      /patch base artifact mismatch/,
+    );
+    const blockedOutput = join(paths.root, 'PatchOutputIsAFile');
+    writeFileSync(blockedOutput, 'do-not-replace');
+    assert.throws(() => createPcPatchPackage({
+      baseDir,
+      targetDir,
+      outputDir: blockedOutput,
+      signingPrivateKeyPath: privateKeyPath,
+      clean: true,
+    }), /regular non-symlink directory/);
+    assert.equal(readFileSync(blockedOutput, 'utf8'), 'do-not-replace');
+
+    const applied = applyPcPatchPackage({
+      baseDir,
+      patchDir,
+      outputDir: appliedDir,
+      publicKeyValue,
+    });
+    assert.equal(applied.contentHash, target.contentHash);
+    assert.deepEqual(
+      JSON.parse(readFileSync(join(appliedDir, BUILD_MANIFEST_FILE), 'utf8')),
+      target,
+    );
+    assert.equal(existsSync(join(appliedDir, 'Assets', 'Textures', 'pixel.bin')), false);
+    assert.equal(readFileSync(join(appliedDir, 'Assets', 'Textures', 'new.bin'), 'utf8'), 'new-content');
+    assert.equal(verifyPcBuildDirectory(appliedDir, publicKeyValue).contentHash, target.contentHash);
+
+    const cliVerification = spawnSync(process.execPath, [
+      cli,
+      'verify-patch',
+      baseDir,
+      patchDir,
+      '--public-key',
+      publicKeyPath,
+    ], { encoding: 'utf8', windowsHide: true });
+    assert.equal(cliVerification.status, 0, cliVerification.stderr);
+    assert.match(cliVerification.stdout, /Verified signed patch/);
+    const cliApply = spawnSync(process.execPath, [
+      cli,
+      'apply-patch',
+      baseDir,
+      patchDir,
+      '--out',
+      cliAppliedDir,
+      '--public-key',
+      publicKeyPath,
+    ], { encoding: 'utf8', windowsHide: true });
+    assert.equal(cliApply.status, 0, cliApply.stderr);
+    assert.equal(verifyPcBuildDirectory(cliAppliedDir, publicKeyValue).contentHash, target.contentHash);
+
+    assert.throws(
+      () => verifyPcPatchDirectory(patchDir, targetDir, publicKeyValue),
+      /patch base content mismatch/,
+    );
+    writeFileSync(join(patchDir, PATCH_PAYLOAD_DIR, 'Assets', 'Textures', 'new.bin'), 'tampered');
+    assert.throws(
+      () => verifyPcPatchDirectory(patchDir, baseDir, publicKeyValue),
+      /payload file size mismatch|payload file hash mismatch/,
+    );
+    writeFileSync(join(patchDir, PATCH_PAYLOAD_DIR, 'Assets', 'Textures', 'new.bin'), 'new-content');
+    const inPlace = applyPcPatchPackage({
+      baseDir,
+      patchDir,
+      outputDir: baseDir,
+      publicKeyValue,
+    });
+    assert.equal(inPlace.contentHash, target.contentHash);
+    assert.equal(verifyPcBuildDirectory(baseDir, publicKeyValue).contentHash, target.contentHash);
   } finally {
     rmSync(paths.root, { recursive: true, force: true });
   }

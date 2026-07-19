@@ -11,9 +11,13 @@ import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import {
   BUILD_CACHE_REPORT_PREFIX,
+  PATCH_MANIFEST_FILE,
+  applyPcPatchPackage,
   buildPcPackage,
+  createPcPatchPackage,
   hostBuildPlatform,
   verifyPcBuildDirectory,
+  verifyPcPatchDirectory,
   type BuildCacheStats,
 } from './pcPackage.js';
 
@@ -101,6 +105,9 @@ Commands:
   build <project> [options]   Build a directly runnable PC player
   export-pc <project>         Alias of build for compatibility
   verify-build <dir>          Verify payload hashes and its Ed25519 signature
+  create-patch <base> <target> Create a signed incremental patch directory
+  verify-patch <base> <patch> Verify a signed patch and its complete trust chain
+  apply-patch <base> <patch>  Apply a signed patch through atomic staging
   codegen                     Print the engine codegen command
 
 Build options:
@@ -116,9 +123,24 @@ Build options:
 Verify options:
   --public-key <pem>          Trusted Ed25519 SPKI public key for verify-build
 
+Patch options:
+  --out <dir>                 Patch or patched-build output directory (required)
+  --sign-key <pem>            Ed25519 key for create-patch (or MENGINE_SIGNING_KEY)
+  --public-key <pem>          Trusted key for verify-patch and apply-patch
+  --clean                     Atomically replace an existing output
+
 Environment:
   MENGINE_SIGNING_KEY         Default path for --sign-key (never stored in project.json)
 `);
+}
+
+function readPublicKeyFile(path: string): Buffer {
+  const absolute = resolve(path);
+  const metadata = lstatSync(absolute);
+  if (metadata.isSymbolicLink() || !metadata.isFile() || metadata.size === 0 || metadata.size > 64 * 1024) {
+    throw new Error(`public key must be a regular non-symlink PEM file: ${absolute}`);
+  }
+  return readFileSync(absolute);
 }
 
 function verifyBuild(values: string[]) {
@@ -135,14 +157,105 @@ function verifyBuild(values: string[]) {
   }
   if (args.length !== 1) throw new Error('verify-build requires one build directory');
   if (!publicKeyPath) throw new Error('verify-build requires --public-key <pem>');
-  const metadata = lstatSync(publicKeyPath);
-  if (metadata.isSymbolicLink() || !metadata.isFile() || metadata.size === 0 || metadata.size > 64 * 1024) {
-    throw new Error(`public key must be a regular non-symlink PEM file: ${publicKeyPath}`);
-  }
-  const manifest = verifyPcBuildDirectory(resolve(args[0]), readFileSync(publicKeyPath));
+  const manifest = verifyPcBuildDirectory(resolve(args[0]), readPublicKeyFile(publicKeyPath));
   console.log(`Verified signed build: ${resolve(args[0])}`);
   console.log(`Content: ${manifest.contentHash}`);
   console.log(`Artifact signature: Ed25519 ${manifest.signature?.keyId}`);
+  console.log(`Files: ${manifest.files.length}`);
+}
+
+function createPatch(values: string[]) {
+  const args = [...values];
+  let outputDir: string | undefined;
+  let signingPrivateKeyPath: string | undefined;
+  let clean = false;
+  for (let index = 0; index < args.length;) {
+    if (args[index] === '--out') {
+      outputDir = resolve(takeOption(args, index, '--out'));
+    } else if (args[index] === '--sign-key') {
+      signingPrivateKeyPath = resolve(takeOption(args, index, '--sign-key'));
+    } else if (args[index] === '--clean') {
+      clean = true;
+      args.splice(index, 1);
+    } else if (args[index].startsWith('--')) {
+      throw new Error(`unknown create-patch option: ${args[index]}`);
+    } else {
+      index += 1;
+    }
+  }
+  if (args.length !== 2) throw new Error('create-patch requires base and target build directories');
+  if (!outputDir) throw new Error('create-patch requires --out <dir>');
+  signingPrivateKeyPath ??= process.env.MENGINE_SIGNING_KEY
+    ? resolve(process.env.MENGINE_SIGNING_KEY)
+    : undefined;
+  if (!signingPrivateKeyPath) {
+    throw new Error('create-patch requires --sign-key <pem> or MENGINE_SIGNING_KEY');
+  }
+  const manifest = createPcPatchPackage({
+    baseDir: resolve(args[0]),
+    targetDir: resolve(args[1]),
+    outputDir,
+    signingPrivateKeyPath,
+    clean,
+  });
+  console.log(`Created signed patch: ${outputDir}`);
+  console.log(`Content: ${manifest.fromContentHash} -> ${manifest.toContentHash}`);
+  console.log(`Payload: ${manifest.files.length} files / ${manifest.payloadBytes} bytes`);
+  console.log(`Removed: ${manifest.removedFiles.length} files`);
+  console.log(`Manifest: ${join(outputDir, PATCH_MANIFEST_FILE)}`);
+}
+
+function parseTrustedPatchArguments(values: string[], command: 'verify-patch' | 'apply-patch') {
+  const args = [...values];
+  let outputDir: string | undefined;
+  let publicKeyPath: string | undefined;
+  let clean = false;
+  for (let index = 0; index < args.length;) {
+    if (args[index] === '--out') {
+      outputDir = resolve(takeOption(args, index, '--out'));
+    } else if (args[index] === '--public-key') {
+      publicKeyPath = resolve(takeOption(args, index, '--public-key'));
+    } else if (args[index] === '--clean') {
+      clean = true;
+      args.splice(index, 1);
+    } else if (args[index].startsWith('--')) {
+      throw new Error(`unknown ${command} option: ${args[index]}`);
+    } else {
+      index += 1;
+    }
+  }
+  if (args.length !== 2) throw new Error(`${command} requires base build and patch directories`);
+  if (!publicKeyPath) throw new Error(`${command} requires --public-key <pem>`);
+  return {
+    baseDir: resolve(args[0]),
+    patchDir: resolve(args[1]),
+    outputDir,
+    publicKeyValue: readPublicKeyFile(publicKeyPath),
+    clean,
+  };
+}
+
+function verifyPatch(values: string[]) {
+  const args = parseTrustedPatchArguments(values, 'verify-patch');
+  if (args.outputDir || args.clean) throw new Error('verify-patch does not accept --out or --clean');
+  const manifest = verifyPcPatchDirectory(args.patchDir, args.baseDir, args.publicKeyValue);
+  console.log(`Verified signed patch: ${args.patchDir}`);
+  console.log(`Content: ${manifest.fromContentHash} -> ${manifest.toContentHash}`);
+  console.log(`Payload: ${manifest.files.length} files / ${manifest.payloadBytes} bytes`);
+}
+
+function applyPatch(values: string[]) {
+  const args = parseTrustedPatchArguments(values, 'apply-patch');
+  if (!args.outputDir) throw new Error('apply-patch requires --out <dir>');
+  const manifest = applyPcPatchPackage({
+    baseDir: args.baseDir,
+    patchDir: args.patchDir,
+    outputDir: args.outputDir,
+    publicKeyValue: args.publicKeyValue,
+    clean: args.clean,
+  });
+  console.log(`Applied signed patch: ${args.outputDir}`);
+  console.log(`Content: ${manifest.contentHash}`);
   console.log(`Files: ${manifest.files.length}`);
 }
 
@@ -408,6 +521,15 @@ try {
       break;
     case 'verify-build':
       verifyBuild(rest);
+      break;
+    case 'create-patch':
+      createPatch(rest);
+      break;
+    case 'verify-patch':
+      verifyPatch(rest);
+      break;
+    case 'apply-patch':
+      applyPatch(rest);
       break;
     case 'codegen':
       console.log('Run from the MEngine source root: pnpm codegen');

@@ -1496,3 +1496,13 @@ Camera Shot 的基础闭环已经形成，但 Timeline 仍不完备：编辑器 
 第一遍自省从失败与热重载路径反查，发现仅回收“不再引用”的贴图仍会让已删除、损坏或上传失败的活跃路径继续显示旧 GPU 内容，同时非法 Shader 的完整 Pipeline 键会残留在 last-used 表中；现分别补上所有失败分支的精确变体删除，以及按实际 Pipeline 集合裁剪辅助索引。第二遍自省从材质语义反查，发现路径级回收会在同一文件同时承担 sRGB 颜色图和 Linear 数据图时误删仍在使用的另一变体；现把活跃集合、尝试记录、GPU 删除和测试全部统一到“路径 + 色彩空间”契约，并用只移除 Linear、保留 sRGB 的回归固定该边界。
 
 这仍不是完整的 GPU 资源管理器。当前统计以对象数量为主，没有纹理/Buffer/Pipeline 的后端真实字节数和显存预算，没有驱动压力反馈、异步上传队列、跨帧销毁栅栏、磁盘 Pipeline Cache、纹理流送/Mip Residency，也未把 Mesh、环境贴图、UI Atlas 和粒子资源纳入统一生命周期；预算仍是引擎常量而不是 Project Settings 与 Profiler 可调指标。后续应建立统一 GPU Resource Registry、按资源类型和场景归属的引用/代际模型，再接入编辑器 Profiler、平台能力档位和构建期显存预算门禁。
+
+## 127. 2026-07-20 签名增量补丁与原子应用链
+
+- CLI 新增 `create-patch <base> <target> --out <dir> --sign-key <pem>`、`verify-patch <base> <patch> --public-key <pem>` 和 `apply-patch <base> <patch> --out <dir> --public-key <pem>`。补丁目录包含 `mengine-patch.json` 与 `payload/`：只复制新增和内容/大小/路径大小写发生变化的目标文件，删除项只进入清单，未变化文件直接从基线复用；清单同时记录 payload/reused 字节和 unchanged 数量，使补丁大小与节省量可审计。
+- 补丁建立完整信任链：创建阶段先逐文件验证 Base/Target 的 SHA-256 Manifest，并要求两者通过同一可信 Ed25519 密钥；目标完整 Manifest 嵌入补丁，补丁本身使用独立域 `MENGINE_PATCH_SIGNATURE_V1` 再签名。验证阶段重新检查基线目录、目标 Manifest、补丁签名、精确 diff 操作以及 payload 不多不少的逐文件大小/哈希，错误基线、篡改 payload、额外文件、路径大小写漂移或伪造删除列表都会在应用前失败。
+- 应用阶段不会对已安装目录逐文件修改。工具把基线声明文件复制到同级临时目录，执行删除和覆盖，写入已签名目标 Manifest，在 Unix 恢复 Player 可执行位，再对完整目标包执行一次文件集合、聚合哈希和 Ed25519 验证；全部通过后才复用现有 backup/rename 事务原子发布。`--out` 可指向新目录，也可等于 Base 做安全原地升级；任何构建、补丁或应用输出若已存在但不是普通目录，即使传入 `--clean` 也会拒绝，避免把同名普通文件当成可替换制品删除。
+
+第一遍自省从失败回滚边界反查，发现最初的输出检查只拒绝符号链接，`--clean` 仍可能把同名普通文件备份并替换为目录；现把 Player Build、Patch Build 和 Patch Apply 统一到“已存在输出必须是普通非符号链接目录”的契约，并回归固定原文件保持不变。第二遍自省从制品身份反查，发现只绑定 payload `contentHash` 会把“文件完全相同但 Engine Version、Manifest 元数据或签名不同”的两个构建误认为同一基线；现增加完整已签名 Manifest 的 `fromArtifactHash/toArtifactHash`，同内容不同 Manifest 的基线会明确拒绝。定向回归覆盖 changed/added/removed、未变化 Runtime 不进 payload、篡改拒绝、错误内容基线、错误制品基线、CLI 验证/应用、新目录应用与原地原子升级；全量验证为 CLI 53/53、编辑器 350/350、Rust workspace 检查与 5 个前端工作区包生产构建通过。
+
+这仍不是成熟 CDN/商店分发系统。当前补丁以目录形式携带完整变更文件，尚无固定大小或内容定义分块、块级去重、压缩包、断点续传、下载优先级、差分二进制算法、补丁链压缩/合并、密钥轮换与撤销、渠道/区域发布环、回滚索引、带宽预算和编辑器可视化发布工作流；同一补丁要求 Base、Target 与 Patch 使用同一信任密钥。下一阶段应先把该安全补丁内核接入 Build Settings/Build History，允许从保留制品生成并展示下载/复用比例，再建设内容块仓库与版本图，最后接平台安装器、代码签名和 macOS 公证。
