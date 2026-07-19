@@ -577,15 +577,6 @@ struct BuildControl {
 }
 
 impl BuildControl {
-    fn standalone() -> Self {
-        Self {
-            build_id: 0,
-            cancelled: Arc::new(AtomicBool::new(false)),
-            cancel_file: None,
-            progress: None,
-        }
-    }
-
     fn ensure_active(&self) -> Result<(), String> {
         if self.cancelled.load(Ordering::Acquire) {
             Err("player build cancelled".into())
@@ -1046,21 +1037,6 @@ fn run_player_build_controlled(
         toolchain,
         log: build_log,
     })
-}
-
-fn run_player_build(
-    project_root: PathBuf,
-    profile: String,
-    clean: bool,
-    bundled_sdk: Option<PathBuf>,
-) -> Result<BuildPlayerResult, String> {
-    run_player_build_controlled(
-        project_root,
-        profile,
-        clean,
-        bundled_sdk,
-        BuildControl::standalone(),
-    )
 }
 
 fn validated_player_executable(project_root: &Path, requested: &Path) -> Result<PathBuf, String> {
@@ -2524,9 +2500,20 @@ mod tests {
         let manifest_dir = Path::new(env!("CARGO_MANIFEST_DIR"));
         let root = find_engine_root(manifest_dir).expect("workspace root");
         assert!(root.join("crates/mengine-runtime/Cargo.toml").is_file());
-        assert!(run_player_build(root, "shipping".into(), true, None)
-            .unwrap_err()
-            .contains("unsupported build profile"));
+        assert!(run_player_build_controlled(
+            root,
+            "shipping".into(),
+            true,
+            None,
+            BuildControl {
+                build_id: 0,
+                cancelled: Arc::new(AtomicBool::new(false)),
+                cancel_file: None,
+                progress: None,
+            },
+        )
+        .unwrap_err()
+        .contains("unsupported build profile"));
     }
 
     #[test]

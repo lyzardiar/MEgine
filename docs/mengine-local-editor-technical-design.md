@@ -1093,3 +1093,11 @@ Timeline 仍未达到成熟编辑器标准：后续还需可配置 Snap、关键
 - 第一遍自审确认仅添加 `React.lazy` 无效：旧 Dock 会渲染所有隐藏槽，且 App 为菜单事件静态引用面板模块；这两个边界都已拆除。第二遍自审补上分离 Dock 的 Suspense，避免直接打开独立 Timeline/Material 窗口时在首包加载期间失去内容，并用纯函数回归锁定“未访问不挂载、访问后保活、Scene/Game 不后台保活”语义。菜单注册测试覆盖全部七个延迟资产命令。
 
 生产入口由 774.38kB（gzip 224.28kB）降为 443.03kB（gzip 135.98kB），降低 42.8%，原 500kB 主 Chunk 警告消失；`index.html` 只预加载 React 与 Tauri Runtime，112.55kB Timeline、83.15kB Sequencer、36.55kB Animator 等模块均未进入启动预加载。全量编辑器测试为 282/282，TypeScript/Vite 生产构建与 Rust workspace 检查通过。Tauri `BuildControl::standalone` 与 `run_player_build` 两处 dead-code 仍是后续构建链清理项；CSS 仍为单一 112.23kB 入口，后续可在样式依赖稳定后评估面板级 CSS 拆分，不能以牺牲 Dock 热切换稳定性换取数字下降。
+
+## 89. 2026-07-19 构建 Host 单入口收敛
+
+- Tauri 生产构建命令的唯一执行入口明确为 `run_player_build_controlled`。该入口强制携带 Build ID、原子取消状态、可选取消文件和阶段进度 Sink，并由 `ActiveBuildGuard` 在任务结束时释放全局单实例状态与临时文件；不存在另一个不带任务生命周期的生产旁路。
+- 删除仅被一个单元测试使用的 `BuildControl::standalone` 和 `run_player_build` 包装。未知 Profile 测试现在直接构造显式无进度 Test Control 并调用正式受控入口，既保留快速校验，也避免测试便利函数长期伪装成可用生产 API。没有使用 `allow(dead_code)` 压制警告。
+- 第一遍自审核对全部调用点，确认 `build_pc_player` 在 `spawn_blocking` 内直接调用受控入口，取消命令、进度事件与 Guard 清理不经过已删除包装。第二遍执行 17 项常规 Tauri Host 测试，并显式运行默认忽略的真实 Player 构建/自验证测试；真实工程从编辑器 Host 路径完成 CLI 构建、暂存验证、原子发布与最终包验证。
+
+Rust workspace 检查现在零警告通过；Tauri Host 17/17 常规测试与 1/1 真实 Player 构建测试通过。该收敛不改变构建格式、CLI 参数或 Player Runtime，只删除漂移入口。构建系统仍需继续完善 Patch/增量分发、签名与公证、安装器、多目标/交叉编译、CI 配置锁、可复现构建和长期制品索引，但后续能力必须继续挂在同一个可取消、可观测的任务入口上。
