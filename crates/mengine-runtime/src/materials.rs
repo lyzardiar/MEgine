@@ -6,11 +6,12 @@ use mengine_assets::{
 };
 use mengine_core::generated::MaterialPropertyBlock;
 use mengine_core::surface_shader::{
-    parse_surface_shader_schema, SurfaceShaderTextureType, MAX_SURFACE_SHADER_PARAMETERS,
-    MAX_SURFACE_SHADER_TEXTURES,
+    parse_surface_shader_schema, SurfaceShaderSchema, SurfaceShaderTextureType,
+    MAX_SURFACE_SHADER_PARAMETERS, MAX_SURFACE_SHADER_TEXTURES,
 };
 use mengine_rhi::{
     validate_surface_shader_hook, MaterialBlendMode, MaterialFilter, MaterialWrap, RenderMaterial,
+    SurfaceShaderParameterBinding,
 };
 use std::collections::{HashMap, HashSet};
 use std::path::PathBuf;
@@ -26,7 +27,15 @@ struct CachedMaterial {
 #[derive(Clone)]
 struct CachedSurfaceShader {
     modified: Option<SystemTime>,
-    result: Result<Arc<String>, String>,
+    result: Result<Arc<LoadedSurfaceShader>, String>,
+}
+
+#[derive(Clone)]
+struct LoadedSurfaceShader {
+    source: Arc<str>,
+    schema: Arc<SurfaceShaderSchema>,
+    parameter_bindings: Arc<[SurfaceShaderParameterBinding]>,
+    texture_names: Arc<[String]>,
 }
 
 #[derive(Clone)]
@@ -67,45 +76,20 @@ impl RuntimeMaterialCache {
                 let mut render = render_material_from_asset(&material);
                 if material.shader == MaterialShader::Custom {
                     match self.load_custom_shader(&material.custom_shader) {
-                        Ok(source) => match pack_surface_shader_parameters(&material, &source) {
-                            Ok(parameters) => {
-                                match resolve_surface_shader_keywords(&material, &source) {
-                                    Ok(keywords) => {
-                                        match resolve_surface_shader_textures(&material, &source) {
-                                            Ok((textures, srgb)) => {
-                                                render.surface_shader = (*source).clone();
-                                                render.surface_keywords = keywords;
-                                                render.custom_parameters = parameters;
-                                                render.custom_textures = textures;
-                                                render.custom_texture_srgb = srgb;
-                                            }
-                                            Err(error) => {
-                                                if self.reported_failures.insert((
-                                                    material.custom_shader.clone(),
-                                                    error.clone(),
-                                                )) {
-                                                    log::warn!(
-                                                        "custom shader textures for '{}' are invalid: {}",
-                                                        material.custom_shader,
-                                                        error
-                                                    );
-                                                }
-                                            }
-                                        }
-                                    }
-                                    Err(error) => {
-                                        if self
-                                            .reported_failures
-                                            .insert((material.custom_shader.clone(), error.clone()))
-                                        {
-                                            log::warn!(
-                                                "custom shader keywords for '{}' are invalid: {}",
-                                                material.custom_shader,
-                                                error
-                                            );
-                                        }
-                                    }
-                                }
+                        Ok(shader) => match resolve_surface_shader_material_with_schema(
+                            &material,
+                            &shader.schema,
+                            Arc::clone(&shader.parameter_bindings),
+                            Arc::clone(&shader.texture_names),
+                        ) {
+                            Ok(bindings) => {
+                                render.surface_shader = Arc::clone(&shader.source);
+                                render.surface_keywords = bindings.keywords;
+                                render.custom_parameters = bindings.parameters;
+                                render.custom_parameter_bindings = bindings.parameter_bindings;
+                                render.custom_textures = bindings.textures;
+                                render.custom_texture_names = bindings.texture_names;
+                                render.custom_texture_srgb = bindings.texture_srgb;
                             }
                             Err(error) => {
                                 if self
@@ -113,7 +97,7 @@ impl RuntimeMaterialCache {
                                     .insert((material.custom_shader.clone(), error.clone()))
                                 {
                                     log::warn!(
-                                        "custom shader parameters for '{}' are invalid: {}",
+                                        "custom shader bindings for '{}' are invalid: {}",
                                         material.custom_shader,
                                         error
                                     );
@@ -263,7 +247,7 @@ impl RuntimeMaterialCache {
             .clone()
     }
 
-    fn load_custom_shader(&mut self, key: &str) -> Result<Arc<String>, String> {
+    fn load_custom_shader(&mut self, key: &str) -> Result<Arc<LoadedSurfaceShader>, String> {
         let normalized = key.trim();
         if normalized.is_empty() {
             return Err("custom material requires a .mshader asset".into());
@@ -289,7 +273,14 @@ impl RuntimeMaterialCache {
                 .map_err(|error| error.to_string())
                 .and_then(|source| {
                     validate_surface_shader_hook(&source)?;
-                    Ok(Arc::new(source))
+                    let schema = Arc::new(parse_surface_shader_schema(&source)?);
+                    let (parameter_bindings, texture_names) = surface_shader_reflection(&schema);
+                    Ok(Arc::new(LoadedSurfaceShader {
+                        source: Arc::from(source),
+                        schema,
+                        parameter_bindings,
+                        texture_names,
+                    }))
                 });
             self.surface_shaders
                 .insert(path.clone(), CachedSurfaceShader { modified, result });
@@ -307,13 +298,89 @@ fn is_material_path(key: &str) -> bool {
     lower.ends_with(".mmat") || lower.ends_with(".mat") || lower.ends_with(".minst")
 }
 
+#[derive(Clone, Debug, PartialEq)]
+pub struct ResolvedSurfaceShaderMaterial {
+    pub parameters: [[f32; 4]; MAX_SURFACE_SHADER_PARAMETERS],
+    pub parameter_bindings: Arc<[SurfaceShaderParameterBinding]>,
+    pub keywords: Vec<String>,
+    pub textures: [String; MAX_SURFACE_SHADER_TEXTURES],
+    pub texture_names: Arc<[String]>,
+    pub texture_srgb: [bool; MAX_SURFACE_SHADER_TEXTURES],
+}
+
+pub fn resolve_surface_shader_material(
+    material: &MaterialAsset,
+    shader_source: &str,
+) -> Result<ResolvedSurfaceShaderMaterial, String> {
+    let schema = parse_surface_shader_schema(shader_source)?;
+    let (parameter_bindings, texture_names) = surface_shader_reflection(&schema);
+    resolve_surface_shader_material_with_schema(
+        material,
+        &schema,
+        parameter_bindings,
+        texture_names,
+    )
+}
+
+fn resolve_surface_shader_material_with_schema(
+    material: &MaterialAsset,
+    schema: &SurfaceShaderSchema,
+    parameter_bindings: Arc<[SurfaceShaderParameterBinding]>,
+    texture_names: Arc<[String]>,
+) -> Result<ResolvedSurfaceShaderMaterial, String> {
+    let parameters = pack_surface_shader_parameters_with_schema(material, schema)?;
+    let keywords = resolve_surface_shader_keywords_with_schema(material, schema)?;
+    let (textures, texture_srgb) = resolve_surface_shader_textures_with_schema(material, schema)?;
+    Ok(ResolvedSurfaceShaderMaterial {
+        parameters,
+        parameter_bindings,
+        keywords,
+        textures,
+        texture_names,
+        texture_srgb,
+    })
+}
+
+fn surface_shader_reflection(
+    schema: &SurfaceShaderSchema,
+) -> (Arc<[SurfaceShaderParameterBinding]>, Arc<[String]>) {
+    let parameter_bindings = Arc::from(
+        schema
+            .parameters
+            .iter()
+            .map(|parameter| SurfaceShaderParameterBinding {
+                name: parameter.name.clone(),
+                components: parameter.parameter_type.component_count() as u8,
+                min: parameter.min,
+                max: parameter.max,
+            })
+            .collect::<Vec<_>>(),
+    );
+    let texture_names = Arc::from(
+        schema
+            .textures
+            .iter()
+            .map(|texture| texture.name.clone())
+            .collect::<Vec<_>>(),
+    );
+    (parameter_bindings, texture_names)
+}
+
 pub fn pack_surface_shader_parameters(
     material: &MaterialAsset,
     shader_source: &str,
 ) -> Result<[[f32; 4]; MAX_SURFACE_SHADER_PARAMETERS], String> {
-    let schema = parse_surface_shader_schema(shader_source)?.parameters;
+    let schema = parse_surface_shader_schema(shader_source)?;
+    pack_surface_shader_parameters_with_schema(material, &schema)
+}
+
+fn pack_surface_shader_parameters_with_schema(
+    material: &MaterialAsset,
+    schema: &SurfaceShaderSchema,
+) -> Result<[[f32; 4]; MAX_SURFACE_SHADER_PARAMETERS], String> {
     if let Some(unknown) = material.custom_parameters.keys().find(|name| {
         !schema
+            .parameters
             .iter()
             .any(|parameter| parameter.name.as_str() == name.as_str())
     }) {
@@ -322,7 +389,7 @@ pub fn pack_surface_shader_parameters(
         ));
     }
     let mut packed = [[0.0; 4]; MAX_SURFACE_SHADER_PARAMETERS];
-    for (index, parameter) in schema.iter().enumerate() {
+    for (index, parameter) in schema.parameters.iter().enumerate() {
         let source = material
             .custom_parameters
             .get(&parameter.name)
@@ -349,9 +416,17 @@ pub fn resolve_surface_shader_keywords(
     material: &MaterialAsset,
     shader_source: &str,
 ) -> Result<Vec<String>, String> {
-    let schema = parse_surface_shader_schema(shader_source)?.keywords;
+    let schema = parse_surface_shader_schema(shader_source)?;
+    resolve_surface_shader_keywords_with_schema(material, &schema)
+}
+
+fn resolve_surface_shader_keywords_with_schema(
+    material: &MaterialAsset,
+    schema: &SurfaceShaderSchema,
+) -> Result<Vec<String>, String> {
     if let Some(unknown) = material.custom_keywords.keys().find(|name| {
         !schema
+            .keywords
             .iter()
             .any(|keyword| keyword.name.as_str() == name.as_str())
     }) {
@@ -360,6 +435,7 @@ pub fn resolve_surface_shader_keywords(
         ));
     }
     Ok(schema
+        .keywords
         .iter()
         .filter(|keyword| {
             material
@@ -382,9 +458,23 @@ pub fn resolve_surface_shader_textures(
     ),
     String,
 > {
-    let schema = parse_surface_shader_schema(shader_source)?.textures;
+    let schema = parse_surface_shader_schema(shader_source)?;
+    resolve_surface_shader_textures_with_schema(material, &schema)
+}
+
+fn resolve_surface_shader_textures_with_schema(
+    material: &MaterialAsset,
+    schema: &SurfaceShaderSchema,
+) -> Result<
+    (
+        [String; MAX_SURFACE_SHADER_TEXTURES],
+        [bool; MAX_SURFACE_SHADER_TEXTURES],
+    ),
+    String,
+> {
     if let Some(unknown) = material.custom_textures.keys().find(|name| {
         !schema
+            .textures
             .iter()
             .any(|texture| texture.name.as_str() == name.as_str())
     }) {
@@ -394,7 +484,7 @@ pub fn resolve_surface_shader_textures(
     }
     let mut textures = std::array::from_fn(|_| String::new());
     let mut srgb = [false; MAX_SURFACE_SHADER_TEXTURES];
-    for (index, texture) in schema.iter().enumerate() {
+    for (index, texture) in schema.textures.iter().enumerate() {
         textures[index] = material
             .custom_textures
             .get(&texture.name)
@@ -461,10 +551,12 @@ pub fn render_material_from_asset(material: &MaterialAsset) -> RenderMaterial {
             AssetMaterialFilter::Linear => MaterialFilter::Linear,
         },
         anisotropy: material.anisotropy,
-        surface_shader: String::new(),
+        surface_shader: Arc::from(""),
         surface_keywords: Vec::new(),
         custom_parameters: [[0.0; 4]; MAX_SURFACE_SHADER_PARAMETERS],
+        custom_parameter_bindings: Arc::from(Vec::new()),
         custom_textures: std::array::from_fn(|_| String::new()),
+        custom_texture_names: Arc::from(Vec::new()),
         custom_texture_srgb: [false; MAX_SURFACE_SHADER_TEXTURES],
     }
 }
@@ -497,7 +589,152 @@ pub fn apply_material_property_block(
     if block.override_emissive_strength {
         material.emissive_strength = finite_or(block.emissive_strength, 1.0).max(0.0);
     }
+    for (name, authored) in block
+        .custom_parameter_names
+        .iter()
+        .zip(&block.custom_parameter_values)
+    {
+        let name = name.trim();
+        let Some(index) = material
+            .custom_parameter_bindings
+            .iter()
+            .position(|declared| declared.name == name)
+        else {
+            continue;
+        };
+        let binding = &material.custom_parameter_bindings[index];
+        let components = usize::from(binding.components).min(4);
+        for component in 0..components {
+            let mut value = finite_or(
+                authored[component],
+                material.custom_parameters[index][component],
+            );
+            if let Some(minimum) = binding.min {
+                value = value.max(minimum);
+            }
+            if let Some(maximum) = binding.max {
+                value = value.min(maximum);
+            }
+            material.custom_parameters[index][component] = value;
+        }
+    }
+    for (name, path) in block
+        .custom_texture_names
+        .iter()
+        .zip(&block.custom_texture_values)
+    {
+        let name = name.trim();
+        let Some(index) = material
+            .custom_texture_names
+            .iter()
+            .position(|declared| declared == name)
+        else {
+            continue;
+        };
+        if let Ok(path) = normalize_property_block_texture_path(path) {
+            material.custom_textures[index] = path;
+        }
+    }
     material
+}
+
+pub fn validate_material_property_block(
+    block: &MaterialPropertyBlock,
+    material: &RenderMaterial,
+) -> Result<(), String> {
+    if block.custom_parameter_names.len() != block.custom_parameter_values.len() {
+        return Err("custom parameter names and values must have equal lengths".into());
+    }
+    if block.custom_parameter_names.len() > MAX_SURFACE_SHADER_PARAMETERS {
+        return Err(format!(
+            "MaterialPropertyBlock contains more than {MAX_SURFACE_SHADER_PARAMETERS} custom parameters"
+        ));
+    }
+    let mut names = HashSet::new();
+    for (name, value) in block
+        .custom_parameter_names
+        .iter()
+        .zip(&block.custom_parameter_values)
+    {
+        if name.trim() != name || !valid_surface_binding_name(name) || !names.insert(name) {
+            return Err(format!(
+                "MaterialPropertyBlock contains invalid or duplicate custom parameter '{name}'"
+            ));
+        }
+        if !material
+            .custom_parameter_bindings
+            .iter()
+            .any(|declared| declared.name == *name)
+        {
+            return Err(format!(
+                "MaterialPropertyBlock parameter '{name}' is not declared by the renderer Surface Shader"
+            ));
+        }
+        if value.iter().any(|component| !component.is_finite()) {
+            return Err(format!(
+                "MaterialPropertyBlock parameter '{name}' must contain finite values"
+            ));
+        }
+    }
+    if block.custom_texture_names.len() != block.custom_texture_values.len() {
+        return Err("custom texture names and values must have equal lengths".into());
+    }
+    if block.custom_texture_names.len() > MAX_SURFACE_SHADER_TEXTURES {
+        return Err(format!(
+            "MaterialPropertyBlock contains more than {MAX_SURFACE_SHADER_TEXTURES} custom textures"
+        ));
+    }
+    names.clear();
+    for (name, path) in block
+        .custom_texture_names
+        .iter()
+        .zip(&block.custom_texture_values)
+    {
+        if name.trim() != name || !valid_surface_binding_name(name) || !names.insert(name) {
+            return Err(format!(
+                "MaterialPropertyBlock contains invalid or duplicate custom texture '{name}'"
+            ));
+        }
+        if !material
+            .custom_texture_names
+            .iter()
+            .any(|declared| declared == name)
+        {
+            return Err(format!(
+                "MaterialPropertyBlock texture '{name}' is not declared by the renderer Surface Shader"
+            ));
+        }
+        normalize_property_block_texture_path(path)?;
+    }
+    Ok(())
+}
+
+fn valid_surface_binding_name(name: &str) -> bool {
+    let mut characters = name.chars();
+    matches!(characters.next(), Some(first) if first.is_ascii_alphabetic())
+        && characters.all(|character| character.is_ascii_alphanumeric() || character == '_')
+        && name.len() <= 48
+}
+
+fn normalize_property_block_texture_path(path: &str) -> Result<String, String> {
+    let normalized = path.trim().replace('\\', "/");
+    if normalized.is_empty() {
+        return Ok(normalized);
+    }
+    let lower = normalized.to_ascii_lowercase();
+    if !normalized.starts_with("Assets/")
+        || normalized
+            .split('/')
+            .any(|segment| segment.is_empty() || segment == "." || segment == "..")
+        || ![".png", ".jpg", ".jpeg", ".webp", ".bmp", ".gif", ".tga"]
+            .iter()
+            .any(|extension| lower.ends_with(extension))
+    {
+        return Err(format!(
+            "MaterialPropertyBlock custom texture must be an Assets image path: {path}"
+        ));
+    }
+    Ok(normalized)
 }
 
 fn sanitize_color4(color: [f32; 4]) -> [f32; 4] {
@@ -618,29 +855,41 @@ mod tests {
             render_queue: 3100,
             base_color_texture: "Assets/Textures/paint.png".into(),
             surface_shader: "fn mengine_lit_surface_hook() {}".into(),
+            custom_parameters: [[0.0; 4]; MAX_SURFACE_SHADER_PARAMETERS],
+            custom_parameter_bindings: Arc::from(vec![SurfaceShaderParameterBinding {
+                name: "power".into(),
+                components: 1,
+                min: Some(0.0),
+                max: Some(8.0),
+            }]),
+            custom_textures: std::array::from_fn(|_| String::new()),
+            custom_texture_names: Arc::from(vec!["detail".into()]),
             ..RenderMaterial::default()
         };
-        let result = apply_material_property_block(
-            source,
-            &MaterialPropertyBlock {
-                override_base_color: true,
-                base_color: [2.0, 0.5, -1.0, f32::NAN],
-                override_metallic: false,
-                metallic: 0.1,
-                override_roughness: true,
-                roughness: 0.0,
-                override_ior: true,
-                ior: 4.0,
-                override_clearcoat: true,
-                clearcoat: 2.0,
-                override_clearcoat_roughness: true,
-                clearcoat_roughness: 0.0,
-                override_emissive: false,
-                emissive: [9.0; 3],
-                override_emissive_strength: true,
-                emissive_strength: 2.0,
-            },
-        );
+        let block = MaterialPropertyBlock {
+            override_base_color: true,
+            base_color: [2.0, 0.5, -1.0, f32::NAN],
+            override_metallic: false,
+            metallic: 0.1,
+            override_roughness: true,
+            roughness: 0.0,
+            override_ior: true,
+            ior: 4.0,
+            override_clearcoat: true,
+            clearcoat: 2.0,
+            override_clearcoat_roughness: true,
+            clearcoat_roughness: 0.0,
+            override_emissive: false,
+            emissive: [9.0; 3],
+            override_emissive_strength: true,
+            emissive_strength: 2.0,
+            custom_parameter_names: vec!["power".into()],
+            custom_parameter_values: vec![[99.0, 5.0, 5.0, 5.0]],
+            custom_texture_names: vec!["detail".into()],
+            custom_texture_values: vec!["Assets\\Textures\\object.png".into()],
+        };
+        assert!(validate_material_property_block(&block, &source).is_ok());
+        let result = apply_material_property_block(source, &block);
         assert_eq!(result.base_color, [1.0, 0.5, 0.0, 1.0]);
         assert_eq!(result.metallic, 0.7);
         assert_eq!(result.roughness, 0.04);
@@ -652,7 +901,16 @@ mod tests {
         assert!(result.transparent);
         assert_eq!(result.render_queue, 3100);
         assert_eq!(result.base_color_texture, "Assets/Textures/paint.png");
+        assert_eq!(result.custom_parameters[0][0], 8.0);
+        assert_eq!(result.custom_textures[0], "Assets/Textures/object.png");
         assert!(!result.surface_shader.is_empty());
+
+        let invalid = MaterialPropertyBlock {
+            custom_texture_names: vec!["removed".into()],
+            custom_texture_values: vec!["../outside.png".into()],
+            ..MaterialPropertyBlock::default()
+        };
+        assert!(validate_material_property_block(&invalid, &result).is_err());
     }
 
     #[test]
@@ -693,9 +951,30 @@ mod tests {
         assert!(material.surface_shader.contains("result.roughness"));
         assert_eq!(material.custom_parameters[0], [0.2, 0.4, 0.8, 1.0]);
         assert_eq!(material.custom_parameters[1], [3.0, 0.0, 0.0, 0.0]);
+        assert_eq!(material.custom_parameter_bindings[0].name, "rim_color");
+        assert_eq!(material.custom_parameter_bindings[1].name, "rim_power");
+        assert_eq!(material.custom_parameter_bindings[0].components, 4);
+        assert_eq!(material.custom_parameter_bindings[1].components, 1);
+        assert_eq!(material.custom_parameter_bindings[1].min, Some(0.0));
+        assert_eq!(material.custom_parameter_bindings[1].max, Some(8.0));
         assert_eq!(material.custom_textures[0], "Assets/Textures/default.png");
         assert_eq!(material.custom_textures[1], "Assets/Textures/mask.png");
+        assert_eq!(material.custom_texture_names[0], "detail");
+        assert_eq!(material.custom_texture_names[1], "mask");
         assert_eq!(material.custom_texture_srgb, [true, false, false, false]);
+        let repeated = cache.resolve("Assets/Materials/Rim.mmat").unwrap();
+        assert!(Arc::ptr_eq(
+            &material.surface_shader,
+            &repeated.surface_shader,
+        ));
+        assert!(Arc::ptr_eq(
+            &material.custom_parameter_bindings,
+            &repeated.custom_parameter_bindings,
+        ));
+        assert!(Arc::ptr_eq(
+            &material.custom_texture_names,
+            &repeated.custom_texture_names,
+        ));
 
         std::fs::remove_dir_all(root).unwrap();
     }

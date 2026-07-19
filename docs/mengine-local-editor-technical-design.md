@@ -1393,3 +1393,14 @@ Rust workspace 检查现在零警告通过；Tauri Host 17/17 常规测试与 1/
 第一遍自省发现最初的依赖扫描在读取每一层时立即入队，导致 referenced 构建同时携带 Shader 默认纹理、Base Material 纹理和子实例覆盖纹理；最终改为结构资产扫描完成后按真实 Root 合并继承图，只把最终非空路径送入依赖队列，并增加“材质覆盖默认纹理后默认文件不入包”的回归。第二遍自省沿 GPU 链路检查时发现 6–9 号自定义绑定声明误放进 Shadow WGSL，Forward Hook 的纹理 helper 因找不到符号而无法通过 Naga；现已把声明移到真实 Forward Shader，保留 Shadow Pipeline 的兼容布局，并让验证错误附带具体 Naga 类型诊断。同时补齐 Shader 默认纹理缺失在 Material Inspector 的即时高亮、Windows 路径大小写比较和 Runtime Cache 最终槽位断言。
 
 这仍不是材质系统的终点。当前固定 4 槽是基于默认 WebGPU 每阶段采样纹理上限的保守契约，还没有 Texture Array/Bindless、独立 Sampler 声明、UV 通道/变换、法线纹理语义、Cube/3D Texture、Render Texture、压缩格式与平台转码、导入制品流送、纹理驻留预算、虚拟纹理或 MaterialPropertyBlock 自定义纹理覆盖。后续应先建立统一 Import Artifact 与 GPU 资源生命周期，再扩展 Shader Graph、离线反射和平台特性分级，避免直接增加固定 Binding 把低端设备上限耗尽。
+
+## 117. 2026-07-19 MaterialPropertyBlock 自定义 Surface Shader 覆盖
+
+- `MaterialPropertyBlock` 增加自定义参数名/`float4` 值和自定义纹理名/路径两组并行数组；IDL 生成器新增 `float4_array`，Rust、TypeScript 与 JSON Schema 均得到固定四分量元素类型。旧场景缺失四个字段时反序列化为空数组，现有 PBR 覆盖行为不变；参数最多 16 个、纹理最多 4 个，名称必须对应当前 MeshRenderer 最终材质的 Surface Shader 声明。
+- Inspector 根据 MeshRenderer 的 `.mmat/.mat/.minst` 继承结果加载 Surface Shader Schema，按声明生成 Float、Vector、Color Picker 与严格图片类型纹理槽，并明确区分 `Material/Override`。开启覆盖复制当前有效材质值，关闭覆盖删除对象层值；材质或 Shader 跨 Dock 变更会自动重载。并行数组损坏、重复或陈旧名称会显示诊断并提供一次原子清理；材质缺失、非 Custom 或 Schema 读取失败时不会把空 Schema 当成“全部陈旧”而误删用户数据。
+- Runtime 把对象级名称映射到 Shader 声明槽，有限数值按声明分量与 min/max 夹取，纹理路径规范化后替换对应固定槽。自定义参数进入 Object Uniform，自定义纹理进入 Texture Set Key，二者都不改变 Shader/Pipeline Key；因此数值覆盖可共享 Pipeline，纹理覆盖只按实际贴图集合复用 Bind Group。Shader 源、参数反射和纹理名称由缓存中的 `Arc` 共享，重复 Renderer 不再逐对象复制 WGSL 与反射字符串；Schema 只在 Shader 文件版本变化时重新解析，材质值仍保持对象级独立。
+- CLI 在 staging 前扫描 Scene/Prefab 的 MaterialPropertyBlock，解析 Material Instance→Base→Shader 继承链，拒绝数组错位、非有限值、重复/陈旧名称、危险路径以及对内置材质使用自定义覆盖，并把对象纹理加入 all/referenced 的真实依赖闭包。Player 启动校验再次对每个实体映射最终槽位并实际解码对象纹理，保证编辑器提示、构建审计和发布运行时不是三套宽松程度不同的契约；失败仍保持原子发布，不产生半成品目录。
+
+第一遍自省从编辑器异常路径反查，发现纹理选择器曾沿用通用 Texture 分类，可能接受 Runtime/CLI 不支持的格式；现已提取共享白名单过滤和无 DOM 诊断模型，并禁止在材质或 Shader 加载失败时显示清理按钮。第二遍自省从每帧 RenderObject 收集热路径反查，发现把 16 组名称/范围、4 个纹理名和整段 WGSL 直接放在每份 RenderMaterial 会造成重复字符串克隆；现改为 Shader Cache 共享 `Arc` 源码和反射切片，并把参数、Keyword、纹理解析收敛为单次 Schema 流程，回归通过指针共享断言固定该性能契约。
+
+这仍不是成熟的对象级材质提交系统。不同自定义纹理覆盖会拆分 Texture Set/Bind Group，当前没有 GPU Instancing、Material Buffer/Structured Buffer、对象属性上传脏标记、批次兼容性诊断、renderer-local Sampler/UV、Keyword 覆盖或平台绑定预算；Scene 的 CSS 预览也不执行真实自定义 WGSL。下一阶段应先建立可观测的材质/纹理批次统计与 GPU 资源脏更新，再设计实例数据布局和离线 Shader 制品，不能把 MaterialPropertyBlock 的便利 API 误当成自动合批已经完成。

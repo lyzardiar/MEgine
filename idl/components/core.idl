@@ -128,6 +128,12 @@ component MaterialPropertyBlock {
   emissive:                   float3 = [0, 0, 0]
   override_emissive_strength: bool   = false
   emissive_strength:          float  = 1
+  /// Surface Shader parameter overrides. Names and values are parallel arrays.
+  custom_parameter_names:     string_array = []
+  custom_parameter_values:    float4_array = []
+  /// Surface Shader texture overrides. Names and project-relative paths are parallel arrays.
+  custom_texture_names:       string_array = []
+  custom_texture_values:      string_array = []
 }
 
 component SpriteRenderer {

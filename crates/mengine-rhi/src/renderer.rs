@@ -65,6 +65,14 @@ pub fn project_world_to_viewport(
     ])
 }
 
+#[derive(Clone, Debug, PartialEq)]
+pub struct SurfaceShaderParameterBinding {
+    pub name: String,
+    pub components: u8,
+    pub min: Option<f32>,
+    pub max: Option<f32>,
+}
+
 #[derive(Clone, Debug)]
 pub struct RenderMaterial {
     pub base_color: [f32; 4],
@@ -99,16 +107,21 @@ pub struct RenderMaterial {
     pub anisotropy: u8,
     /// Optional project-authored WGSL surface hook. The engine wraps and validates this hook
     /// against its stable forward-material interface before creating a pipeline.
-    pub surface_shader: String,
+    pub surface_shader: Arc<str>,
     /// Final enabled Surface Shader keyword set after material-instance inheritance. Keywords
     /// specialize WGSL source and therefore participate in the material pipeline cache key.
     pub surface_keywords: Vec<String>,
     /// Reflected Surface Shader values packed in declaration order. Each parameter owns one
     /// vec4 slot so adding one parameter never shifts the components of another parameter.
     pub custom_parameters: [[f32; 4]; MAX_SURFACE_SHADER_PARAMETERS],
+    /// CPU-side reflection metadata used to apply named per-renderer overrides without parsing
+    /// shader source every frame. This metadata is not uploaded or included in pipeline keys.
+    pub custom_parameter_bindings: Arc<[SurfaceShaderParameterBinding]>,
     /// Final custom texture paths packed in Surface Shader declaration order. Four fixed slots
     /// keep one stable material bind-group layout across all custom pipelines.
     pub custom_textures: [String; MAX_SURFACE_SHADER_TEXTURES],
+    /// CPU-side names for matching MaterialPropertyBlock texture overrides to fixed slots.
+    pub custom_texture_names: Arc<[String]>,
     /// True selects the sRGB upload/cache for the corresponding custom texture slot.
     pub custom_texture_srgb: [bool; MAX_SURFACE_SHADER_TEXTURES],
 }
@@ -170,10 +183,12 @@ impl Default for RenderMaterial {
             filter: MaterialFilter::Linear,
             mipmap_filter: MaterialFilter::Linear,
             anisotropy: 1,
-            surface_shader: String::new(),
+            surface_shader: Arc::from(""),
             surface_keywords: Vec::new(),
             custom_parameters: [[0.0; 4]; MAX_SURFACE_SHADER_PARAMETERS],
+            custom_parameter_bindings: Arc::from(Vec::new()),
             custom_textures: std::array::from_fn(|_| String::new()),
+            custom_texture_names: Arc::from(Vec::new()),
             custom_texture_srgb: [false; MAX_SURFACE_SHADER_TEXTURES],
         }
     }

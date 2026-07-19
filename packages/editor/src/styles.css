@@ -5399,6 +5399,63 @@ button.sequencer-track-header:hover { background: #343b42; }
   background: #303030;
 }
 
+.mpb-custom-section {
+  margin-top: 5px;
+  border-top: 1px solid var(--u-border-2);
+  background: #2d2d2d;
+}
+
+.mpb-custom-head,
+.mpb-override-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+}
+
+.mpb-custom-head {
+  min-height: 27px;
+  padding: 2px 6px;
+  color: var(--u-text-bright);
+  font-size: 10px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.mpb-custom-head button {
+  min-height: 20px;
+  border-radius: 0;
+  font-size: 9px;
+}
+
+.mpb-custom-binding {
+  border-top: 1px solid #3a3a3a;
+}
+
+.mpb-override-toggle {
+  justify-content: flex-start;
+  min-height: 28px;
+  padding: 2px 6px;
+  font-size: 11px;
+}
+
+.mpb-override-toggle > span {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+}
+
+.mpb-override-toggle small {
+  color: var(--u-accent);
+  font-size: 8px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.mpb-custom-binding.inherited .mpb-override-toggle small { color: var(--u-muted); }
+.mpb-custom-binding > .field-row,
+.mpb-custom-binding > .axis-row { border-top: 1px solid #363636; }
+
 .material-custom-parameters > strong {
   padding: 5px 6px;
   color: var(--u-text-bright);

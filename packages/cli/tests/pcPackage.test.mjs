@@ -1158,6 +1158,12 @@ test('buildPcPackage includes validated custom material surface shaders', () => 
     writeFileSync(join(paths.project, 'Assets', 'Scenes', 'Main.mscene'), JSON.stringify({
       world: { entities: [{ components: {
         MeshRenderer: { mesh: 'cube', material: 'Assets/Materials/Rim.mmat' },
+        MaterialPropertyBlock: {
+          custom_parameter_names: ['rim_power'],
+          custom_parameter_values: [[4, 0, 0, 0]],
+          custom_texture_names: ['detail'],
+          custom_texture_values: ['Assets/Textures/object-detail.png'],
+        },
       } }] },
     }));
     writeFileSync(join(paths.project, 'Assets', 'Materials', 'Rim.mmat'), JSON.stringify({
@@ -1179,6 +1185,7 @@ test('buildPcPackage includes validated custom material surface shaders', () => 
     }));
     writeFileSync(join(paths.project, 'Assets', 'Textures', 'detail.png'), 'detail');
     writeFileSync(join(paths.project, 'Assets', 'Textures', 'default-detail.png'), 'default-detail');
+    writeFileSync(join(paths.project, 'Assets', 'Textures', 'object-detail.png'), 'object-detail');
     writeFileSync(join(paths.project, 'Assets', 'Shaders', 'Rim.mshader'), `
       /* MENGINE_PARAMETERS
       {"parameters":[
@@ -1210,8 +1217,8 @@ test('buildPcPackage includes validated custom material surface shaders', () => 
     assert.deepEqual(manifest.assetValidation, {
       assetMode: 'all',
       rootScenes: 2,
-      references: 8,
-      validatedFiles: 8,
+      references: 9,
+      validatedFiles: 9,
       auditedScenes: 2,
       auditedPrefabs: 0,
       auditedMaterials: 2,
@@ -1250,7 +1257,21 @@ test('buildPcPackage includes validated custom material surface shaders', () => 
     assert.equal(referenced.assetValidation.shaderVariants, 1);
     assert.equal(existsSync(join(referencedOutput, 'Assets', 'Materials', 'RimOff.mmat')), false);
     assert.equal(existsSync(join(referencedOutput, 'Assets', 'Textures', 'detail.png')), true);
+    assert.equal(existsSync(join(referencedOutput, 'Assets', 'Textures', 'object-detail.png')), true);
     assert.equal(existsSync(join(referencedOutput, 'Assets', 'Textures', 'default-detail.png')), false);
+
+    const scenePath = join(paths.project, 'Assets', 'Scenes', 'Main.mscene');
+    const scene = JSON.parse(readFileSync(scenePath, 'utf8'));
+    scene.world.entities[0].components.MaterialPropertyBlock.custom_parameter_names = ['removed'];
+    writeFileSync(scenePath, JSON.stringify(scene));
+    const invalidOutput = join(paths.root, 'BuildInvalidPropertyBlock');
+    assert.throws(() => buildPcPackage({
+      projectDir: paths.project,
+      outputDir: invalidOutput,
+      runtimePath: paths.runtime,
+      engineVersion: 'test-engine',
+    }), /MaterialPropertyBlock.*parameter 'removed' is not declared/i);
+    assert.equal(existsSync(invalidOutput), false);
   } finally {
     rmSync(paths.root, { recursive: true, force: true });
   }

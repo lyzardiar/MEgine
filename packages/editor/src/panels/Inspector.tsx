@@ -6,6 +6,7 @@ import {
   type ReactNode,
 } from 'react';
 import { getBehaviour } from '@mengine/behaviour';
+import { PROJECT_ASSETS_CHANGED_EVENT } from '../assetEditorEvents';
 import { createComponentDefaults, getComponentCatalog } from '../componentCatalog';
 import {
   copyComponentValue,
@@ -18,12 +19,29 @@ import {
   normalizeCameraClearFlags,
 } from '../gameCamera';
 import { eulerXYZToQuat, quatToEulerXYZ } from '../math3d';
+import type { MaterialAsset } from '../materialAsset';
+import { loadResolvedMaterialAsset } from '../materialInstanceAsset';
+import {
+  isMaterialPropertyBlockTextureAsset,
+  materialPropertyBlockBindingDiagnostics,
+  materialPropertyParameterMap,
+  materialPropertyTextureMap,
+} from '../materialPropertyBlock';
+import { readProjectAssetText } from '../projectAssets';
 import { readRectTransform } from '../ui/rectLayout';
 import { loadSpineRuntime } from '../spine/spineRuntimeLoader';
 import { getSortingLayerOptions } from '../sortingLayers';
 import { loadSpriteNativeSize } from '../spriteDraw';
 import { resolveSpritePivot, resolveSpritePixelsPerUnit } from '../spriteLibrary';
 import { spriteNativeWorldSize } from '../spriteImport';
+import {
+  normalizeSurfaceShaderParameterValue,
+  parseSurfaceShaderParameters,
+  parseSurfaceShaderTextures,
+  surfaceShaderParameterComponents,
+  type SurfaceShaderParameter,
+  type SurfaceShaderTexture,
+} from '../surfaceShader';
 import { SchemaFieldEditor } from './SchemaFieldEditor';
 import { RectTransformEditor } from './RectTransformEditor';
 import {
@@ -427,6 +445,217 @@ function JsonValueField(props: {
         }}
       />
     </div>
+  );
+}
+
+function MaterialPropertyBlockEditor(props: {
+  data: Record<string, unknown>;
+  materialPath: string;
+  entities: Array<{ entity: number; name?: string | null; components: Record<string, unknown> }>;
+  onChange: (next: Record<string, unknown>) => void;
+}) {
+  const [parameters, setParameters] = useState<SurfaceShaderParameter[]>([]);
+  const [textures, setTextures] = useState<SurfaceShaderTexture[]>([]);
+  const [material, setMaterial] = useState<MaterialAsset | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [assetRevision, setAssetRevision] = useState(0);
+
+  useEffect(() => {
+    const changed = () => setAssetRevision((value) => value + 1);
+    window.addEventListener(PROJECT_ASSETS_CHANGED_EVENT, changed);
+    return () => window.removeEventListener(PROJECT_ASSETS_CHANGED_EVENT, changed);
+  }, []);
+
+  useEffect(() => {
+    let cancelled = false;
+    const path = props.materialPath.trim();
+    setParameters([]);
+    setTextures([]);
+    setMaterial(null);
+    if (!/\.(?:mmat|mat|minst)$/i.test(path)) {
+      setLoading(false);
+      setError('Assign a custom Material asset to expose Surface Shader overrides.');
+      return () => { cancelled = true; };
+    }
+    setLoading(true);
+    setError(null);
+    void loadResolvedMaterialAsset(path)
+      .then(async (resolved) => {
+        if (resolved.shader !== 'custom' || !resolved.custom_shader) {
+          throw new Error('The assigned material does not use a custom Surface Shader.');
+        }
+        const source = await readProjectAssetText(resolved.custom_shader);
+        if (cancelled) return;
+        setMaterial(resolved);
+        setParameters(parseSurfaceShaderParameters(source));
+        setTextures(parseSurfaceShaderTextures(source));
+        setLoading(false);
+      })
+      .catch((reason) => {
+        if (!cancelled) {
+          setLoading(false);
+          setError(reason instanceof Error ? reason.message : String(reason));
+        }
+      });
+    return () => { cancelled = true; };
+  }, [assetRevision, props.materialPath]);
+
+  const parameterOverrides = materialPropertyParameterMap(props.data);
+  const textureOverrides = materialPropertyTextureMap(props.data);
+  const parameterNames = new Set(parameters.map((parameter) => parameter.name));
+  const textureNames = new Set(textures.map((texture) => texture.name));
+  const bindingDiagnostics = loading || error ? [] : materialPropertyBlockBindingDiagnostics(
+    props.data, parameters, textures,
+  );
+
+  const writeParameters = (next: Map<string, [number, number, number, number]>) => props.onChange({
+    ...props.data,
+    custom_parameter_names: [...next.keys()],
+    custom_parameter_values: [...next.values()],
+  });
+  const writeTextures = (next: Map<string, string>) => props.onChange({
+    ...props.data,
+    custom_texture_names: [...next.keys()],
+    custom_texture_values: [...next.values()],
+  });
+  const setParameter = (
+    parameter: SurfaceShaderParameter,
+    value: [number, number, number, number] | null,
+  ) => {
+    const next = new Map(parameterOverrides);
+    if (value == null) next.delete(parameter.name);
+    else next.set(parameter.name, normalizeSurfaceShaderParameterValue(parameter, value));
+    writeParameters(next);
+  };
+  const setTexture = (texture: SurfaceShaderTexture, value: string | null) => {
+    const next = new Map(textureOverrides);
+    if (value == null) next.delete(texture.name);
+    else next.set(texture.name, value.trim().replaceAll('\\', '/'));
+    writeTextures(next);
+  };
+
+  return (
+    <>
+      <GenericCompEditor
+        componentType="MaterialPropertyBlock"
+        data={props.data}
+        entities={props.entities}
+        onChange={props.onChange}
+      />
+      <div className="mpb-custom-section">
+        <div className="mpb-custom-head">
+          <strong>Surface Shader Overrides</strong>
+          {bindingDiagnostics.length > 0 && (
+            <button type="button" onClick={() => {
+              const nextParameters = new Map([...parameterOverrides]
+                .filter(([name]) => parameterNames.has(name)));
+              const nextTextures = new Map([...textureOverrides]
+                .filter(([name]) => textureNames.has(name)));
+              props.onChange({
+                ...props.data,
+                custom_parameter_names: [...nextParameters.keys()],
+                custom_parameter_values: [...nextParameters.values()],
+                custom_texture_names: [...nextTextures.keys()],
+                custom_texture_values: [...nextTextures.values()],
+              });
+            }}>Remove Stale Values</button>
+          )}
+        </div>
+        {loading && <div className="field-hint">Loading Surface Shader bindings...</div>}
+        {error && <div className="field-hint material-parameter-error">{error}</div>}
+        {!error && bindingDiagnostics.length > 0 && (
+          <div className="field-hint material-parameter-error">
+            {bindingDiagnostics.map((diagnostic) => diagnostic.message).join(' ')}
+          </div>
+        )}
+        {!error && parameters.length === 0 && textures.length === 0 && (
+          <div className="field-hint">The Surface Shader declares no per-renderer values.</div>
+        )}
+        {parameters.map((parameter) => {
+          const overridden = parameterOverrides.has(parameter.name);
+          const inherited = normalizeSurfaceShaderParameterValue(
+            parameter,
+            material?.custom_parameters[parameter.name],
+          );
+          const value = normalizeSurfaceShaderParameterValue(
+            parameter,
+            parameterOverrides.get(parameter.name) ?? inherited,
+          );
+          const components = surfaceShaderParameterComponents(parameter.type);
+          return (
+            <div className={`mpb-custom-binding${overridden ? '' : ' inherited'}`} key={parameter.name}>
+              <label className="mpb-override-toggle">
+                <input
+                  type="checkbox"
+                  checked={overridden}
+                  onChange={(event) => setParameter(parameter, event.target.checked ? inherited : null)}
+                />
+                <span>{parameter.label}<small>{overridden ? 'Override' : 'Material'}</small></span>
+              </label>
+              {overridden ? parameter.type === 'color' ? (
+                <ColorField label="Value" value={value} onChange={(next) => setParameter(parameter, next as [number, number, number, number])} />
+              ) : components === 1 ? (
+                <NumField
+                  label="Value"
+                  value={value[0]}
+                  min={parameter.min ?? undefined}
+                  max={parameter.max ?? undefined}
+                  step={0.01}
+                  onChange={(next) => setParameter(parameter, [next, value[1], value[2], value[3]])}
+                />
+              ) : (
+                <div className={`axis-row axis-${components}`}>
+                  <label>Value</label>
+                  {(['x', 'y', 'z', 'w'] as const).slice(0, components).map((axis, index) => (
+                    <AxisInput
+                      key={axis}
+                      label={axis}
+                      value={value[index]}
+                      step={0.01}
+                      onChange={(nextValue) => {
+                        const next = [...value] as [number, number, number, number];
+                        next[index] = nextValue;
+                        setParameter(parameter, next);
+                      }}
+                    />
+                  ))}
+                </div>
+              ) : (
+                <div className="field-row"><label>Value</label><span>{value.slice(0, components).join(', ')}</span></div>
+              )}
+            </div>
+          );
+        })}
+        {textures.map((texture) => {
+          const overridden = textureOverrides.has(texture.name);
+          const inherited = material?.custom_textures[texture.name] ?? texture.default;
+          const value = textureOverrides.get(texture.name) ?? inherited;
+          return (
+            <div className={`mpb-custom-binding${overridden ? '' : ' inherited'}`} key={texture.name}>
+              <label className="mpb-override-toggle">
+                <input
+                  type="checkbox"
+                  checked={overridden}
+                  onChange={(event) => setTexture(texture, event.target.checked ? inherited : null)}
+                />
+                <span>{texture.label}<small>{overridden ? 'Override' : 'Material'} · {texture.type === 'color' ? 'sRGB' : 'Linear'}</small></span>
+              </label>
+              <ProjectAssetSlot
+                label="Texture"
+                value={value}
+                assetKinds={['texture']}
+                referenceType="Surface Shader Texture"
+                allowNone
+                noneValue=""
+                accept={isMaterialPropertyBlockTextureAsset}
+                onChange={(next) => setTexture(texture, next)}
+              />
+            </div>
+          );
+        })}
+      </div>
+    </>
   );
 }
 
@@ -1287,6 +1516,16 @@ export function Inspector(props: {
               <WorldSpriteEditor
                 componentType={k}
                 data={data}
+                entities={props.entities ?? [entity]}
+                onChange={(next) => props.onSetComponent(entity.entity, k, next)}
+              />
+            ) : k === 'MaterialPropertyBlock' ? (
+              <MaterialPropertyBlockEditor
+                data={data}
+                materialPath={String(
+                  (entity.components.MeshRenderer as Record<string, unknown> | undefined)?.material
+                    ?? 'default',
+                )}
                 entities={props.entities ?? [entity]}
                 onChange={(next) => props.onSetComponent(entity.entity, k, next)}
               />

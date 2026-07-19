@@ -140,6 +140,10 @@ const BUILTIN_CATALOG: ComponentCatalogEntry[] = [
       emissive: [0, 0, 0],
       override_emissive_strength: false,
       emissive_strength: 1,
+      custom_parameter_names: [],
+      custom_parameter_values: [],
+      custom_texture_names: [],
+      custom_texture_values: [],
     }),
   },
   {

@@ -14,7 +14,7 @@ pub use renderer::{
     look_at, orthographic, perspective, project_world_to_viewport, validate_surface_shader_hook,
     ClearColor, DirectionalLightData, EnvironmentLightData, FrameCamera, FrameLighting,
     MaterialBlendMode, MaterialFilter, MaterialWrap, PointLightData, RenderMaterial, RenderObject,
-    Renderer, SpotLightData,
+    Renderer, SpotLightData, SurfaceShaderParameterBinding,
 };
 pub use ui::{
     UiBatch, UiBatchKey, UiBatchPlan, UiBlendMode, UiClipRect, UiFrameStats, UiPrimitive,

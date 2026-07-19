@@ -247,6 +247,10 @@ export const BUILTIN_INSPECTOR_FIELDS: Readonly<
       step: 0.1,
       visibleWhen: { field: 'override_emissive_strength', equals: true },
     },
+    custom_parameter_names: { hidden: true },
+    custom_parameter_values: { hidden: true },
+    custom_texture_names: { hidden: true },
+    custom_texture_values: { hidden: true },
   },
   RigidBody3D: {
     body_type: { kind: 'enum', options: options('dynamic', 'fixed', 'kinematic') },

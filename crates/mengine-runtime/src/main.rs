@@ -23,8 +23,8 @@ use mengine_runtime::audio::AudioRuntime;
 use mengine_runtime::build_manifest::verify_build_manifest;
 use mengine_runtime::lighting2d::apply_2d_lighting;
 use mengine_runtime::materials::{
-    apply_material_property_block, pack_surface_shader_parameters, resolve_surface_shader_keywords,
-    resolve_surface_shader_textures, RuntimeMaterialCache,
+    apply_material_property_block, resolve_surface_shader_material,
+    validate_material_property_block, RuntimeMaterialCache,
 };
 use mengine_runtime::meshes::RuntimeMeshCache;
 use mengine_runtime::particles::ParticleWorld;
@@ -2344,18 +2344,12 @@ fn validate_world_assets(
                                 shader_path.display()
                             )
                         })?;
-                        pack_surface_shader_parameters(&asset, &source).map_err(|error| {
-                            anyhow::anyhow!("invalid material {}: {error}", path.display())
-                        })?;
-                        resolve_surface_shader_keywords(&asset, &source).map_err(|error| {
-                            anyhow::anyhow!("invalid material {}: {error}", path.display())
-                        })?;
                         custom_textures.extend(
-                            resolve_surface_shader_textures(&asset, &source)
+                            resolve_surface_shader_material(&asset, &source)
                                 .map_err(|error| {
                                     anyhow::anyhow!("invalid material {}: {error}", path.display())
                                 })?
-                                .0,
+                                .textures,
                         );
                     }
                     for texture in [
@@ -2377,6 +2371,31 @@ fn validate_world_assets(
                                 || format!("invalid material texture {}", texture_path.display()),
                             )?;
                         }
+                    }
+                }
+            }
+            if let Some(block) = world.get_component::<MaterialPropertyBlock>(entity) {
+                let resolved = material_cache
+                    .resolve(material)
+                    .unwrap_or_else(|| material_preset(material));
+                validate_material_property_block(block, &resolved).map_err(|error| {
+                    anyhow::anyhow!(
+                        "invalid MaterialPropertyBlock on entity {}: {error}",
+                        entity.to_u64()
+                    )
+                })?;
+                for texture in &block.custom_texture_values {
+                    if texture.trim().is_empty() {
+                        continue;
+                    }
+                    let texture_path = resolve(texture, "MaterialPropertyBlock custom texture")?;
+                    if validated.insert(texture_path.clone()) {
+                        mengine_assets::load_texture_rgba8(&texture_path).with_context(|| {
+                            format!(
+                                "invalid MaterialPropertyBlock custom texture {}",
+                                texture_path.display()
+                            )
+                        })?;
                     }
                 }
             }
@@ -2644,6 +2663,21 @@ mod tests {
         std::fs::write(path, wav).unwrap();
     }
 
+    fn write_test_bmp(path: &Path) {
+        let mut bmp = vec![0_u8; 58];
+        bmp[0..2].copy_from_slice(b"BM");
+        bmp[2..6].copy_from_slice(&58_u32.to_le_bytes());
+        bmp[10..14].copy_from_slice(&54_u32.to_le_bytes());
+        bmp[14..18].copy_from_slice(&40_u32.to_le_bytes());
+        bmp[18..22].copy_from_slice(&1_i32.to_le_bytes());
+        bmp[22..26].copy_from_slice(&1_i32.to_le_bytes());
+        bmp[26..28].copy_from_slice(&1_u16.to_le_bytes());
+        bmp[28..30].copy_from_slice(&24_u16.to_le_bytes());
+        bmp[34..38].copy_from_slice(&4_u32.to_le_bytes());
+        bmp[54..58].copy_from_slice(&[0, 0, 255, 0]);
+        std::fs::write(path, bmp).unwrap();
+    }
+
     fn world_with_material(reference: &str) -> World {
         let mut world = World::new();
         world.commands.push(WorldCommand::Spawn {
@@ -2820,6 +2854,10 @@ mod tests {
         assert_eq!(legacy_block.clearcoat, 0.0);
         assert!(!legacy_block.override_clearcoat_roughness);
         assert_eq!(legacy_block.clearcoat_roughness, 0.1);
+        assert!(legacy_block.custom_parameter_names.is_empty());
+        assert!(legacy_block.custom_parameter_values.is_empty());
+        assert!(legacy_block.custom_texture_names.is_empty());
+        assert!(legacy_block.custom_texture_values.is_empty());
 
         let component = PbrMaterial {
             base_color: [0.2, 0.3, 0.4, 1.0],
@@ -2915,8 +2953,10 @@ mod tests {
         let root = temporary_project_root("packaged-custom-material");
         let material_path = root.join("Assets/Materials/Rim.mmat");
         let shader_path = root.join("Assets/Shaders/Rim.mshader");
+        let texture_path = root.join("Assets/Textures/object.bmp");
         std::fs::create_dir_all(material_path.parent().unwrap()).unwrap();
         std::fs::create_dir_all(shader_path.parent().unwrap()).unwrap();
+        std::fs::create_dir_all(texture_path.parent().unwrap()).unwrap();
         std::fs::write(
             &material_path,
             r#"{"version":8,"shader":"custom","custom_shader":"Assets/Shaders/Rim.mshader","custom_parameters":{"rim_power":[3,0,0,0]}}"#,
@@ -2925,7 +2965,8 @@ mod tests {
         std::fs::write(
             &shader_path,
             r#"/* MENGINE_PARAMETERS
-                {"parameters":[{"name":"rim_power","type":"float","default":2,"min":0,"max":8}]}
+                {"parameters":[{"name":"rim_power","type":"float","default":2,"min":0,"max":8}],
+                 "textures":[{"name":"detail","type":"data"}]}
                 */
                 fn mengine_lit_surface_hook(
                     surface: MEngineSurface,
@@ -2939,19 +2980,42 @@ mod tests {
             "#,
         )
         .unwrap();
+        write_test_bmp(&texture_path);
 
-        let mut validated = HashSet::new();
-        let result = validate_world_assets(
-            &world_with_material("Assets/Materials/Rim.mmat"),
-            &root,
-            &mut validated,
+        let mut world = world_with_material("Assets/Materials/Rim.mmat");
+        let entity = world.iter_entities().next().unwrap();
+        world.insert_component(
+            entity,
+            MaterialPropertyBlock {
+                custom_parameter_names: vec!["rim_power".into()],
+                custom_parameter_values: vec![[5.0, 0.0, 0.0, 0.0]],
+                custom_texture_names: vec!["detail".into()],
+                custom_texture_values: vec!["Assets/Textures/object.bmp".into()],
+                ..MaterialPropertyBlock::default()
+            },
         );
-        std::fs::remove_dir_all(&root).unwrap();
-
+        let mut validated = HashSet::new();
+        let result = validate_world_assets(&world, &root, &mut validated);
         result.expect("custom material and shader should pass package validation");
-        assert_eq!(validated.len(), 2);
+        assert_eq!(validated.len(), 3);
         assert!(validated.contains(&material_path));
         assert!(validated.contains(&shader_path));
+        assert!(validated.contains(&texture_path));
+
+        world.insert_component(
+            entity,
+            MaterialPropertyBlock {
+                custom_parameter_names: vec!["removed".into()],
+                custom_parameter_values: vec![[1.0, 0.0, 0.0, 0.0]],
+                ..MaterialPropertyBlock::default()
+            },
+        );
+        let error = validate_world_assets(&world, &root, &mut HashSet::new())
+            .expect_err("stale per-renderer shader values must fail package validation");
+        std::fs::remove_dir_all(&root).unwrap();
+        assert!(error
+            .to_string()
+            .contains("MaterialPropertyBlock parameter 'removed'"));
     }
 
     #[test]

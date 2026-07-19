@@ -402,6 +402,7 @@ export function ProjectAssetSlot(props: {
   referenceType: string;
   allowNone?: boolean;
   noneValue?: string;
+  accept?: (asset: ProjectFileAsset) => boolean;
   onChange: (value: string) => void;
 }) {
   const [dragOver, setDragOver] = useState(false);
@@ -417,8 +418,10 @@ export function ProjectAssetSlot(props: {
   const assets = useMemo(() => {
     void revision;
     const accepted = new Set(props.assetKinds);
-    return listProjectFiles().filter((asset) => accepted.has(asset.kind));
-  }, [props.assetKinds, revision]);
+    return listProjectFiles().filter(
+      (asset) => accepted.has(asset.kind) && (props.accept?.(asset) ?? true),
+    );
+  }, [props.accept, props.assetKinds, revision]);
   const hasValue = Boolean(props.value) && props.value !== props.noneValue;
   const selected = hasValue
     ? assets.find((asset) => asset.id === props.value)

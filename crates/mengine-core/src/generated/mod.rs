@@ -467,6 +467,10 @@ pub struct MaterialPropertyBlock {
     pub emissive: [f32; 3],
     pub override_emissive_strength: bool,
     pub emissive_strength: f32,
+    pub custom_parameter_names: Vec<String>,
+    pub custom_parameter_values: Vec<[f32; 4]>,
+    pub custom_texture_names: Vec<String>,
+    pub custom_texture_values: Vec<String>,
 }
 
 impl Default for MaterialPropertyBlock {
@@ -488,6 +492,10 @@ impl Default for MaterialPropertyBlock {
             emissive: [0.0, 0.0, 0.0],
             override_emissive_strength: false,
             emissive_strength: 1.0,
+            custom_parameter_names: Vec::new(),
+            custom_parameter_values: Vec::new(),
+            custom_texture_names: Vec::new(),
+            custom_texture_values: Vec::new(),
         }
     }
 }

@@ -866,6 +866,12 @@ function scanBuildAssetDependencies(
     shader: string;
     textures: string[];
   }> = [];
+  const materialPropertyBlockBindings: Array<{
+    source: string;
+    material: string;
+    parameters: string[];
+    textures: Array<{ name: string; path: string }>;
+  }> = [];
   const materialVariantRoots = new Set<string>();
   let auditedScenes = 0;
   let auditedPrefabs = 0;
@@ -923,6 +929,64 @@ function scanBuildAssetDependencies(
       enqueue(mesh, from, '3D model');
     }
     enqueueMaterial(stringValue(meshRenderer, 'material'), from);
+    const propertyBlock = component('MaterialPropertyBlock');
+    if (propertyBlock) {
+      const parameterNames = propertyBlock.custom_parameter_names ?? [];
+      const parameterValues = propertyBlock.custom_parameter_values ?? [];
+      const textureNames = propertyBlock.custom_texture_names ?? [];
+      const textureValues = propertyBlock.custom_texture_values ?? [];
+      if (!Array.isArray(parameterNames)
+        || !Array.isArray(parameterValues)
+        || parameterNames.length !== parameterValues.length
+        || parameterNames.length > MAX_SURFACE_SHADER_PARAMETERS) {
+        throw new Error(`invalid MaterialPropertyBlock in ${from}: custom parameter names and values must be parallel arrays of at most ${MAX_SURFACE_SHADER_PARAMETERS} entries`);
+      }
+      if (!Array.isArray(textureNames)
+        || !Array.isArray(textureValues)
+        || textureNames.length !== textureValues.length
+        || textureNames.length > MAX_SURFACE_SHADER_TEXTURES) {
+        throw new Error(`invalid MaterialPropertyBlock in ${from}: custom texture names and values must be parallel arrays of at most ${MAX_SURFACE_SHADER_TEXTURES} entries`);
+      }
+      const parameters = parameterNames.map((value, index) => {
+        const name = typeof value === 'string' ? value : '';
+        const parameter = parameterValues[index];
+        if (!/^[A-Za-z][A-Za-z0-9_]{0,47}$/.test(name)
+          || !Array.isArray(parameter)
+          || parameter.length !== 4
+          || parameter.some((part) => typeof part !== 'number' || !Number.isFinite(part))) {
+          throw new Error(`invalid MaterialPropertyBlock in ${from}: invalid custom parameter '${name}'`);
+        }
+        return name;
+      });
+      if (new Set(parameters).size !== parameters.length) {
+        throw new Error(`invalid MaterialPropertyBlock in ${from}: duplicate custom parameter name`);
+      }
+      const textures = textureNames.map((value, index) => {
+        const name = typeof value === 'string' ? value : '';
+        const path = typeof textureValues[index] === 'string'
+          ? String(textureValues[index]).trim().replaceAll('\\', '/')
+          : '';
+        if (!/^[A-Za-z][A-Za-z0-9_]{0,47}$/.test(name)
+          || typeof textureValues[index] !== 'string'
+          || path && (!path.startsWith('Assets/')
+            || !/\.(?:png|jpe?g|webp|bmp|gif|tga)$/i.test(path)
+            || path.split('/').some((segment) => !segment || segment === '.' || segment === '..'))) {
+          throw new Error(`invalid MaterialPropertyBlock in ${from}: invalid custom texture '${name}'`);
+        }
+        return { name, path };
+      });
+      if (new Set(textures.map(({ name }) => name)).size !== textures.length) {
+        throw new Error(`invalid MaterialPropertyBlock in ${from}: duplicate custom texture name`);
+      }
+      if (parameters.length > 0 || textures.length > 0) {
+        materialPropertyBlockBindings.push({
+          source: from,
+          material: stringValue(meshRenderer, 'material').replaceAll('\\', '/').toLowerCase(),
+          parameters,
+          textures,
+        });
+      }
+    }
     enqueue(
       stringValue(component('EnvironmentLight'), 'texture'),
       from,
@@ -1974,6 +2038,37 @@ function scanBuildAssetDependencies(
       throw new Error(
         `invalid material instance ${instance}: texture '${unknown}' is not declared by ${shader}`,
       );
+    }
+  }
+  for (const binding of materialPropertyBlockBindings) {
+    let base = binding.material;
+    for (let depth = 0; depth <= 32 && materialInstanceParents.has(base); depth += 1) {
+      base = materialInstanceParents.get(base)!;
+    }
+    const shader = materialBaseShaders.get(base);
+    if (shader == null) {
+      throw new Error(
+        `invalid MaterialPropertyBlock in ${binding.source}: custom overrides require a custom material asset`,
+      );
+    }
+    const schema = surfaceShaderSchemas.get(shader);
+    if (!schema) {
+      throw new Error(`invalid MaterialPropertyBlock in ${binding.source}: Surface Shader schema was not validated`);
+    }
+    const unknownParameter = binding.parameters.find((name) => !schema.parameters.has(name));
+    if (unknownParameter) {
+      throw new Error(
+        `invalid MaterialPropertyBlock in ${binding.source}: parameter '${unknownParameter}' is not declared by ${shader}`,
+      );
+    }
+    const unknownTexture = binding.textures.find(({ name }) => !schema.textures.has(name));
+    if (unknownTexture) {
+      throw new Error(
+        `invalid MaterialPropertyBlock in ${binding.source}: texture '${unknownTexture.name}' is not declared by ${shader}`,
+      );
+    }
+    for (const { path } of binding.textures) {
+      if (path) enqueue(path, binding.source, 'MaterialPropertyBlock custom texture');
     }
   }
   const resolveCustomTextureDependencies = (start: string): string[] => {

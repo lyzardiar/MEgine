@@ -117,6 +117,10 @@ export interface MaterialPropertyBlock {
   emissive: [number, number, number];
   overrideEmissiveStrength: boolean;
   emissiveStrength: number;
+  customParameterNames: string[];
+  customParameterValues: [number, number, number, number][];
+  customTextureNames: string[];
+  customTextureValues: string[];
 }
 
 export interface SpriteRenderer {

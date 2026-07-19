@@ -1103,6 +1103,35 @@
       "clearcoat_roughness": {
         "type": "number"
       },
+      "custom_parameter_names": {
+        "items": {
+          "type": "string"
+        },
+        "type": "array"
+      },
+      "custom_parameter_values": {
+        "items": {
+          "items": {
+            "type": "number"
+          },
+          "maxItems": 4,
+          "minItems": 4,
+          "type": "array"
+        },
+        "type": "array"
+      },
+      "custom_texture_names": {
+        "items": {
+          "type": "string"
+        },
+        "type": "array"
+      },
+      "custom_texture_values": {
+        "items": {
+          "type": "string"
+        },
+        "type": "array"
+      },
       "emissive": {
         "items": {
           "type": "number"
@@ -1162,7 +1191,11 @@
       "override_emissive",
       "emissive",
       "override_emissive_strength",
-      "emissive_strength"
+      "emissive_strength",
+      "custom_parameter_names",
+      "custom_parameter_values",
+      "custom_texture_names",
+      "custom_texture_values"
     ],
     "type": "object"
   },
