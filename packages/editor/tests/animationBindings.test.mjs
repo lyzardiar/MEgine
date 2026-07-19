@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 import {
   animationBindingKey,
+  groupAnimationPropertyBindings,
   listAnimationPropertyBindings,
   parseAnimationBindingKey,
 } from '../src/animationBindings.ts';
@@ -30,4 +31,21 @@ test('animation binding keys round-trip without path ambiguity', () => {
     label: 'Arm/Hand / Transform.position',
   });
   assert.equal(parseAnimationBindingKey('broken'), null);
+});
+
+test('animation property picker groups bindings by target and component', () => {
+  const groups = groupAnimationPropertyBindings([
+    { target: '.', component: 'Transform', property: 'position', label: 'Root / Transform.position' },
+    { target: '.', component: 'Transform', property: 'scale', label: 'Root / Transform.scale' },
+    { target: 'Arm', component: 'Transform', property: 'rotation', label: 'Arm / Transform.rotation' },
+    { target: 'Arm', component: 'SpriteRenderer', property: 'color', label: 'Arm / SpriteRenderer.color' },
+  ]);
+  assert.deepEqual(groups.map((group) => ({
+    label: group.label,
+    properties: group.bindings.map((binding) => binding.property),
+  })), [
+    { label: 'Root / Transform', properties: ['position', 'scale'] },
+    { label: 'Arm / Transform', properties: ['rotation'] },
+    { label: 'Arm / SpriteRenderer', properties: ['color'] },
+  ]);
 });

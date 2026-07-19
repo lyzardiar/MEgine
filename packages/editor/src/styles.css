@@ -2973,8 +2973,8 @@ body.insp-scrubbing * {
 }
 
 .timeline-track-tools .timeline-property-picker {
-  width: min(280px, 34%);
-  min-width: 150px;
+  width: min(340px, 42%);
+  min-width: 180px;
 }
 
 .timeline-track-tools .timeline-curve-track-picker {
@@ -2995,6 +2995,16 @@ body.insp-scrubbing * {
   padding: 0;
   border-color: #633838;
   color: #d98787;
+}
+
+.timeline-track-tools .timeline-icon-button {
+  width: 26px;
+  min-width: 26px;
+  padding: 0;
+}
+
+.timeline-track-tools .timeline-manual-binding-toggle {
+  color: #8d9aa5;
 }
 
 .timeline-message {

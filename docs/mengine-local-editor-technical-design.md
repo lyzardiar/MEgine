@@ -913,3 +913,14 @@ Referenced Only 是可用的单包裁剪基础，仍不等同于完整 Addressab
 第一遍自审在真实默认 Dock 的 696px Scene 宽度下测量：改动前工具栏被提示文字撑到 84px，改动后为 35px；固定命令宽度由 40–55px 降到 20–38px，提示获得 271px 单行空间，工具栏自身没有横向溢出。第二遍逐项验证 Grid Pressed 切换、Snap Settings 打开/关闭、Scene/Game 页签切换和 1080×1920 → portrait 派生；Game 工具栏保持 33px 单行，252 项 Editor 测试及生产构建通过。
 
 这次只统一了高频 Viewport 工具栏，不代表全编辑器视觉系统已经收敛。后续仍需建立共享 IconButton/ToolbarGroup/DropdownButton 组件与尺寸 Token，继续迁移 Hierarchy、Project、Inspector、Sprite、Material、Animator、Build Settings 和 Sequencer，并补 Dock 极窄宽度下的溢出菜单、全局快捷键映射与可配置工具栏。
+
+## 72. 2026-07-19 Animation Timeline 一步式 Add Property
+
+- Animation Timeline 的属性下拉从“选择属性 → 再点 Track”改为选择即创建轨道，成功后立即选中新轨道并生成首尾关键帧，继续复用原有全局 Undo、Dirty、Save All 和 Scene Preview。下拉始终回到 `Add Property...`，可连续添加多个属性。
+- 候选项按“目标对象 / 组件”分组，只显示组内短属性路径；已经存在于当前 Clip 的完整 `target + component + property` 绑定不再继续显示。Undo 删除轨道后候选自动恢复，Redo 后再次移除，选项状态由当前权威 Clip 推导而不是维护第二份易漂移缓存。
+- 高级 `Component.property` 手工路径不再长期占据工具栏，收进独立 Code 图标。展开后仍支持 Enter 创建、Escape 关闭和显式 Add；成功创建后自动收起。普通用户获得一步式主路径，高级用户没有失去对尚未进入反射列表属性的兜底入口。
+- 新增纯函数分组器，保持目标和组件首次出现顺序，并从完整 Label 稳定生成组名。单测覆盖 Root/子对象、同组件多属性和同对象多组件，避免 UI 自行用字符串切割拼装出不一致菜单。
+
+第一遍真实运行自审创建 `Button.manim` 后检查六个组件分组，选择 `Button / Transform / position` 即刻得到 `Transform.position` 与 0s/1s 两个关键帧，候选列表同步移除 position。第二遍验证高级路径展开/Escape、Undo/Redo 与候选恢复；工具栏保持 31px 单行、340px 属性选择区且 `scrollWidth === clientWidth`。测试资产和编辑器状态差异在提交前全部清理。
+
+这次消除了 Animation Clip 最常见建轨动作中的一次多余确认，但成熟动画编辑器仍需可搜索的虚拟化 Property Popup、多属性批量添加、属性收藏、Binding 丢失修复、模型动画曲线映射、Onion Skin/运动轨迹和录制冲突诊断。HTML Select 在超大层级下不是最终形态，后续应升级为键盘可导航、按目标/组件折叠且支持模糊搜索的专用菜单。

@@ -14,6 +14,7 @@ import {
   ChevronRight,
   Circle,
   ClipboardPaste,
+  Code2,
   Copy,
   Crosshair,
   Maximize2,
@@ -60,6 +61,7 @@ import {
 import { parseAnimatorController } from '../animatorController';
 import {
   animationBindingKey,
+  groupAnimationPropertyBindings,
   listAnimationPropertyBindings,
   parseAnimationBindingKey,
 } from '../animationBindings';
@@ -920,7 +922,7 @@ export function Timeline(props: {
   const [newClipName, setNewClipName] = useState('');
   const [showNewClip, setShowNewClip] = useState(false);
   const [propertyPath, setPropertyPath] = useState('Transform.position');
-  const [propertyBinding, setPropertyBinding] = useState('');
+  const [manualPropertyOpen, setManualPropertyOpen] = useState(false);
   const [zoom, setZoom] = useState(1);
   const [viewMode, setViewMode] = useState<TimelineViewMode>('dope_sheet');
   const [detailsOpen, setDetailsOpen] = useState(false);
@@ -1334,6 +1336,18 @@ export function Timeline(props: {
       : [],
     [props.authoredEntities, props.entity?.entity],
   );
+  const addablePropertyBindings = useMemo(
+    () => propertyBindings.filter((binding) => !clip?.tracks.some((track) => (
+      track.target === binding.target
+      && track.component === binding.component
+      && track.property === binding.property
+    ))),
+    [clip, propertyBindings],
+  );
+  const propertyBindingGroups = useMemo(
+    () => groupAnimationPropertyBindings(addablePropertyBindings),
+    [addablePropertyBindings],
+  );
 
   const assignClip = (path: string) => {
     if (!props.entity) return;
@@ -1466,21 +1480,22 @@ export function Timeline(props: {
     }
   };
 
-  const addProperty = () => {
-    if (!clip || !props.entity) return;
-    const picked = parseAnimationBindingKey(propertyBinding);
+  const addProperty = (bindingKey = ''): boolean => {
+    if (!clip || !props.entity) return false;
+    const picked = parseAnimationBindingKey(bindingKey);
     const raw = propertyPath.trim();
     const dot = raw.indexOf('.');
     const target = picked?.target ?? '.';
     const component = picked?.component ?? raw.slice(0, dot).trim();
     const property = picked?.property ?? raw.slice(dot + 1).trim();
+    const propertyLabel = picked ? `${target}:${component}.${property}` : raw;
     const bindingTarget = targetEntity(props.authoredEntities, props.entity, target);
     const value = dot > 0 || picked
       ? getProperty(bindingTarget?.components[component], property)
       : null;
     if (!component || !property || value == null) {
-      props.onLog(`无法记录属性：${raw}`, 'warn');
-      return;
+      props.onLog(`无法记录属性：${propertyLabel}`, 'warn');
+      return false;
     }
     const existing = clip.tracks.findIndex((track) => (
       track.target === target && track.component === component && track.property === property
@@ -1490,7 +1505,7 @@ export function Timeline(props: {
       setSelectedKeys([]);
       setSelectedKey(null);
       props.onLog(`${component}.${property} 已在当前 Animation Clip 中`, 'warn');
-      return;
+      return false;
     }
     const keyframes = [{ time: 0, value: structuredClone(value) }];
     if (clip.duration > 0) keyframes.push({ time: clip.duration, value: structuredClone(value) });
@@ -1509,7 +1524,7 @@ export function Timeline(props: {
     setSelectedKey(null);
     setSelectedEvent(null);
     updateClip(next, 'Add Animation Track');
-    setPropertyBinding('');
+    return true;
   };
 
   const recordKey = () => {
@@ -2423,37 +2438,64 @@ export function Timeline(props: {
             )}
             <select
               className="timeline-property-picker"
-              aria-label="Animatable property picker"
-              value={propertyBinding}
+              aria-label="Add animated property"
+              value=""
+              disabled={addablePropertyBindings.length === 0}
               onChange={(event) => {
-                setPropertyBinding(event.target.value);
-                const binding = parseAnimationBindingKey(event.target.value);
-                if (binding) setPropertyPath(`${binding.component}.${binding.property}`);
+                const bindingKey = event.target.value;
+                const binding = parseAnimationBindingKey(bindingKey);
+                if (!binding) return;
+                setPropertyPath(`${binding.component}.${binding.property}`);
+                addProperty(bindingKey);
               }}
             >
-              <option value="">Choose target property...</option>
-              {propertyBindings.map((binding) => (
-                <option key={animationBindingKey(binding)} value={animationBindingKey(binding)}>
-                  {binding.label}
-                </option>
+              <option value="">
+                {addablePropertyBindings.length > 0 ? 'Add Property...' : 'All properties added'}
+              </option>
+              {propertyBindingGroups.map((group) => (
+                <optgroup key={group.key} label={group.label}>
+                  {group.bindings.map((binding) => (
+                    <option key={animationBindingKey(binding)} value={animationBindingKey(binding)}>
+                      {binding.property}
+                    </option>
+                  ))}
+                </optgroup>
               ))}
             </select>
-            <input
-              className="timeline-property-path"
-              aria-label="Property track"
-              title="Component.property，例如 Transform.position"
-              value={propertyPath}
-              onChange={(event) => {
-                setPropertyPath(event.target.value);
-                setPropertyBinding('');
-              }}
-              onKeyDown={(event) => {
-                if (event.key === 'Enter') addProperty();
-              }}
-            />
-            <button type="button" onClick={addProperty} title="Add selected property as a track">
-              <Plus size={13} aria-hidden="true" /><span>Track</span>
+            <button
+              type="button"
+              className={`timeline-icon-button timeline-manual-binding-toggle${manualPropertyOpen ? ' active' : ''}`}
+              aria-label={manualPropertyOpen ? 'Hide manual property path' : 'Add property by path'}
+              aria-expanded={manualPropertyOpen}
+              title="Advanced: add a Component.property path"
+              onClick={() => setManualPropertyOpen((open) => !open)}
+            >
+              <Code2 size={13} aria-hidden="true" />
             </button>
+            {manualPropertyOpen && <>
+              <input
+                className="timeline-property-path"
+                aria-label="Property track"
+                title="Component.property，例如 Transform.position"
+                value={propertyPath}
+                onChange={(event) => setPropertyPath(event.target.value)}
+                onKeyDown={(event) => {
+                  if (event.key === 'Enter' && addProperty()) setManualPropertyOpen(false);
+                  if (event.key === 'Escape') setManualPropertyOpen(false);
+                }}
+              />
+              <button
+                type="button"
+                className="timeline-icon-button"
+                aria-label="Add manual property track"
+                title="Add manual property track"
+                onClick={() => {
+                  if (addProperty()) setManualPropertyOpen(false);
+                }}
+              >
+                <Plus size={13} aria-hidden="true" />
+              </button>
+            </>}
             <button type="button" onClick={addEvent} title="Add animation event at the playhead">
               <Plus size={13} aria-hidden="true" /><span>Event</span>
             </button>

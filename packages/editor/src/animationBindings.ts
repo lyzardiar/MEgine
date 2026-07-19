@@ -12,6 +12,12 @@ export type AnimationPropertyBinding = {
   label: string;
 };
 
+export type AnimationPropertyBindingGroup = {
+  key: string;
+  label: string;
+  bindings: AnimationPropertyBinding[];
+};
+
 function animatablePaths(value: unknown, prefix = '', output: string[] = []): string[] {
   if (output.length >= 2048) return output;
   if (typeof value === 'number' || typeof value === 'boolean' || typeof value === 'string') {
@@ -84,6 +90,29 @@ export function listAnimationPropertyBindings(
 
 export function animationBindingKey(binding: Pick<AnimationPropertyBinding, 'target' | 'component' | 'property'>): string {
   return `${binding.target}\u0000${binding.component}\u0000${binding.property}`;
+}
+
+export function groupAnimationPropertyBindings(
+  bindings: readonly AnimationPropertyBinding[],
+): AnimationPropertyBindingGroup[] {
+  const groups = new Map<string, AnimationPropertyBindingGroup>();
+  for (const binding of bindings) {
+    const key = `${binding.target}\u0000${binding.component}`;
+    let group = groups.get(key);
+    if (!group) {
+      const propertySuffix = `.${binding.property}`;
+      group = {
+        key,
+        label: binding.label.endsWith(propertySuffix)
+          ? binding.label.slice(0, -propertySuffix.length)
+          : `${binding.target} / ${binding.component}`,
+        bindings: [],
+      };
+      groups.set(key, group);
+    }
+    group.bindings.push(binding);
+  }
+  return [...groups.values()];
 }
 
 export function parseAnimationBindingKey(value: string): AnimationPropertyBinding | null {
