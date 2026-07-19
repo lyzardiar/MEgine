@@ -93,6 +93,7 @@ export function Project(props: {
   onOpenSprite: (path: string) => void;
   onOpenSpriteAtlas: (path: string) => void;
   onRenameScene: (oldName: string, newName: string) => boolean | Promise<boolean>;
+  onDeleteScene: (name: string) => boolean | Promise<boolean>;
   onLog?: (msg: string, level?: 'info' | 'warn' | 'error') => void;
 }) {
   const [folder, setFolder] = useState('Assets/Scenes');
@@ -275,6 +276,20 @@ export function Project(props: {
         const base = trimmed.replace(/\.mscene$/i, '');
         setSelected(sceneFileName(base));
       }
+    });
+  };
+
+  const requestDeleteScene = (name: string) => {
+    setCtx(null);
+    if (name === props.activeScene) {
+      props.onLog?.('The active scene cannot be deleted. Open another scene first.', 'warn');
+      return;
+    }
+    if (!window.confirm(`Delete ${sceneFileName(name)} permanently? This cannot be undone.`)) {
+      return;
+    }
+    void Promise.resolve(props.onDeleteScene(name)).then((ok) => {
+      if (ok) setSelected((current) => (current === sceneFileName(name) ? null : current));
     });
   };
 
@@ -514,14 +529,28 @@ export function Project(props: {
               onClick={(e) => onCardClick(a, e)}
               onDoubleClick={() => onCardDoubleClick(a)}
               onKeyDown={(event) => {
-                if (event.key !== 'Enter') return;
-                event.preventDefault();
-                onCardDoubleClick(a);
+                if (event.key === 'F2') {
+                  event.preventDefault();
+                  event.stopPropagation();
+                  if (a.kind === 'scene' && a.sceneName) beginRename(a.sceneName);
+                  return;
+                }
+                if (event.key === 'Delete' || event.key === 'Backspace') {
+                  event.preventDefault();
+                  event.stopPropagation();
+                  if (a.kind === 'scene' && a.sceneName) requestDeleteScene(a.sceneName);
+                  return;
+                }
+                if (event.key === 'Enter') {
+                  event.preventDefault();
+                  event.stopPropagation();
+                  onCardDoubleClick(a);
+                }
               }}
               onContextMenu={(e) => onContext(e, a)}
               title={
                 a.kind === 'scene'
-                  ? '双击打开 · F2 / 慢双击重命名'
+                  ? '双击打开 · F2 / 慢双击重命名 · Delete 删除'
                   : a.kind === 'script'
                     ? '双击在 IDE 中打开'
                     : a.kind === 'sprite'
@@ -567,6 +596,7 @@ export function Project(props: {
                   onChange={(e) => setEditValue(e.target.value)}
                   onBlur={commitRename}
                   onKeyDown={(e) => {
+                    e.stopPropagation();
                     if (e.key === 'Enter') {
                       e.preventDefault();
                       commitRename();
@@ -647,6 +677,20 @@ export function Project(props: {
                   }}
                 >
                   Rename <span className="hint">F2</span>
+                </button>
+                <button
+                  type="button"
+                  disabled={ctx.asset.sceneName === props.activeScene}
+                  title={ctx.asset.sceneName === props.activeScene
+                    ? 'Open another scene before deleting the active scene'
+                    : 'Delete scene permanently'}
+                  onPointerDown={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    requestDeleteScene(ctx.asset.sceneName!);
+                  }}
+                >
+                  Delete <span className="hint">Del</span>
                 </button>
               </>
             )}

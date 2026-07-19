@@ -2054,6 +2054,34 @@ fn list_project_scenes(state: State<'_, AppState>) -> Result<Vec<ProjectSceneInf
 }
 
 #[tauri::command]
+fn rename_project_scene(
+    old_name: String,
+    new_name: String,
+    state: State<'_, AppState>,
+) -> Result<ProjectSnapshot, EditorFailure> {
+    let mut guard = state.project.lock();
+    let session = guard.as_mut().ok_or_else(no_project)?;
+    session
+        .rename_scene(
+            Path::new(&format!("Assets/Scenes/{old_name}.mscene")),
+            Path::new(&format!("Assets/Scenes/{new_name}.mscene")),
+        )
+        .map_err(|error| error.failure(Some(session.current_revision())))
+}
+
+#[tauri::command]
+fn delete_project_scene(
+    name: String,
+    state: State<'_, AppState>,
+) -> Result<ProjectSnapshot, EditorFailure> {
+    let mut guard = state.project.lock();
+    let session = guard.as_mut().ok_or_else(no_project)?;
+    session
+        .delete_scene(Path::new(&format!("Assets/Scenes/{name}.mscene")))
+        .map_err(|error| error.failure(Some(session.current_revision())))
+}
+
+#[tauri::command]
 fn get_project_build_settings(state: State<'_, AppState>) -> Result<ProjectBuildSettings, String> {
     let guard = state.project.lock();
     let session = guard.as_ref().ok_or_else(|| no_project().message)?;
@@ -2710,6 +2738,8 @@ pub fn run() {
             remove_recent_project,
             get_project_snapshot,
             list_project_scenes,
+            rename_project_scene,
+            delete_project_scene,
             get_project_build_settings,
             save_project_build_settings,
             save_project_build_asset_settings,

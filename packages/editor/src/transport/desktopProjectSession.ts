@@ -1,9 +1,11 @@
 import {
   createProject,
+  deleteProjectScene,
   getProjectSnapshot,
   openProjectScene,
   openProject,
   projectSnapshotAsSceneJson,
+  renameProjectScene,
   saveProjectScene,
   type HostWorldSnapshot,
   type ProjectSnapshot,
@@ -96,5 +98,20 @@ export async function saveDesktopScene(name: string): Promise<ProjectSnapshot> {
 export async function openDesktopScene(name: string): Promise<ProjectSnapshot> {
   if (!currentProject) throw new Error('no desktop project is open');
   currentProject = await openProjectScene(`Assets/Scenes/${name}.mscene`);
+  return currentProject;
+}
+
+export async function renameDesktopScene(
+  oldName: string,
+  newName: string,
+): Promise<ProjectSnapshot> {
+  if (!currentProject) throw new Error('no desktop project is open');
+  currentProject = await renameProjectScene(oldName, newName);
+  return currentProject;
+}
+
+export async function deleteDesktopScene(name: string): Promise<ProjectSnapshot> {
+  if (!currentProject) throw new Error('no desktop project is open');
+  currentProject = await deleteProjectScene(name);
   return currentProject;
 }

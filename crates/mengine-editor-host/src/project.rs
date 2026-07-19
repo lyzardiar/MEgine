@@ -327,6 +327,150 @@ impl ProjectSession {
         Ok(normalized)
     }
 
+    pub fn rename_scene(
+        &mut self,
+        old_path: impl AsRef<Path>,
+        new_path: impl AsRef<Path>,
+    ) -> Result<ProjectSnapshot, ProjectError> {
+        let old_relative = normalize_scene_asset_path(old_path.as_ref())?;
+        let new_relative = normalize_scene_asset_path(new_path.as_ref())?;
+        if old_relative == new_relative {
+            return Ok(self.snapshot());
+        }
+
+        let source_metadata = std::fs::symlink_metadata(self.project_root.join(&old_relative))?;
+        if source_metadata.file_type().is_symlink() || !source_metadata.is_file() {
+            return Err(ProjectError::InvalidPath(
+                old_relative.display().to_string(),
+            ));
+        }
+        let source = self.resolve_existing(&old_relative)?;
+        let target = self.resolve_for_write(&new_relative)?;
+        if target.exists() {
+            if !same_existing_file(&source, &target)? {
+                return Err(ProjectError::InvalidProject(format!(
+                    "scene already exists: {}",
+                    new_relative.display()
+                )));
+            }
+        }
+        let original_scene_bytes = std::fs::read(&source)?;
+        let mut renamed_scene: serde_json::Value = serde_json::from_slice(&original_scene_bytes)?;
+        let renamed_scene_object = renamed_scene.as_object_mut().ok_or_else(|| {
+            ProjectError::InvalidProject(format!(
+                "scene must contain a JSON object: {}",
+                old_relative.display()
+            ))
+        })?;
+        renamed_scene_object.insert(
+            "name".into(),
+            serde_json::Value::String(
+                new_relative
+                    .file_stem()
+                    .and_then(|value| value.to_str())
+                    .unwrap_or("Untitled")
+                    .to_string(),
+            ),
+        );
+        let mut renamed_scene_bytes = serde_json::to_vec_pretty(&renamed_scene)?;
+        renamed_scene_bytes.push(b'\n');
+
+        let old_portable = old_relative.to_string_lossy().replace('\\', "/");
+        let new_portable = new_relative.to_string_lossy().replace('\\', "/");
+        let mut manifest = self.manifest.clone();
+        if manifest
+            .main_scene
+            .as_deref()
+            .is_some_and(|scene| scene.eq_ignore_ascii_case(&old_portable))
+        {
+            manifest.main_scene = Some(new_portable.clone());
+        }
+        for scene in &mut manifest.build_scenes {
+            if scene.eq_ignore_ascii_case(&old_portable) {
+                *scene = new_portable.clone();
+            }
+        }
+        let manifest_changed = manifest.main_scene != self.manifest.main_scene
+            || manifest.build_scenes != self.manifest.build_scenes;
+        let manifest_bytes = if manifest_changed {
+            let mut bytes = serde_json::to_vec_pretty(&manifest)?;
+            bytes.push(b'\n');
+            Some(bytes)
+        } else {
+            None
+        };
+
+        rename_file_case_aware(&source, &target)?;
+        if let Err(error) = write_replace_synced(&target, &renamed_scene_bytes) {
+            if let Err(rollback) = rename_file_case_aware(&target, &source) {
+                return Err(ProjectError::InvalidProject(format!(
+                    "scene rename could not update the scene name ({error}) and rollback failed ({rollback})"
+                )));
+            }
+            return Err(ProjectError::Io(error));
+        }
+        if let Some(bytes) = manifest_bytes {
+            if let Err(error) =
+                write_replace_synced(&self.project_root.join("project.json"), &bytes)
+            {
+                let content_rollback = write_replace_synced(&target, &original_scene_bytes);
+                let path_rollback = rename_file_case_aware(&target, &source);
+                if let Err(rollback) = content_rollback.and(path_rollback) {
+                    return Err(ProjectError::InvalidProject(format!(
+                        "scene rename could not update project.json ({error}) and rollback failed ({rollback})"
+                    )));
+                }
+                return Err(ProjectError::Io(error));
+            }
+            self.manifest = manifest;
+        }
+        if self.scene_relative_path.as_ref().is_some_and(|scene| {
+            scene
+                .to_string_lossy()
+                .replace('\\', "/")
+                .eq_ignore_ascii_case(&old_portable)
+        }) {
+            self.scene_relative_path = Some(new_relative);
+        }
+        self.revision = self.revision.saturating_add(1);
+        Ok(self.snapshot())
+    }
+
+    pub fn delete_scene(
+        &mut self,
+        relative_path: impl AsRef<Path>,
+    ) -> Result<ProjectSnapshot, ProjectError> {
+        let relative = normalize_scene_asset_path(relative_path.as_ref())?;
+        let portable = relative.to_string_lossy().replace('\\', "/");
+        if self.scene_relative_path.as_ref().is_some_and(|scene| {
+            scene
+                .to_string_lossy()
+                .replace('\\', "/")
+                .eq_ignore_ascii_case(&portable)
+        }) {
+            return Err(ProjectError::InvalidProject(
+                "the active scene cannot be deleted; open another scene first".into(),
+            ));
+        }
+        if self
+            .build_scenes()
+            .iter()
+            .any(|scene| scene.eq_ignore_ascii_case(&portable))
+        {
+            return Err(ProjectError::InvalidProject(
+                "the scene is included in Build Settings; remove it before deleting".into(),
+            ));
+        }
+        let metadata = std::fs::symlink_metadata(self.project_root.join(&relative))?;
+        if metadata.file_type().is_symlink() || !metadata.is_file() {
+            return Err(ProjectError::InvalidPath(relative.display().to_string()));
+        }
+        let absolute = self.resolve_existing(&relative)?;
+        std::fs::remove_file(absolute)?;
+        self.revision = self.revision.saturating_add(1);
+        Ok(self.snapshot())
+    }
+
     pub fn open_scene(
         &mut self,
         relative_path: impl AsRef<Path>,
@@ -768,6 +912,78 @@ fn normalize_relative_path(path: &Path) -> Result<PathBuf, ProjectError> {
     Ok(normalized)
 }
 
+fn normalize_scene_asset_path(path: &Path) -> Result<PathBuf, ProjectError> {
+    let normalized = normalize_relative_path(path)?;
+    let components = normalized.components().collect::<Vec<_>>();
+    let valid_parent = components.len() == 3
+        && components[0] == Component::Normal("Assets".as_ref())
+        && components[1] == Component::Normal("Scenes".as_ref());
+    let valid_extension = normalized
+        .extension()
+        .and_then(|value| value.to_str())
+        .is_some_and(|value| value.eq_ignore_ascii_case("mscene"));
+    let Some(stem) = normalized.file_stem().and_then(|value| value.to_str()) else {
+        return Err(ProjectError::InvalidPath(normalized.display().to_string()));
+    };
+    if !valid_parent || !valid_extension {
+        return Err(ProjectError::InvalidPath(normalized.display().to_string()));
+    }
+    validate_project_name(stem)?;
+    Ok(normalized)
+}
+
+fn rename_file_case_aware(source: &Path, target: &Path) -> std::io::Result<()> {
+    if source == target {
+        return Ok(());
+    }
+    if !target.exists() {
+        return std::fs::rename(source, target);
+    }
+    let metadata = std::fs::symlink_metadata(target)?;
+    if metadata.file_type().is_symlink() || !metadata.is_file() {
+        return Err(std::io::Error::new(
+            std::io::ErrorKind::AlreadyExists,
+            "scene rename target is not the source file",
+        ));
+    }
+    if !same_existing_file(source, target)? {
+        return Err(std::io::Error::new(
+            std::io::ErrorKind::AlreadyExists,
+            "scene rename target already exists",
+        ));
+    }
+    let parent = source.parent().ok_or_else(|| {
+        std::io::Error::new(std::io::ErrorKind::InvalidInput, "scene has no parent")
+    })?;
+    let temporary = parent.join(format!(".scene-rename.{}.tmp", Uuid::new_v4()));
+    std::fs::rename(source, &temporary)?;
+    if let Err(error) = std::fs::rename(&temporary, target) {
+        let _ = std::fs::rename(&temporary, source);
+        return Err(error);
+    }
+    Ok(())
+}
+
+#[cfg(windows)]
+fn same_existing_file(left: &Path, right: &Path) -> std::io::Result<bool> {
+    let left = std::fs::canonicalize(left)?;
+    let right = std::fs::canonicalize(right)?;
+    Ok(left.to_string_lossy().to_lowercase() == right.to_string_lossy().to_lowercase())
+}
+
+#[cfg(unix)]
+fn same_existing_file(left: &Path, right: &Path) -> std::io::Result<bool> {
+    use std::os::unix::fs::MetadataExt;
+    let left = std::fs::metadata(left)?;
+    let right = std::fs::metadata(right)?;
+    Ok(left.dev() == right.dev() && left.ino() == right.ino())
+}
+
+#[cfg(not(any(windows, unix)))]
+fn same_existing_file(left: &Path, right: &Path) -> std::io::Result<bool> {
+    Ok(std::fs::canonicalize(left)? == std::fs::canonicalize(right)?)
+}
+
 fn normalize_build_asset_paths(
     project_root: &Path,
     paths: &[String],
@@ -986,6 +1202,85 @@ mod tests {
         assert_eq!(saved["mainScene"], "Assets/Scenes/Level2.mscene");
         assert_eq!(saved["buildScenes"], json!(scenes));
         assert_eq!(saved["startupScript"], "Assets/Scripts/start.js");
+        std::fs::remove_dir_all(root).unwrap();
+    }
+
+    #[test]
+    fn scene_rename_and_delete_preserve_session_and_build_settings_invariants() {
+        let root = make_project();
+        let main = root.join("Assets/Scenes/Main.mscene");
+        std::fs::copy(&main, root.join("Assets/Scenes/Level2.mscene")).unwrap();
+        std::fs::copy(&main, root.join("Assets/Scenes/Scratch.mscene")).unwrap();
+        std::fs::copy(&main, root.join("Assets/Scenes/Collision.mscene")).unwrap();
+        let mut session = ProjectSession::open(&root).unwrap();
+        session
+            .save_build_scenes(vec![
+                "Assets/Scenes/Main.mscene".into(),
+                "Assets/Scenes/Level2.mscene".into(),
+            ])
+            .unwrap();
+        session.open_main_scene().unwrap();
+
+        let renamed = session
+            .rename_scene("Assets/Scenes/Main.mscene", "Assets/Scenes/Renamed.mscene")
+            .unwrap();
+        assert_eq!(
+            renamed.scene_path.as_deref(),
+            Some("Assets/Scenes/Renamed.mscene")
+        );
+        assert!(!root.join("Assets/Scenes/Main.mscene").exists());
+        let renamed_path = root.join("Assets/Scenes/Renamed.mscene");
+        assert!(renamed_path.is_file());
+        let renamed_scene: serde_json::Value =
+            serde_json::from_slice(&std::fs::read(&renamed_path).unwrap()).unwrap();
+        assert_eq!(renamed_scene["name"], "Renamed");
+        let manifest: serde_json::Value =
+            serde_json::from_slice(&std::fs::read(root.join("project.json")).unwrap()).unwrap();
+        assert_eq!(manifest["mainScene"], "Assets/Scenes/Renamed.mscene");
+        assert_eq!(
+            manifest["buildScenes"],
+            json!([
+                "Assets/Scenes/Renamed.mscene",
+                "Assets/Scenes/Level2.mscene"
+            ])
+        );
+
+        let case_renamed = session
+            .rename_scene(
+                "Assets/Scenes/Renamed.mscene",
+                "Assets/Scenes/RENAMED.mscene",
+            )
+            .unwrap();
+        assert_eq!(
+            case_renamed.scene_path.as_deref(),
+            Some("Assets/Scenes/RENAMED.mscene")
+        );
+        assert!(root.join("Assets/Scenes/RENAMED.mscene").is_file());
+
+        let active_error = session
+            .delete_scene("Assets/Scenes/RENAMED.mscene")
+            .unwrap_err();
+        assert!(active_error.to_string().contains("active scene"));
+        let build_error = session
+            .delete_scene("Assets/Scenes/Level2.mscene")
+            .unwrap_err();
+        assert!(build_error.to_string().contains("Build Settings"));
+        assert!(session
+            .rename_scene(
+                "Assets/Scenes/Level2.mscene",
+                "Assets/Scenes/Collision.mscene"
+            )
+            .is_err());
+        assert!(root.join("Assets/Scenes/Level2.mscene").is_file());
+        assert!(root.join("Assets/Scenes/Collision.mscene").is_file());
+
+        session
+            .delete_scene("Assets/Scenes/Scratch.mscene")
+            .unwrap();
+        assert!(!root.join("Assets/Scenes/Scratch.mscene").exists());
+        assert!(session
+            .delete_scene("Assets/Scenes/../Collision.mscene")
+            .is_err());
         std::fs::remove_dir_all(root).unwrap();
     }
 

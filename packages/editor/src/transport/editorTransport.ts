@@ -367,6 +367,19 @@ export async function listProjectScenes(): Promise<ProjectSceneInfo[]> {
   return invoke<ProjectSceneInfo[]>('list_project_scenes');
 }
 
+export async function renameProjectScene(
+  oldName: string,
+  newName: string,
+): Promise<ProjectSnapshot> {
+  if (!isDesktopEditor()) throw new Error('Scene rename requires the desktop editor');
+  return invoke<ProjectSnapshot>('rename_project_scene', { oldName, newName });
+}
+
+export async function deleteProjectScene(name: string): Promise<ProjectSnapshot> {
+  if (!isDesktopEditor()) throw new Error('Scene deletion requires the desktop editor');
+  return invoke<ProjectSnapshot>('delete_project_scene', { name });
+}
+
 export async function getProjectBuildSettings(): Promise<ProjectBuildSettings> {
   if (isDesktopEditor()) {
     return invoke<ProjectBuildSettings>('get_project_build_settings');

@@ -15,6 +15,7 @@ import {
 import { getBehaviour } from '@mengine/behaviour';
 import {
   getActiveSceneName,
+  deleteScene,
   initSceneLibrary,
   isDiskBackend,
   listScenes,
@@ -1159,24 +1160,42 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
               onOpenSprite={(path) => openSpriteAsset(path)}
               onOpenSpriteAtlas={(path) => openSpriteAtlasAsset(path)}
               onRenameScene={async (oldName, newName) => {
-                const next = await renameScene(oldName, newName);
-                if (next == null) {
-                  log(
-                    `重命名失败：名称无效或「${normalizeSceneName(newName) ?? newName}」已存在`,
-                    'warn',
-                  );
+                try {
+                  const next = await renameScene(oldName, newName);
+                  if (next == null) {
+                    log(
+                      `重命名失败：名称无效或「${normalizeSceneName(newName) ?? newName}」已存在`,
+                      'warn',
+                    );
+                    bumpScenes();
+                    return false;
+                  }
+                  if (next !== oldName) {
+                    if (sceneNameRef.current === oldName) {
+                      sceneNameRef.current = next;
+                      setSceneName(next);
+                    }
+                    bumpScenes();
+                    log(`Renamed ${sceneFileName(oldName)} → ${sceneFileName(next)}`);
+                  }
+                  return true;
+                } catch (error) {
+                  log(`Scene rename failed: ${error instanceof Error ? error.message : String(error)}`, 'error');
                   bumpScenes();
                   return false;
                 }
-                if (next !== oldName) {
-                  if (sceneNameRef.current === oldName) {
-                    sceneNameRef.current = next;
-                    setSceneName(next);
-                  }
+              }}
+              onDeleteScene={async (name) => {
+                try {
+                  await deleteScene(name);
                   bumpScenes();
-                  log(`Renamed ${sceneFileName(oldName)} → ${sceneFileName(next)}`);
+                  log(`Deleted ${sceneFileName(name)}`);
+                  return true;
+                } catch (error) {
+                  log(`Scene deletion failed: ${error instanceof Error ? error.message : String(error)}`, 'error');
+                  bumpScenes();
+                  return false;
                 }
-                return true;
               }}
               onLog={log}
             />

@@ -1,9 +1,11 @@
 /** Scene library — disk via Vite `/__mengine/*` (IDE), localStorage fallback. */
 
 import {
+  deleteDesktopScene,
   desktopProjectSceneJson,
   getDesktopProject,
   openDesktopScene,
+  renameDesktopScene,
   replaceDesktopSceneJson,
   saveDesktopScene,
 } from './transport/desktopProjectSession';
@@ -83,7 +85,8 @@ function saveLocalPrefs() {
 }
 
 export function sceneExists(name: string) {
-  return _index.some((s) => s.name === name);
+  const key = name.toLowerCase();
+  return _index.some((scene) => scene.name.toLowerCase() === key);
 }
 
 export function readSceneJson(name: string): string | null {
@@ -377,21 +380,20 @@ export async function writeScene(name: string, json: string) {
 
 export async function deleteScene(name: string) {
   if (_backend === 'desktop') {
-    throw new Error('desktop scene deletion is not implemented yet');
+    await deleteDesktopScene(name);
+  } else if (_backend === 'disk') {
+    const response = await fetch(`${API}/scenes/${encodeURIComponent(name)}`, { method: 'DELETE' });
+    if (!response.ok) throw new Error(`disk delete failed: ${response.status}`);
+  } else {
+    localStorage.removeItem(dataKey(name));
+    if (localStorage.getItem(SCENES_ACTIVE_KEY) === name) {
+      localStorage.removeItem(SCENES_ACTIVE_KEY);
+    }
   }
   _data.delete(name);
   _index = _index.filter((s) => s.name !== name);
   if (_active === name) _active = null;
-
-  if (_backend === 'disk') {
-    await fetch(`${API}/scenes/${encodeURIComponent(name)}`, { method: 'DELETE' });
-    return;
-  }
-  localStorage.removeItem(dataKey(name));
-  applyLocalIndex(_index);
-  if (localStorage.getItem(SCENES_ACTIVE_KEY) === name) {
-    localStorage.removeItem(SCENES_ACTIVE_KEY);
-  }
+  if (_backend === 'local') applyLocalIndex(_index);
 }
 
 /** Rename scene asset. Returns null on failure; oldName if unchanged; newName on success. */
@@ -400,34 +402,20 @@ export async function renameScene(oldName: string, newNameRaw: string): Promise<
   if (!newName) return null;
   if (newName === oldName) return oldName;
   if (!_data.has(oldName) && !readSceneJson(oldName)) return null;
-  if (sceneExists(newName)) return null;
+  const newKey = newName.toLowerCase();
+  if (_index.some((scene) => scene.name !== oldName && scene.name.toLowerCase() === newKey)) {
+    return null;
+  }
 
-  if (_backend === 'desktop') return null;
-
-  if (_backend === 'disk') {
+  if (_backend === 'desktop') {
+    await renameDesktopScene(oldName, newName);
+  } else if (_backend === 'disk') {
     const res = await fetch(`${API}/scenes/rename`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ from: oldName, to: newName }),
     });
     if (!res.ok) return null;
-    const json = _data.get(oldName);
-    if (json) {
-      try {
-        const data = JSON.parse(json);
-        data.name = newName;
-        _data.set(newName, JSON.stringify(data, null, 2));
-      } catch {
-        _data.set(newName, json);
-      }
-      _data.delete(oldName);
-    }
-    _index = sortIndex([
-      ..._index.filter((s) => s.name !== oldName && s.name !== newName),
-      { name: newName, updatedAt: Date.now() },
-    ]);
-    if (_active === oldName) _active = newName;
-    return newName;
   }
 
   const json = readSceneJson(oldName)!;
@@ -439,17 +427,20 @@ export async function renameScene(oldName: string, newNameRaw: string): Promise<
   } catch {
     /* keep raw */
   }
-  localStorage.setItem(dataKey(newName), payload);
-  localStorage.removeItem(dataKey(oldName));
+  if (_backend === 'local') {
+    localStorage.setItem(dataKey(newName), payload);
+    localStorage.removeItem(dataKey(oldName));
+  }
   _data.set(newName, payload);
   _data.delete(oldName);
-  applyLocalIndex([
+  _index = sortIndex([
     ..._index.filter((s) => s.name !== oldName && s.name !== newName),
     { name: newName, updatedAt: Date.now() },
   ]);
   if (_active === oldName) {
     _active = newName;
-    localStorage.setItem(SCENES_ACTIVE_KEY, newName);
+    if (_backend === 'local') localStorage.setItem(SCENES_ACTIVE_KEY, newName);
   }
+  if (_backend === 'local') applyLocalIndex(_index);
   return newName;
 }
