@@ -1151,3 +1151,12 @@ Rust workspace 检查现在零警告通过；Tauri Host 17/17 常规测试与 1/
 - 第一遍自审发现后缀项目会造成自吸附与假 Guide，已用“实际移动集合”修复并补回归；第二遍自审核对了向左边界、向右时长扩展、跨轨 Signal/Clip、锁定、资产不可变、临时模式反转和键盘事务封口。该功能只改变编辑器时间布局，不修改 `.mtimeline` v1 格式或 Runtime 调度语义。
 
 这一切片补齐了长时间轴插入/收紧时间的核心操作，但 Timeline 仍未完备。下一阶段仍需音频波形、稳定 Binding Table、Animator/Blend Track、嵌套 Timeline、录制模式、轨道拖拽排序/入组、Solo、组颜色与高度、运行时性能分析，以及 Animation Clip Timeline 与 Sequencer 之间更统一的时间域和快捷键。
+
+## 95. 2026-07-19 Sequencer Audio Waveform
+
+- Audio Track Clip 不再只是文件名色块。编辑器通过本地 Web Audio 解码工程内 WAV/OGG/MP3/FLAC，把多声道 PCM 单次压缩为 2048 组 Min/Max Peak，再在 Clip 内绘制轻量 SVG 波形；缓存只保留 Peak 和 Promise，不长期持有完整 AudioBuffer，多个引用同一音频的 Clip 共享一次读取与解码。
+- 波形窗口使用与 Runtime 相同的源时间公式 `clip_in + timeline_offset * pitch`。调整 Clip Start/Duration、起始裁剪、Pitch 或 Loop 会立即重新采样显示；非 Loop 超过源时长的部分显示静音，Loop 跨源尾部时回绕到开头。每个可视列聚合覆盖的源 Peak 区间而不是只取单点，缩小 Clip 时不会轻易漏掉短促瞬态。
+- Project 资产变化会失效波形缓存并通知已挂载的 Clip 重载。缓存按规范化、不区分大小写的工程路径去重；浏览器或 WebView 不支持对应音频编解码器、文件缺失或解码失败时，只隐藏波形并保留原 Clip 编辑能力，不阻塞 Timeline、保存或构建。
+- 第一遍自审核对 Runtime 的 `clip_in + elapsed * pitch` 与 `looped` 语义，并确认解码完成后不保留 PCM。第二遍自审覆盖多声道 Min/Max、裁剪窗口、2x Pitch、Loop 回绕、源尾静音、缓存广播清理和组件卸载订阅回收；生产构建继续把能力留在按需加载的 Sequencer Chunk。
+
+波形完成的是音频剪辑的基本可视化，仍不等于成熟音频 Timeline。后续需要真实音频资源时长门禁、音频预听与 Playhead 同步、Fade/Crossfade、波形缩放层级缓存、响度/Peak 警告、Bus/Mixer/空间音频轨道、录音、字幕/口型标记，以及离线构建时的编码质量与平台转码配置。

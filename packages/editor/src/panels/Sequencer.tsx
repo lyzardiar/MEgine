@@ -64,6 +64,8 @@ import {
   openTimelineAsset,
   PROJECT_ASSETS_CHANGED_EVENT,
 } from '../assetEditorEvents';
+import { clearAudioWaveforms } from '../audioWaveform';
+import { AudioWaveform } from './AudioWaveform';
 import {
   SEQUENCER_MAX_ZOOM,
   SEQUENCER_MIN_ZOOM,
@@ -272,6 +274,12 @@ export function Sequencer(props: SequencerProps) {
   useEffect(() => {
     props.onDirtyChange(anyDirty);
   }, [anyDirty, props.onDirtyChange]);
+
+  useEffect(() => {
+    const clear = () => clearAudioWaveforms();
+    window.addEventListener(PROJECT_ASSETS_CHANGED_EVENT, clear);
+    return () => window.removeEventListener(PROJECT_ASSETS_CHANGED_EVENT, clear);
+  }, []);
 
   useEffect(() => {
     let cancelled = false;
@@ -1829,7 +1837,16 @@ export function Sequencer(props: SequencerProps) {
                     title={`${clip.clip} · ${clip.start.toFixed(3)}s + ${clip.duration.toFixed(3)}s`}
                     key={`${clip.start}-${clip.clip}-${clipIndex}`}
                     onPointerDown={(event) => startMarkerDrag(event, trackIndex, clipIndex)}
-                  >♪ {clip.clip.split('/').at(-1)}</button>
+                  >
+                    <AudioWaveform
+                      path={clip.clip}
+                      clipIn={clip.clip_in}
+                      pitch={clip.pitch}
+                      duration={clip.duration}
+                      looped={clip.looped}
+                    />
+                    <span className="sequencer-clip-label">♪ {clip.clip.split('/').at(-1)}</span>
+                  </button>
                 ))}
                 {track.type === 'animation' && track.clips.map((clip, clipIndex) => (
                   <button

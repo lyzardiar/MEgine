@@ -4541,6 +4541,32 @@ button.sequencer-track-header:hover { background: #343b42; }
 .sequencer-audio-clip:hover,
 .sequencer-audio-clip.selected { outline: 1px solid #fff; filter: brightness(1.18); }
 
+.sequencer-audio-waveform {
+  position: absolute;
+  z-index: 0;
+  inset: 1px 5px;
+  width: calc(100% - 10px);
+  height: calc(100% - 2px);
+  opacity: 0.62;
+  pointer-events: none;
+}
+
+.sequencer-audio-waveform path {
+  fill: none;
+  stroke: #bfe7ff;
+  stroke-width: 0.7;
+  vector-effect: non-scaling-stroke;
+}
+
+.sequencer-clip-label {
+  position: relative;
+  z-index: 1;
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  pointer-events: none;
+}
+
 .sequencer-animation-clip {
   position: absolute;
   z-index: 3;
