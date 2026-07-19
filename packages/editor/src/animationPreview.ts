@@ -12,6 +12,11 @@ export type AnimationPreviewEntity = {
   components: Record<string, unknown>;
 };
 
+export type AnimationPreviewLayer = {
+  root: number;
+  samples: readonly AnimationPreviewSample[];
+};
+
 function arrayIndex(segment: string): number | null {
   if (/^\d+$/.test(segment)) return Number(segment);
   const aliases: Record<string, number> = {
@@ -76,20 +81,30 @@ function applyPreviewProperty(
 }
 
 /** Return a preview snapshot without mutating or dirtying authoring entities. */
+export function applyAnimationPreviews<T extends AnimationPreviewEntity>(
+  source: readonly T[],
+  layers: readonly AnimationPreviewLayer[],
+): T[] {
+  const entities = structuredClone(source) as T[];
+  for (const layer of layers) {
+    for (const sample of layer.samples) {
+      const target = resolveAnimationTarget(entities, layer.root, sample.target);
+      const entity = target == null
+        ? null
+        : entities.find((candidate) => candidate.entity === target);
+      const component = entity?.components[sample.component];
+      if (component == null || typeof component !== 'object' || Array.isArray(component)) continue;
+      applyPreviewProperty(component as Record<string, unknown>, sample.property, sample.value);
+    }
+  }
+  return entities;
+}
+
+/** Return a preview snapshot without mutating or dirtying authoring entities. */
 export function applyAnimationPreview<T extends AnimationPreviewEntity>(
   source: readonly T[],
   root: number,
   samples: readonly AnimationPreviewSample[],
 ): T[] {
-  const entities = structuredClone(source) as T[];
-  for (const sample of samples) {
-    const target = resolveAnimationTarget(entities, root, sample.target);
-    const entity = target == null
-      ? null
-      : entities.find((candidate) => candidate.entity === target);
-    const component = entity?.components[sample.component];
-    if (component == null || typeof component !== 'object' || Array.isArray(component)) continue;
-    applyPreviewProperty(component as Record<string, unknown>, sample.property, sample.value);
-  }
-  return entities;
+  return applyAnimationPreviews(source, [{ root, samples }]);
 }

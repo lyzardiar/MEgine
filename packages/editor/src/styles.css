@@ -3577,6 +3577,7 @@ body.insp-scrubbing * {
   color: var(--u-muted);
 }
 .timeline-message.error { color: #ff8a8a; background: #3a2020; }
+.timeline-message.warning { color: #dfc17a; background: #332d20; }
 
 .timeline-grid-scroll {
   flex: 1;
@@ -4589,6 +4590,15 @@ body.insp-scrubbing * {
   white-space: nowrap;
 }
 .sequencer-live-status.playing { border-color: #39704d; color: #8de5ab; background: #203428; }
+.sequencer-live-status.edit-preview { border-color: #345f75; color: #8ccce7; background: #20303a; }
+.inspector-preview-notice {
+  padding: 6px 8px;
+  border-bottom: 1px solid #243d49;
+  color: #8ccce7;
+  background: #20303a;
+  font-size: 10px;
+  line-height: 1.35;
+}
 .sequencer-edit-controls {
   display: flex;
   flex: 0 0 auto;

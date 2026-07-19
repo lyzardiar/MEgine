@@ -72,6 +72,10 @@ import {
   selectedTransformRoots,
 } from './transformSelection';
 import { applyAnimationPreview, type AnimationPreviewSample } from './animationPreview';
+import {
+  applyTimelineScenePreview,
+  type TimelineScenePreview,
+} from './timelineScenePreview';
 import { assignMaterialToComponents } from './materialAssignment';
 import {
   PREFAB_LINK_COMPONENT,
@@ -185,6 +189,7 @@ export function createEditorStore(undoService: EditorUndoService = createEditorU
   let clipboard: ClipboardPayload | null = null;
   let renameRequestId: number | null = null;
   let animationPreview: { root: number; samples: AnimationPreviewSample[] } | null = null;
+  let timelinePreview: TimelineScenePreview | null = null;
   const behaviourRunner = createBehaviourRunner();
 
   const boot = (name: string, components: Record<string, unknown>, siblingIndex: number): EntityRec => {
@@ -252,6 +257,7 @@ export function createEditorStore(undoService: EditorUndoService = createEditorU
     gestureUndoToken = null;
     gestureHistoryCheckpoint = null;
     animationPreview = null;
+    timelinePreview = null;
   };
 
   buildDefaultScene();
@@ -639,9 +645,12 @@ export function createEditorStore(undoService: EditorUndoService = createEditorU
       active: e.active,
       components: e.components,
     }));
-    return animationPreview && mode === 'edit'
-      ? applyAnimationPreview(entities, animationPreview.root, animationPreview.samples)
-      : structuredClone(entities);
+    if (mode !== 'edit') return structuredClone(entities);
+    if (timelinePreview) return applyTimelineScenePreview(entities, timelinePreview);
+    if (animationPreview) {
+      return applyAnimationPreview(entities, animationPreview.root, animationPreview.samples);
+    }
+    return structuredClone(entities);
   };
 
   const serializeScene = (sceneName: string, source: EntityRec[]) => JSON.stringify(
@@ -704,6 +713,7 @@ export function createEditorStore(undoService: EditorUndoService = createEditorU
     mode = targetMode;
     playSpin = 0;
     animationPreview = null;
+    timelinePreview = null;
     gizmoDragging = false;
     editGestureDepth = 0;
     gestureUndoState = null;
@@ -784,11 +794,23 @@ export function createEditorStore(undoService: EditorUndoService = createEditorU
     setAnimationPreview(root: number, samples: AnimationPreviewSample[]) {
       if (mode !== 'edit' || !editEntities.some((entity) => entity.entity === root)) return false;
       animationPreview = { root, samples: structuredClone(samples) };
+      timelinePreview = null;
       return true;
     },
     clearAnimationPreview() {
       if (!animationPreview) return false;
       animationPreview = null;
+      return true;
+    },
+    setTimelinePreview(preview: TimelineScenePreview) {
+      if (mode !== 'edit') return false;
+      timelinePreview = structuredClone(preview);
+      animationPreview = null;
+      return true;
+    },
+    clearTimelinePreview() {
+      if (!timelinePreview) return false;
+      timelinePreview = null;
       return true;
     },
     getVisibleFlat,
@@ -1142,6 +1164,8 @@ export function createEditorStore(undoService: EditorUndoService = createEditorU
       }
     },
     play() {
+      animationPreview = null;
+      timelinePreview = null;
       playEntities = structuredClone(editEntities);
       mode = 'play';
       playSpin = 0;
@@ -1152,6 +1176,8 @@ export function createEditorStore(undoService: EditorUndoService = createEditorU
       playEntities = null;
       mode = 'edit';
       playSpin = 0;
+      animationPreview = null;
+      timelinePreview = null;
     },
     pause() {
       mode = mode === 'play' ? 'pause' : mode === 'pause' ? 'play' : mode;

@@ -69,10 +69,18 @@ import {
 } from '../assetEditorEvents';
 import { clearAudioWaveforms } from '../audioWaveform';
 import {
+  parseAnimationClip,
+  type AnimationClip,
+} from '../animationClip';
+import {
   clearTimelineBinding,
   resolveTimelineBinding,
   setTimelineBinding,
 } from '../timelineBindings';
+import {
+  buildTimelineScenePreview,
+  type TimelineScenePreview,
+} from '../timelineScenePreview';
 import { AudioWaveform } from './AudioWaveform';
 import {
   SEQUENCER_MAX_ZOOM,
@@ -101,6 +109,8 @@ import {
 const SEQUENCER_SNAPPING_KEY = 'mengine.sequencer.snapping';
 const SEQUENCER_RIPPLE_KEY = 'mengine.sequencer.ripple';
 const SEQUENCER_SNAP_THRESHOLD_PX = 8;
+const EMPTY_PREVIEW_ANIMATION_CLIPS: ReadonlyMap<string, AnimationClip> = new Map();
+const EMPTY_PREVIEW_CLIP_FAILURES: readonly string[] = [];
 
 function clampTimelineAudioFades(clip: TimelineAudioClip): void {
   clip.fade_in = Math.max(0, Math.min(clip.duration, clip.fade_in));
@@ -156,6 +166,8 @@ export type SequencerProps = {
   onClose: () => void;
   onAssignDirector: (entity: number, path: string) => void;
   onPatchDirector: (entity: number, patch: Record<string, unknown>) => void;
+  onPreview: (preview: TimelineScenePreview) => void;
+  onClearPreview: () => void;
   onAssetsChanged: () => void;
   onDirtyChange: (dirty: boolean) => void;
   onLog: (message: string, level?: 'info' | 'warn' | 'error') => void;
@@ -226,6 +238,11 @@ export function Sequencer(props: SequencerProps) {
   const [tracksWidth, setTracksWidth] = useState(720);
   const [clipboard, setClipboard] = useState<SequencerClipboard | null>(null);
   const [marquee, setMarquee] = useState<SequencerMarquee | null>(null);
+  const [previewAnimationClips, setPreviewAnimationClips] = useState<ReadonlyMap<string, AnimationClip>>(new Map());
+  const [previewClipFailures, setPreviewClipFailures] = useState<string[]>([]);
+  const [previewAnimationLoadKey, setPreviewAnimationLoadKey] = useState('');
+  const [previewWarning, setPreviewWarning] = useState<string | null>(null);
+  const [previewAssetEpoch, setPreviewAssetEpoch] = useState(0);
   const [, setDraftEpoch] = useState(0);
   const loadedPath = useRef('');
   const drafts = useRef(new Map<string, Draft>());
@@ -297,6 +314,52 @@ export function Sequencer(props: SequencerProps) {
   const displayTime = liveDirector && Number.isFinite(Number(liveDirector.time))
     ? Math.max(0, Math.min(asset?.duration ?? 0, Number(liveDirector.time)))
     : time;
+  const previewAnimationPaths = useMemo(() => {
+    if (!asset) return [];
+    const paths = new Map<string, string>();
+    const hasSolo = timelineHasSolo(asset);
+    for (const track of asset.tracks) {
+      if (track.type !== 'animation' || timelineTrackIsMuted(asset, track, hasSolo)) continue;
+      for (const clip of track.clips) {
+        const path = clip.clip.trim().replaceAll('\\', '/');
+        if (path) paths.set(path.toLowerCase(), path);
+      }
+    }
+    return [...paths.values()];
+  }, [asset]);
+  const previewAnimationPathKey = previewAnimationPaths.join('\n');
+  const previewAnimationRequestKey = `${previewAssetEpoch}\0${previewAnimationPathKey}`;
+  const previewAnimationResourcesReady = previewAnimationLoadKey === previewAnimationRequestKey;
+  const loadedPreviewAnimationClips = previewAnimationResourcesReady
+    ? previewAnimationClips
+    : EMPTY_PREVIEW_ANIMATION_CLIPS;
+  const loadedPreviewClipFailures = previewAnimationResourcesReady
+    ? previewClipFailures
+    : EMPTY_PREVIEW_CLIP_FAILURES;
+  const previewHierarchyKey = props.entities
+    .map((entity) => `${entity.entity}\0${entity.parent ?? ''}\0${entity.name ?? ''}`
+      + `\0${entity.components.AnimationPlayer ? 'P' : ''}${entity.components.Animator ? 'A' : ''}`)
+    .join('\n');
+  const previewBuild = useMemo(() => {
+    if (!asset || props.playMode || !directorEntity) return null;
+    return buildTimelineScenePreview(
+      asset,
+      props.entities,
+      directorEntity.entity,
+      director?.bindings_json ?? '{}',
+      time,
+      loadedPreviewAnimationClips,
+    );
+  }, [
+    asset,
+    director?.bindings_json,
+    directorEntity?.entity,
+    loadedPreviewAnimationClips,
+    previewHierarchyKey,
+    props.playMode,
+    time,
+  ]);
+  const previewClipFailuresKey = loadedPreviewClipFailures.join('\n');
 
   useEffect(() => {
     const selectedEntityId = props.selectedEntity?.entity ?? null;
@@ -314,10 +377,61 @@ export function Sequencer(props: SequencerProps) {
   }, [anyDirty, props.onDirtyChange]);
 
   useEffect(() => {
-    const clear = () => clearAudioWaveforms();
+    const clear = () => {
+      clearAudioWaveforms();
+      setPreviewAssetEpoch((value) => value + 1);
+    };
     window.addEventListener(PROJECT_ASSETS_CHANGED_EVENT, clear);
     return () => window.removeEventListener(PROJECT_ASSETS_CHANGED_EVENT, clear);
   }, []);
+
+  useEffect(() => {
+    let cancelled = false;
+    setPreviewAnimationClips(new Map());
+    setPreviewClipFailures([]);
+    if (!previewAnimationPaths.length) {
+      setPreviewAnimationLoadKey(previewAnimationRequestKey);
+      return () => { cancelled = true; };
+    }
+    void Promise.all(previewAnimationPaths.map(async (path) => {
+      try {
+        return { path, clip: parseAnimationClip(await readProjectAssetText(path)) };
+      } catch (reason) {
+        return {
+          path,
+          error: reason instanceof Error ? reason.message : String(reason),
+        };
+      }
+    })).then((results) => {
+      if (cancelled) return;
+      const clips = new Map<string, AnimationClip>();
+      const failures: string[] = [];
+      for (const result of results) {
+        if ('error' in result) failures.push(`Animation clip '${result.path}' failed to load: ${result.error}`);
+        else clips.set(result.path.toLowerCase(), result.clip);
+      }
+      setPreviewAnimationClips(clips);
+      setPreviewClipFailures(failures);
+      setPreviewAnimationLoadKey(previewAnimationRequestKey);
+    });
+    return () => { cancelled = true; };
+  }, [previewAnimationRequestKey]);
+
+  useEffect(() => {
+    if (!previewBuild) {
+      setPreviewWarning(null);
+      props.onClearPreview();
+      return;
+    }
+    props.onPreview(previewBuild.preview);
+    const diagnostics = previewBuild.diagnostics.filter((message) => (
+      previewAnimationResourcesReady || !message.endsWith(' is not loaded.')
+    ) && !(loadedPreviewClipFailures.length && message.endsWith(' is not loaded.')));
+    const warnings = [...loadedPreviewClipFailures, ...diagnostics];
+    setPreviewWarning(warnings.length ? warnings.join(' ') : null);
+  }, [previewAnimationResourcesReady, previewBuild, previewClipFailuresKey]);
+
+  useEffect(() => () => props.onClearPreview(), [props.assetPath]);
 
   useEffect(() => {
     let cancelled = false;
@@ -1838,6 +1952,7 @@ export function Sequencer(props: SequencerProps) {
         <span className="timeline-clip-path" title={props.assetPath}>{asset.name} — {props.assetPath}{dirty ? ' *' : ''}</span>
           {selectedItems.length > 0 && <span className="sequencer-selection-count" title="Arrow keys nudge by one frame; Shift+Arrow nudges by ten frames.">{selectedItems.length} selected</span>}
         {liveDirector && <span className={`sequencer-live-status${liveDirector.playing ? ' playing' : ''}`}>{liveDirector.playing ? 'LIVE PLAYING' : 'LIVE PAUSED'} · {displayTime.toFixed(2)}s</span>}
+        {!props.playMode && directorEntity && <span className="sequencer-live-status edit-preview">EDIT PREVIEW · Activation + Animation</span>}
         <div className="sequencer-zoom-controls">
           <button type="button" title="Zoom out" disabled={zoom <= SEQUENCER_MIN_ZOOM} onClick={() => changeZoom(zoom / 1.5)}><Minus size={13} /></button>
           <button type="button" title="Fit entire Timeline" disabled={zoom === 1} onClick={() => {
@@ -1876,6 +1991,7 @@ export function Sequencer(props: SequencerProps) {
       </div>
 
       {error && <div className="timeline-message error">{error}</div>}
+      {previewWarning && !props.playMode && <div className="timeline-message warning">Edit Preview: {previewWarning}</div>}
       <div className="sequencer-workspace">
         <div
           className="sequencer-tracks"

@@ -1423,3 +1423,14 @@ Rust workspace 检查现在零警告通过；Tauri Host 17/17 常规测试与 1/
 - 第一遍自省从兼容性和热路径反查：没有提升 Timeline 版本，所有新字段使用缺省值；同时修正空 Solo 分组意外静音整条 Timeline，并让 Runtime/Editor 每轮只预计算一次有效 Solo，避免逐轨扫描退化为平方复杂度。第二遍自省从语义冲突反查：采用“Mute 优先、多个 Solo 求并集、Group Solo 传递成员、Track Solo 可跨组加入并集”的确定规则，并用编辑器/Rust/CLI 回归固定显式 Mute、Solo 过滤、分组继承和非法类型边界。
 
 这一批补齐的是复杂序列调试所需的隔离控制，不代表 Timeline 已完备。当前编辑模式下本地 Transport 仍主要驱动时间尺，完整的 Scene 非破坏式预览、音频 Scrub、粒子重建、Camera Shot 预览、录制模式、子 Timeline、Control Track、混合/外推和运行时 Timeline Profiler 仍需继续建设。
+
+## 120. 2026-07-20 Timeline 编辑态非破坏预览基础
+
+- Sequencer 的本地 Transport 现在会把 Activation 与 Animation Track 的当前时间求值结果提交给 Scene/Game 视图，而不是只移动时间尺。预览严格建立在 authored world 的单次克隆上：Activation 只覆盖快照的 `active`，Animation 可叠加多目标采样但不写回场景实体；保存、场景 Dirty、Undo/Redo 与进入 Play Mode 都不会包含预览值，停在无 Clip 区间会自然恢复作者值。
+- 编辑态求值与 Runtime 共用 Timeline 资产语义：时间限制在 Timeline 范围内，Clip 使用半开区间、`clip_in + localTime × speed`，Track/Group Mute 与 Solo 共用有效轨道判定，Director 优先使用稳定绑定表，未绑定目标才按 Director 子层级路径解析。Animation Track 要求目标具有 `AnimationPlayer` 且不能同时具有 `Animator`，Clip-in 越界、资源加载失败、无效绑定与目标丢失都会显示明确诊断，避免编辑器预览出 Player 无法复现的结果。
+- `.manim` 依赖按规范化、大小写无关路径去重并异步加载；项目资源变化会使同路径 Clip 重新加载。加载中的旧资源不会短暂污染新预览，Mute/Solo 过滤掉的动画也不会产生无关加载告警。Scene 快照仅在应用所有动画层时克隆一次，编辑器用稳定的层级/组件能力签名避免每次 React 快照刷新重新求值形成反馈循环。
+- Animation Clip 与 Sequencer 共处同一 Dock 时建立显式预览所有权：隐藏但仍挂载的 Animation Clip 编辑器不再继续 RAF 驱动或覆盖 Sequencer 结果；切换资产、切换 Director、关闭 Sequencer、进入/退出 Play Mode、重载场景和卸载面板都会清理对应预览。Timeline 预览期间 Inspector 明确显示并编辑 authored value，避免修改未驱动轴时把同组件的采样值烘焙回场景；工具栏以 `EDIT PREVIEW · Activation + Animation` 明确当前能力边界，诊断区不把异步加载过程误报为资源缺失。
+
+第一遍自省从 Runtime 一致性和异步资源生命周期反查，修正了加载中短暂使用旧 Clip、资源成功前闪烁“未加载”、无 AnimationPlayer 仍可预览，以及非法重复目标可能被误表现为动画层混合的问题。第二遍自省从多编辑器共存、作者值污染和真实渲染路径反查：发现 hidden 只隐藏 DOM、不卸载 Animation Clip 编辑器，旧 RAF 因此可能覆盖 Sequencer；Inspector 直接使用预览实体会在编辑另一字段时写回采样值；Viewport 的层级激活回调仍读取 authored store，使 Activation 已求值却继续绘制。现已分别用可见预览所有权、Inspector authored 基线和 snapshot world-active 结果修正，并把 AnimationPlayer/Animator 能力纳入稳定签名。1280×720 真实页面在 0.5 秒只绘制动画 Actor、隐藏 Marker，工具栏/工作区均满足 `scrollWidth === clientWidth`；332 项编辑器测试、TypeScript 生产构建和专门的非破坏性、绑定、Solo/Mute、依赖失败、运行时组件约束回归均通过。
+
+这仍只是 Timeline 编辑预览的第一条闭环。Audio Scrub 需要独立于 Play Mode 的低延迟音频游标与停止/拖动消抖；Particle 需要可重复的确定性重建、预热和反向拖动策略；Camera Track 需要 Scene/Game 预览相机、Blend 和退出时恢复编辑相机。后续还需补子 Timeline、Control/Playable Track、Clip 混合与外推、Root Motion、Timeline 录制、Marker/Signal 预览策略和运行时 Profiler 关联，不能把 Activation + Animation 标签解释为整个 Timeline 已完备。

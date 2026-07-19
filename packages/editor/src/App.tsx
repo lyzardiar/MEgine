@@ -82,6 +82,7 @@ import {
 import type { ToolHandleOrientation, ToolPivotMode } from './editorTool';
 import { loadSortingLayers, SORTING_LAYERS_CHANGED_EVENT } from './sortingLayers';
 import { saveAllResources } from './saveAll';
+import { buildWorldTransforms } from './worldTransform';
 import './editorWindow'; // MenuItem side-effects
 
 const Timeline = lazy(async () => ({ default: (await import('./panels/Timeline')).Timeline }));
@@ -1179,6 +1180,10 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
   }, [store]);
 
   const treeNodes = useMemo(() => store.getVisibleFlat(), [store, snap, treeTick]);
+  const snapshotWorldTransforms = useMemo(() => buildWorldTransforms(snap.entities), [snap.entities]);
+  const authoredInspectorEntities = mode === 'edit' && timelineAssetPath != null
+    ? store.authoredEntities()
+    : snap.entities;
 
   return (
     <div className={`unity-shell${props.detachedPanel ? ' detached-shell' : ''}`}>
@@ -1283,7 +1288,7 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
               playing={mode !== 'edit'}
               sceneCamera={store.sceneCamera}
               gameResolution={gameResolution}
-              activeInHierarchy={(id) => store.activeInHierarchy(id)}
+              activeInHierarchy={(id) => snapshotWorldTransforms.get(id)?.active === true}
               onPick={(id, modifiers) => {
                 if (modifiers.toggle) store.selectMany([id], 'toggle', id);
                 else if (modifiers.additive) store.selectMany([id], 'add', id);
@@ -1448,8 +1453,11 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
           ),
           inspector: (
             <Inspector
-              entity={snap.entities.find((e) => e.entity === selected) ?? null}
-              entities={snap.entities}
+              entity={authoredInspectorEntities.find((e) => e.entity === selected) ?? null}
+              entities={authoredInspectorEntities}
+              previewNotice={mode === 'edit' && timelineAssetPath != null
+                ? 'Timeline Preview is active. Inspector fields show and edit authored values.'
+                : undefined}
               selectedIds={selectedIds}
               selectionCount={selectedIds.length}
               onBeginEditGesture={() => store.beginTransformGesture('Edit Inspector')}
@@ -1691,10 +1699,11 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
                 <Timeline
                   key={`animation:${assetReloadEpoch.animation}`}
                   assetPath={animationAssetPath}
+                  previewEnabled={timelineAssetPath == null}
                   onCloseAsset={() => setAnimationAssetPath(null)}
                   entity={snap.entities.find((entity) => entity.entity === selected) ?? null}
                   entities={snap.entities}
-                  authoredEntities={store.authoredEntities()}
+                  authoredEntities={mode === 'edit' ? store.authoredEntities() : snap.entities}
                   onAddComponent={(entity, type, value) => {
                     if (store.addComponent(entity, type, value)) {
                       log(`Added ${type}`);
@@ -1752,6 +1761,12 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
                   onPatchDirector={(entity, patch) => {
                     store.patchComponent(entity, 'TimelineDirector', patch);
                     refresh();
+                  }}
+                  onPreview={(preview) => {
+                    if (store.setTimelinePreview(preview)) refresh(false);
+                  }}
+                  onClearPreview={() => {
+                    if (store.clearTimelinePreview()) refresh(false);
                   }}
                   onAssetsChanged={bumpScenes}
                   onDirtyChange={setSequencerDirty}

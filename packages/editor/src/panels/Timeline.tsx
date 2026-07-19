@@ -1407,6 +1407,7 @@ function isAnimationEditControl(target: EventTarget): target is HTMLInputElement
 
 export function Timeline(props: {
   assetPath?: string | null;
+  previewEnabled: boolean;
   onCloseAsset?: () => void;
   entity: SnapshotEntity | null;
   entities: SnapshotEntity[];
@@ -1839,15 +1840,15 @@ export function Timeline(props: {
   }, [maximized]);
 
   useEffect(() => {
-    if (!props.entity || !clip) {
+    if (!props.previewEnabled || !props.entity || !clip) {
       props.onClearPreview();
       return;
     }
     props.onPreview(props.entity.entity, sampleAnimationClip(clip, time));
-  }, [clip, props.entity?.entity, time]);
+  }, [clip, props.entity?.entity, props.previewEnabled, time]);
 
   useEffect(() => {
-    if (!playing || !clip) {
+    if (!props.previewEnabled || !playing || !clip) {
       previousFrameTime.current = null;
       if (playbackFrame.current != null) cancelAnimationFrame(playbackFrame.current);
       playbackFrame.current = null;
@@ -1879,7 +1880,7 @@ export function Timeline(props: {
       playbackFrame.current = null;
       previousFrameTime.current = null;
     };
-  }, [animator, animatorStateSpeed, clip, playing, player?.speed]);
+  }, [animator, animatorStateSpeed, clip, playing, player?.speed, props.previewEnabled]);
 
   useEffect(() => {
     if (!recording || !clip || !props.entity) return;

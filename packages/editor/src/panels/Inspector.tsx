@@ -1216,6 +1216,7 @@ export function Inspector(props: {
   entities?: Array<{ entity: number; name?: string | null; components: Record<string, unknown> }>;
   selectedIds?: number[];
   selectionCount?: number;
+  previewNotice?: string;
   onChangeTransform: (entity: number, t: Transform) => void;
   onChangeTransforms?: (updates: Array<{ entity: number; transform: Transform }>) => void;
   onAddComponent: (entity: number, type: string, value: Record<string, unknown>) => void;
@@ -1261,17 +1262,20 @@ export function Inspector(props: {
       .map((id) => byId.get(id))
       .filter((entity): entity is NonNullable<typeof entity> => entity != null);
     return (
-      <MultiSelectionInspector
-        count={selectedEntities.length}
-        entities={selectedEntities}
-        primary={props.entity}
-        componentClipboard={componentClipboard}
-        onCopyComponent={setComponentClipboard}
-        onChangeTransforms={props.onChangeTransforms}
-        onSetComponents={props.onSetComponents}
-        onBeginEditGesture={props.onBeginEditGesture}
-        onEndEditGesture={props.onEndEditGesture}
-      />
+      <>
+        {props.previewNotice && <div className="inspector-preview-notice">{props.previewNotice}</div>}
+        <MultiSelectionInspector
+          count={selectedEntities.length}
+          entities={selectedEntities}
+          primary={props.entity}
+          componentClipboard={componentClipboard}
+          onCopyComponent={setComponentClipboard}
+          onChangeTransforms={props.onChangeTransforms}
+          onSetComponents={props.onSetComponents}
+          onBeginEditGesture={props.onBeginEditGesture}
+          onEndEditGesture={props.onEndEditGesture}
+        />
+      </>
     );
   }
 
@@ -1394,6 +1398,7 @@ export function Inspector(props: {
           </label>
         </div>
       </div>
+      {props.previewNotice && <div className="inspector-preview-notice">{props.previewNotice}</div>}
 
       {hasRect && (
         <CompBlock
