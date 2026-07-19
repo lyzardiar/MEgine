@@ -1278,3 +1278,15 @@ Rust workspace 检查现在零警告通过；Tauri Host 17/17 常规测试与 1/
 第一遍自省发现旧递归 Prefab 分支绕过 node-token 校验，以及多根 Duplicate 的逐棵映射无法处理跨根引用，现已统一修正。第二遍自省把原方案从“仅修 UI 事件”扩展到用户 Behaviour 的 `@EntityReference` 元数据，否则自定义脚本仍会在场景重开和 Prefab 实例化后失效；同时旧 Prefab 中遗留的裸实体号在实例化时只会转成 Missing，不允许碰撞绑定。
 
 本阶段仍不是完整的全局对象引用系统：跨 Scene/Additive Scene 引用需要稳定 Scene GUID，Prefab 外部引用需要 Override 层而不是永久 Missing，资源构建还需要在发布前汇总 Missing Reference 并阻止错误 Player；嵌套 Prefab、Prefab Variant、Apply/Revert 的属性级 Override 也尚未完成。下一阶段应基于当前 token/metadata 契约增加构建期引用审计，而不是再次引入另一套实体引用格式。
+
+## 107. 2026-07-19 Player 构建期实体引用完整性门禁
+
+- PC 打包依赖扫描现在复用编辑器和 Scene Runtime 已建立的序列化实体引用契约。Button、Toggle、Slider、Scrollbar、InputField、Dropdown、ListView、ScrollView、TabView 的持久调用目标，以及用户 Behaviour 通过 `__mengine_entity_reference_fields` 声明的字段，都会在创建暂存目录之前接受完整性审计；单调用对象和调用数组使用同一遍历规则，错误信息包含资产路径与精确的 `Component.field[index].target` 或自定义字段位置。
+- Scene 审计以移除 EditorOnly 子树后的 Player 实体集合为权威目标集，统一把安全整数与十进制字符串规范化为同一 64 位无符号 ID，拒绝重复 ID、不安全 JSON 数字、悬空目标、显式 `$mengine_entity_ref/missing` 和尚未解析的 `prefab_node` token。对旧资产仍允许没有持久 ID 的匿名实体承载普通组件，但它不能成为实体引用目标；引用 EditorOnly 节点会因目标不在 Player 集合中而阻止发布。
+- Prefab 审计先跳过完整 EditorOnly 子树，再收集稳定 node ID，拒绝重复 node、损坏/未知 token、指向已剥离或不存在 node 的引用以及旧式裸 Scene 实体号。后者在运行时虽然会降级成 Missing，但成熟构建不能把已知损坏状态发布出去。自定义引用字段表必须是至多 256 项的合法字符串数组，字段值使用与内建 UI 事件相同的 token 校验路径。
+- `assetMode: all` 会额外枚举即将复制的全部 Scene/Prefab，因此未被场景依赖树触达但仍会进入 Player 的损坏资产同样阻止构建；`assetMode: referenced` 只审计最终引用闭包与 `alwaysInclude` 根，明确省略的损坏资产不会产生误阻断。所有失败均发生在 staging/publish 之前，已有发布目录不会被替换，也不会留下半成品输出。
+- 回归覆盖有效 Scene 与 Prefab、数字/字符串 ID 规范化、自定义字段表在 Player 文件中保留、悬空 Scene 目标、显式 Missing、Prefab 指向 EditorOnly node、Prefab 裸 Scene ID、损坏元数据，以及 referenced 模式省略资产的闭包边界；CLI 全套 45 个打包测试和 TypeScript 构建共同验证。
+
+第一遍自省纠正了“Player 剥离会删除 Behaviour 内部引用字段表”的初始判断：现有剥离只删除组件表顶层的 `__*` 编辑器组件，嵌套在 Behaviour 数据内的字段表本来就会保留，因此撤回了无意义的缓存版本升级和放宽剥离规则。同时测试发现旧测试资产存在无 ID 匿名实体，最终选择兼容其作为不可引用组件载体，而不是把本次引用门禁扩张成不兼容的全 Scene Schema 升级。第二遍自省补齐了两个相反边界：会被 all 模式打包的未引用 Prefab 必须审计，而 referenced 模式明确省略的资产不应阻断；并增加旧 Prefab 裸实体号拒绝用例，防止仅覆盖新 token 格式而漏掉碰撞绑定风险。
+
+本批完成的是单个 Player 内容闭包内的构建阻断，并不等于全局对象引用系统已经完备。跨 Scene/Additive Scene 仍需要 Scene GUID 与加载域规则，Prefab 外部引用仍需要实例 Override，Inspector 仍缺少 Missing Reference 汇总与批量修复器；内建引用字段注册目前在 TypeScript/Rust/CLI 三处保持同值，后续应由 IDL/codegen 生成以消除协议漂移。构建报告也应增加独立的引用审计数量与结构化诊断，而不只在失败时返回首个错误。

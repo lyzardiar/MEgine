@@ -18,6 +18,20 @@ export const PLAYER_CONFIG_FILE = 'mengine-player.json';
 export const BUILD_MANIFEST_FILE = 'mengine-build.json';
 export const BUILD_CACHE_REPORT_PREFIX = 'MENGINE_BUILD_CACHE ';
 const MAX_TIMELINE_PARTICLE_TIME = 300;
+const ENTITY_REFERENCE_TOKEN = '$mengine_entity_ref';
+const ENTITY_REFERENCE_FIELDS_KEY = '__mengine_entity_reference_fields';
+const COMPONENT_ENTITY_REFERENCE_FIELDS = [
+  ['Button', 'on_click'],
+  ['Toggle', 'on_value_changed'],
+  ['Slider', 'on_value_changed'],
+  ['Scrollbar', 'on_value_changed'],
+  ['InputField', 'on_value_changed'],
+  ['InputField', 'on_submit'],
+  ['Dropdown', 'on_value_changed'],
+  ['ListView', 'on_value_changed'],
+  ['ScrollView', 'on_value_changed'],
+  ['TabView', 'on_value_changed'],
+] as const;
 
 export type BuildAssetMode = 'all' | 'referenced';
 
@@ -369,10 +383,178 @@ function hasEditorOnlyComponent(componentsValue: unknown): boolean {
     .some((name) => name.toLowerCase() === 'editoronly'));
 }
 
+function decimalEntityReference(value: unknown): string | null {
+  if (typeof value === 'number') {
+    return Number.isSafeInteger(value) && value >= 0 ? String(value) : null;
+  }
+  if (typeof value !== 'string' || !/^\d+$/.test(value.trim())) return null;
+  const entity = BigInt(value.trim());
+  if (entity > 0xffff_ffff_ffff_ffffn) return null;
+  return entity.toString();
+}
+
 function entityReferenceKey(value: unknown): string | null {
-  if (typeof value === 'string' && value.length > 0) return `s:${value}`;
-  if (typeof value === 'number' && Number.isFinite(value)) return `n:${value}`;
+  const entity = decimalEntityReference(value);
+  if (entity != null) return entity;
   return null;
+}
+
+function componentEntityReferenceTargets(
+  componentsValue: unknown,
+  visit: (target: unknown, label: string) => void,
+): void {
+  const components = jsonObject(componentsValue);
+  if (!components) return;
+  for (const [componentName, fieldName] of COMPONENT_ENTITY_REFERENCE_FIELDS) {
+    const component = jsonObject(components[componentName]);
+    const field = component?.[fieldName];
+    const calls = Array.isArray(field) ? field : field == null ? [] : [field];
+    for (let index = 0; index < calls.length; index += 1) {
+      const call = jsonObject(calls[index]);
+      if (!call || !Object.hasOwn(call, 'target') || call.target == null) continue;
+      const suffix = calls.length > 1 ? `[${index}]` : '';
+      visit(call.target, `${componentName}.${fieldName}${suffix}.target`);
+    }
+  }
+  for (const [componentName, value] of Object.entries(components)) {
+    const component = jsonObject(value);
+    if (!component || !Object.hasOwn(component, ENTITY_REFERENCE_FIELDS_KEY)) continue;
+    const fields = component[ENTITY_REFERENCE_FIELDS_KEY];
+    if (!Array.isArray(fields) || fields.length > 256) {
+      throw new Error(
+        `${componentName}.${ENTITY_REFERENCE_FIELDS_KEY} must be an array of at most 256 fields`,
+      );
+    }
+    for (const field of fields) {
+      if (typeof field !== 'string' || !field || field === ENTITY_REFERENCE_FIELDS_KEY) {
+        throw new Error(`${componentName}.${ENTITY_REFERENCE_FIELDS_KEY} contains an invalid field`);
+      }
+      if (!Object.hasOwn(component, field) || component[field] == null) continue;
+      visit(component[field], `${componentName}.${field}`);
+    }
+  }
+}
+
+type EntityReferenceScope =
+  | { kind: 'scene'; entityIds: ReadonlySet<string> }
+  | { kind: 'prefab'; nodeIds: ReadonlySet<string> };
+
+function validateSerializedEntityReference(
+  target: unknown,
+  scope: EntityReferenceScope,
+  source: string,
+  label: string,
+): void {
+  const wrapper = jsonObject(target);
+  if (wrapper && Object.hasOwn(wrapper, ENTITY_REFERENCE_TOKEN)) {
+    const token = jsonObject(wrapper[ENTITY_REFERENCE_TOKEN]);
+    if (!token) {
+      throw new Error(`invalid ${scope.kind} ${source}: ${label} contains an invalid serialized entity reference`);
+    }
+    if (token.kind === 'missing') {
+      const entity = decimalEntityReference(token.entity);
+      if (entity == null) {
+        throw new Error(`invalid ${scope.kind} ${source}: ${label} contains an invalid missing entity reference`);
+      }
+      throw new Error(`invalid ${scope.kind} ${source}: ${label} contains missing entity reference '${entity}'`);
+    }
+    if (token.kind === 'prefab_node') {
+      const node = typeof token.node === 'string' ? token.node.trim() : '';
+      if (!node) {
+        throw new Error(`invalid ${scope.kind} ${source}: ${label} contains an invalid prefab node reference`);
+      }
+      if (scope.kind === 'scene') {
+        throw new Error(`invalid scene ${source}: ${label} contains unresolved prefab node reference '${node}'`);
+      }
+      if (!scope.nodeIds.has(node)) {
+        throw new Error(`invalid prefab ${source}: ${label} references missing prefab node '${node}'`);
+      }
+      return;
+    }
+    throw new Error(`invalid ${scope.kind} ${source}: ${label} contains an unsupported serialized entity reference`);
+  }
+
+  const entity = decimalEntityReference(target);
+  if (entity == null) {
+    throw new Error(`invalid ${scope.kind} ${source}: ${label} must be a serialized entity reference`);
+  }
+  if (scope.kind === 'prefab') {
+    throw new Error(`invalid prefab ${source}: ${label} contains legacy scene entity reference '${entity}'`);
+  }
+  if (!scope.entityIds.has(entity)) {
+    throw new Error(`invalid scene ${source}: ${label} references missing entity '${entity}'`);
+  }
+}
+
+function validateSceneEntityReferences(scene: JsonObject, source: string): void {
+  const world = jsonObject(scene.world);
+  if (world?.entities != null && !Array.isArray(world.entities)) {
+    throw new Error(`invalid scene ${source}: world.entities must be an array`);
+  }
+  const playerScene = filterEditorOnlySceneEntities(world?.entities);
+  const entityIds = new Set<string>();
+  for (const entity of playerScene.entities) {
+    const id = decimalEntityReference(entity.entity);
+    if (entity.entity == null) continue;
+    if (id == null) {
+      throw new Error(`invalid scene ${source}: player entity id must be a safe unsigned decimal`);
+    }
+    if (entityIds.has(id)) {
+      throw new Error(`invalid scene ${source}: duplicate player entity id '${id}'`);
+    }
+    entityIds.add(id);
+  }
+  for (const entity of playerScene.entities) {
+    try {
+      componentEntityReferenceTargets(entity.components, (target, label) => {
+        validateSerializedEntityReference(target, { kind: 'scene', entityIds }, source, label);
+      });
+    } catch (error) {
+      if (error instanceof Error && !error.message.startsWith('invalid scene ')) {
+        throw new Error(`invalid scene ${source}: ${error.message}`);
+      }
+      throw error;
+    }
+  }
+}
+
+function validatePrefabEntityReferences(prefab: JsonObject, source: string): void {
+  const root = Object.hasOwn(prefab, 'root') ? jsonObject(prefab.root) : prefab;
+  if (!root) throw new Error(`invalid prefab ${source}: root must be an object`);
+  const nodes: JsonObject[] = [];
+  const nodeIds = new Set<string>();
+  const collect = (node: JsonObject) => {
+    if (hasEditorOnlyComponent(node.components)) return;
+    nodes.push(node);
+    if (node.id != null) {
+      if (typeof node.id !== 'string' || !node.id.trim()) {
+        throw new Error(`invalid prefab ${source}: node id must be a non-empty string`);
+      }
+      const id = node.id.trim();
+      if (nodeIds.has(id)) throw new Error(`invalid prefab ${source}: duplicate node id '${id}'`);
+      nodeIds.add(id);
+    }
+    if (Array.isArray(node.children)) {
+      for (const childValue of node.children) {
+        const child = jsonObject(childValue);
+        if (!child) throw new Error(`invalid prefab ${source}: child node must be an object`);
+        collect(child);
+      }
+    }
+  };
+  collect(root);
+  for (const node of nodes) {
+    try {
+      componentEntityReferenceTargets(node.components, (target, label) => {
+        validateSerializedEntityReference(target, { kind: 'prefab', nodeIds }, source, label);
+      });
+    } catch (error) {
+      if (error instanceof Error && !error.message.startsWith('invalid prefab ')) {
+        throw new Error(`invalid prefab ${source}: ${error.message}`);
+      }
+      throw error;
+    }
+  }
 }
 
 function filterEditorOnlySceneEntities(entitiesValue: unknown): {
@@ -432,6 +614,7 @@ function scanBuildAssetDependencies(
   const processed = new Set<string>();
   const inclusionReasons = new Map<string, BuildInclusionReason[]>();
   const materialInstanceParents = new Map<string, string>();
+  const entityReferenceAudits = new Set<string>();
   let references = 0;
 
   const enqueue = (
@@ -520,16 +703,17 @@ function scanBuildAssetDependencies(
     const source = portablePath(relative(root, absolute));
     if (extension === '.mscene') {
       const scene = readJsonAsset(absolute, root, 'scene');
+      validateSceneEntityReferences(scene, source);
+      entityReferenceAudits.add(process.platform === 'win32' ? absolute.toLowerCase() : absolute);
       const world = jsonObject(scene.world);
-      if (world?.entities != null && !Array.isArray(world.entities)) {
-        throw new Error(`invalid scene ${source}: world.entities must be an array`);
-      }
       const playerScene = filterEditorOnlySceneEntities(world?.entities);
       for (const entity of playerScene.entities) {
         componentReferences(entity.components, source);
       }
     } else if (extension === '.prefab') {
       const prefab = readJsonAsset(absolute, root, 'prefab');
+      validatePrefabEntityReferences(prefab, source);
+      entityReferenceAudits.add(process.platform === 'win32' ? absolute.toLowerCase() : absolute);
       prefabNodeReferences(prefab.root ?? prefab, source);
     } else if (extension === '.minst') {
       const instance = readJsonAsset(absolute, root, 'material instance');
@@ -1313,6 +1497,22 @@ function scanBuildAssetDependencies(
       }
     }
     inspectJsonDependency(absolute, pending);
+  }
+  if (project.assetMode === 'all') {
+    for (const contentRoot of roots) {
+      for (const candidate of collectPackageCandidateFiles(contentRoot, [], isCancelled)) {
+        if (!/\.(?:mscene|prefab)$/i.test(candidate.path)) continue;
+        const key = process.platform === 'win32' ? candidate.path.toLowerCase() : candidate.path;
+        if (entityReferenceAudits.has(key)) continue;
+        const source = portablePath(relative(root, candidate.path));
+        if (/\.mscene$/i.test(candidate.path)) {
+          validateSceneEntityReferences(readJsonAsset(candidate.path, root, 'scene'), source);
+        } else {
+          validatePrefabEntityReferences(readJsonAsset(candidate.path, root, 'prefab'), source);
+        }
+        entityReferenceAudits.add(key);
+      }
+    }
   }
   for (const start of materialInstanceParents.keys()) {
     const seen = new Map<string, number>();

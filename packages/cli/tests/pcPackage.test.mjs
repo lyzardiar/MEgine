@@ -260,6 +260,221 @@ test('buildPcPackage strips EditorOnly scene and prefab subtrees', () => {
   }
 });
 
+test('buildPcPackage validates scene and prefab entity references and preserves runtime metadata', () => {
+  const paths = fixture('entity-references-valid');
+  try {
+    mkdirSync(join(paths.project, 'Assets', 'Prefabs'), { recursive: true });
+    writeFileSync(join(paths.project, 'Assets', 'Scenes', 'Main.mscene'), JSON.stringify({
+      version: 1,
+      world: {
+        entities: [{
+          entity: 1,
+          components: {
+            Button: { on_click: { target: '2', component: 'Menu', method: 'Open' } },
+          },
+        }, {
+          entity: '2',
+          components: {
+            FollowBehaviour: {
+              __mengine_entity_reference_fields: ['leader'],
+              leader: 1,
+            },
+          },
+        }],
+      },
+    }));
+    writeFileSync(join(paths.project, 'Assets', 'Prefabs', 'Linked.prefab'), JSON.stringify({
+      version: 2,
+      root: {
+        id: 'root',
+        components: {
+          FollowBehaviour: {
+            __mengine_entity_reference_fields: ['leader'],
+            leader: { $mengine_entity_ref: { kind: 'prefab_node', node: 'child' } },
+          },
+        },
+        children: [{ id: 'child', components: {}, children: [] }],
+      },
+    }));
+
+    buildPcPackage({
+      projectDir: paths.project,
+      outputDir: paths.output,
+      runtimePath: paths.runtime,
+      engineVersion: 'test-engine',
+    });
+
+    const scene = JSON.parse(readFileSync(
+      join(paths.output, 'Assets', 'Scenes', 'Main.mscene'),
+      'utf8',
+    ));
+    assert.deepEqual(
+      scene.world.entities[1].components.FollowBehaviour.__mengine_entity_reference_fields,
+      ['leader'],
+    );
+    const prefab = JSON.parse(readFileSync(
+      join(paths.output, 'Assets', 'Prefabs', 'Linked.prefab'),
+      'utf8',
+    ));
+    assert.deepEqual(
+      prefab.root.components.FollowBehaviour.__mengine_entity_reference_fields,
+      ['leader'],
+    );
+  } finally {
+    rmSync(paths.root, { recursive: true, force: true });
+  }
+});
+
+test('buildPcPackage rejects missing scene entity references before publishing', () => {
+  const paths = fixture('entity-references-missing');
+  try {
+    const scenePath = join(paths.project, 'Assets', 'Scenes', 'Main.mscene');
+    const writeTarget = (target) => writeFileSync(scenePath, JSON.stringify({
+      version: 1,
+      world: {
+        entities: [{
+          entity: 1,
+          components: { Button: { on_click: { target } } },
+        }],
+      },
+    }));
+    writeTarget(2);
+    assert.throws(() => buildPcPackage({
+      projectDir: paths.project,
+      outputDir: paths.output,
+      runtimePath: paths.runtime,
+      engineVersion: 'test-engine',
+    }), /Button\.on_click\.target references missing entity '2'/);
+    assert.equal(existsSync(paths.output), false);
+
+    writeTarget({ $mengine_entity_ref: { kind: 'missing', entity: '2' } });
+    assert.throws(() => buildPcPackage({
+      projectDir: paths.project,
+      outputDir: paths.output,
+      runtimePath: paths.runtime,
+      engineVersion: 'test-engine',
+    }), /Button\.on_click\.target contains missing entity reference '2'/);
+    assert.equal(existsSync(paths.output), false);
+  } finally {
+    rmSync(paths.root, { recursive: true, force: true });
+  }
+});
+
+test('buildPcPackage rejects prefab references to EditorOnly nodes in all-assets mode', () => {
+  const paths = fixture('entity-references-prefab-editor-only');
+  try {
+    mkdirSync(join(paths.project, 'Assets', 'Prefabs'), { recursive: true });
+    const prefabPath = join(paths.project, 'Assets', 'Prefabs', 'Broken.prefab');
+    writeFileSync(prefabPath, JSON.stringify({
+      version: 2,
+      root: {
+        id: 'root',
+        components: {
+          Button: {
+            on_click: {
+              target: { $mengine_entity_ref: { kind: 'prefab_node', node: 'editor-child' } },
+            },
+          },
+        },
+        children: [{
+          id: 'editor-child',
+          components: { EditorOnly: {} },
+          children: [],
+        }],
+      },
+    }));
+    assert.throws(() => buildPcPackage({
+      projectDir: paths.project,
+      outputDir: paths.output,
+      runtimePath: paths.runtime,
+      engineVersion: 'test-engine',
+    }), /Button\.on_click\.target references missing prefab node 'editor-child'/);
+    assert.equal(existsSync(paths.output), false);
+
+    writeFileSync(prefabPath, JSON.stringify({
+      version: 2,
+      root: {
+        id: 'root',
+        components: { Button: { on_click: { target: 42 } } },
+        children: [],
+      },
+    }));
+    assert.throws(() => buildPcPackage({
+      projectDir: paths.project,
+      outputDir: paths.output,
+      runtimePath: paths.runtime,
+      engineVersion: 'test-engine',
+    }), /Button\.on_click\.target contains legacy scene entity reference '42'/);
+    assert.equal(existsSync(paths.output), false);
+  } finally {
+    rmSync(paths.root, { recursive: true, force: true });
+  }
+});
+
+test('referenced mode ignores broken entity references in assets omitted from the player', () => {
+  const paths = fixture('entity-references-omitted');
+  try {
+    mkdirSync(join(paths.project, 'Assets', 'Prefabs'), { recursive: true });
+    const projectPath = join(paths.project, 'project.json');
+    const project = JSON.parse(readFileSync(projectPath, 'utf8'));
+    project.assetMode = 'referenced';
+    writeFileSync(projectPath, JSON.stringify(project));
+    writeFileSync(join(paths.project, 'Assets', 'Prefabs', 'Broken.prefab'), JSON.stringify({
+      version: 2,
+      root: {
+        id: 'root',
+        components: {
+          Button: {
+            on_click: {
+              target: { $mengine_entity_ref: { kind: 'missing', entity: '99' } },
+            },
+          },
+        },
+        children: [],
+      },
+    }));
+
+    buildPcPackage({
+      projectDir: paths.project,
+      outputDir: paths.output,
+      runtimePath: paths.runtime,
+      engineVersion: 'test-engine',
+    });
+    assert.equal(existsSync(join(paths.output, 'Assets', 'Prefabs', 'Broken.prefab')), false);
+  } finally {
+    rmSync(paths.root, { recursive: true, force: true });
+  }
+});
+
+test('buildPcPackage rejects corrupt custom entity reference metadata', () => {
+  const paths = fixture('entity-reference-metadata');
+  try {
+    writeFileSync(join(paths.project, 'Assets', 'Scenes', 'Main.mscene'), JSON.stringify({
+      version: 1,
+      world: {
+        entities: [{
+          entity: 1,
+          components: {
+            FollowBehaviour: {
+              __mengine_entity_reference_fields: { leader: true },
+              leader: 1,
+            },
+          },
+        }],
+      },
+    }));
+    assert.throws(() => buildPcPackage({
+      projectDir: paths.project,
+      outputDir: paths.output,
+      runtimePath: paths.runtime,
+      engineVersion: 'test-engine',
+    }), /FollowBehaviour\.__mengine_entity_reference_fields must be an array/);
+    assert.equal(existsSync(paths.output), false);
+  } finally {
+    rmSync(paths.root, { recursive: true, force: true });
+  }
+});
+
 test('buildPcPackage referenced mode copies the validated closure and always-include roots', () => {
   const paths = fixture('referenced-assets');
   try {
