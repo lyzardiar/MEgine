@@ -3692,6 +3692,16 @@ body.insp-scrubbing * {
 
 .timeline-tangent-editors > div { grid-template-columns: minmax(0, 1fr) auto; align-items: end; }
 
+.timeline-tangent-mode {
+  display: grid;
+  width: 108px;
+  gap: 2px;
+  color: #777;
+  font-size: 9px;
+}
+
+.timeline-tangent-mode select { padding: 0 4px; font-size: 10px; }
+
 .timeline-details .timeline-tangent-editors button {
   height: 22px;
   border-color: var(--u-border-2);
@@ -3845,6 +3855,11 @@ body.insp-scrubbing * {
 .timeline-curve-tangent-tools {
   padding-left: 7px;
   border-left: 1px solid #171717;
+}
+
+.timeline-curve-tangent-tools button {
+  width: 22px;
+  padding: 0;
 }
 
 .timeline-curve-tangent-tools > span {

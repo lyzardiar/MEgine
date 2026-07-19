@@ -251,6 +251,10 @@ function reverseAnimationKeyframe(keyframe: AnimationKeyframe): AnimationKeyfram
   else reversed.in_tangent = negateAnimationTangent(keyframe.out_tangent);
   if (keyframe.in_tangent === undefined) delete reversed.out_tangent;
   else reversed.out_tangent = negateAnimationTangent(keyframe.in_tangent);
+  if (keyframe.out_tangent_mode === undefined) delete reversed.in_tangent_mode;
+  else reversed.in_tangent_mode = keyframe.out_tangent_mode;
+  if (keyframe.in_tangent_mode === undefined) delete reversed.out_tangent_mode;
+  else reversed.out_tangent_mode = keyframe.in_tangent_mode;
   return reversed;
 }
 

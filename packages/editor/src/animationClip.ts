@@ -2,12 +2,16 @@ export type AnimationWrapMode = 'once' | 'loop' | 'ping_pong';
 export type AnimationInterpolation = 'step' | 'linear' | 'smooth' | 'cubic';
 export type AnimationValue = boolean | number | number[] | string;
 export type AnimationTangent = number | number[];
+export type AnimationTangentMode = 'clamped_auto' | 'free' | 'linear' | 'constant';
 
 export type AnimationKeyframe = {
   time: number;
   value: AnimationValue;
   in_tangent?: AnimationTangent;
   out_tangent?: AnimationTangent;
+  in_tangent_mode?: AnimationTangentMode;
+  out_tangent_mode?: AnimationTangentMode;
+  broken?: boolean;
 };
 
 export type AnimationTrack = {
@@ -85,6 +89,28 @@ function animationTangent(value: unknown, keyValue: AnimationValue): AnimationTa
   return undefined;
 }
 
+function animationTangentMode(value: unknown): AnimationTangentMode | undefined {
+  if (value === 'auto') return 'clamped_auto';
+  return value === 'clamped_auto' || value === 'free' || value === 'linear' || value === 'constant'
+    ? value
+    : undefined;
+}
+
+function tangentsEqual(left: AnimationTangent | undefined, right: AnimationTangent | undefined): boolean {
+  if (left === undefined || right === undefined) return left === right;
+  if (typeof left === 'number' || typeof right === 'number') return left === right;
+  return left.length === right.length && left.every((value, index) => value === right[index]);
+}
+
+export function animationKeyTangentMode(
+  key: AnimationKeyframe,
+  side: 'in_tangent' | 'out_tangent',
+): AnimationTangentMode {
+  const mode = side === 'in_tangent' ? key.in_tangent_mode : key.out_tangent_mode;
+  if (mode) return mode;
+  return key[side] === undefined ? 'clamped_auto' : 'free';
+}
+
 function interpolation(value: unknown): AnimationInterpolation {
   return value === 'step' || value === 'smooth' || value === 'cubic' ? value : 'linear';
 }
@@ -111,11 +137,20 @@ export function normalizeAnimationClip(value: unknown): AnimationClip {
       const safeTime = Math.max(0, time);
       const inTangent = animationTangent(key.in_tangent ?? key.inTangent, parsedValue);
       const outTangent = animationTangent(key.out_tangent ?? key.outTangent, parsedValue);
+      const inMode = animationTangentMode(key.in_tangent_mode ?? key.inTangentMode)
+        ?? (inTangent === undefined ? undefined : 'free');
+      const outMode = animationTangentMode(key.out_tangent_mode ?? key.outTangentMode)
+        ?? (outTangent === undefined ? undefined : 'free');
+      const inferredBroken = (inMode ?? 'clamped_auto') !== (outMode ?? 'clamped_auto')
+        || !tangentsEqual(inTangent, outTangent);
       byTime.set(safeTime, {
         time: safeTime,
         value: parsedValue,
         ...(inTangent === undefined ? {} : { in_tangent: inTangent }),
         ...(outTangent === undefined ? {} : { out_tangent: outTangent }),
+        ...(inMode == null || inMode === 'clamped_auto' ? {} : { in_tangent_mode: inMode }),
+        ...(outMode == null || outMode === 'clamped_auto' ? {} : { out_tangent_mode: outMode }),
+        ...(key.broken === true || inferredBroken ? { broken: true } : {}),
       });
       maxTime = Math.max(maxTime, safeTime);
     }
@@ -199,11 +234,21 @@ function writeAnimationKeyframe(
   ));
   const inTangent = animationTangent(preserved?.in_tangent, value);
   const outTangent = animationTangent(preserved?.out_tangent, value);
+  const numericValue = typeof value === 'number' || Array.isArray(value);
+  const inMode = numericValue ? animationTangentMode(preserved?.in_tangent_mode) : undefined;
+  const outMode = numericValue ? animationTangentMode(preserved?.out_tangent_mode) : undefined;
   keyframes.push({
     time: keyTime,
     value: structuredClone(value),
     ...(inTangent === undefined ? {} : { in_tangent: structuredClone(inTangent) }),
     ...(outTangent === undefined ? {} : { out_tangent: structuredClone(outTangent) }),
+    ...(inMode == null || inMode === 'clamped_auto' || (inMode === 'free' && inTangent === undefined)
+      ? {}
+      : { in_tangent_mode: inMode }),
+    ...(outMode == null || outMode === 'clamped_auto' || (outMode === 'free' && outTangent === undefined)
+      ? {}
+      : { out_tangent_mode: outMode }),
+    ...(numericValue && preserved?.broken ? { broken: true } : {}),
   });
   keyframes.sort((left, right) => left.time - right.time);
   return {
@@ -248,20 +293,56 @@ export function removeAnimationKeyframe(
 export function setAnimationKeyframeTangents(
   track: AnimationTrack,
   keyIndex: number,
-  patch: { in_tangent?: AnimationTangent | null; out_tangent?: AnimationTangent | null },
+  patch: {
+    in_tangent?: AnimationTangent | null;
+    out_tangent?: AnimationTangent | null;
+    in_tangent_mode?: AnimationTangentMode | null;
+    out_tangent_mode?: AnimationTangentMode | null;
+    broken?: boolean;
+  },
 ): AnimationTrack {
   const current = track.keyframes[keyIndex];
   if (!current) return track;
   const next = { ...current };
   if ('in_tangent' in patch) {
     const value = animationTangent(patch.in_tangent, current.value);
-    if (value === undefined || patch.in_tangent == null) delete next.in_tangent;
-    else next.in_tangent = structuredClone(value);
+    if (value === undefined || patch.in_tangent == null) {
+      delete next.in_tangent;
+      if (!('in_tangent_mode' in patch)) delete next.in_tangent_mode;
+    }
+    else {
+      next.in_tangent = structuredClone(value);
+      if (!('in_tangent_mode' in patch)) next.in_tangent_mode = 'free';
+    }
   }
   if ('out_tangent' in patch) {
     const value = animationTangent(patch.out_tangent, current.value);
-    if (value === undefined || patch.out_tangent == null) delete next.out_tangent;
-    else next.out_tangent = structuredClone(value);
+    if (value === undefined || patch.out_tangent == null) {
+      delete next.out_tangent;
+      if (!('out_tangent_mode' in patch)) delete next.out_tangent_mode;
+    }
+    else {
+      next.out_tangent = structuredClone(value);
+      if (!('out_tangent_mode' in patch)) next.out_tangent_mode = 'free';
+    }
+  }
+  if ('in_tangent_mode' in patch) {
+    const mode = animationTangentMode(patch.in_tangent_mode);
+    if (mode == null || mode === 'clamped_auto') delete next.in_tangent_mode;
+    else next.in_tangent_mode = mode;
+  }
+  if ('out_tangent_mode' in patch) {
+    const mode = animationTangentMode(patch.out_tangent_mode);
+    if (mode == null || mode === 'clamped_auto') delete next.out_tangent_mode;
+    else next.out_tangent_mode = mode;
+  }
+  if ('broken' in patch) {
+    if (patch.broken) next.broken = true;
+    else delete next.broken;
+  } else {
+    const editsIn = 'in_tangent' in patch || 'in_tangent_mode' in patch;
+    const editsOut = 'out_tangent' in patch || 'out_tangent_mode' in patch;
+    if (editsIn !== editsOut) next.broken = true;
   }
   return {
     ...track,
@@ -282,6 +363,9 @@ export function pasteAnimationKeyframe(
     track: setAnimationKeyframeTangents(edit.track, edit.keyIndex, {
       in_tangent: source.in_tangent ?? null,
       out_tangent: source.out_tangent ?? null,
+      in_tangent_mode: source.in_tangent_mode ?? null,
+      out_tangent_mode: source.out_tangent_mode ?? null,
+      broken: source.broken === true,
     }),
   };
 }
@@ -407,18 +491,94 @@ function numericSlope(
   return null;
 }
 
+function clampedScalarTangent(
+  previous: number,
+  current: number,
+  next: number,
+  previousSpan: number,
+  nextSpan: number,
+): number {
+  const previousSlope = (current - previous) / previousSpan;
+  const nextSlope = (next - current) / nextSpan;
+  if (!Number.isFinite(previousSlope) || !Number.isFinite(nextSlope)) return 0;
+  if (previousSlope === 0 || nextSlope === 0 || Math.sign(previousSlope) !== Math.sign(nextSlope)) return 0;
+  const previousWeight = 2 * nextSpan + previousSpan;
+  const nextWeight = nextSpan + 2 * previousSpan;
+  const denominator = previousWeight / previousSlope + nextWeight / nextSlope;
+  return denominator === 0 ? 0 : (previousWeight + nextWeight) / denominator;
+}
+
+function clampedNumericTangent(
+  previous: AnimationValue,
+  current: AnimationValue,
+  next: AnimationValue,
+  previousSpan: number,
+  nextSpan: number,
+): AnimationTangent | null {
+  if (!(previousSpan > Number.EPSILON) || !(nextSpan > Number.EPSILON)) return null;
+  if (typeof previous === 'number' && typeof current === 'number' && typeof next === 'number') {
+    return clampedScalarTangent(previous, current, next, previousSpan, nextSpan);
+  }
+  if (
+    Array.isArray(previous)
+    && Array.isArray(current)
+    && Array.isArray(next)
+    && previous.length === current.length
+    && previous.length === next.length
+  ) {
+    return current.map((value, index) => clampedScalarTangent(
+      previous[index],
+      value,
+      next[index],
+      previousSpan,
+      nextSpan,
+    ));
+  }
+  return null;
+}
+
 export function automaticAnimationTangent(
   track: AnimationTrack,
   keyIndex: number,
 ): AnimationTangent | null {
   const key = track.keyframes[keyIndex];
   if (!key || (typeof key.value !== 'number' && !Array.isArray(key.value))) return null;
-  const left = track.keyframes[Math.max(0, keyIndex - 1)];
-  const right = track.keyframes[Math.min(track.keyframes.length - 1, keyIndex + 1)];
-  if (left === right) {
+  if (track.keyframes.length === 1) {
     return typeof key.value === 'number' ? 0 : key.value.map(() => 0);
   }
-  return numericSlope(left.value, right.value, right.time - left.time);
+  if (keyIndex === 0) {
+    const right = track.keyframes[1];
+    return numericSlope(key.value, right.value, right.time - key.time);
+  }
+  if (keyIndex === track.keyframes.length - 1) {
+    const left = track.keyframes[keyIndex - 1];
+    return numericSlope(left.value, key.value, key.time - left.time);
+  }
+  const left = track.keyframes[keyIndex - 1];
+  const right = track.keyframes[keyIndex + 1];
+  return clampedNumericTangent(
+    left.value,
+    key.value,
+    right.value,
+    key.time - left.time,
+    right.time - key.time,
+  );
+}
+
+function resolvedAnimationTangent(
+  track: AnimationTrack,
+  keyIndex: number,
+  side: 'in_tangent' | 'out_tangent',
+  linearSlope: AnimationTangent | null,
+): AnimationTangent | null {
+  const key = track.keyframes[keyIndex];
+  if (!key) return null;
+  const mode = animationKeyTangentMode(key, side);
+  if (mode === 'linear') return linearSlope;
+  if (mode === 'free') {
+    return animationTangent(key[side], key.value) ?? automaticAnimationTangent(track, keyIndex);
+  }
+  return automaticAnimationTangent(track, keyIndex);
 }
 
 function cubicInterpolateValue(
@@ -482,11 +642,13 @@ export function sampleAnimationTrack(
     else if (track.interpolation === 'smooth') amount = amount * amount * (3 - 2 * amount);
     else if (track.interpolation === 'cubic') {
       const fallback = numericSlope(left.value, right.value, span);
-      const outTangent = animationTangent(left.out_tangent, left.value)
-        ?? automaticAnimationTangent(track, index - 1)
+      if (
+        animationKeyTangentMode(left, 'out_tangent') === 'constant'
+        || animationKeyTangentMode(right, 'in_tangent') === 'constant'
+      ) return structuredClone(left.value);
+      const outTangent = resolvedAnimationTangent(track, index - 1, 'out_tangent', fallback)
         ?? fallback;
-      const inTangent = animationTangent(right.in_tangent, right.value)
-        ?? automaticAnimationTangent(track, index)
+      const inTangent = resolvedAnimationTangent(track, index, 'in_tangent', fallback)
         ?? fallback;
       if (outTangent != null && inTangent != null) {
         return cubicInterpolateValue(left.value, right.value, outTangent, inTangent, span, amount);

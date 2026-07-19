@@ -91,6 +91,8 @@ test('Timeline key group copy and paste preserves offsets tangents and extends d
     time: 1.8,
     value: [1, 2],
     in_tangent: [3, 4],
+    in_tangent_mode: 'free',
+    broken: true,
   });
   assert.deepEqual(pasted.clip.tracks[1].keyframes[2], { time: 2.3, value: [2, 2] });
 
@@ -209,6 +211,7 @@ test('Timeline key retiming clamps bounds and rejects collapsed same-track keys'
 test('Timeline key reverse mirrors frames and reverses cubic tangent direction', () => {
   const source = clip();
   source.tracks[0].keyframes[1].out_tangent = [7, 8];
+  source.tracks[0].keyframes[1].out_tangent_mode = 'linear';
   const reversed = reverseTimelineKeySelection(source, [
     { track: 0, key: 0 },
     { track: 0, key: 1 },
@@ -223,6 +226,8 @@ test('Timeline key reverse mirrors frames and reverses cubic tangent direction',
   ]);
   assert.deepEqual(reversed.clip.tracks[0].keyframes[1].in_tangent, [-7, -8]);
   assert.deepEqual(reversed.clip.tracks[0].keyframes[1].out_tangent, [-3, -4]);
+  assert.equal(reversed.clip.tracks[0].keyframes[1].in_tangent_mode, 'linear');
+  assert.equal(reversed.clip.tracks[0].keyframes[1].out_tangent_mode, 'free');
   assert.equal(reversed.selection.length, 3);
 });
 

@@ -3,6 +3,7 @@ import test from 'node:test';
 import {
   advanceAnimationPreviewPhase,
   addAnimationEvent,
+  animationKeyTangentMode,
   automaticAnimationTangent,
   normalizeAnimationClip,
   pasteAnimationEvent,
@@ -105,6 +106,51 @@ test('AnimationClip cubic interpolation supports automatic and authored Hermite 
   assert.deepEqual(sampleAnimationTrack(vector, 0.5), [1, 3]);
 });
 
+test('AnimationClip tangent modes support clamped auto, linear, constant, and legacy free keys', () => {
+  const legacy = normalizeAnimationClip({
+    name: 'Legacy',
+    duration: 1,
+    tracks: [{
+      target: '.',
+      component: 'Transform',
+      property: 'position.x',
+      interpolation: 'cubic',
+      keyframes: [{ time: 0, value: 0, out_tangent: 2 }, { time: 1, value: 2 }],
+    }],
+  }).tracks[0];
+  assert.equal(animationKeyTangentMode(legacy.keyframes[0], 'out_tangent'), 'free');
+  assert.equal(legacy.keyframes[0].broken, true);
+
+  const linear = {
+    ...floatTrack('cubic'),
+    keyframes: [
+      { time: 0, value: 0, out_tangent_mode: 'linear' },
+      { time: 1, value: 2, in_tangent_mode: 'linear' },
+    ],
+  };
+  assert.equal(sampleAnimationTrack(linear, 0.5), 1);
+  const constant = {
+    ...linear,
+    keyframes: [
+      { time: 0, value: 0, out_tangent_mode: 'constant' },
+      { time: 1, value: 2, in_tangent_mode: 'linear' },
+    ],
+  };
+  assert.equal(sampleAnimationTrack(constant, 0.999), 0);
+  assert.equal(sampleAnimationTrack(constant, 1), 2);
+
+  const monotone = {
+    ...floatTrack('cubic'),
+    keyframes: [{ time: 0, value: 0 }, { time: 1, value: 1 }, { time: 2, value: 1.01 }],
+  };
+  assert.ok(automaticAnimationTangent(monotone, 1) > 0);
+  for (let step = 0; step <= 40; step += 1) {
+    const time = step / 20;
+    const value = sampleAnimationTrack(monotone, time);
+    assert.ok(value >= 0 && value <= 1.01, `clamped auto overshot at ${time}: ${value}`);
+  }
+});
+
 test('AnimationClip keeps valid tangents while moving and replacing keys', () => {
   const track = {
     ...floatTrack('cubic'),
@@ -163,14 +209,17 @@ test('AnimationClip serializes cubic tangents and ignores invalid tangent shapes
       property: 'position',
       interpolation: 'cubic',
       keyframes: [
-        { time: 0, value: [0, 0], out_tangent: [1, 2] },
-        { time: 1, value: [2, 3], in_tangent: [0] },
+        { time: 0, value: [0, 0], out_tangent: [1, 2], out_tangent_mode: 'free', broken: true },
+        { time: 1, value: [2, 3], in_tangent: [0], in_tangent_mode: 'constant' },
       ],
     }],
   });
   assert.equal(clip.tracks[0].interpolation, 'cubic');
   assert.deepEqual(clip.tracks[0].keyframes[0].out_tangent, [1, 2]);
+  assert.equal(clip.tracks[0].keyframes[0].out_tangent_mode, 'free');
+  assert.equal(clip.tracks[0].keyframes[0].broken, true);
   assert.equal(clip.tracks[0].keyframes[1].in_tangent, undefined);
+  assert.equal(clip.tracks[0].keyframes[1].in_tangent_mode, 'constant');
   assert.deepEqual(parseAnimationClip(serializeAnimationClip(clip)), clip);
 });
 

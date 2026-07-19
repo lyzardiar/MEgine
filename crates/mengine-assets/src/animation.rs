@@ -29,6 +29,20 @@ pub enum AnimationInterpolation {
     Cubic,
 }
 
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "snake_case")]
+pub enum AnimationTangentMode {
+    #[default]
+    ClampedAuto,
+    Free,
+    Linear,
+    Constant,
+}
+
+fn is_false(value: &bool) -> bool {
+    !*value
+}
+
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 #[serde(untagged)]
 pub enum AnimationValue {
@@ -93,6 +107,68 @@ impl AnimationValue {
         }
     }
 
+    fn clamped_tangent(
+        previous: &Self,
+        current: &Self,
+        next: &Self,
+        previous_span: f32,
+        next_span: f32,
+    ) -> Option<Self> {
+        if !previous_span.is_finite()
+            || !next_span.is_finite()
+            || previous_span <= f32::EPSILON
+            || next_span <= f32::EPSILON
+        {
+            return None;
+        }
+        fn scalar(
+            previous: f32,
+            current: f32,
+            next: f32,
+            previous_span: f32,
+            next_span: f32,
+        ) -> f32 {
+            let previous_slope = (current - previous) / previous_span;
+            let next_slope = (next - current) / next_span;
+            if !previous_slope.is_finite()
+                || !next_slope.is_finite()
+                || previous_slope == 0.0
+                || next_slope == 0.0
+                || previous_slope.signum() != next_slope.signum()
+            {
+                return 0.0;
+            }
+            let previous_weight = 2.0 * next_span + previous_span;
+            let next_weight = next_span + 2.0 * previous_span;
+            let denominator = previous_weight / previous_slope + next_weight / next_slope;
+            if denominator == 0.0 {
+                0.0
+            } else {
+                (previous_weight + next_weight) / denominator
+            }
+        }
+        match (previous, current, next) {
+            (Self::Float(previous), Self::Float(current), Self::Float(next)) => Some(Self::Float(
+                scalar(*previous, *current, *next, previous_span, next_span),
+            )),
+            (Self::Vector(previous), Self::Vector(current), Self::Vector(next))
+                if previous.len() == current.len() && previous.len() == next.len() =>
+            {
+                Some(Self::Vector(
+                    previous
+                        .iter()
+                        .zip(current)
+                        .zip(next)
+                        .map(|((previous, current), next)| {
+                            scalar(*previous, *current, *next, previous_span, next_span)
+                        })
+                        .collect(),
+                ))
+            }
+            _ => None,
+        }
+    }
+
     fn cubic(
         &self,
         next: &Self,
@@ -140,6 +216,20 @@ pub struct AnimationKeyframe {
     pub in_tangent: Option<AnimationValue>,
     #[serde(default, skip_serializing_if = "Option::is_none", alias = "outTangent")]
     pub out_tangent: Option<AnimationValue>,
+    #[serde(
+        default,
+        skip_serializing_if = "Option::is_none",
+        alias = "inTangentMode"
+    )]
+    pub in_tangent_mode: Option<AnimationTangentMode>,
+    #[serde(
+        default,
+        skip_serializing_if = "Option::is_none",
+        alias = "outTangentMode"
+    )]
+    pub out_tangent_mode: Option<AnimationTangentMode>,
+    #[serde(default, skip_serializing_if = "is_false")]
+    pub broken: bool,
 }
 
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
@@ -349,20 +439,17 @@ pub fn sample_track(track: &AnimationTrack, time: f32) -> Option<AnimationValue>
             AnimationInterpolation::Smooth => amount * amount * (3.0 - 2.0 * amount),
             AnimationInterpolation::Cubic => {
                 let fallback = AnimationValue::slope(&left.value, &right.value, span);
-                let out_tangent = left
-                    .out_tangent
-                    .as_ref()
-                    .filter(|tangent| tangent.is_tangent_for(&left.value))
-                    .cloned()
-                    .or_else(|| automatic_tangent(track, pair_index))
-                    .or_else(|| fallback.clone());
-                let in_tangent = right
-                    .in_tangent
-                    .as_ref()
-                    .filter(|tangent| tangent.is_tangent_for(&right.value))
-                    .cloned()
-                    .or_else(|| automatic_tangent(track, pair_index + 1))
-                    .or(fallback);
+                if tangent_mode(left, TangentSide::Out) == AnimationTangentMode::Constant
+                    || tangent_mode(right, TangentSide::In) == AnimationTangentMode::Constant
+                {
+                    return Some(left.value.clone());
+                }
+                let out_tangent =
+                    resolved_tangent(track, pair_index, TangentSide::Out, fallback.clone())
+                        .or_else(|| fallback.clone());
+                let in_tangent =
+                    resolved_tangent(track, pair_index + 1, TangentSide::In, fallback.clone())
+                        .or(fallback);
                 if let (Some(out_tangent), Some(in_tangent)) = (out_tangent, in_tangent) {
                     return Some(left.value.cubic(
                         &right.value,
@@ -380,22 +467,78 @@ pub fn sample_track(track: &AnimationTrack, time: f32) -> Option<AnimationValue>
     track.keyframes.last().map(|key| key.value.clone())
 }
 
+#[derive(Clone, Copy)]
+enum TangentSide {
+    In,
+    Out,
+}
+
+fn tangent_mode(key: &AnimationKeyframe, side: TangentSide) -> AnimationTangentMode {
+    let (mode, tangent) = match side {
+        TangentSide::In => (key.in_tangent_mode, key.in_tangent.as_ref()),
+        TangentSide::Out => (key.out_tangent_mode, key.out_tangent.as_ref()),
+    };
+    mode.unwrap_or(if tangent.is_some() {
+        AnimationTangentMode::Free
+    } else {
+        AnimationTangentMode::ClampedAuto
+    })
+}
+
+fn resolved_tangent(
+    track: &AnimationTrack,
+    key_index: usize,
+    side: TangentSide,
+    linear: Option<AnimationValue>,
+) -> Option<AnimationValue> {
+    let key = track.keyframes.get(key_index)?;
+    match tangent_mode(key, side) {
+        AnimationTangentMode::ClampedAuto => automatic_tangent(track, key_index),
+        AnimationTangentMode::Linear => linear,
+        AnimationTangentMode::Constant => None,
+        AnimationTangentMode::Free => {
+            let authored = match side {
+                TangentSide::In => key.in_tangent.as_ref(),
+                TangentSide::Out => key.out_tangent.as_ref(),
+            };
+            authored
+                .filter(|tangent| tangent.is_tangent_for(&key.value))
+                .cloned()
+                .or_else(|| automatic_tangent(track, key_index))
+        }
+    }
+}
+
 fn automatic_tangent(track: &AnimationTrack, key_index: usize) -> Option<AnimationValue> {
     let key = track.keyframes.get(key_index)?;
     match &key.value {
         AnimationValue::Float(_) | AnimationValue::Vector(_) => {}
         AnimationValue::Bool(_) | AnimationValue::String(_) => return None,
     }
-    let left = &track.keyframes[key_index.saturating_sub(1)];
-    let right = &track.keyframes[(key_index + 1).min(track.keyframes.len() - 1)];
-    if std::ptr::eq(left, right) {
+    if track.keyframes.len() == 1 {
         return match &key.value {
             AnimationValue::Float(_) => Some(AnimationValue::Float(0.0)),
             AnimationValue::Vector(value) => Some(AnimationValue::Vector(vec![0.0; value.len()])),
             AnimationValue::Bool(_) | AnimationValue::String(_) => None,
         };
     }
-    AnimationValue::slope(&left.value, &right.value, right.time - left.time)
+    if key_index == 0 {
+        let right = &track.keyframes[1];
+        return AnimationValue::slope(&key.value, &right.value, right.time - key.time);
+    }
+    if key_index == track.keyframes.len() - 1 {
+        let left = &track.keyframes[key_index - 1];
+        return AnimationValue::slope(&left.value, &key.value, key.time - left.time);
+    }
+    let left = &track.keyframes[key_index - 1];
+    let right = &track.keyframes[key_index + 1];
+    AnimationValue::clamped_tangent(
+        &left.value,
+        &key.value,
+        &right.value,
+        key.time - left.time,
+        right.time - key.time,
+    )
 }
 
 pub fn parse_animation_clip(bytes: &[u8]) -> Result<AnimationClip, AssetError> {
@@ -411,6 +554,23 @@ pub fn load_animation_clip(path: impl AsRef<Path>) -> Result<AnimationClip, Asse
 mod tests {
     use super::*;
 
+    fn keyframe(
+        time: f32,
+        value: AnimationValue,
+        in_tangent: Option<AnimationValue>,
+        out_tangent: Option<AnimationValue>,
+    ) -> AnimationKeyframe {
+        AnimationKeyframe {
+            time,
+            value,
+            in_tangent,
+            out_tangent,
+            in_tangent_mode: None,
+            out_tangent_mode: None,
+            broken: false,
+        }
+    }
+
     fn float_track(interpolation: AnimationInterpolation) -> AnimationTrack {
         AnimationTrack {
             target: ".".into(),
@@ -418,18 +578,8 @@ mod tests {
             property: "position.x".into(),
             interpolation,
             keyframes: vec![
-                AnimationKeyframe {
-                    time: 0.0,
-                    value: AnimationValue::Float(0.0),
-                    in_tangent: None,
-                    out_tangent: None,
-                },
-                AnimationKeyframe {
-                    time: 2.0,
-                    value: AnimationValue::Float(10.0),
-                    in_tangent: None,
-                    out_tangent: None,
-                },
+                keyframe(0.0, AnimationValue::Float(0.0), None, None),
+                keyframe(2.0, AnimationValue::Float(10.0), None, None),
             ],
         }
     }
@@ -475,18 +625,8 @@ mod tests {
 
         let vector = AnimationTrack {
             keyframes: vec![
-                AnimationKeyframe {
-                    time: 0.0,
-                    value: AnimationValue::Vector(vec![0.0, 2.0]),
-                    in_tangent: None,
-                    out_tangent: None,
-                },
-                AnimationKeyframe {
-                    time: 1.0,
-                    value: AnimationValue::Vector(vec![2.0, 4.0]),
-                    in_tangent: None,
-                    out_tangent: None,
-                },
+                keyframe(0.0, AnimationValue::Vector(vec![0.0, 2.0]), None, None),
+                keyframe(1.0, AnimationValue::Vector(vec![2.0, 4.0]), None, None),
             ],
             ..float_track(AnimationInterpolation::Linear)
         };
@@ -497,18 +637,8 @@ mod tests {
 
         let discrete = AnimationTrack {
             keyframes: vec![
-                AnimationKeyframe {
-                    time: 0.0,
-                    value: AnimationValue::Bool(false),
-                    in_tangent: None,
-                    out_tangent: None,
-                },
-                AnimationKeyframe {
-                    time: 1.0,
-                    value: AnimationValue::Bool(true),
-                    in_tangent: None,
-                    out_tangent: None,
-                },
+                keyframe(0.0, AnimationValue::Bool(false), None, None),
+                keyframe(1.0, AnimationValue::Bool(true), None, None),
             ],
             ..float_track(AnimationInterpolation::Linear)
         };
@@ -526,24 +656,9 @@ mod tests {
     fn cubic_tracks_support_automatic_and_authored_hermite_tangents() {
         let mut track = float_track(AnimationInterpolation::Cubic);
         track.keyframes = vec![
-            AnimationKeyframe {
-                time: 0.0,
-                value: AnimationValue::Float(0.0),
-                in_tangent: None,
-                out_tangent: None,
-            },
-            AnimationKeyframe {
-                time: 1.0,
-                value: AnimationValue::Float(1.0),
-                in_tangent: None,
-                out_tangent: None,
-            },
-            AnimationKeyframe {
-                time: 2.0,
-                value: AnimationValue::Float(0.0),
-                in_tangent: None,
-                out_tangent: None,
-            },
+            keyframe(0.0, AnimationValue::Float(0.0), None, None),
+            keyframe(1.0, AnimationValue::Float(1.0), None, None),
+            keyframe(2.0, AnimationValue::Float(0.0), None, None),
         ];
         assert_eq!(
             sample_track(&track, 0.5),
@@ -556,24 +671,92 @@ mod tests {
         let vector = AnimationTrack {
             interpolation: AnimationInterpolation::Cubic,
             keyframes: vec![
-                AnimationKeyframe {
-                    time: 0.0,
-                    value: AnimationValue::Vector(vec![0.0, 2.0]),
-                    in_tangent: None,
-                    out_tangent: Some(AnimationValue::Vector(vec![0.0, 0.0])),
-                },
-                AnimationKeyframe {
-                    time: 1.0,
-                    value: AnimationValue::Vector(vec![2.0, 4.0]),
-                    in_tangent: Some(AnimationValue::Vector(vec![0.0, 0.0])),
-                    out_tangent: None,
-                },
+                keyframe(
+                    0.0,
+                    AnimationValue::Vector(vec![0.0, 2.0]),
+                    None,
+                    Some(AnimationValue::Vector(vec![0.0, 0.0])),
+                ),
+                keyframe(
+                    1.0,
+                    AnimationValue::Vector(vec![2.0, 4.0]),
+                    Some(AnimationValue::Vector(vec![0.0, 0.0])),
+                    None,
+                ),
             ],
             ..float_track(AnimationInterpolation::Linear)
         };
         assert_eq!(
             sample_track(&vector, 0.5),
             Some(AnimationValue::Vector(vec![1.0, 3.0]))
+        );
+    }
+
+    #[test]
+    fn cubic_tangent_modes_support_clamped_linear_constant_and_free_sampling() {
+        let mut linear = float_track(AnimationInterpolation::Cubic);
+        linear.keyframes[0].out_tangent_mode = Some(AnimationTangentMode::Linear);
+        linear.keyframes[1].in_tangent_mode = Some(AnimationTangentMode::Linear);
+        assert_eq!(sample_track(&linear, 1.0), Some(AnimationValue::Float(5.0)));
+
+        linear.keyframes[0].out_tangent_mode = Some(AnimationTangentMode::Constant);
+        assert_eq!(
+            sample_track(&linear, 1.999),
+            Some(AnimationValue::Float(0.0))
+        );
+        assert_eq!(
+            sample_track(&linear, 2.0),
+            Some(AnimationValue::Float(10.0))
+        );
+
+        let mut monotone = float_track(AnimationInterpolation::Cubic);
+        monotone.keyframes = vec![
+            keyframe(0.0, AnimationValue::Float(0.0), None, None),
+            keyframe(1.0, AnimationValue::Float(1.0), None, None),
+            keyframe(2.0, AnimationValue::Float(1.01), None, None),
+        ];
+        for step in 0..=40 {
+            let time = step as f32 / 20.0;
+            let Some(AnimationValue::Float(value)) = sample_track(&monotone, time) else {
+                panic!("expected scalar sample");
+            };
+            assert!(
+                (0.0..=1.01).contains(&value),
+                "overshoot at {time}: {value}"
+            );
+        }
+
+        monotone.keyframes[1].in_tangent = Some(AnimationValue::Float(4.0));
+        monotone.keyframes[1].in_tangent_mode = None;
+        assert_eq!(
+            tangent_mode(&monotone.keyframes[1], TangentSide::In),
+            AnimationTangentMode::Free
+        );
+
+        let parsed = parse_animation_clip(
+            br#"{
+                "name":"Modes","duration":1,"frame_rate":60,"wrap_mode":"loop","events":[],
+                "tracks":[{"target":".","component":"Transform","property":"position.x","interpolation":"cubic",
+                    "keyframes":[
+                        {"time":0,"value":0,"out_tangent_mode":"constant","broken":true},
+                        {"time":1,"value":2,"in_tangent_mode":"linear"}
+                    ]
+                }]
+            }"#,
+        )
+        .unwrap();
+        assert_eq!(
+            parsed.tracks[0].keyframes[0].out_tangent_mode,
+            Some(AnimationTangentMode::Constant)
+        );
+        assert!(parsed.tracks[0].keyframes[0].broken);
+        assert_eq!(
+            parsed.tracks[0].keyframes[1].in_tangent_mode,
+            Some(AnimationTangentMode::Linear)
+        );
+        assert_eq!(
+            sample_track(&parsed.tracks[0], 0.5),
+            Some(AnimationValue::Float(0.0))
         );
     }
 

@@ -3,20 +3,25 @@ import test from 'node:test';
 import { normalizeAnimationClip } from '../src/animationClip.ts';
 import {
   animationCurveCoordinates,
+  animationCurveChannelDrawOrder,
   animationCurveKeysInRect,
   animationCurveMaximumZoom,
   animationCurvePoint,
   animationCurveSelectionBounds,
   animationCurveSlopeFromPoint,
   animationCurveTangentChannel,
+  animationCurveTangentConstraint,
   animationCurveTangentHandle,
   animationCurveValueBounds,
   moveAnimationCurveKey,
   offsetAnimationCurveKeyValues,
   panAnimationCurveView,
   setAnimationCurveTangentChannel,
+  setAnimationCurveTangentSideMode,
   setAnimationCurveTangentsAuto,
+  setAnimationCurveTangentsBroken,
   setAnimationCurveTangentsFlat,
+  setAnimationCurveTangentsFreeSmooth,
   zoomAnimationCurveView,
 } from '../src/animationCurveEditing.ts';
 
@@ -60,6 +65,13 @@ test('Curve viewport coordinates round trip and clamp to the plot', () => {
   assert.deepEqual(point, { x: 275, y: 132.5 });
   assert.deepEqual(animationCurveCoordinates(view, point.x, point.y), { time: 0.5, value: 7.5 });
   assert.deepEqual(animationCurveCoordinates(view, -100, 900), { time: 0, value: 0 });
+});
+
+test('Curve channels draw the active channel last so overlapping keys remain selectable', () => {
+  assert.deepEqual(animationCurveChannelDrawOrder(3, 0), [1, 2, 0]);
+  assert.deepEqual(animationCurveChannelDrawOrder(3, 1), [0, 2, 1]);
+  assert.deepEqual(animationCurveChannelDrawOrder(3, 9), [0, 1, 2]);
+  assert.deepEqual(animationCurveChannelDrawOrder(Number.NaN, 0), []);
 });
 
 test('Curve value bounds include sampled channels and stable padding', () => {
@@ -152,17 +164,45 @@ test('Curve marquee selects one channel and batch value offsets preserve other c
   assert.equal(offsetAnimationCurveKeyValues(source, [0], 5, 1), source);
 });
 
-test('Curve tangent handles support authored, flat and automatic modes', () => {
+test('Curve tangent handles preserve linked, broken, side, flat and automatic modes', () => {
+  assert.equal(animationCurveTangentConstraint(track(), 1, 0), 'clamped_auto');
   let source = setAnimationCurveTangentChannel(track(), 1, 'out_tangent', 0, 4);
   assert.equal(animationCurveTangentChannel(source, 1, 'out_tangent', 0), 4);
+  assert.equal(animationCurveTangentChannel(source, 1, 'in_tangent', 0), 4);
+  assert.equal(source.keyframes[1].broken, undefined);
+  assert.equal(animationCurveTangentConstraint(source, 1, 0), 'free_smooth');
   const handle = animationCurveTangentHandle(source, 1, 'out_tangent', 0, viewport(), 0.25);
   assert.deepEqual(handle, animationCurvePoint(viewport(), 1.25, 3));
   assert.equal(animationCurveSlopeFromPoint(1, 2, 1.25, 3), 4);
 
+  source = setAnimationCurveTangentsBroken(source, 1);
+  assert.equal(source.keyframes[1].broken, true);
+  assert.equal(animationCurveTangentConstraint(source, 1, 0), 'broken');
+  source = setAnimationCurveTangentChannel(source, 1, 'out_tangent', 0, 7);
+  assert.equal(animationCurveTangentChannel(source, 1, 'in_tangent', 0), 4);
+  assert.equal(animationCurveTangentChannel(source, 1, 'out_tangent', 0), 7);
+
+  source = setAnimationCurveTangentSideMode(source, 1, 'in_tangent', 'linear');
+  assert.equal(animationCurveTangentChannel(source, 1, 'in_tangent', 0), 2);
+  source = setAnimationCurveTangentSideMode(source, 1, 'out_tangent', 'constant');
+  assert.equal(animationCurveTangentChannel(source, 1, 'out_tangent', 0), null);
+  assert.equal(animationCurveTangentHandle(source, 1, 'out_tangent', 0, viewport(), 0.25), null);
+  source = setAnimationCurveTangentSideMode(source, 1, 'out_tangent', 'clamped_auto');
+  assert.equal(source.keyframes[1].out_tangent, undefined);
+  assert.equal(source.keyframes[1].out_tangent_mode, undefined);
+  assert.equal(animationCurveTangentChannel(source, 1, 'out_tangent', 0), 0);
+
+  source = setAnimationCurveTangentsFreeSmooth(source, 0);
+  assert.equal(animationCurveTangentConstraint(source, 0, 0), 'free_smooth');
   source = setAnimationCurveTangentsFlat(source, 1);
   assert.deepEqual(source.keyframes[1].in_tangent, [0, 0]);
   assert.deepEqual(source.keyframes[1].out_tangent, [0, 0]);
+  assert.equal(animationCurveTangentConstraint(source, 1, 0), 'flat');
   source = setAnimationCurveTangentsAuto(source, 1);
   assert.equal(source.keyframes[1].in_tangent, undefined);
   assert.equal(source.keyframes[1].out_tangent, undefined);
+  assert.equal(source.keyframes[1].in_tangent_mode, undefined);
+  assert.equal(source.keyframes[1].out_tangent_mode, undefined);
+  assert.equal(source.keyframes[1].broken, undefined);
+  assert.equal(animationCurveTangentConstraint(source, 1, 0), 'clamped_auto');
 });

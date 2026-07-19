@@ -13,8 +13,8 @@ mod timeline;
 
 pub use animation::{
     load_animation_clip, parse_animation_clip, sample_track, wrapped_animation_time, AnimationClip,
-    AnimationEvent, AnimationInterpolation, AnimationKeyframe, AnimationSample, AnimationTrack,
-    AnimationValue, AnimationWrapMode,
+    AnimationEvent, AnimationInterpolation, AnimationKeyframe, AnimationSample,
+    AnimationTangentMode, AnimationTrack, AnimationValue, AnimationWrapMode,
 };
 pub use animator::{
     load_animator_controller, parse_animator_controller, AnimatorBlendTree1D,

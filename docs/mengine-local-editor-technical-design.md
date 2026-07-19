@@ -1012,3 +1012,16 @@ Referenced Only 是可用的单包裁剪基础，仍不等同于完整 Addressab
 第一遍真实自审在 1280×720 普通 Dock 中发现 Timeline 面板实际高 492px、宿主仅 179px，Curve 工具栏又被 Details 从 x=950 开始覆盖；约束面板高度并建立 950px Curve + 330px Details 分栏后，面板与宿主同为 179px，Curve 与 Details 的 `scrollWidth === clientWidth`。选择 0.25 / 0.75 秒两键后按 F 得到 0.190–0.810 秒、-6.800–11.800 的视口，滚轮缩放到 0.355–0.695 秒时选区和 Undo 标题均保持不变。第二遍使用全新编辑器文档排除热更新残留，验证 1 秒、60 FPS 在 19 次 Zoom In 后稳定停在 6000%；最大化后 Curve 为 958×577、SVG 为 958×546、Details 为 322×608，均处于 1280×720 可视区且无横向溢出。最终截图复核发现 1.00 秒尾标签被裁切，改为首尾锚点后完整显示；纯函数测试覆盖选区框定、指针锚定缩放、边界平移、异常范围回退和一帧缩放上限。
 
 这一切片补齐的是成熟 Curve Editor 的基础导航，不代表动画系统已经完备。后续仍需通道级选择、框选变换手柄、独立轴数值输入、Broken/Free/Weighted tangent 与切线权重、曲线复制/粘贴和降噪、可配置 Snap、Euler 过滤、Onion Skin、运动轨迹、Root Motion、Avatar 重定向、动画压缩、录制冲突诊断和动画层混合；Timeline 还要继续统一 Animation Clip、`.mtimeline` Sequencer 与 Animator 的时间域、选择模型和快捷键。
+
+## 81. 2026-07-19 Curve Tangent 模式与运行时一致性
+
+- `.manim` 关键帧新增可选的 `in_tangent_mode`、`out_tangent_mode` 与 `broken` 契约，TypeScript 编辑器预览和 Rust Player 共同支持 Clamped Auto、Free、Linear、Constant。字段保持可选：旧资源没有模式且没有手写切线时按 Clamped Auto 读取，已有手写切线的旧资源按 Free 读取；编辑器保存会输出稳定的蛇形字段，运行时不再与编辑器各自猜测插值语义。
+- Clamped Auto 使用相邻割线同号检查与加权调和斜率，局部极值或变号处斜率归零，端点使用相邻区间斜率，从而避免普通自动 Hermite 在单调关键帧间产生过冲。Linear 每侧实时指向相邻关键帧，Constant 在该区间保持左值并隐藏数值手柄，Free 使用作者切线；反转关键帧时入/出切线及其模式同步交换，复制、粘贴、移动和替换均保留模式与 Broken 状态。
+- Curve 工具栏新增 Clamped Auto、Free Smooth、Broken、Flat 四个紧凑方形命令。Free Smooth 保持入/出斜率共线，Flat 是零斜率的 Free Smooth 特例，Broken 只解除两侧联动而不偷偷改形；Details 为入、出两侧分别提供 Clamped Auto / Free / Linear / Constant，单侧修改自动进入 Broken。拖动自动切线会转换为 Free，批量命令只生成一条具名 Undo，保存、Dirty、Undo/Redo 继续走现有动画资产事务。
+- 多通道重叠关键帧的绘制顺序显式把活动通道放到最后。这样 X/Y/Z 数值完全相同时，先在图例选择 X 再点击重叠关键帧，命中的仍是 X，而不是固定被最后枚举的 Z 截获；无效活动通道则保留稳定的原始顺序。该规则由无 DOM 纯函数测试覆盖，不依赖 SVG 浏览器碰巧采用的命中顺序。
+
+第一遍自审发现把一侧从 Free 改回 Clamped Auto 时，旧手写切线仍可能残留并在后续模式切换中重新生效；现在切回自动模式会同时清理该侧作者值。Broken 最初也会把两侧强制改为 Free，造成 Linear/Constant 曲线在“解除联动”时悄悄变形，现已改为只设置断开标记。真实编辑器中验证 Free Smooth、Broken、单侧 Constant、Undo/Redo 与保存回读：Constant 隐藏出切线手柄，撤销恢复 Free 和手柄，重做再次恢复 Constant，磁盘资源保留两侧模式和 Broken。
+
+第二遍自审在三通道零值曲线中发现 X/Y/Z 关键帧完全重叠时 Z 抢占 X 的点击；活动通道后绘制后，真实界面选择 X 并点击重叠点，选中状态稳定落在 `channel 1`。最大化 1280×720 布局中 Curve 列 958px、Details 322px，两个 108px 模式选择器与 195px 切线工具组均满足 `scrollWidth === clientWidth`，没有新增横向溢出；TypeScript 与 Rust 测试分别覆盖模式归一化、单调自动切线、Linear/Constant 采样、切线联动/断开、复制与时间反转。
+
+当前实现仍不是完整的 Unity Animation Curve：尚缺 Weighted Tangent 与手柄权重、逐通道独立多选、切线复制/粘贴、框选缩放、曲线简化与误差预算、Euler 过滤、Quaternion 连续化、Onion Skin、运动轨迹、动画压缩、导入模型 Clip 的重定向和 Root Motion。后续切片应继续沿同一份 `.manim` 契约扩展，不在编辑器预览和 Player 之间建立第二套曲线定义。

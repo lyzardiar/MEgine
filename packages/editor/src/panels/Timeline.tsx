@@ -26,6 +26,7 @@ import {
   Crosshair,
   FlipHorizontal2,
   Maximize2,
+  Minus,
   Minimize2,
   PanelRightClose,
   PanelRightOpen,
@@ -34,9 +35,12 @@ import {
   Plus,
   Save,
   Search,
+  Spline,
   Trash2,
   Redo2,
   Undo2,
+  Unlink2,
+  WandSparkles,
   X,
   ZoomIn,
   ZoomOut,
@@ -44,6 +48,7 @@ import {
 import {
   advanceAnimationPreviewPhase,
   addAnimationEvent,
+  animationKeyTangentMode,
   automaticAnimationTangent,
   createAnimationClip,
   normalizeAnimationClip,
@@ -64,6 +69,7 @@ import {
   type AnimationKeyframe,
   type AnimationSample,
   type AnimationTangent,
+  type AnimationTangentMode,
   type AnimationTrack,
   type AnimationValue,
 } from '../animationClip';
@@ -78,20 +84,25 @@ import {
 } from '../animationBindings';
 import {
   animationCurveChannelCount,
+  animationCurveChannelDrawOrder,
   animationCurveCoordinates,
   animationCurveKeysInRect,
   animationCurveMaximumZoom,
   animationCurvePoint,
   animationCurveSelectionBounds,
   animationCurveSlopeFromPoint,
+  animationCurveTangentConstraint,
   animationCurveTangentHandle,
   animationCurveValueBounds,
   curveNumericChannels,
   offsetAnimationCurveKeyValues,
   panAnimationCurveView,
   setAnimationCurveTangentChannel,
+  setAnimationCurveTangentSideMode,
   setAnimationCurveTangentsAuto,
+  setAnimationCurveTangentsBroken,
   setAnimationCurveTangentsFlat,
+  setAnimationCurveTangentsFreeSmooth,
   zoomAnimationCurveView,
   type AnimationCurveCoordinates,
   type AnimationCurvePoint,
@@ -420,7 +431,7 @@ function AnimationCurveWorkspace(props: {
     side: 'in_tangent' | 'out_tangent',
     slope: number,
   ) => void;
-  onSetTangents: (mode: 'auto' | 'flat') => void;
+  onSetTangents: (mode: 'auto' | 'smooth' | 'broken' | 'flat') => void;
   onEnableCubic: () => void;
 }) {
   const [selectedChannel, setSelectedChannel] = useState(0);
@@ -523,6 +534,14 @@ function AnimationCurveWorkspace(props: {
     };
   });
   const selectedTrackKeys = props.selectedKeys.filter((ref) => ref.track === props.trackIndex);
+  const selectedTangentConstraints = selectedTrackKeys.flatMap((ref) => {
+    const constraint = animationCurveTangentConstraint(track, ref.key, selectedChannel);
+    return constraint == null ? [] : [constraint];
+  });
+  const selectedTangentConstraint = selectedTangentConstraints.length > 0
+    && selectedTangentConstraints.every((constraint) => constraint === selectedTangentConstraints[0])
+    ? selectedTangentConstraints[0]
+    : null;
   const currentView: AnimationCurveViewBounds = {
     timeStart,
     timeEnd,
@@ -961,8 +980,42 @@ function AnimationCurveWorkspace(props: {
             ? `Tangents · ${selectedTrackKeys.length} selected`
             : `${track.interpolation} interpolation`}</span>
           {track.interpolation === 'cubic' ? <>
-            <button type="button" disabled={selectedTrackKeys.length === 0} onClick={() => props.onSetTangents('auto')}>Auto</button>
-            <button type="button" disabled={selectedTrackKeys.length === 0} onClick={() => props.onSetTangents('flat')}>Flat</button>
+            <button
+              type="button"
+              className={selectedTangentConstraint === 'clamped_auto' ? 'active' : ''}
+              aria-label="Set tangents Clamped Auto"
+              aria-pressed={selectedTangentConstraint === 'clamped_auto'}
+              title="Clamped Auto"
+              disabled={selectedTrackKeys.length === 0}
+              onClick={() => props.onSetTangents('auto')}
+            ><WandSparkles size={12} aria-hidden="true" /></button>
+            <button
+              type="button"
+              className={selectedTangentConstraint === 'free_smooth' ? 'active' : ''}
+              aria-label="Set tangents Free Smooth"
+              aria-pressed={selectedTangentConstraint === 'free_smooth'}
+              title="Free Smooth"
+              disabled={selectedTrackKeys.length === 0}
+              onClick={() => props.onSetTangents('smooth')}
+            ><Spline size={12} aria-hidden="true" /></button>
+            <button
+              type="button"
+              className={selectedTangentConstraint === 'broken' ? 'active' : ''}
+              aria-label="Break tangents"
+              aria-pressed={selectedTangentConstraint === 'broken'}
+              title="Broken / independent sides"
+              disabled={selectedTrackKeys.length === 0}
+              onClick={() => props.onSetTangents('broken')}
+            ><Unlink2 size={12} aria-hidden="true" /></button>
+            <button
+              type="button"
+              className={selectedTangentConstraint === 'flat' ? 'active' : ''}
+              aria-label="Set tangents Flat"
+              aria-pressed={selectedTangentConstraint === 'flat'}
+              title="Flat"
+              disabled={selectedTrackKeys.length === 0}
+              onClick={() => props.onSetTangents('flat')}
+            ><Minus size={12} aria-hidden="true" /></button>
           </> : (
             <button type="button" onClick={props.onEnableCubic}>Use Cubic</button>
           )}
@@ -1057,7 +1110,8 @@ function AnimationCurveWorkspace(props: {
             ref.track === props.trackIndex && ref.key === keyIndex
           ));
           const displayTime = dragged && drag?.kind === 'key' ? key.time + drag.timeDelta : key.time;
-          return values.slice(0, CURVE_COLORS.length).map((value, channel) => {
+          return animationCurveChannelDrawOrder(values.length, selectedChannel).map((channel) => {
+            const value = values[channel];
             const displayValue = dragged && drag?.kind === 'key' && drag.channel === channel
               ? value + drag.valueDelta
               : value;
@@ -2479,6 +2533,20 @@ export function Timeline(props: {
     }, 'Edit Animation Tangent');
   };
 
+  const updateSelectedTangentMode = (
+    side: 'in_tangent' | 'out_tangent',
+    mode: 'clamped_auto' | 'free' | 'linear' | 'constant',
+  ) => {
+    if (!clip || !selectedKey) return;
+    const track = clip.tracks[selectedKey.track];
+    if (!track) return;
+    const next = setAnimationCurveTangentSideMode(track, selectedKey.key, side, mode);
+    updateClip({
+      ...clip,
+      tracks: clip.tracks.map((candidate, index) => index === selectedKey.track ? next : candidate),
+    }, `Set Animation ${side === 'in_tangent' ? 'In' : 'Out'} Tangent ${mode === 'clamped_auto' ? 'Clamped Auto' : mode[0].toUpperCase() + mode.slice(1)}`);
+  };
+
   const updateCurveKeys = (
     keys: readonly TimelineKeyRef[],
     channel: number,
@@ -2549,21 +2617,23 @@ export function Timeline(props: {
     }, 'Edit Animation Tangent');
   };
 
-  const setSelectedCurveTangents = (mode: 'auto' | 'flat') => {
+  const setSelectedCurveTangents = (mode: 'auto' | 'smooth' | 'broken' | 'flat') => {
     if (!clip || selectedTrack == null) return;
     const selection = activeSelectedKeys.filter((ref) => ref.track === selectedTrack);
     if (selection.length === 0) return;
     const track = clip.tracks[selectedTrack];
     if (!track || track.interpolation !== 'cubic') return;
-    const next = selection.reduce((current, ref) => (
-      mode === 'auto'
-        ? setAnimationCurveTangentsAuto(current, ref.key)
-        : setAnimationCurveTangentsFlat(current, ref.key)
-    ), track);
+    const next = selection.reduce((current, ref) => {
+      if (mode === 'auto') return setAnimationCurveTangentsAuto(current, ref.key);
+      if (mode === 'smooth') return setAnimationCurveTangentsFreeSmooth(current, ref.key);
+      if (mode === 'broken') return setAnimationCurveTangentsBroken(current, ref.key);
+      return setAnimationCurveTangentsFlat(current, ref.key);
+    }, track);
+    const label = mode === 'auto' ? 'Clamped Auto' : mode === 'smooth' ? 'Free Smooth' : mode === 'broken' ? 'Broken' : 'Flat';
     updateClip({
       ...clip,
       tracks: clip.tracks.map((candidate, index) => index === selectedTrack ? next : candidate),
-    }, `Set ${selection.length} Animation Tangent${selection.length === 1 ? '' : 's'} ${mode === 'auto' ? 'Auto' : 'Flat'}`);
+    }, `Set ${selection.length} Animation Tangent${selection.length === 1 ? '' : 's'} ${label}`);
   };
 
   const enableSelectedCurveCubic = () => {
@@ -3979,10 +4049,20 @@ export function Timeline(props: {
                       <div className="timeline-tangent-editors">
                         <div><KeyframeValueEditor label="In Tangent" value={selectedKeyframe.in_tangent ?? automatic} onChange={(value) => {
                           if (typeof value === 'number' || Array.isArray(value)) updateSelectedTangent('in_tangent', value);
-                        }} /><button type="button" className={selectedKeyframe.in_tangent === undefined ? 'active' : ''} onClick={() => updateSelectedTangent('in_tangent', null)}>Auto</button></div>
+                        }} /><label className="timeline-tangent-mode"><span>Mode</span><select aria-label="In tangent mode" value={animationKeyTangentMode(selectedKeyframe, 'in_tangent')} onChange={(event) => updateSelectedTangentMode('in_tangent', event.target.value as AnimationTangentMode)}>
+                          <option value="clamped_auto">Clamped Auto</option>
+                          <option value="free">Free</option>
+                          <option value="linear">Linear</option>
+                          <option value="constant">Constant</option>
+                        </select></label></div>
                         <div><KeyframeValueEditor label="Out Tangent" value={selectedKeyframe.out_tangent ?? automatic} onChange={(value) => {
                           if (typeof value === 'number' || Array.isArray(value)) updateSelectedTangent('out_tangent', value);
-                        }} /><button type="button" className={selectedKeyframe.out_tangent === undefined ? 'active' : ''} onClick={() => updateSelectedTangent('out_tangent', null)}>Auto</button></div>
+                        }} /><label className="timeline-tangent-mode"><span>Mode</span><select aria-label="Out tangent mode" value={animationKeyTangentMode(selectedKeyframe, 'out_tangent')} onChange={(event) => updateSelectedTangentMode('out_tangent', event.target.value as AnimationTangentMode)}>
+                          <option value="clamped_auto">Clamped Auto</option>
+                          <option value="free">Free</option>
+                          <option value="linear">Linear</option>
+                          <option value="constant">Constant</option>
+                        </select></label></div>
                       </div>
                     );
                   })()}

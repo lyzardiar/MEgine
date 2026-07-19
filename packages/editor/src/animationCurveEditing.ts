@@ -1,10 +1,12 @@
 import {
+  animationKeyTangentMode,
   automaticAnimationTangent,
   replaceAnimationKeyframe,
   sampleAnimationTrack,
   setAnimationKeyframeTangents,
   type AnimationKeyframeEdit,
   type AnimationTangent,
+  type AnimationTangentMode,
   type AnimationTrack,
   type AnimationValue,
 } from './animationClip.ts';
@@ -68,6 +70,13 @@ export function animationCurveChannelCount(track: AnimationTrack): number {
   return curveNumericChannels(track.keyframes[0]?.value ?? null)?.length ?? 0;
 }
 
+export function animationCurveChannelDrawOrder(channelCount: number, selectedChannel: number): number[] {
+  const count = Math.max(0, Math.min(4, Math.floor(Number.isFinite(channelCount) ? channelCount : 0)));
+  const channels = Array.from({ length: count }, (_unused, channel) => channel);
+  if (!Number.isInteger(selectedChannel) || selectedChannel < 0 || selectedChannel >= count) return channels;
+  return channels.filter((channel) => channel !== selectedChannel).concat(selectedChannel);
+}
+
 function tangentChannel(tangent: AnimationTangent | null, channel: number): number | null {
   if (typeof tangent === 'number') return channel === 0 && Number.isFinite(tangent) ? tangent : null;
   const value = tangent?.[channel];
@@ -82,8 +91,44 @@ export function animationCurveTangentChannel(
 ): number | null {
   const key = track.keyframes[keyIndex];
   if (!key) return null;
-  const tangent = key[side] ?? automaticAnimationTangent(track, keyIndex);
+  const mode = animationKeyTangentMode(key, side);
+  if (mode === 'constant') return null;
+  let tangent: AnimationTangent | null | undefined;
+  if (mode === 'linear') {
+    const neighbourIndex = side === 'in_tangent' ? keyIndex - 1 : keyIndex + 1;
+    const neighbour = track.keyframes[neighbourIndex];
+    const span = neighbour ? neighbour.time - key.time : 0;
+    const keyChannels = curveNumericChannels(key.value);
+    const neighbourChannels = curveNumericChannels(neighbour?.value ?? null);
+    if (keyChannels && neighbourChannels && keyChannels.length === neighbourChannels.length && Math.abs(span) > Number.EPSILON) {
+      tangent = keyChannels.map((value, index) => (neighbourChannels[index] - value) / span);
+    }
+  } else if (mode === 'free') {
+    tangent = key[side] ?? automaticAnimationTangent(track, keyIndex);
+  } else {
+    tangent = automaticAnimationTangent(track, keyIndex);
+  }
   return tangentChannel(tangent ?? null, channel);
+}
+
+export type AnimationCurveTangentConstraint = 'clamped_auto' | 'free_smooth' | 'flat' | 'broken';
+
+export function animationCurveTangentConstraint(
+  track: AnimationTrack,
+  keyIndex: number,
+  channel: number,
+): AnimationCurveTangentConstraint | null {
+  const key = track.keyframes[keyIndex];
+  const channels = curveNumericChannels(key?.value ?? null);
+  if (!key || !channels || channel < 0 || channel >= channels.length) return null;
+  const inMode = animationKeyTangentMode(key, 'in_tangent');
+  const outMode = animationKeyTangentMode(key, 'out_tangent');
+  if (key.broken || inMode !== outMode || inMode === 'linear' || inMode === 'constant') return 'broken';
+  if (inMode === 'clamped_auto') return 'clamped_auto';
+  const input = tangentChannel(key.in_tangent ?? null, channel);
+  const output = tangentChannel(key.out_tangent ?? null, channel);
+  if (input == null || output == null || Math.abs(input - output) > 1e-6) return 'broken';
+  return Math.abs(input) <= 1e-6 ? 'flat' : 'free_smooth';
 }
 
 export function animationCurveValueBounds(
@@ -392,7 +437,25 @@ export function setAnimationCurveTangentChannel(
   if (!key) return track;
   const fallback = automaticAnimationTangent(track, keyIndex);
   const next = tangentWithChannel(key[side] ?? fallback, key.value, channel, slope);
-  return next == null ? track : setAnimationKeyframeTangents(track, keyIndex, { [side]: next });
+  if (next == null) return track;
+  const constraint = animationCurveTangentConstraint(track, keyIndex, channel);
+  if (!key.broken && (constraint === 'clamped_auto' || constraint === 'free_smooth' || constraint === 'flat')) {
+    const opposite = side === 'in_tangent' ? 'out_tangent' : 'in_tangent';
+    const linked = tangentWithChannel(key[opposite] ?? fallback, key.value, channel, slope);
+    if (linked == null) return track;
+    return setAnimationKeyframeTangents(track, keyIndex, {
+      [side]: next,
+      [opposite]: linked,
+      in_tangent_mode: 'free',
+      out_tangent_mode: 'free',
+      broken: false,
+    });
+  }
+  return setAnimationKeyframeTangents(track, keyIndex, {
+    [side]: next,
+    [`${side}_mode`]: 'free',
+    broken: true,
+  });
 }
 
 export function setAnimationCurveTangentsAuto(
@@ -402,6 +465,52 @@ export function setAnimationCurveTangentsAuto(
   return setAnimationKeyframeTangents(track, keyIndex, {
     in_tangent: null,
     out_tangent: null,
+    in_tangent_mode: 'clamped_auto',
+    out_tangent_mode: 'clamped_auto',
+    broken: false,
+  });
+}
+
+export function setAnimationCurveTangentsFreeSmooth(
+  track: AnimationTrack,
+  keyIndex: number,
+): AnimationTrack {
+  const smooth = automaticAnimationTangent(track, keyIndex);
+  if (smooth == null) return track;
+  return setAnimationKeyframeTangents(track, keyIndex, {
+    in_tangent: smooth,
+    out_tangent: smooth,
+    in_tangent_mode: 'free',
+    out_tangent_mode: 'free',
+    broken: false,
+  });
+}
+
+export function setAnimationCurveTangentsBroken(
+  track: AnimationTrack,
+  keyIndex: number,
+): AnimationTrack {
+  const key = track.keyframes[keyIndex];
+  return key ? setAnimationKeyframeTangents(track, keyIndex, { broken: true }) : track;
+}
+
+export function setAnimationCurveTangentSideMode(
+  track: AnimationTrack,
+  keyIndex: number,
+  side: 'in_tangent' | 'out_tangent',
+  mode: AnimationTangentMode,
+): AnimationTrack {
+  const key = track.keyframes[keyIndex];
+  if (!key) return track;
+  const tangent = mode === 'clamped_auto'
+    ? null
+    : mode === 'free'
+      ? key[side] ?? automaticAnimationTangent(track, keyIndex)
+      : key[side] ?? null;
+  return setAnimationKeyframeTangents(track, keyIndex, {
+    [side]: tangent,
+    [`${side}_mode`]: mode,
+    broken: true,
   });
 }
 
@@ -417,6 +526,9 @@ export function setAnimationCurveTangentsFlat(
   return flat == null ? track : setAnimationKeyframeTangents(track, keyIndex, {
     in_tangent: flat,
     out_tangent: flat,
+    in_tangent_mode: 'free',
+    out_tangent_mode: 'free',
+    broken: false,
   });
 }
 
