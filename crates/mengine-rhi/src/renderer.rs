@@ -18,6 +18,9 @@ use winit::dpi::PhysicalSize;
 const MAX_POINT_LIGHTS: usize = 4;
 const MAX_SPOT_LIGHTS: usize = 4;
 const DIRECTIONAL_SHADOW_MAP_SIZE: u32 = 2048;
+const MATERIAL_PIPELINE_GRACE_FRAMES: u64 = 300;
+const MATERIAL_PIPELINE_PRUNE_INTERVAL: u64 = 60;
+const MAX_DYNAMIC_MATERIAL_PIPELINES: usize = 256;
 
 #[derive(Clone, Copy, Debug)]
 pub struct ClearColor {
@@ -154,7 +157,17 @@ pub enum MaterialBlendMode {
 pub struct MaterialPipelineStats {
     pub built_in: usize,
     pub custom: usize,
+    pub resident_custom: usize,
     pub rejected: usize,
+    pub evictions: u64,
+}
+
+#[derive(Clone, Copy, Debug, Default, Eq, PartialEq)]
+pub struct MaterialTextureStats {
+    pub color: usize,
+    pub data: usize,
+    pub bind_groups: usize,
+    pub samplers: usize,
 }
 
 #[derive(Clone, Copy, Debug, Default, Eq, PartialEq)]
@@ -464,7 +477,11 @@ pub struct Renderer {
     surface: wgpu::Surface<'static>,
     config: wgpu::SurfaceConfiguration,
     material_pipelines: HashMap<MaterialPipelineKey, wgpu::RenderPipeline>,
-    invalid_surface_shaders: HashSet<u64>,
+    material_pipeline_last_used: HashMap<MaterialPipelineKey, u64>,
+    resident_material_pipelines: HashSet<MaterialPipelineKey>,
+    invalid_surface_shaders: HashMap<u64, u64>,
+    material_pipeline_epoch: u64,
+    material_pipeline_evictions: u64,
     depth_view: wgpu::TextureView,
     depth_texture: wgpu::Texture,
     meshes: HashMap<String, MeshGpu>,
@@ -1020,7 +1037,11 @@ impl Renderer {
             surface,
             config,
             material_pipelines,
-            invalid_surface_shaders: HashSet::new(),
+            material_pipeline_last_used: HashMap::new(),
+            resident_material_pipelines: HashSet::new(),
+            invalid_surface_shaders: HashMap::new(),
+            material_pipeline_epoch: 0,
+            material_pipeline_evictions: 0,
             depth_view,
             depth_texture,
             meshes,
@@ -1112,6 +1133,7 @@ impl Renderer {
         lighting: &FrameLighting,
         ui: Option<&UiBatchPlan>,
     ) -> Result<(), RhiError> {
+        self.material_pipeline_epoch = self.material_pipeline_epoch.wrapping_add(1);
         self.ensure_object_capacity(objects.len().max(1));
         let environment_key = lighting.environment.texture.trim();
         let has_environment_texture = !environment_key.is_empty()
@@ -1157,6 +1179,7 @@ impl Renderer {
             self.ensure_material_pipeline(&object.material);
             self.ensure_material_texture_set(&object.material);
         }
+        self.prune_material_pipeline_cache();
         let frame = self.surface.get_current_texture()?;
         let view = frame
             .texture
@@ -1378,13 +1401,16 @@ impl Renderer {
         if key.shader_fingerprint == 0 {
             return MaterialPipelinePrepareResult::BuiltIn;
         }
+        self.material_pipeline_last_used
+            .insert(key, self.material_pipeline_epoch);
         if self.material_pipelines.contains_key(&key) {
             return MaterialPipelinePrepareResult::Cached;
         }
-        if self
+        if let Some(last_used) = self
             .invalid_surface_shaders
-            .contains(&key.shader_fingerprint)
+            .get_mut(&key.shader_fingerprint)
         {
+            *last_used = self.material_pipeline_epoch;
             return MaterialPipelinePrepareResult::Rejected;
         }
         let source = match compose_surface_shader(
@@ -1394,7 +1420,8 @@ impl Renderer {
             Ok(source) => source,
             Err(error) => {
                 log::warn!("surface shader rejected: {error}");
-                self.invalid_surface_shaders.insert(key.shader_fingerprint);
+                self.invalid_surface_shaders
+                    .insert(key.shader_fingerprint, self.material_pipeline_epoch);
                 return MaterialPipelinePrepareResult::Rejected;
             }
         };
@@ -1415,6 +1442,50 @@ impl Renderer {
             ),
         );
         MaterialPipelinePrepareResult::Created
+    }
+
+    fn prune_material_pipeline_cache(&mut self) {
+        if self.material_pipeline_epoch % MATERIAL_PIPELINE_PRUNE_INTERVAL != 0 {
+            return;
+        }
+        let custom_keys = self
+            .material_pipelines
+            .keys()
+            .filter(|key| key.shader_fingerprint != 0)
+            .copied()
+            .collect::<Vec<_>>();
+        let evictions = material_pipeline_eviction_candidates(
+            &custom_keys,
+            &self.material_pipeline_last_used,
+            &self.resident_material_pipelines,
+            self.material_pipeline_epoch,
+        );
+        for key in evictions {
+            if self.material_pipelines.remove(&key).is_some() {
+                self.material_pipeline_evictions += 1;
+            }
+            self.material_pipeline_last_used.remove(&key);
+        }
+        self.material_pipeline_last_used
+            .retain(|key, _| self.material_pipelines.contains_key(key));
+        self.invalid_surface_shaders.retain(|_, last_used| {
+            self.material_pipeline_epoch.saturating_sub(*last_used)
+                <= MATERIAL_PIPELINE_GRACE_FRAMES
+        });
+        if self.invalid_surface_shaders.len() > MAX_DYNAMIC_MATERIAL_PIPELINES {
+            let mut oldest = self
+                .invalid_surface_shaders
+                .iter()
+                .map(|(fingerprint, last_used)| (*fingerprint, *last_used))
+                .collect::<Vec<_>>();
+            oldest.sort_by_key(|entry| entry.1);
+            for (fingerprint, _) in oldest
+                .into_iter()
+                .take(self.invalid_surface_shaders.len() - MAX_DYNAMIC_MATERIAL_PIPELINES)
+            {
+                self.invalid_surface_shaders.remove(&fingerprint);
+            }
+        }
     }
 
     fn ensure_material_texture_set(&mut self, material: &RenderMaterial) {
@@ -1522,7 +1593,18 @@ impl Renderer {
                 .keys()
                 .filter(|key| key.shader_fingerprint != 0)
                 .count(),
+            resident_custom: self.resident_material_pipelines.len(),
             rejected: self.invalid_surface_shaders.len(),
+            evictions: self.material_pipeline_evictions,
+        }
+    }
+
+    pub fn material_texture_stats(&self) -> MaterialTextureStats {
+        MaterialTextureStats {
+            color: self.material_color_textures.len(),
+            data: self.material_data_textures.len(),
+            bind_groups: self.material_texture_sets.len(),
+            samplers: self.material_samplers.len(),
         }
     }
 
@@ -1533,12 +1615,36 @@ impl Renderer {
         &mut self,
         materials: &[RenderMaterial],
     ) -> MaterialPipelinePrewarmReport {
+        self.prepare_material_pipelines_impl(materials, true)
+    }
+
+    /// Prepares currently visible materials without pinning them in the cache. This is useful for
+    /// editor and loose-project startup where a later shader hot reload must be reclaimable.
+    pub fn prepare_material_pipelines(
+        &mut self,
+        materials: &[RenderMaterial],
+    ) -> MaterialPipelinePrewarmReport {
+        self.prepare_material_pipelines_impl(materials, false)
+    }
+
+    fn prepare_material_pipelines_impl(
+        &mut self,
+        materials: &[RenderMaterial],
+        keep_resident: bool,
+    ) -> MaterialPipelinePrewarmReport {
         let mut report = MaterialPipelinePrewarmReport {
             requested: materials.len(),
             ..Default::default()
         };
         for material in materials {
-            match self.ensure_material_pipeline(material) {
+            let result = self.ensure_material_pipeline(material);
+            if keep_resident && result != MaterialPipelinePrepareResult::Rejected {
+                let key = MaterialPipelineKey::from(material);
+                if key.shader_fingerprint != 0 {
+                    self.resident_material_pipelines.insert(key);
+                }
+            }
+            match result {
                 MaterialPipelinePrepareResult::BuiltIn => report.built_in += 1,
                 MaterialPipelinePrepareResult::Cached => report.cached += 1,
                 MaterialPipelinePrepareResult::Created => report.created += 1,
@@ -1593,6 +1699,18 @@ impl Renderer {
     pub fn remove_material_texture(&mut self, key: &str) -> bool {
         let removed = self.material_color_textures.remove(key).is_some()
             | self.material_data_textures.remove(key).is_some();
+        if removed {
+            self.material_texture_sets.clear();
+        }
+        removed
+    }
+
+    pub fn remove_material_texture_variant(&mut self, key: &str, srgb: bool) -> bool {
+        let removed = if srgb {
+            self.material_color_textures.remove(key).is_some()
+        } else {
+            self.material_data_textures.remove(key).is_some()
+        };
         if removed {
             self.material_texture_sets.clear();
         }
@@ -1979,6 +2097,39 @@ fn dielectric_f0_from_ior(ior: f32) -> f32 {
     };
     let ratio = (ior - 1.0) / (ior + 1.0);
     ratio * ratio
+}
+
+fn material_pipeline_eviction_candidates(
+    keys: &[MaterialPipelineKey],
+    last_used: &HashMap<MaterialPipelineKey, u64>,
+    resident: &HashSet<MaterialPipelineKey>,
+    epoch: u64,
+) -> Vec<MaterialPipelineKey> {
+    let mut dynamic = keys
+        .iter()
+        .copied()
+        .filter(|key| !resident.contains(key))
+        .map(|key| (key, last_used.get(&key).copied().unwrap_or(0)))
+        .collect::<Vec<_>>();
+    dynamic.sort_by_key(|(_, last_used)| *last_used);
+    let mut evictions = dynamic
+        .iter()
+        .filter(|(_, last_used)| epoch.saturating_sub(*last_used) > MATERIAL_PIPELINE_GRACE_FRAMES)
+        .map(|(key, _)| *key)
+        .collect::<Vec<_>>();
+    let remaining = dynamic.len().saturating_sub(evictions.len());
+    let overflow = remaining.saturating_sub(MAX_DYNAMIC_MATERIAL_PIPELINES);
+    if overflow > 0 {
+        let already_evicted = evictions.iter().copied().collect::<HashSet<_>>();
+        let overflow_keys = dynamic
+            .into_iter()
+            .filter(|(key, last_used)| *last_used != epoch && !already_evicted.contains(key))
+            .take(overflow)
+            .map(|(key, _)| key)
+            .collect::<Vec<_>>();
+        evictions.extend(overflow_keys);
+    }
+    evictions
 }
 
 fn create_material_sampler(
@@ -3650,6 +3801,45 @@ mod tests {
             receive_shadows: true,
         };
         assert_eq!(make_object_uniforms(&object).map_params[3], 1.0);
+    }
+
+    #[test]
+    fn material_pipeline_eviction_keeps_resident_and_current_frame_variants() {
+        let key = |fingerprint| MaterialPipelineKey {
+            blend: MaterialPipelineBlend::Replace,
+            double_sided: false,
+            depth_write: true,
+            shader_fingerprint: fingerprint,
+        };
+        let epoch = MATERIAL_PIPELINE_GRACE_FRAMES + 10;
+        let stale = key(1);
+        let resident_stale = key(2);
+        let fresh = key(3);
+        let keys = vec![stale, resident_stale, fresh];
+        let last_used = HashMap::from([(stale, 0), (resident_stale, 0), (fresh, epoch)]);
+        assert_eq!(
+            material_pipeline_eviction_candidates(
+                &keys,
+                &last_used,
+                &HashSet::from([resident_stale]),
+                epoch,
+            ),
+            vec![stale]
+        );
+
+        let epoch = 100;
+        let keys = (1..=(MAX_DYNAMIC_MATERIAL_PIPELINES as u64 + 2))
+            .map(key)
+            .collect::<Vec<_>>();
+        let last_used = keys
+            .iter()
+            .enumerate()
+            .map(|(index, key)| (*key, if index + 1 == keys.len() { epoch } else { 1 }))
+            .collect::<HashMap<_, _>>();
+        let evicted =
+            material_pipeline_eviction_candidates(&keys, &last_used, &HashSet::new(), epoch);
+        assert_eq!(evicted.len(), 2);
+        assert!(!evicted.contains(keys.last().unwrap()));
     }
 
     #[test]

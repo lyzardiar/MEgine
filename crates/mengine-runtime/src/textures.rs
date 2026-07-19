@@ -3,7 +3,7 @@ use mengine_assets::{
     sprite_import_path, texture_dimensions,
 };
 use mengine_rhi::{FrameLighting, RenderObject, Renderer, UiBatchPlan, UiPrimitive};
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 use std::path::{Component, Path, PathBuf};
 use std::time::SystemTime;
 
@@ -194,63 +194,55 @@ impl RuntimeTextureCache {
             return Vec::new();
         };
         let mut failures = Vec::new();
-        for object in objects {
-            let material = &object.material;
-            for (key, srgb) in [
-                (material.base_color_texture.trim(), true),
-                (material.normal_texture.trim(), false),
-                (material.metallic_roughness_texture.trim(), false),
-                (material.occlusion_texture.trim(), false),
-                (material.emissive_texture.trim(), true),
-            ]
-            .into_iter()
-            .chain(
-                material
-                    .custom_textures
-                    .iter()
-                    .zip(material.custom_texture_srgb)
-                    .map(|(key, srgb)| (key.trim(), srgb)),
-            ) {
-                if key.is_empty() || key.eq_ignore_ascii_case("white") {
-                    continue;
+        let references = material_texture_references(objects);
+        let stale_attempts = stale_material_texture_attempts(&self.attempted_material, &references);
+        for attempt in stale_attempts {
+            self.attempted_material.remove(&attempt);
+            if let Some((srgb, key)) = split_material_texture_attempt(&attempt) {
+                renderer.remove_material_texture_variant(key, srgb);
+            }
+        }
+        for (key, srgb) in references {
+            let attempt = material_texture_attempt_key(&key, srgb);
+            let Some(path) = resolve_project_asset_path(root, &key) else {
+                renderer.remove_material_texture_variant(&key, srgb);
+                if should_attempt(&mut self.attempted_material, &attempt, FileStamp::default()) {
+                    failures.push(TextureLoadFailure {
+                        key,
+                        path: root.to_owned(),
+                        error: "material texture must be a project-relative path without '..'"
+                            .into(),
+                    });
                 }
-                let attempt = format!("{}\0{key}", if srgb { "srgb" } else { "linear" });
-                let Some(path) = resolve_project_asset_path(root, key) else {
-                    if should_attempt(&mut self.attempted_material, &attempt, FileStamp::default())
-                    {
+                continue;
+            };
+            if !should_attempt(&mut self.attempted_material, &attempt, file_stamp(&path)) {
+                continue;
+            }
+            match load_texture_rgba8(&path) {
+                Ok(texture) => {
+                    if let Err(error) = renderer.upload_material_texture_rgba8(
+                        &key,
+                        texture.width,
+                        texture.height,
+                        &texture.pixels,
+                        srgb,
+                    ) {
+                        renderer.remove_material_texture_variant(&key, srgb);
                         failures.push(TextureLoadFailure {
-                            key: key.to_owned(),
-                            path: root.to_owned(),
-                            error: "material texture must be a project-relative path without '..'"
-                                .into(),
+                            key,
+                            path,
+                            error: error.to_string(),
                         });
                     }
-                    continue;
-                };
-                if !should_attempt(&mut self.attempted_material, &attempt, file_stamp(&path)) {
-                    continue;
                 }
-                match load_texture_rgba8(&path) {
-                    Ok(texture) => {
-                        if let Err(error) = renderer.upload_material_texture_rgba8(
-                            key,
-                            texture.width,
-                            texture.height,
-                            &texture.pixels,
-                            srgb,
-                        ) {
-                            failures.push(TextureLoadFailure {
-                                key: key.to_owned(),
-                                path,
-                                error: error.to_string(),
-                            });
-                        }
-                    }
-                    Err(error) => failures.push(TextureLoadFailure {
-                        key: key.to_owned(),
+                Err(error) => {
+                    renderer.remove_material_texture_variant(&key, srgb);
+                    failures.push(TextureLoadFailure {
+                        key,
                         path,
                         error: error.to_string(),
-                    }),
+                    });
                 }
             }
         }
@@ -312,6 +304,65 @@ impl RuntimeTextureCache {
                 }]
             }
         }
+    }
+}
+
+fn material_texture_references(objects: &[RenderObject]) -> Vec<(String, bool)> {
+    let mut references = HashSet::new();
+    for object in objects {
+        let material = &object.material;
+        references.extend(
+            [
+                (material.base_color_texture.trim(), true),
+                (material.normal_texture.trim(), false),
+                (material.metallic_roughness_texture.trim(), false),
+                (material.occlusion_texture.trim(), false),
+                (material.emissive_texture.trim(), true),
+            ]
+            .into_iter()
+            .chain(
+                material
+                    .custom_textures
+                    .iter()
+                    .zip(material.custom_texture_srgb)
+                    .map(|(key, srgb)| (key.trim(), srgb)),
+            )
+            .filter(|(key, _)| !key.is_empty() && !key.eq_ignore_ascii_case("white"))
+            .map(|(key, srgb)| (key.to_owned(), srgb)),
+        );
+    }
+    let mut references = references.into_iter().collect::<Vec<_>>();
+    references.sort_by(|left, right| left.0.cmp(&right.0).then(left.1.cmp(&right.1)));
+    references
+}
+
+fn material_texture_attempt_key(key: &str, srgb: bool) -> String {
+    format!("{}\0{key}", if srgb { "srgb" } else { "linear" })
+}
+
+fn stale_material_texture_attempts(
+    attempted: &HashMap<String, FileStamp>,
+    references: &[(String, bool)],
+) -> Vec<String> {
+    let live = references
+        .iter()
+        .map(|(key, srgb)| material_texture_attempt_key(key, *srgb))
+        .collect::<HashSet<_>>();
+    let mut stale = attempted
+        .keys()
+        .filter(|attempt| !live.contains(*attempt))
+        .cloned()
+        .collect::<Vec<_>>();
+    stale.sort();
+    stale
+}
+
+fn split_material_texture_attempt(attempt: &str) -> Option<(bool, &str)> {
+    let (color_space, key) = attempt.split_once('\0')?;
+    match color_space {
+        "srgb" => Some((true, key)),
+        "linear" => Some((false, key)),
+        _ => None,
     }
 }
 
@@ -384,7 +435,56 @@ pub fn resolve_texture_path(project_root: &Path, key: &str) -> Option<PathBuf> {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use glam::Mat4;
     use mengine_rhi::UiPrimitive;
+
+    #[test]
+    fn material_texture_usage_deduplicates_roles_without_merging_color_spaces() {
+        let mut material = mengine_rhi::RenderMaterial {
+            base_color_texture: "Assets/Shared.png".into(),
+            normal_texture: "Assets/Shared.png".into(),
+            emissive_texture: "white".into(),
+            ..Default::default()
+        };
+        material.custom_textures[0] = "Assets/Shared.png".into();
+        material.custom_texture_srgb[0] = true;
+        let object = RenderObject {
+            mesh_key: "cube".into(),
+            model: Mat4::IDENTITY,
+            material,
+            cast_shadows: true,
+            receive_shadows: true,
+        };
+        assert_eq!(
+            material_texture_references(&[object]),
+            vec![
+                ("Assets/Shared.png".into(), false),
+                ("Assets/Shared.png".into(), true)
+            ]
+        );
+        assert_eq!(
+            split_material_texture_attempt("srgb\0Assets/Shared.png"),
+            Some((true, "Assets/Shared.png"))
+        );
+        assert_eq!(
+            split_material_texture_attempt("linear\0Assets/Shared.png"),
+            Some((false, "Assets/Shared.png"))
+        );
+        let attempted = HashMap::from([
+            (
+                material_texture_attempt_key("Assets/Shared.png", true),
+                FileStamp::default(),
+            ),
+            (
+                material_texture_attempt_key("Assets/Shared.png", false),
+                FileStamp::default(),
+            ),
+        ]);
+        assert_eq!(
+            stale_material_texture_attempts(&attempted, &[("Assets/Shared.png".into(), true)]),
+            vec![material_texture_attempt_key("Assets/Shared.png", false)]
+        );
+    }
 
     #[test]
     fn resolves_assets_relative_to_project_root() {

@@ -16,7 +16,8 @@ use mengine_platform::InputState;
 use mengine_rhi::{
     look_at, orthographic, perspective, validate_surface_shader_hook, DirectionalLightData,
     EnvironmentLightData, FrameCamera, FrameLighting, MaterialBlendMode, MaterialPipelineStats,
-    PointLightData, RenderMaterial, RenderObject, Renderer, SpotLightData, UiBatchPlan,
+    MaterialTextureStats, PointLightData, RenderMaterial, RenderObject, Renderer, SpotLightData,
+    UiBatchPlan,
 };
 use mengine_runtime::animation::{infer_project_root_from_scene, AnimationRuntime};
 use mengine_runtime::audio::AudioRuntime;
@@ -107,6 +108,7 @@ struct App {
     modifiers: ModifiersState,
     last_ui_draw_calls: u32,
     last_material_pipeline_stats: Option<MaterialPipelineStats>,
+    last_material_texture_stats: Option<MaterialTextureStats>,
     particles: ParticleWorld,
     sorting_layers: SortingLayers,
     textures: RuntimeTextureCache,
@@ -167,6 +169,7 @@ impl App {
             modifiers: ModifiersState::empty(),
             last_ui_draw_calls: u32::MAX,
             last_material_pipeline_stats: None,
+            last_material_texture_stats: None,
             particles: ParticleWorld::default(),
             sorting_layers,
             textures,
@@ -202,6 +205,28 @@ impl App {
                 false
             }
         }
+    }
+
+    fn prepare_current_scene_material_pipelines(&mut self) {
+        let hierarchy = TransformHierarchy::build(&self.world);
+        let objects = collect_objects(&self.world, &hierarchy, &mut self.materials);
+        let Some(renderer) = self.renderer.as_mut() else {
+            return;
+        };
+        let materials = objects
+            .iter()
+            .map(|object| object.material.clone())
+            .collect::<Vec<_>>();
+        let report = renderer.prepare_material_pipelines(&materials);
+        log::info!(
+            "scene material pipeline prewarm: requested={}, created={}, cached={}, built_in={}, rejected={}",
+            report.requested,
+            report.created,
+            report.cached,
+            report.built_in,
+            report.rejected
+        );
+        self.last_material_pipeline_stats = Some(renderer.material_pipeline_stats());
     }
 
     fn apply_runtime_request(&mut self, request: ScriptRuntimeRequest) {
@@ -469,6 +494,7 @@ impl App {
                 self.audio.clear();
                 self.physics.clear();
                 self.physics_2d.clear();
+                self.prepare_current_scene_material_pipelines();
                 if let Some(window) = &self.window {
                     window.set_ime_allowed(false);
                 }
@@ -1276,24 +1302,7 @@ impl ApplicationHandler for App {
         if !self.load_requested_scene() {
             self.bootstrap_sample();
         }
-        let hierarchy = TransformHierarchy::build(&self.world);
-        let objects = collect_objects(&self.world, &hierarchy, &mut self.materials);
-        if let Some(renderer) = self.renderer.as_mut() {
-            let materials = objects
-                .iter()
-                .map(|object| object.material.clone())
-                .collect::<Vec<_>>();
-            let report = renderer.prewarm_material_pipelines(&materials);
-            log::info!(
-                "initial scene material pipeline prewarm: requested={}, created={}, cached={}, built_in={}, rejected={}",
-                report.requested,
-                report.created,
-                report.cached,
-                report.built_in,
-                report.rejected
-            );
-            self.last_material_pipeline_stats = Some(renderer.material_pipeline_stats());
-        }
+        self.prepare_current_scene_material_pipelines();
 
         let mut script = ScriptHost::new().ok();
         if let Some(ref mut s) = script {
@@ -1762,12 +1771,25 @@ function onTick(dt, frame) {
                     let pipeline_stats = r.material_pipeline_stats();
                     if self.last_material_pipeline_stats != Some(pipeline_stats) {
                         log::info!(
-                            "material pipeline cache: built_in={}, custom={}, rejected={}",
+                            "material pipeline cache: built_in={}, custom={}, resident={}, rejected={}, evictions={}",
                             pipeline_stats.built_in,
                             pipeline_stats.custom,
-                            pipeline_stats.rejected
+                            pipeline_stats.resident_custom,
+                            pipeline_stats.rejected,
+                            pipeline_stats.evictions
                         );
                         self.last_material_pipeline_stats = Some(pipeline_stats);
+                    }
+                    let texture_stats = r.material_texture_stats();
+                    if self.last_material_texture_stats != Some(texture_stats) {
+                        log::info!(
+                            "material texture cache: color={}, data={}, bind_groups={}, samplers={}",
+                            texture_stats.color,
+                            texture_stats.data,
+                            texture_stats.bind_groups,
+                            texture_stats.samplers
+                        );
+                        self.last_material_texture_stats = Some(texture_stats);
                     }
                     let stats = r.ui_stats();
                     if stats.draw_calls != self.last_ui_draw_calls {
