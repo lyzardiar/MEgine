@@ -5,9 +5,8 @@ import {
   desktopProjectSceneJson,
   getDesktopProject,
   openDesktopScene,
+  persistDesktopScene,
   renameDesktopScene,
-  replaceDesktopSceneJson,
-  saveDesktopScene,
 } from './transport/desktopProjectSession';
 import { listProjectScenes } from './transport/editorTransport';
 import type { GameResolution } from './gameResolution';
@@ -338,14 +337,8 @@ export async function setEditorPrefs(partial: EditorPrefs) {
 }
 
 export async function writeScene(name: string, json: string) {
-  _data.set(name, json);
-  const meta = { name, updatedAt: Date.now() };
-  _index = sortIndex([..._index.filter((s) => s.name !== name), meta]);
-  _active = name;
-
   if (_backend === 'desktop') {
-    await replaceDesktopSceneJson(json);
-    const saved = await saveDesktopScene(name);
+    const saved = await persistDesktopScene(json, name);
     const savedName = saved.scenePath?.split('/').pop()?.replace(/\.mscene$/i, '') ?? name;
     _index = sortIndex([
       ..._index.filter((scene) => scene.name !== savedName),
@@ -364,18 +357,25 @@ export async function writeScene(name: string, json: string) {
     });
     if (!res.ok) throw new Error(`disk write failed: ${res.status}`);
     const out = (await res.json()) as { updatedAt?: number };
-    if (out.updatedAt) {
-      _index = sortIndex([
-        ..._index.filter((s) => s.name !== name),
-        { name, updatedAt: out.updatedAt },
-      ]);
-    }
+    _data.set(name, json);
+    _index = sortIndex([
+      ..._index.filter((s) => s.name !== name),
+      { name, updatedAt: out.updatedAt ?? Date.now() },
+    ]);
+    _active = name;
     return;
   }
 
   localStorage.setItem(dataKey(name), json);
-  applyLocalIndex(_index);
+  const nextIndex = sortIndex([
+    ..._index.filter((scene) => scene.name !== name),
+    { name, updatedAt: Date.now() },
+  ]);
+  localStorage.setItem(SCENES_INDEX_KEY, JSON.stringify(nextIndex));
   localStorage.setItem(SCENES_ACTIVE_KEY, name);
+  _data.set(name, json);
+  _index = nextIndex;
+  _active = name;
 }
 
 export async function deleteScene(name: string) {

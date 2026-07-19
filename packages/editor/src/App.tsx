@@ -66,6 +66,12 @@ import { spriteNativeWorldSize } from './spriteImport';
 import { combineMarqueeSelection } from './marqueeSelection';
 import { instantiateProjectPrefab } from './prefabWorkflow';
 import { isDesktopEditor } from './transport/editorTransport';
+import {
+  checkpointDesktopScene,
+  discardDesktopSceneRecovery,
+  getDesktopSceneRecovery,
+  restoreDesktopSceneRecovery,
+} from './transport/desktopProjectSession';
 import type { ToolHandleOrientation, ToolPivotMode } from './editorTool';
 import { loadSortingLayers, SORTING_LAYERS_CHANGED_EVENT } from './sortingLayers';
 import { saveAllResources } from './saveAll';
@@ -188,6 +194,10 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
   const remoteSceneDirty = useRef(false);
   const syncSender = useRef(crypto.randomUUID());
   const syncChannel = useRef<BroadcastChannel | null>(null);
+  const recoveryTimer = useRef<number | null>(null);
+  const lastRecoveryError = useRef<string | null>(null);
+  const recoveryReady = useRef(false);
+  const recoveryCheckpointActive = useRef(false);
 
   useEffect(() => undoService.subscribe(() => setUndoRevision(undoService.revision)), [undoService]);
   const syncTimer = useRef<number | null>(null);
@@ -323,6 +333,45 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
     broadcastScene();
   };
 
+  useEffect(() => {
+    if (props.detachedPanel || !isDesktopEditor() || !recoveryReady.current) return;
+    if (recoveryTimer.current != null) window.clearTimeout(recoveryTimer.current);
+    if (!sceneDirty) {
+      if (!recoveryCheckpointActive.current) return;
+      recoveryCheckpointActive.current = false;
+      void discardDesktopSceneRecovery().catch((reason) => {
+        recoveryCheckpointActive.current = true;
+        const message = String(reason);
+        if (lastRecoveryError.current === message) return;
+        lastRecoveryError.current = message;
+        log(`自动恢复点清理失败: ${message}`, 'warn');
+      });
+      return;
+    }
+    if (!sceneName || store.mode !== 'edit') return;
+    recoveryTimer.current = window.setTimeout(() => {
+      recoveryTimer.current = null;
+      const sceneJson = store.saveSessionSceneJson(sceneNameRef.current ?? sceneName);
+      void checkpointDesktopScene(sceneJson)
+        .then((recovery) => {
+          recoveryCheckpointActive.current = recovery != null;
+          lastRecoveryError.current = null;
+        })
+        .catch((reason) => {
+          const message = String(reason);
+          if (lastRecoveryError.current === message) return;
+          lastRecoveryError.current = message;
+          log(`场景自动恢复点写入失败: ${message}`, 'warn');
+        });
+    }, 1000);
+    return () => {
+      if (recoveryTimer.current != null) {
+        window.clearTimeout(recoveryTimer.current);
+        recoveryTimer.current = null;
+      }
+    };
+  }, [props.detachedPanel, sceneDirty, sceneName, treeTick, store]);
+
   const instantiateSpriteAsset = (
     path: string,
     options: { parent?: number | null; position?: [number, number, number] } = {},
@@ -438,6 +487,14 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
       sceneNameRef.current = name;
       setSceneName(name);
       await setActiveSceneName(name);
+      if (!silent && isDesktopEditor()) {
+        try {
+          await discardDesktopSceneRecovery();
+          recoveryCheckpointActive.current = false;
+        } catch (reason) {
+          log(`场景已打开，但旧自动恢复点无法清理: ${String(reason)}`, 'warn');
+        }
+      }
       if (!silent) log(`Opened ${sceneFileName(name)}`);
       refresh(!props.detachedPanel);
       bumpScenes();
@@ -453,6 +510,7 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
       const json = store.saveSceneJson(name);
       const savedFingerprint = store.sceneContentFingerprint();
       await writeScene(name, json);
+      recoveryCheckpointActive.current = false;
       savedSceneFingerprint.current = savedFingerprint;
       if (props.detachedPanel) {
         remoteSceneFingerprint.current = savedFingerprint;
@@ -625,6 +683,45 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
       if (active && (await openSceneByName(active, true))) {
         log(`已恢复场景 ${sceneFileName(active)}`);
       }
+      if (backend === 'desktop') {
+        try {
+          const recovery = await getDesktopSceneRecovery();
+          recoveryCheckpointActive.current = recovery != null;
+          if (recovery) {
+            const recordedAt = new Date(recovery.recordedAtMs).toLocaleString();
+            const shouldRestore = window.confirm(
+              `检测到 ${sceneFileName(recovery.sceneName)} 的自动恢复点（${recordedAt}，${recovery.entityCount} 个节点）。\n\n`
+              + '确定：恢复未保存修改；取消：丢弃该恢复点并继续打开磁盘版本。',
+            );
+            if (shouldRestore) {
+              const restored = await restoreDesktopSceneRecovery();
+              store.loadSceneJson(restored.sceneJson);
+              savedSceneFingerprint.current = `recovery:${crypto.randomUUID()}`;
+              sceneNameRef.current = recovery.sceneName;
+              setSceneName(recovery.sceneName);
+              sceneDirtyRef.current = true;
+              setSceneDirty(true);
+              log(`已恢复 ${sceneFileName(recovery.sceneName)} 的未保存修改。请检查后保存。`, 'warn');
+            } else {
+              await discardDesktopSceneRecovery();
+              recoveryCheckpointActive.current = false;
+              log(`已丢弃 ${sceneFileName(recovery.sceneName)} 的自动恢复点。`);
+            }
+          }
+        } catch (reason) {
+          recoveryCheckpointActive.current = true;
+          log(`自动恢复点无法读取: ${String(reason)}`, 'error');
+          if (window.confirm('自动恢复文件已损坏或不兼容。是否删除它，避免下次启动再次提示？')) {
+            try {
+              await discardDesktopSceneRecovery();
+              recoveryCheckpointActive.current = false;
+            } catch (discardReason) {
+              log(`无法删除自动恢复文件: ${String(discardReason)}`, 'error');
+            }
+          }
+        }
+      }
+      recoveryReady.current = true;
       // 编辑器偏好覆盖场景里的值（改横竖屏无需 Ctrl+S）
       applyEditorPrefs(prefs);
       refresh();

@@ -1178,3 +1178,13 @@ Rust workspace 检查现在零警告通过；Tauri Host 17/17 常规测试与 1/
 - Project 卡片与右键菜单补齐 F2 重命名、Delete/Backspace 删除和禁用原因；重命名输入拦截 Enter/Escape 冒泡。第一遍自省发现 Project 卡片的 Delete/F2 会继续冒泡到全局 Hierarchy 快捷键，造成删除场景的同时误删节点，现已对已消费命令显式 `stopPropagation`。第二遍自省补齐场景内部名、Build Settings 引用、大小写文件身份判断和跨文件失败回滚，并用当前场景、构建场景、未引用场景、冲突目标、父级穿越与大小写重命名回归固定边界。
 
 这批只补齐场景资产的基础生命周期，并不代表 Project 资产数据库成熟。后续仍需通用资产 GUID/Meta、引用图驱动的重命名修复、所有资产类型的 Rename/Delete/Duplicate/Move、可恢复回收站、批量操作、冲突预览、版本控制状态、外部文件变更监听和导入事务。
+
+## 98. 2026-07-19 场景崩溃恢复与桌面写入串行化
+
+- `.mengine/Recovery` 不再只是初始化时创建的空目录。主编辑窗口在场景 Dirty 后以 1 秒去抖把浏览器权威 Edit World 同步到 Rust `ProjectSession`，再把版本化完整快照原子写入 `.mengine/Recovery/scene.recovery.json`；Detached Dock 只广播场景，不重复写盘。正常保存、Undo 回磁盘内容或用户明确放弃修改后会清除恢复点，保存失败不会提前清除。
+- 桌面启动先加载磁盘场景，再检查恢复元数据。有效恢复点显示场景名、记录时间和节点数，由用户明确选择恢复或丢弃；恢复后保持 Dirty 且不自动覆盖磁盘，必须人工检查并保存。损坏/不兼容文件给出删除选项，不会静默套用；原场景文件被外部删除时仍可从完整快照恢复并在保存时重建。
+- 恢复文件采用 schema v1、64 MiB 上限、普通文件/非符号链接检查和工程内安全场景路径。写入复用同目录临时文件、文件同步与原子替换；所有 `ProjectSession::resolve_for_write` 目标进一步拒绝现存符号链接、目录和其他非普通文件，避免 Save/Recovery 沿文件链接写出工程根目录。
+- 自动恢复、Ctrl+S、打开、重命名、删除和恢复操作经桌面会话串行队列更新同一个 Revision；其中 Checkpoint 的 Replace + Recovery、保存的 Replace + Save 进一步下沉为 Rust `AppState` 同一把锁内的单条命令，独立 Dock WebView 也不能交错事务。完全相同的快照不增加 Document Revision，也不清空宿主 Undo，从而不会在保存结束后生成假的恢复点；Save As 同时更新场景文件内部名称。
+- 第一遍自省修复 Undo 回干净状态仍遗留旧恢复点、打开场景成功却因恢复清理失败被误报失败，以及自动恢复与保存并发的问题。第二遍自省补齐超大文件门禁、已删除场景重建、无操作快照、符号链接写入边界，并把 Scene Library 改为后端成功后再提交内存缓存，磁盘失败不再显示成已保存。
+
+这一批守住的是场景文档的崩溃恢复底线，尚未覆盖材质、Shader、Animator、Sprite、Timeline、Project/Build Settings 等多文档草稿，也不是完整 Session Restore。后续需要统一 Document Service、每类资产恢复记录、编辑器布局与打开文档会话恢复、外部文件变更监听/三方合并、可恢复回收站、恢复点轮转，以及崩溃报告和符号服务器联动。

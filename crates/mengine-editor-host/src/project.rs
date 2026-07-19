@@ -9,8 +9,13 @@ use std::collections::{BTreeMap, HashSet};
 use std::fs::OpenOptions;
 use std::io::Write;
 use std::path::{Component, Path, PathBuf};
+use std::time::{SystemTime, UNIX_EPOCH};
 use thiserror::Error;
 use uuid::Uuid;
+
+const SCENE_RECOVERY_SCHEMA_VERSION: u32 = 1;
+const SCENE_RECOVERY_PATH: &str = ".mengine/Recovery/scene.recovery.json";
+const MAX_SCENE_RECOVERY_BYTES: u64 = 64 * 1024 * 1024;
 
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "lowercase")]
@@ -58,6 +63,26 @@ pub struct ProjectSnapshot {
     pub dirty: bool,
     pub scene_path: Option<String>,
     pub world: WorldSnapshot,
+}
+
+#[derive(Clone, Debug, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct SceneRecoveryInfo {
+    pub scene_path: String,
+    pub scene_name: String,
+    pub recorded_at_ms: u64,
+    pub document_revision: u64,
+    pub entity_count: usize,
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+struct SceneRecoveryRecord {
+    schema_version: u32,
+    scene_path: String,
+    recorded_at_ms: u64,
+    document_revision: u64,
+    world: WorldSnapshot,
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
@@ -499,9 +524,14 @@ impl ProjectSession {
                 actual: base_revision,
             });
         }
-        self.editor.replace_edit_snapshot(&snapshot);
+        let changes_document = WorldSnapshot::from_world(&self.editor.edit_world) != snapshot;
+        if changes_document {
+            self.editor.replace_edit_snapshot(&snapshot);
+        }
         self.revision = self.revision.saturating_add(1);
-        self.document_revision = self.document_revision.saturating_add(1);
+        if changes_document {
+            self.document_revision = self.document_revision.saturating_add(1);
+        }
         Ok(self.snapshot())
     }
 
@@ -516,14 +546,130 @@ impl ProjectSession {
             })?,
         };
         let absolute = self.resolve_for_write(&relative)?;
-        self.editor
-            .handle_editor_command(EditorCommand::SaveScene {
-                path: absolute.to_string_lossy().into_owned(),
-            })?;
+        let scene_name = relative
+            .file_stem()
+            .and_then(|value| value.to_str())
+            .ok_or_else(|| ProjectError::InvalidPath(relative.display().to_string()))?
+            .to_string();
+        let previous_scene_name = std::mem::replace(&mut self.editor.scene_name, scene_name);
+        if let Err(error) = self.editor.handle_editor_command(EditorCommand::SaveScene {
+            path: absolute.to_string_lossy().into_owned(),
+        }) {
+            self.editor.scene_name = previous_scene_name;
+            return Err(ProjectError::Editor(error));
+        }
         self.scene_relative_path = Some(relative);
         self.revision = self.revision.saturating_add(1);
         self.save_revision = self.document_revision;
+        // The scene is already durable at this point. A stale recovery file is
+        // undesirable, but cleanup failure must not turn a successful save into
+        // a reported save failure.
+        let _ = self.discard_scene_recovery();
         Ok(self.snapshot())
+    }
+
+    pub fn write_scene_recovery(&self) -> Result<Option<SceneRecoveryInfo>, ProjectError> {
+        if self.document_revision == self.save_revision {
+            self.discard_scene_recovery()?;
+            return Ok(None);
+        }
+        let relative = self.scene_relative_path.as_ref().ok_or_else(|| {
+            ProjectError::InvalidPath("cannot recover an unnamed scene; save it once first".into())
+        })?;
+        let relative = normalize_scene_asset_path(relative)?;
+        let scene_path = relative.to_string_lossy().replace('\\', "/");
+        let recorded_at_ms = SystemTime::now()
+            .duration_since(UNIX_EPOCH)
+            .unwrap_or_default()
+            .as_millis()
+            .min(u64::MAX as u128) as u64;
+        let record = SceneRecoveryRecord {
+            schema_version: SCENE_RECOVERY_SCHEMA_VERSION,
+            scene_path,
+            recorded_at_ms,
+            document_revision: self.document_revision,
+            world: WorldSnapshot::from_world(&self.editor.edit_world),
+        };
+        let mut bytes = serde_json::to_vec_pretty(&record)?;
+        bytes.push(b'\n');
+        let path = self.resolve_for_write(Path::new(SCENE_RECOVERY_PATH))?;
+        if path.exists() {
+            let metadata = std::fs::symlink_metadata(&path)?;
+            if metadata.file_type().is_symlink() || !metadata.is_file() {
+                return Err(ProjectError::InvalidPath(display_path(&path)));
+            }
+        }
+        write_replace_synced(&path, &bytes)?;
+        Ok(Some(scene_recovery_info(&record)))
+    }
+
+    pub fn scene_recovery_info(&self) -> Result<Option<SceneRecoveryInfo>, ProjectError> {
+        self.read_scene_recovery()
+            .map(|record| record.map(|record| scene_recovery_info(&record)))
+    }
+
+    pub fn restore_scene_recovery(&mut self) -> Result<ProjectSnapshot, ProjectError> {
+        let record = self.read_scene_recovery()?.ok_or_else(|| {
+            ProjectError::InvalidProject("no scene recovery checkpoint is available".into())
+        })?;
+        let relative = normalize_scene_asset_path(Path::new(&record.scene_path))?;
+        let absolute = self.resolve_for_write(&relative)?;
+        self.editor.replace_edit_snapshot(&record.world);
+        self.editor.scene_name = relative
+            .file_stem()
+            .and_then(|value| value.to_str())
+            .unwrap_or("Untitled")
+            .to_string();
+        self.editor.scene_path = Some(absolute.to_string_lossy().into_owned());
+        self.scene_relative_path = Some(relative);
+        self.revision = self.revision.saturating_add(1);
+        self.document_revision = record
+            .document_revision
+            .max(self.document_revision.saturating_add(1))
+            .max(self.save_revision.saturating_add(1));
+        Ok(self.snapshot())
+    }
+
+    pub fn discard_scene_recovery(&self) -> Result<(), ProjectError> {
+        let path = self.project_root.join(SCENE_RECOVERY_PATH);
+        let metadata = match std::fs::symlink_metadata(&path) {
+            Ok(metadata) => metadata,
+            Err(error) if error.kind() == std::io::ErrorKind::NotFound => return Ok(()),
+            Err(error) => return Err(ProjectError::Io(error)),
+        };
+        if metadata.file_type().is_symlink() || !metadata.is_file() {
+            return Err(ProjectError::InvalidPath(display_path(&path)));
+        }
+        std::fs::remove_file(path)?;
+        Ok(())
+    }
+
+    fn read_scene_recovery(&self) -> Result<Option<SceneRecoveryRecord>, ProjectError> {
+        let path = self.project_root.join(SCENE_RECOVERY_PATH);
+        let metadata = match std::fs::symlink_metadata(&path) {
+            Ok(metadata) => metadata,
+            Err(error) if error.kind() == std::io::ErrorKind::NotFound => return Ok(None),
+            Err(error) => return Err(ProjectError::Io(error)),
+        };
+        if metadata.file_type().is_symlink() || !metadata.is_file() {
+            return Err(ProjectError::InvalidPath(display_path(&path)));
+        }
+        if metadata.len() > MAX_SCENE_RECOVERY_BYTES {
+            return Err(ProjectError::InvalidProject(format!(
+                "scene recovery file exceeds {} MiB",
+                MAX_SCENE_RECOVERY_BYTES / 1024 / 1024
+            )));
+        }
+        let record: SceneRecoveryRecord = serde_json::from_slice(&std::fs::read(&path)?)?;
+        if record.schema_version != SCENE_RECOVERY_SCHEMA_VERSION {
+            return Err(ProjectError::InvalidProject(format!(
+                "unsupported scene recovery schema: {}",
+                record.schema_version
+            )));
+        }
+        let relative = normalize_scene_asset_path(Path::new(&record.scene_path))?;
+        self.resolve_for_write(&relative)?;
+        Ok(Some(record))
     }
 
     pub fn handle_request(&mut self, request: EditorRequest) -> Result<EditorResult, ProjectError> {
@@ -593,11 +739,18 @@ impl ProjectSession {
             }
         }
 
-        Ok(safe_parent.join(
-            candidate.file_name().ok_or_else(|| {
+        let target =
+            safe_parent.join(candidate.file_name().ok_or_else(|| {
                 ProjectError::InvalidPath(relative.to_string_lossy().into_owned())
-            })?,
-        ))
+            })?);
+        match std::fs::symlink_metadata(&target) {
+            Ok(metadata) if metadata.file_type().is_symlink() || !metadata.is_file() => {
+                Err(ProjectError::InvalidPath(display_path(&target)))
+            }
+            Ok(_) => Ok(target),
+            Err(error) if error.kind() == std::io::ErrorKind::NotFound => Ok(target),
+            Err(error) => Err(ProjectError::Io(error)),
+        }
     }
 
     fn ensure_under_root(&self, candidate: PathBuf) -> Result<PathBuf, ProjectError> {
@@ -606,6 +759,20 @@ impl ProjectSession {
         } else {
             Err(ProjectError::InvalidPath(candidate.display().to_string()))
         }
+    }
+}
+
+fn scene_recovery_info(record: &SceneRecoveryRecord) -> SceneRecoveryInfo {
+    SceneRecoveryInfo {
+        scene_path: record.scene_path.clone(),
+        scene_name: Path::new(&record.scene_path)
+            .file_stem()
+            .and_then(|value| value.to_str())
+            .unwrap_or("Untitled")
+            .to_string(),
+        recorded_at_ms: record.recorded_at_ms,
+        document_revision: record.document_revision,
+        entity_count: record.world.entities.len(),
     }
 }
 
@@ -1081,6 +1248,18 @@ mod tests {
     }
 
     #[test]
+    fn project_writes_reject_existing_non_file_targets() {
+        let root = make_project();
+        let session = ProjectSession::open(&root).unwrap();
+        std::fs::create_dir(root.join("Assets/Scenes/Blocked.mscene")).unwrap();
+        assert!(matches!(
+            session.resolve_for_write(Path::new("Assets/Scenes/Blocked.mscene")),
+            Err(ProjectError::InvalidPath(_))
+        ));
+        std::fs::remove_dir_all(root).unwrap();
+    }
+
+    #[test]
     fn opens_main_scene_and_tracks_save_revision() {
         let root = make_project();
         let mut session = ProjectSession::open(&root).unwrap();
@@ -1097,16 +1276,44 @@ mod tests {
     }
 
     #[test]
+    fn save_as_updates_the_serialized_scene_name() {
+        let root = make_project();
+        let mut session = ProjectSession::open(&root).unwrap();
+        session.open_main_scene().unwrap();
+        let saved = session
+            .save_scene(Some(Path::new("Assets/Scenes/CopiedScene.mscene")))
+            .unwrap();
+        assert_eq!(
+            saved.scene_path.as_deref(),
+            Some("Assets/Scenes/CopiedScene.mscene")
+        );
+        let file: serde_json::Value = serde_json::from_slice(
+            &std::fs::read(root.join("Assets/Scenes/CopiedScene.mscene")).unwrap(),
+        )
+        .unwrap();
+        assert_eq!(file["name"], "CopiedScene");
+        std::fs::remove_dir_all(root).unwrap();
+    }
+
+    #[test]
     fn replacement_is_revision_guarded_and_marks_the_scene_dirty() {
         let root = make_project();
         let mut session = ProjectSession::open(&root).unwrap();
         let opened = session.open_main_scene().unwrap().unwrap();
 
-        let replaced = session
+        let unchanged = session
             .replace_snapshot(opened.revision, opened.world.clone())
             .unwrap();
+        assert!(!unchanged.dirty);
+
+        let mut changed = opened.world.clone();
+        changed.clear_color = [0.8, 0.2, 0.3, 1.0];
+
+        let replaced = session
+            .replace_snapshot(unchanged.revision, changed)
+            .unwrap();
         assert!(replaced.dirty);
-        assert!(replaced.revision > opened.revision);
+        assert!(replaced.revision > unchanged.revision);
 
         let error = session
             .replace_snapshot(opened.revision, opened.world)
@@ -1118,6 +1325,90 @@ mod tests {
                 actual
             } if expected == replaced.revision && actual == opened.revision
         ));
+        std::fs::remove_dir_all(root).unwrap();
+    }
+
+    #[test]
+    fn dirty_scene_recovery_survives_restart_and_is_cleared_by_save() {
+        let root = make_project();
+        let expected_color = [0.72, 0.18, 0.44, 1.0];
+        {
+            let mut session = ProjectSession::open(&root).unwrap();
+            let opened = session.open_main_scene().unwrap().unwrap();
+            assert!(session.write_scene_recovery().unwrap().is_none());
+
+            let mut changed = opened.world;
+            changed.clear_color = expected_color;
+            session.replace_snapshot(opened.revision, changed).unwrap();
+            let info = session.write_scene_recovery().unwrap().unwrap();
+            assert_eq!(info.scene_path, "Assets/Scenes/Main.mscene");
+            assert_eq!(info.scene_name, "Main");
+            assert_eq!(info.entity_count, 0);
+            assert!(info.recorded_at_ms > 0);
+            assert!(root.join(SCENE_RECOVERY_PATH).is_file());
+        }
+
+        let mut reopened = ProjectSession::open(&root).unwrap();
+        let saved = reopened.open_main_scene().unwrap().unwrap();
+        assert_ne!(saved.world.clear_color, expected_color);
+        let info = reopened.scene_recovery_info().unwrap().unwrap();
+        assert_eq!(info.scene_name, "Main");
+        let restored = reopened.restore_scene_recovery().unwrap();
+        assert_eq!(restored.world.clear_color, expected_color);
+        assert!(restored.dirty);
+        assert_eq!(
+            restored.scene_path.as_deref(),
+            Some("Assets/Scenes/Main.mscene")
+        );
+
+        let saved = reopened.save_scene(None).unwrap();
+        assert!(!saved.dirty);
+        assert!(!root.join(SCENE_RECOVERY_PATH).exists());
+        std::fs::remove_dir_all(root).unwrap();
+    }
+
+    #[test]
+    fn invalid_scene_recovery_is_never_applied_and_can_be_discarded() {
+        let root = make_project();
+        let recovery_path = root.join(SCENE_RECOVERY_PATH);
+        std::fs::create_dir_all(recovery_path.parent().unwrap()).unwrap();
+        std::fs::write(&recovery_path, br#"{"schemaVersion":999}"#).unwrap();
+        let mut session = ProjectSession::open(&root).unwrap();
+        session.open_main_scene().unwrap();
+
+        assert!(session.scene_recovery_info().is_err());
+        assert!(session.restore_scene_recovery().is_err());
+        session.discard_scene_recovery().unwrap();
+        assert!(!recovery_path.exists());
+        std::fs::remove_dir_all(root).unwrap();
+    }
+
+    #[test]
+    fn recovery_can_recreate_a_scene_file_that_was_deleted_after_checkpointing() {
+        let root = make_project();
+        let scratch = root.join("Assets/Scenes/Scratch.mscene");
+        std::fs::copy(root.join("Assets/Scenes/Main.mscene"), &scratch).unwrap();
+        {
+            let mut session = ProjectSession::open(&root).unwrap();
+            let opened = session.open_scene("Assets/Scenes/Scratch.mscene").unwrap();
+            let mut changed = opened.world;
+            changed.clear_color = [0.15, 0.65, 0.35, 1.0];
+            session.replace_snapshot(opened.revision, changed).unwrap();
+            session.write_scene_recovery().unwrap().unwrap();
+        }
+        std::fs::remove_file(&scratch).unwrap();
+
+        let mut reopened = ProjectSession::open(&root).unwrap();
+        reopened.open_main_scene().unwrap();
+        let restored = reopened.restore_scene_recovery().unwrap();
+        assert_eq!(
+            restored.scene_path.as_deref(),
+            Some("Assets/Scenes/Scratch.mscene")
+        );
+        assert!(restored.dirty);
+        reopened.save_scene(None).unwrap();
+        assert!(scratch.is_file());
+        assert!(!root.join(SCENE_RECOVERY_PATH).exists());
         std::fs::remove_dir_all(root).unwrap();
     }
 

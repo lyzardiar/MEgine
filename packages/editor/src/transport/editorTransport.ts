@@ -32,6 +32,14 @@ export type ProjectSnapshot = {
   world: HostWorldSnapshot;
 };
 
+export type SceneRecoveryInfo = {
+  scenePath: string;
+  sceneName: string;
+  recordedAtMs: number;
+  documentRevision: number;
+  entityCount: number;
+};
+
 export type RecentProjectInfo = {
   name: string;
   path: string;
@@ -469,6 +477,18 @@ export async function openProjectScene(relativePath: string): Promise<ProjectSna
 
 export async function saveProjectScene(relativePath?: string): Promise<ProjectSnapshot> {
   return invoke<ProjectSnapshot>('save_scene', { relativePath: relativePath ?? null });
+}
+
+export async function getSceneRecovery(): Promise<SceneRecoveryInfo | null> {
+  return invoke<SceneRecoveryInfo | null>('get_scene_recovery');
+}
+
+export async function restoreSceneRecovery(): Promise<ProjectSnapshot> {
+  return invoke<ProjectSnapshot>('restore_scene_recovery');
+}
+
+export async function discardSceneRecovery(): Promise<void> {
+  await invoke('discard_scene_recovery');
 }
 
 export async function submitEditorRequest(

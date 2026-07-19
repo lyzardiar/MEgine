@@ -1,18 +1,28 @@
 import {
   createProject,
+  discardSceneRecovery,
   deleteProjectScene,
+  getSceneRecovery,
   getProjectSnapshot,
   openProjectScene,
   openProject,
   projectSnapshotAsSceneJson,
   renameProjectScene,
-  saveProjectScene,
+  restoreSceneRecovery,
+  type SceneRecoveryInfo,
   type HostWorldSnapshot,
   type ProjectSnapshot,
 } from './editorTransport';
 import { invoke } from '@tauri-apps/api/core';
 
 let currentProject: ProjectSnapshot | null = null;
+let sessionQueue: Promise<void> = Promise.resolve();
+
+function enqueueSessionOperation<T>(operation: () => Promise<T>): Promise<T> {
+  const result = sessionQueue.then(operation, operation);
+  sessionQueue = result.then(() => undefined, () => undefined);
+  return result;
+}
 
 export function getDesktopProject(): ProjectSnapshot | null {
   return currentProject;
@@ -20,21 +30,27 @@ export function getDesktopProject(): ProjectSnapshot | null {
 
 /** Attach a newly-created WebView to the project already owned by the Rust host. */
 export async function attachDesktopProject(): Promise<ProjectSnapshot> {
-  currentProject = await getProjectSnapshot();
-  return currentProject;
+  return enqueueSessionOperation(async () => {
+    currentProject = await getProjectSnapshot();
+    return currentProject;
+  });
 }
 
 export async function startDesktopProject(root: string): Promise<ProjectSnapshot> {
-  currentProject = await openProject(root);
-  return currentProject;
+  return enqueueSessionOperation(async () => {
+    currentProject = await openProject(root);
+    return currentProject;
+  });
 }
 
 export async function createDesktopProject(
   parent: string,
   name: string,
 ): Promise<ProjectSnapshot> {
-  currentProject = await createProject(parent, name);
-  return currentProject;
+  return enqueueSessionOperation(async () => {
+    currentProject = await createProject(parent, name);
+    return currentProject;
+  });
 }
 
 export function desktopProjectSceneJson(): string | null {
@@ -77,41 +93,85 @@ function browserWorldToHost(sceneJson: string): HostWorldSnapshot {
   };
 }
 
-export async function replaceDesktopSceneJson(sceneJson: string): Promise<ProjectSnapshot> {
-  if (!currentProject) throw new Error('no desktop project is open');
-  currentProject = await invoke<ProjectSnapshot>('replace_scene_snapshot', {
-    baseRevision: currentProject.revision,
-    snapshot: browserWorldToHost(sceneJson),
+export async function persistDesktopScene(
+  sceneJson: string,
+  name: string,
+): Promise<ProjectSnapshot> {
+  return enqueueSessionOperation(async () => {
+    if (!currentProject) throw new Error('no desktop project is open');
+    currentProject = await invoke<ProjectSnapshot>('persist_scene_snapshot', {
+      relativePath: `Assets/Scenes/${name}.mscene`,
+      snapshot: browserWorldToHost(sceneJson),
+    });
+    return currentProject;
   });
-  return currentProject;
-}
-
-export async function saveDesktopScene(name: string): Promise<ProjectSnapshot> {
-  if (!currentProject) throw new Error('no desktop project is open');
-  const currentName = currentProject.scenePath?.split('/').pop()?.replace(/\.mscene$/i, '');
-  currentProject = await saveProjectScene(
-    currentName === name ? undefined : `Assets/Scenes/${name}.mscene`,
-  );
-  return currentProject;
 }
 
 export async function openDesktopScene(name: string): Promise<ProjectSnapshot> {
-  if (!currentProject) throw new Error('no desktop project is open');
-  currentProject = await openProjectScene(`Assets/Scenes/${name}.mscene`);
-  return currentProject;
+  return enqueueSessionOperation(async () => {
+    if (!currentProject) throw new Error('no desktop project is open');
+    currentProject = await openProjectScene(`Assets/Scenes/${name}.mscene`);
+    return currentProject;
+  });
 }
 
 export async function renameDesktopScene(
   oldName: string,
   newName: string,
 ): Promise<ProjectSnapshot> {
-  if (!currentProject) throw new Error('no desktop project is open');
-  currentProject = await renameProjectScene(oldName, newName);
-  return currentProject;
+  return enqueueSessionOperation(async () => {
+    if (!currentProject) throw new Error('no desktop project is open');
+    currentProject = await renameProjectScene(oldName, newName);
+    return currentProject;
+  });
 }
 
 export async function deleteDesktopScene(name: string): Promise<ProjectSnapshot> {
-  if (!currentProject) throw new Error('no desktop project is open');
-  currentProject = await deleteProjectScene(name);
-  return currentProject;
+  return enqueueSessionOperation(async () => {
+    if (!currentProject) throw new Error('no desktop project is open');
+    currentProject = await deleteProjectScene(name);
+    return currentProject;
+  });
+}
+
+export async function checkpointDesktopScene(sceneJson: string): Promise<SceneRecoveryInfo | null> {
+  return enqueueSessionOperation(async () => {
+    if (!currentProject) return null;
+    const result = await invoke<{
+      snapshot: ProjectSnapshot;
+      recovery: SceneRecoveryInfo | null;
+    }>('checkpoint_scene_snapshot', {
+      snapshot: browserWorldToHost(sceneJson),
+    });
+    currentProject = result.snapshot;
+    return result.recovery;
+  });
+}
+
+export async function getDesktopSceneRecovery(): Promise<SceneRecoveryInfo | null> {
+  return enqueueSessionOperation(async () => {
+    if (!currentProject) return null;
+    return getSceneRecovery();
+  });
+}
+
+export async function restoreDesktopSceneRecovery(): Promise<{
+  snapshot: ProjectSnapshot;
+  sceneJson: string;
+}> {
+  return enqueueSessionOperation(async () => {
+    if (!currentProject) throw new Error('no desktop project is open');
+    currentProject = await restoreSceneRecovery();
+    return {
+      snapshot: currentProject,
+      sceneJson: projectSnapshotAsSceneJson(currentProject),
+    };
+  });
+}
+
+export async function discardDesktopSceneRecovery(): Promise<void> {
+  await enqueueSessionOperation(async () => {
+    if (!currentProject) return;
+    await discardSceneRecovery();
+  });
 }

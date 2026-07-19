@@ -1,6 +1,7 @@
 use mengine_core::snapshot::WorldSnapshot;
 use mengine_editor_host::{
     BuildAssetMode, EditorFailure, EditorRequest, EditorResult, ProjectSession, ProjectSnapshot,
+    SceneRecoveryInfo,
 };
 use parking_lot::Mutex;
 use std::collections::{BTreeMap, HashSet};
@@ -72,6 +73,13 @@ struct ProjectSceneInfo {
     name: String,
     updated_at: u64,
     json: String,
+}
+
+#[derive(serde::Serialize)]
+#[serde(rename_all = "camelCase")]
+struct SceneRecoveryCheckpoint {
+    snapshot: ProjectSnapshot,
+    recovery: Option<SceneRecoveryInfo>,
 }
 
 #[derive(serde::Serialize)]
@@ -2697,6 +2705,70 @@ fn save_scene(
 }
 
 #[tauri::command]
+fn persist_scene_snapshot(
+    relative_path: String,
+    snapshot: WorldSnapshot,
+    state: State<'_, AppState>,
+) -> Result<ProjectSnapshot, EditorFailure> {
+    let mut guard = state.project.lock();
+    let session = guard.as_mut().ok_or_else(no_project)?;
+    let revision = session.current_revision();
+    session
+        .replace_snapshot(revision, snapshot)
+        .and_then(|_| session.save_scene(Some(Path::new(&relative_path))))
+        .map_err(|error| error.failure(Some(session.current_revision())))
+}
+
+#[tauri::command]
+fn checkpoint_scene_snapshot(
+    snapshot: WorldSnapshot,
+    state: State<'_, AppState>,
+) -> Result<SceneRecoveryCheckpoint, EditorFailure> {
+    let mut guard = state.project.lock();
+    let session = guard.as_mut().ok_or_else(no_project)?;
+    let revision = session.current_revision();
+    session
+        .replace_snapshot(revision, snapshot)
+        .map_err(|error| error.failure(Some(session.current_revision())))?;
+    let recovery = session
+        .write_scene_recovery()
+        .map_err(|error| error.failure(Some(session.current_revision())))?;
+    Ok(SceneRecoveryCheckpoint {
+        snapshot: session.snapshot(),
+        recovery,
+    })
+}
+
+#[tauri::command]
+fn get_scene_recovery(
+    state: State<'_, AppState>,
+) -> Result<Option<SceneRecoveryInfo>, EditorFailure> {
+    let guard = state.project.lock();
+    let session = guard.as_ref().ok_or_else(no_project)?;
+    session
+        .scene_recovery_info()
+        .map_err(|error| error.failure(Some(session.current_revision())))
+}
+
+#[tauri::command]
+fn restore_scene_recovery(state: State<'_, AppState>) -> Result<ProjectSnapshot, EditorFailure> {
+    let mut guard = state.project.lock();
+    let session = guard.as_mut().ok_or_else(no_project)?;
+    session
+        .restore_scene_recovery()
+        .map_err(|error| error.failure(Some(session.current_revision())))
+}
+
+#[tauri::command]
+fn discard_scene_recovery(state: State<'_, AppState>) -> Result<(), EditorFailure> {
+    let guard = state.project.lock();
+    let session = guard.as_ref().ok_or_else(no_project)?;
+    session
+        .discard_scene_recovery()
+        .map_err(|error| error.failure(Some(session.current_revision())))
+}
+
+#[tauri::command]
 fn replace_scene_snapshot(
     base_revision: u64,
     snapshot: WorldSnapshot,
@@ -2758,6 +2830,11 @@ pub fn run() {
             list_project_sprites,
             open_scene,
             save_scene,
+            persist_scene_snapshot,
+            checkpoint_scene_snapshot,
+            get_scene_recovery,
+            restore_scene_recovery,
+            discard_scene_recovery,
             replace_scene_snapshot,
             submit_editor_request
         ])
