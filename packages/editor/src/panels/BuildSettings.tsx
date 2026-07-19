@@ -9,6 +9,7 @@ import {
   buildPcPlayer,
   cancelPcBuild,
   comparePcBuildHistory,
+  createPcBuildHistoryPatch,
   getProjectBuildSettings,
   isDesktopEditor,
   listPcBuildHistory,
@@ -19,6 +20,7 @@ import {
   verifyPcPlayer,
   type BuildComparisonResult,
   type BuildHistoryEntry,
+  type BuildHistoryPatchResult,
   type BuildPlayerProfile,
   type BuildProgressEvent,
   type BuildPlayerResult,
@@ -128,6 +130,8 @@ export function BuildSettings(props: {
   } | null>(null);
   const [historyLoading, setHistoryLoading] = useState(false);
   const [historyComparing, setHistoryComparing] = useState(false);
+  const [historyPatching, setHistoryPatching] = useState(false);
+  const [historyPatch, setHistoryPatch] = useState<BuildHistoryPatchResult | null>(null);
   const [historyError, setHistoryError] = useState<string | null>(null);
   const [message, setMessage] = useState<string | null>(null);
   const [messageError, setMessageError] = useState(false);
@@ -149,6 +153,18 @@ export function BuildSettings(props: {
     if (source.includes('mac')) return 'macOS (current host)';
     return 'Linux (current host)';
   }, []);
+  const selectedHistoryEntries = useMemo(() => historySelection
+    .map((id) => buildHistory.find((entry) => entry.id === id))
+    .filter((entry): entry is BuildHistoryEntry => Boolean(entry))
+    .sort((left, right) => left.recordedAtMs - right.recordedAtMs || left.id.localeCompare(right.id)),
+  [buildHistory, historySelection]);
+  const historyPatchEligible = selectedHistoryEntries.length === 2
+    && selectedHistoryEntries.every((entry) => entry.contentAvailable && entry.artifactSigned)
+    && selectedHistoryEntries[0].artifactSigningKeyId === selectedHistoryEntries[1].artifactSigningKeyId
+    && selectedHistoryEntries[0].projectName === selectedHistoryEntries[1].projectName
+    && selectedHistoryEntries[0].platform === selectedHistoryEntries[1].platform
+    && selectedHistoryEntries[0].architecture === selectedHistoryEntries[1].architecture
+    && selectedHistoryEntries[0].profile === selectedHistoryEntries[1].profile;
 
   const refreshBuildHistory = useCallback(async (reportFailure = true) => {
     const revision = historyLoadRevisionRef.current + 1;
@@ -159,6 +175,7 @@ export function BuildSettings(props: {
       setHistoryRetentionLimit(50);
       setHistorySelection([]);
       setHistoryComparison(null);
+      setHistoryPatch(null);
       setHistoryError(null);
       return;
     }
@@ -177,6 +194,7 @@ export function BuildSettings(props: {
         current && ids.has(current.previous.id) && ids.has(current.current.id) ? current : null
       ));
       setHistoryError(null);
+      setHistoryPatch(null);
     } catch (reason) {
       if (historyLoadRevisionRef.current !== revision) return;
       const detail = reason instanceof Error ? reason.message : String(reason);
@@ -461,14 +479,12 @@ export function BuildSettings(props: {
         : selected.length < 2 ? [...selected, id] : selected
     ));
     setHistoryComparison(null);
+    setHistoryPatch(null);
   };
 
   const compareSelectedHistory = async () => {
-    if (historySelection.length !== 2 || historyComparing) return;
-    const selected = historySelection
-      .map((id) => buildHistory.find((entry) => entry.id === id))
-      .filter((entry): entry is BuildHistoryEntry => Boolean(entry))
-      .sort((left, right) => left.recordedAtMs - right.recordedAtMs || left.id.localeCompare(right.id));
+    if (historySelection.length !== 2 || historyComparing || historyPatching) return;
+    const selected = selectedHistoryEntries;
     if (selected.length !== 2) return;
     setHistoryComparing(true);
     setHistoryError(null);
@@ -485,6 +501,29 @@ export function BuildSettings(props: {
     }
   };
 
+  const createSelectedHistoryPatch = async () => {
+    if (!historyPatchEligible || historyPatching) return;
+    const [previous, current] = selectedHistoryEntries;
+    setHistoryPatching(true);
+    setHistoryError(null);
+    setHistoryPatch(null);
+    try {
+      const result = await createPcBuildHistoryPatch(previous.id, current.id);
+      setHistoryPatch(result);
+      setMessageError(false);
+      setMessage(`Signed historical patch created: ${byteSize(result.payloadBytes)} payload.`);
+      props.onLog(`Built signed historical patch -> ${result.outputDir}`);
+    } catch (reason) {
+      const detail = reason instanceof Error ? reason.message : String(reason);
+      setHistoryError(detail);
+      setMessageError(true);
+      setMessage(detail);
+      props.onLog(`Historical patch generation failed: ${detail}`, 'error');
+    } finally {
+      setHistoryPatching(false);
+    }
+  };
+
   const build = async (runAfterBuild = false) => {
     if (
       !desktop
@@ -495,6 +534,7 @@ export function BuildSettings(props: {
       || savingAll
       || !settings?.scenes.length
       || building
+      || historyPatching
       || launching
       || verifying
     ) return;
@@ -556,8 +596,8 @@ export function BuildSettings(props: {
           <strong>PC Build Settings</strong>
           <span>Packages an ordered scene list into a self-validating standalone player.</span>
         </div>
-        <span className={`build-status ${building || launching || verifying || settingsSaving || savingAll ? 'busy' : ''}`}>
-          {building ? (cancelRequested ? 'CANCELLING' : 'BUILDING') : launching ? 'LAUNCHING' : verifying ? 'VERIFYING' : settingsSaving || savingAll ? 'SAVING' : lastVerification ? 'VERIFIED' : lastBuild ? 'SUCCEEDED' : 'READY'}
+        <span className={`build-status ${building || historyPatching || launching || verifying || settingsSaving || savingAll ? 'busy' : ''}`}>
+          {building ? (cancelRequested ? 'CANCELLING' : 'BUILDING') : historyPatching ? 'PATCHING' : launching ? 'LAUNCHING' : verifying ? 'VERIFYING' : settingsSaving || savingAll ? 'SAVING' : lastVerification ? 'VERIFIED' : lastBuild ? 'SUCCEEDED' : 'READY'}
         </span>
       </div>
 
@@ -751,17 +791,27 @@ export function BuildSettings(props: {
               <span>{buildHistory.length}/{historyRetentionLimit} retained</span>
               <button
                 type="button"
-                disabled={historyLoading || historyComparing}
+                disabled={historyLoading || historyComparing || historyPatching}
                 onClick={() => void refreshBuildHistory()}
               >
                 {historyLoading ? 'Refreshing...' : 'Refresh'}
               </button>
               <button
                 type="button"
-                disabled={historySelection.length !== 2 || historyComparing}
+                disabled={historySelection.length !== 2 || historyComparing || historyPatching}
                 onClick={() => void compareSelectedHistory()}
               >
                 {historyComparing ? 'Comparing...' : 'Compare Selected'}
+              </button>
+              <button
+                type="button"
+                disabled={!historyPatchEligible || historyPatching || historyComparing}
+                title={historyPatchEligible
+                  ? 'Rebuild both archived artifacts, then create and verify a signed patch.'
+                  : 'Select two content-archived builds signed by the same key.'}
+                onClick={() => void createSelectedHistoryPatch()}
+              >
+                {historyPatching ? 'Creating Patch...' : 'Create Signed Patch'}
               </button>
             </div>
           </div>
@@ -818,6 +868,22 @@ export function BuildSettings(props: {
                 comparison={historyComparison.comparison}
                 identicalLabel="The selected build artifacts are byte-identical."
               />
+            </div>
+          )}
+          {historyPatch && (
+            <div className="build-history-patch" title={historyPatch.manifestPath}>
+              <h4>
+                Signed patch {historyPatch.fromContentHash.slice(0, 12)} → {historyPatch.toContentHash.slice(0, 12)}
+              </h4>
+              <span>
+                {historyPatch.changedFiles} payload files · {historyPatch.removedFiles} removed ·{' '}
+                {historyPatch.unchangedFiles} reused
+              </span>
+              <span>
+                {byteSize(historyPatch.payloadBytes)} download · {byteSize(historyPatch.reusedBytes)} reused ·{' '}
+                key {historyPatch.signingKeyId.slice(0, 12)}
+              </span>
+              <code>{historyPatch.outputDir}</code>
             </div>
           )}
         </section>
@@ -991,6 +1057,7 @@ export function BuildSettings(props: {
             || settingsSaving
             || savingAll
             || building
+            || historyPatching
             || launching
             || verifying
             || !settings?.scenes.length
@@ -1011,6 +1078,7 @@ export function BuildSettings(props: {
             || settingsSaving
             || savingAll
             || building
+            || historyPatching
             || launching
             || verifying
             || !settings?.scenes.length

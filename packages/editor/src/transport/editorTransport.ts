@@ -149,6 +149,21 @@ export type BuildHistoryListResult = {
   retentionLimit: number;
 };
 
+export type BuildHistoryPatchResult = {
+  outputDir: string;
+  manifestPath: string;
+  fromContentHash: string;
+  toContentHash: string;
+  fromArtifactHash: string;
+  toArtifactHash: string;
+  changedFiles: number;
+  removedFiles: number;
+  unchangedFiles: number;
+  payloadBytes: number;
+  reusedBytes: number;
+  signingKeyId: string;
+};
+
 export type BuildPlayerResult = {
   buildId: number;
   outputDir: string;
@@ -374,6 +389,19 @@ export async function comparePcBuildHistory(
     throw new Error('Build history comparison requires the desktop editor');
   }
   return invoke<BuildComparisonResult>('compare_pc_build_history', { previousId, currentId });
+}
+
+export async function createPcBuildHistoryPatch(
+  previousId: string,
+  currentId: string,
+): Promise<BuildHistoryPatchResult> {
+  if (!isDesktopEditor()) {
+    throw new Error('Historical patch generation requires the desktop editor');
+  }
+  return invoke<BuildHistoryPatchResult>('create_pc_build_history_patch', {
+    previousId,
+    currentId,
+  });
 }
 
 export async function cancelPcBuild(): Promise<boolean> {

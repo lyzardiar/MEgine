@@ -6145,6 +6145,8 @@ body.insp-scrubbing * {
 .build-history-toolbar {
   display: flex;
   align-items: center;
+  justify-content: flex-end;
+  flex-wrap: wrap;
   gap: 5px;
   padding-right: 4px;
 }
@@ -6206,6 +6208,23 @@ body.insp-scrubbing * {
   margin: 0;
   color: #c5d7c8;
   font: 10px var(--u-mono);
+}
+.build-history-patch {
+  display: grid;
+  gap: 4px;
+  padding: 7px;
+  border-top: 1px solid #45644c;
+  background: #28332b;
+  color: #b8c8bb;
+  font-size: 10px;
+}
+.build-history-patch h4 { margin: 0; color: #9dd3a5; font: 10px var(--u-mono); }
+.build-history-patch code {
+  overflow: hidden;
+  color: #9eb8c4;
+  font: 9px var(--u-mono);
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .build-options > label {
