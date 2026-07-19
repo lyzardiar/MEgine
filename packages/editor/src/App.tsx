@@ -1825,6 +1825,10 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
                   assetPath={animationAssetPath}
                   previewEnabled={visiblePanels.has('timeline') && timelineAssetPath == null}
                   onCloseAsset={() => setAnimationAssetPath(null)}
+                  onCreateTimelineAsset={async () => {
+                    const { createProjectTimeline } = await import('./panels/Sequencer');
+                    await createProjectTimeline();
+                  }}
                   entity={snap.entities.find((entity) => entity.entity === selected) ?? null}
                   entities={snap.entities}
                   authoredEntities={mode === 'edit' ? store.authoredEntities() : snap.entities}

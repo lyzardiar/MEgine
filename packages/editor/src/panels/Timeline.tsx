@@ -1409,6 +1409,7 @@ export function Timeline(props: {
   assetPath?: string | null;
   previewEnabled: boolean;
   onCloseAsset?: () => void;
+  onCreateTimelineAsset?: () => Promise<void>;
   entity: SnapshotEntity | null;
   entities: SnapshotEntity[];
   authoredEntities: SnapshotEntity[];
@@ -1441,6 +1442,7 @@ export function Timeline(props: {
   const [selectedEvent, setSelectedEvent] = useState<number | null>(null);
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [creatingTimeline, setCreatingTimeline] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [newClipName, setNewClipName] = useState('');
   const [showNewClip, setShowNewClip] = useState(false);
@@ -2146,6 +2148,21 @@ export function Timeline(props: {
       props.onLog(`Animation Clip 创建失败：${message}`, 'error');
     } finally {
       setSaving(false);
+    }
+  };
+
+  const createTimelineSequence = async () => {
+    if (!props.onCreateTimelineAsset || creatingTimeline) return;
+    setCreatingTimeline(true);
+    setError(null);
+    try {
+      await props.onCreateTimelineAsset();
+    } catch (reason) {
+      const message = reason instanceof Error ? reason.message : String(reason);
+      setError(message);
+      props.onLog(`Timeline 创建失败：${message}`, 'error');
+    } finally {
+      setCreatingTimeline(false);
     }
   };
 
@@ -3314,7 +3331,14 @@ export function Timeline(props: {
   };
 
   if (!props.entity && !directAsset) {
-    return <div className="timeline-empty">选择一个 GameObject 以创建或编辑动画。</div>;
+    return <div className="timeline-empty">
+      <strong>Animation / Sequence</strong>
+      <span>选择一个 GameObject 以创建或编辑 Animation Clip，或创建独立 Timeline Sequence。</span>
+      {props.onCreateTimelineAsset && <button type="button" onClick={() => void createTimelineSequence()} disabled={creatingTimeline}>
+        <Plus size={13} aria-hidden="true" /> {creatingTimeline ? 'Creating…' : 'Create Timeline Sequence'}
+      </button>}
+      {error && <span className="timeline-empty-error">{error}</span>}
+    </div>;
   }
 
   if ((!player && !animator && !directAsset) || !clipPath) {
@@ -3358,6 +3382,13 @@ export function Timeline(props: {
           Create Animation Clip
         </button>
         </>}
+        {props.onCreateTimelineAsset && <>
+          <span className="timeline-empty-divider" aria-hidden="true">or</span>
+          <button type="button" onClick={() => void createTimelineSequence()} disabled={creatingTimeline}>
+            <Plus size={13} aria-hidden="true" /> {creatingTimeline ? 'Creating…' : 'Create Timeline Sequence'}
+          </button>
+        </>}
+        {error && !animator && <span className="timeline-empty-error">{error}</span>}
       </div>
     );
   }
@@ -3580,6 +3611,17 @@ export function Timeline(props: {
             disabled={saving}
           >
             <Plus size={13} aria-hidden="true" /><span>New</span>
+          </button>
+        )}
+        {props.onCreateTimelineAsset && (
+          <button
+            type="button"
+            aria-label="Create new Timeline sequence"
+            title="Create a new Timeline sequence"
+            onClick={() => void createTimelineSequence()}
+            disabled={creatingTimeline}
+          >
+            <Plus size={13} aria-hidden="true" /><span>Sequence</span>
           </button>
         )}
         <button

@@ -69,6 +69,11 @@ export type SequencerCopyResult =
 export const SEQUENCER_MIN_ZOOM = 1;
 export const SEQUENCER_MAX_ZOOM = 32;
 
+export type SequencerTimeRange = {
+  start: number;
+  end: number;
+};
+
 function growAnimationCrossfades(clips: TimelineAnimationClip[]): boolean {
   const ordered = [...clips].sort((left, right) => left.start - right.start);
   for (let index = 1; index < ordered.length; index += 1) {
@@ -168,6 +173,45 @@ export function expandSequencerRippleSelection(
 export function clampSequencerZoom(value: number): number {
   if (!Number.isFinite(value)) return SEQUENCER_MIN_ZOOM;
   return Math.max(SEQUENCER_MIN_ZOOM, Math.min(SEQUENCER_MAX_ZOOM, value));
+}
+
+export function sequencerZoomToSlider(value: number): number {
+  const zoom = clampSequencerZoom(value);
+  return Math.log(zoom / SEQUENCER_MIN_ZOOM)
+    / Math.log(SEQUENCER_MAX_ZOOM / SEQUENCER_MIN_ZOOM) * 100;
+}
+
+export function sequencerSliderToZoom(value: number): number {
+  const normalized = Math.max(0, Math.min(100, Number.isFinite(value) ? value : 0)) / 100;
+  return clampSequencerZoom(
+    SEQUENCER_MIN_ZOOM
+      * Math.pow(SEQUENCER_MAX_ZOOM / SEQUENCER_MIN_ZOOM, normalized),
+  );
+}
+
+export function sequencerSelectionTimeRange(
+  asset: TimelineAsset,
+  selections: readonly SequencerItemSelection[],
+): SequencerTimeRange | null {
+  let start = Number.POSITIVE_INFINITY;
+  let end = Number.NEGATIVE_INFINITY;
+  for (const selection of selections) {
+    if (!Number.isInteger(selection.track) || !Number.isInteger(selection.marker)) continue;
+    const track = asset.tracks[selection.track];
+    if (!track) continue;
+    if (track.type === 'signal') {
+      const marker = track.markers[selection.marker];
+      if (!marker) continue;
+      start = Math.min(start, marker.time);
+      end = Math.max(end, marker.time);
+      continue;
+    }
+    const clip = track.clips[selection.marker];
+    if (!clip) continue;
+    start = Math.min(start, clip.start);
+    end = Math.max(end, clip.start + clip.duration);
+  }
+  return Number.isFinite(start) && Number.isFinite(end) ? { start, end } : null;
 }
 
 function finitePositive(value: number, fallback: number): number {

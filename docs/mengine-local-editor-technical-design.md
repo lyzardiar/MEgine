@@ -1600,3 +1600,17 @@ Camera Shot 的基础闭环已经形成，但 Timeline 仍不完备：编辑器 
 第二遍自省从跨平台可运行性和编辑器状态反查，发现内容寻址仓库只保存字节，初稿恢复出的 Linux/macOS Player 会丢失 executable bit；现按 Manifest executable 恢复权限后再验签。UI 同时把恢复纳入 Build/History/Patch/Run/Verify 的统一忙状态，恢复成功清空旧构建引用，并为公钥选择失败提供结构化错误；回滚消息也区分原本是否存在发布包。回归覆盖可信重建、验签失败保留当前目录、发布后核对失败恢复旧目录、无旧包首次发布、完整 Manifest CURRENT 判定和 Unix 权限契约；编辑器 356/356、Tauri Host 26/26 常规测试通过，生产前端构建与 Rust workspace 检查继续作为提交门禁。
 
 这一批补上了本地历史制品的人工回退闭环，但仍不是成熟 Release Management。历史与 Blob 仍只有单进程内互斥，没有跨编辑器/CI 的文件锁、恢复审计日志、受保护版本 Pin、磁盘配额、删除审批、可信 keyring/密钥轮换与撤销、渠道/灰度指针、远端制品仓库、版本 DAG 或一键选择最短补丁链；备份清理失败也需要后续库存面板提供可审计的人工处理入口。下一阶段应把 Build History/Patch Inventory 拆成独立 Release Dock，以不可变 Artifact ID 建立版本图、Pin/Retention 和恢复记录，再接远端对象存储、CI 发布身份与平台代码签名/公证。
+
+## 136. 2026-07-20 Game 方向回归与 Sequencer 基础可用性
+
+- Game View 继续只保存具体分辨率，方向由 `width/height` 唯一推导；工具栏不存在横竖屏状态按钮。真实 1280×720 编辑器选择 `1080×1920` 后，宽高输入与非交互式 `portrait` 标签保持一致；已有纯函数回归固定横屏、竖屏、正方形与 Free Aspect，防止后续重新引入第二份方向状态。
+- Timeline Dock 的空状态和 Animation Clip 工具栏新增明确的 `Create Timeline Sequence` 入口；无需先去 Project 猜测 `.mtimeline` 的双击约定，也不依赖当前是否选中 GameObject 或该对象是否已使用 Animator。入口按需加载 Sequencer Chunk，创建 `Assets/Timelines/New Timeline.mtimeline` 后立即进入编辑；失败保留当前界面并显示可见错误，不只写 Console。
+- Sequencer 工具栏按“Transport/当前时间与资产/保存关闭”和“编辑命令/缩放/轨道/Director”分组，宽 Dock 保持 31px 单行，窄 Dock 自动换为两行，极窄宽度允许工具组继续换行；长 Preview 状态以省略号收敛，按钮继续使用方形、零圆角、图标优先的专业工具样式。1280px 实测工具栏和 Workspace 均满足 `scrollWidth === clientWidth`，没有隐性横向溢出。
+- 缩放从只能反复点击 `+/-/Fit` 扩展为 1×–32× 对数滑杆，低倍率拥有更细的可控范围，滑杆端点和往返映射由纯函数测试固定。新增 `Frame Selected` 图标与 `F` 快捷键，跨 Marker/Clip 多选先计算完整时间范围，再加入帧率感知边距并居中；8 秒验证资产选中 1–3 秒片段后得到 3.2×、`scrollLeft=259`，内容宽 2903px、可视宽 1024px，选区完整落入视口。
+- Animation Timeline 与 Sequencer 的横纵滚动条统一为 10px 可抓取区域、6px 可见方形 Thumb、稳定 Gutter 和一致 Hover；不再使用 7px 轨道叠 1–2px 边框后只剩 3–5px 的细条。Inspector、轨道区、Dope Sheet、Details 和横向时间轴使用同一套对比度与无圆角规则。
+
+第一遍自省通过真实页面而不是静态 JSX 检查入口、创建和定位：先用临时 Signal/Activation 资产确认旧界面把所有命令压在单行且 Timeline Tab 默认只露出 Animation Clip 空状态；改造后从空状态一键创建真实 `.mtimeline`，并验证 F 定位与布局尺寸。过程中发现运行中的资源扫描器会为验证资产自动生成 `.meta`，因此先结束浏览器会话再清理资源、Sidecar、场景 Sidecar 和编辑器状态差异，最终提交不夹带测试工程污染。
+
+第二遍自省从失败路径和窄 Dock 反查：发现初稿把 Sequence 入口错误嵌在 `!animator` 分支，且非 Animator 空状态不会显示创建失败；现把入口提升为两种动画工作流共用，并补齐内联错误。继续按 900px/700px 容器边界检查，增加工具组换行、Director 弹性宽度和 Preview 状态截断。最终编辑器测试 358/358、严格 TypeScript/Vite 生产构建和 Rust workspace 检查通过；生产构建仍报告主入口 518.56kB 的既有 Chunk 预算警告，应作为后续启动性能切片继续拆分。
+
+这批解决的是 Timeline 的进入、导航和基础操作密度，不代表成熟动画制作系统已经完备。仍缺嵌套 Timeline/Control Track、录制模式、模型动画导入与 Humanoid Retargeting、Root Motion、Animation Layer/Avatar Mask 混合、Onion Skin/运动轨迹、长时间轴虚拟化、统一 Marker/Clip 标签、运行时 Timeline Profiler 关联和真正的音视频采样时钟；后续应优先补 Timeline 录制与嵌套控制，再把 Animation Clip、Animator 和 Sequencer 的选择与时间域收敛为共享编辑内核。

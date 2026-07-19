@@ -19,12 +19,36 @@ import {
   rippleMoveSequencerItems,
   resizeSequencerAnimationBlend,
   selectSequencerItem,
+  sequencerSelectionTimeRange,
+  sequencerSliderToZoom,
   sequencerTicks,
+  sequencerZoomToSlider,
   snapSequencerItemsDelta,
   trimSequencerCameraBlendIn,
   trimSequencerAnimationClip,
   trimSequencerClip,
 } from '../src/sequencerEditing.ts';
+
+test('Sequencer logarithmic zoom slider reaches exact limits and round-trips', () => {
+  assert.equal(sequencerZoomToSlider(1), 0);
+  assert.equal(sequencerZoomToSlider(32), 100);
+  assert.equal(sequencerSliderToZoom(0), 1);
+  assert.equal(sequencerSliderToZoom(100), 32);
+  for (const zoom of [1.5, 2, 4, 8, 16, 24]) {
+    assert.ok(Math.abs(sequencerSliderToZoom(sequencerZoomToSlider(zoom)) - zoom) < 1e-9);
+  }
+  assert.equal(sequencerSliderToZoom(Number.NaN), 1);
+});
+
+test('Sequencer selection range covers markers and complete clips', () => {
+  const asset = timeline();
+  assert.deepEqual(sequencerSelectionTimeRange(asset, [
+    { track: 0, marker: 0 },
+    { track: 1, marker: 0 },
+  ]), { start: 1, end: 3 });
+  assert.deepEqual(sequencerSelectionTimeRange(asset, [{ track: 0, marker: 0 }]), { start: 1, end: 1 });
+  assert.equal(sequencerSelectionTimeRange(asset, [{ track: 99, marker: 0 }]), null);
+});
 
 function timeline() {
   return {

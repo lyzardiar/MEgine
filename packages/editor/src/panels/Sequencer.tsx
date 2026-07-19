@@ -17,6 +17,7 @@ import {
   ChevronsLeft,
   ClipboardPaste,
   Copy,
+  Crosshair,
   FolderTree,
   Link,
   Lock,
@@ -102,7 +103,10 @@ import {
   pasteSequencerClipboard,
   resizeSequencerAnimationBlend,
   rippleMoveSequencerItems,
+  sequencerSelectionTimeRange,
+  sequencerSliderToZoom,
   sequencerTicks,
+  sequencerZoomToSlider,
   selectSequencerItem,
   snapSequencerItemsDelta,
   trimSequencerCameraBlendIn,
@@ -1914,6 +1918,31 @@ export function Sequencer(props: SequencerProps) {
       viewport.scrollLeft = Math.max(0, timeRatio * nextLaneWidth - anchor);
     });
   };
+  const frameSelectedItems = () => {
+    const range = sequencerSelectionTimeRange(asset, selectedItems);
+    const viewport = tracksViewport.current;
+    if (!range || !viewport) return;
+    const visibleLaneWidth = Math.max(1, viewport.clientWidth - 180);
+    const rangeDuration = Math.max(0, range.end - range.start);
+    const padding = rangeDuration <= 1e-9
+      ? Math.max(2 / asset.frame_rate, asset.duration / 16)
+      : Math.max(2 / asset.frame_rate, rangeDuration * 0.12);
+    const visibleDuration = Math.max(1 / asset.frame_rate, Math.min(
+      asset.duration,
+      rangeDuration + padding * 2,
+    ));
+    const nextZoom = clampSequencerZoom(asset.duration / visibleDuration);
+    const center = (range.start + range.end) / 2;
+    setZoom(nextZoom);
+    requestAnimationFrame(() => {
+      const nextLaneWidth = Math.max(360, Math.round(visibleLaneWidth * nextZoom));
+      const maximumScroll = Math.max(0, nextLaneWidth - visibleLaneWidth);
+      viewport.scrollLeft = Math.max(0, Math.min(
+        maximumScroll,
+        center / asset.duration * nextLaneWidth - visibleLaneWidth / 2,
+      ));
+    });
+  };
   const toggleSnapping = () => {
     const next = !snapping;
     setSnapping(next);
@@ -2065,6 +2094,12 @@ export function Sequencer(props: SequencerProps) {
           duplicateSelectedItem();
           return;
         }
+        if (!modified && key === 'f' && selectedItems.length > 0) {
+          event.preventDefault();
+          event.stopPropagation();
+          frameSelectedItems();
+          return;
+        }
         if (['BUTTON', 'SUMMARY'].includes(tag)) return;
         if (event.key === 'Escape') {
           event.preventDefault();
@@ -2098,72 +2133,87 @@ export function Sequencer(props: SequencerProps) {
       }}
     >
       <div className="timeline-toolbar sequencer-toolbar">
-        <div className="timeline-transport">
-          <button type="button" className={transportPlaying ? 'active' : ''} title={transportPlaying ? 'Pause' : 'Play'} onClick={() => {
-            if (liveDirector && directorEntity) props.onPatchDirector(directorEntity.entity, { playing: !transportPlaying });
-            else toggleEditPlayback();
-          }}>
-            {transportPlaying ? <Pause size={14} /> : <Play size={14} />}
-          </button>
-          <button type="button" title="Stop" onClick={() => {
-            if (liveDirector && directorEntity) props.onPatchDirector(directorEntity.entity, { playing: false, time: 0 });
-            else { setPlaying(false); replaceTime(0); }
-          }}><Square size={13} /></button>
-        </div>
-        <div className="sequencer-edit-controls">
-          <button type="button" aria-label="Undo" title={`Undo${props.undoService.undoLabel ? ` ${props.undoService.undoLabel}` : ''} (Ctrl+Z)`} disabled={!props.undoService.canUndo} onClick={() => restoreHistory('undo')}><Undo2 size={13} /></button>
-          <button type="button" aria-label="Redo" title={`Redo${props.undoService.redoLabel ? ` ${props.undoService.redoLabel}` : ''} (Ctrl+Y)`} disabled={!props.undoService.canRedo} onClick={() => restoreHistory('redo')}><Redo2 size={13} /></button>
-          <button type="button" aria-label="Copy selected items" title="Copy selected items (Ctrl+C)" disabled={!selectedMarker && !selectedClip} onClick={() => copySelectedItem()}><Copy size={13} /></button>
-          <button type="button" aria-label="Paste at playhead" title="Paste at playhead (Ctrl+V)" disabled={!clipboard} onClick={() => pasteItem(clipboard, displayTime)}><ClipboardPaste size={13} /></button>
-          <button type="button" aria-label="Delete Timeline selection" title="Delete selected group, track, or items (Delete)" disabled={!selection} onClick={() => deleteSelection()}><Trash2 size={13} /></button>
-          <button type="button" aria-label="Ripple delete selected clips" title="Ripple Delete per affected track (Shift+Delete)" disabled={!rippleEligible} onClick={() => deleteSelection(true)}><ChevronsLeft size={13} /></button>
-          <button type="button" className={rippleMode ? 'active' : ''} aria-pressed={rippleMode} aria-label="Toggle Timeline Ripple Move" title={`Ripple Move ${rippleMode ? 'on' : 'off'} · shifts the affected track suffix · Alt temporarily inverts`} onClick={toggleRippleMode}><MoveHorizontal size={13} /></button>
-          <button type="button" className={snapping ? 'active' : ''} aria-pressed={snapping} aria-label="Toggle Timeline snapping" title={`Magnetic snapping ${snapping ? 'on' : 'off'} (${SEQUENCER_SNAP_THRESHOLD_PX}px)`} onClick={toggleSnapping}><Magnet size={13} /></button>
-        </div>
-        <label className="timeline-time">Time <input type="number" min={0} max={asset.duration} step={1 / asset.frame_rate} value={Number(displayTime.toFixed(4))} onChange={(event) => {
-          const next = snapTimelineAssetTime(Number(event.target.value), asset);
-          scrub(next);
-        }} /></label>
-        <span className="timeline-clip-path" title={props.assetPath}>{asset.name} — {props.assetPath}{dirty ? ' *' : ''}</span>
-          {selectedItems.length > 0 && <span className="sequencer-selection-count" title="Arrow keys nudge by one frame; Shift+Arrow nudges by ten frames.">{selectedItems.length} selected</span>}
-        {liveDirector && <span className={`sequencer-live-status${liveDirector.playing ? ' playing' : ''}`}>{liveDirector.playing ? 'LIVE PLAYING' : 'LIVE PAUSED'} · {displayTime.toFixed(2)}s</span>}
-        {!props.playMode && props.previewEnabled && directorEntity && <span className="sequencer-live-status edit-preview">EDIT PREVIEW · Activation + Animation + Camera + Audio + Particle</span>}
-        {!props.playMode && audioPreviewStatus.mode !== 'idle' && <span className="sequencer-live-status edit-preview">AUDIO {audioPreviewStatus.mode.toUpperCase()}{audioPreviewStatus.voices ? ` · ${audioPreviewStatus.voices}` : ''}</span>}
-        <div className="sequencer-zoom-controls">
-          <button type="button" title="Zoom out" disabled={zoom <= SEQUENCER_MIN_ZOOM} onClick={() => changeZoom(zoom / 1.5)}><Minus size={13} /></button>
-          <button type="button" title="Fit entire Timeline" disabled={zoom === 1} onClick={() => {
-            setZoom(1);
-            if (tracksViewport.current) tracksViewport.current.scrollLeft = 0;
-          }}><Maximize2 size={12} /> Fit</button>
-          <button type="button" title="Zoom in" disabled={zoom >= SEQUENCER_MAX_ZOOM} onClick={() => changeZoom(zoom * 1.5)}><Plus size={13} /></button>
-          <span>{zoom.toFixed(zoom < 10 ? 1 : 0)}x</span>
-        </div>
-        <details className="sequencer-add-track">
-          <summary><Plus size={14} /> Track</summary>
-          <div>
-            <button type="button" onClick={(event) => { addSignalTrack(); event.currentTarget.closest('details')?.removeAttribute('open'); }}>Signal</button>
-            <button type="button" onClick={(event) => { addActivationTrack(); event.currentTarget.closest('details')?.removeAttribute('open'); }}>Activation</button>
-            <button type="button" onClick={(event) => { addAudioTrack(); event.currentTarget.closest('details')?.removeAttribute('open'); }}>Audio</button>
-            <button type="button" onClick={(event) => { addAnimationTrack(); event.currentTarget.closest('details')?.removeAttribute('open'); }}>Animation</button>
-            <button type="button" onClick={(event) => { addParticleTrack(); event.currentTarget.closest('details')?.removeAttribute('open'); }}>Particle</button>
-            <button type="button" disabled={asset.tracks.some((track) => track.type === 'camera')} onClick={(event) => { addCameraTrack(); event.currentTarget.closest('details')?.removeAttribute('open'); }}>Camera</button>
-            <button type="button" onClick={(event) => { addTrackGroup(); event.currentTarget.closest('details')?.removeAttribute('open'); }}><FolderTree size={12} /> Group</button>
+        <div className="sequencer-toolbar-primary">
+          <div className="timeline-transport">
+            <button type="button" className={transportPlaying ? 'active' : ''} title={transportPlaying ? 'Pause' : 'Play'} onClick={() => {
+              if (liveDirector && directorEntity) props.onPatchDirector(directorEntity.entity, { playing: !transportPlaying });
+              else toggleEditPlayback();
+            }}>
+              {transportPlaying ? <Pause size={14} /> : <Play size={14} />}
+            </button>
+            <button type="button" title="Stop" onClick={() => {
+              if (liveDirector && directorEntity) props.onPatchDirector(directorEntity.entity, { playing: false, time: 0 });
+              else { setPlaying(false); replaceTime(0); }
+            }}><Square size={13} /></button>
           </div>
-        </details>
-        <button type="button" disabled={!selectedTrack || selectedTrackLocked} title={selectedTrackLocked ? 'Unlock the track or its group to add items' : undefined} onClick={() => selectedTrack && addTrackItem(selection!.track, displayTime)}>
-          <Plus size={14} /> {selectedTrack?.type === 'signal' ? 'Signal' : 'Clip'}
-        </button>
-        <select className="sequencer-director-select" aria-label="Timeline Director" title="Active TimelineDirector for playback and stable track bindings" value={directorEntity?.entity ?? ''} onChange={(event) => setDirectorEntityId(event.target.value ? Number(event.target.value) : null)}>
-          <option value="">No Director</option>
-          {matchingDirectors.map((entity) => <option value={entity.entity} key={entity.entity}>{entity.name ?? `Entity ${entity.entity}`}</option>)}
-        </select>
-        <button type="button" className="timeline-icon-button" title="Assign this Timeline asset to the selected entity as its Director" disabled={!props.selectedEntity} onClick={() => {
-          if (!props.selectedEntity) return;
-          props.onAssignDirector(props.selectedEntity.entity, props.assetPath!);
-          setDirectorEntityId(props.selectedEntity.entity);
-        }}><Link size={14} /></button>
-        <button type="button" className="timeline-icon-button" title={saving ? 'Saving' : 'Save Timeline'} disabled={!dirty || saving || payloadInvalid} onClick={() => void save()}><Save size={14} /></button>
-        <button type="button" className="timeline-icon-button" title="Back to Animation Clip editor" onClick={props.onClose}><X size={14} /></button>
+          <label className="timeline-time">Time <input type="number" min={0} max={asset.duration} step={1 / asset.frame_rate} value={Number(displayTime.toFixed(4))} onChange={(event) => {
+            const next = snapTimelineAssetTime(Number(event.target.value), asset);
+            scrub(next);
+          }} /></label>
+          <span className="timeline-clip-path" title={props.assetPath}>{asset.name} — {props.assetPath}{dirty ? ' *' : ''}</span>
+          {selectedItems.length > 0 && <span className="sequencer-selection-count" title="Arrow keys nudge by one frame; Shift+Arrow nudges by ten frames.">{selectedItems.length} selected</span>}
+          {liveDirector && <span className={`sequencer-live-status${liveDirector.playing ? ' playing' : ''}`}>{liveDirector.playing ? 'LIVE PLAYING' : 'LIVE PAUSED'} · {displayTime.toFixed(2)}s</span>}
+          {!props.playMode && props.previewEnabled && directorEntity && <span className="sequencer-live-status edit-preview">EDIT PREVIEW · Activation + Animation + Camera + Audio + Particle</span>}
+          {!props.playMode && audioPreviewStatus.mode !== 'idle' && <span className="sequencer-live-status edit-preview">AUDIO {audioPreviewStatus.mode.toUpperCase()}{audioPreviewStatus.voices ? ` · ${audioPreviewStatus.voices}` : ''}</span>}
+          <button type="button" className="timeline-icon-button" aria-label="Save Timeline" title={saving ? 'Saving' : 'Save Timeline (Ctrl+S)'} disabled={!dirty || saving || payloadInvalid} onClick={() => void save()}><Save size={14} /></button>
+          <button type="button" className="timeline-icon-button" aria-label="Back to Animation Clip editor" title="Back to Animation Clip editor" onClick={props.onClose}><X size={14} /></button>
+        </div>
+        <div className="sequencer-toolbar-tools">
+          <div className="sequencer-edit-controls">
+            <button type="button" aria-label="Undo" title={`Undo${props.undoService.undoLabel ? ` ${props.undoService.undoLabel}` : ''} (Ctrl+Z)`} disabled={!props.undoService.canUndo} onClick={() => restoreHistory('undo')}><Undo2 size={13} /></button>
+            <button type="button" aria-label="Redo" title={`Redo${props.undoService.redoLabel ? ` ${props.undoService.redoLabel}` : ''} (Ctrl+Y)`} disabled={!props.undoService.canRedo} onClick={() => restoreHistory('redo')}><Redo2 size={13} /></button>
+            <button type="button" aria-label="Copy selected items" title="Copy selected items (Ctrl+C)" disabled={!selectedMarker && !selectedClip} onClick={() => copySelectedItem()}><Copy size={13} /></button>
+            <button type="button" aria-label="Paste at playhead" title="Paste at playhead (Ctrl+V)" disabled={!clipboard} onClick={() => pasteItem(clipboard, displayTime)}><ClipboardPaste size={13} /></button>
+            <button type="button" aria-label="Delete Timeline selection" title="Delete selected group, track, or items (Delete)" disabled={!selection} onClick={() => deleteSelection()}><Trash2 size={13} /></button>
+            <button type="button" aria-label="Ripple delete selected clips" title="Ripple Delete per affected track (Shift+Delete)" disabled={!rippleEligible} onClick={() => deleteSelection(true)}><ChevronsLeft size={13} /></button>
+            <button type="button" className={rippleMode ? 'active' : ''} aria-pressed={rippleMode} aria-label="Toggle Timeline Ripple Move" title={`Ripple Move ${rippleMode ? 'on' : 'off'} · shifts the affected track suffix · Alt temporarily inverts`} onClick={toggleRippleMode}><MoveHorizontal size={13} /></button>
+            <button type="button" className={snapping ? 'active' : ''} aria-pressed={snapping} aria-label="Toggle Timeline snapping" title={`Magnetic snapping ${snapping ? 'on' : 'off'} (${SEQUENCER_SNAP_THRESHOLD_PX}px)`} onClick={toggleSnapping}><Magnet size={13} /></button>
+          </div>
+          <div className="sequencer-zoom-controls">
+            <button type="button" aria-label="Zoom out" title="Zoom out" disabled={zoom <= SEQUENCER_MIN_ZOOM} onClick={() => changeZoom(zoom / 1.5)}><Minus size={13} /></button>
+            <input
+              type="range"
+              min={0}
+              max={100}
+              step={0.5}
+              aria-label="Timeline zoom"
+              title={`Timeline zoom ${zoom.toFixed(zoom < 10 ? 1 : 0)}x`}
+              value={sequencerZoomToSlider(zoom)}
+              onChange={(event) => changeZoom(sequencerSliderToZoom(Number(event.target.value)))}
+            />
+            <button type="button" aria-label="Fit entire Timeline" title="Fit entire Timeline" disabled={zoom === 1} onClick={() => {
+              setZoom(1);
+              if (tracksViewport.current) tracksViewport.current.scrollLeft = 0;
+            }}><Maximize2 size={12} /></button>
+            <button type="button" aria-label="Frame selected items" title="Frame selected items (F)" disabled={selectedItems.length === 0} onClick={frameSelectedItems}><Crosshair size={12} /></button>
+            <button type="button" aria-label="Zoom in" title="Zoom in" disabled={zoom >= SEQUENCER_MAX_ZOOM} onClick={() => changeZoom(zoom * 1.5)}><Plus size={13} /></button>
+            <span>{zoom.toFixed(zoom < 10 ? 1 : 0)}x</span>
+          </div>
+          <details className="sequencer-add-track">
+            <summary><Plus size={14} /> Track</summary>
+            <div>
+              <button type="button" onClick={(event) => { addSignalTrack(); event.currentTarget.closest('details')?.removeAttribute('open'); }}>Signal</button>
+              <button type="button" onClick={(event) => { addActivationTrack(); event.currentTarget.closest('details')?.removeAttribute('open'); }}>Activation</button>
+              <button type="button" onClick={(event) => { addAudioTrack(); event.currentTarget.closest('details')?.removeAttribute('open'); }}>Audio</button>
+              <button type="button" onClick={(event) => { addAnimationTrack(); event.currentTarget.closest('details')?.removeAttribute('open'); }}>Animation</button>
+              <button type="button" onClick={(event) => { addParticleTrack(); event.currentTarget.closest('details')?.removeAttribute('open'); }}>Particle</button>
+              <button type="button" disabled={asset.tracks.some((track) => track.type === 'camera')} onClick={(event) => { addCameraTrack(); event.currentTarget.closest('details')?.removeAttribute('open'); }}>Camera</button>
+              <button type="button" onClick={(event) => { addTrackGroup(); event.currentTarget.closest('details')?.removeAttribute('open'); }}><FolderTree size={12} /> Group</button>
+            </div>
+          </details>
+          <button type="button" disabled={!selectedTrack || selectedTrackLocked} title={selectedTrackLocked ? 'Unlock the track or its group to add items' : undefined} onClick={() => selectedTrack && addTrackItem(selection!.track, displayTime)}>
+            <Plus size={14} /> {selectedTrack?.type === 'signal' ? 'Signal' : 'Clip'}
+          </button>
+          <select className="sequencer-director-select" aria-label="Timeline Director" title="Active TimelineDirector for playback and stable track bindings" value={directorEntity?.entity ?? ''} onChange={(event) => setDirectorEntityId(event.target.value ? Number(event.target.value) : null)}>
+            <option value="">No Director</option>
+            {matchingDirectors.map((entity) => <option value={entity.entity} key={entity.entity}>{entity.name ?? `Entity ${entity.entity}`}</option>)}
+          </select>
+          <button type="button" className="timeline-icon-button" aria-label="Assign Timeline Director" title="Assign this Timeline asset to the selected entity as its Director" disabled={!props.selectedEntity} onClick={() => {
+            if (!props.selectedEntity) return;
+            props.onAssignDirector(props.selectedEntity.entity, props.assetPath!);
+            setDirectorEntityId(props.selectedEntity.entity);
+          }}><Link size={14} /></button>
+        </div>
       </div>
 
       {error && <div className="timeline-message error">{error}</div>}

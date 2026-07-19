@@ -3152,6 +3152,14 @@ body.insp-scrubbing * {
   line-height: 1.5;
 }
 
+.timeline-empty-divider {
+  color: #666;
+  font: 9px var(--u-mono);
+  text-transform: uppercase;
+}
+
+.timeline-empty-error { color: #ef8d85; }
+
 .timeline-new-name,
 .timeline-new-clip label {
   display: flex;
@@ -4515,53 +4523,55 @@ body.insp-scrubbing * {
 
 .timeline-grid-scroll,
 .timeline-details {
-  scrollbar-width: thin;
-  scrollbar-color: #50555a #181818;
+  scrollbar-width: auto;
+  scrollbar-color: #666b70 #1a1a1a;
+  scrollbar-gutter: stable;
 }
 
 .timeline-grid-scroll::-webkit-scrollbar,
 .timeline-details::-webkit-scrollbar {
-  width: 8px;
-  height: 8px;
+  width: 10px;
+  height: 10px;
 }
 
 .timeline-grid-scroll::-webkit-scrollbar-track,
 .timeline-details::-webkit-scrollbar-track {
   border: 0;
-  background: #181818;
+  background: #1a1a1a;
 }
 
 .timeline-grid-scroll::-webkit-scrollbar-thumb,
 .timeline-details::-webkit-scrollbar-thumb {
-  border: 2px solid #181818;
+  border: 2px solid #1a1a1a;
   border-radius: 0;
-  background: #50555a;
+  background: #666b70;
 }
 
 .timeline-grid-scroll::-webkit-scrollbar-thumb:hover,
-.timeline-details::-webkit-scrollbar-thumb:hover { background: #60676d; }
+.timeline-details::-webkit-scrollbar-thumb:hover { background: #7b838a; }
 
 .timeline-lanes-scroll {
   overscroll-behavior-inline: contain;
-  scrollbar-width: thin;
-  scrollbar-color: #4b535a #191919;
+  scrollbar-width: auto;
+  scrollbar-color: #63717a #1a1a1a;
+  scrollbar-gutter: stable;
 }
 
-.timeline-lanes-scroll::-webkit-scrollbar { height: 7px; }
+.timeline-lanes-scroll::-webkit-scrollbar { height: 10px; }
 
 .timeline-lanes-scroll::-webkit-scrollbar-track {
-  border-top: 1px solid #101010;
-  background: #191919;
+  border-top: 1px solid #111;
+  background: #1a1a1a;
 }
 
 .timeline-lanes-scroll::-webkit-scrollbar-thumb {
   min-width: 36px;
-  border: 1px solid #191919;
+  border: 2px solid #1a1a1a;
   border-radius: 0;
-  background: #4b535a;
+  background: #63717a;
 }
 
-.timeline-lanes-scroll::-webkit-scrollbar-thumb:hover { background: #657681; }
+.timeline-lanes-scroll::-webkit-scrollbar-thumb:hover { background: #7b8d98; }
 
 .timeline-key::after,
 .timeline-event-key::after {
@@ -4579,7 +4589,23 @@ body.insp-scrubbing * {
 
 .sequencer-panel { min-height: 0; outline: 0; }
 .sequencer-panel:focus-visible { box-shadow: inset 0 0 0 1px #4b83aa; }
-.sequencer-toolbar { border-bottom: 1px solid #151515; }
+.sequencer-toolbar {
+  flex-flow: row wrap;
+  align-items: center;
+  gap: 2px 6px;
+  padding: 3px 5px;
+  border-bottom: 1px solid #151515;
+}
+.sequencer-toolbar-primary,
+.sequencer-toolbar-tools {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  gap: 2px;
+}
+.sequencer-toolbar-primary { flex: 1 1 320px; }
+.sequencer-toolbar-tools { flex: 0 1 auto; }
+.sequencer-toolbar-primary .timeline-clip-path { min-width: 96px; }
 .sequencer-live-status {
   flex: 0 0 auto;
   padding: 3px 6px;
@@ -4588,6 +4614,11 @@ body.insp-scrubbing * {
   background: #302c24;
   font: 9px var(--u-mono);
   white-space: nowrap;
+}
+.sequencer-toolbar-primary .sequencer-live-status {
+  max-width: min(260px, 40%);
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 .sequencer-live-status.playing { border-color: #39704d; color: #8de5ab; background: #203428; }
 .sequencer-live-status.edit-preview { border-color: #345f75; color: #8ccce7; background: #20303a; }
@@ -4633,6 +4664,38 @@ body.insp-scrubbing * {
   color: #888;
   font: 9px var(--u-mono);
   text-align: right;
+}
+.sequencer-zoom-controls input[type='range'] {
+  width: 68px;
+  height: 18px;
+  margin: 0 2px;
+  padding: 0;
+  appearance: none;
+  background: transparent;
+  cursor: ew-resize;
+}
+.sequencer-zoom-controls input[type='range']::-webkit-slider-runnable-track {
+  height: 3px;
+  border: 0;
+  background: #555b60;
+}
+.sequencer-zoom-controls input[type='range']::-webkit-slider-thumb {
+  width: 8px;
+  height: 13px;
+  margin-top: -5px;
+  appearance: none;
+  border: 1px solid #171717;
+  border-radius: 0;
+  background: #9aa5ad;
+}
+.sequencer-zoom-controls input[type='range']:focus-visible { outline: 1px solid #5b91b6; outline-offset: 1px; }
+.sequencer-zoom-controls input[type='range']::-moz-range-track { height: 3px; border: 0; background: #555b60; }
+.sequencer-zoom-controls input[type='range']::-moz-range-thumb {
+  width: 8px;
+  height: 13px;
+  border: 1px solid #171717;
+  border-radius: 0;
+  background: #9aa5ad;
 }
 .sequencer-add-track { position: relative; flex: 0 0 auto; }
 .sequencer-add-track summary {
@@ -5209,21 +5272,24 @@ body.insp-scrubbing * {
 
 .sequencer-tracks,
 .sequencer-inspector {
-  scrollbar-color: #555 #1f1f1f;
-  scrollbar-width: thin;
+  scrollbar-color: #666b70 #1a1a1a;
+  scrollbar-width: auto;
+  scrollbar-gutter: stable;
 }
 .sequencer-tracks::-webkit-scrollbar,
-.sequencer-inspector::-webkit-scrollbar { width: 7px; height: 7px; }
+.sequencer-inspector::-webkit-scrollbar { width: 10px; height: 10px; }
 .sequencer-tracks::-webkit-scrollbar-track,
-.sequencer-inspector::-webkit-scrollbar-track { background: #1f1f1f; }
+.sequencer-inspector::-webkit-scrollbar-track { background: #1a1a1a; }
 .sequencer-tracks::-webkit-scrollbar-thumb,
 .sequencer-inspector::-webkit-scrollbar-thumb {
-  border: 1px solid #1f1f1f;
+  min-width: 36px;
+  min-height: 36px;
+  border: 2px solid #1a1a1a;
   border-radius: 0;
-  background: #555;
+  background: #666b70;
 }
 .sequencer-tracks::-webkit-scrollbar-thumb:hover,
-.sequencer-inspector::-webkit-scrollbar-thumb:hover { background: #707070; }
+.sequencer-inspector::-webkit-scrollbar-thumb:hover { background: #7b838a; }
 .sequencer-inspector .sequencer-check { display: flex; flex-direction: row; align-items: center; gap: 7px; }
 .sequencer-inspector .sequencer-check input { width: 14px; }
 .sequencer-inspector-fields {
@@ -5275,7 +5341,18 @@ body.insp-scrubbing * {
   .sequencer-inspector { display: none; }
 }
 
+@container (max-width: 900px) {
+  .sequencer-toolbar-primary,
+  .sequencer-toolbar-tools { flex: 1 1 100%; }
+  .sequencer-toolbar-tools {
+    padding-top: 2px;
+    border-top: 1px solid #1b1b1b;
+  }
+}
+
 @container (max-width: 700px) {
+  .sequencer-toolbar-tools { flex-wrap: wrap; }
+  .sequencer-director-select { flex: 1 1 90px; }
   .timeline-toolbar > button span,
   .timeline-details-toggle span,
   .timeline-track-tools button span,
