@@ -1075,3 +1075,12 @@ Timeline 仍未达到成熟编辑器标准：后续还需可配置 Snap、关键
 - 第一遍自审修复子帧 Event 经相对帧位移后可能偏移一帧的问题，改成绝对时间候选比较；第二遍自审修复 Snap Guide 与 Drag Guide 重合后不可见的问题，并明确 Collision 的视觉优先级。纯函数测试覆盖播放头/键/Event 候选、多选排除、稳定平局、零阈值、无效事件和子帧旧资产。
 
 本批全量编辑器测试为 279/279，编辑器 TypeScript/Vite 生产构建与 Rust workspace 检查通过。Snap 后续仍需可配置目标类型/阈值、临时快捷键绕过、Ghost 目标预览与 Curve View 对齐；当前批先闭环 Dope Sheet 最常用的移动路径。
+
+## 87. 2026-07-19 Dope Sheet 拖拽 Ghost 与覆盖目标预览
+
+- 关键帧拖拽期间保留作者态原位置的方形虚线 Ghost，并用细虚线连接原位置与最终目标。移动中的实体关键帧、工具提示和 Drag Guide 统一使用最终整帧目标时间，不再用未经量化的指针时间制造“松手跳一帧”，旧资产中残留的子帧关键帧也遵循同一结果。
+- Ghost 预览复用 `previewTimelineKeySelectionMove` 的边界钳制、帧位移和碰撞结果。目标帧存在未选关键帧时，移动轨迹转为红色，并在目标处绘制高层级方形冲突环；`Overwrite` 与 `Protect Existing` 的实际提交仍走原有原子编辑内核，预览不会修改 Clip、Dirty 或 Undo 历史。
+- 多关键帧拖动先按 Track 建立 Ghost 分组，渲染每条 Lane 时不再重复扫描全部选区；引用映射同时为活动键反馈提供最终目标时间。纯函数测试交叉比对 Ghost 与真实 Move 的提交位置，并覆盖覆盖目标、多选、无效引用、边界零位移和旧子帧数据。
+- 第一遍自审发现逐轨道三次全选区扫描和活动键直接叠加原始 Delta 的问题，改为 Track/引用索引；第二遍自审以旧子帧关键帧交叉验证预览与提交，确保二者共享帧量化语义。真实 1280×720 编辑器中创建 `Transform.position` 轨道，完成 0f→59f 拖动及 59f→60f 覆盖，最终仅保留一个 60f 关键帧；同时复核 Game 视图从 1080×1920 切换到 1920×1080 后仅由分辨率派生 portrait/landscape，界面不存在方向切换按钮，控制台无警告或错误。测试资产和编辑器状态在回归前已清理。
+
+本批全量编辑器测试为 280/280，编辑器 TypeScript/Vite 生产构建与 Rust workspace 检查通过。现有前端主 chunk 774.38kB 超过 500kB，以及 Tauri `BuildControl::standalone`、`run_player_build` dead-code 警告仍待后续模块拆分与构建链清理；Ghost 之后仍需 Curve View 拖拽对齐、可配置碰撞策略快捷切换、关键帧标签/颜色、Onion Skin、运动轨迹、音频波形与长时间轴虚拟化。

@@ -3351,6 +3351,46 @@ body.insp-scrubbing * {
   box-shadow: 0 0 0 1px #111, 0 0 5px rgba(255, 223, 82, 0.65);
 }
 
+.timeline-key-move-span {
+  position: absolute;
+  z-index: 1;
+  top: 50%;
+  height: 0;
+  border-top: 1px dashed #6f9dbb;
+  opacity: 0.7;
+  pointer-events: none;
+}
+
+.timeline-key-move-span.collision {
+  border-top-color: #df7d69;
+}
+
+.timeline-key-source-ghost,
+.timeline-key-collision-ghost {
+  position: absolute;
+  top: 50%;
+  box-sizing: border-box;
+  transform: translate(-50%, -50%) rotate(45deg);
+  pointer-events: none;
+}
+
+.timeline-key-source-ghost {
+  z-index: 4;
+  width: 9px;
+  height: 9px;
+  border: 1px dashed #9cc7e3;
+  background: rgba(77, 126, 158, 0.16);
+}
+
+.timeline-key-collision-ghost {
+  z-index: 6;
+  width: 17px;
+  height: 17px;
+  border: 1px solid #ff8a76;
+  background: rgba(184, 75, 54, 0.12);
+  box-shadow: 0 0 0 1px #421f19, 0 0 5px rgba(255, 99, 76, 0.55);
+}
+
 .timeline-event-key {
   position: absolute;
   top: 5px;

@@ -76,6 +76,15 @@ export type TimelineKeyMovePreview = TimelineKeyCollisionResult & {
   appliedDelta: number;
 };
 
+export type TimelineKeyMoveGhost = {
+  track: number;
+  key: number;
+  sourceTime: number;
+  targetTime: number;
+  targetFrame: number;
+  collisionKey: number | null;
+};
+
 export type TimelineKeyMoveResult = TimelineKeyEditResult & TimelineKeyCollisionResult & {
   appliedDelta: number;
   requestedDelta: number;
@@ -654,6 +663,34 @@ export function previewTimelineKeySelectionMove(
     appliedDelta,
     collisions: timelineKeyFrameCollisions(clip, refs, targets),
   };
+}
+
+export function timelineKeySelectionMoveGhosts(
+  clip: AnimationClip,
+  selection: readonly TimelineKeyRef[],
+  delta: number,
+): TimelineKeyMoveGhost[] {
+  const refs = normalizeTimelineKeySelection(clip, selection);
+  const preview = previewTimelineKeySelectionMove(clip, refs, delta);
+  if (refs.length === 0 || preview.appliedDelta === 0) return [];
+  const frameRate = Number.isFinite(clip.frame_rate) && clip.frame_rate > 0 ? clip.frame_rate : 60;
+  const deltaFrames = Math.round(preview.appliedDelta * frameRate);
+  const collisionByTarget = new Map(preview.collisions.map((collision) => [
+    `${collision.track}:${collision.frame}`,
+    collision.key,
+  ]));
+  return refs.map((ref) => {
+    const sourceTime = clip.tracks[ref.track].keyframes[ref.key].time;
+    const targetFrame = Math.round(sourceTime * frameRate) + deltaFrames;
+    return {
+      track: ref.track,
+      key: ref.key,
+      sourceTime,
+      targetTime: targetFrame / frameRate,
+      targetFrame,
+      collisionKey: collisionByTarget.get(`${ref.track}:${targetFrame}`) ?? null,
+    };
+  });
 }
 
 export function moveTimelineKeySelection(

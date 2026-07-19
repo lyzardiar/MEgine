@@ -15,6 +15,7 @@ import {
   reverseTimelineKeySelection,
   removeTimelineKeySelection,
   timelineKeyRangeSelection,
+  timelineKeySelectionMoveGhosts,
   timelineKeyNudgeFrames,
   timelineKeyBatchCapabilities,
   timelineKeySelectionFrameRange,
@@ -143,6 +144,38 @@ test('Timeline key collision preview supports atomic protect and explicit overwr
   assert.deepEqual(overwritten.collisions, [{ track: 0, key: 1, frame: 5 }]);
   assert.deepEqual(overwritten.clip.tracks[0].keyframes.map((key) => key.time), [0.5, 2]);
   assert.deepEqual(overwritten.clip.tracks[0].keyframes[0].value, [0, 0]);
+});
+
+test('Timeline key drag ghosts preserve authored origins and expose overwrite targets', () => {
+  const source = clip();
+  assert.deepEqual(timelineKeySelectionMoveGhosts(source, [{ track: 0, key: 0 }], 0.5), [{
+    track: 0,
+    key: 0,
+    sourceTime: 0,
+    targetTime: 0.5,
+    targetFrame: 5,
+    collisionKey: 1,
+  }]);
+  assert.deepEqual(timelineKeySelectionMoveGhosts(source, [
+    { track: 0, key: 0 },
+    { track: 0, key: 1 },
+  ], 0.49), [
+    { track: 0, key: 0, sourceTime: 0, targetTime: 0.5, targetFrame: 5, collisionKey: null },
+    { track: 0, key: 1, sourceTime: 0.5, targetTime: 1, targetFrame: 10, collisionKey: null },
+  ]);
+  assert.deepEqual(timelineKeySelectionMoveGhosts(source, [{ track: 9, key: 9 }], 1), []);
+  assert.deepEqual(timelineKeySelectionMoveGhosts(source, [{ track: 0, key: 0 }], -1), []);
+
+  const legacySubframe = clip();
+  legacySubframe.tracks[0].keyframes[0].time = 0.04;
+  const legacySelection = [{ track: 0, key: 0 }];
+  const [legacyGhost] = timelineKeySelectionMoveGhosts(legacySubframe, legacySelection, 0.3);
+  const legacyMove = moveTimelineKeySelection(legacySubframe, legacySelection, 0.3);
+  assert.equal(legacyGhost.targetTime, 0.3);
+  assert.equal(
+    legacyMove.clip.tracks[legacyMove.selection[0].track].keyframes[legacyMove.selection[0].key].time,
+    legacyGhost.targetTime,
+  );
 });
 
 test('Timeline key selection exposes frame ranges and deterministic nudge shortcuts', () => {

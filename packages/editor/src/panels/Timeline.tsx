@@ -137,6 +137,7 @@ import {
   timelineKeyBatchCapabilities,
   timelineKeyNudgeFrames,
   timelineKeySelectionFrameRange,
+  timelineKeySelectionMoveGhosts,
   timelineKeysInRange,
   toggleTimelineKeySelection,
   type TimelineKeyClipboardItem,
@@ -2371,6 +2372,19 @@ export function Timeline(props: {
   const selectedKeyFrameRange = clip
     ? timelineKeySelectionFrameRange(clip, activeSelectedKeys)
     : null;
+  const timelineDragGhosts = clip && timelineDrag?.kind === 'key'
+    ? timelineKeySelectionMoveGhosts(clip, timelineDrag.selection, timelineDrag.delta)
+    : [];
+  const timelineDragGhostByRef = new Map(timelineDragGhosts.map((ghost) => [
+    `${ghost.track}:${ghost.key}`,
+    ghost,
+  ]));
+  const timelineDragGhostsByTrack = new Map<number, typeof timelineDragGhosts>();
+  for (const ghost of timelineDragGhosts) {
+    const trackGhosts = timelineDragGhostsByTrack.get(ghost.track) ?? [];
+    trackGhosts.push(ghost);
+    timelineDragGhostsByTrack.set(ghost.track, trackGhosts);
+  }
   const timelineDragFeedback = clip && timelineDrag
     ? (() => {
         const frameRate = Math.max(1, clip.frame_rate);
@@ -2383,7 +2397,9 @@ export function Timeline(props: {
         }
         const range = timelineKeySelectionFrameRange(clip, timelineDrag.selection);
         const deltaFrames = Math.round(timelineDrag.delta * frameRate);
-        const activeTime = timelineDrag.activeTime + timelineDrag.delta;
+        const activeTime = timelineDragGhostByRef.get(
+          `${timelineDrag.active.track}:${timelineDrag.active.key}`,
+        )?.targetTime ?? timelineDrag.activeTime + timelineDrag.delta;
         const preview = previewTimelineKeySelectionMove(clip, timelineDrag.selection, timelineDrag.delta);
         const collisionCount = preview.collisions.length;
         const collision = collisionCount === 0
@@ -3974,9 +3990,8 @@ export function Timeline(props: {
                           && timelineDrag.selection.some((candidate) => (
                             candidate.track === index && candidate.key === keyIndex
                           ));
-                        const displayTime = timelineDrag?.kind === 'key'
-                          && dragged
-                          ? key.time + timelineDrag.delta
+                        const displayTime = dragged
+                          ? timelineDragGhostByRef.get(`${index}:${keyIndex}`)?.targetTime ?? key.time
                           : key.time;
                         return (
                           <button
@@ -3999,6 +4014,31 @@ export function Timeline(props: {
                           />
                         );
                       })}
+                      {(timelineDragGhostsByTrack.get(index) ?? []).map((ghost) => {
+                        const source = clip.duration > 0 ? ghost.sourceTime / clip.duration * 100 : 0;
+                        const target = clip.duration > 0 ? ghost.targetTime / clip.duration * 100 : 0;
+                        return (
+                          <i
+                            className={`timeline-key-move-span${ghost.collisionKey != null ? ' collision' : ''}`}
+                            key={`span:${ghost.key}`}
+                            style={{ left: `${Math.min(source, target)}%`, width: `${Math.abs(target - source)}%` }}
+                          />
+                        );
+                      })}
+                      {(timelineDragGhostsByTrack.get(index) ?? []).map((ghost) => (
+                        <i
+                          className="timeline-key-source-ghost"
+                          key={`source:${ghost.key}`}
+                          style={{ left: `clamp(6px, ${clip.duration > 0 ? ghost.sourceTime / clip.duration * 100 : 0}%, calc(100% - 6px))` }}
+                        />
+                      ))}
+                      {(timelineDragGhostsByTrack.get(index) ?? []).filter((ghost) => ghost.collisionKey != null).map((ghost) => (
+                        <i
+                          className="timeline-key-collision-ghost"
+                          key={`collision:${ghost.key}`}
+                          style={{ left: `clamp(8px, ${clip.duration > 0 ? ghost.targetTime / clip.duration * 100 : 0}%, calc(100% - 8px))` }}
+                        />
+                      ))}
                       <i className="timeline-playhead" style={{ left: `${clip.duration > 0 ? time / clip.duration * 100 : 0}%` }} />
                     </div>
                   ))}
