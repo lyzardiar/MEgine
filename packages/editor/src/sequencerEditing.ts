@@ -58,6 +58,15 @@ export type SequencerTrackPlacementResult =
   | { ok: true; asset: TimelineAsset; trackIndex: number; changed: boolean }
   | { ok: false; error: string };
 
+export type SequencerGroupDropTarget =
+  | { kind: 'track'; trackId: string; edge: 'before' | 'after' }
+  | { kind: 'group'; groupId: string; edge: 'before' | 'after' }
+  | { kind: 'root' };
+
+export type SequencerGroupPlacementResult =
+  | { ok: true; asset: TimelineAsset; groupIndex: number; changed: boolean }
+  | { ok: false; error: string };
+
 export type SequencerItemSelection = { track: number; marker: number };
 export type SequencerSelectionMode = 'single' | 'toggle' | 'range';
 export type SequencerMarqueeSelectionMode = 'replace' | 'add' | 'toggle';
@@ -672,10 +681,14 @@ export function moveSequencerTrack(
   if (nextIndex < 0 || nextIndex >= asset.tracks.length) {
     return { ok: false, error: `Track '${track.name}' is already at the ${direction < 0 ? 'top' : 'bottom'}.` };
   }
-  const next = structuredClone(asset);
-  const [moved] = next.tracks.splice(trackIndex, 1);
-  next.tracks.splice(nextIndex, 0, moved);
-  return { ok: true, asset: next, trackIndex: nextIndex };
+  const placed = placeSequencerTrack(asset, track.id, {
+    kind: 'track',
+    trackId: asset.tracks[nextIndex].id,
+    edge: direction < 0 ? 'before' : 'after',
+  });
+  return placed.ok
+    ? { ok: true, asset: placed.asset, trackIndex: placed.trackIndex }
+    : placed;
 }
 
 export function placeSequencerTrack(
@@ -750,6 +763,163 @@ export function placeSequencerTrack(
     trackIndex: insertionIndex,
     changed: JSON.stringify(next) !== JSON.stringify(asset),
   };
+}
+
+function sequencerGroupBlocks(asset: TimelineAsset): Array<
+  { kind: 'group'; groupId: string } | { kind: 'track'; trackId: string }
+> {
+  const emittedGroups = new Set<string>();
+  const blocks: Array<{ kind: 'group'; groupId: string } | { kind: 'track'; trackId: string }> = [];
+  for (const track of asset.tracks) {
+    const group = timelineGroupForTrack(asset, track.id);
+    if (!group) {
+      blocks.push({ kind: 'track', trackId: track.id });
+    } else if (!emittedGroups.has(group.id)) {
+      emittedGroups.add(group.id);
+      blocks.push({ kind: 'group', groupId: group.id });
+    }
+  }
+  for (const group of asset.groups) {
+    if (!emittedGroups.has(group.id)) blocks.push({ kind: 'group', groupId: group.id });
+  }
+  return blocks;
+}
+
+export function placeSequencerGroup(
+  asset: TimelineAsset,
+  groupId: string,
+  target: SequencerGroupDropTarget,
+): SequencerGroupPlacementResult {
+  const sourceGroupIndex = asset.groups.findIndex((group) => group.id === groupId);
+  const sourceGroup = asset.groups[sourceGroupIndex];
+  if (!sourceGroup) return { ok: false, error: 'Timeline group no longer exists.' };
+  if (sourceGroup.locked) {
+    return { ok: false, error: `Timeline group '${sourceGroup.name}' is locked.` };
+  }
+
+  let targetGroupId: string | null = null;
+  let targetTrackId: string | null = null;
+  let targetEdge: 'before' | 'after' = 'after';
+  if (target.kind === 'group') {
+    if (target.groupId === groupId) {
+      return { ok: true, asset: structuredClone(asset), groupIndex: sourceGroupIndex, changed: false };
+    }
+    if (!asset.groups.some((group) => group.id === target.groupId)) {
+      return { ok: false, error: 'Timeline drop group no longer exists.' };
+    }
+    targetGroupId = target.groupId;
+    targetEdge = target.edge;
+  } else if (target.kind === 'track') {
+    const targetTrack = asset.tracks.find((track) => track.id === target.trackId);
+    if (!targetTrack) return { ok: false, error: 'Timeline drop target no longer exists.' };
+    const owner = timelineGroupForTrack(asset, targetTrack.id);
+    if (owner?.id === groupId) {
+      return { ok: true, asset: structuredClone(asset), groupIndex: sourceGroupIndex, changed: false };
+    }
+    if (owner) targetGroupId = owner.id;
+    else targetTrackId = targetTrack.id;
+    targetEdge = target.edge;
+  }
+
+  const sourceMemberIds = new Set(sourceGroup.track_ids);
+  const movedTracks = asset.tracks.filter((track) => sourceMemberIds.has(track.id));
+  const targetGroup = targetGroupId == null
+    ? null
+    : asset.groups.find((group) => group.id === targetGroupId) ?? null;
+  const targetMemberCount = targetGroup
+    ? asset.tracks.filter((track) => targetGroup.track_ids.includes(track.id)).length
+    : 0;
+  if (movedTracks.length === 0 && target.kind !== 'root' && (!targetGroup || targetMemberCount > 0)) {
+    return { ok: false, error: 'An empty Timeline group can only be reordered with another empty group.' };
+  }
+  if (movedTracks.length > 0 && targetGroup && targetMemberCount === 0 && targetEdge === 'after') {
+    return { ok: false, error: 'A group containing tracks cannot be placed after an empty Timeline group.' };
+  }
+
+  const next = structuredClone(asset);
+  const movingIds = new Set(movedTracks.map((track) => track.id));
+  const remainingTracks = next.tracks.filter((track) => !movingIds.has(track.id));
+  let insertionIndex = remainingTracks.length;
+  if (targetTrackId) {
+    const index = remainingTracks.findIndex((track) => track.id === targetTrackId);
+    if (index < 0) return { ok: false, error: 'Timeline drop target no longer exists.' };
+    insertionIndex = index + (targetEdge === 'after' ? 1 : 0);
+  } else if (targetGroup) {
+    const targetIds = new Set(targetGroup.track_ids);
+    const indexes = remainingTracks
+      .map((track, index) => targetIds.has(track.id) ? index : -1)
+      .filter((index) => index >= 0);
+    if (indexes.length > 0) {
+      insertionIndex = targetEdge === 'before'
+        ? Math.min(...indexes)
+        : Math.max(...indexes) + 1;
+    }
+  }
+  remainingTracks.splice(insertionIndex, 0, ...movedTracks);
+  next.tracks = remainingTracks;
+
+  const [movedGroup] = next.groups.splice(sourceGroupIndex, 1);
+  let groupIndex = Math.min(sourceGroupIndex, next.groups.length);
+  if (target.kind === 'root') {
+    groupIndex = next.groups.length;
+  } else if (targetGroupId) {
+    const index = next.groups.findIndex((group) => group.id === targetGroupId);
+    if (index < 0) return { ok: false, error: 'Timeline drop group no longer exists.' };
+    groupIndex = index + (targetEdge === 'after' ? 1 : 0);
+  }
+  next.groups.splice(groupIndex, 0, movedGroup);
+
+  const rank = new Map(next.tracks.map((track, index) => [track.id, index]));
+  next.groups = next.groups.map((group) => ({
+    ...group,
+    track_ids: [...new Set(group.track_ids)]
+      .filter((id) => rank.has(id))
+      .sort((left, right) => rank.get(left)! - rank.get(right)!),
+  }));
+  const ownerByTrackId = new Map<string, string>();
+  for (const group of next.groups) {
+    for (const trackId of group.track_ids) ownerByTrackId.set(trackId, group.id);
+  }
+  const orderedNonEmptyGroupIds: string[] = [];
+  const emittedGroupIds = new Set<string>();
+  for (const track of next.tracks) {
+    const ownerId = ownerByTrackId.get(track.id);
+    if (ownerId && !emittedGroupIds.has(ownerId)) {
+      emittedGroupIds.add(ownerId);
+      orderedNonEmptyGroupIds.push(ownerId);
+    }
+  }
+  const groupById = new Map(next.groups.map((group) => [group.id, group]));
+  next.groups = [
+    ...orderedNonEmptyGroupIds.map((id) => groupById.get(id)!),
+    ...next.groups.filter((group) => !emittedGroupIds.has(group.id)),
+  ];
+  groupIndex = next.groups.findIndex((group) => group.id === groupId);
+  return {
+    ok: true,
+    asset: next,
+    groupIndex,
+    changed: JSON.stringify(next) !== JSON.stringify(asset),
+  };
+}
+
+export function moveSequencerGroup(
+  asset: TimelineAsset,
+  groupId: string,
+  direction: -1 | 1,
+): SequencerGroupPlacementResult {
+  const source = asset.groups.find((group) => group.id === groupId);
+  if (!source) return { ok: false, error: 'Timeline group no longer exists.' };
+  if (source.locked) return { ok: false, error: `Timeline group '${source.name}' is locked.` };
+  const blocks = sequencerGroupBlocks(asset);
+  const sourceIndex = blocks.findIndex((block) => block.kind === 'group' && block.groupId === groupId);
+  const target = blocks[sourceIndex + direction];
+  if (sourceIndex < 0 || !target) {
+    return { ok: false, error: `Timeline group '${source.name}' is already at the ${direction < 0 ? 'top' : 'bottom'}.` };
+  }
+  return placeSequencerGroup(asset, groupId, target.kind === 'group'
+    ? { kind: 'group', groupId: target.groupId, edge: direction < 0 ? 'before' : 'after' }
+    : { kind: 'track', trackId: target.trackId, edge: direction < 0 ? 'before' : 'after' });
 }
 
 export function deleteSequencerItems(

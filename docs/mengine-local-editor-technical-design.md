@@ -1662,3 +1662,15 @@ Camera Shot 的基础闭环已经形成，但 Timeline 仍不完备：编辑器 
 第二遍自省从真实 Dock 手势、遮挡和历史边界反查：初次页面测试在很矮的底部 Dock 中直接读取了滚出裁剪区的元素坐标，实际命中的是工具栏 Undo 图标；扩大 Dock 后按可见命中点重新验证，Audio 入组使成员从 1 变 2，Signals 拖到 Audio 上方得到 `Animation → Signals → Audio`，拖到底部 Root 后变为未分组末轨。每次 Move 的 Undo/Redo 都一步往返；锁定 Group 拒绝后成员仍为 2，Undo 栈顶部仍是 `Lock Timeline Track Group`，证明失败路径没有写入历史。
 
 当前直接操控仍以单轨道为单位，Group 本身还不能整组拖拽排序，也没有多选轨道拖动、组间缩进树线、拖拽悬停自动展开折叠组、键盘无鼠标重排或跨 Timeline 复制轨道。下一阶段应补 Group 整体移动和多轨道选择，再推进嵌套 Timeline/Control Track；不能把单轨道拖放等同于完整的 Unity Timeline 轨道树。
+
+## 141. 2026-07-20 Sequencer Group 整块排序与键盘重排
+
+- Group Header 新增 16px 方形抓手。拖动 Group 时会把其全部成员轨道作为一个稳定块抽出并重新插入，成员的相对顺序、Group 归属、折叠/静音/独奏状态保持不变；可投放到其他 Group 前后、未分组轨道前后或轨道树末尾。目标 Group 展开时，`After` 落点线绘制在最后一个可见成员之后；折叠组和空组使用 Header 边界，避免视觉落点与最终块位置不一致。
+- `placeSequencerGroup` 在不可变模型事务中同时更新全局 `tracks[]`、`groups[]` 和 `track_ids` 顺序，并按最终轨道顺序去重、过滤成员。非空 Group 始终排在空 Group 区之前；空 Group 可以在空组区排序，但不会伪造当前 v1 资产模型无法表示的“空 Header 穿插在实体轨道之间”布局，此类落点返回结构化错误并显示红色反馈。锁定源 Group、消失目标与自投放分别得到拒绝、错误或 No-op，失败和 No-op 都不写 Dirty/Undo。
+- Group 拖拽沿用 Pointer Capture、Window 级 Move/Up/Cancel、Escape 恢复选择和上下边缘 RAF 自动滚动；目标语义未变化时不再重复克隆整份 Timeline 做合法性检查。成功提交只产生一个 `Move Timeline Track Group` Undo。选中 Group 或 Track 后可用 `Alt+ArrowUp/Down` 重排，Inspector 的 Move Up/Down 与直接拖拽复用同一放置内核，因此跨 Group 边界时的归属语义不会因入口不同而漂移。
+
+第一遍自省发现初稿在每个 `pointermove` 都调用完整 Group 放置预演，会对长 Timeline 反复 `structuredClone + JSON` 比较；现缓存语义落点 Key，仅在目标行或 Before/After 边变化时校验。与此同时把旧 `moveSequencerTrack` 改为调用直接放置内核，并用回归固定“组内排序保持归属、越过组边界继承目标归属”的一致行为。
+
+第二遍自省在真实 1280×720 编辑器中创建双成员 Group 与两个空 Group：整组拖到 Signals 前得到 `Group → Audio → Animation → Signals`，一次 Undo/Redo 完整往返；`Alt+ArrowDown` 把同一块移回 Signals 后；锁定后抓手禁用、键盘移动显示结构化错误且 Undo 栈不增加；空 Group 3 拖到空 Group 2 前后顺序正确。页面 Console 只有 Vite/React 开发提示，没有运行错误；验证资产、自动生成 Sidecar 与 Dock 状态差异均在回归前清理。最终编辑器全量测试 367/367、严格 TypeScript/Vite 生产构建通过；主入口仍有 518.56kB 的既有分包预算警告。
+
+这批仍不是完整的 Unity Timeline 轨道树。当前没有多轨道 Header 选择/整组拖动、Group 嵌套、悬停自动展开、缩进树线、跨 Timeline 轨道复制、轨道模板和搜索过滤；空 Group 的任意穿插位置也需要先为 Timeline 资产建立显式、跨 Editor/Runtime/CLI 一致的顶层 Row Order 契约，不能只在 React 中保存一份不可构建的视觉顺序。下一阶段优先补多轨道选择与拖动，再进入嵌套 Timeline/Control Track。

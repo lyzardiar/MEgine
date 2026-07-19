@@ -13,10 +13,12 @@ import {
   lockedSequencerContentEnd,
   moveSequencerClip,
   moveSequencerItems,
+  moveSequencerGroup,
   moveSequencerTrack,
   normalizeSequencerPreviewRange,
   pasteSequencerItem,
   pasteSequencerClipboard,
+  placeSequencerGroup,
   placeSequencerTrack,
   resolveSequencerPasteTrack,
   rippleMoveSequencerItems,
@@ -660,6 +662,20 @@ test('Sequencer track ordering is immutable and rejects locked or boundary moves
   assert.match(boundary.error, /already at the top/);
 });
 
+test('Sequencer track buttons share direct-drag group placement semantics', () => {
+  const asset = timeline();
+  asset.groups = [{ id: 'actors', name: 'Actors', collapsed: false, muted: false, solo: false, locked: false, track_ids: ['audio', 'animation'] }];
+  const withinGroup = moveSequencerTrack(asset, 2, -1);
+  assert.equal(withinGroup.ok, true);
+  assert.deepEqual(withinGroup.asset.tracks.map((track) => track.id), ['signals', 'animation', 'audio']);
+  assert.deepEqual(withinGroup.asset.groups[0].track_ids, ['animation', 'audio']);
+
+  const leaveGroup = moveSequencerTrack(withinGroup.asset, 1, -1);
+  assert.equal(leaveGroup.ok, true);
+  assert.deepEqual(leaveGroup.asset.tracks.map((track) => track.id), ['animation', 'signals', 'audio']);
+  assert.deepEqual(leaveGroup.asset.groups[0].track_ids, ['audio']);
+});
+
 test('Sequencer direct track placement reorders and synchronizes group membership atomically', () => {
   const asset = timeline();
   asset.groups = [{ id: 'actors', name: 'Actors', collapsed: false, muted: false, solo: false, locked: false, track_ids: ['animation'] }];
@@ -702,6 +718,84 @@ test('Sequencer direct track placement rejects locked groups and detects no-op d
   const noOp = placeSequencerTrack(asset, 'signals', { kind: 'track', trackId: 'signals', edge: 'after' });
   assert.equal(noOp.ok, true);
   assert.equal(noOp.changed, false);
+});
+
+test('Sequencer group placement moves complete track blocks and preserves membership order', () => {
+  const asset = timeline();
+  asset.groups = [
+    { id: 'dialog', name: 'Dialog', collapsed: false, muted: false, solo: false, locked: false, track_ids: ['signals', 'audio'] },
+    { id: 'actors', name: 'Actors', collapsed: false, muted: false, solo: false, locked: false, track_ids: ['animation'] },
+    { id: 'empty', name: 'Empty', collapsed: false, muted: false, solo: false, locked: false, track_ids: [] },
+  ];
+
+  const afterActors = placeSequencerGroup(asset, 'dialog', { kind: 'group', groupId: 'actors', edge: 'after' });
+  assert.equal(afterActors.ok, true);
+  assert.equal(afterActors.changed, true);
+  assert.deepEqual(afterActors.asset.tracks.map((track) => track.id), ['animation', 'signals', 'audio']);
+  assert.deepEqual(afterActors.asset.groups.map((group) => group.id), ['actors', 'dialog', 'empty']);
+  assert.deepEqual(afterActors.asset.groups[1].track_ids, ['signals', 'audio']);
+  assert.deepEqual(asset.tracks.map((track) => track.id), ['signals', 'audio', 'animation']);
+
+  const beforeActors = placeSequencerGroup(afterActors.asset, 'dialog', { kind: 'track', trackId: 'animation', edge: 'before' });
+  assert.equal(beforeActors.ok, true);
+  assert.deepEqual(beforeActors.asset.tracks.map((track) => track.id), ['signals', 'audio', 'animation']);
+  assert.deepEqual(beforeActors.asset.groups.map((group) => group.id), ['dialog', 'actors', 'empty']);
+
+  const rooted = placeSequencerGroup(beforeActors.asset, 'dialog', { kind: 'root' });
+  assert.equal(rooted.ok, true);
+  assert.deepEqual(rooted.asset.tracks.map((track) => track.id), ['animation', 'signals', 'audio']);
+  assert.deepEqual(rooted.asset.groups.map((group) => group.id), ['actors', 'dialog', 'empty']);
+  assert.deepEqual(rooted.asset.groups[1].track_ids, ['signals', 'audio']);
+
+  const stable = placeSequencerGroup(rooted.asset, 'dialog', { kind: 'group', groupId: 'dialog', edge: 'after' });
+  assert.equal(stable.ok, true);
+  assert.equal(stable.changed, false);
+});
+
+test('Sequencer group placement handles empty and locked groups without unrepresentable layouts', () => {
+  const asset = timeline();
+  asset.groups = [
+    { id: 'actors', name: 'Actors', collapsed: false, muted: false, solo: false, locked: false, track_ids: ['animation'] },
+    { id: 'empty-a', name: 'Empty A', collapsed: false, muted: false, solo: false, locked: false, track_ids: [] },
+    { id: 'empty-b', name: 'Empty B', collapsed: false, muted: false, solo: false, locked: false, track_ids: [] },
+  ];
+
+  const reordered = placeSequencerGroup(asset, 'empty-b', { kind: 'group', groupId: 'empty-a', edge: 'before' });
+  assert.equal(reordered.ok, true);
+  assert.deepEqual(reordered.asset.groups.map((group) => group.id), ['actors', 'empty-b', 'empty-a']);
+  assert.deepEqual(reordered.asset.tracks.map((track) => track.id), ['signals', 'audio', 'animation']);
+
+  const emptyAcrossTracks = placeSequencerGroup(asset, 'empty-a', { kind: 'group', groupId: 'actors', edge: 'before' });
+  assert.equal(emptyAcrossTracks.ok, false);
+  assert.match(emptyAcrossTracks.error, /empty Timeline group/);
+  const tracksAfterEmpty = placeSequencerGroup(asset, 'actors', { kind: 'group', groupId: 'empty-a', edge: 'after' });
+  assert.equal(tracksAfterEmpty.ok, false);
+  assert.match(tracksAfterEmpty.error, /cannot be placed after an empty/);
+
+  asset.groups[0].locked = true;
+  const locked = placeSequencerGroup(asset, 'actors', { kind: 'root' });
+  assert.equal(locked.ok, false);
+  assert.match(locked.error, /locked/);
+});
+
+test('Sequencer keyboard group movement follows visual blocks and respects boundaries', () => {
+  const asset = timeline();
+  asset.groups = [
+    { id: 'dialog', name: 'Dialog', collapsed: false, muted: false, solo: false, locked: false, track_ids: ['signals'] },
+    { id: 'actors', name: 'Actors', collapsed: false, muted: false, solo: false, locked: false, track_ids: ['animation'] },
+  ];
+  const moved = moveSequencerGroup(asset, 'actors', -1);
+  assert.equal(moved.ok, true);
+  assert.deepEqual(moved.asset.tracks.map((track) => track.id), ['signals', 'animation', 'audio']);
+  assert.deepEqual(moved.asset.groups.map((group) => group.id), ['dialog', 'actors']);
+
+  const movedAgain = moveSequencerGroup(moved.asset, 'actors', -1);
+  assert.equal(movedAgain.ok, true);
+  assert.deepEqual(movedAgain.asset.tracks.map((track) => track.id), ['animation', 'signals', 'audio']);
+  assert.deepEqual(movedAgain.asset.groups.map((group) => group.id), ['actors', 'dialog']);
+  const boundary = moveSequencerGroup(movedAgain.asset, 'actors', -1);
+  assert.equal(boundary.ok, false);
+  assert.match(boundary.error, /already at the top/);
 });
 
 test('Sequencer particle clipboard preserves prewarm and collision-safe placement', () => {

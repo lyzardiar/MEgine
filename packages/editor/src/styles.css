@@ -4796,7 +4796,7 @@ body.insp-scrubbing * {
 }
 
 .sequencer-ruler-row { height: 32px; }
-.sequencer-group-row { height: 30px; border-top: 1px solid #151515; }
+.sequencer-group-row { position: relative; height: 30px; border-top: 1px solid #151515; }
 .sequencer-track-row { position: relative; height: 42px; border-top: 1px solid #151515; }
 .sequencer-group-row.selected { background: #2b3c48; box-shadow: inset 2px 0 #68a8cb; }
 .sequencer-track-row.contains-selection { box-shadow: inset 2px 0 #4d9abe; }
@@ -4819,6 +4819,10 @@ body.insp-scrubbing * {
 .sequencer-panel.track-dragging,
 .sequencer-panel.track-dragging * { cursor: grabbing !important; user-select: none; }
 .sequencer-track-row.drag-source { opacity: 0.48; }
+.sequencer-group-row.group-drag-source,
+.sequencer-track-row.group-drag-member { opacity: 0.48; }
+.sequencer-group-row.drop-before::before,
+.sequencer-group-row.drop-after::after,
 .sequencer-track-row.drop-before::before,
 .sequencer-track-row.drop-after::after {
   position: absolute;
@@ -4831,8 +4835,12 @@ body.insp-scrubbing * {
   box-shadow: 0 0 0 1px #142c3899;
   pointer-events: none;
 }
+.sequencer-group-row.drop-before::before,
 .sequencer-track-row.drop-before::before { top: -1px; }
+.sequencer-group-row.drop-after::after,
 .sequencer-track-row.drop-after::after { bottom: -1px; }
+.sequencer-group-row.drop-before.invalid::before,
+.sequencer-group-row.drop-after.invalid::after,
 .sequencer-track-row.drop-before.invalid::before,
 .sequencer-track-row.drop-after.invalid::after { background: #df6a64; }
 .sequencer-group-row.drop-inside { box-shadow: inset 0 0 0 2px #66b9df; }
@@ -4856,6 +4864,11 @@ body.insp-scrubbing * {
   color: #d8f3ff;
   background: #294759;
   box-shadow: inset 0 0 0 1px #66b9df;
+}
+.sequencer-track-root-drop.active.invalid {
+  color: #ffd2cf;
+  background: #4a2929;
+  box-shadow: inset 0 0 0 1px #df6a64;
 }
 
 .sequencer-track-header {
@@ -4897,6 +4910,12 @@ body.insp-scrubbing * {
 .sequencer-group-header > button:hover,
 .sequencer-group-header > button.active { background: #46525b; color: #fff; }
 .sequencer-group-header > button.active.solo { background: #77651f; color: #fff2a8; }
+.sequencer-group-header > .sequencer-group-drag-handle {
+  min-width: 16px;
+  width: 16px;
+  flex: 0 0 16px;
+  padding: 0;
+}
 .sequencer-group-header .sequencer-group-name {
   min-width: 0;
   flex: 1 1 auto;
