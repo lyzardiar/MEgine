@@ -35,6 +35,13 @@ export type AnimationCurveCoordinates = {
   value: number;
 };
 
+export type AnimationCurveRect = {
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+};
+
 export function curveNumericChannels(value: AnimationValue | null): number[] | null {
   if (typeof value === 'number') return [value];
   if (Array.isArray(value) && value.every(Number.isFinite)) return value;
@@ -137,6 +144,51 @@ export function animationCurveCoordinates(
     value: viewport.maximum - (safeY - top) / plotHeight(viewport)
       * (viewport.maximum - viewport.minimum),
   };
+}
+
+export function animationCurveKeysInRect(
+  track: AnimationTrack,
+  channel: number,
+  viewport: AnimationCurveViewport,
+  rect: AnimationCurveRect,
+): number[] {
+  if (!Number.isInteger(channel) || channel < 0) return [];
+  if (![rect.x, rect.y, rect.width, rect.height].every(Number.isFinite)) return [];
+  const left = Math.min(rect.x, rect.x + rect.width);
+  const right = Math.max(rect.x, rect.x + rect.width);
+  const top = Math.min(rect.y, rect.y + rect.height);
+  const bottom = Math.max(rect.y, rect.y + rect.height);
+  return track.keyframes.flatMap((key, keyIndex) => {
+    const value = curveNumericChannels(key.value)?.[channel];
+    if (value == null || key.time < viewport.timeStart || key.time > viewport.timeEnd) return [];
+    const point = animationCurvePoint(viewport, key.time, value);
+    return point.x >= left && point.x <= right && point.y >= top && point.y <= bottom
+      ? [keyIndex]
+      : [];
+  });
+}
+
+export function offsetAnimationCurveKeyValues(
+  track: AnimationTrack,
+  keyIndices: readonly number[],
+  channel: number,
+  delta: number,
+): AnimationTrack {
+  if (!Number.isInteger(channel) || channel < 0 || !Number.isFinite(delta) || delta === 0) return track;
+  const selected = new Set(keyIndices.filter((key) => Number.isInteger(key) && key >= 0));
+  if (selected.size === 0) return track;
+  let changed = false;
+  const keyframes = track.keyframes.map((key, keyIndex) => {
+    if (!selected.has(keyIndex)) return key;
+    const values = curveNumericChannels(key.value);
+    if (!values || values[channel] == null) return key;
+    changed = true;
+    const value: AnimationValue = typeof key.value === 'number'
+      ? values[0] + delta
+      : values.map((part, index) => index === channel ? part + delta : part);
+    return { ...key, value };
+  });
+  return changed ? { ...track, keyframes } : track;
 }
 
 export function moveAnimationCurveKey(

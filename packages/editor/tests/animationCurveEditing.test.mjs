@@ -3,12 +3,14 @@ import test from 'node:test';
 import { normalizeAnimationClip } from '../src/animationClip.ts';
 import {
   animationCurveCoordinates,
+  animationCurveKeysInRect,
   animationCurvePoint,
   animationCurveSlopeFromPoint,
   animationCurveTangentChannel,
   animationCurveTangentHandle,
   animationCurveValueBounds,
   moveAnimationCurveKey,
+  offsetAnimationCurveKeyValues,
   setAnimationCurveTangentChannel,
   setAnimationCurveTangentsAuto,
   setAnimationCurveTangentsFlat,
@@ -73,6 +75,30 @@ test('Curve key movement updates one channel, snaps time and preserves tangents'
   assert.equal(moved.track.keyframes[1].time, 1.3);
   assert.deepEqual(moved.track.keyframes[1].value, [2, 8]);
   assert.deepEqual(moved.track.keyframes[1].out_tangent, [3, 2]);
+});
+
+test('Curve marquee selects one channel and batch value offsets preserve other channels', () => {
+  const source = track();
+  assert.deepEqual(animationCurveKeysInRect(source, 0, viewport(), {
+    x: 40,
+    y: 430,
+    width: 920,
+    height: 50,
+  }), [0, 2]);
+  assert.deepEqual(animationCurveKeysInRect(source, 1, viewport(), {
+    x: 40,
+    y: 150,
+    width: 920,
+    height: 260,
+  }), [0, 1, 2]);
+
+  const offset = offsetAnimationCurveKeyValues(source, [0, 2, 2, 99], 1, 1.5);
+  assert.deepEqual(offset.keyframes.map((key) => key.value), [
+    [0, 3.5],
+    [2, 4],
+    [0, 7.5],
+  ]);
+  assert.equal(offsetAnimationCurveKeyValues(source, [0], 5, 1), source);
 });
 
 test('Curve tangent handles support authored, flat and automatic modes', () => {

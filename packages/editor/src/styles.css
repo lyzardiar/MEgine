@@ -3831,6 +3831,15 @@ body.insp-scrubbing * {
   white-space: nowrap;
 }
 
+.timeline-curve-collision-status {
+  padding: 2px 4px;
+  border-left: 2px solid #d66f61;
+  background: #4a2d29;
+  color: #efb9b1;
+  font: normal 9px var(--u-mono);
+  white-space: nowrap;
+}
+
 .timeline-curve-workspace > svg {
   display: block;
   width: 100%;
@@ -3873,6 +3882,14 @@ body.insp-scrubbing * {
   stroke: #fff;
   stroke-width: 2;
   filter: drop-shadow(0 0 3px rgba(255, 255, 255, 0.42));
+}
+
+.timeline-curve-marquee {
+  fill: rgba(54, 112, 154, 0.22);
+  stroke: #6ca6cf;
+  stroke-width: 1;
+  vector-effect: non-scaling-stroke;
+  pointer-events: none;
 }
 
 .timeline-curve-tangent-line {

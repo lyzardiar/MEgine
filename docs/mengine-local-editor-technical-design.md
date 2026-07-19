@@ -990,3 +990,14 @@ Referenced Only 是可用的单包裁剪基础，仍不等同于完整 Addressab
 第一遍真实自审在 60 FPS 的 0 / 0.5 / 1.0 秒三关键帧轨道中选择 0 秒键，以 Step 30 和 Protect 向前移动：三键时间完全不变，状态为 `Protected 1 existing key; move cancelled.`，Undo 标题仍停留在此前的 `Record Animation Key`；同一策略下粘贴到 0.5 秒和真实指针拖到 0.5 秒也保持原子取消。第二遍切到 Overwrite 后向前移动 30 帧，轨道变为 0.5 / 1.0 秒并报告覆盖一个目标键，Undo 标题为 `Move Animation Keys`，一次撤销恢复三键及原选区。319px Details 和 303px 策略控件均满足 `scrollWidth === clientWidth`；审计 Clip、状态差异与本地服务已清理。
 
 本阶段的 `Protect Existing` 等价于非破坏性的 Keep/Abort，而不是删除冲突源键后保留目标键；后者会静默改变组选区形状，因此没有伪装成“Merge”。后续若加入 Merge，必须先定义数值、离散值、Cubic 切线和事件载荷的逐类型合并契约，并提供冲突目标列表、逐项覆盖选择与操作前 Ghost 预览。Timeline 仍需曲线框选联动、批量切线模式、Selection Pivot 缩放、Loop/Repeat、可配置 Snap、Onion Skin、运动轨迹、音频波形和模型动画工作流。
+
+## 79. 2026-07-19 Curve View 多选、框选与批量切线
+
+- Curve View 与 Dope Sheet 现在共享同一组关键帧级选择：在任意视图建立的多选切换视图后仍保留，当前曲线通道只决定点的显示与数值编辑维度，不另造一套会与 Dope Sheet 漂移的通道选区。Ctrl/Cmd 点击切换单个关键帧，Shift 点击按当前轨道索引连续选择；按下已选关键帧时保留整组选区，并把实际按下项提升为主关键帧，使播放头、详情与切线手柄始终跟随用户正在操作的项。
+- 曲线空白区支持矩形框选，命中计算使用纯函数把当前通道的可见关键帧映射到 Curve View 坐标；Ctrl/Cmd/Shift 框选追加到原选区，普通框选替换，单击空白则定位播放头并清空选择。框选矩形采用方形蓝灰工具样式，实时选中反馈只高亮当前通道，但选中实体仍是完整关键帧，保证跨视图命令语义一致。
+- 拖动任意已选曲线点会批量移动全部已选关键帧的时间，并只对当前通道批量增加相同数值偏移。时间移动复用 Dope Sheet 的帧吸附、Clip 边界钳制、碰撞预检、Protect/Overwrite 策略和选区重映射；成功只生成一条 `Move Animation Curve Keys` Undo，受保护碰撞会恢复原播放头且不产生 Dirty 或空历史。拖动期间显示碰撞数量，所有点使用同一预览偏移。
+- Cubic 曲线的 Auto/Flat 从单关键帧操作升级为当前轨道选区批处理，整组选区只记录一条具名 Undo。指针手势统一由根 SVG 路由捕获事件，解决子 Circle 获得 Pointer Capture 后根工作区收不到提交的问题；`pointercancel`、`lostpointercapture`、窗口失焦与 Escape 分别执行提交或回滚，不留下永久拖动与框选状态。
+
+第一遍真实自审在 Button 的 `Transform.position` 曲线中框选 0.25 / 0.75 秒两个当前通道点，切到 Dope Sheet 后两键保持选中，再切回 Curves 仍完整恢复；启用 Cubic 后批量 Flat 只生成 `Set 2 Animation Tangents Flat` 一条 Undo，保存回读确认两键入/出切线均为零。第二遍真实拖动将两键整体从 0.25 / 0.75 移到 0.30 / 0.80 秒，Undo 一次恢复原时间与双选，Redo 再次恢复目标时间；期间发现 Pointer Capture 事件落在子 SVG 节点导致根级拖动未提交，改为根 SVG 统一路由后复测通过。审计动画、编辑器状态差异与本地服务在全量回归前全部清理。
+
+当前选择仍是关键帧级而非“关键帧 × 通道”独立选区，这是为了先保持 Dope Sheet 与 Curve View 的确定性同步；批量拖动因此修改所有已选键的时间、只修改活动通道的值。成熟 Curve Editor 仍需通道级选择模型、Broken/Free/Weighted tangent、切线锁定与复制、纵向 Fit/Pan/Zoom、框选缩放手柄、Ghost 碰撞预览、可配置 Snap、曲线降噪/简化、Euler 过滤、Onion Skin、运动轨迹、Root Motion 与动画层混合。
