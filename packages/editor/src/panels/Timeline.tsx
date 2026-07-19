@@ -145,6 +145,7 @@ import {
   type TimelineKeyRef,
   type TimelineKeyTransformResult,
 } from '../timelineKeyEditing.ts';
+import { revealTimelineTimeScroll } from '../timelineViewport.ts';
 import { registerMenuItem } from '../editorWindow';
 import {
   listProjectFiles,
@@ -1442,6 +1443,7 @@ export function Timeline(props: {
   const timelineMarqueeRef = useRef<TimelineMarquee | null>(null);
   const scrubPointer = useRef<number | null>(null);
   const workspaceRef = useRef<HTMLDivElement>(null);
+  const dopeSheetLanesRef = useRef<HTMLDivElement>(null);
   const propertyPickerRef = useRef<HTMLDivElement>(null);
   const propertyPopupRef = useRef<HTMLDivElement>(null);
   const propertySearchRef = useRef<HTMLInputElement>(null);
@@ -1625,6 +1627,24 @@ export function Timeline(props: {
     const maximum = animationCurveMaximumZoom(clip.duration, clip.frame_rate, TIMELINE_MAX_ZOOM);
     setZoom((value) => clampTimelineZoom(value, maximum));
   }, [clip?.duration, clip?.frame_rate]);
+
+  useEffect(() => {
+    if (viewMode !== 'dope_sheet' || !clip) return;
+    const frame = window.requestAnimationFrame(() => {
+      if (scrubPointer.current != null || timelineDragRef.current || timelineMarqueeRef.current) return;
+      const lanes = dopeSheetLanesRef.current;
+      if (!lanes) return;
+      const next = revealTimelineTimeScroll(
+        lanes.scrollLeft,
+        lanes.clientWidth,
+        lanes.scrollWidth,
+        time,
+        clip.duration,
+      );
+      if (Math.abs(next - lanes.scrollLeft) > 0.5) lanes.scrollLeft = next;
+    });
+    return () => window.cancelAnimationFrame(frame);
+  }, [clip?.duration, detailsOpen, maximized, time, viewMode, zoom]);
 
   useEffect(() => {
     let cancelled = false;
@@ -3670,6 +3690,7 @@ export function Timeline(props: {
 
               <div
                 className="timeline-lanes-scroll"
+                ref={dopeSheetLanesRef}
                 role="region"
                 aria-label="Animation dope sheet"
                 title="Ctrl + Wheel to zoom · Shift + Wheel to scroll horizontally"

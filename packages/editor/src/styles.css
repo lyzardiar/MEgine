@@ -4038,24 +4038,26 @@ body.insp-scrubbing * {
 .timeline-details::-webkit-scrollbar-thumb:hover { background: #60676d; }
 
 .timeline-lanes-scroll {
-  scrollbar-width: auto;
-  scrollbar-color: #50555a #181818;
+  overscroll-behavior-inline: contain;
+  scrollbar-width: thin;
+  scrollbar-color: #4b535a #191919;
 }
 
-.timeline-lanes-scroll::-webkit-scrollbar { height: 10px; }
+.timeline-lanes-scroll::-webkit-scrollbar { height: 7px; }
 
 .timeline-lanes-scroll::-webkit-scrollbar-track {
   border-top: 1px solid #101010;
-  background: #181818;
+  background: #191919;
 }
 
 .timeline-lanes-scroll::-webkit-scrollbar-thumb {
-  border: 2px solid #181818;
+  min-width: 36px;
+  border: 1px solid #191919;
   border-radius: 0;
-  background: #50555a;
+  background: #4b535a;
 }
 
-.timeline-lanes-scroll::-webkit-scrollbar-thumb:hover { background: #697177; }
+.timeline-lanes-scroll::-webkit-scrollbar-thumb:hover { background: #657681; }
 
 .timeline-key::after,
 .timeline-event-key::after {
