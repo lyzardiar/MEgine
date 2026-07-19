@@ -3559,14 +3559,35 @@ body.insp-scrubbing * {
   white-space: nowrap;
 }
 
-.timeline-selection-nudge {
+.timeline-selection-offset {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: minmax(88px, 1.1fr) 1fr 1fr;
   gap: 4px;
-  margin: 0 0 7px;
+  margin: 0 0 6px;
 }
 
-.timeline-details .timeline-selection-nudge button {
+.timeline-selection-offset label {
+  display: grid;
+  grid-template-columns: auto minmax(30px, 1fr) auto;
+  align-items: center;
+  gap: 3px;
+  color: #8d8d8d;
+  font-size: 10px;
+}
+
+.timeline-selection-offset label span {
+  color: #686868;
+  font-family: var(--u-mono);
+}
+
+.timeline-selection-offset input {
+  height: 22px;
+  padding: 0 3px;
+  font-family: var(--u-mono);
+}
+
+.timeline-details .timeline-selection-offset button,
+.timeline-details .timeline-selection-batch-tools button {
   display: inline-flex;
   height: 22px;
   align-items: center;
@@ -3577,9 +3598,30 @@ body.insp-scrubbing * {
   color: #c9c9c9;
 }
 
-.timeline-details .timeline-selection-nudge button:disabled {
+.timeline-details .timeline-selection-offset button:disabled,
+.timeline-details .timeline-selection-batch-tools button:disabled {
   color: #666;
   background: #292929;
+}
+
+.timeline-selection-batch-tools {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 3px;
+  margin: 0 0 6px;
+}
+
+.timeline-details .timeline-selection-batch-tools button {
+  min-width: 0;
+  gap: 3px;
+  padding: 0 3px;
+  font-size: 10px;
+}
+
+.timeline-selection-batch-tools button span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .timeline-tangent-editors,

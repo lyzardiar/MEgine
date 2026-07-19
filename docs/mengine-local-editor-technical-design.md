@@ -968,3 +968,14 @@ Referenced Only 是可用的单包裁剪基础，仍不等同于完整 Addressab
 第一遍真实自审在 60 FPS Clip 中选择 15–30 帧，将 Start 改为 20 后得到 20–30 帧；Undo 标题为 `Retime Animation Keys`，一次撤销完整恢复 15–30 帧和双关键帧选择。第二遍通过真实拖拽复现释放事件丢失后导引残留，补齐全局捕获兜底后同一路径会结束手势，`Escape` 也能立即清除导引并恢复 15 帧；截图复核普通底部 Dock 中 Frame/Range、微调和蓝色帧导引保持紧凑方形工具风格。测试 Clip、状态文件和本地服务在回归前全部清理。
 
 这一切片补齐了基础批量 Scale、拖拽反馈和手势历史，但仍不代表动画编辑完成。后续需要 Selection Pivot/Center 缩放、Offset/Reverse/Loop/Align/Distribute 命令、碰撞覆盖预览与策略、框选后的曲线联动、关键帧标签/颜色、切线批处理、可配置 Snap、Onion Skin、运动轨迹、音频波形、模型动画切片、Root Motion 与运行时性能诊断。
+
+## 77. 2026-07-19 Timeline 批量时间命令与统一重排内核
+
+- Timeline 关键帧时间变换收敛到统一的无 DOM 重排内核：先按轨道移除选中关键帧，再通过同一帧吸附与覆盖路径重新写入，最后按原选区顺序重映射引用。Retime、Reverse、Align 和 Distribute 不再各自维护删除、排序、覆盖与选区恢复逻辑；同轨多个选中关键帧被变换到同一帧时会在写入前拒绝，避免部分改写。
+- 多选详情新增 Reverse、Start、End、Even 四个方形紧凑命令。Reverse 以整个选区首尾帧为轴镜像时间；Cubic 曲线同步交换入/出切线并取反斜率，保持真正的时间反向形状。Start/End 只允许每条轨道选择一个关键帧，避免同轨对齐造成破坏性折叠；Even 对每条拥有至少三个选中关键帧的轨道独立均分，其他已选轨道和关键帧保持原时间与选中状态。
+- 原固定 `-1f/+1f` 命令升级为可配置 Step Offset，步长按整数帧钳制，按钮依据整组选区与 Clip 边界实时禁用。快捷键仍保留 Alt+Left/Right 一帧、增加 Shift 十帧的高频约定；可配置按钮和快捷键共用现有 Move 内核、碰撞覆盖语义、选区重映射与全局 Undo，而不是引入第二套时间移动实现。
+- 批处理 UI 根据当前选区派生能力：同轨多选禁用 Align，少于三个同轨关键帧禁用 Even，没有时间跨度禁用 Reverse。每次按钮命令仅记录一条具名历史，成功后把播放头、主关键帧和多选引用同步到变换结果；失败只记录警告，不产生 Dirty 或空 Undo。
+
+第一遍真实自审在 60 FPS 同轨选区中验证 0 / 0.2 / 0.7 秒均分为 0 / 0.35 / 0.7 秒，反转为 0 / 0.5 / 0.7 秒；两项分别只生成 `Distribute Animation Keys` 和 `Reverse Animation Keys` 一条 Undo，同轨 Align 正确禁用。第二遍使用 `Transform.position` 与 `Transform.scale` 跨轨选择 0.2 / 0.4 秒关键帧，Start 对齐得到 0.2 / 0.2 秒，恢复后以 Step 5 偏移得到 0.283 / 0.483 秒；普通 Dock 的 319px Details 和最大化的 311px Details 均满足 `scrollWidth === clientWidth`，四命令工具栏没有横向溢出。审计 Clip、状态差异与本地服务在全量回归前全部清理。
+
+这一切片补齐了常用批量时间变换，但成熟 Timeline 仍需碰撞覆盖预览与 Keep/Overwrite/Merge 策略、Selection Pivot/Center 缩放、Loop/Repeat、可配置 Snap、关键帧标签与颜色、曲线视图框选和批量切线模式、Onion Skin、运动轨迹、音频波形、模型动画切片与重定向、Root Motion、动画层混合，以及和 `.mtimeline` Sequencer 共享时间选择与命令体系。

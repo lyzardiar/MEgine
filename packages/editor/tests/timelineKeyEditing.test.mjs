@@ -2,16 +2,20 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 import { normalizeAnimationClip } from '../src/animationClip.ts';
 import {
+  alignTimelineKeySelection,
   clampTimelineKeyDelta,
   copyTimelineKeySelection,
+  distributeTimelineKeySelection,
   mergeTimelineKeySelection,
   moveTimelineKeySelection,
   normalizeTimelineKeySelection,
   pasteTimelineKeySelection,
   retimeTimelineKeySelection,
+  reverseTimelineKeySelection,
   removeTimelineKeySelection,
   timelineKeyRangeSelection,
   timelineKeyNudgeFrames,
+  timelineKeyBatchCapabilities,
   timelineKeySelectionFrameRange,
   timelineKeysInRange,
   toggleTimelineKeySelection,
@@ -155,7 +159,7 @@ test('Timeline key retiming clamps bounds and rejects collapsed same-track keys'
     { track: 0, key: 2 },
   ], 0, 1);
   assert.equal(collapsed.ok, false);
-  assert.match(collapsed.ok ? '' : collapsed.error, /too short/i);
+  assert.match(collapsed.ok ? '' : collapsed.error, /collapses/i);
   assert.equal(collapsed.clip, source);
 
   const reversed = retimeTimelineKeySelection(source, [
@@ -164,6 +168,77 @@ test('Timeline key retiming clamps bounds and rejects collapsed same-track keys'
   ], 10, 5);
   assert.equal(reversed.ok, false);
   assert.match(reversed.ok ? '' : reversed.error, /before its start/i);
+});
+
+test('Timeline key reverse mirrors frames and reverses cubic tangent direction', () => {
+  const source = clip();
+  source.tracks[0].keyframes[1].out_tangent = [7, 8];
+  const reversed = reverseTimelineKeySelection(source, [
+    { track: 0, key: 0 },
+    { track: 0, key: 1 },
+    { track: 0, key: 2 },
+  ]);
+  assert.equal(reversed.ok, true);
+  assert.deepEqual(reversed.clip.tracks[0].keyframes.map((key) => key.time), [0, 1.5, 2]);
+  assert.deepEqual(reversed.clip.tracks[0].keyframes.map((key) => key.value), [
+    [5, 6],
+    [1, 2],
+    [0, 0],
+  ]);
+  assert.deepEqual(reversed.clip.tracks[0].keyframes[1].in_tangent, [-7, -8]);
+  assert.deepEqual(reversed.clip.tracks[0].keyframes[1].out_tangent, [-3, -4]);
+  assert.equal(reversed.selection.length, 3);
+});
+
+test('Timeline key alignment is cross-track safe and rejects same-track collapse', () => {
+  const source = clip();
+  const selection = [{ track: 0, key: 1 }, { track: 1, key: 1 }];
+  assert.deepEqual(timelineKeyBatchCapabilities(source, selection), {
+    canAlign: true,
+    canDistribute: false,
+    canReverse: true,
+  });
+  const aligned = alignTimelineKeySelection(source, selection, 8);
+  assert.equal(aligned.ok, true);
+  assert.deepEqual(aligned.clip.tracks[0].keyframes.map((key) => key.time), [0, 0.8, 2]);
+  assert.deepEqual(aligned.clip.tracks[1].keyframes.map((key) => key.time), [0.25, 0.8]);
+  assert.equal(aligned.selection.length, 2);
+
+  const destructive = [{ track: 0, key: 0 }, { track: 0, key: 1 }];
+  assert.equal(timelineKeyBatchCapabilities(source, destructive).canAlign, false);
+  const rejected = alignTimelineKeySelection(source, destructive, 8);
+  assert.equal(rejected.ok, false);
+  assert.match(rejected.ok ? '' : rejected.error, /one selected key per track/i);
+});
+
+test('Timeline key distribution spaces each eligible track independently', () => {
+  const source = clip();
+  const selection = [
+    { track: 0, key: 0 },
+    { track: 0, key: 1 },
+    { track: 0, key: 2 },
+    { track: 1, key: 0 },
+  ];
+  assert.equal(timelineKeyBatchCapabilities(source, selection).canDistribute, true);
+  const distributed = distributeTimelineKeySelection(source, selection);
+  assert.equal(distributed.ok, true);
+  assert.deepEqual(distributed.clip.tracks[0].keyframes.map((key) => key.time), [0, 1, 2]);
+  assert.deepEqual(distributed.clip.tracks[0].keyframes[1].value, [1, 2]);
+  assert.deepEqual(distributed.clip.tracks[0].keyframes[1].in_tangent, [3, 4]);
+  assert.deepEqual(distributed.clip.tracks[1].keyframes.map((key) => key.time), [0.25, 1]);
+  assert.deepEqual(distributed.selection.map((ref) => ({
+    track: ref.track,
+    time: distributed.clip.tracks[ref.track].keyframes[ref.key].time,
+  })), [
+    { track: 0, time: 0 },
+    { track: 0, time: 1 },
+    { track: 0, time: 2 },
+    { track: 1, time: 0.25 },
+  ]);
+
+  const rejected = distributeTimelineKeySelection(source, [{ track: 0, key: 0 }, { track: 0, key: 2 }]);
+  assert.equal(rejected.ok, false);
+  assert.match(rejected.ok ? '' : rejected.error, /at least three/i);
 });
 
 test('Timeline group delete removes every selected key without shifting mistakes', () => {

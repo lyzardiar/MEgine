@@ -3,6 +3,7 @@ import {
   snapAnimationTime,
   type AnimationClip,
   type AnimationKeyframe,
+  type AnimationTangent,
 } from './animationClip.ts';
 
 export type TimelineKeyRef = {
@@ -41,6 +42,23 @@ export type TimelineKeyRetimeResult = TimelineKeyEditResult & (
       error: string;
     }
 );
+
+export type TimelineKeyTransformResult = TimelineKeyEditResult & (
+  | { ok: true }
+  | { ok: false; error: string }
+);
+
+export type TimelineKeyBatchCapabilities = {
+  canAlign: boolean;
+  canDistribute: boolean;
+  canReverse: boolean;
+};
+
+type TimelineKeyFrameEdit = {
+  ref: TimelineKeyRef;
+  keyframe: AnimationKeyframe;
+  targetFrame: number;
+};
 
 function refToken(ref: TimelineKeyRef): string {
   return `${ref.track}:${ref.key}`;
@@ -86,6 +104,103 @@ export function timelineKeySelectionFrameRange(
   };
 }
 
+function applyTimelineKeyFrameEdits(
+  clip: AnimationClip,
+  refs: readonly TimelineKeyRef[],
+  edits: readonly TimelineKeyFrameEdit[],
+): TimelineKeyTransformResult {
+  if (refs.length === 0 || edits.length !== refs.length) {
+    return { ok: false, clip, selection: [...refs], error: 'No animation keys are selected.' };
+  }
+  const frameRate = Number.isFinite(clip.frame_rate) && clip.frame_rate > 0 ? clip.frame_rate : 60;
+  const occupiedByTrack = new Map<number, Set<number>>();
+  for (const edit of edits) {
+    const occupied = occupiedByTrack.get(edit.ref.track) ?? new Set<number>();
+    if (occupied.has(edit.targetFrame)) {
+      return {
+        ok: false,
+        clip,
+        selection: [...refs],
+        error: 'The requested key transformation collapses selected keys onto the same frame of one track.',
+      };
+    }
+    occupied.add(edit.targetFrame);
+    occupiedByTrack.set(edit.ref.track, occupied);
+  }
+
+  const tracks = [...clip.tracks];
+  const movedTimes = new Map<string, { track: number; time: number }>();
+  for (const [trackIndex] of occupiedByTrack) {
+    const trackEdits = edits
+      .filter((edit) => edit.ref.track === trackIndex)
+      .sort((left, right) => left.targetFrame - right.targetFrame || left.ref.key - right.ref.key);
+    const selectedIndices = new Set(trackEdits.map((edit) => edit.ref.key));
+    let track = {
+      ...tracks[trackIndex],
+      keyframes: tracks[trackIndex].keyframes.filter((_keyframe, key) => !selectedIndices.has(key)),
+    };
+    for (const edit of trackEdits) {
+      const authored = pasteAnimationKeyframe(
+        track,
+        edit.keyframe,
+        edit.targetFrame / frameRate,
+        frameRate,
+        clip.duration,
+      );
+      track = authored.track;
+      movedTimes.set(refToken(edit.ref), {
+        track: trackIndex,
+        time: track.keyframes[authored.keyIndex].time,
+      });
+    }
+    tracks[trackIndex] = track;
+  }
+
+  const next = { ...clip, tracks };
+  const nextSelection = refs.flatMap((ref) => {
+    const moved = movedTimes.get(refToken(ref));
+    if (!moved) return [];
+    const { track, time } = moved;
+    const key = next.tracks[track].keyframes.findIndex((candidate) => (
+      Math.abs(candidate.time - time) < 0.25 / frameRate
+    ));
+    return key < 0 ? [] : [{ track, key }];
+  });
+  return {
+    ok: true,
+    clip: next,
+    selection: normalizeTimelineKeySelection(next, nextSelection),
+  };
+}
+
+function negateAnimationTangent(tangent: AnimationTangent): AnimationTangent {
+  return Array.isArray(tangent) ? tangent.map((value) => -value) : -tangent;
+}
+
+function reverseAnimationKeyframe(keyframe: AnimationKeyframe): AnimationKeyframe {
+  const reversed = structuredClone(keyframe);
+  if (keyframe.out_tangent === undefined) delete reversed.in_tangent;
+  else reversed.in_tangent = negateAnimationTangent(keyframe.out_tangent);
+  if (keyframe.in_tangent === undefined) delete reversed.out_tangent;
+  else reversed.out_tangent = negateAnimationTangent(keyframe.in_tangent);
+  return reversed;
+}
+
+export function timelineKeyBatchCapabilities(
+  clip: AnimationClip,
+  selection: readonly TimelineKeyRef[],
+): TimelineKeyBatchCapabilities {
+  const refs = normalizeTimelineKeySelection(clip, selection);
+  const counts = new Map<number, number>();
+  for (const ref of refs) counts.set(ref.track, (counts.get(ref.track) ?? 0) + 1);
+  const range = timelineKeySelectionFrameRange(clip, refs);
+  return {
+    canAlign: refs.length > 1 && [...counts.values()].every((count) => count === 1),
+    canDistribute: [...counts.values()].some((count) => count >= 3),
+    canReverse: refs.length > 1 && Boolean(range && range.spanFrames > 0),
+  };
+}
+
 export function retimeTimelineKeySelection(
   clip: AnimationClip,
   selection: readonly TimelineKeyRef[],
@@ -128,59 +243,112 @@ export function retimeTimelineKeySelection(
     return { ref, keyframe, targetFrame };
   });
 
-  const occupiedByTrack = new Map<number, Set<number>>();
-  for (const edit of edits) {
-    const occupied = occupiedByTrack.get(edit.ref.track) ?? new Set<number>();
-    if (occupied.has(edit.targetFrame)) {
-      return {
-        ok: false,
-        clip,
-        selection: refs,
-        error: 'The requested frame range is too short to keep selected keys distinct on their tracks.',
-      };
-    }
-    occupied.add(edit.targetFrame);
-    occupiedByTrack.set(edit.ref.track, occupied);
-  }
-
-  const tracks = [...clip.tracks];
-  const movedTimes: Array<{ track: number; time: number }> = [];
-  for (const [trackIndex] of occupiedByTrack) {
-    const trackEdits = edits
-      .filter((edit) => edit.ref.track === trackIndex)
-      .sort((left, right) => left.targetFrame - right.targetFrame || left.ref.key - right.ref.key);
-    const selectedIndices = new Set(trackEdits.map((edit) => edit.ref.key));
-    let track = {
-      ...tracks[trackIndex],
-      keyframes: tracks[trackIndex].keyframes.filter((_keyframe, key) => !selectedIndices.has(key)),
-    };
-    for (const edit of trackEdits) {
-      const authored = pasteAnimationKeyframe(
-        track,
-        edit.keyframe,
-        edit.targetFrame / frameRate,
-        frameRate,
-        clip.duration,
-      );
-      track = authored.track;
-      movedTimes.push({ track: trackIndex, time: track.keyframes[authored.keyIndex].time });
-    }
-    tracks[trackIndex] = track;
-  }
-
-  const next = { ...clip, tracks };
-  const nextSelection = movedTimes.flatMap(({ track, time }) => {
-    const key = next.tracks[track].keyframes.findIndex((candidate) => (
-      Math.abs(candidate.time - time) < 0.25 / frameRate
-    ));
-    return key < 0 ? [] : [{ track, key }];
-  });
+  const transformed = applyTimelineKeyFrameEdits(clip, refs, edits);
+  if (!transformed.ok) return transformed;
   return {
     ok: true,
-    clip: next,
-    selection: normalizeTimelineKeySelection(next, nextSelection),
+    clip: transformed.clip,
+    selection: transformed.selection,
     startFrame,
     endFrame,
+  };
+}
+
+export function reverseTimelineKeySelection(
+  clip: AnimationClip,
+  selection: readonly TimelineKeyRef[],
+): TimelineKeyTransformResult {
+  const refs = normalizeTimelineKeySelection(clip, selection);
+  const range = timelineKeySelectionFrameRange(clip, refs);
+  if (!range || refs.length < 2 || range.spanFrames === 0) {
+    return { ok: false, clip, selection: refs, error: 'Select keys across at least two different frames to reverse them.' };
+  }
+  const frameRate = Number.isFinite(clip.frame_rate) && clip.frame_rate > 0 ? clip.frame_rate : 60;
+  const edits = refs.map((ref) => {
+    const keyframe = clip.tracks[ref.track].keyframes[ref.key];
+    const sourceFrame = Math.round(keyframe.time * frameRate);
+    return {
+      ref,
+      keyframe: reverseAnimationKeyframe(keyframe),
+      targetFrame: range.startFrame + range.endFrame - sourceFrame,
+    };
+  });
+  return applyTimelineKeyFrameEdits(clip, refs, edits);
+}
+
+export function alignTimelineKeySelection(
+  clip: AnimationClip,
+  selection: readonly TimelineKeyRef[],
+  requestedFrame: number,
+): TimelineKeyTransformResult {
+  const refs = normalizeTimelineKeySelection(clip, selection);
+  if (refs.length < 2 || !Number.isFinite(requestedFrame)) {
+    return { ok: false, clip, selection: refs, error: 'Select at least two keys and provide a valid alignment frame.' };
+  }
+  const tracks = new Set<number>();
+  for (const ref of refs) {
+    if (tracks.has(ref.track)) {
+      return { ok: false, clip, selection: refs, error: 'Time alignment supports one selected key per track to avoid destructive collisions.' };
+    }
+    tracks.add(ref.track);
+  }
+  const frameRate = Number.isFinite(clip.frame_rate) && clip.frame_rate > 0 ? clip.frame_rate : 60;
+  const durationFrames = Math.max(0, Math.round(clip.duration * frameRate));
+  const targetFrame = Math.max(0, Math.min(durationFrames, Math.round(requestedFrame)));
+  return applyTimelineKeyFrameEdits(clip, refs, refs.map((ref) => ({
+    ref,
+    keyframe: structuredClone(clip.tracks[ref.track].keyframes[ref.key]),
+    targetFrame,
+  })));
+}
+
+export function distributeTimelineKeySelection(
+  clip: AnimationClip,
+  selection: readonly TimelineKeyRef[],
+): TimelineKeyTransformResult {
+  const refs = normalizeTimelineKeySelection(clip, selection);
+  const grouped = new Map<number, TimelineKeyRef[]>();
+  for (const ref of refs) {
+    const entries = grouped.get(ref.track) ?? [];
+    entries.push(ref);
+    grouped.set(ref.track, entries);
+  }
+  if (![...grouped.values()].some((entries) => entries.length >= 3)) {
+    return { ok: false, clip, selection: refs, error: 'Select at least three keys on one track to distribute them.' };
+  }
+
+  const frameRate = Number.isFinite(clip.frame_rate) && clip.frame_rate > 0 ? clip.frame_rate : 60;
+  const targetFrames = new Map<string, number>();
+  const distributedRefs: TimelineKeyRef[] = [];
+  for (const entries of grouped.values()) {
+    const ordered = [...entries].sort((left, right) => (
+      clip.tracks[left.track].keyframes[left.key].time - clip.tracks[right.track].keyframes[right.key].time
+    ));
+    if (ordered.length < 3) continue;
+    const startFrame = Math.round(clip.tracks[ordered[0].track].keyframes[ordered[0].key].time * frameRate);
+    const endRef = ordered[ordered.length - 1];
+    const endFrame = Math.round(clip.tracks[endRef.track].keyframes[endRef.key].time * frameRate);
+    for (const [index, ref] of ordered.entries()) {
+      targetFrames.set(refToken(ref), Math.round(startFrame + (endFrame - startFrame) * index / (ordered.length - 1)));
+      distributedRefs.push(ref);
+    }
+  }
+  const transformed = applyTimelineKeyFrameEdits(clip, distributedRefs, distributedRefs.map((ref) => ({
+    ref,
+    keyframe: structuredClone(clip.tracks[ref.track].keyframes[ref.key]),
+    targetFrame: targetFrames.get(refToken(ref))!,
+  })));
+  if (!transformed.ok) return transformed;
+  const remapped = new Map(distributedRefs.map((ref, index) => (
+    [refToken(ref), transformed.selection[index]] as const
+  )));
+  return {
+    ok: true,
+    clip: transformed.clip,
+    selection: normalizeTimelineKeySelection(
+      transformed.clip,
+      refs.map((ref) => remapped.get(refToken(ref)) ?? ref),
+    ),
   };
 }
 

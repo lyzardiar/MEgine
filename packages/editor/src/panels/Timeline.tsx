@@ -12,6 +12,9 @@ import {
 import { createPortal } from 'react-dom';
 import type { WorldSnapshotView } from '@mengine/api';
 import {
+  AlignHorizontalJustifyEnd,
+  AlignHorizontalJustifyStart,
+  AlignHorizontalSpaceBetween,
   ChevronLeft,
   ChevronRight,
   ChevronDown,
@@ -20,6 +23,7 @@ import {
   Code2,
   Copy,
   Crosshair,
+  FlipHorizontal2,
   Maximize2,
   Minimize2,
   PanelRightClose,
@@ -92,21 +96,26 @@ import type {
   EditorUndoToken,
 } from '../editorUndoService';
 import {
+  alignTimelineKeySelection,
   clampTimelineKeyDelta,
   copyTimelineKeySelection,
+  distributeTimelineKeySelection,
   mergeTimelineKeySelection,
   moveTimelineKeySelection,
   normalizeTimelineKeySelection,
   pasteTimelineKeySelection,
   retimeTimelineKeySelection,
+  reverseTimelineKeySelection,
   removeTimelineKeySelection,
   timelineKeyRangeSelection,
+  timelineKeyBatchCapabilities,
   timelineKeyNudgeFrames,
   timelineKeySelectionFrameRange,
   timelineKeysInRange,
   toggleTimelineKeySelection,
   type TimelineKeyClipboardItem,
   type TimelineKeyRef,
+  type TimelineKeyTransformResult,
 } from '../timelineKeyEditing.ts';
 import { registerMenuItem } from '../editorWindow';
 import {
@@ -944,6 +953,7 @@ export function Timeline(props: {
   const [detailsOpen, setDetailsOpen] = useState(false);
   const [maximized, setMaximized] = useState(false);
   const [timelineClipboard, setTimelineClipboard] = useState<TimelineClipboard | null>(null);
+  const [selectionMoveStep, setSelectionMoveStep] = useState(1);
   const [timelineDrag, setTimelineDrag] = useState<TimelineDrag | null>(null);
   const timelineDragRef = useRef<TimelineDrag | null>(null);
   const [timelineMarquee, setTimelineMarquee] = useState<TimelineMarquee | null>(null);
@@ -1825,7 +1835,11 @@ export function Timeline(props: {
         };
       })()
     : null;
-  const selectedKeyFrameStep = clip ? 1 / Math.max(1, clip.frame_rate) : 0;
+  const selectionMoveFrames = Math.max(1, Math.round(selectionMoveStep));
+  const selectedKeyFrameStep = clip ? selectionMoveFrames / Math.max(1, clip.frame_rate) : 0;
+  const selectedKeyBatchCapabilities = clip
+    ? timelineKeyBatchCapabilities(clip, activeSelectedKeys)
+    : { canAlign: false, canDistribute: false, canReverse: false };
   const canNudgeSelectedKeysBackward = Boolean(
     clip
     && activeSelectedKeys.length > 0
@@ -1913,24 +1927,73 @@ export function Timeline(props: {
     }
   };
 
+  const commitSelectedKeyTransform = (
+    result: TimelineKeyTransformResult,
+    label: string,
+    action: string,
+  ) => {
+    if (!result.ok) {
+      props.onLog(`Cannot ${action}: ${result.error}`, 'warn');
+      return;
+    }
+    if (!updateClip(result.clip, label)) return;
+    selectKeys(result.selection, result.clip);
+    const primary = result.selection[result.selection.length - 1];
+    if (!primary) return;
+    const next = result.clip.tracks[primary.track].keyframes[primary.key].time;
+    playbackPhase.current = next;
+    timeRef.current = next;
+    setTime(next);
+  };
+
   const retimeSelectedKeys = (startFrame: number, endFrame: number) => {
     const sourceClip = clipRef.current;
     if (!sourceClip) return;
     const selection = normalizeTimelineKeySelection(sourceClip, selectedKeysRef.current);
-    const result = retimeTimelineKeySelection(sourceClip, selection, startFrame, endFrame);
-    if (!result.ok) {
-      props.onLog(`Cannot retime animation keys: ${result.error}`, 'warn');
-      return;
-    }
-    if (!updateClip(result.clip, 'Retime Animation Keys')) return;
-    selectKeys(result.selection, result.clip);
-    const primary = result.selection[result.selection.length - 1];
-    if (primary) {
-      const next = result.clip.tracks[primary.track].keyframes[primary.key].time;
-      playbackPhase.current = next;
-      timeRef.current = next;
-      setTime(next);
-    }
+    commitSelectedKeyTransform(
+      retimeTimelineKeySelection(sourceClip, selection, startFrame, endFrame),
+      'Retime Animation Keys',
+      'retime animation keys',
+    );
+  };
+
+  const reverseSelectedKeys = () => {
+    const sourceClip = clipRef.current;
+    if (!sourceClip) return;
+    const selection = normalizeTimelineKeySelection(sourceClip, selectedKeysRef.current);
+    commitSelectedKeyTransform(
+      reverseTimelineKeySelection(sourceClip, selection),
+      'Reverse Animation Keys',
+      'reverse animation keys',
+    );
+  };
+
+  const alignSelectedKeys = (edge: 'start' | 'end') => {
+    const sourceClip = clipRef.current;
+    if (!sourceClip) return;
+    const selection = normalizeTimelineKeySelection(sourceClip, selectedKeysRef.current);
+    const range = timelineKeySelectionFrameRange(sourceClip, selection);
+    if (!range) return;
+    commitSelectedKeyTransform(
+      alignTimelineKeySelection(
+        sourceClip,
+        selection,
+        edge === 'start' ? range.startFrame : range.endFrame,
+      ),
+      `Align Animation Keys ${edge === 'start' ? 'Start' : 'End'}`,
+      `align animation keys to the ${edge}`,
+    );
+  };
+
+  const distributeSelectedKeys = () => {
+    const sourceClip = clipRef.current;
+    if (!sourceClip) return;
+    const selection = normalizeTimelineKeySelection(sourceClip, selectedKeysRef.current);
+    commitSelectedKeyTransform(
+      distributeTimelineKeySelection(sourceClip, selection),
+      'Distribute Animation Keys',
+      'distribute animation keys',
+    );
   };
 
   const updateSelectedTangent = (
@@ -3228,26 +3291,40 @@ export function Timeline(props: {
                         : `${selectedKeyFrameRange.spanFrames}f span`}</span>
                     </div>
                   )}
-                  <div className="timeline-selection-nudge">
+                  <div className="timeline-selection-offset" aria-label="Offset selected keyframes">
+                    <label>
+                      Step
+                      <input
+                        aria-label="Selection move step frames"
+                        type="number"
+                        min={1}
+                        step={1}
+                        value={selectionMoveFrames}
+                        onChange={(event) => {
+                          if (Number.isFinite(event.target.valueAsNumber)) {
+                            setSelectionMoveStep(Math.max(1, Math.round(event.target.valueAsNumber)));
+                          }
+                        }}
+                      />
+                      <span>f</span>
+                    </label>
                     <button
                       type="button"
-                      aria-label="Move selected keys back one frame"
-                      aria-keyshortcuts="Alt+ArrowLeft"
-                      title="Move selected keys back 1 frame (Alt+Left; add Shift for 10 frames)"
+                      aria-label={`Move selected keys back ${selectionMoveFrames} frame${selectionMoveFrames === 1 ? '' : 's'}`}
+                      title={`Offset selected keys by -${selectionMoveFrames} frame${selectionMoveFrames === 1 ? '' : 's'}`}
                       disabled={!canNudgeSelectedKeysBackward}
-                      onClick={() => moveSelectedKeysByFrames(-1)}
+                      onClick={() => moveSelectedKeysByFrames(-selectionMoveFrames)}
                     >
-                      <ChevronLeft size={12} aria-hidden="true" /> −1f
+                      <ChevronLeft size={12} aria-hidden="true" /> −{selectionMoveFrames}f
                     </button>
                     <button
                       type="button"
-                      aria-label="Move selected keys forward one frame"
-                      aria-keyshortcuts="Alt+ArrowRight"
-                      title="Move selected keys forward 1 frame (Alt+Right; add Shift for 10 frames)"
+                      aria-label={`Move selected keys forward ${selectionMoveFrames} frame${selectionMoveFrames === 1 ? '' : 's'}`}
+                      title={`Offset selected keys by +${selectionMoveFrames} frame${selectionMoveFrames === 1 ? '' : 's'}`}
                       disabled={!canNudgeSelectedKeysForward}
-                      onClick={() => moveSelectedKeysByFrames(1)}
+                      onClick={() => moveSelectedKeysByFrames(selectionMoveFrames)}
                     >
-                      +1f <ChevronRight size={12} aria-hidden="true" />
+                      +{selectionMoveFrames}f <ChevronRight size={12} aria-hidden="true" />
                     </button>
                   </div>
                   {activeSelectedKeys.length > 1 && (
@@ -3290,8 +3367,50 @@ export function Timeline(props: {
                           </label>
                         </div>
                       )}
+                      <div className="timeline-selection-batch-tools" role="group" aria-label="Keyframe batch time operations">
+                        <button
+                          type="button"
+                          aria-label="Reverse selected keys"
+                          title="Reverse selected keys in their current frame range"
+                          disabled={!selectedKeyBatchCapabilities.canReverse}
+                          onClick={reverseSelectedKeys}
+                        >
+                          <FlipHorizontal2 size={12} aria-hidden="true" /><span>Reverse</span>
+                        </button>
+                        <button
+                          type="button"
+                          aria-label="Align selected keys to range start"
+                          title={selectedKeyBatchCapabilities.canAlign
+                            ? 'Align selected keys to the first selected frame'
+                            : 'Align requires one selected key per track'}
+                          disabled={!selectedKeyBatchCapabilities.canAlign}
+                          onClick={() => alignSelectedKeys('start')}
+                        >
+                          <AlignHorizontalJustifyStart size={12} aria-hidden="true" /><span>Start</span>
+                        </button>
+                        <button
+                          type="button"
+                          aria-label="Align selected keys to range end"
+                          title={selectedKeyBatchCapabilities.canAlign
+                            ? 'Align selected keys to the last selected frame'
+                            : 'Align requires one selected key per track'}
+                          disabled={!selectedKeyBatchCapabilities.canAlign}
+                          onClick={() => alignSelectedKeys('end')}
+                        >
+                          <AlignHorizontalJustifyEnd size={12} aria-hidden="true" /><span>End</span>
+                        </button>
+                        <button
+                          type="button"
+                          aria-label="Distribute selected keys evenly"
+                          title="Distribute three or more selected keys evenly on each track"
+                          disabled={!selectedKeyBatchCapabilities.canDistribute}
+                          onClick={distributeSelectedKeys}
+                        >
+                          <AlignHorizontalSpaceBetween size={12} aria-hidden="true" /><span>Even</span>
+                        </button>
+                      </div>
                       <div className="timeline-multi-selection-summary">
-                        Start/End retime the whole selection. Value editing applies only to the primary key.
+                        Batch time tools preserve values. Value editing targets only the primary key.
                       </div>
                     </>
                   )}
