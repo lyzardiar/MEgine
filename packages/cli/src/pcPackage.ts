@@ -16,6 +16,7 @@ import * as ts from 'typescript';
 
 export const PLAYER_CONFIG_FILE = 'mengine-player.json';
 export const BUILD_MANIFEST_FILE = 'mengine-build.json';
+export const BUILD_CACHE_REPORT_PREFIX = 'MENGINE_BUILD_CACHE ';
 const MAX_TIMELINE_PARTICLE_TIME = 300;
 
 export type BuildAssetMode = 'all' | 'referenced';
@@ -43,6 +44,8 @@ export interface PcPackageOptions {
   isCancelled?: () => boolean;
   /** Runs against the complete staging directory before it can replace a published build. */
   verifyStagedBuild?: (stageDir: string, manifest: PcBuildManifest) => void;
+  /** Operational diagnostics kept outside the reproducible published manifest. */
+  onBuildCacheStats?: (stats: BuildCacheStats) => void;
 }
 
 function assertBuildNotCancelled(isCancelled: (() => boolean) | undefined, stage: string): void {
@@ -112,6 +115,16 @@ export interface BuildAssetValidation {
   omittedAssetFiles: number;
   omittedAssetBytes: number;
   strippedEditorEntities: number;
+}
+
+export interface BuildCacheStats {
+  enabled: boolean;
+  hits: number;
+  misses: number;
+  reusedBytes: number;
+  storedBytes: number;
+  recoveredEntries: number;
+  failures: number;
 }
 
 export interface DirectoryPublishOperations {
@@ -1267,9 +1280,272 @@ function safeExecutableName(name: string): string {
 
 type PlayerCopyStats = { strippedEditorEntities: number };
 
+type CachedArtifactMetadata = {
+  strippedEditorEntities: number;
+};
+
+type CachedArtifactEntry = {
+  schemaVersion: 1;
+  omitted: boolean;
+  size: number;
+  sha256: string;
+  metadata: CachedArtifactMetadata;
+};
+
+const BUILD_CACHE_ROOT = ['.mengine', 'Library', 'BuildCache', 'v1'] as const;
+
+function cacheKey(domain: string, sourceHash: string): string {
+  return createHash('sha256')
+    .update('mengine-build-artifact-v1\0')
+    .update(domain)
+    .update('\0')
+    .update(sourceHash)
+    .digest('hex');
+}
+
+function cachePathIsSafe(projectDir: string, path: string): boolean {
+  let current = projectDir;
+  for (const segment of BUILD_CACHE_ROOT) {
+    current = join(current, segment);
+    if (!existsSync(current)) continue;
+    const stat = lstatSync(current);
+    if (stat.isSymbolicLink() || !stat.isDirectory()) return false;
+  }
+  return resolve(path) === resolve(projectDir, ...BUILD_CACHE_ROOT);
+}
+
+function atomicCacheWrite(path: string, data: string | Buffer): void {
+  const temporary = join(dirname(path), `.${basename(path)}.${process.pid}-${randomUUID()}.tmp`);
+  try {
+    writeFileSync(temporary, data);
+    if (existsSync(path)) rmSync(path, { force: true });
+    renameSync(temporary, path);
+  } finally {
+    rmSync(temporary, { force: true });
+  }
+}
+
+class BuildArtifactCache {
+  readonly stats: BuildCacheStats = {
+    enabled: false,
+    hits: 0,
+    misses: 0,
+    reusedBytes: 0,
+    storedBytes: 0,
+    recoveredEntries: 0,
+    failures: 0,
+  };
+
+  private constructor(private readonly root: string | null) {
+    this.stats.enabled = root != null;
+  }
+
+  static open(projectDir: string): BuildArtifactCache {
+    const root = resolve(projectDir, ...BUILD_CACHE_ROOT);
+    try {
+      if (!cachePathIsSafe(projectDir, root)) return new BuildArtifactCache(null);
+      mkdirSync(join(root, 'entries'), { recursive: true });
+      mkdirSync(join(root, 'objects'), { recursive: true });
+      if (!cachePathIsSafe(projectDir, root)) return new BuildArtifactCache(null);
+      for (const directory of [join(root, 'entries'), join(root, 'objects')]) {
+        const stat = lstatSync(directory);
+        if (stat.isSymbolicLink() || !stat.isDirectory()) return new BuildArtifactCache(null);
+      }
+      return new BuildArtifactCache(root);
+    } catch {
+      return new BuildArtifactCache(null);
+    }
+  }
+
+  private entryPath(key: string): string {
+    return join(this.root!, 'entries', `${key}.json`);
+  }
+
+  private objectPath(hash: string): string {
+    return join(this.root!, 'objects', hash.slice(0, 2), hash);
+  }
+
+  private safeDirectory(path: string, create: boolean): boolean {
+    if (!this.root || !isPathInside(this.root, path)) return false;
+    if (!existsSync(this.root)) return false;
+    const rootStat = lstatSync(this.root);
+    if (rootStat.isSymbolicLink() || !rootStat.isDirectory()) return false;
+    const relativePath = relative(this.root, path);
+    const segments = relativePath ? relativePath.split(sep).filter(Boolean) : [];
+    let current = this.root;
+    for (const segment of segments) {
+      current = join(current, segment);
+      if (!existsSync(current)) {
+        if (!create) return false;
+        mkdirSync(current);
+      }
+      const stat = lstatSync(current);
+      if (stat.isSymbolicLink() || !stat.isDirectory()) return false;
+    }
+    return true;
+  }
+
+  private recover(path: string, objectPath?: string): void {
+    this.stats.recoveredEntries += 1;
+    try { rmSync(path, { force: true }); } catch { this.stats.failures += 1; }
+    if (objectPath) {
+      try { rmSync(objectPath, { force: true }); } catch { this.stats.failures += 1; }
+    }
+  }
+
+  restore(
+    key: string,
+    destination: string,
+    allowOmitted: boolean,
+    isCancelled?: () => boolean,
+  ): CachedArtifactMetadata | null {
+    if (!this.root) return null;
+    assertBuildNotCancelled(isCancelled, 'build cache lookup');
+    const entryPath = this.entryPath(key);
+    if (!this.safeDirectory(dirname(entryPath), false)) {
+      this.stats.failures += 1;
+      this.stats.misses += 1;
+      return null;
+    }
+    if (!existsSync(entryPath)) {
+      this.stats.misses += 1;
+      return null;
+    }
+    try {
+      const entryStat = lstatSync(entryPath);
+      if (entryStat.isSymbolicLink() || !entryStat.isFile()) {
+        this.recover(entryPath);
+        this.stats.misses += 1;
+        return null;
+      }
+      let entry: Partial<CachedArtifactEntry>;
+      try {
+        entry = JSON.parse(readFileSync(entryPath, 'utf8')) as Partial<CachedArtifactEntry>;
+      } catch (error) {
+        if (error instanceof SyntaxError) {
+          this.recover(entryPath);
+          this.stats.misses += 1;
+          return null;
+        }
+        throw error;
+      }
+      const validMetadata = entry.metadata != null
+        && Number.isSafeInteger(entry.metadata.strippedEditorEntities)
+        && entry.metadata.strippedEditorEntities >= 0;
+      const validHash = typeof entry.sha256 === 'string'
+        && /^[0-9a-f]{64}$/.test(entry.sha256);
+      const validSize = Number.isSafeInteger(entry.size) && Number(entry.size) >= 0;
+      if (entry.schemaVersion !== 1 || typeof entry.omitted !== 'boolean'
+        || !validMetadata || !validSize || (!entry.omitted && !validHash)
+        || (entry.omitted && !allowOmitted)) {
+        this.recover(entryPath);
+        this.stats.misses += 1;
+        return null;
+      }
+      if (entry.omitted) {
+        this.stats.hits += 1;
+        return entry.metadata as CachedArtifactMetadata;
+      }
+      const objectPath = this.objectPath(entry.sha256!);
+      if (!this.safeDirectory(dirname(objectPath), false)) {
+        this.recover(entryPath);
+        this.stats.misses += 1;
+        return null;
+      }
+      if (!existsSync(objectPath)) {
+        this.recover(entryPath);
+        this.stats.misses += 1;
+        return null;
+      }
+      const objectStat = lstatSync(objectPath);
+      if (objectStat.isSymbolicLink() || !objectStat.isFile()
+        || objectStat.size !== entry.size || sha256(objectPath) !== entry.sha256) {
+        this.recover(entryPath, objectPath);
+        this.stats.misses += 1;
+        return null;
+      }
+      assertBuildNotCancelled(isCancelled, 'build cache restore');
+      mkdirSync(dirname(destination), { recursive: true });
+      copyFileSync(objectPath, destination);
+      this.stats.hits += 1;
+      this.stats.reusedBytes += entry.size!;
+      return entry.metadata as CachedArtifactMetadata;
+    } catch {
+      assertBuildNotCancelled(isCancelled, 'build cache restore');
+      this.stats.failures += 1;
+      this.stats.misses += 1;
+      this.recover(entryPath);
+      try { rmSync(destination, { force: true }); } catch { this.stats.failures += 1; }
+      return null;
+    }
+  }
+
+  store(
+    key: string,
+    artifact: string | null,
+    metadata: CachedArtifactMetadata,
+    isCancelled?: () => boolean,
+  ): void {
+    if (!this.root) return;
+    assertBuildNotCancelled(isCancelled, 'build cache store');
+    const entryPath = this.entryPath(key);
+    if (!this.safeDirectory(dirname(entryPath), false)) {
+      this.stats.failures += 1;
+      return;
+    }
+    try {
+      let entry: CachedArtifactEntry;
+      if (artifact == null) {
+        entry = {
+          schemaVersion: 1,
+          omitted: true,
+          size: 0,
+          sha256: '',
+          metadata,
+        };
+      } else {
+        const size = statSync(artifact).size;
+        const hash = sha256(artifact);
+        const objectPath = this.objectPath(hash);
+        if (!this.safeDirectory(dirname(entryPath), false)
+          || !this.safeDirectory(dirname(objectPath), true)) {
+          throw new Error('unsafe build cache directory');
+        }
+        let validObject = false;
+        if (existsSync(objectPath)) {
+          const objectStat = lstatSync(objectPath);
+          validObject = !objectStat.isSymbolicLink() && objectStat.isFile()
+            && objectStat.size === size && sha256(objectPath) === hash;
+          if (!validObject) this.recover(entryPath, objectPath);
+        }
+        if (!validObject) {
+          const temporary = join(
+            dirname(objectPath),
+            `.${hash}.${process.pid}-${randomUUID()}.tmp`,
+          );
+          try {
+            copyFileSync(artifact, temporary);
+            if (sha256(temporary) !== hash) throw new Error('cache artifact copy changed content');
+            if (existsSync(objectPath)) rmSync(objectPath, { force: true });
+            renameSync(temporary, objectPath);
+            this.stats.storedBytes += size;
+          } finally {
+            rmSync(temporary, { force: true });
+          }
+        }
+        entry = { schemaVersion: 1, omitted: false, size, sha256: hash, metadata };
+      }
+      atomicCacheWrite(entryPath, `${JSON.stringify(entry)}\n`);
+    } catch {
+      this.stats.failures += 1;
+    }
+  }
+}
+
 function copyTree(
   source: string,
   destination: string,
+  cache: BuildArtifactCache,
   isCancelled?: () => boolean,
 ): PlayerCopyStats {
   assertBuildNotCancelled(isCancelled, 'content copy');
@@ -1286,6 +1562,7 @@ function copyTree(
       const child = copyTree(
         join(source, entry.name),
         join(destination, entry.name),
+        cache,
         isCancelled,
       );
       stats.strippedEditorEntities += child.strippedEditorEntities;
@@ -1296,16 +1573,47 @@ function copyTree(
     if (/\.tsx?$/i.test(source)) return { strippedEditorEntities: 0 };
     mkdirSync(dirname(destination), { recursive: true });
     if (/\.mscene$/i.test(source)) {
-      const scene = copySceneForPlayer(source, destination);
-      if (scene) return scene;
+      return copyPlayerArtifactWithCache(
+        source,
+        destination,
+        'player-scene-strip-v1',
+        copySceneForPlayer,
+        cache,
+        isCancelled,
+      );
     }
     if (/\.prefab$/i.test(source)) {
-      const prefab = copyPrefabForPlayer(source, destination);
-      if (prefab) return prefab;
+      return copyPlayerArtifactWithCache(
+        source,
+        destination,
+        'player-prefab-strip-v1',
+        copyPrefabForPlayer,
+        cache,
+        isCancelled,
+      );
     }
     copyFileSync(source, destination);
   }
   return { strippedEditorEntities: 0 };
+}
+
+function copyPlayerArtifactWithCache(
+  source: string,
+  destination: string,
+  domain: string,
+  transform: (source: string, destination: string) => PlayerCopyStats | null,
+  cache: BuildArtifactCache,
+  isCancelled?: () => boolean,
+): PlayerCopyStats {
+  assertBuildNotCancelled(isCancelled, 'build cache key');
+  const key = cacheKey(domain, sha256(source));
+  const restored = cache.restore(key, destination, true, isCancelled);
+  if (restored) return restored;
+  const transformed = transform(source, destination);
+  const stats = transformed ?? { strippedEditorEntities: 0 };
+  if (!transformed) copyFileSync(source, destination);
+  cache.store(key, existsSync(destination) ? destination : null, stats, isCancelled);
+  return stats;
 }
 
 function stripEditorMetadata(componentsValue: unknown): boolean {
@@ -1422,10 +1730,38 @@ function formatTypeScriptDiagnostics(diagnostics: readonly ts.Diagnostic[]): str
   }).trim();
 }
 
+function typeScriptProgramCacheKey(
+  program: ts.Program,
+  projectDir: string,
+  startupScript: string,
+  options: ts.CompilerOptions,
+): string {
+  const digest = createHash('sha256');
+  const update = (value: string) => {
+    digest.update(String(Buffer.byteLength(value, 'utf8'))).update(':').update(value);
+  };
+  update('mengine-typescript-bundle-v1');
+  update(ts.version);
+  update(startupScript);
+  update(JSON.stringify({ ...options, outFile: '<stage-output>', rootDir: '<script-root>' }));
+  const sources = [...program.getSourceFiles()].sort((left, right) => (
+    compareFileNames(left.fileName.replaceAll('\\', '/'), right.fileName.replaceAll('\\', '/'))
+  ));
+  for (const source of sources) {
+    const fileName = isPathInside(projectDir, source.fileName)
+      ? portablePath(relative(projectDir, source.fileName))
+      : source.fileName.replaceAll('\\', '/');
+    update(fileName);
+    update(source.text);
+  }
+  return cacheKey('typescript-program-v1', digest.digest('hex'));
+}
+
 function compileProjectTypeScript(
   projectDir: string,
   stageDir: string,
   startupScript: string | undefined,
+  cache: BuildArtifactCache,
   isCancelled?: () => boolean,
 ): string | undefined {
   if (!startupScript || !/\.tsx?$/i.test(startupScript)) return startupScript;
@@ -1459,6 +1795,10 @@ function compileProjectTypeScript(
     removeComments: true,
   };
   const program = ts.createProgram(rootNames, options);
+  assertBuildNotCancelled(isCancelled, 'TypeScript cache key');
+  const key = typeScriptProgramCacheKey(program, projectDir, portable, options);
+  const restored = cache.restore(key, outputFile, false, isCancelled);
+  if (restored) return portable.replace(/\.tsx?$/i, '.js');
   assertBuildNotCancelled(isCancelled, 'TypeScript compilation');
   const diagnostics = ts.getPreEmitDiagnostics(program);
   const errors = diagnostics.filter((diagnostic) => diagnostic.category === ts.DiagnosticCategory.Error);
@@ -1470,6 +1810,12 @@ function compileProjectTypeScript(
   if (emitted.emitSkipped) {
     throw new Error(`TypeScript emit failed:\n${formatTypeScriptDiagnostics(emitted.diagnostics)}`);
   }
+  cache.store(
+    key,
+    outputFile,
+    { strippedEditorEntities: 0 },
+    isCancelled,
+  );
   return portable.replace(/\.tsx?$/i, '.js');
 }
 
@@ -1719,6 +2065,7 @@ export function buildPcPackage(options: PcPackageOptions): PcBuildManifest {
   validateProjectSettings(projectDir);
   const dependencyScan = scanBuildAssetDependencies(projectDir, project, options.isCancelled);
   const assetValidation = dependencyScan.validation;
+  const buildCache = BuildArtifactCache.open(projectDir);
   if (project.assetMode === 'referenced') {
     const included = new Set(dependencyScan.files.map((path) => (
       process.platform === 'win32' ? path.toLowerCase() : path
@@ -1744,13 +2091,18 @@ export function buildPcPackage(options: PcPackageOptions): PcBuildManifest {
     const copyStats: PlayerCopyStats = { strippedEditorEntities: 0 };
     if (project.assetMode === 'all') {
       for (const root of roots) {
-        const copied = copyTree(root, join(stageDir, basename(root)), options.isCancelled);
+        const copied = copyTree(
+          root,
+          join(stageDir, basename(root)),
+          buildCache,
+          options.isCancelled,
+        );
         copyStats.strippedEditorEntities += copied.strippedEditorEntities;
       }
     } else {
       for (const source of dependencyScan.files) {
         const destination = join(stageDir, relative(projectDir, source));
-        const copied = copyTree(source, destination, options.isCancelled);
+        const copied = copyTree(source, destination, buildCache, options.isCancelled);
         copyStats.strippedEditorEntities += copied.strippedEditorEntities;
       }
     }
@@ -1759,13 +2111,19 @@ export function buildPcPackage(options: PcPackageOptions): PcBuildManifest {
       if (!statSync(projectSettings).isDirectory()) {
         throw new Error(`ProjectSettings must be a directory: ${projectSettings}`);
       }
-      copyTree(projectSettings, join(stageDir, 'ProjectSettings'), options.isCancelled);
+      copyTree(
+        projectSettings,
+        join(stageDir, 'ProjectSettings'),
+        buildCache,
+        options.isCancelled,
+      );
     }
     assetValidation.strippedEditorEntities = copyStats.strippedEditorEntities;
     const packagedStartupScript = compileProjectTypeScript(
       projectDir,
       stageDir,
       project.startupScript,
+      buildCache,
       options.isCancelled,
     );
     checkCancelled('player assembly');
@@ -1835,6 +2193,11 @@ export function buildPcPackage(options: PcPackageOptions): PcBuildManifest {
     options.verifyStagedBuild?.(stageDir, manifest);
     checkCancelled('publish');
     publishStagedBuild(stageDir, outputDir);
+    try {
+      options.onBuildCacheStats?.({ ...buildCache.stats });
+    } catch {
+      // Diagnostics must never turn a successfully published build into a failure.
+    }
     return manifest;
   } catch (error) {
     rmSync(stageDir, { recursive: true, force: true });

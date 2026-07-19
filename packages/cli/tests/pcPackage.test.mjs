@@ -1147,13 +1147,25 @@ test('buildPcPackage type-checks TypeScript and emits only runnable JavaScript',
       'function scaled(value: number): number { return value * 2; }',
     );
 
+    let firstCache = null;
     const manifest = buildPcPackage({
       projectDir: paths.project,
       outputDir: paths.output,
       runtimePath: paths.runtime,
       engineVersion: 'test-engine',
       platform: 'windows',
+      onBuildCacheStats: (stats) => { firstCache = stats; },
     });
+    assert.deepEqual(firstCache, {
+      enabled: true,
+      hits: 0,
+      misses: 3,
+      reusedBytes: 0,
+      storedBytes: firstCache.storedBytes,
+      recoveredEntries: 0,
+      failures: 0,
+    });
+    assert.ok(firstCache.storedBytes > 0);
     assert.equal(manifest.project.startupScript, 'Assets/Scripts/Main.js');
     const compiledScript = manifest.files.find(
       (file) => file.path === 'Assets/Scripts/Main.js',
@@ -1182,6 +1194,86 @@ test('buildPcPackage type-checks TypeScript and emits only runnable JavaScript',
       JSON.parse(readFileSync(join(paths.output, 'project.json'), 'utf8')).startupScript,
       'Assets/Scripts/Main.js',
     );
+
+    const firstPublishedManifest = readFileSync(join(paths.output, BUILD_MANIFEST_FILE), 'utf8');
+    let secondCache = null;
+    const cachedManifest = buildPcPackage({
+      projectDir: paths.project,
+      outputDir: paths.output,
+      runtimePath: paths.runtime,
+      engineVersion: 'test-engine',
+      platform: 'windows',
+      clean: true,
+      onBuildCacheStats: (stats) => { secondCache = stats; },
+    });
+    assert.equal(cachedManifest.contentHash, manifest.contentHash);
+    assert.equal(readFileSync(join(paths.output, BUILD_MANIFEST_FILE), 'utf8'), firstPublishedManifest);
+    assert.equal(secondCache.hits, 3);
+    assert.equal(secondCache.misses, 0);
+    assert.ok(secondCache.reusedBytes > 0);
+
+    const objectsRoot = join(paths.project, '.mengine', 'Library', 'BuildCache', 'v1', 'objects');
+    const objectPath = readdirSync(objectsRoot, { withFileTypes: true })
+      .filter((entry) => entry.isDirectory())
+      .flatMap((entry) => readdirSync(join(objectsRoot, entry.name))
+        .map((name) => join(objectsRoot, entry.name, name)))[0];
+    assert.ok(objectPath);
+    writeFileSync(objectPath, 'corrupt-cache-entry');
+    let recoveredCache = null;
+    const recoveredManifest = buildPcPackage({
+      projectDir: paths.project,
+      outputDir: paths.output,
+      runtimePath: paths.runtime,
+      engineVersion: 'test-engine',
+      platform: 'windows',
+      clean: true,
+      onBuildCacheStats: (stats) => { recoveredCache = stats; },
+    });
+    assert.equal(recoveredManifest.contentHash, manifest.contentHash);
+    assert.equal(readFileSync(join(paths.output, BUILD_MANIFEST_FILE), 'utf8'), firstPublishedManifest);
+    assert.ok(recoveredCache.recoveredEntries >= 1);
+    assert.ok(recoveredCache.misses >= 1);
+    assert.equal(recoveredCache.failures, 0);
+
+    const entriesRoot = join(paths.project, '.mengine', 'Library', 'BuildCache', 'v1', 'entries');
+    const entryPath = join(entriesRoot, readdirSync(entriesRoot)[0]);
+    writeFileSync(entryPath, '{broken cache entry');
+    let recoveredEntryCache = null;
+    const recoveredEntryManifest = buildPcPackage({
+      projectDir: paths.project,
+      outputDir: paths.output,
+      runtimePath: paths.runtime,
+      engineVersion: 'test-engine',
+      platform: 'windows',
+      clean: true,
+      onBuildCacheStats: (stats) => { recoveredEntryCache = stats; },
+    });
+    assert.equal(recoveredEntryManifest.contentHash, manifest.contentHash);
+    assert.ok(recoveredEntryCache.recoveredEntries >= 1);
+    assert.ok(recoveredEntryCache.misses >= 1);
+    assert.equal(recoveredEntryCache.failures, 0);
+
+    writeFileSync(
+      join(paths.project, 'Assets', 'Scripts', 'helpers.ts'),
+      'function scaled(value: number): number { return value * 3; }',
+    );
+    let invalidatedCache = null;
+    const changedManifest = buildPcPackage({
+      projectDir: paths.project,
+      outputDir: paths.output,
+      runtimePath: paths.runtime,
+      engineVersion: 'test-engine',
+      platform: 'windows',
+      clean: true,
+      onBuildCacheStats: (stats) => { invalidatedCache = stats; },
+    });
+    assert.notEqual(changedManifest.contentHash, manifest.contentHash);
+    assert.equal(invalidatedCache.hits, 2);
+    assert.equal(invalidatedCache.misses, 1);
+    assert.match(
+      readFileSync(join(paths.output, 'Assets', 'Scripts', 'Main.js'), 'utf8'),
+      /value \* 3/,
+    );
   } finally {
     rmSync(paths.root, { recursive: true, force: true });
   }
@@ -1205,6 +1297,33 @@ test('buildPcPackage rejects TypeScript errors without publishing a partial buil
       platform: 'windows',
     }), /TypeScript compilation failed/);
     assert.equal(existsSync(paths.output), false);
+  } finally {
+    rmSync(paths.root, { recursive: true, force: true });
+  }
+});
+
+test('buildPcPackage disables an unsafe cache root without blocking publication', () => {
+  const paths = fixture('unsafe-cache-root');
+  try {
+    writeFileSync(join(paths.project, '.mengine'), 'not a cache directory');
+    let cache = null;
+    const manifest = buildPcPackage({
+      projectDir: paths.project,
+      outputDir: paths.output,
+      runtimePath: paths.runtime,
+      engineVersion: 'test-engine',
+      onBuildCacheStats: (stats) => { cache = stats; },
+    });
+    assert.ok(existsSync(join(paths.output, manifest.executable)));
+    assert.deepEqual(cache, {
+      enabled: false,
+      hits: 0,
+      misses: 0,
+      reusedBytes: 0,
+      storedBytes: 0,
+      recoveredEntries: 0,
+      failures: 0,
+    });
   } finally {
     rmSync(paths.root, { recursive: true, force: true });
   }

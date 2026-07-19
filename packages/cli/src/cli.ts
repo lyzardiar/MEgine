@@ -8,7 +8,12 @@ import {
 import { spawnSync } from 'node:child_process';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { buildPcPackage, hostBuildPlatform } from './pcPackage.js';
+import {
+  BUILD_CACHE_REPORT_PREFIX,
+  buildPcPackage,
+  hostBuildPlatform,
+  type BuildCacheStats,
+} from './pcPackage.js';
 
 const cliPackage = JSON.parse(
   readFileSync(fileURLToPath(new URL('../package.json', import.meta.url)), 'utf8'),
@@ -278,6 +283,7 @@ function buildProject(values: string[]) {
   assertNotCancelled('runtime preparation');
   const runtimePath = resolveRuntime(args);
   assertNotCancelled('runtime preparation');
+  let buildCacheStats: BuildCacheStats | null = null;
   const manifest = buildPcPackage({
     projectDir: args.projectDir,
     outputDir,
@@ -287,6 +293,7 @@ function buildProject(values: string[]) {
     profile: args.profile,
     platform,
     isCancelled,
+    onBuildCacheStats: (stats) => { buildCacheStats = stats; },
     verifyStagedBuild: args.skipVerify ? undefined : (stageDir, stagedManifest) => {
       assertNotCancelled('staged player validation');
       const player = join(stageDir, stagedManifest.executable);
@@ -305,6 +312,9 @@ function buildProject(values: string[]) {
     },
   });
   if (verificationSummary) console.log(verificationSummary);
+  if (buildCacheStats) {
+    console.log(`${BUILD_CACHE_REPORT_PREFIX}${JSON.stringify(buildCacheStats)}`);
+  }
   console.log(`Built ${manifest.project.name} → ${outputDir}`);
   console.log(`Player: ${join(outputDir, manifest.executable)}`);
   console.log(`Files: ${manifest.files.length} (SHA-256 manifest written)`);

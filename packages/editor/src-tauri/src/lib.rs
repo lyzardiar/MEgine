@@ -134,10 +134,42 @@ struct BuildPlayerResult {
     content_categories: Vec<BuildContentCategoryResult>,
     largest_files: Vec<BuildContentFileResult>,
     comparison: Option<BuildComparisonResult>,
+    build_cache: Option<BuildCacheResult>,
     stage_timings: Vec<BuildStageTimingResult>,
     total_duration_ms: u64,
     toolchain: String,
     log: String,
+}
+
+#[derive(Clone, Debug, serde::Deserialize, serde::Serialize, PartialEq, Eq)]
+#[serde(rename_all = "camelCase")]
+struct BuildCacheResult {
+    enabled: bool,
+    hits: usize,
+    misses: usize,
+    reused_bytes: u64,
+    stored_bytes: u64,
+    recovered_entries: usize,
+    failures: usize,
+}
+
+const BUILD_CACHE_REPORT_PREFIX: &str = "MENGINE_BUILD_CACHE ";
+
+fn extract_build_cache_report(stdout: &[u8]) -> (Option<BuildCacheResult>, String) {
+    let stdout = String::from_utf8_lossy(stdout);
+    let mut report = None;
+    let mut log_lines = Vec::new();
+    for line in stdout.lines() {
+        let Some(json) = line.strip_prefix(BUILD_CACHE_REPORT_PREFIX) else {
+            log_lines.push(line);
+            continue;
+        };
+        match serde_json::from_str::<BuildCacheResult>(json) {
+            Ok(parsed) => report = Some(parsed),
+            Err(_) => log_lines.push(line),
+        }
+    }
+    (report, log_lines.join("\n").trim().to_owned())
 }
 
 #[derive(Clone, Debug, serde::Serialize)]
@@ -985,6 +1017,7 @@ fn run_player_build_controlled(
         report_started,
     );
     let total_duration_ms = duration_ms(total_started.elapsed());
+    let (build_cache, build_log) = extract_build_cache_report(&output.stdout);
     Ok(BuildPlayerResult {
         build_id: control.build_id,
         output_dir: output_dir.to_string_lossy().into_owned(),
@@ -1007,10 +1040,11 @@ fn run_player_build_controlled(
         content_categories,
         largest_files,
         comparison,
+        build_cache,
         stage_timings,
         total_duration_ms,
         toolchain,
-        log: String::from_utf8_lossy(&output.stdout).trim().to_owned(),
+        log: build_log,
     })
 }
 
@@ -2308,6 +2342,31 @@ mod tests {
     }
 
     #[test]
+    fn build_cache_report_is_parsed_without_polluting_user_log() {
+        let output = b"validated package\nMENGINE_BUILD_CACHE {\"enabled\":true,\"hits\":3,\"misses\":1,\"reusedBytes\":120,\"storedBytes\":40,\"recoveredEntries\":1,\"failures\":0}\nBuilt Game\n";
+        let (report, log) = extract_build_cache_report(output);
+        assert_eq!(
+            report,
+            Some(BuildCacheResult {
+                enabled: true,
+                hits: 3,
+                misses: 1,
+                reused_bytes: 120,
+                stored_bytes: 40,
+                recovered_entries: 1,
+                failures: 0,
+            })
+        );
+        assert_eq!(log, "validated package\nBuilt Game");
+
+        let (report, log) =
+            extract_build_cache_report(b"MENGINE_BUILD_CACHE {broken}\nlegacy sdk output\n");
+        assert!(report.is_none());
+        assert!(log.contains("{broken}"));
+        assert!(log.contains("legacy sdk output"));
+    }
+
+    #[test]
     fn build_comparison_reports_added_removed_changed_and_unchanged_files() {
         let previous = comparison_manifest(
             'a',
@@ -2707,6 +2766,15 @@ mod tests {
         assert_eq!(result.omitted_asset_bytes, 13);
         assert_eq!(result.stripped_editor_entities, 2);
         assert!(result.packaged_bytes > 0);
+        if result.toolchain == "source-checkout" {
+            let cache = result
+                .build_cache
+                .as_ref()
+                .expect("source checkout builds report cache diagnostics");
+            assert!(cache.enabled);
+            assert_eq!(cache.hits, 0);
+            assert!(cache.misses >= 3);
+        }
         assert_eq!(result.stage_timings.len(), BUILD_STAGE_COUNT);
         assert_eq!(result.stage_timings[0].stage, "prepare");
         assert_eq!(result.stage_timings[4].stage, "build-report");
@@ -2760,6 +2828,30 @@ mod tests {
             1
         );
         assert!(packaged_scene["world"]["selected"].is_null());
+
+        let cached = run_player_build_controlled(
+            root.clone(),
+            "debug".into(),
+            true,
+            None,
+            BuildControl {
+                build_id: 43,
+                cancelled: Arc::new(AtomicBool::new(false)),
+                cancel_file: None,
+                progress: None,
+            },
+        )
+        .unwrap();
+        assert_eq!(cached.content_hash, result.content_hash);
+        if cached.toolchain == "source-checkout" {
+            let cache = cached
+                .build_cache
+                .as_ref()
+                .expect("the second source checkout build reports cache hits");
+            assert!(cache.hits >= 3);
+            assert_eq!(cache.misses, 0);
+            assert!(cache.reused_bytes > 0);
+        }
         std::fs::write(output.join("tampered-after-publish.bin"), b"tampered").unwrap();
         let error = verify_built_player(&root, Path::new(&result.executable), &result.content_hash)
             .unwrap_err();

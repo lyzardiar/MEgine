@@ -578,6 +578,19 @@ export function BuildSettings(props: {
           <span>
             {lastBuild.fileCount} files · {byteSize(lastBuild.packagedBytes)} · {lastBuild.toolchain}
           </span>
+          {lastBuild.buildCache && (
+            <span>
+              Build cache · {lastBuild.buildCache.enabled
+                ? `${lastBuild.buildCache.hits}/${lastBuild.buildCache.hits + lastBuild.buildCache.misses} hits · ${byteSize(lastBuild.buildCache.reusedBytes)} reused`
+                : 'disabled'}
+              {lastBuild.buildCache.recoveredEntries > 0
+                ? ` · ${lastBuild.buildCache.recoveredEntries} corrupt entries rebuilt`
+                : ''}
+              {lastBuild.buildCache.failures > 0
+                ? ` · ${lastBuild.buildCache.failures} cache I/O fallbacks`
+                : ''}
+            </span>
+          )}
           <span>SHA-256 {lastBuild.contentHash}</span>
           <div className="build-content-report">
             <h4>Content by Category</h4>

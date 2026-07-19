@@ -882,3 +882,13 @@ Referenced Only 是可用的单包裁剪基础，仍不等同于完整 Addressab
 第一遍自审修复了跨语言漂移：Rust/编辑器原先会静默清除同时存在的 Clip，而 CLI 会拒绝；现在三端统一为严格二选一。第二遍自审又封堵了非对象 `blend_tree` 被 CLI 当作不存在，以及过渡起点事件被新采样器跳过的旧语义回归。
 
 当前是 Base State Machine 的 1D 基础闭环，不代表 Animator 已完备。同步层 Motion 与独立层 State 仍只支持单 Clip；后续需要 Direct/2D Simple Directional/2D Freeform Directional/Cartesian、嵌套 Blend Tree、子 Motion Speed/Cycle Offset/Mirror、可视化参数游标、Sub-State Machine/Exit、Transition 中断、StateMachineBehaviour、Humanoid Avatar/重定向、Root Motion、动画压缩与运行时分析。
+
+## 69. 2026-07-19 可验证的本地增量构建缓存
+
+- PC Build 在工程 `.mengine/Library/BuildCache/v1` 建立项目级确定性中间产物缓存。首阶段缓存 Player Scene/Prefab 的 EditorOnly/编辑元数据剥离结果，以及完整 TypeScript Program 的单文件 Bundle；原始纹理、模型、音频和 Runtime 仍按原路径复制，不把“有缓存目录”伪装成全管线增量化。
+- Scene/Prefab Key 由源文件 SHA-256、产物域和转换器版本组成；TypeScript Key 还覆盖 TypeScript 版本、固定编译选项、启动脚本以及 Program 实际加载的全部 SourceFile 路径与源码。修改任一脚本、声明文件或编译器契约都会 miss 并重新执行诊断/Emit，不使用 mtime 猜测内容是否变化。
+- 缓存 Entry 只引用按输出 SHA-256 命名的 Object。命中时重新检查 Entry Schema、对象类型、大小和完整哈希；对象丢失、截断、篡改或错误 Entry 会被删除并从权威源重建。恢复和写入只用普通复制，不把发布目录与缓存做硬链接，避免用户修改成品反向污染缓存。
+- `.mengine`、`Library`、`BuildCache`、`entries`、`objects` 及对象分片目录逐级拒绝符号链接和非目录节点；缓存不可用或单项 I/O 失败只降低为非缓存构建。协作式取消在 Key、查找、恢复和写入边界继续向上终止；取消或暂存验证失败留下的确定性缓存对象不参与发布事务，也不会触碰旧成品。
+- 命中/未命中、复用/写入字节、损坏恢复和 I/O 回退作为独立 CLI 诊断传给桌面 Host，并在 Build Settings 显示。它们不进入 `mengine-build.json`，因此同一输入在冷缓存与热缓存下仍产生字节一致的发布 Manifest 和 Content Hash；旧 Build SDK 没有该诊断时编辑器保持兼容并隐藏缓存行。
+
+第一遍自审修复了缓存恢复阶段吞掉取消信号和符号链接目录可能越出缓存根的问题；第二遍验证冷缓存、热缓存、对象损坏重建和脚本内容变更四条路径都保持原子发布与 Manifest 可复现。当前仍是本地中间产物缓存基础：后续必须增加容量配额/LRU 与显式清理、纹理/模型导入产物、Shader 编译与 Variant Cache、Runtime 编译指纹、跨平台命名空间、远程共享缓存、命中原因明细和 CI Cache 协议。

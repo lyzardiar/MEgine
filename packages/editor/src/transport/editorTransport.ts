@@ -78,6 +78,16 @@ export type BuildStageTimingResult = {
   durationMs: number;
 };
 
+export type BuildCacheResult = {
+  enabled: boolean;
+  hits: number;
+  misses: number;
+  reusedBytes: number;
+  storedBytes: number;
+  recoveredEntries: number;
+  failures: number;
+};
+
 export type BuildProgressEvent = {
   buildId: number;
   stage: string;
@@ -110,6 +120,7 @@ export type BuildPlayerResult = {
   contentCategories: BuildContentCategoryResult[];
   largestFiles: BuildContentFileResult[];
   comparison: BuildComparisonResult | null;
+  buildCache: BuildCacheResult | null;
   stageTimings: BuildStageTimingResult[];
   totalDurationMs: number;
   toolchain: 'bundled-sdk' | 'source-checkout';
