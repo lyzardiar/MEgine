@@ -1347,3 +1347,14 @@ Rust workspace 检查现在零警告通过；Tauri Host 17/17 常规测试与 1/
 第一遍自省发现最初只有签名生成函数和内部自检，没有面向发布系统的可信公钥验证入口；这只能证明代码刚生成的签名可解码，不能发现分发目录被替换。最终增加完整目录离线验证、CLI 命令以及内容篡改、错误公钥、确定性签名回归，并修正 Node `KeyObject` 的运行期/类型边界。第二遍自省进一步收紧密钥与信任模型：私钥强制工程外、拒绝符号链接，UI 把“签名存在”和“可信验证通过”分开；同时把签名载荷从少量身份字段扩展为规范化的完整 Manifest，避免项目名、资源审计或文件分类等重复元数据被修改后仍显示有效签名。Manifest 内自报 key id 只用于匹配，攻击者不能用自己的 key id 取代调用方固定的信任锚。
 
 这仍是 MEngine 自身的制品身份签名，不是操作系统分发签名。Windows Authenticode、macOS codesign/notarization、安装器签名、证书轮换/吊销、HSM/KMS 接入、签名透明日志、渠道密钥策略与 Runtime 内置公钥/启动时强制验证尚未完成；这些平台能力应在安装器与发布管线阶段接入，不能用 Ed25519 Manifest 签名冒充系统信誉和商店公证。
+
+## 113. 2026-07-19 Sequencer Audio Clip 淡入淡出包络
+
+- Timeline Audio Clip 新增可选 `fade_in`、`fade_out` 与 `fade_curve`，曲线支持 `linear/ease_in_out`。旧 v1 资产缺少字段时保持 0 秒淡入、0 秒淡出和 Linear，不改变已有音量；Fade 时长必须是有限非负数且不超过 Clip 时长，曲线值在 Rust Asset、TypeScript Editor 和 CLI 构建器三端使用同一白名单。
+- Runtime 按 Director 的绝对 Timeline 时间计算确定性包络，最终音量为 `clip.volume * min(fadeInGain, fadeOutGain)`。Seek、Pause、反向播放、Loop Director 与非 1 倍 Director Speed 不依赖累计帧状态，同一时间始终得到同一音量；Audio Clip 自身 Loop 时淡入淡出仍锚定 Timeline Clip 边界，不会在每次音频源回绕时重复触发。
+- Sequencer Audio Inspector 增加 Fade In、Fade Out 与 Fade Curve 控件，步长跟随 Timeline 帧率。音频 Clip 在波形上覆盖可见的起止衰减区域，Tooltip 同时显示两端时长；新建 Clip 写入完整默认值，复制/粘贴保留 Fade 设置。拖拽裁剪、Inspector 修改 Clip Duration 或缩短 Timeline 时会同步把 Fade 限制在新时长内，不会制造编辑器能显示但保存/Player 拒绝的资产。
+- CLI 在 staging 之前校验 Fade 字段，all 模式未引用 Timeline 与 referenced 依赖闭包使用同一规则；最终 Player 包仍由 Rust 资产解析器再次验证。回归覆盖旧字段默认、大小写曲线规范化、非法时长/曲线拒绝、确定性 Seek 包络、剪辑设置复制和合法 Fade Timeline 打包。
+
+第一遍自省确认 Fade 必须以 Timeline 时间而不是音频采样时间累计，否则 Seek、反向播放、Director Speed 和 Loop 边界会得到不同结果；最终使用绝对时间函数，并让 Fade 乘在用户 Volume 之后。第二遍自省覆盖编辑端所有会缩短 Clip 的入口与旧资产升级，同时明确允许 `fade_in + fade_out > duration`：两段重叠时取较小增益，形成全程不达到满音量的短促包络，而不是隐式重写用户输入或产生大于 1 的叠加。
+
+当前仍是单 AudioSource、单 Clip 的基础包络，不是成熟 DAW/Mixer。相同 AudioSource 仍不允许两个轨道重叠，因此尚无真正 Crossfade；后续需要多 Voice 调度、音频资源真实时长门禁、可拖拽 Fade Handle 与精确曲线图、编辑器音频预听、Bus/Mixer/空间音频轨道、响度/Peak 检查、字幕/口型标记、平台转码和无爆音的 Sample-accurate 调度。

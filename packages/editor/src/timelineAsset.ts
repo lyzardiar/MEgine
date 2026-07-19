@@ -10,6 +10,8 @@ export type TimelineActivationClip = {
   active: boolean;
 };
 
+export type TimelineAudioFadeCurve = 'linear' | 'ease_in_out';
+
 export type TimelineAudioClip = {
   start: number;
   duration: number;
@@ -18,6 +20,9 @@ export type TimelineAudioClip = {
   volume: number;
   pitch: number;
   looped: boolean;
+  fade_in: number;
+  fade_out: number;
+  fade_curve: TimelineAudioFadeCurve;
 };
 
 export type TimelineAnimationClip = {
@@ -144,6 +149,12 @@ function audioAssetPath(value: unknown): string {
   return segments.join('/');
 }
 
+function audioFadeCurve(value: unknown): TimelineAudioFadeCurve {
+  return String(value ?? 'linear').trim().toLowerCase() === 'ease_in_out'
+    ? 'ease_in_out'
+    : 'linear';
+}
+
 function audioAssetIsPortable(path: string): boolean {
   return path.toLowerCase().startsWith('assets/')
     && targetIsPortable(path)
@@ -238,14 +249,18 @@ export function normalizeTimelineAsset(value: unknown): TimelineAsset {
         .map((clipValue) => {
           const clip = object(clipValue);
           const start = Math.max(0, Math.min(duration, finite(clip.start, 0)));
+          const clipDuration = Math.max(0.001, Math.min(duration - start, finite(clip.duration, 1)));
           return {
             start,
-            duration: Math.max(0.001, Math.min(duration - start, finite(clip.duration, 1))),
+            duration: clipDuration,
             clip: audioAssetPath(clip.clip),
             clip_in: Math.max(0, finite(clip.clip_in, 0)),
             volume: Math.max(0, Math.min(4, finite(clip.volume, 1))),
             pitch: Math.max(0.05, Math.min(4, finite(clip.pitch, 1))),
             looped: Boolean(clip.looped),
+            fade_in: Math.max(0, Math.min(clipDuration, finite(clip.fade_in, 0))),
+            fade_out: Math.max(0, Math.min(clipDuration, finite(clip.fade_out, 0))),
+            fade_curve: audioFadeCurve(clip.fade_curve),
           } satisfies TimelineAudioClip;
         })
         .sort((left, right) => left.start - right.start);
@@ -409,7 +424,10 @@ export function validateTimelineAsset(asset: TimelineAsset): void {
         if (!audioAssetIsPortable(audioAssetPath(clip.clip))
           || !Number.isFinite(clip.clip_in) || clip.clip_in < 0
           || !Number.isFinite(clip.volume) || clip.volume < 0 || clip.volume > 4
-          || !Number.isFinite(clip.pitch) || clip.pitch < 0.05 || clip.pitch > 4) {
+          || !Number.isFinite(clip.pitch) || clip.pitch < 0.05 || clip.pitch > 4
+          || !Number.isFinite(clip.fade_in) || clip.fade_in < 0 || clip.fade_in > clip.duration
+          || !Number.isFinite(clip.fade_out) || clip.fade_out < 0 || clip.fade_out > clip.duration
+          || clip.fade_curve !== 'linear' && clip.fade_curve !== 'ease_in_out') {
           throw new Error(`Audio track ${track.name} contains invalid clip settings`);
         }
       }
@@ -582,7 +600,11 @@ export function parseTimelineAsset(text: string): TimelineAsset {
           || clip.clip_in != null && (typeof clip.clip_in !== 'number' || !Number.isFinite(clip.clip_in) || clip.clip_in < 0)
           || clip.volume != null && (typeof clip.volume !== 'number' || !Number.isFinite(clip.volume) || clip.volume < 0 || clip.volume > 4)
           || clip.pitch != null && (typeof clip.pitch !== 'number' || !Number.isFinite(clip.pitch) || clip.pitch < 0.05 || clip.pitch > 4)
-          || clip.looped != null && typeof clip.looped !== 'boolean')
+          || clip.looped != null && typeof clip.looped !== 'boolean'
+          || clip.fade_in != null && (typeof clip.fade_in !== 'number' || !Number.isFinite(clip.fade_in) || clip.fade_in < 0 || clip.fade_in > clip.duration)
+          || clip.fade_out != null && (typeof clip.fade_out !== 'number' || !Number.isFinite(clip.fade_out) || clip.fade_out < 0 || clip.fade_out > clip.duration)
+          || clip.fade_curve != null && (typeof clip.fade_curve !== 'string'
+            || !['linear', 'ease_in_out'].includes(clip.fade_curve.trim().toLowerCase())))
         || track.type === 'animation' && (typeof clip.clip !== 'string' || !animationAssetIsPortable(audioAssetPath(clip.clip))
           || clip.clip_in != null && (typeof clip.clip_in !== 'number' || !Number.isFinite(clip.clip_in) || clip.clip_in < 0)
           || clip.speed != null && (typeof clip.speed !== 'number' || !Number.isFinite(clip.speed) || clip.speed < -4 || clip.speed > 4))

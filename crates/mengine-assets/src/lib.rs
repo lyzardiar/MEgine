@@ -51,8 +51,8 @@ pub use texture::{load_environment_texture, load_texture_rgba8, texture_dimensio
 pub use timeline::{
     load_timeline_asset, normalize_timeline_target, parse_timeline_asset,
     parse_timeline_binding_table, serialize_timeline_binding_table, TimelineAsset,
-    TimelineBindingTable, TimelineCameraClip, TimelineEntityBinding, TimelineParticleClip,
-    TimelineSignal, TimelineTrack, TimelineTrackGroup, MAX_TIMELINE_BINDINGS,
+    TimelineAudioClip, TimelineBindingTable, TimelineCameraClip, TimelineEntityBinding,
+    TimelineParticleClip, TimelineSignal, TimelineTrack, TimelineTrackGroup, MAX_TIMELINE_BINDINGS,
     MAX_TIMELINE_PARTICLE_TIME,
 };
 

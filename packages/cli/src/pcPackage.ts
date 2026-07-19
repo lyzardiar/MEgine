@@ -1422,8 +1422,12 @@ function scanBuildAssetDependencies(
             || !/\.(?:wav|ogg|mp3|flac)$/i.test(clipPath)
             || clip.clip_in != null && (typeof clip.clip_in !== 'number' || !Number.isFinite(clip.clip_in) || clip.clip_in < 0)
             || clip.volume != null && (typeof clip.volume !== 'number' || !Number.isFinite(clip.volume) || clip.volume < 0 || clip.volume > 4)
-            || clip.pitch != null && (typeof clip.pitch !== 'number' || !Number.isFinite(clip.pitch) || clip.pitch < 0.05 || clip.pitch > 4)
-            || clip.looped != null && typeof clip.looped !== 'boolean') {
+             || clip.pitch != null && (typeof clip.pitch !== 'number' || !Number.isFinite(clip.pitch) || clip.pitch < 0.05 || clip.pitch > 4)
+             || clip.looped != null && typeof clip.looped !== 'boolean'
+             || clip.fade_in != null && (typeof clip.fade_in !== 'number' || !Number.isFinite(clip.fade_in) || clip.fade_in < 0 || clip.fade_in > clip.duration)
+             || clip.fade_out != null && (typeof clip.fade_out !== 'number' || !Number.isFinite(clip.fade_out) || clip.fade_out < 0 || clip.fade_out > clip.duration)
+             || clip.fade_curve != null && (typeof clip.fade_curve !== 'string'
+               || !['linear', 'ease_in_out'].includes(clip.fade_curve.trim().toLowerCase()))) {
             throw new Error(`invalid Timeline asset ${source}: audio clip is invalid or outside duration`);
           }
           enqueue(clipPath, source, `Timeline audio track ${name} clip`);

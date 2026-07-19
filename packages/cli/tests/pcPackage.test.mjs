@@ -791,7 +791,10 @@ test('buildPcPackage includes and validates TimelineDirector assets', () => {
         clips: [{ start: 0.5, duration: 1, active: true }],
       }, {
         type: 'audio', id: 'music', name: 'Music', target: 'Audio/Music',
-        clips: [{ start: 0, duration: 3, clip: 'Assets/Audio/intro.ogg', clip_in: 0.25, volume: 0.8, pitch: 1 }],
+        clips: [{
+          start: 0, duration: 3, clip: 'Assets/Audio/intro.ogg', clip_in: 0.25,
+          volume: 0.8, pitch: 1, fade_in: 0.5, fade_out: 0.75, fade_curve: ' EASE_IN_OUT ',
+        }],
       }, {
         type: 'animation', id: 'hero', name: 'Hero', target: 'Characters/Hero',
         clips: [{ start: 0, duration: 2, clip: 'Assets/Animations/Hero.manim', clip_in: 0.1, speed: 1 }],
@@ -989,6 +992,24 @@ test('buildPcPackage rejects invalid or missing Timeline audio clips without pub
       runtimePath: paths.runtime,
       engineVersion: 'test-engine',
     }), /audio clips overlap/);
+    assert.equal(existsSync(paths.output), false);
+
+    writeFileSync(join(paths.project, 'Assets', 'Timelines', 'Broken.mtimeline'), JSON.stringify({
+      version: 1, duration: 2,
+      tracks: [{
+        type: 'audio', id: 'music', name: 'Music', target: 'Audio/Music',
+        clips: [{
+          start: 0, duration: 1, clip: 'Assets/Audio/missing.ogg',
+          fade_in: 1.1, fade_curve: 'logarithmic',
+        }],
+      }],
+    }));
+    assert.throws(() => buildPcPackage({
+      projectDir: paths.project,
+      outputDir: paths.output,
+      runtimePath: paths.runtime,
+      engineVersion: 'test-engine',
+    }), /audio clip is invalid/);
     assert.equal(existsSync(paths.output), false);
 
     writeFileSync(join(paths.project, 'Assets', 'Timelines', 'Broken.mtimeline'), JSON.stringify({

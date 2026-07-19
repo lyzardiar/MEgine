@@ -28,6 +28,10 @@ fn default_camera_blend_curve() -> String {
     "ease_in_out".to_owned()
 }
 
+fn default_audio_fade_curve() -> String {
+    "linear".to_owned()
+}
+
 fn is_false(value: &bool) -> bool {
     !*value
 }
@@ -168,6 +172,12 @@ pub struct TimelineAudioClip {
     pub pitch: f32,
     #[serde(default)]
     pub looped: bool,
+    #[serde(default)]
+    pub fade_in: f32,
+    #[serde(default)]
+    pub fade_out: f32,
+    #[serde(default = "default_audio_fade_curve")]
+    pub fade_curve: String,
 }
 
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
@@ -485,6 +495,7 @@ impl TimelineAsset {
                                 "Timeline audio track '{id}' contains an invalid audio clip path"
                             ))
                         })?;
+                        clip.fade_curve = clip.fade_curve.trim().to_ascii_lowercase();
                         if !clip.start.is_finite()
                             || !clip.duration.is_finite()
                             || clip.start < 0.0
@@ -496,6 +507,11 @@ impl TimelineAsset {
                             || !(0.0..=4.0).contains(&clip.volume)
                             || !clip.pitch.is_finite()
                             || !(0.05..=4.0).contains(&clip.pitch)
+                            || !clip.fade_in.is_finite()
+                            || !(0.0..=clip.duration).contains(&clip.fade_in)
+                            || !clip.fade_out.is_finite()
+                            || !(0.0..=clip.duration).contains(&clip.fade_out)
+                            || !matches!(clip.fade_curve.as_str(), "linear" | "ease_in_out")
                         {
                             return Err(AssetError::Invalid(format!(
                                 "Timeline audio track '{id}' contains an invalid or out-of-range clip"
@@ -944,7 +960,7 @@ mod tests {
               "version":1,"duration":4,
               "tracks":[{"type":"audio","id":"music","name":" Music ",
                 "target":"Audio\\Music","clips":[
-                  {"start":2,"duration":1,"clip":"assets\\Audio\\theme.OGG","clip_in":0.5,"volume":0.8,"pitch":1.25},
+                  {"start":2,"duration":1,"clip":"assets\\Audio\\theme.OGG","clip_in":0.5,"volume":0.8,"pitch":1.25,"fade_in":0.25,"fade_out":0.5,"fade_curve":" EASE_IN_OUT "},
                   {"start":0,"duration":1,"clip":"Assets/Audio/intro.wav"}
                 ]}]
             }"#,
@@ -963,7 +979,13 @@ mod tests {
         assert_eq!(target, "Audio/Music");
         assert_eq!(clips[0].clip, "Assets/Audio/intro.wav");
         assert_eq!(clips[0].volume, 1.0);
+        assert_eq!(clips[0].fade_in, 0.0);
+        assert_eq!(clips[0].fade_out, 0.0);
+        assert_eq!(clips[0].fade_curve, "linear");
         assert_eq!(clips[1].clip, "Assets/Audio/theme.OGG");
+        assert_eq!(clips[1].fade_in, 0.25);
+        assert_eq!(clips[1].fade_out, 0.5);
+        assert_eq!(clips[1].fade_curve, "ease_in_out");
 
         assert!(parse_timeline_asset(
             br#"{"version":1,"duration":2,"tracks":[{"type":"audio","id":"a","name":"A","target":"Audio","clips":[{"start":0,"duration":1.5,"clip":"Assets/Audio/a.ogg"},{"start":1,"duration":1,"clip":"Assets/Audio/b.ogg"}]}]}"#
@@ -971,6 +993,14 @@ mod tests {
         .is_err());
         assert!(parse_timeline_asset(
             br#"{"version":1,"duration":2,"tracks":[{"type":"audio","id":"a","name":"A","target":"Audio","clips":[{"start":0,"duration":1,"clip":"../outside.ogg"}]}]}"#
+        )
+        .is_err());
+        assert!(parse_timeline_asset(
+            br#"{"version":1,"duration":2,"tracks":[{"type":"audio","id":"a","name":"A","target":"Audio","clips":[{"start":0,"duration":1,"clip":"Assets/Audio/a.ogg","fade_in":1.1}]}]}"#
+        )
+        .is_err());
+        assert!(parse_timeline_asset(
+            br#"{"version":1,"duration":2,"tracks":[{"type":"audio","id":"a","name":"A","target":"Audio","clips":[{"start":0,"duration":1,"clip":"Assets/Audio/a.ogg","fade_curve":"exponential"}]}]}"#
         )
         .is_err());
     }

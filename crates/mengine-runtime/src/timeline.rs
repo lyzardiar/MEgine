@@ -1,8 +1,8 @@
 use crate::particles::MAX_INCREMENTAL_DELTA;
 use crate::textures::resolve_project_asset_path;
 use mengine_assets::{
-    load_timeline_asset, parse_timeline_binding_table, TimelineAsset, TimelineBindingTable,
-    TimelineTrack,
+    load_timeline_asset, parse_timeline_binding_table, TimelineAsset, TimelineAudioClip,
+    TimelineBindingTable, TimelineTrack,
 };
 use mengine_core::generated::{
     AnimationPlayer, Animator, AudioSource, Camera2D, Camera3D, ParticleEmitter2D,
@@ -16,6 +16,30 @@ use std::sync::Arc;
 use std::time::SystemTime;
 
 const MAX_SIGNALS_PER_UPDATE: usize = 4096;
+
+fn audio_fade_curve_factor(curve: &str, value: f32) -> f32 {
+    let value = value.clamp(0.0, 1.0);
+    if curve == "ease_in_out" {
+        value * value * (3.0 - 2.0 * value)
+    } else {
+        value
+    }
+}
+
+fn timeline_audio_gain(clip: &TimelineAudioClip, time: f32) -> f32 {
+    let elapsed = (time - clip.start).clamp(0.0, clip.duration);
+    let fade_in = if clip.fade_in > 0.0 {
+        audio_fade_curve_factor(&clip.fade_curve, elapsed / clip.fade_in)
+    } else {
+        1.0
+    };
+    let fade_out = if clip.fade_out > 0.0 {
+        audio_fade_curve_factor(&clip.fade_curve, (clip.duration - elapsed) / clip.fade_out)
+    } else {
+        1.0
+    };
+    fade_in.min(fade_out).clamp(0.0, 1.0)
+}
 
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct TimelineLoadFailure {
@@ -636,7 +660,7 @@ impl TimelineRuntime {
                 source.play_on_awake = true;
                 source.playing = audible;
                 source.looped = clip.looped;
-                source.volume = clip.volume;
+                source.volume = clip.volume * timeline_audio_gain(clip, time);
                 source.pitch = if audible { effective_pitch } else { clip.pitch };
                 if discontinuity
                     || !audible
@@ -1754,6 +1778,46 @@ mod tests {
         assert!(failures[0].error.contains("stale stable binding"));
         assert!(world.entity_active(legacy_panel));
         assert!(runtime.update(&mut world, 0.0).is_empty());
+        let _ = fs::remove_dir_all(root);
+    }
+
+    #[test]
+    fn audio_fades_apply_deterministic_envelopes_during_seek() {
+        let (root, relative) = audio_project_asset("Audio");
+        fs::write(
+            root.join(&relative),
+            r#"{"version":1,"duration":2,"tracks":[{"type":"audio","id":"music","name":"Music","target":"Audio","clips":[{"start":0,"duration":2,"clip":"Assets/Audio/timeline.ogg","volume":0.8,"fade_in":0.5,"fade_out":0.5,"fade_curve":"ease_in_out"}]}]}"#,
+        )
+        .unwrap();
+        let mut world = World::new();
+        let director = world.spawn_empty();
+        let audio = world.spawn_empty();
+        world.set_component_value(audio, "Name", serde_json::json!({ "value": "Audio" }));
+        world.set_parent(audio, Some(director));
+        world.insert_component(audio, AudioSource::default());
+        world.insert_component(
+            director,
+            TimelineDirector {
+                asset: relative,
+                ..TimelineDirector::default()
+            },
+        );
+        let mut runtime = TimelineRuntime::new(Some(root.clone()));
+
+        runtime.update(&mut world, 0.0);
+        assert_eq!(
+            world.get_component::<AudioSource>(audio).unwrap().volume,
+            0.0
+        );
+        for (time, expected) in [(0.25, 0.4), (1.0, 0.8), (1.75, 0.4)] {
+            world
+                .get_component_mut::<TimelineDirector>(director)
+                .unwrap()
+                .time = time;
+            runtime.update(&mut world, 0.0);
+            let volume = world.get_component::<AudioSource>(audio).unwrap().volume;
+            assert!((volume - expected).abs() < 0.0001, "time {time}: {volume}");
+        }
         let _ = fs::remove_dir_all(root);
     }
 

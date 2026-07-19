@@ -120,6 +120,47 @@ test('timeline activation tracks normalize bindings and reject ambiguous clips',
   })), /locked must be boolean/);
 });
 
+test('timeline audio clips normalize fades and reject invalid envelopes', () => {
+  const asset = parseTimelineAsset(JSON.stringify({
+    version: 1,
+    name: 'Audio',
+    duration: 4,
+    tracks: [{
+      type: 'audio', id: 'music', name: 'Music', target: 'Audio\\Music',
+      clips: [
+        { start: 2, duration: 1, clip: 'assets\\Audio\\theme.ogg', fade_in: 0.25, fade_out: 0.5, fade_curve: ' EASE_IN_OUT ' },
+        { start: 0, duration: 1, clip: 'Assets/Audio/intro.wav' },
+      ],
+    }],
+  }));
+  assert.equal(asset.tracks[0].target, 'Audio/Music');
+  assert.deepEqual(asset.tracks[0].clips, [
+    {
+      start: 0, duration: 1, clip: 'Assets/Audio/intro.wav', clip_in: 0,
+      volume: 1, pitch: 1, looped: false, fade_in: 0, fade_out: 0, fade_curve: 'linear',
+    },
+    {
+      start: 2, duration: 1, clip: 'Assets/Audio/theme.ogg', clip_in: 0,
+      volume: 1, pitch: 1, looped: false, fade_in: 0.25, fade_out: 0.5, fade_curve: 'ease_in_out',
+    },
+  ]);
+  assert.deepEqual(parseTimelineAsset(serializeTimelineAsset(asset)), asset);
+  assert.throws(() => parseTimelineAsset(JSON.stringify({
+    version: 1, duration: 2,
+    tracks: [{
+      type: 'audio', id: 'music', name: 'Music', target: 'Audio',
+      clips: [{ start: 0, duration: 1, clip: 'Assets/Audio/a.ogg', fade_out: 1.1 }],
+    }],
+  })), /invalid/);
+  assert.throws(() => parseTimelineAsset(JSON.stringify({
+    version: 1, duration: 2,
+    tracks: [{
+      type: 'audio', id: 'music', name: 'Music', target: 'Audio',
+      clips: [{ start: 0, duration: 1, clip: 'Assets/Audio/a.ogg', fade_curve: 'logarithmic' }],
+    }],
+  })), /invalid/);
+});
+
 test('timeline particle tracks normalize prewarm and reject invalid clips', () => {
   const asset = parseTimelineAsset(JSON.stringify({
     version: 1,

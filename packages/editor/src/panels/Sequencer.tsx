@@ -58,6 +58,7 @@ import {
   timelineTrackIsMuted,
   validateTimelineAsset,
   type TimelineAsset,
+  type TimelineAudioClip,
   type TimelineTrackGroup,
 } from '../timelineAsset';
 import {
@@ -98,6 +99,11 @@ import {
 const SEQUENCER_SNAPPING_KEY = 'mengine.sequencer.snapping';
 const SEQUENCER_RIPPLE_KEY = 'mengine.sequencer.ripple';
 const SEQUENCER_SNAP_THRESHOLD_PX = 8;
+
+function clampTimelineAudioFades(clip: TimelineAudioClip): void {
+  clip.fade_in = Math.max(0, Math.min(clip.duration, clip.fade_in));
+  clip.fade_out = Math.max(0, Math.min(clip.duration, clip.fade_out));
+}
 
 function loadSequencerSnapping(): boolean {
   try {
@@ -778,7 +784,15 @@ export function Sequencer(props: SequencerProps) {
     update((draft) => {
       const target = draft.tracks[trackIndex];
       if (target.type === 'audio') target.clips.push({
-        ...placement, clip: defaultClip, clip_in: 0, volume: 1, pitch: 1, looped: false,
+        ...placement,
+        clip: defaultClip,
+        clip_in: 0,
+        volume: 1,
+        pitch: 1,
+        looped: false,
+        fade_in: 0,
+        fade_out: 0,
+        fade_curve: 'linear',
       });
       if (target.type === 'audio') target.clips.sort((left, right) => left.start - right.start);
     });
@@ -1197,6 +1211,7 @@ export function Sequencer(props: SequencerProps) {
       if (!clip) return;
       clip.start = range.start;
       clip.duration = resolvedDuration;
+      if (track.type === 'audio') clampTimelineAudioFades(track.clips[markerIndex]);
       if (trimEdge === 'start' && track.type === 'audio' && originalTrack.type === 'audio') {
         const original = originalTrack.clips[markerIndex];
         track.clips[markerIndex].clip_in = Math.max(0, original.clip_in + range.sourceOffsetDelta * original.pitch);
@@ -1931,7 +1946,7 @@ export function Sequencer(props: SequencerProps) {
                       left: `${clip.start / asset.duration * 100}%`,
                       width: `${clip.duration / asset.duration * 100}%`,
                     }}
-                    title={`${clip.clip} · ${clip.start.toFixed(3)}s + ${clip.duration.toFixed(3)}s`}
+                    title={`${clip.clip} · ${clip.start.toFixed(3)}s + ${clip.duration.toFixed(3)}s · fade ${clip.fade_in.toFixed(3)}s/${clip.fade_out.toFixed(3)}s`}
                     key={`${clip.start}-${clip.clip}-${clipIndex}`}
                     onPointerDown={(event) => startMarkerDrag(event, trackIndex, clipIndex)}
                   >
@@ -1942,6 +1957,14 @@ export function Sequencer(props: SequencerProps) {
                       duration={clip.duration}
                       looped={clip.looped}
                     />
+                    {clip.fade_in > 0 && <span
+                      className="sequencer-audio-fade in"
+                      style={{ width: `${clip.fade_in / clip.duration * 100}%` }}
+                    />}
+                    {clip.fade_out > 0 && <span
+                      className="sequencer-audio-fade out"
+                      style={{ width: `${clip.fade_out / clip.duration * 100}%` }}
+                    />}
                     <span className="sequencer-clip-label">♪ {clip.clip.split('/').at(-1)}</span>
                   </button>
                 ))}
@@ -2028,6 +2051,8 @@ export function Sequencer(props: SequencerProps) {
                   }
                   if (track.type === 'camera') {
                     for (const clip of track.clips) clip.blend_in = Math.min(clip.blend_in, clip.duration);
+                  } else if (track.type === 'audio') {
+                    for (const clip of track.clips) clampTimelineAudioFades(clip);
                   }
                 }
               }
@@ -2162,6 +2187,7 @@ export function Sequencer(props: SequencerProps) {
                 );
               } else {
                 clip.duration = range.duration;
+                if (track.type === 'audio') clampTimelineAudioFades(track.clips[selection!.marker!]);
                 if (track.type === 'camera') {
                   track.clips[selection!.marker!].blend_in = Math.min(
                     track.clips[selection!.marker!].blend_in,
@@ -2192,6 +2218,21 @@ export function Sequencer(props: SequencerProps) {
                 const track = draft.tracks[selection!.track];
                 if (track.type === 'audio') track.clips[selection!.marker!].pitch = Math.max(0.05, Math.min(4, Number(event.target.value) || 1));
               })} /></label>
+              <label>Fade In <input type="number" min={0} max={selectedAudioClip.duration} step={1 / asset.frame_rate} value={selectedAudioClip.fade_in} onChange={(event) => update((draft) => {
+                const track = draft.tracks[selection!.track];
+                if (track.type === 'audio') track.clips[selection!.marker!].fade_in = Math.max(0, Math.min(track.clips[selection!.marker!].duration, Number(event.target.value) || 0));
+              })} /></label>
+              <label>Fade Out <input type="number" min={0} max={selectedAudioClip.duration} step={1 / asset.frame_rate} value={selectedAudioClip.fade_out} onChange={(event) => update((draft) => {
+                const track = draft.tracks[selection!.track];
+                if (track.type === 'audio') track.clips[selection!.marker!].fade_out = Math.max(0, Math.min(track.clips[selection!.marker!].duration, Number(event.target.value) || 0));
+              })} /></label>
+              <label>Fade Curve <select value={selectedAudioClip.fade_curve} onChange={(event) => update((draft) => {
+                const track = draft.tracks[selection!.track];
+                if (track.type === 'audio') track.clips[selection!.marker!].fade_curve = event.target.value as TimelineAudioClip['fade_curve'];
+              })}>
+                <option value="linear">Linear</option>
+                <option value="ease_in_out">Ease In Out</option>
+              </select></label>
               <label className="sequencer-check"><input type="checkbox" checked={selectedAudioClip.looped} onChange={(event) => update((draft) => {
                 const track = draft.tracks[selection!.track];
                 if (track.type === 'audio') track.clips[selection!.marker!].looped = event.target.checked;

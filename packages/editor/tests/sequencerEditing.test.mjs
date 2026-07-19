@@ -33,7 +33,7 @@ function timeline() {
     groups: [],
     tracks: [
       { type: 'signal', id: 'signals', name: 'Signals', muted: false, locked: false, markers: [{ time: 1, name: 'Hit', payload: { value: 1 } }] },
-      { type: 'audio', id: 'audio', name: 'Audio', muted: false, locked: false, target: 'Audio', clips: [{ start: 1, duration: 2, clip: 'Assets/hit.ogg', clip_in: 0.5, volume: 0.8, pitch: 1, looped: false }] },
+      { type: 'audio', id: 'audio', name: 'Audio', muted: false, locked: false, target: 'Audio', clips: [{ start: 1, duration: 2, clip: 'Assets/hit.ogg', clip_in: 0.5, volume: 0.8, pitch: 1, looped: false, fade_in: 0.25, fade_out: 0.5, fade_curve: 'ease_in_out' }] },
       { type: 'animation', id: 'animation', name: 'Animation', muted: false, locked: false, target: 'Actor', clips: [] },
     ],
   };
@@ -425,6 +425,9 @@ test('Sequencer clip paste preserves source settings and finds collision-free sp
     volume: 0.8,
     pitch: 1,
     looped: false,
+    fade_in: 0.25,
+    fade_out: 0.5,
+    fade_curve: 'ease_in_out',
   });
   const rejected = pasteSequencerItem({ ...asset, tracks: asset.tracks.slice(0, 1) }, null, 0, clipboard);
   assert.equal(rejected.ok, false);
