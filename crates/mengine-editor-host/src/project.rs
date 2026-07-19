@@ -19,6 +19,9 @@ const MAX_SCENE_RECOVERY_BYTES: u64 = 64 * 1024 * 1024;
 const MAX_ASSET_RENAME_UPDATES: usize = 256;
 const MAX_ASSET_RENAME_UPDATE_BYTES: usize = 32 * 1024 * 1024;
 const MAX_ASSET_DUPLICATE_BYTES: u64 = 512 * 1024 * 1024;
+const ASSET_TRASH_SCHEMA_VERSION: u32 = 1;
+const ASSET_TRASH_ROOT: &str = ".mengine/Trash";
+const MAX_ASSET_TRASH_RECORD_BYTES: u64 = 1024 * 1024;
 
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "lowercase")]
@@ -121,6 +124,86 @@ pub struct AssetDuplicateResult {
     pub source_path: String,
     pub destination_path: String,
     pub guid: Uuid,
+}
+
+#[derive(Clone, Debug, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct AssetTrashRequest {
+    pub source_path: String,
+    pub expected_source_revision: String,
+    pub expected_guid: Uuid,
+    pub expected_tree_revision: String,
+    pub expected_manifest_revision: String,
+}
+
+#[derive(Clone, Debug, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct AssetManifestReference {
+    pub location: String,
+    pub reference: String,
+}
+
+#[derive(Clone, Debug, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct AssetDeleteSnapshot {
+    pub tree_revision: String,
+    pub manifest_revision: String,
+    pub manifest_references: Vec<AssetManifestReference>,
+}
+
+#[derive(Clone, Debug, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct AssetTrashEntry {
+    pub trash_id: Uuid,
+    pub original_path: String,
+    pub guid: Uuid,
+    pub trashed_at_ms: u64,
+    pub size: u64,
+    pub has_sprite_import: bool,
+    pub record_revision: String,
+}
+
+#[derive(Clone, Debug, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct AssetTrashInventory {
+    pub entries: Vec<AssetTrashEntry>,
+    pub invalid_entries: usize,
+}
+
+#[derive(Clone, Debug, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct AssetTrashResult {
+    pub entry: AssetTrashEntry,
+}
+
+#[derive(Clone, Debug, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct AssetRestoreRequest {
+    pub trash_id: Uuid,
+    pub expected_record_revision: String,
+}
+
+#[derive(Clone, Debug, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct AssetRestoreResult {
+    pub trash_id: Uuid,
+    pub restored_path: String,
+    pub guid: Uuid,
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+struct AssetTrashRecord {
+    schema_version: u32,
+    trash_id: Uuid,
+    original_path: String,
+    guid: Uuid,
+    trashed_at_ms: u64,
+    size: u64,
+    has_sprite_import: bool,
+    asset_revision: String,
+    metadata_revision: String,
+    sprite_import_revision: Option<String>,
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
@@ -797,7 +880,10 @@ impl ProjectSession {
                     committed: false,
                 });
             }
-            if scene_file_revision(&source)?.as_deref() != Some(&request.expected_source_revision) {
+            if self.resolve_regular_asset(&source_relative)? != source
+                || scene_file_revision(&source)?.as_deref()
+                    != Some(&request.expected_source_revision)
+            {
                 return Err(ProjectError::AssetTransaction(format!(
                     "asset changed while rename was being prepared: {source_portable}"
                 )));
@@ -827,14 +913,17 @@ impl ProjectSession {
                             "project.json changed while rename was being prepared".into(),
                         ));
                     }
-                } else if !update.portable.eq_ignore_ascii_case(&source_portable)
-                    && scene_file_revision(&update.original_path)?.as_deref()
-                        != update.expected_revision.as_deref()
-                {
-                    return Err(ProjectError::AssetTransaction(format!(
-                        "referencing asset changed while rename was being prepared: {}",
-                        update.portable
-                    )));
+                } else if !update.portable.eq_ignore_ascii_case(&source_portable) {
+                    let relative = normalize_asset_file_path(Path::new(&update.portable))?;
+                    if self.resolve_regular_asset(&relative)? != update.original_path
+                        || scene_file_revision(&update.original_path)?.as_deref()
+                            != update.expected_revision.as_deref()
+                    {
+                        return Err(ProjectError::AssetTransaction(format!(
+                            "referencing asset changed while rename was being prepared: {}",
+                            update.portable
+                        )));
+                    }
                 }
             }
             Ok(())
@@ -1067,7 +1156,10 @@ impl ProjectSession {
                     &destination_sprite_import,
                 )?);
             }
-            if scene_file_revision(&source)?.as_deref() != Some(&request.expected_source_revision) {
+            if self.resolve_regular_asset(&source_relative)? != source
+                || scene_file_revision(&source)?.as_deref()
+                    != Some(&request.expected_source_revision)
+            {
                 return Err(ProjectError::AssetTransaction(format!(
                     "asset changed while duplicate was being prepared: {source_portable}"
                 )));
@@ -1142,6 +1234,386 @@ impl ProjectSession {
             source_path: source_portable,
             destination_path: destination_portable,
             guid: new_guid,
+        })
+    }
+
+    pub fn asset_tree_revision(&self) -> Result<String, ProjectError> {
+        project_asset_tree_revision(&self.project_root)
+    }
+
+    pub fn asset_delete_snapshot(
+        &self,
+        source_path: &str,
+    ) -> Result<AssetDeleteSnapshot, ProjectError> {
+        let source = normalize_asset_file_path(Path::new(source_path))?;
+        let source_portable = portable_path(&source);
+        let manifest_path = self.project_root.join("project.json");
+        let (manifest_revision, manifest_value) = read_stable_json_value(&manifest_path)?;
+        let mut manifest_references = Vec::new();
+        collect_manifest_asset_references(
+            &manifest_value,
+            &source_portable,
+            "",
+            &mut manifest_references,
+        );
+        Ok(AssetDeleteSnapshot {
+            tree_revision: self.asset_tree_revision()?,
+            manifest_revision,
+            manifest_references,
+        })
+    }
+
+    pub fn list_asset_trash(&self) -> Result<AssetTrashInventory, ProjectError> {
+        let root = self.project_root.join(ASSET_TRASH_ROOT);
+        let metadata = match std::fs::symlink_metadata(&root) {
+            Ok(metadata) => metadata,
+            Err(error) if error.kind() == std::io::ErrorKind::NotFound => {
+                return Ok(AssetTrashInventory {
+                    entries: Vec::new(),
+                    invalid_entries: 0,
+                });
+            }
+            Err(error) => return Err(ProjectError::Io(error)),
+        };
+        if metadata.file_type().is_symlink() || !metadata.is_dir() {
+            return Err(ProjectError::AssetTransaction(
+                "project Trash root must be a regular directory".into(),
+            ));
+        }
+        let mut entries = Vec::new();
+        let mut invalid_entries = 0usize;
+        for item in std::fs::read_dir(root)? {
+            let item = item?;
+            let Some(name) = item.file_name().to_str().map(str::to_owned) else {
+                invalid_entries += 1;
+                continue;
+            };
+            let Ok(trash_id) = Uuid::parse_str(&name) else {
+                invalid_entries += 1;
+                continue;
+            };
+            if let Ok((record, revision, directory)) =
+                read_asset_trash_record(&self.project_root, trash_id)
+            {
+                if validate_asset_trash_payload(&directory, &record).is_ok() {
+                    entries.push(asset_trash_entry(record, revision));
+                    continue;
+                }
+            }
+            invalid_entries += 1;
+        }
+        entries.sort_by(|left, right| {
+            right
+                .trashed_at_ms
+                .cmp(&left.trashed_at_ms)
+                .then_with(|| left.original_path.cmp(&right.original_path))
+        });
+        Ok(AssetTrashInventory {
+            entries,
+            invalid_entries,
+        })
+    }
+
+    pub fn trash_asset(
+        &mut self,
+        request: AssetTrashRequest,
+    ) -> Result<AssetTrashResult, ProjectError> {
+        let source_relative = normalize_asset_file_path(Path::new(&request.source_path))?;
+        let source_portable = portable_path(&source_relative);
+        if source_relative
+            .extension()
+            .and_then(|value| value.to_str())
+            .is_some_and(|value| value.eq_ignore_ascii_case("mscene"))
+        {
+            return Err(ProjectError::AssetTransaction(
+                "scenes use the dedicated scene lifecycle".into(),
+            ));
+        }
+        let current_tree_revision = self.asset_tree_revision()?;
+        if current_tree_revision != request.expected_tree_revision {
+            return Err(ProjectError::AssetTransaction(
+                "project assets changed since the delete reference scan; preview again".into(),
+            ));
+        }
+        let manifest_path = self.project_root.join("project.json");
+        let (manifest_revision, manifest_value) = read_stable_json_value(&manifest_path)?;
+        if manifest_revision != request.expected_manifest_revision {
+            return Err(ProjectError::AssetTransaction(
+                "project.json changed since the delete reference scan; preview again".into(),
+            ));
+        }
+        let mut manifest_references = Vec::new();
+        collect_manifest_asset_references(
+            &manifest_value,
+            &source_portable,
+            "",
+            &mut manifest_references,
+        );
+        if !manifest_references.is_empty() {
+            return Err(ProjectError::AssetTransaction(
+                "project.json still references this asset".into(),
+            ));
+        }
+        let surviving_references =
+            find_surviving_direct_asset_references(&self.project_root, &source_portable)?;
+        if !surviving_references.is_empty() {
+            return Err(ProjectError::AssetTransaction(format!(
+                "surviving project assets still reference this asset: {}",
+                surviving_references.join(", ")
+            )));
+        }
+        let source = self.resolve_regular_asset(&source_relative)?;
+        let source_metadata = std::fs::symlink_metadata(&source)?;
+        let source_revision = scene_file_revision(&source)?.ok_or_else(|| {
+            ProjectError::AssetTransaction(format!("asset not found: {source_portable}"))
+        })?;
+        if source_revision != request.expected_source_revision {
+            return Err(ProjectError::AssetTransaction(format!(
+                "asset changed on disk since delete preview: {source_portable}"
+            )));
+        }
+        let source_sidecar = mengine_assets::asset_sidecar_path(&source);
+        let metadata_revision = scene_file_revision(&source_sidecar)?.ok_or_else(|| {
+            ProjectError::AssetTransaction("asset metadata disappeared before delete".into())
+        })?;
+        let sidecar = mengine_assets::read_asset_sidecar(&source, "asset")
+            .map_err(ProjectError::AssetTransaction)?;
+        if sidecar.guid.0 != request.expected_guid {
+            return Err(ProjectError::AssetTransaction(format!(
+                "asset identity changed on disk since delete preview: {source_portable}"
+            )));
+        }
+        let source_sprite_import = path_with_suffix(&source, ".sprite.json");
+        let sprite_import_revision = match std::fs::symlink_metadata(&source_sprite_import) {
+            Ok(metadata) if metadata.file_type().is_symlink() || !metadata.is_file() => {
+                return Err(ProjectError::AssetTransaction(format!(
+                    "sprite import sidecar must be a regular file: {}",
+                    display_path(&source_sprite_import)
+                )));
+            }
+            Ok(_) => scene_file_revision(&source_sprite_import)?,
+            Err(error) if error.kind() == std::io::ErrorKind::NotFound => None,
+            Err(error) => return Err(ProjectError::Io(error)),
+        };
+        let trash_id = Uuid::new_v4();
+        let trash_directory = create_asset_trash_directory(&self.project_root, trash_id)?;
+        let trash_asset = trash_directory.join("asset");
+        let trash_metadata = trash_directory.join("asset.meta");
+        let trash_sprite_import = trash_directory.join("asset.sprite.json");
+        let record = AssetTrashRecord {
+            schema_version: ASSET_TRASH_SCHEMA_VERSION,
+            trash_id,
+            original_path: source_portable.clone(),
+            guid: request.expected_guid,
+            trashed_at_ms: unix_time_ms(),
+            size: source_metadata.len(),
+            has_sprite_import: sprite_import_revision.is_some(),
+            asset_revision: source_revision.clone(),
+            metadata_revision: metadata_revision.clone(),
+            sprite_import_revision: sprite_import_revision.clone(),
+        };
+        let record_path = trash_directory.join("record.json");
+        let mut record_bytes = serde_json::to_vec_pretty(&record)?;
+        record_bytes.push(b'\n');
+        if let Err(error) = write_new_synced(&record_path, &record_bytes) {
+            let _ = std::fs::remove_dir(&trash_directory);
+            return Err(ProjectError::Io(error));
+        }
+
+        let prepared = (|| -> Result<(), ProjectError> {
+            if self.asset_tree_revision()? != request.expected_tree_revision {
+                return Err(ProjectError::AssetTransaction(
+                    "project assets changed while delete was being prepared; preview again".into(),
+                ));
+            }
+            if scene_file_revision(&manifest_path)?.as_deref()
+                != Some(&request.expected_manifest_revision)
+            {
+                return Err(ProjectError::AssetTransaction(
+                    "project.json changed while delete was being prepared; preview again".into(),
+                ));
+            }
+            if self.resolve_regular_asset(&source_relative)? != source
+                || scene_file_revision(&source)?.as_deref() != Some(&source_revision)
+            {
+                return Err(ProjectError::AssetTransaction(
+                    "asset changed while delete was being prepared".into(),
+                ));
+            }
+            if scene_file_revision(&source_sidecar)?.as_deref() != Some(&metadata_revision) {
+                return Err(ProjectError::AssetTransaction(
+                    "asset metadata changed while delete was being prepared".into(),
+                ));
+            }
+            if record.has_sprite_import
+                && scene_file_revision(&source_sprite_import)? != sprite_import_revision
+            {
+                return Err(ProjectError::AssetTransaction(
+                    "sprite import sidecar changed while delete was being prepared".into(),
+                ));
+            }
+            Ok(())
+        })();
+        if let Err(error) = prepared {
+            let _ = std::fs::remove_file(&record_path);
+            let _ = std::fs::remove_dir(&trash_directory);
+            return Err(error);
+        }
+
+        let mut asset_moved = false;
+        let mut metadata_moved = false;
+        let mut sprite_import_moved = false;
+        let committed = (|| -> Result<(), ProjectError> {
+            std::fs::rename(&source, &trash_asset)?;
+            asset_moved = true;
+            std::fs::rename(&source_sidecar, &trash_metadata)?;
+            metadata_moved = true;
+            if record.has_sprite_import {
+                std::fs::rename(&source_sprite_import, &trash_sprite_import)?;
+                sprite_import_moved = true;
+            }
+            Ok(())
+        })();
+        if let Err(error) = committed {
+            let mut rollback_errors = Vec::new();
+            if sprite_import_moved {
+                if let Err(rollback) = std::fs::rename(&trash_sprite_import, &source_sprite_import)
+                {
+                    rollback_errors.push(format!("sprite import: {rollback}"));
+                }
+            }
+            if metadata_moved {
+                if let Err(rollback) = std::fs::rename(&trash_metadata, &source_sidecar) {
+                    rollback_errors.push(format!("metadata: {rollback}"));
+                }
+            }
+            if asset_moved {
+                if let Err(rollback) = std::fs::rename(&trash_asset, &source) {
+                    rollback_errors.push(format!("asset: {rollback}"));
+                }
+            }
+            if rollback_errors.is_empty() {
+                let _ = std::fs::remove_file(&record_path);
+                let _ = std::fs::remove_dir(&trash_directory);
+                return Err(error);
+            }
+            return Err(ProjectError::AssetTransaction(format!(
+                "delete move failed ({error}); rollback also failed: {}",
+                rollback_errors.join(", ")
+            )));
+        }
+        remove_empty_asset_parents(&self.project_root, &source);
+        self.revision = self.revision.saturating_add(1);
+        let record_revision = scene_file_revision(&record_path)?.ok_or_else(|| {
+            ProjectError::AssetTransaction("Trash record disappeared after delete".into())
+        })?;
+        Ok(AssetTrashResult {
+            entry: asset_trash_entry(record, record_revision),
+        })
+    }
+
+    pub fn restore_asset(
+        &mut self,
+        request: AssetRestoreRequest,
+    ) -> Result<AssetRestoreResult, ProjectError> {
+        let (record, record_revision, trash_directory) =
+            read_asset_trash_record(&self.project_root, request.trash_id)?;
+        if record_revision != request.expected_record_revision {
+            return Err(ProjectError::AssetTransaction(
+                "Trash record changed since it was listed; refresh Trash".into(),
+            ));
+        }
+        validate_asset_trash_payload(&trash_directory, &record)?;
+        let destination_relative = normalize_asset_file_path(Path::new(&record.original_path))?;
+        if project_contains_asset_guid(&self.project_root, record.guid)? {
+            return Err(ProjectError::AssetTransaction(format!(
+                "cannot restore because GUID {} is already used by another asset",
+                record.guid
+            )));
+        }
+        let (destination, created_directories) =
+            self.prepare_asset_destination(&destination_relative)?;
+        let destination_sidecar = mengine_assets::asset_sidecar_path(&destination);
+        let destination_sprite_import = path_with_suffix(&destination, ".sprite.json");
+        for target in [
+            &destination,
+            &destination_sidecar,
+            &destination_sprite_import,
+        ] {
+            match std::fs::symlink_metadata(target) {
+                Ok(_) => {
+                    return Err(ProjectError::AssetTransaction(format!(
+                        "restore target already exists: {}",
+                        display_path(target)
+                    )));
+                }
+                Err(error) if error.kind() == std::io::ErrorKind::NotFound => {}
+                Err(error) => return Err(ProjectError::Io(error)),
+            }
+        }
+        let create_directories = (|| -> Result<(), ProjectError> {
+            for directory in &created_directories {
+                std::fs::create_dir(directory)?;
+                self.ensure_under_root(std::fs::canonicalize(directory)?)?;
+            }
+            Ok(())
+        })();
+        if let Err(error) = create_directories {
+            remove_empty_directories(&created_directories);
+            return Err(error);
+        }
+        let trash_asset = trash_directory.join("asset");
+        let trash_metadata = trash_directory.join("asset.meta");
+        let trash_sprite_import = trash_directory.join("asset.sprite.json");
+        let mut asset_moved = false;
+        let mut metadata_moved = false;
+        let mut sprite_import_moved = false;
+        let committed = (|| -> Result<(), ProjectError> {
+            std::fs::rename(&trash_asset, &destination)?;
+            asset_moved = true;
+            std::fs::rename(&trash_metadata, &destination_sidecar)?;
+            metadata_moved = true;
+            if record.has_sprite_import {
+                std::fs::rename(&trash_sprite_import, &destination_sprite_import)?;
+                sprite_import_moved = true;
+            }
+            Ok(())
+        })();
+        if let Err(error) = committed {
+            let mut rollback_errors = Vec::new();
+            if sprite_import_moved {
+                if let Err(rollback) =
+                    std::fs::rename(&destination_sprite_import, &trash_sprite_import)
+                {
+                    rollback_errors.push(format!("sprite import: {rollback}"));
+                }
+            }
+            if metadata_moved {
+                if let Err(rollback) = std::fs::rename(&destination_sidecar, &trash_metadata) {
+                    rollback_errors.push(format!("metadata: {rollback}"));
+                }
+            }
+            if asset_moved {
+                if let Err(rollback) = std::fs::rename(&destination, &trash_asset) {
+                    rollback_errors.push(format!("asset: {rollback}"));
+                }
+            }
+            remove_empty_directories(&created_directories);
+            if rollback_errors.is_empty() {
+                return Err(error);
+            }
+            return Err(ProjectError::AssetTransaction(format!(
+                "restore move failed ({error}); rollback also failed: {}",
+                rollback_errors.join(", ")
+            )));
+        }
+        let _ = std::fs::remove_file(trash_directory.join("record.json"));
+        let _ = std::fs::remove_dir(&trash_directory);
+        self.revision = self.revision.saturating_add(1);
+        Ok(AssetRestoreResult {
+            trash_id: request.trash_id,
+            restored_path: portable_path(&destination_relative),
+            guid: record.guid,
         })
     }
 
@@ -1393,12 +1865,29 @@ impl ProjectSession {
     }
 
     fn resolve_regular_asset(&self, relative: &Path) -> Result<PathBuf, ProjectError> {
-        let requested = self.project_root.join(relative);
-        let metadata = std::fs::symlink_metadata(&requested)?;
-        if metadata.file_type().is_symlink() || !metadata.is_file() {
-            return Err(ProjectError::InvalidPath(portable_path(relative)));
+        let mut requested = self.project_root.clone();
+        let components = relative.components().collect::<Vec<_>>();
+        for (index, component) in components.iter().enumerate() {
+            let Component::Normal(segment) = component else {
+                return Err(ProjectError::InvalidPath(portable_path(relative)));
+            };
+            requested.push(segment);
+            let metadata = std::fs::symlink_metadata(&requested)?;
+            let is_last = index + 1 == components.len();
+            if metadata.file_type().is_symlink()
+                || (is_last && !metadata.is_file())
+                || (!is_last && !metadata.is_dir())
+            {
+                return Err(ProjectError::InvalidPath(portable_path(relative)));
+            }
         }
-        self.resolve_existing(relative)
+        let canonical = std::fs::canonicalize(&requested)?;
+        let assets = std::fs::canonicalize(self.project_root.join("Assets"))?;
+        if canonical.starts_with(assets) {
+            Ok(canonical)
+        } else {
+            Err(ProjectError::InvalidPath(portable_path(relative)))
+        }
     }
 
     fn resolve_for_write(&self, relative: &Path) -> Result<PathBuf, ProjectError> {
@@ -1498,6 +1987,412 @@ struct PreparedAssetUpdate {
     original_contents: Vec<u8>,
     staged_path: Option<PathBuf>,
     committed: bool,
+}
+
+fn unix_time_ms() -> u64 {
+    SystemTime::now()
+        .duration_since(UNIX_EPOCH)
+        .map(|duration| duration.as_millis().min(u128::from(u64::MAX)) as u64)
+        .unwrap_or_default()
+}
+
+fn asset_trash_entry(record: AssetTrashRecord, record_revision: String) -> AssetTrashEntry {
+    AssetTrashEntry {
+        trash_id: record.trash_id,
+        original_path: record.original_path,
+        guid: record.guid,
+        trashed_at_ms: record.trashed_at_ms,
+        size: record.size,
+        has_sprite_import: record.has_sprite_import,
+        record_revision,
+    }
+}
+
+fn create_asset_trash_directory(
+    project_root: &Path,
+    trash_id: Uuid,
+) -> Result<PathBuf, ProjectError> {
+    let mut current = project_root.to_path_buf();
+    for component in Path::new(ASSET_TRASH_ROOT).components() {
+        let Component::Normal(segment) = component else {
+            return Err(ProjectError::AssetTransaction(
+                "invalid project Trash root".into(),
+            ));
+        };
+        current.push(segment);
+        match std::fs::symlink_metadata(&current) {
+            Ok(metadata) if metadata.file_type().is_symlink() || !metadata.is_dir() => {
+                return Err(ProjectError::AssetTransaction(format!(
+                    "project Trash path must be a regular directory: {}",
+                    display_path(&current)
+                )));
+            }
+            Ok(_) => {}
+            Err(error) if error.kind() == std::io::ErrorKind::NotFound => {
+                std::fs::create_dir(&current)?;
+            }
+            Err(error) => return Err(ProjectError::Io(error)),
+        }
+        let canonical = std::fs::canonicalize(&current)?;
+        if !canonical.starts_with(project_root) {
+            return Err(ProjectError::InvalidPath(display_path(&canonical)));
+        }
+    }
+    let directory = current.join(trash_id.to_string());
+    std::fs::create_dir(&directory)?;
+    Ok(directory)
+}
+
+fn read_asset_trash_record(
+    project_root: &Path,
+    trash_id: Uuid,
+) -> Result<(AssetTrashRecord, String, PathBuf), ProjectError> {
+    let directory = project_root
+        .join(ASSET_TRASH_ROOT)
+        .join(trash_id.to_string());
+    let directory_metadata = std::fs::symlink_metadata(&directory)?;
+    if directory_metadata.file_type().is_symlink() || !directory_metadata.is_dir() {
+        return Err(ProjectError::AssetTransaction(
+            "Trash entry must be a regular directory".into(),
+        ));
+    }
+    let record_path = directory.join("record.json");
+    let metadata = std::fs::symlink_metadata(&record_path)?;
+    if metadata.file_type().is_symlink()
+        || !metadata.is_file()
+        || metadata.len() > MAX_ASSET_TRASH_RECORD_BYTES
+    {
+        return Err(ProjectError::AssetTransaction(
+            "Trash record must be a small regular file".into(),
+        ));
+    }
+    let revision = scene_file_revision(&record_path)?.ok_or_else(|| {
+        ProjectError::AssetTransaction("Trash record disappeared while being read".into())
+    })?;
+    let record: AssetTrashRecord = serde_json::from_slice(&std::fs::read(&record_path)?)?;
+    if record.schema_version != ASSET_TRASH_SCHEMA_VERSION || record.trash_id != trash_id {
+        return Err(ProjectError::AssetTransaction(
+            "Trash record identity or schema is invalid".into(),
+        ));
+    }
+    normalize_asset_file_path(Path::new(&record.original_path))?;
+    Ok((record, revision, directory))
+}
+
+fn validate_asset_trash_payload(
+    directory: &Path,
+    record: &AssetTrashRecord,
+) -> Result<(), ProjectError> {
+    let asset = directory.join("asset");
+    let metadata = directory.join("asset.meta");
+    if scene_file_revision(&asset)?.as_deref() != Some(&record.asset_revision) {
+        return Err(ProjectError::AssetTransaction(
+            "Trash asset payload was modified or is missing".into(),
+        ));
+    }
+    if scene_file_revision(&metadata)?.as_deref() != Some(&record.metadata_revision) {
+        return Err(ProjectError::AssetTransaction(
+            "Trash metadata payload was modified or is missing".into(),
+        ));
+    }
+    let sidecar = mengine_assets::read_asset_sidecar(&asset, "asset")
+        .map_err(ProjectError::AssetTransaction)?;
+    if sidecar.guid.0 != record.guid {
+        return Err(ProjectError::AssetTransaction(
+            "Trash metadata GUID does not match its record".into(),
+        ));
+    }
+    let sprite_import = directory.join("asset.sprite.json");
+    if record.has_sprite_import {
+        if scene_file_revision(&sprite_import)? != record.sprite_import_revision {
+            return Err(ProjectError::AssetTransaction(
+                "Trash Sprite Import payload was modified or is missing".into(),
+            ));
+        }
+    } else if std::fs::symlink_metadata(&sprite_import).is_ok() {
+        return Err(ProjectError::AssetTransaction(
+            "Trash entry contains an unexpected Sprite Import payload".into(),
+        ));
+    }
+    Ok(())
+}
+
+fn project_asset_tree_revision(project_root: &Path) -> Result<String, ProjectError> {
+    let assets = project_root.join("Assets");
+    let metadata = std::fs::symlink_metadata(&assets)?;
+    if metadata.file_type().is_symlink() || !metadata.is_dir() {
+        return Err(ProjectError::InvalidPath(display_path(&assets)));
+    }
+    let mut entries = Vec::new();
+    collect_asset_tree_entries(&assets, &assets, &mut entries)?;
+    entries.sort();
+    let mut hash = 0xcbf29ce484222325u64;
+    for entry in entries {
+        for byte in entry.as_bytes() {
+            hash ^= u64::from(*byte);
+            hash = hash.wrapping_mul(0x100000001b3);
+        }
+        hash ^= u64::from(b'\n');
+        hash = hash.wrapping_mul(0x100000001b3);
+    }
+    Ok(format!("{hash:016x}"))
+}
+
+fn find_surviving_direct_asset_references(
+    project_root: &Path,
+    target: &str,
+) -> Result<Vec<String>, ProjectError> {
+    const MAX_REFERENCE_BYTES: u64 = 8 * 1024 * 1024;
+    let assets = project_root.join("Assets");
+    let mut directories = vec![assets.clone()];
+    let mut references = Vec::new();
+    while let Some(directory) = directories.pop() {
+        for item in std::fs::read_dir(directory)? {
+            let item = item?;
+            let path = item.path();
+            let metadata = std::fs::symlink_metadata(&path)?;
+            if metadata.file_type().is_symlink() {
+                continue;
+            }
+            if metadata.is_dir() {
+                directories.push(path);
+                continue;
+            }
+            let relative = portable_path(
+                path.strip_prefix(project_root)
+                    .map_err(|_| ProjectError::InvalidPath(display_path(&path)))?,
+            );
+            if !metadata.is_file()
+                || relative.eq_ignore_ascii_case(target)
+                || relative.eq_ignore_ascii_case(&format!("{target}.sprite.json"))
+                || !is_reference_text_asset(&path)
+            {
+                continue;
+            }
+            if metadata.len() > MAX_REFERENCE_BYTES {
+                return Err(ProjectError::AssetTransaction(format!(
+                    "cannot verify oversized reference source: {relative}"
+                )));
+            }
+            let bytes = std::fs::read(&path)?;
+            let text = std::str::from_utf8(&bytes).map_err(|_| {
+                ProjectError::AssetTransaction(format!(
+                    "cannot verify non-UTF-8 reference source: {relative}"
+                ))
+            })?;
+            if contains_direct_asset_reference(text, target) {
+                references.push(relative);
+            }
+        }
+    }
+    references.sort();
+    Ok(references)
+}
+
+fn is_reference_text_asset(path: &Path) -> bool {
+    let extension = path
+        .extension()
+        .and_then(|value| value.to_str())
+        .unwrap_or_default()
+        .to_ascii_lowercase();
+    matches!(
+        extension.as_str(),
+        "json"
+            | "mscene"
+            | "prefab"
+            | "manim"
+            | "mcontroller"
+            | "mavatar"
+            | "mtimeline"
+            | "mmat"
+            | "mat"
+            | "minst"
+            | "mshader"
+            | "matlas"
+            | "gltf"
+            | "atlas"
+            | "ts"
+            | "tsx"
+            | "js"
+            | "jsx"
+    )
+}
+
+fn contains_direct_asset_reference(text: &str, target: &str) -> bool {
+    let text = text.replace('\\', "/").to_lowercase();
+    let target = target.replace('\\', "/").to_lowercase();
+    let mut offset = 0usize;
+    while let Some(relative) = text[offset..].find(&target) {
+        let start = offset + relative;
+        let end = start + target.len();
+        let path_character = |byte: u8| byte.is_ascii_alphanumeric() || b"_./-".contains(&byte);
+        let before = start
+            .checked_sub(1)
+            .and_then(|index| text.as_bytes().get(index));
+        let after = text.as_bytes().get(end);
+        if !before.is_some_and(|byte| path_character(*byte))
+            && !after.is_some_and(|byte| path_character(*byte))
+        {
+            return true;
+        }
+        offset = end.max(start + 1);
+    }
+    false
+}
+
+fn collect_asset_tree_entries(
+    root: &Path,
+    directory: &Path,
+    entries: &mut Vec<String>,
+) -> Result<(), ProjectError> {
+    for item in std::fs::read_dir(directory)? {
+        let item = item?;
+        let path = item.path();
+        let metadata = std::fs::symlink_metadata(&path)?;
+        let relative = portable_path(
+            path.strip_prefix(root)
+                .map_err(|_| ProjectError::InvalidPath(display_path(&path)))?,
+        );
+        if metadata.file_type().is_symlink() {
+            entries.push(format!("L:{relative}"));
+        } else if metadata.is_dir() {
+            entries.push(format!("D:{relative}"));
+            collect_asset_tree_entries(root, &path, entries)?;
+        } else if metadata.is_file() {
+            entries.push(format!("F:{relative}:{}", file_revision(&metadata)));
+        } else {
+            entries.push(format!("O:{relative}"));
+        }
+    }
+    Ok(())
+}
+
+fn file_revision(metadata: &std::fs::Metadata) -> String {
+    let modified_ns = metadata
+        .modified()
+        .ok()
+        .and_then(|modified| modified.duration_since(UNIX_EPOCH).ok())
+        .map(|duration| duration.as_nanos())
+        .unwrap_or_default();
+    format!("{modified_ns:x}-{:x}", metadata.len())
+}
+
+fn project_contains_asset_guid(project_root: &Path, guid: Uuid) -> Result<bool, ProjectError> {
+    let mut directories = vec![project_root.join("Assets")];
+    while let Some(directory) = directories.pop() {
+        for item in std::fs::read_dir(directory)? {
+            let item = item?;
+            let path = item.path();
+            let metadata = std::fs::symlink_metadata(&path)?;
+            if metadata.file_type().is_symlink() {
+                continue;
+            }
+            if metadata.is_dir() {
+                directories.push(path);
+                continue;
+            }
+            if !metadata.is_file()
+                || metadata.len() > MAX_ASSET_TRASH_RECORD_BYTES
+                || !path
+                    .file_name()
+                    .and_then(|value| value.to_str())
+                    .is_some_and(|value| value.to_ascii_lowercase().ends_with(".meta"))
+            {
+                continue;
+            }
+            let Ok(value) = serde_json::from_slice::<serde_json::Value>(&std::fs::read(&path)?)
+            else {
+                continue;
+            };
+            if metadata_guid(&value) == Some(guid) {
+                return Ok(true);
+            }
+        }
+    }
+    Ok(false)
+}
+
+fn metadata_guid(value: &serde_json::Value) -> Option<Uuid> {
+    let object = value.as_object()?;
+    for candidate in [
+        object.get("guid"),
+        object.get("uuid"),
+        object
+            .get("mengine")
+            .and_then(serde_json::Value::as_object)
+            .and_then(|mengine| mengine.get("guid")),
+    ] {
+        if let Some(guid) = candidate
+            .and_then(serde_json::Value::as_str)
+            .and_then(|raw| Uuid::parse_str(raw).ok())
+        {
+            return Some(guid);
+        }
+    }
+    None
+}
+
+fn collect_manifest_asset_references(
+    value: &serde_json::Value,
+    target: &str,
+    pointer: &str,
+    output: &mut Vec<AssetManifestReference>,
+) {
+    match value {
+        serde_json::Value::String(reference)
+            if reference
+                .split('#')
+                .next()
+                .unwrap_or(reference)
+                .replace('\\', "/")
+                .eq_ignore_ascii_case(target) =>
+        {
+            output.push(AssetManifestReference {
+                location: if pointer.is_empty() {
+                    "/".into()
+                } else {
+                    pointer.into()
+                },
+                reference: reference.clone(),
+            });
+        }
+        serde_json::Value::Array(values) => {
+            for (index, child) in values.iter().enumerate() {
+                collect_manifest_asset_references(
+                    child,
+                    target,
+                    &format!("{pointer}/{index}"),
+                    output,
+                );
+            }
+        }
+        serde_json::Value::Object(object) => {
+            for (key, child) in object {
+                let escaped = key.replace('~', "~0").replace('/', "~1");
+                collect_manifest_asset_references(
+                    child,
+                    target,
+                    &format!("{pointer}/{escaped}"),
+                    output,
+                );
+            }
+        }
+        _ => {}
+    }
+}
+
+fn remove_empty_asset_parents(project_root: &Path, asset: &Path) {
+    let assets = project_root.join("Assets");
+    let mut current = asset.parent();
+    while let Some(directory) = current {
+        if directory == assets || !directory.starts_with(&assets) {
+            break;
+        }
+        if std::fs::remove_dir(directory).is_err() {
+            break;
+        }
+        current = directory.parent();
+    }
 }
 
 fn portable_path(path: &Path) -> String {
@@ -1784,13 +2679,23 @@ fn scene_file_revision(path: &Path) -> Result<Option<String>, ProjectError> {
     if metadata.file_type().is_symlink() || !metadata.is_file() {
         return Err(ProjectError::InvalidPath(display_path(path)));
     }
-    let modified_ns = metadata
-        .modified()
-        .ok()
-        .and_then(|modified| modified.duration_since(UNIX_EPOCH).ok())
-        .map(|duration| duration.as_nanos())
-        .unwrap_or_default();
-    Ok(Some(format!("{modified_ns:x}-{:x}", metadata.len())))
+    Ok(Some(file_revision(&metadata)))
+}
+
+fn read_stable_json_value(path: &Path) -> Result<(String, serde_json::Value), ProjectError> {
+    for _ in 0..2 {
+        let before = scene_file_revision(path)?.ok_or_else(|| {
+            ProjectError::InvalidProject(format!("{} is missing", display_path(path)))
+        })?;
+        let value = serde_json::from_slice(&std::fs::read(path)?)?;
+        if scene_file_revision(path)?.as_deref() == Some(&before) {
+            return Ok((before, value));
+        }
+    }
+    Err(ProjectError::AssetTransaction(format!(
+        "{} changed repeatedly while it was read",
+        display_path(path)
+    )))
 }
 
 fn validate_project_name(name: &str) -> Result<&str, ProjectError> {
@@ -1841,6 +2746,7 @@ fn initialize_project(root: &Path, name: &str) -> Result<(), ProjectError> {
         "ProjectSettings",
         ".mengine/Library",
         ".mengine/Recovery",
+        ".mengine/Trash",
         ".mengine/Temp",
         ".mengine/Logs",
     ] {
@@ -2821,6 +3727,138 @@ mod tests {
             std::fs::read(root.join("Assets/Characters/Hero Copy.gltf.sprite.json")).unwrap(),
             std::fs::read(source_import).unwrap()
         );
+        std::fs::remove_dir_all(root).unwrap();
+    }
+
+    #[test]
+    fn asset_trash_is_tree_guarded_and_restores_the_same_identity() {
+        let root = make_project();
+        std::fs::create_dir_all(root.join("Assets/Textures/UI")).unwrap();
+        let source = root.join("Assets/Textures/UI/Icon.png");
+        let source_import = root.join("Assets/Textures/UI/Icon.png.sprite.json");
+        std::fs::write(&source, b"png-bytes").unwrap();
+        std::fs::write(&source_import, br#"{"version":1,"ppu":100}"#).unwrap();
+        let guid = mengine_assets::ensure_asset_sidecar(&source, "texture")
+            .unwrap()
+            .guid
+            .0;
+        let mut session = ProjectSession::open(&root).unwrap();
+        let stale_snapshot = session
+            .asset_delete_snapshot("Assets/Textures/UI/Icon.png")
+            .unwrap();
+        std::fs::create_dir_all(root.join("Assets/Prefabs")).unwrap();
+        std::fs::write(root.join("Assets/Prefabs/New.prefab"), "{}").unwrap();
+        let error = session
+            .trash_asset(AssetTrashRequest {
+                source_path: "Assets/Textures/UI/Icon.png".into(),
+                expected_source_revision: scene_file_revision(&source).unwrap().unwrap(),
+                expected_guid: guid,
+                expected_tree_revision: stale_snapshot.tree_revision,
+                expected_manifest_revision: stale_snapshot.manifest_revision,
+            })
+            .unwrap_err();
+        assert!(error
+            .to_string()
+            .contains("changed since the delete reference scan"));
+        assert!(source.is_file());
+
+        let manifest_path = root.join("project.json");
+        let mut manifest: serde_json::Value =
+            serde_json::from_slice(&std::fs::read(&manifest_path).unwrap()).unwrap();
+        manifest["startupScript"] = json!("Assets/Textures/UI/Icon.png");
+        std::fs::write(
+            &manifest_path,
+            serde_json::to_vec_pretty(&manifest).unwrap(),
+        )
+        .unwrap();
+        let blocked_snapshot = session
+            .asset_delete_snapshot("Assets/Textures/UI/Icon.png")
+            .unwrap();
+        assert_eq!(blocked_snapshot.manifest_references.len(), 1);
+        assert_eq!(
+            blocked_snapshot.manifest_references[0].location,
+            "/startupScript"
+        );
+        let error = session
+            .trash_asset(AssetTrashRequest {
+                source_path: "Assets/Textures/UI/Icon.png".into(),
+                expected_source_revision: scene_file_revision(&source).unwrap().unwrap(),
+                expected_guid: guid,
+                expected_tree_revision: blocked_snapshot.tree_revision,
+                expected_manifest_revision: blocked_snapshot.manifest_revision,
+            })
+            .unwrap_err();
+        assert!(error.to_string().contains("project.json still references"));
+        manifest.as_object_mut().unwrap().remove("startupScript");
+        std::fs::write(
+            &manifest_path,
+            serde_json::to_vec_pretty(&manifest).unwrap(),
+        )
+        .unwrap();
+
+        let dependent_path = root.join("Assets/Prefabs/New.prefab");
+        std::fs::write(
+            &dependent_path,
+            r#"{"texture":"Assets/Textures/UI/Icon.png"}"#,
+        )
+        .unwrap();
+        let blocked_snapshot = session
+            .asset_delete_snapshot("Assets/Textures/UI/Icon.png")
+            .unwrap();
+        let error = session
+            .trash_asset(AssetTrashRequest {
+                source_path: "Assets/Textures/UI/Icon.png".into(),
+                expected_source_revision: scene_file_revision(&source).unwrap().unwrap(),
+                expected_guid: guid,
+                expected_tree_revision: blocked_snapshot.tree_revision,
+                expected_manifest_revision: blocked_snapshot.manifest_revision,
+            })
+            .unwrap_err();
+        assert!(error.to_string().contains("New.prefab"));
+        std::fs::write(&dependent_path, "{}").unwrap();
+
+        let snapshot = session
+            .asset_delete_snapshot("Assets/Textures/UI/Icon.png")
+            .unwrap();
+        let result = session
+            .trash_asset(AssetTrashRequest {
+                source_path: "Assets/Textures/UI/Icon.png".into(),
+                expected_source_revision: scene_file_revision(&source).unwrap().unwrap(),
+                expected_guid: guid,
+                expected_tree_revision: snapshot.tree_revision,
+                expected_manifest_revision: snapshot.manifest_revision,
+            })
+            .unwrap();
+        assert!(!source.exists());
+        assert!(!mengine_assets::asset_sidecar_path(&source).exists());
+        assert!(!source_import.exists());
+        let inventory = session.list_asset_trash().unwrap();
+        assert_eq!(inventory.entries.len(), 1);
+        assert_eq!(inventory.invalid_entries, 0);
+        assert_eq!(inventory.entries[0].trash_id, result.entry.trash_id);
+        assert_eq!(inventory.entries[0].guid, guid);
+
+        let restored = session
+            .restore_asset(AssetRestoreRequest {
+                trash_id: inventory.entries[0].trash_id,
+                expected_record_revision: inventory.entries[0].record_revision.clone(),
+            })
+            .unwrap();
+        assert_eq!(restored.restored_path, "Assets/Textures/UI/Icon.png");
+        assert_eq!(restored.guid, guid);
+        assert_eq!(std::fs::read(&source).unwrap(), b"png-bytes");
+        assert_eq!(
+            mengine_assets::read_asset_sidecar(&source, "texture")
+                .unwrap()
+                .guid
+                .0,
+            guid
+        );
+        assert_eq!(
+            std::fs::read_to_string(&source_import).unwrap(),
+            r#"{"version":1,"ppu":100}"#
+        );
+        assert!(session.list_asset_trash().unwrap().entries.is_empty());
         std::fs::remove_dir_all(root).unwrap();
     }
 

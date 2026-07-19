@@ -1243,3 +1243,15 @@ Rust workspace 检查现在零警告通过；Tauri Host 17/17 常规测试与 1/
 - 第一遍自省补上 metadata importer 扩展字段与 Sprite Import 的独立 Revision；否则主资产未变时仍可能复制到旧导入配置。第二遍自省修正 `.glb` 被当作 JSON、Host `canonicalize` 先解析符号链接导致请求路径本身未被验证，以及连续 Duplicate 默认名称冲突的问题；Rename 的源文件和每个引用更新源也统一改为请求路径 `lstat` 普通非链接文件后再解析真实路径。
 
 本批完成了单资产 Duplicate 的身份和落盘闭环，但还没有文件夹/多选 Duplicate、Prefab Variant、跨资源内部 GUID 引用重映射、导入器生成子资产 GUID 规则或跨卷大文件流式进度。下一阶段优先实现引用阻断、可恢复回收站与 Restore，再开放通用 Delete；永久删除仍不直接暴露给普通 Project 菜单。
+
+## 104. 2026-07-19 引用阻断 Delete、项目回收站与 Restore
+
+- 健康 GUID 的非 Scene 主资源新增 `Move to Trash`，Delete 键和右键菜单共用同一入口；普通 Project 菜单不提供永久删除。预览先执行 Save All 和独立 Dock 脏文档互斥，再在引用扫描前后分别读取 Assets 全树 Revision 与 `project.json` Revision；路径、目录、普通文件/符号链接、metadata、Sprite Import 或 manifest 在扫描期间发生任何变化都会要求重新预览，提交时 Host 再复核同一快照。
+- Scene、Prefab、Material、Animator、Timeline、glTF、Spine Atlas 与脚本等继续复用反向引用器；目标资产及其 Sprite Import sidecar 内部自引用随目标一起进入回收站，不阻止删除，所有仍存活文件的引用都会展示来源、JSON Pointer/行列并阻止提交。`project.json` 现在从真实磁盘稳定读取，`startupScript`、`alwaysInclude` 和未知扩展字段中的精确路径同样以 JSON Pointer 进入阻断列表，而不是只相信进程内旧 Manifest。达到结果上限时强制阻止；未扫描的已知二进制/超限文件必须由用户显式确认当前导入器依赖声明仍不完整。即使绕过 UI 直接调用 Host，Host/Vite 也会重新扫描所有受支持 UTF-8 作者文件中的直接路径并拒绝存活引用或无法权威读取的超限/非 UTF-8 来源，前端零结果不是唯一安全边界。
+- Rust Host 和 Vite 开发桥将资产正文、`.meta` 与 `.sprite.json` 同卷移动到 `.mengine/Trash/<UUID>/`，记录原路径、稳定 GUID、删除时间、大小以及三个载荷各自 Revision。记录先同步落盘，再次复核 Assets/Manifest 与 sidecar 后才移动；中途失败按相反顺序恢复。原 Assets 空目录只做安全的自底向上清理，回收站目录和文件必须是非符号链接普通对象。
+- Project 工具栏新增 Trash 浏览器。Restore 重新验证记录和所有载荷 Revision、metadata GUID、目标路径及 sidecar 全部不存在，并扫描当前 Assets metadata 拒绝重复 GUID；恢复仍使用原 GUID，因此现有版本控制或未来 GUID 引用可以重新连上。成功后记录目录清理失败不会撤销已经恢复的权威资产，但该残留会作为损坏条目统计；损坏、篡改或不完整的 Trash 记录不允许一键恢复，也不会静默消失，界面明确显示需人工检查 `.mengine/Trash` 的数量。
+- 资产生命周期事件新增跨 WebView BroadcastChannel。Rename/Delete 会让已保存的独立 Dock 资源编辑器同步重映射或关闭并清除旧 Undo scope；Duplicate/Restore 也会刷新其他窗口的 Project 索引。这样独立窗口不会在删除完成后继续把旧草稿保存回原路径，主窗口本地 DOM 事件不再是唯一通知边界。
+
+第一遍自省发现“主窗口已关闭文档”并不覆盖已保存的独立 Dock 窗口，因此补齐 Rename/Delete/Create/Restore 跨 WebView 生命周期广播。第二遍自省发现 Assets 引用为零仍可能漏掉 `project.json`，并且损坏回收站记录被静默跳过；最终把真实 Manifest Revision/JSON Pointer 纳入预览与提交门禁，同时让 Trash Inventory 显示不可安全恢复的损坏条目数。提交前的最后路径审计又发现只 `lstat` 文件本身仍会跟随祖先 symlink，现已让 Host/Vite 对 Rename 更新源、Duplicate 和 Delete 的每一级 Assets 祖先重新验证为普通目录，并要求最终 canonical 路径仍位于真实 Assets 根下。
+
+本批仍没有永久清空、单条永久销毁、Trash 容量/保留策略、文件夹与多选事务、版本控制 checkout/lock、导入器声明式二进制依赖图、GUID 引用自动重连或缺失引用修复。下一阶段应先把导入器依赖声明和文件夹级计划建立在同一事务快照上，再决定何时开放受二次确认保护的永久清理。

@@ -33,7 +33,6 @@ import { MenuBar } from './panels/MenuBar';
 import { ToolBar } from './panels/ToolBar';
 import { Hierarchy } from './panels/Hierarchy';
 import { Inspector } from './panels/Inspector';
-import { Project } from './panels/Project';
 import { Console } from './panels/Console';
 import {
   OPEN_ANIMATION_CLIP_EVENT,
@@ -52,6 +51,7 @@ import {
   openSpriteAsset,
   OPEN_SPRITE_ATLAS_EVENT,
   openSpriteAtlasAsset,
+  type ProjectAssetLifecycleDetail,
 } from './assetEditorEvents';
 import {
   pollProjectFileChanges,
@@ -85,6 +85,7 @@ import { saveAllResources } from './saveAll';
 import './editorWindow'; // MenuItem side-effects
 
 const Timeline = lazy(async () => ({ default: (await import('./panels/Timeline')).Timeline }));
+const Project = lazy(async () => ({ default: (await import('./panels/Project')).Project }));
 const Sequencer = lazy(async () => ({ default: (await import('./panels/Sequencer')).Sequencer }));
 const AnimatorEditor = lazy(async () => ({ default: (await import('./panels/Animator')).AnimatorEditor }));
 const MaterialEditor = lazy(async () => ({ default: (await import('./panels/Material')).MaterialEditor }));
@@ -366,7 +367,48 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
         && !window.confirm('Sprite Atlas has unsaved changes. Discard them and open another atlas?')) return;
       setSpriteAtlasPath(path);
     };
-    const assetsChanged = () => bumpScenes();
+    const assetsChanged = (event: Event) => {
+      const detail = (event as CustomEvent<
+        (ProjectAssetLifecycleDetail & { remote?: boolean }) | undefined
+      >).detail;
+      if (detail?.remote && (detail.action === 'renamed' || detail.action === 'deleted')) {
+        const remap = (value: string | null): string | null => {
+          if (!value) return value;
+          const marker = value.indexOf('#');
+          const file = marker < 0 ? value : value.slice(0, marker);
+          const fragment = marker < 0 ? '' : value.slice(marker);
+          if (file.replace(/\\/g, '/').toLocaleLowerCase()
+            !== detail.sourcePath.toLocaleLowerCase()) return value;
+          return detail.action === 'renamed' ? `${detail.destinationPath}${fragment}` : null;
+        };
+        setMaterialPath(remap);
+        setShaderPath(remap);
+        setAnimatorPath(remap);
+        setSpritePath(remap);
+        setSpriteAtlasPath(remap);
+        setAnimationAssetPath(remap);
+        setTimelineAssetPath(remap);
+        for (const scope of [
+          'animation',
+          'timeline',
+          'animator',
+          'avatar-mask',
+          'material',
+          'material-instance',
+          'surface-shader',
+        ]) undoService.clear(`${scope}:${detail.sourcePath}`);
+        setAssetReloadEpoch((current) => ({
+          animation: current.animation + 1,
+          sequencer: current.sequencer + 1,
+          animator: current.animator + 1,
+          material: current.material + 1,
+          shader: current.shader + 1,
+          sprite: current.sprite + 1,
+          spriteAtlas: current.spriteAtlas + 1,
+        }));
+      }
+      bumpScenes();
+    };
     window.addEventListener(OPEN_MATERIAL_EVENT, openMaterial);
     window.addEventListener(OPEN_SURFACE_SHADER_EVENT, openShader);
     window.addEventListener(OPEN_ANIMATOR_EVENT, openAnimator);
@@ -1545,7 +1587,7 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
               onPrepareAssetTransaction={async () => {
                 if (hasUnsavedChanges) {
                   if (!window.confirm(
-                    'Renaming an asset migrates references on disk. Save the current scene and all resource documents before continuing?',
+                    'This asset transaction changes project files on disk. Save the current scene and all resource documents before continuing?',
                   )) return false;
                   if (!await saveEverything()) return false;
                   workspaceDirtyRef.current = false;
@@ -1558,8 +1600,8 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
                 const remoteDirty = await queryRemoteDirtyPanels();
                 if (remoteDirty.length > 0) {
                   const panels = remoteDirty.join(', ');
-                  log(`Asset rename blocked by unsaved changes in detached window(s): ${panels}.`, 'warn');
-                  window.alert(`Save or discard changes in the detached window(s) before renaming assets:\n\n${panels}`);
+                  log(`Asset transaction blocked by unsaved changes in detached window(s): ${panels}.`, 'warn');
+                  window.alert(`Save or discard changes in the detached window(s) before changing project assets:\n\n${panels}`);
                   return false;
                 }
                 return true;
@@ -1582,6 +1624,43 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
                 setSpriteAtlasPath(remap);
                 setAnimationAssetPath(remap);
                 setTimelineAssetPath(remap);
+                for (const scope of [
+                  'animation',
+                  'timeline',
+                  'animator',
+                  'avatar-mask',
+                  'material',
+                  'material-instance',
+                  'surface-shader',
+                ]) undoService.clear(`${scope}:${sourcePath}`);
+                setAssetReloadEpoch((current) => ({
+                  animation: current.animation + 1,
+                  sequencer: current.sequencer + 1,
+                  animator: current.animator + 1,
+                  material: current.material + 1,
+                  shader: current.shader + 1,
+                  sprite: current.sprite + 1,
+                  spriteAtlas: current.spriteAtlas + 1,
+                }));
+                bumpScenes();
+              }}
+              onAssetDeleted={(sourcePath) => {
+                const closeDeleted = (value: string | null): string | null => {
+                  if (!value) return value;
+                  const marker = value.indexOf('#');
+                  const file = marker < 0 ? value : value.slice(0, marker);
+                  return file.replace(/\\/g, '/').toLocaleLowerCase()
+                    === sourcePath.toLocaleLowerCase()
+                    ? null
+                    : value;
+                };
+                setMaterialPath(closeDeleted);
+                setShaderPath(closeDeleted);
+                setAnimatorPath(closeDeleted);
+                setSpritePath(closeDeleted);
+                setSpriteAtlasPath(closeDeleted);
+                setAnimationAssetPath(closeDeleted);
+                setTimelineAssetPath(closeDeleted);
                 for (const scope of [
                   'animation',
                   'timeline',

@@ -8,6 +8,42 @@ export const OPEN_SPRITE_ATLAS_EVENT = 'mengine:open-sprite-atlas';
 export const PROJECT_ASSETS_CHANGED_EVENT = 'mengine:project-assets-changed';
 export const PROJECT_ASSETS_EXTERNAL_CHANGE_EVENT = 'mengine:project-assets-external-change';
 
+export type ProjectAssetLifecycleDetail =
+  | { action: 'renamed'; sourcePath: string; destinationPath: string }
+  | { action: 'deleted'; sourcePath: string }
+  | { action: 'created' | 'restored'; destinationPath: string };
+
+type ProjectAssetLifecycleMessage = ProjectAssetLifecycleDetail & {
+  sender: string;
+  timestamp: number;
+};
+
+const ASSET_CHANNEL = 'mengine.editor.assets.v1';
+const assetSender = crypto.randomUUID();
+const assetChannel = typeof BroadcastChannel === 'undefined'
+  ? null
+  : new BroadcastChannel(ASSET_CHANNEL);
+
+assetChannel?.addEventListener('message', (event: MessageEvent<ProjectAssetLifecycleMessage>) => {
+  const message = event.data;
+  if (!message || message.sender === assetSender) return;
+  window.dispatchEvent(new CustomEvent(PROJECT_ASSETS_CHANGED_EVENT, {
+    detail: { ...message, remote: true },
+  }));
+});
+
+export function broadcastProjectAssetsChanged(detail: ProjectAssetLifecycleDetail): void {
+  const message: ProjectAssetLifecycleMessage = {
+    ...detail,
+    sender: assetSender,
+    timestamp: Date.now(),
+  };
+  window.dispatchEvent(new CustomEvent(PROJECT_ASSETS_CHANGED_EVENT, {
+    detail: { ...message, remote: false },
+  }));
+  assetChannel?.postMessage(message);
+}
+
 function openAsset(eventName: string, panel: string, path: string): void {
   window.dispatchEvent(new CustomEvent(eventName, { detail: path }));
   window.dispatchEvent(new CustomEvent('mengine:focus-panel', { detail: panel }));

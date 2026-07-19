@@ -3002,6 +3002,68 @@ body.insp-scrubbing * {
   opacity: 0.45;
 }
 
+.asset-trash-list {
+  min-height: 0;
+  flex: 1;
+  overflow: auto;
+  scrollbar-color: #666 #202226;
+  scrollbar-width: thin;
+}
+
+.asset-trash-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 14px;
+  padding: 10px 14px;
+  border-bottom: 1px solid #3d4147;
+}
+
+.asset-trash-row > div {
+  min-width: 0;
+  display: grid;
+  gap: 3px;
+}
+
+.asset-trash-row strong,
+.asset-trash-row span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.asset-trash-row strong {
+  color: #d8dadd;
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.asset-trash-row span {
+  color: #8f959e;
+  font: 10px ui-monospace, SFMono-Regular, Consolas, monospace;
+}
+
+.asset-trash-row button {
+  height: 28px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border: 1px solid #565b63;
+  border-radius: 0;
+  background: #3a3e44;
+  color: #d6d9dd;
+  padding: 0 10px;
+}
+
+.asset-trash-row button:hover:not(:disabled) {
+  border-color: #4d8ab7;
+  background: #315f80;
+}
+
+.asset-trash-row button:disabled {
+  opacity: 0.45;
+}
+
 @media (max-width: 720px) {
   .asset-rename-form {
     grid-template-columns: 1fr;
@@ -3009,6 +3071,10 @@ body.insp-scrubbing * {
 
   .asset-rename-form > span {
     grid-column: 1;
+  }
+
+  .asset-trash-row {
+    grid-template-columns: 1fr;
   }
 }
 

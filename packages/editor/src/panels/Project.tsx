@@ -21,6 +21,8 @@ import {
   Music,
   Package,
   Palette,
+  RotateCcw,
+  Trash2,
   Upload,
   Workflow,
 } from 'lucide-react';
@@ -63,7 +65,15 @@ import {
   type AssetDuplicatePlan,
   type AssetRenamePlan,
 } from '../assetRename';
-import { PROJECT_ASSETS_CHANGED_EVENT } from '../assetEditorEvents';
+import {
+  applyProjectAssetTrash,
+  listProjectAssetTrash,
+  prepareProjectAssetTrash,
+  restoreProjectAsset,
+  type AssetTrashEntry,
+  type AssetTrashPlan,
+} from '../assetTrash';
+import { broadcastProjectAssetsChanged } from '../assetEditorEvents';
 
 const STATIC_FOLDERS = [
   'Assets',
@@ -123,6 +133,7 @@ export function Project(props: {
   onDeleteScene: (name: string) => boolean | Promise<boolean>;
   onPrepareAssetTransaction: () => boolean | Promise<boolean>;
   onAssetRenamed: (sourcePath: string, destinationPath: string) => void;
+  onAssetDeleted: (sourcePath: string) => void;
   onLog?: (msg: string, level?: 'info' | 'warn' | 'error') => void;
 }) {
   const [folder, setFolder] = useState('Assets/Scenes');
@@ -158,12 +169,28 @@ export function Project(props: {
     manualConfirmed: boolean;
     error: string | null;
   } | null>(null);
+  const [assetTrash, setAssetTrash] = useState<{
+    asset: AssetItem;
+    loading: boolean;
+    applying: boolean;
+    plan: AssetTrashPlan | null;
+    skippedConfirmed: boolean;
+    error: string | null;
+  } | null>(null);
+  const [trashBrowser, setTrashBrowser] = useState<{
+    loading: boolean;
+    restoring: string | null;
+    entries: AssetTrashEntry[];
+    invalidEntries: number;
+    error: string | null;
+  } | null>(null);
   const lastClick = useRef<{ key: string; t: number }>({ key: '', t: 0 });
   const rootRef = useRef<HTMLDivElement>(null);
   const cardRefs = useRef<Map<string, HTMLDivElement>>(new Map());
   const referenceRequest = useRef(0);
   const renameRequest = useRef(0);
   const duplicateRequest = useRef(0);
+  const trashRequest = useRef(0);
 
   useEffect(() => {
     void Promise.all([refreshScripts(), refreshSprites(), refreshProjectFiles()])
@@ -600,7 +627,11 @@ export function Project(props: {
       const result = await applyProjectAssetRename(state.plan);
       if (renameRequest.current !== request) return;
       props.onAssetRenamed(result.sourcePath, result.destinationPath);
-      window.dispatchEvent(new CustomEvent(PROJECT_ASSETS_CHANGED_EVENT, { detail: result }));
+      broadcastProjectAssetsChanged({
+        action: 'renamed',
+        sourcePath: result.sourcePath,
+        destinationPath: result.destinationPath,
+      });
       setSelected(state.asset.assetKey);
       setLibTick((tick) => tick + 1);
       props.onLog?.(
@@ -699,7 +730,7 @@ export function Project(props: {
       }
       const result = await applyProjectAssetDuplicate(state.plan);
       if (duplicateRequest.current !== request) return;
-      window.dispatchEvent(new CustomEvent(PROJECT_ASSETS_CHANGED_EVENT, { detail: result }));
+      broadcastProjectAssetsChanged({ action: 'created', destinationPath: result.destinationPath });
       setLibTick((tick) => tick + 1);
       props.onLog?.(`Duplicated ${result.sourcePath} to ${result.destinationPath} with new GUID ${result.guid}.`);
       closeAssetDuplicate();
@@ -709,6 +740,139 @@ export function Project(props: {
       const message = error instanceof Error ? error.message : String(error);
       setAssetDuplicate((current) => current && ({ ...current, applying: false, error: message }));
       props.onLog?.(`Asset duplicate failed: ${message}`, 'error');
+    }
+  };
+
+  const requestAssetTrash = (asset: AssetItem) => {
+    if (!canRenameAsset(asset) || !asset.assetPath) return;
+    trashRequest.current += 1;
+    setCtx(null);
+    setAssetTrash({
+      asset,
+      loading: false,
+      applying: false,
+      plan: null,
+      skippedConfirmed: false,
+      error: null,
+    });
+  };
+
+  const closeAssetTrash = () => {
+    trashRequest.current += 1;
+    setAssetTrash(null);
+  };
+
+  const previewAssetTrash = async () => {
+    if (!assetTrash?.asset.assetPath || assetTrash.loading || assetTrash.applying) return;
+    const request = ++trashRequest.current;
+    setAssetTrash((current) => current && ({
+      ...current,
+      loading: true,
+      plan: null,
+      skippedConfirmed: false,
+      error: null,
+    }));
+    try {
+      if (!await props.onPrepareAssetTransaction()) {
+        if (trashRequest.current === request) {
+          setAssetTrash((current) => current && ({ ...current, loading: false }));
+        }
+        return;
+      }
+      const plan = await prepareProjectAssetTrash(assetTrash.asset.assetPath);
+      if (trashRequest.current !== request) return;
+      setAssetTrash((current) => current && ({ ...current, loading: false, plan }));
+    } catch (error) {
+      if (trashRequest.current !== request) return;
+      setAssetTrash((current) => current && ({
+        ...current,
+        loading: false,
+        error: error instanceof Error ? error.message : String(error),
+      }));
+    }
+  };
+
+  const commitAssetTrash = async () => {
+    const state = assetTrash;
+    if (!state?.plan || state.loading || state.applying) return;
+    const report = state.plan.referenceReport;
+    if (report.references.length > 0 || report.truncated) return;
+    if (report.skippedFiles > 0 && !state.skippedConfirmed) return;
+    const request = ++trashRequest.current;
+    setAssetTrash((current) => current && ({ ...current, applying: true, error: null }));
+    try {
+      if (!await props.onPrepareAssetTransaction()) {
+        if (trashRequest.current === request) {
+          setAssetTrash((current) => current && ({ ...current, applying: false }));
+        }
+        return;
+      }
+      const result = await applyProjectAssetTrash(state.plan);
+      if (trashRequest.current !== request) return;
+      props.onAssetDeleted(result.entry.originalPath);
+      broadcastProjectAssetsChanged({ action: 'deleted', sourcePath: result.entry.originalPath });
+      setSelected(null);
+      setLibTick((tick) => tick + 1);
+      props.onLog?.(`Moved ${result.entry.originalPath} to project Trash. Its GUID is preserved for Restore.`);
+      closeAssetTrash();
+    } catch (error) {
+      if (trashRequest.current !== request) return;
+      const message = error instanceof Error ? error.message : String(error);
+      setAssetTrash((current) => current && ({ ...current, applying: false, error: message }));
+      props.onLog?.(`Move to Trash failed: ${message}`, 'error');
+    }
+  };
+
+  const openTrashBrowser = async () => {
+    setTrashBrowser({
+      loading: true,
+      restoring: null,
+      entries: [],
+      invalidEntries: 0,
+      error: null,
+    });
+    try {
+      const inventory = await listProjectAssetTrash();
+      setTrashBrowser({
+        loading: false,
+        restoring: null,
+        entries: inventory.entries,
+        invalidEntries: inventory.invalidEntries,
+        error: null,
+      });
+    } catch (error) {
+      setTrashBrowser({
+        loading: false,
+        restoring: null,
+        entries: [],
+        invalidEntries: 0,
+        error: error instanceof Error ? error.message : String(error),
+      });
+    }
+  };
+
+  const restoreTrashEntry = async (entry: AssetTrashEntry) => {
+    if (!trashBrowser || trashBrowser.restoring) return;
+    setTrashBrowser((current) => current && ({ ...current, restoring: entry.trashId, error: null }));
+    try {
+      if (!await props.onPrepareAssetTransaction()) {
+        setTrashBrowser((current) => current && ({ ...current, restoring: null }));
+        return;
+      }
+      const result = await restoreProjectAsset(entry);
+      broadcastProjectAssetsChanged({ action: 'restored', destinationPath: result.restoredPath });
+      setLibTick((tick) => tick + 1);
+      setTrashBrowser((current) => current && ({
+        ...current,
+        restoring: null,
+        entries: current.entries.filter((candidate) => candidate.trashId !== entry.trashId),
+      }));
+      props.onLog?.(`Restored ${result.restoredPath} from project Trash with GUID ${result.guid}.`);
+      pingProjectAsset(result.restoredPath);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      setTrashBrowser((current) => current && ({ ...current, restoring: null, error: message }));
+      props.onLog?.(`Asset Restore failed: ${message}`, 'error');
     }
   };
 
@@ -766,6 +930,15 @@ export function Project(props: {
           >
             <Upload size={13} aria-hidden="true" />
             {importing ? 'Importing...' : 'Import'}
+          </button>
+          <button
+            type="button"
+            className="project-import-button"
+            title="Open recoverable project Trash"
+            onClick={() => void openTrashBrowser()}
+          >
+            <Trash2 size={13} aria-hidden="true" />
+            Trash
           </button>
           <span className="project-folder-path" title={folder}>{folder}</span>
         </div>
@@ -875,6 +1048,7 @@ export function Project(props: {
                   event.preventDefault();
                   event.stopPropagation();
                   if (a.kind === 'scene' && a.sceneName) requestDeleteScene(a.sceneName);
+                  else requestAssetTrash(a);
                   return;
                 }
                 if (event.key === 'Enter') {
@@ -1056,6 +1230,16 @@ export function Project(props: {
                   }}
                 >
                   Duplicate
+                </button>
+                <button
+                  type="button"
+                  onPointerDown={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    requestAssetTrash(ctx.asset);
+                  }}
+                >
+                  Move to Trash <span className="hint">Del</span>
                 </button>
               </>
             )}
@@ -1428,6 +1612,228 @@ export function Project(props: {
                   {assetDuplicate.applying ? 'Duplicating...' : 'Commit Duplicate'}
                 </button>
               )}
+            </footer>
+          </section>
+        </div>,
+        document.body,
+      )}
+      {assetTrash && createPortal(
+        <div
+          className="asset-reference-backdrop"
+          role="presentation"
+          onPointerDown={() => {
+            if (!assetTrash.applying) closeAssetTrash();
+          }}
+        >
+          <section
+            className="asset-reference-dialog asset-rename-dialog"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="asset-trash-title"
+            onKeyDown={(event) => {
+              if (event.key === 'Escape' && !assetTrash.applying) closeAssetTrash();
+            }}
+            onPointerDown={(event) => event.stopPropagation()}
+          >
+            <header>
+              <div>
+                <strong id="asset-trash-title">Move Asset to Trash</strong>
+                <span>{assetTrash.asset.assetPath}</span>
+              </div>
+              <button
+                type="button"
+                aria-label="Close asset Trash preview"
+                disabled={assetTrash.applying}
+                onClick={closeAssetTrash}
+              >×</button>
+            </header>
+            {!assetTrash.plan && !assetTrash.loading && !assetTrash.error && (
+              <div className="asset-reference-summary">
+                Save all documents, lock the complete Assets tree revision, then scan surviving project files for references.
+              </div>
+            )}
+            {assetTrash.loading && (
+              <div className="asset-reference-summary">Saving documents and scanning revision-locked asset references...</div>
+            )}
+            {assetTrash.error && (
+              <div className="asset-reference-summary asset-rename-error">{assetTrash.error}</div>
+            )}
+            {assetTrash.plan && (
+              <div className="asset-rename-plan">
+                <div className="asset-reference-summary">
+                  {assetTrash.plan.referenceReport.references.length} surviving references · {' '}
+                  {assetTrash.plan.referenceReport.scannedFiles} scanned · {' '}
+                  {assetTrash.plan.referenceReport.skippedFiles} unscanned
+                </div>
+                {assetTrash.plan.referenceReport.references.length > 0 && (
+                  <div className="asset-rename-section asset-rename-manual">
+                    <strong>Delete blocked by surviving references</strong>
+                    <span>Repair or remove every reference below, then build a new preview. The editor will not create missing references automatically.</span>
+                    <div className="asset-reference-list">
+                      {assetTrash.plan.referenceReport.references.map((reference, index) => (
+                        <button
+                          type="button"
+                          className="asset-reference-row"
+                          key={`${reference.sourcePath}:${reference.location}:${index}`}
+                          onClick={() => pingProjectAsset(reference.sourcePath)}
+                        >
+                          <div>
+                            <strong>{reference.sourcePath}</strong>
+                            <span>{reference.location}</span>
+                          </div>
+                          <code title={reference.snippet}>{reference.snippet}</code>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+                {assetTrash.plan.referenceReport.truncated && (
+                  <div className="asset-reference-summary asset-rename-error">
+                    Reference results reached the safety limit. Delete remains blocked until the dependency graph can be scanned completely.
+                  </div>
+                )}
+                {assetTrash.plan.referenceReport.references.length === 0
+                  && !assetTrash.plan.referenceReport.truncated && (
+                  <div className="asset-rename-section">
+                    <strong>Recoverable transaction ready</strong>
+                    <span>The asset, stable metadata and Sprite Import settings move together under .mengine/Trash. Restore preserves the same GUID and refuses to overwrite a new asset.</span>
+                    <div className="asset-rename-files">
+                      <code>{assetTrash.plan.sourcePath}</code>
+                      <code>Assets tree {assetTrash.plan.treeRevision}</code>
+                    </div>
+                  </div>
+                )}
+                {assetTrash.plan.referenceReport.skippedFiles > 0
+                  && assetTrash.plan.referenceReport.references.length === 0
+                  && !assetTrash.plan.referenceReport.truncated && (
+                  <div className="asset-rename-section asset-rename-manual">
+                    <strong>Unscanned binary or oversized files</strong>
+                    <span>These formats are not proven dependency-free by the current static scanner. The Assets tree is race-locked, but importer-level binary dependency declarations are still incomplete.</span>
+                    <label className="asset-rename-confirm">
+                      <input
+                        type="checkbox"
+                        checked={assetTrash.skippedConfirmed}
+                        onChange={(event) => setAssetTrash((current) => current && ({
+                          ...current,
+                          skippedConfirmed: event.target.checked,
+                        }))}
+                      />
+                      I reviewed this limitation and still want a recoverable delete.
+                    </label>
+                  </div>
+                )}
+              </div>
+            )}
+            <footer className="asset-rename-actions">
+              <button type="button" disabled={assetTrash.applying} onClick={closeAssetTrash}>Cancel</button>
+              {!assetTrash.plan ? (
+                <button
+                  type="button"
+                  className="primary"
+                  disabled={assetTrash.loading || assetTrash.applying}
+                  onClick={() => void previewAssetTrash()}
+                >
+                  {assetTrash.loading ? 'Scanning...' : 'Save All & Scan References'}
+                </button>
+              ) : (
+                <button
+                  type="button"
+                  className="primary danger"
+                  disabled={
+                    assetTrash.applying
+                    || assetTrash.plan.referenceReport.references.length > 0
+                    || assetTrash.plan.referenceReport.truncated
+                    || (
+                      assetTrash.plan.referenceReport.skippedFiles > 0
+                      && !assetTrash.skippedConfirmed
+                    )
+                  }
+                  onClick={() => void commitAssetTrash()}
+                >
+                  {assetTrash.applying ? 'Moving...' : 'Move to Project Trash'}
+                </button>
+              )}
+            </footer>
+          </section>
+        </div>,
+        document.body,
+      )}
+      {trashBrowser && createPortal(
+        <div
+          className="asset-reference-backdrop"
+          role="presentation"
+          onPointerDown={() => {
+            if (!trashBrowser.restoring) setTrashBrowser(null);
+          }}
+        >
+          <section
+            className="asset-reference-dialog asset-rename-dialog"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="asset-trash-browser-title"
+            onKeyDown={(event) => {
+              if (event.key === 'Escape' && !trashBrowser.restoring) setTrashBrowser(null);
+            }}
+            onPointerDown={(event) => event.stopPropagation()}
+          >
+            <header>
+              <div>
+                <strong id="asset-trash-browser-title">Project Trash</strong>
+                <span>Recoverable assets stored inside this project</span>
+              </div>
+              <button
+                type="button"
+                aria-label="Close project Trash"
+                disabled={trashBrowser.restoring != null}
+                onClick={() => setTrashBrowser(null)}
+              >×</button>
+            </header>
+            {trashBrowser.loading && (
+              <div className="asset-reference-summary">Reading and validating Trash records...</div>
+            )}
+            {trashBrowser.error && (
+              <div className="asset-reference-summary asset-rename-error">{trashBrowser.error}</div>
+            )}
+            {trashBrowser.invalidEntries > 0 && (
+              <div className="asset-reference-summary asset-rename-error">
+                {trashBrowser.invalidEntries} invalid or damaged Trash entr{trashBrowser.invalidEntries === 1 ? 'y is' : 'ies are'} hidden from one-click Restore. Inspect .mengine/Trash before removing any files manually.
+              </div>
+            )}
+            {!trashBrowser.loading && trashBrowser.entries.length === 0 && !trashBrowser.error && (
+              <div className="asset-reference-empty">Project Trash is empty.</div>
+            )}
+            <div className="asset-trash-list">
+              {trashBrowser.entries.map((entry) => (
+                <div className="asset-trash-row" key={entry.trashId}>
+                  <div>
+                    <strong>{entry.originalPath}</strong>
+                    <span>
+                      {new Date(entry.trashedAtMs).toLocaleString()} · {(entry.size / 1024).toFixed(1)} KiB · {entry.guid}
+                    </span>
+                  </div>
+                  <button
+                    type="button"
+                    disabled={trashBrowser.restoring != null}
+                    onClick={() => void restoreTrashEntry(entry)}
+                  >
+                    <RotateCcw size={13} aria-hidden="true" />
+                    {trashBrowser.restoring === entry.trashId ? 'Restoring...' : 'Restore'}
+                  </button>
+                </div>
+              ))}
+            </div>
+            <footer className="asset-rename-actions">
+              <button
+                type="button"
+                disabled={trashBrowser.loading || trashBrowser.restoring != null}
+                onClick={() => void openTrashBrowser()}
+              >Refresh</button>
+              <button
+                type="button"
+                className="primary"
+                disabled={trashBrowser.restoring != null}
+                onClick={() => setTrashBrowser(null)}
+              >Close</button>
             </footer>
           </section>
         </div>,

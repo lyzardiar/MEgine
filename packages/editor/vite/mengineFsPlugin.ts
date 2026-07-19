@@ -593,6 +593,37 @@ export function mengineFsPlugin(opts: MengineFsOptions | string): Plugin {
     contents: string | null;
   };
 
+  type AssetTrashRequest = {
+    sourcePath: string;
+    expectedSourceRevision: string;
+    expectedGuid: string;
+    expectedTreeRevision: string;
+    expectedManifestRevision: string;
+  };
+
+  type AssetTrashRecord = {
+    schemaVersion: 1;
+    trashId: string;
+    originalPath: string;
+    guid: string;
+    trashedAtMs: number;
+    size: number;
+    hasSpriteImport: boolean;
+    assetRevision: string;
+    metadataRevision: string;
+    spriteImportRevision: string | null;
+  };
+
+  type AssetTrashEntry = Omit<
+    AssetTrashRecord,
+    'schemaVersion' | 'assetRevision' | 'metadataRevision' | 'spriteImportRevision'
+  > & { recordRevision: string };
+
+  type AssetRestoreRequest = {
+    trashId: string;
+    expectedRecordRevision: string;
+  };
+
   function validAssetSegment(segment: string): boolean {
     if (
       !segment
@@ -620,6 +651,32 @@ export function mengineFsPlugin(opts: MengineFsOptions | string): Plugin {
     const absolute = path.resolve(projectRoot, ...segments);
     if (!isUnder(assetsRoot, absolute)) throw new Error(`asset path escapes Assets: ${relative}`);
     return { absolute, relative };
+  }
+
+  function requireRegularAssetPath(asset: { absolute: string; relative: string }): fs.Stats {
+    const relative = path.relative(assetsRoot, asset.absolute);
+    const segments = relative.split(path.sep).filter(Boolean);
+    let current = assetsRoot;
+    const rootStat = fs.lstatSync(current);
+    if (!rootStat.isDirectory() || rootStat.isSymbolicLink()) {
+      throw new Error('Assets must be a regular non-symlink directory');
+    }
+    let finalStat = rootStat;
+    segments.forEach((segment, index) => {
+      current = path.join(current, segment);
+      const stat = fs.lstatSync(current);
+      const isLast = index + 1 === segments.length;
+      if (
+        stat.isSymbolicLink()
+        || (isLast && !stat.isFile())
+        || (!isLast && !stat.isDirectory())
+      ) throw new Error(`asset path contains a non-regular or symbolic component: ${asset.relative}`);
+      finalStat = stat;
+    });
+    if (!isUnder(fs.realpathSync(assetsRoot), fs.realpathSync(asset.absolute))) {
+      throw new Error(`asset path escapes the real Assets root: ${asset.relative}`);
+    }
+    return finalStat;
   }
 
   function rewriteAssetReference(value: string, source: string, destination: string): string {
@@ -741,8 +798,7 @@ export function mengineFsPlugin(opts: MengineFsOptions | string): Plugin {
       throw new Error('scenes must use the scene-aware rename command');
     }
     if (!fs.existsSync(source.absolute)) throw new Error(`asset not found: ${source.relative}`);
-    const sourceStat = fs.lstatSync(source.absolute);
-    if (!sourceStat.isFile() || sourceStat.isSymbolicLink()) throw new Error('source asset must be a regular file');
+    const sourceStat = requireRegularAssetPath(source);
     if (assetFileRevision(sourceStat) !== request.expectedSourceRevision) {
       throw new Error(`asset changed on disk since preview: ${source.relative}`);
     }
@@ -785,8 +841,7 @@ export function mengineFsPlugin(opts: MengineFsOptions | string): Plugin {
         key === `${source.relative}.sprite.json`.toLocaleLowerCase()
         || key === destination.relative.toLocaleLowerCase()
       ) throw new Error(`asset update targets a transaction-owned path: ${candidate.relative}`);
-      const stat = fs.lstatSync(candidate.absolute);
-      if (!stat.isFile() || stat.isSymbolicLink()) throw new Error(`asset update must be a regular file: ${candidate.relative}`);
+      const stat = requireRegularAssetPath(candidate);
       if (assetFileRevision(stat) !== update.expectedRevision) {
         throw new Error(`referencing asset changed on disk since preview: ${candidate.relative}`);
       }
@@ -851,7 +906,7 @@ export function mengineFsPlugin(opts: MengineFsOptions | string): Plugin {
     let spriteImportMoved = false;
     try {
       for (const update of updates) stageRenameUpdate(update);
-      if (assetFileRevision(fs.lstatSync(source.absolute)) !== request.expectedSourceRevision) {
+      if (assetFileRevision(requireRegularAssetPath(source)) !== request.expectedSourceRevision) {
         throw new Error(`asset changed while rename was being prepared: ${source.relative}`);
       }
       const currentSource = listProjectAssets().find(
@@ -869,7 +924,9 @@ export function mengineFsPlugin(opts: MengineFsOptions | string): Plugin {
         }
       }
       for (const update of updates) {
-        const actual = assetFileRevision(fs.lstatSync(update.originalPath));
+        const actual = update.label === 'project.json'
+          ? assetFileRevision(fs.lstatSync(update.originalPath))
+          : assetFileRevision(requireRegularAssetPath(normalizedRenameAssetPath(update.label)));
         if (actual !== update.expectedRevision) throw new Error(`${update.label} changed while rename was being prepared`);
       }
       renameFileCaseAware(source.absolute, destination.absolute);
@@ -981,8 +1038,7 @@ export function mengineFsPlugin(opts: MengineFsOptions | string): Plugin {
     if (path.extname(source.relative).toLocaleLowerCase() === SCENE_EXT) {
       throw new Error('scenes must use Save As instead of generic duplication');
     }
-    const sourceStat = fs.lstatSync(source.absolute);
-    if (!sourceStat.isFile() || sourceStat.isSymbolicLink()) throw new Error('source asset must be a regular file');
+    const sourceStat = requireRegularAssetPath(source);
     if (sourceStat.size > 512 * 1024 * 1024) throw new Error('source asset exceeds the 512 MiB duplication limit');
     if (assetFileRevision(sourceStat) !== request.expectedSourceRevision) {
       throw new Error(`asset changed on disk since duplicate preview: ${source.relative}`);
@@ -1048,7 +1104,7 @@ export function mengineFsPlugin(opts: MengineFsOptions | string): Plugin {
         targets.push(destinationSpriteImport);
         staged.push(stageDuplicateFile(sourceSpriteImport, destinationSpriteImport, null));
       }
-      if (assetFileRevision(fs.lstatSync(source.absolute)) !== request.expectedSourceRevision) {
+      if (assetFileRevision(requireRegularAssetPath(source)) !== request.expectedSourceRevision) {
         throw new Error(`asset changed while duplicate was being prepared: ${source.relative}`);
       }
       const currentSource = listProjectAssets().find(
@@ -1092,6 +1148,471 @@ export function mengineFsPlugin(opts: MengineFsOptions | string): Plugin {
       destinationPath: destination.relative,
       guid: metadata.guid,
     };
+  }
+
+  const assetTrashRoot = path.join(projectRoot, '.mengine', 'Trash');
+
+  function projectAssetTreeRevision(): string {
+    const entries: string[] = [];
+    const collect = (directory: string) => {
+      for (const name of fs.readdirSync(directory)) {
+        const absolute = path.join(directory, name);
+        const relative = path.relative(assetsRoot, absolute).replace(/\\/g, '/');
+        const stat = fs.lstatSync(absolute);
+        if (stat.isSymbolicLink()) entries.push(`L:${relative}`);
+        else if (stat.isDirectory()) {
+          entries.push(`D:${relative}`);
+          collect(absolute);
+        } else if (stat.isFile()) entries.push(`F:${relative}:${assetFileRevision(stat)}`);
+        else entries.push(`O:${relative}`);
+      }
+    };
+    const rootStat = fs.lstatSync(assetsRoot);
+    if (!rootStat.isDirectory() || rootStat.isSymbolicLink()) {
+      throw new Error('Assets must be a regular directory');
+    }
+    collect(assetsRoot);
+    entries.sort();
+    let hash = 0xcbf29ce484222325n;
+    const prime = 0x100000001b3n;
+    for (const entry of entries) {
+      for (const byte of Buffer.from(`${entry}\n`, 'utf8')) {
+        hash ^= BigInt(byte);
+        hash = BigInt.asUintN(64, hash * prime);
+      }
+    }
+    return hash.toString(16).padStart(16, '0');
+  }
+
+  const referenceTextExtensions = new Set([
+    '.json', '.mscene', '.prefab', '.manim', '.mcontroller', '.mavatar',
+    '.mtimeline', '.mmat', '.mat', '.minst', '.mshader', '.matlas', '.gltf',
+    '.atlas', '.ts', '.tsx', '.js', '.jsx',
+  ]);
+
+  function isReferenceTextAsset(absolute: string): boolean {
+    return referenceTextExtensions.has(path.extname(absolute).toLowerCase());
+  }
+
+  function containsDirectAssetReference(text: string, target: string): boolean {
+    const normalized = text.replace(/\\/g, '/').toLocaleLowerCase();
+    const expected = target.replace(/\\/g, '/').toLocaleLowerCase();
+    const isPathCharacter = (value: string | undefined) => value != null && /[\p{L}\p{N}_./-]/u.test(value);
+    let offset = 0;
+    while (offset < normalized.length) {
+      const start = normalized.indexOf(expected, offset);
+      if (start < 0) return false;
+      const end = start + expected.length;
+      if (!isPathCharacter(normalized[start - 1]) && !isPathCharacter(normalized[end])) return true;
+      offset = Math.max(end, start + 1);
+    }
+    return false;
+  }
+
+  function findSurvivingDirectAssetReferences(target: string): string[] {
+    const references: string[] = [];
+    const walk = (directory: string) => {
+      for (const name of fs.readdirSync(directory)) {
+        const absolute = path.join(directory, name);
+        const stat = fs.lstatSync(absolute);
+        if (stat.isSymbolicLink()) continue;
+        if (stat.isDirectory()) {
+          walk(absolute);
+          continue;
+        }
+        const relative = path.relative(projectRoot, absolute).replace(/\\/g, '/');
+        if (
+          !stat.isFile()
+          || relative.toLowerCase() === target.toLowerCase()
+          || relative.toLowerCase() === `${target.toLowerCase()}.sprite.json`
+          || !isReferenceTextAsset(absolute)
+        ) continue;
+        if (stat.size > 8 * 1024 * 1024) {
+          throw new Error(`cannot verify oversized reference source: ${relative}`);
+        }
+        let text: string;
+        try {
+          text = new TextDecoder('utf-8', { fatal: true }).decode(fs.readFileSync(absolute));
+        } catch {
+          throw new Error(`cannot verify non-UTF-8 reference source: ${relative}`);
+        }
+        if (containsDirectAssetReference(text, target)) references.push(relative);
+      }
+    };
+    walk(assetsRoot);
+    return references.sort();
+  }
+
+  function collectManifestAssetReferences(
+    value: unknown,
+    target: string,
+    pointer = '',
+    output: Array<{ location: string; reference: string }> = [],
+  ): Array<{ location: string; reference: string }> {
+    if (typeof value === 'string') {
+      const source = value.split('#', 1)[0].replace(/\\/g, '/');
+      if (source.toLowerCase() === target.toLowerCase()) {
+        output.push({ location: pointer || '/', reference: value });
+      }
+      return output;
+    }
+    if (Array.isArray(value)) {
+      value.forEach((child, index) => {
+        collectManifestAssetReferences(child, target, `${pointer}/${index}`, output);
+      });
+      return output;
+    }
+    if (!value || typeof value !== 'object') return output;
+    for (const [key, child] of Object.entries(value as Record<string, unknown>)) {
+      const escaped = key.replace(/~/g, '~0').replace(/\//g, '~1');
+      collectManifestAssetReferences(child, target, `${pointer}/${escaped}`, output);
+    }
+    return output;
+  }
+
+  function readStableManifest(): { revision: string; value: unknown } {
+    for (let attempt = 0; attempt < 2; attempt += 1) {
+      const before = assetFileRevision(fs.lstatSync(manifestPath));
+      const value = JSON.parse(fs.readFileSync(manifestPath, 'utf8')) as unknown;
+      const after = assetFileRevision(fs.lstatSync(manifestPath));
+      if (before === after) return { revision: before, value };
+    }
+    throw new Error('project.json changed repeatedly while it was read');
+  }
+
+  function projectAssetDeleteSnapshot(sourcePath: string) {
+    const source = normalizedRenameAssetPath(sourcePath);
+    const manifest = readStableManifest();
+    return {
+      treeRevision: projectAssetTreeRevision(),
+      manifestRevision: manifest.revision,
+      manifestReferences: collectManifestAssetReferences(manifest.value, source.relative),
+    };
+  }
+
+  function ensureAssetTrashRoot(): void {
+    let current = projectRoot;
+    for (const segment of ['.mengine', 'Trash']) {
+      current = path.join(current, segment);
+      if (!fs.existsSync(current)) fs.mkdirSync(current);
+      const stat = fs.lstatSync(current);
+      if (!stat.isDirectory() || stat.isSymbolicLink()) {
+        throw new Error(`project Trash path must be a regular directory: ${current}`);
+      }
+      if (!isUnder(projectRoot, fs.realpathSync(current))) {
+        throw new Error('project Trash path escapes the project');
+      }
+    }
+  }
+
+  function trashPayloadPaths(directory: string) {
+    return {
+      asset: path.join(directory, 'asset'),
+      metadata: path.join(directory, 'asset.meta'),
+      spriteImport: path.join(directory, 'asset.sprite.json'),
+      record: path.join(directory, 'record.json'),
+    };
+  }
+
+  function assetTrashEntry(record: AssetTrashRecord, recordRevision: string): AssetTrashEntry {
+    return {
+      trashId: record.trashId,
+      originalPath: record.originalPath,
+      guid: record.guid,
+      trashedAtMs: record.trashedAtMs,
+      size: record.size,
+      hasSpriteImport: record.hasSpriteImport,
+      recordRevision,
+    };
+  }
+
+  function readAssetTrashRecord(trashId: string): {
+    record: AssetTrashRecord;
+    revision: string;
+    directory: string;
+  } {
+    if (!UUID_PATTERN.test(trashId)) throw new Error('invalid Trash entry id');
+    const directory = path.join(assetTrashRoot, trashId.toLowerCase());
+    const directoryStat = fs.lstatSync(directory);
+    if (!directoryStat.isDirectory() || directoryStat.isSymbolicLink()) {
+      throw new Error('Trash entry must be a regular directory');
+    }
+    const payload = trashPayloadPaths(directory);
+    const recordStat = fs.lstatSync(payload.record);
+    if (!recordStat.isFile() || recordStat.isSymbolicLink() || recordStat.size > 1024 * 1024) {
+      throw new Error('Trash record must be a small regular file');
+    }
+    const record = JSON.parse(fs.readFileSync(payload.record, 'utf8')) as AssetTrashRecord;
+    if (
+      !record
+      || record.schemaVersion !== 1
+      || record.trashId.toLowerCase() !== trashId.toLowerCase()
+      || !UUID_PATTERN.test(record.guid)
+    ) throw new Error('Trash record identity or schema is invalid');
+    normalizedRenameAssetPath(record.originalPath);
+    return { record, revision: assetFileRevision(recordStat), directory };
+  }
+
+  function metadataGuid(metadataPath: string): string | null {
+    try {
+      const value = JSON.parse(fs.readFileSync(metadataPath, 'utf8')) as Record<string, unknown>;
+      const mengine = value?.mengine && typeof value.mengine === 'object' && !Array.isArray(value.mengine)
+        ? value.mengine as Record<string, unknown>
+        : null;
+      const guid = value?.guid ?? value?.uuid ?? mengine?.guid;
+      return typeof guid === 'string' && UUID_PATTERN.test(guid) ? guid.toLowerCase() : null;
+    } catch {
+      return null;
+    }
+  }
+
+  function validateAssetTrashPayload(directory: string, record: AssetTrashRecord): void {
+    const payload = trashPayloadPaths(directory);
+    for (const [label, file, revision] of [
+      ['asset', payload.asset, record.assetRevision],
+      ['metadata', payload.metadata, record.metadataRevision],
+    ] as const) {
+      const stat = fs.lstatSync(file);
+      if (!stat.isFile() || stat.isSymbolicLink() || assetFileRevision(stat) !== revision) {
+        throw new Error(`Trash ${label} payload was modified or is missing`);
+      }
+    }
+    if (metadataGuid(payload.metadata) !== record.guid.toLowerCase()) {
+      throw new Error('Trash metadata GUID does not match its record');
+    }
+    if (record.hasSpriteImport) {
+      const stat = fs.lstatSync(payload.spriteImport);
+      if (
+        !stat.isFile()
+        || stat.isSymbolicLink()
+        || assetFileRevision(stat) !== record.spriteImportRevision
+      ) throw new Error('Trash Sprite Import payload was modified or is missing');
+    } else if (fs.existsSync(payload.spriteImport)) {
+      throw new Error('Trash entry contains an unexpected Sprite Import payload');
+    }
+  }
+
+  function listProjectAssetTrash(): { entries: AssetTrashEntry[]; invalidEntries: number } {
+    if (!fs.existsSync(assetTrashRoot)) return { entries: [], invalidEntries: 0 };
+    const rootStat = fs.lstatSync(assetTrashRoot);
+    if (!rootStat.isDirectory() || rootStat.isSymbolicLink()) {
+      throw new Error('project Trash root must be a regular directory');
+    }
+    const entries: AssetTrashEntry[] = [];
+    let invalidEntries = 0;
+    for (const name of fs.readdirSync(assetTrashRoot)) {
+      if (!UUID_PATTERN.test(name)) {
+        invalidEntries += 1;
+        continue;
+      }
+      try {
+        const { record, revision, directory } = readAssetTrashRecord(name);
+        validateAssetTrashPayload(directory, record);
+        entries.push(assetTrashEntry(record, revision));
+      } catch {
+        // Corrupt entries remain on disk for manual recovery but are never
+        // offered as safe one-click restores.
+        invalidEntries += 1;
+      }
+    }
+    return {
+      entries: entries.sort((left, right) => (
+        right.trashedAtMs - left.trashedAtMs
+        || left.originalPath.localeCompare(right.originalPath)
+      )),
+      invalidEntries,
+    };
+  }
+
+  function trashProjectAsset(request: AssetTrashRequest) {
+    const source = normalizedRenameAssetPath(request.sourcePath);
+    if (path.extname(source.relative).toLocaleLowerCase() === SCENE_EXT) {
+      throw new Error('scenes use the dedicated scene lifecycle');
+    }
+    const snapshot = projectAssetDeleteSnapshot(source.relative);
+    if (snapshot.treeRevision !== request.expectedTreeRevision) {
+      throw new Error('project assets changed since the delete reference scan; preview again');
+    }
+    if (snapshot.manifestRevision !== request.expectedManifestRevision) {
+      throw new Error('project.json changed since the delete reference scan; preview again');
+    }
+    if (snapshot.manifestReferences.length > 0) {
+      throw new Error('project.json still references this asset');
+    }
+    const survivingReferences = findSurvivingDirectAssetReferences(source.relative);
+    if (survivingReferences.length > 0) {
+      throw new Error(`surviving project assets still reference this asset: ${survivingReferences.join(', ')}`);
+    }
+    const sourceStat = requireRegularAssetPath(source);
+    const sourceRevision = assetFileRevision(sourceStat);
+    if (sourceRevision !== request.expectedSourceRevision) {
+      throw new Error(`asset changed on disk since delete preview: ${source.relative}`);
+    }
+    const sourceInfo = listProjectAssets().find(
+      (asset) => asset.relPath.toLowerCase() === source.relative.toLowerCase(),
+    );
+    if (
+      !sourceInfo
+      || sourceInfo.metaStatus !== 'ready'
+      || sourceInfo.guid !== request.expectedGuid.toLowerCase()
+    ) throw new Error(`asset identity changed on disk since delete preview: ${source.relative}`);
+    const sourceMetadata = `${source.absolute}.meta`;
+    const sourceSpriteImport = `${source.absolute}.sprite.json`;
+    const metadataStat = fs.lstatSync(sourceMetadata);
+    if (!metadataStat.isFile() || metadataStat.isSymbolicLink()) {
+      throw new Error('asset metadata must be a regular file');
+    }
+    const metadataRevision = assetFileRevision(metadataStat);
+    const hasSpriteImport = fs.existsSync(sourceSpriteImport);
+    const spriteImportRevision = hasSpriteImport
+      ? assetFileRevision(fs.lstatSync(sourceSpriteImport))
+      : null;
+    if (hasSpriteImport) {
+      const stat = fs.lstatSync(sourceSpriteImport);
+      if (!stat.isFile() || stat.isSymbolicLink()) {
+        throw new Error('sprite import sidecar must be a regular file');
+      }
+    }
+    ensureAssetTrashRoot();
+    const trashId = randomUUID().toLowerCase();
+    const directory = path.join(assetTrashRoot, trashId);
+    fs.mkdirSync(directory);
+    const payload = trashPayloadPaths(directory);
+    const record: AssetTrashRecord = {
+      schemaVersion: 1,
+      trashId,
+      originalPath: source.relative,
+      guid: request.expectedGuid.toLowerCase(),
+      trashedAtMs: Date.now(),
+      size: sourceStat.size,
+      hasSpriteImport,
+      assetRevision: sourceRevision,
+      metadataRevision,
+      spriteImportRevision,
+    };
+    try {
+      const descriptor = fs.openSync(payload.record, 'wx');
+      try {
+        fs.writeFileSync(descriptor, `${JSON.stringify(record, null, 2)}\n`, 'utf8');
+        fs.fsyncSync(descriptor);
+      } finally {
+        fs.closeSync(descriptor);
+      }
+      const preparedSnapshot = projectAssetDeleteSnapshot(source.relative);
+      if (preparedSnapshot.treeRevision !== request.expectedTreeRevision) {
+        throw new Error('project assets changed while delete was being prepared; preview again');
+      }
+      if (preparedSnapshot.manifestRevision !== request.expectedManifestRevision) {
+        throw new Error('project.json changed while delete was being prepared; preview again');
+      }
+      if (assetFileRevision(fs.lstatSync(source.absolute)) !== sourceRevision) {
+        throw new Error('asset changed while delete was being prepared');
+      }
+      if (assetFileRevision(fs.lstatSync(sourceMetadata)) !== metadataRevision) {
+        throw new Error('asset metadata changed while delete was being prepared');
+      }
+      if (
+        hasSpriteImport
+        && assetFileRevision(fs.lstatSync(sourceSpriteImport)) !== spriteImportRevision
+      ) throw new Error('sprite import sidecar changed while delete was being prepared');
+    } catch (error) {
+      try { if (fs.existsSync(payload.record)) fs.unlinkSync(payload.record); } catch { /* best effort */ }
+      try { fs.rmdirSync(directory); } catch { /* best effort */ }
+      throw error;
+    }
+    const moved: Array<[string, string]> = [];
+    try {
+      fs.renameSync(source.absolute, payload.asset);
+      moved.push([payload.asset, source.absolute]);
+      fs.renameSync(sourceMetadata, payload.metadata);
+      moved.push([payload.metadata, sourceMetadata]);
+      if (hasSpriteImport) {
+        fs.renameSync(sourceSpriteImport, payload.spriteImport);
+        moved.push([payload.spriteImport, sourceSpriteImport]);
+      }
+    } catch (error) {
+      const rollbackErrors: string[] = [];
+      for (const [from, to] of [...moved].reverse()) {
+        try { fs.renameSync(from, to); } catch (rollback) { rollbackErrors.push(String(rollback)); }
+      }
+      if (rollbackErrors.length === 0) {
+        try { fs.unlinkSync(payload.record); } catch { /* best effort */ }
+        try { fs.rmdirSync(directory); } catch { /* best effort */ }
+        throw error;
+      }
+      throw new Error(`${String(error)}; rollback also failed: ${rollbackErrors.join(', ')}`);
+    }
+    let parent = path.dirname(source.absolute);
+    while (parent !== assetsRoot && isUnder(assetsRoot, parent)) {
+      try { fs.rmdirSync(parent); } catch { break; }
+      parent = path.dirname(parent);
+    }
+    return {
+      entry: assetTrashEntry(record, assetFileRevision(fs.lstatSync(payload.record))),
+    };
+  }
+
+  function restoreProjectAsset(request: AssetRestoreRequest) {
+    const { record, revision, directory } = readAssetTrashRecord(request.trashId);
+    if (revision !== request.expectedRecordRevision) {
+      throw new Error('Trash record changed since it was listed; refresh Trash');
+    }
+    validateAssetTrashPayload(directory, record);
+    if (listProjectAssets().some((asset) => asset.guid === record.guid.toLowerCase())) {
+      throw new Error(`cannot restore because GUID ${record.guid} is already used by another asset`);
+    }
+    const destination = normalizedRenameAssetPath(record.originalPath);
+    const destinationMetadata = `${destination.absolute}.meta`;
+    const destinationSpriteImport = `${destination.absolute}.sprite.json`;
+    for (const target of [destination.absolute, destinationMetadata, destinationSpriteImport]) {
+      if (fs.existsSync(target)) throw new Error(`restore target already exists: ${target}`);
+    }
+    const createdDirectories: string[] = [];
+    let parent = path.dirname(destination.absolute);
+    const missing: string[] = [];
+    while (!fs.existsSync(parent)) {
+      missing.push(parent);
+      parent = path.dirname(parent);
+    }
+    if (!isUnder(assetsRoot, fs.realpathSync(parent))) throw new Error('restore target escapes Assets');
+    try {
+      for (const candidate of missing.reverse()) {
+        fs.mkdirSync(candidate);
+        createdDirectories.push(candidate);
+      }
+    } catch (error) {
+      for (const candidate of [...createdDirectories].reverse()) {
+        try { fs.rmdirSync(candidate); } catch { /* best effort */ }
+      }
+      throw error;
+    }
+    const payload = trashPayloadPaths(directory);
+    const moved: Array<[string, string]> = [];
+    try {
+      fs.renameSync(payload.asset, destination.absolute);
+      moved.push([destination.absolute, payload.asset]);
+      fs.renameSync(payload.metadata, destinationMetadata);
+      moved.push([destinationMetadata, payload.metadata]);
+      if (record.hasSpriteImport) {
+        fs.renameSync(payload.spriteImport, destinationSpriteImport);
+        moved.push([destinationSpriteImport, payload.spriteImport]);
+      }
+    } catch (error) {
+      const rollbackErrors: string[] = [];
+      for (const [from, to] of [...moved].reverse()) {
+        try { fs.renameSync(from, to); } catch (rollback) { rollbackErrors.push(String(rollback)); }
+      }
+      for (const candidate of [...createdDirectories].reverse()) {
+        try { fs.rmdirSync(candidate); } catch { /* best effort */ }
+      }
+      if (rollbackErrors.length > 0) {
+        throw new Error(`${String(error)}; rollback also failed: ${rollbackErrors.join(', ')}`);
+      }
+      throw error;
+    }
+    try { fs.unlinkSync(payload.record); } catch { /* restored asset remains authoritative */ }
+    try { fs.rmdirSync(directory); } catch { /* orphan record is not listed without payload */ }
+    return { trashId: record.trashId, restoredPath: destination.relative, guid: record.guid };
   }
 
   function normalizeBuildScene(value: unknown): string | null {
@@ -1308,6 +1829,29 @@ export function mengineFsPlugin(opts: MengineFsOptions | string): Plugin {
         const body = await readBodyBytes(req, 34 * 1024 * 1024);
         const request = JSON.parse(body.toString('utf8') || '{}') as AssetDuplicateRequest;
         return sendJson(res, 200, duplicateProjectAsset(request));
+      }
+
+      if (pathname === `${API}/assets/delete-snapshot` && method === 'POST') {
+        const body = await readBodyBytes(req, 1024 * 1024);
+        const request = JSON.parse(body.toString('utf8') || '{}') as { sourcePath?: unknown };
+        if (typeof request.sourcePath !== 'string') throw new Error('sourcePath is required');
+        return sendJson(res, 200, projectAssetDeleteSnapshot(request.sourcePath));
+      }
+
+      if (pathname === `${API}/assets/trash` && method === 'POST') {
+        const body = await readBodyBytes(req, 1024 * 1024);
+        const request = JSON.parse(body.toString('utf8') || '{}') as AssetTrashRequest;
+        return sendJson(res, 200, trashProjectAsset(request));
+      }
+
+      if (pathname === `${API}/assets/trash` && method === 'GET') {
+        return sendJson(res, 200, listProjectAssetTrash());
+      }
+
+      if (pathname === `${API}/assets/restore` && method === 'POST') {
+        const body = await readBodyBytes(req, 1024 * 1024);
+        const request = JSON.parse(body.toString('utf8') || '{}') as AssetRestoreRequest;
+        return sendJson(res, 200, restoreProjectAsset(request));
       }
 
       // GET /__mengine/asset/Assets/...  → serve project texture

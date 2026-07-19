@@ -7,9 +7,11 @@ mod undo;
 
 pub use gizmo::{GizmoMode, GizmoState};
 pub use project::{
-    AssetDuplicateRequest, AssetDuplicateResult, AssetRenameRequest, AssetRenameResult,
-    AssetRenameUpdate, BuildAssetMode, EditorFailure, EditorRequest, EditorResult, ProjectError,
-    ProjectManifest, ProjectSession, ProjectSnapshot, SceneRecoveryInfo,
+    AssetDeleteSnapshot, AssetDuplicateRequest, AssetDuplicateResult, AssetManifestReference,
+    AssetRenameRequest, AssetRenameResult, AssetRenameUpdate, AssetRestoreRequest,
+    AssetRestoreResult, AssetTrashEntry, AssetTrashInventory, AssetTrashRequest, AssetTrashResult,
+    BuildAssetMode, EditorFailure, EditorRequest, EditorResult, ProjectError, ProjectManifest,
+    ProjectSession, ProjectSnapshot, SceneRecoveryInfo,
 };
 pub use session::{EditorMode, EditorSession};
 pub use undo::{EditorCommand, UndoStack};
