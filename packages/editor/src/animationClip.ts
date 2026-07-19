@@ -11,6 +11,8 @@ export type AnimationKeyframe = {
   out_tangent?: AnimationTangent;
   in_tangent_mode?: AnimationTangentMode;
   out_tangent_mode?: AnimationTangentMode;
+  in_weight?: number;
+  out_weight?: number;
   broken?: boolean;
 };
 
@@ -96,6 +98,12 @@ function animationTangentMode(value: unknown): AnimationTangentMode | undefined 
     : undefined;
 }
 
+function animationTangentWeight(value: unknown): number | undefined {
+  return typeof value === 'number' && Number.isFinite(value)
+    ? Math.max(0, Math.min(1, value))
+    : undefined;
+}
+
 function tangentsEqual(left: AnimationTangent | undefined, right: AnimationTangent | undefined): boolean {
   if (left === undefined || right === undefined) return left === right;
   if (typeof left === 'number' || typeof right === 'number') return left === right;
@@ -109,6 +117,13 @@ export function animationKeyTangentMode(
   const mode = side === 'in_tangent' ? key.in_tangent_mode : key.out_tangent_mode;
   if (mode) return mode;
   return key[side] === undefined ? 'clamped_auto' : 'free';
+}
+
+export function animationKeyTangentWeight(
+  key: AnimationKeyframe,
+  side: 'in_tangent' | 'out_tangent',
+): number | null {
+  return animationTangentWeight(side === 'in_tangent' ? key.in_weight : key.out_weight) ?? null;
 }
 
 function interpolation(value: unknown): AnimationInterpolation {
@@ -141,6 +156,9 @@ export function normalizeAnimationClip(value: unknown): AnimationClip {
         ?? (inTangent === undefined ? undefined : 'free');
       const outMode = animationTangentMode(key.out_tangent_mode ?? key.outTangentMode)
         ?? (outTangent === undefined ? undefined : 'free');
+      const numericKey = typeof parsedValue === 'number' || Array.isArray(parsedValue);
+      const inWeight = numericKey ? animationTangentWeight(key.in_weight ?? key.inWeight) : undefined;
+      const outWeight = numericKey ? animationTangentWeight(key.out_weight ?? key.outWeight) : undefined;
       const inferredBroken = (inMode ?? 'clamped_auto') !== (outMode ?? 'clamped_auto')
         || !tangentsEqual(inTangent, outTangent);
       byTime.set(safeTime, {
@@ -150,6 +168,8 @@ export function normalizeAnimationClip(value: unknown): AnimationClip {
         ...(outTangent === undefined ? {} : { out_tangent: outTangent }),
         ...(inMode == null || inMode === 'clamped_auto' ? {} : { in_tangent_mode: inMode }),
         ...(outMode == null || outMode === 'clamped_auto' ? {} : { out_tangent_mode: outMode }),
+        ...(inWeight === undefined ? {} : { in_weight: inWeight }),
+        ...(outWeight === undefined ? {} : { out_weight: outWeight }),
         ...(key.broken === true || inferredBroken ? { broken: true } : {}),
       });
       maxTime = Math.max(maxTime, safeTime);
@@ -237,6 +257,8 @@ function writeAnimationKeyframe(
   const numericValue = typeof value === 'number' || Array.isArray(value);
   const inMode = numericValue ? animationTangentMode(preserved?.in_tangent_mode) : undefined;
   const outMode = numericValue ? animationTangentMode(preserved?.out_tangent_mode) : undefined;
+  const inWeight = numericValue ? animationTangentWeight(preserved?.in_weight) : undefined;
+  const outWeight = numericValue ? animationTangentWeight(preserved?.out_weight) : undefined;
   keyframes.push({
     time: keyTime,
     value: structuredClone(value),
@@ -248,6 +270,8 @@ function writeAnimationKeyframe(
     ...(outMode == null || outMode === 'clamped_auto' || (outMode === 'free' && outTangent === undefined)
       ? {}
       : { out_tangent_mode: outMode }),
+    ...(inWeight === undefined ? {} : { in_weight: inWeight }),
+    ...(outWeight === undefined ? {} : { out_weight: outWeight }),
     ...(numericValue && preserved?.broken ? { broken: true } : {}),
   });
   keyframes.sort((left, right) => left.time - right.time);
@@ -298,6 +322,8 @@ export function setAnimationKeyframeTangents(
     out_tangent?: AnimationTangent | null;
     in_tangent_mode?: AnimationTangentMode | null;
     out_tangent_mode?: AnimationTangentMode | null;
+    in_weight?: number | null;
+    out_weight?: number | null;
     broken?: boolean;
   },
 ): AnimationTrack {
@@ -336,6 +362,16 @@ export function setAnimationKeyframeTangents(
     if (mode == null || mode === 'clamped_auto') delete next.out_tangent_mode;
     else next.out_tangent_mode = mode;
   }
+  if ('in_weight' in patch) {
+    const weight = animationTangentWeight(patch.in_weight);
+    if (weight === undefined || patch.in_weight == null) delete next.in_weight;
+    else next.in_weight = weight;
+  }
+  if ('out_weight' in patch) {
+    const weight = animationTangentWeight(patch.out_weight);
+    if (weight === undefined || patch.out_weight == null) delete next.out_weight;
+    else next.out_weight = weight;
+  }
   if ('broken' in patch) {
     if (patch.broken) next.broken = true;
     else delete next.broken;
@@ -365,6 +401,8 @@ export function pasteAnimationKeyframe(
       out_tangent: source.out_tangent ?? null,
       in_tangent_mode: source.in_tangent_mode ?? null,
       out_tangent_mode: source.out_tangent_mode ?? null,
+      in_weight: source.in_weight ?? null,
+      out_weight: source.out_weight ?? null,
       broken: source.broken === true,
     }),
   };
@@ -622,6 +660,73 @@ function cubicInterpolateValue(
   return structuredClone(left);
 }
 
+function cubicBezier(a: number, b: number, c: number, d: number, amount: number): number {
+  const inverse = 1 - amount;
+  return inverse * inverse * inverse * a
+    + 3 * inverse * inverse * amount * b
+    + 3 * inverse * amount * amount * c
+    + amount * amount * amount * d;
+}
+
+function weightedCurveParameter(amount: number, outWeight: number, inWeight: number): number {
+  if (Math.abs(outWeight - 1 / 3) < 1e-7 && Math.abs(inWeight - 1 / 3) < 1e-7) return amount;
+  let lower = 0;
+  let upper = 1;
+  let parameter = amount;
+  for (let iteration = 0; iteration < 24; iteration++) {
+    const x = cubicBezier(0, outWeight, 1 - inWeight, 1, parameter);
+    if (x < amount) lower = parameter;
+    else upper = parameter;
+    parameter = (lower + upper) * 0.5;
+  }
+  return parameter;
+}
+
+function weightedCubicInterpolateValue(
+  left: AnimationValue,
+  right: AnimationValue,
+  outTangent: AnimationTangent,
+  inTangent: AnimationTangent,
+  span: number,
+  amount: number,
+  outWeight: number,
+  inWeight: number,
+): AnimationValue {
+  const parameter = weightedCurveParameter(amount, outWeight, inWeight);
+  if (
+    typeof left === 'number'
+    && typeof right === 'number'
+    && typeof outTangent === 'number'
+    && typeof inTangent === 'number'
+  ) {
+    return cubicBezier(
+      left,
+      left + outTangent * span * outWeight,
+      right - inTangent * span * inWeight,
+      right,
+      parameter,
+    );
+  }
+  if (
+    Array.isArray(left)
+    && Array.isArray(right)
+    && Array.isArray(outTangent)
+    && Array.isArray(inTangent)
+    && left.length === right.length
+    && left.length === outTangent.length
+    && left.length === inTangent.length
+  ) {
+    return left.map((value, index) => cubicBezier(
+      value,
+      value + outTangent[index] * span * outWeight,
+      right[index] - inTangent[index] * span * inWeight,
+      right[index],
+      parameter,
+    ));
+  }
+  return structuredClone(left);
+}
+
 export function sampleAnimationTrack(
   track: AnimationTrack,
   time: number,
@@ -651,6 +756,20 @@ export function sampleAnimationTrack(
       const inTangent = resolvedAnimationTangent(track, index, 'in_tangent', fallback)
         ?? fallback;
       if (outTangent != null && inTangent != null) {
+        const authoredOutWeight = animationKeyTangentWeight(left, 'out_tangent');
+        const authoredInWeight = animationKeyTangentWeight(right, 'in_tangent');
+        if (authoredOutWeight != null || authoredInWeight != null) {
+          return weightedCubicInterpolateValue(
+            left.value,
+            right.value,
+            outTangent,
+            inTangent,
+            span,
+            amount,
+            authoredOutWeight ?? 1 / 3,
+            authoredInWeight ?? 1 / 3,
+          );
+        }
         return cubicInterpolateValue(left.value, right.value, outTangent, inTangent, span, amount);
       }
     }

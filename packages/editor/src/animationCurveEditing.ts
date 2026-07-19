@@ -1,5 +1,6 @@
 import {
   animationKeyTangentMode,
+  animationKeyTangentWeight,
   automaticAnimationTangent,
   replaceAnimationKeyframe,
   sampleAnimationTrack,
@@ -432,6 +433,7 @@ export function setAnimationCurveTangentChannel(
   side: 'in_tangent' | 'out_tangent',
   channel: number,
   slope: number,
+  weight?: number,
 ): AnimationTrack {
   const key = track.keyframes[keyIndex];
   if (!key) return track;
@@ -446,6 +448,7 @@ export function setAnimationCurveTangentChannel(
     return setAnimationKeyframeTangents(track, keyIndex, {
       [side]: next,
       [opposite]: linked,
+      ...(weight === undefined ? {} : { [side === 'in_tangent' ? 'in_weight' : 'out_weight']: weight }),
       in_tangent_mode: 'free',
       out_tangent_mode: 'free',
       broken: false,
@@ -454,6 +457,7 @@ export function setAnimationCurveTangentChannel(
   return setAnimationKeyframeTangents(track, keyIndex, {
     [side]: next,
     [`${side}_mode`]: 'free',
+    ...(weight === undefined ? {} : { [side === 'in_tangent' ? 'in_weight' : 'out_weight']: weight }),
     broken: true,
   });
 }
@@ -467,6 +471,8 @@ export function setAnimationCurveTangentsAuto(
     out_tangent: null,
     in_tangent_mode: 'clamped_auto',
     out_tangent_mode: 'clamped_auto',
+    in_weight: null,
+    out_weight: null,
     broken: false,
   });
 }
@@ -510,7 +516,28 @@ export function setAnimationCurveTangentSideMode(
   return setAnimationKeyframeTangents(track, keyIndex, {
     [side]: tangent,
     [`${side}_mode`]: mode,
+    ...(mode === 'free' ? {} : { [side === 'in_tangent' ? 'in_weight' : 'out_weight']: null }),
     broken: true,
+  });
+}
+
+export function setAnimationCurveTangentWeight(
+  track: AnimationTrack,
+  keyIndex: number,
+  side: 'in_tangent' | 'out_tangent',
+  weight: number | null,
+): AnimationTrack {
+  const key = track.keyframes[keyIndex];
+  if (!key) return track;
+  const weightField = side === 'in_tangent' ? 'in_weight' : 'out_weight';
+  if (weight == null) return setAnimationKeyframeTangents(track, keyIndex, { [weightField]: null });
+  const tangent = key[side] ?? automaticAnimationTangent(track, keyIndex);
+  if (tangent == null) return track;
+  return setAnimationKeyframeTangents(track, keyIndex, {
+    [side]: tangent,
+    [`${side}_mode`]: 'free',
+    [weightField]: weight,
+    broken: key.broken === true,
   });
 }
 
@@ -538,16 +565,36 @@ export function animationCurveTangentHandle(
   side: 'in_tangent' | 'out_tangent',
   channel: number,
   viewport: AnimationCurveViewport,
-  handleTime = (viewport.timeEnd - viewport.timeStart) * 0.08,
+  handleTime?: number,
 ): AnimationCurvePoint | null {
   const key = track.keyframes[keyIndex];
   const values = curveNumericChannels(key?.value ?? null);
   const slope = animationCurveTangentChannel(track, keyIndex, side, channel);
   if (!key || !values || slope == null || values[channel] == null) return null;
   const direction = side === 'in_tangent' ? -1 : 1;
-  const time = key.time + direction * Math.max(Number.EPSILON, handleTime);
-  const value = values[channel] + direction * slope * Math.max(Number.EPSILON, handleTime);
+  const neighbour = track.keyframes[keyIndex + direction];
+  const segmentSpan = neighbour ? Math.abs(neighbour.time - key.time) : 0;
+  const resolvedHandleTime = handleTime ?? segmentSpan * (animationKeyTangentWeight(key, side) ?? 1 / 3);
+  const safeHandleTime = Math.max(Number.EPSILON, Math.min(segmentSpan || Number.POSITIVE_INFINITY, resolvedHandleTime));
+  const time = key.time + direction * safeHandleTime;
+  const value = values[channel] + direction * slope * safeHandleTime;
   return animationCurvePoint(viewport, time, value);
+}
+
+export function animationCurveTangentWeightFromPoint(
+  track: AnimationTrack,
+  keyIndex: number,
+  side: 'in_tangent' | 'out_tangent',
+  pointerTime: number,
+): number | null {
+  const key = track.keyframes[keyIndex];
+  const neighbourIndex = side === 'in_tangent' ? keyIndex - 1 : keyIndex + 1;
+  const neighbour = track.keyframes[neighbourIndex];
+  if (!key || !neighbour || !Number.isFinite(pointerTime)) return null;
+  const span = Math.abs(neighbour.time - key.time);
+  if (!(span > Number.EPSILON)) return null;
+  const direction = side === 'in_tangent' ? -1 : 1;
+  return Math.max(0, Math.min(1, direction * (pointerTime - key.time) / span));
 }
 
 export function animationCurveSlopeFromPoint(

@@ -4,6 +4,7 @@ import {
   advanceAnimationPreviewPhase,
   addAnimationEvent,
   animationKeyTangentMode,
+  animationKeyTangentWeight,
   automaticAnimationTangent,
   normalizeAnimationClip,
   pasteAnimationEvent,
@@ -151,17 +152,72 @@ test('AnimationClip tangent modes support clamped auto, linear, constant, and le
   }
 });
 
+test('AnimationClip weighted tangents use time-weighted Bezier sampling and normalize weights', () => {
+  const weighted = normalizeAnimationClip({
+    name: 'Weighted',
+    duration: 1,
+    frame_rate: 60,
+    tracks: [{
+      target: '.',
+      component: 'Transform',
+      property: 'position.x',
+      interpolation: 'cubic',
+      keyframes: [
+        { time: 0, value: 0, out_tangent: 0, outWeight: 0.8 },
+        { time: 1, value: 1, in_tangent: 0, in_weight: 0.1 },
+      ],
+    }],
+  }).tracks[0];
+  assert.equal(animationKeyTangentWeight(weighted.keyframes[0], 'out_tangent'), 0.8);
+  assert.equal(animationKeyTangentWeight(weighted.keyframes[1], 'in_tangent'), 0.1);
+  assert.ok(Math.abs(sampleAnimationTrack(weighted, 0.5) - 0.17219266) < 1e-6);
+  const unweightedThird = {
+    ...weighted,
+    keyframes: weighted.keyframes.map((key) => ({ ...key, in_weight: undefined, out_weight: undefined })),
+  };
+  const weightedThird = {
+    ...weighted,
+    keyframes: weighted.keyframes.map((key) => ({ ...key, in_weight: 1 / 3, out_weight: 1 / 3 })),
+  };
+  assert.ok(Math.abs(sampleAnimationTrack(unweightedThird, 0.37) - sampleAnimationTrack(weightedThird, 0.37)) < 1e-9);
+
+  const zeroWeight = {
+    ...weighted,
+    keyframes: [
+      { time: 0, value: 0, out_tangent: 100, out_weight: 0 },
+      { time: 1, value: 1, in_tangent: -100, in_weight: 0 },
+    ],
+  };
+  assert.ok(Math.abs(sampleAnimationTrack(zeroWeight, 0.25) - 0.25) < 1e-6);
+
+  const clamped = normalizeAnimationClip({
+    name: 'Clamp', duration: 1, tracks: [{ target: '.', component: 'T', property: 'x', interpolation: 'cubic', keyframes: [
+      { time: 0, value: 0, out_weight: 3 }, { time: 1, value: 1, in_weight: -2 },
+    ] }],
+  }).tracks[0];
+  assert.equal(clamped.keyframes[0].out_weight, 1);
+  assert.equal(clamped.keyframes[1].in_weight, 0);
+  const rejected = normalizeAnimationClip({
+    name: 'Reject', duration: 1, tracks: [{ target: '.', component: 'T', property: 'x', interpolation: 'cubic', keyframes: [
+      { time: 0, value: 0, out_weight: '0.5' }, { time: 1, value: true, in_weight: 0.5 },
+    ] }],
+  }).tracks[0];
+  assert.equal(rejected.keyframes[0].out_weight, undefined);
+  assert.equal(rejected.keyframes[1].in_weight, undefined);
+});
+
 test('AnimationClip keeps valid tangents while moving and replacing keys', () => {
   const track = {
     ...floatTrack('cubic'),
     keyframes: [
-      { time: 0, value: 0, out_tangent: 2 },
+      { time: 0, value: 0, out_tangent: 2, out_weight: 0.7 },
       { time: 2, value: 10, in_tangent: 3 },
     ],
   };
   const moved = replaceAnimationKeyframe(track, 0, 0.5, 1, 10, 2);
   assert.ok(moved);
   assert.equal(moved.track.keyframes[0].out_tangent, 2);
+  assert.equal(moved.track.keyframes[0].out_weight, 0.7);
   const overwritten = upsertAnimationKeyframe(moved.track, 0.51, 4, 10, 2);
   assert.equal(overwritten.track.keyframes[0].out_tangent, 2);
   const changedShape = replaceAnimationKeyframe(overwritten.track, 0, 0.5, [1, 2], 10, 2);
@@ -256,6 +312,8 @@ test('Timeline copy and paste preserves key tangents and event payloads at the p
     value: [2, 4],
     in_tangent: [1, 2],
     out_tangent: [3, 4],
+    in_weight: 0.2,
+    out_weight: 0.7,
   };
   const pastedKey = pasteAnimationKeyframe({
     target: '.',
@@ -270,6 +328,8 @@ test('Timeline copy and paste preserves key tangents and event payloads at the p
     value: [2, 4],
     in_tangent: [1, 2],
     out_tangent: [3, 4],
+    in_weight: 0.2,
+    out_weight: 0.7,
   });
 
   const clip = normalizeAnimationClip({

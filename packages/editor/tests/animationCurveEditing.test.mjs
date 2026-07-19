@@ -12,12 +12,14 @@ import {
   animationCurveTangentChannel,
   animationCurveTangentConstraint,
   animationCurveTangentHandle,
+  animationCurveTangentWeightFromPoint,
   animationCurveValueBounds,
   moveAnimationCurveKey,
   offsetAnimationCurveKeyValues,
   panAnimationCurveView,
   setAnimationCurveTangentChannel,
   setAnimationCurveTangentSideMode,
+  setAnimationCurveTangentWeight,
   setAnimationCurveTangentsAuto,
   setAnimationCurveTangentsBroken,
   setAnimationCurveTangentsFlat,
@@ -205,4 +207,33 @@ test('Curve tangent handles preserve linked, broken, side, flat and automatic mo
   assert.equal(source.keyframes[1].out_tangent_mode, undefined);
   assert.equal(source.keyframes[1].broken, undefined);
   assert.equal(animationCurveTangentConstraint(source, 1, 0), 'clamped_auto');
+});
+
+test('Curve tangent weights control handle time and survive weighted slope edits', () => {
+  let source = setAnimationCurveTangentsFreeSmooth(track(), 1);
+  source = setAnimationCurveTangentWeight(source, 1, 'out_tangent', 0.75);
+  assert.equal(source.keyframes[1].out_weight, 0.75);
+  assert.equal(source.keyframes[1].out_tangent_mode, 'free');
+  assert.equal(source.keyframes[1].broken, undefined);
+  assert.deepEqual(
+    animationCurveTangentHandle(source, 1, 'out_tangent', 0, viewport()),
+    animationCurvePoint(viewport(), 1.75, 2),
+  );
+  assert.ok(Math.abs(animationCurveTangentWeightFromPoint(source, 1, 'out_tangent', 1.6) - 0.6) < 1e-9);
+  assert.equal(animationCurveTangentWeightFromPoint(source, 1, 'out_tangent', 3), 1);
+  assert.equal(animationCurveTangentWeightFromPoint(source, 1, 'out_tangent', 0.5), 0);
+
+  source = setAnimationCurveTangentChannel(source, 1, 'out_tangent', 0, 4, 0.6);
+  assert.equal(source.keyframes[1].out_weight, 0.6);
+  assert.equal(animationCurveTangentChannel(source, 1, 'out_tangent', 0), 4);
+  source = setAnimationCurveTangentWeight(source, 1, 'out_tangent', null);
+  assert.equal(source.keyframes[1].out_weight, undefined);
+
+  source = setAnimationCurveTangentWeight(source, 1, 'in_tangent', 0.4);
+  source = setAnimationCurveTangentSideMode(source, 1, 'in_tangent', 'linear');
+  assert.equal(source.keyframes[1].in_weight, undefined);
+  source = setAnimationCurveTangentWeight(source, 1, 'out_tangent', 0.8);
+  source = setAnimationCurveTangentsAuto(source, 1);
+  assert.equal(source.keyframes[1].in_weight, undefined);
+  assert.equal(source.keyframes[1].out_weight, undefined);
 });

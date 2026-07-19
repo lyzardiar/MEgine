@@ -206,6 +206,77 @@ impl AnimationValue {
             _ => self.clone(),
         }
     }
+
+    fn weighted_cubic(
+        &self,
+        next: &Self,
+        out_tangent: &Self,
+        in_tangent: &Self,
+        span: f32,
+        amount: f32,
+        out_weight: f32,
+        in_weight: f32,
+    ) -> Self {
+        fn bezier(a: f32, b: f32, c: f32, d: f32, amount: f32) -> f32 {
+            let inverse = 1.0 - amount;
+            inverse * inverse * inverse * a
+                + 3.0 * inverse * inverse * amount * b
+                + 3.0 * inverse * amount * amount * c
+                + amount * amount * amount * d
+        }
+        let parameter =
+            if (out_weight - 1.0 / 3.0).abs() < 1e-7 && (in_weight - 1.0 / 3.0).abs() < 1e-7 {
+                amount
+            } else {
+                let mut lower = 0.0;
+                let mut upper = 1.0;
+                let mut parameter = amount;
+                for _ in 0..24 {
+                    let x = bezier(0.0, out_weight, 1.0 - in_weight, 1.0, parameter);
+                    if x < amount {
+                        lower = parameter;
+                    } else {
+                        upper = parameter;
+                    }
+                    parameter = (lower + upper) * 0.5;
+                }
+                parameter
+            };
+        match (self, next, out_tangent, in_tangent) {
+            (Self::Float(left), Self::Float(right), Self::Float(out), Self::Float(input)) => {
+                Self::Float(bezier(
+                    *left,
+                    left + out * span * out_weight,
+                    right - input * span * in_weight,
+                    *right,
+                    parameter,
+                ))
+            }
+            (Self::Vector(left), Self::Vector(right), Self::Vector(out), Self::Vector(input))
+                if left.len() == right.len()
+                    && left.len() == out.len()
+                    && left.len() == input.len() =>
+            {
+                Self::Vector(
+                    left.iter()
+                        .zip(right)
+                        .zip(out)
+                        .zip(input)
+                        .map(|(((left, right), out), input)| {
+                            bezier(
+                                *left,
+                                left + out * span * out_weight,
+                                right - input * span * in_weight,
+                                *right,
+                                parameter,
+                            )
+                        })
+                        .collect(),
+                )
+            }
+            _ => self.clone(),
+        }
+    }
 }
 
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
@@ -228,6 +299,10 @@ pub struct AnimationKeyframe {
         alias = "outTangentMode"
     )]
     pub out_tangent_mode: Option<AnimationTangentMode>,
+    #[serde(default, skip_serializing_if = "Option::is_none", alias = "inWeight")]
+    pub in_weight: Option<f32>,
+    #[serde(default, skip_serializing_if = "Option::is_none", alias = "outWeight")]
+    pub out_weight: Option<f32>,
     #[serde(default, skip_serializing_if = "is_false")]
     pub broken: bool,
 }
@@ -346,6 +421,22 @@ impl AnimationClip {
                     .out_tangent
                     .take()
                     .filter(|tangent| tangent.is_tangent_for(&key.value));
+                match &key.value {
+                    AnimationValue::Float(_) | AnimationValue::Vector(_) => {
+                        key.in_weight = key
+                            .in_weight
+                            .filter(|weight| weight.is_finite())
+                            .map(|weight| weight.clamp(0.0, 1.0));
+                        key.out_weight = key
+                            .out_weight
+                            .filter(|weight| weight.is_finite())
+                            .map(|weight| weight.clamp(0.0, 1.0));
+                    }
+                    AnimationValue::Bool(_) | AnimationValue::String(_) => {
+                        key.in_weight = None;
+                        key.out_weight = None;
+                    }
+                }
             }
             track
                 .keyframes
@@ -451,6 +542,17 @@ pub fn sample_track(track: &AnimationTrack, time: f32) -> Option<AnimationValue>
                     resolved_tangent(track, pair_index + 1, TangentSide::In, fallback.clone())
                         .or(fallback);
                 if let (Some(out_tangent), Some(in_tangent)) = (out_tangent, in_tangent) {
+                    if left.out_weight.is_some() || right.in_weight.is_some() {
+                        return Some(left.value.weighted_cubic(
+                            &right.value,
+                            &out_tangent,
+                            &in_tangent,
+                            span,
+                            amount,
+                            left.out_weight.unwrap_or(1.0 / 3.0),
+                            right.in_weight.unwrap_or(1.0 / 3.0),
+                        ));
+                    }
                     return Some(left.value.cubic(
                         &right.value,
                         &out_tangent,
@@ -567,6 +669,8 @@ mod tests {
             out_tangent,
             in_tangent_mode: None,
             out_tangent_mode: None,
+            in_weight: None,
+            out_weight: None,
             broken: false,
         }
     }
@@ -733,13 +837,40 @@ mod tests {
             AnimationTangentMode::Free
         );
 
+        let mut weighted = float_track(AnimationInterpolation::Cubic);
+        weighted.keyframes[0].out_tangent = Some(AnimationValue::Float(0.0));
+        weighted.keyframes[0].out_weight = Some(0.8);
+        weighted.keyframes[1].in_tangent = Some(AnimationValue::Float(0.0));
+        weighted.keyframes[1].in_weight = Some(0.1);
+        let Some(AnimationValue::Float(weighted_value)) = sample_track(&weighted, 1.0) else {
+            panic!("expected weighted scalar sample");
+        };
+        assert!((weighted_value - 1.721_926_6).abs() < 1e-5);
+
+        weighted.keyframes[0].out_weight = None;
+        weighted.keyframes[1].in_weight = None;
+        let unweighted_third = sample_track(&weighted, 0.74);
+        weighted.keyframes[0].out_weight = Some(1.0 / 3.0);
+        weighted.keyframes[1].in_weight = Some(1.0 / 3.0);
+        let weighted_third = sample_track(&weighted, 0.74);
+        assert_eq!(weighted_third, unweighted_third);
+
+        weighted.keyframes[0].out_tangent = Some(AnimationValue::Float(100.0));
+        weighted.keyframes[0].out_weight = Some(0.0);
+        weighted.keyframes[1].in_tangent = Some(AnimationValue::Float(-100.0));
+        weighted.keyframes[1].in_weight = Some(0.0);
+        let Some(AnimationValue::Float(zero_weight_value)) = sample_track(&weighted, 0.5) else {
+            panic!("expected zero-weight scalar sample");
+        };
+        assert!((zero_weight_value - 2.5).abs() < 1e-5);
+
         let parsed = parse_animation_clip(
             br#"{
                 "name":"Modes","duration":1,"frame_rate":60,"wrap_mode":"loop","events":[],
                 "tracks":[{"target":".","component":"Transform","property":"position.x","interpolation":"cubic",
                     "keyframes":[
-                        {"time":0,"value":0,"out_tangent_mode":"constant","broken":true},
-                        {"time":1,"value":2,"in_tangent_mode":"linear"}
+                        {"time":0,"value":0,"out_tangent_mode":"constant","outWeight":3,"broken":true},
+                        {"time":1,"value":2,"in_tangent_mode":"linear","in_weight":-2}
                     ]
                 }]
             }"#,
@@ -750,14 +881,27 @@ mod tests {
             Some(AnimationTangentMode::Constant)
         );
         assert!(parsed.tracks[0].keyframes[0].broken);
+        assert_eq!(parsed.tracks[0].keyframes[0].out_weight, Some(1.0));
         assert_eq!(
             parsed.tracks[0].keyframes[1].in_tangent_mode,
             Some(AnimationTangentMode::Linear)
         );
+        assert_eq!(parsed.tracks[0].keyframes[1].in_weight, Some(0.0));
         assert_eq!(
             sample_track(&parsed.tracks[0], 0.5),
             Some(AnimationValue::Float(0.0))
         );
+
+        let discrete = parse_animation_clip(
+            br#"{
+                "name":"Discrete","duration":1,"tracks":[{"target":".","component":"Toggle","property":"is_on","interpolation":"cubic",
+                    "keyframes":[{"time":0,"value":false,"out_weight":0.5},{"time":1,"value":true,"in_weight":0.5}]
+                }]
+            }"#,
+        )
+        .unwrap();
+        assert_eq!(discrete.tracks[0].keyframes[0].out_weight, None);
+        assert_eq!(discrete.tracks[0].keyframes[1].in_weight, None);
     }
 
     #[test]

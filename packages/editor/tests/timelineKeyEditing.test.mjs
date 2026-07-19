@@ -212,6 +212,8 @@ test('Timeline key reverse mirrors frames and reverses cubic tangent direction',
   const source = clip();
   source.tracks[0].keyframes[1].out_tangent = [7, 8];
   source.tracks[0].keyframes[1].out_tangent_mode = 'linear';
+  source.tracks[0].keyframes[1].in_weight = 0.2;
+  source.tracks[0].keyframes[1].out_weight = 0.7;
   const reversed = reverseTimelineKeySelection(source, [
     { track: 0, key: 0 },
     { track: 0, key: 1 },
@@ -228,6 +230,8 @@ test('Timeline key reverse mirrors frames and reverses cubic tangent direction',
   assert.deepEqual(reversed.clip.tracks[0].keyframes[1].out_tangent, [-3, -4]);
   assert.equal(reversed.clip.tracks[0].keyframes[1].in_tangent_mode, 'linear');
   assert.equal(reversed.clip.tracks[0].keyframes[1].out_tangent_mode, 'free');
+  assert.equal(reversed.clip.tracks[0].keyframes[1].in_weight, 0.7);
+  assert.equal(reversed.clip.tracks[0].keyframes[1].out_weight, 0.2);
   assert.equal(reversed.selection.length, 3);
 });
 

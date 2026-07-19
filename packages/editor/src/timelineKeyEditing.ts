@@ -255,6 +255,10 @@ function reverseAnimationKeyframe(keyframe: AnimationKeyframe): AnimationKeyfram
   else reversed.in_tangent_mode = keyframe.out_tangent_mode;
   if (keyframe.in_tangent_mode === undefined) delete reversed.out_tangent_mode;
   else reversed.out_tangent_mode = keyframe.in_tangent_mode;
+  if (keyframe.out_weight === undefined) delete reversed.in_weight;
+  else reversed.in_weight = keyframe.out_weight;
+  if (keyframe.in_weight === undefined) delete reversed.out_weight;
+  else reversed.out_weight = keyframe.in_weight;
   return reversed;
 }
 

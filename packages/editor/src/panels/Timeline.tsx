@@ -49,6 +49,7 @@ import {
   advanceAnimationPreviewPhase,
   addAnimationEvent,
   animationKeyTangentMode,
+  animationKeyTangentWeight,
   automaticAnimationTangent,
   createAnimationClip,
   normalizeAnimationClip,
@@ -93,12 +94,14 @@ import {
   animationCurveSlopeFromPoint,
   animationCurveTangentConstraint,
   animationCurveTangentHandle,
+  animationCurveTangentWeightFromPoint,
   animationCurveValueBounds,
   curveNumericChannels,
   offsetAnimationCurveKeyValues,
   panAnimationCurveView,
   setAnimationCurveTangentChannel,
   setAnimationCurveTangentSideMode,
+  setAnimationCurveTangentWeight,
   setAnimationCurveTangentsAuto,
   setAnimationCurveTangentsBroken,
   setAnimationCurveTangentsFlat,
@@ -377,6 +380,7 @@ type AnimationCurveWorkspaceDrag =
       channel: number;
       side: 'in_tangent' | 'out_tangent';
       slope: number;
+      weight?: number;
       point: AnimationCurvePoint;
     }
   | {
@@ -430,6 +434,7 @@ function AnimationCurveWorkspace(props: {
     channel: number,
     side: 'in_tangent' | 'out_tangent',
     slope: number,
+    weight?: number,
   ) => void;
   onSetTangents: (mode: 'auto' | 'smooth' | 'broken' | 'flat') => void;
   onEnableCubic: () => void;
@@ -773,6 +778,9 @@ function AnimationCurveWorkspace(props: {
       channel: selectedChannel,
       side,
       slope,
+      ...(animationKeyTangentWeight(selectedKeyframe, side) == null
+        ? {}
+        : { weight: animationKeyTangentWeight(selectedKeyframe, side)! }),
       point,
     };
     dragRef.current = next;
@@ -830,17 +838,29 @@ function AnimationCurveWorkspace(props: {
       return;
     }
     if (!selectedKeyframe || selectedValues?.[current.channel] == null) return;
+    const nextWeight = current.weight === undefined
+      ? undefined
+      : animationCurveTangentWeightFromPoint(track, current.keyIndex, current.side, coordinates.time);
+    let tangentTime = coordinates.time;
+    if (current.weight !== undefined && nextWeight != null) {
+      const direction = current.side === 'in_tangent' ? -1 : 1;
+      const neighbour = track.keyframes[current.keyIndex + direction];
+      const span = neighbour ? Math.abs(neighbour.time - selectedKeyframe.time) : 0;
+      tangentTime = selectedKeyframe.time
+        + direction * Math.max(Number.EPSILON, span * nextWeight);
+    }
     const slope = animationCurveSlopeFromPoint(
       selectedKeyframe.time,
       selectedValues[current.channel],
-      coordinates.time,
+      tangentTime,
       coordinates.value,
     );
     if (slope == null) return;
     const next: AnimationCurveWorkspaceDrag = {
       ...current,
       slope,
-      point: animationCurvePoint(viewport, coordinates.time, coordinates.value),
+      ...(nextWeight == null ? {} : { weight: nextWeight }),
+      point: animationCurvePoint(viewport, tangentTime, coordinates.value),
     };
     dragRef.current = next;
     setDrag(next);
@@ -869,7 +889,7 @@ function AnimationCurveWorkspace(props: {
         setViewCenter(current.sourceTime + current.timeDelta);
       }
     } else if (current.kind === 'tangent') {
-      props.onCommitTangent(current.keyIndex, current.channel, current.side, current.slope);
+      props.onCommitTangent(current.keyIndex, current.channel, current.side, current.slope, current.weight);
     }
   };
 
@@ -2547,6 +2567,20 @@ export function Timeline(props: {
     }, `Set Animation ${side === 'in_tangent' ? 'In' : 'Out'} Tangent ${mode === 'clamped_auto' ? 'Clamped Auto' : mode[0].toUpperCase() + mode.slice(1)}`);
   };
 
+  const updateSelectedTangentWeight = (
+    side: 'in_tangent' | 'out_tangent',
+    weight: number | null,
+  ) => {
+    if (!clip || !selectedKey) return;
+    const track = clip.tracks[selectedKey.track];
+    if (!track) return;
+    const next = setAnimationCurveTangentWeight(track, selectedKey.key, side, weight);
+    updateClip({
+      ...clip,
+      tracks: clip.tracks.map((candidate, index) => index === selectedKey.track ? next : candidate),
+    }, `${weight == null ? 'Disable' : 'Edit'} Animation ${side === 'in_tangent' ? 'In' : 'Out'} Tangent Weight`);
+  };
+
   const updateCurveKeys = (
     keys: readonly TimelineKeyRef[],
     channel: number,
@@ -2602,6 +2636,7 @@ export function Timeline(props: {
     channel: number,
     side: 'in_tangent' | 'out_tangent',
     slope: number,
+    weight?: number,
   ) => {
     if (!clip || selectedTrack == null) return;
     const next = setAnimationCurveTangentChannel(
@@ -2610,6 +2645,7 @@ export function Timeline(props: {
       side,
       channel,
       slope,
+      weight,
     );
     updateClip({
       ...clip,
@@ -4049,20 +4085,24 @@ export function Timeline(props: {
                       <div className="timeline-tangent-editors">
                         <div><KeyframeValueEditor label="In Tangent" value={selectedKeyframe.in_tangent ?? automatic} onChange={(value) => {
                           if (typeof value === 'number' || Array.isArray(value)) updateSelectedTangent('in_tangent', value);
-                        }} /><label className="timeline-tangent-mode"><span>Mode</span><select aria-label="In tangent mode" value={animationKeyTangentMode(selectedKeyframe, 'in_tangent')} onChange={(event) => updateSelectedTangentMode('in_tangent', event.target.value as AnimationTangentMode)}>
+                        }} /><div className="timeline-tangent-mode"><label><span>Mode</span><select aria-label="In tangent mode" value={animationKeyTangentMode(selectedKeyframe, 'in_tangent')} onChange={(event) => updateSelectedTangentMode('in_tangent', event.target.value as AnimationTangentMode)}>
                           <option value="clamped_auto">Clamped Auto</option>
                           <option value="free">Free</option>
                           <option value="linear">Linear</option>
                           <option value="constant">Constant</option>
-                        </select></label></div>
+                        </select></label><label className="timeline-tangent-weight"><input aria-label="Weighted in tangent" type="checkbox" checked={animationKeyTangentWeight(selectedKeyframe, 'in_tangent') != null} onChange={(event) => updateSelectedTangentWeight('in_tangent', event.target.checked ? 1 / 3 : null)} /><span>Weight</span><input aria-label="In tangent weight" type="number" min={0} max={1} step={0.01} disabled={animationKeyTangentWeight(selectedKeyframe, 'in_tangent') == null} value={Number((animationKeyTangentWeight(selectedKeyframe, 'in_tangent') ?? 1 / 3).toFixed(4))} onChange={(event) => {
+                          if (Number.isFinite(event.target.valueAsNumber)) updateSelectedTangentWeight('in_tangent', event.target.valueAsNumber);
+                        }} /></label></div></div>
                         <div><KeyframeValueEditor label="Out Tangent" value={selectedKeyframe.out_tangent ?? automatic} onChange={(value) => {
                           if (typeof value === 'number' || Array.isArray(value)) updateSelectedTangent('out_tangent', value);
-                        }} /><label className="timeline-tangent-mode"><span>Mode</span><select aria-label="Out tangent mode" value={animationKeyTangentMode(selectedKeyframe, 'out_tangent')} onChange={(event) => updateSelectedTangentMode('out_tangent', event.target.value as AnimationTangentMode)}>
+                        }} /><div className="timeline-tangent-mode"><label><span>Mode</span><select aria-label="Out tangent mode" value={animationKeyTangentMode(selectedKeyframe, 'out_tangent')} onChange={(event) => updateSelectedTangentMode('out_tangent', event.target.value as AnimationTangentMode)}>
                           <option value="clamped_auto">Clamped Auto</option>
                           <option value="free">Free</option>
                           <option value="linear">Linear</option>
                           <option value="constant">Constant</option>
-                        </select></label></div>
+                        </select></label><label className="timeline-tangent-weight"><input aria-label="Weighted out tangent" type="checkbox" checked={animationKeyTangentWeight(selectedKeyframe, 'out_tangent') != null} onChange={(event) => updateSelectedTangentWeight('out_tangent', event.target.checked ? 1 / 3 : null)} /><span>Weight</span><input aria-label="Out tangent weight" type="number" min={0} max={1} step={0.01} disabled={animationKeyTangentWeight(selectedKeyframe, 'out_tangent') == null} value={Number((animationKeyTangentWeight(selectedKeyframe, 'out_tangent') ?? 1 / 3).toFixed(4))} onChange={(event) => {
+                          if (Number.isFinite(event.target.valueAsNumber)) updateSelectedTangentWeight('out_tangent', event.target.valueAsNumber);
+                        }} /></label></div></div>
                       </div>
                     );
                   })()}
