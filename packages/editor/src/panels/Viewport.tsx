@@ -36,7 +36,7 @@ import {
 import { clearModelPreview, modelPreview } from '../modelPreview';
 import {
   clearMaterialPreviews,
-  materialAssetPreview,
+  materialAssetPreviewState,
   resolveMaterialPreviewAppearance,
 } from '../materialPreview';
 import {
@@ -510,6 +510,7 @@ export function Viewport(props: {
   onGameResolution: (resolution: GameResolution | null) => void;
   onFrame: () => void;
   onInstantiateSprite: (path: string, position: Vec3) => void;
+  onLog?: (message: string, level?: 'info' | 'warn' | 'error') => void;
   onUiClick?: (entity: number, onClick: unknown) => void;
   onUiValueChange?: (
     entity: number,
@@ -532,6 +533,7 @@ export function Viewport(props: {
   const focusedUiRef = useRef<number | null>(null);
   const uiStatsRef = useRef({ elements: 0, batches: 0 });
   const particleStatesRef = useRef(new Map<number, ParticleEmitterState>());
+  const reportedMaterialErrorsRef = useRef(new Set<string>());
   const particleTimelineStateRef = useRef(new Map<number, {
     key: string;
     clipStart: number;
@@ -733,6 +735,7 @@ export function Viewport(props: {
     const clear = () => {
       clearModelPreview();
       clearMaterialPreviews();
+      reportedMaterialErrorsRef.current.clear();
       invalidateEnvironmentPreviews();
     };
     window.addEventListener('mengine:project-assets-changed', clear);
@@ -1442,11 +1445,20 @@ export function Viewport(props: {
       const half: Vec3 = [0.5 * t.scale[0], 0.5 * t.scale[1], 0.5 * t.scale[2]];
       const rot = t.rotation as [number, number, number, number] | undefined;
       const materialPath = String((mesh as Record<string, unknown>).material ?? 'default');
+      const materialPreview = materialAssetPreviewState(materialPath);
+      if (materialPreview.error && !e.components.PbrMaterial) {
+        const diagnostic = `${materialPath}: ${materialPreview.error}`;
+        if (!reportedMaterialErrorsRef.current.has(diagnostic)) {
+          reportedMaterialErrorsRef.current.add(diagnostic);
+          p.onLog?.(`Material preview failed: ${diagnostic}`, 'error');
+        }
+      }
       const materialAppearance = resolveMaterialPreviewAppearance(
         materialPath,
-        materialAssetPreview(materialPath),
+        materialPreview.material,
         e.components.PbrMaterial,
         e.components.MaterialPropertyBlock,
+        materialPreview.error,
       );
       const meshPath = String((mesh as Record<string, unknown>).mesh ?? 'cube');
       const imported = /\.(?:gltf|glb)$/i.test(meshPath) ? modelPreview(meshPath) : null;

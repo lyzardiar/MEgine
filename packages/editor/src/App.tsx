@@ -1572,6 +1572,7 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
               onInstantiateSprite={(path, position) => {
                 instantiateSpriteAsset(path, { position });
               }}
+              onLog={log}
             />
           ),
           inspector: (

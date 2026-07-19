@@ -104,3 +104,26 @@ test('built-in material preview presets match runtime presets', () => {
   });
   assert.equal(resolveMaterialPreviewAppearance('unlit', null, null).unlit, true);
 });
+
+test('failed material preview uses the runtime error-material appearance', () => {
+  assert.deepEqual(
+    resolveMaterialPreviewAppearance(
+      'Assets/Broken.mmat',
+      null,
+      null,
+      { override_base_color: true, base_color: [0, 1, 0, 1] },
+      'invalid Surface Shader',
+    ),
+    {
+      baseColor: [1, 0, 1, 1],
+      metallic: 0,
+      roughness: 1,
+      ior: 1.5,
+      clearcoat: 0,
+      clearcoatRoughness: 0.1,
+      emissive: [2, 0, 2],
+      emissiveStrength: 1,
+      unlit: true,
+    },
+  );
+});

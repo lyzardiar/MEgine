@@ -219,12 +219,13 @@ impl App {
             .collect::<Vec<_>>();
         let report = renderer.prepare_material_pipelines(&materials);
         log::info!(
-            "scene material pipeline prewarm: requested={}, created={}, cached={}, built_in={}, rejected={}",
+            "scene material pipeline prewarm: requested={}, created={}, cached={}, built_in={}, rejected={}, error_fallbacks={}",
             report.requested,
             report.created,
             report.cached,
             report.built_in,
-            report.rejected
+            report.rejected,
+            report.error_fallbacks
         );
         self.last_material_pipeline_stats = Some(renderer.material_pipeline_stats());
     }
@@ -1287,11 +1288,12 @@ impl ApplicationHandler for App {
                 Ok(materials) => {
                     let report = renderer.prewarm_material_pipelines(&materials);
                     log::info!(
-                        "packaged material pipeline prewarm: requested={}, created={}, cached={}, rejected={}",
+                        "packaged material pipeline prewarm: requested={}, created={}, cached={}, rejected={}, error_fallbacks={}",
                         report.requested,
                         report.created,
                         report.cached,
-                        report.rejected
+                        report.rejected,
+                        report.error_fallbacks
                     );
                 }
                 Err(error) => log::error!("packaged material pipeline prewarm rejected: {error}"),
@@ -1771,11 +1773,12 @@ function onTick(dt, frame) {
                     let pipeline_stats = r.material_pipeline_stats();
                     if self.last_material_pipeline_stats != Some(pipeline_stats) {
                         log::info!(
-                            "material pipeline cache: built_in={}, custom={}, resident={}, rejected={}, evictions={}",
+                            "material pipeline cache: built_in={}, custom={}, resident={}, rejected={}, error_variants={}, evictions={}",
                             pipeline_stats.built_in,
                             pipeline_stats.custom,
                             pipeline_stats.resident_custom,
                             pipeline_stats.rejected,
+                            pipeline_stats.error_variants,
                             pipeline_stats.evictions
                         );
                         self.last_material_pipeline_stats = Some(pipeline_stats);

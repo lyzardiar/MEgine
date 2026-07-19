@@ -1573,3 +1573,17 @@ Camera Shot 的基础闭环已经形成，但 Timeline 仍不完备：编辑器 
 第二遍自省从未选中邻居、Ripple 和多选边界反查，确认自动 Crossfade 不能只修改被拖动 Clip：向右推前一段时真正的入场参数属于后一段。现统一对最终轨道副本按开始时间扩展入场 Blend，再执行两路布局校验，并用普通移动、Ripple、组复制与 Blend 手柄回归固定原子性。编辑器测试增至 355 项；严格 TypeScript/Vite 构建继续验证手柄事件、联合类型和懒加载 Sequencer Chunk。
 
 当前自动化仍只生成单一入场曲线，尚未提供独立 Ease Out 权重、过渡曲线图、双边切线、对齐/匹配上一帧姿态或 Motion Matching。下一批应把可视区域升级为明确的重叠交叉纹理，并引入兼容旧资产的 `blend_out`/Ease Out 契约，使非对称过渡可在 Editor、Runtime 和 CLI 三端一致表达。
+
+## 134. 2026-07-20 材质错误可视化与诊断闭环
+
+- 引擎新增统一 `RenderMaterial::error()` 契约。Material/Material Instance 文件读取失败、自定义 Surface Shader 缺失或非法、反射参数/Keyword/纹理名称与 Shader Schema 不一致时，Runtime 不再返回普通灰色材质或保留原 PBR 外观，而是使用双面、不透明、发光的洋红棋盘格；`MaterialPropertyBlock` 即使继续参与对象收集，也不能把错误外观伪装成正常材质。
+- RHI 不再在最终 Surface Shader 组合被拒绝时静默回退内置 Forward Pipeline。它为实际需要的 Blend、Depth Write 和 Culling 状态懒创建独立错误 Pipeline，并在绘制时按原固定功能状态选择错误 Shader；错误 Pipeline 使用独立、有界缓存，不占自定义 Shader Variant 数，也不会按资源路径无限增长。`MaterialPipelineStats` 增加错误 Variant 数，预热报告区分资产错误回退与编译拒绝。
+- 非空材质纹理引用只有在相应 sRGB/Linear GPU 缓存确实存在时才算可用。Base Color、Normal、ORM、独立 AO、Emissive 或四个自定义纹理加载/上传失败会使用同一错误 Pipeline；空槽仍绑定白色、平面法线等合法默认纹理。纹理热修复成功上传后，下一帧自动恢复正常材质，不需要重载场景。
+- `RuntimeMaterialCache` 保存每个当前失败资产的一条结构化诊断并按路径稳定输出；相同错误只记录一次，错误内容变化才再次记录，资源恢复或显式失效后清除。RHI 同样提供按 Shader 指纹排序的拒绝诊断，保留完整 Naga 解析/验证信息，而不是只有一个 `rejected` 数字。
+- Scene/Game 的 Canvas 预览缓存现在不仅解析 Material/Instance，还读取自定义 `.mshader`、检查 Schema 参数/Keyword/纹理绑定，并在桌面编辑器调用与 Player 相同的 Rust WGSL 验证器。失败对象显示统一洋红错误外观，具体路径与错误进入 Editor Console 且按错误内容去重；外部资源变化会清空预览与去重状态，修复后可恢复。
+
+第一遍自省从每帧诊断生命周期反查，发现草案在材质文件读取成功后立即清除同路径错误，随后又记录自定义绑定错误，会导致相同消息每帧刷屏。现把清除时机移到完整材质解析成功分支：Shader 加载失败时清除旧绑定错误并保留 Shader 错误，绑定失败时清除旧 Shader 错误并保留材质错误；回归验证重复解析只保留一条诊断，修复后诊断为空。
+
+第二遍自省沿“所有资源失败是否真的可见”反查，发现已有白色/平面法线后备纹理同时承担“作者主动留空”和“声明路径加载失败”，后者仍可能看似正常。现明确区分空槽与非空未驻留引用，并检查内置和自定义槽的颜色空间缓存；单元测试固定只有非空且不可用的引用触发错误回退。验证覆盖 RHI 错误 WGSL、错误 Pipeline 状态归一、材质/Shader 修复、编辑器错误外观和严格前端构建。
+
+这一批解决了静默回退和基础诊断，但还不是完整 Shader 工具链。wgpu 的设备/驱动专属异步 Pipeline 创建错误尚未纳入同步错误作用域，编辑器 Canvas 仍不执行真实 WGSL，也没有在 Inspector/Project 图标上聚合依赖诊断；缺少离线多后端编译、源位置映射、Include、Shader Graph、Render Pass/Frame Debugger、PSO 持久缓存、平台 Feature 门禁和 CI 编译耗时预算。下一阶段应让构建产物携带按平台编译的 Shader Artifact 与源映射，并把 Runtime/RHI 诊断通过版本化 Editor Profiler 协议回传，而不是依赖日志文本。

@@ -15,7 +15,7 @@ pub use renderer::{
     ClearColor, DirectionalLightData, EnvironmentLightData, FrameCamera, FrameLighting,
     MaterialBlendMode, MaterialFilter, MaterialPipelinePrewarmReport, MaterialPipelineStats,
     MaterialTextureStats, MaterialWrap, PointLightData, RenderMaterial, RenderObject, Renderer,
-    SpotLightData, SurfaceShaderParameterBinding,
+    SpotLightData, SurfaceShaderParameterBinding, SurfaceShaderPipelineDiagnostic,
 };
 pub use ui::{
     UiBatch, UiBatchKey, UiBatchPlan, UiBlendMode, UiClipRect, UiFrameStats, UiPrimitive,

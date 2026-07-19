@@ -1,5 +1,16 @@
 import type { MaterialAsset } from './materialAsset.ts';
 import { loadResolvedMaterialAsset } from './materialInstanceAsset.ts';
+import { readProjectAssetText } from './projectAssets.ts';
+import {
+  parseSurfaceShaderKeywords,
+  parseSurfaceShaderParameters,
+  parseSurfaceShaderTextures,
+  validateSurfaceShaderKeywordValues,
+  validateSurfaceShaderParameterValues,
+  validateSurfaceShaderSource,
+  validateSurfaceShaderTextureValues,
+} from './surfaceShader.ts';
+import { isDesktopEditor, validateSurfaceShaderWithRuntime } from './transport/editorTransport.ts';
 
 export type MaterialPreviewAppearance = {
   baseColor: [number, number, number, number];
@@ -13,23 +24,30 @@ export type MaterialPreviewAppearance = {
   unlit: boolean;
 };
 
-type PreviewState = {
+export type MaterialAssetPreviewState = {
   material: MaterialAsset | null;
   loading: boolean;
   error: string | null;
 };
 
-const cache = new Map<string, PreviewState>();
+const cache = new Map<string, MaterialAssetPreviewState>();
 
 /** Returns a cached material immediately and starts an asynchronous load on first use. */
 export function materialAssetPreview(path: string): MaterialAsset | null {
+  return materialAssetPreviewState(path).material;
+}
+
+/** Returns cached material preview state, including a durable load/validation diagnostic. */
+export function materialAssetPreviewState(path: string): MaterialAssetPreviewState {
   const normalized = path.trim().replace(/\\/g, '/');
-  if (!/\.(?:mmat|mat|minst)$/i.test(normalized)) return null;
+  if (!/\.(?:mmat|mat|minst)$/i.test(normalized)) {
+    return { material: null, loading: false, error: null };
+  }
   const existing = cache.get(normalized);
-  if (existing) return existing.material;
-  const state: PreviewState = { material: null, loading: true, error: null };
+  if (existing) return existing;
+  const state: MaterialAssetPreviewState = { material: null, loading: true, error: null };
   cache.set(normalized, state);
-  void loadResolvedMaterialAsset(normalized)
+  void loadValidatedPreviewMaterial(normalized)
     .then((material) => {
       state.material = material;
       state.loading = false;
@@ -39,7 +57,24 @@ export function materialAssetPreview(path: string): MaterialAsset | null {
       state.error = reason instanceof Error ? reason.message : String(reason);
       console.warn(`Material preview failed for ${normalized}: ${state.error}`);
     });
-  return null;
+  return state;
+}
+
+async function loadValidatedPreviewMaterial(path: string): Promise<MaterialAsset> {
+  const material = await loadResolvedMaterialAsset(path);
+  if (material.shader !== 'custom') return material;
+  const shaderPath = material.custom_shader.trim().replace(/\\/g, '/');
+  if (!shaderPath) throw new Error('Custom material requires a .mshader asset.');
+  const source = await readProjectAssetText(shaderPath);
+  validateSurfaceShaderSource(source);
+  const parameters = parseSurfaceShaderParameters(source);
+  const keywords = parseSurfaceShaderKeywords(source);
+  const textures = parseSurfaceShaderTextures(source);
+  validateSurfaceShaderParameterValues(parameters, material.custom_parameters);
+  validateSurfaceShaderKeywordValues(keywords, material.custom_keywords);
+  validateSurfaceShaderTextureValues(textures, material.custom_textures);
+  if (isDesktopEditor()) await validateSurfaceShaderWithRuntime(source);
+  return material;
 }
 
 export function clearMaterialPreviews(path?: string): void {
@@ -52,8 +87,10 @@ export function resolveMaterialPreviewAppearance(
   asset: MaterialAsset | null,
   legacyOverride: unknown,
   propertyBlock?: unknown,
+  loadError: string | null = null,
 ): MaterialPreviewAppearance {
   const component = record(legacyOverride);
+  if (!component && loadError) return errorAppearance();
   const resolved = component
     ? appearance({
       baseColor: component.base_color,
@@ -95,6 +132,17 @@ export function resolveMaterialPreviewAppearance(
       ? block.emissive_strength
       : resolved.emissiveStrength,
     unlit: resolved.unlit,
+  });
+}
+
+function errorAppearance(): MaterialPreviewAppearance {
+  return appearance({
+    baseColor: [1, 0, 1, 1],
+    metallic: 0,
+    roughness: 1,
+    emissive: [2, 0, 2],
+    emissiveStrength: 1,
+    unlit: true,
   });
 }
 

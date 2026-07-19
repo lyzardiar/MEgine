@@ -50,7 +50,13 @@ pub struct RuntimeMaterialCache {
     materials: HashMap<PathBuf, CachedMaterial>,
     instances: HashMap<PathBuf, CachedMaterialInstance>,
     surface_shaders: HashMap<PathBuf, CachedSurfaceShader>,
-    reported_failures: HashSet<(String, String)>,
+    active_failures: HashMap<String, String>,
+}
+
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub struct RuntimeMaterialDiagnostic {
+    pub asset: String,
+    pub error: String,
 }
 
 impl RuntimeMaterialCache {
@@ -60,7 +66,7 @@ impl RuntimeMaterialCache {
             materials: HashMap::new(),
             instances: HashMap::new(),
             surface_shaders: HashMap::new(),
-            reported_failures: HashSet::new(),
+            active_failures: HashMap::new(),
         }
     }
 
@@ -71,8 +77,6 @@ impl RuntimeMaterialCache {
         }
         match self.resolve_asset(normalized) {
             Ok(material) => {
-                self.reported_failures
-                    .retain(|(reported_key, _)| reported_key != normalized);
                 let mut render = render_material_from_asset(&material);
                 if material.shader == MaterialShader::Custom {
                     match self.load_custom_shader(&material.custom_shader) {
@@ -83,6 +87,8 @@ impl RuntimeMaterialCache {
                             Arc::clone(&shader.texture_names),
                         ) {
                             Ok(bindings) => {
+                                self.clear_failure(normalized);
+                                self.clear_failure(&material.custom_shader);
                                 render.surface_shader = Arc::clone(&shader.source);
                                 render.surface_keywords = bindings.keywords;
                                 render.custom_parameters = bindings.parameters;
@@ -92,47 +98,60 @@ impl RuntimeMaterialCache {
                                 render.custom_texture_srgb = bindings.texture_srgb;
                             }
                             Err(error) => {
-                                if self
-                                    .reported_failures
-                                    .insert((material.custom_shader.clone(), error.clone()))
-                                {
+                                self.clear_failure(&material.custom_shader);
+                                if self.record_failure(normalized, &error) {
                                     log::warn!(
-                                        "custom shader bindings for '{}' are invalid: {}",
+                                        "material '{}' has invalid bindings for custom shader '{}': {}",
+                                        normalized,
                                         material.custom_shader,
                                         error
                                     );
                                 }
+                                render = RenderMaterial::error();
                             }
                         },
                         Err(error) => {
-                            if self
-                                .reported_failures
-                                .insert((material.custom_shader.clone(), error.clone()))
-                            {
+                            self.clear_failure(normalized);
+                            if self.record_failure(&material.custom_shader, &error) {
                                 log::warn!(
                                     "custom shader '{}' could not be loaded: {}",
                                     material.custom_shader,
                                     error
                                 );
                             }
+                            render = RenderMaterial::error();
                         }
                     }
+                } else {
+                    self.clear_failure(normalized);
                 }
                 Some(render)
             }
             Err(error) => {
-                if self
-                    .reported_failures
-                    .insert((normalized.to_owned(), error.clone()))
-                {
+                if self.record_failure(normalized, &error) {
                     log::warn!("material '{}' could not be loaded: {}", normalized, error);
                 }
-                Some(RenderMaterial::default())
+                Some(RenderMaterial::error())
             }
         }
     }
 
+    /// Returns current material and Surface Shader failures in stable asset-path order.
+    pub fn diagnostics(&self) -> Vec<RuntimeMaterialDiagnostic> {
+        let mut diagnostics = self
+            .active_failures
+            .iter()
+            .map(|(asset, error)| RuntimeMaterialDiagnostic {
+                asset: asset.clone(),
+                error: error.clone(),
+            })
+            .collect::<Vec<_>>();
+        diagnostics.sort_by(|left, right| left.asset.cmp(&right.asset));
+        diagnostics
+    }
+
     pub fn invalidate(&mut self, key: &str) {
+        self.clear_failure(key.trim());
         let Some(root) = self.project_root.as_deref() else {
             return;
         };
@@ -141,6 +160,23 @@ impl RuntimeMaterialCache {
             self.instances.remove(&path);
             self.surface_shaders.remove(&path);
         }
+    }
+
+    fn record_failure(&mut self, asset: &str, error: &str) -> bool {
+        if self
+            .active_failures
+            .get(asset)
+            .is_some_and(|value| value == error)
+        {
+            return false;
+        }
+        self.active_failures
+            .insert(asset.to_owned(), error.to_owned());
+        true
+    }
+
+    fn clear_failure(&mut self, asset: &str) {
+        self.active_failures.remove(asset);
     }
 
     pub fn resolve_asset(&mut self, key: &str) -> Result<MaterialAsset, String> {
@@ -558,6 +594,7 @@ pub fn render_material_from_asset(material: &MaterialAsset) -> RenderMaterial {
         custom_textures: std::array::from_fn(|_| String::new()),
         custom_texture_names: Arc::from(Vec::new()),
         custom_texture_srgb: [false; MAX_SURFACE_SHADER_TEXTURES],
+        is_error: false,
     }
 }
 
@@ -1134,6 +1171,75 @@ mod tests {
             .resolve_asset("Assets/Materials/A.minst")
             .unwrap_err();
         assert!(error.contains("inheritance cycle"), "{error}");
+        std::fs::remove_dir_all(root).unwrap();
+    }
+
+    #[test]
+    fn missing_material_uses_error_material_and_diagnostic_clears_after_recovery() {
+        let root = std::env::temp_dir().join(format!("mengine-material-error-{}", Uuid::new_v4()));
+        let materials = root.join("Assets/Materials");
+        std::fs::create_dir_all(&materials).unwrap();
+        let key = "Assets/Materials/Recovered.mmat";
+        let mut cache = RuntimeMaterialCache::new(Some(root.clone()));
+
+        let missing = cache.resolve(key).unwrap();
+        assert!(missing.is_error);
+        assert_eq!(missing.base_color, [1.0, 0.0, 1.0, 1.0]);
+        assert_eq!(cache.diagnostics().len(), 1);
+        assert_eq!(cache.diagnostics()[0].asset, key);
+
+        std::fs::write(
+            materials.join("Recovered.mmat"),
+            r#"{"version":10,"name":"Recovered"}"#,
+        )
+        .unwrap();
+        cache.invalidate(key);
+        let recovered = cache.resolve(key).unwrap();
+        assert!(!recovered.is_error);
+        assert!(cache.diagnostics().is_empty());
+
+        std::fs::remove_dir_all(root).unwrap();
+    }
+
+    #[test]
+    fn invalid_custom_shader_uses_error_material_until_shader_recovers() {
+        let root = std::env::temp_dir().join(format!("mengine-shader-error-{}", Uuid::new_v4()));
+        let materials = root.join("Assets/Materials");
+        let shaders = root.join("Assets/Shaders");
+        std::fs::create_dir_all(&materials).unwrap();
+        std::fs::create_dir_all(&shaders).unwrap();
+        let material_key = "Assets/Materials/Broken.mmat";
+        let shader_key = "Assets/Shaders/Broken.mshader";
+        std::fs::write(
+            materials.join("Broken.mmat"),
+            r#"{"version":10,"name":"Broken","shader":"custom","custom_shader":"Assets/Shaders/Broken.mshader"}"#,
+        )
+        .unwrap();
+        std::fs::write(shaders.join("Broken.mshader"), "fn unrelated() {}\n").unwrap();
+        let mut cache = RuntimeMaterialCache::new(Some(root.clone()));
+
+        assert!(cache.resolve(material_key).unwrap().is_error);
+        assert_eq!(cache.diagnostics()[0].asset, shader_key);
+        assert!(cache.resolve(material_key).unwrap().is_error);
+        assert_eq!(cache.diagnostics().len(), 1);
+
+        std::fs::write(
+            shaders.join("Broken.mshader"),
+            r#"fn mengine_lit_surface_hook(
+    surface: MEngineSurface,
+    uv: vec2<f32>,
+    world_position: vec3<f32>,
+) -> MEngineSurface {
+    return surface;
+}
+"#,
+        )
+        .unwrap();
+        cache.invalidate(shader_key);
+        let recovered = cache.resolve(material_key).unwrap();
+        assert!(!recovered.is_error);
+        assert!(cache.diagnostics().is_empty());
+
         std::fs::remove_dir_all(root).unwrap();
     }
 }

@@ -127,6 +127,9 @@ pub struct RenderMaterial {
     pub custom_texture_names: Arc<[String]>,
     /// True selects the sRGB upload/cache for the corresponding custom texture slot.
     pub custom_texture_srgb: [bool; MAX_SURFACE_SHADER_TEXTURES],
+    /// Forces the renderer's diagnostic checker pipeline. Asset and shader resolution failures
+    /// use this path so broken content remains visible instead of resembling a valid material.
+    pub is_error: bool,
 }
 
 #[derive(Clone, Copy, Debug, Default, Eq, Hash, PartialEq)]
@@ -159,6 +162,7 @@ pub struct MaterialPipelineStats {
     pub custom: usize,
     pub resident_custom: usize,
     pub rejected: usize,
+    pub error_variants: usize,
     pub evictions: u64,
 }
 
@@ -170,6 +174,12 @@ pub struct MaterialTextureStats {
     pub samplers: usize,
 }
 
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub struct SurfaceShaderPipelineDiagnostic {
+    pub fingerprint: u64,
+    pub error: String,
+}
+
 #[derive(Clone, Copy, Debug, Default, Eq, PartialEq)]
 pub struct MaterialPipelinePrewarmReport {
     pub requested: usize,
@@ -177,6 +187,7 @@ pub struct MaterialPipelinePrewarmReport {
     pub cached: usize,
     pub built_in: usize,
     pub rejected: usize,
+    pub error_fallbacks: usize,
 }
 
 impl Default for RenderMaterial {
@@ -219,6 +230,22 @@ impl Default for RenderMaterial {
             custom_textures: std::array::from_fn(|_| String::new()),
             custom_texture_names: Arc::from(Vec::new()),
             custom_texture_srgb: [false; MAX_SURFACE_SHADER_TEXTURES],
+            is_error: false,
+        }
+    }
+}
+
+impl RenderMaterial {
+    /// Returns the engine-standard diagnostic material used for missing or invalid content.
+    pub fn error() -> Self {
+        Self {
+            base_color: [1.0, 0.0, 1.0, 1.0],
+            emissive: [1.0, 0.0, 1.0],
+            emissive_strength: 1.0,
+            unlit: true,
+            double_sided: true,
+            is_error: true,
+            ..Self::default()
         }
     }
 }
@@ -420,6 +447,13 @@ enum MaterialPipelinePrepareResult {
     Cached,
     Created,
     Rejected,
+    ErrorFallback,
+}
+
+#[derive(Clone, Debug)]
+struct RejectedSurfaceShader {
+    last_used: u64,
+    error: String,
 }
 
 impl From<&RenderMaterial> for MaterialPipelineKey {
@@ -443,6 +477,13 @@ impl From<&RenderMaterial> for MaterialPipelineKey {
             ),
         }
     }
+}
+
+fn error_material_pipeline_key(mut key: MaterialPipelineKey) -> MaterialPipelineKey {
+    // Error pipelines live in a separate cache, so zero is a canonical state key rather than a
+    // built-in shader identifier here. This avoids reserving a real 64-bit shader fingerprint.
+    key.shader_fingerprint = 0;
+    key
 }
 
 impl From<&RenderMaterial> for MaterialTextureSetKey {
@@ -471,15 +512,39 @@ impl From<&RenderMaterial> for MaterialTextureSetKey {
     }
 }
 
+fn material_has_missing_textures(
+    material: &RenderMaterial,
+    mut available: impl FnMut(&str, bool) -> bool,
+) -> bool {
+    let built_in = [
+        (material.base_color_texture.trim(), true),
+        (material.normal_texture.trim(), false),
+        (material.metallic_roughness_texture.trim(), false),
+        (material.occlusion_texture.trim(), false),
+        (material.emissive_texture.trim(), true),
+    ];
+    built_in
+        .into_iter()
+        .chain(
+            material
+                .custom_textures
+                .iter()
+                .zip(material.custom_texture_srgb)
+                .map(|(path, srgb)| (path.trim(), srgb)),
+        )
+        .any(|(path, srgb)| !path.is_empty() && !available(path, srgb))
+}
+
 pub struct Renderer {
     pub device: wgpu::Device,
     pub queue: wgpu::Queue,
     surface: wgpu::Surface<'static>,
     config: wgpu::SurfaceConfiguration,
     material_pipelines: HashMap<MaterialPipelineKey, wgpu::RenderPipeline>,
+    error_material_pipelines: HashMap<MaterialPipelineKey, wgpu::RenderPipeline>,
     material_pipeline_last_used: HashMap<MaterialPipelineKey, u64>,
     resident_material_pipelines: HashSet<MaterialPipelineKey>,
-    invalid_surface_shaders: HashMap<u64, u64>,
+    invalid_surface_shaders: HashMap<u64, RejectedSurfaceShader>,
     material_pipeline_epoch: u64,
     material_pipeline_evictions: u64,
     depth_view: wgpu::TextureView,
@@ -1037,6 +1102,7 @@ impl Renderer {
             surface,
             config,
             material_pipelines,
+            error_material_pipelines: HashMap::new(),
             material_pipeline_last_used: HashMap::new(),
             resident_material_pipelines: HashSet::new(),
             invalid_surface_shaders: HashMap::new(),
@@ -1177,6 +1243,16 @@ impl Renderer {
         let draw_order = sorted_render_indices(objects, camera.position);
         for object in objects {
             self.ensure_material_pipeline(&object.material);
+            let missing_texture = material_has_missing_textures(&object.material, |key, srgb| {
+                if srgb {
+                    self.material_color_textures.contains_key(key)
+                } else {
+                    self.material_data_textures.contains_key(key)
+                }
+            });
+            if missing_texture {
+                self.ensure_error_material_pipeline(MaterialPipelineKey::from(&object.material));
+            }
             self.ensure_material_texture_set(&object.material);
         }
         self.prune_material_pipeline_cache();
@@ -1296,16 +1372,33 @@ impl Renderer {
                     continue;
                 };
                 let pipeline_key = MaterialPipelineKey::from(&object.material);
-                let pipeline = self
-                    .material_pipelines
-                    .get(&pipeline_key)
-                    .or_else(|| {
-                        self.material_pipelines.get(&MaterialPipelineKey {
-                            shader_fingerprint: 0,
-                            ..pipeline_key
+                let use_error_pipeline = object.material.is_error
+                    || (pipeline_key.shader_fingerprint != 0
+                        && self
+                            .invalid_surface_shaders
+                            .contains_key(&pipeline_key.shader_fingerprint))
+                    || material_has_missing_textures(&object.material, |key, srgb| {
+                        if srgb {
+                            self.material_color_textures.contains_key(key)
+                        } else {
+                            self.material_data_textures.contains_key(key)
+                        }
+                    });
+                let pipeline = if use_error_pipeline {
+                    self.error_material_pipelines
+                        .get(&error_material_pipeline_key(pipeline_key))
+                        .expect("error material pipeline prepared before render pass")
+                } else {
+                    self.material_pipelines
+                        .get(&pipeline_key)
+                        .or_else(|| {
+                            self.material_pipelines.get(&MaterialPipelineKey {
+                                shader_fingerprint: 0,
+                                ..pipeline_key
+                            })
                         })
-                    })
-                    .expect("built-in material pipeline variants are created at startup");
+                        .expect("built-in material pipeline variants are created at startup")
+                };
                 pass.set_pipeline(pipeline);
                 pass.set_bind_group(
                     0,
@@ -1398,6 +1491,10 @@ impl Renderer {
         material: &RenderMaterial,
     ) -> MaterialPipelinePrepareResult {
         let key = MaterialPipelineKey::from(material);
+        if material.is_error {
+            self.ensure_error_material_pipeline(key);
+            return MaterialPipelinePrepareResult::ErrorFallback;
+        }
         if key.shader_fingerprint == 0 {
             return MaterialPipelinePrepareResult::BuiltIn;
         }
@@ -1410,7 +1507,8 @@ impl Renderer {
             .invalid_surface_shaders
             .get_mut(&key.shader_fingerprint)
         {
-            *last_used = self.material_pipeline_epoch;
+            last_used.last_used = self.material_pipeline_epoch;
+            self.ensure_error_material_pipeline(key);
             return MaterialPipelinePrepareResult::Rejected;
         }
         let source = match compose_surface_shader(
@@ -1420,8 +1518,14 @@ impl Renderer {
             Ok(source) => source,
             Err(error) => {
                 log::warn!("surface shader rejected: {error}");
-                self.invalid_surface_shaders
-                    .insert(key.shader_fingerprint, self.material_pipeline_epoch);
+                self.invalid_surface_shaders.insert(
+                    key.shader_fingerprint,
+                    RejectedSurfaceShader {
+                        last_used: self.material_pipeline_epoch,
+                        error,
+                    },
+                );
+                self.ensure_error_material_pipeline(key);
                 return MaterialPipelinePrepareResult::Rejected;
             }
         };
@@ -1442,6 +1546,31 @@ impl Renderer {
             ),
         );
         MaterialPipelinePrepareResult::Created
+    }
+
+    fn ensure_error_material_pipeline(&mut self, source_key: MaterialPipelineKey) {
+        let key = error_material_pipeline_key(source_key);
+        if self.error_material_pipelines.contains_key(&key) {
+            return;
+        }
+        let source = compose_surface_shader(ERROR_SURFACE_SHADER_HOOK, None)
+            .expect("engine error Surface Shader must remain valid");
+        let shader = self
+            .device
+            .create_shader_module(wgpu::ShaderModuleDescriptor {
+                label: Some("error_surface_material"),
+                source: wgpu::ShaderSource::Wgsl(source.into()),
+            });
+        self.error_material_pipelines.insert(
+            key,
+            create_pipeline(
+                &self.device,
+                HDR_COLOR_FORMAT,
+                &shader,
+                &self.pipeline_layout,
+                key,
+            ),
+        );
     }
 
     fn prune_material_pipeline_cache(&mut self) {
@@ -1468,15 +1597,16 @@ impl Renderer {
         }
         self.material_pipeline_last_used
             .retain(|key, _| self.material_pipelines.contains_key(key));
-        self.invalid_surface_shaders.retain(|_, last_used| {
-            self.material_pipeline_epoch.saturating_sub(*last_used)
+        self.invalid_surface_shaders.retain(|_, diagnostic| {
+            self.material_pipeline_epoch
+                .saturating_sub(diagnostic.last_used)
                 <= MATERIAL_PIPELINE_GRACE_FRAMES
         });
         if self.invalid_surface_shaders.len() > MAX_DYNAMIC_MATERIAL_PIPELINES {
             let mut oldest = self
                 .invalid_surface_shaders
                 .iter()
-                .map(|(fingerprint, last_used)| (*fingerprint, *last_used))
+                .map(|(fingerprint, diagnostic)| (*fingerprint, diagnostic.last_used))
                 .collect::<Vec<_>>();
             oldest.sort_by_key(|entry| entry.1);
             for (fingerprint, _) in oldest
@@ -1595,6 +1725,7 @@ impl Renderer {
                 .count(),
             resident_custom: self.resident_material_pipelines.len(),
             rejected: self.invalid_surface_shaders.len(),
+            error_variants: self.error_material_pipelines.len(),
             evictions: self.material_pipeline_evictions,
         }
     }
@@ -1606,6 +1737,22 @@ impl Renderer {
             bind_groups: self.material_texture_sets.len(),
             samplers: self.material_samplers.len(),
         }
+    }
+
+    /// Returns active rejected custom shader variants in deterministic fingerprint order.
+    pub fn surface_shader_diagnostics(&self) -> Vec<SurfaceShaderPipelineDiagnostic> {
+        let mut diagnostics = self
+            .invalid_surface_shaders
+            .iter()
+            .map(
+                |(fingerprint, diagnostic)| SurfaceShaderPipelineDiagnostic {
+                    fingerprint: *fingerprint,
+                    error: diagnostic.error.clone(),
+                },
+            )
+            .collect::<Vec<_>>();
+        diagnostics.sort_by_key(|diagnostic| diagnostic.fingerprint);
+        diagnostics
     }
 
     /// Creates every supplied custom material pipeline before the first render that uses it.
@@ -1649,6 +1796,7 @@ impl Renderer {
                 MaterialPipelinePrepareResult::Cached => report.cached += 1,
                 MaterialPipelinePrepareResult::Created => report.created += 1,
                 MaterialPipelinePrepareResult::Rejected => report.rejected += 1,
+                MaterialPipelinePrepareResult::ErrorFallback => report.error_fallbacks += 1,
             }
         }
         report
@@ -2208,6 +2356,23 @@ const LIT_SURFACE_HOOK_SOURCE: &str = r#"fn mengine_lit_surface_hook(
     world_position: vec3<f32>,
 ) -> MEngineSurface {
     return surface;
+}"#;
+
+const ERROR_SURFACE_SHADER_HOOK: &str = r#"fn mengine_lit_surface_hook(
+    surface: MEngineSurface,
+    uv: vec2<f32>,
+    world_position: vec3<f32>,
+) -> MEngineSurface {
+    var result = surface;
+    let checker = fract((floor(uv.x * 12.0) + floor(uv.y * 12.0)) * 0.5);
+    let intensity = select(0.08, 1.0, checker < 0.25);
+    result.base_color = vec3<f32>(intensity, 0.0, intensity);
+    result.alpha = 1.0;
+    result.metallic = 0.0;
+    result.roughness = 1.0;
+    result.occlusion = 1.0;
+    result.emissive = result.base_color * 2.0;
+    return result;
 }"#;
 
 pub fn validate_surface_shader_hook(source: &str) -> Result<(), String> {
@@ -3474,6 +3639,31 @@ mod tests {
     }
 
     #[test]
+    fn error_material_is_visible_and_uses_a_valid_diagnostic_shader() {
+        let material = RenderMaterial::error();
+        assert!(material.is_error);
+        assert_eq!(material.base_color, [1.0, 0.0, 1.0, 1.0]);
+        assert!(material.unlit);
+        assert!(material.double_sided);
+        let composed = compose_surface_shader(ERROR_SURFACE_SHADER_HOOK, None).unwrap();
+        assert!(composed.contains("result.emissive = result.base_color * 2.0"));
+
+        let source_key = MaterialPipelineKey {
+            blend: MaterialPipelineBlend::Additive,
+            double_sided: true,
+            depth_write: false,
+            shader_fingerprint: 42,
+        };
+        assert_eq!(
+            error_material_pipeline_key(source_key),
+            MaterialPipelineKey {
+                shader_fingerprint: 0,
+                ..source_key
+            }
+        );
+    }
+
+    #[test]
     fn directional_shadow_shader_is_valid_wgsl() {
         let module =
             naga::front::wgsl::parse_str(SHADOW_WGSL).expect("shadow shader should parse as WGSL");
@@ -3773,6 +3963,33 @@ mod tests {
         };
         let key = MaterialTextureSetKey::from(&material);
         assert_eq!(key.occlusion, "orm.png");
+    }
+
+    #[test]
+    fn only_non_empty_unavailable_material_textures_trigger_error_fallback() {
+        let mut material = RenderMaterial {
+            base_color_texture: "base.png".into(),
+            normal_texture: "normal.png".into(),
+            ..Default::default()
+        };
+        material.custom_textures[0] = "mask.png".into();
+        material.custom_texture_srgb[0] = false;
+        let available = HashSet::from([("base.png", true), ("mask.png", false)]);
+        assert!(material_has_missing_textures(&material, |path, srgb| {
+            available.contains(&(path, srgb))
+        }));
+        let available = HashSet::from([
+            ("base.png", true),
+            ("normal.png", false),
+            ("mask.png", false),
+        ]);
+        assert!(!material_has_missing_textures(&material, |path, srgb| {
+            available.contains(&(path, srgb))
+        }));
+        assert!(!material_has_missing_textures(
+            &RenderMaterial::default(),
+            |_, _| false
+        ));
     }
 
     #[test]
