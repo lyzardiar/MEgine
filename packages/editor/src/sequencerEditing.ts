@@ -58,6 +58,10 @@ export type SequencerTrackPlacementResult =
   | { ok: true; asset: TimelineAsset; trackIndex: number; changed: boolean }
   | { ok: false; error: string };
 
+export type SequencerTracksPlacementResult =
+  | { ok: true; asset: TimelineAsset; trackIndexes: number[]; changed: boolean }
+  | { ok: false; error: string };
+
 export type SequencerGroupDropTarget =
   | { kind: 'track'; trackId: string; edge: 'before' | 'after' }
   | { kind: 'group'; groupId: string; edge: 'before' | 'after' }
@@ -69,6 +73,23 @@ export type SequencerGroupPlacementResult =
 
 export type SequencerItemSelection = { track: number; marker: number };
 export type SequencerSelectionMode = 'single' | 'toggle' | 'range';
+export type SequencerTrackHeaderSelectionMode = 'single' | 'toggle' | 'range' | 'add-range';
+export type SequencerTrackHeaderSelectionResult = {
+  trackIds: string[];
+  primaryId: string | null;
+  anchorId: string | null;
+};
+
+export function sequencerStructuralMoveDirection(
+  key: string,
+  altKey: boolean,
+  modified: boolean,
+): -1 | 1 | null {
+  if (modified || !altKey) return null;
+  if (key === 'ArrowUp') return -1;
+  if (key === 'ArrowDown') return 1;
+  return null;
+}
 export type SequencerMarqueeSelectionMode = 'replace' | 'add' | 'toggle';
 export type SequencerItemSelectionResult = {
   primary: SequencerItemSelection | null;
@@ -139,6 +160,46 @@ export function selectSequencerItem(
   else unique.set(key, { ...clicked });
   const items = [...unique.values()];
   return { primary: items[items.length - 1] ?? null, items };
+}
+
+export function selectSequencerTrackHeaders(
+  orderedTrackIds: readonly string[],
+  visibleTrackIds: readonly string[],
+  currentTrackIds: readonly string[],
+  clickedTrackId: string,
+  anchorTrackId: string | null,
+  mode: SequencerTrackHeaderSelectionMode,
+): SequencerTrackHeaderSelectionResult {
+  const ordered = [...new Set(orderedTrackIds)];
+  if (!ordered.includes(clickedTrackId)) {
+    return { trackIds: [], primaryId: null, anchorId: null };
+  }
+  const visible = [...new Set(visibleTrackIds)].filter((trackId) => ordered.includes(trackId));
+  const current = new Set(currentTrackIds.filter((trackId) => ordered.includes(trackId)));
+  const anchorIndex = anchorTrackId == null ? -1 : visible.indexOf(anchorTrackId);
+  const clickedIndex = visible.indexOf(clickedTrackId);
+  let selected: Set<string>;
+  if ((mode === 'range' || mode === 'add-range') && anchorIndex >= 0 && clickedIndex >= 0) {
+    const start = Math.min(anchorIndex, clickedIndex);
+    const end = Math.max(anchorIndex, clickedIndex);
+    const range = visible.slice(start, end + 1);
+    selected = mode === 'add-range' ? new Set([...current, ...range]) : new Set(range);
+  } else if (mode === 'toggle') {
+    selected = current;
+    if (selected.has(clickedTrackId)) selected.delete(clickedTrackId);
+    else selected.add(clickedTrackId);
+  } else {
+    selected = new Set([clickedTrackId]);
+  }
+  const trackIds = ordered.filter((trackId) => selected.has(trackId));
+  const primaryId = selected.has(clickedTrackId) ? clickedTrackId : trackIds.at(-1) ?? null;
+  return {
+    trackIds,
+    primaryId,
+    anchorId: (mode === 'range' || mode === 'add-range') && anchorIndex >= 0
+      ? anchorTrackId
+      : primaryId,
+  };
 }
 
 export function combineSequencerMarqueeSelection(
@@ -681,32 +742,42 @@ export function moveSequencerTrack(
   if (nextIndex < 0 || nextIndex >= asset.tracks.length) {
     return { ok: false, error: `Track '${track.name}' is already at the ${direction < 0 ? 'top' : 'bottom'}.` };
   }
-  const placed = placeSequencerTrack(asset, track.id, {
+  const placed = placeSequencerTracks(asset, [track.id], {
     kind: 'track',
     trackId: asset.tracks[nextIndex].id,
     edge: direction < 0 ? 'before' : 'after',
   });
   return placed.ok
-    ? { ok: true, asset: placed.asset, trackIndex: placed.trackIndex }
+    ? { ok: true, asset: placed.asset, trackIndex: placed.trackIndexes[0] }
     : placed;
 }
 
-export function placeSequencerTrack(
+export function placeSequencerTracks(
   asset: TimelineAsset,
-  trackId: string,
+  trackIds: readonly string[],
   target: SequencerTrackDropTarget,
-): SequencerTrackPlacementResult {
-  const sourceIndex = asset.tracks.findIndex((track) => track.id === trackId);
-  const source = asset.tracks[sourceIndex];
-  if (!source) return { ok: false, error: 'Timeline track no longer exists.' };
-  if (timelineTrackIsLocked(asset, source)) {
-    return { ok: false, error: `Track '${source.name}' is locked. Unlock it before moving.` };
+): SequencerTracksPlacementResult {
+  const requestedIds = new Set(trackIds);
+  if (requestedIds.size === 0) return { ok: false, error: 'No Timeline tracks are selected.' };
+  const movedTracks = asset.tracks.filter((track) => requestedIds.has(track.id));
+  if (movedTracks.length !== requestedIds.size) {
+    return { ok: false, error: 'A selected Timeline track no longer exists.' };
+  }
+  for (const track of movedTracks) {
+    if (timelineTrackIsLocked(asset, track)) {
+      return { ok: false, error: `Track '${track.name}' is locked. Unlock it before moving.` };
+    }
   }
 
   let destinationGroupId: string | null = null;
   if (target.kind === 'track') {
-    if (target.trackId === trackId) {
-      return { ok: true, asset: structuredClone(asset), trackIndex: sourceIndex, changed: false };
+    if (requestedIds.has(target.trackId)) {
+      return {
+        ok: true,
+        asset: structuredClone(asset),
+        trackIndexes: movedTracks.map((track) => asset.tracks.findIndex((candidate) => candidate.id === track.id)),
+        changed: false,
+      };
     }
     const targetTrack = asset.tracks.find((track) => track.id === target.trackId);
     if (!targetTrack) return { ok: false, error: 'Timeline drop target no longer exists.' };
@@ -717,36 +788,47 @@ export function placeSequencerTrack(
     destinationGroupId = group.id;
   }
 
-  const currentGroup = timelineGroupForTrack(asset, source.id);
   const destinationGroup = destinationGroupId == null
     ? null
     : asset.groups.find((group) => group.id === destinationGroupId) ?? null;
-  if (currentGroup?.locked) {
-    return { ok: false, error: `Timeline group '${currentGroup.name}' is locked.` };
+  if (
+    destinationGroup
+    && movedTracks.every((track) => timelineGroupForTrack(asset, track.id)?.id === destinationGroup.id)
+    && destinationGroup.track_ids.every((trackId) => requestedIds.has(trackId))
+  ) {
+    return {
+      ok: true,
+      asset: structuredClone(asset),
+      trackIndexes: movedTracks.map((track) => asset.tracks.findIndex((candidate) => candidate.id === track.id)),
+      changed: false,
+    };
   }
   if (destinationGroup?.locked) {
     return { ok: false, error: `Timeline group '${destinationGroup.name}' is locked.` };
   }
 
   const next = structuredClone(asset);
-  const [moved] = next.tracks.splice(sourceIndex, 1);
-  let insertionIndex = next.tracks.length;
+  const remainingTracks = next.tracks.filter((track) => !requestedIds.has(track.id));
+  let insertionIndex = remainingTracks.length;
   if (target.kind === 'track') {
-    const targetIndex = next.tracks.findIndex((track) => track.id === target.trackId);
+    const targetIndex = remainingTracks.findIndex((track) => track.id === target.trackId);
     if (targetIndex < 0) return { ok: false, error: 'Timeline drop target no longer exists.' };
     insertionIndex = targetIndex + (target.edge === 'after' ? 1 : 0);
   } else if (target.kind === 'group') {
     const memberIds = new Set(
       next.groups.find((group) => group.id === target.groupId)?.track_ids ?? [],
     );
-    for (let index = 0; index < next.tracks.length; index += 1) {
-      if (memberIds.has(next.tracks[index].id)) insertionIndex = index + 1;
+    for (let index = 0; index < remainingTracks.length; index += 1) {
+      if (memberIds.has(remainingTracks[index].id)) insertionIndex = index + 1;
     }
   }
-  next.tracks.splice(insertionIndex, 0, moved);
+  remainingTracks.splice(insertionIndex, 0, ...movedTracks);
+  next.tracks = remainingTracks;
 
   try {
-    next.groups = assignTimelineTrackGroup(next.groups, moved.id, destinationGroupId);
+    for (const moved of movedTracks) {
+      next.groups = assignTimelineTrackGroup(next.groups, moved.id, destinationGroupId);
+    }
   } catch (reason) {
     return { ok: false, error: reason instanceof Error ? reason.message : String(reason) };
   }
@@ -760,9 +842,49 @@ export function placeSequencerTrack(
   return {
     ok: true,
     asset: next,
-    trackIndex: insertionIndex,
+    trackIndexes: movedTracks.map((track) => next.tracks.findIndex((candidate) => candidate.id === track.id)),
     changed: JSON.stringify(next) !== JSON.stringify(asset),
   };
+}
+
+export function placeSequencerTrack(
+  asset: TimelineAsset,
+  trackId: string,
+  target: SequencerTrackDropTarget,
+): SequencerTrackPlacementResult {
+  const placed = placeSequencerTracks(asset, [trackId], target);
+  return placed.ok
+    ? { ok: true, asset: placed.asset, trackIndex: placed.trackIndexes[0], changed: placed.changed }
+    : placed;
+}
+
+export function moveSequencerTracks(
+  asset: TimelineAsset,
+  trackIds: readonly string[],
+  direction: -1 | 1,
+): SequencerTracksPlacementResult {
+  const selectedIds = new Set(trackIds);
+  if (selectedIds.size === 0) return { ok: false, error: 'No Timeline tracks are selected.' };
+  const selectedIndexes = asset.tracks
+    .map((track, index) => selectedIds.has(track.id) ? index : -1)
+    .filter((index) => index >= 0);
+  if (selectedIndexes.length !== selectedIds.size) {
+    return { ok: false, error: 'A selected Timeline track no longer exists.' };
+  }
+  const boundary = direction < 0 ? Math.min(...selectedIndexes) : Math.max(...selectedIndexes);
+  let targetIndex = boundary + direction;
+  while (targetIndex >= 0 && targetIndex < asset.tracks.length && selectedIds.has(asset.tracks[targetIndex].id)) {
+    targetIndex += direction;
+  }
+  const targetTrack = asset.tracks[targetIndex];
+  if (!targetTrack) {
+    return { ok: false, error: `Selected Timeline tracks are already at the ${direction < 0 ? 'top' : 'bottom'}.` };
+  }
+  return placeSequencerTracks(asset, trackIds, {
+    kind: 'track',
+    trackId: targetTrack.id,
+    edge: direction < 0 ? 'before' : 'after',
+  });
 }
 
 function sequencerGroupBlocks(asset: TimelineAsset): Array<
@@ -920,6 +1042,30 @@ export function moveSequencerGroup(
   return placeSequencerGroup(asset, groupId, target.kind === 'group'
     ? { kind: 'group', groupId: target.groupId, edge: direction < 0 ? 'before' : 'after' }
     : { kind: 'track', trackId: target.trackId, edge: direction < 0 ? 'before' : 'after' });
+}
+
+export function deleteSequencerTracks(
+  asset: TimelineAsset,
+  trackIds: readonly string[],
+): SequencerDeleteResult {
+  const selectedIds = new Set(trackIds);
+  if (selectedIds.size === 0) return { ok: false, error: 'No Timeline tracks are selected.' };
+  const tracks = asset.tracks.filter((track) => selectedIds.has(track.id));
+  if (tracks.length !== selectedIds.size) {
+    return { ok: false, error: 'A selected Timeline track no longer exists.' };
+  }
+  for (const track of tracks) {
+    if (timelineTrackIsLocked(asset, track)) {
+      return { ok: false, error: `Track '${track.name}' is locked. Unlock it before deleting.` };
+    }
+  }
+  const next = structuredClone(asset);
+  next.tracks = next.tracks.filter((track) => !selectedIds.has(track.id));
+  next.groups = next.groups.map((group) => ({
+    ...group,
+    track_ids: group.track_ids.filter((trackId) => !selectedIds.has(trackId)),
+  }));
+  return { ok: true, asset: next };
 }
 
 export function deleteSequencerItems(

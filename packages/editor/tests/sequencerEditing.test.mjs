@@ -8,6 +8,7 @@ import {
   copySequencerItem,
   copySequencerItems,
   deleteSequencerItems,
+  deleteSequencerTracks,
   expandSequencerRippleSelection,
   findSequencerClipPlacement,
   lockedSequencerContentEnd,
@@ -15,21 +16,25 @@ import {
   moveSequencerItems,
   moveSequencerGroup,
   moveSequencerTrack,
+  moveSequencerTracks,
   normalizeSequencerPreviewRange,
   pasteSequencerItem,
   pasteSequencerClipboard,
   placeSequencerGroup,
   placeSequencerTrack,
+  placeSequencerTracks,
   resolveSequencerPasteTrack,
   rippleMoveSequencerItems,
   resizeSequencerAnimationBlend,
   resizeSequencerPreviewRange,
   selectSequencerItem,
+  selectSequencerTrackHeaders,
   sequencerPanScrollLeft,
   sequencerRevealScrollLeft,
   sequencerSelectionTimeRange,
   sequencerShiftWheelDelta,
   sequencerSliderToZoom,
+  sequencerStructuralMoveDirection,
   sequencerTicks,
   sequencerZoomToSlider,
   snapSequencerItemsDelta,
@@ -37,6 +42,13 @@ import {
   trimSequencerAnimationClip,
   trimSequencerClip,
 } from '../src/sequencerEditing.ts';
+
+test('Sequencer structural move shortcuts stay active on focused track controls', () => {
+  assert.equal(sequencerStructuralMoveDirection('ArrowUp', true, false), -1);
+  assert.equal(sequencerStructuralMoveDirection('ArrowDown', true, false), 1);
+  assert.equal(sequencerStructuralMoveDirection('ArrowUp', false, false), null);
+  assert.equal(sequencerStructuralMoveDirection('ArrowDown', true, true), null);
+});
 
 test('Sequencer logarithmic zoom slider reaches exact limits and round-trips', () => {
   assert.equal(sequencerZoomToSlider(1), 0);
@@ -198,6 +210,24 @@ test('Sequencer selection model supports toggle and anchored ranges deterministi
   const range = selectSequencerItem([], { track: 2, marker: 4 }, { track: 2, marker: 1 }, 'range');
   assert.deepEqual(range.items, [1, 2, 3, 4].map((marker) => ({ track: 2, marker })));
   assert.deepEqual(range.primary, { track: 2, marker: 1 });
+});
+
+test('Sequencer track header selection supports toggle and visible anchored ranges', () => {
+  const ordered = ['signals', 'audio', 'animation', 'fx'];
+  const visible = ['signals', 'audio', 'fx'];
+  const single = selectSequencerTrackHeaders(ordered, visible, [], 'signals', null, 'single');
+  assert.deepEqual(single, { trackIds: ['signals'], primaryId: 'signals', anchorId: 'signals' });
+  const toggled = selectSequencerTrackHeaders(ordered, visible, single.trackIds, 'fx', single.anchorId, 'toggle');
+  assert.deepEqual(toggled, { trackIds: ['signals', 'fx'], primaryId: 'fx', anchorId: 'fx' });
+  const removed = selectSequencerTrackHeaders(ordered, visible, toggled.trackIds, 'fx', toggled.anchorId, 'toggle');
+  assert.deepEqual(removed, { trackIds: ['signals'], primaryId: 'signals', anchorId: 'signals' });
+  const range = selectSequencerTrackHeaders(ordered, visible, [], 'fx', 'signals', 'range');
+  assert.deepEqual(range, { trackIds: ['signals', 'audio', 'fx'], primaryId: 'fx', anchorId: 'signals' });
+  const additive = selectSequencerTrackHeaders(ordered, visible, ['animation'], 'audio', 'fx', 'add-range');
+  assert.deepEqual(additive, { trackIds: ['audio', 'animation', 'fx'], primaryId: 'audio', anchorId: 'fx' });
+  assert.deepEqual(selectSequencerTrackHeaders(ordered, visible, [], 'missing', null, 'single'), {
+    trackIds: [], primaryId: null, anchorId: null,
+  });
 });
 
 test('Sequencer marquee selection replaces adds and toggles without duplicate items', () => {
@@ -718,6 +748,74 @@ test('Sequencer direct track placement rejects locked groups and detects no-op d
   const noOp = placeSequencerTrack(asset, 'signals', { kind: 'track', trackId: 'signals', edge: 'after' });
   assert.equal(noOp.ok, true);
   assert.equal(noOp.changed, false);
+});
+
+test('Sequencer multi-track placement moves a stable block and reparents atomically', () => {
+  const asset = timeline();
+  asset.groups = [
+    { id: 'events', name: 'Events', collapsed: false, muted: false, solo: false, locked: false, track_ids: ['signals'] },
+    { id: 'actors', name: 'Actors', collapsed: false, muted: false, solo: false, locked: false, track_ids: ['animation'] },
+  ];
+  const ownGroup = placeSequencerTracks(asset, ['signals'], { kind: 'group', groupId: 'events' });
+  assert.equal(ownGroup.ok, true);
+  assert.equal(ownGroup.changed, false);
+  const moved = placeSequencerTracks(asset, ['signals', 'audio'], { kind: 'track', trackId: 'animation', edge: 'after' });
+  assert.equal(moved.ok, true);
+  assert.equal(moved.changed, true);
+  assert.deepEqual(moved.asset.tracks.map((track) => track.id), ['animation', 'signals', 'audio']);
+  assert.deepEqual(moved.trackIndexes, [1, 2]);
+  assert.deepEqual(moved.asset.groups.map((group) => group.track_ids), [[], ['animation', 'signals', 'audio']]);
+  assert.deepEqual(asset.tracks.map((track) => track.id), ['signals', 'audio', 'animation']);
+  assert.deepEqual(asset.groups.map((group) => group.track_ids), [['signals'], ['animation']]);
+
+  const rooted = placeSequencerTracks(moved.asset, ['signals', 'audio'], { kind: 'root' });
+  assert.equal(rooted.ok, true);
+  assert.deepEqual(rooted.asset.tracks.map((track) => track.id), ['animation', 'signals', 'audio']);
+  assert.deepEqual(rooted.asset.groups.map((group) => group.track_ids), [[], ['animation']]);
+  const selfTarget = placeSequencerTracks(rooted.asset, ['signals', 'audio'], { kind: 'track', trackId: 'audio', edge: 'after' });
+  assert.equal(selfTarget.ok, true);
+  assert.equal(selfTarget.changed, false);
+});
+
+test('Sequencer multi-track placement and deletion reject any locked member without partial mutation', () => {
+  const asset = timeline();
+  asset.groups = [{ id: 'actors', name: 'Actors', collapsed: false, muted: false, solo: false, locked: false, track_ids: ['animation'] }];
+  asset.tracks[1].locked = true;
+  const moved = placeSequencerTracks(asset, ['signals', 'audio'], { kind: 'group', groupId: 'actors' });
+  assert.equal(moved.ok, false);
+  assert.match(moved.error, /Audio.*locked/);
+  assert.deepEqual(asset.tracks.map((track) => track.id), ['signals', 'audio', 'animation']);
+  assert.deepEqual(asset.groups[0].track_ids, ['animation']);
+  const deleted = deleteSequencerTracks(asset, ['signals', 'audio']);
+  assert.equal(deleted.ok, false);
+  assert.match(deleted.error, /Audio.*locked/);
+  assert.equal(asset.tracks.length, 3);
+
+  asset.tracks[1].locked = false;
+  asset.groups[0].locked = true;
+  const lockedDestination = placeSequencerTracks(asset, ['signals', 'audio'], { kind: 'group', groupId: 'actors' });
+  assert.equal(lockedDestination.ok, false);
+  assert.match(lockedDestination.error, /Actors.*locked/);
+});
+
+test('Sequencer multi-track keyboard movement and deletion preserve selection order and memberships', () => {
+  const asset = timeline();
+  asset.tracks.push({ type: 'particle', id: 'fx', name: 'FX', muted: false, locked: false, target: 'FX', clips: [] });
+  asset.groups = [{ id: 'mixed', name: 'Mixed', collapsed: false, muted: false, solo: false, locked: false, track_ids: ['signals', 'animation'] }];
+  const moved = moveSequencerTracks(asset, ['signals', 'animation'], 1);
+  assert.equal(moved.ok, true);
+  assert.deepEqual(moved.asset.tracks.map((track) => track.id), ['audio', 'fx', 'signals', 'animation']);
+  assert.deepEqual(moved.asset.groups[0].track_ids, []);
+  assert.deepEqual(moved.trackIndexes, [2, 3]);
+  const boundary = moveSequencerTracks(moved.asset, ['signals', 'animation'], 1);
+  assert.equal(boundary.ok, false);
+  assert.match(boundary.error, /already at the bottom/);
+
+  const deleted = deleteSequencerTracks(moved.asset, ['signals', 'animation']);
+  assert.equal(deleted.ok, true);
+  assert.deepEqual(deleted.asset.tracks.map((track) => track.id), ['audio', 'fx']);
+  assert.deepEqual(deleted.asset.groups[0].track_ids, []);
+  assert.equal(moved.asset.tracks.length, 4);
 });
 
 test('Sequencer group placement moves complete track blocks and preserves membership order', () => {

@@ -1674,3 +1674,15 @@ Camera Shot 的基础闭环已经形成，但 Timeline 仍不完备：编辑器 
 第二遍自省在真实 1280×720 编辑器中创建双成员 Group 与两个空 Group：整组拖到 Signals 前得到 `Group → Audio → Animation → Signals`，一次 Undo/Redo 完整往返；`Alt+ArrowDown` 把同一块移回 Signals 后；锁定后抓手禁用、键盘移动显示结构化错误且 Undo 栈不增加；空 Group 3 拖到空 Group 2 前后顺序正确。页面 Console 只有 Vite/React 开发提示，没有运行错误；验证资产、自动生成 Sidecar 与 Dock 状态差异均在回归前清理。最终编辑器全量测试 367/367、严格 TypeScript/Vite 生产构建通过；主入口仍有 518.56kB 的既有分包预算警告。
 
 这批仍不是完整的 Unity Timeline 轨道树。当前没有多轨道 Header 选择/整组拖动、Group 嵌套、悬停自动展开、缩进树线、跨 Timeline 轨道复制、轨道模板和搜索过滤；空 Group 的任意穿插位置也需要先为 Timeline 资产建立显式、跨 Editor/Runtime/CLI 一致的顶层 Row Order 契约，不能只在 React 中保存一份不可构建的视觉顺序。下一阶段优先补多轨道选择与拖动，再进入嵌套 Timeline/Control Track。
+
+## 142. 2026-07-20 Sequencer 多轨道选择与原子编辑
+
+- Track Header 现在支持与桌面编辑器一致的 `Ctrl/Cmd` 切换、`Shift` 可见区间和 `Ctrl/Cmd + Shift` 追加区间选择。选择按资产轨道顺序去重保存，主轨道负责 Inspector，上次点击轨道负责区间锚点；折叠 Group 的隐藏成员不参与新的可见区间计算，但既有隐藏选择不会被静默丢弃，Group Header 会显示隐藏选中数并保留左侧状态标记。选择状态进入未保存 Draft、跨资产切换和 Undo/Redo 快照，避免窗口切换后恢复出“只剩主轨道”的半状态。
+- `placeSequencerTracks`、`moveSequencerTracks` 和 `deleteSequencerTracks` 提供统一的批量事务内核。任意非连续选择都会先按全局 `tracks[]` 顺序抽成稳定块，再一次性插入目标轨道前后、Group 末尾或 Root 末尾；所有成员同步继承目标 Group 或脱组，随后按最终全局顺序规范化每个 `track_ids`。拖到选择内部、完整成员块拖回自身 Group 或最终语义不变时返回 No-op；任一源轨道、源 Group 或目标 Group 锁定，以及任一实体消失时，整批操作在克隆和历史写入前失败，不产生部分移动、Dirty 或 Undo。
+- 任意已选轨道的可用抓手都可以拖动完整选择；拖动中的所有源行同步降透明度，Root 落点显示批量数量。Inspector 的 Move Up/Down、`Alt+ArrowUp/Down`、Group 创建和 Delete 均作用于完整 Header 选择，并只生成一个历史项；成功后以轨道 ID 重建主轨道索引和整组选择，单步 Undo/Redo 同时恢复顺序、归属与选择。结构移动快捷键改在 Timeline 根节点的捕获阶段处理，使焦点位于轨道头或 Group 控件时也不会被按钮级键盘保护提前吞掉，同时继续排除输入框、下拉框和可编辑文本。
+
+第一遍自省从“批量操作是否真原子”反查：初稿只判断目标 Group 锁定，没有把“完整成员块拖回自身 Group”识别成 No-op，也没有在折叠 Group 上暴露隐藏选择，容易制造无意义历史或让用户误以为选择丢失。现由模型层统一校验全部源成员、精确识别自投放，并在 Group Header 公开隐藏选择数量；锁定源和锁定目标回归均断言原资产不变。
+
+第二遍自省从真实焦点、Draft 与 Undo 生命周期反查：代码审查时快捷键分支看似存在，但 1280×720 页面验证发现点击 Track Header 后焦点停在 `BUTTON`，旧的按钮提前返回让 `Alt+Arrow` 实际失效。结构快捷键现前移到根节点 Capture，并增加纯函数回归。真实编辑器验证还覆盖 Ctrl/Shift 三轨选择、三轨稳定块按钮/键盘移动、单步 Undo/Redo、双轨跨组拖拽与脱组、折叠组隐藏选择提示、双轨删除后单步恢复，以及“选中集合中一条锁定时，从另一条可用抓手拖动仍整批拒绝”；页面无 warn/error，临时 Timeline、Sidecar 和 Dock 状态差异已清理。最终编辑器全量测试 372/372、定向 Sequencer 测试 46/46、根级 `build:editor` 严格 TypeScript/Vite 生产构建通过；主入口仍有 518.56kB 的既有分包预算警告。
+
+这批补齐的是 Unity 风格轨道组织的多选与事务底座，仍没有 Group 嵌套、Sub-Timeline/Control Track、轨道级复制粘贴、模板、搜索过滤、悬停展开折叠组、显式顶层 Row Order、录制模式和虚拟化。下一批应先建立可序列化的嵌套 Timeline 与 Control/Activation 依赖契约，再把轨道树升级为可缩进、可搜索、可跨 Timeline 复制的层级视图；否则继续堆 React 视觉层会让 Editor、Runtime、CLI 与构建依赖分析再次分叉。

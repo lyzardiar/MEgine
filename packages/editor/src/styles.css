@@ -4799,8 +4799,11 @@ body.insp-scrubbing * {
 .sequencer-group-row { position: relative; height: 30px; border-top: 1px solid #151515; }
 .sequencer-track-row { position: relative; height: 42px; border-top: 1px solid #151515; }
 .sequencer-group-row.selected { background: #2b3c48; box-shadow: inset 2px 0 #68a8cb; }
+.sequencer-group-row.contains-track-selection:not(.selected) { box-shadow: inset 2px 0 #4f8fac; }
 .sequencer-track-row.contains-selection { box-shadow: inset 2px 0 #4d9abe; }
 .sequencer-track-row.selected { background: #263747; }
+.sequencer-track-row.header-selected { background: #29343c; box-shadow: inset 2px 0 #68a8cb; }
+.sequencer-track-row.header-selected.selected { background: #2b4050; }
 .sequencer-track-row.locked .sequencer-lane {
   background-color: #202020;
   background-image: repeating-linear-gradient(-45deg, transparent 0 7px, #ffffff05 7px 8px);

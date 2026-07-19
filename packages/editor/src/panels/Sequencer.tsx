@@ -7,6 +7,7 @@ import {
   type CSSProperties,
   type FocusEvent as ReactFocusEvent,
   type KeyboardEvent as ReactKeyboardEvent,
+  type MouseEvent as ReactMouseEvent,
   type PointerEvent as ReactPointerEvent,
 } from 'react';
 import type { WorldSnapshotView } from '@mengine/api';
@@ -101,16 +102,17 @@ import {
   combineSequencerMarqueeSelection,
   copySequencerItems,
   deleteSequencerItems,
+  deleteSequencerTracks,
   expandSequencerRippleSelection,
   findSequencerClipPlacement,
   lockedSequencerContentEnd,
   moveSequencerGroup,
   moveSequencerItems,
-  moveSequencerTrack,
+  moveSequencerTracks,
   normalizeSequencerPreviewRange,
   pasteSequencerClipboard,
   placeSequencerGroup,
-  placeSequencerTrack,
+  placeSequencerTracks,
   resizeSequencerAnimationBlend,
   resizeSequencerPreviewRange,
   rippleMoveSequencerItems,
@@ -119,9 +121,11 @@ import {
   sequencerSelectionTimeRange,
   sequencerShiftWheelDelta,
   sequencerSliderToZoom,
+  sequencerStructuralMoveDirection,
   sequencerTicks,
   sequencerZoomToSlider,
   selectSequencerItem,
+  selectSequencerTrackHeaders,
   snapSequencerItemsDelta,
   trimSequencerCameraBlendIn,
   trimSequencerAnimationClip,
@@ -246,6 +250,7 @@ type HistorySnapshot = {
   asset: TimelineAsset;
   selection: Selection;
   selectedItems: SequencerItemSelection[];
+  selectedTrackIds: string[];
   time: number;
 };
 type InspectorEditTransaction = HistorySnapshot & {
@@ -264,7 +269,7 @@ type SequencerMarquee = {
   height: number;
 };
 type SequencerTrackDragVisual = {
-  sourceTrackId: string;
+  sourceTrackIds: string[];
   target: SequencerTrackDropTarget | null;
   valid: boolean;
 };
@@ -279,6 +284,7 @@ type Draft = {
   time: number;
   selection: Selection;
   selectedItems: SequencerItemSelection[];
+  selectedTrackIds: string[];
   previewRange?: SequencerPreviewRange;
 };
 
@@ -319,6 +325,7 @@ export function Sequencer(props: SequencerProps) {
   const [audioPreviewStatus, setAudioPreviewStatus] = useState(EMPTY_AUDIO_PREVIEW_STATUS);
   const [selection, setSelection] = useState<Selection>(null);
   const [selectedItems, setSelectedItems] = useState<SequencerItemSelection[]>([]);
+  const [selectedTrackIds, setSelectedTrackIds] = useState<string[]>([]);
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -348,6 +355,8 @@ export function Sequencer(props: SequencerProps) {
   const assetRef = useRef<TimelineAsset | null>(null);
   const selectionRef = useRef<Selection>(null);
   const selectedItemsRef = useRef<SequencerItemSelection[]>([]);
+  const selectedTrackIdsRef = useRef<string[]>([]);
+  const trackSelectionAnchor = useRef<string | null>(null);
   const timeRef = useRef(0);
   const previewRangeRef = useRef<SequencerPreviewRange>({ start: 0, end: 5 });
   const inspectorEdit = useRef<InspectorEditTransaction | null>(null);
@@ -367,19 +376,36 @@ export function Sequencer(props: SequencerProps) {
   assetRef.current = asset;
   selectionRef.current = selection;
   selectedItemsRef.current = selectedItems;
+  selectedTrackIdsRef.current = selectedTrackIds;
   timeRef.current = time;
   previewRangeRef.current = previewRange;
 
-  const applySelection = (primary: Selection, items?: readonly SequencerItemSelection[]) => {
+  const applySelection = (
+    primary: Selection,
+    items?: readonly SequencerItemSelection[],
+    trackIds?: readonly string[],
+  ) => {
     const nextItems = items
       ? items.map((item) => ({ ...item }))
       : primary?.marker != null
         ? [{ track: primary.track, marker: primary.marker }]
         : [];
+    const currentAsset = assetRef.current;
+    const availableTrackIds = new Set(currentAsset?.tracks.map((track) => track.id) ?? []);
+    const defaultTrackId = primary && primary.track >= 0 && primary.marker == null
+      ? currentAsset?.tracks[primary.track]?.id
+      : null;
+    const nextTrackIds = [...new Set(trackIds ?? (defaultTrackId ? [defaultTrackId] : []))]
+      .filter((trackId) => availableTrackIds.has(trackId));
     selectionRef.current = primary ? { ...primary } : null;
     selectedItemsRef.current = nextItems;
+    selectedTrackIdsRef.current = nextTrackIds;
     setSelection(primary);
     setSelectedItems(nextItems);
+    setSelectedTrackIds(nextTrackIds);
+    trackSelectionAnchor.current = nextTrackIds.length > 0
+      ? defaultTrackId && nextTrackIds.includes(defaultTrackId) ? defaultTrackId : nextTrackIds.at(-1)!
+      : null;
   };
 
   const replaceAsset = (next: TimelineAsset | null) => {
@@ -607,6 +633,7 @@ export function Sequencer(props: SequencerProps) {
         asset: structuredClone(asset), savedText, time,
         selection: selection ? { ...selection } : null,
         selectedItems: structuredClone(selectedItems),
+        selectedTrackIds: [...selectedTrackIds],
         previewRange: { ...previewRange },
       });
     }
@@ -642,6 +669,7 @@ export function Sequencer(props: SequencerProps) {
       applySelection(
         draft.selection ? { ...draft.selection } : null,
         draft.selectedItems ?? [],
+        draft.selectedTrackIds ?? [],
       );
       return () => { cancelled = true; };
     }
@@ -708,6 +736,7 @@ export function Sequencer(props: SequencerProps) {
         asset: structuredClone(assetRef.current),
         selection: selectionRef.current ? { ...selectionRef.current } : null,
         selectedItems: structuredClone(selectedItemsRef.current),
+        selectedTrackIds: [...selectedTrackIdsRef.current],
         time: timeRef.current,
       };
     }
@@ -717,6 +746,7 @@ export function Sequencer(props: SequencerProps) {
       asset: structuredClone(draft.asset),
       selection: draft.selection ? { ...draft.selection } : null,
       selectedItems: structuredClone(draft.selectedItems),
+      selectedTrackIds: [...(draft.selectedTrackIds ?? [])],
       time: draft.time,
     };
   };
@@ -725,10 +755,11 @@ export function Sequencer(props: SequencerProps) {
     const restoredAsset = structuredClone(snapshot.asset);
     const restoredSelection = snapshot.selection ? { ...snapshot.selection } : null;
     const restoredItems = structuredClone(snapshot.selectedItems);
+    const restoredTrackIds = [...(snapshot.selectedTrackIds ?? [])];
     const restoredTime = Math.max(0, Math.min(restoredAsset.duration, snapshot.time));
     if (loadedPath.current === path) {
       replaceAsset(restoredAsset);
-      applySelection(restoredSelection, restoredItems);
+      applySelection(restoredSelection, restoredItems, restoredTrackIds);
       replaceTime(restoredTime);
       setPayloadInvalid(false);
       setError(null);
@@ -741,6 +772,7 @@ export function Sequencer(props: SequencerProps) {
       asset: restoredAsset,
       selection: restoredSelection,
       selectedItems: restoredItems,
+      selectedTrackIds: restoredTrackIds,
       time: restoredTime,
     });
     setDraftEpoch((value) => value + 1);
@@ -752,6 +784,7 @@ export function Sequencer(props: SequencerProps) {
     snapshotTime = time,
     snapshotItems: readonly SequencerItemSelection[] = selectedItems,
     label = 'Edit Timeline',
+    snapshotTrackIds: readonly string[] = selectedTrackIds,
   ) => {
     const path = loadedPath.current;
     if (!path) return null;
@@ -762,6 +795,7 @@ export function Sequencer(props: SequencerProps) {
         asset: structuredClone(snapshotAsset),
         selection: snapshotSelection ? { ...snapshotSelection } : null,
         selectedItems: snapshotItems.map((item) => ({ ...item })),
+        selectedTrackIds: [...snapshotTrackIds],
         time: snapshotTime,
       },
       capture: () => captureDocument(path),
@@ -783,6 +817,7 @@ export function Sequencer(props: SequencerProps) {
           transaction.time,
           transaction.selectedItems,
           'Edit Timeline Inspector',
+          transaction.selectedTrackIds,
         );
       }
     } else {
@@ -802,6 +837,7 @@ export function Sequencer(props: SequencerProps) {
       asset: structuredClone(asset),
       selection: selection ? { ...selection } : null,
       selectedItems: structuredClone(selectedItems),
+      selectedTrackIds: [...selectedTrackIds],
       time,
       historyCheckpoint: props.undoService.checkpoint(),
       historyToken: null,
@@ -1006,7 +1042,11 @@ export function Sequencer(props: SequencerProps) {
     let index = asset.groups.length + 1;
     let id = `group-${index}`;
     while (used.has(id)) id = `group-${++index}`;
-    const selectedTrackIndexes = selectedItems.length > 0
+    const selectedTrackIndexes = selectedTrackIds.length > 0
+      ? selectedTrackIds
+        .map((trackId) => asset.tracks.findIndex((track) => track.id === trackId))
+        .filter((trackIndex) => trackIndex >= 0)
+      : selectedItems.length > 0
       ? [...new Set(selectedItems.map((item) => item.track))]
       : selection && selection.track >= 0
         ? [selection.track]
@@ -1213,6 +1253,37 @@ export function Sequencer(props: SequencerProps) {
     else if (track?.type === 'camera') addCameraClip(trackIndex, requestedTime);
   };
 
+  const selectTrackHeader = (event: ReactMouseEvent<HTMLButtonElement>, trackIndex: number) => {
+    if (!asset) return;
+    const clicked = asset.tracks[trackIndex];
+    if (!clicked) return;
+    event.preventDefault();
+    const additive = event.ctrlKey || event.metaKey;
+    const visibleTrackIds = asset.tracks
+      .filter((track) => !timelineGroupForTrack(asset, track.id)?.collapsed)
+      .map((track) => track.id);
+    const anchorId = trackSelectionAnchor.current;
+    const next = selectSequencerTrackHeaders(
+      asset.tracks.map((track) => track.id),
+      visibleTrackIds,
+      selectedTrackIds,
+      clicked.id,
+      anchorId,
+      event.shiftKey ? additive ? 'add-range' : 'range' : additive ? 'toggle' : 'single',
+    );
+    const primaryId = next.primaryId;
+    const primaryIndex = primaryId == null
+      ? -1
+      : asset.tracks.findIndex((track) => track.id === primaryId);
+    applySelection(
+      primaryIndex >= 0 ? { track: primaryIndex, marker: null } : null,
+      [],
+      next.trackIds,
+    );
+    trackSelectionAnchor.current = next.anchorId;
+    setError(null);
+  };
+
   const selectedClipboard = () => {
     if (!asset || !selection || selection.marker == null) return null;
     return copySequencerItems(asset, selectedItems, {
@@ -1284,30 +1355,54 @@ export function Sequencer(props: SequencerProps) {
     }
     const selectedTrackIndex = selection.track;
     const track = asset.tracks[selectedTrackIndex];
-    if (!track || timelineTrackIsLocked(asset, track)) {
-      if (track) setError(`Track '${track.name}' is locked. Unlock it before deleting.`);
+    if (!track) return;
+    const trackIds = selection.marker == null && selectedTrackIds.includes(track.id)
+      ? selectedTrackIds
+      : [track.id];
+    const deleted = deleteSequencerTracks(asset, trackIds);
+    if (!deleted.ok) {
+      setError(deleted.error);
       return;
     }
-    update((draft) => {
-      for (const group of draft.groups) {
-        group.track_ids = group.track_ids.filter((trackId) => trackId !== track.id);
-      }
-      draft.tracks.splice(selectedTrackIndex, 1);
-    });
+    pushHistory(
+      asset,
+      selection,
+      time,
+      selectedItems,
+      trackIds.length > 1 ? 'Delete Timeline Tracks' : 'Delete Timeline Track',
+      trackIds,
+    );
+    replaceAsset(deleted.asset);
     setPayloadInvalid(false);
     applySelection(null);
+    setError(null);
   };
 
   const moveSelectedTrack = (direction: -1 | 1) => {
     if (!asset || !selection) return;
-    const moved = moveSequencerTrack(asset, selection.track, direction);
+    const primary = asset.tracks[selection.track];
+    if (!primary) return;
+    const trackIds = selection.marker == null && selectedTrackIds.includes(primary.id)
+      ? selectedTrackIds
+      : [primary.id];
+    const moved = moveSequencerTracks(asset, trackIds, direction);
     if (!moved.ok) {
       setError(moved.error);
       return;
     }
-    pushHistory(asset, selection, time, selectedItems, 'Reorder Timeline Track');
-    replaceAsset(moved.asset);
-    applySelection({ track: moved.trackIndex, marker: selection.marker });
+    if (moved.changed) {
+      pushHistory(
+        asset,
+        selection,
+        time,
+        selectedItems,
+        trackIds.length > 1 ? 'Reorder Timeline Tracks' : 'Reorder Timeline Track',
+        trackIds,
+      );
+      replaceAsset(moved.asset);
+    }
+    const primaryIndex = moved.asset.tracks.findIndex((track) => track.id === primary.id);
+    applySelection({ track: primaryIndex, marker: selection.marker }, [], trackIds);
     setError(null);
   };
 
@@ -1333,7 +1428,18 @@ export function Sequencer(props: SequencerProps) {
   ) => {
     if (event.button !== 0 || !asset) return;
     const track = asset.tracks[trackIndex];
-    if (!track || timelineTrackIsLocked(asset, track)) return;
+    if (!track) return;
+    const dragTrackIds = selectedTrackIds.includes(track.id) && selectedTrackIds.length > 1
+      ? [...selectedTrackIds]
+      : [track.id];
+    const draggedTrackIdSet = new Set(dragTrackIds);
+    const lockedTrack = asset.tracks.find((candidate) => (
+      draggedTrackIdSet.has(candidate.id) && timelineTrackIsLocked(asset, candidate)
+    ));
+    if (lockedTrack) {
+      setError(`Track '${lockedTrack.name}' is locked. Unlock it before moving.`);
+      return;
+    }
     event.preventDefault();
     event.stopPropagation();
     finishKeyboardNudge();
@@ -1348,6 +1454,7 @@ export function Sequencer(props: SequencerProps) {
     const startY = event.clientY;
     const selectionBefore = selection ? { ...selection } : null;
     const selectedItemsBefore = structuredClone(selectedItems);
+    const selectedTrackIdsBefore = [...selectedTrackIds];
     const timeBefore = time;
     let dragged = false;
     let lastClientX = startX;
@@ -1365,7 +1472,7 @@ export function Sequencer(props: SequencerProps) {
       }
       const trackRow = element?.closest<HTMLElement>('[data-sequencer-track-id]');
       const targetTrackId = trackRow?.dataset.sequencerTrackId;
-      if (!trackRow || !targetTrackId || targetTrackId === track.id) return null;
+      if (!trackRow || !targetTrackId || draggedTrackIdSet.has(targetTrackId)) return null;
       const bounds = trackRow.getBoundingClientRect();
       return {
         kind: 'track',
@@ -1384,11 +1491,11 @@ export function Sequencer(props: SequencerProps) {
       lastTarget = target;
       const valid = targetIsValid(target);
       setTrackDragVisual((current) => (
-        current?.sourceTrackId === track.id
+        current?.sourceTrackIds.join('\0') === dragTrackIds.join('\0')
         && current.valid === valid
         && sequencerTrackDropKey(current.target) === sequencerTrackDropKey(target)
           ? current
-          : { sourceTrackId: track.id, target, valid }
+          : { sourceTrackIds: dragTrackIds, target, valid }
       ));
     };
     const updateTarget = (clientX: number, clientY: number, allowScroll: boolean): boolean => {
@@ -1424,7 +1531,7 @@ export function Sequencer(props: SequencerProps) {
     const cancel = () => {
       cleanup();
       setTrackDragVisual(null);
-      applySelection(selectionBefore, selectedItemsBefore);
+      applySelection(selectionBefore, selectedItemsBefore, selectedTrackIdsBefore);
     };
     const move = (moveEvent: PointerEvent) => {
       if (moveEvent.pointerId !== pointerId) return;
@@ -1446,21 +1553,29 @@ export function Sequencer(props: SequencerProps) {
       cleanup();
       setTrackDragVisual(null);
       if (finishEvent.type === 'pointercancel') {
-        applySelection(selectionBefore, selectedItemsBefore);
+        applySelection(selectionBefore, selectedItemsBefore, selectedTrackIdsBefore);
         return;
       }
       if (!dragged || !lastTarget) return;
-      const placed = placeSequencerTrack(asset, track.id, lastTarget);
+      const placed = placeSequencerTracks(asset, dragTrackIds, lastTarget);
       if (!placed.ok) {
         setError(placed.error);
         return;
       }
       if (placed.changed) {
-        pushHistory(asset, selectionBefore, timeBefore, selectedItemsBefore, 'Move Timeline Track');
+        pushHistory(
+          asset,
+          selectionBefore,
+          timeBefore,
+          selectedItemsBefore,
+          dragTrackIds.length > 1 ? 'Move Timeline Tracks' : 'Move Timeline Track',
+          selectedTrackIdsBefore,
+        );
         replaceAsset(placed.asset);
         setPayloadInvalid(false);
       }
-      applySelection({ track: placed.trackIndex, marker: null });
+      const primaryIndex = placed.asset.tracks.findIndex((candidate) => candidate.id === track.id);
+      applySelection({ track: primaryIndex, marker: null }, [], dragTrackIds);
       setError(null);
     };
     const cancelWithEscape = (keyEvent: KeyboardEvent) => {
@@ -1470,7 +1585,7 @@ export function Sequencer(props: SequencerProps) {
       cancel();
     };
 
-    applySelection({ track: trackIndex, marker: null });
+    applySelection({ track: trackIndex, marker: null }, [], dragTrackIds);
     handle.setPointerCapture(pointerId);
     window.addEventListener('pointermove', move);
     window.addEventListener('pointerup', finish);
@@ -1500,6 +1615,7 @@ export function Sequencer(props: SequencerProps) {
     const startY = event.clientY;
     const selectionBefore = selection ? { ...selection } : null;
     const selectedItemsBefore = structuredClone(selectedItems);
+    const selectedTrackIdsBefore = [...selectedTrackIds];
     const timeBefore = time;
     let dragged = false;
     let lastClientX = startX;
@@ -1581,7 +1697,7 @@ export function Sequencer(props: SequencerProps) {
     const cancel = () => {
       cleanup();
       setGroupDragVisual(null);
-      applySelection(selectionBefore, selectedItemsBefore);
+      applySelection(selectionBefore, selectedItemsBefore, selectedTrackIdsBefore);
     };
     const move = (moveEvent: PointerEvent) => {
       if (moveEvent.pointerId !== pointerId) return;
@@ -1601,7 +1717,7 @@ export function Sequencer(props: SequencerProps) {
       cleanup();
       setGroupDragVisual(null);
       if (finishEvent.type === 'pointercancel') {
-        applySelection(selectionBefore, selectedItemsBefore);
+        applySelection(selectionBefore, selectedItemsBefore, selectedTrackIdsBefore);
         return;
       }
       if (!dragged || !lastTarget) return;
@@ -1611,7 +1727,14 @@ export function Sequencer(props: SequencerProps) {
         return;
       }
       if (placed.changed) {
-        pushHistory(asset, selectionBefore, timeBefore, selectedItemsBefore, 'Move Timeline Track Group');
+        pushHistory(
+          asset,
+          selectionBefore,
+          timeBefore,
+          selectedItemsBefore,
+          'Move Timeline Track Group',
+          selectedTrackIdsBefore,
+        );
         replaceAsset(placed.asset);
         setPayloadInvalid(false);
       }
@@ -2176,6 +2299,7 @@ export function Sequencer(props: SequencerProps) {
         asset: structuredClone(current),
         selection: selectionRef.current ? { ...selectionRef.current } : null,
         selectedItems: structuredClone(items),
+        selectedTrackIds: [...selectedTrackIdsRef.current],
         time: timeRef.current,
         historyCheckpoint: props.undoService.checkpoint(),
         historyToken: null,
@@ -2190,6 +2314,7 @@ export function Sequencer(props: SequencerProps) {
         transaction.time,
         transaction.selectedItems,
         useRipple ? 'Ripple Nudge Timeline Items' : 'Nudge Timeline Items',
+        transaction.selectedTrackIds,
       );
     }
     replaceAsset(moved.asset);
@@ -2229,6 +2354,17 @@ export function Sequencer(props: SequencerProps) {
     : null;
   const selectedTrack = selection && selection.track >= 0 ? asset.tracks[selection.track] : null;
   const selectedTrackLocked = Boolean(selectedTrack && timelineTrackIsLocked(asset, selectedTrack));
+  const selectedTrackIndexes = selectedTrackIds
+    .map((trackId) => asset.tracks.findIndex((track) => track.id === trackId))
+    .filter((trackIndex) => trackIndex >= 0);
+  const selectedTrackSelectionLocked = selectedTrackIds.some((trackId) => {
+    const track = asset.tracks.find((candidate) => candidate.id === trackId);
+    return Boolean(track && timelineTrackIsLocked(asset, track));
+  });
+  const selectedTrackSelectionAtTop = selectedTrackIndexes.length > 0
+    && Math.min(...selectedTrackIndexes) === 0;
+  const selectedTrackSelectionAtBottom = selectedTrackIndexes.length > 0
+    && Math.max(...selectedTrackIndexes) === asset.tracks.length - 1;
   const hasSolo = timelineHasSolo(asset);
   const groupByTrackId = new Map<string, TimelineTrackGroup>();
   const firstTrackByGroupId = new Map<string, number>();
@@ -2582,10 +2718,11 @@ export function Sequencer(props: SequencerProps) {
     }
   };
   const renderGroupRow = (group: TimelineTrackGroup) => {
-    const selectedCount = selectedItems.filter((item) => {
+    const selectedItemCount = selectedItems.filter((item) => {
       const trackId = asset.tracks[item.track]?.id;
       return Boolean(trackId && group.track_ids.includes(trackId));
     }).length;
+    const selectedHeaderCount = selectedTrackIds.filter((trackId) => group.track_ids.includes(trackId)).length;
     const dropInside = trackDragVisual?.target?.kind === 'group'
       && trackDragVisual.target.groupId === group.id;
     const groupDrop = groupDragVisual?.target?.kind === 'group'
@@ -2599,7 +2736,7 @@ export function Sequencer(props: SequencerProps) {
         : null;
     const dragSource = groupDragVisual?.sourceGroupId === group.id;
     return <div
-      className={`sequencer-group-row${selection?.groupId === group.id ? ' selected' : ''}${group.solo ? ' solo' : ''}${group.muted ? ' muted' : ''}${group.locked ? ' locked' : ''}${dragSource ? ' group-drag-source' : ''}${dropInside ? ` drop-inside${trackDragVisual.valid ? '' : ' invalid'}` : ''}${groupDropOnRow ? ` drop-${groupDropOnRow}${groupDragVisual?.valid ? '' : ' invalid'}` : ''}`}
+      className={`sequencer-group-row${selection?.groupId === group.id ? ' selected' : ''}${selectedHeaderCount > 0 ? ' contains-track-selection' : ''}${group.solo ? ' solo' : ''}${group.muted ? ' muted' : ''}${group.locked ? ' locked' : ''}${dragSource ? ' group-drag-source' : ''}${dropInside ? ` drop-inside${trackDragVisual.valid ? '' : ' invalid'}` : ''}${groupDropOnRow ? ` drop-${groupDropOnRow}${groupDragVisual?.valid ? '' : ' invalid'}` : ''}`}
       data-sequencer-group-id={group.id}
       key={`group-${group.id}`}
     >
@@ -2656,7 +2793,7 @@ export function Sequencer(props: SequencerProps) {
         ><Lock size={11} /></button>
       </div>
       <div className="sequencer-lane sequencer-group-lane" onClick={() => applySelection({ track: -1, marker: null, groupId: group.id })}>
-        <span>{group.track_ids.length} track{group.track_ids.length === 1 ? '' : 's'}{selectedCount > 0 ? ` · ${selectedCount} selected` : ''}{group.solo ? ' · SOLO' : ''}{group.muted ? ' · MUTED' : ''}{group.locked ? ' · LOCKED' : ''}</span>
+        <span>{group.track_ids.length} track{group.track_ids.length === 1 ? '' : 's'}{selectedHeaderCount > 0 ? ` · ${selectedHeaderCount} track${selectedHeaderCount === 1 ? '' : 's'} selected` : ''}{selectedItemCount > 0 ? ` · ${selectedItemCount} item${selectedItemCount === 1 ? '' : 's'} selected` : ''}{group.solo ? ' · SOLO' : ''}{group.muted ? ' · MUTED' : ''}{group.locked ? ' · LOCKED' : ''}</span>
         {snapGuide != null && <i className="sequencer-snap-guide" style={{ left: `${snapGuide / asset.duration * 100}%` }} />}
         <i className="sequencer-playhead" style={{ left: `${displayTime / asset.duration * 100}%` }} />
       </div>
@@ -2672,6 +2809,22 @@ export function Sequencer(props: SequencerProps) {
         const target = event.target as HTMLElement;
         if (!target.closest('input, textarea, select, button, summary')) {
           event.currentTarget.focus({ preventScroll: true });
+        }
+      }}
+      onKeyDownCapture={(event) => {
+        const eventTarget = event.target as HTMLElement;
+        if (['INPUT', 'TEXTAREA', 'SELECT'].includes(eventTarget.tagName) || eventTarget.isContentEditable) return;
+        const direction = sequencerStructuralMoveDirection(
+          event.key,
+          event.altKey,
+          event.ctrlKey || event.metaKey,
+        );
+        if (direction == null) return;
+        if (selection?.groupId || (selection && selection.track >= 0 && selection.marker == null)) {
+          event.preventDefault();
+          event.stopPropagation();
+          if (selection.groupId) moveSelectedGroup(direction);
+          else moveSelectedTrack(direction);
         }
       }}
       onKeyDown={(event) => {
@@ -2755,16 +2908,6 @@ export function Sequencer(props: SequencerProps) {
           }
           return;
         }
-        if (!modified && event.altKey && (event.key === 'ArrowUp' || event.key === 'ArrowDown')) {
-          const direction = event.key === 'ArrowUp' ? -1 : 1;
-          if (selection?.groupId || (selection && selection.track >= 0 && selection.marker == null)) {
-            event.preventDefault();
-            event.stopPropagation();
-            if (selection.groupId) moveSelectedGroup(direction);
-            else moveSelectedTrack(direction);
-          }
-          return;
-        }
         if (!modified && (event.key === 'ArrowLeft' || event.key === 'ArrowRight')) {
           event.preventDefault();
           event.stopPropagation();
@@ -2800,7 +2943,11 @@ export function Sequencer(props: SequencerProps) {
             scrub(next);
           }} /></label>
           <span className="timeline-clip-path" title={props.assetPath}>{asset.name} — {props.assetPath}{dirty ? ' *' : ''}</span>
-          {selectedItems.length > 0 && <span className="sequencer-selection-count" title="Arrow keys nudge by one frame; Shift+Arrow nudges by ten frames.">{selectedItems.length} selected</span>}
+          {selectedItems.length > 0
+            ? <span className="sequencer-selection-count" title="Arrow keys nudge by one frame; Shift+Arrow nudges by ten frames.">{selectedItems.length} items selected</span>
+            : selectedTrackIds.length > 1
+              ? <span className="sequencer-selection-count" title="Drag any selected grip or use Alt+ArrowUp/Down to move the complete track selection.">{selectedTrackIds.length} tracks selected</span>
+              : null}
           {liveDirector && <span className={`sequencer-live-status${liveDirector.playing ? ' playing' : ''}`}>{liveDirector.playing ? 'LIVE PLAYING' : 'LIVE PAUSED'} · {displayTime.toFixed(2)}s</span>}
           {!props.playMode && props.previewEnabled && directorEntity && <span className="sequencer-live-status edit-preview">EDIT PREVIEW · Activation + Animation + Camera + Audio + Particle</span>}
           {!props.playMode && audioPreviewStatus.mode !== 'idle' && <span className="sequencer-live-status edit-preview">AUDIO {audioPreviewStatus.mode.toUpperCase()}{audioPreviewStatus.voices ? ` · ${audioPreviewStatus.voices}` : ''}</span>}
@@ -2981,7 +3128,7 @@ export function Sequencer(props: SequencerProps) {
               && trackDragVisual.target.trackId === track.id
               ? trackDragVisual.target
               : null;
-            const dragSource = trackDragVisual?.sourceTrackId === track.id;
+            const dragSource = trackDragVisual?.sourceTrackIds.includes(track.id) ?? false;
             const groupTrackDrop = groupDragVisual?.target?.kind === 'track'
               && groupDragVisual.target.trackId === track.id
               ? groupDragVisual.target
@@ -2994,6 +3141,7 @@ export function Sequencer(props: SequencerProps) {
               && groupDragVisual.target.edge === 'after';
             const groupDropEdge = groupTrackDrop?.edge ?? (groupAfterDrop ? 'after' : null);
             const groupDragMember = Boolean(group && groupDragVisual?.sourceGroupId === group.id);
+            const headerSelected = selectedTrackIds.includes(track.id);
             const effectiveMuteLabel = track.muted
               ? 'Muted'
               : group?.muted
@@ -3004,7 +3152,7 @@ export function Sequencer(props: SequencerProps) {
             return <Fragment key={track.id}>
               {group && firstTrackByGroupId.get(group.id) === trackIndex && renderGroupRow(group)}
               {!group?.collapsed && <div
-                className={`sequencer-track-row${group ? ' grouped' : ''}${selection?.track === trackIndex ? ' selected' : ''}${selectedItems.some((item) => item.track === trackIndex) ? ' contains-selection' : ''}${effectivelyLocked ? ' locked' : ''}${effectivelySolo ? ' effectively-solo' : ''}${effectivelyMuted ? ' effectively-muted' : ''}${dragSource ? ' drag-source' : ''}${groupDragMember ? ' group-drag-member' : ''}${dropTarget ? ` drop-${dropTarget.edge}${trackDragVisual?.valid ? '' : ' invalid'}` : ''}${groupDropEdge ? ` drop-${groupDropEdge}${groupDragVisual?.valid ? '' : ' invalid'}` : ''}`}
+                className={`sequencer-track-row${group ? ' grouped' : ''}${selection?.track === trackIndex ? ' selected' : ''}${headerSelected ? ' header-selected' : ''}${selectedItems.some((item) => item.track === trackIndex) ? ' contains-selection' : ''}${effectivelyLocked ? ' locked' : ''}${effectivelySolo ? ' effectively-solo' : ''}${effectivelyMuted ? ' effectively-muted' : ''}${dragSource ? ' drag-source' : ''}${groupDragMember ? ' group-drag-member' : ''}${dropTarget ? ` drop-${dropTarget.edge}${trackDragVisual?.valid ? '' : ' invalid'}` : ''}${groupDropEdge ? ` drop-${groupDropEdge}${groupDragVisual?.valid ? '' : ' invalid'}` : ''}`}
                 data-sequencer-track-id={track.id}
               >
               <div className="sequencer-track-header">
@@ -3016,7 +3164,13 @@ export function Sequencer(props: SequencerProps) {
                   disabled={effectivelyLocked}
                   onPointerDown={(event) => startTrackDrag(event, trackIndex)}
                 ><GripVertical size={12} /></button>
-                <button type="button" className="sequencer-track-select" onClick={() => applySelection({ track: trackIndex, marker: null })}>
+                <button
+                  type="button"
+                  className="sequencer-track-select"
+                  aria-pressed={headerSelected}
+                  title="Click to select · Ctrl/Cmd toggles · Shift selects a visible range"
+                  onClick={(event) => selectTrackHeader(event, trackIndex)}
+                >
                   <span className={`sequencer-track-icon ${track.type}`}>{track.type === 'signal' ? 'S' : track.type === 'activation' ? 'A' : track.type === 'audio' ? '♪' : track.type === 'animation' ? 'M' : track.type === 'particle' ? 'P' : 'C'}</span>
                   <span>{track.name}</span>
                   {effectiveMuteLabel && <small>{effectiveMuteLabel}</small>}
@@ -3174,7 +3328,11 @@ export function Sequencer(props: SequencerProps) {
           {(trackDragVisual || groupDragVisual) && <div
             className={`sequencer-track-root-drop${trackDragVisual?.target?.kind === 'root' || groupDragVisual?.target?.kind === 'root' ? ' active' : ''}${groupDragVisual && !groupDragVisual.valid ? ' invalid' : ''}`}
             data-sequencer-track-root-drop="true"
-          ><GripVertical size={12} /> {groupDragVisual ? 'Move group block to end' : 'Move to root · place at end'}</div>}
+          ><GripVertical size={12} /> {groupDragVisual
+              ? 'Move group block to end'
+              : trackDragVisual && trackDragVisual.sourceTrackIds.length > 1
+                ? `Move ${trackDragVisual.sourceTrackIds.length} tracks to root · place at end`
+                : 'Move to root · place at end'}</div>}
           {asset.tracks.length === 0 && asset.groups.length === 0 && <div className="sequencer-empty-track">Add a Signal, Activation, Audio, Animation, Particle, Camera Track, or Group to begin authoring.</div>}
           {marquee && <i className="sequencer-marquee" style={marquee} aria-hidden="true" />}
         </div>
@@ -3182,6 +3340,7 @@ export function Sequencer(props: SequencerProps) {
         {inspectorOpen && <aside className="sequencer-inspector" onFocusCapture={beginInspectorEdit} onBlurCapture={endInspectorEdit}>
           <h3>{selectedMarker ? 'Signal Marker' : selectedActivationClip ? 'Activation Clip' : selectedAudioClip ? 'Audio Clip' : selectedAnimationClip ? 'Animation Clip' : selectedParticleClip ? 'Particle Clip' : selectedCameraClip ? 'Camera Shot' : selectedTrack ? `${selectedTrack.type === 'signal' ? 'Signal' : selectedTrack.type === 'activation' ? 'Activation' : selectedTrack.type === 'audio' ? 'Audio' : selectedTrack.type === 'animation' ? 'Animation' : selectedTrack.type === 'particle' ? 'Particle' : 'Camera'} Track` : selectedGroup ? 'Track Group' : 'Timeline Asset'}</h3>
           {selectedItems.length > 1 && <p className="sequencer-multi-selection-notice">{selectedItems.length} items selected. Inspector edits and edge trims apply to the primary item; drag, clipboard, duplicate, Delete and Ripple Delete apply to the full selection.</p>}
+          {selectedItems.length === 0 && selectedTrackIds.length > 1 && <p className="sequencer-multi-selection-notice">{selectedTrackIds.length} track headers selected. Inspector fields edit the primary track; drag, Alt+Arrow, Group creation and Delete apply to the full selection.</p>}
           {!selectedTrack && !selectedGroup && <>
             <label>Name <input value={asset.name} onChange={(event) => update((draft) => { draft.name = event.target.value; })} /></label>
             <label>Duration <input type="number" min={0.001} step={0.1} value={asset.duration} onChange={(event) => update((draft) => {
@@ -3278,10 +3437,10 @@ export function Sequencer(props: SequencerProps) {
               }} /></label>}
               {selectedTrack.type !== 'signal' && selectedTrack.type !== 'camera' && renderBindingEditor(selectedTrack.target)}
               <div className="sequencer-track-order">
-                <button type="button" title="Move track up (Alt+ArrowUp)" disabled={selection!.track === 0} onClick={() => moveSelectedTrack(-1)}><ArrowUp size={13} /> Move Up</button>
-                <button type="button" title="Move track down (Alt+ArrowDown)" disabled={selection!.track === asset.tracks.length - 1} onClick={() => moveSelectedTrack(1)}><ArrowDown size={13} /> Move Down</button>
+                <button type="button" title="Move selected track headers up (Alt+ArrowUp)" disabled={selectedTrackSelectionLocked || selectedTrackSelectionAtTop} onClick={() => moveSelectedTrack(-1)}><ArrowUp size={13} /> Move Up</button>
+                <button type="button" title="Move selected track headers down (Alt+ArrowDown)" disabled={selectedTrackSelectionLocked || selectedTrackSelectionAtBottom} onClick={() => moveSelectedTrack(1)}><ArrowDown size={13} /> Move Down</button>
               </div>
-              <button type="button" className="sequencer-danger" onClick={() => deleteSelection()}><Trash2 size={14} /> Delete Track</button>
+              <button type="button" className="sequencer-danger" onClick={() => deleteSelection()}><Trash2 size={14} /> Delete {selectedTrackIds.length > 1 ? `${selectedTrackIds.length} Tracks` : 'Track'}</button>
             </fieldset>
           </>}
           {selectedMarker && <fieldset className="sequencer-inspector-fields" disabled={selectedTrackLocked}>
