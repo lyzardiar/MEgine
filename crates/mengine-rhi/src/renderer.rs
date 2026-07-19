@@ -6,6 +6,9 @@ use crate::sky::SkyBackground;
 use crate::ui::{UiBatchPlan, UiFrameStats, UiRenderer, UiTextureError};
 use crate::RhiError;
 use glam::{Mat4, Vec3, Vec4};
+use mengine_core::surface_shader::{
+    parse_surface_shader_parameters, MAX_SURFACE_SHADER_PARAMETERS,
+};
 use std::collections::{hash_map::DefaultHasher, HashMap, HashSet};
 use std::hash::{Hash, Hasher};
 use std::num::NonZeroU64;
@@ -97,6 +100,9 @@ pub struct RenderMaterial {
     /// Optional project-authored WGSL surface hook. The engine wraps and validates this hook
     /// against its stable forward-material interface before creating a pipeline.
     pub surface_shader: String,
+    /// Reflected Surface Shader values packed in declaration order. Each parameter owns one
+    /// vec4 slot so adding one parameter never shifts the components of another parameter.
+    pub custom_parameters: [[f32; 4]; MAX_SURFACE_SHADER_PARAMETERS],
 }
 
 #[derive(Clone, Copy, Debug, Default, Eq, Hash, PartialEq)]
@@ -157,6 +163,7 @@ impl Default for RenderMaterial {
             mipmap_filter: MaterialFilter::Linear,
             anisotropy: 1,
             surface_shader: String::new(),
+            custom_parameters: [[0.0; 4]; MAX_SURFACE_SHADER_PARAMETERS],
         }
     }
 }
@@ -298,6 +305,7 @@ struct ObjectUniforms {
     map_params: [f32; 4],
     layer_params: [f32; 4],
     shadow_params: [f32; 4],
+    custom_parameters: [[f32; 4]; MAX_SURFACE_SHADER_PARAMETERS],
 }
 
 #[repr(C)]
@@ -1791,6 +1799,7 @@ fn make_object_uniforms(object: &RenderObject) -> ObjectUniforms {
             0.0,
             0.0,
         ],
+        custom_parameters: material.custom_parameters,
     }
 }
 
@@ -1923,8 +1932,22 @@ fn compose_surface_shader(surface_hook: &str) -> Result<String, String> {
     } else {
         LIT_SURFACE_HOOK_SOURCE
     };
+    let parameter_helpers = parse_surface_shader_parameters(hook)?
+        .iter()
+        .enumerate()
+        .map(|(index, parameter)| {
+            format!(
+                "fn mengine_param_{}() -> {} {{ return object.custom_parameters[{}u]{}; }}",
+                parameter.name,
+                parameter.parameter_type.wgsl_type(),
+                index,
+                parameter.parameter_type.wgsl_swizzle(),
+            )
+        })
+        .collect::<Vec<_>>()
+        .join("\n");
     composed.replace_range(start..end, &format!(
-        "{SURFACE_HOOK_BEGIN}\nconst MENGINE_HAS_LIT_SURFACE_HOOK: bool = {has_lit_hook};\n{hook}\n{legacy_fallback}\n{lit_fallback}\n{SURFACE_HOOK_END}"
+        "{SURFACE_HOOK_BEGIN}\nconst MENGINE_HAS_LIT_SURFACE_HOOK: bool = {has_lit_hook};\n{parameter_helpers}\n{hook}\n{legacy_fallback}\n{lit_fallback}\n{SURFACE_HOOK_END}"
     ));
     let module = naga::front::wgsl::parse_str(&composed)
         .map_err(|error| format!("WGSL parse failed: {error}"))?;
@@ -2440,6 +2463,7 @@ struct ObjectUniforms {
     map_params: vec4<f32>,
     layer_params: vec4<f32>,
     shadow_params: vec4<f32>,
+    custom_parameters: array<vec4<f32>, 16>,
 };
 
 @group(0) @binding(0) var<uniform> shadow: ShadowUniforms;
@@ -2515,6 +2539,7 @@ struct ObjectUniforms {
     map_params: vec4<f32>,
     layer_params: vec4<f32>,
     shadow_params: vec4<f32>,
+    custom_parameters: array<vec4<f32>, 16>,
 };
 
 struct ShadowUniforms {
@@ -3125,6 +3150,12 @@ mod tests {
         assert!(validate_surface_shader_hook("@fragment fn fs_main() {}").is_err());
 
         let lit_hook = r#"
+            /* MENGINE_PARAMETERS
+            {"parameters":[
+              {"name":"rim_color","type":"color","default":[1,0.5,0,1]},
+              {"name":"rim_power","type":"float","default":2,"min":0,"max":8}
+            ]}
+            */
             fn mengine_lit_surface_hook(
                 surface: MEngineSurface,
                 uv: vec2<f32>,
@@ -3132,12 +3163,16 @@ mod tests {
             ) -> MEngineSurface {
                 var result = surface;
                 result.roughness = 0.2 + uv.x * 0.5;
-                result.emissive += vec3<f32>(world_position.y * 0.1);
+                result.emissive += mengine_param_rim_color().xyz
+                    * mengine_param_rim_power()
+                    * world_position.y;
                 return result;
             }
         "#;
         let lit_composed = compose_surface_shader(lit_hook).unwrap();
         assert!(lit_composed.contains("MENGINE_HAS_LIT_SURFACE_HOOK: bool = true"));
+        assert!(lit_composed.contains("fn mengine_param_rim_color() -> vec4<f32>"));
+        assert!(lit_composed.contains("object.custom_parameters[1u].x"));
         assert!(lit_composed.contains("result.roughness"));
         assert!(validate_surface_shader_hook(lit_hook).is_ok());
     }
@@ -3146,10 +3181,10 @@ mod tests {
     fn alignment_matches_dynamic_uniform_requirement() {
         assert_eq!(align_to(176, 256), 256);
         assert_eq!(align_to(256, 256), 256);
-        assert_eq!(std::mem::size_of::<ObjectUniforms>(), 240);
+        assert_eq!(std::mem::size_of::<ObjectUniforms>(), 496);
         assert_eq!(
             align_to(std::mem::size_of::<ObjectUniforms>() as u64, 256),
-            256
+            512
         );
     }
 

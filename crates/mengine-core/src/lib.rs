@@ -9,6 +9,7 @@ pub mod hierarchy;
 pub mod query;
 pub mod schedule;
 pub mod snapshot;
+pub mod surface_shader;
 pub mod time;
 pub mod transform_hierarchy;
 pub mod world;

@@ -5371,6 +5371,46 @@ button.sequencer-track-header:hover { background: #343b42; }
   font-size: 11px;
 }
 
+.material-custom-parameters {
+  display: flex;
+  flex-direction: column;
+  border-top: 1px solid var(--u-border-2);
+  border-bottom: 1px solid var(--u-border-2);
+  background: #303030;
+}
+
+.material-custom-parameters > strong {
+  padding: 5px 6px;
+  color: var(--u-text-bright);
+  font-size: 10px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.material-custom-parameters > label {
+  display: grid;
+  min-height: 29px;
+  align-items: center;
+  grid-template-columns: minmax(92px, 0.42fr) minmax(72px, 1fr) auto;
+  gap: 6px;
+  padding: 3px 6px;
+  border-top: 1px solid #3a3a3a;
+  font-size: 11px;
+}
+
+.material-parameter-error {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 5px 6px;
+  border-top: 1px solid #6d2929;
+  border-bottom: 1px solid #6d2929;
+  background: #3c2323;
+  color: #ff9d9d;
+  font-size: 10px;
+}
+
 .material-texture-slot {
   min-height: 34px;
   grid-template-columns: minmax(92px, 0.42fr) minmax(0, 1fr);

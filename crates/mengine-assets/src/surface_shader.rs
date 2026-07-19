@@ -1,4 +1,5 @@
 use crate::AssetError;
+use mengine_core::surface_shader::parse_surface_shader_parameters;
 use std::path::Path;
 
 pub const SURFACE_SHADER_HOOK_NAME: &str = "mengine_surface_hook";
@@ -23,6 +24,7 @@ pub fn parse_surface_shader(bytes: &[u8]) -> Result<String, AssetError> {
             "surface shader contains a NUL character".into(),
         ));
     }
+    parse_surface_shader_parameters(source).map_err(AssetError::Invalid)?;
     let compact: String = source
         .chars()
         .filter(|character| !character.is_whitespace())

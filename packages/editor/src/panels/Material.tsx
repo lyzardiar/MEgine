@@ -35,11 +35,19 @@ import type {
 import { ImageIcon, Redo2, Search, Undo2, X } from 'lucide-react';
 import { ObjectPicker } from './ObjectPicker';
 import {
+  broadcastProjectAssetsChanged,
   openMaterialAsset,
   openSurfaceShaderAsset,
   PROJECT_ASSETS_CHANGED_EVENT,
 } from '../assetEditorEvents';
 import { MaterialInstanceEditor } from './MaterialInstance';
+import {
+  normalizeSurfaceShaderParameterValue,
+  parseSurfaceShaderParameters,
+  surfaceShaderParameterComponents,
+  validateSurfaceShaderParameterValues,
+  type SurfaceShaderParameter,
+} from '../surfaceShader';
 
 function uniqueMaterialPath(baseName = 'New Material'): string {
   const used = new Set(listProjectFiles().map((asset) => asset.relPath.toLowerCase()));
@@ -58,7 +66,7 @@ export async function createProjectMaterial(): Promise<string> {
   const name = path.split('/').pop()!.replace(/\.mmat$/i, '');
   await writeProjectAssetText(path, serializeMaterialAsset(createMaterialAsset(name)));
   await refreshProjectFiles();
-  window.dispatchEvent(new CustomEvent(PROJECT_ASSETS_CHANGED_EVENT));
+  broadcastProjectAssetsChanged({ action: 'created', destinationPath: path });
   openMaterialAsset(path);
   return path;
 }
@@ -221,6 +229,8 @@ function BaseMaterialEditor(props: MaterialEditorProps) {
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [shaderParameters, setShaderParameters] = useState<SurfaceShaderParameter[]>([]);
+  const [shaderParameterError, setShaderParameterError] = useState<string | null>(null);
   const [assetRevision, setAssetRevision] = useState(0);
   const [, setDraftEpoch] = useState(0);
   const loadedPath = useRef<string | null>(null);
@@ -316,8 +326,39 @@ function BaseMaterialEditor(props: MaterialEditorProps) {
   );
 
   useEffect(() => {
+    let cancelled = false;
+    setShaderParameters([]);
+    setShaderParameterError(null);
+    if (material?.shader !== 'custom' || !material.custom_shader) {
+      return () => { cancelled = true; };
+    }
+    void readProjectAssetText(material.custom_shader)
+      .then((source) => {
+        if (cancelled) return;
+        const parameters = parseSurfaceShaderParameters(source);
+        setShaderParameters(parameters);
+        validateSurfaceShaderParameterValues(parameters, material.custom_parameters);
+      })
+      .catch((reason) => {
+        if (!cancelled) {
+          setShaderParameterError(reason instanceof Error ? reason.message : String(reason));
+        }
+      });
+    return () => { cancelled = true; };
+  }, [assetRevision, material?.custom_shader, material?.shader]);
+
+  useEffect(() => {
     props.onDirtyChange(anyDirty);
   }, [anyDirty, props.onDirtyChange]);
+  useEffect(() => {
+    const refresh = () => {
+      void refreshProjectFiles().finally(() => {
+        setAssetRevision((revision) => revision + 1);
+      });
+    };
+    window.addEventListener(PROJECT_ASSETS_CHANGED_EVENT, refresh);
+    return () => window.removeEventListener(PROJECT_ASSETS_CHANGED_EVENT, refresh);
+  }, []);
   const canAssign = Boolean(
     props.assetPath
     && props.selectedEntity?.components.MeshRenderer,
@@ -405,6 +446,15 @@ function BaseMaterialEditor(props: MaterialEditorProps) {
     props.undoService.restoreCheckpoint(transaction.checkpoint);
   };
 
+  const validateCustomParameters = async (candidate: MaterialAsset) => {
+    if (candidate.shader !== 'custom') return;
+    if (!candidate.custom_shader) throw new Error('Custom materials require a Surface Shader asset');
+    const parameters = parseSurfaceShaderParameters(
+      await readProjectAssetText(candidate.custom_shader),
+    );
+    validateSurfaceShaderParameterValues(parameters, candidate.custom_parameters);
+  };
+
   const save = async (): Promise<boolean> => {
     if (!props.assetPath || !material) return false;
     const path = props.assetPath;
@@ -412,6 +462,7 @@ function BaseMaterialEditor(props: MaterialEditorProps) {
     setSaving(true);
     setError(null);
     try {
+      await validateCustomParameters(material);
       await writeProjectAssetText(path, text);
       await refreshProjectFiles();
       setAssetRevision((revision) => revision + 1);
@@ -430,7 +481,7 @@ function BaseMaterialEditor(props: MaterialEditorProps) {
         setDraftEpoch((value) => value + 1);
       }
       props.onAssetsChanged();
-      window.dispatchEvent(new CustomEvent(PROJECT_ASSETS_CHANGED_EVENT));
+      broadcastProjectAssetsChanged({ action: 'modified', sourcePath: path });
       props.onLog(`Saved ${path}`);
       return true;
     } catch (reason) {
@@ -450,6 +501,7 @@ function BaseMaterialEditor(props: MaterialEditorProps) {
     for (const [path, draft] of [...drafts.current]) {
       if (!materialDraftDirty(draft)) continue;
       try {
+        await validateCustomParameters(draft.material);
         const text = serializeMaterialAsset(draft.material);
         await writeProjectAssetText(path, text);
         drafts.current.set(path, {
@@ -457,6 +509,7 @@ function BaseMaterialEditor(props: MaterialEditorProps) {
           savedText: text,
         });
         savedDraft = true;
+        broadcastProjectAssetsChanged({ action: 'modified', sourcePath: path });
         props.onLog(`Saved ${path}`);
       } catch (reason) {
         failures.push(`${path}: ${reason instanceof Error ? reason.message : String(reason)}`);
@@ -466,7 +519,6 @@ function BaseMaterialEditor(props: MaterialEditorProps) {
       await refreshProjectFiles();
       setAssetRevision((revision) => revision + 1);
       props.onAssetsChanged();
-      window.dispatchEvent(new CustomEvent(PROJECT_ASSETS_CHANGED_EVENT));
       setDraftEpoch((value) => value + 1);
     }
     if (failures.length > 0) throw new Error(failures.join('; '));
@@ -572,7 +624,17 @@ function BaseMaterialEditor(props: MaterialEditorProps) {
 
         <div className="material-fields">
           <label>Name <input value={material.name} onChange={(event) => update('name', event.target.value)} /></label>
-          <label>Shader <select value={material.shader} onChange={(event) => update('shader', event.target.value as MaterialAsset['shader'])}>
+          <label>Shader <select value={material.shader} onChange={(event) => {
+            const shader = event.target.value as MaterialAsset['shader'];
+            updateMaterial(
+              (current) => ({
+                ...current,
+                shader,
+                ...(shader === 'custom' ? {} : { custom_parameters: {} }),
+              }),
+              'Edit Material Shader',
+            );
+          }}>
             <option value="pbr">PBR</option>
             <option value="unlit">Unlit</option>
             <option value="custom">Custom Surface</option>
@@ -581,7 +643,16 @@ function BaseMaterialEditor(props: MaterialEditorProps) {
             <label>Surface Shader
               <select
                 value={material.custom_shader}
-                onChange={(event) => update('custom_shader', event.target.value)}
+                onChange={(event) => updateMaterial(
+                  (current) => ({
+                    ...current,
+                    custom_shader: event.target.value,
+                    custom_parameters: event.target.value === current.custom_shader
+                      ? current.custom_parameters
+                      : {},
+                  }),
+                  'Edit Material Surface Shader',
+                )}
               >
                 <option value="">Select .mshader...</option>
                 {material.custom_shader
@@ -599,6 +670,100 @@ function BaseMaterialEditor(props: MaterialEditorProps) {
                 }}
               >Open</button>
             </label>
+          )}
+          {material.shader === 'custom' && shaderParameterError && (
+            <div className="material-parameter-error">
+              <span>{shaderParameterError}</span>
+              {shaderParameters.length > 0 && (
+                <button type="button" onClick={() => {
+                  updateMaterial(
+                    (current) => ({
+                      ...current,
+                      custom_parameters: Object.fromEntries(Object.entries(current.custom_parameters)
+                        .filter(([name]) => shaderParameters.some((parameter) => parameter.name === name))),
+                    }),
+                    'Remove Stale Material Parameters',
+                  );
+                  setShaderParameterError(null);
+                }}>Remove Stale Values</button>
+              )}
+            </div>
+          )}
+          {material.shader === 'custom' && shaderParameters.length > 0 && (
+            <div className="material-custom-parameters">
+              <strong>Surface Shader Parameters</strong>
+              {shaderParameters.map((parameter) => {
+                const value = normalizeSurfaceShaderParameterValue(
+                  parameter,
+                  material.custom_parameters[parameter.name],
+                );
+                const overridden = Object.hasOwn(material.custom_parameters, parameter.name);
+                const updateParameter = (next: [number, number, number, number]) => {
+                  updateMaterial(
+                    (current) => ({
+                      ...current,
+                      custom_parameters: { ...current.custom_parameters, [parameter.name]: next },
+                    }),
+                    `Edit Material ${parameter.label}`,
+                  );
+                };
+                const reset = () => updateMaterial(
+                  (current) => {
+                    const custom_parameters = { ...current.custom_parameters };
+                    delete custom_parameters[parameter.name];
+                    return { ...current, custom_parameters };
+                  },
+                  `Reset Material ${parameter.label}`,
+                );
+                if (parameter.type === 'color') {
+                  return (
+                    <label key={parameter.name} className="material-color-row">
+                      {parameter.label}
+                      <input type="color" value={colorHex(value)} onChange={(event) => {
+                        const [r, g, b] = parseHex(event.target.value);
+                        updateParameter([r, g, b, value[3]]);
+                      }} />
+                      <input aria-label={`${parameter.label} alpha`} type="number" min={0} max={1} step={0.01} value={value[3]} onChange={(event) => updateParameter([value[0], value[1], value[2], Number(event.target.value)])} />
+                      <button type="button" disabled={!overridden} onClick={reset}>Reset</button>
+                    </label>
+                  );
+                }
+                const components = surfaceShaderParameterComponents(parameter.type);
+                if (components === 1) {
+                  return (
+                    <label key={parameter.name}>
+                      {parameter.label}
+                      <input type="number" min={parameter.min ?? undefined} max={parameter.max ?? undefined} step={0.01} value={value[0]} onChange={(event) => updateParameter([Number(event.target.value), 0, 0, 0])} />
+                      <button type="button" disabled={!overridden} onClick={reset}>Reset</button>
+                    </label>
+                  );
+                }
+                return (
+                  <label key={parameter.name}>
+                    {parameter.label}
+                    <span className="material-vector">
+                      {Array.from({ length: components }, (_, index) => (
+                        <input
+                          key={index}
+                          aria-label={`${parameter.label} ${'XYZW'[index]}`}
+                          type="number"
+                          min={parameter.min ?? undefined}
+                          max={parameter.max ?? undefined}
+                          step={0.01}
+                          value={value[index]}
+                          onChange={(event) => {
+                            const next = [...value] as [number, number, number, number];
+                            next[index] = Number(event.target.value);
+                            updateParameter(next);
+                          }}
+                        />
+                      ))}
+                    </span>
+                    <button type="button" disabled={!overridden} onClick={reset}>Reset</button>
+                  </label>
+                );
+              })}
+            </div>
           )}
           <label>Surface <select value={material.surface} onChange={(event) => update('surface', event.target.value as MaterialAsset['surface'])}>
             <option value="opaque">Opaque</option>

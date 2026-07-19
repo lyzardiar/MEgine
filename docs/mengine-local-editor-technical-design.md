@@ -1301,3 +1301,15 @@ Rust workspace 检查现在零警告通过；Tauri Host 17/17 常规测试与 1/
 第一遍自省确认 Clear Coat Override 必须位于材质资产/实例解析之后，否则 Material Instance 会把每对象覆盖重新盖掉；最终复用现有 `apply_material_property_block` 的唯一顺序边界。第二遍自省确认 Clear Coat 仍是纯 Object Uniform 数据，不进入 Material Pipeline Key 或 Texture Set Key，并补上旧场景反序列化默认值，避免把一次参数补全变成 Shader Variant 膨胀或场景迁移事故。
 
 这只是材质实例化语义的一处缺口修复。自定义 `.mshader` 仍没有声明式参数反射、Material Inspector 自动控件、稳定参数打包和 Keyword/Variant 契约；MaterialPropertyBlock 也尚不支持自定义参数与纹理覆盖。下一批继续建立跨编辑器、CLI、Runtime 的 Surface Shader 参数 Schema，而不是在 Inspector 中硬编码某个 Shader 的字段。
+
+## 109. 2026-07-19 Surface Shader 参数反射与 Material v8
+
+- `.mshader` 可在唯一的 `/* MENGINE_PARAMETERS ... */` JSON 区块中声明至多 16 个参数，类型覆盖 `float`、`vector2`、`vector3`、`vector4` 和 `color`。参数名是最长 48 字符的 ASCII 标识符，显示名最长 64 字符；默认值、可选范围和重复字段由 `mengine-core` 的共享解析器校验。`color` 默认使用 0–1 范围，Surface Hook 通过按声明顺序生成的 `mengine_param_<name>()` WGSL helper 读取值，不接触引擎私有绑定布局。
+- `.mmat/.mat` 升级到 v8，以参数名到四分量槽的有序映射保存自定义值。旧 v1–v7 资产自动补为空映射；非 Custom 材质、非法名称、非有限值、超过上限和 Shader 已删除的陈旧字段都会被拒绝。Runtime 按当前 Shader 声明顺序打包，未覆盖字段使用 Shader 默认值，数值在上传前按范围裁剪；因此调整声明顺序不会把旧值绑定到另一个参数，参数值也不进入 Pipeline Key，不会为每个材质值制造 Shader Variant。
+- Forward 与 Shadow 的 Object Uniform 共享 16 个 `vec4` 稳定槽，Rust/WGSL 布局回归固定为 496 字节并按设备动态 Uniform 要求对齐到 512 字节。RHI 在组合完整 Forward Shader 前生成强类型 helper，再由 Naga 解析和验证，错误 Shader 不会创建 Pipeline。Runtime 材质缓存只有在 Shader 与参数表同时通过时才附加自定义代码和值；最终 Player 包验证会逐个材质校验参数，即使多个材质引用同一个 `.mshader`，也不会因为 Shader 路径已缓存而跳过后续材质的陈旧值。
+- Material Inspector 读取所选 Surface Shader 并自动生成数值、向量与 Color Picker 控件；未显式覆盖时显示 Shader 默认值，`Reset` 删除材质覆盖而不是复制默认值。切换 Shader 会清空旧参数，保存与 Save All 会重新读取磁盘上的最新 Schema 并阻止陈旧字段落盘；Surface Shader 保存后广播项目资产变更，使同一 Dock 或其他 Dock 中已打开的 Material Inspector 立即重载参数表。检测到 Shader 删除字段时提供 `Remove Stale Values` 自救入口。
+- CLI 在 staging/publish 前同时验证 Material v8 结构、`.mshader` 参数 Schema 和材质到 Shader 的字段绑定；Player 启动前再次使用 Rust 共享解析器校验实际包内容。回归覆盖声明顺序、默认值、范围裁剪、Color Picker 范围、重复/非法 Schema、陈旧字段、多材质共享 Shader、RHI helper 组合、Uniform 对齐、编辑器往返与完整打包流程。
+
+第一遍自省发现 Surface Shader 保存只刷新 Project 列表，不会让另一个 Dock 中已打开的 Material Inspector 重新读取 Schema，结果用户删除字段后仍可能继续编辑旧控件；现已统一通过项目资产事件刷新，并在真正保存时再次读取磁盘契约。第二遍自省发现最终包校验原本用 Shader 路径去重，两个材质共享同一 Shader 时第二个材质的陈旧参数可能被跳过；现改为 Shader 资源可记录为已访问，但每个材质必须独立执行参数打包校验。跨语言契约复核还统一了 `color` 隐式 0–1 与显式范围冲突、非字符串 Label 的拒绝规则，避免编辑器可保存而 CLI/Player 拒绝。
+
+本阶段仍不是完整的成熟材质系统。固定 16 个槽使所有对象（包括不使用这些值的 Shadow Pass）动态 Uniform 步长从 256 增至 512 字节，后续应迁移到按材质复用的参数缓冲或分层绑定；Material Instance 与 MaterialPropertyBlock 尚不能覆盖自定义参数，自定义纹理、Keyword/Variant、Variant 预热与剥离、Shader 编译缓存、GPU Instancing、真实同 Player 材质预览和 Frame Debugger 仍需继续实现。CLI 的 `assetMode: all` 也应升级为对所有实际复制的材质和 Shader 做独立枚举审计，而不仅依赖场景可达闭包。

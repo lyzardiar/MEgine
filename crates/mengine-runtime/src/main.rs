@@ -22,7 +22,9 @@ use mengine_runtime::animation::{infer_project_root_from_scene, AnimationRuntime
 use mengine_runtime::audio::AudioRuntime;
 use mengine_runtime::build_manifest::verify_build_manifest;
 use mengine_runtime::lighting2d::apply_2d_lighting;
-use mengine_runtime::materials::{apply_material_property_block, RuntimeMaterialCache};
+use mengine_runtime::materials::{
+    apply_material_property_block, pack_surface_shader_parameters, RuntimeMaterialCache,
+};
 use mengine_runtime::meshes::RuntimeMeshCache;
 use mengine_runtime::particles::ParticleWorld;
 use mengine_runtime::player_config::load_player_config;
@@ -2329,21 +2331,20 @@ fn validate_world_assets(
                             );
                         }
                         let shader_path = resolve(shader, "material surface shader")?;
-                        if validated.insert(shader_path.clone()) {
-                            let source = mengine_assets::load_surface_shader(&shader_path)
-                                .with_context(|| {
-                                    format!(
-                                        "invalid material surface shader {}",
-                                        shader_path.display()
-                                    )
-                                })?;
-                            validate_surface_shader_hook(&source).map_err(|error| {
-                                anyhow::anyhow!(
-                                    "invalid material surface shader {}: {error}",
-                                    shader_path.display()
-                                )
+                        validated.insert(shader_path.clone());
+                        let source = mengine_assets::load_surface_shader(&shader_path)
+                            .with_context(|| {
+                                format!("invalid material surface shader {}", shader_path.display())
                             })?;
-                        }
+                        validate_surface_shader_hook(&source).map_err(|error| {
+                            anyhow::anyhow!(
+                                "invalid material surface shader {}: {error}",
+                                shader_path.display()
+                            )
+                        })?;
+                        pack_surface_shader_parameters(&asset, &source).map_err(|error| {
+                            anyhow::anyhow!("invalid material {}: {error}", path.display())
+                        })?;
                     }
                     for texture in [
                         asset.base_color_texture,
@@ -2903,19 +2904,21 @@ mod tests {
         std::fs::create_dir_all(shader_path.parent().unwrap()).unwrap();
         std::fs::write(
             &material_path,
-            r#"{"shader":"custom","custom_shader":"Assets/Shaders/Rim.mshader"}"#,
+            r#"{"version":8,"shader":"custom","custom_shader":"Assets/Shaders/Rim.mshader","custom_parameters":{"rim_power":[3,0,0,0]}}"#,
         )
         .unwrap();
         std::fs::write(
             &shader_path,
-            r#"
+            r#"/* MENGINE_PARAMETERS
+                {"parameters":[{"name":"rim_power","type":"float","default":2,"min":0,"max":8}]}
+                */
                 fn mengine_lit_surface_hook(
                     surface: MEngineSurface,
                     uv: vec2<f32>,
                     world_position: vec3<f32>,
                 ) -> MEngineSurface {
                     var result = surface;
-                    result.metallic = uv.x;
+                    result.metallic = uv.x * mengine_param_rim_power();
                     return result;
                 }
             "#,
@@ -2934,6 +2937,39 @@ mod tests {
         assert_eq!(validated.len(), 2);
         assert!(validated.contains(&material_path));
         assert!(validated.contains(&shader_path));
+    }
+
+    #[test]
+    fn packaged_asset_validation_rejects_stale_custom_material_parameters() {
+        let root = temporary_project_root("packaged-stale-material-parameter");
+        let material_path = root.join("Assets/Materials/Rim.mmat");
+        let shader_path = root.join("Assets/Shaders/Rim.mshader");
+        std::fs::create_dir_all(material_path.parent().unwrap()).unwrap();
+        std::fs::create_dir_all(shader_path.parent().unwrap()).unwrap();
+        std::fs::write(
+            &material_path,
+            r#"{"version":8,"shader":"custom","custom_shader":"Assets/Shaders/Rim.mshader","custom_parameters":{"removed":[3,0,0,0]}}"#,
+        )
+        .unwrap();
+        std::fs::write(
+            &shader_path,
+            r#"/* MENGINE_PARAMETERS
+            {"parameters":[{"name":"power","type":"float","default":2}]}
+            */
+            fn mengine_lit_surface_hook(
+              surface: MEngineSurface, uv: vec2<f32>, world_position: vec3<f32>
+            ) -> MEngineSurface { return surface; }"#,
+        )
+        .unwrap();
+
+        let error = validate_world_assets(
+            &world_with_material("Assets/Materials/Rim.mmat"),
+            &root,
+            &mut HashSet::new(),
+        )
+        .expect_err("stale reflected values must fail final package validation");
+        std::fs::remove_dir_all(&root).unwrap();
+        assert!(error.to_string().contains("not declared"), "{error}");
     }
 
     #[test]

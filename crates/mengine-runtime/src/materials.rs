@@ -5,6 +5,9 @@ use mengine_assets::{
     MaterialInstanceAsset, MaterialShader, MaterialSurface, MaterialWrap as AssetMaterialWrap,
 };
 use mengine_core::generated::MaterialPropertyBlock;
+use mengine_core::surface_shader::{
+    parse_surface_shader_parameters, MAX_SURFACE_SHADER_PARAMETERS,
+};
 use mengine_rhi::{
     validate_surface_shader_hook, MaterialBlendMode, MaterialFilter, MaterialWrap, RenderMaterial,
 };
@@ -63,7 +66,24 @@ impl RuntimeMaterialCache {
                 let mut render = render_material_from_asset(&material);
                 if material.shader == MaterialShader::Custom {
                     match self.load_custom_shader(&material.custom_shader) {
-                        Ok(source) => render.surface_shader = (*source).clone(),
+                        Ok(source) => match pack_surface_shader_parameters(&material, &source) {
+                            Ok(parameters) => {
+                                render.surface_shader = (*source).clone();
+                                render.custom_parameters = parameters;
+                            }
+                            Err(error) => {
+                                if self
+                                    .reported_failures
+                                    .insert((material.custom_shader.clone(), error.clone()))
+                                {
+                                    log::warn!(
+                                        "custom shader parameters for '{}' are invalid: {}",
+                                        material.custom_shader,
+                                        error
+                                    );
+                                }
+                            }
+                        },
                         Err(error) => {
                             if self
                                 .reported_failures
@@ -249,6 +269,44 @@ fn is_material_path(key: &str) -> bool {
     lower.ends_with(".mmat") || lower.ends_with(".mat") || lower.ends_with(".minst")
 }
 
+pub fn pack_surface_shader_parameters(
+    material: &MaterialAsset,
+    shader_source: &str,
+) -> Result<[[f32; 4]; MAX_SURFACE_SHADER_PARAMETERS], String> {
+    let schema = parse_surface_shader_parameters(shader_source)?;
+    if let Some(unknown) = material.custom_parameters.keys().find(|name| {
+        !schema
+            .iter()
+            .any(|parameter| parameter.name.as_str() == name.as_str())
+    }) {
+        return Err(format!(
+            "material parameter '{unknown}' is not declared by its Surface Shader"
+        ));
+    }
+    let mut packed = [[0.0; 4]; MAX_SURFACE_SHADER_PARAMETERS];
+    for (index, parameter) in schema.iter().enumerate() {
+        let source = material
+            .custom_parameters
+            .get(&parameter.name)
+            .unwrap_or(&parameter.default);
+        let mut value = *source;
+        for (component_index, component) in value[..parameter.parameter_type.component_count()]
+            .iter_mut()
+            .enumerate()
+        {
+            *component = finite_or(*component, parameter.default[component_index]);
+            if let Some(minimum) = parameter.min {
+                *component = component.max(minimum);
+            }
+            if let Some(maximum) = parameter.max {
+                *component = component.min(maximum);
+            }
+        }
+        packed[index] = value;
+    }
+    Ok(packed)
+}
+
 pub fn render_material_from_asset(material: &MaterialAsset) -> RenderMaterial {
     RenderMaterial {
         base_color: material.base_color,
@@ -306,6 +364,7 @@ pub fn render_material_from_asset(material: &MaterialAsset) -> RenderMaterial {
         },
         anisotropy: material.anisotropy,
         surface_shader: String::new(),
+        custom_parameters: [[0.0; 4]; MAX_SURFACE_SHADER_PARAMETERS],
     }
 }
 
@@ -502,27 +561,67 @@ mod tests {
         std::fs::create_dir_all(root.join("Assets/Shaders")).unwrap();
         std::fs::write(
             root.join("Assets/Shaders/Rim.mshader"),
-            r#"fn mengine_lit_surface_hook(
+            r#"/* MENGINE_PARAMETERS
+            {"parameters":[
+              {"name":"rim_color","type":"color","default":[1,1,1,1]},
+              {"name":"rim_power","type":"float","default":2,"min":0,"max":8}
+            ]}
+            */
+            fn mengine_lit_surface_hook(
               surface: MEngineSurface, uv: vec2<f32>,
               world_position: vec3<f32>
             ) -> MEngineSurface {
               var result = surface;
               result.roughness = 0.2 + uv.x;
+              result.emissive = mengine_param_rim_color().xyz * mengine_param_rim_power();
               return result;
             }"#,
         )
         .unwrap();
         std::fs::write(
             root.join("Assets/Materials/Rim.mmat"),
-            r#"{"shader":"custom","custom_shader":"Assets/Shaders/Rim.mshader"}"#,
+            r#"{"version":8,"shader":"custom","custom_shader":"Assets/Shaders/Rim.mshader","custom_parameters":{"rim_color":[0.2,0.4,0.8,1],"rim_power":[3,0,0,0]}}"#,
         )
         .unwrap();
 
         let mut cache = RuntimeMaterialCache::new(Some(root.clone()));
         let material = cache.resolve("Assets/Materials/Rim.mmat").unwrap();
         assert!(material.surface_shader.contains("result.roughness"));
+        assert_eq!(material.custom_parameters[0], [0.2, 0.4, 0.8, 1.0]);
+        assert_eq!(material.custom_parameters[1], [3.0, 0.0, 0.0, 0.0]);
 
         std::fs::remove_dir_all(root).unwrap();
+    }
+
+    #[test]
+    fn reflected_shader_parameters_use_defaults_clamp_ranges_and_reject_stale_values() {
+        let shader = r#"/* MENGINE_PARAMETERS
+        {"parameters":[{"name":"power","type":"float","default":2,"min":0,"max":8}]}
+        */
+        fn mengine_lit_surface_hook(
+          surface: MEngineSurface, uv: vec2<f32>, world_position: vec3<f32>
+        ) -> MEngineSurface { return surface; }"#;
+        let mut material = MaterialAsset {
+            shader: MaterialShader::Custom,
+            ..MaterialAsset::default()
+        };
+        assert_eq!(
+            pack_surface_shader_parameters(&material, shader).unwrap()[0][0],
+            2.0
+        );
+        material
+            .custom_parameters
+            .insert("power".into(), [99.0, 0.0, 0.0, 0.0]);
+        assert_eq!(
+            pack_surface_shader_parameters(&material, shader).unwrap()[0][0],
+            8.0
+        );
+        material
+            .custom_parameters
+            .insert("removed".into(), [1.0, 0.0, 0.0, 0.0]);
+        assert!(pack_surface_shader_parameters(&material, shader)
+            .unwrap_err()
+            .contains("not declared"));
     }
 
     #[test]

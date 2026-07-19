@@ -18,6 +18,8 @@ export const PLAYER_CONFIG_FILE = 'mengine-player.json';
 export const BUILD_MANIFEST_FILE = 'mengine-build.json';
 export const BUILD_CACHE_REPORT_PREFIX = 'MENGINE_BUILD_CACHE ';
 const MAX_TIMELINE_PARTICLE_TIME = 300;
+const MAX_SURFACE_SHADER_PARAMETERS = 16;
+const SURFACE_SHADER_PARAMETERS_MARKER = '/* MENGINE_PARAMETERS';
 const ENTITY_REFERENCE_TOKEN = '$mengine_entity_ref';
 const ENTITY_REFERENCE_FIELDS_KEY = '__mengine_entity_reference_fields';
 const COMPONENT_ENTITY_REFERENCE_FIELDS = [
@@ -377,6 +379,74 @@ function strictStringValue(object: JsonObject, field: string, source: string): s
   return value.trim();
 }
 
+function surfaceShaderParameterNames(sourceText: string, source: string): Set<string> {
+  const marker = sourceText.indexOf(SURFACE_SHADER_PARAMETERS_MARKER);
+  if (marker < 0) return new Set();
+  const jsonStart = marker + SURFACE_SHADER_PARAMETERS_MARKER.length;
+  const relativeEnd = sourceText.slice(jsonStart).indexOf('*/');
+  if (relativeEnd < 0) {
+    throw new Error(`invalid material surface shader ${source}: parameter block is not terminated`);
+  }
+  const blockEnd = jsonStart + relativeEnd;
+  if (sourceText.slice(blockEnd + 2).includes(SURFACE_SHADER_PARAMETERS_MARKER)) {
+    throw new Error(`invalid material surface shader ${source}: only one parameter block is allowed`);
+  }
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(sourceText.slice(jsonStart, blockEnd).trim());
+  } catch (reason) {
+    throw new Error(`invalid material surface shader ${source}: parameter JSON ${reason instanceof Error ? reason.message : String(reason)}`);
+  }
+  const root = jsonObject(parsed);
+  if (!root || Object.keys(root).some((key) => key !== 'parameters')
+    || !Array.isArray(root.parameters)) {
+    throw new Error(`invalid material surface shader ${source}: parameter block must contain only a parameters array`);
+  }
+  if (root.parameters.length > MAX_SURFACE_SHADER_PARAMETERS) {
+    throw new Error(`invalid material surface shader ${source}: more than ${MAX_SURFACE_SHADER_PARAMETERS} parameters`);
+  }
+  const names = new Set<string>();
+  for (const [index, value] of root.parameters.entries()) {
+    const parameter = jsonObject(value);
+    if (!parameter || Object.keys(parameter).some(
+      (key) => !['name', 'label', 'type', 'default', 'min', 'max'].includes(key),
+    )) {
+      throw new Error(`invalid material surface shader ${source}: parameter ${index + 1} contains unsupported fields`);
+    }
+    const name = strictStringValue(parameter, 'name', `Surface Shader ${source} parameter`);
+    if (!/^[A-Za-z][A-Za-z0-9_]{0,47}$/.test(name) || names.has(name)) {
+      throw new Error(`invalid material surface shader ${source}: invalid or duplicate parameter '${name}'`);
+    }
+    names.add(name);
+    if (parameter.label != null
+      && (typeof parameter.label !== 'string' || parameter.label.trim().length > 64)) {
+      throw new Error(`invalid material surface shader ${source}: parameter '${name}' has an invalid label`);
+    }
+    const type = parameter.type;
+    const components = type === 'float' ? 1
+      : type === 'vector2' ? 2
+        : type === 'vector3' ? 3
+          : type === 'vector4' || type === 'color' ? 4
+            : 0;
+    if (components === 0) {
+      throw new Error(`invalid material surface shader ${source}: parameter '${name}' has unsupported type '${String(type)}'`);
+    }
+    const rawDefault = components === 1 ? [parameter.default] : parameter.default;
+    if (!Array.isArray(rawDefault) || rawDefault.length !== components
+      || rawDefault.some((part) => typeof part !== 'number' || !Number.isFinite(part))) {
+      throw new Error(`invalid material surface shader ${source}: parameter '${name}' has an invalid default`);
+    }
+    const minimum = parameter.min == null && type === 'color' ? 0 : parameter.min;
+    const maximum = parameter.max == null && type === 'color' ? 1 : parameter.max;
+    if ((minimum != null && (typeof minimum !== 'number' || !Number.isFinite(minimum)))
+      || (maximum != null && (typeof maximum !== 'number' || !Number.isFinite(maximum)))
+      || (typeof minimum === 'number' && typeof maximum === 'number' && minimum > maximum)) {
+      throw new Error(`invalid material surface shader ${source}: parameter '${name}' has an invalid range`);
+    }
+  }
+  return names;
+}
+
 function hasEditorOnlyComponent(componentsValue: unknown): boolean {
   const components = jsonObject(componentsValue);
   return Boolean(components && Object.keys(components)
@@ -615,6 +685,12 @@ function scanBuildAssetDependencies(
   const inclusionReasons = new Map<string, BuildInclusionReason[]>();
   const materialInstanceParents = new Map<string, string>();
   const entityReferenceAudits = new Set<string>();
+  const surfaceShaderSchemas = new Map<string, Set<string>>();
+  const customMaterialParameterBindings: Array<{
+    material: string;
+    shader: string;
+    parameters: string[];
+  }> = [];
   let references = 0;
 
   const enqueue = (
@@ -770,7 +846,7 @@ function scanBuildAssetDependencies(
     } else if (extension === '.mmat' || extension === '.mat') {
       const material = readJsonAsset(absolute, root, 'material');
       if (material.version != null
-        && (!Number.isInteger(material.version) || Number(material.version) < 1 || Number(material.version) > 7)) {
+        && (!Number.isInteger(material.version) || Number(material.version) < 1 || Number(material.version) > 8)) {
         throw new Error(`invalid material ${source}: unsupported version ${String(material.version)}`);
       }
       if (material.shader != null
@@ -780,6 +856,28 @@ function scanBuildAssetDependencies(
         throw new Error(`invalid material ${source}: shader must be pbr, unlit, or custom`);
       }
       const customShader = strictStringValue(material, 'custom_shader', `material ${source}`);
+      const customParameters = material.custom_parameters == null
+        ? {}
+        : jsonObject(material.custom_parameters);
+      if (!customParameters) {
+        throw new Error(`invalid material ${source}: custom_parameters must be an object`);
+      }
+      const customParameterNames = Object.keys(customParameters);
+      if (customParameterNames.length > MAX_SURFACE_SHADER_PARAMETERS) {
+        throw new Error(`invalid material ${source}: more than ${MAX_SURFACE_SHADER_PARAMETERS} custom parameters`);
+      }
+      for (const name of customParameterNames) {
+        const value = customParameters[name];
+        if (!/^[A-Za-z][A-Za-z0-9_]{0,47}$/.test(name)
+          || !Array.isArray(value)
+          || value.length !== 4
+          || value.some((part) => typeof part !== 'number' || !Number.isFinite(part))) {
+          throw new Error(`invalid material ${source}: invalid custom parameter '${name}'`);
+        }
+      }
+      if (material.shader !== 'custom' && customParameterNames.length > 0) {
+        throw new Error(`invalid material ${source}: only custom materials can contain custom_parameters`);
+      }
       if (material.shader === 'custom') {
         if (!customShader) {
           throw new Error(`invalid material ${source}: custom shader requires custom_shader`);
@@ -788,6 +886,11 @@ function scanBuildAssetDependencies(
           throw new Error(`invalid material ${source}: custom_shader must reference a .mshader asset`);
         }
         enqueue(customShader, source, 'material surface shader');
+        customMaterialParameterBindings.push({
+          material: source,
+          shader: customShader.replaceAll('\\', '/').toLowerCase(),
+          parameters: customParameterNames,
+        });
       }
       if (material.surface != null
         && material.surface !== 'opaque'
@@ -868,6 +971,7 @@ function scanBuildAssetDependencies(
       if (forbidden) {
         throw new Error(`invalid material surface shader ${source}: ${forbidden} is reserved by the engine`);
       }
+      surfaceShaderSchemas.set(source.toLowerCase(), surfaceShaderParameterNames(sourceText, source));
     } else if (pending.path.toLowerCase().endsWith('.sprite.json')) {
       const metadata = readJsonAsset(absolute, root, 'sprite import metadata');
       if (metadata.version != null && metadata.version !== 1) {
@@ -1512,6 +1616,18 @@ function scanBuildAssetDependencies(
         }
         entityReferenceAudits.add(key);
       }
+    }
+  }
+  for (const binding of customMaterialParameterBindings) {
+    const schema = surfaceShaderSchemas.get(binding.shader);
+    if (!schema) {
+      throw new Error(`invalid material ${binding.material}: Surface Shader schema was not validated`);
+    }
+    const unknown = binding.parameters.find((name) => !schema.has(name));
+    if (unknown) {
+      throw new Error(
+        `invalid material ${binding.material}: parameter '${unknown}' is not declared by ${binding.shader}`,
+      );
     }
   }
   for (const start of materialInstanceParents.keys()) {

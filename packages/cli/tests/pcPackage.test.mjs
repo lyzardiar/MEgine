@@ -1035,16 +1035,27 @@ test('buildPcPackage includes validated custom material surface shaders', () => 
       } }] },
     }));
     writeFileSync(join(paths.project, 'Assets', 'Materials', 'Rim.mmat'), JSON.stringify({
-      version: 4,
+      version: 8,
       shader: 'custom',
       custom_shader: 'Assets/Shaders/Rim.mshader',
+      custom_parameters: {
+        rim_color: [0.2, 0.5, 1, 1],
+        rim_power: [3, 0, 0, 0],
+      },
     }));
     writeFileSync(join(paths.project, 'Assets', 'Shaders', 'Rim.mshader'), `
+      /* MENGINE_PARAMETERS
+      {"parameters":[
+        {"name":"rim_color","type":"color","default":[1,1,1,1]},
+        {"name":"rim_power","type":"float","default":2,"min":0,"max":8}
+      ]}
+      */
       fn mengine_lit_surface_hook(
         surface: MEngineSurface, uv: vec2<f32>, world_position: vec3<f32>
       ) -> MEngineSurface {
         var result = surface;
         result.roughness = 0.2 + uv.x;
+        result.emissive = mengine_param_rim_color().xyz * mengine_param_rim_power();
         return result;
       }
     `);
@@ -1069,7 +1080,84 @@ test('buildPcPackage includes validated custom material surface shaders', () => 
   }
 });
 
-test('buildPcPackage validates material v7 IOR, clearcoat, and sampler contracts', () => {
+test('buildPcPackage rejects stale or corrupt reflected material parameters', () => {
+  const paths = fixture('invalid-surface-parameters');
+  try {
+    mkdirSync(join(paths.project, 'Assets', 'Shaders'), { recursive: true });
+    writeFileSync(join(paths.project, 'Assets', 'Scenes', 'Main.mscene'), JSON.stringify({
+      world: { entities: [{ components: {
+        MeshRenderer: { mesh: 'cube', material: 'Assets/Materials/Rim.mmat' },
+      } }] },
+    }));
+    const materialPath = join(paths.project, 'Assets', 'Materials', 'Rim.mmat');
+    const shaderPath = join(paths.project, 'Assets', 'Shaders', 'Rim.mshader');
+    writeFileSync(materialPath, JSON.stringify({
+      version: 8,
+      shader: 'custom',
+      custom_shader: 'Assets/Shaders/Rim.mshader',
+      custom_parameters: { removed: [1, 0, 0, 0] },
+    }));
+    writeFileSync(shaderPath, `
+      /* MENGINE_PARAMETERS
+      {"parameters":[{"name":"power","type":"float","default":2}]}
+      */
+      fn mengine_lit_surface_hook(
+        surface: MEngineSurface, uv: vec2<f32>, world_position: vec3<f32>
+      ) -> MEngineSurface { return surface; }
+    `);
+    assert.throws(() => buildPcPackage({
+      projectDir: paths.project,
+      outputDir: paths.output,
+      runtimePath: paths.runtime,
+      engineVersion: 'test-engine',
+    }), /parameter 'removed' is not declared/);
+    assert.equal(existsSync(paths.output), false);
+
+    writeFileSync(materialPath, JSON.stringify({
+      version: 8,
+      shader: 'custom',
+      custom_shader: 'Assets/Shaders/Rim.mshader',
+    }));
+    writeFileSync(shaderPath, `
+      /* MENGINE_PARAMETERS
+      {"parameters":[
+        {"name":"power","type":"float","default":1},
+        {"name":"power","type":"float","default":2}
+      ]}
+      */
+      fn mengine_lit_surface_hook(
+        surface: MEngineSurface, uv: vec2<f32>, world_position: vec3<f32>
+      ) -> MEngineSurface { return surface; }
+    `);
+    assert.throws(() => buildPcPackage({
+      projectDir: paths.project,
+      outputDir: paths.output,
+      runtimePath: paths.runtime,
+      engineVersion: 'test-engine',
+    }), /invalid or duplicate parameter 'power'/);
+    assert.equal(existsSync(paths.output), false);
+
+    writeFileSync(shaderPath, `
+      /* MENGINE_PARAMETERS
+      {"parameters":[{"name":"tint","type":"color","default":[1,1,1,1],"min":2}]}
+      */
+      fn mengine_lit_surface_hook(
+        surface: MEngineSurface, uv: vec2<f32>, world_position: vec3<f32>
+      ) -> MEngineSurface { return surface; }
+    `);
+    assert.throws(() => buildPcPackage({
+      projectDir: paths.project,
+      outputDir: paths.output,
+      runtimePath: paths.runtime,
+      engineVersion: 'test-engine',
+    }), /parameter 'tint' has an invalid range/);
+    assert.equal(existsSync(paths.output), false);
+  } finally {
+    rmSync(paths.root, { recursive: true, force: true });
+  }
+});
+
+test('buildPcPackage validates material v8 IOR, clearcoat, sampler, and parameter contracts', () => {
   const paths = fixture('invalid-material-contract');
   try {
     writeFileSync(join(paths.project, 'Assets', 'Scenes', 'Main.mscene'), JSON.stringify({
@@ -1078,13 +1166,13 @@ test('buildPcPackage validates material v7 IOR, clearcoat, and sampler contracts
       } }] },
     }));
     const materialPath = join(paths.project, 'Assets', 'Materials', 'Paint.mmat');
-    writeFileSync(materialPath, JSON.stringify({ version: 8, shader: 'pbr' }));
+    writeFileSync(materialPath, JSON.stringify({ version: 9, shader: 'pbr' }));
     assert.throws(() => buildPcPackage({
       projectDir: paths.project,
       outputDir: paths.output,
       runtimePath: paths.runtime,
       engineVersion: 'test-engine',
-    }), /unsupported version 8/);
+    }), /unsupported version 9/);
     assert.equal(existsSync(paths.output), false);
 
     writeFileSync(materialPath, JSON.stringify({ version: 7, shader: 'pbr', ior: 3 }));

@@ -11,6 +11,7 @@ export const PROJECT_ASSETS_EXTERNAL_CHANGE_EVENT = 'mengine:project-assets-exte
 export type ProjectAssetLifecycleDetail =
   | { action: 'renamed'; sourcePath: string; destinationPath: string }
   | { action: 'deleted'; sourcePath: string }
+  | { action: 'modified'; sourcePath: string }
   | { action: 'created' | 'restored'; destinationPath: string };
 
 type ProjectAssetLifecycleMessage = ProjectAssetLifecycleDetail & {

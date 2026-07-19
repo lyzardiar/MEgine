@@ -14,8 +14,8 @@ import {
 } from '../surfaceShader';
 import { registerSaveAllParticipant } from '../saveAll';
 import {
+  broadcastProjectAssetsChanged,
   openSurfaceShaderAsset,
-  PROJECT_ASSETS_CHANGED_EVENT,
 } from '../assetEditorEvents';
 import {
   isDesktopEditor,
@@ -43,7 +43,7 @@ export async function createProjectSurfaceShader(): Promise<string> {
   const path = uniqueSurfaceShaderPath();
   await writeProjectAssetText(path, DEFAULT_SURFACE_SHADER);
   await refreshProjectFiles();
-  window.dispatchEvent(new CustomEvent(PROJECT_ASSETS_CHANGED_EVENT));
+  broadcastProjectAssetsChanged({ action: 'created', destinationPath: path });
   openSurfaceShaderAsset(path);
   return path;
 }
@@ -266,6 +266,7 @@ export function SurfaceShaderEditor(props: {
         setDraftEpoch((value) => value + 1);
       }
       props.onAssetsChanged();
+      broadcastProjectAssetsChanged({ action: 'modified', sourcePath: path });
       props.onLog(desktop
         ? `Saved ${path}; Player Forward WGSL validation passed.`
         : `Saved ${path}; desktop Player validation remains required before build.`);
@@ -296,6 +297,7 @@ export function SurfaceShaderEditor(props: {
             source: normalized,
             savedSource: normalized,
           });
+          broadcastProjectAssetsChanged({ action: 'modified', sourcePath: path });
           props.onLog(desktop
             ? `Saved ${path}; Player Forward WGSL validation passed.`
             : `Saved ${path}; desktop Player validation remains required before build.`);
@@ -343,7 +345,7 @@ export function SurfaceShaderEditor(props: {
       <div className="surface-shader-contract">
         <strong>Lit Surface Hook Contract</strong>
         <code>fn mengine_lit_surface_hook(surface: MEngineSurface, uv, world_position) -&gt; MEngineSurface</code>
-        <span>Fields: base_color, alpha, normal, metallic, roughness, occlusion, emissive. Legacy final-color hooks remain supported. Desktop Validate/Save composes the complete Player Forward shader and runs authoritative Naga validation.</span>
+        <span>Fields: base_color, alpha, normal, metallic, roughness, occlusion, emissive. An optional /* MENGINE_PARAMETERS {'{'}"parameters":[...]{'}'} */ block reflects up to 16 float/vector/color values as mengine_param_name() helpers. Legacy final-color hooks remain supported. Desktop Validate/Save composes the complete Player Forward shader and runs authoritative Naga validation.</span>
       </div>
       {loading && <div className="field-hint">Loading shader...</div>}
       {(error || diagnostics.length > 0) && (

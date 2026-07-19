@@ -43,7 +43,10 @@ pub use sprite::{
     load_sprite_import, parse_sprite_import, split_sprite_reference, sprite_import_path,
     ResolvedSpriteSlice, SpriteImportSettings, SpriteMode, SpriteSlice,
 };
-pub use surface_shader::{load_surface_shader, parse_surface_shader, SURFACE_SHADER_HOOK_NAME};
+pub use surface_shader::{
+    load_surface_shader, parse_surface_shader, LIT_SURFACE_SHADER_HOOK_NAME,
+    SURFACE_SHADER_HOOK_NAME,
+};
 pub use texture::{load_environment_texture, load_texture_rgba8, texture_dimensions};
 pub use timeline::{
     load_timeline_asset, normalize_timeline_target, parse_timeline_asset,
