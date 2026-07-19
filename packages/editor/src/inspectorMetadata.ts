@@ -333,6 +333,7 @@ export const BUILTIN_INSPECTOR_FIELDS: Readonly<
       referenceType: 'Timeline Asset',
       allowNone: true,
     },
+    bindings_json: { hidden: true },
     speed: { step: 0.1 },
     time: { min: 0, step: 0.01 },
     wrap_mode: {

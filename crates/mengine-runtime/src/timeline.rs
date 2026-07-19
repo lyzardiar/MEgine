@@ -1,6 +1,9 @@
 use crate::particles::MAX_INCREMENTAL_DELTA;
 use crate::textures::resolve_project_asset_path;
-use mengine_assets::{load_timeline_asset, TimelineAsset, TimelineTrack};
+use mengine_assets::{
+    load_timeline_asset, parse_timeline_binding_table, TimelineAsset, TimelineBindingTable,
+    TimelineTrack,
+};
 use mengine_core::generated::{
     AnimationPlayer, Animator, AudioSource, Camera2D, Camera3D, ParticleEmitter2D,
     ParticleEmitter3D, TimelineDirector,
@@ -95,8 +98,9 @@ pub struct TimelineRuntime {
     assets: HashMap<PathBuf, CachedTimeline>,
     initialized: HashSet<Entity>,
     active: HashSet<Entity>,
-    evaluated_directors: HashMap<Entity, (String, f32)>,
+    evaluated_directors: HashMap<Entity, (String, String, f32)>,
     reported_failures: HashSet<(String, String)>,
+    reported_binding_failures: HashSet<(Entity, String)>,
     reported_activation_failures: HashSet<(Entity, String)>,
     reported_audio_failures: HashSet<(Entity, String)>,
     reported_animation_failures: HashSet<(Entity, String)>,
@@ -169,18 +173,43 @@ impl TimelineRuntime {
                 self.evaluated_directors.remove(&entity);
                 continue;
             }
+            let bindings = match parse_timeline_binding_table(&director.bindings_json) {
+                Ok(bindings) => {
+                    self.reported_binding_failures
+                        .retain(|(owner, _)| *owner != entity);
+                    bindings
+                }
+                Err(error) => {
+                    self.active.remove(&entity);
+                    self.evaluated_directors.remove(&entity);
+                    let error = format!("invalid TimelineDirector bindings_json: {error}");
+                    if self
+                        .reported_binding_failures
+                        .insert((entity, error.clone()))
+                    {
+                        failures.push(TimelineLoadFailure {
+                            entity,
+                            asset: asset_key.to_owned(),
+                            error,
+                        });
+                    }
+                    continue;
+                }
+            };
             if !director.playing {
                 if director.time <= 0.0 {
                     self.active.remove(&entity);
                     self.evaluated_directors.remove(&entity);
                     continue;
                 }
-                let Some((evaluated_asset, evaluated_time)) = self.evaluated_directors.get(&entity)
+                let Some((evaluated_asset, evaluated_bindings, evaluated_time)) =
+                    self.evaluated_directors.get(&entity)
                 else {
                     self.active.remove(&entity);
                     continue;
                 };
                 let unchanged = evaluated_asset == asset_key
+                    && evaluated_bindings == &director.bindings_json
                     && (director.time - *evaluated_time).abs() <= 0.001;
                 if unchanged {
                     self.retain_paused_overrides(
@@ -221,8 +250,14 @@ impl TimelineRuntime {
             if !director.playing {
                 let paused_time = director.time.clamp(0.0, asset.duration);
                 self.active.insert(entity);
-                let (applied, mut activation_failures) =
-                    self.apply_activation_tracks(world, entity, asset_key, &asset, paused_time);
+                let (applied, mut activation_failures) = self.apply_activation_tracks(
+                    world,
+                    entity,
+                    asset_key,
+                    &asset,
+                    &bindings,
+                    paused_time,
+                );
                 applied_activation_overrides.extend(applied);
                 failures.append(&mut activation_failures);
                 let (applied, mut audio_failures) = self.apply_audio_tracks(
@@ -230,6 +265,7 @@ impl TimelineRuntime {
                     entity,
                     asset_key,
                     &asset,
+                    &bindings,
                     paused_time,
                     paused_time,
                     0.0,
@@ -237,8 +273,14 @@ impl TimelineRuntime {
                 );
                 applied_audio_overrides.extend(applied);
                 failures.append(&mut audio_failures);
-                let (applied, mut animation_failures) =
-                    self.apply_animation_tracks(world, entity, asset_key, &asset, paused_time);
+                let (applied, mut animation_failures) = self.apply_animation_tracks(
+                    world,
+                    entity,
+                    asset_key,
+                    &asset,
+                    &bindings,
+                    paused_time,
+                );
                 applied_animation_overrides.extend(applied);
                 failures.append(&mut animation_failures);
                 let (applied, mut particle_failures) = self.apply_particle_tracks(
@@ -246,6 +288,7 @@ impl TimelineRuntime {
                     entity,
                     asset_key,
                     &asset,
+                    &bindings,
                     paused_time,
                     paused_time,
                     0.0,
@@ -253,12 +296,24 @@ impl TimelineRuntime {
                 );
                 applied_particle_overrides.extend(applied);
                 failures.append(&mut particle_failures);
-                let (applied, mut camera_failures) =
-                    self.apply_camera_tracks(world, entity, asset_key, &asset, paused_time);
+                let (applied, mut camera_failures) = self.apply_camera_tracks(
+                    world,
+                    entity,
+                    asset_key,
+                    &asset,
+                    &bindings,
+                    paused_time,
+                );
                 applied_camera_overrides.extend(applied);
                 failures.append(&mut camera_failures);
-                self.evaluated_directors
-                    .insert(entity, (asset_key.to_owned(), paused_time));
+                self.evaluated_directors.insert(
+                    entity,
+                    (
+                        asset_key.to_owned(),
+                        director.bindings_json.clone(),
+                        paused_time,
+                    ),
+                );
                 if let Some(live) = world.get_component_mut::<TimelineDirector>(entity) {
                     live.time = paused_time;
                 }
@@ -291,7 +346,7 @@ impl TimelineRuntime {
             };
             if !finished {
                 let (applied, mut activation_failures) =
-                    self.apply_activation_tracks(world, entity, asset_key, &asset, next);
+                    self.apply_activation_tracks(world, entity, asset_key, &asset, &bindings, next);
                 applied_activation_overrides.extend(applied);
                 failures.append(&mut activation_failures);
                 let (applied, mut audio_failures) = self.apply_audio_tracks(
@@ -299,6 +354,7 @@ impl TimelineRuntime {
                     entity,
                     asset_key,
                     &asset,
+                    &bindings,
                     start,
                     next,
                     director.speed,
@@ -307,7 +363,7 @@ impl TimelineRuntime {
                 applied_audio_overrides.extend(applied);
                 failures.append(&mut audio_failures);
                 let (applied, mut animation_failures) =
-                    self.apply_animation_tracks(world, entity, asset_key, &asset, next);
+                    self.apply_animation_tracks(world, entity, asset_key, &asset, &bindings, next);
                 applied_animation_overrides.extend(applied);
                 failures.append(&mut animation_failures);
                 let (applied, mut particle_failures) = self.apply_particle_tracks(
@@ -315,6 +371,7 @@ impl TimelineRuntime {
                     entity,
                     asset_key,
                     &asset,
+                    &bindings,
                     start,
                     next,
                     director.speed,
@@ -323,7 +380,7 @@ impl TimelineRuntime {
                 applied_particle_overrides.extend(applied);
                 failures.append(&mut particle_failures);
                 let (applied, mut camera_failures) =
-                    self.apply_camera_tracks(world, entity, asset_key, &asset, next);
+                    self.apply_camera_tracks(world, entity, asset_key, &asset, &bindings, next);
                 applied_camera_overrides.extend(applied);
                 failures.append(&mut camera_failures);
             }
@@ -334,8 +391,10 @@ impl TimelineRuntime {
                     self.active.remove(&entity);
                 }
             }
-            self.evaluated_directors
-                .insert(entity, (asset_key.to_owned(), next));
+            self.evaluated_directors.insert(
+                entity,
+                (asset_key.to_owned(), director.bindings_json.clone(), next),
+            );
         }
         self.restore_unused_activation_overrides(world, &applied_activation_overrides);
         self.restore_unused_audio_overrides(world, &applied_audio_overrides);
@@ -343,6 +402,8 @@ impl TimelineRuntime {
         self.restore_unused_particle_overrides(world, &applied_particle_overrides);
         self.restore_unused_camera_overrides(&applied_camera_overrides);
         self.reported_activation_failures
+            .retain(|(entity, _)| world.is_alive(*entity));
+        self.reported_binding_failures
             .retain(|(entity, _)| world.is_alive(*entity));
         self.reported_audio_failures
             .retain(|(entity, _)| world.is_alive(*entity));
@@ -364,7 +425,7 @@ impl TimelineRuntime {
     pub fn seek_director(&mut self, entity: Entity) {
         self.active.remove(&entity);
         self.evaluated_directors
-            .insert(entity, (String::new(), f32::NAN));
+            .insert(entity, (String::new(), String::new(), f32::NAN));
     }
 
     pub fn take_signals(&mut self) -> Vec<RuntimeTimelineSignal> {
@@ -410,6 +471,7 @@ impl TimelineRuntime {
         director: Entity,
         asset_key: &str,
         asset: &TimelineAsset,
+        bindings: &TimelineBindingTable,
         time: f32,
     ) -> (HashSet<(Entity, String)>, Vec<TimelineLoadFailure>) {
         let mut applied = HashSet::new();
@@ -437,17 +499,18 @@ impl TimelineRuntime {
                 self.reported_activation_failures.remove(&key);
                 continue;
             };
-            let Some(target_entity) = resolve_descendant_target(world, director, target) else {
-                if self.reported_activation_failures.insert(key) {
-                    failures.push(TimelineLoadFailure {
-                        entity: director,
-                        asset: asset_key.to_owned(),
-                        error: format!(
-                            "activation track '{name}' target '{target}' was not found below the Director entity"
-                        ),
-                    });
+            let target_entity = match resolve_timeline_target(world, director, target, bindings) {
+                Ok(entity) => entity,
+                Err(error) => {
+                    if self.reported_activation_failures.insert(key) {
+                        failures.push(TimelineLoadFailure {
+                            entity: director,
+                            asset: asset_key.to_owned(),
+                            error: format!("activation track '{name}' target '{target}' {error}"),
+                        });
+                    }
+                    continue;
                 }
-                continue;
             };
             self.reported_activation_failures.remove(&key);
             if let Some(previous) = self.activation_overrides.get(&key).copied() {
@@ -479,6 +542,7 @@ impl TimelineRuntime {
         director: Entity,
         asset_key: &str,
         asset: &TimelineAsset,
+        bindings: &TimelineBindingTable,
         start: f32,
         time: f32,
         director_speed: f32,
@@ -509,17 +573,18 @@ impl TimelineRuntime {
                 self.reported_audio_failures.remove(&key);
                 continue;
             };
-            let Some(target_entity) = resolve_descendant_target(world, director, target) else {
-                if self.reported_audio_failures.insert(key) {
-                    failures.push(TimelineLoadFailure {
-                        entity: director,
-                        asset: asset_key.to_owned(),
-                        error: format!(
-                            "audio track '{name}' target '{target}' was not found below the Director entity"
-                        ),
-                    });
+            let target_entity = match resolve_timeline_target(world, director, target, bindings) {
+                Ok(entity) => entity,
+                Err(error) => {
+                    if self.reported_audio_failures.insert(key) {
+                        failures.push(TimelineLoadFailure {
+                            entity: director,
+                            asset: asset_key.to_owned(),
+                            error: format!("audio track '{name}' target '{target}' {error}"),
+                        });
+                    }
+                    continue;
                 }
-                continue;
             };
             let Some(authored) = world.get_component::<AudioSource>(target_entity).cloned() else {
                 if self.reported_audio_failures.insert(key) {
@@ -598,6 +663,7 @@ impl TimelineRuntime {
         director: Entity,
         asset_key: &str,
         asset: &TimelineAsset,
+        bindings: &TimelineBindingTable,
         time: f32,
     ) -> (HashSet<(Entity, String)>, Vec<TimelineLoadFailure>) {
         let mut applied = HashSet::new();
@@ -625,17 +691,18 @@ impl TimelineRuntime {
                 self.reported_animation_failures.remove(&key);
                 continue;
             };
-            let Some(target_entity) = resolve_descendant_target(world, director, target) else {
-                if self.reported_animation_failures.insert(key) {
-                    failures.push(TimelineLoadFailure {
-                        entity: director,
-                        asset: asset_key.to_owned(),
-                        error: format!(
-                            "animation track '{name}' target '{target}' was not found below the Director entity"
-                        ),
-                    });
+            let target_entity = match resolve_timeline_target(world, director, target, bindings) {
+                Ok(entity) => entity,
+                Err(error) => {
+                    if self.reported_animation_failures.insert(key) {
+                        failures.push(TimelineLoadFailure {
+                            entity: director,
+                            asset: asset_key.to_owned(),
+                            error: format!("animation track '{name}' target '{target}' {error}"),
+                        });
+                    }
+                    continue;
                 }
-                continue;
             };
             let Some(authored) = world
                 .get_component::<AnimationPlayer>(target_entity)
@@ -695,6 +762,7 @@ impl TimelineRuntime {
         director: Entity,
         asset_key: &str,
         asset: &TimelineAsset,
+        bindings: &TimelineBindingTable,
         start: f32,
         time: f32,
         director_speed: f32,
@@ -725,17 +793,18 @@ impl TimelineRuntime {
                 self.reported_particle_failures.remove(&key);
                 continue;
             };
-            let Some(target_entity) = resolve_descendant_target(world, director, target) else {
-                if self.reported_particle_failures.insert(key) {
-                    failures.push(TimelineLoadFailure {
-                        entity: director,
-                        asset: asset_key.to_owned(),
-                        error: format!(
-                            "particle track '{name}' target '{target}' was not found below the Director entity"
-                        ),
-                    });
+            let target_entity = match resolve_timeline_target(world, director, target, bindings) {
+                Ok(entity) => entity,
+                Err(error) => {
+                    if self.reported_particle_failures.insert(key) {
+                        failures.push(TimelineLoadFailure {
+                            entity: director,
+                            asset: asset_key.to_owned(),
+                            error: format!("particle track '{name}' target '{target}' {error}"),
+                        });
+                    }
+                    continue;
                 }
-                continue;
             };
             let two = world
                 .get_component::<ParticleEmitter2D>(target_entity)
@@ -830,16 +899,14 @@ impl TimelineRuntime {
         director: Entity,
         asset_key: &str,
         asset: &TimelineAsset,
+        bindings: &TimelineBindingTable,
         time: f32,
     ) -> (HashSet<(Entity, String)>, Vec<TimelineLoadFailure>) {
         let mut applied = HashSet::new();
         let mut failures = Vec::new();
         for track in &asset.tracks {
             let TimelineTrack::Camera {
-                id,
-                name,
-                clips,
-                ..
+                id, name, clips, ..
             } = track
             else {
                 continue;
@@ -857,18 +924,21 @@ impl TimelineRuntime {
                 self.reported_camera_failures.remove(&key);
                 continue;
             };
-            let Some(target) = resolve_descendant_target(world, director, &clip.target) else {
-                if self.reported_camera_failures.insert(key) {
-                    failures.push(TimelineLoadFailure {
-                        entity: director,
-                        asset: asset_key.to_owned(),
-                        error: format!(
-                            "camera track '{name}' target '{}' was not found below the Director entity",
-                            clip.target
-                        ),
-                    });
+            let target = match resolve_timeline_target(world, director, &clip.target, bindings) {
+                Ok(entity) => entity,
+                Err(error) => {
+                    if self.reported_camera_failures.insert(key) {
+                        failures.push(TimelineLoadFailure {
+                            entity: director,
+                            asset: asset_key.to_owned(),
+                            error: format!(
+                                "camera track '{name}' target '{}' {error}",
+                                clip.target
+                            ),
+                        });
+                    }
+                    continue;
                 }
-                continue;
             };
             if !has_exactly_one_camera(world, target) {
                 if self.reported_camera_failures.insert(key) {
@@ -883,8 +953,6 @@ impl TimelineRuntime {
                 }
                 continue;
             }
-            self.reported_camera_failures.remove(&key);
-
             let local_time = (time - clip.start).max(0.0);
             let linear_weight = if clip.blend_in <= f32::EPSILON {
                 1.0
@@ -899,13 +967,49 @@ impl TimelineRuntime {
             let source = if weight < 1.0 && clip_index > 0 {
                 let previous = &clips[clip_index - 1];
                 let adjacent = (previous.start + previous.duration - clip.start).abs() <= 0.001;
-                adjacent
-                    .then(|| resolve_descendant_target(world, director, &previous.target))
-                    .flatten()
-                    .filter(|entity| has_exactly_one_camera(world, *entity))
+                if !adjacent {
+                    None
+                } else {
+                    let previous_target = match resolve_timeline_target(
+                        world,
+                        director,
+                        &previous.target,
+                        bindings,
+                    ) {
+                        Ok(entity) => entity,
+                        Err(error) => {
+                            if self.reported_camera_failures.insert(key.clone()) {
+                                failures.push(TimelineLoadFailure {
+                                    entity: director,
+                                    asset: asset_key.to_owned(),
+                                    error: format!(
+                                        "camera track '{name}' previous blend source '{}' {error}",
+                                        previous.target
+                                    ),
+                                });
+                            }
+                            continue;
+                        }
+                    };
+                    if !has_exactly_one_camera(world, previous_target) {
+                        if self.reported_camera_failures.insert(key.clone()) {
+                            failures.push(TimelineLoadFailure {
+                                entity: director,
+                                asset: asset_key.to_owned(),
+                                error: format!(
+                                    "camera track '{name}' previous blend source '{}' must have exactly one Camera2D or Camera3D component",
+                                    previous.target
+                                ),
+                            });
+                        }
+                        continue;
+                    }
+                    Some(previous_target)
+                }
             } else {
                 None
             };
+            self.reported_camera_failures.remove(&key);
             self.camera_overrides.insert(
                 key.clone(),
                 RuntimeCameraOverride {
@@ -1098,6 +1202,53 @@ fn has_exactly_one_camera(world: &World, entity: Entity) -> bool {
         ^ world.get_component::<Camera3D>(entity).is_some()
 }
 
+enum TimelineTargetError {
+    MissingLegacyPath,
+    StaleBinding { entity: Entity, name: String },
+}
+
+impl std::fmt::Display for TimelineTargetError {
+    fn fmt(&self, formatter: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Self::MissingLegacyPath => write!(
+                formatter,
+                "was not found below the Director entity and has no stable binding"
+            ),
+            Self::StaleBinding { entity, name } if name.is_empty() => write!(
+                formatter,
+                "has a stale stable binding to entity {entity}; rebind it in Sequencer"
+            ),
+            Self::StaleBinding { entity, name } => write!(
+                formatter,
+                "has a stale stable binding to entity {entity} ('{name}'); rebind it in Sequencer"
+            ),
+        }
+    }
+}
+
+fn resolve_timeline_target(
+    world: &World,
+    root: Entity,
+    target: &str,
+    bindings: &TimelineBindingTable,
+) -> Result<Entity, TimelineTargetError> {
+    if let Some(binding) = bindings.bindings.get(target) {
+        // The table was normalized before evaluation, so this cannot fail here.
+        let entity = binding
+            .resolved_entity()
+            .expect("normalized Timeline binding must contain a valid entity id");
+        return if !binding.missing && world.is_alive(entity) {
+            Ok(entity)
+        } else {
+            Err(TimelineTargetError::StaleBinding {
+                entity,
+                name: binding.name.clone(),
+            })
+        };
+    }
+    resolve_descendant_target(world, root, target).ok_or(TimelineTargetError::MissingLegacyPath)
+}
+
 fn resolve_descendant_target(world: &World, root: Entity, target: &str) -> Option<Entity> {
     let mut current = root;
     for segment in target.split('/') {
@@ -1118,12 +1269,7 @@ fn collect_signals_at(
     output: &mut Vec<RuntimeTimelineSignal>,
 ) {
     for track in &asset.tracks {
-        let TimelineTrack::Signal {
-            name,
-            markers,
-            ..
-        } = track
-        else {
+        let TimelineTrack::Signal { name, markers, .. } = track else {
             continue;
         };
         if asset.track_is_muted(track) {
@@ -1161,12 +1307,7 @@ fn collect_crossed_signals(
     };
     let mut crossed = Vec::new();
     for track in &asset.tracks {
-        let TimelineTrack::Signal {
-            name,
-            markers,
-            ..
-        } = track
-        else {
+        let TimelineTrack::Signal { name, markers, .. } = track else {
             continue;
         };
         if asset.track_is_muted(track) {
@@ -1571,6 +1712,52 @@ mod tests {
     }
 
     #[test]
+    fn stable_binding_survives_rename_and_reparent_and_stale_binding_never_falls_back() {
+        let (root, relative) = activation_project_asset("Panel");
+        let mut world = World::new();
+        let director = world.spawn_empty();
+        let legacy_panel = world.spawn_empty();
+        world.set_component_value(
+            legacy_panel,
+            "Name",
+            serde_json::json!({ "value": "Panel" }),
+        );
+        world.set_parent(legacy_panel, Some(director));
+        let stable_panel = world.spawn_empty();
+        world.set_component_value(
+            stable_panel,
+            "Name",
+            serde_json::json!({ "value": "Renamed Outside Panel" }),
+        );
+        world.insert_component(
+            director,
+            TimelineDirector {
+                asset: relative.clone(),
+                bindings_json: format!(
+                    r#"{{"version":1,"bindings":{{"Panel":{{"entity":"{}","name":"Panel"}}}}}}"#,
+                    stable_panel.to_u64()
+                ),
+                ..TimelineDirector::default()
+            },
+        );
+        let mut runtime = TimelineRuntime::new(Some(root.clone()));
+
+        assert!(runtime.update(&mut world, 0.0).is_empty());
+        assert!(!world.entity_active(stable_panel));
+        assert!(world.entity_active(legacy_panel));
+
+        world.set_editor_state(stable_panel, 0, true);
+        world.despawn(stable_panel);
+        runtime.reset_director(director);
+        let failures = runtime.update(&mut world, 0.0);
+        assert_eq!(failures.len(), 1);
+        assert!(failures[0].error.contains("stale stable binding"));
+        assert!(world.entity_active(legacy_panel));
+        assert!(runtime.update(&mut world, 0.0).is_empty());
+        let _ = fs::remove_dir_all(root);
+    }
+
+    #[test]
     fn audio_tracks_apply_pause_seek_and_restore_authored_sources() {
         let (root, relative) = audio_project_asset("Audio/Music");
         let mut world = World::new();
@@ -1971,6 +2158,45 @@ mod tests {
         runtime.reset_director(director);
         runtime.update(&mut world, 0.0);
         assert_eq!(runtime.camera_override(), None);
+        let _ = fs::remove_dir_all(root);
+    }
+
+    #[test]
+    fn camera_blend_never_falls_back_when_previous_stable_binding_is_stale() {
+        let (root, relative) = camera_project_asset();
+        let mut world = World::new();
+        let director = world.spawn_empty();
+        let cameras = world.spawn_empty();
+        world.set_component_value(cameras, "Name", serde_json::json!({ "value": "Cameras" }));
+        world.set_parent(cameras, Some(director));
+        let legacy_wide = world.spawn_empty();
+        world.set_component_value(legacy_wide, "Name", serde_json::json!({ "value": "Wide" }));
+        world.set_parent(legacy_wide, Some(cameras));
+        world.insert_component(legacy_wide, Camera3D::default());
+        let close = world.spawn_empty();
+        world.set_component_value(close, "Name", serde_json::json!({ "value": "Close" }));
+        world.set_parent(close, Some(cameras));
+        world.insert_component(close, Camera3D::default());
+        world.insert_component(
+            director,
+            TimelineDirector {
+                asset: relative,
+                bindings_json: format!(
+                    r#"{{"version":1,"bindings":{{"Cameras/Close":{{"entity":"{}"}},"Cameras/Wide":{{"entity":"99","name":"Deleted Wide","missing":true}}}}}}"#,
+                    close.to_u64()
+                ),
+                time: 1.0,
+                ..TimelineDirector::default()
+            },
+        );
+        let mut runtime = TimelineRuntime::new(Some(root.clone()));
+
+        let failures = runtime.update(&mut world, 0.0);
+        assert_eq!(failures.len(), 1);
+        assert!(failures[0].error.contains("previous blend source"));
+        assert!(failures[0].error.contains("stale stable binding"));
+        assert_eq!(runtime.camera_override(), None);
+        assert!(runtime.update(&mut world, 0.0).is_empty());
         let _ = fs::remove_dir_all(root);
     }
 

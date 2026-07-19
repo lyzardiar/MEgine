@@ -1,10 +1,12 @@
 use crate::{AssetError, AssetError::Io};
+use mengine_core::Entity;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
-use std::collections::HashSet;
+use std::collections::{BTreeMap, HashMap, HashSet};
 use std::path::Path;
 
 pub const MAX_TIMELINE_PARTICLE_TIME: f32 = 300.0;
+pub const MAX_TIMELINE_BINDINGS: usize = 256;
 
 fn default_version() -> u32 {
     1
@@ -24,6 +26,118 @@ fn default_one() -> f32 {
 
 fn default_camera_blend_curve() -> String {
     "ease_in_out".to_owned()
+}
+
+fn is_false(value: &bool) -> bool {
+    !*value
+}
+
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
+pub struct TimelineEntityBinding {
+    /// Decimal `Entity::to_u64()` value. A string keeps the full u64 intact in WebView JSON.
+    pub entity: String,
+    #[serde(default, skip_serializing_if = "String::is_empty")]
+    pub name: String,
+    /// Set during scene reconstruction when the authored entity no longer exists.
+    #[serde(default, skip_serializing_if = "is_false")]
+    pub missing: bool,
+}
+
+impl TimelineEntityBinding {
+    pub fn resolved_entity(&self) -> Result<Entity, AssetError> {
+        let raw = self.entity.trim();
+        let value = raw.parse::<u64>().map_err(|_| {
+            AssetError::Invalid(format!(
+                "Timeline binding entity '{raw}' must be an unsigned decimal id"
+            ))
+        })?;
+        let entity = Entity::from_u64(value);
+        if !entity.is_valid() {
+            return Err(AssetError::Invalid(format!(
+                "Timeline binding entity '{raw}' is invalid"
+            )));
+        }
+        Ok(entity)
+    }
+}
+
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
+pub struct TimelineBindingTable {
+    #[serde(default = "default_version")]
+    pub version: u32,
+    #[serde(default)]
+    pub bindings: BTreeMap<String, TimelineEntityBinding>,
+}
+
+impl Default for TimelineBindingTable {
+    fn default() -> Self {
+        Self {
+            version: default_version(),
+            bindings: BTreeMap::new(),
+        }
+    }
+}
+
+impl TimelineBindingTable {
+    pub fn normalized(mut self) -> Result<Self, AssetError> {
+        if self.version != default_version() {
+            return Err(AssetError::Invalid(format!(
+                "unsupported Timeline binding table version {}",
+                self.version
+            )));
+        }
+        if self.bindings.len() > MAX_TIMELINE_BINDINGS {
+            return Err(AssetError::Invalid(format!(
+                "Timeline binding table exceeds {MAX_TIMELINE_BINDINGS} entries"
+            )));
+        }
+
+        let mut normalized = BTreeMap::new();
+        for (target, mut binding) in self.bindings {
+            let target = normalize_timeline_target(&target).ok_or_else(|| {
+                AssetError::Invalid(format!(
+                    "Timeline binding target '{target}' is not a portable descendant path"
+                ))
+            })?;
+            binding.entity = binding.resolved_entity()?.to_u64().to_string();
+            binding.name = binding.name.trim().chars().take(256).collect();
+            if normalized.insert(target.clone(), binding).is_some() {
+                return Err(AssetError::Invalid(format!(
+                    "Timeline binding target '{target}' is duplicated after normalization"
+                )));
+            }
+        }
+        self.bindings = normalized;
+        Ok(self)
+    }
+
+    /// Remaps scene-authored entity ids after a world snapshot is reconstructed.
+    pub fn remap_entities(&mut self, entity_map: &HashMap<u64, Entity>) {
+        for binding in self.bindings.values_mut() {
+            let Ok(old_id) = binding.entity.parse::<u64>() else {
+                continue;
+            };
+            if let Some(entity) = entity_map.get(&old_id) {
+                binding.entity = entity.to_u64().to_string();
+                binding.missing = false;
+            } else {
+                // Never let an old generation-zero id accidentally resolve to a newly
+                // allocated entity that reused the same slot during reconstruction.
+                binding.missing = true;
+            }
+        }
+    }
+}
+
+pub fn parse_timeline_binding_table(raw: &str) -> Result<TimelineBindingTable, AssetError> {
+    if raw.trim().is_empty() {
+        return Ok(TimelineBindingTable::default());
+    }
+    serde_json::from_str::<TimelineBindingTable>(raw)?.normalized()
+}
+
+pub fn serialize_timeline_binding_table(table: TimelineBindingTable) -> Result<String, AssetError> {
+    Ok(serde_json::to_string(&table.normalized()?)?)
 }
 
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
@@ -304,7 +418,7 @@ impl TimelineAsset {
                             "Timeline track '{id}' must have a name"
                         )));
                     }
-                    *target = normalize_descendant_target(target).ok_or_else(|| {
+                    *target = normalize_timeline_target(target).ok_or_else(|| {
                         AssetError::Invalid(format!(
                             "Timeline activation track '{id}' must target a descendant path without '.' or '..'"
                         ))
@@ -355,7 +469,7 @@ impl TimelineAsset {
                             "Timeline track '{id}' must have a name"
                         )));
                     }
-                    *target = normalize_descendant_target(target).ok_or_else(|| {
+                    *target = normalize_timeline_target(target).ok_or_else(|| {
                         AssetError::Invalid(format!(
                             "Timeline audio track '{id}' must target a descendant path without '.' or '..'"
                         ))
@@ -417,7 +531,7 @@ impl TimelineAsset {
                             "Timeline track '{id}' must have a name"
                         )));
                     }
-                    *target = normalize_descendant_target(target).ok_or_else(|| {
+                    *target = normalize_timeline_target(target).ok_or_else(|| {
                         AssetError::Invalid(format!(
                             "Timeline animation track '{id}' must target a descendant path without '.' or '..'"
                         ))
@@ -477,7 +591,7 @@ impl TimelineAsset {
                             "Timeline track '{id}' must have a name"
                         )));
                     }
-                    *target = normalize_descendant_target(target).ok_or_else(|| {
+                    *target = normalize_timeline_target(target).ok_or_else(|| {
                         AssetError::Invalid(format!(
                             "Timeline particle track '{id}' must target a descendant path without '.' or '..'"
                         ))
@@ -534,7 +648,7 @@ impl TimelineAsset {
                     }
                     camera_track_seen = true;
                     for clip in clips.iter_mut() {
-                        clip.target = normalize_descendant_target(&clip.target).ok_or_else(|| {
+                        clip.target = normalize_timeline_target(&clip.target).ok_or_else(|| {
                             AssetError::Invalid(format!(
                                 "Timeline camera track '{id}' contains an invalid descendant camera target"
                             ))
@@ -601,9 +715,12 @@ impl TimelineAsset {
     }
 
     pub fn group_for_track(&self, track_id: &str) -> Option<&TimelineTrackGroup> {
-        self.groups
-            .iter()
-            .find(|group| group.track_ids.iter().any(|candidate| candidate == track_id))
+        self.groups.iter().find(|group| {
+            group
+                .track_ids
+                .iter()
+                .any(|candidate| candidate == track_id)
+        })
     }
 
     pub fn track_is_muted(&self, track: &TimelineTrack) -> bool {
@@ -614,7 +731,7 @@ impl TimelineAsset {
     }
 }
 
-fn normalize_descendant_target(raw: &str) -> Option<String> {
+pub fn normalize_timeline_target(raw: &str) -> Option<String> {
     let normalized = raw.trim().replace('\\', "/");
     if normalized.is_empty() || normalized.starts_with('/') {
         return None;
@@ -677,6 +794,43 @@ pub fn load_timeline_asset(path: impl AsRef<Path>) -> Result<TimelineAsset, Asse
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn normalizes_serializes_and_remaps_stable_binding_tables() {
+        let mut table = parse_timeline_binding_table(
+            r#"{"bindings":{" Characters\\Hero ":{"entity":"2","name":" Hero "}}}"#,
+        )
+        .unwrap();
+        assert_eq!(table.bindings["Characters/Hero"].name, "Hero");
+        assert_eq!(table.bindings["Characters/Hero"].entity, "2");
+
+        let replacement = Entity::new(7, 3);
+        table.remap_entities(&HashMap::from([(2, replacement)]));
+        let serialized = serialize_timeline_binding_table(table).unwrap();
+        let reparsed = parse_timeline_binding_table(&serialized).unwrap();
+        assert_eq!(
+            reparsed.bindings["Characters/Hero"]
+                .resolved_entity()
+                .unwrap(),
+            replacement
+        );
+        assert_eq!(
+            parse_timeline_binding_table("{}").unwrap(),
+            TimelineBindingTable::default()
+        );
+    }
+
+    #[test]
+    fn rejects_invalid_stable_binding_tables() {
+        assert!(parse_timeline_binding_table(r#"{"version":2,"bindings":{}}"#,).is_err());
+        assert!(
+            parse_timeline_binding_table(r#"{"bindings":{"../Hero":{"entity":"2"}}}"#,).is_err()
+        );
+        assert!(
+            parse_timeline_binding_table(r#"{"bindings":{"Hero":{"entity":"not-an-id"}}}"#,)
+                .is_err()
+        );
+    }
 
     #[test]
     fn parses_extensible_signal_tracks_and_sorts_markers() {

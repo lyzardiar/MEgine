@@ -65,6 +65,11 @@ import {
   PROJECT_ASSETS_CHANGED_EVENT,
 } from '../assetEditorEvents';
 import { clearAudioWaveforms } from '../audioWaveform';
+import {
+  clearTimelineBinding,
+  resolveTimelineBinding,
+  setTimelineBinding,
+} from '../timelineBindings';
 import { AudioWaveform } from './AudioWaveform';
 import {
   SEQUENCER_MAX_ZOOM,
@@ -138,6 +143,7 @@ type SnapshotEntity = WorldSnapshotView['entities'][number];
 export type SequencerProps = {
   assetPath: string | null;
   selectedEntity: SnapshotEntity | null;
+  entities: readonly SnapshotEntity[];
   playMode: boolean;
   onClose: () => void;
   onAssignDirector: (entity: number, path: string) => void;
@@ -262,14 +268,38 @@ export function Sequencer(props: SequencerProps) {
   }, [savedText]);
   const dirty = Boolean(asset && fingerprint !== savedFingerprint);
   const anyDirty = dirty || [...drafts.current.values()].some(sequencerDraftDirty);
-  const directorValue = props.selectedEntity?.components.TimelineDirector;
+  const [directorEntityId, setDirectorEntityId] = useState<number | null>(null);
+  const observedHierarchySelection = useRef<number | null | undefined>(undefined);
+  const matchingDirectors = useMemo(() => props.entities.filter((entity) => {
+    const value = entity.components.TimelineDirector;
+    return value != null
+      && typeof value === 'object'
+      && String((value as { asset?: unknown }).asset ?? '') === props.assetPath;
+  }), [props.assetPath, props.entities]);
+  const selectedDirector = matchingDirectors.find((entity) => entity.entity === props.selectedEntity?.entity) ?? null;
+  const directorEntity = matchingDirectors.find((entity) => entity.entity === directorEntityId)
+    ?? selectedDirector
+    ?? matchingDirectors[0]
+    ?? null;
+  const directorValue = directorEntity?.components.TimelineDirector;
   const director = directorValue != null && typeof directorValue === 'object'
-    ? directorValue as { asset?: string; playing?: boolean; time?: number }
+    ? directorValue as { asset?: string; bindings_json?: string; playing?: boolean; time?: number }
     : null;
   const liveDirector = props.playMode && director?.asset === props.assetPath ? director : null;
   const displayTime = liveDirector && Number.isFinite(Number(liveDirector.time))
     ? Math.max(0, Math.min(asset?.duration ?? 0, Number(liveDirector.time)))
     : time;
+
+  useEffect(() => {
+    const selectedEntityId = props.selectedEntity?.entity ?? null;
+    const hierarchySelectionChanged = observedHierarchySelection.current !== selectedEntityId;
+    observedHierarchySelection.current = selectedEntityId;
+    if (hierarchySelectionChanged && selectedDirector) {
+      setDirectorEntityId(selectedDirector.entity);
+    } else if (directorEntityId != null && !matchingDirectors.some((entity) => entity.entity === directorEntityId)) {
+      setDirectorEntityId(matchingDirectors[0]?.entity ?? null);
+    }
+  }, [directorEntityId, matchingDirectors, props.selectedEntity?.entity, selectedDirector]);
 
   useEffect(() => {
     props.onDirtyChange(anyDirty);
@@ -1494,8 +1524,67 @@ export function Sequencer(props: SequencerProps) {
   const laneWidth = Math.max(360, Math.round(laneViewportWidth * zoom));
   const ticks = sequencerTicks(asset.duration, laneWidth);
   const transportPlaying = liveDirector ? Boolean(liveDirector.playing) : playing;
+  const bindingsJson = director?.bindings_json ?? '{}';
+  const renderBindingEditor = (target: string) => {
+    let resolution: ReturnType<typeof resolveTimelineBinding> | null = null;
+    let bindingError: string | null = null;
+    try {
+      resolution = resolveTimelineBinding(bindingsJson, target, props.entities);
+    } catch (reason) {
+      bindingError = reason instanceof Error ? reason.message : String(reason);
+    }
+    const status = bindingError
+      ? bindingError
+      : !directorEntity
+        ? 'No TimelineDirector is assigned to this asset.'
+        : resolution?.status === 'bound'
+          ? `Bound to ${resolution.entity.name ?? `Entity ${resolution.entity.entity}`} (${resolution.binding.entity})`
+          : resolution?.status === 'stale'
+            ? `Stale binding: ${resolution.binding.name || 'Unnamed entity'} (${resolution.binding.entity})`
+            : 'Legacy child-path lookup. Bind an entity to survive rename and reparent operations.';
+    return <fieldset className="sequencer-inspector-fields sequencer-binding-editor">
+      <legend>Stable Binding</legend>
+      <p className={`sequencer-field-help${bindingError || resolution?.status === 'stale' ? ' error' : ''}`}>{status}</p>
+      <div className="sequencer-track-order">
+        <button type="button" disabled={!directorEntity || !props.selectedEntity || Boolean(bindingError)} onClick={() => {
+          if (!directorEntity || !props.selectedEntity) return;
+          try {
+            const next = setTimelineBinding(bindingsJson, target, props.selectedEntity);
+            props.onPatchDirector(directorEntity.entity, { bindings_json: next });
+            props.onLog(`Bound Timeline target ${target} to ${props.selectedEntity.name ?? props.selectedEntity.entity}`);
+          } catch (reason) {
+            setError(reason instanceof Error ? reason.message : String(reason));
+          }
+        }}><Link size={13} /> Bind Selected</button>
+        <button type="button" disabled={!directorEntity || (!bindingError && resolution?.status === 'legacy')} onClick={() => {
+          if (!directorEntity) return;
+          try {
+            props.onPatchDirector(directorEntity.entity, {
+              bindings_json: bindingError ? '{}' : clearTimelineBinding(bindingsJson, target),
+            });
+            props.onLog(bindingError
+              ? 'Reset invalid Timeline binding table; legacy child-path lookup is active.'
+              : `Cleared stable Timeline binding for ${target}; legacy child-path lookup is active.`);
+          } catch (reason) {
+            setError(reason instanceof Error ? reason.message : String(reason));
+          }
+        }}>{bindingError ? 'Reset Binding Table' : 'Use Child Path'}</button>
+      </div>
+    </fieldset>;
+  };
+  const clearBindingBeforeTargetEdit = (target: string) => {
+    if (!directorEntity) return;
+    try {
+      if (resolveTimelineBinding(bindingsJson, target, props.entities).status === 'legacy') return;
+      props.onPatchDirector(directorEntity.entity, {
+        bindings_json: clearTimelineBinding(bindingsJson, target),
+      });
+    } catch {
+      // Invalid authoring input is surfaced by the binding editor and runtime validator.
+    }
+  };
   const scrub = (next: number) => {
-    if (liveDirector && props.selectedEntity) props.onPatchDirector(props.selectedEntity.entity, { time: next });
+    if (liveDirector && directorEntity) props.onPatchDirector(directorEntity.entity, { time: next });
     else replaceTime(next);
   };
   const changeZoom = (requested: number, anchorClientX?: number) => {
@@ -1667,8 +1756,8 @@ export function Sequencer(props: SequencerProps) {
         }
         if (event.code === 'Space') {
           event.preventDefault();
-          if (liveDirector && props.selectedEntity) {
-            props.onPatchDirector(props.selectedEntity.entity, { playing: !transportPlaying });
+          if (liveDirector && directorEntity) {
+            props.onPatchDirector(directorEntity.entity, { playing: !transportPlaying });
           } else {
             setPlaying((value) => !value);
           }
@@ -1693,13 +1782,13 @@ export function Sequencer(props: SequencerProps) {
       <div className="timeline-toolbar sequencer-toolbar">
         <div className="timeline-transport">
           <button type="button" className={transportPlaying ? 'active' : ''} title={transportPlaying ? 'Pause' : 'Play'} onClick={() => {
-            if (liveDirector && props.selectedEntity) props.onPatchDirector(props.selectedEntity.entity, { playing: !transportPlaying });
+            if (liveDirector && directorEntity) props.onPatchDirector(directorEntity.entity, { playing: !transportPlaying });
             else setPlaying((value) => !value);
           }}>
             {transportPlaying ? <Pause size={14} /> : <Play size={14} />}
           </button>
           <button type="button" title="Stop" onClick={() => {
-            if (liveDirector && props.selectedEntity) props.onPatchDirector(props.selectedEntity.entity, { playing: false, time: 0 });
+            if (liveDirector && directorEntity) props.onPatchDirector(directorEntity.entity, { playing: false, time: 0 });
             else { setPlaying(false); replaceTime(0); }
           }}><Square size={13} /></button>
         </div>
@@ -1744,7 +1833,15 @@ export function Sequencer(props: SequencerProps) {
         <button type="button" disabled={!selectedTrack || selectedTrackLocked} title={selectedTrackLocked ? 'Unlock the track or its group to add items' : undefined} onClick={() => selectedTrack && addTrackItem(selection!.track, displayTime)}>
           <Plus size={14} /> {selectedTrack?.type === 'signal' ? 'Signal' : 'Clip'}
         </button>
-        <button type="button" className="timeline-icon-button" title="Bind selected entity" disabled={!props.selectedEntity} onClick={() => props.selectedEntity && props.onAssignDirector(props.selectedEntity.entity, props.assetPath!)}><Link size={14} /></button>
+        <select className="sequencer-director-select" aria-label="Timeline Director" title="Active TimelineDirector for playback and stable track bindings" value={directorEntity?.entity ?? ''} onChange={(event) => setDirectorEntityId(event.target.value ? Number(event.target.value) : null)}>
+          <option value="">No Director</option>
+          {matchingDirectors.map((entity) => <option value={entity.entity} key={entity.entity}>{entity.name ?? `Entity ${entity.entity}`}</option>)}
+        </select>
+        <button type="button" className="timeline-icon-button" title="Assign this Timeline asset to the selected entity as its Director" disabled={!props.selectedEntity} onClick={() => {
+          if (!props.selectedEntity) return;
+          props.onAssignDirector(props.selectedEntity.entity, props.assetPath!);
+          setDirectorEntityId(props.selectedEntity.entity);
+        }}><Link size={14} /></button>
         <button type="button" className="timeline-icon-button" title={saving ? 'Saving' : 'Save Timeline'} disabled={!dirty || saving || payloadInvalid} onClick={() => void save()}><Save size={14} /></button>
         <button type="button" className="timeline-icon-button" title="Back to Animation Clip editor" onClick={props.onClose}><X size={14} /></button>
       </div>
@@ -1986,10 +2083,14 @@ export function Sequencer(props: SequencerProps) {
             {selectedTrackLocked && <p className="sequencer-lock-notice"><Lock size={12} /> Content editing is disabled by this track or its group.</p>}
             <fieldset className="sequencer-inspector-fields" disabled={selectedTrackLocked}>
               <label>Name <input value={selectedTrack.name} onChange={(event) => update((draft) => { draft.tracks[selection!.track].name = event.target.value; })} /></label>
-              {selectedTrack.type !== 'signal' && selectedTrack.type !== 'camera' && <label>Target (child path)<input value={selectedTrack.target} placeholder={selectedTrack.type === 'audio' ? 'Audio/Music' : selectedTrack.type === 'animation' ? 'Characters/Hero' : selectedTrack.type === 'particle' ? 'Effects/Burst' : 'Canvas/Dialog'} onChange={(event) => update((draft) => {
+              {selectedTrack.type !== 'signal' && selectedTrack.type !== 'camera' && <label>Target (binding key / child path)<input value={selectedTrack.target} placeholder={selectedTrack.type === 'audio' ? 'Audio/Music' : selectedTrack.type === 'animation' ? 'Characters/Hero' : selectedTrack.type === 'particle' ? 'Effects/Burst' : 'Canvas/Dialog'} onChange={(event) => {
+                clearBindingBeforeTargetEdit(selectedTrack.target);
+                update((draft) => {
                 const track = draft.tracks[selection!.track];
                 if (track.type !== 'signal' && track.type !== 'camera') track.target = event.target.value.replaceAll('\\', '/');
-              })} /></label>}
+                });
+              }} /></label>}
+              {selectedTrack.type !== 'signal' && selectedTrack.type !== 'camera' && renderBindingEditor(selectedTrack.target)}
               <div className="sequencer-track-order">
                 <button type="button" disabled={selection!.track === 0} onClick={() => moveSelectedTrack(-1)}><ArrowUp size={13} /> Move Up</button>
                 <button type="button" disabled={selection!.track === asset.tracks.length - 1} onClick={() => moveSelectedTrack(1)}><ArrowDown size={13} /> Move Down</button>
@@ -2122,10 +2223,14 @@ export function Sequencer(props: SequencerProps) {
               <p className="sequencer-field-help">Particle state is rebuilt deterministically from this local simulation time when entering or seeking the clip.</p>
             </>}
             {selectedCameraClip && <>
-              <label>Camera (child path)<input value={selectedCameraClip.target} placeholder="Cameras/Main Camera" onChange={(event) => update((draft) => {
+              <label>Camera (binding key / child path)<input value={selectedCameraClip.target} placeholder="Cameras/Main Camera" onChange={(event) => {
+                clearBindingBeforeTargetEdit(selectedCameraClip.target);
+                update((draft) => {
                 const track = draft.tracks[selection!.track];
                 if (track.type === 'camera') track.clips[selection!.marker!].target = event.target.value.replaceAll('\\', '/');
-              })} /></label>
+                });
+              }} /></label>
+              {renderBindingEditor(selectedCameraClip.target)}
               <label>Blend In <input type="number" min={0} max={selectedCameraClip.duration} step={1 / asset.frame_rate} value={selectedCameraClip.blend_in} onChange={(event) => update((draft) => {
                 const track = draft.tracks[selection!.track];
                 if (track.type === 'camera') {

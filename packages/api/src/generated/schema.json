@@ -2400,6 +2400,9 @@
       "asset": {
         "type": "string"
       },
+      "bindings_json": {
+        "type": "string"
+      },
       "play_on_awake": {
         "type": "boolean"
       },
@@ -2418,6 +2421,7 @@
     },
     "required": [
       "asset",
+      "bindings_json",
       "play_on_awake",
       "playing",
       "speed",

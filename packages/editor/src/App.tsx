@@ -1729,13 +1729,21 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
                   key={`sequencer:${assetReloadEpoch.sequencer}`}
                   assetPath={timelineAssetPath}
                   selectedEntity={snap.entities.find((entity) => entity.entity === selected) ?? null}
+                  entities={snap.entities}
                   playMode={mode !== 'edit'}
                   onClose={() => setTimelineAssetPath(null)}
                   onAssignDirector={(entity, path) => {
                     const current = store.authoredEntities().find((entry) => entry.entity === entity)?.components.TimelineDirector;
-                    if (current) store.patchComponent(entity, 'TimelineDirector', { asset: path });
+                    if (current) store.patchComponent(entity, 'TimelineDirector', {
+                      asset: path,
+                      ...(typeof current === 'object'
+                        && current != null
+                        && String((current as { asset?: unknown }).asset ?? '') === path
+                        ? {}
+                        : { bindings_json: '{}' }),
+                    });
                     else store.addComponent(entity, 'TimelineDirector', {
-                      asset: path, play_on_awake: true, playing: true, speed: 1, time: 0, wrap_mode: 'Hold',
+                      asset: path, bindings_json: '{}', play_on_awake: true, playing: true, speed: 1, time: 0, wrap_mode: 'Hold',
                     });
                     log(`Bound ${path} to TimelineDirector`);
                     refresh();

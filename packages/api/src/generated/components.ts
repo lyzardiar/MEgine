@@ -190,6 +190,7 @@ export interface Animator {
 
 export interface TimelineDirector {
   asset: string;
+  bindingsJson: string;
   playOnAwake: boolean;
   playing: boolean;
   speed: number;

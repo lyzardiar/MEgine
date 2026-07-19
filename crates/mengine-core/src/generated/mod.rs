@@ -796,6 +796,7 @@ impl Component for Animator {
 #[serde(default)]
 pub struct TimelineDirector {
     pub asset: String,
+    pub bindings_json: String,
     pub play_on_awake: bool,
     pub playing: bool,
     pub speed: f32,
@@ -807,6 +808,7 @@ impl Default for TimelineDirector {
     fn default() -> Self {
         Self {
             asset: "".into(),
+            bindings_json: "{}".into(),
             play_on_awake: true,
             playing: true,
             speed: 1.0,

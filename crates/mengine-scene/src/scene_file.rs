@@ -1,4 +1,6 @@
 use crate::SceneError;
+use mengine_assets::{parse_timeline_binding_table, serialize_timeline_binding_table};
+use mengine_core::generated::TimelineDirector;
 use mengine_core::snapshot::WorldSnapshot;
 use mengine_core::World;
 use serde::{Deserialize, Serialize};
@@ -158,6 +160,14 @@ pub fn apply_snapshot(world: &mut World, snap: &WorldSnapshot) {
         if let Some(parent) = ent.parent.and_then(|id| entity_map.get(&id)).copied() {
             world.set_parent(child, Some(parent));
         }
+        if let Some(director) = world.get_component_mut::<TimelineDirector>(child) {
+            if let Ok(mut bindings) = parse_timeline_binding_table(&director.bindings_json) {
+                bindings.remap_entities(&entity_map);
+                if let Ok(serialized) = serialize_timeline_binding_table(bindings) {
+                    director.bindings_json = serialized;
+                }
+            }
+        }
     }
 
     world.selected = snap.selected.and_then(|id| entity_map.get(&id)).copied();
@@ -168,6 +178,7 @@ mod tests {
     use super::*;
     use mengine_core::command::WorldCommand;
     use mengine_core::generated::{ParticleEmitter2D, ParticleEmitter3D, SpineSkeleton};
+    use mengine_core::snapshot::EntitySnapshot;
     use serde_json::json;
 
     fn temp_scene(name: &str) -> (PathBuf, PathBuf) {
@@ -625,5 +636,60 @@ mod tests {
             "characters"
         );
         std::fs::remove_dir_all(dir).unwrap();
+    }
+
+    #[test]
+    fn snapshot_rebuild_remaps_timeline_stable_bindings() {
+        let mut world = World::new();
+        for _ in 0..3 {
+            world.spawn_empty();
+        }
+        let snapshot = WorldSnapshot {
+            entities: vec![
+                EntitySnapshot {
+                    entity: 10,
+                    name: Some("Director".into()),
+                    parent: None,
+                    sibling_index: 0,
+                    active: true,
+                    components: HashMap::from([(
+                        "TimelineDirector".into(),
+                        json!({
+                            "asset": "Assets/Timelines/intro.mtimeline",
+                            "bindings_json": "{\"version\":1,\"bindings\":{\"Ghost\":{\"entity\":\"8589934594\",\"name\":\"Deleted\"},\"Hero\":{\"entity\":\"20\",\"name\":\"Hero\"}}}"
+                        }),
+                    )]),
+                },
+                EntitySnapshot {
+                    entity: 20,
+                    name: Some("Hero".into()),
+                    parent: None,
+                    sibling_index: 1,
+                    active: true,
+                    components: HashMap::new(),
+                },
+            ],
+            ..WorldSnapshot::default()
+        };
+
+        apply_snapshot(&mut world, &snapshot);
+        let director = world
+            .iter_entities()
+            .find(|entity| world.entity_name(*entity) == Some("Director"))
+            .unwrap();
+        let hero = world
+            .iter_entities()
+            .find(|entity| world.entity_name(*entity) == Some("Hero"))
+            .unwrap();
+        let table = parse_timeline_binding_table(
+            &world
+                .get_component::<TimelineDirector>(director)
+                .unwrap()
+                .bindings_json,
+        )
+        .unwrap();
+        assert_eq!(table.bindings["Hero"].resolved_entity().unwrap(), hero);
+        assert!(table.bindings["Ghost"].missing);
+        assert!(world.is_alive(table.bindings["Ghost"].resolved_entity().unwrap()));
     }
 }

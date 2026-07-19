@@ -213,6 +213,8 @@ component Animator {
 /// Plays a versioned .mtimeline Sequencer asset and emits its track events.
 component TimelineDirector {
   asset:         string = ""
+  /// Versioned JSON map from Timeline target paths to stable scene entity ids.
+  bindings_json: string = "{}"
   play_on_awake: bool   = true
   playing:       bool   = true
   speed:         float  = 1

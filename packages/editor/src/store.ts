@@ -99,6 +99,7 @@ import {
   type SpriteSpawnOptions,
 } from './spriteCreation';
 import { frameWorldSprite } from './sceneFraming';
+import { resetTimelineBindingsOnAssetChange } from './timelineBindings';
 import './behaviours';
 import {
   gameResolutionAspect,
@@ -1139,13 +1140,18 @@ export function createEditorStore(undoService: EditorUndoService = createEditorU
       const e = find(entity);
       if (!e) return;
       if (mode === 'edit' && !gizmoDragging) pushUndo(`Set ${type}`);
-      e.components[type] = value;
+      e.components[type] = type === 'TimelineDirector'
+        ? resetTimelineBindingsOnAssetChange(e.components[type], value)
+        : value;
     },
     patchComponent(entity: number, type: string, patch: Record<string, unknown>) {
       const e = find(entity);
       if (!e || e.components[type] == null) return;
       if (mode === 'edit' && !gizmoDragging) pushUndo(`Edit ${type}`);
-      e.components[type] = { ...(e.components[type] as object), ...patch };
+      const safePatch = type === 'TimelineDirector'
+        ? resetTimelineBindingsOnAssetChange(e.components[type], patch)
+        : patch;
+      e.components[type] = { ...(e.components[type] as object), ...safePatch };
     },
     assignMaterial(
       entity: number,

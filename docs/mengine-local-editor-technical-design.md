@@ -1255,3 +1255,14 @@ Rust workspace 检查现在零警告通过；Tauri Host 17/17 常规测试与 1/
 第一遍自省发现“主窗口已关闭文档”并不覆盖已保存的独立 Dock 窗口，因此补齐 Rename/Delete/Create/Restore 跨 WebView 生命周期广播。第二遍自省发现 Assets 引用为零仍可能漏掉 `project.json`，并且损坏回收站记录被静默跳过；最终把真实 Manifest Revision/JSON Pointer 纳入预览与提交门禁，同时让 Trash Inventory 显示不可安全恢复的损坏条目数。提交前的最后路径审计又发现只 `lstat` 文件本身仍会跟随祖先 symlink，现已让 Host/Vite 对 Rename 更新源、Duplicate 和 Delete 的每一级 Assets 祖先重新验证为普通目录，并要求最终 canonical 路径仍位于真实 Assets 根下。
 
 本批仍没有永久清空、单条永久销毁、Trash 容量/保留策略、文件夹与多选事务、版本控制 checkout/lock、导入器声明式二进制依赖图、GUID 引用自动重连或缺失引用修复。下一阶段应先把导入器依赖声明和文件夹级计划建立在同一事务快照上，再决定何时开放受二次确认保护的永久清理。
+
+## 105. 2026-07-19 Timeline 稳定场景绑定表
+
+- `TimelineDirector` 新增隐藏的版本化 `bindings_json`。表以 Timeline 中已有的规范化目标路径为逻辑键，以十进制字符串保存完整 `Entity::to_u64()`，避免 WebView JSON 把 64 位实体值截断；Activation、Audio、Animation、Particle 和 Camera 轨道现在统一先查稳定绑定，只有没有表项时才兼容旧工程的 Director 子路径查找。绑定实体已销毁时会产生一次明确的 stale binding 诊断并停止该轨道，绝不退回同名子节点而静默驱动错误对象。
+- Scene/Play World 从快照重建实体后，会用本次加载的旧 ID 到新 Entity 映射重写每个 Director 的绑定表；因此保存场景、重开工程和进入 Play Mode 都不会因 allocator 重建而丢失目标。绑定解析限制版本、256 项、可移植路径、有效十进制实体 ID 和规范化重复键；无效表会阻止 Director 求值并进入运行时诊断，而不是在各轨道中产生不一致行为。
+- Sequencer 工具栏新增当前 TimelineDirector 选择器，播放、暂停、停止和 Scrub 始终作用于该 Director，用户切到另一个层级对象后仍可把它绑定到当前轨道。非 Signal 轨道和 Camera Shot 的 Inspector 显示 Stable Binding 状态，支持 `Bind Selected` 与 `Use Child Path`；状态区区分 bound、stale、legacy 和损坏表，损坏表可显式 `Reset Binding Table` 自救。修改目标键会先清除旧稳定绑定，避免留下会占用上限且永远不可见的孤儿条目；把 Director 改绑到另一个 Timeline 资产时也会清空旧资产绑定，防止相同逻辑键在新资产中误命中。
+- IDL 是组件字段的唯一源，Rust/TypeScript/schema 均由 codegen 生成；组件目录默认值、Inspector 隐藏策略和新建 Director 路径同步补齐。Rust 资产测试覆盖表规范化/序列化/重映射和非法输入，Scene 测试覆盖真实 allocator 重建，Runtime 回归证明改名、换父节点/跨层级仍命中绑定且 stale 不会回退，前端测试覆盖绑定、解析、移动、清理和不安全数字拒绝。
+
+第一遍自省否决了“直接把编辑器当前实体 ID 写进组件就完成”的实现，因为 `apply_snapshot` 在重开场景和进入 Play Mode 时会重建 Entity；最终把加载期重映射纳入同一契约，并用字符串跨越 JS 的 53 位整数边界，同时补上损坏表重置入口，避免诊断后只能手工改 Scene JSON。第二遍自省发现 Sequencer 原先把“当前层级选择”同时当作 Director，用户一旦选择轨道目标就失去播放控制和绑定上下文；因此增加显式 Director 选择器，并修正所有实时 Transport 操作使用该上下文。最后一轮路径审计又处理了已删除旧 ID 恰好被 allocator 新实体复用、Camera Blend 上一镜头 stale 时静默退回主摄像机，以及手动 Director 下拉选择被层级选择覆盖；这些情况现在都保持显式 missing/stale 并停止错误求值。
+
+当前稳定表覆盖 Scene/Play 快照生命周期，但 Prefab 捕获仍没有把场景 Entity 引用转换为稳定 Prefab Node ID，也没有跨 additive scene 的全局对象 GUID；因此本批不宣称 Timeline 绑定系统已经完备。下一阶段必须建立通用 Serialized Entity Reference：Scene Object GUID、Prefab Node/Instance 重映射、Duplicate/Apply/Revert 引用迁移、Missing Reference 修复和构建期全场景引用校验。在此之前，Sequencer 稳定绑定应限定为当前场景对象，Prefab 内部绑定需要显式重新绑定并由后续校验阻止错误发布。

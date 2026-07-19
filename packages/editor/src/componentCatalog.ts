@@ -379,6 +379,7 @@ const BUILTIN_CATALOG: ComponentCatalogEntry[] = [
     description: 'Play a .mtimeline Sequencer asset and emit track events',
     create: () => ({
       asset: '',
+      bindings_json: '{}',
       play_on_awake: true,
       playing: true,
       speed: 1,
