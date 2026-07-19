@@ -97,7 +97,6 @@ import {
   expandSequencerRippleSelection,
   findSequencerClipPlacement,
   lockedSequencerContentEnd,
-  moveSequencerClip,
   moveSequencerItems,
   moveSequencerTrack,
   pasteSequencerClipboard,
@@ -106,6 +105,7 @@ import {
   selectSequencerItem,
   snapSequencerItemsDelta,
   trimSequencerCameraBlendIn,
+  trimSequencerAnimationClip,
   trimSequencerClip,
   type SequencerClipboard,
   type SequencerItemSelection,
@@ -1348,21 +1348,31 @@ export function Sequencer(props: SequencerProps) {
       if (originalTrack.type === 'signal') return;
       const originalClip = originalTrack.clips[markerIndex];
       if (!originalClip) return;
-      const range = trimSequencerClip(
-        originalTrack.clips,
-        markerIndex,
-        trimEdge,
-        magnetic.delta,
-        asset.duration,
-        asset.frame_rate,
-        trimEdge === 'start' && originalTrack.type === 'audio'
-          ? { offset: originalTrack.clips[markerIndex].clip_in, rate: originalTrack.clips[markerIndex].pitch }
-          : trimEdge === 'start' && originalTrack.type === 'animation'
-            ? { offset: originalTrack.clips[markerIndex].clip_in, rate: originalTrack.clips[markerIndex].speed }
+      const range = originalTrack.type === 'animation'
+        ? trimSequencerAnimationClip(
+          originalTrack.clips,
+          markerIndex,
+          trimEdge,
+          magnetic.delta,
+          asset.duration,
+          asset.frame_rate,
+        )
+        : trimSequencerClip(
+          originalTrack.clips,
+          markerIndex,
+          trimEdge,
+          magnetic.delta,
+          asset.duration,
+          asset.frame_rate,
+          trimEdge === 'start' && originalTrack.type === 'audio'
+            ? { offset: originalTrack.clips[markerIndex].clip_in, rate: originalTrack.clips[markerIndex].pitch }
             : trimEdge === 'start' && originalTrack.type === 'particle'
               ? { offset: originalTrack.clips[markerIndex].clip_in, rate: 1 }
               : undefined,
-      );
+        );
+      const rangeBlendIn = 'blendIn' in range && typeof range.blendIn === 'number'
+        ? range.blendIn
+        : null;
       const resolvedDuration = originalTrack.type === 'particle'
         ? Math.min(
           range.duration,
@@ -1401,16 +1411,10 @@ export function Sequencer(props: SequencerProps) {
       if (trimEdge === 'start' && track.type === 'animation' && originalTrack.type === 'animation') {
         const original = originalTrack.clips[markerIndex];
         track.clips[markerIndex].clip_in = Math.max(0, original.clip_in + range.sourceOffsetDelta * original.speed);
-        track.clips[markerIndex].blend_in = trimSequencerCameraBlendIn(
-          original.blend_in,
-          clip.duration,
-          range.sourceOffsetDelta,
-        );
+        track.clips[markerIndex].blend_in = rangeBlendIn ?? original.blend_in;
       } else if (track.type === 'animation') {
-        track.clips[markerIndex].blend_in = Math.min(
-          track.clips[markerIndex].blend_in,
-          clip.duration,
-        );
+        track.clips[markerIndex].blend_in = rangeBlendIn
+          ?? Math.min(track.clips[markerIndex].blend_in, clip.duration);
       }
       if (trimEdge === 'start' && track.type === 'particle' && originalTrack.type === 'particle') {
         const original = originalTrack.clips[markerIndex];
@@ -1712,6 +1716,10 @@ export function Sequencer(props: SequencerProps) {
   const selectedAnimationClip = selection?.marker != null && selectedTrack?.type === 'animation'
     ? selectedTrack.clips[selection.marker]
     : null;
+  const selectedAnimationRequiredBlend = selectedAnimationClip && selectedTrack?.type === 'animation'
+    ? Math.max(0, (selectedTrack.clips[selection!.marker! - 1]?.start ?? 0)
+      + (selectedTrack.clips[selection!.marker! - 1]?.duration ?? 0) - selectedAnimationClip.start)
+    : 0;
   const selectedParticleClip = selection?.marker != null && selectedTrack?.type === 'particle'
     ? selectedTrack.clips[selection.marker]
     : null;
@@ -2425,27 +2433,38 @@ export function Sequencer(props: SequencerProps) {
               const track = draft.tracks[selection!.track];
               if (track.type === 'signal') return;
               const clip = track.clips[selection!.marker!];
-              const range = moveSequencerClip(
-                track.clips,
-                selection!.marker!,
+              const moved = moveSequencerItems(
+                draft,
+                [{ track: selection!.track, marker: selection!.marker! }],
                 Number(event.target.value) - clip.start,
-                draft.duration,
-                draft.frame_rate,
               );
-              clip.start = range.start;
+              if (moved.ok) Object.assign(draft, moved.asset);
+              else setError(moved.error);
             })} /></label>
             <label>Duration <input type="number" min={1 / asset.frame_rate} max={selectedParticleClip ? Math.min(asset.duration - selectedClip.start, TIMELINE_MAX_PARTICLE_TIME - selectedParticleClip.clip_in) : asset.duration - selectedClip.start} step={1 / asset.frame_rate} value={selectedClip.duration} onChange={(event) => update((draft) => {
               const track = draft.tracks[selection!.track];
               if (track.type === 'signal') return;
               const clip = track.clips[selection!.marker!];
-              const range = trimSequencerClip(
-                track.clips,
-                selection!.marker!,
-                'end',
-                Number(event.target.value) - clip.duration,
-                draft.duration,
-                draft.frame_rate,
-              );
+              const range = track.type === 'animation'
+                ? trimSequencerAnimationClip(
+                  track.clips,
+                  selection!.marker!,
+                  'end',
+                  Number(event.target.value) - clip.duration,
+                  draft.duration,
+                  draft.frame_rate,
+                )
+                : trimSequencerClip(
+                  track.clips,
+                  selection!.marker!,
+                  'end',
+                  Number(event.target.value) - clip.duration,
+                  draft.duration,
+                  draft.frame_rate,
+                );
+              const rangeBlendIn = 'blendIn' in range && typeof range.blendIn === 'number'
+                ? range.blendIn
+                : null;
               if (track.type === 'particle') {
                 const particleClip = track.clips[selection!.marker!];
                 particleClip.duration = Math.min(
@@ -2456,10 +2475,9 @@ export function Sequencer(props: SequencerProps) {
                 clip.duration = range.duration;
                 if (track.type === 'audio') clampTimelineAudioFades(track.clips[selection!.marker!]);
                 if (track.type === 'camera' || track.type === 'animation') {
-                  track.clips[selection!.marker!].blend_in = Math.min(
-                    track.clips[selection!.marker!].blend_in,
-                    range.duration,
-                  );
+                  track.clips[selection!.marker!].blend_in = track.type === 'animation' && rangeBlendIn != null
+                    ? rangeBlendIn
+                    : Math.min(track.clips[selection!.marker!].blend_in, range.duration);
                 }
               }
             })} /></label>
@@ -2519,11 +2537,11 @@ export function Sequencer(props: SequencerProps) {
                 const track = draft.tracks[selection!.track];
                 if (track.type === 'animation') track.clips[selection!.marker!].speed = Math.max(-4, Math.min(4, Number(event.target.value) || 0));
               })} /></label>
-              <label>Blend In <input type="number" min={0} max={selectedAnimationClip.duration} step={1 / asset.frame_rate} value={selectedAnimationClip.blend_in} onChange={(event) => update((draft) => {
+              <label>Blend In <input type="number" min={selectedAnimationRequiredBlend} max={selectedAnimationClip.duration} step={1 / asset.frame_rate} value={selectedAnimationClip.blend_in} onChange={(event) => update((draft) => {
                 const track = draft.tracks[selection!.track];
                 if (track.type === 'animation') {
                   const clip = track.clips[selection!.marker!];
-                  clip.blend_in = Math.max(0, Math.min(clip.duration, Number(event.target.value) || 0));
+                  clip.blend_in = Math.max(selectedAnimationRequiredBlend, Math.min(clip.duration, Number(event.target.value) || 0));
                 }
               })} /></label>
               <label>Blend Curve <select value={selectedAnimationClip.blend_curve} onChange={(event) => update((draft) => {
@@ -2533,7 +2551,7 @@ export function Sequencer(props: SequencerProps) {
                 <option value="ease_in_out">Ease In / Out</option>
                 <option value="linear">Linear</option>
               </select></label>
-              <p className="sequencer-field-help">A non-zero blend uses the held final pose of an adjacent previous clip. Gaps remain hard cuts.</p>
+              <p className="sequencer-field-help">Overlap the incoming clip with the previous clip for a live two-clip crossfade. Any remaining Blend In time holds the previous final pose; gaps remain hard cuts.</p>
             </>}
             {selectedParticleClip && <>
               <label>Prewarm / Clip In <input type="number" min={0} max={TIMELINE_MAX_PARTICLE_TIME - selectedParticleClip.duration} step={1 / asset.frame_rate} value={selectedParticleClip.clip_in} onChange={(event) => update((draft) => {

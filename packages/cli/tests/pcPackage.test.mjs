@@ -1095,6 +1095,53 @@ test('buildPcPackage includes and validates TimelineDirector assets', () => {
   }
 });
 
+test('buildPcPackage accepts bounded Animation crossfades and rejects excessive overlap', () => {
+  const paths = fixture('timeline-animation-crossfade');
+  try {
+    writeFileSync(join(paths.project, 'Assets', 'Scenes', 'Main.mscene'), JSON.stringify({
+      version: 1,
+      world: { entities: [{ entity: 1, components: {
+        TimelineDirector: { asset: 'Assets/Timelines/Crossfade.mtimeline' },
+      } }] },
+    }));
+    writeFileSync(join(paths.project, 'Assets', 'Animations', 'A.manim'), '{}');
+    writeFileSync(join(paths.project, 'Assets', 'Animations', 'B.manim'), '{}');
+    const writeTimeline = (start, blendIn) => writeFileSync(
+      join(paths.project, 'Assets', 'Timelines', 'Crossfade.mtimeline'),
+      JSON.stringify({
+        version: 1, duration: 2,
+        tracks: [{
+          type: 'animation', id: 'hero', name: 'Hero', target: 'Hero',
+          clips: [
+            { start: 0, duration: 1, clip: 'Assets/Animations/A.manim' },
+            { start, duration: 1, clip: 'Assets/Animations/B.manim', blend_in: blendIn },
+          ],
+        }],
+      }),
+    );
+    writeTimeline(0.75, 0.25);
+    buildPcPackage({
+      projectDir: paths.project,
+      outputDir: paths.output,
+      runtimePath: paths.runtime,
+      engineVersion: 'test-engine',
+    });
+    assert.equal(existsSync(join(paths.output, 'Assets', 'Animations', 'A.manim')), true);
+    assert.equal(existsSync(join(paths.output, 'Assets', 'Animations', 'B.manim')), true);
+
+    writeTimeline(0.5, 0.25);
+    assert.throws(() => buildPcPackage({
+      projectDir: paths.project,
+      outputDir: join(paths.root, 'invalid-output'),
+      runtimePath: paths.runtime,
+      engineVersion: 'test-engine',
+    }), /animation crossfade overlap is invalid/);
+    assert.equal(existsSync(join(paths.root, 'invalid-output')), false);
+  } finally {
+    rmSync(paths.root, { recursive: true, force: true });
+  }
+});
+
 test('buildPcPackage rejects non-boolean Timeline Solo flags', () => {
   const paths = fixture('invalid-timeline-solo');
   try {

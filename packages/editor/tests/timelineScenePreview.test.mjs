@@ -140,6 +140,22 @@ test('blends an adjacent previous Animation clip final pose without mutating aut
     new Map([['assets/animations/in.manim', incoming]]),
   );
   assert.match(missingPrevious.diagnostics.join(' '), /previous blend clip.*Out\.manim.*not loaded/);
+
+  const overlapAsset = parseTimelineAsset(JSON.stringify({
+    version: 1, duration: 2,
+    tracks: [{
+      type: 'animation', id: 'actor', name: 'Actor Motion', target: 'Actor',
+      clips: [
+        { start: 0, duration: 1, clip: 'Assets/Animations/Out.manim' },
+        { start: 0.75, duration: 1, clip: 'Assets/Animations/In.manim', blend_in: 0.25, blend_curve: 'linear' },
+      ],
+    }],
+  }));
+  const liveCrossfade = applyTimelineScenePreview(
+    entities,
+    buildTimelineScenePreview(overlapAsset, entities, 1, '{}', 0.875, blendClips).preview,
+  );
+  assert.ok(Math.abs(liveCrossfade[2].components.Transform.position[0] - 15) < 1e-4);
 });
 
 test('uses stable director bindings and restores authored state outside clips', () => {

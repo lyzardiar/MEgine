@@ -1,4 +1,5 @@
 import {
+  timelineAnimationClipLayoutIsValid,
   timelineTrackIsLocked,
   type TimelineActivationClip,
   type TimelineAnimationClip,
@@ -330,6 +331,66 @@ export function trimSequencerClip(
   };
 }
 
+export function trimSequencerAnimationClip(
+  clips: readonly TimelineAnimationClip[],
+  index: number,
+  edge: SequencerTrimEdge,
+  delta: number,
+  timelineDuration: number,
+  frameRate: number,
+): (SequencerClipRange & { sourceOffsetDelta: number; blendIn: number }) {
+  const clip = clips[index];
+  if (!clip) return { start: 0, duration: 0, sourceOffsetDelta: 0, blendIn: 0 };
+  const frame = 1 / finitePositive(frameRate, 60);
+  const timelineEnd = finitePositive(timelineDuration, clip.start + clip.duration);
+  const clipEnd = clip.start + clip.duration;
+  const safeDelta = Number.isFinite(delta) ? delta : 0;
+  if (edge === 'start') {
+    const previous = clips[index - 1];
+    const twoBefore = clips[index - 2];
+    const next = clips[index + 1];
+    const minimum = Math.max(
+      0,
+      previous ? previous.start + frame : 0,
+      twoBefore ? twoBefore.start + twoBefore.duration : 0,
+      clip.speed > 0 ? clip.start - clip.clip_in / clip.speed : 0,
+      clip.speed < 0 ? Number.NEGATIVE_INFINITY : 0,
+    );
+    const maximum = Math.min(
+      clipEnd - frame,
+      next ? next.start - frame : Number.POSITIVE_INFINITY,
+      clip.speed < 0 ? clip.start - clip.clip_in / clip.speed : Number.POSITIVE_INFINITY,
+    );
+    const start = clamp(snap(clip.start + safeDelta, frameRate), minimum, maximum);
+    const duration = clipEnd - start;
+    return {
+      start,
+      duration,
+      sourceOffsetDelta: start - clip.start,
+      blendIn: clamp(clip.blend_in - (start - clip.start), 0, duration),
+    };
+  }
+  const next = clips[index + 1];
+  const twoAfter = clips[index + 2];
+  const previous = clips[index - 1];
+  const maximum = Math.min(
+    timelineEnd,
+    next ? next.start + next.blend_in : Number.POSITIVE_INFINITY,
+    twoAfter ? twoAfter.start : Number.POSITIVE_INFINITY,
+  );
+  const minimum = Math.max(
+    clip.start + frame,
+    previous ? previous.start + previous.duration : clip.start + frame,
+  );
+  const end = clamp(snap(clipEnd + safeDelta, frameRate), minimum, maximum);
+  return {
+    start: clip.start,
+    duration: end - clip.start,
+    sourceOffsetDelta: 0,
+    blendIn: Math.min(clip.blend_in, end - clip.start),
+  };
+}
+
 export function trimSequencerCameraBlendIn(
   originalBlendIn: number,
   trimmedDuration: number,
@@ -559,6 +620,10 @@ export function moveSequencerItems(
   for (const [trackIndex, selected] of selectedByTrack) {
     const track = asset.tracks[trackIndex];
     if (track.type === 'signal') continue;
+    if (track.type === 'animation' && !timelineAnimationClipLayoutIsValid(track.clips)) {
+      return { ok: false, error: `Track '${track.name}' already contains an invalid animation crossfade.` };
+    }
+    const frame = 1 / finitePositive(asset.frame_rate, 60);
     for (const selectedIndex of selected) {
       const clip = track.clips[selectedIndex];
       const clipEnd = clip.start + clip.duration;
@@ -566,10 +631,20 @@ export function moveSequencerItems(
         if (selected.has(otherIndex)) continue;
         const other = track.clips[otherIndex];
         const otherEnd = other.start + other.duration;
-        if (otherEnd <= clip.start + 1e-6) {
-          minimumDelta = Math.max(minimumDelta, otherEnd - clip.start);
-        } else if (other.start >= clipEnd - 1e-6) {
-          maximumDelta = Math.min(maximumDelta, other.start - clipEnd);
+        if (other.start < clip.start - 1e-6) {
+          const allowedOverlap = track.type === 'animation' ? (clip as TimelineAnimationClip).blend_in : 0;
+          minimumDelta = Math.max(
+            minimumDelta,
+            otherEnd - clip.start - allowedOverlap,
+            other.start + frame - clip.start,
+          );
+        } else if (other.start > clip.start + 1e-6) {
+          const allowedOverlap = track.type === 'animation' ? (other as TimelineAnimationClip).blend_in : 0;
+          maximumDelta = Math.min(
+            maximumDelta,
+            other.start + allowedOverlap - clipEnd,
+            other.start - frame - clip.start,
+          );
         } else {
           return { ok: false, error: `Track '${track.name}' already contains overlapping clips.` };
         }
@@ -577,7 +652,31 @@ export function moveSequencerItems(
     }
   }
   const safeDelta = Number.isFinite(requestedDelta) ? requestedDelta : 0;
-  const delta = snap(clamp(safeDelta, minimumDelta, maximumDelta), asset.frame_rate);
+  let delta = snap(clamp(safeDelta, minimumDelta, maximumDelta), asset.frame_rate);
+  const animationMoveIsValid = (candidate: number) => {
+    for (const [trackIndex, selected] of selectedByTrack) {
+      const track = asset.tracks[trackIndex];
+      if (track.type !== 'animation') continue;
+      const clips = track.clips.map((clip, index) => (
+        selected.has(index) ? { ...clip, start: clip.start + candidate } : clip
+      ));
+      if (!timelineAnimationClipLayoutIsValid(clips)) return false;
+    }
+    return true;
+  };
+  if (!animationMoveIsValid(delta)) {
+    let valid = 0;
+    let invalid = delta;
+    for (let iteration = 0; iteration < 48; iteration += 1) {
+      const middle = (valid + invalid) / 2;
+      if (animationMoveIsValid(middle)) valid = middle;
+      else invalid = middle;
+    }
+    const frame = 1 / finitePositive(asset.frame_rate, 60);
+    delta = snap(valid, asset.frame_rate);
+    if (!animationMoveIsValid(delta)) delta = snap(delta + (delta > 0 ? -frame : frame), asset.frame_rate);
+    if (!animationMoveIsValid(delta)) delta = 0;
+  }
   const next = structuredClone(asset);
   for (const selection of unique.values()) {
     const track = next.tracks[selection.track];
@@ -630,13 +729,28 @@ export function rippleMoveSequencerItems(
     rippleStarts.set(trackIndex, rippleStart);
     minimumDelta = Math.max(minimumDelta, -rippleStart);
     if (track.type === 'signal') continue;
-    const previousEnd = track.clips.reduce((end, clip) => (
-      clip.start < rippleStart - 1e-6 ? Math.max(end, clip.start + clip.duration) : end
-    ), 0);
-    if (previousEnd > rippleStart + 1e-6) {
+    const ordered = [...track.clips].sort((left, right) => left.start - right.start);
+    const firstShifted = ordered.findIndex((clip) => clip.start >= rippleStart - 1e-6);
+    const previous = firstShifted > 0 ? ordered[firstShifted - 1] : null;
+    const twoBefore = firstShifted > 1 ? ordered[firstShifted - 2] : null;
+    const incoming = firstShifted >= 0 ? ordered[firstShifted] : null;
+    const previousEnd = previous ? previous.start + previous.duration : 0;
+    if (track.type !== 'animation' && previousEnd > rippleStart + 1e-6) {
       return { ok: false, error: `Track '${track.name}' already contains overlapping clips.` };
     }
-    minimumDelta = Math.max(minimumDelta, previousEnd - rippleStart);
+    if (track.type === 'animation' && incoming) {
+      const frame = 1 / finitePositive(asset.frame_rate, 60);
+      minimumDelta = Math.max(
+        minimumDelta,
+        previous
+          ? previousEnd - rippleStart - (incoming as TimelineAnimationClip).blend_in
+          : -rippleStart,
+        previous ? previous.start + frame - rippleStart : -rippleStart,
+        twoBefore ? twoBefore.start + twoBefore.duration - rippleStart : -rippleStart,
+      );
+    } else {
+      minimumDelta = Math.max(minimumDelta, previousEnd - rippleStart);
+    }
   }
 
   const safeDelta = Number.isFinite(requestedDelta) ? requestedDelta : 0;
@@ -833,9 +947,20 @@ function resolveSequencerGroupTargets(
 }
 
 function groupInternalCollision(targets: readonly GroupTarget[]): string | null {
+  for (const trackIndex of new Set(targets.map((target) => target.targetTrack))) {
+    const animationClips: TimelineAnimationClip[] = [];
+    for (const target of targets) {
+      if (target.targetTrack === trackIndex && target.entry.type === 'animation') {
+        animationClips.push({ ...target.entry.item, start: target.relativeStart });
+      }
+    }
+    if (animationClips.length > 0 && !timelineAnimationClipLayoutIsValid(animationClips)) {
+      return 'Copied Animation clips contain an invalid crossfade after their source tracks are mapped to the paste target.';
+    }
+  }
   for (let left = 0; left < targets.length; left += 1) {
     const first = targets[left];
-    if (first.entry.type === 'signal') continue;
+    if (first.entry.type === 'signal' || first.entry.type === 'animation') continue;
     for (let right = left + 1; right < targets.length; right += 1) {
       const second = targets[right];
       if (second.entry.type === 'signal' || first.targetTrack !== second.targetTrack) continue;
@@ -856,12 +981,36 @@ function nextGroupPasteCandidate(
 ): number | null {
   let next = candidate;
   let collided = false;
+  const checkedAnimationTracks = new Set<number>();
   for (const target of targets) {
     if (target.entry.type === 'signal') continue;
     const plannedStart = candidate + target.relativeStart;
     const plannedEnd = plannedStart + target.entry.item.duration;
     const track = asset.tracks[target.targetTrack];
     if (track.type === 'signal') return null;
+    if (target.entry.type === 'animation' && track.type === 'animation') {
+      if (checkedAnimationTracks.has(target.targetTrack)) continue;
+      checkedAnimationTracks.add(target.targetTrack);
+      const planned = targets.flatMap((entry) => (
+        entry.targetTrack === target.targetTrack && entry.entry.type === 'animation'
+          ? [{ ...entry.entry.item, start: candidate + entry.relativeStart }]
+          : []
+      ));
+      if (timelineAnimationClipLayoutIsValid([...track.clips, ...planned])) continue;
+      for (const item of targets) {
+        if (item.targetTrack !== target.targetTrack || item.entry.type !== 'animation') continue;
+        const start = candidate + item.relativeStart;
+        const end = start + item.entry.item.duration;
+        for (const existing of track.clips) {
+          const existingEnd = existing.start + existing.duration;
+          if (start < existingEnd - 1e-6 && end > existing.start + 1e-6) {
+            collided = true;
+            next = Math.max(next, existingEnd - item.relativeStart);
+          }
+        }
+      }
+      continue;
+    }
     for (const existing of track.clips) {
       const existingEnd = existing.start + existing.duration;
       if (plannedStart < existingEnd - 1e-6 && plannedEnd > existing.start + 1e-6) {

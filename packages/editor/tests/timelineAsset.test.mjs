@@ -229,6 +229,38 @@ test('timeline animation clips normalize seam blends and reject invalid curves',
     },
   ]);
   assert.deepEqual(parseTimelineAsset(serializeTimelineAsset(asset)), asset);
+  const overlap = parseTimelineAsset(JSON.stringify({
+    version: 1, duration: 2,
+    tracks: [{
+      type: 'animation', id: 'hero', name: 'Hero', target: 'Hero',
+      clips: [
+        { start: 0, duration: 1, clip: 'Assets/Animations/A.manim' },
+        { start: 0.75, duration: 1, clip: 'Assets/Animations/B.manim', blend_in: 0.25 },
+      ],
+    }],
+  }));
+  assert.equal(overlap.tracks[0].clips[1].start, 0.75);
+  assert.throws(() => parseTimelineAsset(JSON.stringify({
+    version: 1, duration: 2,
+    tracks: [{
+      type: 'animation', id: 'hero', name: 'Hero', target: 'Hero',
+      clips: [
+        { start: 0, duration: 1.5, clip: 'Assets/Animations/A.manim' },
+        { start: 1, duration: 1, clip: 'Assets/Animations/B.manim', blend_in: 0.25 },
+      ],
+    }],
+  })), /invalid crossfade/);
+  assert.throws(() => parseTimelineAsset(JSON.stringify({
+    version: 1, duration: 2,
+    tracks: [{
+      type: 'animation', id: 'hero', name: 'Hero', target: 'Hero',
+      clips: [
+        { start: 0, duration: 1.2, clip: 'Assets/Animations/A.manim' },
+        { start: 0.5, duration: 1, clip: 'Assets/Animations/B.manim', blend_in: 0.7 },
+        { start: 0.9, duration: 1, clip: 'Assets/Animations/C.manim', blend_in: 0.6 },
+      ],
+    }],
+  })), /only two clips/);
   assert.throws(() => parseTimelineAsset(JSON.stringify({
     version: 1, duration: 2,
     tracks: [{

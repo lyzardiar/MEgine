@@ -7,6 +7,28 @@ use std::path::Path;
 
 pub const MAX_TIMELINE_PARTICLE_TIME: f32 = 300.0;
 pub const MAX_TIMELINE_BINDINGS: usize = 256;
+const TIMELINE_ANIMATION_OVERLAP_EPSILON: f32 = 0.0001;
+
+fn animation_crossfades_are_valid(clips: &[TimelineAnimationClip]) -> bool {
+    for index in 1..clips.len() {
+        let previous = &clips[index - 1];
+        let current = &clips[index];
+        let overlap = previous.start + previous.duration - current.start;
+        if overlap > TIMELINE_ANIMATION_OVERLAP_EPSILON
+            && (current.start <= previous.start + TIMELINE_ANIMATION_OVERLAP_EPSILON
+                || overlap > current.blend_in + TIMELINE_ANIMATION_OVERLAP_EPSILON)
+        {
+            return false;
+        }
+        if index > 1
+            && clips[index - 2].start + clips[index - 2].duration
+                > current.start + TIMELINE_ANIMATION_OVERLAP_EPSILON
+        {
+            return false;
+        }
+    }
+    true
+}
 
 fn default_version() -> u32 {
     1
@@ -616,12 +638,9 @@ impl TimelineAsset {
                         }
                     }
                     clips.sort_by(|left, right| left.start.total_cmp(&right.start));
-                    if clips
-                        .windows(2)
-                        .any(|pair| pair[0].start + pair[0].duration > pair[1].start)
-                    {
+                    if !animation_crossfades_are_valid(clips) {
                         return Err(AssetError::Invalid(format!(
-                            "Timeline animation track '{id}' contains overlapping clips"
+                            "Timeline animation track '{id}' contains an invalid crossfade; overlap must fit the incoming blend and may involve only two clips"
                         )));
                     }
                 }
@@ -1118,8 +1137,25 @@ mod tests {
         assert_eq!(clips[1].blend_in, 0.4);
         assert_eq!(clips[1].blend_curve, "linear");
 
+        let overlap = parse_timeline_asset(
+            br#"{"version":1,"duration":2,"tracks":[{"type":"animation","id":"a","name":"A","target":"Hero","clips":[{"start":0,"duration":1,"clip":"Assets/Animations/A.manim"},{"start":0.75,"duration":1,"clip":"Assets/Animations/B.manim","blend_in":0.25}]}]}"#,
+        )
+        .unwrap();
+        let TimelineTrack::Animation { clips, .. } = &overlap.tracks[0] else {
+            panic!("expected animation track");
+        };
+        assert_eq!(clips[1].start, 0.75);
+
         assert!(parse_timeline_asset(
             br#"{"version":1,"duration":2,"tracks":[{"type":"animation","id":"a","name":"A","target":"Hero","clips":[{"start":0,"duration":1.5,"clip":"Assets/Animations/A.manim"},{"start":1,"duration":1,"clip":"Assets/Animations/B.manim"}]}]}"#
+        )
+        .is_err());
+        assert!(parse_timeline_asset(
+            br#"{"version":1,"duration":2,"tracks":[{"type":"animation","id":"a","name":"A","target":"Hero","clips":[{"start":0,"duration":1.5,"clip":"Assets/Animations/A.manim"},{"start":1,"duration":1,"clip":"Assets/Animations/B.manim","blend_in":0.25}]}]}"#
+        )
+        .is_err());
+        assert!(parse_timeline_asset(
+            br#"{"version":1,"duration":2,"tracks":[{"type":"animation","id":"a","name":"A","target":"Hero","clips":[{"start":0,"duration":1.2,"clip":"Assets/Animations/A.manim"},{"start":0.5,"duration":1,"clip":"Assets/Animations/B.manim","blend_in":0.7},{"start":0.9,"duration":1,"clip":"Assets/Animations/C.manim","blend_in":0.6}]}]}"#
         )
         .is_err());
         assert!(parse_timeline_asset(

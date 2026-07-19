@@ -745,6 +745,7 @@ impl TimelineRuntime {
             let Some((clip_index, clip)) = clips
                 .iter()
                 .enumerate()
+                .rev()
                 .find(|(_, clip)| time >= clip.start && time < clip.start + clip.duration)
             else {
                 self.reported_animation_failures.remove(&key);
@@ -819,14 +820,19 @@ impl TimelineRuntime {
             let weight = timeline_animation_blend_factor(&clip.blend_curve, linear_weight);
             if clip.blend_in > f32::EPSILON && clip_index > 0 {
                 let previous = &clips[clip_index - 1];
-                let adjacent = (previous.start + previous.duration - clip.start).abs() <= 0.001;
-                if adjacent {
+                let previous_end = previous.start + previous.duration;
+                if previous_end + 0.0001 >= clip.start {
+                    let source_time = if time < previous_end {
+                        (previous.clip_in + (time - previous.start) * previous.speed).max(0.0)
+                    } else {
+                        outgoing_animation_sample_time(previous)
+                    };
                     self.animation_blends.insert(
                         key.clone(),
                         RuntimeAnimationBlend {
                             entity: target_entity,
                             source_clip: previous.clip.clone(),
-                            source_time: outgoing_animation_sample_time(previous),
+                            source_time,
                             destination_clip: clip.clip.clone(),
                             destination_time,
                             weight,
@@ -1527,7 +1533,7 @@ mod tests {
         (root, timeline_relative)
     }
 
-    fn animation_blend_project_asset(target: &str) -> (PathBuf, String) {
+    fn animation_blend_project_asset(target: &str, incoming_start: f32) -> (PathBuf, String) {
         let root = std::env::temp_dir().join(format!(
             "mengine-timeline-animation-blend-{}",
             uuid::Uuid::new_v4()
@@ -1540,7 +1546,7 @@ mod tests {
         fs::write(
             timeline_path,
             format!(
-                r#"{{"version":1,"duration":2,"tracks":[{{"type":"animation","id":"hero","name":"Hero","target":"{target}","clips":[{{"start":0,"duration":1,"clip":"Assets/Animations/Out.manim"}},{{"start":1,"duration":1,"clip":"Assets/Animations/In.manim","blend_in":0.25,"blend_curve":"linear"}}]}}]}}"#
+                r#"{{"version":1,"duration":2,"tracks":[{{"type":"animation","id":"hero","name":"Hero","target":"{target}","clips":[{{"start":0,"duration":1,"clip":"Assets/Animations/Out.manim"}},{{"start":{incoming_start},"duration":1,"clip":"Assets/Animations/In.manim","blend_in":0.25,"blend_curve":"linear"}}]}}]}}"#
             ),
         )
         .unwrap();
@@ -2140,7 +2146,7 @@ mod tests {
 
     #[test]
     fn animation_tracks_emit_and_apply_adjacent_seam_blends() {
-        let (root, relative) = animation_blend_project_asset("Hero");
+        let (root, relative) = animation_blend_project_asset("Hero", 1.0);
         let mut world = World::new();
         let director = world.spawn_empty();
         let hero = world.spawn_empty();
@@ -2190,6 +2196,43 @@ mod tests {
             .time = 0.5;
         assert!(timeline.update(&mut world, 0.0).is_empty());
         assert!(timeline.animation_blends().is_empty());
+        let _ = fs::remove_dir_all(root);
+    }
+
+    #[test]
+    fn animation_tracks_crossfade_two_live_overlapping_clips() {
+        let (root, relative) = animation_blend_project_asset("Hero", 0.75);
+        let mut world = World::new();
+        let director = world.spawn_empty();
+        let hero = world.spawn_empty();
+        world.set_component_value(hero, "Name", serde_json::json!({ "value": "Hero" }));
+        world.set_parent(hero, Some(director));
+        world.insert_component(hero, Transform::default());
+        world.insert_component(hero, AnimationPlayer::default());
+        world.insert_component(
+            director,
+            TimelineDirector {
+                asset: relative,
+                time: 0.875,
+                speed: 0.0,
+                ..TimelineDirector::default()
+            },
+        );
+        let mut timeline = TimelineRuntime::new(Some(root.clone()));
+        let mut animation = AnimationRuntime::new(Some(root.clone()));
+        assert!(timeline.update(&mut world, 0.0).is_empty());
+        let blends = timeline.animation_blends();
+        assert_eq!(blends.len(), 1);
+        assert!((blends[0].source_time - 0.875).abs() < 0.0001);
+        assert!((blends[0].destination_time - 0.125).abs() < 0.0001);
+        assert!((blends[0].weight - 0.5).abs() < 0.0001);
+        assert!(animation.update(&mut world, 0.0).is_empty());
+        assert!(animation
+            .apply_timeline_blends(&mut world, &blends)
+            .is_empty());
+        assert!(
+            (world.get_component::<Transform>(hero).unwrap().position[0] - 15.0).abs() < 0.0001
+        );
         let _ = fs::remove_dir_all(root);
     }
 

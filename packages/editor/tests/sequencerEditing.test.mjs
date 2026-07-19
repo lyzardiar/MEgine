@@ -21,6 +21,7 @@ import {
   sequencerTicks,
   snapSequencerItemsDelta,
   trimSequencerCameraBlendIn,
+  trimSequencerAnimationClip,
   trimSequencerClip,
 } from '../src/sequencerEditing.ts';
 
@@ -77,6 +78,31 @@ test('Sequencer camera start trim preserves the absolute blend end', () => {
   assert.equal(trimSequencerCameraBlendIn(0.75, 1.5, 0.25), 0.5);
   assert.equal(trimSequencerCameraBlendIn(0.75, 2.5, -0.5), 1.25);
   assert.equal(trimSequencerCameraBlendIn(0.75, 0.25, -1), 0.25);
+});
+
+test('Sequencer Animation trimming preserves and bounds crossfade overlap', () => {
+  const clips = [
+    { start: 0, duration: 1, clip: 'A', clip_in: 0, speed: 1, blend_in: 0, blend_curve: 'linear' },
+    { start: 0.8, duration: 1, clip: 'B', clip_in: 0.5, speed: 1, blend_in: 0.2, blend_curve: 'linear' },
+    { start: 2, duration: 1, clip: 'C', clip_in: 0, speed: 1, blend_in: 0.2, blend_curve: 'linear' },
+  ];
+  const startTrim = trimSequencerAnimationClip(clips, 1, 'start', -0.1, 4, 10);
+  assert.equal(startTrim.start, 0.7);
+  assert.ok(Math.abs(startTrim.duration - 1.1) < 1e-9);
+  assert.ok(Math.abs(startTrim.sourceOffsetDelta + 0.1) < 1e-9);
+  assert.ok(Math.abs(startTrim.blendIn - 0.3) < 1e-9);
+  assert.deepEqual(trimSequencerAnimationClip(clips, 0, 'end', 2, 4, 10), {
+    start: 0, duration: 1, sourceOffsetDelta: 0, blendIn: 0,
+  });
+  const endTrim = trimSequencerAnimationClip(clips, 1, 'end', 2, 4, 10);
+  assert.equal(endTrim.start, 0.8);
+  assert.ok(Math.abs(endTrim.duration - 1.4) < 1e-9);
+  assert.equal(endTrim.sourceOffsetDelta, 0);
+  assert.equal(endTrim.blendIn, 0.2);
+  const shortTrim = trimSequencerAnimationClip(clips, 1, 'end', -2, 4, 10);
+  assert.equal(shortTrim.start + shortTrim.duration, 1);
+  const crossedStart = trimSequencerAnimationClip(clips, 1, 'start', 2, 4, 10);
+  assert.equal(crossedStart.start, 1.7);
 });
 
 test('Sequencer selection model supports toggle and anchored ranges deterministically', () => {
@@ -192,6 +218,29 @@ test('Sequencer group clipboard preserves cross-track offsets and primary select
   assert.equal(pasted.asset.tracks[1].clips[1].volume, 0.8);
 });
 
+test('Sequencer group clipboard preserves an Animation crossfade shape', () => {
+  const asset = timeline();
+  asset.tracks[2].clips = [
+    {
+      start: 0, duration: 1, clip: 'Assets/A.manim', clip_in: 0,
+      speed: 1, blend_in: 0, blend_curve: 'linear',
+    },
+    {
+      start: 0.8, duration: 1, clip: 'Assets/B.manim', clip_in: 0,
+      speed: 1, blend_in: 0.2, blend_curve: 'ease_in_out',
+    },
+  ];
+  const copied = copySequencerItems(asset, [
+    { track: 2, marker: 0 },
+    { track: 2, marker: 1 },
+  ]);
+  assert.equal(copied.ok, true);
+  const pasted = pasteSequencerClipboard(asset, 2, 3, copied.clipboard);
+  assert.equal(pasted.ok, true);
+  assert.deepEqual(pasted.asset.tracks[2].clips.map((clip) => clip.start), [0, 0.8, 3, 3.8]);
+  assert.equal(pasted.asset.tracks[2].clips[3].blend_in, 0.2);
+});
+
 test('Sequencer group paste is atomic when the complete shape cannot fit', () => {
   const source = timeline();
   source.tracks[1].clips.push({
@@ -267,6 +316,38 @@ test('Sequencer group movement shares one collision bound and rejects locked tra
   assert.match(groupLocked.error, /locked/);
 });
 
+test('Sequencer movement authors bounded two-clip Animation crossfades', () => {
+  const asset = timeline();
+  asset.tracks[2].clips = [
+    {
+      start: 0, duration: 1, clip: 'Assets/A.manim', clip_in: 0,
+      speed: 1, blend_in: 0, blend_curve: 'linear',
+    },
+    {
+      start: 1.5, duration: 1, clip: 'Assets/B.manim', clip_in: 0,
+      speed: 1, blend_in: 0.25, blend_curve: 'linear',
+    },
+  ];
+  const crossed = moveSequencerItems(asset, [{ track: 2, marker: 1 }], -1);
+  assert.equal(crossed.ok, true);
+  assert.equal(crossed.delta, -0.7);
+  assert.deepEqual(crossed.asset.tracks[2].clips.map((clip) => clip.start), [0, 0.8]);
+
+  asset.tracks[2].clips.push({
+    start: 2.8, duration: 1, clip: 'Assets/C.manim', clip_in: 0,
+    speed: 1, blend_in: 0.5, blend_curve: 'linear',
+  });
+  const grouped = moveSequencerItems(asset, [
+    { track: 2, marker: 1 },
+    { track: 2, marker: 2 },
+  ], -2);
+  assert.equal(grouped.ok, true);
+  assert.ok(grouped.delta > -1.5);
+  assert.equal(grouped.asset.tracks[2].clips.every((clip, index, clips) => (
+    index < 2 || clips[index - 2].start + clips[index - 2].duration <= clip.start + 0.0001
+  )), true);
+});
+
 test('Sequencer ripple movement shifts each affected suffix and extends duration', () => {
   const asset = timeline();
   asset.tracks[1].clips = [
@@ -304,6 +385,28 @@ test('Sequencer ripple movement shifts each affected suffix and extends duration
     ),
     { delta: 1, guideTime: 8 },
   );
+});
+
+test('Sequencer ripple movement preserves a valid Animation crossfade boundary', () => {
+  const asset = timeline();
+  asset.tracks[2].clips = [
+    {
+      start: 0, duration: 1, clip: 'Assets/A.manim', clip_in: 0,
+      speed: 1, blend_in: 0, blend_curve: 'linear',
+    },
+    {
+      start: 0.8, duration: 1, clip: 'Assets/B.manim', clip_in: 0,
+      speed: 1, blend_in: 0.4, blend_curve: 'linear',
+    },
+    {
+      start: 2, duration: 1, clip: 'Assets/C.manim', clip_in: 0,
+      speed: 1, blend_in: 0.2, blend_curve: 'linear',
+    },
+  ];
+  const moved = rippleMoveSequencerItems(asset, [{ track: 2, marker: 1 }], -1);
+  assert.equal(moved.ok, true);
+  assert.equal(moved.delta, -0.2);
+  assert.deepEqual(moved.asset.tracks[2].clips.map((clip) => clip.start), [0, 0.6, 1.8]);
 });
 
 test('Sequencer ripple movement closes time but preserves the previous clip boundary', () => {

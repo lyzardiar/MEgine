@@ -1859,11 +1859,18 @@ function scanBuildAssetDependencies(
             throw new Error(`invalid Timeline asset ${source}: animation clip is invalid or outside duration`);
           }
           enqueue(clipPath, source, `Timeline animation track ${name} clip`);
-          return clip as { start: number; duration: number };
+          return clip as { start: number; duration: number; blend_in?: number };
         }).sort((left, right) => left.start - right.start);
         for (let index = 1; index < clips.length; index += 1) {
-          if (clips[index - 1].start + clips[index - 1].duration > clips[index].start) {
-            throw new Error(`invalid Timeline asset ${source}: animation clips overlap`);
+          const previous = clips[index - 1];
+          const current = clips[index];
+          const overlap = previous.start + previous.duration - current.start;
+          if ((overlap > 0.0001
+              && (current.start <= previous.start + 0.0001
+                || overlap > (current.blend_in ?? 0) + 0.0001))
+            || (index > 1
+              && clips[index - 2].start + clips[index - 2].duration > current.start + 0.0001)) {
+            throw new Error(`invalid Timeline asset ${source}: animation crossfade overlap is invalid`);
           }
         }
       }

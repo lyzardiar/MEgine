@@ -261,8 +261,14 @@ export function buildTimelineScenePreview(
       continue;
     }
     if (track.type !== 'animation') continue;
-    const clipIndex = track.clips.findIndex((candidate) => sampleTime >= candidate.start
-      && sampleTime < candidate.start + candidate.duration);
+    let clipIndex = -1;
+    for (let index = track.clips.length - 1; index >= 0; index -= 1) {
+      const candidate = track.clips[index];
+      if (sampleTime >= candidate.start && sampleTime < candidate.start + candidate.duration) {
+        clipIndex = index;
+        break;
+      }
+    }
     if (clipIndex < 0) continue;
     const timelineClip = track.clips[clipIndex];
     const target = resolveTrackTarget(track.target);
@@ -297,10 +303,8 @@ export function buildTimelineScenePreview(
     const weight = blendCurveFactor(timelineClip.blend_curve, linearWeight);
     if (timelineClip.blend_in > F32_EPSILON && clipIndex > 0) {
       const previousTimelineClip = track.clips[clipIndex - 1];
-      const adjacent = Math.abs(
-        previousTimelineClip.start + previousTimelineClip.duration - timelineClip.start,
-      ) <= 0.001;
-      if (adjacent) {
+      const previousEnd = previousTimelineClip.start + previousTimelineClip.duration;
+      if (previousEnd + 0.0001 >= timelineClip.start) {
         const previousClip = animationClips.get(clipKey(previousTimelineClip.clip));
         if (!previousClip) {
           diagnostics.push(`Animation track '${track.name}' previous blend clip '${previousTimelineClip.clip}' is not loaded.`);
@@ -308,7 +312,13 @@ export function buildTimelineScenePreview(
           diagnostics.push(`Animation track '${track.name}' previous blend clip-in exceeds '${previousTimelineClip.clip}' duration.`);
         } else {
           samples = blendAnimationPreviewSamples(
-            sampleAnimationClip(previousClip, outgoingAnimationSampleTime(previousTimelineClip)),
+            sampleAnimationClip(
+              previousClip,
+              sampleTime < previousEnd
+                ? Math.max(0, previousTimelineClip.clip_in
+                  + (sampleTime - previousTimelineClip.start) * previousTimelineClip.speed)
+                : outgoingAnimationSampleTime(previousTimelineClip),
+            ),
             samples,
             weight,
           );

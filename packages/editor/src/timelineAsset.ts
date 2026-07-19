@@ -35,6 +35,26 @@ export type TimelineAnimationClip = {
   blend_curve: 'linear' | 'ease_in_out';
 };
 
+const TIMELINE_ANIMATION_OVERLAP_EPSILON = 0.0001;
+
+export function timelineAnimationClipLayoutIsValid(
+  clips: readonly Pick<TimelineAnimationClip, 'start' | 'duration' | 'blend_in'>[],
+): boolean {
+  const sorted = [...clips].sort((left, right) => left.start - right.start);
+  for (let index = 1; index < sorted.length; index += 1) {
+    const previous = sorted[index - 1];
+    const current = sorted[index];
+    const overlap = previous.start + previous.duration - current.start;
+    if (overlap > TIMELINE_ANIMATION_OVERLAP_EPSILON
+      && (current.start <= previous.start + TIMELINE_ANIMATION_OVERLAP_EPSILON
+        || overlap > current.blend_in + TIMELINE_ANIMATION_OVERLAP_EPSILON)) return false;
+    if (index > 1
+      && sorted[index - 2].start + sorted[index - 2].duration
+        > current.start + TIMELINE_ANIMATION_OVERLAP_EPSILON) return false;
+  }
+  return true;
+}
+
 export type TimelineParticleClip = {
   start: number;
   duration: number;
@@ -477,9 +497,13 @@ export function validateTimelineAsset(asset: TimelineAsset): void {
         || clip.start < 0 || clip.duration <= 0 || clip.start + clip.duration > asset.duration) {
         throw new Error(`${trackLabel(track.type)} track ${track.name} contains a clip outside the Timeline duration`);
       }
-      if (index > 0 && sorted[index - 1].start + sorted[index - 1].duration > clip.start) {
+      if (index > 0 && track.type !== 'animation'
+        && sorted[index - 1].start + sorted[index - 1].duration > clip.start) {
         throw new Error(`${trackLabel(track.type)} track ${track.name} contains overlapping clips`);
       }
+    }
+    if (track.type === 'animation' && !timelineAnimationClipLayoutIsValid(track.clips)) {
+      throw new Error(`Animation track ${track.name} contains an invalid crossfade; overlap must fit the incoming blend and may involve only two clips`);
     }
   }
   const groupIds = new Set<string>();
@@ -657,9 +681,17 @@ export function parseTimelineAsset(text: string): TimelineAsset {
         || clip.start + clip.duration > parsedDuration) {
         throw new Error(`${label} track ${track.id} contains an invalid or out-of-range clip`);
       }
-      return { start: clip.start, duration: clip.duration };
+      return {
+        start: clip.start,
+        duration: clip.duration,
+        blend_in: track.type === 'animation' && typeof clip.blend_in === 'number' ? clip.blend_in : 0,
+      };
     }).sort((left, right) => left.start - right.start);
-    if (clips.some((clip, index) => index > 0 && clips[index - 1].start + clips[index - 1].duration > clip.start)) {
+    if (track.type === 'animation' && !timelineAnimationClipLayoutIsValid(clips)) {
+      throw new Error(`Animation track ${track.id} contains an invalid crossfade; overlap must fit the incoming blend and may involve only two clips`);
+    }
+    if (track.type !== 'animation'
+      && clips.some((clip, index) => index > 0 && clips[index - 1].start + clips[index - 1].duration > clip.start)) {
       throw new Error(`${label} track ${track.id} contains overlapping clips`);
     }
   }

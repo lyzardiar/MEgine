@@ -1548,3 +1548,16 @@ Camera Shot 的基础闭环已经形成，但 Timeline 仍不完备：编辑器 
 第一遍自省把“库存可读”和“制品可信”严格分开：最初若仅解析 `mengine-patch.json` 就显示绿色状态，攻击者可以自己写 key id 和数字制造假补丁；最终库存只显示 Base 是否仍有内容候选，唯一可信状态来自用户公钥驱动的完整 CLI 验证。第二遍自省从裁剪与同内容不同 Artifact 反查，否决了只按 `fromContentHash` 选一个 Base 的做法；Host 会尝试同内容同 key 的历史候选，而 CLI 继续用 `fromArtifactHash` 选择唯一正确 Base。扫描深度固定为分组/补丁两层并逐层拒绝符号链接，避免把工程内发行库存变成无界文件系统遍历。
 
 当前仍缺补丁删除/固定保留、打开目录、版本 DAG、同一 Target 的多 Base 边比较、补丁应用模拟、升级链最短路径、渠道元数据和发布权限审计；公钥每次由用户选择，尚未有按项目/渠道管理的可信 keyring、轮换/撤销和证书透明记录。下一阶段应把补丁库存迁成独立 Release Dock，加入版本图、应用到临时安装并启动的端到端演练、可审计删除/保留策略，再建设内容定义分块与压缩传输。
+
+## 132. 2026-07-20 Timeline Animation 真正重叠 Crossfade
+
+- Animation Track 从“相邻接缝保持上一段末帧”扩展为真正的双 Clip 重叠 Crossfade。重叠区间内，Runtime 与 Scene 编辑态预览都选择后开始的 Clip 作为目标，并按当前 Timeline 时间同时采样仍在播放的上一段；目标权重继续使用目标 Clip 的 `blend_in` 与 Linear/Ease In Out 曲线。若实际重叠短于 Blend In，上一段结束后的剩余混合时间仍保持其末帧，兼容原有无重叠接缝资产；存在真实间隙时保持硬切。
+- 资产规则明确限制为确定性的两路混合：重叠长度不得超过后一个 Clip 的 Blend In，同起点 Clip 和三段同时激活均被拒绝。Rust 资产加载、编辑器原始 JSON 入口、规范化资产校验和 CLI Player 打包统一使用 0.1ms 容差与相同规则；旧 Timeline v1、无重叠 Clip 和缺省 `blend_in=0` 均不迁移格式。
+- Sequencer 可直接把动画 Clip 拖入前一段的 Blend In 区域；帧吸附后会对整条 Animation Track 再校验，成组移动不会制造三段重叠。Start/Duration 数值输入与左右裁剪理解已有 Crossfade：裁剪目标起点时保持绝对混合终点并同步 `clip_in`，延长前一段时最多进入后一段声明的 Blend In，且不能越过再下一段形成三路混合。Blend In 输入的最小值不会低于当前实际重叠，Clip 覆盖层继续显示混合范围。
+- 多选复制/粘贴保留合法的重叠动画形状；普通 Activation/Audio/Particle/Camera 仍保持原有无重叠规则。CLI 打包回归同时证明合法双 Clip 重叠会收集两份 `.manim`，过量重叠会在产生输出目录之前失败。Runtime 回归在 0.875 秒同时采样 Out=8.75、In=21.25，以 0.5 权重得到 15.0，防止实现退回“Out 末帧 10.0”的伪 Crossfade。
+
+第一遍自省从跨层契约反查，发现编辑器同时存在原始 JSON 入口校验和规范化后校验，初稿只开放后者，导致合法重叠仍在打开资源时被拒绝；现把重叠判断收敛到共享函数，并与 Rust/CLI 的两路上限和容差逐项对齐。还发现 Runtime/Preview 原接缝使用 1ms 容差，会把资产层允许的极小真实间隙误判成混合，现统一为 0.1ms。
+
+第二遍自省从已有重叠资产的二次编辑反查，发现只放开主拖拽仍不完整：旧的通用 Start/Trim 会把重叠 Clip 弹回无重叠接缝，组复制也会把合法 Crossfade 当碰撞拒绝；继续检查又发现 Ripple 移动会拒绝已有重叠，起点裁剪可能越过后一段，末尾缩短可能小于既有入场重叠。最终增加 Animation 专用裁剪边界、Inspector 轨道级移动、Ripple Crossfade 边界、完整布局回检和重叠组粘贴规则。全量验证为编辑器 354/354、CLI 56/56、mengine-assets 51/51、mengine-runtime library 96/96、runtime main 23/23；相关工作区生产构建与 Rust workspace 检查继续作为提交门禁。
+
+这仍不是成熟的动画剪辑与 Timeline 系统。当前只支持同一目标的两路覆盖混合，Animation Event 仍只由目标 Clip 发出；尚缺多层/加法混合、Avatar Mask 轨道覆盖、Root Motion、外推模式、Clip Ease Out、嵌套 Timeline/Control Track、录制、IK/约束、Humanoid Retargeting、音频与动画统一时钟，以及混合姿态缓存和 Profiler 成本统计。下一阶段应先把 Crossfade 扩展成显式可视化过渡区与 Ease In/Out 双边手柄，再建设嵌套控制、录制和 Root Motion 契约。
