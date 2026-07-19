@@ -2157,7 +2157,7 @@ body.insp-scrubbing * {
   background: var(--u-input);
   border: 1px solid var(--u-border-2);
   color: var(--u-text-bright);
-  border-radius: 2px;
+  border-radius: 0;
   padding: 2px 6px;
 }
 
@@ -2224,8 +2224,20 @@ body.insp-scrubbing * {
 }
 
 .game-hint {
+  min-width: 0;
+  overflow: hidden;
   color: var(--u-muted);
   font-size: 11px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.scene-toolbar {
+  gap: 4px;
+}
+
+.scene-toolbar .game-hint {
+  flex: 1 1 auto;
 }
 
 .scene-toolbar .orient-toggle button {
@@ -2261,11 +2273,13 @@ body.insp-scrubbing * {
   cursor: default;
 }
 
-.scene-frame-button {
+.scene-icon-button {
   display: inline-flex;
+  width: 26px;
+  min-width: 26px;
   align-items: center;
   justify-content: center;
-  gap: 5px;
+  padding: 0;
 }
 
 .scene-toolbar .tile-brush-select {
@@ -2333,8 +2347,12 @@ body.insp-scrubbing * {
 }
 
 .scene-snap-buttons button {
+  display: inline-flex;
+  width: 26px;
   height: 24px;
-  padding: 0 8px;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
   border: 0;
   border-radius: 0;
   background: transparent;
@@ -2344,7 +2362,7 @@ body.insp-scrubbing * {
 }
 
 .scene-snap-buttons button + button {
-  width: 22px;
+  width: 20px;
   padding: 0;
   border-left: 1px solid var(--u-border-2);
 }
@@ -2414,8 +2432,13 @@ body.insp-scrubbing * {
 }
 
 .scene-align > button {
+  display: inline-flex;
+  width: 38px;
   height: 26px;
-  padding: 0 8px;
+  align-items: center;
+  justify-content: center;
+  gap: 1px;
+  padding: 0;
   border: 1px solid var(--u-border-2);
   border-radius: 0;
   background: var(--u-input);

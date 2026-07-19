@@ -903,3 +903,13 @@ Referenced Only 是可用的单包裁剪基础，仍不等同于完整 Addressab
 第一遍自审在真实 1280×720 编辑器中创建 Clip、添加 `Transform.position` 轨道并最大化 Timeline：修复前网格只有 98px、剩余近 480px 为空区，修复后网格完整占用 577px；100% 时 Lane 的 `scrollWidth` 与 `clientWidth` 都为 890px，不再有伪滚动条。第二遍恢复普通 Dock 并执行 Zoom In、横向滚动和 Fit：156% 时内容宽 1388px、横向滚动可到 180px，Fit 后普通 Dock 的宽度重新严格一致；252 项 Editor 测试与生产构建全部通过。
 
 本切片解决的是 Animation Clip Dope Sheet 的基础可见性和导航阻塞，不代表 Timeline/动画系统已经完备。后续仍需音频波形与 Onion Skin/运动轨迹、模型动画切片与 Avatar 重定向、Root Motion、批量关键帧工具、稳定 Binding Table、录制冲突诊断、嵌套 Timeline、运行时性能分析，以及把 Animation Timeline 与 `.mtimeline` Sequencer 的快捷键和选择语义进一步统一。
+
+## 71. 2026-07-19 Scene 与 Game 工具栏紧凑化
+
+- Scene 工具栏的 Frame、Grid、Tile Brush、Smart Guide、Pivot、Anchors、Snap 和 Align 从文字按钮改为 26px 方形图标命令；Snap Settings 与 Align 使用独立的下拉指示，2D 与缩放数值继续保留文字，因为它们本身承载状态而不是普通命令名称。
+- 每个图标命令保留稳定的 `aria-label`、完整 Title、Pressed/Expanded/Disabled 状态。2D 与 Snap 补齐 `aria-pressed`，因此视觉简化没有以牺牲键盘、自动化和辅助技术语义为代价；原有点击处理、设置 Popup 与对齐门禁不变。
+- Scene 工具栏间距从通用 Game 工具栏的 12px 收紧到 4px；长操作提示只占剩余空间，强制单行并按可用宽度省略，不再通过多行换行把 Canvas 向下挤压。Game 分辨率下拉同步使用零圆角工具风格，方向标签仍只展示由 W×H 分辨率推导的结果。
+
+第一遍自审在真实默认 Dock 的 696px Scene 宽度下测量：改动前工具栏被提示文字撑到 84px，改动后为 35px；固定命令宽度由 40–55px 降到 20–38px，提示获得 271px 单行空间，工具栏自身没有横向溢出。第二遍逐项验证 Grid Pressed 切换、Snap Settings 打开/关闭、Scene/Game 页签切换和 1080×1920 → portrait 派生；Game 工具栏保持 33px 单行，252 项 Editor 测试及生产构建通过。
+
+这次只统一了高频 Viewport 工具栏，不代表全编辑器视觉系统已经收敛。后续仍需建立共享 IconButton/ToolbarGroup/DropdownButton 组件与尺寸 Token，继续迁移 Hierarchy、Project、Inspector、Sprite、Material、Animator、Build Settings 和 Sequencer，并补 Dock 极窄宽度下的溢出菜单、全局快捷键映射与可配置工具栏。

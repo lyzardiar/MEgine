@@ -1,5 +1,15 @@
 import { useEffect, useRef, useState } from 'react';
-import { Focus } from 'lucide-react';
+import {
+  AlignHorizontalSpaceAround,
+  Anchor,
+  ChevronDown,
+  CircleDot,
+  Focus,
+  Grid3X3,
+  Magnet,
+  Paintbrush,
+  ScanLine,
+} from 'lucide-react';
 import type { GizmoMode, SceneCamera, TransformData } from '../store';
 import {
   GAME_RESOLUTION_PRESETS,
@@ -3017,6 +3027,8 @@ export function Viewport(props: {
             <button
               type="button"
               className={scene2D ? 'active' : ''}
+              aria-label="Toggle 2D Scene mode"
+              aria-pressed={scene2D}
               onClick={() => applyScene2D(!scene2D)}
             >
               2D
@@ -3053,29 +3065,28 @@ export function Viewport(props: {
           </div>
           <button
             type="button"
-            className="scene-grid-toggle scene-frame-button"
+            className="scene-grid-toggle scene-icon-button"
             aria-label="Frame selected"
             disabled={props.selected == null}
             title="Frame Selected (F)"
             onClick={props.onFrame}
           >
             <Focus size={13} aria-hidden />
-            <span>Frame</span>
           </button>
           <button
             type="button"
-            className={`scene-grid-toggle${sceneGrid && scene2D ? ' active' : ''}`}
+            className={`scene-grid-toggle scene-icon-button${sceneGrid && scene2D ? ' active' : ''}`}
             aria-label="Toggle 2D grid"
             aria-pressed={sceneGrid && scene2D}
             disabled={!scene2D}
             title="Show the Canvas pixel grid using the Move Snap increment"
             onClick={toggleSceneGrid}
           >
-            Grid
+            <Grid3X3 size={14} aria-hidden />
           </button>
           <button
             type="button"
-            className={`scene-grid-toggle${tilePaintEnabled && selectedTilemap && scene2D ? ' active' : ''}`}
+            className={`scene-grid-toggle scene-icon-button${tilePaintEnabled && selectedTilemap && scene2D ? ' active' : ''}`}
             aria-label="Toggle Tilemap paint brush"
             aria-pressed={tilePaintEnabled && !!selectedTilemap && scene2D}
             disabled={!selectedTilemap || props.playing}
@@ -3085,7 +3096,7 @@ export function Viewport(props: {
               setTilePaintEnabled((enabled) => !enabled);
             }}
           >
-            Tile Brush
+            <Paintbrush size={14} aria-hidden />
           </button>
           {selectedTilemap && (
             <>
@@ -3118,18 +3129,18 @@ export function Viewport(props: {
           )}
           <button
             type="button"
-            className={`scene-grid-toggle${smartGuidesEnabled && scene2D ? ' active' : ''}`}
+            className={`scene-grid-toggle scene-icon-button${smartGuidesEnabled && scene2D ? ' active' : ''}`}
             aria-label="Toggle smart alignment guides"
             aria-pressed={smartGuidesEnabled && scene2D}
             disabled={!scene2D}
             title="Snap moved RectTransforms to Canvas and sibling edges or centers"
             onClick={toggleSmartGuides}
           >
-            Smart
+            <ScanLine size={14} aria-hidden />
           </button>
           <button
             type="button"
-            className={`scene-grid-toggle${pivotEditing && canEditPivot ? ' active' : ''}`}
+            className={`scene-grid-toggle scene-icon-button${pivotEditing && canEditPivot ? ' active' : ''}`}
             aria-label="Edit RectTransform pivot"
             aria-pressed={pivotEditing && canEditPivot}
             disabled={!canEditPivot}
@@ -3140,11 +3151,11 @@ export function Viewport(props: {
               return next;
             })}
           >
-            Pivot
+            <CircleDot size={14} aria-hidden />
           </button>
           <button
             type="button"
-            className={`scene-grid-toggle${anchorEditing && canEditPivot ? ' active' : ''}`}
+            className={`scene-grid-toggle scene-icon-button${anchorEditing && canEditPivot ? ' active' : ''}`}
             aria-label="Edit RectTransform anchors"
             aria-pressed={anchorEditing && canEditPivot}
             disabled={!canEditPivot}
@@ -3155,7 +3166,7 @@ export function Viewport(props: {
               return next;
             })}
           >
-            Anchors
+            <Anchor size={14} aria-hidden />
           </button>
           <div className="scene-snap" ref={snapSettingsElementRef}>
             <div className="scene-snap-buttons">
@@ -3163,10 +3174,11 @@ export function Viewport(props: {
                 type="button"
                 className={snapSettings.enabled ? 'active' : ''}
                 aria-label="Toggle snapping"
+                aria-pressed={snapSettings.enabled}
                 title="Snap RectTransform tools (Ctrl/Cmd enables it for one drag)"
                 onClick={() => updateSnapSettings({ enabled: !snapSettings.enabled })}
               >
-                Snap
+                <Magnet size={14} aria-hidden />
               </button>
               <button
                 type="button"
@@ -3176,7 +3188,7 @@ export function Viewport(props: {
                 title="Snap settings"
                 onClick={() => setSnapSettingsOpen((open) => !open)}
               >
-                ▾
+                <ChevronDown size={12} aria-hidden />
               </button>
             </div>
             {snapSettingsOpen && (
@@ -3228,7 +3240,8 @@ export function Viewport(props: {
               title="Align selected RectTransforms to the primary selection"
               onClick={() => setAlignOpen((open) => !open)}
             >
-              Align ▾
+              <AlignHorizontalSpaceAround size={14} aria-hidden />
+              <ChevronDown size={11} aria-hidden />
             </button>
             {alignOpen && (
               <div className="scene-align-popup" role="dialog" aria-label="Rect Alignment">
