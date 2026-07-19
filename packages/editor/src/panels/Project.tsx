@@ -67,6 +67,7 @@ const STATIC_FOLDERS = [
 ];
 
 type AssetItem = {
+  assetKey: string;
   folder: string;
   name: string;
   kind: 'animation' | 'animator-controller' | 'avatar-mask' | 'timeline' | 'audio' | 'model' | 'prefab' | 'script' | 'material' | 'shader' | 'scene' | 'sprite' | 'sprite-atlas' | 'texture' | 'spine';
@@ -76,7 +77,19 @@ type AssetItem = {
   script?: ScriptAsset;
   spriteId?: string;
   thumbUrl?: string | null;
+  metaStatus?: ProjectFileAsset['metaStatus'];
+  metaError?: string | null;
 };
+
+function projectAssetKey(
+  asset: ProjectFileAsset | undefined,
+  fallback: string,
+  subresource = '',
+): string {
+  return asset?.metaStatus === 'ready' && asset.guid
+    ? `guid:${asset.guid}${subresource}`
+    : fallback;
+}
 
 export function Project(props: {
   activeScene: string | null;
@@ -122,12 +135,31 @@ export function Project(props: {
     return subscribePing((e) => {
       if (e.kind !== 'asset') return;
       const sprites = listSprites();
-      const projectAsset = listProjectFiles().find((asset) => asset.id === e.assetId);
+      const files = listProjectFiles();
+      const projectAsset = files.find((asset) => asset.id === e.assetId);
       const hit = sprites.find((s) => s.id === (e.spriteId ?? e.assetId));
+      const hitTexturePath = hit ? (hit.textureId ?? hit.relPath).split('#', 1)[0] : null;
+      const hitMetadata = hitTexturePath
+        ? files.find((asset) => asset.relPath.toLocaleLowerCase() === hitTexturePath.toLocaleLowerCase())
+        : undefined;
       if (hit) setFolder(hit.folder);
       else if (projectAsset) setFolder(projectAsset.folder);
       else if (e.folder) setFolder(e.folder);
-      const key = hit?.name ?? projectAsset?.name ?? e.assetId.split('/').pop() ?? e.assetId;
+      const key = hit
+        ? projectAssetKey(
+          hitMetadata,
+          `sprite:${hit.id}`,
+          hit.id.includes('#') ? `#${hit.id.slice(hit.id.indexOf('#') + 1)}` : '#base',
+        )
+        : projectAsset
+          ? (projectAsset.kind === 'scene'
+            ? projectAssetKey(projectAsset, `scene:${projectAsset.name.toLocaleLowerCase()}`)
+            : projectAsset.kind === 'script'
+              ? projectAssetKey(projectAsset, `path:${projectAsset.relPath.toLocaleLowerCase()}`)
+              : projectAsset.metaStatus === 'ready' && projectAsset.guid
+                ? `guid:${projectAsset.guid}`
+                : `path:${projectAsset.relPath.toLocaleLowerCase()}`)
+          : `path:${e.assetId.toLocaleLowerCase()}`;
       setSelected(key);
       setPingKey(key);
       window.setTimeout(() => setPingKey((cur) => (cur === key ? null : cur)), 900);
@@ -142,6 +174,9 @@ export function Project(props: {
   const sprites = useMemo(() => listSprites(), [libTick, props.sceneTick]);
   const diskFolders = useMemo(() => listAssetFolders(), [libTick, props.sceneTick]);
   const projectFiles = useMemo(() => listProjectFiles(), [libTick, props.sceneTick]);
+  const projectFilesByPath = useMemo(() => new Map(
+    projectFiles.map((asset) => [asset.relPath.toLocaleLowerCase(), asset]),
+  ), [projectFiles]);
 
   const folders = useMemo(() => {
     const set = new Set([
@@ -152,33 +187,60 @@ export function Project(props: {
     return [...set].sort((a, b) => a.localeCompare(b));
   }, [diskFolders, projectFiles]);
 
-  const sceneAssets: AssetItem[] = scenes.map((s) => ({
-    folder: 'Assets/Scenes',
-    name: sceneFileName(s.name),
-    kind: 'scene',
-    spawn: null,
-    icon: <MapIcon size={24} strokeWidth={1.4} aria-hidden="true" />,
-    sceneName: s.name,
-  }));
+  const sceneAssets: AssetItem[] = scenes.map((s) => {
+    const name = sceneFileName(s.name);
+    const metadata = projectFilesByPath.get(`assets/scenes/${name}`.toLocaleLowerCase());
+    return {
+      assetKey: projectAssetKey(metadata, `scene:${name.toLocaleLowerCase()}`),
+      folder: 'Assets/Scenes',
+      name,
+      kind: 'scene',
+      spawn: null,
+      icon: <MapIcon size={24} strokeWidth={1.4} aria-hidden="true" />,
+      sceneName: s.name,
+      metaStatus: metadata?.metaStatus,
+      metaError: metadata?.metaError,
+    };
+  });
 
-  const scriptAssets: AssetItem[] = scripts.map((s) => ({
-    folder: s.folder,
-    name: s.name,
-    kind: 'script',
-    spawn: null,
-    icon: <FileCode2 size={24} strokeWidth={1.4} aria-hidden="true" />,
-    script: s,
-  }));
+  const scriptAssets: AssetItem[] = scripts.map((s) => {
+    const metadata = s.id.startsWith('project/')
+      ? projectFilesByPath.get(`${s.folder}/${s.name}`.toLocaleLowerCase())
+      : undefined;
+    const fallback = metadata
+      ? `path:${metadata.relPath.toLocaleLowerCase()}`
+      : `script:${s.id}`;
+    return {
+      assetKey: projectAssetKey(metadata, fallback),
+      folder: s.folder,
+      name: s.name,
+      kind: 'script',
+      spawn: null,
+      icon: <FileCode2 size={24} strokeWidth={1.4} aria-hidden="true" />,
+      script: s,
+      metaStatus: metadata?.metaStatus,
+      metaError: metadata?.metaError,
+    };
+  });
 
-  const spriteAssets: AssetItem[] = sprites.map((s: SpriteAsset) => ({
-    folder: s.folder,
-    name: s.name,
-    kind: 'sprite' as const,
-    spawn: null,
-    icon: <ImageIcon size={24} strokeWidth={1.4} aria-hidden="true" />,
-    spriteId: s.id,
-    thumbUrl: spriteAssetUrl(s.id),
-  }));
+  const spriteAssets: AssetItem[] = sprites.map((s: SpriteAsset) => {
+    const texturePath = (s.textureId ?? s.relPath).split('#', 1)[0];
+    const metadata = projectFilesByPath.get(texturePath.toLocaleLowerCase());
+    const marker = s.id.indexOf('#');
+    const subresource = marker >= 0 ? `#${s.id.slice(marker + 1)}` : '#base';
+    return {
+      assetKey: projectAssetKey(metadata, `sprite:${s.id}`, subresource),
+      folder: s.folder,
+      name: s.name,
+      kind: 'sprite' as const,
+      spawn: null,
+      icon: <ImageIcon size={24} strokeWidth={1.4} aria-hidden="true" />,
+      spriteId: s.id,
+      thumbUrl: spriteAssetUrl(s.id),
+      metaStatus: metadata?.metaStatus,
+      metaError: metadata?.metaError,
+    };
+  });
 
   const spriteTexturePaths = new Set(
     sprites.map((sprite) => (sprite.textureId ?? sprite.relPath).toLowerCase()),
@@ -213,6 +275,7 @@ export function Project(props: {
           ? 'prefab'
           : 'spine';
     return {
+      assetKey: projectAssetKey(asset, `path:${asset.relPath.toLocaleLowerCase()}`),
       folder: asset.folder,
       name: asset.name,
       kind,
@@ -243,6 +306,8 @@ export function Project(props: {
               ? <FileJson2 size={24} strokeWidth={1.4} aria-hidden="true" />
               : <Bone size={24} strokeWidth={1.4} aria-hidden="true" />,
       spriteId: asset.id,
+      metaStatus: asset.metaStatus,
+      metaError: asset.metaError,
     };
   });
 
@@ -275,7 +340,10 @@ export function Project(props: {
     void Promise.resolve(props.onRenameScene(old, editValue)).then((ok) => {
       if (ok) {
         const base = trimmed.replace(/\.mscene$/i, '');
-        setSelected(sceneFileName(base));
+        const oldAsset = sceneAssets.find((asset) => asset.sceneName === old);
+        setSelected(oldAsset?.metaStatus === 'ready'
+          ? oldAsset.assetKey
+          : `scene:${sceneFileName(base).toLocaleLowerCase()}`);
       }
     });
   };
@@ -290,7 +358,11 @@ export function Project(props: {
       return;
     }
     void Promise.resolve(props.onDeleteScene(name)).then((ok) => {
-      if (ok) setSelected((current) => (current === sceneFileName(name) ? null : current));
+      if (ok) {
+        const key = sceneAssets.find((asset) => asset.sceneName === name)?.assetKey
+          ?? `scene:${sceneFileName(name).toLocaleLowerCase()}`;
+        setSelected((current) => (current === key ? null : current));
+      }
     });
   };
 
@@ -304,7 +376,7 @@ export function Project(props: {
 
   const onCardClick = (a: AssetItem, ev: MouseEvent) => {
     if (editing) return;
-    setSelected(a.name);
+    setSelected(a.assetKey);
 
     if (a.kind === 'scene' && a.sceneName) {
       const now = Date.now();
@@ -375,7 +447,7 @@ export function Project(props: {
   const onContext = (e: MouseEvent, a: AssetItem) => {
     e.preventDefault();
     if (a.kind !== 'sprite' && a.kind !== 'scene') return;
-    setSelected(a.name);
+    setSelected(a.assetKey);
     setCtx({ x: e.clientX, y: e.clientY, asset: a });
   };
 
@@ -473,16 +545,17 @@ export function Project(props: {
           const isEditing = a.kind === 'scene' && a.sceneName != null && editing === a.sceneName;
           return (
             <div
-              key={`${a.folder}/${a.kind}/${a.spriteId ?? a.script?.id ?? a.name}`}
+              key={a.assetKey}
               ref={(el) => {
-                if (el) cardRefs.current.set(a.name, el);
-                else cardRefs.current.delete(a.name);
+                if (el) cardRefs.current.set(a.assetKey, el);
+                else cardRefs.current.delete(a.assetKey);
               }}
               className={[
                 'asset-card',
-                selected === a.name ? 'selected' : '',
+                selected === a.assetKey ? 'selected' : '',
                 isActiveScene ? 'active-scene' : '',
-                pingKey === a.name ? 'ping' : '',
+                pingKey === a.assetKey ? 'ping' : '',
+                a.metaStatus === 'invalid' || a.metaStatus === 'duplicate' ? 'metadata-problem' : '',
               ]
                 .filter(Boolean)
                 .join(' ')}
@@ -612,6 +685,11 @@ export function Project(props: {
                 <div className="asset-name">{a.name}</div>
               )}
               {isActiveScene && !isEditing && <div className="asset-badge">打开中</div>}
+              {(a.metaStatus === 'invalid' || a.metaStatus === 'duplicate') && (
+                <div className="asset-meta-badge" title={a.metaError ?? 'Asset metadata needs repair'}>
+                  META
+                </div>
+              )}
             </div>
           );
           })}

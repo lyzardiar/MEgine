@@ -1,6 +1,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { spawn } from 'node:child_process';
+import { randomUUID } from 'node:crypto';
 import type { Connect, Plugin, ViteDevServer } from 'vite';
 
 const API = '/__mengine';
@@ -151,10 +152,96 @@ export function mengineFsPlugin(opts: MengineFsOptions | string): Plugin {
     kind: 'animation' | 'animator-controller' | 'avatar-mask' | 'timeline' | 'audio' | 'material' | 'shader' | 'model' | 'prefab' | 'sprite-atlas' | 'texture' | 'spine-json' | 'spine-binary' | 'spine-atlas' | 'scene' | 'script' | 'sprite-import';
     revision: string;
     size: number;
+    guid: string | null;
+    metaStatus: 'ready' | 'auxiliary' | 'invalid' | 'duplicate';
+    metaError: string | null;
   };
 
   function assetFileRevision(stat: fs.Stats): string {
     return `${Math.round(stat.mtimeMs * 1_000).toString(16)}-${stat.size.toString(16)}`;
+  }
+
+  const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+
+  function createAssetMetadata(metadataPath: string, contents: string): void {
+    const temporary = path.join(
+      path.dirname(metadataPath),
+      `.${path.basename(metadataPath)}.${randomUUID()}.tmp`,
+    );
+    try {
+      const descriptor = fs.openSync(temporary, 'wx');
+      try {
+        fs.writeFileSync(descriptor, contents, 'utf8');
+        fs.fsyncSync(descriptor);
+      } finally {
+        fs.closeSync(descriptor);
+      }
+      fs.linkSync(temporary, metadataPath);
+    } finally {
+      if (fs.existsSync(temporary)) fs.unlinkSync(temporary);
+    }
+  }
+
+  function assetMetadata(asset: string, kind: ProjectFileAsset['kind']): {
+    guid: string | null;
+    metaStatus: ProjectFileAsset['metaStatus'];
+    metaError: string | null;
+  } {
+    if (kind === 'sprite-import') {
+      return { guid: null, metaStatus: 'auxiliary', metaError: null };
+    }
+    const metadataPath = `${asset}.meta`;
+    if (!fs.existsSync(metadataPath)) {
+      const guid = randomUUID().toLowerCase();
+      const contents = `${JSON.stringify({ schemaVersion: 1, guid, importer: kind }, null, 2)}\n`;
+      try {
+        createAssetMetadata(metadataPath, contents);
+        return { guid, metaStatus: 'ready', metaError: null };
+      } catch (error) {
+        if (!fs.existsSync(metadataPath)) {
+          return {
+            guid: null,
+            metaStatus: 'invalid',
+            metaError: `cannot create ${path.basename(metadataPath)}: ${String(error)}`,
+          };
+        }
+      }
+    }
+    try {
+      const metadata = fs.lstatSync(metadataPath);
+      if (metadata.isSymbolicLink() || !metadata.isFile()) {
+        throw new Error('metadata must be a regular non-symlink file');
+      }
+      if (metadata.size > 1024 * 1024) throw new Error('metadata exceeds 1 MiB');
+      const parsed = JSON.parse(fs.readFileSync(metadataPath, 'utf8')) as Record<string, unknown>;
+      if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) {
+        throw new Error('metadata root must be an object');
+      }
+      const mengine = parsed.mengine && typeof parsed.mengine === 'object' && !Array.isArray(parsed.mengine)
+        ? parsed.mengine as Record<string, unknown>
+        : null;
+      const rawGuid = parsed.guid ?? parsed.uuid ?? mengine?.guid;
+      if (
+        typeof rawGuid !== 'string'
+        || !UUID_PATTERN.test(rawGuid)
+        || rawGuid === '00000000-0000-0000-0000-000000000000'
+      ) {
+        throw new Error('metadata does not contain a valid guid or uuid');
+      }
+      if (
+        parsed.schemaVersion != null
+        && (!Number.isSafeInteger(parsed.schemaVersion) || Number(parsed.schemaVersion) !== 1)
+      ) {
+        throw new Error(`unsupported metadata schema version ${String(parsed.schemaVersion)}`);
+      }
+      return { guid: rawGuid.toLowerCase(), metaStatus: 'ready', metaError: null };
+    } catch (error) {
+      return {
+        guid: null,
+        metaStatus: 'invalid',
+        metaError: `${path.basename(metadataPath)}: ${error instanceof Error ? error.message : String(error)}`,
+      };
+    }
   }
 
   function listTextures(): { sprites: TextureAsset[]; folders: string[] } {
@@ -318,6 +405,7 @@ export function mengineFsPlugin(opts: MengineFsOptions | string): Plugin {
                       : null;
         if (!kind) continue;
         const relPath = `Assets/${path.relative(assetsRoot, abs).replace(/\\/g, '/')}`;
+        const metadata = assetMetadata(abs, kind);
         assets.push({
           id: relPath,
           name: file,
@@ -326,10 +414,26 @@ export function mengineFsPlugin(opts: MengineFsOptions | string): Plugin {
           kind,
           revision: assetFileRevision(stat),
           size: stat.size,
+          ...metadata,
         });
       }
     };
     walk(assetsRoot, 'Assets');
+    const owners = new Map<string, ProjectFileAsset[]>();
+    for (const asset of assets) {
+      if (asset.metaStatus !== 'ready' || !asset.guid) continue;
+      const group = owners.get(asset.guid) ?? [];
+      group.push(asset);
+      owners.set(asset.guid, group);
+    }
+    for (const [guid, group] of owners) {
+      if (group.length < 2) continue;
+      const files = group.map((asset) => asset.relPath).sort().join(', ');
+      for (const asset of group) {
+        asset.metaStatus = 'duplicate';
+        asset.metaError = `asset GUID ${guid} is shared by multiple files: ${files}`;
+      }
+    }
     return assets.sort((a, b) => a.relPath.localeCompare(b.relPath));
   }
 
@@ -438,6 +542,35 @@ export function mengineFsPlugin(opts: MengineFsOptions | string): Plugin {
     return scenes.sort((left, right) => left.localeCompare(right));
   }
 
+  function sameExistingFile(left: string, right: string): boolean {
+    if (!fs.existsSync(left) || !fs.existsSync(right)) return false;
+    const leftReal = fs.realpathSync(left);
+    const rightReal = fs.realpathSync(right);
+    return process.platform === 'win32'
+      ? leftReal.toLocaleLowerCase() === rightReal.toLocaleLowerCase()
+      : leftReal === rightReal;
+  }
+
+  function renameFileCaseAware(source: string, target: string): void {
+    if (source === target) return;
+    if (!fs.existsSync(target)) {
+      fs.renameSync(source, target);
+      return;
+    }
+    if (!sameExistingFile(source, target)) throw new Error(`rename target already exists: ${target}`);
+    const temporary = path.join(
+      path.dirname(source),
+      `.asset-rename.${process.pid}.${Date.now()}.${randomUUID()}.tmp`,
+    );
+    fs.renameSync(source, temporary);
+    try {
+      fs.renameSync(temporary, target);
+    } catch (error) {
+      fs.renameSync(temporary, source);
+      throw error;
+    }
+  }
+
   function normalizeBuildScene(value: unknown): string | null {
     if (typeof value !== 'string') return null;
     const segments = value.trim().replace(/\\/g, '/').split('/').filter(Boolean);
@@ -464,6 +597,7 @@ export function mengineFsPlugin(opts: MengineFsOptions | string): Plugin {
       return null;
     }
     const relative = segments.join('/');
+    if (relative.toLocaleLowerCase().endsWith('.meta')) return null;
     const absolute = path.resolve(projectRoot, ...segments);
     const fromRoot = path.relative(projectRoot, absolute);
     if (fromRoot.startsWith(`..${path.sep}`) || fromRoot === '..' || !fs.existsSync(absolute)) {
@@ -876,7 +1010,18 @@ export function mengineFsPlugin(opts: MengineFsOptions | string): Plugin {
         const src = scenePath(from);
         const dst = scenePath(to);
         if (!fs.existsSync(src)) return sendJson(res, 404, { error: 'not found' });
-        if (from !== to && fs.existsSync(dst)) return sendJson(res, 409, { error: 'exists' });
+        if (from !== to && fs.existsSync(dst) && !sameExistingFile(src, dst)) {
+          return sendJson(res, 409, { error: 'exists' });
+        }
+        const sourceMetadata = assetMetadata(src, 'scene');
+        if (sourceMetadata.metaStatus !== 'ready') {
+          return sendJson(res, 409, { error: sourceMetadata.metaError ?? 'invalid scene metadata' });
+        }
+        const srcMeta = `${src}.meta`;
+        const dstMeta = `${dst}.meta`;
+        if (from !== to && fs.existsSync(dstMeta) && !sameExistingFile(srcMeta, dstMeta)) {
+          return sendJson(res, 409, { error: 'scene metadata already exists' });
+        }
         let payload = fs.readFileSync(src, 'utf8');
         try {
           const data = JSON.parse(payload);
@@ -885,8 +1030,24 @@ export function mengineFsPlugin(opts: MengineFsOptions | string): Plugin {
         } catch {
           /* keep raw */
         }
-        fs.writeFileSync(dst, payload, 'utf8');
-        if (from !== to) fs.unlinkSync(src);
+        if (from !== to) {
+          renameFileCaseAware(src, dst);
+          try {
+            renameFileCaseAware(srcMeta, dstMeta);
+          } catch (error) {
+            renameFileCaseAware(dst, src);
+            throw error;
+          }
+        }
+        try {
+          fs.writeFileSync(dst, payload, 'utf8');
+        } catch (error) {
+          if (from !== to) {
+            renameFileCaseAware(dstMeta, srcMeta);
+            renameFileCaseAware(dst, src);
+          }
+          throw error;
+        }
         if (readActive() === from) writeActive(to);
         return sendJson(res, 200, { ok: true, name: to });
       }
@@ -912,7 +1073,15 @@ export function mengineFsPlugin(opts: MengineFsOptions | string): Plugin {
         }
 
         if (method === 'DELETE') {
+          const metadata = `${file}.meta`;
+          if (fs.existsSync(metadata)) {
+            const stat = fs.lstatSync(metadata);
+            if (stat.isSymbolicLink() || !stat.isFile()) {
+              return sendJson(res, 409, { error: 'scene metadata must be a regular file' });
+            }
+          }
           if (fs.existsSync(file)) fs.unlinkSync(file);
+          if (fs.existsSync(metadata)) fs.unlinkSync(metadata);
           if (readActive() === name) writeActive(null);
           return sendJson(res, 200, { ok: true });
         }

@@ -2,6 +2,7 @@
 
 mod animation;
 mod animator;
+mod asset_sidecar;
 mod avatar_mask;
 mod gltf_import;
 mod material;
@@ -22,6 +23,10 @@ pub use animator::{
     AnimatorBlendTreeChild, AnimatorCondition, AnimatorConditionMode, AnimatorController,
     AnimatorLayer, AnimatorLayerBlendMode, AnimatorLayerMotion, AnimatorLayerTimingMode,
     AnimatorParameter, AnimatorParameterKind, AnimatorState, AnimatorTransition,
+};
+pub use asset_sidecar::{
+    asset_sidecar_path, ensure_asset_sidecar, parse_asset_sidecar, read_asset_sidecar,
+    AssetSidecar, ASSET_SIDECAR_SCHEMA_VERSION,
 };
 pub use avatar_mask::{load_avatar_mask, parse_avatar_mask, target_matches_mask, AvatarMaskAsset};
 pub use gltf_import::{load_gltf_mesh_data, MeshData};

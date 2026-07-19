@@ -147,6 +147,10 @@ function portablePath(path: string): string {
   return path.split(sep).join('/');
 }
 
+function isEditorAssetMetadata(path: string): boolean {
+  return path.toLowerCase().endsWith('.meta');
+}
+
 function isPathInside(parent: string, candidate: string): boolean {
   const rel = relative(resolve(parent), resolve(candidate));
   return rel === '' || (!rel.startsWith(`..${sep}`) && rel !== '..' && !isAbsolute(rel));
@@ -235,6 +239,9 @@ export function readGameProject(projectDir: string): GameProjectManifest {
       throw new Error(`invalid alwaysInclude path: ${value}`);
     }
     const path = segments.join('/');
+    if (isEditorAssetMetadata(path)) {
+      throw new Error(`alwaysInclude cannot package editor asset metadata: ${path}`);
+    }
     const absolute = resolveProjectPath(root, path, 'alwaysInclude');
     if (!roots.some((contentRoot) => isPathInside(contentRoot, absolute))) {
       throw new Error(`alwaysInclude must be stored under Assets or Scripts: ${path}`);
@@ -1247,7 +1254,7 @@ function scanBuildAssetDependencies(
         }
         return;
       }
-      if (stats.isFile() && !/\.tsx?$/i.test(candidate)) {
+      if (stats.isFile() && !/\.tsx?$/i.test(candidate) && !isEditorAssetMetadata(candidate)) {
         enqueue(
           portablePath(relative(root, candidate)),
           'project.json alwaysInclude',
@@ -1648,7 +1655,9 @@ function copyTree(
     return stats;
   }
   if (sourceStat.isFile()) {
-    if (/\.tsx?$/i.test(source)) return { strippedEditorEntities: 0 };
+    if (/\.tsx?$/i.test(source) || isEditorAssetMetadata(source)) {
+      return { strippedEditorEntities: 0 };
+    }
     mkdirSync(dirname(destination), { recursive: true });
     if (/\.mscene$/i.test(source)) {
       return copyPlayerArtifactWithCache(
@@ -1922,7 +1931,7 @@ function collectPackageCandidateFiles(
     const path = join(directory, entry.name);
     if (entry.isSymbolicLink()) continue;
     if (entry.isDirectory()) collectPackageCandidateFiles(path, output, isCancelled);
-    else if (entry.isFile() && !/\.tsx?$/i.test(entry.name)) {
+    else if (entry.isFile() && !/\.tsx?$/i.test(entry.name) && !isEditorAssetMetadata(entry.name)) {
       output.push({ path, size: statSync(path).size });
     }
   }

@@ -1199,3 +1199,15 @@ Rust workspace 检查现在零警告通过；Tauri Host 17/17 常规测试与 1/
 - 第一遍自省补齐稳定读、上传完成后再检查、clean 重载前清理 Undo，以及独立 Dock/Save All 仍必须受 Host Revision 门禁。第二遍自省补齐工程切换基线隔离、Scene/Script/sidecar 漏扫、Sprite slice/sidecar 路径映射、场景保存冲突和可执行的冲突决策，而不是只在 Console 打一条警告。
 
 这一批完成的是本地单用户工程的外部编辑安全底线，还不是完整 Asset Database。轮询后续应升级为原生 Watcher + 事件合并，并继续实现 ProjectSettings/project.json 监听、统一 Document Service 冲突栏、文本三方合并/差异视图、二进制资产重新导入队列、GUID/Meta、依赖图失效传播、批量移动/重命名修复引用、版本控制状态和可恢复回收站。
+
+## 100. 2026-07-19 稳定资产 GUID 与编辑器元数据边界
+
+- `mengine-assets` 新增版本化 `.meta` sidecar：受管资产旁保存 schema v1、稳定 UUID GUID 与 importer 类型。缺失 sidecar 时使用排他创建并落盘同步，进程重启、重新扫描和 Project UI 刷新不会更换身份；现有 Cocos/第三方 metadata 的顶层 `uuid` 可直接作为稳定身份读取，原文件保持字节不变。已有 metadata 若损坏、超出 1 MiB、是符号链接/非普通文件或缺少有效 GUID，编辑器明确标记 `invalid`，绝不为了“自动修好”而覆盖用户/外部工具数据。
+- Tauri 与 Vite 资产索引同时返回 `guid/metaStatus/metaError`，并在完整扫描后检测复制 sidecar 导致的重复 GUID。重复组内所有资产都标为 `duplicate`，Project 卡片使用方形 `META` 警示与完整错误提示；正常资产的 React 选择键改用 GUID，名称变化不会让选中态被当成另一份资产。Sprite Import `.sprite.json` 是纹理的辅助导入数据，标记为 `auxiliary`，不会错误生成第二个独立身份。
+- 核心 `AssetRegistry::register_persisted` 已读取同一 sidecar，而不是每次启动重新随机生成 `AssetId`；同一 Registry 内的 GUID 冲突会拒绝注册。原 `scan_hot_reload` 从“每次返回全部存在资产”的占位实现改成按文件修改时间与大小跟踪，只报告一次修改或删除 Revision。旧 `register` 仅保留给虚拟/生成资产兼容调用，真实磁盘资产应走持久注册入口。
+- Scene Rename 会先保证来源 metadata 健康，再以大小写安全方式同时移动 `.mscene` 与 `.mscene.meta`；内容或 `project.json` 后续写入失败时两者共同回滚。Scene Delete 在删除正文前验证 sidecar 类型并同步清理，Vite 开发桥保持同一约束。回归测试固定了普通重命名、仅大小写重命名、GUID 不变与删除无孤儿 sidecar，避免编辑器自身生命周期操作破坏新身份层。
+- Player 构建把 `.meta` 定义为纯编辑器数据：All Assets 复制、Referenced 模式候选/遗漏统计、目录 `alwaysInclude` 遍历均跳过 sidecar，显式把 `.meta` 填入 `alwaysInclude` 会在发布前失败。这样 GUID 数据参与编辑器资产数据库与版本控制，但不污染 Player 体积、内容分类、增量比较或可复现 Content Hash。
+
+第一遍自省发现“扫描生成 GUID”仍会被现有 Scene Rename/Delete 破坏，因而补齐 sidecar 联动与失败回滚，而不是把孤儿 metadata 留给后续清理。第二遍自省发现核心 `AssetRegistry` 仍然按进程随机注册且所谓 Hot Reload 会把所有资产永久视为 dirty，已改为持久 GUID 注册、重复拒绝和 Revision 增量检测；同时补测 metadata 身份/健康变化能触发 Project 索引失效。
+
+这一批只是成熟 Asset Database 的身份地基，引用内容当前仍以 `Assets/...` 路径序列化。下一阶段必须建立 GUID 到当前路径的持久索引、统一依赖图与反向引用查询，再实现带预览和事务回滚的通用 Rename/Move/Delete/Duplicate、文本引用迁移、二进制重导入、回收站、缺失引用修复和版本控制协作；在这些完成前，不应向用户开放无保护的任意资产重命名。

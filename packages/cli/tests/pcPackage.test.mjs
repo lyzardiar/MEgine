@@ -60,6 +60,10 @@ function fixture(name) {
 test('buildPcPackage creates a directly launchable, hashed project bundle', () => {
   const paths = fixture('success');
   try {
+    writeFileSync(
+      join(paths.project, 'Assets', 'Textures', 'pixel.bin.meta'),
+      '{"schemaVersion":1,"guid":"bf914747-8c6a-418f-b74f-49d49114f9a2"}',
+    );
     writeFileSync(join(paths.project, 'Assets', 'Scenes', 'Level2.mscene'), JSON.stringify({
       version: 1,
       name: 'Level2',
@@ -147,6 +151,8 @@ test('buildPcPackage creates a directly launchable, hashed project bundle', () =
     assert.equal(packagedLevel.world.entities[0].components.__MEnginePrefab, undefined);
     assert.equal(readFileSync(join(paths.output, manifest.executable), 'utf8'), 'runtime-binary');
     assert.equal(existsSync(join(paths.output, 'Assets', 'Textures', 'pixel.bin')), true);
+    assert.equal(existsSync(join(paths.output, 'Assets', 'Textures', 'pixel.bin.meta')), false);
+    assert.equal(manifest.files.some((file) => file.path.endsWith('.meta')), false);
     assert.deepEqual(
       JSON.parse(readFileSync(join(paths.output, 'ProjectSettings', 'sorting-layers.json'), 'utf8')),
       {
@@ -165,6 +171,28 @@ test('buildPcPackage creates a directly launchable, hashed project bundle', () =
       assert.equal(entry.size, bytes.length);
       assert.equal(entry.sha256, createHash('sha256').update(bytes).digest('hex'));
     }
+  } finally {
+    rmSync(paths.root, { recursive: true, force: true });
+  }
+});
+
+test('buildPcPackage rejects editor metadata as an explicit runtime root', () => {
+  const paths = fixture('metadata-root');
+  try {
+    const metadata = join(paths.project, 'Assets', 'Textures', 'pixel.bin.meta');
+    writeFileSync(metadata, '{"schemaVersion":1,"guid":"bf914747-8c6a-418f-b74f-49d49114f9a2"}');
+    const projectPath = join(paths.project, 'project.json');
+    const project = JSON.parse(readFileSync(projectPath, 'utf8'));
+    project.assetMode = 'referenced';
+    project.alwaysInclude = ['Assets/Textures/pixel.bin.meta'];
+    writeFileSync(projectPath, JSON.stringify(project));
+    assert.throws(() => buildPcPackage({
+      projectDir: paths.project,
+      outputDir: paths.output,
+      runtimePath: paths.runtime,
+      engineVersion: 'test-engine',
+    }), /cannot package editor asset metadata/);
+    assert.equal(existsSync(paths.output), false);
   } finally {
     rmSync(paths.root, { recursive: true, force: true });
   }

@@ -2635,6 +2635,10 @@ body.insp-scrubbing * {
   outline: 1px solid #7ec8ff;
   background: rgba(46, 90, 130, 0.35);
 }
+.asset-card.metadata-problem {
+  outline: 1px solid #bd7931;
+  background: rgba(116, 66, 22, 0.24);
+}
 
 .asset-badge {
   font-size: 10px;
@@ -2681,6 +2685,17 @@ body.insp-scrubbing * {
   overflow-wrap: anywhere;
   -webkit-box-orient: vertical;
   -webkit-line-clamp: 2;
+}
+
+.asset-meta-badge {
+  padding: 1px 4px;
+  border: 1px solid #bd7931;
+  color: #ffc477;
+  background: #3b2a19;
+  font-size: 9px;
+  font-weight: 700;
+  line-height: 1.2;
+  letter-spacing: 0.04em;
 }
 
 .asset-rename {

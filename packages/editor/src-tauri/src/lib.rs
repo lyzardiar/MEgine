@@ -47,12 +47,15 @@ impl Drop for ActiveBuildGuard {
 #[serde(rename_all = "camelCase")]
 struct ProjectAssetInfo {
     id: String,
+    guid: Option<String>,
     name: String,
     folder: String,
     rel_path: String,
     kind: String,
     revision: String,
     size: u64,
+    meta_status: String,
+    meta_error: Option<String>,
 }
 
 #[derive(serde::Serialize)]
@@ -1830,6 +1833,34 @@ fn collect_project_assets(root: &Path, dir: &Path, output: &mut Vec<ProjectAsset
     }
 }
 
+fn mark_duplicate_project_asset_guids(assets: &mut [ProjectAssetInfo]) {
+    let mut owners = BTreeMap::<String, Vec<usize>>::new();
+    for (index, asset) in assets.iter().enumerate() {
+        if asset.meta_status == "ready" {
+            if let Some(guid) = &asset.guid {
+                owners.entry(guid.clone()).or_default().push(index);
+            }
+        }
+    }
+    for (guid, indexes) in owners {
+        if indexes.len() < 2 {
+            continue;
+        }
+        let mut paths = indexes
+            .iter()
+            .map(|index| assets[*index].rel_path.clone())
+            .collect::<Vec<_>>();
+        paths.sort();
+        let paths = paths.join(", ");
+        for index in indexes {
+            assets[index].meta_status = "duplicate".into();
+            assets[index].meta_error = Some(format!(
+                "asset GUID {guid} is shared by multiple files: {paths}"
+            ));
+        }
+    }
+}
+
 fn project_asset_info(root: &Path, path: &Path) -> Option<ProjectAssetInfo> {
     let metadata = std::fs::symlink_metadata(path).ok()?;
     if metadata.file_type().is_symlink() || !metadata.is_file() {
@@ -1843,14 +1874,25 @@ fn project_asset_info(root: &Path, path: &Path) -> Option<ProjectAssetInfo> {
         .parent()
         .map(|parent| parent.to_string_lossy().replace('\\', "/"))
         .unwrap_or_else(|| "Assets".into());
+    let (guid, meta_status, meta_error) = if kind == "sprite-import" {
+        (None, "auxiliary".to_string(), None)
+    } else {
+        match mengine_assets::ensure_asset_sidecar(path, kind) {
+            Ok(sidecar) => (Some(sidecar.guid.0.to_string()), "ready".to_string(), None),
+            Err(error) => (None, "invalid".to_string(), Some(error)),
+        }
+    };
     Some(ProjectAssetInfo {
         id: rel_path.clone(),
+        guid,
         name,
         folder,
         rel_path,
         kind: kind.into(),
         revision: project_file_revision(&metadata),
         size: metadata.len(),
+        meta_status,
+        meta_error,
     })
 }
 
@@ -2739,6 +2781,7 @@ fn list_project_assets(state: State<'_, AppState>) -> Result<Vec<ProjectAssetInf
         .map_err(|error| error.to_string())?;
     let mut assets = Vec::new();
     collect_project_assets(&root, &root.join("Assets"), &mut assets);
+    mark_duplicate_project_asset_guids(&mut assets);
     assets.sort_by(|left, right| left.rel_path.cmp(&right.rel_path));
     Ok(assets)
 }
@@ -3759,7 +3802,21 @@ mod tests {
 
         let mut found = Vec::new();
         collect_project_assets(&root, &assets, &mut found);
-        std::fs::remove_dir_all(root).unwrap();
+        mark_duplicate_project_asset_guids(&mut found);
+        let first_guids = found
+            .iter()
+            .map(|asset| (asset.rel_path.clone(), asset.guid.clone()))
+            .collect::<BTreeMap<_, _>>();
+        let mut rescanned = Vec::new();
+        collect_project_assets(&root, &assets, &mut rescanned);
+        mark_duplicate_project_asset_guids(&mut rescanned);
+        assert_eq!(
+            first_guids,
+            rescanned
+                .iter()
+                .map(|asset| (asset.rel_path.clone(), asset.guid.clone()))
+                .collect::<BTreeMap<_, _>>()
+        );
         found.sort_by(|left, right| left.name.cmp(&right.name));
 
         assert_eq!(found.len(), 17);
@@ -3812,6 +3869,61 @@ mod tests {
             .iter()
             .any(|asset| asset.name == "Main.ts" && asset.kind == "script"));
         assert!(found.iter().all(|asset| !asset.revision.is_empty()));
+        assert!(found.iter().all(|asset| asset.kind == "sprite-import"
+            || (asset.guid.is_some() && asset.meta_status == "ready")));
+        assert_eq!(
+            std::fs::read_dir(&assets)
+                .unwrap()
+                .flatten()
+                .filter(|entry| entry.file_name().to_string_lossy().ends_with(".meta"))
+                .count(),
+            16
+        );
+        std::fs::remove_dir_all(root).unwrap();
+    }
+
+    #[test]
+    fn project_asset_scan_reports_invalid_and_duplicate_metadata() {
+        let root = std::env::temp_dir().join(format!(
+            "mengine-asset-metadata-scan-{}-{}",
+            std::process::id(),
+            SystemTime::now()
+                .duration_since(UNIX_EPOCH)
+                .unwrap()
+                .as_nanos()
+        ));
+        let assets = root.join("Assets");
+        std::fs::create_dir_all(&assets).unwrap();
+        for name in ["First.mmat", "Second.mmat", "Broken.mmat"] {
+            std::fs::write(assets.join(name), b"{}").unwrap();
+        }
+        let duplicate = br#"{"schemaVersion":1,"guid":"bf914747-8c6a-418f-b74f-49d49114f9a2","importer":"material"}"#;
+        std::fs::write(assets.join("First.mmat.meta"), duplicate).unwrap();
+        std::fs::write(assets.join("Second.mmat.meta"), duplicate).unwrap();
+        std::fs::write(assets.join("Broken.mmat.meta"), b"broken").unwrap();
+
+        let mut found = Vec::new();
+        collect_project_assets(&root, &assets, &mut found);
+        mark_duplicate_project_asset_guids(&mut found);
+        assert_eq!(
+            found
+                .iter()
+                .filter(|asset| asset.meta_status == "duplicate")
+                .count(),
+            2
+        );
+        let broken = found
+            .iter()
+            .find(|asset| asset.name == "Broken.mmat")
+            .unwrap();
+        assert_eq!(broken.meta_status, "invalid");
+        assert!(broken.guid.is_none());
+        assert!(broken.meta_error.as_deref().unwrap().contains("valid JSON"));
+        assert_eq!(
+            std::fs::read(assets.join("Broken.mmat.meta")).unwrap(),
+            b"broken"
+        );
+        std::fs::remove_dir_all(root).unwrap();
     }
 
     #[test]

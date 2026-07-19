@@ -5,6 +5,7 @@ const DEV_ASSET_API = '/__mengine/asset';
 
 export type ProjectFileAsset = {
   id: string;
+  guid: string | null;
   name: string;
   folder: string;
   relPath: string;
@@ -28,6 +29,8 @@ export type ProjectFileAsset = {
     | 'sprite-import';
   revision: string;
   size: number;
+  metaStatus: 'ready' | 'auxiliary' | 'invalid' | 'duplicate';
+  metaError: string | null;
 };
 
 export type ProjectAssetChange = {
@@ -86,10 +89,16 @@ export function acknowledgeProjectFileWrite(relativePath: string): void {
 }
 
 function normalizeListedAsset(asset: ProjectFileAsset): ProjectFileAsset {
+  const metaStatus = ['ready', 'auxiliary', 'invalid', 'duplicate'].includes(asset.metaStatus)
+    ? asset.metaStatus
+    : 'invalid';
   return {
     ...asset,
+    guid: typeof asset.guid === 'string' && asset.guid ? asset.guid.toLowerCase() : null,
     revision: typeof asset.revision === 'string' ? asset.revision : '',
     size: Number.isFinite(asset.size) && asset.size >= 0 ? asset.size : 0,
+    metaStatus,
+    metaError: typeof asset.metaError === 'string' && asset.metaError ? asset.metaError : null,
   };
 }
 
@@ -133,6 +142,9 @@ export function diffProjectFiles(
       prior.revision !== asset.revision
       || prior.kind !== asset.kind
       || prior.relPath !== asset.relPath
+      || prior.guid !== asset.guid
+      || prior.metaStatus !== asset.metaStatus
+      || prior.metaError !== asset.metaError
     ) {
       changes.push({
         type: 'modified',

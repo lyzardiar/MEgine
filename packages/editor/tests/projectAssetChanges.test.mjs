@@ -2,16 +2,19 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 import { diffProjectFiles } from '../src/projectAssets.ts';
 
-function asset(relPath, revision, kind = 'material') {
+function asset(relPath, revision, kind = 'material', guid = 'bf914747-8c6a-418f-b74f-49d49114f9a2') {
   const segments = relPath.split('/');
   return {
     id: relPath,
+    guid,
     name: segments.at(-1),
     folder: segments.slice(0, -1).join('/'),
     relPath,
     kind,
     revision,
     size: 10,
+    metaStatus: 'ready',
+    metaError: null,
   };
 }
 
@@ -34,6 +37,20 @@ test('project asset changes distinguish add modify and delete deterministically'
       ['added', 'Assets/New.mmat'],
     ],
   );
+});
+
+test('asset metadata identity and health changes invalidate the project index', () => {
+  const before = asset('Assets/Materials/Hero.mmat', 'same');
+  const changedGuid = asset(
+    'Assets/Materials/Hero.mmat',
+    'same',
+    'material',
+    '55081cc1-f44d-49fc-8ada-ee889a26ee36',
+  );
+  assert.equal(diffProjectFiles([before], [changedGuid])[0]?.type, 'modified');
+
+  const invalid = { ...before, guid: null, metaStatus: 'invalid', metaError: 'broken metadata' };
+  assert.equal(diffProjectFiles([before], [invalid])[0]?.type, 'modified');
 });
 
 test('case-only path renames remain visible as a modification', () => {

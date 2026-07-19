@@ -394,6 +394,19 @@ impl ProjectSession {
                 )));
             }
         }
+        mengine_assets::ensure_asset_sidecar(&source, "scene").map_err(|error| {
+            ProjectError::InvalidProject(format!(
+                "cannot preserve scene asset identity for {old_portable}: {error}"
+            ))
+        })?;
+        let source_sidecar = mengine_assets::asset_sidecar_path(&source);
+        let target_sidecar = mengine_assets::asset_sidecar_path(&target);
+        if target_sidecar.exists() && !same_existing_file(&source_sidecar, &target_sidecar)? {
+            return Err(ProjectError::InvalidProject(format!(
+                "scene metadata already exists: {}",
+                target_sidecar.display()
+            )));
+        }
         let original_scene_bytes = std::fs::read(&source)?;
         let mut renamed_scene: serde_json::Value = serde_json::from_slice(&original_scene_bytes)?;
         let renamed_scene_object = renamed_scene.as_object_mut().ok_or_else(|| {
@@ -440,10 +453,22 @@ impl ProjectSession {
         };
 
         rename_file_case_aware(&source, &target)?;
-        if let Err(error) = write_replace_synced(&target, &renamed_scene_bytes) {
+        if let Err(error) = rename_file_case_aware(&source_sidecar, &target_sidecar) {
             if let Err(rollback) = rename_file_case_aware(&target, &source) {
                 return Err(ProjectError::InvalidProject(format!(
-                    "scene rename could not update the scene name ({error}) and rollback failed ({rollback})"
+                    "scene metadata rename failed ({error}) and scene rollback failed ({rollback})"
+                )));
+            }
+            return Err(ProjectError::Io(error));
+        }
+        if let Err(error) = write_replace_synced(&target, &renamed_scene_bytes) {
+            let metadata_rollback = rename_file_case_aware(&target_sidecar, &source_sidecar);
+            let scene_rollback = rename_file_case_aware(&target, &source);
+            if metadata_rollback.is_err() || scene_rollback.is_err() {
+                return Err(ProjectError::InvalidProject(format!(
+                    "scene rename could not update the scene name ({error}) and rollback failed (metadata: {:?}, scene: {:?})",
+                    metadata_rollback.err(),
+                    scene_rollback.err()
                 )));
             }
             return Err(ProjectError::Io(error));
@@ -453,10 +478,15 @@ impl ProjectSession {
                 write_replace_synced(&self.project_root.join("project.json"), &bytes)
             {
                 let content_rollback = write_replace_synced(&target, &original_scene_bytes);
+                let metadata_rollback = rename_file_case_aware(&target_sidecar, &source_sidecar);
                 let path_rollback = rename_file_case_aware(&target, &source);
-                if let Err(rollback) = content_rollback.and(path_rollback) {
+                if content_rollback.is_err() || metadata_rollback.is_err() || path_rollback.is_err()
+                {
                     return Err(ProjectError::InvalidProject(format!(
-                        "scene rename could not update project.json ({error}) and rollback failed ({rollback})"
+                        "scene rename could not update project.json ({error}) and rollback failed (content: {:?}, metadata: {:?}, scene: {:?})",
+                        content_rollback.err(),
+                        metadata_rollback.err(),
+                        path_rollback.err()
                     )));
                 }
                 return Err(ProjectError::Io(error));
@@ -501,7 +531,20 @@ impl ProjectSession {
             return Err(ProjectError::InvalidPath(relative.display().to_string()));
         }
         let absolute = self.resolve_existing(&relative)?;
+        let sidecar = mengine_assets::asset_sidecar_path(&absolute);
+        if sidecar.exists() {
+            let metadata = std::fs::symlink_metadata(&sidecar)?;
+            if metadata.file_type().is_symlink() || !metadata.is_file() {
+                return Err(ProjectError::InvalidProject(format!(
+                    "scene metadata must be a regular file before deletion: {}",
+                    sidecar.display()
+                )));
+            }
+        }
         std::fs::remove_file(absolute)?;
+        if sidecar.exists() {
+            std::fs::remove_file(sidecar)?;
+        }
         self.revision = self.revision.saturating_add(1);
         Ok(self.snapshot())
     }
@@ -1236,6 +1279,11 @@ fn normalize_build_asset_paths(
             return Err(ProjectError::InvalidPath(relative.display().to_string()));
         }
         let portable = relative.to_string_lossy().replace('\\', "/");
+        if portable.to_lowercase().ends_with(".meta") {
+            return Err(ProjectError::InvalidProject(format!(
+                "alwaysInclude cannot package editor asset metadata: {portable}"
+            )));
+        }
         if !seen.insert(portable.to_lowercase()) {
             return Err(ProjectError::InvalidProject(format!(
                 "duplicate alwaysInclude path: {portable}"
@@ -1604,6 +1652,12 @@ mod tests {
         std::fs::copy(&main, root.join("Assets/Scenes/Level2.mscene")).unwrap();
         std::fs::copy(&main, root.join("Assets/Scenes/Scratch.mscene")).unwrap();
         std::fs::copy(&main, root.join("Assets/Scenes/Collision.mscene")).unwrap();
+        let main_guid = mengine_assets::ensure_asset_sidecar(&main, "scene")
+            .unwrap()
+            .guid;
+        let scratch = root.join("Assets/Scenes/Scratch.mscene");
+        let scratch_sidecar = mengine_assets::asset_sidecar_path(&scratch);
+        mengine_assets::ensure_asset_sidecar(&scratch, "scene").unwrap();
         let mut session = ProjectSession::open(&root).unwrap();
         session
             .save_build_scenes(vec![
@@ -1621,8 +1675,15 @@ mod tests {
             Some("Assets/Scenes/Renamed.mscene")
         );
         assert!(!root.join("Assets/Scenes/Main.mscene").exists());
+        assert!(!root.join("Assets/Scenes/Main.mscene.meta").exists());
         let renamed_path = root.join("Assets/Scenes/Renamed.mscene");
         assert!(renamed_path.is_file());
+        assert_eq!(
+            mengine_assets::read_asset_sidecar(&renamed_path, "scene")
+                .unwrap()
+                .guid,
+            main_guid
+        );
         let renamed_scene: serde_json::Value =
             serde_json::from_slice(&std::fs::read(&renamed_path).unwrap()).unwrap();
         assert_eq!(renamed_scene["name"], "Renamed");
@@ -1648,6 +1709,12 @@ mod tests {
             Some("Assets/Scenes/RENAMED.mscene")
         );
         assert!(root.join("Assets/Scenes/RENAMED.mscene").is_file());
+        assert_eq!(
+            mengine_assets::read_asset_sidecar(&root.join("Assets/Scenes/RENAMED.mscene"), "scene")
+                .unwrap()
+                .guid,
+            main_guid
+        );
 
         let active_error = session
             .delete_scene("Assets/Scenes/RENAMED.mscene")
@@ -1670,6 +1737,7 @@ mod tests {
             .delete_scene("Assets/Scenes/Scratch.mscene")
             .unwrap();
         assert!(!root.join("Assets/Scenes/Scratch.mscene").exists());
+        assert!(!scratch_sidecar.exists());
         assert!(session
             .delete_scene("Assets/Scenes/../Collision.mscene")
             .is_err());
@@ -1705,6 +1773,19 @@ mod tests {
                 ],
             )
             .is_err());
+        std::fs::write(
+            root.join("Assets/Prefabs/Dynamic/Enemy.prefab.meta"),
+            "{}",
+        )
+        .unwrap();
+        assert!(session
+            .save_build_asset_settings(
+                BuildAssetMode::Referenced,
+                vec!["Assets/Prefabs/Dynamic/Enemy.prefab.meta".into()]
+            )
+            .unwrap_err()
+            .to_string()
+            .contains("editor asset metadata"));
         std::fs::remove_dir_all(root).unwrap();
     }
 
