@@ -83,6 +83,10 @@ import {
 } from '../timelineScenePreview';
 import { AudioWaveform } from './AudioWaveform';
 import {
+  TimelineAudioPreviewController,
+  type TimelineAudioPreviewStatus,
+} from '../timelineAudioPreviewController';
+import {
   SEQUENCER_MAX_ZOOM,
   SEQUENCER_MIN_ZOOM,
   clampSequencerZoom,
@@ -111,6 +115,11 @@ const SEQUENCER_RIPPLE_KEY = 'mengine.sequencer.ripple';
 const SEQUENCER_SNAP_THRESHOLD_PX = 8;
 const EMPTY_PREVIEW_ANIMATION_CLIPS: ReadonlyMap<string, AnimationClip> = new Map();
 const EMPTY_PREVIEW_CLIP_FAILURES: readonly string[] = [];
+const EMPTY_AUDIO_PREVIEW_STATUS: TimelineAudioPreviewStatus = {
+  mode: 'idle',
+  voices: 0,
+  diagnostics: [],
+};
 
 function clampTimelineAudioFades(clip: TimelineAudioClip): void {
   clip.fade_in = Math.max(0, Math.min(clip.duration, clip.fade_in));
@@ -157,6 +166,18 @@ export async function createProjectTimeline(name = 'New Timeline'): Promise<stri
 }
 
 type SnapshotEntity = WorldSnapshotView['entities'][number];
+
+function timelinePreviewEntitySignature(entity: SnapshotEntity): string {
+  const source = entity.components.AudioSource;
+  const audio = source && typeof source === 'object'
+    ? source as { mute?: unknown; pan?: unknown }
+    : null;
+  return `${entity.entity}\0${entity.parent ?? ''}\0${entity.name ?? ''}`
+    + `\0${entity.active === false ? '0' : '1'}`
+    + `\0${entity.components.AnimationPlayer ? 'P' : ''}${entity.components.Animator ? 'A' : ''}`
+    + `${entity.components.Camera2D ? '2' : ''}${entity.components.Camera3D ? '3' : ''}`
+    + `${audio ? `U${audio.mute ? '1' : '0'}:${Number(audio.pan) || 0}` : ''}`;
+}
 
 export type SequencerProps = {
   assetPath: string | null;
@@ -225,6 +246,8 @@ export function Sequencer(props: SequencerProps) {
   const [savedText, setSavedText] = useState('');
   const [time, setTime] = useState(0);
   const [playing, setPlaying] = useState(false);
+  const [audioAuditionRevision, setAudioAuditionRevision] = useState(0);
+  const [audioPreviewStatus, setAudioPreviewStatus] = useState(EMPTY_AUDIO_PREVIEW_STATUS);
   const [selection, setSelection] = useState<Selection>(null);
   const [selectedItems, setSelectedItems] = useState<SequencerItemSelection[]>([]);
   const [loading, setLoading] = useState(false);
@@ -255,6 +278,11 @@ export function Sequencer(props: SequencerProps) {
   const frame = useRef<number | null>(null);
   const previousFrame = useRef<number | null>(null);
   const tracksViewport = useRef<HTMLDivElement | null>(null);
+  const rulerScrubPointer = useRef<number | null>(null);
+  const audioPreviewController = useMemo(
+    () => new TimelineAudioPreviewController(setAudioPreviewStatus),
+    [],
+  );
   assetRef.current = asset;
   selectionRef.current = selection;
   selectedItemsRef.current = selectedItems;
@@ -337,9 +365,7 @@ export function Sequencer(props: SequencerProps) {
     ? previewClipFailures
     : EMPTY_PREVIEW_CLIP_FAILURES;
   const previewHierarchyKey = props.entities
-    .map((entity) => `${entity.entity}\0${entity.parent ?? ''}\0${entity.name ?? ''}`
-      + `\0${entity.components.AnimationPlayer ? 'P' : ''}${entity.components.Animator ? 'A' : ''}`
-      + `${entity.components.Camera2D ? '2' : ''}${entity.components.Camera3D ? '3' : ''}`)
+    .map(timelinePreviewEntitySignature)
     .join('\n');
   const previewBuild = useMemo(() => {
     if (!asset || props.playMode || !directorEntity) return null;
@@ -361,6 +387,7 @@ export function Sequencer(props: SequencerProps) {
     time,
   ]);
   const previewClipFailuresKey = loadedPreviewClipFailures.join('\n');
+  const audioPreviewDiagnosticsKey = audioPreviewStatus.diagnostics.join('\n');
 
   useEffect(() => {
     const selectedEntityId = props.selectedEntity?.entity ?? null;
@@ -380,11 +407,17 @@ export function Sequencer(props: SequencerProps) {
   useEffect(() => {
     const clear = () => {
       clearAudioWaveforms();
+      audioPreviewController.invalidate();
       setPreviewAssetEpoch((value) => value + 1);
     };
     window.addEventListener(PROJECT_ASSETS_CHANGED_EVENT, clear);
     return () => window.removeEventListener(PROJECT_ASSETS_CHANGED_EVENT, clear);
-  }, []);
+  }, [audioPreviewController]);
+
+  useEffect(() => {
+    audioPreviewController.activate();
+    return () => audioPreviewController.dispose();
+  }, [audioPreviewController]);
 
   useEffect(() => {
     let cancelled = false;
@@ -428,9 +461,31 @@ export function Sequencer(props: SequencerProps) {
     const diagnostics = previewBuild.diagnostics.filter((message) => (
       previewAnimationResourcesReady || !message.endsWith(' is not loaded.')
     ) && !(loadedPreviewClipFailures.length && message.endsWith(' is not loaded.')));
-    const warnings = [...loadedPreviewClipFailures, ...diagnostics];
+    const warnings = [
+      ...loadedPreviewClipFailures,
+      ...diagnostics,
+      ...audioPreviewStatus.diagnostics,
+    ];
     setPreviewWarning(warnings.length ? warnings.join(' ') : null);
-  }, [previewAnimationResourcesReady, previewBuild, previewClipFailuresKey]);
+  }, [
+    audioPreviewDiagnosticsKey,
+    previewAnimationResourcesReady,
+    previewBuild,
+    previewClipFailuresKey,
+  ]);
+
+  useEffect(() => {
+    audioPreviewController.update(
+      previewBuild?.audio ?? [],
+      Boolean(playing && previewBuild),
+      audioAuditionRevision,
+    );
+  }, [
+    audioAuditionRevision,
+    audioPreviewController,
+    playing,
+    previewBuild,
+  ]);
 
   useEffect(() => () => props.onClearPreview(), [props.assetPath]);
 
@@ -1719,7 +1774,21 @@ export function Sequencer(props: SequencerProps) {
   };
   const scrub = (next: number) => {
     if (liveDirector && directorEntity) props.onPatchDirector(directorEntity.entity, { time: next });
-    else replaceTime(next);
+    else {
+      void audioPreviewController.unlock();
+      replaceTime(next);
+      setAudioAuditionRevision((value) => value + 1);
+    }
+  };
+  const toggleEditPlayback = () => {
+    void audioPreviewController.unlock();
+    if (!playing && asset && timeRef.current >= asset.duration) replaceTime(0);
+    setPlaying((value) => !value);
+  };
+  const scrubRulerPointer = (event: ReactPointerEvent<HTMLDivElement>) => {
+    if (!asset) return;
+    const bounds = event.currentTarget.getBoundingClientRect();
+    scrub(snapTimelineAssetTime((event.clientX - bounds.left) / bounds.width * asset.duration, asset));
   };
   const changeZoom = (requested: number, anchorClientX?: number) => {
     const next = clampSequencerZoom(requested);
@@ -1903,7 +1972,7 @@ export function Sequencer(props: SequencerProps) {
           if (liveDirector && directorEntity) {
             props.onPatchDirector(directorEntity.entity, { playing: !transportPlaying });
           } else {
-            setPlaying((value) => !value);
+            toggleEditPlayback();
           }
           return;
         }
@@ -1927,7 +1996,7 @@ export function Sequencer(props: SequencerProps) {
         <div className="timeline-transport">
           <button type="button" className={transportPlaying ? 'active' : ''} title={transportPlaying ? 'Pause' : 'Play'} onClick={() => {
             if (liveDirector && directorEntity) props.onPatchDirector(directorEntity.entity, { playing: !transportPlaying });
-            else setPlaying((value) => !value);
+            else toggleEditPlayback();
           }}>
             {transportPlaying ? <Pause size={14} /> : <Play size={14} />}
           </button>
@@ -1953,7 +2022,8 @@ export function Sequencer(props: SequencerProps) {
         <span className="timeline-clip-path" title={props.assetPath}>{asset.name} — {props.assetPath}{dirty ? ' *' : ''}</span>
           {selectedItems.length > 0 && <span className="sequencer-selection-count" title="Arrow keys nudge by one frame; Shift+Arrow nudges by ten frames.">{selectedItems.length} selected</span>}
         {liveDirector && <span className={`sequencer-live-status${liveDirector.playing ? ' playing' : ''}`}>{liveDirector.playing ? 'LIVE PLAYING' : 'LIVE PAUSED'} · {displayTime.toFixed(2)}s</span>}
-        {!props.playMode && directorEntity && <span className="sequencer-live-status edit-preview">EDIT PREVIEW · Activation + Animation + Camera</span>}
+        {!props.playMode && directorEntity && <span className="sequencer-live-status edit-preview">EDIT PREVIEW · Activation + Animation + Camera + Audio</span>}
+        {!props.playMode && audioPreviewStatus.mode !== 'idle' && <span className="sequencer-live-status edit-preview">AUDIO {audioPreviewStatus.mode.toUpperCase()}{audioPreviewStatus.voices ? ` · ${audioPreviewStatus.voices}` : ''}</span>}
         <div className="sequencer-zoom-controls">
           <button type="button" title="Zoom out" disabled={zoom <= SEQUENCER_MIN_ZOOM} onClick={() => changeZoom(zoom / 1.5)}><Minus size={13} /></button>
           <button type="button" title="Fit entire Timeline" disabled={zoom === 1} onClick={() => {
@@ -2007,10 +2077,28 @@ export function Sequencer(props: SequencerProps) {
         >
           <div className="sequencer-ruler-row">
             <div className="sequencer-track-header">Tracks</div>
-            <div className="sequencer-ruler" onPointerDown={(event) => {
-              const bounds = event.currentTarget.getBoundingClientRect();
-              scrub(snapTimelineAssetTime((event.clientX - bounds.left) / bounds.width * asset.duration, asset));
-            }}>
+            <div
+              className="sequencer-ruler"
+              onPointerDown={(event) => {
+                if (event.button !== 0) return;
+                rulerScrubPointer.current = event.pointerId;
+                event.currentTarget.setPointerCapture(event.pointerId);
+                scrubRulerPointer(event);
+              }}
+              onPointerMove={(event) => {
+                if (rulerScrubPointer.current === event.pointerId) scrubRulerPointer(event);
+              }}
+              onPointerUp={(event) => {
+                if (rulerScrubPointer.current !== event.pointerId) return;
+                rulerScrubPointer.current = null;
+                if (event.currentTarget.hasPointerCapture(event.pointerId)) {
+                  event.currentTarget.releasePointerCapture(event.pointerId);
+                }
+              }}
+              onPointerCancel={(event) => {
+                if (rulerScrubPointer.current === event.pointerId) rulerScrubPointer.current = null;
+              }}
+            >
               {ticks.map((tick) => <span key={tick.time} style={{ left: `${tick.position * 100}%` }}>{tick.time.toFixed(tick.time < 1 ? 2 : 1)}</span>)}
               {snapGuide != null && <i className="sequencer-snap-guide ruler-guide" style={{ left: `${snapGuide / asset.duration * 100}%` }}><b>{snapGuide.toFixed(3)}s</b></i>}
               <i className="sequencer-playhead" style={{ left: `${displayTime / asset.duration * 100}%` }} />

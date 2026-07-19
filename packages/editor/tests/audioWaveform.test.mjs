@@ -5,6 +5,10 @@ import {
   buildAudioWaveform,
   sampleAudioWaveform,
 } from '../src/audioWaveform.ts';
+import {
+  timelineAudioFadeFactor,
+  timelineAudioSourceTime,
+} from '../src/timelineAudioPreview.ts';
 
 test('audio waveform combines channels into stable min and max buckets', () => {
   const waveform = buildAudioWaveform([
@@ -46,4 +50,13 @@ test('audio waveform sampling follows clip-in, pitch, silence and looping', () =
     { min: 0, max: 0 },
     { min: 0, max: 0 },
   ]);
+});
+
+test('Timeline audio fade and source offset match runtime edge semantics', () => {
+  assert.equal(timelineAudioFadeFactor(0.25, 2, 1, 0.5, 'linear'), 0.25);
+  assert.equal(timelineAudioFadeFactor(0.25, 2, 1, 0.5, 'ease_in_out'), 0.15625);
+  assert.equal(timelineAudioFadeFactor(1.75, 2, 1, 0.5, 'ease_in_out'), 0.5);
+  assert.equal(timelineAudioSourceTime(2, 4.5, true), 0.5);
+  assert.equal(timelineAudioSourceTime(2, 2, false), null);
+  assert.equal(timelineAudioSourceTime(0, 0, true), null);
 });

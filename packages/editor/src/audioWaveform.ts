@@ -9,6 +9,7 @@ export type AudioWaveformData = {
 type WaveformListener = () => void;
 
 const cache = new Map<string, Promise<AudioWaveformData>>();
+const bufferCache = new Map<string, Promise<AudioBuffer>>();
 const listeners = new Set<WaveformListener>();
 let revision = 0;
 let decoderContext: AudioContext | null = null;
@@ -112,13 +113,35 @@ export function sampleAudioWaveform(
   });
 }
 
-async function decodeAudioWaveform(path: string): Promise<AudioWaveformData> {
+export function projectAudioContext(): AudioContext {
   if (typeof AudioContext === 'undefined') throw new Error('Web Audio decoding is unavailable');
   decoderContext ??= new AudioContext();
-  const bytes = await readProjectAssetBytes(path);
-  const copy = new Uint8Array(bytes.byteLength);
-  copy.set(bytes);
-  const buffer = await decoderContext.decodeAudioData(copy.buffer);
+  return decoderContext;
+}
+
+export function loadProjectAudioBuffer(path: string): Promise<AudioBuffer> {
+  const normalized = normalizeProjectAssetPath(path);
+  const key = normalized.toLowerCase();
+  const existing = bufferCache.get(key);
+  if (existing) return existing;
+  const loading = (async () => {
+    const context = projectAudioContext();
+    const bytes = await readProjectAssetBytes(normalized);
+    const copy = new Uint8Array(bytes.byteLength);
+    copy.set(bytes);
+    return context.decodeAudioData(copy.buffer);
+  })();
+  bufferCache.set(key, loading);
+  return loading;
+}
+
+export async function unlockProjectAudio(): Promise<void> {
+  const context = projectAudioContext();
+  if (context.state !== 'running') await context.resume();
+}
+
+async function decodeAudioWaveform(path: string): Promise<AudioWaveformData> {
+  const buffer = await loadProjectAudioBuffer(path);
   const channels = Array.from(
     { length: buffer.numberOfChannels },
     (_, channel) => buffer.getChannelData(channel),
@@ -137,8 +160,14 @@ export function loadAudioWaveform(path: string): Promise<AudioWaveformData> {
 }
 
 export function clearAudioWaveforms(path?: string): void {
-  if (path) cache.delete(normalizeProjectAssetPath(path).toLowerCase());
-  else cache.clear();
+  if (path) {
+    const key = normalizeProjectAssetPath(path).toLowerCase();
+    cache.delete(key);
+    bufferCache.delete(key);
+  } else {
+    cache.clear();
+    bufferCache.clear();
+  }
   revision += 1;
   for (const listener of listeners) listener();
 }

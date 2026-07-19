@@ -16,6 +16,10 @@ import {
   parseTimelineBindingTable,
   type TimelineBindingTable,
 } from './timelineBindings.ts';
+import {
+  timelineAudioFadeFactor,
+  type TimelineAudioPreviewItem,
+} from './timelineAudioPreview.ts';
 
 const F32_EPSILON = 1.1920928955078125e-7;
 
@@ -38,6 +42,7 @@ export type TimelineCameraPreview = {
 
 export type TimelineScenePreviewBuild = {
   preview: TimelineScenePreview;
+  audio: TimelineAudioPreviewItem[];
   diagnostics: string[];
 };
 
@@ -73,14 +78,19 @@ export function buildTimelineScenePreview(
   time: number,
   animationClips: ReadonlyMap<string, AnimationClip>,
 ): TimelineScenePreviewBuild {
-  const preview: TimelineScenePreview = { activations: [], animations: [], camera: null };
+  const preview: TimelineScenePreview = {
+    activations: [],
+    animations: [],
+    camera: null,
+  };
+  let audio: TimelineAudioPreviewItem[] = [];
   const diagnostics: string[] = [];
   let bindings: TimelineBindingTable;
   try {
     bindings = parseTimelineBindingTable(bindingsJson);
   } catch (reason) {
     diagnostics.push(`Timeline bindings are invalid: ${reason instanceof Error ? reason.message : String(reason)}`);
-    return { preview, diagnostics };
+    return { preview, audio, diagnostics };
   }
   const sampleTime = Math.max(0, Math.min(asset.duration, Number.isFinite(time) ? time : 0));
   const hasSolo = timelineHasSolo(asset);
@@ -157,6 +167,45 @@ export function buildTimelineScenePreview(
       preview.camera = { source, target, weight };
       continue;
     }
+    if (track.type === 'audio') {
+      const clip = track.clips.find((candidate) => sampleTime >= candidate.start
+        && sampleTime < candidate.start + candidate.duration);
+      if (!clip) continue;
+      const target = resolveTrackTarget(track.target);
+      if (target == null) {
+        diagnostics.push(`Audio track '${track.name}' target '${track.target}' is not resolved.`);
+        continue;
+      }
+      const targetEntity = entities.find((candidate) => candidate.entity === target);
+      const source = targetEntity?.components.AudioSource;
+      if (!source || typeof source !== 'object') {
+        diagnostics.push(`Audio track '${track.name}' target '${track.target}' does not have an AudioSource component.`);
+        continue;
+      }
+      const audioSource = source as { mute?: unknown; pan?: unknown };
+      const elapsed = Math.max(0, sampleTime - clip.start);
+      audio.push({
+        key: track.id,
+        label: track.name,
+        target,
+        clip: clip.clip,
+        clipStart: clip.start,
+        clipIn: clip.clip_in,
+        sourceTime: clip.clip_in + elapsed * clip.pitch,
+        volume: clip.volume * timelineAudioFadeFactor(
+          elapsed,
+          clip.duration,
+          clip.fade_in,
+          clip.fade_out,
+          clip.fade_curve,
+        ),
+        pitch: clip.pitch,
+        looped: clip.looped,
+        muted: Boolean(audioSource.mute),
+        pan: Math.max(-1, Math.min(1, Number(audioSource.pan) || 0)),
+      });
+      continue;
+    }
     if (track.type !== 'animation') continue;
     const timelineClip = track.clips.find((candidate) => sampleTime >= candidate.start
       && sampleTime < candidate.start + candidate.duration);
@@ -191,7 +240,24 @@ export function buildTimelineScenePreview(
     if (previous >= 0) preview.animations[previous] = layer;
     else preview.animations.push(layer);
   }
-  return { preview, diagnostics };
+  if (audio.length) {
+    const byId = new Map(entities.map((entity) => [entity.entity, entity]));
+    const activation = new Map(preview.activations.map((entry) => [entry.entity, entry.active]));
+    audio = audio.filter((item) => {
+      let current: number | null = item.target;
+      const visited = new Set<number>();
+      while (current != null) {
+        if (visited.has(current)) return false;
+        visited.add(current);
+        const entity = byId.get(current);
+        if (!entity) return false;
+        if (!(activation.get(current) ?? entity.active ?? true)) return false;
+        current = entity.parent ?? null;
+      }
+      return true;
+    });
+  }
+  return { preview, audio, diagnostics };
 }
 
 /** Apply edit-mode Timeline state to one cloned snapshot, never to the authored world. */

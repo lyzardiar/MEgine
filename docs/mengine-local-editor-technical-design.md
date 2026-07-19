@@ -1444,3 +1444,14 @@ Rust workspace 检查现在零警告通过；Tauri Host 17/17 常规测试与 1/
 第一遍自省沿 Runtime 相机实现逐字段核对，发现初稿遗漏了 Camera2D/Camera3D 能力签名、默认相机精确四元数、`f32::EPSILON`、roll/up、near/far 和 authored 零值夹取；这些差异会造成编辑器可见结果与 Player 不同，现已逐项修正并由 Runtime 现有相机测试交叉验证。第二遍自省从真实 Dock 边界反查，发现独立 Sequencer 只同步场景、不传播当前 Timeline 资源和预览帧，导致主窗口看不到 Camera Shot；现已补齐请求、所有权、关闭清理和场景重载重放协议。1280×720 双窗口真实页面验证中，独立 Timeline 自动打开 `CameraPreview.mtimeline`，在 0.7667 秒驱动主窗口立方体随混合镜头向左偏移，独立窗口卸载后恢复 authored 主相机中心构图；临时场景、资源、metadata 与编辑器状态均在提交前清理。337 项编辑器测试、TypeScript/Vite 全工作区生产构建和 6 项 Runtime 相机契约回归全部通过。
 
 Camera Shot 的基础闭环已经形成，但 Timeline 仍不完备：编辑器 Canvas 预览不是原生 wgpu 的逐像素 FrameCamera，尚未提供 Cinemachine 类跟随/注视/轨道/抖动镜头、镜头叠加和 Preview Monitor；Audio Scrub、确定性 Particle 重建、子 Timeline、Control/Playable Track、录制、混合/外推和 Timeline Profiler 也仍需继续实现。下一批优先补 Audio 的编辑态 seek/停止生命周期，再建设可重复的粒子预热与反向拖动。
+
+## 122. 2026-07-19 Timeline Audio 编辑态播放与 Scrub
+
+- Timeline Audio Track 进入编辑态求值：沿用半开 Clip 区间、Track/Group Mute 与 Solo、稳定绑定/Director 子路径和 `AudioSource` 组件约束，按 `clip_in + elapsed × pitch` 计算源时间，Linear/Smoothstep Fade In/Out 与 Runtime 同式求值，并读取 authored mute/pan。Activation Track 的最终覆盖值会连同父层级 active 一起过滤 Audio Voice；失效绑定、组件缺失和当前激活音频的读取/解码失败进入 Sequencer 诊断，不把失败吞成静音。
+- 波形与播放共享按规范化资产路径缓存的 `AudioBuffer` 和同一 `AudioContext`，避免同一音频为波形和试听重复读取、解码。用户手势显式解锁 Context；本地 Transport 播放期间，每条有效 Audio Track 只维持一个 Source/Gain/Panner 图，持续更新 Fade 音量和 pan，源路径、Clip 起点、clip-in、pitch、loop 改变或游标漂移超过 100ms 时才重建 Voice。非循环源越过素材时长后保持静音，停止、暂停、资源变更、面板卸载和窗口退出都会撤销定时器并断开节点。
+- 暂停态点击时间、输入 Time、键盘逐帧或拖拽标尺会触发 Audio Scrub。标尺使用 Pointer Capture 支持连续拖动；试听以 24ms trailing debounce 合并高频移动，只播放 120ms grain，并在首尾使用 8ms Gain 淡化。新的拖动、开始播放或卸载会取消旧 grain，工具栏显示 `AUDIO LOADING/PLAYING/SCRUBBING` 与 Voice 数；播放头停在 Timeline 末尾后再次 Play 会从 0 开始，而 Stop 只复位时间、不误触发一次 0 秒试听。
+- 音频命令保持 Sequencer 窗口本地所有权，没有塞进 Scene Preview Store 或跨窗口每帧广播；纯求值模型与 WebAudio Controller 分文件，后者仍跟随 Sequencer 动态 Chunk。公共 `WorldSnapshotView` 补齐实际传输已存在的 `active/siblingIndex`，暂停态修改层级 active、AudioSource mute/pan 或组件能力会使求值签名失效并立即重算，不再依靠局部类型断言掩盖快照契约漂移。
+
+第一遍自省从热路径和多窗口边界反查，发现初稿把每帧变化的 Audio 游标放进 Scene Preview，会让纯音频 Timeline 以 60Hz 刷新 Store 和 `BroadcastChannel`，同时把 WebAudio Controller 拉进主包；现已把音频命令留在 `TimelineScenePreviewBuild` 的本地结果中，并拆分纯模型与懒加载控制器。第二遍自省从暂停态编辑和失效状态反查，补齐 active/mute/pan 签名、父层级激活过滤、只保留当前 Clip 诊断、异步旧请求失效以及公共快照字段。真实页面继续发现 React StrictMode 的开发期 effect 清理会永久 dispose 同一 Controller；最终增加可重入 activate/dispose 契约和专门回归。1280×720 页面在 0.5 秒 Scrub 精确报告 `404 Assets/Audio/Missing.wav`，本地播放头推进至约 0.996 秒后 Stop 回到 0，Timeline Pause 和 AUDIO 状态均释放；343 项编辑器测试、全工作区 TypeScript/Vite 生产构建和 6 项 Runtime 音频契约回归全部通过，验证场景、Timeline、metadata 和状态已清理。
+
+这仍不是完整 DAW 或成熟引擎音频工具链。当前编辑态试听故意使用 2D pan，不模拟 AudioListener、距离衰减、3D spatial blend、Doppler、Mixer Bus/Effect、Streaming/Decompression 策略或平台编解码差异；也尚无波形多级缓存、节拍/采样级标尺、录音、音频事件、Submix 自动化和原生 Runtime Transport 的同一主时钟。下一批先实现可重复的 Particle Timeline Seek/Prewarm/反向拖动，再回到统一编辑器/Runtime Transport 和 Mixer 可视化。

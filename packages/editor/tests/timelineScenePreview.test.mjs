@@ -201,3 +201,64 @@ test('builds adjacent Camera shot blends with runtime-compatible weighting', () 
   tinyBlend.tracks[0].clips[0].blend_in = 1e-8;
   assert.equal(buildTimelineScenePreview(tinyBlend, cameraEntities, 1, '{}', 0, new Map()).preview.camera.weight, 1);
 });
+
+test('builds Runtime-compatible audio preview commands and respects activation hierarchy', () => {
+  const audioEntities = [
+    ...entities,
+    {
+      entity: 5,
+      name: 'Audio',
+      parent: 2,
+      active: true,
+      components: { AudioSource: { mute: false, pan: 2 } },
+    },
+  ];
+  const audioAsset = parseTimelineAsset(JSON.stringify({
+    version: 1,
+    duration: 2,
+    tracks: [
+      {
+        type: 'audio', id: 'music', name: 'Music', target: 'Panel/Audio',
+        clips: [{
+          start: 0, duration: 2, clip: 'Assets/Audio/Music.wav', clip_in: 0.5,
+          volume: 0.8, pitch: 2, looped: true, fade_in: 1, fade_out: 0.5,
+          fade_curve: 'ease_in_out',
+        }],
+      },
+      {
+        type: 'activation', id: 'panel', name: 'Panel', target: 'Panel',
+        clips: [{ start: 0, duration: 0.5, active: false }],
+      },
+    ],
+  }));
+
+  const hidden = buildTimelineScenePreview(audioAsset, audioEntities, 1, '{}', 0.25, new Map());
+  assert.deepEqual(hidden.audio, []);
+
+  const audible = buildTimelineScenePreview(audioAsset, audioEntities, 1, '{}', 0.75, new Map());
+  assert.equal(audible.diagnostics.length, 0);
+  assert.equal(audible.audio.length, 1);
+  assert.deepEqual(audible.audio[0], {
+    key: 'music',
+    label: 'Music',
+    target: 5,
+    clip: 'Assets/Audio/Music.wav',
+    clipStart: 0,
+    clipIn: 0.5,
+    sourceTime: 2,
+    volume: 0.675,
+    pitch: 2,
+    looped: true,
+    muted: false,
+    pan: 1,
+  });
+
+  const fadingOut = buildTimelineScenePreview(audioAsset, audioEntities, 1, '{}', 1.75, new Map());
+  assert.equal(fadingOut.audio[0].volume, 0.4);
+
+  const missingSource = structuredClone(audioEntities);
+  delete missingSource[4].components.AudioSource;
+  const invalid = buildTimelineScenePreview(audioAsset, missingSource, 1, '{}', 0.75, new Map());
+  assert.deepEqual(invalid.audio, []);
+  assert.match(invalid.diagnostics.join(' '), /does not have an AudioSource/);
+});

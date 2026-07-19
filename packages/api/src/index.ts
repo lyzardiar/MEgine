@@ -23,6 +23,8 @@ export interface WorldSnapshotView {
     entity: number;
     name?: string | null;
     parent?: number | null;
+    siblingIndex?: number;
+    active?: boolean;
     components: Record<string, unknown>;
   }>;
   frame: number;
