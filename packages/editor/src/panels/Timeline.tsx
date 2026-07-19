@@ -98,6 +98,7 @@ import {
   moveTimelineKeySelection,
   normalizeTimelineKeySelection,
   pasteTimelineKeySelection,
+  retimeTimelineKeySelection,
   removeTimelineKeySelection,
   timelineKeyRangeSelection,
   timelineKeyNudgeFrames,
@@ -149,6 +150,7 @@ type TimelineEventDrag = {
   kind: 'event';
   pointerId: number;
   index: number;
+  authoredTime: number;
   time: number;
   left: number;
   width: number;
@@ -967,6 +969,7 @@ export function Timeline(props: {
   const selectedKeysRef = useRef<TimelineKeyRef[]>([]);
   const selectedEventRef = useRef<number | null>(null);
   const editTransaction = useRef<AnimationEditTransaction | null>(null);
+  const keyboardNudgeKey = useRef<string | null>(null);
   clipRef.current = clip;
   timeRef.current = time;
   selectedTrackRef.current = selectedTrack;
@@ -1086,19 +1089,19 @@ export function Timeline(props: {
     return true;
   };
 
-  const beginEdit = (event: ReactFocusEvent<HTMLDivElement>) => {
-    if (editTransaction.current || !isAnimationEditControl(event.target)) return;
+  const beginHistoryTransaction = () => {
+    if (editTransaction.current) return false;
     const snapshot = currentHistorySnapshot();
-    if (!snapshot) return;
+    if (!snapshot) return false;
     editTransaction.current = {
       ...snapshot,
       checkpoint: props.undoService.checkpoint(),
       token: null,
     };
+    return true;
   };
 
-  const endEdit = (event: ReactFocusEvent<HTMLDivElement>) => {
-    if (!isAnimationEditControl(event.target)) return;
+  const finishHistoryTransaction = () => {
     const transaction = editTransaction.current;
     editTransaction.current = null;
     if (
@@ -1108,6 +1111,18 @@ export function Timeline(props: {
       || serializeAnimationClip(clipRef.current) !== serializeAnimationClip(transaction.clip)
     ) return;
     props.undoService.restoreCheckpoint(transaction.checkpoint);
+  };
+
+  const beginEdit = (event: ReactFocusEvent<HTMLDivElement>) => {
+    if (isAnimationEditControl(event.target)) beginHistoryTransaction();
+  };
+
+  const endEdit = (event: ReactFocusEvent<HTMLDivElement>) => {
+    if (keyboardNudgeKey.current) {
+      keyboardNudgeKey.current = null;
+      finishHistoryTransaction();
+    }
+    if (isAnimationEditControl(event.target)) finishHistoryTransaction();
   };
 
   useEffect(() => {
@@ -1189,6 +1204,7 @@ export function Timeline(props: {
     setTimelineDrag(null);
     timelineMarqueeRef.current = null;
     setTimelineMarquee(null);
+    keyboardNudgeKey.current = null;
     recordingValues.current.clear();
     setError(null);
     replaceClip(null);
@@ -1787,6 +1803,28 @@ export function Timeline(props: {
   const selectedKeyFrameRange = clip
     ? timelineKeySelectionFrameRange(clip, activeSelectedKeys)
     : null;
+  const timelineDragFeedback = clip && timelineDrag
+    ? (() => {
+        const frameRate = Math.max(1, clip.frame_rate);
+        if (timelineDrag.kind === 'event') {
+          return {
+            time: timelineDrag.time,
+            label: `Event ${Math.round(timelineDrag.time * frameRate)}f`,
+          };
+        }
+        const range = timelineKeySelectionFrameRange(clip, timelineDrag.selection);
+        const deltaFrames = Math.round(timelineDrag.delta * frameRate);
+        const activeTime = timelineDrag.activeTime + timelineDrag.delta;
+        if (!range) return { time: activeTime, label: `${Math.round(activeTime * frameRate)}f` };
+        const start = range.startFrame + deltaFrames;
+        const end = range.endFrame + deltaFrames;
+        const moved = deltaFrames === 0 ? '' : ` | ${deltaFrames > 0 ? '+' : ''}${deltaFrames}f`;
+        return {
+          time: activeTime,
+          label: `${start === end ? `${start}f` : `${start}-${end}f`}${moved}`,
+        };
+      })()
+    : null;
   const selectedKeyFrameStep = clip ? 1 / Math.max(1, clip.frame_rate) : 0;
   const canNudgeSelectedKeysBackward = Boolean(
     clip
@@ -1808,9 +1846,15 @@ export function Timeline(props: {
   ) => {
     const normalized = sourceClip ? normalizeTimelineKeySelection(sourceClip, selection) : [];
     const primary = normalized[normalized.length - 1] ?? null;
+    selectedKeysRef.current = normalized;
+    selectedKeyRef.current = primary;
     setSelectedKeys(normalized);
     setSelectedKey(primary);
-    if (primary) setSelectedTrack(primary.track);
+    if (primary) {
+      selectedTrackRef.current = primary.track;
+      setSelectedTrack(primary.track);
+    }
+    selectedEventRef.current = null;
     setSelectedEvent(null);
   };
 
@@ -1848,11 +1892,14 @@ export function Timeline(props: {
   };
 
   const moveSelectedKeysByFrames = (frames: number) => {
-    if (!clip || activeSelectedKeys.length === 0 || !Number.isFinite(frames)) return;
+    const sourceClip = clipRef.current;
+    if (!sourceClip || !Number.isFinite(frames)) return;
+    const selection = normalizeTimelineKeySelection(sourceClip, selectedKeysRef.current);
+    if (selection.length === 0) return;
     const result = moveTimelineKeySelection(
-      clip,
-      activeSelectedKeys,
-      frames / Math.max(1, clip.frame_rate),
+      sourceClip,
+      selection,
+      frames / Math.max(1, sourceClip.frame_rate),
     );
     if (result.appliedDelta === 0) return;
     updateClip(result.clip, 'Move Animation Keys');
@@ -1861,6 +1908,27 @@ export function Timeline(props: {
     if (primary) {
       const next = result.clip.tracks[primary.track].keyframes[primary.key].time;
       playbackPhase.current = next;
+      timeRef.current = next;
+      setTime(next);
+    }
+  };
+
+  const retimeSelectedKeys = (startFrame: number, endFrame: number) => {
+    const sourceClip = clipRef.current;
+    if (!sourceClip) return;
+    const selection = normalizeTimelineKeySelection(sourceClip, selectedKeysRef.current);
+    const result = retimeTimelineKeySelection(sourceClip, selection, startFrame, endFrame);
+    if (!result.ok) {
+      props.onLog(`Cannot retime animation keys: ${result.error}`, 'warn');
+      return;
+    }
+    if (!updateClip(result.clip, 'Retime Animation Keys')) return;
+    selectKeys(result.selection, result.clip);
+    const primary = result.selection[result.selection.length - 1];
+    if (primary) {
+      const next = result.clip.tracks[primary.track].keyframes[primary.key].time;
+      playbackPhase.current = next;
+      timeRef.current = next;
       setTime(next);
     }
   };
@@ -2009,6 +2077,18 @@ export function Timeline(props: {
     setPreviewTime(time + direction / Math.max(1, clip.frame_rate));
   };
 
+  const cancelTimelineDrag = () => {
+    const drag = timelineDragRef.current;
+    if (!drag) return false;
+    timelineDragRef.current = null;
+    setTimelineDrag(null);
+    const restoredTime = drag.kind === 'event' ? drag.authoredTime : drag.activeTime;
+    playbackPhase.current = restoredTime;
+    timeRef.current = restoredTime;
+    setTime(restoredTime);
+    return true;
+  };
+
   const seekAtPointer = (
     event: ReactPointerEvent<HTMLElement>,
     duration: number,
@@ -2050,6 +2130,11 @@ export function Timeline(props: {
     const target = event.target as HTMLElement;
     const command = event.ctrlKey || event.metaKey;
     const key = event.key.toLowerCase();
+    if (event.key === 'Escape' && cancelTimelineDrag()) {
+      event.preventDefault();
+      event.stopPropagation();
+      return;
+    }
     if (command && key === 's') {
       event.preventDefault();
       event.stopPropagation();
@@ -2099,6 +2184,11 @@ export function Timeline(props: {
     if (nudgeFrames !== 0 && activeSelectedKeys.length > 0) {
       event.preventDefault();
       event.stopPropagation();
+      if (keyboardNudgeKey.current !== event.key) {
+        if (keyboardNudgeKey.current) finishHistoryTransaction();
+        beginHistoryTransaction();
+        keyboardNudgeKey.current = event.key;
+      }
       moveSelectedKeysByFrames(nudgeFrames);
       return;
     }
@@ -2122,6 +2212,12 @@ export function Timeline(props: {
         deleteSelectedEvent();
       }
     }
+  };
+
+  const handleTimelineKeyUp = (event: ReactKeyboardEvent<HTMLDivElement>) => {
+    if (keyboardNudgeKey.current !== event.key) return;
+    keyboardNudgeKey.current = null;
+    finishHistoryTransaction();
   };
 
   const beginTimelineDrag = (
@@ -2176,6 +2272,7 @@ export function Timeline(props: {
         kind: 'event',
         pointerId: event.pointerId,
         index,
+        authoredTime,
         time: authoredTime,
         left: rect.left,
         width: Math.max(1, rect.width),
@@ -2190,6 +2287,7 @@ export function Timeline(props: {
       setDetailsOpen(true);
     }
     playbackPhase.current = authoredTime;
+    timeRef.current = authoredTime;
     setTime(authoredTime);
   };
 
@@ -2213,26 +2311,55 @@ export function Timeline(props: {
       ? updated.time
       : updated.activeTime + updated.delta;
     playbackPhase.current = previewTime;
+    timeRef.current = previewTime;
     setTime(previewTime);
   };
 
-  const finishTimelineDrag = (event: ReactPointerEvent<HTMLButtonElement>, commit: boolean) => {
+  const completeTimelineDrag = (pointerId: number, commit: boolean) => {
     const drag = timelineDragRef.current;
-    if (!clip || !drag || drag.pointerId !== event.pointerId) return;
+    const sourceClip = clipRef.current;
+    if (!sourceClip || !drag || drag.pointerId !== pointerId) return;
     timelineDragRef.current = null;
     setTimelineDrag(null);
-    if (!commit) return;
+    if (!commit) {
+      const restoredTime = drag.kind === 'event' ? drag.authoredTime : drag.activeTime;
+      playbackPhase.current = restoredTime;
+      timeRef.current = restoredTime;
+      setTime(restoredTime);
+      return;
+    }
     if (drag.kind === 'event') {
-      const result = replaceAnimationEvent(clip, drag.index, { time: drag.time });
+      const result = replaceAnimationEvent(sourceClip, drag.index, { time: drag.time });
       if (!result) return;
       updateClip(result.clip, 'Move Animation Event');
       setSelectedEvent(result.eventIndex);
       return;
     }
-    const result = moveTimelineKeySelection(clip, drag.selection, drag.delta);
+    const result = moveTimelineKeySelection(sourceClip, drag.selection, drag.delta);
     updateClip(result.clip, 'Move Animation Keys');
     selectKeys(result.selection, result.clip);
   };
+
+  const finishTimelineDrag = (event: ReactPointerEvent<HTMLButtonElement>, commit: boolean) => {
+    completeTimelineDrag(event.pointerId, commit);
+  };
+
+  useEffect(() => {
+    const finishPointerDrag = (event: PointerEvent) => completeTimelineDrag(event.pointerId, true);
+    const finishMouseDrag = () => {
+      const drag = timelineDragRef.current;
+      if (drag) completeTimelineDrag(drag.pointerId, true);
+    };
+    const cancelWindowDrag = () => cancelTimelineDrag();
+    window.addEventListener('pointerup', finishPointerDrag, true);
+    window.addEventListener('mouseup', finishMouseDrag, true);
+    window.addEventListener('blur', cancelWindowDrag);
+    return () => {
+      window.removeEventListener('pointerup', finishPointerDrag, true);
+      window.removeEventListener('mouseup', finishMouseDrag, true);
+      window.removeEventListener('blur', cancelWindowDrag);
+    };
+  }, [clipPath, props.undoService]);
 
   const beginTimelineMarquee = (event: ReactPointerEvent<HTMLDivElement>) => {
     if (!clip || event.button !== 0) return;
@@ -2587,6 +2714,7 @@ export function Timeline(props: {
           ref={workspaceRef}
           tabIndex={0}
           onKeyDown={handleTimelineKeyDown}
+          onKeyUp={handleTimelineKeyUp}
           onPointerDown={(event) => {
             const target = event.target as HTMLElement;
             if (!target.closest('button, input, select, textarea')) {
@@ -2906,6 +3034,7 @@ export function Timeline(props: {
                           onPointerMove={moveTimelineDrag}
                           onPointerUp={(event) => finishTimelineDrag(event, true)}
                           onPointerCancel={(event) => finishTimelineDrag(event, false)}
+                          onLostPointerCapture={(event) => finishTimelineDrag(event, true)}
                           onClick={(event) => {
                             event.stopPropagation();
                             setSelectedTrack(null);
@@ -2950,10 +3079,10 @@ export function Timeline(props: {
                             onPointerMove={moveTimelineDrag}
                             onPointerUp={(event) => finishTimelineDrag(event, true)}
                             onPointerCancel={(event) => finishTimelineDrag(event, false)}
+                            onLostPointerCapture={(event) => finishTimelineDrag(event, true)}
                             onClick={(event) => {
                               event.stopPropagation();
                               setDetailsOpen(true);
-                              setPreviewTime(key.time);
                             }}
                           />
                         );
@@ -2963,6 +3092,15 @@ export function Timeline(props: {
                   ))}
                   {clip.tracks.length === 0 && (
                     <div className="timeline-empty-row timeline-empty-lane">Choose a property above, then add a track.</div>
+                  )}
+                  {timelineDragFeedback && (
+                    <div
+                      className={`timeline-drag-frame-guide${timelineDragFeedback.time > clip.duration * 0.82 ? ' edge' : ''}`}
+                      style={{ left: `${clip.duration > 0 ? timelineDragFeedback.time / clip.duration * 100 : 0}%` }}
+                      aria-hidden="true"
+                    >
+                      <span>{timelineDragFeedback.label}</span>
+                    </div>
                   )}
                   {timelineMarquee && (timelineMarquee.width >= 4 || timelineMarquee.height >= 4) && (
                     <i
@@ -3113,15 +3251,62 @@ export function Timeline(props: {
                     </button>
                   </div>
                   {activeSelectedKeys.length > 1 && (
-                    <div className="timeline-multi-selection-summary">
-                      Editing values applies to the primary key. Move, copy, paste, and delete apply to the whole selection.
-                    </div>
+                    <>
+                      {selectedKeyFrameRange && (
+                        <div className="timeline-selection-retime" aria-label="Retime selected keyframes">
+                          <label>
+                            Start
+                            <input
+                              aria-label="Selection start frame"
+                              type="number"
+                              min={0}
+                              max={selectedKeyFrameRange.endFrame}
+                              step={1}
+                              value={selectedKeyFrameRange.startFrame}
+                              onChange={(event) => {
+                                if (Number.isFinite(event.target.valueAsNumber)) {
+                                  retimeSelectedKeys(event.target.valueAsNumber, selectedKeyFrameRange.endFrame);
+                                }
+                              }}
+                            />
+                            <span>f</span>
+                          </label>
+                          <label>
+                            End
+                            <input
+                              aria-label="Selection end frame"
+                              type="number"
+                              min={selectedKeyFrameRange.startFrame}
+                              max={Math.round(clip.duration * Math.max(1, clip.frame_rate))}
+                              step={1}
+                              value={selectedKeyFrameRange.endFrame}
+                              onChange={(event) => {
+                                if (Number.isFinite(event.target.valueAsNumber)) {
+                                  retimeSelectedKeys(selectedKeyFrameRange.startFrame, event.target.valueAsNumber);
+                                }
+                              }}
+                            />
+                            <span>f</span>
+                          </label>
+                        </div>
+                      )}
+                      <div className="timeline-multi-selection-summary">
+                        Start/End retime the whole selection. Value editing applies only to the primary key.
+                      </div>
+                    </>
                   )}
                   <div className="timeline-details-form">
-                    <label>Time <input aria-label="Keyframe time" type="number" min={0} max={clip.duration} step={1 / Math.max(1, clip.frame_rate)} value={selectedKeyframe.time} onChange={(event) => {
-                      if (Number.isFinite(event.target.valueAsNumber)) updateSelectedKey({ time: event.target.valueAsNumber });
-                    }} /></label>
-                    <KeyframeValueEditor value={selectedKeyframe.value} onChange={(value) => updateSelectedKey({ value })} />
+                    {activeSelectedKeys.length === 1 && (
+                      <>
+                        <label>Frame <input aria-label="Keyframe frame" type="number" min={0} max={Math.round(clip.duration * Math.max(1, clip.frame_rate))} step={1} value={Math.round(selectedKeyframe.time * Math.max(1, clip.frame_rate))} onChange={(event) => {
+                          if (Number.isFinite(event.target.valueAsNumber)) updateSelectedKey({ time: event.target.valueAsNumber / Math.max(1, clip.frame_rate) });
+                        }} /></label>
+                        <label>Time <input aria-label="Keyframe time" type="number" min={0} max={clip.duration} step={1 / Math.max(1, clip.frame_rate)} value={selectedKeyframe.time} onChange={(event) => {
+                          if (Number.isFinite(event.target.valueAsNumber)) updateSelectedKey({ time: event.target.valueAsNumber });
+                        }} /></label>
+                      </>
+                    )}
+                    <KeyframeValueEditor label={activeSelectedKeys.length > 1 ? 'Primary Value' : 'Value'} value={selectedKeyframe.value} onChange={(value) => updateSelectedKey({ value })} />
                   </div>
                   {clip.tracks[selectedKey.track].interpolation === 'cubic' && (() => {
                     const track = clip.tracks[selectedKey.track];
@@ -3164,7 +3349,7 @@ export function Timeline(props: {
               {!selectedTrackData && !selectedAnimationEvent && (
                 <div className="timeline-details-empty">Select a track, keyframe, or event to inspect it.</div>
               )}
-              <footer>Ctrl/Shift+Click: Multi-select · Box Drag: Select · Drag: Move · Alt+←/→: Nudge 1f · Add Shift: 10f · Ctrl/Cmd+C/V: Copy/Paste · Delete: Remove</footer>
+              <footer>Ctrl/Shift+Click: Multi-select · Box Drag: Select · Drag: Move · Esc: Cancel Drag · Alt+←/→: Nudge 1f · Add Shift: 10f · Ctrl/Cmd+C/V: Copy/Paste · Delete: Remove</footer>
             </aside>
           )}
         </div>

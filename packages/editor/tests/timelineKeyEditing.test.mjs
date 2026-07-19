@@ -8,6 +8,7 @@ import {
   moveTimelineKeySelection,
   normalizeTimelineKeySelection,
   pasteTimelineKeySelection,
+  retimeTimelineKeySelection,
   removeTimelineKeySelection,
   timelineKeyRangeSelection,
   timelineKeyNudgeFrames,
@@ -120,6 +121,49 @@ test('Timeline key selection exposes frame ranges and deterministic nudge shortc
   assert.equal(timelineKeyNudgeFrames('ArrowRight', true, true), 10);
   assert.equal(timelineKeyNudgeFrames('ArrowRight', false, true), 0);
   assert.equal(timelineKeyNudgeFrames('ArrowUp', true, true), 0);
+});
+
+test('Timeline key retiming preserves values and tangents across tracks', () => {
+  const source = clip();
+  const retimed = retimeTimelineKeySelection(source, [
+    { track: 0, key: 0 },
+    { track: 0, key: 1 },
+    { track: 1, key: 1 },
+  ], 5, 15);
+  assert.equal(retimed.ok, true);
+  assert.deepEqual(retimed.ok && [retimed.startFrame, retimed.endFrame], [5, 15]);
+  assert.deepEqual(retimed.clip.tracks[0].keyframes.map((key) => key.time), [0.5, 1, 2]);
+  assert.deepEqual(retimed.clip.tracks[0].keyframes[1].in_tangent, [3, 4]);
+  assert.deepEqual(retimed.clip.tracks[1].keyframes.map((key) => key.time), [0.25, 1.5]);
+  assert.deepEqual(retimed.selection, [
+    { track: 0, key: 0 },
+    { track: 0, key: 1 },
+    { track: 1, key: 1 },
+  ]);
+});
+
+test('Timeline key retiming clamps bounds and rejects collapsed same-track keys', () => {
+  const source = clip();
+  const single = retimeTimelineKeySelection(source, [{ track: 0, key: 1 }], 99, -10);
+  assert.equal(single.ok, true);
+  assert.equal(single.ok && single.startFrame, 20);
+  assert.deepEqual(single.clip.tracks[0].keyframes.map((key) => key.time), [0, 2]);
+
+  const collapsed = retimeTimelineKeySelection(source, [
+    { track: 0, key: 0 },
+    { track: 0, key: 1 },
+    { track: 0, key: 2 },
+  ], 0, 1);
+  assert.equal(collapsed.ok, false);
+  assert.match(collapsed.ok ? '' : collapsed.error, /too short/i);
+  assert.equal(collapsed.clip, source);
+
+  const reversed = retimeTimelineKeySelection(source, [
+    { track: 0, key: 0 },
+    { track: 0, key: 1 },
+  ], 10, 5);
+  assert.equal(reversed.ok, false);
+  assert.match(reversed.ok ? '' : reversed.error, /before its start/i);
 });
 
 test('Timeline group delete removes every selected key without shifting mistakes', () => {
