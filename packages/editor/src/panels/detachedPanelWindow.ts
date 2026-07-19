@@ -9,6 +9,7 @@ export const CORE_PANEL_IDS = [
   'inspector',
   'project',
   'console',
+  'profiler',
   'timeline',
   'animator',
   'material',
@@ -28,6 +29,7 @@ const PANEL_TITLES: Record<CorePanelId, string> = {
   inspector: 'Inspector / Property',
   project: 'Project',
   console: 'Console',
+  profiler: 'Profiler',
   timeline: 'Timeline',
   animator: 'Animator',
   material: 'Material',
@@ -145,7 +147,8 @@ export async function detachPanelWindow(
 ): Promise<boolean> {
   const url = `/?detachedPanel=${encodeURIComponent(panel)}`;
   const width = panel === 'hierarchy' || panel === 'inspector' ? 440 : 920;
-  const height = panel === 'console' || panel === 'project' || panel === 'timeline' ? 480 : 720;
+  const height = panel === 'console' || panel === 'profiler'
+    || panel === 'project' || panel === 'timeline' ? 480 : 720;
 
   if (!isDesktopEditor()) {
     const popup = window.open(

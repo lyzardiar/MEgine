@@ -11,6 +11,7 @@ import {
   ScanLine,
 } from 'lucide-react';
 import type { GizmoMode, SceneCamera, TransformData } from '../store';
+import { recordViewportProfilerFrame } from '../editorProfiler';
 import {
   GAME_RESOLUTION_PRESETS,
   gameResolutionKey,
@@ -527,6 +528,7 @@ export function Viewport(props: {
   const spineRuntimeLoadRef = useRef<Promise<void> | null>(null);
   const spineRuntimeErrorRef = useRef<string | null>(null);
   const lastParticleFrameRef = useRef(0);
+  const lastProfilerFrameRef = useRef(0);
   const hoverGizmoRef = useRef<GizmoPart | null>(null);
   const activeGizmoRef = useRef<GizmoPart | null>(null);
   const lastVpRef = useRef({ x: 0, y: 0, w: 1, h: 1 });
@@ -739,20 +741,30 @@ export function Viewport(props: {
   }, [props.tab, props.entities, props.selected, props.selectedIds, props.gizmo, props.pivotMode, props.handleOrientation, props.gameResolution, props.angle, props.playing, props.activeInHierarchy]);
 
   const paint = () => {
+    const paintStartedAt = performance.now();
     const canvas = canvasRef.current;
     if (!canvas) return;
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
     const p = propsRef.current;
     const sc = liveCam.current;
-    const now = performance.now();
+    const now = paintStartedAt;
+    const rect = canvas.getBoundingClientRect();
+    if (rect.width < 1 || rect.height < 1) {
+      lastParticleFrameRef.current = 0;
+      lastProfilerFrameRef.current = 0;
+      return;
+    }
+    const frameIntervalMs = lastProfilerFrameRef.current > 0
+      ? now - lastProfilerFrameRef.current
+      : 0;
+    lastProfilerFrameRef.current = now;
     const particleDelta = lastParticleFrameRef.current > 0
       ? Math.min(0.1, (now - lastParticleFrameRef.current) / 1000)
       : 0;
     lastParticleFrameRef.current = now;
 
     const dpr = window.devicePixelRatio || 1;
-    const rect = canvas.getBoundingClientRect();
     const pw = Math.max(1, Math.floor(rect.width));
     const ph = Math.max(1, Math.floor(rect.height));
     if (canvas.width !== Math.floor(pw * dpr) || canvas.height !== Math.floor(ph * dpr)) {
@@ -762,6 +774,8 @@ export function Viewport(props: {
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
 
     const isGame = p.tab === 'game';
+    let profilerUiPrimitives = 0;
+    let profilerUiBatches = 0;
     hitsRef.current = [];
     linePointHitsRef.current = [];
 
@@ -1539,6 +1553,8 @@ export function Viewport(props: {
           uiPressRef.current ?? focusedInputRef.current,
           { focusId: focusedUiRef.current },
         );
+        profilerUiPrimitives = stats.primitives;
+        profilerUiBatches = stats.batches;
         if (
           stats.elements !== uiStatsRef.current.elements ||
           stats.batches !== uiStatsRef.current.batches
@@ -1584,7 +1600,9 @@ export function Viewport(props: {
               );
             }
           }
-          drawUiItems(ctx, uiItems, null, null, { sceneLabel: true });
+          const stats = drawUiItems(ctx, uiItems, null, null, { sceneLabel: true });
+          profilerUiPrimitives = stats.primitives;
+          profilerUiBatches = stats.batches;
 
           if (usingRectGizmoRef.current && p.selected != null) {
             const item = uiItems.find((it) => it.entity === p.selected);
@@ -1659,6 +1677,20 @@ export function Viewport(props: {
     }
 
     ctx.restore();
+    recordViewportProfilerFrame({
+      source: p.tab,
+      timestamp: now,
+      frameIntervalMs,
+      paintMs: performance.now() - paintStartedAt,
+      entities: p.entities.length,
+      drawItems: drawn.length,
+      uiPrimitives: profilerUiPrimitives,
+      uiBatches: profilerUiBatches,
+      particles: [...particleDrawByEntity.values()]
+        .reduce((count, emitter) => count + emitter.items.length, 0),
+      spineSkeletons: liveSpineIds.size,
+      viewportPixels: Math.round(pw * ph * dpr * dpr),
+    });
     void tick;
   };
 

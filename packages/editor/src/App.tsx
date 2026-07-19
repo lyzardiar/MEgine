@@ -93,6 +93,7 @@ const SurfaceShaderEditor = lazy(async () => ({ default: (await import('./panels
 const SpriteEditor = lazy(async () => ({ default: (await import('./panels/SpriteEditor')).SpriteEditor }));
 const SpriteAtlasEditor = lazy(async () => ({ default: (await import('./panels/SpriteAtlasEditor')).SpriteAtlasEditor }));
 const BuildSettings = lazy(async () => ({ default: (await import('./panels/BuildSettings')).BuildSettings }));
+const Profiler = lazy(async () => ({ default: (await import('./panels/Profiler')).Profiler }));
 const ProjectSettings = lazy(async () => ({ default: (await import('./panels/ProjectSettings')).ProjectSettings }));
 
 function isTypingTarget(el: EventTarget | null) {
@@ -1902,6 +1903,7 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
             <ProjectSettings onDirtyChange={setProjectSettingsDirty} onLog={log} />
           ),
           console: <Console lines={logs} />,
+          profiler: <Profiler />,
         }}
       />
 

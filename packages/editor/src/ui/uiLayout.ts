@@ -1637,5 +1637,9 @@ export function drawUiItems(
     });
     ctx.restore();
   }
-  return { elements: items.filter((item) => item.role === 'graphic').length, batches: batches.length };
+  return {
+    elements: items.filter((item) => item.role === 'graphic').length,
+    primitives: items.length,
+    batches: batches.length,
+  };
 }

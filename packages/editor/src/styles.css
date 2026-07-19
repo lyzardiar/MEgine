@@ -5456,6 +5456,216 @@ button.sequencer-track-header:hover { background: #343b42; }
 .mpb-custom-binding > .field-row,
 .mpb-custom-binding > .axis-row { border-top: 1px solid #363636; }
 
+.profiler-panel {
+  display: flex;
+  width: 100%;
+  height: 100%;
+  min-width: 0;
+  min-height: 0;
+  flex-direction: column;
+  overflow: hidden;
+  background: #252525;
+  color: var(--u-text);
+}
+
+.profiler-toolbar {
+  display: flex;
+  min-height: 29px;
+  align-items: center;
+  gap: 5px;
+  padding: 3px 5px;
+  border-bottom: 1px solid var(--u-border-2);
+  background: #303030;
+}
+
+.profiler-toolbar button,
+.profiler-source-tabs button {
+  min-height: 21px;
+  padding: 2px 8px;
+  border-radius: 0;
+  font-size: 10px;
+}
+
+.profiler-toolbar > button {
+  border: 1px solid #515151;
+  background: #393939;
+  color: #d6d6d6;
+}
+
+.profiler-toolbar > button:hover {
+  border-color: #676767;
+  background: #454545;
+}
+
+.profiler-source-tabs {
+  display: flex;
+  margin-right: auto;
+}
+
+.profiler-source-tabs button + button { border-left: 0; }
+.profiler-source-tabs button.active {
+  border-color: #438aa2;
+  background: #275b70;
+  color: #fff;
+}
+
+.profiler-record-state {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  color: var(--u-muted);
+  font-size: 9px;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.profiler-record-state i {
+  width: 7px;
+  height: 7px;
+  background: #df5b62;
+}
+
+.profiler-record-state.frozen i { background: #c49a50; }
+
+.profiler-scroll {
+  min-height: 0;
+  flex: 1;
+  overflow: auto;
+  padding: 6px;
+}
+
+.profiler-empty {
+  display: flex;
+  min-height: 130px;
+  align-items: center;
+  justify-content: center;
+  flex: 1;
+  flex-direction: column;
+  gap: 5px;
+  color: var(--u-muted);
+  text-align: center;
+}
+
+.profiler-empty strong { color: var(--u-text-bright); }
+
+.profiler-metrics {
+  display: grid;
+  gap: 4px;
+}
+
+.profiler-metrics-primary { grid-template-columns: repeat(4, minmax(120px, 1fr)); }
+.profiler-metrics-secondary {
+  grid-template-columns: repeat(6, minmax(95px, 1fr));
+  margin-top: 5px;
+}
+
+.profiler-metric {
+  display: flex;
+  min-width: 0;
+  min-height: 58px;
+  flex-direction: column;
+  justify-content: center;
+  padding: 5px 7px;
+  border: 1px solid #3b3b3b;
+  background: #2b2b2b;
+}
+
+.profiler-metric > span {
+  color: var(--u-muted);
+  font-size: 9px;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.profiler-metric strong {
+  overflow: hidden;
+  color: #e4e4e4;
+  font-family: ui-monospace, SFMono-Regular, Consolas, monospace;
+  font-size: 17px;
+  font-weight: 500;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.profiler-metric small {
+  overflow: hidden;
+  color: var(--u-muted);
+  font-size: 9px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.profiler-metric.warning {
+  border-color: #8b5a32;
+  background: #342b25;
+}
+
+.profiler-metric.warning strong { color: #efb56e; }
+
+.profiler-graphs {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(240px, 1fr));
+  gap: 4px;
+  margin-top: 5px;
+}
+
+.profiler-graph {
+  min-width: 0;
+  border: 1px solid #3b3b3b;
+  background: #202020;
+}
+
+.profiler-graph header {
+  display: flex;
+  height: 24px;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 6px;
+  border-bottom: 1px solid #343434;
+  color: var(--u-muted);
+  font-size: 9px;
+}
+
+.profiler-graph header strong {
+  color: var(--u-text-bright);
+  font-weight: 500;
+}
+
+.profiler-graph svg {
+  display: block;
+  width: 100%;
+  height: 104px;
+}
+
+.profiler-grid,
+.profiler-budget,
+.profiler-average-line,
+.profiler-peak-line {
+  fill: none;
+  vector-effect: non-scaling-stroke;
+}
+
+.profiler-grid { stroke: #2f2f2f; stroke-width: 1; }
+.profiler-budget { stroke: #9b6d3d; stroke-dasharray: 3 3; stroke-width: 1; }
+.profiler-peak-line { stroke: #5a5a5a; stroke-width: 1; }
+.profiler-average-line { stroke-width: 1.5; }
+
+.profiler-scope-note {
+  margin-top: 5px;
+  padding: 5px 7px;
+  border-left: 2px solid #4b8194;
+  background: #292f32;
+  color: var(--u-muted);
+  font-size: 9px;
+  line-height: 1.45;
+}
+
+@media (max-width: 760px) {
+  .profiler-metrics-primary,
+  .profiler-metrics-secondary,
+  .profiler-graphs { grid-template-columns: repeat(2, minmax(120px, 1fr)); }
+}
+
 .material-custom-parameters > strong {
   padding: 5px 6px;
   color: var(--u-text-bright);

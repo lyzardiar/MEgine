@@ -1404,3 +1404,14 @@ Rust workspace 检查现在零警告通过；Tauri Host 17/17 常规测试与 1/
 第一遍自省从编辑器异常路径反查，发现纹理选择器曾沿用通用 Texture 分类，可能接受 Runtime/CLI 不支持的格式；现已提取共享白名单过滤和无 DOM 诊断模型，并禁止在材质或 Shader 加载失败时显示清理按钮。第二遍自省从每帧 RenderObject 收集热路径反查，发现把 16 组名称/范围、4 个纹理名和整段 WGSL 直接放在每份 RenderMaterial 会造成重复字符串克隆；现改为 Shader Cache 共享 `Arc` 源码和反射切片，并把参数、Keyword、纹理解析收敛为单次 Schema 流程，回归通过指针共享断言固定该性能契约。
 
 这仍不是成熟的对象级材质提交系统。不同自定义纹理覆盖会拆分 Texture Set/Bind Group，当前没有 GPU Instancing、Material Buffer/Structured Buffer、对象属性上传脏标记、批次兼容性诊断、renderer-local Sampler/UV、Keyword 覆盖或平台绑定预算；Scene 的 CSS 预览也不执行真实自定义 WGSL。下一阶段应先建立可观测的材质/纹理批次统计与 GPU 资源脏更新，再设计实例数据布局和离线 Shader 制品，不能把 MaterialPropertyBlock 的便利 API 误当成自动合批已经完成。
+
+## 118. 2026-07-19 可 Dock 的 Editor Profiler 与视口采样
+
+- 补齐此前原生菜单已有名称但 Web Editor 完全缺席的 `Profiler`：它进入统一 Panel 注册表、Window/General 菜单、默认底部 Tab Group、旧布局自动补全、主窗口 Dock 拖拽和原生分离窗口标题/尺寸契约。面板提供 Scene/Game 数据源、Freeze/Resume、Clear、60 FPS 帧预算、Frame Interval/Viewport CPU 双曲线、p95/峰值，以及 Draw Items、UI Primitives/Batches、粒子、Spine、视口像素和实体数量。
+- Viewport 每帧采集整个 Canvas 预览绘制函数的 CPU 耗时、相邻帧间隔和实际绘制计数；250ms 窗口输出平均值与窗口峰值，Scene/Game 各保留 480 个样本，约两分钟。采样器拒绝非法数值、限制计数、处理时钟回退，并在隐藏视口重新出现时开启新窗口，避免把不可见期间错误报告成一次巨大卡顿。Profiler 自身在不可见 Dock Tab 中解除订阅，不为观察性能持续制造无意义 React 重绘。
+- 多窗口使用 `BroadcastChannel` 传输低频聚合样本和 Clear 指令，因此把 Profiler 拖出主窗口后仍能观察主窗口可见 Scene/Game；高频原始帧不跨 WebView 复制。隐藏 Scene/Game Canvas 现在在尺寸为零时提前退出绘制并清空时间基线，解决两个已访问视口即使被 Tab 隐藏仍持续执行完整 `requestAnimationFrame` 绘制的问题。
+- 真实页面复核在 1280×720、默认底部 179px Dock 中得到两张曲线、10 个指标且 `scrollWidth === clientWidth`，Game 样本约 17.7ms 帧间隔、0.4ms Viewport CPU，浏览器 Console 无错误。面板保持方形、零圆角专业工具风格；窄高度通过内部纵向滚动保留指标，而不是把整个编辑器横向撑开。
+
+第一遍自省发现隐藏后重开的视口会把旧聚合窗口跨越整个不可见时段，且 Scene/Game 共用总容量会在多窗口同时可见时把彼此历史挤掉；现已用零帧间隔重置源窗口并按源独立限额。第二遍自省通过真实页面数据发现 UI Batch 包含 Canvas/裁剪等绘制项，而最初分母只统计 Graphic，产生小于 1 的误导性“elements/batch”；现改为同一批次规划器的全部 UI Primitives，并把 Scene 中包含 Gizmo/Particle/Spine 项的 `Visible Renderers` 更名为准确的 `Draw Items`。同时补了隐藏 Profiler 解除订阅和工具栏对比度。
+
+这不是 Player Profiler。当前数据只覆盖 Editor Canvas 预览 CPU，不包含原生 wgpu GPU Timestamp Query、Render Pass/Draw Call、Pipeline/Bind Group 命中、显存与纹理驻留、脚本/物理/动画/音频分区、GC/堆快照、调用栈采样、Marker API、深度帧捕获、网络或构建性能；编辑器明确显示边界，不用 Canvas 批次冒充 Player GPU 证据。下一阶段应定义跨 Runtime Sidecar 的版本化 Profiler 协议和低开销环形缓冲，先接入 CPU Marker、RHI Pass/Draw/Pipeline 计数及 GPU 时间，再做 Timeline 帧关联、Profiler Module、导出与回归预算门禁。
