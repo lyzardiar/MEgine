@@ -45,11 +45,14 @@ import {
   normalizeSurfaceShaderParameterValue,
   parseSurfaceShaderKeywords,
   parseSurfaceShaderParameters,
+  parseSurfaceShaderTextures,
   surfaceShaderParameterComponents,
   validateSurfaceShaderKeywordValues,
   validateSurfaceShaderParameterValues,
+  validateSurfaceShaderTextureValues,
   type SurfaceShaderKeyword,
   type SurfaceShaderParameter,
+  type SurfaceShaderTexture,
 } from '../surfaceShader';
 
 function uniqueMaterialPath(baseName = 'New Material'): string {
@@ -234,6 +237,7 @@ function BaseMaterialEditor(props: MaterialEditorProps) {
   const [error, setError] = useState<string | null>(null);
   const [shaderParameters, setShaderParameters] = useState<SurfaceShaderParameter[]>([]);
   const [shaderKeywords, setShaderKeywords] = useState<SurfaceShaderKeyword[]>([]);
+  const [shaderTextures, setShaderTextures] = useState<SurfaceShaderTexture[]>([]);
   const [shaderParameterError, setShaderParameterError] = useState<string | null>(null);
   const [assetRevision, setAssetRevision] = useState(0);
   const [, setDraftEpoch] = useState(0);
@@ -333,6 +337,7 @@ function BaseMaterialEditor(props: MaterialEditorProps) {
     let cancelled = false;
     setShaderParameters([]);
     setShaderKeywords([]);
+    setShaderTextures([]);
     setShaderParameterError(null);
     if (material?.shader !== 'custom' || !material.custom_shader) {
       return () => { cancelled = true; };
@@ -342,10 +347,13 @@ function BaseMaterialEditor(props: MaterialEditorProps) {
         if (cancelled) return;
         const parameters = parseSurfaceShaderParameters(source);
         const keywords = parseSurfaceShaderKeywords(source);
+        const textures = parseSurfaceShaderTextures(source);
         setShaderParameters(parameters);
         setShaderKeywords(keywords);
+        setShaderTextures(textures);
         validateSurfaceShaderParameterValues(parameters, material.custom_parameters);
         validateSurfaceShaderKeywordValues(keywords, material.custom_keywords);
+        validateSurfaceShaderTextureValues(textures, material.custom_textures);
       })
       .catch((reason) => {
         if (!cancelled) {
@@ -460,8 +468,10 @@ function BaseMaterialEditor(props: MaterialEditorProps) {
     const source = await readProjectAssetText(candidate.custom_shader);
     const parameters = parseSurfaceShaderParameters(source);
     const keywords = parseSurfaceShaderKeywords(source);
+    const textures = parseSurfaceShaderTextures(source);
     validateSurfaceShaderParameterValues(parameters, candidate.custom_parameters);
     validateSurfaceShaderKeywordValues(keywords, candidate.custom_keywords);
+    validateSurfaceShaderTextureValues(textures, candidate.custom_textures);
   };
 
   const save = async (): Promise<boolean> => {
@@ -571,6 +581,31 @@ function BaseMaterialEditor(props: MaterialEditorProps) {
     }
   };
 
+  const dropCustomTexture = (
+    event: DragEvent<HTMLDivElement>,
+    texture: SurfaceShaderTexture,
+  ) => {
+    event.preventDefault();
+    const raw = event.dataTransfer.getData('text/mengine-sprite')
+      || event.dataTransfer.getData('text/mengine-asset')
+      || event.dataTransfer.getData('text/plain');
+    try {
+      const path = normalizeProjectAssetPath(raw);
+      if (!/\.(?:png|jpe?g|webp|gif|bmp|tga)$/i.test(path)) {
+        throw new Error(`${texture.label} only accepts runtime 2D image assets`);
+      }
+      updateMaterial(
+        (current) => ({
+          ...current,
+          custom_textures: { ...current.custom_textures, [texture.name]: path },
+        }),
+        `Edit Material ${texture.label}`,
+      );
+    } catch (reason) {
+      props.onLog(reason instanceof Error ? reason.message : String(reason), 'warn');
+    }
+  };
+
   if (!props.assetPath || !material) {
     return (
       <div className="material-empty">
@@ -639,7 +674,9 @@ function BaseMaterialEditor(props: MaterialEditorProps) {
               (current) => ({
                 ...current,
                 shader,
-                ...(shader === 'custom' ? {} : { custom_parameters: {}, custom_keywords: {} }),
+                ...(shader === 'custom' ? {} : {
+                  custom_parameters: {}, custom_keywords: {}, custom_textures: {},
+                }),
               }),
               'Edit Material Shader',
             );
@@ -661,6 +698,9 @@ function BaseMaterialEditor(props: MaterialEditorProps) {
                       : {},
                     custom_keywords: event.target.value === current.custom_shader
                       ? current.custom_keywords
+                      : {},
+                    custom_textures: event.target.value === current.custom_shader
+                      ? current.custom_textures
                       : {},
                   }),
                   'Edit Material Surface Shader',
@@ -686,7 +726,7 @@ function BaseMaterialEditor(props: MaterialEditorProps) {
           {material.shader === 'custom' && shaderParameterError && (
             <div className="material-parameter-error">
               <span>{shaderParameterError}</span>
-              {(shaderParameters.length > 0 || shaderKeywords.length > 0) && (
+              {(shaderParameters.length > 0 || shaderKeywords.length > 0 || shaderTextures.length > 0) && (
                 <button type="button" onClick={() => {
                   updateMaterial(
                     (current) => ({
@@ -695,12 +735,53 @@ function BaseMaterialEditor(props: MaterialEditorProps) {
                         .filter(([name]) => shaderParameters.some((parameter) => parameter.name === name))),
                       custom_keywords: Object.fromEntries(Object.entries(current.custom_keywords)
                         .filter(([name]) => shaderKeywords.some((keyword) => keyword.name === name))),
+                      custom_textures: Object.fromEntries(Object.entries(current.custom_textures)
+                        .filter(([name]) => shaderTextures.some((texture) => texture.name === name))),
                     }),
                     'Remove Stale Material Parameters',
                   );
                   setShaderParameterError(null);
                 }}>Remove Stale Values</button>
               )}
+            </div>
+          )}
+          {material.shader === 'custom' && shaderTextures.length > 0 && (
+            <div className="material-custom-parameters material-custom-textures">
+              <strong>Surface Shader Textures</strong>
+              {shaderTextures.map((texture) => {
+                const overridden = Object.hasOwn(material.custom_textures, texture.name);
+                const value = overridden ? material.custom_textures[texture.name] : texture.default;
+                return (
+                  <div key={texture.name} className="material-custom-texture">
+                    <MaterialTextureSlot
+                      label={texture.label}
+                      hint={`mengine_texture_${texture.name}(uv)`}
+                      colorSpace={texture.type === 'color' ? 'sRGB' : 'Linear'}
+                      value={value}
+                      assets={textureAssets.filter((asset) => /\.(?:png|jpe?g|webp|gif|bmp|tga)$/i.test(asset.relPath))}
+                      missing={Boolean(value && !textureAssets.some(
+                        (asset) => asset.relPath.toLowerCase() === value.toLowerCase(),
+                      ))}
+                      onChange={(next) => updateMaterial(
+                        (current) => ({
+                          ...current,
+                          custom_textures: { ...current.custom_textures, [texture.name]: next },
+                        }),
+                        `Edit Material ${texture.label}`,
+                      )}
+                      onDrop={(event) => dropCustomTexture(event, texture)}
+                    />
+                    <button type="button" disabled={!overridden} onClick={() => updateMaterial(
+                      (current) => {
+                        const custom_textures = { ...current.custom_textures };
+                        delete custom_textures[texture.name];
+                        return { ...current, custom_textures };
+                      },
+                      `Reset Material ${texture.label}`,
+                    )}>Reset</button>
+                  </div>
+                );
+              })}
             </div>
           )}
           {material.shader === 'custom' && shaderKeywords.length > 0 && (

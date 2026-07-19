@@ -15,12 +15,13 @@ export const MATERIAL_TEXTURE_FIELDS = [
 export type MaterialTextureField = typeof MATERIAL_TEXTURE_FIELDS[number];
 
 export type MaterialReferenceDiagnostic = {
-  field: MaterialTextureField | 'custom_shader';
+  field: MaterialTextureField | 'custom_shader' | `custom_textures.${string}`;
   message: string;
 };
 
 export type MaterialCustomParameters = Record<string, [number, number, number, number]>;
 export type MaterialCustomKeywords = Record<string, boolean>;
+export type MaterialCustomTextures = Record<string, string>;
 
 export type MaterialAsset = {
   version: number;
@@ -29,6 +30,7 @@ export type MaterialAsset = {
   custom_shader: string;
   custom_parameters: MaterialCustomParameters;
   custom_keywords: MaterialCustomKeywords;
+  custom_textures: MaterialCustomTextures;
   surface: MaterialSurface;
   blend_mode: MaterialBlendMode;
   transparent_depth_write: boolean;
@@ -98,17 +100,27 @@ export function materialReferenceDiagnostics(
       diagnostics.push({ field, message: `Missing texture asset: ${path}` });
     }
   }
+  for (const [name, path] of Object.entries(material.custom_textures)) {
+    if (!path) continue;
+    const normalizedPath = path.trim().replace(/\\/g, '/');
+    if (!isCustomMaterialTexturePath(normalizedPath)) {
+      diagnostics.push({ field: `custom_textures.${name}`, message: `Unsupported custom texture asset: ${path}` });
+    } else if (!available.has(normalizedPath.toLowerCase())) {
+      diagnostics.push({ field: `custom_textures.${name}`, message: `Missing custom texture asset: ${path}` });
+    }
+  }
   return diagnostics;
 }
 
 export function createMaterialAsset(name = 'New Material'): MaterialAsset {
   return {
-    version: 9,
+    version: 10,
     name,
     shader: 'pbr',
     custom_shader: '',
     custom_parameters: {},
     custom_keywords: {},
+    custom_textures: {},
     surface: 'opaque',
     blend_mode: 'alpha',
     transparent_depth_write: false,
@@ -192,6 +204,36 @@ export function normalizeMaterialCustomKeywords(value: unknown): MaterialCustomK
   return result;
 }
 
+function isCustomMaterialTexturePath(path: string): boolean {
+  return /^Assets\//.test(path)
+    && /\.(?:png|jpe?g|webp|gif|bmp|tga)$/i.test(path)
+    && !path.split('/').some((segment) => !segment || segment === '.' || segment === '..');
+}
+
+export function normalizeMaterialCustomTextures(value: unknown): MaterialCustomTextures {
+  if (value == null) return {};
+  if (typeof value !== 'object' || Array.isArray(value)) {
+    throw new Error('Material custom_textures must be an object');
+  }
+  const entries = Object.entries(value as Record<string, unknown>);
+  if (entries.length > 4) throw new Error('Material cannot contain more than 4 custom textures');
+  const result: MaterialCustomTextures = {};
+  for (const [name, raw] of entries.sort(([left], [right]) => left.localeCompare(right))) {
+    if (!/^[A-Za-z][A-Za-z0-9_]{0,47}$/.test(name)) {
+      throw new Error(`Invalid custom material texture name: ${name}`);
+    }
+    if (typeof raw !== 'string') {
+      throw new Error(`Custom material texture '${name}' must be a string`);
+    }
+    const path = raw.trim().replace(/\\/g, '/');
+    if (path && !isCustomMaterialTexturePath(path)) {
+      throw new Error(`Custom material texture '${name}' must reference an Assets image`);
+    }
+    result[name] = path;
+  }
+  return result;
+}
+
 export function normalizeMaterialAsset(value: unknown): MaterialAsset {
   const source = value != null && typeof value === 'object' && !Array.isArray(value)
     ? value as Record<string, unknown>
@@ -206,17 +248,21 @@ export function normalizeMaterialAsset(value: unknown): MaterialAsset {
     : 'pbr';
   const reflectedParameters = normalizeMaterialCustomParameters(source.custom_parameters);
   const reflectedKeywords = normalizeMaterialCustomKeywords(source.custom_keywords);
+  const reflectedTextures = normalizeMaterialCustomTextures(source.custom_textures);
   if (shader !== 'custom'
-    && (Object.keys(reflectedParameters).length > 0 || Object.keys(reflectedKeywords).length > 0)) {
-    throw new Error('Only custom materials can contain custom_parameters or custom_keywords');
+    && (Object.keys(reflectedParameters).length > 0
+      || Object.keys(reflectedKeywords).length > 0
+      || Object.keys(reflectedTextures).length > 0)) {
+    throw new Error('Only custom materials can contain custom_parameters, custom_keywords, or custom_textures');
   }
   return {
-    version: 9,
+    version: 10,
     name: String(source.name ?? ''),
     shader,
     custom_shader: String(source.custom_shader ?? '').trim().replace(/\\/g, '/'),
     custom_parameters: reflectedParameters,
     custom_keywords: reflectedKeywords,
+    custom_textures: reflectedTextures,
     surface: source.surface === 'transparent' || source.surface === 'cutout'
       ? source.surface
       : 'opaque',
@@ -266,7 +312,7 @@ export function parseMaterialAsset(text: string): MaterialAsset {
   }
   const source = parsed as Record<string, unknown>;
   if (source.version != null
-    && (!Number.isInteger(source.version) || Number(source.version) < 1 || Number(source.version) > 9)) {
+    && (!Number.isInteger(source.version) || Number(source.version) < 1 || Number(source.version) > 10)) {
     throw new Error(`Unsupported material version: ${String(source.version)}`);
   }
   const enumField = (field: string, allowed: readonly string[]) => {
@@ -290,10 +336,14 @@ export function parseMaterialAsset(text: string): MaterialAsset {
     && Object.keys(normalizeMaterialCustomKeywords(source.custom_keywords)).length > 0) {
     throw new Error('Only custom materials can contain custom_keywords');
   }
+  if (source.shader !== 'custom' && source.custom_textures != null
+    && Object.keys(normalizeMaterialCustomTextures(source.custom_textures)).length > 0) {
+    throw new Error('Only custom materials can contain custom_textures');
+  }
   return normalizeMaterialAsset(source);
 }
 
 export function serializeMaterialAsset(material: MaterialAsset): string {
-  if (material.version !== 9) throw new Error(`Unsupported material version: ${material.version}`);
+  if (material.version !== 10) throw new Error(`Unsupported material version: ${material.version}`);
   return `${JSON.stringify(normalizeMaterialAsset(material), null, 2)}\n`;
 }

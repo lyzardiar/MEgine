@@ -28,6 +28,7 @@ export const BUILD_CACHE_REPORT_PREFIX = 'MENGINE_BUILD_CACHE ';
 const MAX_TIMELINE_PARTICLE_TIME = 300;
 const MAX_SURFACE_SHADER_PARAMETERS = 16;
 const MAX_SURFACE_SHADER_KEYWORDS = 16;
+const MAX_SURFACE_SHADER_TEXTURES = 4;
 const DEFAULT_SHADER_VARIANT_LIMIT = 256;
 const MAX_SHADER_VARIANT_LIMIT = 65_536;
 const SURFACE_SHADER_PARAMETERS_MARKER = '/* MENGINE_PARAMETERS';
@@ -429,11 +430,12 @@ function strictStringValue(object: JsonObject, field: string, source: string): s
 type SurfaceShaderBuildSchema = {
   parameters: Set<string>;
   keywords: Map<string, boolean>;
+  textures: Map<string, string>;
 };
 
 function surfaceShaderSchema(sourceText: string, source: string): SurfaceShaderBuildSchema {
   const marker = sourceText.indexOf(SURFACE_SHADER_PARAMETERS_MARKER);
-  if (marker < 0) return { parameters: new Set(), keywords: new Map() };
+  if (marker < 0) return { parameters: new Set(), keywords: new Map(), textures: new Map() };
   const jsonStart = marker + SURFACE_SHADER_PARAMETERS_MARKER.length;
   const relativeEnd = sourceText.slice(jsonStart).indexOf('*/');
   if (relativeEnd < 0) {
@@ -450,13 +452,17 @@ function surfaceShaderSchema(sourceText: string, source: string): SurfaceShaderB
     throw new Error(`invalid material surface shader ${source}: parameter JSON ${reason instanceof Error ? reason.message : String(reason)}`);
   }
   const root = jsonObject(parsed);
-  if (!root || Object.keys(root).some((key) => key !== 'parameters' && key !== 'keywords')
+  if (!root || Object.keys(root).some(
+    (key) => key !== 'parameters' && key !== 'keywords' && key !== 'textures',
+  )
     || (root.parameters != null && !Array.isArray(root.parameters))
-    || (root.keywords != null && !Array.isArray(root.keywords))) {
-    throw new Error(`invalid material surface shader ${source}: parameter block may contain only parameters and keywords arrays`);
+    || (root.keywords != null && !Array.isArray(root.keywords))
+    || (root.textures != null && !Array.isArray(root.textures))) {
+    throw new Error(`invalid material surface shader ${source}: parameter block may contain only parameters, keywords, and textures arrays`);
   }
   const parameters = (root.parameters ?? []) as unknown[];
   const keywords = (root.keywords ?? []) as unknown[];
+  const textures = (root.textures ?? []) as unknown[];
   if (parameters.length > MAX_SURFACE_SHADER_PARAMETERS) {
     throw new Error(`invalid material surface shader ${source}: more than ${MAX_SURFACE_SHADER_PARAMETERS} parameters`);
   }
@@ -525,7 +531,38 @@ function surfaceShaderSchema(sourceText: string, source: string): SurfaceShaderB
     }
     keywordDefaults.set(name, keyword.default === true);
   }
-  return { parameters: names, keywords: keywordDefaults };
+  if (textures.length > MAX_SURFACE_SHADER_TEXTURES) {
+    throw new Error(`invalid material surface shader ${source}: more than ${MAX_SURFACE_SHADER_TEXTURES} textures`);
+  }
+  const textureDefaults = new Map<string, string>();
+  for (const [index, value] of textures.entries()) {
+    const texture = jsonObject(value);
+    if (!texture || Object.keys(texture).some(
+      (key) => !['name', 'label', 'type', 'default'].includes(key),
+    )) {
+      throw new Error(`invalid material surface shader ${source}: texture ${index + 1} contains unsupported fields`);
+    }
+    const name = strictStringValue(texture, 'name', `Surface Shader ${source} texture`);
+    if (!/^[A-Za-z][A-Za-z0-9_]{0,47}$/.test(name) || textureDefaults.has(name)) {
+      throw new Error(`invalid material surface shader ${source}: invalid or duplicate texture '${name}'`);
+    }
+    if (texture.label != null
+      && (typeof texture.label !== 'string' || texture.label.trim().length > 64)) {
+      throw new Error(`invalid material surface shader ${source}: texture '${name}' has an invalid label`);
+    }
+    if (texture.type !== 'color' && texture.type !== 'data') {
+      throw new Error(`invalid material surface shader ${source}: texture '${name}' type must be color or data`);
+    }
+    const defaultPath = strictStringValue(texture, 'default', `Surface Shader ${source} texture`)
+      .replaceAll('\\', '/');
+    if (defaultPath && (!defaultPath.startsWith('Assets/')
+      || !/\.(?:png|jpe?g|webp|bmp|gif|tga)$/i.test(defaultPath)
+      || defaultPath.split('/').some((segment) => !segment || segment === '.' || segment === '..'))) {
+      throw new Error(`invalid material surface shader ${source}: texture '${name}' has an invalid default`);
+    }
+    textureDefaults.set(name, defaultPath);
+  }
+  return { parameters: names, keywords: keywordDefaults, textures: textureDefaults };
 }
 
 function customKeywordOverrides(value: unknown, source: string): Map<string, boolean> {
@@ -542,6 +579,29 @@ function customKeywordOverrides(value: unknown, source: string): Map<string, boo
       throw new Error(`invalid ${source}: invalid custom keyword '${name}'`);
     }
     result.set(name, enabled);
+  }
+  return result;
+}
+
+function customTextureOverrides(value: unknown, source: string): Map<string, string> {
+  if (value == null) return new Map();
+  const object = jsonObject(value);
+  if (!object) throw new Error(`invalid ${source}: custom_textures must be an object`);
+  const entries = Object.entries(object);
+  if (entries.length > MAX_SURFACE_SHADER_TEXTURES) {
+    throw new Error(`invalid ${source}: more than ${MAX_SURFACE_SHADER_TEXTURES} custom textures`);
+  }
+  const result = new Map<string, string>();
+  for (const [name, value] of entries) {
+    const path = typeof value === 'string' ? value.trim().replaceAll('\\', '/') : '';
+    if (!/^[A-Za-z][A-Za-z0-9_]{0,47}$/.test(name)
+      || typeof value !== 'string'
+      || path && (!path.startsWith('Assets/')
+        || !/\.(?:png|jpe?g|webp|bmp|gif|tga)$/i.test(path)
+        || path.split('/').some((segment) => !segment || segment === '.' || segment === '..'))) {
+      throw new Error(`invalid ${source}: invalid custom texture '${name}'`);
+    }
+    result.set(name, path);
   }
   return result;
 }
@@ -784,9 +844,11 @@ function scanBuildAssetDependencies(
   const inclusionReasons = new Map<string, BuildInclusionReason[]>();
   const materialInstanceParents = new Map<string, string>();
   const materialInstanceCustomParameters = new Map<string, string[]>();
+  const materialInstanceCustomTextures = new Map<string, Map<string, string>>();
   const materialInstanceKeywordOverrides = new Map<string, Map<string, boolean>>();
   const materialBaseShaders = new Map<string, string | null>();
   const materialBaseKeywordOverrides = new Map<string, Map<string, boolean>>();
+  const materialBaseCustomTextures = new Map<string, Map<string, string>>();
   const surfaceShaderSchemas = new Map<string, SurfaceShaderBuildSchema>();
   const surfaceShaderCanonicalPaths = new Map<string, string>();
   const customMaterialParameterBindings: Array<{
@@ -798,6 +860,11 @@ function scanBuildAssetDependencies(
     material: string;
     shader: string;
     keywords: string[];
+  }> = [];
+  const customMaterialTextureBindings: Array<{
+    material: string;
+    shader: string;
+    textures: string[];
   }> = [];
   const materialVariantRoots = new Set<string>();
   let auditedScenes = 0;
@@ -916,7 +983,8 @@ function scanBuildAssetDependencies(
       auditedMaterialInstances += 1;
       const instance = readJsonAsset(absolute, root, 'material instance');
       if (instance.version != null
-        && instance.version !== 1 && instance.version !== 2 && instance.version !== 3) {
+        && instance.version !== 1 && instance.version !== 2
+        && instance.version !== 3 && instance.version !== 4) {
         throw new Error(`invalid material instance ${source}: unsupported version ${String(instance.version)}`);
       }
       if (instance.name != null && typeof instance.name !== 'string') {
@@ -936,6 +1004,7 @@ function scanBuildAssetDependencies(
       const allowed = new Set([
         'base_color', 'metallic', 'roughness', 'ior', 'clearcoat', 'clearcoat_roughness',
         'emissive', 'emissive_strength', 'custom_parameters', 'custom_keywords',
+        'custom_textures',
       ]);
       const unknown = Object.keys(overrides).find((field) => !allowed.has(field));
       if (unknown) {
@@ -990,12 +1059,17 @@ function scanBuildAssetDependencies(
         sourceKey,
         customKeywordOverrides(overrides.custom_keywords, `material instance ${source}`),
       );
+      const customTextures = customTextureOverrides(
+        overrides.custom_textures,
+        `material instance ${source}`,
+      );
+      materialInstanceCustomTextures.set(sourceKey, customTextures);
       enqueue(parent, source, 'material instance parent');
     } else if (extension === '.mmat' || extension === '.mat') {
       auditedMaterials += 1;
       const material = readJsonAsset(absolute, root, 'material');
       if (material.version != null
-        && (!Number.isInteger(material.version) || Number(material.version) < 1 || Number(material.version) > 9)) {
+        && (!Number.isInteger(material.version) || Number(material.version) < 1 || Number(material.version) > 10)) {
         throw new Error(`invalid material ${source}: unsupported version ${String(material.version)}`);
       }
       if (material.shader != null
@@ -1016,6 +1090,10 @@ function scanBuildAssetDependencies(
         material.custom_keywords,
         `material ${source}`,
       );
+      const customTextures = customTextureOverrides(
+        material.custom_textures,
+        `material ${source}`,
+      );
       if (customParameterNames.length > MAX_SURFACE_SHADER_PARAMETERS) {
         throw new Error(`invalid material ${source}: more than ${MAX_SURFACE_SHADER_PARAMETERS} custom parameters`);
       }
@@ -1029,8 +1107,8 @@ function scanBuildAssetDependencies(
         }
       }
       if (material.shader !== 'custom'
-        && (customParameterNames.length > 0 || keywordOverrides.size > 0)) {
-        throw new Error(`invalid material ${source}: only custom materials can contain custom_parameters or custom_keywords`);
+        && (customParameterNames.length > 0 || keywordOverrides.size > 0 || customTextures.size > 0)) {
+        throw new Error(`invalid material ${source}: only custom materials can contain custom_parameters, custom_keywords, or custom_textures`);
       }
       if (material.shader === 'custom') {
         if (!customShader) {
@@ -1050,12 +1128,18 @@ function scanBuildAssetDependencies(
           shader: customShader.replaceAll('\\', '/').toLowerCase(),
           keywords: [...keywordOverrides.keys()],
         });
+        customMaterialTextureBindings.push({
+          material: source,
+          shader: customShader.replaceAll('\\', '/').toLowerCase(),
+          textures: [...customTextures.keys()],
+        });
       }
       materialBaseShaders.set(
         source.toLowerCase(),
         material.shader === 'custom' ? customShader.replaceAll('\\', '/').toLowerCase() : null,
       );
       materialBaseKeywordOverrides.set(source.toLowerCase(), keywordOverrides);
+      materialBaseCustomTextures.set(source.toLowerCase(), customTextures);
       if (material.surface != null
         && material.surface !== 'opaque'
         && material.surface !== 'transparent'
@@ -1136,7 +1220,8 @@ function scanBuildAssetDependencies(
       if (forbidden) {
         throw new Error(`invalid material surface shader ${source}: ${forbidden} is reserved by the engine`);
       }
-      surfaceShaderSchemas.set(source.toLowerCase(), surfaceShaderSchema(sourceText, source));
+      const schema = surfaceShaderSchema(sourceText, source);
+      surfaceShaderSchemas.set(source.toLowerCase(), schema);
       surfaceShaderCanonicalPaths.set(source.toLowerCase(), source);
     } else if (pending.path.toLowerCase().endsWith('.sprite.json')) {
       const metadata = readJsonAsset(absolute, root, 'sprite import metadata');
@@ -1744,50 +1829,53 @@ function scanBuildAssetDependencies(
       }
     }
   }
-  while (queue.length > 0) {
-    assertBuildNotCancelled(isCancelled, 'asset dependency scan');
-    const pending = queue.shift()!;
-    const absolute = resolveProjectPath(root, pending.path, pending.kind);
-    if (!roots.some((contentRoot) => isPathInside(contentRoot, absolute))) {
-      throw new Error(`${pending.kind} must be stored under Assets or Scripts: ${pending.path} (referenced by ${pending.from})`);
-    }
-    const key = process.platform === 'win32' ? absolute.toLowerCase() : absolute;
-    const processKey = pending.spriteSlice ? `${key}#${pending.spriteSlice.toLowerCase()}` : key;
-    const source = portablePath(relative(root, absolute));
-    const sourceKey = process.platform === 'win32' ? source.toLowerCase() : source;
-    const reasons = inclusionReasons.get(sourceKey) ?? [];
-    if (!reasons.some((reason) => reason.kind === pending.kind && reason.from === pending.from)) {
-      reasons.push({ kind: pending.kind, from: pending.from });
-      reasons.sort((left, right) => (
-        compareFileNames(left.kind, right.kind) || compareFileNames(left.from, right.from)
-      ));
-      inclusionReasons.set(sourceKey, reasons);
-    }
-    if (processed.has(processKey)) continue;
-    if (!existsSync(absolute) || !statSync(absolute).isFile()) {
-      throw new Error(`missing ${pending.kind}: ${pending.path} (referenced by ${pending.from})`);
-    }
-    processed.add(processKey);
-    visited.set(key, absolute);
-    if (/\.(?:png|jpe?g|webp|bmp|gif|tga)$/i.test(absolute)) {
-      const sidecar = `${absolute}.sprite.json`;
-      if (existsSync(sidecar) && statSync(sidecar).isFile()) {
-        const sidecarPath = portablePath(relative(root, sidecar));
-        const sidecarKey = process.platform === 'win32' ? sidecar.toLowerCase() : sidecar;
-        const alreadyQueued = queue.some((candidate) => (
-          candidate.path.replaceAll('\\', '/').toLowerCase() === sidecarPath.toLowerCase()
+  const drainQueue = () => {
+    while (queue.length > 0) {
+      assertBuildNotCancelled(isCancelled, 'asset dependency scan');
+      const pending = queue.shift()!;
+      const absolute = resolveProjectPath(root, pending.path, pending.kind);
+      if (!roots.some((contentRoot) => isPathInside(contentRoot, absolute))) {
+        throw new Error(`${pending.kind} must be stored under Assets or Scripts: ${pending.path} (referenced by ${pending.from})`);
+      }
+      const key = process.platform === 'win32' ? absolute.toLowerCase() : absolute;
+      const processKey = pending.spriteSlice ? `${key}#${pending.spriteSlice.toLowerCase()}` : key;
+      const source = portablePath(relative(root, absolute));
+      const sourceKey = process.platform === 'win32' ? source.toLowerCase() : source;
+      const reasons = inclusionReasons.get(sourceKey) ?? [];
+      if (!reasons.some((reason) => reason.kind === pending.kind && reason.from === pending.from)) {
+        reasons.push({ kind: pending.kind, from: pending.from });
+        reasons.sort((left, right) => (
+          compareFileNames(left.kind, right.kind) || compareFileNames(left.from, right.from)
         ));
-        if (!visited.has(sidecarKey) && !alreadyQueued) {
-          enqueue(
-            sidecarPath,
-            portablePath(relative(root, absolute)),
-            'sprite import metadata',
-          );
+        inclusionReasons.set(sourceKey, reasons);
+      }
+      if (processed.has(processKey)) continue;
+      if (!existsSync(absolute) || !statSync(absolute).isFile()) {
+        throw new Error(`missing ${pending.kind}: ${pending.path} (referenced by ${pending.from})`);
+      }
+      processed.add(processKey);
+      visited.set(key, absolute);
+      if (/\.(?:png|jpe?g|webp|bmp|gif|tga)$/i.test(absolute)) {
+        const sidecar = `${absolute}.sprite.json`;
+        if (existsSync(sidecar) && statSync(sidecar).isFile()) {
+          const sidecarPath = portablePath(relative(root, sidecar));
+          const sidecarKey = process.platform === 'win32' ? sidecar.toLowerCase() : sidecar;
+          const alreadyQueued = queue.some((candidate) => (
+            candidate.path.replaceAll('\\', '/').toLowerCase() === sidecarPath.toLowerCase()
+          ));
+          if (!visited.has(sidecarKey) && !alreadyQueued) {
+            enqueue(
+              sidecarPath,
+              portablePath(relative(root, absolute)),
+              'sprite import metadata',
+            );
+          }
         }
       }
+      inspectJsonDependency(absolute, pending);
     }
-    inspectJsonDependency(absolute, pending);
-  }
+  };
+  drainQueue();
   for (const binding of customMaterialParameterBindings) {
     const schema = surfaceShaderSchemas.get(binding.shader);
     if (!schema) {
@@ -1809,6 +1897,18 @@ function scanBuildAssetDependencies(
     if (unknown) {
       throw new Error(
         `invalid material ${binding.material}: keyword '${unknown}' is not declared by ${binding.shader}`,
+      );
+    }
+  }
+  for (const binding of customMaterialTextureBindings) {
+    const schema = surfaceShaderSchemas.get(binding.shader);
+    if (!schema) {
+      throw new Error(`invalid material ${binding.material}: Surface Shader schema was not validated`);
+    }
+    const unknown = binding.textures.find((name) => !schema.textures.has(name));
+    if (unknown) {
+      throw new Error(
+        `invalid material ${binding.material}: texture '${unknown}' is not declared by ${binding.shader}`,
       );
     }
   }
@@ -1853,6 +1953,76 @@ function scanBuildAssetDependencies(
       );
     }
   }
+  for (const [instance, textures] of materialInstanceCustomTextures) {
+    if (textures.size === 0) continue;
+    let base: string | undefined = instance;
+    for (let depth = 0; depth <= 32 && base && materialInstanceParents.has(base); depth += 1) {
+      base = materialInstanceParents.get(base);
+    }
+    const shader = base == null ? undefined : materialBaseShaders.get(base);
+    if (shader == null) {
+      throw new Error(
+        `invalid material instance ${instance}: custom textures require a custom parent material`,
+      );
+    }
+    const schema = surfaceShaderSchemas.get(shader);
+    if (!schema) {
+      throw new Error(`invalid material instance ${instance}: Surface Shader schema was not validated`);
+    }
+    const unknown = [...textures.keys()].find((name) => !schema.textures.has(name));
+    if (unknown) {
+      throw new Error(
+        `invalid material instance ${instance}: texture '${unknown}' is not declared by ${shader}`,
+      );
+    }
+  }
+  const resolveCustomTextureDependencies = (start: string): string[] => {
+    const layers: Array<{ source: string; values: Map<string, string> }> = [];
+    let base = start;
+    for (let depth = 0; depth <= 32 && materialInstanceParents.has(base); depth += 1) {
+      layers.push({
+        source: base,
+        values: materialInstanceCustomTextures.get(base) ?? new Map(),
+      });
+      base = materialInstanceParents.get(base)!;
+    }
+    const shader = materialBaseShaders.get(base);
+    if (shader == null) {
+      const authoredTexture = layers.find((layer) => layer.values.size > 0);
+      if (authoredTexture) {
+        throw new Error(
+          `invalid material instance ${authoredTexture.source}: custom textures require a custom parent material`,
+        );
+      }
+      return [];
+    }
+    const schema = surfaceShaderSchemas.get(shader);
+    if (!schema) {
+      throw new Error(`invalid material ${start}: Surface Shader schema was not validated`);
+    }
+    const state = new Map(schema.textures);
+    const apply = (source: string, values: Map<string, string>) => {
+      for (const [name, path] of values) {
+        if (!schema.textures.has(name)) {
+          throw new Error(
+            `invalid material ${source}: texture '${name}' is not declared by ${shader}`,
+          );
+        }
+        state.set(name, path);
+      }
+    };
+    apply(base, materialBaseCustomTextures.get(base) ?? new Map());
+    for (const layer of layers.reverse()) apply(layer.source, layer.values);
+    return [...schema.textures.keys()]
+      .map((name) => state.get(name) ?? '')
+      .filter(Boolean);
+  };
+  for (const material of materialVariantRoots) {
+    for (const path of resolveCustomTextureDependencies(material)) {
+      enqueue(path, material, 'resolved material custom texture');
+    }
+  }
+  drainQueue();
   const resolveKeywordVariant = (start: string): { shader: string; enabled: string[] } | null => {
     const layers: Array<{ source: string; values: Map<string, boolean> }> = [];
     let base = start;

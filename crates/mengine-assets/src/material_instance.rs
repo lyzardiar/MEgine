@@ -3,7 +3,7 @@ use serde::{Deserialize, Serialize};
 use std::collections::BTreeMap;
 use std::path::Path;
 
-const MATERIAL_INSTANCE_VERSION: u32 = 3;
+const MATERIAL_INSTANCE_VERSION: u32 = 4;
 
 fn default_version() -> u32 {
     MATERIAL_INSTANCE_VERSION
@@ -22,6 +22,7 @@ pub struct MaterialInstanceOverrides {
     pub emissive_strength: Option<f32>,
     pub custom_parameters: BTreeMap<String, [f32; 4]>,
     pub custom_keywords: BTreeMap<String, bool>,
+    pub custom_textures: BTreeMap<String, String>,
 }
 
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
@@ -114,6 +115,41 @@ impl MaterialInstanceAsset {
                 )));
             }
         }
+        if self.overrides.custom_textures.len()
+            > mengine_core::surface_shader::MAX_SURFACE_SHADER_TEXTURES
+        {
+            return Err(AssetError::Invalid(format!(
+                "material instance declares more than {} custom textures",
+                mengine_core::surface_shader::MAX_SURFACE_SHADER_TEXTURES
+            )));
+        }
+        for (name, path) in &mut self.overrides.custom_textures {
+            let mut characters = name.chars();
+            if !matches!(characters.next(), Some(first) if first.is_ascii_alphabetic())
+                || !characters
+                    .all(|character| character.is_ascii_alphanumeric() || character == '_')
+                || name.len() > 48
+            {
+                return Err(AssetError::Invalid(format!(
+                    "invalid custom material instance texture '{name}'"
+                )));
+            }
+            *path = path.trim().replace('\\', "/");
+            let lower = path.to_ascii_lowercase();
+            if !path.is_empty()
+                && (!path.starts_with("Assets/")
+                    || path
+                        .split('/')
+                        .any(|segment| segment.is_empty() || segment == "." || segment == "..")
+                    || ![".png", ".jpg", ".jpeg", ".webp", ".bmp", ".gif", ".tga"]
+                        .iter()
+                        .any(|extension| lower.ends_with(extension)))
+            {
+                return Err(AssetError::Invalid(format!(
+                    "invalid custom material instance texture path '{path}'"
+                )));
+            }
+        }
         Ok(self)
     }
 
@@ -169,6 +205,19 @@ impl MaterialInstanceAsset {
                     .map(|(name, value)| (name.clone(), *value)),
             );
         }
+        if !self.overrides.custom_textures.is_empty() {
+            if parent.shader != MaterialShader::Custom {
+                return Err(AssetError::Invalid(
+                    "custom material instance textures require a custom parent material".into(),
+                ));
+            }
+            parent.custom_textures.extend(
+                self.overrides
+                    .custom_textures
+                    .iter()
+                    .map(|(name, value)| (name.clone(), value.clone())),
+            );
+        }
         Ok(parent.normalized())
     }
 }
@@ -213,7 +262,7 @@ mod tests {
         )
         .unwrap();
         assert_eq!(instance.parent, "Assets/Materials/Glass.mmat");
-        assert_eq!(instance.version, 3);
+        assert_eq!(instance.version, 4);
         let material = instance.apply_to(MaterialAsset::default()).unwrap();
         assert_eq!(material.name, "Ocean Glass");
         assert_eq!(material.base_color, [0.1, 0.3, 1.0, 0.8]);
@@ -226,7 +275,7 @@ mod tests {
     #[test]
     fn instance_rejects_future_versions_and_unsafe_or_missing_parents() {
         assert!(
-            parse_material_instance_asset(br#"{"version":4,"parent":"Assets/A.mmat"}"#).is_err()
+            parse_material_instance_asset(br#"{"version":5,"parent":"Assets/A.mmat"}"#).is_err()
         );
         assert!(parse_material_instance_asset(br#"{"version":1}"#).is_err());
         assert!(
@@ -239,7 +288,7 @@ mod tests {
             parse_material_instance_asset(br#"{"parent":"Assets/A.mmat"}"#)
                 .unwrap()
                 .version,
-            3
+            4
         );
     }
 
@@ -249,7 +298,7 @@ mod tests {
             br#"{"version":1,"parent":"Assets/Base.mmat","overrides":{"custom_parameters":{"rim_power":[3,0,0,0]}}}"#,
         )
         .unwrap();
-        assert_eq!(instance.version, 3);
+        assert_eq!(instance.version, 4);
         let mut parent = MaterialAsset {
             shader: MaterialShader::Custom,
             ..MaterialAsset::default()
@@ -269,7 +318,7 @@ mod tests {
             br#"{"version":2,"parent":"Assets/Base.mmat","overrides":{"custom_keywords":{"USE_RIM":false}}}"#,
         )
         .unwrap();
-        assert_eq!(instance.version, 3);
+        assert_eq!(instance.version, 4);
         let mut parent = MaterialAsset {
             shader: MaterialShader::Custom,
             ..MaterialAsset::default()
@@ -279,6 +328,32 @@ mod tests {
         let resolved = instance.apply_to(parent).unwrap();
         assert!(!resolved.custom_keywords["USE_RIM"]);
         assert!(resolved.custom_keywords["USE_DETAIL"]);
+        assert!(instance.apply_to(MaterialAsset::default()).is_err());
+    }
+
+    #[test]
+    fn instance_custom_textures_upgrade_merge_and_allow_explicit_clear() {
+        let instance = parse_material_instance_asset(
+            br#"{"version":3,"parent":"Assets/Base.mmat","overrides":{"custom_textures":{"detail":" Assets\\Textures\\child.png ","mask":""}}}"#,
+        )
+        .unwrap();
+        assert_eq!(instance.version, 4);
+        let mut parent = MaterialAsset {
+            shader: MaterialShader::Custom,
+            ..MaterialAsset::default()
+        };
+        parent
+            .custom_textures
+            .insert("detail".into(), "Assets/Textures/parent.png".into());
+        parent
+            .custom_textures
+            .insert("mask".into(), "Assets/Textures/mask.png".into());
+        let resolved = instance.apply_to(parent).unwrap();
+        assert_eq!(
+            resolved.custom_textures["detail"],
+            "Assets/Textures/child.png"
+        );
+        assert_eq!(resolved.custom_textures["mask"], "");
         assert!(instance.apply_to(MaterialAsset::default()).is_err());
     }
 }

@@ -6,7 +6,9 @@ use crate::sky::SkyBackground;
 use crate::ui::{UiBatchPlan, UiFrameStats, UiRenderer, UiTextureError};
 use crate::RhiError;
 use glam::{Mat4, Vec3, Vec4};
-use mengine_core::surface_shader::{parse_surface_shader_schema, MAX_SURFACE_SHADER_PARAMETERS};
+use mengine_core::surface_shader::{
+    parse_surface_shader_schema, MAX_SURFACE_SHADER_PARAMETERS, MAX_SURFACE_SHADER_TEXTURES,
+};
 use std::collections::{hash_map::DefaultHasher, HashMap, HashSet};
 use std::hash::{Hash, Hasher};
 use std::num::NonZeroU64;
@@ -104,6 +106,11 @@ pub struct RenderMaterial {
     /// Reflected Surface Shader values packed in declaration order. Each parameter owns one
     /// vec4 slot so adding one parameter never shifts the components of another parameter.
     pub custom_parameters: [[f32; 4]; MAX_SURFACE_SHADER_PARAMETERS],
+    /// Final custom texture paths packed in Surface Shader declaration order. Four fixed slots
+    /// keep one stable material bind-group layout across all custom pipelines.
+    pub custom_textures: [String; MAX_SURFACE_SHADER_TEXTURES],
+    /// True selects the sRGB upload/cache for the corresponding custom texture slot.
+    pub custom_texture_srgb: [bool; MAX_SURFACE_SHADER_TEXTURES],
 }
 
 #[derive(Clone, Copy, Debug, Default, Eq, Hash, PartialEq)]
@@ -166,6 +173,8 @@ impl Default for RenderMaterial {
             surface_shader: String::new(),
             surface_keywords: Vec::new(),
             custom_parameters: [[0.0; 4]; MAX_SURFACE_SHADER_PARAMETERS],
+            custom_textures: std::array::from_fn(|_| String::new()),
+            custom_texture_srgb: [false; MAX_SURFACE_SHADER_TEXTURES],
         }
     }
 }
@@ -330,6 +339,8 @@ struct MaterialTextureSetKey {
     metallic_roughness: String,
     occlusion: String,
     emissive: String,
+    custom: [String; MAX_SURFACE_SHADER_TEXTURES],
+    custom_srgb: [bool; MAX_SURFACE_SHADER_TEXTURES],
     sampler: MaterialSamplerKey,
 }
 
@@ -395,6 +406,8 @@ impl From<&RenderMaterial> for MaterialTextureSetKey {
             },
             metallic_roughness,
             emissive: material.emissive_texture.trim().to_owned(),
+            custom: std::array::from_fn(|index| material.custom_textures[index].trim().to_owned()),
+            custom_srgb: material.custom_texture_srgb,
             sampler: MaterialSamplerKey {
                 wrap_u: material.wrap_u,
                 wrap_v: material.wrap_v,
@@ -609,6 +622,46 @@ impl Renderer {
                         binding: 5,
                         visibility: wgpu::ShaderStages::FRAGMENT,
                         ty: wgpu::BindingType::Sampler(wgpu::SamplerBindingType::Filtering),
+                        count: None,
+                    },
+                    wgpu::BindGroupLayoutEntry {
+                        binding: 6,
+                        visibility: wgpu::ShaderStages::FRAGMENT,
+                        ty: wgpu::BindingType::Texture {
+                            sample_type: wgpu::TextureSampleType::Float { filterable: true },
+                            view_dimension: wgpu::TextureViewDimension::D2,
+                            multisampled: false,
+                        },
+                        count: None,
+                    },
+                    wgpu::BindGroupLayoutEntry {
+                        binding: 7,
+                        visibility: wgpu::ShaderStages::FRAGMENT,
+                        ty: wgpu::BindingType::Texture {
+                            sample_type: wgpu::TextureSampleType::Float { filterable: true },
+                            view_dimension: wgpu::TextureViewDimension::D2,
+                            multisampled: false,
+                        },
+                        count: None,
+                    },
+                    wgpu::BindGroupLayoutEntry {
+                        binding: 8,
+                        visibility: wgpu::ShaderStages::FRAGMENT,
+                        ty: wgpu::BindingType::Texture {
+                            sample_type: wgpu::TextureSampleType::Float { filterable: true },
+                            view_dimension: wgpu::TextureViewDimension::D2,
+                            multisampled: false,
+                        },
+                        count: None,
+                    },
+                    wgpu::BindGroupLayoutEntry {
+                        binding: 9,
+                        visibility: wgpu::ShaderStages::FRAGMENT,
+                        ty: wgpu::BindingType::Texture {
+                            sample_type: wgpu::TextureSampleType::Float { filterable: true },
+                            view_dimension: wgpu::TextureViewDimension::D2,
+                            multisampled: false,
+                        },
                         count: None,
                     },
                 ],
@@ -1347,39 +1400,61 @@ impl Renderer {
             .material_color_textures
             .get(&key.emissive)
             .unwrap_or(&self.fallback_emissive_texture);
+        let custom: [&MaterialTextureGpu; MAX_SURFACE_SHADER_TEXTURES] =
+            std::array::from_fn(|index| {
+                if key.custom_srgb[index] {
+                    self.material_color_textures
+                        .get(&key.custom[index])
+                        .unwrap_or(&self.fallback_base_color_texture)
+                } else {
+                    self.material_data_textures
+                        .get(&key.custom[index])
+                        .unwrap_or(&self.fallback_occlusion_texture)
+                }
+            });
+        let mut entries = vec![
+            wgpu::BindGroupEntry {
+                binding: 0,
+                resource: wgpu::BindingResource::TextureView(&base_color.view),
+            },
+            wgpu::BindGroupEntry {
+                binding: 1,
+                resource: wgpu::BindingResource::TextureView(&normal.view),
+            },
+            wgpu::BindGroupEntry {
+                binding: 2,
+                resource: wgpu::BindingResource::TextureView(&metallic_roughness.view),
+            },
+            wgpu::BindGroupEntry {
+                binding: 3,
+                resource: wgpu::BindingResource::TextureView(&emissive.view),
+            },
+            wgpu::BindGroupEntry {
+                binding: 4,
+                resource: wgpu::BindingResource::TextureView(&occlusion.view),
+            },
+            wgpu::BindGroupEntry {
+                binding: 5,
+                resource: wgpu::BindingResource::Sampler(
+                    self.material_samplers
+                        .get(&key.sampler)
+                        .expect("material sampler inserted before bind group"),
+                ),
+            },
+        ];
+        entries.extend(
+            custom
+                .iter()
+                .enumerate()
+                .map(|(index, texture)| wgpu::BindGroupEntry {
+                    binding: 6 + index as u32,
+                    resource: wgpu::BindingResource::TextureView(&texture.view),
+                }),
+        );
         let bind_group = self.device.create_bind_group(&wgpu::BindGroupDescriptor {
             label: Some("material_texture_set_bg"),
             layout: &self.material_texture_layout,
-            entries: &[
-                wgpu::BindGroupEntry {
-                    binding: 0,
-                    resource: wgpu::BindingResource::TextureView(&base_color.view),
-                },
-                wgpu::BindGroupEntry {
-                    binding: 1,
-                    resource: wgpu::BindingResource::TextureView(&normal.view),
-                },
-                wgpu::BindGroupEntry {
-                    binding: 2,
-                    resource: wgpu::BindingResource::TextureView(&metallic_roughness.view),
-                },
-                wgpu::BindGroupEntry {
-                    binding: 3,
-                    resource: wgpu::BindingResource::TextureView(&emissive.view),
-                },
-                wgpu::BindGroupEntry {
-                    binding: 4,
-                    resource: wgpu::BindingResource::TextureView(&occlusion.view),
-                },
-                wgpu::BindGroupEntry {
-                    binding: 5,
-                    resource: wgpu::BindingResource::Sampler(
-                        self.material_samplers
-                            .get(&key.sampler)
-                            .expect("material sampler inserted before bind group"),
-                    ),
-                },
-            ],
+            entries: &entries,
         });
         self.material_texture_sets.insert(key, bind_group);
     }
@@ -2001,8 +2076,20 @@ fn compose_surface_shader(
         })
         .collect::<Vec<_>>()
         .join("\n");
+    let texture_helpers = schema
+        .textures
+        .iter()
+        .enumerate()
+        .map(|(index, texture)| {
+            format!(
+                "fn mengine_texture_{}(uv: vec2<f32>) -> vec4<f32> {{ return textureSample(mengine_custom_texture_{index}, material_sampler, uv); }}",
+                texture.name,
+            )
+        })
+        .collect::<Vec<_>>()
+        .join("\n");
     composed.replace_range(start..end, &format!(
-        "{SURFACE_HOOK_BEGIN}\nconst MENGINE_HAS_LIT_SURFACE_HOOK: bool = {has_lit_hook};\n{parameter_helpers}\n{keyword_helpers}\n{hook}\n{legacy_fallback}\n{lit_fallback}\n{SURFACE_HOOK_END}"
+        "{SURFACE_HOOK_BEGIN}\nconst MENGINE_HAS_LIT_SURFACE_HOOK: bool = {has_lit_hook};\n{parameter_helpers}\n{keyword_helpers}\n{texture_helpers}\n{hook}\n{legacy_fallback}\n{lit_fallback}\n{SURFACE_HOOK_END}"
     ));
     let module = naga::front::wgsl::parse_str(&composed)
         .map_err(|error| format!("WGSL parse failed: {error}"))?;
@@ -2011,7 +2098,7 @@ fn compose_surface_shader(
         naga::valid::Capabilities::all(),
     )
     .validate(&module)
-    .map_err(|error| format!("WGSL validation failed: {error}"))?;
+    .map_err(|error| format!("WGSL validation failed: {error}: {error:?}"))?;
     Ok(composed)
 }
 
@@ -2611,6 +2698,10 @@ struct ShadowUniforms {
 @group(1) @binding(3) var emissive_texture: texture_2d<f32>;
 @group(1) @binding(4) var occlusion_texture: texture_2d<f32>;
 @group(1) @binding(5) var material_sampler: sampler;
+@group(1) @binding(6) var mengine_custom_texture_0: texture_2d<f32>;
+@group(1) @binding(7) var mengine_custom_texture_1: texture_2d<f32>;
+@group(1) @binding(8) var mengine_custom_texture_2: texture_2d<f32>;
+@group(1) @binding(9) var mengine_custom_texture_3: texture_2d<f32>;
 @group(2) @binding(0) var<uniform> shadow: ShadowUniforms;
 @group(2) @binding(1) var directional_shadow_map: texture_depth_2d;
 @group(2) @binding(2) var directional_shadow_sampler: sampler_comparison;
@@ -3260,6 +3351,26 @@ mod tests {
             surface_shader_fingerprint(keyword_hook, &[]),
             surface_shader_fingerprint(keyword_hook, &["USE_RIM".into()])
         );
+
+        let texture_hook = r#"
+            /* MENGINE_PARAMETERS
+            {"textures":[{"name":"detail","type":"color"},{"name":"mask","type":"data"}]}
+            */
+            fn mengine_lit_surface_hook(
+                surface: MEngineSurface,
+                uv: vec2<f32>,
+                world_position: vec3<f32>,
+            ) -> MEngineSurface {
+                var result = surface;
+                result.base_color *= mengine_texture_detail(uv).rgb;
+                result.roughness *= mengine_texture_mask(uv).r;
+                return result;
+            }
+        "#;
+        let textures = compose_surface_shader(texture_hook, None).unwrap();
+        assert!(textures.contains("fn mengine_texture_detail(uv: vec2<f32>)"));
+        assert!(textures.contains("textureSample(mengine_custom_texture_0"));
+        assert!(textures.contains("textureSample(mengine_custom_texture_1"));
     }
 
     #[test]
@@ -3361,6 +3472,13 @@ mod tests {
                 filter: MaterialFilter::Nearest,
                 mipmap_filter: MaterialFilter::Nearest,
                 anisotropy: 1,
+                custom_textures: [
+                    "detail.png".into(),
+                    "mask.png".into(),
+                    String::new(),
+                    String::new(),
+                ],
+                custom_texture_srgb: [true, false, false, false],
                 ..Default::default()
             },
         };
@@ -3370,6 +3488,9 @@ mod tests {
         assert_eq!(key.metallic_roughness, "orm.png");
         assert_eq!(key.occlusion, "ao.png");
         assert_eq!(key.emissive, "emissive.png");
+        assert_eq!(key.custom[0], "detail.png");
+        assert_eq!(key.custom[1], "mask.png");
+        assert_eq!(key.custom_srgb, [true, false, false, false]);
         assert_eq!(key.sampler.wrap_u, MaterialWrap::Clamp);
         assert_eq!(key.sampler.wrap_v, MaterialWrap::Mirror);
         assert_eq!(key.sampler.filter, MaterialFilter::Nearest);

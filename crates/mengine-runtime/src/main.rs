@@ -24,7 +24,7 @@ use mengine_runtime::build_manifest::verify_build_manifest;
 use mengine_runtime::lighting2d::apply_2d_lighting;
 use mengine_runtime::materials::{
     apply_material_property_block, pack_surface_shader_parameters, resolve_surface_shader_keywords,
-    RuntimeMaterialCache,
+    resolve_surface_shader_textures, RuntimeMaterialCache,
 };
 use mengine_runtime::meshes::RuntimeMeshCache;
 use mengine_runtime::particles::ParticleWorld;
@@ -2317,6 +2317,7 @@ fn validate_world_assets(
                     let asset = material_cache.resolve_asset(material).map_err(|error| {
                         anyhow::anyhow!("invalid material {}: {error}", path.display())
                     })?;
+                    let mut custom_textures = Vec::new();
                     if asset.shader == mengine_assets::MaterialShader::Custom {
                         let shader = asset.custom_shader.trim();
                         if shader.is_empty() {
@@ -2349,6 +2350,13 @@ fn validate_world_assets(
                         resolve_surface_shader_keywords(&asset, &source).map_err(|error| {
                             anyhow::anyhow!("invalid material {}: {error}", path.display())
                         })?;
+                        custom_textures.extend(
+                            resolve_surface_shader_textures(&asset, &source)
+                                .map_err(|error| {
+                                    anyhow::anyhow!("invalid material {}: {error}", path.display())
+                                })?
+                                .0,
+                        );
                     }
                     for texture in [
                         asset.base_color_texture,
@@ -2356,7 +2364,10 @@ fn validate_world_assets(
                         asset.metallic_roughness_texture,
                         asset.occlusion_texture,
                         asset.emissive_texture,
-                    ] {
+                    ]
+                    .into_iter()
+                    .chain(custom_textures)
+                    {
                         if texture.is_empty() {
                             continue;
                         }

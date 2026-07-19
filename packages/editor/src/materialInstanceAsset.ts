@@ -2,10 +2,12 @@ import {
   normalizeMaterialAsset,
   normalizeMaterialCustomKeywords,
   normalizeMaterialCustomParameters,
+  normalizeMaterialCustomTextures,
   parseMaterialAsset,
   type MaterialAsset,
   type MaterialCustomParameters,
   type MaterialCustomKeywords,
+  type MaterialCustomTextures,
 } from './materialAsset.ts';
 import { normalizeProjectAssetPath, readProjectAssetText } from './projectAssets.ts';
 
@@ -20,18 +22,20 @@ export const MATERIAL_INSTANCE_OVERRIDE_FIELDS = [
   'emissive_strength',
   'custom_parameters',
   'custom_keywords',
+  'custom_textures',
 ] as const;
 
 export type MaterialInstanceOverrideField = typeof MATERIAL_INSTANCE_OVERRIDE_FIELDS[number];
 export type MaterialInstanceOverrides = Partial<
-  Pick<MaterialAsset, Exclude<MaterialInstanceOverrideField, 'custom_parameters' | 'custom_keywords'>>
+  Pick<MaterialAsset, Exclude<MaterialInstanceOverrideField, 'custom_parameters' | 'custom_keywords' | 'custom_textures'>>
 > & {
   custom_parameters?: MaterialCustomParameters;
   custom_keywords?: MaterialCustomKeywords;
+  custom_textures?: MaterialCustomTextures;
 };
 
 export type MaterialInstanceAsset = {
-  version: 3;
+  version: 4;
   name: string;
   parent: string;
   overrides: MaterialInstanceOverrides;
@@ -41,7 +45,7 @@ export function createMaterialInstanceAsset(
   name = 'New Material Instance',
   parent = '',
 ): MaterialInstanceAsset {
-  return { version: 3, name, parent, overrides: {} };
+  return { version: 4, name, parent, overrides: {} };
 }
 
 function finite(value: unknown, fallback: number, minimum: number, maximum: number): number {
@@ -93,9 +97,13 @@ export function normalizeMaterialInstanceAsset(value: unknown): MaterialInstance
     const values = normalizeMaterialCustomKeywords(input.custom_keywords);
     if (Object.keys(values).length > 0) overrides.custom_keywords = values;
   }
+  if (input.custom_textures != null) {
+    const values = normalizeMaterialCustomTextures(input.custom_textures);
+    if (Object.keys(values).length > 0) overrides.custom_textures = values;
+  }
   let parent = String(source.parent ?? '').trim().replace(/\\/g, '/');
   if (parent) parent = normalizeProjectAssetPath(parent);
-  return { version: 3, name: String(source.name ?? ''), parent, overrides };
+  return { version: 4, name: String(source.name ?? ''), parent, overrides };
 }
 
 export function parseMaterialInstanceAsset(text: string): MaterialInstanceAsset {
@@ -104,7 +112,8 @@ export function parseMaterialInstanceAsset(text: string): MaterialInstanceAsset 
     throw new Error('Material Instance root must be an object');
   }
   const source = parsed as Record<string, unknown>;
-  if (source.version != null && source.version !== 1 && source.version !== 2 && source.version !== 3) {
+  if (source.version != null && source.version !== 1 && source.version !== 2
+    && source.version !== 3 && source.version !== 4) {
     throw new Error(`Unsupported material instance version: ${String(source.version)}`);
   }
   if (typeof source.parent !== 'string' || !source.parent.trim()) {
@@ -125,7 +134,7 @@ export function parseMaterialInstanceAsset(text: string): MaterialInstanceAsset 
 }
 
 export function serializeMaterialInstanceAsset(instance: MaterialInstanceAsset): string {
-  if (instance.version !== 3) {
+  if (instance.version !== 4) {
     throw new Error(`Unsupported material instance version: ${instance.version}`);
   }
   const normalized = normalizeMaterialInstanceAsset(instance);
@@ -143,14 +152,19 @@ export function applyMaterialInstance(
   const customKeywords = instance.overrides.custom_keywords == null
     ? parent.custom_keywords
     : { ...parent.custom_keywords, ...instance.overrides.custom_keywords };
+  const customTextures = instance.overrides.custom_textures == null
+    ? parent.custom_textures
+    : { ...parent.custom_textures, ...instance.overrides.custom_textures };
   const overrides = structuredClone(instance.overrides);
   delete overrides.custom_parameters;
   delete overrides.custom_keywords;
+  delete overrides.custom_textures;
   return normalizeMaterialAsset({
     ...structuredClone(parent),
     ...structuredClone(overrides),
     custom_parameters: customParameters,
     custom_keywords: customKeywords,
+    custom_textures: customTextures,
     name: instance.name,
   });
 }

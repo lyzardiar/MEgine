@@ -1381,3 +1381,15 @@ Rust workspace 检查现在零警告通过；Tauri Host 17/17 常规测试与 1/
 第一遍自省发现内部为 Windows 路径去重使用的小写 Key 被直接写进报告，会让资源审计失去作者实际路径；最终分离比较 Key 与展示路径，Manifest 保持规范大小写。第二遍自省从失败原子性和编辑器负载反查实现：确认预算门禁位于 staging 创建之前并补回归断言，同时限制 UI 明细渲染而不截断受签名保护的完整清单；Tauri 还会拒绝 0 或越界预算，不能把异常 SDK 报告当作成功构建展示。
 
 这一批完成的是可观察、可控制的 Variant 数量门禁，不等于离线 Shader 编译与预热。当前所有 Variant 权重相同，预算没有按目标平台、质量档、Pass 或 Shader 分组，也没有记录实际 WGSL 编译耗时、Pipeline 创建耗时和运行期命中；构建仍未输出平台专用 Shader 二进制、PSO/驱动缓存或预热顺序。下一阶段应建立 Import Artifact/Shader Compiler 服务，以 Shader 源、Keyword、Pass、目标后端和编译器版本形成稳定 Key，生成可缓存制品与编译诊断，再让 CI 按平台预算、增量变化和首次帧卡顿风险执行门禁。
+
+## 116. 2026-07-19 Surface Shader 纹理反射与 Material v10
+
+- Surface Shader Schema 新增最多 4 个 `textures` 声明，每项包含最长 48 字符的 ASCII 标识符、可选显示名、`color/data` 类型和可选 `Assets` 图片默认值。`color` 进入 sRGB 采样缓存，`data` 保持线性；Hook 通过 `mengine_texture_<name>(uv) -> vec4<f32>` 读取，不允许声明自己的 Group、Binding 或入口。Rust 共享解析器、编辑器 TypeScript 解析器和 CLI 构建审计统一拒绝未知字段、重复名称、非法路径、错误类型和超限声明。
+- `.mmat/.mat` 升级到 v10，`.minst` 升级到 v4，分别保存 `custom_textures` 和 `overrides.custom_textures` 稀疏映射。未覆盖项使用 Shader 默认纹理；显式空字符串表示覆盖为白纹理；实例链按名称从 Base Material 到最末子实例逐层合并，因此子层只替换目标槽，不会抹掉其他父层槽。非 Custom 材质、陈旧名称、危险路径和超过 32 层的继承链会在资产加载、保存、构建或 Player 校验边界失败。
+- Material Inspector 为声明生成支持搜索、拖放、缺失状态、sRGB/Linear 提示和 Reset 的纹理槽；Reset 删除本层值并恢复 Shader 默认。Material Instance Inspector 为每个槽分离 `Inherited/Override`，启用时复制当前有效值，关闭时删除本层覆盖；Shader 保存、跨 Dock 资源变更、切换 Shader 和 `Remove Stale Values` 与数值参数、Keyword 使用同一生命周期。
+- RHI 保留一个稳定材质布局：内置 5 个纹理槽和共享 Sampler 后增加 4 个固定自定义槽，未使用槽绑定白色后备纹理；颜色空间进入 Texture Set Key，但纹理值不进入 Pipeline Key，不会为不同图片复制 Shader Variant。Runtime 按 Schema 声明顺序解析最终路径与颜色空间，纹理同步器分别写入 sRGB/Linear GPU 缓存并在热更新时重建相关 Bind Group；只有 WGSL、参数、Keyword 和纹理声明全部有效时才启用自定义 Pipeline。
+- CLI 在 staging 之前解析 Material/Instance→Base→Shader 图并校验最终纹理依赖；Player 发布校验再次读取每个最终材质、组合真实 Forward WGSL 并解码实际纹理。`assetMode: referenced` 只复制最终继承结果真正使用的纹理，父层值和 Shader 默认值被子层覆盖后不会虚增包体；`all` 模式仍审计并复制所有可发布资产。回归覆盖默认值、显式覆盖、显式清空、多层合并、陈旧字段、颜色空间、WGSL helper、Bind Group Key、缺失文件、最终 Player 解码与 referenced 剥离。
+
+第一遍自省发现最初的依赖扫描在读取每一层时立即入队，导致 referenced 构建同时携带 Shader 默认纹理、Base Material 纹理和子实例覆盖纹理；最终改为结构资产扫描完成后按真实 Root 合并继承图，只把最终非空路径送入依赖队列，并增加“材质覆盖默认纹理后默认文件不入包”的回归。第二遍自省沿 GPU 链路检查时发现 6–9 号自定义绑定声明误放进 Shadow WGSL，Forward Hook 的纹理 helper 因找不到符号而无法通过 Naga；现已把声明移到真实 Forward Shader，保留 Shadow Pipeline 的兼容布局，并让验证错误附带具体 Naga 类型诊断。同时补齐 Shader 默认纹理缺失在 Material Inspector 的即时高亮、Windows 路径大小写比较和 Runtime Cache 最终槽位断言。
+
+这仍不是材质系统的终点。当前固定 4 槽是基于默认 WebGPU 每阶段采样纹理上限的保守契约，还没有 Texture Array/Bindless、独立 Sampler 声明、UV 通道/变换、法线纹理语义、Cube/3D Texture、Render Texture、压缩格式与平台转码、导入制品流送、纹理驻留预算、虚拟纹理或 MaterialPropertyBlock 自定义纹理覆盖。后续应先建立统一 Import Artifact 与 GPU 资源生命周期，再扩展 Shader Graph、离线反射和平台特性分级，避免直接增加固定 Binding 把低端设备上限耗尽。

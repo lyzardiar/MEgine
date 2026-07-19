@@ -5418,6 +5418,24 @@ button.sequencer-track-header:hover { background: #343b42; }
   font-size: 11px;
 }
 
+.material-custom-texture {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: stretch;
+  border-top: 1px solid #3a3a3a;
+}
+
+.material-custom-texture > .material-texture-slot {
+  border-bottom: 0;
+}
+
+.material-custom-texture > button {
+  min-width: 48px;
+  border-width: 0 0 0 1px;
+  border-color: #3a3a3a;
+  border-radius: 0;
+}
+
 .material-custom-parameters.material-instance-custom-parameters > label {
   grid-template-columns: 16px minmax(92px, 0.42fr) minmax(72px, 1fr);
 }

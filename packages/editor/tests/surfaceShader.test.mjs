@@ -7,6 +7,7 @@ import {
   normalizeSurfaceShaderSource,
   parseSurfaceShaderKeywords,
   parseSurfaceShaderParameters,
+  parseSurfaceShaderTextures,
   surfaceShaderDiagnostics,
   validateSurfaceShaderSource,
 } from '../src/surfaceShader.ts';
@@ -65,6 +66,19 @@ test('surface shader keyword schema reflects stable defaults and rejects drift',
   assert.match(surfaceShaderDiagnostics(wrap('{"keywords":[{"name":"BAD-NAME"}]}')).join(' '), /ASCII identifier/);
   assert.match(surfaceShaderDiagnostics(wrap('{"keywords":[{"name":"DUP"},{"name":"DUP"}]}')).join(' '), /Duplicate/);
   assert.match(surfaceShaderDiagnostics(wrap('{"keywords":[{"name":"FLAG","default":1}]}')).join(' '), /boolean/);
+});
+
+test('surface shader texture schema reflects color space defaults and rejects drift', () => {
+  const wrap = (json) => `/* MENGINE_PARAMETERS\n${json}\n*/\n${DEFAULT_SURFACE_SHADER}`;
+  const source = wrap('{"textures":[{"name":"detail","label":"Detail","type":"color","default":"Assets/Textures/detail.png"},{"name":"mask","type":"data"}]}');
+  assert.deepEqual(parseSurfaceShaderTextures(source), [
+    { name: 'detail', label: 'Detail', type: 'color', default: 'Assets/Textures/detail.png' },
+    { name: 'mask', label: 'mask', type: 'data', default: '' },
+  ]);
+  assert.deepEqual(surfaceShaderDiagnostics(source), []);
+  assert.match(surfaceShaderDiagnostics(wrap('{"textures":[{"name":"bad-name","type":"color"}]}')).join(' '), /ASCII identifier/);
+  assert.match(surfaceShaderDiagnostics(wrap('{"textures":[{"name":"detail","type":"cube"}]}')).join(' '), /color or data/);
+  assert.match(surfaceShaderDiagnostics(wrap('{"textures":[{"name":"detail","type":"data","default":"..\/outside.png"}]}')).join(' '), /Assets image path/);
 });
 
 test('surface shader source normalizes newlines and rejects reserved entry points', () => {

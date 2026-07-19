@@ -16,6 +16,7 @@ test('Material Instance normalizes explicit overrides and inherits parent state'
   parent.custom_shader = 'Assets/Shaders/Rim.mshader';
   parent.custom_parameters = { rim_color: [1, 0.5, 0, 1] };
   parent.custom_keywords = { USE_RIM: true };
+  parent.custom_textures = { detail: 'Assets/Textures/Parent.png' };
   parent.base_color_texture = 'Assets/Textures/Paint.png';
   parent.roughness = 0.8;
   const instance = parseMaterialInstanceAsset(JSON.stringify({
@@ -28,16 +29,18 @@ test('Material Instance normalizes explicit overrides and inherits parent state'
       clearcoat: 2,
       custom_parameters: { rim_power: [3, 0, 0, 0] },
       custom_keywords: { USE_RIM: false, USE_DETAIL: true },
+      custom_textures: { detail: ' Assets\\Textures\\Child.png ' },
     },
   }));
   assert.equal(instance.parent, 'Assets/Materials/Base.mmat');
-  assert.equal(instance.version, 3);
+  assert.equal(instance.version, 4);
   assert.deepEqual(instance.overrides, {
     roughness: 0.04,
     ior: 1.33,
     clearcoat: 1,
     custom_parameters: { rim_power: [3, 0, 0, 0] },
     custom_keywords: { USE_DETAIL: true, USE_RIM: false },
+    custom_textures: { detail: 'Assets/Textures/Child.png' },
   });
   const resolved = applyMaterialInstance(parent, instance);
   assert.equal(resolved.name, 'Wet');
@@ -51,6 +54,7 @@ test('Material Instance normalizes explicit overrides and inherits parent state'
     rim_power: [3, 0, 0, 0],
   });
   assert.deepEqual(resolved.custom_keywords, { USE_DETAIL: true, USE_RIM: false });
+  assert.deepEqual(resolved.custom_textures, { detail: 'Assets/Textures/Child.png' });
   assert.deepEqual(parseMaterialInstanceAsset(serializeMaterialInstanceAsset(instance)), instance);
 });
 
@@ -106,10 +110,10 @@ test('Material Instance requires a safe supported parent and rejects unknown ove
   )), /only custom materials/i);
   const created = createMaterialInstanceAsset('Child', 'Assets/Materials/Base.mmat');
   assert.deepEqual(created, {
-    version: 3,
+    version: 4,
     name: 'Child',
     parent: 'Assets/Materials/Base.mmat',
     overrides: {},
   });
-  assert.equal(parseMaterialInstanceAsset('{"parent":"Assets/Materials/Base.mmat"}').version, 3);
+  assert.equal(parseMaterialInstanceAsset('{"parent":"Assets/Materials/Base.mmat"}').version, 4);
 });

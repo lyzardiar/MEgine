@@ -4,7 +4,7 @@ use std::collections::BTreeMap;
 use std::path::Path;
 
 fn default_version() -> u32 {
-    9
+    10
 }
 
 fn default_base_color() -> [f32; 4] {
@@ -105,6 +105,8 @@ pub struct MaterialAsset {
     pub custom_parameters: BTreeMap<String, [f32; 4]>,
     #[serde(default)]
     pub custom_keywords: BTreeMap<String, bool>,
+    #[serde(default)]
+    pub custom_textures: BTreeMap<String, String>,
     pub surface: MaterialSurface,
     pub blend_mode: MaterialBlendMode,
     pub transparent_depth_write: bool,
@@ -166,6 +168,7 @@ impl Default for MaterialAsset {
             custom_shader: String::new(),
             custom_parameters: BTreeMap::new(),
             custom_keywords: BTreeMap::new(),
+            custom_textures: BTreeMap::new(),
             surface: MaterialSurface::Opaque,
             blend_mode: MaterialBlendMode::Alpha,
             transparent_depth_write: false,
@@ -246,6 +249,9 @@ impl MaterialAsset {
         for value in self.custom_parameters.values_mut().flatten() {
             *value = finite_or(*value, 0.0);
         }
+        for value in self.custom_textures.values_mut() {
+            *value = value.trim().replace('\\', "/");
+        }
         self.base_color_texture = self.base_color_texture.trim().replace('\\', "/");
         self.normal_texture = self.normal_texture.trim().replace('\\', "/");
         self.metallic_roughness_texture = self.metallic_roughness_texture.trim().replace('\\', "/");
@@ -285,6 +291,12 @@ pub fn parse_material_asset(bytes: &[u8]) -> Result<MaterialAsset, AssetError> {
             mengine_core::surface_shader::MAX_SURFACE_SHADER_KEYWORDS
         )));
     }
+    if material.custom_textures.len() > mengine_core::surface_shader::MAX_SURFACE_SHADER_TEXTURES {
+        return Err(AssetError::Invalid(format!(
+            "material declares more than {} custom textures",
+            mengine_core::surface_shader::MAX_SURFACE_SHADER_TEXTURES
+        )));
+    }
     if let Some(name) = material.custom_parameters.keys().find(|name| {
         let mut characters = name.chars();
         !matches!(characters.next(), Some(first) if first.is_ascii_alphabetic())
@@ -305,14 +317,42 @@ pub fn parse_material_asset(bytes: &[u8]) -> Result<MaterialAsset, AssetError> {
             "invalid custom material keyword name '{name}'"
         )));
     }
+    if let Some((name, path)) = material.custom_textures.iter().find(|(name, path)| {
+        let mut characters = name.chars();
+        !matches!(characters.next(), Some(first) if first.is_ascii_alphabetic())
+            || !characters.all(|character| character.is_ascii_alphanumeric() || character == '_')
+            || name.len() > 48
+            || !valid_custom_texture_path(path)
+    }) {
+        return Err(AssetError::Invalid(format!(
+            "invalid custom material texture '{name}': '{path}'"
+        )));
+    }
     if material.shader != MaterialShader::Custom
-        && (!material.custom_parameters.is_empty() || !material.custom_keywords.is_empty())
+        && (!material.custom_parameters.is_empty()
+            || !material.custom_keywords.is_empty()
+            || !material.custom_textures.is_empty())
     {
         return Err(AssetError::Invalid(
-            "only custom materials can contain custom_parameters or custom_keywords".into(),
+            "only custom materials can contain custom_parameters, custom_keywords, or custom_textures".into(),
         ));
     }
     Ok(material.normalized())
+}
+
+fn valid_custom_texture_path(value: &str) -> bool {
+    let normalized = value.trim().replace('\\', "/");
+    if normalized.is_empty() {
+        return true;
+    }
+    let lower = normalized.to_ascii_lowercase();
+    normalized.starts_with("Assets/")
+        && !normalized
+            .split('/')
+            .any(|segment| segment.is_empty() || segment == "." || segment == "..")
+        && [".png", ".jpg", ".jpeg", ".webp", ".bmp", ".gif", ".tga"]
+            .iter()
+            .any(|extension| lower.ends_with(extension))
 }
 
 pub fn load_material_asset(path: impl AsRef<Path>) -> Result<MaterialAsset, AssetError> {
@@ -342,7 +382,7 @@ mod tests {
             }"#,
         )
         .unwrap();
-        assert_eq!(parsed.version, 9);
+        assert_eq!(parsed.version, 10);
         assert_eq!(parsed.surface, MaterialSurface::Transparent);
         assert_eq!(parsed.base_color, [1.0, 0.0, 0.5, 0.25]);
         assert_eq!(parsed.metallic, 1.0);
@@ -381,7 +421,7 @@ mod tests {
             }"#,
         )
         .expect("materials authored before PBR maps were added remain loadable");
-        assert_eq!(legacy.version, 9);
+        assert_eq!(legacy.version, 10);
         assert_eq!(legacy.ior, 1.5);
         assert_eq!(legacy.clearcoat, 0.0);
         assert_eq!(legacy.clearcoat_roughness, 0.1);
@@ -422,7 +462,7 @@ mod tests {
             }"#,
         )
         .unwrap();
-        assert_eq!(parsed.version, 9);
+        assert_eq!(parsed.version, 10);
         assert_eq!(parsed.shader, MaterialShader::Custom);
         assert_eq!(parsed.custom_shader, "Assets/Shaders/toon.mshader");
         assert_eq!(parsed.blend_mode, MaterialBlendMode::Premultiplied);
@@ -435,7 +475,7 @@ mod tests {
         assert_eq!(parsed.filter, MaterialFilter::Nearest);
         assert_eq!(parsed.mipmap_filter, MaterialFilter::Linear);
         assert_eq!(parsed.anisotropy, 1);
-        assert!(parse_material_asset(br#"{"version":10}"#).is_err());
+        assert!(parse_material_asset(br#"{"version":11}"#).is_err());
         assert!(parse_material_asset(br#"{"version":0}"#).is_err());
     }
 
@@ -448,7 +488,7 @@ mod tests {
         assert_eq!(parsed.clearcoat_roughness, 0.04);
 
         let legacy = parse_material_asset(br#"{"version":5}"#).unwrap();
-        assert_eq!(legacy.version, 9);
+        assert_eq!(legacy.version, 10);
         assert_eq!(legacy.clearcoat, 0.0);
         assert_eq!(legacy.clearcoat_roughness, 0.1);
     }
@@ -461,7 +501,7 @@ mod tests {
         assert_eq!(high.ior, 2.5);
 
         let legacy = parse_material_asset(br#"{"version":6}"#).unwrap();
-        assert_eq!(legacy.version, 9);
+        assert_eq!(legacy.version, 10);
         assert_eq!(legacy.ior, 1.5);
     }
 
@@ -510,7 +550,7 @@ mod tests {
             br#"{"version":8,"shader":"custom","custom_shader":"Assets/Shaders/Rim.mshader","custom_keywords":{"USE_RIM":true,"USE_DETAIL":false}}"#,
         )
         .unwrap();
-        assert_eq!(material.version, 9);
+        assert_eq!(material.version, 10);
         assert!(material.custom_keywords["USE_RIM"]);
         assert!(!material.custom_keywords["USE_DETAIL"]);
         assert!(parse_material_asset(
@@ -519,6 +559,28 @@ mod tests {
         .is_err());
         assert!(parse_material_asset(
             br#"{"version":9,"shader":"custom","custom_keywords":{"BAD-NAME":true}}"#
+        )
+        .is_err());
+    }
+
+    #[test]
+    fn custom_textures_upgrade_normalize_and_require_custom_materials() {
+        let material = parse_material_asset(
+            br#"{"version":9,"shader":"custom","custom_shader":"Assets/Shaders/Detail.mshader","custom_textures":{"detail":" Assets\\Textures\\detail.png ","mask":""}}"#,
+        )
+        .unwrap();
+        assert_eq!(material.version, 10);
+        assert_eq!(
+            material.custom_textures["detail"],
+            "Assets/Textures/detail.png"
+        );
+        assert_eq!(material.custom_textures["mask"], "");
+        assert!(parse_material_asset(
+            br#"{"version":10,"shader":"pbr","custom_textures":{"detail":"Assets/Textures/detail.png"}}"#
+        )
+        .is_err());
+        assert!(parse_material_asset(
+            br#"{"version":10,"shader":"custom","custom_textures":{"detail":"../outside.png"}}"#
         )
         .is_err());
     }

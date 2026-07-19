@@ -1161,27 +1161,31 @@ test('buildPcPackage includes validated custom material surface shaders', () => 
       } }] },
     }));
     writeFileSync(join(paths.project, 'Assets', 'Materials', 'Rim.mmat'), JSON.stringify({
-      version: 9,
+      version: 10,
       shader: 'custom',
       custom_shader: 'Assets/Shaders/Rim.mshader',
       custom_keywords: { USE_RIM: true },
+      custom_textures: { detail: 'Assets/Textures/detail.png' },
       custom_parameters: {
         rim_color: [0.2, 0.5, 1, 1],
         rim_power: [3, 0, 0, 0],
       },
     }));
     writeFileSync(join(paths.project, 'Assets', 'Materials', 'RimOff.mmat'), JSON.stringify({
-      version: 9,
+      version: 10,
       shader: 'custom',
       custom_shader: 'Assets/Shaders/Rim.mshader',
       custom_keywords: { USE_RIM: false },
     }));
+    writeFileSync(join(paths.project, 'Assets', 'Textures', 'detail.png'), 'detail');
+    writeFileSync(join(paths.project, 'Assets', 'Textures', 'default-detail.png'), 'default-detail');
     writeFileSync(join(paths.project, 'Assets', 'Shaders', 'Rim.mshader'), `
       /* MENGINE_PARAMETERS
       {"parameters":[
         {"name":"rim_color","type":"color","default":[1,1,1,1]},
         {"name":"rim_power","type":"float","default":2,"min":0,"max":8}
-      ],"keywords":[{"name":"USE_RIM","default":false}]}
+      ],"keywords":[{"name":"USE_RIM","default":false}],
+      "textures":[{"name":"detail","label":"Detail","type":"color","default":"Assets/Textures/default-detail.png"}]}
       */
       fn mengine_lit_surface_hook(
         surface: MEngineSurface, uv: vec2<f32>, world_position: vec3<f32>
@@ -1189,7 +1193,8 @@ test('buildPcPackage includes validated custom material surface shaders', () => 
         var result = surface;
         result.roughness = 0.2 + uv.x;
         if (mengine_keyword_USE_RIM()) {
-          result.emissive = mengine_param_rim_color().xyz * mengine_param_rim_power();
+          result.emissive = mengine_texture_detail(uv).rgb
+            * mengine_param_rim_color().xyz * mengine_param_rim_power();
         }
         return result;
       }
@@ -1201,11 +1206,12 @@ test('buildPcPackage includes validated custom material surface shaders', () => 
       engineVersion: 'test-engine',
     });
     assert.equal(existsSync(join(paths.output, 'Assets', 'Shaders', 'Rim.mshader')), true);
+    assert.equal(existsSync(join(paths.output, 'Assets', 'Textures', 'detail.png')), true);
     assert.deepEqual(manifest.assetValidation, {
       assetMode: 'all',
       rootScenes: 2,
-      references: 6,
-      validatedFiles: 6,
+      references: 8,
+      validatedFiles: 8,
       auditedScenes: 2,
       auditedPrefabs: 0,
       auditedMaterials: 2,
@@ -1243,6 +1249,8 @@ test('buildPcPackage includes validated custom material surface shaders', () => 
     });
     assert.equal(referenced.assetValidation.shaderVariants, 1);
     assert.equal(existsSync(join(referencedOutput, 'Assets', 'Materials', 'RimOff.mmat')), false);
+    assert.equal(existsSync(join(referencedOutput, 'Assets', 'Textures', 'detail.png')), true);
+    assert.equal(existsSync(join(referencedOutput, 'Assets', 'Textures', 'default-detail.png')), false);
   } finally {
     rmSync(paths.root, { recursive: true, force: true });
   }
@@ -1369,7 +1377,7 @@ test('all-assets mode audits unreferenced material graphs while referenced mode 
   }
 });
 
-test('buildPcPackage validates material v9 IOR, clearcoat, sampler, parameter, and keyword contracts', () => {
+test('buildPcPackage validates material v10 IOR, clearcoat, sampler, parameter, keyword, and texture contracts', () => {
   const paths = fixture('invalid-material-contract');
   try {
     writeFileSync(join(paths.project, 'Assets', 'Scenes', 'Main.mscene'), JSON.stringify({
@@ -1378,13 +1386,13 @@ test('buildPcPackage validates material v9 IOR, clearcoat, sampler, parameter, a
       } }] },
     }));
     const materialPath = join(paths.project, 'Assets', 'Materials', 'Paint.mmat');
-    writeFileSync(materialPath, JSON.stringify({ version: 10, shader: 'pbr' }));
+    writeFileSync(materialPath, JSON.stringify({ version: 11, shader: 'pbr' }));
     assert.throws(() => buildPcPackage({
       projectDir: paths.project,
       outputDir: paths.output,
       runtimePath: paths.runtime,
       engineVersion: 'test-engine',
-    }), /unsupported version 10/);
+    }), /unsupported version 11/);
     assert.equal(existsSync(paths.output), false);
 
     writeFileSync(materialPath, JSON.stringify({ version: 7, shader: 'pbr', ior: 3 }));

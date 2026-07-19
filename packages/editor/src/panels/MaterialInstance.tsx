@@ -45,11 +45,14 @@ import {
   normalizeSurfaceShaderParameterValue,
   parseSurfaceShaderKeywords,
   parseSurfaceShaderParameters,
+  parseSurfaceShaderTextures,
   surfaceShaderParameterComponents,
   validateSurfaceShaderKeywordValues,
   validateSurfaceShaderParameterValues,
+  validateSurfaceShaderTextureValues,
   type SurfaceShaderKeyword,
   type SurfaceShaderParameter,
+  type SurfaceShaderTexture,
 } from '../surfaceShader';
 
 type InstanceDraft = { instance: MaterialInstanceAsset; savedText: string };
@@ -147,6 +150,7 @@ export function MaterialInstanceEditor(props: MaterialEditorProps) {
   const [error, setError] = useState<string | null>(null);
   const [shaderParameters, setShaderParameters] = useState<SurfaceShaderParameter[]>([]);
   const [shaderKeywords, setShaderKeywords] = useState<SurfaceShaderKeyword[]>([]);
+  const [shaderTextures, setShaderTextures] = useState<SurfaceShaderTexture[]>([]);
   const [shaderParameterError, setShaderParameterError] = useState<string | null>(null);
   const [assetRevision, setAssetRevision] = useState(0);
   const [draftEpoch, setDraftEpoch] = useState(0);
@@ -269,6 +273,7 @@ export function MaterialInstanceEditor(props: MaterialEditorProps) {
     let cancelled = false;
     setShaderParameters([]);
     setShaderKeywords([]);
+    setShaderTextures([]);
     setShaderParameterError(null);
     if (effective?.shader !== 'custom' || !effective.custom_shader) {
       return () => { cancelled = true; };
@@ -278,6 +283,7 @@ export function MaterialInstanceEditor(props: MaterialEditorProps) {
         if (cancelled) return;
         setShaderParameters(parseSurfaceShaderParameters(source));
         setShaderKeywords(parseSurfaceShaderKeywords(source));
+        setShaderTextures(parseSurfaceShaderTextures(source));
       })
       .catch((reason) => {
         if (!cancelled) {
@@ -292,11 +298,12 @@ export function MaterialInstanceEditor(props: MaterialEditorProps) {
     try {
       validateSurfaceShaderParameterValues(shaderParameters, effective.custom_parameters);
       validateSurfaceShaderKeywordValues(shaderKeywords, effective.custom_keywords);
+      validateSurfaceShaderTextureValues(shaderTextures, effective.custom_textures);
       return null;
     } catch (reason) {
       return reason instanceof Error ? reason.message : String(reason);
     }
-  }, [effective, shaderKeywords, shaderParameterError, shaderParameters]);
+  }, [effective, shaderKeywords, shaderParameterError, shaderParameters, shaderTextures]);
 
   const serialized = useMemo(
     () => instance ? serializeMaterialInstanceAsset(instance) : '',
@@ -324,6 +331,13 @@ export function MaterialInstanceEditor(props: MaterialEditorProps) {
         && asset.relPath.toLowerCase() !== props.assetPath?.toLowerCase(),
     );
   }, [assetRevision, props.assetPath]);
+  const textureAssets = useMemo(() => {
+    void assetRevision;
+    return listProjectFiles().filter(
+      (asset) => asset.kind === 'texture'
+        && /\.(?:png|jpe?g|webp|gif|bmp|tga)$/i.test(asset.relPath),
+    );
+  }, [assetRevision]);
 
   const captureDocument = (path: string): MaterialInstanceAsset => {
     if (loadedPath.current === path && instanceRef.current) return structuredClone(instanceRef.current);
@@ -458,14 +472,43 @@ export function MaterialInstanceEditor(props: MaterialEditorProps) {
     }, `${enabled ? 'Enable' : 'Disable'} ${keyword.label} Override`);
   };
 
+  const setCustomTexture = (name: string, value: string) => updateInstance((current) => ({
+    ...current,
+    overrides: {
+      ...current.overrides,
+      custom_textures: {
+        ...current.overrides.custom_textures,
+        [name]: value,
+      },
+    },
+  }), `Edit Material Instance ${name}`);
+
+  const toggleCustomTexture = (texture: SurfaceShaderTexture, enabled: boolean) => {
+    updateInstance((current) => {
+      const custom_textures = { ...current.overrides.custom_textures };
+      if (enabled) {
+        custom_textures[texture.name] = effective?.custom_textures[texture.name]
+          ?? texture.default;
+      } else {
+        delete custom_textures[texture.name];
+      }
+      const overrides = { ...current.overrides };
+      if (Object.keys(custom_textures).length > 0) overrides.custom_textures = custom_textures;
+      else delete overrides.custom_textures;
+      return { ...current, overrides };
+    }, `${enabled ? 'Enable' : 'Disable'} ${texture.label} Override`);
+  };
+
   const validateResolvedCustomParameters = async (material: MaterialAsset) => {
     if (material.shader !== 'custom') return;
     if (!material.custom_shader) throw new Error('Custom materials require a Surface Shader asset');
     const source = await readProjectAssetText(material.custom_shader);
     const parameters = parseSurfaceShaderParameters(source);
     const keywords = parseSurfaceShaderKeywords(source);
+    const textures = parseSurfaceShaderTextures(source);
     validateSurfaceShaderParameterValues(parameters, material.custom_parameters);
     validateSurfaceShaderKeywordValues(keywords, material.custom_keywords);
+    validateSurfaceShaderTextureValues(textures, material.custom_textures);
   };
 
   const beginEdit = (event: ReactFocusEvent<HTMLDivElement>) => {
@@ -608,10 +651,14 @@ export function MaterialInstanceEditor(props: MaterialEditorProps) {
   const reflectedParameterError = shaderParameterError ?? shaderBindingError;
   const ownCustomParameters = instance.overrides.custom_parameters ?? {};
   const ownCustomKeywords = instance.overrides.custom_keywords ?? {};
+  const ownCustomTextures = instance.overrides.custom_textures ?? {};
   const customOverrideCount = Object.keys(ownCustomParameters).length
-    + Object.keys(ownCustomKeywords).length;
+    + Object.keys(ownCustomKeywords).length
+    + Object.keys(ownCustomTextures).length;
   const standardOverrideCount = Object.keys(instance.overrides)
-    .filter((field) => field !== 'custom_parameters' && field !== 'custom_keywords').length;
+    .filter((field) => field !== 'custom_parameters'
+      && field !== 'custom_keywords'
+      && field !== 'custom_textures').length;
   const dielectricF0 = ((displayed.ior - 1) / (displayed.ior + 1)) ** 2;
   const parentMissing = !materialAssets.some(
     (asset) => asset.relPath.toLowerCase() === instance.parent.toLowerCase(),
@@ -738,6 +785,8 @@ export function MaterialInstanceEditor(props: MaterialEditorProps) {
                 (name) => !shaderParameters.some((parameter) => parameter.name === name),
               ) || Object.keys(ownCustomKeywords).some(
                 (name) => !shaderKeywords.some((keyword) => keyword.name === name),
+              ) || Object.keys(ownCustomTextures).some(
+                (name) => !shaderTextures.some((texture) => texture.name === name),
               )) && (
                 <button type="button" onClick={() => {
                   updateInstance((current) => {
@@ -762,10 +811,56 @@ export function MaterialInstanceEditor(props: MaterialEditorProps) {
                     } else {
                       delete overrides.custom_keywords;
                     }
+                    const custom_textures = Object.fromEntries(Object.entries(
+                      current.overrides.custom_textures ?? {},
+                    ).filter(([name]) => shaderTextures.some(
+                      (texture) => texture.name === name,
+                    )));
+                    if (Object.keys(custom_textures).length > 0) {
+                      overrides.custom_textures = custom_textures;
+                    } else {
+                      delete overrides.custom_textures;
+                    }
                     return { ...current, overrides };
                   }, 'Remove Stale Material Instance Shader Values');
                 }}>Remove Stale Values</button>
               )}
+            </div>
+          )}
+          {displayed.shader === 'custom' && shaderTextures.length > 0 && (
+            <div className="material-custom-parameters material-instance-custom-parameters material-custom-textures">
+              <strong>Surface Shader Textures</strong>
+              {shaderTextures.map((texture) => {
+                const isOverridden = Object.hasOwn(ownCustomTextures, texture.name);
+                const value = displayed.custom_textures[texture.name] ?? texture.default;
+                return (
+                  <label key={texture.name} className={isOverridden ? '' : 'inherited'}>
+                    <input
+                      aria-label={`Override ${texture.label}`}
+                      type="checkbox"
+                      checked={isOverridden}
+                      onChange={(event) => toggleCustomTexture(texture, event.target.checked)}
+                    />
+                    <span>{texture.label}<small>{isOverridden ? 'Override' : 'Inherited'} · {texture.type === 'color' ? 'sRGB' : 'Linear'}</small></span>
+                    <select
+                      aria-label={texture.label}
+                      disabled={!isOverridden}
+                      value={value}
+                      onChange={(event) => setCustomTexture(texture.name, event.target.value)}
+                    >
+                      <option value="">None (White)</option>
+                      {value && !textureAssets.some(
+                        (asset) => asset.relPath.toLowerCase() === value.toLowerCase(),
+                      ) && (
+                        <option value={value}>{value} (Missing)</option>
+                      )}
+                      {textureAssets.map((asset) => (
+                        <option key={asset.id} value={asset.relPath}>{asset.relPath}</option>
+                      ))}
+                    </select>
+                  </label>
+                );
+              })}
             </div>
           )}
           {displayed.shader === 'custom' && shaderKeywords.length > 0 && (

@@ -5,7 +5,10 @@ use mengine_assets::{
     MaterialInstanceAsset, MaterialShader, MaterialSurface, MaterialWrap as AssetMaterialWrap,
 };
 use mengine_core::generated::MaterialPropertyBlock;
-use mengine_core::surface_shader::{parse_surface_shader_schema, MAX_SURFACE_SHADER_PARAMETERS};
+use mengine_core::surface_shader::{
+    parse_surface_shader_schema, SurfaceShaderTextureType, MAX_SURFACE_SHADER_PARAMETERS,
+    MAX_SURFACE_SHADER_TEXTURES,
+};
 use mengine_rhi::{
     validate_surface_shader_hook, MaterialBlendMode, MaterialFilter, MaterialWrap, RenderMaterial,
 };
@@ -68,9 +71,27 @@ impl RuntimeMaterialCache {
                             Ok(parameters) => {
                                 match resolve_surface_shader_keywords(&material, &source) {
                                     Ok(keywords) => {
-                                        render.surface_shader = (*source).clone();
-                                        render.surface_keywords = keywords;
-                                        render.custom_parameters = parameters;
+                                        match resolve_surface_shader_textures(&material, &source) {
+                                            Ok((textures, srgb)) => {
+                                                render.surface_shader = (*source).clone();
+                                                render.surface_keywords = keywords;
+                                                render.custom_parameters = parameters;
+                                                render.custom_textures = textures;
+                                                render.custom_texture_srgb = srgb;
+                                            }
+                                            Err(error) => {
+                                                if self.reported_failures.insert((
+                                                    material.custom_shader.clone(),
+                                                    error.clone(),
+                                                )) {
+                                                    log::warn!(
+                                                        "custom shader textures for '{}' are invalid: {}",
+                                                        material.custom_shader,
+                                                        error
+                                                    );
+                                                }
+                                            }
+                                        }
                                     }
                                     Err(error) => {
                                         if self
@@ -351,6 +372,39 @@ pub fn resolve_surface_shader_keywords(
         .collect())
 }
 
+pub fn resolve_surface_shader_textures(
+    material: &MaterialAsset,
+    shader_source: &str,
+) -> Result<
+    (
+        [String; MAX_SURFACE_SHADER_TEXTURES],
+        [bool; MAX_SURFACE_SHADER_TEXTURES],
+    ),
+    String,
+> {
+    let schema = parse_surface_shader_schema(shader_source)?.textures;
+    if let Some(unknown) = material.custom_textures.keys().find(|name| {
+        !schema
+            .iter()
+            .any(|texture| texture.name.as_str() == name.as_str())
+    }) {
+        return Err(format!(
+            "material texture '{unknown}' is not declared by its Surface Shader"
+        ));
+    }
+    let mut textures = std::array::from_fn(|_| String::new());
+    let mut srgb = [false; MAX_SURFACE_SHADER_TEXTURES];
+    for (index, texture) in schema.iter().enumerate() {
+        textures[index] = material
+            .custom_textures
+            .get(&texture.name)
+            .unwrap_or(&texture.default)
+            .clone();
+        srgb[index] = texture.texture_type == SurfaceShaderTextureType::Color;
+    }
+    Ok((textures, srgb))
+}
+
 pub fn render_material_from_asset(material: &MaterialAsset) -> RenderMaterial {
     RenderMaterial {
         base_color: material.base_color,
@@ -410,6 +464,8 @@ pub fn render_material_from_asset(material: &MaterialAsset) -> RenderMaterial {
         surface_shader: String::new(),
         surface_keywords: Vec::new(),
         custom_parameters: [[0.0; 4]; MAX_SURFACE_SHADER_PARAMETERS],
+        custom_textures: std::array::from_fn(|_| String::new()),
+        custom_texture_srgb: [false; MAX_SURFACE_SHADER_TEXTURES],
     }
 }
 
@@ -610,6 +666,9 @@ mod tests {
             {"parameters":[
               {"name":"rim_color","type":"color","default":[1,1,1,1]},
               {"name":"rim_power","type":"float","default":2,"min":0,"max":8}
+            ],"textures":[
+              {"name":"detail","type":"color","default":"Assets/Textures/default.png"},
+              {"name":"mask","type":"data"}
             ]}
             */
             fn mengine_lit_surface_hook(
@@ -625,7 +684,7 @@ mod tests {
         .unwrap();
         std::fs::write(
             root.join("Assets/Materials/Rim.mmat"),
-            r#"{"version":8,"shader":"custom","custom_shader":"Assets/Shaders/Rim.mshader","custom_parameters":{"rim_color":[0.2,0.4,0.8,1],"rim_power":[3,0,0,0]}}"#,
+            r#"{"version":10,"shader":"custom","custom_shader":"Assets/Shaders/Rim.mshader","custom_parameters":{"rim_color":[0.2,0.4,0.8,1],"rim_power":[3,0,0,0]},"custom_textures":{"mask":"Assets/Textures/mask.png"}}"#,
         )
         .unwrap();
 
@@ -634,6 +693,9 @@ mod tests {
         assert!(material.surface_shader.contains("result.roughness"));
         assert_eq!(material.custom_parameters[0], [0.2, 0.4, 0.8, 1.0]);
         assert_eq!(material.custom_parameters[1], [3.0, 0.0, 0.0, 0.0]);
+        assert_eq!(material.custom_textures[0], "Assets/Textures/default.png");
+        assert_eq!(material.custom_textures[1], "Assets/Textures/mask.png");
+        assert_eq!(material.custom_texture_srgb, [true, false, false, false]);
 
         std::fs::remove_dir_all(root).unwrap();
     }
@@ -665,6 +727,36 @@ mod tests {
             .custom_parameters
             .insert("removed".into(), [1.0, 0.0, 0.0, 0.0]);
         assert!(pack_surface_shader_parameters(&material, shader)
+            .unwrap_err()
+            .contains("not declared"));
+    }
+
+    #[test]
+    fn reflected_shader_textures_resolve_defaults_overrides_and_color_space() {
+        let shader = r#"/* MENGINE_PARAMETERS
+        {"textures":[
+          {"name":"detail","type":"color","default":"Assets/Textures/default.png"},
+          {"name":"mask","type":"data"}
+        ]}
+        */
+        fn mengine_lit_surface_hook(
+          surface: MEngineSurface, uv: vec2<f32>, world_position: vec3<f32>
+        ) -> MEngineSurface { return surface; }"#;
+        let mut material = MaterialAsset {
+            shader: MaterialShader::Custom,
+            ..MaterialAsset::default()
+        };
+        material
+            .custom_textures
+            .insert("mask".into(), "Assets/Textures/mask.png".into());
+        let (textures, srgb) = resolve_surface_shader_textures(&material, shader).unwrap();
+        assert_eq!(textures[0], "Assets/Textures/default.png");
+        assert_eq!(textures[1], "Assets/Textures/mask.png");
+        assert_eq!(srgb, [true, false, false, false]);
+        material
+            .custom_textures
+            .insert("removed".into(), "Assets/Textures/stale.png".into());
+        assert!(resolve_surface_shader_textures(&material, shader)
             .unwrap_err()
             .contains("not declared"));
     }

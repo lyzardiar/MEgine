@@ -202,7 +202,15 @@ impl RuntimeTextureCache {
                 (material.metallic_roughness_texture.trim(), false),
                 (material.occlusion_texture.trim(), false),
                 (material.emissive_texture.trim(), true),
-            ] {
+            ]
+            .into_iter()
+            .chain(
+                material
+                    .custom_textures
+                    .iter()
+                    .zip(material.custom_texture_srgb)
+                    .map(|(key, srgb)| (key.trim(), srgb)),
+            ) {
                 if key.is_empty() || key.eq_ignore_ascii_case("white") {
                     continue;
                 }

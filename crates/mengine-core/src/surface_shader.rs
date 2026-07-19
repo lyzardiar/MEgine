@@ -5,6 +5,7 @@ use std::collections::HashSet;
 pub const SURFACE_SHADER_PARAMETERS_MARKER: &str = "/* MENGINE_PARAMETERS";
 pub const MAX_SURFACE_SHADER_PARAMETERS: usize = 16;
 pub const MAX_SURFACE_SHADER_KEYWORDS: usize = 16;
+pub const MAX_SURFACE_SHADER_TEXTURES: usize = 4;
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum SurfaceShaderParameterType {
@@ -61,10 +62,25 @@ pub struct SurfaceShaderKeyword {
     pub default: bool,
 }
 
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum SurfaceShaderTextureType {
+    Color,
+    Data,
+}
+
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub struct SurfaceShaderTexture {
+    pub name: String,
+    pub label: String,
+    pub texture_type: SurfaceShaderTextureType,
+    pub default: String,
+}
+
 #[derive(Clone, Debug, Default, PartialEq)]
 pub struct SurfaceShaderSchema {
     pub parameters: Vec<SurfaceShaderParameter>,
     pub keywords: Vec<SurfaceShaderKeyword>,
+    pub textures: Vec<SurfaceShaderTexture>,
 }
 
 #[derive(Deserialize)]
@@ -74,6 +90,8 @@ struct RawSchema {
     parameters: Vec<RawParameter>,
     #[serde(default)]
     keywords: Vec<RawKeyword>,
+    #[serde(default)]
+    textures: Vec<RawTexture>,
 }
 
 #[derive(Deserialize)]
@@ -101,6 +119,18 @@ struct RawKeyword {
     default: bool,
 }
 
+#[derive(Deserialize)]
+#[serde(deny_unknown_fields)]
+struct RawTexture {
+    name: String,
+    #[serde(default)]
+    label: String,
+    #[serde(rename = "type")]
+    texture_type: String,
+    #[serde(default)]
+    default: String,
+}
+
 fn valid_identifier(name: &str) -> bool {
     let mut characters = name.chars();
     matches!(characters.next(), Some(first) if first.is_ascii_alphabetic())
@@ -119,6 +149,35 @@ fn parameter_type(value: &str) -> Result<SurfaceShaderParameterType, String> {
             "unsupported Surface Shader parameter type '{value}'"
         )),
     }
+}
+
+fn texture_type(value: &str) -> Result<SurfaceShaderTextureType, String> {
+    match value {
+        "color" => Ok(SurfaceShaderTextureType::Color),
+        "data" => Ok(SurfaceShaderTextureType::Data),
+        _ => Err(format!("unsupported Surface Shader texture type '{value}'")),
+    }
+}
+
+fn texture_path(value: &str, name: &str) -> Result<String, String> {
+    let normalized = value.trim().replace('\\', "/");
+    if normalized.is_empty() {
+        return Ok(normalized);
+    }
+    let lower = normalized.to_ascii_lowercase();
+    if !normalized.starts_with("Assets/")
+        || normalized
+            .split('/')
+            .any(|segment| segment.is_empty() || segment == "." || segment == "..")
+        || ![".png", ".jpg", ".jpeg", ".webp", ".bmp", ".gif", ".tga"]
+            .iter()
+            .any(|extension| lower.ends_with(extension))
+    {
+        return Err(format!(
+            "Surface Shader texture '{name}' default must be an Assets image path"
+        ));
+    }
+    Ok(normalized)
 }
 
 fn parameter_default(
@@ -182,6 +241,11 @@ pub fn parse_surface_shader_schema(source: &str) -> Result<SurfaceShaderSchema, 
     if raw.keywords.len() > MAX_SURFACE_SHADER_KEYWORDS {
         return Err(format!(
             "Surface Shader declares more than {MAX_SURFACE_SHADER_KEYWORDS} keywords"
+        ));
+    }
+    if raw.textures.len() > MAX_SURFACE_SHADER_TEXTURES {
+        return Err(format!(
+            "Surface Shader declares more than {MAX_SURFACE_SHADER_TEXTURES} textures"
         ));
     }
     let mut names = HashSet::new();
@@ -276,9 +340,42 @@ pub fn parse_surface_shader_schema(source: &str) -> Result<SurfaceShaderSchema, 
             })
         })
         .collect::<Result<Vec<_>, String>>()?;
+    let mut texture_names = HashSet::new();
+    let textures = raw
+        .textures
+        .into_iter()
+        .map(|texture| {
+            let name = texture.name.trim().to_owned();
+            if !valid_identifier(&name) {
+                return Err(format!(
+                    "Surface Shader texture name '{name}' must be an ASCII identifier of at most 48 characters"
+                ));
+            }
+            if !texture_names.insert(name.clone()) {
+                return Err(format!("duplicate Surface Shader texture '{name}'"));
+            }
+            let label = if texture.label.trim().is_empty() {
+                name.replace('_', " ")
+            } else {
+                texture.label.trim().to_owned()
+            };
+            if label.len() > 64 {
+                return Err(format!(
+                    "Surface Shader texture '{name}' label exceeds 64 characters"
+                ));
+            }
+            Ok(SurfaceShaderTexture {
+                name: name.clone(),
+                label,
+                texture_type: texture_type(&texture.texture_type)?,
+                default: texture_path(&texture.default, &name)?,
+            })
+        })
+        .collect::<Result<Vec<_>, String>>()?;
     Ok(SurfaceShaderSchema {
         parameters,
         keywords,
+        textures,
     })
 }
 
@@ -290,6 +387,10 @@ pub fn parse_surface_shader_parameters(
 
 pub fn parse_surface_shader_keywords(source: &str) -> Result<Vec<SurfaceShaderKeyword>, String> {
     Ok(parse_surface_shader_schema(source)?.keywords)
+}
+
+pub fn parse_surface_shader_textures(source: &str) -> Result<Vec<SurfaceShaderTexture>, String> {
+    Ok(parse_surface_shader_schema(source)?.textures)
 }
 
 #[cfg(test)]
@@ -363,6 +464,42 @@ mod tests {
         .is_err());
         assert!(parse_surface_shader_schema(
             r#"/* MENGINE_PARAMETERS {"keywords":[{"name":"DUP"},{"name":"DUP"}]} */"#
+        )
+        .is_err());
+    }
+
+    #[test]
+    fn parses_and_validates_shader_textures() {
+        let schema = parse_surface_shader_schema(
+            r#"/* MENGINE_PARAMETERS
+            {"textures":[
+              {"name":"detail_color","label":"Detail Color","type":"color","default":"Assets/Textures/detail.png"},
+              {"name":"mask","type":"data"}
+            ]}
+            */"#,
+        )
+        .unwrap();
+        assert_eq!(schema.textures.len(), 2);
+        assert_eq!(schema.textures[0].label, "Detail Color");
+        assert_eq!(
+            schema.textures[0].texture_type,
+            SurfaceShaderTextureType::Color
+        );
+        assert_eq!(schema.textures[0].default, "Assets/Textures/detail.png");
+        assert_eq!(
+            schema.textures[1].texture_type,
+            SurfaceShaderTextureType::Data
+        );
+        assert!(parse_surface_shader_schema(
+            r#"/* MENGINE_PARAMETERS {"textures":[{"name":"BAD-NAME","type":"color"}]} */"#
+        )
+        .is_err());
+        assert!(parse_surface_shader_schema(
+            r#"/* MENGINE_PARAMETERS {"textures":[{"name":"detail","type":"cube"}]} */"#
+        )
+        .is_err());
+        assert!(parse_surface_shader_schema(
+            r#"/* MENGINE_PARAMETERS {"textures":[{"name":"detail","type":"data","default":"../outside.png"}]} */"#
         )
         .is_err());
     }

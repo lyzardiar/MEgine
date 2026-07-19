@@ -11,12 +11,13 @@ import {
 
 test('material assets have stable authoring defaults', () => {
   assert.deepEqual(createMaterialAsset('Paint'), {
-    version: 9,
+    version: 10,
     name: 'Paint',
     shader: 'pbr',
     custom_shader: '',
     custom_parameters: {},
     custom_keywords: {},
+    custom_textures: {},
     surface: 'opaque',
     blend_mode: 'alpha',
     transparent_depth_write: false,
@@ -103,7 +104,7 @@ test('legacy material assets upgrade to safe pipeline defaults', () => {
     name: 'Legacy',
     surface: 'transparent',
   }));
-  assert.equal(legacy.version, 9);
+  assert.equal(legacy.version, 10);
   assert.equal(legacy.blend_mode, 'alpha');
   assert.equal(legacy.transparent_depth_write, false);
   assert.equal(legacy.render_queue, -1);
@@ -113,7 +114,7 @@ test('legacy material assets upgrade to safe pipeline defaults', () => {
   assert.equal(legacy.clearcoat, 0);
   assert.equal(legacy.clearcoat_roughness, 0.1);
   assert.equal(legacy.ior, 1.5);
-  assert.throws(() => parseMaterialAsset('{"version":10}'), /Unsupported material version/);
+  assert.throws(() => parseMaterialAsset('{"version":11}'), /Unsupported material version/);
   assert.throws(() => parseMaterialAsset('{"version":6,"filter":"cubic"}'), /Invalid material filter/);
   assert.throws(() => parseMaterialAsset('{"version":6,"mipmap_filter":"cubic"}'), /Invalid material mipmap_filter/);
 });
@@ -159,7 +160,7 @@ test('custom material shader references normalize project separators', () => {
   assert.equal(material.custom_shader, 'Assets/Shaders/Rim.mshader');
 });
 
-test('material v9 upgrades reflected values and stores keyword overrides', () => {
+test('material v10 upgrades reflected values and stores keyword and texture overrides', () => {
   const material = parseMaterialAsset(JSON.stringify({
     version: 8,
     shader: 'custom',
@@ -169,12 +170,14 @@ test('material v9 upgrades reflected values and stores keyword overrides', () =>
       rim_color: [1, 0.5, 0, 1],
     },
     custom_keywords: { USE_RIM: true, USE_DETAIL: false },
+    custom_textures: { detail: ' Assets\\Textures\\detail.png ' },
   }));
   assert.deepEqual(material.custom_parameters, {
     rim_color: [1, 0.5, 0, 1],
     rim_power: [2, 0, 0, 0],
   });
   assert.deepEqual(material.custom_keywords, { USE_DETAIL: false, USE_RIM: true });
+  assert.deepEqual(material.custom_textures, { detail: 'Assets/Textures/detail.png' });
   assert.deepEqual(parseMaterialAsset(serializeMaterialAsset(material)), material);
   assert.throws(() => parseMaterialAsset(JSON.stringify({
     version: 8,
@@ -187,10 +190,15 @@ test('material v9 upgrades reflected values and stores keyword overrides', () =>
     custom_parameters: { 'bad-name': [2, 0, 0, 0] },
   })), /Invalid custom material parameter name/);
   assert.throws(() => parseMaterialAsset(JSON.stringify({
-    version: 9,
+    version: 10,
     shader: 'custom',
     custom_keywords: { USE_RIM: 1 },
   })), /must be a boolean/);
+  assert.throws(() => parseMaterialAsset(JSON.stringify({
+    version: 10,
+    shader: 'custom',
+    custom_textures: { detail: '../outside.png' },
+  })), /must reference an Assets image/);
 });
 
 test('material references report missing and unsupported authoring assets', () => {
