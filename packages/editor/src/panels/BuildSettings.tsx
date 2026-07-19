@@ -8,19 +8,24 @@ import { registerSaveAllParticipant } from '../saveAll';
 import {
   buildPcPlayer,
   cancelPcBuild,
+  chooseBuildPublicKey,
   comparePcBuildHistory,
   createPcBuildHistoryPatch,
   getProjectBuildSettings,
   isDesktopEditor,
   listPcBuildHistory,
+  listPcBuildPatches,
   listenToPcBuildProgress,
   runPcPlayer,
   saveProjectBuildAssetSettings,
   saveProjectBuildSettings,
   verifyPcPlayer,
+  verifyPcBuildPatch,
   type BuildComparisonResult,
   type BuildHistoryEntry,
   type BuildHistoryPatchResult,
+  type BuildPatchInventoryEntry,
+  type VerifyBuildPatchResult,
   type BuildPlayerProfile,
   type BuildProgressEvent,
   type BuildPlayerResult,
@@ -133,6 +138,12 @@ export function BuildSettings(props: {
   const [historyPatching, setHistoryPatching] = useState(false);
   const [historyPatch, setHistoryPatch] = useState<BuildHistoryPatchResult | null>(null);
   const [historyError, setHistoryError] = useState<string | null>(null);
+  const [buildPatches, setBuildPatches] = useState<BuildPatchInventoryEntry[]>([]);
+  const [invalidBuildPatches, setInvalidBuildPatches] = useState(0);
+  const [patchInventoryLoading, setPatchInventoryLoading] = useState(false);
+  const [patchInventoryError, setPatchInventoryError] = useState<string | null>(null);
+  const [patchVerifyingId, setPatchVerifyingId] = useState<string | null>(null);
+  const [patchVerification, setPatchVerification] = useState<VerifyBuildPatchResult | null>(null);
   const [message, setMessage] = useState<string | null>(null);
   const [messageError, setMessageError] = useState(false);
   const [settingsError, setSettingsError] = useState<string | null>(null);
@@ -140,6 +151,7 @@ export function BuildSettings(props: {
   const alwaysIncludeDraftRef = useRef('');
   const buildReportRevisionRef = useRef(0);
   const historyLoadRevisionRef = useRef(0);
+  const patchLoadRevisionRef = useRef(0);
   const onLogRef = useRef(props.onLog);
   settingsRef.current = settings;
   alwaysIncludeDraftRef.current = alwaysIncludeDraft;
@@ -207,12 +219,52 @@ export function BuildSettings(props: {
     }
   }, [desktop, project?.projectRoot]);
 
+  const refreshBuildPatches = useCallback(async (reportFailure = true) => {
+    const revision = patchLoadRevisionRef.current + 1;
+    patchLoadRevisionRef.current = revision;
+    if (!desktop) {
+      setBuildPatches([]);
+      setInvalidBuildPatches(0);
+      setPatchInventoryError(null);
+      setPatchVerification(null);
+      return;
+    }
+    setPatchInventoryLoading(true);
+    if (reportFailure) setPatchInventoryError(null);
+    try {
+      const result = await listPcBuildPatches();
+      if (patchLoadRevisionRef.current !== revision) return;
+      setBuildPatches(result.entries);
+      setInvalidBuildPatches(result.invalidPatches);
+      setPatchInventoryError(null);
+      setPatchVerification((current) => (
+        current && result.entries.some((entry) => entry.id === current.patchId) ? current : null
+      ));
+    } catch (reason) {
+      if (patchLoadRevisionRef.current !== revision) return;
+      const detail = reason instanceof Error ? reason.message : String(reason);
+      if (reportFailure) {
+        setPatchInventoryError(detail);
+        onLogRef.current(`Build patch inventory load failed: ${detail}`, 'warn');
+      }
+    } finally {
+      if (patchLoadRevisionRef.current === revision) setPatchInventoryLoading(false);
+    }
+  }, [desktop, project?.projectRoot]);
+
   useEffect(() => {
     void refreshBuildHistory();
     return () => {
       historyLoadRevisionRef.current += 1;
     };
   }, [refreshBuildHistory]);
+
+  useEffect(() => {
+    void refreshBuildPatches();
+    return () => {
+      patchLoadRevisionRef.current += 1;
+    };
+  }, [refreshBuildPatches]);
 
   useEffect(() => {
     let cancelled = false;
@@ -513,6 +565,7 @@ export function BuildSettings(props: {
       setMessageError(false);
       setMessage(`Signed historical patch created: ${byteSize(result.payloadBytes)} payload.`);
       props.onLog(`Built signed historical patch -> ${result.outputDir}`);
+      void refreshBuildPatches(false);
     } catch (reason) {
       const detail = reason instanceof Error ? reason.message : String(reason);
       setHistoryError(detail);
@@ -521,6 +574,30 @@ export function BuildSettings(props: {
       props.onLog(`Historical patch generation failed: ${detail}`, 'error');
     } finally {
       setHistoryPatching(false);
+    }
+  };
+
+  const verifyBuildPatch = async (patch: BuildPatchInventoryEntry) => {
+    if (patchVerifyingId || historyPatching || !patch.baseAvailable) return;
+    const publicKeyPath = await chooseBuildPublicKey();
+    if (!publicKeyPath) return;
+    setPatchVerifyingId(patch.id);
+    setPatchInventoryError(null);
+    setPatchVerification(null);
+    try {
+      const result = await verifyPcBuildPatch(patch.id, publicKeyPath);
+      setPatchVerification(result);
+      setMessageError(false);
+      setMessage(`Trusted patch verification passed: ${patch.fromContentHash.slice(0, 12)} → ${patch.toContentHash.slice(0, 12)}.`);
+      props.onLog(`Verified signed patch with archived base -> ${patch.outputDir}`);
+    } catch (reason) {
+      const detail = reason instanceof Error ? reason.message : String(reason);
+      setPatchInventoryError(detail);
+      setMessageError(true);
+      setMessage(detail);
+      props.onLog(`Build patch verification failed: ${detail}`, 'error');
+    } finally {
+      setPatchVerifyingId(null);
     }
   };
 
@@ -535,6 +612,7 @@ export function BuildSettings(props: {
       || !settings?.scenes.length
       || building
       || historyPatching
+      || patchVerifyingId
       || launching
       || verifying
     ) return;
@@ -548,6 +626,7 @@ export function BuildSettings(props: {
       const result = await buildPcPlayer(profile, clean);
       setLastBuild(result);
       void refreshBuildHistory(false);
+      void refreshBuildPatches(false);
       const patchMessage = result.incrementalPatch?.generated
         ? ` Incremental patch: ${byteSize(result.incrementalPatch.payloadBytes ?? 0)}.`
         : '';
@@ -596,8 +675,8 @@ export function BuildSettings(props: {
           <strong>PC Build Settings</strong>
           <span>Packages an ordered scene list into a self-validating standalone player.</span>
         </div>
-        <span className={`build-status ${building || historyPatching || launching || verifying || settingsSaving || savingAll ? 'busy' : ''}`}>
-          {building ? (cancelRequested ? 'CANCELLING' : 'BUILDING') : historyPatching ? 'PATCHING' : launching ? 'LAUNCHING' : verifying ? 'VERIFYING' : settingsSaving || savingAll ? 'SAVING' : lastVerification ? 'VERIFIED' : lastBuild ? 'SUCCEEDED' : 'READY'}
+        <span className={`build-status ${building || historyPatching || patchVerifyingId || launching || verifying || settingsSaving || savingAll ? 'busy' : ''}`}>
+          {building ? (cancelRequested ? 'CANCELLING' : 'BUILDING') : historyPatching ? 'PATCHING' : patchVerifyingId ? 'VERIFYING PATCH' : launching ? 'LAUNCHING' : verifying ? 'VERIFYING' : settingsSaving || savingAll ? 'SAVING' : lastVerification ? 'VERIFIED' : lastBuild ? 'SUCCEEDED' : 'READY'}
         </span>
       </div>
 
@@ -791,21 +870,21 @@ export function BuildSettings(props: {
               <span>{buildHistory.length}/{historyRetentionLimit} retained</span>
               <button
                 type="button"
-                disabled={historyLoading || historyComparing || historyPatching}
+                disabled={historyLoading || historyComparing || historyPatching || Boolean(patchVerifyingId)}
                 onClick={() => void refreshBuildHistory()}
               >
                 {historyLoading ? 'Refreshing...' : 'Refresh'}
               </button>
               <button
                 type="button"
-                disabled={historySelection.length !== 2 || historyComparing || historyPatching}
+                disabled={historySelection.length !== 2 || historyComparing || historyPatching || Boolean(patchVerifyingId)}
                 onClick={() => void compareSelectedHistory()}
               >
                 {historyComparing ? 'Comparing...' : 'Compare Selected'}
               </button>
               <button
                 type="button"
-                disabled={!historyPatchEligible || historyPatching || historyComparing}
+                disabled={!historyPatchEligible || historyPatching || historyComparing || Boolean(patchVerifyingId)}
                 title={historyPatchEligible
                   ? 'Rebuild both archived artifacts, then create and verify a signed patch.'
                   : 'Select two content-archived builds signed by the same key.'}
@@ -884,6 +963,72 @@ export function BuildSettings(props: {
                 key {historyPatch.signingKeyId.slice(0, 12)}
               </span>
               <code>{historyPatch.outputDir}</code>
+            </div>
+          )}
+        </section>
+      )}
+      {desktop && (
+        <section className="build-section build-patch-inventory">
+          <div className="build-section-title">
+            <h3>Patch Inventory</h3>
+            <div className="build-history-toolbar">
+              <span>{buildPatches.length} patches</span>
+              <button
+                type="button"
+                disabled={patchInventoryLoading || historyPatching || Boolean(patchVerifyingId)}
+                onClick={() => void refreshBuildPatches()}
+              >
+                {patchInventoryLoading ? 'Refreshing...' : 'Refresh'}
+              </button>
+            </div>
+          </div>
+          {buildPatches.length === 0 && !patchInventoryLoading && !patchInventoryError && (
+            <div className="build-empty">Signed automatic and historical patches will remain visible here after reopening the editor.</div>
+          )}
+          <div className="build-patch-list">
+            {buildPatches.map((patch) => {
+              const verified = patchVerification?.patchId === patch.id;
+              const verifyingPatch = patchVerifyingId === patch.id;
+              return (
+                <div className="build-patch-row" key={patch.id} title={patch.manifestPath}>
+                  <span className="build-patch-main">
+                    <strong>{patch.fromContentHash.slice(0, 12)} → {patch.toContentHash.slice(0, 12)}</strong>
+                    <small>{buildTimestamp(patch.createdAtMs)} · {patch.source} · key {patch.signingKeyId.slice(0, 12)}</small>
+                  </span>
+                  <span className="build-patch-size">
+                    <strong>{byteSize(patch.payloadBytes)}</strong>
+                    <small>{patch.changedFiles} payload · {patch.removedFiles} removed · {byteSize(patch.reusedBytes)} reused</small>
+                  </span>
+                  <em className={patch.baseAvailable ? 'available' : 'missing'}>
+                    {patch.baseAvailable ? 'BASE STORED' : 'BASE PRUNED'}
+                  </em>
+                  {verified && <em className="verified">VERIFIED</em>}
+                  <button
+                    type="button"
+                    disabled={!patch.baseAvailable || Boolean(patchVerifyingId) || historyPatching}
+                    title={patch.baseAvailable
+                      ? 'Choose an independent trusted Ed25519 public key and verify the complete patch chain.'
+                      : 'The exact archived base is no longer available for verification.'}
+                    onClick={() => void verifyBuildPatch(patch)}
+                  >
+                    {verifyingPatch ? 'Verifying...' : 'Verify...'}
+                  </button>
+                </div>
+              );
+            })}
+          </div>
+          {invalidBuildPatches > 0 && (
+            <div className="build-warning">
+              {invalidBuildPatches} invalid patch entr{invalidBuildPatches === 1 ? 'y' : 'ies'} ignored.
+            </div>
+          )}
+          {patchInventoryError && <div className="build-warning error">{patchInventoryError}</div>}
+          {patchVerification && (
+            <div className="build-patch-verification">
+              <strong>Trusted Ed25519 verification passed</strong>
+              <span>Base history {patchVerification.baseHistoryId}</span>
+              <span>{patchVerification.fromContentHash.slice(0, 12)} → {patchVerification.toContentHash.slice(0, 12)}</span>
+              {patchVerification.log && <pre>{patchVerification.log}</pre>}
             </div>
           )}
         </section>
@@ -1058,6 +1203,7 @@ export function BuildSettings(props: {
             || savingAll
             || building
             || historyPatching
+            || Boolean(patchVerifyingId)
             || launching
             || verifying
             || !settings?.scenes.length
@@ -1079,6 +1225,7 @@ export function BuildSettings(props: {
             || savingAll
             || building
             || historyPatching
+            || Boolean(patchVerifyingId)
             || launching
             || verifying
             || !settings?.scenes.length

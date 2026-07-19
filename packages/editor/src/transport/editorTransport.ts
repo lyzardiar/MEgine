@@ -164,6 +164,27 @@ export type BuildHistoryPatchResult = {
   signingKeyId: string;
 };
 
+export type BuildPatchInventoryEntry = BuildHistoryPatchResult & {
+  id: string;
+  source: 'automatic' | 'history';
+  createdAtMs: number;
+  baseAvailable: boolean;
+};
+
+export type BuildPatchInventoryResult = {
+  entries: BuildPatchInventoryEntry[];
+  invalidPatches: number;
+};
+
+export type VerifyBuildPatchResult = {
+  patchId: string;
+  baseHistoryId: string;
+  fromContentHash: string;
+  toContentHash: string;
+  signingKeyId: string;
+  log: string;
+};
+
 export type BuildPlayerResult = {
   buildId: number;
   outputDir: string;
@@ -402,6 +423,32 @@ export async function createPcBuildHistoryPatch(
     previousId,
     currentId,
   });
+}
+
+export async function listPcBuildPatches(): Promise<BuildPatchInventoryResult> {
+  if (!isDesktopEditor()) return { entries: [], invalidPatches: 0 };
+  return invoke<BuildPatchInventoryResult>('list_pc_build_patches');
+}
+
+export async function chooseBuildPublicKey(): Promise<string | null> {
+  if (!isDesktopEditor()) return null;
+  const selected = await open({
+    directory: false,
+    multiple: false,
+    title: 'Choose Trusted Ed25519 Public Key',
+    filters: [{ name: 'PEM public key', extensions: ['pem', 'pub'] }],
+  });
+  return typeof selected === 'string' ? selected : null;
+}
+
+export async function verifyPcBuildPatch(
+  patchId: string,
+  publicKeyPath: string,
+): Promise<VerifyBuildPatchResult> {
+  if (!isDesktopEditor()) {
+    throw new Error('Patch verification requires the desktop editor');
+  }
+  return invoke<VerifyBuildPatchResult>('verify_pc_build_patch', { patchId, publicKeyPath });
 }
 
 export async function cancelPcBuild(): Promise<boolean> {

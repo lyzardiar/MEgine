@@ -246,7 +246,7 @@ struct BuildHistoryListResult {
     retention_limit: usize,
 }
 
-#[derive(Debug, serde::Serialize, PartialEq, Eq)]
+#[derive(Clone, Debug, serde::Serialize, PartialEq, Eq)]
 #[serde(rename_all = "camelCase")]
 struct BuildHistoryPatchResult {
     output_dir: String,
@@ -261,6 +261,35 @@ struct BuildHistoryPatchResult {
     payload_bytes: u64,
     reused_bytes: u64,
     signing_key_id: String,
+}
+
+#[derive(Debug, serde::Serialize)]
+#[serde(rename_all = "camelCase")]
+struct BuildPatchInventoryEntry {
+    id: String,
+    source: String,
+    created_at_ms: u64,
+    base_available: bool,
+    #[serde(flatten)]
+    patch: BuildHistoryPatchResult,
+}
+
+#[derive(Debug, serde::Serialize)]
+#[serde(rename_all = "camelCase")]
+struct BuildPatchInventoryResult {
+    entries: Vec<BuildPatchInventoryEntry>,
+    invalid_patches: usize,
+}
+
+#[derive(Debug, serde::Serialize)]
+#[serde(rename_all = "camelCase")]
+struct VerifyBuildPatchResult {
+    patch_id: String,
+    base_history_id: String,
+    from_content_hash: String,
+    to_content_hash: String,
+    signing_key_id: String,
+    log: String,
 }
 
 #[derive(Debug, serde::Deserialize, serde::Serialize)]
@@ -1664,11 +1693,10 @@ fn restore_build_history_artifact(
     Ok(entry)
 }
 
-fn build_history_patch_root(project_root: &Path) -> Result<PathBuf, String> {
+fn build_patch_store_root(project_root: &Path, create: bool) -> Result<Option<PathBuf>, String> {
     let engine_dir = project_root.join(".mengine");
     let patch_dir = engine_dir.join("build-patches");
-    let history_patch_dir = patch_dir.join("history");
-    for directory in [&engine_dir, &patch_dir, &history_patch_dir] {
+    for directory in [&engine_dir, &patch_dir] {
         match std::fs::symlink_metadata(directory) {
             Ok(metadata) => {
                 if metadata.file_type().is_symlink() || !metadata.is_dir() {
@@ -1678,7 +1706,7 @@ fn build_history_patch_root(project_root: &Path) -> Result<PathBuf, String> {
                     ));
                 }
             }
-            Err(error) if error.kind() == std::io::ErrorKind::NotFound => {
+            Err(error) if error.kind() == std::io::ErrorKind::NotFound && create => {
                 std::fs::create_dir(directory).map_err(|error| {
                     format!(
                         "cannot create build patch directory {}: {error}",
@@ -1686,6 +1714,7 @@ fn build_history_patch_root(project_root: &Path) -> Result<PathBuf, String> {
                     )
                 })?;
             }
+            Err(error) if error.kind() == std::io::ErrorKind::NotFound => return Ok(None),
             Err(error) => {
                 return Err(format!(
                     "cannot inspect build patch directory {}: {error}",
@@ -1694,7 +1723,33 @@ fn build_history_patch_root(project_root: &Path) -> Result<PathBuf, String> {
             }
         }
     }
-    Ok(history_patch_dir)
+    Ok(Some(patch_dir))
+}
+
+fn build_history_patch_root(project_root: &Path) -> Result<PathBuf, String> {
+    let patch_dir = build_patch_store_root(project_root, true)?
+        .ok_or_else(|| "build patch directory is unavailable".to_string())?;
+    let history_patch_dir = patch_dir.join("history");
+    match std::fs::symlink_metadata(&history_patch_dir) {
+        Ok(metadata) if metadata.file_type().is_symlink() || !metadata.is_dir() => Err(format!(
+            "build patch directory must be a regular directory: {}",
+            history_patch_dir.display()
+        )),
+        Ok(_) => Ok(history_patch_dir),
+        Err(error) if error.kind() == std::io::ErrorKind::NotFound => {
+            std::fs::create_dir(&history_patch_dir).map_err(|error| {
+                format!(
+                    "cannot create build patch directory {}: {error}",
+                    history_patch_dir.display()
+                )
+            })?;
+            Ok(history_patch_dir)
+        }
+        Err(error) => Err(format!(
+            "cannot inspect build patch directory {}: {error}",
+            history_patch_dir.display()
+        )),
+    }
 }
 
 fn source_cli_command() -> Result<Command, String> {
@@ -1752,8 +1807,7 @@ fn history_patch_command(bundled_sdk: Option<PathBuf>, profile: &str) -> Result<
 
 fn parse_build_history_patch_result(
     output_dir: &Path,
-    expected_from: &str,
-    expected_to: &str,
+    expected_edge: Option<(&str, &str)>,
 ) -> Result<BuildHistoryPatchResult, String> {
     let manifest_path = output_dir.join("mengine-patch.json");
     let metadata = std::fs::symlink_metadata(&manifest_path)
@@ -1784,8 +1838,10 @@ fn parse_build_history_patch_result(
     };
     let from_content_hash = string_field("fromContentHash")?;
     let to_content_hash = string_field("toContentHash")?;
-    if from_content_hash != expected_from || to_content_hash != expected_to {
-        return Err("generated patch content identity does not match selected history".into());
+    if let Some((expected_from, expected_to)) = expected_edge {
+        if from_content_hash != expected_from || to_content_hash != expected_to {
+            return Err("generated patch content identity does not match selected history".into());
+        }
     }
     let number_field = |name: &str| -> Result<u64, String> {
         manifest
@@ -1823,6 +1879,207 @@ fn parse_build_history_patch_result(
         reused_bytes: number_field("reusedBytes")?,
         signing_key_id,
     })
+}
+
+fn scan_build_patch_inventory(project_root: &Path) -> Result<BuildPatchInventoryResult, String> {
+    let Some(store_root) = build_patch_store_root(project_root, false)? else {
+        return Ok(BuildPatchInventoryResult {
+            entries: Vec::new(),
+            invalid_patches: 0,
+        });
+    };
+    let history = list_build_history(project_root)?;
+    let mut entries = Vec::new();
+    let mut invalid_patches = 0_usize;
+    for group in std::fs::read_dir(&store_root)
+        .map_err(|error| format!("cannot scan build patch store: {error}"))?
+    {
+        let Ok(group) = group else {
+            invalid_patches = invalid_patches.saturating_add(1);
+            continue;
+        };
+        let group_path = group.path();
+        let Ok(group_metadata) = std::fs::symlink_metadata(&group_path) else {
+            invalid_patches = invalid_patches.saturating_add(1);
+            continue;
+        };
+        if group_metadata.file_type().is_symlink() || !group_metadata.is_dir() {
+            invalid_patches = invalid_patches.saturating_add(1);
+            continue;
+        }
+        let group_name = group.file_name().to_string_lossy().into_owned();
+        if !valid_build_history_id(&group_name) {
+            invalid_patches = invalid_patches.saturating_add(1);
+            continue;
+        }
+        let children = match std::fs::read_dir(&group_path) {
+            Ok(children) => children,
+            Err(_) => {
+                invalid_patches = invalid_patches.saturating_add(1);
+                continue;
+            }
+        };
+        for child in children {
+            let Ok(child) = child else {
+                invalid_patches = invalid_patches.saturating_add(1);
+                continue;
+            };
+            let path = child.path();
+            let Ok(metadata) = std::fs::symlink_metadata(&path) else {
+                invalid_patches = invalid_patches.saturating_add(1);
+                continue;
+            };
+            if metadata.file_type().is_symlink() || !metadata.is_dir() {
+                invalid_patches = invalid_patches.saturating_add(1);
+                continue;
+            }
+            let name = child.file_name().to_string_lossy().into_owned();
+            if !valid_build_history_id(&name) {
+                invalid_patches = invalid_patches.saturating_add(1);
+                continue;
+            }
+            let patch = match parse_build_history_patch_result(&path, None) {
+                Ok(patch) => patch,
+                Err(_) => {
+                    invalid_patches = invalid_patches.saturating_add(1);
+                    continue;
+                }
+            };
+            let base_available = history.iter().any(|entry| {
+                entry.content_available
+                    && entry.artifact_signing_key_id.as_deref()
+                        == Some(patch.signing_key_id.as_str())
+                    && entry.content_hash == patch.from_content_hash
+            });
+            let created_at_ms = std::fs::symlink_metadata(&patch.manifest_path)
+                .and_then(|metadata| metadata.modified())
+                .ok()
+                .and_then(|modified| modified.duration_since(UNIX_EPOCH).ok())
+                .map(|duration| duration.as_millis().try_into().unwrap_or(u64::MAX))
+                .unwrap_or(0);
+            entries.push(BuildPatchInventoryEntry {
+                id: format!("{group_name}/{name}"),
+                source: if group_name == "history" {
+                    "history".into()
+                } else {
+                    "automatic".into()
+                },
+                created_at_ms,
+                base_available,
+                patch,
+            });
+        }
+    }
+    entries.sort_by(|left, right| {
+        right
+            .created_at_ms
+            .cmp(&left.created_at_ms)
+            .then_with(|| right.id.cmp(&left.id))
+    });
+    Ok(BuildPatchInventoryResult {
+        entries,
+        invalid_patches,
+    })
+}
+
+fn build_patch_directory_from_id(store_root: &Path, id: &str) -> Result<PathBuf, String> {
+    let segments = id.split('/').collect::<Vec<_>>();
+    if segments.len() != 2
+        || segments
+            .iter()
+            .any(|segment| !valid_build_history_id(segment))
+    {
+        return Err("invalid build patch id".into());
+    }
+    let path = store_root.join(segments[0]).join(segments[1]);
+    let metadata = std::fs::symlink_metadata(&path)
+        .map_err(|error| format!("cannot inspect build patch: {error}"))?;
+    if metadata.file_type().is_symlink() || !metadata.is_dir() {
+        return Err("build patch must be a regular non-symlink directory".into());
+    }
+    Ok(path)
+}
+
+fn trusted_public_key_path(path: &Path) -> Result<PathBuf, String> {
+    let metadata = std::fs::symlink_metadata(path)
+        .map_err(|error| format!("cannot inspect trusted public key: {error}"))?;
+    if metadata.file_type().is_symlink()
+        || !metadata.is_file()
+        || metadata.len() == 0
+        || metadata.len() > 64 * 1024
+    {
+        return Err(
+            "trusted public key must be a non-empty regular non-symlink file under 64 KiB".into(),
+        );
+    }
+    path.canonicalize()
+        .map_err(|error| format!("cannot resolve trusted public key: {error}"))
+}
+
+fn verify_build_patch_from_history(
+    project_root: &Path,
+    patch_id: &str,
+    public_key_path: &Path,
+    bundled_sdk: Option<PathBuf>,
+) -> Result<VerifyBuildPatchResult, String> {
+    let store_root = build_patch_store_root(project_root, false)?
+        .ok_or_else(|| "build patch inventory is empty".to_string())?;
+    let patch_dir = build_patch_directory_from_id(&store_root, patch_id)?;
+    let patch = parse_build_history_patch_result(&patch_dir, None)?;
+    let public_key = trusted_public_key_path(public_key_path)?;
+    let candidates = list_build_history(project_root)?
+        .into_iter()
+        .filter(|entry| {
+            entry.content_available
+                && entry.content_hash == patch.from_content_hash
+                && entry.artifact_signing_key_id.as_deref() == Some(patch.signing_key_id.as_str())
+        })
+        .collect::<Vec<_>>();
+    if candidates.is_empty() {
+        return Err("no archived build history can provide this patch base artifact".into());
+    }
+    let history_dir = build_history_dir(project_root, false)?
+        .ok_or_else(|| "build history is empty".to_string())?;
+    let mut failures = Vec::new();
+    for (index, candidate) in candidates.iter().enumerate() {
+        let temporary = create_owned_temporary_directory("patch-verify")?;
+        let base_dir = temporary.path.join(format!("base-{index}"));
+        let record_path = build_history_record_path(&history_dir, &candidate.id)?;
+        let record = read_build_history_record(&record_path, &candidate.id)?;
+        if let Err(error) =
+            restore_build_history_artifact(project_root, &record_path, &record, &base_dir)
+        {
+            failures.push(error);
+            continue;
+        }
+        let mut command = history_patch_command(bundled_sdk.clone(), &candidate.profile)?;
+        let output = command
+            .arg("verify-patch")
+            .arg(&base_dir)
+            .arg(&patch_dir)
+            .arg("--public-key")
+            .arg(&public_key)
+            .output()
+            .map_err(|error| format!("cannot start historical patch verification: {error}"))?;
+        if output.status.success() {
+            return Ok(VerifyBuildPatchResult {
+                patch_id: patch_id.to_string(),
+                base_history_id: candidate.id.clone(),
+                from_content_hash: patch.from_content_hash,
+                to_content_hash: patch.to_content_hash,
+                signing_key_id: patch.signing_key_id,
+                log: String::from_utf8_lossy(&output.stdout).trim().to_owned(),
+            });
+        }
+        failures.push(command_failure("historical patch verification", &output));
+    }
+    Err(format!(
+        "no matching archived base passed trusted patch verification: {}",
+        failures
+            .last()
+            .map(String::as_str)
+            .unwrap_or("unknown error")
+    ))
 }
 
 fn create_build_history_patch(
@@ -1887,8 +2144,7 @@ fn create_build_history_patch(
     }
     let result = parse_build_history_patch_result(
         &output_dir,
-        &previous_entry.content_hash,
-        &current_entry.content_hash,
+        Some((&previous_entry.content_hash, &current_entry.content_hash)),
     )?;
     if current_entry.artifact_signing_key_id.as_deref() != Some(result.signing_key_id.as_str()) {
         return Err("generated patch signing key does not match selected history".into());
@@ -3341,6 +3597,17 @@ fn list_pc_build_history(state: State<'_, AppState>) -> Result<BuildHistoryListR
 }
 
 #[tauri::command]
+fn list_pc_build_patches(state: State<'_, AppState>) -> Result<BuildPatchInventoryResult, String> {
+    let project_root = state
+        .project
+        .lock()
+        .as_ref()
+        .map(|session| session.snapshot().project_root)
+        .ok_or_else(|| no_project().message)?;
+    scan_build_patch_inventory(Path::new(&project_root))
+}
+
+#[tauri::command]
 fn compare_pc_build_history(
     previous_id: String,
     current_id: String,
@@ -3408,6 +3675,62 @@ async fn create_pc_build_history_patch(
     {
         Ok(result) => result,
         Err(error) => Err(format!("historical patch task failed: {error}")),
+    }
+}
+
+#[tauri::command]
+async fn verify_pc_build_patch(
+    patch_id: String,
+    public_key_path: String,
+    app: tauri::AppHandle,
+    state: State<'_, AppState>,
+) -> Result<VerifyBuildPatchResult, String> {
+    let project_root = state
+        .project
+        .lock()
+        .as_ref()
+        .map(|session| session.snapshot().project_root)
+        .ok_or_else(|| no_project().message)?;
+    let bundled_sdk = app
+        .path()
+        .resolve("build-sdk", BaseDirectory::Resource)
+        .ok()
+        .filter(|path| path.join("sdk.json").is_file());
+    let operation_id = state.next_build_id.fetch_add(1, Ordering::Relaxed);
+    let cancel_file = std::env::temp_dir().join(format!(
+        "mengine-editor-patch-verify-{}-{operation_id}.cancel",
+        std::process::id()
+    ));
+    {
+        let mut active = state.active_build.lock();
+        if active.is_some() {
+            return Err("another build artifact operation is already running".into());
+        }
+        *active = Some(ActiveBuild {
+            id: operation_id,
+            cancelled: Arc::new(AtomicBool::new(false)),
+            cancel_file: cancel_file.clone(),
+            cancellable: false,
+        });
+    }
+    let cleanup = ActiveBuildGuard {
+        active_build: state.active_build.clone(),
+        id: operation_id,
+        cancel_file,
+    };
+    match tauri::async_runtime::spawn_blocking(move || {
+        let _cleanup = cleanup;
+        verify_build_patch_from_history(
+            Path::new(&project_root),
+            &patch_id,
+            Path::new(&public_key_path),
+            bundled_sdk,
+        )
+    })
+    .await
+    {
+        Ok(result) => result,
+        Err(error) => Err(format!("patch verification task failed: {error}")),
     }
 }
 
@@ -3983,8 +4306,10 @@ pub fn run() {
             get_project_sorting_layers,
             save_project_sorting_layers,
             list_pc_build_history,
+            list_pc_build_patches,
             compare_pc_build_history,
             create_pc_build_history_patch,
+            verify_pc_build_patch,
             build_pc_player,
             cancel_pc_build,
             run_pc_player,
@@ -4400,6 +4725,32 @@ mod tests {
             archive_build_history(&root, Some(&output_dir), &current, 20, "bundled-sdk").unwrap();
         assert!(current_entry.content_available);
 
+        let patch_dir = build_history_patch_root(&root).unwrap().join("test-edge");
+        std::fs::create_dir(&patch_dir).unwrap();
+        std::fs::write(
+            patch_dir.join("mengine-patch.json"),
+            serde_json::to_vec(&serde_json::json!({
+                "schemaVersion": 1,
+                "fromContentHash": previous_entry.content_hash.clone(),
+                "toContentHash": current_entry.content_hash.clone(),
+                "fromArtifactHash": "1".repeat(64),
+                "toArtifactHash": "2".repeat(64),
+                "payloadBytes": current_scene.len(),
+                "reusedBytes": runtime.len(),
+                "unchangedFiles": 1,
+                "files": [{}],
+                "removedFiles": [],
+                "signature": { "keyId": "d".repeat(64) }
+            }))
+            .unwrap(),
+        )
+        .unwrap();
+        let inventory = scan_build_patch_inventory(&root).unwrap();
+        assert_eq!(inventory.entries.len(), 1);
+        assert_eq!(inventory.entries[0].id, "history/test-edge");
+        assert_eq!(inventory.entries[0].source, "history");
+        assert!(inventory.entries[0].base_available);
+
         let store = build_content_store_dir(&root, false).unwrap().unwrap();
         let blob_count = std::fs::read_dir(&store)
             .unwrap()
@@ -4460,6 +4811,7 @@ mod tests {
 
         std::fs::remove_file(&previous_entry.record_path).unwrap();
         prune_build_content_store(&root).unwrap();
+        assert!(!scan_build_patch_inventory(&root).unwrap().entries[0].base_available);
         assert!(runtime_blob.is_file());
         assert!(!previous_scene_blob.exists());
         assert!(current_scene_blob.is_file());
@@ -4517,14 +4869,15 @@ mod tests {
             .unwrap(),
         )
         .unwrap();
-        let report = parse_build_history_patch_result(&root, &from, &to).unwrap();
+        let report = parse_build_history_patch_result(&root, Some((&from, &to))).unwrap();
         assert_eq!(report.changed_files, 2);
         assert_eq!(report.removed_files, 1);
         assert_eq!(report.unchanged_files, 2);
         assert_eq!(report.payload_bytes, 17);
         assert_eq!(report.reused_bytes, 23);
         assert_eq!(report.signing_key_id, "e".repeat(64));
-        assert!(parse_build_history_patch_result(&root, &"f".repeat(64), &to).is_err());
+        let wrong_from = "f".repeat(64);
+        assert!(parse_build_history_patch_result(&root, Some((&wrong_from, &to))).is_err());
         std::fs::remove_dir_all(root).unwrap();
     }
 
