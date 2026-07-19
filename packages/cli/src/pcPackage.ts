@@ -440,7 +440,9 @@ function surfaceShaderParameterNames(sourceText: string, source: string): Set<st
     const maximum = parameter.max == null && type === 'color' ? 1 : parameter.max;
     if ((minimum != null && (typeof minimum !== 'number' || !Number.isFinite(minimum)))
       || (maximum != null && (typeof maximum !== 'number' || !Number.isFinite(maximum)))
-      || (typeof minimum === 'number' && typeof maximum === 'number' && minimum > maximum)) {
+      || (typeof minimum === 'number' && typeof maximum === 'number' && minimum > maximum)
+      || (type === 'color' && (typeof minimum === 'number' && minimum < 0
+        || typeof maximum === 'number' && maximum > 1))) {
       throw new Error(`invalid material surface shader ${source}: parameter '${name}' has an invalid range`);
     }
   }
@@ -684,6 +686,8 @@ function scanBuildAssetDependencies(
   const processed = new Set<string>();
   const inclusionReasons = new Map<string, BuildInclusionReason[]>();
   const materialInstanceParents = new Map<string, string>();
+  const materialInstanceCustomParameters = new Map<string, string[]>();
+  const materialBaseShaders = new Map<string, string | null>();
   const entityReferenceAudits = new Set<string>();
   const surfaceShaderSchemas = new Map<string, Set<string>>();
   const customMaterialParameterBindings: Array<{
@@ -793,7 +797,7 @@ function scanBuildAssetDependencies(
       prefabNodeReferences(prefab.root ?? prefab, source);
     } else if (extension === '.minst') {
       const instance = readJsonAsset(absolute, root, 'material instance');
-      if (instance.version !== 1) {
+      if (instance.version != null && instance.version !== 1 && instance.version !== 2) {
         throw new Error(`invalid material instance ${source}: unsupported version ${String(instance.version)}`);
       }
       if (instance.name != null && typeof instance.name !== 'string') {
@@ -812,7 +816,7 @@ function scanBuildAssetDependencies(
       }
       const allowed = new Set([
         'base_color', 'metallic', 'roughness', 'ior', 'clearcoat', 'clearcoat_roughness',
-        'emissive', 'emissive_strength',
+        'emissive', 'emissive_strength', 'custom_parameters',
       ]);
       const unknown = Object.keys(overrides).find((field) => !allowed.has(field));
       if (unknown) {
@@ -841,7 +845,28 @@ function scanBuildAssetDependencies(
       finiteRange('clearcoat_roughness', 0.04, 1);
       finiteVector('emissive', 3, 0, Number.MAX_VALUE);
       finiteRange('emissive_strength', 0, Number.MAX_VALUE);
-      materialInstanceParents.set(source.toLowerCase(), parent.toLowerCase());
+      const reflected = overrides.custom_parameters == null
+        ? {}
+        : jsonObject(overrides.custom_parameters);
+      if (!reflected) {
+        throw new Error(`invalid material instance ${source}: custom_parameters must be an object`);
+      }
+      const reflectedNames = Object.keys(reflected);
+      if (reflectedNames.length > MAX_SURFACE_SHADER_PARAMETERS) {
+        throw new Error(`invalid material instance ${source}: more than ${MAX_SURFACE_SHADER_PARAMETERS} custom parameters`);
+      }
+      for (const name of reflectedNames) {
+        const value = reflected[name];
+        if (!/^[A-Za-z][A-Za-z0-9_]{0,47}$/.test(name)
+          || !Array.isArray(value)
+          || value.length !== 4
+          || value.some((part) => typeof part !== 'number' || !Number.isFinite(part))) {
+          throw new Error(`invalid material instance ${source}: invalid custom parameter '${name}'`);
+        }
+      }
+      const sourceKey = source.toLowerCase();
+      materialInstanceParents.set(sourceKey, parent.toLowerCase());
+      materialInstanceCustomParameters.set(sourceKey, reflectedNames);
       enqueue(parent, source, 'material instance parent');
     } else if (extension === '.mmat' || extension === '.mat') {
       const material = readJsonAsset(absolute, root, 'material');
@@ -892,6 +917,10 @@ function scanBuildAssetDependencies(
           parameters: customParameterNames,
         });
       }
+      materialBaseShaders.set(
+        source.toLowerCase(),
+        material.shader === 'custom' ? customShader.replaceAll('\\', '/').toLowerCase() : null,
+      );
       if (material.surface != null
         && material.surface !== 'opaque'
         && material.surface !== 'transparent'
@@ -1646,6 +1675,29 @@ function scanBuildAssetDependencies(
       seen.set(current, chain.length);
       chain.push(current);
       current = materialInstanceParents.get(current);
+    }
+  }
+  for (const [instance, parameters] of materialInstanceCustomParameters) {
+    if (parameters.length === 0) continue;
+    let base: string | undefined = instance;
+    for (let depth = 0; depth <= 32 && base && materialInstanceParents.has(base); depth += 1) {
+      base = materialInstanceParents.get(base);
+    }
+    const shader = base == null ? undefined : materialBaseShaders.get(base);
+    if (shader == null) {
+      throw new Error(
+        `invalid material instance ${instance}: custom parameters require a custom parent material`,
+      );
+    }
+    const schema = surfaceShaderSchemas.get(shader);
+    if (!schema) {
+      throw new Error(`invalid material instance ${instance}: Surface Shader schema was not validated`);
+    }
+    const unknown = parameters.find((name) => !schema.has(name));
+    if (unknown) {
+      throw new Error(
+        `invalid material instance ${instance}: parameter '${unknown}' is not declared by ${shader}`,
+      );
     }
   }
   return {

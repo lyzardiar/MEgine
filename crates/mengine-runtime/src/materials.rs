@@ -158,7 +158,9 @@ impl RuntimeMaterialCache {
         let resolved = if lower.ends_with(".minst") {
             let instance = self.load_instance(key)?;
             let parent = self.resolve_asset_inner(&instance.parent, chain)?;
-            instance.apply_to(parent)
+            instance
+                .apply_to(parent)
+                .map_err(|error| error.to_string())?
         } else if lower.ends_with(".mmat") || lower.ends_with(".mat") {
             (*self.load(key)?).clone()
         } else {
@@ -632,17 +634,17 @@ mod tests {
         let parent = materials.join("Base.mmat");
         std::fs::write(
             &parent,
-            r#"{"version":7,"name":"Base","base_color":[1,0,0,1],"roughness":0.8}"#,
+            r#"{"version":8,"name":"Base","shader":"custom","custom_shader":"Assets/Shaders/Rim.mshader","custom_parameters":{"rim_color":[1,0.5,0,1]},"base_color":[1,0,0,1],"roughness":0.8}"#,
         )
         .unwrap();
         std::fs::write(
             materials.join("Wet.minst"),
-            r#"{"version":1,"name":"Wet","parent":"Assets/Materials/Base.mmat","overrides":{"roughness":0.2,"clearcoat":0.7}}"#,
+            r#"{"version":2,"name":"Wet","parent":"Assets/Materials/Base.mmat","overrides":{"roughness":0.2,"clearcoat":0.7,"custom_parameters":{"rim_color":[0.2,0.5,1,1]}}}"#,
         )
         .unwrap();
         std::fs::write(
             materials.join("Ocean.minst"),
-            r#"{"version":1,"name":"Ocean","parent":"Assets/Materials/Wet.minst","overrides":{"base_color":[0,0.2,0.8,1],"ior":1.33}}"#,
+            r#"{"version":2,"name":"Ocean","parent":"Assets/Materials/Wet.minst","overrides":{"base_color":[0,0.2,0.8,1],"ior":1.33,"custom_parameters":{"rim_power":[3,0,0,0]}}}"#,
         )
         .unwrap();
 
@@ -653,11 +655,13 @@ mod tests {
         assert_eq!(first.roughness, 0.2);
         assert_eq!(first.clearcoat, 0.7);
         assert_eq!(first.ior, 1.33);
+        assert_eq!(first.custom_parameters["rim_color"], [0.2, 0.5, 1.0, 1.0]);
+        assert_eq!(first.custom_parameters["rim_power"][0], 3.0);
 
         std::thread::sleep(std::time::Duration::from_millis(20));
         std::fs::write(
             &parent,
-            r#"{"version":7,"name":"Base","base_color":[1,0,0,1],"roughness":0.8,"emissive_strength":4}"#,
+            r#"{"version":8,"name":"Base","shader":"custom","custom_shader":"Assets/Shaders/Rim.mshader","custom_parameters":{"rim_color":[1,0,0,1]},"base_color":[1,0,0,1],"roughness":0.8,"emissive_strength":4}"#,
         )
         .unwrap();
         let reloaded = cache.resolve_asset("Assets/Materials/Ocean.minst").unwrap();

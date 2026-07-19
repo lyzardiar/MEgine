@@ -94,7 +94,8 @@ export function parseSurfaceShaderParameters(source: string): SurfaceShaderParam
       : typeof parameter.max === 'number' ? parameter.max : Number.NaN;
     if ((minimum != null && !Number.isFinite(minimum))
       || (maximum != null && !Number.isFinite(maximum))
-      || (minimum != null && maximum != null && minimum > maximum)) {
+      || (minimum != null && maximum != null && minimum > maximum)
+      || (type === 'color' && ((minimum ?? 0) < 0 || (maximum ?? 1) > 1))) {
       throw new Error(`Surface Shader parameter '${name}' has an invalid range.`);
     }
     const count = surfaceShaderParameterComponents(type);

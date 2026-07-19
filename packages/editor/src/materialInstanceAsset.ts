@@ -1,7 +1,9 @@
 import {
   normalizeMaterialAsset,
+  normalizeMaterialCustomParameters,
   parseMaterialAsset,
   type MaterialAsset,
+  type MaterialCustomParameters,
 } from './materialAsset.ts';
 import { normalizeProjectAssetPath, readProjectAssetText } from './projectAssets.ts';
 
@@ -14,13 +16,16 @@ export const MATERIAL_INSTANCE_OVERRIDE_FIELDS = [
   'clearcoat_roughness',
   'emissive',
   'emissive_strength',
+  'custom_parameters',
 ] as const;
 
 export type MaterialInstanceOverrideField = typeof MATERIAL_INSTANCE_OVERRIDE_FIELDS[number];
-export type MaterialInstanceOverrides = Partial<Pick<MaterialAsset, MaterialInstanceOverrideField>>;
+export type MaterialInstanceOverrides = Partial<
+  Pick<MaterialAsset, Exclude<MaterialInstanceOverrideField, 'custom_parameters'>>
+> & { custom_parameters?: MaterialCustomParameters };
 
 export type MaterialInstanceAsset = {
-  version: 1;
+  version: 2;
   name: string;
   parent: string;
   overrides: MaterialInstanceOverrides;
@@ -30,7 +35,7 @@ export function createMaterialInstanceAsset(
   name = 'New Material Instance',
   parent = '',
 ): MaterialInstanceAsset {
-  return { version: 1, name, parent, overrides: {} };
+  return { version: 2, name, parent, overrides: {} };
 }
 
 function finite(value: unknown, fallback: number, minimum: number, maximum: number): number {
@@ -74,9 +79,13 @@ export function normalizeMaterialInstanceAsset(value: unknown): MaterialInstance
   if (input.emissive_strength != null) {
     overrides.emissive_strength = finite(input.emissive_strength, 1, 0, 65_504);
   }
+  if (input.custom_parameters != null) {
+    const values = normalizeMaterialCustomParameters(input.custom_parameters);
+    if (Object.keys(values).length > 0) overrides.custom_parameters = values;
+  }
   let parent = String(source.parent ?? '').trim().replace(/\\/g, '/');
   if (parent) parent = normalizeProjectAssetPath(parent);
-  return { version: 1, name: String(source.name ?? ''), parent, overrides };
+  return { version: 2, name: String(source.name ?? ''), parent, overrides };
 }
 
 export function parseMaterialInstanceAsset(text: string): MaterialInstanceAsset {
@@ -85,7 +94,7 @@ export function parseMaterialInstanceAsset(text: string): MaterialInstanceAsset 
     throw new Error('Material Instance root must be an object');
   }
   const source = parsed as Record<string, unknown>;
-  if (source.version !== 1) {
+  if (source.version != null && source.version !== 1 && source.version !== 2) {
     throw new Error(`Unsupported material instance version: ${String(source.version)}`);
   }
   if (typeof source.parent !== 'string' || !source.parent.trim()) {
@@ -106,7 +115,7 @@ export function parseMaterialInstanceAsset(text: string): MaterialInstanceAsset 
 }
 
 export function serializeMaterialInstanceAsset(instance: MaterialInstanceAsset): string {
-  if (instance.version !== 1) {
+  if (instance.version !== 2) {
     throw new Error(`Unsupported material instance version: ${instance.version}`);
   }
   const normalized = normalizeMaterialInstanceAsset(instance);
@@ -118,9 +127,15 @@ export function applyMaterialInstance(
   parent: MaterialAsset,
   instance: MaterialInstanceAsset,
 ): MaterialAsset {
+  const customParameters = instance.overrides.custom_parameters == null
+    ? parent.custom_parameters
+    : { ...parent.custom_parameters, ...instance.overrides.custom_parameters };
+  const overrides = structuredClone(instance.overrides);
+  delete overrides.custom_parameters;
   return normalizeMaterialAsset({
     ...structuredClone(parent),
-    ...structuredClone(instance.overrides),
+    ...structuredClone(overrides),
+    custom_parameters: customParameters,
     name: instance.name,
   });
 }

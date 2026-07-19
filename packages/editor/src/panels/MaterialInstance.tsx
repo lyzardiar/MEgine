@@ -36,10 +36,18 @@ import type {
   EditorUndoToken,
 } from '../editorUndoService';
 import {
+  broadcastProjectAssetsChanged,
   openMaterialAsset,
   PROJECT_ASSETS_CHANGED_EVENT,
 } from '../assetEditorEvents';
 import type { MaterialEditorProps } from './Material';
+import {
+  normalizeSurfaceShaderParameterValue,
+  parseSurfaceShaderParameters,
+  surfaceShaderParameterComponents,
+  validateSurfaceShaderParameterValues,
+  type SurfaceShaderParameter,
+} from '../surfaceShader';
 
 type InstanceDraft = { instance: MaterialInstanceAsset; savedText: string };
 
@@ -79,7 +87,7 @@ export async function createProjectMaterialInstance(preferredParent?: string): P
     serializeMaterialInstanceAsset(createMaterialInstanceAsset(name, parent)),
   );
   await refreshProjectFiles();
-  window.dispatchEvent(new CustomEvent(PROJECT_ASSETS_CHANGED_EVENT));
+  broadcastProjectAssetsChanged({ action: 'created', destinationPath: path });
   openMaterialAsset(path);
   return path;
 }
@@ -134,6 +142,8 @@ export function MaterialInstanceEditor(props: MaterialEditorProps) {
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [shaderParameters, setShaderParameters] = useState<SurfaceShaderParameter[]>([]);
+  const [shaderParameterError, setShaderParameterError] = useState<string | null>(null);
   const [assetRevision, setAssetRevision] = useState(0);
   const [draftEpoch, setDraftEpoch] = useState(0);
   const loadedPath = useRef<string | null>(null);
@@ -251,6 +261,36 @@ export function MaterialInstanceEditor(props: MaterialEditorProps) {
     return () => { cancelled = true; };
   }, [instance, props.assetPath, assetRevision, draftEpoch]);
 
+  useEffect(() => {
+    let cancelled = false;
+    setShaderParameters([]);
+    setShaderParameterError(null);
+    if (effective?.shader !== 'custom' || !effective.custom_shader) {
+      return () => { cancelled = true; };
+    }
+    void readProjectAssetText(effective.custom_shader)
+      .then((source) => {
+        if (cancelled) return;
+        setShaderParameters(parseSurfaceShaderParameters(source));
+      })
+      .catch((reason) => {
+        if (!cancelled) {
+          setShaderParameterError(reason instanceof Error ? reason.message : String(reason));
+        }
+      });
+    return () => { cancelled = true; };
+  }, [assetRevision, effective?.custom_shader, effective?.shader]);
+
+  const shaderBindingError = useMemo(() => {
+    if (!effective || shaderParameterError || effective.shader !== 'custom') return null;
+    try {
+      validateSurfaceShaderParameterValues(shaderParameters, effective.custom_parameters);
+      return null;
+    } catch (reason) {
+      return reason instanceof Error ? reason.message : String(reason);
+    }
+  }, [effective, shaderParameterError, shaderParameters]);
+
   const serialized = useMemo(
     () => instance ? serializeMaterialInstanceAsset(instance) : '',
     [instance],
@@ -258,6 +298,16 @@ export function MaterialInstanceEditor(props: MaterialEditorProps) {
   const dirty = Boolean(instance && serialized !== savedText);
   const anyDirty = dirty || [...drafts.current.values()].some(instanceDraftDirty);
   useEffect(() => props.onDirtyChange(anyDirty), [anyDirty, props.onDirtyChange]);
+
+  useEffect(() => {
+    const refresh = () => {
+      void refreshProjectFiles().finally(() => {
+        setAssetRevision((revision) => revision + 1);
+      });
+    };
+    window.addEventListener(PROJECT_ASSETS_CHANGED_EVENT, refresh);
+    return () => window.removeEventListener(PROJECT_ASSETS_CHANGED_EVENT, refresh);
+  }, []);
 
   const materialAssets = useMemo(() => {
     void assetRevision;
@@ -343,6 +393,47 @@ export function MaterialInstanceEditor(props: MaterialEditorProps) {
     }, `${enabled ? 'Enable' : 'Disable'} ${fieldLabel(field)} Override`);
   };
 
+  const setCustomParameter = (
+    name: string,
+    value: [number, number, number, number],
+  ) => updateInstance((current) => ({
+    ...current,
+    overrides: {
+      ...current.overrides,
+      custom_parameters: {
+        ...current.overrides.custom_parameters,
+        [name]: value,
+      },
+    },
+  }), `Edit Material Instance ${name}`);
+
+  const toggleCustomParameter = (parameter: SurfaceShaderParameter, enabled: boolean) => {
+    updateInstance((current) => {
+      const custom_parameters = { ...current.overrides.custom_parameters };
+      if (enabled) {
+        custom_parameters[parameter.name] = normalizeSurfaceShaderParameterValue(
+          parameter,
+          effective?.custom_parameters[parameter.name],
+        );
+      } else {
+        delete custom_parameters[parameter.name];
+      }
+      const overrides = { ...current.overrides };
+      if (Object.keys(custom_parameters).length > 0) overrides.custom_parameters = custom_parameters;
+      else delete overrides.custom_parameters;
+      return { ...current, overrides };
+    }, `${enabled ? 'Enable' : 'Disable'} ${parameter.label} Override`);
+  };
+
+  const validateResolvedCustomParameters = async (material: MaterialAsset) => {
+    if (material.shader !== 'custom') return;
+    if (!material.custom_shader) throw new Error('Custom materials require a Surface Shader asset');
+    const parameters = parseSurfaceShaderParameters(
+      await readProjectAssetText(material.custom_shader),
+    );
+    validateSurfaceShaderParameterValues(parameters, material.custom_parameters);
+  };
+
   const beginEdit = (event: ReactFocusEvent<HTMLDivElement>) => {
     if (editTransaction.current || !instance || !isEditControl(event.target)) return;
     editTransaction.current = {
@@ -373,7 +464,8 @@ export function MaterialInstanceEditor(props: MaterialEditorProps) {
     setSaving(true);
     setError(null);
     try {
-      await resolveDocumentMaterial(path);
+      const resolved = await resolveDocumentMaterial(path);
+      await validateResolvedCustomParameters(resolved);
       await writeProjectAssetText(path, text);
       await refreshProjectFiles();
       const persisted = parseMaterialInstanceAsset(text);
@@ -392,7 +484,7 @@ export function MaterialInstanceEditor(props: MaterialEditorProps) {
       }
       setAssetRevision((revision) => revision + 1);
       props.onAssetsChanged();
-      window.dispatchEvent(new CustomEvent(PROJECT_ASSETS_CHANGED_EVENT));
+      broadcastProjectAssetsChanged({ action: 'modified', sourcePath: path });
       props.onLog(`Saved ${path}`);
       return true;
     } catch (reason) {
@@ -411,7 +503,10 @@ export function MaterialInstanceEditor(props: MaterialEditorProps) {
     for (const [path, draft] of drafts.current) {
       if (instanceDraftDirty(draft)) dirtyPaths.add(path);
     }
-    for (const path of dirtyPaths) await resolveDocumentMaterial(path);
+    for (const path of dirtyPaths) {
+      const resolved = await resolveDocumentMaterial(path);
+      await validateResolvedCustomParameters(resolved);
+    }
     if (dirty && !await save()) throw new Error('Current Material Instance could not be saved');
     const failures: string[] = [];
     let savedDraft = false;
@@ -425,6 +520,7 @@ export function MaterialInstanceEditor(props: MaterialEditorProps) {
           savedText: text,
         });
         savedDraft = true;
+        broadcastProjectAssetsChanged({ action: 'modified', sourcePath: path });
         props.onLog(`Saved ${path}`);
       } catch (reason) {
         failures.push(`${path}: ${reason instanceof Error ? reason.message : String(reason)}`);
@@ -434,7 +530,6 @@ export function MaterialInstanceEditor(props: MaterialEditorProps) {
       await refreshProjectFiles();
       setAssetRevision((revision) => revision + 1);
       props.onAssetsChanged();
-      window.dispatchEvent(new CustomEvent(PROJECT_ASSETS_CHANGED_EVENT));
       setDraftEpoch((value) => value + 1);
     }
     if (failures.length > 0) throw new Error(failures.join('; '));
@@ -476,6 +571,11 @@ export function MaterialInstanceEditor(props: MaterialEditorProps) {
   }
 
   const displayed = effective ?? createMaterialAsset(instance.name);
+  const reflectedParameterError = shaderParameterError ?? shaderBindingError;
+  const ownCustomParameters = instance.overrides.custom_parameters ?? {};
+  const customOverrideCount = Object.keys(ownCustomParameters).length;
+  const standardOverrideCount = Object.keys(instance.overrides)
+    .filter((field) => field !== 'custom_parameters').length;
   const dielectricF0 = ((displayed.ior - 1) / (displayed.ior + 1)) ** 2;
   const parentMissing = !materialAssets.some(
     (asset) => asset.relPath.toLowerCase() === instance.parent.toLowerCase(),
@@ -547,7 +647,7 @@ export function MaterialInstanceEditor(props: MaterialEditorProps) {
           } as CSSProperties}
         >
           <div className="material-preview-sphere" />
-          <span>{displayed.shader.toUpperCase()} · {displayed.surface} · {Object.keys(instance.overrides).length} overrides</span>
+          <span>{displayed.shader.toUpperCase()} · {displayed.surface} · {standardOverrideCount + customOverrideCount} overrides</span>
         </div>
         <div className="material-fields material-instance-fields">
           <label>Name <input value={instance.name} onChange={(event) => updateInstance(
@@ -595,6 +695,117 @@ export function MaterialInstanceEditor(props: MaterialEditorProps) {
             <input aria-label="Emission" type="color" disabled={!overridden('emissive')} value={colorHex(displayed.emissive)} onChange={(event) => setOverride('emissive', parseHex(event.target.value))} />
           </label>
           {scalarRow('emissive_strength', 0, 65_504, 0.1)}
+          {displayed.shader === 'custom' && reflectedParameterError && (
+            <div className="material-parameter-error">
+              <span>{reflectedParameterError}</span>
+              {shaderParameters.length > 0 && Object.keys(ownCustomParameters).some(
+                (name) => !shaderParameters.some((parameter) => parameter.name === name),
+              ) && (
+                <button type="button" onClick={() => {
+                  updateInstance((current) => {
+                    const custom_parameters = Object.fromEntries(Object.entries(
+                      current.overrides.custom_parameters ?? {},
+                    ).filter(([name]) => shaderParameters.some(
+                      (parameter) => parameter.name === name,
+                    )));
+                    const overrides = { ...current.overrides };
+                    if (Object.keys(custom_parameters).length > 0) {
+                      overrides.custom_parameters = custom_parameters;
+                    } else {
+                      delete overrides.custom_parameters;
+                    }
+                    return { ...current, overrides };
+                  }, 'Remove Stale Material Instance Parameters');
+                }}>Remove Stale Values</button>
+              )}
+            </div>
+          )}
+          {displayed.shader === 'custom' && shaderParameters.length > 0 && (
+            <div className="material-custom-parameters material-instance-custom-parameters">
+              <strong>Surface Shader Parameters</strong>
+              {shaderParameters.map((parameter) => {
+                const value = normalizeSurfaceShaderParameterValue(
+                  parameter,
+                  displayed.custom_parameters[parameter.name],
+                );
+                const isOverridden = Object.hasOwn(ownCustomParameters, parameter.name);
+                const componentCount = surfaceShaderParameterComponents(parameter.type);
+                const controls = parameter.type === 'color' ? (
+                  <span className="material-instance-color-controls">
+                    <input
+                      aria-label={parameter.label}
+                      type="color"
+                      disabled={!isOverridden}
+                      value={colorHex(value)}
+                      onChange={(event) => {
+                        const [r, g, b] = parseHex(event.target.value);
+                        setCustomParameter(parameter.name, [r, g, b, value[3]]);
+                      }}
+                    />
+                    <input
+                      aria-label={`${parameter.label} Alpha`}
+                      type="number"
+                      min={parameter.min ?? undefined}
+                      max={parameter.max ?? undefined}
+                      step={0.01}
+                      disabled={!isOverridden}
+                      value={value[3]}
+                      onChange={(event) => setCustomParameter(
+                        parameter.name,
+                        [value[0], value[1], value[2], Number(event.target.value)],
+                      )}
+                    />
+                  </span>
+                ) : componentCount === 1 ? (
+                  <input
+                    aria-label={parameter.label}
+                    type="number"
+                    min={parameter.min ?? undefined}
+                    max={parameter.max ?? undefined}
+                    step={0.01}
+                    disabled={!isOverridden}
+                    value={value[0]}
+                    onChange={(event) => setCustomParameter(
+                      parameter.name,
+                      [Number(event.target.value), 0, 0, 0],
+                    )}
+                  />
+                ) : (
+                  <span className="material-vector">
+                    {Array.from({ length: componentCount }, (_, index) => (
+                      <input
+                        key={index}
+                        aria-label={`${parameter.label} ${'XYZW'[index]}`}
+                        type="number"
+                        min={parameter.min ?? undefined}
+                        max={parameter.max ?? undefined}
+                        step={0.01}
+                        disabled={!isOverridden}
+                        value={value[index]}
+                        onChange={(event) => {
+                          const next = [...value] as [number, number, number, number];
+                          next[index] = Number(event.target.value);
+                          setCustomParameter(parameter.name, next);
+                        }}
+                      />
+                    ))}
+                  </span>
+                );
+                return (
+                  <label key={parameter.name} className={isOverridden ? '' : 'inherited'}>
+                    <input
+                      aria-label={`Override ${parameter.label}`}
+                      type="checkbox"
+                      checked={isOverridden}
+                      onChange={(event) => toggleCustomParameter(parameter, event.target.checked)}
+                    />
+                    <span>{parameter.label}<small>{isOverridden ? 'Override' : 'Inherited'}</small></span>
+                    {controls}
+                  </label>
+                );
+              })}
+            </div>
+          )}
         </div>
       </div>
       <div className="material-footer">

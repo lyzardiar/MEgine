@@ -1266,17 +1266,73 @@ test('buildPcPackage resolves material instance parents and rejects invalid inhe
     }), /material instance inheritance cycle/);
     assert.equal(existsSync(paths.output), false);
 
+    writeFileSync(ocean, JSON.stringify({
+      version: 2,
+      parent: 'Assets/Materials/Base.mmat',
+      overrides: { custom_parameters: { rim_power: [3, 0, 0, 0] } },
+    }));
+    assert.throws(() => buildPcPackage({
+      projectDir: paths.project,
+      outputDir: paths.output,
+      runtimePath: paths.runtime,
+      engineVersion: 'test-engine',
+    }), /custom parameters require a custom parent material/);
+    assert.equal(existsSync(paths.output), false);
+
+    mkdirSync(join(paths.project, 'Assets', 'Shaders'), { recursive: true });
+    writeFileSync(base, JSON.stringify({
+      version: 8,
+      shader: 'custom',
+      custom_shader: 'Assets/Shaders/Rim.mshader',
+      roughness: 0.8,
+    }));
+    writeFileSync(join(paths.project, 'Assets', 'Shaders', 'Rim.mshader'), `
+      /* MENGINE_PARAMETERS
+      {"parameters":[
+        {"name":"rim_color","type":"color","default":[1,1,1,1]},
+        {"name":"rim_power","type":"float","default":2,"min":0,"max":8}
+      ]}
+      */
+      fn mengine_lit_surface_hook(
+        surface: MEngineSurface, uv: vec2<f32>, world_position: vec3<f32>
+      ) -> MEngineSurface { return surface; }
+    `);
     writeFileSync(wet, JSON.stringify({
-      version: 1,
+      version: 2,
       name: 'Wet',
       parent: 'Assets/Materials/Base.mmat',
-      overrides: { roughness: 0.2, clearcoat: 0.7 },
+      overrides: {
+        roughness: 0.2,
+        clearcoat: 0.7,
+        custom_parameters: { rim_color: [0.2, 0.5, 1, 1] },
+      },
     }));
     writeFileSync(ocean, JSON.stringify({
-      version: 1,
       name: 'Ocean',
       parent: 'Assets/Materials/Wet.minst',
-      overrides: { base_color: [0, 0.2, 0.8, 1], ior: 1.33 },
+      overrides: {
+        base_color: [0, 0.2, 0.8, 1],
+        ior: 1.33,
+        custom_parameters: { removed: [3, 0, 0, 0] },
+      },
+    }));
+    assert.throws(() => buildPcPackage({
+      projectDir: paths.project,
+      outputDir: paths.output,
+      runtimePath: paths.runtime,
+      engineVersion: 'test-engine',
+    }), /parameter 'removed' is not declared/);
+    assert.equal(existsSync(paths.output), false);
+
+    writeFileSync(ocean, JSON.stringify({
+      version: 2,
+      name: 'Ocean',
+      parent: 'Assets/Materials/Wet.minst',
+      overrides: {
+        base_color: [0, 0.2, 0.8, 1],
+        ior: 1.33,
+        custom_parameters: { rim_power: [3, 0, 0, 0] },
+      },
     }));
     buildPcPackage({
       projectDir: paths.project,
@@ -1287,6 +1343,7 @@ test('buildPcPackage resolves material instance parents and rejects invalid inhe
     assert.equal(existsSync(join(paths.output, 'Assets', 'Materials', 'Base.mmat')), true);
     assert.equal(existsSync(join(paths.output, 'Assets', 'Materials', 'Wet.minst')), true);
     assert.equal(existsSync(join(paths.output, 'Assets', 'Materials', 'Ocean.minst')), true);
+    assert.equal(existsSync(join(paths.output, 'Assets', 'Shaders', 'Rim.mshader')), true);
   } finally {
     rmSync(paths.root, { recursive: true, force: true });
   }

@@ -187,6 +187,9 @@ pub fn parse_surface_shader_parameters(
             if minimum.is_some_and(|value| !value.is_finite())
                 || maximum.is_some_and(|value| !value.is_finite())
                 || matches!((minimum, maximum), (Some(min), Some(max)) if min > max)
+                || kind == SurfaceShaderParameterType::Color
+                    && (minimum.is_some_and(|value| value < 0.0)
+                        || maximum.is_some_and(|value| value > 1.0))
             {
                 return Err(format!(
                     "Surface Shader parameter '{name}' has an invalid range"
@@ -255,6 +258,10 @@ mod tests {
         .is_err());
         assert!(parse_surface_shader_parameters(&wrap(
             r#"{"parameters":[{"name":"tint","type":"color","default":[1,1,1,1],"min":2}]}"#
+        ))
+        .is_err());
+        assert!(parse_surface_shader_parameters(&wrap(
+            r#"{"parameters":[{"name":"tint","type":"color","default":[1,1,1,1],"max":2}]}"#
         ))
         .is_err());
     }

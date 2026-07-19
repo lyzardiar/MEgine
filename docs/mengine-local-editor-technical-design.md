@@ -1312,4 +1312,16 @@ Rust workspace 检查现在零警告通过；Tauri Host 17/17 常规测试与 1/
 
 第一遍自省发现 Surface Shader 保存只刷新 Project 列表，不会让另一个 Dock 中已打开的 Material Inspector 重新读取 Schema，结果用户删除字段后仍可能继续编辑旧控件；现已统一通过项目资产事件刷新，并在真正保存时再次读取磁盘契约。第二遍自省发现最终包校验原本用 Shader 路径去重，两个材质共享同一 Shader 时第二个材质的陈旧参数可能被跳过；现改为 Shader 资源可记录为已访问，但每个材质必须独立执行参数打包校验。跨语言契约复核还统一了 `color` 隐式 0–1 与显式范围冲突、非字符串 Label 的拒绝规则，避免编辑器可保存而 CLI/Player 拒绝。
 
-本阶段仍不是完整的成熟材质系统。固定 16 个槽使所有对象（包括不使用这些值的 Shadow Pass）动态 Uniform 步长从 256 增至 512 字节，后续应迁移到按材质复用的参数缓冲或分层绑定；Material Instance 与 MaterialPropertyBlock 尚不能覆盖自定义参数，自定义纹理、Keyword/Variant、Variant 预热与剥离、Shader 编译缓存、GPU Instancing、真实同 Player 材质预览和 Frame Debugger 仍需继续实现。CLI 的 `assetMode: all` 也应升级为对所有实际复制的材质和 Shader 做独立枚举审计，而不仅依赖场景可达闭包。
+本阶段仍不是完整的成熟材质系统。固定 16 个槽使所有对象（包括不使用这些值的 Shadow Pass）动态 Uniform 步长从 256 增至 512 字节，后续应迁移到按材质复用的参数缓冲或分层绑定；MaterialPropertyBlock 尚不能覆盖自定义参数，自定义纹理、Keyword/Variant、Variant 预热与剥离、Shader 编译缓存、GPU Instancing、真实同 Player 材质预览和 Frame Debugger 仍需继续实现。Material Instance 自定义覆盖由下一节补齐；CLI 的 `assetMode: all` 也应升级为对所有实际复制的材质和 Shader 做独立枚举审计，而不仅依赖场景可达闭包。
+
+## 110. 2026-07-19 Material Instance v2 自定义参数覆盖
+
+- `.minst` 升级到 v2，在既有 PBR 覆盖之外新增 `overrides.custom_parameters`。旧 v1 和未写版本的资产读取后规范化为 v2；参数名称、四分量有限值、16 项上限与 Material v8 使用同一校验器。实例只保存自己覆盖的字段，空映射被删除；嵌套实例从 Base Material 开始逐层按参数名合并，子实例只替换同名值，不会抹掉父实例的其他参数。
+- Rust 资产合并改为可失败结果：非 Custom 父材质携带自定义覆盖会明确报错，Runtime 不再静默忽略。最终解析出的 `MaterialAsset` 继续走同一 Surface Shader 参数打包，因此默认值、范围裁剪、声明顺序与 RHI 16 槽布局无需产生第二套实例代码；Material Instance 值仍不进入 Pipeline Key。
+- Material Instance Inspector 读取最终继承得到的 Surface Shader Schema，按参数类型生成与 Material Inspector 一致的数值、向量和 Color Picker 控件。每行独立显示 `Inherited/Override`，启用覆盖时复制当前有效值，关闭时删除本层字段；预览摘要按真实字段数统计。父材质、父实例或 Shader 在其他原生 Dock 中保存后，通过跨窗口资产生命周期广播刷新继承结果与控件，不依赖重开工程。
+- 保存、Save All、CLI staging 和 Player 启动前验证都针对“父链合并后的最终材质”。父链不是 Custom、Shader 已删除字段、非法值、继承环或超过 32 层都会阻止发布；CLI 同时追踪 Instance 到 Base Material 再到 `.mshader` 的关系，不会只验证直接父节点。陈旧字段若属于当前实例，Inspector 提供 `Remove Stale Values`；若来自父层则保持错误并要求打开父资产修复，避免子实例偷偷遮蔽损坏状态。
+- `color` 参数契约进一步收紧为 0–1，即使显式 `min/max` 也不得越界，保证 Color Picker、序列化值和 Runtime 一致。需要 HDR 的材质参数使用 `vector3/vector4` 配合独立强度字段。回归覆盖 v1/无版本升级、嵌套合并、非 Custom 父链、陈旧字段、CLI Schema 追踪、Runtime 热重载、最终 Player 包校验和编辑器生产构建。
+
+第一遍自省发现直接把实例的 `custom_parameters` 展开到父材质会整体替换父映射，导致父实例设置的其他 Shader 参数丢失；最终改为逐名称合并并用嵌套链回归固定语义。第二遍自省发现只在 CLI 校验实例 JSON 形状不足以判断字段是否合法，因为 Shader 位于任意深度的 Base Material；因此增加 Instance→Parent→Base→Shader 图追踪，并在 Player 端对解析后的最终材质再次打包校验。UI 复核还避免了每次普通 PBR 数值输入都重新读取 `.mshader`，Schema 只随 Shader/资产修订重载，字段值校验在内存中完成。
+
+材质实例现在覆盖标量、颜色与自定义数值参数，但还不能覆盖纹理/采样器、Shader Keyword、Render State 或自定义纹理参数；MaterialPropertyBlock 也仍缺通用自定义字段。下一阶段材质工作应先定义纹理参数和 Keyword/Variant 的稳定 Schema、构建期 Variant 收集/剥离与缓存，而不是继续向固定 Object Uniform 塞字段。构建系统则应补齐 `assetMode: all` 的全复制资产审计和结构化验证报告。

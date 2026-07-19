@@ -148,7 +148,7 @@ function vector(value: unknown, length: number, fallback: number[]): number[] {
   return value.map((part, index) => finite(part, fallback[index]));
 }
 
-function customParameters(value: unknown): MaterialCustomParameters {
+export function normalizeMaterialCustomParameters(value: unknown): MaterialCustomParameters {
   if (value == null) return {};
   if (typeof value !== 'object' || Array.isArray(value)) {
     throw new Error('Material custom_parameters must be an object');
@@ -181,7 +181,7 @@ export function normalizeMaterialAsset(value: unknown): MaterialAsset {
   const shader: MaterialShader = source.shader === 'unlit' || source.shader === 'custom'
     ? source.shader
     : 'pbr';
-  const reflectedParameters = customParameters(source.custom_parameters);
+  const reflectedParameters = normalizeMaterialCustomParameters(source.custom_parameters);
   if (shader !== 'custom' && Object.keys(reflectedParameters).length > 0) {
     throw new Error('Only custom materials can contain custom_parameters');
   }
@@ -257,7 +257,7 @@ export function parseMaterialAsset(text: string): MaterialAsset {
   enumField('filter', ['nearest', 'linear']);
   enumField('mipmap_filter', ['nearest', 'linear']);
   if (source.shader !== 'custom' && source.custom_parameters != null
-    && Object.keys(customParameters(source.custom_parameters)).length > 0) {
+    && Object.keys(normalizeMaterialCustomParameters(source.custom_parameters)).length > 0) {
     throw new Error('Only custom materials can contain custom_parameters');
   }
   return normalizeMaterialAsset(source);

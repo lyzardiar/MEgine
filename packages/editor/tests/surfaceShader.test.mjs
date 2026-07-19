@@ -49,6 +49,7 @@ test('surface shader parameter schema rejects drift-prone declarations', () => {
   assert.match(surfaceShaderDiagnostics(wrap('{"parameters":[{"name":"x","type":"float","default":0},{"name":"x","type":"float","default":1}]}')).join(' '), /Duplicate/);
   assert.match(surfaceShaderDiagnostics(wrap('{"parameters":[{"name":"tint","label":42,"type":"color","default":[1,1,1,1]}]}')).join(' '), /label must be a string/);
   assert.match(surfaceShaderDiagnostics(wrap('{"parameters":[{"name":"tint","type":"color","default":[1,1,1,1],"min":2}]}')).join(' '), /invalid range/);
+  assert.match(surfaceShaderDiagnostics(wrap('{"parameters":[{"name":"tint","type":"color","default":[1,1,1,1],"max":2}]}')).join(' '), /invalid range/);
   assert.match(surfaceShaderDiagnostics(`${wrap('{"parameters":[]}')}\n${wrap('{"parameters":[]}')}`).join(' '), /only one parameter block/);
 });
 

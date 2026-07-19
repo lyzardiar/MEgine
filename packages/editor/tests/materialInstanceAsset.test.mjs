@@ -14,16 +14,28 @@ test('Material Instance normalizes explicit overrides and inherits parent state'
   const parent = createMaterialAsset('Base');
   parent.shader = 'custom';
   parent.custom_shader = 'Assets/Shaders/Rim.mshader';
+  parent.custom_parameters = { rim_color: [1, 0.5, 0, 1] };
   parent.base_color_texture = 'Assets/Textures/Paint.png';
   parent.roughness = 0.8;
   const instance = parseMaterialInstanceAsset(JSON.stringify({
     version: 1,
     name: 'Wet',
     parent: 'Assets\\Materials\\Base.mmat',
-    overrides: { roughness: 0, ior: 1.33, clearcoat: 2 },
+    overrides: {
+      roughness: 0,
+      ior: 1.33,
+      clearcoat: 2,
+      custom_parameters: { rim_power: [3, 0, 0, 0] },
+    },
   }));
   assert.equal(instance.parent, 'Assets/Materials/Base.mmat');
-  assert.deepEqual(instance.overrides, { roughness: 0.04, ior: 1.33, clearcoat: 1 });
+  assert.equal(instance.version, 2);
+  assert.deepEqual(instance.overrides, {
+    roughness: 0.04,
+    ior: 1.33,
+    clearcoat: 1,
+    custom_parameters: { rim_power: [3, 0, 0, 0] },
+  });
   const resolved = applyMaterialInstance(parent, instance);
   assert.equal(resolved.name, 'Wet');
   assert.equal(resolved.roughness, 0.04);
@@ -31,6 +43,10 @@ test('Material Instance normalizes explicit overrides and inherits parent state'
   assert.equal(resolved.clearcoat, 1);
   assert.equal(resolved.shader, 'custom');
   assert.equal(resolved.base_color_texture, 'Assets/Textures/Paint.png');
+  assert.deepEqual(resolved.custom_parameters, {
+    rim_color: [1, 0.5, 0, 1],
+    rim_power: [3, 0, 0, 0],
+  });
   assert.deepEqual(parseMaterialInstanceAsset(serializeMaterialInstanceAsset(instance)), instance);
 });
 
@@ -81,11 +97,15 @@ test('Material Instance requires a safe supported parent and rejects unknown ove
   assert.throws(() => parseMaterialInstanceAsset(
     '{"version":1,"parent":"Assets/A.mmat","overrides":{"shader":"unlit"}}',
   ), /unsupported.*override/i);
+  assert.throws(() => applyMaterialInstance(createMaterialAsset('Base'), parseMaterialInstanceAsset(
+    '{"version":2,"parent":"Assets/A.mmat","overrides":{"custom_parameters":{"rim":[1,0,0,0]}}}',
+  )), /only custom materials/i);
   const created = createMaterialInstanceAsset('Child', 'Assets/Materials/Base.mmat');
   assert.deepEqual(created, {
-    version: 1,
+    version: 2,
     name: 'Child',
     parent: 'Assets/Materials/Base.mmat',
     overrides: {},
   });
+  assert.equal(parseMaterialInstanceAsset('{"parent":"Assets/Materials/Base.mmat"}').version, 2);
 });

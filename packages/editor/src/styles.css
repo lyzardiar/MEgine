@@ -5398,6 +5398,26 @@ button.sequencer-track-header:hover { background: #343b42; }
   font-size: 11px;
 }
 
+.material-custom-parameters.material-instance-custom-parameters > label {
+  grid-template-columns: 16px minmax(92px, 0.42fr) minmax(72px, 1fr);
+}
+
+.material-instance-custom-parameters > label > span:nth-child(2) {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+}
+
+.material-instance-custom-parameters > label small {
+  color: var(--u-accent);
+  font-size: 8px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.material-instance-custom-parameters > label.inherited small { color: var(--u-muted); }
+.material-instance-custom-parameters > label.inherited > :last-child { opacity: 0.72; }
+
 .material-parameter-error {
   display: flex;
   align-items: center;

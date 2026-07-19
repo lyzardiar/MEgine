@@ -2973,6 +2973,44 @@ mod tests {
     }
 
     #[test]
+    fn packaged_asset_validation_rejects_stale_material_instance_parameters() {
+        let root = temporary_project_root("packaged-stale-instance-parameter");
+        let materials = root.join("Assets/Materials");
+        let shader_path = root.join("Assets/Shaders/Rim.mshader");
+        std::fs::create_dir_all(&materials).unwrap();
+        std::fs::create_dir_all(shader_path.parent().unwrap()).unwrap();
+        std::fs::write(
+            materials.join("Base.mmat"),
+            r#"{"version":8,"shader":"custom","custom_shader":"Assets/Shaders/Rim.mshader"}"#,
+        )
+        .unwrap();
+        std::fs::write(
+            materials.join("Rim.minst"),
+            r#"{"version":2,"parent":"Assets/Materials/Base.mmat","overrides":{"custom_parameters":{"removed":[3,0,0,0]}}}"#,
+        )
+        .unwrap();
+        std::fs::write(
+            &shader_path,
+            r#"/* MENGINE_PARAMETERS
+            {"parameters":[{"name":"power","type":"float","default":2}]}
+            */
+            fn mengine_lit_surface_hook(
+              surface: MEngineSurface, uv: vec2<f32>, world_position: vec3<f32>
+            ) -> MEngineSurface { return surface; }"#,
+        )
+        .unwrap();
+
+        let error = validate_world_assets(
+            &world_with_material("Assets/Materials/Rim.minst"),
+            &root,
+            &mut HashSet::new(),
+        )
+        .expect_err("stale instance parameters must fail final package validation");
+        std::fs::remove_dir_all(&root).unwrap();
+        assert!(error.to_string().contains("not declared"), "{error}");
+    }
+
+    #[test]
     fn packaged_asset_validation_resolves_material_instances_and_rejects_cycles() {
         let root = temporary_project_root("packaged-material-instance");
         let materials = root.join("Assets/Materials");
