@@ -38,7 +38,7 @@ import {
   spriteAssetUrl,
   type SpriteAsset,
 } from '../spriteLibrary';
-import { subscribePing } from '../pingBus';
+import { pingProjectAsset, subscribePing } from '../pingBus';
 import {
   listProjectFiles,
   refreshProjectFiles,
@@ -51,6 +51,10 @@ import {
   importProjectAssetsFromPicker,
   setActiveAssetImportFolder,
 } from '../assetImport';
+import {
+  findProjectAssetReferences,
+  type AssetReferenceReport,
+} from '../assetReferences';
 
 const STATIC_FOLDERS = [
   'Assets',
@@ -68,6 +72,7 @@ const STATIC_FOLDERS = [
 
 type AssetItem = {
   assetKey: string;
+  assetPath?: string;
   folder: string;
   name: string;
   kind: 'animation' | 'animator-controller' | 'avatar-mask' | 'timeline' | 'audio' | 'model' | 'prefab' | 'script' | 'material' | 'shader' | 'scene' | 'sprite' | 'sprite-atlas' | 'texture' | 'spine';
@@ -118,9 +123,16 @@ export function Project(props: {
   const [pingKey, setPingKey] = useState<string | null>(null);
   const [importing, setImporting] = useState(false);
   const [draggingFiles, setDraggingFiles] = useState(false);
+  const [referenceReport, setReferenceReport] = useState<{
+    assetName: string;
+    loading: boolean;
+    report: AssetReferenceReport | null;
+    error: string | null;
+  } | null>(null);
   const lastClick = useRef<{ key: string; t: number }>({ key: '', t: 0 });
   const rootRef = useRef<HTMLDivElement>(null);
   const cardRefs = useRef<Map<string, HTMLDivElement>>(new Map());
+  const referenceRequest = useRef(0);
 
   useEffect(() => {
     void Promise.all([refreshScripts(), refreshSprites(), refreshProjectFiles()])
@@ -192,6 +204,7 @@ export function Project(props: {
     const metadata = projectFilesByPath.get(`assets/scenes/${name}`.toLocaleLowerCase());
     return {
       assetKey: projectAssetKey(metadata, `scene:${name.toLocaleLowerCase()}`),
+      assetPath: `Assets/Scenes/${name}`,
       folder: 'Assets/Scenes',
       name,
       kind: 'scene',
@@ -212,6 +225,7 @@ export function Project(props: {
       : `script:${s.id}`;
     return {
       assetKey: projectAssetKey(metadata, fallback),
+      assetPath: s.id.startsWith('project/') ? `${s.folder}/${s.name}` : undefined,
       folder: s.folder,
       name: s.name,
       kind: 'script',
@@ -230,6 +244,7 @@ export function Project(props: {
     const subresource = marker >= 0 ? `#${s.id.slice(marker + 1)}` : '#base';
     return {
       assetKey: projectAssetKey(metadata, `sprite:${s.id}`, subresource),
+      assetPath: s.id,
       folder: s.folder,
       name: s.name,
       kind: 'sprite' as const,
@@ -276,6 +291,7 @@ export function Project(props: {
           : 'spine';
     return {
       assetKey: projectAssetKey(asset, `path:${asset.relPath.toLocaleLowerCase()}`),
+      assetPath: asset.relPath,
       folder: asset.folder,
       name: asset.name,
       kind,
@@ -446,9 +462,35 @@ export function Project(props: {
 
   const onContext = (e: MouseEvent, a: AssetItem) => {
     e.preventDefault();
-    if (a.kind !== 'sprite' && a.kind !== 'scene') return;
+    if (!a.assetPath) return;
     setSelected(a.assetKey);
     setCtx({ x: e.clientX, y: e.clientY, asset: a });
+  };
+
+  const requestReferences = (asset: AssetItem) => {
+    if (!asset.assetPath) return;
+    const request = ++referenceRequest.current;
+    setCtx(null);
+    setReferenceReport({ assetName: asset.name, loading: true, report: null, error: null });
+    void findProjectAssetReferences(asset.assetPath)
+      .then((report) => {
+        if (referenceRequest.current !== request) return;
+        setReferenceReport({ assetName: asset.name, loading: false, report, error: null });
+        props.onLog?.(
+          `Found ${report.references.length} reference${report.references.length === 1 ? '' : 's'} to ${report.targetPath}`,
+        );
+      })
+      .catch((error) => {
+        if (referenceRequest.current !== request) return;
+        const message = error instanceof Error ? error.message : String(error);
+        setReferenceReport({ assetName: asset.name, loading: false, report: null, error: message });
+        props.onLog?.(`Find References failed: ${message}`, 'error');
+      });
+  };
+
+  const closeReferenceReport = () => {
+    referenceRequest.current += 1;
+    setReferenceReport(null);
   };
 
   const completeImport = async (files?: Iterable<File>) => {
@@ -773,6 +815,18 @@ export function Project(props: {
                 </button>
               </>
             )}
+            {ctx.asset.assetPath && (
+              <button
+                type="button"
+                onPointerDown={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  requestReferences(ctx.asset);
+                }}
+              >
+                Find References
+              </button>
+            )}
             <div className="sep" />
             <button type="button" onPointerDown={() => setCtx(null)}>
               Cancel
@@ -780,6 +834,78 @@ export function Project(props: {
           </div>,
           document.body,
         )}
+      {referenceReport && createPortal(
+        <div
+          className="asset-reference-backdrop"
+          role="presentation"
+          onPointerDown={closeReferenceReport}
+        >
+          <section
+            className="asset-reference-dialog"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="asset-reference-title"
+            tabIndex={-1}
+            onKeyDown={(event) => {
+              if (event.key === 'Escape') closeReferenceReport();
+            }}
+            onPointerDown={(event) => event.stopPropagation()}
+          >
+            <header>
+              <div>
+                <strong id="asset-reference-title">References to {referenceReport.assetName}</strong>
+                <span>{referenceReport.report?.targetPath ?? 'Scanning project assets...'}</span>
+              </div>
+              <button
+                type="button"
+                aria-label="Close asset references"
+                autoFocus
+                onClick={closeReferenceReport}
+              >
+                ×
+              </button>
+            </header>
+            <div className="asset-reference-summary">
+              {referenceReport.loading && 'Scanning text assets in batches...'}
+              {referenceReport.error && `Failed: ${referenceReport.error}`}
+              {referenceReport.report && (
+                <>
+                  {referenceReport.report.references.length}{referenceReport.report.truncated ? '+' : ''} references · {' '}
+                  {referenceReport.report.scannedFiles} files scanned · {' '}
+                  {referenceReport.report.skippedFiles} binary, oversized, or unreadable files skipped
+                  {referenceReport.report.truncated && ' · result limit reached'}
+                </>
+              )}
+            </div>
+            <div className="asset-reference-list">
+              {referenceReport.report?.references.map((reference, index) => (
+                <button
+                  type="button"
+                  className="asset-reference-row"
+                  key={`${reference.sourcePath}:${reference.location}:${index}`}
+                  title={`Select ${reference.sourcePath} in Project`}
+                  onClick={() => {
+                    pingProjectAsset(reference.sourcePath);
+                    closeReferenceReport();
+                  }}
+                >
+                  <div>
+                    <strong>{reference.sourcePath}</strong>
+                    <span>{reference.location} · {reference.kind}</span>
+                  </div>
+                  <code title={reference.snippet}>{reference.snippet}</code>
+                </button>
+              ))}
+              {referenceReport.report && referenceReport.report.references.length === 0 && (
+                <div className="asset-reference-empty">
+                  No serialized or text references found. Dynamic script paths and external binary formats may still reference this asset.
+                </div>
+              )}
+            </div>
+          </section>
+        </div>,
+        document.body,
+      )}
     </div>
   );
 }

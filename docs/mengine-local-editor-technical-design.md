@@ -1211,3 +1211,14 @@ Rust workspace 检查现在零警告通过；Tauri Host 17/17 常规测试与 1/
 第一遍自省发现“扫描生成 GUID”仍会被现有 Scene Rename/Delete 破坏，因而补齐 sidecar 联动与失败回滚，而不是把孤儿 metadata 留给后续清理。第二遍自省发现核心 `AssetRegistry` 仍然按进程随机注册且所谓 Hot Reload 会把所有资产永久视为 dirty，已改为持久 GUID 注册、重复拒绝和 Revision 增量检测；同时补测 metadata 身份/健康变化能触发 Project 索引失效。
 
 这一批只是成熟 Asset Database 的身份地基，引用内容当前仍以 `Assets/...` 路径序列化。下一阶段必须建立 GUID 到当前路径的持久索引、统一依赖图与反向引用查询，再实现带预览和事务回滚的通用 Rename/Move/Delete/Duplicate、文本引用迁移、二进制重导入、回收站、缺失引用修复和版本控制协作；在这些完成前，不应向用户开放无保护的任意资产重命名。
+
+## 101. 2026-07-19 Project 反向资产引用查询
+
+- Project 所有真实工程资产的右键菜单新增 `Find References`。查询以当前磁盘索引为候选，8 个文件一批执行稳定 Revision 读取；Scene、Prefab、Material/Material Instance、Animator、Avatar Mask、Timeline、Sprite Atlas/Import 与 Spine JSON 按 JSON 树精确比较，结果给出 RFC 6901 风格 JSON Pointer。glTF 进一步只解析 `buffers/images[].uri` 并按模型来源目录解析 URL 编码的相对路径；Spine Atlas 复用构建器的 Page 行语义解析相对纹理。Script、Surface Shader 以及损坏但仍可读的 JSON 使用带路径字符边界的逐行保守搜索，结果给出 `line:column` 与单行摘要。
+- 匹配统一规范化斜杠并采用不区分大小写的工程路径比较。查询基础纹理时同时识别 `Assets/X.png#Slice` 子资源；查询具体 Slice 时只匹配同一完整子资源，不把兄弟 Slice 算入结果。自引用保留在依赖图中，因为未来重命名事务同样必须迁移它；目标文件本身不是特殊豁免项。
+- 单文件读取上限为 8 MiB，二进制、超限或读取失败文件计入 skipped；单次最多返回 10000 条并显式显示 `+` 与 result limit，而不是伪装成完整结果。合法 JSON 不再退化成原文二次扫描，避免同一引用重复；损坏 JSON 才回退文本搜索，使修复工具仍能定位路径。动态拼接脚本字符串和不透明二进制格式无法被静态查询证明，零结果界面明确保留该限制。
+- 结果使用独立、零圆角工具对话框展示来源文件、位置、匹配类型与摘要；支持 Escape、遮罩/关闭按钮退出。点击结果会关闭对话框、切换到 Project 并 Ping 来源资产，Scene/Script/Sprite 专用卡片与普通作者资产复用上一批 GUID 选择键，不需要用户再手工翻目录。
+
+第一遍自省删除了最初“排除目标文件自身”的错误捷径，并把 10000 条上限变成显式截断状态；否则自引用会在未来 Rename 迁移中漏改，超大依赖图会被误判完整。第二遍自省补齐键盘焦点/Escape、结果回 Project 定位，以及 Scene/Script/Sprite 专用卡片的 Ping 映射；同时保留无效 JSON 回退、路径边界和具体 Slice 隔离回归。
+
+当前查询是只读的编辑器时刻快照，尚不是可提交的 Rename 事务：多文件扫描期间外部工具仍可能继续修改，文本命中也可能来自注释或普通用户字符串。下一阶段要在 Host 侧用每个来源 Revision 固化预览，生成 exact/subresource 修改计划，用户确认后对源资产、`.meta`、Sprite Import sidecar、所有引用文件和 `project.json` 执行统一乐观并发检查、暂存、原子发布与完整回滚；无法自动迁移的脚本/Shader 文本必须单列人工审查，不能静默替换。

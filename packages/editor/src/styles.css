@@ -2698,6 +2698,151 @@ body.insp-scrubbing * {
   letter-spacing: 0.04em;
 }
 
+.asset-reference-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 10040;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+  background: rgba(10, 12, 15, 0.72);
+}
+
+.asset-reference-dialog {
+  width: min(860px, calc(100vw - 48px));
+  height: min(620px, calc(100vh - 48px));
+  display: grid;
+  grid-template-rows: auto auto minmax(0, 1fr);
+  border: 1px solid #575b61;
+  background: #25282c;
+  color: #d8dadd;
+  box-shadow: 0 16px 48px rgba(0, 0, 0, 0.55);
+}
+
+.asset-reference-dialog > header {
+  min-height: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 8px 10px 8px 14px;
+  border-bottom: 1px solid #45494f;
+  background: #303338;
+}
+
+.asset-reference-dialog > header > div {
+  min-width: 0;
+  display: grid;
+  gap: 2px;
+}
+
+.asset-reference-dialog > header strong,
+.asset-reference-dialog > header span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.asset-reference-dialog > header span {
+  color: #969ba3;
+  font-size: 11px;
+}
+
+.asset-reference-dialog > header button {
+  width: 28px;
+  height: 28px;
+  border: 1px solid transparent;
+  background: transparent;
+  color: #c9ccd1;
+  font-size: 21px;
+  line-height: 1;
+}
+
+.asset-reference-dialog > header button:hover {
+  border-color: #666b73;
+  background: #454950;
+}
+
+.asset-reference-summary {
+  min-height: 34px;
+  display: flex;
+  align-items: center;
+  padding: 7px 14px;
+  border-bottom: 1px solid #3d4147;
+  color: #aeb3ba;
+  font-size: 12px;
+}
+
+.asset-reference-list {
+  min-height: 0;
+  overflow: auto;
+  scrollbar-color: #666 #202226;
+  scrollbar-width: thin;
+}
+
+.asset-reference-row {
+  width: 100%;
+  display: grid;
+  grid-template-columns: minmax(240px, 0.8fr) minmax(280px, 1.2fr);
+  gap: 12px;
+  padding: 8px 14px;
+  border: 0;
+  border-bottom: 1px solid #363a40;
+  background: transparent;
+  color: inherit;
+  text-align: left;
+}
+
+.asset-reference-row:hover {
+  background: #30343a;
+}
+
+.asset-reference-row > div {
+  min-width: 0;
+  display: grid;
+  gap: 2px;
+}
+
+.asset-reference-row strong,
+.asset-reference-row span,
+.asset-reference-row code {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.asset-reference-row strong {
+  color: #d8dadd;
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.asset-reference-row span {
+  color: #8f959e;
+  font-size: 10px;
+}
+
+.asset-reference-row code {
+  align-self: center;
+  color: #b8d7f0;
+  font-family: ui-monospace, SFMono-Regular, Consolas, monospace;
+  font-size: 11px;
+}
+
+.asset-reference-empty {
+  padding: 28px 18px;
+  color: #9ba0a8;
+  text-align: center;
+  line-height: 1.6;
+}
+
+@media (max-width: 720px) {
+  .asset-reference-row {
+    grid-template-columns: 1fr;
+    gap: 5px;
+  }
+}
+
 .asset-rename {
   width: 100%;
   max-width: 88px;
