@@ -19,6 +19,7 @@ test('deferred asset editor modules keep every Assets/Create command registered'
   const paths = listMenuItems('Assets').map((item) => item.path);
   for (const path of [
     'Assets/Create/Material',
+    'Assets/Create/Material Instance',
     'Assets/Create/Surface Shader',
     'Assets/Create/Animation Clip',
     'Assets/Create/Animator Controller',

@@ -288,7 +288,7 @@ export function mengineFsPlugin(opts: MengineFsOptions | string): Plugin {
             ? 'timeline'
             : /\.(wav|ogg|mp3|flac)$/.test(lower)
               ? 'audio'
-            : lower.endsWith('.mmat') || lower.endsWith('.mat')
+            : lower.endsWith('.mmat') || lower.endsWith('.mat') || lower.endsWith('.minst')
               ? 'material'
             : lower.endsWith('.mshader')
               ? 'shader'

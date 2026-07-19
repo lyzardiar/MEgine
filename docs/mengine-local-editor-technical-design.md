@@ -1132,3 +1132,13 @@ Rust workspace 检查现在零警告通过；Tauri Host 17/17 常规测试与 1/
 - 第一遍自审发现单文件缓存无法传播父级热重载，CLI 的 processed 去重会掩盖循环；两处均改为显式父链语义。第二遍自审补最终 Player 实例解析与循环用例，并确认实例只改变 Object Uniform 数据，不扩大 Uniform、不新增 RHI Pipeline Key。回归结果：Assets 35/35、Runtime lib 84/84、Runtime Player 20/20、CLI 42/42，Rust workspace 零警告检查通过。
 
 本批先固定可运行、可发布、可热重载的底层契约；Material Instance 编辑器仍未完成。下一批必须接入 Project 资源识别、Assets/Create、父材质选择、继承值预览、逐参数 Override、Dirty/Undo/Save All、Scene 预览与 MeshRenderer 赋值，不能让用户依赖手写 JSON。
+
+## 93. 2026-07-19 Material Instance 编辑器工作流
+
+- Project 的浏览器版与 Tauri 扫描器统一把 `.minst` 识别为 Material，导入白名单、Assets/Create 和现有 Material Dock 同步接入。空工程第一次创建实例时会同时生成一个合法基础 `.mmat`，不会写出指向不存在父级的占位 JSON；已有工程优先复用基础材质，也可从当前实例创建下一层派生实例。
+- Material Dock 根据扩展名路由普通材质与实例编辑器，但两套编辑器保持常驻后台文档和独立保存基线。切换 `.mmat/.minst` 不会卸载并丢失草稿，窗口 Dirty 是两类文档的并集；Save All 分别保存真实变化的普通材质和实例草稿。
+- 实例面板显示最终继承材质球、父资产、继承来源和 Override 数量。Base Color、Metallic、Roughness、IOR、Clear Coat、Coat Roughness、Emission 与 Emission Strength 均有显式 Override 开关；关闭时控件只读显示继承值，开启时从当前有效值复制，不会跳回无关默认值。父级可继续指向实例，编辑器在保存前以包含未保存实例草稿的完整文档图检查循环和 32 层深度。
+- 所有名称、父级和参数修改进入共享全局 Undo，文本/数值输入按 Focus 到 Blur 合并为一次事务，开关是单次原子事务；Revert、Ctrl/Cmd+S、Save All、New 和 Assign 均走同一文档状态。Scene 材质预览解析 `.minst` 的最终继承结果，Project 资源变化会清除预览缓存，MeshRenderer 可直接 Assign 实例路径并由 Runtime 解析。
+- 两遍自审额外处理了两个非表面功能：第一遍把前端递归解析抽成可注入读取器，用嵌套实例与大小写循环测试固定语义；第二遍修复普通材质和实例共有的异步保存竞态。保存期间继续编辑只推进保存基线而不覆盖新输入，保存期间切换文档只更新原路径后台草稿，不会把旧任务结果写进新资产面板。
+
+这一批完成的是可日常使用的固定 PBR Override 实例工作流，仍不代表材质系统完备。下一阶段需要把 CSS 近似球替换为 Player 同管线离屏预览，并实现 Shader 参数反射驱动的任意属性/纹理 Override、Keyword 与 Variant 管理和预热、Shader Cache、GPU Instancing/SRP Batcher 兼容布局、材质依赖图、Frame Debugger，以及 Transmission/Thickness、Sheen、Subsurface 和 Clear Coat Normal/Mask 等高级模型。

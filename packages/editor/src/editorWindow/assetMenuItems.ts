@@ -14,6 +14,19 @@ registerMenuItem(
 );
 
 registerMenuItem(
+  'Assets/Create/Material Instance',
+  async (context) => {
+    try {
+      const { createProjectMaterialInstance } = await import('../panels/MaterialInstance');
+      context.log(`Created ${await createProjectMaterialInstance()}`);
+    } catch (reason) {
+      context.log(`Material Instance creation failed: ${reason instanceof Error ? reason.message : String(reason)}`);
+    }
+  },
+  { priority: 201 },
+);
+
+registerMenuItem(
   'Assets/Create/Surface Shader',
   async (context) => {
     try {

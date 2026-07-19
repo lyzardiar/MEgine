@@ -4766,6 +4766,11 @@ button.sequencer-track-header:hover { background: #343b42; }
 }
 
 /* Material editor */
+.material-editor-route {
+  height: 100%;
+  min-height: 0;
+}
+
 .material-editor {
   display: flex;
   height: 100%;
@@ -4990,6 +4995,28 @@ button.sequencer-track-header:hover { background: #343b42; }
 
 .material-color-row { grid-template-columns: minmax(92px, 0.42fr) 52px minmax(58px, 0.35fr) !important; }
 .material-check { display: flex !important; gap: 7px !important; }
+.material-instance-fields > .material-instance-row {
+  grid-template-columns: 16px minmax(92px, 0.42fr) minmax(72px, 1fr);
+}
+
+.material-instance-row > span:nth-child(2) {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+}
+
+.material-instance-row small {
+  color: var(--u-accent);
+  font-size: 8px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.material-instance-row.inherited small { color: var(--u-muted); }
+.material-instance-row.inherited > :last-child { opacity: 0.72; }
+.material-instance-parent.missing { background: #3b2925; box-shadow: inset 2px 0 #b56a45; }
+.material-instance-color-controls { display: grid; grid-template-columns: 52px minmax(48px, 1fr); gap: 5px; }
+.material-instance-color-controls input[type='color'] { width: 52px; }
 .material-vector { display: grid; grid-template-columns: 1fr 1fr; gap: 5px; }
 .material-suffixed-input { display: grid; grid-template-columns: minmax(0, 1fr) 18px; align-items: center; }
 .material-suffixed-input > span { color: var(--u-muted); text-align: right; }

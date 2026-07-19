@@ -1,6 +1,5 @@
 import type { MaterialAsset } from './materialAsset.ts';
-import { parseMaterialAsset } from './materialAsset.ts';
-import { readProjectAssetText } from './projectAssets.ts';
+import { loadResolvedMaterialAsset } from './materialInstanceAsset.ts';
 
 export type MaterialPreviewAppearance = {
   baseColor: [number, number, number, number];
@@ -25,14 +24,14 @@ const cache = new Map<string, PreviewState>();
 /** Returns a cached material immediately and starts an asynchronous load on first use. */
 export function materialAssetPreview(path: string): MaterialAsset | null {
   const normalized = path.trim().replace(/\\/g, '/');
-  if (!/\.(?:mmat|mat)$/i.test(normalized)) return null;
+  if (!/\.(?:mmat|mat|minst)$/i.test(normalized)) return null;
   const existing = cache.get(normalized);
   if (existing) return existing.material;
   const state: PreviewState = { material: null, loading: true, error: null };
   cache.set(normalized, state);
-  void readProjectAssetText(normalized)
-    .then((text) => {
-      state.material = parseMaterialAsset(text);
+  void loadResolvedMaterialAsset(normalized)
+    .then((material) => {
+      state.material = material;
       state.loading = false;
     })
     .catch((reason: unknown) => {

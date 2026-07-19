@@ -39,6 +39,7 @@ import {
   openSurfaceShaderAsset,
   PROJECT_ASSETS_CHANGED_EVENT,
 } from '../assetEditorEvents';
+import { MaterialInstanceEditor } from './MaterialInstance';
 
 function uniqueMaterialPath(baseName = 'New Material'): string {
   const used = new Set(listProjectFiles().map((asset) => asset.relPath.toLowerCase()));
@@ -201,7 +202,7 @@ function MaterialTextureSlot(props: {
   );
 }
 
-export function MaterialEditor(props: {
+export type MaterialEditorProps = {
   assetPath: string | null;
   selectedEntity: SnapshotEntity | null;
   onOpenAsset: (path: string) => void;
@@ -212,7 +213,9 @@ export function MaterialEditor(props: {
   undoService: EditorUndoService;
   onGlobalUndo: () => void;
   onGlobalRedo: () => void;
-}) {
+};
+
+function BaseMaterialEditor(props: MaterialEditorProps) {
   const [material, setMaterial] = useState<MaterialAsset | null>(null);
   const [savedText, setSavedText] = useState('');
   const [loading, setLoading] = useState(false);
@@ -404,24 +407,36 @@ export function MaterialEditor(props: {
 
   const save = async (): Promise<boolean> => {
     if (!props.assetPath || !material) return false;
+    const path = props.assetPath;
+    const text = serializeMaterialAsset(structuredClone(material));
     setSaving(true);
     setError(null);
     try {
-      const text = serializeMaterialAsset(material);
-      await writeProjectAssetText(props.assetPath, text);
+      await writeProjectAssetText(path, text);
       await refreshProjectFiles();
       setAssetRevision((revision) => revision + 1);
-      drafts.current.delete(props.assetPath);
-      replaceMaterial(parseMaterialAsset(text));
-      setSavedText(text);
+      const persisted = parseMaterialAsset(text);
+      if (loadedPath.current === path) {
+        const current = materialRef.current;
+        if (current && serializeMaterialAsset(current) === text) replaceMaterial(persisted);
+        setSavedText(text);
+        drafts.current.delete(path);
+      } else {
+        const draft = drafts.current.get(path);
+        drafts.current.set(path, {
+          material: draft?.material ?? persisted,
+          savedText: text,
+        });
+        setDraftEpoch((value) => value + 1);
+      }
       props.onAssetsChanged();
       window.dispatchEvent(new CustomEvent(PROJECT_ASSETS_CHANGED_EVENT));
-      props.onLog(`Saved ${props.assetPath}`);
+      props.onLog(`Saved ${path}`);
       return true;
     } catch (reason) {
       const message = reason instanceof Error ? reason.message : String(reason);
-      setError(message);
-      props.onLog(`Material 保存失败：${message}`, 'error');
+      if (loadedPath.current === path) setError(message);
+      props.onLog(`Material save failed (${path}): ${message}`, 'error');
       return false;
     } finally {
       setSaving(false);
@@ -779,5 +794,34 @@ export function MaterialEditor(props: {
         </button>
       </div>
     </div>
+  );
+}
+
+export function MaterialEditor(props: MaterialEditorProps) {
+  const isInstance = props.assetPath?.toLowerCase().endsWith('.minst') === true;
+  const [materialDirty, setMaterialDirty] = useState(false);
+  const [instanceDirty, setInstanceDirty] = useState(false);
+
+  useEffect(() => {
+    props.onDirtyChange(materialDirty || instanceDirty);
+  }, [instanceDirty, materialDirty, props.onDirtyChange]);
+
+  return (
+    <>
+      <div className="material-editor-route" hidden={isInstance}>
+        <BaseMaterialEditor
+          {...props}
+          assetPath={isInstance ? null : props.assetPath}
+          onDirtyChange={setMaterialDirty}
+        />
+      </div>
+      <div className="material-editor-route" hidden={!isInstance}>
+        <MaterialInstanceEditor
+          {...props}
+          assetPath={isInstance ? props.assetPath : null}
+          onDirtyChange={setInstanceDirty}
+        />
+      </div>
+    </>
   );
 }
