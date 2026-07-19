@@ -2410,7 +2410,17 @@ fn validate_world_assets(
                             format!("invalid animator controller {}", path.display())
                         })?;
                     for state in &controller.states {
-                        validate_animation_clip_asset(&state.clip, project_root, validated)?;
+                        if let Some(tree) = &state.blend_tree {
+                            for child in &tree.children {
+                                validate_animation_clip_asset(
+                                    &child.clip,
+                                    project_root,
+                                    validated,
+                                )?;
+                            }
+                        } else {
+                            validate_animation_clip_asset(&state.clip, project_root, validated)?;
+                        }
                     }
                     for layer in &controller.layers {
                         if !layer.avatar_mask.is_empty() {
@@ -2969,11 +2979,12 @@ mod tests {
     }
 
     #[test]
-    fn packaged_asset_validation_includes_animator_layer_motion_clips() {
+    fn packaged_asset_validation_includes_animator_blend_tree_and_layer_motion_clips() {
         let root = temporary_project_root("packaged-animator-layers");
         let animations = root.join("Assets/Animations");
         std::fs::create_dir_all(&animations).unwrap();
         std::fs::write(animations.join("Idle.manim"), "{}").unwrap();
+        std::fs::write(animations.join("Run.manim"), "{}").unwrap();
         std::fs::write(animations.join("Wave.manim"), "{}").unwrap();
         std::fs::write(animations.join("Aim.manim"), "{}").unwrap();
         std::fs::write(
@@ -2984,8 +2995,14 @@ mod tests {
         std::fs::write(
             animations.join("Hero.mcontroller"),
             r#"{
-              "version":3,"default_state":"Idle",
-              "states":[{"name":"Idle","clip":"Assets/Animations/Idle.manim"}],
+              "version":5,"default_state":"Idle",
+              "parameters":[{"name":"Speed","kind":"float"}],
+              "states":[{"name":"Idle","blend_tree":{
+                "parameter":"Speed","children":[
+                  {"threshold":0,"clip":"Assets/Animations/Idle.manim"},
+                  {"threshold":1,"clip":"Assets/Animations/Run.manim"}
+                ]
+              }}],
               "layers":[{
                 "name":"Upper Body","avatar_mask":"Assets/Animations/Upper Body.mavatar",
                 "motions":[{"state":"Idle","clip":"Assets/Animations/Wave.manim"}]
@@ -3007,10 +3024,14 @@ mod tests {
 
         let mut validated = HashSet::new();
         let result = validate_world_assets(&world, &root, &mut validated);
-        std::fs::remove_dir_all(&root).unwrap();
-
         result.expect("base and layer clips should pass package validation");
-        assert_eq!(validated.len(), 5);
+        assert_eq!(validated.len(), 6);
+
+        std::fs::remove_file(animations.join("Run.manim")).unwrap();
+        let error = validate_world_assets(&world, &root, &mut HashSet::new())
+            .expect_err("every Blend Tree child must be present in the package");
+        std::fs::remove_dir_all(&root).unwrap();
+        assert!(error.to_string().contains("invalid animation clip"));
     }
 
     #[test]

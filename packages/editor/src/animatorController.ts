@@ -21,6 +21,7 @@ export type AnimatorParameter = {
 export type AnimatorState = {
   name: string;
   clip: string;
+  blend_tree?: AnimatorBlendTree1D;
   speed: number;
   position: [number, number];
 };
@@ -38,6 +39,16 @@ export type AnimatorTransition = {
   has_exit_time: boolean;
   exit_time: number;
   conditions: AnimatorCondition[];
+};
+
+export type AnimatorBlendTreeChild = {
+  threshold: number;
+  clip: string;
+};
+
+export type AnimatorBlendTree1D = {
+  parameter: string;
+  children: AnimatorBlendTreeChild[];
 };
 
 export type AnimatorLayerMotion = {
@@ -60,7 +71,7 @@ export type AnimatorLayer = {
 };
 
 export type AnimatorController = {
-  version: 4;
+  version: 5;
   name: string;
   default_state: string;
   parameters: AnimatorParameter[];
@@ -176,7 +187,7 @@ export function createAnimatorController(
   initialClip = 'Assets/Animations/New State.manim',
 ): AnimatorController {
   return {
-    version: 4,
+    version: 5,
     name,
     default_state: 'Idle',
     parameters: [],
@@ -202,9 +213,21 @@ export function normalizeAnimatorController(value: unknown): AnimatorController 
   const states = (Array.isArray(source.states) ? source.states : []).map((item, index) => {
     const state = record(item);
     const position = Array.isArray(state.position) ? state.position : [];
+    const rawTree = record(state.blend_tree);
+    const blendTree = state.blend_tree == null ? undefined : {
+      parameter: String(rawTree.parameter ?? '').trim(),
+      children: (Array.isArray(rawTree.children) ? rawTree.children : []).map((item) => {
+        const child = record(item);
+        return {
+          threshold: finite(child.threshold, 0),
+          clip: String(child.clip ?? '').trim().replace(/\\/g, '/'),
+        } satisfies AnimatorBlendTreeChild;
+      }).sort((left, right) => left.threshold - right.threshold),
+    } satisfies AnimatorBlendTree1D;
     return {
       name: String(state.name ?? '').trim(),
       clip: String(state.clip ?? '').trim().replace(/\\/g, '/'),
+      ...(blendTree ? { blend_tree: blendTree } : {}),
       speed: finite(state.speed, 1),
       position: [
         finite(position[0], 100 + index % 4 * 170),
@@ -290,7 +313,7 @@ export function normalizeAnimatorController(value: unknown): AnimatorController 
     } satisfies AnimatorLayer;
   });
   const controller: AnimatorController = {
-    version: 4,
+    version: 5,
     name: String(source.name ?? ''),
     default_state: String(source.default_state ?? '').trim(),
     parameters,
@@ -305,7 +328,27 @@ export function validateAnimatorController(controller: AnimatorController): void
   if (controller.states.length === 0) throw new Error('Animator Controller 至少需要一个 State');
   const stateNames = new Set<string>();
   for (const state of controller.states) {
-    if (!state.name || !state.clip) throw new Error('每个 State 都必须设置名称和 Animation Clip');
+    if (!state.name) throw new Error('每个 State 都必须设置名称');
+    if (state.blend_tree) {
+      if (state.clip) throw new Error(`State ${state.name} 必须在 Animation Clip 和 Blend Tree 中二选一`);
+      const parameter = controller.parameters.find((item) => item.name === state.blend_tree!.parameter);
+      if (!parameter) throw new Error(`State ${state.name} 的 Blend Tree 参数不存在：${state.blend_tree.parameter || '(空)'}`);
+      if (parameter.kind !== 'float' && parameter.kind !== 'int') {
+        throw new Error(`State ${state.name} 的 Blend Tree 参数必须是 Float 或 Int：${parameter.name}`);
+      }
+      if (state.blend_tree.children.length < 2 || state.blend_tree.children.length > 32) {
+        throw new Error(`State ${state.name} 的 Blend Tree 必须包含 2 到 32 个 Motion`);
+      }
+      for (let index = 0; index < state.blend_tree.children.length; index += 1) {
+        const child = state.blend_tree.children[index];
+        if (!child.clip) throw new Error(`State ${state.name} 的 Blend Tree Motion 必须设置 Animation Clip`);
+        if (index > 0 && child.threshold <= state.blend_tree.children[index - 1].threshold) {
+          throw new Error(`State ${state.name} 的 Blend Tree Threshold 必须严格递增`);
+        }
+      }
+    } else if (!state.clip) {
+      throw new Error(`State ${state.name} 必须设置 Animation Clip 或 Blend Tree`);
+    }
     if (stateNames.has(state.name)) throw new Error(`State 名称重复：${state.name}`);
     stateNames.add(state.name);
   }
@@ -357,7 +400,7 @@ export function validateAnimatorController(controller: AnimatorController): void
       if (layer.states.length === 0) throw new Error(`独立动画层 ${layer.name} 至少需要一个 State`);
       const layerStateNames = new Set<string>();
       for (const state of layer.states) {
-        if (!state.name || !state.clip) throw new Error(`独立动画层 ${layer.name} 的 State 必须设置名称和 Animation Clip`);
+        if (!state.name || !state.clip || state.blend_tree) throw new Error(`独立动画层 ${layer.name} 的 State 必须设置名称和单个 Animation Clip`);
         if (layerStateNames.has(state.name)) throw new Error(`独立动画层 ${layer.name} 的 State 名称重复：${state.name}`);
         layerStateNames.add(state.name);
       }

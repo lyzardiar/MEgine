@@ -4,7 +4,7 @@ use std::collections::HashSet;
 use std::path::Path;
 
 fn default_version() -> u32 {
-    4
+    5
 }
 
 fn default_state_speed() -> f32 {
@@ -52,6 +52,8 @@ impl Default for AnimatorParameter {
 pub struct AnimatorState {
     pub name: String,
     pub clip: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub blend_tree: Option<AnimatorBlendTree1D>,
     #[serde(default = "default_state_speed")]
     pub speed: f32,
     pub position: [f32; 2],
@@ -62,10 +64,25 @@ impl Default for AnimatorState {
         Self {
             name: String::new(),
             clip: String::new(),
+            blend_tree: None,
             speed: default_state_speed(),
             position: [0.0, 0.0],
         }
     }
+}
+
+#[derive(Clone, Debug, Default, PartialEq, Serialize, Deserialize)]
+#[serde(default)]
+pub struct AnimatorBlendTreeChild {
+    pub threshold: f32,
+    pub clip: String,
+}
+
+#[derive(Clone, Debug, Default, PartialEq, Serialize, Deserialize)]
+#[serde(default)]
+pub struct AnimatorBlendTree1D {
+    pub parameter: String,
+    pub children: Vec<AnimatorBlendTreeChild>,
 }
 
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq, Serialize, Deserialize)]
@@ -232,6 +249,17 @@ impl AnimatorController {
         for state in &mut self.states {
             state.name = state.name.trim().to_owned();
             state.clip = state.clip.trim().replace('\\', "/");
+            if let Some(tree) = &mut state.blend_tree {
+                tree.parameter = tree.parameter.trim().to_owned();
+                for child in &mut tree.children {
+                    child.clip = child.clip.trim().replace('\\', "/");
+                    if !child.threshold.is_finite() {
+                        child.threshold = 0.0;
+                    }
+                }
+                tree.children
+                    .sort_by(|left, right| left.threshold.total_cmp(&right.threshold));
+            }
             if !state.speed.is_finite() {
                 state.speed = default_state_speed();
             }
@@ -326,10 +354,60 @@ impl AnimatorController {
         }
         let mut state_names = HashSet::new();
         for state in &self.states {
-            if state.name.is_empty() || state.clip.is_empty() {
+            if state.name.is_empty() {
                 return Err(AssetError::Invalid(
-                    "Animator states require non-empty names and clips".into(),
+                    "Animator states require non-empty names".into(),
                 ));
+            }
+            if let Some(tree) = &state.blend_tree {
+                if !state.clip.is_empty() {
+                    return Err(AssetError::Invalid(format!(
+                        "Animator state '{}' must use exactly one of clip or Blend Tree",
+                        state.name
+                    )));
+                }
+                let Some(parameter) = self.parameter(&tree.parameter) else {
+                    return Err(AssetError::Invalid(format!(
+                        "Animator state '{}' Blend Tree references unknown parameter '{}'",
+                        state.name, tree.parameter
+                    )));
+                };
+                if !matches!(
+                    parameter.kind,
+                    AnimatorParameterKind::Float | AnimatorParameterKind::Int
+                ) {
+                    return Err(AssetError::Invalid(format!(
+                        "Animator state '{}' Blend Tree parameter '{}' must be Float or Int",
+                        state.name, tree.parameter
+                    )));
+                }
+                if !(2..=32).contains(&tree.children.len()) {
+                    return Err(AssetError::Invalid(format!(
+                        "Animator state '{}' Blend Tree requires 2 to 32 children",
+                        state.name
+                    )));
+                }
+                let mut previous = None;
+                for child in &tree.children {
+                    if child.clip.is_empty() {
+                        return Err(AssetError::Invalid(format!(
+                            "Animator state '{}' Blend Tree child requires a clip",
+                            state.name
+                        )));
+                    }
+                    if previous.is_some_and(|threshold| child.threshold <= threshold) {
+                        return Err(AssetError::Invalid(format!(
+                            "Animator state '{}' Blend Tree thresholds must be strictly increasing",
+                            state.name
+                        )));
+                    }
+                    previous = Some(child.threshold);
+                }
+            } else if state.clip.is_empty() {
+                return Err(AssetError::Invalid(format!(
+                    "Animator state '{}' requires a clip or Blend Tree",
+                    state.name
+                )));
             }
             if !state_names.insert(state.name.as_str()) {
                 return Err(AssetError::Invalid(format!(
@@ -418,9 +496,10 @@ impl AnimatorController {
                     )));
                 }
                 for state in &layer.states {
-                    if state.name.is_empty() || state.clip.is_empty() {
+                    if state.name.is_empty() || state.clip.is_empty() || state.blend_tree.is_some()
+                    {
                         return Err(AssetError::Invalid(format!(
-                            "independent Animator layer '{}' states require names and clips",
+                            "independent Animator layer '{}' states require names and single clips",
                             layer.name
                         )));
                     }
@@ -571,10 +650,65 @@ mod tests {
             }"#,
         )
         .unwrap();
-        assert_eq!(controller.version, 4);
+        assert_eq!(controller.version, 5);
         assert_eq!(controller.states[0].clip, "Assets/Animations/idle.manim");
         assert_eq!(controller.states[0].position, [0.0, 0.0]);
         assert_eq!(controller.transitions[0].duration, 0.0);
+    }
+
+    #[test]
+    fn controller_normalizes_and_validates_base_blend_trees() {
+        let controller = parse_animator_controller(
+            br#"{
+              "version":4,"default_state":"Move",
+              "parameters":[{"name":"Speed","kind":"float"}],
+              "states":[{
+                "name":"Move",
+                "blend_tree":{"parameter":" Speed ","children":[
+                  {"threshold":1,"clip":"Run.manim"},
+                  {"threshold":0,"clip":"Idle.manim"}
+                ]}
+              }]
+            }"#,
+        )
+        .unwrap();
+        let state = &controller.states[0];
+        let tree = state.blend_tree.as_ref().unwrap();
+        assert_eq!(controller.version, 5);
+        assert!(state.clip.is_empty());
+        assert_eq!(tree.parameter, "Speed");
+        assert_eq!(tree.children[0].threshold, 0.0);
+        assert_eq!(tree.children[1].clip, "Run.manim");
+
+        let mut ambiguous = controller.clone();
+        ambiguous.states[0].clip = "legacy.manim".into();
+        assert!(ambiguous
+            .validate()
+            .unwrap_err()
+            .to_string()
+            .contains("exactly one"));
+
+        let mut duplicate = controller.clone();
+        duplicate.states[0].blend_tree.as_mut().unwrap().children[1].threshold = 0.0;
+        assert!(duplicate
+            .validate()
+            .unwrap_err()
+            .to_string()
+            .contains("strictly increasing"));
+
+        let mut layer_tree = controller;
+        layer_tree.layers.push(AnimatorLayer {
+            name: "Independent".into(),
+            timing_mode: AnimatorLayerTimingMode::Independent,
+            default_state: "Move".into(),
+            states: vec![layer_tree.states[0].clone()],
+            ..AnimatorLayer::default()
+        });
+        assert!(layer_tree
+            .validate()
+            .unwrap_err()
+            .to_string()
+            .contains("single clips"));
     }
 
     #[test]

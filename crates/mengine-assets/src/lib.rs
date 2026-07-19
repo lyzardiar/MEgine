@@ -17,10 +17,10 @@ pub use animation::{
     AnimationValue, AnimationWrapMode,
 };
 pub use animator::{
-    load_animator_controller, parse_animator_controller, AnimatorCondition, AnimatorConditionMode,
-    AnimatorController, AnimatorLayer, AnimatorLayerBlendMode, AnimatorLayerMotion,
-    AnimatorLayerTimingMode, AnimatorParameter, AnimatorParameterKind, AnimatorState,
-    AnimatorTransition,
+    load_animator_controller, parse_animator_controller, AnimatorBlendTree1D,
+    AnimatorBlendTreeChild, AnimatorCondition, AnimatorConditionMode, AnimatorController,
+    AnimatorLayer, AnimatorLayerBlendMode, AnimatorLayerMotion, AnimatorLayerTimingMode,
+    AnimatorParameter, AnimatorParameterKind, AnimatorState, AnimatorTransition,
 };
 pub use avatar_mask::{load_avatar_mask, parse_avatar_mask, target_matches_mask, AvatarMaskAsset};
 pub use gltf_import::{load_gltf_mesh_data, MeshData};

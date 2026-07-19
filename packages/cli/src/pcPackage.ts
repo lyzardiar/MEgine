@@ -627,19 +627,47 @@ function scanBuildAssetDependencies(
         throw new Error(`invalid animator controller ${source}: states must be a non-empty array`);
       }
       const stateNames = new Set<string>();
+      const blendTreeParameters: Array<{ state: string; parameter: string }> = [];
       for (const stateValue of controller.states) {
         const state = jsonObject(stateValue);
         if (!state) throw new Error(`invalid animator controller ${source}: state must be an object`);
         const name = strictStringValue(state, 'name', `animator controller ${source}`);
         const clip = strictStringValue(state, 'clip', `animator controller ${source}`);
-        if (!name || !clip) {
-          throw new Error(`invalid animator controller ${source}: every state needs a name and clip`);
+        const blendTreeValue = state.blend_tree;
+        const blendTree = blendTreeValue == null ? null : jsonObject(blendTreeValue);
+        if (blendTreeValue != null && !blendTree) {
+          throw new Error(`invalid animator controller ${source}: state ${name || '(empty)'} Blend Tree must be an object`);
+        }
+        if (!name || Boolean(clip) === Boolean(blendTree)) {
+          throw new Error(`invalid animator controller ${source}: every state needs a name and exactly one clip or Blend Tree`);
         }
         if (stateNames.has(name)) {
           throw new Error(`invalid animator controller ${source}: duplicate state ${name}`);
         }
         stateNames.add(name);
-        enqueue(clip, source, 'animation clip');
+        if (blendTree) {
+          const parameter = strictStringValue(blendTree, 'parameter', `animator controller ${source}`);
+          if (!Array.isArray(blendTree.children)
+            || blendTree.children.length < 2
+            || blendTree.children.length > 32) {
+            throw new Error(`invalid animator controller ${source}: state ${name} Blend Tree needs 2 to 32 children`);
+          }
+          let previousThreshold = Number.NEGATIVE_INFINITY;
+          for (const childValue of blendTree.children) {
+            const child = jsonObject(childValue);
+            const threshold = child?.threshold;
+            const childClip = child ? strictStringValue(child, 'clip', `animator controller ${source}`) : '';
+            if (!child || typeof threshold !== 'number' || !Number.isFinite(threshold)
+              || threshold <= previousThreshold || !childClip) {
+              throw new Error(`invalid animator controller ${source}: state ${name} Blend Tree children need increasing finite thresholds and clips`);
+            }
+            previousThreshold = threshold;
+            enqueue(childClip, source, `animator Blend Tree ${name} clip`);
+          }
+          blendTreeParameters.push({ state: name, parameter });
+        } else {
+          enqueue(clip, source, 'animation clip');
+        }
       }
       const defaultState = strictStringValue(
         controller,
@@ -663,6 +691,12 @@ function scanBuildAssetDependencies(
           throw new Error(`invalid animator controller ${source}: invalid or duplicate parameter ${parameterName || '(empty)'}`);
         }
         parameterKinds.set(parameterName, kind);
+      }
+      for (const blendTree of blendTreeParameters) {
+        const kind = parameterKinds.get(blendTree.parameter);
+        if (kind !== 'float' && kind !== 'int') {
+          throw new Error(`invalid animator controller ${source}: state ${blendTree.state} Blend Tree parameter ${blendTree.parameter || '(empty)'} must be Float or Int`);
+        }
       }
       const validateTransitionConditions = (transition: JsonObject, owner: string) => {
         if (transition.conditions != null && !Array.isArray(transition.conditions)) {
@@ -755,7 +789,7 @@ function scanBuildAssetDependencies(
             if (!state) throw new Error(`invalid animator controller ${source}: independent layer ${name} state must be an object`);
             const stateName = strictStringValue(state, 'name', `animator controller ${source}`);
             const clip = strictStringValue(state, 'clip', `animator controller ${source}`);
-            if (!stateName || !clip || independentStateNames.has(stateName)) {
+            if (!stateName || !clip || state.blend_tree != null || independentStateNames.has(stateName)) {
               throw new Error(`invalid animator controller ${source}: independent layer ${name} has invalid state ${stateName || '(empty)'}`);
             }
             independentStateNames.add(stateName);

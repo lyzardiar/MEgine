@@ -870,3 +870,15 @@ Referenced Only 是可用的单包裁剪基础，仍不等同于完整 Addressab
 - 活动任务槽和取消文件由阻塞构建线程持有的 RAII Guard 清理，而不是依赖发起窗口在 `await` 后仍然存活；构建期间关闭或分离 Dock/WebView 不会把 Host 永久锁在“已有构建运行”的假状态，线程异常展开也会释放任务槽。
 
 两遍自审覆盖了最危险的“暂存验证完成、原子发布尚未开始”取消点：旧 Manifest 保持字节不变、暂存目录无残留；真实编辑器构建还验证五阶段事件严格成对、序号递增、总耗时不小于各阶段之和。当前进度仍是阶段级而非 Cargo/文件级精确百分比；成熟构建系统后续仍需可恢复增量缓存、Patch/Chunk、符号与崩溃映射、签名/公证/安装器、多目标/跨编译、远程 Build Farm、CI 配置锁和长期制品索引。
+
+## 68. 2026-07-19 Animator v5 Base 1D Blend Tree
+
+- `.mcontroller` 升级到 v5，Base State Motion 可以在单个 `clip` 和 `blend_tree` 中二选一。1D Blend Tree 使用一个 Float/Int 参数和 2–32 个 Motion；Threshold 在规范化时排序，保存、Rust 资源加载与 CLI 构建都要求有限且严格递增，重复点、空 Clip、未知或非数值参数会在各自入口明确失败。
+- Runtime 按参数值在相邻 Threshold 间线性计算权重，区间外钳制到端点。不同长度 Clip 先以加权 Motion 时长求状态归一化时间，再分别映射到各自采样时间，因此混合不会因素材长度不同而立即失步；状态过渡、Exit Time、调试 Normalized Time 与同步动画层都读取同一 Motion 时长语义。
+- Blend Tree 子 Clip 的动画事件携带子 Motion 权重，再与状态过渡权重相乘。零权重子 Motion 不派发事件；普通 Clip 状态和过渡目标零时刻事件保持既有语义。运行时回归覆盖 0.25/0.75 插值、区间外钳制、参数热更新和双子 Clip 事件权重。
+- Animator 面板提供 Motion Type、数值参数、Motion 增删、Threshold 与 Clip 编辑；所有操作复用 Animator 路径 Scope 的全局 Undo、Dirty、Save All 和后台文档。重命名参数会同步更新 Blend Tree 引用；正在被 Blend Tree 使用的参数不能删除或改成 Bool/Trigger，避免 UI 主动制造失效 Controller。
+- CLI 将所有子 Clip 纳入依赖闭包，发布前校验树结构和参数类型；Player 的最终包校验也逐个加载子 Clip。由此编辑保存、构建收集、暂存验证、成品验真和 Runtime 实际采样使用同一资源闭包，不会只打进 Controller 而漏掉 Motion。
+
+第一遍自审修复了跨语言漂移：Rust/编辑器原先会静默清除同时存在的 Clip，而 CLI 会拒绝；现在三端统一为严格二选一。第二遍自审又封堵了非对象 `blend_tree` 被 CLI 当作不存在，以及过渡起点事件被新采样器跳过的旧语义回归。
+
+当前是 Base State Machine 的 1D 基础闭环，不代表 Animator 已完备。同步层 Motion 与独立层 State 仍只支持单 Clip；后续需要 Direct/2D Simple Directional/2D Freeform Directional/Cartesian、嵌套 Blend Tree、子 Motion Speed/Cycle Offset/Mirror、可视化参数游标、Sub-State Machine/Exit、Transition 中断、StateMachineBehaviour、Humanoid Avatar/重定向、Root Motion、动画压缩与运行时分析。

@@ -234,7 +234,9 @@ function AnimatorStateGraph(props: {
               key={`${index}:${state.name}`}
               className={`animator-graph-state${state.name === props.controller.default_state ? ' default' : ''}${state.name === currentState ? ' current' : ''}${props.selectedState === index ? ' selected' : ''}`}
               style={{ left: state.position[0], top: state.position[1] }}
-              title={state.clip}
+              title={state.blend_tree
+                ? `1D Blend Tree · ${state.blend_tree.parameter} · ${state.blend_tree.children.length} motions`
+                : state.clip}
               onPointerDown={(event) => {
                 const canvas = event.currentTarget.parentElement;
                 if (!canvas) return;
@@ -255,7 +257,9 @@ function AnimatorStateGraph(props: {
               onDoubleClick={() => props.onSelectState(index)}
             >
               <strong>{state.name || '(Unnamed)'}</strong>
-              <span>{state.clip.split('/').pop() || 'No clip'}</span>
+              <span>{state.blend_tree
+                ? `Blend · ${state.blend_tree.parameter || 'No parameter'}`
+                : state.clip.split('/').pop() || 'No clip'}</span>
             </button>
           ))}
           {transitionTo && <div className="animator-transition-progress"><i style={{ width: `${progress * 100}%` }} /></div>}
@@ -1108,12 +1112,17 @@ function AnimatorControllerEditor(props: AnimatorEditorProps) {
             draft.parameters.push({ name, kind: 'bool', default_bool: false, default_float: 0, default_int: 0 });
           })}>+ Parameter</button></div>
           {controller.parameters.length === 0 && <div className="field-hint">No parameters.</div>}
-          {controller.parameters.map((parameter, index) => (
+          {controller.parameters.map((parameter, index) => {
+            const usedByBlendTree = controller.states.some((state) => state.blend_tree?.parameter === parameter.name);
+            return (
             <div className="animator-row" key={`${index}-${parameter.name}`}>
               <input value={parameter.name} onChange={(event) => update((draft) => {
                 const previous = draft.parameters[index].name;
                 const next = event.target.value;
                 draft.parameters[index].name = next;
+                for (const state of draft.states) {
+                  if (state.blend_tree?.parameter === previous) state.blend_tree.parameter = next;
+                }
                 for (const transition of draft.transitions) {
                   for (const condition of transition.conditions) {
                     if (condition.parameter === previous) condition.parameter = next;
@@ -1129,6 +1138,7 @@ function AnimatorControllerEditor(props: AnimatorEditorProps) {
               })} />
               <select value={parameter.kind} onChange={(event) => update((draft) => {
                 const next = event.target.value as AnimatorParameterKind;
+                if (usedByBlendTree && next !== 'float' && next !== 'int') return;
                 draft.parameters[index].kind = next;
                 for (const transition of draft.transitions) {
                   for (const condition of transition.conditions) {
@@ -1147,12 +1157,12 @@ function AnimatorControllerEditor(props: AnimatorEditorProps) {
                   }
                 }
               })}>
-                <option value="bool">Bool</option><option value="float">Float</option><option value="int">Int</option><option value="trigger">Trigger</option>
+                <option value="bool" disabled={usedByBlendTree}>Bool</option><option value="float">Float</option><option value="int">Int</option><option value="trigger" disabled={usedByBlendTree}>Trigger</option>
               </select>
               {parameter.kind === 'bool' && <input type="checkbox" checked={parameter.default_bool} onChange={(event) => update((draft) => { draft.parameters[index].default_bool = event.target.checked; })} />}
               {parameter.kind === 'float' && <input type="number" step="0.1" value={parameter.default_float} onChange={(event) => update((draft) => { draft.parameters[index].default_float = Number(event.target.value); })} />}
               {parameter.kind === 'int' && <input type="number" step="1" value={parameter.default_int} onChange={(event) => update((draft) => { draft.parameters[index].default_int = Number(event.target.value); })} />}
-              <button type="button" title="Delete parameter" onClick={() => update((draft) => {
+              <button type="button" disabled={usedByBlendTree} title={usedByBlendTree ? 'Blend Tree parameter is in use' : 'Delete parameter'} onClick={() => update((draft) => {
                 const name = draft.parameters[index].name;
                 draft.parameters.splice(index, 1);
                 for (const transition of draft.transitions) transition.conditions = transition.conditions.filter((condition) => condition.parameter !== name);
@@ -1163,7 +1173,7 @@ function AnimatorControllerEditor(props: AnimatorEditorProps) {
                 }
               })}>×</button>
             </div>
-          ))}
+          );})}
         </section>
 
         <section className="animator-section">
@@ -1205,10 +1215,36 @@ function AnimatorControllerEditor(props: AnimatorEditorProps) {
                   }
                 }
               })} />
-              <select value={state.clip} onChange={(event) => update((draft) => { draft.states[index].clip = event.target.value; })}>
+              <select aria-label={`${state.name} motion type`} value={state.blend_tree ? 'blend_tree' : 'clip'} onChange={(event) => update((draft) => {
+                const target = draft.states[index];
+                if (event.target.value === 'blend_tree') {
+                  let parameter = draft.parameters.find((item) => item.kind === 'float' || item.kind === 'int');
+                  if (!parameter) {
+                    const name = nextName('Blend', new Set(draft.parameters.map((item) => item.name)));
+                    parameter = { name, kind: 'float', default_bool: false, default_float: 0, default_int: 0 };
+                    draft.parameters.push(parameter);
+                  }
+                  const firstClip = target.clip || clips[0]?.relPath || '';
+                  target.clip = '';
+                  target.blend_tree = {
+                    parameter: parameter.name,
+                    children: [
+                      { threshold: 0, clip: firstClip },
+                      { threshold: 1, clip: clips.find((clip) => clip.relPath !== firstClip)?.relPath ?? firstClip },
+                    ],
+                  };
+                } else {
+                  target.clip = target.blend_tree?.children[0]?.clip || clips[0]?.relPath || '';
+                  delete target.blend_tree;
+                }
+              })}>
+                <option value="clip">Animation Clip</option>
+                <option value="blend_tree">1D Blend Tree</option>
+              </select>
+              {!state.blend_tree && <select value={state.clip} onChange={(event) => update((draft) => { draft.states[index].clip = event.target.value; })}>
                 {!clips.some((clip) => clip.relPath === state.clip) && <option value={state.clip}>{state.clip || 'Select Clip…'}</option>}
                 {clips.map((clip) => <option key={clip.id} value={clip.relPath}>{clip.name}</option>)}
-              </select>
+              </select>}
               <label>Speed <input type="number" step="0.1" value={state.speed} onChange={(event) => update((draft) => { draft.states[index].speed = Number(event.target.value); })} /></label>
               {assigned && props.selectedEntity && (
                 <button
@@ -1245,6 +1281,42 @@ function AnimatorControllerEditor(props: AnimatorEditorProps) {
                   : selected > index ? selected - 1 : selected);
                 setSelectedTransition(null);
               }}>×</button>
+              {state.blend_tree && (
+                <div className="animator-blend-tree" onClick={(event) => event.stopPropagation()}>
+                  <div className="animator-heading">
+                    <label>Parameter
+                      <select value={state.blend_tree.parameter} onChange={(event) => update((draft) => { draft.states[index].blend_tree!.parameter = event.target.value; })}>
+                        {controller.parameters.filter((parameter) => parameter.kind === 'float' || parameter.kind === 'int').map((parameter) => (
+                          <option key={parameter.name} value={parameter.name}>{parameter.name} ({parameter.kind})</option>
+                        ))}
+                      </select>
+                    </label>
+                    <button type="button" disabled={state.blend_tree.children.length >= 32} onClick={() => update((draft) => {
+                      const children = draft.states[index].blend_tree!.children;
+                      children.push({
+                        threshold: (children.at(-1)?.threshold ?? 0) + 1,
+                        clip: clips[0]?.relPath ?? children[0]?.clip ?? '',
+                      });
+                    })}>+ Motion</button>
+                  </div>
+                  {state.blend_tree.children.map((child, childIndex) => (
+                    <div className="animator-blend-child" key={childIndex}>
+                      <input aria-label="Blend threshold" type="number" step="0.1" value={child.threshold} onChange={(event) => update((draft) => {
+                        draft.states[index].blend_tree!.children[childIndex].threshold = Number(event.target.value);
+                      })} />
+                      <select value={child.clip} onChange={(event) => update((draft) => {
+                        draft.states[index].blend_tree!.children[childIndex].clip = event.target.value;
+                      })}>
+                        {!clips.some((clip) => clip.relPath === child.clip) && <option value={child.clip}>{child.clip || 'Select Clip…'}</option>}
+                        {clips.map((clip) => <option key={clip.id} value={clip.relPath}>{clip.name}</option>)}
+                      </select>
+                      <button type="button" disabled={state.blend_tree!.children.length <= 2} onClick={() => update((draft) => {
+                        draft.states[index].blend_tree!.children.splice(childIndex, 1);
+                      })}>×</button>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
           ))}
         </section>

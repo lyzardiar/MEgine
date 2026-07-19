@@ -4,7 +4,7 @@ use mengine_assets::{
     load_animation_clip, load_animator_controller, load_avatar_mask, target_matches_mask,
     AnimationClip, AnimationEvent, AnimationValue, AnimationWrapMode, AnimatorCondition,
     AnimatorConditionMode, AnimatorController, AnimatorLayer, AnimatorLayerBlendMode,
-    AnimatorLayerTimingMode, AnimatorParameterKind, AvatarMaskAsset,
+    AnimatorLayerTimingMode, AnimatorParameterKind, AnimatorState, AvatarMaskAsset,
 };
 use mengine_core::generated::{AnimationPlayer, Animator};
 use mengine_core::{Entity, Parent, World};
@@ -47,6 +47,18 @@ struct CachedController {
 struct CachedAvatarMask {
     modified: Option<SystemTime>,
     result: Result<Arc<AvatarMaskAsset>, String>,
+}
+
+struct WeightedMotionClip {
+    clip: Arc<AnimationClip>,
+    sample_time: f32,
+    weight: f32,
+}
+
+struct EvaluatedStateMotion {
+    duration: f32,
+    samples: Vec<mengine_assets::AnimationSample>,
+    clips: Vec<WeightedMotionClip>,
 }
 
 #[derive(Clone, Debug)]
@@ -311,12 +323,148 @@ impl AnimationRuntime {
         std::mem::take(&mut self.pending_events)
     }
 
+    fn evaluate_state_motion(
+        &mut self,
+        state: &AnimatorState,
+        state_time: f32,
+        parameters: &AnimatorParameters,
+    ) -> Result<EvaluatedStateMotion, (String, String)> {
+        let Some(tree) = &state.blend_tree else {
+            let clip = self
+                .load_clip(&state.clip)
+                .map_err(|error| (state.clip.clone(), error))?;
+            return Ok(EvaluatedStateMotion {
+                duration: clip.duration,
+                samples: clip.sample(state_time),
+                clips: vec![WeightedMotionClip {
+                    clip,
+                    sample_time: state_time,
+                    weight: 1.0,
+                }],
+            });
+        };
+        let value = parameters
+            .get(&tree.parameter)
+            .and_then(Value::as_f64)
+            .filter(|value| value.is_finite())
+            .unwrap_or(0.0) as f32;
+        let upper = tree
+            .children
+            .partition_point(|child| child.threshold < value);
+        let (left_index, right_index, amount) = if upper == 0 {
+            (0, 0, 0.0)
+        } else if upper >= tree.children.len() {
+            let last = tree.children.len() - 1;
+            (last, last, 0.0)
+        } else {
+            let left = upper - 1;
+            let span = tree.children[upper].threshold - tree.children[left].threshold;
+            let amount = if span > f32::EPSILON {
+                ((value - tree.children[left].threshold) / span).clamp(0.0, 1.0)
+            } else {
+                0.0
+            };
+            (left, upper, amount)
+        };
+        let left_child = &tree.children[left_index];
+        let left_clip = self
+            .load_clip(&left_child.clip)
+            .map_err(|error| (left_child.clip.clone(), error))?;
+        if left_index == right_index {
+            return Ok(EvaluatedStateMotion {
+                duration: left_clip.duration,
+                samples: left_clip.sample(state_time),
+                clips: vec![WeightedMotionClip {
+                    clip: left_clip,
+                    sample_time: state_time,
+                    weight: 1.0,
+                }],
+            });
+        }
+        let right_child = &tree.children[right_index];
+        let right_clip = self
+            .load_clip(&right_child.clip)
+            .map_err(|error| (right_child.clip.clone(), error))?;
+        let duration = left_clip.duration + (right_clip.duration - left_clip.duration) * amount;
+        let normalized_time = if duration > f32::EPSILON {
+            state_time / duration
+        } else {
+            0.0
+        };
+        let left_time = normalized_time * left_clip.duration;
+        let right_time = normalized_time * right_clip.duration;
+        let samples = blend_samples(
+            left_clip.sample(left_time),
+            right_clip.sample(right_time),
+            amount,
+        );
+        Ok(EvaluatedStateMotion {
+            duration,
+            samples,
+            clips: vec![
+                WeightedMotionClip {
+                    clip: left_clip,
+                    sample_time: left_time,
+                    weight: 1.0 - amount,
+                },
+                WeightedMotionClip {
+                    clip: right_clip,
+                    sample_time: right_time,
+                    weight: amount,
+                },
+            ],
+        })
+    }
+
+    fn queue_motion_events(
+        &mut self,
+        motion: &EvaluatedStateMotion,
+        entity: Entity,
+        state_delta: f32,
+        state_name: &str,
+        transition_weight: f32,
+        entered: bool,
+    ) {
+        for source in &motion.clips {
+            if source.weight <= f32::EPSILON {
+                continue;
+            }
+            let weight = (source.weight * transition_weight).clamp(0.0, 1.0);
+            let source_delta = if motion.duration > f32::EPSILON {
+                state_delta * source.clip.duration / motion.duration
+            } else {
+                0.0
+            };
+            let previous_time = source.sample_time - source_delta;
+            if entered {
+                self.pending_events.extend(events_at_sample_time(
+                    &source.clip,
+                    entity,
+                    previous_time,
+                    Some(state_name),
+                    weight,
+                ));
+            }
+            if weight > f32::EPSILON {
+                self.pending_events.extend(crossed_animation_events(
+                    &source.clip,
+                    entity,
+                    previous_time,
+                    source_delta,
+                    Some(state_name),
+                    weight,
+                ));
+            }
+        }
+    }
+
     fn sample_layer_motion(
         &mut self,
         controller: &AnimatorController,
         layer: &AnimatorLayer,
         state_name: &str,
         state_time: f32,
+        parameters: &AnimatorParameters,
     ) -> Result<Option<Vec<mengine_assets::AnimationSample>>, (String, String)> {
         let Some(motion) = layer.motion(state_name) else {
             return Ok(None);
@@ -324,14 +472,12 @@ impl AnimationRuntime {
         let Some(base_state) = controller.state(state_name) else {
             return Ok(None);
         };
-        let base_clip = self
-            .load_clip(&base_state.clip)
-            .map_err(|error| (base_state.clip.clone(), error))?;
+        let base_motion = self.evaluate_state_motion(base_state, state_time, parameters)?;
         let layer_clip = self
             .load_clip(&motion.clip)
             .map_err(|error| (motion.clip.clone(), error))?;
-        let normalized_time = if base_clip.duration > f32::EPSILON {
-            state_time / base_clip.duration
+        let normalized_time = if base_motion.duration > f32::EPSILON {
+            state_time / base_motion.duration
         } else {
             0.0
         };
@@ -346,6 +492,7 @@ impl AnimationRuntime {
         layer: &AnimatorLayer,
         instance: &AnimatorInstance,
         weight: f32,
+        parameters: &AnimatorParameters,
     ) -> Result<(Vec<mengine_assets::AnimationSample>, f32), (String, String)> {
         if let Some(active) = instance.transition.as_ref() {
             let amount = (active.elapsed / active.duration.max(f32::EPSILON)).clamp(0.0, 1.0);
@@ -354,12 +501,14 @@ impl AnimationRuntime {
                 layer,
                 &active.source_state,
                 active.source_time,
+                parameters,
             )?;
             let destination = self.sample_layer_motion(
                 controller,
                 layer,
                 &active.destination_state,
                 active.destination_time,
+                parameters,
             )?;
             return Ok(match (source, destination) {
                 (Some(source), Some(destination)) => {
@@ -371,8 +520,14 @@ impl AnimationRuntime {
             });
         }
         Ok((
-            self.sample_layer_motion(controller, layer, &instance.state, instance.state_time)?
-                .unwrap_or_default(),
+            self.sample_layer_motion(
+                controller,
+                layer,
+                &instance.state,
+                instance.state_time,
+                parameters,
+            )?
+            .unwrap_or_default(),
             weight,
         ))
     }
@@ -476,6 +631,7 @@ impl AnimationRuntime {
         &mut self,
         controller: &AnimatorController,
         instance: &AnimatorInstance,
+        parameters: &AnimatorParameters,
     ) -> (f32, f32, String, f32) {
         let (state_time, transition_to, transition_progress) = instance
             .transition
@@ -490,10 +646,13 @@ impl AnimationRuntime {
             .unwrap_or((instance.state_time, String::new(), 0.0));
         let normalized_time = controller
             .state(&instance.state)
-            .and_then(|state| self.load_clip(&state.clip).ok())
-            .map(|clip| {
-                if clip.duration > f32::EPSILON {
-                    state_time / clip.duration
+            .and_then(|state| {
+                self.evaluate_state_motion(state, state_time, parameters)
+                    .ok()
+            })
+            .map(|motion| {
+                if motion.duration > f32::EPSILON {
+                    state_time / motion.duration
                 } else {
                     0.0
                 }
@@ -512,6 +671,7 @@ impl AnimationRuntime {
         controller: &AnimatorController,
         instance: &AnimatorInstance,
         weights: &HashMap<String, f32>,
+        parameters: &AnimatorParameters,
     ) -> String {
         let mut output = serde_json::Map::new();
         for layer in &controller.layers {
@@ -563,7 +723,7 @@ impl AnimationRuntime {
                     )
                 } else {
                     let (state_time, normalized_time, transition_to, transition_progress) =
-                        self.animator_debug_values(controller, instance);
+                        self.animator_debug_values(controller, instance, parameters);
                     (
                         instance.state.clone(),
                         state_time,
@@ -673,12 +833,13 @@ impl AnimationRuntime {
             }
             animator.current_state = instance.state.clone();
             let layer_weights = animator_layer_weights(&animator.layer_weights_json);
+            let parameters = animator_parameters(&controller, &animator.parameters_json);
             if !animator.playing {
                 self.active_animators.remove(&entity);
                 let (state_time, normalized_time, transition_to, transition_progress) =
-                    self.animator_debug_values(&controller, &instance);
+                    self.animator_debug_values(&controller, &instance, &parameters);
                 let layers_json =
-                    self.animator_layers_debug(&controller, &instance, &layer_weights);
+                    self.animator_layers_debug(&controller, &instance, &layer_weights, &parameters);
                 if let Some(live) = world.get_component_mut::<Animator>(entity) {
                     live.current_state = animator.current_state;
                     live.state_time = state_time;
@@ -692,7 +853,6 @@ impl AnimationRuntime {
             }
             entered_state |= self.active_animators.insert(entity);
 
-            let parameters = animator_parameters(&controller, &animator.parameters_json);
             let request_keys: Vec<_> = self
                 .pending_layer_states
                 .keys()
@@ -730,54 +890,48 @@ impl AnimationRuntime {
                     self.animator_instances.insert(entity, instance);
                     continue;
                 };
-                let previous_state_time = instance.state_time;
                 instance.state_time += delta * state.speed;
-                let state_clip = match self.load_clip(&state.clip) {
-                    Ok(clip) => clip,
-                    Err(error) => {
-                        self.record_failure(entity, &state.clip, error, &mut failures);
-                        self.animator_instances.insert(entity, instance);
-                        continue;
-                    }
-                };
-                if entered_state {
-                    self.pending_events.extend(events_at_sample_time(
-                        &state_clip,
-                        entity,
-                        previous_state_time,
-                        Some(&state.name),
-                        1.0,
-                    ));
-                }
-                self.pending_events.extend(crossed_animation_events(
-                    &state_clip,
+                let state_motion =
+                    match self.evaluate_state_motion(state, instance.state_time, &parameters) {
+                        Ok(motion) => motion,
+                        Err((asset, error)) => {
+                            self.record_failure(entity, &asset, error, &mut failures);
+                            self.animator_instances.insert(entity, instance);
+                            continue;
+                        }
+                    };
+                self.queue_motion_events(
+                    &state_motion,
                     entity,
-                    previous_state_time,
                     delta * state.speed,
-                    Some(&state.name),
+                    &state.name,
                     1.0,
-                ));
+                    entered_state,
+                );
                 if let Some(transition) = select_transition(
                     &controller.transitions,
                     &instance.state,
                     instance.state_time,
-                    state_clip.duration,
+                    state_motion.duration,
                     &parameters,
                     &mut consumed_triggers,
                 ) {
                     if let Some(destination) = controller.state(&transition.to) {
-                        if let Ok(destination_clip) = self.load_clip(&destination.clip) {
-                            self.pending_events.extend(events_at_sample_time(
-                                &destination_clip,
+                        if let Ok(destination_motion) =
+                            self.evaluate_state_motion(destination, 0.0, &parameters)
+                        {
+                            self.queue_motion_events(
+                                &destination_motion,
                                 entity,
                                 0.0,
-                                Some(&destination.name),
+                                &destination.name,
                                 if transition.duration <= f32::EPSILON {
                                     1.0
                                 } else {
                                     0.0
                                 },
-                            ));
+                                true,
+                            );
                         }
                     }
                     if transition.duration <= f32::EPSILON {
@@ -799,57 +953,59 @@ impl AnimationRuntime {
             let samples = if let Some(active) = instance.transition.as_ref() {
                 let source = controller.state(&active.source_state).unwrap();
                 let destination = controller.state(&active.destination_state).unwrap();
-                let source_clip = match self.load_clip(&source.clip) {
-                    Ok(clip) => clip,
-                    Err(error) => {
-                        self.record_failure(entity, &source.clip, error, &mut failures);
-                        self.animator_instances.insert(entity, instance);
-                        continue;
-                    }
-                };
-                let destination_clip = match self.load_clip(&destination.clip) {
-                    Ok(clip) => clip,
-                    Err(error) => {
-                        self.record_failure(entity, &destination.clip, error, &mut failures);
+                let source_motion =
+                    match self.evaluate_state_motion(source, active.source_time, &parameters) {
+                        Ok(motion) => motion,
+                        Err((asset, error)) => {
+                            self.record_failure(entity, &asset, error, &mut failures);
+                            self.animator_instances.insert(entity, instance);
+                            continue;
+                        }
+                    };
+                let destination_motion = match self.evaluate_state_motion(
+                    destination,
+                    active.destination_time,
+                    &parameters,
+                ) {
+                    Ok(motion) => motion,
+                    Err((asset, error)) => {
+                        self.record_failure(entity, &asset, error, &mut failures);
                         self.animator_instances.insert(entity, instance);
                         continue;
                     }
                 };
                 let amount = (active.elapsed / active.duration).clamp(0.0, 1.0);
                 if advanced_transition {
-                    self.pending_events.extend(crossed_animation_events(
-                        &source_clip,
+                    self.queue_motion_events(
+                        &source_motion,
                         entity,
-                        active.source_time - delta * source.speed,
                         delta * source.speed,
-                        Some(&source.name),
+                        &source.name,
                         1.0 - amount,
-                    ));
-                    self.pending_events.extend(crossed_animation_events(
-                        &destination_clip,
+                        false,
+                    );
+                    self.queue_motion_events(
+                        &destination_motion,
                         entity,
-                        active.destination_time - delta * destination.speed,
                         delta * destination.speed,
-                        Some(&destination.name),
+                        &destination.name,
                         amount,
-                    ));
+                        false,
+                    );
                 }
-                blend_samples(
-                    source_clip.sample(active.source_time),
-                    destination_clip.sample(active.destination_time),
-                    amount,
-                )
+                blend_samples(source_motion.samples, destination_motion.samples, amount)
             } else {
                 let state = controller.state(&instance.state).unwrap();
-                let clip = match self.load_clip(&state.clip) {
-                    Ok(clip) => clip,
-                    Err(error) => {
-                        self.record_failure(entity, &state.clip, error, &mut failures);
-                        self.animator_instances.insert(entity, instance);
-                        continue;
-                    }
-                };
-                clip.sample(instance.state_time)
+                let motion =
+                    match self.evaluate_state_motion(state, instance.state_time, &parameters) {
+                        Ok(motion) => motion,
+                        Err((asset, error)) => {
+                            self.record_failure(entity, &asset, error, &mut failures);
+                            self.animator_instances.insert(entity, instance);
+                            continue;
+                        }
+                    };
+                motion.samples
             };
             apply_animation_samples(world, entity, samples);
             instance.layers.retain(|name, _| {
@@ -922,7 +1078,13 @@ impl AnimationRuntime {
                     instance.layers.insert(layer.name.clone(), layer_instance);
                     result
                 } else {
-                    self.sample_synced_layer(&controller, layer, &instance, effective_weight)
+                    self.sample_synced_layer(
+                        &controller,
+                        layer,
+                        &instance,
+                        effective_weight,
+                        &parameters,
+                    )
                 };
                 match sampled {
                     Ok((samples, weight)) if weight > f32::EPSILON => {
@@ -967,8 +1129,9 @@ impl AnimationRuntime {
                     consume_trigger_parameters(&animator.parameters_json, &consumed_triggers);
             }
             let (state_time, normalized_time, transition_to, transition_progress) =
-                self.animator_debug_values(&controller, &instance);
-            let layers_json = self.animator_layers_debug(&controller, &instance, &layer_weights);
+                self.animator_debug_values(&controller, &instance, &parameters);
+            let layers_json =
+                self.animator_layers_debug(&controller, &instance, &layer_weights, &parameters);
             if let Some(live) = world.get_component_mut::<Animator>(entity) {
                 live.current_state = animator.current_state;
                 live.parameters_json = animator.parameters_json;
@@ -2055,6 +2218,94 @@ mod tests {
         .unwrap();
     }
 
+    fn write_constant_event_clip(project: &Path, name: &str, value: f32, event: &str) {
+        fs::write(
+            project.join(format!("Assets/Animations/{name}.manim")),
+            format!(
+                r#"{{
+                  "name":"{name}","duration":1,"wrap_mode":"loop",
+                  "events":[{{"time":0,"function":"{event}"}}],
+                  "tracks":[{{
+                    "target":".","component":"Transform","property":"position.x",
+                    "keyframes":[{{"time":0,"value":{value}}},{{"time":1,"value":{value}}}]
+                  }}]
+                }}"#
+            ),
+        )
+        .unwrap();
+    }
+
+    #[test]
+    fn animator_base_blend_tree_samples_clamps_and_weights_events() {
+        let project = temp_project();
+        write_constant_event_clip(&project, "idle", 0.0, "IdleEntered");
+        write_constant_event_clip(&project, "run", 10.0, "RunEntered");
+        fs::write(
+            project.join("Assets/Animations/locomotion.mcontroller"),
+            r#"{
+              "version":5,"name":"Locomotion","default_state":"Move",
+              "parameters":[{"name":"Speed","kind":"float","default_float":0.25}],
+              "states":[{
+                "name":"Move",
+                "blend_tree":{"parameter":"Speed","children":[
+                  {"threshold":0,"clip":"Assets/Animations/idle.manim"},
+                  {"threshold":1,"clip":"Assets/Animations/run.manim"}
+                ]}
+              }]
+            }"#,
+        )
+        .unwrap();
+
+        let mut world = World::new();
+        let entity = world.spawn_empty();
+        world.insert_component(entity, Transform::default());
+        world.insert_component(
+            entity,
+            Animator {
+                controller: "Assets/Animations/locomotion.mcontroller".into(),
+                ..Animator::default()
+            },
+        );
+        let mut runtime = AnimationRuntime::new(Some(project.clone()));
+
+        assert!(runtime.update(&mut world, 0.0).is_empty());
+        assert!(
+            (world.get_component::<Transform>(entity).unwrap().position[0] - 2.5).abs() < 0.001
+        );
+        let events = runtime.take_events();
+        assert_eq!(events.len(), 2);
+        assert_eq!(events[0].function, "IdleEntered");
+        assert!((events[0].weight - 0.75).abs() < 0.001);
+        assert_eq!(events[1].function, "RunEntered");
+        assert!((events[1].weight - 0.25).abs() < 0.001);
+
+        world
+            .get_component_mut::<Animator>(entity)
+            .unwrap()
+            .parameters_json = r#"{"Speed":0.75}"#.into();
+        assert!(runtime.update(&mut world, 0.0).is_empty());
+        assert!(
+            (world.get_component::<Transform>(entity).unwrap().position[0] - 7.5).abs() < 0.001
+        );
+
+        world
+            .get_component_mut::<Animator>(entity)
+            .unwrap()
+            .parameters_json = r#"{"Speed":-1}"#.into();
+        assert!(runtime.update(&mut world, 0.0).is_empty());
+        assert!(world.get_component::<Transform>(entity).unwrap().position[0].abs() < 0.001);
+
+        world
+            .get_component_mut::<Animator>(entity)
+            .unwrap()
+            .parameters_json = r#"{"Speed":2}"#.into();
+        assert!(runtime.update(&mut world, 0.0).is_empty());
+        assert!(
+            (world.get_component::<Transform>(entity).unwrap().position[0] - 10.0).abs() < 0.001
+        );
+        fs::remove_dir_all(project).unwrap();
+    }
+
     #[test]
     fn animator_synced_layers_apply_weight_blend_mode_and_avatar_mask() {
         let project = temp_project();
@@ -2299,7 +2550,7 @@ mod tests {
     fn animator_transitions_blends_and_consumes_triggers() {
         let project = temp_project();
         write_constant_clip(&project, "idle", 0.0);
-        write_constant_clip(&project, "run", 10.0);
+        write_constant_event_clip(&project, "run", 10.0, "RunEntered");
         fs::write(
             project.join("Assets/Animations/hero.mcontroller"),
             r#"{
@@ -2348,6 +2599,10 @@ mod tests {
                 .transition_to,
             "Run"
         );
+        let events = runtime.take_events();
+        assert_eq!(events.len(), 1);
+        assert_eq!(events[0].function, "RunEntered");
+        assert_eq!(events[0].weight, 0.0);
         assert!(runtime.update(&mut world, 0.25).is_empty());
         let animator = world.get_component::<Animator>(entity).unwrap();
         assert!((animator.state_time - 0.25).abs() < 0.001);

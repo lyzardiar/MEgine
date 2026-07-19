@@ -357,9 +357,19 @@ test('buildPcPackage validates transitive material animator and audio dependenci
       occlusion_texture: 'Assets/Textures/hero-ao.png',
     }));
     writeFileSync(join(paths.project, 'Assets', 'Animations', 'Hero.mcontroller'), JSON.stringify({
-      version: 2,
+      version: 5,
       default_state: 'Idle',
-      states: [{ name: 'Idle', clip: 'Assets/Animations/Idle.manim' }],
+      parameters: [{ name: 'Speed', kind: 'float' }],
+      states: [{
+        name: 'Idle',
+        blend_tree: {
+          parameter: 'Speed',
+          children: [
+            { threshold: 0, clip: 'Assets/Animations/Idle.manim' },
+            { threshold: 1, clip: 'Assets/Animations/Run.manim' },
+          ],
+        },
+      }],
       layers: [{
         name: 'Upper Body',
         weight: 0.75,
@@ -374,6 +384,7 @@ test('buildPcPackage validates transitive material animator and audio dependenci
       }],
     }));
     writeFileSync(join(paths.project, 'Assets', 'Animations', 'Idle.manim'), '{}');
+    writeFileSync(join(paths.project, 'Assets', 'Animations', 'Run.manim'), '{}');
     writeFileSync(join(paths.project, 'Assets', 'Animations', 'Wave.manim'), '{}');
     writeFileSync(join(paths.project, 'Assets', 'Animations', 'Aim.manim'), '{}');
     writeFileSync(join(paths.project, 'Assets', 'Animations', 'Upper Body.mavatar'), JSON.stringify({
@@ -393,12 +404,22 @@ test('buildPcPackage validates transitive material animator and audio dependenci
     assert.deepEqual(manifest.assetValidation, {
       assetMode: 'all',
       rootScenes: 2,
-      references: 12,
-      validatedFiles: 12,
+      references: 13,
+      validatedFiles: 13,
       omittedAssetFiles: 0,
       omittedAssetBytes: 0,
       strippedEditorEntities: 0,
     });
+    writeFileSync(join(paths.project, 'Assets', 'Animations', 'Hero.mcontroller'), JSON.stringify({
+      default_state: 'Idle',
+      states: [{ name: 'Idle', clip: 'Assets/Animations/Idle.manim', blend_tree: [] }],
+    }));
+    assert.throws(() => buildPcPackage({
+      projectDir: paths.project,
+      outputDir: join(paths.root, 'invalid-output'),
+      runtimePath: paths.runtime,
+      engineVersion: 'test-engine',
+    }), /Blend Tree must be an object/);
   } finally {
     rmSync(paths.root, { recursive: true, force: true });
   }

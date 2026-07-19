@@ -82,7 +82,7 @@ test('animator controller upgrades and validates synchronized layers with target
       motions: [{ state: 'Run', clip: 'Assets\\Animations\\wave.manim' }],
     }],
   });
-  assert.equal(controller.version, 4);
+  assert.equal(controller.version, 5);
   assert.deepEqual(controller.layers[0], {
     name: 'Upper Body',
     enabled: true,
@@ -106,6 +106,44 @@ test('animator controller upgrades and validates synchronized layers with target
   controller.layers[0].mask_paths = [];
   controller.layers[0].avatar_mask = '../Outside.mavatar';
   assert.throws(() => serializeAnimatorController(controller), /不安全/);
+});
+
+test('animator controller normalizes and validates base 1D Blend Trees', () => {
+  const controller = normalizeAnimatorController({
+    version: 4,
+    default_state: 'Locomotion',
+    parameters: [{ name: 'Speed', kind: 'float', default_float: 0 }],
+    states: [{
+      name: 'Locomotion',
+      blend_tree: {
+        parameter: ' Speed ',
+        children: [
+          { threshold: 1, clip: 'Run.manim' },
+          { threshold: 0, clip: 'Idle.manim' },
+        ],
+      },
+    }],
+  });
+  assert.equal(controller.version, 5);
+  assert.equal(controller.states[0].clip, '');
+  assert.deepEqual(controller.states[0].blend_tree, {
+    parameter: 'Speed',
+    children: [
+      { threshold: 0, clip: 'Idle.manim' },
+      { threshold: 1, clip: 'Run.manim' },
+    ],
+  });
+  assert.doesNotThrow(() => serializeAnimatorController(controller));
+
+  controller.states[0].clip = 'legacy.manim';
+  assert.throws(() => serializeAnimatorController(controller), /二选一/);
+  controller.states[0].clip = '';
+
+  controller.states[0].blend_tree.children[1].threshold = 0;
+  assert.throws(() => serializeAnimatorController(controller), /Threshold/);
+  controller.states[0].blend_tree.children[1].threshold = 1;
+  controller.parameters[0].kind = 'bool';
+  assert.throws(() => serializeAnimatorController(controller), /Float.*Int/);
 });
 
 test('animator controller validates independent layer state machines', () => {

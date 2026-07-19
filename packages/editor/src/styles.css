@@ -5100,10 +5100,35 @@ body.ew-dragging {
 }
 
 .animator-state {
+  flex-wrap: wrap;
   border-left: 3px solid #555;
   background: #2b2b2b;
   padding: 5px;
 }
+
+.animator-blend-tree {
+  flex: 1 0 100%;
+  display: grid;
+  gap: 4px;
+  margin-top: 2px;
+  border-top: 1px solid #1c1c1c;
+  padding-top: 6px;
+}
+.animator-blend-tree .animator-heading { margin: 0; }
+.animator-blend-tree .animator-heading label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: #aaa;
+  font-size: 11px;
+}
+.animator-blend-child {
+  display: grid;
+  grid-template-columns: 82px minmax(0, 1fr) 24px;
+  align-items: center;
+  gap: 5px;
+}
+.animator-blend-child button { min-width: 24px; padding: 0; }
 
 .animator-state.default {
   border-left-color: #54b65a;
