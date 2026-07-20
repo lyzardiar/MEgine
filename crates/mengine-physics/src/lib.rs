@@ -311,6 +311,9 @@ impl PhysicsWorld {
             };
             let translation = body.translation();
             let rotation = body.rotation();
+            let world_position = glam::Vec3::new(translation.x, translation.y, translation.z);
+            let world_rotation =
+                glam::Quat::from_xyzw(rotation.x, rotation.y, rotation.z, rotation.w);
             let parent_world = hierarchy.parent_world(world, *entity);
             let (local_position, local_rotation) = parent_world.map_or(
                 (
@@ -318,10 +321,6 @@ impl PhysicsWorld {
                     [rotation.x, rotation.y, rotation.z, rotation.w],
                 ),
                 |parent| {
-                    let mut world_position = parent.position;
-                    world_position.x = translation.x;
-                    world_position.y = translation.y;
-                    world_position.z = translation.z;
                     let determinant = parent.matrix.determinant();
                     let local_position = if determinant.is_finite() && determinant.abs() > 0.000001
                     {
@@ -329,12 +328,8 @@ impl PhysicsWorld {
                     } else {
                         world_position
                     };
-                    let mut world_rotation = parent.rotation;
-                    world_rotation.x = rotation.x;
-                    world_rotation.y = rotation.y;
-                    world_rotation.z = rotation.z;
-                    world_rotation.w = rotation.w;
-                    let local_rotation = (parent.rotation.conjugate() * world_rotation).normalize();
+                    let local_rotation =
+                        (parent.rotation.conjugate() * world_rotation).normalize();
                     (
                         local_position.to_array(),
                         [
