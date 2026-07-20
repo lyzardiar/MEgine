@@ -809,6 +809,45 @@ fn parse_entity_id(value: &str) -> Option<Entity> {
     trimmed.parse::<u64>().ok().map(Entity::from_u64)
 }
 
+impl mengine_core::PhysicsQuery2D for PhysicsWorld2D {
+    fn raycast(
+        &self,
+        origin: [f32; 2],
+        direction: [f32; 2],
+        max_distance: f32,
+    ) -> Option<mengine_core::PhysicsRaycastHit2D> {
+        PhysicsWorld2D::raycast(self, origin, direction, max_distance).map(|hit| {
+            mengine_core::PhysicsRaycastHit2D {
+                entity: hit.entity.to_u64(),
+                point: hit.point,
+                normal: hit.normal,
+                distance: hit.distance,
+            }
+        })
+    }
+
+    fn overlap_point(&self, point: [f32; 2]) -> Vec<u64> {
+        PhysicsWorld2D::overlap_point(self, point)
+            .into_iter()
+            .map(|e| e.to_u64())
+            .collect()
+    }
+
+    fn overlap_circle(&self, center: [f32; 2], radius: f32) -> Vec<u64> {
+        PhysicsWorld2D::overlap_circle(self, center, radius)
+            .into_iter()
+            .map(|e| e.to_u64())
+            .collect()
+    }
+
+    fn overlap_box(&self, center: [f32; 2], half_extents: [f32; 2]) -> Vec<u64> {
+        PhysicsWorld2D::overlap_box(self, center, half_extents)
+            .into_iter()
+            .map(|e| e.to_u64())
+            .collect()
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;

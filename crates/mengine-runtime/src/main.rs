@@ -90,6 +90,38 @@ struct Args {
     packaged: bool,
 }
 
+/// Thin wrapper that exposes `PhysicsWorld2D` queries through the
+/// `PhysicsQuery2D` trait for the script host. The reference is only
+/// valid for the duration of a single `script.tick()` call.
+struct PhysicsQueryRef<'a>(&'a mengine_physics::PhysicsWorld2D);
+
+// SAFETY: The reference is only used during script.tick() on the same thread
+// that owns the PhysicsWorld2D. It is never sent across threads.
+unsafe impl Send for PhysicsQueryRef<'_> {}
+
+impl mengine_core::PhysicsQuery2D for PhysicsQueryRef<'_> {
+    fn raycast(
+        &self,
+        origin: [f32; 2],
+        direction: [f32; 2],
+        max_distance: f32,
+    ) -> Option<mengine_core::PhysicsRaycastHit2D> {
+        mengine_core::PhysicsQuery2D::raycast(self.0, origin, direction, max_distance)
+    }
+
+    fn overlap_point(&self, point: [f32; 2]) -> Vec<u64> {
+        mengine_core::PhysicsQuery2D::overlap_point(self.0, point)
+    }
+
+    fn overlap_circle(&self, center: [f32; 2], radius: f32) -> Vec<u64> {
+        mengine_core::PhysicsQuery2D::overlap_circle(self.0, center, radius)
+    }
+
+    fn overlap_box(&self, center: [f32; 2], half_extents: [f32; 2]) -> Vec<u64> {
+        mengine_core::PhysicsQuery2D::overlap_box(self.0, center, half_extents)
+    }
+}
+
 struct App {
     args: Args,
     window: Option<Arc<Window>>,
@@ -1794,9 +1826,15 @@ function onTick(dt, frame) {
                     script.update_snapshot(
                         serde_json::to_value(&snapshot).unwrap_or_default(),
                     );
+                    // Inject 2D physics query interface for this tick.
+                    let query_ref = PhysicsQueryRef(&self.physics_2d);
+                    let trait_ref: &dyn mengine_core::PhysicsQuery2D = &query_ref;
+                    let fat_ptr: [usize; 2] = unsafe { std::mem::transmute(trait_ref) };
+                    script.set_physics_query(fat_ptr);
                     if let Err(error) = script.tick(&mut self.world, dt) {
                         log::error!("script tick failed: {error}");
                     }
+                    script.clear_physics_query();
                     script.take_runtime_requests()
                 } else {
                     Vec::new()

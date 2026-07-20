@@ -107,6 +107,14 @@ pub struct ScriptHost {
     snapshot: Arc<Mutex<Option<JsonValue>>>,
 }
 
+// Thread-local storage for the physics query fat pointer, valid only during tick.
+// Stored as [usize; 2] (data pointer + vtable pointer) to avoid 'static lifetime
+// requirements on the trait object.
+thread_local! {
+    static PHYSICS_QUERY: std::cell::Cell<Option<[usize; 2]>> =
+        const { std::cell::Cell::new(None) };
+}
+
 impl ScriptHost {
     pub fn new() -> Result<Self, ScriptError> {
         let commands = Arc::new(Mutex::new(CommandBuffer::new()));
@@ -157,6 +165,22 @@ impl ScriptHost {
         if let Ok(mut guard) = self.snapshot.lock() {
             *guard = Some(snapshot);
         }
+    }
+
+    /// Sets the 2D physics query interface for the current thread.
+    /// Call this before `tick` each frame so scripts can use
+    /// `engine.physics2D.raycast(...)` etc.
+    ///
+    /// # Safety contract
+    /// The fat pointer `[data_ptr, vtable_ptr]` must point to a valid
+    /// `dyn PhysicsQuery2D` and remain valid until `clear_physics_query`.
+    pub fn set_physics_query(&self, fat_ptr: [usize; 2]) {
+        PHYSICS_QUERY.with(|cell| cell.set(Some(fat_ptr)));
+    }
+
+    /// Clears the physics query pointer. Call this after `tick` returns.
+    pub fn clear_physics_query(&self) {
+        PHYSICS_QUERY.with(|cell| cell.set(None));
     }
 
     pub fn tick(&mut self, world: &mut World, dt: f32) -> Result<(), ScriptError> {
@@ -982,6 +1006,113 @@ fn register_engine(
             context,
         )
         .map_err(|e| ScriptError::Js(format!("{e}")))?;
+
+    // ---- engine.physics2D query functions ----
+    let physics_raycast = native_fn(move |_this, args, _ctx| {
+        let ox = args.get_or_undefined(0).as_number().unwrap_or(0.0) as f32;
+        let oy = args.get_or_undefined(1).as_number().unwrap_or(0.0) as f32;
+        let dx = args.get_or_undefined(2).as_number().unwrap_or(0.0) as f32;
+        let dy = args.get_or_undefined(3).as_number().unwrap_or(0.0) as f32;
+        let max_dist = args.get_or_undefined(4).as_number().unwrap_or(100.0) as f32;
+        let result = PHYSICS_QUERY.with(|cell| {
+            let Some(fat) = cell.get() else {
+                return None;
+            };
+            // SAFETY: Reconstruct the fat pointer set by the runtime before tick.
+            let query: &dyn mengine_core::PhysicsQuery2D =
+                unsafe { std::mem::transmute(fat) };
+            query.raycast([ox, oy], [dx, dy], max_dist)
+        });
+        match result {
+            Some(hit) => {
+                let json = serde_json::json!({
+                    "entity": hit.entity.to_string(),
+                    "point": hit.point,
+                    "normal": hit.normal,
+                    "distance": hit.distance,
+                });
+                let json_str = serde_json::to_string(&json).unwrap_or_default();
+                Ok(JsValue::new(boa_engine::JsString::from(json_str)))
+            }
+            None => Ok(JsValue::null()),
+        }
+    });
+
+    let physics_overlap_point = native_fn(move |_this, args, _ctx| {
+        let px = args.get_or_undefined(0).as_number().unwrap_or(0.0) as f32;
+        let py = args.get_or_undefined(1).as_number().unwrap_or(0.0) as f32;
+        let entities = PHYSICS_QUERY.with(|cell| {
+            let Some(fat) = cell.get() else {
+                return Vec::new();
+            };
+            let query: &dyn mengine_core::PhysicsQuery2D =
+                unsafe { std::mem::transmute(fat) };
+            query.overlap_point([px, py])
+        });
+        let ids: Vec<String> = entities.iter().map(|id| format!("\"{id}\"")).collect();
+        Ok(JsValue::new(boa_engine::JsString::from(format!("[{}]", ids.join(",")))))
+    });
+
+    let physics_overlap_circle = native_fn(move |_this, args, _ctx| {
+        let cx = args.get_or_undefined(0).as_number().unwrap_or(0.0) as f32;
+        let cy = args.get_or_undefined(1).as_number().unwrap_or(0.0) as f32;
+        let radius = args.get_or_undefined(2).as_number().unwrap_or(1.0) as f32;
+        let entities = PHYSICS_QUERY.with(|cell| {
+            let Some(fat) = cell.get() else {
+                return Vec::new();
+            };
+            let query: &dyn mengine_core::PhysicsQuery2D =
+                unsafe { std::mem::transmute(fat) };
+            query.overlap_circle([cx, cy], radius)
+        });
+        let ids: Vec<String> = entities.iter().map(|id| format!("\"{id}\"")).collect();
+        Ok(JsValue::new(boa_engine::JsString::from(format!("[{}]", ids.join(",")))))
+    });
+
+    let physics_overlap_box = native_fn(move |_this, args, _ctx| {
+        let cx = args.get_or_undefined(0).as_number().unwrap_or(0.0) as f32;
+        let cy = args.get_or_undefined(1).as_number().unwrap_or(0.0) as f32;
+        let hx = args.get_or_undefined(2).as_number().unwrap_or(0.5) as f32;
+        let hy = args.get_or_undefined(3).as_number().unwrap_or(0.5) as f32;
+        let entities = PHYSICS_QUERY.with(|cell| {
+            let Some(fat) = cell.get() else {
+                return Vec::new();
+            };
+            let query: &dyn mengine_core::PhysicsQuery2D =
+                unsafe { std::mem::transmute(fat) };
+            query.overlap_box([cx, cy], [hx, hy])
+        });
+        let ids: Vec<String> = entities.iter().map(|id| format!("\"{id}\"")).collect();
+        Ok(JsValue::new(boa_engine::JsString::from(format!("[{}]", ids.join(",")))))
+    });
+
+    // Create engine.physics2D object and attach query functions.
+    context
+        .eval(Source::from_bytes(
+            b"engine.physics2D = { raycast: null, overlapPoint: null, overlapCircle: null, overlapBox: null };",
+        ))
+        .map_err(|e| ScriptError::Js(format!("{e}")))?;
+    let physics2d_val = engine_obj
+        .get(boa_engine::js_string!("physics2D"), context)
+        .map_err(|e| ScriptError::Js(format!("{e}")))?;
+    let physics2d_obj = physics2d_val
+        .as_object()
+        .ok_or_else(|| ScriptError::Js("physics2D not object".into()))?;
+    for (name, func) in [
+        ("raycast", physics_raycast),
+        ("overlapPoint", physics_overlap_point),
+        ("overlapCircle", physics_overlap_circle),
+        ("overlapBox", physics_overlap_box),
+    ] {
+        physics2d_obj
+            .set(
+                boa_engine::JsString::from(name),
+                func.to_js_function(context.realm()),
+                false,
+                context,
+            )
+            .map_err(|e| ScriptError::Js(format!("{e}")))?;
+    }
 
     Ok(())
 }
