@@ -3,12 +3,7 @@ use boa_engine::{Context, JsArgs, JsValue, NativeFunction, Source};
 use mengine_core::command::{CommandBuffer, WorldCommand};
 use mengine_core::World;
 use serde_json::Value as JsonValue;
-use std::sync::Mutex;
-
-fn pending() -> &'static Mutex<CommandBuffer> {
-    static CELL: std::sync::OnceLock<Mutex<CommandBuffer>> = std::sync::OnceLock::new();
-    CELL.get_or_init(|| Mutex::new(CommandBuffer::new()))
-}
+use std::sync::{Arc, Mutex};
 
 #[derive(Clone, Debug, PartialEq)]
 pub enum ScriptRuntimeRequest {
@@ -100,30 +95,27 @@ pub struct ScriptTimelineSignal {
     pub payload: Option<JsonValue>,
 }
 
-fn pending_runtime_requests() -> &'static Mutex<Vec<ScriptRuntimeRequest>> {
-    static CELL: std::sync::OnceLock<Mutex<Vec<ScriptRuntimeRequest>>> = std::sync::OnceLock::new();
-    CELL.get_or_init(|| Mutex::new(Vec::new()))
-}
-
-fn queue_runtime_request(request: ScriptRuntimeRequest) -> boa_engine::JsResult<JsValue> {
-    if let Ok(mut requests) = pending_runtime_requests().lock() {
-        requests.push(request);
-        Ok(JsValue::new(true))
-    } else {
-        Ok(JsValue::new(false))
-    }
-}
-
 /// Embeds a JS engine and exposes `engine` global for tick scripts.
+///
+/// Each host owns an isolated command buffer and runtime-request queue so
+/// multiple hosts never share mutable state.
 pub struct ScriptHost {
     context: Context,
+    commands: Arc<Mutex<CommandBuffer>>,
+    requests: Arc<Mutex<Vec<ScriptRuntimeRequest>>>,
 }
 
 impl ScriptHost {
     pub fn new() -> Result<Self, ScriptError> {
+        let commands = Arc::new(Mutex::new(CommandBuffer::new()));
+        let requests = Arc::new(Mutex::new(Vec::new()));
         let mut context = Context::default();
-        register_engine(&mut context)?;
-        Ok(Self { context })
+        register_engine(&mut context, Arc::clone(&commands), Arc::clone(&requests))?;
+        Ok(Self {
+            context,
+            commands,
+            requests,
+        })
     }
 
     pub fn eval(&mut self, source: &str) -> Result<(), ScriptError> {
@@ -145,7 +137,7 @@ impl ScriptHost {
         );
         let _ = self.context.eval(Source::from_bytes(code.as_bytes()));
 
-        if let Ok(mut buf) = pending().lock() {
+        if let Ok(mut buf) = self.commands.lock() {
             for cmd in buf.drain() {
                 world.commands.push(cmd);
             }
@@ -155,13 +147,13 @@ impl ScriptHost {
     }
 
     pub fn inject_snapshot_json(&mut self, json: &str) -> Result<(), ScriptError> {
-        let escaped = json.replace('\\', "\\\\").replace('\'', "\\'");
-        let code = format!("var lastSnapshot = '{escaped}';");
+        // Use JSON.parse for safe injection instead of fragile string escaping.
+        let code = format!("var lastSnapshot = JSON.parse({});", serde_json::to_string(json).unwrap_or_else(|_| "\"{}\"".into()));
         self.eval(&code)
     }
 
     pub fn take_runtime_requests(&mut self) -> Vec<ScriptRuntimeRequest> {
-        pending_runtime_requests()
+        self.requests
             .lock()
             .map(|mut requests| std::mem::take(&mut *requests))
             .unwrap_or_default()
@@ -347,32 +339,65 @@ impl Default for ScriptHost {
     }
 }
 
-fn register_engine(context: &mut Context) -> Result<(), ScriptError> {
-    let set_clear = NativeFunction::from_copy_closure(|_this, args, _ctx| {
+fn queue_request(
+    requests: &Arc<Mutex<Vec<ScriptRuntimeRequest>>>,
+    request: ScriptRuntimeRequest,
+) -> boa_engine::JsResult<JsValue> {
+    if let Ok(mut queue) = requests.lock() {
+        queue.push(request);
+        Ok(JsValue::new(true))
+    } else {
+        Ok(JsValue::new(false))
+    }
+}
+
+/// Creates a `NativeFunction` from a closure that captures only pure-Rust types.
+///
+/// # Safety justification
+/// The closures passed here capture `Arc<Mutex<CommandBuffer>>` and
+/// `Arc<Mutex<Vec<ScriptRuntimeRequest>>> - neither contains Boa GC-traceable
+/// values, so the `unsafe` contract of `NativeFunction::from_closure` is upheld.
+fn native_fn<F>(closure: F) -> NativeFunction
+where
+    F: Fn(&JsValue, &[JsValue], &mut Context) -> boa_engine::JsResult<JsValue> + 'static,
+{
+    // SAFETY: captures are Arc<Mutex<T>> with T: pure Rust data, no JS-traceable types.
+    unsafe { NativeFunction::from_closure(closure) }
+}
+
+fn register_engine(
+    context: &mut Context,
+    commands: Arc<Mutex<CommandBuffer>>,
+    requests: Arc<Mutex<Vec<ScriptRuntimeRequest>>>,
+) -> Result<(), ScriptError> {
+    let cmd_buf = Arc::clone(&commands);
+    let set_clear = native_fn(move |_this, args, _ctx| {
         let r = args.get_or_undefined(0).as_number().unwrap_or(0.0) as f32;
         let g = args.get_or_undefined(1).as_number().unwrap_or(0.0) as f32;
         let b = args.get_or_undefined(2).as_number().unwrap_or(0.0) as f32;
         let a = args.get_or_undefined(3).as_number().unwrap_or(1.0) as f32;
-        if let Ok(mut buf) = pending().lock() {
+        if let Ok(mut buf) = cmd_buf.lock() {
             buf.set_clear_color(r, g, b, a);
         }
         Ok(JsValue::undefined())
     });
 
-    let push_cmd = NativeFunction::from_copy_closure(|_this, args, ctx| {
+    let cmd_buf = Arc::clone(&commands);
+    let push_cmd = native_fn(move |_this, args, ctx| {
         let s = args
             .get_or_undefined(0)
             .to_string(ctx)?
             .to_std_string_escaped();
         if let Ok(cmd) = serde_json::from_str::<WorldCommand>(&s) {
-            if let Ok(mut buf) = pending().lock() {
+            if let Ok(mut buf) = cmd_buf.lock() {
                 buf.push(cmd);
             }
         }
         Ok(JsValue::undefined())
     });
 
-    let load_scene = NativeFunction::from_copy_closure(|_this, args, ctx| {
+    let req = Arc::clone(&requests);
+    let load_scene = native_fn(move |_this, args, ctx| {
         let value = args.get_or_undefined(0);
         let request = if let Some(index) = value.as_number() {
             if !index.is_finite() || index < 0.0 || index.fract() != 0.0 {
@@ -386,24 +411,16 @@ fn register_engine(context: &mut Context) -> Result<(), ScriptError> {
             }
             ScriptRuntimeRequest::LoadScene(reference)
         };
-        if let Ok(mut requests) = pending_runtime_requests().lock() {
-            requests.push(request);
-            Ok(JsValue::new(true))
-        } else {
-            Ok(JsValue::new(false))
-        }
+        queue_request(&req, request)
     });
 
-    let reload_scene = NativeFunction::from_copy_closure(|_this, _args, _ctx| {
-        if let Ok(mut requests) = pending_runtime_requests().lock() {
-            requests.push(ScriptRuntimeRequest::ReloadScene);
-            Ok(JsValue::new(true))
-        } else {
-            Ok(JsValue::new(false))
-        }
+    let req = Arc::clone(&requests);
+    let reload_scene = native_fn(move |_this, _args, _ctx| {
+        queue_request(&req, ScriptRuntimeRequest::ReloadScene)
     });
 
-    let set_animator_parameter = NativeFunction::from_copy_closure(|_this, args, ctx| {
+    let req = Arc::clone(&requests);
+    let set_animator_parameter = native_fn(move |_this, args, ctx| {
         let Some(entity) = js_entity_id(args.get_or_undefined(0), ctx) else {
             return Ok(JsValue::new(false));
         };
@@ -427,19 +444,18 @@ fn register_engine(context: &mut Context) -> Result<(), ScriptError> {
         } else {
             return Ok(JsValue::new(false));
         };
-        if let Ok(mut requests) = pending_runtime_requests().lock() {
-            requests.push(ScriptRuntimeRequest::SetAnimatorParameter {
+        queue_request(
+            &req,
+            ScriptRuntimeRequest::SetAnimatorParameter {
                 entity,
                 name,
                 value,
-            });
-            Ok(JsValue::new(true))
-        } else {
-            Ok(JsValue::new(false))
-        }
+            },
+        )
     });
 
-    let set_animator_trigger = NativeFunction::from_copy_closure(|_this, args, ctx| {
+    let req = Arc::clone(&requests);
+    let set_animator_trigger = native_fn(move |_this, args, ctx| {
         let Some(entity) = js_entity_id(args.get_or_undefined(0), ctx) else {
             return Ok(JsValue::new(false));
         };
@@ -450,19 +466,18 @@ fn register_engine(context: &mut Context) -> Result<(), ScriptError> {
         if name.trim().is_empty() {
             return Ok(JsValue::new(false));
         }
-        if let Ok(mut requests) = pending_runtime_requests().lock() {
-            requests.push(ScriptRuntimeRequest::SetAnimatorParameter {
+        queue_request(
+            &req,
+            ScriptRuntimeRequest::SetAnimatorParameter {
                 entity,
                 name,
                 value: JsonValue::Bool(true),
-            });
-            Ok(JsValue::new(true))
-        } else {
-            Ok(JsValue::new(false))
-        }
+            },
+        )
     });
 
-    let play_animator_state = NativeFunction::from_copy_closure(|_this, args, ctx| {
+    let req = Arc::clone(&requests);
+    let play_animator_state = native_fn(move |_this, args, ctx| {
         let Some(entity) = js_entity_id(args.get_or_undefined(0), ctx) else {
             return Ok(JsValue::new(false));
         };
@@ -473,15 +488,11 @@ fn register_engine(context: &mut Context) -> Result<(), ScriptError> {
         if state.trim().is_empty() {
             return Ok(JsValue::new(false));
         }
-        if let Ok(mut requests) = pending_runtime_requests().lock() {
-            requests.push(ScriptRuntimeRequest::PlayAnimatorState { entity, state });
-            Ok(JsValue::new(true))
-        } else {
-            Ok(JsValue::new(false))
-        }
+        queue_request(&req, ScriptRuntimeRequest::PlayAnimatorState { entity, state })
     });
 
-    let set_animator_layer_weight = NativeFunction::from_copy_closure(|_this, args, ctx| {
+    let req = Arc::clone(&requests);
+    let set_animator_layer_weight = native_fn(move |_this, args, ctx| {
         let Some(entity) = js_entity_id(args.get_or_undefined(0), ctx) else {
             return Ok(JsValue::new(false));
         };
@@ -495,14 +506,18 @@ fn register_engine(context: &mut Context) -> Result<(), ScriptError> {
         if layer.trim().is_empty() || !weight.is_finite() || !(0.0..=1.0).contains(&weight) {
             return Ok(JsValue::new(false));
         }
-        queue_runtime_request(ScriptRuntimeRequest::SetAnimatorLayerWeight {
-            entity,
-            layer,
-            weight: weight as f32,
-        })
+        queue_request(
+            &req,
+            ScriptRuntimeRequest::SetAnimatorLayerWeight {
+                entity,
+                layer,
+                weight: weight as f32,
+            },
+        )
     });
 
-    let play_animator_layer_state = NativeFunction::from_copy_closure(|_this, args, ctx| {
+    let req = Arc::clone(&requests);
+    let play_animator_layer_state = native_fn(move |_this, args, ctx| {
         let Some(entity) = js_entity_id(args.get_or_undefined(0), ctx) else {
             return Ok(JsValue::new(false));
         };
@@ -517,33 +532,40 @@ fn register_engine(context: &mut Context) -> Result<(), ScriptError> {
         if layer.trim().is_empty() || state.trim().is_empty() {
             return Ok(JsValue::new(false));
         }
-        queue_runtime_request(ScriptRuntimeRequest::PlayAnimatorLayerState {
-            entity,
-            layer,
-            state,
-        })
+        queue_request(
+            &req,
+            ScriptRuntimeRequest::PlayAnimatorLayerState {
+                entity,
+                layer,
+                state,
+            },
+        )
     });
 
-    let play_animation = NativeFunction::from_copy_closure(|_this, args, ctx| {
+    let req = Arc::clone(&requests);
+    let play_animation = native_fn(move |_this, args, ctx| {
         let Some(entity) = js_entity_id(args.get_or_undefined(0), ctx) else {
             return Ok(JsValue::new(false));
         };
         let restart = args.get_or_undefined(1).as_boolean().unwrap_or(false);
-        queue_runtime_request(ScriptRuntimeRequest::PlayAnimation { entity, restart })
+        queue_request(&req, ScriptRuntimeRequest::PlayAnimation { entity, restart })
     });
-    let pause_animation = NativeFunction::from_copy_closure(|_this, args, ctx| {
+    let req = Arc::clone(&requests);
+    let pause_animation = native_fn(move |_this, args, ctx| {
         let Some(entity) = js_entity_id(args.get_or_undefined(0), ctx) else {
             return Ok(JsValue::new(false));
         };
-        queue_runtime_request(ScriptRuntimeRequest::PauseAnimation { entity })
+        queue_request(&req, ScriptRuntimeRequest::PauseAnimation { entity })
     });
-    let stop_animation = NativeFunction::from_copy_closure(|_this, args, ctx| {
+    let req = Arc::clone(&requests);
+    let stop_animation = native_fn(move |_this, args, ctx| {
         let Some(entity) = js_entity_id(args.get_or_undefined(0), ctx) else {
             return Ok(JsValue::new(false));
         };
-        queue_runtime_request(ScriptRuntimeRequest::StopAnimation { entity })
+        queue_request(&req, ScriptRuntimeRequest::StopAnimation { entity })
     });
-    let seek_animation = NativeFunction::from_copy_closure(|_this, args, ctx| {
+    let req = Arc::clone(&requests);
+    let seek_animation = native_fn(move |_this, args, ctx| {
         let Some(entity) = js_entity_id(args.get_or_undefined(0), ctx) else {
             return Ok(JsValue::new(false));
         };
@@ -553,32 +575,39 @@ fn register_engine(context: &mut Context) -> Result<(), ScriptError> {
         if !time.is_finite() || time < 0.0 || time > f32::MAX as f64 {
             return Ok(JsValue::new(false));
         }
-        queue_runtime_request(ScriptRuntimeRequest::SeekAnimation {
-            entity,
-            time: time as f32,
-        })
+        queue_request(
+            &req,
+            ScriptRuntimeRequest::SeekAnimation {
+                entity,
+                time: time as f32,
+            },
+        )
     });
 
-    let play_timeline = NativeFunction::from_copy_closure(|_this, args, ctx| {
+    let req = Arc::clone(&requests);
+    let play_timeline = native_fn(move |_this, args, ctx| {
         let Some(entity) = js_entity_id(args.get_or_undefined(0), ctx) else {
             return Ok(JsValue::new(false));
         };
         let restart = args.get_or_undefined(1).as_boolean().unwrap_or(false);
-        queue_runtime_request(ScriptRuntimeRequest::PlayTimeline { entity, restart })
+        queue_request(&req, ScriptRuntimeRequest::PlayTimeline { entity, restart })
     });
-    let pause_timeline = NativeFunction::from_copy_closure(|_this, args, ctx| {
+    let req = Arc::clone(&requests);
+    let pause_timeline = native_fn(move |_this, args, ctx| {
         let Some(entity) = js_entity_id(args.get_or_undefined(0), ctx) else {
             return Ok(JsValue::new(false));
         };
-        queue_runtime_request(ScriptRuntimeRequest::PauseTimeline { entity })
+        queue_request(&req, ScriptRuntimeRequest::PauseTimeline { entity })
     });
-    let stop_timeline = NativeFunction::from_copy_closure(|_this, args, ctx| {
+    let req = Arc::clone(&requests);
+    let stop_timeline = native_fn(move |_this, args, ctx| {
         let Some(entity) = js_entity_id(args.get_or_undefined(0), ctx) else {
             return Ok(JsValue::new(false));
         };
-        queue_runtime_request(ScriptRuntimeRequest::StopTimeline { entity })
+        queue_request(&req, ScriptRuntimeRequest::StopTimeline { entity })
     });
-    let seek_timeline = NativeFunction::from_copy_closure(|_this, args, ctx| {
+    let req = Arc::clone(&requests);
+    let seek_timeline = native_fn(move |_this, args, ctx| {
         let Some(entity) = js_entity_id(args.get_or_undefined(0), ctx) else {
             return Ok(JsValue::new(false));
         };
@@ -588,31 +617,38 @@ fn register_engine(context: &mut Context) -> Result<(), ScriptError> {
         if !time.is_finite() || time < 0.0 || time > f32::MAX as f64 {
             return Ok(JsValue::new(false));
         }
-        queue_runtime_request(ScriptRuntimeRequest::SeekTimeline {
-            entity,
-            time: time as f32,
-        })
+        queue_request(
+            &req,
+            ScriptRuntimeRequest::SeekTimeline {
+                entity,
+                time: time as f32,
+            },
+        )
     });
 
-    let play_audio = NativeFunction::from_copy_closure(|_this, args, ctx| {
+    let req = Arc::clone(&requests);
+    let play_audio = native_fn(move |_this, args, ctx| {
         let Some(entity) = js_entity_id(args.get_or_undefined(0), ctx) else {
             return Ok(JsValue::new(false));
         };
-        queue_runtime_request(ScriptRuntimeRequest::PlayAudio { entity })
+        queue_request(&req, ScriptRuntimeRequest::PlayAudio { entity })
     });
-    let pause_audio = NativeFunction::from_copy_closure(|_this, args, ctx| {
+    let req = Arc::clone(&requests);
+    let pause_audio = native_fn(move |_this, args, ctx| {
         let Some(entity) = js_entity_id(args.get_or_undefined(0), ctx) else {
             return Ok(JsValue::new(false));
         };
-        queue_runtime_request(ScriptRuntimeRequest::PauseAudio { entity })
+        queue_request(&req, ScriptRuntimeRequest::PauseAudio { entity })
     });
-    let stop_audio = NativeFunction::from_copy_closure(|_this, args, ctx| {
+    let req = Arc::clone(&requests);
+    let stop_audio = native_fn(move |_this, args, ctx| {
         let Some(entity) = js_entity_id(args.get_or_undefined(0), ctx) else {
             return Ok(JsValue::new(false));
         };
-        queue_runtime_request(ScriptRuntimeRequest::StopAudio { entity })
+        queue_request(&req, ScriptRuntimeRequest::StopAudio { entity })
     });
-    let seek_audio = NativeFunction::from_copy_closure(|_this, args, ctx| {
+    let req = Arc::clone(&requests);
+    let seek_audio = native_fn(move |_this, args, ctx| {
         let Some(entity) = js_entity_id(args.get_or_undefined(0), ctx) else {
             return Ok(JsValue::new(false));
         };
@@ -622,12 +658,16 @@ fn register_engine(context: &mut Context) -> Result<(), ScriptError> {
         if !time.is_finite() || time < 0.0 || time > f32::MAX as f64 {
             return Ok(JsValue::new(false));
         }
-        queue_runtime_request(ScriptRuntimeRequest::SeekAudio {
-            entity,
-            time: time as f32,
-        })
+        queue_request(
+            &req,
+            ScriptRuntimeRequest::SeekAudio {
+                entity,
+                time: time as f32,
+            },
+        )
     });
-    let instantiate_prefab = NativeFunction::from_copy_closure(|_this, args, ctx| {
+    let req = Arc::clone(&requests);
+    let instantiate_prefab = native_fn(move |_this, args, ctx| {
         let path = args
             .get_or_undefined(0)
             .to_string(ctx)?
@@ -643,7 +683,7 @@ fn register_engine(context: &mut Context) -> Result<(), ScriptError> {
             };
             Some(parent)
         };
-        queue_runtime_request(ScriptRuntimeRequest::InstantiatePrefab { path, parent })
+        queue_request(&req, ScriptRuntimeRequest::InstantiatePrefab { path, parent })
     });
 
     context
@@ -819,14 +859,8 @@ fn js_entity_id(value: &JsValue, context: &mut Context) -> Option<u64> {
 mod tests {
     use super::*;
 
-    fn request_test_guard() -> std::sync::MutexGuard<'static, ()> {
-        static LOCK: std::sync::Mutex<()> = std::sync::Mutex::new(());
-        LOCK.lock().unwrap_or_else(|poisoned| poisoned.into_inner())
-    }
-
     #[test]
     fn scripts_request_scene_changes_and_receive_scene_context() {
-        let _guard = request_test_guard();
         let mut host = ScriptHost::new().unwrap();
         host.eval(
             r#"
@@ -970,7 +1004,6 @@ mod tests {
 
     #[test]
     fn scripts_can_drive_animator_parameters_triggers_and_states() {
-        let _guard = request_test_guard();
         let mut host = ScriptHost::new().unwrap();
         host.eval(
             r#"
@@ -1067,6 +1100,22 @@ mod tests {
                     time: 3.75,
                 },
             ]
+        );
+    }
+
+    #[test]
+    fn two_hosts_are_isolated() {
+        let mut host_a = ScriptHost::new().unwrap();
+        let mut host_b = ScriptHost::new().unwrap();
+        host_a.eval("engine.loadScene(1);").unwrap();
+        host_b.eval("engine.loadScene(2);").unwrap();
+        assert_eq!(
+            host_a.take_runtime_requests(),
+            vec![ScriptRuntimeRequest::LoadSceneByIndex(1)]
+        );
+        assert_eq!(
+            host_b.take_runtime_requests(),
+            vec![ScriptRuntimeRequest::LoadSceneByIndex(2)]
         );
     }
 }
