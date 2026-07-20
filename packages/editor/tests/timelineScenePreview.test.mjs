@@ -402,6 +402,13 @@ test('evaluates nested Control Tracks relative to their target with timing and c
       active: true,
       components: { AudioSource: { mute: false, pan: 0 } },
     },
+    {
+      entity: 7,
+      name: 'Hero',
+      parent: 1,
+      active: true,
+      components: { AnimationPlayer: {}, Transform: { position: [0, 0, 0] } },
+    },
   ];
   const child = parseTimelineAsset(JSON.stringify({
     version: 1,
@@ -425,7 +432,10 @@ test('evaluates nested Control Tracks relative to their target with timing and c
     tracks: [
       {
         type: 'control', id: 'nested', name: 'Nested Sequence', target: 'Panel',
-        clips: [{ start: 0, duration: 1, timeline: 'Assets/Timelines/Child.mtimeline', clip_in: 0.5, speed: 1.5 }],
+        clips: [{
+          start: 0, duration: 1, timeline: 'Assets/Timelines/Child.mtimeline', clip_in: 0.5, speed: 1.5,
+          binding_overrides: { NestedActor: 'Cast/Lead' },
+        }],
       },
     ],
   }));
@@ -437,7 +447,7 @@ test('evaluates nested Control Tracks relative to their target with timing and c
     parent,
     nestedEntities,
     1,
-    '{}',
+    '{"version":1,"bindings":{"Cast/Lead":{"entity":"7","name":"Hero"}}}',
     0.25,
     clips,
     timelines,
@@ -447,7 +457,20 @@ test('evaluates nested Control Tracks relative to their target with timing and c
   assert.equal(build.audio[0].key, 'nested:0/sound');
   assert.equal(build.audio[0].sourceTime, 0.875);
   const preview = applyTimelineScenePreview(nestedEntities, build.preview);
-  assert.equal(preview[4].components.Transform.position[0], 8.75);
+  assert.equal(preview.find((entity) => entity.entity === 5).components.Transform.position[0], 0);
+  assert.equal(preview.find((entity) => entity.entity === 7).components.Transform.position[0], 8.75);
+
+  const missingOverride = buildTimelineScenePreview(
+    parent,
+    nestedEntities,
+    1,
+    '{}',
+    0.25,
+    clips,
+    timelines,
+    'Assets/Timelines/Parent.mtimeline',
+  );
+  assert.match(missingOverride.diagnostics.join(' '), /cannot resolve parent target 'Cast\/Lead'/);
 
   const hiddenParent = structuredClone(parent);
   hiddenParent.tracks.unshift({
@@ -459,7 +482,7 @@ test('evaluates nested Control Tracks relative to their target with timing and c
     hiddenParent,
     nestedEntities,
     1,
-    '{}',
+    '{"version":1,"bindings":{"Cast/Lead":{"entity":"7","name":"Hero"}}}',
     0.25,
     clips,
     timelines,
@@ -477,7 +500,7 @@ test('evaluates nested Control Tracks relative to their target with timing and c
     parent,
     nestedEntities,
     1,
-    '{}',
+    '{"version":1,"bindings":{"Cast/Lead":{"entity":"7","name":"Hero"}}}',
     0.25,
     clips,
     new Map([

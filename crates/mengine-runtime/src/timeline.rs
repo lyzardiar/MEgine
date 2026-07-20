@@ -3,7 +3,7 @@ use crate::particles::MAX_INCREMENTAL_DELTA;
 use crate::textures::resolve_project_asset_path;
 use mengine_assets::{
     load_timeline_asset, parse_timeline_binding_table, TimelineAsset, TimelineAudioClip,
-    TimelineBindingTable, TimelineTrack,
+    TimelineBindingTable, TimelineControlClip, TimelineEntityBinding, TimelineTrack,
 };
 use mengine_core::generated::{
     AnimationPlayer, Animator, AudioSource, Camera2D, Camera3D, ParticleEmitter2D,
@@ -678,6 +678,23 @@ impl TimelineRuntime {
                 }
             };
             let source_end = clip.clip_in + clip.duration * clip.speed;
+            if let Some(unknown) = clip
+                .binding_overrides
+                .keys()
+                .find(|target| !child.requires_binding_target(target))
+            {
+                if self.reported_control_failures.insert(report_key) {
+                    failures.push(TimelineLoadFailure {
+                        entity: owner,
+                        asset: asset_key.to_owned(),
+                        error: format!(
+                            "control track '{name}' overrides unknown binding target '{unknown}' in '{}'",
+                            clip.timeline
+                        ),
+                    });
+                }
+                continue;
+            }
             if clip.clip_in < -f32::EPSILON
                 || clip.clip_in > child.duration + f32::EPSILON
                 || source_end < -f32::EPSILON
@@ -707,7 +724,7 @@ impl TimelineRuntime {
                 (clip.clip_in + (entry - clip.start) * clip.speed).clamp(0.0, child.duration)
             };
             let child_just_started = just_started || !was_active;
-            let child_bindings = TimelineBindingTable::default();
+            let child_bindings = control_binding_table(world, root, bindings, clip);
             let mut child_stack = stack.to_vec();
             child_stack.push(normalized_child_key);
             self.apply_timeline_layers(
@@ -847,6 +864,23 @@ impl TimelineRuntime {
                     }
                 };
                 let source_end = clip.clip_in + clip.duration * clip.speed;
+                if let Some(unknown) = clip
+                    .binding_overrides
+                    .keys()
+                    .find(|target| !child.requires_binding_target(target))
+                {
+                    if self.reported_control_failures.insert(report_key.clone()) {
+                        failures.push(TimelineLoadFailure {
+                            entity: owner,
+                            asset: asset_key.to_owned(),
+                            error: format!(
+                                "control track '{name}' overrides unknown binding target '{unknown}' in '{}'",
+                                clip.timeline
+                            ),
+                        });
+                    }
+                    continue;
+                }
                 if clip.clip_in < -f32::EPSILON
                     || clip.clip_in > child.duration + f32::EPSILON
                     || source_end < -f32::EPSILON
@@ -880,7 +914,7 @@ impl TimelineRuntime {
                     false,
                     &mut self.pending_signals,
                 );
-                let child_bindings = TimelineBindingTable::default();
+                let child_bindings = control_binding_table(world, root, bindings, clip);
                 let mut child_stack = stack.to_vec();
                 child_stack.push(normalized_child_key);
                 self.collect_control_signals_segment(
@@ -1734,6 +1768,36 @@ fn resolve_timeline_target(
         };
     }
     resolve_descendant_target(world, root, target).ok_or(TimelineTargetError::MissingLegacyPath)
+}
+
+fn control_binding_table(
+    world: &World,
+    parent_root: Entity,
+    parent_bindings: &TimelineBindingTable,
+    clip: &TimelineControlClip,
+) -> TimelineBindingTable {
+    let mut child = TimelineBindingTable::default();
+    for (child_target, parent_target) in &clip.binding_overrides {
+        let binding = if let Some(binding) = parent_bindings.bindings.get(parent_target) {
+            binding.clone()
+        } else if let Some(entity) = resolve_descendant_target(world, parent_root, parent_target) {
+            TimelineEntityBinding {
+                entity: entity.to_u64().to_string(),
+                name: world.entity_name(entity).unwrap_or_default().to_owned(),
+                missing: false,
+            }
+        } else {
+            // Preserve the explicit override as stale. Omitting it would incorrectly
+            // fall back to resolving the child target below the nested root.
+            TimelineEntityBinding {
+                entity: parent_root.to_u64().to_string(),
+                name: parent_target.clone(),
+                missing: true,
+            }
+        };
+        child.bindings.insert(child_target.clone(), binding);
+    }
+    child
 }
 
 fn resolve_descendant_target(world: &World, root: Entity, target: &str) -> Option<Entity> {
@@ -2922,7 +2986,7 @@ mod tests {
         fs::create_dir_all(&timelines).unwrap();
         fs::write(
             timelines.join("Parent.mtimeline"),
-            r#"{"version":1,"duration":2,"tracks":[{"type":"control","id":"nested","name":"Nested","target":"Sequence","clips":[{"start":0,"duration":1,"timeline":"Assets/Timelines/Child.mtimeline","clip_in":0.5,"speed":1.5}]}]}"#,
+            r#"{"version":1,"duration":2,"tracks":[{"type":"control","id":"nested","name":"Nested","target":"Sequence","clips":[{"start":0,"duration":1,"timeline":"Assets/Timelines/Child.mtimeline","clip_in":0.5,"speed":1.5,"binding_overrides":{"Sound":"Cast/Audio"}}]}]}"#,
         )
         .unwrap();
         fs::write(
@@ -2940,16 +3004,33 @@ mod tests {
         world.set_component_value(sound, "Name", serde_json::json!({ "value": "Sound" }));
         world.set_parent(sound, Some(sequence));
         world.insert_component(sound, AudioSource::default());
+        let routed_sound = world.spawn_empty();
+        world.set_component_value(
+            routed_sound,
+            "Name",
+            serde_json::json!({ "value": "Routed Sound" }),
+        );
+        world.set_parent(routed_sound, Some(director));
+        world.insert_component(routed_sound, AudioSource::default());
         world.insert_component(
             director,
             TimelineDirector {
                 asset: "Assets/Timelines/Parent.mtimeline".into(),
+                bindings_json: format!(
+                    r#"{{"version":1,"bindings":{{"Cast/Audio":{{"entity":"{}","name":"Routed Sound"}}}}}}"#,
+                    routed_sound.to_u64()
+                ),
                 ..TimelineDirector::default()
             },
         );
         let mut runtime = TimelineRuntime::new(Some(root.clone()));
         assert!(runtime.update(&mut world, 0.25).is_empty());
-        let source = world.get_component::<AudioSource>(sound).unwrap();
+        assert!(world
+            .get_component::<AudioSource>(sound)
+            .unwrap()
+            .clip
+            .is_empty());
+        let source = world.get_component::<AudioSource>(routed_sound).unwrap();
         assert_eq!(source.clip, "Assets/Audio/nested.ogg");
         assert!((source.time - 0.875).abs() < 0.0001);
         assert_eq!(
@@ -2987,11 +3068,28 @@ mod tests {
                 .collect::<Vec<_>>(),
             ["Nested Beat"]
         );
-        assert!((world.get_component::<AudioSource>(sound).unwrap().time - 0.875).abs() < 0.0001);
+        assert!(
+            (world
+                .get_component::<AudioSource>(routed_sound)
+                .unwrap()
+                .time
+                - 0.875)
+                .abs()
+                < 0.0001
+        );
 
         fs::write(
             timelines.join("Child.mtimeline"),
             r#"{"version":1,"duration":2,"tracks":[{"type":"control","id":"back","name":"Back","target":"LoopRoot","clips":[{"start":0,"duration":1,"timeline":"Assets/Timelines/Parent.mtimeline"}]}]}"#,
+        )
+        .unwrap();
+        let mut invalid_binding_runtime = TimelineRuntime::new(Some(root.clone()));
+        let failures = invalid_binding_runtime.update(&mut world, 0.25);
+        assert_eq!(failures.len(), 1);
+        assert!(failures[0].error.contains("unknown binding target 'Sound'"));
+        fs::write(
+            timelines.join("Parent.mtimeline"),
+            r#"{"version":1,"duration":2,"tracks":[{"type":"control","id":"nested","name":"Nested","target":"Sequence","clips":[{"start":0,"duration":1,"timeline":"Assets/Timelines/Child.mtimeline","clip_in":0.5,"speed":1.5}]}]}"#,
         )
         .unwrap();
         let loop_root = world.spawn_empty();

@@ -2,11 +2,12 @@ use crate::{AssetError, AssetError::Io};
 use mengine_core::Entity;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
-use std::collections::{BTreeMap, HashMap, HashSet};
+use std::collections::{BTreeMap, BTreeSet, HashMap, HashSet};
 use std::path::Path;
 
 pub const MAX_TIMELINE_PARTICLE_TIME: f32 = 300.0;
 pub const MAX_TIMELINE_BINDINGS: usize = 256;
+pub const MAX_TIMELINE_CONTROL_BINDING_OVERRIDES: usize = 256;
 const TIMELINE_ANIMATION_OVERLAP_EPSILON: f32 = 0.0001;
 
 fn animation_crossfades_are_valid(clips: &[TimelineAnimationClip]) -> bool {
@@ -245,6 +246,8 @@ pub struct TimelineControlClip {
     pub clip_in: f32,
     #[serde(default = "default_one")]
     pub speed: f32,
+    #[serde(default, skip_serializing_if = "BTreeMap::is_empty")]
+    pub binding_overrides: BTreeMap<String, String>,
 }
 
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
@@ -423,6 +426,60 @@ impl Default for TimelineAsset {
 }
 
 impl TimelineAsset {
+    pub fn requires_binding_target(&self, target: &str) -> bool {
+        self.tracks.iter().any(|track| match track {
+            TimelineTrack::Signal { .. } => false,
+            TimelineTrack::Camera { clips, .. } => clips.iter().any(|clip| clip.target == target),
+            TimelineTrack::Activation {
+                target: candidate, ..
+            }
+            | TimelineTrack::Audio {
+                target: candidate, ..
+            }
+            | TimelineTrack::Animation {
+                target: candidate, ..
+            }
+            | TimelineTrack::Particle {
+                target: candidate, ..
+            } => candidate == target,
+            TimelineTrack::Control {
+                target: candidate,
+                clips,
+                ..
+            } => {
+                candidate == target
+                    || clips
+                        .iter()
+                        .any(|clip| clip.binding_overrides.values().any(|value| value == target))
+            }
+        })
+    }
+
+    pub fn required_binding_targets(&self) -> BTreeSet<String> {
+        let mut targets = BTreeSet::new();
+        for track in &self.tracks {
+            match track {
+                TimelineTrack::Signal { .. } => {}
+                TimelineTrack::Camera { clips, .. } => {
+                    targets.extend(clips.iter().map(|clip| clip.target.clone()));
+                }
+                TimelineTrack::Activation { target, .. }
+                | TimelineTrack::Audio { target, .. }
+                | TimelineTrack::Animation { target, .. }
+                | TimelineTrack::Particle { target, .. } => {
+                    targets.insert(target.clone());
+                }
+                TimelineTrack::Control { target, clips, .. } => {
+                    targets.insert(target.clone());
+                    for clip in clips {
+                        targets.extend(clip.binding_overrides.values().cloned());
+                    }
+                }
+            }
+        }
+        targets
+    }
+
     pub fn normalized(mut self) -> Result<Self, AssetError> {
         if self.version != default_version() {
             return Err(AssetError::Invalid(format!(
@@ -813,6 +870,30 @@ impl TimelineAsset {
                                 "Timeline control track '{id}' contains an invalid nested Timeline path"
                             ))
                         })?;
+                        if clip.binding_overrides.len() > MAX_TIMELINE_CONTROL_BINDING_OVERRIDES {
+                            return Err(AssetError::Invalid(format!(
+                                "Timeline control track '{id}' exceeds {MAX_TIMELINE_CONTROL_BINDING_OVERRIDES} binding overrides"
+                            )));
+                        }
+                        let mut binding_overrides = BTreeMap::new();
+                        for (child, parent) in std::mem::take(&mut clip.binding_overrides) {
+                            let child = normalize_timeline_target(&child).ok_or_else(|| {
+                                AssetError::Invalid(format!(
+                                    "Timeline control track '{id}' contains an invalid child binding target"
+                                ))
+                            })?;
+                            let parent = normalize_timeline_target(&parent).ok_or_else(|| {
+                                AssetError::Invalid(format!(
+                                    "Timeline control track '{id}' contains an invalid parent binding target"
+                                ))
+                            })?;
+                            if binding_overrides.insert(child.clone(), parent).is_some() {
+                                return Err(AssetError::Invalid(format!(
+                                    "Timeline control track '{id}' duplicates child binding target '{child}' after normalization"
+                                )));
+                            }
+                        }
+                        clip.binding_overrides = binding_overrides;
                         if !clip.start.is_finite()
                             || !clip.duration.is_finite()
                             || clip.start < 0.0
@@ -1325,7 +1406,8 @@ mod tests {
               "tracks":[{"type":"control","id":"dialogue","name":" Dialogue ",
                 "target":"Sequences\\Dialogue","clips":[
                   {"start":3,"duration":2,"timeline":"assets\\Timelines\\Outro.mtimeline","clip_in":1,"speed":-0.5},
-                  {"start":0,"duration":2,"timeline":"Assets/Timelines/Intro.mtimeline"}
+                  {"start":0,"duration":2,"timeline":"Assets/Timelines/Intro.mtimeline",
+                    "binding_overrides":{"Actor\\Body":"Cast\\Lead"}}
                 ]}]
             }"#,
         )
@@ -1343,8 +1425,13 @@ mod tests {
         assert_eq!(target, "Sequences/Dialogue");
         assert_eq!(clips[0].timeline, "Assets/Timelines/Intro.mtimeline");
         assert_eq!(clips[0].speed, 1.0);
+        assert_eq!(clips[0].binding_overrides["Actor/Body"], "Cast/Lead");
         assert_eq!(clips[1].timeline, "Assets/Timelines/Outro.mtimeline");
         assert_eq!(clips[1].speed, -0.5);
+        assert_eq!(
+            asset.required_binding_targets(),
+            BTreeSet::from(["Cast/Lead".to_owned(), "Sequences/Dialogue".to_owned()])
+        );
 
         assert!(parse_timeline_asset(
             br#"{"version":1,"duration":2,"tracks":[{"type":"control","id":"nested","name":"Nested","target":"Sequences","clips":[{"start":0,"duration":1,"timeline":"Assets/Scenes/Nested.mscene"}]}]}"#,
@@ -1352,6 +1439,10 @@ mod tests {
         .is_err());
         assert!(parse_timeline_asset(
             br#"{"version":1,"duration":2,"tracks":[{"type":"control","id":"a","name":"A","target":"Sequences","clips":[]},{"type":"control","id":"b","name":"B","target":"Sequences","clips":[]}]}"#,
+        )
+        .is_err());
+        assert!(parse_timeline_asset(
+            br#"{"version":1,"duration":2,"tracks":[{"type":"control","id":"nested","name":"Nested","target":"Sequences","clips":[{"start":0,"duration":1,"timeline":"Assets/Timelines/Child.mtimeline","binding_overrides":{"Actor\\Body":"Cast/Lead","Actor/Body":"Cast/Backup"}}]}]}"#,
         )
         .is_err());
     }

@@ -1068,6 +1068,7 @@ test('buildPcPackage includes and validates TimelineDirector assets', () => {
         type: 'control', id: 'nested', name: 'Nested', target: 'Sequences/Nested',
         clips: [{
           start: 0.5, duration: 1, timeline: 'Assets/Timelines/Nested.mtimeline', clip_in: 0.25, speed: 1.5,
+          binding_overrides: { Actor: 'Characters/Hero' },
         }],
       }, {
         type: 'camera', id: 'shots', name: 'Shots',
@@ -1086,8 +1087,7 @@ test('buildPcPackage includes and validates TimelineDirector assets', () => {
       name: 'Nested',
       duration: 2,
       tracks: [{
-        type: 'signal', id: 'nested-events', name: 'Nested Events',
-        markers: [{ time: 1, name: 'NestedBeat' }],
+        type: 'activation', id: 'actor', name: 'Actor', target: 'Actor', clips: [],
       }],
     }));
     mkdirSync(join(paths.project, 'Assets', 'Audio'), { recursive: true });
@@ -1149,6 +1149,27 @@ test('buildPcPackage rejects Control Track cycles and out-of-range child windows
       runtimePath: paths.runtime,
       engineVersion: 'test-engine',
     }), /source window is outside/);
+
+    writeFileSync(join(paths.project, 'Assets', 'Timelines', 'B.mtimeline'), JSON.stringify({
+      version: 1, duration: 2,
+      tracks: [{ type: 'activation', id: 'actor', name: 'Actor', target: 'Actor', clips: [] }],
+    }));
+    writeFileSync(join(paths.project, 'Assets', 'Timelines', 'A.mtimeline'), JSON.stringify({
+      version: 1, duration: 2,
+      tracks: [{
+        type: 'control', id: 'nested', name: 'Nested', target: 'Nested',
+        clips: [{
+          start: 0, duration: 1, timeline: 'Assets/Timelines/B.mtimeline',
+          binding_overrides: { Missing: 'Characters/Hero' },
+        }],
+      }],
+    }));
+    assert.throws(() => buildPcPackage({
+      projectDir: paths.project,
+      outputDir: join(paths.root, 'binding-output'),
+      runtimePath: paths.runtime,
+      engineVersion: 'test-engine',
+    }), /overrides unknown child binding Missing/);
   } finally {
     rmSync(paths.root, { recursive: true, force: true });
   }

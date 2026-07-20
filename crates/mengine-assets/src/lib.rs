@@ -54,7 +54,7 @@ pub use timeline::{
     TimelineAnimationClip, TimelineAsset, TimelineAudioClip, TimelineBindingTable,
     TimelineCameraClip, TimelineControlClip, TimelineEntityBinding, TimelineParticleClip,
     TimelineSignal, TimelineTrack, TimelineTrackGroup, MAX_TIMELINE_BINDINGS,
-    MAX_TIMELINE_PARTICLE_TIME,
+    MAX_TIMELINE_CONTROL_BINDING_OVERRIDES, MAX_TIMELINE_PARTICLE_TIME,
 };
 
 #[derive(Clone, Debug, PartialEq, Eq)]

@@ -1699,3 +1699,16 @@ Camera Shot 的基础闭环已经形成，但 Timeline 仍不完备：编辑器 
 第二遍自省从“契约是否在所有入口一致”反查了 Editor、Rust 资产模型、Runtime、CLI 和最终包校验的路径、深度及源窗口边界，并在真实 1280×720 编辑器中打开父子 Timeline：Control 轨道和子片段可见，Inspector 四个关键字段唯一出现，Track 菜单可创建 Sub-Timeline；验证后已恢复默认布局并清理临时资产和 Sidecar。最终编辑器测试 375/375、CLI 测试 57/57、资产层测试 52/52、运行时测试 122/122 全部通过；Rust 全 Workspace/All Targets 检查、格式检查与根级 `build:editor` 生产构建通过。构建仍提示主入口 521.34kB 超过既有 500kB 分包预算，这不是本批新增的功能错误，但应进入后续加载性能治理。
 
 这批完成的是可发布、可预览、可运行的 Sub-Timeline 最小闭环，还不是成熟 Timeline 的终点。下一阶段需要补子 Timeline 的公开绑定覆盖、跨父子层的全局 Signal 时间排序、子片段循环/外推模式、内联展开的层级轨道树、Prefab Control、录制模式、模板与虚拟化，并把嵌套求值缓存和依赖图接入 Profiler；在这些契约完成前，不应只在 Sequencer 表层追加更多视觉按钮。
+
+## 144. 2026-07-20 Sub-Timeline 公开绑定覆盖
+
+- Control Clip 新增 `binding_overrides`，以可序列化的“子 Timeline 目标 → 当前 Timeline 目标”映射表达公开引用覆盖。映射只保存可移植路径，不把场景 Entity ID 写入可复用 `.mtimeline`；真正的稳定 Entity 仍由当前 `TimelineDirector.bindings_json` 持有，因此同一子 Timeline 可以复用于不同角色、Prefab 实例或场景对象。TypeScript 与 Rust 资产层统一规范斜杠、限制 256 项、拒绝空段、`.`、`..` 及规范化后的重复子键，并能从普通轨道、Camera Shot、Control 根和下一层覆盖入口计算完整公开绑定集合。
+- Sequencer 在 Sub-Timeline Clip Inspector 中读取实际子资产并列出 Child Binding Overrides。每个公开目标可选择保留 Child-root lookup，或映射到当前 Timeline 的目标；映射后可继续用 Parent child-path lookup，也可通过 Bind Selected 写入 Director 稳定绑定，Use Path 回退，Remove 删除覆盖。状态明确区分 Stable、Stale、Parent Path、Child Root 与 Unknown Child Target；窄 Dock 下状态独占一行、操作按钮可换行，避免绑定编辑器制造横向滚动。
+- Scene 预览和 Runtime 在每一层递归进入前派生独立子绑定表：优先复制父层稳定绑定，否则从当前父根解析目标；显式覆盖无法解析时保留为 Stale，绝不静默退回同名的子根对象。映射允许把子 Timeline 的 Animation、Activation、Audio、Particle、Camera 或下一层 Control 直接路由到嵌套根之外的场景实体，覆盖所有权仍归最顶层 Director，退出、暂停和 Seek 后可正确恢复。
+- CLI staging 扫描与最终 Player 包校验现在都建立每个 Timeline 的公开绑定集合，并在依赖图闭合后拒绝不存在于子资产的覆盖键；Runtime 项目模式也执行同一检查，避免编辑器直跑绕过 Build Gate。空映射保持向后兼容，旧 `.mtimeline` 无需迁移；复制单片段或多片段组时会完整保留绑定覆盖。
+
+第一遍自省从“被静音的轨道还能否被创作”反查，发现初稿沿用了预览求值过滤：Muted、被 Solo 排除或位于静音 Group 的 Control Track 不加载子资产，Inspector 会误报资源不存在并隐藏绑定入口，而构建端仍会校验该依赖。现将创作依赖加载与播放求值彻底分开：Sequencer 递归加载全部 authored Control 依赖，只有 Scene 预览执行 Solo/Muted 过滤。绑定映射写入还改用计算属性重建对象，避免 `__proto__` 等合法路径键触发普通对象原型赋值。
+
+第二遍自省在 1280×720 真实编辑器中打开一个 Muted Control Track：子资产仍成功加载，Inspector 显示 `Actor → Characters/Hero` 和 Parent child-path 状态；Remove 立即切回 Child-root lookup，单步 Undo 恢复原映射，页面 Console 无 warn/error。视觉检查发现窄 Inspector 中状态与三个按钮争抢单行，现改为状态独占行、按钮按空间换行；最终差异审计又移除了 Runtime 每帧为每个 Control Clip 构造公开目标集合的分配，改成无分配直接查询，完整集合只在编辑器和构建审计阶段生成。临时父子 Timeline、自动 Sidecar、Scene Sidecar 和 Editor 状态差异均已清理。最终编辑器测试 375/375、CLI 测试 57/57、资产层测试 52/52、运行时测试 122/122 全部通过；Rust 全 Workspace/All Targets、格式检查、相关 Clippy 与根级 `build:editor` 生产构建通过。主入口现为 522.95kB，仍超过既有 500kB 分包预算。
+
+公开绑定覆盖补齐了 Sub-Timeline 复用的关键前提，但 Timeline 还没有达到 Unity 级成熟度。下一批优先解决跨父子 Timeline 的 Signal 全局时间排序与子片段循环/外推语义，再实现可缩进、可搜索、可内联展开的轨道树；后续仍需 Prefab Control、录制模式、轨道模板、虚拟化、嵌套求值缓存和 Profiler 依赖视图。

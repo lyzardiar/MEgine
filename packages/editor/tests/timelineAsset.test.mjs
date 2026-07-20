@@ -7,6 +7,7 @@ import {
   parseTimelineAsset,
   serializeTimelineAsset,
   snapTimelineAssetTime,
+  timelineBindingTargets,
   timelineHasSolo,
   timelineGroupForTrack,
   timelineTrackIsLocked,
@@ -315,15 +316,22 @@ test('timeline control tracks normalize nested assets and reject invalid windows
       type: 'control', id: 'dialogue', name: 'Dialogue', target: 'Sequences\\Dialogue',
       clips: [
         { start: 3, duration: 2, timeline: 'assets\\Timelines\\Outro.mtimeline', clip_in: 1, speed: -0.5 },
-        { start: 0, duration: 2, timeline: 'Assets/Timelines/Intro.mtimeline' },
+        {
+          start: 0, duration: 2, timeline: 'Assets/Timelines/Intro.mtimeline',
+          binding_overrides: { 'Actor\\Body': 'Cast\\Lead' },
+        },
       ],
     }],
   }));
   assert.equal(asset.tracks[0].target, 'Sequences/Dialogue');
   assert.deepEqual(asset.tracks[0].clips, [
-    { start: 0, duration: 2, timeline: 'Assets/Timelines/Intro.mtimeline', clip_in: 0, speed: 1 },
-    { start: 3, duration: 2, timeline: 'Assets/Timelines/Outro.mtimeline', clip_in: 1, speed: -0.5 },
+    {
+      start: 0, duration: 2, timeline: 'Assets/Timelines/Intro.mtimeline', clip_in: 0, speed: 1,
+      binding_overrides: { 'Actor/Body': 'Cast/Lead' },
+    },
+    { start: 3, duration: 2, timeline: 'Assets/Timelines/Outro.mtimeline', clip_in: 1, speed: -0.5, binding_overrides: {} },
   ]);
+  assert.deepEqual(timelineBindingTargets(asset), ['Cast/Lead', 'Sequences/Dialogue']);
   assert.deepEqual(parseTimelineAsset(serializeTimelineAsset(asset)), asset);
   assert.throws(() => parseTimelineAsset(JSON.stringify({
     version: 1, duration: 2,
@@ -338,6 +346,13 @@ test('timeline control tracks normalize nested assets and reject invalid windows
       { type: 'control', id: 'b', name: 'B', target: 'Sequences', clips: [] },
     ],
   })), /more than one track/);
+  assert.throws(() => parseTimelineAsset(JSON.stringify({
+    version: 1, duration: 2,
+    tracks: [{ type: 'control', id: 'nested', name: 'Nested', target: 'Sequences', clips: [{
+      start: 0, duration: 1, timeline: 'Assets/Timelines/Child.mtimeline',
+      binding_overrides: { 'Actor\\Body': 'Cast/Lead', 'Actor/Body': 'Cast/Backup' },
+    }] }],
+  })), /invalid/);
 });
 
 test('timeline camera tracks normalize shots and reject invalid blends', () => {

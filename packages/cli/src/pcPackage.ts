@@ -960,12 +960,14 @@ function scanBuildAssetDependencies(
     textures: Array<{ name: string; path: string }>;
   }> = [];
   const timelineDurations = new Map<string, number>();
+  const timelineRequiredBindingTargets = new Map<string, Set<string>>();
   const timelineControlEdges = new Map<string, Array<{
     timeline: string;
     track: string;
     clipIn: number;
     duration: number;
     speed: number;
+    bindingOverrides: Array<{ child: string; parent: string }>;
   }>>();
   const materialVariantRoots = new Set<string>();
   let auditedScenes = 0;
@@ -1657,7 +1659,9 @@ function scanBuildAssetDependencies(
         clipIn: number;
         duration: number;
         speed: number;
+        bindingOverrides: Array<{ child: string; parent: string }>;
       }> = [];
+      const requiredBindingTargets = new Set<string>();
       if (timeline.frame_rate != null
         && (typeof timeline.frame_rate !== 'number'
           || !Number.isFinite(timeline.frame_rate)
@@ -1718,6 +1722,7 @@ function scanBuildAssetDependencies(
             || target.split('/').some((segment) => !segment || segment === '.' || segment === '..')) {
             throw new Error(`invalid Timeline asset ${source}: control target must be a descendant path without '.' or '..'`);
           }
+          requiredBindingTargets.add(target);
           if (controlTargets.has(target)) {
             throw new Error(`invalid Timeline asset ${source}: control target ${target} is controlled more than once`);
           }
@@ -1731,6 +1736,23 @@ function scanBuildAssetDependencies(
             const timelinePath = strictStringValue(clip, 'timeline', `Timeline control track ${name}`).replaceAll('\\', '/');
             const clipIn = clip.clip_in == null ? 0 : clip.clip_in;
             const speed = clip.speed == null ? 1 : clip.speed;
+            const rawOverrides = clip.binding_overrides == null ? {} : jsonObject(clip.binding_overrides);
+            if (!rawOverrides || Object.keys(rawOverrides).length > 256) {
+              throw new Error(`invalid Timeline asset ${source}: control binding_overrides must be an object with at most 256 entries`);
+            }
+            const overrideChildren = new Set<string>();
+            const bindingOverrides = Object.entries(rawOverrides).map(([rawChild, rawParent]) => {
+              const child = rawChild.trim().replaceAll('\\', '/');
+              const parent = typeof rawParent === 'string' ? rawParent.trim().replaceAll('\\', '/') : '';
+              if (!child || child.startsWith('/') || child.split('/').some((segment) => !segment || segment === '.' || segment === '..')
+                || !parent || parent.startsWith('/') || parent.split('/').some((segment) => !segment || segment === '.' || segment === '..')
+                || overrideChildren.has(child)) {
+                throw new Error(`invalid Timeline asset ${source}: control binding override targets must be unique portable descendant paths`);
+              }
+              overrideChildren.add(child);
+              requiredBindingTargets.add(parent);
+              return { child, parent };
+            });
             if (typeof clip.start !== 'number' || !Number.isFinite(clip.start)
               || typeof clip.duration !== 'number' || !Number.isFinite(clip.duration)
               || clip.start < 0 || clip.duration <= 0 || clip.start + clip.duration > timelineDuration
@@ -1748,6 +1770,7 @@ function scanBuildAssetDependencies(
               clipIn,
               duration: clip.duration,
               speed,
+              bindingOverrides,
             });
             return clip as { start: number; duration: number };
           }).sort((left, right) => left.start - right.start);
@@ -1780,6 +1803,7 @@ function scanBuildAssetDependencies(
                 || !['linear', 'ease_in_out'].includes(clip.blend_curve.trim().toLowerCase()))) {
               throw new Error(`invalid Timeline asset ${source}: camera clip is invalid or outside duration`);
             }
+            requiredBindingTargets.add(target);
             return clip as { start: number; duration: number };
           }).sort((left, right) => left.start - right.start);
           for (let index = 1; index < clips.length; index += 1) {
@@ -1799,6 +1823,7 @@ function scanBuildAssetDependencies(
           throw new Error(`invalid Timeline asset ${source}: activation target ${target} is controlled more than once`);
         }
         activationTargets.add(target);
+        requiredBindingTargets.add(target);
         if (track.clips != null && !Array.isArray(track.clips)) {
           throw new Error(`invalid Timeline asset ${source}: activation clips must be an array`);
         }
@@ -1829,6 +1854,7 @@ function scanBuildAssetDependencies(
           throw new Error(`invalid Timeline asset ${source}: audio target ${target} is controlled more than once`);
         }
         audioTargets.add(target);
+        requiredBindingTargets.add(target);
         if (track.clips != null && !Array.isArray(track.clips)) {
           throw new Error(`invalid Timeline asset ${source}: audio clips must be an array`);
         }
@@ -1872,6 +1898,7 @@ function scanBuildAssetDependencies(
           throw new Error(`invalid Timeline asset ${source}: particle target ${target} is controlled more than once`);
         }
         particleTargets.add(target);
+        requiredBindingTargets.add(target);
         if (track.clips != null && !Array.isArray(track.clips)) {
           throw new Error(`invalid Timeline asset ${source}: particle clips must be an array`);
         }
@@ -1902,6 +1929,7 @@ function scanBuildAssetDependencies(
           throw new Error(`invalid Timeline asset ${source}: animation target ${target} is controlled more than once`);
         }
         animationTargets.add(target);
+        requiredBindingTargets.add(target);
         if (track.clips != null && !Array.isArray(track.clips)) {
           throw new Error(`invalid Timeline asset ${source}: animation clips must be an array`);
         }
@@ -1939,6 +1967,7 @@ function scanBuildAssetDependencies(
         }
       }
       timelineControlEdges.set(timelineKey, controlEdges);
+      timelineRequiredBindingTargets.set(timelineKey, requiredBindingTargets);
       if (timeline.groups != null && !Array.isArray(timeline.groups)) {
         throw new Error(`invalid Timeline asset ${source}: groups must be an array`);
       }
@@ -2130,6 +2159,13 @@ function scanBuildAssetDependencies(
         || sourceEnd < -0.0001 || sourceEnd > childDuration + 0.0001) {
         throw new Error(
           `invalid Timeline asset ${sourceKey}: control track ${edge.track} source window is outside ${edge.timeline} duration ${childDuration}`,
+        );
+      }
+      const childTargets = timelineRequiredBindingTargets.get(edge.timeline);
+      const unknownOverride = edge.bindingOverrides.find(({ child }) => !childTargets?.has(child));
+      if (unknownOverride) {
+        throw new Error(
+          `invalid Timeline asset ${sourceKey}: control track ${edge.track} overrides unknown child binding ${unknownOverride.child} in ${edge.timeline}`,
         );
       }
       if (stack.includes(edge.timeline)) {

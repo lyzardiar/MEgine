@@ -9,6 +9,7 @@ import {
   type AnimationPreviewLayer,
 } from './animationPreview.ts';
 import {
+  timelineBindingTargets,
   timelineHasSolo,
   timelineTrackIsMuted,
   type TimelineAsset,
@@ -164,6 +165,14 @@ export function buildTimelineScenePreview(
         diagnostics.push(`Control track '${track.name}' Timeline '${clip.timeline}' is not loaded.`);
         continue;
       }
+      const childTargets = new Set(timelineBindingTargets(child));
+      const bindingOverrides = clip.binding_overrides ?? {};
+      const unknownOverride = Object.keys(bindingOverrides)
+        .find((childTarget) => !childTargets.has(childTarget));
+      if (unknownOverride) {
+        diagnostics.push(`Control track '${track.name}' overrides unknown child binding '${unknownOverride}' in '${clip.timeline}'.`);
+        continue;
+      }
       const sourceEnd = clip.clip_in + clip.duration * clip.speed;
       if (clip.clip_in < -F32_EPSILON || clip.clip_in > child.duration + F32_EPSILON
         || sourceEnd < -F32_EPSILON || sourceEnd > child.duration + F32_EPSILON) {
@@ -178,11 +187,34 @@ export function buildTimelineScenePreview(
         diagnostics.push(`Control track '${track.name}' introduces a Timeline dependency cycle through '${clip.timeline}'.`);
         continue;
       }
+      const childBindings: TimelineBindingTable = { version: 1, bindings: Object.create(null) };
+      for (const [childTarget, parentTarget] of Object.entries(bindingOverrides)) {
+        const stable = bindings.bindings[parentTarget];
+        if (stable) {
+          childBindings.bindings[childTarget] = { ...stable };
+          continue;
+        }
+        const entity = resolveDescendant(entities, director, parentTarget);
+        if (entity != null) {
+          const candidate = entities.find((item) => item.entity === entity);
+          childBindings.bindings[childTarget] = {
+            entity: String(entity),
+            name: candidate?.name ?? '',
+          };
+        } else {
+          childBindings.bindings[childTarget] = {
+            entity: String(director),
+            name: parentTarget,
+            missing: true,
+          };
+          diagnostics.push(`Control track '${track.name}' binding '${childTarget}' cannot resolve parent target '${parentTarget}'.`);
+        }
+      }
       const nested = buildTimelineScenePreview(
         child,
         entities,
         target,
-        '{}',
+        childBindings,
         clip.clip_in + (sampleTime - clip.start) * clip.speed,
         animationClips,
         controlAssets,

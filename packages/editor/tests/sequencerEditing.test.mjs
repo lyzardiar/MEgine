@@ -921,6 +921,7 @@ test('Sequencer Control Track clipboard preserves nested source timing', () => {
     type: 'control', id: 'nested', name: 'Nested', muted: false, locked: false, target: 'Sequences/Nested',
     clips: [{
       start: 1, duration: 1.5, timeline: 'Assets/Timelines/Child.mtimeline', clip_in: 0.75, speed: -0.5,
+      binding_overrides: { Actor: 'Cast/Lead' },
     }],
   });
   const clipboard = copySequencerItem(asset, 3, 0);
@@ -934,6 +935,7 @@ test('Sequencer Control Track clipboard preserves nested source timing', () => {
     timeline: 'Assets/Timelines/Child.mtimeline',
     clip_in: 0.75,
     speed: -0.5,
+    binding_overrides: { Actor: 'Cast/Lead' },
   });
   assert.equal(asset.tracks[3].clips.length, 1);
 });

@@ -60,6 +60,7 @@ import {
   serializeTimelineAsset,
   snapTimelineAssetTime,
   TIMELINE_MAX_PARTICLE_TIME,
+  timelineBindingTargets,
   timelineHasSolo,
   timelineGroupForTrack,
   timelineTrackIsLocked,
@@ -462,9 +463,8 @@ export function Sequencer(props: SequencerProps) {
   const previewControlPaths = useMemo(() => {
     if (!asset) return [];
     const paths = new Map<string, string>();
-    const hasSolo = timelineHasSolo(asset);
     for (const track of asset.tracks) {
-      if (track.type !== 'control' || timelineTrackIsMuted(asset, track, hasSolo)) continue;
+      if (track.type !== 'control') continue;
       for (const clip of track.clips) {
         const path = clip.timeline.trim().replaceAll('\\', '/');
         if (path) paths.set(path.toLowerCase(), path);
@@ -590,9 +590,8 @@ export function Sequencer(props: SequencerProps) {
         try {
           const timeline = parseTimelineAsset(await readProjectAssetText(path));
           loaded.set(key, timeline);
-          const hasSolo = timelineHasSolo(timeline);
           for (const track of timeline.tracks) {
-            if (track.type !== 'control' || timelineTrackIsMuted(timeline, track, hasSolo)) continue;
+            if (track.type !== 'control') continue;
             for (const clip of track.clips) {
               const nestedPath = clip.timeline.trim().replaceAll('\\', '/');
               const nestedKey = nestedPath.toLowerCase();
@@ -1357,7 +1356,13 @@ export function Sequencer(props: SequencerProps) {
     update((draft) => {
       const target = draft.tracks[trackIndex];
       if (target.type === 'control') {
-        target.clips.push({ ...placement, timeline: defaultTimeline, clip_in: 0, speed: 1 });
+        target.clips.push({
+          ...placement,
+          timeline: defaultTimeline,
+          clip_in: 0,
+          speed: 1,
+          binding_overrides: {},
+        });
         target.clips.sort((left, right) => left.start - right.start);
       }
     });
@@ -2560,6 +2565,17 @@ export function Sequencer(props: SequencerProps) {
     || selectedControlSourceEnd < -0.0001
     || selectedControlSourceEnd > selectedControlAsset.duration + 0.0001
   ));
+  const selectedControlBindingTargets = selectedControlAsset
+    ? timelineBindingTargets(selectedControlAsset)
+    : [];
+  const selectedControlUnknownBindings = selectedControlClip
+    ? Object.keys(selectedControlClip.binding_overrides)
+      .filter((target) => !selectedControlBindingTargets.includes(target))
+    : [];
+  const selectedControlBindingRows = [
+    ...selectedControlBindingTargets,
+    ...selectedControlUnknownBindings,
+  ];
   const laneViewportWidth = Math.max(360, tracksWidth - 180);
   const laneWidth = Math.max(360, Math.round(laneViewportWidth * zoom));
   const ticks = sequencerTicks(asset.duration, laneWidth);
@@ -3789,6 +3805,97 @@ export function Sequencer(props: SequencerProps) {
               })} /></label>
               {previewControlResourcesReady && !selectedControlAsset && <p className="sequencer-field-help error">This Sub-Timeline could not be loaded. Choose an existing project .mtimeline asset.</p>}
               {selectedControlWindowInvalid && <p className="sequencer-field-help error">Source window {selectedControlClip.clip_in.toFixed(3)}s → {selectedControlSourceEnd.toFixed(3)}s is outside the child duration {selectedControlAsset!.duration.toFixed(3)}s.</p>}
+              {selectedControlAsset && <fieldset className="sequencer-control-bindings">
+                <legend>Child Binding Overrides</legend>
+                <p className="sequencer-field-help">Map a child Timeline target to a target or stable binding in this Timeline. Empty rows keep child-root lookup.</p>
+                {selectedControlBindingRows.map((childTarget) => {
+                  const parentTarget = selectedControlClip.binding_overrides[childTarget] ?? '';
+                  const unknown = selectedControlUnknownBindings.includes(childTarget);
+                  let resolution: ReturnType<typeof resolveTimelineBinding> | null = null;
+                  let bindingError = '';
+                  if (parentTarget) {
+                    try {
+                      resolution = resolveTimelineBinding(bindingsJson, parentTarget, props.entities);
+                    } catch (reason) {
+                      bindingError = reason instanceof Error ? reason.message : String(reason);
+                    }
+                  }
+                  const status = !parentTarget
+                    ? 'Child-root lookup'
+                    : bindingError
+                      ? bindingError
+                      : resolution?.status === 'bound'
+                        ? `Stable · ${resolution.entity.name ?? `Entity ${resolution.entity.entity}`}`
+                        : resolution?.status === 'stale'
+                          ? `Stale · ${resolution.binding.name || resolution.binding.entity}`
+                          : 'Parent child-path lookup';
+                  return <div className={`sequencer-control-binding${unknown ? ' invalid' : ''}`} key={childTarget}>
+                    <div className="sequencer-control-binding-path">
+                      <code title={childTarget}>{childTarget}</code>
+                      <span>→</span>
+                      <input
+                        aria-label={`Parent target for ${childTarget}`}
+                        placeholder="Use child root"
+                        value={parentTarget}
+                        onChange={(event) => update((draft) => {
+                          const track = draft.tracks[selection!.track];
+                          if (track.type !== 'control') return;
+                          const clip = track.clips[selection!.marker!];
+                          const next = event.target.value.replaceAll('\\', '/');
+                          if (next) clip.binding_overrides = {
+                            ...clip.binding_overrides,
+                            [childTarget]: next,
+                          };
+                          else delete clip.binding_overrides[childTarget];
+                        }, 'Edit Sub-Timeline Binding Override')}
+                      />
+                    </div>
+                    <div className="sequencer-control-binding-actions">
+                      <span className={bindingError || resolution?.status === 'stale' || unknown ? 'error' : ''}>
+                        {unknown ? 'Unknown child target' : status}
+                      </span>
+                      {!parentTarget && !unknown && <button type="button" onClick={() => update((draft) => {
+                        const track = draft.tracks[selection!.track];
+                        if (track.type === 'control') {
+                          const clip = track.clips[selection!.marker!];
+                          clip.binding_overrides = {
+                            ...clip.binding_overrides,
+                            [childTarget]: childTarget,
+                          };
+                        }
+                      }, 'Add Sub-Timeline Binding Override')}>Override</button>}
+                      {parentTarget && !unknown && <button type="button" disabled={!directorEntity || !props.selectedEntity || Boolean(bindingError)} onClick={() => {
+                        if (!directorEntity || !props.selectedEntity) return;
+                        try {
+                          props.onPatchDirector(directorEntity.entity, {
+                            bindings_json: setTimelineBinding(bindingsJson, parentTarget, props.selectedEntity),
+                          });
+                          props.onLog(`Bound Sub-Timeline override ${childTarget} to ${props.selectedEntity.name ?? props.selectedEntity.entity}`);
+                        } catch (reason) {
+                          setError(reason instanceof Error ? reason.message : String(reason));
+                        }
+                      }}><Link size={12} /> Bind Selected</button>}
+                      {parentTarget && !unknown && resolution?.status !== 'legacy' && <button type="button" disabled={!directorEntity || Boolean(bindingError)} onClick={() => {
+                        if (!directorEntity) return;
+                        try {
+                          props.onPatchDirector(directorEntity.entity, {
+                            bindings_json: clearTimelineBinding(bindingsJson, parentTarget),
+                          });
+                        } catch (reason) {
+                          setError(reason instanceof Error ? reason.message : String(reason));
+                        }
+                      }}>Use Path</button>}
+                      {(parentTarget || unknown) && <button type="button" onClick={() => update((draft) => {
+                        const track = draft.tracks[selection!.track];
+                        if (track.type === 'control') {
+                          delete track.clips[selection!.marker!].binding_overrides[childTarget];
+                        }
+                      }, 'Remove Sub-Timeline Binding Override')}>Remove</button>}
+                    </div>
+                  </div>;
+                })}
+                {selectedControlBindingRows.length === 0 && <p className="sequencer-field-help">This child Timeline has no bindable targets.</p>}
+              </fieldset>}
               <p className="sequencer-field-help">The nested Timeline is evaluated relative to this Control Track target. Clip In and Speed map parent time into the child Timeline.</p>
             </>}
             {selectedCameraClip && <>

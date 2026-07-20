@@ -5367,6 +5367,33 @@ body.insp-scrubbing * {
 .sequencer-control-clip:hover,
 .sequencer-control-clip.selected { outline: 1px solid #fff; filter: brightness(1.18); }
 
+.sequencer-control-bindings {
+  display: grid;
+  gap: 6px;
+  margin: 4px 0;
+  border: 1px solid #454b50;
+  border-radius: 0;
+  padding: 7px;
+  background: #24282b;
+}
+
+.sequencer-control-binding {
+  display: grid;
+  gap: 4px;
+  border-top: 1px solid #353b3f;
+  padding-top: 6px;
+}
+
+.sequencer-control-binding.invalid { border-left: 2px solid #b74b4b; padding-left: 5px; }
+.sequencer-control-binding-path { display: grid; grid-template-columns: minmax(72px, 0.8fr) 12px minmax(96px, 1fr); align-items: center; gap: 4px; }
+.sequencer-control-binding-path code { overflow: hidden; color: #b9dce0; font: 10px var(--u-mono); text-overflow: ellipsis; white-space: nowrap; }
+.sequencer-control-binding-path > span { color: #78858d; text-align: center; }
+.sequencer-control-binding-path input { min-width: 0; }
+.sequencer-control-binding-actions { display: flex; flex-wrap: wrap; align-items: center; justify-content: flex-end; gap: 4px; }
+.sequencer-control-binding-actions > span { flex: 1 0 100%; min-width: 0; overflow: hidden; color: #87959d; font-size: 9px; text-overflow: ellipsis; white-space: nowrap; }
+.sequencer-control-binding-actions > span.error { color: #ef8b8b; }
+.sequencer-control-binding-actions button { min-height: 22px; padding: 2px 6px; border-radius: 0; font-size: 9px; }
+
 .sequencer-camera-clip {
   position: absolute;
   z-index: 3;

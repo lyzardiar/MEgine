@@ -75,7 +75,10 @@ export type TimelineControlClip = {
   timeline: string;
   clip_in: number;
   speed: number;
+  binding_overrides: Record<string, string>;
 };
+
+export const MAX_TIMELINE_CONTROL_BINDING_OVERRIDES = 256;
 
 export type TimelineSignalTrack = {
   type: 'signal';
@@ -223,6 +226,56 @@ export function timelineAssetIsPortable(path: string): boolean {
   return path.toLowerCase().startsWith('assets/')
     && targetIsPortable(path)
     && /\.mtimeline$/i.test(path);
+}
+
+function normalizeControlBindingOverrides(value: unknown): Record<string, string> {
+  const source = object(value);
+  const result: Record<string, string> = {};
+  for (const [rawChild, rawParent] of Object.entries(source).slice(0, MAX_TIMELINE_CONTROL_BINDING_OVERRIDES)) {
+    const child = activationTarget(rawChild);
+    const parent = activationTarget(rawParent);
+    if (!targetIsPortable(child) || !targetIsPortable(parent) || Object.hasOwn(result, child)) continue;
+    Object.defineProperty(result, child, {
+      value: parent,
+      enumerable: true,
+      configurable: true,
+      writable: true,
+    });
+  }
+  return result;
+}
+
+function controlBindingOverridesAreValid(value: unknown): value is Record<string, string> {
+  if (value == null || typeof value !== 'object' || Array.isArray(value)) return false;
+  const entries = Object.entries(value as Record<string, unknown>);
+  if (entries.length > MAX_TIMELINE_CONTROL_BINDING_OVERRIDES) return false;
+  const children = new Set<string>();
+  return entries.every(([rawChild, rawParent]) => {
+    if (typeof rawParent !== 'string') return false;
+    const child = activationTarget(rawChild);
+    const parent = activationTarget(rawParent);
+    if (!targetIsPortable(child) || !targetIsPortable(parent) || children.has(child)) return false;
+    children.add(child);
+    return true;
+  });
+}
+
+export function timelineBindingTargets(asset: Pick<TimelineAsset, 'tracks'>): string[] {
+  const targets = new Set<string>();
+  for (const track of asset.tracks) {
+    if (track.type === 'signal') continue;
+    if (track.type === 'camera') {
+      for (const clip of track.clips) targets.add(activationTarget(clip.target));
+      continue;
+    }
+    targets.add(activationTarget(track.target));
+    if (track.type === 'control') {
+      for (const clip of track.clips) {
+        for (const parent of Object.values(clip.binding_overrides ?? {})) targets.add(activationTarget(parent));
+      }
+    }
+  }
+  return [...targets].filter(targetIsPortable).sort((left, right) => left.localeCompare(right));
 }
 
 function trackLabel(type: TimelineTrack['type']): string {
@@ -414,6 +467,7 @@ export function normalizeTimelineAsset(value: unknown): TimelineAsset {
             timeline: timelineAssetPath(clip.timeline),
             clip_in: Math.max(0, finite(clip.clip_in, 0)),
             speed: Math.max(-4, Math.min(4, finite(clip.speed, 1))),
+            binding_overrides: normalizeControlBindingOverrides(clip.binding_overrides),
           } satisfies TimelineControlClip;
         })
         .sort((left, right) => left.start - right.start);
@@ -551,7 +605,8 @@ export function validateTimelineAsset(asset: TimelineAsset): void {
       for (const clip of track.clips) {
         if (!timelineAssetIsPortable(timelineAssetPath(clip.timeline))
           || !Number.isFinite(clip.clip_in) || clip.clip_in < 0
-          || !Number.isFinite(clip.speed) || clip.speed < -4 || clip.speed > 4) {
+          || !Number.isFinite(clip.speed) || clip.speed < -4 || clip.speed > 4
+          || !controlBindingOverridesAreValid(clip.binding_overrides)) {
           throw new Error(`Control track ${track.name} contains invalid clip settings`);
         }
       }
@@ -748,7 +803,8 @@ export function parseTimelineAsset(text: string): TimelineAsset {
             || clip.clip_in + clip.duration > TIMELINE_MAX_PARTICLE_TIME)
         || track.type === 'control' && (typeof clip.timeline !== 'string' || !timelineAssetIsPortable(timelineAssetPath(clip.timeline))
           || clip.clip_in != null && (typeof clip.clip_in !== 'number' || !Number.isFinite(clip.clip_in) || clip.clip_in < 0)
-          || clip.speed != null && (typeof clip.speed !== 'number' || !Number.isFinite(clip.speed) || clip.speed < -4 || clip.speed > 4))
+          || clip.speed != null && (typeof clip.speed !== 'number' || !Number.isFinite(clip.speed) || clip.speed < -4 || clip.speed > 4)
+          || clip.binding_overrides != null && !controlBindingOverridesAreValid(clip.binding_overrides))
         || clip.start < 0 || clip.duration <= 0
         || clip.start + clip.duration > parsedDuration) {
         throw new Error(`${label} track ${track.id} contains an invalid or out-of-range clip`);

@@ -2640,11 +2640,22 @@ fn validate_world_assets(
         if let Some(director) = world.get_component::<TimelineDirector>(entity) {
             let reference = director.asset.trim();
             if !reference.is_empty() {
-                validate_timeline_asset(reference, project_root, validated, &mut Vec::new(), 0)?;
+                let _ = validate_timeline_asset(
+                    reference,
+                    project_root,
+                    validated,
+                    &mut Vec::new(),
+                    0,
+                )?;
             }
         }
     }
     Ok(())
+}
+
+struct TimelineValidationSummary {
+    duration: f32,
+    required_binding_targets: std::collections::BTreeSet<String>,
 }
 
 fn validate_timeline_asset(
@@ -2653,7 +2664,7 @@ fn validate_timeline_asset(
     validated: &mut HashSet<PathBuf>,
     stack: &mut Vec<PathBuf>,
     depth: usize,
-) -> Result<f32> {
+) -> Result<TimelineValidationSummary> {
     let path = mengine_runtime::textures::resolve_project_asset_path(project_root, reference)
         .with_context(|| format!("unsafe Timeline asset path: {reference}"))?;
     if stack.contains(&path) {
@@ -2719,24 +2730,36 @@ fn validate_timeline_asset(
             }
             mengine_assets::TimelineTrack::Control { name, clips, .. } => {
                 for clip in clips {
-                    let child_duration = validate_timeline_asset(
+                    let child = validate_timeline_asset(
                         &clip.timeline,
                         project_root,
                         validated,
                         stack,
                         depth + 1,
                     )?;
+                    if let Some(unknown) = clip
+                        .binding_overrides
+                        .keys()
+                        .find(|target| !child.required_binding_targets.contains(*target))
+                    {
+                        bail!(
+                            "Timeline Control Track '{}' overrides unknown child binding '{}' in '{}'",
+                            name,
+                            unknown,
+                            clip.timeline
+                        );
+                    }
                     let source_end = clip.clip_in + clip.duration * clip.speed;
                     if clip.clip_in < -f32::EPSILON
-                        || clip.clip_in > child_duration + f32::EPSILON
+                        || clip.clip_in > child.duration + f32::EPSILON
                         || source_end < -f32::EPSILON
-                        || source_end > child_duration + f32::EPSILON
+                        || source_end > child.duration + f32::EPSILON
                     {
                         bail!(
                             "Timeline Control Track '{}' source window is outside '{}' duration {:.3}s",
                             name,
                             clip.timeline,
-                            child_duration
+                            child.duration
                         );
                     }
                 }
@@ -2745,7 +2768,10 @@ fn validate_timeline_asset(
         }
     }
     stack.pop();
-    Ok(timeline.duration)
+    Ok(TimelineValidationSummary {
+        duration: timeline.duration,
+        required_binding_targets: timeline.required_binding_targets(),
+    })
 }
 
 fn validate_audio_clip_asset(
@@ -3495,12 +3521,13 @@ mod tests {
               ]},{"type":"animation","id":"hero","name":"Hero","target":"Characters/Hero","clips":[
                 {"start":0,"duration":2,"clip":"Assets/Animations/Hero.manim","clip_in":0.25}
               ]},{"type":"control","id":"nested","name":"Nested","target":"Sequences/Nested","clips":[
-                {"start":0,"duration":1,"timeline":"Assets/Timelines/Nested.mtimeline","clip_in":0.25,"speed":1.5}
+                {"start":0,"duration":1,"timeline":"Assets/Timelines/Nested.mtimeline","clip_in":0.25,"speed":1.5,
+                  "binding_overrides":{"Actor":"Characters/Hero"}}
               ]}]
             }"#,
         )
         .unwrap();
-        let nested_source = r#"{"version":1,"name":"Nested","duration":2,"tracks":[{"type":"signal","id":"events","name":"Events","markers":[] }]}"#;
+        let nested_source = r#"{"version":1,"name":"Nested","duration":2,"tracks":[{"type":"activation","id":"actor","name":"Actor","target":"Actor","clips":[]}]}"#;
         std::fs::write(timelines.join("Nested.mtimeline"), nested_source).unwrap();
         let mut world = World::new();
         world.commands.push(WorldCommand::Spawn {
@@ -3517,9 +3544,25 @@ mod tests {
         result.expect("Timeline assets should pass final package validation");
         assert_eq!(validated.len(), 4);
 
+        let intro_source = std::fs::read_to_string(timelines.join("Intro.mtimeline")).unwrap();
+        std::fs::write(
+            timelines.join("Intro.mtimeline"),
+            intro_source.replace(
+                r#""Actor":"Characters/Hero""#,
+                r#""Missing":"Characters/Hero""#,
+            ),
+        )
+        .unwrap();
+        let error = validate_world_assets(&world, &root, &mut HashSet::new())
+            .expect_err("unknown nested binding overrides must fail final package validation");
+        assert!(error
+            .to_string()
+            .contains("unknown child binding 'Missing'"));
+        std::fs::write(timelines.join("Intro.mtimeline"), &intro_source).unwrap();
+
         std::fs::write(
             timelines.join("Nested.mtimeline"),
-            r#"{"version":1,"duration":2,"tracks":[{"type":"control","id":"back","name":"Back","target":"Nested","clips":[{"start":0,"duration":1,"timeline":"Assets/Timelines/Intro.mtimeline"}]}]}"#,
+            r#"{"version":1,"duration":2,"tracks":[{"type":"activation","id":"actor","name":"Actor","target":"Actor","clips":[]},{"type":"control","id":"back","name":"Back","target":"Nested","clips":[{"start":0,"duration":1,"timeline":"Assets/Timelines/Intro.mtimeline"}]}]}"#,
         )
         .unwrap();
         let error = validate_world_assets(&world, &root, &mut HashSet::new())
