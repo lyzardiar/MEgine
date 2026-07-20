@@ -71,13 +71,19 @@ component SpotLight {
 
 /// Unity-inspired 2D light. Active lights modulate world-space 2D renderers.
 component Light2D {
-  /// "global" | "point"
+  /// "global" | "point" | "spot"
   light_type:     string       = "point"
   color:          float4       = [1, 1, 1, 1]
   intensity:      float        = 1
   radius:         float        = 5
   inner_radius:   float        = 0
   falloff:        float        = 1
+  /// Spot light cone half-angle in degrees (only for "spot" type).
+  spot_angle_degrees:   float  = 30
+  /// Spot light direction in degrees (0 = right, 90 = up). Only for "spot" type.
+  spot_direction_degrees: float = 0
+  /// Attenuation curve: "linear" | "quadratic" | "smooth" (default "linear").
+  falloff_mode:   string       = "linear"
   /// Empty means every project sorting layer.
   sorting_layers: string_array = []
 }

@@ -5,15 +5,34 @@ use mengine_core::{TransformHierarchy, World};
 const MAX_LIGHTS_2D: usize = 128;
 const MAX_LIGHT_MULTIPLIER: f32 = 16.0;
 
+#[derive(Clone, Copy, Debug, PartialEq)]
+enum LightType2D {
+    Global,
+    Point,
+    Spot,
+}
+
+#[derive(Clone, Copy, Debug, PartialEq)]
+enum FalloffMode {
+    Linear,
+    Quadratic,
+    Smooth,
+}
+
 #[derive(Clone, Debug)]
 struct RuntimeLight2D {
-    global: bool,
+    light_type: LightType2D,
     position: [f32; 2],
     color: [f32; 3],
     intensity: f32,
     radius: f32,
     inner_radius: f32,
     falloff: f32,
+    falloff_mode: FalloffMode,
+    /// Spot light cone half-angle in radians.
+    spot_half_angle: f32,
+    /// Spot light direction as a unit vector [cos, sin].
+    spot_direction: [f32; 2],
     sorting_layers: Vec<String>,
 }
 
@@ -55,8 +74,20 @@ fn collect_lights(world: &World, hierarchy: &TransformHierarchy) -> Vec<RuntimeL
             let transform = hierarchy.get(entity)?;
             let light = world.get_component::<Light2D>(entity)?;
             let radius = finite(light.radius, 5.0).abs().max(0.001);
+            let light_type = match light.light_type.trim().to_ascii_lowercase().as_str() {
+                "global" => LightType2D::Global,
+                "spot" => LightType2D::Spot,
+                _ => LightType2D::Point,
+            };
+            let falloff_mode = match light.falloff_mode.trim().to_ascii_lowercase().as_str() {
+                "quadratic" => FalloffMode::Quadratic,
+                "smooth" => FalloffMode::Smooth,
+                _ => FalloffMode::Linear,
+            };
+            let spot_direction_deg = finite(light.spot_direction_degrees, 0.0);
+            let spot_rad = spot_direction_deg.to_radians();
             Some(RuntimeLight2D {
-                global: light.light_type.trim().eq_ignore_ascii_case("global"),
+                light_type,
                 position: [
                     finite(transform.position.x, 0.0),
                     finite(transform.position.y, 0.0),
@@ -71,6 +102,12 @@ fn collect_lights(world: &World, hierarchy: &TransformHierarchy) -> Vec<RuntimeL
                 radius,
                 inner_radius: finite(light.inner_radius, 0.0).clamp(0.0, radius),
                 falloff: finite(light.falloff, 1.0).clamp(0.01, 8.0),
+                falloff_mode,
+                spot_half_angle: finite(light.spot_angle_degrees, 30.0)
+                    .clamp(1.0, 179.0)
+                    .to_radians()
+                    * 0.5,
+                spot_direction: [spot_rad.cos(), spot_rad.sin()],
                 sorting_layers: light
                     .sorting_layers
                     .iter()
@@ -96,12 +133,20 @@ fn sample_lights(
         {
             continue;
         }
-        let attenuation = if light.global {
-            1.0
-        } else if let Some(position) = world_position {
-            point_attenuation(light, position)
-        } else {
-            0.0
+        let attenuation = match light.light_type {
+            LightType2D::Global => 1.0,
+            LightType2D::Point | LightType2D::Spot => {
+                if let Some(position) = world_position {
+                    let radial = radial_attenuation(light, position);
+                    if light.light_type == LightType2D::Spot {
+                        radial * spot_angular_attenuation(light, position)
+                    } else {
+                        radial
+                    }
+                } else {
+                    0.0
+                }
+            }
         };
         let energy = light.intensity * attenuation;
         for (channel, color) in result.iter_mut().zip(light.color) {
@@ -111,8 +156,10 @@ fn sample_lights(
     result
 }
 
-fn point_attenuation(light: &RuntimeLight2D, position: [f32; 2]) -> f32 {
-    let distance = (position[0] - light.position[0]).hypot(position[1] - light.position[1]);
+/// Distance-based attenuation with configurable falloff curve.
+fn radial_attenuation(light: &RuntimeLight2D, position: [f32; 2]) -> f32 {
+    let distance =
+        (position[0] - light.position[0]).hypot(position[1] - light.position[1]);
     if distance <= light.inner_radius {
         return 1.0;
     }
@@ -120,7 +167,48 @@ fn point_attenuation(light: &RuntimeLight2D, position: [f32; 2]) -> f32 {
         return 0.0;
     }
     let span = (light.radius - light.inner_radius).max(0.001);
-    (1.0 - (distance - light.inner_radius) / span).powf(light.falloff)
+    let t = (distance - light.inner_radius) / span; // 0..1
+    let base = 1.0 - t;
+    match light.falloff_mode {
+        FalloffMode::Linear => base.powf(light.falloff),
+        FalloffMode::Quadratic => base * base,
+        FalloffMode::Smooth => {
+            // Smoothstep: 3t^2 - 2t^3 mapped to the remaining range.
+            let s = base * base * (3.0 - 2.0 * base);
+            s.powf(light.falloff)
+        }
+    }
+}
+
+/// Angular attenuation for spot lights: full intensity within the inner cone,
+/// smooth falloff to zero at the outer cone edge.
+fn spot_angular_attenuation(light: &RuntimeLight2D, position: [f32; 2]) -> f32 {
+    let dx = position[0] - light.position[0];
+    let dy = position[1] - light.position[1];
+    let length = dx.hypot(dy);
+    if length < 0.0001 {
+        return 1.0; // At the light source, full intensity.
+    }
+    // Normalize direction to the fragment.
+    let dir_x = dx / length;
+    let dir_y = dy / length;
+    // Dot product with the spot direction.
+    let dot = dir_x * light.spot_direction[0] + dir_y * light.spot_direction[1];
+    let angle = dot.acos().clamp(0.0, std::f32::consts::PI);
+    if angle <= light.spot_half_angle * 0.5 {
+        // Inner cone: full intensity.
+        1.0
+    } else if angle >= light.spot_half_angle {
+        // Outside outer cone: no light.
+        0.0
+    } else {
+        // Smooth falloff between inner and outer cone.
+        let inner = light.spot_half_angle * 0.5;
+        let t = (angle - inner) / (light.spot_half_angle - inner).max(0.001);
+        // Smoothstep falloff.
+        let s = 1.0 - t;
+        s * s * (3.0 - 2.0 * s)
+    }
 }
 
 fn finite(value: f32, fallback: f32) -> f32 {
@@ -235,5 +323,78 @@ mod tests {
         let mut primitive = vec![primitive([0.0, 0.0], "characters", [1.0; 4])];
         apply_2d_lighting(&world, &hierarchy, &mut primitive);
         assert_eq!(primitive[0].primitive.color, [1.0; 4]);
+    }
+
+    #[test]
+    fn spot_light_illuminates_cone_and_rejects_outside() {
+        let mut world = World::new();
+        // Spot light at origin pointing right (0 degrees), 60 degree cone (30 half-angle).
+        add_light(
+            &mut world,
+            [0.0, 0.0],
+            Light2D {
+                light_type: "spot".into(),
+                color: [1.0, 1.0, 1.0, 1.0],
+                intensity: 1.0,
+                radius: 10.0,
+                spot_angle_degrees: 60.0,
+                spot_direction_degrees: 0.0,
+                ..Light2D::default()
+            },
+        );
+        let hierarchy = TransformHierarchy::build(&world);
+        // Point directly in front (within cone).
+        let mut in_cone = vec![primitive([5.0, 0.0], "default", [1.0; 4])];
+        apply_2d_lighting(&world, &hierarchy, &mut in_cone);
+        assert!(
+            in_cone[0].primitive.color[0] >= 0.4,
+            "spot should illuminate in-cone point, got {:?}",
+            in_cone[0].primitive.color
+        );
+        // Point behind the light (outside cone).
+        let mut behind = vec![primitive([-5.0, 0.0], "default", [1.0; 4])];
+        apply_2d_lighting(&world, &hierarchy, &mut behind);
+        assert!(
+            behind[0].primitive.color[0] < 0.01,
+            "spot should not illuminate behind, got {:?}",
+            behind[0].primitive.color
+        );
+    }
+
+    #[test]
+    fn quadratic_and_smooth_falloff_modes_differ_from_linear() {
+        let mut world_linear = World::new();
+        add_light(
+            &mut world_linear,
+            [0.0, 0.0],
+            Light2D {
+                radius: 10.0,
+                falloff_mode: "linear".into(),
+                ..Light2D::default()
+            },
+        );
+        let mut world_quad = World::new();
+        add_light(
+            &mut world_quad,
+            [0.0, 0.0],
+            Light2D {
+                radius: 10.0,
+                falloff_mode: "quadratic".into(),
+                ..Light2D::default()
+            },
+        );
+        let h_lin = TransformHierarchy::build(&world_linear);
+        let h_quad = TransformHierarchy::build(&world_quad);
+        let mut p_lin = vec![primitive([5.0, 0.0], "default", [1.0; 4])];
+        let mut p_quad = vec![primitive([5.0, 0.0], "default", [1.0; 4])];
+        apply_2d_lighting(&world_linear, &h_lin, &mut p_lin);
+        apply_2d_lighting(&world_quad, &h_quad, &mut p_quad);
+        // Quadratic should be dimmer than linear at the same distance.
+        assert!(
+            p_quad[0].primitive.color[0] < p_lin[0].primitive.color[0],
+            "quadratic ({}) should be dimmer than linear ({})",
+            p_quad[0].primitive.color[0],
+            p_lin[0].primitive.color[0]
+        );
     }
 }

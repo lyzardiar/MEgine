@@ -72,6 +72,9 @@ export interface Light2D {
   radius: number;
   innerRadius: number;
   falloff: number;
+  spotAngleDegrees: number;
+  spotDirectionDegrees: number;
+  falloffMode: string;
   sortingLayers: string[];
 }
 

@@ -239,6 +239,9 @@ pub struct Light2D {
     pub radius: f32,
     pub inner_radius: f32,
     pub falloff: f32,
+    pub spot_angle_degrees: f32,
+    pub spot_direction_degrees: f32,
+    pub falloff_mode: String,
     pub sorting_layers: Vec<String>,
 }
 
@@ -251,6 +254,9 @@ impl Default for Light2D {
             radius: 5.0,
             inner_radius: 0.0,
             falloff: 1.0,
+            spot_angle_degrees: 30.0,
+            spot_direction_degrees: 0.0,
+            falloff_mode: "linear".into(),
             sorting_layers: Vec::new(),
         }
     }

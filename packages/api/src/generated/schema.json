@@ -1145,6 +1145,9 @@
       "falloff": {
         "type": "number"
       },
+      "falloff_mode": {
+        "type": "string"
+      },
       "inner_radius": {
         "type": "number"
       },
@@ -1162,6 +1165,12 @@
           "type": "string"
         },
         "type": "array"
+      },
+      "spot_angle_degrees": {
+        "type": "number"
+      },
+      "spot_direction_degrees": {
+        "type": "number"
       }
     },
     "required": [
@@ -1171,6 +1180,9 @@
       "radius",
       "inner_radius",
       "falloff",
+      "spot_angle_degrees",
+      "spot_direction_degrees",
+      "falloff_mode",
       "sorting_layers"
     ],
     "type": "object"
