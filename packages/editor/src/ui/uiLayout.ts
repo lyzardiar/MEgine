@@ -527,7 +527,10 @@ export function layoutUiOverlay(
       const isCanvas = isCanvasRoot || !!ent.components.Canvas;
       const anchorParentRect = hasRt && !isCanvasRoot ? { ...parentRect } : undefined;
       const rotation = rt?.local_rotation ?? 0;
-      const pivot: [number, number] = rt ? ([...rt.pivot] as [number, number]) : [0.5, 0.5];
+      // Flip pivot Y: Unity pivot.y=0 is bottom, screen pivot.y=0 is top.
+      const pivot: [number, number] = rt
+        ? [rt.pivot[0], 1 - rt.pivot[1]]
+        : [0.5, 0.5];
       const state = {
         opacity: inherited.opacity * Math.max(0, Math.min(1, number(group?.alpha, 1))),
         interactable: inherited.interactable && group?.interactable !== false,

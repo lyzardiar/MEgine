@@ -60,28 +60,24 @@ export function solveRectTransform(parent: Rect, raw: unknown): Rect {
   const [sdX, sdY] = rt.size_delta;
   const [sx, sy] = rt.local_scale;
 
+  // X axis: Unity and screen both grow right — no conversion needed.
   const anchorMinX = parent.x + aminX * parent.w;
-  const anchorMinY = parent.y + aminY * parent.h;
   const anchorMaxX = parent.x + amaxX * parent.w;
-  const anchorMaxY = parent.y + amaxY * parent.h;
-
   const anchorW = anchorMaxX - anchorMinX;
-  const anchorH = anchorMaxY - anchorMinY;
-
   const width = Math.max(0, (anchorW + sdX) * Math.abs(sx));
-  const height = Math.max(0, (anchorH + sdY) * Math.abs(sy));
-
-  // Pivot point in parent space = lerp(anchorMin, anchorMax) + anchoredPosition
   const pivotX = anchorMinX + anchorW * pivX + apX;
-  const pivotY = anchorMinY + anchorH * pivY + apY;
-
-  // Rect bottom-left (y-up in Unity; our canvas is y-down — keep y-down screen space)
-  // We treat parent.y as top of rect in screen coords (y grows down), matching Canvas 2D.
-  // Convert: Unity y-up local → screen y-down by flipping within parent.
-  // Simpler approach for Overlay: treat all coords as screen y-down directly
-  // (anchored_position y positive = down), matching HTML canvas.
   const x = pivotX - width * pivX;
-  const y = pivotY - height * pivY;
+
+  // Y axis: Unity is Y-up (0 = bottom, 1 = top, anchoredPosition+ = up).
+  // Screen / Canvas 2D is Y-down (0 = top, 1 = bottom, positive = down).
+  // Convert: screen_y = 1 - unity_y, anchoredPosition sign flips.
+  const anchorTopY = parent.y + (1 - amaxY) * parent.h;
+  const anchorBottomY = parent.y + (1 - aminY) * parent.h;
+  const anchorH = anchorBottomY - anchorTopY;
+  const height = Math.max(0, (anchorH + sdY) * Math.abs(sy));
+  const screenPivY = 1 - pivY;
+  const pivotY = anchorTopY + anchorH * screenPivY + (-apY);
+  const y = pivotY - height * screenPivY;
 
   return { x, y, w: width, h: height };
 }
