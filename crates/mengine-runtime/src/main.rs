@@ -1766,6 +1766,34 @@ function onTick(dt, frame) {
                     {
                         log::error!("2D trigger callback failed: {error}");
                     }
+                    // Inject per-frame input, time, and world snapshot for script queries.
+                    let input_json = serde_json::json!({
+                        "pointerX": self.input.pointer.x,
+                        "pointerY": self.input.pointer.y,
+                        "deltaX": self.input.pointer.delta_x,
+                        "deltaY": self.input.pointer.delta_y,
+                        "scrollX": self.input.pointer.scroll_x,
+                        "scrollY": self.input.pointer.scroll_y,
+                        "left": self.input.pointer.left,
+                        "right": self.input.pointer.right,
+                        "middle": self.input.pointer.middle,
+                    });
+                    let time_json = serde_json::json!({
+                        "delta": self.world.time.delta,
+                        "elapsed": self.world.time.elapsed,
+                        "frame": self.world.time.frame,
+                        "fixedDelta": self.world.time.fixed_delta,
+                    });
+                    if let Err(error) = script.inject_frame_context(
+                        &input_json.to_string(),
+                        &time_json.to_string(),
+                    ) {
+                        log::error!("frame context injection failed: {error}");
+                    }
+                    let snapshot = mengine_core::WorldSnapshot::from_world(&self.world);
+                    script.update_snapshot(
+                        serde_json::to_value(&snapshot).unwrap_or_default(),
+                    );
                     if let Err(error) = script.tick(&mut self.world, dt) {
                         log::error!("script tick failed: {error}");
                     }

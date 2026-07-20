@@ -103,18 +103,27 @@ pub struct ScriptHost {
     context: Context,
     commands: Arc<Mutex<CommandBuffer>>,
     requests: Arc<Mutex<Vec<ScriptRuntimeRequest>>>,
+    /// Latest world snapshot for read queries (findByName, getComponent, etc.).
+    snapshot: Arc<Mutex<Option<JsonValue>>>,
 }
 
 impl ScriptHost {
     pub fn new() -> Result<Self, ScriptError> {
         let commands = Arc::new(Mutex::new(CommandBuffer::new()));
         let requests = Arc::new(Mutex::new(Vec::new()));
+        let snapshot = Arc::new(Mutex::new(None));
         let mut context = Context::default();
-        register_engine(&mut context, Arc::clone(&commands), Arc::clone(&requests))?;
+        register_engine(
+            &mut context,
+            Arc::clone(&commands),
+            Arc::clone(&requests),
+            Arc::clone(&snapshot),
+        )?;
         Ok(Self {
             context,
             commands,
             requests,
+            snapshot,
         })
     }
 
@@ -128,6 +137,26 @@ impl ScriptHost {
     pub fn load_file(&mut self, path: &std::path::Path) -> Result<(), ScriptError> {
         let src = std::fs::read_to_string(path)?;
         self.eval(&src)
+    }
+
+    /// Injects per-frame input and time state into the JS `engine.input` and
+    /// `engine.time` objects. Call this before `tick` each frame.
+    pub fn inject_frame_context(
+        &mut self,
+        input_json: &str,
+        time_json: &str,
+    ) -> Result<(), ScriptError> {
+        self.eval(&format!(
+            "engine.input = {input_json}; engine.time = {time_json};"
+        ))
+    }
+
+    /// Updates the world snapshot used by read-query native functions
+    /// (findByName, getComponent, getEntities).
+    pub fn update_snapshot(&mut self, snapshot: JsonValue) {
+        if let Ok(mut guard) = self.snapshot.lock() {
+            *guard = Some(snapshot);
+        }
     }
 
     pub fn tick(&mut self, world: &mut World, dt: f32) -> Result<(), ScriptError> {
@@ -369,6 +398,7 @@ fn register_engine(
     context: &mut Context,
     commands: Arc<Mutex<CommandBuffer>>,
     requests: Arc<Mutex<Vec<ScriptRuntimeRequest>>>,
+    snapshot: Arc<Mutex<Option<JsonValue>>>,
 ) -> Result<(), ScriptError> {
     let cmd_buf = Arc::clone(&commands);
     let set_clear = native_fn(move |_this, args, _ctx| {
@@ -686,9 +716,96 @@ fn register_engine(
         queue_request(&req, ScriptRuntimeRequest::InstantiatePrefab { path, parent })
     });
 
+    // World query native functions (read from the latest snapshot).
+    let snap = Arc::clone(&snapshot);
+    let find_by_name = native_fn(move |_this, args, ctx| {
+        let name = args
+            .get_or_undefined(0)
+            .to_string(ctx)?
+            .to_std_string_escaped();
+        let guard = snap.lock().map_err(|_| {
+            boa_engine::JsError::from_opaque(JsValue::new(boa_engine::JsString::from("snapshot lock poisoned")))
+        })?;
+        let Some(snapshot) = guard.as_ref() else {
+            return Ok(JsValue::null());
+        };
+        let entities = snapshot
+            .get("entities")
+            .and_then(|v| v.as_array())
+            .cloned()
+            .unwrap_or_default();
+        for entity in &entities {
+            if entity.get("name").and_then(|v| v.as_str()) == Some(name.as_str()) {
+                if let Some(id) = entity.get("entity").and_then(|v| v.as_u64()) {
+                    return Ok(JsValue::new(boa_engine::JsString::from(id.to_string())));
+                }
+            }
+        }
+        Ok(JsValue::null())
+    });
+
+    let snap = Arc::clone(&snapshot);
+    let get_component = native_fn(move |_this, args, ctx| {
+        let entity_str = args
+            .get_or_undefined(0)
+            .to_string(ctx)?
+            .to_std_string_escaped();
+        let component_name = args
+            .get_or_undefined(1)
+            .to_string(ctx)?
+            .to_std_string_escaped();
+        let Ok(entity_id) = entity_str.parse::<u64>() else {
+            return Ok(JsValue::null());
+        };
+        let guard = snap.lock().map_err(|_| {
+            boa_engine::JsError::from_opaque(JsValue::new(boa_engine::JsString::from("snapshot lock poisoned")))
+        })?;
+        let Some(snapshot) = guard.as_ref() else {
+            return Ok(JsValue::null());
+        };
+        let entities = snapshot
+            .get("entities")
+            .and_then(|v| v.as_array())
+            .cloned()
+            .unwrap_or_default();
+        for entity in &entities {
+            if entity.get("entity").and_then(|v| v.as_u64()) == Some(entity_id) {
+                if let Some(components) = entity.get("components").and_then(|v| v.as_object()) {
+                    if let Some(value) = components.get(&component_name) {
+                        let json_str = serde_json::to_string(value).unwrap_or_default();
+                        return ctx.eval(Source::from_bytes(json_str.as_bytes()));
+                    }
+                }
+                return Ok(JsValue::null());
+            }
+        }
+        Ok(JsValue::null())
+    });
+
+    let snap = Arc::clone(&snapshot);
+    let get_entities = native_fn(move |_this, _args, _ctx| {
+        let guard = snap.lock().map_err(|_| {
+            boa_engine::JsError::from_opaque(JsValue::new(boa_engine::JsString::from("snapshot lock poisoned")))
+        })?;
+        let Some(snapshot) = guard.as_ref() else {
+            return Ok(JsValue::new(boa_engine::JsString::from("[]")));
+        };
+        let entities = snapshot
+            .get("entities")
+            .and_then(|v| v.as_array())
+            .cloned()
+            .unwrap_or_default();
+        let ids: Vec<String> = entities
+            .iter()
+            .filter_map(|e| e.get("entity").and_then(|v| v.as_u64()))
+            .map(|id| format!("\"{id}\""))
+            .collect();
+        Ok(JsValue::new(boa_engine::JsString::from(format!("[{}]", ids.join(",")))))
+    });
+
     context
         .eval(Source::from_bytes(
-            b"var engine = { setClearColor: null, pushCommandJson: null, loadScene: null, reloadScene: null, instantiatePrefab: null, setAnimatorParameter: null, setAnimatorTrigger: null, playAnimatorState: null, setAnimatorLayerWeight: null, playAnimatorLayerState: null, playAnimation: null, pauseAnimation: null, stopAnimation: null, seekAnimation: null, playTimeline: null, pauseTimeline: null, stopTimeline: null, seekTimeline: null, playAudio: null, pauseAudio: null, stopAudio: null, seekAudio: null, scene: null };",
+            b"var engine = { setClearColor: null, pushCommandJson: null, loadScene: null, reloadScene: null, instantiatePrefab: null, setAnimatorParameter: null, setAnimatorTrigger: null, playAnimatorState: null, setAnimatorLayerWeight: null, playAnimatorLayerState: null, playAnimation: null, pauseAnimation: null, stopAnimation: null, seekAnimation: null, playTimeline: null, pauseTimeline: null, stopTimeline: null, seekTimeline: null, playAudio: null, pauseAudio: null, stopAudio: null, seekAudio: null, scene: null, input: null, time: null, findByName: null, getComponent: null, getEntities: null };",
         ))
         .map_err(|e| ScriptError::Js(format!("{e}")))?;
 
@@ -834,6 +951,33 @@ fn register_engine(
         .set(
             boa_engine::js_string!("reloadScene"),
             reload_scene.to_js_function(context.realm()),
+            false,
+            context,
+        )
+        .map_err(|e| ScriptError::Js(format!("{e}")))?;
+
+    engine_obj
+        .set(
+            boa_engine::js_string!("findByName"),
+            find_by_name.to_js_function(context.realm()),
+            false,
+            context,
+        )
+        .map_err(|e| ScriptError::Js(format!("{e}")))?;
+
+    engine_obj
+        .set(
+            boa_engine::js_string!("getComponent"),
+            get_component.to_js_function(context.realm()),
+            false,
+            context,
+        )
+        .map_err(|e| ScriptError::Js(format!("{e}")))?;
+
+    engine_obj
+        .set(
+            boa_engine::js_string!("getEntities"),
+            get_entities.to_js_function(context.realm()),
             false,
             context,
         )
