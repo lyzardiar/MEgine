@@ -65,6 +65,7 @@ pub fn collect_world_primitives_with_hierarchy(
                 flip_y: animation.flip_y,
                 sorting_layer: animation.sorting_layer.clone(),
                 sorting_order: animation.sorting_order,
+                normal_map: String::new(),
             };
             &resolved
         } else if let Some(sprite) = static_sprite {
@@ -158,6 +159,7 @@ fn project_tilemap(
                     flip_y: false,
                     sorting_layer: tilemap.sorting_layer.clone(),
                     sorting_order: tilemap.sorting_order,
+                    normal_map: String::new(),
                 },
                 camera,
                 viewport,
@@ -436,6 +438,7 @@ mod tests {
             flip_y: false,
             sorting_layer: "default".into(),
             sorting_order: 4,
+            normal_map: String::new(),
         };
         let projected = project_sprite(&transform, &sprite, camera(), [200, 100]).unwrap();
 

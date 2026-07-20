@@ -80,6 +80,13 @@ export interface Camera2D {
   primary: boolean;
   clearFlags: string;
   backgroundColor: [number, number, number, number];
+  followTarget: string;
+  followOffset: [number, number];
+  followSmoothTime: number;
+  deadzoneHalfWidth: number;
+  deadzoneHalfHeight: number;
+  boundsMin: [number, number];
+  boundsMax: [number, number];
 }
 
 export interface MeshRenderer {
@@ -132,6 +139,7 @@ export interface SpriteRenderer {
   flipY: boolean;
   sortingLayer: string;
   sortingOrder: number;
+  normalMap: string;
 }
 
 export interface AnimatedSprite2D {

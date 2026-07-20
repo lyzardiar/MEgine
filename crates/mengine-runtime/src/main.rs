@@ -1777,6 +1777,16 @@ function onTick(dt, frame) {
                     self.apply_runtime_request(request);
                 }
 
+                // Update Camera2D follow before building the frame camera.
+                {
+                    let hierarchy = TransformHierarchy::build(&self.world);
+                    mengine_runtime::camera2d::update_camera2d_follow(
+                        &mut self.world,
+                        &hierarchy,
+                        fixed_delta,
+                    );
+                }
+
                 if let Some(r) = self.renderer.as_mut() {
                     let hierarchy = TransformHierarchy::build(&self.world);
                     let aspect = r.aspect();

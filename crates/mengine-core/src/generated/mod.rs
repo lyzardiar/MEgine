@@ -270,6 +270,13 @@ pub struct Camera2D {
     pub primary: bool,
     pub clear_flags: String,
     pub background_color: [f32; 4],
+    pub follow_target: String,
+    pub follow_offset: [f32; 2],
+    pub follow_smooth_time: f32,
+    pub deadzone_half_width: f32,
+    pub deadzone_half_height: f32,
+    pub bounds_min: [f32; 2],
+    pub bounds_max: [f32; 2],
 }
 
 impl Default for Camera2D {
@@ -279,6 +286,13 @@ impl Default for Camera2D {
             primary: true,
             clear_flags: "scene".into(),
             background_color: [0.1, 0.1, 0.14, 1.0],
+            follow_target: "".into(),
+            follow_offset: [0.0, 0.0],
+            follow_smooth_time: 0.1,
+            deadzone_half_width: 0.0,
+            deadzone_half_height: 0.0,
+            bounds_min: [1.0, 1.0],
+            bounds_max: [-1.0, -1.0],
         }
     }
 }
@@ -422,6 +436,7 @@ pub struct SpriteRenderer {
     pub flip_y: bool,
     pub sorting_layer: String,
     pub sorting_order: i32,
+    pub normal_map: String,
 }
 
 impl Default for SpriteRenderer {
@@ -435,6 +450,7 @@ impl Default for SpriteRenderer {
             flip_y: false,
             sorting_layer: "default".into(),
             sorting_order: 0,
+            normal_map: "".into(),
         }
     }
 }

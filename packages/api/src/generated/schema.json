@@ -394,7 +394,37 @@
         },
         "type": "array"
       },
+      "bounds_max": {
+        "items": {
+          "type": "number"
+        },
+        "type": "array"
+      },
+      "bounds_min": {
+        "items": {
+          "type": "number"
+        },
+        "type": "array"
+      },
       "clear_flags": {
+        "type": "string"
+      },
+      "deadzone_half_height": {
+        "type": "number"
+      },
+      "deadzone_half_width": {
+        "type": "number"
+      },
+      "follow_offset": {
+        "items": {
+          "type": "number"
+        },
+        "type": "array"
+      },
+      "follow_smooth_time": {
+        "type": "number"
+      },
+      "follow_target": {
         "type": "string"
       },
       "primary": {
@@ -408,7 +438,14 @@
       "size",
       "primary",
       "clear_flags",
-      "background_color"
+      "background_color",
+      "follow_target",
+      "follow_offset",
+      "follow_smooth_time",
+      "deadzone_half_width",
+      "deadzone_half_height",
+      "bounds_min",
+      "bounds_max"
     ],
     "type": "object"
   },
@@ -2503,6 +2540,9 @@
       "flip_y": {
         "type": "boolean"
       },
+      "normal_map": {
+        "type": "string"
+      },
       "pivot": {
         "items": {
           "type": "number"
@@ -2533,7 +2573,8 @@
       "flip_x",
       "flip_y",
       "sorting_layer",
-      "sorting_order"
+      "sorting_order",
+      "normal_map"
     ],
     "type": "object"
   },

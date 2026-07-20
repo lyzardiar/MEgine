@@ -88,6 +88,18 @@ component Camera2D {
   /// "scene" | "skybox" | "solid_color". Scene keeps old serialized behavior.
   clear_flags:      string = "scene"
   background_color: float4 = [0.1, 0.1, 0.14, 1]
+  /// Entity id (u64 string) the camera follows. Empty = no follow.
+  follow_target:    string = ""
+  /// Offset from the follow target in world units.
+  follow_offset:    float2 = [0, 0]
+  /// Smooth-damp time in seconds (0 = snap instantly).
+  follow_smooth_time: float = 0.1
+  /// Deadzone half-extents: camera ignores target movement within this box.
+  deadzone_half_width:  float = 0
+  deadzone_half_height: float = 0
+  /// Camera position bounds (min/max in world XY). Disabled when min > max.
+  bounds_min:       float2 = [1, 1]
+  bounds_max:       float2 = [-1, -1]
 }
 
 component MeshRenderer {
@@ -150,6 +162,8 @@ component SpriteRenderer {
   sorting_layer: string = "default"
   /// Draw order among world sprites (higher = closer / later)
   sorting_order: int = 0
+  /// Optional normal map texture path (Assets/...) for 2D lighting.
+  normal_map: string = ""
 }
 
 /// Godot-style world-space animated sprite using an ordered texture frame list.
