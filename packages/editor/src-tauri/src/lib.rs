@@ -4616,6 +4616,11 @@ fn submit_editor_request(
         .map_err(|error| error.failure(Some(session.current_revision())))
 }
 
+#[tauri::command]
+fn exit_editor(app: tauri::AppHandle) {
+    app.exit(0);
+}
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
@@ -4669,7 +4674,8 @@ pub fn run() {
             restore_scene_recovery,
             discard_scene_recovery,
             replace_scene_snapshot,
-            submit_editor_request
+            submit_editor_request,
+            exit_editor
         ])
         .run(tauri::generate_context!())
         .expect("error while running MEngine Editor");

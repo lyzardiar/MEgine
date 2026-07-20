@@ -72,7 +72,7 @@ import { loadSpriteNativeSize } from './spriteDraw';
 import { spriteNativeWorldSize } from './spriteImport';
 import { combineMarqueeSelection } from './marqueeSelection';
 import { instantiateProjectPrefab } from './prefabWorkflow';
-import { isDesktopEditor } from './transport/editorTransport';
+import { exitDesktopEditor, isDesktopEditor } from './transport/editorTransport';
 import {
   checkpointDesktopScene,
   discardDesktopSceneRecovery,
@@ -84,6 +84,14 @@ import { loadSortingLayers, SORTING_LAYERS_CHANGED_EVENT } from './sortingLayers
 import { saveAllResources } from './saveAll';
 import { buildWorldTransforms } from './worldTransform';
 import type { TimelineScenePreview } from './timelineScenePreview';
+import {
+  approveEditorClose,
+  beginNativeEditorClose,
+  beginRequestedEditorClose,
+  cancelEditorClose,
+  createEditorCloseState,
+  editorCloseWarning,
+} from './editorClose';
 import './editorWindow'; // MenuItem side-effects
 
 const Timeline = lazy(async () => ({ default: (await import('./panels/Timeline')).Timeline }));
@@ -237,6 +245,7 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
   const sceneNameRef = useRef<string | null>(null);
   const sceneDirtyRef = useRef(false);
   const unsavedChangesRef = useRef(false);
+  const editorCloseState = useRef(createEditorCloseState());
   const savedSceneFingerprint = useRef(store.sceneContentFingerprint());
   const remoteSceneFingerprint = useRef(savedSceneFingerprint.current);
   const remoteSceneDirty = useRef(false);
@@ -302,6 +311,7 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
   };
 
   useEffect(() => {
+    if (isDesktopEditor()) return;
     const onBeforeUnload = (event: BeforeUnloadEvent) => {
       if (!hasUnsavedChanges) return;
       event.preventDefault();
@@ -1005,6 +1015,42 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
     void persistScene(name).then(() => refresh());
   };
 
+  const requestEditorClose = async (
+    scope: 'window' | 'application',
+    requestAlreadyStarted = false,
+  ): Promise<void> => {
+    const state = editorCloseState.current;
+    if (!requestAlreadyStarted && !beginRequestedEditorClose(state)) return;
+    try {
+      const dirtyPanels = unsavedChangesRef.current
+        ? [props.detachedPanel ?? 'main window']
+        : [];
+      if (scope === 'application') dirtyPanels.push(...await queryRemoteDirtyPanels());
+      const warning = editorCloseWarning(dirtyPanels, scope === 'application');
+      if (warning && !window.confirm(warning)) {
+        cancelEditorClose(state);
+        return;
+      }
+
+      approveEditorClose(state);
+      if (!isDesktopEditor()) {
+        window.close();
+        return;
+      }
+      if (scope === 'window') {
+        await getCurrentWindow().destroy();
+        return;
+      }
+
+      await exitDesktopEditor();
+    } catch (error) {
+      cancelEditorClose(state);
+      const message = error instanceof Error ? error.message : String(error);
+      console.error('Failed to close the editor', error);
+      window.alert(`关闭编辑器失败：${message}`);
+    }
+  };
+
   useEffect(() => {
     const title = `${hasUnsavedChanges ? '* ' : ''}${sceneName ? sceneFileName(sceneName) : 'Untitled'} — MEngine Editor`;
     document.title = props.detachedPanel ? `${props.detachedPanel} — ${title}` : title;
@@ -1016,11 +1062,11 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
     let disposed = false;
     let unlisten: (() => void) | undefined;
     void getCurrentWindow().onCloseRequested((event) => {
-      if (
-        unsavedChangesRef.current
-        && !window.confirm('当前场景或资源有未保存的修改。关闭编辑器将丢失这些修改，是否继续？')
-      ) {
-        event.preventDefault();
+      const decision = beginNativeEditorClose(editorCloseState.current);
+      if (decision === 'allow') return;
+      event.preventDefault();
+      if (decision === 'coordinate') {
+        void requestEditorClose(props.detachedPanel ? 'window' : 'application', true);
       }
     }).then((stop) => {
       if (disposed) stop();
@@ -1313,6 +1359,7 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
         onSaveAll={() => void saveEverything()}
         onSaveAs={saveSceneAs}
         onLoad={openSceneDialog}
+        onExit={() => void requestEditorClose('application')}
         onUndo={() => {
           store.undo();
           refresh();

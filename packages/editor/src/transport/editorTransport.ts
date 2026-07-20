@@ -317,6 +317,14 @@ export function isDesktopEditor(): boolean {
   return typeof window !== 'undefined' && window.__TAURI_INTERNALS__ != null;
 }
 
+export async function exitDesktopEditor(): Promise<void> {
+  if (!isDesktopEditor()) {
+    window.close();
+    return;
+  }
+  await invoke('exit_editor');
+}
+
 export async function isPrimaryPointerDown(): Promise<boolean> {
   return isDesktopEditor() ? invoke<boolean>('is_primary_pointer_down') : false;
 }

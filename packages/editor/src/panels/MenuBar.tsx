@@ -16,6 +16,7 @@ export function MenuBar(props: {
   onSaveAll: () => void;
   onSaveAs: () => void;
   onLoad: () => void;
+  onExit: () => void;
   onUndo: () => void;
   onRedo: () => void;
   onDuplicate: () => void;
@@ -93,7 +94,7 @@ export function MenuBar(props: {
                 Build Settings… <span className="hint">Ctrl+Shift+B</span>
               </button>
               <div className="sep" />
-              <button type="button" onClick={() => setOpen(null)}>Exit</button>
+              <button type="button" onClick={() => { props.onExit(); setOpen(null); }}>Exit</button>
             </div>
           )}
           {name === 'Edit' && (

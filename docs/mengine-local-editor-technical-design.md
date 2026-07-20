@@ -1724,3 +1724,15 @@ Camera Shot 的基础闭环已经形成，但 Timeline 仍不完备：编辑器 
 第二遍自省专门检查“步长恰好落在循环边界”而不是通常的跨界情形，发现剩余步长归零后不会再进入新周期段，因而只发出旧周期末端 Marker。现于连续运动精确抵达端点时追加零长度的新周期边界采样，并用正反向回归固定两个端点的确定顺序。最终 Timeline 定向测试 20/20、编辑器测试 375/375、Rust 全 Workspace/All Targets 测试与检查、格式检查、相关 Clippy 和根级 `build:editor` 生产构建全部通过；严格 Clippy 的三项既有非本批告警通过命令行定向豁免后复核，本批没有新增 Clippy 告警。主入口仍为 522.95kB，继续超过既有 500kB 分包预算。
 
 这一批完成的是可靠的嵌套事件时序底座，不等于 Timeline 已完备。Control Clip 的子源 `Hold/Loop` 外推、内联展开的层级轨道树、Prefab Control、录制模式、轨道模板、虚拟化、嵌套求值缓存和 Profiler 依赖视图仍待实现；下一批先把子源外推契约贯通 Assets、Sequencer、Scene Preview、Runtime 与 Build Gate，再进入层级轨道树。
+
+## 146. 2026-07-20 桌面编辑器统一关闭生命周期
+
+- File → Exit 不再是只收起菜单的空操作，而是进入与系统标题栏 X 共用的关闭协调器。协调器显式区分当前独立 Dock 窗口和整个应用：独立 Dock 的系统 X 只检查并关闭本窗口；主窗口 X 或任意窗口的 File → Exit 会收集主窗口及其他 Dock 广播的未保存资源状态，去重后只确认一次，再通过 Tauri `AppHandle.exit(0)` 终止应用事件循环和全部窗口，避免主窗口消失但浮动 Dock 让进程继续驻留。
+- 桌面端不再同时使用浏览器 `beforeunload` 和 Tauri `onCloseRequested`。Web 版本继续保留浏览器离页保护；Tauri 版本由可重入关闭状态机统一处理第一次原生请求、确认期间的重复点击、用户取消、关闭失败恢复以及批准后的最终销毁。项目选择/最近工程入口还没有挂载 App 的脏状态上下文，因此安装独立的无数据损失关闭处理，保证欢迎页的系统 X 同样有效。
+- Tauri capability 显式加入 `core:window:allow-destroy`，供独立 Dock 和项目入口在确认后绕过 WebView unload 销毁当前窗口；应用级退出则使用原生命令终止整个事件循环，不依赖逐窗销毁是否全部成功。缺少权限时单窗口 Promise 会被拒绝，旧实现即使菜单接线正确也仍然无法退出。回归测试固定关闭状态机的防重入、批准重试、失败复位、提示去重与 capability 契约。
+
+第一遍自省从两个用户入口反查实际动作，确认旧 File → Exit 只有 `setOpen(null)`，没有任何关闭调用；同时发现 App 在桌面端叠加 `beforeunload` 与 `onCloseRequested`，脏状态确认后仍可能被第二层 WebView 防护取消。现将菜单和标题栏统一到同一协调器，桌面移除浏览器层拦截，并把跨 Dock 未保存状态纳入应用退出确认。
+
+第二遍自省没有停在单元测试：重新构建真实 Tauri 调试程序后，以 Windows 物理窗口坐标点击标题栏 X，修复中间态等待 8 秒仍未退出。继续追查确认项目入口缺少关闭处理，且 capability 只允许 `close`、不允许协调器使用的 `destroy`；两处补齐并重新打包后，DPI 感知的真实标题栏 X 与 File → Exit 鼠标点击均使主进程以退出码 0 结束。最终编辑器测试 378/378、Rust Workspace/All Targets 检查、TypeScript/Vite 生产构建与 Tauri Debug 应用构建全部通过；主入口当前为 524.53kB，仍有既有 500kB 分包预算警告。
+
+本节只修复关闭生命周期，不宣称编辑器整体完备。按当前暂停要求，Control Clip 子源外推、Timeline 层级轨道树和后续 Unity2D 对齐工作保留为下一次继续时的起点。

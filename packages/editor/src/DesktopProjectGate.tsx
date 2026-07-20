@@ -1,4 +1,5 @@
 import { useEffect, useState, type ReactNode } from 'react';
+import { getCurrentWindow } from '@tauri-apps/api/window';
 import {
   chooseProjectDirectory,
   chooseProjectLocation,
@@ -64,6 +65,27 @@ export function DesktopProjectGate(props: { children: ReactNode; detached?: bool
       cancelled = true;
     };
   }, [desktop, props.detached]);
+
+  useEffect(() => {
+    if (!desktop || ready) return;
+    let disposed = false;
+    let unlisten: (() => void) | undefined;
+    void getCurrentWindow().onCloseRequested((event) => {
+      event.preventDefault();
+      void getCurrentWindow().destroy().catch((reason) => {
+        console.error('Failed to close the project hub', reason);
+      });
+    }).then((stop) => {
+      if (disposed) stop();
+      else unlisten = stop;
+    }).catch((reason) => {
+      console.error('Failed to register the project hub close handler', reason);
+    });
+    return () => {
+      disposed = true;
+      unlisten?.();
+    };
+  }, [desktop, ready]);
 
   useEffect(() => {
     if (!desktop || !props.detached || ready) return;
