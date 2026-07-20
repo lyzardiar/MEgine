@@ -1712,3 +1712,15 @@ Camera Shot 的基础闭环已经形成，但 Timeline 仍不完备：编辑器 
 第二遍自省在 1280×720 真实编辑器中打开一个 Muted Control Track：子资产仍成功加载，Inspector 显示 `Actor → Characters/Hero` 和 Parent child-path 状态；Remove 立即切回 Child-root lookup，单步 Undo 恢复原映射，页面 Console 无 warn/error。视觉检查发现窄 Inspector 中状态与三个按钮争抢单行，现改为状态独占行、按钮按空间换行；最终差异审计又移除了 Runtime 每帧为每个 Control Clip 构造公开目标集合的分配，改成无分配直接查询，完整集合只在编辑器和构建审计阶段生成。临时父子 Timeline、自动 Sidecar、Scene Sidecar 和 Editor 状态差异均已清理。最终编辑器测试 375/375、CLI 测试 57/57、资产层测试 52/52、运行时测试 122/122 全部通过；Rust 全 Workspace/All Targets、格式检查、相关 Clippy 与根级 `build:editor` 生产构建通过。主入口现为 522.95kB，仍超过既有 500kB 分包预算。
 
 公开绑定覆盖补齐了 Sub-Timeline 复用的关键前提，但 Timeline 还没有达到 Unity 级成熟度。下一批优先解决跨父子 Timeline 的 Signal 全局时间排序与子片段循环/外推语义，再实现可缩进、可搜索、可内联展开的轨道树；后续仍需 Prefab Control、录制模式、轨道模板、虚拟化、嵌套求值缓存和 Profiler 依赖视图。
+
+## 145. 2026-07-20 嵌套 Timeline Signal 全局播放顺序
+
+- Runtime 不再先收集顶层 Signal、随后按 Control Track 遍历顺序追加子事件。每个顶层 Director 的一次更新现在建立统一的“播放路程”坐标：父 Timeline 的连续区间、每个 Control Clip 的真实交集以及任意深度的子 Timeline 区间都映射到同一单调坐标，最终按该坐标稳定排序后一次性投递。因此父、子、孙 Timeline 的 Marker 会按玩家实际经过的顺序交错，而不是按递归调用顺序成块出现；正播、倒播、父 Timeline 循环重入和子片段倍速使用同一条路径。
+- 排序元数据只存在于本帧 Runtime 内部，公开 `RuntimeTimelineSignal.time` 继续表示 Marker 在其所属 Timeline 中的 authored local time，既不修改序列化格式，也不破坏现有脚本事件接口。同一播放时刻使用稳定序号消除歧义：当前 Timeline 的 Marker 先于子 Timeline，多个 Control Track 再按资产轨道与片段顺序处理。所谓“全局”限定在单个顶层 Director 的依赖图内；彼此没有共享时钟的多个 Director 仍保持 World 更新顺序。
+- 循环播放继续按连续区间拆分，但事件上限现在同时约束已排队事件和本 Director 尚未提交的有序事件，循环段数也严格限制在每次更新最多 4096 段。循环末端 Marker 与新周期起点 Marker 即使落在同一个物理时刻也不会合并：正播保持 End 后 Start，倒播保持 Start 后 End；从端点启动和本帧精确停在端点都具有同样语义。回归同时覆盖父事件与子事件正向交错、反向交错、跨循环交错、零时间重新武装以及精确边界的双端 Marker。
+
+第一遍自省从“启动点采样是否仍与旧 Runtime 等价”反查，发现统一分段初稿在 Director 从循环末端启动时会先把游标归零，漏掉当前末端 Marker。现将一次性的启动点采样与随后运动区间分开：先递归采样当前父子图，再让运动段排除起点，既保留末端事件，也不会重复普通起点事件；同时把临时事件数组改为单 Director 复用并收紧总量判断。
+
+第二遍自省专门检查“步长恰好落在循环边界”而不是通常的跨界情形，发现剩余步长归零后不会再进入新周期段，因而只发出旧周期末端 Marker。现于连续运动精确抵达端点时追加零长度的新周期边界采样，并用正反向回归固定两个端点的确定顺序。最终 Timeline 定向测试 20/20、编辑器测试 375/375、Rust 全 Workspace/All Targets 测试与检查、格式检查、相关 Clippy 和根级 `build:editor` 生产构建全部通过；严格 Clippy 的三项既有非本批告警通过命令行定向豁免后复核，本批没有新增 Clippy 告警。主入口仍为 522.95kB，继续超过既有 500kB 分包预算。
+
+这一批完成的是可靠的嵌套事件时序底座，不等于 Timeline 已完备。Control Clip 的子源 `Hold/Loop` 外推、内联展开的层级轨道树、Prefab Control、录制模式、轨道模板、虚拟化、嵌套求值缓存和 Profiler 依赖视图仍待实现；下一批先把子源外推契约贯通 Assets、Sequencer、Scene Preview、Runtime 与 Build Gate，再进入层级轨道树。

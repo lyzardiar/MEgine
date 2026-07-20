@@ -75,6 +75,13 @@ pub struct RuntimeTimelineSignal {
     pub payload: Option<Value>,
 }
 
+#[derive(Clone, Debug)]
+struct OrderedTimelineSignal {
+    traversal: f32,
+    sequence: usize,
+    signal: RuntimeTimelineSignal,
+}
+
 #[derive(Clone, Debug, PartialEq)]
 pub enum RuntimeParticleCommand {
     Seek { entity: Entity, time: f32 },
@@ -333,18 +340,7 @@ impl TimelineRuntime {
             let looped = director.wrap_mode.eq_ignore_ascii_case("loop");
             let just_started = self.active.insert(entity);
             let start = director.time.clamp(0.0, asset.duration);
-            if just_started {
-                collect_signals_at(&asset, entity, start, &mut self.pending_signals);
-            }
             let delta = delta_seconds * director.speed;
-            collect_crossed_signals(
-                &asset,
-                entity,
-                start,
-                delta,
-                looped,
-                &mut self.pending_signals,
-            );
             let raw_next = start + delta;
             let (next, finished) = if looped {
                 (raw_next.rem_euclid(asset.duration), false)
@@ -355,14 +351,36 @@ impl TimelineRuntime {
                 (next, finished)
             };
             let root_stack = [asset_key.trim().replace('\\', "/").to_ascii_lowercase()];
+            let mut ordered_signals = Vec::with_capacity(32);
+            let mut traversal = 0.0;
+            if just_started {
+                self.collect_timeline_signals_segment(
+                    world,
+                    entity,
+                    entity,
+                    "",
+                    asset_key,
+                    &asset,
+                    &bindings,
+                    start,
+                    start,
+                    true,
+                    0.0,
+                    0.0,
+                    0,
+                    &root_stack,
+                    &mut ordered_signals,
+                    &mut failures,
+                );
+            }
             if looped && delta.abs() > f32::EPSILON {
                 let mut cursor = start;
                 let mut remaining = delta;
-                let mut include_start = just_started;
+                let mut include_start = false;
                 let mut segments = 0usize;
                 while remaining.abs() > f32::EPSILON
-                    && segments <= MAX_SIGNALS_PER_UPDATE
-                    && self.pending_signals.len() < MAX_SIGNALS_PER_UPDATE
+                    && segments < MAX_SIGNALS_PER_UPDATE
+                    && self.pending_signals.len() + ordered_signals.len() < MAX_SIGNALS_PER_UPDATE
                 {
                     if remaining > 0.0 && cursor >= asset.duration - f32::EPSILON {
                         cursor = 0.0;
@@ -377,7 +395,7 @@ impl TimelineRuntime {
                         remaining.max(-cursor)
                     };
                     let segment_end = cursor + step;
-                    self.collect_control_signals_segment(
+                    self.collect_timeline_signals_segment(
                         world,
                         entity,
                         entity,
@@ -388,17 +406,51 @@ impl TimelineRuntime {
                         cursor,
                         segment_end,
                         include_start,
+                        traversal,
+                        step.abs(),
                         0,
                         &root_stack,
+                        &mut ordered_signals,
                         &mut failures,
                     );
+                    traversal += step.abs();
                     remaining -= step;
                     cursor = segment_end;
                     include_start = false;
+                    if remaining.abs() <= f32::EPSILON && step.abs() > f32::EPSILON {
+                        let wrapped_boundary =
+                            if delta > 0.0 && cursor >= asset.duration - f32::EPSILON {
+                                Some(0.0)
+                            } else if delta < 0.0 && cursor <= f32::EPSILON {
+                                Some(asset.duration)
+                            } else {
+                                None
+                            };
+                        if let Some(boundary) = wrapped_boundary {
+                            self.collect_timeline_signals_segment(
+                                world,
+                                entity,
+                                entity,
+                                "",
+                                asset_key,
+                                &asset,
+                                &bindings,
+                                boundary,
+                                boundary,
+                                true,
+                                traversal,
+                                0.0,
+                                0,
+                                &root_stack,
+                                &mut ordered_signals,
+                                &mut failures,
+                            );
+                        }
+                    }
                     segments += 1;
                 }
             } else {
-                self.collect_control_signals_segment(
+                self.collect_timeline_signals_segment(
                     world,
                     entity,
                     entity,
@@ -408,12 +460,26 @@ impl TimelineRuntime {
                     &bindings,
                     start,
                     next,
-                    just_started,
+                    false,
+                    0.0,
+                    (next - start).abs(),
                     0,
                     &root_stack,
+                    &mut ordered_signals,
                     &mut failures,
                 );
             }
+            ordered_signals.sort_by(|left, right| {
+                left.traversal
+                    .total_cmp(&right.traversal)
+                    .then_with(|| left.sequence.cmp(&right.sequence))
+            });
+            self.pending_signals.extend(
+                ordered_signals
+                    .into_iter()
+                    .take(MAX_SIGNALS_PER_UPDATE.saturating_sub(self.pending_signals.len()))
+                    .map(|ordered| ordered.signal),
+            );
             if !finished {
                 let wrapped = looped
                     && (director.speed > 0.0 && next < start
@@ -748,7 +814,7 @@ impl TimelineRuntime {
     }
 
     #[allow(clippy::too_many_arguments)]
-    fn collect_control_signals_segment(
+    fn collect_timeline_signals_segment(
         &mut self,
         world: &World,
         owner: Entity,
@@ -760,13 +826,27 @@ impl TimelineRuntime {
         from: f32,
         to: f32,
         include_start: bool,
+        traversal_start: f32,
+        traversal_duration: f32,
         depth: usize,
         stack: &[String],
+        output: &mut Vec<OrderedTimelineSignal>,
         failures: &mut Vec<TimelineLoadFailure>,
     ) {
-        if self.pending_signals.len() >= MAX_SIGNALS_PER_UPDATE {
+        if self.pending_signals.len() + output.len() >= MAX_SIGNALS_PER_UPDATE {
             return;
         }
+        collect_ordered_signals_segment(
+            asset,
+            owner,
+            from,
+            to,
+            include_start,
+            traversal_start,
+            traversal_duration,
+            output,
+            MAX_SIGNALS_PER_UPDATE.saturating_sub(self.pending_signals.len()),
+        );
         let forward = to >= from;
         let has_solo = asset.has_solo_tracks();
         for track in &asset.tracks {
@@ -786,7 +866,7 @@ impl TimelineRuntime {
                 continue;
             }
             for (clip_index, clip) in clips.iter().enumerate() {
-                if self.pending_signals.len() >= MAX_SIGNALS_PER_UPDATE {
+                if self.pending_signals.len() + output.len() >= MAX_SIGNALS_PER_UPDATE {
                     return;
                 }
                 let clip_end = clip.start + clip.duration;
@@ -903,21 +983,24 @@ impl TimelineRuntime {
                     .clamp(0.0, child.duration);
                 let child_to = (clip.clip_in + (parent_to - clip.start) * clip.speed)
                     .clamp(0.0, child.duration);
-                if entered {
-                    collect_signals_at(&child, owner, child_from, &mut self.pending_signals);
-                }
-                collect_crossed_signals(
-                    &child,
-                    owner,
-                    child_from,
-                    child_to - child_from,
-                    false,
-                    &mut self.pending_signals,
-                );
+                let segment_delta = to - from;
+                let start_progress = if segment_delta.abs() <= f32::EPSILON {
+                    0.0
+                } else {
+                    ((parent_from - from) / segment_delta).clamp(0.0, 1.0)
+                };
+                let end_progress = if segment_delta.abs() <= f32::EPSILON {
+                    start_progress
+                } else {
+                    ((parent_to - from) / segment_delta).clamp(0.0, 1.0)
+                };
+                let child_traversal_start = traversal_start + traversal_duration * start_progress;
+                let child_traversal_duration =
+                    traversal_duration * (end_progress - start_progress).max(0.0);
                 let child_bindings = control_binding_table(world, root, bindings, clip);
                 let mut child_stack = stack.to_vec();
                 child_stack.push(normalized_child_key);
-                self.collect_control_signals_segment(
+                self.collect_timeline_signals_segment(
                     world,
                     owner,
                     nested_root,
@@ -928,8 +1011,11 @@ impl TimelineRuntime {
                     child_from,
                     child_to,
                     entered,
+                    child_traversal_start,
+                    child_traversal_duration,
                     depth + 1,
                     &child_stack,
+                    output,
                     failures,
                 );
             }
@@ -1813,12 +1899,22 @@ fn resolve_descendant_target(world: &World, root: Entity, target: &str) -> Optio
     Some(current)
 }
 
-fn collect_signals_at(
+#[allow(clippy::too_many_arguments)]
+fn collect_ordered_signals_segment(
     asset: &TimelineAsset,
     entity: Entity,
-    time: f32,
-    output: &mut Vec<RuntimeTimelineSignal>,
+    from: f32,
+    to: f32,
+    include_start: bool,
+    traversal_start: f32,
+    traversal_duration: f32,
+    output: &mut Vec<OrderedTimelineSignal>,
+    limit: usize,
 ) {
+    if output.len() >= limit {
+        return;
+    }
+    let delta = to - from;
     let has_solo = asset.has_solo_tracks();
     for track in &asset.tracks {
         let TimelineTrack::Signal { name, markers, .. } = track else {
@@ -1828,90 +1924,33 @@ fn collect_signals_at(
             continue;
         }
         for marker in markers {
-            if (marker.time - time).abs() <= f32::EPSILON {
-                output.push(RuntimeTimelineSignal {
+            let at_start = include_start && (marker.time - from).abs() <= f32::EPSILON;
+            let crossed = delta > f32::EPSILON && marker.time > from && marker.time <= to
+                || delta < -f32::EPSILON && marker.time < from && marker.time >= to;
+            if !at_start && !crossed {
+                continue;
+            }
+            let progress = if delta.abs() <= f32::EPSILON {
+                0.0
+            } else {
+                ((marker.time - from) / delta).clamp(0.0, 1.0)
+            };
+            output.push(OrderedTimelineSignal {
+                traversal: traversal_start + traversal_duration * progress,
+                sequence: output.len(),
+                signal: RuntimeTimelineSignal {
                     entity,
                     track: name.clone(),
                     signal: marker.name.clone(),
                     time: marker.time,
                     payload: marker.payload.clone(),
-                });
+                },
+            });
+            if output.len() >= limit {
+                return;
             }
         }
     }
-}
-
-fn collect_crossed_signals(
-    asset: &TimelineAsset,
-    entity: Entity,
-    start: f32,
-    delta: f32,
-    looped: bool,
-    output: &mut Vec<RuntimeTimelineSignal>,
-) {
-    if delta.abs() <= f32::EPSILON || output.len() >= MAX_SIGNALS_PER_UPDATE {
-        return;
-    }
-    let end = if looped {
-        start + delta
-    } else {
-        (start + delta).clamp(0.0, asset.duration)
-    };
-    let mut crossed = Vec::new();
-    let has_solo = asset.has_solo_tracks();
-    for track in &asset.tracks {
-        let TimelineTrack::Signal { name, markers, .. } = track else {
-            continue;
-        };
-        if asset.track_is_muted_with_solo(track, has_solo) {
-            continue;
-        }
-        for marker in markers {
-            if looped {
-                let first = if delta > 0.0 {
-                    ((start - marker.time) / asset.duration).floor() as i64 + 1
-                } else {
-                    ((end - marker.time) / asset.duration).ceil() as i64
-                };
-                let last = if delta > 0.0 {
-                    ((end - marker.time) / asset.duration).floor() as i64
-                } else {
-                    ((start - marker.time) / asset.duration).ceil() as i64 - 1
-                };
-                for cycle in first..=last {
-                    let phase = marker.time + cycle as f32 * asset.duration;
-                    crossed.push((phase, name, marker));
-                    if crossed.len() + output.len() >= MAX_SIGNALS_PER_UPDATE {
-                        break;
-                    }
-                }
-            } else if delta > 0.0 && marker.time > start && marker.time <= end
-                || delta < 0.0 && marker.time < start && marker.time >= end
-            {
-                crossed.push((marker.time, name, marker));
-            }
-        }
-    }
-    crossed.sort_by(|left, right| {
-        let order = left.0.total_cmp(&right.0);
-        if delta > 0.0 {
-            order
-        } else {
-            order.reverse()
-        }
-    });
-    output.extend(
-        crossed
-            .into_iter()
-            .take(MAX_SIGNALS_PER_UPDATE - output.len())
-            .map(|(_, track, marker)| RuntimeTimelineSignal {
-                entity,
-                track: track.clone(),
-                signal: marker.name.clone(),
-                time: marker.time,
-                payload: marker.payload.clone(),
-            }),
-    );
 }
 
 #[cfg(test)]
@@ -2128,6 +2167,80 @@ mod tests {
                 .map(|event| event.signal.as_str())
                 .collect::<Vec<_>>(),
             ["Beat", "Start", "End"]
+        );
+        let _ = fs::remove_dir_all(root);
+    }
+
+    #[test]
+    fn loop_start_at_duration_emits_endpoint_before_wrapped_start() {
+        let root = std::env::temp_dir().join(format!(
+            "mengine-timeline-loop-boundary-{}",
+            uuid::Uuid::new_v4()
+        ));
+        let relative = "Assets/Timelines/boundary.mtimeline".to_owned();
+        let path = root.join(&relative);
+        fs::create_dir_all(path.parent().unwrap()).unwrap();
+        fs::write(
+            path,
+            r#"{"version":1,"duration":2,"tracks":[{"type":"signal","id":"events","name":"Events","markers":[{"time":0,"name":"Start"},{"time":2,"name":"End"}]}]}"#,
+        )
+        .unwrap();
+
+        let mut world = World::new();
+        let entity = world.spawn_empty();
+        world.insert_component(
+            entity,
+            TimelineDirector {
+                asset: relative,
+                time: 2.0,
+                wrap_mode: "Loop".into(),
+                ..TimelineDirector::default()
+            },
+        );
+        let mut runtime = TimelineRuntime::new(Some(root.clone()));
+
+        assert!(runtime.update(&mut world, 0.25).is_empty());
+        assert_eq!(
+            runtime
+                .take_signals()
+                .iter()
+                .map(|event| event.signal.as_str())
+                .collect::<Vec<_>>(),
+            ["End", "Start"]
+        );
+
+        {
+            let director = world.get_component_mut::<TimelineDirector>(entity).unwrap();
+            director.time = 1.75;
+            director.speed = 1.0;
+            director.playing = true;
+        }
+        runtime.reset_director(entity);
+        assert!(runtime.update(&mut world, 0.25).is_empty());
+        assert_eq!(
+            runtime
+                .take_signals()
+                .iter()
+                .map(|event| event.signal.as_str())
+                .collect::<Vec<_>>(),
+            ["End", "Start"]
+        );
+
+        {
+            let director = world.get_component_mut::<TimelineDirector>(entity).unwrap();
+            director.time = 0.25;
+            director.speed = -1.0;
+            director.playing = true;
+        }
+        runtime.reset_director(entity);
+        assert!(runtime.update(&mut world, 0.25).is_empty());
+        assert_eq!(
+            runtime
+                .take_signals()
+                .iter()
+                .map(|event| event.signal.as_str())
+                .collect::<Vec<_>>(),
+            ["Start", "End"]
         );
         let _ = fs::remove_dir_all(root);
     }
@@ -2986,7 +3099,7 @@ mod tests {
         fs::create_dir_all(&timelines).unwrap();
         fs::write(
             timelines.join("Parent.mtimeline"),
-            r#"{"version":1,"duration":2,"tracks":[{"type":"control","id":"nested","name":"Nested","target":"Sequence","clips":[{"start":0,"duration":1,"timeline":"Assets/Timelines/Child.mtimeline","clip_in":0.5,"speed":1.5,"binding_overrides":{"Sound":"Cast/Audio"}}]}]}"#,
+            r#"{"version":1,"duration":2,"tracks":[{"type":"signal","id":"parent-events","name":"Parent Events","markers":[{"time":0.1,"name":"Parent Early"},{"time":0.2,"name":"Parent Late"}]},{"type":"control","id":"nested","name":"Nested","target":"Sequence","clips":[{"start":0,"duration":1,"timeline":"Assets/Timelines/Child.mtimeline","clip_in":0.5,"speed":1.5,"binding_overrides":{"Sound":"Cast/Audio"}}]}]}"#,
         )
         .unwrap();
         fs::write(
@@ -3039,7 +3152,7 @@ mod tests {
                 .into_iter()
                 .map(|signal| signal.signal)
                 .collect::<Vec<_>>(),
-            ["Nested Beat"]
+            ["Parent Early", "Nested Beat", "Parent Late"]
         );
         assert!(runtime.update(&mut world, 0.75).is_empty());
         assert_eq!(
@@ -3054,7 +3167,27 @@ mod tests {
             let live = world
                 .get_component_mut::<TimelineDirector>(director)
                 .unwrap();
+            live.time = 0.25;
+            live.speed = -1.0;
+            live.playing = true;
+            live.wrap_mode = "Hold".into();
+        }
+        runtime.reset_director(director);
+        assert!(runtime.update(&mut world, 0.2).is_empty());
+        assert_eq!(
+            runtime
+                .take_signals()
+                .into_iter()
+                .map(|signal| signal.signal)
+                .collect::<Vec<_>>(),
+            ["Parent Late", "Nested Beat", "Parent Early"]
+        );
+        {
+            let live = world
+                .get_component_mut::<TimelineDirector>(director)
+                .unwrap();
             live.time = 1.9;
+            live.speed = 1.0;
             live.playing = true;
             live.wrap_mode = "Loop".into();
         }
@@ -3066,7 +3199,7 @@ mod tests {
                 .into_iter()
                 .map(|signal| signal.signal)
                 .collect::<Vec<_>>(),
-            ["Nested Beat"]
+            ["Parent Early", "Nested Beat", "Parent Late"]
         );
         assert!(
             (world
