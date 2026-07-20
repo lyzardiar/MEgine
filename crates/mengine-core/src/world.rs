@@ -434,6 +434,8 @@ fn canonical_component_name(component: &str) -> &str {
         "HingeJoint2D" | "hingeJoint2D" | "hingeJoint2d" => "HingeJoint2D",
         "SpringJoint2D" | "springJoint2D" | "springJoint2d" => "SpringJoint2D",
         "FixedJoint2D" | "fixedJoint2D" | "fixedJoint2d" => "FixedJoint2D",
+        "EdgeCollider2D" | "edgeCollider2D" | "edgeCollider2d" => "EdgeCollider2D",
+        "PhysicsMaterial2D" | "physicsMaterial2D" | "physicsMaterial2d" => "PhysicsMaterial2D",
         "Canvas" | "canvas" => "Canvas",
         "CanvasScaler" | "canvasScaler" => "CanvasScaler",
         "CanvasGroup" | "canvasGroup" => "CanvasGroup",

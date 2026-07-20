@@ -801,6 +801,48 @@
     ],
     "type": "object"
   },
+  "EdgeCollider2D": {
+    "properties": {
+      "bounciness": {
+        "type": "number"
+      },
+      "closed": {
+        "type": "boolean"
+      },
+      "friction": {
+        "type": "number"
+      },
+      "is_trigger": {
+        "type": "boolean"
+      },
+      "offset": {
+        "items": {
+          "type": "number"
+        },
+        "type": "array"
+      },
+      "points": {
+        "items": {
+          "items": {
+            "type": "number"
+          },
+          "maxItems": 2,
+          "minItems": 2,
+          "type": "array"
+        },
+        "type": "array"
+      }
+    },
+    "required": [
+      "points",
+      "offset",
+      "closed",
+      "is_trigger",
+      "friction",
+      "bounciness"
+    ],
+    "type": "object"
+  },
   "EditorOnly": {
     "properties": {},
     "type": "object"
@@ -1813,6 +1855,29 @@
       "emissive_strength",
       "unlit",
       "double_sided"
+    ],
+    "type": "object"
+  },
+  "PhysicsMaterial2D": {
+    "properties": {
+      "bounciness": {
+        "type": "number"
+      },
+      "bounciness_combine": {
+        "type": "string"
+      },
+      "friction": {
+        "type": "number"
+      },
+      "friction_combine": {
+        "type": "string"
+      }
+    },
+    "required": [
+      "friction",
+      "bounciness",
+      "friction_combine",
+      "bounciness_combine"
     ],
     "type": "object"
   },

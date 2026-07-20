@@ -1,8 +1,8 @@
 use super::{body_kind, pair_transitions, BodyKind, CollisionPair, PhysicsStepEvents};
 use glam::{Quat, Vec3};
 use mengine_core::generated::{
-    BoxCollider2D, CapsuleCollider2D, CircleCollider2D, DistanceJoint2D, FixedJoint2D,
-    HingeJoint2D, PolygonCollider2D, Rigidbody2D, SpringJoint2D, Transform,
+    BoxCollider2D, CapsuleCollider2D, CircleCollider2D, DistanceJoint2D, EdgeCollider2D,
+    FixedJoint2D, HingeJoint2D, PolygonCollider2D, Rigidbody2D, SpringJoint2D, Transform,
 };
 use mengine_core::{Entity, TransformHierarchy, World};
 use rapier2d::prelude::PhysicsWorld as RapierWorld;
@@ -27,6 +27,7 @@ struct BodySignature2D {
     circle_collider: Option<CircleColliderSignature2D>,
     polygon_collider: Option<PolygonColliderSignature2D>,
     capsule_collider: Option<CapsuleColliderSignature2D>,
+    edge_collider: Option<EdgeColliderSignature2D>,
 }
 
 #[derive(Clone, Debug, PartialEq)]
@@ -63,6 +64,16 @@ struct CapsuleColliderSignature2D {
     direction: String,
     size: [f32; 2],
     offset: [f32; 2],
+    is_trigger: bool,
+    friction: f32,
+    bounciness: f32,
+}
+
+#[derive(Clone, Debug, PartialEq)]
+struct EdgeColliderSignature2D {
+    points: Vec<[f32; 2]>,
+    offset: [f32; 2],
+    closed: bool,
     is_trigger: bool,
     friction: f32,
     bounciness: f32,
@@ -359,6 +370,31 @@ impl PhysicsWorld2D {
                 Some(handle),
             );
         }
+        if let Some(collider) = definition.signature.edge_collider.as_ref() {
+            let scale = definition.signature.scale;
+            let offset = [collider.offset[0] * scale[0], collider.offset[1] * scale[1]];
+            let mut vertices: Vec<Vec2> = collider
+                .points
+                .iter()
+                .map(|p| Vec2::new(p[0] * scale[0], p[1] * scale[1]))
+                .collect();
+            if vertices.len() >= 2 {
+                if collider.closed {
+                    // Close the loop by adding the first point at the end.
+                    let first = vertices[0];
+                    vertices.push(first);
+                }
+                // Build segment indices for the polyline.
+                let indices: Vec<[u32; 2]> = (0..vertices.len() as u32 - 1)
+                    .map(|i| [i, i + 1])
+                    .collect();
+                let builder = ColliderBuilder::polyline(vertices, Some(indices));
+                self.rapier.insert_collider(
+                    configure_collider(builder, offset, collider.is_trigger, collider.friction, collider.bounciness, entity),
+                    Some(handle),
+                );
+            }
+        }
         self.bodies.insert(
             entity,
             BodyEntry2D {
@@ -651,11 +687,13 @@ fn collect_definitions(
             let circle_collider = world.get_component::<CircleCollider2D>(entity).cloned();
             let polygon_collider = world.get_component::<PolygonCollider2D>(entity).cloned();
             let capsule_collider = world.get_component::<CapsuleCollider2D>(entity).cloned();
+            let edge_collider = world.get_component::<EdgeCollider2D>(entity).cloned();
             if rigid_body.is_none()
                 && box_collider.is_none()
                 && circle_collider.is_none()
                 && polygon_collider.is_none()
                 && capsule_collider.is_none()
+                && edge_collider.is_none()
             {
                 return None;
             }
@@ -683,6 +721,7 @@ fn collect_definitions(
                 circle_collider: circle_collider.map(normalize_circle_collider),
                 polygon_collider: polygon_collider.map(normalize_polygon_collider),
                 capsule_collider: capsule_collider.map(normalize_capsule_collider),
+                edge_collider: edge_collider.map(normalize_edge_collider),
             };
             Some((
                 entity,
@@ -740,6 +779,22 @@ fn normalize_capsule_collider(value: CapsuleCollider2D) -> CapsuleColliderSignat
         },
         size: finite_vec2(value.size, [0.5, 1.0]),
         offset: finite_vec2(value.offset, [0.0; 2]),
+        is_trigger: value.is_trigger,
+        friction: finite_or(value.friction, 0.5).max(0.0),
+        bounciness: finite_or(value.bounciness, 0.0).clamp(0.0, 1.0),
+    }
+}
+
+fn normalize_edge_collider(value: EdgeCollider2D) -> EdgeColliderSignature2D {
+    let points: Vec<[f32; 2]> = value
+        .points
+        .iter()
+        .map(|p| [finite_or(p[0], 0.0), finite_or(p[1], 0.0)])
+        .collect();
+    EdgeColliderSignature2D {
+        points,
+        offset: finite_vec2(value.offset, [0.0; 2]),
+        closed: value.closed,
         is_trigger: value.is_trigger,
         friction: finite_or(value.friction, 0.5).max(0.0),
         bounciness: finite_or(value.bounciness, 0.0).clamp(0.0, 1.0),

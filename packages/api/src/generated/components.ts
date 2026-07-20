@@ -321,6 +321,22 @@ export interface CapsuleCollider2D {
   bounciness: number;
 }
 
+export interface EdgeCollider2D {
+  points: [number, number][];
+  offset: [number, number];
+  closed: boolean;
+  isTrigger: boolean;
+  friction: number;
+  bounciness: number;
+}
+
+export interface PhysicsMaterial2D {
+  friction: number;
+  bounciness: number;
+  frictionCombine: string;
+  bouncinessCombine: string;
+}
+
 export interface DistanceJoint2D {
   connectedEntity: string;
   anchor: [number, number];
@@ -708,6 +724,8 @@ export type ComponentName =
   | 'CircleCollider2D'
   | 'PolygonCollider2D'
   | 'CapsuleCollider2D'
+  | 'EdgeCollider2D'
+  | 'PhysicsMaterial2D'
   | 'DistanceJoint2D'
   | 'HingeJoint2D'
   | 'SpringJoint2D'
@@ -777,6 +795,8 @@ export const COMPONENT_NAMES = [
   'CircleCollider2D',
   'PolygonCollider2D',
   'CapsuleCollider2D',
+  'EdgeCollider2D',
+  'PhysicsMaterial2D',
   'DistanceJoint2D',
   'HingeJoint2D',
   'SpringJoint2D',

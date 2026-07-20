@@ -1054,6 +1054,64 @@ impl Component for CapsuleCollider2D {
     fn to_value(&self) -> serde_json::Value { serde_json::to_value(self).unwrap_or(serde_json::Value::Null) }
 }
 
+#[derive(Clone, Debug, Serialize, Deserialize)]
+#[serde(default)]
+pub struct EdgeCollider2D {
+    pub points: Vec<[f32; 2]>,
+    pub offset: [f32; 2],
+    pub closed: bool,
+    pub is_trigger: bool,
+    pub friction: f32,
+    pub bounciness: f32,
+}
+
+impl Default for EdgeCollider2D {
+    fn default() -> Self {
+        Self {
+            points: Vec::new(),
+            offset: [0.0, 0.0],
+            closed: false,
+            is_trigger: false,
+            friction: 0.5,
+            bounciness: 0.0,
+        }
+    }
+}
+
+impl Component for EdgeCollider2D {
+    fn type_name() -> &'static str { "EdgeCollider2D" }
+    fn as_any(&self) -> &dyn std::any::Any { self }
+    fn as_any_mut(&mut self) -> &mut dyn std::any::Any { self }
+    fn to_value(&self) -> serde_json::Value { serde_json::to_value(self).unwrap_or(serde_json::Value::Null) }
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize)]
+#[serde(default)]
+pub struct PhysicsMaterial2D {
+    pub friction: f32,
+    pub bounciness: f32,
+    pub friction_combine: String,
+    pub bounciness_combine: String,
+}
+
+impl Default for PhysicsMaterial2D {
+    fn default() -> Self {
+        Self {
+            friction: 0.4,
+            bounciness: 0.0,
+            friction_combine: "average".into(),
+            bounciness_combine: "average".into(),
+        }
+    }
+}
+
+impl Component for PhysicsMaterial2D {
+    fn type_name() -> &'static str { "PhysicsMaterial2D" }
+    fn as_any(&self) -> &dyn std::any::Any { self }
+    fn as_any_mut(&mut self) -> &mut dyn std::any::Any { self }
+    fn to_value(&self) -> serde_json::Value { serde_json::to_value(self).unwrap_or(serde_json::Value::Null) }
+}
+
 #[derive(Clone, Debug, Default, Serialize, Deserialize)]
 #[serde(default)]
 pub struct DistanceJoint2D {
@@ -2202,6 +2260,8 @@ pub fn component_from_value(
         "CircleCollider2D" => serde_json::from_value::<CircleCollider2D>(value).map(|component| Some(Box::new(component) as ComponentBox)),
         "PolygonCollider2D" => serde_json::from_value::<PolygonCollider2D>(value).map(|component| Some(Box::new(component) as ComponentBox)),
         "CapsuleCollider2D" => serde_json::from_value::<CapsuleCollider2D>(value).map(|component| Some(Box::new(component) as ComponentBox)),
+        "EdgeCollider2D" => serde_json::from_value::<EdgeCollider2D>(value).map(|component| Some(Box::new(component) as ComponentBox)),
+        "PhysicsMaterial2D" => serde_json::from_value::<PhysicsMaterial2D>(value).map(|component| Some(Box::new(component) as ComponentBox)),
         "DistanceJoint2D" => serde_json::from_value::<DistanceJoint2D>(value).map(|component| Some(Box::new(component) as ComponentBox)),
         "HingeJoint2D" => serde_json::from_value::<HingeJoint2D>(value).map(|component| Some(Box::new(component) as ComponentBox)),
         "SpringJoint2D" => serde_json::from_value::<SpringJoint2D>(value).map(|component| Some(Box::new(component) as ComponentBox)),
@@ -2275,6 +2335,8 @@ pub mod meta {
         "CircleCollider2D",
         "PolygonCollider2D",
         "CapsuleCollider2D",
+        "EdgeCollider2D",
+        "PhysicsMaterial2D",
         "DistanceJoint2D",
         "HingeJoint2D",
         "SpringJoint2D",

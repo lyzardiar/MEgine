@@ -376,6 +376,30 @@ component CapsuleCollider2D {
   bounciness:  float  = 0
 }
 
+/// 2D edge/polyline collider defined by a series of connected line segments.
+/// Use for terrain edges, walls, and arbitrary boundary shapes.
+component EdgeCollider2D {
+  /// Ordered vertex list [x0,y0, x1,y1, ...] in local space.
+  /// Consecutive points form line segments.
+  points:      float2_array = [[-0.5, 0], [0.5, 0]]
+  offset:      float2       = [0, 0]
+  /// Connect last point back to first to form a closed loop.
+  closed:      bool         = false
+  is_trigger:  bool         = false
+  friction:    float        = 0.5
+  bounciness:  float        = 0
+}
+
+/// Shared 2D physics material defining surface properties for colliders.
+/// Attach to any entity with a 2D collider to override its friction/bounciness.
+component PhysicsMaterial2D {
+  friction:    float = 0.4
+  bounciness:  float = 0
+  /// "average" | "minimum" | "maximum" | "multiply"
+  friction_combine:    string = "average"
+  bounciness_combine:  string = "average"
+}
+
 /// Constrains two 2D bodies to maintain a fixed distance (Unity DistanceJoint2D).
 component DistanceJoint2D {
   /// Target entity id (u64 as string for JS precision).
