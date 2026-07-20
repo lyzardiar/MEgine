@@ -182,6 +182,8 @@ export interface Tilemap {
   tileAnchor: [number, number];
   sortingLayer: string;
   sortingOrder: number;
+  ruleTile: string;
+  autoTiling: boolean;
 }
 
 export interface AnimationPlayer {

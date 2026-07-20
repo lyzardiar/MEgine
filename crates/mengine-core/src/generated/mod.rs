@@ -576,6 +576,8 @@ pub struct Tilemap {
     pub tile_anchor: [f32; 2],
     pub sorting_layer: String,
     pub sorting_order: i32,
+    pub rule_tile: String,
+    pub auto_tiling: bool,
 }
 
 impl Default for Tilemap {
@@ -587,6 +589,8 @@ impl Default for Tilemap {
             tile_anchor: [0.5, 0.5],
             sorting_layer: "default".into(),
             sorting_order: 0,
+            rule_tile: "".into(),
+            auto_tiling: false,
         }
     }
 }

@@ -139,9 +139,28 @@ fn project_tilemap(
     let origin = Vec3::from(transform.position);
     let scale = Vec3::from(transform.scale);
     let rotation = safe_rotation(transform.rotation);
+
+    // Auto-tiling: resolve sprite per cell from 4-connected neighbor bitmask.
+    let auto_tiling = tilemap.auto_tiling && tilemap.sprites.len() >= 16;
+    let occupied: HashSet<(i32, i32)> = if auto_tiling {
+        cells.keys().copied().collect()
+    } else {
+        HashSet::new()
+    };
+
     cells
         .into_iter()
         .filter_map(|((x, y), sprite)| {
+            let resolved_sprite = if auto_tiling {
+                let bitmask = terrain_bitmask(&occupied, x, y);
+                tilemap
+                    .sprites
+                    .get(bitmask as usize)
+                    .map(|s| s.as_str())
+                    .unwrap_or(sprite)
+            } else {
+                sprite
+            };
             let local = Vec3::new(x as f32 * step[0], y as f32 * step[1], 0.0);
             let position = origin + rotation * (local * scale);
             project_sprite(
@@ -151,7 +170,12 @@ fn project_tilemap(
                     scale: transform.scale,
                 },
                 &SpriteRenderer {
-                    sprite: if sprite.is_empty() { "white" } else { sprite }.into(),
+                    sprite: if resolved_sprite.is_empty() {
+                        "white"
+                    } else {
+                        resolved_sprite
+                    }
+                    .into(),
                     color: tilemap.color,
                     size: cell_size,
                     pivot: tilemap.tile_anchor,
@@ -166,6 +190,26 @@ fn project_tilemap(
             )
         })
         .collect()
+}
+
+/// Computes the 4-connected terrain bitmask for a cell at (x, y).
+/// Bit 0 (1) = north (y+1), Bit 1 (2) = east (x+1),
+/// Bit 2 (4) = south (y-1), Bit 3 (8) = west (x-1).
+fn terrain_bitmask(occupied: &HashSet<(i32, i32)>, x: i32, y: i32) -> u8 {
+    let mut mask = 0u8;
+    if occupied.contains(&(x, y + 1)) {
+        mask |= 1;
+    }
+    if occupied.contains(&(x + 1, y)) {
+        mask |= 2;
+    }
+    if occupied.contains(&(x, y - 1)) {
+        mask |= 4;
+    }
+    if occupied.contains(&(x - 1, y)) {
+        mask |= 8;
+    }
+    mask
 }
 
 fn tile_key(cell: [f32; 2]) -> Option<(i32, i32)> {

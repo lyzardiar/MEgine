@@ -2710,6 +2710,9 @@
   },
   "Tilemap": {
     "properties": {
+      "auto_tiling": {
+        "type": "boolean"
+      },
       "cells": {
         "items": {
           "items": {
@@ -2726,6 +2729,9 @@
           "type": "number"
         },
         "type": "array"
+      },
+      "rule_tile": {
+        "type": "string"
       },
       "sorting_layer": {
         "type": "string"
@@ -2752,7 +2758,9 @@
       "color",
       "tile_anchor",
       "sorting_layer",
-      "sorting_order"
+      "sorting_order",
+      "rule_tile",
+      "auto_tiling"
     ],
     "type": "object"
   },

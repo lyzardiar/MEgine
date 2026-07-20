@@ -213,6 +213,12 @@ component Tilemap {
   tile_anchor:   float2        = [0.5, 0.5]
   sorting_layer: string        = "default"
   sorting_order: int           = 0
+  /// Optional .ruletile asset path for rule-based sprite auto-selection.
+  /// When set, per-cell sprites are resolved from neighbor patterns.
+  rule_tile:     string        = ""
+  /// Enable 4-connected terrain auto-tiling (simpler than rule_tile).
+  /// Uses the sprites array as the 16 terrain variants in bitmask order.
+  auto_tiling:   bool          = false
 }
 
 /// Plays a versioned .manim AnimationClip on this entity hierarchy.
