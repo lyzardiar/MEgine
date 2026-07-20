@@ -1,4 +1,4 @@
-use crate::generated::Transform;
+use crate::generated::{Transform, Transform2D};
 use crate::{Entity, Parent, World};
 use glam::{Mat4, Quat, Vec3};
 use std::collections::HashMap;
@@ -30,6 +30,30 @@ impl WorldTransform {
             transform.rotation[3],
         );
         let rotation = finite_rotation(raw_rotation);
+        Self {
+            position,
+            rotation,
+            scale,
+            matrix: Mat4::from_scale_rotation_translation(scale, rotation, position),
+        }
+    }
+
+    /// Converts a 2D transform (position XY, rotation in degrees around Z, scale XY)
+    /// into a world-space transform with Z = 0.
+    pub fn from_transform2d(t2d: &Transform2D) -> Self {
+        let position = Vec3::new(
+            finite_or(t2d.position[0], 0.0),
+            finite_or(t2d.position[1], 0.0),
+            0.0,
+        );
+        let rotation = finite_rotation(Quat::from_rotation_z(
+            finite_or(t2d.rotation, 0.0).to_radians(),
+        ));
+        let scale = Vec3::new(
+            finite_or(t2d.scale[0], 1.0),
+            finite_or(t2d.scale[1], 1.0),
+            1.0,
+        );
         Self {
             position,
             rotation,
@@ -164,7 +188,12 @@ fn resolve_node(
     );
     let local = world
         .get_component::<Transform>(entity)
-        .map(WorldTransform::from_local);
+        .map(WorldTransform::from_local)
+        .or_else(|| {
+            world
+                .get_component::<Transform2D>(entity)
+                .map(WorldTransform::from_transform2d)
+        });
     let node = ResolvedNode {
         active: parent_node.active && world.entity_active(entity),
         has_transform: local.is_some(),
@@ -201,6 +230,14 @@ fn finite_rotation(value: Quat) -> Quat {
         value.normalize()
     } else {
         Quat::IDENTITY
+    }
+}
+
+fn finite_or(value: f32, fallback: f32) -> f32 {
+    if value.is_finite() {
+        value
+    } else {
+        fallback
     }
 }
 
