@@ -1423,13 +1423,109 @@ function onTick(dt, frame) {
                     }
                 }
                 let key = match code {
-                    WinitKey::KeyW => mengine_platform::KeyCode::W,
                     WinitKey::KeyA => mengine_platform::KeyCode::A,
-                    WinitKey::KeyS => mengine_platform::KeyCode::S,
+                    WinitKey::KeyB => mengine_platform::KeyCode::B,
+                    WinitKey::KeyC => mengine_platform::KeyCode::C,
                     WinitKey::KeyD => mengine_platform::KeyCode::D,
-                    WinitKey::Space => mengine_platform::KeyCode::Space,
-                    WinitKey::Escape => mengine_platform::KeyCode::Escape,
+                    WinitKey::KeyE => mengine_platform::KeyCode::E,
+                    WinitKey::KeyF => mengine_platform::KeyCode::F,
+                    WinitKey::KeyG => mengine_platform::KeyCode::G,
+                    WinitKey::KeyH => mengine_platform::KeyCode::H,
+                    WinitKey::KeyI => mengine_platform::KeyCode::I,
+                    WinitKey::KeyJ => mengine_platform::KeyCode::J,
+                    WinitKey::KeyK => mengine_platform::KeyCode::K,
+                    WinitKey::KeyL => mengine_platform::KeyCode::L,
+                    WinitKey::KeyM => mengine_platform::KeyCode::M,
+                    WinitKey::KeyN => mengine_platform::KeyCode::N,
+                    WinitKey::KeyO => mengine_platform::KeyCode::O,
+                    WinitKey::KeyP => mengine_platform::KeyCode::P,
+                    WinitKey::KeyQ => mengine_platform::KeyCode::Q,
+                    WinitKey::KeyR => mengine_platform::KeyCode::R,
+                    WinitKey::KeyS => mengine_platform::KeyCode::S,
+                    WinitKey::KeyT => mengine_platform::KeyCode::T,
+                    WinitKey::KeyU => mengine_platform::KeyCode::U,
+                    WinitKey::KeyV => mengine_platform::KeyCode::V,
+                    WinitKey::KeyW => mengine_platform::KeyCode::W,
+                    WinitKey::KeyX => mengine_platform::KeyCode::X,
+                    WinitKey::KeyY => mengine_platform::KeyCode::Y,
+                    WinitKey::KeyZ => mengine_platform::KeyCode::Z,
+                    WinitKey::Digit0 => mengine_platform::KeyCode::Key0,
+                    WinitKey::Digit1 => mengine_platform::KeyCode::Key1,
+                    WinitKey::Digit2 => mengine_platform::KeyCode::Key2,
+                    WinitKey::Digit3 => mengine_platform::KeyCode::Key3,
+                    WinitKey::Digit4 => mengine_platform::KeyCode::Key4,
+                    WinitKey::Digit5 => mengine_platform::KeyCode::Key5,
+                    WinitKey::Digit6 => mengine_platform::KeyCode::Key6,
+                    WinitKey::Digit7 => mengine_platform::KeyCode::Key7,
+                    WinitKey::Digit8 => mengine_platform::KeyCode::Key8,
+                    WinitKey::Digit9 => mengine_platform::KeyCode::Key9,
+                    WinitKey::F1 => mengine_platform::KeyCode::F1,
+                    WinitKey::F2 => mengine_platform::KeyCode::F2,
+                    WinitKey::F3 => mengine_platform::KeyCode::F3,
+                    WinitKey::F4 => mengine_platform::KeyCode::F4,
                     WinitKey::F5 => mengine_platform::KeyCode::F5,
+                    WinitKey::F6 => mengine_platform::KeyCode::F6,
+                    WinitKey::F7 => mengine_platform::KeyCode::F7,
+                    WinitKey::F8 => mengine_platform::KeyCode::F8,
+                    WinitKey::F9 => mengine_platform::KeyCode::F9,
+                    WinitKey::F10 => mengine_platform::KeyCode::F10,
+                    WinitKey::F11 => mengine_platform::KeyCode::F11,
+                    WinitKey::F12 => mengine_platform::KeyCode::F12,
+                    WinitKey::ArrowUp => mengine_platform::KeyCode::ArrowUp,
+                    WinitKey::ArrowDown => mengine_platform::KeyCode::ArrowDown,
+                    WinitKey::ArrowLeft => mengine_platform::KeyCode::ArrowLeft,
+                    WinitKey::ArrowRight => mengine_platform::KeyCode::ArrowRight,
+                    WinitKey::ShiftLeft => mengine_platform::KeyCode::ShiftLeft,
+                    WinitKey::ShiftRight => mengine_platform::KeyCode::ShiftRight,
+                    WinitKey::ControlLeft => mengine_platform::KeyCode::ControlLeft,
+                    WinitKey::ControlRight => mengine_platform::KeyCode::ControlRight,
+                    WinitKey::AltLeft => mengine_platform::KeyCode::AltLeft,
+                    WinitKey::AltRight => mengine_platform::KeyCode::AltRight,
+                    WinitKey::SuperLeft => mengine_platform::KeyCode::MetaLeft,
+                    WinitKey::SuperRight => mengine_platform::KeyCode::MetaRight,
+                    WinitKey::Space => mengine_platform::KeyCode::Space,
+                    WinitKey::Enter => mengine_platform::KeyCode::Enter,
+                    WinitKey::Escape => mengine_platform::KeyCode::Escape,
+                    WinitKey::Backspace => mengine_platform::KeyCode::Backspace,
+                    WinitKey::Delete => mengine_platform::KeyCode::Delete,
+                    WinitKey::Insert => mengine_platform::KeyCode::Insert,
+                    WinitKey::Home => mengine_platform::KeyCode::Home,
+                    WinitKey::End => mengine_platform::KeyCode::End,
+                    WinitKey::PageUp => mengine_platform::KeyCode::PageUp,
+                    WinitKey::PageDown => mengine_platform::KeyCode::PageDown,
+                    WinitKey::Tab => mengine_platform::KeyCode::Tab,
+                    WinitKey::CapsLock => mengine_platform::KeyCode::CapsLock,
+                    WinitKey::Minus => mengine_platform::KeyCode::Minus,
+                    WinitKey::Equal => mengine_platform::KeyCode::Equal,
+                    WinitKey::BracketLeft => mengine_platform::KeyCode::BracketLeft,
+                    WinitKey::BracketRight => mengine_platform::KeyCode::BracketRight,
+                    WinitKey::Backslash => mengine_platform::KeyCode::Backslash,
+                    WinitKey::Semicolon => mengine_platform::KeyCode::Semicolon,
+                    WinitKey::Quote => mengine_platform::KeyCode::Quote,
+                    WinitKey::Backquote => mengine_platform::KeyCode::Backquote,
+                    WinitKey::Comma => mengine_platform::KeyCode::Comma,
+                    WinitKey::Period => mengine_platform::KeyCode::Period,
+                    WinitKey::Slash => mengine_platform::KeyCode::Slash,
+                    WinitKey::Numpad0 => mengine_platform::KeyCode::Numpad0,
+                    WinitKey::Numpad1 => mengine_platform::KeyCode::Numpad1,
+                    WinitKey::Numpad2 => mengine_platform::KeyCode::Numpad2,
+                    WinitKey::Numpad3 => mengine_platform::KeyCode::Numpad3,
+                    WinitKey::Numpad4 => mengine_platform::KeyCode::Numpad4,
+                    WinitKey::Numpad5 => mengine_platform::KeyCode::Numpad5,
+                    WinitKey::Numpad6 => mengine_platform::KeyCode::Numpad6,
+                    WinitKey::Numpad7 => mengine_platform::KeyCode::Numpad7,
+                    WinitKey::Numpad8 => mengine_platform::KeyCode::Numpad8,
+                    WinitKey::Numpad9 => mengine_platform::KeyCode::Numpad9,
+                    WinitKey::NumpadAdd => mengine_platform::KeyCode::NumpadAdd,
+                    WinitKey::NumpadSubtract => mengine_platform::KeyCode::NumpadSubtract,
+                    WinitKey::NumpadMultiply => mengine_platform::KeyCode::NumpadMultiply,
+                    WinitKey::NumpadDivide => mengine_platform::KeyCode::NumpadDivide,
+                    WinitKey::NumpadDecimal => mengine_platform::KeyCode::NumpadDecimal,
+                    WinitKey::NumpadEnter => mengine_platform::KeyCode::NumpadEnter,
+                    WinitKey::NumLock => mengine_platform::KeyCode::NumLock,
+                    WinitKey::ScrollLock => mengine_platform::KeyCode::ScrollLock,
+                    WinitKey::PrintScreen => mengine_platform::KeyCode::PrintScreen,
+                    WinitKey::Pause => mengine_platform::KeyCode::Pause,
                     _ => mengine_platform::KeyCode::Other,
                 };
                 match state {
@@ -1453,18 +1549,33 @@ function onTick(dt, frame) {
                         (position.x as f32 / 40.0, position.y as f32 / 40.0)
                     }
                 };
+                self.input.add_scroll(delta_x, delta_y);
                 self.scroll_ui(delta_x, delta_y);
             }
-            WindowEvent::MouseInput {
-                button: MouseButton::Left,
-                state: ElementState::Pressed,
-                ..
-            } => self.press_ui(),
-            WindowEvent::MouseInput {
-                button: MouseButton::Left,
-                state: ElementState::Released,
-                ..
-            } => self.active_slider = None,
+            WindowEvent::MouseInput { button, state, .. } => {
+                let mapped = match button {
+                    MouseButton::Left => mengine_platform::MouseButton::Left,
+                    MouseButton::Right => mengine_platform::MouseButton::Right,
+                    MouseButton::Middle => mengine_platform::MouseButton::Middle,
+                    MouseButton::Back => mengine_platform::MouseButton::Back,
+                    MouseButton::Forward => mengine_platform::MouseButton::Forward,
+                    _ => mengine_platform::MouseButton::Left,
+                };
+                match state {
+                    ElementState::Pressed => {
+                        self.input.mouse_down(mapped);
+                        if button == MouseButton::Left {
+                            self.press_ui();
+                        }
+                    }
+                    ElementState::Released => {
+                        self.input.mouse_up(mapped);
+                        if button == MouseButton::Left {
+                            self.active_slider = None;
+                        }
+                    }
+                }
+            }
             WindowEvent::RedrawRequested => {
                 let now = Instant::now();
                 let dt = (now - self.last).as_secs_f32();

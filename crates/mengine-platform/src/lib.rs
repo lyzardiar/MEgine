@@ -2,7 +2,7 @@
 
 mod input;
 
-pub use input::{InputState, KeyCode, PointerState};
+pub use input::{InputState, KeyCode, MouseButton, PointerState};
 
 use std::path::{Path, PathBuf};
 
@@ -11,5 +11,5 @@ pub fn project_root_from_cwd() -> PathBuf {
 }
 
 pub fn resolve_asset(root: &Path, relative: &str) -> PathBuf {
-    root.join("assets").join(relative)
+    root.join("Assets").join(relative)
 }
