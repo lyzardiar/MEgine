@@ -192,6 +192,72 @@ pub fn apply_snapshot(world: &mut World, snap: &WorldSnapshot) {
     world.selected = snap.selected.and_then(|id| entity_map.get(&id)).copied();
 }
 
+/// Applies a snapshot additively: spawns all entities without clearing the world.
+/// Returns the list of spawned entity IDs in snapshot order, for scene tracking.
+pub fn apply_snapshot_additive(world: &mut World, snap: &WorldSnapshot) -> Vec<mengine_core::Entity> {
+    use mengine_core::command::WorldCommand;
+    use serde_json::json;
+
+    for ent in &snap.entities {
+        let mut components = serde_json::Map::new();
+        for (k, v) in &ent.components {
+            components.insert(k.clone(), v.clone());
+        }
+        if let Some(name) = &ent.name {
+            components.insert("Name".into(), json!({ "value": name }));
+        }
+        world.commands.push(WorldCommand::Spawn {
+            name: ent.name.clone(),
+            components: serde_json::Value::Object(components),
+        });
+    }
+    let spawned = world.commit();
+    let entity_map: HashMap<u64, _> = snap
+        .entities
+        .iter()
+        .zip(spawned.iter().copied())
+        .map(|(snapshot, spawned)| (snapshot.entity, spawned))
+        .collect();
+
+    for ent in &snap.entities {
+        let Some(&child) = entity_map.get(&ent.entity) else {
+            continue;
+        };
+        world.set_editor_state(child, ent.sibling_index, ent.active);
+        if let Some(parent) = ent.parent.and_then(|id| entity_map.get(&id)).copied() {
+            world.set_parent(child, Some(parent));
+        }
+        let mut components = serde_json::Value::Object(
+            ent.components
+                .iter()
+                .map(|(name, value)| (name.clone(), value.clone()))
+                .collect(),
+        );
+        match remap_scene_entity_references(&mut components, &entity_map) {
+            Ok(()) => {
+                if let Some(components) = components.as_object() {
+                    for (name, value) in components {
+                        world.set_component_value(child, name, value.clone());
+                    }
+                }
+            }
+            Err(error) => log::warn!(
+                "additive scene entity references on {} could not be remapped: {error}",
+                ent.entity
+            ),
+        }
+        if let Some(director) = world.get_component_mut::<TimelineDirector>(child) {
+            if let Ok(mut bindings) = parse_timeline_binding_table(&director.bindings_json) {
+                bindings.remap_entities(&entity_map);
+                if let Ok(serialized) = serialize_timeline_binding_table(bindings) {
+                    director.bindings_json = serialized;
+                }
+            }
+        }
+    }
+    spawned
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;

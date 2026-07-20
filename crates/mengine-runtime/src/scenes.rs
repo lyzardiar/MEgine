@@ -39,6 +39,15 @@ pub struct SceneManager {
     build_scenes: Vec<PathBuf>,
     packaged: bool,
     current: Option<PathBuf>,
+    /// Additively loaded scenes and their spawned entity IDs.
+    additive_scenes: Vec<AdditiveScene>,
+}
+
+#[derive(Clone, Debug)]
+struct AdditiveScene {
+    name: String,
+    path: PathBuf,
+    entities: Vec<mengine_core::Entity>,
 }
 
 impl SceneManager {
@@ -51,6 +60,7 @@ impl SceneManager {
                 .collect(),
             packaged,
             current: None,
+            additive_scenes: Vec::new(),
         }
     }
 
@@ -222,6 +232,8 @@ impl SceneManager {
         })?;
         *world = next_world;
         self.current = Some(logical_path.clone());
+        // Clear additive scenes when loading a new base scene.
+        self.additive_scenes.clear();
         Ok(LoadedScene {
             name: scene.name,
             build_index: self
@@ -231,6 +243,85 @@ impl SceneManager {
             build_scene_count: self.build_scenes.len(),
             path: logical_path,
         })
+    }
+
+    /// Loads a scene additively: spawns its entities into the existing world
+    /// without clearing current entities. Returns the loaded scene info.
+    pub fn load_additive(
+        &mut self,
+        selector: SceneSelector,
+        world: &mut World,
+    ) -> Result<LoadedScene, SceneManagerError> {
+        let relative = match selector {
+            SceneSelector::Index(index) => self.build_scenes.get(index).cloned().ok_or(
+                SceneManagerError::IndexOutOfRange {
+                    index,
+                    count: self.build_scenes.len(),
+                },
+            )?,
+            SceneSelector::Reload => self
+                .current
+                .clone()
+                .ok_or(SceneManagerError::NoCurrentScene)?,
+            SceneSelector::PathOrName(reference) => self.resolve_reference(&reference)?,
+        };
+        let absolute = self
+            .project_root
+            .as_deref()
+            .map(|root| root.join(&relative))
+            .unwrap_or_else(|| relative.clone());
+
+        // Load the scene file into a temporary world to get the snapshot.
+        let mut temp_world = World::new();
+        let scene = load_scene(&absolute, &mut temp_world).map_err(|source| {
+            SceneManagerError::Load {
+                path: absolute,
+                source,
+            }
+        })?;
+
+        // Apply the snapshot additively to the real world.
+        let snapshot = mengine_core::WorldSnapshot::from_world(&temp_world);
+        let spawned = mengine_scene::apply_snapshot_additive(world, &snapshot);
+
+        self.additive_scenes.push(AdditiveScene {
+            name: scene.name.clone(),
+            path: relative.clone(),
+            entities: spawned,
+        });
+
+        Ok(LoadedScene {
+            name: scene.name,
+            build_index: self
+                .build_scenes
+                .iter()
+                .position(|entry| entry == &relative),
+            build_scene_count: self.build_scenes.len(),
+            path: relative,
+        })
+    }
+
+    /// Unloads an additively loaded scene by despawning all its entities.
+    /// Returns true if the scene was found and unloaded.
+    pub fn unload_additive(&mut self, name_or_path: &str, world: &mut World) -> bool {
+        let normalized = name_or_path.trim().replace('\\', "/");
+        let index = self.additive_scenes.iter().position(|scene| {
+            scene.name.eq_ignore_ascii_case(&normalized)
+                || scene.path.to_string_lossy().eq_ignore_ascii_case(&normalized)
+        });
+        let Some(index) = index else {
+            return false;
+        };
+        let scene = self.additive_scenes.remove(index);
+        for entity in scene.entities {
+            world.despawn(entity);
+        }
+        true
+    }
+
+    /// Returns the names of all additively loaded scenes.
+    pub fn additive_scene_names(&self) -> Vec<&str> {
+        self.additive_scenes.iter().map(|s| s.name.as_str()).collect()
     }
 }
 

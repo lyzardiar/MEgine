@@ -8,7 +8,7 @@ pub use prefab::{
     expand_prefab, instantiate_prefab, load_prefab, save_prefab, Prefab, PrefabInstance,
     PrefabNode, PREFAB_VERSION,
 };
-pub use scene_file::{apply_snapshot, load_scene, save_scene, SceneFile, SCENE_VERSION};
+pub use scene_file::{apply_snapshot, apply_snapshot_additive, load_scene, save_scene, SceneFile, SCENE_VERSION};
 
 use thiserror::Error;
 
