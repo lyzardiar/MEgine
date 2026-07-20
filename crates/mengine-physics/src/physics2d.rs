@@ -1,11 +1,14 @@
 use super::{body_kind, pair_transitions, BodyKind, CollisionPair, PhysicsStepEvents};
 use glam::{Quat, Vec3};
-use mengine_core::generated::{BoxCollider2D, CircleCollider2D, Rigidbody2D, Transform};
+use mengine_core::generated::{
+    BoxCollider2D, CapsuleCollider2D, CircleCollider2D, DistanceJoint2D, FixedJoint2D,
+    HingeJoint2D, PolygonCollider2D, Rigidbody2D, SpringJoint2D, Transform,
+};
 use mengine_core::{Entity, TransformHierarchy, World};
 use rapier2d::prelude::PhysicsWorld as RapierWorld;
 use rapier2d::prelude::{
-    ColliderBuilder, ColliderHandle, Pose, RigidBodyBuilder, RigidBodyHandle, RigidBodyType,
-    Rotation, Vec2,
+    ColliderBuilder, ColliderHandle, FixedJointBuilder, ImpulseJointHandle, Pose,
+    RevoluteJointBuilder, RigidBodyBuilder, RigidBodyHandle, RigidBodyType, Rotation, Vec2,
 };
 use std::collections::{HashMap, HashSet};
 
@@ -21,6 +24,8 @@ struct BodySignature2D {
     scale: [f32; 2],
     box_collider: Option<BoxColliderSignature2D>,
     circle_collider: Option<CircleColliderSignature2D>,
+    polygon_collider: Option<PolygonColliderSignature2D>,
+    capsule_collider: Option<CapsuleColliderSignature2D>,
 }
 
 #[derive(Clone, Debug, PartialEq)]
@@ -35,6 +40,27 @@ struct BoxColliderSignature2D {
 #[derive(Clone, Debug, PartialEq)]
 struct CircleColliderSignature2D {
     radius: f32,
+    offset: [f32; 2],
+    is_trigger: bool,
+    friction: f32,
+    bounciness: f32,
+}
+
+#[derive(Clone, Debug, PartialEq)]
+struct PolygonColliderSignature2D {
+    /// Flattened [x0,y0, x1,y1, ...] vertices in local space.
+    points: Vec<[f32; 2]>,
+    offset: [f32; 2],
+    is_trigger: bool,
+    friction: f32,
+    bounciness: f32,
+}
+
+#[derive(Clone, Debug, PartialEq)]
+struct CapsuleColliderSignature2D {
+    /// "vertical" | "horizontal"
+    direction: String,
+    size: [f32; 2],
     offset: [f32; 2],
     is_trigger: bool,
     friction: f32,
@@ -57,6 +83,7 @@ struct BodyEntry2D {
 pub struct PhysicsWorld2D {
     rapier: RapierWorld,
     bodies: HashMap<Entity, BodyEntry2D>,
+    joints: HashMap<Entity, ImpulseJointHandle>,
     active_collision_pairs: HashSet<CollisionPair>,
     active_trigger_pairs: HashSet<CollisionPair>,
 }
@@ -72,6 +99,7 @@ impl PhysicsWorld2D {
         Self {
             rapier: RapierWorld::new(),
             bodies: HashMap::new(),
+            joints: HashMap::new(),
             active_collision_pairs: HashSet::new(),
             active_trigger_pairs: HashSet::new(),
         }
@@ -108,6 +136,7 @@ impl PhysicsWorld2D {
             }
             self.sync_body_input(*entity, definition);
         }
+        self.sync_joints(world, &hierarchy);
 
         self.rapier.integration_parameters.dt = finite_or(dt, 1.0 / 60.0).clamp(0.0001, 0.1);
         self.rapier.step();
@@ -128,6 +157,9 @@ impl PhysicsWorld2D {
     }
 
     fn remove_body(&mut self, entity: Entity) {
+        if let Some(joint_handle) = self.joints.remove(&entity) {
+            self.rapier.remove_impulse_joint(joint_handle);
+        }
         if let Some(entry) = self.bodies.remove(&entity) {
             self.rapier.remove_body(entry.handle);
         }
@@ -201,6 +233,46 @@ impl PhysicsWorld2D {
                 Some(handle),
             );
         }
+        if let Some(collider) = definition.signature.polygon_collider.as_ref() {
+            let scale = definition.signature.scale;
+            let offset = [collider.offset[0] * scale[0], collider.offset[1] * scale[1]];
+            let points: Vec<Vec2> = collider
+                .points
+                .iter()
+                .map(|p| Vec2::new(p[0] * scale[0], p[1] * scale[1]))
+                .collect();
+            if points.len() >= 3 {
+                if let Some(builder) = ColliderBuilder::convex_hull(&points) {
+                    self.rapier.insert_collider(
+                        configure_collider(builder, offset, collider.is_trigger, collider.friction, collider.bounciness, entity),
+                        Some(handle),
+                    );
+                }
+            }
+        }
+        if let Some(collider) = definition.signature.capsule_collider.as_ref() {
+            let scale = definition.signature.scale;
+            let offset = [collider.offset[0] * scale[0], collider.offset[1] * scale[1]];
+            let is_vertical = collider.direction == "vertical";
+            let (half_height, radius) = if is_vertical {
+                let h = (collider.size[1] * scale[1]).abs().max(0.002);
+                let r = (collider.size[0] * scale[0]).abs().max(0.001) * 0.5;
+                ((h * 0.5 - r).max(0.001), r)
+            } else {
+                let w = (collider.size[0] * scale[0]).abs().max(0.002);
+                let r = (collider.size[1] * scale[1]).abs().max(0.001) * 0.5;
+                ((w * 0.5 - r).max(0.001), r)
+            };
+            let builder = if is_vertical {
+                ColliderBuilder::capsule_y(half_height, radius)
+            } else {
+                ColliderBuilder::capsule_x(half_height, radius)
+            };
+            self.rapier.insert_collider(
+                configure_collider(builder, offset, collider.is_trigger, collider.friction, collider.bounciness, entity),
+                Some(handle),
+            );
+        }
         self.bodies.insert(
             entity,
             BodyEntry2D {
@@ -243,6 +315,138 @@ impl PhysicsWorld2D {
                         body.set_angvel(angular, true);
                     }
                 }
+            }
+        }
+    }
+
+    /// Creates or removes Rapier impulse joints to match the ECS joint components.
+    fn sync_joints(&mut self, world: &World, _hierarchy: &TransformHierarchy) {
+        // Collect which entities currently have a joint component.
+        let mut joint_entities: HashSet<Entity> = HashSet::new();
+        for entity in world.iter_entities() {
+            let has_joint = world.get_component::<DistanceJoint2D>(entity).is_some()
+                || world.get_component::<HingeJoint2D>(entity).is_some()
+                || world.get_component::<SpringJoint2D>(entity).is_some()
+                || world.get_component::<FixedJoint2D>(entity).is_some();
+            if has_joint {
+                joint_entities.insert(entity);
+            }
+        }
+
+        // Remove joints for entities that no longer have joint components.
+        let stale: Vec<Entity> = self
+            .joints
+            .keys()
+            .filter(|e| !joint_entities.contains(e))
+            .copied()
+            .collect();
+        for entity in stale {
+            if let Some(handle) = self.joints.remove(&entity) {
+                self.rapier.remove_impulse_joint(handle);
+            }
+        }
+
+        // Create joints for new entities.
+        for entity in &joint_entities {
+            if self.joints.contains_key(entity) {
+                continue;
+            }
+            let Some(body_entry) = self.bodies.get(entity) else {
+                continue;
+            };
+            let body_handle = body_entry.handle;
+
+            // Resolve connected entity.
+            let connected = world
+                .get_component::<DistanceJoint2D>(*entity)
+                .and_then(|j| parse_entity_id(&j.connected_entity))
+                .or_else(|| {
+                    world
+                        .get_component::<HingeJoint2D>(*entity)
+                        .and_then(|j| parse_entity_id(&j.connected_entity))
+                })
+                .or_else(|| {
+                    world
+                        .get_component::<SpringJoint2D>(*entity)
+                        .and_then(|j| parse_entity_id(&j.connected_entity))
+                })
+                .or_else(|| {
+                    world
+                        .get_component::<FixedJoint2D>(*entity)
+                        .and_then(|j| parse_entity_id(&j.connected_entity))
+                });
+            let Some(connected_entity) = connected else {
+                continue;
+            };
+            let Some(connected_entry) = self.bodies.get(&connected_entity) else {
+                continue;
+            };
+            let connected_handle = connected_entry.handle;
+
+            if let Some(joint) = world.get_component::<FixedJoint2D>(*entity) {
+                let anchor = finite_vec2(joint.anchor, [0.0; 2]);
+                let connected_anchor = finite_vec2(joint.connected_anchor, [0.0; 2]);
+                let frame1 = Pose::from_parts(Vec2::new(anchor[0], anchor[1]), Rotation::new(0.0));
+                let frame2 = Pose::from_parts(
+                    Vec2::new(connected_anchor[0], connected_anchor[1]),
+                    Rotation::new(0.0),
+                );
+                let rapier_joint = FixedJointBuilder::new()
+                    .local_frame1(frame1)
+                    .local_frame2(frame2)
+                    .build();
+                let handle =
+                    self.rapier
+                        .insert_impulse_joint(body_handle, connected_handle, rapier_joint);
+                self.joints.insert(*entity, handle);
+            } else if let Some(joint) = world.get_component::<HingeJoint2D>(*entity) {
+                let anchor = finite_vec2(joint.anchor, [0.0; 2]);
+                let connected_anchor = finite_vec2(joint.connected_anchor, [0.0; 2]);
+                let mut builder = RevoluteJointBuilder::new()
+                    .local_anchor1(Vec2::new(anchor[0], anchor[1]))
+                    .local_anchor2(Vec2::new(connected_anchor[0], connected_anchor[1]));
+                if joint.use_limits {
+                    let min = finite_or(joint.min_angle, -180.0).to_radians();
+                    let max = finite_or(joint.max_angle, 180.0).to_radians();
+                    builder = builder.limits([min.min(max), min.max(max)]);
+                }
+                if joint.use_motor {
+                    let speed = finite_or(joint.motor_speed, 0.0).to_radians();
+                    let torque = finite_or(joint.max_motor_torque, 0.0).max(0.0);
+                    builder = builder.motor_velocity(speed, torque);
+                }
+                let handle =
+                    self.rapier
+                        .insert_impulse_joint(body_handle, connected_handle, builder.build());
+                self.joints.insert(*entity, handle);
+            } else if let Some(joint) = world.get_component::<DistanceJoint2D>(*entity) {
+                let anchor = finite_vec2(joint.anchor, [0.0; 2]);
+                let connected_anchor = finite_vec2(joint.connected_anchor, [0.0; 2]);
+                let mut builder = RevoluteJointBuilder::new()
+                    .local_anchor1(Vec2::new(anchor[0], anchor[1]))
+                    .local_anchor2(Vec2::new(connected_anchor[0], connected_anchor[1]));
+                let stiffness = finite_or(joint.stiffness, 0.0).max(0.0);
+                let damping = finite_or(joint.damping, 0.0).max(0.0);
+                if stiffness > 0.0 {
+                    builder = builder.motor_position(0.0, stiffness, damping);
+                }
+                let handle =
+                    self.rapier
+                        .insert_impulse_joint(body_handle, connected_handle, builder.build());
+                self.joints.insert(*entity, handle);
+            } else if let Some(joint) = world.get_component::<SpringJoint2D>(*entity) {
+                let anchor = finite_vec2(joint.anchor, [0.0; 2]);
+                let connected_anchor = finite_vec2(joint.connected_anchor, [0.0; 2]);
+                let stiffness = finite_or(joint.stiffness, 10.0).max(0.0);
+                let damping = finite_or(joint.damping, 1.0).max(0.0);
+                let builder = RevoluteJointBuilder::new()
+                    .local_anchor1(Vec2::new(anchor[0], anchor[1]))
+                    .local_anchor2(Vec2::new(connected_anchor[0], connected_anchor[1]))
+                    .motor_position(0.0, stiffness, damping);
+                let handle =
+                    self.rapier
+                        .insert_impulse_joint(body_handle, connected_handle, builder.build());
+                self.joints.insert(*entity, handle);
             }
         }
     }
@@ -359,7 +563,14 @@ fn collect_definitions(
             let rigid_body = world.get_component::<Rigidbody2D>(entity).cloned();
             let box_collider = world.get_component::<BoxCollider2D>(entity).cloned();
             let circle_collider = world.get_component::<CircleCollider2D>(entity).cloned();
-            if rigid_body.is_none() && box_collider.is_none() && circle_collider.is_none() {
+            let polygon_collider = world.get_component::<PolygonCollider2D>(entity).cloned();
+            let capsule_collider = world.get_component::<CapsuleCollider2D>(entity).cloned();
+            if rigid_body.is_none()
+                && box_collider.is_none()
+                && circle_collider.is_none()
+                && polygon_collider.is_none()
+                && capsule_collider.is_none()
+            {
                 return None;
             }
             let kind = rigid_body
@@ -384,6 +595,8 @@ fn collect_definitions(
                 scale: finite_vec2([transform.scale[0], transform.scale[1]], [1.0; 2]),
                 box_collider: box_collider.map(normalize_box_collider),
                 circle_collider: circle_collider.map(normalize_circle_collider),
+                polygon_collider: polygon_collider.map(normalize_polygon_collider),
+                capsule_collider: capsule_collider.map(normalize_capsule_collider),
             };
             Some((
                 entity,
@@ -410,6 +623,36 @@ fn normalize_box_collider(value: BoxCollider2D) -> BoxColliderSignature2D {
 fn normalize_circle_collider(value: CircleCollider2D) -> CircleColliderSignature2D {
     CircleColliderSignature2D {
         radius: finite_or(value.radius, 0.5).abs().max(0.001),
+        offset: finite_vec2(value.offset, [0.0; 2]),
+        is_trigger: value.is_trigger,
+        friction: finite_or(value.friction, 0.5).max(0.0),
+        bounciness: finite_or(value.bounciness, 0.0).clamp(0.0, 1.0),
+    }
+}
+
+fn normalize_polygon_collider(value: PolygonCollider2D) -> PolygonColliderSignature2D {
+    let points: Vec<[f32; 2]> = value
+        .points
+        .iter()
+        .map(|p| [finite_or(p[0], 0.0), finite_or(p[1], 0.0)])
+        .collect();
+    PolygonColliderSignature2D {
+        points,
+        offset: finite_vec2(value.offset, [0.0; 2]),
+        is_trigger: value.is_trigger,
+        friction: finite_or(value.friction, 0.5).max(0.0),
+        bounciness: finite_or(value.bounciness, 0.0).clamp(0.0, 1.0),
+    }
+}
+
+fn normalize_capsule_collider(value: CapsuleCollider2D) -> CapsuleColliderSignature2D {
+    CapsuleColliderSignature2D {
+        direction: if value.direction == "horizontal" {
+            "horizontal".into()
+        } else {
+            "vertical".into()
+        },
+        size: finite_vec2(value.size, [0.5, 1.0]),
         offset: finite_vec2(value.offset, [0.0; 2]),
         is_trigger: value.is_trigger,
         friction: finite_or(value.friction, 0.5).max(0.0),
@@ -469,6 +712,15 @@ fn finite_vec2(value: [f32; 2], fallback: [f32; 2]) -> [f32; 2] {
         finite_or(value[0], fallback[0]),
         finite_or(value[1], fallback[1]),
     ]
+}
+
+/// Parses a u64 entity id from a string (JS passes u64 as strings for precision).
+fn parse_entity_id(value: &str) -> Option<Entity> {
+    let trimmed = value.trim();
+    if trimmed.is_empty() {
+        return None;
+    }
+    trimmed.parse::<u64>().ok().map(Entity::from_u64)
 }
 
 #[cfg(test)]

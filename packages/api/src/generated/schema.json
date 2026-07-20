@@ -522,6 +522,43 @@
     ],
     "type": "object"
   },
+  "CapsuleCollider2D": {
+    "properties": {
+      "bounciness": {
+        "type": "number"
+      },
+      "direction": {
+        "type": "string"
+      },
+      "friction": {
+        "type": "number"
+      },
+      "is_trigger": {
+        "type": "boolean"
+      },
+      "offset": {
+        "items": {
+          "type": "number"
+        },
+        "type": "array"
+      },
+      "size": {
+        "items": {
+          "type": "number"
+        },
+        "type": "array"
+      }
+    },
+    "required": [
+      "direction",
+      "size",
+      "offset",
+      "is_trigger",
+      "friction",
+      "bounciness"
+    ],
+    "type": "object"
+  },
   "CircleCollider2D": {
     "properties": {
       "bounciness": {
@@ -613,6 +650,55 @@
       "shadow_bias",
       "shadow_normal_bias",
       "shadow_distance"
+    ],
+    "type": "object"
+  },
+  "DistanceJoint2D": {
+    "properties": {
+      "anchor": {
+        "items": {
+          "type": "number"
+        },
+        "type": "array"
+      },
+      "break_force": {
+        "type": "number"
+      },
+      "connected_anchor": {
+        "items": {
+          "type": "number"
+        },
+        "type": "array"
+      },
+      "connected_entity": {
+        "type": "string"
+      },
+      "damping": {
+        "type": "number"
+      },
+      "distance": {
+        "type": "number"
+      },
+      "max_distance": {
+        "type": "number"
+      },
+      "min_distance": {
+        "type": "number"
+      },
+      "stiffness": {
+        "type": "number"
+      }
+    },
+    "required": [
+      "connected_entity",
+      "anchor",
+      "connected_anchor",
+      "distance",
+      "min_distance",
+      "max_distance",
+      "stiffness",
+      "damping",
+      "break_force"
     ],
     "type": "object"
   },
@@ -738,6 +824,43 @@
     ],
     "type": "object"
   },
+  "FixedJoint2D": {
+    "properties": {
+      "anchor": {
+        "items": {
+          "type": "number"
+        },
+        "type": "array"
+      },
+      "break_force": {
+        "type": "number"
+      },
+      "connected_anchor": {
+        "items": {
+          "type": "number"
+        },
+        "type": "array"
+      },
+      "connected_entity": {
+        "type": "string"
+      },
+      "damping": {
+        "type": "number"
+      },
+      "stiffness": {
+        "type": "number"
+      }
+    },
+    "required": [
+      "connected_entity",
+      "anchor",
+      "connected_anchor",
+      "stiffness",
+      "damping",
+      "break_force"
+    ],
+    "type": "object"
+  },
   "Grid": {
     "properties": {
       "cell_gap": {
@@ -760,6 +883,59 @@
       "cell_size",
       "cell_gap",
       "cell_layout"
+    ],
+    "type": "object"
+  },
+  "HingeJoint2D": {
+    "properties": {
+      "anchor": {
+        "items": {
+          "type": "number"
+        },
+        "type": "array"
+      },
+      "break_force": {
+        "type": "number"
+      },
+      "connected_anchor": {
+        "items": {
+          "type": "number"
+        },
+        "type": "array"
+      },
+      "connected_entity": {
+        "type": "string"
+      },
+      "max_angle": {
+        "type": "number"
+      },
+      "max_motor_torque": {
+        "type": "number"
+      },
+      "min_angle": {
+        "type": "number"
+      },
+      "motor_speed": {
+        "type": "number"
+      },
+      "use_limits": {
+        "type": "boolean"
+      },
+      "use_motor": {
+        "type": "boolean"
+      }
+    },
+    "required": [
+      "connected_entity",
+      "anchor",
+      "connected_anchor",
+      "use_limits",
+      "min_angle",
+      "max_angle",
+      "use_motor",
+      "motor_speed",
+      "max_motor_torque",
+      "break_force"
     ],
     "type": "object"
   },
@@ -1613,6 +1789,44 @@
     ],
     "type": "object"
   },
+  "PolygonCollider2D": {
+    "properties": {
+      "bounciness": {
+        "type": "number"
+      },
+      "friction": {
+        "type": "number"
+      },
+      "is_trigger": {
+        "type": "boolean"
+      },
+      "offset": {
+        "items": {
+          "type": "number"
+        },
+        "type": "array"
+      },
+      "points": {
+        "items": {
+          "items": {
+            "type": "number"
+          },
+          "maxItems": 2,
+          "minItems": 2,
+          "type": "array"
+        },
+        "type": "array"
+      }
+    },
+    "required": [
+      "points",
+      "offset",
+      "is_trigger",
+      "friction",
+      "bounciness"
+    ],
+    "type": "object"
+  },
   "ProgressBar": {
     "properties": {
       "background_color": {
@@ -2227,6 +2441,51 @@
       "range",
       "inner_angle_degrees",
       "outer_angle_degrees"
+    ],
+    "type": "object"
+  },
+  "SpringJoint2D": {
+    "properties": {
+      "anchor": {
+        "items": {
+          "type": "number"
+        },
+        "type": "array"
+      },
+      "break_force": {
+        "type": "number"
+      },
+      "connected_anchor": {
+        "items": {
+          "type": "number"
+        },
+        "type": "array"
+      },
+      "connected_entity": {
+        "type": "string"
+      },
+      "damping": {
+        "type": "number"
+      },
+      "distance": {
+        "type": "number"
+      },
+      "stiffness": {
+        "type": "number"
+      },
+      "tolerance": {
+        "type": "number"
+      }
+    },
+    "required": [
+      "connected_entity",
+      "anchor",
+      "connected_anchor",
+      "distance",
+      "stiffness",
+      "damping",
+      "tolerance",
+      "break_force"
     ],
     "type": "object"
   },

@@ -291,6 +291,68 @@ export interface CircleCollider2D {
   bounciness: number;
 }
 
+export interface PolygonCollider2D {
+  points: [number, number][];
+  offset: [number, number];
+  isTrigger: boolean;
+  friction: number;
+  bounciness: number;
+}
+
+export interface CapsuleCollider2D {
+  direction: string;
+  size: [number, number];
+  offset: [number, number];
+  isTrigger: boolean;
+  friction: number;
+  bounciness: number;
+}
+
+export interface DistanceJoint2D {
+  connectedEntity: string;
+  anchor: [number, number];
+  connectedAnchor: [number, number];
+  distance: number;
+  minDistance: number;
+  maxDistance: number;
+  stiffness: number;
+  damping: number;
+  breakForce: number;
+}
+
+export interface HingeJoint2D {
+  connectedEntity: string;
+  anchor: [number, number];
+  connectedAnchor: [number, number];
+  useLimits: boolean;
+  minAngle: number;
+  maxAngle: number;
+  useMotor: boolean;
+  motorSpeed: number;
+  maxMotorTorque: number;
+  breakForce: number;
+}
+
+export interface SpringJoint2D {
+  connectedEntity: string;
+  anchor: [number, number];
+  connectedAnchor: [number, number];
+  distance: number;
+  stiffness: number;
+  damping: number;
+  tolerance: number;
+  breakForce: number;
+}
+
+export interface FixedJoint2D {
+  connectedEntity: string;
+  anchor: [number, number];
+  connectedAnchor: [number, number];
+  stiffness: number;
+  damping: number;
+  breakForce: number;
+}
+
 export interface Layer {
   value: number;
 }
@@ -631,6 +693,12 @@ export type ComponentName =
   | 'Rigidbody2D'
   | 'BoxCollider2D'
   | 'CircleCollider2D'
+  | 'PolygonCollider2D'
+  | 'CapsuleCollider2D'
+  | 'DistanceJoint2D'
+  | 'HingeJoint2D'
+  | 'SpringJoint2D'
+  | 'FixedJoint2D'
   | 'Layer'
   | 'EditorOnly'
   | 'AutoRotate'
@@ -694,6 +762,12 @@ export const COMPONENT_NAMES = [
   'Rigidbody2D',
   'BoxCollider2D',
   'CircleCollider2D',
+  'PolygonCollider2D',
+  'CapsuleCollider2D',
+  'DistanceJoint2D',
+  'HingeJoint2D',
+  'SpringJoint2D',
+  'FixedJoint2D',
   'Layer',
   'EditorOnly',
   'AutoRotate',

@@ -327,6 +327,96 @@ component CircleCollider2D {
   bounciness:  float  = 0
 }
 
+/// Local 2D convex polygon collision or trigger shape. Points are in local space,
+/// ordered counter-clockwise. Must form a valid convex polygon (3-8 vertices).
+component PolygonCollider2D {
+  /// Vertex list in local space (CCW order), each element is [x, y].
+  points:      float2_array = [[0.5, 0], [0, 0.5], [-0.5, 0], [0, -0.5]]
+  offset:      float2       = [0, 0]
+  is_trigger:  bool         = false
+  friction:    float        = 0.5
+  bounciness:  float        = 0
+}
+
+/// Local 2D capsule collision or trigger shape (two semicircles connected by a segment).
+component CapsuleCollider2D {
+  /// "vertical" | "horizontal"
+  direction:   string = "vertical"
+  /// Total height including caps (vertical) or width (horizontal).
+  size:        float2 = [0.5, 1]
+  offset:      float2 = [0, 0]
+  is_trigger:  bool   = false
+  friction:    float  = 0.5
+  bounciness:  float  = 0
+}
+
+/// Constrains two 2D bodies to maintain a fixed distance (Unity DistanceJoint2D).
+component DistanceJoint2D {
+  /// Target entity id (u64 as string for JS precision).
+  connected_entity: string = ""
+  /// Anchor in local space of this entity.
+  anchor:           float2 = [0, 0]
+  /// Anchor in local space of the connected entity.
+  connected_anchor: float2 = [0, 0]
+  /// Target distance. 0 = auto-compute from initial positions.
+  distance:         float  = 0
+  /// Allow distance to vary between min and max.
+  min_distance:     float  = 0
+  max_distance:     float  = 0
+  /// Spring-damper for soft constraints (0 = rigid).
+  stiffness:        float  = 0
+  damping:          float  = 0
+  /// Break force threshold (0 = unbreakable).
+  break_force:      float  = 0
+}
+
+/// Constrains two 2D bodies to rotate around a shared point (Unity HingeJoint2D).
+component HingeJoint2D {
+  connected_entity: string = ""
+  anchor:           float2 = [0, 0]
+  connected_anchor: float2 = [0, 0]
+  /// Enable angular limits.
+  use_limits:       bool   = false
+  /// Lower angular limit in degrees.
+  min_angle:        float  = -180
+  /// Upper angular limit in degrees.
+  max_angle:        float  = 180
+  /// Enable motor.
+  use_motor:        bool   = false
+  /// Motor target speed in degrees/second.
+  motor_speed:      float  = 0
+  /// Maximum torque the motor can apply.
+  max_motor_torque: float  = 0
+  break_force:      float  = 0
+}
+
+/// Spring-damper connection between two 2D bodies (Unity SpringJoint2D).
+component SpringJoint2D {
+  connected_entity: string = ""
+  anchor:           float2 = [0, 0]
+  connected_anchor: float2 = [0, 0]
+  /// Rest length of the spring. 0 = auto-compute.
+  distance:         float  = 0
+  /// Spring stiffness (force per unit displacement).
+  stiffness:        float  = 10
+  /// Damping coefficient.
+  damping:          float  = 1
+  /// Allow distance to vary within this tolerance before spring engages.
+  tolerance:        float  = 0.05
+  break_force:      float  = 0
+}
+
+/// Rigidly welds two 2D bodies together (Unity FixedJoint2D).
+component FixedJoint2D {
+  connected_entity: string = ""
+  anchor:           float2 = [0, 0]
+  connected_anchor: float2 = [0, 0]
+  /// Allow slight angular flexibility (0 = perfectly rigid).
+  stiffness:        float  = 0
+  damping:          float  = 0
+  break_force:      float  = 0
+}
+
 component Layer {
   value: int = 0
 }
