@@ -1065,6 +1065,11 @@ test('buildPcPackage includes and validates TimelineDirector assets', () => {
         type: 'particle', id: 'fx', name: 'FX', target: 'Effects/Burst', locked: true,
         clips: [{ start: 0.5, duration: 1, clip_in: 0.25 }],
       }, {
+        type: 'control', id: 'nested', name: 'Nested', target: 'Sequences/Nested',
+        clips: [{
+          start: 0.5, duration: 1, timeline: 'Assets/Timelines/Nested.mtimeline', clip_in: 0.25, speed: 1.5,
+        }],
+      }, {
         type: 'camera', id: 'shots', name: 'Shots',
         clips: [
           { start: 0, duration: 1.5, target: 'Cameras/Wide' },
@@ -1074,6 +1079,15 @@ test('buildPcPackage includes and validates TimelineDirector assets', () => {
       groups: [{
         id: 'presentation', name: 'Presentation', solo: true, muted: false, locked: false, collapsed: true,
         track_ids: ['dialog', 'music', 'shots'],
+      }],
+    }));
+    writeFileSync(join(paths.project, 'Assets', 'Timelines', 'Nested.mtimeline'), JSON.stringify({
+      version: 1,
+      name: 'Nested',
+      duration: 2,
+      tracks: [{
+        type: 'signal', id: 'nested-events', name: 'Nested Events',
+        markers: [{ time: 1, name: 'NestedBeat' }],
       }],
     }));
     mkdirSync(join(paths.project, 'Assets', 'Audio'), { recursive: true });
@@ -1087,9 +1101,54 @@ test('buildPcPackage includes and validates TimelineDirector assets', () => {
       engineVersion: 'test-engine',
     });
     assert.equal(existsSync(join(paths.output, 'Assets', 'Timelines', 'Intro.mtimeline')), true);
+    assert.equal(existsSync(join(paths.output, 'Assets', 'Timelines', 'Nested.mtimeline')), true);
     assert.equal(existsSync(join(paths.output, 'Assets', 'Audio', 'intro.ogg')), true);
     assert.equal(existsSync(join(paths.output, 'Assets', 'Animations', 'Hero.manim')), true);
-    assert.equal(manifest.assetValidation.validatedFiles, 6);
+    assert.equal(manifest.assetValidation.validatedFiles, 7);
+  } finally {
+    rmSync(paths.root, { recursive: true, force: true });
+  }
+});
+
+test('buildPcPackage rejects Control Track cycles and out-of-range child windows', () => {
+  const paths = fixture('timeline-control-graph');
+  try {
+    writeFileSync(join(paths.project, 'Assets', 'Scenes', 'Main.mscene'), JSON.stringify({
+      version: 1,
+      world: { entities: [{ entity: 1, components: {
+        TimelineDirector: { asset: 'Assets/Timelines/A.mtimeline' },
+      } }] },
+    }));
+    const writeControl = (name, target, clipIn = 0) => writeFileSync(
+      join(paths.project, 'Assets', 'Timelines', `${name}.mtimeline`),
+      JSON.stringify({
+        version: 1,
+        duration: 2,
+        tracks: [{
+          type: 'control', id: `${name}-control`, name: `${name} Control`, target: 'Nested',
+          clips: [{ start: 0, duration: 1, timeline: `Assets/Timelines/${target}.mtimeline`, clip_in: clipIn }],
+        }],
+      }),
+    );
+    writeControl('A', 'B');
+    writeControl('B', 'A');
+    assert.throws(() => buildPcPackage({
+      projectDir: paths.project,
+      outputDir: join(paths.root, 'cycle-output'),
+      runtimePath: paths.runtime,
+      engineVersion: 'test-engine',
+    }), /Control Track dependency cycle/);
+
+    writeFileSync(join(paths.project, 'Assets', 'Timelines', 'B.mtimeline'), JSON.stringify({
+      version: 1, duration: 2, tracks: [],
+    }));
+    writeControl('A', 'B', 2);
+    assert.throws(() => buildPcPackage({
+      projectDir: paths.project,
+      outputDir: join(paths.root, 'window-output'),
+      runtimePath: paths.runtime,
+      engineVersion: 'test-engine',
+    }), /source window is outside/);
   } finally {
     rmSync(paths.root, { recursive: true, force: true });
   }

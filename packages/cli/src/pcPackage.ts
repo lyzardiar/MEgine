@@ -959,6 +959,14 @@ function scanBuildAssetDependencies(
     parameters: string[];
     textures: Array<{ name: string; path: string }>;
   }> = [];
+  const timelineDurations = new Map<string, number>();
+  const timelineControlEdges = new Map<string, Array<{
+    timeline: string;
+    track: string;
+    clipIn: number;
+    duration: number;
+    speed: number;
+  }>>();
   const materialVariantRoots = new Set<string>();
   let auditedScenes = 0;
   let auditedPrefabs = 0;
@@ -1641,6 +1649,15 @@ function scanBuildAssetDependencies(
         throw new Error(`invalid Timeline asset ${source}: duration must be positive`);
       }
       const timelineDuration = timeline.duration;
+      const timelineKey = source.replaceAll('\\', '/').toLowerCase();
+      timelineDurations.set(timelineKey, timelineDuration);
+      const controlEdges: Array<{
+        timeline: string;
+        track: string;
+        clipIn: number;
+        duration: number;
+        speed: number;
+      }> = [];
       if (timeline.frame_rate != null
         && (typeof timeline.frame_rate !== 'number'
           || !Number.isFinite(timeline.frame_rate)
@@ -1656,10 +1673,11 @@ function scanBuildAssetDependencies(
       const audioTargets = new Set<string>();
       const animationTargets = new Set<string>();
       const particleTargets = new Set<string>();
+      const controlTargets = new Set<string>();
       let cameraTrackSeen = false;
       for (const trackValue of timeline.tracks) {
         const track = jsonObject(trackValue);
-        if (!track || (track.type !== 'signal' && track.type !== 'activation' && track.type !== 'audio' && track.type !== 'animation' && track.type !== 'particle' && track.type !== 'camera')) {
+        if (!track || (track.type !== 'signal' && track.type !== 'activation' && track.type !== 'audio' && track.type !== 'animation' && track.type !== 'particle' && track.type !== 'control' && track.type !== 'camera')) {
           throw new Error(`invalid Timeline asset ${source}: unsupported track type`);
         }
         const id = strictStringValue(track, 'id', `Timeline asset ${source}`);
@@ -1690,6 +1708,52 @@ function scanBuildAssetDependencies(
             const time = marker.time;
             if (!markerName || typeof time !== 'number' || !Number.isFinite(time) || time < 0 || time > timelineDuration) {
               throw new Error(`invalid Timeline asset ${source}: signal marker is invalid or outside duration`);
+            }
+          }
+          continue;
+        }
+        if (track.type === 'control') {
+          const target = strictStringValue(track, 'target', `Timeline asset ${source}`).replaceAll('\\', '/');
+          if (!target || target.startsWith('/')
+            || target.split('/').some((segment) => !segment || segment === '.' || segment === '..')) {
+            throw new Error(`invalid Timeline asset ${source}: control target must be a descendant path without '.' or '..'`);
+          }
+          if (controlTargets.has(target)) {
+            throw new Error(`invalid Timeline asset ${source}: control target ${target} is controlled more than once`);
+          }
+          controlTargets.add(target);
+          if (track.clips != null && !Array.isArray(track.clips)) {
+            throw new Error(`invalid Timeline asset ${source}: control clips must be an array`);
+          }
+          const clips = (Array.isArray(track.clips) ? track.clips : []).map((clipValue) => {
+            const clip = jsonObject(clipValue);
+            if (!clip) throw new Error(`invalid Timeline asset ${source}: control clip must be an object`);
+            const timelinePath = strictStringValue(clip, 'timeline', `Timeline control track ${name}`).replaceAll('\\', '/');
+            const clipIn = clip.clip_in == null ? 0 : clip.clip_in;
+            const speed = clip.speed == null ? 1 : clip.speed;
+            if (typeof clip.start !== 'number' || !Number.isFinite(clip.start)
+              || typeof clip.duration !== 'number' || !Number.isFinite(clip.duration)
+              || clip.start < 0 || clip.duration <= 0 || clip.start + clip.duration > timelineDuration
+              || !timelinePath.toLowerCase().startsWith('assets/')
+              || timelinePath.split('/').some((segment) => !segment || segment === '.' || segment === '..')
+              || !/\.mtimeline$/i.test(timelinePath)
+              || typeof clipIn !== 'number' || !Number.isFinite(clipIn) || clipIn < 0
+              || typeof speed !== 'number' || !Number.isFinite(speed) || speed < -4 || speed > 4) {
+              throw new Error(`invalid Timeline asset ${source}: control clip is invalid or outside duration`);
+            }
+            enqueue(timelinePath, source, `Timeline control track ${name} nested asset`);
+            controlEdges.push({
+              timeline: timelinePath.toLowerCase(),
+              track: name,
+              clipIn,
+              duration: clip.duration,
+              speed,
+            });
+            return clip as { start: number; duration: number };
+          }).sort((left, right) => left.start - right.start);
+          for (let index = 1; index < clips.length; index += 1) {
+            if (clips[index - 1].start + clips[index - 1].duration > clips[index].start) {
+              throw new Error(`invalid Timeline asset ${source}: control clips overlap`);
             }
           }
           continue;
@@ -1874,6 +1938,7 @@ function scanBuildAssetDependencies(
           }
         }
       }
+      timelineControlEdges.set(timelineKey, controlEdges);
       if (timeline.groups != null && !Array.isArray(timeline.groups)) {
         throw new Error(`invalid Timeline asset ${source}: groups must be an array`);
       }
@@ -2054,6 +2119,35 @@ function scanBuildAssetDependencies(
     }
   };
   drainQueue();
+  const validateTimelineControlGraph = (sourceKey: string, stack: string[]): void => {
+    for (const edge of timelineControlEdges.get(sourceKey) ?? []) {
+      const childDuration = timelineDurations.get(edge.timeline);
+      if (childDuration == null) {
+        throw new Error(`invalid Timeline asset ${sourceKey}: nested Timeline ${edge.timeline} was not validated`);
+      }
+      const sourceEnd = edge.clipIn + edge.duration * edge.speed;
+      if (edge.clipIn < -0.0001 || edge.clipIn > childDuration + 0.0001
+        || sourceEnd < -0.0001 || sourceEnd > childDuration + 0.0001) {
+        throw new Error(
+          `invalid Timeline asset ${sourceKey}: control track ${edge.track} source window is outside ${edge.timeline} duration ${childDuration}`,
+        );
+      }
+      if (stack.includes(edge.timeline)) {
+        throw new Error(
+          `invalid Timeline asset ${sourceKey}: Control Track dependency cycle ${[...stack, edge.timeline].join(' -> ')}`,
+        );
+      }
+      if (stack.length >= 9) {
+        throw new Error(
+          `invalid Timeline asset ${sourceKey}: Control Track nesting exceeds 8 levels through ${edge.timeline}`,
+        );
+      }
+      validateTimelineControlGraph(edge.timeline, [...stack, edge.timeline]);
+    }
+  };
+  for (const timeline of timelineDurations.keys()) {
+    validateTimelineControlGraph(timeline, [timeline]);
+  }
   for (const binding of customMaterialParameterBindings) {
     const schema = surfaceShaderSchemas.get(binding.shader);
     if (!schema) {

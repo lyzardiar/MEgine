@@ -237,6 +237,17 @@ pub struct TimelineCameraClip {
 }
 
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+pub struct TimelineControlClip {
+    pub start: f32,
+    pub duration: f32,
+    pub timeline: String,
+    #[serde(default)]
+    pub clip_in: f32,
+    #[serde(default = "default_one")]
+    pub speed: f32,
+}
+
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 #[serde(tag = "type", rename_all = "snake_case")]
 pub enum TimelineTrack {
     Signal {
@@ -315,6 +326,19 @@ pub enum TimelineTrack {
         #[serde(default)]
         clips: Vec<TimelineCameraClip>,
     },
+    Control {
+        id: String,
+        name: String,
+        #[serde(default)]
+        solo: bool,
+        #[serde(default)]
+        muted: bool,
+        #[serde(default)]
+        locked: bool,
+        target: String,
+        #[serde(default)]
+        clips: Vec<TimelineControlClip>,
+    },
 }
 
 impl TimelineTrack {
@@ -325,7 +349,8 @@ impl TimelineTrack {
             | Self::Audio { id, .. }
             | Self::Animation { id, .. }
             | Self::Particle { id, .. }
-            | Self::Camera { id, .. } => id,
+            | Self::Camera { id, .. }
+            | Self::Control { id, .. } => id,
         }
     }
 
@@ -336,7 +361,8 @@ impl TimelineTrack {
             | Self::Audio { muted, .. }
             | Self::Animation { muted, .. }
             | Self::Particle { muted, .. }
-            | Self::Camera { muted, .. } => *muted,
+            | Self::Camera { muted, .. }
+            | Self::Control { muted, .. } => *muted,
         }
     }
 
@@ -347,7 +373,8 @@ impl TimelineTrack {
             | Self::Audio { solo, .. }
             | Self::Animation { solo, .. }
             | Self::Particle { solo, .. }
-            | Self::Camera { solo, .. } => *solo,
+            | Self::Camera { solo, .. }
+            | Self::Control { solo, .. } => *solo,
         }
     }
 }
@@ -420,6 +447,7 @@ impl TimelineAsset {
         let mut audio_targets = HashSet::new();
         let mut animation_targets = HashSet::new();
         let mut particle_targets = HashSet::new();
+        let mut control_targets = HashSet::new();
         let mut camera_track_seen = false;
         for track in &mut self.tracks {
             match track {
@@ -750,6 +778,66 @@ impl TimelineAsset {
                         )));
                     }
                 }
+                TimelineTrack::Control {
+                    id,
+                    name,
+                    target,
+                    clips,
+                    ..
+                } => {
+                    *id = id.trim().to_owned();
+                    *name = name.trim().to_owned();
+                    if id.is_empty() || !track_ids.insert(id.clone()) {
+                        return Err(AssetError::Invalid(
+                            "Timeline track ids must be non-empty and unique".into(),
+                        ));
+                    }
+                    if name.is_empty() {
+                        return Err(AssetError::Invalid(format!(
+                            "Timeline track '{id}' must have a name"
+                        )));
+                    }
+                    *target = normalize_timeline_target(target).ok_or_else(|| {
+                        AssetError::Invalid(format!(
+                            "Timeline control track '{id}' must target a descendant root without '.' or '..'"
+                        ))
+                    })?;
+                    if !control_targets.insert(target.clone()) {
+                        return Err(AssetError::Invalid(format!(
+                            "Timeline control target '{target}' is controlled by more than one track"
+                        )));
+                    }
+                    for clip in clips.iter_mut() {
+                        clip.timeline = normalize_timeline_asset_path(&clip.timeline).ok_or_else(|| {
+                            AssetError::Invalid(format!(
+                                "Timeline control track '{id}' contains an invalid nested Timeline path"
+                            ))
+                        })?;
+                        if !clip.start.is_finite()
+                            || !clip.duration.is_finite()
+                            || clip.start < 0.0
+                            || clip.duration <= 0.0
+                            || clip.start + clip.duration > self.duration
+                            || !clip.clip_in.is_finite()
+                            || clip.clip_in < 0.0
+                            || !clip.speed.is_finite()
+                            || !(-4.0..=4.0).contains(&clip.speed)
+                        {
+                            return Err(AssetError::Invalid(format!(
+                                "Timeline control track '{id}' contains an invalid or out-of-range clip"
+                            )));
+                        }
+                    }
+                    clips.sort_by(|left, right| left.start.total_cmp(&right.start));
+                    if clips
+                        .windows(2)
+                        .any(|pair| pair[0].start + pair[0].duration > pair[1].start)
+                    {
+                        return Err(AssetError::Invalid(format!(
+                            "Timeline control track '{id}' contains overlapping clips"
+                        )));
+                    }
+                }
             }
         }
         let mut group_ids = HashSet::new();
@@ -861,6 +949,21 @@ fn normalize_animation_asset_path(raw: &str) -> Option<String> {
             .iter()
             .any(|segment| segment.is_empty() || matches!(*segment, "." | ".."))
         || !normalized.to_ascii_lowercase().ends_with(".manim")
+    {
+        return None;
+    }
+    Some(format!("Assets/{}", segments[1..].join("/")))
+}
+
+pub fn normalize_timeline_asset_path(raw: &str) -> Option<String> {
+    let normalized = raw.trim().replace('\\', "/");
+    let segments: Vec<_> = normalized.split('/').collect();
+    if segments.len() < 2
+        || !segments[0].eq_ignore_ascii_case("Assets")
+        || segments
+            .iter()
+            .any(|segment| segment.is_empty() || matches!(*segment, "." | ".."))
+        || !normalized.to_ascii_lowercase().ends_with(".mtimeline")
     {
         return None;
     }
@@ -1210,6 +1313,45 @@ mod tests {
         .is_err());
         assert!(parse_timeline_asset(
             br#"{"version":1,"duration":2,"tracks":[{"type":"particle","id":"fx","name":"FX","target":"Burst","clips":[{"start":0,"duration":1,"clip_in":300}]}]}"#
+        )
+        .is_err());
+    }
+
+    #[test]
+    fn normalizes_control_tracks_and_rejects_invalid_nested_assets() {
+        let asset = parse_timeline_asset(
+            br#"{
+              "version":1,"duration":6,
+              "tracks":[{"type":"control","id":"dialogue","name":" Dialogue ",
+                "target":"Sequences\\Dialogue","clips":[
+                  {"start":3,"duration":2,"timeline":"assets\\Timelines\\Outro.mtimeline","clip_in":1,"speed":-0.5},
+                  {"start":0,"duration":2,"timeline":"Assets/Timelines/Intro.mtimeline"}
+                ]}]
+            }"#,
+        )
+        .unwrap();
+        let TimelineTrack::Control {
+            name,
+            target,
+            clips,
+            ..
+        } = &asset.tracks[0]
+        else {
+            panic!("expected control track");
+        };
+        assert_eq!(name, "Dialogue");
+        assert_eq!(target, "Sequences/Dialogue");
+        assert_eq!(clips[0].timeline, "Assets/Timelines/Intro.mtimeline");
+        assert_eq!(clips[0].speed, 1.0);
+        assert_eq!(clips[1].timeline, "Assets/Timelines/Outro.mtimeline");
+        assert_eq!(clips[1].speed, -0.5);
+
+        assert!(parse_timeline_asset(
+            br#"{"version":1,"duration":2,"tracks":[{"type":"control","id":"nested","name":"Nested","target":"Sequences","clips":[{"start":0,"duration":1,"timeline":"Assets/Scenes/Nested.mscene"}]}]}"#,
+        )
+        .is_err());
+        assert!(parse_timeline_asset(
+            br#"{"version":1,"duration":2,"tracks":[{"type":"control","id":"a","name":"A","target":"Sequences","clips":[]},{"type":"control","id":"b","name":"B","target":"Sequences","clips":[]}]}"#,
         )
         .is_err());
     }

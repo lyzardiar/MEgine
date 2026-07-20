@@ -8,6 +8,7 @@ import {
   type TimelineAsset,
   type TimelineAudioClip,
   type TimelineCameraClip,
+  type TimelineControlClip,
   type TimelineParticleClip,
   type TimelineSignal,
 } from './timelineAsset.ts';
@@ -21,7 +22,8 @@ export type SequencerClipboardItem =
   | { type: 'audio'; sourceTrackId: string; item: TimelineAudioClip }
   | { type: 'animation'; sourceTrackId: string; item: TimelineAnimationClip }
   | { type: 'particle'; sourceTrackId: string; item: TimelineParticleClip }
-  | { type: 'camera'; sourceTrackId: string; item: TimelineCameraClip };
+  | { type: 'camera'; sourceTrackId: string; item: TimelineCameraClip }
+  | { type: 'control'; sourceTrackId: string; item: TimelineControlClip };
 
 export type SequencerClipboardGroup = {
   type: 'group';
@@ -1394,6 +1396,11 @@ export function copySequencerItem(
     if (!item) return null;
     return { type: 'particle', sourceTrackId: track.id, item: structuredClone(item) };
   }
+  if (track.type === 'control') {
+    const item = track.clips[itemIndex];
+    if (!item) return null;
+    return { type: 'control', sourceTrackId: track.id, item: structuredClone(item) };
+  }
   const item = track.clips[itemIndex];
   if (!item) return null;
   return { type: 'camera', sourceTrackId: track.id, item: structuredClone(item) };
@@ -1469,6 +1476,12 @@ export function pasteSequencerItem(
     return { ok: true, asset: next, trackIndex, itemIndex: track.clips.indexOf(item) };
   }
   if (track.type === 'camera' && clipboard.type === 'camera') {
+    const item = { ...structuredClone(clipboard.item), ...placement };
+    track.clips.push(item);
+    track.clips.sort((left, right) => left.start - right.start);
+    return { ok: true, asset: next, trackIndex, itemIndex: track.clips.indexOf(item) };
+  }
+  if (track.type === 'control' && clipboard.type === 'control') {
     const item = { ...structuredClone(clipboard.item), ...placement };
     track.clips.push(item);
     track.clips.sort((left, right) => left.start - right.start);
@@ -1642,7 +1655,7 @@ function insertGroupItem(
   asset: TimelineAsset,
   target: GroupTarget,
   anchorTime: number,
-): { item: TimelineSignal | TimelineActivationClip | TimelineAudioClip | TimelineAnimationClip | TimelineParticleClip | TimelineCameraClip } {
+): { item: TimelineSignal | TimelineActivationClip | TimelineAudioClip | TimelineAnimationClip | TimelineParticleClip | TimelineCameraClip | TimelineControlClip } {
   const track = asset.tracks[target.targetTrack];
   if (track.type === 'signal' && target.entry.type === 'signal') {
     const item = { ...structuredClone(target.entry.item), time: snap(anchorTime + target.relativeStart, asset.frame_rate) };

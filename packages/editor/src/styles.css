@@ -4814,6 +4814,7 @@ body.insp-scrubbing * {
 .sequencer-track-row.locked .sequencer-audio-clip,
 .sequencer-track-row.locked .sequencer-animation-clip,
 .sequencer-track-row.locked .sequencer-particle-clip,
+.sequencer-track-row.locked .sequencer-control-clip,
 .sequencer-track-row.locked .sequencer-camera-clip { cursor: not-allowed; opacity: 0.68; }
 .sequencer-track-row.effectively-muted .sequencer-lane > button { opacity: 0.48; }
 .sequencer-track-row.effectively-solo:not(.effectively-muted) .sequencer-lane { box-shadow: inset 0 1px #88752e; }
@@ -5010,6 +5011,7 @@ body.insp-scrubbing * {
 .sequencer-track-icon.audio { background: #3d5872; color: #d7edff; }
 .sequencer-track-icon.animation { background: #66517a; color: #f0ddff; }
 .sequencer-track-icon.particle { background: #7a5b2e; color: #fff0c8; }
+.sequencer-track-icon.control { background: #356b70; color: #d7fbff; }
 .sequencer-track-icon.camera { background: #2e617a; color: #d9f4ff; }
 
 .sequencer-selection-count {
@@ -5345,6 +5347,26 @@ body.insp-scrubbing * {
 .sequencer-particle-clip:hover,
 .sequencer-particle-clip.selected { outline: 1px solid #fff; filter: brightness(1.18); }
 
+.sequencer-control-clip {
+  position: absolute;
+  z-index: 3;
+  top: 7px;
+  bottom: 7px;
+  min-width: 3px;
+  overflow: hidden;
+  border: 1px solid #285c61;
+  border-radius: 0;
+  padding: 0 5px;
+  background: #3a7075;
+  color: #dcfbff;
+  cursor: grab;
+  text-align: left;
+  font: 8px var(--u-mono);
+  white-space: nowrap;
+}
+.sequencer-control-clip:hover,
+.sequencer-control-clip.selected { outline: 1px solid #fff; filter: brightness(1.18); }
+
 .sequencer-camera-clip {
   position: absolute;
   z-index: 3;
@@ -5376,6 +5398,7 @@ body.insp-scrubbing * {
 .sequencer-audio-clip:active,
 .sequencer-animation-clip:active,
 .sequencer-particle-clip:active,
+.sequencer-control-clip:active,
 .sequencer-camera-clip:active { cursor: grabbing; }
 
 .sequencer-activation-clip::before,
@@ -5386,6 +5409,8 @@ body.insp-scrubbing * {
 .sequencer-animation-clip::after,
 .sequencer-particle-clip::before,
 .sequencer-particle-clip::after,
+.sequencer-control-clip::before,
+.sequencer-control-clip::after,
 .sequencer-camera-clip::before,
 .sequencer-camera-clip::after {
   content: '';
@@ -5402,11 +5427,13 @@ body.insp-scrubbing * {
 .sequencer-audio-clip::before,
 .sequencer-animation-clip::before,
 .sequencer-particle-clip::before,
+.sequencer-control-clip::before,
 .sequencer-camera-clip::before { left: 1px; }
 .sequencer-activation-clip::after,
 .sequencer-audio-clip::after,
 .sequencer-animation-clip::after,
 .sequencer-particle-clip::after,
+.sequencer-control-clip::after,
 .sequencer-camera-clip::after { right: 1px; }
 
 .sequencer-inspector {

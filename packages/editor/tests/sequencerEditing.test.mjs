@@ -915,6 +915,29 @@ test('Sequencer particle clipboard preserves prewarm and collision-safe placemen
   assert.equal(asset.tracks[3].clips.length, 1);
 });
 
+test('Sequencer Control Track clipboard preserves nested source timing', () => {
+  const asset = timeline();
+  asset.tracks.push({
+    type: 'control', id: 'nested', name: 'Nested', muted: false, locked: false, target: 'Sequences/Nested',
+    clips: [{
+      start: 1, duration: 1.5, timeline: 'Assets/Timelines/Child.mtimeline', clip_in: 0.75, speed: -0.5,
+    }],
+  });
+  const clipboard = copySequencerItem(asset, 3, 0);
+  assert.ok(clipboard);
+  assert.equal(clipboard.type, 'control');
+  const pasted = pasteSequencerItem(asset, 3, 2.5, clipboard);
+  assert.equal(pasted.ok, true);
+  assert.deepEqual(pasted.asset.tracks[3].clips[pasted.itemIndex], {
+    start: 2.5,
+    duration: 1.5,
+    timeline: 'Assets/Timelines/Child.mtimeline',
+    clip_in: 0.75,
+    speed: -0.5,
+  });
+  assert.equal(asset.tracks[3].clips.length, 1);
+});
+
 test('Sequencer camera clipboard preserves binding and blend settings', () => {
   const asset = timeline();
   asset.tracks.push({

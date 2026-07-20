@@ -384,3 +384,107 @@ test('builds deterministic particle seek commands and rejects ambiguous emitters
   assert.deepEqual(invalid.preview.particles, []);
   assert.match(invalid.diagnostics.join(' '), /both 2D and 3D emitters/);
 });
+
+test('evaluates nested Control Tracks relative to their target with timing and cycle guards', () => {
+  const nestedEntities = [
+    ...entities,
+    {
+      entity: 5,
+      name: 'NestedActor',
+      parent: 2,
+      active: true,
+      components: { AnimationPlayer: {}, Transform: { position: [0, 0, 0] } },
+    },
+    {
+      entity: 6,
+      name: 'Sound',
+      parent: 2,
+      active: true,
+      components: { AudioSource: { mute: false, pan: 0 } },
+    },
+  ];
+  const child = parseTimelineAsset(JSON.stringify({
+    version: 1,
+    name: 'Child',
+    duration: 2,
+    tracks: [
+      {
+        type: 'animation', id: 'motion', name: 'Nested Motion', target: 'NestedActor',
+        clips: [{ start: 0, duration: 2, clip: 'Assets/Animations/Move.manim' }],
+      },
+      {
+        type: 'audio', id: 'sound', name: 'Nested Sound', target: 'Sound',
+        clips: [{ start: 0, duration: 2, clip: 'Assets/Audio/Nested.wav' }],
+      },
+    ],
+  }));
+  const parent = parseTimelineAsset(JSON.stringify({
+    version: 1,
+    name: 'Parent',
+    duration: 2,
+    tracks: [
+      {
+        type: 'control', id: 'nested', name: 'Nested Sequence', target: 'Panel',
+        clips: [{ start: 0, duration: 1, timeline: 'Assets/Timelines/Child.mtimeline', clip_in: 0.5, speed: 1.5 }],
+      },
+    ],
+  }));
+  const timelines = new Map([
+    ['assets/timelines/parent.mtimeline', parent],
+    ['assets/timelines/child.mtimeline', child],
+  ]);
+  const build = buildTimelineScenePreview(
+    parent,
+    nestedEntities,
+    1,
+    '{}',
+    0.25,
+    clips,
+    timelines,
+    'Assets/Timelines/Parent.mtimeline',
+  );
+  assert.deepEqual(build.diagnostics, []);
+  assert.equal(build.audio[0].key, 'nested:0/sound');
+  assert.equal(build.audio[0].sourceTime, 0.875);
+  const preview = applyTimelineScenePreview(nestedEntities, build.preview);
+  assert.equal(preview[4].components.Transform.position[0], 8.75);
+
+  const hiddenParent = structuredClone(parent);
+  hiddenParent.tracks.unshift({
+    type: 'activation', id: 'hide', name: 'Hide Panel', target: 'Panel',
+    solo: false, muted: false, locked: false,
+    clips: [{ start: 0, duration: 1, active: false }],
+  });
+  const hidden = buildTimelineScenePreview(
+    hiddenParent,
+    nestedEntities,
+    1,
+    '{}',
+    0.25,
+    clips,
+    timelines,
+    'Assets/Timelines/Parent.mtimeline',
+  );
+  assert.deepEqual(hidden.audio, []);
+
+  const cyclicChild = structuredClone(child);
+  cyclicChild.tracks = [{
+    type: 'control', id: 'back', name: 'Back To Parent', target: 'NestedActor',
+    solo: false, muted: false, locked: false,
+    clips: [{ start: 0, duration: 1, timeline: 'Assets/Timelines/Parent.mtimeline', clip_in: 0, speed: 1 }],
+  }];
+  const cyclic = buildTimelineScenePreview(
+    parent,
+    nestedEntities,
+    1,
+    '{}',
+    0.25,
+    clips,
+    new Map([
+      ['assets/timelines/parent.mtimeline', parent],
+      ['assets/timelines/child.mtimeline', cyclicChild],
+    ]),
+    'Assets/Timelines/Parent.mtimeline',
+  );
+  assert.match(cyclic.diagnostics.join(' '), /dependency cycle/);
+});

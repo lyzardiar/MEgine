@@ -2640,61 +2640,112 @@ fn validate_world_assets(
         if let Some(director) = world.get_component::<TimelineDirector>(entity) {
             let reference = director.asset.trim();
             if !reference.is_empty() {
-                let path = resolve(reference, "Timeline asset")?;
-                if validated.insert(path.clone()) {
-                    let timeline = mengine_assets::load_timeline_asset(&path)
-                        .with_context(|| format!("invalid Timeline asset {}", path.display()))?;
-                    for track in &timeline.tracks {
-                        match track {
-                            mengine_assets::TimelineTrack::Audio { clips, .. } => {
-                                for clip in clips {
-                                    let duration = validate_audio_clip_asset(
-                                        &clip.clip,
-                                        project_root,
-                                        validated,
-                                    )?
-                                    .expect(
-                                        "Timeline audio clip paths are non-empty after validation",
-                                    );
-                                    if clip.clip_in as f64 >= duration {
-                                        bail!(
-                                            "Timeline audio clip '{}' starts at {:.3}s, outside its {:.3}s decoded duration",
-                                            clip.clip,
-                                            clip.clip_in,
-                                            duration
-                                        );
-                                    }
-                                }
-                            }
-                            mengine_assets::TimelineTrack::Animation { clips, .. } => {
-                                for clip in clips {
-                                    let clip_path = resolve(&clip.clip, "Timeline animation clip")?;
-                                    let animation = mengine_assets::load_animation_clip(&clip_path)
-                                        .with_context(|| {
-                                            format!(
-                                                "invalid Timeline animation clip {}",
-                                                clip_path.display()
-                                            )
-                                        })?;
-                                    validated.insert(clip_path);
-                                    if clip.clip_in > animation.duration {
-                                        bail!(
-                                            "Timeline animation clip '{}' starts at {:.3}s, outside its {:.3}s duration",
-                                            clip.clip,
-                                            clip.clip_in,
-                                            animation.duration
-                                        );
-                                    }
-                                }
-                            }
-                            _ => {}
-                        }
-                    }
-                }
+                validate_timeline_asset(reference, project_root, validated, &mut Vec::new(), 0)?;
             }
         }
     }
     Ok(())
+}
+
+fn validate_timeline_asset(
+    reference: &str,
+    project_root: &Path,
+    validated: &mut HashSet<PathBuf>,
+    stack: &mut Vec<PathBuf>,
+    depth: usize,
+) -> Result<f32> {
+    let path = mengine_runtime::textures::resolve_project_asset_path(project_root, reference)
+        .with_context(|| format!("unsafe Timeline asset path: {reference}"))?;
+    if stack.contains(&path) {
+        let mut cycle = stack
+            .iter()
+            .map(|entry| entry.display().to_string())
+            .collect::<Vec<_>>();
+        cycle.push(path.display().to_string());
+        bail!(
+            "Timeline Control Track dependency cycle: {}",
+            cycle.join(" -> ")
+        );
+    }
+    if depth > 8 {
+        bail!(
+            "Timeline Control Track nesting exceeds 8 levels through {}",
+            path.display()
+        );
+    }
+    let timeline = mengine_assets::load_timeline_asset(&path)
+        .with_context(|| format!("invalid Timeline asset {}", path.display()))?;
+    validated.insert(path.clone());
+    stack.push(path);
+    for track in &timeline.tracks {
+        match track {
+            mengine_assets::TimelineTrack::Audio { clips, .. } => {
+                for clip in clips {
+                    let duration = validate_audio_clip_asset(&clip.clip, project_root, validated)?
+                        .expect("Timeline audio clip paths are non-empty after validation");
+                    if clip.clip_in as f64 >= duration {
+                        bail!(
+                            "Timeline audio clip '{}' starts at {:.3}s, outside its {:.3}s decoded duration",
+                            clip.clip,
+                            clip.clip_in,
+                            duration
+                        );
+                    }
+                }
+            }
+            mengine_assets::TimelineTrack::Animation { clips, .. } => {
+                for clip in clips {
+                    let clip_path = mengine_runtime::textures::resolve_project_asset_path(
+                        project_root,
+                        &clip.clip,
+                    )
+                    .with_context(|| {
+                        format!("unsafe Timeline animation clip path: {}", clip.clip)
+                    })?;
+                    let animation =
+                        mengine_assets::load_animation_clip(&clip_path).with_context(|| {
+                            format!("invalid Timeline animation clip {}", clip_path.display())
+                        })?;
+                    validated.insert(clip_path);
+                    if clip.clip_in > animation.duration {
+                        bail!(
+                            "Timeline animation clip '{}' starts at {:.3}s, outside its {:.3}s duration",
+                            clip.clip,
+                            clip.clip_in,
+                            animation.duration
+                        );
+                    }
+                }
+            }
+            mengine_assets::TimelineTrack::Control { name, clips, .. } => {
+                for clip in clips {
+                    let child_duration = validate_timeline_asset(
+                        &clip.timeline,
+                        project_root,
+                        validated,
+                        stack,
+                        depth + 1,
+                    )?;
+                    let source_end = clip.clip_in + clip.duration * clip.speed;
+                    if clip.clip_in < -f32::EPSILON
+                        || clip.clip_in > child_duration + f32::EPSILON
+                        || source_end < -f32::EPSILON
+                        || source_end > child_duration + f32::EPSILON
+                    {
+                        bail!(
+                            "Timeline Control Track '{}' source window is outside '{}' duration {:.3}s",
+                            name,
+                            clip.timeline,
+                            child_duration
+                        );
+                    }
+                }
+            }
+            _ => {}
+        }
+    }
+    stack.pop();
+    Ok(timeline.duration)
 }
 
 fn validate_audio_clip_asset(
@@ -3443,10 +3494,14 @@ mod tests {
                 {"start":0,"duration":2,"clip":"Assets/Audio/Intro.wav"}
               ]},{"type":"animation","id":"hero","name":"Hero","target":"Characters/Hero","clips":[
                 {"start":0,"duration":2,"clip":"Assets/Animations/Hero.manim","clip_in":0.25}
+              ]},{"type":"control","id":"nested","name":"Nested","target":"Sequences/Nested","clips":[
+                {"start":0,"duration":1,"timeline":"Assets/Timelines/Nested.mtimeline","clip_in":0.25,"speed":1.5}
               ]}]
             }"#,
         )
         .unwrap();
+        let nested_source = r#"{"version":1,"name":"Nested","duration":2,"tracks":[{"type":"signal","id":"events","name":"Events","markers":[] }]}"#;
+        std::fs::write(timelines.join("Nested.mtimeline"), nested_source).unwrap();
         let mut world = World::new();
         world.commands.push(WorldCommand::Spawn {
             name: Some("Timeline director".into()),
@@ -3460,7 +3515,17 @@ mod tests {
         let mut validated = HashSet::new();
         let result = validate_world_assets(&world, &root, &mut validated);
         result.expect("Timeline assets should pass final package validation");
-        assert_eq!(validated.len(), 3);
+        assert_eq!(validated.len(), 4);
+
+        std::fs::write(
+            timelines.join("Nested.mtimeline"),
+            r#"{"version":1,"duration":2,"tracks":[{"type":"control","id":"back","name":"Back","target":"Nested","clips":[{"start":0,"duration":1,"timeline":"Assets/Timelines/Intro.mtimeline"}]}]}"#,
+        )
+        .unwrap();
+        let error = validate_world_assets(&world, &root, &mut HashSet::new())
+            .expect_err("nested Timeline cycles must fail final package validation");
+        assert!(error.to_string().contains("dependency cycle"));
+        std::fs::write(timelines.join("Nested.mtimeline"), nested_source).unwrap();
 
         let timeline_path = timelines.join("Intro.mtimeline");
         let source = std::fs::read_to_string(&timeline_path).unwrap();

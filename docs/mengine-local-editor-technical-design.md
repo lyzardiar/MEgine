@@ -1686,3 +1686,16 @@ Camera Shot 的基础闭环已经形成，但 Timeline 仍不完备：编辑器 
 第二遍自省从真实焦点、Draft 与 Undo 生命周期反查：代码审查时快捷键分支看似存在，但 1280×720 页面验证发现点击 Track Header 后焦点停在 `BUTTON`，旧的按钮提前返回让 `Alt+Arrow` 实际失效。结构快捷键现前移到根节点 Capture，并增加纯函数回归。真实编辑器验证还覆盖 Ctrl/Shift 三轨选择、三轨稳定块按钮/键盘移动、单步 Undo/Redo、双轨跨组拖拽与脱组、折叠组隐藏选择提示、双轨删除后单步恢复，以及“选中集合中一条锁定时，从另一条可用抓手拖动仍整批拒绝”；页面无 warn/error，临时 Timeline、Sidecar 和 Dock 状态差异已清理。最终编辑器全量测试 372/372、定向 Sequencer 测试 46/46、根级 `build:editor` 严格 TypeScript/Vite 生产构建通过；主入口仍有 518.56kB 的既有分包预算警告。
 
 这批补齐的是 Unity 风格轨道组织的多选与事务底座，仍没有 Group 嵌套、Sub-Timeline/Control Track、轨道级复制粘贴、模板、搜索过滤、悬停展开折叠组、显式顶层 Row Order、录制模式和虚拟化。下一批应先建立可序列化的嵌套 Timeline 与 Control/Activation 依赖契约，再把轨道树升级为可缩进、可搜索、可跨 Timeline 复制的层级视图；否则继续堆 React 视觉层会让 Editor、Runtime、CLI 与构建依赖分析再次分叉。
+
+## 143. 2026-07-20 Control Track 与嵌套 Timeline 闭环
+
+- `.mtimeline` v1 增加可序列化的 `control` 轨道：轨道绑定一个相对当前 Director 根节点解析的 `target`，片段保存嵌套 Timeline 路径、父时间区间、`clip_in` 和 `speed`。TypeScript 与 Rust 资产层统一执行路径可移植性、目标唯一性、父区间、片段不重叠和 `-4..4` 倍速校验；跨资产的源时间窗、依赖环和八层嵌套上限留在拥有完整依赖图的预览、运行时与构建层检查。
+- Sequencer 的 Track 菜单增加 `Control / Sub-Timeline`，轨道行使用独立 `T` 标识与青绿色片段，并提供 Timeline Asset、Clip In、Speed、移动、裁剪、复制粘贴、锁定和 Undo/Redo。开始边裁剪会按倍速同步推进 `clip_in`，资产选择列表排除当前 Timeline；编辑器递归加载有效子 Timeline 及其动画片段，最多扫描 256 个预览依赖，并在 Inspector 中直接报告缺失资产、非法源时间窗、循环依赖和深度越界。
+- Scene 预览按 Control Track 的目标实体建立新的子根，递归合成 Activation、Animation、Audio、Particle 和 Camera 结果；子 Timeline 使用独立片段键前缀，父 Activation 最终仍能抑制整个子树的音频和粒子。Runtime 同样区分顶层覆盖所有者与当前子根，确保暂停、Seek、正反向倍速、覆盖恢复、相机优先级和多层片段 Key 不会互相污染；嵌套 Timeline 暂不继承父绑定表，内部轨道按子根的相对路径解析。
+- CLI 依赖扫描把 Control Track 子 Timeline 纳入发布清单，并在 staging 发布前递归校验所有子 Timeline、动画与音频依赖、源时间窗、依赖环和八层上限。最终 Player 的包校验再次执行同一组跨资产约束，因而手改清单或绕过编辑器也不能把缺失、循环或越界的 Timeline 图带入运行时。
+
+第一遍自省从“跨片段边界和循环边界是否真的保持事件语义”反查，发现最初只在最终采样点仍位于 Control Clip 内时递归处理 Signal：大步长越过片段结束会漏掉尾部 Signal，父 Timeline 循环回绕还可能让嵌套 Audio/Particle 被误判为反向移动。现按父 Timeline 的连续运动区间切段，求每个 Control Clip 的真实交集后映射到子时间，显式处理进入点、离开点、正反向和循环重入；回绕后的效果采样从新周期起点开始。运行时回归固定了 0.75s 中段 Signal、1.9s 片段尾 Signal、循环重入 Signal 与音频源时间，并验证循环依赖只报告一次。
+
+第二遍自省从“契约是否在所有入口一致”反查了 Editor、Rust 资产模型、Runtime、CLI 和最终包校验的路径、深度及源窗口边界，并在真实 1280×720 编辑器中打开父子 Timeline：Control 轨道和子片段可见，Inspector 四个关键字段唯一出现，Track 菜单可创建 Sub-Timeline；验证后已恢复默认布局并清理临时资产和 Sidecar。最终编辑器测试 375/375、CLI 测试 57/57、资产层测试 52/52、运行时测试 122/122 全部通过；Rust 全 Workspace/All Targets 检查、格式检查与根级 `build:editor` 生产构建通过。构建仍提示主入口 521.34kB 超过既有 500kB 分包预算，这不是本批新增的功能错误，但应进入后续加载性能治理。
+
+这批完成的是可发布、可预览、可运行的 Sub-Timeline 最小闭环，还不是成熟 Timeline 的终点。下一阶段需要补子 Timeline 的公开绑定覆盖、跨父子层的全局 Signal 时间排序、子片段循环/外推模式、内联展开的层级轨道树、Prefab Control、录制模式、模板与虚拟化，并把嵌套求值缓存和依赖图接入 Profiler；在这些契约完成前，不应只在 Sequencer 表层追加更多视觉按钮。

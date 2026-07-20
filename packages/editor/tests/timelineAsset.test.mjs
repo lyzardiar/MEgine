@@ -306,6 +306,40 @@ test('timeline particle tracks normalize prewarm and reject invalid clips', () =
   })), /invalid/);
 });
 
+test('timeline control tracks normalize nested assets and reject invalid windows', () => {
+  const asset = parseTimelineAsset(JSON.stringify({
+    version: 1,
+    name: 'Master',
+    duration: 6,
+    tracks: [{
+      type: 'control', id: 'dialogue', name: 'Dialogue', target: 'Sequences\\Dialogue',
+      clips: [
+        { start: 3, duration: 2, timeline: 'assets\\Timelines\\Outro.mtimeline', clip_in: 1, speed: -0.5 },
+        { start: 0, duration: 2, timeline: 'Assets/Timelines/Intro.mtimeline' },
+      ],
+    }],
+  }));
+  assert.equal(asset.tracks[0].target, 'Sequences/Dialogue');
+  assert.deepEqual(asset.tracks[0].clips, [
+    { start: 0, duration: 2, timeline: 'Assets/Timelines/Intro.mtimeline', clip_in: 0, speed: 1 },
+    { start: 3, duration: 2, timeline: 'Assets/Timelines/Outro.mtimeline', clip_in: 1, speed: -0.5 },
+  ]);
+  assert.deepEqual(parseTimelineAsset(serializeTimelineAsset(asset)), asset);
+  assert.throws(() => parseTimelineAsset(JSON.stringify({
+    version: 1, duration: 2,
+    tracks: [{ type: 'control', id: 'nested', name: 'Nested', target: 'Sequences', clips: [
+      { start: 0, duration: 1, timeline: 'Assets/Scenes/NotTimeline.mscene' },
+    ] }],
+  })), /invalid/);
+  assert.throws(() => parseTimelineAsset(JSON.stringify({
+    version: 1, duration: 2,
+    tracks: [
+      { type: 'control', id: 'a', name: 'A', target: 'Sequences', clips: [] },
+      { type: 'control', id: 'b', name: 'B', target: 'Sequences', clips: [] },
+    ],
+  })), /more than one track/);
+});
+
 test('timeline camera tracks normalize shots and reject invalid blends', () => {
   const asset = parseTimelineAsset(JSON.stringify({
     version: 1,

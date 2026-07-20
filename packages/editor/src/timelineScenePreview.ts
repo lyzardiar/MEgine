@@ -73,6 +73,16 @@ export type TimelineScenePreviewEntity = AnimationPreviewEntity & {
   active?: boolean;
 };
 
+type TimelineScenePreviewContext = {
+  depth: number;
+  stack: readonly string[];
+  prefix: string;
+  deferHierarchyFilter: boolean;
+};
+
+const MAX_CONTROL_TIMELINE_DEPTH = 8;
+const EMPTY_TIMELINE_ASSETS: ReadonlyMap<string, TimelineAsset> = new Map();
+
 function resolveDescendant(
   entities: readonly TimelineScenePreviewEntity[],
   root: number,
@@ -100,6 +110,9 @@ export function buildTimelineScenePreview(
   bindingsJson: unknown,
   time: number,
   animationClips: ReadonlyMap<string, AnimationClip>,
+  controlAssets: ReadonlyMap<string, TimelineAsset> = EMPTY_TIMELINE_ASSETS,
+  assetPath = '',
+  context?: TimelineScenePreviewContext,
 ): TimelineScenePreviewBuild {
   const preview: TimelineScenePreview = {
     activations: [],
@@ -118,6 +131,12 @@ export function buildTimelineScenePreview(
   }
   const sampleTime = Math.max(0, Math.min(asset.duration, Number.isFinite(time) ? time : 0));
   const hasSolo = timelineHasSolo(asset);
+  const evaluation = context ?? {
+    depth: 0,
+    stack: assetPath ? [clipKey(assetPath)] : [],
+    prefix: '',
+    deferHierarchyFilter: false,
+  };
   const resolveTrackTarget = (target: string): number | null => {
     const binding = bindings.bindings[target];
     if (binding) {
@@ -129,6 +148,64 @@ export function buildTimelineScenePreview(
 
   for (const track of asset.tracks) {
     if (timelineTrackIsMuted(asset, track, hasSolo)) continue;
+    if (track.type === 'control') {
+      const clipIndex = track.clips.findIndex((candidate) => sampleTime >= candidate.start
+        && sampleTime < candidate.start + candidate.duration);
+      if (clipIndex < 0) continue;
+      const clip = track.clips[clipIndex];
+      const target = resolveTrackTarget(track.target);
+      if (target == null) {
+        diagnostics.push(`Control track '${track.name}' target '${track.target}' is not resolved.`);
+        continue;
+      }
+      const key = clipKey(clip.timeline);
+      const child = controlAssets.get(key);
+      if (!child) {
+        diagnostics.push(`Control track '${track.name}' Timeline '${clip.timeline}' is not loaded.`);
+        continue;
+      }
+      const sourceEnd = clip.clip_in + clip.duration * clip.speed;
+      if (clip.clip_in < -F32_EPSILON || clip.clip_in > child.duration + F32_EPSILON
+        || sourceEnd < -F32_EPSILON || sourceEnd > child.duration + F32_EPSILON) {
+        diagnostics.push(`Control track '${track.name}' clip source window is outside '${clip.timeline}' duration ${child.duration.toFixed(3)}s.`);
+        continue;
+      }
+      if (evaluation.depth >= MAX_CONTROL_TIMELINE_DEPTH) {
+        diagnostics.push(`Control track '${track.name}' exceeds the ${MAX_CONTROL_TIMELINE_DEPTH}-level nesting limit.`);
+        continue;
+      }
+      if (evaluation.stack.includes(key)) {
+        diagnostics.push(`Control track '${track.name}' introduces a Timeline dependency cycle through '${clip.timeline}'.`);
+        continue;
+      }
+      const nested = buildTimelineScenePreview(
+        child,
+        entities,
+        target,
+        '{}',
+        clip.clip_in + (sampleTime - clip.start) * clip.speed,
+        animationClips,
+        controlAssets,
+        clip.timeline,
+        {
+          depth: evaluation.depth + 1,
+          stack: [...evaluation.stack, key],
+          prefix: `${evaluation.prefix}${track.id}:${clipIndex}/`,
+          deferHierarchyFilter: true,
+        },
+      );
+      preview.activations.push(...nested.preview.activations);
+      for (const layer of nested.preview.animations) {
+        const previous = preview.animations.findIndex((candidate) => candidate.root === layer.root);
+        if (previous >= 0) preview.animations[previous] = layer;
+        else preview.animations.push(layer);
+      }
+      if (nested.preview.camera) preview.camera = nested.preview.camera;
+      preview.particles.push(...nested.preview.particles);
+      audio.push(...nested.audio);
+      diagnostics.push(...nested.diagnostics.map((message) => `${track.name} > ${message}`));
+      continue;
+    }
     if (track.type === 'activation') {
       const clip = track.clips.find((candidate) => sampleTime >= candidate.start
         && sampleTime < candidate.start + candidate.duration);
@@ -207,7 +284,7 @@ export function buildTimelineScenePreview(
       const audioSource = source as { mute?: unknown; pan?: unknown };
       const elapsed = Math.max(0, sampleTime - clip.start);
       audio.push({
-        key: track.id,
+        key: `${evaluation.prefix}${track.id}`,
         label: track.name,
         target,
         clip: clip.clip,
@@ -249,7 +326,7 @@ export function buildTimelineScenePreview(
         continue;
       }
       preview.particles.push({
-        key: track.id,
+        key: `${evaluation.prefix}${track.id}`,
         label: track.name,
         target,
         targetPath: track.target,
@@ -330,7 +407,7 @@ export function buildTimelineScenePreview(
     if (previous >= 0) preview.animations[previous] = layer;
     else preview.animations.push(layer);
   }
-  if (audio.length || preview.particles.length) {
+  if (!evaluation.deferHierarchyFilter && (audio.length || preview.particles.length)) {
     const byId = new Map(entities.map((entity) => [entity.entity, entity]));
     const activation = new Map(preview.activations.map((entry) => [entry.entity, entry.active]));
     const activeInHierarchy = (target: number) => {

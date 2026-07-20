@@ -69,6 +69,7 @@ import {
   type TimelineAsset,
   type TimelineAnimationClip,
   type TimelineAudioClip,
+  type TimelineControlClip,
   type TimelineTrackGroup,
 } from '../timelineAsset';
 import {
@@ -144,6 +145,7 @@ const SEQUENCER_INSPECTOR_KEY = 'mengine.sequencer.inspector';
 const SEQUENCER_LOOP_PREVIEW_KEY = 'mengine.sequencer.loop_preview';
 const SEQUENCER_SNAP_THRESHOLD_PX = 8;
 const EMPTY_PREVIEW_ANIMATION_CLIPS: ReadonlyMap<string, AnimationClip> = new Map();
+const EMPTY_PREVIEW_CONTROL_ASSETS: ReadonlyMap<string, TimelineAsset> = new Map();
 const EMPTY_PREVIEW_CLIP_FAILURES: readonly string[] = [];
 const EMPTY_AUDIO_PREVIEW_STATUS: TimelineAudioPreviewStatus = {
   mode: 'idle',
@@ -347,6 +349,9 @@ export function Sequencer(props: SequencerProps) {
   const [previewAnimationClips, setPreviewAnimationClips] = useState<ReadonlyMap<string, AnimationClip>>(new Map());
   const [previewClipFailures, setPreviewClipFailures] = useState<string[]>([]);
   const [previewAnimationLoadKey, setPreviewAnimationLoadKey] = useState('');
+  const [previewControlAssets, setPreviewControlAssets] = useState<ReadonlyMap<string, TimelineAsset>>(new Map());
+  const [previewControlFailures, setPreviewControlFailures] = useState<string[]>([]);
+  const [previewControlLoadKey, setPreviewControlLoadKey] = useState('');
   const [previewWarning, setPreviewWarning] = useState<string | null>(null);
   const [previewAssetEpoch, setPreviewAssetEpoch] = useState(0);
   const [, setDraftEpoch] = useState(0);
@@ -454,19 +459,46 @@ export function Sequencer(props: SequencerProps) {
   const displayTime = liveDirector && Number.isFinite(Number(liveDirector.time))
     ? Math.max(0, Math.min(asset?.duration ?? 0, Number(liveDirector.time)))
     : time;
-  const previewAnimationPaths = useMemo(() => {
+  const previewControlPaths = useMemo(() => {
     if (!asset) return [];
     const paths = new Map<string, string>();
     const hasSolo = timelineHasSolo(asset);
     for (const track of asset.tracks) {
-      if (track.type !== 'animation' || timelineTrackIsMuted(asset, track, hasSolo)) continue;
+      if (track.type !== 'control' || timelineTrackIsMuted(asset, track, hasSolo)) continue;
       for (const clip of track.clips) {
-        const path = clip.clip.trim().replaceAll('\\', '/');
+        const path = clip.timeline.trim().replaceAll('\\', '/');
         if (path) paths.set(path.toLowerCase(), path);
       }
     }
     return [...paths.values()];
   }, [asset]);
+  const previewControlPathKey = previewControlPaths.join('\n');
+  const previewControlRequestKey = `${previewAssetEpoch}\0${props.assetPath ?? ''}\0${previewControlPathKey}`;
+  const previewControlResourcesReady = previewControlLoadKey === previewControlRequestKey;
+  const loadedPreviewControlAssets = useMemo(() => {
+    const loaded = new Map(previewControlResourcesReady ? previewControlAssets : EMPTY_PREVIEW_CONTROL_ASSETS);
+    if (asset && props.assetPath) loaded.set(props.assetPath.trim().replaceAll('\\', '/').toLowerCase(), asset);
+    return loaded;
+  }, [asset, previewControlAssets, previewControlResourcesReady, props.assetPath]);
+  const loadedPreviewControlFailures = previewControlResourcesReady
+    ? previewControlFailures
+    : EMPTY_PREVIEW_CLIP_FAILURES;
+  const previewAnimationPaths = useMemo(() => {
+    if (!asset) return [];
+    const paths = new Map<string, string>();
+    const assets = new Set<TimelineAsset>([asset, ...loadedPreviewControlAssets.values()]);
+    for (const timeline of assets) {
+      const hasSolo = timelineHasSolo(timeline);
+      for (const track of timeline.tracks) {
+        if (track.type !== 'animation' || timelineTrackIsMuted(timeline, track, hasSolo)) continue;
+        for (const clip of track.clips) {
+          const path = clip.clip.trim().replaceAll('\\', '/');
+          if (path) paths.set(path.toLowerCase(), path);
+        }
+      }
+    }
+    return [...paths.values()];
+  }, [asset, loadedPreviewControlAssets]);
   const previewAnimationPathKey = previewAnimationPaths.join('\n');
   const previewAnimationRequestKey = `${previewAssetEpoch}\0${previewAnimationPathKey}`;
   const previewAnimationResourcesReady = previewAnimationLoadKey === previewAnimationRequestKey;
@@ -488,18 +520,22 @@ export function Sequencer(props: SequencerProps) {
       director?.bindings_json ?? '{}',
       time,
       loadedPreviewAnimationClips,
+      loadedPreviewControlAssets,
+      props.assetPath ?? '',
     );
   }, [
     asset,
     director?.bindings_json,
     directorEntity?.entity,
     loadedPreviewAnimationClips,
+    loadedPreviewControlAssets,
     previewHierarchyKey,
     props.playMode,
     props.previewEnabled,
     time,
   ]);
   const previewClipFailuresKey = loadedPreviewClipFailures.join('\n');
+  const previewControlFailuresKey = loadedPreviewControlFailures.join('\n');
   const audioPreviewDiagnosticsKey = audioPreviewStatus.diagnostics.join('\n');
 
   useEffect(() => {
@@ -531,6 +567,52 @@ export function Sequencer(props: SequencerProps) {
     audioPreviewController.activate();
     return () => audioPreviewController.dispose();
   }, [audioPreviewController]);
+
+  useEffect(() => {
+    let cancelled = false;
+    setPreviewControlAssets(new Map());
+    setPreviewControlFailures([]);
+    const rootKey = (props.assetPath ?? '').trim().replaceAll('\\', '/').toLowerCase();
+    const queued = new Set(rootKey ? [rootKey] : []);
+    const queue = [...previewControlPaths];
+    for (const path of queue) queued.add(path.toLowerCase());
+    if (!queue.length) {
+      setPreviewControlLoadKey(previewControlRequestKey);
+      return () => { cancelled = true; };
+    }
+    void (async () => {
+      const loaded = new Map<string, TimelineAsset>();
+      const failures: string[] = [];
+      while (queue.length > 0 && loaded.size + failures.length < 256) {
+        const path = queue.shift()!;
+        const key = path.toLowerCase();
+        if (key === rootKey) continue;
+        try {
+          const timeline = parseTimelineAsset(await readProjectAssetText(path));
+          loaded.set(key, timeline);
+          const hasSolo = timelineHasSolo(timeline);
+          for (const track of timeline.tracks) {
+            if (track.type !== 'control' || timelineTrackIsMuted(timeline, track, hasSolo)) continue;
+            for (const clip of track.clips) {
+              const nestedPath = clip.timeline.trim().replaceAll('\\', '/');
+              const nestedKey = nestedPath.toLowerCase();
+              if (!nestedPath || queued.has(nestedKey)) continue;
+              queued.add(nestedKey);
+              queue.push(nestedPath);
+            }
+          }
+        } catch (reason) {
+          failures.push(`Sub-Timeline '${path}' failed to load: ${reason instanceof Error ? reason.message : String(reason)}`);
+        }
+      }
+      if (queue.length > 0) failures.push('Sub-Timeline dependency graph exceeds the 256-asset editor preview limit.');
+      if (cancelled) return;
+      setPreviewControlAssets(loaded);
+      setPreviewControlFailures(failures);
+      setPreviewControlLoadKey(previewControlRequestKey);
+    })();
+    return () => { cancelled = true; };
+  }, [previewControlRequestKey]);
 
   useEffect(() => {
     let cancelled = false;
@@ -572,9 +654,10 @@ export function Sequencer(props: SequencerProps) {
     }
     props.onPreview(previewBuild.preview);
     const diagnostics = previewBuild.diagnostics.filter((message) => (
-      previewAnimationResourcesReady || !message.endsWith(' is not loaded.')
+      (previewAnimationResourcesReady && previewControlResourcesReady) || !message.endsWith(' is not loaded.')
     ) && !(loadedPreviewClipFailures.length && message.endsWith(' is not loaded.')));
     const warnings = [
+      ...loadedPreviewControlFailures,
       ...loadedPreviewClipFailures,
       ...diagnostics,
       ...audioPreviewStatus.diagnostics,
@@ -583,6 +666,8 @@ export function Sequencer(props: SequencerProps) {
   }, [
     audioPreviewDiagnosticsKey,
     previewAnimationResourcesReady,
+    previewControlFailuresKey,
+    previewControlResourcesReady,
     previewBuild,
     previewClipFailuresKey,
   ]);
@@ -1036,6 +1121,18 @@ export function Sequencer(props: SequencerProps) {
     applySelection({ track: asset.tracks.length, marker: null });
   };
 
+  const addControlTrack = () => {
+    if (!asset) return;
+    const used = new Set(asset.tracks.map((track) => track.id));
+    let index = asset.tracks.length + 1;
+    let id = `control-${index}`;
+    while (used.has(id)) id = `control-${++index}`;
+    update((draft) => draft.tracks.push({
+      type: 'control', id, name: `Control Track ${index}`, solo: false, muted: false, locked: false, target: 'Sequences', clips: [],
+    }));
+    applySelection({ track: asset.tracks.length, marker: null });
+  };
+
   const addTrackGroup = () => {
     if (!asset) return;
     const used = new Set(asset.groups.map((group) => group.id));
@@ -1239,6 +1336,35 @@ export function Sequencer(props: SequencerProps) {
     applySelection({ track: trackIndex, marker });
   };
 
+  const addControlClip = (trackIndex: number, requestedTime = time) => {
+    if (!asset || asset.tracks[trackIndex]?.type !== 'control') return;
+    const defaultTimeline = listProjectFiles().find((entry) => (
+      entry.kind === 'timeline' && entry.relPath.toLowerCase() !== (props.assetPath ?? '').toLowerCase()
+    ))?.relPath ?? 'Assets/Timelines/Sub Timeline.mtimeline';
+    const track = asset.tracks[trackIndex];
+    const placement = findSequencerClipPlacement(
+      track.clips,
+      requestedTime,
+      Math.min(1, asset.duration),
+      asset.duration,
+      asset.frame_rate,
+    );
+    if (!placement) {
+      setError('Control Track has no free space for another Sub-Timeline clip.');
+      return;
+    }
+    const marker = track.clips.filter((clip) => clip.start < placement.start).length;
+    update((draft) => {
+      const target = draft.tracks[trackIndex];
+      if (target.type === 'control') {
+        target.clips.push({ ...placement, timeline: defaultTimeline, clip_in: 0, speed: 1 });
+        target.clips.sort((left, right) => left.start - right.start);
+      }
+    });
+    setError(null);
+    applySelection({ track: trackIndex, marker });
+  };
+
   const addTrackItem = (trackIndex: number, requestedTime: number) => {
     const track = asset?.tracks[trackIndex];
     if (asset && track && timelineTrackIsLocked(asset, track)) {
@@ -1251,6 +1377,7 @@ export function Sequencer(props: SequencerProps) {
     else if (track?.type === 'animation') addAnimationClip(trackIndex, requestedTime);
     else if (track?.type === 'particle') addParticleClip(trackIndex, requestedTime);
     else if (track?.type === 'camera') addCameraClip(trackIndex, requestedTime);
+    else if (track?.type === 'control') addControlClip(trackIndex, requestedTime);
   };
 
   const selectTrackHeader = (event: ReactMouseEvent<HTMLButtonElement>, trackIndex: number) => {
@@ -2076,6 +2203,10 @@ export function Sequencer(props: SequencerProps) {
         const original = originalTrack.clips[markerIndex];
         track.clips[markerIndex].clip_in = Math.max(0, original.clip_in + range.sourceOffsetDelta);
       }
+      if (trimEdge === 'start' && track.type === 'control' && originalTrack.type === 'control') {
+        const original = originalTrack.clips[markerIndex];
+        track.clips[markerIndex].clip_in = Math.max(0, original.clip_in + range.sourceOffsetDelta * original.speed);
+      }
       if (track.type === 'camera') {
         const original = originalTrack.type === 'camera' ? originalTrack.clips[markerIndex] : null;
         track.clips[markerIndex].blend_in = trimEdge === 'start' && original
@@ -2399,10 +2530,13 @@ export function Sequencer(props: SequencerProps) {
   const selectedParticleClip = selection?.marker != null && selectedTrack?.type === 'particle'
     ? selectedTrack.clips[selection.marker]
     : null;
+  const selectedControlClip = selection?.marker != null && selectedTrack?.type === 'control'
+    ? selectedTrack.clips[selection.marker]
+    : null;
   const selectedCameraClip = selection?.marker != null && selectedTrack?.type === 'camera'
     ? selectedTrack.clips[selection.marker]
     : null;
-  const selectedClip = selectedActivationClip ?? selectedAudioClip ?? selectedAnimationClip ?? selectedParticleClip ?? selectedCameraClip;
+  const selectedClip = selectedActivationClip ?? selectedAudioClip ?? selectedAnimationClip ?? selectedParticleClip ?? selectedControlClip ?? selectedCameraClip;
   const isItemSelected = (track: number, marker: number) => selectedItems.some(
     (item) => item.track === track && item.marker === marker,
   );
@@ -2412,6 +2546,20 @@ export function Sequencer(props: SequencerProps) {
   });
   const audioAssets = listProjectFiles().filter((entry) => entry.kind === 'audio');
   const animationAssets = listProjectFiles().filter((entry) => entry.kind === 'animation');
+  const timelineAssets = listProjectFiles().filter((entry) => (
+    entry.kind === 'timeline' && entry.relPath.toLowerCase() !== props.assetPath?.toLowerCase()
+  ));
+  const selectedControlAsset = selectedControlClip
+    ? loadedPreviewControlAssets.get(selectedControlClip.timeline.trim().replaceAll('\\', '/').toLowerCase()) ?? null
+    : null;
+  const selectedControlSourceEnd = selectedControlClip
+    ? selectedControlClip.clip_in + selectedControlClip.duration * selectedControlClip.speed
+    : 0;
+  const selectedControlWindowInvalid = Boolean(selectedControlClip && selectedControlAsset && (
+    selectedControlClip.clip_in > selectedControlAsset.duration + 0.0001
+    || selectedControlSourceEnd < -0.0001
+    || selectedControlSourceEnd > selectedControlAsset.duration + 0.0001
+  ));
   const laneViewportWidth = Math.max(360, tracksWidth - 180);
   const laneWidth = Math.max(360, Math.round(laneViewportWidth * zoom));
   const ticks = sequencerTicks(asset.duration, laneWidth);
@@ -2949,7 +3097,7 @@ export function Sequencer(props: SequencerProps) {
               ? <span className="sequencer-selection-count" title="Drag any selected grip or use Alt+ArrowUp/Down to move the complete track selection.">{selectedTrackIds.length} tracks selected</span>
               : null}
           {liveDirector && <span className={`sequencer-live-status${liveDirector.playing ? ' playing' : ''}`}>{liveDirector.playing ? 'LIVE PLAYING' : 'LIVE PAUSED'} · {displayTime.toFixed(2)}s</span>}
-          {!props.playMode && props.previewEnabled && directorEntity && <span className="sequencer-live-status edit-preview">EDIT PREVIEW · Activation + Animation + Camera + Audio + Particle</span>}
+          {!props.playMode && props.previewEnabled && directorEntity && <span className="sequencer-live-status edit-preview">EDIT PREVIEW · Activation + Animation + Camera + Audio + Particle + Sub-Timeline</span>}
           {!props.playMode && audioPreviewStatus.mode !== 'idle' && <span className="sequencer-live-status edit-preview">AUDIO {audioPreviewStatus.mode.toUpperCase()}{audioPreviewStatus.voices ? ` · ${audioPreviewStatus.voices}` : ''}</span>}
           <button type="button" className={`timeline-icon-button sequencer-inspector-toggle${inspectorOpen ? ' active' : ''}`} aria-label={inspectorOpen ? 'Hide Timeline Inspector' : 'Show Timeline Inspector'} title={inspectorOpen ? 'Hide Timeline Inspector' : 'Show Timeline Inspector'} onClick={toggleInspector}>
             {inspectorOpen ? <PanelRightClose size={13} /> : <PanelRightOpen size={13} />}
@@ -3002,6 +3150,7 @@ export function Sequencer(props: SequencerProps) {
               <button type="button" onClick={(event) => { addAudioTrack(); event.currentTarget.closest('details')?.removeAttribute('open'); }}>Audio</button>
               <button type="button" onClick={(event) => { addAnimationTrack(); event.currentTarget.closest('details')?.removeAttribute('open'); }}>Animation</button>
               <button type="button" onClick={(event) => { addParticleTrack(); event.currentTarget.closest('details')?.removeAttribute('open'); }}>Particle</button>
+              <button type="button" onClick={(event) => { addControlTrack(); event.currentTarget.closest('details')?.removeAttribute('open'); }}>Control / Sub-Timeline</button>
               <button type="button" disabled={asset.tracks.some((track) => track.type === 'camera')} onClick={(event) => { addCameraTrack(); event.currentTarget.closest('details')?.removeAttribute('open'); }}>Camera</button>
               <button type="button" onClick={(event) => { addTrackGroup(); event.currentTarget.closest('details')?.removeAttribute('open'); }}><FolderTree size={12} /> Group</button>
             </div>
@@ -3171,7 +3320,7 @@ export function Sequencer(props: SequencerProps) {
                   title="Click to select · Ctrl/Cmd toggles · Shift selects a visible range"
                   onClick={(event) => selectTrackHeader(event, trackIndex)}
                 >
-                  <span className={`sequencer-track-icon ${track.type}`}>{track.type === 'signal' ? 'S' : track.type === 'activation' ? 'A' : track.type === 'audio' ? '♪' : track.type === 'animation' ? 'M' : track.type === 'particle' ? 'P' : 'C'}</span>
+                  <span className={`sequencer-track-icon ${track.type}`}>{track.type === 'signal' ? 'S' : track.type === 'activation' ? 'A' : track.type === 'audio' ? '♪' : track.type === 'animation' ? 'M' : track.type === 'particle' ? 'P' : track.type === 'control' ? 'T' : 'C'}</span>
                   <span>{track.name}</span>
                   {effectiveMuteLabel && <small>{effectiveMuteLabel}</small>}
                   {effectivelyLocked && <Lock className="sequencer-track-lock" size={11} aria-label={track.locked ? 'Locked' : 'Group locked'} />}
@@ -3302,6 +3451,22 @@ export function Sequencer(props: SequencerProps) {
                     onPointerDown={(event) => startMarkerDrag(event, trackIndex, clipIndex)}
                   >P PARTICLES</button>
                 ))}
+                {track.type === 'control' && track.clips.map((clip, clipIndex) => (
+                  <button
+                    type="button"
+                    data-sequencer-item="true"
+                    data-track={trackIndex}
+                    data-marker={clipIndex}
+                    className={`sequencer-control-clip${isItemSelected(trackIndex, clipIndex) ? ' selected' : ''}`}
+                    style={{
+                      left: `${clip.start / asset.duration * 100}%`,
+                      width: `${clip.duration / asset.duration * 100}%`,
+                    }}
+                    title={`${clip.timeline} · ${clip.start.toFixed(3)}s + ${clip.duration.toFixed(3)}s · source ${clip.clip_in.toFixed(3)}s @ ${clip.speed.toFixed(2)}x`}
+                    key={`${clip.start}-${clip.timeline}-${clipIndex}`}
+                    onPointerDown={(event) => startMarkerDrag(event, trackIndex, clipIndex)}
+                  ><span className="sequencer-clip-label">T {clip.timeline.split('/').at(-1)}</span></button>
+                ))}
                 {track.type === 'camera' && track.clips.map((clip, clipIndex) => (
                   <button
                     type="button"
@@ -3333,12 +3498,12 @@ export function Sequencer(props: SequencerProps) {
               : trackDragVisual && trackDragVisual.sourceTrackIds.length > 1
                 ? `Move ${trackDragVisual.sourceTrackIds.length} tracks to root · place at end`
                 : 'Move to root · place at end'}</div>}
-          {asset.tracks.length === 0 && asset.groups.length === 0 && <div className="sequencer-empty-track">Add a Signal, Activation, Audio, Animation, Particle, Camera Track, or Group to begin authoring.</div>}
+          {asset.tracks.length === 0 && asset.groups.length === 0 && <div className="sequencer-empty-track">Add a Signal, Activation, Audio, Animation, Particle, Control, Camera Track, or Group to begin authoring.</div>}
           {marquee && <i className="sequencer-marquee" style={marquee} aria-hidden="true" />}
         </div>
 
         {inspectorOpen && <aside className="sequencer-inspector" onFocusCapture={beginInspectorEdit} onBlurCapture={endInspectorEdit}>
-          <h3>{selectedMarker ? 'Signal Marker' : selectedActivationClip ? 'Activation Clip' : selectedAudioClip ? 'Audio Clip' : selectedAnimationClip ? 'Animation Clip' : selectedParticleClip ? 'Particle Clip' : selectedCameraClip ? 'Camera Shot' : selectedTrack ? `${selectedTrack.type === 'signal' ? 'Signal' : selectedTrack.type === 'activation' ? 'Activation' : selectedTrack.type === 'audio' ? 'Audio' : selectedTrack.type === 'animation' ? 'Animation' : selectedTrack.type === 'particle' ? 'Particle' : 'Camera'} Track` : selectedGroup ? 'Track Group' : 'Timeline Asset'}</h3>
+          <h3>{selectedMarker ? 'Signal Marker' : selectedActivationClip ? 'Activation Clip' : selectedAudioClip ? 'Audio Clip' : selectedAnimationClip ? 'Animation Clip' : selectedParticleClip ? 'Particle Clip' : selectedControlClip ? 'Sub-Timeline Clip' : selectedCameraClip ? 'Camera Shot' : selectedTrack ? `${selectedTrack.type === 'signal' ? 'Signal' : selectedTrack.type === 'activation' ? 'Activation' : selectedTrack.type === 'audio' ? 'Audio' : selectedTrack.type === 'animation' ? 'Animation' : selectedTrack.type === 'particle' ? 'Particle' : selectedTrack.type === 'control' ? 'Control' : 'Camera'} Track` : selectedGroup ? 'Track Group' : 'Timeline Asset'}</h3>
           {selectedItems.length > 1 && <p className="sequencer-multi-selection-notice">{selectedItems.length} items selected. Inspector edits and edge trims apply to the primary item; drag, clipboard, duplicate, Delete and Ripple Delete apply to the full selection.</p>}
           {selectedItems.length === 0 && selectedTrackIds.length > 1 && <p className="sequencer-multi-selection-notice">{selectedTrackIds.length} track headers selected. Inspector fields edit the primary track; drag, Alt+Arrow, Group creation and Delete apply to the full selection.</p>}
           {!selectedTrack && !selectedGroup && <>
@@ -3428,7 +3593,7 @@ export function Sequencer(props: SequencerProps) {
             {selectedTrackLocked && <p className="sequencer-lock-notice"><Lock size={12} /> Content editing is disabled by this track or its group.</p>}
             <fieldset className="sequencer-inspector-fields" disabled={selectedTrackLocked}>
               <label>Name <input value={selectedTrack.name} onChange={(event) => update((draft) => { draft.tracks[selection!.track].name = event.target.value; })} /></label>
-              {selectedTrack.type !== 'signal' && selectedTrack.type !== 'camera' && <label>Target (binding key / child path)<input value={selectedTrack.target} placeholder={selectedTrack.type === 'audio' ? 'Audio/Music' : selectedTrack.type === 'animation' ? 'Characters/Hero' : selectedTrack.type === 'particle' ? 'Effects/Burst' : 'Canvas/Dialog'} onChange={(event) => {
+              {selectedTrack.type !== 'signal' && selectedTrack.type !== 'camera' && <label>Target (binding key / child path)<input value={selectedTrack.target} placeholder={selectedTrack.type === 'audio' ? 'Audio/Music' : selectedTrack.type === 'animation' ? 'Characters/Hero' : selectedTrack.type === 'particle' ? 'Effects/Burst' : selectedTrack.type === 'control' ? 'Sequences/Nested' : 'Canvas/Dialog'} onChange={(event) => {
                 clearBindingBeforeTargetEdit(selectedTrack.target);
                 update((draft) => {
                 const track = draft.tracks[selection!.track];
@@ -3607,6 +3772,24 @@ export function Sequencer(props: SequencerProps) {
                 }
               })} /></label>
               <p className="sequencer-field-help">Particle state is rebuilt deterministically from this local simulation time when entering or seeking the clip.</p>
+            </>}
+            {selectedControlClip && <>
+              <label>Timeline Asset <input list="sequencer-timeline-assets" value={selectedControlClip.timeline} onChange={(event) => update((draft) => {
+                const track = draft.tracks[selection!.track];
+                if (track.type === 'control') track.clips[selection!.marker!].timeline = event.target.value.replaceAll('\\', '/');
+              })} /></label>
+              <datalist id="sequencer-timeline-assets">{timelineAssets.map((entry) => <option value={entry.relPath} key={entry.relPath} />)}</datalist>
+              <label>Clip In <input type="number" min={0} step={1 / asset.frame_rate} value={selectedControlClip.clip_in} onChange={(event) => update((draft) => {
+                const track = draft.tracks[selection!.track];
+                if (track.type === 'control') track.clips[selection!.marker!].clip_in = Math.max(0, Number(event.target.value) || 0);
+              })} /></label>
+              <label>Speed <input type="number" min={-4} max={4} step={0.05} value={selectedControlClip.speed} onChange={(event) => update((draft) => {
+                const track = draft.tracks[selection!.track];
+                if (track.type === 'control') track.clips[selection!.marker!].speed = Math.max(-4, Math.min(4, Number(event.target.value) || 0));
+              })} /></label>
+              {previewControlResourcesReady && !selectedControlAsset && <p className="sequencer-field-help error">This Sub-Timeline could not be loaded. Choose an existing project .mtimeline asset.</p>}
+              {selectedControlWindowInvalid && <p className="sequencer-field-help error">Source window {selectedControlClip.clip_in.toFixed(3)}s → {selectedControlSourceEnd.toFixed(3)}s is outside the child duration {selectedControlAsset!.duration.toFixed(3)}s.</p>}
+              <p className="sequencer-field-help">The nested Timeline is evaluated relative to this Control Track target. Clip In and Speed map parent time into the child Timeline.</p>
             </>}
             {selectedCameraClip && <>
               <label>Camera (binding key / child path)<input value={selectedCameraClip.target} placeholder="Cameras/Main Camera" onChange={(event) => {
