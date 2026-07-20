@@ -1,6 +1,6 @@
+use crate::component::Component;
 use crate::entity::Entity;
 use crate::world::World;
-use std::any::Any;
 
 /// Simple query over entities that have all requested component type names.
 pub struct Query<'a> {
@@ -20,7 +20,7 @@ impl<'a> Query<'a> {
         self.world.entities_with_components(&self.type_names)
     }
 
-    pub fn get<T: Any + Send + Sync>(&self, entity: Entity) -> Option<&T> {
+    pub fn get<T: Component>(&self, entity: Entity) -> Option<&T> {
         self.world.get_component::<T>(entity)
     }
 }

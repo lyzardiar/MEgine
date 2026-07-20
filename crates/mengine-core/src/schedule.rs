@@ -54,6 +54,7 @@ struct RegisteredSystem {
 #[derive(Default)]
 pub struct Schedule {
     systems: Vec<RegisteredSystem>,
+    startup_done: bool,
 }
 
 impl Schedule {
@@ -104,9 +105,12 @@ impl Schedule {
     }
 
     pub fn run_frame(&mut self, world: &mut crate::world::World) {
+        if !self.startup_done {
+            self.run(world, Stage::Startup);
+            self.startup_done = true;
+        }
         for stage in Stage::all() {
             if stage == Stage::Startup {
-                self.run(world, stage);
                 continue;
             }
             self.run(world, stage);

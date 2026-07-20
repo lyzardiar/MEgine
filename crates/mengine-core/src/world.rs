@@ -7,7 +7,6 @@ use crate::schedule::Schedule;
 use crate::time::Time;
 use glam::{Quat, Vec3, Vec4};
 use serde_json::Value;
-use std::any::Any;
 use std::collections::HashMap;
 
 struct EntityRecord {
@@ -91,14 +90,33 @@ impl World {
         if self.selected == Some(entity) {
             self.selected = None;
         }
-        // Detach children
-        if let Some(children) = self
-            .get_component::<Children>(entity)
-            .map(|c| c.entities.clone())
-        {
-            for child in children {
-                self.remove_component_by_name(child, "Parent");
+        // Collect all descendants depth-first before mutating anything.
+        let mut descendants = Vec::new();
+        let mut stack = vec![entity];
+        while let Some(current) = stack.pop() {
+            if let Some(children) = self.get_component::<Children>(current) {
+                for child in &children.entities {
+                    if self.is_alive(*child) {
+                        descendants.push(*child);
+                        stack.push(*child);
+                    }
+                }
             }
+        }
+        // Despawn children first (deepest first via reverse), then the entity itself.
+        for child in descendants.into_iter().rev() {
+            self.despawn_single(child);
+        }
+        self.despawn_single(entity);
+    }
+
+    /// Despawn a single entity without recursing into children.
+    fn despawn_single(&mut self, entity: Entity) {
+        if !self.is_alive(entity) {
+            return;
+        }
+        if self.selected == Some(entity) {
+            self.selected = None;
         }
         if let Some(parent) = self.get_component::<Parent>(entity).map(|p| p.entity) {
             self.remove_child(parent, entity);
@@ -138,24 +156,24 @@ impl World {
             .insert(name, Box::new(value));
     }
 
-    pub fn get_component<T: Any + Send + Sync>(&self, entity: Entity) -> Option<&T> {
+    pub fn get_component<T: Component>(&self, entity: Entity) -> Option<&T> {
         if !self.is_alive(entity) {
             return None;
         }
         self.entities[entity.index as usize]
             .components
-            .values()
-            .find_map(|c| c.as_any().downcast_ref::<T>())
+            .get(T::type_name())
+            .and_then(|c| c.as_any().downcast_ref::<T>())
     }
 
-    pub fn get_component_mut<T: Any + Send + Sync>(&mut self, entity: Entity) -> Option<&mut T> {
+    pub fn get_component_mut<T: Component>(&mut self, entity: Entity) -> Option<&mut T> {
         if !self.is_alive(entity) {
             return None;
         }
         self.entities[entity.index as usize]
             .components
-            .values_mut()
-            .find_map(|c| c.as_any_mut().downcast_mut::<T>())
+            .get_mut(T::type_name())
+            .and_then(|c| c.as_any_mut().downcast_mut::<T>())
     }
 
     /// Serialize the live typed component, including runtime mutations.
