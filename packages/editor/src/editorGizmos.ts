@@ -398,6 +398,210 @@ export function drawCircleCollider2DGizmo(
   }
 }
 
+type PolygonCollider2DData = {
+  points?: number[][];
+  offset?: number[];
+  is_trigger?: boolean;
+};
+
+type CapsuleCollider2DData = {
+  direction?: string;
+  size?: number[];
+  offset?: number[];
+  is_trigger?: boolean;
+};
+
+type Light2DData = {
+  light_type?: string;
+  color?: number[];
+  intensity?: number;
+  radius?: number;
+  inner_radius?: number;
+  spot_angle_degrees?: number;
+  spot_direction_degrees?: number;
+};
+
+/** Draws the convex polygon outline for a PolygonCollider2D. */
+export function drawPolygonCollider2DGizmo(
+  ctx: CanvasRenderingContext2D,
+  viewCam: Camera,
+  vp: Vp,
+  transform: TransformLike,
+  collider: PolygonCollider2DData,
+) {
+  const points = collider.points;
+  if (!points || points.length < 3) return;
+  const offset = collider.offset ?? [0, 0];
+  const { origin, right, up, scale3 } = colliderOrigin(transform, [offset[0] ?? 0, offset[1] ?? 0, 0]);
+  const color = collider.is_trigger ? '#ffd76a' : '#68f5d0';
+  const worldPoints: Vec3[] = points.map((p) =>
+    add(
+      origin,
+      add(
+        scale(right, (Number(p[0]) || 0) * scale3[0]),
+        scale(up, (Number(p[1]) || 0) * scale3[1]),
+      ),
+    ),
+  );
+  for (let i = 0; i < worldPoints.length; i++) {
+    strokeWorldSeg(ctx, viewCam, vp, worldPoints[i], worldPoints[(i + 1) % worldPoints.length], color, 2);
+  }
+}
+
+/** Draws a capsule outline for a CapsuleCollider2D. */
+export function drawCapsuleCollider2DGizmo(
+  ctx: CanvasRenderingContext2D,
+  viewCam: Camera,
+  vp: Vp,
+  transform: TransformLike,
+  collider: CapsuleCollider2DData,
+) {
+  const offset = collider.offset ?? [0, 0];
+  const { origin, right, up, scale3 } = colliderOrigin(transform, [offset[0] ?? 0, offset[1] ?? 0, 0]);
+  const size = collider.size ?? [0.5, 1];
+  const isVertical = (collider.direction ?? 'vertical') === 'vertical';
+  const color = collider.is_trigger ? '#ffd76a' : '#68f5d0';
+
+  let halfLen: number;
+  let radius: number;
+  if (isVertical) {
+    const h = Math.max(0.002, Math.abs((Number(size[1]) || 1) * scale3[1]));
+    radius = Math.max(0.001, Math.abs((Number(size[0]) || 0.5) * scale3[0]) * 0.5);
+    halfLen = Math.max(0.001, h * 0.5 - radius);
+  } else {
+    const w = Math.max(0.002, Math.abs((Number(size[0]) || 1) * scale3[0]));
+    radius = Math.max(0.001, Math.abs((Number(size[1]) || 0.5) * scale3[1]) * 0.5);
+    halfLen = Math.max(0.001, w * 0.5 - radius);
+  }
+
+  const axis = isVertical ? up : right;
+  const perp = isVertical ? right : up;
+  const c1 = add(origin, scale(axis, halfLen));
+  const c2 = add(origin, scale(axis, -halfLen));
+
+  // Draw the two semicircle caps and connecting lines.
+  const segments = 20;
+  // Top cap.
+  let prev = add(c1, scale(perp, radius));
+  for (let i = 1; i <= segments; i++) {
+    const angle = (i / segments) * Math.PI;
+    const current = add(
+      c1,
+      add(
+        scale(perp, Math.cos(angle) * radius),
+        scale(axis, Math.sin(angle) * radius),
+      ),
+    );
+    strokeWorldSeg(ctx, viewCam, vp, prev, current, color, 2);
+    prev = current;
+  }
+  // Side line.
+  strokeWorldSeg(ctx, viewCam, vp, prev, add(c2, scale(perp, -radius)), color, 2);
+  // Bottom cap.
+  prev = add(c2, scale(perp, -radius));
+  for (let i = 1; i <= segments; i++) {
+    const angle = Math.PI + (i / segments) * Math.PI;
+    const current = add(
+      c2,
+      add(
+        scale(perp, Math.cos(angle) * radius),
+        scale(axis, Math.sin(angle) * radius),
+      ),
+    );
+    strokeWorldSeg(ctx, viewCam, vp, prev, current, color, 2);
+    prev = current;
+  }
+  // Side line back.
+  strokeWorldSeg(ctx, viewCam, vp, prev, add(c1, scale(perp, radius)), color, 2);
+}
+
+/** Draws a Light2D gizmo: circle for point, cone for spot, icon for global. */
+export function drawLight2DGizmo(
+  ctx: CanvasRenderingContext2D,
+  viewCam: Camera,
+  vp: Vp,
+  transform: TransformLike,
+  light: Light2DData,
+) {
+  const { origin, right, up } = colliderOrigin(transform, [0, 0, 0]);
+  const lightType = (light.light_type ?? 'point').toLowerCase();
+  const color = light.color ?? [1, 1, 1, 1];
+  const r = Math.round(Math.min(255, Math.max(0, (color[0] ?? 1) * 255)));
+  const g = Math.round(Math.min(255, Math.max(0, (color[1] ?? 1) * 255)));
+  const b = Math.round(Math.min(255, Math.max(0, (color[2] ?? 1) * 255)));
+  const cssColor = `rgba(${r},${g},${b},0.6)`;
+
+  if (lightType === 'global') {
+    // Draw a small sun icon (circle with rays).
+    const iconRadius = 0.3;
+    let prev = add(origin, scale(right, iconRadius));
+    for (let i = 1; i <= 24; i++) {
+      const angle = (i / 24) * Math.PI * 2;
+      const current = add(
+        origin,
+        add(scale(right, Math.cos(angle) * iconRadius), scale(up, Math.sin(angle) * iconRadius)),
+      );
+      strokeWorldSeg(ctx, viewCam, vp, prev, current, cssColor, 2);
+      prev = current;
+    }
+    return;
+  }
+
+  const radius = Math.max(0.01, Number(light.radius) || 5);
+
+  if (lightType === 'spot') {
+    // Draw cone.
+    const halfAngle = ((Number(light.spot_angle_degrees) || 30) * Math.PI) / 360;
+    const dirDeg = Number(light.spot_direction_degrees) || 0;
+    const dirRad = (dirDeg * Math.PI) / 180;
+    const dir = add(scale(right, Math.cos(dirRad)), scale(up, Math.sin(dirRad)));
+    const perpDir = add(scale(right, -Math.sin(dirRad)), scale(up, Math.cos(dirRad)));
+    const end = add(origin, scale(dir, radius));
+    const left = add(end, scale(perpDir, Math.tan(halfAngle) * radius));
+    const rightPt = add(end, scale(perpDir, -Math.tan(halfAngle) * radius));
+    strokeWorldSeg(ctx, viewCam, vp, origin, left, cssColor, 2);
+    strokeWorldSeg(ctx, viewCam, vp, origin, rightPt, cssColor, 2);
+    // Arc at the end.
+    const segments = 16;
+    let prev = left;
+    for (let i = 1; i <= segments; i++) {
+      const t = i / segments;
+      const current = add(
+        add(left, scale(dir, 0)),
+        scale(perpDir, (1 - 2 * t) * Math.tan(halfAngle) * radius),
+      );
+      strokeWorldSeg(ctx, viewCam, vp, prev, current, cssColor, 1);
+      prev = current;
+    }
+    return;
+  }
+
+  // Point light: draw radius circle + inner radius circle.
+  let prev = add(origin, scale(right, radius));
+  for (let i = 1; i <= 40; i++) {
+    const angle = (i / 40) * Math.PI * 2;
+    const current = add(
+      origin,
+      add(scale(right, Math.cos(angle) * radius), scale(up, Math.sin(angle) * radius)),
+    );
+    strokeWorldSeg(ctx, viewCam, vp, prev, current, cssColor, 2);
+    prev = current;
+  }
+  const innerRadius = Number(light.inner_radius) || 0;
+  if (innerRadius > 0.01) {
+    prev = add(origin, scale(right, innerRadius));
+    for (let i = 1; i <= 32; i++) {
+      const angle = (i / 32) * Math.PI * 2;
+      const current = add(
+        origin,
+        add(scale(right, Math.cos(angle) * innerRadius), scale(up, Math.sin(angle) * innerRadius)),
+      );
+      strokeWorldSeg(ctx, viewCam, vp, prev, current, cssColor, 1);
+      prev = current;
+    }
+  }
+}
+
 export function drawCamera2DGizmo(
   ctx: CanvasRenderingContext2D,
   viewCam: Camera,
