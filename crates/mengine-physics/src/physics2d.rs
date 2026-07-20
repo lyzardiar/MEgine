@@ -7,8 +7,9 @@ use mengine_core::generated::{
 use mengine_core::{Entity, TransformHierarchy, World};
 use rapier2d::prelude::PhysicsWorld as RapierWorld;
 use rapier2d::prelude::{
-    ColliderBuilder, ColliderHandle, FixedJointBuilder, ImpulseJointHandle, Pose,
-    RevoluteJointBuilder, RigidBodyBuilder, RigidBodyHandle, RigidBodyType, Rotation, Vec2,
+    Ball, ColliderBuilder, ColliderHandle, Cuboid, FixedJointBuilder, ImpulseJointHandle, Pose,
+    QueryFilter, Ray, RevoluteJointBuilder, RigidBodyBuilder, RigidBodyHandle, RigidBodyType,
+    Rotation, SharedShape, Vec2,
 };
 use std::collections::{HashMap, HashSet};
 
@@ -78,6 +79,15 @@ struct BodyEntry2D {
     signature: BodySignature2D,
 }
 
+/// Result of a 2D raycast query.
+#[derive(Clone, Debug)]
+pub struct RaycastHit2D {
+    pub entity: Entity,
+    pub point: [f32; 2],
+    pub normal: [f32; 2],
+    pub distance: f32,
+}
+
 /// Independent planar physics world. It reads/writes the XY plane of `Transform`,
 /// preserves world Z, and converts Unity-style angular velocity degrees to Rapier radians.
 pub struct PhysicsWorld2D {
@@ -119,6 +129,82 @@ impl PhysicsWorld2D {
 
     pub fn clear(&mut self) {
         *self = Self::new();
+    }
+
+    // ---- 2D Physics Queries (Unity Physics2D-style) ----
+
+    /// Casts a ray and returns the first collider hit (Unity Physics2D.Raycast).
+    pub fn raycast(
+        &self,
+        origin: [f32; 2],
+        direction: [f32; 2],
+        max_distance: f32,
+    ) -> Option<RaycastHit2D> {
+        let dir = Vec2::new(direction[0], direction[1]);
+        let dir = if dir.length_squared() > 0.000001 {
+            dir.normalize()
+        } else {
+            return None;
+        };
+        let ray = Ray::new(
+            Vec2::new(origin[0], origin[1]),
+            dir,
+        );
+        let max_toi = finite_or(max_distance, 100.0).max(0.001);
+        let (handle, intersection) =
+            self.rapier
+                .cast_ray_and_get_normal(&ray, max_toi, true, QueryFilter::default())?;
+        let collider = self.rapier.colliders.get(handle)?;
+        let entity = Entity::from_u64(collider.user_data as u64);
+        let point = ray.point_at(intersection.time_of_impact);
+        Some(RaycastHit2D {
+            entity,
+            point: [point.x, point.y],
+            normal: [intersection.normal.x, intersection.normal.y],
+            distance: intersection.time_of_impact,
+        })
+    }
+
+    /// Returns all entities whose collider contains the given point (Unity Physics2D.OverlapPoint).
+    pub fn overlap_point(&self, point: [f32; 2]) -> Vec<Entity> {
+        let point = Vec2::new(point[0], point[1]);
+        self.rapier
+            .intersect_point(point, QueryFilter::default())
+            .filter_map(|(_, collider)| {
+                let entity = Entity::from_u64(collider.user_data as u64);
+                (entity != Entity::INVALID).then_some(entity)
+            })
+            .collect()
+    }
+
+    /// Returns all entities whose collider overlaps the given circle (Unity Physics2D.OverlapCircle).
+    pub fn overlap_circle(&self, center: [f32; 2], radius: f32) -> Vec<Entity> {
+        let radius = finite_or(radius, 0.5).abs().max(0.001);
+        let shape_pos = Pose::from_parts(Vec2::new(center[0], center[1]), Rotation::new(0.0));
+        let shape = SharedShape::new(Ball::new(radius));
+        self.rapier
+            .intersect_shape(shape_pos, shape.as_ref(), QueryFilter::default())
+            .filter_map(|(_, collider)| {
+                let entity = Entity::from_u64(collider.user_data as u64);
+                (entity != Entity::INVALID).then_some(entity)
+            })
+            .collect()
+    }
+
+    /// Returns all entities whose collider overlaps the given axis-aligned box
+    /// (Unity Physics2D.OverlapBox).
+    pub fn overlap_box(&self, center: [f32; 2], half_extents: [f32; 2]) -> Vec<Entity> {
+        let hx = finite_or(half_extents[0], 0.5).abs().max(0.001);
+        let hy = finite_or(half_extents[1], 0.5).abs().max(0.001);
+        let shape_pos = Pose::from_parts(Vec2::new(center[0], center[1]), Rotation::new(0.0));
+        let shape = SharedShape::new(Cuboid::new(Vec2::new(hx, hy)));
+        self.rapier
+            .intersect_shape(shape_pos, shape.as_ref(), QueryFilter::default())
+            .filter_map(|(_, collider)| {
+                let entity = Entity::from_u64(collider.user_data as u64);
+                (entity != Entity::INVALID).then_some(entity)
+            })
+            .collect()
     }
 
     pub fn step(&mut self, world: &mut World, dt: f32) -> PhysicsStepEvents {

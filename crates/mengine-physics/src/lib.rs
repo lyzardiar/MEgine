@@ -2,7 +2,7 @@
 
 mod physics2d;
 
-pub use physics2d::PhysicsWorld2D;
+pub use physics2d::{PhysicsWorld2D, RaycastHit2D};
 
 use mengine_core::generated::{BoxCollider3D, RigidBody3D, SphereCollider3D, Transform};
 use mengine_core::{Entity, TransformHierarchy, World};
