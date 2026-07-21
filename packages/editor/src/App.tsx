@@ -60,6 +60,9 @@ import {
 } from './projectAssets';
 import { Viewport } from './panels/Viewport';
 import { DockWorkspace, type PanelKind } from './panels/DockWorkspace';
+import { agentBridge } from './agent/AgentBridge';
+import { logService } from './agent/LogService';
+import { attachBridgeTransport } from './agent/transport';
 import { EditorWindowHost } from './editorWindow';
 import { resolveUnityAction } from './panels/uiFieldEditors';
 import {
@@ -251,6 +254,7 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
   const remoteSceneDirty = useRef(false);
   const syncSender = useRef(crypto.randomUUID());
   const syncChannel = useRef<BroadcastChannel | null>(null);
+  const refreshRef = useRef<() => void>(() => {});
   const localTimelinePreview = useRef<TimelineScenePreview | null>(null);
   const remoteTimelinePreview = useRef<{
     sender: string;
@@ -279,6 +283,33 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
   unsavedChangesRef.current = hasUnsavedChanges;
   workspaceDirtyRef.current = hasUnsavedChanges;
   timelineAssetPathRef.current = timelineAssetPath;
+
+  useEffect(() => {
+    agentBridge.connect(store);
+    agentBridge.connectSceneMeta({
+      sceneName: () => sceneNameRef.current,
+      dirty: () => sceneDirtyRef.current,
+    });
+    agentBridge.connectRefresh(() => refreshRef.current());
+  }, [store]);
+
+  // Attach the AI-agent WebSocket transport (main window only; detached panels
+  // are views and must not answer bridge requests to avoid duplicate replies).
+  useEffect(() => {
+    if (props.detachedPanel) return;
+    let unlisten: (() => void) | undefined;
+    let disposed = false;
+    void attachBridgeTransport()
+      .then((fn) => {
+        if (disposed) fn();
+        else unlisten = fn;
+      })
+      .catch((error) => console.error('AgentBridge transport failed to attach', error));
+    return () => {
+      disposed = true;
+      unlisten?.();
+    };
+  }, [props.detachedPanel]);
 
   const postWorkspaceDirtyState = () => {
     syncChannel.current?.postMessage({
@@ -368,6 +399,7 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
     updateSceneDirty();
     if (publish) broadcastScene();
   };
+  refreshRef.current = refresh;
 
   const postTimelinePreview = (preview: TimelineScenePreview | null) => {
     syncChannel.current?.postMessage({
@@ -614,6 +646,7 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
   }, [animationAssetPath, animationDirty, animatorDirty, animatorPath, materialDirty, materialPath, sequencerDirty, shaderDirty, shaderPath, spriteAtlasDirty, spriteAtlasPath, spriteDirty, spritePath, timelineAssetPath]);
 
   const log = (msg: string, level: 'info' | 'warn' | 'error' = 'info') => {
+    logService.log(msg, level);
     const prefix = level === 'info' ? '' : level === 'warn' ? '[Warn] ' : '[Error] ';
     const next = [...logsRef.current, `${prefix}${msg}`].slice(-300);
     logsRef.current = next;

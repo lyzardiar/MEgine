@@ -12,6 +12,7 @@ import {
 } from 'lucide-react';
 import type { GizmoMode, SceneCamera, TransformData } from '../store';
 import { recordViewportProfilerFrame } from '../editorProfiler';
+import { agentBridge } from '../agent/AgentBridge';
 import {
   GAME_RESOLUTION_PRESETS,
   gameResolutionKey,
@@ -553,6 +554,25 @@ export function Viewport(props: {
   const lastCameraRef = useRef<Camera>({ eye: [0, 0, 10], target: [0, 0, 0], fovYDeg: 60 });
   const propsRef = useRef(props);
   propsRef.current = props;
+
+  // Expose this viewport's canvas to the AgentBridge so AI agents can capture
+  // a screenshot of the rendered scene/game view (Phase 1 observation surface).
+  useEffect(() => {
+    return agentBridge.registerViewportCapture(props.tab, (format, quality) => {
+      const canvas = canvasRef.current;
+      if (!canvas) return null;
+      try {
+        return {
+          dataUrl: canvas.toDataURL(format, quality),
+          width: canvas.width,
+          height: canvas.height,
+          mime: format,
+        };
+      } catch {
+        return null;
+      }
+    });
+  }, [props.tab]);
 
   // Live camera during drag (bypasses React batching for instant feedback)
   const liveCam = useRef<SceneCamera>({

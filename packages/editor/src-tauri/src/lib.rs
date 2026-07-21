@@ -17,6 +17,9 @@ use std::sync::{
 use std::time::{Instant, SystemTime, UNIX_EPOCH};
 use tauri::{path::BaseDirectory, Emitter, Manager, State};
 
+mod agent_bridge;
+use agent_bridge::{agent_bridge_broadcast, agent_bridge_respond, spawn_bridge_server, BridgeHub};
+
 struct AppState {
     project: Mutex<Option<ProjectSession>>,
     active_build: Arc<Mutex<Option<ActiveBuild>>>,
@@ -4616,6 +4619,74 @@ fn submit_editor_request(
         .map_err(|error| error.failure(Some(session.current_revision())))
 }
 
+#[derive(serde::Serialize)]
+#[serde(rename_all = "camelCase")]
+struct EditorWindowInfo {
+    label: String,
+    title: String,
+    /// "main" | "panel" | "editor" | "other"
+    kind: String,
+    /// For `panel-*` windows, the panel id (e.g. "hierarchy").
+    panel_kind: Option<String>,
+    /// For `editor-*` windows, the registered editor window typeId from the URL query.
+    editor_type: Option<String>,
+    url: String,
+    focused: bool,
+    x: i32,
+    y: i32,
+    width: u32,
+    height: u32,
+    scale_factor: f64,
+}
+
+/// Enumerate every webview window the editor currently has open. This is the
+/// AI-agent "which windows are open" observation: the main window, any detached
+/// core panels (`panel-<id>`), and any floating editor windows (`editor-<hash>`).
+#[tauri::command]
+fn list_editor_windows(app: tauri::AppHandle) -> Vec<EditorWindowInfo> {
+    let mut infos: Vec<EditorWindowInfo> = app
+        .webview_windows()
+        .into_iter()
+        .map(|(label, window)| {
+            let kind = if label == "main" {
+                "main"
+            } else if label.starts_with("panel-") {
+                "panel"
+            } else if label.starts_with("editor-") {
+                "editor"
+            } else {
+                "other"
+            };
+            let panel_kind = label.strip_prefix("panel-").map(str::to_string);
+            let url = window.url().ok();
+            let url_str = url.as_ref().map(|u| u.to_string()).unwrap_or_default();
+            let editor_type = url.as_ref().and_then(|u| {
+                u.query_pairs()
+                    .find(|(key, _)| key == "editorWindow")
+                    .map(|(_, value)| value.to_string())
+            });
+            let position = window.outer_position().ok();
+            let size = window.outer_size().ok();
+            EditorWindowInfo {
+                label,
+                title: window.title().unwrap_or_default(),
+                kind: kind.to_string(),
+                panel_kind,
+                editor_type,
+                url: url_str,
+                focused: window.is_focused().unwrap_or(false),
+                x: position.map(|p| p.x).unwrap_or(0),
+                y: position.map(|p| p.y).unwrap_or(0),
+                width: size.map(|s| s.width).unwrap_or(0),
+                height: size.map(|s| s.height).unwrap_or(0),
+                scale_factor: window.scale_factor().unwrap_or(1.0),
+            }
+        })
+        .collect();
+    infos.sort_by(|a, b| a.label.cmp(&b.label));
+    infos
+}
+
 #[tauri::command]
 fn exit_editor(app: tauri::AppHandle) {
     app.exit(0);
@@ -4623,6 +4694,7 @@ fn exit_editor(app: tauri::AppHandle) {
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
+    let bridge_hub = Arc::new(BridgeHub::new(uuid::Uuid::new_v4().to_string()));
     tauri::Builder::default()
         .plugin(tauri_plugin_dialog::init())
         .manage(AppState {
@@ -4630,6 +4702,7 @@ pub fn run() {
             active_build: Arc::new(Mutex::new(None)),
             next_build_id: AtomicU64::new(1),
         })
+        .manage(bridge_hub.clone())
         .invoke_handler(tauri::generate_handler![
             create_project,
             open_project,
@@ -4675,8 +4748,15 @@ pub fn run() {
             discard_scene_recovery,
             replace_scene_snapshot,
             submit_editor_request,
+            list_editor_windows,
+            agent_bridge_respond,
+            agent_bridge_broadcast,
             exit_editor
         ])
+        .setup(move |app| {
+            spawn_bridge_server(app.handle().clone(), bridge_hub.clone());
+            Ok(())
+        })
         .run(tauri::generate_context!())
         .expect("error while running MEngine Editor");
 }
