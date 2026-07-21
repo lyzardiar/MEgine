@@ -140,7 +140,7 @@ export function Project(props: {
   const [selected, setSelected] = useState<string | null>(null);
   const [editing, setEditing] = useState<string | null>(null);
   const [editValue, setEditValue] = useState('');
-  const [ctx, setCtx] = useState<{ x: number; y: number; asset: AssetItem } | null>(null);
+  const [ctx, setCtx] = useState<{ x: number; y: number; asset: AssetItem | null } | null>(null);
   const [libTick, setLibTick] = useState(0);
   const [pingKey, setPingKey] = useState<string | null>(null);
   const [importing, setImporting] = useState(false);
@@ -520,6 +520,7 @@ export function Project(props: {
 
   const onContext = (e: MouseEvent, a: AssetItem) => {
     e.preventDefault();
+    e.stopPropagation();
     if (!a.assetPath) return;
     setSelected(a.assetKey);
     setCtx({ x: e.clientX, y: e.clientY, asset: a });
@@ -922,28 +923,14 @@ export function Project(props: {
       </div>
       <div className="project-content">
         <div className="project-toolbar">
-          <button
-            type="button"
-            className="project-import-button"
-            disabled={importing}
-            onClick={() => void completeImport()}
-          >
-            <Upload size={13} aria-hidden="true" />
-            {importing ? 'Importing...' : 'Import'}
-          </button>
-          <button
-            type="button"
-            className="project-import-button"
-            title="Open recoverable project Trash"
-            onClick={() => void openTrashBrowser()}
-          >
-            <Trash2 size={13} aria-hidden="true" />
-            Trash
-          </button>
           <span className="project-folder-path" title={folder}>{folder}</span>
         </div>
         <div
           className={`project-grid${draggingFiles ? ' file-drop-active' : ''}`}
+          onContextMenu={(event) => {
+            event.preventDefault();
+            setCtx({ x: event.clientX, y: event.clientY, asset: null });
+          }}
           onDragEnter={(event) => {
             if (event.dataTransfer.types.includes('Files')) setDraggingFiles(true);
           }}
@@ -1144,14 +1131,40 @@ export function Project(props: {
             style={{ left: ctx.x, top: ctx.y }}
             onPointerDown={(e) => e.stopPropagation()}
           >
-            {ctx.asset.kind === 'sprite' && ctx.asset.spriteId && (
+            {!ctx.asset && (
               <>
                 <button
                   type="button"
                   onPointerDown={(e) => {
                     e.preventDefault();
                     e.stopPropagation();
-                    props.onInstantiateSprite(ctx.asset.spriteId!);
+                    setCtx(null);
+                    void completeImport();
+                  }}
+                >
+                  Import...
+                </button>
+                <button
+                  type="button"
+                  onPointerDown={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    setCtx(null);
+                    void openTrashBrowser();
+                  }}
+                >
+                  Open Project Trash
+                </button>
+              </>
+            )}
+            {ctx.asset && ctx.asset.kind === 'sprite' && ctx.asset.spriteId && (
+              <>
+                <button
+                  type="button"
+                  onPointerDown={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    props.onInstantiateSprite(ctx.asset!.spriteId!);
                     setCtx(null);
                   }}
                 >
@@ -1162,7 +1175,7 @@ export function Project(props: {
                   onPointerDown={(e) => {
                     e.preventDefault();
                     e.stopPropagation();
-                    props.onOpenSprite(ctx.asset.spriteId!);
+                    props.onOpenSprite(ctx.asset!.spriteId!);
                     setCtx(null);
                   }}
                 >
@@ -1170,14 +1183,14 @@ export function Project(props: {
                 </button>
               </>
             )}
-            {ctx.asset.kind === 'scene' && ctx.asset.sceneName && (
+            {ctx.asset && ctx.asset.kind === 'scene' && ctx.asset.sceneName && (
               <>
                 <button
                   type="button"
                   onPointerDown={(e) => {
                     e.preventDefault();
                     e.stopPropagation();
-                    props.onOpenScene(ctx.asset.sceneName!);
+                    props.onOpenScene(ctx.asset!.sceneName!);
                     setCtx(null);
                   }}
                 >
@@ -1188,7 +1201,7 @@ export function Project(props: {
                   onPointerDown={(e) => {
                     e.preventDefault();
                     e.stopPropagation();
-                    beginRename(ctx.asset.sceneName!);
+                    beginRename(ctx.asset!.sceneName!);
                   }}
                 >
                   Rename <span className="hint">F2</span>
@@ -1202,21 +1215,21 @@ export function Project(props: {
                   onPointerDown={(e) => {
                     e.preventDefault();
                     e.stopPropagation();
-                    requestDeleteScene(ctx.asset.sceneName!);
+                    requestDeleteScene(ctx.asset!.sceneName!);
                   }}
                 >
                   Delete <span className="hint">Del</span>
                 </button>
               </>
             )}
-            {canRenameAsset(ctx.asset) && (
+            {ctx.asset && canRenameAsset(ctx.asset) && (
               <>
                 <button
                   type="button"
                   onPointerDown={(e) => {
                     e.preventDefault();
                     e.stopPropagation();
-                    requestAssetRename(ctx.asset);
+                    requestAssetRename(ctx.asset!);
                   }}
                 >
                   Rename / Move <span className="hint">F2</span>
@@ -1226,7 +1239,7 @@ export function Project(props: {
                   onPointerDown={(e) => {
                     e.preventDefault();
                     e.stopPropagation();
-                    requestAssetDuplicate(ctx.asset);
+                    requestAssetDuplicate(ctx.asset!);
                   }}
                 >
                   Duplicate
@@ -1236,20 +1249,20 @@ export function Project(props: {
                   onPointerDown={(e) => {
                     e.preventDefault();
                     e.stopPropagation();
-                    requestAssetTrash(ctx.asset);
+                    requestAssetTrash(ctx.asset!);
                   }}
                 >
                   Move to Trash <span className="hint">Del</span>
                 </button>
               </>
             )}
-            {ctx.asset.assetPath && (
+            {ctx.asset && ctx.asset.assetPath && (
               <button
                 type="button"
                 onPointerDown={(e) => {
                   e.preventDefault();
                   e.stopPropagation();
-                  requestReferences(ctx.asset);
+                  requestReferences(ctx.asset!);
                 }}
               >
                 Find References

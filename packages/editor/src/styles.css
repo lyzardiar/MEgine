@@ -3,25 +3,28 @@
   --u-panel: #383838;
   --u-panel-2: #303030;
   --u-toolbar: #3c3c3c;
+  --u-toolbar-hi: #444444;
   --u-border: #232323;
   --u-border-2: #4a4a4a;
   --u-text: #c4c4c4;
-  --u-text-bright: #f0f0f0;
-  --u-muted: #8a8a8a;
-  --u-hover: #464646;
+  --u-text-bright: #f2f2f2;
+  --u-muted: #8b8b8b;
+  --u-hover: #474747;
   --u-selected: #2c5d87;
   --u-selected-soft: #3e5f7a;
-  --u-input: #242424;
+  --u-accent: #4d90fe;
+  --u-input: #232323;
   --u-play: #5a5a5a;
   --u-play-on: #3d8f4a;
   --u-focus: #6aa6d1;
-  --u-scroll-track: #202020;
-  --u-scroll-thumb: #555;
-  --u-scroll-thumb-hover: #696969;
+  --u-scroll-track: #1f1f1f;
+  --u-scroll-thumb: #575757;
+  --u-scroll-thumb-hover: #6f6f6f;
   --u-x: #f14c4c;
   --u-y: #6bbf4e;
   --u-z: #4c8ff1;
-  --u-tab: #2a2a2a;
+  --u-tab: #2b2b2b;
+  --u-hi: rgba(255, 255, 255, 0.05);
   --u-font: "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
   --u-mono: Consolas, "Cascadia Mono", monospace;
   font-family: var(--u-font);
@@ -50,8 +53,8 @@
 *::-webkit-scrollbar-thumb {
   min-width: 28px;
   min-height: 28px;
-  border: 1px solid var(--u-scroll-track);
-  border-radius: 0;
+  border: 2px solid var(--u-scroll-track);
+  border-radius: 4px;
   background: var(--u-scroll-thumb);
 }
 
@@ -373,8 +376,9 @@ button, input, select {
   align-items: center;
   gap: 2px;
   padding: 0 6px;
-  background: var(--u-toolbar);
+  background: linear-gradient(to bottom, var(--u-toolbar-hi), var(--u-toolbar));
   border-bottom: 1px solid var(--u-border);
+  box-shadow: inset 0 1px var(--u-hi);
   font-size: 12px;
 }
 
@@ -525,8 +529,9 @@ button, input, select {
   grid-template-columns: 1fr auto 1fr;
   align-items: center;
   padding: 0 8px;
-  background: var(--u-toolbar);
+  background: linear-gradient(to bottom, var(--u-toolbar-hi), var(--u-toolbar));
   border-bottom: 1px solid var(--u-border);
+  box-shadow: inset 0 1px var(--u-hi);
   gap: 8px;
 }
 
@@ -543,7 +548,7 @@ button, input, select {
   width: 28px;
   height: 24px;
   border: 1px solid transparent;
-  border-radius: 0;
+  border-radius: 3px;
   background: transparent;
   color: var(--u-text);
   cursor: pointer;
@@ -552,17 +557,19 @@ button, input, select {
   justify-content: center;
   font-size: 11px;
   font-weight: 600;
+  transition: background 0.1s ease, border-color 0.1s ease, color 0.1s ease;
 }
 
 .tool-btn:hover {
-  border-color: #555;
-  background: #444;
+  border-color: #565656;
+  background: var(--u-hover);
   color: #fff;
 }
 .tool-btn.active {
   background: var(--u-selected);
   border-color: #1a3a55;
   color: #fff;
+  box-shadow: inset 0 1px rgba(255, 255, 255, 0.1);
 }
 
 .tool-separator {
@@ -577,11 +584,12 @@ button, input, select {
   height: 24px;
   padding: 0 8px;
   border: 1px solid var(--u-border-2);
-  border-radius: 0;
-  background: #353a41;
+  border-radius: 3px;
+  background: linear-gradient(to bottom, #3b4048, #33383f);
   color: var(--u-text);
   cursor: pointer;
   font-size: 11px;
+  transition: background 0.1s ease, color 0.1s ease, border-color 0.1s ease;
 }
 
 .tool-mode-btn:hover {
@@ -593,25 +601,27 @@ button, input, select {
   width: 30px;
   height: 24px;
   border: 1px solid var(--u-border-2);
-  border-radius: 0;
-  background: #353535;
+  border-radius: 3px;
+  background: linear-gradient(to bottom, #3c3c3c, #343434);
   color: var(--u-text-bright);
   cursor: pointer;
   display: inline-flex;
   align-items: center;
   justify-content: center;
+  transition: background 0.1s ease, border-color 0.1s ease;
 }
 
 .play-btn:hover { border-color: #666; background: #424242; }
 .play-btn.on {
   background: var(--u-play-on);
   border-color: #2f6b38;
+  box-shadow: inset 0 1px rgba(255, 255, 255, 0.15);
 }
 
 .brand-chip {
   font-weight: 700;
   letter-spacing: 0.06em;
-  color: var(--u-muted);
+  color: #7d97ad;
   font-size: 11px;
   margin-right: 8px;
 }
@@ -635,22 +645,30 @@ button, input, select {
   align-items: stretch;
   background: var(--u-tab);
   border-bottom: 1px solid var(--u-border);
-  min-height: 24px;
+  min-height: 26px;
   flex-shrink: 0;
+  box-shadow: inset 0 1px rgba(0, 0, 0, 0.22);
 }
 
 .dock-tab {
-  padding: 4px 12px;
+  padding: 5px 14px;
   border: none;
   background: transparent;
   color: var(--u-muted);
   cursor: pointer;
   border-right: 1px solid var(--u-border);
+  transition: background 0.1s ease, color 0.1s ease;
+}
+
+.dock-tab:hover {
+  color: var(--u-text);
+  background: rgba(255, 255, 255, 0.035);
 }
 
 .dock-tab.active {
   background: var(--u-panel);
   color: var(--u-text-bright);
+  box-shadow: inset 0 2px 0 var(--u-accent);
 }
 
 .dock-body {
@@ -665,20 +683,26 @@ button, input, select {
   gap: 6px;
   padding: 4px 6px;
   border-bottom: 1px solid var(--u-border);
-  background: var(--u-panel-2);
+  background: linear-gradient(to bottom, #353535, var(--u-panel-2));
+  box-shadow: inset 0 1px var(--u-hi);
 }
 
 .search {
   flex: 1;
   background: var(--u-input);
   border: 1px solid var(--u-border-2);
-  border-radius: 0;
+  border-radius: 3px;
   padding: 3px 6px;
   color: var(--u-text);
   outline: none;
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.3);
+  transition: border-color 0.1s ease, box-shadow 0.1s ease;
 }
 
-.search:focus { border-color: var(--u-selected); }
+.search:focus {
+  border-color: var(--u-accent);
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.3), 0 0 0 1px rgba(77, 144, 254, 0.25);
+}
 
 /* Hierarchy */
 .hier-body {
@@ -728,6 +752,7 @@ button, input, select {
   padding: 2px 8px 2px 4px;
   cursor: grab;
   white-space: nowrap;
+  transition: background 0.1s ease, color 0.1s ease;
 }
 
 .hier-row:hover { background: var(--u-hover); }
@@ -863,8 +888,8 @@ button, input, select {
 .insp-header {
   padding: 7px 8px 8px;
   border-bottom: 1px solid #202020;
-  background: #3a3a3a;
-  box-shadow: inset 0 1px rgba(255, 255, 255, 0.035);
+  background: linear-gradient(to bottom, #404040, #3a3a3a);
+  box-shadow: inset 0 1px rgba(255, 255, 255, 0.05);
 }
 
 .insp-object-row {
@@ -975,7 +1000,8 @@ button, input, select {
   align-items: center;
   gap: 2px;
   padding: 0 3px 0 0;
-  background: #3d3d3d;
+  background: linear-gradient(to bottom, #424242, #3c3c3c);
+  box-shadow: inset 0 1px var(--u-hi);
   font-weight: 600;
   color: var(--u-text-bright);
 }
@@ -1461,6 +1487,16 @@ button, input, select {
   color: var(--u-text);
   outline: none;
   font: inherit;
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.3);
+  transition: border-color 0.1s ease, box-shadow 0.1s ease;
+}
+
+.field-row input[type='number']:focus,
+.field-row input[type='text']:focus,
+.field-row select:focus,
+.field-row textarea:focus {
+  border-color: var(--u-accent);
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.3), 0 0 0 1px rgba(77, 144, 254, 0.25);
 }
 
 .field-row input[type='checkbox'],
@@ -6870,8 +6906,9 @@ body.insp-scrubbing * {
   align-items: center;
   justify-content: space-between;
   padding: 0 10px;
-  background: var(--u-toolbar);
+  background: linear-gradient(to bottom, var(--u-toolbar-hi), var(--u-toolbar));
   border-top: 1px solid var(--u-border);
+  box-shadow: inset 0 1px var(--u-hi);
   color: var(--u-muted);
   font-size: 11px;
 }
@@ -7848,3 +7885,127 @@ body.ew-dragging {
 .sprite-atlas-results small {
   color: #888;
 }
+
+/* ════════════════════════════════════════════════════════════
+   Unity native control skin — de-webify pass
+   Appended at EOF; wins over earlier rules via the cascade.
+   ════════════════════════════════════════════════════════════ */
+
+:root {
+  --u-caret: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 8 5'><path d='M0 0l4 5 4-5z' fill='%23a8a8a8'/></svg>");
+  --u-check: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 10 10'><path d='M1.7 5.3 4.1 7.7 8.3 2.5' fill='none' stroke='%23ededed' stroke-width='1.7' stroke-linecap='round' stroke-linejoin='round'/></svg>");
+}
+
+/* — Checkboxes: native browser box → Unity toggle — */
+input[type='checkbox'] {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 13px;
+  height: 13px;
+  flex: 0 0 auto;
+  margin: 0;
+  border: 1px solid #565656;
+  border-radius: 2px;
+  background-color: #1d1d1d;
+  background-image: linear-gradient(to bottom, #191919, #232323);
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.45);
+  cursor: pointer;
+  transition: border-color 0.1s ease, background-color 0.1s ease;
+}
+
+input[type='checkbox']:hover { border-color: #7a7a7a; }
+
+input[type='checkbox']:checked {
+  border-color: #7d97ad;
+  background-color: #2c3947;
+  background-image: var(--u-check);
+  background-size: 9px 9px;
+  background-position: center;
+  background-repeat: no-repeat;
+}
+
+input[type='checkbox']:disabled { opacity: 0.4; cursor: default; }
+
+/* Hierarchy: keep disabled-entity toggles quiet until the row is hovered */
+.hier-row .hier-active:not(:checked) { opacity: 0.4; }
+.hier-row:hover .hier-active,
+.hier-row.selected .hier-active { opacity: 1; }
+
+/* — Hierarchy icons: colorful emoji → Unity monochrome glyphs — */
+.hier-icon { filter: grayscale(1) brightness(1.12); }
+.hier-row.selected .hier-icon { filter: grayscale(1) brightness(1.5); }
+
+/* — Range sliders: native → Unity thin track + beveled thumb — */
+input[type='range'] {
+  -webkit-appearance: none;
+  appearance: none;
+  height: 18px;
+  background: transparent;
+  cursor: pointer;
+}
+
+input[type='range']::-webkit-slider-runnable-track {
+  height: 4px;
+  border-radius: 2px;
+  background: #1f1f1f;
+  border: 1px solid #161616;
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.4);
+}
+
+input[type='range']::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 10px;
+  height: 16px;
+  margin-top: -7px;
+  border-radius: 2px;
+  background: linear-gradient(to bottom, #4c4c4c, #3a3a3a);
+  border: 1px solid #242424;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.45), inset 0 1px rgba(255, 255, 255, 0.09);
+}
+
+input[type='range']:hover::-webkit-slider-thumb {
+  background: linear-gradient(to bottom, #585858, #454545);
+}
+
+input[type='range']:focus-visible { outline: none; }
+
+/* — Selects: native dropdown arrow → Unity caret — */
+select {
+  -webkit-appearance: none;
+  appearance: none;
+  background-image: var(--u-caret);
+  background-repeat: no-repeat;
+  background-position: right 6px center;
+  background-size: 8px 5px;
+  padding-right: 20px;
+}
+
+/* Re-assert the caret where an earlier `background:` shorthand resets it */
+.field-row select,
+.insp-meta-row select,
+.object-slot select {
+  background-image: var(--u-caret);
+  background-repeat: no-repeat;
+  background-position: right 6px center;
+  background-size: 8px 5px;
+  padding-right: 20px;
+}
+
+/* ════════════════════════════════════════════════════════════
+   Unity polish — strip remaining native form decorations
+   ════════════════════════════════════════════════════════════ */
+
+/* Number fields: Unity uses clean scrubbable fields, no spinners */
+input[type='number']::-webkit-outer-spin-button,
+input[type='number']::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+input[type='number'] { -moz-appearance: textfield; appearance: textfield; }
+
+/* Search fields: drop the native clear button */
+input[type='search']::-webkit-search-cancel-button,
+input[type='search']::-webkit-search-decoration { -webkit-appearance: none; }
+
+/* Text selection in Unity's signature blue */
+::selection { background: rgba(44, 93, 135, 0.75); color: #fff; }
