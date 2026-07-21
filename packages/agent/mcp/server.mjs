@@ -202,19 +202,23 @@ const TOOLS = [
   {
     name: 'take_screenshot',
     description:
-      'Capture a PNG screenshot of the editor viewport (the rendered scene or game view). Returns an image — use it to verify the visual result of your actions.',
+      'Capture a PNG screenshot. target=scene/game captures the rendered viewport; target=window captures the ENTIRE editor window (menu bar, panels, chrome) via the OS — use it to inspect the editor UI itself. Returns an image — use it to verify the visual result of your actions.',
     inputSchema: {
       type: 'object',
       properties: {
         target: {
           type: 'string',
-          enum: ['scene', 'game'],
-          description: 'Which viewport to capture (default: scene)',
+          enum: ['scene', 'game', 'window'],
+          description: 'What to capture: the scene/game viewport, or the whole editor window (default: scene)',
         },
       },
     },
     handler: async (args) => {
-      const shot = await bridgeQuery('view.screenshot', { target: args.target || 'scene' });
+      const target = args.target || 'scene';
+      const shot =
+        target === 'window'
+          ? await bridgeQuery('view.window_screenshot', {})
+          : await bridgeQuery('view.screenshot', { target });
       const base64 = String(shot.dataUrl).split(',')[1] || '';
       return [{ type: 'image', data: base64, mimeType: shot.mime || 'image/png' }];
     },

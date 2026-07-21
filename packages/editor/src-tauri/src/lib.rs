@@ -18,7 +18,10 @@ use std::time::{Instant, SystemTime, UNIX_EPOCH};
 use tauri::{path::BaseDirectory, Emitter, Manager, State};
 
 mod agent_bridge;
-use agent_bridge::{agent_bridge_broadcast, agent_bridge_respond, spawn_bridge_server, BridgeHub};
+use agent_bridge::{
+    agent_bridge_broadcast, agent_bridge_respond, capture_editor_window, spawn_bridge_server,
+    BridgeHub,
+};
 
 struct AppState {
     project: Mutex<Option<ProjectSession>>,
@@ -4751,6 +4754,7 @@ pub fn run() {
             list_editor_windows,
             agent_bridge_respond,
             agent_bridge_broadcast,
+            capture_editor_window,
             exit_editor
         ])
         .setup(move |app| {

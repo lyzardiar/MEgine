@@ -242,3 +242,196 @@ pub fn agent_bridge_respond(
 pub fn agent_bridge_broadcast(payload: String, hub: State<'_, Arc<BridgeHub>>) {
     hub.broadcast(payload);
 }
+
+// ── Full-window screenshot (Windows GDI) ─────────────────────────────────
+//
+// The viewport screenshot (canvas.toDataURL) only shows the rendered scene —
+// it says nothing about the editor's own UI. To let an AI agent actually see
+// the interface (menus, panels, chrome) we capture the whole main window from
+// the OS via GDI and hand back a PNG data URL.
+
+/// A full-window screenshot, returned as a PNG data URL.
+#[derive(Clone, serde::Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct WindowCapture {
+    data_url: String,
+    width: u32,
+    height: u32,
+    mime: String,
+}
+
+/// Webview → Rust: capture the entire main editor window (not just the WebGL
+/// viewport). Windows-only; other platforms return an error.
+#[tauri::command]
+pub fn capture_editor_window(app: AppHandle) -> Result<WindowCapture, String> {
+    capture_editor_window_impl(app)
+}
+
+#[cfg(windows)]
+fn capture_editor_window_impl(app: AppHandle) -> Result<WindowCapture, String> {
+    use base64::Engine as _;
+    let _ = app; // the window is located by process id, see gdi_capture_main_window
+
+    let (rgba, width, height) = gdi_capture_main_window()?;
+    let png_bytes = encode_png(&rgba, width, height)?;
+    let b64 = base64::engine::general_purpose::STANDARD.encode(&png_bytes);
+
+    Ok(WindowCapture {
+        data_url: format!("data:image/png;base64,{}", b64),
+        width,
+        height,
+        mime: "image/png".to_string(),
+    })
+}
+
+#[cfg(not(windows))]
+fn capture_editor_window_impl(_app: AppHandle) -> Result<WindowCapture, String> {
+    Err("full-window capture is only supported on Windows".to_string())
+}
+
+/// Context for [`enum_windows_cb`]: find the largest visible top-level window
+/// belonging to this process (the main editor window).
+#[cfg(windows)]
+struct EnumWindowCtx {
+    pid: u32,
+    best: windows_sys::Win32::Foundation::HWND,
+    best_area: i64,
+}
+
+#[cfg(windows)]
+unsafe extern "system" fn enum_windows_cb(
+    hwnd: windows_sys::Win32::Foundation::HWND,
+    lparam: windows_sys::Win32::Foundation::LPARAM,
+) -> windows_sys::core::BOOL {
+    use windows_sys::Win32::Foundation::RECT;
+    use windows_sys::Win32::UI::WindowsAndMessaging::{GetWindowRect, GetWindowThreadProcessId, IsWindowVisible};
+
+    let ctx = &mut *(lparam as *mut EnumWindowCtx);
+    let mut pid: u32 = 0;
+    GetWindowThreadProcessId(hwnd, &mut pid);
+    if pid == ctx.pid && IsWindowVisible(hwnd) != 0 {
+        let mut r: RECT = std::mem::zeroed();
+        if GetWindowRect(hwnd, &mut r) != 0 {
+            let area = (r.right - r.left) as i64 * (r.bottom - r.top) as i64;
+            if area > ctx.best_area {
+                ctx.best_area = area;
+                ctx.best = hwnd;
+            }
+        }
+    }
+    1 // keep enumerating
+}
+
+/// Find the main editor window, bring it to the front, and capture its full
+/// rect from the screen via GDI. Returns RGBA pixels plus width/height.
+///
+/// Bringing the window forward first is essential: a screen blit captures
+/// whatever is topmost at those coordinates, so an overlapping window would
+/// otherwise occlude the editor.
+#[cfg(windows)]
+fn gdi_capture_main_window() -> Result<(Vec<u8>, u32, u32), String> {
+    use windows_sys::Win32::Foundation::RECT;
+    use windows_sys::Win32::Graphics::Gdi::{
+        BitBlt, CreateCompatibleBitmap, CreateCompatibleDC, DeleteDC, DeleteObject, GetDC,
+        GetDIBits, ReleaseDC, SelectObject, BITMAPINFO, BITMAPINFOHEADER, BI_RGB, DIB_RGB_COLORS,
+        SRCCOPY,
+    };
+    use windows_sys::Win32::UI::WindowsAndMessaging::{EnumWindows, GetWindowRect, SetForegroundWindow};
+
+    unsafe {
+        let mut ctx = EnumWindowCtx {
+            pid: std::process::id(),
+            best: std::ptr::null_mut(),
+            best_area: 0,
+        };
+        EnumWindows(Some(enum_windows_cb), &mut ctx as *mut EnumWindowCtx as _);
+        if ctx.best.is_null() {
+            return Err("editor window not found".to_string());
+        }
+
+        SetForegroundWindow(ctx.best);
+        std::thread::sleep(std::time::Duration::from_millis(350));
+
+        let mut rect: RECT = std::mem::zeroed();
+        if GetWindowRect(ctx.best, &mut rect) == 0 {
+            return Err("GetWindowRect failed".to_string());
+        }
+        let x = rect.left;
+        let y = rect.top;
+        let w = rect.right - rect.left;
+        let h = rect.bottom - rect.top;
+        if w <= 0 || h <= 0 {
+            return Err(format!("invalid window rect {}x{}", w, h));
+        }
+
+        let hdc_screen = GetDC(std::ptr::null_mut());
+        if hdc_screen.is_null() {
+            return Err("GetDC(screen) failed".to_string());
+        }
+        let hdc_mem = CreateCompatibleDC(hdc_screen);
+        if hdc_mem.is_null() {
+            ReleaseDC(std::ptr::null_mut(), hdc_screen);
+            return Err("CreateCompatibleDC failed".to_string());
+        }
+        let hbm = CreateCompatibleBitmap(hdc_screen, w, h);
+        if hbm.is_null() {
+            DeleteDC(hdc_mem);
+            ReleaseDC(std::ptr::null_mut(), hdc_screen);
+            return Err("CreateCompatibleBitmap failed".to_string());
+        }
+        let old_obj = SelectObject(hdc_mem, hbm as _);
+        let blit_ok = BitBlt(hdc_mem, 0, 0, w, h, hdc_screen, x, y, SRCCOPY);
+
+        let mut bmi: BITMAPINFO = std::mem::zeroed();
+        bmi.bmiHeader.biSize = std::mem::size_of::<BITMAPINFOHEADER>() as u32;
+        bmi.bmiHeader.biWidth = w;
+        bmi.bmiHeader.biHeight = -h; // negative → top-down rows
+        bmi.bmiHeader.biPlanes = 1;
+        bmi.bmiHeader.biBitCount = 32;
+        bmi.bmiHeader.biCompression = BI_RGB;
+
+        let mut pixels: Vec<u8> = vec![0u8; (w as usize) * (h as usize) * 4];
+        let lines = GetDIBits(
+            hdc_mem,
+            hbm,
+            0,
+            h as u32,
+            pixels.as_mut_ptr() as *mut _,
+            &mut bmi,
+            DIB_RGB_COLORS,
+        );
+
+        // Release GDI objects regardless of the capture result.
+        SelectObject(hdc_mem, old_obj);
+        DeleteObject(hbm as _);
+        DeleteDC(hdc_mem);
+        ReleaseDC(std::ptr::null_mut(), hdc_screen);
+
+        if blit_ok == 0 || lines == 0 {
+            return Err(format!(
+                "GDI capture failed (BitBlt={}, GetDIBits={})",
+                blit_ok, lines
+            ));
+        }
+
+        // 32bpp BI_RGB pixels are BGRX; convert to RGBA with opaque alpha.
+        for px in pixels.chunks_exact_mut(4) {
+            px.swap(0, 2);
+            px[3] = 255;
+        }
+        Ok((pixels, w as u32, h as u32))
+    }
+}
+
+#[cfg(windows)]
+fn encode_png(rgba: &[u8], width: u32, height: u32) -> Result<Vec<u8>, String> {
+    let mut out = Vec::new();
+    {
+        let mut encoder = png::Encoder::new(&mut out, width, height);
+        encoder.set_color(png::ColorType::Rgba);
+        encoder.set_depth(png::BitDepth::Eight);
+        let mut writer = encoder.write_header().map_err(|e| e.to_string())?;
+        writer.write_image_data(rgba).map_err(|e| e.to_string())?;
+    }
+    Ok(out)
+}

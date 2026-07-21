@@ -28,9 +28,15 @@ tokio = { version = "1", features = ["net", "rt-multi-thread", "macros", "sync",
 tokio-tungstenite = "0.24"
 futures-util = "0.3"
 uuid = { version = "1", features = ["v4"] }
+# Full-window screenshot (Windows GDI) for the AI agent
+png = "0.17"
+base64 = "0.22"
 
 [target.'cfg(windows)'.dependencies]
 windows-sys = { version = "0.61", features = [
     "Win32_Storage_FileSystem",
     "Win32_UI_Input_KeyboardAndMouse",
+    "Win32_Graphics_Gdi",
+    "Win32_Foundation",
+    "Win32_UI_WindowsAndMessaging",
 ] }
