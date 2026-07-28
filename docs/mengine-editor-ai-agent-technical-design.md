@@ -277,7 +277,7 @@ MEngine 编辑器当前对人类友好，但对 AI Agent 不够友好。AI Agent
 | --- | --- | --- |
 | `selection.set` | `{ ids[], mode? }` | `store.selectMany` |
 | `selection.reveal` | `{ id }` | `store.revealEntity`（Ping） |
-| `playback.play` / `pause` / `stop` / `step` | — | `store.play/pause/stop/tick` |
+| `playback.play` / `pause` / `stop` / `step` | `{ deltaTime? }` | ✅ 幂等进入/恢复 Play Mode；暂停态可按指定 deltaTime 单帧推进并保持暂停；粒子、Spine 与 AnimatedSprite 共用模拟时钟，暂停不偷跑 |
 | `history.undo` / `redo` | — | `store.undo/redo` |
 | `view.frame_selected` | — | `store.frameSelected` |
 | `view.set_camera` | `{ yaw?, pitch?, distance?, pivot? }` | `store.setSceneCamera` |
@@ -345,8 +345,8 @@ MEngine 编辑器当前对人类友好，但对 AI Agent 不够友好。AI Agent
 | --- | --- |
 | 命令结果 | 每个写命令返回 `{ ok, revision, data }`，data 含受影响实体/新状态摘要 |
 | 操作后自动截图 | 写命令可带 `options.screenshot: true`，结果里附 `screenshot` 字段，形成「改→看」视觉闭环 |
-| 状态 diff | `query: scene.diff({ fromRevision })` 返回自某 revision 起的实体增删改 |
-| 事件订阅 | `subscribe` 主题：`scene.changed` / `selection.changed` / `mode.changed` / `log.added` / `panel.changed` / `build.progress` / `asset.changed` |
+| 状态 diff | ✅ `query: scene.diff({ fromRevision })` 返回实体增删改和当前 payload；切场景或历史过期时返回 `resetRequired` 与完整快照 |
+| 事件订阅 | ✅ 有界 journal + cursor 查询 `events.get`，并向原生 WebSocket 广播 `scene.changed` / `selection.changed` / `mode.changed` / `log.*` / `panel.changed` / `build.progress` / `asset.changed` |
 | 结构化错误 | 错误码：`STALE_REVISION` / `ENTITY_NOT_FOUND` / `COMPONENT_NOT_FOUND` / `INVALID_ARGS` / `READONLY` / `PERMISSION_DENIED` / `NOT_READY` |
 
 ## 5. MCP Server 设计（优先传输）
@@ -371,7 +371,8 @@ MEngine 编辑器当前对人类友好，但对 AI Agent 不够友好。AI Agent
 只读 tools（Phase 1）：
 
 ```
-get_scene_snapshot, get_hierarchy, get_selection, get_editor_state,
+get_scene_snapshot, get_scene_changes, get_editor_events,
+get_hierarchy, get_selection, get_editor_state,
 get_entity, get_component, get_console_logs, list_windows, list_panels,
 take_screenshot, list_assets, list_scenes, get_component_schema, list_commands
 ```
@@ -382,6 +383,7 @@ take_screenshot, list_assets, list_scenes, get_component_schema, list_commands
 create_gameobject, delete_entities, duplicate_entities, rename_entity,
 set_active, reparent, add_component, remove_component, set_component,
 patch_component, set_transform, set_selection, play, pause, stop, step,
+clear_console_logs,
 undo, redo, save_scene, open_scene, new_scene, focus_panel, open_editor_window,
 invoke_menu, write_asset_text, preview_asset_rename, rename_asset,
 preview_asset_duplicate, duplicate_asset, preview_asset_trash, trash_asset,

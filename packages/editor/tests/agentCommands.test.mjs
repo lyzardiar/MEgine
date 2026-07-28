@@ -64,6 +64,10 @@ function createContext() {
     play: () => calls.push(['play']),
     pause: () => calls.push(['pause']),
     stop: () => calls.push(['stop']),
+    step: (...args) => {
+      calls.push(['step', ...args]);
+      return true;
+    },
     undo: () => calls.push(['undo']),
     redo: () => calls.push(['redo']),
     setGizmo: (...args) => calls.push(['setGizmo', ...args]),
@@ -223,4 +227,25 @@ test('panel commands reject unknown ids and expose background-safe activation', 
     ['focusPanel', 'console'],
     ['resetPanelLayout'],
   ]);
+});
+
+test('single-frame playback steps are bounded and require paused Play Mode', () => {
+  const { ctx, calls } = createContext();
+
+  assertBridgeError(
+    () => run(ctx, 'playback.step'),
+    'READONLY',
+  );
+  ctx.store.mode = 'pause';
+  assertBridgeError(
+    () => run(ctx, 'playback.step', { deltaTime: 2 }),
+    'INVALID_ARGS',
+  );
+  const result = run(ctx, 'playback.step', { deltaTime: 1 / 30 });
+  assert.deepEqual(calls, [['step', 1 / 30]]);
+  assert.deepEqual(result.data, {
+    mode: 'pause',
+    frame: undefined,
+    deltaTime: 1 / 30,
+  });
 });

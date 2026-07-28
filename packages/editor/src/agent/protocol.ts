@@ -147,6 +147,9 @@ export interface HierarchyNode {
 /** Global editor state an agent needs to orient itself. */
 export interface EditorState {
   mode: 'edit' | 'play' | 'pause';
+  frame: number;
+  /** Seconds elapsed on the deterministic Play Mode simulation clock. */
+  simulationTime: number;
   gizmo: string;
   canUndo: boolean;
   canRedo: boolean;
@@ -154,6 +157,10 @@ export interface EditorState {
   redoLabel: string | null;
   sceneName: string | null;
   dirty: boolean;
+  /** Monotonic in-memory scene revision used by scene.diff. */
+  sceneRevision: number;
+  /** Latest event cursor used by events.get. */
+  eventSequence: number;
 }
 
 export interface SelectionInfo {

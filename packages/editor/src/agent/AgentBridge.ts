@@ -27,7 +27,12 @@ import {
   type SelectionInfo,
   type ViewportTab,
 } from './protocol';
-import { logService, type LogEntry, type LogQuery } from './LogService';
+import {
+  logService,
+  type LogChange,
+  type LogEntry,
+  type LogQuery,
+} from './LogService';
 import { WRITE_COMMANDS, COMMAND_META, type CommandContext, type CommandResult, type CommandMeta } from './commands';
 import { getComponentCatalog } from '../componentCatalog';
 import {
@@ -48,6 +53,7 @@ import {
 } from '../projectAssets';
 import { findProjectAssetReferences } from '../assetReferences';
 import {
+  PROJECT_ASSETS_CHANGED_EVENT,
   PROJECT_ASSETS_EXTERNAL_CHANGE_EVENT,
   broadcastProjectAssetsChanged,
 } from '../assetEditorEvents';
@@ -62,6 +68,16 @@ import {
   type BuildProgressEvent,
 } from '../transport/editorTransport';
 import type { AgentAssetOperations } from './assetOperations';
+import {
+  AGENT_EVENT_TOPICS,
+  AgentEventJournal,
+  SceneChangeTracker,
+  type AgentEvent,
+  type AgentEventPage,
+  type AgentEventTopic,
+  type SceneDiff,
+  type SceneEntityView,
+} from './eventJournal';
 
 type CaptureFn = (
   format: 'image/png' | 'image/jpeg',
@@ -124,6 +140,14 @@ interface EntityView {
   components: Record<string, unknown>;
 }
 
+type ObservedEditorState = {
+  mode: EditorState['mode'];
+  sceneName: string | null;
+  dirty: boolean;
+  selectedIds: number[];
+  panelSignature: string | null;
+};
+
 class AgentBridge {
   private store: EditorStore | null = null;
   private sceneMeta: SceneMetaProviders | null = null;
@@ -136,9 +160,23 @@ class AgentBridge {
   private buildJob: AgentBuildJob | null = null;
   private stopBuildProgress: (() => void) | null = null;
   private assetOperations: AgentAssetOperations | null = null;
+  private clearLogProvider: (() => void) | null = null;
+  private readonly events = new AgentEventJournal();
+  private readonly sceneChanges = new SceneChangeTracker();
+  private observedState: ObservedEditorState | null = null;
+  private lastPlaySceneObservationAt = 0;
+  private eventSourceConnections = 0;
+  private stopLogEvents: (() => void) | null = null;
+  private stopAssetEvents: (() => void) | null = null;
+  private lastAssetEvent: { signature: string; time: number } | null = null;
 
   /** Wire the bridge to the live editor store. Called once from App. */
   connect(store: EditorStore): void {
+    if (this.store !== store) {
+      this.sceneChanges.reset();
+      this.observedState = null;
+      this.lastPlaySceneObservationAt = 0;
+    }
     this.store = store;
   }
 
@@ -152,8 +190,9 @@ class AgentBridge {
     this.refreshProvider = refresh;
   }
 
-  connectLog(log: (message: string) => void): void {
+  connectLog(log: (message: string) => void, clear?: () => void): void {
     this.logProvider = log;
+    this.clearLogProvider = clear ?? null;
   }
 
   connectPanelLayout(provider: () => PanelLayoutSnapshot | null): void {
@@ -166,6 +205,49 @@ class AgentBridge {
 
   connectWorkspace(provider: () => AgentWorkspaceProvider | null): void {
     this.workspaceProvider = provider;
+  }
+
+  /**
+   * Attach process-local log and asset sources to the event journal. The main
+   * editor window owns these sources; detached webviews intentionally do not.
+   */
+  connectEventSources(): () => void {
+    this.eventSourceConnections += 1;
+    if (this.eventSourceConnections === 1) {
+      this.stopLogEvents = logService.subscribe((change) => this.recordLogEvent(change));
+      const onAssetChanged = (event: Event) => {
+        const detail = (event as CustomEvent<unknown>).detail ?? { action: 'changed' };
+        let signature: string;
+        try {
+          signature = JSON.stringify(detail);
+        } catch {
+          signature = String(detail);
+        }
+        const time = Date.now();
+        if (
+          this.lastAssetEvent?.signature === signature
+          && time - this.lastAssetEvent.time < 100
+        ) return;
+        this.lastAssetEvent = { signature, time };
+        this.appendEvent('asset.changed', detail, time);
+      };
+      window.addEventListener(PROJECT_ASSETS_CHANGED_EVENT, onAssetChanged);
+      this.stopAssetEvents = () => {
+        window.removeEventListener(PROJECT_ASSETS_CHANGED_EVENT, onAssetChanged);
+      };
+    }
+    let connected = true;
+    return () => {
+      if (!connected) return;
+      connected = false;
+      this.eventSourceConnections = Math.max(0, this.eventSourceConnections - 1);
+      if (this.eventSourceConnections !== 0) return;
+      this.stopLogEvents?.();
+      this.stopLogEvents = null;
+      this.stopAssetEvents?.();
+      this.stopAssetEvents = null;
+      this.lastAssetEvent = null;
+    };
   }
 
   /**
@@ -252,9 +334,13 @@ class AgentBridge {
   }
 
   getEditorState(): EditorState {
+    this.observe();
     const store = this.requireStore();
+    const snapshot = store.snapshot();
     return {
       mode: store.mode,
+      frame: snapshot.frame,
+      simulationTime: snapshot.simulationTime,
       gizmo: store.gizmo,
       canUndo: store.canUndo,
       canRedo: store.canRedo,
@@ -262,6 +348,8 @@ class AgentBridge {
       redoLabel: store.redoLabel,
       sceneName: this.sceneMeta?.sceneName() ?? null,
       dirty: this.sceneMeta?.dirty() ?? false,
+      sceneRevision: this.sceneChanges.revision,
+      eventSequence: this.events.currentSequence,
     };
   }
 
@@ -271,7 +359,11 @@ class AgentBridge {
   }
 
   getSceneSnapshot(): unknown {
-    return this.requireStore().snapshot();
+    this.observe(true);
+    return {
+      ...this.requireStore().snapshot(),
+      revision: this.sceneChanges.revision,
+    };
   }
 
   getHierarchy(): HierarchyNode[] {
@@ -303,7 +395,185 @@ class AgentBridge {
 
   clearLogs(): { ok: true } {
     logService.clear();
+    this.clearLogProvider?.();
     return { ok: true };
+  }
+
+  /**
+   * Compare the live editor with the most recently observed state. App calls
+   * this after its normal refresh path, so UI and AgentBridge share one source
+   * of truth without polling the foreground window.
+   */
+  observe(forceScene = false): void {
+    const store = this.store;
+    if (!store) return;
+    const sceneName = this.sceneMeta?.sceneName() ?? null;
+    const dirty = this.sceneMeta?.dirty() ?? false;
+    const snapshot = store.snapshot();
+    const now = Date.now();
+    const shouldObserveScene = (
+      forceScene
+      || store.mode !== 'play'
+      || this.sceneChanges.revision === 0
+      || now - this.lastPlaySceneObservationAt >= 100
+    );
+    const sceneDelta = shouldObserveScene
+      ? this.sceneChanges.observe(
+        sceneName,
+        snapshot.entities as unknown as SceneEntityView[],
+      )
+      : null;
+    if (shouldObserveScene && store.mode === 'play') {
+      this.lastPlaySceneObservationAt = now;
+    }
+
+    let panelLayout: PanelLayoutSnapshot | null = null;
+    try {
+      panelLayout = this.panelLayoutProvider?.() ?? null;
+    } catch {
+      panelLayout = null;
+    }
+    const panelSignature = panelLayout ? JSON.stringify(panelLayout) : null;
+    const current: ObservedEditorState = {
+      mode: store.mode,
+      sceneName,
+      dirty,
+      selectedIds: [...store.selectedIds],
+      panelSignature,
+    };
+    const previous = this.observedState;
+
+    if (
+      sceneDelta
+      || !previous
+      || previous.sceneName !== current.sceneName
+      || previous.dirty !== current.dirty
+    ) {
+      this.appendEvent('scene.changed', {
+        revision: this.sceneChanges.revision,
+        sceneName,
+        dirty,
+        delta: sceneDelta,
+      }, now);
+    }
+    if (!previous || previous.mode !== current.mode) {
+      this.appendEvent('mode.changed', {
+        previous: previous?.mode ?? null,
+        mode: current.mode,
+      }, now);
+    }
+    if (
+      !previous
+      || !sameNumberArray(previous.selectedIds, current.selectedIds)
+    ) {
+      this.appendEvent('selection.changed', {
+        selected: store.selected,
+        selectedIds: current.selectedIds,
+      }, now);
+    }
+    if (
+      panelLayout
+      && (!previous || previous.panelSignature !== current.panelSignature)
+    ) {
+      this.appendEvent('panel.changed', panelLayout, now);
+    }
+    this.observedState = current;
+  }
+
+  getEvents(params: Record<string, unknown>): AgentEventPage {
+    this.observe();
+    const afterSequence = params.afterSequence ?? 0;
+    const limit = params.limit ?? 100;
+    const rawTopics = params.topics;
+    if (
+      typeof afterSequence !== 'number'
+      || !Number.isSafeInteger(afterSequence)
+      || afterSequence < 0
+    ) {
+      throw new BridgeError(
+        'INVALID_ARGS',
+        '"afterSequence" must be a non-negative safe integer',
+      );
+    }
+    if (
+      typeof limit !== 'number'
+      || !Number.isSafeInteger(limit)
+      || limit < 1
+      || limit > 1_000
+    ) {
+      throw new BridgeError('INVALID_ARGS', '"limit" must be an integer from 1 to 1000');
+    }
+    let topics: AgentEventTopic[] | undefined;
+    if (rawTopics !== undefined) {
+      if (
+        !Array.isArray(rawTopics)
+        || rawTopics.some((topic) => (
+          typeof topic !== 'string'
+          || !AGENT_EVENT_TOPICS.includes(topic as AgentEventTopic)
+        ))
+      ) {
+        throw new BridgeError(
+          'INVALID_ARGS',
+          `"topics" must contain only: ${AGENT_EVENT_TOPICS.join(', ')}`,
+        );
+      }
+      topics = [...new Set(rawTopics as AgentEventTopic[])];
+    }
+    return this.events.list({ afterSequence, limit, topics });
+  }
+
+  getSceneDiff(fromRevision: number): SceneDiff & {
+    sceneName: string | null;
+    dirty: boolean;
+  } {
+    this.observe(true);
+    if (
+      !Number.isSafeInteger(fromRevision)
+      || fromRevision < 0
+      || fromRevision > this.sceneChanges.revision
+    ) {
+      throw new BridgeError(
+        'INVALID_ARGS',
+        `"fromRevision" must be an integer from 0 to ${this.sceneChanges.revision}`,
+      );
+    }
+    const snapshot = this.requireStore().snapshot();
+    return {
+      ...this.sceneChanges.diff(
+        fromRevision,
+        snapshot.entities as unknown as SceneEntityView[],
+      ),
+      sceneName: this.sceneMeta?.sceneName() ?? null,
+      dirty: this.sceneMeta?.dirty() ?? false,
+    };
+  }
+
+  private recordLogEvent(change: LogChange): void {
+    if (change.type === 'added') {
+      this.appendEvent('log.added', change.entry);
+    } else {
+      this.appendEvent('log.cleared', {});
+    }
+  }
+
+  private appendEvent(
+    topic: AgentEventTopic,
+    data: unknown,
+    time = Date.now(),
+  ): AgentEvent {
+    const event = this.events.append(topic, data, time);
+    if (isDesktopEditor()) {
+      const payload = JSON.stringify({
+        jsonrpc: '2.0',
+        method: 'event',
+        params: event,
+      });
+      void invoke('agent_bridge_broadcast', { payload }).catch(() => {
+        // The cursor-backed journal remains authoritative if no raw WS client
+        // is connected or the native broadcast channel is shutting down.
+      });
+    }
+    return event;
   }
 
   // ── Discoverability ───────────────────────────────────────────────────
@@ -573,10 +843,21 @@ class AgentBridge {
       error: null,
     };
     this.buildJob = job;
+    this.appendEvent('build.progress', {
+      jobId: job.id,
+      status: job.status,
+      profile: job.profile,
+      clean: job.clean,
+    }, job.startedAt);
     try {
       this.stopBuildProgress = await listenToPcBuildProgress((progress) => {
         if (this.buildJob?.id === job.id && this.buildJob.status === 'running') {
           this.buildJob.progress = { ...progress };
+          this.appendEvent('build.progress', {
+            jobId: job.id,
+            status: 'running',
+            progress,
+          });
         }
       });
     } catch (error) {
@@ -588,6 +869,11 @@ class AgentBridge {
         this.buildJob.status = 'succeeded';
         this.buildJob.result = result;
         this.buildJob.finishedAt = Date.now();
+        this.appendEvent('build.progress', {
+          jobId: job.id,
+          status: 'succeeded',
+          result,
+        }, this.buildJob.finishedAt);
         this.logProvider?.(`Agent build succeeded: ${result.outputDir}`);
       })
       .catch((error) => {
@@ -598,6 +884,11 @@ class AgentBridge {
           : 'failed';
         this.buildJob.error = message;
         this.buildJob.finishedAt = Date.now();
+        this.appendEvent('build.progress', {
+          jobId: job.id,
+          status: this.buildJob.status,
+          error: message,
+        }, this.buildJob.finishedAt);
         this.logProvider?.(`Agent build ${this.buildJob.status}: ${message}`);
       })
       .finally(() => {
@@ -619,6 +910,10 @@ class AgentBridge {
     if (!requested) {
       throw new BridgeError('CONFLICT', 'The active build did not accept cancellation');
     }
+    this.appendEvent('build.progress', {
+      jobId: this.buildJob.id,
+      status: 'cancellation-requested',
+    });
     return { requested: true, jobId: this.buildJob.id };
   }
 
@@ -860,6 +1155,8 @@ class AgentBridge {
         return this.getSelection();
       case 'scene.snapshot':
         return this.getSceneSnapshot();
+      case 'scene.diff':
+        return this.getSceneDiff(requiredNonNegativeInteger(params, 'fromRevision'));
       case 'scene.hierarchy':
         return this.getHierarchy();
       case 'scene.list':
@@ -936,6 +1233,8 @@ class AgentBridge {
         });
       case 'console.clear':
         return this.clearLogs();
+      case 'events.get':
+        return this.getEvents(params);
       case 'commands.list':
         return this.listCommands();
       case 'schema.components':
@@ -1029,6 +1328,24 @@ function requiredString(
     );
   }
   return allowEmpty ? value : value.trim();
+}
+
+function requiredNonNegativeInteger(
+  args: Record<string, unknown>,
+  key: string,
+): number {
+  const value = args[key];
+  if (
+    typeof value !== 'number'
+    || !Number.isSafeInteger(value)
+    || value < 0
+  ) {
+    throw new BridgeError(
+      'INVALID_ARGS',
+      `"${key}" must be a non-negative safe integer`,
+    );
+  }
+  return value;
 }
 
 function optionalString(
@@ -1138,6 +1455,13 @@ function inferFieldType(value: unknown): string {
   }
   if (value === null || value === undefined) return 'null';
   return 'object';
+}
+
+function sameNumberArray(left: readonly number[], right: readonly number[]): boolean {
+  return (
+    left.length === right.length
+    && left.every((value, index) => value === right[index])
+  );
 }
 
 /** Resolve on the next animation frame (so the viewport can redraw). */

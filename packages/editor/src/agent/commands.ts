@@ -386,6 +386,34 @@ export const WRITE_COMMANDS: Record<string, CommandHandler> = {
     ctx.store.stop();
     return { ok: true, data: { mode: ctx.store.mode } };
   },
+  'playback.step': (ctx, args) => {
+    if (ctx.store.mode !== 'pause') {
+      throw new BridgeError('READONLY', 'Single-frame stepping requires paused Play Mode');
+    }
+    const deltaTime = args.deltaTime ?? 1 / 60;
+    if (
+      typeof deltaTime !== 'number'
+      || !Number.isFinite(deltaTime)
+      || deltaTime <= 0
+      || deltaTime > 1
+    ) {
+      throw new BridgeError(
+        'INVALID_ARGS',
+        '"deltaTime" must be a finite number greater than 0 and at most 1 second',
+      );
+    }
+    if (!ctx.store.step(deltaTime)) {
+      throw new BridgeError('READONLY', 'Single-frame stepping requires paused Play Mode');
+    }
+    return {
+      ok: true,
+      data: {
+        mode: ctx.store.mode,
+        frame: ctx.store.snapshot().frame,
+        deltaTime,
+      },
+    };
+  },
   'history.undo': (ctx) => {
     ctx.store.undo();
     return { ok: true, data: { canUndo: ctx.store.canUndo } };
@@ -459,6 +487,7 @@ export const COMMAND_META: CommandMeta[] = [
   { id: 'playback.play', category: 'playback', description: 'Enter play mode', readOnly: false },
   { id: 'playback.pause', category: 'playback', description: 'Toggle pause', readOnly: false },
   { id: 'playback.stop', category: 'playback', description: 'Stop playback and return to edit mode', readOnly: false },
+  { id: 'playback.step', category: 'playback', description: 'Advance paused Play Mode by one deterministic step', readOnly: false },
   { id: 'history.undo', category: 'history', description: 'Undo the last edit', readOnly: false },
   { id: 'history.redo', category: 'history', description: 'Redo the last undone edit', readOnly: false },
   { id: 'gizmo.set', category: 'view', description: 'Set the active transform gizmo (translate/rotate/scale/rect)', readOnly: false },

@@ -30,18 +30,23 @@ export interface LogQuery {
   limit?: number;
 }
 
+export type LogChange =
+  | { type: 'added'; entry: LogEntry }
+  | { type: 'cleared' };
+
 const CAPACITY = 300;
 
 class LogService {
   private entries: LogEntry[] = [];
-  private listeners = new Set<() => void>();
+  private listeners = new Set<(change: LogChange) => void>();
 
   log(message: string, level: LogLevel = 'info', source?: string): void {
-    this.entries.push({ level, message, time: Date.now(), source });
+    const entry = { level, message, time: Date.now(), source };
+    this.entries.push(entry);
     if (this.entries.length > CAPACITY) {
       this.entries.splice(0, this.entries.length - CAPACITY);
     }
-    this.notify();
+    this.notify({ type: 'added', entry: { ...entry } });
   }
 
   getEntries(query: LogQuery = {}): LogEntry[] {
@@ -58,19 +63,19 @@ class LogService {
 
   clear(): void {
     this.entries = [];
-    this.notify();
+    this.notify({ type: 'cleared' });
   }
 
   /** Subscribe to changes; returns an unsubscribe function. */
-  subscribe(fn: () => void): () => void {
+  subscribe(fn: (change: LogChange) => void): () => void {
     this.listeners.add(fn);
     return () => {
       this.listeners.delete(fn);
     };
   }
 
-  private notify(): void {
-    for (const fn of this.listeners) fn();
+  private notify(change: LogChange): void {
+    for (const fn of this.listeners) fn(change);
   }
 }
 

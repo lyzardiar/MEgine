@@ -187,9 +187,65 @@ const TOOLS = [
   {
     name: 'get_scene_snapshot',
     description:
-      'Get the complete scene snapshot including every entity and all of its component data. Large — prefer get_hierarchy for an overview.',
+      'Get the complete scene snapshot, its monotonic revision, and every entity/component. Large; retain revision and use get_scene_changes for incremental observation.',
     inputSchema: { type: 'object', properties: {} },
     handler: async () => textContent(await bridgeQuery('scene.snapshot')),
+  },
+  {
+    name: 'get_scene_changes',
+    description:
+      'Get entities added, removed, or changed since a scene revision. Returns current payloads for added/changed entities; resetRequired=true includes a full snapshot after scene switches or expired history.',
+    inputSchema: {
+      type: 'object',
+      required: ['fromRevision'],
+      properties: {
+        fromRevision: {
+          type: 'number',
+          minimum: 0,
+          description: 'Revision returned by get_scene_snapshot, get_editor_state, or a previous change result',
+        },
+      },
+    },
+    handler: async (args) => textContent(await bridgeQuery('scene.diff', args)),
+  },
+  {
+    name: 'get_editor_events',
+    description:
+      'Read cursor-based editor events without foreground polling. Topics cover scene, selection, mode, logs, panels, builds, and assets. Continue with nextSequence; truncated=true means older events expired.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        afterSequence: {
+          type: 'number',
+          minimum: 0,
+          description: 'Exclusive cursor from get_editor_state or a previous event page (default 0)',
+        },
+        topics: {
+          type: 'array',
+          items: {
+            type: 'string',
+            enum: [
+              'scene.changed',
+              'selection.changed',
+              'mode.changed',
+              'log.added',
+              'log.cleared',
+              'panel.changed',
+              'build.progress',
+              'asset.changed',
+            ],
+          },
+          description: 'Optional topic filter',
+        },
+        limit: {
+          type: 'number',
+          minimum: 1,
+          maximum: 1000,
+          description: 'Maximum events in chronological order (default 100)',
+        },
+      },
+    },
+    handler: async (args) => textContent(await bridgeQuery('events.get', args)),
   },
   {
     name: 'get_entity',
@@ -282,15 +338,24 @@ const TOOLS = [
       type: 'object',
       properties: {
         level: { type: 'string', enum: ['info', 'warn', 'error'], description: 'Filter by level' },
+        since: { type: 'number', description: 'Only entries at or after this epoch-millisecond time' },
         limit: { type: 'number', description: 'Return at most this many recent entries' },
       },
     },
     handler: async (args) => {
       const queryArgs = {};
       if (args.level) queryArgs.level = args.level;
+      if (typeof args.since === 'number') queryArgs.since = args.since;
       if (typeof args.limit === 'number') queryArgs.limit = args.limit;
       return textContent(await bridgeQuery('console.get_logs', queryArgs));
     },
+  },
+  {
+    name: 'clear_console_logs',
+    description:
+      'Clear both the structured AgentBridge log buffer and the visible editor Console panel.',
+    inputSchema: { type: 'object', properties: {} },
+    handler: async () => textContent(await bridgeQuery('console.clear')),
   },
   {
     name: 'list_assets',
@@ -624,6 +689,19 @@ const TOOLS = [
   execTool('play', 'Enter play mode.', 'playback.play', {}),
   execTool('pause', 'Toggle pause during playback.', 'playback.pause', {}),
   execTool('stop', 'Stop playback and return to edit mode.', 'playback.stop', {}),
+  execTool(
+    'step',
+    'Advance paused Play Mode by one deterministic simulation step while remaining paused.',
+    'playback.step',
+    {
+      deltaTime: {
+        type: 'number',
+        exclusiveMinimum: 0,
+        maximum: 1,
+        description: 'Simulation seconds for the step (default 1/60)',
+      },
+    },
+  ),
   execTool('undo', 'Undo the last edit.', 'history.undo', {}),
   execTool('redo', 'Redo the last undone edit.', 'history.redo', {}),
   execTool('set_gizmo', 'Set the active transform gizmo.', 'gizmo.set', {

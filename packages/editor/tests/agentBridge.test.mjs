@@ -48,6 +48,10 @@ test('whole-window agent capture is background-safe and addressable by window la
   assert.match(mcp, /'restore_asset'/);
   assert.match(mcp, /name: 'get_build_status'/);
   assert.match(mcp, /'start_pc_build'/);
+  assert.match(mcp, /name: 'get_editor_events'/);
+  assert.match(mcp, /name: 'get_scene_changes'/);
+  assert.match(mcp, /'step'/);
+  assert.match(mcp, /name: 'clear_console_logs'/);
 });
 
 test('the main AgentBridge transport is available before a project is opened', () => {
@@ -76,6 +80,12 @@ test('scene, asset, and asynchronous build tools share guarded editor services',
   const bridge = fs.readFileSync(path.join(root, 'src', 'agent', 'AgentBridge.ts'), 'utf8');
   const app = fs.readFileSync(path.join(root, 'src', 'App.tsx'), 'utf8');
   const assets = fs.readFileSync(path.join(root, 'src', 'projectAssets.ts'), 'utf8');
+  const store = fs.readFileSync(path.join(root, 'src', 'store.ts'), 'utf8');
+  const viewport = fs.readFileSync(path.join(root, 'src', 'panels', 'Viewport.tsx'), 'utf8');
+  const eventJournal = fs.readFileSync(
+    path.join(root, 'src', 'agent', 'eventJournal.ts'),
+    'utf8',
+  );
   const assetOperations = fs.readFileSync(
     path.join(root, 'src', 'agent', 'assetOperations.ts'),
     'utf8',
@@ -97,6 +107,17 @@ test('scene, asset, and asynchronous build tools share guarded editor services',
   assert.match(app, /sceneDirtyRef\.current \|\| resourceDirtyRef\.current/);
   assert.match(app, /pass discardDirty=true/);
   assert.match(assets, /expectedRevision === undefined/);
+  assert.match(store, /if \(mode === 'pause'\) \{\s*mode = 'play'/);
+  assert.match(store, /step\(dt = 1 \/ 60\)/);
+  assert.match(store, /simulationTime: playSpin/);
+  assert.match(bridge, /simulationTime: snapshot\.simulationTime/);
+  assert.match(viewport, /sampleViewportSimulationClock/);
+  assert.match(viewport, /resolveAnimatedSpriteFrame\(animatedSprite, animationTime\)/);
+  assert.match(viewport, /deltaSeconds: simulationDelta/);
+  assert.match(bridge, /case 'scene\.diff'/);
+  assert.match(bridge, /case 'events\.get'/);
+  assert.match(bridge, /agent_bridge_broadcast/);
+  assert.match(eventJournal, /truncated: afterSequence < oldestSequence - 1/);
   assert.match(assetOperations, /previewToken/);
   assert.match(assetOperations, /requireCurrentPreview/);
   assert.match(assetOperations, /allowManualReferences/);

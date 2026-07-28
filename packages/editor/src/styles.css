@@ -612,6 +612,14 @@ button, input, select {
 }
 
 .play-btn:hover { border-color: #666; background: #424242; }
+.play-btn:disabled {
+  cursor: default;
+  opacity: 0.38;
+}
+.play-btn:disabled:hover {
+  border-color: #555;
+  background: #333;
+}
 .play-btn.on {
   background: var(--u-play-on);
   border-color: #2f6b38;

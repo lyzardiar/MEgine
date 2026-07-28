@@ -739,7 +739,7 @@ export function createEditorStore(undoService: EditorUndoService = createEditorU
       renameRequestId = null;
       return id;
     },
-    get viewAngle() {
+    get simulationTime() {
       return playSpin;
     },
     get sceneCamera() {
@@ -775,11 +775,12 @@ export function createEditorStore(undoService: EditorUndoService = createEditorU
       sceneCamera.pitch = Math.max(-89, Math.min(89, sceneCamera.pitch));
       sceneCamera.distance = Math.max(0.5, Math.min(200, sceneCamera.distance));
     },
-    snapshot(): WorldSnapshotView & { selectedIds: number[] } {
+    snapshot(): WorldSnapshotView & { selectedIds: number[]; simulationTime: number } {
       return {
         entities: snapshotEntities(),
         frame,
         simFrame: frame,
+        simulationTime: playSpin,
         clearColor,
         selected: primarySelected(),
         selectedIds: [...selectedIds],
@@ -1173,6 +1174,11 @@ export function createEditorStore(undoService: EditorUndoService = createEditorU
       }
     },
     play() {
+      if (mode === 'play') return;
+      if (mode === 'pause') {
+        mode = 'play';
+        return;
+      }
       animationPreview = null;
       timelinePreview = null;
       playEntities = structuredClone(editEntities);
@@ -1203,6 +1209,14 @@ export function createEditorStore(undoService: EditorUndoService = createEditorU
       playSpin += dt;
       const src = playEntities ?? editEntities;
       behaviourRunner.tick(src, dt);
+    },
+    step(dt = 1 / 60) {
+      if (mode !== 'pause' || !Number.isFinite(dt) || dt <= 0) return false;
+      frame++;
+      playSpin += dt;
+      const src = playEntities ?? editEntities;
+      behaviourRunner.tick(src, dt);
+      return true;
     },
     addComponent(entity: number, type: string, value: Record<string, unknown>) {
       if (mode !== 'edit') return false;

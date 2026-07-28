@@ -215,7 +215,8 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
   }, []);
   const updatePanelLayout = useCallback((layout: PanelLayoutSnapshot) => {
     panelLayoutRef.current = layout;
-  }, []);
+    if (!props.detachedPanel) agentBridge.observe();
+  }, [props.detachedPanel]);
   const [assetReloadEpoch, setAssetReloadEpoch] = useState({
     animation: 0,
     sequencer: 0,
@@ -305,11 +306,21 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
       dirty: () => sceneDirtyRef.current,
     });
     agentBridge.connectRefresh(() => refreshRef.current());
-    agentBridge.connectLog((message) => logRef.current(message));
+    agentBridge.connectLog(
+      (message) => logRef.current(message),
+      () => {
+        logsRef.current = [];
+        logEnd.current = 0;
+        setLogs([]);
+        broadcastScene(true);
+      },
+    );
     agentBridge.connectPanelLayout(() => panelLayoutRef.current);
     agentBridge.connectSceneCommands(() => agentSceneProviderRef.current);
     agentBridge.connectWorkspace(() => agentWorkspaceProviderRef.current);
-  }, [store]);
+    if (props.detachedPanel) return undefined;
+    return agentBridge.connectEventSources();
+  }, [props.detachedPanel, store]);
 
   const postWorkspaceDirtyState = () => {
     syncChannel.current?.postMessage({
@@ -397,6 +408,7 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
     setGameResolution(store.gameResolution);
     setTreeTick((t) => t + 1);
     updateSceneDirty();
+    if (!props.detachedPanel) agentBridge.observe();
     if (publish) broadcastScene();
   };
   refreshRef.current = refresh;
@@ -1596,6 +1608,11 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
           log('Exited Play Mode → Scene');
           refresh();
         }}
+        onStep={() => {
+          if (!store.step(1 / 60)) return;
+          log(`Advanced paused Play Mode to frame ${store.snapshot().frame}`);
+          refresh();
+        }}
       />
 
       <DockWorkspace
@@ -1639,7 +1656,7 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
               entities={snap.entities}
               selected={selected}
               selectedIds={selectedIds}
-              angle={store.viewAngle}
+              simulationTime={store.simulationTime}
               gizmo={gizmo}
               pivotMode={pivotMode}
               handleOrientation={handleOrientation}
