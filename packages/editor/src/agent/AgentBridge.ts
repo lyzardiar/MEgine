@@ -382,8 +382,12 @@ class AgentBridge {
   private stopMenuEvents: (() => void) | null = null;
   private stopWindowTypeEvents: (() => void) | null = null;
   private stopAssetEvents: (() => void) | null = null;
+  private windowObservationTimer: number | null = null;
+  private windowObservationGeneration = 0;
+  private windowObservationCommitted = 0;
   private observedDialogSignature: string | null = null;
   private observedMenuSignature: string | null = null;
+  private observedWindowSignature: string | null = null;
   private observedWindowTypeSignature: string | null = null;
   private lastAssetEvent: { signature: string; time: number } | null = null;
   private projectLifecycleProvider:
@@ -504,6 +508,10 @@ class AgentBridge {
       this.recordDialogEvent();
       this.recordMenuEvent();
       this.recordWindowTypeEvent();
+      void this.observeWindowInventory().catch(() => undefined);
+      this.windowObservationTimer = window.setInterval(() => {
+        void this.observeWindowInventory().catch(() => undefined);
+      }, 1_000);
       const onAssetChanged = (event: Event) => {
         const detail = (event as CustomEvent<unknown>).detail ?? { action: 'changed' };
         let signature: string;
@@ -539,6 +547,10 @@ class AgentBridge {
       this.stopMenuEvents = null;
       this.stopWindowTypeEvents?.();
       this.stopWindowTypeEvents = null;
+      if (this.windowObservationTimer != null) {
+        window.clearInterval(this.windowObservationTimer);
+        this.windowObservationTimer = null;
+      }
       this.stopAssetEvents?.();
       this.stopAssetEvents = null;
       this.lastAssetEvent = null;
@@ -1163,9 +1175,48 @@ class AgentBridge {
     };
   }
 
-  async listWindows(): Promise<EditorWindowInfo[]> {
+  private async readWindows(): Promise<EditorWindowInfo[]> {
     if (!isDesktopEditor()) return [];
     return invoke<EditorWindowInfo[]>('list_editor_windows');
+  }
+
+  private recordWindowInventory(
+    windows: readonly EditorWindowInfo[],
+    details: Record<string, unknown> = { action: 'inventory' },
+    emitEvent = true,
+  ): void {
+    const snapshot = structuredClone(windows);
+    const openLabels = new Set(snapshot.map((window) => window.label));
+    for (const label of this.agentOwnedEditorWindows) {
+      if (!openLabels.has(label)) this.agentOwnedEditorWindows.delete(label);
+    }
+    const signature = JSON.stringify(snapshot);
+    const inventoryChanged = signature !== this.observedWindowSignature;
+    if (inventoryChanged) this.observedWindowSignature = signature;
+    const semanticAction = details.action !== undefined && details.action !== 'inventory';
+    if (emitEvent && (inventoryChanged || semanticAction)) {
+      this.appendEvent('window.changed', {
+        ...details,
+        windows: snapshot,
+      });
+    }
+  }
+
+  private async observeWindowInventory(
+    details?: Record<string, unknown>,
+    emitEvent = true,
+  ): Promise<EditorWindowInfo[]> {
+    const generation = ++this.windowObservationGeneration;
+    const windows = await this.readWindows();
+    if (generation >= this.windowObservationCommitted) {
+      this.windowObservationCommitted = generation;
+      this.recordWindowInventory(windows, details, emitEvent);
+    }
+    return windows;
+  }
+
+  async listWindows(): Promise<EditorWindowInfo[]> {
+    return this.observeWindowInventory();
   }
 
   private async assertPanelWindowMutationAllowed(
@@ -1259,12 +1310,13 @@ class AgentBridge {
     );
     if (result.closed) {
       this.agentOwnedEditorWindows.delete(windowLabel);
-      if (emitEvent) {
-        this.appendEvent('window.changed', {
+      await this.observeWindowInventory(
+        {
           action: 'closed',
           window: structuredClone(target),
-        });
-      }
+        },
+        emitEvent,
+      );
     }
     return result;
   }
@@ -1352,7 +1404,7 @@ class AgentBridge {
     }
     let target: EditorWindowInfo | undefined;
     for (let attempt = 0; attempt < 100; attempt += 1) {
-      target = (await this.listWindows()).find(
+      target = (await this.readWindows()).find(
         (window) => window.editorType === normalizedTypeId,
       );
       if (target) break;
@@ -1415,7 +1467,7 @@ class AgentBridge {
       backgroundSafe: true as const,
     };
     if (existing === undefined) {
-      this.appendEvent('window.changed', {
+      await this.observeWindowInventory({
         action: 'opened',
         window: structuredClone(target),
         snapshotRevision: initialSnapshot.snapshotRevision,
