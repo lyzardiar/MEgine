@@ -181,7 +181,7 @@ MEngine 编辑器当前对人类友好，但对 AI Agent 不够友好。AI Agent
 | `view.screenshot` | `{ target?: "scene"\|"game", format?: "image/png"\|"image/jpeg", quality?, maxSize?: 256..4096 }` | `{ dataUrl, width, height, sourceWidth, sourceHeight, scale, capturedAt, mime }` | 视口（scene/game）：`Viewport.tsx` 的 `canvasRef` 在目标 DOM 内按需降采样后编码；默认最长边 2048 |
 | `view.window_screenshot` | `{ windowLabel?: string, maxSize?: 256..4096 }` | `{ dataUrl, width, height, sourceWidth, sourceHeight, scale, capturedAt, mime, windowLabel, captureMethod, backgroundSafe }` | Windows 桌面版通过 WebView2 DevTools `Page.captureScreenshot` 在目标 webview 内离屏缩放渲染；不会激活窗口，也不读取前台屏幕像素；默认最长边 2048 |
 | `view.screenshot_to_file` | `{ path, target? }` | `{ path, width, height }` | 同上，写入磁盘供 Agent 读取 |
-| `view.capture_region` | `{ x, y, w, h, target? }` | `{ dataUrl }` | canvas 裁剪 |
+| `view.capture_region` | `{ windowLabel?, x, y, width, height, maxSize? }` | `{ dataUrl, width, height, region, backgroundSafe }` | ✅ 使用 WebView2 DevTools clip 直接截取后台 WebView CSS 像素区域；坐标可直接复用 `window.ui_snapshot` 的元素 rect，越界明确拒绝 |
 
 说明：当前 Scene/Game 视口是 Canvas2D，`toDataURL` 可稳定截取，无 WebGL `preserveDrawingBuffer` 顾虑。编辑器整窗/浮动窗口不能使用 GDI 屏幕 `BitBlt`：该方式必须把编辑器置前，且窗口被遮挡时会截到其它应用。当前实现改为 WebView2 DevTools 渲染面截图，并已在主窗 `visible=false` 的真实 Tauri 实例上验证：工程欢迎页仍能完整成像，请求前后 Windows 前台窗口句柄不变。**前向兼容**：本地编辑器方案规划了「Rust 进程内原生 wgpu Surface」的真实 Scene View，届时视口不再是 DOM canvas，需改用 wgpu 纹理回读；窗口 UI 截图仍由 WebView2 路径负责。
 

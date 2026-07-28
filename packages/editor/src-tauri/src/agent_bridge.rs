@@ -1535,6 +1535,44 @@ mod transport_tests {
         );
         assert_eq!(screenshot_capture_scale(2_160, 1_350, 4_096), 1.0);
     }
+
+    #[test]
+    fn screenshot_regions_must_fit_the_css_viewport() {
+        let region = WindowCaptureRegion {
+            x: 10.0,
+            y: 20.0,
+            width: 300.0,
+            height: 200.0,
+        };
+        assert_eq!(
+            validated_capture_region(region, 1_280.0, 720.0).unwrap(),
+            region
+        );
+        assert!(validated_capture_region(
+            WindowCaptureRegion { x: -1.0, ..region },
+            1_280.0,
+            720.0
+        )
+        .is_err());
+        assert!(validated_capture_region(
+            WindowCaptureRegion {
+                width: 0.0,
+                ..region
+            },
+            1_280.0,
+            720.0
+        )
+        .is_err());
+        assert!(validated_capture_region(
+            WindowCaptureRegion {
+                x: 1_000.0,
+                ..region
+            },
+            1_280.0,
+            720.0
+        )
+        .is_err());
+    }
 }
 
 // ── Background-safe editor-window observation ───────────────────────────────
@@ -1567,6 +1605,50 @@ fn screenshot_capture_scale(source_width: u32, source_height: u32, max_size: u32
     source_max.min(max_size) as f64 / source_max as f64
 }
 
+#[derive(Clone, Copy, Debug, PartialEq, serde::Deserialize, serde::Serialize)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+pub struct WindowCaptureRegion {
+    x: f64,
+    y: f64,
+    width: f64,
+    height: f64,
+}
+
+fn validated_capture_region(
+    region: WindowCaptureRegion,
+    viewport_width: f64,
+    viewport_height: f64,
+) -> Result<WindowCaptureRegion, String> {
+    if ![
+        region.x,
+        region.y,
+        region.width,
+        region.height,
+        viewport_width,
+        viewport_height,
+    ]
+    .iter()
+    .all(|value| value.is_finite())
+    {
+        return Err("capture region and viewport coordinates must be finite".to_string());
+    }
+    if region.x < 0.0 || region.y < 0.0 {
+        return Err("capture region x and y must be non-negative".to_string());
+    }
+    if region.width <= 0.0 || region.height <= 0.0 {
+        return Err("capture region width and height must be positive".to_string());
+    }
+    if viewport_width <= 0.0 || viewport_height <= 0.0 {
+        return Err("WebView2 viewport dimensions must be positive".to_string());
+    }
+    if region.x + region.width > viewport_width || region.y + region.height > viewport_height {
+        return Err(format!(
+            "capture region must fit inside the {viewport_width}x{viewport_height} CSS pixel viewport"
+        ));
+    }
+    Ok(region)
+}
+
 #[derive(Clone, serde::Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct WindowCapture {
@@ -1581,6 +1663,8 @@ pub struct WindowCapture {
     window_label: String,
     capture_method: String,
     background_safe: bool,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    region: Option<WindowCaptureRegion>,
 }
 
 /// Webview -> Rust: capture one editor webview (menus, panels and rendered
@@ -1591,10 +1675,11 @@ pub async fn capture_editor_window(
     app: AppHandle,
     window_label: Option<String>,
     max_size: Option<u32>,
+    region: Option<WindowCaptureRegion>,
 ) -> Result<WindowCapture, String> {
     let window_label = window_label.unwrap_or_else(|| "main".to_string());
     let max_size = validated_screenshot_max_size(max_size)?;
-    capture_editor_window_impl(app, window_label, max_size).await
+    capture_editor_window_impl(app, window_label, max_size, region).await
 }
 
 /// Return a bounded semantic snapshot of one editor webview. Unlike a bitmap,
@@ -1914,6 +1999,7 @@ async fn capture_editor_window_impl(
     app: AppHandle,
     window_label: String,
     max_size: u32,
+    requested_region: Option<WindowCaptureRegion>,
 ) -> Result<WindowCapture, String> {
     use base64::Engine as _;
     let window = app
@@ -1959,10 +2045,26 @@ async fn capture_editor_window_impl(
     if viewport_width <= 0.0 || viewport_height <= 0.0 {
         return Err("WebView2 viewport dimensions must be positive".to_string());
     }
+    let region = requested_region
+        .map(|candidate| validated_capture_region(candidate, viewport_width, viewport_height))
+        .transpose()?;
+    let clip = region.unwrap_or(WindowCaptureRegion {
+        x: 0.0,
+        y: 0.0,
+        width: viewport_width,
+        height: viewport_height,
+    });
+    let region_source_width = (clip.width * source_width as f64 / viewport_width)
+        .ceil()
+        .max(1.0) as u32;
+    let region_source_height = (clip.height * source_height as f64 / viewport_height)
+        .ceil()
+        .max(1.0) as u32;
     // WebView2 applies the clip scale before its device scale factor. The
     // physical inner size already includes that factor, so dividing by the
     // physical longest edge produces the requested output pixel bound.
-    let capture_scale = screenshot_capture_scale(source_width, source_height, max_size);
+    let capture_scale =
+        screenshot_capture_scale(region_source_width, region_source_height, max_size);
     let response = call_webview_devtools(
         &app,
         &window_label,
@@ -1972,10 +2074,10 @@ async fn capture_editor_window_impl(
             "fromSurface": true,
             "captureBeyondViewport": false,
             "clip": {
-                "x": page_x,
-                "y": page_y,
-                "width": viewport_width,
-                "height": viewport_height,
+                "x": page_x + clip.x,
+                "y": page_y + clip.y,
+                "width": clip.width,
+                "height": clip.height,
                 "scale": capture_scale,
             },
         }),
@@ -2001,7 +2103,8 @@ async fn capture_editor_window_impl(
             info.width, info.height
         ));
     }
-    let output_scale = info.width.max(info.height) as f64 / source_width.max(source_height) as f64;
+    let output_scale =
+        info.width.max(info.height) as f64 / region_source_width.max(region_source_height) as f64;
     let captured_at = std::time::SystemTime::now()
         .duration_since(std::time::UNIX_EPOCH)
         .map_err(|error| format!("system clock is before Unix epoch: {error}"))?
@@ -2014,13 +2117,14 @@ async fn capture_editor_window_impl(
         width: info.width,
         height: info.height,
         mime: "image/png".to_string(),
-        source_width,
-        source_height,
+        source_width: region_source_width,
+        source_height: region_source_height,
         scale: output_scale.min(1.0),
         captured_at,
         window_label,
         capture_method: "webview2-devtools".to_string(),
         background_safe: true,
+        region,
     })
 }
 
@@ -2235,6 +2339,7 @@ async fn capture_editor_window_impl(
     _app: AppHandle,
     _window_label: String,
     _max_size: u32,
+    _region: Option<WindowCaptureRegion>,
 ) -> Result<WindowCapture, String> {
     Err("background editor-window capture is currently only supported on Windows".to_string())
 }

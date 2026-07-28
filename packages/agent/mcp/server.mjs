@@ -1347,6 +1347,40 @@ const TOOLS = [
     },
   },
   {
+    name: 'capture_window_region',
+    description:
+      'Capture only one CSS-pixel rectangle from any editor window without activating it. Coordinates align with element rects returned by get_window_ui, making this the efficient visual-evidence path for a specific panel, field, or control. The complete region must fit inside the current WebView viewport.',
+    inputSchema: {
+      type: 'object',
+      required: ['x', 'y', 'width', 'height'],
+      properties: {
+        windowLabel: {
+          type: 'string',
+          description: 'Window label returned by list_windows (default: main)',
+        },
+        x: { type: 'integer', minimum: 0, maximum: 100000 },
+        y: { type: 'integer', minimum: 0, maximum: 100000 },
+        width: { type: 'integer', minimum: 1, maximum: 100000 },
+        height: { type: 'integer', minimum: 1, maximum: 100000 },
+        maxSize: {
+          type: 'integer',
+          minimum: 256,
+          maximum: 4096,
+          description: 'Maximum output width or height in pixels (default: 2048)',
+        },
+      },
+      additionalProperties: false,
+    },
+    handler: async (args) => screenshotContent(await bridgeQuery('view.capture_region', {
+      windowLabel: args.windowLabel || 'main',
+      x: args.x,
+      y: args.y,
+      width: args.width,
+      height: args.height,
+      maxSize: args.maxSize || 2048,
+    })),
+  },
+  {
     name: 'list_windows',
     description:
       'List every editor window currently open: the main window, detached panels (panel-*), and floating editor windows (editor-*), with title, position, size, visibility and focus.',

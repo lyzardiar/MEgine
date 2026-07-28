@@ -32,6 +32,8 @@ test('whole-window agent capture is background-safe and addressable by window la
   assert.ok(interactionScript);
 
   assert.match(rust, /Page\.captureScreenshot/);
+  assert.match(rust, /validated_capture_region/);
+  assert.match(rust, /page_x \+ clip\.x/);
   assert.match(rust, /Runtime\.evaluate/);
   assert.match(rust, /WINDOW_UI_SNAPSHOT_SCRIPT/);
   assert.match(rust, /state\.checked = element\.indeterminate \? 'mixed' : element\.checked/);
@@ -344,6 +346,7 @@ test('whole-window agent capture is background-safe and addressable by window la
   assert.match(mcp, /'set_entity_layer'/);
   assert.match(mcp, /'set_entity_layers'/);
   assert.match(mcp, /'set_entities_active'/);
+  assert.match(mcp, /name: 'capture_window_region'/);
   assert.match(mcp, /'add_component_to_entities'/);
   assert.match(mcp, /'remove_component_from_entities'/);
   assert.match(mcp, /'set_component_on_entities'/);

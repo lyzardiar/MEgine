@@ -27,6 +27,8 @@ export interface ScreenshotResult {
   captureMethod?: string;
   /** True when capture neither activates the editor nor reads foreground pixels. */
   backgroundSafe?: boolean;
+  /** CSS-pixel clip relative to the captured WebView viewport. */
+  region?: EditorUiRect;
 }
 
 export type ViewportTab = 'scene' | 'game';

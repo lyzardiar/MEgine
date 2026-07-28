@@ -561,6 +561,28 @@ class AgentBridge {
   }
 
   /**
+   * Capture a CSS-pixel region from an editor webview without first encoding
+   * the complete window. Coordinates match rects from `window.ui_snapshot`.
+   */
+  async captureWindowRegion(
+    windowLabel: string,
+    region: { x: number; y: number; width: number; height: number },
+    maxSize = DEFAULT_SCREENSHOT_MAX_SIZE,
+  ): Promise<ScreenshotResult> {
+    if (!isDesktopEditor()) {
+      throw new BridgeError('NOT_READY', 'Editor-window region capture requires the desktop editor');
+    }
+    return this.scheduleScreenshot(() => invoke<ScreenshotResult>(
+      'capture_editor_window',
+      {
+        windowLabel,
+        maxSize: normalizeScreenshotMaxSize(maxSize),
+        region,
+      },
+    ));
+  }
+
+  /**
    * Serialize bitmap captures and leave a short cool-down after each one.
    * Semantic snapshots remain unthrottled, so agents can inspect rapidly
    * without repeatedly allocating multi-megabyte encoded images.
@@ -3991,6 +4013,21 @@ class AgentBridge {
             ? params.maxSize
             : DEFAULT_SCREENSHOT_MAX_SIZE,
         );
+      case 'view.capture_region':
+        return this.captureWindowRegion(
+          typeof params.windowLabel === 'string' && params.windowLabel
+            ? params.windowLabel
+            : 'main',
+          {
+            x: requiredNonNegativeInteger(params, 'x'),
+            y: requiredNonNegativeInteger(params, 'y'),
+            width: requiredPositiveInteger(params, 'width'),
+            height: requiredPositiveInteger(params, 'height'),
+          },
+          typeof params.maxSize === 'number'
+            ? params.maxSize
+            : DEFAULT_SCREENSHOT_MAX_SIZE,
+        );
       case 'window.list':
         return this.listWindows();
       case 'window.types':
@@ -4475,6 +4512,20 @@ function requiredNonNegativeInteger(
     throw new BridgeError(
       'INVALID_ARGS',
       `"${key}" must be a non-negative safe integer`,
+    );
+  }
+  return value;
+}
+
+function requiredPositiveInteger(
+  args: Record<string, unknown>,
+  key: string,
+): number {
+  const value = requiredNonNegativeInteger(args, key);
+  if (value === 0) {
+    throw new BridgeError(
+      'INVALID_ARGS',
+      `"${key}" must be a positive safe integer`,
     );
   }
   return value;

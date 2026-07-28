@@ -55,6 +55,14 @@ test('query schemas accept documented read shapes and reject malformed or extra 
       maxSize: 2_048,
     }],
     ['view.window_screenshot', { windowLabel: 'main', maxSize: 4_096 }],
+    ['view.capture_region', {
+      windowLabel: 'main',
+      x: 10,
+      y: 20,
+      width: 300,
+      height: 200,
+      maxSize: 1_024,
+    }],
     ['window.ui_snapshot', { windowLabel: 'main', maxElements: 2_000, offset: 0 }],
     ['window.ui_snapshot', {
       maxElements: 50,
@@ -104,6 +112,8 @@ test('query schemas accept documented read shapes and reject malformed or extra 
     ['view.screenshot', { quality: 2 }],
     ['view.screenshot', { maxSize: 255 }],
     ['view.window_screenshot', { maxSize: 4_097 }],
+    ['view.capture_region', { x: 0, y: 0, width: 0, height: 100 }],
+    ['view.capture_region', { x: -1, y: 0, width: 100, height: 100 }],
     ['window.ui_snapshot', { maxElements: 49 }],
     ['window.ui_snapshot', { maxElements: 50, offset: 50 }],
     ['window.ui_snapshot', {
