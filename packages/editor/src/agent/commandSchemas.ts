@@ -1,3 +1,5 @@
+import { TYPED_ENTITY_KINDS } from './typedEntityKinds.ts';
+
 export type AgentJsonSchema = Record<string, unknown>;
 
 type SchemaProperties = Record<string, AgentJsonSchema>;
@@ -279,36 +281,7 @@ export const COMMAND_PARAMS_SCHEMAS: Record<string, AgentJsonSchema> = {
   'entity.create_typed': objectSchema({
     kind: {
       type: 'string',
-      enum: [
-        'empty',
-        'camera',
-        'camera2d',
-        'cube',
-        'directional_light',
-        'point_light',
-        'spot_light',
-        'environment_light',
-        'audio_source',
-        'audio_listener',
-        'audio_mixer',
-        'ui_canvas',
-        'ui_image',
-        'ui_raw_image',
-        'ui_button',
-        'ui_text',
-        'ui_toggle',
-        'ui_slider',
-        'ui_scrollbar',
-        'ui_panel',
-        'ui_input_field',
-        'ui_dropdown',
-        'ui_progress_bar',
-        'particle_3d',
-        'particle_2d',
-        'grid',
-        'tilemap',
-        'line2d',
-      ],
+      enum: [...TYPED_ENTITY_KINDS],
       description: 'Built-in object kind',
     },
   }, ['kind']),

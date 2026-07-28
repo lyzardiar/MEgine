@@ -8,6 +8,7 @@ import {
   COMMAND_META,
   WRITE_COMMANDS,
 } from '../src/agent/commands.ts';
+import { TYPED_ENTITY_KINDS } from '../src/agent/typedEntityKinds.ts';
 
 test('every AgentBridge write command has one complete discoverable parameter schema', () => {
   const ids = COMMAND_META.map((command) => command.id);
@@ -75,6 +76,10 @@ test('command schemas expose exact high-risk guards and shared optimistic option
   assert.equal(
     COMMAND_PARAMS_SCHEMAS['batch.apply'].properties.commands.maxItems,
     256,
+  );
+  assert.deepEqual(
+    COMMAND_PARAMS_SCHEMAS['entity.create_typed'].properties.kind.enum,
+    TYPED_ENTITY_KINDS,
   );
   assert.equal(
     COMMAND_PARAMS_SCHEMAS['transform.translate'].properties.delta.minItems,

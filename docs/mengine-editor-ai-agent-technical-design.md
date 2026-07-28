@@ -259,7 +259,7 @@ MEngine 编辑器当前对人类友好，但对 AI Agent 不够友好。AI Agent
 | command id | 参数 | 映射 |
 | --- | --- | --- |
 | `entity.create` | `{ name?, components?, parent? }` | `store.createGameObject` |
-| `entity.create_typed` | `{ kind: "cube"\|"camera"\|"light"\|"ui_button"\|..., parent? }` | 对应 `store.spawn*` |
+| `entity.create_typed` | `{ kind }`，枚举由 `commands.describe` 返回 | 覆盖 GameObject 菜单的 37 种内建对象；Tilemap/UI 等复合创建返回被选中的目标对象而非隐式 Grid/Canvas，Cube 始终走根对象创建路径 |
 | `entity.delete` | `{ ids[] }` | `store.deleteSelection`（先选中）或命令批 |
 | `entity.duplicate` | `{ ids[] }` | `store.duplicateSelection` |
 | `entity.rename` | `{ id, name }` | `store.rename` |

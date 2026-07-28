@@ -3,6 +3,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import test from 'node:test';
 import { fileURLToPath } from 'node:url';
+import { TYPED_ENTITY_KINDS } from '../src/agent/typedEntityKinds.ts';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 
@@ -77,6 +78,9 @@ test('whole-window agent capture is background-safe and addressable by window la
   assert.match(mcp, /'reorder_entity'/);
   assert.match(mcp, /'translate_entity'/);
   assert.match(mcp, /'set_scene_camera'/);
+  for (const kind of TYPED_ENTITY_KINDS) {
+    assert.match(mcp, new RegExp(`'${kind}'`));
+  }
   assert.match(mcp, /expectedSceneRevision/);
   assert.match(mcp, /key !== 'screenshot'/);
   assert.match(mcp, /textContent\(response\)/);

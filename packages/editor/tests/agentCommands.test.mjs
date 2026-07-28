@@ -217,6 +217,70 @@ test('accepts entity id zero when it exists in a loaded scene', () => {
   assert.deepEqual(calls, [['rename', 0, 'Root Zero']]);
 });
 
+test('typed creation returns the selected authored object for composite spawns', () => {
+  const { ctx, calls, entities } = createContext();
+  ctx.store.spawnUiTabView = () => {
+    entities.push(
+      {
+        entity: 3,
+        name: 'Canvas',
+        parent: null,
+        siblingIndex: 2,
+        active: true,
+        components: { Canvas: {} },
+      },
+      {
+        entity: 4,
+        name: 'Tab View',
+        parent: 3,
+        siblingIndex: 0,
+        active: true,
+        components: { TabView: {} },
+      },
+    );
+    ctx.store.selected = 4;
+    ctx.store.selectedIds = [4];
+  };
+  ctx.store.select = (id) => {
+    calls.push(['select', id]);
+    ctx.store.selected = id;
+    ctx.store.selectedIds = [id];
+  };
+
+  const result = run(ctx, 'entity.create_typed', { kind: 'ui_tab_view' });
+
+  assert.deepEqual(result.data, { entity: 4, kind: 'ui_tab_view' });
+  assert.deepEqual(calls, [['select', 4]]);
+});
+
+test('typed cube creation uses the root GameObject path instead of selected-child creation', () => {
+  const { ctx, calls, entities } = createContext();
+  ctx.store.spawnPrefab = (name) => {
+    calls.push(['spawnPrefab', name]);
+    entities.push({
+      entity: 3,
+      name,
+      parent: null,
+      siblingIndex: 2,
+      active: true,
+      components: { MeshRenderer: { mesh: 'cube' } },
+    });
+    ctx.store.selected = 3;
+    ctx.store.selectedIds = [3];
+  };
+  ctx.store.select = (id) => {
+    calls.push(['select', id]);
+    ctx.store.selected = id;
+    ctx.store.selectedIds = [id];
+  };
+
+  const result = run(ctx, 'entity.create_typed', { kind: 'cube' });
+
+  assert.deepEqual(result.data, { entity: 3, kind: 'cube' });
+  assert.deepEqual(calls, [['spawnPrefab', 'Cube'], ['select', 3]]);
+  assert.equal(entities.at(-1).parent, null);
+});
+
 test('component set and patch require an existing component and object payload', () => {
   const { ctx, calls } = createContext();
 

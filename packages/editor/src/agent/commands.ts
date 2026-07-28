@@ -17,6 +17,7 @@ import {
   COMMAND_PARAMS_SCHEMAS,
   type AgentJsonSchema,
 } from './commandSchemas.ts';
+import { TYPED_ENTITY_KINDS, type TypedEntityKind } from './typedEntityKinds.ts';
 
 export interface CommandContext {
   store: EditorStore;
@@ -422,44 +423,57 @@ function worldCommandBatch(
   return commands;
 }
 
-/** Capture the entity id created by a spawn call (most spawn* don't return it). */
+/** Capture the selected object created by a spawn call, including composite spawns. */
 function captureSpawned(ctx: CommandContext, spawn: () => void): number | null {
   const before = new Set(ctx.store.snapshot().entities.map((e) => e.entity));
   spawn();
-  const after = ctx.store.snapshot().entities.map((e) => e.entity);
-  return after.find((id) => !before.has(id)) ?? null;
+  const created = ctx.store.snapshot().entities
+    .map((entity) => entity.entity)
+    .filter((entity) => !before.has(entity));
+  const selected = ctx.store.selected;
+  if (selected != null && created.includes(selected)) return selected;
+  return created.at(-1) ?? null;
 }
 
-/** kind → spawn method name for entity.create_typed. */
-const KIND_SPAWNERS: Record<string, string> = {
-  empty: 'spawnEmpty',
-  camera: 'spawnCamera',
-  camera2d: 'spawnCamera2D',
-  cube: 'spawnCubeChild',
-  directional_light: 'spawnDirectionalLight',
-  point_light: 'spawnPointLight',
-  spot_light: 'spawnSpotLight',
-  environment_light: 'spawnEnvironmentLight',
-  audio_source: 'spawnAudioSource',
-  audio_listener: 'spawnAudioListener',
-  audio_mixer: 'spawnAudioMixer',
-  ui_canvas: 'spawnUiCanvas',
-  ui_image: 'spawnUiImage',
-  ui_raw_image: 'spawnUiRawImage',
-  ui_button: 'spawnUiButton',
-  ui_text: 'spawnUiText',
-  ui_toggle: 'spawnUiToggle',
-  ui_slider: 'spawnUiSlider',
-  ui_scrollbar: 'spawnUiScrollbar',
-  ui_panel: 'spawnUiPanel',
-  ui_input_field: 'spawnUiInputField',
-  ui_dropdown: 'spawnUiDropdown',
-  ui_progress_bar: 'spawnUiProgressBar',
-  particle_3d: 'spawnParticleEmitter3D',
-  particle_2d: 'spawnParticleEmitter2D',
-  grid: 'spawnGrid',
-  tilemap: 'spawnTilemap',
-  line2d: 'spawnLine2D',
+/** Exact built-in kind → the same Store spawn path used by GameObject menus. */
+const KIND_SPAWNERS: Record<TypedEntityKind, (store: EditorStore) => void> = {
+  empty: (store) => store.spawnEmpty(),
+  cube: (store) => store.spawnPrefab('Cube'),
+  camera: (store) => store.spawnCamera(),
+  camera2d: (store) => store.spawnCamera2D(),
+  sprite: (store) => store.spawnSpriteQuad(),
+  animated_sprite: (store) => store.spawnAnimatedSprite2D(),
+  line2d: (store) => store.spawnLine2D(),
+  grid: (store) => store.spawnGrid(),
+  tilemap: (store) => store.spawnTilemap(),
+  spine_skeleton: (store) => store.spawnSpineSkeleton(),
+  particle_3d: (store) => store.spawnParticleEmitter3D(),
+  particle_2d: (store) => store.spawnParticleEmitter2D(),
+  directional_light: (store) => store.spawnDirectionalLight(),
+  point_light: (store) => store.spawnPointLight(),
+  spot_light: (store) => store.spawnSpotLight(),
+  environment_light: (store) => store.spawnEnvironmentLight(),
+  global_light_2d: (store) => store.spawnLight2D('global'),
+  point_light_2d: (store) => store.spawnLight2D('point'),
+  audio_source: (store) => store.spawnAudioSource(),
+  audio_listener: (store) => store.spawnAudioListener(),
+  audio_mixer: (store) => store.spawnAudioMixer(),
+  ui_canvas: (store) => store.spawnUiCanvas(),
+  ui_image: (store) => store.spawnUiImage(),
+  ui_raw_image: (store) => store.spawnUiRawImage(),
+  ui_button: (store) => store.spawnUiButton(),
+  ui_text: (store) => store.spawnUiText(),
+  ui_toggle: (store) => store.spawnUiToggle(),
+  ui_slider: (store) => store.spawnUiSlider(),
+  ui_scrollbar: (store) => store.spawnUiScrollbar(),
+  ui_progress_bar: (store) => store.spawnUiProgressBar(),
+  ui_input_field: (store) => store.spawnUiInputField(),
+  ui_dropdown: (store) => store.spawnUiDropdown(),
+  ui_list_view: (store) => store.spawnUiListView(),
+  ui_scroll_view: (store) => store.spawnUiScrollView(),
+  ui_tab_view: (store) => store.spawnUiTabView(),
+  ui_panel: (store) => store.spawnUiPanel(),
+  ui_layout_group: (store) => store.spawnUiLayoutGroup(),
 };
 
 export const WRITE_COMMANDS: Record<string, CommandHandler> = {
@@ -515,18 +529,14 @@ export const WRITE_COMMANDS: Record<string, CommandHandler> = {
   'entity.create_typed': (ctx, args) => {
     requireEditMode(ctx);
     const kind = str(args, 'kind');
-    const method = KIND_SPAWNERS[kind];
-    if (!method) {
+    if (!TYPED_ENTITY_KINDS.includes(kind as TypedEntityKind)) {
       throw new BridgeError(
         'INVALID_ARGS',
         `Unknown kind "${kind}". Known kinds: ${Object.keys(KIND_SPAWNERS).join(', ')}`,
       );
     }
-    const spawn = (ctx.store as unknown as Record<string, () => void>)[method];
-    if (typeof spawn !== 'function') {
-      throw new BridgeError('INTERNAL', `Spawn method "${method}" is unavailable`);
-    }
-    const id = captureSpawned(ctx, () => spawn.call(ctx.store));
+    const spawn = KIND_SPAWNERS[kind as TypedEntityKind];
+    const id = captureSpawned(ctx, () => spawn(ctx.store));
     if (id == null) {
       throw new BridgeError('INTERNAL', `The editor did not create a "${kind}" entity`);
     }
@@ -898,7 +908,7 @@ const COMMAND_SUMMARIES: CommandSummary[] = [
   { id: 'selection.set', category: 'selection', description: 'Set the selection to the given entity ids', readOnly: false },
   { id: 'selection.reveal', category: 'selection', description: 'Select an entity and expand its ancestors (ping)', readOnly: false },
   { id: 'entity.create', category: 'entity', description: 'Create a GameObject with optional components and parent', readOnly: false },
-  { id: 'entity.create_typed', category: 'entity', description: 'Create a common GameObject by kind (cube, camera, light, ui_button, …)', readOnly: false },
+  { id: 'entity.create_typed', category: 'entity', description: 'Create any built-in GameObject kind with composite parent handling', readOnly: false },
   { id: 'entity.delete', category: 'entity', description: 'Delete the given (or currently selected) entities', readOnly: false },
   { id: 'entity.duplicate', category: 'entity', description: 'Duplicate the given (or currently selected) entities', readOnly: false },
   { id: 'entity.rename', category: 'entity', description: 'Rename an entity', readOnly: false },
