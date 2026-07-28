@@ -102,7 +102,7 @@ CORE_PANEL_IDS.forEach((panel, index) => {
         },
       }));
     },
-    { priority: 100 + index },
+    { priority: 100 + index, agentInvokable: true },
   );
 });
 
@@ -111,7 +111,7 @@ registerMenuItem(
   () => {
     window.dispatchEvent(new CustomEvent(RESET_DOCK_LAYOUT_EVENT));
   },
-  { priority: 850 },
+  { priority: 850, agentInvokable: true },
 );
 
 registerMenuItem(
@@ -124,7 +124,7 @@ registerMenuItem(
       },
     }));
   },
-  { priority: 900 },
+  { priority: 900, agentInvokable: true },
 );
 
 let _idSeq = 0;

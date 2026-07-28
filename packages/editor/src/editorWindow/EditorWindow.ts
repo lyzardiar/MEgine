@@ -83,10 +83,11 @@ export abstract class EditorWindow {
  * Example:
  * ```ts
  * class MyWin extends EditorWindow {
- *   @MenuItem('Window/My Win', false, 100)
+ *   @MenuItem('Window/My Win', { priority: 100, agentInvokable: true })
  *   static open() { MyWin.show(); }
  * }
  * ```
+ * Menu commands are unavailable to Agents unless they explicitly opt in.
  */
 export function MenuItem(
   path: string,

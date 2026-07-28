@@ -89,4 +89,4 @@ registerEditorWindowType('EditorWindow.DocumentationWindow', () => {
 
 registerMenuItem('Help/MEngine Documentation', (context) => {
   DocumentationWindow.openFromMenu(context.source !== 'agent');
-});
+}, { agentInvokable: true });

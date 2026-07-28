@@ -164,8 +164,8 @@ export function registerMenuItem(
     separatorBefore: options.separatorBefore ?? previous?.separatorBefore ?? false,
     validate:
       options.validate ?? previous?.validate ?? pendingMenuValidators.get(normalizedPath),
-    agentInvokable: options.agentInvokable ?? previous?.agentInvokable ?? true,
-    agentAlternative: options.agentAlternative ?? previous?.agentAlternative,
+    agentInvokable: options.agentInvokable ?? false,
+    agentAlternative: options.agentAlternative,
   };
   if (idx >= 0) menuItems[idx] = entry;
   else menuItems.push(entry);

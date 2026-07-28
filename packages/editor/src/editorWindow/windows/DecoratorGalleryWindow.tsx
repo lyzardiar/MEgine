@@ -71,4 +71,4 @@ registerEditorWindowType('EditorWindow.DecoratorGalleryWindow', () => {
 // .tsx 经 Babel 编译，暂不支持 @MenuItem；在此命令式注册
 registerMenuItem('Window/Decorator Gallery', (context) => {
   DecoratorGalleryWindow.openFromMenu(context.source !== 'agent');
-});
+}, { agentInvokable: true });
