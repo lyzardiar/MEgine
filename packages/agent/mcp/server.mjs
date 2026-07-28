@@ -158,9 +158,48 @@ function execTool(name, description, command, properties, mapArgs = (a) => a) {
 
 const TOOLS = [
   {
+    name: 'get_project_state',
+    description:
+      'Get project-hub state even before a project is open: lifecycle phase, active project summary, editorReady mount status, busy/error state, recent count, and event cursor.',
+    inputSchema: { type: 'object', properties: {} },
+    handler: async () => textContent(await bridgeQuery('project.state')),
+  },
+  {
+    name: 'list_recent_projects',
+    description:
+      'List recent MEngine projects from the native editor profile without opening a dialog.',
+    inputSchema: { type: 'object', properties: {} },
+    handler: async () => textContent(await bridgeQuery('project.recent')),
+  },
+  execTool(
+    'open_project',
+    'Open a validated MEngine project path without a dialog while the editor is on the welcome page. Project switching is blocked once a project is open.',
+    'project.open',
+    {
+      root: { type: 'string', description: 'Absolute path to a directory containing project.json' },
+    },
+  ),
+  execTool(
+    'create_project',
+    'Create and open a new MEngine project without a dialog while the editor is on the welcome page.',
+    'project.create',
+    {
+      parent: { type: 'string', description: 'Existing absolute parent directory' },
+      name: { type: 'string', description: 'New project directory and project name' },
+    },
+  ),
+  execTool(
+    'forget_recent_project',
+    'Remove a path from the native recent-project list without deleting the project directory.',
+    'project.forget_recent',
+    {
+      path: { type: 'string', description: 'Exact recent project path to forget' },
+    },
+  ),
+  {
     name: 'get_editor_state',
     description:
-      'Get the global MEngine editor state: edit/play mode, active gizmo, undo/redo availability, current scene name and dirty flag.',
+      'Get the mounted editor state: edit/play mode, simulation time, gizmo, undo/redo, current scene, revisions and dirty flag. Use get_project_state before a project is open.',
     inputSchema: { type: 'object', properties: {} },
     handler: async () => textContent(await bridgeQuery('editor.state')),
   },
@@ -211,7 +250,7 @@ const TOOLS = [
   {
     name: 'get_editor_events',
     description:
-      'Read cursor-based editor events without foreground polling. Topics cover scene, selection, mode, logs, panels, builds, and assets. Continue with nextSequence; truncated=true means older events expired.',
+      'Read cursor-based editor events without foreground polling. Topics cover project lifecycle, scene, selection, mode, logs, panels, builds, and assets. Continue with nextSequence; truncated=true means older events expired.',
     inputSchema: {
       type: 'object',
       properties: {
@@ -233,6 +272,7 @@ const TOOLS = [
               'panel.changed',
               'build.progress',
               'asset.changed',
+              'project.changed',
             ],
           },
           description: 'Optional topic filter',
@@ -746,6 +786,7 @@ const TOOLS = [
 ];
 
 const RESOURCES = [
+  { uri: 'mengine://project/state', name: 'Project Lifecycle State', mimeType: 'application/json' },
   { uri: 'mengine://editor/state', name: 'Editor State', mimeType: 'application/json' },
   { uri: 'mengine://editor/scenes', name: 'Project Scenes', mimeType: 'application/json' },
   { uri: 'mengine://scene/hierarchy', name: 'Scene Hierarchy', mimeType: 'application/json' },
@@ -755,6 +796,7 @@ const RESOURCES = [
 ];
 
 const RESOURCE_READERS = {
+  'mengine://project/state': () => bridgeQuery('project.state'),
   'mengine://editor/state': () => bridgeQuery('editor.state'),
   'mengine://editor/scenes': () => bridgeQuery('scene.list'),
   'mengine://scene/hierarchy': () => bridgeQuery('scene.hierarchy'),

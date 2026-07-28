@@ -50,6 +50,12 @@ test('whole-window agent capture is background-safe and addressable by window la
   assert.match(mcp, /'start_pc_build'/);
   assert.match(mcp, /name: 'get_editor_events'/);
   assert.match(mcp, /name: 'get_scene_changes'/);
+  assert.match(mcp, /name: 'get_project_state'/);
+  assert.match(mcp, /name: 'list_recent_projects'/);
+  assert.match(mcp, /'open_project'/);
+  assert.match(mcp, /'create_project'/);
+  assert.match(mcp, /'forget_recent_project'/);
+  assert.match(mcp, /mengine:\/\/project\/state/);
   assert.match(mcp, /'step'/);
   assert.match(mcp, /name: 'clear_console_logs'/);
 });
@@ -57,11 +63,27 @@ test('whole-window agent capture is background-safe and addressable by window la
 test('the main AgentBridge transport is available before a project is opened', () => {
   const main = fs.readFileSync(path.join(root, 'src', 'main.tsx'), 'utf8');
   const app = fs.readFileSync(path.join(root, 'src', 'App.tsx'), 'utf8');
+  const gate = fs.readFileSync(path.join(root, 'src', 'DesktopProjectGate.tsx'), 'utf8');
+  const projectSession = fs.readFileSync(
+    path.join(root, 'src', 'transport', 'desktopProjectSession.ts'),
+    'utf8',
+  );
+  const bridge = fs.readFileSync(path.join(root, 'src', 'agent', 'AgentBridge.ts'), 'utf8');
 
   assert.match(main, /function AgentBridgeTransportHost/);
   assert.match(main, /attachBridgeTransport\(\)/);
   assert.match(main, /enabled=\{detachedPanel == null && detachedEditorWindow == null\}/);
   assert.doesNotMatch(app, /attachBridgeTransport/);
+  assert.match(gate, /connectProjectLifecycle/);
+  assert.match(gate, /attachDesktopProject\(\)/);
+  assert.match(gate, /errorCode\(reason\) !== 'noProject'/);
+  assert.match(projectSession, /catch \(error\) \{\s*currentProject = null;/);
+  assert.match(bridge, /case 'project\.state'/);
+  assert.match(bridge, /case 'project\.recent'/);
+  assert.match(bridge, /commandId === 'project\.open'/);
+  assert.match(bridge, /commandId === 'project\.create'/);
+  assert.match(bridge, /commandId === 'project\.forget_recent'/);
+  assert.match(bridge, /project switching is blocked to protect unsaved editor state/);
 });
 
 test('panel and menu agent surfaces use live providers and background activation', () => {

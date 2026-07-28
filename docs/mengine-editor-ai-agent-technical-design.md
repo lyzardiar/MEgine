@@ -240,6 +240,16 @@ MEngine 编辑器当前对人类友好，但对 AI Agent 不够友好。AI Agent
 
 所有写命令统一经 Dispatcher。**关键约束：写操作必须走与 UI / 菜单完全相同的路径——调用 `EditorStore` 方法**（菜单命令经 `MenuItemContext.store` 调用，快捷键直接调用），再由 store 内部经 `desktopProjectSession` 串行队列与 Rust `submit_editor_request` 同步。AgentBridge 绝不绕过 store 直接写 Rust，否则会制造第三个事实源——本地编辑器方案已明确「React Store 与 Rust Session 双事实源」是要消除的问题。命令返回 `{ ok, revision, data }`。
 
+#### 4.2.0 工程生命周期
+
+| command/query id | 参数 | 说明 |
+| --- | --- | --- |
+| `project.state` | — | ✅ 欢迎页、工程挂载中和工程打开后均可读取 phase、busy/error、当前工程摘要、recent 数量与事件 cursor |
+| `project.recent` | — | ✅ 无弹窗读取原生配置中的最近工程；页面刷新后若 Rust Host 已持有工程则自动重新挂载 |
+| `project.open` | `{ root }` | ✅ 欢迎页按路径打开并校验 `project.json`；已有工程时拒绝切换，避免丢失未保存状态 |
+| `project.create` | `{ parent, name }` | ✅ 欢迎页无弹窗创建；父目录与工程名由原生 `ProjectSession` 严格校验 |
+| `project.forget_recent` | `{ path }` | ✅ 仅移除原生最近工程记录，不删除工程目录 |
+
 #### 4.2.1 实体生命周期
 
 | command id | 参数 | 映射 |
@@ -346,7 +356,7 @@ MEngine 编辑器当前对人类友好，但对 AI Agent 不够友好。AI Agent
 | 命令结果 | 每个写命令返回 `{ ok, revision, data }`，data 含受影响实体/新状态摘要 |
 | 操作后自动截图 | 写命令可带 `options.screenshot: true`，结果里附 `screenshot` 字段，形成「改→看」视觉闭环 |
 | 状态 diff | ✅ `query: scene.diff({ fromRevision })` 返回实体增删改和当前 payload；切场景或历史过期时返回 `resetRequired` 与完整快照 |
-| 事件订阅 | ✅ 有界 journal + cursor 查询 `events.get`，并向原生 WebSocket 广播 `scene.changed` / `selection.changed` / `mode.changed` / `log.*` / `panel.changed` / `build.progress` / `asset.changed` |
+| 事件订阅 | ✅ 有界 journal + cursor 查询 `events.get`，并向原生 WebSocket 广播 `project.changed` / `scene.changed` / `selection.changed` / `mode.changed` / `log.*` / `panel.changed` / `build.progress` / `asset.changed` |
 | 结构化错误 | 错误码：`STALE_REVISION` / `ENTITY_NOT_FOUND` / `COMPONENT_NOT_FOUND` / `INVALID_ARGS` / `READONLY` / `PERMISSION_DENIED` / `NOT_READY` |
 
 ## 5. MCP Server 设计（优先传输）
@@ -371,6 +381,7 @@ MEngine 编辑器当前对人类友好，但对 AI Agent 不够友好。AI Agent
 只读 tools（Phase 1）：
 
 ```
+get_project_state, list_recent_projects,
 get_scene_snapshot, get_scene_changes, get_editor_events,
 get_hierarchy, get_selection, get_editor_state,
 get_entity, get_component, get_console_logs, list_windows, list_panels,
@@ -380,6 +391,7 @@ take_screenshot, list_assets, list_scenes, get_component_schema, list_commands
 写 tools（Phase 2）：
 
 ```
+open_project, create_project, forget_recent_project,
 create_gameobject, delete_entities, duplicate_entities, rename_entity,
 set_active, reparent, add_component, remove_component, set_component,
 patch_component, set_transform, set_selection, play, pause, stop, step,
@@ -396,6 +408,7 @@ apply_batch, apply_intent
 ### 5.3 Resources（只读上下文）
 
 ```
+mengine://project/state         工程生命周期状态（欢迎页也可读）
 mengine://editor/state          当前编辑器状态
 mengine://scene/snapshot        当前场景快照
 mengine://scene/hierarchy       层级树
@@ -478,7 +491,7 @@ inspect_and_fix       「截图当前场景，检查并修复选中物体的问�
 
 - `commands.list` / `schema.components` / `menu.list` 自描述
 - 操作后自动截图 + `scene.diff`
-- EventBus 事件订阅（scene/selection/mode/log/build/asset）
+- EventBus 事件订阅（project/scene/selection/mode/log/build/asset）
 - MCP resources/prompts 完善
 
 验收：Agent 仅凭 `commands.list` + `schema.components` 即可自主探索能力；写操作后能拿到截图与 diff 自我验证。

@@ -7,6 +7,7 @@ export const AGENT_EVENT_TOPICS = [
   'panel.changed',
   'build.progress',
   'asset.changed',
+  'project.changed',
 ] as const;
 
 export type AgentEventTopic = (typeof AGENT_EVENT_TOPICS)[number];

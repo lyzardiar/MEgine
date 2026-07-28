@@ -1,27 +1,53 @@
-import { useEffect, useState, type ReactNode } from 'react';
+import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { getCurrentWindow } from '@tauri-apps/api/window';
+import {
+  agentBridge,
+  type AgentProjectLifecycleProvider,
+  type AgentProjectLifecycleState,
+  type AgentProjectSummary,
+} from './agent/AgentBridge';
 import {
   chooseProjectDirectory,
   chooseProjectLocation,
   isDesktopEditor,
   listRecentProjects,
   removeRecentProject,
+  type ProjectSnapshot,
   type RecentProjectInfo,
 } from './transport/editorTransport';
 import {
   createDesktopProject,
   attachDesktopProject,
+  getDesktopProject,
   startDesktopProject,
 } from './transport/desktopProjectSession';
 
 const MAX_RECENT_PROJECTS = 12;
 
 type HubMode = 'welcome' | 'create';
+type ProjectHubOperation = 'attach' | 'open' | 'create' | 'choose' | 'browse';
 
 function errorMessage(reason: unknown): string {
   return reason && typeof reason === 'object' && 'message' in reason
     ? String((reason as { message: unknown }).message)
     : String(reason);
+}
+
+function errorCode(reason: unknown): string {
+  return reason && typeof reason === 'object' && 'code' in reason
+    ? String((reason as { code: unknown }).code)
+    : '';
+}
+
+function projectSummary(snapshot: ProjectSnapshot | null): AgentProjectSummary | null {
+  if (!snapshot) return null;
+  return {
+    id: snapshot.projectId,
+    name: snapshot.projectName,
+    root: snapshot.projectRoot,
+    scenePath: snapshot.scenePath ?? null,
+    revision: snapshot.revision,
+  };
 }
 
 function validProjectName(name: string): boolean {
@@ -44,27 +70,184 @@ export function DesktopProjectGate(props: { children: ReactNode; detached?: bool
   const desktop = isDesktopEditor();
   const [ready, setReady] = useState(!desktop);
   const [mode, setMode] = useState<HubMode>('welcome');
-  const [busy, setBusy] = useState(false);
+  const [operation, setOperation] = useState<ProjectHubOperation | null>(null);
   const [projectName, setProjectName] = useState('NewProject');
   const [projectLocation, setProjectLocation] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [recentProjects, setRecentProjects] = useState<RecentProjectInfo[]>([]);
   const [openingPath, setOpeningPath] = useState<string | null>(null);
+  const readyRef = useRef(ready);
+  const operationRef = useRef<ProjectHubOperation | null>(operation);
+  const errorRef = useRef<string | null>(error);
+  const recentProjectsRef = useRef<RecentProjectInfo[]>(recentProjects);
+  const lifecycleProviderRef = useRef<AgentProjectLifecycleProvider | null>(null);
+  readyRef.current = ready;
+  operationRef.current = operation;
+  errorRef.current = error;
+  recentProjectsRef.current = recentProjects;
+  const busy = operation != null;
+
+  const updateReady = (value: boolean) => {
+    readyRef.current = value;
+    setReady(value);
+  };
+  const updateOperation = (value: ProjectHubOperation | null) => {
+    operationRef.current = value;
+    setOperation(value);
+  };
+  const updateError = (value: string | null) => {
+    errorRef.current = value;
+    setError(value);
+  };
+  const updateRecentProjects = (value: RecentProjectInfo[]) => {
+    recentProjectsRef.current = value;
+    setRecentProjects(value);
+  };
+
+  const lifecycleState = (): AgentProjectLifecycleState => {
+    const project = projectSummary(getDesktopProject());
+    const lifecycleOperation = (
+      operationRef.current === 'attach'
+      || operationRef.current === 'open'
+      || operationRef.current === 'create'
+    )
+      ? operationRef.current
+      : null;
+    return {
+      phase: readyRef.current
+        ? 'ready'
+        : lifecycleOperation === 'attach'
+          ? 'attaching'
+          : lifecycleOperation === 'open'
+            ? 'opening'
+            : lifecycleOperation === 'create'
+              ? 'creating'
+              : errorRef.current
+                ? 'error'
+                : 'welcome',
+      ready: readyRef.current,
+      busy: operationRef.current != null,
+      operation: lifecycleOperation,
+      error: errorRef.current,
+      project,
+      recentCount: recentProjectsRef.current.length,
+      recentLimit: MAX_RECENT_PROJECTS,
+    };
+  };
+
+  const refreshRecentProjects = async () => {
+    const projects = await listRecentProjects();
+    updateRecentProjects(projects);
+    return projects;
+  };
+
+  const forgetRecentProjectAtPath = async (path: string) => {
+    const projects = await removeRecentProject(path);
+    updateRecentProjects(projects);
+    return projects;
+  };
+
+  const openProjectAtPath = async (root: string): Promise<ProjectSnapshot> => {
+    if (readyRef.current || getDesktopProject()) {
+      throw new Error('A project is already open; restart the editor before switching projects');
+    }
+    if (operationRef.current) {
+      throw new Error(`Project lifecycle is busy (${operationRef.current})`);
+    }
+    updateOperation('open');
+    updateError(null);
+    try {
+      const snapshot = await startDesktopProject(root);
+      updateReady(true);
+      void refreshRecentProjects().catch(() => undefined);
+      return snapshot;
+    } catch (reason) {
+      updateError(errorMessage(reason));
+      throw reason;
+    } finally {
+      updateOperation(null);
+    }
+  };
+
+  const createProjectAtPath = async (
+    parent: string,
+    name: string,
+  ): Promise<ProjectSnapshot> => {
+    if (readyRef.current || getDesktopProject()) {
+      throw new Error('A project is already open; restart the editor before switching projects');
+    }
+    if (operationRef.current) {
+      throw new Error(`Project lifecycle is busy (${operationRef.current})`);
+    }
+    updateOperation('create');
+    updateError(null);
+    try {
+      const snapshot = await createDesktopProject(parent, name);
+      updateReady(true);
+      void refreshRecentProjects().catch(() => undefined);
+      return snapshot;
+    } catch (reason) {
+      updateError(errorMessage(reason));
+      throw reason;
+    } finally {
+      updateOperation(null);
+    }
+  };
+
+  lifecycleProviderRef.current = {
+    getState: lifecycleState,
+    listRecent: refreshRecentProjects,
+    forgetRecent: forgetRecentProjectAtPath,
+    open: openProjectAtPath,
+    create: createProjectAtPath,
+  };
 
   useEffect(() => {
     if (!desktop || props.detached) return;
     let cancelled = false;
     void listRecentProjects()
       .then((projects) => {
-        if (!cancelled) setRecentProjects(projects);
+        if (!cancelled) updateRecentProjects(projects);
       })
       .catch((reason) => {
-        if (!cancelled) setError(`读取最近工程失败：${errorMessage(reason)}`);
+        if (!cancelled) updateError(`读取最近工程失败：${errorMessage(reason)}`);
       });
     return () => {
       cancelled = true;
     };
   }, [desktop, props.detached]);
+
+  useEffect(() => {
+    if (!desktop || props.detached) return;
+    return agentBridge.connectProjectLifecycle(() => lifecycleProviderRef.current);
+  }, [desktop, props.detached]);
+
+  useEffect(() => {
+    if (!desktop || props.detached) return;
+    agentBridge.observeProject();
+  }, [desktop, props.detached, ready, operation, error, recentProjects.length]);
+
+  useEffect(() => {
+    if (!desktop || props.detached || ready) return;
+    let cancelled = false;
+    updateOperation('attach');
+    updateError(null);
+    void attachDesktopProject()
+      .then(() => {
+        if (!cancelled) updateReady(true);
+      })
+      .catch((reason) => {
+        if (!cancelled && errorCode(reason) !== 'noProject') {
+          updateError(`恢复已打开工程失败：${errorMessage(reason)}`);
+        }
+      })
+      .finally(() => {
+        if (!cancelled) updateOperation(null);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [desktop, props.detached, ready]);
 
   useEffect(() => {
     if (!desktop || ready) return;
@@ -90,16 +273,16 @@ export function DesktopProjectGate(props: { children: ReactNode; detached?: bool
   useEffect(() => {
     if (!desktop || !props.detached || ready) return;
     let cancelled = false;
-    setBusy(true);
+    updateOperation('attach');
     void attachDesktopProject()
       .then(() => {
-        if (!cancelled) setReady(true);
+        if (!cancelled) updateReady(true);
       })
       .catch((reason) => {
-        if (!cancelled) setError(errorMessage(reason));
+        if (!cancelled) updateError(errorMessage(reason));
       })
       .finally(() => {
-        if (!cancelled) setBusy(false);
+        if (!cancelled) updateOperation(null);
       });
     return () => {
       cancelled = true;
@@ -109,69 +292,58 @@ export function DesktopProjectGate(props: { children: ReactNode; detached?: bool
   if (ready) return props.children;
 
   const openExisting = async () => {
-    setBusy(true);
-    setError(null);
+    if (operationRef.current) return;
+    updateOperation('choose');
+    updateError(null);
+    let root: string | null = null;
     try {
-      const root = await chooseProjectDirectory();
-      if (!root) return;
-      await startDesktopProject(root);
-      setReady(true);
+      root = await chooseProjectDirectory();
     } catch (reason) {
-      setError(errorMessage(reason));
+      updateError(errorMessage(reason));
     } finally {
-      setBusy(false);
+      updateOperation(null);
     }
+    if (root) await openProjectAtPath(root).catch(() => undefined);
   };
 
   const openRecent = async (project: RecentProjectInfo) => {
-    setBusy(true);
     setOpeningPath(project.path);
-    setError(null);
-    try {
-      await startDesktopProject(project.path);
-      setReady(true);
-    } catch (reason) {
-      setError(`无法打开最近工程：${project.path}\n${errorMessage(reason)}`);
-    } finally {
-      setOpeningPath(null);
-      setBusy(false);
-    }
+    updateError(null);
+    await openProjectAtPath(project.path)
+      .catch((reason) => {
+        updateError(`无法打开最近工程：${project.path}\n${errorMessage(reason)}`);
+      })
+      .finally(() => {
+        setOpeningPath(null);
+      });
   };
 
   const forgetRecent = async (project: RecentProjectInfo) => {
-    setError(null);
+    updateError(null);
     try {
-      setRecentProjects(await removeRecentProject(project.path));
+      await forgetRecentProjectAtPath(project.path);
     } catch (reason) {
-      setError(`移除最近工程失败：${errorMessage(reason)}`);
+      updateError(`移除最近工程失败：${errorMessage(reason)}`);
     }
   };
 
   const browseLocation = async () => {
-    setBusy(true);
-    setError(null);
+    if (operationRef.current) return;
+    updateOperation('browse');
+    updateError(null);
     try {
       const root = await chooseProjectLocation();
       if (root) setProjectLocation(root);
     } catch (reason) {
-      setError(errorMessage(reason));
+      updateError(errorMessage(reason));
     } finally {
-      setBusy(false);
+      updateOperation(null);
     }
   };
 
   const createNew = async () => {
     if (!validProjectName(projectName) || !projectLocation) return;
-    setBusy(true);
-    setError(null);
-    try {
-      await createDesktopProject(projectLocation, projectName.trim());
-      setReady(true);
-    } catch (reason) {
-      setError(errorMessage(reason));
-    } finally {
-      setBusy(false);
-    }
+    await createProjectAtPath(projectLocation, projectName.trim()).catch(() => undefined);
   };
 
   const targetPath = projectLocation
@@ -198,7 +370,7 @@ export function DesktopProjectGate(props: { children: ReactNode; detached?: bool
               disabled={busy}
               onClick={() => {
                 setMode('create');
-                setError(null);
+                updateError(null);
               }}
             >
               新建工程
@@ -241,7 +413,7 @@ export function DesktopProjectGate(props: { children: ReactNode; detached?: bool
                 disabled={busy}
                 onClick={() => {
                   setMode('welcome');
-                  setError(null);
+                  updateError(null);
                 }}
               >
                 取消

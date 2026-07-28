@@ -13,7 +13,11 @@
  */
 import { invoke } from '@tauri-apps/api/core';
 import type { EditorStore } from '../store';
-import { isDesktopEditor } from '../transport/editorTransport';
+import {
+  isDesktopEditor,
+  type ProjectSnapshot,
+  type RecentProjectInfo,
+} from '../transport/editorTransport';
 import {
   BridgeError,
   type EditorMenuItemInfo,
@@ -119,6 +123,33 @@ export interface AgentWorkspaceProvider {
   assertDiskMutationAllowed: () => Promise<void>;
 }
 
+export type AgentProjectSummary = {
+  id: string;
+  name: string;
+  root: string;
+  scenePath: string | null;
+  revision: number;
+};
+
+export type AgentProjectLifecycleState = {
+  phase: 'welcome' | 'attaching' | 'opening' | 'creating' | 'ready' | 'error';
+  ready: boolean;
+  busy: boolean;
+  operation: 'attach' | 'open' | 'create' | null;
+  error: string | null;
+  project: AgentProjectSummary | null;
+  recentCount: number;
+  recentLimit: number;
+};
+
+export interface AgentProjectLifecycleProvider {
+  getState: () => AgentProjectLifecycleState;
+  listRecent: () => Promise<RecentProjectInfo[]>;
+  forgetRecent: (path: string) => Promise<RecentProjectInfo[]>;
+  open: (root: string) => Promise<ProjectSnapshot>;
+  create: (parent: string, name: string) => Promise<ProjectSnapshot>;
+}
+
 type AgentBuildJob = {
   id: string;
   status: 'running' | 'succeeded' | 'failed' | 'cancelled';
@@ -169,6 +200,10 @@ class AgentBridge {
   private stopLogEvents: (() => void) | null = null;
   private stopAssetEvents: (() => void) | null = null;
   private lastAssetEvent: { signature: string; time: number } | null = null;
+  private projectLifecycleProvider:
+    | (() => AgentProjectLifecycleProvider | null)
+    | null = null;
+  private observedProjectSignature: string | null = null;
 
   /** Wire the bridge to the live editor store. Called once from App. */
   connect(store: EditorStore): void {
@@ -178,6 +213,7 @@ class AgentBridge {
       this.lastPlaySceneObservationAt = 0;
     }
     this.store = store;
+    this.observeProject();
   }
 
   /** Provide scene name / dirty state, which live in React (App) not the store. */
@@ -205,6 +241,31 @@ class AgentBridge {
 
   connectWorkspace(provider: () => AgentWorkspaceProvider | null): void {
     this.workspaceProvider = provider;
+  }
+
+  connectProjectLifecycle(
+    provider: () => AgentProjectLifecycleProvider | null,
+  ): () => void {
+    this.projectLifecycleProvider = provider;
+    this.observeProject();
+    return () => {
+      if (this.projectLifecycleProvider !== provider) return;
+      this.projectLifecycleProvider = null;
+    };
+  }
+
+  /** Record project-hub transitions even before the editor store is mounted. */
+  observeProject(): void {
+    const provider = this.projectLifecycleProvider?.() ?? null;
+    if (!provider) return;
+    const state = {
+      ...provider.getState(),
+      editorReady: this.store != null,
+    };
+    const signature = JSON.stringify(state);
+    if (signature === this.observedProjectSignature) return;
+    this.observedProjectSignature = signature;
+    this.appendEvent('project.changed', state);
   }
 
   /**
@@ -356,6 +417,37 @@ class AgentBridge {
   getSelection(): SelectionInfo {
     const store = this.requireStore();
     return { selected: store.selected, selectedIds: store.selectedIds };
+  }
+
+  getProjectState(): AgentProjectLifecycleState & {
+    editorReady: boolean;
+    eventSequence: number;
+  } {
+    const provider = this.requireProjectLifecycleProvider();
+    this.observeProject();
+    return {
+      ...structuredClone(provider.getState()),
+      editorReady: this.store != null,
+      eventSequence: this.events.currentSequence,
+    };
+  }
+
+  async getRecentProjects(): Promise<{
+    projects: RecentProjectInfo[];
+    count: number;
+    limit: number;
+  }> {
+    try {
+      const projects = await this.requireProjectLifecycleProvider().listRecent();
+      this.observeProject();
+      return {
+        projects: structuredClone(projects),
+        count: projects.length,
+        limit: 12,
+      };
+    } catch (error) {
+      throw projectBridgeError(error);
+    }
   }
 
   getSceneSnapshot(): unknown {
@@ -990,6 +1082,69 @@ class AgentBridge {
     args: Record<string, unknown> = {},
     options: { screenshot?: boolean } = {},
   ): Promise<CommandResult> {
+    if (commandId === 'project.open') {
+      const provider = this.requireAvailableProjectLifecycle();
+      try {
+        const operation = provider.open(requiredString(args, 'root'));
+        this.observeProject();
+        const snapshot = await operation;
+        this.observeProject();
+        return this.finishAsyncCommand(
+          { ok: true, data: projectSummary(snapshot) },
+          options,
+          true,
+        );
+      } catch (error) {
+        this.observeProject();
+        throw projectBridgeError(error);
+      }
+    }
+    if (commandId === 'project.create') {
+      const provider = this.requireAvailableProjectLifecycle();
+      try {
+        const operation = provider.create(
+          requiredString(args, 'parent'),
+          requiredString(args, 'name'),
+        );
+        this.observeProject();
+        const snapshot = await operation;
+        this.observeProject();
+        return this.finishAsyncCommand(
+          { ok: true, data: projectSummary(snapshot) },
+          options,
+          true,
+        );
+      } catch (error) {
+        this.observeProject();
+        throw projectBridgeError(error);
+      }
+    }
+    if (commandId === 'project.forget_recent') {
+      const provider = this.requireProjectLifecycleProvider();
+      const state = provider.getState();
+      if (state.busy) {
+        throw new BridgeError(
+          'CONFLICT',
+          `Project lifecycle is busy${state.operation ? ` (${state.operation})` : ''}`,
+        );
+      }
+      try {
+        const projects = await provider.forgetRecent(
+          requiredString(args, 'path'),
+        );
+        this.observeProject();
+        return this.finishAsyncCommand({
+          ok: true,
+          data: {
+            removedPath: requiredString(args, 'path'),
+            projects: structuredClone(projects),
+          },
+        }, options, true);
+      } catch (error) {
+        this.observeProject();
+        throw projectBridgeError(error);
+      }
+    }
     if (commandId === 'scene.new') {
       const result = await this.requireSceneProvider().create({
         name: requiredString(args, 'name'),
@@ -1151,6 +1306,10 @@ class AgentBridge {
     switch (queryId) {
       case 'editor.state':
         return this.getEditorState();
+      case 'project.state':
+        return this.getProjectState();
+      case 'project.recent':
+        return this.getRecentProjects();
       case 'selection.get':
         return this.getSelection();
       case 'scene.snapshot':
@@ -1267,6 +1426,33 @@ class AgentBridge {
     return provider;
   }
 
+  private requireProjectLifecycleProvider(): AgentProjectLifecycleProvider {
+    const provider = this.projectLifecycleProvider?.() ?? null;
+    if (!provider) {
+      throw new BridgeError('NOT_READY', 'Project lifecycle services are not ready');
+    }
+    return provider;
+  }
+
+  private requireAvailableProjectLifecycle(): AgentProjectLifecycleProvider {
+    const provider = this.requireProjectLifecycleProvider();
+    const state = provider.getState();
+    if (state.busy) {
+      throw new BridgeError(
+        'CONFLICT',
+        `Project lifecycle is busy${state.operation ? ` (${state.operation})` : ''}`,
+      );
+    }
+    if (state.ready || state.project) {
+      throw new BridgeError(
+        'CONFLICT',
+        'A project is already open; project switching is blocked to protect unsaved editor state',
+        { project: state.project },
+      );
+    }
+    return provider;
+  }
+
   private async getAssetOperations(): Promise<AgentAssetOperations> {
     if (!this.assetOperations) {
       const { AgentAssetOperations } = await import('./assetOperations');
@@ -1328,6 +1514,50 @@ function requiredString(
     );
   }
   return allowEmpty ? value : value.trim();
+}
+
+function projectSummary(snapshot: ProjectSnapshot): AgentProjectSummary {
+  return {
+    id: snapshot.projectId,
+    name: snapshot.projectName,
+    root: snapshot.projectRoot,
+    scenePath: snapshot.scenePath ?? null,
+    revision: snapshot.revision,
+  };
+}
+
+function projectBridgeError(reason: unknown): BridgeError {
+  if (reason instanceof BridgeError) return reason;
+  const failure = (
+    reason
+    && typeof reason === 'object'
+    && 'code' in reason
+    && 'message' in reason
+  )
+    ? reason as { code: unknown; message: unknown }
+    : null;
+  const nativeCode = typeof failure?.code === 'string' ? failure.code : '';
+  const message = failure
+    ? String(failure.message)
+    : reason instanceof Error
+      ? reason.message
+      : String(reason);
+  const code = nativeCode === 'noProject'
+    ? 'PROJECT_NOT_OPEN'
+    : ['invalidProject', 'invalidProjectName', 'invalidPath', 'json', 'scene']
+        .includes(nativeCode)
+      ? 'INVALID_ARGS'
+      : [
+          'projectAlreadyExists',
+          'staleRevision',
+          'projectMismatch',
+          'externalSceneModification',
+        ].includes(nativeCode)
+        ? 'CONFLICT'
+        : nativeCode === 'io'
+          ? 'IO_ERROR'
+          : 'INTERNAL';
+  return new BridgeError(code, message, failure ?? undefined);
 }
 
 function requiredNonNegativeInteger(

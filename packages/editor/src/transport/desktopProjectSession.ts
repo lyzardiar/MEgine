@@ -33,8 +33,13 @@ export function getDesktopProject(): ProjectSnapshot | null {
 export async function attachDesktopProject(): Promise<ProjectSnapshot> {
   return enqueueSessionOperation(async () => {
     resetProjectAssetState();
-    currentProject = await getProjectSnapshot();
-    return currentProject;
+    try {
+      currentProject = await getProjectSnapshot();
+      return currentProject;
+    } catch (error) {
+      currentProject = null;
+      throw error;
+    }
   });
 }
 
