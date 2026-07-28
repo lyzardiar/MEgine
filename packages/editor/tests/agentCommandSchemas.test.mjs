@@ -60,6 +60,10 @@ test('command schemas expose exact high-risk guards and shared optimistic option
   assert.equal(COMMAND_PARAMS_SCHEMAS['component.add_many'].properties.entities.maxItems, 256);
   assert.equal(COMMAND_PARAMS_SCHEMAS['component.remove_many'].properties.entities.minItems, 1);
   assert.equal(COMMAND_PARAMS_SCHEMAS['component.remove_many'].properties.entities.maxItems, 256);
+  for (const command of ['component.set_many', 'component.patch_many']) {
+    assert.equal(COMMAND_PARAMS_SCHEMAS[command].properties.entities.minItems, 1);
+    assert.equal(COMMAND_PARAMS_SCHEMAS[command].properties.entities.maxItems, 256);
+  }
   assert.deepEqual(
     COMMAND_PARAMS_SCHEMAS['scene.load_json'].required,
     ['json'],

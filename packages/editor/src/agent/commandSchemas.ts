@@ -528,11 +528,29 @@ export const COMMAND_PARAMS_SCHEMAS: Record<string, AgentJsonSchema> = {
     type: componentType,
     value: { type: 'object', description: 'Complete component value' },
   }, ['entity', 'type', 'value']),
+  'component.set_many': objectSchema({
+    entities: {
+      ...entityIds('Entity ids whose shared component should be replaced together'),
+      minItems: 1,
+      maxItems: 256,
+    },
+    type: componentType,
+    value: { type: 'object', description: 'Complete shared component value' },
+  }, ['entities', 'type', 'value']),
   'component.patch': objectSchema({
     entity: entityId(),
     type: componentType,
     patch: { type: 'object', description: 'Fields to shallow-merge' },
   }, ['entity', 'type', 'patch']),
+  'component.patch_many': objectSchema({
+    entities: {
+      ...entityIds('Entity ids whose shared component should be patched together'),
+      minItems: 1,
+      maxItems: 256,
+    },
+    type: componentType,
+    patch: { type: 'object', description: 'Shared fields to shallow-merge' },
+  }, ['entities', 'type', 'patch']),
   'component.invoke': objectSchema({
     entity: entityId(),
     type: componentType,

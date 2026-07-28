@@ -1334,16 +1334,7 @@ export function createEditorStore(undoService: EditorUndoService = createEditorU
         : normalizedValue;
     },
     patchComponent(entity: number, type: string, patch: Record<string, unknown>) {
-      const e = find(entity);
-      if (!e || e.components[type] == null) return;
-      if (mode === 'edit' && !gizmoDragging) pushUndo(`Edit ${type}`);
-      const safePatch = type === 'TimelineDirector'
-        ? resetTimelineBindingsOnAssetChange(e.components[type], patch)
-        : patch;
-      e.components[type] = withEntityReferenceMetadata(type, {
-        ...(e.components[type] as object),
-        ...safePatch,
-      });
+      this.patchComponents(type, [{ entity, patch }]);
     },
     assignMaterial(
       entity: number,
@@ -1455,6 +1446,29 @@ export function createEditorStore(undoService: EditorUndoService = createEditorU
         entity.components[type] = type === 'TimelineDirector'
           ? resetTimelineBindingsOnAssetChange(entity.components[type], normalizedValue)
           : normalizedValue;
+      }
+      return true;
+    },
+    patchComponents(
+      type: string,
+      updates: Array<{ entity: number; patch: Record<string, unknown> }>,
+    ) {
+      const applicable = updates.filter((update) => find(update.entity)?.components[type] != null);
+      if (!applicable.length) return false;
+      if (mode === 'edit' && !gizmoDragging) pushUndo(`Edit ${type}`);
+      for (const update of applicable) {
+        const entity = find(update.entity);
+        if (!entity) continue;
+        const safePatch = type === 'TimelineDirector'
+          ? resetTimelineBindingsOnAssetChange(
+            entity.components[type],
+            structuredClone(update.patch),
+          )
+          : structuredClone(update.patch);
+        entity.components[type] = withEntityReferenceMetadata(type, {
+          ...(entity.components[type] as object),
+          ...safePatch,
+        });
       }
       return true;
     },

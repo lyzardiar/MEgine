@@ -91,7 +91,15 @@ function createContext() {
       return args[0].length;
     },
     setComponent: (...args) => calls.push(['setComponent', ...args]),
+    setComponents: (...args) => {
+      calls.push(['setComponents', ...args]);
+      return true;
+    },
     patchComponent: (...args) => calls.push(['patchComponent', ...args]),
+    patchComponents: (...args) => {
+      calls.push(['patchComponents', ...args]);
+      return true;
+    },
     invokeBehaviourMethod: (entity, type, method) => {
       calls.push(['invokeBehaviourMethod', entity, type, method]);
       if (type === TEST_BEHAVIOUR_TYPE && method === 'resetAngle') {
@@ -471,6 +479,61 @@ test('component removal protects dependencies and batches one complete transacti
     'COMPONENT_NOT_FOUND',
   );
   assert.equal(calls.length, 1);
+});
+
+test('component batch set and patch validate all targets before one store transaction', () => {
+  const { ctx, calls, entities } = createContext();
+  entities[0].components.PointLight = { intensity: 8, range: 10 };
+  entities[1].components.PointLight = { intensity: 4, range: 6 };
+
+  const setResult = run(ctx, 'component.set_many', {
+    entities: [1, 2],
+    type: 'PointLight',
+    value: { intensity: 3, range: 12 },
+  });
+  assert.deepEqual(calls, [[
+    'setComponents',
+    'PointLight',
+    [
+      { entity: 1, value: { intensity: 3, range: 12 } },
+      { entity: 2, value: { intensity: 3, range: 12 } },
+    ],
+  ]]);
+  assert.deepEqual(setResult.data, {
+    entities: [1, 2],
+    component: 'PointLight',
+    changed: 2,
+  });
+
+  const patchResult = run(ctx, 'component.patch_many', {
+    entities: [1, 2],
+    type: 'PointLight',
+    patch: { intensity: 5 },
+  });
+  assert.deepEqual(calls[1], [
+    'patchComponents',
+    'PointLight',
+    [
+      { entity: 1, patch: { intensity: 5 } },
+      { entity: 2, patch: { intensity: 5 } },
+    ],
+  ]);
+  assert.deepEqual(patchResult.data, {
+    entities: [1, 2],
+    component: 'PointLight',
+    changed: 2,
+  });
+
+  delete entities[1].components.PointLight;
+  assertBridgeError(
+    () => run(ctx, 'component.patch_many', {
+      entities: [1, 2],
+      type: 'PointLight',
+      patch: { intensity: 7 },
+    }),
+    'COMPONENT_NOT_FOUND',
+  );
+  assert.equal(calls.length, 2);
 });
 
 test('component method invocation accepts only registered Behaviour methods', () => {

@@ -808,6 +808,24 @@ export const WRITE_COMMANDS: Record<string, CommandHandler> = {
     ctx.store.setComponent(entity, type, record(args, 'value'));
     return { ok: true, data: { entity, component: type } };
   },
+  'component.set_many': (ctx, args) => {
+    requireEditMode(ctx);
+    const entities = nonEmptyEntityIdArray(args, 'entities');
+    const type = str(args, 'type');
+    for (const entity of entities) requireComponent(ctx, entity, type);
+    const value = record(args, 'value');
+    const changed = ctx.store.setComponents(
+      type,
+      entities.map((entity) => ({ entity, value })),
+    );
+    if (!changed) {
+      throw new BridgeError('INTERNAL', `The editor did not replace component "${type}"`);
+    }
+    return {
+      ok: true,
+      data: { entities, component: type, changed: entities.length },
+    };
+  },
   'component.patch': (ctx, args) => {
     requireEditMode(ctx);
     const entity = entityId(args, 'entity');
@@ -815,6 +833,24 @@ export const WRITE_COMMANDS: Record<string, CommandHandler> = {
     requireComponent(ctx, entity, type);
     ctx.store.patchComponent(entity, type, record(args, 'patch'));
     return { ok: true, data: { entity, component: type } };
+  },
+  'component.patch_many': (ctx, args) => {
+    requireEditMode(ctx);
+    const entities = nonEmptyEntityIdArray(args, 'entities');
+    const type = str(args, 'type');
+    for (const entity of entities) requireComponent(ctx, entity, type);
+    const patch = record(args, 'patch');
+    const changed = ctx.store.patchComponents(
+      type,
+      entities.map((entity) => ({ entity, patch })),
+    );
+    if (!changed) {
+      throw new BridgeError('INTERNAL', `The editor did not patch component "${type}"`);
+    }
+    return {
+      ok: true,
+      data: { entities, component: type, changed: entities.length },
+    };
   },
   'component.invoke': (ctx, args) => {
     const entity = entityId(args, 'entity');
@@ -1069,7 +1105,9 @@ const COMMAND_SUMMARIES: CommandSummary[] = [
   { id: 'component.remove', category: 'component', description: 'Remove a component from an entity', readOnly: false },
   { id: 'component.remove_many', category: 'component', description: 'Remove one shared component from entities as one undo transaction', readOnly: false },
   { id: 'component.set', category: 'component', description: 'Replace a component value on an entity', readOnly: false },
+  { id: 'component.set_many', category: 'component', description: 'Replace one shared component on entities as one undo transaction', readOnly: false },
   { id: 'component.patch', category: 'component', description: 'Shallow-merge fields into a component on an entity', readOnly: false },
+  { id: 'component.patch_many', category: 'component', description: 'Shallow-merge fields into one shared component on entities as one undo transaction', readOnly: false },
   { id: 'component.invoke', category: 'component', description: 'Invoke one registered Behaviour method on an entity', readOnly: false },
   { id: 'transform.set', category: 'transform', description: 'Set position/rotation/scale on an entity transform', readOnly: false },
   { id: 'transform.translate', category: 'transform', description: 'Translate an entity by a local-position delta', readOnly: false },

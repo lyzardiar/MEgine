@@ -1899,11 +1899,33 @@ const TOOLS = [
     type: { type: 'string', description: 'Component type' },
     value: { type: 'object', description: 'Full component value' },
   }, ['entity', 'type', 'value']),
+  execTool('set_component_on_entities', 'Replace one shared component on entities as one undo transaction.', 'component.set_many', {
+    entities: {
+      type: 'array',
+      minItems: 1,
+      maxItems: 256,
+      items: ENTITY_ID_SCHEMA,
+      description: 'Entity ids whose shared component should be replaced together',
+    },
+    type: { type: 'string', description: 'Shared component type' },
+    value: { type: 'object', description: 'Complete shared component value' },
+  }, ['entities', 'type', 'value']),
   execTool('patch_component', 'Shallow-merge fields into a component on an entity.', 'component.patch', {
     entity: { ...ENTITY_ID_SCHEMA, description: 'Entity id' },
     type: { type: 'string', description: 'Component type' },
     patch: { type: 'object', description: 'Fields to merge' },
   }, ['entity', 'type', 'patch']),
+  execTool('patch_component_on_entities', 'Shallow-merge fields into one shared component on entities as one undo transaction.', 'component.patch_many', {
+    entities: {
+      type: 'array',
+      minItems: 1,
+      maxItems: 256,
+      items: ENTITY_ID_SCHEMA,
+      description: 'Entity ids whose shared component should be patched together',
+    },
+    type: { type: 'string', description: 'Shared component type' },
+    patch: { type: 'object', description: 'Shared fields to shallow-merge' },
+  }, ['entities', 'type', 'patch']),
   execTool(
     'invoke_component_method',
     'Invoke one method registered by a Behaviour component. Query get_component_schema first for the exact method list. The edit-mode path is undoable when the method changes serialized fields.',
