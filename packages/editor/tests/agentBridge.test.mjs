@@ -47,7 +47,9 @@ test('whole-window agent capture is background-safe and addressable by window la
   assert.match(mcp, /name: 'preview_asset_trash'/);
   assert.match(mcp, /'restore_asset'/);
   assert.match(mcp, /name: 'get_build_status'/);
+  assert.match(mcp, /'set_build_scenes'/);
   assert.match(mcp, /'start_pc_build'/);
+  assert.match(mcp, /'verify_pc_build'/);
   assert.match(mcp, /name: 'get_editor_events'/);
   assert.match(mcp, /name: 'get_scene_changes'/);
   assert.match(mcp, /name: 'get_project_state'/);
@@ -115,6 +117,10 @@ test('scene, asset, and asynchronous build tools share guarded editor services',
   const assets = fs.readFileSync(path.join(root, 'src', 'projectAssets.ts'), 'utf8');
   const store = fs.readFileSync(path.join(root, 'src', 'store.ts'), 'utf8');
   const viewport = fs.readFileSync(path.join(root, 'src', 'panels', 'Viewport.tsx'), 'utf8');
+  const buildSettings = fs.readFileSync(
+    path.join(root, 'src', 'panels', 'BuildSettings.tsx'),
+    'utf8',
+  );
   const eventJournal = fs.readFileSync(
     path.join(root, 'src', 'agent', 'eventJournal.ts'),
     'utf8',
@@ -136,6 +142,12 @@ test('scene, asset, and asynchronous build tools share guarded editor services',
   assert.match(bridge, /status: 'running'/);
   assert.match(bridge, /listenToPcBuildProgress/);
   assert.match(bridge, /case 'build\.status'/);
+  assert.match(bridge, /commandId === 'build\.settings\.set_scenes'/);
+  assert.match(bridge, /availableScenes/);
+  assert.match(bridge, /commandId === 'build\.verify'/);
+  assert.match(bridge, /verifyPcPlayer\(executable, expectedContentHash\)/);
+  assert.match(buildSettings, /PROJECT_BUILD_SETTINGS_CHANGED_EVENT/);
+  assert.match(eventJournal, /'build\.settings'/);
   assert.match(app, /connectSceneCommands/);
   assert.match(app, /sceneDirtyRef\.current \|\| resourceDirtyRef\.current/);
   assert.match(app, /pass discardDirty=true/);

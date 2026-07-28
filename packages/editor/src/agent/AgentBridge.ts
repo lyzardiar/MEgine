@@ -67,9 +67,14 @@ import {
   getProjectBuildSettings,
   listenToPcBuildProgress,
   listPcBuildHistory,
+  PROJECT_BUILD_SETTINGS_CHANGED_EVENT,
+  saveProjectBuildSettings,
+  verifyPcPlayer,
   type BuildPlayerProfile,
   type BuildPlayerResult,
   type BuildProgressEvent,
+  type ProjectBuildSettings,
+  type VerifyPlayerResult,
 } from '../transport/editorTransport';
 import type { AgentAssetOperations } from './assetOperations';
 import {
@@ -159,6 +164,7 @@ type AgentBuildJob = {
   finishedAt: number | null;
   progress: BuildProgressEvent | null;
   result: BuildPlayerResult | null;
+  verification: VerifyPlayerResult | null;
   error: string | null;
 };
 
@@ -885,6 +891,43 @@ class AgentBridge {
     return bridgeIo('Failed to read Build Settings', () => getProjectBuildSettings());
   }
 
+  async setBuildScenes(requestedScenes: string[]): Promise<ProjectBuildSettings> {
+    if (!isDesktopEditor()) {
+      throw new BridgeError('NOT_READY', 'Build Settings require the desktop editor');
+    }
+    await this.requireWorkspaceProvider().assertDiskMutationAllowed();
+    const current = await bridgeIo(
+      'Failed to read Build Settings',
+      () => getProjectBuildSettings(),
+    );
+    const availableByKey = new Map(
+      current.availableScenes.map((scene) => [scene.toLocaleLowerCase(), scene]),
+    );
+    const scenes = requestedScenes.map((scene) => {
+      const available = availableByKey.get(scene.toLocaleLowerCase());
+      if (!available) {
+        throw new BridgeError(
+          'INVALID_ARGS',
+          `Build scene "${scene}" is not available. Query build.settings for availableScenes.`,
+          { scene, availableScenes: current.availableScenes },
+        );
+      }
+      return available;
+    });
+    const result = await bridgeIo(
+      'Failed to save Build Settings',
+      () => saveProjectBuildSettings(scenes),
+    );
+    window.dispatchEvent(new CustomEvent(PROJECT_BUILD_SETTINGS_CHANGED_EVENT, {
+      detail: result,
+    }));
+    this.appendEvent('build.settings', result);
+    this.logProvider?.(
+      `Agent updated Build Settings: ${result.scenes.length} scene(s), entry ${result.mainScene}`,
+    );
+    return result;
+  }
+
   async getBuildHistory(limit = 20): Promise<unknown> {
     const boundedLimit = Number.isFinite(limit)
       ? Math.min(100, Math.max(1, Math.trunc(limit)))
@@ -932,6 +975,7 @@ class AgentBridge {
       finishedAt: null,
       progress: null,
       result: null,
+      verification: null,
       error: null,
     };
     this.buildJob = job;
@@ -1007,6 +1051,38 @@ class AgentBridge {
       status: 'cancellation-requested',
     });
     return { requested: true, jobId: this.buildJob.id };
+  }
+
+  async verifyBuild(
+    executable: string,
+    expectedContentHash: string,
+  ): Promise<VerifyPlayerResult> {
+    if (!isDesktopEditor()) {
+      throw new BridgeError('NOT_READY', 'Published build verification requires the desktop editor');
+    }
+    if (this.buildJob?.status === 'running') {
+      throw new BridgeError(
+        'CONFLICT',
+        `Build ${this.buildJob.id} is still running; verify it after completion`,
+      );
+    }
+    const verification = await bridgeIo(
+      'Published Player verification failed',
+      () => verifyPcPlayer(executable, expectedContentHash),
+    );
+    const job = this.buildJob;
+    if (job?.result?.contentHash === verification.contentHash) {
+      job.verification = verification;
+    }
+    this.appendEvent('build.progress', {
+      jobId: job?.id ?? null,
+      status: 'verified',
+      verification,
+    });
+    this.logProvider?.(
+      `Agent verified published Player: ${verification.fileCount} file(s), ${verification.contentHash}`,
+    );
+    return verification;
   }
 
   getComponentSchema(type?: string): unknown {
@@ -1223,6 +1299,12 @@ class AgentBridge {
       });
       return this.finishAsyncCommand({ ok: true, data: result }, options, true);
     }
+    if (commandId === 'build.settings.set_scenes') {
+      const result = await this.setBuildScenes(
+        requiredStringArray(args, 'scenes', { nonEmpty: true, unique: true }),
+      );
+      return this.finishAsyncCommand({ ok: true, data: result }, options, true);
+    }
     if (commandId === 'build.start') {
       const profile = optionalEnum(
         args,
@@ -1238,6 +1320,13 @@ class AgentBridge {
     }
     if (commandId === 'build.cancel') {
       return { ok: true, data: await this.cancelBuild() };
+    }
+    if (commandId === 'build.verify') {
+      const result = await this.verifyBuild(
+        requiredString(args, 'executable'),
+        requiredString(args, 'expectedContentHash'),
+      );
+      return this.finishAsyncCommand({ ok: true, data: result }, options, true);
     }
     if (commandId === 'menu.invoke') {
       const path = typeof args.path === 'string' ? args.path : '';
@@ -1514,6 +1603,31 @@ function requiredString(
     );
   }
   return allowEmpty ? value : value.trim();
+}
+
+function requiredStringArray(
+  args: Record<string, unknown>,
+  key: string,
+  options: { nonEmpty?: boolean; unique?: boolean } = {},
+): string[] {
+  const value = args[key];
+  if (!Array.isArray(value) || value.some((item) => typeof item !== 'string' || !item.trim())) {
+    throw new BridgeError(
+      'INVALID_ARGS',
+      `"${key}" must be an array of non-empty strings`,
+    );
+  }
+  const normalized = value.map((item) => (item as string).trim());
+  if (options.nonEmpty && normalized.length === 0) {
+    throw new BridgeError('INVALID_ARGS', `"${key}" must contain at least one value`);
+  }
+  if (options.unique) {
+    const keys = normalized.map((item) => item.toLocaleLowerCase());
+    if (new Set(keys).size !== keys.length) {
+      throw new BridgeError('INVALID_ARGS', `"${key}" must not contain duplicates`);
+    }
+  }
+  return normalized;
 }
 
 function projectSummary(snapshot: ProjectSnapshot): AgentProjectSummary {

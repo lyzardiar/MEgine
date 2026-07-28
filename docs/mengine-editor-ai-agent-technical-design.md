@@ -328,6 +328,8 @@ MEngine 编辑器当前对人类友好，但对 AI Agent 不够友好。AI Agent
 | `asset.trash_list` / `asset.restore` | ✅ 精确 record revision 恢复，不覆盖已占用目标 |
 | `build.start` / `build.cancel` | ✅ 异步 job；写前检查整个 workspace 已保存，进度与结果由 `build.status` 轮询 |
 | `build.settings` / `build.history` / `build.status` | ✅ 构建设置、历史和当前/最近 Agent job 的只读查询 |
+| `build.settings.set_scenes` | ✅ 原子保存精确有序的启用场景；仅接受 `availableScenes` 中的路径，第一项为入口场景，写前拒绝未保存工作 |
+| `build.verify` | ✅ 复用发布 Player 的 `--validate-package`，校验 content hash、manifest、场景与资源；Windows 使用 `CREATE_NO_WINDOW`，不会抢前台 |
 | `build.run` | `run_pc_player`（待接 AgentBridge，必须由调用方显式请求） |
 
 #### 4.2.8 批量与事务
@@ -357,7 +359,7 @@ MEngine 编辑器当前对人类友好，但对 AI Agent 不够友好。AI Agent
 | 命令结果 | 每个写命令返回 `{ ok, revision, data }`，data 含受影响实体/新状态摘要 |
 | 操作后自动截图 | 写命令可带 `options.screenshot: true`，结果里附 `screenshot` 字段，形成「改→看」视觉闭环 |
 | 状态 diff | ✅ `query: scene.diff({ fromRevision })` 返回实体增删改和当前 payload；切场景或历史过期时返回 `resetRequired` 与完整快照 |
-| 事件订阅 | ✅ 有界 journal + cursor 查询 `events.get`，并向原生 WebSocket 广播 `project.changed` / `scene.changed` / `selection.changed` / `mode.changed` / `log.*` / `panel.changed` / `build.progress` / `asset.changed` |
+| 事件订阅 | ✅ 有界 journal + cursor 查询 `events.get`，并向原生 WebSocket 广播 `project.changed` / `scene.changed` / `selection.changed` / `mode.changed` / `log.*` / `panel.changed` / `build.progress` / `build.settings` / `asset.changed` |
 | 结构化错误 | 错误码：`STALE_REVISION` / `ENTITY_NOT_FOUND` / `COMPONENT_NOT_FOUND` / `INVALID_ARGS` / `READONLY` / `PERMISSION_DENIED` / `NOT_READY` |
 
 ## 5. MCP Server 设计（优先传输）
@@ -400,7 +402,8 @@ clear_console_logs,
 undo, redo, save_scene, open_scene, new_scene, focus_panel, open_editor_window,
 invoke_menu, write_asset_text, preview_asset_rename, rename_asset,
 preview_asset_duplicate, duplicate_asset, preview_asset_trash, trash_asset,
-list_asset_trash, restore_asset, start_pc_build, cancel_pc_build,
+list_asset_trash, restore_asset, set_build_scenes, start_pc_build, cancel_pc_build,
+verify_pc_build,
 apply_batch, apply_intent
 ```
 

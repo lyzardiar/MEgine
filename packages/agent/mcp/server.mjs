@@ -271,6 +271,7 @@ const TOOLS = [
               'log.cleared',
               'panel.changed',
               'build.progress',
+              'build.settings',
               'asset.changed',
               'project.changed',
             ],
@@ -642,6 +643,20 @@ const TOOLS = [
     },
   ),
   execTool(
+    'set_build_scenes',
+    'Set the exact ordered scene list in Build Settings. Query get_build_settings.availableScenes first. The first item is the entry scene; unsaved editor work blocks this disk mutation.',
+    'build.settings.set_scenes',
+    {
+      scenes: {
+        type: 'array',
+        minItems: 1,
+        uniqueItems: true,
+        items: { type: 'string' },
+        description: 'Exact ordered paths from availableScenes, e.g. Assets/Scenes/Main.mscene',
+      },
+    },
+  ),
+  execTool(
     'start_pc_build',
     'Start an asynchronous PC Player build after verifying the whole workspace is saved. Poll get_build_status for progress/result.',
     'build.start',
@@ -655,6 +670,21 @@ const TOOLS = [
     'Request safe cancellation of the active AgentBridge PC Player build.',
     'build.cancel',
     {},
+  ),
+  execTool(
+    'verify_pc_build',
+    'Run the published Player package validator without creating a window. Use executable and contentHash from a successful get_build_status result or build history entry.',
+    'build.verify',
+    {
+      executable: {
+        type: 'string',
+        description: 'Published Player executable inside the project build output',
+      },
+      expectedContentHash: {
+        type: 'string',
+        description: 'Exact 64-character contentHash from the build result',
+      },
+    },
   ),
   execTool(
     'create_gameobject',

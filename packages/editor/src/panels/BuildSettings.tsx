@@ -16,6 +16,7 @@ import {
   listPcBuildHistory,
   listPcBuildPatches,
   listenToPcBuildProgress,
+  PROJECT_BUILD_SETTINGS_CHANGED_EVENT,
   restorePcBuildHistory,
   runPcPlayer,
   saveProjectBuildAssetSettings,
@@ -312,6 +313,26 @@ export function BuildSettings(props: {
       });
     return () => { cancelled = true; };
   }, [props.sceneTick]);
+
+  useEffect(() => {
+    const onExternalSettings = (event: Event) => {
+      const next = (event as CustomEvent<ProjectBuildSettings>).detail;
+      if (!next) return;
+      settingsRef.current = next;
+      setSettings(next);
+      const nextDraft = next.alwaysInclude.join('\n');
+      alwaysIncludeDraftRef.current = nextDraft;
+      setAlwaysIncludeDraft(nextDraft);
+      buildReportRevisionRef.current += 1;
+      setLastBuild(null);
+      setLastVerification(null);
+    };
+    window.addEventListener(PROJECT_BUILD_SETTINGS_CHANGED_EVENT, onExternalSettings);
+    return () => window.removeEventListener(
+      PROJECT_BUILD_SETTINGS_CHANGED_EVENT,
+      onExternalSettings,
+    );
+  }, []);
 
   useEffect(() => {
     props.onDirtyChange(assetSettingsDirty);

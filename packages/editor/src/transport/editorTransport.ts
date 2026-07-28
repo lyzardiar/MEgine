@@ -273,6 +273,8 @@ export type ProjectBuildSettings = {
   shaderVariantLimit: number;
 };
 
+export const PROJECT_BUILD_SETTINGS_CHANGED_EVENT = 'mengine:project-build-settings-changed';
+
 export type ProjectSortingLayer = {
   id: string;
   name: string;
