@@ -1,5 +1,8 @@
 import assert from 'node:assert/strict';
+import fs from 'node:fs';
+import path from 'node:path';
 import test from 'node:test';
+import { fileURLToPath } from 'node:url';
 import {
   BridgeOutcomeUnknownError,
   RESOURCES,
@@ -8,6 +11,8 @@ import {
   TOOLS,
 } from '../../agent/mcp/server.mjs';
 import { COMMAND_META } from '../src/agent/commands.ts';
+
+const editorRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 
 test('every AgentBridge write command has exactly one MCP tool with exact required fields', () => {
   const writeTools = TOOLS.filter((tool) => typeof tool.bridgeCommand === 'string');
@@ -46,6 +51,35 @@ test('MCP tool names are unique and every input schema is an object', () => {
       `${tool.name} must declare properties`,
     );
   }
+});
+
+test('every AgentBridge query is exposed by an MCP tool or resource with no stale mappings', () => {
+  const source = fs.readFileSync(
+    path.join(editorRoot, 'src', 'agent', 'AgentBridge.ts'),
+    'utf8',
+  );
+  const queryStart = source.indexOf('async query(');
+  const queryEnd = source.indexOf('private requireStore()', queryStart);
+  assert.ok(queryStart >= 0 && queryEnd > queryStart);
+  const queryIds = new Set(
+    [...source.slice(queryStart, queryEnd).matchAll(/case '([^']+)'/g)]
+      .map((match) => match[1]),
+  );
+
+  const exposedQueryIds = new Set(
+    RESOURCES.map((resource) => resource.bridgeQuery),
+  );
+  for (const tool of TOOLS) {
+    const handlerQueries = [
+      ...String(tool.handler).matchAll(/bridgeQuery\('([^']+)'/g),
+    ].map((match) => match[1]);
+    if (typeof tool.bridgeCommand !== 'string') {
+      assert.ok(handlerQueries.length > 0, `${tool.name} must map to a Bridge query`);
+    }
+    for (const queryId of handlerQueries) exposedQueryIds.add(queryId);
+  }
+
+  assert.deepEqual([...exposedQueryIds].sort(), [...queryIds].sort());
 });
 
 test('MCP resources expose unique, query-backed core editor context', () => {
