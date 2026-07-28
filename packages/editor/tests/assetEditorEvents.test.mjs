@@ -100,7 +100,24 @@ test('asset lifecycle and external changes notify local and remote editor window
 
 test('authored asset writers publish changes through the cross-window event bus', () => {
   const app = fs.readFileSync(path.join(root, 'src', 'App.tsx'), 'utf8');
+  const sceneLibrary = fs.readFileSync(path.join(root, 'src', 'sceneLibrary.ts'), 'utf8');
   assert.match(app, /broadcastProjectAssetsExternalChanges\(changes\)/);
+  assert.match(
+    sceneLibrary,
+    /broadcastProjectAssetsChanged\(\{\s*action: 'deleted',\s*sourcePath: trackedPath/,
+  );
+  assert.match(
+    sceneLibrary,
+    /broadcastProjectAssetsChanged\(\{\s*action: 'renamed',\s*sourcePath: oldPath,\s*destinationPath: newPath/,
+  );
+  assert.match(
+    sceneLibrary,
+    /function broadcastSceneWrite\(path: string, existed: boolean\): void \{\s*broadcastProjectAssetsChanged/,
+  );
+  assert.equal(
+    [...sceneLibrary.matchAll(/broadcastSceneWrite\(/g)].length,
+    4,
+  );
 
   for (const file of [
     'assetImport.ts',

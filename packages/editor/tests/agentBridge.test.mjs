@@ -912,6 +912,10 @@ test('scene, asset, and asynchronous build tools share guarded editor services',
   assert.match(assetOperations, /manifestReferences/);
   assert.match(assetOperations, /referenceScanTruncated/);
   assert.match(assetOperations, /PROJECT_ASSETS_EXTERNAL_CHANGE_EVENT/);
+  assert.equal(
+    [...bridge.matchAll(/this\.appendEvent\(\s*'asset\.changed'/g)].length,
+    1,
+  );
   assert.match(viteFs, /implicitStartupScript/);
   assert.match(viteFs, /materializeImplicitStartupScript/);
   assert.match(viteFs, /sorting-layers-snapshot/);

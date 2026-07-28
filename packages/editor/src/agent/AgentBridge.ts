@@ -3727,11 +3727,6 @@ class AgentBridge {
       } catch (error) {
         throw sceneLifecycleBridgeError(error);
       }
-      this.appendEvent('asset.changed', {
-        action: 'sceneRenamed',
-        sourcePath: sceneAssetPath(result.oldName),
-        destinationPath: sceneAssetPath(result.name),
-      });
       return this.finishAsyncCommand({ ok: true, data: result }, options, true);
     }
     if (commandId === 'scene.delete') {
@@ -3764,10 +3759,6 @@ class AgentBridge {
       } catch (error) {
         throw sceneLifecycleBridgeError(error);
       }
-      this.appendEvent('asset.changed', {
-        action: 'sceneDeleted',
-        sourcePath: sceneAssetPath(result.name),
-      });
       return this.finishAsyncCommand({ ok: true, data: result }, options, true);
     }
     if (commandId === 'asset.import_file') {

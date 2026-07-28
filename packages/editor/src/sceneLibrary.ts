@@ -16,6 +16,7 @@ import {
   endInternalProjectFileWrite,
   refreshProjectFiles,
 } from './projectAssets';
+import { broadcastProjectAssetsChanged } from './assetEditorEvents';
 
 export type SceneMeta = {
   name: string;
@@ -100,6 +101,14 @@ export function readSceneJson(name: string): string | null {
 
 export function sceneFileName(name: string) {
   return `${name}.mscene`;
+}
+
+function broadcastSceneWrite(path: string, existed: boolean): void {
+  broadcastProjectAssetsChanged(
+    existed
+      ? { action: 'modified', sourcePath: path }
+      : { action: 'created', destinationPath: path },
+  );
 }
 
 export function normalizeSceneName(input: string): string | null {
@@ -371,6 +380,9 @@ export async function setEditorPrefs(partial: EditorPrefs) {
 
 export async function writeScene(name: string, json: string) {
   const trackedPath = `Assets/Scenes/${sceneFileName(name)}`;
+  const existed = _index.some(
+    (scene) => scene.name.toLocaleLowerCase() === name.toLocaleLowerCase(),
+  );
   beginInternalProjectFileWrite(trackedPath);
   try {
     if (_backend === 'desktop') {
@@ -383,7 +395,9 @@ export async function writeScene(name: string, json: string) {
       _data.set(savedName, json);
       _active = savedName;
       await refreshProjectFiles();
-      acknowledgeProjectFileWrite(`Assets/Scenes/${sceneFileName(savedName)}`);
+      const savedPath = `Assets/Scenes/${sceneFileName(savedName)}`;
+      acknowledgeProjectFileWrite(savedPath);
+      broadcastSceneWrite(savedPath, existed);
       return;
     }
 
@@ -403,6 +417,7 @@ export async function writeScene(name: string, json: string) {
       _active = name;
       await refreshProjectFiles();
       acknowledgeProjectFileWrite(trackedPath);
+      broadcastSceneWrite(trackedPath, existed);
       return;
     }
 
@@ -416,6 +431,7 @@ export async function writeScene(name: string, json: string) {
     _data.set(name, json);
     _index = nextIndex;
     _active = name;
+    broadcastSceneWrite(trackedPath, existed);
   } finally {
     endInternalProjectFileWrite(trackedPath);
   }
@@ -468,6 +484,7 @@ export async function deleteScene(name: string, expectedRevision?: string) {
       await refreshProjectFiles();
       acknowledgeProjectFileWrite(trackedPath);
     }
+    broadcastProjectAssetsChanged({ action: 'deleted', sourcePath: trackedPath });
   } finally {
     endInternalProjectFileWrite(trackedPath);
   }
@@ -530,6 +547,11 @@ export async function renameScene(oldName: string, newNameRaw: string): Promise<
       acknowledgeProjectFileWrite(oldPath);
       acknowledgeProjectFileWrite(newPath);
     }
+    broadcastProjectAssetsChanged({
+      action: 'renamed',
+      sourcePath: oldPath,
+      destinationPath: newPath,
+    });
     return newName;
   } finally {
     endInternalProjectFileWrite(oldPath);
