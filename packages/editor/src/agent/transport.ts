@@ -9,8 +9,9 @@
  * Only the main editor window attaches this (detached panels skip it), so each
  * request receives exactly one response.
  *
- * Phase 1 serves read-only `query` calls; `execute` (write commands) returns a
- * READONLY error until Phase 2.
+ * Read-only `query` calls dispatch directly. Revision-guarded `execute` calls
+ * require an idempotency key, join duplicate in-flight work, and run through
+ * one bounded FIFO queue so concurrent clients cannot overlap editor writes.
  */
 import { invoke } from '@tauri-apps/api/core';
 import { listen, type UnlistenFn } from '@tauri-apps/api/event';

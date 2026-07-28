@@ -3,13 +3,13 @@
  * integration. It exposes a unified observation surface (`query`) over the
  * live editor store, the viewport canvas, and Tauri window commands.
  *
- * Transports (MCP / WebSocket / HTTP / CLI) are thin adapters that translate
- * their protocol into `query()` / `execute()` calls on the singleton
- * `agentBridge`. This module deliberately has no transport or React dependency
- * so it can be wired once from `App.tsx` and reused everywhere.
+ * Transports (MCP / authenticated WebSocket / CLI, plus future HTTP adapters)
+ * translate their protocol into `query()` / `execute()` calls on the singleton
+ * `agentBridge`. This module deliberately has no transport dependency and uses
+ * React-independent provider interfaces so it can be wired once from `App.tsx`.
  *
- * Phase 1 implements the read-only Observer. The write Dispatcher lands in
- * Phase 2 and will route through the same `EditorStore` methods the UI uses.
+ * The read-only Observer and revision-guarded write Dispatcher both route
+ * through the same services and `EditorStore` methods used by the visible UI.
  */
 import { invoke } from '@tauri-apps/api/core';
 import { INTENT_DEFINITIONS } from '@mengine/agent';

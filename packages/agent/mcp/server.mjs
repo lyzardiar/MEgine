@@ -2612,6 +2612,91 @@ for (const tool of TOOLS) {
   }
 }
 
+const ADDITIVE_BRIDGE_COMMANDS = new Set([
+  'project.create',
+  'asset.import_file',
+  'asset.create',
+  'asset.instantiate',
+  'prefab.create',
+  'asset.duplicate',
+  'entity.create',
+  'entity.create_typed',
+  'entity.duplicate',
+  'component.add',
+  'component.add_many',
+  'window.open_editor',
+]);
+
+const IDEMPOTENT_BRIDGE_COMMANDS = new Set([
+  'console.clear',
+  'profiler.clear',
+  'project.forget_recent',
+  'project.settings.set_sorting_layers',
+  'project.settings.set_tags_and_layers',
+  'scene.save',
+  'scene.save_all',
+  'asset.open',
+  'build.settings.set_scenes',
+  'build.settings.set_asset_policy',
+  'build.cancel',
+  'build.verify',
+  'selection.set',
+  'selection.reveal',
+  'entity.rename',
+  'entity.set_active',
+  'entity.set_actives',
+  'entity.set_tag',
+  'entity.set_tags',
+  'entity.set_layer',
+  'entity.set_layers',
+  'entity.reparent',
+  'entity.reorder',
+  'component.set',
+  'component.set_many',
+  'component.patch',
+  'component.patch_many',
+  'transform.set',
+  'playback.play',
+  'playback.stop',
+  'gizmo.set',
+  'view.frame_selected',
+  'view.set_camera',
+  'view.set_game_resolution',
+  'panel.focus',
+  'panel.reset_layout',
+  'window.open_editor',
+]);
+
+const OPEN_WORLD_BRIDGE_COMMANDS = new Set([
+  'project.open',
+  'project.create',
+  'asset.import_file',
+  'build.start',
+  'build.verify',
+  'build.run',
+  'build.history.create_patch',
+  'build.history.restore',
+  'build.patch.verify',
+]);
+
+function toolAnnotations(tool) {
+  const bridgeCommand = tool.bridgeCommand;
+  if (typeof bridgeCommand !== 'string') {
+    return {
+      readOnlyHint: true,
+      destructiveHint: false,
+      idempotentHint: true,
+      openWorldHint: false,
+    };
+  }
+  return {
+    readOnlyHint: false,
+    destructiveHint: !ADDITIVE_BRIDGE_COMMANDS.has(bridgeCommand),
+    idempotentHint: IDEMPOTENT_BRIDGE_COMMANDS.has(bridgeCommand),
+    openWorldHint: OPEN_WORLD_BRIDGE_COMMANDS.has(bridgeCommand),
+  };
+}
+
 function bridgeResource(uri, name, description, query, args = {}) {
   return {
     uri,
@@ -3268,7 +3353,12 @@ async function handleMessage(msg) {
       return;
     case 'tools/list':
       respond(id, {
-        tools: TOOLS.map((t) => ({ name: t.name, description: t.description, inputSchema: t.inputSchema })),
+        tools: TOOLS.map((tool) => ({
+          name: tool.name,
+          description: tool.description,
+          inputSchema: tool.inputSchema,
+          annotations: toolAnnotations(tool),
+        })),
       });
       return;
     case 'tools/call': {
@@ -3472,6 +3562,7 @@ export {
   SUPPORTED_PROTOCOL_VERSIONS,
   screenshotContent,
   structuredError,
+  toolAnnotations,
   ToolInputValidationError,
   TOOLS,
   validateToolArguments,

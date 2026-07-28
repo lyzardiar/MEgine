@@ -11,6 +11,7 @@ import {
   renderPrompt,
   screenshotContent,
   structuredError,
+  toolAnnotations,
   ToolInputValidationError,
   TOOLS,
   validateToolArguments,
@@ -98,6 +99,64 @@ test('MCP tool names are unique and every input schema is an object', () => {
       `${tool.name} must reject undeclared top-level arguments`,
     );
   }
+});
+
+test('MCP tools expose conservative official safety annotations', () => {
+  for (const tool of TOOLS) {
+    const annotations = toolAnnotations(tool);
+    assert.deepEqual(
+      Object.keys(annotations).sort(),
+      [
+        'destructiveHint',
+        'idempotentHint',
+        'openWorldHint',
+        'readOnlyHint',
+      ],
+    );
+    for (const value of Object.values(annotations)) {
+      assert.equal(typeof value, 'boolean');
+    }
+    if (typeof tool.bridgeCommand !== 'string') {
+      assert.deepEqual(annotations, {
+        readOnlyHint: true,
+        destructiveHint: false,
+        idempotentHint: true,
+        openWorldHint: false,
+      });
+    } else {
+      assert.equal(annotations.readOnlyHint, false);
+    }
+  }
+
+  const annotations = (name) => {
+    const tool = TOOLS.find((candidate) => candidate.name === name);
+    assert.ok(tool, `missing tool ${name}`);
+    return toolAnnotations(tool);
+  };
+  assert.deepEqual(annotations('create_gameobject'), {
+    readOnlyHint: false,
+    destructiveHint: false,
+    idempotentHint: false,
+    openWorldHint: false,
+  });
+  assert.deepEqual(annotations('set_component'), {
+    readOnlyHint: false,
+    destructiveHint: true,
+    idempotentHint: true,
+    openWorldHint: false,
+  });
+  assert.deepEqual(annotations('delete_scene'), {
+    readOnlyHint: false,
+    destructiveHint: true,
+    idempotentHint: false,
+    openWorldHint: false,
+  });
+  assert.deepEqual(annotations('run_pc_player'), {
+    readOnlyHint: false,
+    destructiveHint: true,
+    idempotentHint: false,
+    openWorldHint: true,
+  });
 });
 
 test('MCP validates tool arguments before dispatch with bounded structured issues', () => {

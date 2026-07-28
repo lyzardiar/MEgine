@@ -440,6 +440,8 @@ list_intents, apply_batch, apply_intent
 
 每个 tool 的 `inputSchema` 直接来自命令注册表的 `paramsSchema`（JSON Schema），保证 MCP 客户端能正确校验参数。
 
+`tools/list` 同时为每个工具返回 MCP 官方 `readOnlyHint`、`destructiveHint`、`idempotentHint` 与 `openWorldHint`。只读查询统一标记为封闭世界且可重复；写工具默认按保守策略视为破坏性，仅对纯新增操作解除破坏性提示，并单独标出访问工程外路径、启动编译/Player 或读取外部密钥的开放世界操作。这些元数据用于宿主展示和审批提示，真正的安全边界仍由 token、路径校验、revision、preview token 与显式前台确认承担。
+
 ### 5.3 Resources（只读上下文）
 
 ```

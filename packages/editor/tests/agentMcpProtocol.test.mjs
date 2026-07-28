@@ -262,9 +262,15 @@ test('MCP stdio lists and renders safe workflow prompts with protocol errors', a
         name: 'missing_prompt',
       },
     }),
+    JSON.stringify({
+      jsonrpc: '2.0',
+      id: 15,
+      method: 'tools/list',
+      params: {},
+    }),
   ]);
 
-  assert.equal(responses.length, 5);
+  assert.equal(responses.length, 6);
   assert.deepEqual(responses[0].result.capabilities.prompts, {});
   assert.deepEqual(
     responses[1].result.prompts.map((prompt) => prompt.name),
@@ -289,4 +295,24 @@ test('MCP stdio lists and renders safe workflow prompts with protocol errors', a
       message: 'Unknown prompt: missing_prompt',
     },
   });
+  const listedTools = responses[5].result.tools;
+  assert.equal(responses[5].id, 15);
+  assert.deepEqual(
+    listedTools.find((tool) => tool.name === 'get_project_state').annotations,
+    {
+      readOnlyHint: true,
+      destructiveHint: false,
+      idempotentHint: true,
+      openWorldHint: false,
+    },
+  );
+  assert.deepEqual(
+    listedTools.find((tool) => tool.name === 'run_pc_player').annotations,
+    {
+      readOnlyHint: false,
+      destructiveHint: true,
+      idempotentHint: false,
+      openWorldHint: true,
+    },
+  );
 });
