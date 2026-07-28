@@ -13,6 +13,8 @@ export const AGENT_EVENT_TOPICS = [
   'project.changed',
 ] as const;
 
+export const MAX_AGENT_EVENT_WAITERS = 64;
+
 export type AgentEventTopic = (typeof AGENT_EVENT_TOPICS)[number];
 
 export type AgentEvent = {
@@ -124,7 +126,7 @@ export class AgentEventJournal {
         waitedMs: 0,
       });
     }
-    if (this.waiters.size >= 64) {
+    if (this.waiters.size >= MAX_AGENT_EVENT_WAITERS) {
       throw new Error('Agent event wait limit reached');
     }
     return new Promise((resolve) => {

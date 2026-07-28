@@ -1025,7 +1025,7 @@ const TOOLS = [
   {
     name: 'wait_for_editor_events',
     description:
-      'Wait up to 15 seconds for matching editor events instead of polling. Pass the exact cursor from editor state or the previous event page; timedOut=true is a normal empty result.',
+      'Wait up to 15 seconds for matching editor events instead of polling. Pass the exact cursor from editor state or the previous event page; timedOut=true is a normal empty result. At most 64 waits may be pending; excess requests return RATE_LIMITED with retry guidance.',
     inputSchema: {
       type: 'object',
       required: ['afterSequence'],

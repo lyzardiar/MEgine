@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 import {
   AgentEventJournal,
+  MAX_AGENT_EVENT_WAITERS,
   SceneChangeTracker,
 } from '../src/agent/eventJournal.ts';
 
@@ -79,7 +80,7 @@ test('agent event waits return already-buffered and truncated pages immediately'
 
 test('agent event waits are concurrency-bounded and release their slots', async () => {
   const journal = new AgentEventJournal();
-  const pending = Array.from({ length: 64 }, () => journal.wait({
+  const pending = Array.from({ length: MAX_AGENT_EVENT_WAITERS }, () => journal.wait({
     afterSequence: 0,
     topics: ['mode.changed'],
   }, 1_000));
@@ -87,6 +88,7 @@ test('agent event waits are concurrency-bounded and release their slots', async 
     () => journal.wait({ afterSequence: 0 }, 1_000),
     /event wait limit reached/,
   );
+  assert.equal(MAX_AGENT_EVENT_WAITERS, 64);
 
   journal.append('mode.changed', { mode: 'play' });
   const pages = await Promise.all(pending);

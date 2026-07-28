@@ -128,6 +128,8 @@ test('whole-window agent capture is background-safe and addressable by window la
   assert.match(bridge, /private async scheduleScreenshot/);
   assert.match(bridge, /'RATE_LIMITED'/);
   assert.match(bridge, /pendingScreenshots: this\.pendingScreenshotCount/);
+  assert.match(bridge, /pendingEventWaits: MAX_AGENT_EVENT_WAITERS/);
+  assert.match(bridge, /maxConcurrentEventWaits: MAX_AGENT_EVENT_WAITERS/);
   assert.match(bridge, /this\.lastScreenshotCompletedAt \+ MIN_SCREENSHOT_INTERVAL_MS/);
   assert.match(bridge, /captureWindow\(\s*windowLabel = 'main',\s*maxSize = DEFAULT_SCREENSHOT_MAX_SIZE/);
   assert.match(bridge, /inspectWindow\(/);

@@ -154,6 +154,7 @@ import type { AgentAssetOperations } from './assetOperations';
 import {
   AGENT_EVENT_TOPICS,
   AgentEventJournal,
+  MAX_AGENT_EVENT_WAITERS,
   SceneChangeTracker,
   type AgentEvent,
   type AgentEventPage,
@@ -1399,8 +1400,13 @@ class AgentBridge {
         && error.message === 'Agent event wait limit reached'
       ) {
         throw new BridgeError(
-          'CONFLICT',
+          'RATE_LIMITED',
           'Too many concurrent editor event waits; retry after an existing wait completes',
+          {
+            pendingEventWaits: MAX_AGENT_EVENT_WAITERS,
+            maxConcurrentEventWaits: MAX_AGENT_EVENT_WAITERS,
+            retryAfterMs: 250,
+          },
         );
       }
       throw error;
