@@ -311,7 +311,10 @@ MEngine 编辑器当前对人类友好，但对 AI Agent 不够友好。AI Agent
 | command id | 映射 |
 | --- | --- |
 | `asset.write_text` | ✅ 8 MiB UTF-8 上限；已有文件必须携带精确 revision，新文件必须传 null；写前拒绝任何窗口的未保存工作 |
-| `asset.rename` / `duplicate` / `trash` / `restore` | 对应安全预检与 Tauri 资产事务（待接 AgentBridge） |
+| `asset.rename_preview` / `asset.rename` | ✅ 两阶段引用感知重命名；预览令牌绑定 source revision、自动重写和人工引用，执行前重新扫描校验 |
+| `asset.duplicate_preview` / `asset.duplicate` | ✅ 两阶段复制；新 GUID，移动相对依赖时重写自身内容，脚本引用需显式确认 |
+| `asset.trash_preview` / `asset.trash` | ✅ 完整引用与 manifest 预检；有引用或扫描截断时禁止移动，成功后可恢复 |
+| `asset.trash_list` / `asset.restore` | ✅ 精确 record revision 恢复，不覆盖已占用目标 |
 | `build.start` / `build.cancel` | ✅ 异步 job；写前检查整个 workspace 已保存，进度与结果由 `build.status` 轮询 |
 | `build.settings` / `build.history` / `build.status` | ✅ 构建设置、历史和当前/最近 Agent job 的只读查询 |
 | `build.run` | `run_pc_player`（待接 AgentBridge，必须由调用方显式请求） |
@@ -380,7 +383,10 @@ create_gameobject, delete_entities, duplicate_entities, rename_entity,
 set_active, reparent, add_component, remove_component, set_component,
 patch_component, set_transform, set_selection, play, pause, stop, step,
 undo, redo, save_scene, open_scene, new_scene, focus_panel, open_editor_window,
-invoke_menu, apply_batch, apply_intent
+invoke_menu, write_asset_text, preview_asset_rename, rename_asset,
+preview_asset_duplicate, duplicate_asset, preview_asset_trash, trash_asset,
+list_asset_trash, restore_asset, start_pc_build, cancel_pc_build,
+apply_batch, apply_intent
 ```
 
 每个 tool 的 `inputSchema` 直接来自命令注册表的 `paramsSchema`（JSON Schema），保证 MCP 客户端能正确校验参数。

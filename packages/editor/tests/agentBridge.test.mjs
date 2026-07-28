@@ -42,6 +42,10 @@ test('whole-window agent capture is background-safe and addressable by window la
   assert.match(mcp, /name: 'list_assets'/);
   assert.match(mcp, /name: 'read_asset_text'/);
   assert.match(mcp, /'write_asset_text'/);
+  assert.match(mcp, /name: 'preview_asset_rename'/);
+  assert.match(mcp, /'rename_asset'/);
+  assert.match(mcp, /name: 'preview_asset_trash'/);
+  assert.match(mcp, /'restore_asset'/);
   assert.match(mcp, /name: 'get_build_status'/);
   assert.match(mcp, /'start_pc_build'/);
 });
@@ -72,6 +76,14 @@ test('scene, asset, and asynchronous build tools share guarded editor services',
   const bridge = fs.readFileSync(path.join(root, 'src', 'agent', 'AgentBridge.ts'), 'utf8');
   const app = fs.readFileSync(path.join(root, 'src', 'App.tsx'), 'utf8');
   const assets = fs.readFileSync(path.join(root, 'src', 'projectAssets.ts'), 'utf8');
+  const assetOperations = fs.readFileSync(
+    path.join(root, 'src', 'agent', 'assetOperations.ts'),
+    'utf8',
+  );
+  const viteFs = fs.readFileSync(
+    path.join(root, 'vite', 'mengineFsPlugin.ts'),
+    'utf8',
+  );
 
   assert.match(bridge, /case 'scene\.list'/);
   assert.match(bridge, /commandId === 'scene\.new'/);
@@ -85,4 +97,13 @@ test('scene, asset, and asynchronous build tools share guarded editor services',
   assert.match(app, /sceneDirtyRef\.current \|\| resourceDirtyRef\.current/);
   assert.match(app, /pass discardDirty=true/);
   assert.match(assets, /expectedRevision === undefined/);
+  assert.match(assetOperations, /previewToken/);
+  assert.match(assetOperations, /requireCurrentPreview/);
+  assert.match(assetOperations, /allowManualReferences/);
+  assert.match(assetOperations, /manifestReferences/);
+  assert.match(assetOperations, /referenceScanTruncated/);
+  assert.match(assetOperations, /PROJECT_ASSETS_EXTERNAL_CHANGE_EVENT/);
+  assert.match(viteFs, /implicitStartupScript/);
+  assert.match(viteFs, /materializeImplicitStartupScript/);
+  assert.match(viteFs, /collectEffectiveManifestAssetReferences/);
 });

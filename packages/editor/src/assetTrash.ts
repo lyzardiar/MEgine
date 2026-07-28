@@ -54,13 +54,15 @@ async function fetchJson<T>(url: string, init?: RequestInit): Promise<T> {
   return response.json() as Promise<T>;
 }
 
-type AssetDeleteSnapshot = {
+export type AssetDeleteSnapshot = {
   treeRevision: string;
   manifestRevision: string;
   manifestReferences: Array<{ location: string; reference: string }>;
 };
 
-async function getProjectAssetDeleteSnapshot(sourcePath: string): Promise<AssetDeleteSnapshot> {
+export async function getProjectAssetDeleteSnapshot(
+  sourcePath: string,
+): Promise<AssetDeleteSnapshot> {
   if (isDesktopEditor()) {
     return invoke<AssetDeleteSnapshot>('get_project_asset_delete_snapshot', { sourcePath });
   }

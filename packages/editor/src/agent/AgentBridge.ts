@@ -61,6 +61,7 @@ import {
   type BuildPlayerResult,
   type BuildProgressEvent,
 } from '../transport/editorTransport';
+import type { AgentAssetOperations } from './assetOperations';
 
 type CaptureFn = (
   format: 'image/png' | 'image/jpeg',
@@ -134,6 +135,7 @@ class AgentBridge {
   private workspaceProvider: (() => AgentWorkspaceProvider | null) | null = null;
   private buildJob: AgentBuildJob | null = null;
   private stopBuildProgress: (() => void) | null = null;
+  private assetOperations: AgentAssetOperations | null = null;
 
   /** Wire the bridge to the live editor store. Called once from App. */
   connect(store: EditorStore): void {
@@ -737,6 +739,40 @@ class AgentBridge {
       );
       return this.finishAsyncCommand({ ok: true, data: result }, options, true);
     }
+    if (commandId === 'asset.rename') {
+      const result = await (await this.getAssetOperations()).rename({
+        sourcePath: requiredString(args, 'sourcePath'),
+        destinationPath: requiredString(args, 'destinationPath'),
+        previewToken: requiredString(args, 'previewToken'),
+        allowManualReferences: optionalBoolean(args, 'allowManualReferences', false),
+        allowSkippedFiles: optionalBoolean(args, 'allowSkippedFiles', false),
+      });
+      return this.finishAsyncCommand({ ok: true, data: result }, options, true);
+    }
+    if (commandId === 'asset.duplicate') {
+      const result = await (await this.getAssetOperations()).duplicate({
+        sourcePath: requiredString(args, 'sourcePath'),
+        destinationPath: requiredString(args, 'destinationPath'),
+        previewToken: requiredString(args, 'previewToken'),
+        allowManualReferences: optionalBoolean(args, 'allowManualReferences', false),
+      });
+      return this.finishAsyncCommand({ ok: true, data: result }, options, true);
+    }
+    if (commandId === 'asset.trash') {
+      const result = await (await this.getAssetOperations()).trash({
+        sourcePath: requiredString(args, 'sourcePath'),
+        previewToken: requiredString(args, 'previewToken'),
+        allowSkippedFiles: optionalBoolean(args, 'allowSkippedFiles', false),
+      });
+      return this.finishAsyncCommand({ ok: true, data: result }, options, true);
+    }
+    if (commandId === 'asset.restore') {
+      const result = await (await this.getAssetOperations()).restore({
+        trashId: requiredString(args, 'trashId'),
+        expectedRecordRevision: requiredString(args, 'expectedRecordRevision'),
+      });
+      return this.finishAsyncCommand({ ok: true, data: result }, options, true);
+    }
     if (commandId === 'build.start') {
       const profile = optionalEnum(
         args,
@@ -868,6 +904,22 @@ class AgentBridge {
         );
       case 'asset.find_references':
         return this.findAssetReferences(requiredString(params, 'path'));
+      case 'asset.rename_preview':
+        return (await this.getAssetOperations()).previewRename(
+          requiredString(params, 'sourcePath'),
+          requiredString(params, 'destinationPath'),
+        );
+      case 'asset.duplicate_preview':
+        return (await this.getAssetOperations()).previewDuplicate(
+          requiredString(params, 'sourcePath'),
+          requiredString(params, 'destinationPath'),
+        );
+      case 'asset.trash_preview':
+        return (await this.getAssetOperations()).previewTrash(
+          requiredString(params, 'sourcePath'),
+        );
+      case 'asset.trash_list':
+        return (await this.getAssetOperations()).listTrash();
       case 'build.settings':
         return this.getBuildSettings();
       case 'build.status':
@@ -914,6 +966,17 @@ class AgentBridge {
     const provider = this.workspaceProvider?.() ?? null;
     if (!provider) throw new BridgeError('NOT_READY', 'Workspace services are not ready');
     return provider;
+  }
+
+  private async getAssetOperations(): Promise<AgentAssetOperations> {
+    if (!this.assetOperations) {
+      const { AgentAssetOperations } = await import('./assetOperations');
+      this.assetOperations = new AgentAssetOperations(
+        () => this.requireWorkspaceProvider().assertDiskMutationAllowed(),
+        (message) => this.logProvider?.(message),
+      );
+    }
+    return this.assetOperations;
   }
 
   private async finishAsyncCommand(

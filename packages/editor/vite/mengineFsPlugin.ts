@@ -859,8 +859,9 @@ export function mengineFsPlugin(opts: MengineFsOptions | string): Plugin {
 
     const manifestOriginal = fs.readFileSync(manifestPath);
     const manifestRevision = assetFileRevision(fs.lstatSync(manifestPath));
+    const manifestValue = JSON.parse(manifestOriginal.toString('utf8')) as unknown;
     const rewrittenManifest = rewriteManifestReferences(
-      JSON.parse(manifestOriginal.toString('utf8')),
+      materializeImplicitStartupScript(manifestValue, source.relative),
       source.relative,
       destination.relative,
     );
@@ -1270,6 +1271,55 @@ export function mengineFsPlugin(opts: MengineFsOptions | string): Plugin {
     return output;
   }
 
+  function implicitStartupScript(value: unknown): string | null {
+    if (!value || typeof value !== 'object' || Array.isArray(value)) return null;
+    const manifest = value as Record<string, unknown>;
+    const explicit = manifest.startupScript ?? manifest.startup_script;
+    if (typeof explicit === 'string' && explicit.trim()) return null;
+    const legacy = Array.isArray(manifest.scripts) ? manifest.scripts[0] : null;
+    if (typeof legacy === 'string' && legacy.trim()) return null;
+    return [
+      'Assets/Scripts/Main.ts',
+      'Assets/Scripts/main.ts',
+      'Assets/Scripts/Main.js',
+      'Assets/Scripts/main.js',
+    ].find((candidate) => {
+      const absolute = path.join(projectRoot, ...candidate.split('/'));
+      if (!fs.existsSync(absolute)) return false;
+      const stat = fs.lstatSync(absolute);
+      return stat.isFile() && !stat.isSymbolicLink();
+    }) ?? null;
+  }
+
+  function materializeImplicitStartupScript(value: unknown, source: string): unknown {
+    const implicit = implicitStartupScript(value);
+    if (
+      !implicit
+      || implicit.toLocaleLowerCase() !== source.toLocaleLowerCase()
+      || !value
+      || typeof value !== 'object'
+      || Array.isArray(value)
+    ) return value;
+    return {
+      ...(value as Record<string, unknown>),
+      startupScript: implicit,
+    };
+  }
+
+  function collectEffectiveManifestAssetReferences(
+    value: unknown,
+    target: string,
+  ): Array<{ location: string; reference: string }> {
+    const references = collectManifestAssetReferences(value, target);
+    const implicit = implicitStartupScript(value);
+    if (
+      implicit?.toLocaleLowerCase() === target.toLocaleLowerCase()
+    ) {
+      references.push({ location: '/startupScript', reference: target });
+    }
+    return references;
+  }
+
   function readStableManifest(): { revision: string; value: unknown } {
     for (let attempt = 0; attempt < 2; attempt += 1) {
       const before = assetFileRevision(fs.lstatSync(manifestPath));
@@ -1286,7 +1336,10 @@ export function mengineFsPlugin(opts: MengineFsOptions | string): Plugin {
     return {
       treeRevision: projectAssetTreeRevision(),
       manifestRevision: manifest.revision,
-      manifestReferences: collectManifestAssetReferences(manifest.value, source.relative),
+      manifestReferences: collectEffectiveManifestAssetReferences(
+        manifest.value,
+        source.relative,
+      ),
     };
   }
 

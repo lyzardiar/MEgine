@@ -335,6 +335,54 @@ const TOOLS = [
     handler: async (args) => textContent(await bridgeQuery('asset.find_references', args)),
   },
   {
+    name: 'preview_asset_rename',
+    description:
+      'Prepare a reference-aware asset rename. Returns a previewToken, automatic rewrites, skipped-file count, and bounded manual references. Pass the token unchanged to rename_asset.',
+    inputSchema: {
+      type: 'object',
+      required: ['sourcePath', 'destinationPath'],
+      properties: {
+        sourcePath: { type: 'string', description: 'Existing asset path under Assets/' },
+        destinationPath: { type: 'string', description: 'Unused destination path with the same extension' },
+      },
+    },
+    handler: async (args) => textContent(await bridgeQuery('asset.rename_preview', args)),
+  },
+  {
+    name: 'preview_asset_duplicate',
+    description:
+      'Prepare a GUID-safe asset duplicate and report any source references requiring review. Pass the returned previewToken unchanged to duplicate_asset.',
+    inputSchema: {
+      type: 'object',
+      required: ['sourcePath', 'destinationPath'],
+      properties: {
+        sourcePath: { type: 'string', description: 'Existing asset path under Assets/' },
+        destinationPath: { type: 'string', description: 'Unused destination path with the same extension' },
+      },
+    },
+    handler: async (args) => textContent(await bridgeQuery('asset.duplicate_preview', args)),
+  },
+  {
+    name: 'preview_asset_trash',
+    description:
+      'Scan exact, manifest, relative, subresource, and script references before moving an asset to project Trash. Referenced assets cannot be trashed.',
+    inputSchema: {
+      type: 'object',
+      required: ['sourcePath'],
+      properties: {
+        sourcePath: { type: 'string', description: 'Existing asset path under Assets/' },
+      },
+    },
+    handler: async (args) => textContent(await bridgeQuery('asset.trash_preview', args)),
+  },
+  {
+    name: 'list_asset_trash',
+    description:
+      'List recoverable project Trash entries with exact record revisions required by restore_asset.',
+    inputSchema: { type: 'object', properties: {} },
+    handler: async () => textContent(await bridgeQuery('asset.trash_list')),
+  },
+  {
     name: 'get_build_settings',
     description:
       'Get ordered scenes in build, available scenes, content inclusion mode, always-included paths, and shader variant limit.',
@@ -444,6 +492,48 @@ const TOOLS = [
         type: ['string', 'null'],
         description: 'Current asset revision, or null only for creation',
       },
+    },
+  ),
+  execTool(
+    'rename_asset',
+    'Apply an asset rename prepared by preview_asset_rename. The exact preview token is mandatory and is revalidated immediately before the atomic transaction.',
+    'asset.rename',
+    {
+      sourcePath: { type: 'string', description: 'Source path used for the preview' },
+      destinationPath: { type: 'string', description: 'Destination path used for the preview' },
+      previewToken: { type: 'string', description: 'Exact token returned by preview_asset_rename' },
+      allowManualReferences: { type: 'boolean', description: 'Explicitly accept references that cannot be rewritten automatically' },
+      allowSkippedFiles: { type: 'boolean', description: 'Explicitly accept files skipped by reference scanning' },
+    },
+  ),
+  execTool(
+    'duplicate_asset',
+    'Apply an asset duplicate prepared by preview_asset_duplicate. Creates a new GUID and revalidates the exact preview before writing.',
+    'asset.duplicate',
+    {
+      sourcePath: { type: 'string', description: 'Source path used for the preview' },
+      destinationPath: { type: 'string', description: 'Destination path used for the preview' },
+      previewToken: { type: 'string', description: 'Exact token returned by preview_asset_duplicate' },
+      allowManualReferences: { type: 'boolean', description: 'Explicitly accept source references requiring manual review' },
+    },
+  ),
+  execTool(
+    'trash_asset',
+    'Move an unreferenced asset to recoverable project Trash after revalidating preview_asset_trash. Existing references or a truncated scan always block the operation.',
+    'asset.trash',
+    {
+      sourcePath: { type: 'string', description: 'Source path used for the preview' },
+      previewToken: { type: 'string', description: 'Exact token returned by preview_asset_trash' },
+      allowSkippedFiles: { type: 'boolean', description: 'Explicitly accept files skipped by reference scanning' },
+    },
+  ),
+  execTool(
+    'restore_asset',
+    'Restore an exact project Trash entry without overwriting an occupied destination.',
+    'asset.restore',
+    {
+      trashId: { type: 'string', description: 'Trash entry id returned by list_asset_trash' },
+      expectedRecordRevision: { type: 'string', description: 'Exact record revision returned by list_asset_trash' },
     },
   ),
   execTool(

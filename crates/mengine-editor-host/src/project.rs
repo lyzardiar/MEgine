@@ -862,6 +862,11 @@ impl ProjectSession {
         })?;
         let manifest_original = std::fs::read(&manifest_path)?;
         let mut manifest: ProjectManifest = serde_json::from_slice(&manifest_original)?;
+        if implicit_startup_script(&self.project_root, &manifest)
+            .is_some_and(|path| path.eq_ignore_ascii_case(&source_portable))
+        {
+            manifest.startup_script = Some(source_portable.clone());
+        }
         let manifest_changed = rewrite_manifest_asset_references(
             &mut manifest,
             &source_portable,
@@ -1275,13 +1280,11 @@ impl ProjectSession {
         let source_portable = portable_path(&source);
         let manifest_path = self.project_root.join("project.json");
         let (manifest_revision, manifest_value) = read_stable_json_value(&manifest_path)?;
-        let mut manifest_references = Vec::new();
-        collect_manifest_asset_references(
+        let manifest_references = effective_manifest_asset_references(
+            &self.project_root,
             &manifest_value,
             &source_portable,
-            "",
-            &mut manifest_references,
-        );
+        )?;
         Ok(AssetDeleteSnapshot {
             tree_revision: self.asset_tree_revision()?,
             manifest_revision,
@@ -1368,13 +1371,11 @@ impl ProjectSession {
                 "project.json changed since the delete reference scan; preview again".into(),
             ));
         }
-        let mut manifest_references = Vec::new();
-        collect_manifest_asset_references(
+        let manifest_references = effective_manifest_asset_references(
+            &self.project_root,
             &manifest_value,
             &source_portable,
-            "",
-            &mut manifest_references,
-        );
+        )?;
         if !manifest_references.is_empty() {
             return Err(ProjectError::AssetTransaction(
                 "project.json still references this asset".into(),
@@ -2405,6 +2406,54 @@ fn collect_manifest_asset_references(
         }
         _ => {}
     }
+}
+
+fn implicit_startup_script(project_root: &Path, manifest: &ProjectManifest) -> Option<String> {
+    if manifest
+        .startup_script
+        .as_deref()
+        .is_some_and(|path| !path.trim().is_empty())
+    {
+        return None;
+    }
+    if manifest
+        .extra
+        .get("scripts")
+        .and_then(serde_json::Value::as_array)
+        .and_then(|scripts| scripts.first())
+        .and_then(serde_json::Value::as_str)
+        .is_some_and(|path| !path.trim().is_empty())
+    {
+        return None;
+    }
+    [
+        "Assets/Scripts/Main.ts",
+        "Assets/Scripts/main.ts",
+        "Assets/Scripts/Main.js",
+        "Assets/Scripts/main.js",
+    ]
+    .into_iter()
+    .find(|candidate| project_root.join(candidate).is_file())
+    .map(str::to_owned)
+}
+
+fn effective_manifest_asset_references(
+    project_root: &Path,
+    value: &serde_json::Value,
+    target: &str,
+) -> Result<Vec<AssetManifestReference>, ProjectError> {
+    let mut references = Vec::new();
+    collect_manifest_asset_references(value, target, "", &mut references);
+    let manifest: ProjectManifest = serde_json::from_value(value.clone())?;
+    if implicit_startup_script(project_root, &manifest)
+        .is_some_and(|path| path.eq_ignore_ascii_case(target))
+    {
+        references.push(AssetManifestReference {
+            location: "/startupScript".into(),
+            reference: target.into(),
+        });
+    }
+    Ok(references)
 }
 
 fn remove_empty_asset_parents(project_root: &Path, asset: &Path) {
@@ -3660,6 +3709,46 @@ mod tests {
             session.always_include(),
             vec!["Assets/Characters/Hero/Hero.png"]
         );
+        std::fs::remove_dir_all(root).unwrap();
+    }
+
+    #[test]
+    fn legacy_implicit_startup_script_is_protected_and_materialized_by_rename() {
+        let root = make_project();
+        std::fs::create_dir_all(root.join("Assets/Scripts")).unwrap();
+        let source = root.join("Assets/Scripts/Main.ts");
+        std::fs::write(&source, "export function start() {}\n").unwrap();
+        let guid = mengine_assets::ensure_asset_sidecar(&source, "script")
+            .unwrap()
+            .guid
+            .0;
+        let mut session = ProjectSession::open(&root).unwrap();
+
+        let snapshot = session
+            .asset_delete_snapshot("Assets/Scripts/Main.ts")
+            .unwrap();
+        assert_eq!(snapshot.manifest_references.len(), 1);
+        assert_eq!(snapshot.manifest_references[0].location, "/startupScript");
+        assert_eq!(
+            snapshot.manifest_references[0].reference,
+            "Assets/Scripts/Main.ts"
+        );
+
+        let result = session
+            .rename_asset(AssetRenameRequest {
+                source_path: "Assets/Scripts/Main.ts".into(),
+                destination_path: "Assets/Scripts/Bootstrap.ts".into(),
+                expected_source_revision: scene_file_revision(&source).unwrap().unwrap(),
+                expected_guid: guid,
+                updates: Vec::new(),
+            })
+            .unwrap();
+        assert_eq!(result.destination_path, "Assets/Scripts/Bootstrap.ts");
+        assert!(!source.exists());
+        assert!(root.join("Assets/Scripts/Bootstrap.ts").is_file());
+        let manifest: serde_json::Value =
+            serde_json::from_slice(&std::fs::read(root.join("project.json")).unwrap()).unwrap();
+        assert_eq!(manifest["startupScript"], "Assets/Scripts/Bootstrap.ts");
         std::fs::remove_dir_all(root).unwrap();
     }
 
