@@ -78,6 +78,10 @@ function createContext() {
       calls.push(['addComponent', ...args]);
       return true;
     },
+    addComponents: (...args) => {
+      calls.push(['addComponents', ...args]);
+      return args[0].length;
+    },
     removeComponent: (...args) => {
       calls.push(['removeComponent', ...args]);
       return true;
@@ -388,6 +392,43 @@ test('component add uses catalog defaults unless a custom value is explicit', ()
     'CustomComponent',
     { enabled: true },
   ]);
+});
+
+test('component batch add validates all targets before one store transaction', () => {
+  const { ctx, calls, entities } = createContext();
+  const result = run(ctx, 'component.add_many', {
+    entities: [1, 2],
+    type: 'DirectionalLight',
+  });
+  assert.deepEqual(calls, [[
+    'addComponents',
+    [1, 2],
+    'DirectionalLight',
+    {
+      color: [1, 1, 0.95, 1],
+      intensity: 1,
+      cast_shadows: true,
+      shadow_strength: 1,
+      shadow_bias: 0.0015,
+      shadow_normal_bias: 0.02,
+      shadow_distance: 30,
+    },
+  ]]);
+  assert.deepEqual(result.data, {
+    entities: [1, 2],
+    component: 'DirectionalLight',
+    changed: 2,
+  });
+
+  entities[1].components.DirectionalLight = {};
+  assertBridgeError(
+    () => run(ctx, 'component.add_many', {
+      entities: [1, 2],
+      type: 'DirectionalLight',
+    }),
+    'INVALID_ARGS',
+  );
+  assert.equal(calls.length, 1);
 });
 
 test('component method invocation accepts only registered Behaviour methods', () => {

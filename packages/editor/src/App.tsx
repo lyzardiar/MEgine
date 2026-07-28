@@ -2515,6 +2515,15 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
                   log(`Cannot add ${type}`, 'warn');
                 }
               }}
+              onAddComponents={(entities, type, value) => {
+                const changed = store.addComponents(entities, type, value);
+                if (changed > 0) {
+                  log(`Added ${type} to ${changed} GameObjects`);
+                  refresh();
+                } else {
+                  log(`Cannot add ${type} to the selection`, 'warn');
+                }
+              }}
               onRemoveComponent={(entity, type) => {
                 if (store.removeComponent(entity, type)) {
                   log(`Removed ${type}`);

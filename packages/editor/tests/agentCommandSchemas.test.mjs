@@ -56,6 +56,8 @@ test('command schemas expose exact high-risk guards and shared optimistic option
     assert.equal(COMMAND_PARAMS_SCHEMAS[command].properties.ids.minItems, 1);
     assert.equal(COMMAND_PARAMS_SCHEMAS[command].properties.ids.maxItems, 256);
   }
+  assert.equal(COMMAND_PARAMS_SCHEMAS['component.add_many'].properties.entities.minItems, 1);
+  assert.equal(COMMAND_PARAMS_SCHEMAS['component.add_many'].properties.entities.maxItems, 256);
   assert.deepEqual(
     COMMAND_PARAMS_SCHEMAS['scene.load_json'].required,
     ['json'],

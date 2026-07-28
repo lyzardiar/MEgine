@@ -717,6 +717,39 @@ export const WRITE_COMMANDS: Record<string, CommandHandler> = {
     }
     return { ok: true, data: { entity, component: type } };
   },
+  'component.add_many': (ctx, args) => {
+    requireEditMode(ctx);
+    const entities = nonEmptyEntityIdArray(args, 'entities');
+    const type = str(args, 'type');
+    requireEntities(ctx, entities, 'entities');
+    const records = entities.map((entity) => requireEntity(ctx, entity));
+    const existing = records
+      .filter((entity) => entity.components[type] != null)
+      .map((entity) => entity.entity);
+    if (existing.length) {
+      throw new BridgeError(
+        'INVALID_ARGS',
+        `Component "${type}" already exists on entities: ${existing.join(', ')}`,
+      );
+    }
+    const value = args.value === undefined
+      ? createComponentDefaults(type)
+      : record(args, 'value');
+    if (!value) {
+      throw new BridgeError(
+        'COMPONENT_NOT_FOUND',
+        `Unknown component type "${type}"; provide an explicit value for a custom component`,
+      );
+    }
+    const changed = ctx.store.addComponents(entities, type, value);
+    if (changed !== entities.length) {
+      throw new BridgeError(
+        'INTERNAL',
+        `The editor added "${type}" to ${changed} of ${entities.length} entities`,
+      );
+    }
+    return { ok: true, data: { entities, component: type, changed } };
+  },
   'component.remove': (ctx, args) => {
     requireEditMode(ctx);
     const entity = entityId(args, 'entity');
@@ -996,6 +1029,7 @@ const COMMAND_SUMMARIES: CommandSummary[] = [
   { id: 'entity.reparent', category: 'entity', description: 'Reparent entities under a new parent', readOnly: false },
   { id: 'entity.reorder', category: 'entity', description: 'Move an entity to a sibling index under its current parent', readOnly: false },
   { id: 'component.add', category: 'component', description: 'Add a component to an entity, using catalog defaults when value is omitted', readOnly: false },
+  { id: 'component.add_many', category: 'component', description: 'Add one component to entities as one undo transaction', readOnly: false },
   { id: 'component.remove', category: 'component', description: 'Remove a component from an entity', readOnly: false },
   { id: 'component.set', category: 'component', description: 'Replace a component value on an entity', readOnly: false },
   { id: 'component.patch', category: 'component', description: 'Shallow-merge fields into a component on an entity', readOnly: false },

@@ -190,6 +190,7 @@ test('whole-window agent capture is background-safe and addressable by window la
   assert.match(mcp, /'set_entity_layer'/);
   assert.match(mcp, /'set_entity_layers'/);
   assert.match(mcp, /'set_entities_active'/);
+  assert.match(mcp, /'add_component_to_entities'/);
   assert.match(mcp, /name: 'list_recent_projects'/);
   assert.match(mcp, /'open_project'/);
   assert.match(mcp, /'create_project'/);

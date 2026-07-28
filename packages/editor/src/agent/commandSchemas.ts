@@ -499,6 +499,18 @@ export const COMMAND_PARAMS_SCHEMAS: Record<string, AgentJsonSchema> = {
       description: 'Optional initial component value; known components use catalog defaults when omitted',
     },
   }, ['entity', 'type']),
+  'component.add_many': objectSchema({
+    entities: {
+      ...entityIds('Entity ids that should receive the component together'),
+      minItems: 1,
+      maxItems: 256,
+    },
+    type: componentType,
+    value: {
+      type: 'object',
+      description: 'Optional shared initial value; known components use catalog defaults when omitted',
+    },
+  }, ['entities', 'type']),
   'component.remove': objectSchema({
     entity: entityId(),
     type: componentType,

@@ -1038,6 +1038,11 @@ function MultiSelectionInspector(props: {
   onSetActives?: (ids: number[], active: boolean) => void;
   onSetTags?: (ids: number[], tag: string) => void;
   onSetLayers?: (ids: number[], layer: number) => void;
+  onAddComponents?: (
+    ids: number[],
+    type: string,
+    value: Record<string, unknown>,
+  ) => void;
   onChangeTransforms?: (updates: Array<{ entity: number; transform: Transform }>) => void;
   onSetComponents?: (
     type: string,
@@ -1046,6 +1051,8 @@ function MultiSelectionInspector(props: {
   onBeginEditGesture?: () => void;
   onEndEditGesture?: () => void;
 }) {
+  const [componentMenuOpen, setComponentMenuOpen] = useState(false);
+  const componentMenuRef = useRef<HTMLDivElement>(null);
   const transformEntities = props.entities.filter((entity) => entity.components.Transform != null);
   const rectEntities = props.entities.filter((entity) => entity.components.RectTransform != null);
   const allTransforms = transformEntities.length === props.entities.length;
@@ -1081,6 +1088,20 @@ function MultiSelectionInspector(props: {
       .map((value) => ({ value, label: `Layer ${value} (Unconfigured)` })),
     ...props.layerOptions,
   ];
+  const availableComponents = getComponentCatalog().filter((component) => (
+    props.entities.every((entity) => entity.components[component.type] == null)
+  ));
+
+  useEffect(() => {
+    if (!componentMenuOpen) return;
+    const close = (event: MouseEvent) => {
+      if (!componentMenuRef.current?.contains(event.target as Node)) {
+        setComponentMenuOpen(false);
+      }
+    };
+    window.addEventListener('mousedown', close);
+    return () => window.removeEventListener('mousedown', close);
+  }, [componentMenuOpen]);
 
   const replaceTransforms = (value: Record<string, unknown>) => {
     props.onChangeTransforms?.(transformEntities.map((entity) => ({
@@ -1293,6 +1314,41 @@ function MultiSelectionInspector(props: {
         {!allRects && !allTransforms && (
           <div className="empty-state">Selection has no shared Transform type</div>
         )}
+        <div className="add-comp-wrap" ref={componentMenuRef}>
+          <button
+            type="button"
+            className="add-comp"
+            aria-label="Add Component to selection"
+            onClick={() => setComponentMenuOpen((open) => !open)}
+          >
+            Add Component
+          </button>
+          {componentMenuOpen && (
+            <div className="add-comp-menu">
+              {availableComponents.length === 0 && (
+                <div className="add-comp-empty">No shared component can be added</div>
+              )}
+              {availableComponents.map((component) => (
+                <button
+                  key={component.type}
+                  type="button"
+                  className="add-comp-item"
+                  onClick={() => {
+                    props.onAddComponents?.(
+                      entityIds,
+                      component.type,
+                      component.create(),
+                    );
+                    setComponentMenuOpen(false);
+                  }}
+                >
+                  <span className="add-comp-title">{component.label}</span>
+                  <span className="add-comp-desc">{component.description}</span>
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
       </InspectorEditScope>
     </InspectorGestureProvider>
   );
@@ -1310,6 +1366,7 @@ export function Inspector(props: {
   entities?: Array<{
     entity: number;
     name?: string | null;
+    active?: boolean;
     tag?: string;
     layer?: number;
     components: Record<string, unknown>;
@@ -1338,6 +1395,11 @@ export function Inspector(props: {
   onSetActives?: (ids: number[], active: boolean) => void;
   onSetTags?: (ids: number[], tag: string) => void;
   onSetLayers?: (ids: number[], layer: number) => void;
+  onAddComponents?: (
+    ids: number[],
+    type: string,
+    value: Record<string, unknown>,
+  ) => void;
   onBeginEditGesture?: () => void;
   onEndEditGesture?: () => void;
 }) {
@@ -1382,6 +1444,7 @@ export function Inspector(props: {
           onSetActives={props.onSetActives}
           onSetTags={props.onSetTags}
           onSetLayers={props.onSetLayers}
+          onAddComponents={props.onAddComponents}
           onChangeTransforms={props.onChangeTransforms}
           onSetComponents={props.onSetComponents}
           onBeginEditGesture={props.onBeginEditGesture}

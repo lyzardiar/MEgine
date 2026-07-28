@@ -1869,6 +1869,17 @@ const TOOLS = [
     type: { type: 'string', description: 'Component type, e.g. MeshRenderer, Rigidbody, AutoRotate' },
     value: { type: 'object', description: 'Initial component value (optional)' },
   }, ['entity', 'type']),
+  execTool('add_component_to_entities', 'Add one component to entities as one undo transaction.', 'component.add_many', {
+    entities: {
+      type: 'array',
+      minItems: 1,
+      maxItems: 256,
+      items: ENTITY_ID_SCHEMA,
+      description: 'Entity ids that should receive the component together',
+    },
+    type: { type: 'string', description: 'Component type, e.g. MeshRenderer, Rigidbody, AutoRotate' },
+    value: { type: 'object', description: 'Optional shared initial value; known components use catalog defaults when omitted' },
+  }, ['entities', 'type']),
   execTool('remove_component', 'Remove a component from an entity.', 'component.remove', {
     entity: { ...ENTITY_ID_SCHEMA, description: 'Entity id' },
     type: { type: 'string', description: 'Component type to remove' },

@@ -1275,22 +1275,31 @@ export function createEditorStore(undoService: EditorUndoService = createEditorU
       return true;
     },
     addComponent(entity: number, type: string, value: Record<string, unknown>) {
-      if (mode !== 'edit') return false;
-      const e = find(entity);
-      if (!e) return false;
-      if (e.components[type] != null) return false;
-      pushUndo(`Add ${type}`);
-      e.components[type] = value;
-      // RequireComponent: auto-add missing deps
+      return this.addComponents([entity], type, value) > 0;
+    },
+    addComponents(
+      entities: readonly number[],
+      type: string,
+      value: Record<string, unknown>,
+    ) {
+      if (mode !== 'edit') return 0;
+      const targets = [...new Set(entities)]
+        .map((entity) => find(entity))
+        .filter((entity): entity is EntityRec => (
+          entity != null && entity.components[type] == null
+        ));
+      if (!targets.length) return 0;
+      pushUndo(targets.length > 1 ? `Add ${type} to GameObjects` : `Add ${type}`);
       const requirements = componentRequirements(type);
-      if (requirements.length) {
+      for (const entity of targets) {
+        entity.components[type] = structuredClone(value);
         for (const dep of requirements) {
-          if (e.components[dep] != null) continue;
+          if (entity.components[dep] != null) continue;
           const defaults = createComponentDefaults(dep);
-          if (defaults) e.components[dep] = defaults;
+          if (defaults) entity.components[dep] = defaults;
         }
       }
-      return true;
+      return targets.length;
     },
     removeComponent(entity: number, type: string) {
       if (mode !== 'edit') return false;
