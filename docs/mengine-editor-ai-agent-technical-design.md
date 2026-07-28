@@ -76,10 +76,10 @@ MEngine 编辑器当前对人类友好，但对 AI Agent 不够友好。AI Agent
 │  AI Agent / 外部客户端                                         │
 │  (Claude / Cursor / QoderWork / 自研脚本 / CLI)               │
 └───────────────┬─────────────────────────────┬───────────────┘
-                │ MCP(stdio)                   │ WS / HTTP / CLI(后续)
+                │ MCP(stdio)                   │ WS / HTTP / CLI
         ┌───────▼────────┐            ┌────────▼─────────┐
         │  MCP Adapter    │            │  WS/HTTP Adapter  │
-        │  (Node sidecar) │            │  (后续阶段)        │
+        │  (Node sidecar) │            │  (已实现)          │
         └───────┬────────┘            └────────┬─────────┘
                 │        WebSocket (localhost)  │
         ┌───────▼──────────────────────────────▼─────────┐
@@ -492,6 +492,25 @@ mengine-agent execute intent.apply --args @intent.json --expected-scene-revision
 
 CLI 仅输出结构化 JSON，支持 `--args @file` / `--args -`、显式幂等 `--request-id`、`--discovery-file`、revision 锁和操作后截图。写请求遇到编辑器进程切换时与 MCP 一样返回 `UNKNOWN_OUTCOME`，不会假定重试安全。
 
+### 5.7 本地 HTTP（curl / 自动化服务）
+
+`mengine-agent-http` 同样复用 MCP Adapter 的 Bridge 客户端，默认在 `127.0.0.1` 的随机空闲端口启动，并将 `{ host, port, token, pid }` 原子写入 `%APPDATA%/com.mengine.editor/agent-http.json`（可用 `MENGINE_AGENT_HTTP_FILE` 覆盖）。所有端点都要求发现文件中的 Bearer token：
+
+```powershell
+mengine-agent-http
+$agentHttp = Get-Content "$env:APPDATA/com.mengine.editor/agent-http.json" | ConvertFrom-Json
+$headers = @{ Authorization = "Bearer $($agentHttp.token)" }
+$uri = "http://127.0.0.1:$($agentHttp.port)"
+
+Invoke-RestMethod "$uri/v1/query" -Method Post -Headers $headers -ContentType "application/json" `
+  -Body '{"query":"window.ui_snapshot","args":{"windowLabel":"main"}}'
+
+Invoke-RestMethod "$uri/v1/execute" -Method Post -Headers $headers -ContentType "application/json" `
+  -Body '{"command":"history.undo","args":{},"requestId":"automation:undo:1","options":{"expectedSceneRevision":12}}'
+```
+
+端点固定为 `GET /v1/health`、`POST /v1/query`、`POST /v1/execute`。HTTP 写请求强制提供 1..128 字符的稳定 `requestId`，避免网络重试产生重复副作用；请求体最大 8 MiB、响应最大 128 MiB、最多 64 个活动请求和 128 个连接。适配器校验精确 loopback Host、拒绝 query string/CORS 探测和非 JSON 写入；客户端断开时会精确取消其 Bridge 请求，不影响共享连接上的其他调用。
+
 ## 6. 关键集成点（落到代码）
 
 | 能力 | 文件 / 位置 | 改造内容 |
@@ -507,6 +526,7 @@ CLI 仅输出结构化 JSON，支持 `--args @file` / `--args -`、显式幂等 
 | Bridge 传输 | `src-tauri/src/lib.rs` | 引入 `tokio-tungstenite` 本地 WS 服务器 + 消息路由 + 发现文件 |
 | MCP 适配 | `packages/agent/mcp/` | MCP stdio server，WS 客户端连 Bridge |
 | 单次 CLI | `packages/agent/cli/editor.mjs` | ✅ 复用 MCP Bridge 客户端的 query / execute JSON 命令 |
+| 本地 HTTP | `packages/agent/http/server.mjs` | ✅ loopback + Bearer 鉴权的 query / execute REST 适配器；请求边界、并发和断开取消均有界 |
 | 意图层扩展 | `packages/agent/src/index.ts` | ✅ 3 个严格、自描述的安全 intent，已接 Dispatcher |
 | 命名统一 | `src/agent/protocol.ts` | AgentBridge 对外统一 camelCase，内部按需转换 snake_case |
 
@@ -553,8 +573,8 @@ CLI 仅输出结构化 JSON，支持 `--args @file` / `--args -`、显式幂等 
 
 目标：覆盖更多接入场景。
 
-- WebSocket 直连适配器（自研 agent / 浏览器脚本）
-- HTTP REST 适配器（curl / 简单集成）
+- ✅ WebSocket 直连适配器（自研 agent / 浏览器脚本）
+- ✅ HTTP REST 适配器（curl / 简单集成）
 - ✅ CLI（`mengine-agent query scene.snapshot` / `mengine-agent execute history.undo`）
 - 权限与危险操作确认机制完善
 
@@ -568,6 +588,7 @@ CLI 仅输出结构化 JSON，支持 `--args @file` / `--args -`、显式幂等 
 | 并发：多客户端同时写 | 复用 `base_revision` 乐观锁；冲突返回 `STALE_REVISION`；不同 `request_id` 的唯一在途写请求最多 64 个，超限返回带当前容量与重试提示的 `RATE_LIMITED`，但相同 `request_id` 的超时重试仍复用原在途结果，不额外占位 |
 | 传输：连接/请求洪泛或客户端停止读取 | 原生 WS 最多 32 个连接、每客户端 64/全进程 256 个在途请求、64 MiB 输入；每客户端出站队列最多 64 条且合计 128 MiB，超限断开该慢客户端，不拖累编辑器或其他 Agent |
 | 适配器：MCP stdio 洪泛、生命周期违规、请求失联或宿主停止读取 | sidecar 严格执行 initialize → initialized → operation 生命周期，通知不回包，同会话请求 ID 唯一且最多记录 65,536 个；输入逐字节累计且单行最多 64 MiB，最多 128 个活动 MCP 请求和 64 个在途 Bridge RPC。请求超时会关闭对应 WS，使原生注销客户端并释放全部在途槽位；客户端主动取消则使用精确请求 ID 释放单个槽位并中止可取消的 WebView 等待，不关闭共享连接。读请求可重连，写请求用原 `requestId` 幂等恢复。stdout 响应按序写入、64 MiB 时暂停 stdin，合计 192 MiB 时终止失去消费能力的会话，避免 Node 内部流缓冲无限增长 |
+| 适配器：HTTP 被跨站调用、慢请求或网络重试 | HTTP 仅绑定 IPv4 loopback，精确校验 Host 并要求 16..256 字符 Bearer token；发现文件原子写入且仅由所属进程删除。请求体 8 MiB、响应 128 MiB、连接 128、活动请求 64，header/request/keep-alive 均有超时；写请求必须携带稳定 `requestId`，客户端断开触发精确 Bridge 取消 |
 | 性能：大场景 snapshot / 高频截图 | snapshot 支持精简模式（hierarchy 不含组件）；所有位图截图默认最长边 2048（可在 256..4096 内指定），并在进程内串行且保留至少 250ms 冷却；最多保留 8 个当前/排队请求，超限明确返回 `RATE_LIMITED`；语义快照不受位图限频影响 |
 | 命名漂移：camelCase vs snake_case | AgentBridge 对外统一 camelCase，边界处集中转换，避免泄漏到协议 |
 | Play Mode 双事实源 | 观察/写操作明确区分 edit/play 世界，Play 下写操作按现有 store 规则处理 |

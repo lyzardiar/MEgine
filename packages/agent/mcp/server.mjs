@@ -365,11 +365,12 @@ async function rpc(
   {
     retryAcrossEditorRestart = false,
     timeoutMs = REQUEST_TIMEOUT_MS,
+    signal,
   } = {},
 ) {
   const firstConnection = await ensureBridgeConnected();
   try {
-    return await rpcOnce(firstConnection, method, params, timeoutMs);
+    return await rpcOnce(firstConnection, method, params, timeoutMs, signal);
   } catch (error) {
     if (!(error instanceof BridgeConnectionError)) throw error;
 
@@ -417,15 +418,18 @@ async function rpc(
         retryConnection.discovery,
       );
     }
-    return await rpcOnce(retryConnection, method, params, timeoutMs);
+    return await rpcOnce(retryConnection, method, params, timeoutMs, signal);
   }
 }
 
-async function bridgeQuery(query, args = {}) {
+async function bridgeQuery(query, args = {}, options = {}) {
   const result = await rpc(
     'query',
     { query, args },
-    { retryAcrossEditorRestart: true },
+    {
+      retryAcrossEditorRestart: true,
+      signal: options.signal,
+    },
   );
   return result?.data;
 }
@@ -445,6 +449,7 @@ async function bridgeExecute(command, args = {}, options = {}) {
       timeoutMs: longRunning
         ? BUILD_ARTIFACT_REQUEST_TIMEOUT_MS
         : REQUEST_TIMEOUT_MS,
+      signal: options.signal,
     },
   );
 }
