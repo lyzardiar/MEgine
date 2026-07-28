@@ -408,6 +408,7 @@ test('MCP resources expose unique, query-backed core editor context', () => {
 
   const requiredContext = [
     'mengine://project/state',
+    'mengine://project/script/diagnostics',
     'mengine://editor/state',
     'mengine://editor/windows',
     'mengine://scene/snapshot',

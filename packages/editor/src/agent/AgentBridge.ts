@@ -144,12 +144,14 @@ import {
   runPcPlayer,
   saveProjectBuildAssetSettings,
   saveProjectBuildSettings,
+  validateProjectScripts,
   verifyPcBuildPatch,
   verifyPcPlayer,
   type BuildPlayerProfile,
   type BuildPlayerResult,
   type BuildProgressEvent,
   type ProjectBuildSettings,
+  type ProjectScriptValidation,
   type RunPlayerResult,
   type VerifyPlayerResult,
 } from '../transport/editorTransport';
@@ -1018,6 +1020,13 @@ class AgentBridge {
       settings: structuredClone(sortingLayers.settings),
       revision: sortingLayers.revision,
     };
+  }
+
+  async getProjectScriptDiagnostics(): Promise<ProjectScriptValidation> {
+    return bridgeIo(
+      'Failed to validate project TypeScript',
+      () => validateProjectScripts(),
+    );
   }
 
   getSceneSnapshot(): unknown {
@@ -4323,6 +4332,8 @@ class AgentBridge {
         return { dialogs: listEditorDialogs() };
       case 'project.settings':
         return this.getProjectSettings();
+      case 'project.script_diagnostics':
+        return this.getProjectScriptDiagnostics();
       case 'selection.get':
         return this.getSelection();
       case 'scene.snapshot':

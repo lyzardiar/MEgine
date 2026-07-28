@@ -353,6 +353,7 @@ Rust Host 使用独立的工程生命周期互斥门串行化 open/create/close 
 | `asset.duplicate_preview` / `asset.duplicate` | ✅ 两阶段复制；新 GUID，移动相对依赖时重写自身内容，脚本引用需显式确认 |
 | `asset.trash_preview` / `asset.trash` | ✅ 完整引用与 manifest 预检；有引用或扫描截断时禁止移动，成功后可恢复 |
 | `asset.list` / `sprite.list` / `asset.trash_list` / `asset.restore` | ✅ 有界、revision-safe 的资源/精灵/回收站查询；精确 record revision 恢复且不覆盖已占用目标；对应 MCP 资源可订阅，分离资源窗口保存或磁盘外部修改都会统一失效 |
+| `project.script_diagnostics` | ✅ 复用 PC Player 的严格 TypeScript 编译配置，只读返回源码 revision、TypeScript 版本、文件数以及有界结构化诊断（工程相对路径、1 基行列、错误码、消息）；不 Emit、不写构建缓存、不启动 Player；`mengine://project/script/diagnostics` 在工程或脚本资产变化后失效 |
 | `build.start` / `build.cancel` | ✅ 异步 job；写前检查整个 workspace 已保存，进度与结果由 `build.status` 轮询 |
 | `build.settings` / `build.history` / `build.patches` / `build.status` / `build.artifact_status` | ✅ 构建设置、有界历史/补丁清单和当前/最近异步 job 的只读查询；对应 MCP 资源可订阅 |
 | `build.settings.set_scenes` | ✅ 原子保存精确有序的启用场景；仅接受 `availableScenes` 中的路径，第一项为入口场景，写前拒绝未保存工作 |

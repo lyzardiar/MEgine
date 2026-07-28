@@ -171,6 +171,7 @@ test('MCP resource subscriptions coalesce bridge events and stop after unsubscri
       'mengine://assets/index',
       'mengine://assets/sprites',
       'mengine://assets/trash',
+      'mengine://project/script/diagnostics',
     ],
   );
 

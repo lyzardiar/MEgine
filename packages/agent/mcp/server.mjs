@@ -952,6 +952,13 @@ const TOOLS = [
     inputSchema: { type: 'object', properties: {} },
     handler: async () => textContent(await bridgeQuery('project.settings')),
   },
+  {
+    name: 'validate_project_scripts',
+    description:
+      'Run the exact PC Player TypeScript checks without emitting files, changing build output, or opening a window. Returns a stable source revision plus bounded structured diagnostics with project-relative file, one-based line/column, TypeScript error code, and message.',
+    inputSchema: { type: 'object', properties: {} },
+    handler: async () => textContent(await bridgeQuery('project.script_diagnostics')),
+  },
   execTool(
     'open_project',
     'Open a validated MEngine project path without a dialog while the editor is on the welcome page. Project switching is blocked once a project is open.',
@@ -3013,6 +3020,12 @@ const RESOURCES = [
     'project.settings',
   ),
   bridgeResource(
+    'mengine://project/script/diagnostics',
+    'Project Script Diagnostics',
+    'Revisioned TypeScript diagnostics from the exact PC Player compiler settings, without emitted files.',
+    'project.script_diagnostics',
+  ),
+  bridgeResource(
     'mengine://project/recent',
     'Recent Projects',
     'Bounded recent-project list used by the desktop project hub.',
@@ -3183,6 +3196,7 @@ const EVENT_RESOURCE_URIS = Object.freeze({
     'mengine://scene/hierarchy',
     'mengine://scene/selection',
     'mengine://project/settings',
+    'mengine://project/script/diagnostics',
     'mengine://build/settings',
     'mengine://build/status',
     'mengine://build/artifact',
@@ -3234,6 +3248,7 @@ const EVENT_RESOURCE_URIS = Object.freeze({
     'mengine://assets/index',
     'mengine://assets/sprites',
     'mengine://assets/trash',
+    'mengine://project/script/diagnostics',
   ]),
   'log.added': Object.freeze(['mengine://console/logs']),
   'log.cleared': Object.freeze(['mengine://console/logs']),

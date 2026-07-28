@@ -55,6 +55,7 @@ export const QUERY_PARAMS_SCHEMAS: Record<string, AgentJsonSchema> = {
   }),
   'dialog.list': emptySchema,
   'project.settings': emptySchema,
+  'project.script_diagnostics': emptySchema,
   'selection.get': emptySchema,
   'scene.snapshot': emptySchema,
   'scene.diff': objectSchema({
@@ -409,6 +410,7 @@ const QUERY_SUMMARIES: QuerySummary[] = [
   { id: 'dialog.state', category: 'dialog', description: 'Read the active non-blocking editor dialog for one window', readOnly: true },
   { id: 'dialog.list', category: 'dialog', description: 'List active non-blocking dialogs across all editor windows', readOnly: true },
   { id: 'project.settings', category: 'project', description: 'Read revision-safe project tags, layers, and sorting layers', readOnly: true },
+  { id: 'project.script_diagnostics', category: 'project', description: 'Run the Player TypeScript checks without emitting files and return revisioned structured diagnostics', readOnly: true },
   { id: 'selection.get', category: 'selection', description: 'Read the current entity selection', readOnly: true },
   { id: 'scene.snapshot', category: 'scene', description: 'Read the complete authored scene snapshot and revision', readOnly: true },
   { id: 'scene.diff', category: 'scene', description: 'Read incremental scene changes since a revision', readOnly: true },

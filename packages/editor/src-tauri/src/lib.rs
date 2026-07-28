@@ -153,6 +153,38 @@ struct ProjectBuildSettings {
     shader_variant_limit: u32,
 }
 
+#[derive(Clone, Debug, serde::Deserialize, serde::Serialize, PartialEq, Eq)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+struct ProjectScriptDiagnostic {
+    category: String,
+    code: u32,
+    message: String,
+    file: Option<String>,
+    line: Option<u32>,
+    column: Option<u32>,
+    start: Option<u64>,
+    length: Option<u64>,
+}
+
+#[derive(Clone, Debug, serde::Deserialize, serde::Serialize, PartialEq, Eq)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+struct ProjectScriptValidation {
+    schema_version: u32,
+    valid: bool,
+    checked: bool,
+    startup_script: Option<String>,
+    script_root: Option<String>,
+    revision: Option<String>,
+    typescript_version: String,
+    file_count: usize,
+    error_count: usize,
+    warning_count: usize,
+    diagnostic_count: usize,
+    returned_diagnostics: usize,
+    truncated: bool,
+    diagnostics: Vec<ProjectScriptDiagnostic>,
+}
+
 #[derive(Clone, Debug, serde::Deserialize, serde::Serialize)]
 #[serde(rename_all = "camelCase")]
 struct ProjectSortingLayer {
@@ -595,6 +627,17 @@ fn command_failure(label: &str, output: &std::process::Output) -> String {
     } else {
         format!("{label} failed: {detail}")
     }
+}
+
+fn hide_child_process_window(command: &mut Command) {
+    #[cfg(windows)]
+    {
+        use std::os::windows::process::CommandExt;
+        const CREATE_NO_WINDOW: u32 = 0x0800_0000;
+        command.creation_flags(CREATE_NO_WINDOW);
+    }
+    #[cfg(not(windows))]
+    let _ = command;
 }
 
 fn build_sdk_file(root: &Path, relative: &str, label: &str) -> Result<PathBuf, String> {
@@ -2096,9 +2139,12 @@ fn source_cli_command() -> Result<Command, String> {
     } else {
         "npm"
     };
-    let cli_build = Command::new(npm)
+    let mut cli_build_command = Command::new(npm);
+    cli_build_command
         .current_dir(&engine_root)
-        .args(["--prefix", "packages/cli", "run", "build"])
+        .args(["--prefix", "packages/cli", "run", "build"]);
+    hide_child_process_window(&mut cli_build_command);
+    let cli_build = cli_build_command
         .output()
         .map_err(|error| format!("cannot start CLI build: {error}"))?;
     if !cli_build.status.success() {
@@ -2113,6 +2159,7 @@ fn source_cli_command() -> Result<Command, String> {
     }
     let mut command = Command::new("node");
     command.current_dir(engine_root).arg(cli);
+    hide_child_process_window(&mut command);
     Ok(command)
 }
 
@@ -2126,10 +2173,81 @@ fn history_patch_command(bundled_sdk: Option<PathBuf>, profile: &str) -> Result<
         command
             .current_dir(child_process_path(&sdk.root))
             .arg(child_process_path(&sdk.cli));
+        hide_child_process_window(&mut command);
         Ok(command)
     } else {
         source_cli_command()
     }
+}
+
+const MAX_PROJECT_SCRIPT_DIAGNOSTICS: usize = 1_000;
+const MAX_PROJECT_SCRIPT_DIAGNOSTIC_BYTES: usize = 16 * 1024 * 1024;
+
+fn parse_project_script_validation(stdout: &[u8]) -> Result<ProjectScriptValidation, String> {
+    if stdout.len() > MAX_PROJECT_SCRIPT_DIAGNOSTIC_BYTES {
+        return Err("project script diagnostics exceeded 16 MiB".into());
+    }
+    let result: ProjectScriptValidation = serde_json::from_slice(stdout)
+        .map_err(|error| format!("invalid project script diagnostics: {error}"))?;
+    if result.schema_version != 1 {
+        return Err(format!(
+            "unsupported project script diagnostic schema version {}",
+            result.schema_version
+        ));
+    }
+    if result.diagnostics.len() > MAX_PROJECT_SCRIPT_DIAGNOSTICS
+        || result.returned_diagnostics != result.diagnostics.len()
+        || result.diagnostic_count < result.returned_diagnostics
+        || result.truncated != (result.returned_diagnostics < result.diagnostic_count)
+        || result.error_count > result.diagnostic_count
+        || result.warning_count > result.diagnostic_count
+    {
+        return Err("project script diagnostic counts are inconsistent".into());
+    }
+    if result.valid != (result.error_count == 0)
+        || !result.checked
+            && (result.revision.is_some()
+                || result.script_root.is_some()
+                || result.file_count != 0
+                || result.diagnostic_count != 0)
+    {
+        return Err("project script diagnostic state is inconsistent".into());
+    }
+    if result.checked
+        && (result.revision.as_deref().is_none_or(|revision| {
+            revision.len() != 64 || !revision.bytes().all(|byte| byte.is_ascii_hexdigit())
+        }) || result.script_root.as_deref().is_none_or(str::is_empty))
+    {
+        return Err("project script diagnostic revision is invalid".into());
+    }
+    for diagnostic in &result.diagnostics {
+        if !matches!(
+            diagnostic.category.as_str(),
+            "error" | "warning" | "suggestion" | "message"
+        ) || diagnostic.message.is_empty()
+            || diagnostic.line == Some(0)
+            || diagnostic.column == Some(0)
+        {
+            return Err("project script diagnostic entry is invalid".into());
+        }
+    }
+    Ok(result)
+}
+
+fn run_project_script_validation(
+    project_root: &Path,
+    bundled_sdk: Option<PathBuf>,
+) -> Result<ProjectScriptValidation, String> {
+    let mut command = history_patch_command(bundled_sdk, "release")?;
+    let output = command
+        .arg("validate-scripts")
+        .arg(project_root)
+        .output()
+        .map_err(|error| format!("cannot start project script validation: {error}"))?;
+    if !output.status.success() {
+        return Err(command_failure("project script validation", &output));
+    }
+    parse_project_script_validation(&output.stdout)
 }
 
 fn parse_build_history_patch_result(
@@ -2634,6 +2752,7 @@ fn run_player_build_controlled(
             .arg("--runtime")
             .arg(child_process_path(&sdk.runtime))
             .arg("--skip-runtime-build");
+        hide_child_process_window(&mut command);
         toolchain = "bundled-sdk".to_string();
     } else {
         command = source_cli_command()?;
@@ -3885,6 +4004,40 @@ fn save_project_build_asset_settings(
         )
         .map_err(|error| error.to_string())?;
     project_build_settings(session)
+}
+
+#[tauri::command]
+async fn validate_project_scripts(
+    app: tauri::AppHandle,
+    state: State<'_, AppState>,
+) -> Result<ProjectScriptValidation, String> {
+    let snapshot = state
+        .project
+        .lock()
+        .as_ref()
+        .map(ProjectSession::snapshot)
+        .ok_or_else(|| no_project().message)?;
+    let project_id = snapshot.project_id;
+    let project_root = snapshot.project_root;
+    let validation_root = project_root.clone();
+    let bundled_sdk = app
+        .path()
+        .resolve("build-sdk", BaseDirectory::Resource)
+        .ok()
+        .filter(|path| path.join("sdk.json").is_file());
+    let result = tauri::async_runtime::spawn_blocking(move || {
+        run_project_script_validation(Path::new(&validation_root), bundled_sdk)
+    })
+    .await
+    .map_err(|error| format!("project script validation task failed: {error}"))?;
+    let still_current = state.project.lock().as_ref().is_some_and(|session| {
+        let current = session.snapshot();
+        current.project_id == project_id && current.project_root == project_root
+    });
+    if !still_current {
+        return Err("project changed while script validation was running".into());
+    }
+    result
 }
 
 fn validate_surface_shader_source(source: &str) -> Result<(), String> {
@@ -5325,6 +5478,7 @@ pub fn run() {
             get_project_build_settings,
             save_project_build_settings,
             save_project_build_asset_settings,
+            validate_project_scripts,
             validate_surface_shader,
             get_project_sorting_layers,
             save_project_sorting_layers,
@@ -5403,6 +5557,46 @@ pub fn run() {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn project_script_diagnostics_require_a_bounded_consistent_schema() {
+        let valid = serde_json::to_vec(&serde_json::json!({
+            "schemaVersion": 1,
+            "valid": false,
+            "checked": true,
+            "startupScript": "Assets/Scripts/Main.ts",
+            "scriptRoot": "Assets/Scripts",
+            "revision": "a".repeat(64),
+            "typescriptVersion": "5.8.2",
+            "fileCount": 2,
+            "errorCount": 1,
+            "warningCount": 0,
+            "diagnosticCount": 1,
+            "returnedDiagnostics": 1,
+            "truncated": false,
+            "diagnostics": [{
+                "category": "error",
+                "code": 2322,
+                "message": "Type 'string' is not assignable to type 'number'.",
+                "file": "Assets/Scripts/Main.ts",
+                "line": 2,
+                "column": 7,
+                "start": 31,
+                "length": 7
+            }]
+        }))
+        .unwrap();
+        let parsed = parse_project_script_validation(&valid).unwrap();
+        assert!(!parsed.valid);
+        assert_eq!(parsed.diagnostics[0].code, 2322);
+
+        let inconsistent = String::from_utf8(valid)
+            .unwrap()
+            .replace("\"returnedDiagnostics\":1", "\"returnedDiagnostics\":0");
+        assert!(parse_project_script_validation(inconsistent.as_bytes())
+            .unwrap_err()
+            .contains("counts are inconsistent"));
+    }
 
     fn empty_test_app_state() -> AppState {
         AppState {

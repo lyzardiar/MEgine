@@ -276,6 +276,34 @@ export type ProjectBuildSettings = {
   shaderVariantLimit: number;
 };
 
+export type ProjectScriptDiagnostic = {
+  category: 'error' | 'warning' | 'suggestion' | 'message';
+  code: number;
+  message: string;
+  file: string | null;
+  line: number | null;
+  column: number | null;
+  start: number | null;
+  length: number | null;
+};
+
+export type ProjectScriptValidation = {
+  schemaVersion: 1;
+  valid: boolean;
+  checked: boolean;
+  startupScript: string | null;
+  scriptRoot: string | null;
+  revision: string | null;
+  typescriptVersion: string;
+  fileCount: number;
+  errorCount: number;
+  warningCount: number;
+  diagnosticCount: number;
+  returnedDiagnostics: number;
+  truncated: boolean;
+  diagnostics: ProjectScriptDiagnostic[];
+};
+
 export type ProjectSortingLayer = {
   id: string;
   name: string;
@@ -567,6 +595,13 @@ export async function getProjectBuildSettings(): Promise<ProjectBuildSettings> {
   const response = await fetch('/__mengine/build-settings');
   if (!response.ok) throw new Error(`cannot read build settings: ${response.status}`);
   return response.json() as Promise<ProjectBuildSettings>;
+}
+
+export async function validateProjectScripts(): Promise<ProjectScriptValidation> {
+  if (!isDesktopEditor()) {
+    throw new Error('Project script validation requires the desktop editor');
+  }
+  return invoke<ProjectScriptValidation>('validate_project_scripts');
 }
 
 export async function saveProjectBuildSettings(

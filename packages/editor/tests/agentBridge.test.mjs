@@ -790,6 +790,10 @@ test('scene, asset, and asynchronous build tools share guarded editor services',
     path.join(root, 'src-tauri', 'src', 'lib.rs'),
     'utf8',
   );
+  const mcp = fs.readFileSync(
+    path.join(root, '..', 'agent', 'mcp', 'server.mjs'),
+    'utf8',
+  );
 
   assert.match(bridge, /case 'scene\.list'/);
   assert.match(bridge, /case 'commands\.describe'/);
@@ -808,6 +812,12 @@ test('scene, asset, and asynchronous build tools share guarded editor services',
   assert.match(bridge, /commandId === 'asset\.write_text'/);
   assert.match(bridge, /commandId === 'asset\.import_file'/);
   assert.match(bridge, /case 'project\.settings'/);
+  assert.match(bridge, /case 'project\.script_diagnostics'/);
+  assert.match(bridge, /validateProjectScripts\(\)/);
+  assert.match(native, /async fn validate_project_scripts\(/);
+  assert.match(native, /hide_child_process_window\(&mut command\)/);
+  assert.match(mcp, /mengine:\/\/project\/script\/diagnostics/);
+  assert.match(mcp, /name: 'validate_project_scripts'/);
   assert.match(bridge, /commandId === 'project\.settings\.set_sorting_layers'/);
   assert.match(bridge, /commandId === 'project\.settings\.set_tags_and_layers'/);
   assert.match(bridge, /persistSortingLayersGuarded/);
