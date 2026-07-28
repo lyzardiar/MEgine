@@ -2729,6 +2729,205 @@ const RESOURCE_READERS = Object.fromEntries(
   ]),
 );
 
+const MAX_PROMPT_ARGUMENT_LENGTH = 4_096;
+
+const PROMPTS = Object.freeze([
+  Object.freeze({
+    name: 'create_ui_button',
+    title: 'Create a UI Button',
+    description:
+      'Create and verify a background-safe UI button using current component schemas and revision-guarded domain tools.',
+    arguments: Object.freeze([
+      Object.freeze({
+        name: 'label',
+        title: 'Button Label',
+        description: 'Visible button label (default: Button).',
+      }),
+      Object.freeze({
+        name: 'parentEntity',
+        title: 'Parent Entity',
+        description: 'Optional numeric parent entity id, supplied as a string.',
+      }),
+      Object.freeze({
+        name: 'callback',
+        title: 'Callback',
+        description: 'Optional desired callback behaviour or exact registered component method.',
+      }),
+    ]),
+  }),
+  Object.freeze({
+    name: 'setup_3d_scene',
+    title: 'Set Up a Basic 3D Scene',
+    description:
+      'Create and verify a camera, directional light, and cube without overwriting existing work.',
+    arguments: Object.freeze([
+      Object.freeze({
+        name: 'sceneName',
+        title: 'Scene Name',
+        description: 'Optional new scene name. Existing scenes are never overwritten by this workflow.',
+      }),
+      Object.freeze({
+        name: 'cubeName',
+        title: 'Cube Name',
+        description: 'Optional cube name (default: Cube).',
+      }),
+    ]),
+  }),
+  Object.freeze({
+    name: 'inspect_and_fix',
+    title: 'Inspect and Fix the Current Scene',
+    description:
+      'Inspect semantic state, logs, and background visual evidence, then make the smallest verifiable fix.',
+    arguments: Object.freeze([
+      Object.freeze({
+        name: 'goal',
+        title: 'Inspection Goal',
+        description: 'What should be checked or corrected.',
+        required: true,
+      }),
+    ]),
+  }),
+]);
+
+const AUTONOMOUS_WORKFLOW_PREAMBLE = [
+  'Execute this workflow through the MEngine MCP server without activating, raising, focusing, or otherwise disturbing any editor window.',
+  'Safety and discovery rules:',
+  '1. Read mengine://project/state and mengine://editor/state first. Stop and report the observed state if no project is open or the editor is not ready.',
+  '2. Read mengine://scene/snapshot and mengine://schema/components before editing. Prefer domain tools; use semantic window UI only when no domain tool exists.',
+  '3. Before each revision-sensitive write, use the latest scene revision as expectedSceneRevision. After a successful write, use its returned revision or refresh the snapshot before the next write.',
+  '4. Treat RATE_LIMITED as retryable only after retryAfterMs. Re-read state after UNKNOWN_OUTCOME. Never guess whether a timed-out write succeeded.',
+  '5. Do not discard dirty work, overwrite a scene, delete content, or save changes unless the original user request explicitly authorizes that action.',
+].join('\n');
+
+class PromptInputValidationError extends Error {
+  constructor(message) {
+    super(message);
+    this.name = 'PromptInputValidationError';
+  }
+}
+
+function promptArgumentValue(args, name, fallback) {
+  const value = args[name];
+  return value == null || value.length === 0 ? fallback : value;
+}
+
+const PROMPT_RENDERERS = Object.freeze({
+  create_ui_button: (args) => {
+    const label = promptArgumentValue(args, 'label', 'Button');
+    const parentEntity = promptArgumentValue(args, 'parentEntity', '<not specified>');
+    const callback = promptArgumentValue(args, 'callback', '<not specified>');
+    return [
+      AUTONOMOUS_WORKFLOW_PREAMBLE,
+      '',
+      'Goal: create one functional UI button and verify both its authored state and rendered appearance.',
+      `Requested label: ${JSON.stringify(label)}`,
+      `Requested parent entity id: ${JSON.stringify(parentEntity)}`,
+      `Requested callback: ${JSON.stringify(callback)}`,
+      '',
+      'Workflow:',
+      '1. Inspect the current selection and scene hierarchy. Read get_component_schema for the UI components actually present; never invent component field names.',
+      '2. Use create_typed with kind "ui_button". It will create required implicit UI parents when needed. If a parent id was supplied, validate it with get_entity and use reparent_entities only after creation.',
+      '3. Inspect the returned entity and its children. Apply the requested label through the exact UI Text schema using patch_component or set_component, preserving unrelated fields.',
+      '4. If a callback was requested, bind it only through a callback/event field or registered component method confirmed by get_component_schema. If the requested binding is unsupported, leave the button intact and report the limitation instead of fabricating a field.',
+      '5. Re-read the created entity and get_scene_changes from the baseline revision. Capture a game screenshot with take_screenshot to confirm the label and layout without bringing the editor forward.',
+      '6. Report created entity ids, component changes, scene revision, screenshot result, and any unsupported callback detail. Do not save unless the original request requires it.',
+    ].join('\n');
+  },
+  setup_3d_scene: (args) => {
+    const sceneName = promptArgumentValue(args, 'sceneName', '<use current scene>');
+    const cubeName = promptArgumentValue(args, 'cubeName', 'Cube');
+    return [
+      AUTONOMOUS_WORKFLOW_PREAMBLE,
+      '',
+      'Goal: create a minimal, inspectable 3D scene containing a Camera, Directional Light, and Cube.',
+      `Requested scene name: ${JSON.stringify(sceneName)}`,
+      `Requested cube name: ${JSON.stringify(cubeName)}`,
+      '',
+      'Workflow:',
+      '1. Read list_scenes and the full scene snapshot. If a new scene name was supplied, call new_scene only when that name does not exist and current dirty work will not be discarded. Never set overwrite or discardDirty for this workflow.',
+      '2. Reuse suitable existing active Camera, Directional Light, or Cube entities when that avoids duplicates. Otherwise create them with create_typed using kinds "camera", "directional_light", and "cube".',
+      '3. Read each created or reused entity. Use set_transform with current expectedSceneRevision to place the camera so the cube is visible, keep the cube near the origin, and orient the light through schema-supported values. Preserve unrelated component fields.',
+      '4. Verify the final entities with get_entity and get_scene_changes from the baseline revision. Capture both scene and game screenshots with take_screenshot; correct only evidence-backed framing or lighting problems.',
+      '5. Report entity ids, whether each entity was reused or created, final revision, and screenshot evidence. Do not save the scene unless the original request explicitly asks for persistence.',
+    ].join('\n');
+  },
+  inspect_and_fix: (args) => [
+    AUTONOMOUS_WORKFLOW_PREAMBLE,
+    '',
+    'Goal: inspect the current editor state and apply only a minimal evidence-backed correction.',
+    `Inspection goal: ${JSON.stringify(args.goal)}`,
+    '',
+    'Workflow:',
+    '1. Record the baseline scene revision. Read the current selection, selected entities and components, recent console logs, and relevant component schemas.',
+    '2. Capture a background-safe scene screenshot. Capture the game view or a bounded whole-window screenshot only when it materially helps diagnose the stated goal.',
+    '3. Explain the observed defect from semantic state, logs, or pixels before changing anything. If no defect is confirmed, make no write and report what was checked.',
+    '4. Apply the smallest domain-tool change that addresses the confirmed cause. Preserve unrelated values and pass the exact current expectedSceneRevision.',
+    '5. Verify with get_scene_changes from the baseline revision, re-read every changed entity/component, review new error logs, and capture the same screenshot target for before/after comparison.',
+    '6. Report the confirmed cause, exact edits, final revision, and verification evidence. Do not save unless the original request explicitly asks for it.',
+  ].join('\n'),
+});
+
+function renderPrompt(name, args = {}) {
+  if (typeof name !== 'string' || name.trim().length === 0) {
+    throw new PromptInputValidationError('prompts/get requires a non-empty name');
+  }
+  const prompt = PROMPTS.find((candidate) => candidate.name === name);
+  if (!prompt) {
+    throw new PromptInputValidationError(`Unknown prompt: ${name}`);
+  }
+  if (!args || typeof args !== 'object' || Array.isArray(args)) {
+    throw new PromptInputValidationError('Prompt arguments must be an object of strings');
+  }
+
+  const argumentMetadata = new Map(
+    (prompt.arguments ?? []).map((argument) => [argument.name, argument]),
+  );
+  for (const argumentName of Object.keys(args)) {
+    if (!argumentMetadata.has(argumentName)) {
+      throw new PromptInputValidationError(
+        `Unknown argument for ${name}: ${argumentName}`,
+      );
+    }
+  }
+  for (const argument of argumentMetadata.values()) {
+    const value = args[argument.name];
+    if (value === undefined) {
+      if (argument.required) {
+        throw new PromptInputValidationError(
+          `Missing required argument for ${name}: ${argument.name}`,
+        );
+      }
+      continue;
+    }
+    if (typeof value !== 'string') {
+      throw new PromptInputValidationError(
+        `Prompt argument ${argument.name} must be a string`,
+      );
+    }
+    if (argument.required && value.trim().length === 0) {
+      throw new PromptInputValidationError(
+        `Prompt argument ${argument.name} must not be empty`,
+      );
+    }
+    if (value.length > MAX_PROMPT_ARGUMENT_LENGTH) {
+      throw new PromptInputValidationError(
+        `Prompt argument ${argument.name} exceeds ${MAX_PROMPT_ARGUMENT_LENGTH} characters`,
+      );
+    }
+  }
+
+  return {
+    description: prompt.description,
+    messages: [{
+      role: 'user',
+      content: {
+        type: 'text',
+        text: PROMPT_RENDERERS[prompt.name](args),
+      },
+    }],
+  };
+}
+
 const SERVER_INSTRUCTIONS = [
   'MEngine MCP controls the running editor without activating or raising its native windows.',
   'Start by reading mengine://project/state and mengine://editor/state. If a project is open, inspect mengine://scene/snapshot, mengine://schema/components, mengine://queries, and mengine://commands before editing.',
@@ -2738,7 +2937,7 @@ const SERVER_INSTRUCTIONS = [
   'BRIDGE_CONNECTION means the editor is unavailable and the request was not accepted. UNKNOWN_OUTCOME means a sent write lost its editor process; re-read state before deciding whether a new write is needed.',
   'Prefer domain tools over semantic window UI actions. UI inspection and interaction are available for surfaces without a domain API and remain background-safe. Every UI write must pass expectedSnapshotRevision from the same get_window_ui snapshot as its selector; stale revisions are rejected before dispatch. Successful UI writes settle two target-window render opportunities and return a postSnapshotRevision when post-action semantic observation succeeds.',
   'If an editor confirmation or prompt is open, read get_active_dialog for its window label and exact id, then use respond_to_dialog; stale ids are rejected.',
-  'After edits, verify semantic state and use a scene, game, or whole-window screenshot when visual correctness matters. A requested command screenshot reports screenshotRequested and screenshotCaptured; if capture fails after the write, screenshotError is returned instead of silently claiming visual verification. Poll get_events for incremental observation during longer workflows.',
+  'After edits, verify semantic state and use a scene, game, or whole-window screenshot when visual correctness matters. A requested command screenshot reports screenshotRequested and screenshotCaptured; if capture fails after the write, screenshotError is returned instead of silently claiming visual verification. Use get_editor_events or wait_for_editor_events for incremental observation during longer workflows.',
 ].join('\n');
 
 // ── MCP stdio protocol ───────────────────────────────────────────────────
@@ -3044,7 +3243,7 @@ async function handleMessage(msg) {
       }
       respond(id, {
         protocolVersion: negotiateProtocolVersion(params.protocolVersion),
-        capabilities: { tools: {}, resources: {} },
+        capabilities: { tools: {}, resources: {}, prompts: {} },
         serverInfo: { name: 'mengine-editor', version: '0.1.0' },
         instructions: SERVER_INSTRUCTIONS,
       });
@@ -3055,6 +3254,17 @@ async function handleMessage(msg) {
       return; // notification, no response
     case 'ping':
       respond(id, {});
+      return;
+    case 'prompts/list':
+      respond(id, { prompts: PROMPTS });
+      return;
+    case 'prompts/get':
+      try {
+        respond(id, renderPrompt(params?.name, params?.arguments ?? {}));
+      } catch (error) {
+        if (!(error instanceof PromptInputValidationError)) throw error;
+        respondError(id, -32602, error.message);
+      }
       return;
     case 'tools/list':
       respond(id, {
@@ -3249,6 +3459,7 @@ export {
   BridgeOutcomeUnknownError,
   RESOURCES,
   SERVER_INSTRUCTIONS,
+  PROMPTS,
   BoundedNdjsonDecoder,
   BoundedWriteQueue,
   bridgeExecute,
@@ -3257,6 +3468,7 @@ export {
   incomingMessageError,
   negotiateProtocolVersion,
   rpcOnce,
+  renderPrompt,
   SUPPORTED_PROTOCOL_VERSIONS,
   screenshotContent,
   structuredError,

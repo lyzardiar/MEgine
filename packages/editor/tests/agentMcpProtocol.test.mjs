@@ -195,6 +195,7 @@ test('MCP stdio serves negotiated initialization, resource templates, and protoc
   assert.equal(responses.length, 6);
   assert.equal(responses[0].id, 1);
   assert.equal(responses[0].result.protocolVersion, '2025-11-25');
+  assert.deepEqual(responses[0].result.capabilities.prompts, {});
   assert.match(responses[0].result.instructions, /background-safe/);
   assert.deepEqual(responses[1], {
     jsonrpc: '2.0',
@@ -215,4 +216,77 @@ test('MCP stdio serves negotiated initialization, resource templates, and protoc
   assert.equal(responses[4].error.code, -32600);
   assert.equal(responses[4].error.data.reason, 'id must be a string or safe integer');
   assert.deepEqual(responses[5], { jsonrpc: '2.0', id: 3, result: {} });
+});
+
+test('MCP stdio lists and renders safe workflow prompts with protocol errors', async () => {
+  const responses = await runStdioSession([
+    JSON.stringify({
+      jsonrpc: '2.0',
+      id: 10,
+      method: 'initialize',
+      params: {
+        protocolVersion: '2025-11-25',
+        capabilities: {},
+        clientInfo: { name: 'prompt-test', version: '1.0.0' },
+      },
+    }),
+    JSON.stringify({
+      jsonrpc: '2.0',
+      id: 11,
+      method: 'prompts/list',
+      params: {},
+    }),
+    JSON.stringify({
+      jsonrpc: '2.0',
+      id: 12,
+      method: 'prompts/get',
+      params: {
+        name: 'create_ui_button',
+        arguments: { label: 'Launch', parentEntity: '42' },
+      },
+    }),
+    JSON.stringify({
+      jsonrpc: '2.0',
+      id: 13,
+      method: 'prompts/get',
+      params: {
+        name: 'inspect_and_fix',
+        arguments: {},
+      },
+    }),
+    JSON.stringify({
+      jsonrpc: '2.0',
+      id: 14,
+      method: 'prompts/get',
+      params: {
+        name: 'missing_prompt',
+      },
+    }),
+  ]);
+
+  assert.equal(responses.length, 5);
+  assert.deepEqual(responses[0].result.capabilities.prompts, {});
+  assert.deepEqual(
+    responses[1].result.prompts.map((prompt) => prompt.name),
+    ['create_ui_button', 'setup_3d_scene', 'inspect_and_fix'],
+  );
+  assert.equal(responses[2].result.messages[0].role, 'user');
+  assert.match(responses[2].result.messages[0].content.text, /"Launch"/);
+  assert.match(responses[2].result.messages[0].content.text, /expectedSceneRevision/);
+  assert.deepEqual(responses[3], {
+    jsonrpc: '2.0',
+    id: 13,
+    error: {
+      code: -32602,
+      message: 'Missing required argument for inspect_and_fix: goal',
+    },
+  });
+  assert.deepEqual(responses[4], {
+    jsonrpc: '2.0',
+    id: 14,
+    error: {
+      code: -32602,
+      message: 'Unknown prompt: missing_prompt',
+    },
+  });
 });

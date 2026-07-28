@@ -452,13 +452,15 @@ mengine://commands              命令目录
 mengine://console/logs          控制台日志
 ```
 
-### 5.4 Prompts（可选工作流模板）
+### 5.4 Prompts（可选工作流模板，✓ 已实现）
 
 ```
 create_ui_button      「创建一个可点击的 UI 按钮并绑定回调」
 setup_3d_scene        「搭建一个含相机、灯光、立方体的基础 3D 场景」
 inspect_and_fix       「截图当前场景，检查并修复选中物体的问题」
 ```
+
+MCP 初始化声明 `prompts` 能力，并实现 `prompts/list` / `prompts/get`。模板参数仅接受有界字符串；工作流统一要求先读工程、编辑器、场景和组件 schema，再使用最新 `expectedSceneRevision` 执行领域工具，最后以语义 diff 和后台截图验证。模板不会自行覆盖、丢弃或保存用户工作。
 
 ### 5.5 MCP 客户端配置示例
 
@@ -541,7 +543,7 @@ CLI 仅输出结构化 JSON，支持 `--args @file` / `--args -`、显式幂等 
 - `queries.list` / `commands.list` / `schema.components` / `menu.list` 自描述
 - 操作后自动截图 + `scene.diff`
 - EventBus 事件订阅（project/scene/selection/mode/log/build/asset）
-- MCP resources/prompts 完善
+- ✓ MCP resources/prompts 完善
 
 验收：Agent 仅凭 `queries.list` + `commands.list` + `schema.components` 即可自主探索能力；写操作后能拿到截图与 diff 自我验证。
 

@@ -5,8 +5,10 @@ import test from 'node:test';
 import { fileURLToPath } from 'node:url';
 import {
   BridgeOutcomeUnknownError,
+  PROMPTS,
   RESOURCES,
   SERVER_INSTRUCTIONS,
+  renderPrompt,
   screenshotContent,
   structuredError,
   ToolInputValidationError,
@@ -298,6 +300,80 @@ test('MCP startup instructions teach the safe autonomous workflow', () => {
   assert.match(SERVER_INSTRUCTIONS, /screenshot/);
   assert.match(SERVER_INSTRUCTIONS, /BRIDGE_CONNECTION/);
   assert.match(SERVER_INSTRUCTIONS, /UNKNOWN_OUTCOME/);
+});
+
+test('MCP prompts expose bounded background-safe autonomous workflows', () => {
+  const names = PROMPTS.map((prompt) => prompt.name);
+  assert.deepEqual(names, [
+    'create_ui_button',
+    'setup_3d_scene',
+    'inspect_and_fix',
+  ]);
+  assert.equal(new Set(names).size, names.length);
+
+  for (const prompt of PROMPTS) {
+    assert.match(prompt.name, /^[a-z][a-z0-9_]*$/);
+    assert.equal(typeof prompt.title, 'string');
+    assert.ok(prompt.title.length > 0);
+    assert.equal(typeof prompt.description, 'string');
+    assert.ok(prompt.description.length > 0);
+    const argumentNames = (prompt.arguments ?? []).map((argument) => argument.name);
+    assert.equal(new Set(argumentNames).size, argumentNames.length);
+    for (const argument of prompt.arguments ?? []) {
+      assert.match(argument.name, /^[a-z][A-Za-z0-9]*$/);
+      assert.equal(typeof argument.description, 'string');
+      if (argument.required !== undefined) {
+        assert.equal(typeof argument.required, 'boolean');
+      }
+    }
+  }
+
+  const ui = renderPrompt('create_ui_button', {
+    label: 'Launch',
+    parentEntity: '42',
+    callback: 'StartGame',
+  });
+  assert.equal(ui.messages.length, 1);
+  assert.equal(ui.messages[0].role, 'user');
+  assert.equal(ui.messages[0].content.type, 'text');
+  assert.match(ui.messages[0].content.text, /without activating, raising, focusing/);
+  assert.match(ui.messages[0].content.text, /expectedSceneRevision/);
+  assert.match(ui.messages[0].content.text, /create_typed/);
+  assert.match(ui.messages[0].content.text, /take_screenshot/);
+  assert.match(ui.messages[0].content.text, /Do not save/);
+  assert.match(ui.messages[0].content.text, /"Launch"/);
+
+  const scene = renderPrompt('setup_3d_scene', { cubeName: 'Subject' });
+  assert.match(scene.messages[0].content.text, /"camera"/);
+  assert.match(scene.messages[0].content.text, /"directional_light"/);
+  assert.match(scene.messages[0].content.text, /"cube"/);
+  assert.match(scene.messages[0].content.text, /Never set overwrite or discardDirty/);
+
+  const inspect = renderPrompt('inspect_and_fix', { goal: 'Fix the selected light' });
+  assert.match(inspect.messages[0].content.text, /minimal evidence-backed correction/);
+  assert.match(inspect.messages[0].content.text, /If no defect is confirmed, make no write/);
+  assert.match(inspect.messages[0].content.text, /before\/after comparison/);
+
+  assert.throws(
+    () => renderPrompt('inspect_and_fix'),
+    /Missing required argument/,
+  );
+  assert.throws(
+    () => renderPrompt('create_ui_button', { label: 42 }),
+    /must be a string/,
+  );
+  assert.throws(
+    () => renderPrompt('create_ui_button', { unknown: 'value' }),
+    /Unknown argument/,
+  );
+  assert.throws(
+    () => renderPrompt('create_ui_button', { label: 'x'.repeat(4_097) }),
+    /exceeds 4096 characters/,
+  );
+  assert.throws(
+    () => renderPrompt('missing_prompt'),
+    /Unknown prompt/,
+  );
 });
 
 test('MCP screenshot tool exposes bounded background capture controls', () => {
