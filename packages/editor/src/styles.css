@@ -7056,6 +7056,33 @@ body.insp-scrubbing * {
   padding: 8px 10px 12px;
 }
 
+.editor-window-error {
+  display: grid;
+  gap: 8px;
+  align-content: start;
+  color: var(--u-text);
+}
+
+.editor-window-error h2,
+.editor-window-error p {
+  margin: 0;
+}
+
+.editor-window-error pre {
+  margin: 0;
+  padding: 8px;
+  overflow: auto;
+  color: #ffb4ab;
+  background: rgba(160, 32, 32, 0.18);
+  border: 1px solid rgba(255, 128, 128, 0.28);
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.editor-window-error button {
+  justify-self: start;
+}
+
 .editor-window-resize {
   position: absolute;
   right: 0;

@@ -75,3 +75,27 @@ test('top-level help is implemented by a background-safe readable editor window'
   assert.match(documentation, /mengine:\/\/project\/state/);
   assert.match(documentation, /mengine:\/\/commands/);
 });
+
+test('editor window failures stay isolated and dragging always releases global state', () => {
+  const host = fs.readFileSync(
+    path.join(root, 'src', 'editorWindow', 'EditorWindowHost.tsx'),
+    'utf8',
+  );
+  const registeredHost = fs.readFileSync(
+    path.join(root, 'src', 'editorWindow', 'RegisteredEditorWindowHost.tsx'),
+    'utf8',
+  );
+  const boundary = fs.readFileSync(
+    path.join(root, 'src', 'editorWindow', 'EditorWindowErrorBoundary.tsx'),
+    'utf8',
+  );
+
+  assert.match(host, /<EditorWindowErrorBoundary/);
+  assert.match(registeredHost, /<EditorWindowErrorBoundary/);
+  assert.match(boundary, /role="alert"/);
+  assert.match(boundary, /Window failed to render/);
+  assert.match(boundary, />\s*Retry\s*</);
+  assert.match(host, /window\.addEventListener\('blur', onUp\)/);
+  assert.match(host, /window\.removeEventListener\('blur', onUp\)/);
+  assert.match(host, /document\.body\.classList\.remove\('ew-dragging'\)/);
+});
