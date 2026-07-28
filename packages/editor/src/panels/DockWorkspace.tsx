@@ -1045,8 +1045,11 @@ export function DockWorkspace(props: {
   useEffect(() => {
     if (props.detachedPanel) return;
     const resetLayout = () => {
-      void closeAllDetachedPanelWindows();
-      setTree(defaultTree());
+      void closeAllDetachedPanelWindows()
+        .then(() => setTree(defaultTree()))
+        .catch((error) => {
+          console.error('Failed to close detached panels before resetting layout', error);
+        });
     };
     window.addEventListener(RESET_DOCK_LAYOUT_EVENT, resetLayout);
     return () => window.removeEventListener(RESET_DOCK_LAYOUT_EVENT, resetLayout);

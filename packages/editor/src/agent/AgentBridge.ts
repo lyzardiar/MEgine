@@ -29,6 +29,7 @@ import {
   type EditorUiSnapshot,
   type EditorWindowInfo,
   type HierarchyNode,
+  type DockLayoutNode,
   type PanelLayoutSnapshot,
   type ScreenshotResult,
   type SelectionInfo,
@@ -2875,6 +2876,72 @@ class AgentBridge {
     );
   }
 
+  private async waitForPanelFocused(
+    panel: string,
+  ): Promise<{ layout: PanelLayoutSnapshot; windowLabel: string }> {
+    let lastLayout: PanelLayoutSnapshot | null = null;
+    let lastNativeWindowPresent = false;
+    for (let attempt = 0; attempt < 100; attempt += 1) {
+      lastLayout = this.panelLayoutProvider?.() ?? null;
+      lastNativeWindowPresent = (await this.listWindows()).some(
+        (entry) => entry.label === `panel-${panel}`,
+      );
+      const layoutDetached = lastLayout?.detachedPanels.some(
+        (entry) => entry.kind === panel && entry.windowLabel === `panel-${panel}`,
+      ) ?? false;
+      if (lastLayout && layoutDetached && lastNativeWindowPresent) {
+        return { layout: lastLayout, windowLabel: `panel-${panel}` };
+      }
+      if (
+        lastLayout
+        && !layoutDetached
+        && !lastNativeWindowPresent
+        && lastLayout.dockedPanels.includes(panel)
+        && lastLayout.activePanels.includes(panel)
+      ) {
+        return { layout: lastLayout, windowLabel: 'main' };
+      }
+      await new Promise((resolve) => window.setTimeout(resolve, 50));
+    }
+    throw new BridgeError(
+      'IO_ERROR',
+      `Panel "${panel}" did not become active within 5 seconds`,
+      {
+        panel,
+        layout: lastLayout ? structuredClone(lastLayout) : null,
+        nativeWindowPresent: lastNativeWindowPresent,
+      },
+    );
+  }
+
+  private async waitForPanelLayoutReset(): Promise<PanelLayoutSnapshot> {
+    let lastLayout: PanelLayoutSnapshot | null = null;
+    let lastNativePanelWindows: string[] = [];
+    for (let attempt = 0; attempt < 100; attempt += 1) {
+      lastLayout = this.panelLayoutProvider?.() ?? null;
+      lastNativePanelWindows = (await this.listWindows())
+        .filter((entry) => entry.kind === 'panel')
+        .map((entry) => entry.label)
+        .sort();
+      if (
+        lastLayout
+        && isDefaultPanelLayout(lastLayout)
+        && lastNativePanelWindows.length === 0
+      ) {
+        return lastLayout;
+      }
+      await new Promise((resolve) => window.setTimeout(resolve, 50));
+    }
+    throw new BridgeError(
+      'IO_ERROR',
+      'Panel layout did not return to the complete default state within 5 seconds',
+      {
+        layout: lastLayout ? structuredClone(lastLayout) : null,
+        nativePanelWindows: lastNativePanelWindows,
+      },
+    );
+  }
+
   async invokeMenu(path: string): Promise<CommandResult> {
     const normalizedPath = path.trim();
     if (!normalizedPath) {
@@ -3685,22 +3752,22 @@ class AgentBridge {
     };
     const result = handler(ctx, args);
     if (commandId === 'panel.focus') {
-      await nextFrame();
       const panel = requiredString(args, 'kind');
-      const windowLabel = (await this.listWindows()).some(
-        (entry) => entry.label === `panel-${panel}`,
-      )
-        ? `panel-${panel}`
-        : 'main';
+      const focused = await this.waitForPanelFocused(panel);
       result.data = {
         ...(result.data && typeof result.data === 'object' ? result.data : {}),
-        detached: windowLabel !== 'main',
-        windowLabel,
+        active: true,
+        detached: focused.windowLabel !== 'main',
+        windowLabel: focused.windowLabel,
       };
-      return this.finishAsyncCommand(result, options, windowLabel);
+      return this.finishAsyncCommand(result, options, focused.windowLabel);
     }
     if (commandId === 'panel.reset_layout') {
-      await nextFrame();
+      const layout = await this.waitForPanelLayoutReset();
+      result.data = {
+        ...(result.data && typeof result.data === 'object' ? result.data : {}),
+        layout: structuredClone(layout),
+      };
       return this.finishAsyncCommand(result, options, 'main');
     }
     return this.finishAsyncCommand(result, options);
@@ -4553,6 +4620,62 @@ function sameNumberArray(left: readonly number[], right: readonly number[]): boo
   return (
     left.length === right.length
     && left.every((value, index) => value === right[index])
+  );
+}
+
+function sameStrings(actual: readonly string[], expected: readonly string[]): boolean {
+  return (
+    actual.length === expected.length
+    && actual.every((value, index) => value === expected[index])
+  );
+}
+
+function defaultTabs(
+  node: DockLayoutNode,
+  panels: readonly string[],
+  active: string,
+): boolean {
+  return node.kind === 'tabs' && sameStrings(node.panels, panels) && node.active === active;
+}
+
+function isDefaultPanelLayout(layout: PanelLayoutSnapshot): boolean {
+  const expectedDockedPanels = [...CORE_PANEL_IDS].sort();
+  const expectedActivePanels = ['hierarchy', 'inspector', 'project', 'scene'];
+  if (
+    !sameStrings(layout.dockedPanels, expectedDockedPanels)
+    || layout.detachedPanels.length !== 0
+    || !sameStrings(layout.activePanels, expectedActivePanels)
+  ) {
+    return false;
+  }
+  const root = layout.tree;
+  if (
+    root.kind !== 'split'
+    || root.direction !== 'vertical'
+    || root.ratio !== 0.68
+    || root.first.kind !== 'split'
+    || root.first.direction !== 'horizontal'
+    || root.first.ratio !== 0.22
+  ) {
+    return false;
+  }
+  const middle = root.first.second;
+  return (
+    defaultTabs(root.first.first, ['hierarchy'], 'hierarchy')
+    && middle.kind === 'split'
+    && middle.direction === 'horizontal'
+    && middle.ratio === 0.7
+    && defaultTabs(middle.first, ['scene', 'game'], 'scene')
+    && defaultTabs(
+      middle.second,
+      ['inspector', 'material', 'shader', 'build', 'projectSettings'],
+      'inspector',
+    )
+    && defaultTabs(
+      root.second,
+      ['project', 'console', 'profiler', 'timeline', 'animator', 'spriteEditor', 'spriteAtlas'],
+      'project',
+    )
   );
 }
 

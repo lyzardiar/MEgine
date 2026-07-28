@@ -194,6 +194,12 @@ test('whole-window agent capture is background-safe and addressable by window la
   assert.match(bridge, /Resource editor did not activate/);
   assert.match(bridge, /const document = await this\.waitForWorkspaceDocument\(target\)/);
   assert.doesNotMatch(bridge, /document \?\? \{ \.\.\.target, active: true/);
+  assert.match(bridge, /private async waitForPanelFocused/);
+  assert.match(bridge, /Panel .* did not become active within 5 seconds/);
+  assert.match(bridge, /private async waitForPanelLayoutReset/);
+  assert.match(bridge, /isDefaultPanelLayout\(lastLayout\)/);
+  assert.match(bridge, /function isDefaultPanelLayout\(layout: PanelLayoutSnapshot\)/);
+  assert.match(bridge, /nativePanelWindows: lastNativePanelWindows/);
   assert.match(bridge, /agentOwnedEditorWindows = new Set<string>\(\)/);
   assert.match(
     bridge,
@@ -618,9 +624,10 @@ test('panel and menu agent surfaces use live providers and background activation
     /lastLayoutDetached === expected[\s\S]*lastNativeWindowPresent === expected/,
   );
   assert.match(bridge, /if \(commandId === 'panel\.focus'\)/);
-  assert.match(bridge, /\? `panel-\$\{panel\}`[\s\S]*: 'main'/);
-  assert.match(bridge, /this\.finishAsyncCommand\(result, options, windowLabel\)/);
+  assert.match(bridge, /const focused = await this\.waitForPanelFocused\(panel\)/);
+  assert.match(bridge, /this\.finishAsyncCommand\(result, options, focused\.windowLabel\)/);
   assert.match(bridge, /if \(commandId === 'panel\.reset_layout'\)/);
+  assert.match(bridge, /const layout = await this\.waitForPanelLayoutReset\(\)/);
   assert.match(bridge, /this\.finishAsyncCommand\(result, options, 'main'\)/);
   assert.match(bridge, /case 'menu\.list'/);
   assert.match(bridge, /commandId === 'menu\.invoke'/);
@@ -648,6 +655,10 @@ test('panel and menu agent surfaces use live providers and background activation
   assert.match(documentation, /agentAlternative: 'open_editor_window'/);
   assert.equal([...dock.matchAll(/agentAlternative: 'focus_panel'/g)].length, 2);
   assert.match(dock, /agentAlternative: 'reset_panel_layout'/);
+  assert.match(
+    dock,
+    /closeAllDetachedPanelWindows\(\)[\s\S]*\.then\(\(\) => setTree\(defaultTree\(\)\)\)/,
+  );
   assert.match(popup, /data-agent-interaction=/);
   assert.match(gate, /data-agent-alternative="open_project"/);
   assert.match(gate, /data-agent-alternative="create_project"/);

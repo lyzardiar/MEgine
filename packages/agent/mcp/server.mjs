@@ -2513,7 +2513,7 @@ const TOOLS = [
   execTool('set_gizmo', 'Set the active transform gizmo.', 'gizmo.set', {
     mode: { type: 'string', enum: ['translate', 'rotate', 'scale', 'rect'], description: 'Gizmo mode' },
   }, ['mode']),
-  execTool('focus_panel', 'Activate a docked editor panel by kind without raising or focusing the native editor window. Detached panels remain detached and are not raised.', 'panel.focus', {
+  execTool('focus_panel', 'Activate an editor panel by kind without raising or focusing its native window, and return only after layout state confirms it is active. Detached panels remain detached and are not raised.', 'panel.focus', {
     kind: { ...PANEL_KIND_SCHEMA, description: 'Panel kind' },
   }, ['kind']),
   execTool(
@@ -2536,7 +2536,7 @@ const TOOLS = [
   ),
   execTool(
     'reset_panel_layout',
-    'Reset the dock workspace to its default layout. This also closes detached panel windows.',
+    'Reset the dock workspace to its complete default layout. Returns only after default groups, ratios, active tabs, and the absence of detached native panel windows are confirmed.',
     'panel.reset_layout',
     {},
     [],
