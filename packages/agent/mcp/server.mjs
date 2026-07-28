@@ -412,8 +412,10 @@ const TOOLS = [
               'log.added',
               'log.cleared',
               'panel.changed',
+              'view.changed',
               'build.progress',
               'build.settings',
+              'project.settings',
               'asset.changed',
               'project.changed',
             ],
@@ -1221,6 +1223,29 @@ const TOOLS = [
       distance: { type: 'number', description: 'Orbit distance (clamped to 0.5..200)' },
       pivot: { type: 'array', items: { type: 'number' }, description: 'Orbit pivot [x, y, z]' },
     },
+  ),
+  execTool(
+    'set_game_resolution',
+    'Persist an exact Game View resolution, or use null for Free Aspect, without raising or focusing the editor window. Use this before background Game screenshots to verify landscape, portrait, square, or free layouts.',
+    'view.set_game_resolution',
+    {
+      resolution: {
+        oneOf: [
+          {
+            type: 'object',
+            required: ['width', 'height'],
+            properties: {
+              width: { type: 'integer', minimum: 1, maximum: 16384 },
+              height: { type: 'integer', minimum: 1, maximum: 16384 },
+            },
+            additionalProperties: false,
+          },
+          { type: 'null' },
+        ],
+        description: 'Exact Game View pixels, or null for Free Aspect',
+      },
+    },
+    ['resolution'],
   ),
   execTool('play', 'Enter play mode.', 'playback.play', {}),
   execTool('pause', 'Toggle pause during playback.', 'playback.pause', {}),

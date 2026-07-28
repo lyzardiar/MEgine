@@ -937,6 +937,7 @@ const COMMAND_SUMMARIES: CommandSummary[] = [
   { id: 'gizmo.set', category: 'view', description: 'Set the active transform gizmo (translate/rotate/scale/rect)', readOnly: false },
   { id: 'view.frame_selected', category: 'view', description: 'Frame the selected object in the scene view', readOnly: false },
   { id: 'view.set_camera', category: 'view', description: 'Set the background-safe Scene view orbit camera', readOnly: false },
+  { id: 'view.set_game_resolution', category: 'view', description: 'Persist an exact Game View resolution or Free Aspect', readOnly: false },
   { id: 'panel.focus', category: 'panel', description: 'Activate a docked panel without raising the editor window', readOnly: false },
   { id: 'panel.detach', category: 'panel', description: 'Detach a clean panel into a hidden background-observable window', readOnly: false },
   { id: 'panel.dock', category: 'panel', description: 'Dock a clean detached panel back into the main workspace', readOnly: false },

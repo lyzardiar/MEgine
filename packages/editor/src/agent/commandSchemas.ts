@@ -438,6 +438,26 @@ export const COMMAND_PARAMS_SCHEMAS: Record<string, AgentJsonSchema> = {
       { required: ['pivot'] },
     ],
   }),
+  'view.set_game_resolution': objectSchema({
+    resolution: {
+      oneOf: [
+        objectSchema({
+          width: {
+            type: 'integer',
+            minimum: 1,
+            maximum: 16_384,
+          },
+          height: {
+            type: 'integer',
+            minimum: 1,
+            maximum: 16_384,
+          },
+        }, ['width', 'height']),
+        { type: 'null' },
+      ],
+      description: 'Exact Game View pixels, or null for Free Aspect',
+    },
+  }, ['resolution']),
   'panel.focus': objectSchema({
     kind: panelKind,
   }, ['kind']),

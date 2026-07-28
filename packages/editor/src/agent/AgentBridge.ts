@@ -86,6 +86,8 @@ import {
 import { findProjectAssetReferences } from '../assetReferences';
 import { validateImportedAssetName } from '../assetImportModel';
 import { refreshSprites } from '../spriteLibrary';
+import { setEditorPrefs } from '../sceneLibrary';
+import type { GameResolution } from '../gameResolution';
 import {
   applySelectedPrefab,
   createProjectPrefabFromSelection,
@@ -268,6 +270,7 @@ type ObservedEditorState = {
   dirty: boolean;
   selectedIds: number[];
   panelSignature: string | null;
+  viewSignature: string;
 };
 
 class AgentBridge {
@@ -796,12 +799,17 @@ class AgentBridge {
       panelLayout = null;
     }
     const panelSignature = panelLayout ? JSON.stringify(panelLayout) : null;
+    const view = {
+      gizmo: store.gizmo,
+      gameResolution: store.gameResolution,
+    };
     const current: ObservedEditorState = {
       mode: store.mode,
       sceneName,
       dirty,
       selectedIds: [...store.selectedIds],
       panelSignature,
+      viewSignature: JSON.stringify(view),
     };
     const previous = this.observedState;
 
@@ -838,6 +846,9 @@ class AgentBridge {
       && (!previous || previous.panelSignature !== current.panelSignature)
     ) {
       this.appendEvent('panel.changed', panelLayout, now);
+    }
+    if (!previous || previous.viewSignature !== current.viewSignature) {
+      this.appendEvent('view.changed', view, now);
     }
     this.observedState = current;
   }
@@ -1786,6 +1797,25 @@ class AgentBridge {
     return verification;
   }
 
+  async setGameResolution(
+    resolution: GameResolution | null,
+  ): Promise<EditorState> {
+    const store = this.requireStore();
+    await bridgeIo(
+      'Failed to persist Game View resolution',
+      () => setEditorPrefs({ gameResolution: resolution }),
+    );
+    store.setGameResolution(resolution);
+    this.refreshProvider?.();
+    this.observe();
+    this.logProvider?.(
+      `Agent set Game View resolution to ${
+        resolution ? `${resolution.width} x ${resolution.height}` : 'Free Aspect'
+      }`,
+    );
+    return this.getEditorState();
+  }
+
   getComponentSchema(type?: string): unknown {
     if (type) {
       const schema = buildAgentComponentSchema(type);
@@ -2407,6 +2437,10 @@ class AgentBridge {
       );
       return this.finishAsyncCommand({ ok: true, data: result }, options, true);
     }
+    if (commandId === 'view.set_game_resolution') {
+      const result = await this.setGameResolution(requiredGameResolution(args));
+      return this.finishAsyncCommand({ ok: true, data: result }, options, true);
+    }
     if (commandId === 'menu.invoke') {
       const path = typeof args.path === 'string' ? args.path : '';
       const result = await this.invokeMenu(path);
@@ -2863,6 +2897,48 @@ function requiredNullableRevision(
     );
   }
   return value.trim();
+}
+
+function requiredGameResolution(
+  args: Record<string, unknown>,
+): GameResolution | null {
+  const value = args.resolution;
+  if (value === null) return null;
+  if (!value || typeof value !== 'object' || Array.isArray(value)) {
+    throw new BridgeError(
+      'INVALID_ARGS',
+      '"resolution" must be { width, height } or null for Free Aspect',
+    );
+  }
+  const record = value as Record<string, unknown>;
+  const unexpected = Object.keys(record).filter(
+    (key) => key !== 'width' && key !== 'height',
+  );
+  if (unexpected.length) {
+    throw new BridgeError(
+      'INVALID_ARGS',
+      `"resolution" has unsupported fields: ${unexpected.join(', ')}`,
+    );
+  }
+  if (
+    typeof record.width !== 'number'
+    || !Number.isSafeInteger(record.width)
+    || record.width < 1
+    || record.width > 16_384
+    || typeof record.height !== 'number'
+    || !Number.isSafeInteger(record.height)
+    || record.height < 1
+    || record.height > 16_384
+  ) {
+    throw new BridgeError(
+      'INVALID_ARGS',
+      '"resolution.width" and "resolution.height" must be integers from 1 to 16384',
+    );
+  }
+  return {
+    width: record.width,
+    height: record.height,
+  };
 }
 
 function requiredSortingLayers(args: Record<string, unknown>): SortingLayer[] {

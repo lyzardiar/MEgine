@@ -5,6 +5,7 @@ export const AGENT_EVENT_TOPICS = [
   'log.added',
   'log.cleared',
   'panel.changed',
+  'view.changed',
   'build.progress',
   'build.settings',
   'project.settings',

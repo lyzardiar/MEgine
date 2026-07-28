@@ -98,6 +98,9 @@ test('whole-window agent capture is background-safe and addressable by window la
   assert.match(mcp, /name: 'get_build_status'/);
   assert.match(mcp, /'set_build_scenes'/);
   assert.match(mcp, /'set_build_asset_policy'/);
+  assert.match(mcp, /'set_game_resolution'/);
+  assert.match(mcp, /'project\.settings'/);
+  assert.match(mcp, /'view\.changed'/);
   assert.match(mcp, /'start_pc_build'/);
   assert.match(mcp, /'verify_pc_build'/);
   assert.match(mcp, /name: 'get_editor_events'/);
@@ -281,7 +284,9 @@ test('scene, asset, and asynchronous build tools share guarded editor services',
   assert.match(commands, /'entity\.reorder'/);
   assert.match(commands, /'transform\.translate'/);
   assert.match(commands, /'view\.set_camera'/);
+  assert.match(commands, /'view\.set_game_resolution'/);
   assert.match(bridge, /sceneCamera: store\.sceneCamera/);
+  assert.match(bridge, /setEditorPrefs\(\{ gameResolution: resolution \}\)/);
   assert.match(bridge, /status: 'running'/);
   assert.match(bridge, /listenToPcBuildProgress/);
   assert.match(bridge, /case 'build\.status'/);
@@ -296,6 +301,7 @@ test('scene, asset, and asynchronous build tools share guarded editor services',
   assert.match(buildSettings, /PROJECT_BUILD_SETTINGS_CHANGED_EVENT/);
   assert.match(eventJournal, /'build\.settings'/);
   assert.match(eventJournal, /'project\.settings'/);
+  assert.match(eventJournal, /'view\.changed'/);
   assert.match(app, /connectSceneCommands/);
   assert.match(app, /rename: async \(\{ oldName: rawOldName, newName: rawNewName \}\)/);
   assert.match(app, /delete: async \(\{ name: rawName, expectedRevision \}\)/);
