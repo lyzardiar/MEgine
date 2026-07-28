@@ -2580,7 +2580,7 @@ const TOOLS = [
   ),
   execTool(
     'open_editor_window',
-    'Open one exact registered auxiliary editor window as a hidden, unfocused native WebView after a project is ready. Reuses an existing window without showing or focusing it.',
+    'Open one exact registered auxiliary editor window as a hidden, unfocused native WebView after a project is ready. Reuses an existing window only when it is already hidden and unfocused; never hides, focuses, or claims a foreground window.',
     'window.open_editor',
     {
       typeId: {

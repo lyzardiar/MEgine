@@ -1229,6 +1229,20 @@ class AgentBridge {
     const existing = (await this.listWindows()).find(
       (window) => window.editorType === normalizedTypeId,
     );
+    if (existing && (existing.visible || existing.focused)) {
+      throw new BridgeError(
+        'READONLY',
+        `Editor window type "${normalizedTypeId}" is already visible or focused and cannot be reused for background Agent work`,
+        {
+          typeId: normalizedTypeId,
+          windowLabel: existing.label,
+          visible: existing.visible,
+          focused: existing.focused,
+          createdByAgent: false,
+          requiredWindowState: 'hidden-unfocused',
+        },
+      );
+    }
     const opened = await openNativeEditorWindow({
       typeId: normalizedTypeId,
       title: definition.title,
@@ -1254,6 +1268,20 @@ class AgentBridge {
       throw new BridgeError(
         'IO_ERROR',
         `Editor window type "${normalizedTypeId}" opened without a discoverable native window`,
+      );
+    }
+    if (target.visible || target.focused) {
+      throw new BridgeError(
+        'READONLY',
+        `Editor window "${target.label}" is visible or focused and cannot be used for background Agent work`,
+        {
+          typeId: normalizedTypeId,
+          windowLabel: target.label,
+          visible: target.visible,
+          focused: target.focused,
+          createdByAgent: existing === undefined,
+          requiredWindowState: 'hidden-unfocused',
+        },
       );
     }
     if (existing === undefined) this.agentOwnedEditorWindows.add(target.label);

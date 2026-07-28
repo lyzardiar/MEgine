@@ -190,6 +190,14 @@ test('whole-window agent capture is background-safe and addressable by window la
   assert.match(bridge, /candidate\.totalSemanticElements > 0/);
   assert.match(bridge, /semanticReady: true/);
   assert.match(bridge, /agentOwnedEditorWindows = new Set<string>\(\)/);
+  assert.match(
+    bridge,
+    /existing && \(existing\.visible \|\| existing\.focused\)[\s\S]*cannot be reused for background Agent work/,
+  );
+  assert.match(
+    bridge,
+    /if \(target\.visible \|\| target\.focused\)[\s\S]*cannot be used for background Agent work/,
+  );
   assert.match(bridge, /if \(existing === undefined\) this\.agentOwnedEditorWindows\.add/);
   assert.match(bridge, /if \(!this\.agentOwnedEditorWindows\.has\(windowLabel\)\)/);
   assert.match(bridge, /if \(target\.visible \|\| target\.focused\)/);

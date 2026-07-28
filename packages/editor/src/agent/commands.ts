@@ -1193,7 +1193,7 @@ const COMMAND_SUMMARIES: CommandSummary[] = [
   { id: 'panel.reset_layout', category: 'panel', description: 'Reset the dock workspace to its default layout', readOnly: false },
   { id: 'menu.invoke', category: 'menu', description: 'Invoke a registered Unity-style menu item by exact path', readOnly: false },
   { id: 'window.close', category: 'window', description: 'Close one exact hidden, unfocused auxiliary editor window created by this Agent session', readOnly: false },
-  { id: 'window.open_editor', category: 'window', description: 'Open one registered auxiliary editor window hidden and unfocused', readOnly: false },
+  { id: 'window.open_editor', category: 'window', description: 'Open or safely reuse one hidden, unfocused registered auxiliary editor window', readOnly: false },
   { id: 'window.ui_click', category: 'window', description: 'Click a semantic UI element inside a hidden, unfocused editor window', readOnly: false },
   { id: 'window.ui_double_click', category: 'window', description: 'Double-click a semantic UI element inside a hidden, unfocused editor window', readOnly: false },
   { id: 'window.ui_context_click', category: 'window', description: 'Open a semantic context menu inside a hidden, unfocused editor window', readOnly: false },
