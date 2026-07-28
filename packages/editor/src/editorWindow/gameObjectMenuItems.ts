@@ -1,4 +1,4 @@
-import { registerMenuItem, type MenuItemContext, type MenuItemOptions } from './registry';
+import { registerMenuItem, type MenuItemContext, type MenuItemOptions } from './registry.ts';
 
 type CreateAction = (context: MenuItemContext) => unknown;
 
@@ -9,6 +9,7 @@ function createItem(
   options: Omit<MenuItemOptions, 'priority'> = {},
 ) {
   const path = `GameObject/${relativePath}`;
+  const validate = options.validate;
   registerMenuItem(
     path,
     (context) => {
@@ -16,7 +17,18 @@ function createItem(
       context.log(path);
       context.refresh();
     },
-    { ...options, priority },
+    {
+      ...options,
+      priority,
+      validate: (context) => (
+        context.store.mode === 'edit'
+        && (validate?.(context) ?? true)
+      ),
+      agentInvokable: false,
+      agentAlternative: relativePath === 'Create Empty Child'
+        ? 'create_gameobject'
+        : 'create_typed',
+    },
   );
 }
 
