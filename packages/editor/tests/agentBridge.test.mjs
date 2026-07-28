@@ -354,6 +354,10 @@ test('the main AgentBridge transport is available before a project is opened', (
   assert.match(transport, /requireRequestId\(params\.requestId\)/);
   assert.match(idempotency, /class IdempotentRequestCache/);
   assert.match(idempotency, /class IdempotencyConflictError/);
+  assert.match(idempotency, /class IdempotencyCapacityError/);
+  assert.match(transport, /MAX_PENDING_EXECUTE_REQUESTS = 64/);
+  assert.match(transport, /pendingWrites: error\.pendingEntries/);
+  assert.match(transport, /maxPendingWrites: error\.maxPendingEntries/);
   assert.match(serialQueue, /class SerialTaskQueue/);
   assert.match(nativeBridge, /MAX_QUEUED_BRIDGE_REQUESTS: usize = 256/);
   assert.match(nativeBridge, /bridge_not_ready_response/);

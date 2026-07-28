@@ -17,6 +17,7 @@ import { listen, type UnlistenFn } from '@tauri-apps/api/event';
 import { agentBridge } from './AgentBridge';
 import {
   createExecuteFingerprint,
+  IdempotencyCapacityError,
   IdempotencyConflictError,
   IdempotentRequestCache,
 } from './idempotency';
@@ -43,6 +44,9 @@ interface BridgeTransportReadyResult {
   queuedRequests: BridgeRequestEvent[];
 }
 
+export const MAX_PENDING_EXECUTE_REQUESTS = 64;
+const EXECUTE_CAPACITY_RETRY_AFTER_MS = 250;
+
 const executeRequests = new IdempotentRequestCache<CommandResult>(
   256,
   (result) => {
@@ -50,6 +54,7 @@ const executeRequests = new IdempotentRequestCache<CommandResult>(
     const { screenshot: _screenshot, ...compact } = result;
     return compact;
   },
+  MAX_PENDING_EXECUTE_REQUESTS,
 );
 const executeQueue = new SerialTaskQueue();
 
@@ -137,6 +142,17 @@ async function handleRequest(message: string): Promise<JsonRpcResponse> {
       } catch (error) {
         if (error instanceof IdempotencyConflictError) {
           throw new BridgeError('CONFLICT', error.message, { requestId });
+        }
+        if (error instanceof IdempotencyCapacityError) {
+          throw new BridgeError(
+            'RATE_LIMITED',
+            'Too many unique AgentBridge write requests are already pending',
+            {
+              pendingWrites: error.pendingEntries,
+              maxPendingWrites: error.maxPendingEntries,
+              retryAfterMs: EXECUTE_CAPACITY_RETRY_AFTER_MS,
+            },
+          );
         }
         throw error;
       }
