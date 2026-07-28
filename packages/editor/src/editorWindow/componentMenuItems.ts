@@ -91,6 +91,8 @@ catalog.forEach((entry, index) => {
     },
     {
       priority: 100 + index,
+      agentInvokable: false,
+      agentAlternative: 'add_component',
       validate: (context) => {
         const entity = targetEntity(context);
         return context.store.mode === 'edit' && entity != null

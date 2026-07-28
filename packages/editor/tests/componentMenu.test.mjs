@@ -47,6 +47,8 @@ test('Component menu exposes catalog entries and adds their real defaults', () =
 
   assert.ok(listMenuItems('Component').length > 10);
   assert.ok(entry);
+  assert.equal(entry.agentInvokable, false);
+  assert.equal(entry.agentAlternative, 'add_component');
   assert.equal(entry.validate(context), true);
   entry.action(context);
 
