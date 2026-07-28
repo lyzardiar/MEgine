@@ -191,8 +191,8 @@ MEngine 编辑器当前对人类友好，但对 AI Agent 不够友好。AI Agent
 | --- | --- | --- |
 | `window.list` | `[{ label, title, typeId?, kind: "main"\|"panel"\|"editor", focused, position, size, url }]` | ✅ Rust `app.webview_windows()`；标签规则 `panel-<id>`（`detachedPanelWindow.ts`）、`editor-<hash>`（`nativeEditorWindow.ts`） |
 | `window.ui_snapshot` | `{ windowLabel?, maxElements? }` → `{ elements: [{ role, name, text, value, state, rect, actions, selector }], truncated, ... }` | ✅ WebView2 `Runtime.evaluate` 离屏提取可见语义 DOM；密码脱敏，默认 2000/上限 5000 项，不需要 OCR |
-| `panel.list` | `[{ kind, title, visible, active, detached, dockPath }]` | `DockWorkspace` 的 dock tree + `PanelKind`（15 种，`detachedPanelWindow.ts:5`） |
-| `panel.get_layout` | dock 二叉树（leaf/split） | `localStorage['mengine.dock.layout.v4']` 对应的内存树 |
+| `panel.list` | `[{ kind, title, visible, active, detached, dockPath }]` | ✅ 可由 `panel.get_layout` 的 docked/detached/active 集合推导 |
+| `panel.get_layout` | dock 二叉树（leaf/split）+ docked/detached/active 集合 | ✅ `DockWorkspace` 每次树变化直连 AgentBridge，读取实时内存树而不是过期 localStorage |
 | `window.get_active` | 当前聚焦窗口信息 | `WebviewWindow` focus 状态 |
 
 #### 4.1.3 场景与层级读取
@@ -294,11 +294,12 @@ MEngine 编辑器当前对人类友好，但对 AI Agent 不够友好。AI Agent
 
 | command id | 参数 | 映射 |
 | --- | --- | --- |
-| `panel.focus` | `{ kind }` | dispatch `mengine:focus-panel` |
+| `panel.focus` | `{ kind }` | ✅ dispatch `mengine:focus-panel`；agent 路径携带 `activateWindow: false`，不会抬升独立窗口 |
+| `panel.reset_layout` | `{}` | ✅ 复用 `mengine:reset-dock-layout` |
 | `panel.detach` / `dock` | `{ kind }` | `detachedPanelWindow` |
 | `layout.reset` | — | dispatch `mengine:reset-dock-layout` |
 | `window.open_editor` | `{ typeId }` | `EditorWindow.show` / `openNativeEditorWindow` |
-| `menu.invoke` | `{ path }` | 查 `MenuItemEntry` 并 `entry.action(ctx)` |
+| `menu.invoke` | `{ path }` | ✅ 查 `MenuItemEntry`、执行实时 validator，再复用 `entry.action(ctx)` |
 | `window.ui_click` | `{ windowLabel?, selector }` | ✅ 对 `window.ui_snapshot` 返回的 selector 调用受限 DOM `click()`；不激活顶层窗口 |
 | `window.ui_set_value` | `{ windowLabel?, selector, value }` | ✅ 仅允许 input/textarea/select/contenteditable，触发 input/change；拒绝 disabled/readonly，禁止调用方注入脚本 |
 
@@ -320,11 +321,11 @@ MEngine 编辑器当前对人类友好，但对 AI Agent 不够友好。AI Agent
 
 | query id | 返回 | 集成点 |
 | --- | --- | --- |
-| `commands.list` | `[{ id, category, description, paramsSchema, readOnly, dangerous }]` | 命令注册表（Dispatcher 内建） |
+| `commands.list` | `[{ id, category, description, readOnly }]` | ✅ 命令注册表（Dispatcher 内建） |
+| `menu.list` | `{ root? }` → 注册菜单元数据与实时 `enabled` | ✅ 读取统一 MenuItem 注册表并执行 validator |
 | `commands.describe` | `{ id }` → 完整 schema | 同上 |
 | `schema.components` | 所有组件 `{ type, label, description, fields[], requires[] }` | `componentCatalog` + `inspectorMetadata` + `behaviour.FieldMeta` + `schema.json` |
 | `schema.component` | `{ type }` → 字段级 schema（类型/范围/枚举/条件/资产引用） | 同上 |
-| `menu.list` | 菜单树（含 path/label/shortcut/enabled） | `listMenuItems` 各 root |
 | `intents.list` | 支持的高层意图清单 | `packages/agent` |
 
 这是「自描述」的关键：Agent 先调 `commands.list` 和 `schema.components`，就能动态知道能做什么、每个组件能填什么字段，无需人工硬编码。MCP 的 `tools/list` 直接由 `commands.list` 生成。
@@ -420,7 +421,7 @@ inspect_and_fix       「截图当前场景，检查并修复选中物体的问�
 | 整窗截图 | `src-tauri/src/agent_bridge.rs` | ✅ 已实现 WebView2 DevTools 离屏截图；支持 `windowLabel`，被遮挡/隐藏时不抢焦点；禁止退化为 GDI 屏幕拷贝 |
 | 语义窗口读取/交互 | `src-tauri/src/agent_bridge.rs` | ✅ `Runtime.evaluate` 返回可搜索的控件树；只开放 `click` / `setValue` 两种无前台输入动作，参数经 JSON→Base64 边界传递 |
 | 窗口枚举 | `src-tauri/src/lib.rs` | ✅ 已实现 `list_editor_windows`（`app.webview_windows()`，按 label 分类 main/panel/editor） |
-| 面板枚举 | `src/panels/DockWorkspace.tsx` | 导出当前 dock tree 与面板状态查询函数 |
+| 面板枚举 | `src/panels/DockWorkspace.tsx` | ✅ 推送当前内存 dock tree、活动 tab、docked/detached 状态到 AgentBridge |
 | 命令调度 | 新增 `src/agent/AgentBridge.ts` + `src/agent/commands.ts` | 命令注册表 + Dispatcher，映射到 store / 菜单 / 面板 |
 | 状态观察 | 新增 `src/agent/observer.ts` | 聚合 snapshot / 截图 / 窗口 / 日志 / schema |
 | 结构化日志 | `src/App.tsx` `logs[]` → 新增 `src/agent/LogService.ts` | level/time/source/message，替换字符串数组 |

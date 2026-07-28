@@ -98,6 +98,42 @@ export interface EditorWindowInfo {
   scaleFactor: number;
 }
 
+export type DockLayoutNode =
+  | {
+      kind: 'tabs';
+      id: string;
+      panels: string[];
+      active: string | null;
+    }
+  | {
+      kind: 'split';
+      id: string;
+      direction: 'horizontal' | 'vertical';
+      ratio: number;
+      first: DockLayoutNode;
+      second: DockLayoutNode;
+    };
+
+/** Exact in-memory dock state; detached panels expose their native window label. */
+export interface PanelLayoutSnapshot {
+  tree: DockLayoutNode;
+  dockedPanels: string[];
+  detachedPanels: Array<{ kind: string; windowLabel: string }>;
+  activePanels: string[];
+}
+
+/** Serializable menu metadata with the live validation result. */
+export interface EditorMenuItemInfo {
+  path: string;
+  root: string;
+  label: string;
+  segments: string[];
+  priority: number;
+  shortcut: string | null;
+  separatorBefore: boolean;
+  enabled: boolean;
+}
+
 /** Compact hierarchy node — full tree, independent of UI expansion state. */
 export interface HierarchyNode {
   id: number;

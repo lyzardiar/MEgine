@@ -16,11 +16,13 @@ import type { EditorStore } from '../store';
 import { isDesktopEditor } from '../transport/editorTransport';
 import {
   BridgeError,
+  type EditorMenuItemInfo,
   type EditorState,
   type EditorUiActionResult,
   type EditorUiSnapshot,
   type EditorWindowInfo,
   type HierarchyNode,
+  type PanelLayoutSnapshot,
   type ScreenshotResult,
   type SelectionInfo,
   type ViewportTab,
@@ -28,6 +30,12 @@ import {
 import { logService, type LogEntry, type LogQuery } from './LogService';
 import { WRITE_COMMANDS, COMMAND_META, type CommandContext, type CommandResult, type CommandMeta } from './commands';
 import { getComponentCatalog } from '../componentCatalog';
+import {
+  findMenuItem,
+  listAllMenuItems,
+  type MenuItemContext,
+} from '../editorWindow/registry';
+import { CORE_PANEL_IDS } from '../panels/detachedPanelWindow';
 
 type CaptureFn = (
   format: 'image/png' | 'image/jpeg',
@@ -53,6 +61,8 @@ class AgentBridge {
   private sceneMeta: SceneMetaProviders | null = null;
   private captures = new Map<ViewportTab, CaptureFn>();
   private refreshProvider: (() => void) | null = null;
+  private logProvider: ((message: string) => void) | null = null;
+  private panelLayoutProvider: (() => PanelLayoutSnapshot | null) | null = null;
 
   /** Wire the bridge to the live editor store. Called once from App. */
   connect(store: EditorStore): void {
@@ -67,6 +77,14 @@ class AgentBridge {
   /** Wire the UI refresh callback, invoked after every write command. */
   connectRefresh(refresh: () => void): void {
     this.refreshProvider = refresh;
+  }
+
+  connectLog(log: (message: string) => void): void {
+    this.logProvider = log;
+  }
+
+  connectPanelLayout(provider: () => PanelLayoutSnapshot | null): void {
+    this.panelLayoutProvider = provider;
   }
 
   /**
@@ -213,6 +231,39 @@ class AgentBridge {
     return COMMAND_META.map((meta) => ({ ...meta }));
   }
 
+  getPanelLayout(): PanelLayoutSnapshot {
+    const layout = this.panelLayoutProvider?.() ?? null;
+    if (!layout) {
+      throw new BridgeError('NOT_READY', 'The main dock workspace is not ready');
+    }
+    return structuredClone(layout);
+  }
+
+  listMenus(root?: string): EditorMenuItemInfo[] {
+    const context = this.menuContext();
+    const normalizedRoot = root?.trim();
+    return listAllMenuItems()
+      .filter((entry) => !normalizedRoot || entry.root === normalizedRoot)
+      .map((entry) => {
+        let enabled = true;
+        try {
+          enabled = entry.validate?.(context) ?? true;
+        } catch {
+          enabled = false;
+        }
+        return {
+          path: entry.path,
+          root: entry.root,
+          label: entry.label,
+          segments: [...entry.segments],
+          priority: entry.priority,
+          shortcut: entry.shortcut ?? null,
+          separatorBefore: entry.separatorBefore,
+          enabled,
+        };
+      });
+  }
+
   getComponentSchema(type?: string): unknown {
     const catalog = getComponentCatalog();
     const build = (entry: { type: string; label: string; description: string; create: () => Record<string, unknown>; requires?: string[] }) => {
@@ -242,9 +293,41 @@ class AgentBridge {
     return catalog.map(build);
   }
 
-  /** Open/focus a panel by kind via the editor's existing focus event. */
-  focusPanel(kind: string): void {
-    window.dispatchEvent(new CustomEvent('mengine:focus-panel', { detail: kind }));
+  /** Activate a docked panel without raising or focusing any native window. */
+  focusPanel(kind: string): boolean {
+    if (!CORE_PANEL_IDS.includes(kind as (typeof CORE_PANEL_IDS)[number])) return false;
+    window.dispatchEvent(new CustomEvent('mengine:focus-panel', {
+      detail: { panel: kind, activateWindow: false },
+    }));
+    return true;
+  }
+
+  resetPanelLayout(): void {
+    window.dispatchEvent(new CustomEvent('mengine:reset-dock-layout'));
+  }
+
+  async invokeMenu(path: string): Promise<CommandResult> {
+    const normalizedPath = path.trim();
+    if (!normalizedPath) {
+      throw new BridgeError('INVALID_ARGS', '"path" must be a non-empty string');
+    }
+    const entry = findMenuItem(normalizedPath);
+    if (!entry) {
+      throw new BridgeError('INVALID_ARGS', `Unknown menu item "${normalizedPath}"`);
+    }
+    const context = this.menuContext();
+    let enabled = true;
+    try {
+      enabled = entry.validate?.(context) ?? true;
+    } catch {
+      enabled = false;
+    }
+    if (!enabled) {
+      throw new BridgeError('READONLY', `Menu item "${entry.path}" is currently disabled`);
+    }
+    await entry.action(context);
+    this.refreshProvider?.();
+    return { ok: true, data: { path: entry.path } };
   }
 
   // ── Dispatcher (write commands) ───────────────────────────────────────
@@ -254,6 +337,19 @@ class AgentBridge {
     args: Record<string, unknown> = {},
     options: { screenshot?: boolean } = {},
   ): Promise<CommandResult> {
+    if (commandId === 'menu.invoke') {
+      const path = typeof args.path === 'string' ? args.path : '';
+      const result = await this.invokeMenu(path);
+      await nextFrame();
+      if (options.screenshot) {
+        try {
+          result.screenshot = await this.captureWindow('main');
+        } catch {
+          // Screenshot is best-effort; never fail a completed menu action.
+        }
+      }
+      return result;
+    }
     if (
       commandId === 'window.ui_click'
       || commandId === 'window.ui_set_value'
@@ -283,7 +379,11 @@ class AgentBridge {
     if (!handler) {
       throw new BridgeError('INVALID_ARGS', `Unknown command "${commandId}"`);
     }
-    const ctx: CommandContext = { store: this.requireStore(), focusPanel: (kind) => this.focusPanel(kind) };
+    const ctx: CommandContext = {
+      store: this.requireStore(),
+      focusPanel: (kind) => this.focusPanel(kind),
+      resetPanelLayout: () => this.resetPanelLayout(),
+    };
     const result = handler(ctx, args);
     this.refreshProvider?.();
     if (options.screenshot) {
@@ -333,6 +433,14 @@ class AgentBridge {
             : 'main',
           typeof params.maxElements === 'number' ? params.maxElements : 2_000,
         );
+      case 'panel.get_layout':
+        return this.getPanelLayout();
+      case 'menu.list':
+        return this.listMenus(
+          typeof params.root === 'string' && params.root.trim()
+            ? params.root
+            : undefined,
+        );
       case 'console.get_logs':
         return this.getLogs({
           level: params.level as LogQuery['level'],
@@ -359,6 +467,21 @@ class AgentBridge {
       throw new BridgeError('NOT_READY', 'AgentBridge is not connected to an editor store');
     }
     return this.store;
+  }
+
+  private menuContext(): MenuItemContext {
+    const store = this.requireStore();
+    return {
+      source: 'menu-bar',
+      store,
+      selectedIds: store.selectedIds,
+      contextEntity: store.selected,
+      refresh: () => this.refreshProvider?.(),
+      log: (message) => {
+        if (this.logProvider) this.logProvider(message);
+        else logService.log(message, 'info', 'agent-menu');
+      },
+    };
   }
 }
 

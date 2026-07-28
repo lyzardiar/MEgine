@@ -35,6 +35,9 @@ test('whole-window agent capture is background-safe and addressable by window la
   assert.match(mcp, /name: 'get_window_ui'/);
   assert.match(mcp, /'click_window_ui'/);
   assert.match(mcp, /'set_window_ui_value'/);
+  assert.match(mcp, /name: 'get_panel_layout'/);
+  assert.match(mcp, /name: 'list_menu_items'/);
+  assert.match(mcp, /'invoke_menu_item'/);
 });
 
 test('the main AgentBridge transport is available before a project is opened', () => {
@@ -45,4 +48,16 @@ test('the main AgentBridge transport is available before a project is opened', (
   assert.match(main, /attachBridgeTransport\(\)/);
   assert.match(main, /enabled=\{detachedPanel == null && detachedEditorWindow == null\}/);
   assert.doesNotMatch(app, /attachBridgeTransport/);
+});
+
+test('panel and menu agent surfaces use live providers and background activation', () => {
+  const bridge = fs.readFileSync(path.join(root, 'src', 'agent', 'AgentBridge.ts'), 'utf8');
+  const dock = fs.readFileSync(path.join(root, 'src', 'panels', 'DockWorkspace.tsx'), 'utf8');
+
+  assert.match(bridge, /case 'panel\.get_layout'/);
+  assert.match(bridge, /case 'menu\.list'/);
+  assert.match(bridge, /commandId === 'menu\.invoke'/);
+  assert.match(bridge, /activateWindow: false/);
+  assert.match(dock, /describePanelLayout\(tree\)/);
+  assert.match(dock, /rawDetail\?\.activateWindow !== false/);
 });

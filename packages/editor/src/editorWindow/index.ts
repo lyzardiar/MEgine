@@ -3,6 +3,8 @@ export {
   registerMenuItem,
   registerMenuItemValidator,
   listMenuItems,
+  listAllMenuItems,
+  findMenuItem,
   subscribeMenuItems,
   getMenuRevision,
   openEditorWindow,

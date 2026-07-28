@@ -62,6 +62,7 @@ import { Viewport } from './panels/Viewport';
 import { DockWorkspace, type PanelKind } from './panels/DockWorkspace';
 import { agentBridge } from './agent/AgentBridge';
 import { logService } from './agent/LogService';
+import type { PanelLayoutSnapshot } from './agent/protocol';
 import { EditorWindowHost } from './editorWindow';
 import { resolveUnityAction } from './panels/uiFieldEditors';
 import {
@@ -195,6 +196,8 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
       ? [props.detachedPanel]
       : ['hierarchy', 'scene', 'inspector', 'project']),
   );
+  const panelLayoutRef = useRef<PanelLayoutSnapshot | null>(null);
+  const logRef = useRef<(message: string) => void>(() => undefined);
   const updateVisiblePanels = useCallback((panels: ReadonlySet<PanelKind>) => {
     setVisiblePanels((current) => {
       if (current.size === panels.size && [...current].every((panel) => panels.has(panel))) {
@@ -202,6 +205,9 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
       }
       return new Set(panels);
     });
+  }, []);
+  const updatePanelLayout = useCallback((layout: PanelLayoutSnapshot) => {
+    panelLayoutRef.current = layout;
   }, []);
   const [assetReloadEpoch, setAssetReloadEpoch] = useState({
     animation: 0,
@@ -290,6 +296,8 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
       dirty: () => sceneDirtyRef.current,
     });
     agentBridge.connectRefresh(() => refreshRef.current());
+    agentBridge.connectLog((message) => logRef.current(message));
+    agentBridge.connectPanelLayout(() => panelLayoutRef.current);
   }, [store]);
 
   const postWorkspaceDirtyState = () => {
@@ -635,6 +643,7 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
     setLogs(next);
     broadcastScene();
   };
+  logRef.current = (message) => log(message);
 
   useEffect(() => {
     if (props.detachedPanel || !isDesktopEditor() || !recoveryReady.current) return;
@@ -1427,6 +1436,7 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
         detachedPanel={props.detachedPanel}
         dirtyPanels={dirtyPanels}
         onVisiblePanelsChange={updateVisiblePanels}
+        onLayoutChange={updatePanelLayout}
         panels={{
           hierarchy: (
             <Hierarchy

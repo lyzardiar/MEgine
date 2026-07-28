@@ -237,6 +237,13 @@ const TOOLS = [
     handler: async () => textContent(await bridgeQuery('window.list')),
   },
   {
+    name: 'get_panel_layout',
+    description:
+      'Get the exact live dock layout: split/tab tree, active tabs, docked panels, and detached panels with their native window labels. This is a background-safe read.',
+    inputSchema: { type: 'object', properties: {} },
+    handler: async () => textContent(await bridgeQuery('panel.get_layout')),
+  },
+  {
     name: 'get_window_ui',
     description:
       'Get a background-safe semantic snapshot of an editor window: visible text, accessible roles/names, control values and states, bounds, supported actions, and stable CSS selectors. Use this before screenshots when you need exact UI content without OCR. The editor is not activated.',
@@ -284,6 +291,19 @@ const TOOLS = [
     description: 'List every editor command (id, category, description, readOnly) the agent can invoke via the write tools.',
     inputSchema: { type: 'object', properties: {} },
     handler: async () => textContent(await bridgeQuery('commands.list')),
+  },
+  {
+    name: 'list_menu_items',
+    description:
+      'List registered Unity-style editor menu items with exact path, shortcut, priority, and current enabled state. Optionally filter by root such as Window, Assets, or GameObject.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        root: { type: 'string', description: 'Optional exact root menu name' },
+      },
+    },
+    handler: async (args) =>
+      textContent(await bridgeQuery('menu.list', args.root ? { root: args.root } : {})),
   },
   {
     name: 'get_component_schema',
@@ -380,9 +400,23 @@ const TOOLS = [
   execTool('set_gizmo', 'Set the active transform gizmo.', 'gizmo.set', {
     mode: { type: 'string', enum: ['translate', 'rotate', 'scale', 'rect'], description: 'Gizmo mode' },
   }),
-  execTool('focus_panel', 'Open/focus an editor panel by kind (hierarchy, inspector, project, console, scene, game, …).', 'panel.focus', {
+  execTool('focus_panel', 'Activate a docked editor panel by kind without raising or focusing the native editor window. Detached panels remain detached and are not raised.', 'panel.focus', {
     kind: { type: 'string', description: 'Panel kind' },
   }),
+  execTool(
+    'reset_panel_layout',
+    'Reset the dock workspace to its default layout. This also closes detached panel windows.',
+    'panel.reset_layout',
+    {},
+  ),
+  execTool(
+    'invoke_menu_item',
+    'Invoke a registered Unity-style menu item by the exact path returned by list_menu_items. Menu actions may intentionally open native dialogs or windows; prefer domain-specific tools for background work.',
+    'menu.invoke',
+    {
+      path: { type: 'string', description: 'Exact registered path, e.g. Window/General/Console' },
+    },
+  ),
   execTool(
     'click_window_ui',
     'Click an element returned by get_window_ui without activating or raising the editor window. Prefer domain-specific tools when available.',
@@ -407,12 +441,14 @@ const TOOLS = [
 const RESOURCES = [
   { uri: 'mengine://editor/state', name: 'Editor State', mimeType: 'application/json' },
   { uri: 'mengine://scene/hierarchy', name: 'Scene Hierarchy', mimeType: 'application/json' },
+  { uri: 'mengine://editor/panels', name: 'Editor Panel Layout', mimeType: 'application/json' },
   { uri: 'mengine://console/logs', name: 'Console Logs', mimeType: 'application/json' },
 ];
 
 const RESOURCE_READERS = {
   'mengine://editor/state': () => bridgeQuery('editor.state'),
   'mengine://scene/hierarchy': () => bridgeQuery('scene.hierarchy'),
+  'mengine://editor/panels': () => bridgeQuery('panel.get_layout'),
   'mengine://console/logs': () => bridgeQuery('console.get_logs', {}),
 };
 

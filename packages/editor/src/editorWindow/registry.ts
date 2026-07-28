@@ -181,6 +181,20 @@ export function listMenuItems(root: string): MenuItemEntry[] {
     .sort((a, b) => a.priority - b.priority || a.path.localeCompare(b.path));
 }
 
+export function listAllMenuItems(): MenuItemEntry[] {
+  return [...menuItems]
+    .sort((a, b) =>
+      a.root.localeCompare(b.root)
+      || a.priority - b.priority
+      || a.path.localeCompare(b.path));
+}
+
+export function findMenuItem(path: string): MenuItemEntry | null {
+  const normalized = normalizeMenuPath(path);
+  if (!normalized) return null;
+  return menuItems.find((item) => item.path === normalized.path) ?? null;
+}
+
 export function subscribeMenuItems(fn: Listener): () => void {
   menuListeners.add(fn);
   return () => menuListeners.delete(fn);

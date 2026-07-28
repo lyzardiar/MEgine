@@ -27,6 +27,7 @@ import {
 import { isDesktopEditor } from '../transport/editorTransport';
 import { dockPanelShouldMount } from '../dockPanelMounting';
 import { registerMenuItem } from '../editorWindow';
+import type { DockLayoutNode, PanelLayoutSnapshot } from '../agent/protocol';
 import './dock.css';
 
 export type PanelKind = CorePanelId;
@@ -181,6 +182,37 @@ function collectActivePanels(n: DockNode, out: Set<PanelKind> = new Set()): Set<
   collectActivePanels(n.a, out);
   collectActivePanels(n.b, out);
   return out;
+}
+
+function describeDockNode(node: DockNode): DockLayoutNode {
+  if (node.kind === 'tabs') {
+    return {
+      kind: 'tabs',
+      id: node.id,
+      panels: [...node.panels],
+      active: node.active,
+    };
+  }
+  return {
+    kind: 'split',
+    id: node.id,
+    direction: node.dir === 'h' ? 'horizontal' : 'vertical',
+    ratio: node.ratio,
+    first: describeDockNode(node.a),
+    second: describeDockNode(node.b),
+  };
+}
+
+function describePanelLayout(tree: DockNode): PanelLayoutSnapshot {
+  const detachedPanels = [...readDetachedPanels()]
+    .sort()
+    .map((kind) => ({ kind, windowLabel: `panel-${kind}` }));
+  return {
+    tree: describeDockNode(tree),
+    dockedPanels: [...collectPanels(tree)].sort(),
+    detachedPanels,
+    activePanels: [...collectActivePanels(tree)].sort(),
+  };
 }
 
 function mapLeaf(
@@ -897,6 +929,7 @@ export function DockWorkspace(props: {
   detachedPanel?: PanelKind | null;
   dirtyPanels?: ReadonlySet<PanelKind>;
   onVisiblePanelsChange?: (panels: ReadonlySet<PanelKind>) => void;
+  onLayoutChange?: (layout: PanelLayoutSnapshot) => void;
 }) {
   const boot = useRef(loadTree());
   const [tree, setTree] = useState<DockNode>(boot.current);
@@ -910,7 +943,13 @@ export function DockWorkspace(props: {
     props.onVisiblePanelsChange?.(props.detachedPanel
       ? new Set([props.detachedPanel])
       : collectActivePanels(tree));
-  }, [props.detachedPanel, props.onVisiblePanelsChange, tree]);
+    if (!props.detachedPanel) props.onLayoutChange?.(describePanelLayout(tree));
+  }, [
+    props.detachedPanel,
+    props.onLayoutChange,
+    props.onVisiblePanelsChange,
+    tree,
+  ]);
 
   const panelContent = useCallback((panel: PanelKind): ReactNode => {
     if (panel === 'scene' || panel === 'game') {
@@ -1105,10 +1144,17 @@ export function DockWorkspace(props: {
 
   useEffect(() => {
     const onFocus = (ev: Event) => {
-      const detail = (ev as CustomEvent).detail as PanelKind | undefined;
+      const rawDetail = (ev as CustomEvent).detail as
+        | PanelKind
+        | { panel?: PanelKind; activateWindow?: boolean }
+        | undefined;
+      const detail = typeof rawDetail === 'string' ? rawDetail : rawDetail?.panel;
+      const activateWindow = typeof rawDetail === 'string'
+        ? true
+        : rawDetail?.activateWindow !== false;
       if (!detail || !CORE_PANEL_IDS.includes(detail)) return;
       if (readDetachedPanels().has(detail)) {
-        void detachPanelWindow(detail);
+        if (activateWindow) void detachPanelWindow(detail);
         return;
       }
       setTree((prev) => {
