@@ -104,6 +104,7 @@ import {
   listenToPcBuildProgress,
   listPcBuildHistory,
   PROJECT_BUILD_SETTINGS_CHANGED_EVENT,
+  saveProjectBuildAssetSettings,
   saveProjectBuildSettings,
   verifyPcPlayer,
   type BuildPlayerProfile,
@@ -1482,15 +1483,23 @@ class AgentBridge {
     return bridgeIo('Failed to read Build Settings', () => getProjectBuildSettings());
   }
 
-  async setBuildScenes(requestedScenes: string[]): Promise<ProjectBuildSettings> {
+  async setBuildScenes(
+    requestedScenes: string[],
+    expectedRevision: string,
+  ): Promise<ProjectBuildSettings> {
     if (!isDesktopEditor()) {
       throw new BridgeError('NOT_READY', 'Build Settings require the desktop editor');
     }
-    await this.requireWorkspaceProvider().assertDiskMutationAllowed();
+    await this.requireWorkspaceProvider().assertDiskMutationAllowed({
+      allowSceneDirty: true,
+    });
     const current = await bridgeIo(
       'Failed to read Build Settings',
       () => getProjectBuildSettings(),
     );
+    if (current.revision !== expectedRevision) {
+      throw staleBuildSettingsRevision(current.revision, expectedRevision);
+    }
     const availableByKey = new Map(
       current.availableScenes.map((scene) => [scene.toLocaleLowerCase(), scene]),
     );
@@ -1505,16 +1514,78 @@ class AgentBridge {
       }
       return available;
     });
-    const result = await bridgeIo(
-      'Failed to save Build Settings',
-      () => saveProjectBuildSettings(scenes),
-    );
+    let result: ProjectBuildSettings;
+    try {
+      result = await saveProjectBuildSettings(scenes, expectedRevision);
+    } catch (error) {
+      if (isStaleBuildSettingsError(error)) {
+        const latest = await bridgeIo(
+          'Failed to reload Build Settings',
+          () => getProjectBuildSettings(),
+        );
+        throw staleBuildSettingsRevision(latest.revision, expectedRevision);
+      }
+      throw new BridgeError(
+        'IO_ERROR',
+        error instanceof Error ? error.message : String(error),
+      );
+    }
     window.dispatchEvent(new CustomEvent(PROJECT_BUILD_SETTINGS_CHANGED_EVENT, {
       detail: result,
     }));
     this.appendEvent('build.settings', result);
     this.logProvider?.(
       `Agent updated Build Settings: ${result.scenes.length} scene(s), entry ${result.mainScene}`,
+    );
+    return result;
+  }
+
+  async setBuildAssetPolicy(
+    assetMode: 'all' | 'referenced',
+    alwaysInclude: string[],
+    shaderVariantLimit: number,
+    expectedRevision: string,
+  ): Promise<ProjectBuildSettings> {
+    if (!isDesktopEditor()) {
+      throw new BridgeError('NOT_READY', 'Build Settings require the desktop editor');
+    }
+    await this.requireWorkspaceProvider().assertDiskMutationAllowed({
+      allowSceneDirty: true,
+    });
+    const current = await bridgeIo(
+      'Failed to read Build Settings',
+      () => getProjectBuildSettings(),
+    );
+    if (current.revision !== expectedRevision) {
+      throw staleBuildSettingsRevision(current.revision, expectedRevision);
+    }
+    let result: ProjectBuildSettings;
+    try {
+      result = await saveProjectBuildAssetSettings(
+        assetMode,
+        alwaysInclude,
+        shaderVariantLimit,
+        expectedRevision,
+      );
+    } catch (error) {
+      if (isStaleBuildSettingsError(error)) {
+        const latest = await bridgeIo(
+          'Failed to reload Build Settings',
+          () => getProjectBuildSettings(),
+        );
+        throw staleBuildSettingsRevision(latest.revision, expectedRevision);
+      }
+      throw new BridgeError(
+        'IO_ERROR',
+        error instanceof Error ? error.message : String(error),
+      );
+    }
+    window.dispatchEvent(new CustomEvent(PROJECT_BUILD_SETTINGS_CHANGED_EVENT, {
+      detail: result,
+    }));
+    this.appendEvent('build.settings', result);
+    this.logProvider?.(
+      `Agent updated Build content policy: ${result.assetMode}, ${result.alwaysInclude.length} always-included path(s), ${result.shaderVariantLimit} shader variants`,
     );
     return result;
   }
@@ -2277,6 +2348,35 @@ class AgentBridge {
     if (commandId === 'build.settings.set_scenes') {
       const result = await this.setBuildScenes(
         requiredStringArray(args, 'scenes', { nonEmpty: true, unique: true }),
+        requiredString(args, 'expectedRevision'),
+      );
+      return this.finishAsyncCommand({ ok: true, data: result }, options, true);
+    }
+    if (commandId === 'build.settings.set_asset_policy') {
+      const shaderVariantLimit = args.shaderVariantLimit;
+      const alwaysInclude = requiredStringArray(args, 'alwaysInclude', { unique: true });
+      if (alwaysInclude.length > 256) {
+        throw new BridgeError(
+          'INVALID_ARGS',
+          '"alwaysInclude" must contain at most 256 paths',
+        );
+      }
+      if (
+        typeof shaderVariantLimit !== 'number'
+        || !Number.isSafeInteger(shaderVariantLimit)
+        || shaderVariantLimit < 1
+        || shaderVariantLimit > 65_536
+      ) {
+        throw new BridgeError(
+          'INVALID_ARGS',
+          '"shaderVariantLimit" must be an integer from 1 to 65536',
+        );
+      }
+      const result = await this.setBuildAssetPolicy(
+        requiredEnum(args, 'assetMode', ['all', 'referenced'] as const),
+        alwaysInclude,
+        shaderVariantLimit,
+        requiredString(args, 'expectedRevision'),
       );
       return this.finishAsyncCommand({ ok: true, data: result }, options, true);
     }
@@ -2706,6 +2806,26 @@ function staleSortingLayerRevision(
   );
 }
 
+function isStaleBuildSettingsError(reason: unknown): boolean {
+  const message = reason instanceof Error ? reason.message : String(reason);
+  return message.includes('build settings changed on disk since they were loaded');
+}
+
+function staleBuildSettingsRevision(
+  currentRevision: string,
+  expectedRevision: string,
+): BridgeError {
+  return new BridgeError(
+    'STALE_REVISION',
+    `Build Settings revision changed: expected ${expectedRevision}, current ${currentRevision}`,
+    {
+      path: 'project.json',
+      expectedRevision,
+      currentRevision,
+    },
+  );
+}
+
 function prefabBridgeError(reason: unknown): BridgeError {
   if (reason instanceof BridgeError) return reason;
   const message = reason instanceof Error ? reason.message : String(reason);
@@ -2791,6 +2911,21 @@ function optionalBoolean(
     throw new BridgeError('INVALID_ARGS', `"${key}" must be a boolean`);
   }
   return value;
+}
+
+function requiredEnum<T extends string>(
+  args: Record<string, unknown>,
+  key: string,
+  values: readonly T[],
+): T {
+  const value = args[key];
+  if (typeof value !== 'string' || !values.includes(value as T)) {
+    throw new BridgeError(
+      'INVALID_ARGS',
+      `"${key}" must be one of: ${values.join(', ')}`,
+    );
+  }
+  return value as T;
 }
 
 function optionalEnum<T extends string>(

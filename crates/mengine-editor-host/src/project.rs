@@ -271,6 +271,10 @@ pub enum ProjectError {
     UnsafeSceneCommand,
     #[error("scene changed on disk since it was opened: {0}; reload it before saving")]
     ExternalSceneModification(String),
+    #[error(
+        "build settings changed on disk since they were loaded: expected {expected}, got {actual}"
+    )]
+    ExternalManifestModification { expected: String, actual: String },
     #[error("asset transaction failed: {0}")]
     AssetTransaction(String),
     #[error("io: {0}")]
@@ -294,6 +298,7 @@ impl ProjectError {
             ProjectError::ProjectMismatch => "projectMismatch",
             ProjectError::UnsafeSceneCommand => "unsafeSceneCommand",
             ProjectError::ExternalSceneModification(_) => "externalSceneModification",
+            ProjectError::ExternalManifestModification { .. } => "externalManifestModification",
             ProjectError::AssetTransaction(_) => "assetTransaction",
             ProjectError::Io(_) => "io",
             ProjectError::Json(_) => "json",
@@ -362,36 +367,7 @@ impl ProjectSession {
                 display_path(&project_root)
             )));
         }
-        let manifest_text = std::fs::read_to_string(&manifest_path).map_err(|error| {
-            ProjectError::InvalidProject(format!(
-                "cannot read {}: {error}",
-                display_path(&manifest_path)
-            ))
-        })?;
-        let mut manifest: ProjectManifest = serde_json::from_str(&manifest_text)?;
-        if manifest.name.trim().is_empty() {
-            return Err(ProjectError::InvalidProject(
-                "project name cannot be empty".into(),
-            ));
-        }
-        if !(1..=MAX_SHADER_VARIANT_LIMIT).contains(&manifest.shader_variant_limit) {
-            return Err(ProjectError::InvalidProject(format!(
-                "shaderVariantLimit must be from 1 to {MAX_SHADER_VARIANT_LIMIT}"
-            )));
-        }
-        if let Some(first) = manifest.build_scenes.first().cloned() {
-            match manifest.main_scene.as_deref() {
-                Some(main) if main != first.as_str() => {
-                    return Err(ProjectError::InvalidProject(
-                        "mainScene must match the first buildScenes entry".into(),
-                    ));
-                }
-                None => manifest.main_scene = Some(first),
-                _ => {}
-            }
-        }
-        manifest.always_include =
-            normalize_build_asset_paths(&project_root, &manifest.always_include)?;
+        let (_, manifest) = read_project_manifest(&project_root)?;
 
         Ok(Self {
             project_id: Uuid::new_v4(),
@@ -454,12 +430,35 @@ impl ProjectSession {
         self.manifest.shader_variant_limit
     }
 
+    pub fn refresh_build_settings(&mut self) -> Result<String, ProjectError> {
+        let (revision, manifest) = read_project_manifest(&self.project_root)?;
+        self.manifest = manifest;
+        Ok(revision)
+    }
+
     pub fn save_build_asset_settings(
         &mut self,
         asset_mode: BuildAssetMode,
         paths: Vec<String>,
         shader_variant_limit: u32,
     ) -> Result<Vec<String>, ProjectError> {
+        let expected_revision = self.refresh_build_settings()?;
+        self.save_build_asset_settings_guarded(
+            asset_mode,
+            paths,
+            shader_variant_limit,
+            &expected_revision,
+        )
+    }
+
+    pub fn save_build_asset_settings_guarded(
+        &mut self,
+        asset_mode: BuildAssetMode,
+        paths: Vec<String>,
+        shader_variant_limit: u32,
+        expected_revision: &str,
+    ) -> Result<Vec<String>, ProjectError> {
+        self.require_build_manifest_revision(expected_revision)?;
         if !(1..=MAX_SHADER_VARIANT_LIMIT).contains(&shader_variant_limit) {
             return Err(ProjectError::InvalidProject(format!(
                 "shaderVariantLimit must be from 1 to {MAX_SHADER_VARIANT_LIMIT}"
@@ -472,12 +471,23 @@ impl ProjectSession {
         manifest.shader_variant_limit = shader_variant_limit;
         let mut bytes = serde_json::to_vec_pretty(&manifest)?;
         bytes.push(b'\n');
+        self.require_build_manifest_revision(expected_revision)?;
         write_replace_synced(&self.project_root.join("project.json"), &bytes)?;
         self.manifest = manifest;
         Ok(normalized)
     }
 
     pub fn save_build_scenes(&mut self, scenes: Vec<String>) -> Result<Vec<String>, ProjectError> {
+        let expected_revision = self.refresh_build_settings()?;
+        self.save_build_scenes_guarded(scenes, &expected_revision)
+    }
+
+    pub fn save_build_scenes_guarded(
+        &mut self,
+        scenes: Vec<String>,
+        expected_revision: &str,
+    ) -> Result<Vec<String>, ProjectError> {
+        self.require_build_manifest_revision(expected_revision)?;
         if scenes.is_empty() {
             return Err(ProjectError::InvalidProject(
                 "at least one scene is required in build settings".into(),
@@ -512,9 +522,25 @@ impl ProjectSession {
         manifest.build_scenes = normalized.clone();
         let mut bytes = serde_json::to_vec_pretty(&manifest)?;
         bytes.push(b'\n');
+        self.require_build_manifest_revision(expected_revision)?;
         write_replace_synced(&self.project_root.join("project.json"), &bytes)?;
         self.manifest = manifest;
         Ok(normalized)
+    }
+
+    fn require_build_manifest_revision(
+        &mut self,
+        expected_revision: &str,
+    ) -> Result<(), ProjectError> {
+        let actual = self.refresh_build_settings()?;
+        if actual == expected_revision {
+            Ok(())
+        } else {
+            Err(ProjectError::ExternalManifestModification {
+                expected: expected_revision.to_string(),
+                actual,
+            })
+        }
     }
 
     pub fn rename_scene(
@@ -2786,6 +2812,35 @@ fn read_stable_json_value(path: &Path) -> Result<(String, serde_json::Value), Pr
     )))
 }
 
+fn read_project_manifest(project_root: &Path) -> Result<(String, ProjectManifest), ProjectError> {
+    let manifest_path = project_root.join("project.json");
+    let (revision, value) = read_stable_json_value(&manifest_path)?;
+    let mut manifest: ProjectManifest = serde_json::from_value(value)?;
+    if manifest.name.trim().is_empty() {
+        return Err(ProjectError::InvalidProject(
+            "project name cannot be empty".into(),
+        ));
+    }
+    if !(1..=MAX_SHADER_VARIANT_LIMIT).contains(&manifest.shader_variant_limit) {
+        return Err(ProjectError::InvalidProject(format!(
+            "shaderVariantLimit must be from 1 to {MAX_SHADER_VARIANT_LIMIT}"
+        )));
+    }
+    if let Some(first) = manifest.build_scenes.first().cloned() {
+        match manifest.main_scene.as_deref() {
+            Some(main) if main != first.as_str() => {
+                return Err(ProjectError::InvalidProject(
+                    "mainScene must match the first buildScenes entry".into(),
+                ));
+            }
+            None => manifest.main_scene = Some(first),
+            _ => {}
+        }
+    }
+    manifest.always_include = normalize_build_asset_paths(project_root, &manifest.always_include)?;
+    Ok((revision, manifest))
+}
+
 fn validate_project_name(name: &str) -> Result<&str, ProjectError> {
     let name = name.trim();
     if name.is_empty() {
@@ -4052,6 +4107,57 @@ mod tests {
             .unwrap_err()
             .to_string()
             .contains("editor asset metadata"));
+        std::fs::remove_dir_all(root).unwrap();
+    }
+
+    #[test]
+    fn build_settings_writes_require_the_exact_manifest_revision() {
+        let root = make_project();
+        std::fs::create_dir_all(root.join("Assets/Prefabs/Dynamic")).unwrap();
+        let mut session = ProjectSession::open(&root).unwrap();
+        let stale_revision = session.refresh_build_settings().unwrap();
+        let mut externally_changed: serde_json::Value =
+            serde_json::from_slice(&std::fs::read(root.join("project.json")).unwrap()).unwrap();
+        externally_changed["externalSetting"] = json!("preserve-me");
+        std::fs::write(
+            root.join("project.json"),
+            serde_json::to_vec_pretty(&externally_changed).unwrap(),
+        )
+        .unwrap();
+
+        let error = session
+            .save_build_asset_settings_guarded(
+                BuildAssetMode::Referenced,
+                vec!["Assets/Prefabs/Dynamic".into()],
+                512,
+                &stale_revision,
+            )
+            .unwrap_err();
+        assert!(matches!(
+            error,
+            ProjectError::ExternalManifestModification { .. }
+        ));
+        let unchanged: serde_json::Value =
+            serde_json::from_slice(&std::fs::read(root.join("project.json")).unwrap()).unwrap();
+        assert_eq!(unchanged["externalSetting"], "preserve-me");
+        assert_ne!(unchanged["assetMode"], "referenced");
+
+        let current_revision = session.refresh_build_settings().unwrap();
+        let original_scenes = session.build_scenes();
+        session
+            .save_build_asset_settings_guarded(
+                BuildAssetMode::Referenced,
+                vec!["Assets/Prefabs/Dynamic".into()],
+                512,
+                &current_revision,
+            )
+            .unwrap();
+        assert_eq!(session.build_scenes(), original_scenes);
+        let saved: serde_json::Value =
+            serde_json::from_slice(&std::fs::read(root.join("project.json")).unwrap()).unwrap();
+        assert_eq!(saved["externalSetting"], "preserve-me");
+        assert_eq!(saved["assetMode"], "referenced");
+        assert_eq!(saved["shaderVariantLimit"], 512);
         std::fs::remove_dir_all(root).unwrap();
     }
 

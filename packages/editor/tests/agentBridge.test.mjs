@@ -97,6 +97,7 @@ test('whole-window agent capture is background-safe and addressable by window la
   assert.match(mcp, /'restore_asset'/);
   assert.match(mcp, /name: 'get_build_status'/);
   assert.match(mcp, /'set_build_scenes'/);
+  assert.match(mcp, /'set_build_asset_policy'/);
   assert.match(mcp, /'start_pc_build'/);
   assert.match(mcp, /'verify_pc_build'/);
   assert.match(mcp, /name: 'get_editor_events'/);
@@ -287,6 +288,8 @@ test('scene, asset, and asynchronous build tools share guarded editor services',
   assert.match(bridge, /'STALE_REVISION'/);
   assert.match(bridge, /result\.sceneRevision = this\.sceneChanges\.revision/);
   assert.match(bridge, /commandId === 'build\.settings\.set_scenes'/);
+  assert.match(bridge, /commandId === 'build\.settings\.set_asset_policy'/);
+  assert.match(bridge, /staleBuildSettingsRevision/);
   assert.match(bridge, /availableScenes/);
   assert.match(bridge, /commandId === 'build\.verify'/);
   assert.match(bridge, /verifyPcPlayer\(executable, expectedContentHash\)/);

@@ -265,6 +265,7 @@ export type ProjectSceneInfo = {
 };
 
 export type ProjectBuildSettings = {
+  revision: string;
   mainScene: string | null;
   scenes: string[];
   availableScenes: string[];
@@ -553,13 +554,20 @@ export async function getProjectBuildSettings(): Promise<ProjectBuildSettings> {
 
 export async function saveProjectBuildSettings(
   scenes: string[],
+  expectedRevision: string,
 ): Promise<ProjectBuildSettings> {
   if (isDesktopEditor()) {
-    return invoke<ProjectBuildSettings>('save_project_build_settings', { scenes });
+    return invoke<ProjectBuildSettings>('save_project_build_settings', {
+      scenes,
+      expectedRevision,
+    });
   }
   const response = await fetch('/__mengine/build-settings', {
     method: 'PUT',
-    headers: { 'Content-Type': 'application/json' },
+    headers: {
+      'Content-Type': 'application/json',
+      'X-MEngine-Expected-Revision': expectedRevision,
+    },
     body: JSON.stringify({ scenes }),
   });
   if (!response.ok) {
@@ -573,17 +581,22 @@ export async function saveProjectBuildAssetSettings(
   assetMode: 'all' | 'referenced',
   alwaysInclude: string[],
   shaderVariantLimit: number,
+  expectedRevision: string,
 ): Promise<ProjectBuildSettings> {
   if (isDesktopEditor()) {
     return invoke<ProjectBuildSettings>('save_project_build_asset_settings', {
       assetMode,
       alwaysInclude,
       shaderVariantLimit,
+      expectedRevision,
     });
   }
   const response = await fetch('/__mengine/build-asset-settings', {
     method: 'PUT',
-    headers: { 'Content-Type': 'application/json' },
+    headers: {
+      'Content-Type': 'application/json',
+      'X-MEngine-Expected-Revision': expectedRevision,
+    },
     body: JSON.stringify({ assetMode, alwaysInclude, shaderVariantLimit }),
   });
   if (!response.ok) {

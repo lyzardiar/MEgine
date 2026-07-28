@@ -142,6 +142,7 @@ struct SceneRecoveryCheckpoint {
 #[derive(serde::Serialize)]
 #[serde(rename_all = "camelCase")]
 struct ProjectBuildSettings {
+    revision: String,
     main_scene: Option<String>,
     scenes: Vec<String>,
     available_scenes: Vec<String>,
@@ -3708,13 +3709,14 @@ fn delete_project_scene(
         .map_err(|error| error.failure(Some(session.current_revision())))
 }
 
-#[tauri::command]
-fn get_project_build_settings(state: State<'_, AppState>) -> Result<ProjectBuildSettings, String> {
-    let guard = state.project.lock();
-    let session = guard.as_ref().ok_or_else(|| no_project().message)?;
+fn project_build_settings(session: &mut ProjectSession) -> Result<ProjectBuildSettings, String> {
+    let revision = session
+        .refresh_build_settings()
+        .map_err(|error| error.to_string())?;
     let scenes = session.build_scenes();
     let available_scenes = available_build_scenes(Path::new(&session.snapshot().project_root))?;
     Ok(ProjectBuildSettings {
+        revision,
         main_scene: scenes.first().cloned(),
         scenes,
         available_scenes,
@@ -3725,24 +3727,24 @@ fn get_project_build_settings(state: State<'_, AppState>) -> Result<ProjectBuild
 }
 
 #[tauri::command]
+fn get_project_build_settings(state: State<'_, AppState>) -> Result<ProjectBuildSettings, String> {
+    let mut guard = state.project.lock();
+    let session = guard.as_mut().ok_or_else(|| no_project().message)?;
+    project_build_settings(session)
+}
+
+#[tauri::command]
 fn save_project_build_settings(
     scenes: Vec<String>,
+    expected_revision: String,
     state: State<'_, AppState>,
 ) -> Result<ProjectBuildSettings, String> {
     let mut guard = state.project.lock();
     let session = guard.as_mut().ok_or_else(|| no_project().message)?;
-    let scenes = session
-        .save_build_scenes(scenes)
+    session
+        .save_build_scenes_guarded(scenes, &expected_revision)
         .map_err(|error| error.to_string())?;
-    let available_scenes = available_build_scenes(Path::new(&session.snapshot().project_root))?;
-    Ok(ProjectBuildSettings {
-        main_scene: scenes.first().cloned(),
-        scenes,
-        available_scenes,
-        asset_mode: session.build_asset_mode(),
-        always_include: session.always_include(),
-        shader_variant_limit: session.shader_variant_limit(),
-    })
+    project_build_settings(session)
 }
 
 #[tauri::command]
@@ -3750,23 +3752,20 @@ fn save_project_build_asset_settings(
     asset_mode: BuildAssetMode,
     always_include: Vec<String>,
     shader_variant_limit: u32,
+    expected_revision: String,
     state: State<'_, AppState>,
 ) -> Result<ProjectBuildSettings, String> {
     let mut guard = state.project.lock();
     let session = guard.as_mut().ok_or_else(|| no_project().message)?;
-    let always_include = session
-        .save_build_asset_settings(asset_mode, always_include, shader_variant_limit)
+    session
+        .save_build_asset_settings_guarded(
+            asset_mode,
+            always_include,
+            shader_variant_limit,
+            &expected_revision,
+        )
         .map_err(|error| error.to_string())?;
-    let scenes = session.build_scenes();
-    let available_scenes = available_build_scenes(Path::new(&session.snapshot().project_root))?;
-    Ok(ProjectBuildSettings {
-        main_scene: scenes.first().cloned(),
-        scenes,
-        available_scenes,
-        asset_mode,
-        always_include,
-        shader_variant_limit,
-    })
+    project_build_settings(session)
 }
 
 fn validate_surface_shader_source(source: &str) -> Result<(), String> {

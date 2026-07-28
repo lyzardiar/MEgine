@@ -993,7 +993,7 @@ const TOOLS = [
   ),
   execTool(
     'set_build_scenes',
-    'Set the exact ordered scene list in Build Settings. Query get_build_settings.availableScenes first. The first item is the entry scene; unsaved editor work blocks this disk mutation.',
+    'Revision-safely set the exact ordered scene list in Build Settings without focusing a window. Query get_build_settings first; the first item is the entry scene.',
     'build.settings.set_scenes',
     {
       scenes: {
@@ -1003,7 +1003,42 @@ const TOOLS = [
         items: { type: 'string' },
         description: 'Exact ordered paths from availableScenes, e.g. Assets/Scenes/Main.mscene',
       },
+      expectedRevision: {
+        type: 'string',
+        description: 'Exact project.json revision returned by get_build_settings',
+      },
     },
+    ['scenes', 'expectedRevision'],
+  ),
+  execTool(
+    'set_build_asset_policy',
+    'Revision-safely set content inclusion mode, always-included project paths, and shader variant limit without changing the build scene order or focusing a window.',
+    'build.settings.set_asset_policy',
+    {
+      assetMode: {
+        type: 'string',
+        enum: ['all', 'referenced'],
+        description: 'Package all assets or only referenced assets plus alwaysInclude paths',
+      },
+      alwaysInclude: {
+        type: 'array',
+        maxItems: 256,
+        uniqueItems: true,
+        items: { type: 'string' },
+        description: 'Existing Assets/ or Scripts/ paths that must always be packaged',
+      },
+      shaderVariantLimit: {
+        type: 'integer',
+        minimum: 1,
+        maximum: 65536,
+        description: 'Maximum generated shader variants',
+      },
+      expectedRevision: {
+        type: 'string',
+        description: 'Exact project.json revision returned by get_build_settings',
+      },
+    },
+    ['assetMode', 'alwaysInclude', 'shaderVariantLimit', 'expectedRevision'],
   ),
   execTool(
     'start_pc_build',

@@ -268,7 +268,29 @@ export const COMMAND_PARAMS_SCHEMAS: Record<string, AgentJsonSchema> = {
       items: { type: 'string' },
       description: 'Exact ordered scene paths from build.settings.availableScenes',
     },
-  }, ['scenes']),
+    expectedRevision: stringValue('Exact project.json revision from build.settings'),
+  }, ['scenes', 'expectedRevision']),
+  'build.settings.set_asset_policy': objectSchema({
+    assetMode: {
+      type: 'string',
+      enum: ['all', 'referenced'],
+      description: 'Package all assets or only referenced assets plus alwaysInclude paths',
+    },
+    alwaysInclude: {
+      type: 'array',
+      maxItems: 256,
+      uniqueItems: true,
+      items: { type: 'string' },
+      description: 'Existing Assets/ or Scripts/ paths that must always be packaged',
+    },
+    shaderVariantLimit: {
+      type: 'integer',
+      minimum: 1,
+      maximum: 65_536,
+      description: 'Maximum generated shader variants',
+    },
+    expectedRevision: stringValue('Exact project.json revision from build.settings'),
+  }, ['assetMode', 'alwaysInclude', 'shaderVariantLimit', 'expectedRevision']),
   'build.start': objectSchema({
     profile: {
       type: 'string',

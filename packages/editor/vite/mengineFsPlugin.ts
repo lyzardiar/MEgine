@@ -1704,7 +1704,11 @@ export function mengineFsPlugin(opts: MengineFsOptions | string): Plugin {
   }
 
   function readBuildSettings() {
-    const manifest = JSON.parse(fs.readFileSync(manifestPath, 'utf8')) as Record<string, unknown>;
+    const stable = readStableManifest();
+    if (!stable.value || typeof stable.value !== 'object' || Array.isArray(stable.value)) {
+      throw new Error('project.json must contain an object');
+    }
+    const manifest = stable.value as Record<string, unknown>;
     const mainScene = normalizeBuildScene(manifest.mainScene ?? manifest.main_scene);
     const rawScenes = manifest.buildScenes ?? manifest.build_scenes;
     const source = Array.isArray(rawScenes) ? rawScenes : [];
@@ -1745,8 +1749,10 @@ export function mengineFsPlugin(opts: MengineFsOptions | string): Plugin {
       alwaysInclude.push(included);
     }
     return {
+      revision: stable.revision,
       manifest,
       settings: {
+        revision: stable.revision,
         mainScene: scenes[0] ?? null,
         scenes,
         availableScenes: listBuildScenes(),
@@ -1939,6 +1945,10 @@ export function mengineFsPlugin(opts: MengineFsOptions | string): Plugin {
       }
 
       if (pathname === `${API}/build-settings` && method === 'PUT') {
+        const rawExpected = req.headers['x-mengine-expected-revision'];
+        if (typeof rawExpected !== 'string') {
+          return sendJson(res, 400, { error: 'missing expected build settings revision' });
+        }
         const body = await readBody(req);
         const parsed = JSON.parse(body || '{}') as { scenes?: unknown[] };
         if (!Array.isArray(parsed.scenes) || parsed.scenes.length === 0) {
@@ -1958,11 +1968,24 @@ export function mengineFsPlugin(opts: MengineFsOptions | string): Plugin {
           seen.add(canonical.toLowerCase());
           scenes.push(canonical);
         }
-        const { manifest } = readBuildSettings();
+        const { manifest, revision } = readBuildSettings();
+        if (revision !== rawExpected) {
+          return sendJson(res, 409, {
+            error:
+              `build settings changed on disk since they were loaded; expected ${rawExpected}, current ${revision}`,
+          });
+        }
         manifest.mainScene = scenes[0];
         manifest.buildScenes = scenes;
         delete manifest.main_scene;
         delete manifest.build_scenes;
+        const currentRevision = readStableManifest().revision;
+        if (currentRevision !== rawExpected) {
+          return sendJson(res, 409, {
+            error:
+              `build settings changed on disk since they were loaded; expected ${rawExpected}, current ${currentRevision}`,
+          });
+        }
         writeFileAtomic(
           manifestPath,
           Buffer.from(`${JSON.stringify(manifest, null, 2)}\n`, 'utf8'),
@@ -1971,6 +1994,10 @@ export function mengineFsPlugin(opts: MengineFsOptions | string): Plugin {
       }
 
       if (pathname === `${API}/build-asset-settings` && method === 'PUT') {
+        const rawExpected = req.headers['x-mengine-expected-revision'];
+        if (typeof rawExpected !== 'string') {
+          return sendJson(res, 400, { error: 'missing expected build settings revision' });
+        }
         const body = await readBody(req);
         const parsed = JSON.parse(body || '{}') as {
           assetMode?: unknown;
@@ -2001,13 +2028,26 @@ export function mengineFsPlugin(opts: MengineFsOptions | string): Plugin {
           seen.add(included.toLowerCase());
           alwaysInclude.push(included);
         }
-        const { manifest } = readBuildSettings();
+        const { manifest, revision } = readBuildSettings();
+        if (revision !== rawExpected) {
+          return sendJson(res, 409, {
+            error:
+              `build settings changed on disk since they were loaded; expected ${rawExpected}, current ${revision}`,
+          });
+        }
         manifest.assetMode = parsed.assetMode;
         manifest.alwaysInclude = alwaysInclude;
         manifest.shaderVariantLimit = parsed.shaderVariantLimit;
         delete manifest.asset_mode;
         delete manifest.always_include;
         delete manifest.shader_variant_limit;
+        const currentRevision = readStableManifest().revision;
+        if (currentRevision !== rawExpected) {
+          return sendJson(res, 409, {
+            error:
+              `build settings changed on disk since they were loaded; expected ${rawExpected}, current ${currentRevision}`,
+          });
+        }
         writeFileAtomic(
           manifestPath,
           Buffer.from(`${JSON.stringify(manifest, null, 2)}\n`, 'utf8'),

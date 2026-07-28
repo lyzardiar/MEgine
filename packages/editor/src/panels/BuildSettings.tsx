@@ -385,10 +385,16 @@ export function BuildSettings(props: {
 
   const persistScenes = async (scenes: string[]) => {
     if (settingsSaving || scenes.length === 0) return;
+    const expectedRevision = settingsRef.current?.revision;
+    if (!expectedRevision) {
+      setSettingsError('Build settings are not loaded.');
+      return;
+    }
     setSettingsSaving(true);
     setSettingsError(null);
     try {
-      const next = await saveProjectBuildSettings(scenes);
+      const next = await saveProjectBuildSettings(scenes, expectedRevision);
+      settingsRef.current = next;
       setSettings(next);
       invalidateBuildReport();
       props.onLog(`Build scenes updated: ${next.scenes.length} scene(s), entry ${sceneLabel(next.scenes[0])}`);
@@ -407,6 +413,11 @@ export function BuildSettings(props: {
     shaderVariantLimit: number,
   ): Promise<boolean> => {
     if (settingsSaving) return false;
+    const expectedRevision = settingsRef.current?.revision;
+    if (!expectedRevision) {
+      setSettingsError('Build settings are not loaded.');
+      return false;
+    }
     setSettingsSaving(true);
     setSettingsError(null);
     try {
@@ -414,6 +425,7 @@ export function BuildSettings(props: {
         assetMode,
         alwaysInclude,
         shaderVariantLimit,
+        expectedRevision,
       );
       settingsRef.current = next;
       setSettings(next);
