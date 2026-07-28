@@ -873,6 +873,11 @@ test('scene, asset, and asynchronous build tools share guarded editor services',
   assert.match(buildSettings, /broadcastProjectBuildArtifactsChanged\(\{/);
   assert.match(buildSettings, /PROJECT_BUILD_SETTINGS_CHANGED_EVENT/);
   assert.match(bridge, /PROJECT_BUILD_ARTIFACTS_CHANGED_EVENT/);
+  assert.match(bridge, /PROJECT_BUILD_SETTINGS_CHANGED_EVENT/);
+  assert.equal(
+    [...bridge.matchAll(/this\.appendEvent\(\s*'build\.settings'/g)].length,
+    1,
+  );
   assert.match(bridge, /this\.appendEvent\(\s*'build\.artifacts'/);
   assert.match(eventJournal, /'build\.settings'/);
   assert.match(eventJournal, /'build\.artifacts'/);

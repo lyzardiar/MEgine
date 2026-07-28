@@ -159,6 +159,7 @@ import {
   broadcastProjectBuildArtifactsChanged,
   broadcastProjectBuildSettingsChanged,
   PROJECT_BUILD_ARTIFACTS_CHANGED_EVENT,
+  PROJECT_BUILD_SETTINGS_CHANGED_EVENT,
 } from '../buildEditorEvents';
 import type { AgentAssetOperations } from './assetOperations';
 import type { AssetTrashEntry } from '../assetTrash';
@@ -386,6 +387,7 @@ class AgentBridge {
   private stopDialogEvents: (() => void) | null = null;
   private stopMenuEvents: (() => void) | null = null;
   private stopWindowTypeEvents: (() => void) | null = null;
+  private stopBuildSettingsEvents: (() => void) | null = null;
   private stopBuildArtifactEvents: (() => void) | null = null;
   private stopProjectSettingsEvents: (() => void) | null = null;
   private stopAssetEvents: (() => void) | null = null;
@@ -519,6 +521,22 @@ class AgentBridge {
       this.windowObservationTimer = window.setInterval(() => {
         void this.observeWindowInventory().catch(() => undefined);
       }, 1_000);
+      const onBuildSettingsChanged = (event: Event) => {
+        this.appendEvent(
+          'build.settings',
+          structuredClone((event as CustomEvent<unknown>).detail ?? {}),
+        );
+      };
+      window.addEventListener(
+        PROJECT_BUILD_SETTINGS_CHANGED_EVENT,
+        onBuildSettingsChanged,
+      );
+      this.stopBuildSettingsEvents = () => {
+        window.removeEventListener(
+          PROJECT_BUILD_SETTINGS_CHANGED_EVENT,
+          onBuildSettingsChanged,
+        );
+      };
       const onBuildArtifactsChanged = (event: Event) => {
         this.appendEvent(
           'build.artifacts',
@@ -590,6 +608,8 @@ class AgentBridge {
         window.clearInterval(this.windowObservationTimer);
         this.windowObservationTimer = null;
       }
+      this.stopBuildSettingsEvents?.();
+      this.stopBuildSettingsEvents = null;
       this.stopBuildArtifactEvents?.();
       this.stopBuildArtifactEvents = null;
       this.stopProjectSettingsEvents?.();
@@ -2769,7 +2789,6 @@ class AgentBridge {
       );
     }
     broadcastProjectBuildSettingsChanged(result);
-    this.appendEvent('build.settings', result);
     this.logProvider?.(
       `Agent updated Build Settings: ${result.scenes.length} scene(s), entry ${result.mainScene}`,
     );
@@ -2817,7 +2836,6 @@ class AgentBridge {
       );
     }
     broadcastProjectBuildSettingsChanged(result);
-    this.appendEvent('build.settings', result);
     this.logProvider?.(
       `Agent updated Build content policy: ${result.assetMode}, ${result.alwaysInclude.length} always-included path(s), ${result.shaderVariantLimit} shader variants`,
     );
