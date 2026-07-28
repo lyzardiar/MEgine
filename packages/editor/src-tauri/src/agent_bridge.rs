@@ -1420,9 +1420,20 @@ const WINDOW_UI_INTERACTION_SCRIPT: &str = r#"
   const roleForName = (target) => {
     const explicit = normalizeName(target.getAttribute('role'));
     if (explicit) return explicit;
+    if (/^h[1-6]$/.test(target.localName)) return 'heading';
     if (target.localName === 'button') return 'button';
     if (target.localName === 'a' && target.hasAttribute('href')) return 'link';
+    if (target.localName === 'textarea') return 'textbox';
+    if (target.localName === 'select') return target.multiple ? 'listbox' : 'combobox';
     if (target.localName === 'option') return 'option';
+    if (target.localName === 'input') {
+      const type = String(target.type || 'text').toLowerCase();
+      if (type === 'checkbox') return 'checkbox';
+      if (type === 'radio') return 'radio';
+      if (type === 'range') return 'slider';
+      if (['button', 'submit', 'reset'].includes(type)) return 'button';
+      return 'textbox';
+    }
     return '';
   };
   const directName = (target) => {
@@ -1631,7 +1642,7 @@ const WINDOW_UI_INTERACTION_SCRIPT: &str = r#"
     action,
     selector,
     tag: element.localName,
-    role: element.getAttribute('role'),
+    role: roleForName(element) || null,
     name: interactionName(),
     value: element instanceof HTMLInputElement && element.type === 'password'
       ? '<redacted>'

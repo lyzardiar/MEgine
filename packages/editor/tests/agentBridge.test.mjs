@@ -54,6 +54,7 @@ test('whole-window agent capture is background-safe and addressable by window la
   assert.match(rust, /scrollContextName/);
   assert.match(rust, /meaningfulContentName/);
   assert.match(rust, /interactionName/);
+  assert.match(rust, /role: roleForName\(element\) \|\| null/);
   assert.doesNotMatch(rust, /typeof element\.onclick === 'function'/);
   assert.match(rust, /height: element\.scrollHeight/);
   assert.match(rust, /clientHeight: element\.clientHeight/);
