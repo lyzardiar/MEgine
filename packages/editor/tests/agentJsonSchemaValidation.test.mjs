@@ -24,16 +24,34 @@ function assertParity(commandId, args, valid) {
   }
 }
 
+const UI_REVISION = 'ui-v2-42-0123456789abcdef';
+
 test('direct AgentBridge schema validation matches MCP for valid command arguments', () => {
   for (const [commandId, args] of [
     ['project.create', { parent: 'C:\\projects', name: 'Example' }],
     ['entity.create', { name: 'Child', parent: null, components: {} }],
     ['transform.set', { entity: 1, position: [1, 2, 3] }],
     ['playback.step', { deltaTime: 1 / 60 }],
-    ['window.ui_press_key', { selector: '#dialog-input', key: 'Enter' }],
-    ['window.ui_drag_to', { selector: '#source', targetSelector: '#target' }],
-    ['window.ui_drag_by', { selector: '#splitter', deltaX: 40, deltaY: 0 }],
-    ['window.ui_hover', { selector: '#submenu' }],
+    ['window.ui_press_key', {
+      selector: '#dialog-input',
+      key: 'Enter',
+      expectedSnapshotRevision: UI_REVISION,
+    }],
+    ['window.ui_drag_to', {
+      selector: '#source',
+      targetSelector: '#target',
+      expectedSnapshotRevision: UI_REVISION,
+    }],
+    ['window.ui_drag_by', {
+      selector: '#splitter',
+      deltaX: 40,
+      deltaY: 0,
+      expectedSnapshotRevision: UI_REVISION,
+    }],
+    ['window.ui_hover', {
+      selector: '#submenu',
+      expectedSnapshotRevision: UI_REVISION,
+    }],
     ['build.run', { executable: 'Builds\\Game.exe', allowForegroundLaunch: true }],
     ['intent.apply', {
       intent: { kind: 'SetClearColor', color: [0.1, 0.2, 0.3, 1] },
@@ -57,9 +75,20 @@ test('direct AgentBridge schema validation matches MCP for malformed or extra ar
     ['transform.set', { entity: 1 }],
     ['transform.set', { entity: 1, position: [1, 2] }],
     ['playback.step', { deltaTime: 0 }],
-    ['window.ui_press_key', { selector: '#dialog-input', key: 'A' }],
-    ['window.ui_drag_to', { selector: '#source' }],
-    ['window.ui_drag_by', { selector: '#splitter', deltaX: 40 }],
+    ['window.ui_press_key', {
+      selector: '#dialog-input',
+      key: 'A',
+      expectedSnapshotRevision: UI_REVISION,
+    }],
+    ['window.ui_drag_to', {
+      selector: '#source',
+      expectedSnapshotRevision: UI_REVISION,
+    }],
+    ['window.ui_drag_by', {
+      selector: '#splitter',
+      deltaX: 40,
+      expectedSnapshotRevision: UI_REVISION,
+    }],
     ['window.ui_hover', {}],
     ['build.run', { executable: 'Builds\\Game.exe', allowForegroundLaunch: false }],
     ['intent.apply', {

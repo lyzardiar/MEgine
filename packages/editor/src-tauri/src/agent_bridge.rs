@@ -575,6 +575,22 @@ mod transport_tests {
         assert!(remove_discovery_file_if_owned(&path, new_token, new_pid).unwrap());
         assert!(!path.exists());
     }
+
+    #[test]
+    fn semantic_ui_revisions_are_strictly_validated() {
+        assert!(valid_ui_snapshot_revision("ui-v2-42-0123456789abcdef"));
+        for invalid in [
+            "",
+            "ui-v2-42",
+            "ui-vx-42-0123456789abcdef",
+            "ui-v2--0123456789abcdef",
+            "ui-v2-42-0123456789abcde",
+            "ui-v2-42-0123456789ABCDEf",
+            "content-v2-42-0123456789abcdef",
+        ] {
+            assert!(!valid_ui_snapshot_revision(invalid), "{invalid}");
+        }
+    }
 }
 
 // ── Background-safe editor-window observation ───────────────────────────────
@@ -666,6 +682,7 @@ pub async fn interact_editor_window(
     delta_x: Option<f64>,
     delta_y: Option<f64>,
     key: Option<String>,
+    expected_snapshot_revision: String,
 ) -> Result<serde_json::Value, String> {
     let window_label = window_label.unwrap_or_else(|| "main".to_string());
     let selector = selector.trim().to_string();
@@ -741,6 +758,29 @@ pub async fn interact_editor_window(
     } else if key.is_some() {
         return Err("key is only valid for keyPress".to_string());
     }
+    let expected_snapshot_revision = expected_snapshot_revision.trim().to_string();
+    if !valid_ui_snapshot_revision(&expected_snapshot_revision) {
+        return Err(
+            "expectedSnapshotRevision must be a snapshotRevision returned by inspect_editor_window"
+                .to_string(),
+        );
+    }
+    let current_snapshot =
+        inspect_editor_window_impl(app.clone(), window_label.clone(), 50, 0).await?;
+    let actual_snapshot_revision = current_snapshot
+        .get("snapshotRevision")
+        .and_then(serde_json::Value::as_str)
+        .ok_or_else(|| "editor UI snapshot did not contain a revision".to_string())?;
+    if actual_snapshot_revision != expected_snapshot_revision {
+        return Ok(serde_json::json!({
+            "ok": false,
+            "error": "Editor window semantic content changed; get a fresh UI snapshot before interacting",
+            "staleSnapshot": true,
+            "expectedSnapshotRevision": expected_snapshot_revision,
+            "actualSnapshotRevision": actual_snapshot_revision,
+            "restartOffset": 0,
+        }));
+    }
     interact_editor_window_impl(
         app,
         window_label,
@@ -751,8 +791,31 @@ pub async fn interact_editor_window(
         delta_x,
         delta_y,
         key,
+        expected_snapshot_revision,
     )
     .await
+}
+
+fn valid_ui_snapshot_revision(value: &str) -> bool {
+    let mut parts = value.split('-');
+    let prefix = parts.next();
+    let version = parts.next();
+    let count = parts.next();
+    let hash = parts.next();
+    prefix == Some("ui")
+        && version.is_some_and(|part| {
+            part.strip_prefix('v').is_some_and(|digits| {
+                !digits.is_empty() && digits.chars().all(|ch| ch.is_ascii_digit())
+            })
+        })
+        && count.is_some_and(|part| !part.is_empty() && part.chars().all(|ch| ch.is_ascii_digit()))
+        && hash.is_some_and(|part| {
+            part.len() == 16
+                && part
+                    .chars()
+                    .all(|ch| ch.is_ascii_hexdigit() && !ch.is_ascii_uppercase())
+        })
+        && parts.next().is_none()
 }
 
 #[cfg(windows)]
@@ -873,6 +936,7 @@ async fn interact_editor_window_impl(
     delta_x: Option<f64>,
     delta_y: Option<f64>,
     key: Option<String>,
+    expected_snapshot_revision: String,
 ) -> Result<serde_json::Value, String> {
     use base64::Engine as _;
     let payload = serde_json::json!({
@@ -883,6 +947,7 @@ async fn interact_editor_window_impl(
         "deltaX": delta_x,
         "deltaY": delta_y,
         "key": key,
+        "expectedSnapshotRevision": expected_snapshot_revision,
     })
     .to_string();
     let payload = base64::engine::general_purpose::STANDARD.encode(payload);
@@ -1034,6 +1099,7 @@ async fn interact_editor_window_impl(
     _delta_x: Option<f64>,
     _delta_y: Option<f64>,
     _key: Option<String>,
+    _expected_snapshot_revision: String,
 ) -> Result<serde_json::Value, String> {
     Err("background editor-window interaction is currently only supported on Windows".to_string())
 }
@@ -1049,6 +1115,23 @@ const WINDOW_UI_SNAPSHOT_SCRIPT: &str = r#"
 (() => {
   const limit = __MENGINE_MAX_ELEMENTS__;
   const offset = __MENGINE_OFFSET__;
+  const revisionGuardKey = Symbol.for('mengine.agent.uiRevisionGuard');
+  let revisionGuard = window[revisionGuardKey];
+  if (!revisionGuard) {
+    revisionGuard = { epoch: 0, revisions: new Map() };
+    const observer = new MutationObserver(() => {
+      revisionGuard.epoch += 1;
+      revisionGuard.revisions.clear();
+    });
+    observer.observe(document, {
+      attributes: true,
+      characterData: true,
+      childList: true,
+      subtree: true,
+    });
+    revisionGuard.observer = observer;
+    window[revisionGuardKey] = revisionGuard;
+  }
   const normalize = (value, max = 400) => String(value ?? '')
     .replace(/\s+/g, ' ')
     .trim()
@@ -1335,6 +1418,7 @@ const WINDOW_UI_SNAPSHOT_SCRIPT: &str = r#"
   const snapshotRevision = `ui-v1-${candidates.length}-${
     revisionHash.toString(16).padStart(16, '0')
   }`;
+  revisionGuard.revisions.set(snapshotRevision, revisionGuard.epoch);
   const selected = candidates.slice(offset, offset + limit);
   const ids = new Map(candidates.map((entry, index) => [entry.element, `ui-${index + 1}`]));
   const elements = selected.map((entry) => {
@@ -1512,7 +1596,20 @@ const WINDOW_UI_INTERACTION_SCRIPT: &str = r#"
     deltaX: requestedDeltaX,
     deltaY: requestedDeltaY,
     key: requestedKey,
+    expectedSnapshotRevision,
   } = payload;
+  const revisionGuard = window[Symbol.for('mengine.agent.uiRevisionGuard')];
+  const guardedEpoch = revisionGuard?.revisions?.get(expectedSnapshotRevision);
+  if (!revisionGuard || guardedEpoch !== revisionGuard.epoch) {
+    return {
+      ok: false,
+      error: 'Editor window semantic content changed; get a fresh UI snapshot before interacting',
+      staleSnapshot: true,
+      expectedSnapshotRevision,
+      actualSnapshotRevision: null,
+      restartOffset: 0,
+    };
+  }
   const agentActionNames = [
     'click',
     'doubleClick',

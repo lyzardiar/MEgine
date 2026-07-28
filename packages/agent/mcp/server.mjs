@@ -750,6 +750,20 @@ const INTENT_SCHEMA = {
   ],
 };
 
+const UI_SNAPSHOT_REVISION_SCHEMA = Object.freeze({
+  type: 'string',
+  pattern: '^ui-v\\d+-\\d+-[0-9a-f]{16}$',
+  description: 'Exact snapshotRevision returned with the selector by get_window_ui',
+});
+
+function uiInteractionProperties(selectorDescription) {
+  return {
+    windowLabel: { type: 'string', description: 'Window label (default: main)' },
+    selector: { type: 'string', description: selectorDescription },
+    expectedSnapshotRevision: UI_SNAPSHOT_REVISION_SCHEMA,
+  };
+}
+
 const TOOLS = [
   {
     name: 'get_project_state',
@@ -2406,49 +2420,44 @@ const TOOLS = [
     'Click an element returned by get_window_ui without activating or raising the editor window. Prefer domain-specific tools when available.',
     'window.ui_click',
     {
-      windowLabel: { type: 'string', description: 'Window label (default: main)' },
-      selector: { type: 'string', description: 'Exact selector returned by get_window_ui' },
+      ...uiInteractionProperties('Exact selector returned by get_window_ui'),
     },
-    ['selector'],
+    ['selector', 'expectedSnapshotRevision'],
   ),
   execTool(
     'double_click_window_ui',
     'Double-click an element marked with the doubleClick action by get_window_ui without activating or raising the editor window.',
     'window.ui_double_click',
     {
-      windowLabel: { type: 'string', description: 'Window label (default: main)' },
-      selector: { type: 'string', description: 'Exact selector returned by get_window_ui' },
+      ...uiInteractionProperties('Exact selector returned by get_window_ui'),
     },
-    ['selector'],
+    ['selector', 'expectedSnapshotRevision'],
   ),
   execTool(
     'open_window_ui_context_menu',
     'Open the context menu for an element marked with the contextClick action by get_window_ui without activating or raising the editor window.',
     'window.ui_context_click',
     {
-      windowLabel: { type: 'string', description: 'Window label (default: main)' },
-      selector: { type: 'string', description: 'Exact selector returned by get_window_ui' },
+      ...uiInteractionProperties('Exact selector returned by get_window_ui'),
     },
-    ['selector'],
+    ['selector', 'expectedSnapshotRevision'],
   ),
   execTool(
     'set_window_ui_value',
     'Set an input, textarea, select, or contenteditable value returned by get_window_ui without activating the editor window.',
     'window.ui_set_value',
     {
-      windowLabel: { type: 'string', description: 'Window label (default: main)' },
-      selector: { type: 'string', description: 'Exact selector returned by get_window_ui' },
+      ...uiInteractionProperties('Exact selector returned by get_window_ui'),
       value: { type: 'string', description: 'New value' },
     },
-    ['selector', 'value'],
+    ['selector', 'expectedSnapshotRevision', 'value'],
   ),
   execTool(
     'scroll_window_ui',
     'Scroll a container marked with the scroll action by get_window_ui. This is background-safe and enables inspection of virtualized content without foreground input.',
     'window.ui_scroll',
     {
-      windowLabel: { type: 'string', description: 'Window label (default: main)' },
-      selector: { type: 'string', description: 'Exact scrollable selector returned by get_window_ui' },
+      ...uiInteractionProperties('Exact scrollable selector returned by get_window_ui'),
       deltaX: {
         type: 'number',
         minimum: -1000000,
@@ -2462,26 +2471,24 @@ const TOOLS = [
         description: 'Vertical CSS-pixel delta',
       },
     },
-    ['selector', 'deltaY'],
+    ['selector', 'expectedSnapshotRevision', 'deltaY'],
   ),
   execTool(
     'drag_window_ui',
     'Drag a source marked with the dragTo action by get_window_ui onto another semantic element. The HTML drag events stay inside the hidden WebView and do not move the foreground cursor.',
     'window.ui_drag_to',
     {
-      windowLabel: { type: 'string', description: 'Window label (default: main)' },
-      selector: { type: 'string', description: 'Exact draggable source selector returned by get_window_ui' },
+      ...uiInteractionProperties('Exact draggable source selector returned by get_window_ui'),
       targetSelector: { type: 'string', description: 'Exact drop target selector returned by get_window_ui' },
     },
-    ['selector', 'targetSelector'],
+    ['selector', 'expectedSnapshotRevision', 'targetSelector'],
   ),
   execTool(
     'drag_window_ui_by',
     'Perform a bounded pointer drag from the center of an element marked with the dragBy action by get_window_ui. The endpoint must stay inside the same hidden WebView; this never moves the OS cursor.',
     'window.ui_drag_by',
     {
-      windowLabel: { type: 'string', description: 'Window label (default: main)' },
-      selector: { type: 'string', description: 'Exact pointer-gesture selector returned by get_window_ui' },
+      ...uiInteractionProperties('Exact pointer-gesture selector returned by get_window_ui'),
       deltaX: {
         type: 'number',
         minimum: -1000000,
@@ -2495,25 +2502,23 @@ const TOOLS = [
         description: 'Vertical CSS-pixel displacement; may be zero',
       },
     },
-    ['selector', 'deltaX', 'deltaY'],
+    ['selector', 'expectedSnapshotRevision', 'deltaX', 'deltaY'],
   ),
   execTool(
     'hover_window_ui',
     'Hover an element marked with the hover action by get_window_ui. Hover transitions stay inside the hidden WebView and never move the OS cursor.',
     'window.ui_hover',
     {
-      windowLabel: { type: 'string', description: 'Window label (default: main)' },
-      selector: { type: 'string', description: 'Exact hover-capable selector returned by get_window_ui' },
+      ...uiInteractionProperties('Exact hover-capable selector returned by get_window_ui'),
     },
-    ['selector'],
+    ['selector', 'expectedSnapshotRevision'],
   ),
   execTool(
     'press_window_ui_key',
     'Press an allow-listed semantic key on an element marked with the keyPress action by get_window_ui. Events stay inside the hidden WebView and do not focus or type into the foreground application.',
     'window.ui_press_key',
     {
-      windowLabel: { type: 'string', description: 'Window label (default: main)' },
-      selector: { type: 'string', description: 'Exact keyboard target selector returned by get_window_ui' },
+      ...uiInteractionProperties('Exact keyboard target selector returned by get_window_ui'),
       key: {
         type: 'string',
         enum: [
@@ -2535,7 +2540,7 @@ const TOOLS = [
         description: 'Allow-listed semantic key without modifiers',
       },
     },
-    ['selector', 'key'],
+    ['selector', 'expectedSnapshotRevision', 'key'],
   ),
 ];
 
@@ -2668,7 +2673,7 @@ const SERVER_INSTRUCTIONS = [
   'Read tools may run concurrently. Editor writes are serialized in arrival order.',
   'For revision-sensitive writes, pass the latest expectedSceneRevision. Reuse the same requestId only when retrying the exact same write; using it with different arguments is rejected.',
   'BRIDGE_CONNECTION means the editor is unavailable and the request was not accepted. UNKNOWN_OUTCOME means a sent write lost its editor process; re-read state before deciding whether a new write is needed.',
-  'Prefer domain tools over semantic window UI actions. UI inspection and interaction are available for surfaces without a domain API and remain background-safe.',
+  'Prefer domain tools over semantic window UI actions. UI inspection and interaction are available for surfaces without a domain API and remain background-safe. Every UI write must pass expectedSnapshotRevision from the same get_window_ui snapshot as its selector; stale revisions are rejected before dispatch.',
   'If an editor confirmation or prompt is open, read get_active_dialog for its window label and exact id, then use respond_to_dialog; stale ids are rejected.',
   'After edits, verify semantic state and use a scene, game, or whole-window screenshot when visual correctness matters. Poll get_events for incremental observation during longer workflows.',
 ].join('\n');

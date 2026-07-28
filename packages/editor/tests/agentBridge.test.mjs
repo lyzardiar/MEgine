@@ -139,6 +139,14 @@ test('whole-window agent capture is background-safe and addressable by window la
   assert.match(bridge, /gameResolution: store\.gameResolution/);
   assert.match(bridge, /capture_editor_window', \{ windowLabel \}/);
   assert.match(bridge, /window\.ui_drag_by requires a non-zero deltaX or deltaY/);
+  assert.match(bridge, /Window UI interaction requires expectedSnapshotRevision/);
+  assert.match(bridge, /result\.staleSnapshot/);
+  assert.match(bridge, /'STALE_REVISION'/);
+  assert.match(rust, /inspect_editor_window_impl\(app\.clone\(\), window_label\.clone\(\), 50, 0\)/);
+  assert.match(rust, /actualSnapshotRevision/);
+  assert.match(rust, /new MutationObserver/);
+  assert.match(rust, /guardedEpoch !== revisionGuard\.epoch/);
+  assert.match(mcp, /UI_SNAPSHOT_REVISION_SCHEMA/);
   assert.match(bridge, /candidate\.totalSemanticElements > 0/);
   assert.match(bridge, /semanticReady: true/);
   assert.match(bridge, /snapshotRevision: initialSnapshot\.snapshotRevision/);

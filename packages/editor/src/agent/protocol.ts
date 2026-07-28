@@ -128,6 +128,10 @@ export interface EditorUiContentPage {
 export interface EditorUiActionResult {
   ok: boolean;
   error?: string;
+  staleSnapshot?: boolean;
+  expectedSnapshotRevision?: string;
+  actualSnapshotRevision?: string;
+  restartOffset?: number;
   agentBlocked?: boolean;
   agentAlternative?: string | null;
   action?: EditorUiAction;

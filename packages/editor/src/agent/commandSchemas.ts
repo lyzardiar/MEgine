@@ -123,6 +123,15 @@ const panelKind: AgentJsonSchema = {
   description: 'Core editor panel kind',
 };
 const emptySchema = objectSchema();
+const uiInteractionContext: SchemaProperties = {
+  windowLabel: stringValue('Window label; default main'),
+  expectedSnapshotRevision: {
+    type: 'string',
+    pattern: '^ui-v\\d+-\\d+-[0-9a-f]{16}$',
+    description: 'Exact snapshotRevision returned with the selector by window.ui_snapshot',
+  },
+};
+const uiInteractionRequired = ['selector', 'expectedSnapshotRevision'];
 
 export const COMMAND_PARAMS_SCHEMAS: Record<string, AgentJsonSchema> = {
   'batch.apply': objectSchema({
@@ -664,24 +673,24 @@ export const COMMAND_PARAMS_SCHEMAS: Record<string, AgentJsonSchema> = {
     },
   }, ['typeId']),
   'window.ui_click': objectSchema({
-    windowLabel: stringValue('Window label; default main'),
+    ...uiInteractionContext,
     selector: stringValue('Exact selector returned by window.ui_snapshot'),
-  }, ['selector']),
+  }, uiInteractionRequired),
   'window.ui_double_click': objectSchema({
-    windowLabel: stringValue('Window label; default main'),
+    ...uiInteractionContext,
     selector: stringValue('Exact selector returned by window.ui_snapshot'),
-  }, ['selector']),
+  }, uiInteractionRequired),
   'window.ui_context_click': objectSchema({
-    windowLabel: stringValue('Window label; default main'),
+    ...uiInteractionContext,
     selector: stringValue('Exact selector returned by window.ui_snapshot'),
-  }, ['selector']),
+  }, uiInteractionRequired),
   'window.ui_set_value': objectSchema({
-    windowLabel: stringValue('Window label; default main'),
+    ...uiInteractionContext,
     selector: stringValue('Exact selector returned by window.ui_snapshot'),
     value: stringValue('New form control value'),
-  }, ['selector', 'value']),
+  }, [...uiInteractionRequired, 'value']),
   'window.ui_scroll': objectSchema({
-    windowLabel: stringValue('Window label; default main'),
+    ...uiInteractionContext,
     selector: stringValue('Exact scrollable selector returned by window.ui_snapshot'),
     deltaX: {
       type: 'number',
@@ -695,14 +704,14 @@ export const COMMAND_PARAMS_SCHEMAS: Record<string, AgentJsonSchema> = {
       maximum: 1_000_000,
       description: 'Vertical CSS-pixel delta',
     },
-  }, ['selector', 'deltaY']),
+  }, [...uiInteractionRequired, 'deltaY']),
   'window.ui_drag_to': objectSchema({
-    windowLabel: stringValue('Window label; default main'),
+    ...uiInteractionContext,
     selector: stringValue('Exact draggable source selector returned by window.ui_snapshot'),
     targetSelector: stringValue('Exact drop target selector returned by window.ui_snapshot'),
-  }, ['selector', 'targetSelector']),
+  }, [...uiInteractionRequired, 'targetSelector']),
   'window.ui_drag_by': objectSchema({
-    windowLabel: stringValue('Window label; default main'),
+    ...uiInteractionContext,
     selector: stringValue('Exact pointer-gesture selector returned by window.ui_snapshot'),
     deltaX: {
       type: 'number',
@@ -716,13 +725,13 @@ export const COMMAND_PARAMS_SCHEMAS: Record<string, AgentJsonSchema> = {
       maximum: 1_000_000,
       description: 'Vertical CSS-pixel displacement; may be zero',
     },
-  }, ['selector', 'deltaX', 'deltaY']),
+  }, [...uiInteractionRequired, 'deltaX', 'deltaY']),
   'window.ui_hover': objectSchema({
-    windowLabel: stringValue('Window label; default main'),
+    ...uiInteractionContext,
     selector: stringValue('Exact hover-capable selector returned by window.ui_snapshot'),
-  }, ['selector']),
+  }, uiInteractionRequired),
   'window.ui_press_key': objectSchema({
-    windowLabel: stringValue('Window label; default main'),
+    ...uiInteractionContext,
     selector: stringValue('Exact keyboard target selector returned by window.ui_snapshot'),
     key: {
       type: 'string',
@@ -744,7 +753,7 @@ export const COMMAND_PARAMS_SCHEMAS: Record<string, AgentJsonSchema> = {
       ],
       description: 'Allow-listed semantic key without modifiers',
     },
-  }, ['selector', 'key']),
+  }, [...uiInteractionRequired, 'key']),
 };
 
 export const COMMAND_EXECUTION_OPTIONS_SCHEMA: AgentJsonSchema = objectSchema({

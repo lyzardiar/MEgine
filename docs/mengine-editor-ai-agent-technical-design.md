@@ -334,6 +334,8 @@ Rust Host 使用独立的工程生命周期互斥门串行化 open/create/close 
 | `window.ui_hover` | `{ windowLabel?, selector }` | ✅ 仅接受快照标记为 `hover` 的 React 悬停目标；在同一隐藏 WebView 内合成进入/离开事件，用于展开层级菜单且不移动系统鼠标 |
 | `window.ui_press_key` | `{ windowLabel?, selector, key }` | ✅ 仅允许 Enter/Escape/Tab/Space、方向/翻页/首尾及删除类语义键；事件只进入目标隐藏 WebView，不向前台应用注入输入 |
 
+所有 `window.ui_*` 写动作还必须传入 selector 所属页面的 `expectedSnapshotRevision`。Rust Host 会在事件分发前重新计算完整语义元素身份与顺序指纹；隐藏 WebView 还把 revision 绑定到 DOM mutation epoch，并在查询 selector 前于同一个 JS 任务内同步复核。DOM 已重排、语义内容已变化或检查与执行之间出现竞态时返回 `STALE_REVISION`，调用方必须重新读取快照，不能把过期 selector 作用到新元素。
+
 #### 4.2.7 资产与构建
 
 | command id | 映射 |

@@ -670,12 +670,19 @@ class AgentBridge {
     deltaX?: number,
     deltaY?: number,
     key?: string,
+    expectedSnapshotRevision?: string,
   ): Promise<EditorUiActionResult> {
     if (!isDesktopEditor()) {
       throw new BridgeError('NOT_READY', 'Window UI interaction requires the desktop editor');
     }
     if (!selector) {
       throw new BridgeError('INVALID_ARGS', 'Window UI interaction requires a selector');
+    }
+    if (!/^ui-v\d+-\d+-[0-9a-f]{16}$/.test(expectedSnapshotRevision ?? '')) {
+      throw new BridgeError(
+        'INVALID_ARGS',
+        'Window UI interaction requires expectedSnapshotRevision from window.ui_snapshot',
+      );
     }
     const result = await invoke<EditorUiActionResult>('interact_editor_window', {
       windowLabel,
@@ -686,8 +693,21 @@ class AgentBridge {
       deltaX,
       deltaY,
       key,
+      expectedSnapshotRevision,
     });
     if (!result.ok) {
+      if (result.staleSnapshot) {
+        throw new BridgeError(
+          'STALE_REVISION',
+          result.error ?? 'Editor UI snapshot changed before interaction',
+          {
+            windowLabel,
+            expectedSnapshotRevision: result.expectedSnapshotRevision,
+            actualSnapshotRevision: result.actualSnapshotRevision,
+            restartOffset: result.restartOffset ?? 0,
+          },
+        );
+      }
       throw new BridgeError('INVALID_ARGS', result.error ?? 'Editor UI interaction failed');
     }
     return result;
@@ -3421,6 +3441,7 @@ class AgentBridge {
       const key = commandId === 'window.ui_press_key'
         ? requiredString(args, 'key')
         : undefined;
+      const expectedSnapshotRevision = requiredString(args, 'expectedSnapshotRevision');
       const result: CommandResult = {
         ok: true,
         data: await this.interactWindow(
@@ -3432,6 +3453,7 @@ class AgentBridge {
           deltaX,
           deltaY,
           key,
+          expectedSnapshotRevision,
         ),
       };
       return this.finishAsyncCommand(result, options, windowLabel);
