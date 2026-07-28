@@ -405,7 +405,10 @@ export const COMMAND_PARAMS_SCHEMAS: Record<string, AgentJsonSchema> = {
   'component.add': objectSchema({
     entity: entityId(),
     type: componentType,
-    value: { type: 'object', description: 'Optional initial component value' },
+    value: {
+      type: 'object',
+      description: 'Optional initial component value; known components use catalog defaults when omitted',
+    },
   }, ['entity', 'type']),
   'component.remove': objectSchema({
     entity: entityId(),

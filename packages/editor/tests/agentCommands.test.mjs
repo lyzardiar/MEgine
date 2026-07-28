@@ -304,6 +304,39 @@ test('component set and patch require an existing component and object payload',
   ]);
 });
 
+test('component add uses catalog defaults unless a custom value is explicit', () => {
+  const { ctx, calls } = createContext();
+
+  run(ctx, 'component.add', { entity: 1, type: 'Camera2D' });
+  assert.deepEqual(calls, [[
+    'addComponent',
+    1,
+    'Camera2D',
+    {
+      size: 5,
+      primary: false,
+      clear_flags: 'solid_color',
+      background_color: [0.1, 0.1, 0.14, 1],
+    },
+  ]]);
+
+  assertBridgeError(
+    () => run(ctx, 'component.add', { entity: 1, type: 'CustomComponent' }),
+    'COMPONENT_NOT_FOUND',
+  );
+  run(ctx, 'component.add', {
+    entity: 1,
+    type: 'CustomComponent',
+    value: { enabled: true },
+  });
+  assert.deepEqual(calls.at(-1), [
+    'addComponent',
+    1,
+    'CustomComponent',
+    { enabled: true },
+  ]);
+});
+
 test('component method invocation accepts only registered Behaviour methods', () => {
   const { ctx, calls } = createContext();
 

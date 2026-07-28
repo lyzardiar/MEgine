@@ -1,7 +1,7 @@
 import { getBehaviour, listBehaviours } from '@mengine/behaviour';
-import { defaultRectTransform, stretchRectTransform } from './ui/rectLayout';
-import { createGridComponent, createTilemapComponent } from './tilemapModel';
-import { createEnvironmentLightComponent } from './environmentLightModel';
+import { defaultRectTransform, stretchRectTransform } from './ui/rectLayout.ts';
+import { createGridComponent, createTilemapComponent } from './tilemapModel.ts';
+import { createEnvironmentLightComponent } from './environmentLightModel.ts';
 
 /** Built-in (non-Behaviour) components for Add Component menu. */
 export type ComponentCatalogEntry = {

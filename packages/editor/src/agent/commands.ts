@@ -11,6 +11,7 @@
  */
 import type { WorldCommand } from '@mengine/api';
 import { getBehaviour } from '@mengine/behaviour';
+import { createComponentDefaults } from '../componentCatalog.ts';
 import type { EditorStore } from '../store';
 import { BridgeError, type ScreenshotResult } from './protocol.ts';
 import {
@@ -644,7 +645,15 @@ export const WRITE_COMMANDS: Record<string, CommandHandler> = {
     const entity = entityId(args, 'entity');
     const type = str(args, 'type');
     requireEntity(ctx, entity);
-    const value = record(args, 'value', {});
+    const value = args.value === undefined
+      ? createComponentDefaults(type)
+      : record(args, 'value');
+    if (!value) {
+      throw new BridgeError(
+        'COMPONENT_NOT_FOUND',
+        `Unknown component type "${type}"; provide an explicit value for a custom component`,
+      );
+    }
     const added = ctx.store.addComponent(entity, type, value);
     if (!added) {
       throw new BridgeError(
@@ -926,7 +935,7 @@ const COMMAND_SUMMARIES: CommandSummary[] = [
   { id: 'entity.set_active', category: 'entity', description: 'Enable or disable an entity', readOnly: false },
   { id: 'entity.reparent', category: 'entity', description: 'Reparent entities under a new parent', readOnly: false },
   { id: 'entity.reorder', category: 'entity', description: 'Move an entity to a sibling index under its current parent', readOnly: false },
-  { id: 'component.add', category: 'component', description: 'Add a component to an entity', readOnly: false },
+  { id: 'component.add', category: 'component', description: 'Add a component to an entity, using catalog defaults when value is omitted', readOnly: false },
   { id: 'component.remove', category: 'component', description: 'Remove a component from an entity', readOnly: false },
   { id: 'component.set', category: 'component', description: 'Replace a component value on an entity', readOnly: false },
   { id: 'component.patch', category: 'component', description: 'Shallow-merge fields into a component on an entity', readOnly: false },

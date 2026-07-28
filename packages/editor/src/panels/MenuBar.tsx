@@ -48,6 +48,9 @@ export function MenuBar(props: {
   const windowItems = listMenuItems('Window');
   const assetItems = listMenuItems('Assets');
   const gameObjectItems = listMenuItems('GameObject');
+  const componentItems = listMenuItems('Component');
+  const editItems = listMenuItems('Edit');
+  const helpItems = listMenuItems('Help');
   const menuContext: MenuItemContext = {
     source: 'menu-bar',
     store: props.store,
@@ -115,7 +118,7 @@ export function MenuBar(props: {
             </div>
           )}
           {name === 'Edit' && (
-            <div className="menu-drop">
+            <div className="menu-drop popup-menu" role="menu">
               <button
                 type="button"
                 disabled={!props.store.canUndo}
@@ -134,6 +137,12 @@ export function MenuBar(props: {
               <button type="button" onClick={() => { props.onDuplicate(); setOpen(null); }}>
                 Duplicate <span className="hint">Ctrl+D</span>
               </button>
+              {editItems.length > 0 && <div className="sep" role="separator" />}
+              <PopupMenuItems
+                entries={editItems}
+                context={menuContext}
+                onSelect={() => setOpen(null)}
+              />
             </div>
           )}
           {name === 'GameObject' && (
@@ -157,6 +166,18 @@ export function MenuBar(props: {
               />
             </div>
           )}
+          {name === 'Component' && (
+            <div className="menu-drop popup-menu" role="menu">
+              {componentItems.length === 0 && (
+                <button type="button" disabled>(no components)</button>
+              )}
+              <PopupMenuItems
+                entries={componentItems}
+                context={menuContext}
+                onSelect={() => setOpen(null)}
+              />
+            </div>
+          )}
           {name === 'Window' && (
             <div className="menu-drop popup-menu" role="menu">
               {windowItems.length === 0 && (
@@ -172,10 +193,15 @@ export function MenuBar(props: {
             </div>
           )}
           {name === 'Help' && (
-            <div className="menu-drop">
-              <button type="button" onClick={() => setOpen(null)}>
-                MEngine Docs
-              </button>
+            <div className="menu-drop popup-menu" role="menu">
+              {helpItems.length === 0 && (
+                <button type="button" disabled>(no help topics)</button>
+              )}
+              <PopupMenuItems
+                entries={helpItems}
+                context={menuContext}
+                onSelect={() => setOpen(null)}
+              />
             </div>
           )}
         </div>
