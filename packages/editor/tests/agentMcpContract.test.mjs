@@ -77,6 +77,11 @@ test('MCP tool names are unique and every input schema is an object', () => {
       'object',
       `${tool.name} must declare properties`,
     );
+    assert.equal(
+      tool.inputSchema.additionalProperties,
+      false,
+      `${tool.name} must reject undeclared top-level arguments`,
+    );
   }
 });
 
@@ -103,6 +108,8 @@ test('MCP validates tool arguments before dispatch with bounded structured issue
   });
   validateToolArguments(tool('find_entities'), { limit: 1000, offset: 1000000 });
   validateToolArguments(tool('list_assets'), { limit: 5000, offset: 1000000 });
+  validateToolArguments(tool('get_entity'), { id: 0 });
+  validateToolArguments(tool('get_entity'), { name: 'Player' });
 
   assert.throws(
     () => validateToolArguments(tool('create_project'), {
@@ -146,6 +153,21 @@ test('MCP validates tool arguments before dispatch with bounded structured issue
   );
   assert.throws(
     () => validateToolArguments(tool('find_entities'), { offset: 1.5 }),
+    /Invalid arguments/,
+  );
+  assert.throws(
+    () => validateToolArguments(tool('get_entity'), {}),
+    /Invalid arguments/,
+  );
+  assert.throws(
+    () => validateToolArguments(tool('get_entity'), { id: -1 }),
+    /Invalid arguments/,
+  );
+  assert.throws(
+    () => validateToolArguments(tool('get_entity'), {
+      name: 'Player',
+      unexpected: true,
+    }),
     /Invalid arguments/,
   );
 });

@@ -3209,9 +3209,24 @@ async function bridgeIo<T>(label: string, operation: () => Promise<T>): Promise<
 }
 
 function requireIdOrName(params: Record<string, unknown>): number | string {
-  if (typeof params.id === 'number') return params.id;
-  if (typeof params.name === 'string' && params.name) return params.name;
-  throw new BridgeError('INVALID_ARGS', 'entity.get requires a numeric "id" or string "name"');
+  if (params.id !== undefined) {
+    if (
+      typeof params.id === 'number'
+      && Number.isSafeInteger(params.id)
+      && params.id >= 0
+    ) {
+      return params.id;
+    }
+    throw new BridgeError(
+      'INVALID_ARGS',
+      'entity.get "id" must be a non-negative safe integer',
+    );
+  }
+  if (typeof params.name === 'string' && params.name.trim()) return params.name.trim();
+  throw new BridgeError(
+    'INVALID_ARGS',
+    'entity.get requires a non-negative integer "id" or non-empty string "name"',
+  );
 }
 
 /** Build a full hierarchy tree from flat entities, sorted by siblingIndex. */

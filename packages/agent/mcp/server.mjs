@@ -807,7 +807,7 @@ const TOOLS = [
       required: ['fromRevision'],
       properties: {
         fromRevision: {
-          type: 'number',
+          type: 'integer',
           minimum: 0,
           description: 'Revision returned by get_scene_snapshot, get_editor_state, or a previous change result',
         },
@@ -823,7 +823,7 @@ const TOOLS = [
       type: 'object',
       properties: {
         afterSequence: {
-          type: 'number',
+          type: 'integer',
           minimum: 0,
           description: 'Exclusive cursor from get_editor_state or a previous event page (default 0)',
         },
@@ -849,7 +849,7 @@ const TOOLS = [
           description: 'Optional topic filter',
         },
         limit: {
-          type: 'number',
+          type: 'integer',
           minimum: 1,
           maximum: 1000,
           description: 'Maximum events in chronological order (default 100)',
@@ -863,9 +863,18 @@ const TOOLS = [
     description: 'Get a single entity (with all components) by numeric id or by name.',
     inputSchema: {
       type: 'object',
+      anyOf: [
+        { required: ['id'] },
+        { required: ['name'] },
+      ],
       properties: {
-        id: { type: 'number', description: 'Entity id' },
-        name: { type: 'string', description: 'Entity name (used if id is omitted)' },
+        id: { ...ENTITY_ID_SCHEMA, description: 'Entity id' },
+        name: {
+          type: 'string',
+          minLength: 1,
+          pattern: '\\S',
+          description: 'Entity name (used if id is omitted)',
+        },
       },
     },
     handler: async (args) => {
@@ -906,7 +915,7 @@ const TOOLS = [
       type: 'object',
       required: ['id', 'component'],
       properties: {
-        id: { type: 'number', minimum: 0, description: 'Entity id' },
+        id: { ...ENTITY_ID_SCHEMA, description: 'Entity id' },
         component: { type: 'string', description: 'Exact component type' },
       },
     },
@@ -920,7 +929,7 @@ const TOOLS = [
       type: 'object',
       required: ['entity'],
       properties: {
-        entity: { type: 'number', minimum: 0, description: 'Any entity in the prefab instance' },
+        entity: { ...ENTITY_ID_SCHEMA, description: 'Any entity in the prefab instance' },
       },
       additionalProperties: false,
     },
@@ -989,7 +998,7 @@ const TOOLS = [
           description: 'A label returned by list_windows (default: main)',
         },
         maxElements: {
-          type: 'number',
+          type: 'integer',
           minimum: 50,
           maximum: 5000,
           description: 'Maximum semantic elements to return (default: 2000)',
@@ -1062,7 +1071,12 @@ const TOOLS = [
       properties: {
         level: { type: 'string', enum: ['info', 'warn', 'error'], description: 'Filter by level' },
         since: { type: 'number', description: 'Only entries at or after this epoch-millisecond time' },
-        limit: { type: 'number', description: 'Return at most this many recent entries' },
+        limit: {
+          type: 'integer',
+          minimum: 1,
+          maximum: 300,
+          description: 'Return at most this many recent entries',
+        },
       },
     },
     handler: async (args) => {
@@ -1110,7 +1124,7 @@ const TOOLS = [
       required: ['path'],
       properties: {
         path: { type: 'string', description: 'Asset path under Assets/' },
-        maxBytes: { type: 'number', minimum: 1, maximum: 8388608, description: 'Read limit (default 1 MiB)' },
+        maxBytes: { type: 'integer', minimum: 1, maximum: 8388608, description: 'Read limit (default 1 MiB)' },
       },
     },
     handler: async (args) => textContent(await bridgeQuery('asset.read_text', args)),
@@ -1196,7 +1210,7 @@ const TOOLS = [
     inputSchema: {
       type: 'object',
       properties: {
-        limit: { type: 'number', minimum: 1, maximum: 100, description: 'Maximum history entries (default 20)' },
+        limit: { type: 'integer', minimum: 1, maximum: 100, description: 'Maximum history entries (default 20)' },
       },
     },
     handler: async (args) => textContent(await bridgeQuery('build.history', args)),
@@ -1898,6 +1912,12 @@ const TOOLS = [
     ['selector', 'deltaY'],
   ),
 ];
+
+for (const tool of TOOLS) {
+  if (tool.inputSchema.additionalProperties === undefined) {
+    tool.inputSchema.additionalProperties = false;
+  }
+}
 
 function bridgeResource(uri, name, description, query, args = {}) {
   return {
