@@ -50,7 +50,7 @@ MEngine 编辑器当前对人类友好，但对 AI Agent 不够友好。AI Agent
 | 组件 schema | `inspectorMetadata.ts`（InspectorFieldMeta）+ `behaviour` 的 `FieldMeta` + 生成的 `schema.json` | 属性级类型/范围/枚举/条件，Agent 可知「能填什么」 |
 | 面板聚焦 | `mengine:focus-panel` 事件（`DockWorkspace.tsx:1126`） | 现成的「打开/聚焦面板」程序化入口 |
 | 状态快照 | `store.snapshot(): WorldSnapshotView & {selectedIds}` | 完整世界读取 |
-| 多窗口同步 | BroadcastChannel `mengine.editor.workspace.v1`（`App.tsx`） | 全量状态复制协议，可作事件流参考 |
+| 多窗口同步 | 按原生编辑器实例 ID 隔离的 BroadcastChannel（Workspace / Panel / Asset / Profiler / Sorting Layers / Dialog） | 全量状态复制协议，可作事件流参考；多个同源编辑器进程不会串扰 |
 | 开发期 HTTP | Vite `/__mengine/*`（`vite/mengineFsPlugin.ts`） | 现成 HTTP 路由范式 |
 | 窗口类型注册 | `editorWindow/registry.ts`：windowTypes / openEditorWindow / getOpenEditorWindows | 浮动窗口枚举基础 |
 
@@ -199,7 +199,7 @@ MEngine 编辑器当前对人类友好，但对 AI Agent 不够友好。AI Agent
 | `panel.get_layout` | dock 二叉树（leaf/split）+ docked/detached/active 集合 | ✅ `DockWorkspace` 每次树变化直连 AgentBridge，读取实时内存树而不是过期 localStorage |
 | `window.get_active` | 当前聚焦窗口信息 | `WebviewWindow` focus 状态 |
 
-所有编辑器业务确认、输入和提示均使用队列化 `EditorDialogHost`，不再调用会阻塞 WebView 线程且无法离屏观察的 `window.alert/confirm/prompt`。Agent 先读 `get_active_dialog`，再以稳定 `dialogId` 调用 `respond_to_dialog`；过期 id 返回冲突，不会误答后来出现的另一个确认框。多 WebView 对话框同步通道使用当前原生编辑器进程的随机实例 ID 做命名空间隔离，不会把后台 Agent 实例的确认框投递到同源的另一个编辑器进程，也不会向 WebView 暴露 Bridge 鉴权 token。分离窗口完成场景创建、重命名或删除后，会通知其他 WebView 从原生工程会话重载场景索引，保证主 Agent 查询与磁盘状态一致。原生文件选择器仍只服务人工 UI，Agent 应使用带精确路径参数的领域工具。
+所有编辑器业务确认、输入和提示均使用队列化 `EditorDialogHost`，不再调用会阻塞 WebView 线程且无法离屏观察的 `window.alert/confirm/prompt`。Agent 先读 `get_active_dialog`，再以稳定 `dialogId` 调用 `respond_to_dialog`；过期 id 返回冲突，不会误答后来出现的另一个确认框。全部多 WebView 通道都使用当前原生编辑器进程的随机实例 ID 做命名空间隔离，不会让后台 Agent 实例与同源的另一个前台编辑器进程交换 Workspace、Panel、Asset、Profiler、Sorting Layers 或 Dialog 消息，也不会向 WebView 暴露 Bridge 鉴权 token。分离窗口完成场景创建、重命名或删除后，会通知同实例的其他 WebView 从原生工程会话重载场景索引，保证主 Agent 查询与磁盘状态一致。原生文件选择器仍只服务人工 UI，Agent 应使用带精确路径参数的领域工具。
 
 #### 4.1.3 场景与层级读取
 

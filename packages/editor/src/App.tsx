@@ -117,6 +117,7 @@ import {
   editorCloseWarning,
 } from './editorClose';
 import { alertEditor, confirmEditor, promptEditor } from './editorDialog';
+import { createEditorBroadcastChannel } from './editorInstance.ts';
 import './editorWindow'; // MenuItem side-effects
 
 const Timeline = lazy(async () => ({ default: (await import('./panels/Timeline')).Timeline }));
@@ -950,8 +951,8 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
   };
 
   useEffect(() => {
-    if (typeof BroadcastChannel === 'undefined') return;
-    const channel = new BroadcastChannel(WORKSPACE_CHANNEL);
+    const channel = createEditorBroadcastChannel(WORKSPACE_CHANNEL);
+    if (!channel) return;
     syncChannel.current = channel;
     const saveCoordinator = new RemoteSaveCoordinator((request) => {
       channel.postMessage({

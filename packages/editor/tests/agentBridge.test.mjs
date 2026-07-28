@@ -297,6 +297,7 @@ test('editor dialogs are non-blocking, semantic, and Agent-addressable', () => {
   const main = fs.readFileSync(path.join(root, 'src', 'main.tsx'), 'utf8');
   const host = fs.readFileSync(path.join(root, 'src', 'EditorDialogHost.tsx'), 'utf8');
   const dialog = fs.readFileSync(path.join(root, 'src', 'editorDialog.ts'), 'utf8');
+  const instance = fs.readFileSync(path.join(root, 'src', 'editorInstance.ts'), 'utf8');
   const bridge = fs.readFileSync(path.join(root, 'src', 'agent', 'AgentBridge.ts'), 'utf8');
   const app = fs.readFileSync(path.join(root, 'src', 'App.tsx'), 'utf8');
   const project = fs.readFileSync(path.join(root, 'src', 'panels', 'Project.tsx'), 'utf8');
@@ -314,11 +315,9 @@ test('editor dialogs are non-blocking, semantic, and Agent-addressable', () => {
   assert.match(dialog, /const MAX_QUEUED_DIALOGS = 64/);
   assert.match(dialog, /export function getActiveEditorDialog/);
   assert.match(dialog, /export function respondToEditorDialog/);
-  assert.match(
-    dialog,
-    /new BroadcastChannel\(`\$\{DIALOG_CHANNEL_NAME\}:\$\{normalizedInstanceId\}`\)/,
-  );
-  assert.match(host, /getEditorInstanceId\(\)/);
+  assert.match(dialog, /createEditorBroadcastChannel\(DIALOG_CHANNEL_NAME\)/);
+  assert.match(main, /initializeEditorInstance\(await getEditorInstanceId\(\)\)/);
+  assert.match(instance, /new BroadcastChannel\(editorBroadcastChannelName\(baseName\)\)/);
   assert.match(dialog, /respondToEditorDialogInWindow/);
   assert.match(app, /type: 'scene-library-changed'/);
   assert.match(app, /refreshSceneLibrary\(\)/);
@@ -330,6 +329,22 @@ test('editor dialogs are non-blocking, semantic, and Agent-addressable', () => {
   assert.match(mcp, /windowLabel: args\.windowLabel \|\| 'main'/);
   for (const source of [app, project, build]) {
     assert.doesNotMatch(source, /window\.(?:alert|confirm|prompt)\(/);
+  }
+});
+
+test('every cross-window editor channel is isolated by native editor instance', () => {
+  const files = [
+    'App.tsx',
+    'assetEditorEvents.ts',
+    'editorDialog.ts',
+    'editorProfiler.ts',
+    'sortingLayers.ts',
+    path.join('panels', 'detachedPanelWindow.ts'),
+  ].map((file) => fs.readFileSync(path.join(root, 'src', file), 'utf8'));
+
+  for (const source of files) {
+    assert.match(source, /createEditorBroadcastChannel/);
+    assert.doesNotMatch(source, /new BroadcastChannel/);
   }
 });
 

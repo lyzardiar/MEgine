@@ -11,7 +11,6 @@ import {
   subscribeEditorDialog,
 } from './editorDialog';
 import { getCurrentWindow } from '@tauri-apps/api/window';
-import { getEditorInstanceId } from './transport/editorTransport';
 
 export function EditorDialogHost() {
   const dialog = useSyncExternalStore(
@@ -24,27 +23,13 @@ export function EditorDialogHost() {
   const confirmButton = useRef<HTMLButtonElement>(null);
 
   useEffect(() => {
-    let disposed = false;
-    let disconnect: (() => void) | null = null;
-    void (async () => {
-      let windowLabel = 'main';
-      try {
-        windowLabel = getCurrentWindow().label;
-      } catch {
-        // Browser development mode has no Tauri window metadata.
-      }
-      try {
-        const instanceId = await getEditorInstanceId();
-        if (disposed) return;
-        disconnect = initializeEditorDialogSync(windowLabel, instanceId);
-      } catch (reason) {
-        console.error('Failed to initialize cross-window editor dialogs', reason);
-      }
-    })();
-    return () => {
-      disposed = true;
-      disconnect?.();
-    };
+    let windowLabel = 'main';
+    try {
+      windowLabel = getCurrentWindow().label;
+    } catch {
+      // Browser development mode has no Tauri window metadata.
+    }
+    return initializeEditorDialogSync(windowLabel);
   }, []);
 
   useEffect(() => {

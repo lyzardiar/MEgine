@@ -12,6 +12,7 @@ import {
   saveProjectSortingLayersGuarded,
   type ProjectSortingLayersSnapshot,
 } from './transport/editorTransport';
+import { createEditorBroadcastChannel } from './editorInstance.ts';
 
 export const SORTING_LAYERS_CHANGED_EVENT = 'mengine:sorting-layers-changed';
 const CHANNEL_NAME = 'mengine.editor.sorting-layers.v1';
@@ -20,10 +21,12 @@ let current = normalizeSortingLayerSettings(DEFAULT_SORTING_LAYER_SETTINGS);
 let channel: BroadcastChannel | null = null;
 
 function getChannel(): BroadcastChannel | null {
-  if (channel || typeof BroadcastChannel === 'undefined') return channel;
-  channel = new BroadcastChannel(CHANNEL_NAME);
-  channel.onmessage = (event: MessageEvent<unknown>) => applySortingLayers(event.data, false);
-  return channel;
+  if (channel) return channel;
+  const created = createEditorBroadcastChannel(CHANNEL_NAME);
+  if (!created) return null;
+  channel = created;
+  created.onmessage = (event: MessageEvent<unknown>) => applySortingLayers(event.data, false);
+  return created;
 }
 
 function applySortingLayers(value: unknown, broadcast: boolean): SortingLayerSettings {

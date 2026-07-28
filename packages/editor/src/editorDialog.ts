@@ -1,3 +1,5 @@
+import { createEditorBroadcastChannel } from './editorInstance.ts';
+
 export type EditorDialogKind = 'alert' | 'confirm' | 'prompt';
 export type EditorDialogAction = 'accept' | 'cancel';
 
@@ -215,16 +217,12 @@ export async function respondToEditorDialogInWindow(
 
 export function initializeEditorDialogSync(
   windowLabel: string,
-  editorInstanceId: string,
 ): () => void {
   const normalized = windowLabel.trim();
   if (!normalized) throw new Error('Editor dialog window label must not be empty');
-  const normalizedInstanceId = editorInstanceId.trim();
-  if (!normalizedInstanceId) {
-    throw new Error('Editor dialog instance id must not be empty');
-  }
   localWindowLabel = normalized;
-  const channel = new BroadcastChannel(`${DIALOG_CHANNEL_NAME}:${normalizedInstanceId}`);
+  const channel = createEditorBroadcastChannel(DIALOG_CHANNEL_NAME);
+  if (!channel) return () => {};
   dialogChannel?.close();
   dialogChannel = channel;
   channel.addEventListener('message', (event: MessageEvent<{

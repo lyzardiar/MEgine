@@ -1,3 +1,5 @@
+import { createEditorBroadcastChannel } from './editorInstance.ts';
+
 export const OPEN_ANIMATION_CLIP_EVENT = 'mengine:open-animation-clip';
 export const OPEN_TIMELINE_ASSET_EVENT = 'mengine:open-timeline-asset';
 export const OPEN_ANIMATOR_EVENT = 'mengine:open-animator';
@@ -21,19 +23,25 @@ type ProjectAssetLifecycleMessage = ProjectAssetLifecycleDetail & {
 
 const ASSET_CHANNEL = 'mengine.editor.assets.v1';
 const assetSender = crypto.randomUUID();
-const assetChannel = typeof BroadcastChannel === 'undefined'
-  ? null
-  : new BroadcastChannel(ASSET_CHANNEL);
+let assetChannel: BroadcastChannel | null = null;
 
-assetChannel?.addEventListener('message', (event: MessageEvent<ProjectAssetLifecycleMessage>) => {
-  const message = event.data;
-  if (!message || message.sender === assetSender) return;
-  window.dispatchEvent(new CustomEvent(PROJECT_ASSETS_CHANGED_EVENT, {
-    detail: { ...message, remote: true },
-  }));
-});
+export function initializeAssetEditorEvents(): void {
+  if (assetChannel) return;
+  assetChannel = createEditorBroadcastChannel(ASSET_CHANNEL);
+  assetChannel?.addEventListener(
+    'message',
+    (event: MessageEvent<ProjectAssetLifecycleMessage>) => {
+      const message = event.data;
+      if (!message || message.sender === assetSender) return;
+      window.dispatchEvent(new CustomEvent(PROJECT_ASSETS_CHANGED_EVENT, {
+        detail: { ...message, remote: true },
+      }));
+    },
+  );
+}
 
 export function broadcastProjectAssetsChanged(detail: ProjectAssetLifecycleDetail): void {
+  initializeAssetEditorEvents();
   const message: ProjectAssetLifecycleMessage = {
     ...detail,
     sender: assetSender,
