@@ -1002,6 +1002,8 @@ export function BuildSettings(props: {
               <button
                 type="button"
                 disabled={!historyRestoreEligible || buildArtifactBusy || historyComparing}
+                data-agent-interaction="blocked"
+                data-agent-alternative="manual trusted public-key selection"
                 title={historyRestoreEligible
                   ? 'Choose an independent trusted Ed25519 public key, verify the archived artifact, then atomically replace the published build.'
                   : 'Select one signed, content-archived build that is not already current.'}
@@ -1138,6 +1140,8 @@ export function BuildSettings(props: {
                   <button
                     type="button"
                     disabled={!patch.baseAvailable || buildArtifactBusy}
+                    data-agent-interaction="blocked"
+                    data-agent-alternative="manual trusted public-key selection"
                     title={patch.baseAvailable
                       ? 'Choose an independent trusted Ed25519 public key and verify the complete patch chain.'
                       : 'The exact archived base is no longer available for verification.'}

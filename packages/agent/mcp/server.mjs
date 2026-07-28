@@ -1273,7 +1273,7 @@ const TOOLS = [
   {
     name: 'list_menu_items',
     description:
-      'List registered Unity-style editor menu items with exact path, shortcut, priority, and current enabled state. Optionally filter by root such as Window, Assets, or GameObject.',
+      'List registered Unity-style editor menu items with exact path, shortcut, priority, enabled state, and whether Agent invocation is safe. Foreground-only items include the domain-tool alternative when one exists.',
     inputSchema: {
       type: 'object',
       properties: {
@@ -1896,7 +1896,7 @@ const TOOLS = [
   ),
   execTool(
     'invoke_menu_item',
-    'Invoke a registered Unity-style menu item by the exact path returned by list_menu_items. Editor confirmations remain background-observable through get_active_dialog; actions may still open native file pickers or windows, so prefer domain-specific tools.',
+    'Invoke an Agent-safe registered menu item by the exact path returned by list_menu_items. Foreground-only pickers are rejected before they open; use the returned agentAlternative domain tool. Editor confirmations remain observable through get_active_dialog.',
     'menu.invoke',
     {
       path: { type: 'string', description: 'Exact registered path, e.g. Window/General/Console' },

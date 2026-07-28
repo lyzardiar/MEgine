@@ -48,8 +48,8 @@ export class DecoratorGalleryWindow extends EditorWindow {
   minWidth = 400;
   minHeight = 520;
 
-  static openFromMenu() {
-    DecoratorGalleryWindow.show({ width: 440, height: 560 });
+  static openFromMenu(activateWindow = true) {
+    DecoratorGalleryWindow.show({ width: 440, height: 560, activateWindow });
   }
 
   onGUI() {
@@ -69,6 +69,6 @@ registerEditorWindowType('EditorWindow.DecoratorGalleryWindow', () => {
 });
 
 // .tsx 经 Babel 编译，暂不支持 @MenuItem；在此命令式注册
-registerMenuItem('Window/Decorator Gallery', () => {
-  DecoratorGalleryWindow.openFromMenu();
+registerMenuItem('Window/Decorator Gallery', (context) => {
+  DecoratorGalleryWindow.openFromMenu(context.source !== 'agent');
 });

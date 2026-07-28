@@ -1,7 +1,7 @@
 import type { ReactNode } from 'react';
 import type { EditorStore } from '../store';
 
-export type MenuItemSource = 'menu-bar' | 'hierarchy';
+export type MenuItemSource = 'menu-bar' | 'hierarchy' | 'agent';
 
 /** Runtime context passed to Unity-style menu commands. */
 export type MenuItemContext = {
@@ -25,6 +25,10 @@ export type MenuItemOptions = {
   /** Draw a separator immediately before this item or its root submenu. */
   separatorBefore?: boolean;
   validate?: MenuItemValidate;
+  /** False when the action requires an OS/browser picker or other foreground-only input. */
+  agentInvokable?: boolean;
+  /** Agent-facing domain tool to use instead of this foreground-only menu item. */
+  agentAlternative?: string;
 };
 
 export type MenuItemEntry = {
@@ -41,6 +45,8 @@ export type MenuItemEntry = {
   shortcut?: string;
   separatorBefore: boolean;
   validate?: MenuItemValidate;
+  agentInvokable: boolean;
+  agentAlternative?: string;
 };
 
 export type EditorWindowInstance = {
@@ -142,6 +148,8 @@ export function registerMenuItem(
     separatorBefore: options.separatorBefore ?? previous?.separatorBefore ?? false,
     validate:
       options.validate ?? previous?.validate ?? pendingMenuValidators.get(normalizedPath),
+    agentInvokable: options.agentInvokable ?? previous?.agentInvokable ?? true,
+    agentAlternative: options.agentAlternative ?? previous?.agentAlternative,
   };
   if (idx >= 0) menuItems[idx] = entry;
   else menuItems.push(entry);

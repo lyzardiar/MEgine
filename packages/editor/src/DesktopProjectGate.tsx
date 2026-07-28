@@ -361,7 +361,13 @@ export function DesktopProjectGate(props: { children: ReactNode; detached?: bool
 
         {mode === 'welcome' ? (
           <div className="project-hub-actions">
-            <button type="button" disabled={busy} onClick={() => void openExisting()}>
+            <button
+              type="button"
+              disabled={busy}
+              data-agent-interaction="blocked"
+              data-agent-alternative="open_project"
+              onClick={() => void openExisting()}
+            >
               {busy && !openingPath ? '正在打开…' : '打开其他工程'}
             </button>
             <button
@@ -401,7 +407,14 @@ export function DesktopProjectGate(props: { children: ReactNode; detached?: bool
                 readOnly
                 placeholder="选择工程父目录"
               />
-              <button type="button" className="secondary" disabled={busy} onClick={() => void browseLocation()}>
+              <button
+                type="button"
+                className="secondary"
+                disabled={busy}
+                data-agent-interaction="blocked"
+                data-agent-alternative="create_project"
+                onClick={() => void browseLocation()}
+              >
                 浏览…
               </button>
             </div>

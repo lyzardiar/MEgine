@@ -43,6 +43,11 @@ export interface EditorUiElement {
   value: string | null;
   description: string | null;
   state: Record<string, boolean | string>;
+  /** Present when this UI action requires foreground-only user input. */
+  agentInteraction: {
+    blocked: true;
+    alternative: string | null;
+  } | null;
   actions: Array<'click' | 'doubleClick' | 'contextClick' | 'setValue' | 'scroll'>;
   scroll: {
     left: number;
@@ -103,6 +108,8 @@ export interface EditorUiContentPage {
 export interface EditorUiActionResult {
   ok: boolean;
   error?: string;
+  agentBlocked?: boolean;
+  agentAlternative?: string | null;
   action?: 'click' | 'doubleClick' | 'contextClick' | 'setValue' | 'scroll';
   selector?: string;
   tag?: string;
@@ -170,6 +177,8 @@ export interface EditorMenuItemInfo {
   shortcut: string | null;
   separatorBefore: boolean;
   enabled: boolean;
+  agentInvokable: boolean;
+  agentAlternative: string | null;
 }
 
 /** Compact hierarchy node — full tree, independent of UI expansion state. */

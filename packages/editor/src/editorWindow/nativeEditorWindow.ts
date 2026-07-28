@@ -19,9 +19,12 @@ export async function openNativeEditorWindow(options: {
   title: string;
   width: number;
   height: number;
+  activateWindow?: boolean;
 }): Promise<boolean> {
   const url = `/?editorWindow=${encodeURIComponent(options.typeId)}`;
+  const activateWindow = options.activateWindow !== false;
   if (!isDesktopEditor()) {
+    if (!activateWindow) return false;
     return window.open(
       url,
       labelFor(options.typeId),
@@ -32,8 +35,10 @@ export async function openNativeEditorWindow(options: {
   const label = labelFor(options.typeId);
   const existing = await WebviewWindow.getByLabel(label);
   if (existing) {
-    await existing.show();
-    await existing.setFocus();
+    if (activateWindow) {
+      await existing.show();
+      await existing.setFocus();
+    }
     return true;
   }
   return new Promise<boolean>((resolve) => {
@@ -43,7 +48,8 @@ export async function openNativeEditorWindow(options: {
       width: options.width,
       height: options.height,
       resizable: true,
-      focus: true,
+      visible: activateWindow,
+      focus: activateWindow,
     });
     let settled = false;
     const finish = (value: boolean) => {

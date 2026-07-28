@@ -47,6 +47,10 @@ test('whole-window agent capture is background-safe and addressable by window la
   assert.match(rust, /actions\.push\('scroll'\)/);
   assert.match(rust, /height: element\.scrollHeight/);
   assert.match(rust, /clientHeight: element\.clientHeight/);
+  assert.match(rust, /data-agent-interaction="blocked"/);
+  assert.match(rust, /agentInteraction/);
+  assert.match(rust, /agentBlocked: true/);
+  assert.match(rust, /agentAlternative: alternative \|\| null/);
   assert.match(rust, /STANDARD\.encode\(payload\)/);
   assert.match(rust, /window_label:\s*Option<String>/);
   assert.match(rust, /background_safe:\s*true/);
@@ -350,6 +354,22 @@ test('every cross-window editor channel is isolated by native editor instance', 
 
 test('panel and menu agent surfaces use live providers and background activation', () => {
   const bridge = fs.readFileSync(path.join(root, 'src', 'agent', 'AgentBridge.ts'), 'utf8');
+  const registry = fs.readFileSync(path.join(root, 'src', 'editorWindow', 'registry.ts'), 'utf8');
+  const importer = fs.readFileSync(
+    path.join(root, 'src', 'editorWindow', 'assetImportMenuItem.ts'),
+    'utf8',
+  );
+  const nativeWindow = fs.readFileSync(
+    path.join(root, 'src', 'editorWindow', 'nativeEditorWindow.ts'),
+    'utf8',
+  );
+  const decorator = fs.readFileSync(
+    path.join(root, 'src', 'editorWindow', 'windows', 'DecoratorGalleryWindow.tsx'),
+    'utf8',
+  );
+  const popup = fs.readFileSync(path.join(root, 'src', 'panels', 'PopupMenu.tsx'), 'utf8');
+  const gate = fs.readFileSync(path.join(root, 'src', 'DesktopProjectGate.tsx'), 'utf8');
+  const build = fs.readFileSync(path.join(root, 'src', 'panels', 'BuildSettings.tsx'), 'utf8');
   const dock = fs.readFileSync(path.join(root, 'src', 'panels', 'DockWorkspace.tsx'), 'utf8');
   const detached = fs.readFileSync(
     path.join(root, 'src', 'panels', 'detachedPanelWindow.ts'),
@@ -364,7 +384,22 @@ test('panel and menu agent surfaces use live providers and background activation
   assert.match(bridge, /detachPanelWindow\(panel, undefined, false\)/);
   assert.match(bridge, /case 'menu\.list'/);
   assert.match(bridge, /commandId === 'menu\.invoke'/);
+  assert.match(bridge, /if \(!entry\.agentInvokable\)/);
+  assert.match(bridge, /source: 'agent'/);
   assert.match(bridge, /activateWindow: false/);
+  assert.match(registry, /agentInvokable: options\.agentInvokable/);
+  assert.match(importer, /agentInvokable: false/);
+  assert.match(importer, /agentAlternative: 'import_asset_file'/);
+  assert.match(nativeWindow, /visible: activateWindow/);
+  assert.match(nativeWindow, /focus: activateWindow/);
+  assert.match(decorator, /context\.source !== 'agent'/);
+  assert.match(popup, /data-agent-interaction=/);
+  assert.match(gate, /data-agent-alternative="open_project"/);
+  assert.match(gate, /data-agent-alternative="create_project"/);
+  assert.equal(
+    [...build.matchAll(/data-agent-interaction="blocked"/g)].length,
+    2,
+  );
   assert.match(dock, /describePanelLayout\(tree\)/);
   assert.match(dock, /rawDetail\?\.activateWindow !== false/);
   assert.match(detached, /visible: activateWindow/);

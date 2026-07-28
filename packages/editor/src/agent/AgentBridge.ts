@@ -1068,6 +1068,8 @@ class AgentBridge {
           shortcut: entry.shortcut ?? null,
           separatorBefore: entry.separatorBefore,
           enabled,
+          agentInvokable: entry.agentInvokable,
+          agentAlternative: entry.agentAlternative ?? null,
         };
       });
   }
@@ -1960,6 +1962,19 @@ class AgentBridge {
     const entry = findMenuItem(normalizedPath);
     if (!entry) {
       throw new BridgeError('INVALID_ARGS', `Unknown menu item "${normalizedPath}"`);
+    }
+    if (!entry.agentInvokable) {
+      const alternative = entry.agentAlternative
+        ? ` Use the ${entry.agentAlternative} domain tool instead.`
+        : '';
+      throw new BridgeError(
+        'READONLY',
+        `Menu item "${entry.path}" requires foreground-only user input.${alternative}`,
+        {
+          path: entry.path,
+          agentAlternative: entry.agentAlternative ?? null,
+        },
+      );
     }
     const context = this.menuContext();
     let enabled = true;
@@ -2868,7 +2883,7 @@ class AgentBridge {
   private menuContext(): MenuItemContext {
     const store = this.requireStore();
     return {
-      source: 'menu-bar',
+      source: 'agent',
       store,
       selectedIds: store.selectedIds,
       contextEntity: store.selected,

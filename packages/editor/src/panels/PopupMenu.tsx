@@ -156,6 +156,14 @@ function MenuNode(props: {
         type="button"
         className="popup-menu-row"
         disabled={!enabled}
+        data-agent-interaction={
+          !hasChildren && node.entry && !node.entry.agentInvokable ? 'blocked' : undefined
+        }
+        data-agent-alternative={
+          !hasChildren && node.entry && !node.entry.agentInvokable
+            ? node.entry.agentAlternative
+            : undefined
+        }
         role="menuitem"
         aria-haspopup={hasChildren ? 'menu' : undefined}
         aria-expanded={hasChildren ? expanded : undefined}

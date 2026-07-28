@@ -1162,6 +1162,16 @@ const WINDOW_UI_SNAPSHOT_SCRIPT: &str = r#"
     if ('selected' in element && typeof element.selected === 'boolean') {
       state.selected = element.selected;
     }
+    const agentBlocker = element.closest('[data-agent-interaction="blocked"]');
+    const agentInteraction = agentBlocker
+      ? {
+          blocked: true,
+          alternative: normalize(
+            agentBlocker.getAttribute('data-agent-alternative'),
+            160,
+          ) || null,
+        }
+      : null;
     const scroll = actions.includes('scroll') && element instanceof HTMLElement
       ? {
           left: element.scrollLeft,
@@ -1183,6 +1193,7 @@ const WINDOW_UI_SNAPSHOT_SCRIPT: &str = r#"
       value: valueFor(element) || null,
       description: normalize(element.getAttribute('aria-description'), 300) || null,
       state,
+      agentInteraction,
       actions,
       scroll,
       rect: {
@@ -1289,6 +1300,20 @@ const WINDOW_UI_INTERACTION_SCRIPT: &str = r#"
     return { ok: false, error: `Invalid selector: ${String(error)}` };
   }
   if (!element) return { ok: false, error: `No element matches ${selector}` };
+  const agentBlocker = element.closest('[data-agent-interaction="blocked"]');
+  if (agentBlocker) {
+    const alternative = String(
+      agentBlocker.getAttribute('data-agent-alternative') || '',
+    ).trim();
+    return {
+      ok: false,
+      error: `Element ${selector} requires foreground-only user input${
+        alternative ? `; use ${alternative} instead` : ''
+      }`,
+      agentBlocked: true,
+      agentAlternative: alternative || null,
+    };
+  }
   const disabled = Boolean(
     element.disabled || element.getAttribute('aria-disabled') === 'true',
   );

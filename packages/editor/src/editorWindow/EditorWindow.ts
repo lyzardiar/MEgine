@@ -16,6 +16,8 @@ export type EditorWindowOptions = {
   height?: number;
   x?: number;
   y?: number;
+  /** Keep the native window hidden and unfocused for background Agent work. */
+  activateWindow?: boolean;
 };
 
 /**
@@ -52,7 +54,13 @@ export abstract class EditorWindow {
       };
     };
     registerEditorWindowType(id, definition);
-    void openNativeEditorWindow({ typeId: id, title: inst.title, width, height }).then((opened) => {
+    void openNativeEditorWindow({
+      typeId: id,
+      title: inst.title,
+      width,
+      height,
+      activateWindow: opts.activateWindow,
+    }).then((opened) => {
       if (opened) return;
       openEditorWindow({
       id,
