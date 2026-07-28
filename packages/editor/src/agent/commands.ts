@@ -882,6 +882,7 @@ export interface CommandMeta extends CommandSummary {
 
 const COMMAND_SUMMARIES: CommandSummary[] = [
   { id: 'batch.apply', category: 'batch', description: 'Validate and apply up to 256 WorldCommands as one undo transaction', readOnly: false },
+  { id: 'dialog.respond', category: 'dialog', description: 'Accept or cancel the exact active non-blocking editor dialog', readOnly: false },
   { id: 'project.open', category: 'project', description: 'Open a project from the welcome page without a dialog', readOnly: false },
   { id: 'project.create', category: 'project', description: 'Create and open a project from the welcome page without a dialog', readOnly: false },
   { id: 'project.close', category: 'project', description: 'Close the active project and return to the project hub', readOnly: false },

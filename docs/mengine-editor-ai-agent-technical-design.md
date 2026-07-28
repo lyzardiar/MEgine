@@ -194,9 +194,12 @@ MEngine 编辑器当前对人类友好，但对 AI Agent 不够友好。AI Agent
 | --- | --- | --- |
 | `window.list` | `[{ label, title, typeId?, kind: "main"\|"panel"\|"editor", visible, focused, position, size, url }]` | ✅ Rust `app.webview_windows()`；标签规则 `panel-<id>`（`detachedPanelWindow.ts`）、`editor-<hash>`（`nativeEditorWindow.ts`）；可直接确认后台实例从未显示 |
 | `window.ui_snapshot` | `{ windowLabel?, maxElements? }` → `{ elements: [{ role, name, text, value, state, rect, actions, selector }], truncated, ... }` | ✅ WebView2 `Runtime.evaluate` 离屏提取可见语义 DOM；密码脱敏，默认 2000/上限 5000 项，不需要 OCR |
+| `dialog.state` | 当前编辑器内 alert/confirm/prompt 的稳定 id、完整消息、按钮标签与 prompt 默认值；无对话框时为 `null` | ✅ 非阻塞 DOM Dialog Host；可被语义快照和整窗截图同时读取 |
 | `panel.list` | `[{ kind, title, visible, active, detached, dockPath }]` | ✅ 可由 `panel.get_layout` 的 docked/detached/active 集合推导 |
 | `panel.get_layout` | dock 二叉树（leaf/split）+ docked/detached/active 集合 | ✅ `DockWorkspace` 每次树变化直连 AgentBridge，读取实时内存树而不是过期 localStorage |
 | `window.get_active` | 当前聚焦窗口信息 | `WebviewWindow` focus 状态 |
+
+所有编辑器业务确认、输入和提示均使用队列化 `EditorDialogHost`，不再调用会阻塞 WebView 线程且无法离屏观察的 `window.alert/confirm/prompt`。Agent 先读 `get_active_dialog`，再以稳定 `dialogId` 调用 `respond_to_dialog`；过期 id 返回冲突，不会误答后来出现的另一个确认框。多 WebView 对话框同步通道使用当前原生编辑器进程的随机实例 ID 做命名空间隔离，不会把后台 Agent 实例的确认框投递到同源的另一个编辑器进程，也不会向 WebView 暴露 Bridge 鉴权 token。分离窗口完成场景创建、重命名或删除后，会通知其他 WebView 从原生工程会话重载场景索引，保证主 Agent 查询与磁盘状态一致。原生文件选择器仍只服务人工 UI，Agent 应使用带精确路径参数的领域工具。
 
 #### 4.1.3 场景与层级读取
 
@@ -397,7 +400,7 @@ Rust Host 使用独立的工程生命周期互斥门串行化 open/create/close 
 只读 tools（Phase 1）：
 
 ```
-get_project_state, list_recent_projects,
+get_project_state, list_recent_projects, get_active_dialog,
 get_scene_snapshot, get_scene_changes, get_editor_events,
 get_hierarchy, get_selection, get_editor_state,
 get_entity, find_entities, get_entity_component, get_console_logs, list_windows, list_panels,
@@ -407,7 +410,7 @@ take_screenshot, list_assets, list_scenes, get_component_schema, list_commands
 写 tools（Phase 2）：
 
 ```
-open_project, create_project, close_project, forget_recent_project,
+open_project, create_project, close_project, forget_recent_project, respond_to_dialog,
 create_gameobject, delete_entities, duplicate_entities, rename_entity,
 set_active, reparent_entities, reorder_entity, add_component, remove_component, set_component,
 patch_component, invoke_component_method, set_transform, translate_entity, set_selection,

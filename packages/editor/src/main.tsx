@@ -1,4 +1,4 @@
-import { StrictMode } from 'react';
+import { Fragment, StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 import { App } from './App';
 import { attachBridgeTransport } from './agent/transport';
@@ -6,6 +6,7 @@ import { DesktopProjectGate } from './DesktopProjectGate';
 import { panelFromLocation } from './panels/detachedPanelWindow';
 import { editorWindowTypeFromLocation } from './editorWindow/nativeEditorWindow';
 import { RegisteredEditorWindowHost } from './editorWindow';
+import { EditorDialogHost } from './EditorDialogHost';
 import './editorWindow';
 import './styles.css';
 
@@ -19,10 +20,13 @@ if (detachedPanel == null && detachedEditorWindow == null) {
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
-    <DesktopProjectGate detached={detachedPanel != null || detachedEditorWindow != null}>
-      {detachedEditorWindow
-        ? <RegisteredEditorWindowHost typeId={detachedEditorWindow} />
-        : <App detachedPanel={detachedPanel} />}
-    </DesktopProjectGate>
+    <Fragment>
+      <DesktopProjectGate detached={detachedPanel != null || detachedEditorWindow != null}>
+        {detachedEditorWindow
+          ? <RegisteredEditorWindowHost typeId={detachedEditorWindow} />
+          : <App detachedPanel={detachedPanel} />}
+      </DesktopProjectGate>
+      <EditorDialogHost />
+    </Fragment>
   </StrictMode>,
 );

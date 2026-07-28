@@ -74,6 +74,7 @@ import {
   type AssetTrashPlan,
 } from '../assetTrash';
 import { broadcastProjectAssetsChanged } from '../assetEditorEvents';
+import { confirmEditor } from '../editorDialog';
 
 const STATIC_FOLDERS = [
   'Assets',
@@ -422,13 +423,19 @@ export function Project(props: {
     });
   };
 
-  const requestDeleteScene = (name: string) => {
+  const requestDeleteScene = async (name: string) => {
     setCtx(null);
     if (name === props.activeScene) {
       props.onLog?.('The active scene cannot be deleted. Open another scene first.', 'warn');
       return;
     }
-    if (!window.confirm(`Delete ${sceneFileName(name)} permanently? This cannot be undone.`)) {
+    if (!await confirmEditor(
+      `Delete ${sceneFileName(name)} permanently? This cannot be undone.`,
+      {
+        title: 'Delete Scene',
+        confirmLabel: 'Delete Permanently',
+      },
+    )) {
       return;
     }
     void Promise.resolve(props.onDeleteScene(name)).then((ok) => {

@@ -5,6 +5,7 @@ import {
   parseAlwaysIncludeDraft,
 } from '../buildSettingsModel';
 import { registerSaveAllParticipant } from '../saveAll';
+import { confirmEditor } from '../editorDialog';
 import {
   buildPcPlayer,
   cancelPcBuild,
@@ -640,10 +641,14 @@ export function BuildSettings(props: {
       return;
     }
     if (!publicKeyPath) return;
-    const confirmed = window.confirm(
+    const confirmed = await confirmEditor(
       `Restore build ${selectedRestoreEntry.id} as the published ${selectedRestoreEntry.platform}-${selectedRestoreEntry.architecture}-${selectedRestoreEntry.profile} Player?\n\n`
       + `The archived artifact will be reconstructed and verified with the selected Ed25519 public key before it atomically replaces:\n${selectedRestoreEntry.outputDir}\n\n`
       + 'The previous published build is preserved automatically if validation or replacement fails.',
+      {
+        title: 'Restore Published Build',
+        confirmLabel: 'Verify and Restore',
+      },
     );
     if (!confirmed) return;
     setHistoryRestoringId(selectedRestoreEntry.id);

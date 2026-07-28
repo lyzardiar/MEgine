@@ -117,6 +117,33 @@ export function isSceneLibraryReady() {
   return _ready;
 }
 
+export async function refreshSceneLibrary(): Promise<SceneMeta[]> {
+  if (_backend === 'desktop') {
+    const activeJson = _active == null ? null : _data.get(_active) ?? null;
+    const scenes = await listProjectScenes();
+    _index = sortIndex(scenes.map((scene) => ({
+      name: scene.name,
+      updatedAt: scene.updatedAt,
+    })));
+    _data.clear();
+    for (const scene of scenes) _data.set(scene.name, scene.json);
+    if (_active != null && activeJson != null && _data.has(_active)) {
+      // A detached resource window must not overwrite the live scene copy it
+      // receives through scene-state just to refresh the project scene index.
+      _data.set(_active, activeJson);
+    } else if (_active != null && !_data.has(_active)) {
+      _active = null;
+    }
+  } else if (_backend === 'disk') {
+    if (!await loadFromDisk()) {
+      throw new Error('scene library could not be refreshed from disk');
+    }
+  } else {
+    loadFromLocalStorage();
+  }
+  return listScenes();
+}
+
 function applyLocalIndex(list: SceneMeta[]) {
   _index = sortIndex(list);
   try {

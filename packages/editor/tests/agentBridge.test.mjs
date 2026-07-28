@@ -57,6 +57,8 @@ test('whole-window agent capture is background-safe and addressable by window la
   assert.equal(tauriConfig.app.windows[0].focus, false);
   assert.match(native, /MENGINE_EDITOR_BACKGROUND/);
   assert.match(native, /MENGINE_EDITOR_CONFIG_DIR must be an absolute path/);
+  assert.match(native, /fn get_editor_instance_id\(state: State<'_, AppState>\)/);
+  assert.match(native, /editor_instance_id: uuid::Uuid::new_v4\(\)\.to_string\(\)/);
   assert.match(native, /if starts_in_background\(\)/);
   assert.match(native, /main\.hide\(\)\?/);
   assert.match(native, /main\.set_focusable\(false\)\?/);
@@ -76,11 +78,13 @@ test('whole-window agent capture is background-safe and addressable by window la
   assert.match(mcp, /name: 'read_window_ui_content'/);
   assert.match(mcp, /Continue with nextOffset until null/);
   assert.match(mcp, /name: 'list_open_documents'/);
+  assert.match(mcp, /name: 'get_active_dialog'/);
   assert.match(mcp, /'click_window_ui'/);
   assert.match(mcp, /'double_click_window_ui'/);
   assert.match(mcp, /'open_window_ui_context_menu'/);
   assert.match(mcp, /'set_window_ui_value'/);
   assert.match(mcp, /'scroll_window_ui'/);
+  assert.match(mcp, /'respond_to_dialog'/);
   assert.match(mcp, /name: 'get_panel_layout'/);
   assert.match(mcp, /name: 'list_menu_items'/);
   assert.match(mcp, /'invoke_menu_item'/);
@@ -287,6 +291,46 @@ test('project close is loss-aware, native-atomic, and reconnects the background 
   assert.match(mcp, /'close_project'/);
   assert.match(mcp, /'project\.close'/);
   assert.match(mcp, /discardDirty=true/);
+});
+
+test('editor dialogs are non-blocking, semantic, and Agent-addressable', () => {
+  const main = fs.readFileSync(path.join(root, 'src', 'main.tsx'), 'utf8');
+  const host = fs.readFileSync(path.join(root, 'src', 'EditorDialogHost.tsx'), 'utf8');
+  const dialog = fs.readFileSync(path.join(root, 'src', 'editorDialog.ts'), 'utf8');
+  const bridge = fs.readFileSync(path.join(root, 'src', 'agent', 'AgentBridge.ts'), 'utf8');
+  const app = fs.readFileSync(path.join(root, 'src', 'App.tsx'), 'utf8');
+  const project = fs.readFileSync(path.join(root, 'src', 'panels', 'Project.tsx'), 'utf8');
+  const build = fs.readFileSync(path.join(root, 'src', 'panels', 'BuildSettings.tsx'), 'utf8');
+  const mcp = fs.readFileSync(
+    path.join(root, '..', 'agent', 'mcp', 'server.mjs'),
+    'utf8',
+  );
+
+  assert.match(main, /<EditorDialogHost \/>/);
+  assert.match(host, /role="dialog"/);
+  assert.match(host, /aria-modal="true"/);
+  assert.match(host, /data-editor-dialog-id=\{dialog\.id\}/);
+  assert.match(host, /confirmButton\.current\?\.focus\(\)/);
+  assert.match(dialog, /const MAX_QUEUED_DIALOGS = 64/);
+  assert.match(dialog, /export function getActiveEditorDialog/);
+  assert.match(dialog, /export function respondToEditorDialog/);
+  assert.match(
+    dialog,
+    /new BroadcastChannel\(`\$\{DIALOG_CHANNEL_NAME\}:\$\{normalizedInstanceId\}`\)/,
+  );
+  assert.match(host, /getEditorInstanceId\(\)/);
+  assert.match(dialog, /respondToEditorDialogInWindow/);
+  assert.match(app, /type: 'scene-library-changed'/);
+  assert.match(app, /refreshSceneLibrary\(\)/);
+  assert.match(app, /postSceneLibraryChanged\(\)/);
+  assert.match(bridge, /commandId === 'dialog\.respond'/);
+  assert.match(bridge, /case 'dialog\.state'/);
+  assert.match(mcp, /name: 'get_active_dialog'/);
+  assert.match(mcp, /'respond_to_dialog'/);
+  assert.match(mcp, /windowLabel: args\.windowLabel \|\| 'main'/);
+  for (const source of [app, project, build]) {
+    assert.doesNotMatch(source, /window\.(?:alert|confirm|prompt)\(/);
+  }
 });
 
 test('panel and menu agent surfaces use live providers and background activation', () => {

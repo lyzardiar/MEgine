@@ -101,6 +101,10 @@ import {
   broadcastProjectAssetsChanged,
 } from '../assetEditorEvents';
 import {
+  getEditorDialogForWindow,
+  respondToEditorDialogInWindow,
+} from '../editorDialog';
+import {
   buildPcPlayer,
   cancelPcBuild,
   getProjectBuildSettings,
@@ -1999,6 +2003,41 @@ class AgentBridge {
     options: { screenshot?: boolean; expectedSceneRevision?: number } = {},
   ): Promise<CommandResult> {
     this.assertExpectedSceneRevision(options.expectedSceneRevision);
+    if (commandId === 'dialog.respond') {
+      const dialogId = requiredString(args, 'dialogId');
+      const windowLabel = typeof args.windowLabel === 'string' && args.windowLabel.trim()
+        ? args.windowLabel
+        : 'main';
+      const rawAction = requiredString(args, 'action');
+      if (rawAction !== 'accept' && rawAction !== 'cancel') {
+        throw new BridgeError('INVALID_ARGS', '"action" must be "accept" or "cancel"');
+      }
+      const activeDialog = getEditorDialogForWindow(windowLabel);
+      if (!activeDialog || activeDialog.id !== dialogId) {
+        throw new BridgeError(
+          'CONFLICT',
+          'The editor dialog changed; read get_active_dialog and respond to its current id',
+          { activeDialog },
+        );
+      }
+      const result = await respondToEditorDialogInWindow(
+        windowLabel,
+        dialogId,
+        rawAction,
+        typeof args.value === 'string' ? args.value : undefined,
+      );
+      if (!result) {
+        throw new BridgeError('CONFLICT', 'The editor dialog was resolved concurrently');
+      }
+      return this.finishAsyncCommand({
+        ok: true,
+        data: {
+          ...result,
+          windowLabel,
+          nextDialog: getEditorDialogForWindow(windowLabel),
+        },
+      }, options, windowLabel);
+    }
     if (commandId === 'project.open') {
       const provider = this.requireAvailableProjectLifecycle();
       const editorBootGeneration = this.editorBootGeneration;
@@ -2610,6 +2649,12 @@ class AgentBridge {
         return this.getProjectState();
       case 'project.recent':
         return this.getRecentProjects();
+      case 'dialog.state':
+        return getEditorDialogForWindow(
+          typeof params.windowLabel === 'string' && params.windowLabel.trim()
+            ? params.windowLabel
+            : 'main',
+        );
       case 'project.settings':
         return this.getProjectSettings();
       case 'selection.get':

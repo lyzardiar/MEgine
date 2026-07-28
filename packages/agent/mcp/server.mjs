@@ -991,6 +991,23 @@ const TOOLS = [
     handler: async () => textContent(await bridgeQuery('window.list')),
   },
   {
+    name: 'get_active_dialog',
+    description:
+      'Read the active non-blocking editor alert, confirmation, or prompt with its exact id, full message, labels, and prompt default. Returns null when no editor dialog is open.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        windowLabel: {
+          type: 'string',
+          description: 'A label returned by list_windows (default: main)',
+        },
+      },
+    },
+    handler: async (args) => textContent(await bridgeQuery('dialog.state', {
+      windowLabel: args.windowLabel || 'main',
+    })),
+  },
+  {
     name: 'list_open_documents',
     description:
       'List the current scene and every open resource document with dirty state, active/detached state, and the exact window label to inspect or capture.',
@@ -1879,12 +1896,28 @@ const TOOLS = [
   ),
   execTool(
     'invoke_menu_item',
-    'Invoke a registered Unity-style menu item by the exact path returned by list_menu_items. Menu actions may intentionally open native dialogs or windows; prefer domain-specific tools for background work.',
+    'Invoke a registered Unity-style menu item by the exact path returned by list_menu_items. Editor confirmations remain background-observable through get_active_dialog; actions may still open native file pickers or windows, so prefer domain-specific tools.',
     'menu.invoke',
     {
       path: { type: 'string', description: 'Exact registered path, e.g. Window/General/Console' },
     },
     ['path'],
+  ),
+  execTool(
+    'respond_to_dialog',
+    'Accept or cancel the exact active editor dialog without activating or raising its native window. Read get_active_dialog first and pass its current dialogId; prompt values are bounded to 4096 characters.',
+    'dialog.respond',
+    {
+      windowLabel: { type: 'string', description: 'Window label (default: main)' },
+      dialogId: { type: 'string', description: 'Exact current id from get_active_dialog' },
+      action: { type: 'string', enum: ['accept', 'cancel'] },
+      value: {
+        type: 'string',
+        maxLength: 4096,
+        description: 'Prompt value when accepting a prompt dialog',
+      },
+    },
+    ['dialogId', 'action'],
   ),
   execTool(
     'click_window_ui',
@@ -2075,6 +2108,7 @@ const SERVER_INSTRUCTIONS = [
   'For revision-sensitive writes, pass the latest expectedSceneRevision. Reuse the same requestId only when retrying the exact same write; using it with different arguments is rejected.',
   'BRIDGE_CONNECTION means the editor is unavailable and the request was not accepted. UNKNOWN_OUTCOME means a sent write lost its editor process; re-read state before deciding whether a new write is needed.',
   'Prefer domain tools over semantic window UI actions. UI inspection and interaction are available for surfaces without a domain API and remain background-safe.',
+  'If an editor confirmation or prompt is open, read get_active_dialog for its window label and exact id, then use respond_to_dialog; stale ids are rejected.',
   'After edits, verify semantic state and use a scene, game, or whole-window screenshot when visual correctness matters. Poll get_events for incremental observation during longer workflows.',
 ].join('\n');
 

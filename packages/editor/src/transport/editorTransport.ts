@@ -333,6 +333,11 @@ export async function exitDesktopEditor(): Promise<void> {
   await invoke('exit_editor');
 }
 
+export async function getEditorInstanceId(): Promise<string> {
+  if (!isDesktopEditor()) return 'browser';
+  return invoke<string>('get_editor_instance_id');
+}
+
 export async function isPrimaryPointerDown(): Promise<boolean> {
   return isDesktopEditor() ? invoke<boolean>('is_primary_pointer_down') : false;
 }

@@ -22,6 +22,7 @@ import {
   listScenes,
   normalizeSceneName,
   readSceneJson,
+  refreshSceneLibrary,
   reloadSceneFromBackend,
   renameScene,
   sceneExists,
@@ -115,6 +116,7 @@ import {
   createEditorCloseState,
   editorCloseWarning,
 } from './editorClose';
+import { alertEditor, confirmEditor, promptEditor } from './editorDialog';
 import './editorWindow'; // MenuItem side-effects
 
 const Timeline = lazy(async () => ({ default: (await import('./panels/Timeline')).Timeline }));
@@ -141,8 +143,8 @@ function allowsEditorHistoryShortcut(el: EventTarget | null) {
   return !['text', 'search', 'password', 'email', 'url', 'tel'].includes(el.type);
 }
 
-function askSceneName(title: string, initial: string): string | null {
-  const raw = window.prompt(title, initial);
+async function askSceneName(title: string, initial: string): Promise<string | null> {
+  const raw = await promptEditor(title, initial, { title: 'Scene Name' });
   if (raw == null) return null;
   return normalizeSceneName(raw);
 }
@@ -154,6 +156,7 @@ function sameAssetPath(left: string | null, right: string): boolean {
 
 type WorkspaceSyncMessage =
   | { type: 'request-scene'; sender: string }
+  | { type: 'scene-library-changed'; sender: string }
   | { type: 'request-timeline-preview'; sender: string }
   | { type: 'timeline-preview'; sender: string; preview: TimelineScenePreview | null }
   | { type: 'request-dirty-state'; sender: string }
@@ -588,6 +591,12 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
   };
 
   const bumpScenes = () => setSceneTick((t) => t + 1);
+  const postSceneLibraryChanged = () => {
+    syncChannel.current?.postMessage({
+      type: 'scene-library-changed',
+      sender: syncSender.current,
+    } satisfies WorkspaceSyncMessage);
+  };
 
   useEffect(() => {
     const openMaterial = (event: Event) => {
@@ -612,18 +621,24 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
       setAnimationAssetPath(path);
       setTimelineAssetPath(null);
     };
-    const openSprite = (event: Event) => {
+    const openSprite = async (event: Event) => {
       const path = (event as CustomEvent<string>).detail;
       if (typeof path !== 'string' || !path) return;
       if (spriteDirty && path !== spritePath
-        && !window.confirm('Sprite import settings have unsaved changes. Discard them and open another texture?')) return;
+        && !await confirmEditor(
+          'Sprite import settings have unsaved changes. Discard them and open another texture?',
+          { title: 'Unsaved Sprite Settings', confirmLabel: 'Discard and Open' },
+        )) return;
       setSpritePath(path);
     };
-    const openSpriteAtlas = (event: Event) => {
+    const openSpriteAtlas = async (event: Event) => {
       const path = (event as CustomEvent<string>).detail;
       if (typeof path !== 'string' || !path) return;
       if (spriteAtlasDirty && path !== spriteAtlasPath
-        && !window.confirm('Sprite Atlas has unsaved changes. Discard them and open another atlas?')) return;
+        && !await confirmEditor(
+          'Sprite Atlas has unsaved changes. Discard them and open another atlas?',
+          { title: 'Unsaved Sprite Atlas', confirmLabel: 'Discard and Open' },
+        )) return;
       setSpriteAtlasPath(path);
     };
     const assetsChanged = (event: Event) => {
@@ -689,18 +704,18 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
   }, [spriteAtlasDirty, spriteAtlasPath, spriteDirty, spritePath]);
 
   useEffect(() => {
-    const onExternalChange = (event: Event) => {
+    const onExternalChange = async (event: Event) => {
       const detail = (event as CustomEvent<{
         changes?: ProjectAssetChange[];
       }>).detail;
       const changes = detail?.changes ?? [];
       const changed = new Map(changes.map((change) => [change.relPath.toLocaleLowerCase(), change]));
-      const reload = (
+      const reload = async (
         panel: keyof typeof assetReloadEpoch,
         path: string | null,
         dirty: boolean,
         setPath: (path: string | null) => void,
-      ) => {
+      ): Promise<void> => {
         if (!path) return;
         const hashIndex = path.indexOf('#');
         const filePath = hashIndex >= 0 ? path.slice(0, hashIndex) : path;
@@ -711,10 +726,14 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
             : undefined);
         if (!change) return;
         if (dirty) {
-          const discard = window.confirm(
+          const discard = await confirmEditor(
             `${path} 已在磁盘外部变化，并与本地未保存草稿冲突。\n\n`
             + '确定：丢弃该编辑器窗口中的未保存草稿并加载磁盘版本。\n'
             + '取消：保留本地草稿（保存会被阻止，避免覆盖外部版本）。',
+            {
+              title: '外部文件冲突',
+              confirmLabel: '丢弃并重载',
+            },
           );
           if (!discard) {
             log(`${path} 的本地草稿已保留；保存会被阻止，直到重新加载磁盘版本。`, 'warn');
@@ -748,13 +767,13 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
         setAssetReloadEpoch((current) => ({ ...current, [panel]: current[panel] + 1 }));
         log(`已从磁盘重新加载 ${canonicalPath}`);
       };
-      reload('animation', animationAssetPath, animationDirty, setAnimationAssetPath);
-      reload('sequencer', timelineAssetPath, sequencerDirty, setTimelineAssetPath);
-      reload('animator', animatorPath, animatorDirty, setAnimatorPath);
-      reload('material', materialPath, materialDirty, setMaterialPath);
-      reload('shader', shaderPath, shaderDirty, setShaderPath);
-      reload('sprite', spritePath, spriteDirty, setSpritePath);
-      reload('spriteAtlas', spriteAtlasPath, spriteAtlasDirty, setSpriteAtlasPath);
+      await reload('animation', animationAssetPath, animationDirty, setAnimationAssetPath);
+      await reload('sequencer', timelineAssetPath, sequencerDirty, setTimelineAssetPath);
+      await reload('animator', animatorPath, animatorDirty, setAnimatorPath);
+      await reload('material', materialPath, materialDirty, setMaterialPath);
+      await reload('shader', shaderPath, shaderDirty, setShaderPath);
+      await reload('sprite', spritePath, spriteDirty, setSpritePath);
+      await reload('spriteAtlas', spriteAtlasPath, spriteAtlasDirty, setSpriteAtlasPath);
 
       const currentSceneName = sceneNameRef.current;
       if (currentSceneName) {
@@ -769,10 +788,14 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
           } else {
             const nextPath = sceneChange.current?.relPath ?? currentScenePath;
             const nextName = nextPath.split('/').pop()?.replace(/\.mscene$/i, '') ?? currentSceneName;
-            if (sceneDirtyRef.current && !window.confirm(
+            if (sceneDirtyRef.current && !await confirmEditor(
               `${currentScenePath} 已在磁盘外部修改，并与当前未保存场景冲突。\n\n`
               + '确定：丢弃当前未保存修改并加载磁盘版本。\n'
               + '取消：保留内存场景（直接保存会被阻止）。',
+              {
+                title: '外部场景冲突',
+                confirmLabel: '丢弃并重载',
+              },
             )) {
               log(`${currentScenePath} 的内存修改已保留；直接保存会被阻止。`, 'warn');
               return;
@@ -1034,6 +1057,17 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
         broadcastScene(true);
         return;
       }
+      if (message.type === 'scene-library-changed') {
+        void refreshSceneLibrary()
+          .then(() => {
+            bumpScenes();
+            if (!props.detachedPanel) agentBridge.observe();
+          })
+          .catch((reason) => {
+            console.error('Failed to refresh the cross-window scene library', reason);
+          });
+        return;
+      }
       if (message.type !== 'scene-state' || message.timestamp < lastRemoteTimestamp.current) return;
       try {
         applyingRemote.current = true;
@@ -1152,9 +1186,12 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
     timelineAssetPath,
   ]);
 
-  const confirmDiscardSceneChanges = (action: string) => (
+  const confirmDiscardSceneChanges = async (action: string) => (
     !sceneDirtyRef.current
-    || window.confirm(`当前场景有未保存的修改。${action}将丢失这些修改，是否继续？`)
+    || await confirmEditor(`当前场景有未保存的修改。${action}将丢失这些修改，是否继续？`, {
+      title: '未保存的场景修改',
+      confirmLabel: '丢弃并继续',
+    })
   );
 
   const openSceneByName = async (
@@ -1167,7 +1204,7 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
       if (!silent) log(`Scene not found: ${name}`, 'warn');
       return false;
     }
-    if (!silent && !confirmDiscardSceneChanges(`打开 ${sceneFileName(name)}`)) return false;
+    if (!silent && !await confirmDiscardSceneChanges(`打开 ${sceneFileName(name)}`)) return false;
     try {
       store.loadSceneJson(json);
       const openedFingerprint = store.sceneContentFingerprint();
@@ -1204,6 +1241,7 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
       const json = store.saveSceneJson(name);
       const savedFingerprint = store.sceneContentFingerprint();
       await writeScene(name, json);
+      postSceneLibraryChanged();
       recoveryCheckpointActive.current = false;
       savedSceneFingerprint.current = savedFingerprint;
       if (props.detachedPanel) {
@@ -1234,16 +1272,19 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
     return persistScene(current);
   };
 
-  const saveScene = () => {
+  const saveScene = async () => {
     const current = sceneNameRef.current;
     if (current) {
-      void persistScene(current);
+      await persistScene(current);
       return;
     }
-    const name = askSceneName('保存场景 — 请输入名称', 'Untitled');
+    const name = await askSceneName('保存场景 — 请输入名称', 'Untitled');
     if (!name) return;
-    if (sceneExists(name) && !window.confirm(`场景「${name}」已存在，要覆盖吗？`)) return;
-    void persistScene(name);
+    if (sceneExists(name) && !await confirmEditor(`场景「${name}」已存在，要覆盖吗？`, {
+      title: '覆盖场景',
+      confirmLabel: '覆盖',
+    })) return;
+    await persistScene(name);
   };
 
   const saveEverything = async (unnamedScene?: string): Promise<boolean> => {
@@ -1255,7 +1296,7 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
         sceneSaved = await persistScene(current);
       } else {
         const name = unnamedScene
-          ?? askSceneName('保存场景 — 请输入名称', 'Untitled');
+          ?? await askSceneName('保存场景 — 请输入名称', 'Untitled');
         sceneSaved = Boolean(name) && await persistScene(name!);
       }
     }
@@ -1274,22 +1315,29 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
     return false;
   };
 
-  const saveSceneAs = () => {
-    const name = askSceneName('另存为 — 请输入新名称', sceneNameRef.current ?? 'Untitled');
+  const saveSceneAs = async () => {
+    const name = await askSceneName('另存为 — 请输入新名称', sceneNameRef.current ?? 'Untitled');
     if (!name) return;
     if (sceneExists(name) && name !== sceneNameRef.current) {
-      if (!window.confirm(`场景「${name}」已存在，要覆盖吗？`)) return;
+      if (!await confirmEditor(`场景「${name}」已存在，要覆盖吗？`, {
+        title: '覆盖场景',
+        confirmLabel: '覆盖',
+      })) return;
     }
-    void persistScene(name);
+    await persistScene(name);
   };
 
-  const newScene = () => {
-    const name = askSceneName('新建场景 — 请输入名称', 'NewScene');
+  const newScene = async () => {
+    const name = await askSceneName('新建场景 — 请输入名称', 'NewScene');
     if (!name) return;
-    if (sceneExists(name) && !window.confirm(`场景「${name}」已存在，要覆盖吗？`)) return;
-    if (!confirmDiscardSceneChanges('新建场景')) return;
+    if (sceneExists(name) && !await confirmEditor(`场景「${name}」已存在，要覆盖吗？`, {
+      title: '覆盖场景',
+      confirmLabel: '覆盖',
+    })) return;
+    if (!await confirmDiscardSceneChanges('新建场景')) return;
     store.newScene();
-    void persistScene(name).then(() => refresh());
+    await persistScene(name);
+    refresh();
   };
 
   agentSceneProviderRef.current = {
@@ -1461,6 +1509,7 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
         sceneNameRef.current = renamed;
         setSceneName(renamed);
       }
+      postSceneLibraryChanged();
       bumpScenes();
       refresh();
       log(`Renamed ${sceneFileName(oldName)} to ${sceneFileName(renamed)} from AgentBridge`);
@@ -1492,6 +1541,7 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
         );
       }
       await deleteScene(name, expectedRevision);
+      postSceneLibraryChanged();
       bumpScenes();
       refresh();
       log(`Deleted ${sceneFileName(name)} from AgentBridge`);
@@ -1760,7 +1810,10 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
         : [];
       if (scope === 'application') dirtyPanels.push(...await queryRemoteDirtyPanels());
       const warning = editorCloseWarning(dirtyPanels, scope === 'application');
-      if (warning && !window.confirm(warning)) {
+      if (warning && !await confirmEditor(warning, {
+        title: '关闭编辑器',
+        confirmLabel: '关闭',
+      })) {
         cancelEditorClose(state);
         return;
       }
@@ -1780,7 +1833,7 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
       cancelEditorClose(state);
       const message = error instanceof Error ? error.message : String(error);
       console.error('Failed to close the editor', error);
-      window.alert(`关闭编辑器失败：${message}`);
+      await alertEditor(`关闭编辑器失败：${message}`, { title: '关闭失败' });
     }
   };
 
@@ -1789,10 +1842,14 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
       const dirtyPanels = await queryProjectDirtyPanels();
       if (
         dirtyPanels.length > 0
-        && !window.confirm(
+        && !await confirmEditor(
           `以下窗口有未保存的场景或资源修改：\n\n`
           + `${dirtyPanels.map((panel) => `• ${panel}`).join('\n')}`
           + '\n\n关闭工程将丢失这些修改，是否继续？',
+          {
+            title: '关闭工程',
+            confirmLabel: '丢弃并关闭',
+          },
         )
       ) {
         return;
@@ -1801,7 +1858,7 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
       window.location.reload();
     } catch (reason) {
       const message = reason instanceof Error ? reason.message : String(reason);
-      window.alert(`关闭工程失败：${message}`);
+      await alertEditor(`关闭工程失败：${message}`, { title: '关闭失败' });
     }
   };
 
@@ -1834,16 +1891,16 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
     };
   }, []);
 
-  const openSceneDialog = () => {
+  const openSceneDialog = async () => {
     const scenes = listScenes();
     if (!scenes.length) {
       log('还没有已保存的场景。先 File → New Scene 并命名。', 'warn');
       return;
     }
     const hint = scenes.map((s) => s.name).join(', ');
-    const name = askSceneName(`打开场景（已有: ${hint}）`, scenes[0].name);
+    const name = await askSceneName(`打开场景（已有: ${hint}）`, scenes[0].name);
     if (!name) return;
-    void openSceneByName(name);
+    await openSceneByName(name);
   };
 
   const applyEditorPrefs = (prefs: {
@@ -1900,9 +1957,14 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
           recoveryCheckpointActive.current = recovery != null;
           if (recovery) {
             const recordedAt = new Date(recovery.recordedAtMs).toLocaleString();
-            const shouldRestore = window.confirm(
+            const shouldRestore = await confirmEditor(
               `检测到 ${sceneFileName(recovery.sceneName)} 的自动恢复点（${recordedAt}，${recovery.entityCount} 个节点）。\n\n`
               + '确定：恢复未保存修改；取消：丢弃该恢复点并继续打开磁盘版本。',
+              {
+                title: '场景自动恢复',
+                confirmLabel: '恢复',
+                cancelLabel: '丢弃',
+              },
             );
             if (shouldRestore) {
               const restored = await restoreDesktopSceneRecovery();
@@ -1922,7 +1984,13 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
         } catch (reason) {
           recoveryCheckpointActive.current = true;
           log(`自动恢复点无法读取: ${String(reason)}`, 'error');
-          if (window.confirm('自动恢复文件已损坏或不兼容。是否删除它，避免下次启动再次提示？')) {
+          if (await confirmEditor(
+            '自动恢复文件已损坏或不兼容。是否删除它，避免下次启动再次提示？',
+            {
+              title: '恢复文件损坏',
+              confirmLabel: '删除',
+            },
+          )) {
             try {
               await discardDesktopSceneRecovery();
               recoveryCheckpointActive.current = false;
@@ -1990,17 +2058,17 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
       }
       if (ctrl && e.key.toLowerCase() === 'n') {
         e.preventDefault();
-        newScene();
+        void newScene();
         return;
       }
       if (ctrl && e.key.toLowerCase() === 's') {
         e.preventDefault();
-        saveScene();
+        void saveScene();
         return;
       }
       if (ctrl && e.key.toLowerCase() === 'o') {
         e.preventDefault();
-        openSceneDialog();
+        void openSceneDialog();
         return;
       }
       if (ctrl && e.key.toLowerCase() === 'd') {
@@ -2504,6 +2572,7 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
                       sceneNameRef.current = next;
                       setSceneName(next);
                     }
+                    postSceneLibraryChanged();
                     bumpScenes();
                     log(`Renamed ${sceneFileName(oldName)} → ${sceneFileName(next)}`);
                   }
@@ -2517,6 +2586,7 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
               onDeleteScene={async (name) => {
                 try {
                   await deleteScene(name);
+                  postSceneLibraryChanged();
                   bumpScenes();
                   log(`Deleted ${sceneFileName(name)}`);
                   return true;
@@ -2528,8 +2598,12 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
               }}
               onPrepareAssetTransaction={async () => {
                 if (hasUnsavedChanges) {
-                  if (!window.confirm(
+                  if (!await confirmEditor(
                     'This asset transaction changes project files on disk. Save the current scene and all resource documents before continuing?',
+                    {
+                      title: 'Save Before Asset Transaction',
+                      confirmLabel: 'Save and Continue',
+                    },
                   )) return false;
                   if (!await saveEverything()) return false;
                   workspaceDirtyRef.current = false;
@@ -2543,7 +2617,10 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
                 if (remoteDirty.length > 0) {
                   const panels = remoteDirty.join(', ');
                   log(`Asset transaction blocked by unsaved changes in detached window(s): ${panels}.`, 'warn');
-                  window.alert(`Save or discard changes in the detached window(s) before changing project assets:\n\n${panels}`);
+                  await alertEditor(
+                    `Save or discard changes in the detached window(s) before changing project assets:\n\n${panels}`,
+                    { title: 'Asset Transaction Blocked' },
+                  );
                   return false;
                 }
                 return true;

@@ -25,6 +25,7 @@ use agent_bridge::{
 };
 
 struct AppState {
+    editor_instance_id: String,
     project_lifecycle: Mutex<()>,
     project: Mutex<Option<ProjectSession>>,
     active_build: Arc<Mutex<Option<ActiveBuild>>>,
@@ -3595,6 +3596,11 @@ fn is_primary_pointer_down() -> bool {
     false
 }
 
+#[tauri::command]
+fn get_editor_instance_id(state: State<'_, AppState>) -> String {
+    state.editor_instance_id.clone()
+}
+
 fn activate_project<F>(
     state: &AppState,
     create_session: F,
@@ -5120,6 +5126,7 @@ pub fn run() {
     let app = tauri::Builder::default()
         .plugin(tauri_plugin_dialog::init())
         .manage(AppState {
+            editor_instance_id: uuid::Uuid::new_v4().to_string(),
             project_lifecycle: Mutex::new(()),
             project: Mutex::new(None),
             active_build: Arc::new(Mutex::new(None)),
@@ -5130,6 +5137,7 @@ pub fn run() {
             create_project,
             open_project,
             close_project,
+            get_editor_instance_id,
             is_primary_pointer_down,
             list_recent_projects,
             remove_recent_project,
@@ -5220,6 +5228,7 @@ mod tests {
 
     fn empty_test_app_state() -> AppState {
         AppState {
+            editor_instance_id: "test-editor".to_string(),
             project_lifecycle: Mutex::new(()),
             project: Mutex::new(None),
             active_build: Arc::new(Mutex::new(None)),
@@ -5246,6 +5255,7 @@ mod tests {
         let session = ProjectSession::create(&parent, "First").unwrap();
         let existing_root = session.snapshot().project_root;
         let state = AppState {
+            editor_instance_id: "test-editor".to_string(),
             project_lifecycle: Mutex::new(()),
             project: Mutex::new(Some(session)),
             active_build: Arc::new(Mutex::new(None)),

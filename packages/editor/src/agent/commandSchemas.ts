@@ -133,6 +133,20 @@ export const COMMAND_PARAMS_SCHEMAS: Record<string, AgentJsonSchema> = {
       description: 'WorldCommands validated and applied as one undo transaction',
     },
   }, ['commands']),
+  'dialog.respond': objectSchema({
+    windowLabel: stringValue('Window label from list_windows; default main'),
+    dialogId: stringValue('Exact active dialog id from get_active_dialog'),
+    action: {
+      type: 'string',
+      enum: ['accept', 'cancel'],
+      description: 'Accept or cancel the active editor dialog',
+    },
+    value: {
+      type: 'string',
+      maxLength: 4096,
+      description: 'Prompt value when action=accept; ignored for alert/confirm dialogs',
+    },
+  }, ['dialogId', 'action']),
   'project.open': objectSchema({
     root: stringValue('Absolute existing MEngine project root'),
   }, ['root']),
