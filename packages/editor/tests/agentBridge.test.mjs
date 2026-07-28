@@ -32,7 +32,11 @@ test('whole-window agent capture is background-safe and addressable by window la
   assert.match(rust, /nextOffset:/);
   assert.match(rust, /hasMore:/);
   assert.match(rust, /WINDOW_UI_INTERACTION_SCRIPT/);
-  assert.match(rust, /matches!\(action\.as_str\(\), "click" \| "setValue"\)/);
+  assert.match(rust, /matches!\(action\.as_str\(\), "click" \| "setValue" \| "scroll"\)/);
+  assert.match(rust, /element\.scrollBy/);
+  assert.match(rust, /actions\.push\('scroll'\)/);
+  assert.match(rust, /height: element\.scrollHeight/);
+  assert.match(rust, /clientHeight: element\.clientHeight/);
   assert.match(rust, /STANDARD\.encode\(payload\)/);
   assert.match(rust, /window_label:\s*Option<String>/);
   assert.match(rust, /background_safe:\s*true/);
@@ -61,6 +65,7 @@ test('whole-window agent capture is background-safe and addressable by window la
   assert.match(mcp, /name: 'list_open_documents'/);
   assert.match(mcp, /'click_window_ui'/);
   assert.match(mcp, /'set_window_ui_value'/);
+  assert.match(mcp, /'scroll_window_ui'/);
   assert.match(mcp, /name: 'get_panel_layout'/);
   assert.match(mcp, /name: 'list_menu_items'/);
   assert.match(mcp, /'invoke_menu_item'/);

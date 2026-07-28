@@ -631,19 +631,29 @@ pub async fn interact_editor_window(
     selector: String,
     action: String,
     value: Option<String>,
+    delta_x: Option<f64>,
+    delta_y: Option<f64>,
 ) -> Result<serde_json::Value, String> {
     let window_label = window_label.unwrap_or_else(|| "main".to_string());
     let selector = selector.trim().to_string();
     if selector.is_empty() || selector.len() > 1_000 {
         return Err("selector must contain 1 to 1000 characters".to_string());
     }
-    if !matches!(action.as_str(), "click" | "setValue") {
+    if !matches!(action.as_str(), "click" | "setValue" | "scroll") {
         return Err(format!("unsupported editor UI action \"{action}\""));
     }
     if value.as_ref().is_some_and(|value| value.len() > 100_000) {
         return Err("UI value exceeds the 100000-character limit".to_string());
     }
-    interact_editor_window_impl(app, window_label, selector, action, value).await
+    for (name, delta) in [("deltaX", delta_x), ("deltaY", delta_y)] {
+        if delta.is_some_and(|delta| !delta.is_finite() || delta.abs() > 1_000_000.0) {
+            return Err(format!("{name} must be from -1000000 to 1000000"));
+        }
+    }
+    if action == "scroll" && delta_y.is_none() {
+        return Err("scroll requires deltaY".to_string());
+    }
+    interact_editor_window_impl(app, window_label, selector, action, value, delta_x, delta_y).await
 }
 
 #[cfg(windows)]
@@ -722,12 +732,16 @@ async fn interact_editor_window_impl(
     selector: String,
     action: String,
     value: Option<String>,
+    delta_x: Option<f64>,
+    delta_y: Option<f64>,
 ) -> Result<serde_json::Value, String> {
     use base64::Engine as _;
     let payload = serde_json::json!({
         "selector": selector,
         "action": action,
         "value": value,
+        "deltaX": delta_x,
+        "deltaY": delta_y,
     })
     .to_string();
     let payload = base64::engine::general_purpose::STANDARD.encode(payload);
@@ -860,6 +874,8 @@ async fn interact_editor_window_impl(
     _selector: String,
     _action: String,
     _value: Option<String>,
+    _delta_x: Option<f64>,
+    _delta_y: Option<f64>,
 ) -> Result<serde_json::Value, String> {
     Err("background editor-window interaction is currently only supported on Windows".to_string())
 }
@@ -999,6 +1015,11 @@ const WINDOW_UI_SNAPSHOT_SCRIPT: &str = r#"
       || element.isContentEditable) {
       actions.push('setValue');
     }
+    if (element instanceof HTMLElement
+      && (element.scrollHeight > element.clientHeight + 1
+        || element.scrollWidth > element.clientWidth + 1)) {
+      actions.push('scroll');
+    }
     return actions;
   };
   const all = [document.documentElement, ...document.querySelectorAll('*')];
@@ -1037,6 +1058,17 @@ const WINDOW_UI_SNAPSHOT_SCRIPT: &str = r#"
     if ('selected' in element && typeof element.selected === 'boolean') {
       state.selected = element.selected;
     }
+    const actions = actionList(element, role);
+    const scroll = actions.includes('scroll') && element instanceof HTMLElement
+      ? {
+          left: element.scrollLeft,
+          top: element.scrollTop,
+          width: element.scrollWidth,
+          height: element.scrollHeight,
+          clientWidth: element.clientWidth,
+          clientHeight: element.clientHeight,
+        }
+      : null;
     return {
       id: ids.get(element),
       parentId: parent ? ids.get(parent) || null : null,
@@ -1048,7 +1080,8 @@ const WINDOW_UI_SNAPSHOT_SCRIPT: &str = r#"
       value: valueFor(element) || null,
       description: normalize(element.getAttribute('aria-description'), 300) || null,
       state,
-      actions: actionList(element, role),
+      actions,
+      scroll,
       rect: {
         x: Math.round(rect.x * 100) / 100,
         y: Math.round(rect.y * 100) / 100,
@@ -1091,7 +1124,13 @@ const WINDOW_UI_SNAPSHOT_SCRIPT: &str = r#"
 const WINDOW_UI_INTERACTION_SCRIPT: &str = r#"
 (() => {
   const payload = JSON.parse(atob(__MENGINE_PAYLOAD_BASE64__));
-  const { selector, action, value: requestedValue } = payload;
+  const {
+    selector,
+    action,
+    value: requestedValue,
+    deltaX: requestedDeltaX,
+    deltaY: requestedDeltaY,
+  } = payload;
   let element;
   try {
     element = document.querySelector(selector);
@@ -1135,6 +1174,16 @@ const WINDOW_UI_INTERACTION_SCRIPT: &str = r#"
     } else {
       return { ok: false, error: `Element ${selector} does not accept a value` };
     }
+  } else if (action === 'scroll') {
+    if (!(element instanceof HTMLElement) || typeof element.scrollBy !== 'function') {
+      return { ok: false, error: `Element ${selector} is not scrollable` };
+    }
+    const deltaX = Number(requestedDeltaX ?? 0);
+    const deltaY = Number(requestedDeltaY);
+    if (!Number.isFinite(deltaX) || !Number.isFinite(deltaY)) {
+      return { ok: false, error: 'Scroll deltas must be finite numbers' };
+    }
+    element.scrollBy({ left: deltaX, top: deltaY, behavior: 'instant' });
   }
   return {
     ok: true,
@@ -1148,6 +1197,12 @@ const WINDOW_UI_INTERACTION_SCRIPT: &str = r#"
     value: element instanceof HTMLInputElement && element.type === 'password'
       ? '<redacted>'
       : ('value' in element ? String(element.value) : null),
+    scrollLeft: element instanceof HTMLElement ? element.scrollLeft : null,
+    scrollTop: element instanceof HTMLElement ? element.scrollTop : null,
+    scrollWidth: element instanceof HTMLElement ? element.scrollWidth : null,
+    scrollHeight: element instanceof HTMLElement ? element.scrollHeight : null,
+    clientWidth: element instanceof HTMLElement ? element.clientWidth : null,
+    clientHeight: element instanceof HTMLElement ? element.clientHeight : null,
   };
 })()
 "#;

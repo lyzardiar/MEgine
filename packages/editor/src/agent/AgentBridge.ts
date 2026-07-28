@@ -497,10 +497,12 @@ class AgentBridge {
 
   /** Execute one allow-listed DOM action without activating the OS window. */
   async interactWindow(
-    action: 'click' | 'setValue',
+    action: 'click' | 'setValue' | 'scroll',
     selector: string,
     windowLabel = 'main',
     value?: string,
+    deltaX?: number,
+    deltaY?: number,
   ): Promise<EditorUiActionResult> {
     if (!isDesktopEditor()) {
       throw new BridgeError('NOT_READY', 'Window UI interaction requires the desktop editor');
@@ -513,6 +515,8 @@ class AgentBridge {
       selector,
       action,
       value,
+      deltaX,
+      deltaY,
     });
     if (!result.ok) {
       throw new BridgeError('INVALID_ARGS', result.error ?? 'Editor UI interaction failed');
@@ -2454,17 +2458,31 @@ class AgentBridge {
     if (
       commandId === 'window.ui_click'
       || commandId === 'window.ui_set_value'
+      || commandId === 'window.ui_scroll'
     ) {
       const action = commandId === 'window.ui_click'
         ? 'click'
-        : 'setValue';
+        : commandId === 'window.ui_set_value'
+          ? 'setValue'
+          : 'scroll';
       const selector = typeof args.selector === 'string' ? args.selector : '';
       const windowLabel =
         typeof args.windowLabel === 'string' && args.windowLabel ? args.windowLabel : 'main';
       const value = typeof args.value === 'string' ? args.value : undefined;
+      const deltaX = optionalBoundedUiDelta(args, 'deltaX', 0);
+      const deltaY = commandId === 'window.ui_scroll'
+        ? requiredBoundedUiDelta(args, 'deltaY')
+        : undefined;
       const result: CommandResult = {
         ok: true,
-        data: await this.interactWindow(action, selector, windowLabel, value),
+        data: await this.interactWindow(
+          action,
+          selector,
+          windowLabel,
+          value,
+          deltaX,
+          deltaY,
+        ),
       };
       return this.finishAsyncCommand(result, options, windowLabel);
     }
@@ -2723,6 +2741,32 @@ function requiredString(
     );
   }
   return allowEmpty ? value : value.trim();
+}
+
+function requiredBoundedUiDelta(
+  args: Record<string, unknown>,
+  key: string,
+): number {
+  const value = args[key];
+  if (
+    typeof value !== 'number'
+    || !Number.isFinite(value)
+    || Math.abs(value) > 1_000_000
+  ) {
+    throw new BridgeError(
+      'INVALID_ARGS',
+      `"${key}" must be a finite number from -1000000 to 1000000`,
+    );
+  }
+  return value;
+}
+
+function optionalBoundedUiDelta(
+  args: Record<string, unknown>,
+  key: string,
+  fallback: number,
+): number {
+  return args[key] === undefined ? fallback : requiredBoundedUiDelta(args, key);
 }
 
 function requiredStringArray(

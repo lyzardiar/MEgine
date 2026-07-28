@@ -1596,6 +1596,28 @@ const TOOLS = [
     },
     ['selector', 'value'],
   ),
+  execTool(
+    'scroll_window_ui',
+    'Scroll a container marked with the scroll action by get_window_ui. This is background-safe and enables inspection of virtualized content without foreground input.',
+    'window.ui_scroll',
+    {
+      windowLabel: { type: 'string', description: 'Window label (default: main)' },
+      selector: { type: 'string', description: 'Exact scrollable selector returned by get_window_ui' },
+      deltaX: {
+        type: 'number',
+        minimum: -1000000,
+        maximum: 1000000,
+        description: 'Horizontal CSS-pixel delta (default: 0)',
+      },
+      deltaY: {
+        type: 'number',
+        minimum: -1000000,
+        maximum: 1000000,
+        description: 'Vertical CSS-pixel delta',
+      },
+    },
+    ['selector', 'deltaY'],
+  ),
 ];
 
 function bridgeResource(uri, name, description, query, args = {}) {

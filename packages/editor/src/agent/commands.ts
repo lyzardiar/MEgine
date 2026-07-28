@@ -945,6 +945,7 @@ const COMMAND_SUMMARIES: CommandSummary[] = [
   { id: 'menu.invoke', category: 'menu', description: 'Invoke a registered Unity-style menu item by exact path', readOnly: false },
   { id: 'window.ui_click', category: 'window', description: 'Click a semantic UI element in an editor window without activating it', readOnly: false },
   { id: 'window.ui_set_value', category: 'window', description: 'Set an input value in an editor window without activating it', readOnly: false },
+  { id: 'window.ui_scroll', category: 'window', description: 'Scroll a semantic UI container in an editor window without activating it', readOnly: false },
 ];
 
 export const COMMAND_META: CommandMeta[] = COMMAND_SUMMARIES.map((summary) => {

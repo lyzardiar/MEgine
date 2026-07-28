@@ -43,7 +43,15 @@ export interface EditorUiElement {
   value: string | null;
   description: string | null;
   state: Record<string, boolean | string>;
-  actions: Array<'click' | 'setValue'>;
+  actions: Array<'click' | 'setValue' | 'scroll'>;
+  scroll: {
+    left: number;
+    top: number;
+    width: number;
+    height: number;
+    clientWidth: number;
+    clientHeight: number;
+  } | null;
   rect: EditorUiRect;
 }
 
@@ -80,12 +88,18 @@ export interface EditorUiSnapshot {
 export interface EditorUiActionResult {
   ok: boolean;
   error?: string;
-  action?: 'click' | 'setValue';
+  action?: 'click' | 'setValue' | 'scroll';
   selector?: string;
   tag?: string;
   role?: string | null;
   name?: string | null;
   value?: string | null;
+  scrollLeft?: number;
+  scrollTop?: number;
+  scrollWidth?: number;
+  scrollHeight?: number;
+  clientWidth?: number;
+  clientHeight?: number;
 }
 
 /** One open editor window (main, detached panel, or floating editor window). */

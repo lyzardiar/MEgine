@@ -476,6 +476,22 @@ export const COMMAND_PARAMS_SCHEMAS: Record<string, AgentJsonSchema> = {
     selector: stringValue('Exact selector returned by window.ui_snapshot'),
     value: stringValue('New form control value'),
   }, ['selector', 'value']),
+  'window.ui_scroll': objectSchema({
+    windowLabel: stringValue('Window label; default main'),
+    selector: stringValue('Exact scrollable selector returned by window.ui_snapshot'),
+    deltaX: {
+      type: 'number',
+      minimum: -1_000_000,
+      maximum: 1_000_000,
+      description: 'Horizontal CSS-pixel delta; default 0',
+    },
+    deltaY: {
+      type: 'number',
+      minimum: -1_000_000,
+      maximum: 1_000_000,
+      description: 'Vertical CSS-pixel delta',
+    },
+  }, ['selector', 'deltaY']),
 };
 
 export const COMMAND_EXECUTION_OPTIONS_SCHEMA: AgentJsonSchema = objectSchema({
