@@ -743,7 +743,7 @@ class AgentBridge {
     return result;
   }
 
-  /** Execute one allow-listed DOM action without activating the OS window. */
+  /** Execute one allow-listed DOM action only in a hidden, unfocused OS window. */
   async interactWindow(
     action:
       | 'click'
@@ -774,6 +774,28 @@ class AgentBridge {
       throw new BridgeError(
         'INVALID_ARGS',
         'Window UI interaction requires expectedSnapshotRevision from window.ui_snapshot',
+      );
+    }
+    const targetWindow = (await this.listWindows()).find(
+      (window) => window.label === windowLabel,
+    );
+    if (!targetWindow) {
+      throw new BridgeError(
+        'INVALID_ARGS',
+        `Editor window "${windowLabel}" was not found; query window.list for current labels`,
+        { windowLabel },
+      );
+    }
+    if (targetWindow.visible || targetWindow.focused) {
+      throw new BridgeError(
+        'READONLY',
+        `Editor window "${windowLabel}" must be hidden and unfocused before semantic UI interaction`,
+        {
+          windowLabel,
+          visible: targetWindow.visible,
+          focused: targetWindow.focused,
+          requiredWindowState: 'hidden-unfocused',
+        },
       );
     }
     const result = await invoke<EditorUiActionResult>('interact_editor_window', {

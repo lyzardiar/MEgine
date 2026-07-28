@@ -2594,7 +2594,7 @@ const TOOLS = [
   ),
   execTool(
     'click_window_ui',
-    'Click an element returned by get_window_ui without activating or raising the editor window. Prefer domain-specific tools when available.',
+    'Click an element returned by get_window_ui only when its editor window is hidden and unfocused. Prefer domain-specific tools when available.',
     'window.ui_click',
     {
       ...uiInteractionProperties('Exact selector returned by get_window_ui'),
@@ -2603,7 +2603,7 @@ const TOOLS = [
   ),
   execTool(
     'double_click_window_ui',
-    'Double-click an element marked with the doubleClick action by get_window_ui without activating or raising the editor window.',
+    'Double-click an element marked with the doubleClick action by get_window_ui only when its editor window is hidden and unfocused.',
     'window.ui_double_click',
     {
       ...uiInteractionProperties('Exact selector returned by get_window_ui'),
@@ -2612,7 +2612,7 @@ const TOOLS = [
   ),
   execTool(
     'open_window_ui_context_menu',
-    'Open the context menu for an element marked with the contextClick action by get_window_ui without activating or raising the editor window.',
+    'Open the context menu for an element marked with the contextClick action by get_window_ui only when its editor window is hidden and unfocused.',
     'window.ui_context_click',
     {
       ...uiInteractionProperties('Exact selector returned by get_window_ui'),
@@ -2621,7 +2621,7 @@ const TOOLS = [
   ),
   execTool(
     'set_window_ui_value',
-    'Set an input, textarea, select, or contenteditable value returned by get_window_ui without activating the editor window.',
+    'Set an input, textarea, select, or contenteditable value returned by get_window_ui only when its editor window is hidden and unfocused.',
     'window.ui_set_value',
     {
       ...uiInteractionProperties('Exact selector returned by get_window_ui'),
@@ -2631,7 +2631,7 @@ const TOOLS = [
   ),
   execTool(
     'scroll_window_ui',
-    'Scroll a container marked with the scroll action by get_window_ui. This is background-safe and enables inspection of virtualized content without foreground input.',
+    'Scroll a container marked with the scroll action by get_window_ui only when its editor window is hidden and unfocused. This enables inspection of virtualized content without foreground input.',
     'window.ui_scroll',
     {
       ...uiInteractionProperties('Exact scrollable selector returned by get_window_ui'),
@@ -2652,7 +2652,7 @@ const TOOLS = [
   ),
   execTool(
     'drag_window_ui',
-    'Drag a source marked with the dragTo action by get_window_ui onto another semantic element. The HTML drag events stay inside the hidden WebView and do not move the foreground cursor.',
+    'Drag a source marked with the dragTo action by get_window_ui onto another semantic element. The editor window must be hidden and unfocused; the HTML drag events never move the OS cursor.',
     'window.ui_drag_to',
     {
       ...uiInteractionProperties('Exact draggable source selector returned by get_window_ui'),
@@ -2662,7 +2662,7 @@ const TOOLS = [
   ),
   execTool(
     'drag_window_ui_by',
-    'Perform a bounded pointer drag from the center of an element marked with the dragBy action by get_window_ui. The endpoint must stay inside the same hidden WebView; this never moves the OS cursor.',
+    'Perform a bounded pointer drag from the center of an element marked with the dragBy action by get_window_ui. The editor window must be hidden and unfocused, and the endpoint must stay inside the same WebView.',
     'window.ui_drag_by',
     {
       ...uiInteractionProperties('Exact pointer-gesture selector returned by get_window_ui'),
@@ -2683,7 +2683,7 @@ const TOOLS = [
   ),
   execTool(
     'hover_window_ui',
-    'Hover an element marked with the hover action by get_window_ui. Hover transitions stay inside the hidden WebView and never move the OS cursor.',
+    'Hover an element marked with the hover action by get_window_ui only when its editor window is hidden and unfocused. Hover transitions never move the OS cursor.',
     'window.ui_hover',
     {
       ...uiInteractionProperties('Exact hover-capable selector returned by get_window_ui'),
@@ -2692,7 +2692,7 @@ const TOOLS = [
   ),
   execTool(
     'press_window_ui_key',
-    'Press an allow-listed semantic key on an element marked with the keyPress action by get_window_ui. Events stay inside the hidden WebView and do not focus or type into the foreground application.',
+    'Press an allow-listed semantic key on an element marked with the keyPress action by get_window_ui only when its editor window is hidden and unfocused.',
     'window.ui_press_key',
     {
       ...uiInteractionProperties('Exact keyboard target selector returned by get_window_ui'),

@@ -1084,6 +1084,14 @@ mod transport_tests {
     }
 
     #[test]
+    fn semantic_ui_interaction_refuses_visible_or_focused_windows() {
+        assert!(validate_background_ui_interaction_state(false, false).is_ok());
+        assert!(validate_background_ui_interaction_state(true, false).is_err());
+        assert!(validate_background_ui_interaction_state(false, true).is_err());
+        assert!(validate_background_ui_interaction_state(true, true).is_err());
+    }
+
+    #[test]
     fn startup_requests_wait_for_the_first_transport_session() {
         let mut state = BridgeTransportState::default();
         assert!(matches!(
@@ -1661,10 +1669,11 @@ pub async fn read_editor_ui_content(
     .await
 }
 
-/// Execute one allow-listed DOM interaction in a target editor webview.
+/// Execute one allow-listed DOM interaction in a hidden, unfocused editor webview.
 ///
 /// This is a fallback for UI surfaces that do not yet have a domain command.
-/// It deliberately accepts no JavaScript from the caller.
+/// It deliberately accepts no JavaScript from the caller and refuses to alter
+/// a window that could be part of the user's foreground workflow.
 #[tauri::command]
 pub async fn interact_editor_window(
     app: AppHandle,
@@ -1759,6 +1768,7 @@ pub async fn interact_editor_window(
                 .to_string(),
         );
     }
+    validate_background_ui_interaction_window(&app, &window_label)?;
     let current_snapshot =
         inspect_editor_window_impl(app.clone(), window_label.clone(), 50, 0).await?;
     let actual_snapshot_revision = current_snapshot
@@ -1775,6 +1785,9 @@ pub async fn interact_editor_window(
             "restartOffset": 0,
         }));
     }
+    // Recheck immediately before injection so a window made visible while the
+    // semantic snapshot was being validated cannot receive background input.
+    validate_background_ui_interaction_window(&app, &window_label)?;
     let mut result = interact_editor_window_impl(
         app.clone(),
         window_label.clone(),
@@ -1868,6 +1881,32 @@ fn valid_ui_snapshot_revision(value: &str) -> bool {
                     .all(|ch| ch.is_ascii_hexdigit() && !ch.is_ascii_uppercase())
         })
         && parts.next().is_none()
+}
+
+fn validate_background_ui_interaction_state(visible: bool, focused: bool) -> Result<(), String> {
+    if visible || focused {
+        return Err(
+            "editor UI interactions require a hidden, unfocused window so background automation cannot disrupt the user"
+                .to_string(),
+        );
+    }
+    Ok(())
+}
+
+fn validate_background_ui_interaction_window(
+    app: &AppHandle,
+    window_label: &str,
+) -> Result<(), String> {
+    let window = app
+        .get_webview_window(window_label)
+        .ok_or_else(|| format!("editor window \"{window_label}\" was not found"))?;
+    let visible = window
+        .is_visible()
+        .map_err(|error| format!("could not inspect editor window \"{window_label}\": {error}"))?;
+    let focused = window
+        .is_focused()
+        .map_err(|error| format!("could not inspect editor window \"{window_label}\": {error}"))?;
+    validate_background_ui_interaction_state(visible, focused)
 }
 
 #[cfg(windows)]

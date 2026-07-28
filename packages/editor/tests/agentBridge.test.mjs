@@ -157,9 +157,17 @@ test('whole-window agent capture is background-safe and addressable by window la
   assert.match(rust, /scale: output_scale\.min\(1\.0\)/);
   assert.match(bridge, /window\.ui_drag_by requires a non-zero deltaX or deltaY/);
   assert.match(bridge, /Window UI interaction requires expectedSnapshotRevision/);
+  assert.match(bridge, /must be hidden and unfocused before semantic UI interaction/);
+  assert.match(bridge, /requiredWindowState: 'hidden-unfocused'/);
   assert.match(bridge, /result\.staleSnapshot/);
   assert.match(bridge, /'STALE_REVISION'/);
   assert.match(rust, /inspect_editor_window_impl\(app\.clone\(\), window_label\.clone\(\), 50, 0\)/);
+  assert.match(
+    rust,
+    /validate_background_ui_interaction_window\(&app, &window_label\)\?;[\s\S]*validate_background_ui_interaction_window\(&app, &window_label\)\?;/,
+  );
+  assert.match(rust, /fn validate_background_ui_interaction_state\(visible: bool, focused: bool\)/);
+  assert.match(rust, /semantic_ui_interaction_refuses_visible_or_focused_windows/);
   assert.match(rust, /actualSnapshotRevision/);
   assert.match(rust, /new MutationObserver/);
   assert.match(rust, /guardedEpoch !== revisionGuard\.epoch/);
