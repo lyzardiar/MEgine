@@ -1491,6 +1491,7 @@ class AgentBridge {
   }
 
   async listAssets(params: Record<string, unknown> = {}): Promise<{
+    indexRevision: string;
     total: number;
     offset: number;
     count: number;
@@ -1509,6 +1510,7 @@ class AgentBridge {
       : '';
     const limit = params.limit ?? 1_000;
     const offset = params.offset ?? 0;
+    const rawExpectedIndexRevision = params.expectedIndexRevision;
     if (
       typeof limit !== 'number'
       || !Number.isSafeInteger(limit)
@@ -1525,6 +1527,24 @@ class AgentBridge {
     ) {
       throw new BridgeError('INVALID_ARGS', '"offset" must be an integer from 0 to 1000000');
     }
+    const expectedIndexRevision = typeof rawExpectedIndexRevision === 'string'
+      ? rawExpectedIndexRevision.trim()
+      : '';
+    if (
+      rawExpectedIndexRevision !== undefined
+      && !/^asset-index-v\d+-\d+-[0-9a-f]{16}$/.test(expectedIndexRevision)
+    ) {
+      throw new BridgeError(
+        'INVALID_ARGS',
+        '"expectedIndexRevision" must be an indexRevision returned by asset.list',
+      );
+    }
+    if (offset > 0 && !expectedIndexRevision) {
+      throw new BridgeError(
+        'INVALID_ARGS',
+        'Continuation pages require "expectedIndexRevision" from the first asset page',
+      );
+    }
     const filtered = files
       .filter((asset) => !kind || asset.kind === kind)
       .filter((asset) => !folder || (
@@ -1536,8 +1556,21 @@ class AgentBridge {
         || asset.name.toLocaleLowerCase().includes(search)
       ))
       .sort((left, right) => left.relPath.localeCompare(right.relPath));
+    const indexRevision = projectAssetIndexRevision(filtered);
+    if (expectedIndexRevision && expectedIndexRevision !== indexRevision) {
+      throw new BridgeError(
+        'STALE_REVISION',
+        'Project asset index changed while paging; restart from offset 0',
+        {
+          expectedIndexRevision,
+          currentIndexRevision: indexRevision,
+          restartOffset: 0,
+        },
+      );
+    }
     const page = paginateAgentItems(filtered, offset, limit);
     return {
+      indexRevision,
       total: page.total,
       offset: page.offset,
       count: page.count,
@@ -4044,6 +4077,32 @@ function normalizeAssetPath(path: string): string {
       error instanceof Error ? error.message : String(error),
     );
   }
+}
+
+function projectAssetIndexRevision(assets: readonly ProjectFileAsset[]): string {
+  let hashA = 0x811c9dc5;
+  let hashB = 0x9e3779b9;
+  let sourceOffset = 0;
+  for (const asset of assets) {
+    const source = JSON.stringify([
+      asset.relPath,
+      asset.guid,
+      asset.kind,
+      asset.revision,
+      asset.size,
+      asset.metaStatus,
+      asset.metaError,
+    ]);
+    for (let index = 0; index < source.length; index += 1) {
+      const code = source.charCodeAt(index);
+      hashA = Math.imul(hashA ^ code, 0x01000193);
+      hashB = Math.imul(hashB ^ (code + sourceOffset + index), 0x85ebca6b);
+    }
+    sourceOffset += source.length;
+  }
+  return `asset-index-v1-${assets.length}-${
+    (hashA >>> 0).toString(16).padStart(8, '0')
+  }${(hashB >>> 0).toString(16).padStart(8, '0')}`;
 }
 
 function sceneAssetPath(name: string): string {

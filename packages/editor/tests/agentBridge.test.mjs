@@ -108,6 +108,9 @@ test('whole-window agent capture is background-safe and addressable by window la
   assert.match(bridge, /result\.contentRevision !== expectedRevision/);
   assert.match(bridge, /Continuation pages require "expectedSceneRevision"/);
   assert.match(bridge, /currentSceneRevision: sceneRevision/);
+  assert.match(bridge, /function projectAssetIndexRevision/);
+  assert.match(bridge, /Continuation pages require "expectedIndexRevision"/);
+  assert.match(bridge, /currentIndexRevision: indexRevision/);
   assert.match(bridge, /offset: boundedOffset/);
   assert.match(bridge, /gameResolution: store\.gameResolution/);
   assert.match(bridge, /capture_editor_window', \{ windowLabel \}/);

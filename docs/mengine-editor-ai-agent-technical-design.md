@@ -237,7 +237,7 @@ MEngine 编辑器当前对人类友好，但对 AI Agent 不够友好。AI Agent
 | query id | 返回 | 集成点 |
 | --- | --- | --- |
 | `project.info` | `{ name, root, revision }` | `get_project_snapshot` |
-| `asset.list` | `{ total, truncated, assets: ProjectAssetInfo[] }` | ✅ 刷新统一 Project asset index；支持 search/kind/folder/limit |
+| `asset.list` | `{ search?, kind?, folder?, limit?, offset?, expectedIndexRevision? }` → `{ indexRevision, total, nextOffset, assets }` | ✅ 刷新统一 Project asset index；筛选后完整索引生成确定性 revision，续页必须回传，外部磁盘或编辑器内资源变化时返回 `STALE_REVISION` 并从 offset 0 重读 |
 | `asset.read_text` | `{ path, revision, size, contents }` | ✅ UTF-8 严格解码，默认 1 MiB/上限 8 MiB |
 | `asset.find_references` | 引用报告 | ✅ 复用完整项目引用扫描器 |
 | `scene.list` | `{ ready, activeScene, dirty, scenes[] }` | ✅ 读取实时 Scene Library 与内存场景状态 |

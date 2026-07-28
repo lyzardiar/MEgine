@@ -200,6 +200,26 @@ export const QUERY_PARAMS_SCHEMAS: Record<string, AgentJsonSchema> = {
     folder: nonEmptyString('Assets folder prefix'),
     limit: boundedInteger(1, 5_000, 'Maximum assets; default 1000'),
     offset: boundedInteger(0, 1_000_000, 'Zero-based asset cursor; default 0'),
+    expectedIndexRevision: {
+      type: 'string',
+      pattern: '^asset-index-v\\d+-\\d+-[0-9a-f]{16}$',
+      maxLength: 80,
+      description: 'indexRevision from the first page; required when offset is greater than 0',
+    },
+  }, [], {
+    anyOf: [
+      {
+        properties: {
+          offset: { type: 'integer', maximum: 0 },
+        },
+      },
+      {
+        required: ['offset', 'expectedIndexRevision'],
+        properties: {
+          offset: { type: 'integer', minimum: 1 },
+        },
+      },
+    ],
   }),
   'asset.read_text': objectSchema({
     path: nonEmptyString('Project-relative text asset path under Assets/'),

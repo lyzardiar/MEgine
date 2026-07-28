@@ -1389,9 +1389,10 @@ const TOOLS = [
   {
     name: 'list_assets',
     description:
-      'List the current project asset index with paths, kinds, GUID/meta health, sizes, and optimistic-lock revisions. Supports filters and bounded pages; continue with nextOffset until null.',
+      'List the current project asset index with paths, kinds, GUID/meta health, sizes, and optimistic-lock revisions. Supports filters and bounded pages; continue with nextOffset until null and pass the first page indexRevision as expectedIndexRevision on every continuation. Disk or editor changes fail with STALE_REVISION instead of returning a torn index.',
     inputSchema: {
       type: 'object',
+      additionalProperties: false,
       properties: {
         search: { type: 'string', description: 'Case-insensitive path/name substring' },
         kind: { type: 'string', description: 'Exact asset kind filter' },
@@ -1403,7 +1404,26 @@ const TOOLS = [
           maximum: 1000000,
           description: 'Zero-based asset cursor from the previous page (default 0)',
         },
+        expectedIndexRevision: {
+          type: 'string',
+          pattern: '^asset-index-v\\d+-\\d+-[0-9a-f]{16}$',
+          maxLength: 80,
+          description: 'indexRevision from the first page; required when offset is greater than 0',
+        },
       },
+      anyOf: [
+        {
+          properties: {
+            offset: { type: 'integer', maximum: 0 },
+          },
+        },
+        {
+          required: ['offset', 'expectedIndexRevision'],
+          properties: {
+            offset: { type: 'integer', minimum: 1 },
+          },
+        },
+      ],
     },
     handler: async (args) => textContent(await bridgeQuery('asset.list', args)),
   },
