@@ -58,13 +58,26 @@ export function MenuBar(props: {
   };
 
   return (
-    <div className="menu-bar" ref={root}>
+    <div className="menu-bar" ref={root} role="menubar" aria-label="Main menu">
       {MENUS.map((name) => (
         <div
           key={name}
           className={`menu-item${open === name ? ' open' : ''}`}
+          role="menuitem"
+          tabIndex={0}
+          aria-label={name}
+          aria-haspopup="menu"
+          aria-expanded={open === name}
           onMouseEnter={() => open && setOpen(name)}
           onClick={() => setOpen(open === name ? null : name)}
+          onKeyDown={(event) => {
+            if (event.key === 'Escape') {
+              setOpen(null);
+            } else if (event.key === 'Enter' || event.key === ' ') {
+              event.preventDefault();
+              setOpen(open === name ? null : name);
+            }
+          }}
         >
           {name}
           {name === 'File' && (

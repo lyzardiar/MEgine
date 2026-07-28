@@ -47,6 +47,7 @@ test('whole-window agent capture is background-safe and addressable by window la
   assert.match(rust, /actions\.push\('scroll'\)/);
   assert.match(rust, /height: element\.scrollHeight/);
   assert.match(rust, /clientHeight: element\.clientHeight/);
+  assert.match(rust, /'level',\s*'haspopup',/);
   assert.match(rust, /getAttribute\('data-agent-interaction'\) === 'blocked'/);
   assert.match(rust, /data-agent-blocked-actions/);
   assert.match(rust, /agentInteraction/);
@@ -419,6 +420,10 @@ test('panel and menu agent surfaces use live providers and background activation
   assert.match(build, /data-agent-alternative="start_pc_build"/);
   assert.match(project, /data-agent-blocked-actions=\{a\.kind === 'script' \? 'doubleClick'/);
   assert.match(project, /data-agent-alternative=\{a\.kind === 'script' \? 'read_asset_text'/);
+  assert.match(project, /role="tree" aria-label="Project folders"/);
+  assert.match(project, /role="treeitem"/);
+  assert.match(project, /aria-label=\{f\}/);
+  assert.match(project, /event\.key !== 'Enter' && event\.key !== ' '/);
   assert.match(dock, /describePanelLayout\(tree\)/);
   assert.match(dock, /rawDetail\?\.activateWindow !== false/);
   assert.match(detached, /visible: activateWindow/);

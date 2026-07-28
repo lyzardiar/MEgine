@@ -2959,7 +2959,19 @@ export function Sequencer(props: SequencerProps) {
           }, group.locked ? 'Unlock Timeline Track Group' : 'Lock Timeline Track Group')}
         ><Lock size={11} /></button>
       </div>
-      <div className="sequencer-lane sequencer-group-lane" onClick={() => applySelection({ track: -1, marker: null, groupId: group.id })}>
+      <div
+        className="sequencer-lane sequencer-group-lane"
+        role="button"
+        tabIndex={0}
+        aria-label={`${group.name} group lane`}
+        aria-pressed={selection?.groupId === group.id}
+        onClick={() => applySelection({ track: -1, marker: null, groupId: group.id })}
+        onKeyDown={(event) => {
+          if (event.key !== 'Enter' && event.key !== ' ') return;
+          event.preventDefault();
+          applySelection({ track: -1, marker: null, groupId: group.id });
+        }}
+      >
         <span>{group.track_ids.length} track{group.track_ids.length === 1 ? '' : 's'}{selectedHeaderCount > 0 ? ` · ${selectedHeaderCount} track${selectedHeaderCount === 1 ? '' : 's'} selected` : ''}{selectedItemCount > 0 ? ` · ${selectedItemCount} item${selectedItemCount === 1 ? '' : 's'} selected` : ''}{group.solo ? ' · SOLO' : ''}{group.muted ? ' · MUTED' : ''}{group.locked ? ' · LOCKED' : ''}</span>
         {snapGuide != null && <i className="sequencer-snap-guide" style={{ left: `${snapGuide / asset.duration * 100}%` }} />}
         <i className="sequencer-playhead" style={{ left: `${displayTime / asset.duration * 100}%` }} />
@@ -3359,13 +3371,19 @@ export function Sequencer(props: SequencerProps) {
                   onClick={() => update((draft) => { draft.tracks[trackIndex].muted = !draft.tracks[trackIndex].muted; }, track.muted ? 'Unmute Timeline Track' : 'Mute Timeline Track')}
                 >M</button>
               </div>
-              <div className="sequencer-lane" onDoubleClick={(event) => {
-                if (event.target !== event.currentTarget) return;
-                const bounds = event.currentTarget.getBoundingClientRect();
-                const markerTime = snapTimelineAssetTime((event.clientX - bounds.left) / bounds.width * asset.duration, asset);
-                scrub(markerTime);
-                addTrackItem(trackIndex, markerTime);
-              }} onPointerDown={(event) => startMarquee(event, trackIndex)}>
+              <div
+                className="sequencer-lane"
+                role="group"
+                aria-label={`${track.name} ${track.type} lane`}
+                onDoubleClick={(event) => {
+                  if (event.target !== event.currentTarget) return;
+                  const bounds = event.currentTarget.getBoundingClientRect();
+                  const markerTime = snapTimelineAssetTime((event.clientX - bounds.left) / bounds.width * asset.duration, asset);
+                  scrub(markerTime);
+                  addTrackItem(trackIndex, markerTime);
+                }}
+                onPointerDown={(event) => startMarquee(event, trackIndex)}
+              >
                 {ticks.map((tick) => <i className="sequencer-grid-line" key={tick.time} style={{ left: `${tick.position * 100}%` }} />)}
                 {track.type === 'signal' && track.markers.map((marker, markerIndex) => (
                   <button

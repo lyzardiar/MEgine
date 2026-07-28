@@ -1187,7 +1187,15 @@ const WINDOW_UI_SNAPSHOT_SCRIPT: &str = r#"
       readOnly: Boolean(element.readOnly || element.getAttribute('aria-readonly') === 'true'),
       focused: document.activeElement === element,
     };
-    for (const key of ['checked', 'selected', 'expanded', 'pressed', 'current']) {
+    for (const key of [
+      'checked',
+      'selected',
+      'expanded',
+      'pressed',
+      'current',
+      'level',
+      'haspopup',
+    ]) {
       const value = element.getAttribute(`aria-${key}`);
       if (value !== null) state[key] = value;
     }

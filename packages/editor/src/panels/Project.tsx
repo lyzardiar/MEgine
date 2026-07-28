@@ -916,12 +916,21 @@ export function Project(props: {
 
   return (
     <div className="project-layout" ref={rootRef} tabIndex={0}>
-      <div className="project-tree">
+      <div className="project-tree" role="tree" aria-label="Project folders">
         {folders.map((f) => (
           <div
             key={f}
             className={`row${folder === f ? ' active' : ''}`}
+            role="treeitem"
+            tabIndex={0}
+            aria-label={f}
+            aria-selected={folder === f}
             onClick={() => setFolder(f)}
+            onKeyDown={(event) => {
+              if (event.key !== 'Enter' && event.key !== ' ') return;
+              event.preventDefault();
+              setFolder(f);
+            }}
           >
             <Folder size={13} strokeWidth={1.6} aria-hidden="true" />
             <span>{f.replace('Assets/', '') || 'Assets'}</span>
@@ -934,6 +943,8 @@ export function Project(props: {
         </div>
         <div
           className={`project-grid${draggingFiles ? ' file-drop-active' : ''}`}
+          role="region"
+          aria-label={`${folder} contents`}
           onContextMenu={(event) => {
             event.preventDefault();
             setCtx({ x: event.clientX, y: event.clientY, asset: null });

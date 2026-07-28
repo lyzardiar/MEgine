@@ -1187,6 +1187,9 @@ function AnimatorControllerEditor(props: AnimatorEditorProps) {
             <div
               className={`animator-state${state.name === controller.default_state ? ' default' : ''}${selectedState === index ? ' selected' : ''}`}
               key={`${index}-${state.name}`}
+              role="group"
+              aria-label={`Animator state ${state.name}`}
+              aria-current={selectedState === index ? 'true' : undefined}
               onClick={() => {
                 setSelectedState(index);
                 setSelectedTransition(null);
@@ -1274,7 +1277,12 @@ function AnimatorControllerEditor(props: AnimatorEditorProps) {
                 setSelectedTransition(null);
               }}>×</button>
               {state.blend_tree && (
-                <div className="animator-blend-tree" onClick={(event) => event.stopPropagation()}>
+                <div
+                  className="animator-blend-tree"
+                  role="group"
+                  aria-label={`Blend tree for ${state.name}`}
+                  onClick={(event) => event.stopPropagation()}
+                >
                   <div className="animator-heading">
                     <label>Parameter
                       <select value={state.blend_tree.parameter} onChange={(event) => update((draft) => { draft.states[index].blend_tree!.parameter = event.target.value; })}>
@@ -1330,6 +1338,9 @@ function AnimatorControllerEditor(props: AnimatorEditorProps) {
             <div
               className={`animator-transition${selectedTransition === transitionIndex ? ' selected' : ''}`}
               key={transitionIndex}
+              role="group"
+              aria-label={`Transition ${transition.from} to ${transition.to}`}
+              aria-current={selectedTransition === transitionIndex ? 'true' : undefined}
               onClick={() => {
                 setSelectedState(null);
                 setSelectedTransition(transitionIndex);
