@@ -1033,6 +1033,9 @@ class AgentBridge {
     created: boolean;
     visible: boolean;
     focused: boolean;
+    semanticReady: true;
+    snapshotRevision: string;
+    semanticElementCount: number;
     backgroundSafe: true;
   }> {
     if (!isDesktopEditor()) {
@@ -1091,6 +1094,29 @@ class AgentBridge {
         `Editor window type "${normalizedTypeId}" opened without a discoverable native window`,
       );
     }
+    let initialSnapshot: EditorUiSnapshot | null = null;
+    for (let attempt = 0; attempt < 100; attempt += 1) {
+      try {
+        const candidate = await this.inspectWindow(target.label, 250, 0);
+        if (candidate.totalSemanticElements > 0) {
+          initialSnapshot = candidate;
+          break;
+        }
+      } catch {
+        // The native window can be discoverable before its WebView document is ready.
+      }
+      await new Promise((resolve) => window.setTimeout(resolve, 50));
+    }
+    if (!initialSnapshot) {
+      if (existing === undefined) {
+        await this.closeRegisteredEditorWindow(target.label).catch(() => undefined);
+      }
+      throw new BridgeError(
+        'NOT_READY',
+        `Editor window type "${normalizedTypeId}" did not expose semantic UI within 5 seconds`,
+        { windowLabel: target.label },
+      );
+    }
     return {
       typeId: normalizedTypeId,
       title: target.title,
@@ -1098,6 +1124,9 @@ class AgentBridge {
       created: existing === undefined,
       visible: target.visible,
       focused: target.focused,
+      semanticReady: true,
+      snapshotRevision: initialSnapshot.snapshotRevision,
+      semanticElementCount: initialSnapshot.totalSemanticElements,
       backgroundSafe: true,
     };
   }

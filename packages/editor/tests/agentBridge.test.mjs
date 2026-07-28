@@ -129,6 +129,10 @@ test('whole-window agent capture is background-safe and addressable by window la
   assert.match(bridge, /offset: boundedOffset/);
   assert.match(bridge, /gameResolution: store\.gameResolution/);
   assert.match(bridge, /capture_editor_window', \{ windowLabel \}/);
+  assert.match(bridge, /candidate\.totalSemanticElements > 0/);
+  assert.match(bridge, /semanticReady: true/);
+  assert.match(bridge, /snapshotRevision: initialSnapshot\.snapshotRevision/);
+  assert.match(bridge, /did not expose semantic UI within 5 seconds/);
   assert.match(mcp, /windowLabel: args\.windowLabel \|\| 'main'/);
   assert.match(mcp, /name: 'get_window_ui'/);
   assert.match(mcp, /name: 'read_window_ui_content'/);

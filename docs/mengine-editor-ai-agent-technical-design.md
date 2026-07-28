@@ -324,7 +324,7 @@ Rust Host 使用独立的工程生命周期互斥门串行化 open/create/close 
 | `panel.reset_layout` | `{}` | ✅ 复用 `mengine:reset-dock-layout` |
 | `panel.detach` / `dock` | `{ kind }` | ✅ 复用 `detachedPanelWindow` 与 dock channel；Agent 拆分窗以 `visible=false/focus=false` 创建，脏资源面板拒绝迁移 |
 | `layout.reset` | — | dispatch `mengine:reset-dock-layout` |
-| `window.open_editor` | `{ typeId }` | `EditorWindow.show` / `openNativeEditorWindow` |
+| `window.open_editor` | `{ typeId }` | ✅ 隐藏创建后同时等待原生窗口可发现与目标 WebView 非空语义快照就绪；返回初始 `snapshotRevision` / `semanticElementCount`，不会把仍在加载的窗口误报为空 |
 | `menu.invoke` | `{ path }` | ✅ 查 `MenuItemEntry`、执行实时 validator，再复用 `entry.action(ctx)` |
 | `window.ui_click` | `{ windowLabel?, selector }` | ✅ 对 `window.ui_snapshot` 返回的 selector 调用受限 DOM `click()`；不激活顶层窗口 |
 | `window.ui_set_value` | `{ windowLabel?, selector, value }` | ✅ 仅允许 input/textarea/select/contenteditable，触发 input/change；拒绝 disabled/readonly，禁止调用方注入脚本 |
