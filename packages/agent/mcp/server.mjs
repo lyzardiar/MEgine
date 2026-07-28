@@ -22,6 +22,7 @@ import { createHash } from 'node:crypto';
 import os from 'node:os';
 import path from 'node:path';
 import readline from 'node:readline';
+import { pathToFileURL } from 'node:url';
 
 const PROTOCOL_VERSION = '2024-11-05';
 const REQUEST_TIMEOUT_MS = 20000;
@@ -315,6 +316,7 @@ function execTool(name, description, command, properties, required, mapArgs = (a
   return {
     name,
     description,
+    bridgeCommand: command,
     inputSchema: {
       type: 'object',
       properties: {
@@ -1744,7 +1746,15 @@ async function main() {
   rl.on('close', () => process.exit(0));
 }
 
-main().catch((error) => {
-  process.stderr.write(`[mengine-mcp] fatal: ${error?.message || String(error)}\n`);
-  process.exit(1);
-});
+const launchedAsMain =
+  process.argv[1] != null
+  && import.meta.url === pathToFileURL(path.resolve(process.argv[1])).href;
+
+if (launchedAsMain) {
+  main().catch((error) => {
+    process.stderr.write(`[mengine-mcp] fatal: ${error?.message || String(error)}\n`);
+    process.exit(1);
+  });
+}
+
+export { RESOURCES, TOOLS };
