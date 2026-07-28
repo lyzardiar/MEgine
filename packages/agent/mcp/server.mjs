@@ -2498,6 +2498,16 @@ const TOOLS = [
     ['selector', 'deltaX', 'deltaY'],
   ),
   execTool(
+    'hover_window_ui',
+    'Hover an element marked with the hover action by get_window_ui. Hover transitions stay inside the hidden WebView and never move the OS cursor.',
+    'window.ui_hover',
+    {
+      windowLabel: { type: 'string', description: 'Window label (default: main)' },
+      selector: { type: 'string', description: 'Exact hover-capable selector returned by get_window_ui' },
+    },
+    ['selector'],
+  ),
+  execTool(
     'press_window_ui_key',
     'Press an allow-listed semantic key on an element marked with the keyPress action by get_window_ui. Events stay inside the hidden WebView and do not focus or type into the foreground application.',
     'window.ui_press_key',

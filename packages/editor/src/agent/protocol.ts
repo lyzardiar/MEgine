@@ -38,7 +38,8 @@ export type EditorUiAction =
   | 'scroll'
   | 'keyPress'
   | 'dragTo'
-  | 'dragBy';
+  | 'dragBy'
+  | 'hover';
 
 /** One visible, semantically meaningful DOM element in an editor webview. */
 export interface EditorUiElement {

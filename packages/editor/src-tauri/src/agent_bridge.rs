@@ -682,6 +682,7 @@ pub async fn interact_editor_window(
             | "keyPress"
             | "dragTo"
             | "dragBy"
+            | "hover"
     ) {
         return Err(format!("unsupported editor UI action \"{action}\""));
     }
@@ -1061,6 +1062,7 @@ const WINDOW_UI_SNAPSHOT_SCRIPT: &str = r#"
     'keyPress',
     'dragTo',
     'dragBy',
+    'hover',
   ];
   const agentPolicyFor = (element) => {
     const blockedActions = new Set();
@@ -1276,6 +1278,14 @@ const WINDOW_UI_SNAPSHOT_SCRIPT: &str = r#"
       && typeof props.onClick !== 'function';
     if ((pointerGesture || mouseGesture) && typeof props.onClick !== 'function') {
       actions.push('dragBy');
+    }
+    if (
+      typeof props.onPointerEnter === 'function'
+      || typeof props.onPointerOver === 'function'
+      || typeof props.onMouseEnter === 'function'
+      || typeof props.onMouseOver === 'function'
+    ) {
+      actions.push('hover');
     }
     return actions;
   };
@@ -1512,6 +1522,7 @@ const WINDOW_UI_INTERACTION_SCRIPT: &str = r#"
     'keyPress',
     'dragTo',
     'dragBy',
+    'hover',
   ];
   const agentPolicyFor = (target) => {
     const blockedActions = new Set();
@@ -1693,6 +1704,30 @@ const WINDOW_UI_INTERACTION_SCRIPT: &str = r#"
   };
   const dispatchPointer = (type, button, buttons, detail = 0) => {
     dispatchPointerAt(element, type, button, buttons, detail);
+  };
+  const reactHoverEvent = (target, type, relatedTarget) => {
+    const coordinates = eventCoordinates(target);
+    return {
+      type,
+      target,
+      currentTarget: target,
+      nativeEvent: null,
+      bubbles: true,
+      cancelable: true,
+      defaultPrevented: false,
+      button: 0,
+      buttons: 0,
+      pointerId: 1,
+      pointerType: 'mouse',
+      isPrimary: true,
+      relatedTarget,
+      ...coordinates,
+      preventDefault() { this.defaultPrevented = true; },
+      stopPropagation() {},
+      isDefaultPrevented() { return this.defaultPrevented; },
+      isPropagationStopped() { return false; },
+      persist() {},
+    };
   };
   const reactPropsFor = (target) => {
     for (const key of Object.keys(target)) {
@@ -1897,6 +1932,53 @@ const WINDOW_UI_INTERACTION_SCRIPT: &str = r#"
         else delete element[name];
       });
     }
+  } else if (action === 'hover') {
+    const reactProps = reactPropsFor(element);
+    if (
+      typeof reactProps.onPointerEnter !== 'function'
+      && typeof reactProps.onPointerOver !== 'function'
+      && typeof reactProps.onMouseEnter !== 'function'
+      && typeof reactProps.onMouseOver !== 'function'
+    ) {
+      return { ok: false, error: `Element ${selector} has no semantic hover interaction` };
+    }
+    const hoverState = Symbol.for('mengine.agent.hoveredElement');
+    const storedHover = window[hoverState];
+    const previous = storedHover instanceof Element && storedHover.isConnected
+      ? storedHover
+      : null;
+    if (
+      previous
+      && previous !== element
+      && !previous.contains(element)
+    ) {
+      const previousProps = reactPropsFor(previous);
+      if (typeof previousProps.onPointerOut === 'function') {
+        previousProps.onPointerOut(reactHoverEvent(previous, 'pointerout', element));
+      }
+      if (typeof previousProps.onPointerLeave === 'function') {
+        previousProps.onPointerLeave(reactHoverEvent(previous, 'pointerleave', element));
+      }
+      if (typeof previousProps.onMouseOut === 'function') {
+        previousProps.onMouseOut(reactHoverEvent(previous, 'mouseout', element));
+      }
+      if (typeof previousProps.onMouseLeave === 'function') {
+        previousProps.onMouseLeave(reactHoverEvent(previous, 'mouseleave', element));
+      }
+    }
+    if (typeof reactProps.onPointerOver === 'function') {
+      reactProps.onPointerOver(reactHoverEvent(element, 'pointerover', previous));
+    }
+    if (typeof reactProps.onPointerEnter === 'function') {
+      reactProps.onPointerEnter(reactHoverEvent(element, 'pointerenter', previous));
+    }
+    if (typeof reactProps.onMouseOver === 'function') {
+      reactProps.onMouseOver(reactHoverEvent(element, 'mouseover', previous));
+    }
+    if (typeof reactProps.onMouseEnter === 'function') {
+      reactProps.onMouseEnter(reactHoverEvent(element, 'mouseenter', previous));
+    }
+    window[hoverState] = element;
   } else if (action === 'setValue') {
     if (element.readOnly || element.getAttribute('aria-readonly') === 'true') {
       return { ok: false, error: `Element ${selector} is read-only` };

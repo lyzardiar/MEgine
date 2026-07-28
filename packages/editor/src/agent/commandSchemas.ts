@@ -717,6 +717,10 @@ export const COMMAND_PARAMS_SCHEMAS: Record<string, AgentJsonSchema> = {
       description: 'Vertical CSS-pixel displacement; may be zero',
     },
   }, ['selector', 'deltaX', 'deltaY']),
+  'window.ui_hover': objectSchema({
+    windowLabel: stringValue('Window label; default main'),
+    selector: stringValue('Exact hover-capable selector returned by window.ui_snapshot'),
+  }, ['selector']),
   'window.ui_press_key': objectSchema({
     windowLabel: stringValue('Window label; default main'),
     selector: stringValue('Exact keyboard target selector returned by window.ui_snapshot'),

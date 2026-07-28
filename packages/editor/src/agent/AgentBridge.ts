@@ -661,7 +661,8 @@ class AgentBridge {
       | 'scroll'
       | 'keyPress'
       | 'dragTo'
-      | 'dragBy',
+      | 'dragBy'
+      | 'hover',
     selector: string,
     windowLabel = 'main',
     targetSelector?: string,
@@ -3378,6 +3379,7 @@ class AgentBridge {
       || commandId === 'window.ui_scroll'
       || commandId === 'window.ui_drag_to'
       || commandId === 'window.ui_drag_by'
+      || commandId === 'window.ui_hover'
       || commandId === 'window.ui_press_key'
     ) {
       const action = commandId === 'window.ui_click'
@@ -3394,7 +3396,9 @@ class AgentBridge {
                   ? 'dragTo'
                   : commandId === 'window.ui_drag_by'
                     ? 'dragBy'
-                    : 'keyPress';
+                    : commandId === 'window.ui_hover'
+                      ? 'hover'
+                      : 'keyPress';
       const selector = typeof args.selector === 'string' ? args.selector : '';
       const windowLabel =
         typeof args.windowLabel === 'string' && args.windowLabel ? args.windowLabel : 'main';

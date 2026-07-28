@@ -65,12 +65,17 @@ test('whole-window agent capture is background-safe and addressable by window la
   assert.match(rust, /actions\.push\('keyPress'\)/);
   assert.match(rust, /actions\.push\('dragTo'\)/);
   assert.match(rust, /actions\.push\('dragBy'\)/);
+  assert.match(rust, /actions\.push\('hover'\)/);
   assert.match(rust, /new DataTransfer\(\)/);
   assert.match(rust, /new DragEvent\(type/);
   assert.match(rust, /dispatchDrag\(targetElement, 'drop'\)/);
   assert.match(rust, /dragBy must end inside the target WebView viewport/);
   assert.match(rust, /Object\.defineProperty\(element, name/);
   assert.match(rust, /dispatchPointerAt\(element, 'mousemove'/);
+  assert.match(rust, /Symbol\.for\('mengine\.agent\.hoveredElement'\)/);
+  assert.match(rust, /!previous\.contains\(element\)/);
+  assert.match(rust, /previousProps\.onPointerLeave\(reactHoverEvent/);
+  assert.match(rust, /reactProps\.onPointerEnter\(reactHoverEvent/);
   assert.doesNotMatch(contentScript, /targetElement|targetSelector|action === 'dragTo'/);
   assert.match(interactionScript, /let targetElement = null/);
   assert.match(interactionScript, /document\.querySelector\(targetSelector\)/);
@@ -153,6 +158,7 @@ test('whole-window agent capture is background-safe and addressable by window la
   assert.match(mcp, /'scroll_window_ui'/);
   assert.match(mcp, /'drag_window_ui'/);
   assert.match(mcp, /'drag_window_ui_by'/);
+  assert.match(mcp, /'hover_window_ui'/);
   assert.match(mcp, /'press_window_ui_key'/);
   assert.match(mcp, /'respond_to_dialog'/);
   assert.match(mcp, /'close_editor_window'/);
