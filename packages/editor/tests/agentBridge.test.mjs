@@ -38,6 +38,12 @@ test('whole-window agent capture is background-safe and addressable by window la
   assert.match(mcp, /name: 'get_panel_layout'/);
   assert.match(mcp, /name: 'list_menu_items'/);
   assert.match(mcp, /'invoke_menu_item'/);
+  assert.match(mcp, /name: 'list_scenes'/);
+  assert.match(mcp, /name: 'list_assets'/);
+  assert.match(mcp, /name: 'read_asset_text'/);
+  assert.match(mcp, /'write_asset_text'/);
+  assert.match(mcp, /name: 'get_build_status'/);
+  assert.match(mcp, /'start_pc_build'/);
 });
 
 test('the main AgentBridge transport is available before a project is opened', () => {
@@ -60,4 +66,23 @@ test('panel and menu agent surfaces use live providers and background activation
   assert.match(bridge, /activateWindow: false/);
   assert.match(dock, /describePanelLayout\(tree\)/);
   assert.match(dock, /rawDetail\?\.activateWindow !== false/);
+});
+
+test('scene, asset, and asynchronous build tools share guarded editor services', () => {
+  const bridge = fs.readFileSync(path.join(root, 'src', 'agent', 'AgentBridge.ts'), 'utf8');
+  const app = fs.readFileSync(path.join(root, 'src', 'App.tsx'), 'utf8');
+  const assets = fs.readFileSync(path.join(root, 'src', 'projectAssets.ts'), 'utf8');
+
+  assert.match(bridge, /case 'scene\.list'/);
+  assert.match(bridge, /commandId === 'scene\.new'/);
+  assert.match(bridge, /case 'asset\.read_text'/);
+  assert.match(bridge, /commandId === 'asset\.write_text'/);
+  assert.match(bridge, /assertDiskMutationAllowed/);
+  assert.match(bridge, /status: 'running'/);
+  assert.match(bridge, /listenToPcBuildProgress/);
+  assert.match(bridge, /case 'build\.status'/);
+  assert.match(app, /connectSceneCommands/);
+  assert.match(app, /sceneDirtyRef\.current \|\| resourceDirtyRef\.current/);
+  assert.match(app, /pass discardDirty=true/);
+  assert.match(assets, /expectedRevision === undefined/);
 });

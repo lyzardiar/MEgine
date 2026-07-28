@@ -36,6 +36,31 @@ import {
   type MenuItemContext,
 } from '../editorWindow/registry';
 import { CORE_PANEL_IDS } from '../panels/detachedPanelWindow';
+import {
+  listProjectFiles,
+  isProjectTextAssetPath,
+  normalizeProjectAssetPath,
+  readProjectAssetBytesWithRevision,
+  refreshProjectFiles,
+  writeProjectAssetText,
+  type ProjectAssetChange,
+  type ProjectFileAsset,
+} from '../projectAssets';
+import { findProjectAssetReferences } from '../assetReferences';
+import {
+  PROJECT_ASSETS_EXTERNAL_CHANGE_EVENT,
+  broadcastProjectAssetsChanged,
+} from '../assetEditorEvents';
+import {
+  buildPcPlayer,
+  cancelPcBuild,
+  getProjectBuildSettings,
+  listenToPcBuildProgress,
+  listPcBuildHistory,
+  type BuildPlayerProfile,
+  type BuildPlayerResult,
+  type BuildProgressEvent,
+} from '../transport/editorTransport';
 
 type CaptureFn = (
   format: 'image/png' | 'image/jpeg',
@@ -46,6 +71,48 @@ interface SceneMetaProviders {
   sceneName: () => string | null;
   dirty: () => boolean;
 }
+
+export interface AgentSceneProvider {
+  list: () => {
+    ready: boolean;
+    activeScene: string | null;
+    dirty: boolean;
+    scenes: Array<{ name: string; updatedAt: number }>;
+  };
+  create: (options: {
+    name: string;
+    overwrite: boolean;
+    discardDirty: boolean;
+  }) => Promise<{ name: string }>;
+  open: (options: {
+    name: string;
+    discardDirty: boolean;
+  }) => Promise<{ name: string }>;
+  save: (options: {
+    name?: string;
+    overwrite: boolean;
+  }) => Promise<{ name: string }>;
+  saveAll: (options: {
+    unnamedScene?: string;
+    overwrite: boolean;
+  }) => Promise<{ sceneName: string | null }>;
+}
+
+export interface AgentWorkspaceProvider {
+  assertDiskMutationAllowed: () => Promise<void>;
+}
+
+type AgentBuildJob = {
+  id: string;
+  status: 'running' | 'succeeded' | 'failed' | 'cancelled';
+  profile: BuildPlayerProfile;
+  clean: boolean;
+  startedAt: number;
+  finishedAt: number | null;
+  progress: BuildProgressEvent | null;
+  result: BuildPlayerResult | null;
+  error: string | null;
+};
 
 interface EntityView {
   entity: number;
@@ -63,6 +130,10 @@ class AgentBridge {
   private refreshProvider: (() => void) | null = null;
   private logProvider: ((message: string) => void) | null = null;
   private panelLayoutProvider: (() => PanelLayoutSnapshot | null) | null = null;
+  private sceneProvider: (() => AgentSceneProvider | null) | null = null;
+  private workspaceProvider: (() => AgentWorkspaceProvider | null) | null = null;
+  private buildJob: AgentBuildJob | null = null;
+  private stopBuildProgress: (() => void) | null = null;
 
   /** Wire the bridge to the live editor store. Called once from App. */
   connect(store: EditorStore): void {
@@ -85,6 +156,14 @@ class AgentBridge {
 
   connectPanelLayout(provider: () => PanelLayoutSnapshot | null): void {
     this.panelLayoutProvider = provider;
+  }
+
+  connectSceneCommands(provider: () => AgentSceneProvider | null): void {
+    this.sceneProvider = provider;
+  }
+
+  connectWorkspace(provider: () => AgentWorkspaceProvider | null): void {
+    this.workspaceProvider = provider;
   }
 
   /**
@@ -264,6 +343,283 @@ class AgentBridge {
       });
   }
 
+  getScenes(): ReturnType<AgentSceneProvider['list']> {
+    return structuredClone(this.requireSceneProvider().list());
+  }
+
+  async listAssets(params: Record<string, unknown> = {}): Promise<{
+    total: number;
+    truncated: boolean;
+    assets: ProjectFileAsset[];
+  }> {
+    const files = await refreshProjectFiles();
+    const search = typeof params.search === 'string'
+      ? params.search.trim().toLocaleLowerCase()
+      : '';
+    const kind = typeof params.kind === 'string' ? params.kind.trim() : '';
+    const folder = typeof params.folder === 'string' && params.folder.trim()
+      ? normalizeAssetPath(params.folder)
+      : '';
+    const requestedLimit = typeof params.limit === 'number' && Number.isFinite(params.limit)
+      ? Math.trunc(params.limit)
+      : 1_000;
+    const limit = Math.min(5_000, Math.max(1, requestedLimit));
+    const filtered = files
+      .filter((asset) => !kind || asset.kind === kind)
+      .filter((asset) => !folder || (
+        asset.relPath === folder
+        || asset.relPath.startsWith(`${folder}/`)
+      ))
+      .filter((asset) => !search || (
+        asset.relPath.toLocaleLowerCase().includes(search)
+        || asset.name.toLocaleLowerCase().includes(search)
+      ))
+      .sort((left, right) => left.relPath.localeCompare(right.relPath));
+    return {
+      total: filtered.length,
+      truncated: filtered.length > limit,
+      assets: structuredClone(filtered.slice(0, limit)),
+    };
+  }
+
+  async readAssetText(path: string, maxBytes = 1_048_576): Promise<{
+    path: string;
+    revision: string;
+    size: number;
+    contents: string;
+  }> {
+    const normalized = normalizeAssetPath(path);
+    const boundedMaxBytes = Number.isFinite(maxBytes)
+      ? Math.min(8 * 1024 * 1024, Math.max(1, Math.trunc(maxBytes)))
+      : 1_048_576;
+    const files = await refreshProjectFiles();
+    const asset = findAsset(files, normalized);
+    if (!asset) throw new BridgeError('IO_ERROR', `Asset not found: ${normalized}`);
+    if (!isProjectTextAssetPath(asset.relPath)) {
+      throw new BridgeError(
+        'INVALID_ARGS',
+        `Asset is not a supported text format: ${asset.relPath}`,
+      );
+    }
+    if (asset.size > boundedMaxBytes) {
+      throw new BridgeError(
+        'INVALID_ARGS',
+        `Asset is ${asset.size} bytes, above maxBytes=${boundedMaxBytes}`,
+      );
+    }
+    const read = await bridgeIo(
+      `Failed to read ${normalized}`,
+      () => readProjectAssetBytesWithRevision(normalized),
+    );
+    const bytes = read.contents;
+    let contents: string;
+    try {
+      contents = new TextDecoder('utf-8', { fatal: true }).decode(bytes);
+    } catch {
+      throw new BridgeError('INVALID_ARGS', `Asset is not valid UTF-8 text: ${normalized}`);
+    }
+    return {
+      path: asset.relPath,
+      revision: read.revision,
+      size: bytes.byteLength,
+      contents,
+    };
+  }
+
+  async findAssetReferences(path: string): Promise<unknown> {
+    const normalized = normalizeAssetPath(path);
+    return bridgeIo(
+      `Failed to scan references for ${normalized}`,
+      () => findProjectAssetReferences(normalized),
+    );
+  }
+
+  async writeAssetText(
+    path: string,
+    contents: string,
+    expectedRevision: string | null,
+  ): Promise<{ created: boolean; asset: ProjectFileAsset }> {
+    const normalized = normalizeAssetPath(path);
+    if (!isProjectTextAssetPath(normalized)) {
+      throw new BridgeError(
+        'INVALID_ARGS',
+        `Asset is not a supported text format: ${normalized}`,
+      );
+    }
+    const byteLength = new TextEncoder().encode(contents).byteLength;
+    if (byteLength > 8 * 1024 * 1024) {
+      throw new BridgeError('INVALID_ARGS', 'Text asset exceeds the 8 MiB agent write limit');
+    }
+    await this.requireWorkspaceProvider().assertDiskMutationAllowed();
+    const beforeFiles = await refreshProjectFiles();
+    const before = findAsset(beforeFiles, normalized);
+    if (before) {
+      if (expectedRevision !== before.revision) {
+        throw new BridgeError(
+          'STALE_REVISION',
+          `Asset revision changed: expected ${String(expectedRevision)}, current ${before.revision}`,
+          { path: before.relPath, expectedRevision, currentRevision: before.revision },
+        );
+      }
+    } else if (expectedRevision !== null) {
+      throw new BridgeError(
+        'STALE_REVISION',
+        `Asset does not exist; expectedRevision must be null when creating ${normalized}`,
+      );
+    }
+
+    try {
+      await writeProjectAssetText(normalized, contents, expectedRevision);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      if (message.includes('asset changed on disk since it was loaded')) {
+        const current = findAsset(await refreshProjectFiles(), normalized);
+        throw new BridgeError(
+          'STALE_REVISION',
+          `Asset revision changed while writing ${normalized}`,
+          {
+            path: current?.relPath ?? normalized,
+            expectedRevision,
+            currentRevision: current?.revision ?? null,
+          },
+        );
+      }
+      throw new BridgeError(
+        'IO_ERROR',
+        message,
+      );
+    }
+    const afterFiles = await refreshProjectFiles();
+    const after = findAsset(afterFiles, normalized);
+    if (!after) {
+      throw new BridgeError('IO_ERROR', `Asset write completed but index is missing ${normalized}`);
+    }
+    const change: ProjectAssetChange = before
+      ? {
+          type: 'modified',
+          relPath: after.relPath,
+          previous: before,
+          current: after,
+        }
+      : {
+          type: 'added',
+          relPath: after.relPath,
+          previous: null,
+          current: after,
+        };
+    window.dispatchEvent(new CustomEvent(PROJECT_ASSETS_EXTERNAL_CHANGE_EVENT, {
+      detail: { changes: [change], source: 'agent' },
+    }));
+    broadcastProjectAssetsChanged(before
+      ? { action: 'modified', sourcePath: after.relPath }
+      : { action: 'created', destinationPath: after.relPath });
+    this.logProvider?.(`${before ? 'Updated' : 'Created'} ${after.relPath} from AgentBridge`);
+    return { created: before == null, asset: structuredClone(after) };
+  }
+
+  async getBuildSettings(): Promise<unknown> {
+    return bridgeIo('Failed to read Build Settings', () => getProjectBuildSettings());
+  }
+
+  async getBuildHistory(limit = 20): Promise<unknown> {
+    const boundedLimit = Number.isFinite(limit)
+      ? Math.min(100, Math.max(1, Math.trunc(limit)))
+      : 20;
+    const history = await bridgeIo(
+      'Failed to read build history',
+      () => listPcBuildHistory(),
+    );
+    return {
+      ...history,
+      total: history.entries.length,
+      entries: history.entries.slice(0, boundedLimit),
+      truncated: history.entries.length > boundedLimit,
+    };
+  }
+
+  getBuildStatus(): { status: 'idle' } | AgentBuildJob {
+    return this.buildJob ? structuredClone(this.buildJob) : { status: 'idle' };
+  }
+
+  async startBuild(profile: BuildPlayerProfile, clean: boolean): Promise<AgentBuildJob> {
+    if (!isDesktopEditor()) {
+      throw new BridgeError('NOT_READY', 'Player builds require the desktop editor');
+    }
+    if (this.buildJob?.status === 'running') {
+      throw new BridgeError('CONFLICT', `Build ${this.buildJob.id} is already running`);
+    }
+    await this.requireWorkspaceProvider().assertDiskMutationAllowed();
+    const settings = await bridgeIo(
+      'Failed to read Build Settings',
+      () => getProjectBuildSettings(),
+    );
+    if (!settings.scenes.length) {
+      throw new BridgeError('INVALID_ARGS', 'Build Settings has no enabled scenes');
+    }
+
+    this.stopBuildProgress?.();
+    this.stopBuildProgress = null;
+    const job: AgentBuildJob = {
+      id: crypto.randomUUID(),
+      status: 'running',
+      profile,
+      clean,
+      startedAt: Date.now(),
+      finishedAt: null,
+      progress: null,
+      result: null,
+      error: null,
+    };
+    this.buildJob = job;
+    try {
+      this.stopBuildProgress = await listenToPcBuildProgress((progress) => {
+        if (this.buildJob?.id === job.id && this.buildJob.status === 'running') {
+          this.buildJob.progress = { ...progress };
+        }
+      });
+    } catch (error) {
+      this.logProvider?.(`Build progress listener failed: ${String(error)}`);
+    }
+    void buildPcPlayer(profile, clean)
+      .then((result) => {
+        if (this.buildJob?.id !== job.id) return;
+        this.buildJob.status = 'succeeded';
+        this.buildJob.result = result;
+        this.buildJob.finishedAt = Date.now();
+        this.logProvider?.(`Agent build succeeded: ${result.outputDir}`);
+      })
+      .catch((error) => {
+        if (this.buildJob?.id !== job.id) return;
+        const message = error instanceof Error ? error.message : String(error);
+        this.buildJob.status = message.toLocaleLowerCase().includes('cancel')
+          ? 'cancelled'
+          : 'failed';
+        this.buildJob.error = message;
+        this.buildJob.finishedAt = Date.now();
+        this.logProvider?.(`Agent build ${this.buildJob.status}: ${message}`);
+      })
+      .finally(() => {
+        if (this.buildJob?.id !== job.id) return;
+        this.stopBuildProgress?.();
+        this.stopBuildProgress = null;
+      });
+    return structuredClone(job);
+  }
+
+  async cancelBuild(): Promise<{ requested: boolean; jobId: string }> {
+    if (!this.buildJob || this.buildJob.status !== 'running') {
+      throw new BridgeError('CONFLICT', 'No AgentBridge build is currently running');
+    }
+    const requested = await bridgeIo(
+      'Failed to cancel Player build',
+      () => cancelPcBuild(),
+    );
+    if (!requested) {
+      throw new BridgeError('CONFLICT', 'The active build did not accept cancellation');
+    }
+    return { requested: true, jobId: this.buildJob.id };
+  }
+
   getComponentSchema(type?: string): unknown {
     const catalog = getComponentCatalog();
     const build = (entry: { type: string; label: string; description: string; create: () => Record<string, unknown>; requires?: string[] }) => {
@@ -337,6 +693,66 @@ class AgentBridge {
     args: Record<string, unknown> = {},
     options: { screenshot?: boolean } = {},
   ): Promise<CommandResult> {
+    if (commandId === 'scene.new') {
+      const result = await this.requireSceneProvider().create({
+        name: requiredString(args, 'name'),
+        overwrite: optionalBoolean(args, 'overwrite', false),
+        discardDirty: optionalBoolean(args, 'discardDirty', false),
+      });
+      return this.finishAsyncCommand({ ok: true, data: result }, options);
+    }
+    if (commandId === 'scene.open') {
+      const result = await this.requireSceneProvider().open({
+        name: requiredString(args, 'name'),
+        discardDirty: optionalBoolean(args, 'discardDirty', false),
+      });
+      return this.finishAsyncCommand({ ok: true, data: result }, options);
+    }
+    if (commandId === 'scene.save') {
+      const result = await this.requireSceneProvider().save({
+        name: optionalString(args, 'name'),
+        overwrite: optionalBoolean(args, 'overwrite', false),
+      });
+      return this.finishAsyncCommand({ ok: true, data: result }, options);
+    }
+    if (commandId === 'scene.save_all') {
+      const result = await this.requireSceneProvider().saveAll({
+        unnamedScene: optionalString(args, 'name'),
+        overwrite: optionalBoolean(args, 'overwrite', false),
+      });
+      return this.finishAsyncCommand({ ok: true, data: result }, options);
+    }
+    if (commandId === 'asset.write_text') {
+      const expectedRevision = args.expectedRevision;
+      if (expectedRevision !== null && typeof expectedRevision !== 'string') {
+        throw new BridgeError(
+          'INVALID_ARGS',
+          '"expectedRevision" must be the current revision string, or null when creating',
+        );
+      }
+      const result = await this.writeAssetText(
+        requiredString(args, 'path'),
+        requiredString(args, 'contents', true),
+        expectedRevision,
+      );
+      return this.finishAsyncCommand({ ok: true, data: result }, options, true);
+    }
+    if (commandId === 'build.start') {
+      const profile = optionalEnum(
+        args,
+        'profile',
+        ['debug', 'release'] as const,
+        'debug',
+      );
+      const result = await this.startBuild(
+        profile,
+        optionalBoolean(args, 'clean', true),
+      );
+      return { ok: true, data: result };
+    }
+    if (commandId === 'build.cancel') {
+      return { ok: true, data: await this.cancelBuild() };
+    }
     if (commandId === 'menu.invoke') {
       const path = typeof args.path === 'string' ? args.path : '';
       const result = await this.invokeMenu(path);
@@ -410,6 +826,8 @@ class AgentBridge {
         return this.getSceneSnapshot();
       case 'scene.hierarchy':
         return this.getHierarchy();
+      case 'scene.list':
+        return this.getScenes();
       case 'entity.get':
         return this.getEntity(requireIdOrName(params));
       case 'view.screenshot':
@@ -441,6 +859,23 @@ class AgentBridge {
             ? params.root
             : undefined,
         );
+      case 'asset.list':
+        return this.listAssets(params);
+      case 'asset.read_text':
+        return this.readAssetText(
+          requiredString(params, 'path'),
+          typeof params.maxBytes === 'number' ? params.maxBytes : 1_048_576,
+        );
+      case 'asset.find_references':
+        return this.findAssetReferences(requiredString(params, 'path'));
+      case 'build.settings':
+        return this.getBuildSettings();
+      case 'build.status':
+        return this.getBuildStatus();
+      case 'build.history':
+        return this.getBuildHistory(
+          typeof params.limit === 'number' ? params.limit : 20,
+        );
       case 'console.get_logs':
         return this.getLogs({
           level: params.level as LogQuery['level'],
@@ -469,6 +904,36 @@ class AgentBridge {
     return this.store;
   }
 
+  private requireSceneProvider(): AgentSceneProvider {
+    const provider = this.sceneProvider?.() ?? null;
+    if (!provider) throw new BridgeError('NOT_READY', 'Scene services are not ready');
+    return provider;
+  }
+
+  private requireWorkspaceProvider(): AgentWorkspaceProvider {
+    const provider = this.workspaceProvider?.() ?? null;
+    if (!provider) throw new BridgeError('NOT_READY', 'Workspace services are not ready');
+    return provider;
+  }
+
+  private async finishAsyncCommand(
+    result: CommandResult,
+    options: { screenshot?: boolean },
+    wholeWindow = false,
+  ): Promise<CommandResult> {
+    this.refreshProvider?.();
+    if (!options.screenshot) return result;
+    await nextFrame();
+    try {
+      result.screenshot = wholeWindow
+        ? await this.captureWindow('main')
+        : this.captureViewport('scene');
+    } catch {
+      // Screenshot is best-effort; never fail a completed command.
+    }
+    return result;
+  }
+
   private menuContext(): MenuItemContext {
     const store = this.requireStore();
     return {
@@ -482,6 +947,90 @@ class AgentBridge {
         else logService.log(message, 'info', 'agent-menu');
       },
     };
+  }
+}
+
+function requiredString(
+  args: Record<string, unknown>,
+  key: string,
+  allowEmpty = false,
+): string {
+  const value = args[key];
+  if (
+    typeof value !== 'string'
+    || (!allowEmpty && !value.trim())
+  ) {
+    throw new BridgeError(
+      'INVALID_ARGS',
+      `"${key}" must be ${allowEmpty ? 'a string' : 'a non-empty string'}`,
+    );
+  }
+  return allowEmpty ? value : value.trim();
+}
+
+function optionalString(
+  args: Record<string, unknown>,
+  key: string,
+): string | undefined {
+  if (args[key] === undefined) return undefined;
+  return requiredString(args, key);
+}
+
+function optionalBoolean(
+  args: Record<string, unknown>,
+  key: string,
+  fallback: boolean,
+): boolean {
+  const value = args[key];
+  if (value === undefined) return fallback;
+  if (typeof value !== 'boolean') {
+    throw new BridgeError('INVALID_ARGS', `"${key}" must be a boolean`);
+  }
+  return value;
+}
+
+function optionalEnum<T extends string>(
+  args: Record<string, unknown>,
+  key: string,
+  values: readonly T[],
+  fallback: T,
+): T {
+  const value = args[key] ?? fallback;
+  if (typeof value !== 'string' || !values.includes(value as T)) {
+    throw new BridgeError(
+      'INVALID_ARGS',
+      `"${key}" must be one of: ${values.join(', ')}`,
+    );
+  }
+  return value as T;
+}
+
+function normalizeAssetPath(path: string): string {
+  try {
+    return normalizeProjectAssetPath(path);
+  } catch (error) {
+    throw new BridgeError(
+      'INVALID_ARGS',
+      error instanceof Error ? error.message : String(error),
+    );
+  }
+}
+
+function findAsset(
+  files: readonly ProjectFileAsset[],
+  normalizedPath: string,
+): ProjectFileAsset | null {
+  const key = normalizedPath.toLocaleLowerCase();
+  return files.find((asset) => asset.relPath.toLocaleLowerCase() === key) ?? null;
+}
+
+async function bridgeIo<T>(label: string, operation: () => Promise<T>): Promise<T> {
+  try {
+    return await operation();
+  } catch (error) {
+    if (error instanceof BridgeError) throw error;
+    const detail = error instanceof Error ? error.message : String(error);
+    throw new BridgeError('IO_ERROR', `${label}: ${detail}`);
   }
 }
 

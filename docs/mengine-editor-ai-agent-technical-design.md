@@ -230,8 +230,10 @@ MEngine 编辑器当前对人类友好，但对 AI Agent 不够友好。AI Agent
 | query id | 返回 | 集成点 |
 | --- | --- | --- |
 | `project.info` | `{ name, root, revision }` | `get_project_snapshot` |
-| `asset.list` | `ProjectAssetInfo[]` | `list_project_assets` |
-| `scene.list` | `ProjectSceneInfo[]` | `list_project_scenes` |
+| `asset.list` | `{ total, truncated, assets: ProjectAssetInfo[] }` | ✅ 刷新统一 Project asset index；支持 search/kind/folder/limit |
+| `asset.read_text` | `{ path, revision, size, contents }` | ✅ UTF-8 严格解码，默认 1 MiB/上限 8 MiB |
+| `asset.find_references` | 引用报告 | ✅ 复用完整项目引用扫描器 |
+| `scene.list` | `{ ready, activeScene, dirty, scenes[] }` | ✅ 读取实时 Scene Library 与内存场景状态 |
 | `sprite.list` | `ProjectSpriteInfo[]` | `list_project_sprites` |
 
 ### 4.2 可操作性（Controllability）—— 让 Agent「动手」
@@ -285,9 +287,10 @@ MEngine 编辑器当前对人类友好，但对 AI Agent 不够友好。AI Agent
 
 | command id | 参数 | 映射 |
 | --- | --- | --- |
-| `scene.new` | `{ name }` | `store.newScene` + 持久化 |
-| `scene.open` | `{ name }` | `openSceneByName` |
-| `scene.save` / `save_as` | `{ name? }` | `persistScene` |
+| `scene.new` | `{ name, overwrite?, discardDirty? }` | ✅ `store.newScene` + 持久化；默认拒绝覆盖和丢弃脏场景 |
+| `scene.open` | `{ name, discardDirty? }` | ✅ `openSceneByName`；无弹窗且默认拒绝丢弃脏场景 |
+| `scene.save` | `{ name?, overwrite? }` | ✅ `persistScene`；Save As 默认拒绝覆盖 |
+| `scene.save_all` | `{ name?, overwrite? }` | ✅ 保存场景与已挂载资源文档；检查独立窗口脏状态 |
 | `scene.load_json` | `{ json }` | `store.loadSceneJson` |
 
 #### 4.2.6 面板 / 窗口 / 菜单
@@ -307,8 +310,11 @@ MEngine 编辑器当前对人类友好，但对 AI Agent 不够友好。AI Agent
 
 | command id | 映射 |
 | --- | --- |
-| `asset.read` / `write` / `rename` / `duplicate` / `trash` / `restore` | 对应 Tauri 资产命令 |
-| `build.pc_player` / `build.cancel` / `build.run` | `build_pc_player` / `cancel_pc_build` / `run_pc_player` |
+| `asset.write_text` | ✅ 8 MiB UTF-8 上限；已有文件必须携带精确 revision，新文件必须传 null；写前拒绝任何窗口的未保存工作 |
+| `asset.rename` / `duplicate` / `trash` / `restore` | 对应安全预检与 Tauri 资产事务（待接 AgentBridge） |
+| `build.start` / `build.cancel` | ✅ 异步 job；写前检查整个 workspace 已保存，进度与结果由 `build.status` 轮询 |
+| `build.settings` / `build.history` / `build.status` | ✅ 构建设置、历史和当前/最近 Agent job 的只读查询 |
+| `build.run` | `run_pc_player`（待接 AgentBridge，必须由调用方显式请求） |
 
 #### 4.2.8 批量与事务
 

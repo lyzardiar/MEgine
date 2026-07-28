@@ -178,6 +178,13 @@ const TOOLS = [
     handler: async () => textContent(await bridgeQuery('scene.hierarchy')),
   },
   {
+    name: 'list_scenes',
+    description:
+      'List saved scenes with active scene, dirty flag, timestamps, and scene-library readiness.',
+    inputSchema: { type: 'object', properties: {} },
+    handler: async () => textContent(await bridgeQuery('scene.list')),
+  },
+  {
     name: 'get_scene_snapshot',
     description:
       'Get the complete scene snapshot including every entity and all of its component data. Large — prefer get_hierarchy for an overview.',
@@ -285,6 +292,73 @@ const TOOLS = [
       return textContent(await bridgeQuery('console.get_logs', queryArgs));
     },
   },
+  {
+    name: 'list_assets',
+    description:
+      'List the current project asset index with paths, kinds, GUID/meta health, sizes, and optimistic-lock revisions. Supports search, kind, folder, and bounded limit filters.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        search: { type: 'string', description: 'Case-insensitive path/name substring' },
+        kind: { type: 'string', description: 'Exact asset kind filter' },
+        folder: { type: 'string', description: 'Assets folder prefix, e.g. Assets/Scripts' },
+        limit: { type: 'number', minimum: 1, maximum: 5000, description: 'Maximum rows (default 1000)' },
+      },
+    },
+    handler: async (args) => textContent(await bridgeQuery('asset.list', args)),
+  },
+  {
+    name: 'read_asset_text',
+    description:
+      'Read a UTF-8 project text asset and return its exact revision. Use that revision with write_asset_text to prevent overwriting concurrent edits.',
+    inputSchema: {
+      type: 'object',
+      required: ['path'],
+      properties: {
+        path: { type: 'string', description: 'Asset path under Assets/' },
+        maxBytes: { type: 'number', minimum: 1, maximum: 8388608, description: 'Read limit (default 1 MiB)' },
+      },
+    },
+    handler: async (args) => textContent(await bridgeQuery('asset.read_text', args)),
+  },
+  {
+    name: 'find_asset_references',
+    description:
+      'Scan the project for exact, subresource, relative, manifest, and script references to an asset before changing it.',
+    inputSchema: {
+      type: 'object',
+      required: ['path'],
+      properties: {
+        path: { type: 'string', description: 'Asset path under Assets/' },
+      },
+    },
+    handler: async (args) => textContent(await bridgeQuery('asset.find_references', args)),
+  },
+  {
+    name: 'get_build_settings',
+    description:
+      'Get ordered scenes in build, available scenes, content inclusion mode, always-included paths, and shader variant limit.',
+    inputSchema: { type: 'object', properties: {} },
+    handler: async () => textContent(await bridgeQuery('build.settings')),
+  },
+  {
+    name: 'get_build_status',
+    description:
+      'Get the active or most recent AgentBridge PC build job, including progress, result, failure, and timestamps. Returns idle before any agent build.',
+    inputSchema: { type: 'object', properties: {} },
+    handler: async () => textContent(await bridgeQuery('build.status')),
+  },
+  {
+    name: 'get_build_history',
+    description: 'Get recent PC build history entries and validation counts.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        limit: { type: 'number', minimum: 1, maximum: 100, description: 'Maximum history entries (default 20)' },
+      },
+    },
+    handler: async (args) => textContent(await bridgeQuery('build.history', args)),
+  },
 
   {
     name: 'list_commands',
@@ -322,6 +396,71 @@ const TOOLS = [
   },
 
   // ── Write tools (Phase 2) ────────────────────────────────────────────
+  execTool(
+    'new_scene',
+    'Create and immediately save a named scene without a dialog. Refuses to discard dirty work or overwrite an existing scene unless explicitly allowed.',
+    'scene.new',
+    {
+      name: { type: 'string', description: 'Scene name, with or without .mscene' },
+      overwrite: { type: 'boolean', description: 'Allow replacing an existing scene (default false)' },
+      discardDirty: { type: 'boolean', description: 'Allow discarding unsaved current-scene changes (default false)' },
+    },
+  ),
+  execTool(
+    'open_scene',
+    'Open a saved scene by name without a dialog. Refuses to discard current unsaved scene changes unless explicitly allowed.',
+    'scene.open',
+    {
+      name: { type: 'string', description: 'Scene name, with or without .mscene' },
+      discardDirty: { type: 'boolean', description: 'Allow discarding unsaved current-scene changes (default false)' },
+    },
+  ),
+  execTool(
+    'save_scene',
+    'Save the current scene, optionally under a new name. Existing destinations require overwrite=true.',
+    'scene.save',
+    {
+      name: { type: 'string', description: 'Optional destination scene name' },
+      overwrite: { type: 'boolean', description: 'Allow replacing an existing destination (default false)' },
+    },
+  ),
+  execTool(
+    'save_all',
+    'Save the current scene and every open resource document without a dialog. Provide name for a dirty unnamed scene.',
+    'scene.save_all',
+    {
+      name: { type: 'string', description: 'Name to use only when the dirty scene is unnamed' },
+      overwrite: { type: 'boolean', description: 'Allow replacing that unnamed-scene destination (default false)' },
+    },
+  ),
+  execTool(
+    'write_asset_text',
+    'Create or update a UTF-8 text asset under Assets/ with optimistic concurrency. Pass the exact revision returned by list_assets/read_asset_text, or null only when creating a missing file. Refuses while any editor window has unsaved work.',
+    'asset.write_text',
+    {
+      path: { type: 'string', description: 'Asset path under Assets/' },
+      contents: { type: 'string', description: 'Complete UTF-8 file contents (max 8 MiB)' },
+      expectedRevision: {
+        type: ['string', 'null'],
+        description: 'Current asset revision, or null only for creation',
+      },
+    },
+  ),
+  execTool(
+    'start_pc_build',
+    'Start an asynchronous PC Player build after verifying the whole workspace is saved. Poll get_build_status for progress/result.',
+    'build.start',
+    {
+      profile: { type: 'string', enum: ['debug', 'release'], description: 'Build profile (default debug)' },
+      clean: { type: 'boolean', description: 'Clean output before building (default true)' },
+    },
+  ),
+  execTool(
+    'cancel_pc_build',
+    'Request safe cancellation of the active AgentBridge PC Player build.',
+    'build.cancel',
+    {},
+  ),
   execTool(
     'create_gameobject',
     'Create a new GameObject with optional components and parent. Returns the new entity id.',
@@ -440,15 +579,19 @@ const TOOLS = [
 
 const RESOURCES = [
   { uri: 'mengine://editor/state', name: 'Editor State', mimeType: 'application/json' },
+  { uri: 'mengine://editor/scenes', name: 'Project Scenes', mimeType: 'application/json' },
   { uri: 'mengine://scene/hierarchy', name: 'Scene Hierarchy', mimeType: 'application/json' },
   { uri: 'mengine://editor/panels', name: 'Editor Panel Layout', mimeType: 'application/json' },
+  { uri: 'mengine://build/status', name: 'PC Build Status', mimeType: 'application/json' },
   { uri: 'mengine://console/logs', name: 'Console Logs', mimeType: 'application/json' },
 ];
 
 const RESOURCE_READERS = {
   'mengine://editor/state': () => bridgeQuery('editor.state'),
+  'mengine://editor/scenes': () => bridgeQuery('scene.list'),
   'mengine://scene/hierarchy': () => bridgeQuery('scene.hierarchy'),
   'mengine://editor/panels': () => bridgeQuery('panel.get_layout'),
+  'mengine://build/status': () => bridgeQuery('build.status'),
   'mengine://console/logs': () => bridgeQuery('console.get_logs', {}),
 };
 

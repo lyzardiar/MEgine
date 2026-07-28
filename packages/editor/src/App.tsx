@@ -17,6 +17,7 @@ import {
   getActiveSceneName,
   deleteScene,
   initSceneLibrary,
+  isSceneLibraryReady,
   isDiskBackend,
   listScenes,
   normalizeSceneName,
@@ -60,9 +61,13 @@ import {
 } from './projectAssets';
 import { Viewport } from './panels/Viewport';
 import { DockWorkspace, type PanelKind } from './panels/DockWorkspace';
-import { agentBridge } from './agent/AgentBridge';
+import {
+  agentBridge,
+  type AgentSceneProvider,
+  type AgentWorkspaceProvider,
+} from './agent/AgentBridge';
 import { logService } from './agent/LogService';
-import type { PanelLayoutSnapshot } from './agent/protocol';
+import { BridgeError, type PanelLayoutSnapshot } from './agent/protocol';
 import { EditorWindowHost } from './editorWindow';
 import { resolveUnityAction } from './panels/uiFieldEditors';
 import {
@@ -198,6 +203,8 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
   );
   const panelLayoutRef = useRef<PanelLayoutSnapshot | null>(null);
   const logRef = useRef<(message: string) => void>(() => undefined);
+  const agentSceneProviderRef = useRef<AgentSceneProvider | null>(null);
+  const agentWorkspaceProviderRef = useRef<AgentWorkspaceProvider | null>(null);
   const updateVisiblePanels = useCallback((panels: ReadonlySet<PanelKind>) => {
     setVisiblePanels((current) => {
       if (current.size === panels.size && [...current].every((panel) => panels.has(panel))) {
@@ -252,6 +259,7 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
   const booted = useRef(false);
   const sceneNameRef = useRef<string | null>(null);
   const sceneDirtyRef = useRef(false);
+  const resourceDirtyRef = useRef(resourceDirty);
   const unsavedChangesRef = useRef(false);
   const editorCloseState = useRef(createEditorCloseState());
   const savedSceneFingerprint = useRef(store.sceneContentFingerprint());
@@ -287,6 +295,7 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
   sceneNameRef.current = sceneName;
   unsavedChangesRef.current = hasUnsavedChanges;
   workspaceDirtyRef.current = hasUnsavedChanges;
+  resourceDirtyRef.current = resourceDirty;
   timelineAssetPathRef.current = timelineAssetPath;
 
   useEffect(() => {
@@ -298,6 +307,8 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
     agentBridge.connectRefresh(() => refreshRef.current());
     agentBridge.connectLog((message) => logRef.current(message));
     agentBridge.connectPanelLayout(() => panelLayoutRef.current);
+    agentBridge.connectSceneCommands(() => agentSceneProviderRef.current);
+    agentBridge.connectWorkspace(() => agentWorkspaceProviderRef.current);
   }, [store]);
 
   const postWorkspaceDirtyState = () => {
@@ -911,7 +922,11 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
     || window.confirm(`当前场景有未保存的修改。${action}将丢失这些修改，是否继续？`)
   );
 
-  const openSceneByName = async (name: string, silent = false) => {
+  const openSceneByName = async (
+    name: string,
+    silent = false,
+    clearRecovery = false,
+  ) => {
     const json = readSceneJson(name);
     if (!json) {
       if (!silent) log(`Scene not found: ${name}`, 'warn');
@@ -931,7 +946,7 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
       sceneNameRef.current = name;
       setSceneName(name);
       await setActiveSceneName(name);
-      if (!silent && isDesktopEditor()) {
+      if ((!silent || clearRecovery) && isDesktopEditor()) {
         try {
           await discardDesktopSceneRecovery();
           recoveryCheckpointActive.current = false;
@@ -996,7 +1011,7 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
     void persistScene(name);
   };
 
-  const saveEverything = async (): Promise<boolean> => {
+  const saveEverything = async (unnamedScene?: string): Promise<boolean> => {
     const hadDirtyScene = sceneDirtyRef.current;
     let sceneSaved = true;
     if (hadDirtyScene) {
@@ -1004,7 +1019,8 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
       if (current) {
         sceneSaved = await persistScene(current);
       } else {
-        const name = askSceneName('保存场景 — 请输入名称', 'Untitled');
+        const name = unnamedScene
+          ?? askSceneName('保存场景 — 请输入名称', 'Untitled');
         sceneSaved = Boolean(name) && await persistScene(name!);
       }
     }
@@ -1036,6 +1052,156 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
     if (!confirmDiscardSceneChanges('新建场景')) return;
     store.newScene();
     void persistScene(name).then(() => refresh());
+  };
+
+  agentSceneProviderRef.current = {
+    list: () => ({
+      ready: isSceneLibraryReady(),
+      activeScene: sceneNameRef.current,
+      dirty: sceneDirtyRef.current,
+      scenes: listScenes().map((scene) => ({ ...scene })),
+    }),
+    create: async ({ name: rawName, overwrite, discardDirty }) => {
+      if (!isSceneLibraryReady()) {
+        throw new BridgeError('NOT_READY', 'Scene library is still loading');
+      }
+      if (store.mode !== 'edit') {
+        throw new BridgeError('READONLY', 'Stop playback before creating a scene');
+      }
+      const name = normalizeSceneName(rawName);
+      if (!name) throw new BridgeError('INVALID_ARGS', 'Scene name is invalid');
+      if (sceneDirtyRef.current && !discardDirty) {
+        throw new BridgeError(
+          'CONFLICT',
+          'The current scene has unsaved changes; pass discardDirty=true to replace it',
+        );
+      }
+      if (sceneExists(name) && !overwrite) {
+        throw new BridgeError(
+          'CONFLICT',
+          `${sceneFileName(name)} already exists; pass overwrite=true to replace it`,
+        );
+      }
+      store.newScene();
+      if (!await persistScene(name)) {
+        throw new BridgeError('IO_ERROR', `Failed to create ${sceneFileName(name)}`);
+      }
+      log(`Created ${sceneFileName(name)} from AgentBridge`);
+      refresh();
+      return { name };
+    },
+    open: async ({ name: rawName, discardDirty }) => {
+      if (!isSceneLibraryReady()) {
+        throw new BridgeError('NOT_READY', 'Scene library is still loading');
+      }
+      if (store.mode !== 'edit') {
+        throw new BridgeError('READONLY', 'Stop playback before opening a scene');
+      }
+      const name = normalizeSceneName(rawName);
+      if (!name) throw new BridgeError('INVALID_ARGS', 'Scene name is invalid');
+      if (!sceneExists(name)) {
+        throw new BridgeError('IO_ERROR', `Scene not found: ${sceneFileName(name)}`);
+      }
+      if (sceneDirtyRef.current && !discardDirty) {
+        throw new BridgeError(
+          'CONFLICT',
+          'The current scene has unsaved changes; pass discardDirty=true to open another scene',
+        );
+      }
+      if (!await openSceneByName(name, true, true)) {
+        throw new BridgeError('IO_ERROR', `Failed to open ${sceneFileName(name)}`);
+      }
+      log(`Opened ${sceneFileName(name)} from AgentBridge`);
+      return { name };
+    },
+    save: async ({ name: rawName, overwrite }) => {
+      if (!isSceneLibraryReady()) {
+        throw new BridgeError('NOT_READY', 'Scene library is still loading');
+      }
+      if (store.mode !== 'edit') {
+        throw new BridgeError('READONLY', 'Stop playback before saving a scene');
+      }
+      const current = sceneNameRef.current;
+      const name = rawName === undefined ? current : normalizeSceneName(rawName);
+      if (!name) {
+        throw new BridgeError(
+          'INVALID_ARGS',
+          'The current scene is unnamed; provide "name"',
+        );
+      }
+      if (name !== current && sceneExists(name) && !overwrite) {
+        throw new BridgeError(
+          'CONFLICT',
+          `${sceneFileName(name)} already exists; pass overwrite=true to replace it`,
+        );
+      }
+      if (!await persistScene(name)) {
+        throw new BridgeError('IO_ERROR', `Failed to save ${sceneFileName(name)}`);
+      }
+      return { name };
+    },
+    saveAll: async ({ unnamedScene: rawName, overwrite }) => {
+      if (!isSceneLibraryReady()) {
+        throw new BridgeError('NOT_READY', 'Scene library is still loading');
+      }
+      if (store.mode !== 'edit') {
+        throw new BridgeError('READONLY', 'Stop playback before saving the workspace');
+      }
+      const unnamedScene = rawName === undefined
+        ? undefined
+        : (normalizeSceneName(rawName) ?? undefined);
+      if (rawName !== undefined && unnamedScene === undefined) {
+        throw new BridgeError('INVALID_ARGS', 'Scene name is invalid');
+      }
+      if (sceneDirtyRef.current && !sceneNameRef.current && !unnamedScene) {
+        throw new BridgeError(
+          'INVALID_ARGS',
+          'The dirty scene is unnamed; provide "name" to save all without a dialog',
+        );
+      }
+      if (
+        sceneDirtyRef.current
+        && !sceneNameRef.current
+        && unnamedScene
+        && sceneExists(unnamedScene)
+        && !overwrite
+      ) {
+        throw new BridgeError(
+          'CONFLICT',
+          `${sceneFileName(unnamedScene)} already exists; pass overwrite=true to replace it`,
+        );
+      }
+      if (!await saveEverything(unnamedScene)) {
+        throw new BridgeError('IO_ERROR', 'Save All completed with errors');
+      }
+      workspaceDirtyRef.current = false;
+      resourceDirtyRef.current = false;
+      const remoteDirty = await queryRemoteDirtyPanels();
+      if (remoteDirty.length) {
+        throw new BridgeError(
+          'CONFLICT',
+          `Detached panels still have unsaved changes: ${remoteDirty.join(', ')}`,
+        );
+      }
+      return { sceneName: sceneNameRef.current };
+    },
+  };
+  agentWorkspaceProviderRef.current = {
+    assertDiskMutationAllowed: async () => {
+      if (sceneDirtyRef.current || resourceDirtyRef.current) {
+        throw new BridgeError(
+          'CONFLICT',
+          'Workspace has unsaved changes; run scene.save_all before changing project files',
+        );
+      }
+      const remoteDirty = await queryRemoteDirtyPanels();
+      if (remoteDirty.length) {
+        throw new BridgeError(
+          'CONFLICT',
+          `Detached panels have unsaved changes: ${remoteDirty.join(', ')}`,
+        );
+      }
+    },
   };
 
   const requestEditorClose = async (

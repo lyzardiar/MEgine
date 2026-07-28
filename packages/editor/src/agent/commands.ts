@@ -431,6 +431,13 @@ export interface CommandMeta {
 }
 
 export const COMMAND_META: CommandMeta[] = [
+  { id: 'scene.new', category: 'scene', description: 'Create and save a named scene without opening a dialog', readOnly: false },
+  { id: 'scene.open', category: 'scene', description: 'Open a named scene without opening a dialog', readOnly: false },
+  { id: 'scene.save', category: 'scene', description: 'Save the current scene, optionally under a new name', readOnly: false },
+  { id: 'scene.save_all', category: 'scene', description: 'Save the scene and every open resource document', readOnly: false },
+  { id: 'asset.write_text', category: 'asset', description: 'Create or revision-safely update a UTF-8 text asset', readOnly: false },
+  { id: 'build.start', category: 'build', description: 'Start an asynchronous PC Player build', readOnly: false },
+  { id: 'build.cancel', category: 'build', description: 'Request cancellation of the active AgentBridge build', readOnly: false },
   { id: 'selection.set', category: 'selection', description: 'Set the selection to the given entity ids', readOnly: false },
   { id: 'selection.reveal', category: 'selection', description: 'Select an entity and expand its ancestors (ping)', readOnly: false },
   { id: 'entity.create', category: 'entity', description: 'Create a GameObject with optional components and parent', readOnly: false },

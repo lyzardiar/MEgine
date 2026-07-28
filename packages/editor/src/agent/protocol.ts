@@ -164,6 +164,7 @@ export interface SelectionInfo {
 /** Structured error codes shared across all transports. */
 export type BridgeErrorCode =
   | 'STALE_REVISION'
+  | 'CONFLICT'
   | 'ENTITY_NOT_FOUND'
   | 'COMPONENT_NOT_FOUND'
   | 'INVALID_ARGS'

@@ -240,6 +240,29 @@ export function normalizeProjectAssetPath(raw: string): string {
   return segments.join('/');
 }
 
+export function isProjectTextAssetPath(relativePath: string): boolean {
+  const lower = normalizeProjectAssetPath(relativePath).toLocaleLowerCase();
+  return [
+    '.json',
+    '.mscene',
+    '.prefab',
+    '.manim',
+    '.mcontroller',
+    '.mavatar',
+    '.mtimeline',
+    '.mmat',
+    '.mat',
+    '.minst',
+    '.mshader',
+    '.matlas',
+    '.gltf',
+    '.atlas',
+    '.ts',
+    '.js',
+    '.mjs',
+  ].some((extension) => lower.endsWith(extension));
+}
+
 export function resolveProjectAssetPath(baseAsset: string, relative: string): string {
   if (/^assets[\\/]/i.test(relative)) return normalizeProjectAssetPath(relative);
   const base = normalizeProjectAssetPath(baseAsset).split('/');
@@ -261,20 +284,33 @@ export function projectAssetUrl(relativePath: string): string {
   return `${DEV_ASSET_API}/${normalized.split('/').map(encodeURIComponent).join('/')}`;
 }
 
-export async function readProjectAssetBytes(relativePath: string): Promise<Uint8Array> {
+export async function readProjectAssetBytesWithRevision(
+  relativePath: string,
+): Promise<{ contents: Uint8Array; revision: string }> {
   const normalized = normalizeProjectAssetPath(relativePath);
   if (isDesktopEditor()) {
     const result = await invoke<{ contents: number[]; revision: string }>('read_project_asset', {
       relativePath: normalized,
     });
     writeBaselines.set(assetKey(normalized), result.revision);
-    return Uint8Array.from(result.contents);
+    return {
+      contents: Uint8Array.from(result.contents),
+      revision: result.revision,
+    };
   }
   const response = await fetch(projectAssetUrl(normalized));
   if (!response.ok) throw new Error(`${response.status} ${response.statusText}: ${normalized}`);
   const revision = response.headers.get('X-MEngine-Asset-Revision');
-  if (revision) writeBaselines.set(assetKey(normalized), revision);
-  return new Uint8Array(await response.arrayBuffer());
+  if (!revision) throw new Error(`asset read did not return a revision: ${normalized}`);
+  writeBaselines.set(assetKey(normalized), revision);
+  return {
+    contents: new Uint8Array(await response.arrayBuffer()),
+    revision,
+  };
+}
+
+export async function readProjectAssetBytes(relativePath: string): Promise<Uint8Array> {
+  return (await readProjectAssetBytesWithRevision(relativePath)).contents;
 }
 
 export async function readProjectAssetText(relativePath: string): Promise<string> {
@@ -324,6 +360,7 @@ export async function toggleProjectAudioPreview(relativePath: string): Promise<'
 export async function writeProjectAssetBytes(
   relativePath: string,
   contents: Uint8Array,
+  expectedRevision?: string | null,
 ): Promise<void> {
   const normalized = normalizeProjectAssetPath(relativePath);
   if (contents.byteLength > 64 * 1024 * 1024) {
@@ -338,7 +375,10 @@ export async function writeProjectAssetBytes(
       }>('write_project_asset', {
         relativePath: normalized,
         contents: Array.from(contents),
-        expectedRevision: writeBaselines.get(assetKey(normalized)) ?? null,
+        expectedRevision:
+          expectedRevision === undefined
+            ? (writeBaselines.get(assetKey(normalized)) ?? null)
+            : expectedRevision,
       });
       writeBaselines.set(assetKey(normalized), result.revision);
       acceptWrittenAsset(result.asset);
@@ -350,7 +390,10 @@ export async function writeProjectAssetBytes(
       method: 'PUT',
       headers: {
         'Content-Type': 'application/octet-stream',
-        'X-MEngine-Expected-Revision': writeBaselines.get(assetKey(normalized)) ?? '__missing__',
+        'X-MEngine-Expected-Revision':
+          expectedRevision === undefined
+            ? (writeBaselines.get(assetKey(normalized)) ?? '__missing__')
+            : (expectedRevision ?? '__missing__'),
       },
       body: copy,
     });
@@ -378,8 +421,13 @@ export async function writeProjectAssetBytes(
 export async function writeProjectAssetText(
   relativePath: string,
   contents: string,
+  expectedRevision?: string | null,
 ): Promise<void> {
-  await writeProjectAssetBytes(relativePath, new TextEncoder().encode(contents));
+  await writeProjectAssetBytes(
+    relativePath,
+    new TextEncoder().encode(contents),
+    expectedRevision,
+  );
 }
 
 export async function loadProjectImage(relativePath: string): Promise<HTMLImageElement> {
