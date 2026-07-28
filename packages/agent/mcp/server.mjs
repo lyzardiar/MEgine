@@ -24,7 +24,13 @@ import path from 'node:path';
 import readline from 'node:readline';
 import { pathToFileURL } from 'node:url';
 
-const PROTOCOL_VERSION = '2024-11-05';
+const SUPPORTED_PROTOCOL_VERSIONS = Object.freeze([
+  '2025-11-25',
+  '2025-06-18',
+  '2025-03-26',
+  '2024-11-05',
+]);
+const PROTOCOL_VERSION = SUPPORTED_PROTOCOL_VERSIONS[0];
 const REQUEST_TIMEOUT_MS = 20000;
 const BRIDGE_CONNECT_ATTEMPTS = 30;
 const BRIDGE_CONNECT_RETRY_MS = 200;
@@ -2062,6 +2068,45 @@ function respondError(id, code, message, data) {
   });
 }
 
+function negotiateProtocolVersion(requestedVersion) {
+  return SUPPORTED_PROTOCOL_VERSIONS.includes(requestedVersion)
+    ? requestedVersion
+    : PROTOCOL_VERSION;
+}
+
+function requestIdFromMessage(message) {
+  const id = message?.id;
+  return typeof id === 'string' || Number.isSafeInteger(id) ? id : null;
+}
+
+function incomingMessageError(message) {
+  if (!message || typeof message !== 'object' || Array.isArray(message)) {
+    return 'Message must be a JSON object';
+  }
+  if (message.jsonrpc !== '2.0') return 'jsonrpc must be "2.0"';
+  if (typeof message.method !== 'string' || message.method.length === 0) {
+    return 'method must be a non-empty string';
+  }
+  if (
+    Object.hasOwn(message, 'id')
+    && typeof message.id !== 'string'
+    && !Number.isSafeInteger(message.id)
+  ) {
+    return 'id must be a string or safe integer';
+  }
+  if (
+    Object.hasOwn(message, 'params')
+    && (
+      !message.params
+      || typeof message.params !== 'object'
+      || Array.isArray(message.params)
+    )
+  ) {
+    return 'params must be an object';
+  }
+  return null;
+}
+
 function structuredError(error) {
   if (error instanceof ToolInputValidationError) {
     return {
@@ -2107,14 +2152,19 @@ function toolErrorContent(error) {
 async function handleMessage(msg) {
   const { id, method, params } = msg;
   switch (method) {
-    case 'initialize':
+    case 'initialize': {
+      if (typeof params?.protocolVersion !== 'string' || params.protocolVersion.length === 0) {
+        respondError(id, -32602, 'initialize requires a non-empty protocolVersion');
+        return;
+      }
       respond(id, {
-        protocolVersion: PROTOCOL_VERSION,
+        protocolVersion: negotiateProtocolVersion(params.protocolVersion),
         capabilities: { tools: {}, resources: {} },
         serverInfo: { name: 'mengine-editor', version: '0.1.0' },
         instructions: SERVER_INSTRUCTIONS,
       });
       return;
+    }
     case 'notifications/initialized':
     case 'initialized':
       return; // notification, no response
@@ -2153,6 +2203,9 @@ async function handleMessage(msg) {
           ({ uri, name, description, mimeType }) => ({ uri, name, description, mimeType }),
         ),
       });
+      return;
+    case 'resources/templates/list':
+      respond(id, { resourceTemplates: [] });
       return;
     case 'resources/read': {
       const reader = RESOURCE_READERS[params?.uri];
@@ -2219,6 +2272,14 @@ async function main() {
     try {
       msg = JSON.parse(trimmed);
     } catch {
+      respondError(null, -32700, 'Parse error');
+      return;
+    }
+    const validationError = incomingMessageError(msg);
+    if (validationError) {
+      respondError(requestIdFromMessage(msg), -32600, 'Invalid Request', {
+        reason: validationError,
+      });
       return;
     }
     handleMessage(msg).catch((error) => {
@@ -2250,6 +2311,9 @@ export {
   BridgeOutcomeUnknownError,
   RESOURCES,
   SERVER_INSTRUCTIONS,
+  incomingMessageError,
+  negotiateProtocolVersion,
+  SUPPORTED_PROTOCOL_VERSIONS,
   structuredError,
   ToolInputValidationError,
   TOOLS,
