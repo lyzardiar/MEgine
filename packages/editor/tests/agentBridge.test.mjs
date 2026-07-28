@@ -84,6 +84,9 @@ test('whole-window agent capture is background-safe and addressable by window la
   assert.match(native, /main\.show\(\)\?/);
   assert.match(native, /main\.set_focus\(\)\?/);
   assert.match(native, /visible: window\.is_visible\(\)\.unwrap_or\(false\)/);
+  assert.match(native, /fn close_editor_window\(/);
+  assert.match(native, /validate_agent_editor_window_label/);
+  assert.match(native, /window\s*\.destroy\(\)/);
   assert.match(native, /async fn import_project_asset/);
   assert.match(native, /std::fs::hard_link\(&temporary, target\)/);
   assert.match(bridge, /captureWindow\(windowLabel = 'main'\)/);
@@ -104,6 +107,7 @@ test('whole-window agent capture is background-safe and addressable by window la
   assert.match(mcp, /'set_window_ui_value'/);
   assert.match(mcp, /'scroll_window_ui'/);
   assert.match(mcp, /'respond_to_dialog'/);
+  assert.match(mcp, /'close_editor_window'/);
   assert.match(mcp, /name: 'get_panel_layout'/);
   assert.match(mcp, /name: 'list_menu_items'/);
   assert.match(mcp, /'invoke_menu_item'/);

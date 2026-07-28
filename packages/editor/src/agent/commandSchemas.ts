@@ -637,6 +637,9 @@ export const COMMAND_PARAMS_SCHEMAS: Record<string, AgentJsonSchema> = {
   'menu.invoke': objectSchema({
     path: stringValue('Exact registered menu path'),
   }, ['path']),
+  'window.close': objectSchema({
+    windowLabel: stringValue('Exact registered editor-* label returned by window.list'),
+  }, ['windowLabel']),
   'window.ui_click': objectSchema({
     windowLabel: stringValue('Window label; default main'),
     selector: stringValue('Exact selector returned by window.ui_snapshot'),

@@ -839,6 +839,53 @@ class AgentBridge {
     return invoke<EditorWindowInfo[]>('list_editor_windows');
   }
 
+  async closeRegisteredEditorWindow(windowLabel: string): Promise<{
+    windowLabel: string;
+    closed: boolean;
+  }> {
+    const target = (await this.listWindows()).find(
+      (window) => window.label === windowLabel,
+    );
+    if (!target) {
+      throw new BridgeError(
+        'INVALID_ARGS',
+        `Editor window "${windowLabel}" was not found; query window.list for current labels`,
+      );
+    }
+    if (target.kind === 'main') {
+      throw new BridgeError(
+        'READONLY',
+        'The main editor window cannot be closed by window.close; use project.close to return to the project hub',
+        { windowLabel, agentAlternative: 'close_project' },
+      );
+    }
+    if (target.kind === 'panel') {
+      throw new BridgeError(
+        'READONLY',
+        `Detached panel "${target.panelKind ?? windowLabel}" must use panel.dock so its dock layout stays consistent`,
+        {
+          windowLabel,
+          panelKind: target.panelKind,
+          agentAlternative: 'dock_panel',
+        },
+      );
+    }
+    if (target.kind !== 'editor') {
+      throw new BridgeError(
+        'READONLY',
+        `Window "${windowLabel}" is not a registered auxiliary editor window`,
+        { windowLabel, kind: target.kind },
+      );
+    }
+    return bridgeIo(
+      `Failed to close editor window "${windowLabel}"`,
+      () => invoke<{ windowLabel: string; closed: boolean }>(
+        'close_editor_window',
+        { windowLabel },
+      ),
+    );
+  }
+
   async getWorkspaceDocuments(): Promise<{
     documents: Array<AgentWorkspaceDocument & {
       active: boolean;
@@ -2287,6 +2334,16 @@ class AgentBridge {
       clearEditorProfilerSamples();
       return this.finishAsyncCommand(
         { ok: true, data: { cleared: true } },
+        options,
+        true,
+      );
+    }
+    if (commandId === 'window.close') {
+      const result = await this.closeRegisteredEditorWindow(
+        requiredString(args, 'windowLabel'),
+      );
+      return this.finishAsyncCommand(
+        { ok: true, data: result },
         options,
         true,
       );

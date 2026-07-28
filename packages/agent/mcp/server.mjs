@@ -2125,6 +2125,18 @@ const TOOLS = [
     ['dialogId', 'action'],
   ),
   execTool(
+    'close_editor_window',
+    'Close one exact hidden or visible registered auxiliary editor window without activating it. Only editor-* labels from list_windows are accepted; use dock_panel for panel-* windows and close_project for the main project lifecycle.',
+    'window.close',
+    {
+      windowLabel: {
+        type: 'string',
+        description: 'Exact editor-* label returned by list_windows',
+      },
+    },
+    ['windowLabel'],
+  ),
+  execTool(
     'click_window_ui',
     'Click an element returned by get_window_ui without activating or raising the editor window. Prefer domain-specific tools when available.',
     'window.ui_click',

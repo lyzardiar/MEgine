@@ -5154,6 +5154,62 @@ struct EditorWindowInfo {
     scale_factor: f64,
 }
 
+#[derive(serde::Serialize)]
+#[serde(rename_all = "camelCase")]
+struct CloseEditorWindowResult {
+    window_label: String,
+    closed: bool,
+}
+
+fn validate_agent_editor_window_label(window_label: &str) -> Result<&str, String> {
+    let label = window_label.trim();
+    if label.is_empty() {
+        return Err("windowLabel must not be empty".to_string());
+    }
+    if label == "main" {
+        return Err(
+            "the main editor window cannot be closed by window.close; use project.close to return to the project hub"
+                .to_string(),
+        );
+    }
+    if label.starts_with("panel-") {
+        return Err(
+            "detached panel windows cannot be closed by window.close; use panel.dock to preserve the dock layout"
+                .to_string(),
+        );
+    }
+    if !label.starts_with("editor-") {
+        return Err(
+            "window.close only accepts a registered editor window label returned by window.list"
+                .to_string(),
+        );
+    }
+    Ok(label)
+}
+
+/// Close one exact registered auxiliary editor window without activating it.
+///
+/// The main window and detached core panels deliberately use their own
+/// lifecycle commands so this generic escape hatch cannot exit the editor or
+/// leave the dock layout stale.
+#[tauri::command]
+fn close_editor_window(
+    window_label: String,
+    app: tauri::AppHandle,
+) -> Result<CloseEditorWindowResult, String> {
+    let label = validate_agent_editor_window_label(&window_label)?.to_string();
+    let window = app
+        .get_webview_window(&label)
+        .ok_or_else(|| format!("editor window \"{label}\" was not found"))?;
+    window
+        .destroy()
+        .map_err(|error| format!("could not close editor window \"{label}\": {error}"))?;
+    Ok(CloseEditorWindowResult {
+        window_label: label,
+        closed: true,
+    })
+}
+
 /// Enumerate every webview window the editor currently has open. This is the
 /// AI-agent "which windows are open" observation: the main window, any detached
 /// core panels (`panel-<id>`), and any floating editor windows (`editor-<hash>`).
@@ -5286,6 +5342,7 @@ pub fn run() {
             replace_scene_snapshot,
             submit_editor_request,
             list_editor_windows,
+            close_editor_window,
             agent_bridge_respond,
             agent_bridge_broadcast,
             agent_bridge_set_transport_ready,
@@ -5336,6 +5393,18 @@ mod tests {
             active_build: Arc::new(Mutex::new(None)),
             next_build_id: AtomicU64::new(1),
         }
+    }
+
+    #[test]
+    fn agent_window_close_accepts_only_registered_auxiliary_windows() {
+        assert_eq!(
+            validate_agent_editor_window_label("editor-cff95ea4").unwrap(),
+            "editor-cff95ea4"
+        );
+        assert!(validate_agent_editor_window_label("").is_err());
+        assert!(validate_agent_editor_window_label("main").is_err());
+        assert!(validate_agent_editor_window_label("panel-console").is_err());
+        assert!(validate_agent_editor_window_label("plugin-unknown").is_err());
     }
 
     fn test_project_parent(label: &str) -> PathBuf {
