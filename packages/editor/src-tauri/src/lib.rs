@@ -5277,7 +5277,9 @@ fn starts_in_background() -> bool {
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
-    let bridge_hub = Arc::new(BridgeHub::new(uuid::Uuid::new_v4().to_string()));
+    let bridge_hub = Arc::new(BridgeHub::from_environment(
+        uuid::Uuid::new_v4().to_string(),
+    ));
     let bridge_hub_for_page_load = bridge_hub.clone();
     let bridge_hub_for_setup = bridge_hub.clone();
     let bridge_token_for_exit = bridge_hub.token().to_string();

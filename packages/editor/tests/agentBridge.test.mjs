@@ -344,6 +344,10 @@ test('the main AgentBridge transport is available before a project is opened', (
     'utf8',
   );
   const nativeHost = fs.readFileSync(path.join(root, 'src-tauri', 'src', 'lib.rs'), 'utf8');
+  const mcp = fs.readFileSync(
+    path.join(root, '..', 'agent', 'mcp', 'server.mjs'),
+    'utf8',
+  );
   const projectSession = fs.readFileSync(
     path.join(root, 'src', 'transport', 'desktopProjectSession.ts'),
     'utf8',
@@ -380,6 +384,11 @@ test('the main AgentBridge transport is available before a project is opened', (
   assert.match(nativeBridge, /in_flight_request_ids: HashMap<String, usize>/);
   assert.match(nativeBridge, /cancellation_request_id_from_message/);
   assert.match(nativeBridge, /emit_bridge_cancel/);
+  assert.match(nativeBridge, /MENGINE_AGENT_DANGEROUS_POLICY/);
+  assert.match(nativeBridge, /MENGINE_AGENT_APPROVAL_TOKEN/);
+  assert.match(nativeBridge, /DANGEROUS_AGENT_COMMANDS/);
+  assert.match(nativeBridge, /authorize_request\(&text\)/);
+  assert.match(nativeBridge, /"code": "PERMISSION_DENIED"/);
   assert.match(nativeBridge, /accept_hdr_async_with_config/);
   assert.doesNotMatch(nativeBridge, /unbounded_channel/);
   assert.match(nativeBridge, /bridge_not_ready_response/);
@@ -390,6 +399,7 @@ test('the main AgentBridge transport is available before a project is opened', (
   assert.match(nativeBridge, /cleanup_bridge_discovery/);
   assert.match(nativeBridge, /discovery_file_is_owned/);
   assert.match(nativeHost, /PageLoadEvent::Started/);
+  assert.match(nativeHost, /BridgeHub::from_environment/);
   assert.match(nativeHost, /tauri::RunEvent::Exit/);
   assert.match(nativeHost, /cleanup_bridge_discovery\(app_handle, &bridge_token_for_exit\)/);
   assert.match(gate, /connectProjectLifecycle/);
@@ -415,6 +425,10 @@ test('the main AgentBridge transport is available before a project is opened', (
   assert.match(bridge, /this\.store != null && this\.editorBootReady/);
   assert.match(app, /markEditorBootReady\(store\)/);
   assert.match(bridge, /call close_project before opening another project/);
+  assert.match(
+    mcp,
+    /approvalToken:\s*options\.approvalToken \?\? process\.env\.MENGINE_AGENT_APPROVAL_TOKEN/,
+  );
 });
 
 test('project close is loss-aware, native-atomic, and reconnects the background bridge', () => {

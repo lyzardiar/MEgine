@@ -40,6 +40,7 @@ Environment:
   MENGINE_AGENT_HTTP_TOKEN         Optional bearer token (16-256 characters)
   MENGINE_AGENT_HTTP_FILE          Override HTTP discovery-file path
   MENGINE_AGENT_BRIDGE_FILE        Override editor Bridge discovery-file path
+  MENGINE_AGENT_APPROVAL_TOKEN     Forward an editor dangerous-operation approval
 
 Endpoints:
   GET  /v1/health

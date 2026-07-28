@@ -511,6 +511,16 @@ Invoke-RestMethod "$uri/v1/execute" -Method Post -Headers $headers -ContentType 
 
 端点固定为 `GET /v1/health`、`POST /v1/query`、`POST /v1/execute`。HTTP 写请求强制提供 1..128 字符的稳定 `requestId`，避免网络重试产生重复副作用；请求体最大 8 MiB、响应最大 128 MiB、最多 64 个活动请求和 128 个连接。适配器校验精确 loopback Host、拒绝 query string/CORS 探测和非 JSON 写入；客户端断开时会精确取消其 Bridge 请求，不影响共享连接上的其他调用。
 
+### 5.8 危险操作授权策略
+
+Rust Bridge Host 会在请求占用槽位或进入 WebView **之前**统一拦截 `scene.delete`、`asset.trash`、`build.start`、`build.run`、`build.history.create_patch` 与 `build.history.restore`。策略由编辑器进程的 `MENGINE_AGENT_DANGEROUS_POLICY` 配置：
+
+- `allow`：默认值，保持本机可信环境下的无人值守 Agent 流程；
+- `deny`：所有上述命令返回 `PERMISSION_DENIED`；
+- `token`：仅接受带正确独立授权令牌的请求。编辑器进程和获批的 MCP / HTTP / CLI 适配器都配置相同的 `MENGINE_AGENT_APPROVAL_TOKEN`（16..256 个可见 ASCII 字符），适配器会在 Bridge 信封中自动转发，工具参数和 HTTP 请求体都不会暴露该令牌。
+
+无效策略或 `token` 模式缺少合格令牌时按 `deny` 失败关闭。授权令牌不会写入 AgentBridge / HTTP 发现文件，不会出现在错误数据、幂等指纹或日志中；直连 WebSocket 客户端应把它放在 `execute.params.approvalToken`，而不是业务 `args`。
+
 ## 6. 关键集成点（落到代码）
 
 | 能力 | 文件 / 位置 | 改造内容 |
@@ -576,7 +586,7 @@ Invoke-RestMethod "$uri/v1/execute" -Method Post -Headers $headers -ContentType 
 - ✅ WebSocket 直连适配器（自研 agent / 浏览器脚本）
 - ✅ HTTP REST 适配器（curl / 简单集成）
 - ✅ CLI（`mengine-agent query scene.snapshot` / `mengine-agent execute history.undo`）
-- 权限与危险操作确认机制完善
+- ✅ 原生统一权限策略（`allow` / `deny` / 独立 approval token）
 
 验收：同一内核经 WS/HTTP/CLI 均可驱动，行为一致。
 
@@ -584,7 +594,7 @@ Invoke-RestMethod "$uri/v1/execute" -Method Post -Headers $headers -ContentType 
 
 | 风险 | 应对 |
 | --- | --- |
-| 安全：本地端口被其它进程调用 | 仅绑定 127.0.0.1；发现文件含随机 token，连接需校验；危险命令（删除/构建）可配置确认 |
+| 安全：本地端口被其它进程调用 | 仅绑定 127.0.0.1；发现文件含随机 Bridge token，连接需校验；危险命令在原生入队前执行 `allow` / `deny` / 独立 approval token 策略，无效配置失败关闭且令牌不进入发现文件、错误或日志 |
 | 并发：多客户端同时写 | 复用 `base_revision` 乐观锁；冲突返回 `STALE_REVISION`；不同 `request_id` 的唯一在途写请求最多 64 个，超限返回带当前容量与重试提示的 `RATE_LIMITED`，但相同 `request_id` 的超时重试仍复用原在途结果，不额外占位 |
 | 传输：连接/请求洪泛或客户端停止读取 | 原生 WS 最多 32 个连接、每客户端 64/全进程 256 个在途请求、64 MiB 输入；每客户端出站队列最多 64 条且合计 128 MiB，超限断开该慢客户端，不拖累编辑器或其他 Agent |
 | 适配器：MCP stdio 洪泛、生命周期违规、请求失联或宿主停止读取 | sidecar 严格执行 initialize → initialized → operation 生命周期，通知不回包，同会话请求 ID 唯一且最多记录 65,536 个；输入逐字节累计且单行最多 64 MiB，最多 128 个活动 MCP 请求和 64 个在途 Bridge RPC。请求超时会关闭对应 WS，使原生注销客户端并释放全部在途槽位；客户端主动取消则使用精确请求 ID 释放单个槽位并中止可取消的 WebView 等待，不关闭共享连接。读请求可重连，写请求用原 `requestId` 幂等恢复。stdout 响应按序写入、64 MiB 时暂停 stdin，合计 192 MiB 时终止失去消费能力的会话，避免 Node 内部流缓冲无限增长 |

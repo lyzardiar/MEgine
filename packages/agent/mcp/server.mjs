@@ -442,6 +442,8 @@ async function bridgeExecute(command, args = {}, options = {}) {
       command,
       args,
       requestId: options.requestId,
+      approvalToken:
+        options.approvalToken ?? process.env.MENGINE_AGENT_APPROVAL_TOKEN,
       screenshot: Boolean(options.screenshot),
       expectedSceneRevision: options.expectedSceneRevision,
     },
@@ -3075,6 +3077,7 @@ const SERVER_INSTRUCTIONS = [
   'The MCP adapter bounds active and in-flight requests; RATE_LIMITED includes current capacity and retryAfterMs when a caller should retry later.',
   'For revision-sensitive writes, pass the latest expectedSceneRevision. Reuse the same requestId only when retrying the exact same write; using it with different arguments is rejected.',
   'BRIDGE_CONNECTION means the editor is unavailable and the request was not accepted. UNKNOWN_OUTCOME means a sent write lost its editor process; re-read state before deciding whether a new write is needed.',
+  'Dangerous scene deletion, asset trash, build, Player launch, and build-artifact commands may return PERMISSION_DENIED when the editor policy is deny or token. Approved adapters forward MENGINE_AGENT_APPROVAL_TOKEN automatically; never place approval tokens in tool arguments or logs.',
   'Prefer domain tools over semantic window UI actions. UI inspection and interaction are available for surfaces without a domain API and remain background-safe. Every UI write must pass expectedSnapshotRevision from the same get_window_ui snapshot as its selector; stale revisions are rejected before dispatch. Successful UI writes settle two target-window render opportunities and return a postSnapshotRevision when post-action semantic observation succeeds.',
   'If an editor confirmation or prompt is open, read get_active_dialog for its window label and exact id, then use respond_to_dialog; stale ids are rejected.',
   'After edits, verify semantic state and use a scene, game, or whole-window screenshot when visual correctness matters. A requested command screenshot reports screenshotRequested and screenshotCaptured; if capture fails after the write, screenshotError is returned instead of silently claiming visual verification. Use get_editor_events or wait_for_editor_events for incremental observation during longer workflows.',

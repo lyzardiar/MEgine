@@ -38,6 +38,80 @@ const MAX_BRIDGE_INBOUND_MESSAGE_BYTES: usize = 64 * 1024 * 1024;
 const MAX_BRIDGE_OUTBOUND_MESSAGES: usize = 64;
 const MAX_BRIDGE_OUTBOUND_QUEUED_BYTES: usize = 128 * 1024 * 1024;
 const BRIDGE_RATE_LIMIT_RETRY_AFTER_MS: usize = 250;
+const DANGEROUS_AGENT_COMMANDS: &[&str] = &[
+    "scene.delete",
+    "asset.trash",
+    "build.start",
+    "build.run",
+    "build.history.create_patch",
+    "build.history.restore",
+];
+
+#[derive(Clone, Debug, PartialEq)]
+enum DangerousOperationPolicy {
+    Allow,
+    Deny,
+    Token(String),
+}
+
+impl DangerousOperationPolicy {
+    fn from_config(policy: Option<&str>, token: Option<&str>) -> Result<Self, String> {
+        match policy
+            .unwrap_or("allow")
+            .trim()
+            .to_ascii_lowercase()
+            .as_str()
+        {
+            "" | "allow" => Ok(Self::Allow),
+            "deny" => Ok(Self::Deny),
+            "token" => {
+                let token = token.unwrap_or("");
+                if !(16..=256).contains(&token.len())
+                    || !token.bytes().all(|byte| (0x21..=0x7e).contains(&byte))
+                {
+                    return Err(
+                        "MENGINE_AGENT_APPROVAL_TOKEN must contain 16-256 visible ASCII characters"
+                            .to_string(),
+                    );
+                }
+                Ok(Self::Token(token.to_string()))
+            }
+            value => Err(format!(
+                "MENGINE_AGENT_DANGEROUS_POLICY must be allow, deny, or token (got {value:?})"
+            )),
+        }
+    }
+
+    fn from_environment() -> Self {
+        match Self::from_config(
+            std::env::var("MENGINE_AGENT_DANGEROUS_POLICY")
+                .ok()
+                .as_deref(),
+            std::env::var("MENGINE_AGENT_APPROVAL_TOKEN")
+                .ok()
+                .as_deref(),
+        ) {
+            Ok(policy) => policy,
+            Err(error) => {
+                log::warn!("{error}; dangerous AgentBridge commands will be denied");
+                Self::Deny
+            }
+        }
+    }
+
+    fn mode(&self) -> &'static str {
+        match self {
+            Self::Allow => "allow",
+            Self::Deny => "deny",
+            Self::Token(_) => "token",
+        }
+    }
+}
+
+enum DangerousOperationAuthorization {
+    Allowed,
+    Denied(Option<String>),
+}
 
 #[derive(Default)]
 struct BridgeTransportState {
@@ -181,19 +255,52 @@ pub struct BridgeHub {
     transport: Mutex<BridgeTransportState>,
     /// Token a client must present (in the WS URL query) to connect.
     token: String,
+    /// Process-level policy enforced before dangerous writes reach the WebView.
+    dangerous_policy: DangerousOperationPolicy,
 }
 
 impl BridgeHub {
+    #[cfg(test)]
     pub fn new(token: String) -> Self {
+        Self::with_dangerous_policy(token, DangerousOperationPolicy::Allow)
+    }
+
+    pub fn from_environment(token: String) -> Self {
+        Self::with_dangerous_policy(token, DangerousOperationPolicy::from_environment())
+    }
+
+    fn with_dangerous_policy(token: String, dangerous_policy: DangerousOperationPolicy) -> Self {
         Self {
             clients: Mutex::new(BridgeClients::default()),
             transport: Mutex::new(BridgeTransportState::default()),
             token,
+            dangerous_policy,
         }
     }
 
     pub fn token(&self) -> &str {
         &self.token
+    }
+
+    fn authorize_request(&self, message: &str) -> DangerousOperationAuthorization {
+        let Some((request_id, command, approval_token)) =
+            dangerous_execute_request_from_message(message)
+        else {
+            return DangerousOperationAuthorization::Allowed;
+        };
+        let allowed = match &self.dangerous_policy {
+            DangerousOperationPolicy::Allow => true,
+            DangerousOperationPolicy::Deny => false,
+            DangerousOperationPolicy::Token(expected) => approval_token
+                .as_deref()
+                .is_some_and(|supplied| constant_time_equal(supplied, expected)),
+        };
+        if allowed {
+            return DangerousOperationAuthorization::Allowed;
+        }
+        DangerousOperationAuthorization::Denied(request_id.map(|request_id| {
+            bridge_permission_denied_response(request_id, &command, self.dangerous_policy.mode())
+        }))
     }
 
     fn register(&self, id: String, client: BridgeClient) -> bool {
@@ -481,6 +588,75 @@ fn request_slot_key(message: &str) -> String {
     request_id_from_message(message).to_string()
 }
 
+fn dangerous_execute_request_from_message(
+    message: &str,
+) -> Option<(Option<serde_json::Value>, String, Option<String>)> {
+    let request = serde_json::from_str::<serde_json::Value>(message).ok()?;
+    if request.get("jsonrpc").and_then(serde_json::Value::as_str) != Some("2.0")
+        || request.get("method").and_then(serde_json::Value::as_str) != Some("execute")
+    {
+        return None;
+    }
+    let params = request.get("params")?;
+    let command = params.get("command")?.as_str()?;
+    if !DANGEROUS_AGENT_COMMANDS.contains(&command) {
+        return None;
+    }
+    let request_id = request.get("id").and_then(|value| {
+        if value.is_string() || value.is_number() {
+            Some(value.clone())
+        } else {
+            None
+        }
+    });
+    let approval_token = params
+        .get("approvalToken")
+        .and_then(serde_json::Value::as_str)
+        .map(str::to_string);
+    Some((request_id, command.to_string(), approval_token))
+}
+
+fn constant_time_equal(supplied: &str, expected: &str) -> bool {
+    if supplied.len() != expected.len() {
+        return false;
+    }
+    supplied
+        .bytes()
+        .zip(expected.bytes())
+        .fold(0_u8, |difference, (left, right)| {
+            difference | (left ^ right)
+        })
+        == 0
+}
+
+fn bridge_permission_denied_response(
+    request_id: serde_json::Value,
+    command: &str,
+    policy: &str,
+) -> String {
+    let message = if policy == "token" {
+        format!(
+            "Agent command \"{command}\" requires the configured dangerous-operation approval token"
+        )
+    } else {
+        format!("Agent command \"{command}\" is disabled by editor policy")
+    };
+    serde_json::json!({
+        "jsonrpc": "2.0",
+        "id": request_id,
+        "error": {
+            "code": "PERMISSION_DENIED",
+            "message": message,
+            "data": {
+                "command": command,
+                "policy": policy,
+                "approvalRequired": policy == "token",
+            },
+        },
+    })
+    .to_string()
+}
+
 fn cancellation_request_id_from_message(message: &str) -> Option<serde_json::Value> {
     let request = serde_json::from_str::<serde_json::Value>(message).ok()?;
     if request.get("jsonrpc").and_then(serde_json::Value::as_str) != Some("2.0")
@@ -639,6 +815,15 @@ async fn handle_connection(
                         );
                     }
                     continue;
+                }
+                match hub.authorize_request(&text) {
+                    DangerousOperationAuthorization::Allowed => {}
+                    DangerousOperationAuthorization::Denied(response) => {
+                        if let Some(response) = response {
+                            let _ = hub.enqueue_to(&client_id, response);
+                        }
+                        continue;
+                    }
                 }
                 hub.forward_request(
                     &app,
@@ -883,6 +1068,21 @@ mod transport_tests {
         )
     }
 
+    fn execute_message(id: Option<usize>, command: &str, approval_token: Option<&str>) -> String {
+        serde_json::json!({
+            "jsonrpc": "2.0",
+            "id": id,
+            "method": "execute",
+            "params": {
+                "command": command,
+                "requestId": "test-request",
+                "args": {},
+                "approvalToken": approval_token,
+            },
+        })
+        .to_string()
+    }
+
     #[test]
     fn startup_requests_wait_for_the_first_transport_session() {
         let mut state = BridgeTransportState::default();
@@ -1010,6 +1210,81 @@ mod transport_tests {
             None
         );
         assert_eq!(cancellation_request_id_from_message("not-json"), None);
+    }
+
+    #[test]
+    fn dangerous_operation_policy_is_fail_closed_when_misconfigured() {
+        assert_eq!(
+            DangerousOperationPolicy::from_config(None, None),
+            Ok(DangerousOperationPolicy::Allow)
+        );
+        assert_eq!(
+            DangerousOperationPolicy::from_config(Some(" DENY "), None),
+            Ok(DangerousOperationPolicy::Deny)
+        );
+        assert_eq!(
+            DangerousOperationPolicy::from_config(Some("token"), Some("approval-token-123456")),
+            Ok(DangerousOperationPolicy::Token(
+                "approval-token-123456".to_string()
+            ))
+        );
+        assert!(DangerousOperationPolicy::from_config(Some("token"), Some("short")).is_err());
+        assert!(DangerousOperationPolicy::from_config(Some("unknown"), None).is_err());
+    }
+
+    #[test]
+    fn dangerous_commands_are_authorized_before_bridge_admission() {
+        let approval_token = "approval-token-123456";
+        let hub = BridgeHub::with_dangerous_policy(
+            "bridge-token".to_string(),
+            DangerousOperationPolicy::Token(approval_token.to_string()),
+        );
+
+        assert!(matches!(
+            hub.authorize_request(&execute_message(Some(1), "build.verify", None)),
+            DangerousOperationAuthorization::Allowed
+        ));
+        let denied = match hub.authorize_request(&execute_message(
+            Some(2),
+            "scene.delete",
+            Some("wrong-token-1234567"),
+        )) {
+            DangerousOperationAuthorization::Denied(Some(response)) => response,
+            _ => panic!("dangerous command without approval must be rejected"),
+        };
+        let denied = serde_json::from_str::<serde_json::Value>(&denied).unwrap();
+        assert_eq!(denied["id"], 2);
+        assert_eq!(denied["error"]["code"], "PERMISSION_DENIED");
+        assert_eq!(denied["error"]["data"]["command"], "scene.delete");
+        assert_eq!(denied["error"]["data"]["policy"], "token");
+        assert_eq!(denied["error"]["data"]["approvalRequired"], true);
+        assert!(!denied.to_string().contains(approval_token));
+
+        assert!(matches!(
+            hub.authorize_request(&execute_message(
+                Some(3),
+                "scene.delete",
+                Some(approval_token),
+            )),
+            DangerousOperationAuthorization::Allowed
+        ));
+        assert!(matches!(
+            hub.authorize_request(&execute_message(None, "build.start", None)),
+            DangerousOperationAuthorization::Denied(None)
+        ));
+
+        let deny_hub = BridgeHub::with_dangerous_policy(
+            "bridge-token".to_string(),
+            DangerousOperationPolicy::Deny,
+        );
+        assert!(matches!(
+            deny_hub.authorize_request(&execute_message(
+                Some(4),
+                "build.start",
+                Some(approval_token),
+            )),
+            DangerousOperationAuthorization::Denied(Some(_))
+        ));
     }
 
     #[test]
