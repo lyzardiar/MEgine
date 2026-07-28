@@ -1019,12 +1019,14 @@ function MultiSelectionInspector(props: {
   count: number;
   entities: Array<{
     entity: number;
+    active?: boolean;
     tag?: string;
     layer?: number;
     components: Record<string, unknown>;
   }>;
   primary: {
     entity: number;
+    active?: boolean;
     tag?: string;
     layer?: number;
     components: Record<string, unknown>;
@@ -1033,6 +1035,7 @@ function MultiSelectionInspector(props: {
   onCopyComponent: (next: ComponentClipboard) => void;
   tagOptions: Array<{ value: string; label: string }>;
   layerOptions: Array<{ value: number; label: string }>;
+  onSetActives?: (ids: number[], active: boolean) => void;
   onSetTags?: (ids: number[], tag: string) => void;
   onSetLayers?: (ids: number[], layer: number) => void;
   onChangeTransforms?: (updates: Array<{ entity: number; transform: Transform }>) => void;
@@ -1052,10 +1055,12 @@ function MultiSelectionInspector(props: {
     ? readRectTransform(props.primary.components.RectTransform)
     : null;
   const entityIds = props.entities.map((entity) => entity.entity);
+  const selectedActives = props.entities.map((entity) => entity.active !== false);
   const selectedTags = props.entities.map((entity) => entity.tag?.trim() || 'Untagged');
   const selectedLayers = props.entities.map((entity) => (
     Number.isInteger(entity.layer) ? Number(entity.layer) : 0
   ));
+  const activeMixed = selectedActives.some((value) => value !== selectedActives[0]);
   const tagMixed = selectedTags.some((value) => value !== selectedTags[0]);
   const layerMixed = selectedLayers.some((value) => value !== selectedLayers[0]);
   const tagOptions = [
@@ -1137,7 +1142,21 @@ function MultiSelectionInspector(props: {
     >
       <InspectorEditScope>
         <div className="insp-header">
-          <div className="insp-name">{props.count} selected</div>
+          <div className="insp-object-row">
+            <input
+              className="insp-active"
+              type="checkbox"
+              checked={!activeMixed && selectedActives[0]}
+              ref={(element) => {
+                if (element) element.indeterminate = activeMixed;
+              }}
+              title={activeMixed ? 'Active (mixed)' : 'Active'}
+              aria-label="Active"
+              aria-checked={activeMixed ? 'mixed' : selectedActives[0]}
+              onChange={(event) => props.onSetActives?.(entityIds, event.target.checked)}
+            />
+            <div className="insp-name">{props.count} selected</div>
+          </div>
           <div className="insp-tag">Editing shared values</div>
           <div className="insp-meta-row">
             <label>
@@ -1316,6 +1335,7 @@ export function Inspector(props: {
   layerOptions?: Array<{ value: number; label: string }>;
   onSetTag?: (entity: number, tag: string) => void;
   onSetLayer?: (entity: number, layer: number) => void;
+  onSetActives?: (ids: number[], active: boolean) => void;
   onSetTags?: (ids: number[], tag: string) => void;
   onSetLayers?: (ids: number[], layer: number) => void;
   onBeginEditGesture?: () => void;
@@ -1359,6 +1379,7 @@ export function Inspector(props: {
           onCopyComponent={setComponentClipboard}
           tagOptions={props.tagOptions ?? [{ value: 'Untagged', label: 'Untagged' }]}
           layerOptions={props.layerOptions ?? [{ value: 0, label: 'Default (0)' }]}
+          onSetActives={props.onSetActives}
           onSetTags={props.onSetTags}
           onSetLayers={props.onSetLayers}
           onChangeTransforms={props.onChangeTransforms}

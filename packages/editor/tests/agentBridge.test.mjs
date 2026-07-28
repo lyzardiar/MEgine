@@ -26,6 +26,7 @@ test('whole-window agent capture is background-safe and addressable by window la
   assert.match(rust, /Page\.captureScreenshot/);
   assert.match(rust, /Runtime\.evaluate/);
   assert.match(rust, /WINDOW_UI_SNAPSHOT_SCRIPT/);
+  assert.match(rust, /element instanceof HTMLInputElement && element\.indeterminate/);
   assert.match(rust, /WINDOW_UI_CONTENT_SCRIPT/);
   assert.match(rust, /Password values cannot be read/);
   assert.match(rust, /content\.slice\(start, start \+ Number\(maxChars\)\)/);
@@ -185,7 +186,10 @@ test('whole-window agent capture is background-safe and addressable by window la
   assert.match(mcp, /'set_sorting_layers'/);
   assert.match(mcp, /'set_tags_and_layers'/);
   assert.match(mcp, /'set_entity_tag'/);
+  assert.match(mcp, /'set_entity_tags'/);
   assert.match(mcp, /'set_entity_layer'/);
+  assert.match(mcp, /'set_entity_layers'/);
+  assert.match(mcp, /'set_entities_active'/);
   assert.match(mcp, /name: 'list_recent_projects'/);
   assert.match(mcp, /'open_project'/);
   assert.match(mcp, /'create_project'/);

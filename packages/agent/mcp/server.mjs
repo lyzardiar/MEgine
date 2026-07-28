@@ -1835,14 +1835,26 @@ const TOOLS = [
     id: { ...ENTITY_ID_SCHEMA, description: 'Entity id' },
     active: { type: 'boolean', description: 'Active flag' },
   }, ['id', 'active']),
+  execTool('set_entities_active', 'Enable or disable entities as one undo transaction.', 'entity.set_actives', {
+    ids: { type: 'array', minItems: 1, maxItems: 256, items: ENTITY_ID_SCHEMA, description: 'Entity ids to activate or deactivate together' },
+    active: { type: 'boolean', description: 'Shared active state' },
+  }, ['ids', 'active']),
   execTool('set_entity_tag', 'Set an entity classification tag.', 'entity.set_tag', {
     id: { ...ENTITY_ID_SCHEMA, description: 'Entity id' },
     tag: { type: 'string', minLength: 1, maxLength: 64, description: 'Tag value' },
   }, ['id', 'tag']),
+  execTool('set_entity_tags', 'Set one classification tag on entities as one undo transaction.', 'entity.set_tags', {
+    ids: { type: 'array', minItems: 1, maxItems: 256, items: ENTITY_ID_SCHEMA, description: 'Entity ids whose tags should be changed together' },
+    tag: { type: 'string', minLength: 1, maxLength: 64, description: 'Shared GameObject classification tag' },
+  }, ['ids', 'tag']),
   execTool('set_entity_layer', 'Set an entity GameObject layer index.', 'entity.set_layer', {
     id: { ...ENTITY_ID_SCHEMA, description: 'Entity id' },
     layer: { type: 'integer', minimum: 0, maximum: 31, description: 'Layer index' },
   }, ['id', 'layer']),
+  execTool('set_entity_layers', 'Set one GameObject layer on entities as one undo transaction.', 'entity.set_layers', {
+    ids: { type: 'array', minItems: 1, maxItems: 256, items: ENTITY_ID_SCHEMA, description: 'Entity ids whose GameObject layers should be changed together' },
+    layer: { type: 'integer', minimum: 0, maximum: 31, description: 'Shared GameObject layer index' },
+  }, ['ids', 'layer']),
   execTool('reparent_entities', 'Reparent entities under a new parent.', 'entity.reparent', {
     ids: { type: 'array', items: ENTITY_ID_SCHEMA, description: 'Entity ids to reparent' },
     parent: { type: ['integer', 'null'], minimum: 0, description: 'New parent id (null = root)' },

@@ -72,6 +72,14 @@ function entityIdArray(args: Record<string, unknown>, key: string): number[] {
   return [...new Set(value as number[])];
 }
 
+function nonEmptyEntityIdArray(args: Record<string, unknown>, key: string): number[] {
+  const ids = entityIdArray(args, key);
+  if (!ids.length) {
+    throw new BridgeError('INVALID_ARGS', `"${key}" must contain at least one entity id`);
+  }
+  return ids;
+}
+
 function bool(args: Record<string, unknown>, key: string): boolean {
   const value = args[key];
   if (typeof value !== 'boolean') {
@@ -582,6 +590,14 @@ export const WRITE_COMMANDS: Record<string, CommandHandler> = {
     ctx.store.setActive(id, active);
     return { ok: true, data: { entity: id, active } };
   },
+  'entity.set_actives': (ctx, args) => {
+    requireEditMode(ctx);
+    const ids = nonEmptyEntityIdArray(args, 'ids');
+    const active = bool(args, 'active');
+    requireEntities(ctx, ids);
+    const changed = ctx.store.setActives(ids, active);
+    return { ok: true, data: { entities: ids, active, changed } };
+  },
   'entity.set_tag': (ctx, args) => {
     requireEditMode(ctx);
     const id = entityId(args, 'id');
@@ -589,6 +605,14 @@ export const WRITE_COMMANDS: Record<string, CommandHandler> = {
     requireEntity(ctx, id);
     ctx.store.setTag(id, tag);
     return { ok: true, data: { entity: id, tag } };
+  },
+  'entity.set_tags': (ctx, args) => {
+    requireEditMode(ctx);
+    const ids = nonEmptyEntityIdArray(args, 'ids');
+    const tag = str(args, 'tag');
+    requireEntities(ctx, ids);
+    const changed = ctx.store.setTags(ids, tag);
+    return { ok: true, data: { entities: ids, tag, changed } };
   },
   'entity.set_layer': (ctx, args) => {
     requireEditMode(ctx);
@@ -600,6 +624,17 @@ export const WRITE_COMMANDS: Record<string, CommandHandler> = {
     requireEntity(ctx, id);
     ctx.store.setLayer(id, layer);
     return { ok: true, data: { entity: id, layer } };
+  },
+  'entity.set_layers': (ctx, args) => {
+    requireEditMode(ctx);
+    const ids = nonEmptyEntityIdArray(args, 'ids');
+    const layer = entityId(args, 'layer');
+    if (layer > 31) {
+      throw new BridgeError('INVALID_ARGS', '"layer" must be an integer from 0 to 31');
+    }
+    requireEntities(ctx, ids);
+    const changed = ctx.store.setLayers(ids, layer);
+    return { ok: true, data: { entities: ids, layer, changed } };
   },
   'entity.reparent': (ctx, args) => {
     requireEditMode(ctx);
@@ -953,8 +988,11 @@ const COMMAND_SUMMARIES: CommandSummary[] = [
   { id: 'entity.duplicate', category: 'entity', description: 'Duplicate the given (or currently selected) entities', readOnly: false },
   { id: 'entity.rename', category: 'entity', description: 'Rename an entity', readOnly: false },
   { id: 'entity.set_active', category: 'entity', description: 'Enable or disable an entity', readOnly: false },
+  { id: 'entity.set_actives', category: 'entity', description: 'Enable or disable entities as one undo transaction', readOnly: false },
   { id: 'entity.set_tag', category: 'entity', description: 'Set an entity classification tag', readOnly: false },
+  { id: 'entity.set_tags', category: 'entity', description: 'Set one classification tag on entities as one undo transaction', readOnly: false },
   { id: 'entity.set_layer', category: 'entity', description: 'Set an entity GameObject layer index', readOnly: false },
+  { id: 'entity.set_layers', category: 'entity', description: 'Set one GameObject layer on entities as one undo transaction', readOnly: false },
   { id: 'entity.reparent', category: 'entity', description: 'Reparent entities under a new parent', readOnly: false },
   { id: 'entity.reorder', category: 'entity', description: 'Move an entity to a sibling index under its current parent', readOnly: false },
   { id: 'component.add', category: 'component', description: 'Add a component to an entity, using catalog defaults when value is omitted', readOnly: false },

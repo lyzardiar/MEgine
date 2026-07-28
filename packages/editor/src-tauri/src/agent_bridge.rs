@@ -1200,7 +1200,9 @@ const WINDOW_UI_SNAPSHOT_SCRIPT: &str = r#"
       if (value !== null) state[key] = value;
     }
     if ('checked' in element && typeof element.checked === 'boolean') {
-      state.checked = element.checked;
+      state.checked = element instanceof HTMLInputElement && element.indeterminate
+        ? 'mixed'
+        : element.checked;
     }
     if ('selected' in element && typeof element.selected === 'boolean') {
       state.selected = element.selected;

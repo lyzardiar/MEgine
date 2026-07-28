@@ -426,6 +426,14 @@ export const COMMAND_PARAMS_SCHEMAS: Record<string, AgentJsonSchema> = {
     id: entityId(),
     active: booleanValue('New active state'),
   }, ['id', 'active']),
+  'entity.set_actives': objectSchema({
+    ids: {
+      ...entityIds('Entity ids to activate or deactivate together'),
+      minItems: 1,
+      maxItems: 256,
+    },
+    active: booleanValue('Shared active state'),
+  }, ['ids', 'active']),
   'entity.set_tag': objectSchema({
     id: entityId(),
     tag: {
@@ -435,6 +443,19 @@ export const COMMAND_PARAMS_SCHEMAS: Record<string, AgentJsonSchema> = {
       description: 'GameObject classification tag',
     },
   }, ['id', 'tag']),
+  'entity.set_tags': objectSchema({
+    ids: {
+      ...entityIds('Entity ids whose tags should be changed together'),
+      minItems: 1,
+      maxItems: 256,
+    },
+    tag: {
+      type: 'string',
+      minLength: 1,
+      maxLength: 64,
+      description: 'Shared GameObject classification tag',
+    },
+  }, ['ids', 'tag']),
   'entity.set_layer': objectSchema({
     id: entityId(),
     layer: {
@@ -444,6 +465,19 @@ export const COMMAND_PARAMS_SCHEMAS: Record<string, AgentJsonSchema> = {
       description: 'GameObject layer index',
     },
   }, ['id', 'layer']),
+  'entity.set_layers': objectSchema({
+    ids: {
+      ...entityIds('Entity ids whose GameObject layers should be changed together'),
+      minItems: 1,
+      maxItems: 256,
+    },
+    layer: {
+      type: 'integer',
+      minimum: 0,
+      maximum: 31,
+      description: 'Shared GameObject layer index',
+    },
+  }, ['ids', 'layer']),
   'entity.reparent': objectSchema({
     ids: entityIds('Entity ids to reparent'),
     parent: {

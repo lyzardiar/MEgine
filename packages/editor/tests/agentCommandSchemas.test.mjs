@@ -52,6 +52,10 @@ test('command schemas expose exact high-risk guards and shared optimistic option
     COMMAND_PARAMS_SCHEMAS['entity.set_layer'].properties.layer.maximum,
     31,
   );
+  for (const command of ['entity.set_actives', 'entity.set_tags', 'entity.set_layers']) {
+    assert.equal(COMMAND_PARAMS_SCHEMAS[command].properties.ids.minItems, 1);
+    assert.equal(COMMAND_PARAMS_SCHEMAS[command].properties.ids.maxItems, 256);
+  }
   assert.deepEqual(
     COMMAND_PARAMS_SCHEMAS['scene.load_json'].required,
     ['json'],

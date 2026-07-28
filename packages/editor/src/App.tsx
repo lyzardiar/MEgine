@@ -2487,6 +2487,10 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
                 store.setLayer(entity, layer);
                 refresh();
               }}
+              onSetActives={(entities, active) => {
+                store.setActives(entities, active);
+                refresh();
+              }}
               onSetTags={(entities, tag) => {
                 store.setTags(entities, tag);
                 refresh();

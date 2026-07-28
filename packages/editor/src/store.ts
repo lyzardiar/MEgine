@@ -904,10 +904,20 @@ export function createEditorStore(undoService: EditorUndoService = createEditorU
       e.name = n;
     },
     setActive(id: number, activeFlag: boolean) {
-      const e = find(id);
-      if (!e || e.active === activeFlag) return;
-      pushUndo(activeFlag ? 'Activate GameObject' : 'Deactivate GameObject');
-      e.active = activeFlag;
+      return this.setActives([id], activeFlag) > 0;
+    },
+    setActives(ids: readonly number[], activeFlag: boolean) {
+      if (mode !== 'edit') return 0;
+      const targets = [...new Set(ids)]
+        .map((id) => find(id))
+        .filter((entity): entity is EntityRec => (
+          entity != null && entity.active !== activeFlag
+        ));
+      if (!targets.length) return 0;
+      const action = activeFlag ? 'Activate' : 'Deactivate';
+      pushUndo(`${action} GameObject${targets.length > 1 ? 's' : ''}`);
+      for (const entity of targets) entity.active = activeFlag;
+      return targets.length;
     },
     setTag(id: number, value: string) {
       return this.setTags([id], value) > 0;

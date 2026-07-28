@@ -48,8 +48,20 @@ function createContext() {
     duplicateSelection: () => 3,
     rename: (...args) => calls.push(['rename', ...args]),
     setActive: (...args) => calls.push(['setActive', ...args]),
+    setActives: (...args) => {
+      calls.push(['setActives', ...args]);
+      return args[0].length;
+    },
     setTag: (...args) => calls.push(['setTag', ...args]),
+    setTags: (...args) => {
+      calls.push(['setTags', ...args]);
+      return args[0].length;
+    },
     setLayer: (...args) => calls.push(['setLayer', ...args]),
+    setLayers: (...args) => {
+      calls.push(['setLayers', ...args]);
+      return args[0].length;
+    },
     setParent: (...args) => {
       calls.push(['setParent', ...args]);
       const [ids, parent, index] = args;
@@ -216,6 +228,31 @@ test('sets entity tags and bounded GameObject layers through the store', () => {
     () => run(ctx, 'entity.set_layer', { id: 1, layer: 32 }),
     'INVALID_ARGS',
   );
+});
+
+test('batch metadata commands validate every entity and use one store transaction', () => {
+  const { ctx, calls } = createContext();
+  const active = run(ctx, 'entity.set_actives', { ids: [1, 2], active: false });
+  const tags = run(ctx, 'entity.set_tags', { ids: [1, 2], tag: 'Enemy' });
+  const layers = run(ctx, 'entity.set_layers', { ids: [1, 2], layer: 9 });
+  assert.deepEqual(calls, [
+    ['setActives', [1, 2], false],
+    ['setTags', [1, 2], 'Enemy'],
+    ['setLayers', [1, 2], 9],
+  ]);
+  assert.deepEqual(active.data, { entities: [1, 2], active: false, changed: 2 });
+  assert.deepEqual(tags.data, { entities: [1, 2], tag: 'Enemy', changed: 2 });
+  assert.deepEqual(layers.data, { entities: [1, 2], layer: 9, changed: 2 });
+
+  assertBridgeError(
+    () => run(ctx, 'entity.set_tags', { ids: [1, 999], tag: 'Player' }),
+    'ENTITY_NOT_FOUND',
+  );
+  assertBridgeError(
+    () => run(ctx, 'entity.set_layers', { ids: [], layer: 0 }),
+    'INVALID_ARGS',
+  );
+  assert.equal(calls.length, 3);
 });
 
 test('accepts entity id zero when it exists in a loaded scene', () => {
