@@ -97,6 +97,41 @@ test('agent event waits are concurrency-bounded and release their slots', async 
   assert.equal(released.timedOut, true);
 });
 
+test('agent event wait cancellation rejects promptly and releases its slot', async () => {
+  const journal = new AgentEventJournal();
+  const controller = new AbortController();
+  const pending = journal.wait(
+    { afterSequence: 0, topics: ['mode.changed'] },
+    15_000,
+    controller.signal,
+  );
+
+  controller.abort();
+  await assert.rejects(
+    pending,
+    (error) => error instanceof Error
+      && error.name === 'AbortError'
+      && /cancelled/.test(error.message),
+  );
+
+  const replacements = Array.from(
+    { length: MAX_AGENT_EVENT_WAITERS },
+    () => journal.wait(
+      { afterSequence: 0, topics: ['mode.changed'] },
+      1_000,
+    ),
+  );
+  journal.append('mode.changed', { mode: 'play' });
+  await Promise.all(replacements);
+
+  const alreadyCancelled = new AbortController();
+  alreadyCancelled.abort();
+  await assert.rejects(
+    journal.wait({ afterSequence: 1 }, 1_000, alreadyCancelled.signal),
+    { name: 'AbortError' },
+  );
+});
+
 test('scene changes coalesce into a compact revision diff with current entity payloads', () => {
   const tracker = new SceneChangeTracker();
   const baseline = [

@@ -159,6 +159,44 @@ test('MCP bridge timeout closes the socket so native request slots are released'
   }]);
 });
 
+test('MCP bridge cancellation releases one request without closing its shared socket', async () => {
+  const sent = [];
+  const closed = [];
+  const controller = new AbortController();
+  const socket = {
+    readyState: WebSocket.OPEN,
+    send(message) {
+      sent.push(JSON.parse(message));
+    },
+    close(code, reason) {
+      closed.push({ code, reason });
+      this.readyState = WebSocket.CLOSING;
+    },
+  };
+
+  const pending = rpcOnce(
+    { socket, discovery: { port: 4707, token: 'secret', pid: 42 } },
+    'query',
+    { query: 'events.wait', args: { afterSequence: 0 } },
+    1_000,
+    controller.signal,
+  );
+  controller.abort();
+
+  await assert.rejects(
+    pending,
+    (error) => error?.name === 'McpRequestCancelledError',
+  );
+  assert.equal(sent.length, 2);
+  assert.equal(sent[0].method, 'query');
+  assert.deepEqual(sent[1], {
+    jsonrpc: '2.0',
+    method: 'cancel',
+    params: { requestId: sent[0].id },
+  });
+  assert.deepEqual(closed, []);
+});
+
 test('MCP stdio serves negotiated initialization, resource templates, and protocol errors', async () => {
   const responses = await runStdioSession([
     JSON.stringify({

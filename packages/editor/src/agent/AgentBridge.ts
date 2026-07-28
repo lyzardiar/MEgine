@@ -1377,6 +1377,7 @@ class AgentBridge {
 
   async waitForEvents(
     params: Record<string, unknown>,
+    signal?: AbortSignal,
   ): Promise<AgentEventWaitPage> {
     this.observe();
     const options = this.eventQueryOptions(params);
@@ -1393,7 +1394,7 @@ class AgentBridge {
       );
     }
     try {
-      return await this.events.wait(options, timeoutMs);
+      return await this.events.wait(options, timeoutMs, signal);
     } catch (error) {
       if (
         error instanceof Error
@@ -3569,7 +3570,11 @@ class AgentBridge {
 
   // ── Unified query entry (called by transports) ────────────────────────
 
-  async query(queryId: string, params: Record<string, unknown> = {}): Promise<unknown> {
+  async query(
+    queryId: string,
+    params: Record<string, unknown> = {},
+    options: { signal?: AbortSignal } = {},
+  ): Promise<unknown> {
     const paramsSchema = QUERY_PARAMS_SCHEMAS[queryId];
     if (!paramsSchema) {
       throw new BridgeError('INVALID_ARGS', `Unknown query "${queryId}"`);
@@ -3758,7 +3763,7 @@ class AgentBridge {
       case 'events.get':
         return this.getEvents(params);
       case 'events.wait':
-        return this.waitForEvents(params);
+        return this.waitForEvents(params, options.signal);
       case 'commands.list':
         return this.listCommands();
       case 'commands.describe':

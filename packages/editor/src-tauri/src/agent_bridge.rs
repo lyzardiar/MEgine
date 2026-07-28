@@ -1,9 +1,9 @@
 //! AgentBridge transport — a localhost-only WebSocket server that lets external
-//! AI agents (via the MCP adapter, or any WS/HTTP client) drive and observe the
-//! editor.
+//! AI agents (via the MCP adapter, CLI, or a direct authenticated WS client)
+//! drive and observe the editor.
 //!
 //! Architecture:
-//! - Rust binds `127.0.0.1:0` (auto port) and writes `{ port, token }` to a
+//! - Rust binds `127.0.0.1:0` (auto port) and writes `{ port, token, pid }` to a
 //!   discovery file so adapters can find and authenticate to the editor.
 //! - Each WS client gets a unique id. Incoming text frames are forwarded to the
 //!   webview as a Tauri event (`agent-bridge:request`).
@@ -84,6 +84,20 @@ impl BridgeTransportState {
         self.queued_requests
             .retain(|request| request.client_id != client_id);
     }
+
+    fn remove_request(&mut self, client_id: &str, request_key: &str) {
+        let mut removed = false;
+        self.queued_requests.retain(|request| {
+            if !removed
+                && request.client_id == client_id
+                && request_slot_key(&request.message) == request_key
+            {
+                removed = true;
+                return false;
+            }
+            true
+        });
+    }
 }
 
 struct OutboundMessage {
@@ -138,6 +152,7 @@ struct BridgeClient {
     disconnect: watch::Sender<bool>,
     queued_bytes: Arc<AtomicUsize>,
     in_flight_requests: usize,
+    in_flight_request_ids: HashMap<String, usize>,
 }
 
 #[derive(Default)]
@@ -217,7 +232,7 @@ impl BridgeHub {
         self.transport.lock().remove_client(id);
     }
 
-    fn begin_request(&self, id: &str) -> BridgeRequestAdmission {
+    fn begin_request(&self, id: &str, message: &str) -> BridgeRequestAdmission {
         let mut clients = self.clients.lock();
         let Some(client) = clients.entries.get(id) else {
             return BridgeRequestAdmission::MissingClient;
@@ -231,24 +246,54 @@ impl BridgeHub {
             });
         }
         clients.in_flight_requests += 1;
-        clients
+        let client = clients
             .entries
             .get_mut(id)
-            .expect("admitted client must remain registered")
-            .in_flight_requests += 1;
+            .expect("admitted client must remain registered");
+        client.in_flight_requests += 1;
+        *client
+            .in_flight_request_ids
+            .entry(request_slot_key(message))
+            .or_default() += 1;
         BridgeRequestAdmission::Accepted
     }
 
-    fn complete_request_slot(&self, id: &str) -> bool {
+    fn complete_request_slot(&self, id: &str, message: &str) -> bool {
         let mut clients = self.clients.lock();
         let Some(client) = clients.entries.get_mut(id) else {
             return false;
         };
-        if client.in_flight_requests == 0 {
+        let request_key = request_slot_key(message);
+        let Some(matching_requests) = client.in_flight_request_ids.get_mut(&request_key) else {
             return false;
+        };
+        *matching_requests -= 1;
+        if *matching_requests == 0 {
+            client.in_flight_request_ids.remove(&request_key);
         }
         client.in_flight_requests -= 1;
         clients.in_flight_requests -= 1;
+        true
+    }
+
+    fn cancel_request(&self, id: &str, request_id: &serde_json::Value) -> bool {
+        let request_key = request_id.to_string();
+        {
+            let mut clients = self.clients.lock();
+            let Some(client) = clients.entries.get_mut(id) else {
+                return false;
+            };
+            let Some(matching_requests) = client.in_flight_request_ids.get_mut(&request_key) else {
+                return false;
+            };
+            *matching_requests -= 1;
+            if *matching_requests == 0 {
+                client.in_flight_request_ids.remove(&request_key);
+            }
+            client.in_flight_requests -= 1;
+            clients.in_flight_requests -= 1;
+        }
+        self.transport.lock().remove_request(id, &request_key);
         true
     }
 
@@ -276,7 +321,7 @@ impl BridgeHub {
     /// Complete one admitted request and queue its reply. Returns false if the
     /// request/client is gone or the bounded client queue required disconnect.
     pub fn send_response_to(&self, id: &str, msg: String) -> bool {
-        if !self.complete_request_slot(id) {
+        if !self.complete_request_slot(id, &msg) {
             return false;
         }
         self.enqueue_to(id, msg)
@@ -301,7 +346,7 @@ impl BridgeHub {
     /// synchronously emit it while holding the readiness lock. Holding the lock
     /// closes the gap between a readiness check and a page-load reset.
     fn forward_request(&self, app: &AppHandle, payload: BridgeRequestPayload) {
-        match self.begin_request(&payload.client_id) {
+        match self.begin_request(&payload.client_id, &payload.message) {
             BridgeRequestAdmission::Accepted => {}
             BridgeRequestAdmission::MissingClient => return,
             BridgeRequestAdmission::RateLimited(capacity) => {
@@ -364,6 +409,13 @@ struct BridgeRequestPayload {
     message: String,
 }
 
+#[derive(Clone, Debug, PartialEq, serde::Serialize)]
+#[serde(rename_all = "camelCase")]
+struct BridgeCancelPayload {
+    client_id: String,
+    request_id: serde_json::Value,
+}
+
 #[derive(serde::Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct BridgeTransportReadyResult {
@@ -377,6 +429,12 @@ fn emit_bridge_request(app: &AppHandle, payload: BridgeRequestPayload) -> bool {
         return false;
     }
     true
+}
+
+fn emit_bridge_cancel(app: &AppHandle, payload: BridgeCancelPayload) {
+    if let Err(error) = app.emit("agent-bridge:cancel", payload) {
+        log::warn!("AgentBridge could not forward request cancellation: {error}");
+    }
 }
 
 fn bridge_rate_limited_response(message: &str, capacity: &BridgeRequestCapacity) -> String {
@@ -417,6 +475,26 @@ fn request_id_from_message(message: &str) -> serde_json::Value {
         .ok()
         .and_then(|request| request.get("id").cloned())
         .unwrap_or(serde_json::Value::Null)
+}
+
+fn request_slot_key(message: &str) -> String {
+    request_id_from_message(message).to_string()
+}
+
+fn cancellation_request_id_from_message(message: &str) -> Option<serde_json::Value> {
+    let request = serde_json::from_str::<serde_json::Value>(message).ok()?;
+    if request.get("jsonrpc").and_then(serde_json::Value::as_str) != Some("2.0")
+        || request.get("method").and_then(serde_json::Value::as_str) != Some("cancel")
+        || request.get("id").is_some()
+    {
+        return None;
+    }
+    let request_id = request.get("params")?.get("requestId")?;
+    if request_id.is_string() || request_id.is_number() {
+        Some(request_id.clone())
+    } else {
+        None
+    }
 }
 
 /// Start the WebSocket server on the Tauri async runtime.
@@ -509,6 +587,7 @@ async fn handle_connection(
         disconnect,
         queued_bytes: Arc::new(AtomicUsize::new(0)),
         in_flight_requests: 0,
+        in_flight_request_ids: HashMap::new(),
     };
     if !hub.register(client_id.clone(), client) {
         let _ = sink
@@ -549,6 +628,18 @@ async fn handle_connection(
         };
         match msg {
             Ok(Message::Text(text)) => {
+                if let Some(request_id) = cancellation_request_id_from_message(&text) {
+                    if hub.cancel_request(&client_id, &request_id) {
+                        emit_bridge_cancel(
+                            &app,
+                            BridgeCancelPayload {
+                                client_id: client_id.clone(),
+                                request_id,
+                            },
+                        );
+                    }
+                    continue;
+                }
                 hub.forward_request(
                     &app,
                     BridgeRequestPayload {
@@ -785,6 +876,7 @@ mod transport_tests {
                 disconnect,
                 queued_bytes: Arc::new(AtomicUsize::new(0)),
                 in_flight_requests: 0,
+                in_flight_request_ids: HashMap::new(),
             },
             receiver,
             disconnect_receiver,
@@ -851,6 +943,76 @@ mod transport_tests {
     }
 
     #[test]
+    fn queued_request_cancellation_removes_only_the_exact_rpc_id() {
+        let mut state = BridgeTransportState::default();
+        state.route(request("client-a", 1));
+        state.route(request("client-a", 2));
+        state.route(request("client-b", 1));
+
+        state.remove_request("client-a", "1");
+
+        assert_eq!(
+            state
+                .activate("session-a".to_string())
+                .into_iter()
+                .collect::<Vec<_>>(),
+            vec![request("client-a", 2), request("client-b", 1)]
+        );
+    }
+
+    #[test]
+    fn request_slots_match_response_and_cancellation_ids() {
+        let hub = BridgeHub::new("token".to_string());
+        let (client, _receiver, _disconnect) = test_client();
+        assert!(hub.register("client-a".to_string(), client));
+        assert!(matches!(
+            hub.begin_request("client-a", &request("client-a", 1).message),
+            BridgeRequestAdmission::Accepted
+        ));
+        assert!(matches!(
+            hub.begin_request("client-a", &request("client-a", 2).message),
+            BridgeRequestAdmission::Accepted
+        ));
+
+        assert!(!hub.send_response_to(
+            "client-a",
+            r#"{"jsonrpc":"2.0","id":3,"result":{}}"#.to_string()
+        ));
+        assert_eq!(hub.clients.lock().in_flight_requests, 2);
+        assert!(hub.cancel_request("client-a", &serde_json::json!(1)));
+        assert!(!hub.cancel_request("client-a", &serde_json::json!(1)));
+        assert_eq!(hub.clients.lock().in_flight_requests, 1);
+        assert!(hub.send_response_to(
+            "client-a",
+            r#"{"jsonrpc":"2.0","id":2,"result":{}}"#.to_string()
+        ));
+        assert_eq!(hub.clients.lock().in_flight_requests, 0);
+    }
+
+    #[test]
+    fn bridge_cancellation_is_a_strict_notification() {
+        assert_eq!(
+            cancellation_request_id_from_message(
+                r#"{"jsonrpc":"2.0","method":"cancel","params":{"requestId":"rpc-1"}}"#
+            ),
+            Some(serde_json::json!("rpc-1"))
+        );
+        assert_eq!(
+            cancellation_request_id_from_message(
+                r#"{"jsonrpc":"2.0","id":9,"method":"cancel","params":{"requestId":"rpc-1"}}"#
+            ),
+            None
+        );
+        assert_eq!(
+            cancellation_request_id_from_message(
+                r#"{"jsonrpc":"2.0","method":"cancel","params":{"requestId":null}}"#
+            ),
+            None
+        );
+        assert_eq!(cancellation_request_id_from_message("not-json"), None);
+    }
+
+    #[test]
     fn pending_queue_is_bounded_and_returns_the_original_rpc_id() {
         let mut state = BridgeTransportState::default();
         for id in 0..MAX_QUEUED_BRIDGE_REQUESTS {
@@ -883,8 +1045,9 @@ mod transport_tests {
         let (client, _receiver, _disconnect) = test_client();
         assert!(hub.register("client-0".to_string(), client));
         for index in 0..MAX_PENDING_REQUESTS_PER_CLIENT {
+            let message = request("client-0", index).message;
             assert!(matches!(
-                hub.begin_request("client-0"),
+                hub.begin_request("client-0", &message),
                 BridgeRequestAdmission::Accepted
             ));
             assert_eq!(
@@ -897,7 +1060,8 @@ mod transport_tests {
                 index + 1
             );
         }
-        let capacity = match hub.begin_request("client-0") {
+        let excess_message = request("client-0", 10_000).message;
+        let capacity = match hub.begin_request("client-0", &excess_message) {
             BridgeRequestAdmission::RateLimited(capacity) => capacity,
             _ => panic!("request after the per-client limit should be rejected"),
         };
@@ -909,9 +1073,13 @@ mod transport_tests {
             }
         );
 
-        assert!(hub.send_response_to("client-0", "{}".to_string()));
+        assert!(hub.send_response_to(
+            "client-0",
+            r#"{"jsonrpc":"2.0","id":0,"result":{}}"#.to_string()
+        ));
+        let replacement_message = request("client-0", 20_000).message;
         assert!(matches!(
-            hub.begin_request("client-0"),
+            hub.begin_request("client-0", &replacement_message),
             BridgeRequestAdmission::Accepted
         ));
         hub.unregister("client-0");
@@ -928,15 +1096,21 @@ mod transport_tests {
             assert!(hub.register(format!("client-{client_index}"), client));
         }
         for client_index in 0..MAX_PENDING_BRIDGE_REQUESTS / MAX_PENDING_REQUESTS_PER_CLIENT {
-            for _ in 0..MAX_PENDING_REQUESTS_PER_CLIENT {
+            for request_index in 0..MAX_PENDING_REQUESTS_PER_CLIENT {
+                let message = request(
+                    &format!("client-{client_index}"),
+                    client_index * MAX_PENDING_REQUESTS_PER_CLIENT + request_index,
+                )
+                .message;
                 assert!(matches!(
-                    hub.begin_request(&format!("client-{client_index}")),
+                    hub.begin_request(&format!("client-{client_index}"), &message),
                     BridgeRequestAdmission::Accepted
                 ));
             }
         }
 
-        let capacity = match hub.begin_request("client-4") {
+        let excess_message = request("client-4", 30_000).message;
+        let capacity = match hub.begin_request("client-4", &excess_message) {
             BridgeRequestAdmission::RateLimited(capacity) => capacity,
             _ => panic!("request after the bridge-wide limit should be rejected"),
         };

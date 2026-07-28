@@ -389,7 +389,7 @@ Rust Host 使用独立的工程生命周期互斥门串行化 open/create/close 
 | 命令结果 | ✅ 每个写命令返回 `{ ok, sceneRevision, eventSequence, data }`；所有传输先按同一 `paramsSchema` 严格校验参数，再检查 `expectedSceneRevision`，不匹配时在任何改动前返回 `STALE_REVISION` |
 | 操作后自动截图 | 写命令可带 `options.screenshot: true`；结果显式返回 `screenshotRequested=true`，成功时返回 `screenshotCaptured=true` 与 `screenshot`，失败时保留已完成写动作并返回 `screenshotCaptured=false` 和有界 `screenshotError`。MCP 将不含 Base64 的尺寸、缩放、时间与后台安全元数据作为 text block，并另附 image block |
 | 状态 diff | ✅ `query: scene.diff({ fromRevision })` 返回实体增删改、场景级状态（当前含 clear color）和当前 payload；切场景或历史过期时返回 `resetRequired` 与完整快照 |
-| 事件订阅 | ✅ 有界 journal + cursor 查询 `events.get`；`events.wait` 可按 topic 等待最多 15 秒并显式返回 `timedOut`，MCP/CLI 无需高频轮询；最多 64 个等待请求，超限返回带容量与重试提示的 `RATE_LIMITED`；原生 WebSocket 同时广播 `project.changed` / `scene.changed` / `selection.changed` / `mode.changed` / `log.*` / `panel.changed` / `build.progress` / `build.settings` / `asset.changed` |
+| 事件订阅 | ✅ 有界 journal + cursor 查询 `events.get`；`events.wait` 可按 topic 等待最多 15 秒并显式返回 `timedOut`，MCP/CLI 无需高频轮询；最多 64 个等待请求，超限返回带容量与重试提示的 `RATE_LIMITED`；MCP `notifications/cancelled` 会按原请求 ID 精确释放 sidecar、原生 Bridge 和 WebView waiter 三层资源且不回写已取消响应，不会关闭共享 WS 或误伤其他请求；原生 WebSocket 同时广播 `project.changed` / `scene.changed` / `selection.changed` / `mode.changed` / `log.*` / `panel.changed` / `build.progress` / `build.settings` / `asset.changed` |
 | 结构化错误 | 错误码：`STALE_REVISION` / `RATE_LIMITED` / `CONFLICT` / `ENTITY_NOT_FOUND` / `COMPONENT_NOT_FOUND` / `INVALID_ARGS` / `READONLY` / `PERMISSION_DENIED` / `NOT_READY` / `PROJECT_NOT_OPEN` / `IO_ERROR` / `INTERNAL` |
 
 ## 5. MCP Server 设计（优先传输）
@@ -567,7 +567,7 @@ CLI 仅输出结构化 JSON，支持 `--args @file` / `--args -`、显式幂等 
 | 安全：本地端口被其它进程调用 | 仅绑定 127.0.0.1；发现文件含随机 token，连接需校验；危险命令（删除/构建）可配置确认 |
 | 并发：多客户端同时写 | 复用 `base_revision` 乐观锁；冲突返回 `STALE_REVISION`；不同 `request_id` 的唯一在途写请求最多 64 个，超限返回带当前容量与重试提示的 `RATE_LIMITED`，但相同 `request_id` 的超时重试仍复用原在途结果，不额外占位 |
 | 传输：连接/请求洪泛或客户端停止读取 | 原生 WS 最多 32 个连接、每客户端 64/全进程 256 个在途请求、64 MiB 输入；每客户端出站队列最多 64 条且合计 128 MiB，超限断开该慢客户端，不拖累编辑器或其他 Agent |
-| 适配器：MCP stdio 洪泛、请求失联或宿主停止读取 | sidecar 输入逐字节累计且单行最多 64 MiB；最多 128 个活动 MCP 请求和 64 个在途 Bridge RPC。请求超时会关闭对应 WS，使原生注销客户端并释放全部在途槽位；读请求可重连，写请求用原 `requestId` 幂等恢复。stdout 响应按序写入、64 MiB 时暂停 stdin，合计 192 MiB 时终止失去消费能力的会话，避免 Node 内部流缓冲无限增长 |
+| 适配器：MCP stdio 洪泛、请求失联或宿主停止读取 | sidecar 输入逐字节累计且单行最多 64 MiB；最多 128 个活动 MCP 请求和 64 个在途 Bridge RPC。请求超时会关闭对应 WS，使原生注销客户端并释放全部在途槽位；客户端主动取消则使用精确请求 ID 释放单个槽位并中止可取消的 WebView 等待，不关闭共享连接。读请求可重连，写请求用原 `requestId` 幂等恢复。stdout 响应按序写入、64 MiB 时暂停 stdin，合计 192 MiB 时终止失去消费能力的会话，避免 Node 内部流缓冲无限增长 |
 | 性能：大场景 snapshot / 高频截图 | snapshot 支持精简模式（hierarchy 不含组件）；所有位图截图默认最长边 2048（可在 256..4096 内指定），并在进程内串行且保留至少 250ms 冷却；最多保留 8 个当前/排队请求，超限明确返回 `RATE_LIMITED`；语义快照不受位图限频影响 |
 | 命名漂移：camelCase vs snake_case | AgentBridge 对外统一 camelCase，边界处集中转换，避免泄漏到协议 |
 | Play Mode 双事实源 | 观察/写操作明确区分 edit/play 世界，Play 下写操作按现有 store 规则处理 |

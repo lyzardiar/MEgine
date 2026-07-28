@@ -113,9 +113,13 @@ export class AgentEventJournal {
       limit?: number;
     } = {},
     timeoutMs = 15_000,
+    signal?: AbortSignal,
   ): Promise<AgentEventWaitPage> {
     if (!Number.isSafeInteger(timeoutMs) || timeoutMs < 0 || timeoutMs > 15_000) {
       throw new Error('timeoutMs must be an integer from 0 to 15000');
+    }
+    if (signal?.aborted) {
+      return Promise.reject(eventWaitAbortError());
     }
     const startedAt = Date.now();
     const initial = this.list(options);
@@ -129,31 +133,52 @@ export class AgentEventJournal {
     if (this.waiters.size >= MAX_AGENT_EVENT_WAITERS) {
       throw new Error('Agent event wait limit reached');
     }
-    return new Promise((resolve) => {
+    return new Promise((resolve, reject) => {
       let settled = false;
       let timer: ReturnType<typeof setTimeout> | null = null;
+      const cleanup = () => {
+        this.waiters.delete(wake);
+        if (timer !== null) clearTimeout(timer);
+        signal?.removeEventListener('abort', cancel);
+      };
       const finish = (page: AgentEventPage, timedOut: boolean) => {
         if (settled) return;
         settled = true;
-        this.waiters.delete(wake);
-        if (timer !== null) clearTimeout(timer);
+        cleanup();
         resolve({
           ...page,
           timedOut,
           waitedMs: Math.max(0, Date.now() - startedAt),
         });
       };
+      const cancel = () => {
+        if (settled) return;
+        settled = true;
+        cleanup();
+        reject(eventWaitAbortError());
+      };
       const wake = () => {
         const page = this.list(options);
         if (page.truncated || page.events.length > 0) finish(page, false);
       };
       this.waiters.add(wake);
+      signal?.addEventListener('abort', cancel, { once: true });
+      if (signal?.aborted) {
+        cancel();
+        return;
+      }
       timer = setTimeout(
         () => finish(this.list(options), true),
         timeoutMs,
       );
     });
   }
+}
+
+function eventWaitAbortError(): Error {
+  const error = new Error('Agent event wait cancelled');
+  error.name = 'AbortError';
+  return error;
 }
 
 export type SceneEntityView = {

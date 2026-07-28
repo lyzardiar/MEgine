@@ -356,6 +356,11 @@ test('the main AgentBridge transport is available before a project is opened', (
   assert.doesNotMatch(app, /attachBridgeTransport/);
   assert.match(transport, /agent_bridge_set_transport_ready/);
   assert.match(transport, /activation\.queuedRequests\.map\(respondToRequest\)/);
+  assert.match(transport, /listen<BridgeCancelEvent>\('agent-bridge:cancel'/);
+  assert.match(transport, /cancelledRequestKeys\.delete\(requestKey\)/);
+  assert.match(transport, /MAX_CANCELLED_REQUEST_TOMBSTONES = 256/);
+  assert.match(transport, /rememberCancelledRequest\(requestKey\)/);
+  assert.match(transport, /controller\.abort\(\)/);
   assert.match(transport, /executeRequests\.run/);
   assert.match(transport, /executeQueue\.run/);
   assert.match(transport, /requireRequestId\(params\.requestId\)/);
@@ -372,6 +377,9 @@ test('the main AgentBridge transport is available before a project is opened', (
   assert.match(nativeBridge, /MAX_PENDING_BRIDGE_REQUESTS: usize = 256/);
   assert.match(nativeBridge, /MAX_BRIDGE_OUTBOUND_MESSAGES: usize = 64/);
   assert.match(nativeBridge, /MAX_BRIDGE_OUTBOUND_QUEUED_BYTES: usize = 128 \* 1024 \* 1024/);
+  assert.match(nativeBridge, /in_flight_request_ids: HashMap<String, usize>/);
+  assert.match(nativeBridge, /cancellation_request_id_from_message/);
+  assert.match(nativeBridge, /emit_bridge_cancel/);
   assert.match(nativeBridge, /accept_hdr_async_with_config/);
   assert.doesNotMatch(nativeBridge, /unbounded_channel/);
   assert.match(nativeBridge, /bridge_not_ready_response/);

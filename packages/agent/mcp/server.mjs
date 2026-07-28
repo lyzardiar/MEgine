@@ -18,6 +18,7 @@
  */
 
 import fs from 'node:fs';
+import { AsyncLocalStorage } from 'node:async_hooks';
 import { createHash } from 'node:crypto';
 import os from 'node:os';
 import path from 'node:path';
@@ -100,6 +101,7 @@ let activeConnection = null;
 let connectionAttempt = null;
 let successfulConnections = 0;
 const pending = new Map();
+const mcpRequestContext = new AsyncLocalStorage();
 
 class BridgeConnectionError extends Error {
   constructor(message, { sent = false, discovery = null, cause } = {}) {
@@ -134,6 +136,13 @@ class BridgeOutcomeUnknownError extends Error {
       currentEditorPid: currentDiscovery?.pid ?? null,
     };
     this.cause = cause;
+  }
+}
+
+class McpRequestCancelledError extends Error {
+  constructor() {
+    super('MCP request cancelled');
+    this.name = 'McpRequestCancelledError';
   }
 }
 
@@ -184,7 +193,7 @@ function connectBridge(discovery) {
         const entry = pending.get(msg.id);
         if (entry.socket !== socket) return;
         pending.delete(msg.id);
-        clearTimeout(entry.timer);
+        entry.cleanup();
         if (msg.error) {
           entry.reject(new BridgeRpcError(
             msg.error.code,
@@ -207,7 +216,7 @@ function connectBridge(discovery) {
       for (const [id, entry] of pending) {
         if (entry.socket !== socket) continue;
         pending.delete(id);
-        clearTimeout(entry.timer);
+        entry.cleanup();
         entry.reject(new BridgeConnectionError(
           'Editor bridge connection closed',
           { sent: true, discovery },
@@ -245,9 +254,19 @@ async function connectLatestBridge() {
   throw lastError;
 }
 
-function rpcOnce(connection, method, params, timeoutMs = REQUEST_TIMEOUT_MS) {
+function rpcOnce(
+  connection,
+  method,
+  params,
+  timeoutMs = REQUEST_TIMEOUT_MS,
+  signal = mcpRequestContext.getStore()?.signal,
+) {
   return new Promise((resolve, reject) => {
     const { socket, discovery } = connection;
+    if (signal?.aborted) {
+      reject(new McpRequestCancelledError());
+      return;
+    }
     if (socket.readyState !== WebSocket.OPEN) {
       reject(new BridgeConnectionError(
         'Not connected to the editor bridge',
@@ -268,8 +287,31 @@ function rpcOnce(connection, method, params, timeoutMs = REQUEST_TIMEOUT_MS) {
       return;
     }
     const id = crypto.randomUUID();
-    const timer = setTimeout(() => {
+    let sent = false;
+    let timer;
+    const cleanup = () => {
+      clearTimeout(timer);
+      signal?.removeEventListener('abort', cancel);
+    };
+    const cancel = () => {
+      if (!pending.delete(id)) return;
+      cleanup();
+      if (sent && socket.readyState === WebSocket.OPEN) {
+        try {
+          socket.send(JSON.stringify({
+            jsonrpc: '2.0',
+            method: 'cancel',
+            params: { requestId: id },
+          }));
+        } catch {
+          // Cancellation remains local if the bridge is already unavailable.
+        }
+      }
+      reject(new McpRequestCancelledError());
+    };
+    timer = setTimeout(() => {
       pending.delete(id);
+      cleanup();
       if (activeConnection?.socket === socket) activeConnection = null;
       try {
         socket.close(1011, 'AgentBridge request timed out');
@@ -285,14 +327,21 @@ function rpcOnce(connection, method, params, timeoutMs = REQUEST_TIMEOUT_MS) {
     pending.set(id, {
       socket,
       timer,
+      cleanup,
       resolve,
       reject,
     });
+    signal?.addEventListener('abort', cancel, { once: true });
+    if (signal?.aborted) {
+      cancel();
+      return;
+    }
     try {
       socket.send(JSON.stringify({ jsonrpc: '2.0', id, method, params }));
+      sent = true;
     } catch (error) {
       pending.delete(id);
-      clearTimeout(timer);
+      cleanup();
       reject(new BridgeConnectionError(
         `Could not send editor bridge request: ${error?.message || String(error)}`,
         { discovery },
@@ -3168,6 +3217,7 @@ let activeMcpRequests = 0;
 let inputClosed = false;
 let outputFailed = false;
 let mcpExitCode = 0;
+const activeMcpRequestControllers = new Map();
 
 const outputQueue = new BoundedWriteQueue(
   process.stdout,
@@ -3318,7 +3368,7 @@ function toolErrorContent(error) {
   });
 }
 
-async function handleMessage(msg) {
+async function handleMessage(msg, signal) {
   const { id, method, params } = msg;
   switch (method) {
     case 'initialize': {
@@ -3373,8 +3423,10 @@ async function handleMessage(msg) {
         const content = await tool.handler(args, {
           requestId: automaticWriteRequestId(msg),
         });
+        if (signal.aborted) return;
         respond(id, { content, isError: false });
       } catch (error) {
+        if (signal.aborted || error instanceof McpRequestCancelledError) return;
         respond(id, {
           content: toolErrorContent(error),
           isError: true,
@@ -3400,10 +3452,12 @@ async function handleMessage(msg) {
       }
       try {
         const data = await reader();
+        if (signal.aborted) return;
         respond(id, {
           contents: [{ uri: params.uri, mimeType: 'application/json', text: JSON.stringify(data, null, 2) }],
         });
       } catch (error) {
+        if (signal.aborted || error instanceof McpRequestCancelledError) return;
         respondError(
           id,
           -32603,
@@ -3420,7 +3474,27 @@ async function handleMessage(msg) {
   }
 }
 
+function mcpRequestKey(requestId) {
+  return `${typeof requestId}:${String(requestId)}`;
+}
+
+function cancelMcpRequest(message) {
+  if (Object.hasOwn(message, 'id')) return;
+  const requestId = message.params?.requestId;
+  if (typeof requestId !== 'string' && !Number.isSafeInteger(requestId)) return;
+  const entry = activeMcpRequestControllers.get(mcpRequestKey(requestId));
+  if (!entry || entry.method === 'initialize') return;
+  entry.controller.abort();
+  process.stderr.write(
+    `[mengine-mcp] cancelled request ${JSON.stringify(requestId)}\n`,
+  );
+}
+
 function dispatchMcpMessage(msg) {
+  if (msg.method === 'notifications/cancelled') {
+    cancelMcpRequest(msg);
+    return;
+  }
   if (activeMcpRequests >= MAX_ACTIVE_MCP_REQUESTS) {
     if (msg.id !== undefined && msg.id !== null) {
       respondError(
@@ -3437,11 +3511,27 @@ function dispatchMcpMessage(msg) {
     }
     return;
   }
+  const hasRequestId = msg.id !== undefined && msg.id !== null;
+  const requestKey = hasRequestId ? mcpRequestKey(msg.id) : null;
+  if (requestKey && activeMcpRequestControllers.has(requestKey)) {
+    respondError(msg.id, -32600, 'Request id is already active');
+    return;
+  }
+  const controller = new AbortController();
+  if (requestKey) {
+    activeMcpRequestControllers.set(requestKey, {
+      controller,
+      method: msg.method,
+    });
+  }
   activeMcpRequests += 1;
   updateMcpInputFlow();
-  handleMessage(msg)
+  mcpRequestContext.run(
+    { signal: controller.signal },
+    () => handleMessage(msg, controller.signal),
+  )
     .catch((error) => {
-      if (msg.id !== undefined && msg.id !== null) {
+      if (hasRequestId && !controller.signal.aborted) {
         respondError(
           msg.id,
           -32603,
@@ -3451,6 +3541,12 @@ function dispatchMcpMessage(msg) {
       }
     })
     .finally(() => {
+      if (
+        requestKey
+        && activeMcpRequestControllers.get(requestKey)?.controller === controller
+      ) {
+        activeMcpRequestControllers.delete(requestKey);
+      }
       activeMcpRequests -= 1;
       updateMcpInputFlow();
       maybeFinishMcpProcess();

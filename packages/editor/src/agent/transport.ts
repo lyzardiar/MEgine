@@ -31,6 +31,11 @@ interface BridgeRequestEvent {
   message: string;
 }
 
+interface BridgeCancelEvent {
+  clientId: string;
+  requestId: string | number;
+}
+
 interface JsonRpcRequest {
   jsonrpc?: string;
   id?: string | number | null;
@@ -47,6 +52,7 @@ interface BridgeTransportReadyResult {
 
 export const MAX_PENDING_EXECUTE_REQUESTS = 64;
 const EXECUTE_CAPACITY_RETRY_AFTER_MS = 250;
+const MAX_CANCELLED_REQUEST_TOMBSTONES = 256;
 
 const executeRequests = new IdempotentRequestCache<CommandResult>(
   256,
@@ -58,9 +64,21 @@ const executeRequests = new IdempotentRequestCache<CommandResult>(
   MAX_PENDING_EXECUTE_REQUESTS,
 );
 const executeQueue = new SerialTaskQueue();
+const activeRequestControllers = new Map<string, AbortController>();
+const cancelledRequestKeys = new Set<string>();
 
 async function respondToRequest({ clientId, message }: BridgeRequestEvent): Promise<void> {
-  const response = await handleRequest(message);
+  const requestKey = bridgeRequestKey(clientId, message);
+  const controller = new AbortController();
+  if (requestKey) {
+    activeRequestControllers.set(requestKey, controller);
+    if (cancelledRequestKeys.delete(requestKey)) controller.abort();
+  }
+  const response = await handleRequest(message, controller.signal);
+  if (requestKey && activeRequestControllers.get(requestKey) === controller) {
+    activeRequestControllers.delete(requestKey);
+  }
+  if (controller.signal.aborted) return;
   try {
     await invoke('agent_bridge_respond', {
       clientId,
@@ -74,9 +92,27 @@ async function respondToRequest({ clientId, message }: BridgeRequestEvent): Prom
 /** Start listening for bridge requests. Returns an unlisten function. */
 export async function attachBridgeTransport(): Promise<UnlistenFn> {
   const sessionId = globalThis.crypto.randomUUID();
-  const unlisten = await listen<BridgeRequestEvent>('agent-bridge:request', (event) => {
+  const unlistenRequests = await listen<BridgeRequestEvent>('agent-bridge:request', (event) => {
     void respondToRequest(event.payload);
   });
+  let unlistenCancellation: UnlistenFn;
+  try {
+    unlistenCancellation = await listen<BridgeCancelEvent>('agent-bridge:cancel', (event) => {
+      const requestKey = bridgeRequestIdKey(
+        event.payload.clientId,
+        event.payload.requestId,
+      );
+      const controller = activeRequestControllers.get(requestKey);
+      if (controller) {
+        controller.abort();
+      } else {
+        rememberCancelledRequest(requestKey);
+      }
+    });
+  } catch (error) {
+    unlistenRequests();
+    throw error;
+  }
   try {
     const activation = await invoke<BridgeTransportReadyResult>(
       'agent_bridge_set_transport_ready',
@@ -84,17 +120,27 @@ export async function attachBridgeTransport(): Promise<UnlistenFn> {
     );
     await Promise.all(activation.queuedRequests.map(respondToRequest));
   } catch (error) {
-    unlisten();
+    unlistenCancellation();
+    unlistenRequests();
     throw error;
   }
   return () => {
-    unlisten();
+    unlistenCancellation();
+    unlistenRequests();
+    for (const controller of activeRequestControllers.values()) {
+      controller.abort();
+    }
+    activeRequestControllers.clear();
+    cancelledRequestKeys.clear();
     void invoke('agent_bridge_set_transport_ready', { sessionId, ready: false })
       .catch((error) => console.error('AgentBridge failed to release transport session', error));
   };
 }
 
-async function handleRequest(message: string): Promise<JsonRpcResponse> {
+async function handleRequest(
+  message: string,
+  signal: AbortSignal,
+): Promise<JsonRpcResponse> {
   let request: JsonRpcRequest;
   try {
     request = JSON.parse(message);
@@ -113,14 +159,16 @@ async function handleRequest(message: string): Promise<JsonRpcResponse> {
 
   try {
     if (method === 'query') {
+      if (signal.aborted) throw requestCancelledError();
       const queryId = params.query;
       if (typeof queryId !== 'string' || !queryId) {
         throw new BridgeError('INVALID_ARGS', 'query requires params.query');
       }
-      const data = await agentBridge.query(queryId, args);
+      const data = await agentBridge.query(queryId, args, { signal });
       return { jsonrpc: '2.0', id, result: { ok: true, data } };
     }
     if (method === 'execute') {
+      if (signal.aborted) throw requestCancelledError();
       const command = params.command;
       if (typeof command !== 'string' || !command) {
         throw new BridgeError('INVALID_ARGS', 'execute requires params.command');
@@ -137,7 +185,10 @@ async function handleRequest(message: string): Promise<JsonRpcResponse> {
           requestId,
           fingerprint,
           () => executeQueue.run(
-            () => agentBridge.execute(command, args, options),
+            () => {
+              if (signal.aborted) throw requestCancelledError();
+              return agentBridge.execute(command, args, options);
+            },
           ),
         );
       } catch (error) {
@@ -187,6 +238,43 @@ async function handleRequest(message: string): Promise<JsonRpcResponse> {
     }
     return { jsonrpc: '2.0', id, error: { code: 'INTERNAL', message: String(error) } };
   }
+}
+
+function bridgeRequestKey(clientId: string, message: string): string | null {
+  try {
+    const request = JSON.parse(message) as JsonRpcRequest;
+    const id = request.id;
+    if (
+      typeof id !== 'string'
+      && (typeof id !== 'number' || !Number.isSafeInteger(id))
+    ) {
+      return null;
+    }
+    return bridgeRequestIdKey(clientId, id);
+  } catch {
+    return null;
+  }
+}
+
+function bridgeRequestIdKey(clientId: string, requestId: string | number): string {
+  return `${clientId}\u0000${typeof requestId}:${String(requestId)}`;
+}
+
+function rememberCancelledRequest(requestKey: string): void {
+  if (
+    !cancelledRequestKeys.has(requestKey)
+    && cancelledRequestKeys.size >= MAX_CANCELLED_REQUEST_TOMBSTONES
+  ) {
+    const oldest = cancelledRequestKeys.values().next().value;
+    if (typeof oldest === 'string') cancelledRequestKeys.delete(oldest);
+  }
+  cancelledRequestKeys.add(requestKey);
+}
+
+function requestCancelledError(): Error {
+  const error = new Error('AgentBridge request cancelled');
+  error.name = 'AbortError';
+  return error;
 }
 
 function requireRequestId(value: unknown): string {
