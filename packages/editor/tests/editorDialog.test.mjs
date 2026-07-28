@@ -4,11 +4,17 @@ import {
   alertEditor,
   confirmEditor,
   getActiveEditorDialog,
+  initializeEditorDialogSync,
+  listEditorDialogs,
   promptEditor,
   resetEditorDialogsForTests,
   respondToEditorDialog,
   subscribeEditorDialog,
 } from '../src/editorDialog.ts';
+import {
+  createEditorBroadcastChannel,
+  initializeEditorInstance,
+} from '../src/editorInstance.ts';
 
 test.afterEach(() => {
   resetEditorDialogsForTests();
@@ -29,6 +35,7 @@ test('editor dialogs are queued and resolved without blocking the JavaScript thr
   assert.equal(first.kind, 'confirm');
   assert.equal(first.title, 'Unsaved Changes');
   assert.equal(first.confirmLabel, 'Discard');
+  assert.deepEqual(listEditorDialogs(), [{ ...first, windowLabel: 'main' }]);
   assert.equal(respondToEditorDialog('stale-id', 'accept'), null);
   assert.deepEqual(
     respondToEditorDialog(first.id, 'accept'),
@@ -54,6 +61,7 @@ test('editor dialogs are queued and resolved without blocking the JavaScript thr
   );
   assert.equal(await prompt, 'Level 01');
   assert.equal(getActiveEditorDialog(), null);
+  assert.deepEqual(listEditorDialogs(), []);
   assert.deepEqual(revisions, [first.id, second.id, null]);
   unsubscribe();
 });
@@ -82,4 +90,48 @@ test('prompt results and defaults are bounded for safe Agent transport', async (
   assert.equal(snapshot.defaultValue.length, 4096);
   respondToEditorDialog(snapshot.id, 'accept', 'y'.repeat(5000));
   assert.equal((await prompt).length, 4096);
+});
+
+test('remote dialog state is listed and notifies main-window subscribers', async () => {
+  initializeEditorInstance('editor-dialog-sync-test');
+  const stopSync = initializeEditorDialogSync('main');
+  const remote = createEditorBroadcastChannel('mengine-editor-dialogs-v1');
+  assert.ok(remote);
+  const revisions = [];
+  const unsubscribe = subscribeEditorDialog(() => {
+    revisions.push(listEditorDialogs().map((dialog) => `${dialog.windowLabel}:${dialog.id}`));
+  });
+  const dialog = {
+    id: 'remote-dialog',
+    kind: 'confirm',
+    title: 'Remote Confirm',
+    message: 'Continue?',
+    defaultValue: null,
+    confirmLabel: 'Continue',
+    cancelLabel: 'Cancel',
+    createdAt: 123,
+  };
+
+  remote.postMessage({
+    type: 'state',
+    source: 'panel-material',
+    dialog,
+  });
+  await new Promise((resolve) => setTimeout(resolve, 20));
+  assert.deepEqual(listEditorDialogs(), [{
+    ...dialog,
+    windowLabel: 'panel-material',
+  }]);
+
+  remote.postMessage({ type: 'closed', source: 'panel-material' });
+  await new Promise((resolve) => setTimeout(resolve, 20));
+  assert.deepEqual(listEditorDialogs(), []);
+  assert.deepEqual(revisions, [
+    ['panel-material:remote-dialog'],
+    [],
+  ]);
+
+  unsubscribe();
+  remote.close();
+  stopSync();
 });

@@ -53,6 +53,7 @@ export const QUERY_PARAMS_SCHEMAS: Record<string, AgentJsonSchema> = {
   'dialog.state': objectSchema({
     windowLabel: stringValue('Window label from window.list; default main'),
   }),
+  'dialog.list': emptySchema,
   'project.settings': emptySchema,
   'selection.get': emptySchema,
   'scene.snapshot': emptySchema,
@@ -383,6 +384,7 @@ const QUERY_SUMMARIES: QuerySummary[] = [
   { id: 'project.state', category: 'project', description: 'Read project lifecycle state before or after a project opens', readOnly: true },
   { id: 'project.recent', category: 'project', description: 'List recent projects without opening a dialog', readOnly: true },
   { id: 'dialog.state', category: 'dialog', description: 'Read the active non-blocking editor dialog for one window', readOnly: true },
+  { id: 'dialog.list', category: 'dialog', description: 'List active non-blocking dialogs across all editor windows', readOnly: true },
   { id: 'project.settings', category: 'project', description: 'Read revision-safe project tags, layers, and sorting layers', readOnly: true },
   { id: 'selection.get', category: 'selection', description: 'Read the current entity selection', readOnly: true },
   { id: 'scene.snapshot', category: 'scene', description: 'Read the complete authored scene snapshot and revision', readOnly: true },

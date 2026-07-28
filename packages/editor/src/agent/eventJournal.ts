@@ -2,6 +2,7 @@ export const AGENT_EVENT_TOPICS = [
   'scene.changed',
   'selection.changed',
   'mode.changed',
+  'dialog.changed',
   'log.added',
   'log.cleared',
   'panel.changed',

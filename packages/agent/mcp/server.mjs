@@ -1138,6 +1138,7 @@ const TOOLS = [
               'scene.changed',
               'selection.changed',
               'mode.changed',
+              'dialog.changed',
               'log.added',
               'log.cleared',
               'panel.changed',
@@ -1184,6 +1185,7 @@ const TOOLS = [
               'scene.changed',
               'selection.changed',
               'mode.changed',
+              'dialog.changed',
               'log.added',
               'log.cleared',
               'panel.changed',
@@ -1414,6 +1416,13 @@ const TOOLS = [
     handler: async (args) => textContent(await bridgeQuery('dialog.state', {
       windowLabel: args.windowLabel || 'main',
     })),
+  },
+  {
+    name: 'list_active_dialogs',
+    description:
+      'List every active non-blocking alert, confirmation, or prompt across all editor windows, including exact window labels and dialog ids.',
+    inputSchema: { type: 'object', properties: {}, additionalProperties: false },
+    handler: async () => textContent(await bridgeQuery('dialog.list')),
   },
   {
     name: 'list_open_documents',
@@ -2980,6 +2989,12 @@ const RESOURCES = [
     'window.list',
   ),
   bridgeResource(
+    'mengine://editor/dialogs',
+    'Active Editor Dialogs',
+    'Active non-blocking alerts, confirmations, and prompts across every editor window.',
+    'dialog.list',
+  ),
+  bridgeResource(
     'mengine://editor/documents',
     'Open Resource Documents',
     'Open docked resource editors with dirty and active state.',
@@ -3080,6 +3095,7 @@ const EVENT_RESOURCE_URIS = Object.freeze({
     'mengine://scene/selection',
   ]),
   'mode.changed': Object.freeze(['mengine://editor/state']),
+  'dialog.changed': Object.freeze(['mengine://editor/dialogs']),
   'panel.changed': Object.freeze([
     'mengine://editor/state',
     'mengine://editor/windows',

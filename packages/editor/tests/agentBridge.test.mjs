@@ -545,6 +545,7 @@ test('editor dialogs are non-blocking, semantic, and Agent-addressable', () => {
   assert.match(host, /confirmButton\.current\?\.focus\(\)/);
   assert.match(dialog, /const MAX_QUEUED_DIALOGS = 64/);
   assert.match(dialog, /export function getActiveEditorDialog/);
+  assert.match(dialog, /export function listEditorDialogs/);
   assert.match(dialog, /export function respondToEditorDialog/);
   assert.match(dialog, /createEditorBroadcastChannel\(DIALOG_CHANNEL_NAME\)/);
   assert.match(main, /initializeEditorInstance\(await getEditorInstanceId\(\)\)/);
@@ -555,7 +556,10 @@ test('editor dialogs are non-blocking, semantic, and Agent-addressable', () => {
   assert.match(app, /postSceneLibraryChanged\(\)/);
   assert.match(bridge, /commandId === 'dialog\.respond'/);
   assert.match(bridge, /case 'dialog\.state'/);
+  assert.match(bridge, /case 'dialog\.list'/);
+  assert.match(bridge, /this\.appendEvent\('dialog\.changed'/);
   assert.match(mcp, /name: 'get_active_dialog'/);
+  assert.match(mcp, /name: 'list_active_dialogs'/);
   assert.match(mcp, /'respond_to_dialog'/);
   assert.match(mcp, /windowLabel: args\.windowLabel \|\| 'main'/);
   for (const source of [app, project, build]) {

@@ -119,7 +119,9 @@ import {
 } from '../assetEditorEvents';
 import {
   getEditorDialogForWindow,
+  listEditorDialogs,
   respondToEditorDialogInWindow,
+  subscribeEditorDialog,
 } from '../editorDialog';
 import {
   clearEditorProfilerSamples,
@@ -374,7 +376,9 @@ class AgentBridge {
   private lastPlaySceneObservationAt = 0;
   private eventSourceConnections = 0;
   private stopLogEvents: (() => void) | null = null;
+  private stopDialogEvents: (() => void) | null = null;
   private stopAssetEvents: (() => void) | null = null;
+  private observedDialogSignature: string | null = null;
   private lastAssetEvent: { signature: string; time: number } | null = null;
   private projectLifecycleProvider:
     | (() => AgentProjectLifecycleProvider | null)
@@ -484,6 +488,8 @@ class AgentBridge {
     this.eventSourceConnections += 1;
     if (this.eventSourceConnections === 1) {
       this.stopLogEvents = logService.subscribe((change) => this.recordLogEvent(change));
+      this.stopDialogEvents = subscribeEditorDialog(() => this.recordDialogEvent());
+      this.recordDialogEvent();
       const onAssetChanged = (event: Event) => {
         const detail = (event as CustomEvent<unknown>).detail ?? { action: 'changed' };
         let signature: string;
@@ -513,6 +519,8 @@ class AgentBridge {
       if (this.eventSourceConnections !== 0) return;
       this.stopLogEvents?.();
       this.stopLogEvents = null;
+      this.stopDialogEvents?.();
+      this.stopDialogEvents = null;
       this.stopAssetEvents?.();
       this.stopAssetEvents = null;
       this.lastAssetEvent = null;
@@ -1701,6 +1709,14 @@ class AgentBridge {
     } else {
       this.appendEvent('log.cleared', {});
     }
+  }
+
+  private recordDialogEvent(): void {
+    const dialogs = listEditorDialogs();
+    const signature = JSON.stringify(dialogs);
+    if (signature === this.observedDialogSignature) return;
+    this.observedDialogSignature = signature;
+    this.appendEvent('dialog.changed', { dialogs });
   }
 
   private appendEvent(
@@ -4099,6 +4115,8 @@ class AgentBridge {
             ? params.windowLabel
             : 'main',
         );
+      case 'dialog.list':
+        return { dialogs: listEditorDialogs() };
       case 'project.settings':
         return this.getProjectSettings();
       case 'selection.get':

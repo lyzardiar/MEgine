@@ -186,6 +186,21 @@ export function getEditorDialogForWindow(
   return snapshot ? { ...snapshot, windowLabel } : null;
 }
 
+export function listEditorDialogs(): EditorWindowDialogSnapshot[] {
+  const dialogs: EditorWindowDialogSnapshot[] = [];
+  if (activeSnapshot) {
+    dialogs.push({ ...activeSnapshot, windowLabel: localWindowLabel });
+  }
+  for (const [windowLabel, dialog] of remoteDialogs) {
+    dialogs.push({ ...dialog, windowLabel });
+  }
+  return dialogs.sort((left, right) => (
+    left.windowLabel.localeCompare(right.windowLabel)
+    || left.createdAt - right.createdAt
+    || left.id.localeCompare(right.id)
+  ));
+}
+
 export async function respondToEditorDialogInWindow(
   windowLabel: string,
   dialogId: string,
@@ -241,10 +256,12 @@ export function initializeEditorDialogSync(
     if (message.type === 'state' && message.source) {
       if (message.dialog) remoteDialogs.set(message.source, message.dialog);
       else remoteDialogs.delete(message.source);
+      emit();
       return;
     }
     if (message.type === 'closed' && message.source) {
       remoteDialogs.delete(message.source);
+      emit();
       return;
     }
     if (message.type === 'request-state') {
@@ -293,6 +310,7 @@ export function initializeEditorDialogSync(
     channel.close();
     dialogChannel = null;
     remoteDialogs.clear();
+    emit();
     for (const [requestId, pending] of pendingRemoteResponses) {
       window.clearTimeout(pending.timer);
       pending.resolve(null);
