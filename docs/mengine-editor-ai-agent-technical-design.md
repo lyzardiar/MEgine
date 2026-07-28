@@ -372,7 +372,7 @@ Rust Host 使用独立的工程生命周期互斥门串行化 open/create/close 
 
 | 能力 | 说明 |
 | --- | --- |
-| 命令结果 | ✅ 每个写命令返回 `{ ok, sceneRevision, eventSequence, data }`；MCP 写工具均可携带 `expectedSceneRevision`，不匹配时在任何改动前返回 `STALE_REVISION` |
+| 命令结果 | ✅ 每个写命令返回 `{ ok, sceneRevision, eventSequence, data }`；所有传输先按同一 `paramsSchema` 严格校验参数，再检查 `expectedSceneRevision`，不匹配时在任何改动前返回 `STALE_REVISION` |
 | 操作后自动截图 | 写命令可带 `options.screenshot: true`，结果里附 `screenshot` 字段，形成「改→看」视觉闭环 |
 | 状态 diff | ✅ `query: scene.diff({ fromRevision })` 返回实体增删改、场景级状态（当前含 clear color）和当前 payload；切场景或历史过期时返回 `resetRequired` 与完整快照 |
 | 事件订阅 | ✅ 有界 journal + cursor 查询 `events.get`，并向原生 WebSocket 广播 `project.changed` / `scene.changed` / `selection.changed` / `mode.changed` / `log.*` / `panel.changed` / `build.progress` / `build.settings` / `asset.changed` |

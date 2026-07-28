@@ -58,7 +58,11 @@ import {
   type AgentResourceEditorKind,
   type AgentResourceEditorTarget,
 } from './resourceTargets';
-import { COMMAND_EXECUTION_OPTIONS_SCHEMA } from './commandSchemas';
+import {
+  COMMAND_EXECUTION_OPTIONS_SCHEMA,
+  COMMAND_PARAMS_SCHEMAS,
+} from './commandSchemas';
+import { validateAgentJsonSchema } from './jsonSchemaValidation';
 import {
   buildAgentComponentSchema,
   listAgentComponentSchemas,
@@ -2423,6 +2427,18 @@ class AgentBridge {
     args: Record<string, unknown> = {},
     options: { screenshot?: boolean; expectedSceneRevision?: number } = {},
   ): Promise<CommandResult> {
+    const paramsSchema = COMMAND_PARAMS_SCHEMAS[commandId];
+    if (!paramsSchema) {
+      throw new BridgeError('INVALID_ARGS', `Unknown command "${commandId}"`);
+    }
+    const argumentIssues = validateAgentJsonSchema(args, paramsSchema);
+    if (argumentIssues.length > 0) {
+      throw new BridgeError(
+        'INVALID_ARGS',
+        `Invalid arguments for command "${commandId}"`,
+        { command: commandId, issues: argumentIssues },
+      );
+    }
     this.assertExpectedSceneRevision(options.expectedSceneRevision);
     if (commandId === 'console.clear') {
       return this.finishAsyncCommand(

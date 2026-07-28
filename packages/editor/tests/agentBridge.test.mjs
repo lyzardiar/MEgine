@@ -275,6 +275,10 @@ test('the main AgentBridge transport is available before a project is opened', (
   assert.match(projectSession, /catch \(error\) \{\s*currentProject = null;/);
   assert.match(bridge, /case 'project\.state'/);
   assert.match(bridge, /case 'project\.recent'/);
+  assert.match(
+    bridge,
+    /const argumentIssues = validateAgentJsonSchema\(args, paramsSchema\);[\s\S]*this\.assertExpectedSceneRevision/,
+  );
   assert.match(bridge, /commandId === 'project\.open'/);
   assert.match(bridge, /commandId === 'project\.create'/);
   assert.match(bridge, /commandId === 'project\.forget_recent'/);
