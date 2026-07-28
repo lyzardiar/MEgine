@@ -34,6 +34,7 @@ import {
   type PanelLayoutSnapshot,
   type ScreenshotResult,
   type SelectionInfo,
+  type SpriteImportSettingsInfo,
   type ViewportTab,
 } from './protocol';
 import {
@@ -96,6 +97,7 @@ import {
   importExternalProjectAsset,
   listProjectFiles,
   isProjectTextAssetPath,
+  loadProjectImage,
   normalizeProjectAssetPath,
   readProjectAssetBytesWithRevision,
   refreshProjectFiles,
@@ -106,6 +108,14 @@ import {
 import { findProjectAssetReferences } from '../assetReferences';
 import { validateImportedAssetName } from '../assetImportModel';
 import { refreshSprites, type SpriteAsset } from '../spriteLibrary';
+import {
+  createSpriteImportSettings,
+  normalizeSpriteImportSettings,
+  parseSpriteImportSettings,
+  serializeSpriteImportSettings,
+  spriteImportPath,
+  spriteTexturePath,
+} from '../spriteImport';
 import { setEditorPrefs } from '../sceneLibrary';
 import type { GameResolution } from '../gameResolution';
 import {
@@ -2318,6 +2328,135 @@ class AgentBridge {
     };
   }
 
+  async getSpriteImportSettings(path: string): Promise<SpriteImportSettingsInfo> {
+    const normalized = normalizeAssetPath(spriteTexturePath(path));
+    const files = await refreshProjectFiles();
+    const texture = findAsset(files, normalized);
+    if (!texture) {
+      throw new BridgeError('IO_ERROR', `Texture asset not found: ${normalized}`);
+    }
+    if (
+      texture.metaStatus !== 'ready'
+      || resourceEditorTarget(texture)?.kind !== 'sprite'
+    ) {
+      throw new BridgeError(
+        'INVALID_ARGS',
+        `Asset is not a healthy Sprite Editor texture: ${texture.relPath}`,
+      );
+    }
+    const image = await bridgeIo(
+      `Failed to decode texture ${texture.relPath}`,
+      () => loadProjectImage(texture.relPath),
+    );
+    const textureSize: [number, number] = [
+      image.naturalWidth,
+      image.naturalHeight,
+    ];
+    const importPath = spriteImportPath(texture.relPath);
+    const sidecar = findAsset(files, importPath);
+    let revision: string | null = null;
+    let settings = createSpriteImportSettings();
+    if (sidecar) {
+      if (sidecar.size > 4 * 1024 * 1024) {
+        throw new BridgeError(
+          'IO_ERROR',
+          `Sprite import settings exceed 4 MiB: ${sidecar.relPath}`,
+        );
+      }
+      const read = await bridgeIo(
+        `Failed to read ${sidecar.relPath}`,
+        () => readProjectAssetBytesWithRevision(sidecar.relPath),
+      );
+      if (read.contents.byteLength > 4 * 1024 * 1024) {
+        throw new BridgeError(
+          'IO_ERROR',
+          `Sprite import settings exceed 4 MiB: ${sidecar.relPath}`,
+        );
+      }
+      try {
+        settings = parseSpriteImportSettings(
+          new TextDecoder('utf-8', { fatal: true }).decode(read.contents),
+          textureSize,
+        );
+      } catch (error) {
+        throw new BridgeError(
+          'IO_ERROR',
+          `Invalid sprite import settings ${sidecar.relPath}: ${
+            error instanceof Error ? error.message : String(error)
+          }`,
+        );
+      }
+      revision = read.revision;
+    }
+    return {
+      texturePath: texture.relPath,
+      importPath,
+      textureSize,
+      revision,
+      settings: {
+        mode: settings.mode,
+        pixelsPerUnit: settings.pixels_per_unit,
+        slices: structuredClone(settings.slices),
+      },
+    };
+  }
+
+  async setSpriteImportSettings(
+    args: Record<string, unknown>,
+  ): Promise<SpriteImportSettingsInfo> {
+    await this.requireWorkspaceProvider().assertDiskMutationAllowed();
+    const current = await this.getSpriteImportSettings(
+      requiredString(args, 'path'),
+    );
+    const expectedRevision = requiredNullableRevision(
+      args,
+      'expectedRevision',
+    );
+    if (current.revision !== expectedRevision) {
+      throw new BridgeError(
+        'STALE_REVISION',
+        `Sprite import settings changed: expected ${
+          String(expectedRevision)
+        }, current ${String(current.revision)}`,
+        {
+          path: current.importPath,
+          expectedRevision,
+          currentRevision: current.revision,
+        },
+      );
+    }
+    const raw = args.settings as {
+      mode: 'single' | 'multiple';
+      pixelsPerUnit: number;
+      slices: SpriteImportSettingsInfo['settings']['slices'];
+    };
+    let normalized;
+    try {
+      normalized = normalizeSpriteImportSettings({
+        version: 1,
+        mode: raw.mode,
+        pixels_per_unit: raw.pixelsPerUnit,
+        slices: structuredClone(raw.slices),
+      }, current.textureSize);
+    } catch (error) {
+      throw new BridgeError(
+        'INVALID_ARGS',
+        error instanceof Error ? error.message : String(error),
+      );
+    }
+    await this.writeAssetText(
+      current.importPath,
+      serializeSpriteImportSettings(normalized, current.textureSize),
+      expectedRevision,
+    );
+    await refreshSprites();
+    const result = await this.getSpriteImportSettings(current.texturePath);
+    this.logProvider?.(
+      `Agent applied sprite import settings: ${current.texturePath}`,
+    );
+    return result;
+  }
+
   async listAssetTrash(params: Record<string, unknown> = {}): Promise<{
     trashRevision: string;
     total: number;
@@ -4133,6 +4272,10 @@ class AgentBridge {
       );
       return this.finishAsyncCommand({ ok: true, data: result }, options, true);
     }
+    if (commandId === 'sprite.import_settings.set') {
+      const result = await this.setSpriteImportSettings(args);
+      return this.finishAsyncCommand({ ok: true, data: result }, options, true);
+    }
     if (commandId === 'asset.rename') {
       const result = await (await this.getAssetOperations()).rename({
         sourcePath: requiredString(args, 'sourcePath'),
@@ -4562,6 +4705,8 @@ class AgentBridge {
         return this.listAssets(params);
       case 'sprite.list':
         return this.listSpriteAssets(params);
+      case 'sprite.import_settings':
+        return this.getSpriteImportSettings(requiredString(params, 'path'));
       case 'asset.read_text':
         return this.readAssetText(
           requiredString(params, 'path'),

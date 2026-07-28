@@ -182,6 +182,17 @@ test('command schemas expose exact high-risk guards and shared optimistic option
     4,
   );
   assert.equal(
+    COMMAND_PARAMS_SCHEMAS['sprite.import_settings.set']
+      .properties.settings.properties.slices.maxItems,
+    4_096,
+  );
+  assert.equal(
+    COMMAND_PARAMS_SCHEMAS['sprite.import_settings.set']
+      .properties.settings.properties.slices.items
+      .properties.rect.maxItems,
+    4,
+  );
+  assert.equal(
     COMMAND_EXECUTION_OPTIONS_SCHEMA.properties.expectedSceneRevision.minimum,
     0,
   );

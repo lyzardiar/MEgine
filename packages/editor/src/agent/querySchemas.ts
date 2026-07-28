@@ -278,6 +278,11 @@ export const QUERY_PARAMS_SCHEMAS: Record<string, AgentJsonSchema> = {
       },
     ],
   }),
+  'sprite.import_settings': objectSchema({
+    path: nonEmptyString(
+      'Sprite-compatible texture path or exact texture#slice reference',
+    ),
+  }, ['path']),
   'asset.read_text': objectSchema({
     path: nonEmptyString('Project-relative text asset path under Assets/'),
     maxBytes: boundedInteger(1, 8_388_608, 'Maximum UTF-8 bytes; default 1 MiB'),
@@ -434,6 +439,7 @@ const QUERY_SUMMARIES: QuerySummary[] = [
   { id: 'menu.list', category: 'menu', description: 'List registered menu items and Agent-safe invocation metadata', readOnly: true },
   { id: 'asset.list', category: 'asset', description: 'List and filter the paged project asset index', readOnly: true },
   { id: 'sprite.list', category: 'asset', description: 'List stable sprite and texture-slice references in bounded revision-safe pages', readOnly: true },
+  { id: 'sprite.import_settings', category: 'asset', description: 'Read normalized Sprite Editor import settings and their exact sidecar revision', readOnly: true },
   { id: 'asset.read_text', category: 'asset', description: 'Read a bounded UTF-8 text asset and its revision', readOnly: true },
   { id: 'asset.find_references', category: 'asset', description: 'Find project references to an exact asset', readOnly: true },
   { id: 'asset.rename_preview', category: 'asset', description: 'Preview a reference-aware asset rename', readOnly: true },

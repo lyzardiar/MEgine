@@ -1722,6 +1722,24 @@ const TOOLS = [
     handler: async (args) => textContent(await bridgeQuery('sprite.list', args)),
   },
   {
+    name: 'get_sprite_import_settings',
+    description:
+      'Read normalized Sprite Editor mode, pixels-per-unit, slices, texture dimensions, and the exact sidecar revision. The revision is null while a texture still uses implicit Single defaults.',
+    inputSchema: {
+      type: 'object',
+      additionalProperties: false,
+      required: ['path'],
+      properties: {
+        path: nonEmptyStringSchema(
+          'Sprite-compatible texture path or exact texture#slice reference',
+        ),
+      },
+    },
+    handler: async (args) => textContent(
+      await bridgeQuery('sprite.import_settings', args),
+    ),
+  },
+  {
     name: 'read_asset_text',
     description:
       'Read a UTF-8 project text asset and return its exact revision. Use that revision with write_asset_text to prevent overwriting concurrent edits.',
@@ -2181,6 +2199,71 @@ const TOOLS = [
       },
     },
     ['path', 'contents', 'expectedRevision'],
+  ),
+  execTool(
+    'set_sprite_import_settings',
+    'Apply complete normalized Sprite Editor settings without opening or focusing the editor. Pass the exact revision returned by get_sprite_import_settings, or null only while defaults are implicit. Unsaved resource documents block the write.',
+    'sprite.import_settings.set',
+    {
+      path: {
+        type: 'string',
+        description: 'Sprite-compatible texture path under Assets/',
+      },
+      settings: {
+        type: 'object',
+        additionalProperties: false,
+        required: ['mode', 'pixelsPerUnit', 'slices'],
+        properties: {
+          mode: {
+            type: 'string',
+            enum: ['single', 'multiple'],
+            description: 'Single texture sprite or named multiple slices',
+          },
+          pixelsPerUnit: {
+            type: 'number',
+            exclusiveMinimum: 0,
+            maximum: 100000,
+          },
+          slices: {
+            type: 'array',
+            maxItems: 4096,
+            items: {
+              type: 'object',
+              additionalProperties: false,
+              required: ['name', 'rect', 'pivot'],
+              properties: {
+                name: {
+                  type: 'string',
+                  minLength: 1,
+                  maxLength: 64,
+                },
+                rect: {
+                  type: 'array',
+                  minItems: 4,
+                  maxItems: 4,
+                  items: { type: 'integer', minimum: 0 },
+                  description:
+                    'Top-left pixel rectangle [x, y, width, height]',
+                },
+                pivot: {
+                  type: 'array',
+                  minItems: 2,
+                  maxItems: 2,
+                  items: { type: 'number', minimum: 0, maximum: 1 },
+                  description: 'Normalized bottom-left pivot [x, y]',
+                },
+              },
+            },
+          },
+        },
+      },
+      expectedRevision: {
+        type: ['string', 'null'],
+        description:
+          'Exact revision from get_sprite_import_settings, or null while defaults are implicit',
+      },
+    },
+    ['path', 'settings', 'expectedRevision'],
   ),
   execTool(
     'rename_asset',
@@ -3102,6 +3185,7 @@ const IDEMPOTENT_BRIDGE_COMMANDS = new Set([
   'view.set_game_resolution',
   'view.set_scene_preferences',
   'view.set_timeline_preferences',
+  'sprite.import_settings.set',
   'panel.focus',
   'panel.reset_layout',
   'window.open_editor',

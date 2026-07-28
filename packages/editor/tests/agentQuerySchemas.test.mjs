@@ -91,6 +91,7 @@ test('query schemas accept documented read shapes and reject malformed or extra 
       offset: 1,
       expectedSpriteRevision: 'sprite-index-v1-20-0123456789abcdef',
     }],
+    ['sprite.import_settings', { path: 'Assets/Characters/Hero.png#Idle' }],
     ['asset.trash_list', {
       limit: 1,
       offset: 1,
@@ -138,6 +139,7 @@ test('query schemas accept documented read shapes and reject malformed or extra 
     ['asset.list', { limit: 1, offset: 1 }],
     ['sprite.list', { limit: 1, offset: 1 }],
     ['sprite.list', { expectedSpriteRevision: 'not-a-sprite-revision' }],
+    ['sprite.import_settings', { path: '   ' }],
     ['asset.trash_list', { limit: 1, offset: 1 }],
     ['asset.trash_list', { expectedTrashRevision: 'not-a-trash-revision' }],
     ['events.get', { topics: ['unknown'] }],

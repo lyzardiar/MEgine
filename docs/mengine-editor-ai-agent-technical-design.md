@@ -242,6 +242,7 @@ MEngine 编辑器当前对人类友好，但对 AI Agent 不够友好。AI Agent
 | `asset.find_references` | 引用报告 | ✅ 复用完整项目引用扫描器 |
 | `scene.list` | `{ ready, activeScene, dirty, scenes[] }` | ✅ 读取实时 Scene Library 与内存场景状态 |
 | `sprite.list` | 带 `spriteRevision` 的分页 `ProjectSpriteInfo[]`，支持 search/folder 过滤 | ✅ 复用 `list_project_sprites`；返回稳定 sprite id、切片 rect/pivot/PPU，续页用 revision 防止导入变化造成撕裂 |
+| `sprite.import_settings` | `{ texturePath, importPath, textureSize, revision, settings: { mode, pixelsPerUnit, slices } }` | ✅ 读取 Sprite Editor 规范化导入设置；缺少 sidecar 时返回兼容 Single 默认值与 `revision: null`，支持 texture#slice 引用 |
 
 ### 4.2 可操作性（Controllability）—— 让 Agent「动手」
 
@@ -351,6 +352,7 @@ Rust Host 使用独立的工程生命周期互斥门串行化 open/create/close 
 | `asset.open` | ✅ 校验资产索引与 `.meta` 后，在对应 Material/Material Instance/Shader/Animator/Avatar Mask/Timeline/Sprite 编辑器中打开；只把 Sprite 编辑器实际支持的 PNG/JPEG/WebP/GIF 纹理作为 Sprite 文档，跨拆分窗口同步文档路径，切换前拒绝丢弃本地或远端脏文档，目标宿主可见或聚焦时直接拒绝 |
 | `asset.instantiate` | ✅ 校验资产索引与 `.meta` 后，把 Prefab、glTF/GLB Model 或 Sprite 纹理通过与 Project 面板一致的路径实例化到当前编辑场景；返回根实体完整快照并形成一次撤销 |
 | `asset.write_text` | ✅ 8 MiB UTF-8 上限；已有文件必须携带精确 revision，新文件必须传 null；写前拒绝任何窗口的未保存工作 |
+| `sprite.import_settings.set` | ✅ 以 `sprite.import_settings` 的精确 revision 完整更新模式、PPU 与最多 4096 个切片；复用 Sprite Editor 校验并刷新 Sprite 索引，外部变化会刷新干净文档，脏文档保留草稿且过期保存失败 |
 | `asset.rename_preview` / `asset.rename` | ✅ 两阶段引用感知重命名；预览令牌绑定 source revision、自动重写和人工引用，执行前重新扫描校验 |
 | `asset.duplicate_preview` / `asset.duplicate` | ✅ 两阶段复制；新 GUID，移动相对依赖时重写自身内容，脚本引用需显式确认 |
 | `asset.trash_preview` / `asset.trash` | ✅ 完整引用与 manifest 预检；有引用或扫描截断时禁止移动，成功后可恢复 |

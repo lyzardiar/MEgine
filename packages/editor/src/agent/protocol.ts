@@ -298,6 +298,23 @@ export interface SelectionInfo {
   selectedIds: number[];
 }
 
+export interface SpriteImportSettingsInfo {
+  texturePath: string;
+  importPath: string;
+  textureSize: [number, number];
+  /** Exact sidecar revision, or null while compatible Single defaults are implicit. */
+  revision: string | null;
+  settings: {
+    mode: 'single' | 'multiple';
+    pixelsPerUnit: number;
+    slices: Array<{
+      name: string;
+      rect: [number, number, number, number];
+      pivot: [number, number];
+    }>;
+  };
+}
+
 /** Structured error codes shared across all transports. */
 export type BridgeErrorCode =
   | 'STALE_REVISION'

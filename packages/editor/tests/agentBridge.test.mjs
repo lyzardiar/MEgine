@@ -778,6 +778,7 @@ test('scene, asset, and asynchronous build tools share guarded editor services',
   const viewport = fs.readFileSync(path.join(root, 'src', 'panels', 'Viewport.tsx'), 'utf8');
   const timeline = fs.readFileSync(path.join(root, 'src', 'panels', 'Timeline.tsx'), 'utf8');
   const sequencer = fs.readFileSync(path.join(root, 'src', 'panels', 'Sequencer.tsx'), 'utf8');
+  const spriteEditor = fs.readFileSync(path.join(root, 'src', 'panels', 'SpriteEditor.tsx'), 'utf8');
   const buildSettings = fs.readFileSync(
     path.join(root, 'src', 'panels', 'BuildSettings.tsx'),
     'utf8',
@@ -868,6 +869,12 @@ test('scene, asset, and asynchronous build tools share guarded editor services',
   assert.match(sequencer, /updateTimelineEditorPreferences\(\{/);
   assert.doesNotMatch(timeline, /localStorage\.setItem/);
   assert.doesNotMatch(sequencer, /localStorage\.setItem/);
+  assert.match(bridge, /case 'sprite\.import_settings'/);
+  assert.match(bridge, /commandId === 'sprite\.import_settings\.set'/);
+  assert.match(bridge, /normalizeSpriteImportSettings/);
+  assert.match(bridge, /current\.revision !== expectedRevision/);
+  assert.match(spriteEditor, /writeProjectAssetText\(importPath, text, savedRevision\)/);
+  assert.match(spriteEditor, /PROJECT_ASSETS_CHANGED_EVENT/);
   assert.match(app, /updateSceneViewPreferences\(\{ pivotMode: next \}\)/);
   assert.match(app, /updateSceneViewPreferences\(\{ handleOrientation: next \}\)/);
   assert.match(bridge, /setEditorPrefs\(\{ gameResolution: resolution \}\)/);

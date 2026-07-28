@@ -68,6 +68,19 @@ test('direct AgentBridge schema validation matches MCP for valid command argumen
       animationTimeline: { timeDisplayMode: 'seconds' },
       sequencer: { snapping: false, rippleMode: true },
     }],
+    ['sprite.import_settings.set', {
+      path: 'Assets/Characters/Hero.png',
+      settings: {
+        mode: 'multiple',
+        pixelsPerUnit: 100,
+        slices: [{
+          name: 'Idle',
+          rect: [0, 0, 32, 64],
+          pivot: [0.5, 0],
+        }],
+      },
+      expectedRevision: null,
+    }],
   ]) {
     assertParity(commandId, args, true);
   }
@@ -111,6 +124,19 @@ test('direct AgentBridge schema validation matches MCP for malformed or extra ar
     ['view.set_timeline_preferences', {
       animationTimeline: {},
       sequencer: { loopPreview: 'yes' },
+    }],
+    ['sprite.import_settings.set', {
+      path: 'Assets/Characters/Hero.png',
+      settings: {
+        mode: 'multiple',
+        pixelsPerUnit: 100,
+        slices: [{
+          name: 'Idle',
+          rect: [0, 32, 64],
+          pivot: [2, 0],
+        }],
+      },
+      expectedRevision: null,
     }],
   ]) {
     assertParity(commandId, args, false);

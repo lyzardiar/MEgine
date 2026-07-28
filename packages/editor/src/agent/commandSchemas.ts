@@ -320,6 +320,51 @@ export const COMMAND_PARAMS_SCHEMAS: Record<string, AgentJsonSchema> = {
       description: 'Current asset revision, or null only when creating a missing file',
     },
   }, ['path', 'contents', 'expectedRevision']),
+  'sprite.import_settings.set': objectSchema({
+    path: assetPath,
+    settings: objectSchema({
+      mode: {
+        type: 'string',
+        enum: ['single', 'multiple'],
+        description: 'Single texture sprite or named multiple slices',
+      },
+      pixelsPerUnit: {
+        type: 'number',
+        exclusiveMinimum: 0,
+        maximum: 100_000,
+      },
+      slices: {
+        type: 'array',
+        maxItems: 4_096,
+        items: objectSchema({
+          name: {
+            type: 'string',
+            minLength: 1,
+            maxLength: 64,
+          },
+          rect: {
+            type: 'array',
+            minItems: 4,
+            maxItems: 4,
+            items: { type: 'integer', minimum: 0 },
+            description: 'Top-left pixel rectangle [x, y, width, height]',
+          },
+          pivot: {
+            type: 'array',
+            minItems: 2,
+            maxItems: 2,
+            items: { type: 'number', minimum: 0, maximum: 1 },
+            description: 'Normalized bottom-left pivot [x, y]',
+          },
+        }, ['name', 'rect', 'pivot']),
+      },
+    }, ['mode', 'pixelsPerUnit', 'slices']),
+    expectedRevision: {
+      type: ['string', 'null'],
+      description:
+        'Exact revision from sprite.import_settings, or null while defaults are implicit',
+    },
+  }, ['path', 'settings', 'expectedRevision']),
   'asset.rename': objectSchema({
     sourcePath: assetPath,
     destinationPath: assetPath,
