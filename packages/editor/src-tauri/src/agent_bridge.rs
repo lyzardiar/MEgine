@@ -1146,7 +1146,7 @@ const WINDOW_UI_SNAPSHOT_SCRIPT: &str = r#"
       ? String(element.type || 'text').toLowerCase()
       : '';
     const writableInput = element instanceof HTMLInputElement
-      && !['button', 'submit', 'reset', 'checkbox', 'radio', 'file', 'image'].includes(inputType);
+      && !['button', 'submit', 'reset', 'file', 'image'].includes(inputType);
     if ((writableInput && !element.readOnly)
       || (element instanceof HTMLTextAreaElement && !element.readOnly)
       || element instanceof HTMLSelectElement
@@ -1199,10 +1199,11 @@ const WINDOW_UI_SNAPSHOT_SCRIPT: &str = r#"
       const value = element.getAttribute(`aria-${key}`);
       if (value !== null) state[key] = value;
     }
-    if ('checked' in element && typeof element.checked === 'boolean') {
-      state.checked = element instanceof HTMLInputElement && element.indeterminate
-        ? 'mixed'
-        : element.checked;
+    if (
+      element instanceof HTMLInputElement
+      && ['checkbox', 'radio'].includes(element.type)
+    ) {
+      state.checked = element.indeterminate ? 'mixed' : element.checked;
     }
     if ('selected' in element && typeof element.selected === 'boolean') {
       state.selected = element.selected;
@@ -1418,12 +1419,72 @@ const WINDOW_UI_INTERACTION_SCRIPT: &str = r#"
       ...coordinates,
     }));
   };
+  const reactPropsFor = (target) => {
+    for (const key of Object.keys(target)) {
+      if (key.startsWith('__reactProps$')) return target[key] || {};
+    }
+    return {};
+  };
+  const setCheckableInput = (checked, includeClick = false) => {
+    if (
+      !(element instanceof HTMLInputElement)
+      || !['checkbox', 'radio'].includes(element.type)
+    ) {
+      return false;
+    }
+    const setter = Object.getOwnPropertyDescriptor(
+      HTMLInputElement.prototype,
+      'checked',
+    )?.set;
+    if (!setter) return false;
+    setter.call(element, Boolean(checked));
+    element.indeterminate = false;
+    const reactProps = reactPropsFor(element);
+    const syntheticEvent = (type) => ({
+      type,
+      target: element,
+      currentTarget: element,
+      nativeEvent: null,
+      bubbles: true,
+      cancelable: true,
+      defaultPrevented: false,
+      preventDefault() { this.defaultPrevented = true; },
+      stopPropagation() {},
+      isDefaultPrevented() { return this.defaultPrevented; },
+      isPropagationStopped() { return false; },
+      persist() {},
+    });
+    let handledByReact = false;
+    if (includeClick && typeof reactProps.onClick === 'function') {
+      reactProps.onClick(syntheticEvent('click'));
+      handledByReact = true;
+    }
+    if (typeof reactProps.onChange === 'function') {
+      reactProps.onChange(syntheticEvent('change'));
+      handledByReact = true;
+    }
+    if (!handledByReact) {
+      element.dispatchEvent(new Event('input', { bubbles: true, composed: true }));
+      element.dispatchEvent(new Event('change', { bubbles: true, composed: true }));
+    }
+    return true;
+  };
   const dispatchClick = (detail) => {
     dispatchPointer('pointerdown', 0, 1, detail);
     dispatchPointer('mousedown', 0, 1, detail);
     dispatchPointer('pointerup', 0, 0, detail);
     dispatchPointer('mouseup', 0, 0, detail);
-    if (typeof element.click === 'function') element.click();
+    if (
+      element instanceof HTMLInputElement
+      && ['checkbox', 'radio'].includes(element.type)
+    ) {
+      setCheckableInput(
+        element.type === 'radio'
+          ? true
+          : (element.indeterminate ? true : !element.checked),
+        true,
+      );
+    } else if (typeof element.click === 'function') element.click();
     else dispatchPointer('click', 0, 0, detail);
   };
   if (action === 'click') {
@@ -1443,25 +1504,37 @@ const WINDOW_UI_INTERACTION_SCRIPT: &str = r#"
       return { ok: false, error: `Element ${selector} is read-only` };
     }
     const value = requestedValue == null ? '' : String(requestedValue);
-    let prototype;
-    if (element instanceof HTMLInputElement) prototype = HTMLInputElement.prototype;
-    else if (element instanceof HTMLTextAreaElement) prototype = HTMLTextAreaElement.prototype;
-    else if (element instanceof HTMLSelectElement) prototype = HTMLSelectElement.prototype;
-    if (prototype) {
-      const setter = Object.getOwnPropertyDescriptor(prototype, 'value')?.set;
-      if (!setter) return { ok: false, error: `Element ${selector} has no value setter` };
-      setter.call(element, value);
-      element.dispatchEvent(new Event('input', { bubbles: true }));
-      element.dispatchEvent(new Event('change', { bubbles: true }));
-    } else if (element.isContentEditable) {
-      element.textContent = value;
-      element.dispatchEvent(new InputEvent('input', {
-        bubbles: true,
-        inputType: 'insertText',
-        data: value,
-      }));
+    if (
+      element instanceof HTMLInputElement
+      && ['checkbox', 'radio'].includes(element.type)
+    ) {
+      if (!['true', 'false'].includes(value.toLowerCase())) {
+        return { ok: false, error: `Element ${selector} accepts only true or false` };
+      }
+      if (!setCheckableInput(value.toLowerCase() === 'true')) {
+        return { ok: false, error: `Element ${selector} has no checked setter` };
+      }
     } else {
-      return { ok: false, error: `Element ${selector} does not accept a value` };
+      let prototype;
+      if (element instanceof HTMLInputElement) prototype = HTMLInputElement.prototype;
+      else if (element instanceof HTMLTextAreaElement) prototype = HTMLTextAreaElement.prototype;
+      else if (element instanceof HTMLSelectElement) prototype = HTMLSelectElement.prototype;
+      if (prototype) {
+        const setter = Object.getOwnPropertyDescriptor(prototype, 'value')?.set;
+        if (!setter) return { ok: false, error: `Element ${selector} has no value setter` };
+        setter.call(element, value);
+        element.dispatchEvent(new Event('input', { bubbles: true }));
+        element.dispatchEvent(new Event('change', { bubbles: true }));
+      } else if (element.isContentEditable) {
+        element.textContent = value;
+        element.dispatchEvent(new InputEvent('input', {
+          bubbles: true,
+          inputType: 'insertText',
+          data: value,
+        }));
+      } else {
+        return { ok: false, error: `Element ${selector} does not accept a value` };
+      }
     }
   } else if (action === 'scroll') {
     if (!(element instanceof HTMLElement) || typeof element.scrollBy !== 'function') {
@@ -1486,6 +1559,10 @@ const WINDOW_UI_INTERACTION_SCRIPT: &str = r#"
     value: element instanceof HTMLInputElement && element.type === 'password'
       ? '<redacted>'
       : ('value' in element ? String(element.value) : null),
+    checked: element instanceof HTMLInputElement
+      && ['checkbox', 'radio'].includes(element.type)
+      ? element.checked
+      : null,
     scrollLeft: element instanceof HTMLElement ? element.scrollLeft : null,
     scrollTop: element instanceof HTMLElement ? element.scrollTop : null,
     scrollWidth: element instanceof HTMLElement ? element.scrollWidth : null,

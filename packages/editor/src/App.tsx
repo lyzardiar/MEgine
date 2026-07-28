@@ -2566,6 +2566,10 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
                 store.setComponents(type, updates);
                 refresh();
               }}
+              onPatchComponents={(type, updates) => {
+                store.patchComponents(type, updates);
+                refresh();
+              }}
               onPatchComponent={(entity, type, patch) => {
                 store.patchComponent(entity, type, patch);
                 refresh();

@@ -26,7 +26,7 @@ test('whole-window agent capture is background-safe and addressable by window la
   assert.match(rust, /Page\.captureScreenshot/);
   assert.match(rust, /Runtime\.evaluate/);
   assert.match(rust, /WINDOW_UI_SNAPSHOT_SCRIPT/);
-  assert.match(rust, /element instanceof HTMLInputElement && element\.indeterminate/);
+  assert.match(rust, /state\.checked = element\.indeterminate \? 'mixed' : element\.checked/);
   assert.match(rust, /WINDOW_UI_CONTENT_SCRIPT/);
   assert.match(rust, /Password values cannot be read/);
   assert.match(rust, /content\.slice\(start, start \+ Number\(maxChars\)\)/);
@@ -36,6 +36,10 @@ test('whole-window agent capture is background-safe and addressable by window la
   assert.match(rust, /nextOffset:/);
   assert.match(rust, /hasMore:/);
   assert.match(rust, /WINDOW_UI_INTERACTION_SCRIPT/);
+  assert.match(rust, /setCheckableInput/);
+  assert.match(rust, /HTMLInputElement\.prototype,\s*'checked'/);
+  assert.match(rust, /typeof reactProps\.onChange === 'function'/);
+  assert.match(rust, /\['checkbox', 'radio'\]\.includes\(element\.type\)/);
   assert.match(rust, /MENGINE_EDITOR_CONFIG_DIR/);
   assert.match(rust, /"click" \| "doubleClick" \| "contextClick" \| "setValue" \| "scroll"/);
   assert.match(rust, /key\.startsWith\('__reactProps\$'\)/);

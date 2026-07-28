@@ -22,6 +22,10 @@ import { eulerXYZToQuat, quatToEulerXYZ } from '../math3d';
 import type { MaterialAsset } from '../materialAsset';
 import { loadResolvedMaterialAsset } from '../materialInstanceAsset';
 import {
+  inspectMultiComponentFields,
+  planMultiComponentEdit,
+} from '../multiComponentEditing';
+import {
   isMaterialPropertyBlockTextureAsset,
   materialPropertyBlockBindingDiagnostics,
   materialPropertyParameterMap,
@@ -66,6 +70,8 @@ type Transform = {
   rotation: [number, number, number, number];
   scale: [number, number, number];
 };
+
+const MIXED_SELECT_VALUE = '__mengine_mixed_value__';
 
 /** Unity-style: drag label horizontally to scrub number. Shift=快, Alt=细 */
 function useScrubDrag(
@@ -133,6 +139,7 @@ function useScrubDrag(
 
 function AxisInput(props: {
   label: 'x' | 'y' | 'z' | 'w' | 'h';
+  ariaLabel?: string;
   value: number;
   onChange: (v: number) => void;
   step?: number;
@@ -152,8 +159,9 @@ function AxisInput(props: {
       <input
         type="number"
         step={step}
+        aria-label={props.ariaLabel ?? props.label.toUpperCase()}
         value={props.mixed ? '' : Number(props.value.toFixed(3))}
-        placeholder={props.mixed ? '—' : undefined}
+        placeholder={props.mixed ? 'Mixed' : undefined}
         title={props.mixed ? 'Mixed values' : undefined}
         onChange={(e) => props.onChange(parseFloat(e.target.value) || 0)}
       />
@@ -285,6 +293,7 @@ function NumField(props: {
   step?: number;
   min?: number;
   max?: number;
+  mixed?: boolean;
   onChange: (v: number) => void;
 }) {
   const step = props.step ?? 1;
@@ -307,7 +316,10 @@ function NumField(props: {
         step={step}
         min={props.min}
         max={props.max}
-        value={Number(props.value.toFixed(3))}
+        aria-label={props.label}
+        value={props.mixed ? '' : Number(props.value.toFixed(3))}
+        placeholder={props.mixed ? 'Mixed' : undefined}
+        title={props.mixed ? 'Mixed values' : undefined}
         onChange={(e) => props.onChange(clamp(parseFloat(e.target.value) || 0))}
       />
     </div>
@@ -664,7 +676,12 @@ function GenericCompEditor(props: {
   data: Record<string, unknown>;
   entities: Array<{ entity: number; name?: string | null; components: Record<string, unknown> }>;
   dynamicOptions?: Record<string, InspectorOption[]>;
-  onChange: (next: Record<string, unknown>) => void;
+  mixedFields?: ReadonlySet<string>;
+  mixedArrayIndices?: Readonly<Record<string, readonly boolean[]>>;
+  onChange: (
+    next: Record<string, unknown>,
+    editedPath?: readonly (string | number)[],
+  ) => void;
 }) {
   const isColorVector = (key: string, value: number[]) => {
     if (value.length !== 3 && value.length !== 4) return false;
@@ -690,7 +707,11 @@ function GenericCompEditor(props: {
           return null;
         }
         const label = meta?.label ?? inspectorLabel(key);
-        const setValue = (value: unknown) => props.onChange({ ...props.data, [key]: value });
+        const setValue = (
+          value: unknown,
+          nestedPath: readonly (string | number)[] = [],
+        ) => props.onChange({ ...props.data, [key]: value }, [key, ...nestedPath]);
+        const mixed = props.mixedFields?.has(key) ?? false;
 
         if (meta?.kind === 'event') {
           return (
@@ -783,7 +804,13 @@ function GenericCompEditor(props: {
               <label title={key}>{label}</label>
               <input
                 type="checkbox"
-                checked={val}
+                checked={!mixed && val}
+                ref={(element) => {
+                  if (element) element.indeterminate = mixed;
+                }}
+                aria-label={label}
+                aria-checked={mixed ? 'mixed' : val}
+                title={mixed ? 'Mixed values' : undefined}
                 onChange={(e) => setValue(e.target.checked)}
               />
             </div>
@@ -798,6 +825,7 @@ function GenericCompEditor(props: {
               min={meta?.min}
               max={meta?.max}
               step={meta?.step}
+              mixed={mixed}
               onChange={setValue}
             />
           );
@@ -810,9 +838,11 @@ function GenericCompEditor(props: {
               <label title={key}>{label}</label>
               {selectOptions ? (
                 <select
-                  value={val}
+                  value={mixed ? MIXED_SELECT_VALUE : val}
+                  aria-label={label}
                   onChange={(e) => setValue(e.target.value)}
                 >
+                  {mixed && <option value={MIXED_SELECT_VALUE} disabled>Mixed</option>}
                   {!selectOptions.some((option) => option.value === val) && (
                     <option value={val}>
                       {key === 'sorting_layer' && val
@@ -827,13 +857,17 @@ function GenericCompEditor(props: {
               ) : meta?.kind === 'multiline' ? (
                 <textarea
                   rows={3}
-                  value={val}
+                  value={mixed ? '' : val}
+                  placeholder={mixed ? 'Mixed values' : undefined}
+                  aria-label={label}
                   onChange={(e) => setValue(e.target.value)}
                 />
               ) : (
                 <input
                   type="text"
-                  value={val}
+                  value={mixed ? '' : val}
+                  placeholder={mixed ? 'Mixed values' : undefined}
+                  aria-label={label}
                   onChange={(e) => setValue(e.target.value)}
                 />
               )}
@@ -861,11 +895,13 @@ function GenericCompEditor(props: {
                   <AxisInput
                     key={ax}
                     label={ax}
+                    ariaLabel={`${label} ${ax.toUpperCase()}`}
                     value={arr[i]}
+                    mixed={props.mixedArrayIndices?.[key]?.[i] ?? mixed}
                     onChange={(v) => {
                       const next = [...arr];
                       next[i] = v;
-                      setValue(next);
+                      setValue(next, [i]);
                     }}
                   />
                 ))}
@@ -1048,6 +1084,10 @@ function MultiSelectionInspector(props: {
   onSetComponents?: (
     type: string,
     updates: Array<{ entity: number; value: Record<string, unknown> }>,
+  ) => void;
+  onPatchComponents?: (
+    type: string,
+    updates: Array<{ entity: number; patch: Record<string, unknown> }>,
   ) => void;
   onBeginEditGesture?: () => void;
   onEndEditGesture?: () => void;
@@ -1334,6 +1374,7 @@ function MultiSelectionInspector(props: {
           const label = catalog.find((entry) => entry.type === type)?.label
             ?? getBehaviour(type)?.label
             ?? type;
+          const fieldState = inspectMultiComponentFields(props.entities, type);
           return (
             <CompBlock
               key={type}
@@ -1347,10 +1388,29 @@ function MultiSelectionInspector(props: {
                 (next) => replaceSharedComponent(type, next),
               )}
             >
-              <div className="field-hint">
-                Shared by all {props.count} selected GameObjects. Reset, paste, or remove applies
-                to the complete selection as one edit.
-              </div>
+              {fieldState.mixedFields.size > 0 && (
+                <div className="field-hint">
+                  Mixed: {[...fieldState.mixedFields].map(inspectorLabel).join(', ')}.
+                  Editing changes only that field on all {props.count} GameObjects.
+                </div>
+              )}
+              <GenericCompEditor
+                componentType={type}
+                data={value}
+                entities={props.entities}
+                mixedFields={fieldState.mixedFields}
+                mixedArrayIndices={fieldState.mixedArrayIndices}
+                onChange={(next, editedPath) => {
+                  const updates = planMultiComponentEdit(
+                    props.entities,
+                    type,
+                    value,
+                    next,
+                    editedPath,
+                  );
+                  if (updates.length) props.onPatchComponents?.(type, updates);
+                }}
+              />
             </CompBlock>
           );
         })}
@@ -1423,6 +1483,10 @@ export function Inspector(props: {
     type: string,
     updates: Array<{ entity: number; value: Record<string, unknown> }>,
   ) => void;
+  onPatchComponents?: (
+    type: string,
+    updates: Array<{ entity: number; patch: Record<string, unknown> }>,
+  ) => void;
   /** Merge patch into existing component (avoids stale full-replace wiping fields). */
   onPatchComponent?: (entity: number, type: string, patch: Record<string, unknown>) => void;
   onInvokeBehaviourMethod?: (entity: number, type: string, method: string) => void;
@@ -1489,6 +1553,7 @@ export function Inspector(props: {
           onRemoveComponents={props.onRemoveComponents}
           onChangeTransforms={props.onChangeTransforms}
           onSetComponents={props.onSetComponents}
+          onPatchComponents={props.onPatchComponents}
           onBeginEditGesture={props.onBeginEditGesture}
           onEndEditGesture={props.onEndEditGesture}
         />
