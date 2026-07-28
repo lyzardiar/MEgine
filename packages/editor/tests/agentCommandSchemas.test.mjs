@@ -154,6 +154,20 @@ test('command schemas expose exact high-risk guards and shared optimistic option
     3,
   );
   assert.equal(
+    COMMAND_PARAMS_SCHEMAS['view.set_scene_preferences'].anyOf.length,
+    4,
+  );
+  assert.equal(
+    COMMAND_PARAMS_SCHEMAS['view.set_scene_preferences']
+      .properties.snap.anyOf.length,
+    4,
+  );
+  assert.equal(
+    COMMAND_PARAMS_SCHEMAS['view.set_scene_preferences']
+      .properties.snap.properties.move.exclusiveMinimum,
+    0,
+  );
+  assert.equal(
     COMMAND_EXECUTION_OPTIONS_SCHEMA.properties.expectedSceneRevision.minimum,
     0,
   );

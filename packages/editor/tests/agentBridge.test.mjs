@@ -154,6 +154,7 @@ test('whole-window agent capture is background-safe and addressable by window la
   assert.match(bridge, /currentTrashRevision: trashRevision/);
   assert.match(bridge, /offset: boundedOffset/);
   assert.match(bridge, /gameResolution: store\.gameResolution/);
+  assert.match(bridge, /sceneView: readSceneViewPreferences\(\)/);
   assert.match(bridge, /capture_editor_window',\s*\{ windowLabel, maxSize:/);
   assert.match(rust, /Page\.getLayoutMetrics/);
   assert.match(rust, /\"clip\": \{/);
@@ -843,8 +844,11 @@ test('scene, asset, and asynchronous build tools share guarded editor services',
   assert.match(bridge, /sceneCamera: store\.sceneCamera/);
   assert.match(
     bridge,
-    /const view = \{\s+gizmo: store\.gizmo,\s+sceneCamera: store\.sceneCamera,\s+gameResolution: store\.gameResolution,\s+\};/,
+    /const view = \{\s+gizmo: store\.gizmo,\s+sceneCamera: store\.sceneCamera,\s+sceneView: readSceneViewPreferences\(\),\s+gameResolution: store\.gameResolution,\s+\};/,
   );
+  assert.match(bridge, /SCENE_VIEW_PREFERENCES_CHANGED_EVENT/);
+  assert.match(bridge, /updateSceneViewPreferences\(patch\)/);
+  assert.match(bridge, /commandId === 'view\.set_scene_preferences'/);
   assert.match(bridge, /setEditorPrefs\(\{ gameResolution: resolution \}\)/);
   assert.match(bridge, /status: 'running'/);
   assert.match(bridge, /listenToPcBuildProgress/);

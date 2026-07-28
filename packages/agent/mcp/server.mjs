@@ -2674,6 +2674,69 @@ const TOOLS = [
     },
     ['resolution'],
   ),
+  execTool(
+    'set_scene_view_preferences',
+    'Persist Scene View editing preferences without raising or focusing the editor. Omitted fields retain their current values and changes propagate to every window in the current editor instance.',
+    'view.set_scene_preferences',
+    {
+      mode2D: {
+        type: 'boolean',
+        description: 'Lock the Scene view to its 2D canvas plane',
+      },
+      gridVisible: {
+        type: 'boolean',
+        description: 'Show the pixel grid while the Scene view is in 2D mode',
+      },
+      smartGuidesEnabled: {
+        type: 'boolean',
+        description: 'Snap RectTransforms to Canvas and sibling guides',
+      },
+      snap: {
+        type: 'object',
+        properties: {
+          enabled: {
+            type: 'boolean',
+            description: 'Enable persistent transform snapping',
+          },
+          move: {
+            type: 'number',
+            exclusiveMinimum: 0,
+            maximum: 1000000,
+            description: 'Move snap increment',
+          },
+          rotate: {
+            type: 'number',
+            exclusiveMinimum: 0,
+            maximum: 1000000,
+            description: 'Rotation snap increment in degrees',
+          },
+          scale: {
+            type: 'number',
+            exclusiveMinimum: 0,
+            maximum: 1000000,
+            description: 'Scale snap increment',
+          },
+        },
+        additionalProperties: false,
+        anyOf: [
+          { required: ['enabled'] },
+          { required: ['move'] },
+          { required: ['rotate'] },
+          { required: ['scale'] },
+        ],
+      },
+    },
+    [],
+    undefined,
+    {
+      anyOf: [
+        { required: ['mode2D'] },
+        { required: ['gridVisible'] },
+        { required: ['smartGuidesEnabled'] },
+        { required: ['snap'] },
+      ],
+    },
+  ),
   execTool('play', 'Enter play mode.', 'playback.play', {}, []),
   execTool('pause', 'Toggle pause during playback.', 'playback.pause', {}, []),
   execTool('stop', 'Stop playback and return to edit mode.', 'playback.stop', {}, []),
@@ -2960,6 +3023,7 @@ const IDEMPOTENT_BRIDGE_COMMANDS = new Set([
   'view.frame_selected',
   'view.set_camera',
   'view.set_game_resolution',
+  'view.set_scene_preferences',
   'panel.focus',
   'panel.reset_layout',
   'window.open_editor',

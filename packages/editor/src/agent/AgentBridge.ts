@@ -109,6 +109,13 @@ import { refreshSprites, type SpriteAsset } from '../spriteLibrary';
 import { setEditorPrefs } from '../sceneLibrary';
 import type { GameResolution } from '../gameResolution';
 import {
+  initializeSceneViewPreferencesEvents,
+  readSceneViewPreferences,
+  SCENE_VIEW_PREFERENCES_CHANGED_EVENT,
+  updateSceneViewPreferences,
+  type SceneViewPreferencesPatch,
+} from '../sceneViewPreferences';
+import {
   applySelectedPrefab,
   createProjectPrefabFromSelection,
   revertSelectedPrefab,
@@ -387,6 +394,7 @@ class AgentBridge {
   private stopDialogEvents: (() => void) | null = null;
   private stopMenuEvents: (() => void) | null = null;
   private stopWindowTypeEvents: (() => void) | null = null;
+  private stopSceneViewPreferenceEvents: (() => void) | null = null;
   private stopBuildSettingsEvents: (() => void) | null = null;
   private stopBuildArtifactEvents: (() => void) | null = null;
   private stopProjectSettingsEvents: (() => void) | null = null;
@@ -521,6 +529,20 @@ class AgentBridge {
       this.windowObservationTimer = window.setInterval(() => {
         void this.observeWindowInventory().catch(() => undefined);
       }, 1_000);
+      initializeSceneViewPreferencesEvents();
+      const onSceneViewPreferencesChanged = () => {
+        this.observe();
+      };
+      window.addEventListener(
+        SCENE_VIEW_PREFERENCES_CHANGED_EVENT,
+        onSceneViewPreferencesChanged,
+      );
+      this.stopSceneViewPreferenceEvents = () => {
+        window.removeEventListener(
+          SCENE_VIEW_PREFERENCES_CHANGED_EVENT,
+          onSceneViewPreferencesChanged,
+        );
+      };
       const onBuildSettingsChanged = (event: Event) => {
         this.appendEvent(
           'build.settings',
@@ -608,6 +630,8 @@ class AgentBridge {
         window.clearInterval(this.windowObservationTimer);
         this.windowObservationTimer = null;
       }
+      this.stopSceneViewPreferenceEvents?.();
+      this.stopSceneViewPreferenceEvents = null;
       this.stopBuildSettingsEvents?.();
       this.stopBuildSettingsEvents = null;
       this.stopBuildArtifactEvents?.();
@@ -978,6 +1002,7 @@ class AgentBridge {
       simulationTime: snapshot.simulationTime,
       gizmo: store.gizmo,
       sceneCamera: store.sceneCamera,
+      sceneView: readSceneViewPreferences(),
       gameResolution: store.gameResolution,
       canUndo: store.canUndo,
       canRedo: store.canRedo,
@@ -1669,6 +1694,7 @@ class AgentBridge {
     const view = {
       gizmo: store.gizmo,
       sceneCamera: store.sceneCamera,
+      sceneView: readSceneViewPreferences(),
       gameResolution: store.gameResolution,
     };
     const current: ObservedEditorState = {
@@ -3299,6 +3325,29 @@ class AgentBridge {
     return this.getEditorState();
   }
 
+  setSceneViewPreferences(
+    args: Record<string, unknown>,
+  ): EditorState {
+    this.requireStore();
+    const patch: SceneViewPreferencesPatch = {};
+    if (args.mode2D !== undefined) patch.mode2D = args.mode2D as boolean;
+    if (args.gridVisible !== undefined) {
+      patch.gridVisible = args.gridVisible as boolean;
+    }
+    if (args.smartGuidesEnabled !== undefined) {
+      patch.smartGuidesEnabled = args.smartGuidesEnabled as boolean;
+    }
+    if (args.snap !== undefined) {
+      patch.snap = structuredClone(
+        args.snap as NonNullable<SceneViewPreferencesPatch['snap']>,
+      );
+    }
+    updateSceneViewPreferences(patch);
+    this.observe();
+    this.logProvider?.('Agent updated persistent Scene View preferences');
+    return this.getEditorState();
+  }
+
   getComponentSchema(type?: string): unknown {
     if (type) {
       const schema = buildAgentComponentSchema(type);
@@ -4152,6 +4201,10 @@ class AgentBridge {
     }
     if (commandId === 'view.set_game_resolution') {
       const result = await this.setGameResolution(requiredGameResolution(args));
+      return this.finishAsyncCommand({ ok: true, data: result }, options, true);
+    }
+    if (commandId === 'view.set_scene_preferences') {
+      const result = this.setSceneViewPreferences(args);
       return this.finishAsyncCommand({ ok: true, data: result }, options, true);
     }
     if (commandId === 'menu.invoke') {

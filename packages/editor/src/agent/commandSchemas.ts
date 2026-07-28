@@ -682,6 +682,48 @@ export const COMMAND_PARAMS_SCHEMAS: Record<string, AgentJsonSchema> = {
       description: 'Exact Game View pixels, or null for Free Aspect',
     },
   }, ['resolution']),
+  'view.set_scene_preferences': objectSchema({
+    mode2D: booleanValue('Lock the Scene view to its 2D canvas plane'),
+    gridVisible: booleanValue('Show the Scene 2D pixel grid'),
+    smartGuidesEnabled: booleanValue(
+      'Snap RectTransforms to sibling and Canvas guides',
+    ),
+    snap: objectSchema({
+      enabled: booleanValue('Enable persistent transform snapping'),
+      move: {
+        type: 'number',
+        exclusiveMinimum: 0,
+        maximum: 1_000_000,
+        description: 'Move snap increment',
+      },
+      rotate: {
+        type: 'number',
+        exclusiveMinimum: 0,
+        maximum: 1_000_000,
+        description: 'Rotation snap increment in degrees',
+      },
+      scale: {
+        type: 'number',
+        exclusiveMinimum: 0,
+        maximum: 1_000_000,
+        description: 'Scale snap increment',
+      },
+    }, [], {
+      anyOf: [
+        { required: ['enabled'] },
+        { required: ['move'] },
+        { required: ['rotate'] },
+        { required: ['scale'] },
+      ],
+    }),
+  }, [], {
+    anyOf: [
+      { required: ['mode2D'] },
+      { required: ['gridVisible'] },
+      { required: ['smartGuidesEnabled'] },
+      { required: ['snap'] },
+    ],
+  }),
   'panel.focus': objectSchema({
     kind: panelKind,
   }, ['kind']),

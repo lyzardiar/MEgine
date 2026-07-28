@@ -7,6 +7,8 @@
  * scene JSON or the Rust host is translated at the boundary.
  */
 
+import type { SceneViewPreferences } from '../sceneViewPreferences';
+
 /** A captured image, returned as a data URL so any client can consume it. */
 export interface ScreenshotResult {
   dataUrl: string;
@@ -269,6 +271,8 @@ export interface EditorState {
     distance: number;
     pivot: [number, number, number];
   };
+  /** Persistent Scene-view editing switches shared by all project windows. */
+  sceneView: SceneViewPreferences;
   /** Current project Game-view resolution, or free aspect when null. */
   gameResolution: {
     width: number;
