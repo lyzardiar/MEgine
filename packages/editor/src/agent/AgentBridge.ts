@@ -167,6 +167,7 @@ import {
   type SceneEntityView,
 } from './eventJournal';
 import { paginateAgentItems } from './pagination';
+import { panelWindowBlockers } from './panelSafety';
 import {
   loadSortingLayersSnapshot,
   persistSortingLayersGuarded,
@@ -1131,6 +1132,26 @@ class AgentBridge {
   async listWindows(): Promise<EditorWindowInfo[]> {
     if (!isDesktopEditor()) return [];
     return invoke<EditorWindowInfo[]>('list_editor_windows');
+  }
+
+  private async assertPanelWindowMutationAllowed(
+    operation: string,
+    windowLabels: readonly string[],
+    windows?: readonly EditorWindowInfo[],
+  ): Promise<void> {
+    const observedWindows = windows ?? await this.listWindows();
+    const blockers = panelWindowBlockers(observedWindows, windowLabels);
+    if (blockers.length === 0) return;
+    throw new BridgeError(
+      'READONLY',
+      `${operation} would modify a visible or focused editor window`,
+      {
+        operation,
+        blockers,
+        requiredWindowState: 'hidden-unfocused',
+        agentAlternative: 'Use window.ui_snapshot or view.window_screenshot for read-only observation',
+      },
+    );
   }
 
   async closeRegisteredEditorWindow(windowLabel: string): Promise<{
@@ -3628,6 +3649,11 @@ class AgentBridge {
           `Asset type "${asset.kind}" has no docked resource editor; use the matching scene, entity, or text-asset command`,
         );
       }
+      const layout = this.getPanelLayout();
+      const windowLabel = layout.detachedPanels.find(
+        (entry) => entry.kind === target.panel,
+      )?.windowLabel ?? 'main';
+      await this.assertPanelWindowMutationAllowed('asset.open', [windowLabel]);
       await this.requireWorkspaceProvider().openAsset(target);
       const document = await this.waitForWorkspaceDocument(target);
       return this.finishAsyncCommand({
@@ -3660,6 +3686,9 @@ class AgentBridge {
         (entry) => entry.kind === panel,
       );
       if (commandId === 'panel.detach') {
+        if (!detachedWindowExists) {
+          await this.assertPanelWindowMutationAllowed('panel.detach', ['main']);
+        }
         if (!detachedWindowExists && !await detachPanelWindow(panel, undefined, false)) {
           throw new BridgeError('IO_ERROR', `Failed to detach panel "${panel}"`);
         }
@@ -3675,6 +3704,10 @@ class AgentBridge {
         }, options, `panel-${panel}`);
       }
       if (detached) {
+        await this.assertPanelWindowMutationAllowed(
+          'panel.dock',
+          ['main', `panel-${panel}`],
+        );
         requestPanelDock(panel);
         await this.waitForPanelDetached(panel, false);
       }
@@ -3909,6 +3942,53 @@ class AgentBridge {
     const handler = WRITE_COMMANDS[commandId];
     if (!handler) {
       throw new BridgeError('INVALID_ARGS', `Unknown command "${commandId}"`);
+    }
+    if (commandId === 'panel.focus') {
+      const panel = requiredString(args, 'kind');
+      const layout = this.getPanelLayout();
+      const detachedWindow = layout.detachedPanels.find(
+        (entry) => entry.kind === panel,
+      )?.windowLabel;
+      const detachedWindowExists = detachedWindow
+        ? (await this.listWindows()).some((entry) => entry.label === detachedWindow)
+        : false;
+      if (detachedWindowExists || (!detachedWindow && layout.activePanels.includes(panel))) {
+        return this.finishAsyncCommand({
+          ok: true,
+          data: {
+            panel,
+            active: true,
+            detached: detachedWindow !== undefined,
+            windowLabel: detachedWindow ?? 'main',
+            backgroundSafe: true,
+            unchanged: true,
+          },
+        }, options, detachedWindow ?? 'main');
+      }
+      await this.assertPanelWindowMutationAllowed('panel.focus', ['main']);
+    }
+    if (commandId === 'panel.reset_layout') {
+      const layout = this.getPanelLayout();
+      const windows = await this.listWindows();
+      if (isDefaultPanelLayout(layout) && panelWindowsMatchLayout(layout, windows)) {
+        return this.finishAsyncCommand({
+          ok: true,
+          data: {
+            layout: structuredClone(layout),
+            backgroundSafe: true,
+            unchanged: true,
+          },
+        }, options, 'main');
+      }
+      await this.assertPanelWindowMutationAllowed(
+        'panel.reset_layout',
+        [
+          'main',
+          ...layout.detachedPanels.map((entry) => entry.windowLabel),
+          ...windows.filter((entry) => entry.kind === 'panel').map((entry) => entry.label),
+        ],
+        windows,
+      );
     }
     const ctx: CommandContext = {
       store: this.requireStore(),

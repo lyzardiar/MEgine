@@ -2046,7 +2046,7 @@ const TOOLS = [
   ),
   execTool(
     'open_asset',
-    'Open a supported material, material-instance, shader, animator, avatar-mask, animation, timeline, sprite-compatible texture, or sprite-atlas asset in its docked editor without raising or focusing a native window. Returns only after the exact document is active, and refuses to switch away from unsaved resource work.',
+    'Open a supported material, material-instance, shader, animator, avatar-mask, animation, timeline, sprite-compatible texture, or sprite-atlas asset in its docked editor without raising or focusing a native window. Refuses when the target host is visible or focused, and returns only after the exact document is active.',
     'asset.open',
     {
       path: {
@@ -2634,12 +2634,12 @@ const TOOLS = [
   execTool('set_gizmo', 'Set the active transform gizmo.', 'gizmo.set', {
     mode: { type: 'string', enum: ['translate', 'rotate', 'scale', 'rect'], description: 'Gizmo mode' },
   }, ['mode']),
-  execTool('focus_panel', 'Activate an editor panel by kind without raising or focusing its native window, and return only after layout state confirms it is active. Detached panels remain detached and are not raised.', 'panel.focus', {
+  execTool('focus_panel', 'Activate an editor panel by kind without raising or focusing its native window, and return only after layout state confirms it is active. If activation would change a visible or focused host, the command refuses; already-active panels return unchanged.', 'panel.focus', {
     kind: { ...PANEL_KIND_SCHEMA, description: 'Panel kind' },
   }, ['kind']),
   execTool(
     'detach_panel',
-    'Detach a clean panel into its own hidden, background-observable editor window. The new native window is created with visible=false and focus=false.',
+    'Detach a clean panel into its own hidden, background-observable editor window. Refuses when changing the main layout would disturb a visible or focused window. The new native window is created with visible=false and focus=false.',
     'panel.detach',
     {
       kind: { ...PANEL_KIND_SCHEMA, description: 'Core editor panel kind' },
@@ -2648,7 +2648,7 @@ const TOOLS = [
   ),
   execTool(
     'dock_panel',
-    'Dock a clean detached panel back into the main workspace without raising or focusing either native window.',
+    'Dock a clean detached panel back into the main workspace only while both affected native windows are hidden and unfocused.',
     'panel.dock',
     {
       kind: { ...PANEL_KIND_SCHEMA, description: 'Core editor panel kind' },
@@ -2657,7 +2657,7 @@ const TOOLS = [
   ),
   execTool(
     'reset_panel_layout',
-    'Reset the dock workspace to its complete default layout. Returns only after default groups, ratios, active tabs, and the absence of detached native panel windows are confirmed.',
+    'Reset the dock workspace to its complete default layout only while every affected native window is hidden and unfocused. Already-default layouts return unchanged.',
     'panel.reset_layout',
     {},
     [],

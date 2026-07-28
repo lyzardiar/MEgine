@@ -618,7 +618,10 @@ test('panel and menu agent surfaces use live providers and background activation
   assert.match(bridge, /case 'panel\.get_layout'/);
   assert.match(bridge, /case 'workspace\.documents'/);
   assert.match(bridge, /commandId === 'asset\.open'/);
+  assert.match(bridge, /assertPanelWindowMutationAllowed\('asset\.open', \[windowLabel\]\)/);
   assert.match(bridge, /commandId === 'panel\.detach'/);
+  assert.match(bridge, /assertPanelWindowMutationAllowed\('panel\.detach', \['main'\]\)/);
+  assert.match(bridge, /assertPanelWindowMutationAllowed\([\s\S]*'panel\.dock'/);
   assert.match(bridge, /detachPanelWindow\(panel, undefined, false\)/);
   assert.match(
     bridge,
@@ -629,9 +632,12 @@ test('panel and menu agent surfaces use live providers and background activation
     /lastLayoutDetached === expected[\s\S]*lastNativeWindowPresent === expected/,
   );
   assert.match(bridge, /if \(commandId === 'panel\.focus'\)/);
+  assert.match(bridge, /assertPanelWindowMutationAllowed\('panel\.focus', \['main'\]\)/);
+  assert.match(bridge, /unchanged: true/);
   assert.match(bridge, /const focused = await this\.waitForPanelFocused\(panel\)/);
   assert.match(bridge, /this\.finishAsyncCommand\(result, options, focused\.windowLabel\)/);
   assert.match(bridge, /if \(commandId === 'panel\.reset_layout'\)/);
+  assert.match(bridge, /assertPanelWindowMutationAllowed\([\s\S]*'panel\.reset_layout'/);
   assert.match(bridge, /const layout = await this\.waitForPanelLayoutReset\(\)/);
   assert.match(bridge, /this\.finishAsyncCommand\(result, options, 'main'\)/);
   assert.match(bridge, /case 'menu\.list'/);

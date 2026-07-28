@@ -320,9 +320,9 @@ Rust Host 使用独立的工程生命周期互斥门串行化 open/create/close 
 
 | command id | 参数 | 映射 |
 | --- | --- | --- |
-| `panel.focus` | `{ kind }` | ✅ dispatch `mengine:focus-panel`；agent 路径携带 `activateWindow: false`，不会抬升独立窗口 |
-| `panel.reset_layout` | `{}` | ✅ 复用 `mengine:reset-dock-layout` |
-| `panel.detach` / `dock` | `{ kind }` | ✅ 复用 `detachedPanelWindow` 与 dock channel；Agent 拆分窗以 `visible=false/focus=false` 创建，脏资源面板拒绝迁移 |
+| `panel.focus` | `{ kind }` | ✅ dispatch `mengine:focus-panel`；agent 路径携带 `activateWindow: false`；目标已激活则零变更返回，否则宿主窗口必须 hidden/unfocused |
+| `panel.reset_layout` | `{}` | ✅ 复用 `mengine:reset-dock-layout`；已是默认布局则零变更返回，否则主窗与全部拆分面板窗必须 hidden/unfocused |
+| `panel.detach` / `dock` | `{ kind }` | ✅ 复用 `detachedPanelWindow` 与 dock channel；Agent 拆分窗以 `visible=false/focus=false` 创建，脏资源面板拒绝迁移，任何实际布局变更均拒绝影响可见或聚焦宿主 |
 | `layout.reset` | — | dispatch `mengine:reset-dock-layout` |
 | `window.open_editor` | `{ typeId }` | ✅ 隐藏创建后同时等待原生窗口可发现与目标 WebView 非空语义快照就绪；返回初始 `snapshotRevision` / `semanticElementCount`，不会把仍在加载的窗口误报为空 |
 | `menu.invoke` | `{ path }` | ✅ 查 `MenuItemEntry`、执行实时 validator，再复用 `entry.action(ctx)` |
@@ -346,7 +346,7 @@ Rust Host 使用独立的工程生命周期互斥门串行化 open/create/close 
 | --- | --- |
 | `asset.import_file` | ✅ 从绝对本地路径导入 UI 支持的单个二进制/内容资产；64 MiB 上限，拒绝 symlink、覆盖和残留 `.meta`，目标以 create-only 原子安装并生成新 GUID，sidecar 失败则完整回滚 |
 | `asset.create` | ✅ 在不打开资源编辑器、不激活窗口的前提下，复用人工 Assets/Create 的默认工厂创建 Animation、Animator、Avatar Mask、Material、Material Instance、Shader、Sprite Atlas、Timeline；返回主资源及自动生成伴生资源的精确路径、GUID 与 revision |
-| `asset.open` | ✅ 校验资产索引与 `.meta` 后，在对应 Material/Material Instance/Shader/Animator/Avatar Mask/Timeline/Sprite 编辑器中打开；只把 Sprite 编辑器实际支持的 PNG/JPEG/WebP/GIF 纹理作为 Sprite 文档，跨拆分窗口同步文档路径，切换前拒绝丢弃本地或远端脏文档，且不激活原生窗口 |
+| `asset.open` | ✅ 校验资产索引与 `.meta` 后，在对应 Material/Material Instance/Shader/Animator/Avatar Mask/Timeline/Sprite 编辑器中打开；只把 Sprite 编辑器实际支持的 PNG/JPEG/WebP/GIF 纹理作为 Sprite 文档，跨拆分窗口同步文档路径，切换前拒绝丢弃本地或远端脏文档，目标宿主可见或聚焦时直接拒绝 |
 | `asset.instantiate` | ✅ 校验资产索引与 `.meta` 后，把 Prefab、glTF/GLB Model 或 Sprite 纹理通过与 Project 面板一致的路径实例化到当前编辑场景；返回根实体完整快照并形成一次撤销 |
 | `asset.write_text` | ✅ 8 MiB UTF-8 上限；已有文件必须携带精确 revision，新文件必须传 null；写前拒绝任何窗口的未保存工作 |
 | `asset.rename_preview` / `asset.rename` | ✅ 两阶段引用感知重命名；预览令牌绑定 source revision、自动重写和人工引用，执行前重新扫描校验 |
