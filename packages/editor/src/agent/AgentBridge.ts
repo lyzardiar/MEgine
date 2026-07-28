@@ -24,6 +24,7 @@ import {
   type EditorMenuItemInfo,
   type EditorState,
   type EditorUiActionResult,
+  type EditorUiContentPage,
   type EditorUiSnapshot,
   type EditorWindowInfo,
   type HierarchyNode,
@@ -493,6 +494,42 @@ class AgentBridge {
       maxElements: boundedMaxElements,
       offset: boundedOffset,
     });
+  }
+
+  /** Read exact, unnormalized UI text/value in bounded pages. */
+  async readWindowContent(
+    selector: string,
+    field: 'text' | 'value',
+    windowLabel = 'main',
+    offset = 0,
+    maxChars = 10_000,
+  ): Promise<EditorUiContentPage> {
+    if (!isDesktopEditor()) {
+      throw new BridgeError('NOT_READY', 'Window UI content reads require the desktop editor');
+    }
+    if (!selector) {
+      throw new BridgeError('INVALID_ARGS', 'Window UI content reads require a selector');
+    }
+    const boundedOffset = Number.isFinite(offset)
+      ? Math.min(10_000_000, Math.max(0, Math.trunc(offset)))
+      : 0;
+    const boundedMaxChars = Number.isFinite(maxChars)
+      ? Math.min(100_000, Math.max(1, Math.trunc(maxChars)))
+      : 10_000;
+    const result = await invoke<EditorUiContentPage & { ok?: boolean; error?: string }>(
+      'read_editor_ui_content',
+      {
+        windowLabel,
+        selector,
+        field,
+        offset: boundedOffset,
+        maxChars: boundedMaxChars,
+      },
+    );
+    if (result.ok === false) {
+      throw new BridgeError('INVALID_ARGS', result.error ?? 'Editor UI content read failed');
+    }
+    return result;
   }
 
   /** Execute one allow-listed DOM action without activating the OS window. */
@@ -2558,6 +2595,16 @@ class AgentBridge {
           typeof params.maxElements === 'number' ? params.maxElements : 2_000,
           typeof params.offset === 'number' ? params.offset : 0,
         );
+      case 'window.ui_content':
+        return this.readWindowContent(
+          requiredString(params, 'selector'),
+          requiredUiContentField(params),
+          typeof params.windowLabel === 'string' && params.windowLabel
+            ? params.windowLabel
+            : 'main',
+          typeof params.offset === 'number' ? params.offset : 0,
+          typeof params.maxChars === 'number' ? params.maxChars : 10_000,
+        );
       case 'panel.get_layout':
         return this.getPanelLayout();
       case 'menu.list':
@@ -2757,6 +2804,16 @@ function requiredBoundedUiDelta(
       'INVALID_ARGS',
       `"${key}" must be a finite number from -1000000 to 1000000`,
     );
+  }
+  return value;
+}
+
+function requiredUiContentField(
+  args: Record<string, unknown>,
+): 'text' | 'value' {
+  const value = args.field;
+  if (value !== 'text' && value !== 'value') {
+    throw new BridgeError('INVALID_ARGS', '"field" must be "text" or "value"');
   }
   return value;
 }

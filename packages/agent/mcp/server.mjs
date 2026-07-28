@@ -814,6 +814,51 @@ const TOOLS = [
       })),
   },
   {
+    name: 'read_window_ui_content',
+    description:
+      'Read exact, unnormalized text or value content from one selector returned by get_window_ui. Use nextOffset until null for long or unsaved editor content. Password values are never returned.',
+    inputSchema: {
+      type: 'object',
+      required: ['selector', 'field'],
+      properties: {
+        windowLabel: {
+          type: 'string',
+          description: 'A label returned by list_windows (default: main)',
+        },
+        selector: {
+          type: 'string',
+          description: 'Exact selector returned by get_window_ui',
+        },
+        field: {
+          type: 'string',
+          enum: ['text', 'value'],
+          description: 'Exact content source to read',
+        },
+        offset: {
+          type: 'integer',
+          minimum: 0,
+          maximum: 10000000,
+          description: 'Zero-based UTF-16 character cursor (default: 0)',
+        },
+        maxChars: {
+          type: 'integer',
+          minimum: 1,
+          maximum: 100000,
+          description: 'Maximum characters on this page (default: 10000)',
+        },
+      },
+      additionalProperties: false,
+    },
+    handler: async (args) =>
+      textContent(await bridgeQuery('window.ui_content', {
+        windowLabel: args.windowLabel || 'main',
+        selector: args.selector,
+        field: args.field,
+        offset: typeof args.offset === 'number' ? args.offset : 0,
+        maxChars: typeof args.maxChars === 'number' ? args.maxChars : 10000,
+      })),
+  },
+  {
     name: 'get_console_logs',
     description: 'Get structured editor console logs (level, message, time). Filter by level and limit.',
     inputSchema: {

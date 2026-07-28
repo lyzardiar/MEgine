@@ -85,6 +85,21 @@ export interface EditorUiSnapshot {
   elements: EditorUiElement[];
 }
 
+/** One exact, paged text/value read from an editor UI element. */
+export interface EditorUiContentPage {
+  version: number;
+  windowLabel: string;
+  captureMethod: string;
+  backgroundSafe: boolean;
+  selector: string;
+  field: 'text' | 'value';
+  offset: number;
+  count: number;
+  totalLength: number;
+  nextOffset: number | null;
+  content: string;
+}
+
 export interface EditorUiActionResult {
   ok: boolean;
   error?: string;

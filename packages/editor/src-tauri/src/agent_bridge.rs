@@ -620,6 +620,29 @@ pub async fn inspect_editor_window(
     inspect_editor_window_impl(app, window_label, max_elements, offset).await
 }
 
+/// Read an exact page of one element's text or value without normalizing it.
+#[tauri::command]
+pub async fn read_editor_ui_content(
+    app: AppHandle,
+    window_label: Option<String>,
+    selector: String,
+    field: String,
+    offset: Option<usize>,
+    max_chars: Option<usize>,
+) -> Result<serde_json::Value, String> {
+    let window_label = window_label.unwrap_or_else(|| "main".to_string());
+    let selector = selector.trim().to_string();
+    if selector.is_empty() || selector.len() > 1_000 {
+        return Err("selector must contain 1 to 1000 characters".to_string());
+    }
+    if !matches!(field.as_str(), "text" | "value") {
+        return Err("field must be text or value".to_string());
+    }
+    let offset = offset.unwrap_or(0).min(10_000_000);
+    let max_chars = max_chars.unwrap_or(10_000).clamp(1, 100_000);
+    read_editor_ui_content_impl(app, window_label, selector, field, offset, max_chars).await
+}
+
 /// Execute one allow-listed DOM interaction in a target editor webview.
 ///
 /// This is a fallback for UI surfaces that do not yet have a domain command.
@@ -723,6 +746,44 @@ async fn inspect_editor_window_impl(
     );
     object.insert("backgroundSafe".to_string(), serde_json::Value::Bool(true));
     Ok(snapshot)
+}
+
+#[cfg(windows)]
+async fn read_editor_ui_content_impl(
+    app: AppHandle,
+    window_label: String,
+    selector: String,
+    field: String,
+    offset: usize,
+    max_chars: usize,
+) -> Result<serde_json::Value, String> {
+    use base64::Engine as _;
+    let payload = serde_json::json!({
+        "selector": selector,
+        "field": field,
+        "offset": offset,
+        "maxChars": max_chars,
+    })
+    .to_string();
+    let payload = base64::engine::general_purpose::STANDARD.encode(payload);
+    let expression = WINDOW_UI_CONTENT_SCRIPT.replace(
+        "__MENGINE_PAYLOAD_BASE64__",
+        &serde_json::to_string(&payload).map_err(|error| error.to_string())?,
+    );
+    let mut page = evaluate_webview_script(&app, &window_label, expression).await?;
+    let object = page
+        .as_object_mut()
+        .ok_or_else(|| "WebView2 UI content read returned a non-object value".to_string())?;
+    object.insert(
+        "windowLabel".to_string(),
+        serde_json::Value::String(window_label),
+    );
+    object.insert(
+        "captureMethod".to_string(),
+        serde_json::Value::String("webview2-devtools".to_string()),
+    );
+    object.insert("backgroundSafe".to_string(), serde_json::Value::Bool(true));
+    Ok(page)
 }
 
 #[cfg(windows)]
@@ -865,6 +926,21 @@ async fn inspect_editor_window_impl(
     _offset: usize,
 ) -> Result<serde_json::Value, String> {
     Err("background editor-window inspection is currently only supported on Windows".to_string())
+}
+
+#[cfg(not(windows))]
+async fn read_editor_ui_content_impl(
+    _app: AppHandle,
+    _window_label: String,
+    _selector: String,
+    _field: String,
+    _offset: usize,
+    _max_chars: usize,
+) -> Result<serde_json::Value, String> {
+    Err(
+        "background editor-window content reads are currently only supported on Windows"
+            .to_string(),
+    )
 }
 
 #[cfg(not(windows))]
@@ -1114,6 +1190,54 @@ const WINDOW_UI_SNAPSHOT_SCRIPT: &str = r#"
     hasMore: offset + selected.length < candidates.length,
     truncated: offset > 0 || offset + selected.length < candidates.length,
     elements,
+  };
+})()
+"#;
+
+/// Exact, paged element content read. Password values remain inaccessible.
+#[cfg(windows)]
+const WINDOW_UI_CONTENT_SCRIPT: &str = r#"
+(() => {
+  const payload = JSON.parse(atob(__MENGINE_PAYLOAD_BASE64__));
+  const { selector, field, offset, maxChars } = payload;
+  let element;
+  try {
+    element = document.querySelector(selector);
+  } catch (error) {
+    return { ok: false, error: `Invalid selector: ${String(error)}` };
+  }
+  if (!element) return { ok: false, error: `No element matches ${selector}` };
+  let content;
+  if (field === 'value') {
+    if (element instanceof HTMLInputElement) {
+      if (String(element.type).toLowerCase() === 'password') {
+        return { ok: false, error: 'Password values cannot be read' };
+      }
+      content = String(element.value);
+    } else if (element instanceof HTMLTextAreaElement
+      || element instanceof HTMLSelectElement) {
+      content = String(element.value);
+    } else if (element instanceof HTMLElement && element.isContentEditable) {
+      content = String(element.textContent ?? '');
+    } else {
+      return { ok: false, error: `Element ${selector} has no readable value` };
+    }
+  } else {
+    content = String(element.innerText ?? element.textContent ?? '');
+  }
+  const start = Math.min(Number(offset), content.length);
+  const page = content.slice(start, start + Number(maxChars));
+  const nextOffset = start + page.length < content.length ? start + page.length : null;
+  return {
+    ok: true,
+    version: 1,
+    selector,
+    field,
+    offset: start,
+    count: page.length,
+    totalLength: content.length,
+    nextOffset,
+    content: page,
   };
 })()
 "#;

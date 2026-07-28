@@ -26,6 +26,9 @@ test('whole-window agent capture is background-safe and addressable by window la
   assert.match(rust, /Page\.captureScreenshot/);
   assert.match(rust, /Runtime\.evaluate/);
   assert.match(rust, /WINDOW_UI_SNAPSHOT_SCRIPT/);
+  assert.match(rust, /WINDOW_UI_CONTENT_SCRIPT/);
+  assert.match(rust, /Password values cannot be read/);
+  assert.match(rust, /content\.slice\(start, start \+ Number\(maxChars\)\)/);
   assert.match(rust, /const offset = __MENGINE_OFFSET__/);
   assert.match(rust, /candidates\.slice\(offset, offset \+ limit\)/);
   assert.match(rust, /new Map\(candidates\.map/);
@@ -56,11 +59,13 @@ test('whole-window agent capture is background-safe and addressable by window la
   assert.match(native, /std::fs::hard_link\(&temporary, target\)/);
   assert.match(bridge, /captureWindow\(windowLabel = 'main'\)/);
   assert.match(bridge, /inspectWindow\(/);
+  assert.match(bridge, /readWindowContent\(/);
   assert.match(bridge, /offset: boundedOffset/);
   assert.match(bridge, /gameResolution: store\.gameResolution/);
   assert.match(bridge, /capture_editor_window', \{ windowLabel \}/);
   assert.match(mcp, /windowLabel: args\.windowLabel \|\| 'main'/);
   assert.match(mcp, /name: 'get_window_ui'/);
+  assert.match(mcp, /name: 'read_window_ui_content'/);
   assert.match(mcp, /Continue with nextOffset until null/);
   assert.match(mcp, /name: 'list_open_documents'/);
   assert.match(mcp, /'click_window_ui'/);
