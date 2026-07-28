@@ -268,6 +268,7 @@ test('MCP stdio lists and renders safe workflow prompts with protocol errors', a
         clientInfo: { name: 'prompt-test', version: '1.0.0' },
       },
     }),
+    JSON.stringify({ jsonrpc: '2.0', method: 'notifications/initialized' }),
     JSON.stringify({
       jsonrpc: '2.0',
       id: 11,
@@ -353,4 +354,91 @@ test('MCP stdio lists and renders safe workflow prompts with protocol errors', a
       openWorldHint: true,
     },
   );
+});
+
+test('MCP enforces initialization, notification envelopes, and session-unique request ids', async () => {
+  const responses = await runStdioSession([
+    JSON.stringify({ jsonrpc: '2.0', id: 1, method: 'ping' }),
+    JSON.stringify({ jsonrpc: '2.0', id: 2, method: 'tools/list', params: {} }),
+    JSON.stringify({
+      jsonrpc: '2.0',
+      id: 3,
+      method: 'initialize',
+      params: {
+        protocolVersion: '2025-11-25',
+        capabilities: {},
+      },
+    }),
+    JSON.stringify({
+      jsonrpc: '2.0',
+      id: 4,
+      method: 'initialize',
+      params: {
+        protocolVersion: '2025-11-25',
+        capabilities: {},
+        clientInfo: { name: 'lifecycle-test', version: '1.0.0' },
+      },
+    }),
+    JSON.stringify({ jsonrpc: '2.0', id: 5, method: 'resources/list', params: {} }),
+    JSON.stringify({ jsonrpc: '2.0', method: 'tools/list', params: {} }),
+    JSON.stringify({ jsonrpc: '2.0', id: 6, method: 'notifications/initialized' }),
+    JSON.stringify({ jsonrpc: '2.0', method: 'notifications/initialized' }),
+    JSON.stringify({ jsonrpc: '2.0', id: 7, method: 'tools/list', params: {} }),
+    JSON.stringify({ jsonrpc: '2.0', id: 7, method: 'ping' }),
+    JSON.stringify({
+      jsonrpc: '2.0',
+      id: 8,
+      method: 'initialize',
+      params: {
+        protocolVersion: '2025-11-25',
+        capabilities: {},
+        clientInfo: { name: 'lifecycle-test', version: '1.0.0' },
+      },
+    }),
+  ]);
+
+  assert.equal(responses.length, 9);
+  assert.deepEqual(responses[0], { jsonrpc: '2.0', id: 1, result: {} });
+  assert.equal(responses[1].id, 2);
+  assert.equal(responses[1].error.code, -32002);
+  assert.equal(responses[1].error.data.lifecycleState, 'awaitingInitialize');
+  assert.deepEqual(responses[2], {
+    jsonrpc: '2.0',
+    id: 3,
+    error: {
+      code: -32602,
+      message: 'initialize requires clientInfo with non-empty name and version',
+    },
+  });
+  assert.equal(responses[3].id, 4);
+  assert.equal(responses[3].result.protocolVersion, '2025-11-25');
+  assert.equal(responses[4].id, 5);
+  assert.equal(responses[4].error.code, -32002);
+  assert.equal(responses[4].error.data.lifecycleState, 'awaitingInitialized');
+  assert.deepEqual(responses[5], {
+    jsonrpc: '2.0',
+    id: 6,
+    error: {
+      code: -32600,
+      message: 'notifications/initialized must be a notification',
+    },
+  });
+  assert.equal(responses[6].id, 7);
+  assert.ok(Array.isArray(responses[6].result.tools));
+  assert.deepEqual(responses[7], {
+    jsonrpc: '2.0',
+    id: 7,
+    error: {
+      code: -32600,
+      message: 'Request id was already used in this MCP session',
+    },
+  });
+  assert.deepEqual(responses[8], {
+    jsonrpc: '2.0',
+    id: 8,
+    error: {
+      code: -32600,
+      message: 'MCP session is already initialized',
+    },
+  });
 });

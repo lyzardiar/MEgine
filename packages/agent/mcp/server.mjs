@@ -37,6 +37,7 @@ const BRIDGE_CONNECT_ATTEMPTS = 30;
 const BRIDGE_CONNECT_RETRY_MS = 200;
 const MAX_PENDING_BRIDGE_REQUESTS = 64;
 const MAX_ACTIVE_MCP_REQUESTS = 128;
+const MAX_MCP_SESSION_REQUEST_IDS = 65_536;
 const MAX_MCP_INPUT_LINE_BYTES = 64 * 1024 * 1024;
 const MAX_MCP_OUTBOUND_QUEUED_BYTES = 192 * 1024 * 1024;
 const MCP_OUTPUT_PAUSE_BYTES = 64 * 1024 * 1024;
@@ -3217,7 +3218,9 @@ let activeMcpRequests = 0;
 let inputClosed = false;
 let outputFailed = false;
 let mcpExitCode = 0;
+let mcpLifecycleState = 'awaitingInitialize';
 const activeMcpRequestControllers = new Map();
+const seenMcpRequestIds = new Set();
 
 const outputQueue = new BoundedWriteQueue(
   process.stdout,
@@ -3368,14 +3371,48 @@ function toolErrorContent(error) {
   });
 }
 
+function initializeParamsError(params) {
+  if (!params || typeof params !== 'object' || Array.isArray(params)) {
+    return 'initialize requires parameters';
+  }
+  if (typeof params.protocolVersion !== 'string' || params.protocolVersion.length === 0) {
+    return 'initialize requires a non-empty protocolVersion';
+  }
+  if (
+    !params.capabilities
+    || typeof params.capabilities !== 'object'
+    || Array.isArray(params.capabilities)
+  ) {
+    return 'initialize requires a capabilities object';
+  }
+  if (
+    !params.clientInfo
+    || typeof params.clientInfo !== 'object'
+    || Array.isArray(params.clientInfo)
+    || typeof params.clientInfo.name !== 'string'
+    || params.clientInfo.name.length === 0
+    || typeof params.clientInfo.version !== 'string'
+    || params.clientInfo.version.length === 0
+  ) {
+    return 'initialize requires clientInfo with non-empty name and version';
+  }
+  return null;
+}
+
 async function handleMessage(msg, signal) {
   const { id, method, params } = msg;
   switch (method) {
     case 'initialize': {
-      if (typeof params?.protocolVersion !== 'string' || params.protocolVersion.length === 0) {
-        respondError(id, -32602, 'initialize requires a non-empty protocolVersion');
+      if (mcpLifecycleState !== 'awaitingInitialize') {
+        respondError(id, -32600, 'MCP session is already initialized');
         return;
       }
+      const paramsError = initializeParamsError(params);
+      if (paramsError) {
+        respondError(id, -32602, paramsError);
+        return;
+      }
+      mcpLifecycleState = 'awaitingInitialized';
       respond(id, {
         protocolVersion: negotiateProtocolVersion(params.protocolVersion),
         capabilities: { tools: {}, resources: {}, prompts: {} },
@@ -3386,6 +3423,9 @@ async function handleMessage(msg, signal) {
     }
     case 'notifications/initialized':
     case 'initialized':
+      if (mcpLifecycleState === 'awaitingInitialized') {
+        mcpLifecycleState = 'operational';
+      }
       return; // notification, no response
     case 'ping':
       respond(id, {});
@@ -3478,6 +3518,83 @@ function mcpRequestKey(requestId) {
   return `${typeof requestId}:${String(requestId)}`;
 }
 
+const MCP_REQUEST_METHODS = new Set([
+  'initialize',
+  'ping',
+  'prompts/list',
+  'prompts/get',
+  'tools/list',
+  'tools/call',
+  'resources/list',
+  'resources/templates/list',
+  'resources/read',
+]);
+
+const MCP_NOTIFICATION_METHODS = new Set([
+  'notifications/initialized',
+  'initialized',
+  'notifications/cancelled',
+]);
+
+function admitMcpRequestId(message) {
+  if (!Object.hasOwn(message, 'id')) return true;
+  const requestKey = mcpRequestKey(message.id);
+  if (seenMcpRequestIds.has(requestKey)) {
+    respondError(message.id, -32600, 'Request id was already used in this MCP session');
+    return false;
+  }
+  if (seenMcpRequestIds.size >= MAX_MCP_SESSION_REQUEST_IDS) {
+    respondError(
+      message.id,
+      -32000,
+      'MCP session request-id capacity reached; restart the MCP server',
+      {
+        code: 'RATE_LIMITED',
+        maxSessionRequestIds: MAX_MCP_SESSION_REQUEST_IDS,
+      },
+    );
+    return false;
+  }
+  seenMcpRequestIds.add(requestKey);
+  return true;
+}
+
+function validateMcpMethodEnvelope(message) {
+  const hasRequestId = Object.hasOwn(message, 'id');
+  if (MCP_REQUEST_METHODS.has(message.method) && !hasRequestId) {
+    // A JSON-RPC notification must never receive a response, even when the
+    // method is only valid as an MCP request.
+    return false;
+  }
+  if (MCP_NOTIFICATION_METHODS.has(message.method) && hasRequestId) {
+    respondError(message.id, -32600, `${message.method} must be a notification`);
+    return false;
+  }
+  return true;
+}
+
+function validateMcpLifecycle(message) {
+  if (
+    message.method === 'initialize'
+    || message.method === 'ping'
+    || MCP_NOTIFICATION_METHODS.has(message.method)
+  ) {
+    return true;
+  }
+  if (mcpLifecycleState === 'operational') return true;
+  if (Object.hasOwn(message, 'id')) {
+    respondError(
+      message.id,
+      -32002,
+      mcpLifecycleState === 'awaitingInitialize'
+        ? 'Server not initialized; send initialize first'
+        : 'Server initialization is incomplete; send notifications/initialized',
+      { lifecycleState: mcpLifecycleState },
+    );
+  }
+  return false;
+}
+
 function cancelMcpRequest(message) {
   if (Object.hasOwn(message, 'id')) return;
   const requestId = message.params?.requestId;
@@ -3491,10 +3608,12 @@ function cancelMcpRequest(message) {
 }
 
 function dispatchMcpMessage(msg) {
+  if (!admitMcpRequestId(msg) || !validateMcpMethodEnvelope(msg)) return;
   if (msg.method === 'notifications/cancelled') {
     cancelMcpRequest(msg);
     return;
   }
+  if (!validateMcpLifecycle(msg)) return;
   if (activeMcpRequests >= MAX_ACTIVE_MCP_REQUESTS) {
     if (msg.id !== undefined && msg.id !== null) {
       respondError(
@@ -3513,10 +3632,6 @@ function dispatchMcpMessage(msg) {
   }
   const hasRequestId = msg.id !== undefined && msg.id !== null;
   const requestKey = hasRequestId ? mcpRequestKey(msg.id) : null;
-  if (requestKey && activeMcpRequestControllers.has(requestKey)) {
-    respondError(msg.id, -32600, 'Request id is already active');
-    return;
-  }
   const controller = new AbortController();
   if (requestKey) {
     activeMcpRequestControllers.set(requestKey, {
