@@ -84,7 +84,11 @@ test('whole-window agent capture is background-safe and addressable by window la
   assert.match(mcp, /toolErrorContent/);
   assert.match(mcp, /data: error\.data/);
   assert.match(mcp, /bridgeCommand: command/);
-  assert.match(mcp, /export \{ RESOURCES, TOOLS \}/);
+  assert.match(mcp, /export \{ RESOURCES, SERVER_INSTRUCTIONS, TOOLS \}/);
+  assert.match(mcp, /instructions: SERVER_INSTRUCTIONS/);
+  assert.match(mcp, /RESOURCES\.map/);
+  assert.match(mcp, /editor bridge connects on first read or write/);
+  assert.doesNotMatch(mcp, /async function main\(\) \{\s*const connection = await ensureBridgeConnected/);
   assert.match(mcp, /if \(!Array\.isArray\(required\)\)/);
   assert.doesNotMatch(mcp, /required = \[\]/);
   assert.match(mcp, /\.\.\.\(required\.length \? \{ required \} : \{\}\)/);

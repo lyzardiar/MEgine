@@ -1,6 +1,10 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { TOOLS } from '../../agent/mcp/server.mjs';
+import {
+  RESOURCES,
+  SERVER_INSTRUCTIONS,
+  TOOLS,
+} from '../../agent/mcp/server.mjs';
 import { COMMAND_META } from '../src/agent/commands.ts';
 
 test('every AgentBridge write command has exactly one MCP tool with exact required fields', () => {
@@ -40,4 +44,39 @@ test('MCP tool names are unique and every input schema is an object', () => {
       `${tool.name} must declare properties`,
     );
   }
+});
+
+test('MCP resources expose unique, query-backed core editor context', () => {
+  const uris = RESOURCES.map((resource) => resource.uri);
+  assert.equal(new Set(uris).size, uris.length);
+
+  for (const resource of RESOURCES) {
+    assert.match(resource.uri, /^mengine:\/\/[a-z]+(?:\/[a-z]+)*$/);
+    assert.equal(resource.mimeType, 'application/json');
+    assert.equal(typeof resource.description, 'string');
+    assert.ok(resource.description.length > 0);
+    assert.equal(typeof resource.bridgeQuery, 'string');
+    assert.ok(resource.bridgeQuery.length > 0);
+  }
+
+  const requiredContext = [
+    'mengine://project/state',
+    'mengine://editor/state',
+    'mengine://editor/windows',
+    'mengine://scene/snapshot',
+    'mengine://schema/components',
+    'mengine://commands',
+    'mengine://build/settings',
+  ];
+  for (const uri of requiredContext) {
+    assert.ok(uris.includes(uri), `${uri} must be discoverable`);
+  }
+});
+
+test('MCP startup instructions teach the safe autonomous workflow', () => {
+  assert.match(SERVER_INSTRUCTIONS, /without activating or raising/);
+  assert.match(SERVER_INSTRUCTIONS, /expectedSceneRevision/);
+  assert.match(SERVER_INSTRUCTIONS, /requestId/);
+  assert.match(SERVER_INSTRUCTIONS, /serialized/);
+  assert.match(SERVER_INSTRUCTIONS, /screenshot/);
 });

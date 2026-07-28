@@ -1549,25 +1549,125 @@ const TOOLS = [
   ),
 ];
 
+function bridgeResource(uri, name, description, query, args = {}) {
+  return {
+    uri,
+    name,
+    description,
+    mimeType: 'application/json',
+    bridgeQuery: query,
+    bridgeArgs: args,
+  };
+}
+
 const RESOURCES = [
-  { uri: 'mengine://project/state', name: 'Project Lifecycle State', mimeType: 'application/json' },
-  { uri: 'mengine://editor/state', name: 'Editor State', mimeType: 'application/json' },
-  { uri: 'mengine://editor/scenes', name: 'Project Scenes', mimeType: 'application/json' },
-  { uri: 'mengine://scene/hierarchy', name: 'Scene Hierarchy', mimeType: 'application/json' },
-  { uri: 'mengine://editor/panels', name: 'Editor Panel Layout', mimeType: 'application/json' },
-  { uri: 'mengine://build/status', name: 'PC Build Status', mimeType: 'application/json' },
-  { uri: 'mengine://console/logs', name: 'Console Logs', mimeType: 'application/json' },
+  bridgeResource(
+    'mengine://project/state',
+    'Project Lifecycle State',
+    'Current project identity, readiness, lifecycle operation, and failure state.',
+    'project.state',
+  ),
+  bridgeResource(
+    'mengine://project/settings',
+    'Project Settings',
+    'Revision-safe project settings including ordered sorting layers.',
+    'project.settings',
+  ),
+  bridgeResource(
+    'mengine://editor/state',
+    'Editor State',
+    'Current editor, scene revision, selection, playback, history, view, and project summary.',
+    'editor.state',
+  ),
+  bridgeResource(
+    'mengine://editor/scenes',
+    'Project Scenes',
+    'Indexed scene assets and the currently open scene.',
+    'scene.list',
+  ),
+  bridgeResource(
+    'mengine://editor/windows',
+    'Editor Windows',
+    'All native editor windows with labels, visibility, focus, geometry, and panel identity.',
+    'window.list',
+  ),
+  bridgeResource(
+    'mengine://editor/documents',
+    'Open Resource Documents',
+    'Open docked resource editors with dirty and active state.',
+    'workspace.documents',
+  ),
+  bridgeResource(
+    'mengine://editor/panels',
+    'Editor Panel Layout',
+    'Dock tree, tabs, active panels, and detached editor windows.',
+    'panel.get_layout',
+  ),
+  bridgeResource(
+    'mengine://scene/snapshot',
+    'Scene Snapshot',
+    'Complete authored scene snapshot with revision and entity component data.',
+    'scene.snapshot',
+  ),
+  bridgeResource(
+    'mengine://scene/hierarchy',
+    'Scene Hierarchy',
+    'Current scene hierarchy optimized for structural inspection.',
+    'scene.hierarchy',
+  ),
+  bridgeResource(
+    'mengine://scene/selection',
+    'Scene Selection',
+    'Currently selected scene entities.',
+    'selection.get',
+  ),
+  bridgeResource(
+    'mengine://schema/components',
+    'Component Schemas',
+    'All built-in component types, defaults, field schemas, and editor metadata.',
+    'schema.components',
+  ),
+  bridgeResource(
+    'mengine://commands',
+    'Agent Command Catalog',
+    'All supported write commands with categories, descriptions, and read-only metadata.',
+    'commands.list',
+  ),
+  bridgeResource(
+    'mengine://build/settings',
+    'PC Build Settings',
+    'Revision-safe scene ordering, content policy, shader policy, and output configuration.',
+    'build.settings',
+  ),
+  bridgeResource(
+    'mengine://build/status',
+    'PC Build Status',
+    'Current asynchronous PC build progress and outcome.',
+    'build.status',
+  ),
+  bridgeResource(
+    'mengine://console/logs',
+    'Console Logs',
+    'Recent structured editor console entries.',
+    'console.get_logs',
+  ),
 ];
 
-const RESOURCE_READERS = {
-  'mengine://project/state': () => bridgeQuery('project.state'),
-  'mengine://editor/state': () => bridgeQuery('editor.state'),
-  'mengine://editor/scenes': () => bridgeQuery('scene.list'),
-  'mengine://scene/hierarchy': () => bridgeQuery('scene.hierarchy'),
-  'mengine://editor/panels': () => bridgeQuery('panel.get_layout'),
-  'mengine://build/status': () => bridgeQuery('build.status'),
-  'mengine://console/logs': () => bridgeQuery('console.get_logs', {}),
-};
+const RESOURCE_READERS = Object.fromEntries(
+  RESOURCES.map((resource) => [
+    resource.uri,
+    () => bridgeQuery(resource.bridgeQuery, resource.bridgeArgs),
+  ]),
+);
+
+const SERVER_INSTRUCTIONS = [
+  'MEngine MCP controls the running editor without activating or raising its native windows.',
+  'Start by reading mengine://project/state and mengine://editor/state. If a project is open, inspect mengine://scene/snapshot, mengine://schema/components, and mengine://commands before editing.',
+  'Read tools may run concurrently. Editor writes are serialized in arrival order.',
+  'For revision-sensitive writes, pass the latest expectedSceneRevision. Reuse the same requestId only when retrying the exact same write; using it with different arguments is rejected.',
+  'Prefer domain tools over semantic window UI actions. UI inspection and interaction are available for surfaces without a domain API and remain background-safe.',
+  'After edits, verify semantic state and use a scene, game, or whole-window screenshot when visual correctness matters. Poll get_events for incremental observation during longer workflows.',
+].join('\n');
 
 // ── MCP stdio protocol ───────────────────────────────────────────────────
 
@@ -1627,6 +1727,7 @@ async function handleMessage(msg) {
         protocolVersion: params?.protocolVersion || PROTOCOL_VERSION,
         capabilities: { tools: {}, resources: {} },
         serverInfo: { name: 'mengine-editor', version: '0.1.0' },
+        instructions: SERVER_INSTRUCTIONS,
       });
       return;
     case 'notifications/initialized':
@@ -1660,7 +1761,11 @@ async function handleMessage(msg) {
       return;
     }
     case 'resources/list':
-      respond(id, { resources: RESOURCES });
+      respond(id, {
+        resources: RESOURCES.map(
+          ({ uri, name, description, mimeType }) => ({ uri, name, description, mimeType }),
+        ),
+      });
       return;
     case 'resources/read': {
       const reader = RESOURCE_READERS[params?.uri];
@@ -1717,10 +1822,7 @@ function automaticWriteRequestId(message) {
 // ── Entry point ──────────────────────────────────────────────────────────
 
 async function main() {
-  const connection = await ensureBridgeConnected();
-  process.stderr.write(
-    `[mengine-mcp] connected to editor bridge on port ${connection.discovery.port}\n`,
-  );
+  process.stderr.write('[mengine-mcp] ready; editor bridge connects on first read or write\n');
 
   const rl = readline.createInterface({ input: process.stdin, terminal: false });
   rl.on('line', (line) => {
@@ -1757,4 +1859,4 @@ if (launchedAsMain) {
   });
 }
 
-export { RESOURCES, TOOLS };
+export { RESOURCES, SERVER_INSTRUCTIONS, TOOLS };
