@@ -162,6 +162,12 @@ export const QUERY_PARAMS_SCHEMAS: Record<string, AgentJsonSchema> = {
   'window.ui_content': objectSchema({
     windowLabel: stringValue('Window label from window.list; default main'),
     selector: nonEmptyString('Exact selector returned by window.ui_snapshot'),
+    expectedSnapshotRevision: {
+      type: 'string',
+      pattern: '^ui-v\\d+-\\d+-[0-9a-f]{16}$',
+      maxLength: 64,
+      description: 'snapshotRevision returned with this selector by window.ui_snapshot',
+    },
     field: {
       type: 'string',
       enum: ['text', 'value'],
@@ -175,7 +181,7 @@ export const QUERY_PARAMS_SCHEMAS: Record<string, AgentJsonSchema> = {
       maxLength: 72,
       description: 'contentRevision from the first page; required when offset is greater than 0',
     },
-  }, ['selector', 'field'], {
+  }, ['selector', 'expectedSnapshotRevision', 'field'], {
     anyOf: [
       {
         properties: {

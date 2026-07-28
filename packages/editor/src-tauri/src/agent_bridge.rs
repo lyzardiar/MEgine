@@ -653,6 +653,7 @@ pub async fn read_editor_ui_content(
     field: String,
     offset: Option<usize>,
     max_chars: Option<usize>,
+    expected_snapshot_revision: String,
 ) -> Result<serde_json::Value, String> {
     let window_label = window_label.unwrap_or_else(|| "main".to_string());
     let selector = selector.trim().to_string();
@@ -664,7 +665,39 @@ pub async fn read_editor_ui_content(
     }
     let offset = offset.unwrap_or(0).min(10_000_000);
     let max_chars = max_chars.unwrap_or(10_000).clamp(1, 100_000);
-    read_editor_ui_content_impl(app, window_label, selector, field, offset, max_chars).await
+    let expected_snapshot_revision = expected_snapshot_revision.trim().to_string();
+    if !valid_ui_snapshot_revision(&expected_snapshot_revision) {
+        return Err(
+            "expectedSnapshotRevision must be a snapshotRevision returned by inspect_editor_window"
+                .to_string(),
+        );
+    }
+    let current_snapshot =
+        inspect_editor_window_impl(app.clone(), window_label.clone(), 50, 0).await?;
+    let actual_snapshot_revision = current_snapshot
+        .get("snapshotRevision")
+        .and_then(serde_json::Value::as_str)
+        .ok_or_else(|| "editor UI snapshot did not contain a revision".to_string())?;
+    if actual_snapshot_revision != expected_snapshot_revision {
+        return Ok(serde_json::json!({
+            "ok": false,
+            "error": "Editor window semantic content changed; get a fresh UI snapshot before reading exact content",
+            "staleSnapshot": true,
+            "expectedSnapshotRevision": expected_snapshot_revision,
+            "actualSnapshotRevision": actual_snapshot_revision,
+            "restartOffset": 0,
+        }));
+    }
+    read_editor_ui_content_impl(
+        app,
+        window_label,
+        selector,
+        field,
+        offset,
+        max_chars,
+        expected_snapshot_revision,
+    )
+    .await
 }
 
 /// Execute one allow-listed DOM interaction in a target editor webview.
@@ -953,6 +986,7 @@ async fn read_editor_ui_content_impl(
     field: String,
     offset: usize,
     max_chars: usize,
+    expected_snapshot_revision: String,
 ) -> Result<serde_json::Value, String> {
     use base64::Engine as _;
     let payload = serde_json::json!({
@@ -960,6 +994,7 @@ async fn read_editor_ui_content_impl(
         "field": field,
         "offset": offset,
         "maxChars": max_chars,
+        "expectedSnapshotRevision": expected_snapshot_revision,
     })
     .to_string();
     let payload = base64::engine::general_purpose::STANDARD.encode(payload);
@@ -1149,6 +1184,7 @@ async fn read_editor_ui_content_impl(
     _field: String,
     _offset: usize,
     _max_chars: usize,
+    _expected_snapshot_revision: String,
 ) -> Result<serde_json::Value, String> {
     Err(
         "background editor-window content reads are currently only supported on Windows"
@@ -1604,7 +1640,19 @@ const WINDOW_UI_SNAPSHOT_SCRIPT: &str = r#"
 const WINDOW_UI_CONTENT_SCRIPT: &str = r#"
 (() => {
   const payload = JSON.parse(atob(__MENGINE_PAYLOAD_BASE64__));
-  const { selector, field, offset, maxChars } = payload;
+  const { selector, field, offset, maxChars, expectedSnapshotRevision } = payload;
+  const revisionGuard = window[Symbol.for('mengine.agent.uiRevisionGuard')];
+  const guardedEpoch = revisionGuard?.revisions?.get(expectedSnapshotRevision);
+  if (!revisionGuard || guardedEpoch !== revisionGuard.epoch) {
+    return {
+      ok: false,
+      error: 'Editor window semantic content changed; get a fresh UI snapshot before reading exact content',
+      staleSnapshot: true,
+      expectedSnapshotRevision,
+      actualSnapshotRevision: null,
+      restartOffset: 0,
+    };
+  }
   let element;
   try {
     element = document.querySelector(selector);

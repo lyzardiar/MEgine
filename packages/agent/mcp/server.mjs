@@ -1275,10 +1275,10 @@ const TOOLS = [
   {
     name: 'read_window_ui_content',
     description:
-      'Read exact, unnormalized text or value content from one selector returned by get_window_ui. Use nextOffset until null and pass the first page contentRevision as expectedContentRevision on every continuation; changed content fails instead of returning a torn read. Password values are never returned.',
+      'Read exact, unnormalized text or value content from one selector returned by get_window_ui. Pass that same snapshotRevision as expectedSnapshotRevision on every page. Use nextOffset until null and pass the first page contentRevision as expectedContentRevision on every continuation; changed selectors or content fail instead of returning the wrong element or a torn read. Password values are never returned.',
     inputSchema: {
       type: 'object',
-      required: ['selector', 'field'],
+      required: ['selector', 'expectedSnapshotRevision', 'field'],
       properties: {
         windowLabel: {
           type: 'string',
@@ -1288,6 +1288,7 @@ const TOOLS = [
           type: 'string',
           description: 'Exact selector returned by get_window_ui',
         },
+        expectedSnapshotRevision: UI_SNAPSHOT_REVISION_SCHEMA,
         field: {
           type: 'string',
           enum: ['text', 'value'],
@@ -1331,6 +1332,7 @@ const TOOLS = [
       textContent(await bridgeQuery('window.ui_content', {
         windowLabel: args.windowLabel || 'main',
         selector: args.selector,
+        expectedSnapshotRevision: args.expectedSnapshotRevision,
         field: args.field,
         offset: typeof args.offset === 'number' ? args.offset : 0,
         maxChars: typeof args.maxChars === 'number' ? args.maxChars : 10000,

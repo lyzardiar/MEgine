@@ -588,6 +588,7 @@ class AgentBridge {
   async readWindowContent(
     selector: string,
     field: 'text' | 'value',
+    expectedSnapshotRevision: string,
     windowLabel = 'main',
     offset = 0,
     maxChars = 10_000,
@@ -598,6 +599,12 @@ class AgentBridge {
     }
     if (!selector) {
       throw new BridgeError('INVALID_ARGS', 'Window UI content reads require a selector');
+    }
+    if (!/^ui-v\d+-\d+-[0-9a-f]{16}$/.test(expectedSnapshotRevision ?? '')) {
+      throw new BridgeError(
+        'INVALID_ARGS',
+        'Window UI content reads require expectedSnapshotRevision from window.ui_snapshot',
+      );
     }
     const boundedOffset = Number.isFinite(offset)
       ? Math.min(10_000_000, Math.max(0, Math.trunc(offset)))
@@ -621,7 +628,14 @@ class AgentBridge {
         'Continuation pages require "expectedContentRevision" from the first content page',
       );
     }
-    const result = await invoke<EditorUiContentPage & { ok?: boolean; error?: string }>(
+    const result = await invoke<EditorUiContentPage & {
+      ok?: boolean;
+      error?: string;
+      staleSnapshot?: boolean;
+      expectedSnapshotRevision?: string;
+      actualSnapshotRevision?: string;
+      restartOffset?: number;
+    }>(
       'read_editor_ui_content',
       {
         windowLabel,
@@ -629,9 +643,23 @@ class AgentBridge {
         field,
         offset: boundedOffset,
         maxChars: boundedMaxChars,
+        expectedSnapshotRevision,
       },
     );
     if (result.ok === false) {
+      if (result.staleSnapshot) {
+        throw new BridgeError(
+          'STALE_REVISION',
+          result.error ?? 'Editor UI snapshot changed before exact content read',
+          {
+            windowLabel,
+            selector,
+            expectedSnapshotRevision: result.expectedSnapshotRevision,
+            actualSnapshotRevision: result.actualSnapshotRevision,
+            restartOffset: result.restartOffset ?? 0,
+          },
+        );
+      }
       throw new BridgeError('INVALID_ARGS', result.error ?? 'Editor UI content read failed');
     }
     if (expectedRevision && result.contentRevision !== expectedRevision) {
@@ -3557,6 +3585,7 @@ class AgentBridge {
         return this.readWindowContent(
           requiredString(params, 'selector'),
           requiredUiContentField(params),
+          requiredString(params, 'expectedSnapshotRevision'),
           typeof params.windowLabel === 'string' && params.windowLabel
             ? params.windowLabel
             : 'main',

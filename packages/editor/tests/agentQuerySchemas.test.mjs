@@ -55,9 +55,14 @@ test('query schemas accept documented read shapes and reject malformed or extra 
       offset: 50,
       expectedSnapshotRevision: 'ui-v1-100-0123456789abcdef',
     }],
-    ['window.ui_content', { selector: '#editor', field: 'text' }],
     ['window.ui_content', {
       selector: '#editor',
+      expectedSnapshotRevision: 'ui-v1-100-0123456789abcdef',
+      field: 'text',
+    }],
+    ['window.ui_content', {
+      selector: '#editor',
+      expectedSnapshotRevision: 'ui-v1-100-0123456789abcdef',
       field: 'text',
       offset: 10_000,
       expectedContentRevision: 'content-v1-20000-0123456789abcdef',
@@ -93,9 +98,11 @@ test('query schemas accept documented read shapes and reject malformed or extra 
       expectedSnapshotRevision: 'not-a-snapshot-revision',
     }],
     ['window.ui_content', { selector: '#editor', field: 'password' }],
+    ['window.ui_content', { selector: '#editor', field: 'text' }],
     ['window.ui_content', { selector: '#editor', field: 'text', offset: 1 }],
     ['window.ui_content', {
       selector: '#editor',
+      expectedSnapshotRevision: 'ui-v1-100-0123456789abcdef',
       field: 'text',
       offset: 1,
       expectedContentRevision: 'not-a-content-revision',
