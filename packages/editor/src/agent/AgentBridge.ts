@@ -651,9 +651,17 @@ class AgentBridge {
 
   /** Execute one allow-listed DOM action without activating the OS window. */
   async interactWindow(
-    action: 'click' | 'doubleClick' | 'contextClick' | 'setValue' | 'scroll' | 'keyPress',
+    action:
+      | 'click'
+      | 'doubleClick'
+      | 'contextClick'
+      | 'setValue'
+      | 'scroll'
+      | 'keyPress'
+      | 'dragTo',
     selector: string,
     windowLabel = 'main',
+    targetSelector?: string,
     value?: string,
     deltaX?: number,
     deltaY?: number,
@@ -669,6 +677,7 @@ class AgentBridge {
       windowLabel,
       selector,
       action,
+      targetSelector,
       value,
       deltaX,
       deltaY,
@@ -3300,6 +3309,7 @@ class AgentBridge {
       || commandId === 'window.ui_context_click'
       || commandId === 'window.ui_set_value'
       || commandId === 'window.ui_scroll'
+      || commandId === 'window.ui_drag_to'
       || commandId === 'window.ui_press_key'
     ) {
       const action = commandId === 'window.ui_click'
@@ -3312,11 +3322,16 @@ class AgentBridge {
               ? 'setValue'
               : commandId === 'window.ui_scroll'
                 ? 'scroll'
-                : 'keyPress';
+                : commandId === 'window.ui_drag_to'
+                  ? 'dragTo'
+                  : 'keyPress';
       const selector = typeof args.selector === 'string' ? args.selector : '';
       const windowLabel =
         typeof args.windowLabel === 'string' && args.windowLabel ? args.windowLabel : 'main';
       const value = typeof args.value === 'string' ? args.value : undefined;
+      const targetSelector = commandId === 'window.ui_drag_to'
+        ? requiredString(args, 'targetSelector')
+        : undefined;
       const deltaX = optionalBoundedUiDelta(args, 'deltaX', 0);
       const deltaY = commandId === 'window.ui_scroll'
         ? requiredBoundedUiDelta(args, 'deltaY')
@@ -3330,6 +3345,7 @@ class AgentBridge {
           action,
           selector,
           windowLabel,
+          targetSelector,
           value,
           deltaX,
           deltaY,

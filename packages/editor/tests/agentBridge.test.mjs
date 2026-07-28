@@ -22,6 +22,14 @@ test('whole-window agent capture is background-safe and addressable by window la
     path.join(root, '..', 'agent', 'mcp', 'server.mjs'),
     'utf8',
   );
+  const contentScript = rust.match(
+    /const WINDOW_UI_CONTENT_SCRIPT: &str = r#"(.*?)"#;/s,
+  )?.[1];
+  const interactionScript = rust.match(
+    /const WINDOW_UI_INTERACTION_SCRIPT: &str = r#"(.*?)"#;/s,
+  )?.[1];
+  assert.ok(contentScript);
+  assert.ok(interactionScript);
 
   assert.match(rust, /Page\.captureScreenshot/);
   assert.match(rust, /Runtime\.evaluate/);
@@ -45,7 +53,7 @@ test('whole-window agent capture is background-safe and addressable by window la
   assert.match(rust, /typeof reactProps\.onChange === 'function'/);
   assert.match(rust, /\['checkbox', 'radio'\]\.includes\(element\.type\)/);
   assert.match(rust, /MENGINE_EDITOR_CONFIG_DIR/);
-  assert.match(rust, /"click" \| "doubleClick" \| "contextClick" \| "setValue" \| "scroll" \| "keyPress"/);
+  assert.match(rust, /\| "dragTo"/);
   assert.match(rust, /key\.startsWith\('__reactProps\$'\)/);
   assert.match(rust, /actions\.push\('doubleClick'\)/);
   assert.match(rust, /actions\.push\('contextClick'\)/);
@@ -55,6 +63,13 @@ test('whole-window agent capture is background-safe and addressable by window la
   assert.match(rust, /element\.scrollBy/);
   assert.match(rust, /actions\.push\('scroll'\)/);
   assert.match(rust, /actions\.push\('keyPress'\)/);
+  assert.match(rust, /actions\.push\('dragTo'\)/);
+  assert.match(rust, /new DataTransfer\(\)/);
+  assert.match(rust, /new DragEvent\(type/);
+  assert.match(rust, /dispatchDrag\(targetElement, 'drop'\)/);
+  assert.doesNotMatch(contentScript, /targetElement|targetSelector|action === 'dragTo'/);
+  assert.match(interactionScript, /let targetElement = null/);
+  assert.match(interactionScript, /document\.querySelector\(targetSelector\)/);
   assert.match(rust, /new KeyboardEvent\(type/);
   assert.match(rust, /requestedKey === 'Space' \? ' ' :/);
   assert.match(rust, /element\.focus\(\{ preventScroll: true \}\)/);
@@ -127,6 +142,7 @@ test('whole-window agent capture is background-safe and addressable by window la
   assert.match(mcp, /'open_window_ui_context_menu'/);
   assert.match(mcp, /'set_window_ui_value'/);
   assert.match(mcp, /'scroll_window_ui'/);
+  assert.match(mcp, /'drag_window_ui'/);
   assert.match(mcp, /'press_window_ui_key'/);
   assert.match(mcp, /'respond_to_dialog'/);
   assert.match(mcp, /'close_editor_window'/);

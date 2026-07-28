@@ -1192,6 +1192,7 @@ const COMMAND_SUMMARIES: CommandSummary[] = [
   { id: 'window.ui_context_click', category: 'window', description: 'Open the context menu for a semantic UI element without activating the editor window', readOnly: false },
   { id: 'window.ui_set_value', category: 'window', description: 'Set an input value in an editor window without activating it', readOnly: false },
   { id: 'window.ui_scroll', category: 'window', description: 'Scroll a semantic UI container in an editor window without activating it', readOnly: false },
+  { id: 'window.ui_drag_to', category: 'window', description: 'Drag one semantic UI element to another inside a hidden editor window', readOnly: false },
   { id: 'window.ui_press_key', category: 'window', description: 'Press an allow-listed semantic key on an editor UI element without activating its window', readOnly: false },
 ];
 

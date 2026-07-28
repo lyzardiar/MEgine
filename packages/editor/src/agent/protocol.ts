@@ -36,7 +36,8 @@ export type EditorUiAction =
   | 'contextClick'
   | 'setValue'
   | 'scroll'
-  | 'keyPress';
+  | 'keyPress'
+  | 'dragTo';
 
 /** One visible, semantically meaningful DOM element in an editor webview. */
 export interface EditorUiElement {
@@ -129,6 +130,8 @@ export interface EditorUiActionResult {
   agentAlternative?: string | null;
   action?: EditorUiAction;
   selector?: string;
+  targetSelector?: string | null;
+  targetName?: string | null;
   tag?: string;
   role?: string | null;
   name?: string | null;

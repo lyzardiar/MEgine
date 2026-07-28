@@ -688,6 +688,11 @@ export const COMMAND_PARAMS_SCHEMAS: Record<string, AgentJsonSchema> = {
       description: 'Vertical CSS-pixel delta',
     },
   }, ['selector', 'deltaY']),
+  'window.ui_drag_to': objectSchema({
+    windowLabel: stringValue('Window label; default main'),
+    selector: stringValue('Exact draggable source selector returned by window.ui_snapshot'),
+    targetSelector: stringValue('Exact drop target selector returned by window.ui_snapshot'),
+  }, ['selector', 'targetSelector']),
   'window.ui_press_key': objectSchema({
     windowLabel: stringValue('Window label; default main'),
     selector: stringValue('Exact keyboard target selector returned by window.ui_snapshot'),

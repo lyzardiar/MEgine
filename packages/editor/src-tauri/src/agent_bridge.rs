@@ -661,6 +661,7 @@ pub async fn interact_editor_window(
     window_label: Option<String>,
     selector: String,
     action: String,
+    target_selector: Option<String>,
     value: Option<String>,
     delta_x: Option<f64>,
     delta_y: Option<f64>,
@@ -673,9 +674,22 @@ pub async fn interact_editor_window(
     }
     if !matches!(
         action.as_str(),
-        "click" | "doubleClick" | "contextClick" | "setValue" | "scroll" | "keyPress"
+        "click" | "doubleClick" | "contextClick" | "setValue" | "scroll" | "keyPress" | "dragTo"
     ) {
         return Err(format!("unsupported editor UI action \"{action}\""));
+    }
+    let target_selector = target_selector
+        .map(|selector| selector.trim().to_string())
+        .filter(|selector| !selector.is_empty());
+    if action == "dragTo" {
+        let target_selector = target_selector
+            .as_ref()
+            .ok_or_else(|| "dragTo requires targetSelector".to_string())?;
+        if target_selector.len() > 1_000 {
+            return Err("targetSelector must contain 1 to 1000 characters".to_string());
+        }
+    } else if target_selector.is_some() {
+        return Err("targetSelector is only valid for dragTo".to_string());
     }
     if value.as_ref().is_some_and(|value| value.len() > 100_000) {
         return Err("UI value exceeds the 100000-character limit".to_string());
@@ -719,6 +733,7 @@ pub async fn interact_editor_window(
         window_label,
         selector,
         action,
+        target_selector,
         value,
         delta_x,
         delta_y,
@@ -840,6 +855,7 @@ async fn interact_editor_window_impl(
     window_label: String,
     selector: String,
     action: String,
+    target_selector: Option<String>,
     value: Option<String>,
     delta_x: Option<f64>,
     delta_y: Option<f64>,
@@ -849,6 +865,7 @@ async fn interact_editor_window_impl(
     let payload = serde_json::json!({
         "selector": selector,
         "action": action,
+        "targetSelector": target_selector,
         "value": value,
         "deltaX": delta_x,
         "deltaY": delta_y,
@@ -999,6 +1016,7 @@ async fn interact_editor_window_impl(
     _window_label: String,
     _selector: String,
     _action: String,
+    _target_selector: Option<String>,
     _value: Option<String>,
     _delta_x: Option<f64>,
     _delta_y: Option<f64>,
@@ -1029,6 +1047,7 @@ const WINDOW_UI_SNAPSHOT_SCRIPT: &str = r#"
     'setValue',
     'scroll',
     'keyPress',
+    'dragTo',
   ];
   const agentPolicyFor = (element) => {
     const blockedActions = new Set();
@@ -1225,6 +1244,9 @@ const WINDOW_UI_SNAPSHOT_SCRIPT: &str = r#"
       || typeof props.onKeyPress === 'function'
     ) {
       actions.push('keyPress');
+    }
+    if (element.draggable || typeof props.onDragStart === 'function') {
+      actions.push('dragTo');
     }
     return actions;
   };
@@ -1446,6 +1468,7 @@ const WINDOW_UI_INTERACTION_SCRIPT: &str = r#"
   const {
     selector,
     action,
+    targetSelector,
     value: requestedValue,
     deltaX: requestedDeltaX,
     deltaY: requestedDeltaY,
@@ -1458,6 +1481,7 @@ const WINDOW_UI_INTERACTION_SCRIPT: &str = r#"
     'setValue',
     'scroll',
     'keyPress',
+    'dragTo',
   ];
   const agentPolicyFor = (target) => {
     const blockedActions = new Set();
@@ -1495,6 +1519,17 @@ const WINDOW_UI_INTERACTION_SCRIPT: &str = r#"
     return { ok: false, error: `Invalid selector: ${String(error)}` };
   }
   if (!element) return { ok: false, error: `No element matches ${selector}` };
+  let targetElement = null;
+  if (action === 'dragTo') {
+    try {
+      targetElement = document.querySelector(targetSelector);
+    } catch (error) {
+      return { ok: false, error: `Invalid target selector: ${String(error)}` };
+    }
+    if (!targetElement) {
+      return { ok: false, error: `No element matches target ${targetSelector}` };
+    }
+  }
   const normalizeName = (value) => String(value || '').replace(/\s+/g, ' ').trim().slice(0, 160);
   const labelledText = (target) => {
     const ids = String(target.getAttribute('aria-labelledby') || '').split(/\s+/).filter(Boolean);
@@ -1541,18 +1576,18 @@ const WINDOW_UI_INTERACTION_SCRIPT: &str = r#"
       || normalizeName(target.getAttribute('title'))
       || content;
   };
-  const interactionName = () => {
-    const direct = directName(element);
+  const interactionName = (target, includeScrollContext = false) => {
+    const direct = directName(target);
     if (direct) return direct;
-    if (action === 'scroll') {
-      let current = element.parentElement;
+    if (includeScrollContext) {
+      let current = target.parentElement;
       while (current instanceof Element) {
         const context = directName(current);
         if (context) return `${context} scroll area`;
         current = current.parentElement;
       }
     }
-    return normalizeName(element.innerText || element.textContent);
+    return normalizeName(target.innerText || target.textContent);
   };
   const agentPolicy = agentPolicyFor(element);
   if (agentPolicy && (
@@ -1569,25 +1604,45 @@ const WINDOW_UI_INTERACTION_SCRIPT: &str = r#"
       agentAlternative: alternative,
     };
   }
+  const targetAgentPolicy = targetElement ? agentPolicyFor(targetElement) : null;
+  if (targetAgentPolicy && (
+    targetAgentPolicy.blockedActions === null
+    || targetAgentPolicy.blockedActions.includes(action)
+  )) {
+    const alternative = targetAgentPolicy.alternative;
+    return {
+      ok: false,
+      error: `Target element ${targetSelector} requires foreground-only user input for ${action}${
+        alternative ? `; use ${alternative} instead` : ''
+      }`,
+      agentBlocked: true,
+      agentAlternative: alternative,
+    };
+  }
   const disabled = Boolean(
     element.disabled || element.getAttribute('aria-disabled') === 'true',
   );
   if (disabled) {
     return { ok: false, error: `Element ${selector} is disabled` };
   }
-  const eventCoordinates = () => {
-    const rect = element.getBoundingClientRect();
+  if (targetElement && Boolean(
+    targetElement.disabled || targetElement.getAttribute('aria-disabled') === 'true',
+  )) {
+    return { ok: false, error: `Target element ${targetSelector} is disabled` };
+  }
+  const eventCoordinates = (target = element) => {
+    const rect = target.getBoundingClientRect();
     return {
       clientX: rect.left + rect.width / 2,
       clientY: rect.top + rect.height / 2,
     };
   };
-  const dispatchPointer = (type, button, buttons, detail = 0) => {
-    const coordinates = eventCoordinates();
+  const dispatchPointerAt = (target, type, button, buttons, detail = 0) => {
+    const coordinates = eventCoordinates(target);
     const EventType = typeof PointerEvent === 'function' && type.startsWith('pointer')
       ? PointerEvent
       : MouseEvent;
-    element.dispatchEvent(new EventType(type, {
+    target.dispatchEvent(new EventType(type, {
       bubbles: true,
       cancelable: true,
       composed: true,
@@ -1599,6 +1654,9 @@ const WINDOW_UI_INTERACTION_SCRIPT: &str = r#"
       isPrimary: true,
       ...coordinates,
     }));
+  };
+  const dispatchPointer = (type, button, buttons, detail = 0) => {
+    dispatchPointerAt(element, type, button, buttons, detail);
   };
   const reactPropsFor = (target) => {
     for (const key of Object.keys(target)) {
@@ -1680,6 +1738,42 @@ const WINDOW_UI_INTERACTION_SCRIPT: &str = r#"
     dispatchPointer('contextmenu', 2, 2, 1);
     dispatchPointer('pointerup', 2, 0, 1);
     dispatchPointer('mouseup', 2, 0, 1);
+  } else if (action === 'dragTo') {
+    const reactProps = reactPropsFor(element);
+    if (!element.draggable && typeof reactProps.onDragStart !== 'function') {
+      return { ok: false, error: `Element ${selector} is not a draggable semantic source` };
+    }
+    if (
+      !(targetElement instanceof Element)
+      || typeof DataTransfer !== 'function'
+      || typeof DragEvent !== 'function'
+    ) {
+      return { ok: false, error: 'This WebView does not support semantic drag events' };
+    }
+    const dataTransfer = new DataTransfer();
+    dataTransfer.effectAllowed = 'all';
+    const dispatchDrag = (target, type) => target.dispatchEvent(new DragEvent(type, {
+      bubbles: true,
+      cancelable: true,
+      composed: true,
+      dataTransfer,
+      ...eventCoordinates(target),
+    }));
+    dispatchPointer('pointerdown', 0, 1, 1);
+    dispatchPointer('mousedown', 0, 1, 1);
+    if (!dispatchDrag(element, 'dragstart')) {
+      dispatchPointer('pointerup', 0, 0, 1);
+      dispatchPointer('mouseup', 0, 0, 1);
+      return { ok: false, error: `Element ${selector} cancelled dragstart` };
+    }
+    dispatchPointerAt(targetElement, 'pointermove', 0, 1, 1);
+    dispatchPointerAt(targetElement, 'mousemove', 0, 1, 1);
+    dispatchDrag(targetElement, 'dragenter');
+    dispatchDrag(targetElement, 'dragover');
+    dispatchDrag(targetElement, 'drop');
+    dispatchDrag(element, 'dragend');
+    dispatchPointerAt(targetElement, 'pointerup', 0, 0, 1);
+    dispatchPointerAt(targetElement, 'mouseup', 0, 0, 1);
   } else if (action === 'setValue') {
     if (element.readOnly || element.getAttribute('aria-readonly') === 'true') {
       return { ok: false, error: `Element ${selector} is read-only` };
@@ -1792,9 +1886,11 @@ const WINDOW_UI_INTERACTION_SCRIPT: &str = r#"
     action,
     key: action === 'keyPress' ? requestedKey : null,
     selector,
+    targetSelector: action === 'dragTo' ? targetSelector : null,
+    targetName: targetElement ? interactionName(targetElement) : null,
     tag: element.localName,
     role: roleForName(element) || null,
-    name: interactionName(),
+    name: interactionName(element, action === 'scroll'),
     value: element instanceof HTMLInputElement && element.type === 'password'
       ? '<redacted>'
       : ('value' in element ? String(element.value) : null),
