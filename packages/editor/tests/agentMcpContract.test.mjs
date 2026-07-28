@@ -5,6 +5,8 @@ import test from 'node:test';
 import { fileURLToPath } from 'node:url';
 import {
   BridgeOutcomeUnknownError,
+  bridgeExecuteParams,
+  DANGEROUS_AGENT_COMMANDS,
   PROMPTS,
   RESOURCES,
   SERVER_INSTRUCTIONS,
@@ -157,6 +159,58 @@ test('MCP tools expose conservative official safety annotations', () => {
     idempotentHint: false,
     openWorldHint: true,
   });
+});
+
+test('MCP forwards approval tokens only for the native dangerous command set', () => {
+  const nativeBridge = fs.readFileSync(
+    path.join(editorRoot, 'src-tauri', 'src', 'agent_bridge.rs'),
+    'utf8',
+  );
+  const nativeDeclaration = nativeBridge.match(
+    /const DANGEROUS_AGENT_COMMANDS:\s*&\[&str\]\s*=\s*&\[([\s\S]*?)\];/,
+  );
+  assert.ok(nativeDeclaration, 'native dangerous command declaration must remain readable');
+  const nativeCommands = [
+    ...nativeDeclaration[1].matchAll(/"([^"]+)"/g),
+  ].map((match) => match[1]);
+
+  assert.ok(Object.isFrozen(DANGEROUS_AGENT_COMMANDS));
+  assert.deepEqual(
+    [...DANGEROUS_AGENT_COMMANDS].sort(),
+    nativeCommands.sort(),
+    'MCP and native dangerous command sets must not drift',
+  );
+
+  const previousToken = process.env.MENGINE_AGENT_APPROVAL_TOKEN;
+  try {
+    process.env.MENGINE_AGENT_APPROVAL_TOKEN = 'environment-secret';
+    const ordinary = bridgeExecuteParams('scene.save', {}, {
+      requestId: 'ordinary-write',
+      approvalToken: 'explicit-secret',
+    });
+    assert.equal(Object.hasOwn(ordinary, 'approvalToken'), false);
+    assert.doesNotMatch(JSON.stringify(ordinary), /secret/);
+
+    const dangerous = bridgeExecuteParams('scene.delete', { path: 'Scene' }, {
+      requestId: 'dangerous-write',
+    });
+    assert.equal(dangerous.approvalToken, 'environment-secret');
+
+    const explicitlyApproved = bridgeExecuteParams('asset.trash', {}, {
+      approvalToken: 'explicit-secret',
+    });
+    assert.equal(explicitlyApproved.approvalToken, 'explicit-secret');
+
+    delete process.env.MENGINE_AGENT_APPROVAL_TOKEN;
+    const unapproved = bridgeExecuteParams('build.start');
+    assert.equal(Object.hasOwn(unapproved, 'approvalToken'), false);
+  } finally {
+    if (previousToken == null) {
+      delete process.env.MENGINE_AGENT_APPROVAL_TOKEN;
+    } else {
+      process.env.MENGINE_AGENT_APPROVAL_TOKEN = previousToken;
+    }
+  }
 });
 
 test('MCP validates tool arguments before dispatch with bounded structured issues', () => {

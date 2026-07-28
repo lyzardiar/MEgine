@@ -44,6 +44,15 @@ const MAX_MCP_OUTBOUND_QUEUED_BYTES = 192 * 1024 * 1024;
 const MCP_OUTPUT_PAUSE_BYTES = 64 * 1024 * 1024;
 const MCP_RATE_LIMIT_RETRY_AFTER_MS = 250;
 const MCP_SESSION_ID = crypto.randomUUID();
+const DANGEROUS_AGENT_COMMANDS = Object.freeze([
+  'scene.delete',
+  'asset.trash',
+  'build.start',
+  'build.run',
+  'build.history.create_patch',
+  'build.history.restore',
+]);
+const DANGEROUS_AGENT_COMMAND_SET = new Set(DANGEROUS_AGENT_COMMANDS);
 
 // ── Discovery ────────────────────────────────────────────────────────────
 
@@ -473,19 +482,29 @@ async function bridgeQuery(query, args = {}, options = {}) {
   return result?.data;
 }
 
+function bridgeExecuteParams(command, args = {}, options = {}) {
+  const params = {
+    command,
+    args,
+    requestId: options.requestId,
+    screenshot: Boolean(options.screenshot),
+    expectedSceneRevision: options.expectedSceneRevision,
+  };
+  if (DANGEROUS_AGENT_COMMAND_SET.has(command)) {
+    const approvalToken =
+      options.approvalToken ?? process.env.MENGINE_AGENT_APPROVAL_TOKEN;
+    if (approvalToken != null) {
+      params.approvalToken = approvalToken;
+    }
+  }
+  return params;
+}
+
 async function bridgeExecute(command, args = {}, options = {}) {
   const longRunning = command === 'build.verify';
   return await rpc(
     'execute',
-    {
-      command,
-      args,
-      requestId: options.requestId,
-      approvalToken:
-        options.approvalToken ?? process.env.MENGINE_AGENT_APPROVAL_TOKEN,
-      screenshot: Boolean(options.screenshot),
-      expectedSceneRevision: options.expectedSceneRevision,
-    },
+    bridgeExecuteParams(command, args, options),
     {
       timeoutMs: longRunning
         ? BUILD_ARTIFACT_REQUEST_TIMEOUT_MS
@@ -3960,9 +3979,11 @@ export {
   PROMPTS,
   BoundedNdjsonDecoder,
   BoundedWriteQueue,
+  bridgeExecuteParams,
   bridgeExecute,
   bridgeQuery,
   closeBridgeConnection,
+  DANGEROUS_AGENT_COMMANDS,
   incomingMessageError,
   negotiateProtocolVersion,
   rpcOnce,

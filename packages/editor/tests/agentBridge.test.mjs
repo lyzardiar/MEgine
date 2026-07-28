@@ -428,8 +428,9 @@ test('the main AgentBridge transport is available before a project is opened', (
   assert.match(bridge, /call close_project before opening another project/);
   assert.match(
     mcp,
-    /approvalToken:\s*options\.approvalToken \?\? process\.env\.MENGINE_AGENT_APPROVAL_TOKEN/,
+    /DANGEROUS_AGENT_COMMAND_SET\.has\(command\)/,
   );
+  assert.match(mcp, /bridgeExecuteParams\(command, args, options\)/);
 });
 
 test('project close is loss-aware, native-atomic, and reconnects the background bridge', () => {
