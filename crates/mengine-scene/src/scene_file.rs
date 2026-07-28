@@ -157,6 +157,7 @@ pub fn apply_snapshot(world: &mut World, snap: &WorldSnapshot) {
             continue;
         };
         world.set_editor_state(child, ent.sibling_index, ent.active);
+        world.set_entity_metadata(child, ent.tag.clone(), ent.layer);
         if let Some(parent) = ent.parent.and_then(|id| entity_map.get(&id)).copied() {
             world.set_parent(child, Some(parent));
         }
@@ -224,6 +225,7 @@ mod tests {
         });
         let entity = world.commit()[0];
         world.set_editor_state(entity, 4, false);
+        world.set_entity_metadata(entity, "Player".into(), 8);
         world.time.frame = 12;
         world.time.sim_frame = 9;
         world.selected = Some(entity);
@@ -235,6 +237,8 @@ mod tests {
 
         assert_eq!(snapshot.entities[0].sibling_index, 4);
         assert!(!snapshot.entities[0].active);
+        assert_eq!(snapshot.entities[0].tag, "Player");
+        assert_eq!(snapshot.entities[0].layer, 8);
         assert_eq!(snapshot.frame, 12);
         assert_eq!(snapshot.sim_frame, 9);
         assert!(snapshot.selected.is_some());
@@ -671,6 +675,8 @@ mod tests {
                     parent: None,
                     sibling_index: 0,
                     active: true,
+                    tag: "Untagged".into(),
+                    layer: 0,
                     components: HashMap::from([(
                         "TimelineDirector".into(),
                         json!({
@@ -685,6 +691,8 @@ mod tests {
                     parent: None,
                     sibling_index: 1,
                     active: true,
+                    tag: "Player".into(),
+                    layer: 8,
                     components: HashMap::new(),
                 },
             ],
@@ -726,6 +734,8 @@ mod tests {
                     parent: None,
                     sibling_index: 0,
                     active: true,
+                    tag: "Untagged".into(),
+                    layer: 0,
                     components: HashMap::from([(
                         "Button".into(),
                         json!({
@@ -739,6 +749,8 @@ mod tests {
                     parent: None,
                     sibling_index: 1,
                     active: true,
+                    tag: "Untagged".into(),
+                    layer: 0,
                     components: HashMap::new(),
                 },
                 EntitySnapshot {
@@ -747,6 +759,8 @@ mod tests {
                     parent: None,
                     sibling_index: 2,
                     active: true,
+                    tag: "Untagged".into(),
+                    layer: 0,
                     components: HashMap::from([(
                         "Button".into(),
                         json!({

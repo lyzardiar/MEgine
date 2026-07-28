@@ -185,6 +185,43 @@ export const COMMAND_PARAMS_SCHEMAS: Record<string, AgentJsonSchema> = {
       description: 'Exact current settings revision, or null only when the file is missing',
     },
   }, ['layers', 'expectedRevision']),
+  'project.settings.set_tags_and_layers': objectSchema({
+    tags: {
+      type: 'array',
+      minItems: 1,
+      maxItems: 64,
+      items: {
+        type: 'string',
+        minLength: 1,
+        maxLength: 64,
+      },
+      description: 'Complete unique tag list including Untagged',
+    },
+    gameLayers: {
+      type: 'array',
+      minItems: 1,
+      maxItems: 32,
+      items: objectSchema({
+        index: {
+          type: 'integer',
+          minimum: 0,
+          maximum: 31,
+          description: 'Stable layer bit index',
+        },
+        name: {
+          type: 'string',
+          minLength: 1,
+          maxLength: 64,
+          description: 'Unique display name',
+        },
+      }, ['index', 'name']),
+      description: 'Complete named GameObject layer list including index 0 Default',
+    },
+    expectedRevision: {
+      type: ['string', 'null'],
+      description: 'Exact current settings revision, or null only when the file is missing',
+    },
+  }, ['tags', 'gameLayers', 'expectedRevision']),
   'scene.new': objectSchema({
     name: sceneName,
     overwrite: booleanValue('Allow replacing an existing scene; default false'),
@@ -389,6 +426,24 @@ export const COMMAND_PARAMS_SCHEMAS: Record<string, AgentJsonSchema> = {
     id: entityId(),
     active: booleanValue('New active state'),
   }, ['id', 'active']),
+  'entity.set_tag': objectSchema({
+    id: entityId(),
+    tag: {
+      type: 'string',
+      minLength: 1,
+      maxLength: 64,
+      description: 'GameObject classification tag',
+    },
+  }, ['id', 'tag']),
+  'entity.set_layer': objectSchema({
+    id: entityId(),
+    layer: {
+      type: 'integer',
+      minimum: 0,
+      maximum: 31,
+      description: 'GameObject layer index',
+    },
+  }, ['id', 'layer']),
   'entity.reparent': objectSchema({
     ids: entityIds('Entity ids to reparent'),
     parent: {

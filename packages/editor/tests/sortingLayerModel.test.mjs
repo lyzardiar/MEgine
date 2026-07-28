@@ -3,6 +3,7 @@ import test from 'node:test';
 import {
   normalizeSortingLayerSettings,
   sortingLayerRank,
+  validateTagsAndLayers,
   validateSortingLayers,
 } from '../src/sortingLayerModel.ts';
 
@@ -22,6 +23,8 @@ test('sorting layer normalization guarantees Default and rejects ambiguous entri
       { id: 'default', name: 'Default' },
       { id: 'background', name: 'Background' },
     ],
+    tags: ['Untagged'],
+    gameLayers: [{ index: 0, name: 'Default' }],
   });
 });
 
@@ -58,4 +61,32 @@ test('strict authoring validation rejects settings that normalization would disc
     { id: 'default', name: 'Default' },
     { id: 'effects', name: 'Default' },
   ]), /Duplicate sorting layer name/);
+});
+
+test('tags and GameObject layers normalize legacy settings and validate stable indices', () => {
+  const settings = normalizeSortingLayerSettings({
+    layers: [{ id: 'default', name: 'Default' }],
+    tags: ['Player', 'player', 'UNTAGGED'],
+    gameLayers: [
+      { index: 8, name: 'Gameplay' },
+      { index: 8, name: 'Duplicate' },
+    ],
+  });
+  assert.deepEqual(settings.tags, ['Untagged', 'Player']);
+  assert.deepEqual(settings.gameLayers, [
+    { index: 0, name: 'Default' },
+    { index: 8, name: 'Gameplay' },
+  ]);
+  assert.equal(validateTagsAndLayers(
+    ['Untagged', 'Player'],
+    [{ index: 0, name: 'Default' }, { index: 8, name: 'Gameplay' }],
+  ), null);
+  assert.match(validateTagsAndLayers(
+    ['Player'],
+    [{ index: 0, name: 'Default' }],
+  ), /Untagged/);
+  assert.match(validateTagsAndLayers(
+    ['Untagged'],
+    [{ index: 0, name: 'Default' }, { index: 32, name: 'Invalid' }],
+  ), /between 0 and 31/);
 });

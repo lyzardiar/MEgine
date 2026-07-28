@@ -9,6 +9,8 @@ type HostEntitySnapshot = {
   parent?: number | null;
   sibling_index?: number;
   active?: boolean;
+  tag?: string;
+  layer?: number;
   components: Record<string, unknown>;
 };
 
@@ -282,6 +284,8 @@ export type ProjectSortingLayer = {
 export type ProjectSortingLayers = {
   version: 1;
   layers: ProjectSortingLayer[];
+  tags: string[];
+  gameLayers: Array<{ index: number; name: string }>;
 };
 
 export type ProjectSortingLayersSnapshot = {
@@ -350,6 +354,8 @@ export function toWorldSnapshotView(snapshot: HostWorldSnapshot): WorldSnapshotV
       parent: entity.parent,
       siblingIndex: entity.sibling_index ?? 0,
       active: entity.active ?? true,
+      tag: entity.tag ?? 'Untagged',
+      layer: entity.layer ?? 0,
       components: entity.components,
     })),
     frame: snapshot.frame,

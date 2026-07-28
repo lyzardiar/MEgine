@@ -183,6 +183,9 @@ test('whole-window agent capture is background-safe and addressable by window la
   assert.match(mcp, /name: 'get_project_state'/);
   assert.match(mcp, /name: 'get_project_settings'/);
   assert.match(mcp, /'set_sorting_layers'/);
+  assert.match(mcp, /'set_tags_and_layers'/);
+  assert.match(mcp, /'set_entity_tag'/);
+  assert.match(mcp, /'set_entity_layer'/);
   assert.match(mcp, /name: 'list_recent_projects'/);
   assert.match(mcp, /'open_project'/);
   assert.match(mcp, /'create_project'/);
@@ -515,7 +518,9 @@ test('scene, asset, and asynchronous build tools share guarded editor services',
   assert.match(bridge, /commandId === 'asset\.import_file'/);
   assert.match(bridge, /case 'project\.settings'/);
   assert.match(bridge, /commandId === 'project\.settings\.set_sorting_layers'/);
+  assert.match(bridge, /commandId === 'project\.settings\.set_tags_and_layers'/);
   assert.match(bridge, /persistSortingLayersGuarded/);
+  assert.match(bridge, /persistTagsAndLayersGuarded/);
   assert.match(bridge, /staleSortingLayerRevision/);
   assert.match(bridge, /case 'prefab\.instance'/);
   assert.match(bridge, /commandId === 'prefab\.create'/);

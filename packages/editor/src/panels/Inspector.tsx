@@ -1211,6 +1211,8 @@ export function Inspector(props: {
     entity: number;
     name?: string | null;
     active?: boolean;
+    tag?: string;
+    layer?: number;
     components: Record<string, unknown>;
   } | null;
   entities?: Array<{ entity: number; name?: string | null; components: Record<string, unknown> }>;
@@ -1231,6 +1233,10 @@ export function Inspector(props: {
   onInvokeBehaviourMethod?: (entity: number, type: string, method: string) => void;
   onRename?: (entity: number, name: string) => void;
   onSetActive?: (entity: number, active: boolean) => void;
+  tagOptions?: Array<{ value: string; label: string }>;
+  layerOptions?: Array<{ value: number; label: string }>;
+  onSetTag?: (entity: number, tag: string) => void;
+  onSetLayer?: (entity: number, layer: number) => void;
   onBeginEditGesture?: () => void;
   onEndEditGesture?: () => void;
 }) {
@@ -1280,6 +1286,16 @@ export function Inspector(props: {
   }
 
   const entity = props.entity;
+  const tag = entity.tag?.trim() || 'Untagged';
+  const layer = Number.isInteger(entity.layer) ? Number(entity.layer) : 0;
+  const configuredTags = props.tagOptions ?? [{ value: 'Untagged', label: 'Untagged' }];
+  const configuredLayers = props.layerOptions ?? [{ value: 0, label: 'Default (0)' }];
+  const tagOptions = configuredTags.some((option) => option.value === tag)
+    ? configuredTags
+    : [{ value: tag, label: `${tag} (Unconfigured)` }, ...configuredTags];
+  const layerOptions = configuredLayers.some((option) => option.value === layer)
+    ? configuredLayers
+    : [{ value: layer, label: `Layer ${layer} (Unconfigured)` }, ...configuredLayers];
   const hasRect = !!entity.components.RectTransform;
   const hasTransform = !!entity.components.Transform;
   const t = (entity.components.Transform ?? {
@@ -1386,14 +1402,26 @@ export function Inspector(props: {
         <div className="insp-meta-row">
           <label>
             <span>Tag</span>
-            <select value="Untagged" disabled aria-label="Tag">
-              <option>Untagged</option>
+            <select
+              value={tag}
+              aria-label="Tag"
+              onChange={(event) => props.onSetTag?.(entity.entity, event.target.value)}
+            >
+              {tagOptions.map((option) => (
+                <option value={option.value} key={option.value}>{option.label}</option>
+              ))}
             </select>
           </label>
           <label>
             <span>Layer</span>
-            <select value="Default" disabled aria-label="Layer">
-              <option>Default</option>
+            <select
+              value={layer}
+              aria-label="Layer"
+              onChange={(event) => props.onSetLayer?.(entity.entity, Number(event.target.value))}
+            >
+              {layerOptions.map((option) => (
+                <option value={option.value} key={option.value}>{option.label}</option>
+              ))}
             </select>
           </label>
         </div>

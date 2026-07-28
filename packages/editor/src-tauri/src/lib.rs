@@ -162,9 +162,20 @@ struct ProjectSortingLayer {
 
 #[derive(Clone, Debug, serde::Deserialize, serde::Serialize)]
 #[serde(rename_all = "camelCase")]
+struct ProjectGameLayer {
+    index: u8,
+    name: String,
+}
+
+#[derive(Clone, Debug, serde::Deserialize, serde::Serialize)]
+#[serde(rename_all = "camelCase")]
 struct ProjectSortingLayers {
     version: u32,
     layers: Vec<ProjectSortingLayer>,
+    #[serde(default = "default_project_tags")]
+    tags: Vec<String>,
+    #[serde(default = "default_project_game_layers")]
+    game_layers: Vec<ProjectGameLayer>,
 }
 
 #[derive(Clone, Debug, serde::Serialize)]
@@ -172,6 +183,17 @@ struct ProjectSortingLayers {
 struct ProjectSortingLayersSnapshot {
     settings: ProjectSortingLayers,
     revision: Option<String>,
+}
+
+fn default_project_tags() -> Vec<String> {
+    vec!["Untagged".into()]
+}
+
+fn default_project_game_layers() -> Vec<ProjectGameLayer> {
+    vec![ProjectGameLayer {
+        index: 0,
+        name: "Default".into(),
+    }]
 }
 
 impl Default for ProjectSortingLayers {
@@ -182,6 +204,8 @@ impl Default for ProjectSortingLayers {
                 id: "default".into(),
                 name: "Default".into(),
             }],
+            tags: default_project_tags(),
+            game_layers: default_project_game_layers(),
         }
     }
 }
@@ -3923,7 +3947,85 @@ fn normalize_sorting_layers(value: ProjectSortingLayers) -> Result<ProjectSortin
             },
         );
     }
-    Ok(ProjectSortingLayers { version: 1, layers })
+    if layers.len() > 64 {
+        return Err("at most 64 sorting layers are supported including Default".into());
+    }
+
+    if value.tags.len() > 64 {
+        return Err("at most 64 tags are supported".into());
+    }
+    let mut tag_names = HashSet::new();
+    let mut tags = Vec::with_capacity(value.tags.len().max(1));
+    for raw_tag in value.tags {
+        let mut tag = raw_tag.trim().to_string();
+        if tag.is_empty() || tag.chars().count() > 64 {
+            return Err(format!("invalid tag name '{tag}'"));
+        }
+        let key = tag.to_lowercase();
+        if key == "untagged" {
+            tag = "Untagged".into();
+        }
+        if !tag_names.insert(key) {
+            return Err(format!("duplicate tag '{tag}'"));
+        }
+        tags.push(tag);
+    }
+    if !tag_names.contains("untagged") {
+        tags.insert(0, "Untagged".into());
+    } else if let Some(index) = tags.iter().position(|tag| tag == "Untagged") {
+        if index > 0 {
+            tags.remove(index);
+            tags.insert(0, "Untagged".into());
+        }
+    }
+    if tags.len() > 64 {
+        return Err("at most 64 tags are supported including Untagged".into());
+    }
+
+    if value.game_layers.len() > 32 {
+        return Err("at most 32 GameObject layers are supported".into());
+    }
+    let mut game_layer_indices = HashSet::new();
+    let mut game_layer_names = HashSet::new();
+    let mut game_layers = Vec::with_capacity(value.game_layers.len().max(1));
+    for layer in value.game_layers {
+        if layer.index >= 32 {
+            return Err(format!(
+                "GameObject layer index {} must be between 0 and 31",
+                layer.index
+            ));
+        }
+        let mut name = layer.name.trim().to_string();
+        if name.is_empty() || name.chars().count() > 64 {
+            return Err(format!("invalid GameObject layer name '{name}'"));
+        }
+        if layer.index == 0 {
+            name = "Default".into();
+        }
+        if !game_layer_indices.insert(layer.index) {
+            return Err(format!("duplicate GameObject layer index {}", layer.index));
+        }
+        if !game_layer_names.insert(name.to_lowercase()) {
+            return Err(format!("duplicate GameObject layer name '{name}'"));
+        }
+        game_layers.push(ProjectGameLayer {
+            index: layer.index,
+            name,
+        });
+    }
+    if !game_layer_indices.contains(&0) {
+        game_layers.push(ProjectGameLayer {
+            index: 0,
+            name: "Default".into(),
+        });
+    }
+    game_layers.sort_by_key(|layer| layer.index);
+    Ok(ProjectSortingLayers {
+        version: 1,
+        layers,
+        tags,
+        game_layers,
+    })
 }
 
 fn sorting_layers_path(
@@ -6320,6 +6422,7 @@ mod tests {
                 id: "effects".into(),
                 name: "Effects".into(),
             }],
+            ..ProjectSortingLayers::default()
         })
         .unwrap();
         assert_eq!(settings.layers[0].id, "default");
@@ -6346,10 +6449,23 @@ mod tests {
                     name: "Other".into(),
                 },
             ],
+            ..ProjectSortingLayers::default()
         };
         assert!(normalize_sorting_layers(duplicate)
             .unwrap_err()
             .contains("duplicate sorting layer id"));
+        let metadata = normalize_sorting_layers(ProjectSortingLayers {
+            tags: vec!["Player".into()],
+            game_layers: vec![ProjectGameLayer {
+                index: 8,
+                name: "Gameplay".into(),
+            }],
+            ..ProjectSortingLayers::default()
+        })
+        .unwrap();
+        assert_eq!(metadata.tags, vec!["Untagged", "Player"]);
+        assert_eq!(metadata.game_layers[0].name, "Default");
+        assert_eq!(metadata.game_layers[1].index, 8);
         std::fs::remove_dir_all(root).unwrap();
     }
 

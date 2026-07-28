@@ -143,9 +143,12 @@ import { paginateAgentItems } from './pagination';
 import {
   loadSortingLayersSnapshot,
   persistSortingLayersGuarded,
+  persistTagsAndLayersGuarded,
 } from '../sortingLayers';
 import {
+  validateTagsAndLayers,
   validateSortingLayers,
+  type GameObjectLayer,
   type SortingLayer,
 } from '../sortingLayerModel';
 
@@ -291,6 +294,8 @@ interface EntityView {
   parent?: number | null;
   siblingIndex?: number;
   active?: boolean;
+  tag?: string;
+  layer?: number;
   components: Record<string, unknown>;
 }
 
@@ -651,12 +656,18 @@ class AgentBridge {
 
   async getProjectSettings(): Promise<{
     sortingLayers: Awaited<ReturnType<typeof loadSortingLayersSnapshot>>;
+    settings: Awaited<ReturnType<typeof loadSortingLayersSnapshot>>['settings'];
+    revision: string | null;
   }> {
     const sortingLayers = await bridgeIo(
       'Failed to read Project Settings',
       () => loadSortingLayersSnapshot(),
     );
-    return { sortingLayers: structuredClone(sortingLayers) };
+    return {
+      sortingLayers: structuredClone(sortingLayers),
+      settings: structuredClone(sortingLayers.settings),
+      revision: sortingLayers.revision,
+    };
   }
 
   getSceneSnapshot(): unknown {
@@ -1752,7 +1763,51 @@ class AgentBridge {
     this.logProvider?.(
       `Agent saved ${saved.settings.layers.length} project sorting layer(s) at revision ${saved.revision}`,
     );
-    return { sortingLayers: structuredClone(saved) };
+    return {
+      projectSettings: structuredClone(saved),
+      sortingLayers: structuredClone(saved),
+    };
+  }
+
+  async setTagsAndLayers(
+    tags: string[],
+    gameLayers: GameObjectLayer[],
+    expectedRevision: string | null,
+  ): Promise<unknown> {
+    await this.requireWorkspaceProvider().assertDiskMutationAllowed({
+      allowSceneDirty: true,
+    });
+    const current = await bridgeIo(
+      'Failed to read Project Settings',
+      () => loadSortingLayersSnapshot(),
+    );
+    if (current.revision !== expectedRevision) {
+      throw staleSortingLayerRevision(current.revision, expectedRevision);
+    }
+    let saved: Awaited<ReturnType<typeof persistTagsAndLayersGuarded>>;
+    try {
+      saved = await persistTagsAndLayersGuarded(tags, gameLayers, expectedRevision);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      if (message.includes('sorting layers changed on disk since they were loaded')) {
+        const latest = await bridgeIo(
+          'Failed to reload Project Settings',
+          () => loadSortingLayersSnapshot(),
+        );
+        throw staleSortingLayerRevision(latest.revision, expectedRevision);
+      }
+      throw new BridgeError('IO_ERROR', message);
+    }
+    this.appendEvent('project.settings', {
+      section: 'tagsAndLayers',
+      revision: saved.revision,
+      tags: saved.settings.tags,
+      gameLayers: saved.settings.gameLayers,
+    });
+    this.logProvider?.(
+      `Agent saved ${saved.settings.tags.length} tag(s) and ${saved.settings.gameLayers.length} GameObject layer(s) at revision ${saved.revision}`,
+    );
+    return { projectSettings: structuredClone(saved) };
   }
 
   async getBuildHistory(limit = 20): Promise<unknown> {
@@ -2335,6 +2390,18 @@ class AgentBridge {
       if (validation) throw new BridgeError('INVALID_ARGS', validation);
       const result = await this.setSortingLayers(
         layers,
+        requiredNullableRevision(args, 'expectedRevision'),
+      );
+      return this.finishAsyncCommand({ ok: true, data: result }, options, true);
+    }
+    if (commandId === 'project.settings.set_tags_and_layers') {
+      const tags = requiredTags(args);
+      const gameLayers = requiredGameLayers(args);
+      const validation = validateTagsAndLayers(tags, gameLayers);
+      if (validation) throw new BridgeError('INVALID_ARGS', validation);
+      const result = await this.setTagsAndLayers(
+        tags,
+        gameLayers,
         requiredNullableRevision(args, 'expectedRevision'),
       );
       return this.finishAsyncCommand({ ok: true, data: result }, options, true);
@@ -3441,6 +3508,45 @@ function requiredSortingLayers(args: Record<string, unknown>): SortingLayer[] {
       );
     }
     return { id: record.id, name: record.name };
+  });
+}
+
+function requiredTags(args: Record<string, unknown>): string[] {
+  const value = args.tags;
+  if (!Array.isArray(value) || value.some((entry) => typeof entry !== 'string')) {
+    throw new BridgeError('INVALID_ARGS', '"tags" must be an array of strings');
+  }
+  return value.map((entry) => (entry as string).trim());
+}
+
+function requiredGameLayers(args: Record<string, unknown>): GameObjectLayer[] {
+  const value = args.gameLayers;
+  if (!Array.isArray(value)) {
+    throw new BridgeError('INVALID_ARGS', '"gameLayers" must be an array');
+  }
+  return value.map((entry, index) => {
+    if (!entry || typeof entry !== 'object' || Array.isArray(entry)) {
+      throw new BridgeError('INVALID_ARGS', `gameLayers[${index}] must be an object`);
+    }
+    const record = entry as Record<string, unknown>;
+    const unexpected = Object.keys(record).filter((key) => key !== 'index' && key !== 'name');
+    if (unexpected.length) {
+      throw new BridgeError(
+        'INVALID_ARGS',
+        `gameLayers[${index}] has unsupported fields: ${unexpected.join(', ')}`,
+      );
+    }
+    if (
+      typeof record.index !== 'number'
+      || !Number.isInteger(record.index)
+      || typeof record.name !== 'string'
+    ) {
+      throw new BridgeError(
+        'INVALID_ARGS',
+        `gameLayers[${index}] must contain integer "index" and string "name" fields`,
+      );
+    }
+    return { index: record.index, name: record.name };
   });
 }
 

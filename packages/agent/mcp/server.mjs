@@ -712,7 +712,7 @@ const TOOLS = [
   {
     name: 'get_project_settings',
     description:
-      'Read persisted Project Settings without opening or focusing the settings panel. Returns the ordered Sorting Layers and the exact file revision required for updates.',
+      'Read persisted Project Settings without opening or focusing the settings panel. Returns Tags, named GameObject Layers, ordered Sorting Layers, and the exact file revision required for updates.',
     inputSchema: { type: 'object', properties: {} },
     handler: async () => textContent(await bridgeQuery('project.settings')),
   },
@@ -785,6 +785,38 @@ const TOOLS = [
       },
     },
     ['layers', 'expectedRevision'],
+  ),
+  execTool(
+    'set_tags_and_layers',
+    'Strictly validate and revision-safely replace the complete Tag and named GameObject Layer lists without opening or focusing a window. Include Untagged and layer 0 Default, then pass the exact revision from get_project_settings.',
+    'project.settings.set_tags_and_layers',
+    {
+      tags: {
+        type: 'array',
+        minItems: 1,
+        maxItems: 64,
+        items: { type: 'string', minLength: 1, maxLength: 64 },
+      },
+      gameLayers: {
+        type: 'array',
+        minItems: 1,
+        maxItems: 32,
+        items: {
+          type: 'object',
+          required: ['index', 'name'],
+          properties: {
+            index: { type: 'integer', minimum: 0, maximum: 31 },
+            name: { type: 'string', minLength: 1, maxLength: 64 },
+          },
+          additionalProperties: false,
+        },
+      },
+      expectedRevision: {
+        type: ['string', 'null'],
+        description: 'Exact current revision, or null only when the file is missing',
+      },
+    },
+    ['tags', 'gameLayers', 'expectedRevision'],
   ),
   {
     name: 'get_editor_state',
@@ -1803,6 +1835,14 @@ const TOOLS = [
     id: { ...ENTITY_ID_SCHEMA, description: 'Entity id' },
     active: { type: 'boolean', description: 'Active flag' },
   }, ['id', 'active']),
+  execTool('set_entity_tag', 'Set an entity classification tag.', 'entity.set_tag', {
+    id: { ...ENTITY_ID_SCHEMA, description: 'Entity id' },
+    tag: { type: 'string', minLength: 1, maxLength: 64, description: 'Tag value' },
+  }, ['id', 'tag']),
+  execTool('set_entity_layer', 'Set an entity GameObject layer index.', 'entity.set_layer', {
+    id: { ...ENTITY_ID_SCHEMA, description: 'Entity id' },
+    layer: { type: 'integer', minimum: 0, maximum: 31, description: 'Layer index' },
+  }, ['id', 'layer']),
   execTool('reparent_entities', 'Reparent entities under a new parent.', 'entity.reparent', {
     ids: { type: 'array', items: ENTITY_ID_SCHEMA, description: 'Entity ids to reparent' },
     parent: { type: ['integer', 'null'], minimum: 0, description: 'New parent id (null = root)' },

@@ -2,6 +2,7 @@ import {
   DEFAULT_SORTING_LAYER_SETTINGS,
   normalizeSortingLayerSettings,
   sortingLayerRank,
+  type GameObjectLayer,
   type SortingLayer,
   type SortingLayerSettings,
 } from './sortingLayerModel';
@@ -44,6 +45,17 @@ export function getSortingLayerOptions(): Array<{ value: string; label: string }
   return current.layers.map((layer) => ({ value: layer.id, label: layer.name }));
 }
 
+export function getTagOptions(): Array<{ value: string; label: string }> {
+  return current.tags.map((tag) => ({ value: tag, label: tag }));
+}
+
+export function getGameLayerOptions(): Array<{ value: number; label: string }> {
+  return current.gameLayers.map((layer) => ({
+    value: layer.index,
+    label: `${layer.name} (${layer.index})`,
+  }));
+}
+
 export function getSortingLayerRank(id: unknown): number {
   return sortingLayerRank(current, id);
 }
@@ -54,7 +66,13 @@ export async function loadSortingLayers(): Promise<SortingLayerSettings> {
 }
 
 export async function persistSortingLayers(layers: SortingLayer[]): Promise<SortingLayerSettings> {
-  const normalized = normalizeSortingLayerSettings({ version: 1, layers });
+  return persistProjectSettings({ ...current, layers });
+}
+
+export async function persistProjectSettings(
+  settings: SortingLayerSettings,
+): Promise<SortingLayerSettings> {
+  const normalized = normalizeSortingLayerSettings(settings);
   const saved = await saveProjectSortingLayers(normalized);
   return applySortingLayers(saved, true);
 }
@@ -72,7 +90,25 @@ export async function persistSortingLayersGuarded(
   layers: SortingLayer[],
   expectedRevision: string | null,
 ): Promise<ProjectSortingLayersSnapshot> {
-  const normalized = normalizeSortingLayerSettings({ version: 1, layers });
+  return persistProjectSettingsGuarded({ ...current, layers }, expectedRevision);
+}
+
+export async function persistTagsAndLayersGuarded(
+  tags: string[],
+  gameLayers: GameObjectLayer[],
+  expectedRevision: string | null,
+): Promise<ProjectSortingLayersSnapshot> {
+  return persistProjectSettingsGuarded(
+    { ...current, tags, gameLayers },
+    expectedRevision,
+  );
+}
+
+export async function persistProjectSettingsGuarded(
+  settings: SortingLayerSettings,
+  expectedRevision: string | null,
+): Promise<ProjectSortingLayersSnapshot> {
+  const normalized = normalizeSortingLayerSettings(settings);
   const snapshot = await saveProjectSortingLayersGuarded(normalized, expectedRevision);
   return {
     settings: applySortingLayers(snapshot.settings, true),

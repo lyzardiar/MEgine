@@ -48,6 +48,8 @@ function createContext() {
     duplicateSelection: () => 3,
     rename: (...args) => calls.push(['rename', ...args]),
     setActive: (...args) => calls.push(['setActive', ...args]),
+    setTag: (...args) => calls.push(['setTag', ...args]),
+    setLayer: (...args) => calls.push(['setLayer', ...args]),
     setParent: (...args) => {
       calls.push(['setParent', ...args]);
       const [ids, parent, index] = args;
@@ -200,6 +202,20 @@ test('uses exact booleans and validates entity existence', () => {
     'ENTITY_NOT_FOUND',
   );
   assert.equal(calls.length, 1);
+});
+
+test('sets entity tags and bounded GameObject layers through the store', () => {
+  const { ctx, calls } = createContext();
+  run(ctx, 'entity.set_tag', { id: 1, tag: 'Player' });
+  run(ctx, 'entity.set_layer', { id: 1, layer: 8 });
+  assert.deepEqual(calls, [
+    ['setTag', 1, 'Player'],
+    ['setLayer', 1, 8],
+  ]);
+  assertBridgeError(
+    () => run(ctx, 'entity.set_layer', { id: 1, layer: 32 }),
+    'INVALID_ARGS',
+  );
 });
 
 test('accepts entity id zero when it exists in a loaded scene', () => {

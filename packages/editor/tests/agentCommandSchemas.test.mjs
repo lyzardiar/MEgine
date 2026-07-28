@@ -41,6 +41,18 @@ test('command schemas expose exact high-risk guards and shared optimistic option
     64,
   );
   assert.deepEqual(
+    COMMAND_PARAMS_SCHEMAS['project.settings.set_tags_and_layers'].required,
+    ['tags', 'gameLayers', 'expectedRevision'],
+  );
+  assert.equal(
+    COMMAND_PARAMS_SCHEMAS['project.settings.set_tags_and_layers'].properties.gameLayers.maxItems,
+    32,
+  );
+  assert.equal(
+    COMMAND_PARAMS_SCHEMAS['entity.set_layer'].properties.layer.maximum,
+    31,
+  );
+  assert.deepEqual(
     COMMAND_PARAMS_SCHEMAS['scene.load_json'].required,
     ['json'],
   );

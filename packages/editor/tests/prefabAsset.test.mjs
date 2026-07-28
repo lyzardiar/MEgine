@@ -17,6 +17,8 @@ const entities = [
     parent: null,
     siblingIndex: 0,
     active: true,
+    tag: 'UI',
+    layer: 5,
     components: { RectTransform: { size_delta: [300, 200] } },
   },
   {
@@ -25,6 +27,8 @@ const entities = [
     parent: 10,
     siblingIndex: 1,
     active: false,
+    tag: 'Untagged',
+    layer: 0,
     components: { Text: { text: 'Second' } },
   },
   {
@@ -33,6 +37,8 @@ const entities = [
     parent: 10,
     siblingIndex: 0,
     active: true,
+    tag: 'Button',
+    layer: 5,
     components: { Text: { text: 'First' } },
   },
 ];
@@ -44,6 +50,8 @@ test('captures ordered hierarchy and round trips the versioned format', () => {
   });
   assert.deepEqual(captured.asset.root.children.map((node) => node.name), ['First', 'Second']);
   assert.equal(captured.asset.root.children[1].active, false);
+  assert.equal(captured.asset.root.tag, 'UI');
+  assert.equal(captured.asset.root.layer, 5);
   const parsed = parsePrefabAsset(serializePrefabAsset(captured.asset));
   assert.deepEqual(parsed, captured.asset);
   assert.equal(flattenPrefabNodes(parsed).length, 3);

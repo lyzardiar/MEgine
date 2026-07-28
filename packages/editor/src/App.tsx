@@ -98,7 +98,12 @@ import {
   restoreDesktopSceneRecovery,
 } from './transport/desktopProjectSession';
 import type { ToolHandleOrientation, ToolPivotMode } from './editorTool';
-import { loadSortingLayers, SORTING_LAYERS_CHANGED_EVENT } from './sortingLayers';
+import {
+  getGameLayerOptions,
+  getTagOptions,
+  loadSortingLayers,
+  SORTING_LAYERS_CHANGED_EVENT,
+} from './sortingLayers';
 import {
   mergeSaveAllResults,
   RemoteSaveCoordinator,
@@ -2470,6 +2475,16 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
               }}
               onSetActive={(entity, active) => {
                 store.setActive(entity, active);
+                refresh();
+              }}
+              tagOptions={getTagOptions()}
+              layerOptions={getGameLayerOptions()}
+              onSetTag={(entity, tag) => {
+                store.setTag(entity, tag);
+                refresh();
+              }}
+              onSetLayer={(entity, layer) => {
+                store.setLayer(entity, layer);
                 refresh();
               }}
               onChangeTransform={(entity, transform) => {

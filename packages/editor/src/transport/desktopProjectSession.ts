@@ -88,6 +88,8 @@ function browserWorldToHost(sceneJson: string): HostWorldSnapshot {
         parent?: number | null;
         siblingIndex?: number;
         active?: boolean;
+        tag?: string;
+        layer?: number;
         components?: Record<string, unknown>;
       }>;
       frame?: number;
@@ -106,6 +108,8 @@ function browserWorldToHost(sceneJson: string): HostWorldSnapshot {
       parent: entity.parent,
       sibling_index: entity.siblingIndex ?? 0,
       active: entity.active ?? true,
+      tag: entity.tag ?? 'Untagged',
+      layer: entity.layer ?? 0,
       components: entity.components ?? {},
     })),
     frame: world.frame ?? 0,

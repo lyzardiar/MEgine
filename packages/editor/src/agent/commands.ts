@@ -582,6 +582,25 @@ export const WRITE_COMMANDS: Record<string, CommandHandler> = {
     ctx.store.setActive(id, active);
     return { ok: true, data: { entity: id, active } };
   },
+  'entity.set_tag': (ctx, args) => {
+    requireEditMode(ctx);
+    const id = entityId(args, 'id');
+    const tag = str(args, 'tag');
+    requireEntity(ctx, id);
+    ctx.store.setTag(id, tag);
+    return { ok: true, data: { entity: id, tag } };
+  },
+  'entity.set_layer': (ctx, args) => {
+    requireEditMode(ctx);
+    const id = entityId(args, 'id');
+    const layer = entityId(args, 'layer');
+    if (layer > 31) {
+      throw new BridgeError('INVALID_ARGS', '"layer" must be an integer from 0 to 31');
+    }
+    requireEntity(ctx, id);
+    ctx.store.setLayer(id, layer);
+    return { ok: true, data: { entity: id, layer } };
+  },
   'entity.reparent': (ctx, args) => {
     requireEditMode(ctx);
     const ids = entityIdArray(args, 'ids');
@@ -897,6 +916,7 @@ const COMMAND_SUMMARIES: CommandSummary[] = [
   { id: 'project.close', category: 'project', description: 'Close the active project and return to the project hub', readOnly: false },
   { id: 'project.forget_recent', category: 'project', description: 'Remove a path from the recent-project list', readOnly: false },
   { id: 'project.settings.set_sorting_layers', category: 'project', description: 'Revision-safely replace the ordered project sorting layers', readOnly: false },
+  { id: 'project.settings.set_tags_and_layers', category: 'project', description: 'Revision-safely replace project tags and named GameObject layers', readOnly: false },
   { id: 'scene.new', category: 'scene', description: 'Create and save a named scene without opening a dialog', readOnly: false },
   { id: 'scene.open', category: 'scene', description: 'Open a named scene without opening a dialog', readOnly: false },
   { id: 'scene.save', category: 'scene', description: 'Save the current scene, optionally under a new name', readOnly: false },
@@ -933,6 +953,8 @@ const COMMAND_SUMMARIES: CommandSummary[] = [
   { id: 'entity.duplicate', category: 'entity', description: 'Duplicate the given (or currently selected) entities', readOnly: false },
   { id: 'entity.rename', category: 'entity', description: 'Rename an entity', readOnly: false },
   { id: 'entity.set_active', category: 'entity', description: 'Enable or disable an entity', readOnly: false },
+  { id: 'entity.set_tag', category: 'entity', description: 'Set an entity classification tag', readOnly: false },
+  { id: 'entity.set_layer', category: 'entity', description: 'Set an entity GameObject layer index', readOnly: false },
   { id: 'entity.reparent', category: 'entity', description: 'Reparent entities under a new parent', readOnly: false },
   { id: 'entity.reorder', category: 'entity', description: 'Move an entity to a sibling index under its current parent', readOnly: false },
   { id: 'component.add', category: 'component', description: 'Add a component to an entity, using catalog defaults when value is omitted', readOnly: false },

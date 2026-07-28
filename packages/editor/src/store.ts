@@ -65,6 +65,7 @@ import {
   type EditorUndoToken,
 } from './editorUndoService';
 import { sceneContentFingerprint } from './sceneFingerprint';
+import { normalizeEntityTag, normalizeGameLayerIndex } from './sortingLayerModel';
 import type { GizmoMode } from './editorTool';
 import {
   rotateTransformAround,
@@ -136,6 +137,8 @@ export interface EntityRec {
   parent?: number | null;
   siblingIndex: number;
   active: boolean;
+  tag: string;
+  layer: number;
   components: Record<string, unknown>;
 }
 
@@ -158,6 +161,8 @@ function normalizeEntity(e: Partial<EntityRec> & { entity: number; components: R
     parent: e.parent ?? null,
     siblingIndex: e.siblingIndex ?? 0,
     active: e.active ?? true,
+    tag: normalizeEntityTag(e.tag),
+    layer: normalizeGameLayerIndex(e.layer),
     components: e.components,
   };
 }
@@ -506,6 +511,8 @@ export function createEditorStore(undoService: EditorUndoService = createEditorU
       const id = spawnAt(entry.node.name, components, nodeParent, false);
       const entity = find(id)!;
       entity.active = entry.node.active;
+      entity.tag = entry.node.tag;
+      entity.layer = entry.node.layer;
       entity.siblingIndex = entry.siblingIndex;
       entitiesByNode.set(entry.node.id, id);
       if (entry.parentNodeId == null) root = id;
@@ -603,6 +610,8 @@ export function createEditorStore(undoService: EditorUndoService = createEditorU
           siblingIndex:
             isRoot ? nextSiblingIndex(newPar) : s.siblingIndex,
           active: s.active,
+          tag: s.tag,
+          layer: s.layer,
           components: clonedComponents.get(oldId) ?? structuredClone(s.components),
         }),
       );
@@ -643,6 +652,8 @@ export function createEditorStore(undoService: EditorUndoService = createEditorU
       parent: e.parent,
       siblingIndex: e.siblingIndex,
       active: e.active,
+      tag: e.tag,
+      layer: e.layer,
       components: e.components,
     }));
     if (mode !== 'edit') return structuredClone(entities);
@@ -664,6 +675,8 @@ export function createEditorStore(undoService: EditorUndoService = createEditorU
           parent: e.parent,
           siblingIndex: e.siblingIndex,
           active: e.active,
+          tag: e.tag,
+          layer: e.layer,
           components: e.components,
         })),
         frame,
@@ -895,6 +908,24 @@ export function createEditorStore(undoService: EditorUndoService = createEditorU
       if (!e || e.active === activeFlag) return;
       pushUndo(activeFlag ? 'Activate GameObject' : 'Deactivate GameObject');
       e.active = activeFlag;
+    },
+    setTag(id: number, value: string) {
+      if (mode !== 'edit') return false;
+      const e = find(id);
+      const tag = normalizeEntityTag(value);
+      if (!e || e.tag === tag) return false;
+      pushUndo('Set GameObject Tag');
+      e.tag = tag;
+      return true;
+    },
+    setLayer(id: number, value: number) {
+      if (mode !== 'edit') return false;
+      const e = find(id);
+      const layer = normalizeGameLayerIndex(value);
+      if (!e || e.layer === layer) return false;
+      pushUndo('Set GameObject Layer');
+      e.layer = layer;
+      return true;
     },
     setParent(ids: number[], parent: number | null, atIndex?: number, withUndo = true) {
       const current = list();
@@ -1136,6 +1167,8 @@ export function createEditorStore(undoService: EditorUndoService = createEditorU
             parent: newPar,
             siblingIndex: isRoot ? nextSiblingIndex(parent) : s.siblingIndex,
             active: s.active,
+            tag: s.tag,
+            layer: s.layer,
             components: clonedComponents.get(s.entity) ?? structuredClone(s.components),
           }),
         );
