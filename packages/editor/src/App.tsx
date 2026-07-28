@@ -265,7 +265,10 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
   }, []);
   const updatePanelLayout = useCallback((layout: PanelLayoutSnapshot) => {
     panelLayoutRef.current = layout;
-    if (!props.detachedPanel) agentBridge.observe();
+    if (!props.detachedPanel) {
+      agentBridge.observe();
+      agentBridge.observeWorkspace();
+    }
   }, [props.detachedPanel]);
   const [assetReloadEpoch, setAssetReloadEpoch] = useState({
     animation: 0,
@@ -1041,6 +1044,12 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
         return;
       }
       if (message.type === 'dirty-state') {
+        const previous = remoteDirtyPeers.current.get(message.sender);
+        const changed = (
+          previous?.panel !== message.panel
+          || previous?.dirty !== message.dirty
+          || previous?.resourceDirty !== message.resourceDirty
+        );
         remoteDirtyPeers.current.set(message.sender, {
           timestamp: message.timestamp,
           panel: message.panel,
@@ -1050,10 +1059,12 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
         if (remoteTimelinePreview.current?.sender === message.sender) {
           remoteTimelinePreview.current.lastSeenAt = Date.now();
         }
+        if (changed && !props.detachedPanel) agentBridge.observeWorkspace();
         return;
       }
       if (message.type === 'window-closing') {
-        remoteDirtyPeers.current.delete(message.sender);
+        const removedDirtyPeer = remoteDirtyPeers.current.delete(message.sender);
+        if (removedDirtyPeer && !props.detachedPanel) agentBridge.observeWorkspace();
         if (!localTimelinePreview.current && remoteTimelinePreview.current?.sender === message.sender) {
           remoteTimelinePreview.current = null;
           if (store.clearTimelinePreview()) setSnap(store.snapshot());
@@ -1185,10 +1196,12 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
 
   useEffect(() => {
     postWorkspaceDirtyState();
+    if (!props.detachedPanel) agentBridge.observeWorkspace();
   }, [hasUnsavedChanges, props.detachedPanel]);
 
   useEffect(() => {
     if (booted.current) broadcastScene(true);
+    if (!props.detachedPanel) agentBridge.observeWorkspace();
   }, [
     animationAssetPath,
     animatorPath,
@@ -1197,6 +1210,7 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
     spriteAtlasPath,
     spritePath,
     timelineAssetPath,
+    sceneName,
   ]);
 
   const confirmDiscardSceneChanges = async (action: string) => (

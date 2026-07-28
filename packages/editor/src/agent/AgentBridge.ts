@@ -367,6 +367,10 @@ class AgentBridge {
   private readonly events = new AgentEventJournal();
   private readonly sceneChanges = new SceneChangeTracker();
   private observedState: ObservedEditorState | null = null;
+  private observedWorkspaceSignature: string | null = null;
+  private workspaceObservationGeneration = 0;
+  private workspaceObservationStarted = 0;
+  private workspaceObservationCommitted = 0;
   private lastPlaySceneObservationAt = 0;
   private eventSourceConnections = 0;
   private stopLogEvents: (() => void) | null = null;
@@ -385,6 +389,10 @@ class AgentBridge {
     if (this.store !== store) {
       this.sceneChanges.reset();
       this.observedState = null;
+      this.observedWorkspaceSignature = null;
+      this.workspaceObservationGeneration += 1;
+      this.workspaceObservationStarted = 0;
+      this.workspaceObservationCommitted = 0;
       this.lastPlaySceneObservationAt = 0;
       this.editorBootReady = false;
     }
@@ -1377,13 +1385,16 @@ class AgentBridge {
   async getWorkspaceDocuments(): Promise<{
     documents: AgentObservedWorkspaceDocument[];
   }> {
+    const generation = this.workspaceObservationGeneration;
+    const observation = this.workspaceObservationStarted + 1;
+    this.workspaceObservationStarted = observation;
     const documents = await this.requireWorkspaceProvider().listDocuments();
     const layout = this.panelLayoutProvider?.() ?? null;
     const detachedPanels = new Map(
       (layout?.detachedPanels ?? []).map((entry) => [entry.kind, entry.windowLabel]),
     );
     const activePanels = new Set(layout?.activePanels ?? []);
-    return {
+    const result = {
       documents: documents.map((document) => {
         const detachedWindow = detachedPanels.get(document.panel);
         return {
@@ -1394,6 +1405,26 @@ class AgentBridge {
         };
       }),
     };
+    if (
+      generation === this.workspaceObservationGeneration
+      && observation >= this.workspaceObservationCommitted
+    ) {
+      this.workspaceObservationCommitted = observation;
+      const signature = JSON.stringify(result.documents);
+      if (signature !== this.observedWorkspaceSignature) {
+        this.observedWorkspaceSignature = signature;
+        this.appendEvent('workspace.changed', result);
+      }
+    }
+    return result;
+  }
+
+  /** Observe document path, dirty, active, and host-window changes without polling UI. */
+  observeWorkspace(): void {
+    if (!this.store || !this.workspaceProvider?.()) return;
+    void this.getWorkspaceDocuments().catch(() => {
+      // Workspace providers can be briefly unavailable during project/window transitions.
+    });
   }
 
   private async waitForWorkspaceDocument(

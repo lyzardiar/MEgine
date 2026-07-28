@@ -134,6 +134,10 @@ test('MCP resource subscriptions coalesce bridge events and stop after unsubscri
       assert.ok(resourceUris.has(uri), `event mapping references unknown resource ${uri}`);
     }
   }
+  assert.deepEqual(
+    EVENT_RESOURCE_URIS['workspace.changed'],
+    ['mengine://editor/documents'],
+  );
 
   const notifications = [];
   const subscriptions = new ResourceSubscriptions(

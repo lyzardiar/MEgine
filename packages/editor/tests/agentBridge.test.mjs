@@ -710,6 +710,8 @@ test('panel and menu agent surfaces use live providers and background activation
   assert.match(app, /type: 'save-resources-result'/);
   assert.match(app, /await saveRemoteResources\(\)/);
   assert.match(app, /Workspace remains dirty after its Save All participants completed/);
+  assert.match(app, /agentBridge\.observeWorkspace\(\)/);
+  assert.match(bridge, /this\.appendEvent\('workspace\.changed', result\)/);
 });
 
 test('authored resource factories can create without opening or activating their editor', () => {
