@@ -309,6 +309,7 @@ export type AgentProjectLifecycleState = {
   project: AgentProjectSummary | null;
   recentCount: number;
   recentLimit: number;
+  recentRevision: string;
 };
 
 export interface AgentProjectLifecycleProvider {

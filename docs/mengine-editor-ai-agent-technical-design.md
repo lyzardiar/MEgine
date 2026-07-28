@@ -251,7 +251,7 @@ MEngine 编辑器当前对人类友好，但对 AI Agent 不够友好。AI Agent
 
 | command/query id | 参数 | 说明 |
 | --- | --- | --- |
-| `project.state` | — | ✅ 欢迎页、工程挂载中和工程打开后均可读取 phase、busy/error、当前工程摘要、recent 数量与事件 cursor |
+| `project.state` | — | ✅ 欢迎页、工程挂载中和工程打开后均可读取 phase、busy/error、当前工程摘要、recent 数量/内容 revision 与事件 cursor；revision 覆盖名称、路径、时间和顺序，因此同数量重排也会触发 `project.changed` |
 | `project.recent` | — | ✅ 无弹窗读取原生配置中的最近工程；页面刷新后若 Rust Host 已持有工程则自动重新挂载 |
 | `project.open` | `{ root }` | ✅ 欢迎页按路径打开并校验 `project.json`；已有工程时拒绝切换；响应会等待新 store 完成场景、设置与资源初始化，过渡期查询返回 `NOT_READY` 而不是旧场景 |
 | `project.create` | `{ parent, name }` | ✅ 欢迎页无弹窗创建；父目录与工程名由原生 `ProjectSession` 严格校验，并使用同一 store-ready 握手后才返回 |

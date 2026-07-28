@@ -479,6 +479,15 @@ test('the main AgentBridge transport is available before a project is opened', (
   assert.match(bridge, /await this\.waitForEditorBootAfter\(editorBootGeneration\)/);
   assert.match(bridge, /this\.store != null && this\.editorBootReady/);
   assert.match(app, /markEditorBootReady\(store\)/);
+  assert.match(bridge, /recentRevision: string/);
+  assert.match(
+    gate,
+    /recentRevision: recentProjectsRevision\(recentProjectsRef\.current\)/,
+  );
+  assert.match(
+    gate,
+    /\[desktop, props\.detached, ready, operation, error, recentRevision\]/,
+  );
   assert.match(bridge, /call close_project before opening another project/);
   assert.match(
     mcp,

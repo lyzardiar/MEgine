@@ -21,6 +21,7 @@ import {
   getDesktopProject,
   startDesktopProject,
 } from './transport/desktopProjectSession';
+import { recentProjectsRevision } from './recentProjectsRevision';
 
 const MAX_RECENT_PROJECTS = 12;
 
@@ -86,6 +87,7 @@ export function DesktopProjectGate(props: { children: ReactNode; detached?: bool
   errorRef.current = error;
   recentProjectsRef.current = recentProjects;
   const busy = operation != null;
+  const recentRevision = recentProjectsRevision(recentProjects);
 
   const updateReady = (value: boolean) => {
     readyRef.current = value;
@@ -132,6 +134,7 @@ export function DesktopProjectGate(props: { children: ReactNode; detached?: bool
       project,
       recentCount: recentProjectsRef.current.length,
       recentLimit: MAX_RECENT_PROJECTS,
+      recentRevision: recentProjectsRevision(recentProjectsRef.current),
     };
   };
 
@@ -225,7 +228,7 @@ export function DesktopProjectGate(props: { children: ReactNode; detached?: bool
   useEffect(() => {
     if (!desktop || props.detached) return;
     agentBridge.observeProject();
-  }, [desktop, props.detached, ready, operation, error, recentProjects.length]);
+  }, [desktop, props.detached, ready, operation, error, recentRevision]);
 
   useEffect(() => {
     if (!desktop || props.detached || ready) return;
