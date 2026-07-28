@@ -332,18 +332,21 @@ fn extract_token(query: &str) -> Option<String> {
     })
 }
 
-/// Write `{ port, token, pid }` so adapters can discover and authenticate.
-/// Location: `$MENGINE_AGENT_BRIDGE_FILE` if set, else `<app_config_dir>/agent-bridge.json`.
-fn write_discovery_file(app: &AppHandle, port: u16, token: &str) {
-    let path = std::env::var("MENGINE_AGENT_BRIDGE_FILE")
+fn discovery_file_path(app: &AppHandle) -> Option<PathBuf> {
+    std::env::var_os("MENGINE_AGENT_BRIDGE_FILE")
         .map(PathBuf::from)
-        .ok()
         .or_else(|| {
             app.path()
                 .app_config_dir()
                 .ok()
                 .map(|dir| dir.join("agent-bridge.json"))
-        });
+        })
+}
+
+/// Write `{ port, token, pid }` so adapters can discover and authenticate.
+/// Location: `$MENGINE_AGENT_BRIDGE_FILE` if set, else `<app_config_dir>/agent-bridge.json`.
+fn write_discovery_file(app: &AppHandle, port: u16, token: &str) {
+    let path = discovery_file_path(app);
     let Some(path) = path else {
         log::warn!("AgentBridge discovery file location unavailable");
         return;
@@ -361,6 +364,55 @@ fn write_discovery_file(app: &AppHandle, port: u16, token: &str) {
         log::warn!("AgentBridge could not write discovery file: {error}");
     } else {
         log::info!("AgentBridge discovery file: {}", path.display());
+    }
+}
+
+fn discovery_file_is_owned(content: &str, token: &str, pid: u32) -> bool {
+    serde_json::from_str::<serde_json::Value>(content)
+        .ok()
+        .is_some_and(|value| {
+            value.get("token").and_then(serde_json::Value::as_str) == Some(token)
+                && value.get("pid").and_then(serde_json::Value::as_u64) == Some(u64::from(pid))
+        })
+}
+
+fn remove_discovery_file_if_owned(
+    path: &std::path::Path,
+    token: &str,
+    pid: u32,
+) -> std::io::Result<bool> {
+    let content = match std::fs::read_to_string(path) {
+        Ok(content) => content,
+        Err(error) if error.kind() == std::io::ErrorKind::NotFound => return Ok(false),
+        Err(error) => return Err(error),
+    };
+    if !discovery_file_is_owned(&content, token, pid) {
+        return Ok(false);
+    }
+    match std::fs::remove_file(path) {
+        Ok(()) => Ok(true),
+        Err(error) if error.kind() == std::io::ErrorKind::NotFound => Ok(false),
+        Err(error) => Err(error),
+    }
+}
+
+/// Remove this process's discovery record on final application exit.
+///
+/// The content is revalidated before deletion so an older editor process
+/// cannot remove a record that a newer process has already published.
+pub fn cleanup_bridge_discovery(app: &AppHandle, token: &str) {
+    let Some(path) = discovery_file_path(app) else {
+        return;
+    };
+    match remove_discovery_file_if_owned(&path, token, std::process::id()) {
+        Ok(true) => log::info!("AgentBridge removed discovery file: {}", path.display()),
+        Ok(false) => {}
+        Err(error) => {
+            log::warn!(
+                "AgentBridge could not remove discovery file {}: {error}",
+                path.display()
+            );
+        }
     }
 }
 
@@ -477,6 +529,43 @@ mod transport_tests {
             serde_json::from_str(&bridge_not_ready_response(&rejected.message)).unwrap();
         assert_eq!(response["id"], 777);
         assert_eq!(response["error"]["code"], "NOT_READY");
+    }
+
+    #[test]
+    fn discovery_cleanup_removes_only_the_publishing_process_record() {
+        let path = std::env::temp_dir().join(format!(
+            "mengine-agent-bridge-cleanup-{}.json",
+            uuid::Uuid::new_v4()
+        ));
+        let old_token = "old-editor-token";
+        let new_token = "new-editor-token";
+        let old_pid = 41;
+        let new_pid = 42;
+
+        std::fs::write(
+            &path,
+            serde_json::json!({
+                "port": 4707,
+                "token": new_token,
+                "pid": new_pid,
+                "version": 1,
+            })
+            .to_string(),
+        )
+        .unwrap();
+
+        assert!(!remove_discovery_file_if_owned(&path, old_token, old_pid).unwrap());
+        assert!(
+            path.exists(),
+            "an older editor must leave the newer record intact"
+        );
+        assert!(!remove_discovery_file_if_owned(&path, new_token, old_pid).unwrap());
+        assert!(
+            path.exists(),
+            "token alone must not grant cleanup ownership"
+        );
+        assert!(remove_discovery_file_if_owned(&path, new_token, new_pid).unwrap());
+        assert!(!path.exists());
     }
 }
 

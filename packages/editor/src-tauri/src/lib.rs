@@ -20,8 +20,8 @@ use tauri::{path::BaseDirectory, Emitter, Manager, State};
 mod agent_bridge;
 use agent_bridge::{
     agent_bridge_broadcast, agent_bridge_respond, agent_bridge_set_transport_ready,
-    capture_editor_window, inspect_editor_window, interact_editor_window, spawn_bridge_server,
-    BridgeHub,
+    capture_editor_window, cleanup_bridge_discovery, inspect_editor_window, interact_editor_window,
+    spawn_bridge_server, BridgeHub,
 };
 
 struct AppState {
@@ -5040,7 +5040,8 @@ pub fn run() {
     let bridge_hub = Arc::new(BridgeHub::new(uuid::Uuid::new_v4().to_string()));
     let bridge_hub_for_page_load = bridge_hub.clone();
     let bridge_hub_for_setup = bridge_hub.clone();
-    tauri::Builder::default()
+    let bridge_token_for_exit = bridge_hub.token().to_string();
+    let app = tauri::Builder::default()
         .plugin(tauri_plugin_dialog::init())
         .manage(AppState {
             project: Mutex::new(None),
@@ -5125,8 +5126,13 @@ pub fn run() {
             }
             Ok(())
         })
-        .run(tauri::generate_context!())
-        .expect("error while running MEngine Editor");
+        .build(tauri::generate_context!())
+        .expect("error while building MEngine Editor");
+    app.run(move |app_handle, event| {
+        if matches!(event, tauri::RunEvent::Exit) {
+            cleanup_bridge_discovery(app_handle, &bridge_token_for_exit);
+        }
+    });
 }
 
 #[cfg(test)]

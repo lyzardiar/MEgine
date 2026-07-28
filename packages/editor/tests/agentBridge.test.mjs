@@ -171,7 +171,11 @@ test('the main AgentBridge transport is available before a project is opened', (
   assert.match(serialQueue, /class SerialTaskQueue/);
   assert.match(nativeBridge, /MAX_QUEUED_BRIDGE_REQUESTS: usize = 256/);
   assert.match(nativeBridge, /bridge_not_ready_response/);
+  assert.match(nativeBridge, /cleanup_bridge_discovery/);
+  assert.match(nativeBridge, /discovery_file_is_owned/);
   assert.match(nativeHost, /PageLoadEvent::Started/);
+  assert.match(nativeHost, /tauri::RunEvent::Exit/);
+  assert.match(nativeHost, /cleanup_bridge_discovery\(app_handle, &bridge_token_for_exit\)/);
   assert.match(gate, /connectProjectLifecycle/);
   assert.match(gate, /attachDesktopProject\(\)/);
   assert.match(gate, /errorCode\(reason\) !== 'noProject'/);
