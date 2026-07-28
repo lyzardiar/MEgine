@@ -63,6 +63,7 @@ import { Viewport } from './panels/Viewport';
 import { DockWorkspace, type PanelKind } from './panels/DockWorkspace';
 import {
   agentBridge,
+  type AgentCreateAssetRequest,
   type AgentInstantiableAssetTarget,
   type AgentResourceEditorTarget,
   type AgentSceneProvider,
@@ -1645,6 +1646,48 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
       window.dispatchEvent(new CustomEvent('mengine:focus-panel', {
         detail: { panel: target.panel, activateWindow: false },
       }));
+    },
+    createAsset: async (request: AgentCreateAssetRequest) => {
+      switch (request.kind) {
+        case 'animation': {
+          const { createProjectAnimationClip } = await import('./panels/Timeline');
+          const path = await createProjectAnimationClip('New Animation', false);
+          return { primaryPath: path, createdPaths: [path] };
+        }
+        case 'animator': {
+          const { createProjectAnimatorControllerDetailed } = await import('./panels/Animator');
+          return createProjectAnimatorControllerDetailed(false);
+        }
+        case 'avatar-mask': {
+          const { createProjectAvatarMask } = await import('./panels/AvatarMask');
+          const path = await createProjectAvatarMask(false);
+          return { primaryPath: path, createdPaths: [path] };
+        }
+        case 'material': {
+          const { createProjectMaterial } = await import('./panels/Material');
+          const path = await createProjectMaterial(false);
+          return { primaryPath: path, createdPaths: [path] };
+        }
+        case 'material-instance': {
+          const { createProjectMaterialInstanceDetailed } = await import('./panels/MaterialInstance');
+          return createProjectMaterialInstanceDetailed(request.parentPath, false);
+        }
+        case 'shader': {
+          const { createProjectSurfaceShader } = await import('./panels/SurfaceShader');
+          const path = await createProjectSurfaceShader(false);
+          return { primaryPath: path, createdPaths: [path] };
+        }
+        case 'sprite-atlas': {
+          const { createProjectSpriteAtlas } = await import('./panels/SpriteAtlasEditor');
+          const path = await createProjectSpriteAtlas(false);
+          return { primaryPath: path, createdPaths: [path] };
+        }
+        case 'timeline': {
+          const { createProjectTimeline } = await import('./panels/Sequencer');
+          const path = await createProjectTimeline('New Timeline', false);
+          return { primaryPath: path, createdPaths: [path] };
+        }
+      }
     },
     instantiateAsset: async (target: AgentInstantiableAssetTarget) => {
       switch (target.kind) {

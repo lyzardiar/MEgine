@@ -66,6 +66,7 @@ test('whole-window agent capture is background-safe and addressable by window la
   assert.match(mcp, /name: 'read_asset_text'/);
   assert.match(mcp, /'write_asset_text'/);
   assert.match(mcp, /'import_asset_file'/);
+  assert.match(mcp, /'create_asset'/);
   assert.match(mcp, /'open_asset'/);
   assert.match(mcp, /'instantiate_asset'/);
   assert.match(mcp, /'detach_panel'/);
@@ -164,11 +165,38 @@ test('panel and menu agent surfaces use live providers and background activation
   assert.match(app, /\.\.\.resourceDocumentPathsRef\.current/);
   assert.match(app, /setMaterialPath\(message\.materialPath \?\? null\)/);
   assert.match(app, /openAsset: async \(target: AgentResourceEditorTarget\)/);
+  assert.match(app, /createAsset: async \(request: AgentCreateAssetRequest\)/);
   assert.match(app, /instantiateAsset: async \(target: AgentInstantiableAssetTarget\)/);
   assert.match(app, /type: 'request-save-resources'/);
   assert.match(app, /type: 'save-resources-result'/);
   assert.match(app, /await saveRemoteResources\(\)/);
   assert.match(app, /Workspace remains dirty after its Save All participants completed/);
+});
+
+test('authored resource factories can create without opening or activating their editor', () => {
+  const factories = [
+    ['Material.tsx', /if \(open\) openMaterialAsset\(path\)/],
+    ['MaterialInstance.tsx', /if \(open\) openMaterialAsset\(path\)/],
+    ['SurfaceShader.tsx', /if \(open\) openSurfaceShaderAsset\(path\)/],
+    ['Timeline.tsx', /if \(open\) openAnimationClipAsset\(path\)/],
+    ['Animator.tsx', /if \(open\) openAnimatorAsset\(controllerPath\)/],
+    ['SpriteAtlasEditor.tsx', /if \(open\) openSpriteAtlasAsset\(path\)/],
+    ['AvatarMask.tsx', /if \(open\) openAnimatorAsset\(path\)/],
+    ['Sequencer.tsx', /if \(open\) openTimelineAsset\(path\)/],
+  ];
+  for (const [file, openGuard] of factories) {
+    const source = fs.readFileSync(path.join(root, 'src', 'panels', file), 'utf8');
+    assert.match(source, /open = true/);
+    assert.match(source, openGuard);
+  }
+  const animator = fs.readFileSync(path.join(root, 'src', 'panels', 'Animator.tsx'), 'utf8');
+  const materialInstance = fs.readFileSync(
+    path.join(root, 'src', 'panels', 'MaterialInstance.tsx'),
+    'utf8',
+  );
+  assert.match(animator, /createdPaths: \[clipPath, controllerPath\]/);
+  assert.match(materialInstance, /createdPaths\.push\(parent\)/);
+  assert.match(materialInstance, /createdPaths\.push\(path\)/);
 });
 
 test('scene, asset, and asynchronous build tools share guarded editor services', () => {
@@ -204,6 +232,7 @@ test('scene, asset, and asynchronous build tools share guarded editor services',
   assert.match(commands, /worldCommandBatch/);
   assert.match(store, /cmd\.op === 'removeComponent'/);
   assert.match(bridge, /commandId === 'scene\.new'/);
+  assert.match(bridge, /commandId === 'asset\.create'/);
   assert.match(bridge, /commandId === 'scene\.rename'/);
   assert.match(bridge, /commandId === 'scene\.delete'/);
   assert.match(bridge, /Scene deletion preview is stale/);

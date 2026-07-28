@@ -203,14 +203,17 @@ function uniqueTimelinePath(baseName: string): string {
   return path;
 }
 
-export async function createProjectTimeline(name = 'New Timeline'): Promise<string> {
+export async function createProjectTimeline(
+  name = 'New Timeline',
+  open = true,
+): Promise<string> {
   await refreshProjectFiles();
   const safe = safeName(name) || 'New Timeline';
   const path = uniqueTimelinePath(safe);
   await writeProjectAssetText(path, serializeTimelineAsset(createTimelineAsset(safe)));
   await refreshProjectFiles();
   window.dispatchEvent(new CustomEvent(PROJECT_ASSETS_CHANGED_EVENT));
-  openTimelineAsset(path);
+  if (open) openTimelineAsset(path);
   return path;
 }
 

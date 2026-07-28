@@ -42,14 +42,14 @@ function uniqueAvatarMaskPath(): string {
   return path;
 }
 
-export async function createProjectAvatarMask(): Promise<string> {
+export async function createProjectAvatarMask(open = true): Promise<string> {
   await refreshProjectFiles();
   const path = uniqueAvatarMaskPath();
   const name = path.split('/').pop()!.replace(/\.mavatar$/i, '');
   await writeProjectAssetText(path, serializeAvatarMask(createAvatarMask(name)));
   await refreshProjectFiles();
   window.dispatchEvent(new CustomEvent(PROJECT_ASSETS_CHANGED_EVENT));
-  openAnimatorAsset(path);
+  if (open) openAnimatorAsset(path);
   return path;
 }
 

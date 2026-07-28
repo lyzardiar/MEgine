@@ -48,7 +48,10 @@ import {
 } from './commands';
 import {
   instantiableAssetTarget,
+  isAgentCreatableAssetKind,
   resourceEditorTarget,
+  type AgentCreateAssetRequest,
+  type AgentCreateAssetResult,
   type AgentInstantiableAssetTarget,
   type AgentResourceEditorKind,
   type AgentResourceEditorTarget,
@@ -175,10 +178,14 @@ export interface AgentWorkspaceProvider {
   assertDiskMutationAllowed: () => Promise<void>;
   listDocuments: () => Promise<AgentWorkspaceDocument[]>;
   openAsset: (target: AgentResourceEditorTarget) => Promise<void>;
+  createAsset: (request: AgentCreateAssetRequest) => Promise<AgentCreateAssetResult>;
   instantiateAsset: (target: AgentInstantiableAssetTarget) => Promise<number>;
 }
 
 export type {
+  AgentCreateAssetRequest,
+  AgentCreateAssetResult,
+  AgentCreatableAssetKind,
   AgentInstantiableAssetTarget,
   AgentResourceEditorKind,
   AgentResourceEditorTarget,
@@ -1679,6 +1686,98 @@ class AgentBridge {
         requiredString(args, 'destinationPath'),
       );
       return this.finishAsyncCommand({ ok: true, data: result }, options, true);
+    }
+    if (commandId === 'asset.create') {
+      const kind = requiredString(args, 'kind');
+      if (!isAgentCreatableAssetKind(kind)) {
+        throw new BridgeError('INVALID_ARGS', `Unsupported creatable asset kind "${kind}"`);
+      }
+      const requestedParentPath = optionalString(args, 'parentPath');
+      if (kind !== 'material-instance' && requestedParentPath != null) {
+        throw new BridgeError(
+          'INVALID_ARGS',
+          '"parentPath" is only valid when creating a material-instance',
+        );
+      }
+      await this.requireWorkspaceProvider().assertDiskMutationAllowed();
+      const beforeFiles = await refreshProjectFiles();
+      let parentPath: string | undefined;
+      if (requestedParentPath != null) {
+        parentPath = normalizeAssetPath(requestedParentPath);
+        const parent = findAsset(beforeFiles, parentPath);
+        if (
+          !parent
+          || parent.kind !== 'material'
+          || !/\.(?:mmat|mat|minst)$/i.test(parent.relPath)
+        ) {
+          throw new BridgeError(
+            'INVALID_ARGS',
+            `Material parent not found: ${parentPath}`,
+          );
+        }
+        if (parent.metaStatus !== 'ready') {
+          throw new BridgeError(
+            'CONFLICT',
+            `Asset metadata is not healthy: ${parent.relPath} (${parent.metaStatus})`,
+          );
+        }
+        parentPath = parent.relPath;
+      }
+      const beforePaths = new Set(
+        beforeFiles.map((asset) => asset.relPath.toLocaleLowerCase()),
+      );
+      const creation = await bridgeIo(
+        `Failed to create ${kind}`,
+        () => this.requireWorkspaceProvider().createAsset({ kind, parentPath }),
+      );
+      const afterFiles = await refreshProjectFiles();
+      const primaryPath = normalizeAssetPath(creation.primaryPath);
+      const createdPaths = [...new Set(
+        creation.createdPaths.map((path) => normalizeAssetPath(path).toLocaleLowerCase()),
+      )];
+      const primary = findAsset(afterFiles, primaryPath);
+      const created = createdPaths.map((path) => findAsset(afterFiles, path));
+      if (
+        !primary
+        || !createdPaths.includes(primary.relPath.toLocaleLowerCase())
+        || created.some((asset) => asset == null)
+        || createdPaths.some((path) => beforePaths.has(path))
+      ) {
+        throw new BridgeError(
+          'IO_ERROR',
+          `Asset creation completed but its exact new asset set was not indexed: ${primaryPath}`,
+        );
+      }
+      const indexedCreated = created as ProjectFileAsset[];
+      const unhealthy = indexedCreated.find(
+        (asset) => asset.metaStatus !== 'ready' || !asset.guid,
+      );
+      if (unhealthy) {
+        throw new BridgeError(
+          'IO_ERROR',
+          `Asset creation completed but metadata is unhealthy: ${unhealthy.relPath} (${unhealthy.metaStatus})`,
+        );
+      }
+      const changes: ProjectAssetChange[] = indexedCreated.map((asset) => ({
+        type: 'added',
+        relPath: asset.relPath,
+        previous: null,
+        current: asset,
+      }));
+      window.dispatchEvent(new CustomEvent(PROJECT_ASSETS_EXTERNAL_CHANGE_EVENT, {
+        detail: { changes, source: 'agent' },
+      }));
+      this.logProvider?.(
+        `Created ${primary.relPath} from AgentBridge (${indexedCreated.length} asset${indexedCreated.length === 1 ? '' : 's'})`,
+      );
+      return this.finishAsyncCommand({
+        ok: true,
+        data: {
+          kind,
+          primary: structuredClone(primary),
+          created: structuredClone(indexedCreated),
+        },
+      }, options, true);
     }
     if (commandId === 'asset.instantiate') {
       const store = this.requireStore();

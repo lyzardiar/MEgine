@@ -799,6 +799,32 @@ const TOOLS = [
     },
   ),
   execTool(
+    'create_asset',
+    'Create one default authored resource without a dialog, opening an editor, or foreground focus. Returns the primary indexed asset and every newly generated companion asset with GUID and revision. Use parentPath only to choose the parent of a material instance.',
+    'asset.create',
+    {
+      kind: {
+        type: 'string',
+        enum: [
+          'animation',
+          'animator',
+          'avatar-mask',
+          'material',
+          'material-instance',
+          'shader',
+          'sprite-atlas',
+          'timeline',
+        ],
+        description: 'Authored resource type',
+      },
+      parentPath: {
+        type: 'string',
+        description: 'Optional existing .mmat, .mat, or .minst parent for material-instance',
+      },
+    },
+    ['kind'],
+  ),
+  execTool(
     'open_asset',
     'Open a supported material, material-instance, shader, animator, avatar-mask, animation, timeline, sprite-compatible texture, or sprite-atlas asset in its docked editor without raising or focusing a native window. Refuses to switch away from unsaved resource work.',
     'asset.open',

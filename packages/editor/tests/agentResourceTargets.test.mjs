@@ -1,8 +1,10 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import {
+  AGENT_CREATABLE_ASSET_KINDS,
   animatorDocumentKind,
   instantiableAssetTarget,
+  isAgentCreatableAssetKind,
   materialDocumentKind,
   resourceEditorTarget,
 } from '../src/agent/resourceTargets.ts';
@@ -35,6 +37,26 @@ test('resource targets preserve logical subtypes hosted by shared editor panels'
   assert.equal(animatorDocumentKind('Assets/Movement.mcontroller'), 'animator');
   assert.equal(materialDocumentKind('Assets/Metal.minst'), 'material-instance');
   assert.equal(materialDocumentKind('Assets/Metal.mmat'), 'material');
+});
+
+test('creatable authored resource kinds are stable and self-validating', () => {
+  assert.deepEqual(
+    AGENT_CREATABLE_ASSET_KINDS,
+    [
+      'animation',
+      'animator',
+      'avatar-mask',
+      'material',
+      'material-instance',
+      'shader',
+      'sprite-atlas',
+      'timeline',
+    ],
+  );
+  for (const kind of AGENT_CREATABLE_ASSET_KINDS) {
+    assert.equal(isAgentCreatableAssetKind(kind), true);
+  }
+  assert.equal(isAgentCreatableAssetKind('texture'), false);
 });
 
 test('sprite workflows accept only the texture formats supported by the sprite index', () => {

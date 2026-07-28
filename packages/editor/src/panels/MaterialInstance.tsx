@@ -68,8 +68,19 @@ function uniqueAssetPath(extension: 'mmat' | 'minst', baseName: string): string 
   return path;
 }
 
-export async function createProjectMaterialInstance(preferredParent?: string): Promise<string> {
+export async function createProjectMaterialInstance(
+  preferredParent?: string,
+  open = true,
+): Promise<string> {
+  return (await createProjectMaterialInstanceDetailed(preferredParent, open)).primaryPath;
+}
+
+export async function createProjectMaterialInstanceDetailed(
+  preferredParent?: string,
+  open = true,
+): Promise<{ primaryPath: string; createdPaths: string[] }> {
   await refreshProjectFiles();
+  const createdPaths: string[] = [];
   let parent = preferredParent?.trim() ?? '';
   if (parent) {
     parent = normalizeProjectAssetPath(parent);
@@ -85,6 +96,8 @@ export async function createProjectMaterialInstance(preferredParent?: string): P
     const baseName = parent.split('/').pop()!.replace(/\.mmat$/i, '');
     await writeProjectAssetText(parent, serializeMaterialAsset(createMaterialAsset(baseName)));
     await refreshProjectFiles();
+    createdPaths.push(parent);
+    broadcastProjectAssetsChanged({ action: 'created', destinationPath: parent });
   }
   const path = uniqueAssetPath('minst', 'New Material Instance');
   const name = path.split('/').pop()!.replace(/\.minst$/i, '');
@@ -93,9 +106,10 @@ export async function createProjectMaterialInstance(preferredParent?: string): P
     serializeMaterialInstanceAsset(createMaterialInstanceAsset(name, parent)),
   );
   await refreshProjectFiles();
+  createdPaths.push(path);
   broadcastProjectAssetsChanged({ action: 'created', destinationPath: path });
-  openMaterialAsset(path);
-  return path;
+  if (open) openMaterialAsset(path);
+  return { primaryPath: path, createdPaths };
 }
 
 function byteHex(value: number): string {

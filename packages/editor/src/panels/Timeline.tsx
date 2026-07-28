@@ -1348,14 +1348,17 @@ function uniqueClipPath(name: string): string {
   return path;
 }
 
-export async function createProjectAnimationClip(name = 'New Animation'): Promise<string> {
+export async function createProjectAnimationClip(
+  name = 'New Animation',
+  open = true,
+): Promise<string> {
   await refreshProjectFiles();
   const safe = safeClipName(name) || 'New Animation';
   const path = uniqueClipPath(safe);
   await writeProjectAssetText(path, serializeAnimationClip(createAnimationClip(safe)));
   await refreshProjectFiles();
   window.dispatchEvent(new CustomEvent(PROJECT_ASSETS_CHANGED_EVENT));
-  openAnimationClipAsset(path);
+  if (open) openAnimationClipAsset(path);
   return path;
 }
 

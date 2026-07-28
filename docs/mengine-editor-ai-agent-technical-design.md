@@ -328,6 +328,7 @@ MEngine 编辑器当前对人类友好，但对 AI Agent 不够友好。AI Agent
 | command id | 映射 |
 | --- | --- |
 | `asset.import_file` | ✅ 从绝对本地路径导入 UI 支持的单个二进制/内容资产；64 MiB 上限，拒绝 symlink、覆盖和残留 `.meta`，目标以 create-only 原子安装并生成新 GUID，sidecar 失败则完整回滚 |
+| `asset.create` | ✅ 在不打开资源编辑器、不激活窗口的前提下，复用人工 Assets/Create 的默认工厂创建 Animation、Animator、Avatar Mask、Material、Material Instance、Shader、Sprite Atlas、Timeline；返回主资源及自动生成伴生资源的精确路径、GUID 与 revision |
 | `asset.open` | ✅ 校验资产索引与 `.meta` 后，在对应 Material/Material Instance/Shader/Animator/Avatar Mask/Timeline/Sprite 编辑器中打开；只把 Sprite 编辑器实际支持的 PNG/JPEG/WebP/GIF 纹理作为 Sprite 文档，跨拆分窗口同步文档路径，切换前拒绝丢弃本地或远端脏文档，且不激活原生窗口 |
 | `asset.instantiate` | ✅ 校验资产索引与 `.meta` 后，把 Prefab、glTF/GLB Model 或 Sprite 纹理通过与 Project 面板一致的路径实例化到当前编辑场景；返回根实体完整快照并形成一次撤销 |
 | `asset.write_text` | ✅ 8 MiB UTF-8 上限；已有文件必须携带精确 revision，新文件必须传 null；写前拒绝任何窗口的未保存工作 |

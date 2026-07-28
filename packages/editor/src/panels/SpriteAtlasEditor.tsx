@@ -35,14 +35,14 @@ function uniqueAtlasPath(): string {
   return path;
 }
 
-export async function createProjectSpriteAtlas(): Promise<string> {
+export async function createProjectSpriteAtlas(open = true): Promise<string> {
   await refreshProjectFiles();
   const path = uniqueAtlasPath();
   const name = path.split('/').pop()!.replace(/\.matlas$/i, '');
   await writeProjectAssetText(path, serializeSpriteAtlasAsset(createSpriteAtlasAsset(name)));
   await refreshProjectFiles();
   window.dispatchEvent(new CustomEvent(PROJECT_ASSETS_CHANGED_EVENT));
-  openSpriteAtlasAsset(path);
+  if (open) openSpriteAtlasAsset(path);
   return path;
 }
 

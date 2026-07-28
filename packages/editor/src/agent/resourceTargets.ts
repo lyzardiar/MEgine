@@ -22,6 +22,33 @@ export type AgentInstantiableAssetTarget = {
   path: string;
 };
 
+export const AGENT_CREATABLE_ASSET_KINDS = [
+  'animation',
+  'animator',
+  'avatar-mask',
+  'material',
+  'material-instance',
+  'shader',
+  'sprite-atlas',
+  'timeline',
+] as const;
+
+export type AgentCreatableAssetKind = (typeof AGENT_CREATABLE_ASSET_KINDS)[number];
+
+export type AgentCreateAssetRequest = {
+  kind: AgentCreatableAssetKind;
+  parentPath?: string;
+};
+
+export type AgentCreateAssetResult = {
+  primaryPath: string;
+  createdPaths: string[];
+};
+
+export function isAgentCreatableAssetKind(value: string): value is AgentCreatableAssetKind {
+  return AGENT_CREATABLE_ASSET_KINDS.includes(value as AgentCreatableAssetKind);
+}
+
 const SPRITE_TEXTURE_EXTENSION = /\.(?:png|jpe?g|webp|gif)$/i;
 
 export function animatorDocumentKind(path: string | null): 'animator' | 'avatar-mask' {

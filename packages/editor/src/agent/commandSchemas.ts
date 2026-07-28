@@ -175,6 +175,23 @@ export const COMMAND_PARAMS_SCHEMAS: Record<string, AgentJsonSchema> = {
     sourcePath: stringValue('Absolute regular local source file'),
     destinationPath: assetPath,
   }, ['sourcePath', 'destinationPath']),
+  'asset.create': objectSchema({
+    kind: {
+      type: 'string',
+      enum: [
+        'animation',
+        'animator',
+        'avatar-mask',
+        'material',
+        'material-instance',
+        'shader',
+        'sprite-atlas',
+        'timeline',
+      ],
+      description: 'Default authored resource type to create',
+    },
+    parentPath: stringValue('Optional parent material path for material-instance'),
+  }, ['kind']),
   'asset.instantiate': objectSchema({
     path: assetPath,
   }, ['path']),
