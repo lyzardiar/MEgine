@@ -14,7 +14,7 @@
 //! Only the main editor window answers requests (detached panels ignore the
 //! event), so each request gets exactly one response.
 
-use std::collections::HashMap;
+use std::collections::{HashMap, VecDeque};
 use std::path::PathBuf;
 use std::sync::Arc;
 
@@ -26,10 +26,61 @@ use tokio::sync::mpsc;
 use tokio_tungstenite::tungstenite::handshake::server::{ErrorResponse, Request, Response};
 use tokio_tungstenite::tungstenite::Message;
 
+const MAX_QUEUED_BRIDGE_REQUESTS: usize = 256;
+
+#[derive(Default)]
+struct BridgeTransportState {
+    ready_session: Option<String>,
+    queued_requests: VecDeque<BridgeRequestPayload>,
+}
+
+enum BridgeRequestRoute {
+    Dispatch(BridgeRequestPayload),
+    Queued,
+    Rejected(BridgeRequestPayload),
+}
+
+impl BridgeTransportState {
+    fn route(&mut self, payload: BridgeRequestPayload) -> BridgeRequestRoute {
+        if self.ready_session.is_some() {
+            return BridgeRequestRoute::Dispatch(payload);
+        }
+        if self.queued_requests.len() >= MAX_QUEUED_BRIDGE_REQUESTS {
+            return BridgeRequestRoute::Rejected(payload);
+        }
+        self.queued_requests.push_back(payload);
+        BridgeRequestRoute::Queued
+    }
+
+    fn activate(&mut self, session_id: String) -> VecDeque<BridgeRequestPayload> {
+        self.ready_session = Some(session_id);
+        std::mem::take(&mut self.queued_requests)
+    }
+
+    fn deactivate(&mut self, session_id: &str) -> bool {
+        if self.ready_session.as_deref() != Some(session_id) {
+            return false;
+        }
+        self.ready_session = None;
+        true
+    }
+
+    fn reset_for_page_load(&mut self) {
+        self.ready_session = None;
+    }
+
+    fn remove_client(&mut self, client_id: &str) {
+        self.queued_requests
+            .retain(|request| request.client_id != client_id);
+    }
+}
+
 /// Routes messages between the webview and connected WebSocket clients.
 pub struct BridgeHub {
     /// client id -> channel feeding that client's WS write loop.
     clients: Mutex<HashMap<String, mpsc::UnboundedSender<Message>>>,
+    /// Main-webview readiness and requests received while it is loading.
+    transport: Mutex<BridgeTransportState>,
     /// Token a client must present (in the WS URL query) to connect.
     token: String,
 }
@@ -38,6 +89,7 @@ impl BridgeHub {
     pub fn new(token: String) -> Self {
         Self {
             clients: Mutex::new(HashMap::new()),
+            transport: Mutex::new(BridgeTransportState::default()),
             token,
         }
     }
@@ -52,6 +104,7 @@ impl BridgeHub {
 
     fn unregister(&self, id: &str) {
         self.clients.lock().remove(id);
+        self.transport.lock().remove_client(id);
     }
 
     /// Send a reply to a single client. Returns false if the client is gone.
@@ -70,13 +123,85 @@ impl BridgeHub {
             let _ = tx.send(Message::Text(msg.clone().into()));
         }
     }
+
+    /// Queue a client request until the main webview listener is ready, or
+    /// synchronously emit it while holding the readiness lock. Holding the lock
+    /// closes the gap between a readiness check and a page-load reset.
+    fn forward_request(&self, app: &AppHandle, payload: BridgeRequestPayload) {
+        let mut transport = self.transport.lock();
+        match transport.route(payload) {
+            BridgeRequestRoute::Dispatch(payload) => emit_bridge_request(app, payload),
+            BridgeRequestRoute::Queued => {}
+            BridgeRequestRoute::Rejected(payload) => {
+                drop(transport);
+                let response = bridge_not_ready_response(&payload.message);
+                let _ = self.send_to(&payload.client_id, response);
+            }
+        }
+    }
+
+    /// Activate one JS transport session and return all requests that arrived
+    /// during startup or navigation. Returning the batch through the readiness
+    /// invoke avoids emitting events back into a webview while that same
+    /// webview's IPC call is still in progress.
+    pub fn set_transport_ready(
+        &self,
+        session_id: String,
+        ready: bool,
+    ) -> BridgeTransportReadyResult {
+        let mut transport = self.transport.lock();
+        if !ready {
+            return BridgeTransportReadyResult {
+                accepted: transport.deactivate(&session_id),
+                queued_requests: Vec::new(),
+            };
+        }
+        BridgeTransportReadyResult {
+            accepted: true,
+            queued_requests: transport.activate(session_id).into(),
+        }
+    }
+
+    /// Called by Tauri's page-load hook before the old document is discarded.
+    pub fn mark_transport_loading(&self) {
+        self.transport.lock().reset_for_page_load();
+    }
 }
 
-#[derive(Clone, serde::Serialize)]
+#[derive(Clone, Debug, PartialEq, serde::Serialize)]
 #[serde(rename_all = "camelCase")]
 struct BridgeRequestPayload {
     client_id: String,
     message: String,
+}
+
+#[derive(serde::Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct BridgeTransportReadyResult {
+    accepted: bool,
+    queued_requests: Vec<BridgeRequestPayload>,
+}
+
+fn emit_bridge_request(app: &AppHandle, payload: BridgeRequestPayload) {
+    if let Err(error) = app.emit("agent-bridge:request", payload) {
+        log::warn!("AgentBridge could not forward a request to the main webview: {error}");
+    }
+}
+
+fn bridge_not_ready_response(message: &str) -> String {
+    let id = serde_json::from_str::<serde_json::Value>(message)
+        .ok()
+        .and_then(|request| request.get("id").cloned())
+        .unwrap_or(serde_json::Value::Null);
+    serde_json::json!({
+        "jsonrpc": "2.0",
+        "id": id,
+        "error": {
+            "code": "NOT_READY",
+            "message": "Editor webview transport is still loading; retry the request",
+        },
+    })
+    .to_string()
 }
 
 /// Start the WebSocket server on the Tauri async runtime.
@@ -164,8 +289,8 @@ async fn handle_connection(
     while let Some(msg) = stream.next().await {
         match msg {
             Ok(Message::Text(text)) => {
-                let _ = app.emit(
-                    "agent-bridge:request",
+                hub.forward_request(
+                    &app,
                     BridgeRequestPayload {
                         client_id: client_id.clone(),
                         message: text.to_string(),
@@ -253,6 +378,106 @@ pub fn agent_bridge_respond(
 #[tauri::command]
 pub fn agent_bridge_broadcast(payload: String, hub: State<'_, Arc<BridgeHub>>) {
     hub.broadcast(payload);
+}
+
+/// Main webview -> Rust: begin or end one request-listener session.
+#[tauri::command]
+pub fn agent_bridge_set_transport_ready(
+    session_id: String,
+    ready: bool,
+    hub: State<'_, Arc<BridgeHub>>,
+) -> BridgeTransportReadyResult {
+    hub.set_transport_ready(session_id, ready)
+}
+
+#[cfg(test)]
+mod transport_tests {
+    use super::*;
+
+    fn request(client_id: &str, id: usize) -> BridgeRequestPayload {
+        BridgeRequestPayload {
+            client_id: client_id.to_string(),
+            message: format!(r#"{{"jsonrpc":"2.0","id":{id},"method":"query"}}"#),
+        }
+    }
+
+    #[test]
+    fn startup_requests_wait_for_the_first_transport_session() {
+        let mut state = BridgeTransportState::default();
+        assert!(matches!(
+            state.route(request("client-a", 1)),
+            BridgeRequestRoute::Queued
+        ));
+        assert!(matches!(
+            state.route(request("client-a", 2)),
+            BridgeRequestRoute::Queued
+        ));
+
+        let queued = state.activate("session-a".to_string());
+        assert_eq!(
+            queued.into_iter().collect::<Vec<_>>(),
+            vec![request("client-a", 1), request("client-a", 2)]
+        );
+        assert!(matches!(
+            state.route(request("client-a", 3)),
+            BridgeRequestRoute::Dispatch(_)
+        ));
+    }
+
+    #[test]
+    fn stale_cleanup_cannot_disable_a_newer_transport_session() {
+        let mut state = BridgeTransportState::default();
+        state.activate("session-old".to_string());
+        state.activate("session-new".to_string());
+
+        assert!(!state.deactivate("session-old"));
+        assert!(matches!(
+            state.route(request("client-a", 1)),
+            BridgeRequestRoute::Dispatch(_)
+        ));
+        assert!(state.deactivate("session-new"));
+        assert!(matches!(
+            state.route(request("client-a", 2)),
+            BridgeRequestRoute::Queued
+        ));
+    }
+
+    #[test]
+    fn page_load_and_disconnect_preserve_only_live_pending_requests() {
+        let mut state = BridgeTransportState::default();
+        state.activate("session-a".to_string());
+        state.reset_for_page_load();
+        state.route(request("client-a", 1));
+        state.route(request("client-b", 2));
+        state.remove_client("client-a");
+
+        assert_eq!(
+            state
+                .activate("session-b".to_string())
+                .into_iter()
+                .collect::<Vec<_>>(),
+            vec![request("client-b", 2)]
+        );
+    }
+
+    #[test]
+    fn pending_queue_is_bounded_and_returns_the_original_rpc_id() {
+        let mut state = BridgeTransportState::default();
+        for id in 0..MAX_QUEUED_BRIDGE_REQUESTS {
+            assert!(matches!(
+                state.route(request("client-a", id)),
+                BridgeRequestRoute::Queued
+            ));
+        }
+        let rejected = match state.route(request("client-a", 777)) {
+            BridgeRequestRoute::Rejected(payload) => payload,
+            _ => panic!("request after the queue limit should be rejected"),
+        };
+        let response: serde_json::Value =
+            serde_json::from_str(&bridge_not_ready_response(&rejected.message)).unwrap();
+        assert_eq!(response["id"], 777);
+        assert_eq!(response["error"]["code"], "NOT_READY");
+    }
 }
 
 // ── Background-safe editor-window observation ───────────────────────────────

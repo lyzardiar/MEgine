@@ -113,8 +113,9 @@ MEngine 编辑器当前对人类友好，但对 AI Agent 不够友好。AI Agent
 **Bridge Transport（Rust / Tauri）** —— 本地 WebSocket 服务器：
 
 - 监听 `127.0.0.1` 自动分配端口，端口号写入发现文件（如 `<project>/.mengine/agent-bridge.json`），供适配器发现。
-- 下行：WS 消息 → Tauri event `agent-bridge:request` 转发给 webview。
-- 上行：webview 通过 Tauri command `agent_bridge_respond` / `agent_bridge_emit` 回传，Rust 按 `request_id` 路由给对应 WS 客户端。
+- 下行：WS 消息 → 有界启动队列 / Tauri event `agent-bridge:request` → webview。主 WebView 注册监听后用带 session id 的握手声明就绪；冷启动和页面重载期间到达的请求会按序等待，并由握手 command 的返回值直接交给新页面处理，避免在同一次 IPC 尚未返回时反向发送事件。
+- 上行：webview 通过 Tauri command `agent_bridge_respond` / `agent_bridge_broadcast` 回传，Rust 按 `client_id` 路由给对应 WS 客户端。
+- 主 WebView 每次开始导航时由 Rust 页加载钩子原子重置就绪状态；旧页面的延迟清理只能释放自己的 session，不能误停用新页面。队列上限为 256，超限请求会收到保留原 JSON-RPC id 的 `NOT_READY` 错误，而不是静默丢失。
 - 仅绑定 localhost，不暴露到网络。
 
 **MCP Adapter（Node sidecar）** —— MCP 协议适配器：

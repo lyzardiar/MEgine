@@ -31,20 +31,44 @@ interface JsonRpcRequest {
 
 type JsonRpcResponse = Record<string, unknown>;
 
+interface BridgeTransportReadyResult {
+  accepted: boolean;
+  queuedRequests: BridgeRequestEvent[];
+}
+
+async function respondToRequest({ clientId, message }: BridgeRequestEvent): Promise<void> {
+  const response = await handleRequest(message);
+  try {
+    await invoke('agent_bridge_respond', {
+      clientId,
+      payload: JSON.stringify(response),
+    });
+  } catch (error) {
+    console.error('AgentBridge failed to deliver response', error);
+  }
+}
+
 /** Start listening for bridge requests. Returns an unlisten function. */
 export async function attachBridgeTransport(): Promise<UnlistenFn> {
-  return listen<BridgeRequestEvent>('agent-bridge:request', async (event) => {
-    const { clientId, message } = event.payload;
-    const response = await handleRequest(message);
-    try {
-      await invoke('agent_bridge_respond', {
-        clientId,
-        payload: JSON.stringify(response),
-      });
-    } catch (error) {
-      console.error('AgentBridge failed to deliver response', error);
-    }
+  const sessionId = globalThis.crypto.randomUUID();
+  const unlisten = await listen<BridgeRequestEvent>('agent-bridge:request', (event) => {
+    void respondToRequest(event.payload);
   });
+  try {
+    const activation = await invoke<BridgeTransportReadyResult>(
+      'agent_bridge_set_transport_ready',
+      { sessionId, ready: true },
+    );
+    await Promise.all(activation.queuedRequests.map(respondToRequest));
+  } catch (error) {
+    unlisten();
+    throw error;
+  }
+  return () => {
+    unlisten();
+    void invoke('agent_bridge_set_transport_ready', { sessionId, ready: false })
+      .catch((error) => console.error('AgentBridge failed to release transport session', error));
+  };
 }
 
 async function handleRequest(message: string): Promise<JsonRpcResponse> {

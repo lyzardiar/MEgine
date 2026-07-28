@@ -64,16 +64,27 @@ test('the main AgentBridge transport is available before a project is opened', (
   const main = fs.readFileSync(path.join(root, 'src', 'main.tsx'), 'utf8');
   const app = fs.readFileSync(path.join(root, 'src', 'App.tsx'), 'utf8');
   const gate = fs.readFileSync(path.join(root, 'src', 'DesktopProjectGate.tsx'), 'utf8');
+  const transport = fs.readFileSync(path.join(root, 'src', 'agent', 'transport.ts'), 'utf8');
+  const nativeBridge = fs.readFileSync(
+    path.join(root, 'src-tauri', 'src', 'agent_bridge.rs'),
+    'utf8',
+  );
+  const nativeHost = fs.readFileSync(path.join(root, 'src-tauri', 'src', 'lib.rs'), 'utf8');
   const projectSession = fs.readFileSync(
     path.join(root, 'src', 'transport', 'desktopProjectSession.ts'),
     'utf8',
   );
   const bridge = fs.readFileSync(path.join(root, 'src', 'agent', 'AgentBridge.ts'), 'utf8');
 
-  assert.match(main, /function AgentBridgeTransportHost/);
   assert.match(main, /attachBridgeTransport\(\)/);
-  assert.match(main, /enabled=\{detachedPanel == null && detachedEditorWindow == null\}/);
+  assert.match(main, /if \(detachedPanel == null && detachedEditorWindow == null\)/);
+  assert.doesNotMatch(main, /useEffect/);
   assert.doesNotMatch(app, /attachBridgeTransport/);
+  assert.match(transport, /agent_bridge_set_transport_ready/);
+  assert.match(transport, /activation\.queuedRequests\.map\(respondToRequest\)/);
+  assert.match(nativeBridge, /MAX_QUEUED_BRIDGE_REQUESTS: usize = 256/);
+  assert.match(nativeBridge, /bridge_not_ready_response/);
+  assert.match(nativeHost, /PageLoadEvent::Started/);
   assert.match(gate, /connectProjectLifecycle/);
   assert.match(gate, /attachDesktopProject\(\)/);
   assert.match(gate, /errorCode\(reason\) !== 'noProject'/);
