@@ -62,6 +62,22 @@ test('command schemas expose exact high-risk guards and shared optimistic option
     ['path'],
   );
   assert.deepEqual(
+    COMMAND_PARAMS_SCHEMAS['prefab.create'].required,
+    ['entity'],
+  );
+  assert.deepEqual(
+    COMMAND_PARAMS_SCHEMAS['prefab.apply'].required,
+    ['entity', 'expectedRevision'],
+  );
+  assert.deepEqual(
+    COMMAND_PARAMS_SCHEMAS['prefab.revert'].required,
+    ['entity', 'expectedRevision'],
+  );
+  assert.deepEqual(
+    COMMAND_PARAMS_SCHEMAS['prefab.unpack'].required,
+    ['entity'],
+  );
+  assert.deepEqual(
     COMMAND_PARAMS_SCHEMAS['panel.detach'].required,
     ['kind'],
   );

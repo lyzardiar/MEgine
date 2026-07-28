@@ -197,6 +197,20 @@ export const COMMAND_PARAMS_SCHEMAS: Record<string, AgentJsonSchema> = {
   'asset.instantiate': objectSchema({
     path: assetPath,
   }, ['path']),
+  'prefab.create': objectSchema({
+    entity: entityId('Root entity to capture and link'),
+  }, ['entity']),
+  'prefab.apply': objectSchema({
+    entity: entityId('Any entity in the linked prefab instance'),
+    expectedRevision: stringValue('Exact current prefab asset revision'),
+  }, ['entity', 'expectedRevision']),
+  'prefab.revert': objectSchema({
+    entity: entityId('Any entity in the linked prefab instance'),
+    expectedRevision: stringValue('Exact current prefab asset revision'),
+  }, ['entity', 'expectedRevision']),
+  'prefab.unpack': objectSchema({
+    entity: entityId('Any entity in the linked prefab instance'),
+  }, ['entity']),
   'asset.open': objectSchema({
     path: assetPath,
   }, ['path']),

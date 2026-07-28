@@ -1461,8 +1461,8 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
     },
   };
   agentWorkspaceProviderRef.current = {
-    assertDiskMutationAllowed: async () => {
-      if (sceneDirtyRef.current || resourceDirtyRef.current) {
+    assertDiskMutationAllowed: async (options = {}) => {
+      if ((!options.allowSceneDirty && sceneDirtyRef.current) || resourceDirtyRef.current) {
         throw new BridgeError(
           'CONFLICT',
           'Workspace has unsaved changes; run scene.save_all before changing project files',

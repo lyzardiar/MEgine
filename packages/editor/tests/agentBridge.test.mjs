@@ -70,6 +70,13 @@ test('whole-window agent capture is background-safe and addressable by window la
   assert.match(mcp, /'create_asset'/);
   assert.match(mcp, /'open_asset'/);
   assert.match(mcp, /'instantiate_asset'/);
+  assert.match(mcp, /name: 'get_prefab_instance'/);
+  assert.match(mcp, /'create_prefab'/);
+  assert.match(mcp, /'apply_prefab'/);
+  assert.match(mcp, /'revert_prefab'/);
+  assert.match(mcp, /'unpack_prefab'/);
+  assert.match(mcp, /function execTool\(name, description, command, properties, required = \[\], mapArgs/);
+  assert.match(mcp, /\.\.\.\(required\.length \? \{ required \} : \{\}\)/);
   assert.match(mcp, /'detach_panel'/);
   assert.match(mcp, /'dock_panel'/);
   assert.match(mcp, /'invoke_component_method'/);
@@ -226,6 +233,10 @@ test('scene, asset, and asynchronous build tools share guarded editor services',
     path.join(root, 'vite', 'mengineFsPlugin.ts'),
     'utf8',
   );
+  const prefabWorkflow = fs.readFileSync(
+    path.join(root, 'src', 'prefabWorkflow.ts'),
+    'utf8',
+  );
 
   assert.match(bridge, /case 'scene\.list'/);
   assert.match(bridge, /case 'commands\.describe'/);
@@ -243,6 +254,16 @@ test('scene, asset, and asynchronous build tools share guarded editor services',
   assert.match(bridge, /case 'asset\.read_text'/);
   assert.match(bridge, /commandId === 'asset\.write_text'/);
   assert.match(bridge, /commandId === 'asset\.import_file'/);
+  assert.match(bridge, /case 'prefab\.instance'/);
+  assert.match(bridge, /commandId === 'prefab\.create'/);
+  assert.match(bridge, /commandId === 'prefab\.apply'/);
+  assert.match(bridge, /commandId === 'prefab\.revert'/);
+  assert.match(bridge, /commandId === 'prefab\.unpack'/);
+  assert.match(bridge, /allowSceneDirty: true/);
+  assert.match(bridge, /stalePrefabRevision/);
+  assert.match(prefabWorkflow, /writeProjectAssetText\(path, serializePrefabAsset\(captured\.asset\), null\)/);
+  assert.match(prefabWorkflow, /expectedRevision\?: string/);
+  assert.match(prefabWorkflow, /readProjectAssetBytesWithRevision\(instance\.source\)/);
   assert.match(bridge, /importExternalProjectAsset\(sourcePath, normalized\)/);
   assert.match(bridge, /assertDiskMutationAllowed/);
   assert.match(commands, /'component\.invoke'/);
@@ -265,7 +286,10 @@ test('scene, asset, and asynchronous build tools share guarded editor services',
   assert.match(app, /rename: async \(\{ oldName: rawOldName, newName: rawNewName \}\)/);
   assert.match(app, /delete: async \(\{ name: rawName, expectedRevision \}\)/);
   assert.match(app, /deleteScene\(name, expectedRevision\)/);
-  assert.match(app, /sceneDirtyRef\.current \|\| resourceDirtyRef\.current/);
+  assert.match(
+    app,
+    /\(!options\.allowSceneDirty && sceneDirtyRef\.current\) \|\| resourceDirtyRef\.current/,
+  );
   assert.match(app, /pass discardDirty=true/);
   assert.match(assets, /expectedRevision === undefined/);
   assert.match(store, /if \(mode === 'pause'\) \{\s*mode = 'play'/);

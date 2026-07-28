@@ -87,6 +87,12 @@ import { findProjectAssetReferences } from '../assetReferences';
 import { validateImportedAssetName } from '../assetImportModel';
 import { refreshSprites } from '../spriteLibrary';
 import {
+  applySelectedPrefab,
+  createProjectPrefabFromSelection,
+  revertSelectedPrefab,
+  unpackSelectedPrefab,
+} from '../prefabWorkflow';
+import {
   PROJECT_ASSETS_CHANGED_EVENT,
   PROJECT_ASSETS_EXTERNAL_CHANGE_EVENT,
   broadcastProjectAssetsChanged,
@@ -175,7 +181,7 @@ export type AgentSceneDeletePreview = {
 };
 
 export interface AgentWorkspaceProvider {
-  assertDiskMutationAllowed: () => Promise<void>;
+  assertDiskMutationAllowed: (options?: { allowSceneDirty?: boolean }) => Promise<void>;
   listDocuments: () => Promise<AgentWorkspaceDocument[]>;
   openAsset: (target: AgentResourceEditorTarget) => Promise<void>;
   createAsset: (request: AgentCreateAssetRequest) => Promise<AgentCreateAssetResult>;
@@ -579,6 +585,41 @@ class AgentBridge {
       throw new BridgeError('ENTITY_NOT_FOUND', `No entity matches "${String(idOrName)}"`);
     }
     return found;
+  }
+
+  async getPrefabInstanceInfo(entityId: number): Promise<{
+    entity: number;
+    root: number;
+    source: string;
+    instance: string;
+    asset: ProjectFileAsset;
+  }> {
+    this.getEntity(entityId);
+    const instance = this.requireStore().getPrefabInstance(entityId);
+    if (!instance) {
+      throw new BridgeError(
+        'INVALID_ARGS',
+        `Entity ${entityId} is not part of a prefab instance`,
+      );
+    }
+    const asset = findAsset(await refreshProjectFiles(), instance.source);
+    if (!asset) {
+      throw new BridgeError(
+        'IO_ERROR',
+        `Prefab asset is missing: ${instance.source}`,
+      );
+    }
+    if (asset.kind !== 'prefab' || asset.metaStatus !== 'ready' || !asset.guid) {
+      throw new BridgeError(
+        'CONFLICT',
+        `Prefab asset is not healthy: ${asset.relPath} (${asset.metaStatus})`,
+      );
+    }
+    return {
+      entity: entityId,
+      ...instance,
+      asset: structuredClone(asset),
+    };
   }
 
   findEntities(params: Record<string, unknown>): {
@@ -1225,6 +1266,200 @@ class AgentBridge {
     return { created: before == null, asset: structuredClone(after) };
   }
 
+  async createPrefab(entityId: number): Promise<unknown> {
+    const store = this.requireStore();
+    if (store.mode !== 'edit') {
+      throw new BridgeError('READONLY', 'prefab.create is only available in Edit Mode');
+    }
+    this.getEntity(entityId);
+    await this.requireWorkspaceProvider().assertDiskMutationAllowed({
+      allowSceneDirty: true,
+    });
+    this.getEntity(entityId);
+    const beforePaths = new Set(
+      (await refreshProjectFiles()).map((asset) => asset.relPath.toLocaleLowerCase()),
+    );
+    this.getEntity(entityId);
+    store.select(entityId);
+    let path: string;
+    try {
+      path = await createProjectPrefabFromSelection(store);
+    } catch (error) {
+      throw prefabBridgeError(error);
+    }
+    const asset = findAsset(await refreshProjectFiles(), path);
+    if (
+      !asset
+      || beforePaths.has(asset.relPath.toLocaleLowerCase())
+      || asset.kind !== 'prefab'
+      || asset.metaStatus !== 'ready'
+      || !asset.guid
+    ) {
+      throw new BridgeError(
+        'IO_ERROR',
+        `Prefab creation completed but the indexed asset is unhealthy: ${path}`,
+      );
+    }
+    const instance = store.getPrefabInstance(entityId);
+    if (!instance || instance.source !== asset.relPath) {
+      throw new BridgeError(
+        'INTERNAL',
+        `Prefab asset was created but entity ${entityId} was not linked`,
+      );
+    }
+    const change: ProjectAssetChange = {
+      type: 'added',
+      relPath: asset.relPath,
+      previous: null,
+      current: asset,
+    };
+    window.dispatchEvent(new CustomEvent(PROJECT_ASSETS_EXTERNAL_CHANGE_EVENT, {
+      detail: { changes: [change], source: 'agent' },
+    }));
+    broadcastProjectAssetsChanged({
+      action: 'created',
+      destinationPath: asset.relPath,
+    });
+    this.logProvider?.(
+      `Created ${asset.relPath} from entity ${entityId} and linked its first instance`,
+    );
+    return {
+      path: asset.relPath,
+      asset: structuredClone(asset),
+      instance: structuredClone(instance),
+      entity: this.getEntity(instance.root),
+    };
+  }
+
+  async applyPrefab(entityId: number, expectedRevision: string): Promise<unknown> {
+    const store = this.requireStore();
+    if (store.mode !== 'edit') {
+      throw new BridgeError('READONLY', 'prefab.apply is only available in Edit Mode');
+    }
+    await this.requireWorkspaceProvider().assertDiskMutationAllowed({
+      allowSceneDirty: true,
+    });
+    const target = await this.getPrefabInstanceInfo(entityId);
+    if (target.asset.revision !== expectedRevision) {
+      throw stalePrefabRevision(target.asset, expectedRevision);
+    }
+    store.select(entityId);
+    try {
+      await applySelectedPrefab(store, expectedRevision);
+    } catch (error) {
+      if (isStaleAssetError(error)) {
+        const current = findAsset(await refreshProjectFiles(), target.source);
+        throw stalePrefabRevision(current, expectedRevision, target.source);
+      }
+      throw prefabBridgeError(error);
+    }
+    const after = findAsset(await refreshProjectFiles(), target.source);
+    if (
+      !after
+      || after.revision === target.asset.revision
+      || after.kind !== 'prefab'
+      || after.metaStatus !== 'ready'
+      || !after.guid
+    ) {
+      throw new BridgeError(
+        'IO_ERROR',
+        `Prefab apply completed but the indexed revision did not advance: ${target.source}`,
+      );
+    }
+    const instance = store.getPrefabInstance(target.root);
+    if (!instance) {
+      throw new BridgeError('INTERNAL', `Prefab instance link was lost: ${target.source}`);
+    }
+    const change: ProjectAssetChange = {
+      type: 'modified',
+      relPath: after.relPath,
+      previous: target.asset,
+      current: after,
+    };
+    window.dispatchEvent(new CustomEvent(PROJECT_ASSETS_EXTERNAL_CHANGE_EVENT, {
+      detail: { changes: [change], source: 'agent' },
+    }));
+    broadcastProjectAssetsChanged({ action: 'modified', sourcePath: after.relPath });
+    this.logProvider?.(
+      `Applied entity ${entityId} to ${after.relPath} at revision ${after.revision}`,
+    );
+    return {
+      path: after.relPath,
+      asset: structuredClone(after),
+      instance: structuredClone(instance),
+      entity: this.getEntity(instance.root),
+    };
+  }
+
+  async revertPrefab(entityId: number, expectedRevision: string): Promise<unknown> {
+    const store = this.requireStore();
+    if (store.mode !== 'edit') {
+      throw new BridgeError('READONLY', 'prefab.revert is only available in Edit Mode');
+    }
+    const target = await this.getPrefabInstanceInfo(entityId);
+    if (target.asset.revision !== expectedRevision) {
+      throw stalePrefabRevision(target.asset, expectedRevision);
+    }
+    store.select(entityId);
+    try {
+      await revertSelectedPrefab(store, expectedRevision);
+    } catch (error) {
+      if (isStaleAssetError(error)) {
+        const current = findAsset(await refreshProjectFiles(), target.source);
+        throw stalePrefabRevision(current, expectedRevision, target.source);
+      }
+      throw prefabBridgeError(error);
+    }
+    const root = store.selected;
+    const instance = root == null ? null : store.getPrefabInstance(root);
+    if (!instance) {
+      throw new BridgeError(
+        'INTERNAL',
+        `Prefab revert completed but the replacement instance was not linked: ${target.source}`,
+      );
+    }
+    this.logProvider?.(
+      `Reverted entity ${entityId} from ${target.source} at revision ${expectedRevision}`,
+    );
+    return {
+      path: target.source,
+      revision: expectedRevision,
+      instance: structuredClone(instance),
+      entity: this.getEntity(instance.root),
+    };
+  }
+
+  async unpackPrefab(entityId: number): Promise<unknown> {
+    const store = this.requireStore();
+    if (store.mode !== 'edit') {
+      throw new BridgeError('READONLY', 'prefab.unpack is only available in Edit Mode');
+    }
+    const target = await this.getPrefabInstanceInfo(entityId);
+    store.select(entityId);
+    let path: string;
+    try {
+      path = unpackSelectedPrefab(store);
+    } catch (error) {
+      throw prefabBridgeError(error);
+    }
+    if (store.getPrefabInstance(target.root)) {
+      throw new BridgeError(
+        'INTERNAL',
+        `Prefab unpack completed but linkage remains: ${target.source}`,
+      );
+    }
+    this.logProvider?.(`Unpacked prefab instance ${target.instance} from ${path}`);
+    return {
+      path,
+      previousInstance: {
+        root: target.root,
+        source: target.source,
+        instance: target.instance,
+      },
+      entity: this.getEntity(target.root),
+    };
+  }
+
   async getBuildSettings(): Promise<unknown> {
     return bridgeIo('Failed to read Build Settings', () => getProjectBuildSettings());
   }
@@ -1816,6 +2051,28 @@ class AgentBridge {
         },
       }, options);
     }
+    if (commandId === 'prefab.create') {
+      const result = await this.createPrefab(requiredNonNegativeInteger(args, 'entity'));
+      return this.finishAsyncCommand({ ok: true, data: result }, options);
+    }
+    if (commandId === 'prefab.apply') {
+      const result = await this.applyPrefab(
+        requiredNonNegativeInteger(args, 'entity'),
+        requiredString(args, 'expectedRevision'),
+      );
+      return this.finishAsyncCommand({ ok: true, data: result }, options);
+    }
+    if (commandId === 'prefab.revert') {
+      const result = await this.revertPrefab(
+        requiredNonNegativeInteger(args, 'entity'),
+        requiredString(args, 'expectedRevision'),
+      );
+      return this.finishAsyncCommand({ ok: true, data: result }, options);
+    }
+    if (commandId === 'prefab.unpack') {
+      const result = await this.unpackPrefab(requiredNonNegativeInteger(args, 'entity'));
+      return this.finishAsyncCommand({ ok: true, data: result }, options);
+    }
     if (commandId === 'asset.open') {
       const normalized = normalizeAssetPath(requiredString(args, 'path'));
       const asset = findAsset(await refreshProjectFiles(), normalized);
@@ -2036,6 +2293,8 @@ class AgentBridge {
         return this.getSceneDiff(requiredNonNegativeInteger(params, 'fromRevision'));
       case 'scene.hierarchy':
         return this.getHierarchy();
+      case 'prefab.instance':
+        return this.getPrefabInstanceInfo(requiredNonNegativeInteger(params, 'entity'));
       case 'scene.list':
         return this.getScenes();
       case 'scene.delete_preview':
@@ -2340,6 +2599,33 @@ function sceneLifecycleBridgeError(reason: unknown): BridgeError {
     return new BridgeError('IO_ERROR', converted.message, converted.data);
   }
   return converted;
+}
+
+function isStaleAssetError(reason: unknown): boolean {
+  const message = reason instanceof Error ? reason.message : String(reason);
+  return message.includes('asset changed on disk since it was loaded');
+}
+
+function stalePrefabRevision(
+  asset: ProjectFileAsset | null | undefined,
+  expectedRevision: string,
+  fallbackPath?: string,
+): BridgeError {
+  return new BridgeError(
+    'STALE_REVISION',
+    `Prefab revision changed: expected ${expectedRevision}, current ${asset?.revision ?? 'missing'}`,
+    {
+      path: asset?.relPath ?? fallbackPath ?? null,
+      expectedRevision,
+      currentRevision: asset?.revision ?? null,
+    },
+  );
+}
+
+function prefabBridgeError(reason: unknown): BridgeError {
+  if (reason instanceof BridgeError) return reason;
+  const message = reason instanceof Error ? reason.message : String(reason);
+  return new BridgeError('IO_ERROR', message);
 }
 
 function requiredNonNegativeInteger(

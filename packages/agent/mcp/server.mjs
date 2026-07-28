@@ -132,7 +132,7 @@ function textContent(value) {
 }
 
 /** Build a tool that invokes a bridge `execute` command. */
-function execTool(name, description, command, properties, mapArgs = (a) => a) {
+function execTool(name, description, command, properties, required = [], mapArgs = (a) => a) {
   return {
     name,
     description,
@@ -151,6 +151,7 @@ function execTool(name, description, command, properties, mapArgs = (a) => a) {
             'Optional optimistic lock from get_editor_state/get_scene_snapshot. The command fails with STALE_REVISION if the scene changed.',
         },
       },
+      ...(required.length ? { required } : {}),
     },
     handler: async (args) => {
       const wantScreenshot = Boolean(args.screenshot);
@@ -439,6 +440,20 @@ const TOOLS = [
       },
     },
     handler: async (args) => textContent(await bridgeQuery('entity.get_component', args)),
+  },
+  {
+    name: 'get_prefab_instance',
+    description:
+      'Resolve any entity in a prefab instance to its root, stable instance id, source asset, GUID, metadata health, and exact current revision. Use the returned revision for apply_prefab or revert_prefab.',
+    inputSchema: {
+      type: 'object',
+      required: ['entity'],
+      properties: {
+        entity: { type: 'number', minimum: 0, description: 'Any entity in the prefab instance' },
+      },
+      additionalProperties: false,
+    },
+    handler: async (args) => textContent(await bridgeQuery('prefab.instance', args)),
   },
   {
     name: 'take_screenshot',
@@ -845,6 +860,44 @@ const TOOLS = [
         description: 'Exact prefab, model, or PNG/JPEG/WebP/GIF path under Assets/',
       },
     },
+  ),
+  execTool(
+    'create_prefab',
+    'Capture one authored entity hierarchy as a new uniquely named prefab asset, then link that hierarchy as its first instance. Resource-document edits block the write, while intentional unsaved scene edits are preserved. Returns the indexed asset, exact revision, link identity, and root entity.',
+    'prefab.create',
+    {
+      entity: { type: 'number', minimum: 0, description: 'Root entity to capture and link' },
+    },
+    ['entity'],
+  ),
+  execTool(
+    'apply_prefab',
+    'Apply one linked instance hierarchy to its prefab asset without a dialog or foreground focus. Requires the exact asset revision returned by get_prefab_instance or list_assets and fails on concurrent disk edits.',
+    'prefab.apply',
+    {
+      entity: { type: 'number', minimum: 0, description: 'Any entity in the prefab instance' },
+      expectedRevision: { type: 'string', description: 'Exact current prefab asset revision' },
+    },
+    ['entity', 'expectedRevision'],
+  ),
+  execTool(
+    'revert_prefab',
+    'Replace one linked instance hierarchy from an exact prefab asset revision as one undoable scene edit. The asset is read in the background and is not modified.',
+    'prefab.revert',
+    {
+      entity: { type: 'number', minimum: 0, description: 'Any entity in the prefab instance' },
+      expectedRevision: { type: 'string', description: 'Exact current prefab asset revision' },
+    },
+    ['entity', 'expectedRevision'],
+  ),
+  execTool(
+    'unpack_prefab',
+    'Remove prefab linkage from one complete instance while preserving its authored entities and components as one undoable scene edit.',
+    'prefab.unpack',
+    {
+      entity: { type: 'number', minimum: 0, description: 'Any entity in the prefab instance' },
+    },
+    ['entity'],
   ),
   execTool(
     'write_asset_text',
