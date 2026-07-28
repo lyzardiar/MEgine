@@ -89,26 +89,36 @@ const menuListeners = new Set<Listener>();
 let windows: EditorWindowInstance[] = [];
 let idSeq = 1;
 let menuRevision = 0;
-const windowTypes = new Map<string, () => EditorWindowDefinition>();
+const windowTypeRegistrations = new Map<string, Array<() => EditorWindowDefinition>>();
 
 export function registerEditorWindowType(
   typeId: string,
   factory: () => EditorWindowDefinition,
 ): () => void {
-  windowTypes.set(typeId, factory);
+  const registrations = windowTypeRegistrations.get(typeId) ?? [];
+  registrations.push(factory);
+  windowTypeRegistrations.set(typeId, registrations);
+  let disposed = false;
   return () => {
-    if (windowTypes.get(typeId) === factory) windowTypes.delete(typeId);
+    if (disposed) return;
+    disposed = true;
+    const current = windowTypeRegistrations.get(typeId);
+    if (!current) return;
+    const index = current.indexOf(factory);
+    if (index < 0) return;
+    current.splice(index, 1);
+    if (current.length === 0) windowTypeRegistrations.delete(typeId);
   };
 }
 
 export function createRegisteredEditorWindow(typeId: string): EditorWindowDefinition | null {
-  return windowTypes.get(typeId)?.() ?? null;
+  return windowTypeRegistrations.get(typeId)?.at(-1)?.() ?? null;
 }
 
 export function listRegisteredEditorWindowTypes(): EditorWindowTypeInfo[] {
-  return [...windowTypes.entries()]
-    .map(([typeId, factory]) => {
-      const definition = factory();
+  return [...windowTypeRegistrations.entries()]
+    .map(([typeId, registrations]) => {
+      const definition = registrations.at(-1)!();
       return {
         typeId,
         title: definition.title,
@@ -293,8 +303,10 @@ export function openEditorWindow(win: Omit<EditorWindowInstance, 'id'> & { id?: 
     onClose: win.onClose,
   };
   if (existing >= 0) {
-    windows = [...windows];
-    windows[existing] = { ...windows[existing], ...next };
+    windows = [
+      ...windows.filter((_, index) => index !== existing),
+      { ...windows[existing], ...next },
+    ];
   } else {
     windows = [...windows, next];
   }

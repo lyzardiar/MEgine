@@ -1,7 +1,7 @@
 import type { ReactNode } from 'react';
 import {
+  createRegisteredEditorWindow,
   openEditorWindow,
-  registerEditorWindowType,
   registerMenuItem,
   registerMenuItemValidator,
   type MenuItemContext,
@@ -23,6 +23,8 @@ export type EditorWindowOptions = {
 /**
  * Unity-like custom editor window.
  * Subclass, implement `title` + `onGUI()`, open via `YourWindow.show()` or `@MenuItem`.
+ * Register a module-load factory with `registerEditorWindowType` when the window
+ * must be detachable and discoverable from independent WebViews or Agents.
  */
 export abstract class EditorWindow {
   abstract title: string;
@@ -53,7 +55,18 @@ export abstract class EditorWindow {
         render: () => current.onGUI(),
       };
     };
-    registerEditorWindowType(id, definition);
+    if (!createRegisteredEditorWindow(id)) {
+      openEditorWindow({
+        id,
+        title: inst.title,
+        x,
+        y,
+        width,
+        height,
+        render: () => inst.onGUI(),
+      });
+      return;
+    }
     void openNativeEditorWindow({
       typeId: id,
       title: inst.title,
@@ -62,14 +75,15 @@ export abstract class EditorWindow {
       activateWindow: opts.activateWindow,
     }).then((opened) => {
       if (opened) return;
+      const fallback = definition();
       openEditorWindow({
-      id,
-      title: inst.title,
-      x,
-      y,
-      width,
-      height,
-      render: () => inst.onGUI(),
+        id,
+        title: fallback.title,
+        x,
+        y,
+        width,
+        height,
+        render: fallback.render,
       });
     });
   }
