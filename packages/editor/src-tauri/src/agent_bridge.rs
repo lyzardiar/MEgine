@@ -650,6 +650,7 @@ pub struct WindowCapture {
     source_width: u32,
     source_height: u32,
     scale: f64,
+    captured_at: u64,
     window_label: String,
     capture_method: String,
     background_safe: bool,
@@ -1043,6 +1044,12 @@ async fn capture_editor_window_impl(
         ));
     }
     let output_scale = info.width.max(info.height) as f64 / source_width.max(source_height) as f64;
+    let captured_at = std::time::SystemTime::now()
+        .duration_since(std::time::UNIX_EPOCH)
+        .map_err(|error| format!("system clock is before Unix epoch: {error}"))?
+        .as_millis()
+        .try_into()
+        .map_err(|_| "screenshot timestamp exceeded u64".to_string())?;
 
     Ok(WindowCapture {
         data_url: format!("data:image/png;base64,{data}"),
@@ -1052,6 +1059,7 @@ async fn capture_editor_window_impl(
         source_width,
         source_height,
         scale: output_scale.min(1.0),
+        captured_at,
         window_label,
         capture_method: "webview2-devtools".to_string(),
         background_safe: true,

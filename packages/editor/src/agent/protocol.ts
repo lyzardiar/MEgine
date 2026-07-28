@@ -19,6 +19,8 @@ export interface ScreenshotResult {
   sourceHeight: number;
   /** Output-to-source scale, never greater than 1. */
   scale: number;
+  /** Unix epoch milliseconds recorded when encoding completed. */
+  capturedAt: number;
   /** Present for whole-window captures. */
   windowLabel?: string;
   /** Native implementation used for the capture. */

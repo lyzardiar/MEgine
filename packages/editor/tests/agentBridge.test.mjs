@@ -268,7 +268,8 @@ test('whole-window agent capture is background-safe and addressable by window la
   }
   assert.match(mcp, /expectedSceneRevision/);
   assert.match(mcp, /key !== 'screenshot'/);
-  assert.match(mcp, /textContent\(response\)/);
+  assert.match(mcp, /function screenshotContent/);
+  assert.match(mcp, /screenshotContent\(result\?\.screenshot, response\)/);
   assert.match(mcp, /name: 'preview_asset_rename'/);
   assert.match(mcp, /'rename_asset'/);
   assert.match(mcp, /name: 'preview_asset_trash'/);

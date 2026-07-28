@@ -589,14 +589,16 @@ export function Viewport(props: {
           outputCanvas.width / sourceWidth,
           outputCanvas.height / sourceHeight,
         );
+        const dataUrl = outputCanvas.toDataURL(format, quality);
         return {
-          dataUrl: outputCanvas.toDataURL(format, quality),
+          dataUrl,
           width: outputCanvas.width,
           height: outputCanvas.height,
           mime: format,
           sourceWidth,
           sourceHeight,
           scale: outputScale,
+          capturedAt: Date.now(),
         };
       } catch {
         return null;

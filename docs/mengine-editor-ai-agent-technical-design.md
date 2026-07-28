@@ -178,8 +178,8 @@ MEngine 编辑器当前对人类友好，但对 AI Agent 不够友好。AI Agent
 
 | query id | 参数 | 返回 | 集成点 |
 | --- | --- | --- | --- |
-| `view.screenshot` | `{ target?: "scene"\|"game", format?: "image/png"\|"image/jpeg", quality?, maxSize?: 256..4096 }` | `{ dataUrl, width, height, sourceWidth, sourceHeight, scale, mime }` | 视口（scene/game）：`Viewport.tsx` 的 `canvasRef` 在目标 DOM 内按需降采样后编码；默认最长边 2048 |
-| `view.window_screenshot` | `{ windowLabel?: string, maxSize?: 256..4096 }` | `{ dataUrl, width, height, sourceWidth, sourceHeight, scale, mime, windowLabel, captureMethod, backgroundSafe }` | Windows 桌面版通过 WebView2 DevTools `Page.captureScreenshot` 在目标 webview 内离屏缩放渲染；不会激活窗口，也不读取前台屏幕像素；默认最长边 2048 |
+| `view.screenshot` | `{ target?: "scene"\|"game", format?: "image/png"\|"image/jpeg", quality?, maxSize?: 256..4096 }` | `{ dataUrl, width, height, sourceWidth, sourceHeight, scale, capturedAt, mime }` | 视口（scene/game）：`Viewport.tsx` 的 `canvasRef` 在目标 DOM 内按需降采样后编码；默认最长边 2048 |
+| `view.window_screenshot` | `{ windowLabel?: string, maxSize?: 256..4096 }` | `{ dataUrl, width, height, sourceWidth, sourceHeight, scale, capturedAt, mime, windowLabel, captureMethod, backgroundSafe }` | Windows 桌面版通过 WebView2 DevTools `Page.captureScreenshot` 在目标 webview 内离屏缩放渲染；不会激活窗口，也不读取前台屏幕像素；默认最长边 2048 |
 | `view.screenshot_to_file` | `{ path, target? }` | `{ path, width, height }` | 同上，写入磁盘供 Agent 读取 |
 | `view.capture_region` | `{ x, y, w, h, target? }` | `{ dataUrl }` | canvas 裁剪 |
 
@@ -387,10 +387,10 @@ Rust Host 使用独立的工程生命周期互斥门串行化 open/create/close 
 | --- | --- |
 | 查询契约 | ✅ 每个只读查询都有权威 `paramsSchema`；所有一一映射的 MCP query tool 自动对比结构约束（含非空、pattern、长度和分页条件），WebSocket、CLI 与 MCP 对非法、缺失或多余字段返回一致的 `INVALID_ARGS`，不再静默忽略 |
 | 命令结果 | ✅ 每个写命令返回 `{ ok, sceneRevision, eventSequence, data }`；所有传输先按同一 `paramsSchema` 严格校验参数，再检查 `expectedSceneRevision`，不匹配时在任何改动前返回 `STALE_REVISION` |
-| 操作后自动截图 | 写命令可带 `options.screenshot: true`；结果显式返回 `screenshotRequested=true`，成功时返回 `screenshotCaptured=true` 与 `screenshot`，失败时保留已完成写动作并返回 `screenshotCaptured=false` 和有界 `screenshotError`，不再静默丢失视觉证据 |
+| 操作后自动截图 | 写命令可带 `options.screenshot: true`；结果显式返回 `screenshotRequested=true`，成功时返回 `screenshotCaptured=true` 与 `screenshot`，失败时保留已完成写动作并返回 `screenshotCaptured=false` 和有界 `screenshotError`。MCP 将不含 Base64 的尺寸、缩放、时间与后台安全元数据作为 text block，并另附 image block |
 | 状态 diff | ✅ `query: scene.diff({ fromRevision })` 返回实体增删改、场景级状态（当前含 clear color）和当前 payload；切场景或历史过期时返回 `resetRequired` 与完整快照 |
 | 事件订阅 | ✅ 有界 journal + cursor 查询 `events.get`；`events.wait` 可按 topic 等待最多 15 秒并显式返回 `timedOut`，MCP/CLI 无需高频轮询；原生 WebSocket 同时广播 `project.changed` / `scene.changed` / `selection.changed` / `mode.changed` / `log.*` / `panel.changed` / `build.progress` / `build.settings` / `asset.changed` |
-| 结构化错误 | 错误码：`STALE_REVISION` / `ENTITY_NOT_FOUND` / `COMPONENT_NOT_FOUND` / `INVALID_ARGS` / `READONLY` / `PERMISSION_DENIED` / `NOT_READY` |
+| 结构化错误 | 错误码：`STALE_REVISION` / `RATE_LIMITED` / `CONFLICT` / `ENTITY_NOT_FOUND` / `COMPONENT_NOT_FOUND` / `INVALID_ARGS` / `READONLY` / `PERMISSION_DENIED` / `NOT_READY` / `PROJECT_NOT_OPEN` / `IO_ERROR` / `INTERNAL` |
 
 ## 5. MCP Server 设计（优先传输）
 

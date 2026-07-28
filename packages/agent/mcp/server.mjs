@@ -389,6 +389,28 @@ function textContent(value) {
   return [{ type: 'text', text: typeof value === 'string' ? value : JSON.stringify(value, null, 2) }];
 }
 
+function screenshotContent(screenshot, envelope) {
+  if (!screenshot || typeof screenshot !== 'object') {
+    return textContent(envelope);
+  }
+  const { dataUrl, ...metadata } = screenshot;
+  const payload = envelope === undefined
+    ? metadata
+    : envelope && typeof envelope === 'object' && !Array.isArray(envelope)
+      ? { ...envelope, screenshot: metadata }
+      : { result: envelope, screenshot: metadata };
+  const content = textContent(payload);
+  const base64 = typeof dataUrl === 'string' ? dataUrl.split(',')[1] || '' : '';
+  if (base64) {
+    content.push({
+      type: 'image',
+      data: base64,
+      mimeType: screenshot.mime || 'image/png',
+    });
+  }
+  return content;
+}
+
 function schemaTypeMatches(value, expected) {
   switch (expected) {
     case 'null':
@@ -596,12 +618,7 @@ function execTool(
             Object.entries(result).filter(([key]) => key !== 'screenshot'),
           )
         : result;
-      const content = textContent(response);
-      if (result?.screenshot?.dataUrl) {
-        const base64 = String(result.screenshot.dataUrl).split(',')[1] || '';
-        content.push({ type: 'image', data: base64, mimeType: result.screenshot.mime || 'image/png' });
-      }
-      return content;
+      return screenshotContent(result?.screenshot, response);
     },
   };
 }
@@ -1187,8 +1204,7 @@ const TOOLS = [
               maxSize,
             })
           : await bridgeQuery('view.screenshot', { target, maxSize });
-      const base64 = String(shot.dataUrl).split(',')[1] || '';
-      return [{ type: 'image', data: base64, mimeType: shot.mime || 'image/png' }];
+      return screenshotContent(shot);
     },
   },
   {
@@ -2971,6 +2987,7 @@ export {
   incomingMessageError,
   negotiateProtocolVersion,
   SUPPORTED_PROTOCOL_VERSIONS,
+  screenshotContent,
   structuredError,
   ToolInputValidationError,
   TOOLS,

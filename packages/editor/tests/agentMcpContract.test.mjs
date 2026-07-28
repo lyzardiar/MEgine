@@ -7,6 +7,7 @@ import {
   BridgeOutcomeUnknownError,
   RESOURCES,
   SERVER_INSTRUCTIONS,
+  screenshotContent,
   structuredError,
   ToolInputValidationError,
   TOOLS,
@@ -304,6 +305,51 @@ test('MCP screenshot tool exposes bounded background capture controls', () => {
   assert.equal(screenshot.inputSchema.properties.maxSize.minimum, 256);
   assert.equal(screenshot.inputSchema.properties.maxSize.maximum, 4_096);
   assert.match(screenshot.description, /serialized and rate-limited/);
+});
+
+test('MCP screenshot content keeps evidence metadata out of the base64 image payload', () => {
+  const content = screenshotContent({
+    dataUrl: 'data:image/png;base64,aGVsbG8=',
+    width: 256,
+    height: 160,
+    sourceWidth: 2_160,
+    sourceHeight: 1_350,
+    scale: 256 / 2_160,
+    capturedAt: 123_456,
+    mime: 'image/png',
+    windowLabel: 'main',
+    captureMethod: 'webview2-devtools',
+    backgroundSafe: true,
+  }, {
+    ok: true,
+    screenshotRequested: true,
+    screenshotCaptured: true,
+  });
+
+  assert.equal(content.length, 2);
+  assert.deepEqual(JSON.parse(content[0].text), {
+    ok: true,
+    screenshotRequested: true,
+    screenshotCaptured: true,
+    screenshot: {
+      width: 256,
+      height: 160,
+      sourceWidth: 2_160,
+      sourceHeight: 1_350,
+      scale: 256 / 2_160,
+      capturedAt: 123_456,
+      mime: 'image/png',
+      windowLabel: 'main',
+      captureMethod: 'webview2-devtools',
+      backgroundSafe: true,
+    },
+  });
+  assert.deepEqual(content[1], {
+    type: 'image',
+    data: 'aGVsbG8=',
+    mimeType: 'image/png',
+  });
+  assert.doesNotMatch(content[0].text, /aGVsbG8=/);
 });
 
 test('MCP reports process-loss writes as actionable unknown outcomes without tokens', () => {
