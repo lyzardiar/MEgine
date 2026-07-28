@@ -591,6 +591,23 @@ mod transport_tests {
             assert!(!valid_ui_snapshot_revision(invalid), "{invalid}");
         }
     }
+
+    #[test]
+    fn screenshot_size_is_bounded_before_native_capture() {
+        assert_eq!(validated_screenshot_max_size(None).unwrap(), 2_048);
+        assert_eq!(validated_screenshot_max_size(Some(256)).unwrap(), 256);
+        assert_eq!(validated_screenshot_max_size(Some(4_096)).unwrap(), 4_096);
+        assert!(validated_screenshot_max_size(Some(255)).is_err());
+        assert!(validated_screenshot_max_size(Some(4_097)).is_err());
+        assert!(
+            (screenshot_capture_scale(2_160, 1_350, 2_048) - (2_048.0 / 2_160.0)).abs()
+                < f64::EPSILON
+        );
+        assert!(
+            (screenshot_capture_scale(2_160, 1_350, 256) - (256.0 / 2_160.0)).abs() < f64::EPSILON
+        );
+        assert_eq!(screenshot_capture_scale(2_160, 1_350, 4_096), 1.0);
+    }
 }
 
 // ── Background-safe editor-window observation ───────────────────────────────
@@ -604,6 +621,25 @@ mod transport_tests {
 // top instead of the editor.
 
 /// A full-window screenshot, returned as a PNG data URL.
+const DEFAULT_SCREENSHOT_MAX_SIZE: u32 = 2_048;
+const MIN_SCREENSHOT_MAX_SIZE: u32 = 256;
+const MAX_SCREENSHOT_MAX_SIZE: u32 = 4_096;
+
+fn validated_screenshot_max_size(max_size: Option<u32>) -> Result<u32, String> {
+    let max_size = max_size.unwrap_or(DEFAULT_SCREENSHOT_MAX_SIZE);
+    if !(MIN_SCREENSHOT_MAX_SIZE..=MAX_SCREENSHOT_MAX_SIZE).contains(&max_size) {
+        return Err(format!(
+            "maxSize must be an integer from {MIN_SCREENSHOT_MAX_SIZE} to {MAX_SCREENSHOT_MAX_SIZE}"
+        ));
+    }
+    Ok(max_size)
+}
+
+fn screenshot_capture_scale(source_width: u32, source_height: u32, max_size: u32) -> f64 {
+    let source_max = source_width.max(source_height).max(1);
+    source_max.min(max_size) as f64 / source_max as f64
+}
+
 #[derive(Clone, serde::Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct WindowCapture {
@@ -611,6 +647,9 @@ pub struct WindowCapture {
     width: u32,
     height: u32,
     mime: String,
+    source_width: u32,
+    source_height: u32,
+    scale: f64,
     window_label: String,
     capture_method: String,
     background_safe: bool,
@@ -623,9 +662,11 @@ pub struct WindowCapture {
 pub async fn capture_editor_window(
     app: AppHandle,
     window_label: Option<String>,
+    max_size: Option<u32>,
 ) -> Result<WindowCapture, String> {
     let window_label = window_label.unwrap_or_else(|| "main".to_string());
-    capture_editor_window_impl(app, window_label).await
+    let max_size = validated_screenshot_max_size(max_size)?;
+    capture_editor_window_impl(app, window_label, max_size).await
 }
 
 /// Return a bounded semantic snapshot of one editor webview. Unlike a bitmap,
@@ -913,8 +954,56 @@ fn valid_ui_snapshot_revision(value: &str) -> bool {
 async fn capture_editor_window_impl(
     app: AppHandle,
     window_label: String,
+    max_size: u32,
 ) -> Result<WindowCapture, String> {
     use base64::Engine as _;
+    let window = app
+        .get_webview_window(&window_label)
+        .ok_or_else(|| format!("editor window \"{window_label}\" was not found"))?;
+    let source_size = window
+        .inner_size()
+        .map_err(|error| format!("could not read editor window size: {error}"))?;
+    let source_width = source_size.width.max(1);
+    let source_height = source_size.height.max(1);
+    let metrics = call_webview_devtools(
+        &app,
+        &window_label,
+        "Page.getLayoutMetrics",
+        serde_json::json!({}),
+    )
+    .await?;
+    let viewport = metrics
+        .get("cssVisualViewport")
+        .or_else(|| metrics.get("visualViewport"))
+        .or_else(|| metrics.get("cssLayoutViewport"))
+        .or_else(|| metrics.get("layoutViewport"))
+        .ok_or_else(|| "WebView2 layout metrics did not contain a viewport".to_string())?;
+    let viewport_number = |name: &str| {
+        viewport
+            .get(name)
+            .and_then(serde_json::Value::as_f64)
+            .filter(|value| value.is_finite())
+            .ok_or_else(|| format!("WebView2 viewport did not contain a finite {name}"))
+    };
+    let page_x = viewport
+        .get("pageX")
+        .and_then(serde_json::Value::as_f64)
+        .filter(|value| value.is_finite())
+        .unwrap_or(0.0);
+    let page_y = viewport
+        .get("pageY")
+        .and_then(serde_json::Value::as_f64)
+        .filter(|value| value.is_finite())
+        .unwrap_or(0.0);
+    let viewport_width = viewport_number("clientWidth")?;
+    let viewport_height = viewport_number("clientHeight")?;
+    if viewport_width <= 0.0 || viewport_height <= 0.0 {
+        return Err("WebView2 viewport dimensions must be positive".to_string());
+    }
+    // WebView2 applies the clip scale before its device scale factor. The
+    // physical inner size already includes that factor, so dividing by the
+    // physical longest edge produces the requested output pixel bound.
+    let capture_scale = screenshot_capture_scale(source_width, source_height, max_size);
     let response = call_webview_devtools(
         &app,
         &window_label,
@@ -923,6 +1012,13 @@ async fn capture_editor_window_impl(
             "format": "png",
             "fromSurface": true,
             "captureBeyondViewport": false,
+            "clip": {
+                "x": page_x,
+                "y": page_y,
+                "width": viewport_width,
+                "height": viewport_height,
+                "scale": capture_scale,
+            },
         }),
     )
     .await?;
@@ -940,12 +1036,22 @@ async fn capture_editor_window_impl(
         .read_info()
         .map_err(|error| format!("invalid WebView2 screenshot PNG: {error}"))?;
     let info = reader.info();
+    if info.width.max(info.height) > max_size {
+        return Err(format!(
+            "WebView2 screenshot exceeded maxSize {max_size}: {}x{}",
+            info.width, info.height
+        ));
+    }
+    let output_scale = info.width.max(info.height) as f64 / source_width.max(source_height) as f64;
 
     Ok(WindowCapture {
         data_url: format!("data:image/png;base64,{data}"),
         width: info.width,
         height: info.height,
         mime: "image/png".to_string(),
+        source_width,
+        source_height,
+        scale: output_scale.min(1.0),
         window_label,
         capture_method: "webview2-devtools".to_string(),
         background_safe: true,
@@ -1162,6 +1268,7 @@ async fn call_webview_devtools(
 async fn capture_editor_window_impl(
     _app: AppHandle,
     _window_label: String,
+    _max_size: u32,
 ) -> Result<WindowCapture, String> {
     Err("background editor-window capture is currently only supported on Windows".to_string())
 }

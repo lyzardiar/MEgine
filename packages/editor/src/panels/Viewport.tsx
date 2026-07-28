@@ -566,15 +566,37 @@ export function Viewport(props: {
   // Expose this viewport's canvas to the AgentBridge so AI agents can capture
   // a screenshot of the rendered scene/game view (Phase 1 observation surface).
   useEffect(() => {
-    return agentBridge.registerViewportCapture(props.tab, (format, quality) => {
+    return agentBridge.registerViewportCapture(props.tab, (format, quality, maxSize = 2_048) => {
       const canvas = canvasRef.current;
       if (!canvas) return null;
       try {
+        const sourceWidth = canvas.width;
+        const sourceHeight = canvas.height;
+        const sourceMax = Math.max(sourceWidth, sourceHeight);
+        if (sourceMax <= 0) return null;
+        const requestedScale = Math.min(1, maxSize / sourceMax);
+        let outputCanvas = canvas;
+        if (requestedScale < 1) {
+          const scaled = document.createElement('canvas');
+          scaled.width = Math.max(1, Math.round(sourceWidth * requestedScale));
+          scaled.height = Math.max(1, Math.round(sourceHeight * requestedScale));
+          const context = scaled.getContext('2d');
+          if (!context) return null;
+          context.drawImage(canvas, 0, 0, scaled.width, scaled.height);
+          outputCanvas = scaled;
+        }
+        const outputScale = Math.min(
+          outputCanvas.width / sourceWidth,
+          outputCanvas.height / sourceHeight,
+        );
         return {
-          dataUrl: canvas.toDataURL(format, quality),
-          width: canvas.width,
-          height: canvas.height,
+          dataUrl: outputCanvas.toDataURL(format, quality),
+          width: outputCanvas.width,
+          height: outputCanvas.height,
           mime: format,
+          sourceWidth,
+          sourceHeight,
+          scale: outputScale,
         };
       } catch {
         return null;

@@ -178,8 +178,8 @@ MEngine 编辑器当前对人类友好，但对 AI Agent 不够友好。AI Agent
 
 | query id | 参数 | 返回 | 集成点 |
 | --- | --- | --- | --- |
-| `view.screenshot` | `{ target?: "scene"\|"game", format?: "png"\|"jpeg", quality? }` | `{ dataUrl, width, height, mime }` | 视口（scene/game）：`Viewport.tsx` 的 `canvasRef` 使用 `canvas.toDataURL()` |
-| `view.window_screenshot` | `{ windowLabel?: string }` | `{ dataUrl, width, height, mime, windowLabel, captureMethod, backgroundSafe }` | Windows 桌面版通过 WebView2 DevTools `Page.captureScreenshot` 离屏渲染指定 webview；不会激活窗口，也不读取前台屏幕像素 |
+| `view.screenshot` | `{ target?: "scene"\|"game", format?: "image/png"\|"image/jpeg", quality?, maxSize?: 256..4096 }` | `{ dataUrl, width, height, sourceWidth, sourceHeight, scale, mime }` | 视口（scene/game）：`Viewport.tsx` 的 `canvasRef` 在目标 DOM 内按需降采样后编码；默认最长边 2048 |
+| `view.window_screenshot` | `{ windowLabel?: string, maxSize?: 256..4096 }` | `{ dataUrl, width, height, sourceWidth, sourceHeight, scale, mime, windowLabel, captureMethod, backgroundSafe }` | Windows 桌面版通过 WebView2 DevTools `Page.captureScreenshot` 在目标 webview 内离屏缩放渲染；不会激活窗口，也不读取前台屏幕像素；默认最长边 2048 |
 | `view.screenshot_to_file` | `{ path, target? }` | `{ path, width, height }` | 同上，写入磁盘供 Agent 读取 |
 | `view.capture_region` | `{ x, y, w, h, target? }` | `{ dataUrl }` | canvas 裁剪 |
 
@@ -562,7 +562,7 @@ CLI 仅输出结构化 JSON，支持 `--args @file` / `--args -`、显式幂等 
 | --- | --- |
 | 安全：本地端口被其它进程调用 | 仅绑定 127.0.0.1；发现文件含随机 token，连接需校验；危险命令（删除/构建）可配置确认 |
 | 并发：多客户端同时写 | 复用 `base_revision` 乐观锁；冲突返回 `STALE_REVISION` |
-| 性能：大场景 snapshot / 高频截图 | snapshot 支持精简模式（hierarchy 不含组件）；截图支持 maxSize 缩放与频率限制 |
+| 性能：大场景 snapshot / 高频截图 | snapshot 支持精简模式（hierarchy 不含组件）；所有位图截图默认最长边 2048（可在 256..4096 内指定），并在进程内串行且保留至少 250ms 冷却；最多保留 8 个当前/排队请求，超限明确返回 `RATE_LIMITED`；语义快照不受位图限频影响 |
 | 命名漂移：camelCase vs snake_case | AgentBridge 对外统一 camelCase，边界处集中转换，避免泄漏到协议 |
 | Play Mode 双事实源 | 观察/写操作明确区分 edit/play 世界，Play 下写操作按现有 store 规则处理 |
 | 截图与渲染时机 | Canvas2D 在 RAF 帧内捕获；整窗使用 WebView2 渲染面，不激活窗口、不读取前台像素 |

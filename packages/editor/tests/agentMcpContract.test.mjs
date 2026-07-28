@@ -297,6 +297,15 @@ test('MCP startup instructions teach the safe autonomous workflow', () => {
   assert.match(SERVER_INSTRUCTIONS, /UNKNOWN_OUTCOME/);
 });
 
+test('MCP screenshot tool exposes bounded background capture controls', () => {
+  const screenshot = TOOLS.find((tool) => tool.name === 'take_screenshot');
+  assert.ok(screenshot);
+  assert.equal(screenshot.inputSchema.additionalProperties, false);
+  assert.equal(screenshot.inputSchema.properties.maxSize.minimum, 256);
+  assert.equal(screenshot.inputSchema.properties.maxSize.maximum, 4_096);
+  assert.match(screenshot.description, /serialized and rate-limited/);
+});
+
 test('MCP reports process-loss writes as actionable unknown outcomes without tokens', () => {
   const error = new BridgeOutcomeUnknownError(
     'execute',

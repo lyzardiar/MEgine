@@ -1155,7 +1155,7 @@ const TOOLS = [
   {
     name: 'take_screenshot',
     description:
-      'Capture a PNG screenshot. target=scene/game captures the rendered viewport; target=window captures an editor window off-screen without activating it, so foreground work is not interrupted. Returns an image for visual verification.',
+      'Capture a bounded PNG screenshot. target=scene/game captures the rendered viewport; target=window captures an editor window off-screen without activating it, so foreground work is not interrupted. Bitmap captures are serialized and rate-limited. Returns an image for visual verification.',
     inputSchema: {
       type: 'object',
       properties: {
@@ -1168,16 +1168,25 @@ const TOOLS = [
           type: 'string',
           description: 'For target=window, a label returned by list_windows (default: main)',
         },
+        maxSize: {
+          type: 'integer',
+          minimum: 256,
+          maximum: 4096,
+          description: 'Maximum output width or height in pixels (default: 2048)',
+        },
       },
+      additionalProperties: false,
     },
     handler: async (args) => {
       const target = args.target || 'scene';
+      const maxSize = args.maxSize || 2048;
       const shot =
         target === 'window'
           ? await bridgeQuery('view.window_screenshot', {
               windowLabel: args.windowLabel || 'main',
+              maxSize,
             })
-          : await bridgeQuery('view.screenshot', { target });
+          : await bridgeQuery('view.screenshot', { target, maxSize });
       const base64 = String(shot.dataUrl).split(',')[1] || '';
       return [{ type: 'image', data: base64, mimeType: shot.mime || 'image/png' }];
     },

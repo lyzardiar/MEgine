@@ -48,7 +48,13 @@ test('query schemas accept documented read shapes and reject malformed or extra 
     ['entity.get', { id: 0 }],
     ['entity.get', { name: 'Main Camera' }],
     ['entity.find', { limit: 1, offset: 1, expectedSceneRevision: 12 }],
-    ['view.screenshot', { target: 'game', format: 'image/jpeg', quality: 0.8 }],
+    ['view.screenshot', {
+      target: 'game',
+      format: 'image/jpeg',
+      quality: 0.8,
+      maxSize: 2_048,
+    }],
+    ['view.window_screenshot', { windowLabel: 'main', maxSize: 4_096 }],
     ['window.ui_snapshot', { windowLabel: 'main', maxElements: 2_000, offset: 0 }],
     ['window.ui_snapshot', {
       maxElements: 50,
@@ -91,6 +97,8 @@ test('query schemas accept documented read shapes and reject malformed or extra 
     ['entity.find', { limit: 1, offset: 1 }],
     ['view.screenshot', { target: 'window' }],
     ['view.screenshot', { quality: 2 }],
+    ['view.screenshot', { maxSize: 255 }],
+    ['view.window_screenshot', { maxSize: 4_097 }],
     ['window.ui_snapshot', { maxElements: 49 }],
     ['window.ui_snapshot', { maxElements: 50, offset: 50 }],
     ['window.ui_snapshot', {

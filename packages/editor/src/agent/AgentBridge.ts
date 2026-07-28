@@ -178,7 +178,12 @@ import {
 type CaptureFn = (
   format: 'image/png' | 'image/jpeg',
   quality?: number,
+  maxSize?: number,
 ) => ScreenshotResult | null;
+
+const DEFAULT_SCREENSHOT_MAX_SIZE = 2_048;
+const MIN_SCREENSHOT_INTERVAL_MS = 250;
+const MAX_PENDING_SCREENSHOTS = 8;
 
 interface SceneMetaProviders {
   sceneName: () => string | null;
@@ -335,6 +340,9 @@ class AgentBridge {
   private store: EditorStore | null = null;
   private sceneMeta: SceneMetaProviders | null = null;
   private captures = new Map<ViewportTab, CaptureFn>();
+  private screenshotQueue: Promise<void> = Promise.resolve();
+  private pendingScreenshotCount = 0;
+  private lastScreenshotCompletedAt = 0;
   private refreshProvider: (() => void) | null = null;
   private logProvider: ((message: string) => void) | null = null;
   private panelLayoutProvider: (() => PanelLayoutSnapshot | null) | null = null;
@@ -504,20 +512,23 @@ class AgentBridge {
 
   // ── Observer ──────────────────────────────────────────────────────────
 
-  captureViewport(
+  async captureViewport(
     tab: ViewportTab = 'scene',
     format: 'image/png' | 'image/jpeg' = 'image/png',
     quality?: number,
-  ): ScreenshotResult {
-    const fn = this.captures.get(tab);
-    if (!fn) {
-      throw new BridgeError('NOT_READY', `No viewport capture registered for "${tab}"`);
-    }
-    const result = fn(format, quality);
-    if (!result) {
-      throw new BridgeError('NOT_READY', `Viewport "${tab}" canvas is not available yet`);
-    }
-    return result;
+    maxSize = DEFAULT_SCREENSHOT_MAX_SIZE,
+  ): Promise<ScreenshotResult> {
+    return this.scheduleScreenshot(() => {
+      const fn = this.captures.get(tab);
+      if (!fn) {
+        throw new BridgeError('NOT_READY', `No viewport capture registered for "${tab}"`);
+      }
+      const result = fn(format, quality, normalizeScreenshotMaxSize(maxSize));
+      if (!result) {
+        throw new BridgeError('NOT_READY', `Viewport "${tab}" canvas is not available yet`);
+      }
+      return result;
+    });
   }
 
   /**
@@ -525,11 +536,62 @@ class AgentBridge {
    * activating the window. Pass a label from `window.list` to inspect a
    * detached panel/editor window; the main window is the default.
    */
-  async captureWindow(windowLabel = 'main'): Promise<ScreenshotResult> {
+  async captureWindow(
+    windowLabel = 'main',
+    maxSize = DEFAULT_SCREENSHOT_MAX_SIZE,
+  ): Promise<ScreenshotResult> {
     if (!isDesktopEditor()) {
       throw new BridgeError('NOT_READY', 'Full-window capture requires the desktop editor');
     }
-    return invoke<ScreenshotResult>('capture_editor_window', { windowLabel });
+    return this.scheduleScreenshot(() => invoke<ScreenshotResult>(
+      'capture_editor_window',
+      { windowLabel, maxSize: normalizeScreenshotMaxSize(maxSize) },
+    ));
+  }
+
+  /**
+   * Serialize bitmap captures and leave a short cool-down after each one.
+   * Semantic snapshots remain unthrottled, so agents can inspect rapidly
+   * without repeatedly allocating multi-megabyte encoded images.
+   */
+  private async scheduleScreenshot<T>(
+    capture: () => T | Promise<T>,
+  ): Promise<T> {
+    if (this.pendingScreenshotCount >= MAX_PENDING_SCREENSHOTS) {
+      throw new BridgeError(
+        'RATE_LIMITED',
+        `Screenshot queue is full; retry after ${MIN_SCREENSHOT_INTERVAL_MS}ms`,
+        {
+          pendingScreenshots: this.pendingScreenshotCount,
+          maxPendingScreenshots: MAX_PENDING_SCREENSHOTS,
+          retryAfterMs: MIN_SCREENSHOT_INTERVAL_MS,
+        },
+      );
+    }
+    this.pendingScreenshotCount += 1;
+    const previous = this.screenshotQueue;
+    let release!: () => void;
+    this.screenshotQueue = new Promise<void>((resolve) => {
+      release = resolve;
+    });
+    try {
+      await previous;
+      const waitMs = Math.max(
+        0,
+        this.lastScreenshotCompletedAt + MIN_SCREENSHOT_INTERVAL_MS - Date.now(),
+      );
+      if (waitMs > 0) {
+        await new Promise((resolve) => setTimeout(resolve, waitMs));
+      }
+      try {
+        return await capture();
+      } finally {
+        this.lastScreenshotCompletedAt = Date.now();
+        release();
+      }
+    } finally {
+      this.pendingScreenshotCount -= 1;
+    }
   }
 
   /** Read text, roles, values, bounds and stable selectors without OCR. */
@@ -3557,12 +3619,18 @@ class AgentBridge {
           (params.target as ViewportTab) ?? 'scene',
           (params.format as 'image/png' | 'image/jpeg') ?? 'image/png',
           params.quality as number | undefined,
+          typeof params.maxSize === 'number'
+            ? params.maxSize
+            : DEFAULT_SCREENSHOT_MAX_SIZE,
         );
       case 'view.window_screenshot':
         return this.captureWindow(
           typeof params.windowLabel === 'string' && params.windowLabel
             ? params.windowLabel
             : 'main',
+          typeof params.maxSize === 'number'
+            ? params.maxSize
+            : DEFAULT_SCREENSHOT_MAX_SIZE,
         );
       case 'window.list':
         return this.listWindows();
@@ -3785,7 +3853,7 @@ class AgentBridge {
     try {
       result.screenshot = wholeWindow
         ? await this.captureWindow(typeof wholeWindow === 'string' ? wholeWindow : 'main')
-        : this.captureViewport('scene');
+        : await this.captureViewport('scene');
       result.screenshotCaptured = true;
     } catch (error) {
       // The write is already complete, so preserve its outcome while making
@@ -4337,6 +4405,11 @@ function sameNumberArray(left: readonly number[], right: readonly number[]): boo
     left.length === right.length
     && left.every((value, index) => value === right[index])
   );
+}
+
+function normalizeScreenshotMaxSize(value: number): number {
+  if (!Number.isFinite(value)) return DEFAULT_SCREENSHOT_MAX_SIZE;
+  return Math.min(4_096, Math.max(256, Math.trunc(value)));
 }
 
 /** Resolve on the next animation frame (so the viewport can redraw). */

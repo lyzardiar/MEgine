@@ -13,6 +13,12 @@ export interface ScreenshotResult {
   width: number;
   height: number;
   mime: string;
+  /** Unscaled capture width before maxSize was applied. */
+  sourceWidth: number;
+  /** Unscaled capture height before maxSize was applied. */
+  sourceHeight: number;
+  /** Output-to-source scale, never greater than 1. */
+  scale: number;
   /** Present for whole-window captures. */
   windowLabel?: string;
   /** Native implementation used for the capture. */
@@ -265,6 +271,7 @@ export interface SelectionInfo {
 /** Structured error codes shared across all transports. */
 export type BridgeErrorCode =
   | 'STALE_REVISION'
+  | 'RATE_LIMITED'
   | 'CONFLICT'
   | 'ENTITY_NOT_FOUND'
   | 'COMPONENT_NOT_FOUND'

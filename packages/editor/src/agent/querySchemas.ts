@@ -127,9 +127,19 @@ export const QUERY_PARAMS_SCHEMAS: Record<string, AgentJsonSchema> = {
       maximum: 1,
       description: 'JPEG quality from 0 to 1',
     },
+    maxSize: boundedInteger(
+      256,
+      4_096,
+      'Maximum output width or height in pixels; default 2048',
+    ),
   }),
   'view.window_screenshot': objectSchema({
     windowLabel: stringValue('Window label from window.list; default main'),
+    maxSize: boundedInteger(
+      256,
+      4_096,
+      'Maximum output width or height in pixels; default 2048',
+    ),
   }),
   'window.list': emptySchema,
   'window.types': emptySchema,
