@@ -1315,11 +1315,31 @@ class AgentBridge {
 
   // ── Dispatcher (write commands) ───────────────────────────────────────
 
+  private assertExpectedSceneRevision(expected: number | undefined): void {
+    if (expected === undefined) return;
+    if (!Number.isSafeInteger(expected) || expected < 0) {
+      throw new BridgeError(
+        'INVALID_ARGS',
+        '"expectedSceneRevision" must be a non-negative safe integer',
+      );
+    }
+    this.observe(true);
+    const current = this.sceneChanges.revision;
+    if (expected !== current) {
+      throw new BridgeError(
+        'STALE_REVISION',
+        `Scene revision changed: expected ${expected}, current ${current}`,
+        { expectedSceneRevision: expected, currentSceneRevision: current },
+      );
+    }
+  }
+
   async execute(
     commandId: string,
     args: Record<string, unknown> = {},
-    options: { screenshot?: boolean } = {},
+    options: { screenshot?: boolean; expectedSceneRevision?: number } = {},
   ): Promise<CommandResult> {
+    this.assertExpectedSceneRevision(options.expectedSceneRevision);
     if (commandId === 'project.open') {
       const provider = this.requireAvailableProjectLifecycle();
       const editorBootGeneration = this.editorBootGeneration;
@@ -1489,10 +1509,14 @@ class AgentBridge {
         profile,
         optionalBoolean(args, 'clean', true),
       );
-      return { ok: true, data: result };
+      return this.finishAsyncCommand({ ok: true, data: result }, options, true);
     }
     if (commandId === 'build.cancel') {
-      return { ok: true, data: await this.cancelBuild() };
+      return this.finishAsyncCommand(
+        { ok: true, data: await this.cancelBuild() },
+        options,
+        true,
+      );
     }
     if (commandId === 'build.verify') {
       const result = await this.verifyBuild(
@@ -1504,15 +1528,7 @@ class AgentBridge {
     if (commandId === 'menu.invoke') {
       const path = typeof args.path === 'string' ? args.path : '';
       const result = await this.invokeMenu(path);
-      await nextFrame();
-      if (options.screenshot) {
-        try {
-          result.screenshot = await this.captureWindow('main');
-        } catch {
-          // Screenshot is best-effort; never fail a completed menu action.
-        }
-      }
-      return result;
+      return this.finishAsyncCommand(result, options, true);
     }
     if (
       commandId === 'window.ui_click'
@@ -1529,15 +1545,7 @@ class AgentBridge {
         ok: true,
         data: await this.interactWindow(action, selector, windowLabel, value),
       };
-      await nextFrame();
-      if (options.screenshot) {
-        try {
-          result.screenshot = await this.captureWindow(windowLabel);
-        } catch {
-          // Screenshot is best-effort; never fail a completed interaction.
-        }
-      }
-      return result;
+      return this.finishAsyncCommand(result, options, windowLabel);
     }
     const handler = WRITE_COMMANDS[commandId];
     if (!handler) {
@@ -1549,17 +1557,7 @@ class AgentBridge {
       resetPanelLayout: () => this.resetPanelLayout(),
     };
     const result = handler(ctx, args);
-    this.refreshProvider?.();
-    if (options.screenshot) {
-      // Let the viewport redraw before capturing the visual result.
-      await nextFrame();
-      try {
-        result.screenshot = this.captureViewport('scene');
-      } catch {
-        // Screenshot is best-effort; never fail the command over it.
-      }
-    }
-    return result;
+    return this.finishAsyncCommand(result, options);
   }
 
   // ── Unified query entry (called by transports) ────────────────────────
@@ -1738,15 +1736,22 @@ class AgentBridge {
 
   private async finishAsyncCommand(
     result: CommandResult,
-    options: { screenshot?: boolean },
-    wholeWindow = false,
+    options: { screenshot?: boolean; expectedSceneRevision?: number },
+    wholeWindow: boolean | string = false,
   ): Promise<CommandResult> {
     this.refreshProvider?.();
+    if (this.store && this.editorBootReady) {
+      this.observe(true);
+      result.sceneRevision = this.sceneChanges.revision;
+    } else {
+      this.observeProject();
+    }
+    result.eventSequence = this.events.currentSequence;
     if (!options.screenshot) return result;
     await nextFrame();
     try {
       result.screenshot = wholeWindow
-        ? await this.captureWindow('main')
+        ? await this.captureWindow(typeof wholeWindow === 'string' ? wholeWindow : 'main')
         : this.captureViewport('scene');
     } catch {
       // Screenshot is best-effort; never fail a completed command.

@@ -117,7 +117,12 @@ async function bridgeQuery(query, args = {}) {
 }
 
 async function bridgeExecute(command, args = {}, options = {}) {
-  return await rpc('execute', { command, args, screenshot: Boolean(options.screenshot) });
+  return await rpc('execute', {
+    command,
+    args,
+    screenshot: Boolean(options.screenshot),
+    expectedSceneRevision: options.expectedSceneRevision,
+  });
 }
 
 // ── Tool definitions ─────────────────────────────────────────────────────
@@ -139,14 +144,30 @@ function execTool(name, description, command, properties, mapArgs = (a) => a) {
           type: 'boolean',
           description: 'Capture a viewport screenshot after the action for visual verification',
         },
+        expectedSceneRevision: {
+          type: 'number',
+          minimum: 0,
+          description:
+            'Optional optimistic lock from get_editor_state/get_scene_snapshot. The command fails with STALE_REVISION if the scene changed.',
+        },
       },
     },
     handler: async (args) => {
       const wantScreenshot = Boolean(args.screenshot);
+      const expectedSceneRevision = args.expectedSceneRevision;
       const callArgs = { ...args };
       delete callArgs.screenshot;
-      const result = await bridgeExecute(command, mapArgs(callArgs), { screenshot: wantScreenshot });
-      const content = textContent(result?.data ?? result);
+      delete callArgs.expectedSceneRevision;
+      const result = await bridgeExecute(command, mapArgs(callArgs), {
+        screenshot: wantScreenshot,
+        expectedSceneRevision,
+      });
+      const response = result && typeof result === 'object'
+        ? Object.fromEntries(
+            Object.entries(result).filter(([key]) => key !== 'screenshot'),
+          )
+        : result;
+      const content = textContent(response);
       if (result?.screenshot?.dataUrl) {
         const base64 = String(result.screenshot.dataUrl).split(',')[1] || '';
         content.push({ type: 'image', data: base64, mimeType: result.screenshot.mime || 'image/png' });
@@ -155,6 +176,76 @@ function execTool(name, description, command, properties, mapArgs = (a) => a) {
     },
   };
 }
+
+const WORLD_COMMAND_SCHEMA = {
+  oneOf: [
+    {
+      type: 'object',
+      required: ['op', 'components'],
+      properties: {
+        op: { const: 'spawn' },
+        name: { type: 'string' },
+        components: {
+          type: 'object',
+          additionalProperties: { type: 'object' },
+        },
+      },
+      additionalProperties: false,
+    },
+    {
+      type: 'object',
+      required: ['op', 'entity'],
+      properties: {
+        op: { const: 'despawn' },
+        entity: { type: 'number', minimum: 0 },
+      },
+      additionalProperties: false,
+    },
+    {
+      type: 'object',
+      required: ['op', 'entity', 'component', 'value'],
+      properties: {
+        op: { const: 'setComponent' },
+        entity: { type: 'number', minimum: 0 },
+        component: { type: 'string' },
+        value: { type: 'object' },
+      },
+      additionalProperties: false,
+    },
+    {
+      type: 'object',
+      required: ['op', 'entity', 'component'],
+      properties: {
+        op: { const: 'removeComponent' },
+        entity: { type: 'number', minimum: 0 },
+        component: { type: 'string' },
+      },
+      additionalProperties: false,
+    },
+    {
+      type: 'object',
+      required: ['op', 'entity'],
+      properties: {
+        op: { const: 'setParent' },
+        entity: { type: 'number', minimum: 0 },
+        parent: { type: ['number', 'null'], minimum: 0 },
+      },
+      additionalProperties: false,
+    },
+    {
+      type: 'object',
+      required: ['op', 'r', 'g', 'b', 'a'],
+      properties: {
+        op: { const: 'setClearColor' },
+        r: { type: 'number', minimum: 0, maximum: 1 },
+        g: { type: 'number', minimum: 0, maximum: 1 },
+        b: { type: 'number', minimum: 0, maximum: 1 },
+        a: { type: 'number', minimum: 0, maximum: 1 },
+      },
+      additionalProperties: false,
+    },
+  ],
+};
 
 const TOOLS = [
   {
@@ -369,7 +460,7 @@ const TOOLS = [
   {
     name: 'list_windows',
     description:
-      'List every editor window currently open: the main window, detached panels (panel-*), and floating editor windows (editor-*), with title, position, size and focus.',
+      'List every editor window currently open: the main window, detached panels (panel-*), and floating editor windows (editor-*), with title, position, size, visibility and focus.',
     inputSchema: { type: 'object', properties: {} },
     handler: async () => textContent(await bridgeQuery('window.list')),
   },
@@ -583,6 +674,19 @@ const TOOLS = [
   },
 
   // ── Write tools (Phase 2) ────────────────────────────────────────────
+  execTool(
+    'apply_batch',
+    'Validate and apply 1-256 WorldCommands as one undo transaction. Validation simulates hierarchy changes before mutation, so an invalid command leaves the scene untouched. Spawned entity ids are returned after success and cannot be referenced inside the same batch.',
+    'batch.apply',
+    {
+      commands: {
+        type: 'array',
+        minItems: 1,
+        maxItems: 256,
+        items: WORLD_COMMAND_SCHEMA,
+      },
+    },
+  ),
   execTool(
     'new_scene',
     'Create and immediately save a named scene without a dialog. Refuses to discard dirty work or overwrite an existing scene unless explicitly allowed.',

@@ -186,11 +186,13 @@ MEngine 编辑器当前对人类友好，但对 AI Agent 不够友好。AI Agent
 
 说明：当前 Scene/Game 视口是 Canvas2D，`toDataURL` 可稳定截取，无 WebGL `preserveDrawingBuffer` 顾虑。编辑器整窗/浮动窗口不能使用 GDI 屏幕 `BitBlt`：该方式必须把编辑器置前，且窗口被遮挡时会截到其它应用。当前实现改为 WebView2 DevTools 渲染面截图，并已在主窗 `visible=false` 的真实 Tauri 实例上验证：工程欢迎页仍能完整成像，请求前后 Windows 前台窗口句柄不变。**前向兼容**：本地编辑器方案规划了「Rust 进程内原生 wgpu Surface」的真实 Scene View，届时视口不再是 DOM canvas，需改用 wgpu 纹理回读；窗口 UI 截图仍由 WebView2 路径负责。
 
+后台自动化实例可设置 `MENGINE_EDITOR_BACKGROUND=1`。主窗口配置从创建时即为 `visible=false/focus=false`；普通启动由 Rust `setup` 显式显示并聚焦，后台模式则从未显示或抢占前台，不依赖 Windows 对 `SW_HIDE` 的不稳定事后处理。
+
 #### 4.1.2 窗口与面板枚举（用户明确提出）
 
 | query id | 返回 | 集成点 |
 | --- | --- | --- |
-| `window.list` | `[{ label, title, typeId?, kind: "main"\|"panel"\|"editor", focused, position, size, url }]` | ✅ Rust `app.webview_windows()`；标签规则 `panel-<id>`（`detachedPanelWindow.ts`）、`editor-<hash>`（`nativeEditorWindow.ts`） |
+| `window.list` | `[{ label, title, typeId?, kind: "main"\|"panel"\|"editor", visible, focused, position, size, url }]` | ✅ Rust `app.webview_windows()`；标签规则 `panel-<id>`（`detachedPanelWindow.ts`）、`editor-<hash>`（`nativeEditorWindow.ts`）；可直接确认后台实例从未显示 |
 | `window.ui_snapshot` | `{ windowLabel?, maxElements? }` → `{ elements: [{ role, name, text, value, state, rect, actions, selector }], truncated, ... }` | ✅ WebView2 `Runtime.evaluate` 离屏提取可见语义 DOM；密码脱敏，默认 2000/上限 5000 项，不需要 OCR |
 | `panel.list` | `[{ kind, title, visible, active, detached, dockPath }]` | ✅ 可由 `panel.get_layout` 的 docked/detached/active 集合推导 |
 | `panel.get_layout` | dock 二叉树（leaf/split）+ docked/detached/active 集合 | ✅ `DockWorkspace` 每次树变化直连 AgentBridge，读取实时内存树而不是过期 localStorage |
@@ -337,7 +339,7 @@ MEngine 编辑器当前对人类友好，但对 AI Agent 不够友好。AI Agent
 
 | command id | 参数 | 说明 |
 | --- | --- | --- |
-| `batch.apply` | `{ commands: WorldCommand[] }` | 走 `submit_editor_request` 的 `ApplyBatch{forward, inverse}`，单 undo 事务 |
+| `batch.apply` | `{ commands: WorldCommand[] }` | ✅ 1–256 条 WorldCommand 在写入前模拟实体存在性、组件存在性、删除顺序与父子循环；整批校验成功后通过 `store.applyCommands` 形成单个 undo 事务 |
 | `intent.apply` | `{ intent }` | 复用 `packages/agent` 的 `validateIntent + expandIntent`，把高层意图展开为命令批 |
 
 ### 4.3 可发现性（Discoverability）—— 让 Agent「知道能做什么」
@@ -357,7 +359,7 @@ MEngine 编辑器当前对人类友好，但对 AI Agent 不够友好。AI Agent
 
 | 能力 | 说明 |
 | --- | --- |
-| 命令结果 | 每个写命令返回 `{ ok, revision, data }`，data 含受影响实体/新状态摘要 |
+| 命令结果 | ✅ 每个写命令返回 `{ ok, sceneRevision, eventSequence, data }`；MCP 写工具均可携带 `expectedSceneRevision`，不匹配时在任何改动前返回 `STALE_REVISION` |
 | 操作后自动截图 | 写命令可带 `options.screenshot: true`，结果里附 `screenshot` 字段，形成「改→看」视觉闭环 |
 | 状态 diff | ✅ `query: scene.diff({ fromRevision })` 返回实体增删改和当前 payload；切场景或历史过期时返回 `resetRequired` 与完整快照 |
 | 事件订阅 | ✅ 有界 journal + cursor 查询 `events.get`，并向原生 WebSocket 广播 `project.changed` / `scene.changed` / `selection.changed` / `mode.changed` / `log.*` / `panel.changed` / `build.progress` / `build.settings` / `asset.changed` |

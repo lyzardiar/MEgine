@@ -9,8 +9,9 @@
  * Scene-mutating commands require edit mode; playback/selection/view commands
  * work in any mode.
  */
-import type { EditorStore } from '../store';
+import type { WorldCommand } from '@mengine/api';
 import { getBehaviour } from '@mengine/behaviour';
+import type { EditorStore } from '../store';
 import { BridgeError, type ScreenshotResult } from './protocol.ts';
 
 export interface CommandContext {
@@ -22,6 +23,10 @@ export interface CommandContext {
 export interface CommandResult {
   ok: true;
   data?: unknown;
+  /** Scene revision after the command completed. */
+  sceneRevision?: number;
+  /** Event cursor after the command completed. */
+  eventSequence?: number;
   /** Optional post-action viewport screenshot for visual verification. */
   screenshot?: ScreenshotResult;
 }
@@ -153,6 +158,254 @@ function requireComponent(ctx: CommandContext, entityIdValue: number, type: stri
   return entity.components[type];
 }
 
+type BatchEntity = {
+  parent: number | null;
+  components: Record<string, unknown>;
+};
+
+function batchCommandRecord(value: unknown, index: number): Record<string, unknown> {
+  if (value === null || typeof value !== 'object' || Array.isArray(value)) {
+    throw new BridgeError('INVALID_ARGS', `commands[${index}] must be an object`);
+  }
+  return value as Record<string, unknown>;
+}
+
+function batchEntityId(
+  command: Record<string, unknown>,
+  key: string,
+  index: number,
+): number {
+  const value = command[key];
+  if (typeof value !== 'number' || !Number.isSafeInteger(value) || value < 0) {
+    throw new BridgeError(
+      'INVALID_ARGS',
+      `commands[${index}].${key} must be a non-negative safe integer`,
+    );
+  }
+  return value;
+}
+
+function batchString(
+  command: Record<string, unknown>,
+  key: string,
+  index: number,
+): string {
+  const value = command[key];
+  if (typeof value !== 'string' || !value.trim()) {
+    throw new BridgeError(
+      'INVALID_ARGS',
+      `commands[${index}].${key} must be a non-empty string`,
+    );
+  }
+  return value.trim();
+}
+
+function batchRecord(
+  command: Record<string, unknown>,
+  key: string,
+  index: number,
+): Record<string, unknown> {
+  const value = command[key];
+  if (value === null || typeof value !== 'object' || Array.isArray(value)) {
+    throw new BridgeError(
+      'INVALID_ARGS',
+      `commands[${index}].${key} must be an object`,
+    );
+  }
+  return value as Record<string, unknown>;
+}
+
+function requireBatchEntity(
+  entities: Map<number, BatchEntity>,
+  entity: number,
+  index: number,
+): BatchEntity {
+  const found = entities.get(entity);
+  if (!found) {
+    throw new BridgeError(
+      'ENTITY_NOT_FOUND',
+      `commands[${index}] references missing entity ${entity}`,
+    );
+  }
+  return found;
+}
+
+function removeBatchSubtree(entities: Map<number, BatchEntity>, root: number): void {
+  const pending = [root];
+  while (pending.length) {
+    const current = pending.pop()!;
+    for (const [entity, value] of entities) {
+      if (value.parent === current) pending.push(entity);
+    }
+    entities.delete(current);
+  }
+}
+
+function assertBatchParent(
+  entities: Map<number, BatchEntity>,
+  entity: number,
+  parent: number | null,
+  index: number,
+): void {
+  if (parent == null) return;
+  requireBatchEntity(entities, parent, index);
+  let current: number | null = parent;
+  const visited = new Set<number>();
+  while (current != null) {
+    if (current === entity) {
+      throw new BridgeError(
+        'INVALID_ARGS',
+        `commands[${index}] would create a hierarchy cycle`,
+      );
+    }
+    if (visited.has(current)) {
+      throw new BridgeError(
+        'INVALID_ARGS',
+        `commands[${index}] encountered an invalid hierarchy cycle`,
+      );
+    }
+    visited.add(current);
+    current = entities.get(current)?.parent ?? null;
+  }
+}
+
+/**
+ * Validate the complete batch against a simulated hierarchy before the store
+ * sees any command. This is what makes malformed batches all-or-nothing.
+ */
+function worldCommandBatch(
+  ctx: CommandContext,
+  args: Record<string, unknown>,
+): WorldCommand[] {
+  const raw = args.commands;
+  if (!Array.isArray(raw) || raw.length === 0 || raw.length > 256) {
+    throw new BridgeError(
+      'INVALID_ARGS',
+      '"commands" must contain between 1 and 256 WorldCommand objects',
+    );
+  }
+  const entities = new Map<number, BatchEntity>(
+    ctx.store.snapshot().entities.map((entity) => [
+      entity.entity,
+      {
+        parent: entity.parent ?? null,
+        components: structuredClone(entity.components),
+      },
+    ]),
+  );
+  const commands: WorldCommand[] = [];
+  raw.forEach((value, index) => {
+    const command = batchCommandRecord(value, index);
+    const op = batchString(command, 'op', index);
+    if (op === 'spawn') {
+      const name = command.name === undefined
+        ? undefined
+        : batchString(command, 'name', index);
+      const components = batchRecord(command, 'components', index);
+      for (const [type, component] of Object.entries(components)) {
+        if (!type.trim()) {
+          throw new BridgeError(
+            'INVALID_ARGS',
+            `commands[${index}].components contains an empty component type`,
+          );
+        }
+        if (component === null || typeof component !== 'object' || Array.isArray(component)) {
+          throw new BridgeError(
+            'INVALID_ARGS',
+            `commands[${index}].components.${type} must be an object`,
+          );
+        }
+      }
+      commands.push({
+        op: 'spawn',
+        ...(name ? { name } : {}),
+        components: structuredClone(components),
+      });
+      return;
+    }
+    if (op === 'despawn') {
+      const entity = batchEntityId(command, 'entity', index);
+      requireBatchEntity(entities, entity, index);
+      removeBatchSubtree(entities, entity);
+      commands.push({ op: 'despawn', entity });
+      return;
+    }
+    if (op === 'setComponent') {
+      const entity = batchEntityId(command, 'entity', index);
+      const simulated = requireBatchEntity(entities, entity, index);
+      const component = batchString(command, 'component', index);
+      const componentValue = structuredClone(batchRecord(command, 'value', index));
+      simulated.components[component] = componentValue;
+      commands.push({ op: 'setComponent', entity, component, value: componentValue });
+      return;
+    }
+    if (op === 'removeComponent') {
+      const entity = batchEntityId(command, 'entity', index);
+      const simulated = requireBatchEntity(entities, entity, index);
+      const component = batchString(command, 'component', index);
+      if (component === 'Transform') {
+        throw new BridgeError(
+          'INVALID_ARGS',
+          `commands[${index}] cannot remove the required Transform component`,
+        );
+      }
+      if (!Object.prototype.hasOwnProperty.call(simulated.components, component)) {
+        throw new BridgeError(
+          'COMPONENT_NOT_FOUND',
+          `commands[${index}] references missing component "${component}" on entity ${entity}`,
+        );
+      }
+      delete simulated.components[component];
+      commands.push({ op: 'removeComponent', entity, component });
+      return;
+    }
+    if (op === 'setParent') {
+      const entity = batchEntityId(command, 'entity', index);
+      const simulated = requireBatchEntity(entities, entity, index);
+      const parent = command.parent === undefined || command.parent === null
+        ? null
+        : batchEntityId(command, 'parent', index);
+      assertBatchParent(entities, entity, parent, index);
+      simulated.parent = parent;
+      commands.push({
+        op: 'setParent',
+        entity,
+        ...(parent == null ? {} : { parent }),
+      });
+      return;
+    }
+    if (op === 'setClearColor') {
+      const channels = (['r', 'g', 'b', 'a'] as const).map((key) => command[key]);
+      if (
+        channels.some((channel) => (
+          typeof channel !== 'number'
+          || !Number.isFinite(channel)
+          || channel < 0
+          || channel > 1
+        ))
+      ) {
+        throw new BridgeError(
+          'INVALID_ARGS',
+          `commands[${index}] clear-color channels must be finite numbers from 0 to 1`,
+        );
+      }
+      commands.push({
+        op: 'setClearColor',
+        r: channels[0] as number,
+        g: channels[1] as number,
+        b: channels[2] as number,
+        a: channels[3] as number,
+      });
+      return;
+    }
+    throw new BridgeError(
+      'INVALID_ARGS',
+      `commands[${index}] has unsupported op "${op}"`,
+    );
+  });
+  return commands;
+}
+
 /** Capture the entity id created by a spawn call (most spawn* don't return it). */
 function captureSpawned(ctx: CommandContext, spawn: () => void): number | null {
   const before = new Set(ctx.store.snapshot().entities.map((e) => e.entity));
@@ -194,6 +447,26 @@ const KIND_SPAWNERS: Record<string, string> = {
 };
 
 export const WRITE_COMMANDS: Record<string, CommandHandler> = {
+  'batch.apply': (ctx, args) => {
+    requireEditMode(ctx);
+    const beforeIds = new Set(ctx.store.snapshot().entities.map((entity) => entity.entity));
+    const commands = worldCommandBatch(ctx, args);
+    if (!ctx.store.applyCommands(commands)) {
+      throw new BridgeError('INTERNAL', 'The editor did not apply the validated command batch');
+    }
+    const after = ctx.store.snapshot().entities;
+    const afterIds = new Set(after.map((entity) => entity.entity));
+    return {
+      ok: true,
+      data: {
+        commandCount: commands.length,
+        entityCount: after.length,
+        created: [...afterIds].filter((entity) => !beforeIds.has(entity)),
+        removed: [...beforeIds].filter((entity) => !afterIds.has(entity)),
+      },
+    };
+  },
+
   // ── Selection ──────────────────────────────────────────────────────────
   'selection.set': (ctx, args) => {
     const ids = entityIdArray(args, 'ids');
@@ -490,6 +763,7 @@ export interface CommandMeta {
 }
 
 export const COMMAND_META: CommandMeta[] = [
+  { id: 'batch.apply', category: 'batch', description: 'Validate and apply up to 256 WorldCommands as one undo transaction', readOnly: false },
   { id: 'project.open', category: 'project', description: 'Open a project from the welcome page without a dialog', readOnly: false },
   { id: 'project.create', category: 'project', description: 'Create and open a project from the welcome page without a dialog', readOnly: false },
   { id: 'project.forget_recent', category: 'project', description: 'Remove a path from the recent-project list', readOnly: false },

@@ -71,6 +71,47 @@ function createContext() {
         };
       }
     },
+    applyCommands: (commands) => {
+      calls.push(['applyCommands', commands]);
+      for (const command of commands) {
+        if (command.op === 'spawn') {
+          const entity = Math.max(0, ...entities.map((candidate) => candidate.entity)) + 1;
+          entities.push({
+            entity,
+            name: command.name ?? 'GameObject',
+            parent: null,
+            siblingIndex: entities.filter((candidate) => candidate.parent == null).length,
+            active: true,
+            components: structuredClone(command.components),
+          });
+        } else if (command.op === 'despawn') {
+          const remove = new Set([command.entity]);
+          let changed = true;
+          while (changed) {
+            changed = false;
+            for (const candidate of entities) {
+              if (candidate.parent != null && remove.has(candidate.parent) && !remove.has(candidate.entity)) {
+                remove.add(candidate.entity);
+                changed = true;
+              }
+            }
+          }
+          for (let index = entities.length - 1; index >= 0; index -= 1) {
+            if (remove.has(entities[index].entity)) entities.splice(index, 1);
+          }
+        } else if (command.op === 'setComponent') {
+          entities.find((candidate) => candidate.entity === command.entity)
+            .components[command.component] = structuredClone(command.value);
+        } else if (command.op === 'removeComponent') {
+          delete entities.find((candidate) => candidate.entity === command.entity)
+            .components[command.component];
+        } else if (command.op === 'setParent') {
+          entities.find((candidate) => candidate.entity === command.entity).parent =
+            command.parent ?? null;
+        }
+      }
+      return true;
+    },
     getTransform: (id) => entities.find((entity) => entity.entity === id)?.components.Transform ?? null,
     setTransform: (...args) => calls.push(['setTransform', ...args]),
     play: () => calls.push(['play']),
@@ -215,6 +256,75 @@ test('component method invocation accepts only registered Behaviour methods', ()
     method: 'resetAngle',
     value: { axis: [0, 1, 0], angle: 90, speed: 1 },
   });
+});
+
+test('world command batches validate completely before one atomic store call', () => {
+  const { ctx, calls, entities } = createContext();
+
+  assertBridgeError(
+    () => run(ctx, 'batch.apply', {
+      commands: [
+        { op: 'setParent', entity: 1, parent: 2 },
+        { op: 'setParent', entity: 2, parent: 1 },
+      ],
+    }),
+    'INVALID_ARGS',
+  );
+  assertBridgeError(
+    () => run(ctx, 'batch.apply', {
+      commands: [
+        { op: 'removeComponent', entity: 1, component: 'Transform' },
+      ],
+    }),
+    'INVALID_ARGS',
+  );
+  assertBridgeError(
+    () => run(ctx, 'batch.apply', {
+      commands: [
+        { op: 'despawn', entity: 2 },
+        { op: 'setComponent', entity: 2, component: 'Light', value: {} },
+      ],
+    }),
+    'ENTITY_NOT_FOUND',
+  );
+  assert.deepEqual(calls, []);
+
+  const result = run(ctx, 'batch.apply', {
+    commands: [
+      {
+        op: 'setComponent',
+        entity: 1,
+        component: 'MeshRenderer',
+        value: { mesh: 'sphere', material: 'default' },
+      },
+      { op: 'removeComponent', entity: 1, component: 'MeshRenderer' },
+      { op: 'setParent', entity: 2, parent: 1 },
+      {
+        op: 'spawn',
+        name: 'Batch Camera',
+        components: {
+          Transform: {
+            position: [0, 2, 5],
+            rotation: [0, 0, 0, 1],
+            scale: [1, 1, 1],
+          },
+          Camera3D: { primary: false },
+        },
+      },
+      { op: 'setClearColor', r: 0.1, g: 0.2, b: 0.3, a: 1 },
+    ],
+  });
+  assert.equal(calls.length, 1);
+  assert.equal(calls[0][0], 'applyCommands');
+  assert.equal(calls[0][1].length, 5);
+  assert.deepEqual(result.data, {
+    commandCount: 5,
+    entityCount: 3,
+    created: [3],
+    removed: [],
+  });
+  assert.equal(entities[1].parent, 1);
+  assert.equal(entities[0].components.MeshRenderer, undefined);
 });
 
 test('transform updates require finite tuples with exact dimensions', () => {

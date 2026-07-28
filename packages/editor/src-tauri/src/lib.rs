@@ -4885,6 +4885,7 @@ struct EditorWindowInfo {
     /// For `editor-*` windows, the registered editor window typeId from the URL query.
     editor_type: Option<String>,
     url: String,
+    visible: bool,
     focused: bool,
     x: i32,
     y: i32,
@@ -4928,6 +4929,7 @@ fn list_editor_windows(app: tauri::AppHandle) -> Vec<EditorWindowInfo> {
                 panel_kind,
                 editor_type,
                 url: url_str,
+                visible: window.is_visible().unwrap_or(false),
                 focused: window.is_focused().unwrap_or(false),
                 x: position.map(|p| p.x).unwrap_or(0),
                 y: position.map(|p| p.y).unwrap_or(0),
@@ -4944,6 +4946,17 @@ fn list_editor_windows(app: tauri::AppHandle) -> Vec<EditorWindowInfo> {
 #[tauri::command]
 fn exit_editor(app: tauri::AppHandle) {
     app.exit(0);
+}
+
+fn starts_in_background() -> bool {
+    std::env::var("MENGINE_EDITOR_BACKGROUND")
+        .ok()
+        .is_some_and(|value| {
+            matches!(
+                value.trim().to_ascii_lowercase().as_str(),
+                "1" | "true" | "yes"
+            )
+        })
 }
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
@@ -5023,6 +5036,15 @@ pub fn run() {
         })
         .setup(move |app| {
             spawn_bridge_server(app.handle().clone(), bridge_hub_for_setup.clone());
+            if let Some(main) = app.get_webview_window("main") {
+                if starts_in_background() {
+                    main.hide()?;
+                    main.set_focusable(false)?;
+                } else {
+                    main.show()?;
+                    main.set_focus()?;
+                }
+            }
             Ok(())
         })
         .run(tauri::generate_context!())

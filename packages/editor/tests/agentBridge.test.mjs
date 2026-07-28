@@ -12,6 +12,10 @@ test('whole-window agent capture is background-safe and addressable by window la
     'utf8',
   );
   const native = fs.readFileSync(path.join(root, 'src-tauri', 'src', 'lib.rs'), 'utf8');
+  const tauriConfig = JSON.parse(fs.readFileSync(
+    path.join(root, 'src-tauri', 'tauri.conf.json'),
+    'utf8',
+  ));
   const bridge = fs.readFileSync(path.join(root, 'src', 'agent', 'AgentBridge.ts'), 'utf8');
   const mcp = fs.readFileSync(
     path.join(root, '..', 'agent', 'mcp', 'server.mjs'),
@@ -29,6 +33,15 @@ test('whole-window agent capture is background-safe and addressable by window la
   assert.doesNotMatch(rust, /\bSetForegroundWindow\b\s*\(/);
   assert.doesNotMatch(rust, /\bBitBlt\b\s*\(/);
   assert.match(rust, /sink\.close\(\)\.await/);
+  assert.equal(tauriConfig.app.windows[0].visible, false);
+  assert.equal(tauriConfig.app.windows[0].focus, false);
+  assert.match(native, /MENGINE_EDITOR_BACKGROUND/);
+  assert.match(native, /if starts_in_background\(\)/);
+  assert.match(native, /main\.hide\(\)\?/);
+  assert.match(native, /main\.set_focusable\(false\)\?/);
+  assert.match(native, /main\.show\(\)\?/);
+  assert.match(native, /main\.set_focus\(\)\?/);
+  assert.match(native, /visible: window\.is_visible\(\)\.unwrap_or\(false\)/);
   assert.match(native, /async fn import_project_asset/);
   assert.match(native, /std::fs::hard_link\(&temporary, target\)/);
   assert.match(bridge, /captureWindow\(windowLabel = 'main'\)/);
@@ -49,6 +62,10 @@ test('whole-window agent capture is background-safe and addressable by window la
   assert.match(mcp, /'write_asset_text'/);
   assert.match(mcp, /'import_asset_file'/);
   assert.match(mcp, /'invoke_component_method'/);
+  assert.match(mcp, /'apply_batch'/);
+  assert.match(mcp, /expectedSceneRevision/);
+  assert.match(mcp, /key !== 'screenshot'/);
+  assert.match(mcp, /textContent\(response\)/);
   assert.match(mcp, /name: 'preview_asset_rename'/);
   assert.match(mcp, /'rename_asset'/);
   assert.match(mcp, /name: 'preview_asset_trash'/);
@@ -148,6 +165,9 @@ test('scene, asset, and asynchronous build tools share guarded editor services',
   assert.match(bridge, /case 'scene\.list'/);
   assert.match(bridge, /case 'entity\.find'/);
   assert.match(bridge, /case 'entity\.get_component'/);
+  assert.match(commands, /'batch\.apply'/);
+  assert.match(commands, /worldCommandBatch/);
+  assert.match(store, /cmd\.op === 'removeComponent'/);
   assert.match(bridge, /commandId === 'scene\.new'/);
   assert.match(bridge, /case 'asset\.read_text'/);
   assert.match(bridge, /commandId === 'asset\.write_text'/);
@@ -158,6 +178,8 @@ test('scene, asset, and asynchronous build tools share guarded editor services',
   assert.match(bridge, /status: 'running'/);
   assert.match(bridge, /listenToPcBuildProgress/);
   assert.match(bridge, /case 'build\.status'/);
+  assert.match(bridge, /'STALE_REVISION'/);
+  assert.match(bridge, /result\.sceneRevision = this\.sceneChanges\.revision/);
   assert.match(bridge, /commandId === 'build\.settings\.set_scenes'/);
   assert.match(bridge, /availableScenes/);
   assert.match(bridge, /commandId === 'build\.verify'/);

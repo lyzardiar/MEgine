@@ -1315,18 +1315,27 @@ export function createEditorStore(undoService: EditorUndoService = createEditorU
       }
     },
     applyCommands(cmds: WorldCommand[]) {
+      if (mode !== 'edit' || cmds.length === 0) return false;
       pushUndo('Apply World Commands');
       for (const cmd of cmds) {
         if (cmd.op === 'spawn') {
           spawnAt(
             cmd.name ?? 'GameObject',
-            { ...cmd.components },
+            structuredClone(cmd.components),
             null,
             false,
           );
         } else if (cmd.op === 'setComponent') {
           const e = editEntities.find((x) => x.entity === cmd.entity);
-          if (e) e.components[cmd.component] = cmd.value;
+          if (e) {
+            e.components[cmd.component] = withEntityReferenceMetadata(
+              cmd.component,
+              structuredClone(cmd.value),
+            );
+          }
+        } else if (cmd.op === 'removeComponent') {
+          const e = editEntities.find((x) => x.entity === cmd.entity);
+          if (e && cmd.component !== 'Transform') delete e.components[cmd.component];
         } else if (cmd.op === 'despawn') {
           deleteIdsWithSubtree([cmd.entity]);
         } else if (cmd.op === 'setParent') {
@@ -1335,6 +1344,7 @@ export function createEditorStore(undoService: EditorUndoService = createEditorU
           clearColor = [cmd.r, cmd.g, cmd.b, cmd.a];
         }
       }
+      return true;
     },
     setTransform(entity: number, transform: TransformData) {
       this.setTransforms([{ entity, transform }]);

@@ -104,6 +104,7 @@ async function handleRequest(message: string): Promise<JsonRpcResponse> {
       }
       const result = await agentBridge.execute(command, args, {
         screenshot: Boolean(params.screenshot),
+        expectedSceneRevision: params.expectedSceneRevision as number | undefined,
       });
       return { jsonrpc: '2.0', id, result };
     }

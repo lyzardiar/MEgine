@@ -90,6 +90,7 @@ export interface EditorWindowInfo {
   /** For `editor-*` windows, the registered editor window typeId. */
   editorType: string | null;
   url: string;
+  visible: boolean;
   focused: boolean;
   x: number;
   y: number;
