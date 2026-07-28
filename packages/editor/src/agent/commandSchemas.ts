@@ -515,6 +515,14 @@ export const COMMAND_PARAMS_SCHEMAS: Record<string, AgentJsonSchema> = {
     entity: entityId(),
     type: componentType,
   }, ['entity', 'type']),
+  'component.remove_many': objectSchema({
+    entities: {
+      ...entityIds('Entity ids that should lose the shared component together'),
+      minItems: 1,
+      maxItems: 256,
+    },
+    type: componentType,
+  }, ['entities', 'type']),
   'component.set': objectSchema({
     entity: entityId(),
     type: componentType,

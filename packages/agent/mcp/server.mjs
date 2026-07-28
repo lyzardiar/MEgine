@@ -1884,6 +1884,16 @@ const TOOLS = [
     entity: { ...ENTITY_ID_SCHEMA, description: 'Entity id' },
     type: { type: 'string', description: 'Component type to remove' },
   }, ['entity', 'type']),
+  execTool('remove_component_from_entities', 'Remove one shared component from entities as one undo transaction.', 'component.remove_many', {
+    entities: {
+      type: 'array',
+      minItems: 1,
+      maxItems: 256,
+      items: ENTITY_ID_SCHEMA,
+      description: 'Entity ids that should lose the shared component together',
+    },
+    type: { type: 'string', description: 'Shared component type to remove' },
+  }, ['entities', 'type']),
   execTool('set_component', 'Replace a component value on an entity.', 'component.set', {
     entity: { ...ENTITY_ID_SCHEMA, description: 'Entity id' },
     type: { type: 'string', description: 'Component type' },

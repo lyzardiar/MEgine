@@ -11,7 +11,10 @@
  */
 import type { WorldCommand } from '@mengine/api';
 import { getBehaviour } from '@mengine/behaviour';
-import { createComponentDefaults } from '../componentCatalog.ts';
+import {
+  componentRemovalBlockers,
+  createComponentDefaults,
+} from '../componentCatalog.ts';
 import type { EditorStore } from '../store';
 import { BridgeError, type ScreenshotResult } from './protocol.ts';
 import {
@@ -182,6 +185,26 @@ function requireComponent(ctx: CommandContext, entityIdValue: number, type: stri
     );
   }
   return entity.components[type];
+}
+
+function requireRemovableComponent(
+  ctx: CommandContext,
+  entityIdValue: number,
+  type: string,
+) {
+  const entity = requireEntity(ctx, entityIdValue);
+  requireComponent(ctx, entityIdValue, type);
+  if (type === 'Transform') {
+    throw new BridgeError('INVALID_ARGS', 'The required Transform component cannot be removed');
+  }
+  const blockers = componentRemovalBlockers(entity.components, type);
+  if (blockers.length) {
+    throw new BridgeError(
+      'INVALID_ARGS',
+      `Entity ${entityIdValue} cannot remove "${type}" because it is required by: ${blockers.join(', ')}`,
+    );
+  }
+  return entity;
 }
 
 type BatchEntity = {
@@ -754,15 +777,28 @@ export const WRITE_COMMANDS: Record<string, CommandHandler> = {
     requireEditMode(ctx);
     const entity = entityId(args, 'entity');
     const type = str(args, 'type');
-    requireComponent(ctx, entity, type);
-    if (type === 'Transform') {
-      throw new BridgeError('INVALID_ARGS', 'The required Transform component cannot be removed');
-    }
+    requireRemovableComponent(ctx, entity, type);
     const removed = ctx.store.removeComponent(entity, type);
     if (!removed) {
       throw new BridgeError('INTERNAL', `The editor did not remove component "${type}"`);
     }
-    return { ok: true };
+    return { ok: true, data: { entity, component: type } };
+  },
+  'component.remove_many': (ctx, args) => {
+    requireEditMode(ctx);
+    const entities = nonEmptyEntityIdArray(args, 'entities');
+    const type = str(args, 'type');
+    for (const entity of entities) {
+      requireRemovableComponent(ctx, entity, type);
+    }
+    const changed = ctx.store.removeComponents(entities, type);
+    if (changed !== entities.length) {
+      throw new BridgeError(
+        'INTERNAL',
+        `The editor removed "${type}" from ${changed} of ${entities.length} entities`,
+      );
+    }
+    return { ok: true, data: { entities, component: type, changed } };
   },
   'component.set': (ctx, args) => {
     requireEditMode(ctx);
@@ -1031,6 +1067,7 @@ const COMMAND_SUMMARIES: CommandSummary[] = [
   { id: 'component.add', category: 'component', description: 'Add a component to an entity, using catalog defaults when value is omitted', readOnly: false },
   { id: 'component.add_many', category: 'component', description: 'Add one component to entities as one undo transaction', readOnly: false },
   { id: 'component.remove', category: 'component', description: 'Remove a component from an entity', readOnly: false },
+  { id: 'component.remove_many', category: 'component', description: 'Remove one shared component from entities as one undo transaction', readOnly: false },
   { id: 'component.set', category: 'component', description: 'Replace a component value on an entity', readOnly: false },
   { id: 'component.patch', category: 'component', description: 'Shallow-merge fields into a component on an entity', readOnly: false },
   { id: 'component.invoke', category: 'component', description: 'Invoke one registered Behaviour method on an entity', readOnly: false },

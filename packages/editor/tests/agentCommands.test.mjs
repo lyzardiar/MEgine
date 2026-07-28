@@ -86,6 +86,10 @@ function createContext() {
       calls.push(['removeComponent', ...args]);
       return true;
     },
+    removeComponents: (...args) => {
+      calls.push(['removeComponents', ...args]);
+      return args[0].length;
+    },
     setComponent: (...args) => calls.push(['setComponent', ...args]),
     patchComponent: (...args) => calls.push(['patchComponent', ...args]),
     invokeBehaviourMethod: (entity, type, method) => {
@@ -181,10 +185,11 @@ function run(ctx, command, args = {}) {
   return WRITE_COMMANDS[command](ctx, args);
 }
 
-function assertBridgeError(fn, code) {
+function assertBridgeError(fn, code, messagePattern) {
   assert.throws(fn, (error) => {
     assert.equal(error?.name, 'BridgeError');
     assert.equal(error?.code, code);
+    if (messagePattern) assert.match(error.message, messagePattern);
     return true;
   });
 }
@@ -427,6 +432,43 @@ test('component batch add validates all targets before one store transaction', (
       type: 'DirectionalLight',
     }),
     'INVALID_ARGS',
+  );
+  assert.equal(calls.length, 1);
+});
+
+test('component removal protects dependencies and batches one complete transaction', () => {
+  const { ctx, calls, entities } = createContext();
+  entities[0].components.MaterialPropertyBlock = {};
+  assertBridgeError(
+    () => run(ctx, 'component.remove', {
+      entity: 1,
+      type: 'MeshRenderer',
+    }),
+    'INVALID_ARGS',
+    /required by: MaterialPropertyBlock/,
+  );
+  assert.deepEqual(calls, []);
+
+  entities[0].components.PointLight = {};
+  entities[1].components.PointLight = {};
+  const result = run(ctx, 'component.remove_many', {
+    entities: [1, 2],
+    type: 'PointLight',
+  });
+  assert.deepEqual(calls, [['removeComponents', [1, 2], 'PointLight']]);
+  assert.deepEqual(result.data, {
+    entities: [1, 2],
+    component: 'PointLight',
+    changed: 2,
+  });
+
+  delete entities[1].components.PointLight;
+  assertBridgeError(
+    () => run(ctx, 'component.remove_many', {
+      entities: [1, 2],
+      type: 'PointLight',
+    }),
+    'COMPONENT_NOT_FOUND',
   );
   assert.equal(calls.length, 1);
 });

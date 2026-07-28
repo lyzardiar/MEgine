@@ -1043,6 +1043,7 @@ function MultiSelectionInspector(props: {
     type: string,
     value: Record<string, unknown>,
   ) => void;
+  onRemoveComponents?: (ids: number[], type: string) => void;
   onChangeTransforms?: (updates: Array<{ entity: number; transform: Transform }>) => void;
   onSetComponents?: (
     type: string,
@@ -1088,9 +1089,17 @@ function MultiSelectionInspector(props: {
       .map((value) => ({ value, label: `Layer ${value} (Unconfigured)` })),
     ...props.layerOptions,
   ];
-  const availableComponents = getComponentCatalog().filter((component) => (
+  const catalog = getComponentCatalog();
+  const availableComponents = catalog.filter((component) => (
     props.entities.every((entity) => entity.components[component.type] == null)
   ));
+  const sharedComponents = Object.keys(props.primary.components)
+    .filter((type) => (
+      type !== 'Transform'
+      && type !== 'RectTransform'
+      && !type.startsWith('__')
+      && props.entities.every((entity) => entity.components[type] != null)
+    ));
 
   useEffect(() => {
     if (!componentMenuOpen) return;
@@ -1111,6 +1120,12 @@ function MultiSelectionInspector(props: {
   };
   const replaceRects = (value: Record<string, unknown>) => {
     props.onSetComponents?.('RectTransform', rectEntities.map((entity) => ({
+      entity: entity.entity,
+      value: structuredClone(value),
+    })));
+  };
+  const replaceSharedComponent = (type: string, value: Record<string, unknown>) => {
+    props.onSetComponents?.(type, props.entities.map((entity) => ({
       entity: entity.entity,
       value: structuredClone(value),
     })));
@@ -1314,6 +1329,31 @@ function MultiSelectionInspector(props: {
         {!allRects && !allTransforms && (
           <div className="empty-state">Selection has no shared Transform type</div>
         )}
+        {sharedComponents.map((type) => {
+          const value = props.primary.components[type] as Record<string, unknown>;
+          const label = catalog.find((entry) => entry.type === type)?.label
+            ?? getBehaviour(type)?.label
+            ?? type;
+          return (
+            <CompBlock
+              key={type}
+              title={`${label} (Multi)`}
+              onRemove={() => props.onRemoveComponents?.(entityIds, type)}
+              contextMenuItems={componentEditMenu(
+                type,
+                value,
+                props.componentClipboard,
+                props.onCopyComponent,
+                (next) => replaceSharedComponent(type, next),
+              )}
+            >
+              <div className="field-hint">
+                Shared by all {props.count} selected GameObjects. Reset, paste, or remove applies
+                to the complete selection as one edit.
+              </div>
+            </CompBlock>
+          );
+        })}
         <div className="add-comp-wrap" ref={componentMenuRef}>
           <button
             type="button"
@@ -1400,6 +1440,7 @@ export function Inspector(props: {
     type: string,
     value: Record<string, unknown>,
   ) => void;
+  onRemoveComponents?: (ids: number[], type: string) => void;
   onBeginEditGesture?: () => void;
   onEndEditGesture?: () => void;
 }) {
@@ -1445,6 +1486,7 @@ export function Inspector(props: {
           onSetTags={props.onSetTags}
           onSetLayers={props.onSetLayers}
           onAddComponents={props.onAddComponents}
+          onRemoveComponents={props.onRemoveComponents}
           onChangeTransforms={props.onChangeTransforms}
           onSetComponents={props.onSetComponents}
           onBeginEditGesture={props.onBeginEditGesture}

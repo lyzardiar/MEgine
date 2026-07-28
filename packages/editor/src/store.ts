@@ -13,6 +13,7 @@ import {
   quatNormalize,
 } from './math3d';
 import {
+  componentRemovalBlockers,
   componentRequirements,
   createComponentDefaults,
   createParticleEmitter2D,
@@ -1302,13 +1303,26 @@ export function createEditorStore(undoService: EditorUndoService = createEditorU
       return targets.length;
     },
     removeComponent(entity: number, type: string) {
-      if (mode !== 'edit') return false;
-      if (type === 'Transform') return false;
-      const e = find(entity);
-      if (!e || e.components[type] == null) return false;
-      pushUndo(`Remove ${type}`);
-      delete e.components[type];
-      return true;
+      return this.removeComponents([entity], type) > 0;
+    },
+    removeComponents(entities: readonly number[], type: string) {
+      if (mode !== 'edit' || type === 'Transform') return 0;
+      const targets = [...new Set(entities)].map((entity) => find(entity));
+      if (
+        !targets.length
+        || targets.some((entity) => (
+          entity == null
+          || entity.components[type] == null
+          || componentRemovalBlockers(entity.components, type).length > 0
+        ))
+      ) {
+        return 0;
+      }
+      pushUndo(targets.length > 1 ? `Remove ${type} from GameObjects` : `Remove ${type}`);
+      for (const entity of targets) {
+        delete entity!.components[type];
+      }
+      return targets.length;
     },
     setComponent(entity: number, type: string, value: Record<string, unknown>) {
       const e = find(entity);
@@ -1433,7 +1447,14 @@ export function createEditorStore(undoService: EditorUndoService = createEditorU
       if (mode === 'edit' && !gizmoDragging) pushUndo(`Set ${type}`);
       for (const update of applicable) {
         const entity = find(update.entity);
-        if (entity) entity.components[type] = structuredClone(update.value);
+        if (!entity) continue;
+        const normalizedValue = withEntityReferenceMetadata(
+          type,
+          structuredClone(update.value),
+        );
+        entity.components[type] = type === 'TimelineDirector'
+          ? resetTimelineBindingsOnAssetChange(entity.components[type], normalizedValue)
+          : normalizedValue;
       }
       return true;
     },

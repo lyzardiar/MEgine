@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import '../src/editorWindow/componentMenuItems.ts';
+import { componentRemovalBlockers } from '../src/componentCatalog.ts';
 import { findMenuItem, listMenuItems } from '../src/editorWindow/registry.ts';
 
 function createContext() {
@@ -73,4 +74,21 @@ test('Component menu is disabled without an editable selection', () => {
   context.contextEntity = null;
   context.store.selected = null;
   assert.equal(entry.validate(context), false);
+});
+
+test('explicit component requirements block removal of their dependencies', () => {
+  assert.deepEqual(componentRemovalBlockers({
+    Transform: {},
+    MeshRenderer: {},
+    MaterialPropertyBlock: {},
+  }, 'MeshRenderer'), ['MaterialPropertyBlock']);
+  assert.deepEqual(componentRemovalBlockers({
+    Transform: {},
+    MeshRenderer: {},
+  }, 'MeshRenderer'), []);
+  assert.deepEqual(componentRemovalBlockers({
+    Transform: {},
+    MeshRenderer: {},
+    MaterialPropertyBlock: null,
+  }, 'MeshRenderer'), []);
 });

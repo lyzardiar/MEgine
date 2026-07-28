@@ -2528,6 +2528,17 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
                 if (store.removeComponent(entity, type)) {
                   log(`Removed ${type}`);
                   refresh();
+                } else {
+                  log(`Cannot remove ${type}; another component may require it`, 'warn');
+                }
+              }}
+              onRemoveComponents={(entities, type) => {
+                const changed = store.removeComponents(entities, type);
+                if (changed > 0) {
+                  log(`Removed ${type} from ${changed} GameObjects`);
+                  refresh();
+                } else {
+                  log(`Cannot remove ${type} from the selection; another component may require it`, 'warn');
                 }
               }}
               onSetComponent={(entity, type, value) => {

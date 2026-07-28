@@ -636,6 +636,19 @@ export function componentRequirements(type: string): readonly string[] {
   return BUILTIN_CATALOG.find((entry) => entry.type === type)?.requires ?? [];
 }
 
+export function componentRemovalBlockers(
+  components: Readonly<Record<string, unknown>>,
+  type: string,
+): string[] {
+  return Object.keys(components)
+    .filter((candidate) => (
+      candidate !== type
+      && components[candidate] != null
+      && componentRequirements(candidate).includes(type)
+    ))
+    .sort((left, right) => left.localeCompare(right));
+}
+
 export function createUiCanvasComponents(): Record<string, unknown> {
   return {
     RectTransform: stretchRectTransform(),
