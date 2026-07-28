@@ -368,6 +368,7 @@ class AgentBridge {
   private observedProjectSignature: string | null = null;
   private editorBootReady = false;
   private editorBootGeneration = 0;
+  private readonly agentOwnedEditorWindows = new Set<string>();
 
   /** Wire the bridge to the live editor store. Called once from App. */
   connect(store: EditorStore): void {
@@ -1117,13 +1118,39 @@ class AgentBridge {
         { windowLabel, kind: target.kind },
       );
     }
-    return bridgeIo(
+    if (!this.agentOwnedEditorWindows.has(windowLabel)) {
+      throw new BridgeError(
+        'READONLY',
+        `Editor window "${windowLabel}" was not created by this Agent session and cannot be closed in the background`,
+        {
+          windowLabel,
+          visible: target.visible,
+          focused: target.focused,
+          createdByAgent: false,
+        },
+      );
+    }
+    if (target.visible || target.focused) {
+      throw new BridgeError(
+        'READONLY',
+        `Editor window "${windowLabel}" is visible or focused and cannot be closed in the background`,
+        {
+          windowLabel,
+          visible: target.visible,
+          focused: target.focused,
+          createdByAgent: true,
+        },
+      );
+    }
+    const result = await bridgeIo(
       `Failed to close editor window "${windowLabel}"`,
       () => invoke<{ windowLabel: string; closed: boolean }>(
         'close_editor_window',
         { windowLabel },
       ),
     );
+    if (result.closed) this.agentOwnedEditorWindows.delete(windowLabel);
+    return result;
   }
 
   listRegisteredWindowTypes(): Array<{
@@ -1207,6 +1234,7 @@ class AgentBridge {
         `Editor window type "${normalizedTypeId}" opened without a discoverable native window`,
       );
     }
+    if (existing === undefined) this.agentOwnedEditorWindows.add(target.label);
     let initialSnapshot: EditorUiSnapshot | null = null;
     for (let attempt = 0; attempt < 100; attempt += 1) {
       try {

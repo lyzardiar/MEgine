@@ -119,6 +119,7 @@ test('whole-window agent capture is background-safe and addressable by window la
   assert.match(native, /visible: window\.is_visible\(\)\.unwrap_or\(false\)/);
   assert.match(native, /fn close_editor_window\(/);
   assert.match(native, /validate_agent_editor_window_label/);
+  assert.match(native, /validate_agent_editor_window_state\(visible, focused\)/);
   assert.match(native, /window\s*\.destroy\(\)/);
   assert.match(native, /async fn import_project_asset/);
   assert.match(native, /std::fs::hard_link\(&temporary, target\)/);
@@ -180,6 +181,11 @@ test('whole-window agent capture is background-safe and addressable by window la
   assert.match(mcp, /function nonEmptyStringSchema/);
   assert.match(bridge, /candidate\.totalSemanticElements > 0/);
   assert.match(bridge, /semanticReady: true/);
+  assert.match(bridge, /agentOwnedEditorWindows = new Set<string>\(\)/);
+  assert.match(bridge, /if \(existing === undefined\) this\.agentOwnedEditorWindows\.add/);
+  assert.match(bridge, /if \(!this\.agentOwnedEditorWindows\.has\(windowLabel\)\)/);
+  assert.match(bridge, /if \(target\.visible \|\| target\.focused\)/);
+  assert.match(bridge, /this\.agentOwnedEditorWindows\.delete\(windowLabel\)/);
   assert.match(bridge, /snapshotRevision: initialSnapshot\.snapshotRevision/);
   assert.match(bridge, /did not expose semantic UI within 5 seconds/);
   assert.match(mcp, /windowLabel: args\.windowLabel \|\| 'main'/);

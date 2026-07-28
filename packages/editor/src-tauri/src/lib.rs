@@ -5187,7 +5187,17 @@ fn validate_agent_editor_window_label(window_label: &str) -> Result<&str, String
     Ok(label)
 }
 
-/// Close one exact registered auxiliary editor window without activating it.
+fn validate_agent_editor_window_state(visible: bool, focused: bool) -> Result<(), String> {
+    if visible || focused {
+        return Err(
+            "agent-owned editor windows must be hidden and unfocused before background close"
+                .to_string(),
+        );
+    }
+    Ok(())
+}
+
+/// Close one exact hidden, unfocused registered auxiliary editor window.
 ///
 /// The main window and detached core panels deliberately use their own
 /// lifecycle commands so this generic escape hatch cannot exit the editor or
@@ -5201,6 +5211,13 @@ fn close_editor_window(
     let window = app
         .get_webview_window(&label)
         .ok_or_else(|| format!("editor window \"{label}\" was not found"))?;
+    let visible = window
+        .is_visible()
+        .map_err(|error| format!("could not inspect editor window \"{label}\": {error}"))?;
+    let focused = window
+        .is_focused()
+        .map_err(|error| format!("could not inspect editor window \"{label}\": {error}"))?;
+    validate_agent_editor_window_state(visible, focused)?;
     window
         .destroy()
         .map_err(|error| format!("could not close editor window \"{label}\": {error}"))?;
@@ -5407,6 +5424,14 @@ mod tests {
         assert!(validate_agent_editor_window_label("main").is_err());
         assert!(validate_agent_editor_window_label("panel-console").is_err());
         assert!(validate_agent_editor_window_label("plugin-unknown").is_err());
+    }
+
+    #[test]
+    fn agent_window_close_refuses_visible_or_focused_windows() {
+        assert!(validate_agent_editor_window_state(false, false).is_ok());
+        assert!(validate_agent_editor_window_state(true, false).is_err());
+        assert!(validate_agent_editor_window_state(false, true).is_err());
+        assert!(validate_agent_editor_window_state(true, true).is_err());
     }
 
     fn test_project_parent(label: &str) -> PathBuf {

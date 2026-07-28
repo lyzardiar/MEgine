@@ -2568,7 +2568,7 @@ const TOOLS = [
   ),
   execTool(
     'close_editor_window',
-    'Close one exact hidden or visible registered auxiliary editor window without activating it. Only editor-* labels from list_windows are accepted; use dock_panel for panel-* windows and close_project for the main project lifecycle.',
+    'Close one exact hidden, unfocused registered auxiliary editor window created by this Agent session. Visible, focused, pre-existing, main, and panel windows are refused so background automation cannot disrupt the user.',
     'window.close',
     {
       windowLabel: {
