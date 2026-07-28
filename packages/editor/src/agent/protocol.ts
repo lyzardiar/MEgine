@@ -152,6 +152,12 @@ export interface EditorState {
   /** Seconds elapsed on the deterministic Play Mode simulation clock. */
   simulationTime: number;
   gizmo: string;
+  sceneCamera: {
+    yaw: number;
+    pitch: number;
+    distance: number;
+    pivot: [number, number, number];
+  };
   canUndo: boolean;
   canRedo: boolean;
   undoLabel: string | null;

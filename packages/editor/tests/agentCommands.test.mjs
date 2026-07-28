@@ -34,6 +34,7 @@ function createContext() {
   const store = {
     mode: 'edit',
     gizmo: 'translate',
+    sceneCamera: { yaw: 35, pitch: 25, distance: 8, pivot: [0, 0.5, 0] },
     selected: 1,
     selectedIds: [1],
     snapshot: () => ({ entities }),
@@ -49,6 +50,14 @@ function createContext() {
     setActive: (...args) => calls.push(['setActive', ...args]),
     setParent: (...args) => {
       calls.push(['setParent', ...args]);
+      const [ids, parent, index] = args;
+      for (const id of ids) {
+        const entity = entities.find((candidate) => candidate.entity === id);
+        if (entity) {
+          entity.parent = parent;
+          if (index !== undefined) entity.siblingIndex = index;
+        }
+      }
       return true;
     },
     addComponent: (...args) => {
@@ -125,6 +134,16 @@ function createContext() {
     redo: () => calls.push(['redo']),
     setGizmo: (...args) => calls.push(['setGizmo', ...args]),
     frameSelected: () => calls.push(['frameSelected']),
+    setSceneCamera: (partial) => {
+      calls.push(['setSceneCamera', partial]);
+      store.sceneCamera = {
+        ...store.sceneCamera,
+        ...partial,
+        pivot: partial.pivot ? [...partial.pivot] : store.sceneCamera.pivot,
+      };
+      store.sceneCamera.pitch = Math.max(-89, Math.min(89, store.sceneCamera.pitch));
+      store.sceneCamera.distance = Math.max(0.5, Math.min(200, store.sceneCamera.distance));
+    },
   };
   return {
     calls,
@@ -354,6 +373,58 @@ test('transform updates require finite tuples with exact dimensions', () => {
       scale: [1, 1, 1],
     },
   ]);
+});
+
+test('relative translation, sibling reorder, and Scene camera control use native store paths', () => {
+  const { ctx, calls, entities } = createContext();
+
+  const translated = run(ctx, 'transform.translate', {
+    entity: 1,
+    delta: [2, -1, 4],
+  });
+  assert.deepEqual(translated.data.transform.position, [2, -1, 4]);
+  assert.deepEqual(calls[0], [
+    'setTransform',
+    1,
+    {
+      position: [2, -1, 4],
+      rotation: [0, 0, 0, 1],
+      scale: [1, 1, 1],
+    },
+  ]);
+
+  const reordered = run(ctx, 'entity.reorder', { id: 2, index: 0 });
+  assert.equal(reordered.data.siblingIndex, 0);
+  assert.equal(reordered.data.changed, true);
+  assert.deepEqual(calls[1], ['setParent', [2], null, 0]);
+  assert.equal(entities[1].siblingIndex, 0);
+
+  const camera = run(ctx, 'view.set_camera', {
+    yaw: 120,
+    pitch: 100,
+    distance: 0.1,
+    pivot: [3, 2, 1],
+  });
+  assert.deepEqual(calls[2], [
+    'setSceneCamera',
+    { yaw: 120, pitch: 100, distance: 0.1, pivot: [3, 2, 1] },
+  ]);
+  assert.deepEqual(camera.data.sceneCamera, {
+    yaw: 120,
+    pitch: 89,
+    distance: 0.5,
+    pivot: [3, 2, 1],
+  });
+
+  assertBridgeError(
+    () => run(ctx, 'view.set_camera', { yaw: Number.NaN }),
+    'INVALID_ARGS',
+  );
+  assertBridgeError(
+    () => run(ctx, 'transform.translate', { entity: 1, delta: [0, 1] }),
+    'INVALID_ARGS',
+  );
+  assert.equal(calls.length, 3);
 });
 
 test('invalid hierarchy operations fail instead of reporting false success', () => {

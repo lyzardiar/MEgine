@@ -216,8 +216,8 @@ MEngine 编辑器当前对人类友好，但对 AI Agent 不够友好。AI Agent
 | query id | 返回 |
 | --- | --- |
 | `selection.get` | `{ selected, selectedIds }` |
-| `editor.state` | `{ mode, gizmo, pivotMode, handleOrientation, canUndo, canRedo, undoLabel, redoLabel, dirty, sceneName }` |
-| `editor.get_camera` | `sceneCamera { yaw, pitch, distance, pivot }` |
+| `editor.state` | ✅ `{ mode, gizmo, sceneCamera, canUndo, canRedo, undoLabel, redoLabel, dirty, sceneName, sceneRevision, eventSequence }` |
+| `editor.get_camera` | ✅ 已合并进 `editor.state.sceneCamera { yaw, pitch, distance, pivot }`，减少一次查询 |
 
 #### 4.1.5 控制台日志（结构化）
 
@@ -264,7 +264,7 @@ MEngine 编辑器当前对人类友好，但对 AI Agent 不够友好。AI Agent
 | `entity.rename` | `{ id, name }` | `store.rename` |
 | `entity.set_active` | `{ id, active }` | `store.setActive` |
 | `entity.reparent` | `{ ids[], parent, index? }` | `store.setParent` |
-| `entity.reorder` | `{ id, index }` | `store.reorderSibling` |
+| `entity.reorder` | `{ id, index }` | ✅ 复用 `store.setParent` 的同父级排序路径；同位置为明确 no-op，其余保持单次 undo |
 
 #### 4.2.2 组件操作
 
@@ -281,7 +281,7 @@ MEngine 编辑器当前对人类友好，但对 AI Agent 不够友好。AI Agent
 | command id | 参数 | 映射 |
 | --- | --- | --- |
 | `transform.set` | `{ entity, position?, rotation?, scale? }` | `store.setTransform` |
-| `transform.translate` | `{ entity, delta }` | `store.translateBy` |
+| `transform.translate` | `{ entity, delta }` | ✅ 从实时 Transform 计算有限新位置并走 `store.setTransform`，因此与 Inspector 一样可撤销 |
 | `rect.set` | `{ entity, anchoredPosition?, sizeDelta?, pivot?, anchors? }` | `store.setRectPivot/setRectAnchors/...` |
 
 #### 4.2.4 选择 / 播放 / 历史
@@ -293,7 +293,7 @@ MEngine 编辑器当前对人类友好，但对 AI Agent 不够友好。AI Agent
 | `playback.play` / `pause` / `stop` / `step` | `{ deltaTime? }` | ✅ 幂等进入/恢复 Play Mode；暂停态可按指定 deltaTime 单帧推进并保持暂停；粒子、Spine 与 AnimatedSprite 共用模拟时钟，暂停不偷跑 |
 | `history.undo` / `redo` | — | `store.undo/redo` |
 | `view.frame_selected` | — | `store.frameSelected` |
-| `view.set_camera` | `{ yaw?, pitch?, distance?, pivot? }` | `store.setSceneCamera` |
+| `view.set_camera` | `{ yaw?, pitch?, distance?, pivot? }` | ✅ 复用 `store.setSceneCamera` 的 pitch/distance 安全钳制；后台调用不激活窗口 |
 | `gizmo.set` | `{ mode }` | `store.setGizmo` |
 
 #### 4.2.5 场景 I/O
@@ -399,9 +399,9 @@ take_screenshot, list_assets, list_scenes, get_component_schema, list_commands
 ```
 open_project, create_project, forget_recent_project,
 create_gameobject, delete_entities, duplicate_entities, rename_entity,
-set_active, reparent, add_component, remove_component, set_component,
-patch_component, invoke_component_method, set_transform, set_selection,
-reveal_entity, frame_selection, play, pause, stop, step,
+set_active, reparent_entities, reorder_entity, add_component, remove_component, set_component,
+patch_component, invoke_component_method, set_transform, translate_entity, set_selection,
+reveal_entity, frame_selection, set_scene_camera, play, pause, stop, step,
 clear_console_logs,
 undo, redo, save_scene, open_scene, new_scene, focus_panel, open_editor_window,
 invoke_menu, import_asset_file, write_asset_text, preview_asset_rename, rename_asset,

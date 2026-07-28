@@ -63,6 +63,9 @@ test('whole-window agent capture is background-safe and addressable by window la
   assert.match(mcp, /'import_asset_file'/);
   assert.match(mcp, /'invoke_component_method'/);
   assert.match(mcp, /'apply_batch'/);
+  assert.match(mcp, /'reorder_entity'/);
+  assert.match(mcp, /'translate_entity'/);
+  assert.match(mcp, /'set_scene_camera'/);
   assert.match(mcp, /expectedSceneRevision/);
   assert.match(mcp, /key !== 'screenshot'/);
   assert.match(mcp, /textContent\(response\)/);
@@ -175,6 +178,10 @@ test('scene, asset, and asynchronous build tools share guarded editor services',
   assert.match(bridge, /importExternalProjectAsset\(sourcePath, normalized\)/);
   assert.match(bridge, /assertDiskMutationAllowed/);
   assert.match(commands, /'component\.invoke'/);
+  assert.match(commands, /'entity\.reorder'/);
+  assert.match(commands, /'transform\.translate'/);
+  assert.match(commands, /'view\.set_camera'/);
+  assert.match(bridge, /sceneCamera: store\.sceneCamera/);
   assert.match(bridge, /status: 'running'/);
   assert.match(bridge, /listenToPcBuildProgress/);
   assert.match(bridge, /case 'build\.status'/);

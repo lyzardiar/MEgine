@@ -442,6 +442,7 @@ class AgentBridge {
       frame: snapshot.frame,
       simulationTime: snapshot.simulationTime,
       gizmo: store.gizmo,
+      sceneCamera: store.sceneCamera,
       canUndo: store.canUndo,
       canRedo: store.canRedo,
       undoLabel: store.undoLabel,

@@ -290,7 +290,7 @@ const TOOLS = [
   {
     name: 'get_editor_state',
     description:
-      'Get the mounted editor state: edit/play mode, simulation time, gizmo, undo/redo, current scene, revisions and dirty flag. Use get_project_state before a project is open.',
+      'Get the mounted editor state: edit/play mode, simulation time, gizmo, Scene orbit camera, undo/redo, current scene, revisions and dirty flag. Use get_project_state before a project is open.',
     inputSchema: { type: 'object', properties: {} },
     handler: async () => textContent(await bridgeQuery('editor.state')),
   },
@@ -876,6 +876,10 @@ const TOOLS = [
     parent: { type: ['number', 'null'], description: 'New parent id (null = root)' },
     index: { type: 'number', description: 'Sibling index (optional)' },
   }),
+  execTool('reorder_entity', 'Move an entity to a sibling index under its current parent.', 'entity.reorder', {
+    id: { type: 'number', description: 'Entity id' },
+    index: { type: 'number', minimum: 0, description: 'Destination sibling index' },
+  }),
   execTool('add_component', 'Add a component to an entity.', 'component.add', {
     entity: { type: 'number', description: 'Entity id' },
     type: { type: 'string', description: 'Component type, e.g. MeshRenderer, Rigidbody, AutoRotate' },
@@ -911,6 +915,10 @@ const TOOLS = [
     rotation: { type: 'array', items: { type: 'number' }, description: 'quaternion [x, y, z, w]' },
     scale: { type: 'array', items: { type: 'number' }, description: '[x, y, z]' },
   }),
+  execTool('translate_entity', 'Translate an entity by a local-position delta as one undoable edit.', 'transform.translate', {
+    entity: { type: 'number', description: 'Entity id' },
+    delta: { type: 'array', items: { type: 'number' }, description: 'Local-position delta [x, y, z]' },
+  }),
   execTool('set_selection', 'Set the selection to the given entity ids.', 'selection.set', {
     ids: { type: 'array', items: { type: 'number' }, description: 'Entity ids to select' },
     mode: { type: 'string', enum: ['replace', 'add', 'toggle'], description: 'Selection mode (default replace)' },
@@ -923,6 +931,17 @@ const TOOLS = [
     'Frame the current selection in the Scene view without raising the editor window.',
     'view.frame_selected',
     {},
+  ),
+  execTool(
+    'set_scene_camera',
+    'Set the Scene view orbit camera without raising or focusing the editor window. Omitted fields retain their current values; pitch and distance are clamped to editor-safe limits.',
+    'view.set_camera',
+    {
+      yaw: { type: 'number', description: 'Orbit yaw in degrees' },
+      pitch: { type: 'number', description: 'Orbit pitch in degrees (clamped to -89..89)' },
+      distance: { type: 'number', description: 'Orbit distance (clamped to 0.5..200)' },
+      pivot: { type: 'array', items: { type: 'number' }, description: 'Orbit pivot [x, y, z]' },
+    },
   ),
   execTool('play', 'Enter play mode.', 'playback.play', {}),
   execTool('pause', 'Toggle pause during playback.', 'playback.pause', {}),

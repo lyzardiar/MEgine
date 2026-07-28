@@ -132,6 +132,18 @@ function finiteTuple(
   return value as number[];
 }
 
+function optionalFiniteNumber(
+  args: Record<string, unknown>,
+  key: string,
+): number | undefined {
+  const value = args[key];
+  if (value === undefined) return undefined;
+  if (typeof value !== 'number' || !Number.isFinite(value)) {
+    throw new BridgeError('INVALID_ARGS', `"${key}" must be a finite number`);
+  }
+  return value;
+}
+
 function requireEntity(ctx: CommandContext, id: number) {
   const entity = ctx.store.snapshot().entities.find((candidate) => candidate.entity === id);
   if (!entity) {
@@ -570,6 +582,47 @@ export const WRITE_COMMANDS: Record<string, CommandHandler> = {
     }
     return { ok: true, data: { entities: ids, parent, index: index ?? null } };
   },
+  'entity.reorder': (ctx, args) => {
+    requireEditMode(ctx);
+    const id = entityId(args, 'id');
+    const index = optionalIndex(args, 'index');
+    const current = requireEntity(ctx, id);
+    if (index === undefined) {
+      throw new BridgeError('INVALID_ARGS', '"index" is required');
+    }
+    const siblings = ctx.store.snapshot().entities
+      .filter((entity) => (entity.parent ?? null) === (current.parent ?? null))
+      .sort((left, right) => (
+        (left.siblingIndex ?? 0) - (right.siblingIndex ?? 0)
+        || left.entity - right.entity
+      ));
+    const currentIndex = siblings.findIndex((entity) => entity.entity === id);
+    const targetIndex = Math.min(index, Math.max(0, siblings.length - 1));
+    if (currentIndex === targetIndex) {
+      return {
+        ok: true,
+        data: {
+          entity: id,
+          parent: current.parent ?? null,
+          siblingIndex: current.siblingIndex,
+          changed: false,
+        },
+      };
+    }
+    if (!ctx.store.setParent([id], current.parent ?? null, targetIndex)) {
+      throw new BridgeError('INVALID_ARGS', `Entity ${id} could not be reordered`);
+    }
+    const updated = requireEntity(ctx, id);
+    return {
+      ok: true,
+      data: {
+        entity: id,
+        parent: updated.parent ?? null,
+        siblingIndex: updated.siblingIndex,
+        changed: true,
+      },
+    };
+  },
 
   // ── Components ─────────────────────────────────────────────────────────
   'component.add': (ctx, args) => {
@@ -676,6 +729,27 @@ export const WRITE_COMMANDS: Record<string, CommandHandler> = {
     ctx.store.setTransform(entity, next);
     return { ok: true, data: { entity, transform: next } };
   },
+  'transform.translate': (ctx, args) => {
+    requireEditMode(ctx);
+    const entity = entityId(args, 'entity');
+    requireEntity(ctx, entity);
+    const current = ctx.store.getTransform(entity);
+    if (!current) {
+      throw new BridgeError('COMPONENT_NOT_FOUND', `Entity ${entity} has no Transform component`);
+    }
+    const delta = finiteTuple(args, 'delta', 3);
+    if (!delta) throw new BridgeError('INVALID_ARGS', '"delta" is required');
+    const position = current.position.map((value, index) => value + delta[index]);
+    if (position.some((value) => !Number.isFinite(value))) {
+      throw new BridgeError('INVALID_ARGS', 'Translated position must remain finite');
+    }
+    const next = {
+      ...current,
+      position: position as [number, number, number],
+    };
+    ctx.store.setTransform(entity, next);
+    return { ok: true, data: { entity, delta, transform: next } };
+  },
 
   // ── Playback / history / view ──────────────────────────────────────────
   'playback.play': (ctx) => {
@@ -737,7 +811,33 @@ export const WRITE_COMMANDS: Record<string, CommandHandler> = {
   },
   'view.frame_selected': (ctx) => {
     ctx.store.frameSelected();
-    return { ok: true };
+    return { ok: true, data: { sceneCamera: ctx.store.sceneCamera } };
+  },
+  'view.set_camera': (ctx, args) => {
+    const yaw = optionalFiniteNumber(args, 'yaw');
+    const pitch = optionalFiniteNumber(args, 'pitch');
+    const distance = optionalFiniteNumber(args, 'distance');
+    const pivot = finiteTuple(args, 'pivot', 3);
+    if (
+      yaw === undefined
+      && pitch === undefined
+      && distance === undefined
+      && pivot === undefined
+    ) {
+      throw new BridgeError(
+        'INVALID_ARGS',
+        'view.set_camera requires at least one of "yaw", "pitch", "distance", or "pivot"',
+      );
+    }
+    ctx.store.setSceneCamera({
+      ...(yaw === undefined ? {} : { yaw }),
+      ...(pitch === undefined ? {} : { pitch }),
+      ...(distance === undefined ? {} : { distance }),
+      ...(pivot === undefined
+        ? {}
+        : { pivot: pivot as [number, number, number] }),
+    });
+    return { ok: true, data: { sceneCamera: ctx.store.sceneCamera } };
   },
 
   // ── Panels ─────────────────────────────────────────────────────────────
@@ -790,12 +890,14 @@ export const COMMAND_META: CommandMeta[] = [
   { id: 'entity.rename', category: 'entity', description: 'Rename an entity', readOnly: false },
   { id: 'entity.set_active', category: 'entity', description: 'Enable or disable an entity', readOnly: false },
   { id: 'entity.reparent', category: 'entity', description: 'Reparent entities under a new parent', readOnly: false },
+  { id: 'entity.reorder', category: 'entity', description: 'Move an entity to a sibling index under its current parent', readOnly: false },
   { id: 'component.add', category: 'component', description: 'Add a component to an entity', readOnly: false },
   { id: 'component.remove', category: 'component', description: 'Remove a component from an entity', readOnly: false },
   { id: 'component.set', category: 'component', description: 'Replace a component value on an entity', readOnly: false },
   { id: 'component.patch', category: 'component', description: 'Shallow-merge fields into a component on an entity', readOnly: false },
   { id: 'component.invoke', category: 'component', description: 'Invoke one registered Behaviour method on an entity', readOnly: false },
   { id: 'transform.set', category: 'transform', description: 'Set position/rotation/scale on an entity transform', readOnly: false },
+  { id: 'transform.translate', category: 'transform', description: 'Translate an entity by a local-position delta', readOnly: false },
   { id: 'playback.play', category: 'playback', description: 'Enter play mode', readOnly: false },
   { id: 'playback.pause', category: 'playback', description: 'Toggle pause', readOnly: false },
   { id: 'playback.stop', category: 'playback', description: 'Stop playback and return to edit mode', readOnly: false },
@@ -804,6 +906,7 @@ export const COMMAND_META: CommandMeta[] = [
   { id: 'history.redo', category: 'history', description: 'Redo the last undone edit', readOnly: false },
   { id: 'gizmo.set', category: 'view', description: 'Set the active transform gizmo (translate/rotate/scale/rect)', readOnly: false },
   { id: 'view.frame_selected', category: 'view', description: 'Frame the selected object in the scene view', readOnly: false },
+  { id: 'view.set_camera', category: 'view', description: 'Set the background-safe Scene view orbit camera', readOnly: false },
   { id: 'panel.focus', category: 'panel', description: 'Activate a docked panel without raising the editor window', readOnly: false },
   { id: 'panel.reset_layout', category: 'panel', description: 'Reset the dock workspace to its default layout', readOnly: false },
   { id: 'menu.invoke', category: 'menu', description: 'Invoke a registered Unity-style menu item by exact path', readOnly: false },
