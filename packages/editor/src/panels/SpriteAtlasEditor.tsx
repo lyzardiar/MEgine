@@ -18,8 +18,8 @@ import {
 } from '../spriteAtlas';
 import { buildSpriteAtlas } from '../spriteAtlasBuild';
 import {
+  broadcastProjectAssetsChanged,
   openSpriteAtlasAsset,
-  PROJECT_ASSETS_CHANGED_EVENT,
 } from '../assetEditorEvents';
 import { registerSaveAllParticipant } from '../saveAll';
 import { SpriteListField } from './uiFieldEditors';
@@ -41,7 +41,7 @@ export async function createProjectSpriteAtlas(open = true): Promise<string> {
   const name = path.split('/').pop()!.replace(/\.matlas$/i, '');
   await writeProjectAssetText(path, serializeSpriteAtlasAsset(createSpriteAtlasAsset(name)));
   await refreshProjectFiles();
-  window.dispatchEvent(new CustomEvent(PROJECT_ASSETS_CHANGED_EVENT));
+  broadcastProjectAssetsChanged({ action: 'created', destinationPath: path });
   if (open) openSpriteAtlasAsset(path);
   return path;
 }
@@ -181,7 +181,7 @@ export function SpriteAtlasEditor(props: {
       setAsset(normalized);
       setSavedAsset(cloneAsset(normalized));
       await refreshProjectFiles();
-      window.dispatchEvent(new CustomEvent(PROJECT_ASSETS_CHANGED_EVENT));
+      broadcastProjectAssetsChanged({ action: 'modified', sourcePath: props.assetPath });
       props.onAssetsChanged();
       return normalized;
     } finally {
@@ -208,7 +208,8 @@ export function SpriteAtlasEditor(props: {
       setPreview(image);
       setPlan(result.plan);
       props.onAssetsChanged();
-      window.dispatchEvent(new CustomEvent(PROJECT_ASSETS_CHANGED_EVENT));
+      broadcastProjectAssetsChanged({ action: 'modified', sourcePath: result.texturePath });
+      broadcastProjectAssetsChanged({ action: 'modified', sourcePath: result.importPath });
       props.onLog(`Packed ${result.plan.entries.length} sprites into ${result.texturePath} (${result.plan.width}x${result.plan.height})`);
     } catch (reason) {
       const message = reason instanceof Error ? reason.message : String(reason);

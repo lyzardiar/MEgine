@@ -39,8 +39,8 @@ import type {
 } from '../editorUndoService';
 import { AvatarMaskEditor } from './AvatarMask';
 import {
+  broadcastProjectAssetsChanged,
   openAnimatorAsset,
-  PROJECT_ASSETS_CHANGED_EVENT,
 } from '../assetEditorEvents';
 
 function uniquePath(extension: '.mcontroller' | '.manim', baseName: string): string {
@@ -72,7 +72,8 @@ export async function createProjectAnimatorControllerDetailed(
     serializeAnimatorController(createAnimatorController(controllerName, clipPath)),
   );
   await refreshProjectFiles();
-  window.dispatchEvent(new CustomEvent(PROJECT_ASSETS_CHANGED_EVENT));
+  broadcastProjectAssetsChanged({ action: 'created', destinationPath: clipPath });
+  broadcastProjectAssetsChanged({ action: 'created', destinationPath: controllerPath });
   if (open) openAnimatorAsset(controllerPath);
   return {
     primaryPath: controllerPath,
@@ -580,6 +581,7 @@ function AnimatorControllerEditor(props: AnimatorEditorProps) {
       drafts.current.delete(props.assetPath);
       replaceController(normalized);
       setSavedFingerprint(controllerFingerprint(normalized));
+      broadcastProjectAssetsChanged({ action: 'modified', sourcePath: props.assetPath });
       props.onAssetsChanged();
       props.onLog(`Saved ${props.assetPath}`);
       return true;
@@ -610,6 +612,7 @@ function AnimatorControllerEditor(props: AnimatorEditorProps) {
             controller: normalized,
             savedFingerprint: controllerFingerprint(normalized),
           });
+          broadcastProjectAssetsChanged({ action: 'modified', sourcePath: path });
           props.onLog(`Saved ${path}`);
         } catch (reason) {
           failures.push(`${path}: ${reason instanceof Error ? reason.message : String(reason)}`);

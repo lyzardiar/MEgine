@@ -37,6 +37,7 @@ import { Hierarchy } from './panels/Hierarchy';
 import { Inspector } from './panels/Inspector';
 import { Console } from './panels/Console';
 import {
+  broadcastProjectAssetsExternalChanges,
   OPEN_ANIMATION_CLIP_EVENT,
   openAnimationClipAsset,
   OPEN_TIMELINE_ASSET_EVENT,
@@ -889,9 +890,7 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
         const changes = await pollProjectFileChanges();
         lastAssetPollError.current = null;
         if (!disposed && changes.length > 0) {
-          const detail = { changes, detectedAt: Date.now() };
-          window.dispatchEvent(new CustomEvent(PROJECT_ASSETS_EXTERNAL_CHANGE_EVENT, { detail }));
-          window.dispatchEvent(new CustomEvent(PROJECT_ASSETS_CHANGED_EVENT, { detail }));
+          broadcastProjectAssetsExternalChanges(changes);
           const counts = changes.reduce((result, change) => {
             result[change.type] += 1;
             return result;

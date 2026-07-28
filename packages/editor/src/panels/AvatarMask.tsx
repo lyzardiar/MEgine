@@ -27,8 +27,8 @@ import type {
   EditorUndoToken,
 } from '../editorUndoService';
 import {
+  broadcastProjectAssetsChanged,
   openAnimatorAsset,
-  PROJECT_ASSETS_CHANGED_EVENT,
 } from '../assetEditorEvents';
 
 function uniqueAvatarMaskPath(): string {
@@ -48,7 +48,7 @@ export async function createProjectAvatarMask(open = true): Promise<string> {
   const name = path.split('/').pop()!.replace(/\.mavatar$/i, '');
   await writeProjectAssetText(path, serializeAvatarMask(createAvatarMask(name)));
   await refreshProjectFiles();
-  window.dispatchEvent(new CustomEvent(PROJECT_ASSETS_CHANGED_EVENT));
+  broadcastProjectAssetsChanged({ action: 'created', destinationPath: path });
   if (open) openAnimatorAsset(path);
   return path;
 }
@@ -251,6 +251,7 @@ export function AvatarMaskEditor(props: {
       replaceMask(normalized);
       setSavedFingerprint(fingerprint(normalized));
       await refreshProjectFiles();
+      broadcastProjectAssetsChanged({ action: 'modified', sourcePath: props.assetPath });
       props.onAssetsChanged();
       props.onLog(`Saved ${props.assetPath}`);
       return true;
@@ -278,6 +279,7 @@ export function AvatarMaskEditor(props: {
             mask: normalized,
             savedFingerprint: fingerprint(normalized),
           });
+          broadcastProjectAssetsChanged({ action: 'modified', sourcePath: path });
           props.onLog(`Saved ${path}`);
         } catch (reason) {
           failures.push(`${path}: ${reason instanceof Error ? reason.message : String(reason)}`);

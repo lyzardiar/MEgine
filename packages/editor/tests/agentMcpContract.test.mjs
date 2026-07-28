@@ -253,6 +253,11 @@ test('MCP validates tool arguments before dispatch with bounded structured issue
     offset: 1000000,
     expectedIndexRevision: 'asset-index-v1-5000-0123456789abcdef',
   });
+  validateToolArguments(tool('list_asset_trash'), {
+    limit: 1000,
+    offset: 1000000,
+    expectedTrashRevision: 'asset-trash-v1-5000-0123456789abcdef',
+  });
   validateToolArguments(tool('get_entity'), { id: 0 });
   validateToolArguments(tool('get_entity'), { name: 'Player' });
   validateToolArguments(tool('compare_build_history'), {

@@ -1789,9 +1789,45 @@ const TOOLS = [
   {
     name: 'list_asset_trash',
     description:
-      'List recoverable project Trash entries with exact record revisions required by restore_asset.',
-    inputSchema: { type: 'object', properties: {} },
-    handler: async () => textContent(await bridgeQuery('asset.trash_list')),
+      'List recoverable project Trash entries with exact record revisions required by restore_asset. Continuation pages require the first trashRevision so concurrent Trash changes fail instead of returning torn results.',
+    inputSchema: {
+      type: 'object',
+      additionalProperties: false,
+      properties: {
+        limit: {
+          type: 'integer',
+          minimum: 1,
+          maximum: 1000,
+          description: 'Maximum Trash entries (default 100)',
+        },
+        offset: {
+          type: 'integer',
+          minimum: 0,
+          maximum: 1000000,
+          description: 'Zero-based Trash cursor from the previous page (default 0)',
+        },
+        expectedTrashRevision: {
+          type: 'string',
+          pattern: '^asset-trash-v\\d+-\\d+-[0-9a-f]{16}$',
+          maxLength: 80,
+          description: 'trashRevision from the first page; required when offset is greater than 0',
+        },
+      },
+      anyOf: [
+        {
+          properties: {
+            offset: { type: 'integer', maximum: 0 },
+          },
+        },
+        {
+          required: ['offset', 'expectedTrashRevision'],
+          properties: {
+            offset: { type: 'integer', minimum: 1 },
+          },
+        },
+      ],
+    },
+    handler: async (args) => textContent(await bridgeQuery('asset.trash_list', args)),
   },
   {
     name: 'get_build_settings',
@@ -3025,6 +3061,24 @@ const RESOURCES = [
     'workspace.documents',
   ),
   bridgeResource(
+    'mengine://assets/index',
+    'Project Asset Index',
+    'First bounded revision-safe page of project assets.',
+    'asset.list',
+  ),
+  bridgeResource(
+    'mengine://assets/sprites',
+    'Project Sprite Index',
+    'First bounded revision-safe page of texture and sprite-slice references.',
+    'sprite.list',
+  ),
+  bridgeResource(
+    'mengine://assets/trash',
+    'Project Asset Trash',
+    'Recoverable project asset Trash entries.',
+    'asset.trash_list',
+  ),
+  bridgeResource(
     'mengine://editor/panels',
     'Editor Panel Layout',
     'Dock tree, tabs, active panels, and detached editor windows.',
@@ -3121,6 +3175,9 @@ const EVENT_RESOURCE_URIS = Object.freeze({
     'mengine://editor/window/types',
     'mengine://editor/menus',
     'mengine://editor/documents',
+    'mengine://assets/index',
+    'mengine://assets/sprites',
+    'mengine://assets/trash',
     'mengine://editor/panels',
     'mengine://scene/snapshot',
     'mengine://scene/hierarchy',
@@ -3174,6 +3231,9 @@ const EVENT_RESOURCE_URIS = Object.freeze({
     'mengine://project/state',
     'mengine://editor/scenes',
     'mengine://editor/documents',
+    'mengine://assets/index',
+    'mengine://assets/sprites',
+    'mengine://assets/trash',
   ]),
   'log.added': Object.freeze(['mengine://console/logs']),
   'log.cleared': Object.freeze(['mengine://console/logs']),

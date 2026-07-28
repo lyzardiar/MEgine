@@ -166,8 +166,8 @@ import {
   snapTimelineKeySelectionDelta,
 } from '../timelineSnapping.ts';
 import {
+  broadcastProjectAssetsChanged,
   openAnimationClipAsset,
-  PROJECT_ASSETS_CHANGED_EVENT,
 } from '../assetEditorEvents';
 import {
   listProjectFiles,
@@ -1357,7 +1357,7 @@ export async function createProjectAnimationClip(
   const path = uniqueClipPath(safe);
   await writeProjectAssetText(path, serializeAnimationClip(createAnimationClip(safe)));
   await refreshProjectFiles();
-  window.dispatchEvent(new CustomEvent(PROJECT_ASSETS_CHANGED_EVENT));
+  broadcastProjectAssetsChanged({ action: 'created', destinationPath: path });
   if (open) openAnimationClipAsset(path);
   return path;
 }
@@ -2065,6 +2065,7 @@ export function Timeline(props: {
       await refreshProjectFiles();
       drafts.current.delete(clipPath);
       setSavedText(serializeAnimationClip(normalized));
+      broadcastProjectAssetsChanged({ action: 'modified', sourcePath: clipPath });
       props.onAssetsChanged();
       return true;
     } catch (reason) {
@@ -2089,6 +2090,7 @@ export function Timeline(props: {
           const text = serializeAnimationClip(normalized);
           await writeProjectAssetText(path, text);
           drafts.current.set(path, { ...draft, clip: normalized, savedText: text });
+          broadcastProjectAssetsChanged({ action: 'modified', sourcePath: path });
           props.onLog(`Saved ${path}`);
         } catch (reason) {
           failures.push(`${path}: ${reason instanceof Error ? reason.message : String(reason)}`);
@@ -2143,6 +2145,7 @@ export function Timeline(props: {
       setSelectedEvent(null);
       playbackPhase.current = 0;
       setShowNewClip(false);
+      broadcastProjectAssetsChanged({ action: 'created', destinationPath: path });
       props.onAssetsChanged();
       props.onLog(`Created ${path}`);
     } catch (reason) {

@@ -74,6 +74,7 @@ import {
   type TimelineTrackGroup,
 } from '../timelineAsset';
 import {
+  broadcastProjectAssetsChanged,
   openTimelineAsset,
   PROJECT_ASSETS_CHANGED_EVENT,
 } from '../assetEditorEvents';
@@ -212,7 +213,7 @@ export async function createProjectTimeline(
   const path = uniqueTimelinePath(safe);
   await writeProjectAssetText(path, serializeTimelineAsset(createTimelineAsset(safe)));
   await refreshProjectFiles();
-  window.dispatchEvent(new CustomEvent(PROJECT_ASSETS_CHANGED_EVENT));
+  broadcastProjectAssetsChanged({ action: 'created', destinationPath: path });
   if (open) openTimelineAsset(path);
   return path;
 }
@@ -965,6 +966,7 @@ export function Sequencer(props: SequencerProps) {
       setSavedText(text);
       drafts.current.delete(props.assetPath);
       await refreshProjectFiles();
+      broadcastProjectAssetsChanged({ action: 'modified', sourcePath: props.assetPath });
       props.onAssetsChanged();
       props.onLog(`Saved ${props.assetPath}`);
       return true;
@@ -992,6 +994,7 @@ export function Sequencer(props: SequencerProps) {
           asset: parseTimelineAsset(text),
           savedText: text,
         });
+        broadcastProjectAssetsChanged({ action: 'modified', sourcePath: path });
       }
       setDraftEpoch((value) => value + 1);
       await refreshProjectFiles();

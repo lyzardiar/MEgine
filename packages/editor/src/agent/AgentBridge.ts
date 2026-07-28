@@ -159,6 +159,7 @@ import {
   PROJECT_BUILD_ARTIFACTS_CHANGED_EVENT,
 } from '../buildEditorEvents';
 import type { AgentAssetOperations } from './assetOperations';
+import type { AssetTrashEntry } from '../assetTrash';
 import {
   AGENT_EVENT_TOPICS,
   AgentEventJournal,
@@ -2212,6 +2213,81 @@ class AgentBridge {
       hasMore: page.hasMore,
       truncated: page.truncated,
       sprites: structuredClone(page.items),
+    };
+  }
+
+  async listAssetTrash(params: Record<string, unknown> = {}): Promise<{
+    trashRevision: string;
+    total: number;
+    offset: number;
+    count: number;
+    nextOffset: number | null;
+    hasMore: boolean;
+    truncated: boolean;
+    invalidEntries: number;
+    entries: AssetTrashEntry[];
+  }> {
+    const inventory = await (await this.getAssetOperations()).listTrash();
+    const limit = params.limit ?? 100;
+    const offset = params.offset ?? 0;
+    if (
+      typeof limit !== 'number'
+      || !Number.isSafeInteger(limit)
+      || limit < 1
+      || limit > 1_000
+    ) {
+      throw new BridgeError('INVALID_ARGS', '"limit" must be an integer from 1 to 1000');
+    }
+    if (
+      typeof offset !== 'number'
+      || !Number.isSafeInteger(offset)
+      || offset < 0
+      || offset > 1_000_000
+    ) {
+      throw new BridgeError('INVALID_ARGS', '"offset" must be an integer from 0 to 1000000');
+    }
+    const rawExpectedTrashRevision = params.expectedTrashRevision;
+    const expectedTrashRevision = typeof rawExpectedTrashRevision === 'string'
+      ? rawExpectedTrashRevision.trim()
+      : '';
+    if (
+      rawExpectedTrashRevision !== undefined
+      && !/^asset-trash-v\d+-\d+-[0-9a-f]{16}$/.test(expectedTrashRevision)
+    ) {
+      throw new BridgeError(
+        'INVALID_ARGS',
+        '"expectedTrashRevision" must be a trashRevision returned by asset.trash_list',
+      );
+    }
+    if (offset > 0 && !expectedTrashRevision) {
+      throw new BridgeError(
+        'INVALID_ARGS',
+        'Continuation pages require "expectedTrashRevision" from the first Trash page',
+      );
+    }
+    const trashRevision = assetTrashIndexRevision(inventory.entries);
+    if (expectedTrashRevision && expectedTrashRevision !== trashRevision) {
+      throw new BridgeError(
+        'STALE_REVISION',
+        'Project Trash changed while paging; restart from offset 0',
+        {
+          expectedTrashRevision,
+          currentTrashRevision: trashRevision,
+          restartOffset: 0,
+        },
+      );
+    }
+    const page = paginateAgentItems(inventory.entries, offset, limit);
+    return {
+      trashRevision,
+      total: page.total,
+      offset: page.offset,
+      count: page.count,
+      nextOffset: page.nextOffset,
+      hasMore: page.hasMore,
+      truncated: page.truncated,
+      invalidEntries: inventory.invalidEntries,
+      entries: structuredClone(page.items),
     };
   }
 
@@ -4361,7 +4437,7 @@ class AgentBridge {
           requiredString(params, 'sourcePath'),
         );
       case 'asset.trash_list':
-        return (await this.getAssetOperations()).listTrash();
+        return this.listAssetTrash(params);
       case 'build.settings':
         return this.getBuildSettings();
       case 'build.status':
@@ -5033,6 +5109,31 @@ function spriteAssetIndexRevision(sprites: readonly SpriteAsset[]): string {
     sourceOffset += source.length;
   }
   return `sprite-index-v1-${sprites.length}-${
+    (hashA >>> 0).toString(16).padStart(8, '0')
+  }${(hashB >>> 0).toString(16).padStart(8, '0')}`;
+}
+
+function assetTrashIndexRevision(entries: readonly AssetTrashEntry[]): string {
+  let hashA = 0x811c9dc5;
+  let hashB = 0x9e3779b9;
+  let sourceOffset = 0;
+  for (const entry of entries) {
+    const source = JSON.stringify([
+      entry.trashId,
+      entry.originalPath,
+      entry.recordRevision,
+      entry.trashedAtMs,
+      entry.size,
+      entry.hasSpriteImport,
+    ]);
+    for (let index = 0; index < source.length; index += 1) {
+      const code = source.charCodeAt(index);
+      hashA = Math.imul(hashA ^ code, 0x01000193);
+      hashB = Math.imul(hashB ^ (code + sourceOffset + index), 0x85ebca6b);
+    }
+    sourceOffset += source.length;
+  }
+  return `asset-trash-v1-${entries.length}-${
     (hashA >>> 0).toString(16).padStart(8, '0')
   }${(hashB >>> 0).toString(16).padStart(8, '0')}`;
 }

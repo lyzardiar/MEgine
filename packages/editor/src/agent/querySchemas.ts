@@ -295,7 +295,30 @@ export const QUERY_PARAMS_SCHEMAS: Record<string, AgentJsonSchema> = {
   'asset.trash_preview': objectSchema({
     sourcePath: nonEmptyString('Existing source asset path under Assets/'),
   }, ['sourcePath']),
-  'asset.trash_list': emptySchema,
+  'asset.trash_list': objectSchema({
+    limit: boundedInteger(1, 1_000, 'Maximum Trash entries; default 100'),
+    offset: boundedInteger(0, 1_000_000, 'Zero-based Trash cursor; default 0'),
+    expectedTrashRevision: {
+      type: 'string',
+      pattern: '^asset-trash-v\\d+-\\d+-[0-9a-f]{16}$',
+      maxLength: 80,
+      description: 'trashRevision from the first page; required when offset is greater than 0',
+    },
+  }, [], {
+    anyOf: [
+      {
+        properties: {
+          offset: { type: 'integer', maximum: 0 },
+        },
+      },
+      {
+        required: ['offset', 'expectedTrashRevision'],
+        properties: {
+          offset: { type: 'integer', minimum: 1 },
+        },
+      },
+    ],
+  }),
   'build.settings': emptySchema,
   'build.status': emptySchema,
   'build.artifact_status': emptySchema,

@@ -17,7 +17,7 @@ import {
   type SpriteImportSettings,
   type SpriteSlice,
 } from '../spriteImport';
-import { PROJECT_ASSETS_CHANGED_EVENT } from '../assetEditorEvents';
+import { broadcastProjectAssetsChanged } from '../assetEditorEvents';
 import { registerSaveAllParticipant } from '../saveAll';
 
 type TextureSize = [number, number];
@@ -233,7 +233,10 @@ export function SpriteEditor(props: {
       setSavedSettings(cloneSettings(normalized));
       await refreshSprites();
       props.onAssetsChanged();
-      window.dispatchEvent(new CustomEvent(PROJECT_ASSETS_CHANGED_EVENT));
+      broadcastProjectAssetsChanged({
+        action: 'modified',
+        sourcePath: spriteImportPath(basePath),
+      });
       props.onLog(`Applied sprite import settings: ${basePath}`);
       return true;
     } catch (reason) {

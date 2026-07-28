@@ -1,4 +1,5 @@
 import { createEditorBroadcastChannel } from './editorInstance.ts';
+import type { ProjectAssetChange } from './projectAssets.ts';
 
 export const OPEN_ANIMATION_CLIP_EVENT = 'mengine:open-animation-clip';
 export const OPEN_TIMELINE_ASSET_EVENT = 'mengine:open-timeline-asset';
@@ -21,6 +22,17 @@ type ProjectAssetLifecycleMessage = ProjectAssetLifecycleDetail & {
   timestamp: number;
 };
 
+type ProjectAssetExternalChangeMessage = {
+  type: 'external';
+  changes: ProjectAssetChange[];
+  sender: string;
+  timestamp: number;
+};
+
+type ProjectAssetEditorMessage =
+  | ProjectAssetLifecycleMessage
+  | ProjectAssetExternalChangeMessage;
+
 const ASSET_CHANNEL = 'mengine.editor.assets.v1';
 const assetSender = crypto.randomUUID();
 let assetChannel: BroadcastChannel | null = null;
@@ -30,14 +42,33 @@ export function initializeAssetEditorEvents(): void {
   assetChannel = createEditorBroadcastChannel(ASSET_CHANNEL);
   assetChannel?.addEventListener(
     'message',
-    (event: MessageEvent<ProjectAssetLifecycleMessage>) => {
+    (event: MessageEvent<ProjectAssetEditorMessage>) => {
       const message = event.data;
       if (!message || message.sender === assetSender) return;
+      if ('type' in message && message.type === 'external') {
+        const detail = {
+          changes: structuredClone(message.changes),
+          remote: true,
+          timestamp: message.timestamp,
+        };
+        window.dispatchEvent(new CustomEvent(PROJECT_ASSETS_EXTERNAL_CHANGE_EVENT, {
+          detail,
+        }));
+        window.dispatchEvent(new CustomEvent(PROJECT_ASSETS_CHANGED_EVENT, {
+          detail: { ...detail, source: 'external' },
+        }));
+        return;
+      }
       window.dispatchEvent(new CustomEvent(PROJECT_ASSETS_CHANGED_EVENT, {
         detail: { ...message, remote: true },
       }));
     },
   );
+}
+
+export function resetAssetEditorEventsForTests(): void {
+  assetChannel?.close();
+  assetChannel = null;
 }
 
 export function broadcastProjectAssetsChanged(detail: ProjectAssetLifecycleDetail): void {
@@ -49,6 +80,30 @@ export function broadcastProjectAssetsChanged(detail: ProjectAssetLifecycleDetai
   };
   window.dispatchEvent(new CustomEvent(PROJECT_ASSETS_CHANGED_EVENT, {
     detail: { ...message, remote: false },
+  }));
+  assetChannel?.postMessage(message);
+}
+
+export function broadcastProjectAssetsExternalChanges(
+  changes: readonly ProjectAssetChange[],
+): void {
+  initializeAssetEditorEvents();
+  const message: ProjectAssetExternalChangeMessage = {
+    type: 'external',
+    changes: structuredClone([...changes]),
+    sender: assetSender,
+    timestamp: Date.now(),
+  };
+  const detail = {
+    changes: structuredClone(message.changes),
+    remote: false,
+    timestamp: message.timestamp,
+  };
+  window.dispatchEvent(new CustomEvent(PROJECT_ASSETS_EXTERNAL_CHANGE_EVENT, {
+    detail,
+  }));
+  window.dispatchEvent(new CustomEvent(PROJECT_ASSETS_CHANGED_EVENT, {
+    detail: { ...detail, source: 'external' },
   }));
   assetChannel?.postMessage(message);
 }
