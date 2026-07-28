@@ -25,6 +25,8 @@ import readline from 'node:readline';
 
 const PROTOCOL_VERSION = '2024-11-05';
 const REQUEST_TIMEOUT_MS = 20000;
+const BRIDGE_CONNECT_ATTEMPTS = 30;
+const BRIDGE_CONNECT_RETRY_MS = 200;
 const MCP_SESSION_ID = crypto.randomUUID();
 
 // ── Discovery ────────────────────────────────────────────────────────────
@@ -54,67 +56,222 @@ function readDiscovery() {
   if (!data.port || !data.token) {
     throw new Error(`Discovery file ${file} is missing port/token`);
   }
-  return { port: data.port, token: data.token };
+  return {
+    port: data.port,
+    token: data.token,
+    pid: Number.isSafeInteger(data.pid) && data.pid > 0 ? data.pid : null,
+  };
 }
 
 // ── Bridge client (WebSocket) ────────────────────────────────────────────
 
-let ws = null;
+let activeConnection = null;
+let connectionAttempt = null;
+let successfulConnections = 0;
 const pending = new Map();
 
-function connectBridge(port, token) {
+class BridgeConnectionError extends Error {
+  constructor(message, { sent = false, discovery = null } = {}) {
+    super(message);
+    this.name = 'BridgeConnectionError';
+    this.sent = sent;
+    this.discovery = discovery;
+  }
+}
+
+function connectBridge(discovery) {
+  const { port, token } = discovery;
   return new Promise((resolve, reject) => {
-    ws = new WebSocket(`ws://127.0.0.1:${port}/?token=${encodeURIComponent(token)}`);
-    const onError = () => reject(new Error(`Failed to connect to editor bridge on port ${port}`));
-    ws.addEventListener('error', onError);
-    ws.addEventListener('open', () => {
-      ws.removeEventListener('error', onError);
-      resolve();
+    const socket = new WebSocket(
+      `ws://127.0.0.1:${port}/?token=${encodeURIComponent(token)}`,
+    );
+    let opened = false;
+    const onError = () => {
+      if (opened) return;
+      reject(new BridgeConnectionError(
+        `Failed to connect to editor bridge on port ${port}`,
+        { discovery },
+      ));
+    };
+    socket.addEventListener('error', onError);
+    socket.addEventListener('open', () => {
+      opened = true;
+      socket.removeEventListener('error', onError);
+      const connection = { socket, discovery };
+      activeConnection = connection;
+      successfulConnections += 1;
+      if (successfulConnections > 1) {
+        process.stderr.write(
+          `[mengine-mcp] reconnected to editor bridge on port ${discovery.port}\n`,
+        );
+      }
+      resolve(connection);
     });
-    ws.addEventListener('message', (event) => {
+    socket.addEventListener('message', (event) => {
       let msg;
       try {
         msg = JSON.parse(typeof event.data === 'string' ? event.data : event.data.toString());
       } catch {
         return;
       }
-      if (msg.id && pending.has(msg.id)) {
-        const cb = pending.get(msg.id);
+      if (msg.id != null && pending.has(msg.id)) {
+        const entry = pending.get(msg.id);
+        if (entry.socket !== socket) return;
         pending.delete(msg.id);
-        cb(msg);
+        clearTimeout(entry.timer);
+        if (msg.error) entry.reject(new Error(`${msg.error.code}: ${msg.error.message}`));
+        else entry.resolve(msg.result);
       }
     });
-    ws.addEventListener('close', () => {
-      for (const [id, cb] of pending) {
+    socket.addEventListener('close', () => {
+      if (activeConnection?.socket === socket) activeConnection = null;
+      if (!opened) {
+        reject(new BridgeConnectionError(
+          `Editor bridge on port ${port} closed during connection`,
+          { discovery },
+        ));
+      }
+      for (const [id, entry] of pending) {
+        if (entry.socket !== socket) continue;
         pending.delete(id);
-        cb({ id, error: { code: 'BRIDGE_CLOSED', message: 'Editor bridge connection closed' } });
+        clearTimeout(entry.timer);
+        entry.reject(new BridgeConnectionError(
+          'Editor bridge connection closed',
+          { sent: true, discovery },
+        ));
       }
     });
   });
 }
 
-function rpc(method, params) {
+async function ensureBridgeConnected() {
+  if (activeConnection?.socket.readyState === WebSocket.OPEN) {
+    return activeConnection;
+  }
+  if (connectionAttempt) return await connectionAttempt;
+  connectionAttempt = connectLatestBridge();
+  try {
+    return await connectionAttempt;
+  } finally {
+    connectionAttempt = null;
+  }
+}
+
+async function connectLatestBridge() {
+  let lastError;
+  for (let attempt = 0; attempt < BRIDGE_CONNECT_ATTEMPTS; attempt += 1) {
+    try {
+      return await connectBridge(readDiscovery());
+    } catch (error) {
+      lastError = error;
+      if (attempt + 1 < BRIDGE_CONNECT_ATTEMPTS) {
+        await new Promise((resolve) => setTimeout(resolve, BRIDGE_CONNECT_RETRY_MS));
+      }
+    }
+  }
+  throw lastError;
+}
+
+function rpcOnce(connection, method, params) {
   return new Promise((resolve, reject) => {
-    if (!ws || ws.readyState !== WebSocket.OPEN) {
-      reject(new Error('Not connected to the editor bridge'));
+    const { socket, discovery } = connection;
+    if (socket.readyState !== WebSocket.OPEN) {
+      reject(new BridgeConnectionError(
+        'Not connected to the editor bridge',
+        { discovery },
+      ));
       return;
     }
     const id = crypto.randomUUID();
     const timer = setTimeout(() => {
       pending.delete(id);
-      reject(new Error(`Editor bridge request timed out (${method})`));
+      reject(new BridgeConnectionError(
+        `Editor bridge request timed out (${method})`,
+        { sent: true, discovery },
+      ));
     }, REQUEST_TIMEOUT_MS);
-    pending.set(id, (msg) => {
-      clearTimeout(timer);
-      if (msg.error) reject(new Error(`${msg.error.code}: ${msg.error.message}`));
-      else resolve(msg.result);
+    pending.set(id, {
+      socket,
+      timer,
+      resolve,
+      reject,
     });
-    ws.send(JSON.stringify({ jsonrpc: '2.0', id, method, params }));
+    try {
+      socket.send(JSON.stringify({ jsonrpc: '2.0', id, method, params }));
+    } catch (error) {
+      pending.delete(id);
+      clearTimeout(timer);
+      reject(new BridgeConnectionError(
+        `Could not send editor bridge request: ${error?.message || String(error)}`,
+        { discovery },
+      ));
+    }
   });
 }
 
+function sameEditorProcess(left, right) {
+  if (!left || !right) return false;
+  if (left.pid != null && right.pid != null) {
+    return left.pid === right.pid && left.token === right.token;
+  }
+  return left.port === right.port && left.token === right.token;
+}
+
+async function rpc(method, params, { retryAcrossEditorRestart = false } = {}) {
+  const firstConnection = await ensureBridgeConnected();
+  try {
+    return await rpcOnce(firstConnection, method, params);
+  } catch (error) {
+    if (!(error instanceof BridgeConnectionError)) throw error;
+
+    let latestDiscovery = null;
+    try {
+      latestDiscovery = readDiscovery();
+    } catch (discoveryError) {
+      if (error.sent && !retryAcrossEditorRestart) {
+        throw new Error(
+          `Editor discovery changed while ${method} was in flight; its outcome is unknown. ` +
+            'Re-read editor state before issuing a new requestId.',
+          { cause: discoveryError },
+        );
+      }
+    }
+    const sameProcess = sameEditorProcess(firstConnection.discovery, latestDiscovery);
+    if (error.sent && !sameProcess && !retryAcrossEditorRestart) {
+      throw new Error(
+        `Editor process changed while ${method} was in flight; its outcome is unknown. ` +
+          'Re-read editor state before issuing a new requestId.',
+      );
+    }
+
+    let retryConnection = firstConnection;
+    if (
+      firstConnection.socket.readyState !== WebSocket.OPEN
+      || !sameEditorProcess(firstConnection.discovery, latestDiscovery)
+    ) {
+      if (activeConnection?.socket === firstConnection.socket) activeConnection = null;
+      retryConnection = await ensureBridgeConnected();
+    }
+    if (
+      error.sent
+      && !retryAcrossEditorRestart
+      && !sameEditorProcess(firstConnection.discovery, retryConnection.discovery)
+    ) {
+      throw new Error(
+        `Editor process changed while ${method} was in flight; its outcome is unknown. ` +
+          'Re-read editor state before issuing a new requestId.',
+      );
+    }
+    return await rpcOnce(retryConnection, method, params);
+  }
+}
+
 async function bridgeQuery(query, args = {}) {
-  const result = await rpc('query', { query, args });
+  const result = await rpc(
+    'query',
+    { query, args },
+    { retryAcrossEditorRestart: true },
+  );
   return result?.data;
 }
 
@@ -1501,9 +1658,10 @@ function automaticWriteRequestId(message) {
 // ── Entry point ──────────────────────────────────────────────────────────
 
 async function main() {
-  const { port, token } = readDiscovery();
-  await connectBridge(port, token);
-  process.stderr.write(`[mengine-mcp] connected to editor bridge on port ${port}\n`);
+  const connection = await ensureBridgeConnected();
+  process.stderr.write(
+    `[mengine-mcp] connected to editor bridge on port ${connection.discovery.port}\n`,
+  );
 
   const rl = readline.createInterface({ input: process.stdin, terminal: false });
   rl.on('line', (line) => {
