@@ -125,6 +125,14 @@ class BridgeOutcomeUnknownError extends Error {
   }
 }
 
+class ToolInputValidationError extends Error {
+  constructor(toolName, issues) {
+    super(`Invalid arguments for tool "${toolName}"`);
+    this.name = 'ToolInputValidationError';
+    this.data = { tool: toolName, issues };
+  }
+}
+
 function connectBridge(discovery) {
   const { port, token } = discovery;
   return new Promise((resolve, reject) => {
@@ -350,6 +358,144 @@ function textContent(value) {
   return [{ type: 'text', text: typeof value === 'string' ? value : JSON.stringify(value, null, 2) }];
 }
 
+function schemaTypeMatches(value, expected) {
+  switch (expected) {
+    case 'null':
+      return value === null;
+    case 'array':
+      return Array.isArray(value);
+    case 'object':
+      return value !== null && typeof value === 'object' && !Array.isArray(value);
+    case 'integer':
+      return Number.isSafeInteger(value);
+    case 'number':
+      return typeof value === 'number' && Number.isFinite(value);
+    case 'string':
+    case 'boolean':
+      return typeof value === expected;
+    default:
+      return true;
+  }
+}
+
+function schemaValuesEqual(left, right) {
+  return JSON.stringify(stableJson(left)) === JSON.stringify(stableJson(right));
+}
+
+function validateSchemaValue(value, schema, path, issues) {
+  if (!schema || typeof schema !== 'object' || issues.length >= 32) return;
+
+  if (Array.isArray(schema.oneOf)) {
+    const matches = schema.oneOf.filter((candidate) => {
+      const candidateIssues = [];
+      validateSchemaValue(value, candidate, path, candidateIssues);
+      return candidateIssues.length === 0;
+    });
+    if (matches.length !== 1) {
+      issues.push(`${path} must match exactly one allowed shape`);
+    }
+    return;
+  }
+
+  const expectedTypes = Array.isArray(schema.type)
+    ? schema.type
+    : schema.type == null
+      ? []
+      : [schema.type];
+  if (
+    expectedTypes.length > 0
+    && !expectedTypes.some((expected) => schemaTypeMatches(value, expected))
+  ) {
+    issues.push(`${path} must be ${expectedTypes.join(' or ')}`);
+    return;
+  }
+
+  if ('const' in schema && !schemaValuesEqual(value, schema.const)) {
+    issues.push(`${path} must equal ${JSON.stringify(schema.const)}`);
+  }
+  if (
+    Array.isArray(schema.enum)
+    && !schema.enum.some((candidate) => schemaValuesEqual(value, candidate))
+  ) {
+    issues.push(`${path} must be one of ${schema.enum.map((item) => JSON.stringify(item)).join(', ')}`);
+  }
+
+  if (typeof value === 'string') {
+    if (Number.isInteger(schema.minLength) && value.length < schema.minLength) {
+      issues.push(`${path} must contain at least ${schema.minLength} characters`);
+    }
+    if (Number.isInteger(schema.maxLength) && value.length > schema.maxLength) {
+      issues.push(`${path} must contain at most ${schema.maxLength} characters`);
+    }
+    if (typeof schema.pattern === 'string' && !new RegExp(schema.pattern, 'u').test(value)) {
+      issues.push(`${path} does not match the required pattern`);
+    }
+  }
+
+  if (typeof value === 'number' && Number.isFinite(value)) {
+    if (typeof schema.minimum === 'number' && value < schema.minimum) {
+      issues.push(`${path} must be at least ${schema.minimum}`);
+    }
+    if (typeof schema.maximum === 'number' && value > schema.maximum) {
+      issues.push(`${path} must be at most ${schema.maximum}`);
+    }
+    if (typeof schema.exclusiveMinimum === 'number' && value <= schema.exclusiveMinimum) {
+      issues.push(`${path} must be greater than ${schema.exclusiveMinimum}`);
+    }
+    if (typeof schema.exclusiveMaximum === 'number' && value >= schema.exclusiveMaximum) {
+      issues.push(`${path} must be less than ${schema.exclusiveMaximum}`);
+    }
+  }
+
+  if (Array.isArray(value)) {
+    if (Number.isInteger(schema.minItems) && value.length < schema.minItems) {
+      issues.push(`${path} must contain at least ${schema.minItems} items`);
+    }
+    if (Number.isInteger(schema.maxItems) && value.length > schema.maxItems) {
+      issues.push(`${path} must contain at most ${schema.maxItems} items`);
+    }
+    if (schema.uniqueItems) {
+      const keys = value.map((item) => JSON.stringify(stableJson(item)));
+      if (new Set(keys).size !== keys.length) issues.push(`${path} must contain unique items`);
+    }
+    if (schema.items && typeof schema.items === 'object') {
+      value.forEach((item, index) => {
+        validateSchemaValue(item, schema.items, `${path}[${index}]`, issues);
+      });
+    }
+  }
+
+  if (value !== null && typeof value === 'object' && !Array.isArray(value)) {
+    const properties = schema.properties && typeof schema.properties === 'object'
+      ? schema.properties
+      : {};
+    for (const key of schema.required || []) {
+      if (!Object.hasOwn(value, key) || value[key] === undefined) {
+        issues.push(`${path}.${key} is required`);
+      }
+    }
+    for (const [key, item] of Object.entries(value)) {
+      if (Object.hasOwn(properties, key)) {
+        validateSchemaValue(item, properties[key], `${path}.${key}`, issues);
+      } else if (schema.additionalProperties === false) {
+        issues.push(`${path}.${key} is not allowed`);
+      } else if (
+        schema.additionalProperties
+        && typeof schema.additionalProperties === 'object'
+      ) {
+        validateSchemaValue(item, schema.additionalProperties, `${path}.${key}`, issues);
+      }
+      if (issues.length >= 32) break;
+    }
+  }
+}
+
+function validateToolArguments(tool, args) {
+  const issues = [];
+  validateSchemaValue(args, tool.inputSchema, '$', issues);
+  if (issues.length > 0) throw new ToolInputValidationError(tool.name, issues);
+}
+
 /** Build a tool that invokes a bridge `execute` command. */
 function execTool(name, description, command, properties, required, mapArgs = (a) => a) {
   if (!Array.isArray(required)) {
@@ -368,7 +514,7 @@ function execTool(name, description, command, properties, required, mapArgs = (a
           description: 'Capture a viewport screenshot after the action for visual verification',
         },
         expectedSceneRevision: {
-          type: 'number',
+          type: 'integer',
           minimum: 0,
           description:
             'Optional optimistic lock from get_editor_state/get_scene_snapshot. The command fails with STALE_REVISION if the scene changed.',
@@ -382,6 +528,7 @@ function execTool(name, description, command, properties, required, mapArgs = (a
         },
       },
       ...(required.length ? { required } : {}),
+      additionalProperties: false,
     },
     handler: async (args, context = {}) => {
       const wantScreenshot = Boolean(args.screenshot);
@@ -1386,7 +1533,11 @@ const TOOLS = [
     {
       name: { type: 'string', description: 'Entity name' },
       components: { type: 'object', description: 'Component map, e.g. { Transform: {...}, MeshRenderer: {...} }' },
-      parent: { type: 'number', description: 'Parent entity id (null = root)' },
+      parent: {
+        type: ['integer', 'null'],
+        minimum: 0,
+        description: 'Parent entity id (null = root)',
+      },
     },
     [],
   ),
@@ -1809,6 +1960,13 @@ function respondError(id, code, message, data) {
 }
 
 function structuredError(error) {
+  if (error instanceof ToolInputValidationError) {
+    return {
+      code: 'INVALID_ARGS',
+      message: error.message,
+      data: error.data,
+    };
+  }
   if (error instanceof BridgeRpcError) {
     return {
       code: error.code,
@@ -1872,7 +2030,9 @@ async function handleMessage(msg) {
         return;
       }
       try {
-        const content = await tool.handler(params?.arguments || {}, {
+        const args = params?.arguments ?? {};
+        validateToolArguments(tool, args);
+        const content = await tool.handler(args, {
           requestId: automaticWriteRequestId(msg),
         });
         respond(id, { content, isError: false });
@@ -1988,5 +2148,7 @@ export {
   RESOURCES,
   SERVER_INSTRUCTIONS,
   structuredError,
+  ToolInputValidationError,
   TOOLS,
+  validateToolArguments,
 };

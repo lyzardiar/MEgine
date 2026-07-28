@@ -8,7 +8,9 @@ import {
   RESOURCES,
   SERVER_INSTRUCTIONS,
   structuredError,
+  ToolInputValidationError,
   TOOLS,
+  validateToolArguments,
 } from '../../agent/mcp/server.mjs';
 import { COMMAND_META } from '../src/agent/commands.ts';
 
@@ -51,6 +53,55 @@ test('MCP tool names are unique and every input schema is an object', () => {
       `${tool.name} must declare properties`,
     );
   }
+});
+
+test('MCP validates tool arguments before dispatch with bounded structured issues', () => {
+  const tool = (name) => {
+    const result = TOOLS.find((candidate) => candidate.name === name);
+    assert.ok(result, `missing tool ${name}`);
+    return result;
+  };
+
+  validateToolArguments(tool('create_project'), {
+    parent: 'C:\\projects',
+    name: 'Example',
+  });
+  validateToolArguments(tool('create_gameobject'), {
+    parent: null,
+  });
+  validateToolArguments(tool('apply_batch'), {
+    commands: [{ op: 'spawn', name: 'Cube', components: {} }],
+  });
+
+  assert.throws(
+    () => validateToolArguments(tool('create_project'), {
+      parent: 'C:\\projects',
+      unexpected: true,
+    }),
+    (error) => {
+      assert.ok(error instanceof ToolInputValidationError);
+      const payload = structuredError(error);
+      assert.equal(payload.code, 'INVALID_ARGS');
+      assert.equal(payload.data.tool, 'create_project');
+      assert.ok(payload.data.issues.includes('$.name is required'));
+      assert.ok(payload.data.issues.includes('$.unexpected is not allowed'));
+      return true;
+    },
+  );
+  assert.throws(
+    () => validateToolArguments(tool('read_window_ui_content'), {
+      selector: '#editor',
+      field: 'password',
+      offset: -1,
+    }),
+    /Invalid arguments/,
+  );
+  assert.throws(
+    () => validateToolArguments(tool('apply_batch'), {
+      commands: [{ op: 'unknown', components: {} }],
+    }),
+    /Invalid arguments/,
+  );
 });
 
 test('every AgentBridge query is exposed by an MCP tool or resource with no stale mappings', () => {
