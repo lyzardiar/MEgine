@@ -247,6 +247,13 @@ test('whole-window agent capture is background-safe and addressable by window la
   assert.match(mcp, /instructions: SERVER_INSTRUCTIONS/);
   assert.match(mcp, /protocolVersion: negotiateProtocolVersion\(params\.protocolVersion\)/);
   assert.match(mcp, /SUPPORTED_PROTOCOL_VERSIONS/);
+  assert.match(mcp, /MAX_PENDING_BRIDGE_REQUESTS = 64/);
+  assert.match(mcp, /MAX_ACTIVE_MCP_REQUESTS = 128/);
+  assert.match(mcp, /MAX_MCP_INPUT_LINE_BYTES = 64 \* 1024 \* 1024/);
+  assert.match(mcp, /MAX_MCP_OUTBOUND_QUEUED_BYTES = 192 \* 1024 \* 1024/);
+  assert.match(mcp, /class BoundedNdjsonDecoder/);
+  assert.match(mcp, /class BoundedWriteQueue/);
+  assert.doesNotMatch(mcp, /readline\.createInterface/);
   assert.match(mcp, /case 'resources\/templates\/list'/);
   assert.match(mcp, /respondError\(null, -32700, 'Parse error'\)/);
   assert.match(mcp, /RESOURCES\.map/);

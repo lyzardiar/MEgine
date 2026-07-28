@@ -21,7 +21,6 @@ import fs from 'node:fs';
 import { createHash } from 'node:crypto';
 import os from 'node:os';
 import path from 'node:path';
-import readline from 'node:readline';
 import { pathToFileURL } from 'node:url';
 
 const SUPPORTED_PROTOCOL_VERSIONS = Object.freeze([
@@ -35,6 +34,12 @@ const REQUEST_TIMEOUT_MS = 20000;
 const BUILD_ARTIFACT_REQUEST_TIMEOUT_MS = 5 * 60 * 1000;
 const BRIDGE_CONNECT_ATTEMPTS = 30;
 const BRIDGE_CONNECT_RETRY_MS = 200;
+const MAX_PENDING_BRIDGE_REQUESTS = 64;
+const MAX_ACTIVE_MCP_REQUESTS = 128;
+const MAX_MCP_INPUT_LINE_BYTES = 64 * 1024 * 1024;
+const MAX_MCP_OUTBOUND_QUEUED_BYTES = 192 * 1024 * 1024;
+const MCP_OUTPUT_PAUSE_BYTES = 64 * 1024 * 1024;
+const MCP_RATE_LIMIT_RETRY_AFTER_MS = 250;
 const MCP_SESSION_ID = crypto.randomUUID();
 
 // ── Discovery ────────────────────────────────────────────────────────────
@@ -247,6 +252,18 @@ function rpcOnce(connection, method, params, timeoutMs = REQUEST_TIMEOUT_MS) {
       reject(new BridgeConnectionError(
         'Not connected to the editor bridge',
         { discovery },
+      ));
+      return;
+    }
+    if (pending.size >= MAX_PENDING_BRIDGE_REQUESTS) {
+      reject(new BridgeRpcError(
+        'RATE_LIMITED',
+        'Too many MCP requests are already waiting for the editor bridge',
+        {
+          pendingBridgeRequests: pending.size,
+          maxPendingBridgeRequests: MAX_PENDING_BRIDGE_REQUESTS,
+          retryAfterMs: MCP_RATE_LIMIT_RETRY_AFTER_MS,
+        },
       ));
       return;
     }
@@ -2709,6 +2726,7 @@ const SERVER_INSTRUCTIONS = [
   'MEngine MCP controls the running editor without activating or raising its native windows.',
   'Start by reading mengine://project/state and mengine://editor/state. If a project is open, inspect mengine://scene/snapshot, mengine://schema/components, mengine://queries, and mengine://commands before editing.',
   'Read tools may run concurrently. Editor writes are serialized in arrival order.',
+  'The MCP adapter bounds active and in-flight requests; RATE_LIMITED includes current capacity and retryAfterMs when a caller should retry later.',
   'For revision-sensitive writes, pass the latest expectedSceneRevision. Reuse the same requestId only when retrying the exact same write; using it with different arguments is rejected.',
   'BRIDGE_CONNECTION means the editor is unavailable and the request was not accepted. UNKNOWN_OUTCOME means a sent write lost its editor process; re-read state before deciding whether a new write is needed.',
   'Prefer domain tools over semantic window UI actions. UI inspection and interaction are available for surfaces without a domain API and remain background-safe. Every UI write must pass expectedSnapshotRevision from the same get_window_ui snapshot as its selector; stale revisions are rejected before dispatch. Successful UI writes settle two target-window render opportunities and return a postSnapshotRevision when post-action semantic observation succeeds.',
@@ -2718,8 +2736,198 @@ const SERVER_INSTRUCTIONS = [
 
 // ── MCP stdio protocol ───────────────────────────────────────────────────
 
+class BoundedNdjsonDecoder {
+  constructor(maxLineBytes, { onLine, onOverflow }) {
+    if (!Number.isSafeInteger(maxLineBytes) || maxLineBytes < 1) {
+      throw new Error('maxLineBytes must be a positive safe integer');
+    }
+    this.maxLineBytes = maxLineBytes;
+    this.onLine = onLine;
+    this.onOverflow = onOverflow;
+    this.chunks = [];
+    this.lineBytes = 0;
+    this.discarding = false;
+  }
+
+  write(chunk) {
+    const buffer = Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk);
+    let start = 0;
+    while (start < buffer.length) {
+      const newline = buffer.indexOf(0x0A, start);
+      const end = newline < 0 ? buffer.length : newline;
+      this.append(buffer.subarray(start, end));
+      if (newline < 0) return;
+      this.finishLine();
+      start = newline + 1;
+    }
+  }
+
+  end() {
+    if (this.discarding) {
+      this.reset();
+      return;
+    }
+    if (this.lineBytes > 0 || this.chunks.length > 0) this.finishLine();
+  }
+
+  append(segment) {
+    if (this.discarding || segment.length === 0) return;
+    if (this.lineBytes + segment.length > this.maxLineBytes) {
+      this.chunks = [];
+      this.lineBytes = 0;
+      this.discarding = true;
+      this.onOverflow(this.maxLineBytes);
+      return;
+    }
+    // Copy the slice so a short unfinished line cannot retain a very large
+    // source chunk after the data callback returns.
+    this.chunks.push(Buffer.from(segment));
+    this.lineBytes += segment.length;
+  }
+
+  finishLine() {
+    if (this.discarding) {
+      this.reset();
+      return;
+    }
+    let line = Buffer.concat(this.chunks, this.lineBytes).toString('utf8');
+    this.reset();
+    if (line.endsWith('\r')) line = line.slice(0, -1);
+    this.onLine(line);
+  }
+
+  reset() {
+    this.chunks = [];
+    this.lineBytes = 0;
+    this.discarding = false;
+  }
+}
+
+class BoundedWriteQueue {
+  constructor(stream, maxQueuedBytes, {
+    onError = () => {},
+    onOverflow = () => {},
+    onStateChange = () => {},
+  } = {}) {
+    if (!Number.isSafeInteger(maxQueuedBytes) || maxQueuedBytes < 1) {
+      throw new Error('maxQueuedBytes must be a positive safe integer');
+    }
+    this.stream = stream;
+    this.maxQueuedBytes = maxQueuedBytes;
+    this.onError = onError;
+    this.onOverflow = onOverflow;
+    this.onStateChange = onStateChange;
+    this.entries = [];
+    this.queuedBytes = 0;
+    this.writing = false;
+  }
+
+  enqueue(value) {
+    const byteLength = Buffer.byteLength(value, 'utf8');
+    if (
+      byteLength > this.maxQueuedBytes
+      || this.queuedBytes + byteLength > this.maxQueuedBytes
+    ) {
+      this.onOverflow({
+        byteLength,
+        queuedBytes: this.queuedBytes,
+        maxQueuedBytes: this.maxQueuedBytes,
+      });
+      return false;
+    }
+    this.entries.push({ value, byteLength });
+    this.queuedBytes += byteLength;
+    this.onStateChange(this);
+    this.flush();
+    return true;
+  }
+
+  get idle() {
+    return !this.writing && this.entries.length === 0;
+  }
+
+  flush() {
+    if (this.writing || this.entries.length === 0) return;
+    this.writing = true;
+    const entry = this.entries[0];
+    const complete = (error) => {
+      if (!this.writing) return;
+      this.writing = false;
+      if (error) {
+        this.entries = [];
+        this.queuedBytes = 0;
+        this.onError(error);
+        this.onStateChange(this);
+        return;
+      }
+      this.entries.shift();
+      this.queuedBytes -= entry.byteLength;
+      this.onStateChange(this);
+      queueMicrotask(() => this.flush());
+    };
+    try {
+      this.stream.write(entry.value, complete);
+    } catch (error) {
+      complete(error);
+    }
+  }
+}
+
+let activeMcpRequests = 0;
+let inputClosed = false;
+let outputFailed = false;
+let mcpExitCode = 0;
+
+const outputQueue = new BoundedWriteQueue(
+  process.stdout,
+  MAX_MCP_OUTBOUND_QUEUED_BYTES,
+  {
+    onError: (error) => failMcpOutput(
+      `stdout failed: ${error?.message || String(error)}`,
+    ),
+    onOverflow: ({ byteLength, queuedBytes, maxQueuedBytes }) => failMcpOutput(
+      `stdout queue limit exceeded (${byteLength} byte response, `
+        + `${queuedBytes}/${maxQueuedBytes} bytes already queued)`,
+    ),
+    onStateChange: () => {
+      updateMcpInputFlow();
+      maybeFinishMcpProcess();
+    },
+  },
+);
+
+function updateMcpInputFlow() {
+  if (inputClosed) return;
+  if (
+    activeMcpRequests >= MAX_ACTIVE_MCP_REQUESTS
+    || outputQueue.queuedBytes >= MCP_OUTPUT_PAUSE_BYTES
+  ) {
+    process.stdin.pause();
+  } else {
+    process.stdin.resume();
+  }
+}
+
+function failMcpOutput(message) {
+  if (outputFailed) return;
+  outputFailed = true;
+  mcpExitCode = 1;
+  inputClosed = true;
+  process.stderr.write(`[mengine-mcp] fatal: ${message}\n`);
+  process.stdin.destroy();
+  closeBridgeConnection();
+  maybeFinishMcpProcess();
+}
+
+function maybeFinishMcpProcess() {
+  if (!inputClosed || activeMcpRequests > 0 || !outputQueue.idle) return;
+  closeBridgeConnection();
+  process.exit(mcpExitCode);
+}
+
 function send(message) {
-  process.stdout.write(JSON.stringify(message) + '\n');
+  if (outputFailed) return;
+  outputQueue.enqueue(`${JSON.stringify(message)}\n`);
 }
 
 function respond(id, result) {
@@ -2905,6 +3113,43 @@ async function handleMessage(msg) {
   }
 }
 
+function dispatchMcpMessage(msg) {
+  if (activeMcpRequests >= MAX_ACTIVE_MCP_REQUESTS) {
+    if (msg.id !== undefined && msg.id !== null) {
+      respondError(
+        msg.id,
+        -32000,
+        'Too many MCP requests are already active',
+        {
+          code: 'RATE_LIMITED',
+          activeRequests: activeMcpRequests,
+          maxActiveRequests: MAX_ACTIVE_MCP_REQUESTS,
+          retryAfterMs: MCP_RATE_LIMIT_RETRY_AFTER_MS,
+        },
+      );
+    }
+    return;
+  }
+  activeMcpRequests += 1;
+  updateMcpInputFlow();
+  handleMessage(msg)
+    .catch((error) => {
+      if (msg.id !== undefined && msg.id !== null) {
+        respondError(
+          msg.id,
+          -32603,
+          String(error?.message || error),
+          structuredError(error),
+        );
+      }
+    })
+    .finally(() => {
+      activeMcpRequests -= 1;
+      updateMcpInputFlow();
+      maybeFinishMcpProcess();
+    });
+}
+
 function stableJson(value) {
   if (Array.isArray(value)) return value.map((item) => item === undefined ? null : stableJson(item));
   if (value && typeof value === 'object') {
@@ -2934,8 +3179,7 @@ function automaticWriteRequestId(message) {
 async function main() {
   process.stderr.write('[mengine-mcp] ready; editor bridge connects on first read or write\n');
 
-  const rl = readline.createInterface({ input: process.stdin, terminal: false });
-  rl.on('line', (line) => {
+  const consumeLine = (line) => {
     const trimmed = line.trim();
     if (!trimmed) return;
     let msg;
@@ -2952,18 +3196,35 @@ async function main() {
       });
       return;
     }
-    handleMessage(msg).catch((error) => {
-      if (msg.id !== undefined && msg.id !== null) {
-        respondError(
-          msg.id,
-          -32603,
-          String(error?.message || error),
-          structuredError(error),
-        );
-      }
-    });
+    dispatchMcpMessage(msg);
+  };
+  const decoder = new BoundedNdjsonDecoder(MAX_MCP_INPUT_LINE_BYTES, {
+    onLine: consumeLine,
+    onOverflow: (maxLineBytes) => respondError(
+      null,
+      -32600,
+      'Invalid Request',
+      {
+        reason: `Request line exceeds the ${maxLineBytes} byte limit`,
+        maxLineBytes,
+      },
+    ),
   });
-  rl.on('close', () => process.exit(0));
+  process.stdin.on('data', (chunk) => decoder.write(chunk));
+  process.stdin.on('end', () => {
+    decoder.end();
+    inputClosed = true;
+    maybeFinishMcpProcess();
+  });
+  process.stdin.on('error', (error) => {
+    mcpExitCode = 1;
+    process.stderr.write(
+      `[mengine-mcp] stdin failed: ${error?.message || String(error)}\n`,
+    );
+    inputClosed = true;
+    maybeFinishMcpProcess();
+  });
+  process.stdin.resume();
 }
 
 const launchedAsMain =
@@ -2981,6 +3242,8 @@ export {
   BridgeOutcomeUnknownError,
   RESOURCES,
   SERVER_INSTRUCTIONS,
+  BoundedNdjsonDecoder,
+  BoundedWriteQueue,
   bridgeExecute,
   bridgeQuery,
   closeBridgeConnection,

@@ -293,6 +293,8 @@ test('MCP startup instructions teach the safe autonomous workflow', () => {
   assert.match(SERVER_INSTRUCTIONS, /expectedSceneRevision/);
   assert.match(SERVER_INSTRUCTIONS, /requestId/);
   assert.match(SERVER_INSTRUCTIONS, /serialized/);
+  assert.match(SERVER_INSTRUCTIONS, /RATE_LIMITED/);
+  assert.match(SERVER_INSTRUCTIONS, /retryAfterMs/);
   assert.match(SERVER_INSTRUCTIONS, /screenshot/);
   assert.match(SERVER_INSTRUCTIONS, /BRIDGE_CONNECTION/);
   assert.match(SERVER_INSTRUCTIONS, /UNKNOWN_OUTCOME/);

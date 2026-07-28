@@ -5,6 +5,8 @@ import path from 'node:path';
 import test from 'node:test';
 import { fileURLToPath } from 'node:url';
 import {
+  BoundedNdjsonDecoder,
+  BoundedWriteQueue,
   incomingMessageError,
   negotiateProtocolVersion,
   SUPPORTED_PROTOCOL_VERSIONS,
@@ -69,6 +71,56 @@ test('MCP rejects malformed request envelopes before dispatch', () => {
     'params must be an object',
   );
   assert.equal(incomingMessageError({ jsonrpc: '2.0', id: 1, method: 'ping' }), null);
+});
+
+test('MCP stdio decoder bounds fragmented lines and recovers after overflow', () => {
+  const lines = [];
+  const overflows = [];
+  const decoder = new BoundedNdjsonDecoder(5, {
+    onLine: (line) => lines.push(line),
+    onOverflow: (limit) => overflows.push(limit),
+  });
+
+  decoder.write(Buffer.from('one\r\nab'));
+  decoder.write(Buffer.from('c\n123456\nok'));
+  decoder.end();
+
+  assert.deepEqual(lines, ['one', 'abc', 'ok']);
+  assert.deepEqual(overflows, [5]);
+});
+
+test('MCP stdout queue serializes writes and enforces its byte budget', async () => {
+  const writes = [];
+  const callbacks = [];
+  const overflows = [];
+  const queue = new BoundedWriteQueue({
+    write(value, callback) {
+      writes.push(value);
+      callbacks.push(callback);
+    },
+  }, 9, {
+    onOverflow: (details) => overflows.push(details),
+  });
+
+  assert.equal(queue.enqueue('1234'), true);
+  assert.equal(queue.enqueue('56789'), true);
+  assert.equal(queue.enqueue('x'), false);
+  assert.deepEqual(writes, ['1234']);
+  assert.equal(queue.queuedBytes, 9);
+  assert.equal(queue.idle, false);
+  assert.deepEqual(overflows, [{
+    byteLength: 1,
+    queuedBytes: 9,
+    maxQueuedBytes: 9,
+  }]);
+
+  callbacks.shift()();
+  await Promise.resolve();
+  assert.deepEqual(writes, ['1234', '56789']);
+  callbacks.shift()();
+  await Promise.resolve();
+  assert.equal(queue.queuedBytes, 0);
+  assert.equal(queue.idle, true);
 });
 
 test('MCP stdio serves negotiated initialization, resource templates, and protocol errors', async () => {
