@@ -589,12 +589,13 @@ class AgentBridge {
 
   /** Execute one allow-listed DOM action without activating the OS window. */
   async interactWindow(
-    action: 'click' | 'doubleClick' | 'contextClick' | 'setValue' | 'scroll',
+    action: 'click' | 'doubleClick' | 'contextClick' | 'setValue' | 'scroll' | 'keyPress',
     selector: string,
     windowLabel = 'main',
     value?: string,
     deltaX?: number,
     deltaY?: number,
+    key?: string,
   ): Promise<EditorUiActionResult> {
     if (!isDesktopEditor()) {
       throw new BridgeError('NOT_READY', 'Window UI interaction requires the desktop editor');
@@ -609,6 +610,7 @@ class AgentBridge {
       value,
       deltaX,
       deltaY,
+      key,
     });
     if (!result.ok) {
       throw new BridgeError('INVALID_ARGS', result.error ?? 'Editor UI interaction failed');
@@ -3118,6 +3120,7 @@ class AgentBridge {
       || commandId === 'window.ui_context_click'
       || commandId === 'window.ui_set_value'
       || commandId === 'window.ui_scroll'
+      || commandId === 'window.ui_press_key'
     ) {
       const action = commandId === 'window.ui_click'
         ? 'click'
@@ -3127,7 +3130,9 @@ class AgentBridge {
             ? 'contextClick'
             : commandId === 'window.ui_set_value'
               ? 'setValue'
-              : 'scroll';
+              : commandId === 'window.ui_scroll'
+                ? 'scroll'
+                : 'keyPress';
       const selector = typeof args.selector === 'string' ? args.selector : '';
       const windowLabel =
         typeof args.windowLabel === 'string' && args.windowLabel ? args.windowLabel : 'main';
@@ -3135,6 +3140,9 @@ class AgentBridge {
       const deltaX = optionalBoundedUiDelta(args, 'deltaX', 0);
       const deltaY = commandId === 'window.ui_scroll'
         ? requiredBoundedUiDelta(args, 'deltaY')
+        : undefined;
+      const key = commandId === 'window.ui_press_key'
+        ? requiredString(args, 'key')
         : undefined;
       const result: CommandResult = {
         ok: true,
@@ -3145,6 +3153,7 @@ class AgentBridge {
           value,
           deltaX,
           deltaY,
+          key,
         ),
       };
       return this.finishAsyncCommand(result, options, windowLabel);

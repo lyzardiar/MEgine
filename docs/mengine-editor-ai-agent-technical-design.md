@@ -328,6 +328,8 @@ Rust Host 使用独立的工程生命周期互斥门串行化 open/create/close 
 | `menu.invoke` | `{ path }` | ✅ 查 `MenuItemEntry`、执行实时 validator，再复用 `entry.action(ctx)` |
 | `window.ui_click` | `{ windowLabel?, selector }` | ✅ 对 `window.ui_snapshot` 返回的 selector 调用受限 DOM `click()`；不激活顶层窗口 |
 | `window.ui_set_value` | `{ windowLabel?, selector, value }` | ✅ 仅允许 input/textarea/select/contenteditable，触发 input/change；拒绝 disabled/readonly，禁止调用方注入脚本 |
+| `window.ui_double_click` / `context_click` / `scroll` | 快照 selector 与对应参数 | ✅ 支持双击、上下文菜单和虚拟化容器滚动；均遵守元素级 Agent 禁止策略 |
+| `window.ui_press_key` | `{ windowLabel?, selector, key }` | ✅ 仅允许 Enter/Escape/Tab/Space、方向/翻页/首尾及删除类语义键；事件只进入目标隐藏 WebView，不向前台应用注入输入 |
 
 #### 4.2.7 资产与构建
 
@@ -483,7 +485,7 @@ CLI 仅输出结构化 JSON，支持 `--args @file` / `--args -`、显式幂等 
 | --- | --- | --- |
 | 视口截图 | `src/panels/Viewport.tsx`（`canvasRef` line 522） | 暴露 `captureCanvas(): dataUrl`（`canvas.toDataURL`），由 Observer 调用——当前主路径 |
 | 整窗截图 | `src-tauri/src/agent_bridge.rs` | ✅ 已实现 WebView2 DevTools 离屏截图；支持 `windowLabel`，被遮挡/隐藏时不抢焦点；禁止退化为 GDI 屏幕拷贝 |
-| 语义窗口读取/交互 | `src-tauri/src/agent_bridge.rs` | ✅ `Runtime.evaluate` 返回可搜索的控件树；只开放 `click` / `setValue` 两种无前台输入动作，参数经 JSON→Base64 边界传递 |
+| 语义窗口读取/交互 | `src-tauri/src/agent_bridge.rs` | ✅ `Runtime.evaluate` 返回可搜索的控件树；开放点击、双击、上下文菜单、改值、滚动和白名单语义按键，全部不激活窗口；参数经 JSON→Base64 边界传递 |
 | 窗口枚举 | `src-tauri/src/lib.rs` | ✅ 已实现 `list_editor_windows`（`app.webview_windows()`，按 label 分类 main/panel/editor） |
 | 面板枚举 | `src/panels/DockWorkspace.tsx` | ✅ 推送当前内存 dock tree、活动 tab、docked/detached 状态到 AgentBridge |
 | 命令调度 | 新增 `src/agent/AgentBridge.ts` + `src/agent/commands.ts` | 命令注册表 + Dispatcher，映射到 store / 菜单 / 面板 |

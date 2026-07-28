@@ -2312,6 +2312,36 @@ const TOOLS = [
     },
     ['selector', 'deltaY'],
   ),
+  execTool(
+    'press_window_ui_key',
+    'Press an allow-listed semantic key on an element marked with the keyPress action by get_window_ui. Events stay inside the hidden WebView and do not focus or type into the foreground application.',
+    'window.ui_press_key',
+    {
+      windowLabel: { type: 'string', description: 'Window label (default: main)' },
+      selector: { type: 'string', description: 'Exact keyboard target selector returned by get_window_ui' },
+      key: {
+        type: 'string',
+        enum: [
+          'Enter',
+          'Escape',
+          'Tab',
+          'Space',
+          'ArrowUp',
+          'ArrowDown',
+          'ArrowLeft',
+          'ArrowRight',
+          'Home',
+          'End',
+          'PageUp',
+          'PageDown',
+          'Backspace',
+          'Delete',
+        ],
+        description: 'Allow-listed semantic key without modifiers',
+      },
+    },
+    ['selector', 'key'],
+  ),
 ];
 
 for (const tool of TOOLS) {

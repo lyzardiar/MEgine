@@ -35,7 +35,8 @@ export type EditorUiAction =
   | 'doubleClick'
   | 'contextClick'
   | 'setValue'
-  | 'scroll';
+  | 'scroll'
+  | 'keyPress';
 
 /** One visible, semantically meaningful DOM element in an editor webview. */
 export interface EditorUiElement {
@@ -125,6 +126,7 @@ export interface EditorUiActionResult {
   role?: string | null;
   name?: string | null;
   value?: string | null;
+  key?: string | null;
   scrollLeft?: number;
   scrollTop?: number;
   scrollWidth?: number;

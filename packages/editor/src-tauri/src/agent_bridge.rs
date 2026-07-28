@@ -664,6 +664,7 @@ pub async fn interact_editor_window(
     value: Option<String>,
     delta_x: Option<f64>,
     delta_y: Option<f64>,
+    key: Option<String>,
 ) -> Result<serde_json::Value, String> {
     let window_label = window_label.unwrap_or_else(|| "main".to_string());
     let selector = selector.trim().to_string();
@@ -672,7 +673,7 @@ pub async fn interact_editor_window(
     }
     if !matches!(
         action.as_str(),
-        "click" | "doubleClick" | "contextClick" | "setValue" | "scroll"
+        "click" | "doubleClick" | "contextClick" | "setValue" | "scroll" | "keyPress"
     ) {
         return Err(format!("unsupported editor UI action \"{action}\""));
     }
@@ -687,7 +688,43 @@ pub async fn interact_editor_window(
     if action == "scroll" && delta_y.is_none() {
         return Err("scroll requires deltaY".to_string());
     }
-    interact_editor_window_impl(app, window_label, selector, action, value, delta_x, delta_y).await
+    if action == "keyPress" {
+        let key = key
+            .as_deref()
+            .ok_or_else(|| "keyPress requires key".to_string())?;
+        if !matches!(
+            key,
+            "Enter"
+                | "Escape"
+                | "Tab"
+                | "Space"
+                | "ArrowUp"
+                | "ArrowDown"
+                | "ArrowLeft"
+                | "ArrowRight"
+                | "Home"
+                | "End"
+                | "PageUp"
+                | "PageDown"
+                | "Backspace"
+                | "Delete"
+        ) {
+            return Err(format!("unsupported editor UI key \"{key}\""));
+        }
+    } else if key.is_some() {
+        return Err("key is only valid for keyPress".to_string());
+    }
+    interact_editor_window_impl(
+        app,
+        window_label,
+        selector,
+        action,
+        value,
+        delta_x,
+        delta_y,
+        key,
+    )
+    .await
 }
 
 #[cfg(windows)]
@@ -806,6 +843,7 @@ async fn interact_editor_window_impl(
     value: Option<String>,
     delta_x: Option<f64>,
     delta_y: Option<f64>,
+    key: Option<String>,
 ) -> Result<serde_json::Value, String> {
     use base64::Engine as _;
     let payload = serde_json::json!({
@@ -814,6 +852,7 @@ async fn interact_editor_window_impl(
         "value": value,
         "deltaX": delta_x,
         "deltaY": delta_y,
+        "key": key,
     })
     .to_string();
     let payload = base64::engine::general_purpose::STANDARD.encode(payload);
@@ -963,6 +1002,7 @@ async fn interact_editor_window_impl(
     _value: Option<String>,
     _delta_x: Option<f64>,
     _delta_y: Option<f64>,
+    _key: Option<String>,
 ) -> Result<serde_json::Value, String> {
     Err("background editor-window interaction is currently only supported on Windows".to_string())
 }
@@ -988,6 +1028,7 @@ const WINDOW_UI_SNAPSHOT_SCRIPT: &str = r#"
     'contextClick',
     'setValue',
     'scroll',
+    'keyPress',
   ];
   const agentPolicyFor = (element) => {
     const blockedActions = new Set();
@@ -1169,6 +1210,21 @@ const WINDOW_UI_SNAPSHOT_SCRIPT: &str = r#"
       && element.scrollWidth > element.clientWidth + 1;
     if (scrollsVertically || scrollsHorizontally) {
       actions.push('scroll');
+    }
+    const keyboardTarget = element instanceof HTMLElement && (
+      element.tabIndex >= 0
+      || writableInput
+      || element instanceof HTMLTextAreaElement
+      || element instanceof HTMLSelectElement
+      || element.isContentEditable
+    );
+    if (
+      keyboardTarget
+      || typeof props.onKeyDown === 'function'
+      || typeof props.onKeyUp === 'function'
+      || typeof props.onKeyPress === 'function'
+    ) {
+      actions.push('keyPress');
     }
     return actions;
   };
@@ -1360,6 +1416,7 @@ const WINDOW_UI_INTERACTION_SCRIPT: &str = r#"
     value: requestedValue,
     deltaX: requestedDeltaX,
     deltaY: requestedDeltaY,
+    key: requestedKey,
   } = payload;
   const agentActionNames = [
     'click',
@@ -1367,6 +1424,7 @@ const WINDOW_UI_INTERACTION_SCRIPT: &str = r#"
     'contextClick',
     'setValue',
     'scroll',
+    'keyPress',
   ];
   const agentPolicyFor = (target) => {
     const blockedActions = new Set();
@@ -1626,6 +1684,65 @@ const WINDOW_UI_INTERACTION_SCRIPT: &str = r#"
         return { ok: false, error: `Element ${selector} does not accept a value` };
       }
     }
+  } else if (action === 'keyPress') {
+    const key = requestedKey === 'Space' ? ' ' : String(requestedKey || '');
+    const code = requestedKey === 'Space' ? 'Space' : String(requestedKey || '');
+    if (typeof element.focus === 'function') {
+      element.focus({ preventScroll: true });
+    }
+    const dispatchKeyboard = (type) => element.dispatchEvent(new KeyboardEvent(type, {
+      key,
+      code,
+      bubbles: true,
+      cancelable: true,
+      composed: true,
+    }));
+    const acceptsDefault = dispatchKeyboard('keydown');
+    if (requestedKey === 'Enter' || requestedKey === 'Space') {
+      dispatchKeyboard('keypress');
+    }
+    if (acceptsDefault && (requestedKey === 'Enter' || requestedKey === 'Space')) {
+      const role = roleForName(element);
+      const activates = (
+        element instanceof HTMLButtonElement
+        || (element instanceof HTMLInputElement
+          && ['button', 'submit', 'reset'].includes(element.type))
+        || role === 'button'
+        || role === 'link'
+        || role === 'menuitem'
+        || role === 'tab'
+      );
+      if (activates) {
+        dispatchClick(1);
+      } else if (
+        requestedKey === 'Enter'
+        && (
+          element instanceof HTMLInputElement
+          || element instanceof HTMLTextAreaElement
+          || element instanceof HTMLSelectElement
+        )
+      ) {
+        const form = element.form || element.closest('form');
+        if (form instanceof HTMLFormElement && typeof form.requestSubmit === 'function') {
+          form.requestSubmit();
+        }
+      }
+    }
+    if (acceptsDefault && requestedKey === 'Tab') {
+      const focusable = Array.from(document.querySelectorAll(
+        'button:not([disabled]), input:not([disabled]), select:not([disabled]), '
+          + 'textarea:not([disabled]), a[href], [tabindex]:not([tabindex="-1"])',
+      )).filter((candidate) => (
+        candidate instanceof HTMLElement
+        && getComputedStyle(candidate).display !== 'none'
+        && getComputedStyle(candidate).visibility !== 'hidden'
+        && candidate.getClientRects().length > 0
+      ));
+      const index = focusable.indexOf(element);
+      const next = focusable[index >= 0 ? (index + 1) % focusable.length : 0];
+      if (next instanceof HTMLElement) next.focus({ preventScroll: true });
+    }
+    dispatchKeyboard('keyup');
   } else if (action === 'scroll') {
     if (!(element instanceof HTMLElement) || typeof element.scrollBy !== 'function') {
       return { ok: false, error: `Element ${selector} is not scrollable` };
@@ -1640,6 +1757,7 @@ const WINDOW_UI_INTERACTION_SCRIPT: &str = r#"
   return {
     ok: true,
     action,
+    key: action === 'keyPress' ? requestedKey : null,
     selector,
     tag: element.localName,
     role: roleForName(element) || null,

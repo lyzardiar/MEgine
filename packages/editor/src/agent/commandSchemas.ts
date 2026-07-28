@@ -688,6 +688,30 @@ export const COMMAND_PARAMS_SCHEMAS: Record<string, AgentJsonSchema> = {
       description: 'Vertical CSS-pixel delta',
     },
   }, ['selector', 'deltaY']),
+  'window.ui_press_key': objectSchema({
+    windowLabel: stringValue('Window label; default main'),
+    selector: stringValue('Exact keyboard target selector returned by window.ui_snapshot'),
+    key: {
+      type: 'string',
+      enum: [
+        'Enter',
+        'Escape',
+        'Tab',
+        'Space',
+        'ArrowUp',
+        'ArrowDown',
+        'ArrowLeft',
+        'ArrowRight',
+        'Home',
+        'End',
+        'PageUp',
+        'PageDown',
+        'Backspace',
+        'Delete',
+      ],
+      description: 'Allow-listed semantic key without modifiers',
+    },
+  }, ['selector', 'key']),
 };
 
 export const COMMAND_EXECUTION_OPTIONS_SCHEMA: AgentJsonSchema = objectSchema({

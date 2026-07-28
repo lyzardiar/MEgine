@@ -30,6 +30,7 @@ test('direct AgentBridge schema validation matches MCP for valid command argumen
     ['entity.create', { name: 'Child', parent: null, components: {} }],
     ['transform.set', { entity: 1, position: [1, 2, 3] }],
     ['playback.step', { deltaTime: 1 / 60 }],
+    ['window.ui_press_key', { selector: '#dialog-input', key: 'Enter' }],
     ['intent.apply', {
       intent: { kind: 'SetClearColor', color: [0.1, 0.2, 0.3, 1] },
     }],
@@ -52,6 +53,7 @@ test('direct AgentBridge schema validation matches MCP for malformed or extra ar
     ['transform.set', { entity: 1 }],
     ['transform.set', { entity: 1, position: [1, 2] }],
     ['playback.step', { deltaTime: 0 }],
+    ['window.ui_press_key', { selector: '#dialog-input', key: 'A' }],
     ['intent.apply', {
       intent: { kind: 'SetClearColor', color: [0.1, 0.2, 3, 1] },
     }],

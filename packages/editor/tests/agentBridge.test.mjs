@@ -41,7 +41,7 @@ test('whole-window agent capture is background-safe and addressable by window la
   assert.match(rust, /typeof reactProps\.onChange === 'function'/);
   assert.match(rust, /\['checkbox', 'radio'\]\.includes\(element\.type\)/);
   assert.match(rust, /MENGINE_EDITOR_CONFIG_DIR/);
-  assert.match(rust, /"click" \| "doubleClick" \| "contextClick" \| "setValue" \| "scroll"/);
+  assert.match(rust, /"click" \| "doubleClick" \| "contextClick" \| "setValue" \| "scroll" \| "keyPress"/);
   assert.match(rust, /key\.startsWith\('__reactProps\$'\)/);
   assert.match(rust, /actions\.push\('doubleClick'\)/);
   assert.match(rust, /actions\.push\('contextClick'\)/);
@@ -50,6 +50,10 @@ test('whole-window agent capture is background-safe and addressable by window la
   assert.match(rust, /dispatchPointer\('contextmenu'/);
   assert.match(rust, /element\.scrollBy/);
   assert.match(rust, /actions\.push\('scroll'\)/);
+  assert.match(rust, /actions\.push\('keyPress'\)/);
+  assert.match(rust, /new KeyboardEvent\(type/);
+  assert.match(rust, /requestedKey === 'Space' \? ' ' :/);
+  assert.match(rust, /element\.focus\(\{ preventScroll: true \}\)/);
   assert.match(rust, /scrollableOverflow/);
   assert.match(rust, /scrollContextName/);
   assert.match(rust, /meaningfulContentName/);
@@ -107,6 +111,7 @@ test('whole-window agent capture is background-safe and addressable by window la
   assert.match(mcp, /'open_window_ui_context_menu'/);
   assert.match(mcp, /'set_window_ui_value'/);
   assert.match(mcp, /'scroll_window_ui'/);
+  assert.match(mcp, /'press_window_ui_key'/);
   assert.match(mcp, /'respond_to_dialog'/);
   assert.match(mcp, /'close_editor_window'/);
   assert.match(mcp, /'open_editor_window'/);
