@@ -211,6 +211,25 @@ export interface PanelLayoutSnapshot {
   activePanels: string[];
 }
 
+/** Flat panel inventory derived from one live dock and native-window snapshot. */
+export interface EditorPanelInfo {
+  kind: string;
+  title: string;
+  /** Selected dock tab, or the sole content of a detached panel window. */
+  active: boolean;
+  /** Panel content is currently shown in its host; independent of OS window visibility. */
+  visible: boolean;
+  docked: boolean;
+  detached: boolean;
+  dockPath: string | null;
+  tabIndex: number | null;
+  windowLabel: string;
+  nativeWindowAvailable: boolean;
+  /** Actual native host-window state; null in the browser-only editor. */
+  windowVisible: boolean | null;
+  windowFocused: boolean | null;
+}
+
 /** Serializable menu metadata with the live validation result. */
 export interface EditorMenuItemInfo {
   path: string;

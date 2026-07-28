@@ -12,6 +12,7 @@ import {
 import { cursorPosition, getCurrentWindow } from '@tauri-apps/api/window';
 import {
   CORE_PANEL_IDS,
+  PANEL_TITLES,
   closeAllDetachedPanelWindows,
   closeDetachedPanelWindow,
   createPanelChannel,
@@ -71,29 +72,11 @@ export type DockPanelContents = Omit<Record<PanelKind, ReactNode>, 'scene' | 'ga
 
 const LAYOUT_KEY = 'mengine.dock.layout.v4';
 
-const PANEL_TITLE: Record<PanelKind, string> = {
-  hierarchy: 'Hierarchy',
-  scene: 'Scene',
-  game: 'Game',
-  inspector: 'Inspector / Property',
-  project: 'Project',
-  console: 'Console',
-  profiler: 'Profiler',
-  timeline: 'Timeline',
-  animator: 'Animator',
-  material: 'Material',
-  shader: 'Surface Shader',
-  spriteEditor: 'Sprite Editor',
-  spriteAtlas: 'Sprite Atlas',
-  build: 'Build Settings',
-  projectSettings: 'Project Settings',
-};
-
 const ALL_PANELS: PanelKind[] = [...CORE_PANEL_IDS];
 
 CORE_PANEL_IDS.forEach((panel, index) => {
   registerMenuItem(
-    `Window/General/${PANEL_TITLE[panel]}`,
+    `Window/General/${PANEL_TITLES[panel]}`,
     (context) => {
       window.dispatchEvent(new CustomEvent('mengine:focus-panel', {
         detail: {
@@ -766,7 +749,7 @@ function DockLeaf(props: {
                 aria-controls={panelId}
                 className={`dock-tab dock-tab-drag${active === kind ? ' active' : ''}${dirty ? ' dirty' : ''}`}
                 title={dirty
-                  ? `Save ${PANEL_TITLE[kind]} before moving or detaching it`
+                  ? `Save ${PANEL_TITLES[kind]} before moving or detaching it`
                   : '拖到面板中间=叠页签；拖到边缘=上下左右拆分'}
                 onClick={(event) => {
                   if (suppressClick.current) {
@@ -834,7 +817,7 @@ function DockLeaf(props: {
                   if (current?.started) props.onDragEnd();
                 }}
               >
-                {PANEL_TITLE[kind]}{dirty ? ' *' : ''}
+                {PANEL_TITLES[kind]}{dirty ? ' *' : ''}
               </button>
             );
           })}
@@ -843,9 +826,9 @@ function DockLeaf(props: {
               type="button"
               className="dock-popout"
               title={props.dirtyPanels.has(active)
-                ? `Save ${PANEL_TITLE[active]} before detaching it`
-                : `Open ${PANEL_TITLE[active]} as a native window`}
-              aria-label={`Detach ${PANEL_TITLE[active]}`}
+                ? `Save ${PANEL_TITLES[active]} before detaching it`
+                : `Open ${PANEL_TITLES[active]} as a native window`}
+              aria-label={`Detach ${PANEL_TITLES[active]}`}
               disabled={props.dirtyPanels.has(active)}
               onClick={() => props.onDetach(active)}
             >
@@ -864,11 +847,11 @@ function DockLeaf(props: {
                 id={panelId}
                 className={`dock-panel-slot${active === panel ? '' : ' hidden'}`}
                 role="tabpanel"
-                aria-label={`${PANEL_TITLE[panel]} panel`}
+                aria-label={`${PANEL_TITLES[panel]} panel`}
                 aria-labelledby={tabId}
                 aria-hidden={active !== panel}
               >
-                <Suspense fallback={<div className="dock-panel-loading">Loading {PANEL_TITLE[panel]}…</div>}>
+                <Suspense fallback={<div className="dock-panel-loading">Loading {PANEL_TITLES[panel]}…</div>}>
                   {props.panelContent(panel)}
                 </Suspense>
               </div>
@@ -1274,14 +1257,14 @@ export function DockWorkspace(props: {
       <div
         className="dock-workspace detached-panel-workspace"
         role="region"
-        aria-label={`${PANEL_TITLE[props.detachedPanel]} panel`}
+        aria-label={`${PANEL_TITLES[props.detachedPanel]} panel`}
       >
         <div className="detached-dock-header">
           <button
             type="button"
             className="detached-dock-drag"
             title={detachedDirty
-              ? `Save ${PANEL_TITLE[props.detachedPanel]} before moving it`
+              ? `Save ${PANEL_TITLES[props.detachedPanel]} before moving it`
               : '拖回主窗口中的目标区域即可重新停靠'}
             disabled={detachedDirty}
             onPointerDown={(event) => {
@@ -1290,14 +1273,14 @@ export function DockWorkspace(props: {
               void dragDetachedPanelWindow(props.detachedPanel!);
             }}
           >
-            <span className="detached-dock-tab">{PANEL_TITLE[props.detachedPanel]}</span>
+            <span className="detached-dock-tab">{PANEL_TITLES[props.detachedPanel]}</span>
           </button>
           <div className="detached-dock-controls">
             <button
               type="button"
               className="detached-dock-return"
               title={detachedDirty
-                ? `Save ${PANEL_TITLE[props.detachedPanel]} before docking it`
+                ? `Save ${PANEL_TITLES[props.detachedPanel]} before docking it`
                 : '停靠回主窗口'}
               aria-label="停靠回主窗口"
               disabled={detachedDirty}
@@ -1331,7 +1314,7 @@ export function DockWorkspace(props: {
           </div>
         </div>
         <div className="detached-panel-content">
-          <Suspense fallback={<div className="dock-panel-loading">Loading {PANEL_TITLE[props.detachedPanel]}…</div>}>
+          <Suspense fallback={<div className="dock-panel-loading">Loading {PANEL_TITLES[props.detachedPanel]}…</div>}>
             {panelContent(props.detachedPanel)}
           </Suspense>
         </div>

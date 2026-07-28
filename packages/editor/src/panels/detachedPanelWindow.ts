@@ -23,7 +23,7 @@ export const CORE_PANEL_IDS = [
 
 export type CorePanelId = (typeof CORE_PANEL_IDS)[number];
 
-const PANEL_TITLES: Record<CorePanelId, string> = {
+export const PANEL_TITLES: Record<CorePanelId, string> = {
   hierarchy: 'Hierarchy',
   scene: 'Scene',
   game: 'Game',

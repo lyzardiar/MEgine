@@ -44,7 +44,7 @@ test('core editor navigation exposes named semantic controls', () => {
   assert.match(dock, /role="tab"/);
   assert.match(dock, /aria-selected=\{active === kind\}/);
   assert.match(dock, /role="tabpanel"/);
-  assert.match(dock, /aria-label=\{`\$\{PANEL_TITLE\[panel\]\} panel`\}/);
+  assert.match(dock, /aria-label=\{`\$\{PANEL_TITLES\[panel\]\} panel`\}/);
 });
 
 test('complex authoring rows identify their selectable semantic regions', () => {

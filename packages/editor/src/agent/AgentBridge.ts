@@ -22,14 +22,15 @@ import {
 import { normalizeSceneName, sceneFileName } from '../sceneLibrary';
 import {
   BridgeError,
+  type DockLayoutNode,
   type EditorMenuItemInfo,
+  type EditorPanelInfo,
   type EditorState,
   type EditorUiActionResult,
   type EditorUiContentPage,
   type EditorUiSnapshot,
   type EditorWindowInfo,
   type HierarchyNode,
-  type DockLayoutNode,
   type PanelLayoutSnapshot,
   type ScreenshotResult,
   type SelectionInfo,
@@ -86,6 +87,7 @@ import { openNativeEditorWindow } from '../editorWindow/nativeEditorWindow';
 import {
   CORE_PANEL_IDS,
   detachPanelWindow,
+  PANEL_TITLES,
   requestPanelDock,
 } from '../panels/detachedPanelWindow';
 import {
@@ -1670,6 +1672,51 @@ class AgentBridge {
       throw new BridgeError('NOT_READY', 'The main dock workspace is not ready');
     }
     return structuredClone(layout);
+  }
+
+  async listPanels(): Promise<{
+    panels: EditorPanelInfo[];
+    nativeLayoutConsistent: boolean;
+  }> {
+    let layout = this.getPanelLayout();
+    let windows = await this.listWindows();
+    let nativeLayoutConsistent = panelWindowsMatchLayout(layout, windows);
+    for (let attempt = 0; attempt < 20 && !nativeLayoutConsistent; attempt += 1) {
+      await new Promise((resolve) => window.setTimeout(resolve, 25));
+      layout = this.getPanelLayout();
+      windows = await this.listWindows();
+      nativeLayoutConsistent = panelWindowsMatchLayout(layout, windows);
+    }
+    const detached = new Map(
+      layout.detachedPanels.map((entry) => [entry.kind, entry.windowLabel]),
+    );
+    const docked = new Set(layout.dockedPanels);
+    const active = new Set(layout.activePanels);
+    const windowsByLabel = new Map(windows.map((entry) => [entry.label, entry]));
+    return {
+      panels: CORE_PANEL_IDS.map((kind) => {
+        const dockLocation = findPanelDockLocation(layout.tree, kind);
+        const detachedWindow = detached.get(kind);
+        const windowLabel = detachedWindow ?? 'main';
+        const nativeWindow = windowsByLabel.get(windowLabel);
+        const isActive = active.has(kind);
+        return {
+          kind,
+          title: PANEL_TITLES[kind],
+          active: isActive,
+          visible: isActive,
+          docked: docked.has(kind),
+          detached: detachedWindow !== undefined,
+          dockPath: dockLocation?.path ?? null,
+          tabIndex: dockLocation?.tabIndex ?? null,
+          windowLabel,
+          nativeWindowAvailable: nativeWindow !== undefined,
+          windowVisible: nativeWindow?.visible ?? null,
+          windowFocused: nativeWindow?.focused ?? null,
+        };
+      }),
+      nativeLayoutConsistent,
+    };
   }
 
   listMenus(root?: string): EditorMenuItemInfo[] {
@@ -3879,6 +3926,8 @@ class AgentBridge {
             ? params.expectedContentRevision
             : undefined,
         );
+      case 'panel.list':
+        return this.listPanels();
       case 'panel.get_layout':
         return this.getPanelLayout();
       case 'menu.list':
@@ -4636,6 +4685,35 @@ function defaultTabs(
   active: string,
 ): boolean {
   return node.kind === 'tabs' && sameStrings(node.panels, panels) && node.active === active;
+}
+
+function findPanelDockLocation(
+  node: DockLayoutNode,
+  panel: string,
+  path = 'root',
+): { path: string; tabIndex: number } | null {
+  if (node.kind === 'tabs') {
+    const tabIndex = node.panels.indexOf(panel);
+    return tabIndex < 0 ? null : { path, tabIndex };
+  }
+  return (
+    findPanelDockLocation(node.first, panel, `${path}.first`)
+    ?? findPanelDockLocation(node.second, panel, `${path}.second`)
+  );
+}
+
+function panelWindowsMatchLayout(
+  layout: PanelLayoutSnapshot,
+  windows: readonly EditorWindowInfo[],
+): boolean {
+  const layoutWindowLabels = layout.detachedPanels
+    .map((entry) => entry.windowLabel)
+    .sort();
+  const nativeWindowLabels = windows
+    .filter((entry) => entry.kind === 'panel')
+    .map((entry) => entry.label)
+    .sort();
+  return sameStrings(layoutWindowLabels, nativeWindowLabels);
 }
 
 function isDefaultPanelLayout(layout: PanelLayoutSnapshot): boolean {

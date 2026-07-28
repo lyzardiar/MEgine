@@ -1385,6 +1385,13 @@ const TOOLS = [
     handler: async () => textContent(await bridgeQuery('workspace.documents')),
   },
   {
+    name: 'list_panels',
+    description:
+      'List every editor panel with its title, active/docked/detached state, stable dock path, exact host window label, and native visibility/focus state. The response retries briefly across detach/dock transitions and reports whether the dock and native-window snapshots agree.',
+    inputSchema: { type: 'object', properties: {} },
+    handler: async () => textContent(await bridgeQuery('panel.list')),
+  },
+  {
     name: 'get_panel_layout',
     description:
       'Get the exact live dock layout: split/tab tree, active tabs, docked panels, and detached panels with their native window labels. This is a background-safe read.',

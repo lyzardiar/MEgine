@@ -206,6 +206,7 @@ export const QUERY_PARAMS_SCHEMAS: Record<string, AgentJsonSchema> = {
       },
     ],
   }),
+  'panel.list': emptySchema,
   'panel.get_layout': emptySchema,
   'menu.list': objectSchema({
     root: nonEmptyString('Optional exact root menu name'),
@@ -362,6 +363,7 @@ const QUERY_SUMMARIES: QuerySummary[] = [
   { id: 'workspace.documents', category: 'workspace', description: 'List open scene and resource documents with dirty state', readOnly: true },
   { id: 'window.ui_snapshot', category: 'window', description: 'Read paged semantic content for any editor window', readOnly: true },
   { id: 'window.ui_content', category: 'window', description: 'Read exact paged text or value content for a semantic selector', readOnly: true },
+  { id: 'panel.list', category: 'panel', description: 'List every panel with its active state, dock path, and native host window', readOnly: true },
   { id: 'panel.get_layout', category: 'panel', description: 'Read the complete dock, tab, and detached-panel layout', readOnly: true },
   { id: 'menu.list', category: 'menu', description: 'List registered menu items and Agent-safe invocation metadata', readOnly: true },
   { id: 'asset.list', category: 'asset', description: 'List and filter the paged project asset index', readOnly: true },

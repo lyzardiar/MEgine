@@ -236,6 +236,8 @@ test('whole-window agent capture is background-safe and addressable by window la
   assert.match(mcp, /'close_editor_window'/);
   assert.match(mcp, /'open_editor_window'/);
   assert.match(mcp, /name: 'get_panel_layout'/);
+  assert.match(mcp, /name: 'list_panels'/);
+  assert.match(mcp, /bridgeQuery\('panel\.list'\)/);
   assert.match(mcp, /name: 'list_menu_items'/);
   assert.match(mcp, /'invoke_menu_item'/);
   assert.match(mcp, /name: 'list_scenes'/);
