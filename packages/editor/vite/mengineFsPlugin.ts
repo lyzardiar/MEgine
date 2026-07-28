@@ -1792,11 +1792,29 @@ export function mengineFsPlugin(opts: MengineFsOptions | string): Plugin {
   }
 
   function readSortingLayers() {
+    return readSortingLayersSnapshot().settings;
+  }
+
+  function readSortingLayersSnapshot() {
     const sortingLayersPath = resolveSortingLayersPath(false);
     if (!sortingLayersPath || !fs.existsSync(sortingLayersPath)) {
-      return { version: 1 as const, layers: [{ id: 'default', name: 'Default' }] };
+      return {
+        settings: { version: 1 as const, layers: [{ id: 'default', name: 'Default' }] },
+        revision: null,
+      };
     }
-    return normalizeSortingLayers(JSON.parse(fs.readFileSync(sortingLayersPath, 'utf8')));
+    for (let attempt = 0; attempt < 2; attempt += 1) {
+      const before = assetFileRevision(fs.statSync(sortingLayersPath));
+      const contents = fs.readFileSync(sortingLayersPath, 'utf8');
+      const after = assetFileRevision(fs.statSync(sortingLayersPath));
+      if (before === after) {
+        return {
+          settings: normalizeSortingLayers(JSON.parse(contents)),
+          revision: after,
+        };
+      }
+    }
+    throw new Error('sorting layers changed repeatedly while being read; retry');
   }
 
   function collectTs(dir: string, folder: string, idPrefix: string, out: ScriptAsset[]) {
@@ -2010,6 +2028,33 @@ export function mengineFsPlugin(opts: MengineFsOptions | string): Plugin {
           Buffer.from(`${JSON.stringify(settings, null, 2)}\n`, 'utf8'),
         );
         return sendJson(res, 200, settings);
+      }
+
+      if (pathname === `${API}/sorting-layers-snapshot` && method === 'GET') {
+        return sendJson(res, 200, readSortingLayersSnapshot());
+      }
+
+      if (pathname === `${API}/sorting-layers-guarded` && method === 'PUT') {
+        const rawExpected = req.headers['x-mengine-expected-revision'];
+        if (typeof rawExpected !== 'string') {
+          return sendJson(res, 400, { error: 'missing expected sorting layer revision' });
+        }
+        const expectedRevision = rawExpected === '__missing__' ? null : rawExpected;
+        const before = readSortingLayersSnapshot();
+        if (before.revision !== expectedRevision) {
+          return sendJson(res, 409, {
+            error:
+              `sorting layers changed on disk since they were loaded; expected ${expectedRevision ?? 'missing'}, current ${before.revision ?? 'missing'}`,
+          });
+        }
+        const settings = normalizeSortingLayers(JSON.parse(await readBody(req) || '{}'));
+        const sortingLayersPath = resolveSortingLayersPath(true);
+        if (!sortingLayersPath) throw new Error('sorting layer path is unavailable');
+        writeFileAtomic(
+          sortingLayersPath,
+          Buffer.from(`${JSON.stringify(settings, null, 2)}\n`, 'utf8'),
+        );
+        return sendJson(res, 200, readSortingLayersSnapshot());
       }
 
       const assetMatch = pathname.match(new RegExp(`^${API}/asset/(.+)$`));

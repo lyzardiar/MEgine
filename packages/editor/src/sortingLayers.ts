@@ -7,7 +7,10 @@ import {
 } from './sortingLayerModel';
 import {
   getProjectSortingLayers,
+  getProjectSortingLayersSnapshot,
   saveProjectSortingLayers,
+  saveProjectSortingLayersGuarded,
+  type ProjectSortingLayersSnapshot,
 } from './transport/editorTransport';
 
 export const SORTING_LAYERS_CHANGED_EVENT = 'mengine:sorting-layers-changed';
@@ -51,4 +54,25 @@ export async function persistSortingLayers(layers: SortingLayer[]): Promise<Sort
   const normalized = normalizeSortingLayerSettings({ version: 1, layers });
   const saved = await saveProjectSortingLayers(normalized);
   return applySortingLayers(saved, true);
+}
+
+export async function loadSortingLayersSnapshot(): Promise<ProjectSortingLayersSnapshot> {
+  getChannel();
+  const snapshot = await getProjectSortingLayersSnapshot();
+  return {
+    settings: applySortingLayers(snapshot.settings, false),
+    revision: snapshot.revision,
+  };
+}
+
+export async function persistSortingLayersGuarded(
+  layers: SortingLayer[],
+  expectedRevision: string | null,
+): Promise<ProjectSortingLayersSnapshot> {
+  const normalized = normalizeSortingLayerSettings({ version: 1, layers });
+  const snapshot = await saveProjectSortingLayersGuarded(normalized, expectedRevision);
+  return {
+    settings: applySortingLayers(snapshot.settings, true),
+    revision: snapshot.revision,
+  };
 }

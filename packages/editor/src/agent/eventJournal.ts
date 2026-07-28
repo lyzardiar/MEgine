@@ -7,6 +7,7 @@ export const AGENT_EVENT_TOPICS = [
   'panel.changed',
   'build.progress',
   'build.settings',
+  'project.settings',
   'asset.changed',
   'project.changed',
 ] as const;

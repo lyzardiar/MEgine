@@ -885,6 +885,7 @@ const COMMAND_SUMMARIES: CommandSummary[] = [
   { id: 'project.open', category: 'project', description: 'Open a project from the welcome page without a dialog', readOnly: false },
   { id: 'project.create', category: 'project', description: 'Create and open a project from the welcome page without a dialog', readOnly: false },
   { id: 'project.forget_recent', category: 'project', description: 'Remove a path from the recent-project list', readOnly: false },
+  { id: 'project.settings.set_sorting_layers', category: 'project', description: 'Revision-safely replace the ordered project sorting layers', readOnly: false },
   { id: 'scene.new', category: 'scene', description: 'Create and save a named scene without opening a dialog', readOnly: false },
   { id: 'scene.open', category: 'scene', description: 'Open a named scene without opening a dialog', readOnly: false },
   { id: 'scene.save', category: 'scene', description: 'Save the current scene, optionally under a new name', readOnly: false },

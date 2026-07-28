@@ -263,6 +263,13 @@ const TOOLS = [
     inputSchema: { type: 'object', properties: {} },
     handler: async () => textContent(await bridgeQuery('project.recent')),
   },
+  {
+    name: 'get_project_settings',
+    description:
+      'Read persisted Project Settings without opening or focusing the settings panel. Returns the ordered Sorting Layers and the exact file revision required for updates.',
+    inputSchema: { type: 'object', properties: {} },
+    handler: async () => textContent(await bridgeQuery('project.settings')),
+  },
   execTool(
     'open_project',
     'Open a validated MEngine project path without a dialog while the editor is on the welcome page. Project switching is blocked once a project is open.',
@@ -287,6 +294,36 @@ const TOOLS = [
     {
       path: { type: 'string', description: 'Exact recent project path to forget' },
     },
+  ),
+  execTool(
+    'set_sorting_layers',
+    'Strictly validate and revision-safely replace the complete ordered Sorting Layer list without opening or focusing a window. Include the Default layer and pass the exact revision from get_project_settings, or null only while the settings file is missing.',
+    'project.settings.set_sorting_layers',
+    {
+      layers: {
+        type: 'array',
+        minItems: 1,
+        maxItems: 64,
+        items: {
+          type: 'object',
+          required: ['id', 'name'],
+          properties: {
+            id: {
+              type: 'string',
+              pattern: '^[A-Za-z0-9_-]{1,64}$',
+              description: 'Stable serialized identifier',
+            },
+            name: { type: 'string', minLength: 1, maxLength: 64 },
+          },
+          additionalProperties: false,
+        },
+      },
+      expectedRevision: {
+        type: ['string', 'null'],
+        description: 'Exact current revision, or null only when the file is missing',
+      },
+    },
+    ['layers', 'expectedRevision'],
   ),
   {
     name: 'get_editor_state',

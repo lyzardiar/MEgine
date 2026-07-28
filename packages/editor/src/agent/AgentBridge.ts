@@ -123,6 +123,14 @@ import {
   type SceneDiff,
   type SceneEntityView,
 } from './eventJournal';
+import {
+  loadSortingLayersSnapshot,
+  persistSortingLayersGuarded,
+} from '../sortingLayers';
+import {
+  validateSortingLayers,
+  type SortingLayer,
+} from '../sortingLayerModel';
 
 type CaptureFn = (
   format: 'image/png' | 'image/jpeg',
@@ -559,6 +567,16 @@ class AgentBridge {
     } catch (error) {
       throw projectBridgeError(error);
     }
+  }
+
+  async getProjectSettings(): Promise<{
+    sortingLayers: Awaited<ReturnType<typeof loadSortingLayersSnapshot>>;
+  }> {
+    const sortingLayers = await bridgeIo(
+      'Failed to read Project Settings',
+      () => loadSortingLayersSnapshot(),
+    );
+    return { sortingLayers: structuredClone(sortingLayers) };
   }
 
   getSceneSnapshot(): unknown {
@@ -1501,6 +1519,45 @@ class AgentBridge {
     return result;
   }
 
+  async setSortingLayers(
+    layers: SortingLayer[],
+    expectedRevision: string | null,
+  ): Promise<unknown> {
+    await this.requireWorkspaceProvider().assertDiskMutationAllowed({
+      allowSceneDirty: true,
+    });
+    const current = await bridgeIo(
+      'Failed to read Project Settings',
+      () => loadSortingLayersSnapshot(),
+    );
+    if (current.revision !== expectedRevision) {
+      throw staleSortingLayerRevision(current.revision, expectedRevision);
+    }
+    let saved: Awaited<ReturnType<typeof persistSortingLayersGuarded>>;
+    try {
+      saved = await persistSortingLayersGuarded(layers, expectedRevision);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      if (message.includes('sorting layers changed on disk since they were loaded')) {
+        const latest = await bridgeIo(
+          'Failed to reload Project Settings',
+          () => loadSortingLayersSnapshot(),
+        );
+        throw staleSortingLayerRevision(latest.revision, expectedRevision);
+      }
+      throw new BridgeError('IO_ERROR', message);
+    }
+    this.appendEvent('project.settings', {
+      section: 'sortingLayers',
+      revision: saved.revision,
+      layers: saved.settings.layers,
+    });
+    this.logProvider?.(
+      `Agent saved ${saved.settings.layers.length} project sorting layer(s) at revision ${saved.revision}`,
+    );
+    return { sortingLayers: structuredClone(saved) };
+  }
+
   async getBuildHistory(limit = 20): Promise<unknown> {
     const boundedLimit = Number.isFinite(limit)
       ? Math.min(100, Math.max(1, Math.trunc(limit)))
@@ -1815,6 +1872,16 @@ class AgentBridge {
         this.observeProject();
         throw projectBridgeError(error);
       }
+    }
+    if (commandId === 'project.settings.set_sorting_layers') {
+      const layers = requiredSortingLayers(args);
+      const validation = validateSortingLayers(layers);
+      if (validation) throw new BridgeError('INVALID_ARGS', validation);
+      const result = await this.setSortingLayers(
+        layers,
+        requiredNullableRevision(args, 'expectedRevision'),
+      );
+      return this.finishAsyncCommand({ ok: true, data: result }, options, true);
     }
     if (commandId === 'scene.new') {
       const result = await this.requireSceneProvider().create({
@@ -2285,6 +2352,8 @@ class AgentBridge {
         return this.getProjectState();
       case 'project.recent':
         return this.getRecentProjects();
+      case 'project.settings':
+        return this.getProjectSettings();
       case 'selection.get':
         return this.getSelection();
       case 'scene.snapshot':
@@ -2622,6 +2691,21 @@ function stalePrefabRevision(
   );
 }
 
+function staleSortingLayerRevision(
+  currentRevision: string | null,
+  expectedRevision: string | null,
+): BridgeError {
+  return new BridgeError(
+    'STALE_REVISION',
+    `Project Settings revision changed: expected ${expectedRevision ?? 'missing'}, current ${currentRevision ?? 'missing'}`,
+    {
+      path: 'ProjectSettings/sorting-layers.json',
+      expectedRevision,
+      currentRevision,
+    },
+  );
+}
+
 function prefabBridgeError(reason: unknown): BridgeError {
   if (reason instanceof BridgeError) return reason;
   const message = reason instanceof Error ? reason.message : String(reason);
@@ -2644,6 +2728,48 @@ function requiredNonNegativeInteger(
     );
   }
   return value;
+}
+
+function requiredNullableRevision(
+  args: Record<string, unknown>,
+  key: string,
+): string | null {
+  const value = args[key];
+  if (value === null) return null;
+  if (typeof value !== 'string' || !value.trim()) {
+    throw new BridgeError(
+      'INVALID_ARGS',
+      `"${key}" must be a non-empty revision string or null`,
+    );
+  }
+  return value.trim();
+}
+
+function requiredSortingLayers(args: Record<string, unknown>): SortingLayer[] {
+  const value = args.layers;
+  if (!Array.isArray(value)) {
+    throw new BridgeError('INVALID_ARGS', '"layers" must be an array');
+  }
+  return value.map((entry, index) => {
+    if (!entry || typeof entry !== 'object' || Array.isArray(entry)) {
+      throw new BridgeError('INVALID_ARGS', `layers[${index}] must be an object`);
+    }
+    const record = entry as Record<string, unknown>;
+    const unexpected = Object.keys(record).filter((key) => key !== 'id' && key !== 'name');
+    if (unexpected.length) {
+      throw new BridgeError(
+        'INVALID_ARGS',
+        `layers[${index}] has unsupported fields: ${unexpected.join(', ')}`,
+      );
+    }
+    if (typeof record.id !== 'string' || typeof record.name !== 'string') {
+      throw new BridgeError(
+        'INVALID_ARGS',
+        `layers[${index}] must contain string "id" and "name" fields`,
+      );
+    }
+    return { id: record.id, name: record.name };
+  });
 }
 
 function optionalString(

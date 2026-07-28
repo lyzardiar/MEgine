@@ -164,6 +164,13 @@ struct ProjectSortingLayers {
     layers: Vec<ProjectSortingLayer>,
 }
 
+#[derive(Clone, Debug, serde::Serialize)]
+#[serde(rename_all = "camelCase")]
+struct ProjectSortingLayersSnapshot {
+    settings: ProjectSortingLayers,
+    revision: Option<String>,
+}
+
 impl Default for ProjectSortingLayers {
     fn default() -> Self {
         Self {
@@ -3858,17 +3865,41 @@ fn sorting_layers_path(
     Ok(Some(target))
 }
 
-fn read_sorting_layers(project_root: &Path) -> Result<ProjectSortingLayers, String> {
+fn read_sorting_layers_snapshot(
+    project_root: &Path,
+) -> Result<ProjectSortingLayersSnapshot, String> {
     let Some(path) = sorting_layers_path(project_root, false)? else {
-        return Ok(ProjectSortingLayers::default());
+        return Ok(ProjectSortingLayersSnapshot {
+            settings: ProjectSortingLayers::default(),
+            revision: None,
+        });
     };
     if !path.is_file() {
-        return Ok(ProjectSortingLayers::default());
+        return Ok(ProjectSortingLayersSnapshot {
+            settings: ProjectSortingLayers::default(),
+            revision: None,
+        });
     }
-    let contents = std::fs::read(&path).map_err(|error| error.to_string())?;
-    let value = serde_json::from_slice(&contents)
-        .map_err(|error| format!("cannot parse {}: {error}", path.display()))?;
-    normalize_sorting_layers(value)
+    for _ in 0..2 {
+        let before = path.metadata().map_err(|error| error.to_string())?;
+        let revision = project_file_revision(&before);
+        let contents = std::fs::read(&path).map_err(|error| error.to_string())?;
+        let after = path.metadata().map_err(|error| error.to_string())?;
+        if revision != project_file_revision(&after) {
+            continue;
+        }
+        let value = serde_json::from_slice(&contents)
+            .map_err(|error| format!("cannot parse {}: {error}", path.display()))?;
+        return Ok(ProjectSortingLayersSnapshot {
+            settings: normalize_sorting_layers(value)?,
+            revision: Some(revision),
+        });
+    }
+    Err("sorting layers changed repeatedly while being read; retry".into())
+}
+
+fn read_sorting_layers(project_root: &Path) -> Result<ProjectSortingLayers, String> {
+    Ok(read_sorting_layers_snapshot(project_root)?.settings)
 }
 
 fn write_sorting_layers(
@@ -3908,6 +3939,23 @@ fn write_sorting_layers(
     result.map_err(|error| error.to_string())
 }
 
+fn write_sorting_layers_guarded(
+    project_root: &Path,
+    settings: &ProjectSortingLayers,
+    expected_revision: Option<&str>,
+) -> Result<ProjectSortingLayersSnapshot, String> {
+    let before = read_sorting_layers_snapshot(project_root)?;
+    if before.revision.as_deref() != expected_revision {
+        return Err(format!(
+            "sorting layers changed on disk since they were loaded; expected {}, current {}",
+            expected_revision.unwrap_or("missing"),
+            before.revision.as_deref().unwrap_or("missing"),
+        ));
+    }
+    write_sorting_layers(project_root, settings)?;
+    read_sorting_layers_snapshot(project_root)
+}
+
 #[tauri::command]
 fn get_project_sorting_layers(state: State<'_, AppState>) -> Result<ProjectSortingLayers, String> {
     let guard = state.project.lock();
@@ -3925,6 +3973,31 @@ fn save_project_sorting_layers(
     let session = guard.as_ref().ok_or_else(|| no_project().message)?;
     write_sorting_layers(Path::new(&session.snapshot().project_root), &settings)?;
     Ok(settings)
+}
+
+#[tauri::command]
+fn get_project_sorting_layers_snapshot(
+    state: State<'_, AppState>,
+) -> Result<ProjectSortingLayersSnapshot, String> {
+    let guard = state.project.lock();
+    let session = guard.as_ref().ok_or_else(|| no_project().message)?;
+    read_sorting_layers_snapshot(Path::new(&session.snapshot().project_root))
+}
+
+#[tauri::command]
+fn save_project_sorting_layers_guarded(
+    settings: ProjectSortingLayers,
+    expected_revision: Option<String>,
+    state: State<'_, AppState>,
+) -> Result<ProjectSortingLayersSnapshot, String> {
+    let settings = normalize_sorting_layers(settings)?;
+    let guard = state.project.lock();
+    let session = guard.as_ref().ok_or_else(|| no_project().message)?;
+    write_sorting_layers_guarded(
+        Path::new(&session.snapshot().project_root),
+        &settings,
+        expected_revision.as_deref(),
+    )
 }
 
 #[tauri::command]
@@ -4992,6 +5065,8 @@ pub fn run() {
             validate_surface_shader,
             get_project_sorting_layers,
             save_project_sorting_layers,
+            get_project_sorting_layers_snapshot,
+            save_project_sorting_layers_guarded,
             list_pc_build_history,
             list_pc_build_patches,
             compare_pc_build_history,
@@ -6054,6 +6129,11 @@ mod tests {
         let loaded = read_sorting_layers(&root).unwrap();
         assert_eq!(loaded.layers.len(), 2);
         assert_eq!(loaded.layers[1].id, "effects");
+        let snapshot = read_sorting_layers_snapshot(&root).unwrap();
+        let revision = snapshot.revision.clone().unwrap();
+        assert!(write_sorting_layers_guarded(&root, &settings, Some("stale")).is_err());
+        let updated = write_sorting_layers_guarded(&root, &settings, Some(&revision)).unwrap();
+        assert!(updated.revision.is_some());
 
         let duplicate = ProjectSortingLayers {
             version: 1,

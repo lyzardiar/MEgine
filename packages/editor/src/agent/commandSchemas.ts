@@ -143,6 +143,22 @@ export const COMMAND_PARAMS_SCHEMAS: Record<string, AgentJsonSchema> = {
   'project.forget_recent': objectSchema({
     path: stringValue('Exact recent-project path to remove'),
   }, ['path']),
+  'project.settings.set_sorting_layers': objectSchema({
+    layers: {
+      type: 'array',
+      minItems: 1,
+      maxItems: 64,
+      items: objectSchema({
+        id: stringValue('Stable ASCII identifier (letters, digits, underscore, or hyphen)'),
+        name: stringValue('Unique display name, at most 64 characters'),
+      }, ['id', 'name']),
+      description: 'Complete ordered sorting layer list including the Default layer',
+    },
+    expectedRevision: {
+      type: ['string', 'null'],
+      description: 'Exact current settings revision, or null only when the file is missing',
+    },
+  }, ['layers', 'expectedRevision']),
   'scene.new': objectSchema({
     name: sceneName,
     overwrite: booleanValue('Allow replacing an existing scene; default false'),

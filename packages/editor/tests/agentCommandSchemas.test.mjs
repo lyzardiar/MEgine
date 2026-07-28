@@ -33,6 +33,14 @@ test('command schemas expose exact high-risk guards and shared optimistic option
     ['name', 'previewToken'],
   );
   assert.deepEqual(
+    COMMAND_PARAMS_SCHEMAS['project.settings.set_sorting_layers'].required,
+    ['layers', 'expectedRevision'],
+  );
+  assert.equal(
+    COMMAND_PARAMS_SCHEMAS['project.settings.set_sorting_layers'].properties.layers.maxItems,
+    64,
+  );
+  assert.deepEqual(
     COMMAND_PARAMS_SCHEMAS['scene.load_json'].required,
     ['json'],
   );
