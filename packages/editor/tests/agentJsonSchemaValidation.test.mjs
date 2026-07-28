@@ -64,6 +64,10 @@ test('direct AgentBridge schema validation matches MCP for valid command argumen
       layers: [{ id: 'Default', name: 'Default' }],
       expectedRevision: null,
     }],
+    ['view.set_timeline_preferences', {
+      animationTimeline: { timeDisplayMode: 'seconds' },
+      sequencer: { snapping: false, rippleMode: true },
+    }],
   ]) {
     assertParity(commandId, args, true);
   }
@@ -103,6 +107,10 @@ test('direct AgentBridge schema validation matches MCP for malformed or extra ar
     ['project.settings.set_sorting_layers', {
       layers: [{ id: 'not valid', name: 'Default' }],
       expectedRevision: null,
+    }],
+    ['view.set_timeline_preferences', {
+      animationTimeline: {},
+      sequencer: { loopPreview: 'yes' },
     }],
   ]) {
     assertParity(commandId, args, false);

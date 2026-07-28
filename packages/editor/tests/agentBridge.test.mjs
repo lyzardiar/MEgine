@@ -776,6 +776,8 @@ test('scene, asset, and asynchronous build tools share guarded editor services',
   const assets = fs.readFileSync(path.join(root, 'src', 'projectAssets.ts'), 'utf8');
   const store = fs.readFileSync(path.join(root, 'src', 'store.ts'), 'utf8');
   const viewport = fs.readFileSync(path.join(root, 'src', 'panels', 'Viewport.tsx'), 'utf8');
+  const timeline = fs.readFileSync(path.join(root, 'src', 'panels', 'Timeline.tsx'), 'utf8');
+  const sequencer = fs.readFileSync(path.join(root, 'src', 'panels', 'Sequencer.tsx'), 'utf8');
   const buildSettings = fs.readFileSync(
     path.join(root, 'src', 'panels', 'BuildSettings.tsx'),
     'utf8',
@@ -853,11 +855,19 @@ test('scene, asset, and asynchronous build tools share guarded editor services',
   assert.match(bridge, /sceneCamera: store\.sceneCamera/);
   assert.match(
     bridge,
-    /const view = \{\s+gizmo: store\.gizmo,\s+sceneCamera: store\.sceneCamera,\s+sceneView: readSceneViewPreferences\(\),\s+gameResolution: store\.gameResolution,\s+\};/,
+    /const view = \{\s+gizmo: store\.gizmo,\s+sceneCamera: store\.sceneCamera,\s+sceneView: readSceneViewPreferences\(\),\s+timelinePreferences: readTimelineEditorPreferences\(\),\s+gameResolution: store\.gameResolution,\s+\};/,
   );
   assert.match(bridge, /SCENE_VIEW_PREFERENCES_CHANGED_EVENT/);
   assert.match(bridge, /updateSceneViewPreferences\(patch\)/);
   assert.match(bridge, /commandId === 'view\.set_scene_preferences'/);
+  assert.match(bridge, /TIMELINE_EDITOR_PREFERENCES_CHANGED_EVENT/);
+  assert.match(bridge, /timelinePreferences: readTimelineEditorPreferences\(\)/);
+  assert.match(bridge, /updateTimelineEditorPreferences\(patch\)/);
+  assert.match(bridge, /commandId === 'view\.set_timeline_preferences'/);
+  assert.match(timeline, /updateTimelineEditorPreferences\(\{/);
+  assert.match(sequencer, /updateTimelineEditorPreferences\(\{/);
+  assert.doesNotMatch(timeline, /localStorage\.setItem/);
+  assert.doesNotMatch(sequencer, /localStorage\.setItem/);
   assert.match(app, /updateSceneViewPreferences\(\{ pivotMode: next \}\)/);
   assert.match(app, /updateSceneViewPreferences\(\{ handleOrientation: next \}\)/);
   assert.match(bridge, /setEditorPrefs\(\{ gameResolution: resolution \}\)/);

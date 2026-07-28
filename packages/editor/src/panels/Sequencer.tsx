@@ -92,6 +92,13 @@ import {
   buildTimelineScenePreview,
   type TimelineScenePreview,
 } from '../timelineScenePreview';
+import {
+  initializeTimelineEditorPreferencesEvents,
+  readTimelineEditorPreferences,
+  TIMELINE_EDITOR_PREFERENCES_CHANGED_EVENT,
+  updateTimelineEditorPreferences,
+  type TimelineEditorPreferencesChangeDetail,
+} from '../timelineEditorPreferences';
 import { AudioWaveform } from './AudioWaveform';
 import {
   TimelineAudioPreviewController,
@@ -141,10 +148,6 @@ import {
   type SequencerTrackDropTarget,
 } from '../sequencerEditing';
 
-const SEQUENCER_SNAPPING_KEY = 'mengine.sequencer.snapping';
-const SEQUENCER_RIPPLE_KEY = 'mengine.sequencer.ripple';
-const SEQUENCER_INSPECTOR_KEY = 'mengine.sequencer.inspector';
-const SEQUENCER_LOOP_PREVIEW_KEY = 'mengine.sequencer.loop_preview';
 const SEQUENCER_SNAP_THRESHOLD_PX = 8;
 const EMPTY_PREVIEW_ANIMATION_CLIPS: ReadonlyMap<string, AnimationClip> = new Map();
 const EMPTY_PREVIEW_CONTROL_ASSETS: ReadonlyMap<string, TimelineAsset> = new Map();
@@ -158,38 +161,6 @@ const EMPTY_AUDIO_PREVIEW_STATUS: TimelineAudioPreviewStatus = {
 function clampTimelineAudioFades(clip: TimelineAudioClip): void {
   clip.fade_in = Math.max(0, Math.min(clip.duration, clip.fade_in));
   clip.fade_out = Math.max(0, Math.min(clip.duration, clip.fade_out));
-}
-
-function loadSequencerSnapping(): boolean {
-  try {
-    return localStorage.getItem(SEQUENCER_SNAPPING_KEY) !== '0';
-  } catch {
-    return true;
-  }
-}
-
-function loadSequencerRipple(): boolean {
-  try {
-    return localStorage.getItem(SEQUENCER_RIPPLE_KEY) === '1';
-  } catch {
-    return false;
-  }
-}
-
-function loadSequencerInspector(): boolean {
-  try {
-    return localStorage.getItem(SEQUENCER_INSPECTOR_KEY) !== '0';
-  } catch {
-    return true;
-  }
-}
-
-function loadSequencerLoopPreview(): boolean {
-  try {
-    return localStorage.getItem(SEQUENCER_LOOP_PREVIEW_KEY) === '1';
-  } catch {
-    return false;
-  }
 }
 
 function safeName(raw: string): string {
@@ -338,10 +309,18 @@ export function Sequencer(props: SequencerProps) {
   const [error, setError] = useState<string | null>(null);
   const [payloadInvalid, setPayloadInvalid] = useState(false);
   const [zoom, setZoom] = useState(1);
-  const [snapping, setSnapping] = useState(loadSequencerSnapping);
-  const [rippleMode, setRippleMode] = useState(loadSequencerRipple);
-  const [inspectorOpen, setInspectorOpen] = useState(loadSequencerInspector);
-  const [loopPreview, setLoopPreview] = useState(loadSequencerLoopPreview);
+  const [snapping, setSnapping] = useState(
+    () => readTimelineEditorPreferences().sequencer.snapping,
+  );
+  const [rippleMode, setRippleMode] = useState(
+    () => readTimelineEditorPreferences().sequencer.rippleMode,
+  );
+  const [inspectorOpen, setInspectorOpen] = useState(
+    () => readTimelineEditorPreferences().sequencer.inspectorOpen,
+  );
+  const [loopPreview, setLoopPreview] = useState(
+    () => readTimelineEditorPreferences().sequencer.loopPreview,
+  );
   const [previewRange, setPreviewRange] = useState<SequencerPreviewRange>({ start: 0, end: 5 });
   const [draggingPreviewEdge, setDraggingPreviewEdge] = useState<SequencerPreviewRangeEdge | null>(null);
   const [panning, setPanning] = useState(false);
@@ -2478,6 +2457,39 @@ export function Sequencer(props: SequencerProps) {
     };
   }, [props.undoService]);
 
+  useEffect(() => {
+    initializeTimelineEditorPreferencesEvents();
+    const applyPreferences = (
+      preferences: TimelineEditorPreferencesChangeDetail['preferences'],
+    ) => {
+      const next = preferences.sequencer;
+      if (rippleMode !== next.rippleMode) finishKeyboardNudge();
+      if (inspectorOpen && !next.inspectorOpen) finishInspectorEdit();
+      if (snapping && !next.snapping) setSnapGuide(null);
+      setSnapping(next.snapping);
+      setRippleMode(next.rippleMode);
+      setInspectorOpen(next.inspectorOpen);
+      setLoopPreview(next.loopPreview);
+    };
+    const onPreferencesChanged = (event: Event) => {
+      applyPreferences(
+        (event as CustomEvent<TimelineEditorPreferencesChangeDetail>)
+          .detail.preferences,
+      );
+    };
+    window.addEventListener(
+      TIMELINE_EDITOR_PREFERENCES_CHANGED_EVENT,
+      onPreferencesChanged,
+    );
+    applyPreferences(readTimelineEditorPreferences());
+    return () => {
+      window.removeEventListener(
+        TIMELINE_EDITOR_PREFERENCES_CHANGED_EVENT,
+        onPreferencesChanged,
+      );
+    };
+  }, [inspectorOpen, props.undoService, rippleMode, snapping]);
+
   if (!props.assetPath) return null;
   if (!asset) {
     return (
@@ -2758,13 +2770,9 @@ export function Sequencer(props: SequencerProps) {
     revealPreviewRangeEdge(edge);
   };
   const toggleLoopPreview = () => {
-    const next = !loopPreview;
-    setLoopPreview(next);
-    try {
-      localStorage.setItem(SEQUENCER_LOOP_PREVIEW_KEY, next ? '1' : '0');
-    } catch {
-      /* ignore unavailable storage */
-    }
+    updateTimelineEditorPreferences({
+      sequencer: { loopPreview: !loopPreview },
+    });
   };
   const toggleEditPlayback = () => {
     void audioPreviewController.unlock();
@@ -2823,34 +2831,19 @@ export function Sequencer(props: SequencerProps) {
     });
   };
   const toggleSnapping = () => {
-    const next = !snapping;
-    setSnapping(next);
-    if (!next) setSnapGuide(null);
-    try {
-      localStorage.setItem(SEQUENCER_SNAPPING_KEY, next ? '1' : '0');
-    } catch {
-      /* ignore unavailable storage */
-    }
+    updateTimelineEditorPreferences({
+      sequencer: { snapping: !snapping },
+    });
   };
   const toggleRippleMode = () => {
-    finishKeyboardNudge();
-    const next = !rippleMode;
-    setRippleMode(next);
-    try {
-      localStorage.setItem(SEQUENCER_RIPPLE_KEY, next ? '1' : '0');
-    } catch {
-      /* ignore unavailable storage */
-    }
+    updateTimelineEditorPreferences({
+      sequencer: { rippleMode: !rippleMode },
+    });
   };
   const toggleInspector = () => {
-    const next = !inspectorOpen;
-    if (!next) finishInspectorEdit();
-    setInspectorOpen(next);
-    try {
-      localStorage.setItem(SEQUENCER_INSPECTOR_KEY, next ? '1' : '0');
-    } catch {
-      /* ignore unavailable storage */
-    }
+    updateTimelineEditorPreferences({
+      sequencer: { inspectorOpen: !inspectorOpen },
+    });
   };
   const beginTrackPan = (event: ReactPointerEvent<HTMLDivElement>) => {
     if (event.button !== 1) return;

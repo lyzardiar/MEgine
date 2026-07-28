@@ -2749,6 +2749,71 @@ const TOOLS = [
       ],
     },
   ),
+  execTool(
+    'set_timeline_preferences',
+    'Persist Animation Timeline and Sequencer editing preferences without raising or focusing the editor. Omitted fields retain their current values and changes propagate to every window in the current editor instance.',
+    'view.set_timeline_preferences',
+    {
+      animationTimeline: {
+        type: 'object',
+        properties: {
+          timeDisplayMode: {
+            type: 'string',
+            enum: ['frames', 'seconds'],
+            description:
+              'Display Animation Timeline time as frames or seconds',
+          },
+          snapping: {
+            type: 'boolean',
+            description:
+              'Snap Animation Timeline keys and events to frame-aligned targets',
+          },
+        },
+        additionalProperties: false,
+        anyOf: [
+          { required: ['timeDisplayMode'] },
+          { required: ['snapping'] },
+        ],
+      },
+      sequencer: {
+        type: 'object',
+        properties: {
+          snapping: {
+            type: 'boolean',
+            description: 'Snap Sequencer clips and markers to editing targets',
+          },
+          rippleMode: {
+            type: 'boolean',
+            description:
+              'Shift the affected track suffix while moving Sequencer items',
+          },
+          inspectorOpen: {
+            type: 'boolean',
+            description: 'Show the Sequencer Inspector',
+          },
+          loopPreview: {
+            type: 'boolean',
+            description: 'Loop the Sequencer edit preview range',
+          },
+        },
+        additionalProperties: false,
+        anyOf: [
+          { required: ['snapping'] },
+          { required: ['rippleMode'] },
+          { required: ['inspectorOpen'] },
+          { required: ['loopPreview'] },
+        ],
+      },
+    },
+    [],
+    undefined,
+    {
+      anyOf: [
+        { required: ['animationTimeline'] },
+        { required: ['sequencer'] },
+      ],
+    },
+  ),
   execTool('play', 'Enter play mode.', 'playback.play', {}, []),
   execTool('pause', 'Toggle pause during playback.', 'playback.pause', {}, []),
   execTool('stop', 'Stop playback and return to edit mode.', 'playback.stop', {}, []),
@@ -3036,6 +3101,7 @@ const IDEMPOTENT_BRIDGE_COMMANDS = new Set([
   'view.set_camera',
   'view.set_game_resolution',
   'view.set_scene_preferences',
+  'view.set_timeline_preferences',
   'panel.focus',
   'panel.reset_layout',
   'window.open_editor',

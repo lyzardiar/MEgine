@@ -116,6 +116,13 @@ import {
   type SceneViewPreferencesPatch,
 } from '../sceneViewPreferences';
 import {
+  initializeTimelineEditorPreferencesEvents,
+  readTimelineEditorPreferences,
+  TIMELINE_EDITOR_PREFERENCES_CHANGED_EVENT,
+  updateTimelineEditorPreferences,
+  type TimelineEditorPreferencesPatch,
+} from '../timelineEditorPreferences';
+import {
   applySelectedPrefab,
   createProjectPrefabFromSelection,
   revertSelectedPrefab,
@@ -396,6 +403,7 @@ class AgentBridge {
   private stopMenuEvents: (() => void) | null = null;
   private stopWindowTypeEvents: (() => void) | null = null;
   private stopSceneViewPreferenceEvents: (() => void) | null = null;
+  private stopTimelineEditorPreferenceEvents: (() => void) | null = null;
   private stopBuildSettingsEvents: (() => void) | null = null;
   private stopBuildArtifactEvents: (() => void) | null = null;
   private stopProjectSettingsEvents: (() => void) | null = null;
@@ -544,6 +552,20 @@ class AgentBridge {
           onSceneViewPreferencesChanged,
         );
       };
+      initializeTimelineEditorPreferencesEvents();
+      const onTimelineEditorPreferencesChanged = () => {
+        this.observe();
+      };
+      window.addEventListener(
+        TIMELINE_EDITOR_PREFERENCES_CHANGED_EVENT,
+        onTimelineEditorPreferencesChanged,
+      );
+      this.stopTimelineEditorPreferenceEvents = () => {
+        window.removeEventListener(
+          TIMELINE_EDITOR_PREFERENCES_CHANGED_EVENT,
+          onTimelineEditorPreferencesChanged,
+        );
+      };
       const onBuildSettingsChanged = (event: Event) => {
         this.appendEvent(
           'build.settings',
@@ -633,6 +655,8 @@ class AgentBridge {
       }
       this.stopSceneViewPreferenceEvents?.();
       this.stopSceneViewPreferenceEvents = null;
+      this.stopTimelineEditorPreferenceEvents?.();
+      this.stopTimelineEditorPreferenceEvents = null;
       this.stopBuildSettingsEvents?.();
       this.stopBuildSettingsEvents = null;
       this.stopBuildArtifactEvents?.();
@@ -1004,6 +1028,7 @@ class AgentBridge {
       gizmo: store.gizmo,
       sceneCamera: store.sceneCamera,
       sceneView: readSceneViewPreferences(),
+      timelinePreferences: readTimelineEditorPreferences(),
       gameResolution: store.gameResolution,
       canUndo: store.canUndo,
       canRedo: store.canRedo,
@@ -1696,6 +1721,7 @@ class AgentBridge {
       gizmo: store.gizmo,
       sceneCamera: store.sceneCamera,
       sceneView: readSceneViewPreferences(),
+      timelinePreferences: readTimelineEditorPreferences(),
       gameResolution: store.gameResolution,
     };
     const current: ObservedEditorState = {
@@ -3356,6 +3382,33 @@ class AgentBridge {
     return this.getEditorState();
   }
 
+  setTimelineEditorPreferences(
+    args: Record<string, unknown>,
+  ): EditorState {
+    this.requireStore();
+    const patch: TimelineEditorPreferencesPatch = {};
+    if (args.animationTimeline !== undefined) {
+      patch.animationTimeline = structuredClone(
+        args.animationTimeline as NonNullable<
+          TimelineEditorPreferencesPatch['animationTimeline']
+        >,
+      );
+    }
+    if (args.sequencer !== undefined) {
+      patch.sequencer = structuredClone(
+        args.sequencer as NonNullable<
+          TimelineEditorPreferencesPatch['sequencer']
+        >,
+      );
+    }
+    updateTimelineEditorPreferences(patch);
+    this.observe();
+    this.logProvider?.(
+      'Agent updated persistent Timeline editor preferences',
+    );
+    return this.getEditorState();
+  }
+
   getComponentSchema(type?: string): unknown {
     if (type) {
       const schema = buildAgentComponentSchema(type);
@@ -4213,6 +4266,10 @@ class AgentBridge {
     }
     if (commandId === 'view.set_scene_preferences') {
       const result = this.setSceneViewPreferences(args);
+      return this.finishAsyncCommand({ ok: true, data: result }, options, true);
+    }
+    if (commandId === 'view.set_timeline_preferences') {
+      const result = this.setTimelineEditorPreferences(args);
       return this.finishAsyncCommand({ ok: true, data: result }, options, true);
     }
     if (commandId === 'menu.invoke') {

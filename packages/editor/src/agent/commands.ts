@@ -1249,6 +1249,7 @@ const COMMAND_SUMMARIES: CommandSummary[] = [
   { id: 'view.set_camera', category: 'view', description: 'Set the background-safe Scene view orbit camera', readOnly: false },
   { id: 'view.set_game_resolution', category: 'view', description: 'Persist an exact Game View resolution or Free Aspect', readOnly: false },
   { id: 'view.set_scene_preferences', category: 'view', description: 'Persist Scene 2D, grid, smart-guide, and snapping preferences across editor windows', readOnly: false },
+  { id: 'view.set_timeline_preferences', category: 'view', description: 'Persist Animation Timeline and Sequencer editing preferences across editor windows', readOnly: false },
   { id: 'panel.focus', category: 'panel', description: 'Activate a panel only when its host mutation cannot disturb a foreground window', readOnly: false },
   { id: 'panel.detach', category: 'panel', description: 'Detach a clean panel only while the main workspace is hidden and unfocused', readOnly: false },
   { id: 'panel.dock', category: 'panel', description: 'Dock a clean panel only while both affected windows are hidden and unfocused', readOnly: false },

@@ -177,6 +177,13 @@ import {
   writeProjectAssetText,
 } from '../projectAssets';
 import { registerSaveAllParticipant } from '../saveAll';
+import {
+  initializeTimelineEditorPreferencesEvents,
+  readTimelineEditorPreferences,
+  TIMELINE_EDITOR_PREFERENCES_CHANGED_EVENT,
+  updateTimelineEditorPreferences,
+  type TimelineEditorPreferencesChangeDetail,
+} from '../timelineEditorPreferences';
 
 type SnapshotEntity = WorldSnapshotView['entities'][number];
 
@@ -216,25 +223,7 @@ type TimelineCollisionNotice = {
 
 type TimelineViewMode = 'dope_sheet' | 'curves';
 
-const TIMELINE_TIME_DISPLAY_KEY = 'mengine.timeline.time_display';
-const TIMELINE_SNAPPING_KEY = 'mengine.timeline.snapping';
 const TIMELINE_SNAP_THRESHOLD_PX = 8;
-
-function loadTimelineTimeDisplayMode(): TimelineTimeDisplayMode {
-  try {
-    return localStorage.getItem(TIMELINE_TIME_DISPLAY_KEY) === 'seconds' ? 'seconds' : 'frames';
-  } catch {
-    return 'frames';
-  }
-}
-
-function loadTimelineSnapping(): boolean {
-  try {
-    return localStorage.getItem(TIMELINE_SNAPPING_KEY) !== '0';
-  } catch {
-    return true;
-  }
-}
 
 type TimelineMarquee = {
   pointerId: number;
@@ -1458,9 +1447,42 @@ export function Timeline(props: {
   const [activePropertyBindingKey, setActivePropertyBindingKey] = useState<string | null>(null);
   const [zoom, setZoom] = useState(1);
   const [viewMode, setViewMode] = useState<TimelineViewMode>('dope_sheet');
-  const [timeDisplayMode, setTimeDisplayMode] = useState<TimelineTimeDisplayMode>(loadTimelineTimeDisplayMode);
-  const [snapping, setSnapping] = useState(loadTimelineSnapping);
+  const [timeDisplayMode, setTimeDisplayMode] =
+    useState<TimelineTimeDisplayMode>(
+      () => readTimelineEditorPreferences()
+        .animationTimeline.timeDisplayMode,
+    );
+  const [snapping, setSnapping] = useState(
+    () => readTimelineEditorPreferences().animationTimeline.snapping,
+  );
   const [snapGuide, setSnapGuide] = useState<number | null>(null);
+  useEffect(() => {
+    initializeTimelineEditorPreferencesEvents();
+    const applyPreferences = (
+      preferences: TimelineEditorPreferencesChangeDetail['preferences'],
+    ) => {
+      setTimeDisplayMode(preferences.animationTimeline.timeDisplayMode);
+      setSnapping(preferences.animationTimeline.snapping);
+      if (!preferences.animationTimeline.snapping) setSnapGuide(null);
+    };
+    const onPreferencesChanged = (event: Event) => {
+      applyPreferences(
+        (event as CustomEvent<TimelineEditorPreferencesChangeDetail>)
+          .detail.preferences,
+      );
+    };
+    window.addEventListener(
+      TIMELINE_EDITOR_PREFERENCES_CHANGED_EVENT,
+      onPreferencesChanged,
+    );
+    applyPreferences(readTimelineEditorPreferences());
+    return () => {
+      window.removeEventListener(
+        TIMELINE_EDITOR_PREFERENCES_CHANGED_EVENT,
+        onPreferencesChanged,
+      );
+    };
+  }, []);
   const [detailsOpen, setDetailsOpen] = useState(false);
   const [maximized, setMaximized] = useState(false);
   const [timelineClipboard, setTimelineClipboard] = useState<TimelineClipboard | null>(null);
@@ -2846,24 +2868,18 @@ export function Timeline(props: {
   };
 
   const toggleTimelineTimeDisplayMode = () => {
-    const next = timeDisplayMode === 'frames' ? 'seconds' : 'frames';
-    setTimeDisplayMode(next);
-    try {
-      localStorage.setItem(TIMELINE_TIME_DISPLAY_KEY, next);
-    } catch {
-      /* ignore unavailable preference storage */
-    }
+    updateTimelineEditorPreferences({
+      animationTimeline: {
+        timeDisplayMode:
+          timeDisplayMode === 'frames' ? 'seconds' : 'frames',
+      },
+    });
   };
 
   const toggleTimelineSnapping = () => {
-    const next = !snapping;
-    setSnapping(next);
-    if (!next) setSnapGuide(null);
-    try {
-      localStorage.setItem(TIMELINE_SNAPPING_KEY, next ? '1' : '0');
-    } catch {
-      /* ignore unavailable preference storage */
-    }
+    updateTimelineEditorPreferences({
+      animationTimeline: { snapping: !snapping },
+    });
   };
 
   const stopTimelineAutoScroll = () => {

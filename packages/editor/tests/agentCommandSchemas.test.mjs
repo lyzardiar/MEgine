@@ -168,6 +168,20 @@ test('command schemas expose exact high-risk guards and shared optimistic option
     0,
   );
   assert.equal(
+    COMMAND_PARAMS_SCHEMAS['view.set_timeline_preferences'].anyOf.length,
+    2,
+  );
+  assert.equal(
+    COMMAND_PARAMS_SCHEMAS['view.set_timeline_preferences']
+      .properties.animationTimeline.anyOf.length,
+    2,
+  );
+  assert.equal(
+    COMMAND_PARAMS_SCHEMAS['view.set_timeline_preferences']
+      .properties.sequencer.anyOf.length,
+    4,
+  );
+  assert.equal(
     COMMAND_EXECUTION_OPTIONS_SCHEMA.properties.expectedSceneRevision.minimum,
     0,
   );

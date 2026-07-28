@@ -736,6 +736,45 @@ export const COMMAND_PARAMS_SCHEMAS: Record<string, AgentJsonSchema> = {
       { required: ['snap'] },
     ],
   }),
+  'view.set_timeline_preferences': objectSchema({
+    animationTimeline: objectSchema({
+      timeDisplayMode: {
+        type: 'string',
+        enum: ['frames', 'seconds'],
+        description: 'Display Animation Timeline time as frames or seconds',
+      },
+      snapping: booleanValue(
+        'Snap Animation Timeline keys and events to frame-aligned targets',
+      ),
+    }, [], {
+      anyOf: [
+        { required: ['timeDisplayMode'] },
+        { required: ['snapping'] },
+      ],
+    }),
+    sequencer: objectSchema({
+      snapping: booleanValue(
+        'Snap Sequencer clips and markers to editing targets',
+      ),
+      rippleMode: booleanValue(
+        'Shift the affected track suffix while moving Sequencer items',
+      ),
+      inspectorOpen: booleanValue('Show the Sequencer Inspector'),
+      loopPreview: booleanValue('Loop the Sequencer edit preview range'),
+    }, [], {
+      anyOf: [
+        { required: ['snapping'] },
+        { required: ['rippleMode'] },
+        { required: ['inspectorOpen'] },
+        { required: ['loopPreview'] },
+      ],
+    }),
+  }, [], {
+    anyOf: [
+      { required: ['animationTimeline'] },
+      { required: ['sequencer'] },
+    ],
+  }),
   'panel.focus': objectSchema({
     kind: panelKind,
   }, ['kind']),
