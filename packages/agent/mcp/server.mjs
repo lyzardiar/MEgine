@@ -1148,6 +1148,7 @@ const TOOLS = [
               'menu.changed',
               'view.changed',
               'build.progress',
+              'build.artifacts',
               'build.settings',
               'project.settings',
               'asset.changed',
@@ -1197,6 +1198,7 @@ const TOOLS = [
               'menu.changed',
               'view.changed',
               'build.progress',
+              'build.artifacts',
               'build.settings',
               'project.settings',
               'asset.changed',
@@ -2975,6 +2977,12 @@ const RESOURCES = [
     'project.settings',
   ),
   bridgeResource(
+    'mengine://project/recent',
+    'Recent Projects',
+    'Bounded recent-project list used by the desktop project hub.',
+    'project.recent',
+  ),
+  bridgeResource(
     'mengine://editor/state',
     'Editor State',
     'Current editor, scene revision, selection, playback, history, view, and project summary.',
@@ -3071,6 +3079,24 @@ const RESOURCES = [
     'build.status',
   ),
   bridgeResource(
+    'mengine://build/artifact',
+    'Build Artifact Job Status',
+    'Current asynchronous history patch, restore, or verification job state.',
+    'build.artifact_status',
+  ),
+  bridgeResource(
+    'mengine://build/history',
+    'Build History',
+    'Most recent signed PC build history entries with bounded default pagination.',
+    'build.history',
+  ),
+  bridgeResource(
+    'mengine://build/patches',
+    'Build Patch Inventory',
+    'Most recent signed build patches with bounded default pagination.',
+    'build.patches',
+  ),
+  bridgeResource(
     'mengine://console/logs',
     'Console Logs',
     'Recent structured editor console entries.',
@@ -3088,6 +3114,7 @@ const RESOURCE_READERS = Object.fromEntries(
 const EVENT_RESOURCE_URIS = Object.freeze({
   'project.changed': Object.freeze([
     'mengine://project/state',
+    'mengine://project/recent',
     'mengine://editor/state',
     'mengine://editor/scenes',
     'mengine://editor/windows',
@@ -3101,6 +3128,9 @@ const EVENT_RESOURCE_URIS = Object.freeze({
     'mengine://project/settings',
     'mengine://build/settings',
     'mengine://build/status',
+    'mengine://build/artifact',
+    'mengine://build/history',
+    'mengine://build/patches',
   ]),
   'scene.changed': Object.freeze([
     'mengine://editor/state',
@@ -3130,7 +3160,14 @@ const EVENT_RESOURCE_URIS = Object.freeze({
   'window.types.changed': Object.freeze(['mengine://editor/window/types']),
   'menu.changed': Object.freeze(['mengine://editor/menus']),
   'view.changed': Object.freeze(['mengine://editor/state']),
-  'build.progress': Object.freeze(['mengine://build/status']),
+  'build.progress': Object.freeze([
+    'mengine://build/status',
+    'mengine://build/artifact',
+  ]),
+  'build.artifacts': Object.freeze([
+    'mengine://build/history',
+    'mengine://build/patches',
+  ]),
   'build.settings': Object.freeze(['mengine://build/settings']),
   'project.settings': Object.freeze(['mengine://project/settings']),
   'asset.changed': Object.freeze([

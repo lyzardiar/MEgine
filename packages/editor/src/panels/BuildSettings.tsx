@@ -36,6 +36,7 @@ import {
   type VerifyPlayerResult,
 } from '../transport/editorTransport';
 import {
+  broadcastProjectBuildArtifactsChanged,
   broadcastProjectBuildSettingsChanged,
   PROJECT_BUILD_ARTIFACTS_CHANGED_EVENT,
   PROJECT_BUILD_SETTINGS_CHANGED_EVENT,
@@ -340,7 +341,12 @@ export function BuildSettings(props: {
   }, []);
 
   useEffect(() => {
-    const onExternalArtifacts = () => {
+    const onExternalArtifacts = (event: Event) => {
+      const change = (event as CustomEvent<{
+        detail?: { source?: string };
+        remote?: boolean;
+      }>).detail;
+      if (change?.remote === false && change.detail?.source === 'build-settings') return;
       void refreshBuildHistory(false);
       void refreshBuildPatches(false);
     };
@@ -631,6 +637,11 @@ export function BuildSettings(props: {
     setHistoryPatch(null);
     try {
       const result = await createPcBuildHistoryPatch(previous.id, current.id);
+      broadcastProjectBuildArtifactsChanged({
+        source: 'build-settings',
+        status: 'history-patch-created',
+        result,
+      });
       setHistoryPatch(result);
       setMessageError(false);
       setMessage(`Signed historical patch created: ${byteSize(result.payloadBytes)} payload.`);
@@ -674,6 +685,11 @@ export function BuildSettings(props: {
     setHistoryRestore(null);
     try {
       const result = await restorePcBuildHistory(selectedRestoreEntry.id, publicKeyPath);
+      broadcastProjectBuildArtifactsChanged({
+        source: 'build-settings',
+        status: 'history-restored',
+        result,
+      });
       setHistoryRestore(result);
       setLastBuild(null);
       setLastVerification(null);
@@ -749,6 +765,11 @@ export function BuildSettings(props: {
     setMessageError(false);
     try {
       const result = await buildPcPlayer(profile, clean);
+      broadcastProjectBuildArtifactsChanged({
+        source: 'build-settings',
+        status: 'build-created',
+        result,
+      });
       setLastBuild(result);
       void refreshBuildHistory(false);
       void refreshBuildPatches(false);

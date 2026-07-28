@@ -35,6 +35,11 @@ export function initializeBuildEditorEvents(): void {
   );
 }
 
+export function resetBuildEditorEventsForTests(): void {
+  buildChannel?.close();
+  buildChannel = null;
+}
+
 export function broadcastProjectBuildSettingsChanged(
   detail: ProjectBuildSettings,
 ): void {

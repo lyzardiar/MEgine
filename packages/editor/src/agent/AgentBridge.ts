@@ -156,6 +156,7 @@ import {
 import {
   broadcastProjectBuildArtifactsChanged,
   broadcastProjectBuildSettingsChanged,
+  PROJECT_BUILD_ARTIFACTS_CHANGED_EVENT,
 } from '../buildEditorEvents';
 import type { AgentAssetOperations } from './assetOperations';
 import {
@@ -381,6 +382,7 @@ class AgentBridge {
   private stopDialogEvents: (() => void) | null = null;
   private stopMenuEvents: (() => void) | null = null;
   private stopWindowTypeEvents: (() => void) | null = null;
+  private stopBuildArtifactEvents: (() => void) | null = null;
   private stopAssetEvents: (() => void) | null = null;
   private windowObservationTimer: number | null = null;
   private windowObservationGeneration = 0;
@@ -512,6 +514,22 @@ class AgentBridge {
       this.windowObservationTimer = window.setInterval(() => {
         void this.observeWindowInventory().catch(() => undefined);
       }, 1_000);
+      const onBuildArtifactsChanged = (event: Event) => {
+        this.appendEvent(
+          'build.artifacts',
+          structuredClone((event as CustomEvent<unknown>).detail ?? {}),
+        );
+      };
+      window.addEventListener(
+        PROJECT_BUILD_ARTIFACTS_CHANGED_EVENT,
+        onBuildArtifactsChanged,
+      );
+      this.stopBuildArtifactEvents = () => {
+        window.removeEventListener(
+          PROJECT_BUILD_ARTIFACTS_CHANGED_EVENT,
+          onBuildArtifactsChanged,
+        );
+      };
       const onAssetChanged = (event: Event) => {
         const detail = (event as CustomEvent<unknown>).detail ?? { action: 'changed' };
         let signature: string;
@@ -551,6 +569,8 @@ class AgentBridge {
         window.clearInterval(this.windowObservationTimer);
         this.windowObservationTimer = null;
       }
+      this.stopBuildArtifactEvents?.();
+      this.stopBuildArtifactEvents = null;
       this.stopAssetEvents?.();
       this.stopAssetEvents = null;
       this.lastAssetEvent = null;
@@ -2974,8 +2994,7 @@ class AgentBridge {
   }
 
   private notifyBuildArtifactsChanged(status: string, result: unknown): void {
-    broadcastProjectBuildArtifactsChanged({ status, result });
-    this.appendEvent('build.progress', { status, result });
+    broadcastProjectBuildArtifactsChanged({ source: 'agent', status, result });
   }
 
   getBuildStatus(): { status: 'idle' } | AgentBuildJob {
@@ -3044,6 +3063,11 @@ class AgentBridge {
           status: 'succeeded',
           result,
         }, this.buildJob.finishedAt);
+        broadcastProjectBuildArtifactsChanged({
+          source: 'agent',
+          status: 'build-created',
+          result,
+        });
         this.logProvider?.(`Agent build succeeded: ${result.outputDir}`);
       })
       .catch((error) => {

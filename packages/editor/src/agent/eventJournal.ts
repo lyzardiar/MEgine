@@ -12,6 +12,7 @@ export const AGENT_EVENT_TOPICS = [
   'menu.changed',
   'view.changed',
   'build.progress',
+  'build.artifacts',
   'build.settings',
   'project.settings',
   'asset.changed',

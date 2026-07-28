@@ -154,6 +154,14 @@ test('MCP resource subscriptions coalesce bridge events and stop after unsubscri
     EVENT_RESOURCE_URIS['menu.changed'],
     ['mengine://editor/menus'],
   );
+  assert.deepEqual(
+    EVENT_RESOURCE_URIS['build.progress'],
+    ['mengine://build/status', 'mengine://build/artifact'],
+  );
+  assert.deepEqual(
+    EVENT_RESOURCE_URIS['build.artifacts'],
+    ['mengine://build/history', 'mengine://build/patches'],
+  );
 
   const notifications = [];
   const subscriptions = new ResourceSubscriptions(
