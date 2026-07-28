@@ -461,6 +461,18 @@ inspect_and_fix       「截图当前场景，检查并修复选中物体的问�
 }
 ```
 
+### 5.6 单次 CLI（脚本 / CI / Agent Shell）
+
+`mengine-agent` 复用 MCP Adapter 的同一 Bridge 客户端，不需要自己维护 WebSocket 或 MCP stdio 会话：
+
+```powershell
+mengine-agent query window.list
+'{"windowLabel":"main"}' | mengine-agent query window.ui_snapshot --args -
+mengine-agent execute intent.apply --args @intent.json --expected-scene-revision 12
+```
+
+CLI 仅输出结构化 JSON，支持 `--args @file` / `--args -`、显式幂等 `--request-id`、`--discovery-file`、revision 锁和操作后截图。写请求遇到编辑器进程切换时与 MCP 一样返回 `UNKNOWN_OUTCOME`，不会假定重试安全。
+
 ## 6. 关键集成点（落到代码）
 
 | 能力 | 文件 / 位置 | 改造内容 |
@@ -474,8 +486,9 @@ inspect_and_fix       「截图当前场景，检查并修复选中物体的问�
 | 状态观察 | 新增 `src/agent/observer.ts` | 聚合 snapshot / 截图 / 窗口 / 日志 / schema |
 | 结构化日志 | `src/App.tsx` `logs[]` → 新增 `src/agent/LogService.ts` | level/time/source/message，替换字符串数组 |
 | Bridge 传输 | `src-tauri/src/lib.rs` | 引入 `tokio-tungstenite` 本地 WS 服务器 + 消息路由 + 发现文件 |
-| MCP 适配 | `packages/agent/src/mcp/` | MCP stdio server，WS 客户端连 Bridge |
-| 意图层扩展 | `packages/agent/src/index.ts` | 从 4 个 intent 扩展，接 Dispatcher |
+| MCP 适配 | `packages/agent/mcp/` | MCP stdio server，WS 客户端连 Bridge |
+| 单次 CLI | `packages/agent/cli/editor.mjs` | ✅ 复用 MCP Bridge 客户端的 query / execute JSON 命令 |
+| 意图层扩展 | `packages/agent/src/index.ts` | ✅ 3 个严格、自描述的安全 intent，已接 Dispatcher |
 | 命名统一 | `src/agent/protocol.ts` | AgentBridge 对外统一 camelCase，内部按需转换 snake_case |
 
 ## 7. 分阶段路线图
@@ -523,7 +536,7 @@ inspect_and_fix       「截图当前场景，检查并修复选中物体的问�
 
 - WebSocket 直连适配器（自研 agent / 浏览器脚本）
 - HTTP REST 适配器（curl / 简单集成）
-- CLI（`mengine-cli execute scene.snapshot`）
+- ✅ CLI（`mengine-agent query scene.snapshot` / `mengine-agent execute history.undo`）
 - 权限与危险操作确认机制完善
 
 验收：同一内核经 WS/HTTP/CLI 均可驱动，行为一致。

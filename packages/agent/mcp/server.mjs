@@ -375,6 +375,14 @@ async function bridgeExecute(command, args = {}, options = {}) {
   );
 }
 
+function closeBridgeConnection() {
+  const connection = activeConnection;
+  activeConnection = null;
+  if (connection?.socket.readyState === WebSocket.OPEN) {
+    connection.socket.close();
+  }
+}
+
 // ── Tool definitions ─────────────────────────────────────────────────────
 
 function textContent(value) {
@@ -2679,6 +2687,9 @@ export {
   BridgeOutcomeUnknownError,
   RESOURCES,
   SERVER_INSTRUCTIONS,
+  bridgeExecute,
+  bridgeQuery,
+  closeBridgeConnection,
   incomingMessageError,
   negotiateProtocolVersion,
   SUPPORTED_PROTOCOL_VERSIONS,

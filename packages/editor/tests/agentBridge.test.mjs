@@ -223,6 +223,7 @@ test('whole-window agent capture is background-safe and addressable by window la
   assert.match(mcp, /name: 'get_profiler_samples'/);
   assert.match(mcp, /'clear_profiler_samples'/);
   assert.match(mcp, /name: 'describe_command'/);
+  assert.match(mcp, /bridgeExecute,\s*bridgeQuery,\s*closeBridgeConnection/);
 });
 
 test('the main AgentBridge transport is available before a project is opened', () => {

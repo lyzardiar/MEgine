@@ -11,10 +11,12 @@
     }
   },
   "bin": {
-    "mengine-mcp": "./mcp/server.mjs"
+    "mengine-mcp": "./mcp/server.mjs",
+    "mengine-agent": "./cli/editor.mjs"
   },
   "scripts": {
     "build": "tsc -p tsconfig.json",
+    "cli": "node cli/editor.mjs",
     "mcp": "node mcp/server.mjs"
   },
   "dependencies": {
