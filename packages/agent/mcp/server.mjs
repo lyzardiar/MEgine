@@ -18,12 +18,14 @@
  */
 
 import fs from 'node:fs';
+import { createHash } from 'node:crypto';
 import os from 'node:os';
 import path from 'node:path';
 import readline from 'node:readline';
 
 const PROTOCOL_VERSION = '2024-11-05';
 const REQUEST_TIMEOUT_MS = 20000;
+const MCP_SESSION_ID = crypto.randomUUID();
 
 // ── Discovery ────────────────────────────────────────────────────────────
 
@@ -120,6 +122,7 @@ async function bridgeExecute(command, args = {}, options = {}) {
   return await rpc('execute', {
     command,
     args,
+    requestId: options.requestId,
     screenshot: Boolean(options.screenshot),
     expectedSceneRevision: options.expectedSceneRevision,
   });
@@ -153,18 +156,28 @@ function execTool(name, description, command, properties, required, mapArgs = (a
           description:
             'Optional optimistic lock from get_editor_state/get_scene_snapshot. The command fails with STALE_REVISION if the scene changed.',
         },
+        requestId: {
+          type: 'string',
+          minLength: 1,
+          maxLength: 128,
+          description:
+            'Stable idempotency key for safe retries. Reuse the exact key when retrying the same write. If omitted, this MCP process derives one from the current tool call.',
+        },
       },
       ...(required.length ? { required } : {}),
     },
-    handler: async (args) => {
+    handler: async (args, context = {}) => {
       const wantScreenshot = Boolean(args.screenshot);
       const expectedSceneRevision = args.expectedSceneRevision;
+      const requestId = args.requestId || context.requestId || crypto.randomUUID();
       const callArgs = { ...args };
       delete callArgs.screenshot;
       delete callArgs.expectedSceneRevision;
+      delete callArgs.requestId;
       const result = await bridgeExecute(command, mapArgs(callArgs), {
         screenshot: wantScreenshot,
         expectedSceneRevision,
+        requestId,
       });
       const response = result && typeof result === 'object'
         ? Object.fromEntries(
@@ -1423,7 +1436,9 @@ async function handleMessage(msg) {
         return;
       }
       try {
-        const content = await tool.handler(params?.arguments || {});
+        const content = await tool.handler(params?.arguments || {}, {
+          requestId: automaticWriteRequestId(msg),
+        });
         respond(id, { content, isError: false });
       } catch (error) {
         respond(id, {
@@ -1457,6 +1472,30 @@ async function handleMessage(msg) {
         respondError(id, -32601, `Method not found: ${method}`);
       }
   }
+}
+
+function stableJson(value) {
+  if (Array.isArray(value)) return value.map((item) => item === undefined ? null : stableJson(item));
+  if (value && typeof value === 'object') {
+    return Object.fromEntries(
+      Object.keys(value)
+        .sort()
+        .filter((key) => value[key] !== undefined)
+        .map((key) => [key, stableJson(value[key])]),
+    );
+  }
+  if (typeof value === 'number' && !Number.isFinite(value)) return null;
+  return value;
+}
+
+function automaticWriteRequestId(message) {
+  const fingerprint = JSON.stringify(stableJson({
+    id: message.id ?? null,
+    name: message.params?.name ?? null,
+    arguments: message.params?.arguments ?? {},
+  }));
+  const digest = createHash('sha256').update(fingerprint).digest('hex').slice(0, 24);
+  return `mcp:${MCP_SESSION_ID}:${digest}`;
 }
 
 // ── Entry point ──────────────────────────────────────────────────────────

@@ -15,7 +15,13 @@
 import { invoke } from '@tauri-apps/api/core';
 import { listen, type UnlistenFn } from '@tauri-apps/api/event';
 import { agentBridge } from './AgentBridge';
+import {
+  createExecuteFingerprint,
+  IdempotencyConflictError,
+  IdempotentRequestCache,
+} from './idempotency';
 import { BridgeError } from './protocol';
+import type { CommandResult } from './commands';
 
 interface BridgeRequestEvent {
   clientId: string;
@@ -35,6 +41,15 @@ interface BridgeTransportReadyResult {
   accepted: boolean;
   queuedRequests: BridgeRequestEvent[];
 }
+
+const executeRequests = new IdempotentRequestCache<CommandResult>(
+  256,
+  (result) => {
+    if (!result.screenshot) return result;
+    const { screenshot: _screenshot, ...compact } = result;
+    return compact;
+  },
+);
 
 async function respondToRequest({ clientId, message }: BridgeRequestEvent): Promise<void> {
   const response = await handleRequest(message);
@@ -102,11 +117,39 @@ async function handleRequest(message: string): Promise<JsonRpcResponse> {
       if (typeof command !== 'string' || !command) {
         throw new BridgeError('INVALID_ARGS', 'execute requires params.command');
       }
-      const result = await agentBridge.execute(command, args, {
+      const requestId = requireRequestId(params.requestId);
+      const options = {
         screenshot: Boolean(params.screenshot),
         expectedSceneRevision: params.expectedSceneRevision as number | undefined,
-      });
-      return { jsonrpc: '2.0', id, result };
+      };
+      const fingerprint = createExecuteFingerprint(command, args, options);
+      let outcome;
+      try {
+        outcome = await executeRequests.run(
+          requestId,
+          fingerprint,
+          () => agentBridge.execute(command, args, options),
+        );
+      } catch (error) {
+        if (error instanceof IdempotencyConflictError) {
+          throw new BridgeError('CONFLICT', error.message, { requestId });
+        }
+        throw error;
+      }
+      return {
+        jsonrpc: '2.0',
+        id,
+        result: {
+          ...outcome.value,
+          idempotency: {
+            requestId,
+            replayed: outcome.replayed,
+            screenshotOmitted: outcome.fromCompleted
+              && Boolean(params.screenshot)
+              && outcome.value.screenshot == null,
+          },
+        },
+      };
     }
     return {
       jsonrpc: '2.0',
@@ -123,4 +166,20 @@ async function handleRequest(message: string): Promise<JsonRpcResponse> {
     }
     return { jsonrpc: '2.0', id, error: { code: 'INTERNAL', message: String(error) } };
   }
+}
+
+function requireRequestId(value: unknown): string {
+  if (
+    typeof value !== 'string'
+    || value.length < 1
+    || value.length > 128
+    || value.trim() !== value
+    || [...value].some((character) => /\p{Cc}/u.test(character))
+  ) {
+    throw new BridgeError(
+      'INVALID_ARGS',
+      'execute requires a 1 to 128 character params.requestId without surrounding whitespace or control characters',
+    );
+  }
+  return value;
 }
