@@ -990,6 +990,8 @@ export function Project(props: {
               role="button"
               tabIndex={0}
               aria-label={`${a.name} (${a.kind})`}
+              data-agent-blocked-actions={a.kind === 'script' ? 'doubleClick' : undefined}
+              data-agent-alternative={a.kind === 'script' ? 'read_asset_text' : undefined}
               draggable={
                 a.kind === 'sprite'
                 || a.kind === 'spine'

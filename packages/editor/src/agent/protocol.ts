@@ -30,6 +30,13 @@ export interface EditorUiRect {
   height: number;
 }
 
+export type EditorUiAction =
+  | 'click'
+  | 'doubleClick'
+  | 'contextClick'
+  | 'setValue'
+  | 'scroll';
+
 /** One visible, semantically meaningful DOM element in an editor webview. */
 export interface EditorUiElement {
   id: string;
@@ -43,12 +50,14 @@ export interface EditorUiElement {
   value: string | null;
   description: string | null;
   state: Record<string, boolean | string>;
-  /** Present when this UI action requires foreground-only user input. */
+  /** Present when one or more UI actions require foreground-only user input. */
   agentInteraction: {
     blocked: true;
+    /** Null means every action is blocked. */
+    blockedActions: EditorUiAction[] | null;
     alternative: string | null;
   } | null;
-  actions: Array<'click' | 'doubleClick' | 'contextClick' | 'setValue' | 'scroll'>;
+  actions: EditorUiAction[];
   scroll: {
     left: number;
     top: number;
@@ -110,7 +119,7 @@ export interface EditorUiActionResult {
   error?: string;
   agentBlocked?: boolean;
   agentAlternative?: string | null;
-  action?: 'click' | 'doubleClick' | 'contextClick' | 'setValue' | 'scroll';
+  action?: EditorUiAction;
   selector?: string;
   tag?: string;
   role?: string | null;

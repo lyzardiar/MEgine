@@ -47,10 +47,13 @@ test('whole-window agent capture is background-safe and addressable by window la
   assert.match(rust, /actions\.push\('scroll'\)/);
   assert.match(rust, /height: element\.scrollHeight/);
   assert.match(rust, /clientHeight: element\.clientHeight/);
-  assert.match(rust, /data-agent-interaction="blocked"/);
+  assert.match(rust, /getAttribute\('data-agent-interaction'\) === 'blocked'/);
+  assert.match(rust, /data-agent-blocked-actions/);
   assert.match(rust, /agentInteraction/);
+  assert.match(rust, /blockedActions: null/);
+  assert.match(rust, /agentPolicy\.blockedActions\.includes\(action\)/);
   assert.match(rust, /agentBlocked: true/);
-  assert.match(rust, /agentAlternative: alternative \|\| null/);
+  assert.match(rust, /agentAlternative: alternative/);
   assert.match(rust, /STANDARD\.encode\(payload\)/);
   assert.match(rust, /window_label:\s*Option<String>/);
   assert.match(rust, /background_safe:\s*true/);
@@ -381,6 +384,7 @@ test('panel and menu agent surfaces use live providers and background activation
   const popup = fs.readFileSync(path.join(root, 'src', 'panels', 'PopupMenu.tsx'), 'utf8');
   const gate = fs.readFileSync(path.join(root, 'src', 'DesktopProjectGate.tsx'), 'utf8');
   const build = fs.readFileSync(path.join(root, 'src', 'panels', 'BuildSettings.tsx'), 'utf8');
+  const project = fs.readFileSync(path.join(root, 'src', 'panels', 'Project.tsx'), 'utf8');
   const dock = fs.readFileSync(path.join(root, 'src', 'panels', 'DockWorkspace.tsx'), 'utf8');
   const detached = fs.readFileSync(
     path.join(root, 'src', 'panels', 'detachedPanelWindow.ts'),
@@ -409,8 +413,12 @@ test('panel and menu agent surfaces use live providers and background activation
   assert.match(gate, /data-agent-alternative="create_project"/);
   assert.equal(
     [...build.matchAll(/data-agent-interaction="blocked"/g)].length,
-    2,
+    4,
   );
+  assert.match(build, /data-agent-alternative="verify_pc_build"/);
+  assert.match(build, /data-agent-alternative="start_pc_build"/);
+  assert.match(project, /data-agent-blocked-actions=\{a\.kind === 'script' \? 'doubleClick'/);
+  assert.match(project, /data-agent-alternative=\{a\.kind === 'script' \? 'read_asset_text'/);
   assert.match(dock, /describePanelLayout\(tree\)/);
   assert.match(dock, /rawDetail\?\.activateWindow !== false/);
   assert.match(detached, /visible: activateWindow/);

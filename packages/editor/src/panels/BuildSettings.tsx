@@ -1341,6 +1341,8 @@ export function BuildSettings(props: {
           <button
             type="button"
             disabled={buildArtifactBusy || launching || verifying || settingsSaving}
+            data-agent-interaction="blocked"
+            data-agent-alternative="verify_pc_build"
             onClick={() => void launch(lastBuild)}
           >
             {launching ? 'Starting Player...' : 'Run Player'}
@@ -1371,6 +1373,8 @@ export function BuildSettings(props: {
         <button
           type="button"
           className="primary"
+          data-agent-interaction="blocked"
+          data-agent-alternative="start_pc_build"
           disabled={
             !desktop
             || props.sceneDirty

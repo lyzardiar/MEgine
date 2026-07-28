@@ -982,6 +982,41 @@ const WINDOW_UI_SNAPSHOT_SCRIPT: &str = r#"
     .replace(/\s+/g, ' ')
     .trim()
     .slice(0, max);
+  const agentActionNames = [
+    'click',
+    'doubleClick',
+    'contextClick',
+    'setValue',
+    'scroll',
+  ];
+  const agentPolicyFor = (element) => {
+    const blockedActions = new Set();
+    let alternative = null;
+    let current = element;
+    while (current instanceof Element) {
+      const blocksAll = current.getAttribute('data-agent-interaction') === 'blocked';
+      const localBlockedActions = String(
+        current.getAttribute('data-agent-blocked-actions') || '',
+      ).split(/\s+/).filter((candidate) => agentActionNames.includes(candidate));
+      if (blocksAll || localBlockedActions.length > 0) {
+        alternative ||= normalize(current.getAttribute('data-agent-alternative'), 160) || null;
+        if (blocksAll) {
+          return { blocked: true, blockedActions: null, alternative };
+        }
+        for (const blockedAction of localBlockedActions) {
+          blockedActions.add(blockedAction);
+        }
+      }
+      current = current.parentElement;
+    }
+    return blockedActions.size > 0
+      ? {
+          blocked: true,
+          blockedActions: agentActionNames.filter((name) => blockedActions.has(name)),
+          alternative,
+        }
+      : null;
+  };
   const implicitRole = (element) => {
     const tag = element.localName;
     if (/^h[1-6]$/.test(tag)) return 'heading';
@@ -1162,16 +1197,7 @@ const WINDOW_UI_SNAPSHOT_SCRIPT: &str = r#"
     if ('selected' in element && typeof element.selected === 'boolean') {
       state.selected = element.selected;
     }
-    const agentBlocker = element.closest('[data-agent-interaction="blocked"]');
-    const agentInteraction = agentBlocker
-      ? {
-          blocked: true,
-          alternative: normalize(
-            agentBlocker.getAttribute('data-agent-alternative'),
-            160,
-          ) || null,
-        }
-      : null;
+    const agentInteraction = agentPolicyFor(element);
     const scroll = actions.includes('scroll') && element instanceof HTMLElement
       ? {
           left: element.scrollLeft,
@@ -1293,6 +1319,42 @@ const WINDOW_UI_INTERACTION_SCRIPT: &str = r#"
     deltaX: requestedDeltaX,
     deltaY: requestedDeltaY,
   } = payload;
+  const agentActionNames = [
+    'click',
+    'doubleClick',
+    'contextClick',
+    'setValue',
+    'scroll',
+  ];
+  const agentPolicyFor = (target) => {
+    const blockedActions = new Set();
+    let alternative = null;
+    let current = target;
+    while (current instanceof Element) {
+      const blocksAll = current.getAttribute('data-agent-interaction') === 'blocked';
+      const localBlockedActions = String(
+        current.getAttribute('data-agent-blocked-actions') || '',
+      ).split(/\s+/).filter((candidate) => agentActionNames.includes(candidate));
+      if (blocksAll || localBlockedActions.length > 0) {
+        alternative ||= String(
+          current.getAttribute('data-agent-alternative') || '',
+        ).trim() || null;
+        if (blocksAll) {
+          return { blockedActions: null, alternative };
+        }
+        for (const blockedAction of localBlockedActions) {
+          blockedActions.add(blockedAction);
+        }
+      }
+      current = current.parentElement;
+    }
+    return blockedActions.size > 0
+      ? {
+          blockedActions: agentActionNames.filter((name) => blockedActions.has(name)),
+          alternative,
+        }
+      : null;
+  };
   let element;
   try {
     element = document.querySelector(selector);
@@ -1300,18 +1362,19 @@ const WINDOW_UI_INTERACTION_SCRIPT: &str = r#"
     return { ok: false, error: `Invalid selector: ${String(error)}` };
   }
   if (!element) return { ok: false, error: `No element matches ${selector}` };
-  const agentBlocker = element.closest('[data-agent-interaction="blocked"]');
-  if (agentBlocker) {
-    const alternative = String(
-      agentBlocker.getAttribute('data-agent-alternative') || '',
-    ).trim();
+  const agentPolicy = agentPolicyFor(element);
+  if (agentPolicy && (
+    agentPolicy.blockedActions === null
+    || agentPolicy.blockedActions.includes(action)
+  )) {
+    const alternative = agentPolicy.alternative;
     return {
       ok: false,
-      error: `Element ${selector} requires foreground-only user input${
+      error: `Element ${selector} requires foreground-only user input for ${action}${
         alternative ? `; use ${alternative} instead` : ''
       }`,
       agentBlocked: true,
-      agentAlternative: alternative || null,
+      agentAlternative: alternative,
     };
   }
   const disabled = Boolean(
