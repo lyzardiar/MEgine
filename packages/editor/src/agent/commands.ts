@@ -13,6 +13,10 @@ import type { WorldCommand } from '@mengine/api';
 import { getBehaviour } from '@mengine/behaviour';
 import type { EditorStore } from '../store';
 import { BridgeError, type ScreenshotResult } from './protocol.ts';
+import {
+  COMMAND_PARAMS_SCHEMAS,
+  type AgentJsonSchema,
+} from './commandSchemas.ts';
 
 export interface CommandContext {
   store: EditorStore;
@@ -855,14 +859,18 @@ export const WRITE_COMMANDS: Record<string, CommandHandler> = {
 };
 
 /** Metadata for self-description (Phase 3 discoverability). */
-export interface CommandMeta {
+export interface CommandSummary {
   id: string;
   category: string;
   description: string;
   readOnly: boolean;
 }
 
-export const COMMAND_META: CommandMeta[] = [
+export interface CommandMeta extends CommandSummary {
+  paramsSchema: AgentJsonSchema;
+}
+
+const COMMAND_SUMMARIES: CommandSummary[] = [
   { id: 'batch.apply', category: 'batch', description: 'Validate and apply up to 256 WorldCommands as one undo transaction', readOnly: false },
   { id: 'project.open', category: 'project', description: 'Open a project from the welcome page without a dialog', readOnly: false },
   { id: 'project.create', category: 'project', description: 'Create and open a project from the welcome page without a dialog', readOnly: false },
@@ -915,3 +923,11 @@ export const COMMAND_META: CommandMeta[] = [
   { id: 'window.ui_click', category: 'window', description: 'Click a semantic UI element in an editor window without activating it', readOnly: false },
   { id: 'window.ui_set_value', category: 'window', description: 'Set an input value in an editor window without activating it', readOnly: false },
 ];
+
+export const COMMAND_META: CommandMeta[] = COMMAND_SUMMARIES.map((summary) => {
+  const paramsSchema = COMMAND_PARAMS_SCHEMAS[summary.id];
+  if (!paramsSchema) {
+    throw new Error(`Agent command "${summary.id}" is missing its params schema`);
+  }
+  return { ...summary, paramsSchema };
+});

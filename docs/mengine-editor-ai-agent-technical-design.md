@@ -351,7 +351,7 @@ MEngine 编辑器当前对人类友好，但对 AI Agent 不够友好。AI Agent
 | --- | --- | --- |
 | `commands.list` | `[{ id, category, description, readOnly }]` | ✅ 命令注册表（Dispatcher 内建） |
 | `menu.list` | `{ root? }` → 注册菜单元数据与实时 `enabled` | ✅ 读取统一 MenuItem 注册表并执行 validator |
-| `commands.describe` | `{ id }` → 完整 schema | 同上 |
+| `commands.describe` | `{ id }` → 完整 schema | ✅ 返回命令参数 JSON Schema 与通用执行选项 schema；未知命令明确拒绝 |
 | `schema.components` | 所有组件 `{ type, label, description, fields[], methods[], requires[] }` | ✅ 合并 `componentCatalog`、`inspectorMetadata` 与 `behaviour.FieldMeta/MethodMeta`，并包含专用 Transform 契约 |
 | `schema.component` | `{ type }` → 字段级 schema（默认值/类型/范围/枚举/条件/资产引用/可编辑状态） | ✅ 与真实 Inspector authoring metadata 同源，不再仅从默认值猜粗粒度类型 |
 | `intents.list` | 支持的高层意图清单 | `packages/agent` |

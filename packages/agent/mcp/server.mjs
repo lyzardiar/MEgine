@@ -658,6 +658,19 @@ const TOOLS = [
     handler: async () => textContent(await bridgeQuery('commands.list')),
   },
   {
+    name: 'describe_command',
+    description:
+      'Get the complete JSON Schema for one AgentBridge command argument object plus shared execution options such as screenshot and expectedSceneRevision.',
+    inputSchema: {
+      type: 'object',
+      required: ['id'],
+      properties: {
+        id: { type: 'string', description: 'Exact id returned by list_commands' },
+      },
+    },
+    handler: async (args) => textContent(await bridgeQuery('commands.describe', args)),
+  },
+  {
     name: 'list_menu_items',
     description:
       'List registered Unity-style editor menu items with exact path, shortcut, priority, and current enabled state. Optionally filter by root such as Window, Assets, or GameObject.',

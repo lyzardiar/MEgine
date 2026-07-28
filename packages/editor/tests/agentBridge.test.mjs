@@ -90,6 +90,7 @@ test('whole-window agent capture is background-safe and addressable by window la
   assert.match(mcp, /mengine:\/\/project\/state/);
   assert.match(mcp, /'step'/);
   assert.match(mcp, /name: 'clear_console_logs'/);
+  assert.match(mcp, /name: 'describe_command'/);
 });
 
 test('the main AgentBridge transport is available before a project is opened', () => {
@@ -169,6 +170,7 @@ test('scene, asset, and asynchronous build tools share guarded editor services',
   );
 
   assert.match(bridge, /case 'scene\.list'/);
+  assert.match(bridge, /case 'commands\.describe'/);
   assert.match(bridge, /case 'scene\.delete_preview'/);
   assert.match(bridge, /case 'entity\.find'/);
   assert.match(bridge, /case 'entity\.get_component'/);

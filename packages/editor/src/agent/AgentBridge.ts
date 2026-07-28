@@ -38,7 +38,15 @@ import {
   type LogEntry,
   type LogQuery,
 } from './LogService';
-import { WRITE_COMMANDS, COMMAND_META, type CommandContext, type CommandResult, type CommandMeta } from './commands';
+import {
+  WRITE_COMMANDS,
+  COMMAND_META,
+  type CommandContext,
+  type CommandMeta,
+  type CommandResult,
+  type CommandSummary,
+} from './commands';
+import { COMMAND_EXECUTION_OPTIONS_SCHEMA } from './commandSchemas';
 import {
   buildAgentComponentSchema,
   listAgentComponentSchemas,
@@ -810,8 +818,19 @@ class AgentBridge {
 
   // ── Discoverability ───────────────────────────────────────────────────
 
-  listCommands(): CommandMeta[] {
-    return COMMAND_META.map((meta) => ({ ...meta }));
+  listCommands(): CommandSummary[] {
+    return COMMAND_META.map(({ paramsSchema: _paramsSchema, ...summary }) => ({ ...summary }));
+  }
+
+  describeCommand(id: string): CommandMeta & { executionOptionsSchema: unknown } {
+    const command = COMMAND_META.find((candidate) => candidate.id === id);
+    if (!command) {
+      throw new BridgeError('INVALID_ARGS', `Unknown command "${id}"`);
+    }
+    return structuredClone({
+      ...command,
+      executionOptionsSchema: COMMAND_EXECUTION_OPTIONS_SCHEMA,
+    });
   }
 
   getPanelLayout(): PanelLayoutSnapshot {
@@ -1796,6 +1815,8 @@ class AgentBridge {
         return this.getEvents(params);
       case 'commands.list':
         return this.listCommands();
+      case 'commands.describe':
+        return this.describeCommand(requiredString(params, 'id'));
       case 'schema.components':
         return this.getComponentSchema();
       case 'schema.component':
