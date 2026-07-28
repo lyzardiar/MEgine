@@ -1067,12 +1067,18 @@ const WINDOW_UI_SNAPSHOT_SCRIPT: &str = r#"
   const nameFromContent = (role) => [
     'button', 'link', 'heading', 'menuitem', 'option', 'tab',
   ].includes(role);
+  const meaningfulContentName = (element, role) => {
+    if (!nameFromContent(role)) return '';
+    const content = normalize(element.innerText || element.textContent);
+    return /[\p{L}\p{N}]/u.test(content) ? content : '';
+  };
   const accessibleName = (element, role) => normalize(
     element.getAttribute('aria-label')
       || labelledText(element)
       || element.getAttribute('alt')
-      || element.getAttribute('title')
+      || meaningfulContentName(element, role)
       || element.getAttribute('placeholder')
+      || element.getAttribute('title')
       || (nameFromContent(role) ? element.innerText || element.textContent : ''),
   );
   const ownText = (element, role) => {
@@ -1245,7 +1251,15 @@ const WINDOW_UI_SNAPSHOT_SCRIPT: &str = r#"
       name: name || null,
       text: text && text !== name ? text : null,
       value: valueFor(element) || null,
-      description: normalize(element.getAttribute('aria-description'), 300) || null,
+      description: normalize(
+        element.getAttribute('aria-description')
+          || (
+            normalize(element.getAttribute('title')) !== name
+              ? element.getAttribute('title')
+              : ''
+          ),
+        300,
+      ) || null,
       state,
       agentInteraction,
       actions,
@@ -1403,11 +1417,28 @@ const WINDOW_UI_INTERACTION_SCRIPT: &str = r#"
         .join(' '),
     );
   };
-  const directName = (target) => normalizeName(target.getAttribute('aria-label'))
-    || labelledText(target)
-    || normalizeName(target.getAttribute('alt'))
-    || normalizeName(target.getAttribute('title'))
-    || normalizeName(target.getAttribute('placeholder'));
+  const roleForName = (target) => {
+    const explicit = normalizeName(target.getAttribute('role'));
+    if (explicit) return explicit;
+    if (target.localName === 'button') return 'button';
+    if (target.localName === 'a' && target.hasAttribute('href')) return 'link';
+    if (target.localName === 'option') return 'option';
+    return '';
+  };
+  const directName = (target) => {
+    const role = roleForName(target);
+    const content = ['button', 'link', 'heading', 'menuitem', 'option', 'tab'].includes(role)
+      ? normalizeName(target.innerText || target.textContent)
+      : '';
+    const meaningfulContent = /[\p{L}\p{N}]/u.test(content) ? content : '';
+    return normalizeName(target.getAttribute('aria-label'))
+      || labelledText(target)
+      || normalizeName(target.getAttribute('alt'))
+      || meaningfulContent
+      || normalizeName(target.getAttribute('placeholder'))
+      || normalizeName(target.getAttribute('title'))
+      || content;
+  };
   const interactionName = () => {
     const direct = directName(element);
     if (direct) return direct;
