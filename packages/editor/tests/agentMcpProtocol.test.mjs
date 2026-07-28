@@ -9,6 +9,7 @@ import {
   BoundedWriteQueue,
   incomingMessageError,
   negotiateProtocolVersion,
+  rpcOnce,
   SUPPORTED_PROTOCOL_VERSIONS,
 } from '../../agent/mcp/server.mjs';
 
@@ -121,6 +122,41 @@ test('MCP stdout queue serializes writes and enforces its byte budget', async ()
   await Promise.resolve();
   assert.equal(queue.queuedBytes, 0);
   assert.equal(queue.idle, true);
+});
+
+test('MCP bridge timeout closes the socket so native request slots are released', async () => {
+  const sent = [];
+  const closed = [];
+  const socket = {
+    readyState: WebSocket.OPEN,
+    send(message) {
+      sent.push(JSON.parse(message));
+    },
+    close(code, reason) {
+      closed.push({ code, reason });
+      this.readyState = WebSocket.CLOSING;
+    },
+  };
+
+  await assert.rejects(
+    rpcOnce(
+      { socket, discovery: { port: 4707, token: 'secret', pid: 42 } },
+      'query',
+      { query: 'events.wait', args: { afterSequence: 0 } },
+      5,
+    ),
+    (error) => {
+      assert.equal(error.name, 'BridgeConnectionError');
+      assert.equal(error.sent, true);
+      assert.match(error.message, /timed out \(query\)/);
+      return true;
+    },
+  );
+  assert.equal(sent.length, 1);
+  assert.deepEqual(closed, [{
+    code: 1011,
+    reason: 'AgentBridge request timed out',
+  }]);
 });
 
 test('MCP stdio serves negotiated initialization, resource templates, and protocol errors', async () => {

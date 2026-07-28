@@ -270,6 +270,13 @@ function rpcOnce(connection, method, params, timeoutMs = REQUEST_TIMEOUT_MS) {
     const id = crypto.randomUUID();
     const timer = setTimeout(() => {
       pending.delete(id);
+      if (activeConnection?.socket === socket) activeConnection = null;
+      try {
+        socket.close(1011, 'AgentBridge request timed out');
+      } catch {
+        // The timeout error below remains authoritative even if the socket
+        // implementation is already closing.
+      }
       reject(new BridgeConnectionError(
         `Editor bridge request timed out (${method})`,
         { sent: true, discovery },
@@ -3249,6 +3256,7 @@ export {
   closeBridgeConnection,
   incomingMessageError,
   negotiateProtocolVersion,
+  rpcOnce,
   SUPPORTED_PROTOCOL_VERSIONS,
   screenshotContent,
   structuredError,
