@@ -2691,6 +2691,16 @@ const TOOLS = [
         type: 'boolean',
         description: 'Snap RectTransforms to Canvas and sibling guides',
       },
+      pivotMode: {
+        type: 'string',
+        enum: ['pivot', 'center'],
+        description: 'Place transform handles at the pivot or selection center',
+      },
+      handleOrientation: {
+        type: 'string',
+        enum: ['local', 'global'],
+        description: 'Orient transform handles in local or global axes',
+      },
       snap: {
         type: 'object',
         properties: {
@@ -2733,6 +2743,8 @@ const TOOLS = [
         { required: ['mode2D'] },
         { required: ['gridVisible'] },
         { required: ['smartGuidesEnabled'] },
+        { required: ['pivotMode'] },
+        { required: ['handleOrientation'] },
         { required: ['snap'] },
       ],
     },

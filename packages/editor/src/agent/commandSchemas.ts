@@ -688,6 +688,16 @@ export const COMMAND_PARAMS_SCHEMAS: Record<string, AgentJsonSchema> = {
     smartGuidesEnabled: booleanValue(
       'Snap RectTransforms to sibling and Canvas guides',
     ),
+    pivotMode: {
+      type: 'string',
+      enum: ['pivot', 'center'],
+      description: 'Place transform handles at the pivot or selection center',
+    },
+    handleOrientation: {
+      type: 'string',
+      enum: ['local', 'global'],
+      description: 'Orient transform handles in local or global axes',
+    },
     snap: objectSchema({
       enabled: booleanValue('Enable persistent transform snapping'),
       move: {
@@ -721,6 +731,8 @@ export const COMMAND_PARAMS_SCHEMAS: Record<string, AgentJsonSchema> = {
       { required: ['mode2D'] },
       { required: ['gridVisible'] },
       { required: ['smartGuidesEnabled'] },
+      { required: ['pivotMode'] },
+      { required: ['handleOrientation'] },
       { required: ['snap'] },
     ],
   }),

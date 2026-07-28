@@ -124,6 +124,13 @@ import {
 } from './editorClose';
 import { alertEditor, confirmEditor, promptEditor } from './editorDialog';
 import { createEditorBroadcastChannel } from './editorInstance.ts';
+import {
+  initializeSceneViewPreferencesEvents,
+  readSceneViewPreferences,
+  SCENE_VIEW_PREFERENCES_CHANGED_EVENT,
+  updateSceneViewPreferences,
+  type SceneViewPreferencesChangeDetail,
+} from './sceneViewPreferences';
 import './editorWindow'; // MenuItem side-effects
 
 const Timeline = lazy(async () => ({ default: (await import('./panels/Timeline')).Timeline }));
@@ -221,8 +228,13 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
   const [snap, setSnap] = useState<WorldSnapshotView & { selectedIds?: number[] }>(store.snapshot());
   const [mode, setMode] = useState<EditorMode>('edit');
   const [gizmo, setGizmo] = useState<GizmoMode>('translate');
-  const [pivotMode, setPivotMode] = useState<ToolPivotMode>('pivot');
-  const [handleOrientation, setHandleOrientation] = useState<ToolHandleOrientation>('local');
+  const [pivotMode, setPivotMode] = useState<ToolPivotMode>(
+    () => readSceneViewPreferences().pivotMode,
+  );
+  const [handleOrientation, setHandleOrientation] =
+    useState<ToolHandleOrientation>(
+      () => readSceneViewPreferences().handleOrientation,
+    );
   const [viewTab, setViewTab] = useState<'scene' | 'game'>('scene');
   const [gameResolution, setGameResolution] = useState(store.gameResolution);
   const [hierFilter, setHierFilter] = useState('');
@@ -413,6 +425,33 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
     if (props.detachedPanel) return undefined;
     return agentBridge.connectEventSources();
   }, [props.detachedPanel, store]);
+
+  useEffect(() => {
+    initializeSceneViewPreferencesEvents();
+    const applyPreferences = (
+      preferences: SceneViewPreferencesChangeDetail['preferences'],
+    ) => {
+      setPivotMode(preferences.pivotMode);
+      setHandleOrientation(preferences.handleOrientation);
+    };
+    const onPreferencesChanged = (event: Event) => {
+      applyPreferences(
+        (event as CustomEvent<SceneViewPreferencesChangeDetail>).detail
+          .preferences,
+      );
+    };
+    window.addEventListener(
+      SCENE_VIEW_PREFERENCES_CHANGED_EVENT,
+      onPreferencesChanged,
+    );
+    applyPreferences(readSceneViewPreferences());
+    return () => {
+      window.removeEventListener(
+        SCENE_VIEW_PREFERENCES_CHANGED_EVENT,
+        onPreferencesChanged,
+      );
+    };
+  }, []);
 
   const postWorkspaceDirtyState = () => {
     syncChannel.current?.postMessage({
@@ -2238,8 +2277,12 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
           store.setGizmo(m);
           refresh();
         }}
-        onPivotMode={setPivotMode}
-        onHandleOrientation={setHandleOrientation}
+        onPivotMode={(next) => {
+          updateSceneViewPreferences({ pivotMode: next });
+        }}
+        onHandleOrientation={(next) => {
+          updateSceneViewPreferences({ handleOrientation: next });
+        }}
         onPlay={() => {
           store.play();
           setViewTab('game');

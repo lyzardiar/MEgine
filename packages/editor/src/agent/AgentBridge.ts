@@ -3337,6 +3337,13 @@ class AgentBridge {
     if (args.smartGuidesEnabled !== undefined) {
       patch.smartGuidesEnabled = args.smartGuidesEnabled as boolean;
     }
+    if (args.pivotMode !== undefined) {
+      patch.pivotMode = args.pivotMode as SceneViewPreferencesPatch['pivotMode'];
+    }
+    if (args.handleOrientation !== undefined) {
+      patch.handleOrientation =
+        args.handleOrientation as SceneViewPreferencesPatch['handleOrientation'];
+    }
     if (args.snap !== undefined) {
       patch.snap = structuredClone(
         args.snap as NonNullable<SceneViewPreferencesPatch['snap']>,

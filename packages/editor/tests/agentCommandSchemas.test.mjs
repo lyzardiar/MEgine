@@ -155,7 +155,7 @@ test('command schemas expose exact high-risk guards and shared optimistic option
   );
   assert.equal(
     COMMAND_PARAMS_SCHEMAS['view.set_scene_preferences'].anyOf.length,
-    4,
+    6,
   );
   assert.equal(
     COMMAND_PARAMS_SCHEMAS['view.set_scene_preferences']

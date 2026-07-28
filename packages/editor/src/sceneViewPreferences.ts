@@ -3,11 +3,17 @@ import {
   normalizeSceneSnapSettings,
   type SceneSnapSettings,
 } from './sceneSnap.ts';
+import type {
+  ToolHandleOrientation,
+  ToolPivotMode,
+} from './editorTool.ts';
 
 const SCENE_2D_KEY = 'mengine.scene.2d';
 const SCENE_SNAP_KEY = 'mengine.scene.snap';
 const SCENE_GRID_KEY = 'mengine.scene.grid';
 const SCENE_SMART_GUIDES_KEY = 'mengine.scene.smart-guides';
+const SCENE_PIVOT_MODE_KEY = 'mengine.scene.pivot-mode';
+const SCENE_HANDLE_ORIENTATION_KEY = 'mengine.scene.handle-orientation';
 const SCENE_VIEW_CHANNEL = 'mengine.editor.scene-view.v1';
 
 export const SCENE_VIEW_PREFERENCES_CHANGED_EVENT =
@@ -17,6 +23,8 @@ export type SceneViewPreferences = {
   mode2D: boolean;
   gridVisible: boolean;
   smartGuidesEnabled: boolean;
+  pivotMode: ToolPivotMode;
+  handleOrientation: ToolHandleOrientation;
   snap: SceneSnapSettings;
 };
 
@@ -24,6 +32,8 @@ export type SceneViewPreferencesPatch = {
   mode2D?: boolean;
   gridVisible?: boolean;
   smartGuidesEnabled?: boolean;
+  pivotMode?: ToolPivotMode;
+  handleOrientation?: ToolHandleOrientation;
   snap?: Partial<SceneSnapSettings>;
 };
 
@@ -61,6 +71,14 @@ export function readSceneViewPreferences(): SceneViewPreferences {
       gridVisible: localStorage.getItem(SCENE_GRID_KEY) !== '0',
       smartGuidesEnabled:
         localStorage.getItem(SCENE_SMART_GUIDES_KEY) !== '0',
+      pivotMode:
+        localStorage.getItem(SCENE_PIVOT_MODE_KEY) === 'center'
+          ? 'center'
+          : 'pivot',
+      handleOrientation:
+        localStorage.getItem(SCENE_HANDLE_ORIENTATION_KEY) === 'global'
+          ? 'global'
+          : 'local',
       snap: loadStoredSnap(),
     };
   } catch {
@@ -68,6 +86,8 @@ export function readSceneViewPreferences(): SceneViewPreferences {
       mode2D: false,
       gridVisible: true,
       smartGuidesEnabled: true,
+      pivotMode: 'pivot',
+      handleOrientation: 'local',
       snap: normalizeSceneSnapSettings(null),
     };
   }
@@ -84,6 +104,11 @@ function persistSceneViewPreferences(preferences: SceneViewPreferences): void {
     localStorage.setItem(
       SCENE_SMART_GUIDES_KEY,
       preferences.smartGuidesEnabled ? '1' : '0',
+    );
+    localStorage.setItem(SCENE_PIVOT_MODE_KEY, preferences.pivotMode);
+    localStorage.setItem(
+      SCENE_HANDLE_ORIENTATION_KEY,
+      preferences.handleOrientation,
     );
     localStorage.setItem(SCENE_SNAP_KEY, JSON.stringify(preferences.snap));
   } catch {
@@ -127,6 +152,12 @@ export function initializeSceneViewPreferencesEvents(): void {
         gridVisible: message.preferences.gridVisible !== false,
         smartGuidesEnabled:
           message.preferences.smartGuidesEnabled !== false,
+        pivotMode:
+          message.preferences.pivotMode === 'center' ? 'center' : 'pivot',
+        handleOrientation:
+          message.preferences.handleOrientation === 'global'
+            ? 'global'
+            : 'local',
         snap: normalizeSceneSnapSettings(message.preferences.snap),
       };
       sceneViewPreferencesCache = preferences;
@@ -161,6 +192,14 @@ export function updateSceneViewPreferences(
       typeof patch.smartGuidesEnabled === 'boolean'
         ? patch.smartGuidesEnabled
         : current.smartGuidesEnabled,
+    pivotMode:
+      patch.pivotMode === 'center' || patch.pivotMode === 'pivot'
+        ? patch.pivotMode
+        : current.pivotMode,
+    handleOrientation:
+      patch.handleOrientation === 'global' || patch.handleOrientation === 'local'
+        ? patch.handleOrientation
+        : current.handleOrientation,
     snap: normalizeSceneSnapSettings({
       ...current.snap,
       ...(patch.snap ?? {}),

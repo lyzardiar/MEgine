@@ -849,6 +849,8 @@ test('scene, asset, and asynchronous build tools share guarded editor services',
   assert.match(bridge, /SCENE_VIEW_PREFERENCES_CHANGED_EVENT/);
   assert.match(bridge, /updateSceneViewPreferences\(patch\)/);
   assert.match(bridge, /commandId === 'view\.set_scene_preferences'/);
+  assert.match(app, /updateSceneViewPreferences\(\{ pivotMode: next \}\)/);
+  assert.match(app, /updateSceneViewPreferences\(\{ handleOrientation: next \}\)/);
   assert.match(bridge, /setEditorPrefs\(\{ gameResolution: resolution \}\)/);
   assert.match(bridge, /status: 'running'/);
   assert.match(bridge, /listenToPcBuildProgress/);

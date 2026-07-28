@@ -54,12 +54,16 @@ test('Scene view preferences persist and notify local and remote editor windows'
     const local = updateSceneViewPreferences({
       mode2D: true,
       gridVisible: false,
+      pivotMode: 'center',
+      handleOrientation: 'global',
       snap: { enabled: true, move: 4 },
     });
     assert.deepEqual(local, {
       mode2D: true,
       gridVisible: false,
       smartGuidesEnabled: true,
+      pivotMode: 'center',
+      handleOrientation: 'global',
       snap: { enabled: true, move: 4, rotate: 15, scale: 0.1 },
     });
     assert.deepEqual(readSceneViewPreferences(), local);
@@ -74,6 +78,8 @@ test('Scene view preferences persist and notify local and remote editor windows'
         mode2D: false,
         gridVisible: true,
         smartGuidesEnabled: false,
+        pivotMode: 'pivot',
+        handleOrientation: 'local',
         snap: { enabled: false, move: 8, rotate: 30, scale: 0.25 },
       },
       sender: 'remote-scene-view-window',
