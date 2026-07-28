@@ -1179,6 +1179,36 @@ const TOOLS = [
     [],
   ),
   {
+    name: 'get_profiler_samples',
+    description:
+      'Read bounded Scene or Game editor Canvas preview samples plus latest, average, p95, and peak frame/paint metrics. This is editor CPU telemetry, not native Player GPU or memory profiling.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        source: {
+          type: 'string',
+          enum: ['scene', 'game'],
+          description: 'Viewport source; defaults to game',
+        },
+        limit: {
+          type: 'integer',
+          minimum: 1,
+          maximum: 480,
+          description: 'Recent samples to return; defaults to 120',
+        },
+      },
+      additionalProperties: false,
+    },
+    handler: async (args) => textContent(await bridgeQuery('profiler.get_samples', args)),
+  },
+  execTool(
+    'clear_profiler_samples',
+    'Clear Scene and Game editor-profiler samples across every editor window as an idempotent background-safe write.',
+    'profiler.clear',
+    {},
+    [],
+  ),
+  {
     name: 'list_assets',
     description:
       'List the current project asset index with paths, kinds, GUID/meta health, sizes, and optimistic-lock revisions. Supports filters and bounded pages; continue with nextOffset until null.',

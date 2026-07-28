@@ -105,6 +105,12 @@ import {
   respondToEditorDialogInWindow,
 } from '../editorDialog';
 import {
+  clearEditorProfilerSamples,
+  readEditorProfilerSamples,
+  summarizeEditorProfilerSamples,
+  type EditorProfilerSource,
+} from '../editorProfiler';
+import {
   buildPcPlayer,
   cancelPcBuild,
   comparePcBuildHistory,
@@ -2277,6 +2283,14 @@ class AgentBridge {
         true,
       );
     }
+    if (commandId === 'profiler.clear') {
+      clearEditorProfilerSamples();
+      return this.finishAsyncCommand(
+        { ok: true, data: { cleared: true } },
+        options,
+        true,
+      );
+    }
     if (commandId === 'dialog.respond') {
       const dialogId = requiredString(args, 'dialogId');
       const windowLabel = typeof args.windowLabel === 'string' && args.windowLabel.trim()
@@ -3079,6 +3093,34 @@ class AgentBridge {
           since: params.since as number | undefined,
           limit: params.limit as number | undefined,
         });
+      case 'profiler.get_samples': {
+        const source = params.source ?? 'game';
+        if (source !== 'scene' && source !== 'game') {
+          throw new BridgeError(
+            'INVALID_ARGS',
+            '"source" must be "scene" or "game"',
+          );
+        }
+        const limit = params.limit ?? 120;
+        if (!Number.isSafeInteger(limit) || Number(limit) < 1 || Number(limit) > 480) {
+          throw new BridgeError(
+            'INVALID_ARGS',
+            '"limit" must be an integer from 1 to 480',
+          );
+        }
+        const allSamples = readEditorProfilerSamples(source as EditorProfilerSource);
+        const samples = allSamples.slice(-Number(limit));
+        return {
+          source,
+          scope: 'editor-canvas-preview',
+          note: 'Editor Canvas preview CPU samples; not native Player GPU timing, memory, or draw-call capture.',
+          summary: summarizeEditorProfilerSamples(allSamples),
+          totalSamples: allSamples.length,
+          returnedSamples: samples.length,
+          truncated: samples.length < allSamples.length,
+          samples,
+        };
+      }
       case 'events.get':
         return this.getEvents(params);
       case 'commands.list':

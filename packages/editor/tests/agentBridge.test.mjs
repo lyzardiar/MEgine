@@ -212,6 +212,8 @@ test('whole-window agent capture is background-safe and addressable by window la
   assert.match(mcp, /mengine:\/\/project\/state/);
   assert.match(mcp, /'step'/);
   assert.match(mcp, /'clear_console_logs'/);
+  assert.match(mcp, /name: 'get_profiler_samples'/);
+  assert.match(mcp, /'clear_profiler_samples'/);
   assert.match(mcp, /name: 'describe_command'/);
 });
 

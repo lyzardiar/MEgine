@@ -148,6 +148,7 @@ export const COMMAND_PARAMS_SCHEMAS: Record<string, AgentJsonSchema> = {
     },
   }, ['dialogId', 'action']),
   'console.clear': emptySchema,
+  'profiler.clear': emptySchema,
   'project.open': objectSchema({
     root: stringValue('Absolute existing MEngine project root'),
   }, ['root']),
