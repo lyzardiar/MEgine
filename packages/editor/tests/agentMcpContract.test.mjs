@@ -241,6 +241,7 @@ test('MCP resources expose unique, query-backed core editor context', () => {
     'mengine://editor/windows',
     'mengine://scene/snapshot',
     'mengine://schema/components',
+    'mengine://queries',
     'mengine://commands',
     'mengine://build/settings',
   ];

@@ -62,6 +62,12 @@ import {
   COMMAND_EXECUTION_OPTIONS_SCHEMA,
   COMMAND_PARAMS_SCHEMAS,
 } from './commandSchemas';
+import {
+  QUERY_META,
+  QUERY_PARAMS_SCHEMAS,
+  type QueryMeta,
+  type QuerySummary,
+} from './querySchemas';
 import { validateAgentJsonSchema } from './jsonSchemaValidation';
 import {
   buildAgentComponentSchema,
@@ -1227,6 +1233,18 @@ class AgentBridge {
       ...command,
       executionOptionsSchema: COMMAND_EXECUTION_OPTIONS_SCHEMA,
     });
+  }
+
+  listQueries(): QuerySummary[] {
+    return QUERY_META.map(({ paramsSchema: _paramsSchema, ...summary }) => ({ ...summary }));
+  }
+
+  describeQuery(id: string): QueryMeta {
+    const query = QUERY_META.find((candidate) => candidate.id === id);
+    if (!query) {
+      throw new BridgeError('INVALID_ARGS', `Unknown query "${id}"`);
+    }
+    return structuredClone(query);
   }
 
   getPanelLayout(): PanelLayoutSnapshot {
@@ -3147,6 +3165,18 @@ class AgentBridge {
   // ── Unified query entry (called by transports) ────────────────────────
 
   async query(queryId: string, params: Record<string, unknown> = {}): Promise<unknown> {
+    const paramsSchema = QUERY_PARAMS_SCHEMAS[queryId];
+    if (!paramsSchema) {
+      throw new BridgeError('INVALID_ARGS', `Unknown query "${queryId}"`);
+    }
+    const parameterIssues = validateAgentJsonSchema(params, paramsSchema);
+    if (parameterIssues.length > 0) {
+      throw new BridgeError(
+        'INVALID_ARGS',
+        `Invalid parameters for query "${queryId}"`,
+        { query: queryId, issues: parameterIssues },
+      );
+    }
     switch (queryId) {
       case 'editor.state':
         return this.getEditorState();
@@ -3321,6 +3351,10 @@ class AgentBridge {
         return this.getComponentSchema(
           typeof params.type === 'string' ? params.type : undefined,
         );
+      case 'queries.list':
+        return this.listQueries();
+      case 'queries.describe':
+        return this.describeQuery(requiredString(params, 'id'));
       default:
         throw new BridgeError('INVALID_ARGS', `Unknown query "${queryId}"`);
     }

@@ -359,6 +359,8 @@ Rust Host 使用独立的工程生命周期互斥门串行化 open/create/close 
 
 | query id | 返回 | 集成点 |
 | --- | --- | --- |
+| `queries.list` | `[{ id, category, description, readOnly }]` | ✅ 全部只读 Bridge 查询目录；MCP resource、原生 WebSocket 与 CLI 共用 |
+| `queries.describe` | `{ id }` → 完整参数 schema | ✅ 返回查询参数 JSON Schema；所有传输在查询执行前按同一 schema 严格校验 |
 | `commands.list` | `[{ id, category, description, readOnly }]` | ✅ 命令注册表（Dispatcher 内建） |
 | `menu.list` | `{ root? }` → 注册菜单元数据与实时 `enabled` | ✅ 读取统一 MenuItem 注册表并执行 validator |
 | `commands.describe` | `{ id }` → 完整 schema | ✅ 返回命令参数 JSON Schema 与通用执行选项 schema；未知命令明确拒绝 |
@@ -366,12 +368,13 @@ Rust Host 使用独立的工程生命周期互斥门串行化 open/create/close 
 | `schema.component` | `{ type }` → 字段级 schema（默认值/类型/范围/枚举/条件/资产引用/可编辑状态） | ✅ 与真实 Inspector authoring metadata 同源，不再仅从默认值猜粗粒度类型 |
 | `intents.list` | 支持的高层意图、说明与完整 JSON Schema | ✅ `packages/agent` 单一契约源；MCP 对应 `list_intents` |
 
-这是「自描述」的关键：Agent 先调 `commands.list` 和 `schema.components`，就能动态知道能做什么、每个组件能填什么字段，无需人工硬编码。MCP 的 `tools/list` 直接由 `commands.list` 生成。
+这是「自描述」的关键：Agent 先调 `queries.list`、`commands.list` 和 `schema.components`，就能动态知道可读什么、可改什么、每个组件能填什么字段，无需人工硬编码。MCP 同时暴露 `mengine://queries`、查询描述工具和领域工具。
 
 ### 4.4 反馈与验证（Feedback & Verification）—— 让 Agent「确认结果」
 
 | 能力 | 说明 |
 | --- | --- |
+| 查询契约 | ✅ 每个只读查询都有权威 `paramsSchema`；WebSocket、CLI 与 MCP 对非法、缺失或多余字段返回一致的 `INVALID_ARGS`，不再静默忽略 |
 | 命令结果 | ✅ 每个写命令返回 `{ ok, sceneRevision, eventSequence, data }`；所有传输先按同一 `paramsSchema` 严格校验参数，再检查 `expectedSceneRevision`，不匹配时在任何改动前返回 `STALE_REVISION` |
 | 操作后自动截图 | 写命令可带 `options.screenshot: true`，结果里附 `screenshot` 字段，形成「改→看」视觉闭环 |
 | 状态 diff | ✅ `query: scene.diff({ fromRevision })` 返回实体增删改、场景级状态（当前含 clear color）和当前 payload；切场景或历史过期时返回 `resetRequired` 与完整快照 |
@@ -467,6 +470,7 @@ inspect_and_fix       「截图当前场景，检查并修复选中物体的问�
 
 ```powershell
 mengine-agent query window.list
+'{"id":"window.ui_snapshot"}' | mengine-agent query queries.describe --args -
 '{"windowLabel":"main"}' | mengine-agent query window.ui_snapshot --args -
 mengine-agent execute intent.apply --args @intent.json --expected-scene-revision 12
 ```
@@ -523,12 +527,12 @@ CLI 仅输出结构化 JSON，支持 `--args @file` / `--args -`、显式幂等 
 
 目标：让 Agent「知道能做什么」并「确认结果」。
 
-- `commands.list` / `schema.components` / `menu.list` 自描述
+- `queries.list` / `commands.list` / `schema.components` / `menu.list` 自描述
 - 操作后自动截图 + `scene.diff`
 - EventBus 事件订阅（project/scene/selection/mode/log/build/asset）
 - MCP resources/prompts 完善
 
-验收：Agent 仅凭 `commands.list` + `schema.components` 即可自主探索能力；写操作后能拿到截图与 diff 自我验证。
+验收：Agent 仅凭 `queries.list` + `commands.list` + `schema.components` 即可自主探索能力；写操作后能拿到截图与 diff 自我验证。
 
 ### Phase 4 —— 扩展传输层
 

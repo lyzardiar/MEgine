@@ -1433,6 +1433,26 @@ const TOOLS = [
     handler: async () => textContent(await bridgeQuery('commands.list')),
   },
   {
+    name: 'list_queries',
+    description:
+      'List every transport-level read query (id, category, description, readOnly) available through the native WebSocket and one-shot CLI.',
+    inputSchema: { type: 'object', properties: {} },
+    handler: async () => textContent(await bridgeQuery('queries.list')),
+  },
+  {
+    name: 'describe_query',
+    description:
+      'Get the complete JSON Schema for one transport-level read query argument object.',
+    inputSchema: {
+      type: 'object',
+      required: ['id'],
+      properties: {
+        id: { type: 'string', minLength: 1, pattern: '\\S', description: 'Exact id returned by list_queries' },
+      },
+    },
+    handler: async (args) => textContent(await bridgeQuery('queries.describe', args)),
+  },
+  {
     name: 'list_intents',
     description:
       'List supported high-level editor intents with their complete JSON Schemas before applying one.',
@@ -2385,6 +2405,12 @@ const RESOURCES = [
     'commands.list',
   ),
   bridgeResource(
+    'mengine://queries',
+    'Agent Query Catalog',
+    'All supported transport-level read queries with categories and descriptions.',
+    'queries.list',
+  ),
+  bridgeResource(
     'mengine://build/settings',
     'PC Build Settings',
     'Revision-safe scene ordering, content policy, shader policy, and output configuration.',
@@ -2413,7 +2439,7 @@ const RESOURCE_READERS = Object.fromEntries(
 
 const SERVER_INSTRUCTIONS = [
   'MEngine MCP controls the running editor without activating or raising its native windows.',
-  'Start by reading mengine://project/state and mengine://editor/state. If a project is open, inspect mengine://scene/snapshot, mengine://schema/components, and mengine://commands before editing.',
+  'Start by reading mengine://project/state and mengine://editor/state. If a project is open, inspect mengine://scene/snapshot, mengine://schema/components, mengine://queries, and mengine://commands before editing.',
   'Read tools may run concurrently. Editor writes are serialized in arrival order.',
   'For revision-sensitive writes, pass the latest expectedSceneRevision. Reuse the same requestId only when retrying the exact same write; using it with different arguments is rejected.',
   'BRIDGE_CONNECTION means the editor is unavailable and the request was not accepted. UNKNOWN_OUTCOME means a sent write lost its editor process; re-read state before deciding whether a new write is needed.',
