@@ -612,10 +612,12 @@ pub async fn inspect_editor_window(
     app: AppHandle,
     window_label: Option<String>,
     max_elements: Option<usize>,
+    offset: Option<usize>,
 ) -> Result<serde_json::Value, String> {
     let window_label = window_label.unwrap_or_else(|| "main".to_string());
     let max_elements = max_elements.unwrap_or(2_000).clamp(50, 5_000);
-    inspect_editor_window_impl(app, window_label, max_elements).await
+    let offset = offset.unwrap_or(0).min(1_000_000);
+    inspect_editor_window_impl(app, window_label, max_elements, offset).await
 }
 
 /// Execute one allow-listed DOM interaction in a target editor webview.
@@ -692,9 +694,11 @@ async fn inspect_editor_window_impl(
     app: AppHandle,
     window_label: String,
     max_elements: usize,
+    offset: usize,
 ) -> Result<serde_json::Value, String> {
-    let expression =
-        WINDOW_UI_SNAPSHOT_SCRIPT.replace("__MENGINE_MAX_ELEMENTS__", &max_elements.to_string());
+    let expression = WINDOW_UI_SNAPSHOT_SCRIPT
+        .replace("__MENGINE_MAX_ELEMENTS__", &max_elements.to_string())
+        .replace("__MENGINE_OFFSET__", &offset.to_string());
     let mut snapshot = evaluate_webview_script(&app, &window_label, expression).await?;
     let object = snapshot
         .as_object_mut()
@@ -844,6 +848,7 @@ async fn inspect_editor_window_impl(
     _app: AppHandle,
     _window_label: String,
     _max_elements: usize,
+    _offset: usize,
 ) -> Result<serde_json::Value, String> {
     Err("background editor-window inspection is currently only supported on Windows".to_string())
 }
@@ -869,6 +874,7 @@ async fn interact_editor_window_impl(
 const WINDOW_UI_SNAPSHOT_SCRIPT: &str = r#"
 (() => {
   const limit = __MENGINE_MAX_ELEMENTS__;
+  const offset = __MENGINE_OFFSET__;
   const normalize = (value, max = 400) => String(value ?? '')
     .replace(/\s+/g, ' ')
     .trim()
@@ -1009,8 +1015,8 @@ const WINDOW_UI_SNAPSHOT_SCRIPT: &str = r#"
     if (!role && !name && !text && !structural) continue;
     candidates.push({ element, role, name, text });
   }
-  const selected = candidates.slice(0, limit);
-  const ids = new Map(selected.map((entry, index) => [entry.element, `ui-${index + 1}`]));
+  const selected = candidates.slice(offset, offset + limit);
+  const ids = new Map(candidates.map((entry, index) => [entry.element, `ui-${index + 1}`]));
   const elements = selected.map((entry) => {
     const { element, role, name, text } = entry;
     let parent = element.parentElement;
@@ -1052,7 +1058,7 @@ const WINDOW_UI_SNAPSHOT_SCRIPT: &str = r#"
     };
   });
   return {
-    version: 1,
+    version: 2,
     title: document.title,
     url: location.href,
     capturedAt: Date.now(),
@@ -1067,7 +1073,13 @@ const WINDOW_UI_SNAPSHOT_SCRIPT: &str = r#"
       document.activeElement instanceof Element ? selectorFor(document.activeElement) : null,
     totalDomElements: all.length,
     totalSemanticElements: candidates.length,
-    truncated: candidates.length > selected.length,
+    offset,
+    count: selected.length,
+    nextOffset: offset + selected.length < candidates.length
+      ? offset + selected.length
+      : null,
+    hasMore: offset + selected.length < candidates.length,
+    truncated: offset > 0 || offset + selected.length < candidates.length,
     elements,
   };
 })()

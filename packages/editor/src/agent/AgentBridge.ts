@@ -477,6 +477,7 @@ class AgentBridge {
   async inspectWindow(
     windowLabel = 'main',
     maxElements = 2_000,
+    offset = 0,
   ): Promise<EditorUiSnapshot> {
     if (!isDesktopEditor()) {
       throw new BridgeError('NOT_READY', 'Window UI inspection requires the desktop editor');
@@ -484,9 +485,13 @@ class AgentBridge {
     const boundedMaxElements = Number.isFinite(maxElements)
       ? Math.min(5_000, Math.max(50, Math.trunc(maxElements)))
       : 2_000;
+    const boundedOffset = Number.isFinite(offset)
+      ? Math.min(1_000_000, Math.max(0, Math.trunc(offset)))
+      : 0;
     return invoke<EditorUiSnapshot>('inspect_editor_window', {
       windowLabel,
       maxElements: boundedMaxElements,
+      offset: boundedOffset,
     });
   }
 
@@ -2533,6 +2538,7 @@ class AgentBridge {
             ? params.windowLabel
             : 'main',
           typeof params.maxElements === 'number' ? params.maxElements : 2_000,
+          typeof params.offset === 'number' ? params.offset : 0,
         );
       case 'panel.get_layout':
         return this.getPanelLayout();

@@ -784,7 +784,7 @@ const TOOLS = [
   {
     name: 'get_window_ui',
     description:
-      'Get a background-safe semantic snapshot of an editor window: visible text, accessible roles/names, control values and states, bounds, supported actions, and stable CSS selectors. Use this before screenshots when you need exact UI content without OCR. The editor is not activated.',
+      'Get one page of a background-safe semantic editor-window snapshot: visible text, accessible roles/names, control values and states, bounds, supported actions, and stable CSS selectors. Continue with nextOffset until null to retrieve all semantic content without OCR, scrolling, or activating the editor.',
     inputSchema: {
       type: 'object',
       properties: {
@@ -798,12 +798,19 @@ const TOOLS = [
           maximum: 5000,
           description: 'Maximum semantic elements to return (default: 2000)',
         },
+        offset: {
+          type: 'integer',
+          minimum: 0,
+          maximum: 1000000,
+          description: 'Zero-based semantic element cursor from the previous page (default: 0)',
+        },
       },
     },
     handler: async (args) =>
       textContent(await bridgeQuery('window.ui_snapshot', {
         windowLabel: args.windowLabel || 'main',
         maxElements: typeof args.maxElements === 'number' ? args.maxElements : 2000,
+        offset: typeof args.offset === 'number' ? args.offset : 0,
       })),
   },
   {

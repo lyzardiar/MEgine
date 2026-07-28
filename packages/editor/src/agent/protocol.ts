@@ -33,6 +33,7 @@ export interface EditorUiRect {
 /** One visible, semantically meaningful DOM element in an editor webview. */
 export interface EditorUiElement {
   id: string;
+  /** May refer to an element on another semantic snapshot page. */
   parentId: string | null;
   selector: string;
   tag: string;
@@ -65,6 +66,13 @@ export interface EditorUiSnapshot {
   activeElementSelector: string | null;
   totalDomElements: number;
   totalSemanticElements: number;
+  /** Zero-based semantic element offset requested for this page. */
+  offset: number;
+  /** Number of semantic elements returned on this page. */
+  count: number;
+  /** Cursor for the next page, or null once all semantic content is reachable. */
+  nextOffset: number | null;
+  hasMore: boolean;
   truncated: boolean;
   elements: EditorUiElement[];
 }
