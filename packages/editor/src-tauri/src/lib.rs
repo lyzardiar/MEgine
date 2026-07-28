@@ -3619,6 +3619,54 @@ fn create_project(
     Ok(snapshot)
 }
 
+#[derive(serde::Serialize)]
+#[serde(rename_all = "camelCase")]
+struct CloseProjectResult {
+    closed_windows: Vec<String>,
+}
+
+#[tauri::command]
+fn close_project(
+    discard_dirty: bool,
+    state: State<'_, AppState>,
+    app: tauri::AppHandle,
+) -> Result<CloseProjectResult, String> {
+    let active_build = state.active_build.lock();
+    if active_build.is_some() {
+        return Err("cannot close the project while a PC Player build is active".to_string());
+    }
+    let mut project = state.project.lock();
+    let session = project.as_ref().ok_or_else(|| no_project().message)?;
+    if session.snapshot().dirty && !discard_dirty {
+        return Err(
+            "the native scene has unsaved changes; pass discardDirty=true to discard them"
+                .to_string(),
+        );
+    }
+
+    let mut secondary_windows: Vec<_> = app
+        .webview_windows()
+        .into_iter()
+        .filter(|(label, _)| label != "main")
+        .collect();
+    secondary_windows.sort_by(|left, right| left.0.cmp(&right.0));
+    let mut closed_windows = Vec::with_capacity(secondary_windows.len());
+    for (label, window) in secondary_windows {
+        window
+            .destroy()
+            .map_err(|error| format!("could not close editor window \"{label}\": {error}"))?;
+        closed_windows.push(label);
+    }
+
+    session
+        .discard_scene_recovery()
+        .map_err(|error| format!("could not discard scene recovery before closing: {error}"))?;
+    let session = project.take().ok_or_else(|| no_project().message)?;
+    drop(session);
+    drop(active_build);
+    Ok(CloseProjectResult { closed_windows })
+}
+
 #[tauri::command]
 fn list_recent_projects(app: tauri::AppHandle) -> Result<Vec<RecentProjectInfo>, String> {
     load_recent_projects(&app)
@@ -4050,12 +4098,6 @@ async fn create_pc_build_history_patch(
     app: tauri::AppHandle,
     state: State<'_, AppState>,
 ) -> Result<BuildHistoryPatchResult, String> {
-    let project_root = state
-        .project
-        .lock()
-        .as_ref()
-        .map(|session| session.snapshot().project_root)
-        .ok_or_else(|| no_project().message)?;
     let bundled_sdk = app
         .path()
         .resolve("build-sdk", BaseDirectory::Resource)
@@ -4066,18 +4108,25 @@ async fn create_pc_build_history_patch(
         "mengine-editor-history-patch-{}-{operation_id}.cancel",
         std::process::id()
     ));
-    {
+    let project_root = {
         let mut active = state.active_build.lock();
         if active.is_some() {
             return Err("another build artifact operation is already running".into());
         }
+        let project_root = state
+            .project
+            .lock()
+            .as_ref()
+            .map(|session| session.snapshot().project_root)
+            .ok_or_else(|| no_project().message)?;
         *active = Some(ActiveBuild {
             id: operation_id,
             cancelled: Arc::new(AtomicBool::new(false)),
             cancel_file: cancel_file.clone(),
             cancellable: false,
         });
-    }
+        project_root
+    };
     let cleanup = ActiveBuildGuard {
         active_build: state.active_build.clone(),
         id: operation_id,
@@ -4106,12 +4155,6 @@ async fn restore_pc_build_history(
     app: tauri::AppHandle,
     state: State<'_, AppState>,
 ) -> Result<RestoreBuildHistoryResult, String> {
-    let project_root = state
-        .project
-        .lock()
-        .as_ref()
-        .map(|session| session.snapshot().project_root)
-        .ok_or_else(|| no_project().message)?;
     let bundled_sdk = app
         .path()
         .resolve("build-sdk", BaseDirectory::Resource)
@@ -4122,18 +4165,25 @@ async fn restore_pc_build_history(
         "mengine-editor-history-restore-{}-{operation_id}.cancel",
         std::process::id()
     ));
-    {
+    let project_root = {
         let mut active = state.active_build.lock();
         if active.is_some() {
             return Err("another build artifact operation is already running".into());
         }
+        let project_root = state
+            .project
+            .lock()
+            .as_ref()
+            .map(|session| session.snapshot().project_root)
+            .ok_or_else(|| no_project().message)?;
         *active = Some(ActiveBuild {
             id: operation_id,
             cancelled: Arc::new(AtomicBool::new(false)),
             cancel_file: cancel_file.clone(),
             cancellable: false,
         });
-    }
+        project_root
+    };
     let cleanup = ActiveBuildGuard {
         active_build: state.active_build.clone(),
         id: operation_id,
@@ -4162,12 +4212,6 @@ async fn verify_pc_build_patch(
     app: tauri::AppHandle,
     state: State<'_, AppState>,
 ) -> Result<VerifyBuildPatchResult, String> {
-    let project_root = state
-        .project
-        .lock()
-        .as_ref()
-        .map(|session| session.snapshot().project_root)
-        .ok_or_else(|| no_project().message)?;
     let bundled_sdk = app
         .path()
         .resolve("build-sdk", BaseDirectory::Resource)
@@ -4178,18 +4222,25 @@ async fn verify_pc_build_patch(
         "mengine-editor-patch-verify-{}-{operation_id}.cancel",
         std::process::id()
     ));
-    {
+    let project_root = {
         let mut active = state.active_build.lock();
         if active.is_some() {
             return Err("another build artifact operation is already running".into());
         }
+        let project_root = state
+            .project
+            .lock()
+            .as_ref()
+            .map(|session| session.snapshot().project_root)
+            .ok_or_else(|| no_project().message)?;
         *active = Some(ActiveBuild {
             id: operation_id,
             cancelled: Arc::new(AtomicBool::new(false)),
             cancel_file: cancel_file.clone(),
             cancellable: false,
         });
-    }
+        project_root
+    };
     let cleanup = ActiveBuildGuard {
         active_build: state.active_build.clone(),
         id: operation_id,
@@ -4218,12 +4269,6 @@ async fn build_pc_player(
     app: tauri::AppHandle,
     state: State<'_, AppState>,
 ) -> Result<BuildPlayerResult, String> {
-    let project_root = state
-        .project
-        .lock()
-        .as_ref()
-        .map(|session| session.snapshot().project_root)
-        .ok_or_else(|| no_project().message)?;
     let bundled_sdk = app
         .path()
         .resolve("build-sdk", BaseDirectory::Resource)
@@ -4236,18 +4281,25 @@ async fn build_pc_player(
     ));
     let _ = std::fs::remove_file(&cancel_file);
     let cancelled = Arc::new(AtomicBool::new(false));
-    {
+    let project_root = {
         let mut active = state.active_build.lock();
         if active.is_some() {
             return Err("a player build is already running".into());
         }
+        let project_root = state
+            .project
+            .lock()
+            .as_ref()
+            .map(|session| session.snapshot().project_root)
+            .ok_or_else(|| no_project().message)?;
         *active = Some(ActiveBuild {
             id: build_id,
             cancelled: cancelled.clone(),
             cancel_file: cancel_file.clone(),
             cancellable: true,
         });
-    }
+        project_root
+    };
     let progress_app = app.clone();
     let progress: BuildProgressSink = Arc::new(move |event| {
         let _ = progress_app.emit("pc-build-progress", event);
@@ -4263,7 +4315,7 @@ async fn build_pc_player(
         id: build_id,
         cancel_file,
     };
-    let task = match tauri::async_runtime::spawn_blocking(move || {
+    match tauri::async_runtime::spawn_blocking(move || {
         let _cleanup = cleanup;
         run_player_build_controlled(
             PathBuf::from(project_root),
@@ -4277,8 +4329,7 @@ async fn build_pc_player(
     {
         Ok(result) => result,
         Err(error) => Err(format!("player build task failed: {error}")),
-    };
-    task
+    }
 }
 
 #[tauri::command]
@@ -5059,6 +5110,7 @@ pub fn run() {
         .invoke_handler(tauri::generate_handler![
             create_project,
             open_project,
+            close_project,
             is_primary_pointer_down,
             list_recent_projects,
             remove_recent_project,

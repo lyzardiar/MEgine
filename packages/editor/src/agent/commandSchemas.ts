@@ -140,6 +140,9 @@ export const COMMAND_PARAMS_SCHEMAS: Record<string, AgentJsonSchema> = {
     parent: stringValue('Absolute parent directory for the new project'),
     name: stringValue('New project directory and display name'),
   }, ['parent', 'name']),
+  'project.close': objectSchema({
+    discardDirty: booleanValue('Explicitly allow discarding all unsaved workspace changes'),
+  }),
   'project.forget_recent': objectSchema({
     path: stringValue('Exact recent-project path to remove'),
   }, ['path']),

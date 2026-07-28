@@ -884,6 +884,7 @@ const COMMAND_SUMMARIES: CommandSummary[] = [
   { id: 'batch.apply', category: 'batch', description: 'Validate and apply up to 256 WorldCommands as one undo transaction', readOnly: false },
   { id: 'project.open', category: 'project', description: 'Open a project from the welcome page without a dialog', readOnly: false },
   { id: 'project.create', category: 'project', description: 'Create and open a project from the welcome page without a dialog', readOnly: false },
+  { id: 'project.close', category: 'project', description: 'Close the active project and return to the project hub', readOnly: false },
   { id: 'project.forget_recent', category: 'project', description: 'Remove a path from the recent-project list', readOnly: false },
   { id: 'project.settings.set_sorting_layers', category: 'project', description: 'Revision-safely replace the ordered project sorting layers', readOnly: false },
   { id: 'scene.new', category: 'scene', description: 'Create and save a named scene without opening a dialog', readOnly: false },

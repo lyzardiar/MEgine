@@ -91,6 +91,7 @@ import { instantiateProjectPrefab } from './prefabWorkflow';
 import { exitDesktopEditor, isDesktopEditor } from './transport/editorTransport';
 import {
   checkpointDesktopScene,
+  closeDesktopProject,
   discardDesktopSceneRecovery,
   getDesktopSceneRecovery,
   restoreDesktopSceneRecovery,
@@ -437,6 +438,43 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
   const queryRemoteDirtyPanels = async (): Promise<string[]> => {
     const dirty = new Set((await queryRemoteDirtyPeers()).map((peer) => peer.panel));
     return [...dirty].sort();
+  };
+
+  const queryProjectDirtyPanels = async (): Promise<string[]> => {
+    const dirty = new Set<string>();
+    if (unsavedChangesRef.current) dirty.add(props.detachedPanel ?? 'main window');
+    for (const panel of await queryRemoteDirtyPanels()) dirty.add(panel);
+    return [...dirty].sort();
+  };
+
+  const closeWorkspaceProject = async (discardDirty: boolean): Promise<{
+    closedWindows: string[];
+    discardedUnsavedChanges: boolean;
+  }> => {
+    if (props.detachedPanel) {
+      throw new BridgeError('CONFLICT', 'Close the project from the main editor window');
+    }
+    if (store.mode !== 'edit') {
+      throw new BridgeError('READONLY', 'Stop playback before closing the project');
+    }
+    const dirtyPanels = await queryProjectDirtyPanels();
+    if (dirtyPanels.length > 0 && !discardDirty) {
+      throw new BridgeError(
+        'CONFLICT',
+        `Workspace has unsaved changes: ${dirtyPanels.join(', ')}; pass discardDirty=true to discard them`,
+      );
+    }
+    try {
+      const result = await closeDesktopProject(discardDirty);
+      return {
+        ...result,
+        discardedUnsavedChanges: dirtyPanels.length > 0,
+      };
+    } catch (reason) {
+      if (reason instanceof BridgeError) throw reason;
+      const message = reason instanceof Error ? reason.message : String(reason);
+      throw new BridgeError('CONFLICT', `Could not close the project: ${message}`);
+    }
   };
 
   const saveRemoteResources = async (): Promise<SaveAllResult> => {
@@ -1476,6 +1514,7 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
         );
       }
     },
+    closeProject: closeWorkspaceProject,
     listDocuments: async () => {
       const remoteDirty = new Set(await queryRemoteDirtyPanels());
       const documents: AgentWorkspaceDocument[] = [
@@ -1742,6 +1781,27 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
       const message = error instanceof Error ? error.message : String(error);
       console.error('Failed to close the editor', error);
       window.alert(`关闭编辑器失败：${message}`);
+    }
+  };
+
+  const requestProjectClose = async (): Promise<void> => {
+    try {
+      const dirtyPanels = await queryProjectDirtyPanels();
+      if (
+        dirtyPanels.length > 0
+        && !window.confirm(
+          `以下窗口有未保存的场景或资源修改：\n\n`
+          + `${dirtyPanels.map((panel) => `• ${panel}`).join('\n')}`
+          + '\n\n关闭工程将丢失这些修改，是否继续？',
+        )
+      ) {
+        return;
+      }
+      await closeWorkspaceProject(dirtyPanels.length > 0);
+      window.location.reload();
+    } catch (reason) {
+      const message = reason instanceof Error ? reason.message : String(reason);
+      window.alert(`关闭工程失败：${message}`);
     }
   };
 
@@ -2054,6 +2114,7 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
         onSaveAll={() => void saveEverything()}
         onSaveAs={saveSceneAs}
         onLoad={openSceneDialog}
+        onCloseProject={() => void requestProjectClose()}
         onExit={() => void requestEditorClose('application')}
         onUndo={() => {
           store.undo();

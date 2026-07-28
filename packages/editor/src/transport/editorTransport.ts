@@ -404,6 +404,14 @@ export async function openProject(root: string): Promise<ProjectSnapshot> {
   return invoke<ProjectSnapshot>('open_project', { root });
 }
 
+export type CloseProjectResult = {
+  closedWindows: string[];
+};
+
+export async function closeProject(discardDirty: boolean): Promise<CloseProjectResult> {
+  return invoke<CloseProjectResult>('close_project', { discardDirty });
+}
+
 export async function listRecentProjects(): Promise<RecentProjectInfo[]> {
   return invoke<RecentProjectInfo[]>('list_recent_projects');
 }

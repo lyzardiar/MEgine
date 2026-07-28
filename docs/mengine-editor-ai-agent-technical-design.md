@@ -252,6 +252,7 @@ MEngine 编辑器当前对人类友好，但对 AI Agent 不够友好。AI Agent
 | `project.recent` | — | ✅ 无弹窗读取原生配置中的最近工程；页面刷新后若 Rust Host 已持有工程则自动重新挂载 |
 | `project.open` | `{ root }` | ✅ 欢迎页按路径打开并校验 `project.json`；已有工程时拒绝切换；响应会等待新 store 完成场景、设置与资源初始化，过渡期查询返回 `NOT_READY` 而不是旧场景 |
 | `project.create` | `{ parent, name }` | ✅ 欢迎页无弹窗创建；父目录与工程名由原生 `ProjectSession` 严格校验，并使用同一 store-ready 握手后才返回 |
+| `project.close` | `{ discardDirty? }` | ✅ 不退出编辑器进程地返回欢迎页；播放、构建或未显式允许丢弃的脏工作区会拒绝。原生临界区销毁全部次级窗口、清理恢复快照并原子释放 `ProjectSession`，Bridge 在响应完成后随页面重载自动重连 |
 | `project.forget_recent` | `{ path }` | ✅ 仅移除原生最近工程记录，不删除工程目录 |
 
 #### 4.2.1 实体生命周期
@@ -404,7 +405,7 @@ take_screenshot, list_assets, list_scenes, get_component_schema, list_commands
 写 tools（Phase 2）：
 
 ```
-open_project, create_project, forget_recent_project,
+open_project, create_project, close_project, forget_recent_project,
 create_gameobject, delete_entities, duplicate_entities, rename_entity,
 set_active, reparent_entities, reorder_entity, add_component, remove_component, set_component,
 patch_component, invoke_component_method, set_transform, translate_entity, set_selection,

@@ -166,6 +166,7 @@ test('whole-window agent capture is background-safe and addressable by window la
   assert.match(mcp, /name: 'list_recent_projects'/);
   assert.match(mcp, /'open_project'/);
   assert.match(mcp, /'create_project'/);
+  assert.match(mcp, /'close_project'/);
   assert.match(mcp, /'forget_recent_project'/);
   assert.match(mcp, /mengine:\/\/project\/state/);
   assert.match(mcp, /'step'/);
@@ -235,6 +236,59 @@ test('the main AgentBridge transport is available before a project is opened', (
   assert.match(bridge, /this\.store != null && this\.editorBootReady/);
   assert.match(app, /markEditorBootReady\(store\)/);
   assert.match(bridge, /project switching is blocked to protect unsaved editor state/);
+});
+
+test('project close is loss-aware, native-atomic, and reconnects the background bridge', () => {
+  const native = fs.readFileSync(path.join(root, 'src-tauri', 'src', 'lib.rs'), 'utf8');
+  const transport = fs.readFileSync(
+    path.join(root, 'src', 'transport', 'editorTransport.ts'),
+    'utf8',
+  );
+  const projectSession = fs.readFileSync(
+    path.join(root, 'src', 'transport', 'desktopProjectSession.ts'),
+    'utf8',
+  );
+  const app = fs.readFileSync(path.join(root, 'src', 'App.tsx'), 'utf8');
+  const bridge = fs.readFileSync(path.join(root, 'src', 'agent', 'AgentBridge.ts'), 'utf8');
+  const menu = fs.readFileSync(path.join(root, 'src', 'panels', 'MenuBar.tsx'), 'utf8');
+  const mcp = fs.readFileSync(
+    path.join(root, '..', 'agent', 'mcp', 'server.mjs'),
+    'utf8',
+  );
+
+  assert.match(native, /fn close_project\(\s*discard_dirty: bool,/);
+  assert.match(native, /let active_build = state\.active_build\.lock\(\)/);
+  assert.match(native, /session\.snapshot\(\)\.dirty && !discard_dirty/);
+  assert.match(native, /\.filter\(\|\(label, _\)\| label != "main"\)/);
+  assert.match(native, /window\s*\.destroy\(\)/);
+  assert.match(native, /session\s*\.discard_scene_recovery\(\)/);
+  assert.match(native, /let session = project\.take\(\)/);
+  assert.match(native, /create_project,\s*open_project,\s*close_project,/);
+  assert.match(
+    native,
+    /let project_root = \{\s*let mut active = state\.active_build\.lock\(\);[\s\S]*?\*active = Some\(ActiveBuild/,
+  );
+  assert.match(transport, /invoke<CloseProjectResult>\('close_project', \{ discardDirty \}\)/);
+  assert.match(
+    projectSession,
+    /const result = await closeProject\(discardDirty\);\s*currentProject = null;\s*resetProjectAssetState\(\)/,
+  );
+  assert.match(app, /if \(store\.mode !== 'edit'\)/);
+  assert.match(app, /dirtyPanels\.length > 0 && !discardDirty/);
+  assert.doesNotMatch(
+    app,
+    /await discardDesktopSceneRecovery\(\);\s*const result = await closeDesktopProject/,
+  );
+  assert.match(app, /const result = await closeDesktopProject\(discardDirty\)/);
+  assert.match(menu, /Close Project/);
+  assert.match(bridge, /commandId === 'project\.close'/);
+  assert.match(
+    bridge,
+    /const response = await this\.finishAsyncCommand\([\s\S]*?window\.setTimeout\(\(\) => window\.location\.reload\(\), 250\);\s*return response;/,
+  );
+  assert.match(mcp, /'close_project'/);
+  assert.match(mcp, /'project\.close'/);
+  assert.match(mcp, /discardDirty=true/);
 });
 
 test('panel and menu agent surfaces use live providers and background activation', () => {

@@ -1,4 +1,5 @@
 import {
+  closeProject,
   createProject,
   discardSceneRecovery,
   deleteProjectScene,
@@ -59,6 +60,18 @@ export async function createDesktopProject(
     resetProjectAssetState();
     currentProject = await createProject(parent, name);
     return currentProject;
+  });
+}
+
+export async function closeDesktopProject(
+  discardDirty: boolean,
+): Promise<{ closedWindows: string[] }> {
+  return enqueueSessionOperation(async () => {
+    if (!currentProject) throw new Error('no desktop project is open');
+    const result = await closeProject(discardDirty);
+    currentProject = null;
+    resetProjectAssetState();
+    return result;
   });
 }
 

@@ -16,6 +16,7 @@ export function MenuBar(props: {
   onSaveAll: () => void;
   onSaveAs: () => void;
   onLoad: () => void;
+  onCloseProject: () => void;
   onExit: () => void;
   onUndo: () => void;
   onRedo: () => void;
@@ -82,6 +83,9 @@ export function MenuBar(props: {
               </button>
               <button type="button" onClick={() => { props.onLoad(); setOpen(null); }}>
                 Open Scene…
+              </button>
+              <button type="button" onClick={() => { props.onCloseProject(); setOpen(null); }}>
+                Close Project
               </button>
               <div className="sep" />
               <button

@@ -195,6 +195,10 @@ export type AgentSceneDeletePreview = {
 
 export interface AgentWorkspaceProvider {
   assertDiskMutationAllowed: (options?: { allowSceneDirty?: boolean }) => Promise<void>;
+  closeProject: (discardDirty: boolean) => Promise<{
+    closedWindows: string[];
+    discardedUnsavedChanges: boolean;
+  }>;
   listDocuments: () => Promise<AgentWorkspaceDocument[]>;
   openAsset: (target: AgentResourceEditorTarget) => Promise<void>;
   createAsset: (request: AgentCreateAssetRequest) => Promise<AgentCreateAssetResult>;
@@ -2035,6 +2039,18 @@ class AgentBridge {
         this.observeProject();
         throw projectBridgeError(error);
       }
+    }
+    if (commandId === 'project.close') {
+      const result = await this.requireWorkspaceProvider().closeProject(
+        optionalBoolean(args, 'discardDirty', false),
+      );
+      const response = await this.finishAsyncCommand(
+        { ok: true, data: result },
+        options,
+        true,
+      );
+      window.setTimeout(() => window.location.reload(), 250);
+      return response;
     }
     if (commandId === 'project.forget_recent') {
       const provider = this.requireProjectLifecycleProvider();

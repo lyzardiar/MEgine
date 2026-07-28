@@ -719,6 +719,18 @@ const TOOLS = [
     ['parent', 'name'],
   ),
   execTool(
+    'close_project',
+    'Close the active project, destroy its detached/floating editor windows, and return to the project hub without exiting the editor process. Refuses Play Mode and active builds. Unsaved workspace changes require discardDirty=true.',
+    'project.close',
+    {
+      discardDirty: {
+        type: 'boolean',
+        description: 'Explicitly discard every unsaved scene/resource change (default: false)',
+      },
+    },
+    [],
+  ),
+  execTool(
     'forget_recent_project',
     'Remove a path from the native recent-project list without deleting the project directory.',
     'project.forget_recent',
