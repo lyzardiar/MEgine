@@ -2777,7 +2777,7 @@ class AgentBridge {
     if (state.ready || state.project) {
       throw new BridgeError(
         'CONFLICT',
-        'A project is already open; project switching is blocked to protect unsaved editor state',
+        'A project is already open; call close_project before opening another project',
         { project: state.project },
       );
     }
@@ -2948,6 +2948,8 @@ function projectBridgeError(reason: unknown): BridgeError {
       ? 'INVALID_ARGS'
       : [
           'projectAlreadyExists',
+          'projectAlreadyOpen',
+          'projectBuildActive',
           'staleRevision',
           'projectMismatch',
           'externalSceneModification',

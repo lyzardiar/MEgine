@@ -25,6 +25,7 @@ use agent_bridge::{
 };
 
 struct AppState {
+    project_lifecycle: Mutex<()>,
     project: Mutex<Option<ProjectSession>>,
     active_build: Arc<Mutex<Option<ActiveBuild>>>,
     next_build_id: AtomicU64,
@@ -3570,6 +3571,18 @@ fn no_project() -> EditorFailure {
     }
 }
 
+fn project_lifecycle_failure(
+    code: &'static str,
+    message: impl Into<String>,
+    current_revision: Option<u64>,
+) -> EditorFailure {
+    EditorFailure {
+        code,
+        message: message.into(),
+        current_revision,
+    }
+}
+
 #[tauri::command]
 fn is_primary_pointer_down() -> bool {
     #[cfg(windows)]
@@ -3582,15 +3595,35 @@ fn is_primary_pointer_down() -> bool {
     false
 }
 
-fn activate_project(
-    mut session: ProjectSession,
+fn activate_project<F>(
     state: &AppState,
-) -> Result<ProjectSnapshot, EditorFailure> {
+    create_session: F,
+) -> Result<ProjectSnapshot, EditorFailure>
+where
+    F: FnOnce() -> Result<ProjectSession, EditorFailure>,
+{
+    let _lifecycle = state.project_lifecycle.lock();
+    if state.active_build.lock().is_some() {
+        return Err(project_lifecycle_failure(
+            "projectBuildActive",
+            "cannot open or create a project while a build artifact operation is active",
+            None,
+        ));
+    }
+    let mut project = state.project.lock();
+    if let Some(session) = project.as_ref() {
+        return Err(project_lifecycle_failure(
+            "projectAlreadyOpen",
+            "a MEngine project is already open; close it before opening another project",
+            Some(session.current_revision()),
+        ));
+    }
+    let mut session = create_session()?;
     let snapshot = session
         .open_main_scene()
         .map_err(|error| error.failure(Some(session.current_revision())))?
         .unwrap_or_else(|| session.snapshot());
-    *state.project.lock() = Some(session);
+    *project = Some(session);
     Ok(snapshot)
 }
 
@@ -3600,8 +3633,9 @@ fn open_project(
     state: State<'_, AppState>,
     app: tauri::AppHandle,
 ) -> Result<ProjectSnapshot, EditorFailure> {
-    let session = ProjectSession::open(&root).map_err(|error| error.failure(None))?;
-    let snapshot = activate_project(session, &state)?;
+    let snapshot = activate_project(&state, || {
+        ProjectSession::open(&root).map_err(|error| error.failure(None))
+    })?;
     remember_recent_project(&app, &snapshot);
     Ok(snapshot)
 }
@@ -3613,8 +3647,9 @@ fn create_project(
     state: State<'_, AppState>,
     app: tauri::AppHandle,
 ) -> Result<ProjectSnapshot, EditorFailure> {
-    let session = ProjectSession::create(&parent, &name).map_err(|error| error.failure(None))?;
-    let snapshot = activate_project(session, &state)?;
+    let snapshot = activate_project(&state, || {
+        ProjectSession::create(&parent, &name).map_err(|error| error.failure(None))
+    })?;
     remember_recent_project(&app, &snapshot);
     Ok(snapshot)
 }
@@ -3631,8 +3666,8 @@ fn close_project(
     state: State<'_, AppState>,
     app: tauri::AppHandle,
 ) -> Result<CloseProjectResult, String> {
-    let active_build = state.active_build.lock();
-    if active_build.is_some() {
+    let _lifecycle = state.project_lifecycle.lock();
+    if state.active_build.lock().is_some() {
         return Err("cannot close the project while a PC Player build is active".to_string());
     }
     let mut project = state.project.lock();
@@ -3663,7 +3698,6 @@ fn close_project(
         .map_err(|error| format!("could not discard scene recovery before closing: {error}"))?;
     let session = project.take().ok_or_else(|| no_project().message)?;
     drop(session);
-    drop(active_build);
     Ok(CloseProjectResult { closed_windows })
 }
 
@@ -4091,6 +4125,26 @@ fn compare_pc_build_history(
     compare_build_history(Path::new(&project_root), &previous_id, &current_id)
 }
 
+fn reserve_project_build(
+    state: &AppState,
+    build: ActiveBuild,
+    busy_message: &str,
+) -> Result<String, String> {
+    let _lifecycle = state.project_lifecycle.lock();
+    let mut active = state.active_build.lock();
+    if active.is_some() {
+        return Err(busy_message.to_string());
+    }
+    let project_root = state
+        .project
+        .lock()
+        .as_ref()
+        .map(|session| session.snapshot().project_root)
+        .ok_or_else(|| no_project().message)?;
+    *active = Some(build);
+    Ok(project_root)
+}
+
 #[tauri::command]
 async fn create_pc_build_history_patch(
     previous_id: String,
@@ -4108,25 +4162,16 @@ async fn create_pc_build_history_patch(
         "mengine-editor-history-patch-{}-{operation_id}.cancel",
         std::process::id()
     ));
-    let project_root = {
-        let mut active = state.active_build.lock();
-        if active.is_some() {
-            return Err("another build artifact operation is already running".into());
-        }
-        let project_root = state
-            .project
-            .lock()
-            .as_ref()
-            .map(|session| session.snapshot().project_root)
-            .ok_or_else(|| no_project().message)?;
-        *active = Some(ActiveBuild {
+    let project_root = reserve_project_build(
+        &state,
+        ActiveBuild {
             id: operation_id,
             cancelled: Arc::new(AtomicBool::new(false)),
             cancel_file: cancel_file.clone(),
             cancellable: false,
-        });
-        project_root
-    };
+        },
+        "another build artifact operation is already running",
+    )?;
     let cleanup = ActiveBuildGuard {
         active_build: state.active_build.clone(),
         id: operation_id,
@@ -4165,25 +4210,16 @@ async fn restore_pc_build_history(
         "mengine-editor-history-restore-{}-{operation_id}.cancel",
         std::process::id()
     ));
-    let project_root = {
-        let mut active = state.active_build.lock();
-        if active.is_some() {
-            return Err("another build artifact operation is already running".into());
-        }
-        let project_root = state
-            .project
-            .lock()
-            .as_ref()
-            .map(|session| session.snapshot().project_root)
-            .ok_or_else(|| no_project().message)?;
-        *active = Some(ActiveBuild {
+    let project_root = reserve_project_build(
+        &state,
+        ActiveBuild {
             id: operation_id,
             cancelled: Arc::new(AtomicBool::new(false)),
             cancel_file: cancel_file.clone(),
             cancellable: false,
-        });
-        project_root
-    };
+        },
+        "another build artifact operation is already running",
+    )?;
     let cleanup = ActiveBuildGuard {
         active_build: state.active_build.clone(),
         id: operation_id,
@@ -4222,25 +4258,16 @@ async fn verify_pc_build_patch(
         "mengine-editor-patch-verify-{}-{operation_id}.cancel",
         std::process::id()
     ));
-    let project_root = {
-        let mut active = state.active_build.lock();
-        if active.is_some() {
-            return Err("another build artifact operation is already running".into());
-        }
-        let project_root = state
-            .project
-            .lock()
-            .as_ref()
-            .map(|session| session.snapshot().project_root)
-            .ok_or_else(|| no_project().message)?;
-        *active = Some(ActiveBuild {
+    let project_root = reserve_project_build(
+        &state,
+        ActiveBuild {
             id: operation_id,
             cancelled: Arc::new(AtomicBool::new(false)),
             cancel_file: cancel_file.clone(),
             cancellable: false,
-        });
-        project_root
-    };
+        },
+        "another build artifact operation is already running",
+    )?;
     let cleanup = ActiveBuildGuard {
         active_build: state.active_build.clone(),
         id: operation_id,
@@ -4281,25 +4308,16 @@ async fn build_pc_player(
     ));
     let _ = std::fs::remove_file(&cancel_file);
     let cancelled = Arc::new(AtomicBool::new(false));
-    let project_root = {
-        let mut active = state.active_build.lock();
-        if active.is_some() {
-            return Err("a player build is already running".into());
-        }
-        let project_root = state
-            .project
-            .lock()
-            .as_ref()
-            .map(|session| session.snapshot().project_root)
-            .ok_or_else(|| no_project().message)?;
-        *active = Some(ActiveBuild {
+    let project_root = reserve_project_build(
+        &state,
+        ActiveBuild {
             id: build_id,
             cancelled: cancelled.clone(),
             cancel_file: cancel_file.clone(),
             cancellable: true,
-        });
-        project_root
-    };
+        },
+        "a player build is already running",
+    )?;
     let progress_app = app.clone();
     let progress: BuildProgressSink = Arc::new(move |event| {
         let _ = progress_app.emit("pc-build-progress", event);
@@ -5102,6 +5120,7 @@ pub fn run() {
     let app = tauri::Builder::default()
         .plugin(tauri_plugin_dialog::init())
         .manage(AppState {
+            project_lifecycle: Mutex::new(()),
             project: Mutex::new(None),
             active_build: Arc::new(Mutex::new(None)),
             next_build_id: AtomicU64::new(1),
@@ -5198,6 +5217,111 @@ pub fn run() {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    fn empty_test_app_state() -> AppState {
+        AppState {
+            project_lifecycle: Mutex::new(()),
+            project: Mutex::new(None),
+            active_build: Arc::new(Mutex::new(None)),
+            next_build_id: AtomicU64::new(1),
+        }
+    }
+
+    fn test_project_parent(label: &str) -> PathBuf {
+        let path = std::env::temp_dir().join(format!(
+            "mengine-project-lifecycle-{label}-{}-{}",
+            std::process::id(),
+            SystemTime::now()
+                .duration_since(UNIX_EPOCH)
+                .unwrap()
+                .as_nanos()
+        ));
+        std::fs::create_dir(&path).unwrap();
+        path
+    }
+
+    #[test]
+    fn project_activation_refuses_to_replace_an_existing_session() {
+        let parent = test_project_parent("existing");
+        let session = ProjectSession::create(&parent, "First").unwrap();
+        let existing_root = session.snapshot().project_root;
+        let state = AppState {
+            project_lifecycle: Mutex::new(()),
+            project: Mutex::new(Some(session)),
+            active_build: Arc::new(Mutex::new(None)),
+            next_build_id: AtomicU64::new(1),
+        };
+        let mut create_called = false;
+
+        let error = activate_project(&state, || {
+            create_called = true;
+            Err(project_lifecycle_failure(
+                "unexpected",
+                "replacement factory must not run",
+                None,
+            ))
+        })
+        .unwrap_err();
+
+        assert_eq!(error.code, "projectAlreadyOpen");
+        assert!(!create_called);
+        assert_eq!(
+            state
+                .project
+                .lock()
+                .as_ref()
+                .unwrap()
+                .snapshot()
+                .project_root,
+            existing_root
+        );
+        drop(state);
+        std::fs::remove_dir_all(parent).unwrap();
+    }
+
+    #[test]
+    fn project_activation_refuses_to_run_during_a_reserved_build() {
+        let state = empty_test_app_state();
+        *state.active_build.lock() = Some(ActiveBuild {
+            id: 7,
+            cancelled: Arc::new(AtomicBool::new(false)),
+            cancel_file: std::env::temp_dir().join("mengine-unused-lifecycle.cancel"),
+            cancellable: true,
+        });
+        let mut create_called = false;
+
+        let error = activate_project(&state, || {
+            create_called = true;
+            Err(project_lifecycle_failure(
+                "unexpected",
+                "project factory must not run",
+                None,
+            ))
+        })
+        .unwrap_err();
+
+        assert_eq!(error.code, "projectBuildActive");
+        assert!(!create_called);
+    }
+
+    #[test]
+    fn build_reservation_does_not_claim_the_slot_without_a_project() {
+        let state = empty_test_app_state();
+        let error = reserve_project_build(
+            &state,
+            ActiveBuild {
+                id: 11,
+                cancelled: Arc::new(AtomicBool::new(false)),
+                cancel_file: std::env::temp_dir().join("mengine-unused-reservation.cancel"),
+                cancellable: false,
+            },
+            "busy",
+        )
+        .unwrap_err();
+
+        assert_eq!(error, no_project().message);
+        assert!(state.active_build.lock().is_none());
+    }
 
     #[test]
     fn surface_shader_validation_uses_the_complete_player_forward_contract() {

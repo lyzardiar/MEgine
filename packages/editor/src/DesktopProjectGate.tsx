@@ -149,7 +149,7 @@ export function DesktopProjectGate(props: { children: ReactNode; detached?: bool
 
   const openProjectAtPath = async (root: string): Promise<ProjectSnapshot> => {
     if (readyRef.current || getDesktopProject()) {
-      throw new Error('A project is already open; restart the editor before switching projects');
+      throw new Error('A project is already open; close it before switching projects');
     }
     if (operationRef.current) {
       throw new Error(`Project lifecycle is busy (${operationRef.current})`);
@@ -174,7 +174,7 @@ export function DesktopProjectGate(props: { children: ReactNode; detached?: bool
     name: string,
   ): Promise<ProjectSnapshot> => {
     if (readyRef.current || getDesktopProject()) {
-      throw new Error('A project is already open; restart the editor before switching projects');
+      throw new Error('A project is already open; close it before switching projects');
     }
     if (operationRef.current) {
       throw new Error(`Project lifecycle is busy (${operationRef.current})`);

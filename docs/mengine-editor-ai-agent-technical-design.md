@@ -255,6 +255,8 @@ MEngine 编辑器当前对人类友好，但对 AI Agent 不够友好。AI Agent
 | `project.close` | `{ discardDirty? }` | ✅ 不退出编辑器进程地返回欢迎页；播放、构建或未显式允许丢弃的脏工作区会拒绝。原生临界区销毁全部次级窗口、清理恢复快照并原子释放 `ProjectSession`，Bridge 在响应完成后随页面重载自动重连 |
 | `project.forget_recent` | `{ path }` | ✅ 仅移除原生最近工程记录，不删除工程目录 |
 
+Rust Host 使用独立的工程生命周期互斥门串行化 open/create/close 与四类构建任务的预留阶段，并在创建目录或读取新会话前复核“无现有工程、无活跃构建”。因此前端状态机不是唯一保护层，直接 IPC 或并发请求也不能覆盖现有 `ProjectSession`、启动脱离工程的构建或留下被拒绝的半创建工程。
+
 #### 4.2.1 实体生命周期
 
 | command id | 参数 | 映射 |

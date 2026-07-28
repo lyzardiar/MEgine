@@ -235,7 +235,7 @@ test('the main AgentBridge transport is available before a project is opened', (
   assert.match(bridge, /await this\.waitForEditorBootAfter\(editorBootGeneration\)/);
   assert.match(bridge, /this\.store != null && this\.editorBootReady/);
   assert.match(app, /markEditorBootReady\(store\)/);
-  assert.match(bridge, /project switching is blocked to protect unsaved editor state/);
+  assert.match(bridge, /call close_project before opening another project/);
 });
 
 test('project close is loss-aware, native-atomic, and reconnects the background bridge', () => {
@@ -257,17 +257,15 @@ test('project close is loss-aware, native-atomic, and reconnects the background 
   );
 
   assert.match(native, /fn close_project\(\s*discard_dirty: bool,/);
-  assert.match(native, /let active_build = state\.active_build\.lock\(\)/);
+  assert.match(native, /let _lifecycle = state\.project_lifecycle\.lock\(\)/);
   assert.match(native, /session\.snapshot\(\)\.dirty && !discard_dirty/);
   assert.match(native, /\.filter\(\|\(label, _\)\| label != "main"\)/);
   assert.match(native, /window\s*\.destroy\(\)/);
   assert.match(native, /session\s*\.discard_scene_recovery\(\)/);
   assert.match(native, /let session = project\.take\(\)/);
   assert.match(native, /create_project,\s*open_project,\s*close_project,/);
-  assert.match(
-    native,
-    /let project_root = \{\s*let mut active = state\.active_build\.lock\(\);[\s\S]*?\*active = Some\(ActiveBuild/,
-  );
+  assert.match(native, /fn reserve_project_build\(/);
+  assert.match(native, /\*active = Some\(build\)/);
   assert.match(transport, /invoke<CloseProjectResult>\('close_project', \{ discardDirty \}\)/);
   assert.match(
     projectSession,
