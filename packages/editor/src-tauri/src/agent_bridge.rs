@@ -15,6 +15,7 @@
 //! event), so each request gets exactly one response.
 
 use std::collections::{HashMap, VecDeque};
+use std::io::Write;
 use std::path::PathBuf;
 use std::sync::atomic::{AtomicUsize, Ordering};
 use std::sync::Arc;
@@ -621,20 +622,68 @@ fn write_discovery_file(app: &AppHandle, port: u16, token: &str) {
         log::warn!("AgentBridge discovery file location unavailable");
         return;
     };
-    if let Some(parent) = path.parent() {
-        let _ = std::fs::create_dir_all(parent);
-    }
     let content = serde_json::json!({
         "port": port,
         "token": token,
         "pid": std::process::id(),
         "version": 1,
-    });
-    if let Err(error) = std::fs::write(&path, content.to_string()) {
+    })
+    .to_string();
+    if let Err(error) = write_discovery_record(&path, content.as_bytes()) {
         log::warn!("AgentBridge could not write discovery file: {error}");
     } else {
         log::info!("AgentBridge discovery file: {}", path.display());
     }
+}
+
+fn write_discovery_record(path: &std::path::Path, contents: &[u8]) -> std::io::Result<()> {
+    let parent = path
+        .parent()
+        .filter(|parent| !parent.as_os_str().is_empty())
+        .unwrap_or_else(|| std::path::Path::new("."));
+    std::fs::create_dir_all(parent)?;
+    if let Ok(metadata) = std::fs::symlink_metadata(path) {
+        if metadata.file_type().is_symlink() || !metadata.is_file() {
+            return Err(std::io::Error::new(
+                std::io::ErrorKind::InvalidInput,
+                "AgentBridge discovery target must be a regular file",
+            ));
+        }
+    }
+    let name = path
+        .file_name()
+        .and_then(|value| value.to_str())
+        .unwrap_or("agent-bridge.json");
+    let temporary = parent.join(format!(".{name}.{}.tmp", uuid::Uuid::new_v4()));
+    let result = (|| -> std::io::Result<()> {
+        let mut options = std::fs::OpenOptions::new();
+        options.create_new(true).write(true);
+        #[cfg(unix)]
+        {
+            use std::os::unix::fs::OpenOptionsExt;
+            options.mode(0o600);
+        }
+        let mut file = options.open(&temporary)?;
+        file.write_all(contents)?;
+        file.sync_all()?;
+        drop(file);
+        crate::replace_file_atomically(&temporary, path)?;
+        sync_discovery_parent(parent)
+    })();
+    if result.is_err() {
+        let _ = std::fs::remove_file(&temporary);
+    }
+    result
+}
+
+#[cfg(unix)]
+fn sync_discovery_parent(parent: &std::path::Path) -> std::io::Result<()> {
+    std::fs::File::open(parent)?.sync_all()
+}
+
+#[cfg(not(unix))]
+fn sync_discovery_parent(_parent: &std::path::Path) -> std::io::Result<()> {
+    Ok(())
 }
 
 fn discovery_file_is_owned(content: &str, token: &str, pid: u32) -> bool {
@@ -968,6 +1017,33 @@ mod transport_tests {
         );
         assert!(remove_discovery_file_if_owned(&path, new_token, new_pid).unwrap());
         assert!(!path.exists());
+    }
+
+    #[test]
+    fn discovery_publish_is_atomic_and_rejects_non_file_targets() {
+        let directory = std::env::temp_dir().join(format!(
+            "mengine-agent-bridge-publish-{}",
+            uuid::Uuid::new_v4()
+        ));
+        std::fs::create_dir(&directory).unwrap();
+        let path = directory.join("agent-bridge.json");
+        std::fs::write(&path, br#"{"version":0}"#).unwrap();
+        let contents = br#"{"port":4707,"token":"secret","pid":42,"version":1}"#;
+
+        write_discovery_record(&path, contents).unwrap();
+        assert_eq!(std::fs::read(&path).unwrap(), contents);
+        assert_eq!(
+            std::fs::read_dir(&directory).unwrap().count(),
+            1,
+            "temporary publish files must not remain"
+        );
+
+        let directory_target = directory.join("not-a-file");
+        std::fs::create_dir(&directory_target).unwrap();
+        let error = write_discovery_record(&directory_target, contents).unwrap_err();
+        assert_eq!(error.kind(), std::io::ErrorKind::InvalidInput);
+
+        std::fs::remove_dir_all(&directory).unwrap();
     }
 
     #[test]

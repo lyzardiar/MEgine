@@ -375,6 +375,10 @@ test('the main AgentBridge transport is available before a project is opened', (
   assert.match(nativeBridge, /accept_hdr_async_with_config/);
   assert.doesNotMatch(nativeBridge, /unbounded_channel/);
   assert.match(nativeBridge, /bridge_not_ready_response/);
+  assert.match(nativeBridge, /write_discovery_record/);
+  assert.match(nativeBridge, /file\.sync_all\(\)/);
+  assert.match(nativeBridge, /replace_file_atomically\(&temporary, path\)/);
+  assert.match(nativeBridge, /discovery target must be a regular file/);
   assert.match(nativeBridge, /cleanup_bridge_discovery/);
   assert.match(nativeBridge, /discovery_file_is_owned/);
   assert.match(nativeHost, /PageLoadEvent::Started/);

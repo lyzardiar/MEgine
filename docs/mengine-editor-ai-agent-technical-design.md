@@ -112,7 +112,7 @@ MEngine 编辑器当前对人类友好，但对 AI Agent 不够友好。AI Agent
 
 **Bridge Transport（Rust / Tauri）** —— 本地 WebSocket 服务器：
 
-- 监听 `127.0.0.1` 自动分配端口，端口号写入发现文件（如 `<project>/.mengine/agent-bridge.json`），供适配器发现。
+- 监听 `127.0.0.1` 自动分配端口，端口号和随机 token 通过同目录临时文件同步落盘后原子替换发现文件（如 `<project>/.mengine/agent-bridge.json`），供适配器发现；拒绝把符号链接或非普通文件当作凭据目标，Unix 新文件使用 `0600`，客户端不会读到半截 JSON。
 - 下行：WS 消息 → 有界启动队列 / Tauri event `agent-bridge:request` → webview。主 WebView 注册监听后用带 session id 的握手声明就绪；冷启动和页面重载期间到达的请求会按序等待，并由握手 command 的返回值直接交给新页面处理，避免在同一次 IPC 尚未返回时反向发送事件。原生层最多同时保留 32 个连接、每客户端 64 个及全进程 256 个在途请求；输入消息/帧显式限制为 64 MiB，避免依赖库默认值漂移。
 - 上行：webview 通过 Tauri command `agent_bridge_respond` / `agent_bridge_broadcast` 回传，Rust 按 `client_id` 路由给对应 WS 客户端。
 - 主 WebView 每次开始导航时由 Rust 页加载钩子原子重置就绪状态；旧页面的延迟清理只能释放自己的 session，不能误停用新页面。启动队列上限为 256，超限请求会收到保留原 JSON-RPC id 的 `NOT_READY` 错误，而不是静默丢失；运行期在途请求超限则返回含客户端/进程容量和重试提示的 `RATE_LIMITED`。每个连接的出站通道同时受 64 条消息和 128 MiB 字节预算约束，无法继续读取的慢客户端会被断开，不会让广播或截图响应无限占用内存。
