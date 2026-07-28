@@ -910,22 +910,32 @@ export function createEditorStore(undoService: EditorUndoService = createEditorU
       e.active = activeFlag;
     },
     setTag(id: number, value: string) {
-      if (mode !== 'edit') return false;
-      const e = find(id);
+      return this.setTags([id], value) > 0;
+    },
+    setTags(ids: readonly number[], value: string) {
+      if (mode !== 'edit') return 0;
       const tag = normalizeEntityTag(value);
-      if (!e || e.tag === tag) return false;
-      pushUndo('Set GameObject Tag');
-      e.tag = tag;
-      return true;
+      const targets = [...new Set(ids)]
+        .map((id) => find(id))
+        .filter((entity): entity is EntityRec => entity != null && entity.tag !== tag);
+      if (!targets.length) return 0;
+      pushUndo(targets.length > 1 ? 'Set GameObject Tags' : 'Set GameObject Tag');
+      for (const entity of targets) entity.tag = tag;
+      return targets.length;
     },
     setLayer(id: number, value: number) {
-      if (mode !== 'edit') return false;
-      const e = find(id);
+      return this.setLayers([id], value) > 0;
+    },
+    setLayers(ids: readonly number[], value: number) {
+      if (mode !== 'edit') return 0;
       const layer = normalizeGameLayerIndex(value);
-      if (!e || e.layer === layer) return false;
-      pushUndo('Set GameObject Layer');
-      e.layer = layer;
-      return true;
+      const targets = [...new Set(ids)]
+        .map((id) => find(id))
+        .filter((entity): entity is EntityRec => entity != null && entity.layer !== layer);
+      if (!targets.length) return 0;
+      pushUndo(targets.length > 1 ? 'Set GameObject Layers' : 'Set GameObject Layer');
+      for (const entity of targets) entity.layer = layer;
+      return targets.length;
     },
     setParent(ids: number[], parent: number | null, atIndex?: number, withUndo = true) {
       const current = list();

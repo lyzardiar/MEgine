@@ -1017,10 +1017,24 @@ function valuesAreMixed(values: number[]): boolean {
 
 function MultiSelectionInspector(props: {
   count: number;
-  entities: Array<{ entity: number; components: Record<string, unknown> }>;
-  primary: { entity: number; components: Record<string, unknown> };
+  entities: Array<{
+    entity: number;
+    tag?: string;
+    layer?: number;
+    components: Record<string, unknown>;
+  }>;
+  primary: {
+    entity: number;
+    tag?: string;
+    layer?: number;
+    components: Record<string, unknown>;
+  };
   componentClipboard: ComponentClipboard | null;
   onCopyComponent: (next: ComponentClipboard) => void;
+  tagOptions: Array<{ value: string; label: string }>;
+  layerOptions: Array<{ value: number; label: string }>;
+  onSetTags?: (ids: number[], tag: string) => void;
+  onSetLayers?: (ids: number[], layer: number) => void;
   onChangeTransforms?: (updates: Array<{ entity: number; transform: Transform }>) => void;
   onSetComponents?: (
     type: string,
@@ -1037,6 +1051,31 @@ function MultiSelectionInspector(props: {
   const primaryRect = props.primary.components.RectTransform
     ? readRectTransform(props.primary.components.RectTransform)
     : null;
+  const entityIds = props.entities.map((entity) => entity.entity);
+  const selectedTags = props.entities.map((entity) => entity.tag?.trim() || 'Untagged');
+  const selectedLayers = props.entities.map((entity) => (
+    Number.isInteger(entity.layer) ? Number(entity.layer) : 0
+  ));
+  const tagMixed = selectedTags.some((value) => value !== selectedTags[0]);
+  const layerMixed = selectedLayers.some((value) => value !== selectedLayers[0]);
+  const tagOptions = [
+    ...selectedTags
+      .filter((value, index) => (
+        selectedTags.indexOf(value) === index
+        && !props.tagOptions.some((option) => option.value === value)
+      ))
+      .map((value) => ({ value, label: `${value} (Unconfigured)` })),
+    ...props.tagOptions,
+  ];
+  const layerOptions = [
+    ...selectedLayers
+      .filter((value, index) => (
+        selectedLayers.indexOf(value) === index
+        && !props.layerOptions.some((option) => option.value === value)
+      ))
+      .map((value) => ({ value, label: `Layer ${value} (Unconfigured)` })),
+    ...props.layerOptions,
+  ];
 
   const replaceTransforms = (value: Record<string, unknown>) => {
     props.onChangeTransforms?.(transformEntities.map((entity) => ({
@@ -1100,6 +1139,40 @@ function MultiSelectionInspector(props: {
         <div className="insp-header">
           <div className="insp-name">{props.count} selected</div>
           <div className="insp-tag">Editing shared values</div>
+          <div className="insp-meta-row">
+            <label>
+              <span>Tag</span>
+              <select
+                aria-label="Tag"
+                value={tagMixed ? '' : selectedTags[0]}
+                onChange={(event) => {
+                  if (event.target.value) props.onSetTags?.(entityIds, event.target.value);
+                }}
+              >
+                {tagMixed && <option value="" disabled>— Mixed —</option>}
+                {tagOptions.map((option) => (
+                  <option value={option.value} key={option.value}>{option.label}</option>
+                ))}
+              </select>
+            </label>
+            <label>
+              <span>Layer</span>
+              <select
+                aria-label="Layer"
+                value={layerMixed ? '' : selectedLayers[0]}
+                onChange={(event) => {
+                  if (event.target.value !== '') {
+                    props.onSetLayers?.(entityIds, Number(event.target.value));
+                  }
+                }}
+              >
+                {layerMixed && <option value="" disabled>— Mixed —</option>}
+                {layerOptions.map((option) => (
+                  <option value={option.value} key={option.value}>{option.label}</option>
+                ))}
+              </select>
+            </label>
+          </div>
         </div>
         {allRects && primaryRect && (
           <CompBlock
@@ -1215,7 +1288,13 @@ export function Inspector(props: {
     layer?: number;
     components: Record<string, unknown>;
   } | null;
-  entities?: Array<{ entity: number; name?: string | null; components: Record<string, unknown> }>;
+  entities?: Array<{
+    entity: number;
+    name?: string | null;
+    tag?: string;
+    layer?: number;
+    components: Record<string, unknown>;
+  }>;
   selectedIds?: number[];
   selectionCount?: number;
   previewNotice?: string;
@@ -1237,6 +1316,8 @@ export function Inspector(props: {
   layerOptions?: Array<{ value: number; label: string }>;
   onSetTag?: (entity: number, tag: string) => void;
   onSetLayer?: (entity: number, layer: number) => void;
+  onSetTags?: (ids: number[], tag: string) => void;
+  onSetLayers?: (ids: number[], layer: number) => void;
   onBeginEditGesture?: () => void;
   onEndEditGesture?: () => void;
 }) {
@@ -1276,6 +1357,10 @@ export function Inspector(props: {
           primary={props.entity}
           componentClipboard={componentClipboard}
           onCopyComponent={setComponentClipboard}
+          tagOptions={props.tagOptions ?? [{ value: 'Untagged', label: 'Untagged' }]}
+          layerOptions={props.layerOptions ?? [{ value: 0, label: 'Default (0)' }]}
+          onSetTags={props.onSetTags}
+          onSetLayers={props.onSetLayers}
           onChangeTransforms={props.onChangeTransforms}
           onSetComponents={props.onSetComponents}
           onBeginEditGesture={props.onBeginEditGesture}
