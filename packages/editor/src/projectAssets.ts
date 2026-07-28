@@ -387,7 +387,9 @@ export async function writeProjectAssetBytes(
             ? (writeBaselines.get(assetKey(normalized)) ?? null)
             : expectedRevision,
       });
-      writeBaselines.set(assetKey(normalized), result.revision);
+      if (expectedRevision === undefined) {
+        writeBaselines.set(assetKey(normalized), result.revision);
+      }
       acceptWrittenAsset(result.asset);
       return;
     }
@@ -418,7 +420,9 @@ export async function writeProjectAssetBytes(
       revision?: string;
       asset?: ProjectFileAsset | null;
     };
-    if (result.revision) writeBaselines.set(assetKey(normalized), result.revision);
+    if (expectedRevision === undefined && result.revision) {
+      writeBaselines.set(assetKey(normalized), result.revision);
+    }
     acceptWrittenAsset(result.asset);
   } finally {
     endInternalProjectFileWrite(normalized);
