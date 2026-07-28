@@ -133,6 +133,10 @@ test('the main AgentBridge transport is available before a project is opened', (
     path.join(root, 'src', 'agent', 'idempotency.ts'),
     'utf8',
   );
+  const serialQueue = fs.readFileSync(
+    path.join(root, 'src', 'agent', 'serialQueue.ts'),
+    'utf8',
+  );
   const nativeBridge = fs.readFileSync(
     path.join(root, 'src-tauri', 'src', 'agent_bridge.rs'),
     'utf8',
@@ -151,9 +155,11 @@ test('the main AgentBridge transport is available before a project is opened', (
   assert.match(transport, /agent_bridge_set_transport_ready/);
   assert.match(transport, /activation\.queuedRequests\.map\(respondToRequest\)/);
   assert.match(transport, /executeRequests\.run/);
+  assert.match(transport, /executeQueue\.run/);
   assert.match(transport, /requireRequestId\(params\.requestId\)/);
   assert.match(idempotency, /class IdempotentRequestCache/);
   assert.match(idempotency, /class IdempotencyConflictError/);
+  assert.match(serialQueue, /class SerialTaskQueue/);
   assert.match(nativeBridge, /MAX_QUEUED_BRIDGE_REQUESTS: usize = 256/);
   assert.match(nativeBridge, /bridge_not_ready_response/);
   assert.match(nativeHost, /PageLoadEvent::Started/);

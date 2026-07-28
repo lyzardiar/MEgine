@@ -22,6 +22,7 @@ import {
 } from './idempotency';
 import { BridgeError } from './protocol';
 import type { CommandResult } from './commands';
+import { SerialTaskQueue } from './serialQueue';
 
 interface BridgeRequestEvent {
   clientId: string;
@@ -50,6 +51,7 @@ const executeRequests = new IdempotentRequestCache<CommandResult>(
     return compact;
   },
 );
+const executeQueue = new SerialTaskQueue();
 
 async function respondToRequest({ clientId, message }: BridgeRequestEvent): Promise<void> {
   const response = await handleRequest(message);
@@ -128,7 +130,9 @@ async function handleRequest(message: string): Promise<JsonRpcResponse> {
         outcome = await executeRequests.run(
           requestId,
           fingerprint,
-          () => agentBridge.execute(command, args, options),
+          () => executeQueue.run(
+            () => agentBridge.execute(command, args, options),
+          ),
         );
       } catch (error) {
         if (error instanceof IdempotencyConflictError) {
