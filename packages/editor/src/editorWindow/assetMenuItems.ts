@@ -1,5 +1,13 @@
 import { registerMenuItem } from './registry.ts';
 
+function authoredAssetMenu(priority: number) {
+  return {
+    priority,
+    agentInvokable: false,
+    agentAlternative: 'create_asset',
+  } as const;
+}
+
 registerMenuItem(
   'Assets/Create/Material',
   async (context) => {
@@ -10,7 +18,7 @@ registerMenuItem(
       context.log(`Material 创建失败：${reason instanceof Error ? reason.message : String(reason)}`);
     }
   },
-  { priority: 200 },
+  authoredAssetMenu(200),
 );
 
 registerMenuItem(
@@ -23,7 +31,7 @@ registerMenuItem(
       context.log(`Material Instance creation failed: ${reason instanceof Error ? reason.message : String(reason)}`);
     }
   },
-  { priority: 201 },
+  authoredAssetMenu(201),
 );
 
 registerMenuItem(
@@ -36,7 +44,7 @@ registerMenuItem(
       context.log(`Surface Shader creation failed: ${reason instanceof Error ? reason.message : String(reason)}`);
     }
   },
-  { priority: 205 },
+  authoredAssetMenu(205),
 );
 
 registerMenuItem(
@@ -49,7 +57,7 @@ registerMenuItem(
       context.log(`Animation Clip 创建失败：${reason instanceof Error ? reason.message : String(reason)}`);
     }
   },
-  { priority: 205 },
+  authoredAssetMenu(205),
 );
 
 registerMenuItem(
@@ -62,7 +70,7 @@ registerMenuItem(
       context.log(`Animator Controller 创建失败：${reason instanceof Error ? reason.message : String(reason)}`);
     }
   },
-  { priority: 210 },
+  authoredAssetMenu(210),
 );
 
 registerMenuItem(
@@ -75,7 +83,7 @@ registerMenuItem(
       context.log(`Sprite Atlas creation failed: ${reason instanceof Error ? reason.message : String(reason)}`);
     }
   },
-  { priority: 210 },
+  authoredAssetMenu(210),
 );
 
 registerMenuItem(
@@ -88,7 +96,7 @@ registerMenuItem(
       context.log(`Avatar Mask 创建失败：${reason instanceof Error ? reason.message : String(reason)}`);
     }
   },
-  { priority: 211 },
+  authoredAssetMenu(211),
 );
 
 registerMenuItem(
@@ -101,5 +109,5 @@ registerMenuItem(
       context.log(`Timeline 创建失败：${reason instanceof Error ? reason.message : String(reason)}`);
     }
   },
-  { priority: 215 },
+  authoredAssetMenu(215),
 );

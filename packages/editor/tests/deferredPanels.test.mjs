@@ -16,7 +16,7 @@ test('Dock defers unseen panels and preserves panels after their first activatio
 });
 
 test('deferred asset editor modules keep every Assets/Create command registered', () => {
-  const paths = listMenuItems('Assets').map((item) => item.path);
+  const items = listMenuItems('Assets');
   for (const path of [
     'Assets/Create/Material',
     'Assets/Create/Material Instance',
@@ -27,6 +27,9 @@ test('deferred asset editor modules keep every Assets/Create command registered'
     'Assets/Create/Avatar Mask',
     'Assets/Create/Timeline',
   ]) {
-    assert.ok(paths.includes(path), `${path} is missing`);
+    const item = items.find((candidate) => candidate.path === path);
+    assert.ok(item, `${path} is missing`);
+    assert.equal(item.agentInvokable, false);
+    assert.equal(item.agentAlternative, 'create_asset');
   }
 });
