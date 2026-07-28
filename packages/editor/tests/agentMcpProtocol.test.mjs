@@ -90,12 +90,21 @@ test('MCP stdio serves negotiated initialization, resource templates, and protoc
       method: 'resources/templates/list',
       params: {},
     }),
+    JSON.stringify({
+      jsonrpc: '2.0',
+      id: 4,
+      method: 'tools/call',
+      params: {
+        name: 'read_asset_text',
+        arguments: { path: '   ' },
+      },
+    }),
     '{"jsonrpc":"2.0",',
     JSON.stringify({ jsonrpc: '2.0', id: null, method: 'ping' }),
     JSON.stringify({ jsonrpc: '2.0', id: 3, method: 'ping' }),
   ]);
 
-  assert.equal(responses.length, 5);
+  assert.equal(responses.length, 6);
   assert.equal(responses[0].id, 1);
   assert.equal(responses[0].result.protocolVersion, '2025-11-25');
   assert.match(responses[0].result.instructions, /background-safe/);
@@ -104,13 +113,18 @@ test('MCP stdio serves negotiated initialization, resource templates, and protoc
     id: 2,
     result: { resourceTemplates: [] },
   });
-  assert.deepEqual(responses[2], {
+  assert.equal(responses[2].id, 4);
+  assert.equal(responses[2].result.isError, true);
+  const toolError = JSON.parse(responses[2].result.content[0].text);
+  assert.equal(toolError.error.code, 'INVALID_ARGS');
+  assert.ok(toolError.error.data.issues.includes('$.path does not match the required pattern'));
+  assert.deepEqual(responses[3], {
     jsonrpc: '2.0',
     id: null,
     error: { code: -32700, message: 'Parse error' },
   });
-  assert.equal(responses[3].id, null);
-  assert.equal(responses[3].error.code, -32600);
-  assert.equal(responses[3].error.data.reason, 'id must be a string or safe integer');
-  assert.deepEqual(responses[4], { jsonrpc: '2.0', id: 3, result: {} });
+  assert.equal(responses[4].id, null);
+  assert.equal(responses[4].error.code, -32600);
+  assert.equal(responses[4].error.data.reason, 'id must be a string or safe integer');
+  assert.deepEqual(responses[5], { jsonrpc: '2.0', id: 3, result: {} });
 });

@@ -163,6 +163,7 @@ test('whole-window agent capture is background-safe and addressable by window la
   assert.match(rust, /scroll: scrollFor\(element, actions\)/);
   assert.match(rust, /rect: rectFor\(element\)/);
   assert.match(mcp, /UI_SNAPSHOT_REVISION_SCHEMA/);
+  assert.match(mcp, /function nonEmptyStringSchema/);
   assert.match(bridge, /candidate\.totalSemanticElements > 0/);
   assert.match(bridge, /semanticReady: true/);
   assert.match(bridge, /snapshotRevision: initialSnapshot\.snapshotRevision/);

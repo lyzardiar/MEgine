@@ -128,6 +128,7 @@ const uiInteractionContext: SchemaProperties = {
   expectedSnapshotRevision: {
     type: 'string',
     pattern: '^ui-v\\d+-\\d+-[0-9a-f]{16}$',
+    maxLength: 64,
     description: 'Exact snapshotRevision returned with the selector by window.ui_snapshot',
   },
 };

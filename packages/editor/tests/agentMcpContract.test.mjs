@@ -13,6 +13,7 @@ import {
   validateToolArguments,
 } from '../../agent/mcp/server.mjs';
 import { COMMAND_META } from '../src/agent/commands.ts';
+import { QUERY_PARAMS_SCHEMAS } from '../src/agent/querySchemas.ts';
 
 const editorRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const EXECUTION_SCHEMA_KEYS = new Set([
@@ -33,6 +34,17 @@ function contractSchema(value) {
         && !EXECUTION_SCHEMA_KEYS.has(key)
       ))
       .map((key) => [key, contractSchema(value[key])]),
+  );
+}
+
+function queryContractSchema(value) {
+  if (Array.isArray(value)) return value.map(queryContractSchema);
+  if (!value || typeof value !== 'object') return value;
+  return Object.fromEntries(
+    Object.keys(value)
+      .sort()
+      .filter((key) => key !== 'description' && key !== 'title')
+      .map((key) => [key, queryContractSchema(value[key])]),
   );
 }
 
@@ -228,6 +240,23 @@ test('every AgentBridge query is exposed by an MCP tool or resource with no stal
   }
 
   assert.deepEqual([...exposedQueryIds].sort(), [...queryIds].sort());
+});
+
+test('direct MCP query tools preserve every authoritative parameter constraint', () => {
+  for (const tool of TOOLS) {
+    if (typeof tool.bridgeCommand === 'string') continue;
+    const queryIds = [
+      ...String(tool.handler).matchAll(/bridgeQuery\('([^']+)'/g),
+    ].map((match) => match[1]);
+    if (queryIds.length !== 1) continue;
+    const querySchema = QUERY_PARAMS_SCHEMAS[queryIds[0]];
+    if (!querySchema) continue;
+    assert.deepEqual(
+      queryContractSchema(tool.inputSchema),
+      queryContractSchema(querySchema),
+      `${tool.name} drifted from authoritative query ${queryIds[0]}`,
+    );
+  }
 });
 
 test('MCP resources expose unique, query-backed core editor context', () => {

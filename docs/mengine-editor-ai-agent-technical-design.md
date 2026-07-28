@@ -385,7 +385,7 @@ Rust Host 使用独立的工程生命周期互斥门串行化 open/create/close 
 
 | 能力 | 说明 |
 | --- | --- |
-| 查询契约 | ✅ 每个只读查询都有权威 `paramsSchema`；WebSocket、CLI 与 MCP 对非法、缺失或多余字段返回一致的 `INVALID_ARGS`，不再静默忽略 |
+| 查询契约 | ✅ 每个只读查询都有权威 `paramsSchema`；所有一一映射的 MCP query tool 自动对比结构约束（含非空、pattern、长度和分页条件），WebSocket、CLI 与 MCP 对非法、缺失或多余字段返回一致的 `INVALID_ARGS`，不再静默忽略 |
 | 命令结果 | ✅ 每个写命令返回 `{ ok, sceneRevision, eventSequence, data }`；所有传输先按同一 `paramsSchema` 严格校验参数，再检查 `expectedSceneRevision`，不匹配时在任何改动前返回 `STALE_REVISION` |
 | 操作后自动截图 | 写命令可带 `options.screenshot: true`；结果显式返回 `screenshotRequested=true`，成功时返回 `screenshotCaptured=true` 与 `screenshot`，失败时保留已完成写动作并返回 `screenshotCaptured=false` 和有界 `screenshotError`，不再静默丢失视觉证据 |
 | 状态 diff | ✅ `query: scene.diff({ fromRevision })` 返回实体增删改、场景级状态（当前含 clear color）和当前 payload；切场景或历史过期时返回 `resetRequired` 与完整快照 |

@@ -753,8 +753,18 @@ const INTENT_SCHEMA = {
 const UI_SNAPSHOT_REVISION_SCHEMA = Object.freeze({
   type: 'string',
   pattern: '^ui-v\\d+-\\d+-[0-9a-f]{16}$',
+  maxLength: 64,
   description: 'Exact snapshotRevision returned with the selector by get_window_ui',
 });
+
+function nonEmptyStringSchema(description) {
+  return {
+    type: 'string',
+    minLength: 1,
+    pattern: '\\S',
+    description,
+  };
+}
 
 function uiInteractionProperties(selectorDescription) {
   return {
@@ -923,7 +933,7 @@ const TOOLS = [
       type: 'object',
       required: ['name'],
       properties: {
-        name: { type: 'string', description: 'Existing scene name, with or without .mscene' },
+        name: nonEmptyStringSchema('Existing scene name, with or without .mscene'),
       },
     },
     handler: async (args) => textContent(await bridgeQuery('scene.delete_preview', args)),
@@ -1077,8 +1087,8 @@ const TOOLS = [
       type: 'object',
       additionalProperties: false,
       properties: {
-        name: { type: 'string', description: 'Case-insensitive entity name substring' },
-        component: { type: 'string', description: 'Exact component type to require' },
+        name: nonEmptyStringSchema('Case-insensitive entity name substring'),
+        component: nonEmptyStringSchema('Exact component type to require'),
         active: { type: 'boolean', description: 'Filter by active state' },
         limit: {
           type: 'integer',
@@ -1123,7 +1133,7 @@ const TOOLS = [
       required: ['id', 'component'],
       properties: {
         id: { ...ENTITY_ID_SCHEMA, description: 'Entity id' },
-        component: { type: 'string', description: 'Exact component type' },
+        component: nonEmptyStringSchema('Exact component type'),
       },
     },
     handler: async (args) => textContent(await bridgeQuery('entity.get_component', args)),
@@ -1284,10 +1294,7 @@ const TOOLS = [
           type: 'string',
           description: 'A label returned by list_windows (default: main)',
         },
-        selector: {
-          type: 'string',
-          description: 'Exact selector returned by get_window_ui',
-        },
+        selector: nonEmptyStringSchema('Exact selector returned by get_window_ui'),
         expectedSnapshotRevision: UI_SNAPSHOT_REVISION_SCHEMA,
         field: {
           type: 'string',
@@ -1412,7 +1419,7 @@ const TOOLS = [
       properties: {
         search: { type: 'string', description: 'Case-insensitive path/name substring' },
         kind: { type: 'string', description: 'Exact asset kind filter' },
-        folder: { type: 'string', description: 'Assets folder prefix, e.g. Assets/Scripts' },
+        folder: nonEmptyStringSchema('Assets folder prefix, e.g. Assets/Scripts'),
         limit: { type: 'integer', minimum: 1, maximum: 5000, description: 'Maximum rows (default 1000)' },
         offset: {
           type: 'integer',
@@ -1451,7 +1458,7 @@ const TOOLS = [
       type: 'object',
       required: ['path'],
       properties: {
-        path: { type: 'string', description: 'Asset path under Assets/' },
+        path: nonEmptyStringSchema('Asset path under Assets/'),
         maxBytes: { type: 'integer', minimum: 1, maximum: 8388608, description: 'Read limit (default 1 MiB)' },
       },
     },
@@ -1465,7 +1472,7 @@ const TOOLS = [
       type: 'object',
       required: ['path'],
       properties: {
-        path: { type: 'string', description: 'Asset path under Assets/' },
+        path: nonEmptyStringSchema('Asset path under Assets/'),
       },
     },
     handler: async (args) => textContent(await bridgeQuery('asset.find_references', args)),
@@ -1478,8 +1485,10 @@ const TOOLS = [
       type: 'object',
       required: ['sourcePath', 'destinationPath'],
       properties: {
-        sourcePath: { type: 'string', description: 'Existing asset path under Assets/' },
-        destinationPath: { type: 'string', description: 'Unused destination path with the same extension' },
+        sourcePath: nonEmptyStringSchema('Existing asset path under Assets/'),
+        destinationPath: nonEmptyStringSchema(
+          'Unused destination path with the same extension',
+        ),
       },
     },
     handler: async (args) => textContent(await bridgeQuery('asset.rename_preview', args)),
@@ -1492,8 +1501,10 @@ const TOOLS = [
       type: 'object',
       required: ['sourcePath', 'destinationPath'],
       properties: {
-        sourcePath: { type: 'string', description: 'Existing asset path under Assets/' },
-        destinationPath: { type: 'string', description: 'Unused destination path with the same extension' },
+        sourcePath: nonEmptyStringSchema('Existing asset path under Assets/'),
+        destinationPath: nonEmptyStringSchema(
+          'Unused destination path with the same extension',
+        ),
       },
     },
     handler: async (args) => textContent(await bridgeQuery('asset.duplicate_preview', args)),
@@ -1506,7 +1517,7 @@ const TOOLS = [
       type: 'object',
       required: ['sourcePath'],
       properties: {
-        sourcePath: { type: 'string', description: 'Existing asset path under Assets/' },
+        sourcePath: nonEmptyStringSchema('Existing asset path under Assets/'),
       },
     },
     handler: async (args) => textContent(await bridgeQuery('asset.trash_preview', args)),
@@ -1570,8 +1581,8 @@ const TOOLS = [
       type: 'object',
       required: ['previousId', 'currentId'],
       properties: {
-        previousId: { type: 'string', description: 'Older history id from get_build_history' },
-        currentId: { type: 'string', description: 'Newer history id from get_build_history' },
+        previousId: nonEmptyStringSchema('Older history id from get_build_history'),
+        currentId: nonEmptyStringSchema('Newer history id from get_build_history'),
       },
     },
     handler: async (args) => textContent(await bridgeQuery('build.history.compare', args)),
@@ -1618,7 +1629,7 @@ const TOOLS = [
       type: 'object',
       required: ['id'],
       properties: {
-        id: { type: 'string', description: 'Exact id returned by list_commands' },
+        id: nonEmptyStringSchema('Exact id returned by list_commands'),
       },
     },
     handler: async (args) => textContent(await bridgeQuery('commands.describe', args)),
@@ -1630,7 +1641,7 @@ const TOOLS = [
     inputSchema: {
       type: 'object',
       properties: {
-        root: { type: 'string', description: 'Optional exact root menu name' },
+        root: nonEmptyStringSchema('Optional exact root menu name'),
       },
     },
     handler: async (args) =>
