@@ -1137,7 +1137,7 @@ const WINDOW_UI_SNAPSHOT_SCRIPT: &str = r#"
     if (role === 'button' || role === 'link' || role === 'menuitem'
       || role === 'tab' || role === 'option' || role === 'checkbox'
       || role === 'radio' || role === 'switch'
-      || typeof element.onclick === 'function' || typeof props.onClick === 'function') {
+      || typeof props.onClick === 'function') {
       actions.push('click');
     }
     if (typeof props.onDoubleClick === 'function') actions.push('doubleClick');
@@ -1153,12 +1153,28 @@ const WINDOW_UI_SNAPSHOT_SCRIPT: &str = r#"
       || element.isContentEditable) {
       actions.push('setValue');
     }
-    if (element instanceof HTMLElement
-      && (element.scrollHeight > element.clientHeight + 1
-        || element.scrollWidth > element.clientWidth + 1)) {
+    const style = element instanceof HTMLElement ? getComputedStyle(element) : null;
+    const scrollableOverflow = (value) => ['auto', 'scroll', 'overlay'].includes(value);
+    const scrollsVertically = style
+      && scrollableOverflow(style.overflowY)
+      && element.scrollHeight > element.clientHeight + 1;
+    const scrollsHorizontally = style
+      && scrollableOverflow(style.overflowX)
+      && element.scrollWidth > element.clientWidth + 1;
+    if (scrollsVertically || scrollsHorizontally) {
       actions.push('scroll');
     }
     return actions;
+  };
+  const scrollContextName = (element) => {
+    let current = element;
+    while (current instanceof Element) {
+      const label = normalize(current.getAttribute('aria-label'), 160)
+        || labelledText(current);
+      if (label) return `${label} scroll area`;
+      current = current.parentElement;
+    }
+    return 'Scrollable content';
   };
   const all = [document.documentElement, ...document.querySelectorAll('*')];
   const candidates = [];
@@ -1166,10 +1182,11 @@ const WINDOW_UI_SNAPSHOT_SCRIPT: &str = r#"
     if (!(element instanceof HTMLElement || element instanceof SVGElement)
       || !visible(element)) continue;
     const role = normalize(element.getAttribute('role') || implicitRole(element), 80);
-    const name = accessibleName(element, role);
+    const directName = accessibleName(element, role);
     const text = ownText(element, role);
     const tag = element.localName;
     const actions = actionList(element, role);
+    const name = directName || (actions.includes('scroll') ? scrollContextName(element) : '');
     const structural = /^h[1-6]$/.test(tag)
       || ['p', 'label', 'summary', 'legend', 'caption'].includes(tag);
     if (!role && !name && !text && !structural && actions.length === 0) continue;
@@ -1373,6 +1390,37 @@ const WINDOW_UI_INTERACTION_SCRIPT: &str = r#"
     return { ok: false, error: `Invalid selector: ${String(error)}` };
   }
   if (!element) return { ok: false, error: `No element matches ${selector}` };
+  const normalizeName = (value) => String(value || '').replace(/\s+/g, ' ').trim().slice(0, 160);
+  const labelledText = (target) => {
+    const ids = String(target.getAttribute('aria-labelledby') || '').split(/\s+/).filter(Boolean);
+    const referenced = normalizeName(
+      ids.map((id) => document.getElementById(id)?.textContent || '').join(' '),
+    );
+    if (referenced) return referenced;
+    return normalizeName(
+      Array.from(target.labels || [])
+        .map((label) => label.innerText || label.textContent || '')
+        .join(' '),
+    );
+  };
+  const directName = (target) => normalizeName(target.getAttribute('aria-label'))
+    || labelledText(target)
+    || normalizeName(target.getAttribute('alt'))
+    || normalizeName(target.getAttribute('title'))
+    || normalizeName(target.getAttribute('placeholder'));
+  const interactionName = () => {
+    const direct = directName(element);
+    if (direct) return direct;
+    if (action === 'scroll') {
+      let current = element.parentElement;
+      while (current instanceof Element) {
+        const context = directName(current);
+        if (context) return `${context} scroll area`;
+        current = current.parentElement;
+      }
+    }
+    return normalizeName(element.innerText || element.textContent);
+  };
   const agentPolicy = agentPolicyFor(element);
   if (agentPolicy && (
     agentPolicy.blockedActions === null
@@ -1553,9 +1601,7 @@ const WINDOW_UI_INTERACTION_SCRIPT: &str = r#"
     selector,
     tag: element.localName,
     role: element.getAttribute('role'),
-    name: element.getAttribute('aria-label')
-      || element.getAttribute('title')
-      || String(element.innerText || element.textContent || '').replace(/\s+/g, ' ').trim(),
+    name: interactionName(),
     value: element instanceof HTMLInputElement && element.type === 'password'
       ? '<redacted>'
       : ('value' in element ? String(element.value) : null),

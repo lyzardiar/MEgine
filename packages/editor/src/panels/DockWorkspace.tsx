@@ -729,13 +729,19 @@ function DockLeaf(props: {
       }}
     >
       <div className={`dock${isDropHere ? ' dock-drop-target' : ''}`}>
-        <div className="dock-tabs">
+        <div className="dock-tabs" role="tablist" aria-label="Dock panels">
           {node.panels.map((kind) => {
             const dirty = props.dirtyPanels.has(kind);
+            const tabId = `dock-tab-${node.id}-${kind}`;
+            const panelId = `dock-panel-${node.id}-${kind}`;
             return (
               <button
                 key={kind}
+                id={tabId}
                 type="button"
+                role="tab"
+                aria-selected={active === kind}
+                aria-controls={panelId}
                 className={`dock-tab dock-tab-drag${active === kind ? ' active' : ''}${dirty ? ' dirty' : ''}`}
                 title={dirty
                   ? `Save ${PANEL_TITLE[kind]} before moving or detaching it`
@@ -828,10 +834,16 @@ function DockLeaf(props: {
         <div className="dock-content">
           {node.panels.map((panel) => {
             if (!dockPanelShouldMount(panel, active, mountedPanels)) return null;
+            const tabId = `dock-tab-${node.id}-${panel}`;
+            const panelId = `dock-panel-${node.id}-${panel}`;
             return (
               <div
                 key={panel}
+                id={panelId}
                 className={`dock-panel-slot${active === panel ? '' : ' hidden'}`}
+                role="tabpanel"
+                aria-label={`${PANEL_TITLE[panel]} panel`}
+                aria-labelledby={tabId}
                 aria-hidden={active !== panel}
               >
                 <Suspense fallback={<div className="dock-panel-loading">Loading {PANEL_TITLE[panel]}…</div>}>
@@ -1234,7 +1246,11 @@ export function DockWorkspace(props: {
   if (props.detachedPanel) {
     const detachedDirty = props.dirtyPanels?.has(props.detachedPanel) ?? false;
     return (
-      <div className="dock-workspace detached-panel-workspace">
+      <div
+        className="dock-workspace detached-panel-workspace"
+        role="region"
+        aria-label={`${PANEL_TITLE[props.detachedPanel]} panel`}
+      >
         <div className="detached-dock-header">
           <button
             type="button"

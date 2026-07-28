@@ -340,6 +340,7 @@ function Camera3DEditor(props: {
       <div className="field-row">
         <label>Projection</label>
         <select
+          aria-label="Projection"
           value={isOrtho ? 'orthographic' : 'perspective'}
           onChange={(e) => props.onChange({ ...d, projection: e.target.value })}
         >
@@ -384,6 +385,7 @@ function Camera3DEditor(props: {
       <div className="field-row">
         <label>Clear Flags</label>
         <select
+          aria-label="Clear Flags"
           value={clearFlags}
           onChange={(e) => props.onChange({ ...d, clear_flags: e.target.value })}
         >
@@ -403,6 +405,7 @@ function Camera3DEditor(props: {
         <label>Primary</label>
         <input
           type="checkbox"
+          aria-label="Primary"
           checked={!!d.primary}
           onChange={(e) => props.onChange({ ...d, primary: e.target.checked })}
         />

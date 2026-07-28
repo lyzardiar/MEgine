@@ -50,6 +50,10 @@ test('whole-window agent capture is background-safe and addressable by window la
   assert.match(rust, /dispatchPointer\('contextmenu'/);
   assert.match(rust, /element\.scrollBy/);
   assert.match(rust, /actions\.push\('scroll'\)/);
+  assert.match(rust, /scrollableOverflow/);
+  assert.match(rust, /scrollContextName/);
+  assert.match(rust, /interactionName/);
+  assert.doesNotMatch(rust, /typeof element\.onclick === 'function'/);
   assert.match(rust, /height: element\.scrollHeight/);
   assert.match(rust, /clientHeight: element\.clientHeight/);
   assert.match(rust, /'level',\s*'haspopup',/);

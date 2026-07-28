@@ -11,6 +11,8 @@ test('core editor navigation exposes named semantic controls', () => {
   const project = panel('Project.tsx');
   const hierarchy = panel('Hierarchy.tsx');
   const menu = panel('MenuBar.tsx');
+  const inspector = panel('Inspector.tsx');
+  const dock = panel('DockWorkspace.tsx');
 
   assert.match(project, /role="tree" aria-label="Project folders"/);
   assert.match(project, /role="treeitem"/);
@@ -33,6 +35,16 @@ test('core editor navigation exposes named semantic controls', () => {
   assert.match(menu, /const componentItems = listMenuItems\('Component'\)/);
   assert.match(menu, /const editItems = listMenuItems\('Edit'\)/);
   assert.match(menu, /const helpItems = listMenuItems\('Help'\)/);
+
+  assert.match(inspector, /aria-label="Projection"/);
+  assert.match(inspector, /aria-label="Clear Flags"/);
+  assert.match(inspector, /aria-label="Primary"/);
+
+  assert.match(dock, /role="tablist" aria-label="Dock panels"/);
+  assert.match(dock, /role="tab"/);
+  assert.match(dock, /aria-selected=\{active === kind\}/);
+  assert.match(dock, /role="tabpanel"/);
+  assert.match(dock, /aria-label=\{`\$\{PANEL_TITLE\[panel\]\} panel`\}/);
 });
 
 test('complex authoring rows identify their selectable semantic regions', () => {
