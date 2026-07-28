@@ -51,6 +51,7 @@ import {
   buildAgentComponentSchema,
   listAgentComponentSchemas,
 } from './componentSchema';
+import { validateAgentSceneJson } from './sceneJsonValidation';
 import {
   findMenuItem,
   listAllMenuItems,
@@ -472,6 +473,7 @@ class AgentBridge {
       simulationTime: snapshot.simulationTime,
       gizmo: store.gizmo,
       sceneCamera: store.sceneCamera,
+      gameResolution: store.gameResolution,
       canUndo: store.canUndo,
       canRedo: store.canRedo,
       undoLabel: store.undoLabel,
@@ -1531,6 +1533,22 @@ class AgentBridge {
         overwrite: optionalBoolean(args, 'overwrite', false),
       });
       return this.finishAsyncCommand({ ok: true, data: result }, options);
+    }
+    if (commandId === 'scene.load_json') {
+      const store = this.requireStore();
+      if (store.mode !== 'edit') {
+        throw new BridgeError(
+          'READONLY',
+          'scene.load_json is only available in Edit Mode',
+        );
+      }
+      const json = requiredString(args, 'json', true);
+      const summary = validateAgentSceneJson(json);
+      store.replaceSceneWorldJson(json);
+      this.logProvider?.(
+        `Agent replaced current scene world: ${summary.entityCount} entities, ${summary.componentCount} components`,
+      );
+      return this.finishAsyncCommand({ ok: true, data: summary }, options);
     }
     if (commandId === 'scene.rename') {
       await this.requireWorkspaceProvider().assertDiskMutationAllowed();

@@ -158,6 +158,11 @@ export interface EditorState {
     distance: number;
     pivot: [number, number, number];
   };
+  /** Current project Game-view resolution, or free aspect when null. */
+  gameResolution: {
+    width: number;
+    height: number;
+  } | null;
   canUndo: boolean;
   canRedo: boolean;
   undoLabel: string | null;

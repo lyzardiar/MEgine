@@ -32,6 +32,10 @@ test('command schemas expose exact high-risk guards and shared optimistic option
     ['name', 'previewToken'],
   );
   assert.deepEqual(
+    COMMAND_PARAMS_SCHEMAS['scene.load_json'].required,
+    ['json'],
+  );
+  assert.deepEqual(
     COMMAND_PARAMS_SCHEMAS['asset.write_text'].required,
     ['path', 'contents', 'expectedRevision'],
   );

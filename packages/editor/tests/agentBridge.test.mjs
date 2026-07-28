@@ -46,6 +46,7 @@ test('whole-window agent capture is background-safe and addressable by window la
   assert.match(native, /std::fs::hard_link\(&temporary, target\)/);
   assert.match(bridge, /captureWindow\(windowLabel = 'main'\)/);
   assert.match(bridge, /inspectWindow\(/);
+  assert.match(bridge, /gameResolution: store\.gameResolution/);
   assert.match(bridge, /capture_editor_window', \{ windowLabel \}/);
   assert.match(mcp, /windowLabel: args\.windowLabel \|\| 'main'/);
   assert.match(mcp, /name: 'get_window_ui'/);
@@ -66,6 +67,7 @@ test('whole-window agent capture is background-safe and addressable by window la
   assert.match(mcp, /'import_asset_file'/);
   assert.match(mcp, /'invoke_component_method'/);
   assert.match(mcp, /'apply_batch'/);
+  assert.match(mcp, /'load_scene_json'/);
   assert.match(mcp, /'reorder_entity'/);
   assert.match(mcp, /'translate_entity'/);
   assert.match(mcp, /'set_scene_camera'/);

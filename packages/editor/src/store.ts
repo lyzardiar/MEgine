@@ -682,6 +682,7 @@ export function createEditorStore(undoService: EditorUndoService = createEditorU
     json: string,
     targetMode: EditorMode,
     recordUndo: boolean,
+    applyScenePreferences = true,
   ) => {
     const data = JSON.parse(json);
     if (recordUndo) pushUndo('Load Scene');
@@ -698,10 +699,12 @@ export function createEditorStore(undoService: EditorUndoService = createEditorU
     );
     nextId = Math.max(1, ...editEntities.map((e) => e.entity + 1), 1);
     clearColor = data.world?.clearColor ?? clearColor;
-    if (data.sceneCamera) sceneCamera = data.sceneCamera;
-    gameResolution = Object.prototype.hasOwnProperty.call(data, 'gameResolution')
-      ? normalizeGameResolution(data.gameResolution)
-      : legacyGameResolution(data.gameAspect, data.gameOrientation);
+    if (applyScenePreferences) {
+      if (data.sceneCamera) sceneCamera = data.sceneCamera;
+      gameResolution = Object.prototype.hasOwnProperty.call(data, 'gameResolution')
+        ? normalizeGameResolution(data.gameResolution)
+        : legacyGameResolution(data.gameAspect, data.gameOrientation);
+    }
     expanded = new Set(editEntities.map((e) => e.entity));
     selectedIds = restoreSceneSelection(
       editEntities.map((entity) => entity.entity),
@@ -2234,6 +2237,9 @@ export function createEditorStore(undoService: EditorUndoService = createEditorU
     },
     loadSceneJson(json: string) {
       applySceneJson(json, 'edit', true);
+    },
+    replaceSceneWorldJson(json: string) {
+      applySceneJson(json, 'edit', true, false);
     },
     loadRemoteSceneJson(json: string, remoteMode: EditorMode) {
       applySceneJson(json, remoteMode, false);

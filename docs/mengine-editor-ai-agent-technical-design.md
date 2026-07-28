@@ -216,7 +216,7 @@ MEngine 编辑器当前对人类友好，但对 AI Agent 不够友好。AI Agent
 | query id | 返回 |
 | --- | --- |
 | `selection.get` | `{ selected, selectedIds }` |
-| `editor.state` | ✅ `{ mode, gizmo, sceneCamera, canUndo, canRedo, undoLabel, redoLabel, dirty, sceneName, sceneRevision, eventSequence }` |
+| `editor.state` | ✅ `{ mode, gizmo, sceneCamera, gameResolution, canUndo, canRedo, undoLabel, redoLabel, dirty, sceneName, sceneRevision, eventSequence }` |
 | `editor.get_camera` | ✅ 已合并进 `editor.state.sceneCamera { yaw, pitch, distance, pivot }`，减少一次查询 |
 
 #### 4.1.5 控制台日志（结构化）
@@ -307,7 +307,7 @@ MEngine 编辑器当前对人类友好，但对 AI Agent 不够友好。AI Agent
 | `scene.rename` | `{ oldName, newName }` | ✅ 保持 GUID，原子更新场景名、活动场景路径与 Build Settings 引用；写前拒绝未保存工作 |
 | `scene.delete_preview` | `{ name }` | ✅ 返回文件修订、活动/构建阻断项与 SHA-256 预览令牌 |
 | `scene.delete` | `{ name, previewToken }` | ✅ 重新验证预览令牌后永久删除；拒绝活动场景、Build Settings 场景及过期文件修订 |
-| `scene.load_json` | `{ json }` | `store.loadSceneJson` |
+| `scene.load_json` | `{ json }` | ✅ 严格校验后原子替换当前 authored world；单次 undo、不自动保存，并保留 Scene 相机与工程分辨率 |
 
 #### 4.2.6 面板 / 窗口 / 菜单
 

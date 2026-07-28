@@ -137,6 +137,11 @@ export const COMMAND_PARAMS_SCHEMAS: Record<string, AgentJsonSchema> = {
     name: stringValue('Name to use only when the dirty scene is unnamed'),
     overwrite: booleanValue('Allow replacing that unnamed-scene destination; default false'),
   }),
+  'scene.load_json': objectSchema({
+    json: stringValue(
+      'Complete version 1 MEngine scene JSON (max 8 MiB and 20,000 entities)',
+    ),
+  }, ['json']),
   'scene.rename': objectSchema({
     oldName: sceneName,
     newName: sceneName,

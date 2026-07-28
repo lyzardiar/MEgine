@@ -751,6 +751,17 @@ const TOOLS = [
     },
   ),
   execTool(
+    'load_scene_json',
+    'Strictly validate and atomically replace the current authored scene world in memory. The operation creates one undo step, does not save to disk, and preserves the current Scene-view camera and project game resolution.',
+    'scene.load_json',
+    {
+      json: {
+        type: 'string',
+        description: 'Complete version 1 MEngine scene JSON (max 8 MiB and 20,000 entities)',
+      },
+    },
+  ),
+  execTool(
     'rename_scene',
     'Rename a saved scene while preserving its GUID and automatically updating active-scene and Build Settings references. Unsaved workspace changes block the operation.',
     'scene.rename',
