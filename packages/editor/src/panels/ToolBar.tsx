@@ -8,6 +8,7 @@ import {
   Scan,
   Scaling,
   Square,
+  StepForward,
 } from 'lucide-react';
 
 export function ToolBar(props: {
@@ -21,6 +22,7 @@ export function ToolBar(props: {
   onPlay: () => void;
   onPause: () => void;
   onStop: () => void;
+  onStep: () => void;
 }) {
   return (
     <div className="tool-bar">
@@ -98,6 +100,16 @@ export function ToolBar(props: {
         </button>
         <button type="button" className="play-btn" aria-label="Stop" title="Stop" onClick={props.onStop}>
           <Square size={12} fill="currentColor" aria-hidden="true" />
+        </button>
+        <button
+          type="button"
+          className="play-btn"
+          aria-label="Step one frame"
+          title="Step one frame"
+          disabled={props.mode !== 'pause'}
+          onClick={props.onStep}
+        >
+          <StepForward size={14} fill="currentColor" aria-hidden="true" />
         </button>
       </div>
 

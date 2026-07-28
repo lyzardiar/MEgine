@@ -16,6 +16,7 @@ import {
   listPcBuildHistory,
   listPcBuildPatches,
   listenToPcBuildProgress,
+  PROJECT_BUILD_SETTINGS_CHANGED_EVENT,
   restorePcBuildHistory,
   runPcPlayer,
   saveProjectBuildAssetSettings,
@@ -314,6 +315,26 @@ export function BuildSettings(props: {
   }, [props.sceneTick]);
 
   useEffect(() => {
+    const onExternalSettings = (event: Event) => {
+      const next = (event as CustomEvent<ProjectBuildSettings>).detail;
+      if (!next) return;
+      settingsRef.current = next;
+      setSettings(next);
+      const nextDraft = next.alwaysInclude.join('\n');
+      alwaysIncludeDraftRef.current = nextDraft;
+      setAlwaysIncludeDraft(nextDraft);
+      buildReportRevisionRef.current += 1;
+      setLastBuild(null);
+      setLastVerification(null);
+    };
+    window.addEventListener(PROJECT_BUILD_SETTINGS_CHANGED_EVENT, onExternalSettings);
+    return () => window.removeEventListener(
+      PROJECT_BUILD_SETTINGS_CHANGED_EVENT,
+      onExternalSettings,
+    );
+  }, []);
+
+  useEffect(() => {
     props.onDirtyChange(assetSettingsDirty);
   }, [assetSettingsDirty, props.onDirtyChange]);
 
@@ -364,10 +385,16 @@ export function BuildSettings(props: {
 
   const persistScenes = async (scenes: string[]) => {
     if (settingsSaving || scenes.length === 0) return;
+    const expectedRevision = settingsRef.current?.revision;
+    if (!expectedRevision) {
+      setSettingsError('Build settings are not loaded.');
+      return;
+    }
     setSettingsSaving(true);
     setSettingsError(null);
     try {
-      const next = await saveProjectBuildSettings(scenes);
+      const next = await saveProjectBuildSettings(scenes, expectedRevision);
+      settingsRef.current = next;
       setSettings(next);
       invalidateBuildReport();
       props.onLog(`Build scenes updated: ${next.scenes.length} scene(s), entry ${sceneLabel(next.scenes[0])}`);
@@ -386,6 +413,11 @@ export function BuildSettings(props: {
     shaderVariantLimit: number,
   ): Promise<boolean> => {
     if (settingsSaving) return false;
+    const expectedRevision = settingsRef.current?.revision;
+    if (!expectedRevision) {
+      setSettingsError('Build settings are not loaded.');
+      return false;
+    }
     setSettingsSaving(true);
     setSettingsError(null);
     try {
@@ -393,6 +425,7 @@ export function BuildSettings(props: {
         assetMode,
         alwaysInclude,
         shaderVariantLimit,
+        expectedRevision,
       );
       settingsRef.current = next;
       setSettings(next);

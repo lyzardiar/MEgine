@@ -3,6 +3,7 @@ import {
   DEFAULT_SORTING_LAYER_ID,
   MAX_SORTING_LAYERS,
   createSortingLayerId,
+  validateSortingLayers,
   type SortingLayer,
 } from '../sortingLayerModel';
 import { registerSaveAllParticipant } from '../saveAll';
@@ -15,24 +16,6 @@ import {
 
 function fingerprint(layers: SortingLayer[]): string {
   return JSON.stringify(layers);
-}
-
-function validationError(layers: SortingLayer[]): string | null {
-  if (!layers.length) return 'At least the Default sorting layer is required.';
-  const ids = new Set<string>();
-  const names = new Set<string>();
-  for (const layer of layers) {
-    const name = layer.name.trim();
-    const id = layer.id.toLowerCase();
-    if (!name) return 'Sorting layer names cannot be empty.';
-    if ([...name].length > 64) return `'${name}' exceeds 64 characters.`;
-    if (ids.has(id)) return `Duplicate stable id '${layer.id}'.`;
-    const nameKey = name.toLocaleLowerCase();
-    if (names.has(nameKey)) return `Duplicate sorting layer name '${name}'.`;
-    ids.add(id);
-    names.add(nameKey);
-  }
-  return ids.has(DEFAULT_SORTING_LAYER_ID) ? null : 'The Default sorting layer is required.';
 }
 
 function nextLayerName(layers: SortingLayer[]): string {
@@ -56,7 +39,7 @@ export function ProjectSettings(props: {
   const [message, setMessage] = useState<string | null>(null);
   const dirty = fingerprint(layers) !== saved;
   const dirtyRef = useRef(dirty);
-  const error = useMemo(() => validationError(layers), [layers]);
+  const error = useMemo(() => validateSortingLayers(layers), [layers]);
 
   useEffect(() => {
     dirtyRef.current = dirty;

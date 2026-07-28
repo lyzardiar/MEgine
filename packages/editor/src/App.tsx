@@ -17,6 +17,7 @@ import {
   getActiveSceneName,
   deleteScene,
   initSceneLibrary,
+  isSceneLibraryReady,
   isDiskBackend,
   listScenes,
   normalizeSceneName,
@@ -60,6 +61,21 @@ import {
 } from './projectAssets';
 import { Viewport } from './panels/Viewport';
 import { DockWorkspace, type PanelKind } from './panels/DockWorkspace';
+import {
+  agentBridge,
+  type AgentCreateAssetRequest,
+  type AgentInstantiableAssetTarget,
+  type AgentResourceEditorTarget,
+  type AgentSceneProvider,
+  type AgentWorkspaceDocument,
+  type AgentWorkspaceProvider,
+} from './agent/AgentBridge';
+import {
+  animatorDocumentKind,
+  materialDocumentKind,
+} from './agent/resourceTargets';
+import { logService } from './agent/LogService';
+import { BridgeError, type PanelLayoutSnapshot } from './agent/protocol';
 import { EditorWindowHost } from './editorWindow';
 import { resolveUnityAction } from './panels/uiFieldEditors';
 import {
@@ -75,13 +91,20 @@ import { instantiateProjectPrefab } from './prefabWorkflow';
 import { exitDesktopEditor, isDesktopEditor } from './transport/editorTransport';
 import {
   checkpointDesktopScene,
+  closeDesktopProject,
   discardDesktopSceneRecovery,
   getDesktopSceneRecovery,
   restoreDesktopSceneRecovery,
 } from './transport/desktopProjectSession';
 import type { ToolHandleOrientation, ToolPivotMode } from './editorTool';
 import { loadSortingLayers, SORTING_LAYERS_CHANGED_EVENT } from './sortingLayers';
-import { saveAllResources } from './saveAll';
+import {
+  mergeSaveAllResults,
+  RemoteSaveCoordinator,
+  saveAllResources,
+  type RemoteSavePeer,
+  type SaveAllResult,
+} from './saveAll';
 import { buildWorldTransforms } from './worldTransform';
 import type { TimelineScenePreview } from './timelineScenePreview';
 import {
@@ -124,11 +147,29 @@ function askSceneName(title: string, initial: string): string | null {
   return normalizeSceneName(raw);
 }
 
+function sameAssetPath(left: string | null, right: string): boolean {
+  return left?.replace(/\\/g, '/').toLocaleLowerCase()
+    === right.replace(/\\/g, '/').toLocaleLowerCase();
+}
+
 type WorkspaceSyncMessage =
   | { type: 'request-scene'; sender: string }
   | { type: 'request-timeline-preview'; sender: string }
   | { type: 'timeline-preview'; sender: string; preview: TimelineScenePreview | null }
   | { type: 'request-dirty-state'; sender: string }
+  | {
+      type: 'request-save-resources';
+      sender: string;
+      requestId: string;
+      targets: string[];
+    }
+  | {
+      type: 'save-resources-result';
+      sender: string;
+      recipient: string;
+      requestId: string;
+      result: SaveAllResult;
+    }
   | { type: 'window-closing'; sender: string }
   | {
       type: 'dirty-state';
@@ -136,6 +177,7 @@ type WorkspaceSyncMessage =
       timestamp: number;
       panel: string;
       dirty: boolean;
+      resourceDirty: boolean;
     }
   | {
       type: 'scene-state';
@@ -147,6 +189,12 @@ type WorkspaceSyncMessage =
       selectedIds: number[];
       logs: string[];
       dirty: boolean;
+      animationAssetPath?: string | null;
+      animatorPath?: string | null;
+      materialPath?: string | null;
+      shaderPath?: string | null;
+      spritePath?: string | null;
+      spriteAtlasPath?: string | null;
       timelineAssetPath?: string | null;
     };
 
@@ -193,6 +241,10 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
       ? [props.detachedPanel]
       : ['hierarchy', 'scene', 'inspector', 'project']),
   );
+  const panelLayoutRef = useRef<PanelLayoutSnapshot | null>(null);
+  const logRef = useRef<(message: string) => void>(() => undefined);
+  const agentSceneProviderRef = useRef<AgentSceneProvider | null>(null);
+  const agentWorkspaceProviderRef = useRef<AgentWorkspaceProvider | null>(null);
   const updateVisiblePanels = useCallback((panels: ReadonlySet<PanelKind>) => {
     setVisiblePanels((current) => {
       if (current.size === panels.size && [...current].every((panel) => panels.has(panel))) {
@@ -201,6 +253,10 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
       return new Set(panels);
     });
   }, []);
+  const updatePanelLayout = useCallback((layout: PanelLayoutSnapshot) => {
+    panelLayoutRef.current = layout;
+    if (!props.detachedPanel) agentBridge.observe();
+  }, [props.detachedPanel]);
   const [assetReloadEpoch, setAssetReloadEpoch] = useState({
     animation: 0,
     sequencer: 0,
@@ -244,6 +300,7 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
   const booted = useRef(false);
   const sceneNameRef = useRef<string | null>(null);
   const sceneDirtyRef = useRef(false);
+  const resourceDirtyRef = useRef(resourceDirty);
   const unsavedChangesRef = useRef(false);
   const editorCloseState = useRef(createEditorCloseState());
   const savedSceneFingerprint = useRef(store.sceneContentFingerprint());
@@ -251,6 +308,7 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
   const remoteSceneDirty = useRef(false);
   const syncSender = useRef(crypto.randomUUID());
   const syncChannel = useRef<BroadcastChannel | null>(null);
+  const refreshRef = useRef<() => void>(() => {});
   const localTimelinePreview = useRef<TimelineScenePreview | null>(null);
   const remoteTimelinePreview = useRef<{
     sender: string;
@@ -258,12 +316,23 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
     lastSeenAt: number;
   } | null>(null);
   const workspaceDirtyRef = useRef(false);
-  const timelineAssetPathRef = useRef<string | null>(timelineAssetPath);
+  const resourceDocumentPathsRef = useRef({
+    animationAssetPath,
+    animatorPath,
+    materialPath,
+    shaderPath,
+    spritePath,
+    spriteAtlasPath,
+    timelineAssetPath,
+  });
   const remoteDirtyPeers = useRef(new Map<string, {
     timestamp: number;
     panel: string;
     dirty: boolean;
+    resourceDirty: boolean;
   }>());
+  const remoteSaveCoordinator = useRef<RemoteSaveCoordinator | null>(null);
+  const saveResourcesInFlight = useRef<Promise<SaveAllResult> | null>(null);
   const recoveryTimer = useRef<number | null>(null);
   const lastRecoveryError = useRef<string | null>(null);
   const lastAssetPollError = useRef<string | null>(null);
@@ -278,7 +347,60 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
   sceneNameRef.current = sceneName;
   unsavedChangesRef.current = hasUnsavedChanges;
   workspaceDirtyRef.current = hasUnsavedChanges;
-  timelineAssetPathRef.current = timelineAssetPath;
+  resourceDirtyRef.current = resourceDirty;
+  resourceDocumentPathsRef.current = {
+    animationAssetPath,
+    animatorPath,
+    materialPath,
+    shaderPath,
+    spritePath,
+    spriteAtlasPath,
+    timelineAssetPath,
+  };
+
+  const saveLocalResources = async (): Promise<SaveAllResult> => {
+    const existing = saveResourcesInFlight.current;
+    if (existing) return existing;
+    const request = saveAllResources();
+    saveResourcesInFlight.current = request;
+    try {
+      return await request;
+    } finally {
+      if (saveResourcesInFlight.current === request) saveResourcesInFlight.current = null;
+    }
+  };
+
+  const waitForLocalResourcesClean = async (timeoutMs = 2_000): Promise<boolean> => {
+    const deadline = Date.now() + timeoutMs;
+    do {
+      await new Promise((resolve) => window.setTimeout(resolve, 25));
+      if (!resourceDirtyRef.current) return true;
+    } while (Date.now() < deadline);
+    return !resourceDirtyRef.current;
+  };
+
+  useEffect(() => {
+    agentBridge.connect(store);
+    agentBridge.connectSceneMeta({
+      sceneName: () => sceneNameRef.current,
+      dirty: () => sceneDirtyRef.current,
+    });
+    agentBridge.connectRefresh(() => refreshRef.current());
+    agentBridge.connectLog(
+      (message) => logRef.current(message),
+      () => {
+        logsRef.current = [];
+        logEnd.current = 0;
+        setLogs([]);
+        broadcastScene(true);
+      },
+    );
+    agentBridge.connectPanelLayout(() => panelLayoutRef.current);
+    agentBridge.connectSceneCommands(() => agentSceneProviderRef.current);
+    agentBridge.connectWorkspace(() => agentWorkspaceProviderRef.current);
+    if (props.detachedPanel) return undefined;
+    return agentBridge.connectEventSources();
+  }, [props.detachedPanel, store]);
 
   const postWorkspaceDirtyState = () => {
     syncChannel.current?.postMessage({
@@ -287,10 +409,11 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
       timestamp: Date.now(),
       panel: props.detachedPanel ?? 'main window',
       dirty: workspaceDirtyRef.current,
+      resourceDirty: resourceDirtyRef.current,
     } satisfies WorkspaceSyncMessage);
   };
 
-  const queryRemoteDirtyPanels = async (): Promise<string[]> => {
+  const queryRemoteDirtyPeers = async (resourceOnly = false): Promise<RemoteSavePeer[]> => {
     const channel = syncChannel.current;
     if (!channel) return [];
     channel.postMessage({
@@ -299,15 +422,75 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
     } satisfies WorkspaceSyncMessage);
     await new Promise((resolve) => window.setTimeout(resolve, 120));
     const cutoff = Date.now() - 5_000;
-    const dirty = new Set<string>();
+    const dirty: RemoteSavePeer[] = [];
     for (const [sender, peer] of remoteDirtyPeers.current) {
       if (peer.timestamp < cutoff) {
         remoteDirtyPeers.current.delete(sender);
-      } else if (peer.dirty) {
-        dirty.add(peer.panel);
+      } else if (resourceOnly ? peer.resourceDirty : peer.dirty) {
+        dirty.push({ sender, panel: peer.panel });
       }
     }
+    return dirty.sort((left, right) => (
+      left.panel.localeCompare(right.panel) || left.sender.localeCompare(right.sender)
+    ));
+  };
+
+  const queryRemoteDirtyPanels = async (): Promise<string[]> => {
+    const dirty = new Set((await queryRemoteDirtyPeers()).map((peer) => peer.panel));
     return [...dirty].sort();
+  };
+
+  const queryProjectDirtyPanels = async (): Promise<string[]> => {
+    const dirty = new Set<string>();
+    if (unsavedChangesRef.current) dirty.add(props.detachedPanel ?? 'main window');
+    for (const panel of await queryRemoteDirtyPanels()) dirty.add(panel);
+    return [...dirty].sort();
+  };
+
+  const closeWorkspaceProject = async (discardDirty: boolean): Promise<{
+    closedWindows: string[];
+    discardedUnsavedChanges: boolean;
+  }> => {
+    if (props.detachedPanel) {
+      throw new BridgeError('CONFLICT', 'Close the project from the main editor window');
+    }
+    if (store.mode !== 'edit') {
+      throw new BridgeError('READONLY', 'Stop playback before closing the project');
+    }
+    const dirtyPanels = await queryProjectDirtyPanels();
+    if (dirtyPanels.length > 0 && !discardDirty) {
+      throw new BridgeError(
+        'CONFLICT',
+        `Workspace has unsaved changes: ${dirtyPanels.join(', ')}; pass discardDirty=true to discard them`,
+      );
+    }
+    try {
+      const result = await closeDesktopProject(discardDirty);
+      return {
+        ...result,
+        discardedUnsavedChanges: dirtyPanels.length > 0,
+      };
+    } catch (reason) {
+      if (reason instanceof BridgeError) throw reason;
+      const message = reason instanceof Error ? reason.message : String(reason);
+      throw new BridgeError('CONFLICT', `Could not close the project: ${message}`);
+    }
+  };
+
+  const saveRemoteResources = async (): Promise<SaveAllResult> => {
+    const peers = await queryRemoteDirtyPeers(true);
+    if (peers.length === 0) return { saved: [], failures: [] };
+    const coordinator = remoteSaveCoordinator.current;
+    if (!coordinator) {
+      return {
+        saved: [],
+        failures: peers.map((peer) => ({
+          label: peer.panel,
+          error: 'Workspace save channel is unavailable',
+        })),
+      };
+    }
+    return coordinator.request(peers);
   };
 
   useEffect(() => {
@@ -336,7 +519,7 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
         selectedIds: store.selectedIds,
         logs: logsRef.current,
         dirty: sceneDirtyRef.current,
-        timelineAssetPath: timelineAssetPathRef.current,
+        ...resourceDocumentPathsRef.current,
       } satisfies WorkspaceSyncMessage);
     };
     if (immediate) {
@@ -366,8 +549,10 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
     setGameResolution(store.gameResolution);
     setTreeTick((t) => t + 1);
     updateSceneDirty();
+    if (!props.detachedPanel) agentBridge.observe();
     if (publish) broadcastScene();
   };
+  refreshRef.current = refresh;
 
   const postTimelinePreview = (preview: TimelineScenePreview | null) => {
     syncChannel.current?.postMessage({
@@ -614,6 +799,7 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
   }, [animationAssetPath, animationDirty, animatorDirty, animatorPath, materialDirty, materialPath, sequencerDirty, shaderDirty, shaderPath, spriteAtlasDirty, spriteAtlasPath, spriteDirty, spritePath, timelineAssetPath]);
 
   const log = (msg: string, level: 'info' | 'warn' | 'error' = 'info') => {
+    logService.log(msg, level);
     const prefix = level === 'info' ? '' : level === 'warn' ? '[Warn] ' : '[Error] ';
     const next = [...logsRef.current, `${prefix}${msg}`].slice(-300);
     logsRef.current = next;
@@ -621,6 +807,7 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
     setLogs(next);
     broadcastScene();
   };
+  logRef.current = (message) => log(message);
 
   useEffect(() => {
     if (props.detachedPanel || !isDesktopEditor() || !recoveryReady.current) return;
@@ -709,27 +896,33 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
     };
   }, [props.detachedPanel]);
 
-  const instantiateSpriteAsset = (
+  const instantiateSpriteAsset = async (
+    path: string,
+    options: { parent?: number | null; position?: [number, number, number] } = {},
+  ): Promise<number> => {
+    const pixelSize = await loadSpriteNativeSize(path);
+    const size = spriteNativeWorldSize(
+      pixelSize ? [pixelSize.w, pixelSize.h] : [100, 100],
+      resolveSpritePixelsPerUnit(path),
+    );
+    const id = store.spawnSpriteAsset(path, {
+      name: spriteDisplayName(path).replace(/\.[^.]+$/, ''),
+      parent: options.parent ?? null,
+      position: options.position ?? [0, 0, 0],
+      size,
+      pivot: resolveSpritePivot(path),
+    });
+    if (options.position == null) store.frameSelected();
+    log(`Created SpriteRenderer ${path} (entity ${id})`);
+    refresh();
+    return id;
+  };
+
+  const requestSpriteInstantiation = (
     path: string,
     options: { parent?: number | null; position?: [number, number, number] } = {},
   ) => {
-    void loadSpriteNativeSize(path)
-      .then((pixelSize) => {
-        const size = spriteNativeWorldSize(
-          pixelSize ? [pixelSize.w, pixelSize.h] : [100, 100],
-          resolveSpritePixelsPerUnit(path),
-        );
-        const id = store.spawnSpriteAsset(path, {
-          name: spriteDisplayName(path).replace(/\.[^.]+$/, ''),
-          parent: options.parent ?? null,
-          position: options.position ?? [0, 0, 0],
-          size,
-          pivot: resolveSpritePivot(path),
-        });
-        if (options.position == null) store.frameSelected();
-        log(`Created SpriteRenderer ${path} (entity ${id})`);
-        refresh();
-      })
+    void instantiateSpriteAsset(path, options)
       .catch((error) => log(`Sprite creation failed: ${String(error)}`, 'error'));
   };
 
@@ -737,11 +930,64 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
     if (typeof BroadcastChannel === 'undefined') return;
     const channel = new BroadcastChannel(WORKSPACE_CHANNEL);
     syncChannel.current = channel;
+    const saveCoordinator = new RemoteSaveCoordinator((request) => {
+      channel.postMessage({
+        type: 'request-save-resources',
+        sender: syncSender.current,
+        requestId: request.requestId,
+        targets: request.targets,
+      } satisfies WorkspaceSyncMessage);
+    });
+    remoteSaveCoordinator.current = saveCoordinator;
     channel.onmessage = (event: MessageEvent<WorkspaceSyncMessage>) => {
       const message = event.data;
       if (!message || message.sender === syncSender.current) return;
       if (message.type === 'request-dirty-state') {
         postWorkspaceDirtyState();
+        return;
+      }
+      if (message.type === 'request-save-resources') {
+        if (!message.targets.includes(syncSender.current)) return;
+        void (async () => {
+          let result: SaveAllResult;
+          try {
+            result = await saveLocalResources();
+          } catch (reason) {
+            result = {
+              saved: [],
+              failures: [{
+                label: props.detachedPanel ?? 'Workspace resources',
+                error: reason instanceof Error ? reason.message : String(reason),
+              }],
+            };
+          }
+          const resourcesClean = result.failures.length > 0
+            ? !resourceDirtyRef.current
+            : await waitForLocalResourcesClean();
+          if (!resourcesClean && result.failures.length === 0) {
+            result = {
+              ...result,
+              failures: [{
+                label: props.detachedPanel ?? 'Workspace resources',
+                error: 'Workspace remains dirty after its Save All participants completed',
+              }],
+            };
+          }
+          postWorkspaceDirtyState();
+          channel.postMessage({
+            type: 'save-resources-result',
+            sender: syncSender.current,
+            recipient: message.sender,
+            requestId: message.requestId,
+            result,
+          } satisfies WorkspaceSyncMessage);
+        })();
+        return;
+      }
+      if (message.type === 'save-resources-result') {
+        if (message.recipient === syncSender.current) {
+          saveCoordinator.accept(message.requestId, message.sender, message.result);
+        }
         return;
       }
       if (message.type === 'request-timeline-preview') {
@@ -768,6 +1014,7 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
           timestamp: message.timestamp,
           panel: message.panel,
           dirty: message.dirty,
+          resourceDirty: message.resourceDirty,
         });
         if (remoteTimelinePreview.current?.sender === message.sender) {
           remoteTimelinePreview.current.lastSeenAt = Date.now();
@@ -809,6 +1056,16 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
           setSceneDirty(dirty);
         }
         setSceneName(message.sceneName);
+        if ('animationAssetPath' in message) {
+          setAnimationAssetPath(message.animationAssetPath ?? null);
+        }
+        if ('animatorPath' in message) setAnimatorPath(message.animatorPath ?? null);
+        if ('materialPath' in message) setMaterialPath(message.materialPath ?? null);
+        if ('shaderPath' in message) setShaderPath(message.shaderPath ?? null);
+        if ('spritePath' in message) setSpritePath(message.spritePath ?? null);
+        if ('spriteAtlasPath' in message) {
+          setSpriteAtlasPath(message.spriteAtlasPath ?? null);
+        }
         if ('timelineAssetPath' in message) setTimelineAssetPath(message.timelineAssetPath ?? null);
         setSnap(store.snapshot());
         setMode(store.mode);
@@ -870,6 +1127,10 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
         type: 'window-closing',
         sender: syncSender.current,
       } satisfies WorkspaceSyncMessage);
+      saveCoordinator.dispose();
+      if (remoteSaveCoordinator.current === saveCoordinator) {
+        remoteSaveCoordinator.current = null;
+      }
       syncChannel.current = null;
       channel.close();
     };
@@ -881,14 +1142,26 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
 
   useEffect(() => {
     if (booted.current) broadcastScene(true);
-  }, [timelineAssetPath]);
+  }, [
+    animationAssetPath,
+    animatorPath,
+    materialPath,
+    shaderPath,
+    spriteAtlasPath,
+    spritePath,
+    timelineAssetPath,
+  ]);
 
   const confirmDiscardSceneChanges = (action: string) => (
     !sceneDirtyRef.current
     || window.confirm(`当前场景有未保存的修改。${action}将丢失这些修改，是否继续？`)
   );
 
-  const openSceneByName = async (name: string, silent = false) => {
+  const openSceneByName = async (
+    name: string,
+    silent = false,
+    clearRecovery = false,
+  ) => {
     const json = readSceneJson(name);
     if (!json) {
       if (!silent) log(`Scene not found: ${name}`, 'warn');
@@ -908,7 +1181,7 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
       sceneNameRef.current = name;
       setSceneName(name);
       await setActiveSceneName(name);
-      if (!silent && isDesktopEditor()) {
+      if ((!silent || clearRecovery) && isDesktopEditor()) {
         try {
           await discardDesktopSceneRecovery();
           recoveryCheckpointActive.current = false;
@@ -973,7 +1246,7 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
     void persistScene(name);
   };
 
-  const saveEverything = async (): Promise<boolean> => {
+  const saveEverything = async (unnamedScene?: string): Promise<boolean> => {
     const hadDirtyScene = sceneDirtyRef.current;
     let sceneSaved = true;
     if (hadDirtyScene) {
@@ -981,11 +1254,15 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
       if (current) {
         sceneSaved = await persistScene(current);
       } else {
-        const name = askSceneName('保存场景 — 请输入名称', 'Untitled');
+        const name = unnamedScene
+          ?? askSceneName('保存场景 — 请输入名称', 'Untitled');
         sceneSaved = Boolean(name) && await persistScene(name!);
       }
     }
-    const resources = await saveAllResources();
+    const resources = mergeSaveAllResults([
+      await saveLocalResources(),
+      await saveRemoteResources(),
+    ]);
     for (const failure of resources.failures) {
       log(`Save All failed for ${failure.label}: ${failure.error}`, 'error');
     }
@@ -1013,6 +1290,462 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
     if (!confirmDiscardSceneChanges('新建场景')) return;
     store.newScene();
     void persistScene(name).then(() => refresh());
+  };
+
+  agentSceneProviderRef.current = {
+    list: () => ({
+      ready: isSceneLibraryReady(),
+      activeScene: sceneNameRef.current,
+      dirty: sceneDirtyRef.current,
+      scenes: listScenes().map((scene) => ({ ...scene })),
+    }),
+    create: async ({ name: rawName, overwrite, discardDirty }) => {
+      if (!isSceneLibraryReady()) {
+        throw new BridgeError('NOT_READY', 'Scene library is still loading');
+      }
+      if (store.mode !== 'edit') {
+        throw new BridgeError('READONLY', 'Stop playback before creating a scene');
+      }
+      const name = normalizeSceneName(rawName);
+      if (!name) throw new BridgeError('INVALID_ARGS', 'Scene name is invalid');
+      if (sceneDirtyRef.current && !discardDirty) {
+        throw new BridgeError(
+          'CONFLICT',
+          'The current scene has unsaved changes; pass discardDirty=true to replace it',
+        );
+      }
+      if (sceneExists(name) && !overwrite) {
+        throw new BridgeError(
+          'CONFLICT',
+          `${sceneFileName(name)} already exists; pass overwrite=true to replace it`,
+        );
+      }
+      store.newScene();
+      if (!await persistScene(name)) {
+        throw new BridgeError('IO_ERROR', `Failed to create ${sceneFileName(name)}`);
+      }
+      log(`Created ${sceneFileName(name)} from AgentBridge`);
+      refresh();
+      return { name };
+    },
+    open: async ({ name: rawName, discardDirty }) => {
+      if (!isSceneLibraryReady()) {
+        throw new BridgeError('NOT_READY', 'Scene library is still loading');
+      }
+      if (store.mode !== 'edit') {
+        throw new BridgeError('READONLY', 'Stop playback before opening a scene');
+      }
+      const name = normalizeSceneName(rawName);
+      if (!name) throw new BridgeError('INVALID_ARGS', 'Scene name is invalid');
+      if (!sceneExists(name)) {
+        throw new BridgeError('IO_ERROR', `Scene not found: ${sceneFileName(name)}`);
+      }
+      if (sceneDirtyRef.current && !discardDirty) {
+        throw new BridgeError(
+          'CONFLICT',
+          'The current scene has unsaved changes; pass discardDirty=true to open another scene',
+        );
+      }
+      if (!await openSceneByName(name, true, true)) {
+        throw new BridgeError('IO_ERROR', `Failed to open ${sceneFileName(name)}`);
+      }
+      log(`Opened ${sceneFileName(name)} from AgentBridge`);
+      return { name };
+    },
+    save: async ({ name: rawName, overwrite }) => {
+      if (!isSceneLibraryReady()) {
+        throw new BridgeError('NOT_READY', 'Scene library is still loading');
+      }
+      if (store.mode !== 'edit') {
+        throw new BridgeError('READONLY', 'Stop playback before saving a scene');
+      }
+      const current = sceneNameRef.current;
+      const name = rawName === undefined ? current : normalizeSceneName(rawName);
+      if (!name) {
+        throw new BridgeError(
+          'INVALID_ARGS',
+          'The current scene is unnamed; provide "name"',
+        );
+      }
+      if (name !== current && sceneExists(name) && !overwrite) {
+        throw new BridgeError(
+          'CONFLICT',
+          `${sceneFileName(name)} already exists; pass overwrite=true to replace it`,
+        );
+      }
+      if (!await persistScene(name)) {
+        throw new BridgeError('IO_ERROR', `Failed to save ${sceneFileName(name)}`);
+      }
+      return { name };
+    },
+    saveAll: async ({ unnamedScene: rawName, overwrite }) => {
+      if (!isSceneLibraryReady()) {
+        throw new BridgeError('NOT_READY', 'Scene library is still loading');
+      }
+      if (store.mode !== 'edit') {
+        throw new BridgeError('READONLY', 'Stop playback before saving the workspace');
+      }
+      const unnamedScene = rawName === undefined
+        ? undefined
+        : (normalizeSceneName(rawName) ?? undefined);
+      if (rawName !== undefined && unnamedScene === undefined) {
+        throw new BridgeError('INVALID_ARGS', 'Scene name is invalid');
+      }
+      if (sceneDirtyRef.current && !sceneNameRef.current && !unnamedScene) {
+        throw new BridgeError(
+          'INVALID_ARGS',
+          'The dirty scene is unnamed; provide "name" to save all without a dialog',
+        );
+      }
+      if (
+        sceneDirtyRef.current
+        && !sceneNameRef.current
+        && unnamedScene
+        && sceneExists(unnamedScene)
+        && !overwrite
+      ) {
+        throw new BridgeError(
+          'CONFLICT',
+          `${sceneFileName(unnamedScene)} already exists; pass overwrite=true to replace it`,
+        );
+      }
+      if (!await saveEverything(unnamedScene)) {
+        throw new BridgeError('IO_ERROR', 'Save All completed with errors');
+      }
+      workspaceDirtyRef.current = false;
+      resourceDirtyRef.current = false;
+      const remoteDirty = await queryRemoteDirtyPanels();
+      if (remoteDirty.length) {
+        throw new BridgeError(
+          'CONFLICT',
+          `Detached panels still have unsaved changes: ${remoteDirty.join(', ')}`,
+        );
+      }
+      return { sceneName: sceneNameRef.current };
+    },
+    rename: async ({ oldName: rawOldName, newName: rawNewName }) => {
+      if (!isSceneLibraryReady()) {
+        throw new BridgeError('NOT_READY', 'Scene library is still loading');
+      }
+      if (store.mode !== 'edit') {
+        throw new BridgeError('READONLY', 'Stop playback before renaming a scene');
+      }
+      const requestedOldName = normalizeSceneName(rawOldName);
+      const newName = normalizeSceneName(rawNewName);
+      if (!requestedOldName || !newName) {
+        throw new BridgeError('INVALID_ARGS', 'Scene name is invalid');
+      }
+      const oldName = listScenes().find(
+        (scene) => scene.name.toLocaleLowerCase() === requestedOldName.toLocaleLowerCase(),
+      )?.name;
+      if (!oldName) {
+        throw new BridgeError('INVALID_ARGS', `Scene not found: ${sceneFileName(requestedOldName)}`);
+      }
+      const collision = listScenes().find(
+        (scene) => (
+          scene.name.toLocaleLowerCase() === newName.toLocaleLowerCase()
+          && scene.name !== oldName
+        ),
+      );
+      if (collision) {
+        throw new BridgeError('CONFLICT', `${sceneFileName(collision.name)} already exists`);
+      }
+      const renamed = await renameScene(oldName, newName);
+      if (!renamed) {
+        throw new BridgeError(
+          'CONFLICT',
+          `Failed to rename ${sceneFileName(oldName)} to ${sceneFileName(newName)}`,
+        );
+      }
+      if (sceneNameRef.current?.toLocaleLowerCase() === oldName.toLocaleLowerCase()) {
+        sceneNameRef.current = renamed;
+        setSceneName(renamed);
+      }
+      bumpScenes();
+      refresh();
+      log(`Renamed ${sceneFileName(oldName)} to ${sceneFileName(renamed)} from AgentBridge`);
+      return {
+        oldName,
+        name: renamed,
+        activeScene: sceneNameRef.current,
+      };
+    },
+    delete: async ({ name: rawName, expectedRevision }) => {
+      if (!isSceneLibraryReady()) {
+        throw new BridgeError('NOT_READY', 'Scene library is still loading');
+      }
+      if (store.mode !== 'edit') {
+        throw new BridgeError('READONLY', 'Stop playback before deleting a scene');
+      }
+      const requestedName = normalizeSceneName(rawName);
+      if (!requestedName) throw new BridgeError('INVALID_ARGS', 'Scene name is invalid');
+      const name = listScenes().find(
+        (scene) => scene.name.toLocaleLowerCase() === requestedName.toLocaleLowerCase(),
+      )?.name;
+      if (!name) {
+        throw new BridgeError('INVALID_ARGS', `Scene not found: ${sceneFileName(requestedName)}`);
+      }
+      if (sceneNameRef.current?.toLocaleLowerCase() === name.toLocaleLowerCase()) {
+        throw new BridgeError(
+          'CONFLICT',
+          'The active scene cannot be deleted; open another scene first',
+        );
+      }
+      await deleteScene(name, expectedRevision);
+      bumpScenes();
+      refresh();
+      log(`Deleted ${sceneFileName(name)} from AgentBridge`);
+      return { name };
+    },
+  };
+  agentWorkspaceProviderRef.current = {
+    assertDiskMutationAllowed: async (options = {}) => {
+      if ((!options.allowSceneDirty && sceneDirtyRef.current) || resourceDirtyRef.current) {
+        throw new BridgeError(
+          'CONFLICT',
+          'Workspace has unsaved changes; run scene.save_all before changing project files',
+        );
+      }
+      const remoteDirty = await queryRemoteDirtyPanels();
+      if (remoteDirty.length) {
+        throw new BridgeError(
+          'CONFLICT',
+          `Detached panels have unsaved changes: ${remoteDirty.join(', ')}`,
+        );
+      }
+    },
+    closeProject: closeWorkspaceProject,
+    listDocuments: async () => {
+      const remoteDirty = new Set(await queryRemoteDirtyPanels());
+      const documents: AgentWorkspaceDocument[] = [
+        {
+          kind: 'scene',
+          panel: 'scene',
+          path: sceneNameRef.current
+            ? `Assets/Scenes/${sceneFileName(sceneNameRef.current)}`
+            : null,
+          dirty: sceneDirtyRef.current,
+        },
+      ];
+      if (timelineAssetPath) {
+        documents.push({
+          kind: 'timeline',
+          panel: 'timeline',
+          path: timelineAssetPath,
+          dirty: sequencerDirty || remoteDirty.has('timeline'),
+        });
+      } else if (animationAssetPath) {
+        documents.push({
+          kind: 'animation',
+          panel: 'timeline',
+          path: animationAssetPath,
+          dirty: animationDirty || remoteDirty.has('timeline'),
+        });
+      }
+      const resources: AgentWorkspaceDocument[] = [
+        {
+          kind: animatorDocumentKind(animatorPath),
+          panel: 'animator',
+          path: animatorPath,
+          dirty: animatorDirty,
+        },
+        {
+          kind: materialDocumentKind(materialPath),
+          panel: 'material',
+          path: materialPath,
+          dirty: materialDirty,
+        },
+        {
+          kind: 'shader',
+          panel: 'shader',
+          path: shaderPath,
+          dirty: shaderDirty,
+        },
+        {
+          kind: 'sprite',
+          panel: 'spriteEditor',
+          path: spritePath,
+          dirty: spriteDirty,
+        },
+        {
+          kind: 'sprite-atlas',
+          panel: 'spriteAtlas',
+          path: spriteAtlasPath,
+          dirty: spriteAtlasDirty,
+        },
+      ];
+      documents.push(...resources
+        .filter((document) => (
+          document.path !== null
+          || document.dirty
+          || remoteDirty.has(document.panel)
+        ))
+        .map((document) => ({
+          ...document,
+          dirty: document.dirty || remoteDirty.has(document.panel),
+        })));
+      if (buildSettingsDirty || remoteDirty.has('build')) {
+        documents.push({
+          kind: 'build-settings',
+          panel: 'build',
+          path: null,
+          dirty: true,
+        });
+      }
+      if (projectSettingsDirty || remoteDirty.has('projectSettings')) {
+        documents.push({
+          kind: 'project-settings',
+          panel: 'projectSettings',
+          path: null,
+          dirty: true,
+        });
+      }
+      return documents;
+    },
+    openAsset: async (target: AgentResourceEditorTarget) => {
+      const currentPath = (() => {
+        switch (target.kind) {
+          case 'animation':
+            return timelineAssetPath == null ? animationAssetPath : null;
+          case 'timeline':
+            return timelineAssetPath;
+          case 'animator':
+          case 'avatar-mask':
+            return animatorPath;
+          case 'material':
+          case 'material-instance':
+            return materialPath;
+          case 'shader':
+            return shaderPath;
+          case 'sprite':
+            return spritePath;
+          case 'sprite-atlas':
+            return spriteAtlasPath;
+        }
+      })();
+      const locallyDirty = (() => {
+        switch (target.panel) {
+          case 'timeline':
+            return animationDirty || sequencerDirty;
+          case 'animator':
+            return animatorDirty;
+          case 'material':
+            return materialDirty;
+          case 'shader':
+            return shaderDirty;
+          case 'spriteEditor':
+            return spriteDirty;
+          case 'spriteAtlas':
+            return spriteAtlasDirty;
+          default:
+            return false;
+        }
+      })();
+      if (!sameAssetPath(currentPath, target.path)) {
+        if (locallyDirty) {
+          throw new BridgeError(
+            'CONFLICT',
+            `${target.panel} has unsaved changes; save all before opening another asset`,
+          );
+        }
+        const remoteDirty = await queryRemoteDirtyPanels();
+        if (remoteDirty.includes(target.panel)) {
+          throw new BridgeError(
+            'CONFLICT',
+            `Detached ${target.panel} has unsaved changes; save all before opening another asset`,
+          );
+        }
+      }
+      switch (target.kind) {
+        case 'animation':
+          setAnimationAssetPath(target.path);
+          setTimelineAssetPath(null);
+          break;
+        case 'timeline':
+          setTimelineAssetPath(target.path);
+          break;
+        case 'animator':
+        case 'avatar-mask':
+          setAnimatorPath(target.path);
+          break;
+        case 'material':
+        case 'material-instance':
+          setMaterialPath(target.path);
+          break;
+        case 'shader':
+          setShaderPath(target.path);
+          break;
+        case 'sprite':
+          setSpritePath(target.path);
+          break;
+        case 'sprite-atlas':
+          setSpriteAtlasPath(target.path);
+          break;
+      }
+      window.dispatchEvent(new CustomEvent('mengine:focus-panel', {
+        detail: { panel: target.panel, activateWindow: false },
+      }));
+    },
+    createAsset: async (request: AgentCreateAssetRequest) => {
+      switch (request.kind) {
+        case 'animation': {
+          const { createProjectAnimationClip } = await import('./panels/Timeline');
+          const path = await createProjectAnimationClip('New Animation', false);
+          return { primaryPath: path, createdPaths: [path] };
+        }
+        case 'animator': {
+          const { createProjectAnimatorControllerDetailed } = await import('./panels/Animator');
+          return createProjectAnimatorControllerDetailed(false);
+        }
+        case 'avatar-mask': {
+          const { createProjectAvatarMask } = await import('./panels/AvatarMask');
+          const path = await createProjectAvatarMask(false);
+          return { primaryPath: path, createdPaths: [path] };
+        }
+        case 'material': {
+          const { createProjectMaterial } = await import('./panels/Material');
+          const path = await createProjectMaterial(false);
+          return { primaryPath: path, createdPaths: [path] };
+        }
+        case 'material-instance': {
+          const { createProjectMaterialInstanceDetailed } = await import('./panels/MaterialInstance');
+          return createProjectMaterialInstanceDetailed(request.parentPath, false);
+        }
+        case 'shader': {
+          const { createProjectSurfaceShader } = await import('./panels/SurfaceShader');
+          const path = await createProjectSurfaceShader(false);
+          return { primaryPath: path, createdPaths: [path] };
+        }
+        case 'sprite-atlas': {
+          const { createProjectSpriteAtlas } = await import('./panels/SpriteAtlasEditor');
+          const path = await createProjectSpriteAtlas(false);
+          return { primaryPath: path, createdPaths: [path] };
+        }
+        case 'timeline': {
+          const { createProjectTimeline } = await import('./panels/Sequencer');
+          const path = await createProjectTimeline('New Timeline', false);
+          return { primaryPath: path, createdPaths: [path] };
+        }
+      }
+    },
+    instantiateAsset: async (target: AgentInstantiableAssetTarget) => {
+      switch (target.kind) {
+        case 'prefab': {
+          const entity = await instantiateProjectPrefab(store, target.path);
+          log(`Instantiated ${target.path} from AgentBridge (entity ${entity})`);
+          refresh();
+          return entity;
+        }
+        case 'model': {
+          const entity = store.spawnModel(target.path);
+          log(`Instantiated model ${target.path} from AgentBridge (entity ${entity})`);
+          refresh();
+          return entity;
+        }
+        case 'sprite':
+          return instantiateSpriteAsset(target.path);
+      }
+    },
   };
 
   const requestEditorClose = async (
@@ -1048,6 +1781,27 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
       const message = error instanceof Error ? error.message : String(error);
       console.error('Failed to close the editor', error);
       window.alert(`关闭编辑器失败：${message}`);
+    }
+  };
+
+  const requestProjectClose = async (): Promise<void> => {
+    try {
+      const dirtyPanels = await queryProjectDirtyPanels();
+      if (
+        dirtyPanels.length > 0
+        && !window.confirm(
+          `以下窗口有未保存的场景或资源修改：\n\n`
+          + `${dirtyPanels.map((panel) => `• ${panel}`).join('\n')}`
+          + '\n\n关闭工程将丢失这些修改，是否继续？',
+        )
+      ) {
+        return;
+      }
+      await closeWorkspaceProject(dirtyPanels.length > 0);
+      window.location.reload();
+    } catch (reason) {
+      const message = reason instanceof Error ? reason.message : String(reason);
+      window.alert(`关闭工程失败：${message}`);
     }
   };
 
@@ -1182,6 +1936,7 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
       // 编辑器偏好覆盖场景里的值（改横竖屏无需 Ctrl+S）
       applyEditorPrefs(prefs);
       refresh();
+      if (!props.detachedPanel) agentBridge.markEditorBootReady(store);
     })();
   }, [props.detachedPanel, store]);
 
@@ -1359,6 +2114,7 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
         onSaveAll={() => void saveEverything()}
         onSaveAs={saveSceneAs}
         onLoad={openSceneDialog}
+        onCloseProject={() => void requestProjectClose()}
         onExit={() => void requestEditorClose('application')}
         onUndo={() => {
           store.undo();
@@ -1407,12 +2163,18 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
           log('Exited Play Mode → Scene');
           refresh();
         }}
+        onStep={() => {
+          if (!store.step(1 / 60)) return;
+          log(`Advanced paused Play Mode to frame ${store.snapshot().frame}`);
+          refresh();
+        }}
       />
 
       <DockWorkspace
         detachedPanel={props.detachedPanel}
         dirtyPanels={dirtyPanels}
         onVisiblePanelsChange={updateVisiblePanels}
+        onLayoutChange={updatePanelLayout}
         panels={{
           hierarchy: (
             <Hierarchy
@@ -1438,7 +2200,7 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
                   .catch((error) => log(`Prefab instantiate failed: ${String(error)}`, 'error'));
               }}
               onInstantiateSprite={(path, parent) => {
-                instantiateSpriteAsset(path, { parent });
+                requestSpriteInstantiation(path, { parent });
               }}
             />
           ),
@@ -1449,7 +2211,7 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
               entities={snap.entities}
               selected={selected}
               selectedIds={selectedIds}
-              angle={store.viewAngle}
+              simulationTime={store.simulationTime}
               gizmo={gizmo}
               pivotMode={pivotMode}
               handleOrientation={handleOrientation}
@@ -1617,7 +2379,7 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
                 refresh();
               }}
               onInstantiateSprite={(path, position) => {
-                instantiateSpriteAsset(path, { position });
+                requestSpriteInstantiation(path, { position });
               }}
               onLog={log}
             />
@@ -1715,7 +2477,7 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
                 log(`Instantiated model ${path}`);
                 refresh();
               }}
-              onInstantiateSprite={(path) => instantiateSpriteAsset(path)}
+              onInstantiateSprite={(path) => requestSpriteInstantiation(path)}
               onOpenScene={(name) => {
                 void openSceneByName(name);
               }}

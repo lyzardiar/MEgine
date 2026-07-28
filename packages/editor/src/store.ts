@@ -682,6 +682,7 @@ export function createEditorStore(undoService: EditorUndoService = createEditorU
     json: string,
     targetMode: EditorMode,
     recordUndo: boolean,
+    applyScenePreferences = true,
   ) => {
     const data = JSON.parse(json);
     if (recordUndo) pushUndo('Load Scene');
@@ -698,10 +699,12 @@ export function createEditorStore(undoService: EditorUndoService = createEditorU
     );
     nextId = Math.max(1, ...editEntities.map((e) => e.entity + 1), 1);
     clearColor = data.world?.clearColor ?? clearColor;
-    if (data.sceneCamera) sceneCamera = data.sceneCamera;
-    gameResolution = Object.prototype.hasOwnProperty.call(data, 'gameResolution')
-      ? normalizeGameResolution(data.gameResolution)
-      : legacyGameResolution(data.gameAspect, data.gameOrientation);
+    if (applyScenePreferences) {
+      if (data.sceneCamera) sceneCamera = data.sceneCamera;
+      gameResolution = Object.prototype.hasOwnProperty.call(data, 'gameResolution')
+        ? normalizeGameResolution(data.gameResolution)
+        : legacyGameResolution(data.gameAspect, data.gameOrientation);
+    }
     expanded = new Set(editEntities.map((e) => e.entity));
     selectedIds = restoreSceneSelection(
       editEntities.map((entity) => entity.entity),
@@ -739,7 +742,7 @@ export function createEditorStore(undoService: EditorUndoService = createEditorU
       renameRequestId = null;
       return id;
     },
-    get viewAngle() {
+    get simulationTime() {
       return playSpin;
     },
     get sceneCamera() {
@@ -775,11 +778,12 @@ export function createEditorStore(undoService: EditorUndoService = createEditorU
       sceneCamera.pitch = Math.max(-89, Math.min(89, sceneCamera.pitch));
       sceneCamera.distance = Math.max(0.5, Math.min(200, sceneCamera.distance));
     },
-    snapshot(): WorldSnapshotView & { selectedIds: number[] } {
+    snapshot(): WorldSnapshotView & { selectedIds: number[]; simulationTime: number } {
       return {
         entities: snapshotEntities(),
         frame,
         simFrame: frame,
+        simulationTime: playSpin,
         clearColor,
         selected: primarySelected(),
         selectedIds: [...selectedIds],
@@ -1173,6 +1177,11 @@ export function createEditorStore(undoService: EditorUndoService = createEditorU
       }
     },
     play() {
+      if (mode === 'play') return;
+      if (mode === 'pause') {
+        mode = 'play';
+        return;
+      }
       animationPreview = null;
       timelinePreview = null;
       playEntities = structuredClone(editEntities);
@@ -1203,6 +1212,14 @@ export function createEditorStore(undoService: EditorUndoService = createEditorU
       playSpin += dt;
       const src = playEntities ?? editEntities;
       behaviourRunner.tick(src, dt);
+    },
+    step(dt = 1 / 60) {
+      if (mode !== 'pause' || !Number.isFinite(dt) || dt <= 0) return false;
+      frame++;
+      playSpin += dt;
+      const src = playEntities ?? editEntities;
+      behaviourRunner.tick(src, dt);
+      return true;
     },
     addComponent(entity: number, type: string, value: Record<string, unknown>) {
       if (mode !== 'edit') return false;
@@ -1301,18 +1318,27 @@ export function createEditorStore(undoService: EditorUndoService = createEditorU
       }
     },
     applyCommands(cmds: WorldCommand[]) {
+      if (mode !== 'edit' || cmds.length === 0) return false;
       pushUndo('Apply World Commands');
       for (const cmd of cmds) {
         if (cmd.op === 'spawn') {
           spawnAt(
             cmd.name ?? 'GameObject',
-            { ...cmd.components },
+            structuredClone(cmd.components),
             null,
             false,
           );
         } else if (cmd.op === 'setComponent') {
           const e = editEntities.find((x) => x.entity === cmd.entity);
-          if (e) e.components[cmd.component] = cmd.value;
+          if (e) {
+            e.components[cmd.component] = withEntityReferenceMetadata(
+              cmd.component,
+              structuredClone(cmd.value),
+            );
+          }
+        } else if (cmd.op === 'removeComponent') {
+          const e = editEntities.find((x) => x.entity === cmd.entity);
+          if (e && cmd.component !== 'Transform') delete e.components[cmd.component];
         } else if (cmd.op === 'despawn') {
           deleteIdsWithSubtree([cmd.entity]);
         } else if (cmd.op === 'setParent') {
@@ -1321,6 +1347,7 @@ export function createEditorStore(undoService: EditorUndoService = createEditorU
           clearColor = [cmd.r, cmd.g, cmd.b, cmd.a];
         }
       }
+      return true;
     },
     setTransform(entity: number, transform: TransformData) {
       this.setTransforms([{ entity, transform }]);
@@ -2187,7 +2214,7 @@ export function createEditorStore(undoService: EditorUndoService = createEditorU
     },
     spawnModel(path: string) {
       const name = path.split('/').pop()?.replace(/\.(?:gltf|glb)$/i, '') || 'Model';
-      spawnAt(
+      return spawnAt(
         name,
         {
           Transform: { position: [0, 0, 0], rotation: [0, 0, 0, 1], scale: [1, 1, 1] },
@@ -2210,6 +2237,9 @@ export function createEditorStore(undoService: EditorUndoService = createEditorU
     },
     loadSceneJson(json: string) {
       applySceneJson(json, 'edit', true);
+    },
+    replaceSceneWorldJson(json: string) {
+      applySceneJson(json, 'edit', true, false);
     },
     loadRemoteSceneJson(json: string, remoteMode: EditorMode) {
       applySceneJson(json, remoteMode, false);

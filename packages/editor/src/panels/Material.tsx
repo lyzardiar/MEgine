@@ -66,14 +66,14 @@ function uniqueMaterialPath(baseName = 'New Material'): string {
   return path;
 }
 
-export async function createProjectMaterial(): Promise<string> {
+export async function createProjectMaterial(open = true): Promise<string> {
   await refreshProjectFiles();
   const path = uniqueMaterialPath();
   const name = path.split('/').pop()!.replace(/\.mmat$/i, '');
   await writeProjectAssetText(path, serializeMaterialAsset(createMaterialAsset(name)));
   await refreshProjectFiles();
   broadcastProjectAssetsChanged({ action: 'created', destinationPath: path });
-  openMaterialAsset(path);
+  if (open) openMaterialAsset(path);
   return path;
 }
 

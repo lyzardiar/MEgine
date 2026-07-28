@@ -38,13 +38,13 @@ function uniqueSurfaceShaderPath(baseName = 'New Surface Shader'): string {
   return path;
 }
 
-export async function createProjectSurfaceShader(): Promise<string> {
+export async function createProjectSurfaceShader(open = true): Promise<string> {
   await refreshProjectFiles();
   const path = uniqueSurfaceShaderPath();
   await writeProjectAssetText(path, DEFAULT_SURFACE_SHADER);
   await refreshProjectFiles();
   broadcastProjectAssetsChanged({ action: 'created', destinationPath: path });
-  openSurfaceShaderAsset(path);
+  if (open) openSurfaceShaderAsset(path);
   return path;
 }
 

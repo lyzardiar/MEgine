@@ -271,6 +271,10 @@ pub enum ProjectError {
     UnsafeSceneCommand,
     #[error("scene changed on disk since it was opened: {0}; reload it before saving")]
     ExternalSceneModification(String),
+    #[error(
+        "build settings changed on disk since they were loaded: expected {expected}, got {actual}"
+    )]
+    ExternalManifestModification { expected: String, actual: String },
     #[error("asset transaction failed: {0}")]
     AssetTransaction(String),
     #[error("io: {0}")]
@@ -294,6 +298,7 @@ impl ProjectError {
             ProjectError::ProjectMismatch => "projectMismatch",
             ProjectError::UnsafeSceneCommand => "unsafeSceneCommand",
             ProjectError::ExternalSceneModification(_) => "externalSceneModification",
+            ProjectError::ExternalManifestModification { .. } => "externalManifestModification",
             ProjectError::AssetTransaction(_) => "assetTransaction",
             ProjectError::Io(_) => "io",
             ProjectError::Json(_) => "json",
@@ -362,36 +367,7 @@ impl ProjectSession {
                 display_path(&project_root)
             )));
         }
-        let manifest_text = std::fs::read_to_string(&manifest_path).map_err(|error| {
-            ProjectError::InvalidProject(format!(
-                "cannot read {}: {error}",
-                display_path(&manifest_path)
-            ))
-        })?;
-        let mut manifest: ProjectManifest = serde_json::from_str(&manifest_text)?;
-        if manifest.name.trim().is_empty() {
-            return Err(ProjectError::InvalidProject(
-                "project name cannot be empty".into(),
-            ));
-        }
-        if !(1..=MAX_SHADER_VARIANT_LIMIT).contains(&manifest.shader_variant_limit) {
-            return Err(ProjectError::InvalidProject(format!(
-                "shaderVariantLimit must be from 1 to {MAX_SHADER_VARIANT_LIMIT}"
-            )));
-        }
-        if let Some(first) = manifest.build_scenes.first().cloned() {
-            match manifest.main_scene.as_deref() {
-                Some(main) if main != first.as_str() => {
-                    return Err(ProjectError::InvalidProject(
-                        "mainScene must match the first buildScenes entry".into(),
-                    ));
-                }
-                None => manifest.main_scene = Some(first),
-                _ => {}
-            }
-        }
-        manifest.always_include =
-            normalize_build_asset_paths(&project_root, &manifest.always_include)?;
+        let (_, manifest) = read_project_manifest(&project_root)?;
 
         Ok(Self {
             project_id: Uuid::new_v4(),
@@ -454,12 +430,35 @@ impl ProjectSession {
         self.manifest.shader_variant_limit
     }
 
+    pub fn refresh_build_settings(&mut self) -> Result<String, ProjectError> {
+        let (revision, manifest) = read_project_manifest(&self.project_root)?;
+        self.manifest = manifest;
+        Ok(revision)
+    }
+
     pub fn save_build_asset_settings(
         &mut self,
         asset_mode: BuildAssetMode,
         paths: Vec<String>,
         shader_variant_limit: u32,
     ) -> Result<Vec<String>, ProjectError> {
+        let expected_revision = self.refresh_build_settings()?;
+        self.save_build_asset_settings_guarded(
+            asset_mode,
+            paths,
+            shader_variant_limit,
+            &expected_revision,
+        )
+    }
+
+    pub fn save_build_asset_settings_guarded(
+        &mut self,
+        asset_mode: BuildAssetMode,
+        paths: Vec<String>,
+        shader_variant_limit: u32,
+        expected_revision: &str,
+    ) -> Result<Vec<String>, ProjectError> {
+        self.require_build_manifest_revision(expected_revision)?;
         if !(1..=MAX_SHADER_VARIANT_LIMIT).contains(&shader_variant_limit) {
             return Err(ProjectError::InvalidProject(format!(
                 "shaderVariantLimit must be from 1 to {MAX_SHADER_VARIANT_LIMIT}"
@@ -472,12 +471,23 @@ impl ProjectSession {
         manifest.shader_variant_limit = shader_variant_limit;
         let mut bytes = serde_json::to_vec_pretty(&manifest)?;
         bytes.push(b'\n');
+        self.require_build_manifest_revision(expected_revision)?;
         write_replace_synced(&self.project_root.join("project.json"), &bytes)?;
         self.manifest = manifest;
         Ok(normalized)
     }
 
     pub fn save_build_scenes(&mut self, scenes: Vec<String>) -> Result<Vec<String>, ProjectError> {
+        let expected_revision = self.refresh_build_settings()?;
+        self.save_build_scenes_guarded(scenes, &expected_revision)
+    }
+
+    pub fn save_build_scenes_guarded(
+        &mut self,
+        scenes: Vec<String>,
+        expected_revision: &str,
+    ) -> Result<Vec<String>, ProjectError> {
+        self.require_build_manifest_revision(expected_revision)?;
         if scenes.is_empty() {
             return Err(ProjectError::InvalidProject(
                 "at least one scene is required in build settings".into(),
@@ -512,9 +522,25 @@ impl ProjectSession {
         manifest.build_scenes = normalized.clone();
         let mut bytes = serde_json::to_vec_pretty(&manifest)?;
         bytes.push(b'\n');
+        self.require_build_manifest_revision(expected_revision)?;
         write_replace_synced(&self.project_root.join("project.json"), &bytes)?;
         self.manifest = manifest;
         Ok(normalized)
+    }
+
+    fn require_build_manifest_revision(
+        &mut self,
+        expected_revision: &str,
+    ) -> Result<(), ProjectError> {
+        let actual = self.refresh_build_settings()?;
+        if actual == expected_revision {
+            Ok(())
+        } else {
+            Err(ProjectError::ExternalManifestModification {
+                expected: expected_revision.to_string(),
+                actual,
+            })
+        }
     }
 
     pub fn rename_scene(
@@ -665,6 +691,14 @@ impl ProjectSession {
         &mut self,
         relative_path: impl AsRef<Path>,
     ) -> Result<ProjectSnapshot, ProjectError> {
+        self.delete_scene_with_revision(relative_path, None)
+    }
+
+    pub fn delete_scene_with_revision(
+        &mut self,
+        relative_path: impl AsRef<Path>,
+        expected_revision: Option<&str>,
+    ) -> Result<ProjectSnapshot, ProjectError> {
         let relative = normalize_scene_asset_path(relative_path.as_ref())?;
         let portable = relative.to_string_lossy().replace('\\', "/");
         if self.scene_relative_path.as_ref().is_some_and(|scene| {
@@ -691,6 +725,11 @@ impl ProjectSession {
             return Err(ProjectError::InvalidPath(relative.display().to_string()));
         }
         let absolute = self.resolve_existing(&relative)?;
+        if expected_revision.is_some()
+            && scene_file_revision(&absolute)?.as_deref() != expected_revision
+        {
+            return Err(ProjectError::ExternalSceneModification(portable));
+        }
         let sidecar = mengine_assets::asset_sidecar_path(&absolute);
         if sidecar.exists() {
             let metadata = std::fs::symlink_metadata(&sidecar)?;
@@ -862,6 +901,11 @@ impl ProjectSession {
         })?;
         let manifest_original = std::fs::read(&manifest_path)?;
         let mut manifest: ProjectManifest = serde_json::from_slice(&manifest_original)?;
+        if implicit_startup_script(&self.project_root, &manifest)
+            .is_some_and(|path| path.eq_ignore_ascii_case(&source_portable))
+        {
+            manifest.startup_script = Some(source_portable.clone());
+        }
         let manifest_changed = rewrite_manifest_asset_references(
             &mut manifest,
             &source_portable,
@@ -1275,13 +1319,11 @@ impl ProjectSession {
         let source_portable = portable_path(&source);
         let manifest_path = self.project_root.join("project.json");
         let (manifest_revision, manifest_value) = read_stable_json_value(&manifest_path)?;
-        let mut manifest_references = Vec::new();
-        collect_manifest_asset_references(
+        let manifest_references = effective_manifest_asset_references(
+            &self.project_root,
             &manifest_value,
             &source_portable,
-            "",
-            &mut manifest_references,
-        );
+        )?;
         Ok(AssetDeleteSnapshot {
             tree_revision: self.asset_tree_revision()?,
             manifest_revision,
@@ -1368,13 +1410,11 @@ impl ProjectSession {
                 "project.json changed since the delete reference scan; preview again".into(),
             ));
         }
-        let mut manifest_references = Vec::new();
-        collect_manifest_asset_references(
+        let manifest_references = effective_manifest_asset_references(
+            &self.project_root,
             &manifest_value,
             &source_portable,
-            "",
-            &mut manifest_references,
-        );
+        )?;
         if !manifest_references.is_empty() {
             return Err(ProjectError::AssetTransaction(
                 "project.json still references this asset".into(),
@@ -2407,6 +2447,54 @@ fn collect_manifest_asset_references(
     }
 }
 
+fn implicit_startup_script(project_root: &Path, manifest: &ProjectManifest) -> Option<String> {
+    if manifest
+        .startup_script
+        .as_deref()
+        .is_some_and(|path| !path.trim().is_empty())
+    {
+        return None;
+    }
+    if manifest
+        .extra
+        .get("scripts")
+        .and_then(serde_json::Value::as_array)
+        .and_then(|scripts| scripts.first())
+        .and_then(serde_json::Value::as_str)
+        .is_some_and(|path| !path.trim().is_empty())
+    {
+        return None;
+    }
+    [
+        "Assets/Scripts/Main.ts",
+        "Assets/Scripts/main.ts",
+        "Assets/Scripts/Main.js",
+        "Assets/Scripts/main.js",
+    ]
+    .into_iter()
+    .find(|candidate| project_root.join(candidate).is_file())
+    .map(str::to_owned)
+}
+
+fn effective_manifest_asset_references(
+    project_root: &Path,
+    value: &serde_json::Value,
+    target: &str,
+) -> Result<Vec<AssetManifestReference>, ProjectError> {
+    let mut references = Vec::new();
+    collect_manifest_asset_references(value, target, "", &mut references);
+    let manifest: ProjectManifest = serde_json::from_value(value.clone())?;
+    if implicit_startup_script(project_root, &manifest)
+        .is_some_and(|path| path.eq_ignore_ascii_case(target))
+    {
+        references.push(AssetManifestReference {
+            location: "/startupScript".into(),
+            reference: target.into(),
+        });
+    }
+    Ok(references)
+}
+
 fn remove_empty_asset_parents(project_root: &Path, asset: &Path) {
     let assets = project_root.join("Assets");
     let mut current = asset.parent();
@@ -2722,6 +2810,35 @@ fn read_stable_json_value(path: &Path) -> Result<(String, serde_json::Value), Pr
         "{} changed repeatedly while it was read",
         display_path(path)
     )))
+}
+
+fn read_project_manifest(project_root: &Path) -> Result<(String, ProjectManifest), ProjectError> {
+    let manifest_path = project_root.join("project.json");
+    let (revision, value) = read_stable_json_value(&manifest_path)?;
+    let mut manifest: ProjectManifest = serde_json::from_value(value)?;
+    if manifest.name.trim().is_empty() {
+        return Err(ProjectError::InvalidProject(
+            "project name cannot be empty".into(),
+        ));
+    }
+    if !(1..=MAX_SHADER_VARIANT_LIMIT).contains(&manifest.shader_variant_limit) {
+        return Err(ProjectError::InvalidProject(format!(
+            "shaderVariantLimit must be from 1 to {MAX_SHADER_VARIANT_LIMIT}"
+        )));
+    }
+    if let Some(first) = manifest.build_scenes.first().cloned() {
+        match manifest.main_scene.as_deref() {
+            Some(main) if main != first.as_str() => {
+                return Err(ProjectError::InvalidProject(
+                    "mainScene must match the first buildScenes entry".into(),
+                ));
+            }
+            None => manifest.main_scene = Some(first),
+            _ => {}
+        }
+    }
+    manifest.always_include = normalize_build_asset_paths(project_root, &manifest.always_include)?;
+    Ok((revision, manifest))
 }
 
 fn validate_project_name(name: &str) -> Result<&str, ProjectError> {
@@ -3501,12 +3618,16 @@ mod tests {
         std::fs::copy(&main, root.join("Assets/Scenes/Level2.mscene")).unwrap();
         std::fs::copy(&main, root.join("Assets/Scenes/Scratch.mscene")).unwrap();
         std::fs::copy(&main, root.join("Assets/Scenes/Collision.mscene")).unwrap();
+        std::fs::copy(&main, root.join("Assets/Scenes/Stale.mscene")).unwrap();
         let main_guid = mengine_assets::ensure_asset_sidecar(&main, "scene")
             .unwrap()
             .guid;
         let scratch = root.join("Assets/Scenes/Scratch.mscene");
         let scratch_sidecar = mengine_assets::asset_sidecar_path(&scratch);
         mengine_assets::ensure_asset_sidecar(&scratch, "scene").unwrap();
+        let stale = root.join("Assets/Scenes/Stale.mscene");
+        mengine_assets::ensure_asset_sidecar(&stale, "scene").unwrap();
+        let stale_revision = scene_file_revision(&stale).unwrap().unwrap();
         let mut session = ProjectSession::open(&root).unwrap();
         session
             .save_build_scenes(vec![
@@ -3590,6 +3711,16 @@ mod tests {
         assert!(session
             .delete_scene("Assets/Scenes/../Collision.mscene")
             .is_err());
+        let stale_contents = std::fs::read_to_string(&stale).unwrap();
+        std::fs::write(&stale, format!("{stale_contents}\n")).unwrap();
+        let stale_error = session
+            .delete_scene_with_revision("Assets/Scenes/Stale.mscene", Some(&stale_revision))
+            .unwrap_err();
+        assert!(matches!(
+            stale_error,
+            ProjectError::ExternalSceneModification(_)
+        ));
+        assert!(stale.is_file());
         std::fs::remove_dir_all(root).unwrap();
     }
 
@@ -3660,6 +3791,46 @@ mod tests {
             session.always_include(),
             vec!["Assets/Characters/Hero/Hero.png"]
         );
+        std::fs::remove_dir_all(root).unwrap();
+    }
+
+    #[test]
+    fn legacy_implicit_startup_script_is_protected_and_materialized_by_rename() {
+        let root = make_project();
+        std::fs::create_dir_all(root.join("Assets/Scripts")).unwrap();
+        let source = root.join("Assets/Scripts/Main.ts");
+        std::fs::write(&source, "export function start() {}\n").unwrap();
+        let guid = mengine_assets::ensure_asset_sidecar(&source, "script")
+            .unwrap()
+            .guid
+            .0;
+        let mut session = ProjectSession::open(&root).unwrap();
+
+        let snapshot = session
+            .asset_delete_snapshot("Assets/Scripts/Main.ts")
+            .unwrap();
+        assert_eq!(snapshot.manifest_references.len(), 1);
+        assert_eq!(snapshot.manifest_references[0].location, "/startupScript");
+        assert_eq!(
+            snapshot.manifest_references[0].reference,
+            "Assets/Scripts/Main.ts"
+        );
+
+        let result = session
+            .rename_asset(AssetRenameRequest {
+                source_path: "Assets/Scripts/Main.ts".into(),
+                destination_path: "Assets/Scripts/Bootstrap.ts".into(),
+                expected_source_revision: scene_file_revision(&source).unwrap().unwrap(),
+                expected_guid: guid,
+                updates: Vec::new(),
+            })
+            .unwrap();
+        assert_eq!(result.destination_path, "Assets/Scripts/Bootstrap.ts");
+        assert!(!source.exists());
+        assert!(root.join("Assets/Scripts/Bootstrap.ts").is_file());
+        let manifest: serde_json::Value =
+            serde_json::from_slice(&std::fs::read(root.join("project.json")).unwrap()).unwrap();
+        assert_eq!(manifest["startupScript"], "Assets/Scripts/Bootstrap.ts");
         std::fs::remove_dir_all(root).unwrap();
     }
 
@@ -3936,6 +4107,57 @@ mod tests {
             .unwrap_err()
             .to_string()
             .contains("editor asset metadata"));
+        std::fs::remove_dir_all(root).unwrap();
+    }
+
+    #[test]
+    fn build_settings_writes_require_the_exact_manifest_revision() {
+        let root = make_project();
+        std::fs::create_dir_all(root.join("Assets/Prefabs/Dynamic")).unwrap();
+        let mut session = ProjectSession::open(&root).unwrap();
+        let stale_revision = session.refresh_build_settings().unwrap();
+        let mut externally_changed: serde_json::Value =
+            serde_json::from_slice(&std::fs::read(root.join("project.json")).unwrap()).unwrap();
+        externally_changed["externalSetting"] = json!("preserve-me");
+        std::fs::write(
+            root.join("project.json"),
+            serde_json::to_vec_pretty(&externally_changed).unwrap(),
+        )
+        .unwrap();
+
+        let error = session
+            .save_build_asset_settings_guarded(
+                BuildAssetMode::Referenced,
+                vec!["Assets/Prefabs/Dynamic".into()],
+                512,
+                &stale_revision,
+            )
+            .unwrap_err();
+        assert!(matches!(
+            error,
+            ProjectError::ExternalManifestModification { .. }
+        ));
+        let unchanged: serde_json::Value =
+            serde_json::from_slice(&std::fs::read(root.join("project.json")).unwrap()).unwrap();
+        assert_eq!(unchanged["externalSetting"], "preserve-me");
+        assert_ne!(unchanged["assetMode"], "referenced");
+
+        let current_revision = session.refresh_build_settings().unwrap();
+        let original_scenes = session.build_scenes();
+        session
+            .save_build_asset_settings_guarded(
+                BuildAssetMode::Referenced,
+                vec!["Assets/Prefabs/Dynamic".into()],
+                512,
+                &current_revision,
+            )
+            .unwrap();
+        assert_eq!(session.build_scenes(), original_scenes);
+        let saved: serde_json::Value =
+            serde_json::from_slice(&std::fs::read(root.join("project.json")).unwrap()).unwrap();
+        assert_eq!(saved["externalSetting"], "preserve-me");
+        assert_eq!(saved["assetMode"], "referenced");
+        assert_eq!(saved["shaderVariantLimit"], 512);
         std::fs::remove_dir_all(root).unwrap();
     }
 

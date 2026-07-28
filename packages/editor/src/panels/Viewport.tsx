@@ -12,6 +12,7 @@ import {
 } from 'lucide-react';
 import type { GizmoMode, SceneCamera, TransformData } from '../store';
 import { recordViewportProfilerFrame } from '../editorProfiler';
+import { agentBridge } from '../agent/AgentBridge';
 import {
   GAME_RESOLUTION_PRESETS,
   gameResolutionKey,
@@ -103,6 +104,10 @@ import {
   stepParticleEmitter,
   type ParticleEmitterState,
 } from '../particles/particleSystem';
+import {
+  createViewportSimulationClock,
+  sampleViewportSimulationClock,
+} from '../viewportSimulationClock';
 import { loadSpineRuntime } from '../spine/spineRuntimeLoader';
 import type { SpineCanvasRuntime, SpineDrawResult } from '../spine/spineCanvasRuntime';
 import {
@@ -440,7 +445,7 @@ export function Viewport(props: {
   selected: number | null;
   selectedIds?: number[];
   activeInHierarchy?: (id: number) => boolean;
-  angle: number;
+  simulationTime: number;
   gizmo: GizmoMode;
   pivotMode: ToolPivotMode;
   handleOrientation: ToolHandleOrientation;
@@ -545,7 +550,11 @@ export function Viewport(props: {
   const spineRuntimeRef = useRef<SpineCanvasRuntime | null>(null);
   const spineRuntimeLoadRef = useRef<Promise<void> | null>(null);
   const spineRuntimeErrorRef = useRef<string | null>(null);
-  const lastParticleFrameRef = useRef(0);
+  const simulationClockRef = useRef(createViewportSimulationClock(
+    props.playing,
+    props.simulationTime,
+    performance.now(),
+  ));
   const lastProfilerFrameRef = useRef(0);
   const hoverGizmoRef = useRef<GizmoPart | null>(null);
   const activeGizmoRef = useRef<GizmoPart | null>(null);
@@ -553,6 +562,25 @@ export function Viewport(props: {
   const lastCameraRef = useRef<Camera>({ eye: [0, 0, 10], target: [0, 0, 0], fovYDeg: 60 });
   const propsRef = useRef(props);
   propsRef.current = props;
+
+  // Expose this viewport's canvas to the AgentBridge so AI agents can capture
+  // a screenshot of the rendered scene/game view (Phase 1 observation surface).
+  useEffect(() => {
+    return agentBridge.registerViewportCapture(props.tab, (format, quality) => {
+      const canvas = canvasRef.current;
+      if (!canvas) return null;
+      try {
+        return {
+          dataUrl: canvas.toDataURL(format, quality),
+          width: canvas.width,
+          height: canvas.height,
+          mime: format,
+        };
+      } catch {
+        return null;
+      }
+    });
+  }, [props.tab]);
 
   // Live camera during drag (bypasses React batching for instant feedback)
   const liveCam = useRef<SceneCamera>({
@@ -757,7 +785,7 @@ export function Viewport(props: {
   // Force paint when props change
   useEffect(() => {
     setTick((t) => t + 1);
-  }, [props.tab, props.entities, props.selected, props.selectedIds, props.gizmo, props.pivotMode, props.handleOrientation, props.gameResolution, props.timelineCameraPreview, props.timelineParticlePreviews, props.angle, props.playing, props.activeInHierarchy]);
+  }, [props.tab, props.entities, props.selected, props.selectedIds, props.gizmo, props.pivotMode, props.handleOrientation, props.gameResolution, props.timelineCameraPreview, props.timelineParticlePreviews, props.simulationTime, props.playing, props.activeInHierarchy]);
 
   const paint = () => {
     const paintStartedAt = performance.now();
@@ -770,7 +798,6 @@ export function Viewport(props: {
     const now = paintStartedAt;
     const rect = canvas.getBoundingClientRect();
     if (rect.width < 1 || rect.height < 1) {
-      lastParticleFrameRef.current = 0;
       lastProfilerFrameRef.current = 0;
       return;
     }
@@ -778,10 +805,15 @@ export function Viewport(props: {
       ? now - lastProfilerFrameRef.current
       : 0;
     lastProfilerFrameRef.current = now;
-    const particleDelta = lastParticleFrameRef.current > 0
-      ? Math.min(0.1, (now - lastParticleFrameRef.current) / 1000)
-      : 0;
-    lastParticleFrameRef.current = now;
+    const simulationClock = sampleViewportSimulationClock(
+      simulationClockRef.current,
+      p.playing,
+      p.simulationTime,
+      now,
+    );
+    simulationClockRef.current = simulationClock.state;
+    const simulationDelta = simulationClock.deltaSeconds;
+    const animationTime = simulationClock.animationTimeSeconds;
 
     const dpr = window.devicePixelRatio || 1;
     const pw = Math.max(1, Math.floor(rect.width));
@@ -956,7 +988,7 @@ export function Viewport(props: {
           resetParticleEmitterState(state, Number(emitter.seed) || 1);
           particleTimelineStateRef.current.delete(entity.entity);
         }
-        stepParticleEmitter(dimension, emitter, state, particleDelta, emitterPosition);
+        stepParticleEmitter(dimension, emitter, state, simulationDelta, emitterPosition);
       }
       particleDrawByEntity.set(entity.entity, {
         items: collectParticleDrawItems(state, emitterPosition, emitter.simulation_space),
@@ -1141,7 +1173,7 @@ export function Viewport(props: {
               screenX: pr.x,
               screenY: pr.y,
               pixelsPerWorldUnit,
-              deltaSeconds: particleDelta,
+              deltaSeconds: simulationDelta,
             })
           : spineRuntimeErrorRef.current
             ? { error: spineRuntimeErrorRef.current }
@@ -1410,7 +1442,7 @@ export function Viewport(props: {
           ];
           const rot = t.rotation as [number, number, number, number] | undefined;
           const sprite = animatedSprite
-            ? resolveAnimatedSpriteFrame(animatedSprite, performance.now() / 1000)
+            ? resolveAnimatedSpriteFrame(animatedSprite, animationTime)
             : String(staticSprite?.sprite ?? 'white');
           const image = getSpriteImage(sprite);
           const imageReady = image?.complete && image.naturalWidth > 0 ? image : null;

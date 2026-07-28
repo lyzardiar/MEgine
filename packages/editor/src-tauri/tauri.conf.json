@@ -15,7 +15,9 @@
         "title": "MEngine Editor",
         "width": 1440,
         "height": 900,
-        "resizable": true
+        "resizable": true,
+        "visible": false,
+        "focus": false
       }
     ],
     "security": {

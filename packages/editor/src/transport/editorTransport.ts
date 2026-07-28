@@ -265,6 +265,7 @@ export type ProjectSceneInfo = {
 };
 
 export type ProjectBuildSettings = {
+  revision: string;
   mainScene: string | null;
   scenes: string[];
   availableScenes: string[];
@@ -272,6 +273,8 @@ export type ProjectBuildSettings = {
   alwaysInclude: string[];
   shaderVariantLimit: number;
 };
+
+export const PROJECT_BUILD_SETTINGS_CHANGED_EVENT = 'mengine:project-build-settings-changed';
 
 export type ProjectSortingLayer = {
   id: string;
@@ -281,6 +284,11 @@ export type ProjectSortingLayer = {
 export type ProjectSortingLayers = {
   version: 1;
   layers: ProjectSortingLayer[];
+};
+
+export type ProjectSortingLayersSnapshot = {
+  settings: ProjectSortingLayers;
+  revision: string | null;
 };
 
 export type EditorOperation =
@@ -394,6 +402,14 @@ export async function createProject(parent: string, name: string): Promise<Proje
 
 export async function openProject(root: string): Promise<ProjectSnapshot> {
   return invoke<ProjectSnapshot>('open_project', { root });
+}
+
+export type CloseProjectResult = {
+  closedWindows: string[];
+};
+
+export async function closeProject(discardDirty: boolean): Promise<CloseProjectResult> {
+  return invoke<CloseProjectResult>('close_project', { discardDirty });
 }
 
 export async function listRecentProjects(): Promise<RecentProjectInfo[]> {
@@ -527,9 +543,12 @@ export async function renameProjectScene(
   return invoke<ProjectSnapshot>('rename_project_scene', { oldName, newName });
 }
 
-export async function deleteProjectScene(name: string): Promise<ProjectSnapshot> {
+export async function deleteProjectScene(
+  name: string,
+  expectedRevision?: string,
+): Promise<ProjectSnapshot> {
   if (!isDesktopEditor()) throw new Error('Scene deletion requires the desktop editor');
-  return invoke<ProjectSnapshot>('delete_project_scene', { name });
+  return invoke<ProjectSnapshot>('delete_project_scene', { name, expectedRevision });
 }
 
 export async function getProjectBuildSettings(): Promise<ProjectBuildSettings> {
@@ -543,13 +562,20 @@ export async function getProjectBuildSettings(): Promise<ProjectBuildSettings> {
 
 export async function saveProjectBuildSettings(
   scenes: string[],
+  expectedRevision: string,
 ): Promise<ProjectBuildSettings> {
   if (isDesktopEditor()) {
-    return invoke<ProjectBuildSettings>('save_project_build_settings', { scenes });
+    return invoke<ProjectBuildSettings>('save_project_build_settings', {
+      scenes,
+      expectedRevision,
+    });
   }
   const response = await fetch('/__mengine/build-settings', {
     method: 'PUT',
-    headers: { 'Content-Type': 'application/json' },
+    headers: {
+      'Content-Type': 'application/json',
+      'X-MEngine-Expected-Revision': expectedRevision,
+    },
     body: JSON.stringify({ scenes }),
   });
   if (!response.ok) {
@@ -563,17 +589,22 @@ export async function saveProjectBuildAssetSettings(
   assetMode: 'all' | 'referenced',
   alwaysInclude: string[],
   shaderVariantLimit: number,
+  expectedRevision: string,
 ): Promise<ProjectBuildSettings> {
   if (isDesktopEditor()) {
     return invoke<ProjectBuildSettings>('save_project_build_asset_settings', {
       assetMode,
       alwaysInclude,
       shaderVariantLimit,
+      expectedRevision,
     });
   }
   const response = await fetch('/__mengine/build-asset-settings', {
     method: 'PUT',
-    headers: { 'Content-Type': 'application/json' },
+    headers: {
+      'Content-Type': 'application/json',
+      'X-MEngine-Expected-Revision': expectedRevision,
+    },
     body: JSON.stringify({ assetMode, alwaysInclude, shaderVariantLimit }),
   });
   if (!response.ok) {
@@ -615,6 +646,40 @@ export async function saveProjectSortingLayers(
     throw new Error(detail || `cannot save sorting layers: ${response.status}`);
   }
   return response.json() as Promise<ProjectSortingLayers>;
+}
+
+export async function getProjectSortingLayersSnapshot(): Promise<ProjectSortingLayersSnapshot> {
+  if (isDesktopEditor()) {
+    return invoke<ProjectSortingLayersSnapshot>('get_project_sorting_layers_snapshot');
+  }
+  const response = await fetch('/__mengine/sorting-layers-snapshot');
+  if (!response.ok) throw new Error(`cannot read sorting layer snapshot: ${response.status}`);
+  return response.json() as Promise<ProjectSortingLayersSnapshot>;
+}
+
+export async function saveProjectSortingLayersGuarded(
+  settings: ProjectSortingLayers,
+  expectedRevision: string | null,
+): Promise<ProjectSortingLayersSnapshot> {
+  if (isDesktopEditor()) {
+    return invoke<ProjectSortingLayersSnapshot>('save_project_sorting_layers_guarded', {
+      settings,
+      expectedRevision,
+    });
+  }
+  const response = await fetch('/__mengine/sorting-layers-guarded', {
+    method: 'PUT',
+    headers: {
+      'Content-Type': 'application/json',
+      'X-MEngine-Expected-Revision': expectedRevision ?? '__missing__',
+    },
+    body: JSON.stringify(settings),
+  });
+  if (!response.ok) {
+    const detail = await response.text();
+    throw new Error(detail || `cannot save sorting layers: ${response.status}`);
+  }
+  return response.json() as Promise<ProjectSortingLayersSnapshot>;
 }
 
 export async function openProjectScene(relativePath: string): Promise<ProjectSnapshot> {

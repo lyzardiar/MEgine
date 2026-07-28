@@ -7,6 +7,7 @@ import {
 import {
   listProjectFiles,
   normalizeProjectAssetPath,
+  readProjectAssetBytesWithRevision,
   readProjectAssetText,
   refreshProjectFiles,
   writeProjectAssetText,
@@ -50,13 +51,16 @@ export async function createProjectPrefabFromSelection(store: EditorStore): Prom
   if (!entity) throw new Error('selected entity no longer exists');
   const path = await uniquePrefabPath(entity.name ?? 'New Prefab');
   const captured = capturePrefabAsset(entity.name ?? 'New Prefab', entities, root);
-  await writeProjectAssetText(path, serializePrefabAsset(captured.asset));
+  await writeProjectAssetText(path, serializePrefabAsset(captured.asset), null);
   store.markPrefabInstance(root, path, captured.nodeIds);
   await refreshProjectFiles();
   return path;
 }
 
-export async function applySelectedPrefab(store: EditorStore): Promise<string> {
+export async function applySelectedPrefab(
+  store: EditorStore,
+  expectedRevision?: string,
+): Promise<string> {
   const selected = store.selected;
   if (selected == null) throw new Error('select a prefab instance');
   const instance = store.getPrefabInstance(selected);
@@ -67,18 +71,29 @@ export async function applySelectedPrefab(store: EditorStore): Promise<string> {
   const captured = capturePrefabAsset(root.name ?? 'Prefab', entities, instance.root, {
     source: instance.source,
   });
-  await writeProjectAssetText(instance.source, serializePrefabAsset(captured.asset));
+  await writeProjectAssetText(
+    instance.source,
+    serializePrefabAsset(captured.asset),
+    expectedRevision,
+  );
   store.markPrefabInstance(instance.root, instance.source, captured.nodeIds);
   await refreshProjectFiles();
   return instance.source;
 }
 
-export async function revertSelectedPrefab(store: EditorStore): Promise<string> {
+export async function revertSelectedPrefab(
+  store: EditorStore,
+  expectedRevision?: string,
+): Promise<string> {
   const selected = store.selected;
   if (selected == null) throw new Error('select a prefab instance');
   const instance = store.getPrefabInstance(selected);
   if (!instance) throw new Error('selection is not part of a prefab instance');
-  const prefab = parsePrefabAsset(await readProjectAssetText(instance.source));
+  const source = await readProjectAssetBytesWithRevision(instance.source);
+  if (expectedRevision != null && source.revision !== expectedRevision) {
+    throw new Error('asset changed on disk since it was loaded');
+  }
+  const prefab = parsePrefabAsset(new TextDecoder().decode(source.contents));
   if (store.revertPrefabInstance(selected, prefab) == null) {
     throw new Error('could not revert prefab instance');
   }

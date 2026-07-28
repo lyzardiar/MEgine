@@ -859,8 +859,9 @@ export function mengineFsPlugin(opts: MengineFsOptions | string): Plugin {
 
     const manifestOriginal = fs.readFileSync(manifestPath);
     const manifestRevision = assetFileRevision(fs.lstatSync(manifestPath));
+    const manifestValue = JSON.parse(manifestOriginal.toString('utf8')) as unknown;
     const rewrittenManifest = rewriteManifestReferences(
-      JSON.parse(manifestOriginal.toString('utf8')),
+      materializeImplicitStartupScript(manifestValue, source.relative),
       source.relative,
       destination.relative,
     );
@@ -1270,6 +1271,55 @@ export function mengineFsPlugin(opts: MengineFsOptions | string): Plugin {
     return output;
   }
 
+  function implicitStartupScript(value: unknown): string | null {
+    if (!value || typeof value !== 'object' || Array.isArray(value)) return null;
+    const manifest = value as Record<string, unknown>;
+    const explicit = manifest.startupScript ?? manifest.startup_script;
+    if (typeof explicit === 'string' && explicit.trim()) return null;
+    const legacy = Array.isArray(manifest.scripts) ? manifest.scripts[0] : null;
+    if (typeof legacy === 'string' && legacy.trim()) return null;
+    return [
+      'Assets/Scripts/Main.ts',
+      'Assets/Scripts/main.ts',
+      'Assets/Scripts/Main.js',
+      'Assets/Scripts/main.js',
+    ].find((candidate) => {
+      const absolute = path.join(projectRoot, ...candidate.split('/'));
+      if (!fs.existsSync(absolute)) return false;
+      const stat = fs.lstatSync(absolute);
+      return stat.isFile() && !stat.isSymbolicLink();
+    }) ?? null;
+  }
+
+  function materializeImplicitStartupScript(value: unknown, source: string): unknown {
+    const implicit = implicitStartupScript(value);
+    if (
+      !implicit
+      || implicit.toLocaleLowerCase() !== source.toLocaleLowerCase()
+      || !value
+      || typeof value !== 'object'
+      || Array.isArray(value)
+    ) return value;
+    return {
+      ...(value as Record<string, unknown>),
+      startupScript: implicit,
+    };
+  }
+
+  function collectEffectiveManifestAssetReferences(
+    value: unknown,
+    target: string,
+  ): Array<{ location: string; reference: string }> {
+    const references = collectManifestAssetReferences(value, target);
+    const implicit = implicitStartupScript(value);
+    if (
+      implicit?.toLocaleLowerCase() === target.toLocaleLowerCase()
+    ) {
+      references.push({ location: '/startupScript', reference: target });
+    }
+    return references;
+  }
+
   function readStableManifest(): { revision: string; value: unknown } {
     for (let attempt = 0; attempt < 2; attempt += 1) {
       const before = assetFileRevision(fs.lstatSync(manifestPath));
@@ -1286,7 +1336,10 @@ export function mengineFsPlugin(opts: MengineFsOptions | string): Plugin {
     return {
       treeRevision: projectAssetTreeRevision(),
       manifestRevision: manifest.revision,
-      manifestReferences: collectManifestAssetReferences(manifest.value, source.relative),
+      manifestReferences: collectEffectiveManifestAssetReferences(
+        manifest.value,
+        source.relative,
+      ),
     };
   }
 
@@ -1651,7 +1704,11 @@ export function mengineFsPlugin(opts: MengineFsOptions | string): Plugin {
   }
 
   function readBuildSettings() {
-    const manifest = JSON.parse(fs.readFileSync(manifestPath, 'utf8')) as Record<string, unknown>;
+    const stable = readStableManifest();
+    if (!stable.value || typeof stable.value !== 'object' || Array.isArray(stable.value)) {
+      throw new Error('project.json must contain an object');
+    }
+    const manifest = stable.value as Record<string, unknown>;
     const mainScene = normalizeBuildScene(manifest.mainScene ?? manifest.main_scene);
     const rawScenes = manifest.buildScenes ?? manifest.build_scenes;
     const source = Array.isArray(rawScenes) ? rawScenes : [];
@@ -1692,8 +1749,10 @@ export function mengineFsPlugin(opts: MengineFsOptions | string): Plugin {
       alwaysInclude.push(included);
     }
     return {
+      revision: stable.revision,
       manifest,
       settings: {
+        revision: stable.revision,
         mainScene: scenes[0] ?? null,
         scenes,
         availableScenes: listBuildScenes(),
@@ -1739,11 +1798,29 @@ export function mengineFsPlugin(opts: MengineFsOptions | string): Plugin {
   }
 
   function readSortingLayers() {
+    return readSortingLayersSnapshot().settings;
+  }
+
+  function readSortingLayersSnapshot() {
     const sortingLayersPath = resolveSortingLayersPath(false);
     if (!sortingLayersPath || !fs.existsSync(sortingLayersPath)) {
-      return { version: 1 as const, layers: [{ id: 'default', name: 'Default' }] };
+      return {
+        settings: { version: 1 as const, layers: [{ id: 'default', name: 'Default' }] },
+        revision: null,
+      };
     }
-    return normalizeSortingLayers(JSON.parse(fs.readFileSync(sortingLayersPath, 'utf8')));
+    for (let attempt = 0; attempt < 2; attempt += 1) {
+      const before = assetFileRevision(fs.statSync(sortingLayersPath));
+      const contents = fs.readFileSync(sortingLayersPath, 'utf8');
+      const after = assetFileRevision(fs.statSync(sortingLayersPath));
+      if (before === after) {
+        return {
+          settings: normalizeSortingLayers(JSON.parse(contents)),
+          revision: after,
+        };
+      }
+    }
+    throw new Error('sorting layers changed repeatedly while being read; retry');
   }
 
   function collectTs(dir: string, folder: string, idPrefix: string, out: ScriptAsset[]) {
@@ -1868,6 +1945,10 @@ export function mengineFsPlugin(opts: MengineFsOptions | string): Plugin {
       }
 
       if (pathname === `${API}/build-settings` && method === 'PUT') {
+        const rawExpected = req.headers['x-mengine-expected-revision'];
+        if (typeof rawExpected !== 'string') {
+          return sendJson(res, 400, { error: 'missing expected build settings revision' });
+        }
         const body = await readBody(req);
         const parsed = JSON.parse(body || '{}') as { scenes?: unknown[] };
         if (!Array.isArray(parsed.scenes) || parsed.scenes.length === 0) {
@@ -1887,11 +1968,24 @@ export function mengineFsPlugin(opts: MengineFsOptions | string): Plugin {
           seen.add(canonical.toLowerCase());
           scenes.push(canonical);
         }
-        const { manifest } = readBuildSettings();
+        const { manifest, revision } = readBuildSettings();
+        if (revision !== rawExpected) {
+          return sendJson(res, 409, {
+            error:
+              `build settings changed on disk since they were loaded; expected ${rawExpected}, current ${revision}`,
+          });
+        }
         manifest.mainScene = scenes[0];
         manifest.buildScenes = scenes;
         delete manifest.main_scene;
         delete manifest.build_scenes;
+        const currentRevision = readStableManifest().revision;
+        if (currentRevision !== rawExpected) {
+          return sendJson(res, 409, {
+            error:
+              `build settings changed on disk since they were loaded; expected ${rawExpected}, current ${currentRevision}`,
+          });
+        }
         writeFileAtomic(
           manifestPath,
           Buffer.from(`${JSON.stringify(manifest, null, 2)}\n`, 'utf8'),
@@ -1900,6 +1994,10 @@ export function mengineFsPlugin(opts: MengineFsOptions | string): Plugin {
       }
 
       if (pathname === `${API}/build-asset-settings` && method === 'PUT') {
+        const rawExpected = req.headers['x-mengine-expected-revision'];
+        if (typeof rawExpected !== 'string') {
+          return sendJson(res, 400, { error: 'missing expected build settings revision' });
+        }
         const body = await readBody(req);
         const parsed = JSON.parse(body || '{}') as {
           assetMode?: unknown;
@@ -1930,13 +2028,26 @@ export function mengineFsPlugin(opts: MengineFsOptions | string): Plugin {
           seen.add(included.toLowerCase());
           alwaysInclude.push(included);
         }
-        const { manifest } = readBuildSettings();
+        const { manifest, revision } = readBuildSettings();
+        if (revision !== rawExpected) {
+          return sendJson(res, 409, {
+            error:
+              `build settings changed on disk since they were loaded; expected ${rawExpected}, current ${revision}`,
+          });
+        }
         manifest.assetMode = parsed.assetMode;
         manifest.alwaysInclude = alwaysInclude;
         manifest.shaderVariantLimit = parsed.shaderVariantLimit;
         delete manifest.asset_mode;
         delete manifest.always_include;
         delete manifest.shader_variant_limit;
+        const currentRevision = readStableManifest().revision;
+        if (currentRevision !== rawExpected) {
+          return sendJson(res, 409, {
+            error:
+              `build settings changed on disk since they were loaded; expected ${rawExpected}, current ${currentRevision}`,
+          });
+        }
         writeFileAtomic(
           manifestPath,
           Buffer.from(`${JSON.stringify(manifest, null, 2)}\n`, 'utf8'),
@@ -1957,6 +2068,33 @@ export function mengineFsPlugin(opts: MengineFsOptions | string): Plugin {
           Buffer.from(`${JSON.stringify(settings, null, 2)}\n`, 'utf8'),
         );
         return sendJson(res, 200, settings);
+      }
+
+      if (pathname === `${API}/sorting-layers-snapshot` && method === 'GET') {
+        return sendJson(res, 200, readSortingLayersSnapshot());
+      }
+
+      if (pathname === `${API}/sorting-layers-guarded` && method === 'PUT') {
+        const rawExpected = req.headers['x-mengine-expected-revision'];
+        if (typeof rawExpected !== 'string') {
+          return sendJson(res, 400, { error: 'missing expected sorting layer revision' });
+        }
+        const expectedRevision = rawExpected === '__missing__' ? null : rawExpected;
+        const before = readSortingLayersSnapshot();
+        if (before.revision !== expectedRevision) {
+          return sendJson(res, 409, {
+            error:
+              `sorting layers changed on disk since they were loaded; expected ${expectedRevision ?? 'missing'}, current ${before.revision ?? 'missing'}`,
+          });
+        }
+        const settings = normalizeSortingLayers(JSON.parse(await readBody(req) || '{}'));
+        const sortingLayersPath = resolveSortingLayersPath(true);
+        if (!sortingLayersPath) throw new Error('sorting layer path is unavailable');
+        writeFileAtomic(
+          sortingLayersPath,
+          Buffer.from(`${JSON.stringify(settings, null, 2)}\n`, 'utf8'),
+        );
+        return sendJson(res, 200, readSortingLayersSnapshot());
       }
 
       const assetMatch = pathname.match(new RegExp(`^${API}/asset/(.+)$`));

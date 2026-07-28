@@ -3,6 +3,7 @@ import test from 'node:test';
 import {
   normalizeSortingLayerSettings,
   sortingLayerRank,
+  validateSortingLayers,
 } from '../src/sortingLayerModel.ts';
 
 test('sorting layer normalization guarantees Default and rejects ambiguous entries', () => {
@@ -36,4 +37,25 @@ test('stable ids survive names and missing ids use Default rank', () => {
   assert.equal(sortingLayerRank(settings, 'effects'), 2);
   assert.equal(sortingLayerRank(settings, 'deleted-layer'), 1);
   assert.equal(settings.layers[1].name, 'Default');
+});
+
+test('strict authoring validation rejects settings that normalization would discard or rewrite', () => {
+  assert.equal(validateSortingLayers([
+    { id: 'default', name: 'Default' },
+    { id: 'effects', name: 'Effects' },
+  ]), null);
+  assert.match(validateSortingLayers([
+    { id: 'default', name: 'Default' },
+    { id: 'bad/id', name: 'Effects' },
+  ]), /Invalid stable id/);
+  assert.match(validateSortingLayers([
+    { id: 'DEFAULT', name: 'Default' },
+  ]), /must be 'default'/);
+  assert.match(validateSortingLayers([
+    { id: 'default', name: 'Other' },
+  ]), /name must be 'Default'/);
+  assert.match(validateSortingLayers([
+    { id: 'default', name: 'Default' },
+    { id: 'effects', name: 'Default' },
+  ]), /Duplicate sorting layer name/);
 });

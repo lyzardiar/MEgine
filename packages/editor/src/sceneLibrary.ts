@@ -418,12 +418,12 @@ export async function reloadSceneFromBackend(name: string): Promise<string> {
   return json;
 }
 
-export async function deleteScene(name: string) {
+export async function deleteScene(name: string, expectedRevision?: string) {
   const trackedPath = `Assets/Scenes/${sceneFileName(name)}`;
   beginInternalProjectFileWrite(trackedPath);
   try {
     if (_backend === 'desktop') {
-      await deleteDesktopScene(name);
+      await deleteDesktopScene(name, expectedRevision);
     } else if (_backend === 'disk') {
       const response = await fetch(`${API}/scenes/${encodeURIComponent(name)}`, { method: 'DELETE' });
       if (!response.ok) throw new Error(`disk delete failed: ${response.status}`);

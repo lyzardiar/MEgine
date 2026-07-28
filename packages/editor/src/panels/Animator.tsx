@@ -54,7 +54,13 @@ function uniquePath(extension: '.mcontroller' | '.manim', baseName: string): str
   return path;
 }
 
-export async function createProjectAnimatorController(): Promise<string> {
+export async function createProjectAnimatorController(open = true): Promise<string> {
+  return (await createProjectAnimatorControllerDetailed(open)).primaryPath;
+}
+
+export async function createProjectAnimatorControllerDetailed(
+  open = true,
+): Promise<{ primaryPath: string; createdPaths: string[] }> {
   await refreshProjectFiles();
   const controllerPath = uniquePath('.mcontroller', 'New Animator Controller');
   const clipPath = uniquePath('.manim', 'New State');
@@ -67,8 +73,11 @@ export async function createProjectAnimatorController(): Promise<string> {
   );
   await refreshProjectFiles();
   window.dispatchEvent(new CustomEvent(PROJECT_ASSETS_CHANGED_EVENT));
-  openAnimatorAsset(controllerPath);
-  return controllerPath;
+  if (open) openAnimatorAsset(controllerPath);
+  return {
+    primaryPath: controllerPath,
+    createdPaths: [clipPath, controllerPath],
+  };
 }
 
 type SnapshotEntity = WorldSnapshotView['entities'][number];

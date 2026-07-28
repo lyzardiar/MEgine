@@ -10,7 +10,145 @@ export type SaveAllResult = {
   failures: Array<{ label: string; error: string }>;
 };
 
+export type RemoteSavePeer = {
+  sender: string;
+  panel: string;
+};
+
+export type RemoteSaveRequest = {
+  requestId: string;
+  targets: string[];
+};
+
 type SaveAllRequest = { tasks: SaveAllTask[] };
+
+type PendingRemoteSave = {
+  peers: Map<string, RemoteSavePeer>;
+  results: Map<string, SaveAllResult>;
+  resolve: (result: SaveAllResult) => void;
+  timeout: ReturnType<typeof setTimeout>;
+};
+
+let remoteSaveSequence = 0;
+
+function nextRemoteSaveRequestId(): string {
+  remoteSaveSequence += 1;
+  return `save-${Date.now().toString(36)}-${remoteSaveSequence.toString(36)}`;
+}
+
+function scopedSaveResult(
+  peer: RemoteSavePeer,
+  result: SaveAllResult,
+): SaveAllResult {
+  return {
+    saved: result.saved.map((label) => `${peer.panel}/${label}`),
+    failures: result.failures.map((failure) => ({
+      label: `${peer.panel}/${failure.label}`,
+      error: failure.error,
+    })),
+  };
+}
+
+export function mergeSaveAllResults(results: readonly SaveAllResult[]): SaveAllResult {
+  return {
+    saved: results.flatMap((result) => result.saved),
+    failures: results.flatMap((result) => result.failures),
+  };
+}
+
+export class RemoteSaveCoordinator {
+  private readonly pending = new Map<string, PendingRemoteSave>();
+  private readonly dispatch: (request: RemoteSaveRequest) => void;
+  private readonly timeoutMs: number;
+  private readonly requestId: () => string;
+
+  constructor(
+    dispatch: (request: RemoteSaveRequest) => void,
+    timeoutMs = 10_000,
+    requestId: () => string = nextRemoteSaveRequestId,
+  ) {
+    this.dispatch = dispatch;
+    this.timeoutMs = timeoutMs;
+    this.requestId = requestId;
+  }
+
+  request(peers: readonly RemoteSavePeer[]): Promise<SaveAllResult> {
+    const uniquePeers = new Map<string, RemoteSavePeer>();
+    for (const peer of peers) {
+      if (!peer.sender || uniquePeers.has(peer.sender)) continue;
+      uniquePeers.set(peer.sender, { ...peer });
+    }
+    if (uniquePeers.size === 0) {
+      return Promise.resolve({ saved: [], failures: [] });
+    }
+
+    const requestId = this.requestId();
+    return new Promise((resolve) => {
+      const timeout = setTimeout(() => {
+        this.finish(requestId, true);
+      }, this.timeoutMs);
+      this.pending.set(requestId, {
+        peers: uniquePeers,
+        results: new Map(),
+        resolve,
+        timeout,
+      });
+      try {
+        this.dispatch({
+          requestId,
+          targets: [...uniquePeers.keys()],
+        });
+      } catch (reason) {
+        clearTimeout(timeout);
+        this.pending.delete(requestId);
+        const error = reason instanceof Error ? reason.message : String(reason);
+        resolve({
+          saved: [],
+          failures: [...uniquePeers.values()].map((peer) => ({
+            label: peer.panel,
+            error: `Could not request background save: ${error}`,
+          })),
+        });
+      }
+    });
+  }
+
+  accept(requestId: string, sender: string, result: SaveAllResult): boolean {
+    const pending = this.pending.get(requestId);
+    if (!pending || !pending.peers.has(sender)) return false;
+    if (!pending.results.has(sender)) pending.results.set(sender, structuredClone(result));
+    if (pending.results.size === pending.peers.size) this.finish(requestId, false);
+    return true;
+  }
+
+  dispose(): void {
+    for (const requestId of [...this.pending.keys()]) this.finish(requestId, true);
+  }
+
+  private finish(requestId: string, timedOut: boolean): void {
+    const pending = this.pending.get(requestId);
+    if (!pending) return;
+    clearTimeout(pending.timeout);
+    this.pending.delete(requestId);
+
+    const results: SaveAllResult[] = [];
+    for (const [sender, peer] of pending.peers) {
+      const result = pending.results.get(sender);
+      if (result) {
+        results.push(scopedSaveResult(peer, result));
+      } else if (timedOut) {
+        results.push({
+          saved: [],
+          failures: [{
+            label: peer.panel,
+            error: `Background editor window did not respond within ${this.timeoutMs} ms`,
+          }],
+        });
+      }
+    }
+    pending.resolve(mergeSaveAllResults(results));
+  }
+}
 
 export function registerSaveAllParticipant(
   label: string,

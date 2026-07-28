@@ -17,7 +17,15 @@ use std::sync::{
 use std::time::{Instant, SystemTime, UNIX_EPOCH};
 use tauri::{path::BaseDirectory, Emitter, Manager, State};
 
+mod agent_bridge;
+use agent_bridge::{
+    agent_bridge_broadcast, agent_bridge_respond, agent_bridge_set_transport_ready,
+    capture_editor_window, cleanup_bridge_discovery, inspect_editor_window, interact_editor_window,
+    read_editor_ui_content, spawn_bridge_server, BridgeHub,
+};
+
 struct AppState {
+    project_lifecycle: Mutex<()>,
     project: Mutex<Option<ProjectSession>>,
     active_build: Arc<Mutex<Option<ActiveBuild>>>,
     next_build_id: AtomicU64,
@@ -96,6 +104,15 @@ struct ProjectAssetWriteResult {
 
 #[derive(serde::Serialize)]
 #[serde(rename_all = "camelCase")]
+struct ProjectAssetImportResult {
+    source_path: String,
+    source_revision: String,
+    destination_path: String,
+    asset: ProjectAssetInfo,
+}
+
+#[derive(serde::Serialize)]
+#[serde(rename_all = "camelCase")]
 struct ProjectSpriteInfo {
     id: String,
     name: String,
@@ -126,6 +143,7 @@ struct SceneRecoveryCheckpoint {
 #[derive(serde::Serialize)]
 #[serde(rename_all = "camelCase")]
 struct ProjectBuildSettings {
+    revision: String,
     main_scene: Option<String>,
     scenes: Vec<String>,
     available_scenes: Vec<String>,
@@ -146,6 +164,13 @@ struct ProjectSortingLayer {
 struct ProjectSortingLayers {
     version: u32,
     layers: Vec<ProjectSortingLayer>,
+}
+
+#[derive(Clone, Debug, serde::Serialize)]
+#[serde(rename_all = "camelCase")]
+struct ProjectSortingLayersSnapshot {
+    settings: ProjectSortingLayers,
+    revision: Option<String>,
 }
 
 impl Default for ProjectSortingLayers {
@@ -3134,6 +3159,13 @@ struct RecentProjectInfo {
 }
 
 fn recent_projects_file(app: &tauri::AppHandle) -> Result<PathBuf, String> {
+    if let Some(configured) = std::env::var_os("MENGINE_EDITOR_CONFIG_DIR") {
+        let directory = PathBuf::from(configured);
+        if !directory.is_absolute() {
+            return Err("MENGINE_EDITOR_CONFIG_DIR must be an absolute path".to_string());
+        }
+        return Ok(directory.join("recent-projects.json"));
+    }
     app.path()
         .app_config_dir()
         .map(|directory| directory.join("recent-projects.json"))
@@ -3196,6 +3228,48 @@ fn remember_recent_project(app: &tauri::AppHandle, snapshot: &ProjectSnapshot) {
     );
     projects.truncate(MAX_RECENT_PROJECTS);
     let _ = save_recent_projects(app, &projects);
+}
+
+const IMPORTABLE_ASSET_EXTENSIONS: &[&str] = &[
+    ".png",
+    ".jpg",
+    ".jpeg",
+    ".webp",
+    ".gif",
+    ".bmp",
+    ".tga",
+    ".tif",
+    ".tiff",
+    ".hdr",
+    ".exr",
+    ".wav",
+    ".ogg",
+    ".mp3",
+    ".flac",
+    ".gltf",
+    ".glb",
+    ".atlas",
+    ".skel",
+    ".json",
+    ".mmat",
+    ".mat",
+    ".minst",
+    ".mshader",
+    ".prefab",
+    ".matlas",
+    ".manim",
+    ".mcontroller",
+    ".mavatar",
+    ".mtimeline",
+];
+
+fn importable_asset_extension(name: &str) -> Option<&'static str> {
+    let lower = name.to_ascii_lowercase();
+    IMPORTABLE_ASSET_EXTENSIONS
+        .iter()
+        .copied()
+        .filter(|extension| lower.ends_with(extension))
+        .max_by_key(|extension| extension.len())
 }
 
 fn project_asset_kind(name: &str) -> Option<&'static str> {
@@ -3497,6 +3571,18 @@ fn no_project() -> EditorFailure {
     }
 }
 
+fn project_lifecycle_failure(
+    code: &'static str,
+    message: impl Into<String>,
+    current_revision: Option<u64>,
+) -> EditorFailure {
+    EditorFailure {
+        code,
+        message: message.into(),
+        current_revision,
+    }
+}
+
 #[tauri::command]
 fn is_primary_pointer_down() -> bool {
     #[cfg(windows)]
@@ -3509,15 +3595,35 @@ fn is_primary_pointer_down() -> bool {
     false
 }
 
-fn activate_project(
-    mut session: ProjectSession,
+fn activate_project<F>(
     state: &AppState,
-) -> Result<ProjectSnapshot, EditorFailure> {
+    create_session: F,
+) -> Result<ProjectSnapshot, EditorFailure>
+where
+    F: FnOnce() -> Result<ProjectSession, EditorFailure>,
+{
+    let _lifecycle = state.project_lifecycle.lock();
+    if state.active_build.lock().is_some() {
+        return Err(project_lifecycle_failure(
+            "projectBuildActive",
+            "cannot open or create a project while a build artifact operation is active",
+            None,
+        ));
+    }
+    let mut project = state.project.lock();
+    if let Some(session) = project.as_ref() {
+        return Err(project_lifecycle_failure(
+            "projectAlreadyOpen",
+            "a MEngine project is already open; close it before opening another project",
+            Some(session.current_revision()),
+        ));
+    }
+    let mut session = create_session()?;
     let snapshot = session
         .open_main_scene()
         .map_err(|error| error.failure(Some(session.current_revision())))?
         .unwrap_or_else(|| session.snapshot());
-    *state.project.lock() = Some(session);
+    *project = Some(session);
     Ok(snapshot)
 }
 
@@ -3527,8 +3633,9 @@ fn open_project(
     state: State<'_, AppState>,
     app: tauri::AppHandle,
 ) -> Result<ProjectSnapshot, EditorFailure> {
-    let session = ProjectSession::open(&root).map_err(|error| error.failure(None))?;
-    let snapshot = activate_project(session, &state)?;
+    let snapshot = activate_project(&state, || {
+        ProjectSession::open(&root).map_err(|error| error.failure(None))
+    })?;
     remember_recent_project(&app, &snapshot);
     Ok(snapshot)
 }
@@ -3540,10 +3647,58 @@ fn create_project(
     state: State<'_, AppState>,
     app: tauri::AppHandle,
 ) -> Result<ProjectSnapshot, EditorFailure> {
-    let session = ProjectSession::create(&parent, &name).map_err(|error| error.failure(None))?;
-    let snapshot = activate_project(session, &state)?;
+    let snapshot = activate_project(&state, || {
+        ProjectSession::create(&parent, &name).map_err(|error| error.failure(None))
+    })?;
     remember_recent_project(&app, &snapshot);
     Ok(snapshot)
+}
+
+#[derive(serde::Serialize)]
+#[serde(rename_all = "camelCase")]
+struct CloseProjectResult {
+    closed_windows: Vec<String>,
+}
+
+#[tauri::command]
+fn close_project(
+    discard_dirty: bool,
+    state: State<'_, AppState>,
+    app: tauri::AppHandle,
+) -> Result<CloseProjectResult, String> {
+    let _lifecycle = state.project_lifecycle.lock();
+    if state.active_build.lock().is_some() {
+        return Err("cannot close the project while a PC Player build is active".to_string());
+    }
+    let mut project = state.project.lock();
+    let session = project.as_ref().ok_or_else(|| no_project().message)?;
+    if session.snapshot().dirty && !discard_dirty {
+        return Err(
+            "the native scene has unsaved changes; pass discardDirty=true to discard them"
+                .to_string(),
+        );
+    }
+
+    let mut secondary_windows: Vec<_> = app
+        .webview_windows()
+        .into_iter()
+        .filter(|(label, _)| label != "main")
+        .collect();
+    secondary_windows.sort_by(|left, right| left.0.cmp(&right.0));
+    let mut closed_windows = Vec::with_capacity(secondary_windows.len());
+    for (label, window) in secondary_windows {
+        window
+            .destroy()
+            .map_err(|error| format!("could not close editor window \"{label}\": {error}"))?;
+        closed_windows.push(label);
+    }
+
+    session
+        .discard_scene_recovery()
+        .map_err(|error| format!("could not discard scene recovery before closing: {error}"))?;
+    let session = project.take().ok_or_else(|| no_project().message)?;
+    drop(session);
+    Ok(CloseProjectResult { closed_windows })
 }
 
 #[tauri::command]
@@ -3630,22 +3785,27 @@ fn rename_project_scene(
 #[tauri::command]
 fn delete_project_scene(
     name: String,
+    expected_revision: Option<String>,
     state: State<'_, AppState>,
 ) -> Result<ProjectSnapshot, EditorFailure> {
     let mut guard = state.project.lock();
     let session = guard.as_mut().ok_or_else(no_project)?;
     session
-        .delete_scene(Path::new(&format!("Assets/Scenes/{name}.mscene")))
+        .delete_scene_with_revision(
+            Path::new(&format!("Assets/Scenes/{name}.mscene")),
+            expected_revision.as_deref(),
+        )
         .map_err(|error| error.failure(Some(session.current_revision())))
 }
 
-#[tauri::command]
-fn get_project_build_settings(state: State<'_, AppState>) -> Result<ProjectBuildSettings, String> {
-    let guard = state.project.lock();
-    let session = guard.as_ref().ok_or_else(|| no_project().message)?;
+fn project_build_settings(session: &mut ProjectSession) -> Result<ProjectBuildSettings, String> {
+    let revision = session
+        .refresh_build_settings()
+        .map_err(|error| error.to_string())?;
     let scenes = session.build_scenes();
     let available_scenes = available_build_scenes(Path::new(&session.snapshot().project_root))?;
     Ok(ProjectBuildSettings {
+        revision,
         main_scene: scenes.first().cloned(),
         scenes,
         available_scenes,
@@ -3653,27 +3813,27 @@ fn get_project_build_settings(state: State<'_, AppState>) -> Result<ProjectBuild
         always_include: session.always_include(),
         shader_variant_limit: session.shader_variant_limit(),
     })
+}
+
+#[tauri::command]
+fn get_project_build_settings(state: State<'_, AppState>) -> Result<ProjectBuildSettings, String> {
+    let mut guard = state.project.lock();
+    let session = guard.as_mut().ok_or_else(|| no_project().message)?;
+    project_build_settings(session)
 }
 
 #[tauri::command]
 fn save_project_build_settings(
     scenes: Vec<String>,
+    expected_revision: String,
     state: State<'_, AppState>,
 ) -> Result<ProjectBuildSettings, String> {
     let mut guard = state.project.lock();
     let session = guard.as_mut().ok_or_else(|| no_project().message)?;
-    let scenes = session
-        .save_build_scenes(scenes)
+    session
+        .save_build_scenes_guarded(scenes, &expected_revision)
         .map_err(|error| error.to_string())?;
-    let available_scenes = available_build_scenes(Path::new(&session.snapshot().project_root))?;
-    Ok(ProjectBuildSettings {
-        main_scene: scenes.first().cloned(),
-        scenes,
-        available_scenes,
-        asset_mode: session.build_asset_mode(),
-        always_include: session.always_include(),
-        shader_variant_limit: session.shader_variant_limit(),
-    })
+    project_build_settings(session)
 }
 
 #[tauri::command]
@@ -3681,23 +3841,20 @@ fn save_project_build_asset_settings(
     asset_mode: BuildAssetMode,
     always_include: Vec<String>,
     shader_variant_limit: u32,
+    expected_revision: String,
     state: State<'_, AppState>,
 ) -> Result<ProjectBuildSettings, String> {
     let mut guard = state.project.lock();
     let session = guard.as_mut().ok_or_else(|| no_project().message)?;
-    let always_include = session
-        .save_build_asset_settings(asset_mode, always_include, shader_variant_limit)
+    session
+        .save_build_asset_settings_guarded(
+            asset_mode,
+            always_include,
+            shader_variant_limit,
+            &expected_revision,
+        )
         .map_err(|error| error.to_string())?;
-    let scenes = session.build_scenes();
-    let available_scenes = available_build_scenes(Path::new(&session.snapshot().project_root))?;
-    Ok(ProjectBuildSettings {
-        main_scene: scenes.first().cloned(),
-        scenes,
-        available_scenes,
-        asset_mode,
-        always_include,
-        shader_variant_limit,
-    })
+    project_build_settings(session)
 }
 
 fn validate_surface_shader_source(source: &str) -> Result<(), String> {
@@ -3796,17 +3953,41 @@ fn sorting_layers_path(
     Ok(Some(target))
 }
 
-fn read_sorting_layers(project_root: &Path) -> Result<ProjectSortingLayers, String> {
+fn read_sorting_layers_snapshot(
+    project_root: &Path,
+) -> Result<ProjectSortingLayersSnapshot, String> {
     let Some(path) = sorting_layers_path(project_root, false)? else {
-        return Ok(ProjectSortingLayers::default());
+        return Ok(ProjectSortingLayersSnapshot {
+            settings: ProjectSortingLayers::default(),
+            revision: None,
+        });
     };
     if !path.is_file() {
-        return Ok(ProjectSortingLayers::default());
+        return Ok(ProjectSortingLayersSnapshot {
+            settings: ProjectSortingLayers::default(),
+            revision: None,
+        });
     }
-    let contents = std::fs::read(&path).map_err(|error| error.to_string())?;
-    let value = serde_json::from_slice(&contents)
-        .map_err(|error| format!("cannot parse {}: {error}", path.display()))?;
-    normalize_sorting_layers(value)
+    for _ in 0..2 {
+        let before = path.metadata().map_err(|error| error.to_string())?;
+        let revision = project_file_revision(&before);
+        let contents = std::fs::read(&path).map_err(|error| error.to_string())?;
+        let after = path.metadata().map_err(|error| error.to_string())?;
+        if revision != project_file_revision(&after) {
+            continue;
+        }
+        let value = serde_json::from_slice(&contents)
+            .map_err(|error| format!("cannot parse {}: {error}", path.display()))?;
+        return Ok(ProjectSortingLayersSnapshot {
+            settings: normalize_sorting_layers(value)?,
+            revision: Some(revision),
+        });
+    }
+    Err("sorting layers changed repeatedly while being read; retry".into())
+}
+
+fn read_sorting_layers(project_root: &Path) -> Result<ProjectSortingLayers, String> {
+    Ok(read_sorting_layers_snapshot(project_root)?.settings)
 }
 
 fn write_sorting_layers(
@@ -3846,6 +4027,23 @@ fn write_sorting_layers(
     result.map_err(|error| error.to_string())
 }
 
+fn write_sorting_layers_guarded(
+    project_root: &Path,
+    settings: &ProjectSortingLayers,
+    expected_revision: Option<&str>,
+) -> Result<ProjectSortingLayersSnapshot, String> {
+    let before = read_sorting_layers_snapshot(project_root)?;
+    if before.revision.as_deref() != expected_revision {
+        return Err(format!(
+            "sorting layers changed on disk since they were loaded; expected {}, current {}",
+            expected_revision.unwrap_or("missing"),
+            before.revision.as_deref().unwrap_or("missing"),
+        ));
+    }
+    write_sorting_layers(project_root, settings)?;
+    read_sorting_layers_snapshot(project_root)
+}
+
 #[tauri::command]
 fn get_project_sorting_layers(state: State<'_, AppState>) -> Result<ProjectSortingLayers, String> {
     let guard = state.project.lock();
@@ -3863,6 +4061,31 @@ fn save_project_sorting_layers(
     let session = guard.as_ref().ok_or_else(|| no_project().message)?;
     write_sorting_layers(Path::new(&session.snapshot().project_root), &settings)?;
     Ok(settings)
+}
+
+#[tauri::command]
+fn get_project_sorting_layers_snapshot(
+    state: State<'_, AppState>,
+) -> Result<ProjectSortingLayersSnapshot, String> {
+    let guard = state.project.lock();
+    let session = guard.as_ref().ok_or_else(|| no_project().message)?;
+    read_sorting_layers_snapshot(Path::new(&session.snapshot().project_root))
+}
+
+#[tauri::command]
+fn save_project_sorting_layers_guarded(
+    settings: ProjectSortingLayers,
+    expected_revision: Option<String>,
+    state: State<'_, AppState>,
+) -> Result<ProjectSortingLayersSnapshot, String> {
+    let settings = normalize_sorting_layers(settings)?;
+    let guard = state.project.lock();
+    let session = guard.as_ref().ok_or_else(|| no_project().message)?;
+    write_sorting_layers_guarded(
+        Path::new(&session.snapshot().project_root),
+        &settings,
+        expected_revision.as_deref(),
+    )
 }
 
 #[tauri::command]
@@ -3902,6 +4125,26 @@ fn compare_pc_build_history(
     compare_build_history(Path::new(&project_root), &previous_id, &current_id)
 }
 
+fn reserve_project_build(
+    state: &AppState,
+    build: ActiveBuild,
+    busy_message: &str,
+) -> Result<String, String> {
+    let _lifecycle = state.project_lifecycle.lock();
+    let mut active = state.active_build.lock();
+    if active.is_some() {
+        return Err(busy_message.to_string());
+    }
+    let project_root = state
+        .project
+        .lock()
+        .as_ref()
+        .map(|session| session.snapshot().project_root)
+        .ok_or_else(|| no_project().message)?;
+    *active = Some(build);
+    Ok(project_root)
+}
+
 #[tauri::command]
 async fn create_pc_build_history_patch(
     previous_id: String,
@@ -3909,12 +4152,6 @@ async fn create_pc_build_history_patch(
     app: tauri::AppHandle,
     state: State<'_, AppState>,
 ) -> Result<BuildHistoryPatchResult, String> {
-    let project_root = state
-        .project
-        .lock()
-        .as_ref()
-        .map(|session| session.snapshot().project_root)
-        .ok_or_else(|| no_project().message)?;
     let bundled_sdk = app
         .path()
         .resolve("build-sdk", BaseDirectory::Resource)
@@ -3925,18 +4162,16 @@ async fn create_pc_build_history_patch(
         "mengine-editor-history-patch-{}-{operation_id}.cancel",
         std::process::id()
     ));
-    {
-        let mut active = state.active_build.lock();
-        if active.is_some() {
-            return Err("another build artifact operation is already running".into());
-        }
-        *active = Some(ActiveBuild {
+    let project_root = reserve_project_build(
+        &state,
+        ActiveBuild {
             id: operation_id,
             cancelled: Arc::new(AtomicBool::new(false)),
             cancel_file: cancel_file.clone(),
             cancellable: false,
-        });
-    }
+        },
+        "another build artifact operation is already running",
+    )?;
     let cleanup = ActiveBuildGuard {
         active_build: state.active_build.clone(),
         id: operation_id,
@@ -3965,12 +4200,6 @@ async fn restore_pc_build_history(
     app: tauri::AppHandle,
     state: State<'_, AppState>,
 ) -> Result<RestoreBuildHistoryResult, String> {
-    let project_root = state
-        .project
-        .lock()
-        .as_ref()
-        .map(|session| session.snapshot().project_root)
-        .ok_or_else(|| no_project().message)?;
     let bundled_sdk = app
         .path()
         .resolve("build-sdk", BaseDirectory::Resource)
@@ -3981,18 +4210,16 @@ async fn restore_pc_build_history(
         "mengine-editor-history-restore-{}-{operation_id}.cancel",
         std::process::id()
     ));
-    {
-        let mut active = state.active_build.lock();
-        if active.is_some() {
-            return Err("another build artifact operation is already running".into());
-        }
-        *active = Some(ActiveBuild {
+    let project_root = reserve_project_build(
+        &state,
+        ActiveBuild {
             id: operation_id,
             cancelled: Arc::new(AtomicBool::new(false)),
             cancel_file: cancel_file.clone(),
             cancellable: false,
-        });
-    }
+        },
+        "another build artifact operation is already running",
+    )?;
     let cleanup = ActiveBuildGuard {
         active_build: state.active_build.clone(),
         id: operation_id,
@@ -4021,12 +4248,6 @@ async fn verify_pc_build_patch(
     app: tauri::AppHandle,
     state: State<'_, AppState>,
 ) -> Result<VerifyBuildPatchResult, String> {
-    let project_root = state
-        .project
-        .lock()
-        .as_ref()
-        .map(|session| session.snapshot().project_root)
-        .ok_or_else(|| no_project().message)?;
     let bundled_sdk = app
         .path()
         .resolve("build-sdk", BaseDirectory::Resource)
@@ -4037,18 +4258,16 @@ async fn verify_pc_build_patch(
         "mengine-editor-patch-verify-{}-{operation_id}.cancel",
         std::process::id()
     ));
-    {
-        let mut active = state.active_build.lock();
-        if active.is_some() {
-            return Err("another build artifact operation is already running".into());
-        }
-        *active = Some(ActiveBuild {
+    let project_root = reserve_project_build(
+        &state,
+        ActiveBuild {
             id: operation_id,
             cancelled: Arc::new(AtomicBool::new(false)),
             cancel_file: cancel_file.clone(),
             cancellable: false,
-        });
-    }
+        },
+        "another build artifact operation is already running",
+    )?;
     let cleanup = ActiveBuildGuard {
         active_build: state.active_build.clone(),
         id: operation_id,
@@ -4077,12 +4296,6 @@ async fn build_pc_player(
     app: tauri::AppHandle,
     state: State<'_, AppState>,
 ) -> Result<BuildPlayerResult, String> {
-    let project_root = state
-        .project
-        .lock()
-        .as_ref()
-        .map(|session| session.snapshot().project_root)
-        .ok_or_else(|| no_project().message)?;
     let bundled_sdk = app
         .path()
         .resolve("build-sdk", BaseDirectory::Resource)
@@ -4095,18 +4308,16 @@ async fn build_pc_player(
     ));
     let _ = std::fs::remove_file(&cancel_file);
     let cancelled = Arc::new(AtomicBool::new(false));
-    {
-        let mut active = state.active_build.lock();
-        if active.is_some() {
-            return Err("a player build is already running".into());
-        }
-        *active = Some(ActiveBuild {
+    let project_root = reserve_project_build(
+        &state,
+        ActiveBuild {
             id: build_id,
             cancelled: cancelled.clone(),
             cancel_file: cancel_file.clone(),
             cancellable: true,
-        });
-    }
+        },
+        "a player build is already running",
+    )?;
     let progress_app = app.clone();
     let progress: BuildProgressSink = Arc::new(move |event| {
         let _ = progress_app.emit("pc-build-progress", event);
@@ -4122,7 +4333,7 @@ async fn build_pc_player(
         id: build_id,
         cancel_file,
     };
-    let task = match tauri::async_runtime::spawn_blocking(move || {
+    match tauri::async_runtime::spawn_blocking(move || {
         let _cleanup = cleanup;
         run_player_build_controlled(
             PathBuf::from(project_root),
@@ -4136,8 +4347,7 @@ async fn build_pc_player(
     {
         Ok(result) => result,
         Err(error) => Err(format!("player build task failed: {error}")),
-    };
-    task
+    }
 }
 
 #[tauri::command]
@@ -4352,6 +4562,182 @@ fn write_project_asset_file(
     result.map_err(|error| error.to_string())
 }
 
+fn appended_path_suffix(path: &Path, suffix: &str) -> PathBuf {
+    let mut value = path.as_os_str().to_os_string();
+    value.push(suffix);
+    PathBuf::from(value)
+}
+
+fn write_new_synced_file(target: &Path, contents: &[u8], label: &str) -> Result<(), String> {
+    let parent = target
+        .parent()
+        .ok_or_else(|| format!("{label} target has no parent"))?;
+    let name = target
+        .file_name()
+        .and_then(|value| value.to_str())
+        .unwrap_or(label);
+    let nonce = SystemTime::now()
+        .duration_since(UNIX_EPOCH)
+        .unwrap_or_default()
+        .as_nanos();
+    let temporary = parent.join(format!(".{name}.{}.{nonce}.{label}", std::process::id()));
+    let result = (|| -> std::io::Result<()> {
+        use std::io::Write;
+        let mut file = std::fs::OpenOptions::new()
+            .write(true)
+            .create_new(true)
+            .open(&temporary)?;
+        file.write_all(contents)?;
+        file.sync_all()?;
+        drop(file);
+        // A hard link is an atomic create-only installation. Unlike rename or
+        // ReplaceFile it cannot overwrite a path that appeared after preflight.
+        std::fs::hard_link(&temporary, target)?;
+        let _ = std::fs::remove_file(&temporary);
+        Ok(())
+    })();
+    if result.is_err() {
+        let _ = std::fs::remove_file(&temporary);
+    }
+    result.map_err(|error| format!("cannot create {label}: {error}"))
+}
+
+fn remove_file_if_contents_match(path: &Path, expected: &[u8]) {
+    let Ok(metadata) = std::fs::symlink_metadata(path) else {
+        return;
+    };
+    if metadata.file_type().is_symlink() || !metadata.is_file() {
+        return;
+    }
+    if std::fs::read(path).is_ok_and(|contents| contents == expected) {
+        let _ = std::fs::remove_file(path);
+    }
+}
+
+fn write_new_project_asset_file(
+    project_root: &Path,
+    relative_path: &str,
+    contents: &[u8],
+) -> Result<PathBuf, String> {
+    if contents.len() > MAX_PROJECT_ASSET_BYTES {
+        return Err("asset exceeds 64 MiB editor limit".into());
+    }
+    let target = project_asset_write_path(project_root, relative_path)?;
+    if std::fs::symlink_metadata(&target).is_ok() {
+        return Err(format!("destination asset already exists: {relative_path}"));
+    }
+    let metadata_path = appended_path_suffix(&target, ".meta");
+    if std::fs::symlink_metadata(&metadata_path).is_ok() {
+        return Err(format!(
+            "destination metadata already exists: {relative_path}.meta"
+        ));
+    }
+    write_new_synced_file(&target, contents, "import")
+        .map_err(|error| format!("cannot import {relative_path}: {error}"))?;
+    Ok(target)
+}
+
+fn import_project_asset_file(
+    project_root: &Path,
+    source_path: &Path,
+    destination_path: &str,
+) -> Result<ProjectAssetImportResult, String> {
+    let canonical_project_root = project_root
+        .canonicalize()
+        .map_err(|error| format!("cannot resolve project root: {error}"))?;
+    if !source_path.is_absolute() {
+        return Err("import source path must be absolute".into());
+    }
+    let source_metadata = std::fs::symlink_metadata(source_path)
+        .map_err(|error| format!("cannot inspect import source: {error}"))?;
+    if source_metadata.file_type().is_symlink() || !source_metadata.is_file() {
+        return Err("import source must be a regular non-symlink file".into());
+    }
+    if source_metadata.len() > MAX_PROJECT_ASSET_BYTES as u64 {
+        return Err("import source exceeds 64 MiB editor limit".into());
+    }
+    let source = source_path
+        .canonicalize()
+        .map_err(|error| format!("cannot resolve import source: {error}"))?;
+    let source_name = source
+        .file_name()
+        .and_then(|value| value.to_str())
+        .ok_or_else(|| "import source file name is not valid UTF-8".to_string())?;
+    let destination_name = Path::new(destination_path)
+        .file_name()
+        .and_then(|value| value.to_str())
+        .ok_or_else(|| "import destination file name is not valid UTF-8".to_string())?;
+    let source_extension = importable_asset_extension(source_name)
+        .ok_or_else(|| "unsupported import source type".to_string())?;
+    let destination_extension = importable_asset_extension(destination_name)
+        .ok_or_else(|| "unsupported import destination type".to_string())?;
+    if source_extension != destination_extension {
+        return Err(format!(
+            "import destination must keep the source extension {source_extension}"
+        ));
+    }
+
+    let mut stable_source = None;
+    for _ in 0..2 {
+        let before = source
+            .metadata()
+            .map_err(|error| format!("cannot inspect import source: {error}"))?;
+        if before.len() > MAX_PROJECT_ASSET_BYTES as u64 {
+            return Err("import source exceeds 64 MiB editor limit".into());
+        }
+        let revision = project_file_revision(&before);
+        let contents = std::fs::read(&source)
+            .map_err(|error| format!("cannot read import source: {error}"))?;
+        let after = source
+            .metadata()
+            .map_err(|error| format!("cannot inspect import source after reading: {error}"))?;
+        if revision == project_file_revision(&after) {
+            stable_source = Some((contents, revision));
+            break;
+        }
+    }
+    let (contents, source_revision) = stable_source.ok_or_else(|| {
+        "import source changed repeatedly while it was being read; retry".to_string()
+    })?;
+    let asset_kind = project_asset_kind(destination_name)
+        .ok_or_else(|| "unsupported import destination type".to_string())?;
+    let expected_sidecar = mengine_assets::AssetSidecar::new(asset_kind);
+    let mut metadata_contents =
+        serde_json::to_vec_pretty(&expected_sidecar).map_err(|error| error.to_string())?;
+    metadata_contents.push(b'\n');
+    let target =
+        write_new_project_asset_file(&canonical_project_root, destination_path, &contents)?;
+    let metadata_path = appended_path_suffix(&target, ".meta");
+    if let Err(error) = write_new_synced_file(&metadata_path, &metadata_contents, "import-meta") {
+        remove_file_if_contents_match(&target, &contents);
+        return Err(format!(
+            "imported asset metadata could not be installed ({error}); the import was rolled back"
+        ));
+    }
+    let expected_guid = expected_sidecar.guid.0.to_string();
+    let asset = project_asset_info(&canonical_project_root, &target);
+    if !asset.as_ref().is_some_and(|asset| {
+        asset.meta_status == "ready" && asset.guid.as_deref() == Some(expected_guid.as_str())
+    }) {
+        let detail = asset
+            .as_ref()
+            .and_then(|asset| asset.meta_error.as_deref())
+            .unwrap_or("the imported file or generated GUID was not recognized");
+        remove_file_if_contents_match(&target, &contents);
+        remove_file_if_contents_match(&metadata_path, &metadata_contents);
+        return Err(format!(
+            "imported asset metadata could not be created ({detail}); the import was rolled back"
+        ));
+    }
+    let asset = asset.expect("validated imported asset metadata");
+    Ok(ProjectAssetImportResult {
+        source_path: source.to_string_lossy().into_owned(),
+        source_revision,
+        destination_path: asset.rel_path.clone(),
+        asset,
+    })
+}
+
 #[tauri::command]
 fn read_project_asset(
     relative_path: String,
@@ -4397,6 +4783,29 @@ fn write_project_asset(
         revision: project_file_revision(&metadata),
         asset: project_asset_info(root, &file),
     })
+}
+
+#[tauri::command]
+async fn import_project_asset(
+    source_path: String,
+    destination_path: String,
+    state: State<'_, AppState>,
+) -> Result<ProjectAssetImportResult, String> {
+    let project_root = state
+        .project
+        .lock()
+        .as_ref()
+        .map(|session| session.snapshot().project_root)
+        .ok_or_else(|| no_project().message)?;
+    tauri::async_runtime::spawn_blocking(move || {
+        import_project_asset_file(
+            Path::new(&project_root),
+            Path::new(&source_path),
+            &destination_path,
+        )
+    })
+    .await
+    .map_err(|error| format!("asset import task failed: {error}"))?
 }
 
 #[tauri::command]
@@ -4616,23 +5025,111 @@ fn submit_editor_request(
         .map_err(|error| error.failure(Some(session.current_revision())))
 }
 
+#[derive(serde::Serialize)]
+#[serde(rename_all = "camelCase")]
+struct EditorWindowInfo {
+    label: String,
+    title: String,
+    /// "main" | "panel" | "editor" | "other"
+    kind: String,
+    /// For `panel-*` windows, the panel id (e.g. "hierarchy").
+    panel_kind: Option<String>,
+    /// For `editor-*` windows, the registered editor window typeId from the URL query.
+    editor_type: Option<String>,
+    url: String,
+    visible: bool,
+    focused: bool,
+    x: i32,
+    y: i32,
+    width: u32,
+    height: u32,
+    scale_factor: f64,
+}
+
+/// Enumerate every webview window the editor currently has open. This is the
+/// AI-agent "which windows are open" observation: the main window, any detached
+/// core panels (`panel-<id>`), and any floating editor windows (`editor-<hash>`).
+#[tauri::command]
+fn list_editor_windows(app: tauri::AppHandle) -> Vec<EditorWindowInfo> {
+    let mut infos: Vec<EditorWindowInfo> = app
+        .webview_windows()
+        .into_iter()
+        .map(|(label, window)| {
+            let kind = if label == "main" {
+                "main"
+            } else if label.starts_with("panel-") {
+                "panel"
+            } else if label.starts_with("editor-") {
+                "editor"
+            } else {
+                "other"
+            };
+            let panel_kind = label.strip_prefix("panel-").map(str::to_string);
+            let url = window.url().ok();
+            let url_str = url.as_ref().map(|u| u.to_string()).unwrap_or_default();
+            let editor_type = url.as_ref().and_then(|u| {
+                u.query_pairs()
+                    .find(|(key, _)| key == "editorWindow")
+                    .map(|(_, value)| value.to_string())
+            });
+            let position = window.outer_position().ok();
+            let size = window.outer_size().ok();
+            EditorWindowInfo {
+                label,
+                title: window.title().unwrap_or_default(),
+                kind: kind.to_string(),
+                panel_kind,
+                editor_type,
+                url: url_str,
+                visible: window.is_visible().unwrap_or(false),
+                focused: window.is_focused().unwrap_or(false),
+                x: position.map(|p| p.x).unwrap_or(0),
+                y: position.map(|p| p.y).unwrap_or(0),
+                width: size.map(|s| s.width).unwrap_or(0),
+                height: size.map(|s| s.height).unwrap_or(0),
+                scale_factor: window.scale_factor().unwrap_or(1.0),
+            }
+        })
+        .collect();
+    infos.sort_by(|a, b| a.label.cmp(&b.label));
+    infos
+}
+
 #[tauri::command]
 fn exit_editor(app: tauri::AppHandle) {
     app.exit(0);
 }
 
+fn starts_in_background() -> bool {
+    std::env::var("MENGINE_EDITOR_BACKGROUND")
+        .ok()
+        .is_some_and(|value| {
+            matches!(
+                value.trim().to_ascii_lowercase().as_str(),
+                "1" | "true" | "yes"
+            )
+        })
+}
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
-    tauri::Builder::default()
+    let bridge_hub = Arc::new(BridgeHub::new(uuid::Uuid::new_v4().to_string()));
+    let bridge_hub_for_page_load = bridge_hub.clone();
+    let bridge_hub_for_setup = bridge_hub.clone();
+    let bridge_token_for_exit = bridge_hub.token().to_string();
+    let app = tauri::Builder::default()
         .plugin(tauri_plugin_dialog::init())
         .manage(AppState {
+            project_lifecycle: Mutex::new(()),
             project: Mutex::new(None),
             active_build: Arc::new(Mutex::new(None)),
             next_build_id: AtomicU64::new(1),
         })
+        .manage(bridge_hub.clone())
         .invoke_handler(tauri::generate_handler![
             create_project,
             open_project,
+            close_project,
             is_primary_pointer_down,
             list_recent_projects,
             remove_recent_project,
@@ -4646,6 +5143,8 @@ pub fn run() {
             validate_surface_shader,
             get_project_sorting_layers,
             save_project_sorting_layers,
+            get_project_sorting_layers_snapshot,
+            save_project_sorting_layers_guarded,
             list_pc_build_history,
             list_pc_build_patches,
             compare_pc_build_history,
@@ -4658,6 +5157,7 @@ pub fn run() {
             verify_pc_player,
             read_project_asset,
             write_project_asset,
+            import_project_asset,
             rename_project_asset,
             duplicate_project_asset,
             get_project_asset_delete_snapshot,
@@ -4675,15 +5175,153 @@ pub fn run() {
             discard_scene_recovery,
             replace_scene_snapshot,
             submit_editor_request,
+            list_editor_windows,
+            agent_bridge_respond,
+            agent_bridge_broadcast,
+            agent_bridge_set_transport_ready,
+            capture_editor_window,
+            inspect_editor_window,
+            read_editor_ui_content,
+            interact_editor_window,
             exit_editor
         ])
-        .run(tauri::generate_context!())
-        .expect("error while running MEngine Editor");
+        .on_page_load(move |webview, payload| {
+            if webview.label() == "main"
+                && matches!(payload.event(), tauri::webview::PageLoadEvent::Started)
+            {
+                bridge_hub_for_page_load.mark_transport_loading();
+            }
+        })
+        .setup(move |app| {
+            spawn_bridge_server(app.handle().clone(), bridge_hub_for_setup.clone());
+            if let Some(main) = app.get_webview_window("main") {
+                if starts_in_background() {
+                    main.hide()?;
+                    main.set_focusable(false)?;
+                } else {
+                    main.show()?;
+                    main.set_focus()?;
+                }
+            }
+            Ok(())
+        })
+        .build(tauri::generate_context!())
+        .expect("error while building MEngine Editor");
+    app.run(move |app_handle, event| {
+        if matches!(event, tauri::RunEvent::Exit) {
+            cleanup_bridge_discovery(app_handle, &bridge_token_for_exit);
+        }
+    });
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    fn empty_test_app_state() -> AppState {
+        AppState {
+            project_lifecycle: Mutex::new(()),
+            project: Mutex::new(None),
+            active_build: Arc::new(Mutex::new(None)),
+            next_build_id: AtomicU64::new(1),
+        }
+    }
+
+    fn test_project_parent(label: &str) -> PathBuf {
+        let path = std::env::temp_dir().join(format!(
+            "mengine-project-lifecycle-{label}-{}-{}",
+            std::process::id(),
+            SystemTime::now()
+                .duration_since(UNIX_EPOCH)
+                .unwrap()
+                .as_nanos()
+        ));
+        std::fs::create_dir(&path).unwrap();
+        path
+    }
+
+    #[test]
+    fn project_activation_refuses_to_replace_an_existing_session() {
+        let parent = test_project_parent("existing");
+        let session = ProjectSession::create(&parent, "First").unwrap();
+        let existing_root = session.snapshot().project_root;
+        let state = AppState {
+            project_lifecycle: Mutex::new(()),
+            project: Mutex::new(Some(session)),
+            active_build: Arc::new(Mutex::new(None)),
+            next_build_id: AtomicU64::new(1),
+        };
+        let mut create_called = false;
+
+        let error = activate_project(&state, || {
+            create_called = true;
+            Err(project_lifecycle_failure(
+                "unexpected",
+                "replacement factory must not run",
+                None,
+            ))
+        })
+        .unwrap_err();
+
+        assert_eq!(error.code, "projectAlreadyOpen");
+        assert!(!create_called);
+        assert_eq!(
+            state
+                .project
+                .lock()
+                .as_ref()
+                .unwrap()
+                .snapshot()
+                .project_root,
+            existing_root
+        );
+        drop(state);
+        std::fs::remove_dir_all(parent).unwrap();
+    }
+
+    #[test]
+    fn project_activation_refuses_to_run_during_a_reserved_build() {
+        let state = empty_test_app_state();
+        *state.active_build.lock() = Some(ActiveBuild {
+            id: 7,
+            cancelled: Arc::new(AtomicBool::new(false)),
+            cancel_file: std::env::temp_dir().join("mengine-unused-lifecycle.cancel"),
+            cancellable: true,
+        });
+        let mut create_called = false;
+
+        let error = activate_project(&state, || {
+            create_called = true;
+            Err(project_lifecycle_failure(
+                "unexpected",
+                "project factory must not run",
+                None,
+            ))
+        })
+        .unwrap_err();
+
+        assert_eq!(error.code, "projectBuildActive");
+        assert!(!create_called);
+    }
+
+    #[test]
+    fn build_reservation_does_not_claim_the_slot_without_a_project() {
+        let state = empty_test_app_state();
+        let error = reserve_project_build(
+            &state,
+            ActiveBuild {
+                id: 11,
+                cancelled: Arc::new(AtomicBool::new(false)),
+                cancel_file: std::env::temp_dir().join("mengine-unused-reservation.cancel"),
+                cancellable: false,
+            },
+            "busy",
+        )
+        .unwrap_err();
+
+        assert_eq!(error, no_project().message);
+        assert!(state.active_build.lock().is_none());
+    }
 
     #[test]
     fn surface_shader_validation_uses_the_complete_player_forward_contract() {
@@ -5680,6 +6318,11 @@ mod tests {
         let loaded = read_sorting_layers(&root).unwrap();
         assert_eq!(loaded.layers.len(), 2);
         assert_eq!(loaded.layers[1].id, "effects");
+        let snapshot = read_sorting_layers_snapshot(&root).unwrap();
+        let revision = snapshot.revision.clone().unwrap();
+        assert!(write_sorting_layers_guarded(&root, &settings, Some("stale")).is_err());
+        let updated = write_sorting_layers_guarded(&root, &settings, Some(&revision)).unwrap();
+        assert!(updated.revision.is_some());
 
         let duplicate = ProjectSortingLayers {
             version: 1,
@@ -6174,5 +6817,56 @@ mod tests {
         let current = project_file_revision(&path.metadata().unwrap());
         assert!(require_project_asset_revision(&path, Some(&current)).is_ok());
         std::fs::remove_dir_all(root).unwrap();
+    }
+
+    #[test]
+    fn external_asset_import_is_create_only_and_generates_healthy_metadata() {
+        let temporary = create_owned_temporary_directory("agent-import-test").unwrap();
+        let root = temporary.path.join("Project");
+        std::fs::create_dir_all(root.join("Assets/Imported")).unwrap();
+        #[cfg(windows)]
+        let root_argument = PathBuf::from(
+            root.to_string_lossy()
+                .strip_prefix(r"\\?\")
+                .expect("temporary root should use a canonical verbatim path"),
+        );
+        #[cfg(not(windows))]
+        let root_argument = root.clone();
+        let source = temporary.path.join("source.png");
+        std::fs::write(&source, b"stable image bytes").unwrap();
+
+        let imported =
+            import_project_asset_file(&root_argument, &source, "Assets/Imported/source.png")
+                .unwrap();
+        assert_eq!(imported.destination_path, "Assets/Imported/source.png");
+        assert_eq!(imported.asset.meta_status, "ready");
+        assert!(imported.asset.guid.is_some());
+        let destination = root.join("Assets/Imported/source.png");
+        assert_eq!(std::fs::read(&destination).unwrap(), b"stable image bytes");
+        assert!(appended_path_suffix(&destination, ".meta").is_file());
+
+        let overwrite =
+            import_project_asset_file(&root_argument, &source, "Assets/Imported/source.png")
+                .err()
+                .expect("an existing destination must be rejected");
+        assert!(overwrite.contains("already exists"));
+        let wrong_extension =
+            import_project_asset_file(&root_argument, &source, "Assets/Imported/source.jpg")
+                .err()
+                .expect("the source extension must be preserved");
+        assert!(wrong_extension.contains("keep the source extension"));
+
+        let blocked_destination = root.join("Assets/Imported/blocked.png");
+        std::fs::write(
+            appended_path_suffix(&blocked_destination, ".meta"),
+            b"unowned metadata",
+        )
+        .unwrap();
+        let metadata_conflict =
+            import_project_asset_file(&root_argument, &source, "Assets/Imported/blocked.png")
+                .err()
+                .expect("unowned destination metadata must block import");
+        assert!(metadata_conflict.contains("metadata already exists"));
+        assert!(!blocked_destination.exists());
     }
 }
