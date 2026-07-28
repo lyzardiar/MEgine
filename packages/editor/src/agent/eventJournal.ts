@@ -32,8 +32,14 @@ export type AgentEventPage = {
   events: AgentEvent[];
 };
 
+export type AgentEventWaitPage = AgentEventPage & {
+  timedOut: boolean;
+  waitedMs: number;
+};
+
 export class AgentEventJournal {
   private readonly events: AgentEvent[] = [];
+  private readonly waiters = new Set<() => void>();
   private nextSequence = 1;
   private readonly capacity: number;
 
@@ -60,6 +66,7 @@ export class AgentEventJournal {
     if (this.events.length > this.capacity) {
       this.events.splice(0, this.events.length - this.capacity);
     }
+    for (const waiter of [...this.waiters]) waiter();
     return clone(event);
   }
 
@@ -95,6 +102,55 @@ export class AgentEventJournal {
       hasMore,
       events: clone(page),
     };
+  }
+
+  wait(
+    options: {
+      afterSequence?: number;
+      topics?: readonly AgentEventTopic[];
+      limit?: number;
+    } = {},
+    timeoutMs = 15_000,
+  ): Promise<AgentEventWaitPage> {
+    if (!Number.isSafeInteger(timeoutMs) || timeoutMs < 0 || timeoutMs > 15_000) {
+      throw new Error('timeoutMs must be an integer from 0 to 15000');
+    }
+    const startedAt = Date.now();
+    const initial = this.list(options);
+    if (initial.truncated || initial.events.length > 0 || timeoutMs === 0) {
+      return Promise.resolve({
+        ...initial,
+        timedOut: initial.events.length === 0 && !initial.truncated,
+        waitedMs: 0,
+      });
+    }
+    if (this.waiters.size >= 64) {
+      throw new Error('Agent event wait limit reached');
+    }
+    return new Promise((resolve) => {
+      let settled = false;
+      let timer: ReturnType<typeof setTimeout> | null = null;
+      const finish = (page: AgentEventPage, timedOut: boolean) => {
+        if (settled) return;
+        settled = true;
+        this.waiters.delete(wake);
+        if (timer !== null) clearTimeout(timer);
+        resolve({
+          ...page,
+          timedOut,
+          waitedMs: Math.max(0, Date.now() - startedAt),
+        });
+      };
+      const wake = () => {
+        const page = this.list(options);
+        if (page.truncated || page.events.length > 0) finish(page, false);
+      };
+      this.waiters.add(wake);
+      timer = setTimeout(
+        () => finish(this.list(options), true),
+        timeoutMs,
+      );
+    });
   }
 }
 

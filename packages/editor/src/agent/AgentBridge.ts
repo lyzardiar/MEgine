@@ -156,6 +156,7 @@ import {
   type AgentEvent,
   type AgentEventPage,
   type AgentEventTopic,
+  type AgentEventWaitPage,
   type SceneDiff,
   type SceneEntityView,
 } from './eventJournal';
@@ -1119,6 +1120,47 @@ class AgentBridge {
 
   getEvents(params: Record<string, unknown>): AgentEventPage {
     this.observe();
+    return this.events.list(this.eventQueryOptions(params));
+  }
+
+  async waitForEvents(
+    params: Record<string, unknown>,
+  ): Promise<AgentEventWaitPage> {
+    this.observe();
+    const options = this.eventQueryOptions(params);
+    const timeoutMs = params.timeoutMs ?? 15_000;
+    if (
+      typeof timeoutMs !== 'number'
+      || !Number.isSafeInteger(timeoutMs)
+      || timeoutMs < 0
+      || timeoutMs > 15_000
+    ) {
+      throw new BridgeError(
+        'INVALID_ARGS',
+        '"timeoutMs" must be an integer from 0 to 15000',
+      );
+    }
+    try {
+      return await this.events.wait(options, timeoutMs);
+    } catch (error) {
+      if (
+        error instanceof Error
+        && error.message === 'Agent event wait limit reached'
+      ) {
+        throw new BridgeError(
+          'CONFLICT',
+          'Too many concurrent editor event waits; retry after an existing wait completes',
+        );
+      }
+      throw error;
+    }
+  }
+
+  private eventQueryOptions(params: Record<string, unknown>): {
+    afterSequence: number;
+    limit: number;
+    topics?: AgentEventTopic[];
+  } {
     const afterSequence = params.afterSequence ?? 0;
     const limit = params.limit ?? 100;
     const rawTopics = params.topics;
@@ -1130,6 +1172,12 @@ class AgentBridge {
       throw new BridgeError(
         'INVALID_ARGS',
         '"afterSequence" must be a non-negative safe integer',
+      );
+    }
+    if (afterSequence > this.events.currentSequence) {
+      throw new BridgeError(
+        'INVALID_ARGS',
+        `"afterSequence" cannot exceed the current event sequence ${this.events.currentSequence}`,
       );
     }
     if (
@@ -1156,7 +1204,7 @@ class AgentBridge {
       }
       topics = [...new Set(rawTopics as AgentEventTopic[])];
     }
-    return this.events.list({ afterSequence, limit, topics });
+    return { afterSequence, limit, topics };
   }
 
   getSceneDiff(fromRevision: number): SceneDiff & {
@@ -3348,6 +3396,8 @@ class AgentBridge {
       }
       case 'events.get':
         return this.getEvents(params);
+      case 'events.wait':
+        return this.waitForEvents(params);
       case 'commands.list':
         return this.listCommands();
       case 'commands.describe':

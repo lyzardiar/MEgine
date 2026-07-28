@@ -941,7 +941,7 @@ const TOOLS = [
   {
     name: 'get_editor_events',
     description:
-      'Read cursor-based editor events without foreground polling. Topics cover project lifecycle, scene, selection, mode, logs, panels, builds, and assets. Continue with nextSequence; truncated=true means older events expired.',
+      'Read currently buffered cursor-based editor events. Topics cover project lifecycle, scene, selection, mode, logs, panels, builds, and assets. Continue with nextSequence; truncated=true means older events expired.',
     inputSchema: {
       type: 'object',
       properties: {
@@ -980,6 +980,56 @@ const TOOLS = [
       },
     },
     handler: async (args) => textContent(await bridgeQuery('events.get', args)),
+  },
+  {
+    name: 'wait_for_editor_events',
+    description:
+      'Wait up to 15 seconds for matching editor events instead of polling. Pass the exact cursor from editor state or the previous event page; timedOut=true is a normal empty result.',
+    inputSchema: {
+      type: 'object',
+      required: ['afterSequence'],
+      properties: {
+        afterSequence: {
+          type: 'integer',
+          minimum: 0,
+          description: 'Exact cursor from editor state, get_editor_events, or a previous wait',
+        },
+        topics: {
+          type: 'array',
+          items: {
+            type: 'string',
+            enum: [
+              'scene.changed',
+              'selection.changed',
+              'mode.changed',
+              'log.added',
+              'log.cleared',
+              'panel.changed',
+              'view.changed',
+              'build.progress',
+              'build.settings',
+              'project.settings',
+              'asset.changed',
+              'project.changed',
+            ],
+          },
+          description: 'Optional topic filter',
+        },
+        limit: {
+          type: 'integer',
+          minimum: 1,
+          maximum: 1000,
+          description: 'Maximum events in chronological order (default 100)',
+        },
+        timeoutMs: {
+          type: 'integer',
+          minimum: 0,
+          maximum: 15000,
+          description: 'Maximum wait duration (default 15000)',
+        },
+      },
+    },
+    handler: async (args) => textContent(await bridgeQuery('events.wait', args)),
   },
   {
     name: 'get_entity',

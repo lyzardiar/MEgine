@@ -133,12 +133,11 @@ MEngine 编辑器当前对人类友好，但对 AI Agent 不够友好。AI Agent
 {
   "jsonrpc": "2.0",
   "id": "req-uuid",
-  "method": "execute" | "query" | "subscribe" | "unsubscribe",
+  "method": "execute" | "query",
   "params": {
     "command": "scene.set_transform",     // execute 时
     "args": { "entity": 12, "position": [0, 1, 0] },
-    "query": "editor.screenshot",          // query 时
-    "topic": "scene.changed"               // subscribe 时
+    "query": "editor.screenshot"          // query 时
   }
 }
 
@@ -380,7 +379,7 @@ Rust Host 使用独立的工程生命周期互斥门串行化 open/create/close 
 | 命令结果 | ✅ 每个写命令返回 `{ ok, sceneRevision, eventSequence, data }`；所有传输先按同一 `paramsSchema` 严格校验参数，再检查 `expectedSceneRevision`，不匹配时在任何改动前返回 `STALE_REVISION` |
 | 操作后自动截图 | 写命令可带 `options.screenshot: true`，结果里附 `screenshot` 字段，形成「改→看」视觉闭环 |
 | 状态 diff | ✅ `query: scene.diff({ fromRevision })` 返回实体增删改、场景级状态（当前含 clear color）和当前 payload；切场景或历史过期时返回 `resetRequired` 与完整快照 |
-| 事件订阅 | ✅ 有界 journal + cursor 查询 `events.get`，并向原生 WebSocket 广播 `project.changed` / `scene.changed` / `selection.changed` / `mode.changed` / `log.*` / `panel.changed` / `build.progress` / `build.settings` / `asset.changed` |
+| 事件订阅 | ✅ 有界 journal + cursor 查询 `events.get`；`events.wait` 可按 topic 等待最多 15 秒并显式返回 `timedOut`，MCP/CLI 无需高频轮询；原生 WebSocket 同时广播 `project.changed` / `scene.changed` / `selection.changed` / `mode.changed` / `log.*` / `panel.changed` / `build.progress` / `build.settings` / `asset.changed` |
 | 结构化错误 | 错误码：`STALE_REVISION` / `ENTITY_NOT_FOUND` / `COMPONENT_NOT_FOUND` / `INVALID_ARGS` / `READONLY` / `PERMISSION_DENIED` / `NOT_READY` |
 
 ## 5. MCP Server 设计（优先传输）
@@ -406,7 +405,7 @@ Rust Host 使用独立的工程生命周期互斥门串行化 open/create/close 
 
 ```
 get_project_state, list_recent_projects, get_active_dialog,
-get_scene_snapshot, get_scene_changes, get_editor_events,
+get_scene_snapshot, get_scene_changes, get_editor_events, wait_for_editor_events,
 get_hierarchy, get_selection, get_editor_state,
 get_entity, find_entities, get_entity_component, get_console_logs, list_windows, list_panels,
 take_screenshot, list_assets, list_scenes, get_component_schema, list_commands

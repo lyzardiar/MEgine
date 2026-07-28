@@ -34,6 +34,67 @@ test('agent event journal uses loss-detecting cursors and deterministic topic pa
   assert.deepEqual(drained.events.map((event) => event.sequence), [5]);
 });
 
+test('agent event waits resolve only for matching topics and report bounded timeouts', async () => {
+  const journal = new AgentEventJournal();
+  let settled = false;
+  const pending = journal.wait({
+    afterSequence: 0,
+    topics: ['mode.changed'],
+    limit: 10,
+  }, 1_000).then((page) => {
+    settled = true;
+    return page;
+  });
+
+  journal.append('selection.changed', { selectedIds: [1] }, 10);
+  await Promise.resolve();
+  assert.equal(settled, false);
+
+  journal.append('mode.changed', { mode: 'play' }, 20);
+  const page = await pending;
+  assert.equal(page.timedOut, false);
+  assert.equal(page.currentSequence, 2);
+  assert.equal(page.nextSequence, 2);
+  assert.deepEqual(page.events.map((event) => event.sequence), [2]);
+
+  const timeout = await journal.wait({ afterSequence: 2 }, 0);
+  assert.equal(timeout.timedOut, true);
+  assert.equal(timeout.waitedMs, 0);
+  assert.deepEqual(timeout.events, []);
+});
+
+test('agent event waits return already-buffered and truncated pages immediately', async () => {
+  const journal = new AgentEventJournal(1);
+  journal.append('mode.changed', { mode: 'play' });
+  const buffered = await journal.wait({ afterSequence: 0 }, 1_000);
+  assert.equal(buffered.timedOut, false);
+  assert.equal(buffered.waitedMs, 0);
+  assert.equal(buffered.events.length, 1);
+
+  journal.append('mode.changed', { mode: 'pause' });
+  const truncated = await journal.wait({ afterSequence: 0 }, 1_000);
+  assert.equal(truncated.timedOut, false);
+  assert.equal(truncated.truncated, true);
+});
+
+test('agent event waits are concurrency-bounded and release their slots', async () => {
+  const journal = new AgentEventJournal();
+  const pending = Array.from({ length: 64 }, () => journal.wait({
+    afterSequence: 0,
+    topics: ['mode.changed'],
+  }, 1_000));
+  assert.throws(
+    () => journal.wait({ afterSequence: 0 }, 1_000),
+    /event wait limit reached/,
+  );
+
+  journal.append('mode.changed', { mode: 'play' });
+  const pages = await Promise.all(pending);
+  assert.ok(pages.every((page) => page.timedOut === false));
+  const released = await journal.wait({ afterSequence: 1 }, 0);
+  assert.equal(released.timedOut, true);
+});
+
 test('scene changes coalesce into a compact revision diff with current entity payloads', () => {
   const tracker = new SceneChangeTracker();
   const baseline = [

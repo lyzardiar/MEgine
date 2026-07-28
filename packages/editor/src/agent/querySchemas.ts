@@ -204,6 +204,20 @@ export const QUERY_PARAMS_SCHEMAS: Record<string, AgentJsonSchema> = {
     },
     limit: boundedInteger(1, 1_000, 'Maximum events; default 100'),
   }),
+  'events.wait': objectSchema({
+    afterSequence: {
+      type: 'integer',
+      minimum: 0,
+      description: 'Exact event cursor returned by editor.state, events.get, or events.wait',
+    },
+    topics: {
+      type: 'array',
+      items: { type: 'string', enum: [...AGENT_EVENT_TOPICS] },
+      description: 'Optional event topic filter',
+    },
+    limit: boundedInteger(1, 1_000, 'Maximum events; default 100'),
+    timeoutMs: boundedInteger(0, 15_000, 'Maximum wait duration; default 15000'),
+  }, ['afterSequence']),
   'commands.list': emptySchema,
   'commands.describe': objectSchema({
     id: nonEmptyString('Exact command id returned by commands.list'),
@@ -270,7 +284,8 @@ const QUERY_SUMMARIES: QuerySummary[] = [
   { id: 'build.history.compare', category: 'build', description: 'Compare two exact archived build manifests', readOnly: true },
   { id: 'console.get_logs', category: 'console', description: 'Read filtered structured editor logs', readOnly: true },
   { id: 'profiler.get_samples', category: 'profiler', description: 'Read bounded editor Canvas preview timing samples', readOnly: true },
-  { id: 'events.get', category: 'events', description: 'Read cursor-based editor events without foreground polling', readOnly: true },
+  { id: 'events.get', category: 'events', description: 'Read currently buffered editor events from an exact cursor', readOnly: true },
+  { id: 'events.wait', category: 'events', description: 'Wait up to 15 seconds for matching editor events without polling', readOnly: true },
   { id: 'commands.list', category: 'discovery', description: 'List every supported write command', readOnly: true },
   { id: 'commands.describe', category: 'discovery', description: 'Describe one write command and its complete parameter schema', readOnly: true },
   { id: 'intents.list', category: 'discovery', description: 'List supported high-level editor intents and schemas', readOnly: true },

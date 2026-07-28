@@ -51,6 +51,7 @@ test('query schemas accept documented read shapes and reject malformed or extra 
     ['window.ui_snapshot', { windowLabel: 'main', maxElements: 2_000, offset: 0 }],
     ['window.ui_content', { selector: '#editor', field: 'text' }],
     ['events.get', { topics: [...AGENT_EVENT_TOPICS], limit: 1_000 }],
+    ['events.wait', { afterSequence: 0, topics: ['scene.changed'], timeoutMs: 15_000 }],
     ['queries.describe', { id: 'scene.snapshot' }],
   ]) {
     assert.deepEqual(
@@ -70,6 +71,7 @@ test('query schemas accept documented read shapes and reject malformed or extra 
     ['window.ui_snapshot', { maxElements: 49 }],
     ['window.ui_content', { selector: '#editor', field: 'password' }],
     ['events.get', { topics: ['unknown'] }],
+    ['events.wait', { timeoutMs: 15_001 }],
     ['asset.read_text', { path: 'Assets/a.txt', maxBytes: 8_388_609 }],
     ['queries.describe', { id: ' ' }],
   ]) {
