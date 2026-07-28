@@ -867,6 +867,8 @@ test('scene, asset, and asynchronous build tools share guarded editor services',
   assert.match(eventJournal, /'build\.settings'/);
   assert.match(eventJournal, /'build\.artifacts'/);
   assert.match(eventJournal, /'project\.settings'/);
+  assert.match(bridge, /SORTING_LAYERS_CHANGED_EVENT/);
+  assert.match(bridge, /this\.appendEvent\(\s*'project\.settings'/);
   assert.match(eventJournal, /'view\.changed'/);
   assert.match(app, /connectSceneCommands/);
   assert.match(app, /rename: async \(\{ oldName: rawOldName, newName: rawNewName \}\)/);

@@ -178,6 +178,7 @@ import {
   loadSortingLayersSnapshot,
   persistSortingLayersGuarded,
   persistTagsAndLayersGuarded,
+  SORTING_LAYERS_CHANGED_EVENT,
 } from '../sortingLayers';
 import {
   validateTagsAndLayers,
@@ -384,6 +385,7 @@ class AgentBridge {
   private stopMenuEvents: (() => void) | null = null;
   private stopWindowTypeEvents: (() => void) | null = null;
   private stopBuildArtifactEvents: (() => void) | null = null;
+  private stopProjectSettingsEvents: (() => void) | null = null;
   private stopAssetEvents: (() => void) | null = null;
   private windowObservationTimer: number | null = null;
   private windowObservationGeneration = 0;
@@ -531,6 +533,22 @@ class AgentBridge {
           onBuildArtifactsChanged,
         );
       };
+      const onProjectSettingsChanged = (event: Event) => {
+        this.appendEvent(
+          'project.settings',
+          structuredClone((event as CustomEvent<unknown>).detail ?? {}),
+        );
+      };
+      window.addEventListener(
+        SORTING_LAYERS_CHANGED_EVENT,
+        onProjectSettingsChanged,
+      );
+      this.stopProjectSettingsEvents = () => {
+        window.removeEventListener(
+          SORTING_LAYERS_CHANGED_EVENT,
+          onProjectSettingsChanged,
+        );
+      };
       const onAssetChanged = (event: Event) => {
         const detail = (event as CustomEvent<unknown>).detail ?? { action: 'changed' };
         let signature: string;
@@ -572,6 +590,8 @@ class AgentBridge {
       }
       this.stopBuildArtifactEvents?.();
       this.stopBuildArtifactEvents = null;
+      this.stopProjectSettingsEvents?.();
+      this.stopProjectSettingsEvents = null;
       this.stopAssetEvents?.();
       this.stopAssetEvents = null;
       this.lastAssetEvent = null;
@@ -2823,11 +2843,6 @@ class AgentBridge {
       }
       throw new BridgeError('IO_ERROR', message);
     }
-    this.appendEvent('project.settings', {
-      section: 'sortingLayers',
-      revision: saved.revision,
-      layers: saved.settings.layers,
-    });
     this.logProvider?.(
       `Agent saved ${saved.settings.layers.length} project sorting layer(s) at revision ${saved.revision}`,
     );
@@ -2866,12 +2881,6 @@ class AgentBridge {
       }
       throw new BridgeError('IO_ERROR', message);
     }
-    this.appendEvent('project.settings', {
-      section: 'tagsAndLayers',
-      revision: saved.revision,
-      tags: saved.settings.tags,
-      gameLayers: saved.settings.gameLayers,
-    });
     this.logProvider?.(
       `Agent saved ${saved.settings.tags.length} tag(s) and ${saved.settings.gameLayers.length} GameObject layer(s) at revision ${saved.revision}`,
     );
