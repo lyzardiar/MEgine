@@ -328,7 +328,7 @@ Rust Host 使用独立的工程生命周期互斥门串行化 open/create/close 
 | `menu.invoke` | `{ path }` | ✅ 查 `MenuItemEntry`、执行实时 validator，再复用 `entry.action(ctx)` |
 | `window.ui_click` | `{ windowLabel?, selector }` | ✅ 对 `window.ui_snapshot` 返回的 selector 调用受限 DOM `click()`；不激活顶层窗口 |
 | `window.ui_set_value` | `{ windowLabel?, selector, value }` | ✅ 仅允许 input/textarea/select/contenteditable，触发 input/change；拒绝 disabled/readonly，禁止调用方注入脚本 |
-| `window.ui_double_click` / `context_click` / `scroll` | 快照 selector 与对应参数 | ✅ 支持双击、上下文菜单和虚拟化容器滚动；均遵守元素级 Agent 禁止策略 |
+| `window.ui_double_click` / `context_click` / `scroll` | 快照 selector 与对应参数 | ✅ 支持双击、上下文菜单和虚拟化容器滚动；均遵守元素级 Agent 禁止策略，脚本 IDE 启动、系统文件选择器、工程关闭与进程退出等人工路径不能借键盘或上下文菜单旁路 |
 | `window.ui_drag_to` | `{ windowLabel?, selector, targetSelector }` | ✅ 仅接受语义快照中的源/目标 selector，在同一隐藏 WebView 内合成 HTML5 拖放事件；不移动前台鼠标 |
 | `window.ui_drag_by` | `{ windowLabel?, selector, deltaX, deltaY }` | ✅ 从快照标记为 `dragBy` 的元素中心开始，在同一隐藏 WebView 内分步合成 Pointer/Mouse 手势；终点必须留在视口内，不接受屏幕坐标且不移动系统鼠标 |
 | `window.ui_hover` | `{ windowLabel?, selector }` | ✅ 仅接受快照标记为 `hover` 的 React 悬停目标；在同一隐藏 WebView 内合成进入/离开事件，用于展开层级菜单且不移动系统鼠标 |

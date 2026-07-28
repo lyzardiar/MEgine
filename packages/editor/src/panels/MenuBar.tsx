@@ -100,7 +100,12 @@ export function MenuBar(props: {
               <button type="button" onClick={() => { props.onLoad(); setOpen(null); }}>
                 Open Scene…
               </button>
-              <button type="button" onClick={() => { props.onCloseProject(); setOpen(null); }}>
+              <button
+                type="button"
+                data-agent-interaction="blocked"
+                data-agent-alternative="close_project"
+                onClick={() => { props.onCloseProject(); setOpen(null); }}
+              >
                 Close Project
               </button>
               <div className="sep" />
@@ -114,7 +119,14 @@ export function MenuBar(props: {
                 Build Settings… <span className="hint">Ctrl+Shift+B</span>
               </button>
               <div className="sep" />
-              <button type="button" onClick={() => { props.onExit(); setOpen(null); }}>Exit</button>
+              <button
+                type="button"
+                data-agent-interaction="blocked"
+                data-agent-alternative="close_project"
+                onClick={() => { props.onExit(); setOpen(null); }}
+              >
+                Exit
+              </button>
             </div>
           )}
           {name === 'Edit' && (

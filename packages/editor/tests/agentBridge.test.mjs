@@ -473,6 +473,7 @@ test('panel and menu agent surfaces use live providers and background activation
   );
   const popup = fs.readFileSync(path.join(root, 'src', 'panels', 'PopupMenu.tsx'), 'utf8');
   const gate = fs.readFileSync(path.join(root, 'src', 'DesktopProjectGate.tsx'), 'utf8');
+  const menu = fs.readFileSync(path.join(root, 'src', 'panels', 'MenuBar.tsx'), 'utf8');
   const build = fs.readFileSync(path.join(root, 'src', 'panels', 'BuildSettings.tsx'), 'utf8');
   const project = fs.readFileSync(path.join(root, 'src', 'panels', 'Project.tsx'), 'utf8');
   const dock = fs.readFileSync(path.join(root, 'src', 'panels', 'DockWorkspace.tsx'), 'utf8');
@@ -502,13 +503,21 @@ test('panel and menu agent surfaces use live providers and background activation
   assert.match(gate, /data-agent-alternative="open_project"/);
   assert.match(gate, /data-agent-alternative="create_project"/);
   assert.equal(
+    [...menu.matchAll(/data-agent-alternative="close_project"/g)].length,
+    2,
+  );
+  assert.equal(
     [...build.matchAll(/data-agent-interaction="blocked"/g)].length,
     4,
   );
-  assert.match(build, /data-agent-alternative="verify_pc_build"/);
+  assert.match(build, /data-agent-alternative="run_pc_player"/);
   assert.match(build, /data-agent-alternative="start_pc_build"/);
-  assert.match(project, /data-agent-blocked-actions=\{a\.kind === 'script' \? 'doubleClick'/);
+  assert.match(project, /a\.kind === 'script' \? 'doubleClick keyPress'/);
   assert.match(project, /data-agent-alternative=\{a\.kind === 'script' \? 'read_asset_text'/);
+  assert.match(
+    project,
+    /data-agent-alternative="import_asset_file"[\s\S]*?void completeImport\(\)/,
+  );
   assert.match(project, /role="tree" aria-label="Project folders"/);
   assert.match(project, /role="treeitem"/);
   assert.match(project, /aria-label=\{f\}/);

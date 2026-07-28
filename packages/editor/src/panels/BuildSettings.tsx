@@ -1342,7 +1342,7 @@ export function BuildSettings(props: {
             type="button"
             disabled={buildArtifactBusy || launching || verifying || settingsSaving}
             data-agent-interaction="blocked"
-            data-agent-alternative="verify_pc_build"
+            data-agent-alternative="run_pc_player"
             onClick={() => void launch(lastBuild)}
           >
             {launching ? 'Starting Player...' : 'Run Player'}

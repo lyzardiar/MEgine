@@ -1001,7 +1001,7 @@ export function Project(props: {
               role="button"
               tabIndex={0}
               aria-label={`${a.name} (${a.kind})`}
-              data-agent-blocked-actions={a.kind === 'script' ? 'doubleClick' : undefined}
+              data-agent-blocked-actions={a.kind === 'script' ? 'doubleClick keyPress' : undefined}
               data-agent-alternative={a.kind === 'script' ? 'read_asset_text' : undefined}
               draggable={
                 a.kind === 'sprite'
@@ -1155,6 +1155,8 @@ export function Project(props: {
               <>
                 <button
                   type="button"
+                  data-agent-interaction="blocked"
+                  data-agent-alternative="import_asset_file"
                   onPointerDown={(e) => {
                     e.preventDefault();
                     e.stopPropagation();
