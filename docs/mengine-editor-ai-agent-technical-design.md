@@ -193,6 +193,7 @@ MEngine 编辑器当前对人类友好，但对 AI Agent 不够友好。AI Agent
 | --- | --- | --- |
 | `window.list` | `[{ label, title, typeId?, kind: "main"\|"panel"\|"editor", visible, focused, position, size, url }]` | ✅ Rust `app.webview_windows()`；标签规则 `panel-<id>`（`detachedPanelWindow.ts`）、`editor-<hash>`（`nativeEditorWindow.ts`）；可直接确认后台实例从未显示 |
 | `window.ui_snapshot` | `{ windowLabel?, maxElements?, offset?, expectedSnapshotRevision? }` → `{ snapshotRevision, nextOffset, elements: [{ role, name, text, value, state, rect, actions, selector }], truncated, ... }` | ✅ WebView2 `Runtime.evaluate` 离屏提取可见语义 DOM；密码脱敏，默认 2000/上限 5000 项，不需要 OCR；续页必须回传首屏 `snapshotRevision`，语义内容或顺序变化时返回 `STALE_REVISION` 并从 offset 0 重读 |
+| `window.ui_content` | `{ windowLabel?, selector, field, offset?, maxChars?, expectedContentRevision? }` → `{ contentRevision, nextOffset, content, ... }` | ✅ 精确读取未归一化的文本或表单值；续页必须回传首屏 `contentRevision`，内容变化时返回 `STALE_REVISION`，避免长代码、日志和未保存文本产生撕裂读取 |
 | `dialog.state` | 当前编辑器内 alert/confirm/prompt 的稳定 id、完整消息、按钮标签与 prompt 默认值；无对话框时为 `null` | ✅ 非阻塞 DOM Dialog Host；可被语义快照和整窗截图同时读取 |
 | `panel.list` | `[{ kind, title, visible, active, detached, dockPath }]` | ✅ 可由 `panel.get_layout` 的 docked/detached/active 集合推导 |
 | `panel.get_layout` | dock 二叉树（leaf/split）+ docked/detached/active 集合 | ✅ `DockWorkspace` 每次树变化直连 AgentBridge，读取实时内存树而不是过期 localStorage |

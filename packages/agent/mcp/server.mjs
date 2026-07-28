@@ -1241,7 +1241,7 @@ const TOOLS = [
   {
     name: 'read_window_ui_content',
     description:
-      'Read exact, unnormalized text or value content from one selector returned by get_window_ui. Use nextOffset until null for long or unsaved editor content. Password values are never returned.',
+      'Read exact, unnormalized text or value content from one selector returned by get_window_ui. Use nextOffset until null and pass the first page contentRevision as expectedContentRevision on every continuation; changed content fails instead of returning a torn read. Password values are never returned.',
     inputSchema: {
       type: 'object',
       required: ['selector', 'field'],
@@ -1271,8 +1271,27 @@ const TOOLS = [
           maximum: 100000,
           description: 'Maximum characters on this page (default: 10000)',
         },
+        expectedContentRevision: {
+          type: 'string',
+          pattern: '^content-v\\d+-\\d+-[0-9a-f]{16}$',
+          maxLength: 72,
+          description: 'contentRevision from the first page; required when offset is greater than 0',
+        },
       },
       additionalProperties: false,
+      anyOf: [
+        {
+          properties: {
+            offset: { type: 'integer', maximum: 0 },
+          },
+        },
+        {
+          required: ['offset', 'expectedContentRevision'],
+          properties: {
+            offset: { type: 'integer', minimum: 1 },
+          },
+        },
+      ],
     },
     handler: async (args) =>
       textContent(await bridgeQuery('window.ui_content', {
@@ -1281,6 +1300,9 @@ const TOOLS = [
         field: args.field,
         offset: typeof args.offset === 'number' ? args.offset : 0,
         maxChars: typeof args.maxChars === 'number' ? args.maxChars : 10000,
+        expectedContentRevision: typeof args.expectedContentRevision === 'string'
+          ? args.expectedContentRevision
+          : undefined,
       })),
   },
   {

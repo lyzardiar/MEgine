@@ -108,6 +108,8 @@ export interface EditorUiSnapshot {
 /** One exact, paged text/value read from an editor UI element. */
 export interface EditorUiContentPage {
   version: number;
+  /** Fingerprint of the complete exact content used for this page. */
+  contentRevision: string;
   windowLabel: string;
   captureMethod: string;
   backgroundSafe: boolean;

@@ -589,6 +589,7 @@ class AgentBridge {
     windowLabel = 'main',
     offset = 0,
     maxChars = 10_000,
+    expectedContentRevision?: string,
   ): Promise<EditorUiContentPage> {
     if (!isDesktopEditor()) {
       throw new BridgeError('NOT_READY', 'Window UI content reads require the desktop editor');
@@ -602,6 +603,22 @@ class AgentBridge {
     const boundedMaxChars = Number.isFinite(maxChars)
       ? Math.min(100_000, Math.max(1, Math.trunc(maxChars)))
       : 10_000;
+    const expectedRevision = expectedContentRevision?.trim();
+    if (
+      expectedContentRevision !== undefined
+      && !/^content-v\d+-\d+-[0-9a-f]{16}$/.test(expectedRevision ?? '')
+    ) {
+      throw new BridgeError(
+        'INVALID_ARGS',
+        '"expectedContentRevision" must be a contentRevision returned by window.ui_content',
+      );
+    }
+    if (boundedOffset > 0 && !expectedRevision) {
+      throw new BridgeError(
+        'INVALID_ARGS',
+        'Continuation pages require "expectedContentRevision" from the first content page',
+      );
+    }
     const result = await invoke<EditorUiContentPage & { ok?: boolean; error?: string }>(
       'read_editor_ui_content',
       {
@@ -614,6 +631,20 @@ class AgentBridge {
     );
     if (result.ok === false) {
       throw new BridgeError('INVALID_ARGS', result.error ?? 'Editor UI content read failed');
+    }
+    if (expectedRevision && result.contentRevision !== expectedRevision) {
+      throw new BridgeError(
+        'STALE_REVISION',
+        'Editor UI exact content changed while paging; restart from offset 0',
+        {
+          windowLabel,
+          selector,
+          field,
+          expectedContentRevision: expectedRevision,
+          actualContentRevision: result.contentRevision,
+          restartOffset: 0,
+        },
+      );
     }
     return result;
   }
@@ -3340,6 +3371,9 @@ class AgentBridge {
             : 'main',
           typeof params.offset === 'number' ? params.offset : 0,
           typeof params.maxChars === 'number' ? params.maxChars : 10_000,
+          typeof params.expectedContentRevision === 'string'
+            ? params.expectedContentRevision
+            : undefined,
         );
       case 'panel.get_layout':
         return this.getPanelLayout();

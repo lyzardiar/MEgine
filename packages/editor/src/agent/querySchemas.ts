@@ -150,7 +150,27 @@ export const QUERY_PARAMS_SCHEMAS: Record<string, AgentJsonSchema> = {
     },
     offset: boundedInteger(0, 10_000_000, 'Zero-based UTF-16 character cursor; default 0'),
     maxChars: boundedInteger(1, 100_000, 'Maximum characters; default 10000'),
-  }, ['selector', 'field']),
+    expectedContentRevision: {
+      type: 'string',
+      pattern: '^content-v\\d+-\\d+-[0-9a-f]{16}$',
+      maxLength: 72,
+      description: 'contentRevision from the first page; required when offset is greater than 0',
+    },
+  }, ['selector', 'field'], {
+    anyOf: [
+      {
+        properties: {
+          offset: { type: 'integer', maximum: 0 },
+        },
+      },
+      {
+        required: ['offset', 'expectedContentRevision'],
+        properties: {
+          offset: { type: 'integer', minimum: 1 },
+        },
+      },
+    ],
+  }),
   'panel.get_layout': emptySchema,
   'menu.list': objectSchema({
     root: nonEmptyString('Optional exact root menu name'),

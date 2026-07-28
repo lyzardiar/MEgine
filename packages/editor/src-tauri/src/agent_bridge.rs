@@ -1408,12 +1408,24 @@ const WINDOW_UI_CONTENT_SCRIPT: &str = r#"
   } else {
     content = String(element.innerText ?? element.textContent ?? '');
   }
+  const revisionSource = JSON.stringify([selector, field, content]);
+  let revisionHashA = 0x811c9dc5;
+  let revisionHashB = 0x9e3779b9;
+  for (let index = 0; index < revisionSource.length; index += 1) {
+    const code = revisionSource.charCodeAt(index);
+    revisionHashA = Math.imul(revisionHashA ^ code, 0x01000193);
+    revisionHashB = Math.imul(revisionHashB ^ (code + index), 0x85ebca6b);
+  }
+  const contentRevision = `content-v1-${content.length}-${
+    (revisionHashA >>> 0).toString(16).padStart(8, '0')
+  }${(revisionHashB >>> 0).toString(16).padStart(8, '0')}`;
   const start = Math.min(Number(offset), content.length);
   const page = content.slice(start, start + Number(maxChars));
   const nextOffset = start + page.length < content.length ? start + page.length : null;
   return {
     ok: true,
     version: 1,
+    contentRevision,
     selector,
     field,
     offset: start,

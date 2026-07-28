@@ -30,6 +30,8 @@ test('whole-window agent capture is background-safe and addressable by window la
   assert.match(rust, /WINDOW_UI_CONTENT_SCRIPT/);
   assert.match(rust, /Password values cannot be read/);
   assert.match(rust, /content\.slice\(start, start \+ Number\(maxChars\)\)/);
+  assert.match(rust, /const contentRevision = `content-v1-/);
+  assert.match(rust, /revisionHashA = Math\.imul/);
   assert.match(rust, /const offset = __MENGINE_OFFSET__/);
   assert.match(rust, /candidates\.slice\(offset, offset \+ limit\)/);
   assert.match(rust, /new Map\(candidates\.map/);
@@ -102,6 +104,8 @@ test('whole-window agent capture is background-safe and addressable by window la
   assert.match(bridge, /'STALE_REVISION'/);
   assert.match(bridge, /restartOffset: 0/);
   assert.match(bridge, /readWindowContent\(/);
+  assert.match(bridge, /Continuation pages require "expectedContentRevision"/);
+  assert.match(bridge, /result\.contentRevision !== expectedRevision/);
   assert.match(bridge, /offset: boundedOffset/);
   assert.match(bridge, /gameResolution: store\.gameResolution/);
   assert.match(bridge, /capture_editor_window', \{ windowLabel \}/);
