@@ -10,6 +10,7 @@
  * work in any mode.
  */
 import type { EditorStore } from '../store';
+import { getBehaviour } from '@mengine/behaviour';
 import { BridgeError, type ScreenshotResult } from './protocol.ts';
 
 export interface CommandContext {
@@ -343,6 +344,36 @@ export const WRITE_COMMANDS: Record<string, CommandHandler> = {
     ctx.store.patchComponent(entity, type, record(args, 'patch'));
     return { ok: true, data: { entity, component: type } };
   },
+  'component.invoke': (ctx, args) => {
+    const entity = entityId(args, 'entity');
+    const type = str(args, 'type');
+    const method = str(args, 'method');
+    requireComponent(ctx, entity, type);
+    const behaviour = getBehaviour(type);
+    if (!behaviour) {
+      throw new BridgeError(
+        'COMPONENT_NOT_FOUND',
+        `Component "${type}" is not an invokable Behaviour`,
+      );
+    }
+    if (!behaviour.methods.some((candidate) => candidate.key === method)) {
+      throw new BridgeError(
+        'INVALID_ARGS',
+        `Behaviour "${type}" has no registered method "${method}"`,
+      );
+    }
+    ctx.store.invokeBehaviourMethod(entity, type, method);
+    const value = requireComponent(ctx, entity, type);
+    return {
+      ok: true,
+      data: {
+        entity,
+        component: type,
+        method,
+        value: structuredClone(value),
+      },
+    };
+  },
 
   // ── Transform ──────────────────────────────────────────────────────────
   'transform.set': (ctx, args) => {
@@ -489,6 +520,7 @@ export const COMMAND_META: CommandMeta[] = [
   { id: 'component.remove', category: 'component', description: 'Remove a component from an entity', readOnly: false },
   { id: 'component.set', category: 'component', description: 'Replace a component value on an entity', readOnly: false },
   { id: 'component.patch', category: 'component', description: 'Shallow-merge fields into a component on an entity', readOnly: false },
+  { id: 'component.invoke', category: 'component', description: 'Invoke one registered Behaviour method on an entity', readOnly: false },
   { id: 'transform.set', category: 'transform', description: 'Set position/rotation/scale on an entity transform', readOnly: false },
   { id: 'playback.play', category: 'playback', description: 'Enter play mode', readOnly: false },
   { id: 'playback.pause', category: 'playback', description: 'Toggle pause', readOnly: false },

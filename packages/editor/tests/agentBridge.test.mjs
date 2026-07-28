@@ -42,10 +42,13 @@ test('whole-window agent capture is background-safe and addressable by window la
   assert.match(mcp, /name: 'list_menu_items'/);
   assert.match(mcp, /'invoke_menu_item'/);
   assert.match(mcp, /name: 'list_scenes'/);
+  assert.match(mcp, /name: 'find_entities'/);
+  assert.match(mcp, /name: 'get_entity_component'/);
   assert.match(mcp, /name: 'list_assets'/);
   assert.match(mcp, /name: 'read_asset_text'/);
   assert.match(mcp, /'write_asset_text'/);
   assert.match(mcp, /'import_asset_file'/);
+  assert.match(mcp, /'invoke_component_method'/);
   assert.match(mcp, /name: 'preview_asset_rename'/);
   assert.match(mcp, /'rename_asset'/);
   assert.match(mcp, /name: 'preview_asset_trash'/);
@@ -100,6 +103,9 @@ test('the main AgentBridge transport is available before a project is opened', (
   assert.match(bridge, /commandId === 'project\.open'/);
   assert.match(bridge, /commandId === 'project\.create'/);
   assert.match(bridge, /commandId === 'project\.forget_recent'/);
+  assert.match(bridge, /await this\.waitForEditorBootAfter\(editorBootGeneration\)/);
+  assert.match(bridge, /this\.store != null && this\.editorBootReady/);
+  assert.match(app, /markEditorBootReady\(store\)/);
   assert.match(bridge, /project switching is blocked to protect unsaved editor state/);
 });
 
@@ -117,6 +123,7 @@ test('panel and menu agent surfaces use live providers and background activation
 
 test('scene, asset, and asynchronous build tools share guarded editor services', () => {
   const bridge = fs.readFileSync(path.join(root, 'src', 'agent', 'AgentBridge.ts'), 'utf8');
+  const commands = fs.readFileSync(path.join(root, 'src', 'agent', 'commands.ts'), 'utf8');
   const app = fs.readFileSync(path.join(root, 'src', 'App.tsx'), 'utf8');
   const assets = fs.readFileSync(path.join(root, 'src', 'projectAssets.ts'), 'utf8');
   const store = fs.readFileSync(path.join(root, 'src', 'store.ts'), 'utf8');
@@ -139,12 +146,15 @@ test('scene, asset, and asynchronous build tools share guarded editor services',
   );
 
   assert.match(bridge, /case 'scene\.list'/);
+  assert.match(bridge, /case 'entity\.find'/);
+  assert.match(bridge, /case 'entity\.get_component'/);
   assert.match(bridge, /commandId === 'scene\.new'/);
   assert.match(bridge, /case 'asset\.read_text'/);
   assert.match(bridge, /commandId === 'asset\.write_text'/);
   assert.match(bridge, /commandId === 'asset\.import_file'/);
   assert.match(bridge, /importExternalProjectAsset\(sourcePath, normalized\)/);
   assert.match(bridge, /assertDiskMutationAllowed/);
+  assert.match(commands, /'component\.invoke'/);
   assert.match(bridge, /status: 'running'/);
   assert.match(bridge, /listenToPcBuildProgress/);
   assert.match(bridge, /case 'build\.status'/);

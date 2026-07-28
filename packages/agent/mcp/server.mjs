@@ -304,6 +304,39 @@ const TOOLS = [
     },
   },
   {
+    name: 'find_entities',
+    description:
+      'Find live scene entities by case-insensitive name substring, exact component type, and/or active state. Returns compact records; use get_entity or get_entity_component for values.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        name: { type: 'string', description: 'Case-insensitive entity name substring' },
+        component: { type: 'string', description: 'Exact component type to require' },
+        active: { type: 'boolean', description: 'Filter by active state' },
+        limit: {
+          type: 'number',
+          minimum: 1,
+          maximum: 1000,
+          description: 'Maximum matches to return (default 100)',
+        },
+      },
+    },
+    handler: async (args) => textContent(await bridgeQuery('entity.find', args)),
+  },
+  {
+    name: 'get_entity_component',
+    description: 'Get one exact component value from a live scene entity.',
+    inputSchema: {
+      type: 'object',
+      required: ['id', 'component'],
+      properties: {
+        id: { type: 'number', minimum: 0, description: 'Entity id' },
+        component: { type: 'string', description: 'Exact component type' },
+      },
+    },
+    handler: async (args) => textContent(await bridgeQuery('entity.get_component', args)),
+  },
+  {
     name: 'take_screenshot',
     description:
       'Capture a PNG screenshot. target=scene/game captures the rendered viewport; target=window captures an editor window off-screen without activating it, so foreground work is not interrupted. Returns an image for visual verification.',
@@ -758,6 +791,16 @@ const TOOLS = [
     type: { type: 'string', description: 'Component type' },
     patch: { type: 'object', description: 'Fields to merge' },
   }),
+  execTool(
+    'invoke_component_method',
+    'Invoke one method registered by a Behaviour component. Query get_component_schema first for the exact method list. The edit-mode path is undoable when the method changes serialized fields.',
+    'component.invoke',
+    {
+      entity: { type: 'number', description: 'Entity id' },
+      type: { type: 'string', description: 'Behaviour component type' },
+      method: { type: 'string', description: 'Exact registered method name' },
+    },
+  ),
   execTool('set_transform', 'Set position/rotation/scale on an entity (omitted fields keep current values). Rotation is a quaternion [x,y,z,w].', 'transform.set', {
     entity: { type: 'number', description: 'Entity id' },
     position: { type: 'array', items: { type: 'number' }, description: '[x, y, z]' },
@@ -768,6 +811,15 @@ const TOOLS = [
     ids: { type: 'array', items: { type: 'number' }, description: 'Entity ids to select' },
     mode: { type: 'string', enum: ['replace', 'add', 'toggle'], description: 'Selection mode (default replace)' },
   }),
+  execTool('reveal_entity', 'Select an entity and expand its hierarchy ancestors.', 'selection.reveal', {
+    id: { type: 'number', description: 'Entity id' },
+  }),
+  execTool(
+    'frame_selection',
+    'Frame the current selection in the Scene view without raising the editor window.',
+    'view.frame_selected',
+    {},
+  ),
   execTool('play', 'Enter play mode.', 'playback.play', {}),
   execTool('pause', 'Toggle pause during playback.', 'playback.pause', {}),
   execTool('stop', 'Stop playback and return to edit mode.', 'playback.stop', {}),

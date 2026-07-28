@@ -1,5 +1,6 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
+import { TEST_BEHAVIOUR_TYPE } from './testBehaviourFixture.mjs';
 import { WRITE_COMMANDS } from '../src/agent/commands.ts';
 
 function createContext() {
@@ -17,6 +18,7 @@ function createContext() {
           scale: [1, 1, 1],
         },
         MeshRenderer: { mesh: 'cube' },
+        [TEST_BEHAVIOUR_TYPE]: { axis: [0, 1, 0], angle: 10, speed: 2 },
       },
     },
     {
@@ -59,6 +61,16 @@ function createContext() {
     },
     setComponent: (...args) => calls.push(['setComponent', ...args]),
     patchComponent: (...args) => calls.push(['patchComponent', ...args]),
+    invokeBehaviourMethod: (entity, type, method) => {
+      calls.push(['invokeBehaviourMethod', entity, type, method]);
+      if (type === TEST_BEHAVIOUR_TYPE && method === 'resetAngle') {
+        entities[0].components[TEST_BEHAVIOUR_TYPE] = {
+          axis: [0, 1, 0],
+          angle: 90,
+          speed: 1,
+        };
+      }
+    },
     getTransform: (id) => entities.find((entity) => entity.entity === id)?.components.Transform ?? null,
     setTransform: (...args) => calls.push(['setTransform', ...args]),
     play: () => calls.push(['play']),
@@ -166,6 +178,43 @@ test('component set and patch require an existing component and object payload',
   assert.deepEqual(calls, [
     ['patchComponent', 1, 'MeshRenderer', { material: 'default' }],
   ]);
+});
+
+test('component method invocation accepts only registered Behaviour methods', () => {
+  const { ctx, calls } = createContext();
+
+  assertBridgeError(
+    () => run(ctx, 'component.invoke', {
+      entity: 1,
+      type: 'MeshRenderer',
+      method: 'reset',
+    }),
+    'COMPONENT_NOT_FOUND',
+  );
+  assertBridgeError(
+    () => run(ctx, 'component.invoke', {
+      entity: 1,
+      type: TEST_BEHAVIOUR_TYPE,
+      method: 'missing',
+    }),
+    'INVALID_ARGS',
+  );
+  assert.deepEqual(calls, []);
+
+  const result = run(ctx, 'component.invoke', {
+    entity: 1,
+    type: TEST_BEHAVIOUR_TYPE,
+    method: 'resetAngle',
+  });
+  assert.deepEqual(calls, [
+    ['invokeBehaviourMethod', 1, TEST_BEHAVIOUR_TYPE, 'resetAngle'],
+  ]);
+  assert.deepEqual(result.data, {
+    entity: 1,
+    component: TEST_BEHAVIOUR_TYPE,
+    method: 'resetAngle',
+    value: { axis: [0, 1, 0], angle: 90, speed: 1 },
+  });
 });
 
 test('transform updates require finite tuples with exact dimensions', () => {

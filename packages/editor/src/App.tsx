@@ -1383,6 +1383,7 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
       // 编辑器偏好覆盖场景里的值（改横竖屏无需 Ctrl+S）
       applyEditorPrefs(prefs);
       refresh();
+      if (!props.detachedPanel) agentBridge.markEditorBootReady(store);
     })();
   }, [props.detachedPanel, store]);
 

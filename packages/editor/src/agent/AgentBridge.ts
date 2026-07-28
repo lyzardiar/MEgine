@@ -38,7 +38,10 @@ import {
   type LogQuery,
 } from './LogService';
 import { WRITE_COMMANDS, COMMAND_META, type CommandContext, type CommandResult, type CommandMeta } from './commands';
-import { getComponentCatalog } from '../componentCatalog';
+import {
+  buildAgentComponentSchema,
+  listAgentComponentSchemas,
+} from './componentSchema';
 import {
   findMenuItem,
   listAllMenuItems,
@@ -213,6 +216,8 @@ class AgentBridge {
     | (() => AgentProjectLifecycleProvider | null)
     | null = null;
   private observedProjectSignature: string | null = null;
+  private editorBootReady = false;
+  private editorBootGeneration = 0;
 
   /** Wire the bridge to the live editor store. Called once from App. */
   connect(store: EditorStore): void {
@@ -220,9 +225,34 @@ class AgentBridge {
       this.sceneChanges.reset();
       this.observedState = null;
       this.lastPlaySceneObservationAt = 0;
+      this.editorBootReady = false;
     }
     this.store = store;
     this.observeProject();
+  }
+
+  /** Declare that the connected store has finished loading its project scene and settings. */
+  markEditorBootReady(store: EditorStore): void {
+    if (this.store !== store || this.editorBootReady) return;
+    this.editorBootReady = true;
+    this.editorBootGeneration += 1;
+    this.observeProject();
+  }
+
+  private async waitForEditorBootAfter(generation: number): Promise<void> {
+    const deadline = Date.now() + 15_000;
+    while (
+      !this.editorBootReady
+      || this.editorBootGeneration <= generation
+    ) {
+      if (Date.now() >= deadline) {
+        throw new BridgeError(
+          'NOT_READY',
+          'The project opened, but the editor store did not finish loading within 15 seconds',
+        );
+      }
+      await new Promise((resolve) => setTimeout(resolve, 25));
+    }
   }
 
   /** Provide scene name / dirty state, which live in React (App) not the store. */
@@ -269,7 +299,7 @@ class AgentBridge {
     if (!provider) return;
     const state = {
       ...provider.getState(),
-      editorReady: this.store != null,
+      editorReady: this.store != null && this.editorBootReady,
     };
     const signature = JSON.stringify(state);
     if (signature === this.observedProjectSignature) return;
@@ -436,7 +466,7 @@ class AgentBridge {
     this.observeProject();
     return {
       ...structuredClone(provider.getState()),
-      editorReady: this.store != null,
+      editorReady: this.store != null && this.editorBootReady,
       eventSequence: this.events.currentSequence,
     };
   }
@@ -483,6 +513,85 @@ class AgentBridge {
       throw new BridgeError('ENTITY_NOT_FOUND', `No entity matches "${String(idOrName)}"`);
     }
     return found;
+  }
+
+  findEntities(params: Record<string, unknown>): {
+    total: number;
+    truncated: boolean;
+    entities: Array<{
+      id: number;
+      name: string;
+      parent: number | null;
+      active: boolean;
+      components: string[];
+    }>;
+  } {
+    const rawName = params.name;
+    const rawComponent = params.component;
+    const rawActive = params.active;
+    const rawLimit = params.limit ?? 100;
+    if (rawName !== undefined && (typeof rawName !== 'string' || !rawName.trim())) {
+      throw new BridgeError('INVALID_ARGS', '"name" must be a non-empty string');
+    }
+    if (
+      rawComponent !== undefined
+      && (typeof rawComponent !== 'string' || !rawComponent.trim())
+    ) {
+      throw new BridgeError('INVALID_ARGS', '"component" must be a non-empty string');
+    }
+    if (rawActive !== undefined && typeof rawActive !== 'boolean') {
+      throw new BridgeError('INVALID_ARGS', '"active" must be a boolean');
+    }
+    if (
+      typeof rawLimit !== 'number'
+      || !Number.isSafeInteger(rawLimit)
+      || rawLimit < 1
+      || rawLimit > 1_000
+    ) {
+      throw new BridgeError('INVALID_ARGS', '"limit" must be an integer from 1 to 1000');
+    }
+    const name = typeof rawName === 'string' ? rawName.trim().toLocaleLowerCase() : null;
+    const component = typeof rawComponent === 'string' ? rawComponent.trim() : null;
+    const entities = (
+      this.requireStore().snapshot().entities as unknown as EntityView[]
+    ).filter((entity) => (
+      (name == null || (entity.name ?? '').toLocaleLowerCase().includes(name))
+      && (
+        component == null
+        || Object.prototype.hasOwnProperty.call(entity.components ?? {}, component)
+      )
+      && (rawActive === undefined || (entity.active ?? true) === rawActive)
+    ));
+    return {
+      total: entities.length,
+      truncated: entities.length > rawLimit,
+      entities: entities.slice(0, rawLimit).map((entity) => ({
+        id: entity.entity,
+        name: entity.name ?? `Entity ${entity.entity}`,
+        parent: entity.parent ?? null,
+        active: entity.active ?? true,
+        components: Object.keys(entity.components ?? {}),
+      })),
+    };
+  }
+
+  getEntityComponent(entityId: number, type: string): {
+    entity: number;
+    component: string;
+    value: unknown;
+  } {
+    const entity = this.getEntity(entityId);
+    if (!Object.prototype.hasOwnProperty.call(entity.components ?? {}, type)) {
+      throw new BridgeError(
+        'COMPONENT_NOT_FOUND',
+        `Entity ${entityId} has no component "${type}"`,
+      );
+    }
+    return {
+      entity: entityId,
+      component: type,
+      value: structuredClone(entity.components[type]),
+    };
   }
 
   async listWindows(): Promise<EditorWindowInfo[]> {
@@ -1157,32 +1266,14 @@ class AgentBridge {
   }
 
   getComponentSchema(type?: string): unknown {
-    const catalog = getComponentCatalog();
-    const build = (entry: { type: string; label: string; description: string; create: () => Record<string, unknown>; requires?: string[] }) => {
-      let defaults: Record<string, unknown> = {};
-      try {
-        defaults = entry.create() ?? {};
-      } catch {
-        defaults = {};
-      }
-      return {
-        type: entry.type,
-        label: entry.label,
-        description: entry.description,
-        requires: entry.requires ?? [],
-        fields: Object.entries(defaults).map(([name, value]) => ({
-          name,
-          type: inferFieldType(value),
-          default: value,
-        })),
-      };
-    };
     if (type) {
-      const entry = catalog.find((e) => e.type === type);
-      if (!entry) throw new BridgeError('COMPONENT_NOT_FOUND', `Unknown component type "${type}"`);
-      return build(entry);
+      const schema = buildAgentComponentSchema(type);
+      if (!schema) {
+        throw new BridgeError('COMPONENT_NOT_FOUND', `Unknown component type "${type}"`);
+      }
+      return schema;
     }
-    return catalog.map(build);
+    return listAgentComponentSchemas();
   }
 
   /** Activate a docked panel without raising or focusing any native window. */
@@ -1231,10 +1322,12 @@ class AgentBridge {
   ): Promise<CommandResult> {
     if (commandId === 'project.open') {
       const provider = this.requireAvailableProjectLifecycle();
+      const editorBootGeneration = this.editorBootGeneration;
       try {
         const operation = provider.open(requiredString(args, 'root'));
         this.observeProject();
         const snapshot = await operation;
+        await this.waitForEditorBootAfter(editorBootGeneration);
         this.observeProject();
         return this.finishAsyncCommand(
           { ok: true, data: projectSummary(snapshot) },
@@ -1248,6 +1341,7 @@ class AgentBridge {
     }
     if (commandId === 'project.create') {
       const provider = this.requireAvailableProjectLifecycle();
+      const editorBootGeneration = this.editorBootGeneration;
       try {
         const operation = provider.create(
           requiredString(args, 'parent'),
@@ -1255,6 +1349,7 @@ class AgentBridge {
         );
         this.observeProject();
         const snapshot = await operation;
+        await this.waitForEditorBootAfter(editorBootGeneration);
         this.observeProject();
         return this.finishAsyncCommand(
           { ok: true, data: projectSummary(snapshot) },
@@ -1489,6 +1584,13 @@ class AgentBridge {
         return this.getScenes();
       case 'entity.get':
         return this.getEntity(requireIdOrName(params));
+      case 'entity.find':
+        return this.findEntities(params);
+      case 'entity.get_component':
+        return this.getEntityComponent(
+          requiredNonNegativeInteger(params, 'id'),
+          requiredString(params, 'component'),
+        );
       case 'view.screenshot':
         return this.captureViewport(
           (params.target as ViewportTab) ?? 'scene',
@@ -1575,8 +1677,11 @@ class AgentBridge {
   }
 
   private requireStore(): EditorStore {
-    if (!this.store) {
-      throw new BridgeError('NOT_READY', 'AgentBridge is not connected to an editor store');
+    if (!this.store || !this.editorBootReady) {
+      throw new BridgeError(
+        'NOT_READY',
+        'AgentBridge editor workspace is still loading',
+      );
     }
     return this.store;
   }
@@ -1862,21 +1967,6 @@ function buildHierarchy(entities: EntityView[]): HierarchyNode[] {
     children: (childrenByParent.get(entity.entity) ?? []).map(toNode),
   });
   return (childrenByParent.get(null) ?? []).map(toNode);
-}
-
-/** Infer a coarse field type from a component default value. */
-function inferFieldType(value: unknown): string {
-  if (typeof value === 'number') return 'number';
-  if (typeof value === 'boolean') return 'boolean';
-  if (typeof value === 'string') return 'string';
-  if (Array.isArray(value)) {
-    if (value.length >= 2 && value.length <= 4 && value.every((v) => typeof v === 'number')) {
-      return `vec${value.length}`;
-    }
-    return 'array';
-  }
-  if (value === null || value === undefined) return 'null';
-  return 'object';
 }
 
 function sameNumberArray(left: readonly number[], right: readonly number[]): boolean {

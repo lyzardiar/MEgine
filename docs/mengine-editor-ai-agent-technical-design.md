@@ -203,8 +203,8 @@ MEngine 编辑器当前对人类友好，但对 AI Agent 不够友好。AI Agent
 | `scene.snapshot` | `{ overlay?: bool }` | 完整 `WorldSnapshotView`（实体 + 组件 + frame + clearColor） |
 | `scene.hierarchy` | `{ depth?, filter? }` | 精简树 `[{ id, name, active, icon, children }]` |
 | `entity.get` | `{ id }` 或 `{ name }` | 单个实体完整记录（含组件） |
-| `entity.find` | `{ name?, component?, active? }` | 匹配的实体列表 |
-| `entity.get_component` | `{ id, component }` | 指定组件数据 |
+| `entity.find` | `{ name?, component?, active?, limit? }` | ✅ 按名称子串、组件类型和 active 状态过滤实时世界，返回有界紧凑记录 |
+| `entity.get_component` | `{ id, component }` | ✅ 精确读取一个实体组件值；缺失实体和组件使用结构化错误 |
 | `scene.get_meta` | — | `{ name, path, dirty, objectCount, mode, gizmo, sceneCamera, gameResolution }` |
 
 集成点：`store.snapshot()`、`store.getVisibleFlat()`、`store.authoredEntities()`。
@@ -247,8 +247,8 @@ MEngine 编辑器当前对人类友好，但对 AI Agent 不够友好。AI Agent
 | --- | --- | --- |
 | `project.state` | — | ✅ 欢迎页、工程挂载中和工程打开后均可读取 phase、busy/error、当前工程摘要、recent 数量与事件 cursor |
 | `project.recent` | — | ✅ 无弹窗读取原生配置中的最近工程；页面刷新后若 Rust Host 已持有工程则自动重新挂载 |
-| `project.open` | `{ root }` | ✅ 欢迎页按路径打开并校验 `project.json`；已有工程时拒绝切换，避免丢失未保存状态 |
-| `project.create` | `{ parent, name }` | ✅ 欢迎页无弹窗创建；父目录与工程名由原生 `ProjectSession` 严格校验 |
+| `project.open` | `{ root }` | ✅ 欢迎页按路径打开并校验 `project.json`；已有工程时拒绝切换；响应会等待新 store 完成场景、设置与资源初始化，过渡期查询返回 `NOT_READY` 而不是旧场景 |
+| `project.create` | `{ parent, name }` | ✅ 欢迎页无弹窗创建；父目录与工程名由原生 `ProjectSession` 严格校验，并使用同一 store-ready 握手后才返回 |
 | `project.forget_recent` | `{ path }` | ✅ 仅移除原生最近工程记录，不删除工程目录 |
 
 #### 4.2.1 实体生命周期
@@ -272,7 +272,7 @@ MEngine 编辑器当前对人类友好，但对 AI Agent 不够友好。AI Agent
 | `component.remove` | `{ entity, type }` | `store.removeComponent` |
 | `component.set` | `{ entity, type, value }` | `store.setComponent` |
 | `component.patch` | `{ entity, type, patch }` | `store.patchComponent` |
-| `component.invoke` | `{ entity, type, method }` | `store.invokeBehaviourMethod`（@Button 方法） |
+| `component.invoke` | `{ entity, type, method }` | ✅ 仅允许 schema 中已注册的 Behaviour 方法，复用 `store.invokeBehaviourMethod`，返回调用后的组件值 |
 
 #### 4.2.3 Transform 与 UI
 
@@ -347,8 +347,8 @@ MEngine 编辑器当前对人类友好，但对 AI Agent 不够友好。AI Agent
 | `commands.list` | `[{ id, category, description, readOnly }]` | ✅ 命令注册表（Dispatcher 内建） |
 | `menu.list` | `{ root? }` → 注册菜单元数据与实时 `enabled` | ✅ 读取统一 MenuItem 注册表并执行 validator |
 | `commands.describe` | `{ id }` → 完整 schema | 同上 |
-| `schema.components` | 所有组件 `{ type, label, description, fields[], requires[] }` | `componentCatalog` + `inspectorMetadata` + `behaviour.FieldMeta` + `schema.json` |
-| `schema.component` | `{ type }` → 字段级 schema（类型/范围/枚举/条件/资产引用） | 同上 |
+| `schema.components` | 所有组件 `{ type, label, description, fields[], methods[], requires[] }` | ✅ 合并 `componentCatalog`、`inspectorMetadata` 与 `behaviour.FieldMeta/MethodMeta`，并包含专用 Transform 契约 |
+| `schema.component` | `{ type }` → 字段级 schema（默认值/类型/范围/枚举/条件/资产引用/可编辑状态） | ✅ 与真实 Inspector authoring metadata 同源，不再仅从默认值猜粗粒度类型 |
 | `intents.list` | 支持的高层意图清单 | `packages/agent` |
 
 这是「自描述」的关键：Agent 先调 `commands.list` 和 `schema.components`，就能动态知道能做什么、每个组件能填什么字段，无需人工硬编码。MCP 的 `tools/list` 直接由 `commands.list` 生成。
@@ -388,7 +388,7 @@ MEngine 编辑器当前对人类友好，但对 AI Agent 不够友好。AI Agent
 get_project_state, list_recent_projects,
 get_scene_snapshot, get_scene_changes, get_editor_events,
 get_hierarchy, get_selection, get_editor_state,
-get_entity, get_component, get_console_logs, list_windows, list_panels,
+get_entity, find_entities, get_entity_component, get_console_logs, list_windows, list_panels,
 take_screenshot, list_assets, list_scenes, get_component_schema, list_commands
 ```
 
@@ -398,7 +398,8 @@ take_screenshot, list_assets, list_scenes, get_component_schema, list_commands
 open_project, create_project, forget_recent_project,
 create_gameobject, delete_entities, duplicate_entities, rename_entity,
 set_active, reparent, add_component, remove_component, set_component,
-patch_component, set_transform, set_selection, play, pause, stop, step,
+patch_component, invoke_component_method, set_transform, set_selection,
+reveal_entity, frame_selection, play, pause, stop, step,
 clear_console_logs,
 undo, redo, save_scene, open_scene, new_scene, focus_panel, open_editor_window,
 invoke_menu, import_asset_file, write_asset_text, preview_asset_rename, rename_asset,
