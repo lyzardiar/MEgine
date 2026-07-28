@@ -57,7 +57,11 @@ import {
   listAllMenuItems,
   type MenuItemContext,
 } from '../editorWindow/registry';
-import { CORE_PANEL_IDS } from '../panels/detachedPanelWindow';
+import {
+  CORE_PANEL_IDS,
+  detachPanelWindow,
+  requestPanelDock,
+} from '../panels/detachedPanelWindow';
 import {
   importExternalProjectAsset,
   listProjectFiles,
@@ -162,7 +166,31 @@ export type AgentSceneDeletePreview = {
 
 export interface AgentWorkspaceProvider {
   assertDiskMutationAllowed: () => Promise<void>;
+  listDocuments: () => Promise<AgentWorkspaceDocument[]>;
+  openAsset: (target: AgentResourceEditorTarget) => Promise<void>;
 }
+
+export type AgentResourceEditorKind =
+  | 'animation'
+  | 'animator'
+  | 'material'
+  | 'shader'
+  | 'sprite'
+  | 'sprite-atlas'
+  | 'timeline';
+
+export type AgentResourceEditorTarget = {
+  kind: AgentResourceEditorKind;
+  panel: string;
+  path: string;
+};
+
+export type AgentWorkspaceDocument = {
+  kind: 'scene' | AgentResourceEditorKind | 'build-settings' | 'project-settings';
+  panel: string;
+  path: string | null;
+  dirty: boolean;
+};
 
 export type AgentProjectSummary = {
   id: string;
@@ -629,6 +657,32 @@ class AgentBridge {
   async listWindows(): Promise<EditorWindowInfo[]> {
     if (!isDesktopEditor()) return [];
     return invoke<EditorWindowInfo[]>('list_editor_windows');
+  }
+
+  async getWorkspaceDocuments(): Promise<{
+    documents: Array<AgentWorkspaceDocument & {
+      active: boolean;
+      detached: boolean;
+      windowLabel: string;
+    }>;
+  }> {
+    const documents = await this.requireWorkspaceProvider().listDocuments();
+    const layout = this.panelLayoutProvider?.() ?? null;
+    const detachedPanels = new Map(
+      (layout?.detachedPanels ?? []).map((entry) => [entry.kind, entry.windowLabel]),
+    );
+    const activePanels = new Set(layout?.activePanels ?? []);
+    return {
+      documents: documents.map((document) => {
+        const detachedWindow = detachedPanels.get(document.panel);
+        return {
+          ...structuredClone(document),
+          active: detachedWindow !== undefined || activePanels.has(document.panel),
+          detached: detachedWindow !== undefined,
+          windowLabel: detachedWindow ?? 'main',
+        };
+      }),
+    };
   }
 
   getLogs(query: LogQuery = {}): LogEntry[] {
@@ -1387,6 +1441,22 @@ class AgentBridge {
     window.dispatchEvent(new CustomEvent('mengine:reset-dock-layout'));
   }
 
+  private async waitForPanelDetached(
+    panel: string,
+    expected: boolean,
+  ): Promise<PanelLayoutSnapshot> {
+    for (let attempt = 0; attempt < 40; attempt += 1) {
+      const layout = this.panelLayoutProvider?.() ?? null;
+      const detached = (layout?.detachedPanels ?? []).some((entry) => entry.kind === panel);
+      if (layout && detached === expected) return layout;
+      await new Promise((resolve) => window.setTimeout(resolve, 50));
+    }
+    throw new BridgeError(
+      'IO_ERROR',
+      `Panel "${panel}" did not become ${expected ? 'detached' : 'docked'} within 2 seconds`,
+    );
+  }
+
   async invokeMenu(path: string): Promise<CommandResult> {
     const normalizedPath = path.trim();
     if (!normalizedPath) {
@@ -1611,6 +1681,91 @@ class AgentBridge {
       );
       return this.finishAsyncCommand({ ok: true, data: result }, options, true);
     }
+    if (commandId === 'asset.open') {
+      const normalized = normalizeAssetPath(requiredString(args, 'path'));
+      const asset = findAsset(await refreshProjectFiles(), normalized);
+      if (!asset) throw new BridgeError('IO_ERROR', `Asset not found: ${normalized}`);
+      if (asset.metaStatus !== 'ready') {
+        throw new BridgeError(
+          'CONFLICT',
+          `Asset metadata is not healthy: ${asset.relPath} (${asset.metaStatus})`,
+        );
+      }
+      const target = resourceEditorTarget(asset);
+      if (!target) {
+        throw new BridgeError(
+          'INVALID_ARGS',
+          `Asset type "${asset.kind}" has no docked resource editor; use the matching scene, entity, or text-asset command`,
+        );
+      }
+      await this.requireWorkspaceProvider().openAsset(target);
+      await nextFrame();
+      await nextFrame();
+      const documents = await this.getWorkspaceDocuments();
+      const document = documents.documents.find(
+        (candidate) => (
+          candidate.panel === target.panel
+          && candidate.path?.toLocaleLowerCase() === target.path.toLocaleLowerCase()
+        ),
+      );
+      return this.finishAsyncCommand({
+        ok: true,
+        data: document ?? { ...target, active: true, detached: false, windowLabel: 'main' },
+      }, options, document?.windowLabel ?? 'main');
+    }
+    if (commandId === 'panel.detach' || commandId === 'panel.dock') {
+      const kind = requiredString(args, 'kind');
+      if (!CORE_PANEL_IDS.includes(kind as (typeof CORE_PANEL_IDS)[number])) {
+        throw new BridgeError('INVALID_ARGS', `Unknown panel kind "${kind}"`);
+      }
+      const panel = kind as (typeof CORE_PANEL_IDS)[number];
+      const workspace = await this.getWorkspaceDocuments();
+      const dirtyDocument = workspace.documents.find(
+        (document) => document.panel === panel && document.kind !== 'scene' && document.dirty,
+      );
+      if (dirtyDocument) {
+        throw new BridgeError(
+          'CONFLICT',
+          `${panel} has unsaved resource changes; save all before changing its window`,
+        );
+      }
+      const detachedWindowExists = (await this.listWindows()).some(
+        (window) => window.label === `panel-${panel}`,
+      );
+      const detached = detachedWindowExists || workspace.documents.some(
+        (document) => document.panel === panel && document.detached,
+      ) || (this.panelLayoutProvider?.()?.detachedPanels ?? []).some(
+        (entry) => entry.kind === panel,
+      );
+      if (commandId === 'panel.detach') {
+        if (!detachedWindowExists && !await detachPanelWindow(panel, undefined, false)) {
+          throw new BridgeError('IO_ERROR', `Failed to detach panel "${panel}"`);
+        }
+        await this.waitForPanelDetached(panel, true);
+        return this.finishAsyncCommand({
+          ok: true,
+          data: {
+            panel,
+            detached: true,
+            windowLabel: `panel-${panel}`,
+            backgroundSafe: true,
+          },
+        }, options, `panel-${panel}`);
+      }
+      if (detached) {
+        requestPanelDock(panel);
+        await this.waitForPanelDetached(panel, false);
+      }
+      return this.finishAsyncCommand({
+        ok: true,
+        data: {
+          panel,
+          detached: false,
+          windowLabel: 'main',
+          backgroundSafe: true,
+        },
+      }, options, 'main');
+    }
     if (commandId === 'asset.write_text') {
       const expectedRevision = args.expectedRevision;
       if (expectedRevision !== null && typeof expectedRevision !== 'string') {
@@ -1773,6 +1928,8 @@ class AgentBridge {
         );
       case 'window.list':
         return this.listWindows();
+      case 'workspace.documents':
+        return this.getWorkspaceDocuments();
       case 'window.ui_snapshot':
         return this.inspectWindow(
           typeof params.windowLabel === 'string' && params.windowLabel
@@ -2132,6 +2289,31 @@ function findAsset(
 ): ProjectFileAsset | null {
   const key = normalizedPath.toLocaleLowerCase();
   return files.find((asset) => asset.relPath.toLocaleLowerCase() === key) ?? null;
+}
+
+function resourceEditorTarget(asset: ProjectFileAsset): AgentResourceEditorTarget | null {
+  const target = (() => {
+    switch (asset.kind) {
+      case 'animation':
+        return { kind: 'animation', panel: 'timeline' } as const;
+      case 'animator-controller':
+      case 'avatar-mask':
+        return { kind: 'animator', panel: 'animator' } as const;
+      case 'material':
+        return { kind: 'material', panel: 'material' } as const;
+      case 'shader':
+        return { kind: 'shader', panel: 'shader' } as const;
+      case 'texture':
+        return { kind: 'sprite', panel: 'spriteEditor' } as const;
+      case 'sprite-atlas':
+        return { kind: 'sprite-atlas', panel: 'spriteAtlas' } as const;
+      case 'timeline':
+        return { kind: 'timeline', panel: 'timeline' } as const;
+      default:
+        return null;
+    }
+  })();
+  return target ? { ...target, path: asset.relPath } : null;
 }
 
 async function bridgeIo<T>(label: string, operation: () => Promise<T>): Promise<T> {

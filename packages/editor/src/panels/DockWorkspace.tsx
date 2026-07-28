@@ -1056,6 +1056,7 @@ export function DockWorkspace(props: {
           const payload = dragRef.current;
           if (!payload || payload.panel !== message.panel || payload.fromId !== '__detached__') return;
           if (target) {
+            setDetachedPanelOpen(message.panel, false);
             setTree((previous) => applyDrop(previous, message.panel, payload.fromId, target));
             void closeDetachedPanelWindow(message.panel);
           }
@@ -1066,6 +1067,7 @@ export function DockWorkspace(props: {
           setExternalDragging(null);
         });
       } else if (message.type === 'panel-dock-requested') {
+        setDetachedPanelOpen(message.panel, false);
         setTree((previous) => applyDrop(
           previous,
           message.panel,

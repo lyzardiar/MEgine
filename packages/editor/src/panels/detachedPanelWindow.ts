@@ -139,11 +139,13 @@ export async function closeDetachedPanelWindow(panel: CorePanelId): Promise<void
   if (!isDesktopEditor()) return;
   const window = await WebviewWindow.getByLabel(`panel-${panel}`);
   if (window) await window.close();
+  setDetachedPanelOpen(panel, false);
 }
 
 export async function detachPanelWindow(
   panel: CorePanelId,
   screenPosition?: { x: number; y: number },
+  activateWindow = true,
 ): Promise<boolean> {
   const url = `/?detachedPanel=${encodeURIComponent(panel)}`;
   const width = panel === 'hierarchy' || panel === 'inspector' ? 440 : 920;
@@ -151,6 +153,7 @@ export async function detachPanelWindow(
     || panel === 'project' || panel === 'timeline' ? 480 : 720;
 
   if (!isDesktopEditor()) {
+    if (!activateWindow) return false;
     const popup = window.open(
       url,
       `mengine-panel-${panel}`,
@@ -163,8 +166,10 @@ export async function detachPanelWindow(
   const existing = await WebviewWindow.getByLabel(label);
   if (existing) {
     setDetachedPanelOpen(panel, true);
-    await existing.show();
-    await existing.setFocus();
+    if (activateWindow) {
+      await existing.show();
+      await existing.setFocus();
+    }
     return true;
   }
 
@@ -178,7 +183,8 @@ export async function detachPanelWindow(
       y: screenPosition?.y,
       decorations: false,
       resizable: true,
-      focus: true,
+      visible: activateWindow,
+      focus: activateWindow,
     });
     let settled = false;
     const finish = (value: boolean) => {
@@ -203,5 +209,6 @@ export async function closeAllDetachedPanelWindows(): Promise<void> {
   await Promise.all(CORE_PANEL_IDS.map(async (panel) => {
     const window = await WebviewWindow.getByLabel(`panel-${panel}`);
     if (window) await window.close();
+    setDetachedPanelOpen(panel, false);
   }));
 }

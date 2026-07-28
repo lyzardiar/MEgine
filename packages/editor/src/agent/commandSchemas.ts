@@ -98,6 +98,27 @@ const sceneName = stringValue('Scene name, with or without .mscene');
 const previewToken = stringValue('Exact token returned by the matching preview query');
 const assetPath = stringValue('Project-relative asset path under Assets/');
 const componentType = stringValue('Exact component type');
+const panelKind: AgentJsonSchema = {
+  type: 'string',
+  enum: [
+    'hierarchy',
+    'scene',
+    'game',
+    'inspector',
+    'project',
+    'console',
+    'profiler',
+    'timeline',
+    'animator',
+    'material',
+    'shader',
+    'spriteEditor',
+    'spriteAtlas',
+    'build',
+    'projectSettings',
+  ],
+  description: 'Core editor panel kind',
+};
 const emptySchema = objectSchema();
 
 export const COMMAND_PARAMS_SCHEMAS: Record<string, AgentJsonSchema> = {
@@ -154,6 +175,9 @@ export const COMMAND_PARAMS_SCHEMAS: Record<string, AgentJsonSchema> = {
     sourcePath: stringValue('Absolute regular local source file'),
     destinationPath: assetPath,
   }, ['sourcePath', 'destinationPath']),
+  'asset.open': objectSchema({
+    path: assetPath,
+  }, ['path']),
   'asset.write_text': objectSchema({
     path: assetPath,
     contents: stringValue('Complete UTF-8 file contents, at most 8 MiB'),
@@ -370,28 +394,10 @@ export const COMMAND_PARAMS_SCHEMAS: Record<string, AgentJsonSchema> = {
     ],
   }),
   'panel.focus': objectSchema({
-    kind: {
-      type: 'string',
-      enum: [
-        'hierarchy',
-        'scene',
-        'game',
-        'inspector',
-        'project',
-        'console',
-        'profiler',
-        'timeline',
-        'animator',
-        'material',
-        'shader',
-        'spriteEditor',
-        'spriteAtlas',
-        'build',
-        'projectSettings',
-      ],
-      description: 'Docked panel kind',
-    },
+    kind: panelKind,
   }, ['kind']),
+  'panel.detach': objectSchema({ kind: panelKind }, ['kind']),
+  'panel.dock': objectSchema({ kind: panelKind }, ['kind']),
   'panel.reset_layout': emptySchema,
   'menu.invoke': objectSchema({
     path: stringValue('Exact registered menu path'),

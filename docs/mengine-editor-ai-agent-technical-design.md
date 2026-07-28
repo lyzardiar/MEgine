@@ -217,6 +217,7 @@ MEngine 编辑器当前对人类友好，但对 AI Agent 不够友好。AI Agent
 | --- | --- |
 | `selection.get` | `{ selected, selectedIds }` |
 | `editor.state` | ✅ `{ mode, gizmo, sceneCamera, gameResolution, canUndo, canRedo, undoLabel, redoLabel, dirty, sceneName, sceneRevision, eventSequence }` |
+| `workspace.documents` | ✅ 当前场景与已打开资源文档的路径、脏状态、活动/拆分状态及可观测窗口标签 |
 | `editor.get_camera` | ✅ 已合并进 `editor.state.sceneCamera { yaw, pitch, distance, pivot }`，减少一次查询 |
 
 #### 4.1.5 控制台日志（结构化）
@@ -315,7 +316,7 @@ MEngine 编辑器当前对人类友好，但对 AI Agent 不够友好。AI Agent
 | --- | --- | --- |
 | `panel.focus` | `{ kind }` | ✅ dispatch `mengine:focus-panel`；agent 路径携带 `activateWindow: false`，不会抬升独立窗口 |
 | `panel.reset_layout` | `{}` | ✅ 复用 `mengine:reset-dock-layout` |
-| `panel.detach` / `dock` | `{ kind }` | `detachedPanelWindow` |
+| `panel.detach` / `dock` | `{ kind }` | ✅ 复用 `detachedPanelWindow` 与 dock channel；Agent 拆分窗以 `visible=false/focus=false` 创建，脏资源面板拒绝迁移 |
 | `layout.reset` | — | dispatch `mengine:reset-dock-layout` |
 | `window.open_editor` | `{ typeId }` | `EditorWindow.show` / `openNativeEditorWindow` |
 | `menu.invoke` | `{ path }` | ✅ 查 `MenuItemEntry`、执行实时 validator，再复用 `entry.action(ctx)` |
@@ -327,6 +328,7 @@ MEngine 编辑器当前对人类友好，但对 AI Agent 不够友好。AI Agent
 | command id | 映射 |
 | --- | --- |
 | `asset.import_file` | ✅ 从绝对本地路径导入 UI 支持的单个二进制/内容资产；64 MiB 上限，拒绝 symlink、覆盖和残留 `.meta`，目标以 create-only 原子安装并生成新 GUID，sidecar 失败则完整回滚 |
+| `asset.open` | ✅ 校验资产索引与 `.meta` 后，在对应 Material/Shader/Animator/Timeline/Sprite 编辑器中打开；跨拆分窗口同步文档路径，切换前拒绝丢弃本地或远端脏文档，且不激活原生窗口 |
 | `asset.write_text` | ✅ 8 MiB UTF-8 上限；已有文件必须携带精确 revision，新文件必须传 null；写前拒绝任何窗口的未保存工作 |
 | `asset.rename_preview` / `asset.rename` | ✅ 两阶段引用感知重命名；预览令牌绑定 source revision、自动重写和人工引用，执行前重新扫描校验 |
 | `asset.duplicate_preview` / `asset.duplicate` | ✅ 两阶段复制；新 GUID，移动相对依赖时重写自身内容，脚本引用需显式确认 |

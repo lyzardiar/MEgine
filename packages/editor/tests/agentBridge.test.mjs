@@ -50,6 +50,7 @@ test('whole-window agent capture is background-safe and addressable by window la
   assert.match(bridge, /capture_editor_window', \{ windowLabel \}/);
   assert.match(mcp, /windowLabel: args\.windowLabel \|\| 'main'/);
   assert.match(mcp, /name: 'get_window_ui'/);
+  assert.match(mcp, /name: 'list_open_documents'/);
   assert.match(mcp, /'click_window_ui'/);
   assert.match(mcp, /'set_window_ui_value'/);
   assert.match(mcp, /name: 'get_panel_layout'/);
@@ -65,6 +66,9 @@ test('whole-window agent capture is background-safe and addressable by window la
   assert.match(mcp, /name: 'read_asset_text'/);
   assert.match(mcp, /'write_asset_text'/);
   assert.match(mcp, /'import_asset_file'/);
+  assert.match(mcp, /'open_asset'/);
+  assert.match(mcp, /'detach_panel'/);
+  assert.match(mcp, /'dock_panel'/);
   assert.match(mcp, /'invoke_component_method'/);
   assert.match(mcp, /'apply_batch'/);
   assert.match(mcp, /'load_scene_json'/);
@@ -138,13 +142,27 @@ test('the main AgentBridge transport is available before a project is opened', (
 test('panel and menu agent surfaces use live providers and background activation', () => {
   const bridge = fs.readFileSync(path.join(root, 'src', 'agent', 'AgentBridge.ts'), 'utf8');
   const dock = fs.readFileSync(path.join(root, 'src', 'panels', 'DockWorkspace.tsx'), 'utf8');
+  const detached = fs.readFileSync(
+    path.join(root, 'src', 'panels', 'detachedPanelWindow.ts'),
+    'utf8',
+  );
+  const app = fs.readFileSync(path.join(root, 'src', 'App.tsx'), 'utf8');
 
   assert.match(bridge, /case 'panel\.get_layout'/);
+  assert.match(bridge, /case 'workspace\.documents'/);
+  assert.match(bridge, /commandId === 'asset\.open'/);
+  assert.match(bridge, /commandId === 'panel\.detach'/);
+  assert.match(bridge, /detachPanelWindow\(panel, undefined, false\)/);
   assert.match(bridge, /case 'menu\.list'/);
   assert.match(bridge, /commandId === 'menu\.invoke'/);
   assert.match(bridge, /activateWindow: false/);
   assert.match(dock, /describePanelLayout\(tree\)/);
   assert.match(dock, /rawDetail\?\.activateWindow !== false/);
+  assert.match(detached, /visible: activateWindow/);
+  assert.match(detached, /focus: activateWindow/);
+  assert.match(app, /\.\.\.resourceDocumentPathsRef\.current/);
+  assert.match(app, /setMaterialPath\(message\.materialPath \?\? null\)/);
+  assert.match(app, /openAsset: async \(target: AgentResourceEditorTarget\)/);
 });
 
 test('scene, asset, and asynchronous build tools share guarded editor services', () => {

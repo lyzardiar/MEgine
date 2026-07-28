@@ -36,6 +36,18 @@ test('command schemas expose exact high-risk guards and shared optimistic option
     ['json'],
   );
   assert.deepEqual(
+    COMMAND_PARAMS_SCHEMAS['asset.open'].required,
+    ['path'],
+  );
+  assert.deepEqual(
+    COMMAND_PARAMS_SCHEMAS['panel.detach'].required,
+    ['kind'],
+  );
+  assert.deepEqual(
+    COMMAND_PARAMS_SCHEMAS['panel.dock'].required,
+    ['kind'],
+  );
+  assert.deepEqual(
     COMMAND_PARAMS_SCHEMAS['asset.write_text'].required,
     ['path', 'contents', 'expectedRevision'],
   );

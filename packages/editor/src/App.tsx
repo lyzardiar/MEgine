@@ -63,7 +63,9 @@ import { Viewport } from './panels/Viewport';
 import { DockWorkspace, type PanelKind } from './panels/DockWorkspace';
 import {
   agentBridge,
+  type AgentResourceEditorTarget,
   type AgentSceneProvider,
+  type AgentWorkspaceDocument,
   type AgentWorkspaceProvider,
 } from './agent/AgentBridge';
 import { logService } from './agent/LogService';
@@ -132,6 +134,11 @@ function askSceneName(title: string, initial: string): string | null {
   return normalizeSceneName(raw);
 }
 
+function sameAssetPath(left: string | null, right: string): boolean {
+  return left?.replace(/\\/g, '/').toLocaleLowerCase()
+    === right.replace(/\\/g, '/').toLocaleLowerCase();
+}
+
 type WorkspaceSyncMessage =
   | { type: 'request-scene'; sender: string }
   | { type: 'request-timeline-preview'; sender: string }
@@ -155,6 +162,12 @@ type WorkspaceSyncMessage =
       selectedIds: number[];
       logs: string[];
       dirty: boolean;
+      animationAssetPath?: string | null;
+      animatorPath?: string | null;
+      materialPath?: string | null;
+      shaderPath?: string | null;
+      spritePath?: string | null;
+      spriteAtlasPath?: string | null;
       timelineAssetPath?: string | null;
     };
 
@@ -276,7 +289,15 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
     lastSeenAt: number;
   } | null>(null);
   const workspaceDirtyRef = useRef(false);
-  const timelineAssetPathRef = useRef<string | null>(timelineAssetPath);
+  const resourceDocumentPathsRef = useRef({
+    animationAssetPath,
+    animatorPath,
+    materialPath,
+    shaderPath,
+    spritePath,
+    spriteAtlasPath,
+    timelineAssetPath,
+  });
   const remoteDirtyPeers = useRef(new Map<string, {
     timestamp: number;
     panel: string;
@@ -297,7 +318,15 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
   unsavedChangesRef.current = hasUnsavedChanges;
   workspaceDirtyRef.current = hasUnsavedChanges;
   resourceDirtyRef.current = resourceDirty;
-  timelineAssetPathRef.current = timelineAssetPath;
+  resourceDocumentPathsRef.current = {
+    animationAssetPath,
+    animatorPath,
+    materialPath,
+    shaderPath,
+    spritePath,
+    spriteAtlasPath,
+    timelineAssetPath,
+  };
 
   useEffect(() => {
     agentBridge.connect(store);
@@ -378,7 +407,7 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
         selectedIds: store.selectedIds,
         logs: logsRef.current,
         dirty: sceneDirtyRef.current,
-        timelineAssetPath: timelineAssetPathRef.current,
+        ...resourceDocumentPathsRef.current,
       } satisfies WorkspaceSyncMessage);
     };
     if (immediate) {
@@ -855,6 +884,16 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
           setSceneDirty(dirty);
         }
         setSceneName(message.sceneName);
+        if ('animationAssetPath' in message) {
+          setAnimationAssetPath(message.animationAssetPath ?? null);
+        }
+        if ('animatorPath' in message) setAnimatorPath(message.animatorPath ?? null);
+        if ('materialPath' in message) setMaterialPath(message.materialPath ?? null);
+        if ('shaderPath' in message) setShaderPath(message.shaderPath ?? null);
+        if ('spritePath' in message) setSpritePath(message.spritePath ?? null);
+        if ('spriteAtlasPath' in message) {
+          setSpriteAtlasPath(message.spriteAtlasPath ?? null);
+        }
         if ('timelineAssetPath' in message) setTimelineAssetPath(message.timelineAssetPath ?? null);
         setSnap(store.snapshot());
         setMode(store.mode);
@@ -927,7 +966,15 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
 
   useEffect(() => {
     if (booted.current) broadcastScene(true);
-  }, [timelineAssetPath]);
+  }, [
+    animationAssetPath,
+    animatorPath,
+    materialPath,
+    shaderPath,
+    spriteAtlasPath,
+    spritePath,
+    timelineAssetPath,
+  ]);
 
   const confirmDiscardSceneChanges = (action: string) => (
     !sceneDirtyRef.current
@@ -1287,6 +1334,173 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
           `Detached panels have unsaved changes: ${remoteDirty.join(', ')}`,
         );
       }
+    },
+    listDocuments: async () => {
+      const remoteDirty = new Set(await queryRemoteDirtyPanels());
+      const documents: AgentWorkspaceDocument[] = [
+        {
+          kind: 'scene',
+          panel: 'scene',
+          path: sceneNameRef.current
+            ? `Assets/Scenes/${sceneFileName(sceneNameRef.current)}`
+            : null,
+          dirty: sceneDirtyRef.current,
+        },
+      ];
+      if (timelineAssetPath) {
+        documents.push({
+          kind: 'timeline',
+          panel: 'timeline',
+          path: timelineAssetPath,
+          dirty: sequencerDirty || remoteDirty.has('timeline'),
+        });
+      } else if (animationAssetPath) {
+        documents.push({
+          kind: 'animation',
+          panel: 'timeline',
+          path: animationAssetPath,
+          dirty: animationDirty || remoteDirty.has('timeline'),
+        });
+      }
+      const resources: AgentWorkspaceDocument[] = [
+        {
+          kind: 'animator',
+          panel: 'animator',
+          path: animatorPath,
+          dirty: animatorDirty,
+        },
+        {
+          kind: 'material',
+          panel: 'material',
+          path: materialPath,
+          dirty: materialDirty,
+        },
+        {
+          kind: 'shader',
+          panel: 'shader',
+          path: shaderPath,
+          dirty: shaderDirty,
+        },
+        {
+          kind: 'sprite',
+          panel: 'spriteEditor',
+          path: spritePath,
+          dirty: spriteDirty,
+        },
+        {
+          kind: 'sprite-atlas',
+          panel: 'spriteAtlas',
+          path: spriteAtlasPath,
+          dirty: spriteAtlasDirty,
+        },
+      ];
+      documents.push(...resources
+        .filter((document) => (
+          document.path !== null
+          || document.dirty
+          || remoteDirty.has(document.panel)
+        ))
+        .map((document) => ({
+          ...document,
+          dirty: document.dirty || remoteDirty.has(document.panel),
+        })));
+      if (buildSettingsDirty || remoteDirty.has('build')) {
+        documents.push({
+          kind: 'build-settings',
+          panel: 'build',
+          path: null,
+          dirty: true,
+        });
+      }
+      if (projectSettingsDirty || remoteDirty.has('projectSettings')) {
+        documents.push({
+          kind: 'project-settings',
+          panel: 'projectSettings',
+          path: null,
+          dirty: true,
+        });
+      }
+      return documents;
+    },
+    openAsset: async (target: AgentResourceEditorTarget) => {
+      const currentPath = (() => {
+        switch (target.kind) {
+          case 'animation':
+            return timelineAssetPath == null ? animationAssetPath : null;
+          case 'timeline':
+            return timelineAssetPath;
+          case 'animator':
+            return animatorPath;
+          case 'material':
+            return materialPath;
+          case 'shader':
+            return shaderPath;
+          case 'sprite':
+            return spritePath;
+          case 'sprite-atlas':
+            return spriteAtlasPath;
+        }
+      })();
+      const locallyDirty = (() => {
+        switch (target.panel) {
+          case 'timeline':
+            return animationDirty || sequencerDirty;
+          case 'animator':
+            return animatorDirty;
+          case 'material':
+            return materialDirty;
+          case 'shader':
+            return shaderDirty;
+          case 'spriteEditor':
+            return spriteDirty;
+          case 'spriteAtlas':
+            return spriteAtlasDirty;
+          default:
+            return false;
+        }
+      })();
+      if (!sameAssetPath(currentPath, target.path)) {
+        if (locallyDirty) {
+          throw new BridgeError(
+            'CONFLICT',
+            `${target.panel} has unsaved changes; save all before opening another asset`,
+          );
+        }
+        const remoteDirty = await queryRemoteDirtyPanels();
+        if (remoteDirty.includes(target.panel)) {
+          throw new BridgeError(
+            'CONFLICT',
+            `Detached ${target.panel} has unsaved changes; save all before opening another asset`,
+          );
+        }
+      }
+      switch (target.kind) {
+        case 'animation':
+          setAnimationAssetPath(target.path);
+          setTimelineAssetPath(null);
+          break;
+        case 'timeline':
+          setTimelineAssetPath(target.path);
+          break;
+        case 'animator':
+          setAnimatorPath(target.path);
+          break;
+        case 'material':
+          setMaterialPath(target.path);
+          break;
+        case 'shader':
+          setShaderPath(target.path);
+          break;
+        case 'sprite':
+          setSpritePath(target.path);
+          break;
+        case 'sprite-atlas':
+          setSpriteAtlasPath(target.path);
+          break;
+      }
+      window.dispatchEvent(new CustomEvent('mengine:focus-panel', {
+        detail: { panel: target.panel, activateWindow: false },
+      }));
     },
   };
 

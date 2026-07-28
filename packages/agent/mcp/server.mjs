@@ -478,6 +478,13 @@ const TOOLS = [
     handler: async () => textContent(await bridgeQuery('window.list')),
   },
   {
+    name: 'list_open_documents',
+    description:
+      'List the current scene and every open resource document with dirty state, active/detached state, and the exact window label to inspect or capture.',
+    inputSchema: { type: 'object', properties: {} },
+    handler: async () => textContent(await bridgeQuery('workspace.documents')),
+  },
+  {
     name: 'get_panel_layout',
     description:
       'Get the exact live dock layout: split/tab tree, active tabs, docked panels, and detached panels with their native window labels. This is a background-safe read.',
@@ -792,6 +799,17 @@ const TOOLS = [
     },
   ),
   execTool(
+    'open_asset',
+    'Open a supported material, shader, animator, animation, timeline, texture, or sprite-atlas asset in its docked editor without raising or focusing a native window. Refuses to switch away from unsaved resource work.',
+    'asset.open',
+    {
+      path: {
+        type: 'string',
+        description: 'Exact project-relative asset path under Assets/',
+      },
+    },
+  ),
+  execTool(
     'write_asset_text',
     'Create or update a UTF-8 text asset under Assets/ with optimistic concurrency. Pass the exact revision returned by list_assets/read_asset_text, or null only when creating a missing file. Refuses while any editor window has unsaved work.',
     'asset.write_text',
@@ -1022,6 +1040,22 @@ const TOOLS = [
   execTool('focus_panel', 'Activate a docked editor panel by kind without raising or focusing the native editor window. Detached panels remain detached and are not raised.', 'panel.focus', {
     kind: { type: 'string', description: 'Panel kind' },
   }),
+  execTool(
+    'detach_panel',
+    'Detach a clean panel into its own hidden, background-observable editor window. The new native window is created with visible=false and focus=false.',
+    'panel.detach',
+    {
+      kind: { type: 'string', description: 'Core editor panel kind' },
+    },
+  ),
+  execTool(
+    'dock_panel',
+    'Dock a clean detached panel back into the main workspace without raising or focusing either native window.',
+    'panel.dock',
+    {
+      kind: { type: 'string', description: 'Core editor panel kind' },
+    },
+  ),
   execTool(
     'reset_panel_layout',
     'Reset the dock workspace to its default layout. This also closes detached panel windows.',
