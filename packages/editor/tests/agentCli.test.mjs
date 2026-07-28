@@ -74,6 +74,9 @@ test('Agent CLI accepts bounded inline and file-backed JSON objects', async () =
   assert.deepEqual(await parseArgsObject('{"windowLabel":"main"}'), {
     windowLabel: 'main',
   });
+  assert.deepEqual(await parseArgsObject('\uFEFF{"windowLabel":"main"}'), {
+    windowLabel: 'main',
+  });
   await assert.rejects(() => parseArgsObject('[]'), /JSON object/);
   await assert.rejects(() => parseArgsObject('{'), /not valid JSON/);
 

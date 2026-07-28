@@ -33,6 +33,8 @@ test('whole-window agent capture is background-safe and addressable by window la
   assert.match(rust, /const offset = __MENGINE_OFFSET__/);
   assert.match(rust, /candidates\.slice\(offset, offset \+ limit\)/);
   assert.match(rust, /new Map\(candidates\.map/);
+  assert.match(rust, /const snapshotRevision = `ui-v1-/);
+  assert.match(rust, /revisionHash = BigInt\.asUintN\(64/);
   assert.match(rust, /nextOffset:/);
   assert.match(rust, /hasMore:/);
   assert.match(rust, /WINDOW_UI_INTERACTION_SCRIPT/);
@@ -95,6 +97,10 @@ test('whole-window agent capture is background-safe and addressable by window la
   assert.match(native, /std::fs::hard_link\(&temporary, target\)/);
   assert.match(bridge, /captureWindow\(windowLabel = 'main'\)/);
   assert.match(bridge, /inspectWindow\(/);
+  assert.match(bridge, /Continuation pages require "expectedSnapshotRevision"/);
+  assert.match(bridge, /snapshot\.snapshotRevision !== expectedRevision/);
+  assert.match(bridge, /'STALE_REVISION'/);
+  assert.match(bridge, /restartOffset: 0/);
   assert.match(bridge, /readWindowContent\(/);
   assert.match(bridge, /offset: boundedOffset/);
   assert.match(bridge, /gameResolution: store\.gameResolution/);
@@ -103,6 +109,7 @@ test('whole-window agent capture is background-safe and addressable by window la
   assert.match(mcp, /name: 'get_window_ui'/);
   assert.match(mcp, /name: 'read_window_ui_content'/);
   assert.match(mcp, /Continue with nextOffset until null/);
+  assert.match(mcp, /expectedSnapshotRevision/);
   assert.match(mcp, /name: 'list_open_documents'/);
   assert.match(mcp, /name: 'list_editor_window_types'/);
   assert.match(mcp, /name: 'get_active_dialog'/);

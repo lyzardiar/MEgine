@@ -73,6 +73,11 @@ export interface EditorUiElement {
 /** Background-safe semantic snapshot used instead of OCR for UI inspection. */
 export interface EditorUiSnapshot {
   version: number;
+  /**
+   * Fingerprint of the full semantic element identity and order. Pass this
+   * back as expectedSnapshotRevision when reading a continuation page.
+   */
+  snapshotRevision: string;
   windowLabel: string;
   title: string;
   url: string;

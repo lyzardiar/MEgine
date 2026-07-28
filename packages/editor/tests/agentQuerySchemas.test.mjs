@@ -49,6 +49,11 @@ test('query schemas accept documented read shapes and reject malformed or extra 
     ['entity.get', { name: 'Main Camera' }],
     ['view.screenshot', { target: 'game', format: 'image/jpeg', quality: 0.8 }],
     ['window.ui_snapshot', { windowLabel: 'main', maxElements: 2_000, offset: 0 }],
+    ['window.ui_snapshot', {
+      maxElements: 50,
+      offset: 50,
+      expectedSnapshotRevision: 'ui-v1-100-0123456789abcdef',
+    }],
     ['window.ui_content', { selector: '#editor', field: 'text' }],
     ['events.get', { topics: [...AGENT_EVENT_TOPICS], limit: 1_000 }],
     ['events.wait', { afterSequence: 0, topics: ['scene.changed'], timeoutMs: 15_000 }],
@@ -69,6 +74,11 @@ test('query schemas accept documented read shapes and reject malformed or extra 
     ['view.screenshot', { target: 'window' }],
     ['view.screenshot', { quality: 2 }],
     ['window.ui_snapshot', { maxElements: 49 }],
+    ['window.ui_snapshot', { maxElements: 50, offset: 50 }],
+    ['window.ui_snapshot', {
+      offset: 50,
+      expectedSnapshotRevision: 'not-a-snapshot-revision',
+    }],
     ['window.ui_content', { selector: '#editor', field: 'password' }],
     ['events.get', { topics: ['unknown'] }],
     ['events.wait', { timeoutMs: 15_001 }],

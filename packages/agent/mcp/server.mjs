@@ -1186,9 +1186,10 @@ const TOOLS = [
   {
     name: 'get_window_ui',
     description:
-      'Get one page of a background-safe semantic editor-window snapshot: visible text, accessible roles/names, control values and states, bounds, supported actions, and stable CSS selectors. Continue with nextOffset until null to retrieve all semantic content without OCR, scrolling, or activating the editor.',
+      'Get one page of a background-safe semantic editor-window snapshot: visible text, accessible roles/names, control values and states, bounds, supported actions, and stable CSS selectors. Continue with nextOffset until null and pass the first page snapshotRevision as expectedSnapshotRevision on every continuation; stale pages fail instead of skipping or duplicating changed content.',
     inputSchema: {
       type: 'object',
+      additionalProperties: false,
       properties: {
         windowLabel: {
           type: 'string',
@@ -1206,13 +1207,35 @@ const TOOLS = [
           maximum: 1000000,
           description: 'Zero-based semantic element cursor from the previous page (default: 0)',
         },
+        expectedSnapshotRevision: {
+          type: 'string',
+          pattern: '^ui-v\\d+-\\d+-[0-9a-f]{16}$',
+          maxLength: 64,
+          description: 'snapshotRevision from the first page; required when offset is greater than 0',
+        },
       },
+      anyOf: [
+        {
+          properties: {
+            offset: { type: 'integer', maximum: 0 },
+          },
+        },
+        {
+          required: ['offset', 'expectedSnapshotRevision'],
+          properties: {
+            offset: { type: 'integer', minimum: 1 },
+          },
+        },
+      ],
     },
     handler: async (args) =>
       textContent(await bridgeQuery('window.ui_snapshot', {
         windowLabel: args.windowLabel || 'main',
         maxElements: typeof args.maxElements === 'number' ? args.maxElements : 2000,
         offset: typeof args.offset === 'number' ? args.offset : 0,
+        expectedSnapshotRevision: typeof args.expectedSnapshotRevision === 'string'
+          ? args.expectedSnapshotRevision
+          : undefined,
       })),
   },
   {

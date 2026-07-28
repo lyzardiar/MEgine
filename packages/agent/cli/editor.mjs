@@ -202,6 +202,9 @@ export async function parseArgsObject(source) {
   } else {
     contents = boundedUtf8(source, '--args');
   }
+  // Windows PowerShell 5 emits a UTF-8 BOM when piping text to a native
+  // process. Treat that encoding marker as transport metadata, not JSON.
+  contents = contents.replace(/^\uFEFF/, '');
   let parsed;
   try {
     parsed = JSON.parse(contents);

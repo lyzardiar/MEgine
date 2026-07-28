@@ -535,6 +535,7 @@ class AgentBridge {
     windowLabel = 'main',
     maxElements = 2_000,
     offset = 0,
+    expectedSnapshotRevision?: string,
   ): Promise<EditorUiSnapshot> {
     if (!isDesktopEditor()) {
       throw new BridgeError('NOT_READY', 'Window UI inspection requires the desktop editor');
@@ -545,11 +546,40 @@ class AgentBridge {
     const boundedOffset = Number.isFinite(offset)
       ? Math.min(1_000_000, Math.max(0, Math.trunc(offset)))
       : 0;
-    return invoke<EditorUiSnapshot>('inspect_editor_window', {
+    const expectedRevision = expectedSnapshotRevision?.trim();
+    if (
+      expectedSnapshotRevision !== undefined
+      && !/^ui-v\d+-\d+-[0-9a-f]{16}$/.test(expectedRevision ?? '')
+    ) {
+      throw new BridgeError(
+        'INVALID_ARGS',
+        '"expectedSnapshotRevision" must be a snapshotRevision returned by window.ui_snapshot',
+      );
+    }
+    if (boundedOffset > 0 && !expectedRevision) {
+      throw new BridgeError(
+        'INVALID_ARGS',
+        'Continuation pages require "expectedSnapshotRevision" from the first page',
+      );
+    }
+    const snapshot = await invoke<EditorUiSnapshot>('inspect_editor_window', {
       windowLabel,
       maxElements: boundedMaxElements,
       offset: boundedOffset,
     });
+    if (expectedRevision && snapshot.snapshotRevision !== expectedRevision) {
+      throw new BridgeError(
+        'STALE_REVISION',
+        'Editor window semantic content changed while paging; restart from offset 0',
+        {
+          windowLabel,
+          expectedSnapshotRevision: expectedRevision,
+          actualSnapshotRevision: snapshot.snapshotRevision,
+          restartOffset: 0,
+        },
+      );
+    }
+    return snapshot;
   }
 
   /** Read exact, unnormalized UI text/value in bounded pages. */
@@ -3297,6 +3327,9 @@ class AgentBridge {
             : 'main',
           typeof params.maxElements === 'number' ? params.maxElements : 2_000,
           typeof params.offset === 'number' ? params.offset : 0,
+          typeof params.expectedSnapshotRevision === 'string'
+            ? params.expectedSnapshotRevision
+            : undefined,
         );
       case 'window.ui_content':
         return this.readWindowContent(

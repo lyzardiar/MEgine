@@ -1254,6 +1254,26 @@ const WINDOW_UI_SNAPSHOT_SCRIPT: &str = r#"
     if (!role && !name && !text && !structural && actions.length === 0) continue;
     candidates.push({ element, role, name, text, actions });
   }
+  const revisionSource = JSON.stringify({
+    title: document.title,
+    url: location.href,
+    elements: candidates.map(({ element, role, name, text, actions }) => [
+      selectorFor(element),
+      element.localName,
+      role,
+      name,
+      text,
+      actions,
+    ]),
+  });
+  let revisionHash = 0xcbf29ce484222325n;
+  for (let index = 0; index < revisionSource.length; index += 1) {
+    revisionHash ^= BigInt(revisionSource.charCodeAt(index));
+    revisionHash = BigInt.asUintN(64, revisionHash * 0x100000001b3n);
+  }
+  const snapshotRevision = `ui-v1-${candidates.length}-${
+    revisionHash.toString(16).padStart(16, '0')
+  }`;
   const selected = candidates.slice(offset, offset + limit);
   const ids = new Map(candidates.map((entry, index) => [entry.element, `ui-${index + 1}`]));
   const elements = selected.map((entry) => {
@@ -1330,6 +1350,7 @@ const WINDOW_UI_SNAPSHOT_SCRIPT: &str = r#"
   });
   return {
     version: 2,
+    snapshotRevision,
     title: document.title,
     url: location.href,
     capturedAt: Date.now(),

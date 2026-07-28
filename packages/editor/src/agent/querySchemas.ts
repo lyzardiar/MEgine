@@ -119,6 +119,26 @@ export const QUERY_PARAMS_SCHEMAS: Record<string, AgentJsonSchema> = {
     windowLabel: stringValue('Window label from window.list; default main'),
     maxElements: boundedInteger(50, 5_000, 'Maximum semantic elements; default 2000'),
     offset: boundedInteger(0, 1_000_000, 'Zero-based semantic element cursor; default 0'),
+    expectedSnapshotRevision: {
+      type: 'string',
+      pattern: '^ui-v\\d+-\\d+-[0-9a-f]{16}$',
+      maxLength: 64,
+      description: 'snapshotRevision from the first page; required when offset is greater than 0',
+    },
+  }, [], {
+    anyOf: [
+      {
+        properties: {
+          offset: { type: 'integer', maximum: 0 },
+        },
+      },
+      {
+        required: ['offset', 'expectedSnapshotRevision'],
+        properties: {
+          offset: { type: 'integer', minimum: 1 },
+        },
+      },
+    ],
   }),
   'window.ui_content': objectSchema({
     windowLabel: stringValue('Window label from window.list; default main'),
