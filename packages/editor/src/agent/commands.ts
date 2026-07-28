@@ -1136,7 +1136,7 @@ const COMMAND_SUMMARIES: CommandSummary[] = [
   { id: 'prefab.apply', category: 'prefab', description: 'Revision-safely apply an instance hierarchy to its prefab asset', readOnly: false },
   { id: 'prefab.revert', category: 'prefab', description: 'Revert an instance hierarchy from an exact prefab asset revision', readOnly: false },
   { id: 'prefab.unpack', category: 'prefab', description: 'Remove prefab linkage while preserving the authored hierarchy', readOnly: false },
-  { id: 'asset.open', category: 'asset', description: 'Open a supported resource asset in its docked editor without raising a window', readOnly: false },
+  { id: 'asset.open', category: 'asset', description: 'Open a supported resource asset and wait until its background editor is active', readOnly: false },
   { id: 'asset.write_text', category: 'asset', description: 'Create or revision-safely update a UTF-8 text asset', readOnly: false },
   { id: 'asset.rename', category: 'asset', description: 'Apply a previewed reference-aware asset rename', readOnly: false },
   { id: 'asset.duplicate', category: 'asset', description: 'Apply a previewed asset duplicate with a new GUID', readOnly: false },

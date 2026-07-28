@@ -1965,7 +1965,7 @@ const TOOLS = [
   ),
   execTool(
     'open_asset',
-    'Open a supported material, material-instance, shader, animator, avatar-mask, animation, timeline, sprite-compatible texture, or sprite-atlas asset in its docked editor without raising or focusing a native window. Refuses to switch away from unsaved resource work.',
+    'Open a supported material, material-instance, shader, animator, avatar-mask, animation, timeline, sprite-compatible texture, or sprite-atlas asset in its docked editor without raising or focusing a native window. Returns only after the exact document is active, and refuses to switch away from unsaved resource work.',
     'asset.open',
     {
       path: {

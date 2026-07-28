@@ -265,6 +265,12 @@ export type AgentWorkspaceDocument = {
   dirty: boolean;
 };
 
+type AgentObservedWorkspaceDocument = AgentWorkspaceDocument & {
+  active: boolean;
+  detached: boolean;
+  windowLabel: string;
+};
+
 export type AgentProjectSummary = {
   id: string;
   name: string;
@@ -1323,11 +1329,7 @@ class AgentBridge {
   }
 
   async getWorkspaceDocuments(): Promise<{
-    documents: Array<AgentWorkspaceDocument & {
-      active: boolean;
-      detached: boolean;
-      windowLabel: string;
-    }>;
+    documents: AgentObservedWorkspaceDocument[];
   }> {
     const documents = await this.requireWorkspaceProvider().listDocuments();
     const layout = this.panelLayoutProvider?.() ?? null;
@@ -1346,6 +1348,34 @@ class AgentBridge {
         };
       }),
     };
+  }
+
+  private async waitForWorkspaceDocument(
+    target: AgentResourceEditorTarget,
+  ): Promise<AgentObservedWorkspaceDocument> {
+    let observedPanelDocuments: AgentObservedWorkspaceDocument[] = [];
+    for (let attempt = 0; attempt < 100; attempt += 1) {
+      const workspace = await this.getWorkspaceDocuments();
+      observedPanelDocuments = workspace.documents.filter(
+        (document) => document.panel === target.panel,
+      );
+      const document = observedPanelDocuments.find(
+        (candidate) => (
+          candidate.path?.toLocaleLowerCase() === target.path.toLocaleLowerCase()
+          && candidate.active
+        ),
+      );
+      if (document) return document;
+      await new Promise((resolve) => window.setTimeout(resolve, 50));
+    }
+    throw new BridgeError(
+      'IO_ERROR',
+      `Resource editor did not activate "${target.path}" in panel "${target.panel}" within 5 seconds`,
+      {
+        target: structuredClone(target),
+        observedPanelDocuments: structuredClone(observedPanelDocuments),
+      },
+    );
   }
 
   getLogs(query: LogQuery = {}): LogEntry[] {
@@ -3367,19 +3397,11 @@ class AgentBridge {
         );
       }
       await this.requireWorkspaceProvider().openAsset(target);
-      await nextFrame();
-      await nextFrame();
-      const documents = await this.getWorkspaceDocuments();
-      const document = documents.documents.find(
-        (candidate) => (
-          candidate.panel === target.panel
-          && candidate.path?.toLocaleLowerCase() === target.path.toLocaleLowerCase()
-        ),
-      );
+      const document = await this.waitForWorkspaceDocument(target);
       return this.finishAsyncCommand({
         ok: true,
-        data: document ?? { ...target, active: true, detached: false, windowLabel: 'main' },
-      }, options, document?.windowLabel ?? 'main');
+        data: document,
+      }, options, document.windowLabel);
     }
     if (commandId === 'panel.detach' || commandId === 'panel.dock') {
       const kind = requiredString(args, 'kind');

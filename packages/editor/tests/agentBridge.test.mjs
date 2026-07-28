@@ -189,6 +189,11 @@ test('whole-window agent capture is background-safe and addressable by window la
   assert.match(mcp, /function nonEmptyStringSchema/);
   assert.match(bridge, /candidate\.totalSemanticElements > 0/);
   assert.match(bridge, /semanticReady: true/);
+  assert.match(bridge, /private async waitForWorkspaceDocument/);
+  assert.match(bridge, /candidate\.active/);
+  assert.match(bridge, /Resource editor did not activate/);
+  assert.match(bridge, /const document = await this\.waitForWorkspaceDocument\(target\)/);
+  assert.doesNotMatch(bridge, /document \?\? \{ \.\.\.target, active: true/);
   assert.match(bridge, /agentOwnedEditorWindows = new Set<string>\(\)/);
   assert.match(
     bridge,
