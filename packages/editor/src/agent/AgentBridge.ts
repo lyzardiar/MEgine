@@ -103,7 +103,7 @@ import {
 } from '../projectAssets';
 import { findProjectAssetReferences } from '../assetReferences';
 import { validateImportedAssetName } from '../assetImportModel';
-import { refreshSprites } from '../spriteLibrary';
+import { refreshSprites, type SpriteAsset } from '../spriteLibrary';
 import { setEditorPrefs } from '../sceneLibrary';
 import type { GameResolution } from '../gameResolution';
 import {
@@ -1893,6 +1893,102 @@ class AgentBridge {
       hasMore: page.hasMore,
       truncated: page.truncated,
       assets: structuredClone(page.items),
+    };
+  }
+
+  async listSpriteAssets(params: Record<string, unknown> = {}): Promise<{
+    spriteRevision: string;
+    total: number;
+    offset: number;
+    count: number;
+    nextOffset: number | null;
+    hasMore: boolean;
+    truncated: boolean;
+    sprites: SpriteAsset[];
+  }> {
+    const sprites = isDesktopEditor()
+      ? await bridgeIo(
+        'Failed to read the project sprite index',
+        () => invoke<SpriteAsset[]>('list_project_sprites'),
+      )
+      : await refreshSprites();
+    const search = typeof params.search === 'string'
+      ? params.search.trim().toLocaleLowerCase()
+      : '';
+    const folder = typeof params.folder === 'string' && params.folder.trim()
+      ? normalizeAssetPath(params.folder)
+      : '';
+    const limit = params.limit ?? 1_000;
+    const offset = params.offset ?? 0;
+    const rawExpectedSpriteRevision = params.expectedSpriteRevision;
+    if (
+      typeof limit !== 'number'
+      || !Number.isSafeInteger(limit)
+      || limit < 1
+      || limit > 5_000
+    ) {
+      throw new BridgeError('INVALID_ARGS', '"limit" must be an integer from 1 to 5000');
+    }
+    if (
+      typeof offset !== 'number'
+      || !Number.isSafeInteger(offset)
+      || offset < 0
+      || offset > 1_000_000
+    ) {
+      throw new BridgeError('INVALID_ARGS', '"offset" must be an integer from 0 to 1000000');
+    }
+    const expectedSpriteRevision = typeof rawExpectedSpriteRevision === 'string'
+      ? rawExpectedSpriteRevision.trim()
+      : '';
+    if (
+      rawExpectedSpriteRevision !== undefined
+      && !/^sprite-index-v\d+-\d+-[0-9a-f]{16}$/.test(expectedSpriteRevision)
+    ) {
+      throw new BridgeError(
+        'INVALID_ARGS',
+        '"expectedSpriteRevision" must be a spriteRevision returned by sprite.list',
+      );
+    }
+    if (offset > 0 && !expectedSpriteRevision) {
+      throw new BridgeError(
+        'INVALID_ARGS',
+        'Continuation pages require "expectedSpriteRevision" from the first sprite page',
+      );
+    }
+    const filtered = sprites
+      .filter((sprite) => !folder || (
+        sprite.folder === folder
+        || sprite.folder.startsWith(`${folder}/`)
+      ))
+      .filter((sprite) => !search || (
+        sprite.id.toLocaleLowerCase().includes(search)
+        || sprite.name.toLocaleLowerCase().includes(search)
+        || sprite.relPath.toLocaleLowerCase().includes(search)
+        || (sprite.sliceName ?? '').toLocaleLowerCase().includes(search)
+      ))
+      .sort((left, right) => left.id.localeCompare(right.id));
+    const spriteRevision = spriteAssetIndexRevision(filtered);
+    if (expectedSpriteRevision && expectedSpriteRevision !== spriteRevision) {
+      throw new BridgeError(
+        'STALE_REVISION',
+        'Project sprite index changed while paging; restart from offset 0',
+        {
+          expectedSpriteRevision,
+          currentSpriteRevision: spriteRevision,
+          restartOffset: 0,
+        },
+      );
+    }
+    const page = paginateAgentItems(filtered, offset, limit);
+    return {
+      spriteRevision,
+      total: page.total,
+      offset: page.offset,
+      count: page.count,
+      nextOffset: page.nextOffset,
+      hasMore: page.hasMore,
+      truncated: page.truncated,
+      sprites: structuredClone(page.items),
     };
   }
 
@@ -3938,6 +4034,8 @@ class AgentBridge {
         );
       case 'asset.list':
         return this.listAssets(params);
+      case 'sprite.list':
+        return this.listSpriteAssets(params);
       case 'asset.read_text':
         return this.readAssetText(
           requiredString(params, 'path'),
@@ -4590,6 +4688,34 @@ function projectAssetIndexRevision(assets: readonly ProjectFileAsset[]): string 
     sourceOffset += source.length;
   }
   return `asset-index-v1-${assets.length}-${
+    (hashA >>> 0).toString(16).padStart(8, '0')
+  }${(hashB >>> 0).toString(16).padStart(8, '0')}`;
+}
+
+function spriteAssetIndexRevision(sprites: readonly SpriteAsset[]): string {
+  let hashA = 0x811c9dc5;
+  let hashB = 0x9e3779b9;
+  let sourceOffset = 0;
+  for (const sprite of sprites) {
+    const source = JSON.stringify([
+      sprite.id,
+      sprite.name,
+      sprite.folder,
+      sprite.relPath,
+      sprite.textureId,
+      sprite.sliceName,
+      sprite.rect,
+      sprite.pivot,
+      sprite.pixelsPerUnit,
+    ]);
+    for (let index = 0; index < source.length; index += 1) {
+      const code = source.charCodeAt(index);
+      hashA = Math.imul(hashA ^ code, 0x01000193);
+      hashB = Math.imul(hashB ^ (code + sourceOffset + index), 0x85ebca6b);
+    }
+    sourceOffset += source.length;
+  }
+  return `sprite-index-v1-${sprites.length}-${
     (hashA >>> 0).toString(16).padStart(8, '0')
   }${(hashB >>> 0).toString(16).padStart(8, '0')}`;
 }

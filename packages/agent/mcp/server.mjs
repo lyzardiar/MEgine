@@ -1622,6 +1622,46 @@ const TOOLS = [
     handler: async (args) => textContent(await bridgeQuery('asset.list', args)),
   },
   {
+    name: 'list_sprites',
+    description:
+      'List stable sprite ids, source texture paths, slice names, source rectangles, pivots, and pixels-per-unit values. Supports filtered revision-safe pages; pass the first spriteRevision on every continuation so changed imports fail with STALE_REVISION instead of returning torn references.',
+    inputSchema: {
+      type: 'object',
+      additionalProperties: false,
+      properties: {
+        search: { type: 'string', description: 'Case-insensitive id, name, path, or slice-name substring' },
+        folder: nonEmptyStringSchema('Assets folder prefix'),
+        limit: { type: 'integer', minimum: 1, maximum: 5000, description: 'Maximum rows (default 1000)' },
+        offset: {
+          type: 'integer',
+          minimum: 0,
+          maximum: 1000000,
+          description: 'Zero-based sprite cursor from the previous page (default 0)',
+        },
+        expectedSpriteRevision: {
+          type: 'string',
+          pattern: '^sprite-index-v\\d+-\\d+-[0-9a-f]{16}$',
+          maxLength: 80,
+          description: 'spriteRevision from the first page; required when offset is greater than 0',
+        },
+      },
+      anyOf: [
+        {
+          properties: {
+            offset: { type: 'integer', maximum: 0 },
+          },
+        },
+        {
+          required: ['offset', 'expectedSpriteRevision'],
+          properties: {
+            offset: { type: 'integer', minimum: 1 },
+          },
+        },
+      ],
+    },
+    handler: async (args) => textContent(await bridgeQuery('sprite.list', args)),
+  },
+  {
     name: 'read_asset_text',
     description:
       'Read a UTF-8 project text asset and return its exact revision. Use that revision with write_asset_text to prevent overwriting concurrent edits.',

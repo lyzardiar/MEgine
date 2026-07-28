@@ -241,7 +241,7 @@ MEngine 编辑器当前对人类友好，但对 AI Agent 不够友好。AI Agent
 | `asset.read_text` | `{ path, revision, size, contents }` | ✅ UTF-8 严格解码，默认 1 MiB/上限 8 MiB |
 | `asset.find_references` | 引用报告 | ✅ 复用完整项目引用扫描器 |
 | `scene.list` | `{ ready, activeScene, dirty, scenes[] }` | ✅ 读取实时 Scene Library 与内存场景状态 |
-| `sprite.list` | `ProjectSpriteInfo[]` | `list_project_sprites` |
+| `sprite.list` | 带 `spriteRevision` 的分页 `ProjectSpriteInfo[]`，支持 search/folder 过滤 | ✅ 复用 `list_project_sprites`；返回稳定 sprite id、切片 rect/pivot/PPU，续页用 revision 防止导入变化造成撕裂 |
 
 ### 4.2 可操作性（Controllability）—— 让 Agent「动手」
 
