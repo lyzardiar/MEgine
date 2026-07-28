@@ -208,7 +208,7 @@ MEngine 编辑器当前对人类友好，但对 AI Agent 不够友好。AI Agent
 | `scene.snapshot` | `{ overlay?: bool }` | 完整 `WorldSnapshotView`（实体 + 组件 + frame + clearColor） |
 | `scene.hierarchy` | `{ depth?, filter? }` | 精简树 `[{ id, name, active, icon, children }]` |
 | `entity.get` | `{ id }` 或 `{ name }` | 单个实体完整记录（含组件） |
-| `entity.find` | `{ name?, component?, active?, limit? }` | ✅ 按名称子串、组件类型和 active 状态过滤实时世界，返回有界紧凑记录 |
+| `entity.find` | `{ name?, component?, active?, limit?, offset?, expectedSceneRevision? }` | ✅ 按名称子串、组件类型和 active 状态过滤实时世界，返回带 `sceneRevision` 的有界紧凑记录；续页必须回传首屏 revision，场景变化时返回 `STALE_REVISION` 并从 offset 0 重读 |
 | `entity.get_component` | `{ id, component }` | ✅ 精确读取一个实体组件值；缺失实体和组件使用结构化错误 |
 | `scene.get_meta` | — | `{ name, path, dirty, objectCount, mode, gizmo, sceneCamera, gameResolution }` |
 

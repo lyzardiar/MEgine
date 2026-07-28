@@ -816,6 +816,7 @@ class AgentBridge {
   }
 
   findEntities(params: Record<string, unknown>): {
+    sceneRevision: number;
     total: number;
     offset: number;
     count: number;
@@ -835,6 +836,7 @@ class AgentBridge {
     const rawActive = params.active;
     const rawLimit = params.limit ?? 100;
     const rawOffset = params.offset ?? 0;
+    const rawExpectedSceneRevision = params.expectedSceneRevision;
     if (rawName !== undefined && (typeof rawName !== 'string' || !rawName.trim())) {
       throw new BridgeError('INVALID_ARGS', '"name" must be a non-empty string');
     }
@@ -863,10 +865,45 @@ class AgentBridge {
     ) {
       throw new BridgeError('INVALID_ARGS', '"offset" must be an integer from 0 to 1000000');
     }
+    if (
+      rawExpectedSceneRevision !== undefined
+      && (
+        typeof rawExpectedSceneRevision !== 'number'
+        || !Number.isSafeInteger(rawExpectedSceneRevision)
+        || rawExpectedSceneRevision < 0
+      )
+    ) {
+      throw new BridgeError(
+        'INVALID_ARGS',
+        '"expectedSceneRevision" must be a non-negative safe integer',
+      );
+    }
+    if (rawOffset > 0 && rawExpectedSceneRevision === undefined) {
+      throw new BridgeError(
+        'INVALID_ARGS',
+        'Continuation pages require "expectedSceneRevision" from the first entity page',
+      );
+    }
+    const store = this.requireStore();
+    const sceneRevision = this.sceneChanges.revision;
+    if (
+      rawExpectedSceneRevision !== undefined
+      && rawExpectedSceneRevision !== sceneRevision
+    ) {
+      throw new BridgeError(
+        'STALE_REVISION',
+        'Scene changed while paging entity matches; restart from offset 0',
+        {
+          expectedSceneRevision: rawExpectedSceneRevision,
+          currentSceneRevision: sceneRevision,
+          restartOffset: 0,
+        },
+      );
+    }
     const name = typeof rawName === 'string' ? rawName.trim().toLocaleLowerCase() : null;
     const component = typeof rawComponent === 'string' ? rawComponent.trim() : null;
     const entities = (
-      this.requireStore().snapshot().entities as unknown as EntityView[]
+      store.snapshot().entities as unknown as EntityView[]
     ).filter((entity) => (
       (name == null || (entity.name ?? '').toLocaleLowerCase().includes(name))
       && (
@@ -877,6 +914,7 @@ class AgentBridge {
     ));
     const page = paginateAgentItems(entities, rawOffset, rawLimit);
     return {
+      sceneRevision,
       total: page.total,
       offset: page.offset,
       count: page.count,

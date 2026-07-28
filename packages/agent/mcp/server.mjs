@@ -1058,9 +1058,10 @@ const TOOLS = [
   {
     name: 'find_entities',
     description:
-      'Find live scene entities by case-insensitive name substring, exact component type, and/or active state. Returns compact paged records; continue with nextOffset until null, then use get_entity or get_entity_component for values.',
+      'Find live scene entities by case-insensitive name substring, exact component type, and/or active state. Returns compact paged records; continue with nextOffset until null and pass the first page sceneRevision as expectedSceneRevision on every continuation. Scene changes fail with STALE_REVISION instead of returning a torn entity list.',
     inputSchema: {
       type: 'object',
+      additionalProperties: false,
       properties: {
         name: { type: 'string', description: 'Case-insensitive entity name substring' },
         component: { type: 'string', description: 'Exact component type to require' },
@@ -1077,7 +1078,26 @@ const TOOLS = [
           maximum: 1000000,
           description: 'Zero-based match cursor from the previous page (default 0)',
         },
+        expectedSceneRevision: {
+          type: 'integer',
+          minimum: 0,
+          maximum: Number.MAX_SAFE_INTEGER,
+          description: 'sceneRevision from the first page; required when offset is greater than 0',
+        },
       },
+      anyOf: [
+        {
+          properties: {
+            offset: { type: 'integer', maximum: 0 },
+          },
+        },
+        {
+          required: ['offset', 'expectedSceneRevision'],
+          properties: {
+            offset: { type: 'integer', minimum: 1 },
+          },
+        },
+      ],
     },
     handler: async (args) => textContent(await bridgeQuery('entity.find', args)),
   },

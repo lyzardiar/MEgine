@@ -47,6 +47,7 @@ test('query schemas accept documented read shapes and reject malformed or extra 
     ['scene.diff', { fromRevision: 0 }],
     ['entity.get', { id: 0 }],
     ['entity.get', { name: 'Main Camera' }],
+    ['entity.find', { limit: 1, offset: 1, expectedSceneRevision: 12 }],
     ['view.screenshot', { target: 'game', format: 'image/jpeg', quality: 0.8 }],
     ['window.ui_snapshot', { windowLabel: 'main', maxElements: 2_000, offset: 0 }],
     ['window.ui_snapshot', {
@@ -77,6 +78,7 @@ test('query schemas accept documented read shapes and reject malformed or extra 
     ['scene.diff', {}],
     ['scene.diff', { fromRevision: -1 }],
     ['entity.get', { name: '   ' }],
+    ['entity.find', { limit: 1, offset: 1 }],
     ['view.screenshot', { target: 'window' }],
     ['view.screenshot', { quality: 2 }],
     ['window.ui_snapshot', { maxElements: 49 }],

@@ -86,6 +86,25 @@ export const QUERY_PARAMS_SCHEMAS: Record<string, AgentJsonSchema> = {
     active: { type: 'boolean', description: 'Filter by active state' },
     limit: boundedInteger(1, 1_000, 'Maximum matches; default 100'),
     offset: boundedInteger(0, 1_000_000, 'Zero-based match cursor; default 0'),
+    expectedSceneRevision: boundedInteger(
+      0,
+      Number.MAX_SAFE_INTEGER,
+      'sceneRevision from the first page; required when offset is greater than 0',
+    ),
+  }, [], {
+    anyOf: [
+      {
+        properties: {
+          offset: { type: 'integer', maximum: 0 },
+        },
+      },
+      {
+        required: ['offset', 'expectedSceneRevision'],
+        properties: {
+          offset: { type: 'integer', minimum: 1 },
+        },
+      },
+    ],
   }),
   'entity.get_component': objectSchema({
     id: entityId(),
