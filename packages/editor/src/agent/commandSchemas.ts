@@ -334,6 +334,18 @@ export const COMMAND_PARAMS_SCHEMAS: Record<string, AgentJsonSchema> = {
       description: 'Exact 64-character content hash from a successful build',
     },
   }, ['executable', 'expectedContentHash']),
+  'build.history.create_patch': objectSchema({
+    previousId: stringValue('Older build history id from get_build_history'),
+    currentId: stringValue('Newer build history id from get_build_history'),
+  }, ['previousId', 'currentId']),
+  'build.history.restore': objectSchema({
+    historyId: stringValue('Signed archived build history id from get_build_history'),
+    publicKeyPath: stringValue('Absolute trusted Ed25519 public-key file path'),
+  }, ['historyId', 'publicKeyPath']),
+  'build.patch.verify': objectSchema({
+    patchId: stringValue('Exact patch id from get_build_patches'),
+    publicKeyPath: stringValue('Absolute trusted Ed25519 public-key file path'),
+  }, ['patchId', 'publicKeyPath']),
   'selection.set': objectSchema({
     ids: entityIds('Entity ids to select'),
     mode: {

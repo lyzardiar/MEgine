@@ -8,6 +8,7 @@ import { editorWindowTypeFromLocation } from './editorWindow/nativeEditorWindow'
 import { RegisteredEditorWindowHost } from './editorWindow';
 import { EditorDialogHost } from './EditorDialogHost';
 import { initializeAssetEditorEvents } from './assetEditorEvents';
+import { initializeBuildEditorEvents } from './buildEditorEvents';
 import { initializeEditorInstance } from './editorInstance';
 import { getEditorInstanceId } from './transport/editorTransport';
 import './editorWindow';
@@ -23,6 +24,7 @@ async function bootstrap(): Promise<void> {
     initializeEditorInstance(`isolated-${crypto.randomUUID()}`);
   }
   initializeAssetEditorEvents();
+  initializeBuildEditorEvents();
 
   const detachedPanel = panelFromLocation();
   const detachedEditorWindow = editorWindowTypeFromLocation();

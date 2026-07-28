@@ -32,6 +32,7 @@ const SUPPORTED_PROTOCOL_VERSIONS = Object.freeze([
 ]);
 const PROTOCOL_VERSION = SUPPORTED_PROTOCOL_VERSIONS[0];
 const REQUEST_TIMEOUT_MS = 20000;
+const BUILD_ARTIFACT_REQUEST_TIMEOUT_MS = 5 * 60 * 1000;
 const BRIDGE_CONNECT_ATTEMPTS = 30;
 const BRIDGE_CONNECT_RETRY_MS = 200;
 const MCP_SESSION_ID = crypto.randomUUID();
@@ -239,7 +240,7 @@ async function connectLatestBridge() {
   throw lastError;
 }
 
-function rpcOnce(connection, method, params) {
+function rpcOnce(connection, method, params, timeoutMs = REQUEST_TIMEOUT_MS) {
   return new Promise((resolve, reject) => {
     const { socket, discovery } = connection;
     if (socket.readyState !== WebSocket.OPEN) {
@@ -256,7 +257,7 @@ function rpcOnce(connection, method, params) {
         `Editor bridge request timed out (${method})`,
         { sent: true, discovery },
       ));
-    }, REQUEST_TIMEOUT_MS);
+    }, timeoutMs);
     pending.set(id, {
       socket,
       timer,
@@ -284,10 +285,17 @@ function sameEditorProcess(left, right) {
   return left.port === right.port && left.token === right.token;
 }
 
-async function rpc(method, params, { retryAcrossEditorRestart = false } = {}) {
+async function rpc(
+  method,
+  params,
+  {
+    retryAcrossEditorRestart = false,
+    timeoutMs = REQUEST_TIMEOUT_MS,
+  } = {},
+) {
   const firstConnection = await ensureBridgeConnected();
   try {
-    return await rpcOnce(firstConnection, method, params);
+    return await rpcOnce(firstConnection, method, params, timeoutMs);
   } catch (error) {
     if (!(error instanceof BridgeConnectionError)) throw error;
 
@@ -335,7 +343,7 @@ async function rpc(method, params, { retryAcrossEditorRestart = false } = {}) {
         retryConnection.discovery,
       );
     }
-    return await rpcOnce(retryConnection, method, params);
+    return await rpcOnce(retryConnection, method, params, timeoutMs);
   }
 }
 
@@ -349,13 +357,22 @@ async function bridgeQuery(query, args = {}) {
 }
 
 async function bridgeExecute(command, args = {}, options = {}) {
-  return await rpc('execute', {
-    command,
-    args,
-    requestId: options.requestId,
-    screenshot: Boolean(options.screenshot),
-    expectedSceneRevision: options.expectedSceneRevision,
-  });
+  const longRunning = command === 'build.verify';
+  return await rpc(
+    'execute',
+    {
+      command,
+      args,
+      requestId: options.requestId,
+      screenshot: Boolean(options.screenshot),
+      expectedSceneRevision: options.expectedSceneRevision,
+    },
+    {
+      timeoutMs: longRunning
+        ? BUILD_ARTIFACT_REQUEST_TIMEOUT_MS
+        : REQUEST_TIMEOUT_MS,
+    },
+  );
 }
 
 // ── Tool definitions ─────────────────────────────────────────────────────
@@ -1240,6 +1257,13 @@ const TOOLS = [
     handler: async () => textContent(await bridgeQuery('build.status')),
   },
   {
+    name: 'get_build_artifact_status',
+    description:
+      'Get the active or most recent asynchronous history-patch, history-restore, or patch-verify job. Poll until status is succeeded or failed; these integrity-sensitive jobs are not cancellable.',
+    inputSchema: { type: 'object', properties: {} },
+    handler: async () => textContent(await bridgeQuery('build.artifact_status')),
+  },
+  {
     name: 'get_build_history',
     description: 'Get recent PC build history entries and validation counts.',
     inputSchema: {
@@ -1249,6 +1273,32 @@ const TOOLS = [
       },
     },
     handler: async (args) => textContent(await bridgeQuery('build.history', args)),
+  },
+  {
+    name: 'get_build_patches',
+    description:
+      'Get signed automatic and historical build patches, including exact ids, hashes, sizes, signing keys, and whether an archived base is available for verification.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        limit: { type: 'integer', minimum: 1, maximum: 100, description: 'Maximum patch entries (default 50)' },
+      },
+    },
+    handler: async (args) => textContent(await bridgeQuery('build.patches', args)),
+  },
+  {
+    name: 'compare_build_history',
+    description:
+      'Compare two exact build history entries without opening or focusing Build Settings. Returns added, removed, changed, and unchanged packaged files.',
+    inputSchema: {
+      type: 'object',
+      required: ['previousId', 'currentId'],
+      properties: {
+        previousId: { type: 'string', description: 'Older history id from get_build_history' },
+        currentId: { type: 'string', description: 'Newer history id from get_build_history' },
+      },
+    },
+    handler: async (args) => textContent(await bridgeQuery('build.history.compare', args)),
   },
 
   {
@@ -1630,6 +1680,36 @@ const TOOLS = [
       },
     },
     ['executable', 'expectedContentHash'],
+  ),
+  execTool(
+    'create_build_history_patch',
+    'Start asynchronous creation and verification of a signed patch between two archived builds without opening Build Settings. Poll get_build_artifact_status. Both ids must be compatible signed content archives, and MENGINE_SIGNING_KEY must be configured.',
+    'build.history.create_patch',
+    {
+      previousId: { type: 'string', description: 'Older history id from get_build_history' },
+      currentId: { type: 'string', description: 'Newer history id from get_build_history' },
+    },
+    ['previousId', 'currentId'],
+  ),
+  execTool(
+    'restore_build_history',
+    'Start asynchronous reconstruction of one signed archived build, verify it with an explicit trusted Ed25519 public-key path, and atomically publish it. Poll get_build_artifact_status. The previous published build is preserved on failure.',
+    'build.history.restore',
+    {
+      historyId: { type: 'string', description: 'Signed archived history id from get_build_history' },
+      publicKeyPath: { type: 'string', description: 'Absolute trusted Ed25519 public-key file path' },
+    },
+    ['historyId', 'publicKeyPath'],
+  ),
+  execTool(
+    'verify_build_patch',
+    'Start asynchronous verification of one signed build patch against a matching archived base using an explicit trusted Ed25519 public-key path. Poll get_build_artifact_status. No editor window or native picker is opened.',
+    'build.patch.verify',
+    {
+      patchId: { type: 'string', description: 'Exact patch id from get_build_patches' },
+      publicKeyPath: { type: 'string', description: 'Absolute trusted Ed25519 public-key file path' },
+    },
+    ['patchId', 'publicKeyPath'],
   ),
   execTool(
     'create_gameobject',

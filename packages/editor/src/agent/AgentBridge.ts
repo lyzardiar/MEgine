@@ -107,12 +107,16 @@ import {
 import {
   buildPcPlayer,
   cancelPcBuild,
+  comparePcBuildHistory,
+  createPcBuildHistoryPatch,
   getProjectBuildSettings,
   listenToPcBuildProgress,
   listPcBuildHistory,
-  PROJECT_BUILD_SETTINGS_CHANGED_EVENT,
+  listPcBuildPatches,
+  restorePcBuildHistory,
   saveProjectBuildAssetSettings,
   saveProjectBuildSettings,
+  verifyPcBuildPatch,
   verifyPcPlayer,
   type BuildPlayerProfile,
   type BuildPlayerResult,
@@ -120,6 +124,10 @@ import {
   type ProjectBuildSettings,
   type VerifyPlayerResult,
 } from '../transport/editorTransport';
+import {
+  broadcastProjectBuildArtifactsChanged,
+  broadcastProjectBuildSettingsChanged,
+} from '../buildEditorEvents';
 import type { AgentAssetOperations } from './assetOperations';
 import {
   AGENT_EVENT_TOPICS,
@@ -265,6 +273,18 @@ type AgentBuildJob = {
   error: string | null;
 };
 
+type AgentBuildArtifactJob = {
+  id: string;
+  operation: 'history-patch' | 'history-restore' | 'patch-verify';
+  status: 'running' | 'succeeded' | 'failed';
+  cancellable: false;
+  input: Record<string, string>;
+  startedAt: number;
+  finishedAt: number | null;
+  result: unknown;
+  error: string | null;
+};
+
 interface EntityView {
   entity: number;
   name?: string | null;
@@ -293,6 +313,7 @@ class AgentBridge {
   private sceneProvider: (() => AgentSceneProvider | null) | null = null;
   private workspaceProvider: (() => AgentWorkspaceProvider | null) | null = null;
   private buildJob: AgentBuildJob | null = null;
+  private buildArtifactJob: AgentBuildArtifactJob | null = null;
   private stopBuildProgress: (() => void) | null = null;
   private assetOperations: AgentAssetOperations | null = null;
   private clearLogProvider: (() => void) | null = null;
@@ -1639,9 +1660,7 @@ class AgentBridge {
         error instanceof Error ? error.message : String(error),
       );
     }
-    window.dispatchEvent(new CustomEvent(PROJECT_BUILD_SETTINGS_CHANGED_EVENT, {
-      detail: result,
-    }));
+    broadcastProjectBuildSettingsChanged(result);
     this.appendEvent('build.settings', result);
     this.logProvider?.(
       `Agent updated Build Settings: ${result.scenes.length} scene(s), entry ${result.mainScene}`,
@@ -1689,9 +1708,7 @@ class AgentBridge {
         error instanceof Error ? error.message : String(error),
       );
     }
-    window.dispatchEvent(new CustomEvent(PROJECT_BUILD_SETTINGS_CHANGED_EVENT, {
-      detail: result,
-    }));
+    broadcastProjectBuildSettingsChanged(result);
     this.appendEvent('build.settings', result);
     this.logProvider?.(
       `Agent updated Build content policy: ${result.assetMode}, ${result.alwaysInclude.length} always-included path(s), ${result.shaderVariantLimit} shader variants`,
@@ -1752,6 +1769,186 @@ class AgentBridge {
       entries: history.entries.slice(0, boundedLimit),
       truncated: history.entries.length > boundedLimit,
     };
+  }
+
+  async getBuildPatches(limit = 50): Promise<unknown> {
+    const boundedLimit = Number.isFinite(limit)
+      ? Math.min(100, Math.max(1, Math.trunc(limit)))
+      : 50;
+    const inventory = await bridgeIo(
+      'Failed to read build patch inventory',
+      () => listPcBuildPatches(),
+    );
+    return {
+      ...inventory,
+      total: inventory.entries.length,
+      entries: inventory.entries.slice(0, boundedLimit),
+      truncated: inventory.entries.length > boundedLimit,
+    };
+  }
+
+  async compareBuildHistory(previousId: string, currentId: string): Promise<unknown> {
+    if (previousId === currentId) {
+      throw new BridgeError('INVALID_ARGS', 'Build history comparison requires two different ids');
+    }
+    return bridgeIo(
+      'Failed to compare build history',
+      () => comparePcBuildHistory(previousId, currentId),
+    );
+  }
+
+  async createBuildHistoryPatch(previousId: string, currentId: string): Promise<unknown> {
+    if (!isDesktopEditor()) {
+      throw new BridgeError('NOT_READY', 'Historical patch generation requires the desktop editor');
+    }
+    if (previousId === currentId) {
+      throw new BridgeError('INVALID_ARGS', 'Historical patch generation requires two different ids');
+    }
+    const result = await bridgeIo(
+      'Historical patch generation failed',
+      () => createPcBuildHistoryPatch(previousId, currentId),
+    );
+    this.notifyBuildArtifactsChanged('history-patch-created', result);
+    this.logProvider?.(`Agent created signed historical patch: ${result.outputDir}`);
+    return result;
+  }
+
+  async restoreBuildHistory(historyId: string, publicKeyPath: string): Promise<unknown> {
+    if (!isDesktopEditor()) {
+      throw new BridgeError('NOT_READY', 'Build history restore requires the desktop editor');
+    }
+    const result = await bridgeIo(
+      'Historical build restore failed',
+      () => restorePcBuildHistory(historyId, publicKeyPath),
+    );
+    this.notifyBuildArtifactsChanged('history-restored', result);
+    this.logProvider?.(`Agent restored trusted build history ${result.historyId}: ${result.outputDir}`);
+    return result;
+  }
+
+  async verifyBuildPatch(patchId: string, publicKeyPath: string): Promise<unknown> {
+    if (!isDesktopEditor()) {
+      throw new BridgeError('NOT_READY', 'Build patch verification requires the desktop editor');
+    }
+    const result = await bridgeIo(
+      'Build patch verification failed',
+      () => verifyPcBuildPatch(patchId, publicKeyPath),
+    );
+    this.appendEvent('build.progress', {
+      status: 'patch-verified',
+      result,
+    });
+    this.logProvider?.(`Agent verified signed build patch ${result.patchId}`);
+    return result;
+  }
+
+  getBuildArtifactStatus(): { status: 'idle' } | AgentBuildArtifactJob {
+    return this.buildArtifactJob
+      ? structuredClone(this.buildArtifactJob)
+      : { status: 'idle' };
+  }
+
+  startBuildHistoryPatch(previousId: string, currentId: string): AgentBuildArtifactJob {
+    if (previousId === currentId) {
+      throw new BridgeError('INVALID_ARGS', 'Historical patch generation requires two different ids');
+    }
+    return this.startBuildArtifactJob(
+      'history-patch',
+      { previousId, currentId },
+      () => this.createBuildHistoryPatch(previousId, currentId),
+    );
+  }
+
+  startBuildHistoryRestore(
+    historyId: string,
+    publicKeyPath: string,
+  ): AgentBuildArtifactJob {
+    return this.startBuildArtifactJob(
+      'history-restore',
+      { historyId, publicKeyPath },
+      () => this.restoreBuildHistory(historyId, publicKeyPath),
+    );
+  }
+
+  startBuildPatchVerification(
+    patchId: string,
+    publicKeyPath: string,
+  ): AgentBuildArtifactJob {
+    return this.startBuildArtifactJob(
+      'patch-verify',
+      { patchId, publicKeyPath },
+      () => this.verifyBuildPatch(patchId, publicKeyPath),
+    );
+  }
+
+  private startBuildArtifactJob(
+    operation: AgentBuildArtifactJob['operation'],
+    input: Record<string, string>,
+    run: () => Promise<unknown>,
+  ): AgentBuildArtifactJob {
+    if (!isDesktopEditor()) {
+      throw new BridgeError('NOT_READY', 'Build artifact jobs require the desktop editor');
+    }
+    if (this.buildArtifactJob?.status === 'running') {
+      throw new BridgeError(
+        'CONFLICT',
+        `Build artifact job ${this.buildArtifactJob.id} is already running`,
+      );
+    }
+    if (this.buildJob?.status === 'running') {
+      throw new BridgeError('CONFLICT', `Build ${this.buildJob.id} is already running`);
+    }
+    const job: AgentBuildArtifactJob = {
+      id: crypto.randomUUID(),
+      operation,
+      status: 'running',
+      cancellable: false,
+      input: structuredClone(input),
+      startedAt: Date.now(),
+      finishedAt: null,
+      result: null,
+      error: null,
+    };
+    this.buildArtifactJob = job;
+    this.appendEvent('build.progress', {
+      jobId: job.id,
+      operation,
+      status: 'running',
+      cancellable: false,
+    }, job.startedAt);
+    void run()
+      .then((result) => {
+        if (this.buildArtifactJob?.id !== job.id) return;
+        this.buildArtifactJob.status = 'succeeded';
+        this.buildArtifactJob.result = result;
+        this.buildArtifactJob.finishedAt = Date.now();
+        this.appendEvent('build.progress', {
+          jobId: job.id,
+          operation,
+          status: 'succeeded',
+          result,
+        }, this.buildArtifactJob.finishedAt);
+      })
+      .catch((error) => {
+        if (this.buildArtifactJob?.id !== job.id) return;
+        const message = error instanceof Error ? error.message : String(error);
+        this.buildArtifactJob.status = 'failed';
+        this.buildArtifactJob.error = message;
+        this.buildArtifactJob.finishedAt = Date.now();
+        this.appendEvent('build.progress', {
+          jobId: job.id,
+          operation,
+          status: 'failed',
+          error: message,
+        }, this.buildArtifactJob.finishedAt);
+        this.logProvider?.(`Agent build artifact ${operation} failed: ${message}`);
+      });
+    return structuredClone(job);
+  }
+
+  private notifyBuildArtifactsChanged(status: string, result: unknown): void {
+    broadcastProjectBuildArtifactsChanged({ status, result });
+    this.appendEvent('build.progress', { status, result });
   }
 
   getBuildStatus(): { status: 'idle' } | AgentBuildJob {
@@ -2595,6 +2792,27 @@ class AgentBridge {
       );
       return this.finishAsyncCommand({ ok: true, data: result }, options, true);
     }
+    if (commandId === 'build.history.create_patch') {
+      const result = this.startBuildHistoryPatch(
+        requiredString(args, 'previousId'),
+        requiredString(args, 'currentId'),
+      );
+      return this.finishAsyncCommand({ ok: true, data: result }, options, true);
+    }
+    if (commandId === 'build.history.restore') {
+      const result = this.startBuildHistoryRestore(
+        requiredString(args, 'historyId'),
+        requiredAbsolutePath(args, 'publicKeyPath'),
+      );
+      return this.finishAsyncCommand({ ok: true, data: result }, options, true);
+    }
+    if (commandId === 'build.patch.verify') {
+      const result = this.startBuildPatchVerification(
+        requiredString(args, 'patchId'),
+        requiredAbsolutePath(args, 'publicKeyPath'),
+      );
+      return this.finishAsyncCommand({ ok: true, data: result }, options, true);
+    }
     if (commandId === 'view.set_game_resolution') {
       const result = await this.setGameResolution(requiredGameResolution(args));
       return this.finishAsyncCommand({ ok: true, data: result }, options, true);
@@ -2766,9 +2984,20 @@ class AgentBridge {
         return this.getBuildSettings();
       case 'build.status':
         return this.getBuildStatus();
+      case 'build.artifact_status':
+        return this.getBuildArtifactStatus();
       case 'build.history':
         return this.getBuildHistory(
           typeof params.limit === 'number' ? params.limit : 20,
+        );
+      case 'build.patches':
+        return this.getBuildPatches(
+          typeof params.limit === 'number' ? params.limit : 50,
+        );
+      case 'build.history.compare':
+        return this.compareBuildHistory(
+          requiredString(params, 'previousId'),
+          requiredString(params, 'currentId'),
         );
       case 'console.get_logs':
         return this.getLogs({
@@ -2912,6 +3141,20 @@ function requiredString(
     );
   }
   return allowEmpty ? value : value.trim();
+}
+
+function requiredAbsolutePath(
+  args: Record<string, unknown>,
+  key: string,
+): string {
+  const value = requiredString(args, key);
+  const windowsDrive = /^[a-zA-Z]:[\\/]/.test(value);
+  const windowsUnc = value.startsWith('\\\\');
+  const posixRoot = value.startsWith('/');
+  if (!windowsDrive && !windowsUnc && !posixRoot) {
+    throw new BridgeError('INVALID_ARGS', `"${key}" must be an absolute path`);
+  }
+  return value;
 }
 
 function requiredBoundedUiDelta(

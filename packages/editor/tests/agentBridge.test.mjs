@@ -120,6 +120,8 @@ test('whole-window agent capture is background-safe and addressable by window la
   assert.match(mcp, /its outcome is unknown/);
   assert.match(mcp, /class BridgeRpcError/);
   assert.match(mcp, /class BridgeOutcomeUnknownError/);
+  assert.match(mcp, /BUILD_ARTIFACT_REQUEST_TIMEOUT_MS/);
+  assert.match(mcp, /const longRunning = command === 'build\.verify'/);
   assert.match(mcp, /toolErrorContent/);
   assert.match(mcp, /data: error\.data/);
   assert.match(mcp, /code: 'UNKNOWN_OUTCOME'/);
@@ -159,6 +161,9 @@ test('whole-window agent capture is background-safe and addressable by window la
   assert.match(mcp, /name: 'preview_asset_trash'/);
   assert.match(mcp, /'restore_asset'/);
   assert.match(mcp, /name: 'get_build_status'/);
+  assert.match(mcp, /name: 'get_build_artifact_status'/);
+  assert.match(mcp, /name: 'get_build_patches'/);
+  assert.match(mcp, /name: 'compare_build_history'/);
   assert.match(mcp, /'set_build_scenes'/);
   assert.match(mcp, /'set_build_asset_policy'/);
   assert.match(mcp, /'set_game_resolution'/);
@@ -166,6 +171,9 @@ test('whole-window agent capture is background-safe and addressable by window la
   assert.match(mcp, /'view\.changed'/);
   assert.match(mcp, /'start_pc_build'/);
   assert.match(mcp, /'verify_pc_build'/);
+  assert.match(mcp, /'create_build_history_patch'/);
+  assert.match(mcp, /'restore_build_history'/);
+  assert.match(mcp, /'verify_build_patch'/);
   assert.match(mcp, /name: 'get_editor_events'/);
   assert.match(mcp, /name: 'get_scene_changes'/);
   assert.match(mcp, /name: 'get_project_state'/);
@@ -337,9 +345,11 @@ test('editor dialogs are non-blocking, semantic, and Agent-addressable', () => {
 });
 
 test('every cross-window editor channel is isolated by native editor instance', () => {
+  const main = fs.readFileSync(path.join(root, 'src', 'main.tsx'), 'utf8');
   const files = [
     'App.tsx',
     'assetEditorEvents.ts',
+    'buildEditorEvents.ts',
     'editorDialog.ts',
     'editorProfiler.ts',
     'sortingLayers.ts',
@@ -350,6 +360,7 @@ test('every cross-window editor channel is isolated by native editor instance', 
     assert.match(source, /createEditorBroadcastChannel/);
     assert.doesNotMatch(source, /new BroadcastChannel/);
   }
+  assert.match(main, /initializeBuildEditorEvents\(\)/);
 });
 
 test('panel and menu agent surfaces use live providers and background activation', () => {
@@ -515,6 +526,7 @@ test('scene, asset, and asynchronous build tools share guarded editor services',
   assert.match(bridge, /status: 'running'/);
   assert.match(bridge, /listenToPcBuildProgress/);
   assert.match(bridge, /case 'build\.status'/);
+  assert.match(bridge, /case 'build\.artifact_status'/);
   assert.match(bridge, /'STALE_REVISION'/);
   assert.match(bridge, /result\.sceneRevision = this\.sceneChanges\.revision/);
   assert.match(bridge, /commandId === 'build\.settings\.set_scenes'/);
@@ -523,6 +535,15 @@ test('scene, asset, and asynchronous build tools share guarded editor services',
   assert.match(bridge, /availableScenes/);
   assert.match(bridge, /commandId === 'build\.verify'/);
   assert.match(bridge, /verifyPcPlayer\(executable, expectedContentHash\)/);
+  assert.match(bridge, /case 'build\.patches'/);
+  assert.match(bridge, /case 'build\.history\.compare'/);
+  assert.match(bridge, /commandId === 'build\.history\.create_patch'/);
+  assert.match(bridge, /commandId === 'build\.history\.restore'/);
+  assert.match(bridge, /commandId === 'build\.patch\.verify'/);
+  assert.match(bridge, /requiredAbsolutePath\(args, 'publicKeyPath'\)/);
+  assert.match(bridge, /private startBuildArtifactJob/);
+  assert.match(bridge, /cancellable: false/);
+  assert.match(buildSettings, /PROJECT_BUILD_ARTIFACTS_CHANGED_EVENT/);
   assert.match(buildSettings, /PROJECT_BUILD_SETTINGS_CHANGED_EVENT/);
   assert.match(eventJournal, /'build\.settings'/);
   assert.match(eventJournal, /'project\.settings'/);

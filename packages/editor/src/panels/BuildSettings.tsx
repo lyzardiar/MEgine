@@ -17,7 +17,6 @@ import {
   listPcBuildHistory,
   listPcBuildPatches,
   listenToPcBuildProgress,
-  PROJECT_BUILD_SETTINGS_CHANGED_EVENT,
   restorePcBuildHistory,
   runPcPlayer,
   saveProjectBuildAssetSettings,
@@ -36,6 +35,11 @@ import {
   type ProjectBuildSettings,
   type VerifyPlayerResult,
 } from '../transport/editorTransport';
+import {
+  broadcastProjectBuildSettingsChanged,
+  PROJECT_BUILD_ARTIFACTS_CHANGED_EVENT,
+  PROJECT_BUILD_SETTINGS_CHANGED_EVENT,
+} from '../buildEditorEvents';
 
 const SHADER_VARIANT_LIMIT_OPTIONS = [64, 128, 256, 512, 1024, 2048, 4096, 8192];
 const MAX_RENDERED_SHADER_VARIANTS = 512;
@@ -336,6 +340,18 @@ export function BuildSettings(props: {
   }, []);
 
   useEffect(() => {
+    const onExternalArtifacts = () => {
+      void refreshBuildHistory(false);
+      void refreshBuildPatches(false);
+    };
+    window.addEventListener(PROJECT_BUILD_ARTIFACTS_CHANGED_EVENT, onExternalArtifacts);
+    return () => window.removeEventListener(
+      PROJECT_BUILD_ARTIFACTS_CHANGED_EVENT,
+      onExternalArtifacts,
+    );
+  }, [refreshBuildHistory, refreshBuildPatches]);
+
+  useEffect(() => {
     props.onDirtyChange(assetSettingsDirty);
   }, [assetSettingsDirty, props.onDirtyChange]);
 
@@ -397,6 +413,7 @@ export function BuildSettings(props: {
       const next = await saveProjectBuildSettings(scenes, expectedRevision);
       settingsRef.current = next;
       setSettings(next);
+      broadcastProjectBuildSettingsChanged(next);
       invalidateBuildReport();
       props.onLog(`Build scenes updated: ${next.scenes.length} scene(s), entry ${sceneLabel(next.scenes[0])}`);
     } catch (reason) {
@@ -430,6 +447,7 @@ export function BuildSettings(props: {
       );
       settingsRef.current = next;
       setSettings(next);
+      broadcastProjectBuildSettingsChanged(next);
       const nextDraft = next.alwaysInclude.join('\n');
       alwaysIncludeDraftRef.current = nextDraft;
       setAlwaysIncludeDraft(nextDraft);
@@ -1003,7 +1021,7 @@ export function BuildSettings(props: {
                 type="button"
                 disabled={!historyRestoreEligible || buildArtifactBusy || historyComparing}
                 data-agent-interaction="blocked"
-                data-agent-alternative="manual trusted public-key selection"
+                data-agent-alternative="restore_build_history"
                 title={historyRestoreEligible
                   ? 'Choose an independent trusted Ed25519 public key, verify the archived artifact, then atomically replace the published build.'
                   : 'Select one signed, content-archived build that is not already current.'}
@@ -1141,7 +1159,7 @@ export function BuildSettings(props: {
                     type="button"
                     disabled={!patch.baseAvailable || buildArtifactBusy}
                     data-agent-interaction="blocked"
-                    data-agent-alternative="manual trusted public-key selection"
+                    data-agent-alternative="verify_build_patch"
                     title={patch.baseAvailable
                       ? 'Choose an independent trusted Ed25519 public key and verify the complete patch chain.'
                       : 'The exact archived base is no longer available for verification.'}

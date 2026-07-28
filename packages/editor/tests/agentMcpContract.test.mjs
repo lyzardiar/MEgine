@@ -110,6 +110,18 @@ test('MCP validates tool arguments before dispatch with bounded structured issue
   validateToolArguments(tool('list_assets'), { limit: 5000, offset: 1000000 });
   validateToolArguments(tool('get_entity'), { id: 0 });
   validateToolArguments(tool('get_entity'), { name: 'Player' });
+  validateToolArguments(tool('compare_build_history'), {
+    previousId: 'history-old',
+    currentId: 'history-new',
+  });
+  validateToolArguments(tool('restore_build_history'), {
+    historyId: 'history-new',
+    publicKeyPath: 'C:\\keys\\trusted.pub',
+  });
+  validateToolArguments(tool('verify_build_patch'), {
+    patchId: 'history-old--history-new',
+    publicKeyPath: 'C:\\keys\\trusted.pub',
+  });
 
   assert.throws(
     () => validateToolArguments(tool('create_project'), {
