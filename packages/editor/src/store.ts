@@ -2214,7 +2214,7 @@ export function createEditorStore(undoService: EditorUndoService = createEditorU
     },
     spawnModel(path: string) {
       const name = path.split('/').pop()?.replace(/\.(?:gltf|glb)$/i, '') || 'Model';
-      spawnAt(
+      return spawnAt(
         name,
         {
           Transform: { position: [0, 0, 0], rotation: [0, 0, 0, 1], scale: [1, 1, 1] },

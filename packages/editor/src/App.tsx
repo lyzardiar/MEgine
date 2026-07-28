@@ -63,11 +63,16 @@ import { Viewport } from './panels/Viewport';
 import { DockWorkspace, type PanelKind } from './panels/DockWorkspace';
 import {
   agentBridge,
+  type AgentInstantiableAssetTarget,
   type AgentResourceEditorTarget,
   type AgentSceneProvider,
   type AgentWorkspaceDocument,
   type AgentWorkspaceProvider,
 } from './agent/AgentBridge';
+import {
+  animatorDocumentKind,
+  materialDocumentKind,
+} from './agent/resourceTargets';
 import { logService } from './agent/LogService';
 import { BridgeError, type PanelLayoutSnapshot } from './agent/protocol';
 import { EditorWindowHost } from './editorWindow';
@@ -852,27 +857,33 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
     };
   }, [props.detachedPanel]);
 
-  const instantiateSpriteAsset = (
+  const instantiateSpriteAsset = async (
+    path: string,
+    options: { parent?: number | null; position?: [number, number, number] } = {},
+  ): Promise<number> => {
+    const pixelSize = await loadSpriteNativeSize(path);
+    const size = spriteNativeWorldSize(
+      pixelSize ? [pixelSize.w, pixelSize.h] : [100, 100],
+      resolveSpritePixelsPerUnit(path),
+    );
+    const id = store.spawnSpriteAsset(path, {
+      name: spriteDisplayName(path).replace(/\.[^.]+$/, ''),
+      parent: options.parent ?? null,
+      position: options.position ?? [0, 0, 0],
+      size,
+      pivot: resolveSpritePivot(path),
+    });
+    if (options.position == null) store.frameSelected();
+    log(`Created SpriteRenderer ${path} (entity ${id})`);
+    refresh();
+    return id;
+  };
+
+  const requestSpriteInstantiation = (
     path: string,
     options: { parent?: number | null; position?: [number, number, number] } = {},
   ) => {
-    void loadSpriteNativeSize(path)
-      .then((pixelSize) => {
-        const size = spriteNativeWorldSize(
-          pixelSize ? [pixelSize.w, pixelSize.h] : [100, 100],
-          resolveSpritePixelsPerUnit(path),
-        );
-        const id = store.spawnSpriteAsset(path, {
-          name: spriteDisplayName(path).replace(/\.[^.]+$/, ''),
-          parent: options.parent ?? null,
-          position: options.position ?? [0, 0, 0],
-          size,
-          pivot: resolveSpritePivot(path),
-        });
-        if (options.position == null) store.frameSelected();
-        log(`Created SpriteRenderer ${path} (entity ${id})`);
-        refresh();
-      })
+    void instantiateSpriteAsset(path, options)
       .catch((error) => log(`Sprite creation failed: ${String(error)}`, 'error'));
   };
 
@@ -1493,13 +1504,13 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
       }
       const resources: AgentWorkspaceDocument[] = [
         {
-          kind: 'animator',
+          kind: animatorDocumentKind(animatorPath),
           panel: 'animator',
           path: animatorPath,
           dirty: animatorDirty,
         },
         {
-          kind: 'material',
+          kind: materialDocumentKind(materialPath),
           panel: 'material',
           path: materialPath,
           dirty: materialDirty,
@@ -1559,8 +1570,10 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
           case 'timeline':
             return timelineAssetPath;
           case 'animator':
+          case 'avatar-mask':
             return animatorPath;
           case 'material':
+          case 'material-instance':
             return materialPath;
           case 'shader':
             return shaderPath;
@@ -1612,9 +1625,11 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
           setTimelineAssetPath(target.path);
           break;
         case 'animator':
+        case 'avatar-mask':
           setAnimatorPath(target.path);
           break;
         case 'material':
+        case 'material-instance':
           setMaterialPath(target.path);
           break;
         case 'shader':
@@ -1630,6 +1645,24 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
       window.dispatchEvent(new CustomEvent('mengine:focus-panel', {
         detail: { panel: target.panel, activateWindow: false },
       }));
+    },
+    instantiateAsset: async (target: AgentInstantiableAssetTarget) => {
+      switch (target.kind) {
+        case 'prefab': {
+          const entity = await instantiateProjectPrefab(store, target.path);
+          log(`Instantiated ${target.path} from AgentBridge (entity ${entity})`);
+          refresh();
+          return entity;
+        }
+        case 'model': {
+          const entity = store.spawnModel(target.path);
+          log(`Instantiated model ${target.path} from AgentBridge (entity ${entity})`);
+          refresh();
+          return entity;
+        }
+        case 'sprite':
+          return instantiateSpriteAsset(target.path);
+      }
     },
   };
 
@@ -2063,7 +2096,7 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
                   .catch((error) => log(`Prefab instantiate failed: ${String(error)}`, 'error'));
               }}
               onInstantiateSprite={(path, parent) => {
-                instantiateSpriteAsset(path, { parent });
+                requestSpriteInstantiation(path, { parent });
               }}
             />
           ),
@@ -2242,7 +2275,7 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
                 refresh();
               }}
               onInstantiateSprite={(path, position) => {
-                instantiateSpriteAsset(path, { position });
+                requestSpriteInstantiation(path, { position });
               }}
               onLog={log}
             />
@@ -2340,7 +2373,7 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
                 log(`Instantiated model ${path}`);
                 refresh();
               }}
-              onInstantiateSprite={(path) => instantiateSpriteAsset(path)}
+              onInstantiateSprite={(path) => requestSpriteInstantiation(path)}
               onOpenScene={(name) => {
                 void openSceneByName(name);
               }}

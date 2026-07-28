@@ -67,6 +67,7 @@ test('whole-window agent capture is background-safe and addressable by window la
   assert.match(mcp, /'write_asset_text'/);
   assert.match(mcp, /'import_asset_file'/);
   assert.match(mcp, /'open_asset'/);
+  assert.match(mcp, /'instantiate_asset'/);
   assert.match(mcp, /'detach_panel'/);
   assert.match(mcp, /'dock_panel'/);
   assert.match(mcp, /'invoke_component_method'/);
@@ -163,6 +164,7 @@ test('panel and menu agent surfaces use live providers and background activation
   assert.match(app, /\.\.\.resourceDocumentPathsRef\.current/);
   assert.match(app, /setMaterialPath\(message\.materialPath \?\? null\)/);
   assert.match(app, /openAsset: async \(target: AgentResourceEditorTarget\)/);
+  assert.match(app, /instantiateAsset: async \(target: AgentInstantiableAssetTarget\)/);
   assert.match(app, /type: 'request-save-resources'/);
   assert.match(app, /type: 'save-resources-result'/);
   assert.match(app, /await saveRemoteResources\(\)/);

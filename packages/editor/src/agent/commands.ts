@@ -883,6 +883,7 @@ const COMMAND_SUMMARIES: CommandSummary[] = [
   { id: 'scene.rename', category: 'scene', description: 'Rename a scene asset while preserving its identity and build references', readOnly: false },
   { id: 'scene.delete', category: 'scene', description: 'Permanently delete a scene after revalidating an exact preview token', readOnly: false },
   { id: 'asset.import_file', category: 'asset', description: 'Import one external local file to an exact unused project asset path', readOnly: false },
+  { id: 'asset.instantiate', category: 'asset', description: 'Instantiate an indexed prefab, model, or sprite asset as one scene entity transaction', readOnly: false },
   { id: 'asset.open', category: 'asset', description: 'Open a supported resource asset in its docked editor without raising a window', readOnly: false },
   { id: 'asset.write_text', category: 'asset', description: 'Create or revision-safely update a UTF-8 text asset', readOnly: false },
   { id: 'asset.rename', category: 'asset', description: 'Apply a previewed reference-aware asset rename', readOnly: false },

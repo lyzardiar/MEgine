@@ -175,6 +175,9 @@ export const COMMAND_PARAMS_SCHEMAS: Record<string, AgentJsonSchema> = {
     sourcePath: stringValue('Absolute regular local source file'),
     destinationPath: assetPath,
   }, ['sourcePath', 'destinationPath']),
+  'asset.instantiate': objectSchema({
+    path: assetPath,
+  }, ['path']),
   'asset.open': objectSchema({
     path: assetPath,
   }, ['path']),

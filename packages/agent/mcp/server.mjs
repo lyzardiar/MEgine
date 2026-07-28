@@ -800,12 +800,23 @@ const TOOLS = [
   ),
   execTool(
     'open_asset',
-    'Open a supported material, shader, animator, animation, timeline, texture, or sprite-atlas asset in its docked editor without raising or focusing a native window. Refuses to switch away from unsaved resource work.',
+    'Open a supported material, material-instance, shader, animator, avatar-mask, animation, timeline, sprite-compatible texture, or sprite-atlas asset in its docked editor without raising or focusing a native window. Refuses to switch away from unsaved resource work.',
     'asset.open',
     {
       path: {
         type: 'string',
         description: 'Exact project-relative asset path under Assets/',
+      },
+    },
+  ),
+  execTool(
+    'instantiate_asset',
+    'Instantiate one indexed prefab, glTF/GLB model, or sprite-compatible texture into the authored scene without a dialog or foreground focus. The asset must have healthy metadata and the operation creates one undo step.',
+    'asset.instantiate',
+    {
+      path: {
+        type: 'string',
+        description: 'Exact prefab, model, or PNG/JPEG/WebP/GIF path under Assets/',
       },
     },
   ),

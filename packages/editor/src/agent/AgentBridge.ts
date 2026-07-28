@@ -46,6 +46,13 @@ import {
   type CommandResult,
   type CommandSummary,
 } from './commands';
+import {
+  instantiableAssetTarget,
+  resourceEditorTarget,
+  type AgentInstantiableAssetTarget,
+  type AgentResourceEditorKind,
+  type AgentResourceEditorTarget,
+} from './resourceTargets';
 import { COMMAND_EXECUTION_OPTIONS_SCHEMA } from './commandSchemas';
 import {
   buildAgentComponentSchema,
@@ -168,22 +175,14 @@ export interface AgentWorkspaceProvider {
   assertDiskMutationAllowed: () => Promise<void>;
   listDocuments: () => Promise<AgentWorkspaceDocument[]>;
   openAsset: (target: AgentResourceEditorTarget) => Promise<void>;
+  instantiateAsset: (target: AgentInstantiableAssetTarget) => Promise<number>;
 }
 
-export type AgentResourceEditorKind =
-  | 'animation'
-  | 'animator'
-  | 'material'
-  | 'shader'
-  | 'sprite'
-  | 'sprite-atlas'
-  | 'timeline';
-
-export type AgentResourceEditorTarget = {
-  kind: AgentResourceEditorKind;
-  panel: string;
-  path: string;
-};
+export type {
+  AgentInstantiableAssetTarget,
+  AgentResourceEditorKind,
+  AgentResourceEditorTarget,
+} from './resourceTargets';
 
 export type AgentWorkspaceDocument = {
   kind: 'scene' | AgentResourceEditorKind | 'build-settings' | 'project-settings';
@@ -1681,6 +1680,43 @@ class AgentBridge {
       );
       return this.finishAsyncCommand({ ok: true, data: result }, options, true);
     }
+    if (commandId === 'asset.instantiate') {
+      const store = this.requireStore();
+      if (store.mode !== 'edit') {
+        throw new BridgeError(
+          'READONLY',
+          'asset.instantiate is only available in Edit Mode',
+        );
+      }
+      const normalized = normalizeAssetPath(requiredString(args, 'path'));
+      const asset = findAsset(await refreshProjectFiles(), normalized);
+      if (!asset) throw new BridgeError('IO_ERROR', `Asset not found: ${normalized}`);
+      if (asset.metaStatus !== 'ready') {
+        throw new BridgeError(
+          'CONFLICT',
+          `Asset metadata is not healthy: ${asset.relPath} (${asset.metaStatus})`,
+        );
+      }
+      const target = instantiableAssetTarget(asset);
+      if (!target) {
+        throw new BridgeError(
+          'INVALID_ARGS',
+          `Asset type "${asset.kind}" cannot be instantiated as a scene entity`,
+        );
+      }
+      const entityId = await bridgeIo(
+        `Failed to instantiate ${asset.relPath}`,
+        () => this.requireWorkspaceProvider().instantiateAsset(target),
+      );
+      return this.finishAsyncCommand({
+        ok: true,
+        data: {
+          kind: target.kind,
+          path: target.path,
+          entity: this.getEntity(entityId),
+        },
+      }, options);
+    }
     if (commandId === 'asset.open') {
       const normalized = normalizeAssetPath(requiredString(args, 'path'));
       const asset = findAsset(await refreshProjectFiles(), normalized);
@@ -2289,31 +2325,6 @@ function findAsset(
 ): ProjectFileAsset | null {
   const key = normalizedPath.toLocaleLowerCase();
   return files.find((asset) => asset.relPath.toLocaleLowerCase() === key) ?? null;
-}
-
-function resourceEditorTarget(asset: ProjectFileAsset): AgentResourceEditorTarget | null {
-  const target = (() => {
-    switch (asset.kind) {
-      case 'animation':
-        return { kind: 'animation', panel: 'timeline' } as const;
-      case 'animator-controller':
-      case 'avatar-mask':
-        return { kind: 'animator', panel: 'animator' } as const;
-      case 'material':
-        return { kind: 'material', panel: 'material' } as const;
-      case 'shader':
-        return { kind: 'shader', panel: 'shader' } as const;
-      case 'texture':
-        return { kind: 'sprite', panel: 'spriteEditor' } as const;
-      case 'sprite-atlas':
-        return { kind: 'sprite-atlas', panel: 'spriteAtlas' } as const;
-      case 'timeline':
-        return { kind: 'timeline', panel: 'timeline' } as const;
-      default:
-        return null;
-    }
-  })();
-  return target ? { ...target, path: asset.relPath } : null;
 }
 
 async function bridgeIo<T>(label: string, operation: () => Promise<T>): Promise<T> {

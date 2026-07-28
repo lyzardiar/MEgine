@@ -40,6 +40,10 @@ test('command schemas expose exact high-risk guards and shared optimistic option
     ['path'],
   );
   assert.deepEqual(
+    COMMAND_PARAMS_SCHEMAS['asset.instantiate'].required,
+    ['path'],
+  );
+  assert.deepEqual(
     COMMAND_PARAMS_SCHEMAS['panel.detach'].required,
     ['kind'],
   );
