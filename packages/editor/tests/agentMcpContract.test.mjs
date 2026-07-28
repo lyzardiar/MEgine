@@ -237,6 +237,12 @@ test('MCP validates tool arguments before dispatch with bounded structured issue
     entity: 1,
     position: [1, 2, 3],
   });
+  validateToolArguments(tool('set_rect_transform'), {
+    entity: 1,
+    anchorMin: [0, 0],
+    anchorMax: [1, 1],
+    sizeDelta: [0, 0],
+  });
   validateToolArguments(tool('find_entities'), {
     limit: 1000,
     offset: 1000000,
@@ -305,6 +311,13 @@ test('MCP validates tool arguments before dispatch with bounded structured issue
     () => validateToolArguments(tool('set_transform'), {
       entity: 1.5,
       position: [1, 2],
+    }),
+    /Invalid arguments/,
+  );
+  assert.throws(
+    () => validateToolArguments(tool('set_rect_transform'), {
+      entity: 1,
+      pivot: [0.5, 2],
     }),
     /Invalid arguments/,
   );

@@ -2440,6 +2440,46 @@ const TOOLS = [
     entity: { ...ENTITY_ID_SCHEMA, description: 'Entity id' },
     delta: { ...finiteNumberTuple(3), description: 'Local-position delta [x, y, z]' },
   }, ['entity', 'delta']),
+  execTool(
+    'set_rect_transform',
+    'Set exact serialized RectTransform fields as one undoable edit. Omitted fields retain their current values; anchors and pivot are normalized 0..1 tuples.',
+    'rect.set',
+    {
+      entity: { ...ENTITY_ID_SCHEMA, description: 'Entity id with RectTransform' },
+      anchoredPosition: { ...finiteNumberTuple(2), description: '[x, y]' },
+      sizeDelta: { ...finiteNumberTuple(2), description: '[width, height]' },
+      pivot: {
+        ...finiteNumberTuple(2),
+        items: { type: 'number', minimum: 0, maximum: 1 },
+        description: 'Normalized pivot [x, y]',
+      },
+      anchorMin: {
+        ...finiteNumberTuple(2),
+        items: { type: 'number', minimum: 0, maximum: 1 },
+        description: 'Normalized minimum anchor [x, y]',
+      },
+      anchorMax: {
+        ...finiteNumberTuple(2),
+        items: { type: 'number', minimum: 0, maximum: 1 },
+        description: 'Normalized maximum anchor [x, y]',
+      },
+      localRotation: { type: 'number', description: 'Local Z rotation in degrees' },
+      localScale: { ...finiteNumberTuple(2), description: 'Local UI scale [x, y]' },
+    },
+    ['entity'],
+    undefined,
+    {
+      anyOf: [
+        { required: ['anchoredPosition'] },
+        { required: ['sizeDelta'] },
+        { required: ['pivot'] },
+        { required: ['anchorMin'] },
+        { required: ['anchorMax'] },
+        { required: ['localRotation'] },
+        { required: ['localScale'] },
+      ],
+    },
+  ),
   execTool('set_selection', 'Set the selection to the given entity ids.', 'selection.set', {
     ids: { type: 'array', items: ENTITY_ID_SCHEMA, description: 'Entity ids to select' },
     mode: { type: 'string', enum: ['replace', 'add', 'toggle'], description: 'Selection mode (default replace)' },

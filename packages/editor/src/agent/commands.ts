@@ -21,6 +21,7 @@ import {
   createComponentDefaults,
 } from '../componentCatalog.ts';
 import type { EditorStore } from '../store';
+import { readRectTransform } from '../ui/rectLayout.ts';
 import { BridgeError, type ScreenshotResult } from './protocol.ts';
 import {
   COMMAND_PARAMS_SCHEMAS,
@@ -994,6 +995,65 @@ export const WRITE_COMMANDS: Record<string, CommandHandler> = {
     ctx.store.setTransform(entity, next);
     return { ok: true, data: { entity, delta, transform: next } };
   },
+  'rect.set': (ctx, args) => {
+    requireEditMode(ctx);
+    const entity = entityId(args, 'entity');
+    const current = readRectTransform(requireComponent(ctx, entity, 'RectTransform'));
+    const anchoredPosition = finiteTuple(args, 'anchoredPosition', 2);
+    const sizeDelta = finiteTuple(args, 'sizeDelta', 2);
+    const pivot = finiteTuple(args, 'pivot', 2);
+    const anchorMin = finiteTuple(args, 'anchorMin', 2);
+    const anchorMax = finiteTuple(args, 'anchorMax', 2);
+    const localRotation = optionalFiniteNumber(args, 'localRotation');
+    const localScale = finiteTuple(args, 'localScale', 2);
+    if (
+      !anchoredPosition
+      && !sizeDelta
+      && !pivot
+      && !anchorMin
+      && !anchorMax
+      && localRotation === undefined
+      && !localScale
+    ) {
+      throw new BridgeError(
+        'INVALID_ARGS',
+        'rect.set requires at least one RectTransform field',
+      );
+    }
+    const requireUnitTuple = (value: number[] | undefined, key: string): void => {
+      if (value?.some((item) => item < 0 || item > 1)) {
+        throw new BridgeError('INVALID_ARGS', `"${key}" values must be between 0 and 1`);
+      }
+    };
+    requireUnitTuple(pivot, 'pivot');
+    requireUnitTuple(anchorMin, 'anchorMin');
+    requireUnitTuple(anchorMax, 'anchorMax');
+    const nextAnchorMin = (anchorMin ?? current.anchor_min) as [number, number];
+    const nextAnchorMax = (anchorMax ?? current.anchor_max) as [number, number];
+    if (
+      nextAnchorMin[0] > nextAnchorMax[0]
+      || nextAnchorMin[1] > nextAnchorMax[1]
+    ) {
+      throw new BridgeError(
+        'INVALID_ARGS',
+        '"anchorMin" must not exceed "anchorMax" on either axis',
+      );
+    }
+    const next = {
+      ...current,
+      ...(anchoredPosition
+        ? { anchored_position: anchoredPosition as [number, number] }
+        : {}),
+      ...(sizeDelta ? { size_delta: sizeDelta as [number, number] } : {}),
+      ...(pivot ? { pivot: pivot as [number, number] } : {}),
+      ...(anchorMin ? { anchor_min: nextAnchorMin } : {}),
+      ...(anchorMax ? { anchor_max: nextAnchorMax } : {}),
+      ...(localRotation === undefined ? {} : { local_rotation: localRotation }),
+      ...(localScale ? { local_scale: localScale as [number, number] } : {}),
+    };
+    ctx.store.setComponent(entity, 'RectTransform', next);
+    return { ok: true, data: { entity, rectTransform: structuredClone(next) } };
+  },
 
   // ── Playback / history / view ──────────────────────────────────────────
   'playback.play': (ctx) => {
@@ -1177,6 +1237,7 @@ const COMMAND_SUMMARIES: CommandSummary[] = [
   { id: 'component.invoke', category: 'component', description: 'Invoke one registered Behaviour method on an entity', readOnly: false },
   { id: 'transform.set', category: 'transform', description: 'Set position/rotation/scale on an entity transform', readOnly: false },
   { id: 'transform.translate', category: 'transform', description: 'Translate an entity by a local-position delta', readOnly: false },
+  { id: 'rect.set', category: 'rect', description: 'Set exact RectTransform fields while preserving omitted values', readOnly: false },
   { id: 'playback.play', category: 'playback', description: 'Enter play mode', readOnly: false },
   { id: 'playback.pause', category: 'playback', description: 'Toggle pause', readOnly: false },
   { id: 'playback.stop', category: 'playback', description: 'Stop playback and return to edit mode', readOnly: false },

@@ -599,6 +599,35 @@ export const COMMAND_PARAMS_SCHEMAS: Record<string, AgentJsonSchema> = {
     entity: entityId(),
     delta: finiteTuple(3, 'Local-position delta [x, y, z]'),
   }, ['entity', 'delta']),
+  'rect.set': objectSchema({
+    entity: entityId(),
+    anchoredPosition: finiteTuple(2, 'Anchored position [x, y]'),
+    sizeDelta: finiteTuple(2, 'Size delta [width, height]'),
+    pivot: {
+      ...finiteTuple(2, 'Normalized pivot [x, y]'),
+      items: { type: 'number', minimum: 0, maximum: 1 },
+    },
+    anchorMin: {
+      ...finiteTuple(2, 'Normalized minimum anchor [x, y]'),
+      items: { type: 'number', minimum: 0, maximum: 1 },
+    },
+    anchorMax: {
+      ...finiteTuple(2, 'Normalized maximum anchor [x, y]'),
+      items: { type: 'number', minimum: 0, maximum: 1 },
+    },
+    localRotation: numberValue('Local Z rotation in degrees'),
+    localScale: finiteTuple(2, 'Local UI scale [x, y]'),
+  }, ['entity'], {
+    anyOf: [
+      { required: ['anchoredPosition'] },
+      { required: ['sizeDelta'] },
+      { required: ['pivot'] },
+      { required: ['anchorMin'] },
+      { required: ['anchorMax'] },
+      { required: ['localRotation'] },
+      { required: ['localScale'] },
+    ],
+  }),
   'playback.play': emptySchema,
   'playback.pause': emptySchema,
   'playback.stop': emptySchema,

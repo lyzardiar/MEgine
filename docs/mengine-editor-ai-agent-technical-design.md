@@ -289,7 +289,7 @@ Rust Host 使用独立的工程生命周期互斥门串行化 open/create/close 
 | --- | --- | --- |
 | `transform.set` | `{ entity, position?, rotation?, scale? }` | `store.setTransform` |
 | `transform.translate` | `{ entity, delta }` | ✅ 从实时 Transform 计算有限新位置并走 `store.setTransform`，因此与 Inspector 一样可撤销 |
-| `rect.set` | `{ entity, anchoredPosition?, sizeDelta?, pivot?, anchors? }` | `store.setRectPivot/setRectAnchors/...` |
+| `rect.set` | `{ entity, anchoredPosition?, sizeDelta?, pivot?, anchorMin?, anchorMax?, localRotation?, localScale? }` | ✅ 严格校验并规范化 RectTransform；未提供字段保持当前值，整次修改走 `store.setComponent` 形成单次撤销 |
 
 #### 4.2.4 选择 / 播放 / 历史
 

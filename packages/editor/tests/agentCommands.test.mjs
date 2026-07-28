@@ -27,7 +27,18 @@ function createContext() {
       parent: null,
       siblingIndex: 1,
       active: true,
-      components: { Transform: {} },
+      components: {
+        Transform: {},
+        RectTransform: {
+          anchor_min: [0.5, 0.5],
+          anchor_max: [0.5, 0.5],
+          pivot: [0.5, 0.5],
+          anchored_position: [0, 0],
+          size_delta: [100, 100],
+          local_rotation: 0,
+          local_scale: [1, 1],
+        },
+      },
     },
   ];
   const calls = [];
@@ -731,6 +742,54 @@ test('transform updates require finite tuples with exact dimensions', () => {
       scale: [1, 1, 1],
     },
   ]);
+});
+
+test('RectTransform updates preserve omitted fields and reject invalid normalized geometry', () => {
+  const { ctx, calls } = createContext();
+
+  assertBridgeError(
+    () => run(ctx, 'rect.set', { entity: 1, sizeDelta: [200, 80] }),
+    'COMPONENT_NOT_FOUND',
+  );
+  assertBridgeError(
+    () => run(ctx, 'rect.set', { entity: 2 }),
+    'INVALID_ARGS',
+  );
+  assertBridgeError(
+    () => run(ctx, 'rect.set', { entity: 2, pivot: [-0.1, 0.5] }),
+    'INVALID_ARGS',
+  );
+  assertBridgeError(
+    () => run(ctx, 'rect.set', {
+      entity: 2,
+      anchorMin: [0.8, 0],
+      anchorMax: [0.2, 1],
+    }),
+    'INVALID_ARGS',
+  );
+  assert.deepEqual(calls, []);
+
+  const result = run(ctx, 'rect.set', {
+    entity: 2,
+    anchoredPosition: [12, -4],
+    sizeDelta: [240, 80],
+    pivot: [0, 1],
+    anchorMin: [0, 0],
+    anchorMax: [1, 1],
+    localRotation: 15,
+    localScale: [-1, 2],
+  });
+  const expected = {
+    anchor_min: [0, 0],
+    anchor_max: [1, 1],
+    pivot: [0, 1],
+    anchored_position: [12, -4],
+    size_delta: [240, 80],
+    local_rotation: 15,
+    local_scale: [-1, 2],
+  };
+  assert.deepEqual(calls[0], ['setComponent', 2, 'RectTransform', expected]);
+  assert.deepEqual(result.data, { entity: 2, rectTransform: expected });
 });
 
 test('relative translation, sibling reorder, and Scene camera control use native store paths', () => {

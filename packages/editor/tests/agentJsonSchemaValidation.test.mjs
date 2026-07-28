@@ -31,6 +31,7 @@ test('direct AgentBridge schema validation matches MCP for valid command argumen
     ['project.create', { parent: 'C:\\projects', name: 'Example' }],
     ['entity.create', { name: 'Child', parent: null, components: {} }],
     ['transform.set', { entity: 1, position: [1, 2, 3] }],
+    ['rect.set', { entity: 1, pivot: [0.5, 0.5], sizeDelta: [100, 40] }],
     ['playback.step', { deltaTime: 1 / 60 }],
     ['window.ui_press_key', {
       selector: '#dialog-input',
@@ -74,6 +75,8 @@ test('direct AgentBridge schema validation matches MCP for malformed or extra ar
     ['entity.create', { parent: -1 }],
     ['transform.set', { entity: 1 }],
     ['transform.set', { entity: 1, position: [1, 2] }],
+    ['rect.set', { entity: 1 }],
+    ['rect.set', { entity: 1, anchorMin: [0, 2] }],
     ['playback.step', { deltaTime: 0 }],
     ['window.ui_press_key', {
       selector: '#dialog-input',
