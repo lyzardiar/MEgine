@@ -100,6 +100,7 @@ test('whole-window agent capture is background-safe and addressable by window la
   assert.match(mcp, /name: 'read_window_ui_content'/);
   assert.match(mcp, /Continue with nextOffset until null/);
   assert.match(mcp, /name: 'list_open_documents'/);
+  assert.match(mcp, /name: 'list_editor_window_types'/);
   assert.match(mcp, /name: 'get_active_dialog'/);
   assert.match(mcp, /'click_window_ui'/);
   assert.match(mcp, /'double_click_window_ui'/);
@@ -108,6 +109,7 @@ test('whole-window agent capture is background-safe and addressable by window la
   assert.match(mcp, /'scroll_window_ui'/);
   assert.match(mcp, /'respond_to_dialog'/);
   assert.match(mcp, /'close_editor_window'/);
+  assert.match(mcp, /'open_editor_window'/);
   assert.match(mcp, /name: 'get_panel_layout'/);
   assert.match(mcp, /name: 'list_menu_items'/);
   assert.match(mcp, /'invoke_menu_item'/);

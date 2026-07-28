@@ -68,6 +68,8 @@ export type EditorWindowDefinition = {
   render: () => ReactNode;
 };
 
+export type EditorWindowTypeInfo = Omit<EditorWindowDefinition, 'render'>;
+
 type Listener = () => void;
 
 const menuItems: MenuItemEntry[] = [];
@@ -91,6 +93,20 @@ export function registerEditorWindowType(
 
 export function createRegisteredEditorWindow(typeId: string): EditorWindowDefinition | null {
   return windowTypes.get(typeId)?.() ?? null;
+}
+
+export function listRegisteredEditorWindowTypes(): EditorWindowTypeInfo[] {
+  return [...windowTypes.entries()]
+    .map(([typeId, factory]) => {
+      const definition = factory();
+      return {
+        typeId,
+        title: definition.title,
+        width: definition.width,
+        height: definition.height,
+      };
+    })
+    .sort((left, right) => left.typeId.localeCompare(right.typeId));
 }
 
 function notify() {

@@ -13,6 +13,7 @@ export {
   getOpenEditorWindows,
   registerEditorWindowType,
   createRegisteredEditorWindow,
+  listRegisteredEditorWindowTypes,
 } from './registry';
 export type {
   MenuItemAction,
@@ -21,6 +22,7 @@ export type {
   MenuItemOptions,
   MenuItemSource,
   MenuItemValidate,
+  EditorWindowTypeInfo,
 } from './registry';
 export { EditorWindowHost } from './EditorWindowHost';
 export { RegisteredEditorWindowHost } from './RegisteredEditorWindowHost';

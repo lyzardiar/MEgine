@@ -640,6 +640,14 @@ export const COMMAND_PARAMS_SCHEMAS: Record<string, AgentJsonSchema> = {
   'window.close': objectSchema({
     windowLabel: stringValue('Exact registered editor-* label returned by window.list'),
   }, ['windowLabel']),
+  'window.open_editor': objectSchema({
+    typeId: {
+      type: 'string',
+      minLength: 1,
+      maxLength: 256,
+      description: 'Exact registered type id returned by window.types',
+    },
+  }, ['typeId']),
   'window.ui_click': objectSchema({
     windowLabel: stringValue('Window label; default main'),
     selector: stringValue('Exact selector returned by window.ui_snapshot'),

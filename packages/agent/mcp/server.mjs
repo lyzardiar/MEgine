@@ -1040,6 +1040,13 @@ const TOOLS = [
     handler: async () => textContent(await bridgeQuery('window.list')),
   },
   {
+    name: 'list_editor_window_types',
+    description:
+      'List every registered auxiliary editor window type with its exact typeId, title, default size, and project requirement. Use open_editor_window after a project is ready.',
+    inputSchema: { type: 'object', properties: {}, additionalProperties: false },
+    handler: async () => textContent(await bridgeQuery('window.types')),
+  },
+  {
     name: 'get_active_dialog',
     description:
       'Read the active non-blocking editor alert, confirmation, or prompt with its exact id, full message, labels, and prompt default. Returns null when no editor dialog is open.',
@@ -2135,6 +2142,20 @@ const TOOLS = [
       },
     },
     ['windowLabel'],
+  ),
+  execTool(
+    'open_editor_window',
+    'Open one exact registered auxiliary editor window as a hidden, unfocused native WebView after a project is ready. Reuses an existing window without showing or focusing it.',
+    'window.open_editor',
+    {
+      typeId: {
+        type: 'string',
+        minLength: 1,
+        maxLength: 256,
+        description: 'Exact typeId returned by list_editor_window_types',
+      },
+    },
+    ['typeId'],
   ),
   execTool(
     'click_window_ui',

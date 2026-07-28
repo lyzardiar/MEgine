@@ -64,10 +64,13 @@ import {
 } from './componentSchema';
 import { validateAgentSceneJson } from './sceneJsonValidation';
 import {
+  createRegisteredEditorWindow,
   findMenuItem,
   listAllMenuItems,
+  listRegisteredEditorWindowTypes,
   type MenuItemContext,
 } from '../editorWindow/registry';
+import { openNativeEditorWindow } from '../editorWindow/nativeEditorWindow';
 import {
   CORE_PANEL_IDS,
   detachPanelWindow,
@@ -884,6 +887,95 @@ class AgentBridge {
         { windowLabel },
       ),
     );
+  }
+
+  listRegisteredWindowTypes(): Array<{
+    typeId: string;
+    title: string;
+    width: number;
+    height: number;
+    requiresProject: true;
+  }> {
+    return listRegisteredEditorWindowTypes().map((entry) => ({
+      ...entry,
+      requiresProject: true,
+    }));
+  }
+
+  async openRegisteredEditorWindow(typeId: string): Promise<{
+    typeId: string;
+    title: string;
+    windowLabel: string;
+    created: boolean;
+    visible: boolean;
+    focused: boolean;
+    backgroundSafe: true;
+  }> {
+    if (!isDesktopEditor()) {
+      throw new BridgeError(
+        'NOT_READY',
+        'Background registered editor windows require the desktop editor',
+      );
+    }
+    if (!this.store || !this.editorBootReady) {
+      throw new BridgeError(
+        'NOT_READY',
+        'Registered editor windows require an active project; open or create a project first',
+      );
+    }
+    const normalizedTypeId = typeId.trim();
+    if (!normalizedTypeId || normalizedTypeId.length > 256) {
+      throw new BridgeError(
+        'INVALID_ARGS',
+        '"typeId" must contain 1 to 256 characters',
+      );
+    }
+    const definition = createRegisteredEditorWindow(normalizedTypeId);
+    if (!definition) {
+      throw new BridgeError(
+        'INVALID_ARGS',
+        `Unknown editor window type "${normalizedTypeId}"; query window.types for registered types`,
+      );
+    }
+    const existing = (await this.listWindows()).find(
+      (window) => window.editorType === normalizedTypeId,
+    );
+    const opened = await openNativeEditorWindow({
+      typeId: normalizedTypeId,
+      title: definition.title,
+      width: definition.width,
+      height: definition.height,
+      activateWindow: false,
+    });
+    if (!opened) {
+      throw new BridgeError(
+        'IO_ERROR',
+        `Failed to open editor window type "${normalizedTypeId}"`,
+      );
+    }
+    let target: EditorWindowInfo | undefined;
+    for (let attempt = 0; attempt < 100; attempt += 1) {
+      target = (await this.listWindows()).find(
+        (window) => window.editorType === normalizedTypeId,
+      );
+      if (target) break;
+      await new Promise((resolve) => window.setTimeout(resolve, 50));
+    }
+    if (!target) {
+      throw new BridgeError(
+        'IO_ERROR',
+        `Editor window type "${normalizedTypeId}" opened without a discoverable native window`,
+      );
+    }
+    return {
+      typeId: normalizedTypeId,
+      title: target.title,
+      windowLabel: target.label,
+      created: existing === undefined,
+      visible: target.visible,
+      focused: target.focused,
+      backgroundSafe: true,
+    };
   }
 
   async getWorkspaceDocuments(): Promise<{
@@ -2348,6 +2440,16 @@ class AgentBridge {
         true,
       );
     }
+    if (commandId === 'window.open_editor') {
+      const result = await this.openRegisteredEditorWindow(
+        requiredString(args, 'typeId'),
+      );
+      return this.finishAsyncCommand(
+        { ok: true, data: result },
+        options,
+        result.windowLabel,
+      );
+    }
     if (commandId === 'dialog.respond') {
       const dialogId = requiredString(args, 'dialogId');
       const windowLabel = typeof args.windowLabel === 'string' && args.windowLabel.trim()
@@ -3072,6 +3174,8 @@ class AgentBridge {
         );
       case 'window.list':
         return this.listWindows();
+      case 'window.types':
+        return this.listRegisteredWindowTypes();
       case 'workspace.documents':
         return this.getWorkspaceDocuments();
       case 'window.ui_snapshot':
