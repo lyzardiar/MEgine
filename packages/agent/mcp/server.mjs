@@ -132,7 +132,10 @@ function textContent(value) {
 }
 
 /** Build a tool that invokes a bridge `execute` command. */
-function execTool(name, description, command, properties, required = [], mapArgs = (a) => a) {
+function execTool(name, description, command, properties, required, mapArgs = (a) => a) {
+  if (!Array.isArray(required)) {
+    throw new Error(`MCP write tool "${name}" must declare its required fields`);
+  }
   return {
     name,
     description,
@@ -277,6 +280,7 @@ const TOOLS = [
     {
       root: { type: 'string', description: 'Absolute path to a directory containing project.json' },
     },
+    ['root'],
   ),
   execTool(
     'create_project',
@@ -286,6 +290,7 @@ const TOOLS = [
       parent: { type: 'string', description: 'Existing absolute parent directory' },
       name: { type: 'string', description: 'New project directory and project name' },
     },
+    ['parent', 'name'],
   ),
   execTool(
     'forget_recent_project',
@@ -294,6 +299,7 @@ const TOOLS = [
     {
       path: { type: 'string', description: 'Exact recent project path to forget' },
     },
+    ['path'],
   ),
   execTool(
     'set_sorting_layers',
@@ -773,6 +779,7 @@ const TOOLS = [
         items: WORLD_COMMAND_SCHEMA,
       },
     },
+    ['commands'],
   ),
   execTool(
     'new_scene',
@@ -783,6 +790,7 @@ const TOOLS = [
       overwrite: { type: 'boolean', description: 'Allow replacing an existing scene (default false)' },
       discardDirty: { type: 'boolean', description: 'Allow discarding unsaved current-scene changes (default false)' },
     },
+    ['name'],
   ),
   execTool(
     'open_scene',
@@ -792,6 +800,7 @@ const TOOLS = [
       name: { type: 'string', description: 'Scene name, with or without .mscene' },
       discardDirty: { type: 'boolean', description: 'Allow discarding unsaved current-scene changes (default false)' },
     },
+    ['name'],
   ),
   execTool(
     'save_scene',
@@ -801,6 +810,7 @@ const TOOLS = [
       name: { type: 'string', description: 'Optional destination scene name' },
       overwrite: { type: 'boolean', description: 'Allow replacing an existing destination (default false)' },
     },
+    [],
   ),
   execTool(
     'save_all',
@@ -810,6 +820,7 @@ const TOOLS = [
       name: { type: 'string', description: 'Name to use only when the dirty scene is unnamed' },
       overwrite: { type: 'boolean', description: 'Allow replacing that unnamed-scene destination (default false)' },
     },
+    [],
   ),
   execTool(
     'load_scene_json',
@@ -821,6 +832,7 @@ const TOOLS = [
         description: 'Complete version 1 MEngine scene JSON (max 8 MiB and 20,000 entities)',
       },
     },
+    ['json'],
   ),
   execTool(
     'rename_scene',
@@ -830,6 +842,7 @@ const TOOLS = [
       oldName: { type: 'string', description: 'Existing scene name, with or without .mscene' },
       newName: { type: 'string', description: 'Unused destination scene name, with or without .mscene' },
     },
+    ['oldName', 'newName'],
   ),
   execTool(
     'delete_scene',
@@ -839,6 +852,7 @@ const TOOLS = [
       name: { type: 'string', description: 'Scene name returned by preview_scene_delete' },
       previewToken: { type: 'string', description: 'Exact token returned by preview_scene_delete' },
     },
+    ['name', 'previewToken'],
   ),
   execTool(
     'import_asset_file',
@@ -851,6 +865,7 @@ const TOOLS = [
         description: 'Exact unused destination path under Assets/ with the same extension',
       },
     },
+    ['sourcePath', 'destinationPath'],
   ),
   execTool(
     'create_asset',
@@ -888,6 +903,7 @@ const TOOLS = [
         description: 'Exact project-relative asset path under Assets/',
       },
     },
+    ['path'],
   ),
   execTool(
     'instantiate_asset',
@@ -899,6 +915,7 @@ const TOOLS = [
         description: 'Exact prefab, model, or PNG/JPEG/WebP/GIF path under Assets/',
       },
     },
+    ['path'],
   ),
   execTool(
     'create_prefab',
@@ -950,6 +967,7 @@ const TOOLS = [
         description: 'Current asset revision, or null only for creation',
       },
     },
+    ['path', 'contents', 'expectedRevision'],
   ),
   execTool(
     'rename_asset',
@@ -962,6 +980,7 @@ const TOOLS = [
       allowManualReferences: { type: 'boolean', description: 'Explicitly accept references that cannot be rewritten automatically' },
       allowSkippedFiles: { type: 'boolean', description: 'Explicitly accept files skipped by reference scanning' },
     },
+    ['sourcePath', 'destinationPath', 'previewToken'],
   ),
   execTool(
     'duplicate_asset',
@@ -973,6 +992,7 @@ const TOOLS = [
       previewToken: { type: 'string', description: 'Exact token returned by preview_asset_duplicate' },
       allowManualReferences: { type: 'boolean', description: 'Explicitly accept source references requiring manual review' },
     },
+    ['sourcePath', 'destinationPath', 'previewToken'],
   ),
   execTool(
     'trash_asset',
@@ -983,6 +1003,7 @@ const TOOLS = [
       previewToken: { type: 'string', description: 'Exact token returned by preview_asset_trash' },
       allowSkippedFiles: { type: 'boolean', description: 'Explicitly accept files skipped by reference scanning' },
     },
+    ['sourcePath', 'previewToken'],
   ),
   execTool(
     'restore_asset',
@@ -992,6 +1013,7 @@ const TOOLS = [
       trashId: { type: 'string', description: 'Trash entry id returned by list_asset_trash' },
       expectedRecordRevision: { type: 'string', description: 'Exact record revision returned by list_asset_trash' },
     },
+    ['trashId', 'expectedRecordRevision'],
   ),
   execTool(
     'set_build_scenes',
@@ -1050,12 +1072,14 @@ const TOOLS = [
       profile: { type: 'string', enum: ['debug', 'release'], description: 'Build profile (default debug)' },
       clean: { type: 'boolean', description: 'Clean output before building (default true)' },
     },
+    [],
   ),
   execTool(
     'cancel_pc_build',
     'Request safe cancellation of the active AgentBridge PC Player build.',
     'build.cancel',
     {},
+    [],
   ),
   execTool(
     'verify_pc_build',
@@ -1071,6 +1095,7 @@ const TOOLS = [
         description: 'Exact 64-character contentHash from the build result',
       },
     },
+    ['executable', 'expectedContentHash'],
   ),
   execTool(
     'create_gameobject',
@@ -1081,6 +1106,7 @@ const TOOLS = [
       components: { type: 'object', description: 'Component map, e.g. { Transform: {...}, MeshRenderer: {...} }' },
       parent: { type: 'number', description: 'Parent entity id (null = root)' },
     },
+    [],
   ),
   execTool(
     'create_typed',
@@ -1131,55 +1157,58 @@ const TOOLS = [
         description: 'Exact built-in object kind',
       },
     },
+    ['kind'],
   ),
   execTool(
     'delete_entities',
     'Delete entities. Pass ids to delete specific ones, or omit to delete the current selection.',
     'entity.delete',
     { ids: { type: 'array', items: { type: 'number' }, description: 'Entity ids to delete (default: current selection)' } },
+    [],
   ),
   execTool(
     'duplicate_entities',
     'Duplicate entities. Pass ids or omit to duplicate the current selection.',
     'entity.duplicate',
     { ids: { type: 'array', items: { type: 'number' }, description: 'Entity ids to duplicate (default: current selection)' } },
+    [],
   ),
   execTool('rename_entity', 'Rename an entity.', 'entity.rename', {
     id: { type: 'number', description: 'Entity id' },
     name: { type: 'string', description: 'New name' },
-  }),
+  }, ['id', 'name']),
   execTool('set_active', 'Enable or disable an entity.', 'entity.set_active', {
     id: { type: 'number', description: 'Entity id' },
     active: { type: 'boolean', description: 'Active flag' },
-  }),
+  }, ['id', 'active']),
   execTool('reparent_entities', 'Reparent entities under a new parent.', 'entity.reparent', {
     ids: { type: 'array', items: { type: 'number' }, description: 'Entity ids to reparent' },
     parent: { type: ['number', 'null'], description: 'New parent id (null = root)' },
     index: { type: 'number', description: 'Sibling index (optional)' },
-  }),
+  }, ['ids', 'parent']),
   execTool('reorder_entity', 'Move an entity to a sibling index under its current parent.', 'entity.reorder', {
     id: { type: 'number', description: 'Entity id' },
     index: { type: 'number', minimum: 0, description: 'Destination sibling index' },
-  }),
+  }, ['id', 'index']),
   execTool('add_component', 'Add a component to an entity.', 'component.add', {
     entity: { type: 'number', description: 'Entity id' },
     type: { type: 'string', description: 'Component type, e.g. MeshRenderer, Rigidbody, AutoRotate' },
     value: { type: 'object', description: 'Initial component value (optional)' },
-  }),
+  }, ['entity', 'type']),
   execTool('remove_component', 'Remove a component from an entity.', 'component.remove', {
     entity: { type: 'number', description: 'Entity id' },
     type: { type: 'string', description: 'Component type to remove' },
-  }),
+  }, ['entity', 'type']),
   execTool('set_component', 'Replace a component value on an entity.', 'component.set', {
     entity: { type: 'number', description: 'Entity id' },
     type: { type: 'string', description: 'Component type' },
     value: { type: 'object', description: 'Full component value' },
-  }),
+  }, ['entity', 'type', 'value']),
   execTool('patch_component', 'Shallow-merge fields into a component on an entity.', 'component.patch', {
     entity: { type: 'number', description: 'Entity id' },
     type: { type: 'string', description: 'Component type' },
     patch: { type: 'object', description: 'Fields to merge' },
-  }),
+  }, ['entity', 'type', 'patch']),
   execTool(
     'invoke_component_method',
     'Invoke one method registered by a Behaviour component. Query get_component_schema first for the exact method list. The edit-mode path is undoable when the method changes serialized fields.',
@@ -1189,29 +1218,31 @@ const TOOLS = [
       type: { type: 'string', description: 'Behaviour component type' },
       method: { type: 'string', description: 'Exact registered method name' },
     },
+    ['entity', 'type', 'method'],
   ),
   execTool('set_transform', 'Set position/rotation/scale on an entity (omitted fields keep current values). Rotation is a quaternion [x,y,z,w].', 'transform.set', {
     entity: { type: 'number', description: 'Entity id' },
     position: { type: 'array', items: { type: 'number' }, description: '[x, y, z]' },
     rotation: { type: 'array', items: { type: 'number' }, description: 'quaternion [x, y, z, w]' },
     scale: { type: 'array', items: { type: 'number' }, description: '[x, y, z]' },
-  }),
+  }, ['entity']),
   execTool('translate_entity', 'Translate an entity by a local-position delta as one undoable edit.', 'transform.translate', {
     entity: { type: 'number', description: 'Entity id' },
     delta: { type: 'array', items: { type: 'number' }, description: 'Local-position delta [x, y, z]' },
-  }),
+  }, ['entity', 'delta']),
   execTool('set_selection', 'Set the selection to the given entity ids.', 'selection.set', {
     ids: { type: 'array', items: { type: 'number' }, description: 'Entity ids to select' },
     mode: { type: 'string', enum: ['replace', 'add', 'toggle'], description: 'Selection mode (default replace)' },
-  }),
+  }, ['ids']),
   execTool('reveal_entity', 'Select an entity and expand its hierarchy ancestors.', 'selection.reveal', {
     id: { type: 'number', description: 'Entity id' },
-  }),
+  }, ['id']),
   execTool(
     'frame_selection',
     'Frame the current selection in the Scene view without raising the editor window.',
     'view.frame_selected',
     {},
+    [],
   ),
   execTool(
     'set_scene_camera',
@@ -1223,6 +1254,7 @@ const TOOLS = [
       distance: { type: 'number', description: 'Orbit distance (clamped to 0.5..200)' },
       pivot: { type: 'array', items: { type: 'number' }, description: 'Orbit pivot [x, y, z]' },
     },
+    [],
   ),
   execTool(
     'set_game_resolution',
@@ -1247,9 +1279,9 @@ const TOOLS = [
     },
     ['resolution'],
   ),
-  execTool('play', 'Enter play mode.', 'playback.play', {}),
-  execTool('pause', 'Toggle pause during playback.', 'playback.pause', {}),
-  execTool('stop', 'Stop playback and return to edit mode.', 'playback.stop', {}),
+  execTool('play', 'Enter play mode.', 'playback.play', {}, []),
+  execTool('pause', 'Toggle pause during playback.', 'playback.pause', {}, []),
+  execTool('stop', 'Stop playback and return to edit mode.', 'playback.stop', {}, []),
   execTool(
     'step',
     'Advance paused Play Mode by one deterministic simulation step while remaining paused.',
@@ -1262,15 +1294,16 @@ const TOOLS = [
         description: 'Simulation seconds for the step (default 1/60)',
       },
     },
+    [],
   ),
-  execTool('undo', 'Undo the last edit.', 'history.undo', {}),
-  execTool('redo', 'Redo the last undone edit.', 'history.redo', {}),
+  execTool('undo', 'Undo the last edit.', 'history.undo', {}, []),
+  execTool('redo', 'Redo the last undone edit.', 'history.redo', {}, []),
   execTool('set_gizmo', 'Set the active transform gizmo.', 'gizmo.set', {
     mode: { type: 'string', enum: ['translate', 'rotate', 'scale', 'rect'], description: 'Gizmo mode' },
-  }),
+  }, ['mode']),
   execTool('focus_panel', 'Activate a docked editor panel by kind without raising or focusing the native editor window. Detached panels remain detached and are not raised.', 'panel.focus', {
     kind: { type: 'string', description: 'Panel kind' },
-  }),
+  }, ['kind']),
   execTool(
     'detach_panel',
     'Detach a clean panel into its own hidden, background-observable editor window. The new native window is created with visible=false and focus=false.',
@@ -1278,6 +1311,7 @@ const TOOLS = [
     {
       kind: { type: 'string', description: 'Core editor panel kind' },
     },
+    ['kind'],
   ),
   execTool(
     'dock_panel',
@@ -1286,12 +1320,14 @@ const TOOLS = [
     {
       kind: { type: 'string', description: 'Core editor panel kind' },
     },
+    ['kind'],
   ),
   execTool(
     'reset_panel_layout',
     'Reset the dock workspace to its default layout. This also closes detached panel windows.',
     'panel.reset_layout',
     {},
+    [],
   ),
   execTool(
     'invoke_menu_item',
@@ -1300,6 +1336,7 @@ const TOOLS = [
     {
       path: { type: 'string', description: 'Exact registered path, e.g. Window/General/Console' },
     },
+    ['path'],
   ),
   execTool(
     'click_window_ui',
@@ -1309,6 +1346,7 @@ const TOOLS = [
       windowLabel: { type: 'string', description: 'Window label (default: main)' },
       selector: { type: 'string', description: 'Exact selector returned by get_window_ui' },
     },
+    ['selector'],
   ),
   execTool(
     'set_window_ui_value',
@@ -1319,6 +1357,7 @@ const TOOLS = [
       selector: { type: 'string', description: 'Exact selector returned by get_window_ui' },
       value: { type: 'string', description: 'New value' },
     },
+    ['selector', 'value'],
   ),
 ];
 

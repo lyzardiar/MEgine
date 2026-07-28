@@ -75,7 +75,9 @@ test('whole-window agent capture is background-safe and addressable by window la
   assert.match(mcp, /'apply_prefab'/);
   assert.match(mcp, /'revert_prefab'/);
   assert.match(mcp, /'unpack_prefab'/);
-  assert.match(mcp, /function execTool\(name, description, command, properties, required = \[\], mapArgs/);
+  assert.match(mcp, /function execTool\(name, description, command, properties, required, mapArgs/);
+  assert.match(mcp, /if \(!Array\.isArray\(required\)\)/);
+  assert.doesNotMatch(mcp, /required = \[\]/);
   assert.match(mcp, /\.\.\.\(required\.length \? \{ required \} : \{\}\)/);
   assert.match(mcp, /'detach_panel'/);
   assert.match(mcp, /'dock_panel'/);
