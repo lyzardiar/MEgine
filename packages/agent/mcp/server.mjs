@@ -876,7 +876,7 @@ const TOOLS = [
   {
     name: 'find_entities',
     description:
-      'Find live scene entities by case-insensitive name substring, exact component type, and/or active state. Returns compact records; use get_entity or get_entity_component for values.',
+      'Find live scene entities by case-insensitive name substring, exact component type, and/or active state. Returns compact paged records; continue with nextOffset until null, then use get_entity or get_entity_component for values.',
     inputSchema: {
       type: 'object',
       properties: {
@@ -884,10 +884,16 @@ const TOOLS = [
         component: { type: 'string', description: 'Exact component type to require' },
         active: { type: 'boolean', description: 'Filter by active state' },
         limit: {
-          type: 'number',
+          type: 'integer',
           minimum: 1,
           maximum: 1000,
           description: 'Maximum matches to return (default 100)',
+        },
+        offset: {
+          type: 'integer',
+          minimum: 0,
+          maximum: 1000000,
+          description: 'Zero-based match cursor from the previous page (default 0)',
         },
       },
     },
@@ -1077,14 +1083,20 @@ const TOOLS = [
   {
     name: 'list_assets',
     description:
-      'List the current project asset index with paths, kinds, GUID/meta health, sizes, and optimistic-lock revisions. Supports search, kind, folder, and bounded limit filters.',
+      'List the current project asset index with paths, kinds, GUID/meta health, sizes, and optimistic-lock revisions. Supports filters and bounded pages; continue with nextOffset until null.',
     inputSchema: {
       type: 'object',
       properties: {
         search: { type: 'string', description: 'Case-insensitive path/name substring' },
         kind: { type: 'string', description: 'Exact asset kind filter' },
         folder: { type: 'string', description: 'Assets folder prefix, e.g. Assets/Scripts' },
-        limit: { type: 'number', minimum: 1, maximum: 5000, description: 'Maximum rows (default 1000)' },
+        limit: { type: 'integer', minimum: 1, maximum: 5000, description: 'Maximum rows (default 1000)' },
+        offset: {
+          type: 'integer',
+          minimum: 0,
+          maximum: 1000000,
+          description: 'Zero-based asset cursor from the previous page (default 0)',
+        },
       },
     },
     handler: async (args) => textContent(await bridgeQuery('asset.list', args)),

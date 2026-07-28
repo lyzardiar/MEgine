@@ -127,6 +127,7 @@ import {
   type SceneDiff,
   type SceneEntityView,
 } from './eventJournal';
+import { paginateAgentItems } from './pagination';
 import {
   loadSortingLayersSnapshot,
   persistSortingLayersGuarded,
@@ -692,6 +693,10 @@ class AgentBridge {
 
   findEntities(params: Record<string, unknown>): {
     total: number;
+    offset: number;
+    count: number;
+    nextOffset: number | null;
+    hasMore: boolean;
     truncated: boolean;
     entities: Array<{
       id: number;
@@ -705,6 +710,7 @@ class AgentBridge {
     const rawComponent = params.component;
     const rawActive = params.active;
     const rawLimit = params.limit ?? 100;
+    const rawOffset = params.offset ?? 0;
     if (rawName !== undefined && (typeof rawName !== 'string' || !rawName.trim())) {
       throw new BridgeError('INVALID_ARGS', '"name" must be a non-empty string');
     }
@@ -725,6 +731,14 @@ class AgentBridge {
     ) {
       throw new BridgeError('INVALID_ARGS', '"limit" must be an integer from 1 to 1000');
     }
+    if (
+      typeof rawOffset !== 'number'
+      || !Number.isSafeInteger(rawOffset)
+      || rawOffset < 0
+      || rawOffset > 1_000_000
+    ) {
+      throw new BridgeError('INVALID_ARGS', '"offset" must be an integer from 0 to 1000000');
+    }
     const name = typeof rawName === 'string' ? rawName.trim().toLocaleLowerCase() : null;
     const component = typeof rawComponent === 'string' ? rawComponent.trim() : null;
     const entities = (
@@ -737,10 +751,15 @@ class AgentBridge {
       )
       && (rawActive === undefined || (entity.active ?? true) === rawActive)
     ));
+    const page = paginateAgentItems(entities, rawOffset, rawLimit);
     return {
-      total: entities.length,
-      truncated: entities.length > rawLimit,
-      entities: entities.slice(0, rawLimit).map((entity) => ({
+      total: page.total,
+      offset: page.offset,
+      count: page.count,
+      nextOffset: page.nextOffset,
+      hasMore: page.hasMore,
+      truncated: page.truncated,
+      entities: page.items.map((entity) => ({
         id: entity.entity,
         name: entity.name ?? `Entity ${entity.entity}`,
         parent: entity.parent ?? null,
@@ -1106,6 +1125,10 @@ class AgentBridge {
 
   async listAssets(params: Record<string, unknown> = {}): Promise<{
     total: number;
+    offset: number;
+    count: number;
+    nextOffset: number | null;
+    hasMore: boolean;
     truncated: boolean;
     assets: ProjectFileAsset[];
   }> {
@@ -1117,10 +1140,24 @@ class AgentBridge {
     const folder = typeof params.folder === 'string' && params.folder.trim()
       ? normalizeAssetPath(params.folder)
       : '';
-    const requestedLimit = typeof params.limit === 'number' && Number.isFinite(params.limit)
-      ? Math.trunc(params.limit)
-      : 1_000;
-    const limit = Math.min(5_000, Math.max(1, requestedLimit));
+    const limit = params.limit ?? 1_000;
+    const offset = params.offset ?? 0;
+    if (
+      typeof limit !== 'number'
+      || !Number.isSafeInteger(limit)
+      || limit < 1
+      || limit > 5_000
+    ) {
+      throw new BridgeError('INVALID_ARGS', '"limit" must be an integer from 1 to 5000');
+    }
+    if (
+      typeof offset !== 'number'
+      || !Number.isSafeInteger(offset)
+      || offset < 0
+      || offset > 1_000_000
+    ) {
+      throw new BridgeError('INVALID_ARGS', '"offset" must be an integer from 0 to 1000000');
+    }
     const filtered = files
       .filter((asset) => !kind || asset.kind === kind)
       .filter((asset) => !folder || (
@@ -1132,10 +1169,15 @@ class AgentBridge {
         || asset.name.toLocaleLowerCase().includes(search)
       ))
       .sort((left, right) => left.relPath.localeCompare(right.relPath));
+    const page = paginateAgentItems(filtered, offset, limit);
     return {
-      total: filtered.length,
-      truncated: filtered.length > limit,
-      assets: structuredClone(filtered.slice(0, limit)),
+      total: page.total,
+      offset: page.offset,
+      count: page.count,
+      nextOffset: page.nextOffset,
+      hasMore: page.hasMore,
+      truncated: page.truncated,
+      assets: structuredClone(page.items),
     };
   }
 

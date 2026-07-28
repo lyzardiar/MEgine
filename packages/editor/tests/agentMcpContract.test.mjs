@@ -101,6 +101,8 @@ test('MCP validates tool arguments before dispatch with bounded structured issue
     entity: 1,
     position: [1, 2, 3],
   });
+  validateToolArguments(tool('find_entities'), { limit: 1000, offset: 1000000 });
+  validateToolArguments(tool('list_assets'), { limit: 5000, offset: 1000000 });
 
   assert.throws(
     () => validateToolArguments(tool('create_project'), {
@@ -140,6 +142,10 @@ test('MCP validates tool arguments before dispatch with bounded structured issue
       entity: 1.5,
       position: [1, 2],
     }),
+    /Invalid arguments/,
+  );
+  assert.throws(
+    () => validateToolArguments(tool('find_entities'), { offset: 1.5 }),
     /Invalid arguments/,
   );
 });
