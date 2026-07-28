@@ -15,8 +15,28 @@ import {
 import { COMMAND_META } from '../src/agent/commands.ts';
 
 const editorRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
+const EXECUTION_SCHEMA_KEYS = new Set([
+  'requestId',
+  'screenshot',
+  'expectedSceneRevision',
+]);
 
-test('every AgentBridge write command has exactly one MCP tool with exact required fields', () => {
+function contractSchema(value) {
+  if (Array.isArray(value)) return value.map(contractSchema);
+  if (!value || typeof value !== 'object') return value;
+  return Object.fromEntries(
+    Object.keys(value)
+      .sort()
+      .filter((key) => (
+        key !== 'description'
+        && key !== 'title'
+        && !EXECUTION_SCHEMA_KEYS.has(key)
+      ))
+      .map((key) => [key, contractSchema(value[key])]),
+  );
+}
+
+test('every AgentBridge write command has exactly one MCP tool with its exact parameter schema', () => {
   const writeTools = TOOLS.filter((tool) => typeof tool.bridgeCommand === 'string');
   const byCommand = new Map();
   for (const tool of writeTools) {
@@ -38,6 +58,11 @@ test('every AgentBridge write command has exactly one MCP tool with exact requir
       [...(matches[0].inputSchema.required ?? [])].sort(),
       [...(command.paramsSchema.required ?? [])].sort(),
       `${command.id} required fields drifted from its authoritative schema`,
+    );
+    assert.deepEqual(
+      contractSchema(matches[0].inputSchema),
+      contractSchema(command.paramsSchema),
+      `${command.id} parameter schema drifted from its authoritative schema`,
     );
   }
 });
@@ -72,6 +97,10 @@ test('MCP validates tool arguments before dispatch with bounded structured issue
   validateToolArguments(tool('apply_batch'), {
     commands: [{ op: 'spawn', name: 'Cube', components: {} }],
   });
+  validateToolArguments(tool('set_transform'), {
+    entity: 1,
+    position: [1, 2, 3],
+  });
 
   assert.throws(
     () => validateToolArguments(tool('create_project'), {
@@ -99,6 +128,17 @@ test('MCP validates tool arguments before dispatch with bounded structured issue
   assert.throws(
     () => validateToolArguments(tool('apply_batch'), {
       commands: [{ op: 'unknown', components: {} }],
+    }),
+    /Invalid arguments/,
+  );
+  assert.throws(
+    () => validateToolArguments(tool('set_transform'), { entity: 1 }),
+    /Invalid arguments/,
+  );
+  assert.throws(
+    () => validateToolArguments(tool('set_transform'), {
+      entity: 1.5,
+      position: [1, 2],
     }),
     /Invalid arguments/,
   );

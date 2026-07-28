@@ -396,6 +396,14 @@ function validateSchemaValue(value, schema, path, issues) {
     }
     return;
   }
+  if (Array.isArray(schema.anyOf)) {
+    const matches = schema.anyOf.some((candidate) => {
+      const candidateIssues = [];
+      validateSchemaValue(value, candidate, path, candidateIssues);
+      return candidateIssues.length === 0;
+    });
+    if (!matches) issues.push(`${path} must match at least one allowed shape`);
+  }
 
   const expectedTypes = Array.isArray(schema.type)
     ? schema.type
@@ -497,7 +505,15 @@ function validateToolArguments(tool, args) {
 }
 
 /** Build a tool that invokes a bridge `execute` command. */
-function execTool(name, description, command, properties, required, mapArgs = (a) => a) {
+function execTool(
+  name,
+  description,
+  command,
+  properties,
+  required,
+  mapArgs = (a) => a,
+  schemaExtras = {},
+) {
   if (!Array.isArray(required)) {
     throw new Error(`MCP write tool "${name}" must declare its required fields`);
   }
@@ -529,6 +545,7 @@ function execTool(name, description, command, properties, required, mapArgs = (a
       },
       ...(required.length ? { required } : {}),
       additionalProperties: false,
+      ...schemaExtras,
     },
     handler: async (args, context = {}) => {
       const wantScreenshot = Boolean(args.screenshot);
@@ -558,6 +575,32 @@ function execTool(name, description, command, properties, required, mapArgs = (a
   };
 }
 
+const ENTITY_ID_SCHEMA = { type: 'integer', minimum: 0 };
+const PANEL_KIND_VALUES = [
+  'hierarchy',
+  'scene',
+  'game',
+  'inspector',
+  'project',
+  'console',
+  'profiler',
+  'timeline',
+  'animator',
+  'material',
+  'shader',
+  'spriteEditor',
+  'spriteAtlas',
+  'build',
+  'projectSettings',
+];
+const PANEL_KIND_SCHEMA = { type: 'string', enum: PANEL_KIND_VALUES };
+const finiteNumberTuple = (length) => ({
+  type: 'array',
+  minItems: length,
+  maxItems: length,
+  items: { type: 'number' },
+});
+
 const WORLD_COMMAND_SCHEMA = {
   oneOf: [
     {
@@ -578,7 +621,7 @@ const WORLD_COMMAND_SCHEMA = {
       required: ['op', 'entity'],
       properties: {
         op: { const: 'despawn' },
-        entity: { type: 'number', minimum: 0 },
+        entity: ENTITY_ID_SCHEMA,
       },
       additionalProperties: false,
     },
@@ -587,7 +630,7 @@ const WORLD_COMMAND_SCHEMA = {
       required: ['op', 'entity', 'component', 'value'],
       properties: {
         op: { const: 'setComponent' },
-        entity: { type: 'number', minimum: 0 },
+        entity: ENTITY_ID_SCHEMA,
         component: { type: 'string' },
         value: { type: 'object' },
       },
@@ -598,7 +641,7 @@ const WORLD_COMMAND_SCHEMA = {
       required: ['op', 'entity', 'component'],
       properties: {
         op: { const: 'removeComponent' },
-        entity: { type: 'number', minimum: 0 },
+        entity: ENTITY_ID_SCHEMA,
         component: { type: 'string' },
       },
       additionalProperties: false,
@@ -608,8 +651,8 @@ const WORLD_COMMAND_SCHEMA = {
       required: ['op', 'entity'],
       properties: {
         op: { const: 'setParent' },
-        entity: { type: 'number', minimum: 0 },
-        parent: { type: ['number', 'null'], minimum: 0 },
+        entity: ENTITY_ID_SCHEMA,
+        parent: { type: ['integer', 'null'], minimum: 0 },
       },
       additionalProperties: false,
     },
@@ -1351,7 +1394,7 @@ const TOOLS = [
     'Capture one authored entity hierarchy as a new uniquely named prefab asset, then link that hierarchy as its first instance. Resource-document edits block the write, while intentional unsaved scene edits are preserved. Returns the indexed asset, exact revision, link identity, and root entity.',
     'prefab.create',
     {
-      entity: { type: 'number', minimum: 0, description: 'Root entity to capture and link' },
+      entity: { ...ENTITY_ID_SCHEMA, description: 'Root entity to capture and link' },
     },
     ['entity'],
   ),
@@ -1360,7 +1403,7 @@ const TOOLS = [
     'Apply one linked instance hierarchy to its prefab asset without a dialog or foreground focus. Requires the exact asset revision returned by get_prefab_instance or list_assets and fails on concurrent disk edits.',
     'prefab.apply',
     {
-      entity: { type: 'number', minimum: 0, description: 'Any entity in the prefab instance' },
+      entity: { ...ENTITY_ID_SCHEMA, description: 'Any entity in the prefab instance' },
       expectedRevision: { type: 'string', description: 'Exact current prefab asset revision' },
     },
     ['entity', 'expectedRevision'],
@@ -1370,7 +1413,7 @@ const TOOLS = [
     'Replace one linked instance hierarchy from an exact prefab asset revision as one undoable scene edit. The asset is read in the background and is not modified.',
     'prefab.revert',
     {
-      entity: { type: 'number', minimum: 0, description: 'Any entity in the prefab instance' },
+      entity: { ...ENTITY_ID_SCHEMA, description: 'Any entity in the prefab instance' },
       expectedRevision: { type: 'string', description: 'Exact current prefab asset revision' },
     },
     ['entity', 'expectedRevision'],
@@ -1380,7 +1423,7 @@ const TOOLS = [
     'Remove prefab linkage from one complete instance while preserving its authored entities and components as one undoable scene edit.',
     'prefab.unpack',
     {
-      entity: { type: 'number', minimum: 0, description: 'Any entity in the prefab instance' },
+      entity: { ...ENTITY_ID_SCHEMA, description: 'Any entity in the prefab instance' },
     },
     ['entity'],
   ),
@@ -1521,6 +1564,7 @@ const TOOLS = [
       },
       expectedContentHash: {
         type: 'string',
+        pattern: '^[0-9a-fA-F]{64}$',
         description: 'Exact 64-character contentHash from the build result',
       },
     },
@@ -1532,7 +1576,11 @@ const TOOLS = [
     'entity.create',
     {
       name: { type: 'string', description: 'Entity name' },
-      components: { type: 'object', description: 'Component map, e.g. { Transform: {...}, MeshRenderer: {...} }' },
+      components: {
+        type: 'object',
+        additionalProperties: { type: 'object' },
+        description: 'Component map, e.g. { Transform: {...}, MeshRenderer: {...} }',
+      },
       parent: {
         type: ['integer', 'null'],
         minimum: 0,
@@ -1596,49 +1644,49 @@ const TOOLS = [
     'delete_entities',
     'Delete entities. Pass ids to delete specific ones, or omit to delete the current selection.',
     'entity.delete',
-    { ids: { type: 'array', items: { type: 'number' }, description: 'Entity ids to delete (default: current selection)' } },
+    { ids: { type: 'array', items: ENTITY_ID_SCHEMA, description: 'Entity ids to delete (default: current selection)' } },
     [],
   ),
   execTool(
     'duplicate_entities',
     'Duplicate entities. Pass ids or omit to duplicate the current selection.',
     'entity.duplicate',
-    { ids: { type: 'array', items: { type: 'number' }, description: 'Entity ids to duplicate (default: current selection)' } },
+    { ids: { type: 'array', items: ENTITY_ID_SCHEMA, description: 'Entity ids to duplicate (default: current selection)' } },
     [],
   ),
   execTool('rename_entity', 'Rename an entity.', 'entity.rename', {
-    id: { type: 'number', description: 'Entity id' },
+    id: { ...ENTITY_ID_SCHEMA, description: 'Entity id' },
     name: { type: 'string', description: 'New name' },
   }, ['id', 'name']),
   execTool('set_active', 'Enable or disable an entity.', 'entity.set_active', {
-    id: { type: 'number', description: 'Entity id' },
+    id: { ...ENTITY_ID_SCHEMA, description: 'Entity id' },
     active: { type: 'boolean', description: 'Active flag' },
   }, ['id', 'active']),
   execTool('reparent_entities', 'Reparent entities under a new parent.', 'entity.reparent', {
-    ids: { type: 'array', items: { type: 'number' }, description: 'Entity ids to reparent' },
-    parent: { type: ['number', 'null'], description: 'New parent id (null = root)' },
-    index: { type: 'number', description: 'Sibling index (optional)' },
+    ids: { type: 'array', items: ENTITY_ID_SCHEMA, description: 'Entity ids to reparent' },
+    parent: { type: ['integer', 'null'], minimum: 0, description: 'New parent id (null = root)' },
+    index: { type: 'integer', minimum: 0, description: 'Sibling index (optional)' },
   }, ['ids', 'parent']),
   execTool('reorder_entity', 'Move an entity to a sibling index under its current parent.', 'entity.reorder', {
-    id: { type: 'number', description: 'Entity id' },
-    index: { type: 'number', minimum: 0, description: 'Destination sibling index' },
+    id: { ...ENTITY_ID_SCHEMA, description: 'Entity id' },
+    index: { type: 'integer', minimum: 0, description: 'Destination sibling index' },
   }, ['id', 'index']),
   execTool('add_component', 'Add a component to an entity.', 'component.add', {
-    entity: { type: 'number', description: 'Entity id' },
+    entity: { ...ENTITY_ID_SCHEMA, description: 'Entity id' },
     type: { type: 'string', description: 'Component type, e.g. MeshRenderer, Rigidbody, AutoRotate' },
     value: { type: 'object', description: 'Initial component value (optional)' },
   }, ['entity', 'type']),
   execTool('remove_component', 'Remove a component from an entity.', 'component.remove', {
-    entity: { type: 'number', description: 'Entity id' },
+    entity: { ...ENTITY_ID_SCHEMA, description: 'Entity id' },
     type: { type: 'string', description: 'Component type to remove' },
   }, ['entity', 'type']),
   execTool('set_component', 'Replace a component value on an entity.', 'component.set', {
-    entity: { type: 'number', description: 'Entity id' },
+    entity: { ...ENTITY_ID_SCHEMA, description: 'Entity id' },
     type: { type: 'string', description: 'Component type' },
     value: { type: 'object', description: 'Full component value' },
   }, ['entity', 'type', 'value']),
   execTool('patch_component', 'Shallow-merge fields into a component on an entity.', 'component.patch', {
-    entity: { type: 'number', description: 'Entity id' },
+    entity: { ...ENTITY_ID_SCHEMA, description: 'Entity id' },
     type: { type: 'string', description: 'Component type' },
     patch: { type: 'object', description: 'Fields to merge' },
   }, ['entity', 'type', 'patch']),
@@ -1647,28 +1695,42 @@ const TOOLS = [
     'Invoke one method registered by a Behaviour component. Query get_component_schema first for the exact method list. The edit-mode path is undoable when the method changes serialized fields.',
     'component.invoke',
     {
-      entity: { type: 'number', description: 'Entity id' },
+      entity: { ...ENTITY_ID_SCHEMA, description: 'Entity id' },
       type: { type: 'string', description: 'Behaviour component type' },
       method: { type: 'string', description: 'Exact registered method name' },
     },
     ['entity', 'type', 'method'],
   ),
-  execTool('set_transform', 'Set position/rotation/scale on an entity (omitted fields keep current values). Rotation is a quaternion [x,y,z,w].', 'transform.set', {
-    entity: { type: 'number', description: 'Entity id' },
-    position: { type: 'array', items: { type: 'number' }, description: '[x, y, z]' },
-    rotation: { type: 'array', items: { type: 'number' }, description: 'quaternion [x, y, z, w]' },
-    scale: { type: 'array', items: { type: 'number' }, description: '[x, y, z]' },
-  }, ['entity']),
+  execTool(
+    'set_transform',
+    'Set position/rotation/scale on an entity (omitted fields keep current values). Rotation is a quaternion [x,y,z,w].',
+    'transform.set',
+    {
+      entity: { ...ENTITY_ID_SCHEMA, description: 'Entity id' },
+      position: { ...finiteNumberTuple(3), description: '[x, y, z]' },
+      rotation: { ...finiteNumberTuple(4), description: 'quaternion [x, y, z, w]' },
+      scale: { ...finiteNumberTuple(3), description: '[x, y, z]' },
+    },
+    ['entity'],
+    undefined,
+    {
+      anyOf: [
+        { required: ['position'] },
+        { required: ['rotation'] },
+        { required: ['scale'] },
+      ],
+    },
+  ),
   execTool('translate_entity', 'Translate an entity by a local-position delta as one undoable edit.', 'transform.translate', {
-    entity: { type: 'number', description: 'Entity id' },
-    delta: { type: 'array', items: { type: 'number' }, description: 'Local-position delta [x, y, z]' },
+    entity: { ...ENTITY_ID_SCHEMA, description: 'Entity id' },
+    delta: { ...finiteNumberTuple(3), description: 'Local-position delta [x, y, z]' },
   }, ['entity', 'delta']),
   execTool('set_selection', 'Set the selection to the given entity ids.', 'selection.set', {
-    ids: { type: 'array', items: { type: 'number' }, description: 'Entity ids to select' },
+    ids: { type: 'array', items: ENTITY_ID_SCHEMA, description: 'Entity ids to select' },
     mode: { type: 'string', enum: ['replace', 'add', 'toggle'], description: 'Selection mode (default replace)' },
   }, ['ids']),
   execTool('reveal_entity', 'Select an entity and expand its hierarchy ancestors.', 'selection.reveal', {
-    id: { type: 'number', description: 'Entity id' },
+    id: { ...ENTITY_ID_SCHEMA, description: 'Entity id' },
   }, ['id']),
   execTool(
     'frame_selection',
@@ -1685,9 +1747,18 @@ const TOOLS = [
       yaw: { type: 'number', description: 'Orbit yaw in degrees' },
       pitch: { type: 'number', description: 'Orbit pitch in degrees (clamped to -89..89)' },
       distance: { type: 'number', description: 'Orbit distance (clamped to 0.5..200)' },
-      pivot: { type: 'array', items: { type: 'number' }, description: 'Orbit pivot [x, y, z]' },
+      pivot: { ...finiteNumberTuple(3), description: 'Orbit pivot [x, y, z]' },
     },
     [],
+    undefined,
+    {
+      anyOf: [
+        { required: ['yaw'] },
+        { required: ['pitch'] },
+        { required: ['distance'] },
+        { required: ['pivot'] },
+      ],
+    },
   ),
   execTool(
     'set_game_resolution',
@@ -1735,14 +1806,14 @@ const TOOLS = [
     mode: { type: 'string', enum: ['translate', 'rotate', 'scale', 'rect'], description: 'Gizmo mode' },
   }, ['mode']),
   execTool('focus_panel', 'Activate a docked editor panel by kind without raising or focusing the native editor window. Detached panels remain detached and are not raised.', 'panel.focus', {
-    kind: { type: 'string', description: 'Panel kind' },
+    kind: { ...PANEL_KIND_SCHEMA, description: 'Panel kind' },
   }, ['kind']),
   execTool(
     'detach_panel',
     'Detach a clean panel into its own hidden, background-observable editor window. The new native window is created with visible=false and focus=false.',
     'panel.detach',
     {
-      kind: { type: 'string', description: 'Core editor panel kind' },
+      kind: { ...PANEL_KIND_SCHEMA, description: 'Core editor panel kind' },
     },
     ['kind'],
   ),
@@ -1751,7 +1822,7 @@ const TOOLS = [
     'Dock a clean detached panel back into the main workspace without raising or focusing either native window.',
     'panel.dock',
     {
-      kind: { type: 'string', description: 'Core editor panel kind' },
+      kind: { ...PANEL_KIND_SCHEMA, description: 'Core editor panel kind' },
     },
     ['kind'],
   ),

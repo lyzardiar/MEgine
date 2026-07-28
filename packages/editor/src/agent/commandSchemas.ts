@@ -149,8 +149,17 @@ export const COMMAND_PARAMS_SCHEMAS: Record<string, AgentJsonSchema> = {
       minItems: 1,
       maxItems: 64,
       items: objectSchema({
-        id: stringValue('Stable ASCII identifier (letters, digits, underscore, or hyphen)'),
-        name: stringValue('Unique display name, at most 64 characters'),
+        id: {
+          type: 'string',
+          pattern: '^[A-Za-z0-9_-]{1,64}$',
+          description: 'Stable ASCII identifier (letters, digits, underscore, or hyphen)',
+        },
+        name: {
+          type: 'string',
+          minLength: 1,
+          maxLength: 64,
+          description: 'Unique display name, at most 64 characters',
+        },
       }, ['id', 'name']),
       description: 'Complete ordered sorting layer list including the Default layer',
     },

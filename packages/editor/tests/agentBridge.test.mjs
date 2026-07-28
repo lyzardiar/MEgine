@@ -92,7 +92,10 @@ test('whole-window agent capture is background-safe and addressable by window la
   assert.match(mcp, /'apply_prefab'/);
   assert.match(mcp, /'revert_prefab'/);
   assert.match(mcp, /'unpack_prefab'/);
-  assert.match(mcp, /function execTool\(name, description, command, properties, required, mapArgs/);
+  assert.match(
+    mcp,
+    /function execTool\(\s*name,\s*description,\s*command,\s*properties,\s*required,\s*mapArgs/,
+  );
   assert.match(mcp, /ensureBridgeConnected/);
   assert.match(mcp, /sameEditorProcess/);
   assert.match(mcp, /retryAcrossEditorRestart: true/);
@@ -210,6 +213,12 @@ test('the main AgentBridge transport is available before a project is opened', (
   assert.match(bridge, /commandId === 'project\.open'/);
   assert.match(bridge, /commandId === 'project\.create'/);
   assert.match(bridge, /commandId === 'project\.forget_recent'/);
+  assert.equal(
+    [...bridge.matchAll(
+      /commandId === 'project\.(?:open|create)'\) \{\s*const provider = this\.requireAvailableProjectLifecycle\(\);/g,
+    )].length,
+    2,
+  );
   assert.match(bridge, /await this\.waitForEditorBootAfter\(editorBootGeneration\)/);
   assert.match(bridge, /this\.store != null && this\.editorBootReady/);
   assert.match(app, /markEditorBootReady\(store\)/);
