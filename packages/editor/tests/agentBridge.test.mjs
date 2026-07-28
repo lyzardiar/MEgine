@@ -609,6 +609,10 @@ test('panel and menu agent surfaces use live providers and background activation
   assert.match(project, /event\.key !== 'Enter' && event\.key !== ' '/);
   assert.match(dock, /describePanelLayout\(tree\)/);
   assert.match(dock, /rawDetail\?\.activateWindow !== false/);
+  assert.equal(
+    [...dock.matchAll(/activateWindow: context\.source !== 'agent'/g)].length,
+    2,
+  );
   assert.match(detached, /visible: activateWindow/);
   assert.match(detached, /focus: activateWindow/);
   assert.match(app, /\.\.\.resourceDocumentPathsRef\.current/);

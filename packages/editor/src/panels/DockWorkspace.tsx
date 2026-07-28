@@ -94,8 +94,13 @@ const ALL_PANELS: PanelKind[] = [...CORE_PANEL_IDS];
 CORE_PANEL_IDS.forEach((panel, index) => {
   registerMenuItem(
     `Window/General/${PANEL_TITLE[panel]}`,
-    () => {
-      window.dispatchEvent(new CustomEvent('mengine:focus-panel', { detail: panel }));
+    (context) => {
+      window.dispatchEvent(new CustomEvent('mengine:focus-panel', {
+        detail: {
+          panel,
+          activateWindow: context.source !== 'agent',
+        },
+      }));
     },
     { priority: 100 + index },
   );
@@ -111,8 +116,13 @@ registerMenuItem(
 
 registerMenuItem(
   'Edit/Project Settings...',
-  () => {
-    window.dispatchEvent(new CustomEvent('mengine:focus-panel', { detail: 'projectSettings' }));
+  (context) => {
+    window.dispatchEvent(new CustomEvent('mengine:focus-panel', {
+      detail: {
+        panel: 'projectSettings',
+        activateWindow: context.source !== 'agent',
+      },
+    }));
   },
   { priority: 900 },
 );
