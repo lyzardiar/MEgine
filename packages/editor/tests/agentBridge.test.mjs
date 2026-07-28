@@ -35,7 +35,14 @@ test('whole-window agent capture is background-safe and addressable by window la
   assert.match(rust, /nextOffset:/);
   assert.match(rust, /hasMore:/);
   assert.match(rust, /WINDOW_UI_INTERACTION_SCRIPT/);
-  assert.match(rust, /matches!\(action\.as_str\(\), "click" \| "setValue" \| "scroll"\)/);
+  assert.match(rust, /MENGINE_EDITOR_CONFIG_DIR/);
+  assert.match(rust, /"click" \| "doubleClick" \| "contextClick" \| "setValue" \| "scroll"/);
+  assert.match(rust, /key\.startsWith\('__reactProps\$'\)/);
+  assert.match(rust, /actions\.push\('doubleClick'\)/);
+  assert.match(rust, /actions\.push\('contextClick'\)/);
+  assert.match(rust, /dispatchPointer\('pointerdown'/);
+  assert.match(rust, /dispatchPointer\('dblclick'/);
+  assert.match(rust, /dispatchPointer\('contextmenu'/);
   assert.match(rust, /element\.scrollBy/);
   assert.match(rust, /actions\.push\('scroll'\)/);
   assert.match(rust, /height: element\.scrollHeight/);
@@ -49,6 +56,7 @@ test('whole-window agent capture is background-safe and addressable by window la
   assert.equal(tauriConfig.app.windows[0].visible, false);
   assert.equal(tauriConfig.app.windows[0].focus, false);
   assert.match(native, /MENGINE_EDITOR_BACKGROUND/);
+  assert.match(native, /MENGINE_EDITOR_CONFIG_DIR must be an absolute path/);
   assert.match(native, /if starts_in_background\(\)/);
   assert.match(native, /main\.hide\(\)\?/);
   assert.match(native, /main\.set_focusable\(false\)\?/);
@@ -69,6 +77,8 @@ test('whole-window agent capture is background-safe and addressable by window la
   assert.match(mcp, /Continue with nextOffset until null/);
   assert.match(mcp, /name: 'list_open_documents'/);
   assert.match(mcp, /'click_window_ui'/);
+  assert.match(mcp, /'double_click_window_ui'/);
+  assert.match(mcp, /'open_window_ui_context_menu'/);
   assert.match(mcp, /'set_window_ui_value'/);
   assert.match(mcp, /'scroll_window_ui'/);
   assert.match(mcp, /name: 'get_panel_layout'/);

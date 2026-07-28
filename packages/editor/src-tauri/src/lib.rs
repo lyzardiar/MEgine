@@ -3158,6 +3158,13 @@ struct RecentProjectInfo {
 }
 
 fn recent_projects_file(app: &tauri::AppHandle) -> Result<PathBuf, String> {
+    if let Some(configured) = std::env::var_os("MENGINE_EDITOR_CONFIG_DIR") {
+        let directory = PathBuf::from(configured);
+        if !directory.is_absolute() {
+            return Err("MENGINE_EDITOR_CONFIG_DIR must be an absolute path".to_string());
+        }
+        return Ok(directory.join("recent-projects.json"));
+    }
     app.path()
         .app_config_dir()
         .map(|directory| directory.join("recent-projects.json"))

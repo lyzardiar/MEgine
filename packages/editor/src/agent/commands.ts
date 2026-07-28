@@ -944,6 +944,8 @@ const COMMAND_SUMMARIES: CommandSummary[] = [
   { id: 'panel.reset_layout', category: 'panel', description: 'Reset the dock workspace to its default layout', readOnly: false },
   { id: 'menu.invoke', category: 'menu', description: 'Invoke a registered Unity-style menu item by exact path', readOnly: false },
   { id: 'window.ui_click', category: 'window', description: 'Click a semantic UI element in an editor window without activating it', readOnly: false },
+  { id: 'window.ui_double_click', category: 'window', description: 'Double-click a semantic UI element in an editor window without activating it', readOnly: false },
+  { id: 'window.ui_context_click', category: 'window', description: 'Open the context menu for a semantic UI element without activating the editor window', readOnly: false },
   { id: 'window.ui_set_value', category: 'window', description: 'Set an input value in an editor window without activating it', readOnly: false },
   { id: 'window.ui_scroll', category: 'window', description: 'Scroll a semantic UI container in an editor window without activating it', readOnly: false },
 ];

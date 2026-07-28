@@ -535,7 +535,7 @@ class AgentBridge {
 
   /** Execute one allow-listed DOM action without activating the OS window. */
   async interactWindow(
-    action: 'click' | 'setValue' | 'scroll',
+    action: 'click' | 'doubleClick' | 'contextClick' | 'setValue' | 'scroll',
     selector: string,
     windowLabel = 'main',
     value?: string,
@@ -2536,14 +2536,20 @@ class AgentBridge {
     }
     if (
       commandId === 'window.ui_click'
+      || commandId === 'window.ui_double_click'
+      || commandId === 'window.ui_context_click'
       || commandId === 'window.ui_set_value'
       || commandId === 'window.ui_scroll'
     ) {
       const action = commandId === 'window.ui_click'
         ? 'click'
-        : commandId === 'window.ui_set_value'
-          ? 'setValue'
-          : 'scroll';
+        : commandId === 'window.ui_double_click'
+          ? 'doubleClick'
+          : commandId === 'window.ui_context_click'
+            ? 'contextClick'
+            : commandId === 'window.ui_set_value'
+              ? 'setValue'
+              : 'scroll';
       const selector = typeof args.selector === 'string' ? args.selector : '';
       const windowLabel =
         typeof args.windowLabel === 'string' && args.windowLabel ? args.windowLabel : 'main';

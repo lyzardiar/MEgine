@@ -43,7 +43,7 @@ export interface EditorUiElement {
   value: string | null;
   description: string | null;
   state: Record<string, boolean | string>;
-  actions: Array<'click' | 'setValue' | 'scroll'>;
+  actions: Array<'click' | 'doubleClick' | 'contextClick' | 'setValue' | 'scroll'>;
   scroll: {
     left: number;
     top: number;
@@ -103,7 +103,7 @@ export interface EditorUiContentPage {
 export interface EditorUiActionResult {
   ok: boolean;
   error?: string;
-  action?: 'click' | 'setValue' | 'scroll';
+  action?: 'click' | 'doubleClick' | 'contextClick' | 'setValue' | 'scroll';
   selector?: string;
   tag?: string;
   role?: string | null;

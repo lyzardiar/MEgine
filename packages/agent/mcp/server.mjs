@@ -1885,6 +1885,26 @@ const TOOLS = [
     ['selector'],
   ),
   execTool(
+    'double_click_window_ui',
+    'Double-click an element marked with the doubleClick action by get_window_ui without activating or raising the editor window.',
+    'window.ui_double_click',
+    {
+      windowLabel: { type: 'string', description: 'Window label (default: main)' },
+      selector: { type: 'string', description: 'Exact selector returned by get_window_ui' },
+    },
+    ['selector'],
+  ),
+  execTool(
+    'open_window_ui_context_menu',
+    'Open the context menu for an element marked with the contextClick action by get_window_ui without activating or raising the editor window.',
+    'window.ui_context_click',
+    {
+      windowLabel: { type: 'string', description: 'Window label (default: main)' },
+      selector: { type: 'string', description: 'Exact selector returned by get_window_ui' },
+    },
+    ['selector'],
+  ),
+  execTool(
     'set_window_ui_value',
     'Set an input, textarea, select, or contenteditable value returned by get_window_ui without activating the editor window.',
     'window.ui_set_value',

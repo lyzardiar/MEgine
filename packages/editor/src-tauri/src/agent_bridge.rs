@@ -333,18 +333,26 @@ fn extract_token(query: &str) -> Option<String> {
 }
 
 fn discovery_file_path(app: &AppHandle) -> Option<PathBuf> {
-    std::env::var_os("MENGINE_AGENT_BRIDGE_FILE")
-        .map(PathBuf::from)
-        .or_else(|| {
-            app.path()
-                .app_config_dir()
-                .ok()
-                .map(|dir| dir.join("agent-bridge.json"))
-        })
+    if let Some(path) = std::env::var_os("MENGINE_AGENT_BRIDGE_FILE") {
+        return Some(PathBuf::from(path));
+    }
+    if let Some(directory) = std::env::var_os("MENGINE_EDITOR_CONFIG_DIR") {
+        let directory = PathBuf::from(directory);
+        if !directory.is_absolute() {
+            log::warn!("MENGINE_EDITOR_CONFIG_DIR must be an absolute path");
+            return None;
+        }
+        return Some(directory.join("agent-bridge.json"));
+    }
+    app.path()
+        .app_config_dir()
+        .ok()
+        .map(|dir| dir.join("agent-bridge.json"))
 }
 
 /// Write `{ port, token, pid }` so adapters can discover and authenticate.
-/// Location: `$MENGINE_AGENT_BRIDGE_FILE` if set, else `<app_config_dir>/agent-bridge.json`.
+/// Location: `$MENGINE_AGENT_BRIDGE_FILE` if set, then
+/// `$MENGINE_EDITOR_CONFIG_DIR/agent-bridge.json`, else the native app config dir.
 fn write_discovery_file(app: &AppHandle, port: u16, token: &str) {
     let path = discovery_file_path(app);
     let Some(path) = path else {
@@ -662,7 +670,10 @@ pub async fn interact_editor_window(
     if selector.is_empty() || selector.len() > 1_000 {
         return Err("selector must contain 1 to 1000 characters".to_string());
     }
-    if !matches!(action.as_str(), "click" | "setValue" | "scroll") {
+    if !matches!(
+        action.as_str(),
+        "click" | "doubleClick" | "contextClick" | "setValue" | "scroll"
+    ) {
         return Err(format!("unsupported editor UI action \"{action}\""));
     }
     if value.as_ref().is_some_and(|value| value.len() > 100_000) {
@@ -1079,13 +1090,29 @@ const WINDOW_UI_SNAPSHOT_SCRIPT: &str = r#"
     if (element.isContentEditable) return normalize(element.textContent);
     return '';
   };
+  const reactProps = (element) => {
+    for (const key of Object.keys(element)) {
+      if (key.startsWith('__reactProps$')) return element[key] || {};
+    }
+    return {};
+  };
   const actionList = (element, role) => {
     const actions = [];
+    const props = reactProps(element);
     if (role === 'button' || role === 'link' || role === 'menuitem'
-      || role === 'tab' || role === 'option' || typeof element.onclick === 'function') {
+      || role === 'tab' || role === 'option' || role === 'checkbox'
+      || role === 'radio' || role === 'switch'
+      || typeof element.onclick === 'function' || typeof props.onClick === 'function') {
       actions.push('click');
     }
-    if ((element instanceof HTMLInputElement && !element.readOnly)
+    if (typeof props.onDoubleClick === 'function') actions.push('doubleClick');
+    if (typeof props.onContextMenu === 'function') actions.push('contextClick');
+    const inputType = element instanceof HTMLInputElement
+      ? String(element.type || 'text').toLowerCase()
+      : '';
+    const writableInput = element instanceof HTMLInputElement
+      && !['button', 'submit', 'reset', 'checkbox', 'radio', 'file', 'image'].includes(inputType);
+    if ((writableInput && !element.readOnly)
       || (element instanceof HTMLTextAreaElement && !element.readOnly)
       || element instanceof HTMLSelectElement
       || element.isContentEditable) {
@@ -1107,15 +1134,16 @@ const WINDOW_UI_SNAPSHOT_SCRIPT: &str = r#"
     const name = accessibleName(element, role);
     const text = ownText(element, role);
     const tag = element.localName;
+    const actions = actionList(element, role);
     const structural = /^h[1-6]$/.test(tag)
       || ['p', 'label', 'summary', 'legend', 'caption'].includes(tag);
-    if (!role && !name && !text && !structural) continue;
-    candidates.push({ element, role, name, text });
+    if (!role && !name && !text && !structural && actions.length === 0) continue;
+    candidates.push({ element, role, name, text, actions });
   }
   const selected = candidates.slice(offset, offset + limit);
   const ids = new Map(candidates.map((entry, index) => [entry.element, `ui-${index + 1}`]));
   const elements = selected.map((entry) => {
-    const { element, role, name, text } = entry;
+    const { element, role, name, text, actions } = entry;
     let parent = element.parentElement;
     while (parent && !ids.has(parent)) parent = parent.parentElement;
     const rect = element.getBoundingClientRect();
@@ -1134,7 +1162,6 @@ const WINDOW_UI_SNAPSHOT_SCRIPT: &str = r#"
     if ('selected' in element && typeof element.selected === 'boolean') {
       state.selected = element.selected;
     }
-    const actions = actionList(element, role);
     const scroll = actions.includes('scroll') && element instanceof HTMLElement
       ? {
           left: element.scrollLeft,
@@ -1268,11 +1295,51 @@ const WINDOW_UI_INTERACTION_SCRIPT: &str = r#"
   if (disabled) {
     return { ok: false, error: `Element ${selector} is disabled` };
   }
+  const eventCoordinates = () => {
+    const rect = element.getBoundingClientRect();
+    return {
+      clientX: rect.left + rect.width / 2,
+      clientY: rect.top + rect.height / 2,
+    };
+  };
+  const dispatchPointer = (type, button, buttons, detail = 0) => {
+    const coordinates = eventCoordinates();
+    const EventType = typeof PointerEvent === 'function' && type.startsWith('pointer')
+      ? PointerEvent
+      : MouseEvent;
+    element.dispatchEvent(new EventType(type, {
+      bubbles: true,
+      cancelable: true,
+      composed: true,
+      button,
+      buttons,
+      detail,
+      pointerId: 1,
+      pointerType: 'mouse',
+      isPrimary: true,
+      ...coordinates,
+    }));
+  };
+  const dispatchClick = (detail) => {
+    dispatchPointer('pointerdown', 0, 1, detail);
+    dispatchPointer('mousedown', 0, 1, detail);
+    dispatchPointer('pointerup', 0, 0, detail);
+    dispatchPointer('mouseup', 0, 0, detail);
+    if (typeof element.click === 'function') element.click();
+    else dispatchPointer('click', 0, 0, detail);
+  };
   if (action === 'click') {
-    if (typeof element.click !== 'function') {
-      return { ok: false, error: `Element ${selector} is not clickable` };
-    }
-    element.click();
+    dispatchClick(1);
+  } else if (action === 'doubleClick') {
+    dispatchClick(1);
+    dispatchClick(2);
+    dispatchPointer('dblclick', 0, 0, 2);
+  } else if (action === 'contextClick') {
+    dispatchPointer('pointerdown', 2, 2, 1);
+    dispatchPointer('mousedown', 2, 2, 1);
+    dispatchPointer('contextmenu', 2, 2, 1);
+    dispatchPointer('pointerup', 2, 0, 1);
+    dispatchPointer('mouseup', 2, 0, 1);
   } else if (action === 'setValue') {
     if (element.readOnly || element.getAttribute('aria-readonly') === 'true') {
       return { ok: false, error: `Element ${selector} is read-only` };

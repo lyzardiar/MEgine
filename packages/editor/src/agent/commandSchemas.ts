@@ -480,6 +480,14 @@ export const COMMAND_PARAMS_SCHEMAS: Record<string, AgentJsonSchema> = {
     windowLabel: stringValue('Window label; default main'),
     selector: stringValue('Exact selector returned by window.ui_snapshot'),
   }, ['selector']),
+  'window.ui_double_click': objectSchema({
+    windowLabel: stringValue('Window label; default main'),
+    selector: stringValue('Exact selector returned by window.ui_snapshot'),
+  }, ['selector']),
+  'window.ui_context_click': objectSchema({
+    windowLabel: stringValue('Window label; default main'),
+    selector: stringValue('Exact selector returned by window.ui_snapshot'),
+  }, ['selector']),
   'window.ui_set_value': objectSchema({
     windowLabel: stringValue('Window label; default main'),
     selector: stringValue('Exact selector returned by window.ui_snapshot'),
