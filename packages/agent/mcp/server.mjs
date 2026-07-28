@@ -35,6 +35,7 @@ const REQUEST_TIMEOUT_MS = 20000;
 const BUILD_ARTIFACT_REQUEST_TIMEOUT_MS = 5 * 60 * 1000;
 const BRIDGE_CONNECT_ATTEMPTS = 30;
 const BRIDGE_CONNECT_RETRY_MS = 200;
+const SUBSCRIPTION_RECONNECT_MS = 1_000;
 const MAX_PENDING_BRIDGE_REQUESTS = 64;
 const MAX_ACTIVE_MCP_REQUESTS = 128;
 const MAX_MCP_SESSION_REQUEST_IDS = 65_536;
@@ -100,6 +101,7 @@ function readDiscovery() {
 
 let activeConnection = null;
 let connectionAttempt = null;
+let subscriptionReconnectTimer = null;
 let successfulConnections = 0;
 const pending = new Map();
 const mcpRequestContext = new AsyncLocalStorage();
@@ -181,6 +183,7 @@ function connectBridge(discovery) {
           `[mengine-mcp] reconnected to editor bridge on port ${discovery.port}\n`,
         );
       }
+      resourceSubscriptions.invalidateAll();
       resolve(connection);
     });
     socket.addEventListener('message', (event) => {
@@ -190,6 +193,7 @@ function connectBridge(discovery) {
       } catch {
         return;
       }
+      if (resourceSubscriptions.handleBridgeMessage(msg)) return;
       if (msg.id != null && pending.has(msg.id)) {
         const entry = pending.get(msg.id);
         if (entry.socket !== socket) return;
@@ -223,6 +227,7 @@ function connectBridge(discovery) {
           { sent: true, discovery },
         ));
       }
+      scheduleSubscriptionReconnect();
     });
   });
 }
@@ -253,6 +258,40 @@ async function connectLatestBridge() {
     }
   }
   throw lastError;
+}
+
+function scheduleSubscriptionReconnect(delayMs = SUBSCRIPTION_RECONNECT_MS) {
+  if (
+    inputClosed
+    || outputFailed
+    || !resourceSubscriptions.hasSubscriptions
+    || activeConnection?.socket.readyState === WebSocket.OPEN
+    || subscriptionReconnectTimer
+  ) return;
+  subscriptionReconnectTimer = setTimeout(async () => {
+    subscriptionReconnectTimer = null;
+    if (
+      inputClosed
+      || outputFailed
+      || !resourceSubscriptions.hasSubscriptions
+      || activeConnection?.socket.readyState === WebSocket.OPEN
+    ) return;
+    try {
+      const connection = await ensureBridgeConnected();
+      if (connection.socket.readyState !== WebSocket.OPEN) {
+        scheduleSubscriptionReconnect();
+      }
+    } catch {
+      scheduleSubscriptionReconnect();
+    }
+  }, delayMs);
+  subscriptionReconnectTimer.unref();
+}
+
+function cancelSubscriptionReconnectIfIdle() {
+  if (resourceSubscriptions.hasSubscriptions || !subscriptionReconnectTimer) return;
+  clearTimeout(subscriptionReconnectTimer);
+  subscriptionReconnectTimer = null;
 }
 
 function rpcOnce(
@@ -2871,6 +2910,133 @@ const RESOURCE_READERS = Object.fromEntries(
   ]),
 );
 
+const EVENT_RESOURCE_URIS = Object.freeze({
+  'project.changed': Object.freeze([
+    'mengine://project/state',
+    'mengine://editor/state',
+    'mengine://editor/scenes',
+    'mengine://editor/windows',
+    'mengine://editor/documents',
+    'mengine://editor/panels',
+    'mengine://scene/snapshot',
+    'mengine://scene/hierarchy',
+    'mengine://scene/selection',
+    'mengine://project/settings',
+    'mengine://build/settings',
+    'mengine://build/status',
+  ]),
+  'scene.changed': Object.freeze([
+    'mengine://editor/state',
+    'mengine://editor/scenes',
+    'mengine://scene/snapshot',
+    'mengine://scene/hierarchy',
+  ]),
+  'selection.changed': Object.freeze([
+    'mengine://editor/state',
+    'mengine://scene/selection',
+  ]),
+  'mode.changed': Object.freeze(['mengine://editor/state']),
+  'panel.changed': Object.freeze([
+    'mengine://editor/state',
+    'mengine://editor/windows',
+    'mengine://editor/documents',
+    'mengine://editor/panels',
+  ]),
+  'view.changed': Object.freeze(['mengine://editor/state']),
+  'build.progress': Object.freeze(['mengine://build/status']),
+  'build.settings': Object.freeze(['mengine://build/settings']),
+  'project.settings': Object.freeze(['mengine://project/settings']),
+  'asset.changed': Object.freeze([
+    'mengine://project/state',
+    'mengine://editor/scenes',
+    'mengine://editor/documents',
+  ]),
+  'log.added': Object.freeze(['mengine://console/logs']),
+  'log.cleared': Object.freeze(['mengine://console/logs']),
+});
+
+class ResourceSubscriptions {
+  constructor(resourceUris, eventResourceUris, notify) {
+    this.resourceUris = new Set(resourceUris);
+    this.eventResourceUris = eventResourceUris;
+    this.notify = notify;
+    this.subscribed = new Set();
+    this.pending = new Set();
+    this.flushScheduled = false;
+  }
+
+  get hasSubscriptions() {
+    return this.subscribed.size > 0;
+  }
+
+  subscribe(uri) {
+    if (!this.resourceUris.has(uri)) {
+      throw new Error(`Unknown resource: ${String(uri)}`);
+    }
+    this.subscribed.add(uri);
+  }
+
+  unsubscribe(uri) {
+    if (!this.resourceUris.has(uri)) {
+      throw new Error(`Unknown resource: ${String(uri)}`);
+    }
+    if (!this.subscribed.delete(uri)) {
+      throw new Error(`Resource is not subscribed: ${uri}`);
+    }
+    this.pending.delete(uri);
+  }
+
+  invalidateAll() {
+    for (const uri of this.subscribed) this.pending.add(uri);
+    this.scheduleFlush();
+  }
+
+  handleBridgeMessage(message) {
+    if (
+      !message
+      || typeof message !== 'object'
+      || message.jsonrpc !== '2.0'
+      || message.method !== 'event'
+      || typeof message.params?.topic !== 'string'
+    ) return false;
+    const resourceUris = this.eventResourceUris[message.params.topic];
+    if (!resourceUris) return true;
+    for (const uri of resourceUris) {
+      if (this.subscribed.has(uri)) this.pending.add(uri);
+    }
+    this.scheduleFlush();
+    return true;
+  }
+
+  scheduleFlush() {
+    if (this.pending.size === 0 || this.flushScheduled) return;
+    this.flushScheduled = true;
+    queueMicrotask(() => this.flush());
+  }
+
+  flush() {
+    this.flushScheduled = false;
+    const uris = [...this.pending];
+    this.pending.clear();
+    for (const uri of uris) {
+      if (this.subscribed.has(uri)) this.notify(uri);
+    }
+  }
+}
+
+const resourceSubscriptions = new ResourceSubscriptions(
+  RESOURCES.map((resource) => resource.uri),
+  EVENT_RESOURCE_URIS,
+  (uri) => {
+    if (mcpLifecycleState !== 'operational' || inputClosed) return;
+    send({
+      jsonrpc: '2.0',
+      method: 'notifications/resources/updated',
+      params: { uri },
+    });
+  },
+);
+
 const MAX_PROMPT_ARGUMENT_LENGTH = 4_096;
 
 const PROMPTS = Object.freeze([
@@ -3081,6 +3247,7 @@ const SERVER_INSTRUCTIONS = [
   'Prefer domain tools over semantic window UI actions. UI inspection and interaction are available for surfaces without a domain API and remain background-safe. Every UI write must pass expectedSnapshotRevision from the same get_window_ui snapshot as its selector; stale revisions are rejected before dispatch. Successful UI writes settle two target-window render opportunities and return a postSnapshotRevision when post-action semantic observation succeeds.',
   'If an editor confirmation or prompt is open, read get_active_dialog for its window label and exact id, then use respond_to_dialog; stale ids are rejected.',
   'After edits, verify semantic state and use a scene, game, or whole-window screenshot when visual correctness matters. A requested command screenshot reports screenshotRequested and screenshotCaptured; if capture fails after the write, screenshotError is returned instead of silently claiming visual verification. Use get_editor_events or wait_for_editor_events for incremental observation during longer workflows.',
+  'MCP hosts may subscribe to any listed mengine:// resource. Editor events emit coalesced notifications/resources/updated invalidations, and a Bridge reconnect invalidates every active subscription so the host can re-read authoritative state.',
 ].join('\n');
 
 // ── MCP stdio protocol ───────────────────────────────────────────────────
@@ -3423,7 +3590,7 @@ async function handleMessage(msg, signal) {
       mcpLifecycleState = 'awaitingInitialized';
       respond(id, {
         protocolVersion: negotiateProtocolVersion(params.protocolVersion),
-        capabilities: { tools: {}, resources: {}, prompts: {} },
+        capabilities: { tools: {}, resources: { subscribe: true }, prompts: {} },
         serverInfo: { name: 'mengine-editor', version: '0.1.0' },
         instructions: SERVER_INSTRUCTIONS,
       });
@@ -3492,6 +3659,24 @@ async function handleMessage(msg, signal) {
     case 'resources/templates/list':
       respond(id, { resourceTemplates: [] });
       return;
+    case 'resources/subscribe':
+      try {
+        resourceSubscriptions.subscribe(params?.uri);
+        scheduleSubscriptionReconnect(0);
+        respond(id, {});
+      } catch (error) {
+        respondError(id, -32602, error.message);
+      }
+      return;
+    case 'resources/unsubscribe':
+      try {
+        resourceSubscriptions.unsubscribe(params?.uri);
+        cancelSubscriptionReconnectIfIdle();
+        respond(id, {});
+      } catch (error) {
+        respondError(id, -32602, error.message);
+      }
+      return;
     case 'resources/read': {
       const reader = RESOURCE_READERS[params?.uri];
       if (!reader) {
@@ -3535,6 +3720,8 @@ const MCP_REQUEST_METHODS = new Set([
   'tools/call',
   'resources/list',
   'resources/templates/list',
+  'resources/subscribe',
+  'resources/unsubscribe',
   'resources/read',
 ]);
 
@@ -3766,7 +3953,9 @@ if (launchedAsMain) {
 
 export {
   BridgeOutcomeUnknownError,
+  EVENT_RESOURCE_URIS,
   RESOURCES,
+  ResourceSubscriptions,
   SERVER_INSTRUCTIONS,
   PROMPTS,
   BoundedNdjsonDecoder,

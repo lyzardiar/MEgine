@@ -7,8 +7,11 @@ import { fileURLToPath } from 'node:url';
 import {
   BoundedNdjsonDecoder,
   BoundedWriteQueue,
+  EVENT_RESOURCE_URIS,
   incomingMessageError,
   negotiateProtocolVersion,
+  RESOURCES,
+  ResourceSubscriptions,
   rpcOnce,
   SUPPORTED_PROTOCOL_VERSIONS,
 } from '../../agent/mcp/server.mjs';
@@ -124,6 +127,83 @@ test('MCP stdout queue serializes writes and enforces its byte budget', async ()
   assert.equal(queue.idle, true);
 });
 
+test('MCP resource subscriptions coalesce bridge events and stop after unsubscribe', async () => {
+  const resourceUris = new Set(RESOURCES.map((resource) => resource.uri));
+  for (const uris of Object.values(EVENT_RESOURCE_URIS)) {
+    for (const uri of uris) {
+      assert.ok(resourceUris.has(uri), `event mapping references unknown resource ${uri}`);
+    }
+  }
+
+  const notifications = [];
+  const subscriptions = new ResourceSubscriptions(
+    [
+      'mengine://editor/state',
+      'mengine://scene/snapshot',
+      'mengine://console/logs',
+    ],
+    EVENT_RESOURCE_URIS,
+    (uri) => notifications.push(uri),
+  );
+  subscriptions.subscribe('mengine://editor/state');
+  subscriptions.subscribe('mengine://scene/snapshot');
+  subscriptions.invalidateAll();
+  subscriptions.invalidateAll();
+  await Promise.resolve();
+  assert.deepEqual(notifications, [
+    'mengine://editor/state',
+    'mengine://scene/snapshot',
+  ]);
+  notifications.splice(0);
+
+  assert.equal(subscriptions.handleBridgeMessage({
+    jsonrpc: '2.0',
+    method: 'event',
+    params: { topic: 'scene.changed', sequence: 1 },
+  }), true);
+  subscriptions.handleBridgeMessage({
+    jsonrpc: '2.0',
+    method: 'event',
+    params: { topic: 'scene.changed', sequence: 2 },
+  });
+  subscriptions.handleBridgeMessage({
+    jsonrpc: '2.0',
+    method: 'event',
+    params: { topic: 'log.added', sequence: 3 },
+  });
+  assert.equal(subscriptions.handleBridgeMessage({
+    jsonrpc: '2.0',
+    method: 'response',
+  }), false);
+
+  await Promise.resolve();
+  assert.deepEqual(notifications, [
+    'mengine://editor/state',
+    'mengine://scene/snapshot',
+  ]);
+
+  subscriptions.unsubscribe('mengine://scene/snapshot');
+  subscriptions.handleBridgeMessage({
+    jsonrpc: '2.0',
+    method: 'event',
+    params: { topic: 'scene.changed', sequence: 4 },
+  });
+  await Promise.resolve();
+  assert.deepEqual(notifications, [
+    'mengine://editor/state',
+    'mengine://scene/snapshot',
+    'mengine://editor/state',
+  ]);
+  assert.throws(
+    () => subscriptions.unsubscribe('mengine://scene/snapshot'),
+    /not subscribed/,
+  );
+  assert.throws(
+    () => subscriptions.subscribe('mengine://missing'),
+    /Unknown resource/,
+  );
+});
+
 test('MCP bridge timeout closes the socket so native request slots are released', async () => {
   const sent = [];
   const closed = [];
@@ -234,6 +314,7 @@ test('MCP stdio serves negotiated initialization, resource templates, and protoc
   assert.equal(responses[0].id, 1);
   assert.equal(responses[0].result.protocolVersion, '2025-11-25');
   assert.deepEqual(responses[0].result.capabilities.prompts, {});
+  assert.deepEqual(responses[0].result.capabilities.resources, { subscribe: true });
   assert.match(responses[0].result.instructions, /background-safe/);
   assert.deepEqual(responses[1], {
     jsonrpc: '2.0',
@@ -254,6 +335,65 @@ test('MCP stdio serves negotiated initialization, resource templates, and protoc
   assert.equal(responses[4].error.code, -32600);
   assert.equal(responses[4].error.data.reason, 'id must be a string or safe integer');
   assert.deepEqual(responses[5], { jsonrpc: '2.0', id: 3, result: {} });
+});
+
+test('MCP stdio validates resource subscription lifecycle', async () => {
+  const responses = await runStdioSession([
+    JSON.stringify({
+      jsonrpc: '2.0',
+      id: 20,
+      method: 'initialize',
+      params: {
+        protocolVersion: '2025-11-25',
+        capabilities: {},
+        clientInfo: { name: 'subscription-test', version: '1.0.0' },
+      },
+    }),
+    JSON.stringify({ jsonrpc: '2.0', method: 'notifications/initialized' }),
+    JSON.stringify({
+      jsonrpc: '2.0',
+      id: 21,
+      method: 'resources/subscribe',
+      params: { uri: 'mengine://editor/state' },
+    }),
+    JSON.stringify({
+      jsonrpc: '2.0',
+      id: 22,
+      method: 'resources/subscribe',
+      params: { uri: 'mengine://missing' },
+    }),
+    JSON.stringify({
+      jsonrpc: '2.0',
+      id: 23,
+      method: 'resources/unsubscribe',
+      params: { uri: 'mengine://editor/state' },
+    }),
+    JSON.stringify({
+      jsonrpc: '2.0',
+      id: 24,
+      method: 'resources/unsubscribe',
+      params: { uri: 'mengine://editor/state' },
+    }),
+  ]);
+
+  assert.equal(responses.length, 5);
+  assert.deepEqual(responses[0].result.capabilities.resources, { subscribe: true });
+  assert.deepEqual(responses[1], {
+    jsonrpc: '2.0',
+    id: 21,
+    result: {},
+  });
+  assert.equal(responses[2].id, 22);
+  assert.equal(responses[2].error.code, -32602);
+  assert.match(responses[2].error.message, /Unknown resource/);
+  assert.deepEqual(responses[3], {
+    jsonrpc: '2.0',
+    id: 23,
+    result: {},
+  });
+  assert.equal(responses[4].id, 24);
+  assert.equal(responses[4].error.code, -32602);
+  assert.match(responses[4].error.message, /not subscribed/);
 });
 
 test('MCP stdio lists and renders safe workflow prompts with protocol errors', async () => {

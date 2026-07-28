@@ -243,7 +243,8 @@ test('whole-window agent capture is background-safe and addressable by window la
   assert.match(mcp, /validateToolArguments\(tool, args\)/);
   assert.match(mcp, /additionalProperties: false/);
   assert.match(mcp, /bridgeCommand: command/);
-  assert.match(mcp, /BridgeOutcomeUnknownError,\s*RESOURCES,\s*SERVER_INSTRUCTIONS/);
+  assert.match(mcp, /export \{[\s\S]*\bBridgeOutcomeUnknownError,/);
+  assert.match(mcp, /export \{[\s\S]*\bRESOURCES,/);
   assert.match(mcp, /instructions: SERVER_INSTRUCTIONS/);
   assert.match(mcp, /protocolVersion: negotiateProtocolVersion\(params\.protocolVersion\)/);
   assert.match(mcp, /SUPPORTED_PROTOCOL_VERSIONS/);
