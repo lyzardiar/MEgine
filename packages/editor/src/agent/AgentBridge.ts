@@ -18,6 +18,7 @@ import {
   type ProjectSnapshot,
   type RecentProjectInfo,
 } from '../transport/editorTransport';
+import { normalizeSceneName, sceneFileName } from '../sceneLibrary';
 import {
   BridgeError,
   type EditorMenuItemInfo,
@@ -128,7 +129,27 @@ export interface AgentSceneProvider {
     unnamedScene?: string;
     overwrite: boolean;
   }) => Promise<{ sceneName: string | null }>;
+  rename: (options: {
+    oldName: string;
+    newName: string;
+  }) => Promise<{ oldName: string; name: string; activeScene: string | null }>;
+  delete: (options: {
+    name: string;
+    expectedRevision: string;
+  }) => Promise<{ name: string }>;
 }
+
+export type AgentSceneDeletePreview = {
+  operation: 'delete';
+  previewToken: string;
+  name: string;
+  path: string;
+  revision: string;
+  activeScene: string | null;
+  includedInBuildSettings: boolean;
+  blockers: string[];
+  permanent: true;
+};
 
 export interface AgentWorkspaceProvider {
   assertDiskMutationAllowed: () => Promise<void>;
@@ -830,6 +851,61 @@ class AgentBridge {
     return structuredClone(this.requireSceneProvider().list());
   }
 
+  async previewSceneDelete(rawName: string): Promise<AgentSceneDeletePreview> {
+    const state = this.requireSceneProvider().list();
+    if (!state.ready) {
+      throw new BridgeError('NOT_READY', 'Scene library is still loading');
+    }
+    const requestedName = normalizeSceneName(rawName);
+    if (!requestedName) throw new BridgeError('INVALID_ARGS', 'Scene name is invalid');
+    const scene = state.scenes.find(
+      (candidate) => candidate.name.toLocaleLowerCase() === requestedName.toLocaleLowerCase(),
+    );
+    if (!scene) {
+      throw new BridgeError('INVALID_ARGS', `Scene not found: ${sceneFileName(requestedName)}`);
+    }
+
+    const path = sceneAssetPath(scene.name);
+    const files = await refreshProjectFiles();
+    const asset = findAsset(files, path);
+    if (!asset || asset.kind !== 'scene') {
+      throw new BridgeError('IO_ERROR', `Scene asset index is missing ${path}`);
+    }
+    const buildSettings = await bridgeIo(
+      'Failed to read Build Settings',
+      () => getProjectBuildSettings(),
+    );
+    const includedInBuildSettings = buildSettings.scenes.some(
+      (candidate) => candidate.toLocaleLowerCase() === path.toLocaleLowerCase(),
+    );
+    const active = state.activeScene?.toLocaleLowerCase() === scene.name.toLocaleLowerCase();
+    const blockers = [
+      ...(active ? ['The active scene cannot be deleted; open another scene first'] : []),
+      ...(includedInBuildSettings
+        ? ['The scene is included in Build Settings; remove it before deleting']
+        : []),
+    ];
+    const tokenPlan = {
+      operation: 'delete',
+      name: scene.name,
+      path,
+      revision: asset.revision,
+      activeScene: state.activeScene,
+      buildScenes: buildSettings.scenes,
+    };
+    return {
+      operation: 'delete',
+      previewToken: await previewPlanToken(tokenPlan),
+      name: scene.name,
+      path,
+      revision: asset.revision,
+      activeScene: state.activeScene,
+      includedInBuildSettings,
+      blockers,
+      permanent: true,
+    };
+  }
+
   async listAssets(params: Record<string, unknown> = {}): Promise<{
     total: number;
     truncated: boolean;
@@ -1437,6 +1513,60 @@ class AgentBridge {
       });
       return this.finishAsyncCommand({ ok: true, data: result }, options);
     }
+    if (commandId === 'scene.rename') {
+      await this.requireWorkspaceProvider().assertDiskMutationAllowed();
+      let result: Awaited<ReturnType<AgentSceneProvider['rename']>>;
+      try {
+        result = await this.requireSceneProvider().rename({
+          oldName: requiredString(args, 'oldName'),
+          newName: requiredString(args, 'newName'),
+        });
+      } catch (error) {
+        throw sceneLifecycleBridgeError(error);
+      }
+      this.appendEvent('asset.changed', {
+        action: 'sceneRenamed',
+        sourcePath: sceneAssetPath(result.oldName),
+        destinationPath: sceneAssetPath(result.name),
+      });
+      return this.finishAsyncCommand({ ok: true, data: result }, options, true);
+    }
+    if (commandId === 'scene.delete') {
+      await this.requireWorkspaceProvider().assertDiskMutationAllowed();
+      const expectedPreviewToken = requiredString(args, 'previewToken');
+      const preview = await this.previewSceneDelete(requiredString(args, 'name'));
+      if (preview.previewToken !== expectedPreviewToken) {
+        throw new BridgeError(
+          'STALE_REVISION',
+          'Scene deletion preview is stale; preview the operation again',
+          {
+            expectedPreviewToken,
+            currentPreviewToken: preview.previewToken,
+          },
+        );
+      }
+      if (preview.blockers.length > 0) {
+        throw new BridgeError(
+          'CONFLICT',
+          preview.blockers.join('; '),
+          { blockers: preview.blockers },
+        );
+      }
+      let result: Awaited<ReturnType<AgentSceneProvider['delete']>>;
+      try {
+        result = await this.requireSceneProvider().delete({
+          name: preview.name,
+          expectedRevision: preview.revision,
+        });
+      } catch (error) {
+        throw sceneLifecycleBridgeError(error);
+      }
+      this.appendEvent('asset.changed', {
+        action: 'sceneDeleted',
+        sourcePath: sceneAssetPath(result.name),
+      });
+      return this.finishAsyncCommand({ ok: true, data: result }, options, true);
+    }
     if (commandId === 'asset.import_file') {
       const result = await this.importAssetFile(
         requiredString(args, 'sourcePath'),
@@ -1581,6 +1711,8 @@ class AgentBridge {
         return this.getHierarchy();
       case 'scene.list':
         return this.getScenes();
+      case 'scene.delete_preview':
+        return this.previewSceneDelete(requiredString(params, 'name'));
       case 'entity.get':
         return this.getEntity(requireIdOrName(params));
       case 'entity.find':
@@ -1863,6 +1995,22 @@ function projectBridgeError(reason: unknown): BridgeError {
   return new BridgeError(code, message, failure ?? undefined);
 }
 
+function sceneLifecycleBridgeError(reason: unknown): BridgeError {
+  if (reason instanceof BridgeError) return reason;
+  const converted = projectBridgeError(reason);
+  if (converted.code === 'INVALID_ARGS' && (
+    /active scene/i.test(converted.message)
+    || /Build Settings/i.test(converted.message)
+    || /already exists/i.test(converted.message)
+  )) {
+    return new BridgeError('CONFLICT', converted.message, converted.data);
+  }
+  if (converted.code === 'INTERNAL') {
+    return new BridgeError('IO_ERROR', converted.message, converted.data);
+  }
+  return converted;
+}
+
 function requiredNonNegativeInteger(
   args: Record<string, unknown>,
   key: string,
@@ -1927,6 +2075,16 @@ function normalizeAssetPath(path: string): string {
       error instanceof Error ? error.message : String(error),
     );
   }
+}
+
+function sceneAssetPath(name: string): string {
+  return `Assets/Scenes/${sceneFileName(name)}`;
+}
+
+async function previewPlanToken(value: unknown): Promise<string> {
+  const bytes = new TextEncoder().encode(JSON.stringify(value));
+  const digest = new Uint8Array(await crypto.subtle.digest('SHA-256', bytes));
+  return [...digest].map((byte) => byte.toString(16).padStart(2, '0')).join('');
 }
 
 function findAsset(

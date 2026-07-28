@@ -1197,6 +1197,80 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
       }
       return { sceneName: sceneNameRef.current };
     },
+    rename: async ({ oldName: rawOldName, newName: rawNewName }) => {
+      if (!isSceneLibraryReady()) {
+        throw new BridgeError('NOT_READY', 'Scene library is still loading');
+      }
+      if (store.mode !== 'edit') {
+        throw new BridgeError('READONLY', 'Stop playback before renaming a scene');
+      }
+      const requestedOldName = normalizeSceneName(rawOldName);
+      const newName = normalizeSceneName(rawNewName);
+      if (!requestedOldName || !newName) {
+        throw new BridgeError('INVALID_ARGS', 'Scene name is invalid');
+      }
+      const oldName = listScenes().find(
+        (scene) => scene.name.toLocaleLowerCase() === requestedOldName.toLocaleLowerCase(),
+      )?.name;
+      if (!oldName) {
+        throw new BridgeError('INVALID_ARGS', `Scene not found: ${sceneFileName(requestedOldName)}`);
+      }
+      const collision = listScenes().find(
+        (scene) => (
+          scene.name.toLocaleLowerCase() === newName.toLocaleLowerCase()
+          && scene.name !== oldName
+        ),
+      );
+      if (collision) {
+        throw new BridgeError('CONFLICT', `${sceneFileName(collision.name)} already exists`);
+      }
+      const renamed = await renameScene(oldName, newName);
+      if (!renamed) {
+        throw new BridgeError(
+          'CONFLICT',
+          `Failed to rename ${sceneFileName(oldName)} to ${sceneFileName(newName)}`,
+        );
+      }
+      if (sceneNameRef.current?.toLocaleLowerCase() === oldName.toLocaleLowerCase()) {
+        sceneNameRef.current = renamed;
+        setSceneName(renamed);
+      }
+      bumpScenes();
+      refresh();
+      log(`Renamed ${sceneFileName(oldName)} to ${sceneFileName(renamed)} from AgentBridge`);
+      return {
+        oldName,
+        name: renamed,
+        activeScene: sceneNameRef.current,
+      };
+    },
+    delete: async ({ name: rawName, expectedRevision }) => {
+      if (!isSceneLibraryReady()) {
+        throw new BridgeError('NOT_READY', 'Scene library is still loading');
+      }
+      if (store.mode !== 'edit') {
+        throw new BridgeError('READONLY', 'Stop playback before deleting a scene');
+      }
+      const requestedName = normalizeSceneName(rawName);
+      if (!requestedName) throw new BridgeError('INVALID_ARGS', 'Scene name is invalid');
+      const name = listScenes().find(
+        (scene) => scene.name.toLocaleLowerCase() === requestedName.toLocaleLowerCase(),
+      )?.name;
+      if (!name) {
+        throw new BridgeError('INVALID_ARGS', `Scene not found: ${sceneFileName(requestedName)}`);
+      }
+      if (sceneNameRef.current?.toLocaleLowerCase() === name.toLocaleLowerCase()) {
+        throw new BridgeError(
+          'CONFLICT',
+          'The active scene cannot be deleted; open another scene first',
+        );
+      }
+      await deleteScene(name, expectedRevision);
+      bumpScenes();
+      refresh();
+      log(`Deleted ${sceneFileName(name)} from AgentBridge`);
+      return { name };
+    },
   };
   agentWorkspaceProviderRef.current = {
     assertDiskMutationAllowed: async () => {

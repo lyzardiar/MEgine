@@ -315,6 +315,19 @@ const TOOLS = [
     handler: async () => textContent(await bridgeQuery('scene.list')),
   },
   {
+    name: 'preview_scene_delete',
+    description:
+      'Prepare permanent scene deletion. Returns the exact file revision, active/build blockers, and a previewToken that delete_scene must revalidate.',
+    inputSchema: {
+      type: 'object',
+      required: ['name'],
+      properties: {
+        name: { type: 'string', description: 'Existing scene name, with or without .mscene' },
+      },
+    },
+    handler: async (args) => textContent(await bridgeQuery('scene.delete_preview', args)),
+  },
+  {
     name: 'get_scene_snapshot',
     description:
       'Get the complete scene snapshot, its monotonic revision, and every entity/component. Large; retain revision and use get_scene_changes for incremental observation.',
@@ -722,6 +735,24 @@ const TOOLS = [
     {
       name: { type: 'string', description: 'Name to use only when the dirty scene is unnamed' },
       overwrite: { type: 'boolean', description: 'Allow replacing that unnamed-scene destination (default false)' },
+    },
+  ),
+  execTool(
+    'rename_scene',
+    'Rename a saved scene while preserving its GUID and automatically updating active-scene and Build Settings references. Unsaved workspace changes block the operation.',
+    'scene.rename',
+    {
+      oldName: { type: 'string', description: 'Existing scene name, with or without .mscene' },
+      newName: { type: 'string', description: 'Unused destination scene name, with or without .mscene' },
+    },
+  ),
+  execTool(
+    'delete_scene',
+    'Permanently delete a non-active scene that is not in Build Settings. Requires an exact token from preview_scene_delete and revalidates file revision and blockers immediately before deletion.',
+    'scene.delete',
+    {
+      name: { type: 'string', description: 'Scene name returned by preview_scene_delete' },
+      previewToken: { type: 'string', description: 'Exact token returned by preview_scene_delete' },
     },
   ),
   execTool(

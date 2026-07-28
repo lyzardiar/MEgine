@@ -304,6 +304,9 @@ MEngine 编辑器当前对人类友好，但对 AI Agent 不够友好。AI Agent
 | `scene.open` | `{ name, discardDirty? }` | ✅ `openSceneByName`；无弹窗且默认拒绝丢弃脏场景 |
 | `scene.save` | `{ name?, overwrite? }` | ✅ `persistScene`；Save As 默认拒绝覆盖 |
 | `scene.save_all` | `{ name?, overwrite? }` | ✅ 保存场景与已挂载资源文档；检查独立窗口脏状态 |
+| `scene.rename` | `{ oldName, newName }` | ✅ 保持 GUID，原子更新场景名、活动场景路径与 Build Settings 引用；写前拒绝未保存工作 |
+| `scene.delete_preview` | `{ name }` | ✅ 返回文件修订、活动/构建阻断项与 SHA-256 预览令牌 |
+| `scene.delete` | `{ name, previewToken }` | ✅ 重新验证预览令牌后永久删除；拒绝活动场景、Build Settings 场景及过期文件修订 |
 | `scene.load_json` | `{ json }` | `store.loadSceneJson` |
 
 #### 4.2.6 面板 / 窗口 / 菜单

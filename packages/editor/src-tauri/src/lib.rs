@@ -3688,12 +3688,16 @@ fn rename_project_scene(
 #[tauri::command]
 fn delete_project_scene(
     name: String,
+    expected_revision: Option<String>,
     state: State<'_, AppState>,
 ) -> Result<ProjectSnapshot, EditorFailure> {
     let mut guard = state.project.lock();
     let session = guard.as_mut().ok_or_else(no_project)?;
     session
-        .delete_scene(Path::new(&format!("Assets/Scenes/{name}.mscene")))
+        .delete_scene_with_revision(
+            Path::new(&format!("Assets/Scenes/{name}.mscene")),
+            expected_revision.as_deref(),
+        )
         .map_err(|error| error.failure(Some(session.current_revision())))
 }
 

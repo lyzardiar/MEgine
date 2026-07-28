@@ -665,6 +665,14 @@ impl ProjectSession {
         &mut self,
         relative_path: impl AsRef<Path>,
     ) -> Result<ProjectSnapshot, ProjectError> {
+        self.delete_scene_with_revision(relative_path, None)
+    }
+
+    pub fn delete_scene_with_revision(
+        &mut self,
+        relative_path: impl AsRef<Path>,
+        expected_revision: Option<&str>,
+    ) -> Result<ProjectSnapshot, ProjectError> {
         let relative = normalize_scene_asset_path(relative_path.as_ref())?;
         let portable = relative.to_string_lossy().replace('\\', "/");
         if self.scene_relative_path.as_ref().is_some_and(|scene| {
@@ -691,6 +699,11 @@ impl ProjectSession {
             return Err(ProjectError::InvalidPath(relative.display().to_string()));
         }
         let absolute = self.resolve_existing(&relative)?;
+        if expected_revision.is_some()
+            && scene_file_revision(&absolute)?.as_deref() != expected_revision
+        {
+            return Err(ProjectError::ExternalSceneModification(portable));
+        }
         let sidecar = mengine_assets::asset_sidecar_path(&absolute);
         if sidecar.exists() {
             let metadata = std::fs::symlink_metadata(&sidecar)?;
@@ -3550,12 +3563,16 @@ mod tests {
         std::fs::copy(&main, root.join("Assets/Scenes/Level2.mscene")).unwrap();
         std::fs::copy(&main, root.join("Assets/Scenes/Scratch.mscene")).unwrap();
         std::fs::copy(&main, root.join("Assets/Scenes/Collision.mscene")).unwrap();
+        std::fs::copy(&main, root.join("Assets/Scenes/Stale.mscene")).unwrap();
         let main_guid = mengine_assets::ensure_asset_sidecar(&main, "scene")
             .unwrap()
             .guid;
         let scratch = root.join("Assets/Scenes/Scratch.mscene");
         let scratch_sidecar = mengine_assets::asset_sidecar_path(&scratch);
         mengine_assets::ensure_asset_sidecar(&scratch, "scene").unwrap();
+        let stale = root.join("Assets/Scenes/Stale.mscene");
+        mengine_assets::ensure_asset_sidecar(&stale, "scene").unwrap();
+        let stale_revision = scene_file_revision(&stale).unwrap().unwrap();
         let mut session = ProjectSession::open(&root).unwrap();
         session
             .save_build_scenes(vec![
@@ -3639,6 +3656,16 @@ mod tests {
         assert!(session
             .delete_scene("Assets/Scenes/../Collision.mscene")
             .is_err());
+        let stale_contents = std::fs::read_to_string(&stale).unwrap();
+        std::fs::write(&stale, format!("{stale_contents}\n")).unwrap();
+        let stale_error = session
+            .delete_scene_with_revision("Assets/Scenes/Stale.mscene", Some(&stale_revision))
+            .unwrap_err();
+        assert!(matches!(
+            stale_error,
+            ProjectError::ExternalSceneModification(_)
+        ));
+        assert!(stale.is_file());
         std::fs::remove_dir_all(root).unwrap();
     }
 

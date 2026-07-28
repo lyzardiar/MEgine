@@ -135,10 +135,13 @@ export async function renameDesktopScene(
   });
 }
 
-export async function deleteDesktopScene(name: string): Promise<ProjectSnapshot> {
+export async function deleteDesktopScene(
+  name: string,
+  expectedRevision?: string,
+): Promise<ProjectSnapshot> {
   return enqueueSessionOperation(async () => {
     if (!currentProject) throw new Error('no desktop project is open');
-    currentProject = await deleteProjectScene(name);
+    currentProject = await deleteProjectScene(name, expectedRevision);
     return currentProject;
   });
 }

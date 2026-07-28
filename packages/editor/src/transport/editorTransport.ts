@@ -529,9 +529,12 @@ export async function renameProjectScene(
   return invoke<ProjectSnapshot>('rename_project_scene', { oldName, newName });
 }
 
-export async function deleteProjectScene(name: string): Promise<ProjectSnapshot> {
+export async function deleteProjectScene(
+  name: string,
+  expectedRevision?: string,
+): Promise<ProjectSnapshot> {
   if (!isDesktopEditor()) throw new Error('Scene deletion requires the desktop editor');
-  return invoke<ProjectSnapshot>('delete_project_scene', { name });
+  return invoke<ProjectSnapshot>('delete_project_scene', { name, expectedRevision });
 }
 
 export async function getProjectBuildSettings(): Promise<ProjectBuildSettings> {

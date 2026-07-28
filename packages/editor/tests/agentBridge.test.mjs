@@ -55,6 +55,9 @@ test('whole-window agent capture is background-safe and addressable by window la
   assert.match(mcp, /name: 'list_menu_items'/);
   assert.match(mcp, /'invoke_menu_item'/);
   assert.match(mcp, /name: 'list_scenes'/);
+  assert.match(mcp, /name: 'preview_scene_delete'/);
+  assert.match(mcp, /'rename_scene'/);
+  assert.match(mcp, /'delete_scene'/);
   assert.match(mcp, /name: 'find_entities'/);
   assert.match(mcp, /name: 'get_entity_component'/);
   assert.match(mcp, /name: 'list_assets'/);
@@ -166,12 +169,16 @@ test('scene, asset, and asynchronous build tools share guarded editor services',
   );
 
   assert.match(bridge, /case 'scene\.list'/);
+  assert.match(bridge, /case 'scene\.delete_preview'/);
   assert.match(bridge, /case 'entity\.find'/);
   assert.match(bridge, /case 'entity\.get_component'/);
   assert.match(commands, /'batch\.apply'/);
   assert.match(commands, /worldCommandBatch/);
   assert.match(store, /cmd\.op === 'removeComponent'/);
   assert.match(bridge, /commandId === 'scene\.new'/);
+  assert.match(bridge, /commandId === 'scene\.rename'/);
+  assert.match(bridge, /commandId === 'scene\.delete'/);
+  assert.match(bridge, /Scene deletion preview is stale/);
   assert.match(bridge, /case 'asset\.read_text'/);
   assert.match(bridge, /commandId === 'asset\.write_text'/);
   assert.match(bridge, /commandId === 'asset\.import_file'/);
@@ -194,6 +201,9 @@ test('scene, asset, and asynchronous build tools share guarded editor services',
   assert.match(buildSettings, /PROJECT_BUILD_SETTINGS_CHANGED_EVENT/);
   assert.match(eventJournal, /'build\.settings'/);
   assert.match(app, /connectSceneCommands/);
+  assert.match(app, /rename: async \(\{ oldName: rawOldName, newName: rawNewName \}\)/);
+  assert.match(app, /delete: async \(\{ name: rawName, expectedRevision \}\)/);
+  assert.match(app, /deleteScene\(name, expectedRevision\)/);
   assert.match(app, /sceneDirtyRef\.current \|\| resourceDirtyRef\.current/);
   assert.match(app, /pass discardDirty=true/);
   assert.match(assets, /expectedRevision === undefined/);
