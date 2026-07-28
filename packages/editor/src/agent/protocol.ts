@@ -132,6 +132,13 @@ export interface EditorUiActionResult {
   expectedSnapshotRevision?: string;
   actualSnapshotRevision?: string;
   restartOffset?: number;
+  settledFrames?: number;
+  elementConnected?: boolean;
+  postObservationConfirmed?: boolean;
+  postObservationError?: string;
+  postSnapshotRevision?: string;
+  postSemanticElementCount?: number;
+  snapshotChanged?: boolean;
   agentBlocked?: boolean;
   agentAlternative?: string | null;
   action?: EditorUiAction;

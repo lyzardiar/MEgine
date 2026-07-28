@@ -146,6 +146,10 @@ test('whole-window agent capture is background-safe and addressable by window la
   assert.match(rust, /actualSnapshotRevision/);
   assert.match(rust, /new MutationObserver/);
   assert.match(rust, /guardedEpoch !== revisionGuard\.epoch/);
+  assert.match(rust, /evaluate_webview_script_with_await\(&app, &window_label, expression, true\)/);
+  assert.match(rust, /await waitForRender\(\)/);
+  assert.match(rust, /postObservationConfirmed/);
+  assert.match(rust, /postSnapshotRevision/);
   assert.match(mcp, /UI_SNAPSHOT_REVISION_SCHEMA/);
   assert.match(bridge, /candidate\.totalSemanticElements > 0/);
   assert.match(bridge, /semanticReady: true/);

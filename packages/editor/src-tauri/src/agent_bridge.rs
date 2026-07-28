@@ -781,9 +781,9 @@ pub async fn interact_editor_window(
             "restartOffset": 0,
         }));
     }
-    interact_editor_window_impl(
-        app,
-        window_label,
+    let mut result = interact_editor_window_impl(
+        app.clone(),
+        window_label.clone(),
         selector,
         action,
         target_selector,
@@ -791,9 +791,67 @@ pub async fn interact_editor_window(
         delta_x,
         delta_y,
         key,
-        expected_snapshot_revision,
+        expected_snapshot_revision.clone(),
     )
-    .await
+    .await?;
+    if result.get("ok").and_then(serde_json::Value::as_bool) == Some(true) {
+        let post_snapshot = inspect_editor_window_impl(app, window_label, 50, 0).await;
+        let object = result
+            .as_object_mut()
+            .ok_or_else(|| "WebView2 UI interaction returned a non-object value".to_string())?;
+        match post_snapshot {
+            Ok(snapshot) => {
+                let post_revision = snapshot
+                    .get("snapshotRevision")
+                    .and_then(serde_json::Value::as_str)
+                    .map(str::to_string);
+                if let Some(post_revision) = post_revision {
+                    let post_semantic_elements = snapshot
+                        .get("totalSemanticElements")
+                        .and_then(serde_json::Value::as_u64)
+                        .unwrap_or(0);
+                    object.insert(
+                        "postObservationConfirmed".to_string(),
+                        serde_json::Value::Bool(true),
+                    );
+                    object.insert(
+                        "postSnapshotRevision".to_string(),
+                        serde_json::Value::String(post_revision.clone()),
+                    );
+                    object.insert(
+                        "postSemanticElementCount".to_string(),
+                        serde_json::Value::from(post_semantic_elements),
+                    );
+                    object.insert(
+                        "snapshotChanged".to_string(),
+                        serde_json::Value::Bool(post_revision != expected_snapshot_revision),
+                    );
+                } else {
+                    object.insert(
+                        "postObservationConfirmed".to_string(),
+                        serde_json::Value::Bool(false),
+                    );
+                    object.insert(
+                        "postObservationError".to_string(),
+                        serde_json::Value::String(
+                            "post-interaction UI snapshot did not contain a revision".to_string(),
+                        ),
+                    );
+                }
+            }
+            Err(error) => {
+                object.insert(
+                    "postObservationConfirmed".to_string(),
+                    serde_json::Value::Bool(false),
+                );
+                object.insert(
+                    "postObservationError".to_string(),
+                    serde_json::Value::String(error),
+                );
+            }
+        }
+    }
+    Ok(result)
 }
 
 fn valid_ui_snapshot_revision(value: &str) -> bool {
@@ -955,7 +1013,7 @@ async fn interact_editor_window_impl(
         "__MENGINE_PAYLOAD_BASE64__",
         &serde_json::to_string(&payload).map_err(|error| error.to_string())?,
     );
-    evaluate_webview_script(&app, &window_label, expression).await
+    evaluate_webview_script_with_await(&app, &window_label, expression, true).await
 }
 
 #[cfg(windows)]
@@ -964,6 +1022,16 @@ async fn evaluate_webview_script(
     window_label: &str,
     expression: String,
 ) -> Result<serde_json::Value, String> {
+    evaluate_webview_script_with_await(app, window_label, expression, false).await
+}
+
+#[cfg(windows)]
+async fn evaluate_webview_script_with_await(
+    app: &AppHandle,
+    window_label: &str,
+    expression: String,
+    await_promise: bool,
+) -> Result<serde_json::Value, String> {
     let response = call_webview_devtools(
         app,
         window_label,
@@ -971,7 +1039,7 @@ async fn evaluate_webview_script(
         serde_json::json!({
             "expression": expression,
             "returnByValue": true,
-            "awaitPromise": false,
+            "awaitPromise": await_promise,
             "userGesture": false,
         }),
     )
@@ -1586,7 +1654,7 @@ const WINDOW_UI_CONTENT_SCRIPT: &str = r#"
 /// Caller-controlled strings are inserted only as JSON string literals.
 #[cfg(windows)]
 const WINDOW_UI_INTERACTION_SCRIPT: &str = r#"
-(() => {
+(async () => {
   const payload = JSON.parse(atob(__MENGINE_PAYLOAD_BASE64__));
   const {
     selector,
@@ -2183,8 +2251,23 @@ const WINDOW_UI_INTERACTION_SCRIPT: &str = r#"
     }
     element.scrollBy({ left: deltaX, top: deltaY, behavior: 'instant' });
   }
+  const waitForRender = () => new Promise((resolve) => {
+    let settled = false;
+    const finish = () => {
+      if (settled) return;
+      settled = true;
+      clearTimeout(timer);
+      resolve();
+    };
+    const timer = setTimeout(finish, 50);
+    if (typeof requestAnimationFrame === 'function') requestAnimationFrame(finish);
+  });
+  await waitForRender();
+  await waitForRender();
   return {
     ok: true,
+    settledFrames: 2,
+    elementConnected: element.isConnected,
     action,
     key: action === 'keyPress' ? requestedKey : null,
     deltaX: action === 'dragBy' ? requestedDeltaX : null,

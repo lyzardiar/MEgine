@@ -336,6 +336,8 @@ Rust Host 使用独立的工程生命周期互斥门串行化 open/create/close 
 
 所有 `window.ui_*` 写动作还必须传入 selector 所属页面的 `expectedSnapshotRevision`。Rust Host 会在事件分发前重新计算完整语义元素身份与顺序指纹；隐藏 WebView 还把 revision 绑定到 DOM mutation epoch，并在查询 selector 前于同一个 JS 任务内同步复核。DOM 已重排、语义内容已变化或检查与执行之间出现竞态时返回 `STALE_REVISION`，调用方必须重新读取快照，不能把过期 selector 作用到新元素。
 
+动作分发后，目标 WebView 会等待两次渲染机会（后台限流时由有界 timer 接管），Rust Host 再读取一次完整语义指纹。成功结果携带 `settledFrames`、`postObservationConfirmed`、`postSnapshotRevision`、`postSemanticElementCount` 与 `snapshotChanged`；因此 Agent 可以直接把返回的 post revision 用于下一次交互，而不需要任意 sleep。若动作已执行但目标窗口随即消失，结果保留成功分发并以 `postObservationConfirmed=false` 和 `postObservationError` 明确标记未能完成后置观测。
+
 #### 4.2.7 资产与构建
 
 | command id | 映射 |
