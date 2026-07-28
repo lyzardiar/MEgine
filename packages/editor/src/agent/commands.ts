@@ -466,6 +466,7 @@ export const COMMAND_META: CommandMeta[] = [
   { id: 'scene.open', category: 'scene', description: 'Open a named scene without opening a dialog', readOnly: false },
   { id: 'scene.save', category: 'scene', description: 'Save the current scene, optionally under a new name', readOnly: false },
   { id: 'scene.save_all', category: 'scene', description: 'Save the scene and every open resource document', readOnly: false },
+  { id: 'asset.import_file', category: 'asset', description: 'Import one external local file to an exact unused project asset path', readOnly: false },
   { id: 'asset.write_text', category: 'asset', description: 'Create or revision-safely update a UTF-8 text asset', readOnly: false },
   { id: 'asset.rename', category: 'asset', description: 'Apply a previewed reference-aware asset rename', readOnly: false },
   { id: 'asset.duplicate', category: 'asset', description: 'Apply a previewed asset duplicate with a new GUID', readOnly: false },

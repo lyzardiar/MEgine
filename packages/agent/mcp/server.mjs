@@ -588,6 +588,18 @@ const TOOLS = [
     },
   ),
   execTool(
+    'import_asset_file',
+    'Import one external local file into the project without a file picker or foreground focus. The source must be an absolute regular non-symlink file of a type accepted by the editor (max 64 MiB). The exact destination under Assets/ must be unused and keep the source extension.',
+    'asset.import_file',
+    {
+      sourcePath: { type: 'string', description: 'Absolute local source file path' },
+      destinationPath: {
+        type: 'string',
+        description: 'Exact unused destination path under Assets/ with the same extension',
+      },
+    },
+  ),
+  execTool(
     'write_asset_text',
     'Create or update a UTF-8 text asset under Assets/ with optimistic concurrency. Pass the exact revision returned by list_assets/read_asset_text, or null only when creating a missing file. Refuses while any editor window has unsaved work.',
     'asset.write_text',

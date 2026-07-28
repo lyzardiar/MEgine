@@ -40,6 +40,13 @@ export type ProjectAssetChange = {
   current: ProjectFileAsset | null;
 };
 
+export type ProjectAssetImportResult = {
+  sourcePath: string;
+  sourceRevision: string;
+  destinationPath: string;
+  asset: ProjectFileAsset;
+};
+
 let projectFiles: ProjectFileAsset[] = [];
 let watchedProjectFiles: ProjectFileAsset[] = [];
 let watchBaselineInitialized = false;
@@ -413,6 +420,28 @@ export async function writeProjectAssetBytes(
     };
     if (result.revision) writeBaselines.set(assetKey(normalized), result.revision);
     acceptWrittenAsset(result.asset);
+  } finally {
+    endInternalProjectFileWrite(normalized);
+  }
+}
+
+export async function importExternalProjectAsset(
+  sourcePath: string,
+  destinationPath: string,
+): Promise<ProjectAssetImportResult> {
+  if (!isDesktopEditor()) {
+    throw new Error('Importing an external local file requires the desktop editor');
+  }
+  const normalized = normalizeProjectAssetPath(destinationPath);
+  beginInternalProjectFileWrite(normalized);
+  try {
+    const result = await invoke<ProjectAssetImportResult>('import_project_asset', {
+      sourcePath,
+      destinationPath: normalized,
+    });
+    writeBaselines.set(assetKey(normalized), result.asset.revision);
+    acceptWrittenAsset(result.asset);
+    return result;
   } finally {
     endInternalProjectFileWrite(normalized);
   }

@@ -103,6 +103,15 @@ struct ProjectAssetWriteResult {
 
 #[derive(serde::Serialize)]
 #[serde(rename_all = "camelCase")]
+struct ProjectAssetImportResult {
+    source_path: String,
+    source_revision: String,
+    destination_path: String,
+    asset: ProjectAssetInfo,
+}
+
+#[derive(serde::Serialize)]
+#[serde(rename_all = "camelCase")]
 struct ProjectSpriteInfo {
     id: String,
     name: String,
@@ -3205,6 +3214,48 @@ fn remember_recent_project(app: &tauri::AppHandle, snapshot: &ProjectSnapshot) {
     let _ = save_recent_projects(app, &projects);
 }
 
+const IMPORTABLE_ASSET_EXTENSIONS: &[&str] = &[
+    ".png",
+    ".jpg",
+    ".jpeg",
+    ".webp",
+    ".gif",
+    ".bmp",
+    ".tga",
+    ".tif",
+    ".tiff",
+    ".hdr",
+    ".exr",
+    ".wav",
+    ".ogg",
+    ".mp3",
+    ".flac",
+    ".gltf",
+    ".glb",
+    ".atlas",
+    ".skel",
+    ".json",
+    ".mmat",
+    ".mat",
+    ".minst",
+    ".mshader",
+    ".prefab",
+    ".matlas",
+    ".manim",
+    ".mcontroller",
+    ".mavatar",
+    ".mtimeline",
+];
+
+fn importable_asset_extension(name: &str) -> Option<&'static str> {
+    let lower = name.to_ascii_lowercase();
+    IMPORTABLE_ASSET_EXTENSIONS
+        .iter()
+        .copied()
+        .filter(|extension| lower.ends_with(extension))
+        .max_by_key(|extension| extension.len())
+}
+
 fn project_asset_kind(name: &str) -> Option<&'static str> {
     let lower = name.to_ascii_lowercase();
     if lower.ends_with(".sprite.json") {
@@ -4359,6 +4410,182 @@ fn write_project_asset_file(
     result.map_err(|error| error.to_string())
 }
 
+fn appended_path_suffix(path: &Path, suffix: &str) -> PathBuf {
+    let mut value = path.as_os_str().to_os_string();
+    value.push(suffix);
+    PathBuf::from(value)
+}
+
+fn write_new_synced_file(target: &Path, contents: &[u8], label: &str) -> Result<(), String> {
+    let parent = target
+        .parent()
+        .ok_or_else(|| format!("{label} target has no parent"))?;
+    let name = target
+        .file_name()
+        .and_then(|value| value.to_str())
+        .unwrap_or(label);
+    let nonce = SystemTime::now()
+        .duration_since(UNIX_EPOCH)
+        .unwrap_or_default()
+        .as_nanos();
+    let temporary = parent.join(format!(".{name}.{}.{nonce}.{label}", std::process::id()));
+    let result = (|| -> std::io::Result<()> {
+        use std::io::Write;
+        let mut file = std::fs::OpenOptions::new()
+            .write(true)
+            .create_new(true)
+            .open(&temporary)?;
+        file.write_all(contents)?;
+        file.sync_all()?;
+        drop(file);
+        // A hard link is an atomic create-only installation. Unlike rename or
+        // ReplaceFile it cannot overwrite a path that appeared after preflight.
+        std::fs::hard_link(&temporary, target)?;
+        let _ = std::fs::remove_file(&temporary);
+        Ok(())
+    })();
+    if result.is_err() {
+        let _ = std::fs::remove_file(&temporary);
+    }
+    result.map_err(|error| format!("cannot create {label}: {error}"))
+}
+
+fn remove_file_if_contents_match(path: &Path, expected: &[u8]) {
+    let Ok(metadata) = std::fs::symlink_metadata(path) else {
+        return;
+    };
+    if metadata.file_type().is_symlink() || !metadata.is_file() {
+        return;
+    }
+    if std::fs::read(path).is_ok_and(|contents| contents == expected) {
+        let _ = std::fs::remove_file(path);
+    }
+}
+
+fn write_new_project_asset_file(
+    project_root: &Path,
+    relative_path: &str,
+    contents: &[u8],
+) -> Result<PathBuf, String> {
+    if contents.len() > MAX_PROJECT_ASSET_BYTES {
+        return Err("asset exceeds 64 MiB editor limit".into());
+    }
+    let target = project_asset_write_path(project_root, relative_path)?;
+    if std::fs::symlink_metadata(&target).is_ok() {
+        return Err(format!("destination asset already exists: {relative_path}"));
+    }
+    let metadata_path = appended_path_suffix(&target, ".meta");
+    if std::fs::symlink_metadata(&metadata_path).is_ok() {
+        return Err(format!(
+            "destination metadata already exists: {relative_path}.meta"
+        ));
+    }
+    write_new_synced_file(&target, contents, "import")
+        .map_err(|error| format!("cannot import {relative_path}: {error}"))?;
+    Ok(target)
+}
+
+fn import_project_asset_file(
+    project_root: &Path,
+    source_path: &Path,
+    destination_path: &str,
+) -> Result<ProjectAssetImportResult, String> {
+    let canonical_project_root = project_root
+        .canonicalize()
+        .map_err(|error| format!("cannot resolve project root: {error}"))?;
+    if !source_path.is_absolute() {
+        return Err("import source path must be absolute".into());
+    }
+    let source_metadata = std::fs::symlink_metadata(source_path)
+        .map_err(|error| format!("cannot inspect import source: {error}"))?;
+    if source_metadata.file_type().is_symlink() || !source_metadata.is_file() {
+        return Err("import source must be a regular non-symlink file".into());
+    }
+    if source_metadata.len() > MAX_PROJECT_ASSET_BYTES as u64 {
+        return Err("import source exceeds 64 MiB editor limit".into());
+    }
+    let source = source_path
+        .canonicalize()
+        .map_err(|error| format!("cannot resolve import source: {error}"))?;
+    let source_name = source
+        .file_name()
+        .and_then(|value| value.to_str())
+        .ok_or_else(|| "import source file name is not valid UTF-8".to_string())?;
+    let destination_name = Path::new(destination_path)
+        .file_name()
+        .and_then(|value| value.to_str())
+        .ok_or_else(|| "import destination file name is not valid UTF-8".to_string())?;
+    let source_extension = importable_asset_extension(source_name)
+        .ok_or_else(|| "unsupported import source type".to_string())?;
+    let destination_extension = importable_asset_extension(destination_name)
+        .ok_or_else(|| "unsupported import destination type".to_string())?;
+    if source_extension != destination_extension {
+        return Err(format!(
+            "import destination must keep the source extension {source_extension}"
+        ));
+    }
+
+    let mut stable_source = None;
+    for _ in 0..2 {
+        let before = source
+            .metadata()
+            .map_err(|error| format!("cannot inspect import source: {error}"))?;
+        if before.len() > MAX_PROJECT_ASSET_BYTES as u64 {
+            return Err("import source exceeds 64 MiB editor limit".into());
+        }
+        let revision = project_file_revision(&before);
+        let contents = std::fs::read(&source)
+            .map_err(|error| format!("cannot read import source: {error}"))?;
+        let after = source
+            .metadata()
+            .map_err(|error| format!("cannot inspect import source after reading: {error}"))?;
+        if revision == project_file_revision(&after) {
+            stable_source = Some((contents, revision));
+            break;
+        }
+    }
+    let (contents, source_revision) = stable_source.ok_or_else(|| {
+        "import source changed repeatedly while it was being read; retry".to_string()
+    })?;
+    let asset_kind = project_asset_kind(destination_name)
+        .ok_or_else(|| "unsupported import destination type".to_string())?;
+    let expected_sidecar = mengine_assets::AssetSidecar::new(asset_kind);
+    let mut metadata_contents =
+        serde_json::to_vec_pretty(&expected_sidecar).map_err(|error| error.to_string())?;
+    metadata_contents.push(b'\n');
+    let target =
+        write_new_project_asset_file(&canonical_project_root, destination_path, &contents)?;
+    let metadata_path = appended_path_suffix(&target, ".meta");
+    if let Err(error) = write_new_synced_file(&metadata_path, &metadata_contents, "import-meta") {
+        remove_file_if_contents_match(&target, &contents);
+        return Err(format!(
+            "imported asset metadata could not be installed ({error}); the import was rolled back"
+        ));
+    }
+    let expected_guid = expected_sidecar.guid.0.to_string();
+    let asset = project_asset_info(&canonical_project_root, &target);
+    if !asset.as_ref().is_some_and(|asset| {
+        asset.meta_status == "ready" && asset.guid.as_deref() == Some(expected_guid.as_str())
+    }) {
+        let detail = asset
+            .as_ref()
+            .and_then(|asset| asset.meta_error.as_deref())
+            .unwrap_or("the imported file or generated GUID was not recognized");
+        remove_file_if_contents_match(&target, &contents);
+        remove_file_if_contents_match(&metadata_path, &metadata_contents);
+        return Err(format!(
+            "imported asset metadata could not be created ({detail}); the import was rolled back"
+        ));
+    }
+    let asset = asset.expect("validated imported asset metadata");
+    Ok(ProjectAssetImportResult {
+        source_path: source.to_string_lossy().into_owned(),
+        source_revision,
+        destination_path: asset.rel_path.clone(),
+        asset,
+    })
+}
+
 #[tauri::command]
 fn read_project_asset(
     relative_path: String,
@@ -4404,6 +4631,29 @@ fn write_project_asset(
         revision: project_file_revision(&metadata),
         asset: project_asset_info(root, &file),
     })
+}
+
+#[tauri::command]
+async fn import_project_asset(
+    source_path: String,
+    destination_path: String,
+    state: State<'_, AppState>,
+) -> Result<ProjectAssetImportResult, String> {
+    let project_root = state
+        .project
+        .lock()
+        .as_ref()
+        .map(|session| session.snapshot().project_root)
+        .ok_or_else(|| no_project().message)?;
+    tauri::async_runtime::spawn_blocking(move || {
+        import_project_asset_file(
+            Path::new(&project_root),
+            Path::new(&source_path),
+            &destination_path,
+        )
+    })
+    .await
+    .map_err(|error| format!("asset import task failed: {error}"))?
 }
 
 #[tauri::command]
@@ -4737,6 +4987,7 @@ pub fn run() {
             verify_pc_player,
             read_project_asset,
             write_project_asset,
+            import_project_asset,
             rename_project_asset,
             duplicate_project_asset,
             get_project_asset_delete_snapshot,
@@ -6271,5 +6522,56 @@ mod tests {
         let current = project_file_revision(&path.metadata().unwrap());
         assert!(require_project_asset_revision(&path, Some(&current)).is_ok());
         std::fs::remove_dir_all(root).unwrap();
+    }
+
+    #[test]
+    fn external_asset_import_is_create_only_and_generates_healthy_metadata() {
+        let temporary = create_owned_temporary_directory("agent-import-test").unwrap();
+        let root = temporary.path.join("Project");
+        std::fs::create_dir_all(root.join("Assets/Imported")).unwrap();
+        #[cfg(windows)]
+        let root_argument = PathBuf::from(
+            root.to_string_lossy()
+                .strip_prefix(r"\\?\")
+                .expect("temporary root should use a canonical verbatim path"),
+        );
+        #[cfg(not(windows))]
+        let root_argument = root.clone();
+        let source = temporary.path.join("source.png");
+        std::fs::write(&source, b"stable image bytes").unwrap();
+
+        let imported =
+            import_project_asset_file(&root_argument, &source, "Assets/Imported/source.png")
+                .unwrap();
+        assert_eq!(imported.destination_path, "Assets/Imported/source.png");
+        assert_eq!(imported.asset.meta_status, "ready");
+        assert!(imported.asset.guid.is_some());
+        let destination = root.join("Assets/Imported/source.png");
+        assert_eq!(std::fs::read(&destination).unwrap(), b"stable image bytes");
+        assert!(appended_path_suffix(&destination, ".meta").is_file());
+
+        let overwrite =
+            import_project_asset_file(&root_argument, &source, "Assets/Imported/source.png")
+                .err()
+                .expect("an existing destination must be rejected");
+        assert!(overwrite.contains("already exists"));
+        let wrong_extension =
+            import_project_asset_file(&root_argument, &source, "Assets/Imported/source.jpg")
+                .err()
+                .expect("the source extension must be preserved");
+        assert!(wrong_extension.contains("keep the source extension"));
+
+        let blocked_destination = root.join("Assets/Imported/blocked.png");
+        std::fs::write(
+            appended_path_suffix(&blocked_destination, ".meta"),
+            b"unowned metadata",
+        )
+        .unwrap();
+        let metadata_conflict =
+            import_project_asset_file(&root_argument, &source, "Assets/Imported/blocked.png")
+                .err()
+                .expect("unowned destination metadata must block import");
+        assert!(metadata_conflict.contains("metadata already exists"));
+        assert!(!blocked_destination.exists());
     }
 }

@@ -11,6 +11,7 @@ test('whole-window agent capture is background-safe and addressable by window la
     path.join(root, 'src-tauri', 'src', 'agent_bridge.rs'),
     'utf8',
   );
+  const native = fs.readFileSync(path.join(root, 'src-tauri', 'src', 'lib.rs'), 'utf8');
   const bridge = fs.readFileSync(path.join(root, 'src', 'agent', 'AgentBridge.ts'), 'utf8');
   const mcp = fs.readFileSync(
     path.join(root, '..', 'agent', 'mcp', 'server.mjs'),
@@ -28,6 +29,8 @@ test('whole-window agent capture is background-safe and addressable by window la
   assert.doesNotMatch(rust, /\bSetForegroundWindow\b\s*\(/);
   assert.doesNotMatch(rust, /\bBitBlt\b\s*\(/);
   assert.match(rust, /sink\.close\(\)\.await/);
+  assert.match(native, /async fn import_project_asset/);
+  assert.match(native, /std::fs::hard_link\(&temporary, target\)/);
   assert.match(bridge, /captureWindow\(windowLabel = 'main'\)/);
   assert.match(bridge, /inspectWindow\(/);
   assert.match(bridge, /capture_editor_window', \{ windowLabel \}/);
@@ -42,6 +45,7 @@ test('whole-window agent capture is background-safe and addressable by window la
   assert.match(mcp, /name: 'list_assets'/);
   assert.match(mcp, /name: 'read_asset_text'/);
   assert.match(mcp, /'write_asset_text'/);
+  assert.match(mcp, /'import_asset_file'/);
   assert.match(mcp, /name: 'preview_asset_rename'/);
   assert.match(mcp, /'rename_asset'/);
   assert.match(mcp, /name: 'preview_asset_trash'/);
@@ -138,6 +142,8 @@ test('scene, asset, and asynchronous build tools share guarded editor services',
   assert.match(bridge, /commandId === 'scene\.new'/);
   assert.match(bridge, /case 'asset\.read_text'/);
   assert.match(bridge, /commandId === 'asset\.write_text'/);
+  assert.match(bridge, /commandId === 'asset\.import_file'/);
+  assert.match(bridge, /importExternalProjectAsset\(sourcePath, normalized\)/);
   assert.match(bridge, /assertDiskMutationAllowed/);
   assert.match(bridge, /status: 'running'/);
   assert.match(bridge, /listenToPcBuildProgress/);

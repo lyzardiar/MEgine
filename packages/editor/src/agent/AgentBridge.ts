@@ -46,6 +46,7 @@ import {
 } from '../editorWindow/registry';
 import { CORE_PANEL_IDS } from '../panels/detachedPanelWindow';
 import {
+  importExternalProjectAsset,
   listProjectFiles,
   isProjectTextAssetPath,
   normalizeProjectAssetPath,
@@ -56,6 +57,8 @@ import {
   type ProjectFileAsset,
 } from '../projectAssets';
 import { findProjectAssetReferences } from '../assetReferences';
+import { validateImportedAssetName } from '../assetImportModel';
+import { refreshSprites } from '../spriteLibrary';
 import {
   PROJECT_ASSETS_CHANGED_EVENT,
   PROJECT_ASSETS_EXTERNAL_CHANGE_EVENT,
@@ -804,6 +807,74 @@ class AgentBridge {
     );
   }
 
+  async importAssetFile(
+    sourcePath: string,
+    destinationPath: string,
+  ): Promise<unknown> {
+    const normalized = normalizeAssetPath(destinationPath);
+    const leaf = normalized.split('/').pop() ?? '';
+    let safeLeaf: string;
+    try {
+      safeLeaf = validateImportedAssetName(leaf);
+    } catch (error) {
+      throw new BridgeError(
+        'INVALID_ARGS',
+        error instanceof Error ? error.message : String(error),
+      );
+    }
+    if (safeLeaf !== leaf) {
+      throw new BridgeError(
+        'INVALID_ARGS',
+        `Import destination file name is unsafe; use "${safeLeaf}"`,
+      );
+    }
+    await this.requireWorkspaceProvider().assertDiskMutationAllowed();
+    const beforeFiles = await refreshProjectFiles();
+    if (findAsset(beforeFiles, normalized)) {
+      throw new BridgeError(
+        'CONFLICT',
+        `Import destination already exists: ${normalized}`,
+      );
+    }
+    const imported = await bridgeIo(
+      `Failed to import ${sourcePath}`,
+      () => importExternalProjectAsset(sourcePath, normalized),
+    );
+    const [afterFiles] = await Promise.all([
+      refreshProjectFiles(),
+      refreshSprites(),
+    ]);
+    const after = findAsset(afterFiles, imported.destinationPath);
+    if (!after || after.metaStatus !== 'ready' || !after.guid) {
+      throw new BridgeError(
+        'IO_ERROR',
+        `Import completed but the indexed asset is unhealthy: ${imported.destinationPath}`,
+      );
+    }
+    const change: ProjectAssetChange = {
+      type: 'added',
+      relPath: after.relPath,
+      previous: null,
+      current: after,
+    };
+    window.dispatchEvent(new CustomEvent(PROJECT_ASSETS_EXTERNAL_CHANGE_EVENT, {
+      detail: { changes: [change], source: 'agent' },
+    }));
+    broadcastProjectAssetsChanged({
+      action: 'created',
+      destinationPath: after.relPath,
+    });
+    this.logProvider?.(
+      `Imported ${imported.sourcePath} to ${after.relPath} from AgentBridge with GUID ${after.guid}`,
+    );
+    return {
+      sourcePath: imported.sourcePath,
+      sourceRevision: imported.sourceRevision,
+      destinationPath: after.relPath,
+      asset: structuredClone(after),
+    };
+  }
+
   async writeAssetText(
     path: string,
     contents: string,
@@ -1249,6 +1320,13 @@ class AgentBridge {
         overwrite: optionalBoolean(args, 'overwrite', false),
       });
       return this.finishAsyncCommand({ ok: true, data: result }, options);
+    }
+    if (commandId === 'asset.import_file') {
+      const result = await this.importAssetFile(
+        requiredString(args, 'sourcePath'),
+        requiredString(args, 'destinationPath'),
+      );
+      return this.finishAsyncCommand({ ok: true, data: result }, options, true);
     }
     if (commandId === 'asset.write_text') {
       const expectedRevision = args.expectedRevision;

@@ -321,6 +321,7 @@ MEngine 编辑器当前对人类友好，但对 AI Agent 不够友好。AI Agent
 
 | command id | 映射 |
 | --- | --- |
+| `asset.import_file` | ✅ 从绝对本地路径导入 UI 支持的单个二进制/内容资产；64 MiB 上限，拒绝 symlink、覆盖和残留 `.meta`，目标以 create-only 原子安装并生成新 GUID，sidecar 失败则完整回滚 |
 | `asset.write_text` | ✅ 8 MiB UTF-8 上限；已有文件必须携带精确 revision，新文件必须传 null；写前拒绝任何窗口的未保存工作 |
 | `asset.rename_preview` / `asset.rename` | ✅ 两阶段引用感知重命名；预览令牌绑定 source revision、自动重写和人工引用，执行前重新扫描校验 |
 | `asset.duplicate_preview` / `asset.duplicate` | ✅ 两阶段复制；新 GUID，移动相对依赖时重写自身内容，脚本引用需显式确认 |
@@ -400,7 +401,7 @@ set_active, reparent, add_component, remove_component, set_component,
 patch_component, set_transform, set_selection, play, pause, stop, step,
 clear_console_logs,
 undo, redo, save_scene, open_scene, new_scene, focus_panel, open_editor_window,
-invoke_menu, write_asset_text, preview_asset_rename, rename_asset,
+invoke_menu, import_asset_file, write_asset_text, preview_asset_rename, rename_asset,
 preview_asset_duplicate, duplicate_asset, preview_asset_trash, trash_asset,
 list_asset_trash, restore_asset, set_build_scenes, start_pc_build, cancel_pc_build,
 verify_pc_build,
