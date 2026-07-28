@@ -79,6 +79,15 @@ class BridgeConnectionError extends Error {
   }
 }
 
+class BridgeRpcError extends Error {
+  constructor(code, message, data) {
+    super(message);
+    this.name = 'BridgeRpcError';
+    this.code = code || 'INTERNAL';
+    this.data = data;
+  }
+}
+
 function connectBridge(discovery) {
   const { port, token } = discovery;
   return new Promise((resolve, reject) => {
@@ -119,8 +128,15 @@ function connectBridge(discovery) {
         if (entry.socket !== socket) return;
         pending.delete(msg.id);
         clearTimeout(entry.timer);
-        if (msg.error) entry.reject(new Error(`${msg.error.code}: ${msg.error.message}`));
-        else entry.resolve(msg.result);
+        if (msg.error) {
+          entry.reject(new BridgeRpcError(
+            msg.error.code,
+            msg.error.message,
+            msg.error.data,
+          ));
+        } else {
+          entry.resolve(msg.result);
+        }
       }
     });
     socket.addEventListener('close', () => {
@@ -1561,8 +1577,44 @@ function respond(id, result) {
   send({ jsonrpc: '2.0', id, result });
 }
 
-function respondError(id, code, message) {
-  send({ jsonrpc: '2.0', id, error: { code, message } });
+function respondError(id, code, message, data) {
+  send({
+    jsonrpc: '2.0',
+    id,
+    error: {
+      code,
+      message,
+      ...(data === undefined ? {} : { data }),
+    },
+  });
+}
+
+function structuredError(error) {
+  if (error instanceof BridgeRpcError) {
+    return {
+      code: error.code,
+      message: error.message,
+      ...(error.data === undefined ? {} : { data: error.data }),
+    };
+  }
+  if (error instanceof BridgeConnectionError) {
+    return {
+      code: 'BRIDGE_CONNECTION',
+      message: error.message,
+      sent: error.sent,
+    };
+  }
+  return {
+    code: 'INTERNAL',
+    message: error?.message || String(error),
+  };
+}
+
+function toolErrorContent(error) {
+  return textContent({
+    ok: false,
+    error: structuredError(error),
+  });
 }
 
 async function handleMessage(msg) {
@@ -1599,7 +1651,7 @@ async function handleMessage(msg) {
         respond(id, { content, isError: false });
       } catch (error) {
         respond(id, {
-          content: [{ type: 'text', text: `Error: ${error?.message || String(error)}` }],
+          content: toolErrorContent(error),
           isError: true,
         });
       }
@@ -1620,7 +1672,12 @@ async function handleMessage(msg) {
           contents: [{ uri: params.uri, mimeType: 'application/json', text: JSON.stringify(data, null, 2) }],
         });
       } catch (error) {
-        respondError(id, -32603, `Failed to read resource: ${error?.message || String(error)}`);
+        respondError(
+          id,
+          -32603,
+          `Failed to read resource: ${error?.message || String(error)}`,
+          structuredError(error),
+        );
       }
       return;
     }
@@ -1675,7 +1732,12 @@ async function main() {
     }
     handleMessage(msg).catch((error) => {
       if (msg.id !== undefined && msg.id !== null) {
-        respondError(msg.id, -32603, String(error?.message || error));
+        respondError(
+          msg.id,
+          -32603,
+          String(error?.message || error),
+          structuredError(error),
+        );
       }
     });
   });

@@ -80,6 +80,9 @@ test('whole-window agent capture is background-safe and addressable by window la
   assert.match(mcp, /sameEditorProcess/);
   assert.match(mcp, /retryAcrossEditorRestart: true/);
   assert.match(mcp, /its outcome is unknown/);
+  assert.match(mcp, /class BridgeRpcError/);
+  assert.match(mcp, /toolErrorContent/);
+  assert.match(mcp, /data: error\.data/);
   assert.match(mcp, /if \(!Array\.isArray\(required\)\)/);
   assert.doesNotMatch(mcp, /required = \[\]/);
   assert.match(mcp, /\.\.\.\(required\.length \? \{ required \} : \{\}\)/);
