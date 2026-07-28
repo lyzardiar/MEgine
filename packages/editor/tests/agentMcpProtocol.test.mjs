@@ -138,6 +138,10 @@ test('MCP resource subscriptions coalesce bridge events and stop after unsubscri
     EVENT_RESOURCE_URIS['workspace.changed'],
     ['mengine://editor/documents'],
   );
+  assert.deepEqual(
+    EVENT_RESOURCE_URIS['window.changed'],
+    ['mengine://editor/windows'],
+  );
 
   const notifications = [];
   const subscriptions = new ResourceSubscriptions(

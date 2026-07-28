@@ -237,6 +237,8 @@ test('whole-window agent capture is background-safe and addressable by window la
   assert.match(mcp, /'respond_to_dialog'/);
   assert.match(mcp, /'close_editor_window'/);
   assert.match(mcp, /'open_editor_window'/);
+  assert.match(bridge, /this\.appendEvent\('window\.changed'/);
+  assert.match(bridge, /closeRegisteredEditorWindow\(target\.label, false\)/);
   assert.match(mcp, /name: 'get_panel_layout'/);
   assert.match(mcp, /name: 'list_panels'/);
   assert.match(mcp, /bridgeQuery\('panel\.list'\)/);

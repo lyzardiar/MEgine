@@ -1162,7 +1162,7 @@ class AgentBridge {
     );
   }
 
-  async closeRegisteredEditorWindow(windowLabel: string): Promise<{
+  async closeRegisteredEditorWindow(windowLabel: string, emitEvent = true): Promise<{
     windowLabel: string;
     closed: boolean;
   }> {
@@ -1231,7 +1231,15 @@ class AgentBridge {
         { windowLabel },
       ),
     );
-    if (result.closed) this.agentOwnedEditorWindows.delete(windowLabel);
+    if (result.closed) {
+      this.agentOwnedEditorWindows.delete(windowLabel);
+      if (emitEvent) {
+        this.appendEvent('window.changed', {
+          action: 'closed',
+          window: structuredClone(target),
+        });
+      }
+    }
     return result;
   }
 
@@ -1360,7 +1368,7 @@ class AgentBridge {
     }
     if (!initialSnapshot) {
       if (existing === undefined) {
-        await this.closeRegisteredEditorWindow(target.label).catch(() => undefined);
+        await this.closeRegisteredEditorWindow(target.label, false).catch(() => undefined);
       }
       throw new BridgeError(
         'NOT_READY',
@@ -1368,18 +1376,27 @@ class AgentBridge {
         { windowLabel: target.label },
       );
     }
-    return {
+    const result = {
       typeId: normalizedTypeId,
       title: target.title,
       windowLabel: target.label,
       created: existing === undefined,
       visible: target.visible,
       focused: target.focused,
-      semanticReady: true,
+      semanticReady: true as const,
       snapshotRevision: initialSnapshot.snapshotRevision,
       semanticElementCount: initialSnapshot.totalSemanticElements,
-      backgroundSafe: true,
+      backgroundSafe: true as const,
     };
+    if (existing === undefined) {
+      this.appendEvent('window.changed', {
+        action: 'opened',
+        window: structuredClone(target),
+        snapshotRevision: initialSnapshot.snapshotRevision,
+        semanticElementCount: initialSnapshot.totalSemanticElements,
+      });
+    }
+    return result;
   }
 
   async getWorkspaceDocuments(): Promise<{
