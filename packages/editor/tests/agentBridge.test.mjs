@@ -561,6 +561,10 @@ test('panel and menu agent surfaces use live providers and background activation
     path.join(root, 'src', 'editorWindow', 'windows', 'DecoratorGalleryWindow.tsx'),
     'utf8',
   );
+  const documentation = fs.readFileSync(
+    path.join(root, 'src', 'editorWindow', 'windows', 'DocumentationWindow.tsx'),
+    'utf8',
+  );
   const popup = fs.readFileSync(path.join(root, 'src', 'panels', 'PopupMenu.tsx'), 'utf8');
   const gate = fs.readFileSync(path.join(root, 'src', 'DesktopProjectGate.tsx'), 'utf8');
   const menu = fs.readFileSync(path.join(root, 'src', 'panels', 'MenuBar.tsx'), 'utf8');
@@ -611,6 +615,12 @@ test('panel and menu agent surfaces use live providers and background activation
   assert.match(nativeWindow, /visible: activateWindow/);
   assert.match(nativeWindow, /focus: activateWindow/);
   assert.match(decorator, /context\.source !== 'agent'/);
+  assert.match(decorator, /agentInvokable: false/);
+  assert.match(decorator, /agentAlternative: 'open_editor_window'/);
+  assert.match(documentation, /agentInvokable: false/);
+  assert.match(documentation, /agentAlternative: 'open_editor_window'/);
+  assert.equal([...dock.matchAll(/agentAlternative: 'focus_panel'/g)].length, 2);
+  assert.match(dock, /agentAlternative: 'reset_panel_layout'/);
   assert.match(popup, /data-agent-interaction=/);
   assert.match(gate, /data-agent-alternative="open_project"/);
   assert.match(gate, /data-agent-alternative="create_project"/);

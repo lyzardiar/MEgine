@@ -102,7 +102,11 @@ CORE_PANEL_IDS.forEach((panel, index) => {
         },
       }));
     },
-    { priority: 100 + index, agentInvokable: true },
+    {
+      priority: 100 + index,
+      agentInvokable: false,
+      agentAlternative: 'focus_panel',
+    },
   );
 });
 
@@ -111,7 +115,11 @@ registerMenuItem(
   () => {
     window.dispatchEvent(new CustomEvent(RESET_DOCK_LAYOUT_EVENT));
   },
-  { priority: 850, agentInvokable: true },
+  {
+    priority: 850,
+    agentInvokable: false,
+    agentAlternative: 'reset_panel_layout',
+  },
 );
 
 registerMenuItem(
@@ -124,7 +132,11 @@ registerMenuItem(
       },
     }));
   },
-  { priority: 900, agentInvokable: true },
+  {
+    priority: 900,
+    agentInvokable: false,
+    agentAlternative: 'focus_panel',
+  },
 );
 
 let _idSeq = 0;
