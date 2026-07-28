@@ -1,8 +1,10 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import {
+  BridgeOutcomeUnknownError,
   RESOURCES,
   SERVER_INSTRUCTIONS,
+  structuredError,
   TOOLS,
 } from '../../agent/mcp/server.mjs';
 import { COMMAND_META } from '../src/agent/commands.ts';
@@ -79,4 +81,30 @@ test('MCP startup instructions teach the safe autonomous workflow', () => {
   assert.match(SERVER_INSTRUCTIONS, /requestId/);
   assert.match(SERVER_INSTRUCTIONS, /serialized/);
   assert.match(SERVER_INSTRUCTIONS, /screenshot/);
+  assert.match(SERVER_INSTRUCTIONS, /BRIDGE_CONNECTION/);
+  assert.match(SERVER_INSTRUCTIONS, /UNKNOWN_OUTCOME/);
+});
+
+test('MCP reports process-loss writes as actionable unknown outcomes without tokens', () => {
+  const error = new BridgeOutcomeUnknownError(
+    'execute',
+    { requestId: 'write-17' },
+    { pid: 101, token: 'old-secret' },
+    { pid: 202, token: 'new-secret' },
+  );
+  const payload = structuredError(error);
+
+  assert.deepEqual(payload, {
+    code: 'UNKNOWN_OUTCOME',
+    message:
+      'Editor process changed while execute was in flight; its outcome is unknown. ' +
+      'Re-read editor state before issuing a new requestId.',
+    data: {
+      method: 'execute',
+      requestId: 'write-17',
+      previousEditorPid: 101,
+      currentEditorPid: 202,
+    },
+  });
+  assert.doesNotMatch(JSON.stringify(payload), /secret/);
 });

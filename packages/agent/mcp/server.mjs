@@ -35,7 +35,7 @@ const MCP_SESSION_ID = crypto.randomUUID();
 function defaultDiscoveryPath() {
   const base =
     process.platform === 'win32'
-      ? process.env.APPDATA
+      ? process.env.APPDATA || path.join(os.homedir(), 'AppData', 'Roaming')
       : process.platform === 'darwin'
         ? path.join(os.homedir(), 'Library', 'Application Support')
         : process.env.XDG_CONFIG_HOME || path.join(os.homedir(), '.config');
@@ -47,15 +47,33 @@ function readDiscovery() {
   let raw;
   try {
     raw = fs.readFileSync(file, 'utf-8');
-  } catch {
-    throw new Error(
+  } catch (error) {
+    throw new BridgeConnectionError(
       `Cannot read AgentBridge discovery file at ${file}. ` +
         'Is the MEngine editor running? Set MENGINE_AGENT_BRIDGE_FILE to override.',
+      { cause: error },
     );
   }
-  const data = JSON.parse(raw);
-  if (!data.port || !data.token) {
-    throw new Error(`Discovery file ${file} is missing port/token`);
+  let data;
+  try {
+    data = JSON.parse(raw);
+  } catch (error) {
+    throw new BridgeConnectionError(
+      `AgentBridge discovery file at ${file} is not valid JSON`,
+      { cause: error },
+    );
+  }
+  if (
+    !Number.isInteger(data.port)
+    || data.port < 1
+    || data.port > 65_535
+    || typeof data.token !== 'string'
+    || data.token.length < 1
+    || data.token.length > 1_024
+  ) {
+    throw new BridgeConnectionError(
+      `Discovery file ${file} must contain a valid TCP port and authentication token`,
+    );
   }
   return {
     port: data.port,
@@ -72,11 +90,12 @@ let successfulConnections = 0;
 const pending = new Map();
 
 class BridgeConnectionError extends Error {
-  constructor(message, { sent = false, discovery = null } = {}) {
+  constructor(message, { sent = false, discovery = null, cause } = {}) {
     super(message);
     this.name = 'BridgeConnectionError';
     this.sent = sent;
     this.discovery = discovery;
+    this.cause = cause;
   }
 }
 
@@ -86,6 +105,23 @@ class BridgeRpcError extends Error {
     this.name = 'BridgeRpcError';
     this.code = code || 'INTERNAL';
     this.data = data;
+  }
+}
+
+class BridgeOutcomeUnknownError extends Error {
+  constructor(method, params, previousDiscovery, currentDiscovery, cause) {
+    super(
+      `Editor process changed while ${method} was in flight; its outcome is unknown. ` +
+        'Re-read editor state before issuing a new requestId.',
+    );
+    this.name = 'BridgeOutcomeUnknownError';
+    this.data = {
+      method,
+      requestId: typeof params?.requestId === 'string' ? params.requestId : null,
+      previousEditorPid: previousDiscovery?.pid ?? null,
+      currentEditorPid: currentDiscovery?.pid ?? null,
+    };
+    this.cause = cause;
   }
 }
 
@@ -246,18 +282,22 @@ async function rpc(method, params, { retryAcrossEditorRestart = false } = {}) {
       latestDiscovery = readDiscovery();
     } catch (discoveryError) {
       if (error.sent && !retryAcrossEditorRestart) {
-        throw new Error(
-          `Editor discovery changed while ${method} was in flight; its outcome is unknown. ` +
-            'Re-read editor state before issuing a new requestId.',
-          { cause: discoveryError },
+        throw new BridgeOutcomeUnknownError(
+          method,
+          params,
+          firstConnection.discovery,
+          null,
+          discoveryError,
         );
       }
     }
     const sameProcess = sameEditorProcess(firstConnection.discovery, latestDiscovery);
     if (error.sent && !sameProcess && !retryAcrossEditorRestart) {
-      throw new Error(
-        `Editor process changed while ${method} was in flight; its outcome is unknown. ` +
-          'Re-read editor state before issuing a new requestId.',
+      throw new BridgeOutcomeUnknownError(
+        method,
+        params,
+        firstConnection.discovery,
+        latestDiscovery,
       );
     }
 
@@ -274,9 +314,11 @@ async function rpc(method, params, { retryAcrossEditorRestart = false } = {}) {
       && !retryAcrossEditorRestart
       && !sameEditorProcess(firstConnection.discovery, retryConnection.discovery)
     ) {
-      throw new Error(
-        `Editor process changed while ${method} was in flight; its outcome is unknown. ` +
-          'Re-read editor state before issuing a new requestId.',
+      throw new BridgeOutcomeUnknownError(
+        method,
+        params,
+        firstConnection.discovery,
+        retryConnection.discovery,
       );
     }
     return await rpcOnce(retryConnection, method, params);
@@ -1665,6 +1707,7 @@ const SERVER_INSTRUCTIONS = [
   'Start by reading mengine://project/state and mengine://editor/state. If a project is open, inspect mengine://scene/snapshot, mengine://schema/components, and mengine://commands before editing.',
   'Read tools may run concurrently. Editor writes are serialized in arrival order.',
   'For revision-sensitive writes, pass the latest expectedSceneRevision. Reuse the same requestId only when retrying the exact same write; using it with different arguments is rejected.',
+  'BRIDGE_CONNECTION means the editor is unavailable and the request was not accepted. UNKNOWN_OUTCOME means a sent write lost its editor process; re-read state before deciding whether a new write is needed.',
   'Prefer domain tools over semantic window UI actions. UI inspection and interaction are available for surfaces without a domain API and remain background-safe.',
   'After edits, verify semantic state and use a scene, game, or whole-window screenshot when visual correctness matters. Poll get_events for incremental observation during longer workflows.',
 ].join('\n');
@@ -1706,6 +1749,13 @@ function structuredError(error) {
       sent: error.sent,
     };
   }
+  if (error instanceof BridgeOutcomeUnknownError) {
+    return {
+      code: 'UNKNOWN_OUTCOME',
+      message: error.message,
+      data: error.data,
+    };
+  }
   return {
     code: 'INTERNAL',
     message: error?.message || String(error),
@@ -1724,7 +1774,7 @@ async function handleMessage(msg) {
   switch (method) {
     case 'initialize':
       respond(id, {
-        protocolVersion: params?.protocolVersion || PROTOCOL_VERSION,
+        protocolVersion: PROTOCOL_VERSION,
         capabilities: { tools: {}, resources: {} },
         serverInfo: { name: 'mengine-editor', version: '0.1.0' },
         instructions: SERVER_INSTRUCTIONS,
@@ -1859,4 +1909,10 @@ if (launchedAsMain) {
   });
 }
 
-export { RESOURCES, SERVER_INSTRUCTIONS, TOOLS };
+export {
+  BridgeOutcomeUnknownError,
+  RESOURCES,
+  SERVER_INSTRUCTIONS,
+  structuredError,
+  TOOLS,
+};

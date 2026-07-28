@@ -81,11 +81,16 @@ test('whole-window agent capture is background-safe and addressable by window la
   assert.match(mcp, /retryAcrossEditorRestart: true/);
   assert.match(mcp, /its outcome is unknown/);
   assert.match(mcp, /class BridgeRpcError/);
+  assert.match(mcp, /class BridgeOutcomeUnknownError/);
   assert.match(mcp, /toolErrorContent/);
   assert.match(mcp, /data: error\.data/);
+  assert.match(mcp, /code: 'UNKNOWN_OUTCOME'/);
+  assert.match(mcp, /code: 'BRIDGE_CONNECTION'/);
   assert.match(mcp, /bridgeCommand: command/);
-  assert.match(mcp, /export \{ RESOURCES, SERVER_INSTRUCTIONS, TOOLS \}/);
+  assert.match(mcp, /BridgeOutcomeUnknownError,\s*RESOURCES,\s*SERVER_INSTRUCTIONS/);
   assert.match(mcp, /instructions: SERVER_INSTRUCTIONS/);
+  assert.match(mcp, /protocolVersion: PROTOCOL_VERSION/);
+  assert.doesNotMatch(mcp, /protocolVersion: params\?\.protocolVersion/);
   assert.match(mcp, /RESOURCES\.map/);
   assert.match(mcp, /editor bridge connects on first read or write/);
   assert.doesNotMatch(mcp, /async function main\(\) \{\s*const connection = await ensureBridgeConnected/);
