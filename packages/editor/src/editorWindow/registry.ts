@@ -25,9 +25,9 @@ export type MenuItemOptions = {
   /** Draw a separator immediately before this item or its root submenu. */
   separatorBefore?: boolean;
   validate?: MenuItemValidate;
-  /** False when the action requires an OS/browser picker or other foreground-only input. */
+  /** False when generic Agent invocation would require foreground input or bypass a safer domain tool. */
   agentInvokable?: boolean;
-  /** Agent-facing domain tool to use instead of this foreground-only menu item. */
+  /** Agent-facing domain tool to use instead of this menu item. */
   agentAlternative?: string;
 };
 

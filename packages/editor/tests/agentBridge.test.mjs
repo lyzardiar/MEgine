@@ -548,6 +548,10 @@ test('panel and menu agent surfaces use live providers and background activation
     path.join(root, 'src', 'editorWindow', 'assetImportMenuItem.ts'),
     'utf8',
   );
+  const prefabMenu = fs.readFileSync(
+    path.join(root, 'src', 'editorWindow', 'prefabMenuItems.ts'),
+    'utf8',
+  );
   const nativeWindow = fs.readFileSync(
     path.join(root, 'src', 'editorWindow', 'nativeEditorWindow.ts'),
     'utf8',
@@ -581,6 +585,15 @@ test('panel and menu agent surfaces use live providers and background activation
   assert.match(registry, /agentInvokable: options\.agentInvokable/);
   assert.match(importer, /agentInvokable: false/);
   assert.match(importer, /agentAlternative: 'import_asset_file'/);
+  assert.equal([...prefabMenu.matchAll(/agentInvokable: false/g)].length, 4);
+  for (const alternative of [
+    'create_prefab',
+    'apply_prefab',
+    'revert_prefab',
+    'unpack_prefab',
+  ]) {
+    assert.match(prefabMenu, new RegExp(`agentAlternative: '${alternative}'`));
+  }
   assert.match(nativeWindow, /visible: activateWindow/);
   assert.match(nativeWindow, /focus: activateWindow/);
   assert.match(decorator, /context\.source !== 'agent'/);

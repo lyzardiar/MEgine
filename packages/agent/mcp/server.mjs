@@ -2524,7 +2524,7 @@ const TOOLS = [
   ),
   execTool(
     'invoke_menu_item',
-    'Invoke an Agent-safe registered menu item by the exact path returned by list_menu_items. Foreground-only pickers are rejected before they open; use the returned agentAlternative domain tool. Editor confirmations remain observable through get_active_dialog.',
+    'Invoke an Agent-safe registered menu item by the exact path returned by list_menu_items. Commands requiring foreground input or stricter domain safety are rejected; use the returned agentAlternative domain tool. Editor confirmations remain observable through get_active_dialog.',
     'menu.invoke',
     {
       path: { type: 'string', description: 'Exact registered path, e.g. Window/General/Console' },

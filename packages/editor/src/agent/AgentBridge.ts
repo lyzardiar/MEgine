@@ -2763,7 +2763,7 @@ class AgentBridge {
         : '';
       throw new BridgeError(
         'READONLY',
-        `Menu item "${entry.path}" requires foreground-only user input.${alternative}`,
+        `Menu item "${entry.path}" is unavailable through generic Agent invocation.${alternative}`,
         {
           path: entry.path,
           agentAlternative: entry.agentAlternative ?? null,

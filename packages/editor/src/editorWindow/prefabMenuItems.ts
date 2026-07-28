@@ -15,6 +15,8 @@ registerMenuItem(
   },
   {
     priority: 120,
+    agentInvokable: false,
+    agentAlternative: 'create_prefab',
     validate: (context) => context.store.mode === 'edit' && context.store.selected != null,
   },
 );
@@ -29,6 +31,8 @@ registerMenuItem(
   {
     priority: 20,
     separatorBefore: true,
+    agentInvokable: false,
+    agentAlternative: 'apply_prefab',
     validate: (context) => context.store.getPrefabInstance(context.contextEntity) != null,
   },
 );
@@ -42,6 +46,8 @@ registerMenuItem(
   },
   {
     priority: 21,
+    agentInvokable: false,
+    agentAlternative: 'revert_prefab',
     validate: (context) => context.store.getPrefabInstance(context.contextEntity) != null,
   },
 );
@@ -55,6 +61,8 @@ registerMenuItem(
   },
   {
     priority: 22,
+    agentInvokable: false,
+    agentAlternative: 'unpack_prefab',
     validate: (context) => context.store.getPrefabInstance(context.contextEntity) != null,
   },
 );
