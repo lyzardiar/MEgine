@@ -178,11 +178,12 @@ MEngine 编辑器当前对人类友好，但对 AI Agent 不够友好。AI Agent
 
 | query id | 参数 | 返回 | 集成点 |
 | --- | --- | --- | --- |
-| `view.screenshot` | `{ target?: "scene"\|"game"\|"window"\|"panel", panel?, format?: "png"\|"jpeg", quality?, maxSize? }` | `{ dataUrl, width, height, mime }` | 视口（scene/game）：`Viewport.tsx` 的 `canvasRef`（line 522）`canvas.toDataURL()`，**当前唯一已验证可靠路径**；整窗：Tauri 2.11.5 无原生截图 API，列为后续增强（Windows GDI `BitBlt` 取 RGBA 后经 canvas 编码，或升级 Tauri 版本） |
+| `view.screenshot` | `{ target?: "scene"\|"game", format?: "png"\|"jpeg", quality? }` | `{ dataUrl, width, height, mime }` | 视口（scene/game）：`Viewport.tsx` 的 `canvasRef` 使用 `canvas.toDataURL()` |
+| `view.window_screenshot` | `{ windowLabel?: string }` | `{ dataUrl, width, height, mime, windowLabel, captureMethod, backgroundSafe }` | Windows 桌面版通过 WebView2 DevTools `Page.captureScreenshot` 离屏渲染指定 webview；不会激活窗口，也不读取前台屏幕像素 |
 | `view.screenshot_to_file` | `{ path, target? }` | `{ path, width, height }` | 同上，写入磁盘供 Agent 读取 |
 | `view.capture_region` | `{ x, y, w, h, target? }` | `{ dataUrl }` | canvas 裁剪 |
 
-说明：当前 Scene/Game 视口是 Canvas2D（`Viewport.tsx` `getContext('2d')`，line 766），`toDataURL` 即可稳定截取，无 WebGL `preserveDrawingBuffer` 顾虑，这是 Phase 1 落地的主路径。**整窗截图**（含面板）经核实 Tauri 2.11.5 并无原生截图 API，列为后续增强：可在 Windows 上用 GDI `BitBlt`/`PrintWindow` 抓取窗口 RGBA（项目已依赖 `windows-sys`），再交由 webview canvas 编码为 PNG。**前向兼容**：本地编辑器方案规划了「Rust 进程内原生 wgpu Surface」的真实 Scene View，届时视口不再是 DOM canvas，`toDataURL` 会失效——需改用 wgpu 纹理回读或未来 Tauri 版本的截图 API。因此 `view.screenshot` 必须是一个抽象接口，内部按当前渲染后端选择实现，对 Agent 暴露统一签名。
+说明：当前 Scene/Game 视口是 Canvas2D，`toDataURL` 可稳定截取，无 WebGL `preserveDrawingBuffer` 顾虑。编辑器整窗/浮动窗口不能使用 GDI 屏幕 `BitBlt`：该方式必须把编辑器置前，且窗口被遮挡时会截到其它应用。当前实现改为 WebView2 DevTools 渲染面截图，并已在主窗 `visible=false` 的真实 Tauri 实例上验证：工程欢迎页仍能完整成像，请求前后 Windows 前台窗口句柄不变。**前向兼容**：本地编辑器方案规划了「Rust 进程内原生 wgpu Surface」的真实 Scene View，届时视口不再是 DOM canvas，需改用 wgpu 纹理回读；窗口 UI 截图仍由 WebView2 路径负责。
 
 #### 4.1.2 窗口与面板枚举（用户明确提出）
 
@@ -413,7 +414,7 @@ inspect_and_fix       「截图当前场景，检查并修复选中物体的问�
 | 能力 | 文件 / 位置 | 改造内容 |
 | --- | --- | --- |
 | 视口截图 | `src/panels/Viewport.tsx`（`canvasRef` line 522） | 暴露 `captureCanvas(): dataUrl`（`canvas.toDataURL`），由 Observer 调用——当前主路径 |
-| 整窗截图 | （后续增强）`src-tauri/src/lib.rs` | Tauri 2.11.5 无原生截图 API；后续用 Windows GDI `BitBlt` 取 RGBA 经 canvas 编码，无需 capability 改动 |
+| 整窗截图 | `src-tauri/src/agent_bridge.rs` | ✅ 已实现 WebView2 DevTools 离屏截图；支持 `windowLabel`，被遮挡/隐藏时不抢焦点；禁止退化为 GDI 屏幕拷贝 |
 | 窗口枚举 | `src-tauri/src/lib.rs` | ✅ 已实现 `list_editor_windows`（`app.webview_windows()`，按 label 分类 main/panel/editor） |
 | 面板枚举 | `src/panels/DockWorkspace.tsx` | 导出当前 dock tree 与面板状态查询函数 |
 | 命令调度 | 新增 `src/agent/AgentBridge.ts` + `src/agent/commands.ts` | 命令注册表 + Dispatcher，映射到 store / 菜单 / 面板 |
@@ -431,7 +432,7 @@ inspect_and_fix       「截图当前场景，检查并修复选中物体的问�
 目标：让 Agent 能「看见」和「摸清」编辑器。
 
 - AgentBridge Core 骨架（Observer + 命令注册表只读部分）
-- 截图：`view.screenshot`（视口 canvas，主路径）；整窗截图列为后续增强
+- 截图：`view.screenshot`（视口 canvas）+ `view.window_screenshot`（WebView2 离屏整窗/浮动窗口）
 - 枚举：`window.list` / `panel.list` / `panel.get_layout`
 - 状态：`scene.snapshot` / `scene.hierarchy` / `selection.get` / `editor.state` / `entity.get`
 - 结构化日志服务 + `console.get_logs`
@@ -483,7 +484,7 @@ inspect_and_fix       「截图当前场景，检查并修复选中物体的问�
 | 性能：大场景 snapshot / 高频截图 | snapshot 支持精简模式（hierarchy 不含组件）；截图支持 maxSize 缩放与频率限制 |
 | 命名漂移：camelCase vs snake_case | AgentBridge 对外统一 camelCase，边界处集中转换，避免泄漏到协议 |
 | Play Mode 双事实源 | 观察/写操作明确区分 edit/play 世界，Play 下写操作按现有 store 规则处理 |
-| 截图与渲染时机 | Canvas2D 在 RAF 帧内捕获，确保取到最新帧 |
+| 截图与渲染时机 | Canvas2D 在 RAF 帧内捕获；整窗使用 WebView2 渲染面，不激活窗口、不读取前台像素 |
 | MCP 进程与编辑器生命周期 | sidecar 随编辑器启停；连接断开自动重连；发现文件过期清理 |
 
 ## 9. 附录

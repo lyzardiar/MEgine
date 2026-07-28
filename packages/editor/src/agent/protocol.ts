@@ -13,6 +13,12 @@ export interface ScreenshotResult {
   width: number;
   height: number;
   mime: string;
+  /** Present for whole-window captures. */
+  windowLabel?: string;
+  /** Native implementation used for the capture. */
+  captureMethod?: string;
+  /** True when capture neither activates the editor nor reads foreground pixels. */
+  backgroundSafe?: boolean;
 }
 
 export type ViewportTab = 'scene' | 'game';

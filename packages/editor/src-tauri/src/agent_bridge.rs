@@ -29,7 +29,7 @@ use tokio_tungstenite::tungstenite::Message;
 /// Routes messages between the webview and connected WebSocket clients.
 pub struct BridgeHub {
     /// client id -> channel feeding that client's WS write loop.
-    clients: Mutex<HashMap<String, mpsc::UnboundedSender<String>>>,
+    clients: Mutex<HashMap<String, mpsc::UnboundedSender<Message>>>,
     /// Token a client must present (in the WS URL query) to connect.
     token: String,
 }
@@ -46,7 +46,7 @@ impl BridgeHub {
         &self.token
     }
 
-    fn register(&self, id: String, tx: mpsc::UnboundedSender<String>) {
+    fn register(&self, id: String, tx: mpsc::UnboundedSender<Message>) {
         self.clients.lock().insert(id, tx);
     }
 
@@ -57,7 +57,7 @@ impl BridgeHub {
     /// Send a reply to a single client. Returns false if the client is gone.
     pub fn send_to(&self, id: &str, msg: String) -> bool {
         match self.clients.lock().get(id) {
-            Some(tx) => tx.send(msg).is_ok(),
+            Some(tx) => tx.send(Message::Text(msg.into())).is_ok(),
             None => false,
         }
     }
@@ -67,7 +67,7 @@ impl BridgeHub {
     pub fn broadcast(&self, msg: String) {
         let clients = self.clients.lock();
         for tx in clients.values() {
-            let _ = tx.send(msg.clone());
+            let _ = tx.send(Message::Text(msg.clone().into()));
         }
     }
 }
@@ -145,16 +145,19 @@ async fn handle_connection(
 
     let (mut sink, mut stream) = ws.split();
     let client_id = uuid::Uuid::new_v4().to_string();
-    let (tx, mut rx) = mpsc::unbounded_channel::<String>();
-    hub.register(client_id.clone(), tx);
+    let (tx, mut rx) = mpsc::unbounded_channel::<Message>();
+    hub.register(client_id.clone(), tx.clone());
 
     // Write loop: forward queued replies/events to this client's socket.
     let write_task = tokio::spawn(async move {
         while let Some(msg) = rx.recv().await {
-            if sink.send(Message::Text(msg)).await.is_err() {
+            if sink.send(msg).await.is_err() {
                 break;
             }
         }
+        // `Stream` queues the protocol close response when it receives the
+        // peer's close frame. Closing the sink flushes that queued response.
+        let _ = sink.close().await;
     });
 
     // Read loop: forward incoming requests to the webview.
@@ -179,7 +182,16 @@ async fn handle_connection(
     }
 
     hub.unregister(&client_id);
-    write_task.abort();
+    // Complete the WebSocket close handshake instead of aborting the TCP
+    // writer. Abrupt shutdown makes standards-compliant MCP clients report a
+    // spurious connection error after an otherwise successful session.
+    drop(tx);
+    if tokio::time::timeout(std::time::Duration::from_secs(1), write_task)
+        .await
+        .is_err()
+    {
+        log::debug!("AgentBridge close handshake timed out for client {client_id}");
+    }
     Ok(())
 }
 
@@ -243,12 +255,15 @@ pub fn agent_bridge_broadcast(payload: String, hub: State<'_, Arc<BridgeHub>>) {
     hub.broadcast(payload);
 }
 
-// ── Full-window screenshot (Windows GDI) ─────────────────────────────────
+// ── Background-safe editor-window screenshot ────────────────────────────────
 //
-// The viewport screenshot (canvas.toDataURL) only shows the rendered scene —
-// it says nothing about the editor's own UI. To let an AI agent actually see
-// the interface (menus, panels, chrome) we capture the whole main window from
-// the OS via GDI and hand back a PNG data URL.
+// The viewport screenshot (canvas.toDataURL) only shows the rendered scene; it
+// says nothing about the editor's own UI. WebView2's DevTools screenshot path
+// renders the webview surface directly, so it remains correct while another
+// application covers the editor and never activates or raises the editor
+// window. Screen BitBlt/SetForegroundWindow must not be used here: besides
+// stealing focus, that path captures whichever application happens to be on
+// top instead of the editor.
 
 /// A full-window screenshot, returned as a PNG data URL.
 #[derive(Clone, serde::Serialize)]
@@ -258,180 +273,118 @@ pub struct WindowCapture {
     width: u32,
     height: u32,
     mime: String,
+    window_label: String,
+    capture_method: String,
+    background_safe: bool,
 }
 
-/// Webview → Rust: capture the entire main editor window (not just the WebGL
-/// viewport). Windows-only; other platforms return an error.
+/// Webview -> Rust: capture one editor webview (menus, panels and rendered
+/// content). The target defaults to the main window, but detached panel/editor
+/// windows can be addressed by label as returned by `list_editor_windows`.
 #[tauri::command]
-pub fn capture_editor_window(app: AppHandle) -> Result<WindowCapture, String> {
-    capture_editor_window_impl(app)
+pub async fn capture_editor_window(
+    app: AppHandle,
+    window_label: Option<String>,
+) -> Result<WindowCapture, String> {
+    let window_label = window_label.unwrap_or_else(|| "main".to_string());
+    capture_editor_window_impl(app, window_label).await
 }
 
 #[cfg(windows)]
-fn capture_editor_window_impl(app: AppHandle) -> Result<WindowCapture, String> {
+async fn capture_editor_window_impl(
+    app: AppHandle,
+    window_label: String,
+) -> Result<WindowCapture, String> {
     use base64::Engine as _;
-    let _ = app; // the window is located by process id, see gdi_capture_main_window
+    use std::sync::{Arc, Mutex as StdMutex};
+    use webview2_com::CallDevToolsProtocolMethodCompletedHandler;
+    use windows::core::HSTRING;
 
-    let (rgba, width, height) = gdi_capture_main_window()?;
-    let png_bytes = encode_png(&rgba, width, height)?;
-    let b64 = base64::engine::general_purpose::STANDARD.encode(&png_bytes);
+    let window = app
+        .get_webview_window(&window_label)
+        .ok_or_else(|| format!("editor window \"{window_label}\" was not found"))?;
+    let (tx, rx) = tokio::sync::oneshot::channel::<Result<String, String>>();
+    let tx = Arc::new(StdMutex::new(Some(tx)));
+    let setup_tx = tx.clone();
+
+    window
+        .with_webview(move |platform_webview| {
+            let send = |result: Result<String, String>| {
+                if let Some(sender) = setup_tx.lock().ok().and_then(|mut guard| guard.take()) {
+                    let _ = sender.send(result);
+                }
+            };
+            let controller = platform_webview.controller();
+            let webview = match unsafe { controller.CoreWebView2() } {
+                Ok(webview) => webview,
+                Err(error) => {
+                    send(Err(format!("WebView2 controller is unavailable: {error}")));
+                    return;
+                }
+            };
+            let completion_tx = setup_tx.clone();
+            let handler = CallDevToolsProtocolMethodCompletedHandler::create(Box::new(
+                move |status, payload| {
+                    let result = status
+                        .map_err(|error| format!("WebView2 screenshot failed: {error}"))
+                        .map(|_| payload);
+                    if let Some(sender) =
+                        completion_tx.lock().ok().and_then(|mut guard| guard.take())
+                    {
+                        let _ = sender.send(result);
+                    }
+                    Ok(())
+                },
+            ));
+            let method = HSTRING::from("Page.captureScreenshot");
+            let params = HSTRING::from(
+                r#"{"format":"png","fromSurface":true,"captureBeyondViewport":false}"#,
+            );
+            if let Err(error) =
+                unsafe { webview.CallDevToolsProtocolMethod(&method, &params, &handler) }
+            {
+                send(Err(format!(
+                    "could not start WebView2 screenshot capture: {error}"
+                )));
+            }
+        })
+        .map_err(|error| format!("could not access editor webview: {error}"))?;
+
+    let payload = tokio::time::timeout(std::time::Duration::from_secs(10), rx)
+        .await
+        .map_err(|_| "WebView2 screenshot timed out after 10 seconds".to_string())?
+        .map_err(|_| "WebView2 screenshot callback was cancelled".to_string())??;
+    let data = serde_json::from_str::<serde_json::Value>(&payload)
+        .map_err(|error| format!("invalid WebView2 screenshot response: {error}"))?
+        .get("data")
+        .and_then(serde_json::Value::as_str)
+        .filter(|data| !data.is_empty())
+        .ok_or_else(|| "WebView2 screenshot response did not contain image data".to_string())?
+        .to_string();
+    let png_bytes = base64::engine::general_purpose::STANDARD
+        .decode(&data)
+        .map_err(|error| format!("invalid WebView2 screenshot base64: {error}"))?;
+    let decoder = png::Decoder::new(std::io::Cursor::new(&png_bytes));
+    let reader = decoder
+        .read_info()
+        .map_err(|error| format!("invalid WebView2 screenshot PNG: {error}"))?;
+    let info = reader.info();
 
     Ok(WindowCapture {
-        data_url: format!("data:image/png;base64,{}", b64),
-        width,
-        height,
+        data_url: format!("data:image/png;base64,{data}"),
+        width: info.width,
+        height: info.height,
         mime: "image/png".to_string(),
+        window_label,
+        capture_method: "webview2-devtools".to_string(),
+        background_safe: true,
     })
 }
 
 #[cfg(not(windows))]
-fn capture_editor_window_impl(_app: AppHandle) -> Result<WindowCapture, String> {
-    Err("full-window capture is only supported on Windows".to_string())
-}
-
-/// Context for [`enum_windows_cb`]: find the largest visible top-level window
-/// belonging to this process (the main editor window).
-#[cfg(windows)]
-struct EnumWindowCtx {
-    pid: u32,
-    best: windows_sys::Win32::Foundation::HWND,
-    best_area: i64,
-}
-
-#[cfg(windows)]
-unsafe extern "system" fn enum_windows_cb(
-    hwnd: windows_sys::Win32::Foundation::HWND,
-    lparam: windows_sys::Win32::Foundation::LPARAM,
-) -> windows_sys::core::BOOL {
-    use windows_sys::Win32::Foundation::RECT;
-    use windows_sys::Win32::UI::WindowsAndMessaging::{GetWindowRect, GetWindowThreadProcessId, IsWindowVisible};
-
-    let ctx = &mut *(lparam as *mut EnumWindowCtx);
-    let mut pid: u32 = 0;
-    GetWindowThreadProcessId(hwnd, &mut pid);
-    if pid == ctx.pid && IsWindowVisible(hwnd) != 0 {
-        let mut r: RECT = std::mem::zeroed();
-        if GetWindowRect(hwnd, &mut r) != 0 {
-            let area = (r.right - r.left) as i64 * (r.bottom - r.top) as i64;
-            if area > ctx.best_area {
-                ctx.best_area = area;
-                ctx.best = hwnd;
-            }
-        }
-    }
-    1 // keep enumerating
-}
-
-/// Find the main editor window, bring it to the front, and capture its full
-/// rect from the screen via GDI. Returns RGBA pixels plus width/height.
-///
-/// Bringing the window forward first is essential: a screen blit captures
-/// whatever is topmost at those coordinates, so an overlapping window would
-/// otherwise occlude the editor.
-#[cfg(windows)]
-fn gdi_capture_main_window() -> Result<(Vec<u8>, u32, u32), String> {
-    use windows_sys::Win32::Foundation::RECT;
-    use windows_sys::Win32::Graphics::Gdi::{
-        BitBlt, CreateCompatibleBitmap, CreateCompatibleDC, DeleteDC, DeleteObject, GetDC,
-        GetDIBits, ReleaseDC, SelectObject, BITMAPINFO, BITMAPINFOHEADER, BI_RGB, DIB_RGB_COLORS,
-        SRCCOPY,
-    };
-    use windows_sys::Win32::UI::WindowsAndMessaging::{EnumWindows, GetWindowRect, SetForegroundWindow};
-
-    unsafe {
-        let mut ctx = EnumWindowCtx {
-            pid: std::process::id(),
-            best: std::ptr::null_mut(),
-            best_area: 0,
-        };
-        EnumWindows(Some(enum_windows_cb), &mut ctx as *mut EnumWindowCtx as _);
-        if ctx.best.is_null() {
-            return Err("editor window not found".to_string());
-        }
-
-        SetForegroundWindow(ctx.best);
-        std::thread::sleep(std::time::Duration::from_millis(350));
-
-        let mut rect: RECT = std::mem::zeroed();
-        if GetWindowRect(ctx.best, &mut rect) == 0 {
-            return Err("GetWindowRect failed".to_string());
-        }
-        let x = rect.left;
-        let y = rect.top;
-        let w = rect.right - rect.left;
-        let h = rect.bottom - rect.top;
-        if w <= 0 || h <= 0 {
-            return Err(format!("invalid window rect {}x{}", w, h));
-        }
-
-        let hdc_screen = GetDC(std::ptr::null_mut());
-        if hdc_screen.is_null() {
-            return Err("GetDC(screen) failed".to_string());
-        }
-        let hdc_mem = CreateCompatibleDC(hdc_screen);
-        if hdc_mem.is_null() {
-            ReleaseDC(std::ptr::null_mut(), hdc_screen);
-            return Err("CreateCompatibleDC failed".to_string());
-        }
-        let hbm = CreateCompatibleBitmap(hdc_screen, w, h);
-        if hbm.is_null() {
-            DeleteDC(hdc_mem);
-            ReleaseDC(std::ptr::null_mut(), hdc_screen);
-            return Err("CreateCompatibleBitmap failed".to_string());
-        }
-        let old_obj = SelectObject(hdc_mem, hbm as _);
-        let blit_ok = BitBlt(hdc_mem, 0, 0, w, h, hdc_screen, x, y, SRCCOPY);
-
-        let mut bmi: BITMAPINFO = std::mem::zeroed();
-        bmi.bmiHeader.biSize = std::mem::size_of::<BITMAPINFOHEADER>() as u32;
-        bmi.bmiHeader.biWidth = w;
-        bmi.bmiHeader.biHeight = -h; // negative → top-down rows
-        bmi.bmiHeader.biPlanes = 1;
-        bmi.bmiHeader.biBitCount = 32;
-        bmi.bmiHeader.biCompression = BI_RGB;
-
-        let mut pixels: Vec<u8> = vec![0u8; (w as usize) * (h as usize) * 4];
-        let lines = GetDIBits(
-            hdc_mem,
-            hbm,
-            0,
-            h as u32,
-            pixels.as_mut_ptr() as *mut _,
-            &mut bmi,
-            DIB_RGB_COLORS,
-        );
-
-        // Release GDI objects regardless of the capture result.
-        SelectObject(hdc_mem, old_obj);
-        DeleteObject(hbm as _);
-        DeleteDC(hdc_mem);
-        ReleaseDC(std::ptr::null_mut(), hdc_screen);
-
-        if blit_ok == 0 || lines == 0 {
-            return Err(format!(
-                "GDI capture failed (BitBlt={}, GetDIBits={})",
-                blit_ok, lines
-            ));
-        }
-
-        // 32bpp BI_RGB pixels are BGRX; convert to RGBA with opaque alpha.
-        for px in pixels.chunks_exact_mut(4) {
-            px.swap(0, 2);
-            px[3] = 255;
-        }
-        Ok((pixels, w as u32, h as u32))
-    }
-}
-
-#[cfg(windows)]
-fn encode_png(rgba: &[u8], width: u32, height: u32) -> Result<Vec<u8>, String> {
-    let mut out = Vec::new();
-    {
-        let mut encoder = png::Encoder::new(&mut out, width, height);
-        encoder.set_color(png::ColorType::Rgba);
-        encoder.set_depth(png::BitDepth::Eight);
-        let mut writer = encoder.write_header().map_err(|e| e.to_string())?;
-        writer.write_image_data(rgba).map_err(|e| e.to_string())?;
-    }
-    Ok(out)
+async fn capture_editor_window_impl(
+    _app: AppHandle,
+    _window_label: String,
+) -> Result<WindowCapture, String> {
+    Err("background editor-window capture is currently only supported on Windows".to_string())
 }

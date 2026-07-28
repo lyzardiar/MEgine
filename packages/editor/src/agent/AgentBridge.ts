@@ -97,15 +97,15 @@ class AgentBridge {
   }
 
   /**
-   * Capture the ENTIRE editor window (menus, panels, chrome) via the OS — not
-   * just the WebGL viewport. Backed by the Rust `capture_editor_window`
-   * command (Windows GDI). Use this to inspect the editor UI itself.
+   * Capture an editor webview (menus, panels, and rendered content) without
+   * activating the window. Pass a label from `window.list` to inspect a
+   * detached panel/editor window; the main window is the default.
    */
-  async captureWindow(): Promise<ScreenshotResult> {
+  async captureWindow(windowLabel = 'main'): Promise<ScreenshotResult> {
     if (!isDesktopEditor()) {
       throw new BridgeError('NOT_READY', 'Full-window capture requires the desktop editor');
     }
-    return invoke<ScreenshotResult>('capture_editor_window');
+    return invoke<ScreenshotResult>('capture_editor_window', { windowLabel });
   }
 
   getEditorState(): EditorState {
@@ -250,7 +250,11 @@ class AgentBridge {
           params.quality as number | undefined,
         );
       case 'view.window_screenshot':
-        return this.captureWindow();
+        return this.captureWindow(
+          typeof params.windowLabel === 'string' && params.windowLabel
+            ? params.windowLabel
+            : 'main',
+        );
       case 'window.list':
         return this.listWindows();
       case 'console.get_logs':

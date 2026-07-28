@@ -62,7 +62,6 @@ import { Viewport } from './panels/Viewport';
 import { DockWorkspace, type PanelKind } from './panels/DockWorkspace';
 import { agentBridge } from './agent/AgentBridge';
 import { logService } from './agent/LogService';
-import { attachBridgeTransport } from './agent/transport';
 import { EditorWindowHost } from './editorWindow';
 import { resolveUnityAction } from './panels/uiFieldEditors';
 import {
@@ -292,24 +291,6 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
     });
     agentBridge.connectRefresh(() => refreshRef.current());
   }, [store]);
-
-  // Attach the AI-agent WebSocket transport (main window only; detached panels
-  // are views and must not answer bridge requests to avoid duplicate replies).
-  useEffect(() => {
-    if (props.detachedPanel) return;
-    let unlisten: (() => void) | undefined;
-    let disposed = false;
-    void attachBridgeTransport()
-      .then((fn) => {
-        if (disposed) fn();
-        else unlisten = fn;
-      })
-      .catch((error) => console.error('AgentBridge transport failed to attach', error));
-    return () => {
-      disposed = true;
-      unlisten?.();
-    };
-  }, [props.detachedPanel]);
 
   const postWorkspaceDirtyState = () => {
     syncChannel.current?.postMessage({

@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * MEngine Editor MCP server (Phase 1, read-only).
+ * MEngine Editor MCP server.
  *
  * A self-contained Model Context Protocol server that lets any MCP client
  * (Claude Desktop, Cursor, QoderWork, …) observe the running MEngine editor.
@@ -202,7 +202,7 @@ const TOOLS = [
   {
     name: 'take_screenshot',
     description:
-      'Capture a PNG screenshot. target=scene/game captures the rendered viewport; target=window captures the ENTIRE editor window (menu bar, panels, chrome) via the OS — use it to inspect the editor UI itself. Returns an image — use it to verify the visual result of your actions.',
+      'Capture a PNG screenshot. target=scene/game captures the rendered viewport; target=window captures an editor window off-screen without activating it, so foreground work is not interrupted. Returns an image for visual verification.',
     inputSchema: {
       type: 'object',
       properties: {
@@ -211,13 +211,19 @@ const TOOLS = [
           enum: ['scene', 'game', 'window'],
           description: 'What to capture: the scene/game viewport, or the whole editor window (default: scene)',
         },
+        windowLabel: {
+          type: 'string',
+          description: 'For target=window, a label returned by list_windows (default: main)',
+        },
       },
     },
     handler: async (args) => {
       const target = args.target || 'scene';
       const shot =
         target === 'window'
-          ? await bridgeQuery('view.window_screenshot', {})
+          ? await bridgeQuery('view.window_screenshot', {
+              windowLabel: args.windowLabel || 'main',
+            })
           : await bridgeQuery('view.screenshot', { target });
       const base64 = String(shot.dataUrl).split(',')[1] || '';
       return [{ type: 'image', data: base64, mimeType: shot.mime || 'image/png' }];
