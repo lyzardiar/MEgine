@@ -118,6 +118,14 @@ test('command schemas expose exact high-risk guards and shared optimistic option
     ['kind'],
   );
   assert.deepEqual(
+    COMMAND_PARAMS_SCHEMAS['build.run'].required,
+    ['executable', 'allowForegroundLaunch'],
+  );
+  assert.equal(
+    COMMAND_PARAMS_SCHEMAS['build.run'].properties.allowForegroundLaunch.const,
+    true,
+  );
+  assert.deepEqual(
     COMMAND_PARAMS_SCHEMAS['asset.write_text'].required,
     ['path', 'contents', 'expectedRevision'],
   );

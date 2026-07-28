@@ -1141,6 +1141,7 @@ const COMMAND_SUMMARIES: CommandSummary[] = [
   { id: 'build.start', category: 'build', description: 'Start an asynchronous PC Player build', readOnly: false },
   { id: 'build.cancel', category: 'build', description: 'Request cancellation of the active AgentBridge build', readOnly: false },
   { id: 'build.verify', category: 'build', description: 'Verify a published Player and packaged content without opening a window', readOnly: false },
+  { id: 'build.run', category: 'build', description: 'Launch a validated published Player after explicit foreground acknowledgement', readOnly: false },
   { id: 'build.history.create_patch', category: 'build', description: 'Start signed patch creation between two archived build artifacts', readOnly: false },
   { id: 'build.history.restore', category: 'build', description: 'Start trusted verification and atomic publication of one archived build', readOnly: false },
   { id: 'build.patch.verify', category: 'build', description: 'Start trusted verification of a signed build patch against an archived base', readOnly: false },

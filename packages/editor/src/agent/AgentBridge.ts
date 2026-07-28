@@ -134,6 +134,7 @@ import {
   listPcBuildHistory,
   listPcBuildPatches,
   restorePcBuildHistory,
+  runPcPlayer,
   saveProjectBuildAssetSettings,
   saveProjectBuildSettings,
   verifyPcBuildPatch,
@@ -142,6 +143,7 @@ import {
   type BuildPlayerResult,
   type BuildProgressEvent,
   type ProjectBuildSettings,
+  type RunPlayerResult,
   type VerifyPlayerResult,
 } from '../transport/editorTransport';
 import {
@@ -2514,6 +2516,31 @@ class AgentBridge {
     return verification;
   }
 
+  async launchBuiltPlayer(executable: string): Promise<RunPlayerResult> {
+    if (!isDesktopEditor()) {
+      throw new BridgeError('NOT_READY', 'Published Player launch requires the desktop editor');
+    }
+    if (this.buildJob?.status === 'running') {
+      throw new BridgeError(
+        'CONFLICT',
+        `Build ${this.buildJob.id} is still running; launch it after completion`,
+      );
+    }
+    const launched = await bridgeIo(
+      'Published Player launch failed',
+      () => runPcPlayer(executable),
+    );
+    this.appendEvent('build.progress', {
+      jobId: this.buildJob?.id ?? null,
+      status: 'player-launched',
+      launched,
+    });
+    this.logProvider?.(
+      `Agent launched published Player process ${launched.processId}: ${launched.executable}`,
+    );
+    return launched;
+  }
+
   async setGameResolution(
     resolution: GameResolution | null,
   ): Promise<EditorState> {
@@ -3271,6 +3298,16 @@ class AgentBridge {
         requiredString(args, 'executable'),
         requiredString(args, 'expectedContentHash'),
       );
+      return this.finishAsyncCommand({ ok: true, data: result }, options, true);
+    }
+    if (commandId === 'build.run') {
+      if (args.allowForegroundLaunch !== true) {
+        throw new BridgeError(
+          'INVALID_ARGS',
+          'build.run requires allowForegroundLaunch=true because the Player creates a window',
+        );
+      }
+      const result = await this.launchBuiltPlayer(requiredString(args, 'executable'));
       return this.finishAsyncCommand({ ok: true, data: result }, options, true);
     }
     if (commandId === 'build.history.create_patch') {

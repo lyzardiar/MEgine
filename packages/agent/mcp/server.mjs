@@ -1978,6 +1978,23 @@ const TOOLS = [
     ['executable', 'expectedContentHash'],
   ),
   execTool(
+    'run_pc_player',
+    'Launch a validated published Player. This creates a visible application window and may take foreground, so call it only after the user explicitly requests a launch and pass allowForegroundLaunch=true.',
+    'build.run',
+    {
+      executable: {
+        type: 'string',
+        description: 'Published Player executable from a successful build result or current build history',
+      },
+      allowForegroundLaunch: {
+        type: 'boolean',
+        const: true,
+        description: 'Required acknowledgement that the launched Player creates a visible window',
+      },
+    },
+    ['executable', 'allowForegroundLaunch'],
+  ),
+  execTool(
     'create_build_history_patch',
     'Start asynchronous creation and verification of a signed patch between two archived builds without opening Build Settings. Poll get_build_artifact_status. Both ids must be compatible signed content archives, and MENGINE_SIGNING_KEY must be configured.',
     'build.history.create_patch',

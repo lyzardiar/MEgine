@@ -380,6 +380,14 @@ export const COMMAND_PARAMS_SCHEMAS: Record<string, AgentJsonSchema> = {
       description: 'Exact 64-character content hash from a successful build',
     },
   }, ['executable', 'expectedContentHash']),
+  'build.run': objectSchema({
+    executable: stringValue('Published Player executable inside the active project output'),
+    allowForegroundLaunch: {
+      type: 'boolean',
+      const: true,
+      description: 'Required explicit acknowledgement that launching the Player creates a window',
+    },
+  }, ['executable', 'allowForegroundLaunch']),
   'build.history.create_patch': objectSchema({
     previousId: stringValue('Older build history id from get_build_history'),
     currentId: stringValue('Newer build history id from get_build_history'),

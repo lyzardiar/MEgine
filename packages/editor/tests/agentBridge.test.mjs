@@ -623,6 +623,9 @@ test('scene, asset, and asynchronous build tools share guarded editor services',
   assert.match(bridge, /availableScenes/);
   assert.match(bridge, /commandId === 'build\.verify'/);
   assert.match(bridge, /verifyPcPlayer\(executable, expectedContentHash\)/);
+  assert.match(bridge, /commandId === 'build\.run'/);
+  assert.match(bridge, /args\.allowForegroundLaunch !== true/);
+  assert.match(bridge, /runPcPlayer\(executable\)/);
   assert.match(bridge, /case 'build\.patches'/);
   assert.match(bridge, /case 'build\.history\.compare'/);
   assert.match(bridge, /commandId === 'build\.history\.create_patch'/);

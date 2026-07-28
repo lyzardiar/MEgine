@@ -349,7 +349,7 @@ Rust Host 使用独立的工程生命周期互斥门串行化 open/create/close 
 | `build.settings` / `build.history` / `build.status` | ✅ 构建设置、历史和当前/最近 Agent job 的只读查询 |
 | `build.settings.set_scenes` | ✅ 原子保存精确有序的启用场景；仅接受 `availableScenes` 中的路径，第一项为入口场景，写前拒绝未保存工作 |
 | `build.verify` | ✅ 复用发布 Player 的 `--validate-package`，校验 content hash、manifest、场景与资源；Windows 使用 `CREATE_NO_WINDOW`，不会抢前台 |
-| `build.run` | `run_pc_player`（待接 AgentBridge，必须由调用方显式请求） |
+| `build.run` | ✅ 复用 `run_pc_player` 与当前 Manifest/工程输出校验；必须传 `allowForegroundLaunch: true` 显式确认 Player 会创建可见窗口 |
 
 #### 4.2.8 批量与事务
 
