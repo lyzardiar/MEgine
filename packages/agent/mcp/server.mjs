@@ -1171,13 +1171,13 @@ const TOOLS = [
       return textContent(await bridgeQuery('console.get_logs', queryArgs));
     },
   },
-  {
-    name: 'clear_console_logs',
-    description:
-      'Clear both the structured AgentBridge log buffer and the visible editor Console panel.',
-    inputSchema: { type: 'object', properties: {} },
-    handler: async () => textContent(await bridgeQuery('console.clear')),
-  },
+  execTool(
+    'clear_console_logs',
+    'Clear both the structured AgentBridge log buffer and the visible editor Console panel as an idempotent background-safe write.',
+    'console.clear',
+    {},
+    [],
+  ),
   {
     name: 'list_assets',
     description:

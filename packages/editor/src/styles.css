@@ -3137,11 +3137,69 @@ body.insp-scrubbing * {
 }
 
 /* Console */
+.console-panel {
+  display: flex;
+  flex: 1;
+  min-height: 0;
+  flex-direction: column;
+  background: #1f1f1f;
+}
+
+.console-toolbar {
+  display: flex;
+  flex: none;
+  gap: 4px;
+  align-items: center;
+  padding: 4px 6px;
+  border-bottom: 1px solid var(--u-border);
+  background: var(--u-panel-2);
+}
+
+.console-toolbar button {
+  min-width: 44px;
+  height: 22px;
+  padding: 0 7px;
+  border: 1px solid var(--u-border);
+  border-radius: 2px;
+  background: var(--u-toolbar-hi);
+  color: var(--u-text);
+  font-size: 11px;
+}
+
+.console-toolbar button:hover:not(:disabled),
+.console-toolbar button.active {
+  border-color: var(--u-selected);
+  color: var(--u-text-bright);
+}
+
+.console-toolbar button:disabled {
+  opacity: 0.45;
+}
+
+.console-toolbar input {
+  min-width: 100px;
+  max-width: 260px;
+  height: 22px;
+  margin-left: auto;
+  padding: 0 6px;
+  border: 1px solid var(--u-border);
+  border-radius: 2px;
+  outline: none;
+  background: var(--u-input);
+  color: var(--u-text-bright);
+  font-size: 11px;
+}
+
+.console-toolbar input:focus {
+  border-color: var(--u-selected);
+}
+
 .console-body {
+  flex: 1;
+  min-height: 0;
   font-family: var(--u-mono);
   font-size: 11px;
   padding: 6px 8px;
-  height: 100%;
   overflow: auto;
   background: #1f1f1f;
 }
@@ -3154,6 +3212,12 @@ body.insp-scrubbing * {
 
 .console-line.warn { color: #e0b44c; }
 .console-line.error { color: #e06c75; }
+
+.console-empty {
+  padding: 8px 0;
+  color: var(--u-muted);
+  font-style: italic;
+}
 
 /* Animation Timeline */
 .timeline-panel {

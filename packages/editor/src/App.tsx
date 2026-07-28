@@ -75,7 +75,7 @@ import {
   animatorDocumentKind,
   materialDocumentKind,
 } from './agent/resourceTargets';
-import { logService } from './agent/LogService';
+import { formatConsoleLog, logService } from './agent/LogService';
 import { BridgeError, type PanelLayoutSnapshot } from './agent/protocol';
 import { EditorWindowHost } from './editorWindow';
 import { resolveUnityAction } from './panels/uiFieldEditors';
@@ -165,6 +165,7 @@ type WorkspaceSyncMessage =
   | { type: 'scene-library-changed'; sender: string }
   | { type: 'request-timeline-preview'; sender: string }
   | { type: 'timeline-preview'; sender: string; preview: TimelineScenePreview | null }
+  | { type: 'request-clear-logs'; sender: string }
   | { type: 'request-dirty-state'; sender: string }
   | {
       type: 'request-save-resources';
@@ -297,11 +298,9 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
     if (buildSettingsDirty) dirty.add('build');
     return dirty;
   }, [animationDirty, animatorDirty, buildSettingsDirty, materialDirty, projectSettingsDirty, sequencerDirty, shaderDirty, spriteAtlasDirty, spriteDirty]);
-  const [logs, setLogs] = useState<string[]>([
-    'MEngine Editor',
-    '场景落盘：packages/editor/project/Assets/Scenes/*.mscene',
-    '新建会弹出命名；双击 .mscene 打开；Ctrl+S 保存',
-  ]);
+  const [logs, setLogs] = useState<string[]>(
+    () => logService.getEntries().map(formatConsoleLog),
+  );
   const [selected, setSelected] = useState<number | null>(null);
   const [selectedIds, setSelectedIds] = useState<number[]>([]);
   const logEnd = useRef(0);
@@ -829,8 +828,7 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
 
   const log = (msg: string, level: 'info' | 'warn' | 'error' = 'info') => {
     logService.log(msg, level);
-    const prefix = level === 'info' ? '' : level === 'warn' ? '[Warn] ' : '[Error] ';
-    const next = [...logsRef.current, `${prefix}${msg}`].slice(-300);
+    const next = [...logsRef.current, formatConsoleLog({ level, message: msg })].slice(-300);
     logsRef.current = next;
     logEnd.current = next.length;
     setLogs(next);
@@ -975,6 +973,10 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
         postWorkspaceDirtyState();
         return;
       }
+      if (message.type === 'request-clear-logs') {
+        if (!props.detachedPanel) agentBridge.clearLogs();
+        return;
+      }
       if (message.type === 'request-save-resources') {
         if (!message.targets.includes(syncSender.current)) return;
         void (async () => {
@@ -1114,9 +1116,14 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
         setSelectedIds(store.selectedIds);
         setGameResolution(store.gameResolution);
         if (Array.isArray(message.logs)) {
-          logsRef.current = message.logs;
-          logEnd.current = message.logs.length;
-          setLogs(message.logs);
+          logService.syncConsoleLines(
+            message.logs,
+            props.detachedPanel ? 'main-window' : 'detached-window',
+          );
+          const nextLogs = logService.getEntries().map(formatConsoleLog);
+          logsRef.current = nextLogs;
+          logEnd.current = nextLogs.length;
+          setLogs(nextLogs);
         }
         setTreeTick((tick) => tick + 1);
       } catch (reason) {
@@ -2980,7 +2987,21 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
           projectSettings: (
             <ProjectSettings onDirtyChange={setProjectSettingsDirty} onLog={log} />
           ),
-          console: <Console lines={logs} />,
+          console: (
+            <Console
+              lines={logs}
+              onClear={() => {
+                if (!props.detachedPanel) {
+                  agentBridge.clearLogs();
+                  return;
+                }
+                syncChannel.current?.postMessage({
+                  type: 'request-clear-logs',
+                  sender: syncSender.current,
+                } satisfies WorkspaceSyncMessage);
+              }}
+            />
+          ),
           profiler: <Profiler />,
         }}
       />

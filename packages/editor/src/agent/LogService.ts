@@ -1,15 +1,9 @@
 /**
  * Structured log service for the AI-agent observation surface.
  *
- * The editor historically kept logs as a plain `string[]` in `App.tsx`
- * (prefixed with `[Warn] `/`[Error] `, capped at 300). That works for the
- * Console panel but is hard for an agent to filter. This service keeps
- * structured entries (level / message / time / source) that the AgentBridge
- * exposes via `console.get_logs`.
- *
- * Phase 1 mirrors entries here from `App.tsx`'s existing `log()` so the
- * Console panel and window broadcast keep working unchanged; a later pass can
- * make this service the single source of truth for the Console panel too.
+ * App mirrors these structured entries into its cross-window `string[]` so
+ * the visible Console, detached windows, and `console.get_logs` start from
+ * the same source and retain the same 300-entry capacity.
  */
 
 export type LogLevel = 'info' | 'warn' | 'error';
@@ -21,6 +15,8 @@ export interface LogEntry {
   time: number;
   source?: string;
 }
+
+export type LogSeed = Omit<LogEntry, 'time'> & { time?: number };
 
 export interface LogQuery {
   level?: LogLevel;
@@ -36,9 +32,50 @@ export type LogChange =
 
 const CAPACITY = 300;
 
-class LogService {
-  private entries: LogEntry[] = [];
+export const INITIAL_EDITOR_LOGS: readonly LogSeed[] = [
+  { level: 'info', message: 'MEngine Editor', source: 'editor' },
+  {
+    level: 'info',
+    message: '场景落盘：packages/editor/project/Assets/Scenes/*.mscene',
+    source: 'editor',
+  },
+  {
+    level: 'info',
+    message: '新建会弹出命名；双击 .mscene 打开；Ctrl+S 保存',
+    source: 'editor',
+  },
+];
+
+export function formatConsoleLog(entry: Pick<LogEntry, 'level' | 'message'>): string {
+  const prefix = entry.level === 'info'
+    ? ''
+    : entry.level === 'warn'
+      ? '[Warn] '
+      : '[Error] ';
+  return `${prefix}${entry.message}`;
+}
+
+export function parseConsoleLog(line: string): Pick<LogEntry, 'level' | 'message'> {
+  if (line.startsWith('[Warn] ')) {
+    return { level: 'warn', message: line.slice('[Warn] '.length) };
+  }
+  if (line.startsWith('[Error] ')) {
+    return { level: 'error', message: line.slice('[Error] '.length) };
+  }
+  return { level: 'info', message: line };
+}
+
+export class LogService {
+  private entries: LogEntry[];
   private listeners = new Set<(change: LogChange) => void>();
+
+  constructor(initialEntries: readonly LogSeed[] = []) {
+    const now = Date.now();
+    this.entries = initialEntries.slice(-CAPACITY).map((entry) => ({
+      ...entry,
+      time: entry.time ?? now,
+    }));
+  }
 
   log(message: string, level: LogLevel = 'info', source?: string): void {
     const entry = { level, message, time: Date.now(), source };
@@ -66,6 +103,45 @@ class LogService {
     this.notify({ type: 'cleared' });
   }
 
+  /**
+   * Reconcile a cross-window Console snapshot while preserving structured
+   * entries in the overlapping tail and emitting events only for real changes.
+   */
+  syncConsoleLines(lines: readonly string[], source = 'workspace'): void {
+    const nextLines = lines.slice(-CAPACITY);
+    const currentLines = this.entries.map(formatConsoleLog);
+    if (
+      currentLines.length === nextLines.length
+      && currentLines.every((line, index) => line === nextLines[index])
+    ) return;
+    if (nextLines.length === 0) {
+      if (this.entries.length > 0) this.clear();
+      return;
+    }
+
+    let overlap = Math.min(currentLines.length, nextLines.length);
+    while (
+      overlap > 0
+      && !currentLines.slice(-overlap).every((line, index) => line === nextLines[index])
+    ) {
+      overlap -= 1;
+    }
+    if (overlap === 0 && this.entries.length > 0) {
+      this.entries = [];
+      this.notify({ type: 'cleared' });
+    } else if (overlap > 0) {
+      this.entries = this.entries.slice(-overlap);
+    }
+
+    const now = Date.now();
+    for (const line of nextLines.slice(overlap)) {
+      const parsed = parseConsoleLog(line);
+      const entry = { ...parsed, time: now, source };
+      this.entries.push(entry);
+      this.notify({ type: 'added', entry: { ...entry } });
+    }
+  }
+
   /** Subscribe to changes; returns an unsubscribe function. */
   subscribe(fn: (change: LogChange) => void): () => void {
     this.listeners.add(fn);
@@ -79,5 +155,5 @@ class LogService {
   }
 }
 
-/** Process-wide log sink, mirrored from App.tsx and read by the AgentBridge. */
-export const logService = new LogService();
+/** Process-wide log sink mirrored to App and read by the AgentBridge. */
+export const logService = new LogService(INITIAL_EDITOR_LOGS);

@@ -2270,6 +2270,13 @@ class AgentBridge {
     options: { screenshot?: boolean; expectedSceneRevision?: number } = {},
   ): Promise<CommandResult> {
     this.assertExpectedSceneRevision(options.expectedSceneRevision);
+    if (commandId === 'console.clear') {
+      return this.finishAsyncCommand(
+        { ok: true, data: this.clearLogs() },
+        options,
+        true,
+      );
+    }
     if (commandId === 'dialog.respond') {
       const dialogId = requiredString(args, 'dialogId');
       const windowLabel = typeof args.windowLabel === 'string' && args.windowLabel.trim()
@@ -3072,8 +3079,6 @@ class AgentBridge {
           since: params.since as number | undefined,
           limit: params.limit as number | undefined,
         });
-      case 'console.clear':
-        return this.clearLogs();
       case 'events.get':
         return this.getEvents(params);
       case 'commands.list':

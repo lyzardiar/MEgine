@@ -147,6 +147,7 @@ export const COMMAND_PARAMS_SCHEMAS: Record<string, AgentJsonSchema> = {
       description: 'Prompt value when action=accept; ignored for alert/confirm dialogs',
     },
   }, ['dialogId', 'action']),
+  'console.clear': emptySchema,
   'project.open': objectSchema({
     root: stringValue('Absolute existing MEngine project root'),
   }, ['root']),
