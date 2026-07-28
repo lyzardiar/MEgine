@@ -86,10 +86,17 @@ const menuRegistrations = new Map<string, MenuRegistration[]>();
 const menuValidatorRegistrations = new Map<string, MenuValidatorRegistration[]>();
 const listeners = new Set<Listener>();
 const menuListeners = new Set<Listener>();
+const windowTypeListeners = new Set<Listener>();
 let windows: EditorWindowInstance[] = [];
 let idSeq = 1;
 let menuRevision = 0;
+let windowTypeRevision = 0;
 const windowTypeRegistrations = new Map<string, Array<() => EditorWindowDefinition>>();
+
+function notifyWindowTypesChanged() {
+  windowTypeRevision += 1;
+  for (const listener of windowTypeListeners) listener();
+}
 
 export function registerEditorWindowType(
   typeId: string,
@@ -98,6 +105,7 @@ export function registerEditorWindowType(
   const registrations = windowTypeRegistrations.get(typeId) ?? [];
   registrations.push(factory);
   windowTypeRegistrations.set(typeId, registrations);
+  notifyWindowTypesChanged();
   let disposed = false;
   return () => {
     if (disposed) return;
@@ -106,8 +114,10 @@ export function registerEditorWindowType(
     if (!current) return;
     const index = current.indexOf(factory);
     if (index < 0) return;
+    const wasCurrent = index === current.length - 1;
     current.splice(index, 1);
     if (current.length === 0) windowTypeRegistrations.delete(typeId);
+    if (wasCurrent) notifyWindowTypesChanged();
   };
 }
 
@@ -127,6 +137,15 @@ export function listRegisteredEditorWindowTypes(): EditorWindowTypeInfo[] {
       };
     })
     .sort((left, right) => left.typeId.localeCompare(right.typeId));
+}
+
+export function subscribeEditorWindowTypes(fn: Listener): () => void {
+  windowTypeListeners.add(fn);
+  return () => windowTypeListeners.delete(fn);
+}
+
+export function getEditorWindowTypeRevision(): number {
+  return windowTypeRevision;
 }
 
 function notify() {

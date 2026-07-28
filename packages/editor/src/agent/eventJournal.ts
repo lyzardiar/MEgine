@@ -8,6 +8,8 @@ export const AGENT_EVENT_TOPICS = [
   'panel.changed',
   'workspace.changed',
   'window.changed',
+  'window.types.changed',
+  'menu.changed',
   'view.changed',
   'build.progress',
   'build.settings',

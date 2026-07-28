@@ -81,6 +81,8 @@ import {
   findMenuItem,
   listAllMenuItems,
   listRegisteredEditorWindowTypes,
+  subscribeEditorWindowTypes,
+  subscribeMenuItems,
   type MenuItemContext,
 } from '../editorWindow/registry';
 import { openNativeEditorWindow } from '../editorWindow/nativeEditorWindow';
@@ -377,8 +379,12 @@ class AgentBridge {
   private eventSourceConnections = 0;
   private stopLogEvents: (() => void) | null = null;
   private stopDialogEvents: (() => void) | null = null;
+  private stopMenuEvents: (() => void) | null = null;
+  private stopWindowTypeEvents: (() => void) | null = null;
   private stopAssetEvents: (() => void) | null = null;
   private observedDialogSignature: string | null = null;
+  private observedMenuSignature: string | null = null;
+  private observedWindowTypeSignature: string | null = null;
   private lastAssetEvent: { signature: string; time: number } | null = null;
   private projectLifecycleProvider:
     | (() => AgentProjectLifecycleProvider | null)
@@ -394,6 +400,7 @@ class AgentBridge {
       this.sceneChanges.reset();
       this.observedState = null;
       this.observedWorkspaceSignature = null;
+      this.observedMenuSignature = null;
       this.workspaceObservationGeneration += 1;
       this.workspaceObservationStarted = 0;
       this.workspaceObservationCommitted = 0;
@@ -410,6 +417,7 @@ class AgentBridge {
     this.editorBootReady = true;
     this.editorBootGeneration += 1;
     this.observeProject();
+    this.recordMenuEvent();
   }
 
   private async waitForEditorBootAfter(generation: number): Promise<void> {
@@ -489,7 +497,13 @@ class AgentBridge {
     if (this.eventSourceConnections === 1) {
       this.stopLogEvents = logService.subscribe((change) => this.recordLogEvent(change));
       this.stopDialogEvents = subscribeEditorDialog(() => this.recordDialogEvent());
+      this.stopMenuEvents = subscribeMenuItems(() => this.recordMenuEvent());
+      this.stopWindowTypeEvents = subscribeEditorWindowTypes(
+        () => this.recordWindowTypeEvent(),
+      );
       this.recordDialogEvent();
+      this.recordMenuEvent();
+      this.recordWindowTypeEvent();
       const onAssetChanged = (event: Event) => {
         const detail = (event as CustomEvent<unknown>).detail ?? { action: 'changed' };
         let signature: string;
@@ -521,6 +535,10 @@ class AgentBridge {
       this.stopLogEvents = null;
       this.stopDialogEvents?.();
       this.stopDialogEvents = null;
+      this.stopMenuEvents?.();
+      this.stopMenuEvents = null;
+      this.stopWindowTypeEvents?.();
+      this.stopWindowTypeEvents = null;
       this.stopAssetEvents?.();
       this.stopAssetEvents = null;
       this.lastAssetEvent = null;
@@ -1578,6 +1596,14 @@ class AgentBridge {
     if (!previous || previous.viewSignature !== current.viewSignature) {
       this.appendEvent('view.changed', view, now);
     }
+    if (
+      !previous
+      || sceneDelta
+      || previous.mode !== current.mode
+      || !sameNumberArray(previous.selectedIds, current.selectedIds)
+    ) {
+      this.recordMenuEvent(now);
+    }
     this.observedState = current;
   }
 
@@ -1717,6 +1743,23 @@ class AgentBridge {
     if (signature === this.observedDialogSignature) return;
     this.observedDialogSignature = signature;
     this.appendEvent('dialog.changed', { dialogs });
+  }
+
+  private recordMenuEvent(time = Date.now()): void {
+    if (!this.store || !this.editorBootReady) return;
+    const menus = this.listMenus();
+    const signature = JSON.stringify(menus);
+    if (signature === this.observedMenuSignature) return;
+    this.observedMenuSignature = signature;
+    this.appendEvent('menu.changed', { menus }, time);
+  }
+
+  private recordWindowTypeEvent(): void {
+    const windowTypes = this.listRegisteredWindowTypes();
+    const signature = JSON.stringify(windowTypes);
+    if (signature === this.observedWindowTypeSignature) return;
+    this.observedWindowTypeSignature = signature;
+    this.appendEvent('window.types.changed', { windowTypes });
   }
 
   private appendEvent(

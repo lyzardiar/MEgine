@@ -7,6 +7,7 @@ import {
   listRegisteredEditorWindowTypes,
   openEditorWindow,
   registerEditorWindowType,
+  subscribeEditorWindowTypes,
 } from '../src/editorWindow/registry.ts';
 
 test('registered editor window types are discoverable and sorted by stable id', () => {
@@ -53,6 +54,11 @@ test('registered editor window types are discoverable and sorted by stable id', 
 
 test('editor window type overrides restore only factories that remain registered', () => {
   const typeId = 'Test.Window.Override';
+  const revisions = [];
+  const unsubscribe = subscribeEditorWindowTypes(() => revisions.push(
+    listRegisteredEditorWindowTypes()
+      .find((entry) => entry.typeId === typeId)?.title ?? null,
+  ));
   const factory = (title) => () => ({
     typeId,
     title,
@@ -70,6 +76,8 @@ test('editor window type overrides restore only factories that remain registered
   assert.equal(createRegisteredEditorWindow(typeId)?.title, 'Base');
   unregisterBase();
   assert.equal(createRegisteredEditorWindow(typeId), null);
+  unsubscribe();
+  assert.deepEqual(revisions, ['Base', 'Middle', 'Top', 'Base', null]);
 });
 
 test('reopening an in-workspace editor window updates it and brings it to the front', () => {

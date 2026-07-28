@@ -14,6 +14,8 @@ export {
   registerEditorWindowType,
   createRegisteredEditorWindow,
   listRegisteredEditorWindowTypes,
+  subscribeEditorWindowTypes,
+  getEditorWindowTypeRevision,
 } from './registry';
 export type {
   MenuItemAction,

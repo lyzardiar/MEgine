@@ -224,6 +224,9 @@ test('whole-window agent capture is background-safe and addressable by window la
   assert.match(mcp, /expectedSnapshotRevision/);
   assert.match(mcp, /name: 'list_open_documents'/);
   assert.match(mcp, /name: 'list_editor_window_types'/);
+  assert.match(bridge, /subscribeEditorWindowTypes/);
+  assert.match(bridge, /this\.appendEvent\('window\.types\.changed'/);
+  assert.match(mcp, /mengine:\/\/editor\/window\/types/);
   assert.match(mcp, /name: 'get_active_dialog'/);
   assert.match(mcp, /'click_window_ui'/);
   assert.match(mcp, /'double_click_window_ui'/);
@@ -243,6 +246,9 @@ test('whole-window agent capture is background-safe and addressable by window la
   assert.match(mcp, /name: 'list_panels'/);
   assert.match(mcp, /bridgeQuery\('panel\.list'\)/);
   assert.match(mcp, /name: 'list_menu_items'/);
+  assert.match(bridge, /subscribeMenuItems/);
+  assert.match(bridge, /this\.appendEvent\('menu\.changed'/);
+  assert.match(mcp, /mengine:\/\/editor\/menus/);
   assert.match(mcp, /'invoke_menu_item'/);
   assert.match(mcp, /name: 'list_scenes'/);
   assert.match(mcp, /name: 'preview_scene_delete'/);
