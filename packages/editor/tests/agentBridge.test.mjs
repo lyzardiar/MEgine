@@ -810,6 +810,10 @@ test('scene, asset, and asynchronous build tools share guarded editor services',
   assert.match(commands, /'view\.set_camera'/);
   assert.match(commands, /'view\.set_game_resolution'/);
   assert.match(bridge, /sceneCamera: store\.sceneCamera/);
+  assert.match(
+    bridge,
+    /const view = \{\s+gizmo: store\.gizmo,\s+sceneCamera: store\.sceneCamera,\s+gameResolution: store\.gameResolution,\s+\};/,
+  );
   assert.match(bridge, /setEditorPrefs\(\{ gameResolution: resolution \}\)/);
   assert.match(bridge, /status: 'running'/);
   assert.match(bridge, /listenToPcBuildProgress/);

@@ -1472,6 +1472,7 @@ class AgentBridge {
     const panelSignature = panelLayout ? JSON.stringify(panelLayout) : null;
     const view = {
       gizmo: store.gizmo,
+      sceneCamera: store.sceneCamera,
       gameResolution: store.gameResolution,
     };
     const current: ObservedEditorState = {
