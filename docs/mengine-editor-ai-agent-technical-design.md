@@ -189,7 +189,8 @@ MEngine 编辑器当前对人类友好，但对 AI Agent 不够友好。AI Agent
 
 | query id | 返回 | 集成点 |
 | --- | --- | --- |
-| `window.list` | `[{ label, title, typeId?, kind: "main"\|"panel"\|"editor", focused, position, size, url }]` | Rust `app.webview_windows()`（当前未用）或 JS `WebviewWindow.getAll()`；标签规则 `panel-<id>`（`detachedPanelWindow.ts`）、`editor-<hash>`（`nativeEditorWindow.ts`） |
+| `window.list` | `[{ label, title, typeId?, kind: "main"\|"panel"\|"editor", focused, position, size, url }]` | ✅ Rust `app.webview_windows()`；标签规则 `panel-<id>`（`detachedPanelWindow.ts`）、`editor-<hash>`（`nativeEditorWindow.ts`） |
+| `window.ui_snapshot` | `{ windowLabel?, maxElements? }` → `{ elements: [{ role, name, text, value, state, rect, actions, selector }], truncated, ... }` | ✅ WebView2 `Runtime.evaluate` 离屏提取可见语义 DOM；密码脱敏，默认 2000/上限 5000 项，不需要 OCR |
 | `panel.list` | `[{ kind, title, visible, active, detached, dockPath }]` | `DockWorkspace` 的 dock tree + `PanelKind`（15 种，`detachedPanelWindow.ts:5`） |
 | `panel.get_layout` | dock 二叉树（leaf/split） | `localStorage['mengine.dock.layout.v4']` 对应的内存树 |
 | `window.get_active` | 当前聚焦窗口信息 | `WebviewWindow` focus 状态 |
@@ -298,6 +299,8 @@ MEngine 编辑器当前对人类友好，但对 AI Agent 不够友好。AI Agent
 | `layout.reset` | — | dispatch `mengine:reset-dock-layout` |
 | `window.open_editor` | `{ typeId }` | `EditorWindow.show` / `openNativeEditorWindow` |
 | `menu.invoke` | `{ path }` | 查 `MenuItemEntry` 并 `entry.action(ctx)` |
+| `window.ui_click` | `{ windowLabel?, selector }` | ✅ 对 `window.ui_snapshot` 返回的 selector 调用受限 DOM `click()`；不激活顶层窗口 |
+| `window.ui_set_value` | `{ windowLabel?, selector, value }` | ✅ 仅允许 input/textarea/select/contenteditable，触发 input/change；拒绝 disabled/readonly，禁止调用方注入脚本 |
 
 #### 4.2.7 资产与构建
 
@@ -415,6 +418,7 @@ inspect_and_fix       「截图当前场景，检查并修复选中物体的问�
 | --- | --- | --- |
 | 视口截图 | `src/panels/Viewport.tsx`（`canvasRef` line 522） | 暴露 `captureCanvas(): dataUrl`（`canvas.toDataURL`），由 Observer 调用——当前主路径 |
 | 整窗截图 | `src-tauri/src/agent_bridge.rs` | ✅ 已实现 WebView2 DevTools 离屏截图；支持 `windowLabel`，被遮挡/隐藏时不抢焦点；禁止退化为 GDI 屏幕拷贝 |
+| 语义窗口读取/交互 | `src-tauri/src/agent_bridge.rs` | ✅ `Runtime.evaluate` 返回可搜索的控件树；只开放 `click` / `setValue` 两种无前台输入动作，参数经 JSON→Base64 边界传递 |
 | 窗口枚举 | `src-tauri/src/lib.rs` | ✅ 已实现 `list_editor_windows`（`app.webview_windows()`，按 label 分类 main/panel/editor） |
 | 面板枚举 | `src/panels/DockWorkspace.tsx` | 导出当前 dock tree 与面板状态查询函数 |
 | 命令调度 | 新增 `src/agent/AgentBridge.ts` + `src/agent/commands.ts` | 命令注册表 + Dispatcher，映射到 store / 菜单 / 面板 |

@@ -281,4 +281,6 @@ export const COMMAND_META: CommandMeta[] = [
   { id: 'gizmo.set', category: 'view', description: 'Set the active transform gizmo (translate/rotate/scale/rect)', readOnly: false },
   { id: 'view.frame_selected', category: 'view', description: 'Frame the selected object in the scene view', readOnly: false },
   { id: 'panel.focus', category: 'panel', description: 'Open/focus a panel by kind', readOnly: false },
+  { id: 'window.ui_click', category: 'window', description: 'Click a semantic UI element in an editor window without activating it', readOnly: false },
+  { id: 'window.ui_set_value', category: 'window', description: 'Set an input value in an editor window without activating it', readOnly: false },
 ];

@@ -19,8 +19,8 @@ use tauri::{path::BaseDirectory, Emitter, Manager, State};
 
 mod agent_bridge;
 use agent_bridge::{
-    agent_bridge_broadcast, agent_bridge_respond, capture_editor_window, spawn_bridge_server,
-    BridgeHub,
+    agent_bridge_broadcast, agent_bridge_respond, capture_editor_window, inspect_editor_window,
+    interact_editor_window, spawn_bridge_server, BridgeHub,
 };
 
 struct AppState {
@@ -4755,6 +4755,8 @@ pub fn run() {
             agent_bridge_respond,
             agent_bridge_broadcast,
             capture_editor_window,
+            inspect_editor_window,
+            interact_editor_window,
             exit_editor
         ])
         .setup(move |app| {

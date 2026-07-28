@@ -237,6 +237,31 @@ const TOOLS = [
     handler: async () => textContent(await bridgeQuery('window.list')),
   },
   {
+    name: 'get_window_ui',
+    description:
+      'Get a background-safe semantic snapshot of an editor window: visible text, accessible roles/names, control values and states, bounds, supported actions, and stable CSS selectors. Use this before screenshots when you need exact UI content without OCR. The editor is not activated.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        windowLabel: {
+          type: 'string',
+          description: 'A label returned by list_windows (default: main)',
+        },
+        maxElements: {
+          type: 'number',
+          minimum: 50,
+          maximum: 5000,
+          description: 'Maximum semantic elements to return (default: 2000)',
+        },
+      },
+    },
+    handler: async (args) =>
+      textContent(await bridgeQuery('window.ui_snapshot', {
+        windowLabel: args.windowLabel || 'main',
+        maxElements: typeof args.maxElements === 'number' ? args.maxElements : 2000,
+      })),
+  },
+  {
     name: 'get_console_logs',
     description: 'Get structured editor console logs (level, message, time). Filter by level and limit.',
     inputSchema: {
@@ -358,6 +383,25 @@ const TOOLS = [
   execTool('focus_panel', 'Open/focus an editor panel by kind (hierarchy, inspector, project, console, scene, game, …).', 'panel.focus', {
     kind: { type: 'string', description: 'Panel kind' },
   }),
+  execTool(
+    'click_window_ui',
+    'Click an element returned by get_window_ui without activating or raising the editor window. Prefer domain-specific tools when available.',
+    'window.ui_click',
+    {
+      windowLabel: { type: 'string', description: 'Window label (default: main)' },
+      selector: { type: 'string', description: 'Exact selector returned by get_window_ui' },
+    },
+  ),
+  execTool(
+    'set_window_ui_value',
+    'Set an input, textarea, select, or contenteditable value returned by get_window_ui without activating the editor window.',
+    'window.ui_set_value',
+    {
+      windowLabel: { type: 'string', description: 'Window label (default: main)' },
+      selector: { type: 'string', description: 'Exact selector returned by get_window_ui' },
+      value: { type: 'string', description: 'New value' },
+    },
+  ),
 ];
 
 const RESOURCES = [

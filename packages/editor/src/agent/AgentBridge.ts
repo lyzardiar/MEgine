@@ -17,6 +17,8 @@ import { isDesktopEditor } from '../transport/editorTransport';
 import {
   BridgeError,
   type EditorState,
+  type EditorUiActionResult,
+  type EditorUiSnapshot,
   type EditorWindowInfo,
   type HierarchyNode,
   type ScreenshotResult,
@@ -106,6 +108,48 @@ class AgentBridge {
       throw new BridgeError('NOT_READY', 'Full-window capture requires the desktop editor');
     }
     return invoke<ScreenshotResult>('capture_editor_window', { windowLabel });
+  }
+
+  /** Read text, roles, values, bounds and stable selectors without OCR. */
+  async inspectWindow(
+    windowLabel = 'main',
+    maxElements = 2_000,
+  ): Promise<EditorUiSnapshot> {
+    if (!isDesktopEditor()) {
+      throw new BridgeError('NOT_READY', 'Window UI inspection requires the desktop editor');
+    }
+    const boundedMaxElements = Number.isFinite(maxElements)
+      ? Math.min(5_000, Math.max(50, Math.trunc(maxElements)))
+      : 2_000;
+    return invoke<EditorUiSnapshot>('inspect_editor_window', {
+      windowLabel,
+      maxElements: boundedMaxElements,
+    });
+  }
+
+  /** Execute one allow-listed DOM action without activating the OS window. */
+  async interactWindow(
+    action: 'click' | 'setValue',
+    selector: string,
+    windowLabel = 'main',
+    value?: string,
+  ): Promise<EditorUiActionResult> {
+    if (!isDesktopEditor()) {
+      throw new BridgeError('NOT_READY', 'Window UI interaction requires the desktop editor');
+    }
+    if (!selector) {
+      throw new BridgeError('INVALID_ARGS', 'Window UI interaction requires a selector');
+    }
+    const result = await invoke<EditorUiActionResult>('interact_editor_window', {
+      windowLabel,
+      selector,
+      action,
+      value,
+    });
+    if (!result.ok) {
+      throw new BridgeError('INVALID_ARGS', result.error ?? 'Editor UI interaction failed');
+    }
+    return result;
   }
 
   getEditorState(): EditorState {
@@ -210,6 +254,31 @@ class AgentBridge {
     args: Record<string, unknown> = {},
     options: { screenshot?: boolean } = {},
   ): Promise<CommandResult> {
+    if (
+      commandId === 'window.ui_click'
+      || commandId === 'window.ui_set_value'
+    ) {
+      const action = commandId === 'window.ui_click'
+        ? 'click'
+        : 'setValue';
+      const selector = typeof args.selector === 'string' ? args.selector : '';
+      const windowLabel =
+        typeof args.windowLabel === 'string' && args.windowLabel ? args.windowLabel : 'main';
+      const value = typeof args.value === 'string' ? args.value : undefined;
+      const result: CommandResult = {
+        ok: true,
+        data: await this.interactWindow(action, selector, windowLabel, value),
+      };
+      await nextFrame();
+      if (options.screenshot) {
+        try {
+          result.screenshot = await this.captureWindow(windowLabel);
+        } catch {
+          // Screenshot is best-effort; never fail a completed interaction.
+        }
+      }
+      return result;
+    }
     const handler = WRITE_COMMANDS[commandId];
     if (!handler) {
       throw new BridgeError('INVALID_ARGS', `Unknown command "${commandId}"`);
@@ -257,6 +326,13 @@ class AgentBridge {
         );
       case 'window.list':
         return this.listWindows();
+      case 'window.ui_snapshot':
+        return this.inspectWindow(
+          typeof params.windowLabel === 'string' && params.windowLabel
+            ? params.windowLabel
+            : 'main',
+          typeof params.maxElements === 'number' ? params.maxElements : 2_000,
+        );
       case 'console.get_logs':
         return this.getLogs({
           level: params.level as LogQuery['level'],

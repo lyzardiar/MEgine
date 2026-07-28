@@ -23,6 +23,63 @@ export interface ScreenshotResult {
 
 export type ViewportTab = 'scene' | 'game';
 
+export interface EditorUiRect {
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+}
+
+/** One visible, semantically meaningful DOM element in an editor webview. */
+export interface EditorUiElement {
+  id: string;
+  parentId: string | null;
+  selector: string;
+  tag: string;
+  role: string | null;
+  name: string | null;
+  text: string | null;
+  value: string | null;
+  description: string | null;
+  state: Record<string, boolean | string>;
+  actions: Array<'click' | 'setValue'>;
+  rect: EditorUiRect;
+}
+
+/** Background-safe semantic snapshot used instead of OCR for UI inspection. */
+export interface EditorUiSnapshot {
+  version: number;
+  windowLabel: string;
+  title: string;
+  url: string;
+  capturedAt: number;
+  captureMethod: string;
+  backgroundSafe: boolean;
+  viewport: {
+    width: number;
+    height: number;
+    deviceScaleFactor: number;
+    scrollX: number;
+    scrollY: number;
+  };
+  activeElementSelector: string | null;
+  totalDomElements: number;
+  totalSemanticElements: number;
+  truncated: boolean;
+  elements: EditorUiElement[];
+}
+
+export interface EditorUiActionResult {
+  ok: boolean;
+  error?: string;
+  action?: 'click' | 'setValue';
+  selector?: string;
+  tag?: string;
+  role?: string | null;
+  name?: string | null;
+  value?: string | null;
+}
+
 /** One open editor window (main, detached panel, or floating editor window). */
 export interface EditorWindowInfo {
   label: string;

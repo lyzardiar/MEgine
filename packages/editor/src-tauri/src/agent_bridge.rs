@@ -255,7 +255,7 @@ pub fn agent_bridge_broadcast(payload: String, hub: State<'_, Arc<BridgeHub>>) {
     hub.broadcast(payload);
 }
 
-// ── Background-safe editor-window screenshot ────────────────────────────────
+// ── Background-safe editor-window observation ───────────────────────────────
 //
 // The viewport screenshot (canvas.toDataURL) only shows the rendered scene; it
 // says nothing about the editor's own UI. WebView2's DevTools screenshot path
@@ -290,72 +290,64 @@ pub async fn capture_editor_window(
     capture_editor_window_impl(app, window_label).await
 }
 
+/// Return a bounded semantic snapshot of one editor webview. Unlike a bitmap,
+/// this exposes readable text, roles, values, states, bounds, actions and CSS
+/// selectors so an agent can understand the UI without OCR or foreground input.
+#[tauri::command]
+pub async fn inspect_editor_window(
+    app: AppHandle,
+    window_label: Option<String>,
+    max_elements: Option<usize>,
+) -> Result<serde_json::Value, String> {
+    let window_label = window_label.unwrap_or_else(|| "main".to_string());
+    let max_elements = max_elements.unwrap_or(2_000).clamp(50, 5_000);
+    inspect_editor_window_impl(app, window_label, max_elements).await
+}
+
+/// Execute one allow-listed DOM interaction in a target editor webview.
+///
+/// This is a fallback for UI surfaces that do not yet have a domain command.
+/// It deliberately accepts no JavaScript from the caller.
+#[tauri::command]
+pub async fn interact_editor_window(
+    app: AppHandle,
+    window_label: Option<String>,
+    selector: String,
+    action: String,
+    value: Option<String>,
+) -> Result<serde_json::Value, String> {
+    let window_label = window_label.unwrap_or_else(|| "main".to_string());
+    let selector = selector.trim().to_string();
+    if selector.is_empty() || selector.len() > 1_000 {
+        return Err("selector must contain 1 to 1000 characters".to_string());
+    }
+    if !matches!(action.as_str(), "click" | "setValue") {
+        return Err(format!("unsupported editor UI action \"{action}\""));
+    }
+    if value.as_ref().is_some_and(|value| value.len() > 100_000) {
+        return Err("UI value exceeds the 100000-character limit".to_string());
+    }
+    interact_editor_window_impl(app, window_label, selector, action, value).await
+}
+
 #[cfg(windows)]
 async fn capture_editor_window_impl(
     app: AppHandle,
     window_label: String,
 ) -> Result<WindowCapture, String> {
     use base64::Engine as _;
-    use std::sync::{Arc, Mutex as StdMutex};
-    use webview2_com::CallDevToolsProtocolMethodCompletedHandler;
-    use windows::core::HSTRING;
-
-    let window = app
-        .get_webview_window(&window_label)
-        .ok_or_else(|| format!("editor window \"{window_label}\" was not found"))?;
-    let (tx, rx) = tokio::sync::oneshot::channel::<Result<String, String>>();
-    let tx = Arc::new(StdMutex::new(Some(tx)));
-    let setup_tx = tx.clone();
-
-    window
-        .with_webview(move |platform_webview| {
-            let send = |result: Result<String, String>| {
-                if let Some(sender) = setup_tx.lock().ok().and_then(|mut guard| guard.take()) {
-                    let _ = sender.send(result);
-                }
-            };
-            let controller = platform_webview.controller();
-            let webview = match unsafe { controller.CoreWebView2() } {
-                Ok(webview) => webview,
-                Err(error) => {
-                    send(Err(format!("WebView2 controller is unavailable: {error}")));
-                    return;
-                }
-            };
-            let completion_tx = setup_tx.clone();
-            let handler = CallDevToolsProtocolMethodCompletedHandler::create(Box::new(
-                move |status, payload| {
-                    let result = status
-                        .map_err(|error| format!("WebView2 screenshot failed: {error}"))
-                        .map(|_| payload);
-                    if let Some(sender) =
-                        completion_tx.lock().ok().and_then(|mut guard| guard.take())
-                    {
-                        let _ = sender.send(result);
-                    }
-                    Ok(())
-                },
-            ));
-            let method = HSTRING::from("Page.captureScreenshot");
-            let params = HSTRING::from(
-                r#"{"format":"png","fromSurface":true,"captureBeyondViewport":false}"#,
-            );
-            if let Err(error) =
-                unsafe { webview.CallDevToolsProtocolMethod(&method, &params, &handler) }
-            {
-                send(Err(format!(
-                    "could not start WebView2 screenshot capture: {error}"
-                )));
-            }
-        })
-        .map_err(|error| format!("could not access editor webview: {error}"))?;
-
-    let payload = tokio::time::timeout(std::time::Duration::from_secs(10), rx)
-        .await
-        .map_err(|_| "WebView2 screenshot timed out after 10 seconds".to_string())?
-        .map_err(|_| "WebView2 screenshot callback was cancelled".to_string())??;
-    let data = serde_json::from_str::<serde_json::Value>(&payload)
-        .map_err(|error| format!("invalid WebView2 screenshot response: {error}"))?
+    let response = call_webview_devtools(
+        &app,
+        &window_label,
+        "Page.captureScreenshot",
+        serde_json::json!({
+            "format": "png",
+            "fromSurface": true,
+            "captureBeyondViewport": false,
+        }),
+    )
+    .await?;
+    let data = response
         .get("data")
         .and_then(serde_json::Value::as_str)
         .filter(|data| !data.is_empty())
@@ -381,6 +373,150 @@ async fn capture_editor_window_impl(
     })
 }
 
+#[cfg(windows)]
+async fn inspect_editor_window_impl(
+    app: AppHandle,
+    window_label: String,
+    max_elements: usize,
+) -> Result<serde_json::Value, String> {
+    let expression =
+        WINDOW_UI_SNAPSHOT_SCRIPT.replace("__MENGINE_MAX_ELEMENTS__", &max_elements.to_string());
+    let mut snapshot = evaluate_webview_script(&app, &window_label, expression).await?;
+    let object = snapshot
+        .as_object_mut()
+        .ok_or_else(|| "WebView2 UI inspection returned a non-object value".to_string())?;
+    object.insert(
+        "windowLabel".to_string(),
+        serde_json::Value::String(window_label),
+    );
+    object.insert(
+        "captureMethod".to_string(),
+        serde_json::Value::String("webview2-devtools".to_string()),
+    );
+    object.insert("backgroundSafe".to_string(), serde_json::Value::Bool(true));
+    Ok(snapshot)
+}
+
+#[cfg(windows)]
+async fn interact_editor_window_impl(
+    app: AppHandle,
+    window_label: String,
+    selector: String,
+    action: String,
+    value: Option<String>,
+) -> Result<serde_json::Value, String> {
+    use base64::Engine as _;
+    let payload = serde_json::json!({
+        "selector": selector,
+        "action": action,
+        "value": value,
+    })
+    .to_string();
+    let payload = base64::engine::general_purpose::STANDARD.encode(payload);
+    let expression = WINDOW_UI_INTERACTION_SCRIPT.replace(
+        "__MENGINE_PAYLOAD_BASE64__",
+        &serde_json::to_string(&payload).map_err(|error| error.to_string())?,
+    );
+    evaluate_webview_script(&app, &window_label, expression).await
+}
+
+#[cfg(windows)]
+async fn evaluate_webview_script(
+    app: &AppHandle,
+    window_label: &str,
+    expression: String,
+) -> Result<serde_json::Value, String> {
+    let response = call_webview_devtools(
+        app,
+        window_label,
+        "Runtime.evaluate",
+        serde_json::json!({
+            "expression": expression,
+            "returnByValue": true,
+            "awaitPromise": false,
+            "userGesture": false,
+        }),
+    )
+    .await?;
+    if let Some(exception) = response.get("exceptionDetails") {
+        return Err(format!("editor UI evaluation failed: {exception}"));
+    }
+    response
+        .pointer("/result/value")
+        .cloned()
+        .ok_or_else(|| "WebView2 UI evaluation returned no serializable value".to_string())
+}
+
+#[cfg(windows)]
+async fn call_webview_devtools(
+    app: &AppHandle,
+    window_label: &str,
+    method: &str,
+    params: serde_json::Value,
+) -> Result<serde_json::Value, String> {
+    use std::sync::{Arc, Mutex as StdMutex};
+    use webview2_com::CallDevToolsProtocolMethodCompletedHandler;
+    use windows::core::HSTRING;
+
+    let window = app
+        .get_webview_window(window_label)
+        .ok_or_else(|| format!("editor window \"{window_label}\" was not found"))?;
+    let method_name = method.to_string();
+    let params_json = params.to_string();
+    let (tx, rx) = tokio::sync::oneshot::channel::<Result<String, String>>();
+    let tx = Arc::new(StdMutex::new(Some(tx)));
+    let setup_tx = tx.clone();
+
+    window
+        .with_webview(move |platform_webview| {
+            let send = |result: Result<String, String>| {
+                if let Some(sender) = setup_tx.lock().ok().and_then(|mut guard| guard.take()) {
+                    let _ = sender.send(result);
+                }
+            };
+            let controller = platform_webview.controller();
+            let webview = match unsafe { controller.CoreWebView2() } {
+                Ok(webview) => webview,
+                Err(error) => {
+                    send(Err(format!("WebView2 controller is unavailable: {error}")));
+                    return;
+                }
+            };
+            let completion_tx = setup_tx.clone();
+            let completion_method = method_name.clone();
+            let handler = CallDevToolsProtocolMethodCompletedHandler::create(Box::new(
+                move |status, payload| {
+                    let result = status
+                        .map_err(|error| format!("WebView2 {completion_method} failed: {error}"))
+                        .map(|_| payload);
+                    if let Some(sender) =
+                        completion_tx.lock().ok().and_then(|mut guard| guard.take())
+                    {
+                        let _ = sender.send(result);
+                    }
+                    Ok(())
+                },
+            ));
+            let method = HSTRING::from(method_name);
+            let params = HSTRING::from(params_json);
+            if let Err(error) =
+                unsafe { webview.CallDevToolsProtocolMethod(&method, &params, &handler) }
+            {
+                send(Err(format!(
+                    "could not start WebView2 DevTools call: {error}"
+                )));
+            }
+        })
+        .map_err(|error| format!("could not access editor webview: {error}"))?;
+
+    let payload = tokio::time::timeout(std::time::Duration::from_secs(10), rx)
+        .await
+        .map_err(|_| format!("WebView2 {method} timed out after 10 seconds"))?
+        .map_err(|_| format!("WebView2 {method} callback was cancelled"))??;
+    serde_json::from_str(&payload)
+        .map_err(|error| format!("invalid WebView2 {method} response: {error}"))
+}
+
 #[cfg(not(windows))]
 async fn capture_editor_window_impl(
     _app: AppHandle,
@@ -388,3 +524,304 @@ async fn capture_editor_window_impl(
 ) -> Result<WindowCapture, String> {
     Err("background editor-window capture is currently only supported on Windows".to_string())
 }
+
+#[cfg(not(windows))]
+async fn inspect_editor_window_impl(
+    _app: AppHandle,
+    _window_label: String,
+    _max_elements: usize,
+) -> Result<serde_json::Value, String> {
+    Err("background editor-window inspection is currently only supported on Windows".to_string())
+}
+
+#[cfg(not(windows))]
+async fn interact_editor_window_impl(
+    _app: AppHandle,
+    _window_label: String,
+    _selector: String,
+    _action: String,
+    _value: Option<String>,
+) -> Result<serde_json::Value, String> {
+    Err("background editor-window interaction is currently only supported on Windows".to_string())
+}
+
+/// Runs inside the target WebView2 renderer through `Runtime.evaluate`.
+///
+/// The result is deliberately bounded and flat. `parentId` preserves semantic
+/// hierarchy while a flat array stays cheap for agents to search. Password
+/// values are always redacted. Selectors are deterministic for the current DOM
+/// and are the stable addressing seam for the background interaction layer.
+#[cfg(windows)]
+const WINDOW_UI_SNAPSHOT_SCRIPT: &str = r#"
+(() => {
+  const limit = __MENGINE_MAX_ELEMENTS__;
+  const normalize = (value, max = 400) => String(value ?? '')
+    .replace(/\s+/g, ' ')
+    .trim()
+    .slice(0, max);
+  const implicitRole = (element) => {
+    const tag = element.localName;
+    if (/^h[1-6]$/.test(tag)) return 'heading';
+    if (tag === 'button') return 'button';
+    if (tag === 'a' && element.hasAttribute('href')) return 'link';
+    if (tag === 'textarea') return 'textbox';
+    if (tag === 'select') return element.multiple ? 'listbox' : 'combobox';
+    if (tag === 'option') return 'option';
+    if (tag === 'main') return 'main';
+    if (tag === 'nav') return 'navigation';
+    if (tag === 'form') return 'form';
+    if (tag === 'progress') return 'progressbar';
+    if (tag !== 'input') return '';
+    const type = String(element.type || 'text').toLowerCase();
+    if (type === 'checkbox') return 'checkbox';
+    if (type === 'radio') return 'radio';
+    if (type === 'range') return 'slider';
+    if (['button', 'submit', 'reset'].includes(type)) return 'button';
+    return 'textbox';
+  };
+  const visible = (element) => {
+    const style = getComputedStyle(element);
+    if (style.display === 'none' || style.visibility === 'hidden'
+      || Number(style.opacity) === 0 || element.hidden) return false;
+    const rect = element.getBoundingClientRect();
+    return rect.width > 0 && rect.height > 0;
+  };
+  const labelledText = (element) => {
+    const labelledBy = normalize(element.getAttribute('aria-labelledby'));
+    if (labelledBy) {
+      const text = labelledBy.split(/\s+/)
+        .map((id) => document.getElementById(id))
+        .filter(Boolean)
+        .map((node) => normalize(node.innerText || node.textContent))
+        .filter(Boolean)
+        .join(' ');
+      if (text) return normalize(text);
+    }
+    if (element.labels?.length) {
+      const text = Array.from(element.labels)
+        .map((label) => normalize(label.innerText || label.textContent))
+        .filter(Boolean)
+        .join(' ');
+      if (text) return normalize(text);
+    }
+    return '';
+  };
+  const nameFromContent = (role) => [
+    'button', 'link', 'heading', 'menuitem', 'option', 'tab',
+  ].includes(role);
+  const accessibleName = (element, role) => normalize(
+    element.getAttribute('aria-label')
+      || labelledText(element)
+      || element.getAttribute('alt')
+      || element.getAttribute('title')
+      || element.getAttribute('placeholder')
+      || (nameFromContent(role) ? element.innerText || element.textContent : ''),
+  );
+  const ownText = (element, role) => {
+    if (nameFromContent(role) || element.children.length === 0) {
+      return normalize(element.innerText || element.textContent);
+    }
+    return normalize(Array.from(element.childNodes)
+      .filter((node) => node.nodeType === Node.TEXT_NODE)
+      .map((node) => node.textContent)
+      .join(' '));
+  };
+  const selectorFor = (element) => {
+    const escape = (value) => CSS.escape(String(value));
+    if (element.id) {
+      const selector = `#${escape(element.id)}`;
+      if (document.querySelectorAll(selector).length === 1) return selector;
+    }
+    const parts = [];
+    let current = element;
+    while (current && current !== document.documentElement) {
+      let part = current.localName;
+      const parent = current.parentElement;
+      if (current.id) {
+        const selector = `#${escape(current.id)}`;
+        if (document.querySelectorAll(selector).length === 1) {
+          parts.unshift(selector);
+          break;
+        }
+      }
+      if (parent) {
+        const sameTag = Array.from(parent.children)
+          .filter((child) => child.localName === current.localName);
+        if (sameTag.length > 1) {
+          part += `:nth-of-type(${sameTag.indexOf(current) + 1})`;
+        }
+      }
+      parts.unshift(part);
+      current = parent;
+    }
+    return parts.join(' > ');
+  };
+  const valueFor = (element) => {
+    if (element instanceof HTMLInputElement) {
+      if (String(element.type).toLowerCase() === 'password') return '<redacted>';
+      return normalize(element.value);
+    }
+    if (element instanceof HTMLTextAreaElement || element instanceof HTMLSelectElement) {
+      return normalize(element.value);
+    }
+    if (element.isContentEditable) return normalize(element.textContent);
+    return '';
+  };
+  const actionList = (element, role) => {
+    const actions = [];
+    if (role === 'button' || role === 'link' || role === 'menuitem'
+      || role === 'tab' || role === 'option' || typeof element.onclick === 'function') {
+      actions.push('click');
+    }
+    if ((element instanceof HTMLInputElement && !element.readOnly)
+      || (element instanceof HTMLTextAreaElement && !element.readOnly)
+      || element instanceof HTMLSelectElement
+      || element.isContentEditable) {
+      actions.push('setValue');
+    }
+    return actions;
+  };
+  const all = [document.documentElement, ...document.querySelectorAll('*')];
+  const candidates = [];
+  for (const element of all) {
+    if (!(element instanceof HTMLElement || element instanceof SVGElement)
+      || !visible(element)) continue;
+    const role = normalize(element.getAttribute('role') || implicitRole(element), 80);
+    const name = accessibleName(element, role);
+    const text = ownText(element, role);
+    const tag = element.localName;
+    const structural = /^h[1-6]$/.test(tag)
+      || ['p', 'label', 'summary', 'legend', 'caption'].includes(tag);
+    if (!role && !name && !text && !structural) continue;
+    candidates.push({ element, role, name, text });
+  }
+  const selected = candidates.slice(0, limit);
+  const ids = new Map(selected.map((entry, index) => [entry.element, `ui-${index + 1}`]));
+  const elements = selected.map((entry) => {
+    const { element, role, name, text } = entry;
+    let parent = element.parentElement;
+    while (parent && !ids.has(parent)) parent = parent.parentElement;
+    const rect = element.getBoundingClientRect();
+    const state = {
+      disabled: Boolean(element.disabled || element.getAttribute('aria-disabled') === 'true'),
+      readOnly: Boolean(element.readOnly || element.getAttribute('aria-readonly') === 'true'),
+      focused: document.activeElement === element,
+    };
+    for (const key of ['checked', 'selected', 'expanded', 'pressed', 'current']) {
+      const value = element.getAttribute(`aria-${key}`);
+      if (value !== null) state[key] = value;
+    }
+    if ('checked' in element && typeof element.checked === 'boolean') {
+      state.checked = element.checked;
+    }
+    if ('selected' in element && typeof element.selected === 'boolean') {
+      state.selected = element.selected;
+    }
+    return {
+      id: ids.get(element),
+      parentId: parent ? ids.get(parent) || null : null,
+      selector: selectorFor(element),
+      tag: element.localName,
+      role: role || null,
+      name: name || null,
+      text: text && text !== name ? text : null,
+      value: valueFor(element) || null,
+      description: normalize(element.getAttribute('aria-description'), 300) || null,
+      state,
+      actions: actionList(element, role),
+      rect: {
+        x: Math.round(rect.x * 100) / 100,
+        y: Math.round(rect.y * 100) / 100,
+        width: Math.round(rect.width * 100) / 100,
+        height: Math.round(rect.height * 100) / 100,
+      },
+    };
+  });
+  return {
+    version: 1,
+    title: document.title,
+    url: location.href,
+    capturedAt: Date.now(),
+    viewport: {
+      width: window.innerWidth,
+      height: window.innerHeight,
+      deviceScaleFactor: window.devicePixelRatio,
+      scrollX: window.scrollX,
+      scrollY: window.scrollY,
+    },
+    activeElementSelector:
+      document.activeElement instanceof Element ? selectorFor(document.activeElement) : null,
+    totalDomElements: all.length,
+    totalSemanticElements: candidates.length,
+    truncated: candidates.length > selected.length,
+    elements,
+  };
+})()
+"#;
+
+/// Allow-listed DOM interaction executed inside the target WebView2 renderer.
+/// Caller-controlled strings are inserted only as JSON string literals.
+#[cfg(windows)]
+const WINDOW_UI_INTERACTION_SCRIPT: &str = r#"
+(() => {
+  const payload = JSON.parse(atob(__MENGINE_PAYLOAD_BASE64__));
+  const { selector, action, value: requestedValue } = payload;
+  let element;
+  try {
+    element = document.querySelector(selector);
+  } catch (error) {
+    return { ok: false, error: `Invalid selector: ${String(error)}` };
+  }
+  if (!element) return { ok: false, error: `No element matches ${selector}` };
+  const disabled = Boolean(
+    element.disabled || element.getAttribute('aria-disabled') === 'true',
+  );
+  if (disabled) {
+    return { ok: false, error: `Element ${selector} is disabled` };
+  }
+  if (action === 'click') {
+    if (typeof element.click !== 'function') {
+      return { ok: false, error: `Element ${selector} is not clickable` };
+    }
+    element.click();
+  } else if (action === 'setValue') {
+    if (element.readOnly || element.getAttribute('aria-readonly') === 'true') {
+      return { ok: false, error: `Element ${selector} is read-only` };
+    }
+    const value = requestedValue == null ? '' : String(requestedValue);
+    let prototype;
+    if (element instanceof HTMLInputElement) prototype = HTMLInputElement.prototype;
+    else if (element instanceof HTMLTextAreaElement) prototype = HTMLTextAreaElement.prototype;
+    else if (element instanceof HTMLSelectElement) prototype = HTMLSelectElement.prototype;
+    if (prototype) {
+      const setter = Object.getOwnPropertyDescriptor(prototype, 'value')?.set;
+      if (!setter) return { ok: false, error: `Element ${selector} has no value setter` };
+      setter.call(element, value);
+      element.dispatchEvent(new Event('input', { bubbles: true }));
+      element.dispatchEvent(new Event('change', { bubbles: true }));
+    } else if (element.isContentEditable) {
+      element.textContent = value;
+      element.dispatchEvent(new InputEvent('input', {
+        bubbles: true,
+        inputType: 'insertText',
+        data: value,
+      }));
+    } else {
+      return { ok: false, error: `Element ${selector} does not accept a value` };
+    }
+  }
+  return {
+    ok: true,
+    action,
+    selector,
+    tag: element.localName,
+    role: element.getAttribute('role'),
+    name: element.getAttribute('aria-label')
+      || element.getAttribute('title')
+      || String(element.innerText || element.textContent || '').replace(/\s+/g, ' ').trim(),
+    value: element instanceof HTMLInputElement && element.type === 'password'
+      ? '<redacted>'
+      : ('value' in element ? String(element.value) : null),
+  };
+})()
+"#;
