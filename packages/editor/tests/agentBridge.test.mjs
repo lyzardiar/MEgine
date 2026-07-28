@@ -578,6 +578,19 @@ test('panel and menu agent surfaces use live providers and background activation
   assert.match(bridge, /commandId === 'asset\.open'/);
   assert.match(bridge, /commandId === 'panel\.detach'/);
   assert.match(bridge, /detachPanelWindow\(panel, undefined, false\)/);
+  assert.match(
+    bridge,
+    /lastNativeWindowPresent = \(await this\.listWindows\(\)\)\.some/,
+  );
+  assert.match(
+    bridge,
+    /lastLayoutDetached === expected[\s\S]*lastNativeWindowPresent === expected/,
+  );
+  assert.match(bridge, /if \(commandId === 'panel\.focus'\)/);
+  assert.match(bridge, /\? `panel-\$\{panel\}`[\s\S]*: 'main'/);
+  assert.match(bridge, /this\.finishAsyncCommand\(result, options, windowLabel\)/);
+  assert.match(bridge, /if \(commandId === 'panel\.reset_layout'\)/);
+  assert.match(bridge, /this\.finishAsyncCommand\(result, options, 'main'\)/);
   assert.match(bridge, /case 'menu\.list'/);
   assert.match(bridge, /commandId === 'menu\.invoke'/);
   assert.match(bridge, /if \(!entry\.agentInvokable\)/);

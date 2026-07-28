@@ -2736,15 +2736,34 @@ class AgentBridge {
     panel: string,
     expected: boolean,
   ): Promise<PanelLayoutSnapshot> {
+    let lastLayoutDetached = false;
+    let lastNativeWindowPresent = false;
     for (let attempt = 0; attempt < 40; attempt += 1) {
       const layout = this.panelLayoutProvider?.() ?? null;
-      const detached = (layout?.detachedPanels ?? []).some((entry) => entry.kind === panel);
-      if (layout && detached === expected) return layout;
+      lastLayoutDetached = (layout?.detachedPanels ?? []).some(
+        (entry) => entry.kind === panel,
+      );
+      lastNativeWindowPresent = (await this.listWindows()).some(
+        (entry) => entry.label === `panel-${panel}`,
+      );
+      if (
+        layout
+        && lastLayoutDetached === expected
+        && lastNativeWindowPresent === expected
+      ) {
+        return layout;
+      }
       await new Promise((resolve) => window.setTimeout(resolve, 50));
     }
     throw new BridgeError(
       'IO_ERROR',
       `Panel "${panel}" did not become ${expected ? 'detached' : 'docked'} within 2 seconds`,
+      {
+        panel,
+        expectedDetached: expected,
+        layoutDetached: lastLayoutDetached,
+        nativeWindowPresent: lastNativeWindowPresent,
+      },
     );
   }
 
@@ -3565,6 +3584,25 @@ class AgentBridge {
       resetPanelLayout: () => this.resetPanelLayout(),
     };
     const result = handler(ctx, args);
+    if (commandId === 'panel.focus') {
+      await nextFrame();
+      const panel = requiredString(args, 'kind');
+      const windowLabel = (await this.listWindows()).some(
+        (entry) => entry.label === `panel-${panel}`,
+      )
+        ? `panel-${panel}`
+        : 'main';
+      result.data = {
+        ...(result.data && typeof result.data === 'object' ? result.data : {}),
+        detached: windowLabel !== 'main',
+        windowLabel,
+      };
+      return this.finishAsyncCommand(result, options, windowLabel);
+    }
+    if (commandId === 'panel.reset_layout') {
+      await nextFrame();
+      return this.finishAsyncCommand(result, options, 'main');
+    }
     return this.finishAsyncCommand(result, options);
   }
 
