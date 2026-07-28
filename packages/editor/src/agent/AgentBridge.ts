@@ -660,7 +660,8 @@ class AgentBridge {
       | 'setValue'
       | 'scroll'
       | 'keyPress'
-      | 'dragTo',
+      | 'dragTo'
+      | 'dragBy',
     selector: string,
     windowLabel = 'main',
     targetSelector?: string,
@@ -3376,6 +3377,7 @@ class AgentBridge {
       || commandId === 'window.ui_set_value'
       || commandId === 'window.ui_scroll'
       || commandId === 'window.ui_drag_to'
+      || commandId === 'window.ui_drag_by'
       || commandId === 'window.ui_press_key'
     ) {
       const action = commandId === 'window.ui_click'
@@ -3390,7 +3392,9 @@ class AgentBridge {
                 ? 'scroll'
                 : commandId === 'window.ui_drag_to'
                   ? 'dragTo'
-                  : 'keyPress';
+                  : commandId === 'window.ui_drag_by'
+                    ? 'dragBy'
+                    : 'keyPress';
       const selector = typeof args.selector === 'string' ? args.selector : '';
       const windowLabel =
         typeof args.windowLabel === 'string' && args.windowLabel ? args.windowLabel : 'main';
@@ -3398,10 +3402,18 @@ class AgentBridge {
       const targetSelector = commandId === 'window.ui_drag_to'
         ? requiredString(args, 'targetSelector')
         : undefined;
-      const deltaX = optionalBoundedUiDelta(args, 'deltaX', 0);
-      const deltaY = commandId === 'window.ui_scroll'
+      const deltaX = commandId === 'window.ui_drag_by'
+        ? requiredBoundedUiDelta(args, 'deltaX')
+        : optionalBoundedUiDelta(args, 'deltaX', 0);
+      const deltaY = commandId === 'window.ui_scroll' || commandId === 'window.ui_drag_by'
         ? requiredBoundedUiDelta(args, 'deltaY')
         : undefined;
+      if (commandId === 'window.ui_drag_by' && deltaX === 0 && deltaY === 0) {
+        throw new BridgeError(
+          'INVALID_ARGS',
+          'window.ui_drag_by requires a non-zero deltaX or deltaY',
+        );
+      }
       const key = commandId === 'window.ui_press_key'
         ? requiredString(args, 'key')
         : undefined;

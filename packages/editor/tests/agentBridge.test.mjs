@@ -64,9 +64,13 @@ test('whole-window agent capture is background-safe and addressable by window la
   assert.match(rust, /actions\.push\('scroll'\)/);
   assert.match(rust, /actions\.push\('keyPress'\)/);
   assert.match(rust, /actions\.push\('dragTo'\)/);
+  assert.match(rust, /actions\.push\('dragBy'\)/);
   assert.match(rust, /new DataTransfer\(\)/);
   assert.match(rust, /new DragEvent\(type/);
   assert.match(rust, /dispatchDrag\(targetElement, 'drop'\)/);
+  assert.match(rust, /dragBy must end inside the target WebView viewport/);
+  assert.match(rust, /Object\.defineProperty\(element, name/);
+  assert.match(rust, /dispatchPointerAt\(element, 'mousemove'/);
   assert.doesNotMatch(contentScript, /targetElement|targetSelector|action === 'dragTo'/);
   assert.match(interactionScript, /let targetElement = null/);
   assert.match(interactionScript, /document\.querySelector\(targetSelector\)/);
@@ -129,6 +133,7 @@ test('whole-window agent capture is background-safe and addressable by window la
   assert.match(bridge, /offset: boundedOffset/);
   assert.match(bridge, /gameResolution: store\.gameResolution/);
   assert.match(bridge, /capture_editor_window', \{ windowLabel \}/);
+  assert.match(bridge, /window\.ui_drag_by requires a non-zero deltaX or deltaY/);
   assert.match(bridge, /candidate\.totalSemanticElements > 0/);
   assert.match(bridge, /semanticReady: true/);
   assert.match(bridge, /snapshotRevision: initialSnapshot\.snapshotRevision/);
@@ -147,6 +152,7 @@ test('whole-window agent capture is background-safe and addressable by window la
   assert.match(mcp, /'set_window_ui_value'/);
   assert.match(mcp, /'scroll_window_ui'/);
   assert.match(mcp, /'drag_window_ui'/);
+  assert.match(mcp, /'drag_window_ui_by'/);
   assert.match(mcp, /'press_window_ui_key'/);
   assert.match(mcp, /'respond_to_dialog'/);
   assert.match(mcp, /'close_editor_window'/);

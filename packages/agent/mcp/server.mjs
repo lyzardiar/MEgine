@@ -2476,6 +2476,28 @@ const TOOLS = [
     ['selector', 'targetSelector'],
   ),
   execTool(
+    'drag_window_ui_by',
+    'Perform a bounded pointer drag from the center of an element marked with the dragBy action by get_window_ui. The endpoint must stay inside the same hidden WebView; this never moves the OS cursor.',
+    'window.ui_drag_by',
+    {
+      windowLabel: { type: 'string', description: 'Window label (default: main)' },
+      selector: { type: 'string', description: 'Exact pointer-gesture selector returned by get_window_ui' },
+      deltaX: {
+        type: 'number',
+        minimum: -1000000,
+        maximum: 1000000,
+        description: 'Horizontal CSS-pixel displacement; may be zero',
+      },
+      deltaY: {
+        type: 'number',
+        minimum: -1000000,
+        maximum: 1000000,
+        description: 'Vertical CSS-pixel displacement; may be zero',
+      },
+    },
+    ['selector', 'deltaX', 'deltaY'],
+  ),
+  execTool(
     'press_window_ui_key',
     'Press an allow-listed semantic key on an element marked with the keyPress action by get_window_ui. Events stay inside the hidden WebView and do not focus or type into the foreground application.',
     'window.ui_press_key',

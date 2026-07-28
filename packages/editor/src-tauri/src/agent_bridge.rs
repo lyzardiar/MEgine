@@ -674,7 +674,14 @@ pub async fn interact_editor_window(
     }
     if !matches!(
         action.as_str(),
-        "click" | "doubleClick" | "contextClick" | "setValue" | "scroll" | "keyPress" | "dragTo"
+        "click"
+            | "doubleClick"
+            | "contextClick"
+            | "setValue"
+            | "scroll"
+            | "keyPress"
+            | "dragTo"
+            | "dragBy"
     ) {
         return Err(format!("unsupported editor UI action \"{action}\""));
     }
@@ -701,6 +708,11 @@ pub async fn interact_editor_window(
     }
     if action == "scroll" && delta_y.is_none() {
         return Err("scroll requires deltaY".to_string());
+    }
+    if action == "dragBy"
+        && (delta_x.is_none() || delta_y.is_none() || delta_x == Some(0.0) && delta_y == Some(0.0))
+    {
+        return Err("dragBy requires non-zero deltaX or deltaY and both fields".to_string());
     }
     if action == "keyPress" {
         let key = key
@@ -1048,6 +1060,7 @@ const WINDOW_UI_SNAPSHOT_SCRIPT: &str = r#"
     'scroll',
     'keyPress',
     'dragTo',
+    'dragBy',
   ];
   const agentPolicyFor = (element) => {
     const blockedActions = new Set();
@@ -1247,6 +1260,22 @@ const WINDOW_UI_SNAPSHOT_SCRIPT: &str = r#"
     }
     if (element.draggable || typeof props.onDragStart === 'function') {
       actions.push('dragTo');
+    }
+    const gestureHint = normalize(
+      `${element.getAttribute('aria-label') || ''} `
+        + `${element.getAttribute('title') || ''} ${element.className || ''}`,
+      240,
+    ).toLocaleLowerCase();
+    const pointerGesture = typeof props.onPointerDown === 'function' && (
+      typeof props.onPointerMove === 'function'
+      || typeof props.onPointerUp === 'function'
+      || typeof props.onPointerCancel === 'function'
+      || /drag|scrub|resize|拖|调整|调节/.test(gestureHint)
+    );
+    const mouseGesture = typeof props.onMouseDown === 'function'
+      && typeof props.onClick !== 'function';
+    if ((pointerGesture || mouseGesture) && typeof props.onClick !== 'function') {
+      actions.push('dragBy');
     }
     return actions;
   };
@@ -1482,6 +1511,7 @@ const WINDOW_UI_INTERACTION_SCRIPT: &str = r#"
     'scroll',
     'keyPress',
     'dragTo',
+    'dragBy',
   ];
   const agentPolicyFor = (target) => {
     const blockedActions = new Set();
@@ -1637,8 +1667,14 @@ const WINDOW_UI_INTERACTION_SCRIPT: &str = r#"
       clientY: rect.top + rect.height / 2,
     };
   };
-  const dispatchPointerAt = (target, type, button, buttons, detail = 0) => {
-    const coordinates = eventCoordinates(target);
+  const dispatchPointerAt = (
+    target,
+    type,
+    button,
+    buttons,
+    detail = 0,
+    coordinates = eventCoordinates(target),
+  ) => {
     const EventType = typeof PointerEvent === 'function' && type.startsWith('pointer')
       ? PointerEvent
       : MouseEvent;
@@ -1774,6 +1810,93 @@ const WINDOW_UI_INTERACTION_SCRIPT: &str = r#"
     dispatchDrag(element, 'dragend');
     dispatchPointerAt(targetElement, 'pointerup', 0, 0, 1);
     dispatchPointerAt(targetElement, 'mouseup', 0, 0, 1);
+  } else if (action === 'dragBy') {
+    const deltaX = Number(requestedDeltaX);
+    const deltaY = Number(requestedDeltaY);
+    if (
+      !Number.isFinite(deltaX)
+      || !Number.isFinite(deltaY)
+      || (deltaX === 0 && deltaY === 0)
+    ) {
+      return { ok: false, error: 'dragBy requires finite non-zero CSS-pixel deltas' };
+    }
+    const start = eventCoordinates(element);
+    const end = {
+      clientX: start.clientX + deltaX,
+      clientY: start.clientY + deltaY,
+    };
+    if (
+      end.clientX < 0
+      || end.clientY < 0
+      || end.clientX >= document.documentElement.clientWidth
+      || end.clientY >= document.documentElement.clientHeight
+    ) {
+      return {
+        ok: false,
+        error: 'dragBy must end inside the target WebView viewport',
+      };
+    }
+    const reactProps = reactPropsFor(element);
+    const gestureHint = String(
+      `${element.getAttribute('aria-label') || ''} `
+        + `${element.getAttribute('title') || ''} ${element.className || ''}`,
+    ).toLocaleLowerCase();
+    const pointerGesture = typeof reactProps.onPointerDown === 'function' && (
+      typeof reactProps.onPointerMove === 'function'
+      || typeof reactProps.onPointerUp === 'function'
+      || typeof reactProps.onPointerCancel === 'function'
+      || /drag|scrub|resize|拖|调整|调节/.test(gestureHint)
+    );
+    const mouseGesture = typeof reactProps.onMouseDown === 'function'
+      && typeof reactProps.onClick !== 'function';
+    if (
+      (!pointerGesture && !mouseGesture)
+      || typeof reactProps.onClick === 'function'
+    ) {
+      return { ok: false, error: `Element ${selector} is not a draggable pointer gesture` };
+    }
+    let syntheticCapture = false;
+    const captureMethods = [
+      ['setPointerCapture', (pointerId) => {
+        if (pointerId === 1) syntheticCapture = true;
+      }],
+      ['releasePointerCapture', (pointerId) => {
+        if (pointerId === 1) syntheticCapture = false;
+      }],
+      ['hasPointerCapture', (pointerId) => pointerId === 1 && syntheticCapture],
+    ];
+    const captureDescriptors = captureMethods.map(([name]) => (
+      Object.getOwnPropertyDescriptor(element, name)
+    ));
+    try {
+      captureMethods.forEach(([name, implementation]) => {
+        Object.defineProperty(element, name, {
+          configurable: true,
+          value: implementation,
+        });
+      });
+      dispatchPointerAt(element, 'pointerdown', 0, 1, 1, start);
+      dispatchPointerAt(element, 'mousedown', 0, 1, 1, start);
+      const distance = Math.hypot(deltaX, deltaY);
+      const steps = Math.max(2, Math.min(16, Math.ceil(distance / 20)));
+      for (let step = 1; step <= steps; step += 1) {
+        const progress = step / steps;
+        const coordinates = {
+          clientX: start.clientX + deltaX * progress,
+          clientY: start.clientY + deltaY * progress,
+        };
+        dispatchPointerAt(element, 'pointermove', 0, 1, 1, coordinates);
+        dispatchPointerAt(element, 'mousemove', 0, 1, 1, coordinates);
+      }
+      dispatchPointerAt(element, 'pointerup', 0, 0, 1, end);
+      dispatchPointerAt(element, 'mouseup', 0, 0, 1, end);
+    } finally {
+      captureMethods.forEach(([name], index) => {
+        const descriptor = captureDescriptors[index];
+        if (descriptor) Object.defineProperty(element, name, descriptor);
+        else delete element[name];
+      });
+    }
   } else if (action === 'setValue') {
     if (element.readOnly || element.getAttribute('aria-readonly') === 'true') {
       return { ok: false, error: `Element ${selector} is read-only` };
@@ -1885,6 +2008,8 @@ const WINDOW_UI_INTERACTION_SCRIPT: &str = r#"
     ok: true,
     action,
     key: action === 'keyPress' ? requestedKey : null,
+    deltaX: action === 'dragBy' ? requestedDeltaX : null,
+    deltaY: action === 'dragBy' ? requestedDeltaY : null,
     selector,
     targetSelector: action === 'dragTo' ? targetSelector : null,
     targetName: targetElement ? interactionName(targetElement) : null,

@@ -37,7 +37,8 @@ export type EditorUiAction =
   | 'setValue'
   | 'scroll'
   | 'keyPress'
-  | 'dragTo';
+  | 'dragTo'
+  | 'dragBy';
 
 /** One visible, semantically meaningful DOM element in an editor webview. */
 export interface EditorUiElement {
@@ -132,6 +133,8 @@ export interface EditorUiActionResult {
   selector?: string;
   targetSelector?: string | null;
   targetName?: string | null;
+  deltaX?: number | null;
+  deltaY?: number | null;
   tag?: string;
   role?: string | null;
   name?: string | null;

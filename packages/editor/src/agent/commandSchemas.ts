@@ -701,6 +701,22 @@ export const COMMAND_PARAMS_SCHEMAS: Record<string, AgentJsonSchema> = {
     selector: stringValue('Exact draggable source selector returned by window.ui_snapshot'),
     targetSelector: stringValue('Exact drop target selector returned by window.ui_snapshot'),
   }, ['selector', 'targetSelector']),
+  'window.ui_drag_by': objectSchema({
+    windowLabel: stringValue('Window label; default main'),
+    selector: stringValue('Exact pointer-gesture selector returned by window.ui_snapshot'),
+    deltaX: {
+      type: 'number',
+      minimum: -1_000_000,
+      maximum: 1_000_000,
+      description: 'Horizontal CSS-pixel displacement; may be zero',
+    },
+    deltaY: {
+      type: 'number',
+      minimum: -1_000_000,
+      maximum: 1_000_000,
+      description: 'Vertical CSS-pixel displacement; may be zero',
+    },
+  }, ['selector', 'deltaX', 'deltaY']),
   'window.ui_press_key': objectSchema({
     windowLabel: stringValue('Window label; default main'),
     selector: stringValue('Exact keyboard target selector returned by window.ui_snapshot'),

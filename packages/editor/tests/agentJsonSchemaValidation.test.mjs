@@ -32,6 +32,7 @@ test('direct AgentBridge schema validation matches MCP for valid command argumen
     ['playback.step', { deltaTime: 1 / 60 }],
     ['window.ui_press_key', { selector: '#dialog-input', key: 'Enter' }],
     ['window.ui_drag_to', { selector: '#source', targetSelector: '#target' }],
+    ['window.ui_drag_by', { selector: '#splitter', deltaX: 40, deltaY: 0 }],
     ['build.run', { executable: 'Builds\\Game.exe', allowForegroundLaunch: true }],
     ['intent.apply', {
       intent: { kind: 'SetClearColor', color: [0.1, 0.2, 0.3, 1] },
@@ -57,6 +58,7 @@ test('direct AgentBridge schema validation matches MCP for malformed or extra ar
     ['playback.step', { deltaTime: 0 }],
     ['window.ui_press_key', { selector: '#dialog-input', key: 'A' }],
     ['window.ui_drag_to', { selector: '#source' }],
+    ['window.ui_drag_by', { selector: '#splitter', deltaX: 40 }],
     ['build.run', { executable: 'Builds\\Game.exe', allowForegroundLaunch: false }],
     ['intent.apply', {
       intent: { kind: 'SetClearColor', color: [0.1, 0.2, 3, 1] },
