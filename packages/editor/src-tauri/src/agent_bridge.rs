@@ -16,17 +16,27 @@
 
 use std::collections::{HashMap, VecDeque};
 use std::path::PathBuf;
+use std::sync::atomic::{AtomicUsize, Ordering};
 use std::sync::Arc;
 
 use futures_util::{SinkExt, StreamExt};
 use parking_lot::Mutex;
 use tauri::{AppHandle, Emitter, Manager, State};
 use tokio::net::{TcpListener, TcpStream};
-use tokio::sync::mpsc;
+use tokio::sync::{mpsc, watch, Semaphore};
 use tokio_tungstenite::tungstenite::handshake::server::{ErrorResponse, Request, Response};
+use tokio_tungstenite::tungstenite::protocol::frame::coding::CloseCode;
+use tokio_tungstenite::tungstenite::protocol::{CloseFrame, WebSocketConfig};
 use tokio_tungstenite::tungstenite::Message;
 
 const MAX_QUEUED_BRIDGE_REQUESTS: usize = 256;
+const MAX_BRIDGE_CLIENTS: usize = 32;
+const MAX_PENDING_REQUESTS_PER_CLIENT: usize = 64;
+const MAX_PENDING_BRIDGE_REQUESTS: usize = 256;
+const MAX_BRIDGE_INBOUND_MESSAGE_BYTES: usize = 64 * 1024 * 1024;
+const MAX_BRIDGE_OUTBOUND_MESSAGES: usize = 64;
+const MAX_BRIDGE_OUTBOUND_QUEUED_BYTES: usize = 128 * 1024 * 1024;
+const BRIDGE_RATE_LIMIT_RETRY_AFTER_MS: usize = 250;
 
 #[derive(Default)]
 struct BridgeTransportState {
@@ -75,10 +85,82 @@ impl BridgeTransportState {
     }
 }
 
+struct OutboundMessage {
+    message: Option<Message>,
+    byte_len: usize,
+    queued_bytes: Arc<AtomicUsize>,
+}
+
+impl OutboundMessage {
+    fn try_new(text: String, queued_bytes: Arc<AtomicUsize>) -> Option<Self> {
+        let byte_len = text.len();
+        if !try_reserve_queued_bytes(
+            queued_bytes.as_ref(),
+            byte_len,
+            MAX_BRIDGE_OUTBOUND_QUEUED_BYTES,
+        ) {
+            return None;
+        }
+        Some(Self {
+            message: Some(Message::Text(text.into())),
+            byte_len,
+            queued_bytes,
+        })
+    }
+
+    fn take(&mut self) -> Message {
+        self.message
+            .take()
+            .expect("outbound message must be consumed exactly once")
+    }
+}
+
+impl Drop for OutboundMessage {
+    fn drop(&mut self) {
+        self.queued_bytes.fetch_sub(self.byte_len, Ordering::AcqRel);
+    }
+}
+
+fn try_reserve_queued_bytes(counter: &AtomicUsize, byte_len: usize, limit: usize) -> bool {
+    if byte_len > limit {
+        return false;
+    }
+    counter
+        .fetch_update(Ordering::AcqRel, Ordering::Acquire, |current| {
+            current.checked_add(byte_len).filter(|next| *next <= limit)
+        })
+        .is_ok()
+}
+
+struct BridgeClient {
+    outbound: mpsc::Sender<OutboundMessage>,
+    disconnect: watch::Sender<bool>,
+    queued_bytes: Arc<AtomicUsize>,
+    in_flight_requests: usize,
+}
+
+#[derive(Default)]
+struct BridgeClients {
+    entries: HashMap<String, BridgeClient>,
+    in_flight_requests: usize,
+}
+
+#[derive(Debug, PartialEq)]
+struct BridgeRequestCapacity {
+    pending_requests: usize,
+    pending_bridge_requests: usize,
+}
+
+enum BridgeRequestAdmission {
+    Accepted,
+    MissingClient,
+    RateLimited(BridgeRequestCapacity),
+}
+
 /// Routes messages between the webview and connected WebSocket clients.
 pub struct BridgeHub {
     /// client id -> channel feeding that client's WS write loop.
-    clients: Mutex<HashMap<String, mpsc::UnboundedSender<Message>>>,
+    clients: Mutex<BridgeClients>,
     /// Main-webview readiness and requests received while it is loading.
     transport: Mutex<BridgeTransportState>,
     /// Token a client must present (in the WS URL query) to connect.
@@ -88,7 +170,7 @@ pub struct BridgeHub {
 impl BridgeHub {
     pub fn new(token: String) -> Self {
         Self {
-            clients: Mutex::new(HashMap::new()),
+            clients: Mutex::new(BridgeClients::default()),
             transport: Mutex::new(BridgeTransportState::default()),
             token,
         }
@@ -98,29 +180,119 @@ impl BridgeHub {
         &self.token
     }
 
-    fn register(&self, id: String, tx: mpsc::UnboundedSender<Message>) {
-        self.clients.lock().insert(id, tx);
+    fn register(&self, id: String, client: BridgeClient) -> bool {
+        let mut clients = self.clients.lock();
+        if clients.entries.len() >= MAX_BRIDGE_CLIENTS || clients.entries.contains_key(&id) {
+            return false;
+        }
+        clients.entries.insert(id, client);
+        true
     }
 
     fn unregister(&self, id: &str) {
-        self.clients.lock().remove(id);
+        self.remove_client(id, false);
+    }
+
+    fn disconnect(&self, id: &str) {
+        self.remove_client(id, true);
+    }
+
+    fn remove_client(&self, id: &str, signal_disconnect: bool) {
+        let removed = {
+            let mut clients = self.clients.lock();
+            let removed = clients.entries.remove(id);
+            if let Some(client) = removed.as_ref() {
+                clients.in_flight_requests = clients
+                    .in_flight_requests
+                    .saturating_sub(client.in_flight_requests);
+            }
+            removed
+        };
+        if signal_disconnect {
+            if let Some(client) = removed {
+                let _ = client.disconnect.send(true);
+            }
+        }
         self.transport.lock().remove_client(id);
     }
 
-    /// Send a reply to a single client. Returns false if the client is gone.
-    pub fn send_to(&self, id: &str, msg: String) -> bool {
-        match self.clients.lock().get(id) {
-            Some(tx) => tx.send(Message::Text(msg.into())).is_ok(),
-            None => false,
+    fn begin_request(&self, id: &str) -> BridgeRequestAdmission {
+        let mut clients = self.clients.lock();
+        let Some(client) = clients.entries.get(id) else {
+            return BridgeRequestAdmission::MissingClient;
+        };
+        if client.in_flight_requests >= MAX_PENDING_REQUESTS_PER_CLIENT
+            || clients.in_flight_requests >= MAX_PENDING_BRIDGE_REQUESTS
+        {
+            return BridgeRequestAdmission::RateLimited(BridgeRequestCapacity {
+                pending_requests: client.in_flight_requests,
+                pending_bridge_requests: clients.in_flight_requests,
+            });
         }
+        clients.in_flight_requests += 1;
+        clients
+            .entries
+            .get_mut(id)
+            .expect("admitted client must remain registered")
+            .in_flight_requests += 1;
+        BridgeRequestAdmission::Accepted
+    }
+
+    fn complete_request_slot(&self, id: &str) -> bool {
+        let mut clients = self.clients.lock();
+        let Some(client) = clients.entries.get_mut(id) else {
+            return false;
+        };
+        if client.in_flight_requests == 0 {
+            return false;
+        }
+        client.in_flight_requests -= 1;
+        clients.in_flight_requests -= 1;
+        true
+    }
+
+    fn enqueue_to(&self, id: &str, msg: String) -> bool {
+        let channels = self
+            .clients
+            .lock()
+            .entries
+            .get(id)
+            .map(|client| (client.outbound.clone(), Arc::clone(&client.queued_bytes)));
+        let Some((outbound, queued_bytes)) = channels else {
+            return false;
+        };
+        let Some(message) = OutboundMessage::try_new(msg, queued_bytes) else {
+            self.disconnect(id);
+            return false;
+        };
+        if outbound.try_send(message).is_err() {
+            self.disconnect(id);
+            return false;
+        }
+        true
+    }
+
+    /// Complete one admitted request and queue its reply. Returns false if the
+    /// request/client is gone or the bounded client queue required disconnect.
+    pub fn send_response_to(&self, id: &str, msg: String) -> bool {
+        if !self.complete_request_slot(id) {
+            return false;
+        }
+        self.enqueue_to(id, msg)
     }
 
     /// Broadcast an event to every connected client.
     #[allow(dead_code)]
     pub fn broadcast(&self, msg: String) {
-        let clients = self.clients.lock();
-        for tx in clients.values() {
-            let _ = tx.send(Message::Text(msg.clone().into()));
+        let client_ids = self
+            .clients
+            .lock()
+            .entries
+            .keys()
+            .cloned()
+            .collect::<Vec<_>>();
+        for client_id in client_ids {
+            let _ = self.enqueue_to(&client_id, msg.clone());
         }
     }
 
@@ -128,14 +300,30 @@ impl BridgeHub {
     /// synchronously emit it while holding the readiness lock. Holding the lock
     /// closes the gap between a readiness check and a page-load reset.
     fn forward_request(&self, app: &AppHandle, payload: BridgeRequestPayload) {
+        match self.begin_request(&payload.client_id) {
+            BridgeRequestAdmission::Accepted => {}
+            BridgeRequestAdmission::MissingClient => return,
+            BridgeRequestAdmission::RateLimited(capacity) => {
+                let response = bridge_rate_limited_response(&payload.message, &capacity);
+                let _ = self.enqueue_to(&payload.client_id, response);
+                return;
+            }
+        }
         let mut transport = self.transport.lock();
         match transport.route(payload) {
-            BridgeRequestRoute::Dispatch(payload) => emit_bridge_request(app, payload),
+            BridgeRequestRoute::Dispatch(payload) => {
+                let client_id = payload.client_id.clone();
+                let response = bridge_not_ready_response(&payload.message);
+                if !emit_bridge_request(app, payload) {
+                    drop(transport);
+                    let _ = self.send_response_to(&client_id, response);
+                }
+            }
             BridgeRequestRoute::Queued => {}
             BridgeRequestRoute::Rejected(payload) => {
                 drop(transport);
                 let response = bridge_not_ready_response(&payload.message);
-                let _ = self.send_to(&payload.client_id, response);
+                let _ = self.send_response_to(&payload.client_id, response);
             }
         }
     }
@@ -182,17 +370,36 @@ pub struct BridgeTransportReadyResult {
     queued_requests: Vec<BridgeRequestPayload>,
 }
 
-fn emit_bridge_request(app: &AppHandle, payload: BridgeRequestPayload) {
+fn emit_bridge_request(app: &AppHandle, payload: BridgeRequestPayload) -> bool {
     if let Err(error) = app.emit("agent-bridge:request", payload) {
         log::warn!("AgentBridge could not forward a request to the main webview: {error}");
+        return false;
     }
+    true
+}
+
+fn bridge_rate_limited_response(message: &str, capacity: &BridgeRequestCapacity) -> String {
+    let id = request_id_from_message(message);
+    serde_json::json!({
+        "jsonrpc": "2.0",
+        "id": id,
+        "error": {
+            "code": "RATE_LIMITED",
+            "message": "Too many AgentBridge requests are already pending",
+            "data": {
+                "pendingRequests": capacity.pending_requests,
+                "maxPendingRequests": MAX_PENDING_REQUESTS_PER_CLIENT,
+                "pendingBridgeRequests": capacity.pending_bridge_requests,
+                "maxPendingBridgeRequests": MAX_PENDING_BRIDGE_REQUESTS,
+                "retryAfterMs": BRIDGE_RATE_LIMIT_RETRY_AFTER_MS,
+            },
+        },
+    })
+    .to_string()
 }
 
 fn bridge_not_ready_response(message: &str) -> String {
-    let id = serde_json::from_str::<serde_json::Value>(message)
-        .ok()
-        .and_then(|request| request.get("id").cloned())
-        .unwrap_or(serde_json::Value::Null);
+    let id = request_id_from_message(message);
     serde_json::json!({
         "jsonrpc": "2.0",
         "id": id,
@@ -202,6 +409,13 @@ fn bridge_not_ready_response(message: &str) -> String {
         },
     })
     .to_string()
+}
+
+fn request_id_from_message(message: &str) -> serde_json::Value {
+    serde_json::from_str::<serde_json::Value>(message)
+        .ok()
+        .and_then(|request| request.get("id").cloned())
+        .unwrap_or(serde_json::Value::Null)
 }
 
 /// Start the WebSocket server on the Tauri async runtime.
@@ -223,13 +437,22 @@ pub fn spawn_bridge_server(app: AppHandle, hub: Arc<BridgeHub>) {
         };
         write_discovery_file(&app, port, hub.token());
         log::info!("AgentBridge listening on 127.0.0.1:{port}");
+        let connection_slots = Arc::new(Semaphore::new(MAX_BRIDGE_CLIENTS));
 
         loop {
             match listener.accept().await {
                 Ok((stream, _peer)) => {
+                    let Ok(connection_slot) = Arc::clone(&connection_slots).try_acquire_owned()
+                    else {
+                        log::warn!(
+                            "AgentBridge rejected a connection because {MAX_BRIDGE_CLIENTS} connection tasks are already active"
+                        );
+                        continue;
+                    };
                     let app = app.clone();
                     let hub = hub.clone();
                     tokio::spawn(async move {
+                        let _connection_slot = connection_slot;
                         if let Err(error) = handle_connection(app, hub, stream).await {
                             log::warn!("AgentBridge connection closed: {error}");
                         }
@@ -249,7 +472,13 @@ async fn handle_connection(
     stream: TcpStream,
 ) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
     let expected = hub.token().to_string();
-    let ws = tokio_tungstenite::accept_hdr_async(
+    let websocket_config = WebSocketConfig {
+        max_message_size: Some(MAX_BRIDGE_INBOUND_MESSAGE_BYTES),
+        max_frame_size: Some(MAX_BRIDGE_INBOUND_MESSAGE_BYTES),
+        max_write_buffer_size: MAX_BRIDGE_OUTBOUND_QUEUED_BYTES,
+        ..WebSocketConfig::default()
+    };
+    let ws = tokio_tungstenite::accept_hdr_async_with_config(
         stream,
         move |req: &Request, resp: Response| -> Result<Response, ErrorResponse> {
             let token_ok = req
@@ -265,18 +494,41 @@ async fn handle_connection(
                 )))
             }
         },
+        Some(websocket_config),
     )
     .await?;
 
     let (mut sink, mut stream) = ws.split();
     let client_id = uuid::Uuid::new_v4().to_string();
-    let (tx, mut rx) = mpsc::unbounded_channel::<Message>();
-    hub.register(client_id.clone(), tx.clone());
+    let (tx, mut rx) = mpsc::channel::<OutboundMessage>(MAX_BRIDGE_OUTBOUND_MESSAGES);
+    let (disconnect, mut read_disconnect) = watch::channel(false);
+    let mut write_disconnect = read_disconnect.clone();
+    let client = BridgeClient {
+        outbound: tx,
+        disconnect,
+        queued_bytes: Arc::new(AtomicUsize::new(0)),
+        in_flight_requests: 0,
+    };
+    if !hub.register(client_id.clone(), client) {
+        let _ = sink
+            .send(Message::Close(Some(CloseFrame {
+                code: CloseCode::Policy,
+                reason: "AgentBridge client limit reached".into(),
+            })))
+            .await;
+        return Ok(());
+    }
 
     // Write loop: forward queued replies/events to this client's socket.
     let write_task = tokio::spawn(async move {
-        while let Some(msg) = rx.recv().await {
-            if sink.send(msg).await.is_err() {
+        while let Some(mut outbound) = rx.recv().await {
+            let message = outbound.take();
+            let send_result = tokio::select! {
+                result = sink.send(message) => result,
+                _ = write_disconnect.changed() => break,
+            };
+            drop(outbound);
+            if send_result.is_err() {
                 break;
             }
         }
@@ -286,7 +538,14 @@ async fn handle_connection(
     });
 
     // Read loop: forward incoming requests to the webview.
-    while let Some(msg) = stream.next().await {
+    loop {
+        let msg = tokio::select! {
+            msg = stream.next() => msg,
+            _ = read_disconnect.changed() => break,
+        };
+        let Some(msg) = msg else {
+            break;
+        };
         match msg {
             Ok(Message::Text(text)) => {
                 hub.forward_request(
@@ -298,6 +557,10 @@ async fn handle_connection(
                 );
             }
             Ok(Message::Close(_)) => break,
+            Ok(Message::Binary(_)) => {
+                log::warn!("AgentBridge rejected a binary message from client {client_id}");
+                break;
+            }
             Ok(_) => {}
             Err(error) => {
                 log::warn!("AgentBridge read error: {error}");
@@ -310,7 +573,6 @@ async fn handle_connection(
     // Complete the WebSocket close handshake instead of aborting the TCP
     // writer. Abrupt shutdown makes standards-compliant MCP clients report a
     // spurious connection error after an otherwise successful session.
-    drop(tx);
     if tokio::time::timeout(std::time::Duration::from_secs(1), write_task)
         .await
         .is_err()
@@ -431,7 +693,7 @@ pub fn agent_bridge_respond(
     payload: String,
     hub: State<'_, Arc<BridgeHub>>,
 ) -> bool {
-    hub.send_to(&client_id, payload)
+    hub.send_response_to(&client_id, payload)
 }
 
 /// Webview → Rust: push an event payload to every connected client.
@@ -459,6 +721,25 @@ mod transport_tests {
             client_id: client_id.to_string(),
             message: format!(r#"{{"jsonrpc":"2.0","id":{id},"method":"query"}}"#),
         }
+    }
+
+    fn test_client() -> (
+        BridgeClient,
+        mpsc::Receiver<OutboundMessage>,
+        watch::Receiver<bool>,
+    ) {
+        let (outbound, receiver) = mpsc::channel(MAX_BRIDGE_OUTBOUND_MESSAGES);
+        let (disconnect, disconnect_receiver) = watch::channel(false);
+        (
+            BridgeClient {
+                outbound,
+                disconnect,
+                queued_bytes: Arc::new(AtomicUsize::new(0)),
+                in_flight_requests: 0,
+            },
+            receiver,
+            disconnect_receiver,
+        )
     }
 
     #[test]
@@ -537,6 +818,119 @@ mod transport_tests {
             serde_json::from_str(&bridge_not_ready_response(&rejected.message)).unwrap();
         assert_eq!(response["id"], 777);
         assert_eq!(response["error"]["code"], "NOT_READY");
+    }
+
+    #[test]
+    fn connected_clients_and_pending_requests_are_bounded() {
+        let connection_hub = BridgeHub::new("token".to_string());
+        for index in 0..MAX_BRIDGE_CLIENTS {
+            let (client, _receiver, _disconnect) = test_client();
+            assert!(connection_hub.register(format!("client-{index}"), client));
+        }
+        let (excess_client, _receiver, _disconnect) = test_client();
+        assert!(!connection_hub.register("client-excess".to_string(), excess_client));
+
+        let hub = BridgeHub::new("token".to_string());
+        let (client, _receiver, _disconnect) = test_client();
+        assert!(hub.register("client-0".to_string(), client));
+        for index in 0..MAX_PENDING_REQUESTS_PER_CLIENT {
+            assert!(matches!(
+                hub.begin_request("client-0"),
+                BridgeRequestAdmission::Accepted
+            ));
+            assert_eq!(
+                hub.clients
+                    .lock()
+                    .entries
+                    .get("client-0")
+                    .unwrap()
+                    .in_flight_requests,
+                index + 1
+            );
+        }
+        let capacity = match hub.begin_request("client-0") {
+            BridgeRequestAdmission::RateLimited(capacity) => capacity,
+            _ => panic!("request after the per-client limit should be rejected"),
+        };
+        assert_eq!(
+            capacity,
+            BridgeRequestCapacity {
+                pending_requests: MAX_PENDING_REQUESTS_PER_CLIENT,
+                pending_bridge_requests: MAX_PENDING_REQUESTS_PER_CLIENT,
+            }
+        );
+
+        assert!(hub.send_response_to("client-0", "{}".to_string()));
+        assert!(matches!(
+            hub.begin_request("client-0"),
+            BridgeRequestAdmission::Accepted
+        ));
+        hub.unregister("client-0");
+        assert_eq!(hub.clients.lock().in_flight_requests, 0);
+    }
+
+    #[test]
+    fn bridge_wide_pending_requests_are_bounded() {
+        let hub = BridgeHub::new("token".to_string());
+        for client_index in
+            0..=MAX_PENDING_BRIDGE_REQUESTS.div_ceil(MAX_PENDING_REQUESTS_PER_CLIENT)
+        {
+            let (client, _receiver, _disconnect) = test_client();
+            assert!(hub.register(format!("client-{client_index}"), client));
+        }
+        for client_index in 0..MAX_PENDING_BRIDGE_REQUESTS / MAX_PENDING_REQUESTS_PER_CLIENT {
+            for _ in 0..MAX_PENDING_REQUESTS_PER_CLIENT {
+                assert!(matches!(
+                    hub.begin_request(&format!("client-{client_index}")),
+                    BridgeRequestAdmission::Accepted
+                ));
+            }
+        }
+
+        let capacity = match hub.begin_request("client-4") {
+            BridgeRequestAdmission::RateLimited(capacity) => capacity,
+            _ => panic!("request after the bridge-wide limit should be rejected"),
+        };
+        assert_eq!(capacity.pending_requests, 0);
+        assert_eq!(
+            capacity.pending_bridge_requests,
+            MAX_PENDING_BRIDGE_REQUESTS
+        );
+        let response: serde_json::Value = serde_json::from_str(&bridge_rate_limited_response(
+            r#"{"jsonrpc":"2.0","id":"limited"}"#,
+            &capacity,
+        ))
+        .unwrap();
+        assert_eq!(response["id"], "limited");
+        assert_eq!(response["error"]["code"], "RATE_LIMITED");
+        assert_eq!(
+            response["error"]["data"]["maxPendingBridgeRequests"],
+            MAX_PENDING_BRIDGE_REQUESTS
+        );
+    }
+
+    #[test]
+    fn slow_client_outbound_queue_disconnects_without_unbounded_growth() {
+        let hub = BridgeHub::new("token".to_string());
+        let (client, receiver, disconnect) = test_client();
+        assert!(hub.register("client-a".to_string(), client));
+
+        for index in 0..MAX_BRIDGE_OUTBOUND_MESSAGES {
+            assert!(hub.enqueue_to("client-a", format!("message-{index}")));
+        }
+        assert!(!hub.enqueue_to("client-a", "excess".to_string()));
+        assert!(*disconnect.borrow());
+        assert!(!hub.clients.lock().entries.contains_key("client-a"));
+        assert_eq!(receiver.len(), MAX_BRIDGE_OUTBOUND_MESSAGES);
+    }
+
+    #[test]
+    fn outbound_byte_reservation_is_atomic_and_bounded() {
+        let queued = AtomicUsize::new(0);
+        assert!(try_reserve_queued_bytes(&queued, 6, 10));
+        assert!(!try_reserve_queued_bytes(&queued, 5, 10));
+        assert_eq!(queued.load(Ordering::Acquire), 6);
+        assert!(!try_reserve_queued_bytes(&queued, 11, 10));
     }
 
     #[test]

@@ -113,9 +113,9 @@ MEngine 编辑器当前对人类友好，但对 AI Agent 不够友好。AI Agent
 **Bridge Transport（Rust / Tauri）** —— 本地 WebSocket 服务器：
 
 - 监听 `127.0.0.1` 自动分配端口，端口号写入发现文件（如 `<project>/.mengine/agent-bridge.json`），供适配器发现。
-- 下行：WS 消息 → 有界启动队列 / Tauri event `agent-bridge:request` → webview。主 WebView 注册监听后用带 session id 的握手声明就绪；冷启动和页面重载期间到达的请求会按序等待，并由握手 command 的返回值直接交给新页面处理，避免在同一次 IPC 尚未返回时反向发送事件。
+- 下行：WS 消息 → 有界启动队列 / Tauri event `agent-bridge:request` → webview。主 WebView 注册监听后用带 session id 的握手声明就绪；冷启动和页面重载期间到达的请求会按序等待，并由握手 command 的返回值直接交给新页面处理，避免在同一次 IPC 尚未返回时反向发送事件。原生层最多同时保留 32 个连接、每客户端 64 个及全进程 256 个在途请求；输入消息/帧显式限制为 64 MiB，避免依赖库默认值漂移。
 - 上行：webview 通过 Tauri command `agent_bridge_respond` / `agent_bridge_broadcast` 回传，Rust 按 `client_id` 路由给对应 WS 客户端。
-- 主 WebView 每次开始导航时由 Rust 页加载钩子原子重置就绪状态；旧页面的延迟清理只能释放自己的 session，不能误停用新页面。队列上限为 256，超限请求会收到保留原 JSON-RPC id 的 `NOT_READY` 错误，而不是静默丢失。
+- 主 WebView 每次开始导航时由 Rust 页加载钩子原子重置就绪状态；旧页面的延迟清理只能释放自己的 session，不能误停用新页面。启动队列上限为 256，超限请求会收到保留原 JSON-RPC id 的 `NOT_READY` 错误，而不是静默丢失；运行期在途请求超限则返回含客户端/进程容量和重试提示的 `RATE_LIMITED`。每个连接的出站通道同时受 64 条消息和 128 MiB 字节预算约束，无法继续读取的慢客户端会被断开，不会让广播或截图响应无限占用内存。
 - 仅绑定 localhost，不暴露到网络。
 
 **MCP Adapter（Node sidecar）** —— MCP 协议适配器：
@@ -562,6 +562,7 @@ CLI 仅输出结构化 JSON，支持 `--args @file` / `--args -`、显式幂等 
 | --- | --- |
 | 安全：本地端口被其它进程调用 | 仅绑定 127.0.0.1；发现文件含随机 token，连接需校验；危险命令（删除/构建）可配置确认 |
 | 并发：多客户端同时写 | 复用 `base_revision` 乐观锁；冲突返回 `STALE_REVISION`；不同 `request_id` 的唯一在途写请求最多 64 个，超限返回带当前容量与重试提示的 `RATE_LIMITED`，但相同 `request_id` 的超时重试仍复用原在途结果，不额外占位 |
+| 传输：连接/请求洪泛或客户端停止读取 | 原生 WS 最多 32 个连接、每客户端 64/全进程 256 个在途请求、64 MiB 输入；每客户端出站队列最多 64 条且合计 128 MiB，超限断开该慢客户端，不拖累编辑器或其他 Agent |
 | 性能：大场景 snapshot / 高频截图 | snapshot 支持精简模式（hierarchy 不含组件）；所有位图截图默认最长边 2048（可在 256..4096 内指定），并在进程内串行且保留至少 250ms 冷却；最多保留 8 个当前/排队请求，超限明确返回 `RATE_LIMITED`；语义快照不受位图限频影响 |
 | 命名漂移：camelCase vs snake_case | AgentBridge 对外统一 camelCase，边界处集中转换，避免泄漏到协议 |
 | Play Mode 双事实源 | 观察/写操作明确区分 edit/play 世界，Play 下写操作按现有 store 规则处理 |

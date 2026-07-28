@@ -360,6 +360,13 @@ test('the main AgentBridge transport is available before a project is opened', (
   assert.match(transport, /maxPendingWrites: error\.maxPendingEntries/);
   assert.match(serialQueue, /class SerialTaskQueue/);
   assert.match(nativeBridge, /MAX_QUEUED_BRIDGE_REQUESTS: usize = 256/);
+  assert.match(nativeBridge, /MAX_BRIDGE_CLIENTS: usize = 32/);
+  assert.match(nativeBridge, /MAX_PENDING_REQUESTS_PER_CLIENT: usize = 64/);
+  assert.match(nativeBridge, /MAX_PENDING_BRIDGE_REQUESTS: usize = 256/);
+  assert.match(nativeBridge, /MAX_BRIDGE_OUTBOUND_MESSAGES: usize = 64/);
+  assert.match(nativeBridge, /MAX_BRIDGE_OUTBOUND_QUEUED_BYTES: usize = 128 \* 1024 \* 1024/);
+  assert.match(nativeBridge, /accept_hdr_async_with_config/);
+  assert.doesNotMatch(nativeBridge, /unbounded_channel/);
   assert.match(nativeBridge, /bridge_not_ready_response/);
   assert.match(nativeBridge, /cleanup_bridge_discovery/);
   assert.match(nativeBridge, /discovery_file_is_owned/);
