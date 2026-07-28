@@ -91,7 +91,13 @@ import {
 } from './transport/desktopProjectSession';
 import type { ToolHandleOrientation, ToolPivotMode } from './editorTool';
 import { loadSortingLayers, SORTING_LAYERS_CHANGED_EVENT } from './sortingLayers';
-import { saveAllResources } from './saveAll';
+import {
+  mergeSaveAllResults,
+  RemoteSaveCoordinator,
+  saveAllResources,
+  type RemoteSavePeer,
+  type SaveAllResult,
+} from './saveAll';
 import { buildWorldTransforms } from './worldTransform';
 import type { TimelineScenePreview } from './timelineScenePreview';
 import {
@@ -144,6 +150,19 @@ type WorkspaceSyncMessage =
   | { type: 'request-timeline-preview'; sender: string }
   | { type: 'timeline-preview'; sender: string; preview: TimelineScenePreview | null }
   | { type: 'request-dirty-state'; sender: string }
+  | {
+      type: 'request-save-resources';
+      sender: string;
+      requestId: string;
+      targets: string[];
+    }
+  | {
+      type: 'save-resources-result';
+      sender: string;
+      recipient: string;
+      requestId: string;
+      result: SaveAllResult;
+    }
   | { type: 'window-closing'; sender: string }
   | {
       type: 'dirty-state';
@@ -151,6 +170,7 @@ type WorkspaceSyncMessage =
       timestamp: number;
       panel: string;
       dirty: boolean;
+      resourceDirty: boolean;
     }
   | {
       type: 'scene-state';
@@ -302,7 +322,10 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
     timestamp: number;
     panel: string;
     dirty: boolean;
+    resourceDirty: boolean;
   }>());
+  const remoteSaveCoordinator = useRef<RemoteSaveCoordinator | null>(null);
+  const saveResourcesInFlight = useRef<Promise<SaveAllResult> | null>(null);
   const recoveryTimer = useRef<number | null>(null);
   const lastRecoveryError = useRef<string | null>(null);
   const lastAssetPollError = useRef<string | null>(null);
@@ -326,6 +349,27 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
     spritePath,
     spriteAtlasPath,
     timelineAssetPath,
+  };
+
+  const saveLocalResources = async (): Promise<SaveAllResult> => {
+    const existing = saveResourcesInFlight.current;
+    if (existing) return existing;
+    const request = saveAllResources();
+    saveResourcesInFlight.current = request;
+    try {
+      return await request;
+    } finally {
+      if (saveResourcesInFlight.current === request) saveResourcesInFlight.current = null;
+    }
+  };
+
+  const waitForLocalResourcesClean = async (timeoutMs = 2_000): Promise<boolean> => {
+    const deadline = Date.now() + timeoutMs;
+    do {
+      await new Promise((resolve) => window.setTimeout(resolve, 25));
+      if (!resourceDirtyRef.current) return true;
+    } while (Date.now() < deadline);
+    return !resourceDirtyRef.current;
   };
 
   useEffect(() => {
@@ -358,10 +402,11 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
       timestamp: Date.now(),
       panel: props.detachedPanel ?? 'main window',
       dirty: workspaceDirtyRef.current,
+      resourceDirty: resourceDirtyRef.current,
     } satisfies WorkspaceSyncMessage);
   };
 
-  const queryRemoteDirtyPanels = async (): Promise<string[]> => {
+  const queryRemoteDirtyPeers = async (resourceOnly = false): Promise<RemoteSavePeer[]> => {
     const channel = syncChannel.current;
     if (!channel) return [];
     channel.postMessage({
@@ -370,15 +415,38 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
     } satisfies WorkspaceSyncMessage);
     await new Promise((resolve) => window.setTimeout(resolve, 120));
     const cutoff = Date.now() - 5_000;
-    const dirty = new Set<string>();
+    const dirty: RemoteSavePeer[] = [];
     for (const [sender, peer] of remoteDirtyPeers.current) {
       if (peer.timestamp < cutoff) {
         remoteDirtyPeers.current.delete(sender);
-      } else if (peer.dirty) {
-        dirty.add(peer.panel);
+      } else if (resourceOnly ? peer.resourceDirty : peer.dirty) {
+        dirty.push({ sender, panel: peer.panel });
       }
     }
+    return dirty.sort((left, right) => (
+      left.panel.localeCompare(right.panel) || left.sender.localeCompare(right.sender)
+    ));
+  };
+
+  const queryRemoteDirtyPanels = async (): Promise<string[]> => {
+    const dirty = new Set((await queryRemoteDirtyPeers()).map((peer) => peer.panel));
     return [...dirty].sort();
+  };
+
+  const saveRemoteResources = async (): Promise<SaveAllResult> => {
+    const peers = await queryRemoteDirtyPeers(true);
+    if (peers.length === 0) return { saved: [], failures: [] };
+    const coordinator = remoteSaveCoordinator.current;
+    if (!coordinator) {
+      return {
+        saved: [],
+        failures: peers.map((peer) => ({
+          label: peer.panel,
+          error: 'Workspace save channel is unavailable',
+        })),
+      };
+    }
+    return coordinator.request(peers);
   };
 
   useEffect(() => {
@@ -812,11 +880,64 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
     if (typeof BroadcastChannel === 'undefined') return;
     const channel = new BroadcastChannel(WORKSPACE_CHANNEL);
     syncChannel.current = channel;
+    const saveCoordinator = new RemoteSaveCoordinator((request) => {
+      channel.postMessage({
+        type: 'request-save-resources',
+        sender: syncSender.current,
+        requestId: request.requestId,
+        targets: request.targets,
+      } satisfies WorkspaceSyncMessage);
+    });
+    remoteSaveCoordinator.current = saveCoordinator;
     channel.onmessage = (event: MessageEvent<WorkspaceSyncMessage>) => {
       const message = event.data;
       if (!message || message.sender === syncSender.current) return;
       if (message.type === 'request-dirty-state') {
         postWorkspaceDirtyState();
+        return;
+      }
+      if (message.type === 'request-save-resources') {
+        if (!message.targets.includes(syncSender.current)) return;
+        void (async () => {
+          let result: SaveAllResult;
+          try {
+            result = await saveLocalResources();
+          } catch (reason) {
+            result = {
+              saved: [],
+              failures: [{
+                label: props.detachedPanel ?? 'Workspace resources',
+                error: reason instanceof Error ? reason.message : String(reason),
+              }],
+            };
+          }
+          const resourcesClean = result.failures.length > 0
+            ? !resourceDirtyRef.current
+            : await waitForLocalResourcesClean();
+          if (!resourcesClean && result.failures.length === 0) {
+            result = {
+              ...result,
+              failures: [{
+                label: props.detachedPanel ?? 'Workspace resources',
+                error: 'Workspace remains dirty after its Save All participants completed',
+              }],
+            };
+          }
+          postWorkspaceDirtyState();
+          channel.postMessage({
+            type: 'save-resources-result',
+            sender: syncSender.current,
+            recipient: message.sender,
+            requestId: message.requestId,
+            result,
+          } satisfies WorkspaceSyncMessage);
+        })();
+        return;
+      }
+      if (message.type === 'save-resources-result') {
+        if (message.recipient === syncSender.current) {
+          saveCoordinator.accept(message.requestId, message.sender, message.result);
+        }
         return;
       }
       if (message.type === 'request-timeline-preview') {
@@ -843,6 +964,7 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
           timestamp: message.timestamp,
           panel: message.panel,
           dirty: message.dirty,
+          resourceDirty: message.resourceDirty,
         });
         if (remoteTimelinePreview.current?.sender === message.sender) {
           remoteTimelinePreview.current.lastSeenAt = Date.now();
@@ -955,6 +1077,10 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
         type: 'window-closing',
         sender: syncSender.current,
       } satisfies WorkspaceSyncMessage);
+      saveCoordinator.dispose();
+      if (remoteSaveCoordinator.current === saveCoordinator) {
+        remoteSaveCoordinator.current = null;
+      }
       syncChannel.current = null;
       channel.close();
     };
@@ -1083,7 +1209,10 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
         sceneSaved = Boolean(name) && await persistScene(name!);
       }
     }
-    const resources = await saveAllResources();
+    const resources = mergeSaveAllResults([
+      await saveLocalResources(),
+      await saveRemoteResources(),
+    ]);
     for (const failure of resources.failures) {
       log(`Save All failed for ${failure.label}: ${failure.error}`, 'error');
     }

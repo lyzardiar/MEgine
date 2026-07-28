@@ -163,6 +163,10 @@ test('panel and menu agent surfaces use live providers and background activation
   assert.match(app, /\.\.\.resourceDocumentPathsRef\.current/);
   assert.match(app, /setMaterialPath\(message\.materialPath \?\? null\)/);
   assert.match(app, /openAsset: async \(target: AgentResourceEditorTarget\)/);
+  assert.match(app, /type: 'request-save-resources'/);
+  assert.match(app, /type: 'save-resources-result'/);
+  assert.match(app, /await saveRemoteResources\(\)/);
+  assert.match(app, /Workspace remains dirty after its Save All participants completed/);
 });
 
 test('scene, asset, and asynchronous build tools share guarded editor services', () => {
