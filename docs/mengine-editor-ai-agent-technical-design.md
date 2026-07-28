@@ -338,6 +338,8 @@ Rust Host 使用独立的工程生命周期互斥门串行化 open/create/close 
 
 动作分发后，目标 WebView 会等待两次渲染机会（后台限流时由有界 timer 接管），Rust Host 再读取一次完整语义指纹。成功结果携带 `settledFrames`、`postObservationConfirmed`、`postSnapshotRevision`、`postSemanticElementCount` 与 `snapshotChanged`；因此 Agent 可以直接把返回的 post revision 用于下一次交互，而不需要任意 sleep。若动作已执行但目标窗口随即消失，结果保留成功分发并以 `postObservationConfirmed=false` 和 `postObservationError` 明确标记未能完成后置观测。
 
+`snapshotRevision` 的哈希输入与快照的可观察内容共用同一份 `semanticElements` 序列化结果，覆盖 id/parent、selector、role/name/text、快照控件值、description、disabled/readOnly/focused 与 ARIA/check 状态、Agent 交互策略、actions、滚动状态、bounds，并同时覆盖 viewport、活动元素和 DOM/语义元素总数。任何已返回字段的变化都会使续页和写动作的旧 revision 失效，不会把不同时间点的控件状态拼成一份快照；未归一化的完整长文本和值仍通过 `window.ui_content` 分页读取。
+
 #### 4.2.7 资产与构建
 
 | command id | 映射 |

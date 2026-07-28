@@ -1450,50 +1450,7 @@ const WINDOW_UI_SNAPSHOT_SCRIPT: &str = r#"
     }
     return 'Scrollable content';
   };
-  const all = [document.documentElement, ...document.querySelectorAll('*')];
-  const candidates = [];
-  for (const element of all) {
-    if (!(element instanceof HTMLElement || element instanceof SVGElement)
-      || !visible(element)) continue;
-    const role = normalize(element.getAttribute('role') || implicitRole(element), 80);
-    const directName = accessibleName(element, role);
-    const text = ownText(element, role);
-    const tag = element.localName;
-    const actions = actionList(element, role);
-    const name = directName || (actions.includes('scroll') ? scrollContextName(element) : '');
-    const structural = /^h[1-6]$/.test(tag)
-      || ['p', 'label', 'summary', 'legend', 'caption'].includes(tag);
-    if (!role && !name && !text && !structural && actions.length === 0) continue;
-    candidates.push({ element, role, name, text, actions });
-  }
-  const revisionSource = JSON.stringify({
-    title: document.title,
-    url: location.href,
-    elements: candidates.map(({ element, role, name, text, actions }) => [
-      selectorFor(element),
-      element.localName,
-      role,
-      name,
-      text,
-      actions,
-    ]),
-  });
-  let revisionHash = 0xcbf29ce484222325n;
-  for (let index = 0; index < revisionSource.length; index += 1) {
-    revisionHash ^= BigInt(revisionSource.charCodeAt(index));
-    revisionHash = BigInt.asUintN(64, revisionHash * 0x100000001b3n);
-  }
-  const snapshotRevision = `ui-v1-${candidates.length}-${
-    revisionHash.toString(16).padStart(16, '0')
-  }`;
-  revisionGuard.revisions.set(snapshotRevision, revisionGuard.epoch);
-  const selected = candidates.slice(offset, offset + limit);
-  const ids = new Map(candidates.map((entry, index) => [entry.element, `ui-${index + 1}`]));
-  const elements = selected.map((entry) => {
-    const { element, role, name, text, actions } = entry;
-    let parent = element.parentElement;
-    while (parent && !ids.has(parent)) parent = parent.parentElement;
-    const rect = element.getBoundingClientRect();
+  const stateFor = (element) => {
     const state = {
       disabled: Boolean(element.disabled || element.getAttribute('aria-disabled') === 'true'),
       readOnly: Boolean(element.readOnly || element.getAttribute('aria-readonly') === 'true'),
@@ -1520,8 +1477,19 @@ const WINDOW_UI_SNAPSHOT_SCRIPT: &str = r#"
     if ('selected' in element && typeof element.selected === 'boolean') {
       state.selected = element.selected;
     }
-    const agentInteraction = agentPolicyFor(element);
-    const scroll = actions.includes('scroll') && element instanceof HTMLElement
+    return state;
+  };
+  const descriptionFor = (element, name) => normalize(
+    element.getAttribute('aria-description')
+      || (
+        normalize(element.getAttribute('title')) !== name
+          ? element.getAttribute('title')
+          : ''
+      ),
+    300,
+  ) || null;
+  const scrollFor = (element, actions) => (
+    actions.includes('scroll') && element instanceof HTMLElement
       ? {
           left: element.scrollLeft,
           top: element.scrollTop,
@@ -1530,7 +1498,38 @@ const WINDOW_UI_SNAPSHOT_SCRIPT: &str = r#"
           clientWidth: element.clientWidth,
           clientHeight: element.clientHeight,
         }
-      : null;
+      : null
+  );
+  const rectFor = (element) => {
+    const rect = element.getBoundingClientRect();
+    return {
+      x: Math.round(rect.x * 100) / 100,
+      y: Math.round(rect.y * 100) / 100,
+      width: Math.round(rect.width * 100) / 100,
+      height: Math.round(rect.height * 100) / 100,
+    };
+  };
+  const all = [document.documentElement, ...document.querySelectorAll('*')];
+  const candidates = [];
+  for (const element of all) {
+    if (!(element instanceof HTMLElement || element instanceof SVGElement)
+      || !visible(element)) continue;
+    const role = normalize(element.getAttribute('role') || implicitRole(element), 80);
+    const directName = accessibleName(element, role);
+    const text = ownText(element, role);
+    const tag = element.localName;
+    const actions = actionList(element, role);
+    const name = directName || (actions.includes('scroll') ? scrollContextName(element) : '');
+    const structural = /^h[1-6]$/.test(tag)
+      || ['p', 'label', 'summary', 'legend', 'caption'].includes(tag);
+    if (!role && !name && !text && !structural && actions.length === 0) continue;
+    candidates.push({ element, role, name, text, actions });
+  }
+  const ids = new Map(candidates.map((entry, index) => [entry.element, `ui-${index + 1}`]));
+  const semanticElementFor = (entry) => {
+    const { element, role, name, text, actions } = entry;
+    let parent = element.parentElement;
+    while (parent && !ids.has(parent)) parent = parent.parentElement;
     return {
       id: ids.get(element),
       parentId: parent ? ids.get(parent) || null : null,
@@ -1540,51 +1539,61 @@ const WINDOW_UI_SNAPSHOT_SCRIPT: &str = r#"
       name: name || null,
       text: text && text !== name ? text : null,
       value: valueFor(element) || null,
-      description: normalize(
-        element.getAttribute('aria-description')
-          || (
-            normalize(element.getAttribute('title')) !== name
-              ? element.getAttribute('title')
-              : ''
-          ),
-        300,
-      ) || null,
-      state,
-      agentInteraction,
+      description: descriptionFor(element, name),
+      state: stateFor(element),
+      agentInteraction: agentPolicyFor(element),
       actions,
-      scroll,
-      rect: {
-        x: Math.round(rect.x * 100) / 100,
-        y: Math.round(rect.y * 100) / 100,
-        width: Math.round(rect.width * 100) / 100,
-        height: Math.round(rect.height * 100) / 100,
-      },
+      scroll: scrollFor(element, actions),
+      rect: rectFor(element),
     };
+  };
+  const semanticElements = candidates.map(semanticElementFor);
+  const viewport = {
+    width: window.innerWidth,
+    height: window.innerHeight,
+    deviceScaleFactor: window.devicePixelRatio,
+    scrollX: window.scrollX,
+    scrollY: window.scrollY,
+  };
+  const activeElementSelector =
+    document.activeElement instanceof Element ? selectorFor(document.activeElement) : null;
+  const revisionSource = JSON.stringify({
+    version: 2,
+    title: document.title,
+    url: location.href,
+    viewport,
+    activeElementSelector,
+    totalDomElements: all.length,
+    totalSemanticElements: semanticElements.length,
+    elements: semanticElements,
   });
+  let revisionHash = 0xcbf29ce484222325n;
+  for (let index = 0; index < revisionSource.length; index += 1) {
+    revisionHash ^= BigInt(revisionSource.charCodeAt(index));
+    revisionHash = BigInt.asUintN(64, revisionHash * 0x100000001b3n);
+  }
+  const snapshotRevision = `ui-v1-${candidates.length}-${
+    revisionHash.toString(16).padStart(16, '0')
+  }`;
+  revisionGuard.revisions.set(snapshotRevision, revisionGuard.epoch);
+  const elements = semanticElements.slice(offset, offset + limit);
   return {
     version: 2,
     snapshotRevision,
     title: document.title,
     url: location.href,
     capturedAt: Date.now(),
-    viewport: {
-      width: window.innerWidth,
-      height: window.innerHeight,
-      deviceScaleFactor: window.devicePixelRatio,
-      scrollX: window.scrollX,
-      scrollY: window.scrollY,
-    },
-    activeElementSelector:
-      document.activeElement instanceof Element ? selectorFor(document.activeElement) : null,
+    viewport,
+    activeElementSelector,
     totalDomElements: all.length,
-    totalSemanticElements: candidates.length,
+    totalSemanticElements: semanticElements.length,
     offset,
-    count: selected.length,
-    nextOffset: offset + selected.length < candidates.length
-      ? offset + selected.length
+    count: elements.length,
+    nextOffset: offset + elements.length < semanticElements.length
+      ? offset + elements.length
       : null,
-    hasMore: offset + selected.length < candidates.length,
-    truncated: offset > 0 || offset + selected.length < candidates.length,
+    hasMore: offset + elements.length < semanticElements.length,
+    truncated: offset > 0 || offset + elements.length < semanticElements.length,
     elements,
   };
 })()

@@ -41,7 +41,7 @@ test('whole-window agent capture is background-safe and addressable by window la
   assert.match(rust, /const contentRevision = `content-v1-/);
   assert.match(rust, /revisionHashA = Math\.imul/);
   assert.match(rust, /const offset = __MENGINE_OFFSET__/);
-  assert.match(rust, /candidates\.slice\(offset, offset \+ limit\)/);
+  assert.match(rust, /semanticElements\.slice\(offset, offset \+ limit\)/);
   assert.match(rust, /new Map\(candidates\.map/);
   assert.match(rust, /const snapshotRevision = `ui-v1-/);
   assert.match(rust, /revisionHash = BigInt\.asUintN\(64/);
@@ -150,6 +150,12 @@ test('whole-window agent capture is background-safe and addressable by window la
   assert.match(rust, /await waitForRender\(\)/);
   assert.match(rust, /postObservationConfirmed/);
   assert.match(rust, /postSnapshotRevision/);
+  assert.match(rust, /const semanticElements = candidates\.map\(semanticElementFor\)/);
+  assert.match(rust, /elements: semanticElements/);
+  assert.match(rust, /state: stateFor\(element\)/);
+  assert.match(rust, /agentInteraction: agentPolicyFor\(element\)/);
+  assert.match(rust, /scroll: scrollFor\(element, actions\)/);
+  assert.match(rust, /rect: rectFor\(element\)/);
   assert.match(mcp, /UI_SNAPSHOT_REVISION_SCHEMA/);
   assert.match(bridge, /candidate\.totalSemanticElements > 0/);
   assert.match(bridge, /semanticReady: true/);
