@@ -12,6 +12,7 @@
  * Phase 2 and will route through the same `EditorStore` methods the UI uses.
  */
 import { invoke } from '@tauri-apps/api/core';
+import { INTENT_DEFINITIONS } from '@mengine/agent';
 import type { EditorStore } from '../store';
 import {
   isDesktopEditor,
@@ -1036,6 +1037,7 @@ class AgentBridge {
       ? this.sceneChanges.observe(
         sceneName,
         snapshot.entities as unknown as SceneEntityView[],
+        { clearColor: snapshot.clearColor },
       )
       : null;
     if (shouldObserveScene && store.mode === 'play') {
@@ -1165,6 +1167,7 @@ class AgentBridge {
       ...this.sceneChanges.diff(
         fromRevision,
         snapshot.entities as unknown as SceneEntityView[],
+        { clearColor: snapshot.clearColor },
       ),
       sceneName: this.sceneMeta?.sceneName() ?? null,
       dirty: this.sceneMeta?.dirty() ?? false,
@@ -1203,6 +1206,12 @@ class AgentBridge {
 
   listCommands(): CommandSummary[] {
     return COMMAND_META.map(({ paramsSchema: _paramsSchema, ...summary }) => ({ ...summary }));
+  }
+
+  listIntents(): unknown {
+    return structuredClone({
+      intents: INTENT_DEFINITIONS,
+    });
   }
 
   describeCommand(id: string): CommandMeta & { executionOptionsSchema: unknown } {
@@ -3288,6 +3297,8 @@ class AgentBridge {
         return this.listCommands();
       case 'commands.describe':
         return this.describeCommand(requiredString(params, 'id'));
+      case 'intents.list':
+        return this.listIntents();
       case 'schema.components':
         return this.getComponentSchema();
       case 'schema.component':

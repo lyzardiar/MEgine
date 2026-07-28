@@ -59,6 +59,8 @@ test('scene changes coalesce into a compact revision diff with current entity pa
     fromRevision: 1,
     toRevision: 3,
     resetRequired: false,
+    sceneStateChanged: false,
+    sceneState: null,
     added: [3],
     removed: [2],
     changed: [1],
@@ -79,4 +81,31 @@ test('scene identity changes and expired revisions require a full reset snapshot
   assert.equal(diff.resetRequired, true);
   assert.equal(diff.toRevision, 3);
   assert.deepEqual(diff.entities, [{ entity: 1, name: 'Other Root Updated' }]);
+  assert.equal(diff.sceneStateChanged, true);
+  assert.deepEqual(diff.sceneState, {});
+});
+
+test('scene-level authored state advances revisions and is returned by incremental diffs', () => {
+  const tracker = new SceneChangeTracker();
+  const entities = [{ entity: 1, name: 'Root' }];
+  tracker.observe('Main', entities, { clearColor: [0, 0, 0, 1] });
+
+  const delta = tracker.observe('Main', entities, { clearColor: [0.1, 0.2, 0.3, 1] });
+  assert.equal(delta?.sceneStateChanged, true);
+  assert.equal(tracker.revision, 2);
+  assert.deepEqual(tracker.diff(
+    1,
+    entities,
+    { clearColor: [0.1, 0.2, 0.3, 1] },
+  ), {
+    fromRevision: 1,
+    toRevision: 2,
+    resetRequired: false,
+    sceneStateChanged: true,
+    sceneState: { clearColor: [0.1, 0.2, 0.3, 1] },
+    added: [],
+    removed: [],
+    changed: [],
+    entities: [],
+  });
 });

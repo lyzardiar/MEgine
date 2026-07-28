@@ -43,7 +43,7 @@ MEngine 编辑器当前对人类友好，但对 AI Agent 不够友好。AI Agent
 | 场景修改 RPC | `submit_editor_request`（`src-tauri/src/lib.rs:4608`），`EditorRequest{request_id, project_id, base_revision, operation}`（`mengine-editor-host/src/project.rs:231`） | 带乐观锁的权威修改入口，写操作的基石 |
 | 命令原语 | `WorldCommand`（`packages/api/src/generated/components.ts:730`）：spawn/despawn/setComponent/removeComponent/setParent/setClearColor | 类型化、可序列化的世界修改词汇 |
 | 命令应用 | `store.applyCommands(cmds)`（`store.ts:1303`） | 进程内批量应用命令 |
-| Agent 雏形 | `packages/agent/src/index.ts`：`Intent → validateIntent → expandIntent → WorldCommand[]` | 已有意图层，但仅 4 个 intent，且未接编辑器 |
+| Agent 意图层 | `packages/agent/src/index.ts`：`Intent → validateIntent → expandIntent → WorldCommand[]` | ✅ 3 个语义真实、严格校验且自描述的 intent；已接入 AgentBridge 与 MCP |
 | World facade | `@mengine/api` `World` 类（`index.ts:40`），注释明确「used by game scripts, editor, and AI agents」 | 官方认可的 Agent 接入面 |
 | 菜单注册表 | `MenuItemEntry`（`editorWindow/registry.ts:30`）：path/label/priority/shortcut/validate/action | 数据驱动、可自描述的命令目录 |
 | 组件目录 | `componentCatalog.ts`：type/label/description/create()/requires | 组件可发现性 |
@@ -353,7 +353,7 @@ Rust Host 使用独立的工程生命周期互斥门串行化 open/create/close 
 | command id | 参数 | 说明 |
 | --- | --- | --- |
 | `batch.apply` | `{ commands: WorldCommand[] }` | ✅ 1–256 条 WorldCommand 在写入前模拟实体存在性、组件存在性、删除顺序与父子循环；整批校验成功后通过 `store.applyCommands` 形成单个 undo 事务 |
-| `intent.apply` | `{ intent }` | 复用 `packages/agent` 的 `validateIntent + expandIntent`，把高层意图展开为命令批 |
+| `intent.apply` | `{ intent }` | ✅ 复用 `packages/agent` 的严格校验与展开；部分 Transform 先合并当前值，再经 `batch.apply` 同一校验路径形成单个 undo 事务 |
 
 ### 4.3 可发现性（Discoverability）—— 让 Agent「知道能做什么」
 
@@ -364,7 +364,7 @@ Rust Host 使用独立的工程生命周期互斥门串行化 open/create/close 
 | `commands.describe` | `{ id }` → 完整 schema | ✅ 返回命令参数 JSON Schema 与通用执行选项 schema；未知命令明确拒绝 |
 | `schema.components` | 所有组件 `{ type, label, description, fields[], methods[], requires[] }` | ✅ 合并 `componentCatalog`、`inspectorMetadata` 与 `behaviour.FieldMeta/MethodMeta`，并包含专用 Transform 契约 |
 | `schema.component` | `{ type }` → 字段级 schema（默认值/类型/范围/枚举/条件/资产引用/可编辑状态） | ✅ 与真实 Inspector authoring metadata 同源，不再仅从默认值猜粗粒度类型 |
-| `intents.list` | 支持的高层意图清单 | `packages/agent` |
+| `intents.list` | 支持的高层意图、说明与完整 JSON Schema | ✅ `packages/agent` 单一契约源；MCP 对应 `list_intents` |
 
 这是「自描述」的关键：Agent 先调 `commands.list` 和 `schema.components`，就能动态知道能做什么、每个组件能填什么字段，无需人工硬编码。MCP 的 `tools/list` 直接由 `commands.list` 生成。
 
@@ -374,7 +374,7 @@ Rust Host 使用独立的工程生命周期互斥门串行化 open/create/close 
 | --- | --- |
 | 命令结果 | ✅ 每个写命令返回 `{ ok, sceneRevision, eventSequence, data }`；MCP 写工具均可携带 `expectedSceneRevision`，不匹配时在任何改动前返回 `STALE_REVISION` |
 | 操作后自动截图 | 写命令可带 `options.screenshot: true`，结果里附 `screenshot` 字段，形成「改→看」视觉闭环 |
-| 状态 diff | ✅ `query: scene.diff({ fromRevision })` 返回实体增删改和当前 payload；切场景或历史过期时返回 `resetRequired` 与完整快照 |
+| 状态 diff | ✅ `query: scene.diff({ fromRevision })` 返回实体增删改、场景级状态（当前含 clear color）和当前 payload；切场景或历史过期时返回 `resetRequired` 与完整快照 |
 | 事件订阅 | ✅ 有界 journal + cursor 查询 `events.get`，并向原生 WebSocket 广播 `project.changed` / `scene.changed` / `selection.changed` / `mode.changed` / `log.*` / `panel.changed` / `build.progress` / `build.settings` / `asset.changed` |
 | 结构化错误 | 错误码：`STALE_REVISION` / `ENTITY_NOT_FOUND` / `COMPONENT_NOT_FOUND` / `INVALID_ARGS` / `READONLY` / `PERMISSION_DENIED` / `NOT_READY` |
 
@@ -421,7 +421,7 @@ invoke_menu, import_asset_file, write_asset_text, preview_asset_rename, rename_a
 preview_asset_duplicate, duplicate_asset, preview_asset_trash, trash_asset,
 list_asset_trash, restore_asset, set_build_scenes, start_pc_build, cancel_pc_build,
 verify_pc_build,
-apply_batch, apply_intent
+list_intents, apply_batch, apply_intent
 ```
 
 每个 tool 的 `inputSchema` 直接来自命令注册表的 `paramsSchema`（JSON Schema），保证 MCP 客户端能正确校验参数。

@@ -694,6 +694,54 @@ const WORLD_COMMAND_SCHEMA = {
   ],
 };
 
+const INTENT_SCHEMA = {
+  oneOf: [
+    {
+      type: 'object',
+      properties: {
+        kind: { const: 'SpawnMesh' },
+        mesh: { type: 'string', minLength: 1, maxLength: 1024 },
+        material: { type: 'string', minLength: 1, maxLength: 1024 },
+        at: finiteNumberTuple(3),
+        name: { type: 'string', minLength: 1, maxLength: 1024 },
+      },
+      required: ['kind', 'mesh', 'at'],
+      additionalProperties: false,
+    },
+    {
+      type: 'object',
+      properties: {
+        kind: { const: 'SetTransform' },
+        entity: ENTITY_ID_SCHEMA,
+        position: finiteNumberTuple(3),
+        rotation: finiteNumberTuple(4),
+        scale: finiteNumberTuple(3),
+      },
+      required: ['kind', 'entity'],
+      additionalProperties: false,
+      anyOf: [
+        { required: ['position'] },
+        { required: ['rotation'] },
+        { required: ['scale'] },
+      ],
+    },
+    {
+      type: 'object',
+      properties: {
+        kind: { const: 'SetClearColor' },
+        color: {
+          type: 'array',
+          minItems: 4,
+          maxItems: 4,
+          items: { type: 'number', minimum: 0, maximum: 1 },
+        },
+      },
+      required: ['kind', 'color'],
+      additionalProperties: false,
+    },
+  ],
+};
+
 const TOOLS = [
   {
     name: 'get_project_state',
@@ -1377,6 +1425,13 @@ const TOOLS = [
     handler: async () => textContent(await bridgeQuery('commands.list')),
   },
   {
+    name: 'list_intents',
+    description:
+      'List supported high-level editor intents with their complete JSON Schemas before applying one.',
+    inputSchema: { type: 'object', properties: {} },
+    handler: async () => textContent(await bridgeQuery('intents.list')),
+  },
+  {
     name: 'describe_command',
     description:
       'Get the complete JSON Schema for one AgentBridge command argument object plus shared execution options such as screenshot and expectedSceneRevision.',
@@ -1432,6 +1487,15 @@ const TOOLS = [
       },
     },
     ['commands'],
+  ),
+  execTool(
+    'apply_intent',
+    'Validate, expand, and atomically apply one supported high-level intent without activating the editor window.',
+    'intent.apply',
+    {
+      intent: INTENT_SCHEMA,
+    },
+    ['intent'],
   ),
   execTool(
     'new_scene',

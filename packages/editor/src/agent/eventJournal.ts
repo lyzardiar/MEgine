@@ -103,11 +103,14 @@ export type SceneEntityView = {
   [key: string]: unknown;
 };
 
+export type SceneStateView = Record<string, unknown>;
+
 export type SceneDelta = {
   previousRevision: number;
   revision: number;
   sceneName: string | null;
   resetRequired: boolean;
+  sceneStateChanged: boolean;
   added: number[];
   removed: number[];
   changed: number[];
@@ -117,6 +120,8 @@ export type SceneDiff = {
   fromRevision: number;
   toRevision: number;
   resetRequired: boolean;
+  sceneStateChanged: boolean;
+  sceneState: SceneStateView | null;
   added: number[];
   removed: number[];
   changed: number[];
@@ -131,6 +136,7 @@ type SceneEntityRecord = {
 export class SceneChangeTracker {
   private revisionValue = 0;
   private sceneName: string | null = null;
+  private sceneStateSignature = '';
   private entities = new Map<number, SceneEntityRecord>();
   private readonly deltas: SceneDelta[] = [];
   private readonly capacity: number;
@@ -149,21 +155,29 @@ export class SceneChangeTracker {
   reset(): void {
     this.revisionValue = 0;
     this.sceneName = null;
+    this.sceneStateSignature = '';
     this.entities.clear();
     this.deltas.splice(0);
   }
 
-  observe(sceneName: string | null, entities: readonly SceneEntityView[]): SceneDelta | null {
+  observe(
+    sceneName: string | null,
+    entities: readonly SceneEntityView[],
+    sceneState: SceneStateView = {},
+  ): SceneDelta | null {
     const current = entityRecords(entities);
+    const currentSceneStateSignature = JSON.stringify(clone(sceneState));
     if (this.revisionValue === 0) {
       this.revisionValue = 1;
       this.sceneName = sceneName;
+      this.sceneStateSignature = currentSceneStateSignature;
       this.entities = current;
       return this.pushDelta({
         previousRevision: 0,
         revision: 1,
         sceneName,
         resetRequired: true,
+        sceneStateChanged: true,
         added: [],
         removed: [],
         changed: [],
@@ -171,6 +185,10 @@ export class SceneChangeTracker {
     }
 
     const sceneChanged = sceneName !== this.sceneName;
+    const sceneStateChanged = (
+      sceneChanged
+      || currentSceneStateSignature !== this.sceneStateSignature
+    );
     const added: number[] = [];
     const removed: number[] = [];
     const changed: number[] = [];
@@ -184,24 +202,36 @@ export class SceneChangeTracker {
         if (!current.has(id)) removed.push(id);
       }
     }
-    if (!sceneChanged && !added.length && !removed.length && !changed.length) return null;
+    if (
+      !sceneChanged
+      && !sceneStateChanged
+      && !added.length
+      && !removed.length
+      && !changed.length
+    ) return null;
 
     const previousRevision = this.revisionValue;
     this.revisionValue += 1;
     this.sceneName = sceneName;
+    this.sceneStateSignature = currentSceneStateSignature;
     this.entities = current;
     return this.pushDelta({
       previousRevision,
       revision: this.revisionValue,
       sceneName,
       resetRequired: sceneChanged,
+      sceneStateChanged,
       added: added.sort(numberOrder),
       removed: removed.sort(numberOrder),
       changed: changed.sort(numberOrder),
     });
   }
 
-  diff(fromRevision: number, currentEntities: readonly SceneEntityView[]): SceneDiff {
+  diff(
+    fromRevision: number,
+    currentEntities: readonly SceneEntityView[],
+    currentSceneState: SceneStateView = {},
+  ): SceneDiff {
     if (
       !Number.isSafeInteger(fromRevision)
       || fromRevision < 0
@@ -221,6 +251,8 @@ export class SceneChangeTracker {
       return {
         ...emptySceneDiff(fromRevision, this.revisionValue),
         resetRequired: true,
+        sceneStateChanged: true,
+        sceneState: clone(currentSceneState),
         entities: clone([...currentEntities]),
       };
     }
@@ -241,11 +273,14 @@ export class SceneChangeTracker {
     const added = idsWithState(states, 'added');
     const removed = idsWithState(states, 'removed');
     const changed = idsWithState(states, 'changed');
+    const sceneStateChanged = deltas.some((delta) => delta.sceneStateChanged);
     const included = new Set([...added, ...changed]);
     return {
       fromRevision,
       toRevision: this.revisionValue,
       resetRequired: false,
+      sceneStateChanged,
+      sceneState: sceneStateChanged ? clone(currentSceneState) : null,
       added,
       removed,
       changed,
@@ -281,6 +316,8 @@ function emptySceneDiff(fromRevision: number, toRevision: number): SceneDiff {
     fromRevision,
     toRevision,
     resetRequired: false,
+    sceneStateChanged: false,
+    sceneState: null,
     added: [],
     removed: [],
     changed: [],

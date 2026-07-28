@@ -167,6 +167,8 @@ test('whole-window agent capture is background-safe and addressable by window la
   assert.match(mcp, /'dock_panel'/);
   assert.match(mcp, /'invoke_component_method'/);
   assert.match(mcp, /'apply_batch'/);
+  assert.match(mcp, /name: 'list_intents'/);
+  assert.match(mcp, /'apply_intent'/);
   assert.match(mcp, /'load_scene_json'/);
   assert.match(mcp, /'reorder_entity'/);
   assert.match(mcp, /'translate_entity'/);

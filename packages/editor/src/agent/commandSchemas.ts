@@ -1,3 +1,4 @@
+import { INTENT_SCHEMA } from '@mengine/agent';
 import { TYPED_ENTITY_KINDS } from './typedEntityKinds.ts';
 
 export type AgentJsonSchema = Record<string, unknown>;
@@ -133,6 +134,12 @@ export const COMMAND_PARAMS_SCHEMAS: Record<string, AgentJsonSchema> = {
       description: 'WorldCommands validated and applied as one undo transaction',
     },
   }, ['commands']),
+  'intent.apply': objectSchema({
+    intent: {
+      ...INTENT_SCHEMA,
+      description: 'One supported high-level intent from intents.list',
+    },
+  }, ['intent']),
   'dialog.respond': objectSchema({
     windowLabel: stringValue('Window label from list_windows; default main'),
     dialogId: stringValue('Exact active dialog id from get_active_dialog'),

@@ -642,6 +642,68 @@ test('world command batches validate completely before one atomic store call', (
   assert.equal(entities[0].components.MeshRenderer, undefined);
 });
 
+test('high-level intents reuse atomic world-command validation and preserve transforms', () => {
+  const { ctx, calls, entities } = createContext();
+
+  assertBridgeError(
+    () => run(ctx, 'intent.apply', {
+      intent: {
+        kind: 'SpawnEnemy',
+        archetype: 'placeholder',
+        at: [0, 0, 0],
+      },
+    }),
+    'INVALID_ARGS',
+  );
+  assert.deepEqual(calls, []);
+
+  const transformResult = run(ctx, 'intent.apply', {
+    intent: {
+      kind: 'SetTransform',
+      entity: 1,
+      position: [5, 6, 7],
+    },
+  });
+  assert.equal(calls.length, 1);
+  assert.equal(calls[0][0], 'applyCommands');
+  assert.deepEqual(calls[0][1], [{
+    op: 'setComponent',
+    entity: 1,
+    component: 'Transform',
+    value: {
+      position: [5, 6, 7],
+      rotation: [0, 0, 0, 1],
+      scale: [1, 1, 1],
+    },
+  }]);
+  assert.deepEqual(transformResult.data, {
+    intentKind: 'SetTransform',
+    commandCount: 1,
+    entityCount: 2,
+    created: [],
+    removed: [],
+  });
+  assert.deepEqual(entities[0].components.Transform.position, [5, 6, 7]);
+
+  const spawnResult = run(ctx, 'intent.apply', {
+    intent: {
+      kind: 'SpawnMesh',
+      mesh: 'sphere',
+      at: [1, 2, 3],
+      name: 'Orb',
+    },
+  });
+  assert.equal(calls.length, 2);
+  assert.deepEqual(spawnResult.data, {
+    intentKind: 'SpawnMesh',
+    commandCount: 1,
+    entityCount: 3,
+    created: [3],
+    removed: [],
+  });
+  assert.equal(entities[2].name, 'Orb');
+});
+
 test('transform updates require finite tuples with exact dimensions', () => {
   const { ctx, calls } = createContext();
 

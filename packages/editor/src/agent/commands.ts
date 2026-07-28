@@ -10,6 +10,11 @@
  * work in any mode.
  */
 import type { WorldCommand } from '@mengine/api';
+import {
+  expandIntent,
+  validateIntent,
+  type Intent,
+} from '@mengine/agent';
 import { getBehaviour } from '@mengine/behaviour';
 import {
   componentRemovalBlockers,
@@ -455,6 +460,29 @@ function worldCommandBatch(
   return commands;
 }
 
+function applyWorldCommands(
+  ctx: CommandContext,
+  commands: WorldCommand[],
+): {
+  commandCount: number;
+  entityCount: number;
+  created: number[];
+  removed: number[];
+} {
+  const beforeIds = new Set(ctx.store.snapshot().entities.map((entity) => entity.entity));
+  if (!ctx.store.applyCommands(commands)) {
+    throw new BridgeError('INTERNAL', 'The editor did not apply the validated command batch');
+  }
+  const after = ctx.store.snapshot().entities;
+  const afterIds = new Set(after.map((entity) => entity.entity));
+  return {
+    commandCount: commands.length,
+    entityCount: after.length,
+    created: [...afterIds].filter((entity) => !beforeIds.has(entity)),
+    removed: [...beforeIds].filter((entity) => !afterIds.has(entity)),
+  };
+}
+
 /** Capture the selected object created by a spawn call, including composite spawns. */
 function captureSpawned(ctx: CommandContext, spawn: () => void): number | null {
   const before = new Set(ctx.store.snapshot().entities.map((e) => e.entity));
@@ -511,20 +539,48 @@ const KIND_SPAWNERS: Record<TypedEntityKind, (store: EditorStore) => void> = {
 export const WRITE_COMMANDS: Record<string, CommandHandler> = {
   'batch.apply': (ctx, args) => {
     requireEditMode(ctx);
-    const beforeIds = new Set(ctx.store.snapshot().entities.map((entity) => entity.entity));
     const commands = worldCommandBatch(ctx, args);
-    if (!ctx.store.applyCommands(commands)) {
-      throw new BridgeError('INTERNAL', 'The editor did not apply the validated command batch');
+    return {
+      ok: true,
+      data: applyWorldCommands(ctx, commands),
+    };
+  },
+  'intent.apply': (ctx, args) => {
+    requireEditMode(ctx);
+    const validation = validateIntent(args.intent);
+    if (!validation.ok) {
+      throw new BridgeError(
+        'INVALID_ARGS',
+        `Invalid intent: ${validation.errors.join('; ')}`,
+      );
     }
-    const after = ctx.store.snapshot().entities;
-    const afterIds = new Set(after.map((entity) => entity.entity));
+    const intent = args.intent as Intent;
+    if (intent.kind === 'SetTransform') {
+      requireEntity(ctx, intent.entity);
+      if (!ctx.store.getTransform(intent.entity)) {
+        throw new BridgeError(
+          'COMPONENT_NOT_FOUND',
+          `Entity ${intent.entity} has no Transform component`,
+        );
+      }
+    }
+    let expanded: WorldCommand[];
+    try {
+      expanded = expandIntent(intent, {
+        getTransform: (entity) => ctx.store.getTransform(entity),
+      });
+    } catch (error) {
+      throw new BridgeError(
+        'INVALID_ARGS',
+        error instanceof Error ? error.message : 'Invalid intent',
+      );
+    }
+    const commands = worldCommandBatch(ctx, { commands: expanded });
     return {
       ok: true,
       data: {
-        commandCount: commands.length,
-        entityCount: after.length,
-        created: [...afterIds].filter((entity) => !beforeIds.has(entity)),
-        removed: [...beforeIds].filter((entity) => !afterIds.has(entity)),
+        intentKind: intent.kind,
+        ...applyWorldCommands(ctx, commands),
       },
     };
   },
@@ -1050,6 +1106,7 @@ export interface CommandMeta extends CommandSummary {
 
 const COMMAND_SUMMARIES: CommandSummary[] = [
   { id: 'batch.apply', category: 'batch', description: 'Validate and apply up to 256 WorldCommands as one undo transaction', readOnly: false },
+  { id: 'intent.apply', category: 'intent', description: 'Validate, expand, and atomically apply one supported high-level intent', readOnly: false },
   { id: 'dialog.respond', category: 'dialog', description: 'Accept or cancel the exact active non-blocking editor dialog', readOnly: false },
   { id: 'console.clear', category: 'console', description: 'Clear structured logs and the visible Console panel as one background-safe write', readOnly: false },
   { id: 'profiler.clear', category: 'profiler', description: 'Clear Scene and Game editor-profiler samples across all editor windows', readOnly: false },

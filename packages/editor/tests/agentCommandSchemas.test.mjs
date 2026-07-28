@@ -126,6 +126,14 @@ test('command schemas expose exact high-risk guards and shared optimistic option
     256,
   );
   assert.deepEqual(
+    COMMAND_PARAMS_SCHEMAS['intent.apply'].required,
+    ['intent'],
+  );
+  assert.equal(
+    COMMAND_PARAMS_SCHEMAS['intent.apply'].properties.intent.oneOf.length,
+    3,
+  );
+  assert.deepEqual(
     COMMAND_PARAMS_SCHEMAS['entity.create_typed'].properties.kind.enum,
     TYPED_ENTITY_KINDS,
   );

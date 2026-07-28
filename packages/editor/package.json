@@ -13,6 +13,7 @@
   },
   "dependencies": {
     "@esotericsoftware/spine-canvas": "4.3.10",
+    "@mengine/agent": "workspace:*",
     "@mengine/api": "workspace:*",
     "@mengine/behaviour": "workspace:*",
     "@tauri-apps/api": "^2.0.0",

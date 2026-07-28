@@ -102,6 +102,9 @@ test('MCP validates tool arguments before dispatch with bounded structured issue
   validateToolArguments(tool('apply_batch'), {
     commands: [{ op: 'spawn', name: 'Cube', components: {} }],
   });
+  validateToolArguments(tool('apply_intent'), {
+    intent: { kind: 'SetTransform', entity: 1, position: [1, 2, 3] },
+  });
   validateToolArguments(tool('set_transform'), {
     entity: 1,
     position: [1, 2, 3],
@@ -149,6 +152,12 @@ test('MCP validates tool arguments before dispatch with bounded structured issue
   assert.throws(
     () => validateToolArguments(tool('apply_batch'), {
       commands: [{ op: 'unknown', components: {} }],
+    }),
+    /Invalid arguments/,
+  );
+  assert.throws(
+    () => validateToolArguments(tool('apply_intent'), {
+      intent: { kind: 'SpawnEnemy', archetype: 'placeholder', at: [0, 0, 0] },
     }),
     /Invalid arguments/,
   );
