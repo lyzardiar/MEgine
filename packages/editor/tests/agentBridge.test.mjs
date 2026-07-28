@@ -152,6 +152,10 @@ test('whole-window agent capture is background-safe and addressable by window la
   assert.match(rust, /await waitForRender\(\)/);
   assert.match(rust, /postObservationConfirmed/);
   assert.match(rust, /postSnapshotRevision/);
+  assert.match(bridge, /result\.screenshotRequested = true/);
+  assert.match(bridge, /result\.screenshotCaptured = true/);
+  assert.match(bridge, /result\.screenshotCaptured = false/);
+  assert.match(bridge, /result\.screenshotError =/);
   assert.match(rust, /const semanticElements = candidates\.map\(semanticElementFor\)/);
   assert.match(rust, /elements: semanticElements/);
   assert.match(rust, /state: stateFor\(element\)/);

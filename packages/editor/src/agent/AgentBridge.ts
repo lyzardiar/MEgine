@@ -3780,13 +3780,20 @@ class AgentBridge {
     }
     result.eventSequence = this.events.currentSequence;
     if (!options.screenshot) return result;
+    result.screenshotRequested = true;
     await nextFrame();
     try {
       result.screenshot = wholeWindow
         ? await this.captureWindow(typeof wholeWindow === 'string' ? wholeWindow : 'main')
         : this.captureViewport('scene');
-    } catch {
-      // Screenshot is best-effort; never fail a completed command.
+      result.screenshotCaptured = true;
+    } catch (error) {
+      // The write is already complete, so preserve its outcome while making
+      // the missing visual postcondition explicit and actionable.
+      result.screenshotCaptured = false;
+      result.screenshotError = (
+        error instanceof Error ? error.message : String(error)
+      ).slice(0, 1_000);
     }
     return result;
   }

@@ -43,6 +43,12 @@ export interface CommandResult {
   eventSequence?: number;
   /** Optional post-action viewport screenshot for visual verification. */
   screenshot?: ScreenshotResult;
+  /** True when the caller explicitly requested post-action visual verification. */
+  screenshotRequested?: boolean;
+  /** Whether the requested post-action screenshot was captured. */
+  screenshotCaptured?: boolean;
+  /** Bounded diagnostic when the write completed but screenshot capture failed. */
+  screenshotError?: string;
 }
 
 type CommandHandler = (ctx: CommandContext, args: Record<string, unknown>) => CommandResult;
