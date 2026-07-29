@@ -59,6 +59,9 @@ test('core editor navigation exposes named semantic controls', () => {
   assert.match(schemaFields, /aria-label=\{`\$\{label\} value`\}/);
   assert.match(fieldEditors, /aria-label=\{`\$\{props\.label\} color`\}/);
   assert.match(fieldEditors, /aria-label=\{`\$\{props\.label\} component`\}/);
+  assert.match(fieldEditors, /aria-label=\{`\$\{props\.label\} sprite drop target`\}/);
+  assert.match(fieldEditors, /aria-label=\{`\$\{props\.label\} asset drop target`\}/);
+  assert.match(fieldEditors, /aria-label=\{`\$\{props\.label\} entity drop target`\}/);
   assert.match(fieldEditors, /aria-label="Image Type"/);
 
   assert.match(dock, /role="tablist" aria-label="Dock panels"/);

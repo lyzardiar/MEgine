@@ -238,6 +238,7 @@ export function SpriteSlot(props: {
     <div className="field-row">
       <label>{props.label}</label>
       <div
+        aria-label={`${props.label} sprite drop target`}
         className={[
           'object-slot',
           'sprite-slot',
@@ -445,6 +446,7 @@ export function ProjectAssetSlot(props: {
     <div className="field-row">
       <label>{props.label}</label>
       <div
+        aria-label={`${props.label} asset drop target`}
         className={`object-slot project-asset-slot${hasValue ? ' filled' : ''}${dragOver ? ' drag-over' : ''}`}
         onDragEnter={(event) => {
           if (!Array.from(event.dataTransfer.types).includes('text/mengine-asset')) return;
@@ -751,6 +753,7 @@ export function EntityReferenceField(props: {
     <div className="field-row">
       <label>{props.label}</label>
       <div
+        aria-label={`${props.label} entity drop target`}
         className={`object-slot entity-slot${props.value != null || props.missingValue ? ' filled' : ''}${dragOver ? ' drag-over' : ''}`}
         onDragEnter={(event) => {
           if (!Array.from(event.dataTransfer.types).includes('text/mengine-entity')) return;
@@ -952,6 +955,7 @@ export function UnityEventField(props: {
       <div className="unity-event-list">
         <div className="unity-event-call">
           <div
+            aria-label={`${props.label} entity drop target`}
             className={[
               'object-slot',
               'entity-slot',
