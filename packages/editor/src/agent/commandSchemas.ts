@@ -918,6 +918,10 @@ export const COMMAND_PARAMS_SCHEMAS: Record<string, AgentJsonSchema> = {
     selector: stringValue('Exact selector returned by window.ui_snapshot'),
     value: stringValue('New form control value'),
   }, [...uiInteractionRequired, 'value']),
+  'window.ui_scroll_into_view': objectSchema({
+    ...uiInteractionContext,
+    selector: stringValue('Exact offscreen selector returned by window.ui_snapshot'),
+  }, uiInteractionRequired),
   'window.ui_scroll': objectSchema({
     ...uiInteractionContext,
     ...uiModifierContext,

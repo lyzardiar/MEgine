@@ -43,6 +43,7 @@ test('whole-window agent capture is background-safe and addressable by window la
   assert.match(rust, /Page\.captureScreenshot/);
   assert.match(rust, /validated_capture_region/);
   assert.match(rust, /clipped_element_capture_region/);
+  assert.match(rust, /visible_rect: WindowCaptureRegion/);
   assert.match(rust, /page_x \+ clip\.x/);
   assert.match(rust, /Runtime\.evaluate/);
   assert.match(rust, /WINDOW_UI_SNAPSHOT_SCRIPT/);
@@ -52,6 +53,9 @@ test('whole-window agent capture is background-safe and addressable by window la
   assert.match(rust, /guardedRevision\.elements\?\.get\(selector\)/);
   assert.match(rust, /const element = guardedElement\.element/);
   assert.match(rust, /semantic content changed during element capture/);
+  assert.match(rust, /visibleRect: \{/);
+  assert.match(rust, /visibleLeft = Math\.max\(visibleLeft, clipLeft\)/);
+  assert.match(rust, /visibleBottom = Math\.min\(visibleBottom, clipBottom\)/);
   assert.match(protocol, /snapshotRevision\?: string/);
   assert.match(protocol, /elementRect\?: EditorUiRect/);
   assert.match(protocol, /clipped\?: boolean/);
@@ -86,14 +90,14 @@ test('whole-window agent capture is background-safe and addressable by window la
   assert.match(rust, /const offset = __MENGINE_OFFSET__/);
   assert.match(rust, /semanticElements\.slice\(offset, offset \+ limit\)/);
   assert.match(rust, /new Map\(candidates\.map/);
-  assert.match(rust, /const snapshotRevision = `ui-v29-/);
+  assert.match(rust, /const snapshotRevision = `ui-v30-/);
   assert.match(rust, /revisionHash = BigInt\.asUintN\(64/);
   assert.match(rust, /const semanticScopeFor = \(element\) =>/);
   assert.match(rust, /role === 'tabpanel'/);
   assert.match(rust, /const qualifiedNameFor = \(scope, name\) =>/);
   assert.match(rust, /scope: scope \|\| null/);
   assert.match(rust, /qualifiedName: qualifiedNameFor\(scope, name\) \|\| null/);
-  assert.equal([...rust.matchAll(/version: 29,/g)].length, 2);
+  assert.equal([...rust.matchAll(/version: 30,/g)].length, 2);
   assert.match(rust, /const invalidateRevisionGuard = \(\) =>/);
   assert.match(rust, /'input',\s*'change',\s*'selectionchange',\s*'focusin',\s*'focusout',\s*'scroll'/);
   assert.match(rust, /root\.addEventListener\(eventName, invalidateRevisionGuard, true\)/);
@@ -287,6 +291,14 @@ test('whole-window agent capture is background-safe and addressable by window la
   );
   assert.match(interactionScript, /requestedKey === 'Enter' \|\| requestedKey === 'Escape'/);
   assert.match(interactionScript, /const wheelEvent = new WheelEvent\('wheel'/);
+  assert.match(rust, /const needsScrollIntoView = \(element\) =>/);
+  assert.match(rust, /actions\.push\('scrollIntoView'\)/);
+  assert.match(interactionScript, /element\.scrollIntoView\(\{/);
+  assert.match(interactionScript, /block: 'nearest'/);
+  assert.match(interactionScript, /inline: 'nearest'/);
+  assert.match(interactionScript, /scrollIntoViewChanged:/);
+  assert.match(interactionScript, /revealedRect:/);
+  assert.match(interactionScript, /effectivelyDisabled\(element\) && action !== 'scrollIntoView'/);
   assert.match(interactionScript, /const applyNativeScroll = element\.dispatchEvent\(wheelEvent\)/);
   assert.match(interactionScript, /if \(applyNativeScroll\) \{/);
   assert.match(
@@ -412,7 +424,10 @@ test('whole-window agent capture is background-safe and addressable by window la
   );
   assert.match(rust, /if \(effectivelyDisabled\(element\)\) return actions/);
   assert.match(rust, /disabled: effectivelyDisabled\(element\)/);
-  assert.match(interactionScript, /if \(effectivelyDisabled\(element\)\)/);
+  assert.match(
+    interactionScript,
+    /if \(effectivelyDisabled\(element\) && action !== 'scrollIntoView'\)/,
+  );
   assert.match(
     interactionScript,
     /if \(targetElement && effectivelyDisabled\(targetElement\)\)/,

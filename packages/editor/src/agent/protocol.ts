@@ -38,7 +38,7 @@ export interface ScreenshotResult {
   snapshotRevision?: string;
   /** Complete element bounds before clipping to the visible viewport. */
   elementRect?: EditorUiRect;
-  /** True when only the visible intersection of the element was captured. */
+  /** True when only the viewport/overflow-visible intersection was captured. */
   clipped?: boolean;
 }
 
@@ -85,6 +85,7 @@ export type EditorUiAction =
   | 'doubleClick'
   | 'contextClick'
   | 'setValue'
+  | 'scrollIntoView'
   | 'scroll'
   | 'keyPress'
   | 'dragTo'
@@ -243,6 +244,8 @@ export interface EditorUiActionResult {
   path?: EditorUiDragPathPoint[] | null;
   hoverState?: 'enter' | 'leave' | null;
   hoverStateChanged?: boolean | null;
+  scrollIntoViewChanged?: boolean | null;
+  revealedRect?: EditorUiRect | null;
   valueCommitMethod?: 'change' | 'blur' | null;
   valueCommitConfirmed?: boolean | null;
   valueHandledByReact?: boolean | null;

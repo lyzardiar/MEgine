@@ -182,6 +182,10 @@ test('command schemas expose exact high-risk guards and shared optimistic option
     ['selector', 'expectedSnapshotRevision'],
   );
   assert.deepEqual(
+    COMMAND_PARAMS_SCHEMAS['window.ui_scroll_into_view'].required,
+    ['selector', 'expectedSnapshotRevision'],
+  );
+  assert.deepEqual(
     COMMAND_PARAMS_SCHEMAS['build.run'].required,
     ['executable', 'allowForegroundLaunch'],
   );

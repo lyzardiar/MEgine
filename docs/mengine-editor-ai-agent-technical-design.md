@@ -182,7 +182,7 @@ MEngine 编辑器当前对人类友好，但对 AI Agent 不够友好。AI Agent
 | `view.window_screenshot` | `{ windowLabel?: string, maxSize?: 256..4096 }` | `{ dataUrl, width, height, sourceWidth, sourceHeight, scale, capturedAt, mime, windowLabel, captureMethod, backgroundSafe }` | Windows 桌面版通过 WebView2 DevTools `Page.captureScreenshot` 在目标 webview 内离屏缩放渲染；不会激活窗口，也不读取前台屏幕像素；默认最长边 2048 |
 | `view.screenshot_to_file` | `{ path, target? }` | `{ path, width, height }` | 同上，写入磁盘供 Agent 读取 |
 | `view.capture_region` | `{ windowLabel?, x, y, width, height, maxSize? }` | `{ dataUrl, width, height, region, backgroundSafe }` | ✅ 使用 WebView2 DevTools clip 直接截取后台 WebView CSS 像素区域；坐标可直接复用 `window.ui_snapshot` 的元素 rect，越界明确拒绝 |
-| `view.capture_element` | `{ windowLabel?, selector, expectedSnapshotRevision, maxSize? }` | `{ dataUrl, width, height, region, elementRect, clipped, selector, snapshotRevision, backgroundSafe }` | ✅ 通过同一语义快照暴露的 selector 原子定位元素，重新核对 revision、DOM 身份与渲染状态，自动裁剪到当前可见 viewport，并在截图后再次拒绝变更过的快照；Agent 无需复制裸坐标，也不会把旧矩形误当成当前控件 |
+| `view.capture_element` | `{ windowLabel?, selector, expectedSnapshotRevision, maxSize? }` | `{ dataUrl, width, height, region, elementRect, clipped, selector, snapshotRevision, backgroundSafe }` | ✅ 通过同一语义快照暴露的 selector 原子定位元素，重新核对 revision、DOM 身份与渲染状态，自动裁剪到当前 viewport 与组合树中每层 overflow 裁剪区域的真实可见交集，并在截图后再次拒绝变更过的快照；Agent 无需复制裸坐标，也不会把旧矩形或相邻面板像素误当成当前控件 |
 
 说明：当前 Scene/Game 视口是 Canvas2D，`toDataURL` 可稳定截取，无 WebGL `preserveDrawingBuffer` 顾虑。编辑器整窗/浮动窗口不能使用 GDI 屏幕 `BitBlt`：该方式必须把编辑器置前，且窗口被遮挡时会截到其它应用。当前实现改为 WebView2 DevTools 渲染面截图，并已在主窗 `visible=false` 的真实 Tauri 实例上验证：工程欢迎页仍能完整成像，请求前后 Windows 前台窗口句柄不变。**前向兼容**：本地编辑器方案规划了「Rust 进程内原生 wgpu Surface」的真实 Scene View，届时视口不再是 DOM canvas，需改用 wgpu 纹理回读；窗口 UI 截图仍由 WebView2 路径负责。
 
@@ -332,6 +332,7 @@ Rust Host 使用独立的工程生命周期互斥门串行化 open/create/close 
 | `menu.invoke` | `{ path }` | ✅ 查 `MenuItemEntry`、执行实时 validator，再复用 `entry.action(ctx)` |
 | `window.ui_click` | `{ windowLabel?, selector, offsetX?, offsetY?, shiftKey?, ctrlKey?, altKey?, metaKey? }` | ✅ 对 `window.ui_snapshot` 返回的 selector 合成受限 Pointer/Mouse/Click 事件；可使用元素左上角相对 CSS 像素定位画布内目标，省略坐标时兼容使用可见元素中心，并可携带显式修饰键完成范围/追加选择，不激活顶层窗口 |
 | `window.ui_set_value` | `{ windowLabel?, selector, value }` | ✅ 仅允许 input/textarea/select/contenteditable；文本型控件按 `focus → input/change → render → blur → render` 原子提交，保证 `onBlur` 草稿与 Inspector 撤销手势在操作后观察前闭合；checkbox/radio 通过 change 直接提交。拒绝 disabled/readonly，禁止调用方注入脚本 |
+| `window.ui_scroll_into_view` | `{ windowLabel?, selector, expectedSnapshotRevision }` | ✅ 对快照标记为 `scrollIntoView` 的视口外元素调用浏览器原生 nearest 对齐，依次显现嵌套滚动容器中的内容；仅允许隐藏且未聚焦窗口，操作后旧 revision 立即失效，截图或继续交互前必须读取新快照 |
 | `window.ui_double_click` / `context_click` / `scroll` | 快照 selector 与对应参数 | ✅ 双击和上下文菜单支持可选 `offsetX/offsetY` 精确点位；滚轮可指定元素内落点、横纵增量和修饰键，先派发真实语义 `WheelEvent` 供 Scene/Timeline 等画布缩放消费，未消费时再执行原生容器滚动；均遵守元素级 Agent 禁止策略，脚本 IDE 启动、系统文件选择器、工程关闭与进程退出等人工路径不能借键盘或上下文菜单旁路 |
 | `window.ui_drag_to` | `{ windowLabel?, selector, targetSelector, offsetX?, offsetY?, targetOffsetX?, targetOffsetY?, shiftKey?, ctrlKey?, altKey?, metaKey? }` | ✅ 仅接受语义快照中的源/目标 selector，可分别指定源与目标元素内的 CSS 像素点，在同一隐藏 WebView 内合成可带修饰键的 HTML5 拖放事件；不移动前台鼠标 |
 | `window.ui_drag_by` | `{ windowLabel?, selector, offsetX?, offsetY?, button?, deltaX?/deltaY? 或 path?, shiftKey?, ctrlKey?, altKey?, metaKey? }` | ✅ 从快照标记为 `dragBy` 的元素内精确点位（默认中心）开始，可选择 `left/middle/right` 按钮；简单手势使用单终点增量，曲线/绕行手势可传最多 64 个相对起点的累计位移点。所有路径点必须留在同一隐藏 WebView 视口内，事件数量有界，不接受屏幕坐标且不移动系统鼠标 |
@@ -369,6 +370,7 @@ Space 或方向/首尾/翻页键触发 checkbox、radio、单选 select、number
 语义快照 v28 的 revision guard 除 Document DOM Mutation 外，会发现并分别观察每个开放 ShadowRoot；运行期 `attachShadow()` 也会立即注册观察并撤销旧 revision。它还监听 Document/ShadowRoot 的 input/change、焦点、光标选区、滚动、toggle/reset，以及窗口与 VisualViewport 的 resize/scroll、hash/popstate 和 History API URL 变化。这些不会可靠产生 Document DOM Mutation、但会改变快照值、选区、活动元素、滚动状态、bounds 或 URL 的更新，现在都会立即撤销旧 revision；精确内容分页、元素截图和后台写动作不能再用旧快照跨越这类状态变化。
 
 语义快照 v29 不再只递归枚举 ShadowRoot 中的元素，而是统一按开放 ShadowRoot 与 `<slot>` 的实际组合子节点顺序遍历元素和文本。Shadow host 直接承载的可访问名称、裸文本与 `window.ui_content(field=text)` 现在能读取开放 Shadow DOM 和已分发 Light DOM 的完整可见内容；未被任何 slot 分发的 Light DOM、样式和脚本文本不会进入语义结果。合成 Tab 顺序也使用相同的组合树顺序。
+语义快照 v30 为完全或部分位于 WebView 视口、嵌套 overflow 裁剪区域之外的元素公开 `scrollIntoView` 动作；执行端使用 `block/inline=nearest` 在隐藏、未聚焦 WebView 内完成原生组合树滚动，并回传滚动是否改变位置及显现后的矩形。滚动事件会撤销旧快照授权，Agent 必须读取新 revision 后再调用 `view.capture_element`，从而稳定获取 Animator、Atlas 等长面板中的视口外图形内容。
 
 精确文本内容 revision v2 逐个保留可渲染文本节点的原始空白，同时排除任一 `aria-hidden=true`、`inert`、`display:none`、`content-visibility:hidden` 或透明祖先下的装饰文字。`window.ui_content(field=text)` 因而与语义快照使用同一隐藏边界，不会在分页正文中重新混入对象槽图标、拖放提示或其他 Agent 不应读取的辅助层。
 

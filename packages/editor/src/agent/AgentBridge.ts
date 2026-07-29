@@ -785,7 +785,7 @@ class AgentBridge {
   /**
    * Resolve and capture one semantic selector against the exact snapshot that
    * exposed it. Native code clips oversized/partly visible elements to the
-   * viewport and rejects stale identities before returning visual evidence.
+   * viewport and every composed overflow clip before returning visual evidence.
    */
   async captureWindowElement(
     windowLabel: string,
@@ -1082,6 +1082,7 @@ class AgentBridge {
       | 'doubleClick'
       | 'contextClick'
       | 'setValue'
+      | 'scrollIntoView'
       | 'scroll'
       | 'keyPress'
       | 'dragTo'
@@ -4758,6 +4759,7 @@ class AgentBridge {
       || commandId === 'window.ui_double_click'
       || commandId === 'window.ui_context_click'
       || commandId === 'window.ui_set_value'
+      || commandId === 'window.ui_scroll_into_view'
       || commandId === 'window.ui_scroll'
       || commandId === 'window.ui_drag_to'
       || commandId === 'window.ui_drag_by'
@@ -4772,15 +4774,17 @@ class AgentBridge {
             ? 'contextClick'
             : commandId === 'window.ui_set_value'
               ? 'setValue'
-              : commandId === 'window.ui_scroll'
-                ? 'scroll'
-                : commandId === 'window.ui_drag_to'
-                  ? 'dragTo'
-                  : commandId === 'window.ui_drag_by'
-                    ? 'dragBy'
-                    : commandId === 'window.ui_hover'
-                      ? 'hover'
-                      : 'keyPress';
+              : commandId === 'window.ui_scroll_into_view'
+                ? 'scrollIntoView'
+                : commandId === 'window.ui_scroll'
+                  ? 'scroll'
+                  : commandId === 'window.ui_drag_to'
+                    ? 'dragTo'
+                    : commandId === 'window.ui_drag_by'
+                      ? 'dragBy'
+                      : commandId === 'window.ui_hover'
+                        ? 'hover'
+                        : 'keyPress';
       const selector = typeof args.selector === 'string' ? args.selector : '';
       const windowLabel =
         typeof args.windowLabel === 'string' && args.windowLabel ? args.windowLabel : 'main';

@@ -1616,21 +1616,28 @@ mod transport_tests {
             height: 200.0,
         };
         assert_eq!(
-            clipped_element_capture_region(inside, 1_280.0, 720.0).unwrap(),
+            clipped_element_capture_region(inside, inside, 1_280.0, 720.0).unwrap(),
             (inside, false)
         );
+        let partly_visible = WindowCaptureRegion {
+            x: 10.0,
+            y: 80.0,
+            width: 300.0,
+            height: 140.0,
+        };
         assert_eq!(
-            clipped_element_capture_region(
-                WindowCaptureRegion {
-                    x: -20.0,
-                    y: 650.0,
-                    width: 100.0,
-                    height: 100.0,
-                },
-                1_280.0,
-                720.0,
-            )
-            .unwrap(),
+            clipped_element_capture_region(inside, partly_visible, 1_280.0, 720.0).unwrap(),
+            (partly_visible, true)
+        );
+        let partly_outside = WindowCaptureRegion {
+            x: -20.0,
+            y: 650.0,
+            width: 100.0,
+            height: 100.0,
+        };
+        assert_eq!(
+            clipped_element_capture_region(partly_outside, partly_outside, 1_280.0, 720.0,)
+                .unwrap(),
             (
                 WindowCaptureRegion {
                     x: 0.0,
@@ -1642,6 +1649,10 @@ mod transport_tests {
             )
         );
         assert!(clipped_element_capture_region(
+            WindowCaptureRegion {
+                x: 1_300.0,
+                ..inside
+            },
             WindowCaptureRegion {
                 x: 1_300.0,
                 ..inside
@@ -1736,6 +1747,7 @@ fn validated_capture_region(
 
 fn clipped_element_capture_region(
     element_rect: WindowCaptureRegion,
+    visible_rect: WindowCaptureRegion,
     viewport_width: f64,
     viewport_height: f64,
 ) -> Result<(WindowCaptureRegion, bool), String> {
@@ -1744,6 +1756,10 @@ fn clipped_element_capture_region(
         element_rect.y,
         element_rect.width,
         element_rect.height,
+        visible_rect.x,
+        visible_rect.y,
+        visible_rect.width,
+        visible_rect.height,
         viewport_width,
         viewport_height,
     ]
@@ -1758,12 +1774,15 @@ fn clipped_element_capture_region(
     if viewport_width <= 0.0 || viewport_height <= 0.0 {
         return Err("WebView2 viewport dimensions must be positive".to_string());
     }
-    let left = element_rect.x.max(0.0);
-    let top = element_rect.y.max(0.0);
-    let right = (element_rect.x + element_rect.width).min(viewport_width);
-    let bottom = (element_rect.y + element_rect.height).min(viewport_height);
+    let left = visible_rect.x.max(0.0);
+    let top = visible_rect.y.max(0.0);
+    let right = (visible_rect.x + visible_rect.width).min(viewport_width);
+    let bottom = (visible_rect.y + visible_rect.height).min(viewport_height);
     if right <= left || bottom <= top {
-        return Err("semantic element is outside the current WebView2 viewport".to_string());
+        return Err(
+            "semantic element is outside the current WebView2 viewport or overflow clip"
+                .to_string(),
+        );
     }
     let region = WindowCaptureRegion {
         x: left,
@@ -1797,6 +1816,7 @@ pub struct WindowCapture {
 #[serde(rename_all = "camelCase")]
 struct ResolvedWindowElementBounds {
     element_rect: WindowCaptureRegion,
+    visible_rect: WindowCaptureRegion,
     viewport_width: f64,
     viewport_height: f64,
 }
@@ -1873,6 +1893,7 @@ pub async fn capture_editor_window_element(
         })?;
     let (region, clipped) = match clipped_element_capture_region(
         bounds.element_rect,
+        bounds.visible_rect,
         bounds.viewport_width,
         bounds.viewport_height,
     ) {
@@ -2040,6 +2061,7 @@ pub async fn interact_editor_window(
             | "doubleClick"
             | "contextClick"
             | "setValue"
+            | "scrollIntoView"
             | "scroll"
             | "keyPress"
             | "dragTo"
@@ -2921,6 +2943,7 @@ const WINDOW_UI_SNAPSHOT_SCRIPT: &str = r#"
     'doubleClick',
     'contextClick',
     'setValue',
+    'scrollIntoView',
     'scroll',
     'keyPress',
     'dragTo',
@@ -3437,9 +3460,46 @@ const WINDOW_UI_SNAPSHOT_SCRIPT: &str = r#"
     }
     return {};
   };
+  const needsScrollIntoView = (element) => {
+    const rect = renderedRectFor(element);
+    if (
+      rect.left < 0
+      || rect.top < 0
+      || rect.right > document.documentElement.clientWidth
+      || rect.bottom > document.documentElement.clientHeight
+    ) return true;
+    let current = composedParent(element);
+    while (current instanceof Element) {
+      const style = getComputedStyle(current);
+      const clipsX = style.overflowX !== 'visible';
+      const clipsY = style.overflowY !== 'visible';
+      if (clipsX || clipsY) {
+        const ancestorRect = renderedRectFor(current, style);
+        const clipLeft = current instanceof HTMLElement
+          ? ancestorRect.left + current.clientLeft
+          : ancestorRect.left;
+        const clipTop = current instanceof HTMLElement
+          ? ancestorRect.top + current.clientTop
+          : ancestorRect.top;
+        const clipRight = current instanceof HTMLElement
+          ? clipLeft + current.clientWidth
+          : ancestorRect.right;
+        const clipBottom = current instanceof HTMLElement
+          ? clipTop + current.clientHeight
+          : ancestorRect.bottom;
+        if (
+          (clipsX && (rect.left < clipLeft || rect.right > clipRight))
+          || (clipsY && (rect.top < clipTop || rect.bottom > clipBottom))
+        ) return true;
+      }
+      current = composedParent(current);
+    }
+    return false;
+  };
   const actionList = (element, role) => {
     const actions = [];
     const props = reactProps(element);
+    if (needsScrollIntoView(element)) actions.push('scrollIntoView');
     if (effectivelyDisabled(element)) return actions;
     if (role === 'button' || role === 'link' || role === 'menuitem'
       || role === 'tab' || role === 'option' || role === 'checkbox'
@@ -3811,7 +3871,7 @@ const WINDOW_UI_SNAPSHOT_SCRIPT: &str = r#"
   const activeElementSelector =
     activeElement instanceof Element ? selectorFor(activeElement) : null;
   const revisionSource = JSON.stringify({
-    version: 29,
+    version: 30,
     title: document.title,
     url: location.href,
     viewport,
@@ -3825,7 +3885,7 @@ const WINDOW_UI_SNAPSHOT_SCRIPT: &str = r#"
     revisionHash ^= BigInt(revisionSource.charCodeAt(index));
     revisionHash = BigInt.asUintN(64, revisionHash * 0x100000001b3n);
   }
-  const snapshotRevision = `ui-v29-${candidates.length}-${
+  const snapshotRevision = `ui-v30-${candidates.length}-${
     revisionHash.toString(16).padStart(16, '0')
   }`;
   const guardedElements = new Map(semanticElements.map((semanticElement, index) => [
@@ -3846,7 +3906,7 @@ const WINDOW_UI_SNAPSHOT_SCRIPT: &str = r#"
   }
   const elements = semanticElements.slice(offset, offset + limit);
   return {
-    version: 29,
+    version: 30,
     snapshotRevision,
     title: document.title,
     url: location.href,
@@ -3989,6 +4049,40 @@ const WINDOW_UI_ELEMENT_BOUNDS_SCRIPT: &str = r#"
       expectedSnapshotRevision,
     };
   }
+  let visibleLeft = Math.max(0, rect.left);
+  let visibleTop = Math.max(0, rect.top);
+  let visibleRight = Math.min(document.documentElement.clientWidth, rect.right);
+  let visibleBottom = Math.min(document.documentElement.clientHeight, rect.bottom);
+  let current = composedParent(element);
+  while (current instanceof Element) {
+    const ancestorStyle = getComputedStyle(current);
+    const clipsX = ancestorStyle.overflowX !== 'visible';
+    const clipsY = ancestorStyle.overflowY !== 'visible';
+    if (clipsX || clipsY) {
+      const ancestorRect = renderedRectFor(current, ancestorStyle);
+      const clipLeft = current instanceof HTMLElement
+        ? ancestorRect.left + current.clientLeft
+        : ancestorRect.left;
+      const clipTop = current instanceof HTMLElement
+        ? ancestorRect.top + current.clientTop
+        : ancestorRect.top;
+      const clipRight = current instanceof HTMLElement
+        ? clipLeft + current.clientWidth
+        : ancestorRect.right;
+      const clipBottom = current instanceof HTMLElement
+        ? clipTop + current.clientHeight
+        : ancestorRect.bottom;
+      if (clipsX) {
+        visibleLeft = Math.max(visibleLeft, clipLeft);
+        visibleRight = Math.min(visibleRight, clipRight);
+      }
+      if (clipsY) {
+        visibleTop = Math.max(visibleTop, clipTop);
+        visibleBottom = Math.min(visibleBottom, clipBottom);
+      }
+    }
+    current = composedParent(current);
+  }
   return {
     ok: true,
     elementRect: {
@@ -3996,6 +4090,12 @@ const WINDOW_UI_ELEMENT_BOUNDS_SCRIPT: &str = r#"
       y: rect.y,
       width: rect.width,
       height: rect.height,
+    },
+    visibleRect: {
+      x: visibleLeft,
+      y: visibleTop,
+      width: Math.max(0, visibleRight - visibleLeft),
+      height: Math.max(0, visibleBottom - visibleTop),
     },
     viewportWidth: document.documentElement.clientWidth,
     viewportHeight: document.documentElement.clientHeight,
@@ -4504,6 +4604,7 @@ const WINDOW_UI_INTERACTION_SCRIPT: &str = r#"
     'doubleClick',
     'contextClick',
     'setValue',
+    'scrollIntoView',
     'scroll',
     'keyPress',
     'dragTo',
@@ -4849,7 +4950,7 @@ const WINDOW_UI_INTERACTION_SCRIPT: &str = r#"
       agentAlternative: alternative,
     };
   }
-  if (effectivelyDisabled(element)) {
+  if (effectivelyDisabled(element) && action !== 'scrollIntoView') {
     return { ok: false, error: `Element ${selector} is disabled` };
   }
   if (targetElement && effectivelyDisabled(targetElement)) {
@@ -5212,6 +5313,8 @@ const WINDOW_UI_INTERACTION_SCRIPT: &str = r#"
   let performedDragPath = null;
   let performedHoverState = null;
   let hoverStateChanged = null;
+  let scrollIntoViewChanged = null;
+  let revealedRect = null;
   let pendingValueBlur = false;
   let valueCommitMethod = null;
   let valueCommitConfirmed = null;
@@ -6849,6 +6952,30 @@ const WINDOW_UI_INTERACTION_SCRIPT: &str = r#"
     ) {
       pendingValueBlur = true;
     }
+  } else if (action === 'scrollIntoView') {
+    const before = renderedRectFor(element);
+    element.scrollIntoView({
+      behavior: 'instant',
+      block: 'nearest',
+      inline: 'nearest',
+    });
+    const after = renderedRectFor(element);
+    scrollIntoViewChanged = (
+      before.left !== after.left
+      || before.top !== after.top
+      || before.right !== after.right
+      || before.bottom !== after.bottom
+    );
+    revealedRect = {
+      x: after.x,
+      y: after.y,
+      left: after.left,
+      top: after.top,
+      right: after.right,
+      bottom: after.bottom,
+      width: after.width,
+      height: after.height,
+    };
   } else if (action === 'scroll') {
     if (!(element instanceof HTMLElement) || typeof element.scrollBy !== 'function') {
       return { ok: false, error: `Element ${selector} is not scrollable` };
@@ -6957,6 +7084,8 @@ const WINDOW_UI_INTERACTION_SCRIPT: &str = r#"
     path: action === 'dragBy' ? performedDragPath : null,
     hoverState: action === 'hover' ? performedHoverState : null,
     hoverStateChanged: action === 'hover' ? hoverStateChanged : null,
+    scrollIntoViewChanged: action === 'scrollIntoView' ? scrollIntoViewChanged : null,
+    revealedRect: action === 'scrollIntoView' ? revealedRect : null,
     valueCommitMethod: ['setValue', 'keyPress'].includes(action) ? valueCommitMethod : null,
     valueCommitConfirmed: ['setValue', 'keyPress'].includes(action) ? valueCommitConfirmed : null,
     valueHandledByReact: ['setValue', 'keyPress'].includes(action) ? valueHandledByReact : null,

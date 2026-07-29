@@ -3234,6 +3234,15 @@ const TOOLS = [
     ['selector', 'expectedSnapshotRevision', 'value'],
   ),
   execTool(
+    'scroll_window_ui_into_view',
+    'Reveal one semantic element marked with the scrollIntoView action by get_window_ui through its nested scroll containers without activating the editor window. Get a fresh UI snapshot after this action before capturing or interacting with the element.',
+    'window.ui_scroll_into_view',
+    {
+      ...uiInteractionProperties('Exact offscreen selector returned by get_window_ui'),
+    },
+    ['selector', 'expectedSnapshotRevision'],
+  ),
+  execTool(
     'scroll_window_ui',
     'Dispatch a CSS-pixel wheel gesture at an exact element-relative point on a target marked with the scroll action by get_window_ui. Unhandled wheel gestures fall back to native element scrolling, enabling both canvas zoom controls and virtualized content inspection without foreground input.',
     'window.ui_scroll',
