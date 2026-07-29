@@ -883,6 +883,10 @@ fn discovery_file_path(app: &AppHandle) -> Option<PathBuf> {
         }
         return Some(directory.join("agent-bridge.json"));
     }
+    if crate::starts_in_background() {
+        return crate::default_editor_config_dir()
+            .map(|directory| directory.join("agent-bridge.json"));
+    }
     app.path()
         .app_config_dir()
         .ok()
@@ -902,6 +906,8 @@ fn write_discovery_file(app: &AppHandle, port: u16, token: &str) {
         "port": port,
         "token": token,
         "pid": std::process::id(),
+        "runtimeIdentifier": app.config().identifier,
+        "background": crate::starts_in_background(),
         "version": 1,
     })
     .to_string();

@@ -25,6 +25,8 @@ use agent_bridge::{
     BridgeHub,
 };
 
+pub(crate) const EDITOR_IDENTIFIER: &str = "com.mengine.editor";
+
 struct AppState {
     editor_instance_id: String,
     project_lifecycle: Mutex<()>,
@@ -5449,8 +5451,77 @@ fn starts_in_background() -> bool {
         })
 }
 
+fn background_runtime_identifier(editor_instance_id: &str) -> String {
+    format!(
+        "{EDITOR_IDENTIFIER}.agent-{}",
+        editor_instance_id.replace('-', "")
+    )
+}
+
+pub(crate) fn default_editor_config_dir() -> Option<PathBuf> {
+    dirs::config_dir().map(|directory| directory.join(EDITOR_IDENTIFIER))
+}
+
+fn background_runtime_path_is_owned(path: &Path, identifier: &str) -> bool {
+    identifier.starts_with(&format!("{EDITOR_IDENTIFIER}.agent-"))
+        && path
+            .file_name()
+            .and_then(|name| name.to_str())
+            .is_some_and(|name| name == identifier)
+}
+
+fn cleanup_background_runtime_paths(app: &tauri::AppHandle, identifier: &str) {
+    let candidates = [app.path().app_local_data_dir(), app.path().app_config_dir()];
+    for path in candidates.into_iter().flatten() {
+        if !background_runtime_path_is_owned(&path, identifier) {
+            log::warn!(
+                "Refusing to remove unowned background editor directory: {}",
+                path.display()
+            );
+            continue;
+        }
+        match std::fs::symlink_metadata(&path) {
+            Ok(metadata) if metadata.file_type().is_symlink() => {
+                log::warn!(
+                    "Refusing to remove symlinked background editor directory: {}",
+                    path.display()
+                );
+            }
+            Ok(metadata) if metadata.is_dir() => {
+                if let Err(error) = std::fs::remove_dir_all(&path) {
+                    log::warn!(
+                        "Could not remove background editor directory {}: {error}",
+                        path.display()
+                    );
+                }
+            }
+            Ok(_) => {
+                log::warn!(
+                    "Refusing to remove non-directory background editor path: {}",
+                    path.display()
+                );
+            }
+            Err(error) if error.kind() == std::io::ErrorKind::NotFound => {}
+            Err(error) => {
+                log::warn!(
+                    "Could not inspect background editor directory {}: {error}",
+                    path.display()
+                );
+            }
+        }
+    }
+}
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
+    let background = starts_in_background();
+    let editor_instance_id = uuid::Uuid::new_v4().to_string();
+    let background_identifier =
+        background.then(|| background_runtime_identifier(&editor_instance_id));
+    let mut context = tauri::generate_context!();
+    if let Some(identifier) = &background_identifier {
+        context.config_mut().identifier = identifier.clone();
+    }
     let bridge_hub = Arc::new(BridgeHub::from_environment(
         uuid::Uuid::new_v4().to_string(),
     ));
@@ -5460,7 +5531,7 @@ pub fn run() {
     let app = tauri::Builder::default()
         .plugin(tauri_plugin_dialog::init())
         .manage(AppState {
-            editor_instance_id: uuid::Uuid::new_v4().to_string(),
+            editor_instance_id,
             project_lifecycle: Mutex::new(()),
             project: Mutex::new(None),
             active_build: Arc::new(Mutex::new(None)),
@@ -5540,7 +5611,7 @@ pub fn run() {
         .setup(move |app| {
             spawn_bridge_server(app.handle().clone(), bridge_hub_for_setup.clone());
             if let Some(main) = app.get_webview_window("main") {
-                if starts_in_background() {
+                if background {
                     main.hide()?;
                     main.set_focusable(false)?;
                 } else {
@@ -5550,11 +5621,14 @@ pub fn run() {
             }
             Ok(())
         })
-        .build(tauri::generate_context!())
+        .build(context)
         .expect("error while building MEngine Editor");
     app.run(move |app_handle, event| {
         if matches!(event, tauri::RunEvent::Exit) {
             cleanup_bridge_discovery(app_handle, &bridge_token_for_exit);
+            if let Some(identifier) = &background_identifier {
+                cleanup_background_runtime_paths(app_handle, identifier);
+            }
         }
     });
 }
@@ -5631,6 +5705,26 @@ mod tests {
         assert!(validate_agent_editor_window_state(true, false).is_err());
         assert!(validate_agent_editor_window_state(false, true).is_err());
         assert!(validate_agent_editor_window_state(true, true).is_err());
+    }
+
+    #[test]
+    fn background_runtime_identifier_isolates_webview_persistence() {
+        let first = background_runtime_identifier("12345678-1234-1234-1234-123456789abc");
+        let second = background_runtime_identifier("abcdefab-cdef-cdef-cdef-abcdefabcdef");
+        assert_eq!(
+            first,
+            "com.mengine.editor.agent-12345678123412341234123456789abc"
+        );
+        assert_ne!(first, second);
+        assert_ne!(first, EDITOR_IDENTIFIER);
+        assert!(background_runtime_path_is_owned(
+            Path::new("root").join(&first).as_path(),
+            &first
+        ));
+        assert!(!background_runtime_path_is_owned(
+            Path::new("root").join(EDITOR_IDENTIFIER).as_path(),
+            &first
+        ));
     }
 
     fn test_project_parent(label: &str) -> PathBuf {
