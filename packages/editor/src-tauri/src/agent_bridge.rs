@@ -4722,6 +4722,7 @@ const WINDOW_UI_INTERACTION_SCRIPT: &str = r#"
       'checked',
     )?.set;
     if (!setter) return false;
+    const changed = element.checked !== Boolean(checked) || element.indeterminate;
     setter.call(element, Boolean(checked));
     element.indeterminate = false;
     const reactProps = reactPropsFor(element);
@@ -4737,6 +4738,17 @@ const WINDOW_UI_INTERACTION_SCRIPT: &str = r#"
     if (!handledByReact) {
       element.dispatchEvent(new Event('input', { bubbles: true, composed: true }));
       element.dispatchEvent(new Event('change', { bubbles: true, composed: true }));
+    }
+    if (action === 'setValue' || (action === 'keyPress' && changed)) {
+      valueHandledByReact = handledByReact;
+    }
+    if (action === 'keyPress' && changed) {
+      valueCommitMethod = 'change';
+      pendingValueChangeConfirmation = () => (
+        element.isConnected
+        && element.checked === Boolean(checked)
+        && !element.indeterminate
+      );
     }
     return true;
   };
@@ -4769,6 +4781,7 @@ const WINDOW_UI_INTERACTION_SCRIPT: &str = r#"
   let pendingValueBlur = false;
   let valueCommitMethod = null;
   let valueCommitConfirmed = null;
+  let pendingValueChangeConfirmation = null;
   let valueHandledByReact = null;
   let valueDraftSynchronized = null;
   let valueFocusHandledByReact = null;
@@ -5674,6 +5687,10 @@ const WINDOW_UI_INTERACTION_SCRIPT: &str = r#"
         if (nextIndex !== element.selectedIndex) {
           element.selectedIndex = nextIndex;
           valueHandledByReact = dispatchValueChange(element, element.value);
+          valueCommitMethod = 'change';
+          pendingValueChangeConfirmation = () => (
+            element.isConnected && element.selectedIndex === nextIndex
+          );
         }
         return true;
       }
@@ -5723,6 +5740,11 @@ const WINDOW_UI_INTERACTION_SCRIPT: &str = r#"
       }
       if (element.value !== previousValue) {
         valueHandledByReact = dispatchValueChange(element, element.value);
+        valueCommitMethod = 'change';
+        const expectedValue = element.value;
+        pendingValueChangeConfirmation = () => (
+          element.isConnected && element.value === expectedValue
+        );
       }
       return true;
     };
@@ -5903,6 +5925,9 @@ const WINDOW_UI_INTERACTION_SCRIPT: &str = r#"
   performedSettledFrames += 1;
   await waitForRender();
   performedSettledFrames += 1;
+  if (typeof pendingValueChangeConfirmation === 'function') {
+    valueCommitConfirmed = pendingValueChangeConfirmation();
+  }
   return {
     ok: true,
     settledFrames: performedSettledFrames,

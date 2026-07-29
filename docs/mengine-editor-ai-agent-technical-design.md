@@ -356,6 +356,8 @@ Rust Host 使用独立的工程生命周期互斥门串行化 open/create/close 
 
 Tab 的合成焦点顺序同时包含可见、可用且 `tabIndex >= 0` 的 HTML 与 SVG 元素，并遵循正 `tabIndex` 优先、同组 DOM 顺序的原生规则。这样 Timeline 曲线编辑器、曲线关键帧和切线手柄不会被跳过；显式 `tabIndex=-1` 仍可直接接收 Agent 按键，但不会错误进入 Tab 顺序。
 
+Space 或方向/首尾/翻页键触发 checkbox、radio、单选 select、number、range 的原生默认值变化时，Bridge 会同步当前 React `onInput/onChange`，并仅在值确实变化后返回 `valueCommitMethod=change`、`valueCommitConfirmed=true`。到达边界、单选框已经选中或选择框没有下一个可用选项时不伪报提交。
+
 #### 4.2.7 资产与构建
 
 | command id | 映射 |

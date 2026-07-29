@@ -205,6 +205,28 @@ test('whole-window agent capture is background-safe and addressable by window la
     interactionScript,
     /keyboardReadOnly\s+&&\s+\(\s+element instanceof HTMLInputElement\s+\|\| element instanceof HTMLSelectElement/,
   );
+  assert.match(
+    interactionScript,
+    /const changed = element\.checked !== Boolean\(checked\) \|\| element\.indeterminate/,
+  );
+  assert.match(
+    interactionScript,
+    /action === 'setValue' \|\| \(action === 'keyPress' && changed\)/,
+  );
+  assert.match(
+    interactionScript,
+    /if \(action === 'keyPress' && changed\) \{\s+valueCommitMethod = 'change';\s+pendingValueChangeConfirmation = \(\) => \(/,
+  );
+  assert.equal(
+    [...interactionScript.matchAll(
+      /valueHandledByReact = dispatchValueChange\(element, element\.value\);\s+valueCommitMethod = 'change';\s+(?:const expectedValue = element\.value;\s+)?pendingValueChangeConfirmation = \(\) => \(/g,
+    )].length,
+    2,
+  );
+  assert.match(
+    interactionScript,
+    /if \(typeof pendingValueChangeConfirmation === 'function'\) \{\s+valueCommitConfirmed = pendingValueChangeConfirmation\(\)/,
+  );
   assert.match(interactionScript, /if \(keyboardValueTarget\) pendingValueBlur = true/);
   assert.match(
     interactionScript,
@@ -799,6 +821,19 @@ test('whole-window agent capture is background-safe and addressable by window la
   assert.match(mcp, /'clear_profiler_samples'/);
   assert.match(mcp, /name: 'describe_command'/);
   assert.match(mcp, /bridgeExecute,\s*bridgeQuery,\s*closeBridgeConnection/);
+});
+
+test('editor shortcuts yield native keyboard behavior to form controls', () => {
+  const app = fs.readFileSync(path.join(root, 'src', 'App.tsx'), 'utf8');
+  const typingTarget = app.match(
+    /function isTypingTarget\(el: EventTarget \| null\) \{([\s\S]*?)\n\}/,
+  )?.[1];
+
+  assert.ok(typingTarget);
+  assert.match(typingTarget, /tag === 'INPUT'/);
+  assert.match(typingTarget, /tag === 'TEXTAREA'/);
+  assert.match(typingTarget, /tag === 'SELECT'/);
+  assert.match(typingTarget, /el\.isContentEditable/);
 });
 
 test('the main AgentBridge transport is available before a project is opened', () => {
