@@ -2827,6 +2827,43 @@ const WINDOW_UI_SNAPSHOT_SCRIPT: &str = r#"
     }
     return 'Scrollable content';
   };
+  const ariaStateKeys = [
+    'checked',
+    'selected',
+    'expanded',
+    'pressed',
+    'current',
+    'level',
+    'haspopup',
+    'modal',
+    'valuemin',
+    'valuemax',
+    'valuenow',
+    'valuetext',
+    'orientation',
+    'multiselectable',
+    'required',
+    'invalid',
+    'busy',
+    'autocomplete',
+    'live',
+    'atomic',
+    'relevant',
+    'sort',
+    'keyshortcuts',
+    'roledescription',
+    'setsize',
+    'posinset',
+    'colcount',
+    'rowcount',
+    'colindex',
+    'rowindex',
+    'controls',
+    'activedescendant',
+    'describedby',
+    'details',
+    'errormessage',
+  ];
   const stateFor = (element, modalBlocked = false) => {
     const state = {
       disabled: Boolean(element.disabled || element.getAttribute('aria-disabled') === 'true'),
@@ -2834,16 +2871,7 @@ const WINDOW_UI_SNAPSHOT_SCRIPT: &str = r#"
       focused: document.activeElement === element,
     };
     if (modalBlocked) state.modalBlocked = true;
-    for (const key of [
-      'checked',
-      'selected',
-      'expanded',
-      'pressed',
-      'current',
-      'level',
-      'haspopup',
-      'modal',
-    ]) {
+    for (const key of ariaStateKeys) {
       const value = element.getAttribute(`aria-${key}`);
       if (value !== null) state[key] = value;
     }
@@ -2967,7 +2995,7 @@ const WINDOW_UI_SNAPSHOT_SCRIPT: &str = r#"
   const activeElementSelector =
     document.activeElement instanceof Element ? selectorFor(document.activeElement) : null;
   const revisionSource = JSON.stringify({
-    version: 5,
+    version: 6,
     title: document.title,
     url: location.href,
     viewport,
@@ -2981,13 +3009,13 @@ const WINDOW_UI_SNAPSHOT_SCRIPT: &str = r#"
     revisionHash ^= BigInt(revisionSource.charCodeAt(index));
     revisionHash = BigInt.asUintN(64, revisionHash * 0x100000001b3n);
   }
-  const snapshotRevision = `ui-v4-${candidates.length}-${
+  const snapshotRevision = `ui-v5-${candidates.length}-${
     revisionHash.toString(16).padStart(16, '0')
   }`;
   revisionGuard.revisions.set(snapshotRevision, revisionGuard.epoch);
   const elements = semanticElements.slice(offset, offset + limit);
   return {
-    version: 5,
+    version: 6,
     snapshotRevision,
     title: document.title,
     url: location.href,

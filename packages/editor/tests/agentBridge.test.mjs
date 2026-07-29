@@ -46,14 +46,30 @@ test('whole-window agent capture is background-safe and addressable by window la
   assert.match(rust, /const offset = __MENGINE_OFFSET__/);
   assert.match(rust, /semanticElements\.slice\(offset, offset \+ limit\)/);
   assert.match(rust, /new Map\(candidates\.map/);
-  assert.match(rust, /const snapshotRevision = `ui-v4-/);
+  assert.match(rust, /const snapshotRevision = `ui-v5-/);
   assert.match(rust, /revisionHash = BigInt\.asUintN\(64/);
   assert.match(rust, /const semanticScopeFor = \(element\) =>/);
   assert.match(rust, /role === 'tabpanel'/);
   assert.match(rust, /const qualifiedNameFor = \(scope, name\) =>/);
   assert.match(rust, /scope: scope \|\| null/);
   assert.match(rust, /qualifiedName: qualifiedNameFor\(scope, name\) \|\| null/);
-  assert.equal([...rust.matchAll(/version: 5,/g)].length, 2);
+  assert.equal([...rust.matchAll(/version: 6,/g)].length, 2);
+  assert.match(rust, /const ariaStateKeys = \[/);
+  for (const key of [
+    'valuemin',
+    'valuemax',
+    'valuenow',
+    'valuetext',
+    'orientation',
+    'multiselectable',
+    'autocomplete',
+    'live',
+    'keyshortcuts',
+    'activedescendant',
+  ]) {
+    assert.match(rust, new RegExp(`'${key}'`));
+  }
+  assert.match(rust, /for \(const key of ariaStateKeys\)/);
   assert.match(rust, /const controlFor = \(element\) =>/);
   assert.match(rust, /control: controlFor\(element\)/);
   assert.match(rust, /control\.optionsRevision = compactContentRevision\('options'/);
