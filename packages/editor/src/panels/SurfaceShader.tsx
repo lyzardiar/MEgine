@@ -16,6 +16,8 @@ import { registerSaveAllParticipant } from '../saveAll';
 import {
   broadcastProjectAssetsChanged,
   openSurfaceShaderAsset,
+  projectAssetsChangeTouches,
+  PROJECT_ASSETS_CHANGED_EVENT,
 } from '../assetEditorEvents';
 import {
   isDesktopEditor,
@@ -65,6 +67,7 @@ export function SurfaceShaderEditor(props: {
   const [saving, setSaving] = useState(false);
   const [validating, setValidating] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [reloadToken, setReloadToken] = useState(0);
   const [, setDraftEpoch] = useState(0);
   const loadedPath = useRef<string | null>(null);
   const drafts = useRef(new Map<string, { source: string; savedSource: string }>());
@@ -75,6 +78,8 @@ export function SurfaceShaderEditor(props: {
     token: EditorUndoToken | null;
   } | null>(null);
   const lineNumbers = useRef<HTMLDivElement | null>(null);
+  const forceReloadPath = useRef<string | null>(null);
+  const suppressAssetChange = useRef(false);
   sourceRef.current = source;
 
   const replaceSource = (next: string) => {
@@ -84,6 +89,8 @@ export function SurfaceShaderEditor(props: {
 
   useEffect(() => {
     let cancelled = false;
+    const forceReload = forceReloadPath.current === props.assetPath;
+    if (forceReload) forceReloadPath.current = null;
     const transaction = editTransaction.current;
     if (
       transaction?.token
@@ -94,7 +101,7 @@ export function SurfaceShaderEditor(props: {
     }
     editTransaction.current = null;
     const previous = loadedPath.current;
-    if (previous && !loading) {
+    if (previous && !loading && !forceReload) {
       drafts.current.set(previous, { source, savedSource });
     }
     loadedPath.current = props.assetPath;
@@ -105,7 +112,8 @@ export function SurfaceShaderEditor(props: {
       setLoading(false);
       return () => { cancelled = true; };
     }
-    const draft = drafts.current.get(props.assetPath);
+    if (forceReload) drafts.current.delete(props.assetPath);
+    const draft = forceReload ? undefined : drafts.current.get(props.assetPath);
     if (draft) {
       drafts.current.delete(props.assetPath);
       replaceSource(draft.source);
@@ -126,7 +134,7 @@ export function SurfaceShaderEditor(props: {
       })
       .finally(() => { if (!cancelled) setLoading(false); });
     return () => { cancelled = true; };
-  }, [props.assetPath]);
+  }, [props.assetPath, reloadToken]);
 
   const dirty = source !== savedSource && props.assetPath != null;
   const anyDirty = dirty || [...drafts.current.values()].some(
@@ -135,6 +143,34 @@ export function SurfaceShaderEditor(props: {
   useEffect(() => props.onDirtyChange(anyDirty), [anyDirty, props.onDirtyChange]);
   const diagnostics = useMemo(() => surfaceShaderDiagnostics(source), [source]);
   const lines = useMemo(() => Math.max(1, source.split('\n').length - 1), [source]);
+
+  const reloadFromDisk = () => {
+    if (!props.assetPath) return;
+    forceReloadPath.current = props.assetPath;
+    setReloadToken((value) => value + 1);
+  };
+
+  useEffect(() => {
+    if (!props.assetPath) return;
+    const onAssetsChanged = (event: Event) => {
+      if (
+        suppressAssetChange.current
+        || !projectAssetsChangeTouches(
+          (event as CustomEvent<unknown>).detail,
+          [props.assetPath!],
+        )
+      ) return;
+      if (dirty) {
+        setError(
+          'Surface Shader changed outside this editor. Reload to discard this draft before saving.',
+        );
+        return;
+      }
+      reloadFromDisk();
+    };
+    window.addEventListener(PROJECT_ASSETS_CHANGED_EVENT, onAssetsChanged);
+    return () => window.removeEventListener(PROJECT_ASSETS_CHANGED_EVENT, onAssetsChanged);
+  }, [dirty, props.assetPath]);
 
   const captureDocument = (path: string): string => {
     if (loadedPath.current === path) return sourceRef.current;
@@ -266,7 +302,12 @@ export function SurfaceShaderEditor(props: {
         setDraftEpoch((value) => value + 1);
       }
       props.onAssetsChanged();
-      broadcastProjectAssetsChanged({ action: 'modified', sourcePath: path });
+      suppressAssetChange.current = true;
+      try {
+        broadcastProjectAssetsChanged({ action: 'modified', sourcePath: path });
+      } finally {
+        suppressAssetChange.current = false;
+      }
       props.onLog(desktop
         ? `Saved ${path}; Player Forward WGSL validation passed.`
         : `Saved ${path}; desktop Player validation remains required before build.`);
@@ -328,6 +369,7 @@ export function SurfaceShaderEditor(props: {
         <button type="button" aria-label="Undo" title={`Undo${props.undoService.undoLabel ? ` ${props.undoService.undoLabel}` : ''}`} disabled={!props.undoService.canUndo || saving || validating} onClick={props.onGlobalUndo}><Undo2 size={13} /></button>
         <button type="button" aria-label="Redo" title={`Redo${props.undoService.redoLabel ? ` ${props.undoService.redoLabel}` : ''}`} disabled={!props.undoService.canRedo || saving || validating} onClick={props.onGlobalRedo}><Redo2 size={13} /></button>
         <button type="button" onClick={() => void createNew()}>New</button>
+        <button type="button" disabled={loading || saving || validating} onClick={reloadFromDisk}>Reload</button>
         <button
           type="button"
           disabled={saving || validating || diagnostics.length > 0}

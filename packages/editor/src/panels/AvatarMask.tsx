@@ -29,6 +29,8 @@ import type {
 import {
   broadcastProjectAssetsChanged,
   openAnimatorAsset,
+  projectAssetsChangeTouches,
+  PROJECT_ASSETS_CHANGED_EVENT,
 } from '../assetEditorEvents';
 
 function uniqueAvatarMaskPath(): string {
@@ -99,11 +101,14 @@ export function AvatarMaskEditor(props: {
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [reloadToken, setReloadToken] = useState(0);
   const loadedPath = useRef<string | null>(null);
   const drafts = useRef(new Map<string, AvatarMaskDraft>());
   const [, setDraftEpoch] = useState(0);
   const maskRef = useRef<AvatarMaskAsset | null>(null);
   const editTransaction = useRef<AvatarMaskEditTransaction | null>(null);
+  const forceReloadPath = useRef<string | null>(null);
+  const suppressAssetChange = useRef(false);
   maskRef.current = mask;
 
   const replaceMask = (next: AvatarMaskAsset | null) => {
@@ -169,6 +174,8 @@ export function AvatarMaskEditor(props: {
 
   useEffect(() => {
     let cancelled = false;
+    const forceReload = forceReloadPath.current === props.assetPath;
+    if (forceReload) forceReloadPath.current = null;
     const transaction = editTransaction.current;
     if (
       transaction?.token
@@ -179,7 +186,7 @@ export function AvatarMaskEditor(props: {
       props.undoService.restoreCheckpoint(transaction.checkpoint);
     }
     const previousPath = loadedPath.current;
-    if (previousPath && mask) {
+    if (previousPath && mask && !forceReload) {
       drafts.current.set(previousPath, { mask: structuredClone(mask), savedFingerprint });
     }
     loadedPath.current = props.assetPath;
@@ -188,7 +195,8 @@ export function AvatarMaskEditor(props: {
     setSavedFingerprint('');
     setError(null);
     if (!props.assetPath) return () => { cancelled = true; };
-    const draft = drafts.current.get(props.assetPath);
+    if (forceReload) drafts.current.delete(props.assetPath);
+    const draft = forceReload ? undefined : drafts.current.get(props.assetPath);
     if (draft) {
       drafts.current.delete(props.assetPath);
       replaceMask(structuredClone(draft.mask));
@@ -210,11 +218,39 @@ export function AvatarMaskEditor(props: {
         if (!cancelled) setLoading(false);
       });
     return () => { cancelled = true; };
-  }, [props.assetPath]);
+  }, [props.assetPath, reloadToken]);
 
   const dirty = mask != null && fingerprint(mask) !== savedFingerprint;
   const anyDirty = dirty || [...drafts.current.values()].some(avatarMaskDraftDirty);
   useEffect(() => props.onDirtyChange(anyDirty), [anyDirty, props.onDirtyChange]);
+
+  const reloadFromDisk = () => {
+    if (!props.assetPath) return;
+    forceReloadPath.current = props.assetPath;
+    setReloadToken((value) => value + 1);
+  };
+
+  useEffect(() => {
+    if (!props.assetPath) return;
+    const onAssetsChanged = (event: Event) => {
+      if (
+        suppressAssetChange.current
+        || !projectAssetsChangeTouches(
+          (event as CustomEvent<unknown>).detail,
+          [props.assetPath!],
+        )
+      ) return;
+      if (dirty) {
+        setError(
+          'Avatar Mask changed outside this editor. Reload to discard this draft before saving.',
+        );
+        return;
+      }
+      reloadFromDisk();
+    };
+    window.addEventListener(PROJECT_ASSETS_CHANGED_EVENT, onAssetsChanged);
+    return () => window.removeEventListener(PROJECT_ASSETS_CHANGED_EVENT, onAssetsChanged);
+  }, [dirty, props.assetPath]);
 
   const update = (mutate: (draft: AvatarMaskAsset) => void, label = 'Edit Avatar Mask') => {
     const current = maskRef.current;
@@ -251,7 +287,12 @@ export function AvatarMaskEditor(props: {
       replaceMask(normalized);
       setSavedFingerprint(fingerprint(normalized));
       await refreshProjectFiles();
-      broadcastProjectAssetsChanged({ action: 'modified', sourcePath: props.assetPath });
+      suppressAssetChange.current = true;
+      try {
+        broadcastProjectAssetsChanged({ action: 'modified', sourcePath: props.assetPath });
+      } finally {
+        suppressAssetChange.current = false;
+      }
       props.onAssetsChanged();
       props.onLog(`Saved ${props.assetPath}`);
       return true;
@@ -354,6 +395,7 @@ export function AvatarMaskEditor(props: {
         <button type="button" aria-label="Undo" title={`Undo${props.undoService.undoLabel ? ` ${props.undoService.undoLabel}` : ''} (Ctrl+Z)`} disabled={!props.undoService.canUndo} onClick={props.onGlobalUndo}><Undo2 size={13} /></button>
         <button type="button" aria-label="Redo" title={`Redo${props.undoService.redoLabel ? ` ${props.undoService.redoLabel}` : ''} (Ctrl+Y)`} disabled={!props.undoService.canRedo} onClick={props.onGlobalRedo}><Redo2 size={13} /></button>
         <button type="button" onClick={() => void createNew()}>New</button>
+        <button type="button" disabled={loading || saving} onClick={reloadFromDisk}>Reload</button>
         <button type="button" disabled={!dirty || saving} onClick={() => void save()}>
           {saving ? 'Saving…' : 'Save'}
         </button>

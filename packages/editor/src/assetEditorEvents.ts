@@ -17,6 +17,39 @@ export type ProjectAssetLifecycleDetail =
   | { action: 'modified'; sourcePath: string }
   | { action: 'created' | 'restored'; destinationPath: string };
 
+function comparableAssetPath(value: unknown): string | null {
+  return typeof value === 'string'
+    ? value.replace(/\\/g, '/').toLocaleLowerCase()
+    : null;
+}
+
+export function projectAssetsChangeTouches(
+  detail: unknown,
+  paths: readonly string[],
+): boolean {
+  if (!detail || typeof detail !== 'object') return false;
+  const targetPaths = new Set(paths.map(comparableAssetPath).filter((path) => path != null));
+  if (targetPaths.size === 0) return false;
+  const record = detail as Record<string, unknown>;
+  const changedPaths: unknown[] = [record.sourcePath, record.destinationPath];
+  if (Array.isArray(record.changes)) {
+    for (const value of record.changes) {
+      if (!value || typeof value !== 'object') continue;
+      const change = value as Record<string, unknown>;
+      changedPaths.push(change.relPath);
+      for (const endpoint of [change.previous, change.current]) {
+        if (endpoint && typeof endpoint === 'object') {
+          changedPaths.push((endpoint as Record<string, unknown>).relPath);
+        }
+      }
+    }
+  }
+  return changedPaths.some((path) => {
+    const comparable = comparableAssetPath(path);
+    return comparable != null && targetPaths.has(comparable);
+  });
+}
+
 type ProjectAssetLifecycleMessage = ProjectAssetLifecycleDetail & {
   sender: string;
   timestamp: number;

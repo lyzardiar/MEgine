@@ -19,8 +19,8 @@ import {
 } from '../spriteImport';
 import {
   broadcastProjectAssetsChanged,
+  projectAssetsChangeTouches,
   PROJECT_ASSETS_CHANGED_EVENT,
-  type ProjectAssetLifecycleDetail,
 } from '../assetEditorEvents';
 import { registerSaveAllParticipant } from '../saveAll';
 
@@ -154,30 +154,10 @@ export function SpriteEditor(props: {
     const importPath = spriteImportPath(basePath).toLocaleLowerCase();
     const onAssetsChanged = (event: Event) => {
       if (savingRef.current) return;
-      const detail = (
-        event as CustomEvent<
-          ProjectAssetLifecycleDetail & {
-            changes?: Array<{
-              relPath?: string;
-              previous?: { relPath?: string } | null;
-              current?: { relPath?: string } | null;
-            }>;
-          }
-        >
-      ).detail;
-      if (!detail || typeof detail !== 'object') return;
-      const paths = [
-        'sourcePath' in detail ? detail.sourcePath : null,
-        'destinationPath' in detail ? detail.destinationPath : null,
-        ...(detail.changes ?? []).flatMap((change) => [
-          change.relPath,
-          change.previous?.relPath,
-          change.current?.relPath,
-        ]),
-      ]
-        .filter((path): path is string => typeof path === 'string')
-        .map((path) => path.toLocaleLowerCase());
-      if (!paths.includes(texturePath) && !paths.includes(importPath)) return;
+      if (!projectAssetsChangeTouches(
+        (event as CustomEvent<unknown>).detail,
+        [texturePath, importPath],
+      )) return;
       if (dirty) {
         setError(
           'Sprite source changed outside this editor. Reload or Revert before applying this draft.',

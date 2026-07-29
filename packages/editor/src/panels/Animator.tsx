@@ -41,6 +41,8 @@ import { AvatarMaskEditor } from './AvatarMask';
 import {
   broadcastProjectAssetsChanged,
   openAnimatorAsset,
+  projectAssetsChangeTouches,
+  PROJECT_ASSETS_CHANGED_EVENT,
 } from '../assetEditorEvents';
 
 function uniquePath(extension: '.mcontroller' | '.manim', baseName: string): string {
@@ -369,6 +371,7 @@ function AnimatorControllerEditor(props: AnimatorEditorProps) {
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [reloadToken, setReloadToken] = useState(0);
   const [selectedState, setSelectedState] = useState<number | null>(null);
   const [selectedTransition, setSelectedTransition] = useState<number | null>(null);
   const loadedPath = useRef<string | null>(null);
@@ -378,6 +381,8 @@ function AnimatorControllerEditor(props: AnimatorEditorProps) {
   const selectedStateRef = useRef<number | null>(null);
   const selectedTransitionRef = useRef<number | null>(null);
   const editTransaction = useRef<AnimatorEditTransaction | null>(null);
+  const forceReloadPath = useRef<string | null>(null);
+  const suppressAssetChange = useRef(false);
   controllerRef.current = controller;
   selectedStateRef.current = selectedState;
   selectedTransitionRef.current = selectedTransition;
@@ -482,6 +487,8 @@ function AnimatorControllerEditor(props: AnimatorEditorProps) {
 
   useEffect(() => {
     let cancelled = false;
+    const forceReload = forceReloadPath.current === props.assetPath;
+    if (forceReload) forceReloadPath.current = null;
     const transaction = editTransaction.current;
     if (
       transaction?.token
@@ -492,7 +499,7 @@ function AnimatorControllerEditor(props: AnimatorEditorProps) {
       props.undoService.restoreCheckpoint(transaction.checkpoint);
     }
     const previousPath = loadedPath.current;
-    if (previousPath && controller) {
+    if (previousPath && controller && !forceReload) {
       drafts.current.set(previousPath, {
         controller: structuredClone(controller),
         savedFingerprint,
@@ -508,7 +515,8 @@ function AnimatorControllerEditor(props: AnimatorEditorProps) {
     setSelectedState(null);
     setSelectedTransition(null);
     if (!props.assetPath) return () => { cancelled = true; };
-    const draft = drafts.current.get(props.assetPath);
+    if (forceReload) drafts.current.delete(props.assetPath);
+    const draft = forceReload ? undefined : drafts.current.get(props.assetPath);
     if (draft) {
       drafts.current.delete(props.assetPath);
       replaceController(structuredClone(draft.controller));
@@ -532,11 +540,39 @@ function AnimatorControllerEditor(props: AnimatorEditorProps) {
         if (!cancelled) setLoading(false);
       });
     return () => { cancelled = true; };
-  }, [props.assetPath]);
+  }, [props.assetPath, reloadToken]);
 
   const dirty = controllerFingerprint(controller) !== savedFingerprint && controller != null;
   const anyDirty = dirty || [...drafts.current.values()].some(animatorDraftDirty);
   useEffect(() => props.onDirtyChange(anyDirty), [anyDirty, props.onDirtyChange]);
+
+  const reloadFromDisk = () => {
+    if (!props.assetPath) return;
+    forceReloadPath.current = props.assetPath;
+    setReloadToken((value) => value + 1);
+  };
+
+  useEffect(() => {
+    if (!props.assetPath) return;
+    const onAssetsChanged = (event: Event) => {
+      if (
+        suppressAssetChange.current
+        || !projectAssetsChangeTouches(
+          (event as CustomEvent<unknown>).detail,
+          [props.assetPath!],
+        )
+      ) return;
+      if (dirty) {
+        setError(
+          'Animator Controller changed outside this editor. Reload to discard this draft before saving.',
+        );
+        return;
+      }
+      reloadFromDisk();
+    };
+    window.addEventListener(PROJECT_ASSETS_CHANGED_EVENT, onAssetsChanged);
+    return () => window.removeEventListener(PROJECT_ASSETS_CHANGED_EVENT, onAssetsChanged);
+  }, [dirty, props.assetPath]);
 
   const clips = listProjectFiles().filter((asset) => asset.kind === 'animation');
   const avatarMasks = listProjectFiles().filter((asset) => asset.kind === 'avatar-mask');
@@ -581,7 +617,12 @@ function AnimatorControllerEditor(props: AnimatorEditorProps) {
       drafts.current.delete(props.assetPath);
       replaceController(normalized);
       setSavedFingerprint(controllerFingerprint(normalized));
-      broadcastProjectAssetsChanged({ action: 'modified', sourcePath: props.assetPath });
+      suppressAssetChange.current = true;
+      try {
+        broadcastProjectAssetsChanged({ action: 'modified', sourcePath: props.assetPath });
+      } finally {
+        suppressAssetChange.current = false;
+      }
       props.onAssetsChanged();
       props.onLog(`Saved ${props.assetPath}`);
       return true;
@@ -716,6 +757,7 @@ function AnimatorControllerEditor(props: AnimatorEditorProps) {
         <button type="button" aria-label="Undo" title={`Undo${props.undoService.undoLabel ? ` ${props.undoService.undoLabel}` : ''} (Ctrl+Z)`} disabled={!props.undoService.canUndo} onClick={props.onGlobalUndo}><Undo2 size={13} /></button>
         <button type="button" aria-label="Redo" title={`Redo${props.undoService.redoLabel ? ` ${props.undoService.redoLabel}` : ''} (Ctrl+Y)`} disabled={!props.undoService.canRedo} onClick={props.onGlobalRedo}><Redo2 size={13} /></button>
         <button type="button" onClick={() => void createNew()}>New</button>
+        <button type="button" disabled={loading || saving} onClick={reloadFromDisk}>Reload</button>
         <button type="button" disabled={!dirty || saving} onClick={() => void save()}>
           {saving ? 'Saving…' : 'Save'}
         </button>

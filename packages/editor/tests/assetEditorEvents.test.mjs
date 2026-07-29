@@ -7,6 +7,7 @@ import {
   broadcastProjectAssetsChanged,
   broadcastProjectAssetsExternalChanges,
   initializeAssetEditorEvents,
+  projectAssetsChangeTouches,
   PROJECT_ASSETS_CHANGED_EVENT,
   PROJECT_ASSETS_EXTERNAL_CHANGE_EVENT,
   resetAssetEditorEventsForTests,
@@ -17,6 +18,26 @@ import {
 } from '../src/editorInstance.ts';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
+
+test('asset change matching covers lifecycle and external watcher event paths', () => {
+  assert.equal(projectAssetsChangeTouches({
+    action: 'renamed',
+    sourcePath: 'Assets\\Materials\\Old.mat',
+    destinationPath: 'Assets/Materials/New.mat',
+  }, ['assets/materials/old.mat']), true);
+  assert.equal(projectAssetsChangeTouches({
+    changes: [{
+      relPath: 'Assets/Animations/Run.manim',
+      previous: { relPath: 'Assets/Animations/Idle.manim' },
+      current: { relPath: 'Assets/Animations/Run.manim' },
+    }],
+  }, ['assets/animations/idle.manim']), true);
+  assert.equal(projectAssetsChangeTouches({
+    action: 'modified',
+    sourcePath: 'Assets/Materials/Other.mat',
+  }, ['Assets/Materials/Selected.mat']), false);
+  assert.equal(projectAssetsChangeTouches(null, ['Assets/Materials/Selected.mat']), false);
+});
 
 test('asset lifecycle and external changes notify local and remote editor windows', async () => {
   const originalWindow = globalThis.window;

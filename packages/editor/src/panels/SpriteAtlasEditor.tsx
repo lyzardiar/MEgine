@@ -20,6 +20,8 @@ import { buildSpriteAtlas } from '../spriteAtlasBuild';
 import {
   broadcastProjectAssetsChanged,
   openSpriteAtlasAsset,
+  projectAssetsChangeTouches,
+  PROJECT_ASSETS_CHANGED_EVENT,
 } from '../assetEditorEvents';
 import { registerSaveAllParticipant } from '../saveAll';
 import { SpriteListField } from './uiFieldEditors';
@@ -62,10 +64,12 @@ export function SpriteAtlasEditor(props: {
   const [saving, setSaving] = useState(false);
   const [packing, setPacking] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [reloadToken, setReloadToken] = useState(0);
   const [plan, setPlan] = useState<SpriteAtlasPlan | null>(null);
   const [preview, setPreview] = useState<HTMLImageElement | null>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const previewRef = useRef<HTMLDivElement>(null);
+  const suppressAssetChange = useRef(false);
   const [previewSize, setPreviewSize] = useState({ width: 480, height: 320 });
 
   const dirty = useMemo(() => {
@@ -114,7 +118,29 @@ export function SpriteAtlasEditor(props: {
     return () => {
       cancelled = true;
     };
-  }, [props.assetPath]);
+  }, [props.assetPath, reloadToken]);
+
+  useEffect(() => {
+    if (!props.assetPath) return;
+    const onAssetsChanged = (event: Event) => {
+      if (
+        suppressAssetChange.current
+        || !projectAssetsChangeTouches(
+          (event as CustomEvent<unknown>).detail,
+          [props.assetPath!],
+        )
+      ) return;
+      if (dirty) {
+        setError(
+          'Sprite Atlas changed outside this editor. Reload to discard this draft before saving.',
+        );
+        return;
+      }
+      setReloadToken((value) => value + 1);
+    };
+    window.addEventListener(PROJECT_ASSETS_CHANGED_EVENT, onAssetsChanged);
+    return () => window.removeEventListener(PROJECT_ASSETS_CHANGED_EVENT, onAssetsChanged);
+  }, [dirty, props.assetPath]);
 
   useEffect(() => {
     const element = previewRef.current;
@@ -181,7 +207,12 @@ export function SpriteAtlasEditor(props: {
       setAsset(normalized);
       setSavedAsset(cloneAsset(normalized));
       await refreshProjectFiles();
-      broadcastProjectAssetsChanged({ action: 'modified', sourcePath: props.assetPath });
+      suppressAssetChange.current = true;
+      try {
+        broadcastProjectAssetsChanged({ action: 'modified', sourcePath: props.assetPath });
+      } finally {
+        suppressAssetChange.current = false;
+      }
       props.onAssetsChanged();
       return normalized;
     } finally {
@@ -249,6 +280,13 @@ export function SpriteAtlasEditor(props: {
             setError(null);
           }
         }}>Revert</button>
+        <button
+          type="button"
+          disabled={loading || saving || packing}
+          onClick={() => setReloadToken((value) => value + 1)}
+        >
+          Reload
+        </button>
         <button type="button" disabled={!dirty || saving || packing} onClick={() => void save().catch((reason) => setError(String(reason)))}>
           {saving ? 'Saving...' : 'Save'}
         </button>
