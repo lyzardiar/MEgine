@@ -3430,6 +3430,52 @@ const WINDOW_UI_INTERACTION_SCRIPT: &str = r#"
     }
     return {};
   };
+  const nativeValidityIssues = (target) => {
+    if (
+      !(target instanceof HTMLInputElement)
+      && !(target instanceof HTMLTextAreaElement)
+      && !(target instanceof HTMLSelectElement)
+    ) return [];
+    const validity = target.validity;
+    const issues = [
+      'badInput',
+      'customError',
+      'patternMismatch',
+      'rangeOverflow',
+      'rangeUnderflow',
+      'stepMismatch',
+      'tooLong',
+      'tooShort',
+      'typeMismatch',
+      'valueMissing',
+    ].filter((key) => validity[key]);
+    if (
+      (target instanceof HTMLInputElement || target instanceof HTMLTextAreaElement)
+      && target.hasAttribute('minlength')
+      && target.minLength >= 0
+      && target.value.length > 0
+      && target.value.length < target.minLength
+      && !issues.includes('tooShort')
+    ) {
+      issues.push('tooShort');
+    }
+    if (
+      (target instanceof HTMLInputElement || target instanceof HTMLTextAreaElement)
+      && target.hasAttribute('maxlength')
+      && target.maxLength >= 0
+      && target.value.length > target.maxLength
+      && !issues.includes('tooLong')
+    ) {
+      issues.push('tooLong');
+    }
+    return issues;
+  };
+  const constraintFailure = (issues) => ({
+    ok: false,
+    error: `Element ${selector} violates native constraints (${issues.join(', ')})`,
+    constraintViolation: true,
+    validityIssues: issues,
+  });
   const setCheckableInput = (checked, includeClick = false) => {
     if (
       !(element instanceof HTMLInputElement)
@@ -3692,7 +3738,23 @@ const WINDOW_UI_INTERACTION_SCRIPT: &str = r#"
       if (!['true', 'false'].includes(value.toLowerCase())) {
         return { ok: false, error: `Element ${selector} accepts only true or false` };
       }
-      if (!setCheckableInput(value.toLowerCase() === 'true')) {
+      const checked = value.toLowerCase() === 'true';
+      const checkedSetter = Object.getOwnPropertyDescriptor(
+        HTMLInputElement.prototype,
+        'checked',
+      )?.set;
+      if (!checkedSetter) {
+        return { ok: false, error: `Element ${selector} has no checked setter` };
+      }
+      const previousChecked = element.checked;
+      const previousIndeterminate = element.indeterminate;
+      checkedSetter.call(element, checked);
+      element.indeterminate = false;
+      const validityIssues = nativeValidityIssues(element);
+      checkedSetter.call(element, previousChecked);
+      element.indeterminate = previousIndeterminate;
+      if (validityIssues.length > 0) return constraintFailure(validityIssues);
+      if (!setCheckableInput(checked)) {
         return { ok: false, error: `Element ${selector} has no checked setter` };
       }
     } else {
@@ -3753,6 +3815,11 @@ const WINDOW_UI_INTERACTION_SCRIPT: &str = r#"
             ok: false,
             error: `Element ${selector} cannot represent the requested value`,
           };
+        }
+        const validityIssues = nativeValidityIssues(element);
+        if (validityIssues.length > 0) {
+          setter.call(element, previousValue);
+          return constraintFailure(validityIssues);
         }
         element.dispatchEvent(new Event('input', { bubbles: true }));
         element.dispatchEvent(new Event('change', { bubbles: true }));

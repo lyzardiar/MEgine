@@ -79,6 +79,12 @@ test('whole-window agent capture is background-safe and addressable by window la
   assert.match(interactionScript, /requires a six-digit hexadecimal color/);
   assert.match(interactionScript, /cannot represent the requested value/);
   assert.match(interactionScript, /setter\.call\(element, previousValue\)/);
+  assert.match(interactionScript, /const nativeValidityIssues = \(target\) =>/);
+  assert.match(interactionScript, /'stepMismatch'/);
+  assert.match(interactionScript, /target\.value\.length < target\.minLength/);
+  assert.match(interactionScript, /return constraintFailure\(validityIssues\)/);
+  assert.match(bridge, /if \(result\.constraintViolation\) \{/);
+  assert.match(bridge, /validityIssues: result\.validityIssues \?\? \[\]/);
   assert.match(interactionScript, /is blocked by active modal dialog/);
   assert.match(interactionScript, /modalBlocked: true/);
   assert.match(interactionScript, /activeModal\.contains\(targetElement\)/);

@@ -1076,6 +1076,18 @@ class AgentBridge {
           },
         );
       }
+      if (result.constraintViolation) {
+        throw new BridgeError(
+          'INVALID_ARGS',
+          result.error ?? 'Editor UI value violates native control constraints',
+          {
+            windowLabel,
+            selector,
+            constraintViolation: true,
+            validityIssues: result.validityIssues ?? [],
+          },
+        );
+      }
       throw new BridgeError('INVALID_ARGS', result.error ?? 'Editor UI interaction failed');
     }
     return result;
