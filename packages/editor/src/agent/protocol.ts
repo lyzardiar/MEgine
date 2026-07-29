@@ -32,6 +32,14 @@ export interface ScreenshotResult {
   backgroundSafe?: boolean;
   /** CSS-pixel clip relative to the captured WebView viewport. */
   region?: EditorUiRect;
+  /** Semantic selector used for a revision-guarded element capture. */
+  selector?: string;
+  /** UI snapshot revision that authorized an element capture. */
+  snapshotRevision?: string;
+  /** Complete element bounds before clipping to the visible viewport. */
+  elementRect?: EditorUiRect;
+  /** True when only the visible intersection of the element was captured. */
+  clipped?: boolean;
 }
 
 export type ViewportTab = 'scene' | 'game';

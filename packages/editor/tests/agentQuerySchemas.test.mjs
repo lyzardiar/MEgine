@@ -63,6 +63,12 @@ test('query schemas accept documented read shapes and reject malformed or extra 
       height: 200,
       maxSize: 1_024,
     }],
+    ['view.capture_element', {
+      windowLabel: 'main',
+      selector: '#sprite-atlas-preview',
+      expectedSnapshotRevision: 'ui-v20-100-0123456789abcdef',
+      maxSize: 1_024,
+    }],
     ['window.ui_snapshot', { windowLabel: 'main', maxElements: 2_000, offset: 0 }],
     ['window.ui_snapshot', {
       maxElements: 50,
@@ -135,6 +141,14 @@ test('query schemas accept documented read shapes and reject malformed or extra 
     ['view.window_screenshot', { maxSize: 4_097 }],
     ['view.capture_region', { x: 0, y: 0, width: 0, height: 100 }],
     ['view.capture_region', { x: -1, y: 0, width: 100, height: 100 }],
+    ['view.capture_element', {
+      selector: '#sprite-atlas-preview',
+      expectedSnapshotRevision: 'not-a-snapshot-revision',
+    }],
+    ['view.capture_element', {
+      selector: '   ',
+      expectedSnapshotRevision: 'ui-v20-100-0123456789abcdef',
+    }],
     ['window.ui_snapshot', { maxElements: 49 }],
     ['window.ui_snapshot', { maxElements: 50, offset: 50 }],
     ['window.ui_snapshot', {

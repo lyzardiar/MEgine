@@ -1594,6 +1594,51 @@ mod transport_tests {
         )
         .is_err());
     }
+
+    #[test]
+    fn element_capture_regions_clip_to_the_visible_viewport() {
+        let inside = WindowCaptureRegion {
+            x: 10.0,
+            y: 20.0,
+            width: 300.0,
+            height: 200.0,
+        };
+        assert_eq!(
+            clipped_element_capture_region(inside, 1_280.0, 720.0).unwrap(),
+            (inside, false)
+        );
+        assert_eq!(
+            clipped_element_capture_region(
+                WindowCaptureRegion {
+                    x: -20.0,
+                    y: 650.0,
+                    width: 100.0,
+                    height: 100.0,
+                },
+                1_280.0,
+                720.0,
+            )
+            .unwrap(),
+            (
+                WindowCaptureRegion {
+                    x: 0.0,
+                    y: 650.0,
+                    width: 80.0,
+                    height: 70.0,
+                },
+                true,
+            )
+        );
+        assert!(clipped_element_capture_region(
+            WindowCaptureRegion {
+                x: 1_300.0,
+                ..inside
+            },
+            1_280.0,
+            720.0,
+        )
+        .is_err());
+    }
 }
 
 // ── Background-safe editor-window observation ───────────────────────────────
@@ -1670,6 +1715,47 @@ fn validated_capture_region(
     Ok(region)
 }
 
+fn clipped_element_capture_region(
+    element_rect: WindowCaptureRegion,
+    viewport_width: f64,
+    viewport_height: f64,
+) -> Result<(WindowCaptureRegion, bool), String> {
+    if ![
+        element_rect.x,
+        element_rect.y,
+        element_rect.width,
+        element_rect.height,
+        viewport_width,
+        viewport_height,
+    ]
+    .iter()
+    .all(|value| value.is_finite())
+    {
+        return Err("element bounds and viewport coordinates must be finite".to_string());
+    }
+    if element_rect.width <= 0.0 || element_rect.height <= 0.0 {
+        return Err("semantic element must have positive rendered bounds".to_string());
+    }
+    if viewport_width <= 0.0 || viewport_height <= 0.0 {
+        return Err("WebView2 viewport dimensions must be positive".to_string());
+    }
+    let left = element_rect.x.max(0.0);
+    let top = element_rect.y.max(0.0);
+    let right = (element_rect.x + element_rect.width).min(viewport_width);
+    let bottom = (element_rect.y + element_rect.height).min(viewport_height);
+    if right <= left || bottom <= top {
+        return Err("semantic element is outside the current WebView2 viewport".to_string());
+    }
+    let region = WindowCaptureRegion {
+        x: left,
+        y: top,
+        width: right - left,
+        height: bottom - top,
+    };
+    let clipped = region != element_rect;
+    Ok((region, clipped))
+}
+
 #[derive(Clone, serde::Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct WindowCapture {
@@ -1688,6 +1774,14 @@ pub struct WindowCapture {
     region: Option<WindowCaptureRegion>,
 }
 
+#[derive(serde::Deserialize)]
+#[serde(rename_all = "camelCase")]
+struct ResolvedWindowElementBounds {
+    element_rect: WindowCaptureRegion,
+    viewport_width: f64,
+    viewport_height: f64,
+}
+
 /// Webview -> Rust: capture one editor webview (menus, panels and rendered
 /// content). The target defaults to the main window, but detached panel/editor
 /// windows can be addressed by label as returned by `list_editor_windows`.
@@ -1701,6 +1795,115 @@ pub async fn capture_editor_window(
     let window_label = window_label.unwrap_or_else(|| "main".to_string());
     let max_size = validated_screenshot_max_size(max_size)?;
     capture_editor_window_impl(app, window_label, max_size, region).await
+}
+
+/// Capture the currently visible portion of one semantic element. The selector
+/// is resolved only through the guarded snapshot that exposed it, then the
+/// snapshot is checked again after capture so a caller never receives evidence
+/// silently associated with stale UI content.
+#[tauri::command]
+pub async fn capture_editor_window_element(
+    app: AppHandle,
+    window_label: Option<String>,
+    selector: String,
+    expected_snapshot_revision: String,
+    max_size: Option<u32>,
+) -> Result<serde_json::Value, String> {
+    let window_label = window_label.unwrap_or_else(|| "main".to_string());
+    let selector = selector.trim().to_string();
+    if selector.is_empty() || selector.len() > 1_000 {
+        return Err("selector must contain 1 to 1000 characters".to_string());
+    }
+    let expected_snapshot_revision = expected_snapshot_revision.trim().to_string();
+    if !valid_ui_snapshot_revision(&expected_snapshot_revision) {
+        return Err(
+            "expectedSnapshotRevision must be a snapshotRevision returned by inspect_editor_window"
+                .to_string(),
+        );
+    }
+    let max_size = validated_screenshot_max_size(max_size)?;
+    let current_snapshot =
+        inspect_editor_window_impl(app.clone(), window_label.clone(), 50, 0).await?;
+    let actual_snapshot_revision = current_snapshot
+        .get("snapshotRevision")
+        .and_then(serde_json::Value::as_str)
+        .ok_or_else(|| "editor UI snapshot did not contain a revision".to_string())?;
+    if actual_snapshot_revision != expected_snapshot_revision {
+        return Ok(serde_json::json!({
+            "ok": false,
+            "error": "Editor window semantic content changed; get a fresh UI snapshot before capturing the element",
+            "staleSnapshot": true,
+            "expectedSnapshotRevision": expected_snapshot_revision,
+            "actualSnapshotRevision": actual_snapshot_revision,
+            "restartOffset": 0,
+        }));
+    }
+    let resolved = resolve_editor_window_element_bounds_impl(
+        app.clone(),
+        window_label.clone(),
+        selector.clone(),
+        expected_snapshot_revision.clone(),
+    )
+    .await?;
+    if resolved.get("ok").and_then(serde_json::Value::as_bool) == Some(false) {
+        return Ok(resolved);
+    }
+    let bounds: ResolvedWindowElementBounds =
+        serde_json::from_value(resolved).map_err(|error| {
+            format!("WebView2 semantic element bounds had an invalid shape: {error}")
+        })?;
+    let (region, clipped) = match clipped_element_capture_region(
+        bounds.element_rect,
+        bounds.viewport_width,
+        bounds.viewport_height,
+    ) {
+        Ok(value) => value,
+        Err(error) => {
+            return Ok(serde_json::json!({
+                "ok": false,
+                "error": error,
+                "notVisible": true,
+                "selector": selector,
+                "expectedSnapshotRevision": expected_snapshot_revision,
+            }));
+        }
+    };
+    let capture =
+        capture_editor_window_impl(app.clone(), window_label.clone(), max_size, Some(region))
+            .await?;
+    let post_snapshot = inspect_editor_window_impl(app, window_label.clone(), 50, 0).await?;
+    let post_snapshot_revision = post_snapshot
+        .get("snapshotRevision")
+        .and_then(serde_json::Value::as_str)
+        .ok_or_else(|| "editor UI snapshot did not contain a post-capture revision".to_string())?;
+    if post_snapshot_revision != expected_snapshot_revision {
+        return Ok(serde_json::json!({
+            "ok": false,
+            "error": "Editor window semantic content changed during element capture; discard the image and retry from a fresh UI snapshot",
+            "staleSnapshot": true,
+            "expectedSnapshotRevision": expected_snapshot_revision,
+            "actualSnapshotRevision": post_snapshot_revision,
+            "restartOffset": 0,
+        }));
+    }
+    let mut result = serde_json::to_value(capture)
+        .map_err(|error| format!("could not encode capture: {error}"))?;
+    let object = result
+        .as_object_mut()
+        .ok_or_else(|| "encoded element capture was not an object".to_string())?;
+    object.insert("ok".to_string(), serde_json::Value::Bool(true));
+    object.insert("selector".to_string(), serde_json::Value::String(selector));
+    object.insert(
+        "snapshotRevision".to_string(),
+        serde_json::Value::String(expected_snapshot_revision),
+    );
+    object.insert(
+        "elementRect".to_string(),
+        serde_json::to_value(bounds.element_rect)
+            .map_err(|error| format!("could not encode element bounds: {error}"))?,
+    );
+    object.insert("clipped".to_string(), serde_json::Value::Bool(clipped));
+    Ok(result)
 }
 
 /// Return a bounded semantic snapshot of one editor webview. Unlike a bitmap,
@@ -2216,6 +2419,27 @@ async fn inspect_editor_window_impl(
 }
 
 #[cfg(windows)]
+async fn resolve_editor_window_element_bounds_impl(
+    app: AppHandle,
+    window_label: String,
+    selector: String,
+    expected_snapshot_revision: String,
+) -> Result<serde_json::Value, String> {
+    use base64::Engine as _;
+    let payload = serde_json::json!({
+        "selector": selector,
+        "expectedSnapshotRevision": expected_snapshot_revision,
+    })
+    .to_string();
+    let payload = base64::engine::general_purpose::STANDARD.encode(payload);
+    let expression = WINDOW_UI_ELEMENT_BOUNDS_SCRIPT.replace(
+        "__MENGINE_PAYLOAD_BASE64__",
+        &serde_json::to_string(&payload).map_err(|error| error.to_string())?,
+    );
+    evaluate_webview_script(&app, &window_label, expression).await
+}
+
+#[cfg(windows)]
 async fn read_editor_ui_content_impl(
     app: AppHandle,
     window_label: String,
@@ -2421,6 +2645,16 @@ async fn inspect_editor_window_impl(
     _offset: usize,
 ) -> Result<serde_json::Value, String> {
     Err("background editor-window inspection is currently only supported on Windows".to_string())
+}
+
+#[cfg(not(windows))]
+async fn resolve_editor_window_element_bounds_impl(
+    _app: AppHandle,
+    _window_label: String,
+    _selector: String,
+    _expected_snapshot_revision: String,
+) -> Result<serde_json::Value, String> {
+    Err("background editor-element capture is currently only supported on Windows".to_string())
 }
 
 #[cfg(not(windows))]
@@ -3309,6 +3543,93 @@ const WINDOW_UI_SNAPSHOT_SCRIPT: &str = r#"
 "#;
 
 /// Exact, paged element content read. Password values remain inaccessible.
+#[cfg(windows)]
+const WINDOW_UI_ELEMENT_BOUNDS_SCRIPT: &str = r#"
+(() => {
+  const payload = JSON.parse(new TextDecoder().decode(Uint8Array.from(
+    atob(__MENGINE_PAYLOAD_BASE64__),
+    (character) => character.charCodeAt(0),
+  )));
+  const { selector, expectedSnapshotRevision } = payload;
+  const revisionGuard = window[Symbol.for('mengine.agent.uiRevisionGuard')];
+  const guardedRevision = revisionGuard?.revisions?.get(expectedSnapshotRevision);
+  if (!guardedRevision || guardedRevision.epoch !== revisionGuard?.epoch) {
+    return {
+      ok: false,
+      error: 'Editor window semantic snapshot expired before element capture',
+      staleSnapshot: true,
+      expectedSnapshotRevision,
+      actualSnapshotRevision: null,
+      restartOffset: 0,
+    };
+  }
+  const guardedElement = guardedRevision.elements?.get(selector);
+  if (!guardedElement) {
+    return {
+      ok: false,
+      error: `Selector ${selector} was not exposed by the expected semantic UI snapshot`,
+      selectorNotExposed: true,
+      expectedSnapshotRevision,
+    };
+  }
+  const element = document.querySelector(selector);
+  if (element !== guardedElement.element) {
+    return {
+      ok: false,
+      error: 'Editor window semantic element changed before capture',
+      staleSnapshot: true,
+      expectedSnapshotRevision,
+      actualSnapshotRevision: null,
+      restartOffset: 0,
+    };
+  }
+  if (!(element instanceof HTMLElement || element instanceof SVGElement)) {
+    return {
+      ok: false,
+      error: `Selector ${selector} no longer resolves to a renderable semantic element`,
+      notVisible: true,
+      expectedSnapshotRevision,
+    };
+  }
+  if (element.closest('[aria-hidden="true"], [inert]')) {
+    return {
+      ok: false,
+      error: `Selector ${selector} is hidden from the semantic accessibility tree`,
+      notVisible: true,
+      expectedSnapshotRevision,
+    };
+  }
+  const style = getComputedStyle(element);
+  const rect = element.getBoundingClientRect();
+  if (
+    style.display === 'none'
+    || style.visibility === 'hidden'
+    || Number(style.opacity) === 0
+    || element.hidden
+    || rect.width <= 0
+    || rect.height <= 0
+  ) {
+    return {
+      ok: false,
+      error: `Selector ${selector} is not currently rendered`,
+      notVisible: true,
+      expectedSnapshotRevision,
+    };
+  }
+  return {
+    ok: true,
+    elementRect: {
+      x: rect.x,
+      y: rect.y,
+      width: rect.width,
+      height: rect.height,
+    },
+    viewportWidth: document.documentElement.clientWidth,
+    viewportHeight: document.documentElement.clientHeight,
+  };
+})()
+"#;
+
 #[cfg(windows)]
 const WINDOW_UI_CONTENT_SCRIPT: &str = r#"
 (() => {

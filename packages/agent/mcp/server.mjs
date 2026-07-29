@@ -1409,6 +1409,46 @@ const TOOLS = [
     })),
   },
   {
+    name: 'capture_window_element',
+    description:
+      'Capture the visible portion of one semantic UI element without activating its editor window. Pass the exact selector and snapshotRevision returned together by get_window_ui. Native code revalidates the selector identity, clips it to the viewport, and rejects stale snapshots before returning image evidence.',
+    inputSchema: {
+      type: 'object',
+      required: ['selector', 'expectedSnapshotRevision'],
+      properties: {
+        windowLabel: {
+          type: 'string',
+          description: 'Window label from window.list; default main',
+        },
+        selector: {
+          type: 'string',
+          minLength: 1,
+          pattern: '\\S',
+          description: 'Exact semantic selector returned by window.ui_snapshot',
+        },
+        expectedSnapshotRevision: {
+          type: 'string',
+          pattern: '^ui-v\\d+-\\d+-[0-9a-f]{16}$',
+          maxLength: 64,
+          description: 'snapshotRevision that exposed the selector',
+        },
+        maxSize: {
+          type: 'integer',
+          minimum: 256,
+          maximum: 4096,
+          description: 'Maximum output width or height in pixels; default 2048',
+        },
+      },
+      additionalProperties: false,
+    },
+    handler: async (args) => screenshotContent(await bridgeQuery('view.capture_element', {
+      windowLabel: args.windowLabel || 'main',
+      selector: args.selector,
+      expectedSnapshotRevision: args.expectedSnapshotRevision,
+      maxSize: args.maxSize || 2048,
+    })),
+  },
+  {
     name: 'list_windows',
     description:
       'List every editor window currently open: the main window, detached panels (panel-*), and floating editor windows (editor-*), with canonical typeId (plus the compatible editorType alias), title, position, size, visibility and focus.',

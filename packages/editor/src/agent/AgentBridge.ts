@@ -783,6 +783,76 @@ class AgentBridge {
   }
 
   /**
+   * Resolve and capture one semantic selector against the exact snapshot that
+   * exposed it. Native code clips oversized/partly visible elements to the
+   * viewport and rejects stale identities before returning visual evidence.
+   */
+  async captureWindowElement(
+    windowLabel: string,
+    selector: string,
+    expectedSnapshotRevision: string,
+    maxSize = DEFAULT_SCREENSHOT_MAX_SIZE,
+  ): Promise<ScreenshotResult> {
+    if (!isDesktopEditor()) {
+      throw new BridgeError('NOT_READY', 'Editor-window element capture requires the desktop editor');
+    }
+    if (!selector) {
+      throw new BridgeError('INVALID_ARGS', 'Editor-window element capture requires a selector');
+    }
+    if (!/^ui-v\d+-\d+-[0-9a-f]{16}$/.test(expectedSnapshotRevision ?? '')) {
+      throw new BridgeError(
+        'INVALID_ARGS',
+        'Editor-window element capture requires expectedSnapshotRevision from window.ui_snapshot',
+      );
+    }
+    const result = await this.scheduleScreenshot(() => invoke<ScreenshotResult & {
+      ok?: boolean;
+      error?: string;
+      staleSnapshot?: boolean;
+      selectorNotExposed?: boolean;
+      notVisible?: boolean;
+      expectedSnapshotRevision?: string;
+      actualSnapshotRevision?: string | null;
+      restartOffset?: number;
+    }>(
+      'capture_editor_window_element',
+      {
+        windowLabel,
+        selector,
+        expectedSnapshotRevision,
+        maxSize: normalizeScreenshotMaxSize(maxSize),
+      },
+    ));
+    if (result.ok === false) {
+      if (result.staleSnapshot) {
+        throw new BridgeError(
+          'STALE_REVISION',
+          result.error ?? 'Editor UI snapshot changed during element capture',
+          {
+            windowLabel,
+            selector,
+            expectedSnapshotRevision: result.expectedSnapshotRevision,
+            actualSnapshotRevision: result.actualSnapshotRevision,
+            restartOffset: result.restartOffset ?? 0,
+          },
+        );
+      }
+      throw new BridgeError(
+        'INVALID_ARGS',
+        result.error ?? 'Editor UI element could not be captured',
+        {
+          windowLabel,
+          selector,
+          expectedSnapshotRevision,
+          selectorNotExposed: Boolean(result.selectorNotExposed),
+          notVisible: Boolean(result.notVisible),
+        },
+      );
+    }
+    return result;
+  }
+
+  /**
    * Serialize bitmap captures and leave a short cool-down after each one.
    * Semantic snapshots remain unthrottled, so agents can inspect rapidly
    * without repeatedly allocating multi-megabyte encoded images.
@@ -4821,6 +4891,17 @@ class AgentBridge {
             width: requiredPositiveInteger(params, 'width'),
             height: requiredPositiveInteger(params, 'height'),
           },
+          typeof params.maxSize === 'number'
+            ? params.maxSize
+            : DEFAULT_SCREENSHOT_MAX_SIZE,
+        );
+      case 'view.capture_element':
+        return this.captureWindowElement(
+          typeof params.windowLabel === 'string' && params.windowLabel
+            ? params.windowLabel
+            : 'main',
+          requiredString(params, 'selector'),
+          requiredString(params, 'expectedSnapshotRevision'),
           typeof params.maxSize === 'number'
             ? params.maxSize
             : DEFAULT_SCREENSHOT_MAX_SIZE,

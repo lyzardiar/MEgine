@@ -33,7 +33,7 @@ test('whole-window agent capture is background-safe and addressable by window la
   assert.ok(interactionScript);
   assert.equal(
     [...rust.matchAll(/new TextDecoder\(\)\.decode\(Uint8Array\.from\(/g)].length,
-    2,
+    3,
   );
 
   assert.match(native, /type_id: Option<String>/);
@@ -42,11 +42,19 @@ test('whole-window agent capture is background-safe and addressable by window la
   assert.match(protocol, /editorType: string \| null/);
   assert.match(rust, /Page\.captureScreenshot/);
   assert.match(rust, /validated_capture_region/);
+  assert.match(rust, /clipped_element_capture_region/);
   assert.match(rust, /page_x \+ clip\.x/);
   assert.match(rust, /Runtime\.evaluate/);
   assert.match(rust, /WINDOW_UI_SNAPSHOT_SCRIPT/);
   assert.match(rust, /state\.checked = element\.indeterminate \? 'mixed' : element\.checked/);
   assert.match(rust, /WINDOW_UI_CONTENT_SCRIPT/);
+  assert.match(rust, /WINDOW_UI_ELEMENT_BOUNDS_SCRIPT/);
+  assert.match(rust, /guardedRevision\.elements\?\.get\(selector\)/);
+  assert.match(rust, /element !== guardedElement\.element/);
+  assert.match(rust, /semantic content changed during element capture/);
+  assert.match(protocol, /snapshotRevision\?: string/);
+  assert.match(protocol, /elementRect\?: EditorUiRect/);
+  assert.match(protocol, /clipped\?: boolean/);
   assert.match(rust, /Password values cannot be read/);
   assert.match(contentScript, /guardedRevision\?\.epoch !== revisionGuard\.epoch/);
   assert.match(contentScript, /const semanticName = \(target\) =>/);
@@ -116,7 +124,7 @@ test('whole-window agent capture is background-safe and addressable by window la
   );
   assert.equal(
     [...rust.matchAll(/guardedRevision\.elements\?\.get\(/g)].length,
-    3,
+    4,
   );
   assert.match(contentScript, /element !== guardedElement\.element/);
   assert.match(contentScript, /selectorNotExposed: true/);
@@ -152,7 +160,7 @@ test('whole-window agent capture is background-safe and addressable by window la
   assert.equal([...rust.matchAll(/const semanticallyHidden = \(/g)].length, 3);
   assert.equal(
     [...rust.matchAll(/\.closest\('\[aria-hidden="true"\], \[inert\]'\)/g)].length,
-    3,
+    4,
   );
   assert.equal([...rust.matchAll(/const semanticText = \(/g)].length, 3);
   assert.equal([...rust.matchAll(/includeHiddenSubtree = false/g)].length, 3);
@@ -649,6 +657,7 @@ test('whole-window agent capture is background-safe and addressable by window la
   assert.match(mcp, /'set_entity_layers'/);
   assert.match(mcp, /'set_entities_active'/);
   assert.match(mcp, /name: 'capture_window_region'/);
+  assert.match(mcp, /name: 'capture_window_element'/);
   assert.match(mcp, /'add_component_to_entities'/);
   assert.match(mcp, /'remove_component_from_entities'/);
   assert.match(mcp, /'set_component_on_entities'/);
