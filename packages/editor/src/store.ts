@@ -995,10 +995,10 @@ export function createEditorStore(undoService: EditorUndoService = createEditorU
         if (entity) entity.parent = plan.parent;
       }
       if (preservedWorld.size) {
-        const after = buildWorldTransforms(editEntities);
+        const after = buildWorldTransforms(current);
         for (const [id, worldTransform] of preservedWorld) {
           const entity = find(id);
-          const parentTransform = parentWorldTransform(editEntities, after, id);
+          const parentTransform = parentWorldTransform(current, after, id);
           if (!entity?.components.Transform || !parentTransform) continue;
           entity.components.Transform = worldTransformToLocal(parentTransform, worldTransform);
         }
