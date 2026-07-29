@@ -103,6 +103,7 @@ import {
   SORTING_LAYERS_CHANGED_EVENT,
 } from './sortingLayers';
 import {
+  discardResourceDocument,
   mergeSaveAllResults,
   RemoteSaveCoordinator,
   saveAllResources,
@@ -185,6 +186,7 @@ type WorkspaceSyncMessage =
       requestId: string;
       targets: string[];
       paths?: string[];
+      operation?: 'save' | 'discard';
     }
   | {
       type: 'save-resources-result';
@@ -370,6 +372,7 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
   const remoteSaveCoordinator = useRef<RemoteSaveCoordinator | null>(null);
   const saveResourcesInFlight = useRef<Promise<SaveAllResult> | null>(null);
   const saveDocumentInFlight = useRef(new Map<string, Promise<SaveAllResult>>());
+  const discardDocumentInFlight = useRef(new Map<string, Promise<SaveAllResult>>());
   const recoveryTimer = useRef<number | null>(null);
   const lastRecoveryError = useRef<string | null>(null);
   const lastAssetPollError = useRef<string | null>(null);
@@ -450,6 +453,21 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
     }
   };
 
+  const discardLocalResourceDocument = async (path: string): Promise<SaveAllResult> => {
+    const key = path.replace(/\\/g, '/').toLocaleLowerCase();
+    const existing = discardDocumentInFlight.current.get(key);
+    if (existing) return existing;
+    const request = discardResourceDocument(path);
+    discardDocumentInFlight.current.set(key, request);
+    try {
+      return await request;
+    } finally {
+      if (discardDocumentInFlight.current.get(key) === request) {
+        discardDocumentInFlight.current.delete(key);
+      }
+    }
+  };
+
   const waitForLocalResourcesClean = async (timeoutMs = 2_000): Promise<boolean> => {
     const deadline = Date.now() + timeoutMs;
     do {
@@ -475,6 +493,23 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
       (candidate) => sameAssetPath(candidate.path, path),
     );
     return Boolean(document && !document.dirty);
+  };
+
+  const waitForLocalResourceDocumentDiscarded = async (
+    path: string,
+    timeoutMs = 2_000,
+  ): Promise<boolean> => {
+    const deadline = Date.now() + timeoutMs;
+    do {
+      await new Promise((resolve) => window.setTimeout(resolve, 25));
+      const document = localResourceDocumentsRef.current.find(
+        (candidate) => sameAssetPath(candidate.path, path),
+      );
+      if (!document || !document.dirty) return true;
+    } while (Date.now() < deadline);
+    return !localResourceDocumentsRef.current.some(
+      (candidate) => sameAssetPath(candidate.path, path) && candidate.dirty,
+    );
   };
 
   useEffect(() => {
@@ -1093,6 +1128,7 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
         requestId: request.requestId,
         targets: request.targets,
         ...(request.paths ? { paths: request.paths } : {}),
+        ...(request.operation ? { operation: request.operation } : {}),
       } satisfies WorkspaceSyncMessage);
     });
     remoteSaveCoordinator.current = saveCoordinator;
@@ -1110,11 +1146,16 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
       if (message.type === 'request-save-resources') {
         if (!message.targets.includes(syncSender.current)) return;
         void (async () => {
+          const discarding = message.operation === 'discard';
           let result: SaveAllResult;
           try {
             result = message.paths?.length
               ? mergeSaveAllResults(await Promise.all(
-                  message.paths.map((path) => saveLocalResourceDocument(path)),
+                  message.paths.map((path) => (
+                    discarding
+                      ? discardLocalResourceDocument(path)
+                      : saveLocalResourceDocument(path)
+                  )),
                 ))
               : await saveLocalResources();
           } catch (reason) {
@@ -1133,10 +1174,16 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
                       const document = localResourceDocumentsRef.current.find(
                         (candidate) => sameAssetPath(candidate.path, path),
                       );
-                      return Boolean(document && !document.dirty);
+                      return discarding
+                        ? !document || !document.dirty
+                        : Boolean(document && !document.dirty);
                     })
                   : (await Promise.all(
-                      message.paths.map((path) => waitForLocalResourceDocumentClean(path)),
+                      message.paths.map((path) => (
+                        discarding
+                          ? waitForLocalResourceDocumentDiscarded(path)
+                          : waitForLocalResourceDocumentClean(path)
+                      )),
                     )).every(Boolean)
               )
             : (
@@ -1150,7 +1197,9 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
               failures: [{
                 label: message.paths?.join(', ') ?? props.detachedPanel ?? 'Workspace resources',
                 error: message.paths?.length
-                  ? 'The requested document remains dirty after its save participant completed'
+                  ? `The requested document remains dirty after its ${
+                      discarding ? 'discard' : 'save'
+                    } participant completed`
                   : 'Workspace remains dirty after its Save All participants completed',
               }],
             };
@@ -1732,6 +1781,56 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
       return { name };
     },
   };
+  const resolveWorkspaceDocumentMutationTarget = async (requestedPath: string) => {
+    const remotePeers = await queryRemoteWorkspacePeers();
+    const localMatches = localResourceDocumentsRef.current.filter(
+      (document) => sameAssetPath(document.path, requestedPath),
+    );
+    const remoteMatches = remotePeers.flatMap((peer) => (
+      peer.documents
+        .filter((document) => sameAssetPath(document.path, requestedPath))
+        .map((document) => ({ peer, document }))
+    ));
+    const matches = [
+      ...localMatches.map((document) => ({
+        host: 'main',
+        panel: document.panel,
+        document,
+        peer: null,
+      })),
+      ...remoteMatches.map(({ peer, document }) => ({
+        host: peer.sender,
+        panel: peer.panel,
+        document,
+        peer,
+      })),
+    ];
+    if (matches.length === 0) {
+      throw new BridgeError(
+        'INVALID_ARGS',
+        `No open resource document matches "${requestedPath}"`,
+      );
+    }
+    const dirtyMatches = matches.filter((match) => match.document.dirty);
+    const canonicalPath = (dirtyMatches[0] ?? matches[0]).document.path;
+    if (dirtyMatches.length === 0) return { canonicalPath, target: null };
+    const dirtyHosts = new Set(dirtyMatches.map((match) => match.host));
+    if (dirtyHosts.size > 1 || dirtyMatches.length > 1) {
+      throw new BridgeError(
+        'CONFLICT',
+        `Multiple editor windows contain dirty drafts for "${canonicalPath}"`,
+        {
+          hosts: dirtyMatches.map((match) => ({
+            panel: match.panel,
+            sender: match.host,
+            kind: match.document.kind,
+          })),
+        },
+      );
+    }
+    return { canonicalPath, target: dirtyMatches[0] };
+  };
+
   agentWorkspaceProviderRef.current = {
     assertDiskMutationAllowed: async (options = {}) => {
       if ((!options.allowSceneDirty && sceneDirtyRef.current) || resourceDirtyRef.current) {
@@ -1750,55 +1849,12 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
     },
     closeProject: closeWorkspaceProject,
     saveDocument: async (requestedPath: string) => {
-      const remotePeers = await queryRemoteWorkspacePeers();
-      const localMatches = localResourceDocumentsRef.current.filter(
-        (document) => sameAssetPath(document.path, requestedPath),
+      const { canonicalPath, target } = await resolveWorkspaceDocumentMutationTarget(
+        requestedPath,
       );
-      const remoteMatches = remotePeers.flatMap((peer) => (
-        peer.documents
-          .filter((document) => sameAssetPath(document.path, requestedPath))
-          .map((document) => ({ peer, document }))
-      ));
-      const matches = [
-        ...localMatches.map((document) => ({
-          host: 'main',
-          panel: document.panel,
-          document,
-          peer: null,
-        })),
-        ...remoteMatches.map(({ peer, document }) => ({
-          host: peer.sender,
-          panel: peer.panel,
-          document,
-          peer,
-        })),
-      ];
-      if (matches.length === 0) {
-        throw new BridgeError(
-          'INVALID_ARGS',
-          `No open resource document matches "${requestedPath}"`,
-        );
-      }
-      const dirtyMatches = matches.filter((match) => match.document.dirty);
-      const canonicalPath = (dirtyMatches[0] ?? matches[0]).document.path;
-      if (dirtyMatches.length === 0) {
+      if (!target) {
         return { path: canonicalPath, saved: false, unchanged: true };
       }
-      const dirtyHosts = new Set(dirtyMatches.map((match) => match.host));
-      if (dirtyHosts.size > 1 || dirtyMatches.length > 1) {
-        throw new BridgeError(
-          'CONFLICT',
-          `Multiple editor windows contain dirty drafts for "${canonicalPath}"`,
-          {
-            hosts: dirtyMatches.map((match) => ({
-              panel: match.panel,
-              sender: match.host,
-              kind: match.document.kind,
-            })),
-          },
-        );
-      }
-      const [target] = dirtyMatches;
       let result: SaveAllResult;
       if (target.peer) {
         const coordinator = remoteSaveCoordinator.current;
@@ -1844,6 +1900,60 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
       }
       postWorkspaceDirtyState();
       return { path: canonicalPath, saved: true, unchanged: false };
+    },
+    discardDocument: async (requestedPath: string) => {
+      const { canonicalPath, target } = await resolveWorkspaceDocumentMutationTarget(
+        requestedPath,
+      );
+      if (!target) {
+        return { path: canonicalPath, discarded: false, unchanged: true };
+      }
+      let result: SaveAllResult;
+      if (target.peer) {
+        const coordinator = remoteSaveCoordinator.current;
+        if (!coordinator) {
+          throw new BridgeError(
+            'NOT_READY',
+            'Workspace document channel is unavailable',
+          );
+        }
+        result = await coordinator.request(
+          [{ sender: target.peer.sender, panel: target.peer.panel }],
+          [canonicalPath],
+          'discard',
+        );
+      } else {
+        result = await discardLocalResourceDocument(canonicalPath);
+        if (
+          result.failures.length === 0
+          && !await waitForLocalResourceDocumentDiscarded(canonicalPath)
+        ) {
+          result = {
+            ...result,
+            failures: [{
+              label: canonicalPath,
+              error: 'The requested document remains dirty after its discard participant completed',
+            }],
+          };
+        }
+      }
+      if (result.failures.length > 0) {
+        throw new BridgeError(
+          'IO_ERROR',
+          `Could not discard "${canonicalPath}": ${
+            result.failures.map((failure) => failure.error).join('; ')
+          }`,
+          { failures: structuredClone(result.failures) },
+        );
+      }
+      if (result.saved.length === 0) {
+        throw new BridgeError(
+          'NOT_READY',
+          `No resource editor accepted the discard request for "${canonicalPath}"`,
+        );
+      }
+      postWorkspaceDirtyState();
+      return { path: canonicalPath, discarded: true, unchanged: false };
     },
     listDocuments: async () => {
       const remotePeers = await queryRemoteWorkspacePeers();

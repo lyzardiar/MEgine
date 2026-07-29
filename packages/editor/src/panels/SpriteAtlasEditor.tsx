@@ -24,6 +24,7 @@ import {
   PROJECT_ASSETS_CHANGED_EVENT,
 } from '../assetEditorEvents';
 import {
+  registerDiscardDocumentParticipant,
   registerSaveAllParticipant,
   registerSaveDocumentParticipant,
   sameSaveDocumentPath,
@@ -234,6 +235,11 @@ export function SpriteAtlasEditor(props: {
       ? async () => { await save(); }
       : null
   )), [asset, dirty, packing, props.assetPath, saving]);
+  useEffect(() => registerDiscardDocumentParticipant('Sprite Atlas', (path) => (
+    dirty && !loading && !saving && !packing && sameSaveDocumentPath(props.assetPath, path)
+      ? async () => { setReloadToken((value) => value + 1); }
+      : null
+  )), [dirty, loading, packing, props.assetPath, saving]);
 
   const pack = async () => {
     if (!asset || !props.assetPath) return;

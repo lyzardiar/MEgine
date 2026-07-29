@@ -32,6 +32,7 @@ import {
 } from '../projectAssets';
 import { pingProjectAsset } from '../pingBus';
 import {
+  registerDiscardDocumentParticipant,
   registerSaveAllParticipant,
   registerSaveDocumentParticipant,
   sameSaveDocumentPath,
@@ -645,6 +646,24 @@ function BaseMaterialEditor(props: MaterialEditorProps) {
       ? () => saveDocument(path)
       : null;
   }), [dirty, draftEpoch, material, props.assetPath, savedText, saving]);
+  useEffect(() => registerDiscardDocumentParticipant('Materials', (path) => {
+    if (loading || saving) return null;
+    if (dirty && sameSaveDocumentPath(props.assetPath, path)) {
+      return async () => {
+        props.undoService.clear(`material:${props.assetPath}`);
+        reloadFromDisk();
+      };
+    }
+    const entry = [...drafts.current].find(([draftPath]) => (
+      sameSaveDocumentPath(draftPath, path)
+    ));
+    if (!entry || !materialDraftDirty(entry[1])) return null;
+    return async () => {
+      props.undoService.clear(`material:${entry[0]}`);
+      drafts.current.delete(entry[0]);
+      setDraftEpoch((value) => value + 1);
+    };
+  }), [dirty, draftEpoch, loading, props.assetPath, saving]);
 
   const createNew = async () => {
     try {

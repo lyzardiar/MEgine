@@ -49,6 +49,7 @@ import {
   writeProjectAssetText,
 } from '../projectAssets';
 import {
+  registerDiscardDocumentParticipant,
   registerSaveAllParticipant,
   registerSaveDocumentParticipant,
   sameSaveDocumentPath,
@@ -1082,6 +1083,24 @@ export function Sequencer(props: SequencerProps) {
       ? () => saveDocument(path)
       : null;
   }), [asset, dirty, draftEpoch, payloadInvalid, props.assetPath, savedText, saving]);
+  useEffect(() => registerDiscardDocumentParticipant('Timelines', (path) => {
+    if (loading || saving) return null;
+    if (dirty && sameSaveDocumentPath(props.assetPath, path)) {
+      return async () => {
+        props.undoService.clear(`timeline:${props.assetPath}`);
+        reloadFromDisk();
+      };
+    }
+    const entry = [...drafts.current].find(([draftPath]) => (
+      sameSaveDocumentPath(draftPath, path)
+    ));
+    if (!entry || !sequencerDraftDirty(entry[1])) return null;
+    return async () => {
+      props.undoService.clear(`timeline:${entry[0]}`);
+      drafts.current.delete(entry[0]);
+      setDraftEpoch((value) => value + 1);
+    };
+  }), [dirty, draftEpoch, loading, props.assetPath, saving]);
 
   useEffect(() => {
     if (!props.previewEnabled || !playing || !asset) return;

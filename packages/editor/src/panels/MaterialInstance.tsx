@@ -32,6 +32,7 @@ import {
   writeProjectAssetText,
 } from '../projectAssets';
 import {
+  registerDiscardDocumentParticipant,
   registerSaveAllParticipant,
   registerSaveDocumentParticipant,
   sameSaveDocumentPath,
@@ -723,6 +724,24 @@ export function MaterialInstanceEditor(props: MaterialEditorProps) {
       ? () => saveDocument(path)
       : null;
   }), [dirty, draftEpoch, instance, props.assetPath, savedText, saving]);
+  useEffect(() => registerDiscardDocumentParticipant('Material Instances', (path) => {
+    if (loading || saving) return null;
+    if (dirty && sameSaveDocumentPath(props.assetPath, path)) {
+      return async () => {
+        props.undoService.clear(`material-instance:${props.assetPath}`);
+        reloadFromDisk();
+      };
+    }
+    const entry = [...drafts.current].find(([draftPath]) => (
+      sameSaveDocumentPath(draftPath, path)
+    ));
+    if (!entry || !instanceDraftDirty(entry[1])) return null;
+    return async () => {
+      props.undoService.clear(`material-instance:${entry[0]}`);
+      drafts.current.delete(entry[0]);
+      setDraftEpoch((value) => value + 1);
+    };
+  }), [dirty, draftEpoch, loading, props.assetPath, saving]);
 
   const createNew = async () => {
     try {

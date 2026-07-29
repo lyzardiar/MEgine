@@ -184,6 +184,7 @@ import {
   writeProjectAssetText,
 } from '../projectAssets';
 import {
+  registerDiscardDocumentParticipant,
   registerSaveAllParticipant,
   registerSaveDocumentParticipant,
   sameSaveDocumentPath,
@@ -2235,6 +2236,24 @@ export function Timeline(props: {
       ? () => persistDocument(path)
       : null;
   }), [clip, clipPath, dirty, draftEpoch, savedText, saving]);
+  useEffect(() => registerDiscardDocumentParticipant('Animation Clips', (path) => {
+    if (loading || saving) return null;
+    if (dirty && sameSaveDocumentPath(clipPath || null, path)) {
+      return async () => {
+        props.undoService.clear(`animation:${clipPath}`);
+        reloadFromDisk();
+      };
+    }
+    const entry = [...drafts.current].find(([draftPath]) => (
+      sameSaveDocumentPath(draftPath, path)
+    ));
+    if (!entry || !animationDraftDirty(entry[1])) return null;
+    return async () => {
+      props.undoService.clear(`animation:${entry[0]}`);
+      drafts.current.delete(entry[0]);
+      setDraftEpoch((value) => value + 1);
+    };
+  }), [clipPath, dirty, draftEpoch, loading, saving]);
 
   const createClip = async () => {
     if (!props.entity) return;

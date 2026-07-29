@@ -38,6 +38,7 @@ import {
   writeProjectAssetText,
 } from '../projectAssets';
 import {
+  registerDiscardDocumentParticipant,
   registerSaveAllParticipant,
   registerSaveDocumentParticipant,
   sameSaveDocumentPath,
@@ -748,6 +749,24 @@ function AnimatorControllerEditor(props: AnimatorEditorProps) {
       ? () => saveDocument(path)
       : null;
   }), [controller, dirty, draftEpoch, props.assetPath, savedFingerprint, saving]);
+  useEffect(() => registerDiscardDocumentParticipant('Animator Controllers', (path) => {
+    if (loading || saving) return null;
+    if (dirty && sameSaveDocumentPath(props.assetPath, path)) {
+      return async () => {
+        props.undoService.clear(`animator:${props.assetPath}`);
+        reloadFromDisk();
+      };
+    }
+    const entry = [...drafts.current].find(([draftPath]) => (
+      sameSaveDocumentPath(draftPath, path)
+    ));
+    if (!entry || !animatorDraftDirty(entry[1])) return null;
+    return async () => {
+      props.undoService.clear(`animator:${entry[0]}`);
+      drafts.current.delete(entry[0]);
+      setDraftEpoch((value) => value + 1);
+    };
+  }), [dirty, draftEpoch, loading, props.assetPath, saving]);
 
   const createNew = async () => {
     try {

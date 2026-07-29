@@ -26,6 +26,7 @@ import {
   writeProjectAssetText,
 } from '../projectAssets';
 import {
+  registerDiscardDocumentParticipant,
   registerSaveAllParticipant,
   registerSaveDocumentParticipant,
   sameSaveDocumentPath,
@@ -404,6 +405,24 @@ export function AvatarMaskEditor(props: {
       ? () => saveDocument(path)
       : null;
   }), [dirty, draftEpoch, mask, props.assetPath, saving]);
+  useEffect(() => registerDiscardDocumentParticipant('Avatar Masks', (path) => {
+    if (loading || saving) return null;
+    if (dirty && sameSaveDocumentPath(props.assetPath, path)) {
+      return async () => {
+        props.undoService.clear(`avatar-mask:${props.assetPath}`);
+        reloadFromDisk();
+      };
+    }
+    const entry = [...drafts.current].find(([draftPath]) => (
+      sameSaveDocumentPath(draftPath, path)
+    ));
+    if (!entry || !avatarMaskDraftDirty(entry[1])) return null;
+    return async () => {
+      props.undoService.clear(`avatar-mask:${entry[0]}`);
+      drafts.current.delete(entry[0]);
+      setDraftEpoch((value) => value + 1);
+    };
+  }), [dirty, draftEpoch, loading, props.assetPath, saving]);
 
   const createNew = async () => {
     try {

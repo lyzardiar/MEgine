@@ -13,6 +13,7 @@ import {
   validateSurfaceShaderSource,
 } from '../surfaceShader';
 import {
+  registerDiscardDocumentParticipant,
   registerSaveAllParticipant,
   registerSaveDocumentParticipant,
   sameSaveDocumentPath,
@@ -422,6 +423,24 @@ export function SurfaceShaderEditor(props: {
       ? () => saveDocument(path)
       : null;
   }), [dirty, draftEpoch, props.assetPath, savedSource, saving, source, validating]);
+  useEffect(() => registerDiscardDocumentParticipant('Surface Shaders', (path) => {
+    if (loading || saving || validating) return null;
+    if (dirty && sameSaveDocumentPath(props.assetPath, path)) {
+      return async () => {
+        props.undoService.clear(`surface-shader:${props.assetPath}`);
+        reloadFromDisk();
+      };
+    }
+    const entry = [...drafts.current].find(([draftPath]) => (
+      sameSaveDocumentPath(draftPath, path)
+    ));
+    if (!entry || entry[1].source === entry[1].savedSource) return null;
+    return async () => {
+      props.undoService.clear(`surface-shader:${entry[0]}`);
+      drafts.current.delete(entry[0]);
+      setDraftEpoch((value) => value + 1);
+    };
+  }), [dirty, draftEpoch, loading, props.assetPath, saving, validating]);
 
   if (!props.assetPath) {
     return <div className="material-empty"><strong>Surface Shader</strong><span>Create or double-click a .mshader asset.</span><button type="button" onClick={() => void createNew()}>Create Shader</button></div>;

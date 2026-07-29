@@ -1,5 +1,6 @@
 export const SAVE_ALL_RESOURCES_EVENT = 'mengine:save-all-resources';
 export const SAVE_RESOURCE_DOCUMENT_EVENT = 'mengine:save-resource-document';
+export const DISCARD_RESOURCE_DOCUMENT_EVENT = 'mengine:discard-resource-document';
 
 export type SaveAllTask = {
   label: string;
@@ -20,6 +21,7 @@ export type RemoteSaveRequest = {
   requestId: string;
   targets: string[];
   paths?: string[];
+  operation?: 'save' | 'discard';
 };
 
 type SaveAllRequest = { tasks: SaveAllTask[] };
@@ -28,6 +30,7 @@ type SaveDocumentRequest = SaveAllRequest & { path: string };
 type PendingRemoteSave = {
   peers: Map<string, RemoteSavePeer>;
   results: Map<string, SaveAllResult>;
+  operation: 'save' | 'discard';
   resolve: (result: SaveAllResult) => void;
   timeout: ReturnType<typeof setTimeout>;
 };
@@ -78,6 +81,7 @@ export class RemoteSaveCoordinator {
   request(
     peers: readonly RemoteSavePeer[],
     paths: readonly string[] = [],
+    operation: 'save' | 'discard' = 'save',
   ): Promise<SaveAllResult> {
     const uniquePeers = new Map<string, RemoteSavePeer>();
     for (const peer of peers) {
@@ -96,6 +100,7 @@ export class RemoteSaveCoordinator {
       this.pending.set(requestId, {
         peers: uniquePeers,
         results: new Map(),
+        operation,
         resolve,
         timeout,
       });
@@ -104,6 +109,7 @@ export class RemoteSaveCoordinator {
           requestId,
           targets: [...uniquePeers.keys()],
           ...(paths.length > 0 ? { paths: [...paths] } : {}),
+          ...(operation === 'discard' ? { operation } : {}),
         });
       } catch (reason) {
         clearTimeout(timeout);
@@ -113,7 +119,7 @@ export class RemoteSaveCoordinator {
           saved: [],
           failures: [...uniquePeers.values()].map((peer) => ({
             label: peer.panel,
-            error: `Could not request background save: ${error}`,
+            error: `Could not request background ${operation}: ${error}`,
           })),
         });
       }
@@ -148,7 +154,9 @@ export class RemoteSaveCoordinator {
           saved: [],
           failures: [{
             label: peer.panel,
-            error: `Background editor window did not respond within ${this.timeoutMs} ms`,
+            error: `Background editor window did not respond to ${pending.operation} within ${
+              this.timeoutMs
+            } ms`,
           }],
         });
       }
@@ -188,6 +196,19 @@ export function registerSaveDocumentParticipant(
   return () => window.removeEventListener(SAVE_RESOURCE_DOCUMENT_EVENT, listener);
 }
 
+export function registerDiscardDocumentParticipant(
+  label: string,
+  task: (path: string) => (() => Promise<void>) | null,
+): () => void {
+  const listener = (event: Event) => {
+    const request = (event as CustomEvent<SaveDocumentRequest>).detail;
+    const run = task(request.path);
+    if (run) request.tasks.push({ label, run });
+  };
+  window.addEventListener(DISCARD_RESOURCE_DOCUMENT_EVENT, listener);
+  return () => window.removeEventListener(DISCARD_RESOURCE_DOCUMENT_EVENT, listener);
+}
+
 export async function executeSaveAllTasks(tasks: readonly SaveAllTask[]): Promise<SaveAllResult> {
   const saved: string[] = [];
   const failures: SaveAllResult['failures'] = [];
@@ -214,8 +235,20 @@ export async function saveAllResources(): Promise<SaveAllResult> {
 }
 
 export async function saveResourceDocument(path: string): Promise<SaveAllResult> {
+  return executeResourceDocumentEvent(SAVE_RESOURCE_DOCUMENT_EVENT, path, 'save');
+}
+
+export async function discardResourceDocument(path: string): Promise<SaveAllResult> {
+  return executeResourceDocumentEvent(DISCARD_RESOURCE_DOCUMENT_EVENT, path, 'discard');
+}
+
+async function executeResourceDocumentEvent(
+  eventName: string,
+  path: string,
+  operation: 'save' | 'discard',
+): Promise<SaveAllResult> {
   const request: SaveDocumentRequest = { path, tasks: [] };
-  window.dispatchEvent(new CustomEvent<SaveDocumentRequest>(SAVE_RESOURCE_DOCUMENT_EVENT, {
+  window.dispatchEvent(new CustomEvent<SaveDocumentRequest>(eventName, {
     detail: request,
   }));
   if (request.tasks.length > 1) {
@@ -223,7 +256,7 @@ export async function saveResourceDocument(path: string): Promise<SaveAllResult>
       saved: [],
       failures: [{
         label: path,
-        error: `Multiple resource editors claimed this document: ${
+        error: `Multiple resource editors claimed this document for ${operation}: ${
           request.tasks.map((task) => task.label).join(', ')
         }`,
       }],

@@ -287,6 +287,11 @@ export interface AgentWorkspaceProvider {
     saved: boolean;
     unchanged: boolean;
   }>;
+  discardDocument: (path: string) => Promise<{
+    path: string;
+    discarded: boolean;
+    unchanged: boolean;
+  }>;
   listDocuments: () => Promise<AgentWorkspaceDocument[]>;
   openAsset: (target: AgentResourceEditorTarget) => Promise<void>;
   createAsset: (request: AgentCreateAssetRequest) => Promise<AgentCreateAssetResult>;
@@ -3969,6 +3974,12 @@ class AgentBridge {
     }
     if (commandId === 'workspace.save_document') {
       const result = await this.requireWorkspaceProvider().saveDocument(
+        requiredString(args, 'path'),
+      );
+      return this.finishAsyncCommand({ ok: true, data: result }, options);
+    }
+    if (commandId === 'workspace.discard_document') {
+      const result = await this.requireWorkspaceProvider().discardDocument(
         requiredString(args, 'path'),
       );
       return this.finishAsyncCommand({ ok: true, data: result }, options);

@@ -267,6 +267,9 @@ export const COMMAND_PARAMS_SCHEMAS: Record<string, AgentJsonSchema> = {
   'workspace.save_document': objectSchema({
     path: assetPath,
   }, ['path']),
+  'workspace.discard_document': objectSchema({
+    path: assetPath,
+  }, ['path']),
   'scene.load_json': objectSchema({
     json: stringValue(
       'Complete version 1 MEngine scene JSON (max 8 MiB and 20,000 entities)',

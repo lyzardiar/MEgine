@@ -23,6 +23,7 @@ import {
   PROJECT_ASSETS_CHANGED_EVENT,
 } from '../assetEditorEvents';
 import {
+  registerDiscardDocumentParticipant,
   registerSaveAllParticipant,
   registerSaveDocumentParticipant,
   sameSaveDocumentPath,
@@ -314,6 +315,11 @@ export function SpriteEditor(props: {
       }
       : null
   )), [basePath, dirty, saving, settings]);
+  useEffect(() => registerDiscardDocumentParticipant('Sprite Import Settings', (path) => (
+    dirty && !loading && !saving && sameSaveDocumentPath(basePath, path)
+      ? async () => { setReloadToken((value) => value + 1); }
+      : null
+  )), [basePath, dirty, loading, saving]);
 
   if (!basePath) {
     return <div className="sprite-editor-empty">Double-click a texture in Project to edit its sprite import settings.</div>;

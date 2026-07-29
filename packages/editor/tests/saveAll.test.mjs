@@ -2,8 +2,10 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 
 import {
+  discardResourceDocument,
   executeSaveAllTasks,
   mergeSaveAllResults,
+  registerDiscardDocumentParticipant,
   registerSaveDocumentParticipant,
   RemoteSaveCoordinator,
   sameSaveDocumentPath,
@@ -87,6 +89,35 @@ test('remote save coordinator includes exact document paths only when requested'
   });
 });
 
+test('remote save coordinator identifies exact discard requests', async () => {
+  let dispatched = null;
+  const coordinator = new RemoteSaveCoordinator(
+    (request) => { dispatched = request; },
+    100,
+    () => 'request-discard',
+  );
+  const pending = coordinator.request(
+    [{ sender: 'material-window', panel: 'material' }],
+    ['Assets/Materials/Target.mmat'],
+    'discard',
+  );
+
+  assert.deepEqual(dispatched, {
+    requestId: 'request-discard',
+    targets: ['material-window'],
+    paths: ['Assets/Materials/Target.mmat'],
+    operation: 'discard',
+  });
+  coordinator.accept('request-discard', 'material-window', {
+    saved: ['Assets/Materials/Target.mmat'],
+    failures: [],
+  });
+  assert.deepEqual(await pending, {
+    saved: ['material/Assets/Materials/Target.mmat'],
+    failures: [],
+  });
+});
+
 test('save resource document executes only the exact claimed document task', async () => {
   const previousWindow = globalThis.window;
   globalThis.window = new EventTarget();
@@ -116,6 +147,35 @@ test('save resource document executes only the exact claimed document task', asy
   }
 });
 
+test('discard resource document executes only the exact claimed document task', async () => {
+  const previousWindow = globalThis.window;
+  globalThis.window = new EventTarget();
+  const discarded = [];
+  const cleanups = [
+    registerDiscardDocumentParticipant('Materials', (path) => (
+      sameSaveDocumentPath(path, 'Assets/Materials/Target.mmat')
+        ? async () => { discarded.push(path); }
+        : null
+    )),
+    registerDiscardDocumentParticipant('Shaders', (path) => (
+      sameSaveDocumentPath(path, 'Assets/Shaders/Other.mshader')
+        ? async () => { discarded.push(path); }
+        : null
+    )),
+  ];
+  try {
+    assert.deepEqual(
+      await discardResourceDocument('assets\\materials\\TARGET.mmat'),
+      { saved: ['assets\\materials\\TARGET.mmat'], failures: [] },
+    );
+    assert.deepEqual(discarded, ['assets\\materials\\TARGET.mmat']);
+  } finally {
+    cleanups.forEach((cleanup) => cleanup());
+    if (previousWindow === undefined) delete globalThis.window;
+    else globalThis.window = previousWindow;
+  }
+});
+
 test('save resource document rejects ambiguous editor ownership without writing', async () => {
   const previousWindow = globalThis.window;
   globalThis.window = new EventTarget();
@@ -129,6 +189,28 @@ test('save resource document rejects ambiguous editor ownership without writing'
     assert.deepEqual(result.saved, []);
     assert.equal(result.failures.length, 1);
     assert.match(result.failures[0].error, /Multiple resource editors claimed/);
+    assert.equal(runs, 0);
+  } finally {
+    cleanups.forEach((cleanup) => cleanup());
+    if (previousWindow === undefined) delete globalThis.window;
+    else globalThis.window = previousWindow;
+  }
+});
+
+test('discard resource document rejects ambiguous editor ownership without mutation', async () => {
+  const previousWindow = globalThis.window;
+  globalThis.window = new EventTarget();
+  let runs = 0;
+  const cleanups = [
+    registerDiscardDocumentParticipant('First', () => async () => { runs += 1; }),
+    registerDiscardDocumentParticipant('Second', () => async () => { runs += 1; }),
+  ];
+  try {
+    const result = await discardResourceDocument('Assets/Duplicate.mmat');
+    assert.deepEqual(result.saved, []);
+    assert.equal(result.failures.length, 1);
+    assert.match(result.failures[0].error, /Multiple resource editors claimed/);
+    assert.match(result.failures[0].error, /discard/);
     assert.equal(runs, 0);
   } finally {
     cleanups.forEach((cleanup) => cleanup());
@@ -151,7 +233,7 @@ test('remote save coordinator reports a bounded timeout for every missing window
     saved: [],
     failures: [{
       label: 'timeline',
-      error: 'Background editor window did not respond within 5 ms',
+      error: 'Background editor window did not respond to save within 5 ms',
     }],
   });
 });

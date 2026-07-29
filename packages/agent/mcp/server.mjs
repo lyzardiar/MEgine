@@ -2075,6 +2075,18 @@ const TOOLS = [
     ['path'],
   ),
   execTool(
+    'discard_document',
+    'Discard exactly one open dirty resource draft by its Assets/... path without changing its file or any other resource draft. Clean documents return unchanged=true; documents that are not open are rejected.',
+    'workspace.discard_document',
+    {
+      path: {
+        type: 'string',
+        description: 'Exact open resource document path returned by list_open_documents',
+      },
+    },
+    ['path'],
+  ),
+  execTool(
     'load_scene_json',
     'Strictly validate and atomically replace the current authored scene world in memory. The operation creates one undo step, does not save to disk, and preserves the current Scene-view camera and project game resolution.',
     'scene.load_json',
@@ -3184,6 +3196,7 @@ const IDEMPOTENT_BRIDGE_COMMANDS = new Set([
   'scene.save',
   'scene.save_all',
   'workspace.save_document',
+  'workspace.discard_document',
   'asset.open',
   'build.settings.set_scenes',
   'build.settings.set_asset_policy',
