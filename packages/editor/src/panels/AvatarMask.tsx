@@ -440,7 +440,7 @@ export function AvatarMaskEditor(props: {
                 value={path}
                 onChange={(event) => update((draft) => { draft.paths[index] = event.target.value; })}
               />
-              <button type="button" title="Delete path" onClick={() => update((draft) => { draft.paths.splice(index, 1); }, 'Delete Avatar Mask Path')}>×</button>
+              <button type="button" aria-label={`Delete Avatar Mask path ${index + 1}`} title="Delete path" onClick={() => update((draft) => { draft.paths.splice(index, 1); }, 'Delete Avatar Mask Path')}>×</button>
             </div>
           ))}
         </section>

@@ -543,10 +543,11 @@ export function StringListField(props: {
               aria-label={`${props.label} ${index}`}
               onChange={(event) => update(index, event.target.value)}
             />
-            <button type="button" title="Move up" disabled={index === 0} onClick={() => move(index, -1)}>↑</button>
-            <button type="button" title="Move down" disabled={index === items.length - 1} onClick={() => move(index, 1)}>↓</button>
+            <button type="button" aria-label={`Move ${props.label} ${index + 1} up`} title="Move up" disabled={index === 0} onClick={() => move(index, -1)}>↑</button>
+            <button type="button" aria-label={`Move ${props.label} ${index + 1} down`} title="Move down" disabled={index === items.length - 1} onClick={() => move(index, 1)}>↓</button>
             <button
               type="button"
+              aria-label={`Remove ${props.label} ${index + 1}`}
               title="Remove"
               onClick={() => props.onChange(items.filter((_, itemIndex) => itemIndex !== index))}
             >
@@ -597,9 +598,9 @@ export function SpriteListField(props: {
               />
             </div>
             <div className="sprite-list-actions">
-              <button type="button" title="Move up" disabled={index === 0} onClick={() => move(index, -1)}>↑</button>
-              <button type="button" title="Move down" disabled={index === items.length - 1} onClick={() => move(index, 1)}>↓</button>
-              <button type="button" title="Remove" onClick={() => props.onChange(items.filter((_, candidate) => candidate !== index))}>×</button>
+              <button type="button" aria-label={`Move ${props.label} ${index + 1} up`} title="Move up" disabled={index === 0} onClick={() => move(index, -1)}>↑</button>
+              <button type="button" aria-label={`Move ${props.label} ${index + 1} down`} title="Move down" disabled={index === items.length - 1} onClick={() => move(index, 1)}>↓</button>
+              <button type="button" aria-label={`Remove ${props.label} ${index + 1}`} title="Remove" onClick={() => props.onChange(items.filter((_, candidate) => candidate !== index))}>×</button>
             </div>
           </div>
         ))}
@@ -642,9 +643,9 @@ export function Vector2ListField(props: {
             <span className="string-list-index">{index}</span>
             <input type="number" step="0.1" value={item[0]} aria-label={`${props.label} ${index} X`} onChange={(event) => update(index, 0, event.target.value)} />
             <input type="number" step="0.1" value={item[1]} aria-label={`${props.label} ${index} Y`} onChange={(event) => update(index, 1, event.target.value)} />
-            <button type="button" title="Move up" disabled={index === 0} onClick={() => move(index, -1)}>↑</button>
-            <button type="button" title="Move down" disabled={index === items.length - 1} onClick={() => move(index, 1)}>↓</button>
-            <button type="button" title="Remove" onClick={() => props.onChange(items.filter((_, itemIndex) => itemIndex !== index))}>×</button>
+            <button type="button" aria-label={`Move ${props.label} ${index + 1} up`} title="Move up" disabled={index === 0} onClick={() => move(index, -1)}>↑</button>
+            <button type="button" aria-label={`Move ${props.label} ${index + 1} down`} title="Move down" disabled={index === items.length - 1} onClick={() => move(index, 1)}>↓</button>
+            <button type="button" aria-label={`Remove ${props.label} ${index + 1}`} title="Remove" onClick={() => props.onChange(items.filter((_, itemIndex) => itemIndex !== index))}>×</button>
           </div>
         ))}
         <button type="button" className="string-list-add" onClick={() => props.onChange([...items, [0, 0]])}>

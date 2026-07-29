@@ -50,12 +50,31 @@ test('core editor navigation exposes named semantic controls', () => {
 test('complex authoring rows identify their selectable semantic regions', () => {
   const animator = panel('Animator.tsx');
   const sequencer = panel('Sequencer.tsx');
+  const avatarMask = panel('AvatarMask.tsx');
+  const fieldEditors = panel('uiFieldEditors.tsx');
 
   assert.match(animator, /aria-label=\{`Animator state \$\{state\.name\}`\}/);
   assert.match(animator, /aria-label=\{`Blend tree for \$\{state\.name\}`\}/);
   assert.match(animator, /aria-label=\{`Transition \$\{transition\.from\} to \$\{transition\.to\}`\}/);
+  assert.match(animator, /aria-label=\{`Delete state \$\{state\.name\}`\}/);
+  assert.match(
+    animator,
+    /aria-label=\{`Delete transition \$\{transition\.from\} to \$\{transition\.to\}`\}/,
+  );
+  assert.match(
+    animator,
+    /aria-label=\{`Delete condition \$\{conditionIndex \+ 1\} from transition/,
+  );
   assert.match(sequencer, /aria-label=\{`\$\{group\.name\} group lane`\}/);
   assert.match(sequencer, /aria-label=\{`\$\{track\.name\} \$\{track\.type\} lane`\}/);
+  assert.match(
+    avatarMask,
+    /aria-label=\{`Delete Avatar Mask path \$\{index \+ 1\}`\}/,
+  );
+  assert.match(
+    fieldEditors,
+    /aria-label=\{`Remove \$\{props\.label\} \$\{index \+ 1\}`\}/,
+  );
 });
 
 test('top-level help is implemented by a background-safe readable editor window', () => {
