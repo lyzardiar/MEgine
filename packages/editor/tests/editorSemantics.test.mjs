@@ -35,6 +35,7 @@ test('core editor navigation exposes named semantic controls', () => {
   assert.match(hierarchy, /role="treeitem"/);
   assert.match(hierarchy, /aria-label=\{n\.entity\.name \?\? `Entity \$\{id\}`\}/);
   assert.match(hierarchy, /aria-level=\{n\.depth \+ 1\}/);
+  assert.match(hierarchy, /data-agent-drag-by="true"/);
   assert.match(hierarchy, /if \(event\.target !== event\.currentTarget\) return/);
   assert.match(hierarchy, /event\.key === 'F2'/);
   assert.match(hierarchy, /aria-label=\{`Rename \$\{n\.entity\.name/);
@@ -77,6 +78,7 @@ test('core editor navigation exposes named semantic controls', () => {
   assert.match(spriteEditor, /aria-label="Select sprite slice from preview"\s*onClick=/);
   assert.match(timeline, /aria-label="Animation Timeline workspace"/);
   assert.match(timeline, /aria-label="Animation Timeline lanes"/);
+  assert.equal(timeline.match(/data-agent-drag-by="true"/g)?.length, 2);
   assert.match(panel('Material.tsx'), /aria-label=\{`\$\{props\.label\} texture drop target`\}/);
   assert.match(panel('SpriteAtlasEditor.tsx'), /aria-label="Sprite Atlas source drop target"/);
   assert.match(dialogHost, /aria-label=\{`\$\{dialog\.title\} dialog keyboard controls`\}/);

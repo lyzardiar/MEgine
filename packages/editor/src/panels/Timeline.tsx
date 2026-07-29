@@ -4076,6 +4076,7 @@ export function Timeline(props: {
                           type="button"
                           className={`timeline-event-key${selectedEvent === eventIndex ? ' selected' : ''}${timelineDrag?.kind === 'event' && timelineDrag.index === eventIndex ? ' dragging' : ''}`}
                           key={eventIndex}
+                          data-agent-drag-by="true"
                           aria-label={`Animation event at ${formatTimelineTimeTooltip(displayTime, clip.frame_rate)}`}
                           title={`${formatTimelineTimeTooltip(displayTime, clip.frame_rate)} · ${animationEvent.function}`}
                           style={{ left: `clamp(6px, ${clip.duration > 0 ? displayTime / clip.duration * 100 : 0}%, calc(100% - 6px))` }}
@@ -4119,6 +4120,7 @@ export function Timeline(props: {
                             type="button"
                             className={`timeline-key${selected ? ' selected' : ''}${dragged ? ' dragging' : ''}`}
                             key={keyIndex}
+                            data-agent-drag-by="true"
                             aria-pressed={selected}
                             aria-label={`Keyframe at ${formatTimelineTimeTooltip(displayTime, clip.frame_rate)}`}
                             title={`${formatTimelineTimeTooltip(displayTime, clip.frame_rate)} · ${valueLabel(key.value)}`}
