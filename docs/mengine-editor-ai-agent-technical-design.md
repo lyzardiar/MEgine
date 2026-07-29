@@ -358,6 +358,8 @@ Tab 的合成焦点顺序同时包含可见、可用且 `tabIndex >= 0` 的 HTML
 
 Space 或方向/首尾/翻页键触发 checkbox、radio、单选 select、number、range 的原生默认值变化时，Bridge 会同步当前 React `onInput/onChange`，并仅在值确实变化后返回 `valueCommitMethod=change`、`valueCommitConfirmed=true`。到达边界、单选框已经选中或选择框没有下一个可用选项时不伪报提交。
 
+`tablist/tab` 使用 roving `tabIndex`：Tab 只进入当前选项卡，左右方向键循环切换，Home/End 跳到首尾，并同步焦点、`aria-selected` 与关联 `tabpanel`。控件处理后会阻止事件继续进入全局层级快捷键，保证 Agent 的目标按键不会误改场景选择。
+
 #### 4.2.7 资产与构建
 
 | command id | 映射 |

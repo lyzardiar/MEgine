@@ -132,6 +132,9 @@ test('core editor navigation exposes named semantic controls', () => {
   assert.match(dock, /role="tablist" aria-label="Dock panels"/);
   assert.match(dock, /role="tab"/);
   assert.match(dock, /aria-selected=\{active === kind\}/);
+  assert.match(dock, /tabIndex=\{active === kind \? 0 : -1\}/);
+  assert.match(dock, /nextHorizontalTabIndex\(/);
+  assert.match(dock, /event\.stopPropagation\(\)/);
   assert.match(dock, /data-agent-drag-by="true"/);
   assert.match(dock, /role="tabpanel"/);
   assert.match(dock, /aria-label=\{`\$\{PANEL_TITLES\[panel\]\} panel`\}/);
@@ -178,6 +181,11 @@ test('core editor navigation exposes named semantic controls', () => {
   );
   assert.equal(timeline.match(/data-agent-wheel="true"/g)?.length, 2);
   assert.match(profiler, /role="img"[^>]*aria-label=\{`\$\{props\.label\} history`\}/);
+  assert.match(profiler, /role="tab"[^>]*aria-selected=\{source === value\}/);
+  assert.match(profiler, /aria-controls="profiler-source-panel"/);
+  assert.match(profiler, /tabIndex=\{source === value \? 0 : -1\}/);
+  assert.match(profiler, /role="tabpanel"/);
+  assert.match(profiler, /nextHorizontalTabIndex\(/);
   assert.match(animator, /role="group"[^>]*aria-label="Animator state graph"/);
   assert.match(timeline, /aria-label="Animation Timeline workspace"/);
   assert.match(timeline, /aria-label="Animation Timeline lanes"/);

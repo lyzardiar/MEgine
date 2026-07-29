@@ -7,10 +7,12 @@ import {
   type EditorProfilerSample,
   type EditorProfilerSource,
 } from '../editorProfiler';
+import { nextHorizontalTabIndex } from '../tabKeyboardNavigation';
 
 const GRAPH_SAMPLES = 120;
 const FRAME_BUDGET_MS = 1000 / 60;
 const COUNT_FORMATTER = new Intl.NumberFormat();
+const PROFILER_SOURCES = ['scene', 'game'] as const;
 
 function formatMs(value: number): string {
   return Number.isFinite(value) ? `${value.toFixed(value >= 10 ? 1 : 2)} ms` : '—';
@@ -114,13 +116,31 @@ export function Profiler() {
     <div className="profiler-panel" ref={panelRef}>
       <div className="profiler-toolbar">
         <div className="profiler-source-tabs" role="tablist" aria-label="Profiler source">
-          {(['scene', 'game'] as const).map((value) => (
+          {PROFILER_SOURCES.map((value, index) => (
             <button
+              id={`profiler-source-tab-${value}`}
               type="button"
               role="tab"
               aria-selected={source === value}
+              aria-controls="profiler-source-panel"
+              tabIndex={source === value ? 0 : -1}
               className={source === value ? 'active' : ''}
               onClick={() => setSource(value)}
+              onKeyDown={(event) => {
+                const nextIndex = nextHorizontalTabIndex(
+                  PROFILER_SOURCES.length,
+                  index,
+                  event.key,
+                );
+                if (nextIndex == null) return;
+                event.preventDefault();
+                event.stopPropagation();
+                const nextSource = PROFILER_SOURCES[nextIndex];
+                setSource(nextSource);
+                document
+                  .getElementById(`profiler-source-tab-${nextSource}`)
+                  ?.focus({ preventScroll: true });
+              }}
               key={value}
             >{value === 'scene' ? 'Scene' : 'Game'}</button>
           ))}
@@ -138,12 +158,22 @@ export function Profiler() {
       </div>
 
       {!latest ? (
-        <div className="profiler-empty">
+        <div
+          id="profiler-source-panel"
+          className="profiler-empty"
+          role="tabpanel"
+          aria-labelledby={`profiler-source-tab-${source}`}
+        >
           <strong>No {source === 'scene' ? 'Scene' : 'Game'} samples</strong>
           <span>Open the {source === 'scene' ? 'Scene' : 'Game'} tab at a visible size to begin sampling.</span>
         </div>
       ) : (
-        <div className="profiler-scroll">
+        <div
+          id="profiler-source-panel"
+          className="profiler-scroll"
+          role="tabpanel"
+          aria-labelledby={`profiler-source-tab-${source}`}
+        >
           <div className="profiler-metrics profiler-metrics-primary">
             <Metric
               label="Frame"
