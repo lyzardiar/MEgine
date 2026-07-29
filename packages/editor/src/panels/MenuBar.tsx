@@ -71,7 +71,7 @@ export function MenuBar(props: {
           aria-label={name}
           aria-haspopup="menu"
           aria-expanded={open === name}
-          onMouseEnter={() => open && setOpen(name)}
+          onMouseEnter={open && open !== name ? () => setOpen(name) : undefined}
           onClick={() => setOpen(open === name ? null : name)}
           onKeyDown={(event) => {
             if (event.key === 'Escape') {

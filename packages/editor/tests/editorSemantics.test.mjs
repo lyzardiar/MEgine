@@ -48,6 +48,7 @@ test('core editor navigation exposes named semantic controls', () => {
   assert.match(menu, /role="menuitem"/);
   assert.match(menu, /aria-haspopup="menu"/);
   assert.match(menu, /aria-expanded=\{open === name\}/);
+  assert.match(menu, /onMouseEnter=\{open && open !== name \? \(\) => setOpen\(name\) : undefined\}/);
   assert.match(menu, /const componentItems = listMenuItems\('Component'\)/);
   assert.match(menu, /const editItems = listMenuItems\('Edit'\)/);
   assert.match(menu, /const helpItems = listMenuItems\('Help'\)/);
