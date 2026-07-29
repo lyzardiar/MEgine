@@ -1265,7 +1265,7 @@ const COMMAND_SUMMARIES: CommandSummary[] = [
   { id: 'window.ui_click', category: 'window', description: 'Click a semantic UI element with optional modifiers inside a hidden, unfocused editor window', readOnly: false },
   { id: 'window.ui_double_click', category: 'window', description: 'Double-click a semantic UI element with optional modifiers inside a hidden, unfocused editor window', readOnly: false },
   { id: 'window.ui_context_click', category: 'window', description: 'Open a semantic context menu with optional modifiers inside a hidden, unfocused editor window', readOnly: false },
-  { id: 'window.ui_set_value', category: 'window', description: 'Set an input value inside a hidden, unfocused editor window', readOnly: false },
+  { id: 'window.ui_set_value', category: 'window', description: 'Atomically set and commit a form value inside a hidden, unfocused editor window', readOnly: false },
   { id: 'window.ui_scroll', category: 'window', description: 'Dispatch a precise semantic wheel gesture inside a hidden, unfocused editor window', readOnly: false },
   { id: 'window.ui_drag_to', category: 'window', description: 'Drag one semantic UI element to another with optional modifiers inside a hidden, unfocused editor window', readOnly: false },
   { id: 'window.ui_drag_by', category: 'window', description: 'Perform a bounded straight or multi-segment pointer drag inside a hidden, unfocused editor WebView', readOnly: false },

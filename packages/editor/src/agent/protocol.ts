@@ -239,6 +239,12 @@ export interface EditorUiActionResult {
   path?: EditorUiDragPathPoint[] | null;
   hoverState?: 'enter' | 'leave' | null;
   hoverStateChanged?: boolean | null;
+  valueCommitMethod?: 'change' | 'blur' | null;
+  valueCommitConfirmed?: boolean | null;
+  valueHandledByReact?: boolean | null;
+  valueDraftSynchronized?: boolean | null;
+  valueFocusHandledByReact?: boolean | null;
+  valueBlurHandledByReact?: boolean | null;
   deltaX?: number | null;
   deltaY?: number | null;
   tag?: string;

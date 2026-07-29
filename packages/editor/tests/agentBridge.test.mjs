@@ -157,6 +157,19 @@ test('whole-window agent capture is background-safe and addressable by window la
   assert.match(interactionScript, /hoverTargetMismatch: true/);
   assert.match(interactionScript, /window\[hoverState\] = null/);
   assert.match(interactionScript, /hoverStateChanged: action === 'hover' \? hoverStateChanged : null/);
+  assert.match(interactionScript, /const beginBlurCommit = \(\) =>/);
+  assert.match(interactionScript, /const dispatchValueChange = \(target, value\) =>/);
+  assert.match(interactionScript, /reactProps\.onChange\(reactValueEvent\(target, 'change', value\)\)/);
+  assert.match(interactionScript, /const dispatchReactFocusLifecycle = \(target, type, nativeTransition\) =>/);
+  assert.match(interactionScript, /const captureName = type === 'focus' \? 'onFocusCapture' : 'onBlurCapture'/);
+  assert.match(interactionScript, /if \(pendingValueBlur\)/);
+  assert.match(interactionScript, /element\.blur\(\)/);
+  assert.match(interactionScript, /valueCommitMethod: action === 'setValue' \? valueCommitMethod : null/);
+  assert.match(interactionScript, /valueCommitConfirmed: action === 'setValue' \? valueCommitConfirmed : null/);
+  assert.match(interactionScript, /valueHandledByReact: action === 'setValue' \? valueHandledByReact : null/);
+  assert.match(interactionScript, /valueDraftSynchronized: action === 'setValue' \? valueDraftSynchronized : null/);
+  assert.match(interactionScript, /valueFocusHandledByReact: action === 'setValue' \? valueFocusHandledByReact : null/);
+  assert.match(interactionScript, /valueBlurHandledByReact: action === 'setValue' \? valueBlurHandledByReact : null/);
   assert.match(interactionScript, /const wheelEvent = new WheelEvent\('wheel'/);
   assert.match(interactionScript, /const applyNativeScroll = element\.dispatchEvent\(wheelEvent\)/);
   assert.match(interactionScript, /if \(applyNativeScroll\) \{/);
@@ -178,6 +191,12 @@ test('whole-window agent capture is background-safe and addressable by window la
   assert.match(protocol, /hoverTargetMismatch\?: boolean/);
   assert.match(protocol, /hoverState\?: 'enter' \| 'leave' \| null/);
   assert.match(protocol, /hoverStateChanged\?: boolean \| null/);
+  assert.match(protocol, /valueCommitMethod\?: 'change' \| 'blur' \| null/);
+  assert.match(protocol, /valueCommitConfirmed\?: boolean \| null/);
+  assert.match(protocol, /valueHandledByReact\?: boolean \| null/);
+  assert.match(protocol, /valueDraftSynchronized\?: boolean \| null/);
+  assert.match(protocol, /valueFocusHandledByReact\?: boolean \| null/);
+  assert.match(protocol, /valueBlurHandledByReact\?: boolean \| null/);
   assert.match(protocol, /allowedActions\?: EditorUiAction\[\]/);
   assert.match(rust, /const ariaStateKeys = \[/);
   for (const key of [
@@ -499,6 +518,8 @@ test('whole-window agent capture is background-safe and addressable by window la
   assert.match(bridge, /window\.ui_drag_by requires a non-zero deltaX or deltaY/);
   assert.match(bridge, /window\.ui_drag_by path is mutually exclusive with deltaX and deltaY/);
   assert.match(bridge, /Hover leave target does not match the current semantic hover target/);
+  assert.match(bridge, /Semantic value edit changed the control but did not confirm its commit boundary/);
+  assert.match(bridge, /action === 'setValue' && result\.valueCommitConfirmed === false/);
   assert.match(bridge, /Window UI interaction requires expectedSnapshotRevision/);
   assert.match(bridge, /must be hidden and unfocused before semantic UI interaction/);
   assert.match(bridge, /requiredWindowState: 'hidden-unfocused'/);

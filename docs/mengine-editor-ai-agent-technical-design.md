@@ -331,7 +331,7 @@ Rust Host 使用独立的工程生命周期互斥门串行化 open/create/close 
 | `window.open_editor` | `{ typeId }` | ✅ 隐藏创建后同时等待原生窗口可发现与目标 WebView 非空语义快照就绪；返回初始 `snapshotRevision` / `semanticElementCount`，不会把仍在加载的窗口误报为空；成功创建及 `window.close` 销毁均发出 `window.changed` |
 | `menu.invoke` | `{ path }` | ✅ 查 `MenuItemEntry`、执行实时 validator，再复用 `entry.action(ctx)` |
 | `window.ui_click` | `{ windowLabel?, selector, offsetX?, offsetY?, shiftKey?, ctrlKey?, altKey?, metaKey? }` | ✅ 对 `window.ui_snapshot` 返回的 selector 合成受限 Pointer/Mouse/Click 事件；可使用元素左上角相对 CSS 像素定位画布内目标，省略坐标时兼容使用可见元素中心，并可携带显式修饰键完成范围/追加选择，不激活顶层窗口 |
-| `window.ui_set_value` | `{ windowLabel?, selector, value }` | ✅ 仅允许 input/textarea/select/contenteditable，触发 input/change；拒绝 disabled/readonly，禁止调用方注入脚本 |
+| `window.ui_set_value` | `{ windowLabel?, selector, value }` | ✅ 仅允许 input/textarea/select/contenteditable；文本型控件按 `focus → input/change → render → blur → render` 原子提交，保证 `onBlur` 草稿与 Inspector 撤销手势在操作后观察前闭合；checkbox/radio 通过 change 直接提交。拒绝 disabled/readonly，禁止调用方注入脚本 |
 | `window.ui_double_click` / `context_click` / `scroll` | 快照 selector 与对应参数 | ✅ 双击和上下文菜单支持可选 `offsetX/offsetY` 精确点位；滚轮可指定元素内落点、横纵增量和修饰键，先派发真实语义 `WheelEvent` 供 Scene/Timeline 等画布缩放消费，未消费时再执行原生容器滚动；均遵守元素级 Agent 禁止策略，脚本 IDE 启动、系统文件选择器、工程关闭与进程退出等人工路径不能借键盘或上下文菜单旁路 |
 | `window.ui_drag_to` | `{ windowLabel?, selector, targetSelector, offsetX?, offsetY?, targetOffsetX?, targetOffsetY?, shiftKey?, ctrlKey?, altKey?, metaKey? }` | ✅ 仅接受语义快照中的源/目标 selector，可分别指定源与目标元素内的 CSS 像素点，在同一隐藏 WebView 内合成可带修饰键的 HTML5 拖放事件；不移动前台鼠标 |
 | `window.ui_drag_by` | `{ windowLabel?, selector, offsetX?, offsetY?, button?, deltaX?/deltaY? 或 path?, shiftKey?, ctrlKey?, altKey?, metaKey? }` | ✅ 从快照标记为 `dragBy` 的元素内精确点位（默认中心）开始，可选择 `left/middle/right` 按钮；简单手势使用单终点增量，曲线/绕行手势可传最多 64 个相对起点的累计位移点。所有路径点必须留在同一隐藏 WebView 视口内，事件数量有界，不接受屏幕坐标且不移动系统鼠标 |
@@ -350,7 +350,7 @@ Rust Host 使用独立的工程生命周期互斥门串行化 open/create/close 
 
 快照与原生动作脚本还分别使用浏览器权威的 `:disabled` 匹配和 `aria-disabled` 祖先检查计算有效禁用状态。被 `<fieldset disabled>`、`<optgroup disabled>` 或禁用 ARIA 容器包围的后代会返回 `state.disabled=true` 且不再暴露动作；执行端即使收到手工构造的 selector 也会再次拒绝源元素或拖放目标，Agent 不能用合成 React 事件绕过 Timeline 锁定区等 UI 门禁。
 
-`setValue` 在发出 React/input/change 事件前先用原生 `ValidityState` 校验 required、type、pattern、min/max/step 及长度约束；不合法的临时 DOM 值会先回滚，再以 `INVALID_ARGS` 返回具体 `validityIssues`，不会让 Agent 绕过快照中已经公开的控件约束。
+`setValue` 在发出 React/input/change 事件前先用原生 `ValidityState` 校验 required、type、pattern、min/max/step 及长度约束；不合法的临时 DOM 值会先回滚，再以 `INVALID_ARGS` 返回具体 `validityIssues`，不会让 Agent 绕过快照中已经公开的控件约束。通过校验后优先调用元素当前 React props 的 `onInput/onChange`，无 React handler 时才回退到原生冒泡事件，避免受控输入只改 DOM 未改模型。文本型控件还必须成功取得 WebView 内语义编辑焦点，等待受控 props 与 DOM 值同步，再按捕获/冒泡顺序补齐 WebView 未派发的 React focus/blur 生命周期并等待提交渲染；结果用 `valueCommitMethod/valueCommitConfirmed` 明示采用 change 或 blur 提交以及提交边界是否实际触发，附带 React handler 与草稿同步证据供 Agent 判断。若 DOM 值已经变化但提交边界未获确认，Bridge 返回 `CONFLICT` 并要求重新读取 UI 与领域模型，不把未落模的草稿误报为成功。
 
 #### 4.2.7 资产与构建
 

@@ -1233,6 +1233,21 @@ class AgentBridge {
       }
       throw new BridgeError('INVALID_ARGS', result.error ?? 'Editor UI interaction failed');
     }
+    if (action === 'setValue' && result.valueCommitConfirmed === false) {
+      throw new BridgeError(
+        'CONFLICT',
+        'Semantic value edit changed the control but did not confirm its commit boundary; re-read the UI and domain model before retrying',
+        {
+          windowLabel,
+          selector,
+          valueCommitMethod: result.valueCommitMethod ?? null,
+          valueHandledByReact: result.valueHandledByReact ?? null,
+          valueDraftSynchronized: result.valueDraftSynchronized ?? null,
+          valueFocusHandledByReact: result.valueFocusHandledByReact ?? null,
+          valueBlurHandledByReact: result.valueBlurHandledByReact ?? null,
+        },
+      );
+    }
     return result;
   }
 

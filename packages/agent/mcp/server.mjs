@@ -3173,7 +3173,7 @@ const TOOLS = [
   ),
   execTool(
     'set_window_ui_value',
-    'Set an input, textarea, select, or contenteditable value returned by get_window_ui only when its editor window is hidden and unfocused.',
+    'Atomically set and commit an input, textarea, select, or contenteditable value returned by get_window_ui only when its editor window is hidden and unfocused. Text-like controls receive focus, input/change, one render opportunity, and blur so onBlur-backed drafts and undo gestures finish before post-action observation.',
     'window.ui_set_value',
     {
       ...uiInteractionProperties('Exact selector returned by get_window_ui'),

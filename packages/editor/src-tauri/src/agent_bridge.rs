@@ -4507,6 +4507,93 @@ const WINDOW_UI_INTERACTION_SCRIPT: &str = r#"
     }
     return {};
   };
+  const reactValueEvent = (target, type, data = null) => ({
+    type,
+    target,
+    currentTarget: target,
+    nativeEvent: null,
+    bubbles: true,
+    cancelable: true,
+    defaultPrevented: false,
+    data,
+    inputType: type === 'input' ? 'insertText' : null,
+    propagationStopped: false,
+    ...modifiers,
+    preventDefault() { this.defaultPrevented = true; },
+    stopPropagation() { this.propagationStopped = true; },
+    isDefaultPrevented() { return this.defaultPrevented; },
+    isPropagationStopped() { return this.propagationStopped; },
+    persist() {},
+  });
+  const dispatchValueChange = (target, value) => {
+    const reactProps = reactPropsFor(target);
+    let handledByReact = false;
+    if (typeof reactProps.onInput === 'function') {
+      reactProps.onInput(reactValueEvent(target, 'input', value));
+      handledByReact = true;
+    }
+    if (typeof reactProps.onChange === 'function') {
+      reactProps.onChange(reactValueEvent(target, 'change', value));
+      handledByReact = true;
+    }
+    if (!handledByReact) {
+      target.dispatchEvent(new InputEvent('input', {
+        bubbles: true,
+        composed: true,
+        inputType: 'insertText',
+        data: value,
+      }));
+      target.dispatchEvent(new Event('change', { bubbles: true, composed: true }));
+    }
+    return handledByReact;
+  };
+  const dispatchReactFocusLifecycle = (target, type, nativeTransition) => {
+    const captureName = type === 'focus' ? 'onFocusCapture' : 'onBlurCapture';
+    const bubbleName = type === 'focus' ? 'onFocus' : 'onBlur';
+    const path = [];
+    for (let current = target; current instanceof Element; current = current.parentElement) {
+      path.push({ target: current, props: reactPropsFor(current) });
+    }
+    const handlers = [];
+    for (const entry of path) {
+      for (const name of [captureName, bubbleName]) {
+        if (typeof entry.props[name] === 'function') {
+          handlers.push({ ...entry, name, handler: entry.props[name] });
+        }
+      }
+    }
+    let nativeHandlerCount = 0;
+    for (const entry of handlers) {
+      entry.props[entry.name] = (...args) => {
+        nativeHandlerCount += 1;
+        return entry.handler(...args);
+      };
+    }
+    try {
+      nativeTransition();
+    } finally {
+      for (const entry of handlers) entry.props[entry.name] = entry.handler;
+    }
+    if (nativeHandlerCount > 0 || handlers.length === 0) {
+      return { handledByReact: nativeHandlerCount > 0, nativeHandlerCount };
+    }
+    const event = reactValueEvent(target, type);
+    for (const entry of [...path].reverse()) {
+      const handler = entry.props[captureName];
+      if (typeof handler !== 'function') continue;
+      event.currentTarget = entry.target;
+      handler(event);
+      if (event.isPropagationStopped()) return { handledByReact: true, nativeHandlerCount: 0 };
+    }
+    for (const entry of path) {
+      const handler = entry.props[bubbleName];
+      if (typeof handler !== 'function') continue;
+      event.currentTarget = entry.target;
+      handler(event);
+      if (event.isPropagationStopped()) break;
+    }
+    return { handledByReact: true, nativeHandlerCount: 0 };
+  };
   const nativeValidityIssues = (target) => {
     if (
       !(target instanceof HTMLInputElement)
@@ -4568,28 +4655,13 @@ const WINDOW_UI_INTERACTION_SCRIPT: &str = r#"
     setter.call(element, Boolean(checked));
     element.indeterminate = false;
     const reactProps = reactPropsFor(element);
-    const syntheticEvent = (type) => ({
-      type,
-      target: element,
-      currentTarget: element,
-      nativeEvent: null,
-      bubbles: true,
-      cancelable: true,
-      defaultPrevented: false,
-      ...modifiers,
-      preventDefault() { this.defaultPrevented = true; },
-      stopPropagation() {},
-      isDefaultPrevented() { return this.defaultPrevented; },
-      isPropagationStopped() { return false; },
-      persist() {},
-    });
     let handledByReact = false;
     if (includeClick && typeof reactProps.onClick === 'function') {
-      reactProps.onClick(syntheticEvent('click'));
+      reactProps.onClick(reactValueEvent(element, 'click'));
       handledByReact = true;
     }
     if (typeof reactProps.onChange === 'function') {
-      reactProps.onChange(syntheticEvent('change'));
+      reactProps.onChange(reactValueEvent(element, 'change'));
       handledByReact = true;
     }
     if (!handledByReact) {
@@ -4624,6 +4696,14 @@ const WINDOW_UI_INTERACTION_SCRIPT: &str = r#"
   let performedDragPath = null;
   let performedHoverState = null;
   let hoverStateChanged = null;
+  let pendingValueBlur = false;
+  let valueCommitMethod = null;
+  let valueCommitConfirmed = null;
+  let valueHandledByReact = null;
+  let valueDraftSynchronized = null;
+  let valueFocusHandledByReact = null;
+  let valueBlurHandledByReact = null;
+  let performedSettledFrames = 0;
   if (action === 'click') {
     dispatchClick(1);
   } else if (action === 'doubleClick') {
@@ -4857,6 +4937,18 @@ const WINDOW_UI_INTERACTION_SCRIPT: &str = r#"
       return { ok: false, error: `Element ${selector} is read-only` };
     }
     const value = requestedValue == null ? '' : String(requestedValue);
+    const beginBlurCommit = () => {
+      if (typeof element.focus !== 'function') return false;
+      const focusLifecycle = dispatchReactFocusLifecycle(
+        element,
+        'focus',
+        () => element.focus({ preventScroll: true }),
+      );
+      valueFocusHandledByReact = focusLifecycle.handledByReact;
+      if (document.activeElement !== element) return false;
+      pendingValueBlur = true;
+      return true;
+    };
     if (
       element instanceof HTMLInputElement
       && ['checkbox', 'radio'].includes(element.type)
@@ -4883,6 +4975,8 @@ const WINDOW_UI_INTERACTION_SCRIPT: &str = r#"
       if (!setCheckableInput(checked)) {
         return { ok: false, error: `Element ${selector} has no checked setter` };
       }
+      valueCommitMethod = 'change';
+      valueCommitConfirmed = true;
     } else {
       let prototype;
       if (element instanceof HTMLInputElement) prototype = HTMLInputElement.prototype;
@@ -4943,19 +5037,21 @@ const WINDOW_UI_INTERACTION_SCRIPT: &str = r#"
           };
         }
         const validityIssues = nativeValidityIssues(element);
+        setter.call(element, previousValue);
         if (validityIssues.length > 0) {
-          setter.call(element, previousValue);
           return constraintFailure(validityIssues);
         }
-        element.dispatchEvent(new Event('input', { bubbles: true }));
-        element.dispatchEvent(new Event('change', { bubbles: true }));
+        if (!beginBlurCommit()) {
+          return { ok: false, error: `Element ${selector} could not receive edit focus` };
+        }
+        setter.call(element, valueToApply);
+        valueHandledByReact = dispatchValueChange(element, valueToApply);
       } else if (element.isContentEditable) {
+        if (!beginBlurCommit()) {
+          return { ok: false, error: `Element ${selector} could not receive edit focus` };
+        }
         element.textContent = value;
-        element.dispatchEvent(new InputEvent('input', {
-          bubbles: true,
-          inputType: 'insertText',
-          data: value,
-        }));
+        valueHandledByReact = dispatchValueChange(element, value);
       } else {
         return { ok: false, error: `Element ${selector} does not accept a value` };
       }
@@ -5632,11 +5728,38 @@ const WINDOW_UI_INTERACTION_SCRIPT: &str = r#"
     const timer = setTimeout(finish, 50);
     if (typeof requestAnimationFrame === 'function') requestAnimationFrame(finish);
   });
+  if (pendingValueBlur) {
+    for (let frame = 0; frame < 4; frame += 1) {
+      await waitForRender();
+      performedSettledFrames += 1;
+      const currentReactProps = reactPropsFor(element);
+      if (!('value' in currentReactProps) || String(currentReactProps.value) === String(element.value)) {
+        valueDraftSynchronized = true;
+        break;
+      }
+      valueDraftSynchronized = false;
+    }
+    if (element.isConnected && document.activeElement === element) {
+      const blurLifecycle = dispatchReactFocusLifecycle(element, 'blur', () => element.blur());
+      valueBlurHandledByReact = blurLifecycle.handledByReact;
+      valueCommitConfirmed = (
+        valueDraftSynchronized !== false
+        && document.activeElement !== element
+      );
+    } else {
+      valueCommitConfirmed = false;
+    }
+    await waitForRender();
+    performedSettledFrames += 1;
+    valueCommitMethod = 'blur';
+  }
   await waitForRender();
+  performedSettledFrames += 1;
   await waitForRender();
+  performedSettledFrames += 1;
   return {
     ok: true,
-    settledFrames: 2,
+    settledFrames: performedSettledFrames,
     elementConnected: element.isConnected,
     action,
     key: action === 'keyPress' ? requestedKey : null,
@@ -5653,6 +5776,12 @@ const WINDOW_UI_INTERACTION_SCRIPT: &str = r#"
     path: action === 'dragBy' ? performedDragPath : null,
     hoverState: action === 'hover' ? performedHoverState : null,
     hoverStateChanged: action === 'hover' ? hoverStateChanged : null,
+    valueCommitMethod: action === 'setValue' ? valueCommitMethod : null,
+    valueCommitConfirmed: action === 'setValue' ? valueCommitConfirmed : null,
+    valueHandledByReact: action === 'setValue' ? valueHandledByReact : null,
+    valueDraftSynchronized: action === 'setValue' ? valueDraftSynchronized : null,
+    valueFocusHandledByReact: action === 'setValue' ? valueFocusHandledByReact : null,
+    valueBlurHandledByReact: action === 'setValue' ? valueBlurHandledByReact : null,
     deltaX: action === 'dragBy'
       ? performedDragPath[performedDragPath.length - 1].deltaX
       : action === 'scroll' ? requestedDeltaX ?? 0 : null,
@@ -5667,7 +5796,9 @@ const WINDOW_UI_INTERACTION_SCRIPT: &str = r#"
     name: interactionName(element, action === 'scroll'),
     value: element instanceof HTMLInputElement && element.type === 'password'
       ? '<redacted>'
-      : ('value' in element ? String(element.value) : null),
+      : ('value' in element
+          ? String(element.value)
+          : element.isContentEditable ? element.textContent ?? '' : null),
     checked: element instanceof HTMLInputElement
       && ['checkbox', 'radio'].includes(element.type)
       ? element.checked
