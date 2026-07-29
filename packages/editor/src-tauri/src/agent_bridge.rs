@@ -5361,6 +5361,50 @@ const WINDOW_UI_INTERACTION_SCRIPT: &str = r#"
       && !modifiers.altKey
       && modifiers.ctrlKey !== modifiers.metaKey
     );
+    const graphemeBoundaries = (rawText) => {
+      const text = String(rawText ?? '');
+      const boundaries = [0];
+      if (typeof Intl.Segmenter === 'function') {
+        const segments = new Intl.Segmenter(undefined, {
+          granularity: 'grapheme',
+        }).segment(text);
+        for (const segment of segments) {
+          const end = segment.index + segment.segment.length;
+          if (end > boundaries[boundaries.length - 1]) boundaries.push(end);
+        }
+      } else {
+        let offset = 0;
+        for (const codePoint of Array.from(text)) {
+          offset += codePoint.length;
+          boundaries.push(offset);
+        }
+      }
+      if (boundaries[boundaries.length - 1] !== text.length) {
+        boundaries.push(text.length);
+      }
+      return boundaries;
+    };
+    const previousGraphemeBoundary = (boundaries, rawOffset) => {
+      const offset = Number(rawOffset);
+      for (let index = boundaries.length - 1; index >= 0; index -= 1) {
+        if (boundaries[index] < offset) return boundaries[index];
+      }
+      return 0;
+    };
+    const nextGraphemeBoundary = (boundaries, rawOffset) => {
+      const offset = Number(rawOffset);
+      for (const boundary of boundaries) {
+        if (boundary > offset) return boundary;
+      }
+      return boundaries[boundaries.length - 1] ?? 0;
+    };
+    const floorGraphemeBoundary = (boundaries, rawOffset) => {
+      const offset = Number(rawOffset);
+      for (let index = boundaries.length - 1; index >= 0; index -= 1) {
+        if (boundaries[index] <= offset) return boundaries[index];
+      }
+      return 0;
+    };
     const code = requestedKey === 'Space'
       ? 'Space'
       : /^[A-Za-z]$/.test(key)
@@ -5422,6 +5466,7 @@ const WINDOW_UI_INTERACTION_SCRIPT: &str = r#"
       }
       if (typeof start !== 'number' || typeof end !== 'number') return false;
       const length = element.value.length;
+      const boundaries = graphemeBoundaries(element.value);
       const setSelection = (anchor, focus) => {
         const boundedAnchor = Math.max(0, Math.min(length, anchor));
         const boundedFocus = Math.max(0, Math.min(length, focus));
@@ -5446,18 +5491,24 @@ const WINDOW_UI_INTERACTION_SCRIPT: &str = r#"
       const verticalColumnKey = Symbol.for('mengine.agent.textVerticalColumn');
       if (requestedKey === 'ArrowLeft') {
         delete element[verticalColumnKey];
-        if (modifiers.shiftKey) setSelection(anchor, focus - 1);
-        else {
-          const caret = start === end ? Math.max(0, start - 1) : start;
+        if (modifiers.shiftKey) {
+          setSelection(anchor, previousGraphemeBoundary(boundaries, focus));
+        } else {
+          const caret = start === end
+            ? previousGraphemeBoundary(boundaries, start)
+            : start;
           setSelection(caret, caret);
         }
         return true;
       }
       if (requestedKey === 'ArrowRight') {
         delete element[verticalColumnKey];
-        if (modifiers.shiftKey) setSelection(anchor, focus + 1);
-        else {
-          const caret = start === end ? Math.min(length, end + 1) : end;
+        if (modifiers.shiftKey) {
+          setSelection(anchor, nextGraphemeBoundary(boundaries, focus));
+        } else {
+          const caret = start === end
+            ? nextGraphemeBoundary(boundaries, end)
+            : end;
           setSelection(caret, caret);
         }
         return true;
@@ -5509,9 +5560,9 @@ const WINDOW_UI_INTERACTION_SCRIPT: &str = r#"
         const targetLineEnd = nextLineStart === undefined
           ? length
           : Math.max(targetLineStart, nextLineStart - 1);
-        const target = Math.min(
-          targetLineEnd,
-          targetLineStart + preferredColumn,
+        const target = floorGraphemeBoundary(
+          boundaries,
+          Math.min(targetLineEnd, targetLineStart + preferredColumn),
         );
         element[verticalColumnKey] = {
           column: preferredColumn,
@@ -5559,13 +5610,17 @@ const WINDOW_UI_INTERACTION_SCRIPT: &str = r#"
         if (keyboardReadOnly) return true;
         if (start === end && start === 0) return true;
         inputType = 'deleteContentBackward';
-        if (start === end) replacementStart = Math.max(0, start - 1);
+        if (start === end) {
+          replacementStart = previousGraphemeBoundary(boundaries, start);
+        }
         replacement = '';
       } else if (requestedKey === 'Delete') {
         if (keyboardReadOnly) return true;
         if (start === end && end === length) return true;
         inputType = 'deleteContentForward';
-        if (start === end) replacementEnd = Math.min(length, end + 1);
+        if (start === end) {
+          replacementEnd = nextGraphemeBoundary(boundaries, end);
+        }
         replacement = '';
       } else {
         return false;
@@ -5640,6 +5695,7 @@ const WINDOW_UI_INTERACTION_SCRIPT: &str = r#"
       if (anchor === null || focus === null) return false;
       const text = String(element.textContent ?? '');
       const length = text.length;
+      const boundaries = graphemeBoundaries(text);
       const textPointAt = (rawOffset) => {
         const targetOffset = Math.max(0, Math.min(length, rawOffset));
         const walker = document.createTreeWalker(element, NodeFilter.SHOW_TEXT);
@@ -5676,11 +5732,13 @@ const WINDOW_UI_INTERACTION_SCRIPT: &str = r#"
       const verticalColumnKey = Symbol.for('mengine.agent.textVerticalColumn');
       if (requestedKey === 'ArrowLeft' || requestedKey === 'ArrowRight') {
         delete element[verticalColumnKey];
-        const delta = requestedKey === 'ArrowLeft' ? -1 : 1;
-        if (modifiers.shiftKey) setSelection(anchor, focus + delta);
+        const nextFocus = requestedKey === 'ArrowLeft'
+          ? previousGraphemeBoundary(boundaries, focus)
+          : nextGraphemeBoundary(boundaries, focus);
+        if (modifiers.shiftKey) setSelection(anchor, nextFocus);
         else {
           const caret = start === end
-            ? Math.max(0, Math.min(length, focus + delta))
+            ? nextFocus
             : requestedKey === 'ArrowLeft'
               ? start
               : end;
@@ -5729,7 +5787,10 @@ const WINDOW_UI_INTERACTION_SCRIPT: &str = r#"
         const targetLineEnd = nextLineStart === undefined
           ? length
           : Math.max(targetLineStart, nextLineStart - 1);
-        const target = Math.min(targetLineEnd, targetLineStart + preferredColumn);
+        const target = floorGraphemeBoundary(
+          boundaries,
+          Math.min(targetLineEnd, targetLineStart + preferredColumn),
+        );
         element[verticalColumnKey] = {
           column: preferredColumn,
           position: target,
@@ -5763,12 +5824,16 @@ const WINDOW_UI_INTERACTION_SCRIPT: &str = r#"
       } else if (requestedKey === 'Backspace') {
         if (start === end && start === 0) return true;
         inputType = 'deleteContentBackward';
-        if (start === end) replacementStart = Math.max(0, start - 1);
+        if (start === end) {
+          replacementStart = previousGraphemeBoundary(boundaries, start);
+        }
         replacement = '';
       } else if (requestedKey === 'Delete') {
         if (start === end && end === length) return true;
         inputType = 'deleteContentForward';
-        if (start === end) replacementEnd = Math.min(length, end + 1);
+        if (start === end) {
+          replacementEnd = nextGraphemeBoundary(boundaries, end);
+        }
         replacement = '';
       } else {
         return false;

@@ -469,6 +469,32 @@ test('whole-window agent capture is background-safe and addressable by window la
     interactionScript,
     /if \(selectAllShortcut\) \{\s*const range = document\.createRange\(\);\s*range\.selectNodeContents\(element\);\s*selection\.removeAllRanges\(\);\s*selection\.addRange\(range\);/,
   );
+  assert.match(interactionScript, /const graphemeBoundaries = \(rawText\) =>/);
+  assert.match(interactionScript, /typeof Intl\.Segmenter === 'function'/);
+  assert.match(interactionScript, /granularity: 'grapheme'/);
+  assert.match(interactionScript, /for \(const codePoint of Array\.from\(text\)\)/);
+  assert.match(
+    interactionScript,
+    /setSelection\(anchor, previousGraphemeBoundary\(boundaries, focus\)\)/,
+  );
+  assert.match(
+    interactionScript,
+    /setSelection\(anchor, nextGraphemeBoundary\(boundaries, focus\)\)/,
+  );
+  assert.equal(
+    [...interactionScript.matchAll(
+      /replacementStart = previousGraphemeBoundary\(boundaries, start\)/g,
+    )].length,
+    2,
+  );
+  assert.equal(
+    [...interactionScript.matchAll(
+      /replacementEnd = nextGraphemeBoundary\(boundaries, end\)/g,
+    )].length,
+    2,
+  );
+  assert.doesNotMatch(interactionScript, /replacementStart = Math\.max\(0, start - 1\)/);
+  assert.doesNotMatch(interactionScript, /replacementEnd = Math\.min\(length, end \+ 1\)/);
   assert.match(interactionScript, /element\.maxLength >= 0 && nextValue\.length > element\.maxLength/);
   assert.match(interactionScript, /element\.setSelectionRange\(/);
   assert.match(interactionScript, /inputType = 'deleteContentBackward'/);
