@@ -57,6 +57,7 @@ function BoolField(props: {
       <input
         type="checkbox"
         className="field-bool"
+        aria-label={props.label}
         checked={props.value}
         onChange={(e) => props.onChange(e.target.checked)}
       />
@@ -81,6 +82,7 @@ export function ColorField(props: {
         <input
           type="color"
           className="color-swatch"
+          aria-label={`${props.label} color`}
           value={colorToHex(arr)}
           title={colorToHex(arr)}
           onChange={(e) => {
@@ -94,6 +96,7 @@ export function ColorField(props: {
             <input
               type="number"
               className="color-alpha"
+              aria-label={`${props.label} alpha`}
               min={0}
               max={1}
               step={0.01}
@@ -311,6 +314,7 @@ function NumberVectorField(props: {
             type="number"
             min={props.min}
             step={1}
+            aria-label={`${props.label} ${axis}`}
             value={Number(props.value[index] ?? 0)}
             onChange={(event) => {
               const next = [...props.value];
@@ -1021,6 +1025,7 @@ export function UnityEventField(props: {
               <div className="field-row">
                 <label>Component</label>
                 <select
+                  aria-label={`${props.label} component`}
                   value={activeComp?.type ?? ''}
                   disabled={!componentOptions.length}
                   onChange={(e) => {
@@ -1042,6 +1047,7 @@ export function UnityEventField(props: {
               <div className="field-row">
                 <label>Method</label>
                 <select
+                  aria-label={`${props.label} method`}
                   value={methods.includes(call.method) ? call.method : methods[0] ?? ''}
                   disabled={!methods.length}
                   onChange={(e) => patch({ method: e.target.value })}
@@ -1109,6 +1115,7 @@ export function ImageEditor(props: {
       <div className="field-row">
         <label>Image Type</label>
         <select
+          aria-label="Image Type"
           value={String(d.image_type ?? d.imageType ?? 'Simple')}
           onChange={(e) => props.onPatch({ image_type: e.target.value })}
         >

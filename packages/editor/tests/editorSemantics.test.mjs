@@ -16,8 +16,12 @@ test('core editor navigation exposes named semantic controls', () => {
   const hierarchyMenu = panel('HierarchyContextMenu.tsx');
   const objectPicker = panel('ObjectPicker.tsx');
   const spriteEditor = panel('SpriteEditor.tsx');
+  const rectTransform = panel('RectTransformEditor.tsx');
+  const schemaFields = panel('SchemaFieldEditor.tsx');
+  const fieldEditors = panel('uiFieldEditors.tsx');
 
   assert.match(project, /role="tree" aria-label="Project folders"/);
+  assert.match(project, /tabIndex=\{0\} aria-label="Project browser"/);
   assert.match(project, /role="treeitem"/);
   assert.match(project, /aria-label=\{f\}/);
   assert.match(project, /event\.key !== 'Enter' && event\.key !== ' '/);
@@ -42,6 +46,15 @@ test('core editor navigation exposes named semantic controls', () => {
   assert.match(inspector, /aria-label="Projection"/);
   assert.match(inspector, /aria-label="Clear Flags"/);
   assert.match(inspector, /aria-label="Primary"/);
+  assert.match(inspector, /aria-label=\{`Adjust \$\{props\.ariaLabel/);
+  assert.match(inspector, /aria-label=\{`Adjust \$\{props\.label\}`\}/);
+  assert.match(rectTransform, /aria-label=\{`Adjust \$\{props\.ariaLabel\}`\}/);
+  assert.match(rectTransform, /aria-label=\{props\.ariaLabel\}/);
+  assert.match(schemaFields, /aria-label=\{`\$\{label\} slider`\}/);
+  assert.match(schemaFields, /aria-label=\{`\$\{label\} value`\}/);
+  assert.match(fieldEditors, /aria-label=\{`\$\{props\.label\} color`\}/);
+  assert.match(fieldEditors, /aria-label=\{`\$\{props\.label\} component`\}/);
+  assert.match(fieldEditors, /aria-label="Image Type"/);
 
   assert.match(dock, /role="tablist" aria-label="Dock panels"/);
   assert.match(dock, /role="tab"/);

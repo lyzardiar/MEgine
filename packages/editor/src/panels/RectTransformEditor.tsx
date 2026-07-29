@@ -59,6 +59,7 @@ function useScrub(value: number, step: number, onChange: (v: number) => void) {
 
 function Axis(props: {
   label: string;
+  ariaLabel: string;
   value: number;
   onChange: (v: number) => void;
   step?: number;
@@ -68,12 +69,17 @@ function Axis(props: {
   const cls = props.label === 'z' ? 'z' : props.label;
   return (
     <div className="axis">
-      <span className={`scrub-label ${cls}`} onPointerDown={onScrub}>
+      <span
+        className={`scrub-label ${cls}`}
+        aria-label={`Adjust ${props.ariaLabel}`}
+        onPointerDown={onScrub}
+      >
         {props.label.toUpperCase()}
       </span>
       <input
         type="number"
         step={step}
+        aria-label={props.ariaLabel}
         value={Number(props.value.toFixed(4))}
         onChange={(e) => props.onChange(parseFloat(e.target.value) || 0)}
       />
@@ -181,28 +187,30 @@ export function RectTransformEditor(props: {
       </div>
       <div className="axis-row">
         <label>Anch Min</label>
-        <Axis label="x" value={rt.anchor_min[0]} step={0.05} onChange={(v) => setV2('anchor_min', 0, v)} />
-        <Axis label="y" value={rt.anchor_min[1]} step={0.05} onChange={(v) => setV2('anchor_min', 1, v)} />
+        <Axis label="x" ariaLabel="Anchor Min X" value={rt.anchor_min[0]} step={0.05} onChange={(v) => setV2('anchor_min', 0, v)} />
+        <Axis label="y" ariaLabel="Anchor Min Y" value={rt.anchor_min[1]} step={0.05} onChange={(v) => setV2('anchor_min', 1, v)} />
       </div>
       <div className="axis-row">
         <label>Anch Max</label>
-        <Axis label="x" value={rt.anchor_max[0]} step={0.05} onChange={(v) => setV2('anchor_max', 0, v)} />
-        <Axis label="y" value={rt.anchor_max[1]} step={0.05} onChange={(v) => setV2('anchor_max', 1, v)} />
+        <Axis label="x" ariaLabel="Anchor Max X" value={rt.anchor_max[0]} step={0.05} onChange={(v) => setV2('anchor_max', 0, v)} />
+        <Axis label="y" ariaLabel="Anchor Max Y" value={rt.anchor_max[1]} step={0.05} onChange={(v) => setV2('anchor_max', 1, v)} />
       </div>
       <div className="axis-row">
         <label>Pivot</label>
-        <Axis label="x" value={rt.pivot[0]} step={0.05} onChange={(v) => setV2('pivot', 0, v)} />
-        <Axis label="y" value={rt.pivot[1]} step={0.05} onChange={(v) => setV2('pivot', 1, v)} />
+        <Axis label="x" ariaLabel="Pivot X" value={rt.pivot[0]} step={0.05} onChange={(v) => setV2('pivot', 0, v)} />
+        <Axis label="y" ariaLabel="Pivot Y" value={rt.pivot[1]} step={0.05} onChange={(v) => setV2('pivot', 1, v)} />
       </div>
       <div className="axis-row">
         <label>Horizontal</label>
         <Axis
           label={horizontal.firstLabel.toLowerCase()}
+          ariaLabel={`Horizontal ${horizontal.firstLabel}`}
           value={horizontal.first}
           onChange={(value) => props.onChange(writeRectAxis(rt, 0, 0, value))}
         />
         <Axis
           label={horizontal.secondLabel.toLowerCase()}
+          ariaLabel={`Horizontal ${horizontal.secondLabel}`}
           value={horizontal.second}
           onChange={(value) => props.onChange(writeRectAxis(rt, 0, 1, value))}
         />
@@ -211,11 +219,13 @@ export function RectTransformEditor(props: {
         <label>Vertical</label>
         <Axis
           label={vertical.firstLabel.toLowerCase()}
+          ariaLabel={`Vertical ${vertical.firstLabel}`}
           value={vertical.first}
           onChange={(value) => props.onChange(writeRectAxis(rt, 1, 0, value))}
         />
         <Axis
           label={vertical.secondLabel.toLowerCase()}
+          ariaLabel={`Vertical ${vertical.secondLabel}`}
           value={vertical.second}
           onChange={(value) => props.onChange(writeRectAxis(rt, 1, 1, value))}
         />
@@ -224,6 +234,7 @@ export function RectTransformEditor(props: {
         <label>Rotation</label>
         <Axis
           label="z"
+          ariaLabel="Rotation Z"
           value={rt.local_rotation}
           step={1}
           onChange={(v) => set({ local_rotation: v })}
@@ -231,8 +242,8 @@ export function RectTransformEditor(props: {
       </div>
       <div className="axis-row">
         <label>Scale</label>
-        <Axis label="x" value={rt.local_scale[0]} onChange={(v) => setV2('local_scale', 0, v)} />
-        <Axis label="y" value={rt.local_scale[1]} onChange={(v) => setV2('local_scale', 1, v)} />
+        <Axis label="x" ariaLabel="Scale X" value={rt.local_scale[0]} onChange={(v) => setV2('local_scale', 0, v)} />
+        <Axis label="y" ariaLabel="Scale Y" value={rt.local_scale[1]} onChange={(v) => setV2('local_scale', 1, v)} />
       </div>
     </>
   );

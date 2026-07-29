@@ -915,7 +915,7 @@ export function Project(props: {
   };
 
   return (
-    <div className="project-layout" ref={rootRef} tabIndex={0}>
+    <div className="project-layout" ref={rootRef} tabIndex={0} aria-label="Project browser">
       <div className="project-tree" role="tree" aria-label="Project folders">
         {folders.map((f) => (
           <div
