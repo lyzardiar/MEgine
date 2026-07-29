@@ -38,6 +38,7 @@ import type {
 import {
   broadcastProjectAssetsChanged,
   openMaterialAsset,
+  projectAssetsChangeTouches,
   PROJECT_ASSETS_CHANGED_EVENT,
 } from '../assetEditorEvents';
 import type { MaterialEditorProps } from './Material';
@@ -162,6 +163,7 @@ export function MaterialInstanceEditor(props: MaterialEditorProps) {
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [reloadToken, setReloadToken] = useState(0);
   const [shaderParameters, setShaderParameters] = useState<SurfaceShaderParameter[]>([]);
   const [shaderKeywords, setShaderKeywords] = useState<SurfaceShaderKeyword[]>([]);
   const [shaderTextures, setShaderTextures] = useState<SurfaceShaderTexture[]>([]);
@@ -171,6 +173,8 @@ export function MaterialInstanceEditor(props: MaterialEditorProps) {
   const loadedPath = useRef<string | null>(null);
   const drafts = useRef(new Map<string, InstanceDraft>());
   const instanceRef = useRef<MaterialInstanceAsset | null>(null);
+  const forceReloadPath = useRef<string | null>(null);
+  const suppressAssetChange = useRef(false);
   const editTransaction = useRef<{
     instance: MaterialInstanceAsset;
     checkpoint: EditorUndoCheckpoint;
@@ -185,6 +189,8 @@ export function MaterialInstanceEditor(props: MaterialEditorProps) {
 
   useEffect(() => {
     let cancelled = false;
+    const forceReload = forceReloadPath.current === props.assetPath;
+    if (forceReload) forceReloadPath.current = null;
     const transaction = editTransaction.current;
     if (
       transaction?.token
@@ -195,7 +201,7 @@ export function MaterialInstanceEditor(props: MaterialEditorProps) {
       props.undoService.restoreCheckpoint(transaction.checkpoint);
     }
     const previousPath = loadedPath.current;
-    if (previousPath && instance) {
+    if (previousPath && instance && !forceReload) {
       drafts.current.set(previousPath, { instance: structuredClone(instance), savedText });
       setDraftEpoch((value) => value + 1);
     }
@@ -207,7 +213,8 @@ export function MaterialInstanceEditor(props: MaterialEditorProps) {
     setSavedText('');
     setLoading(false);
     if (!props.assetPath) return () => { cancelled = true; };
-    const draft = drafts.current.get(props.assetPath);
+    if (forceReload) drafts.current.delete(props.assetPath);
+    const draft = forceReload ? undefined : drafts.current.get(props.assetPath);
     if (draft) {
       drafts.current.delete(props.assetPath);
       replaceInstance(structuredClone(draft.instance));
@@ -231,7 +238,7 @@ export function MaterialInstanceEditor(props: MaterialEditorProps) {
         if (!cancelled) setLoading(false);
       });
     return () => { cancelled = true; };
-  }, [props.assetPath]);
+  }, [props.assetPath, reloadToken]);
 
   const documentAt = async (path: string): Promise<MaterialInstanceAsset> => {
     const normalized = normalizeProjectAssetPath(path);
@@ -327,15 +334,36 @@ export function MaterialInstanceEditor(props: MaterialEditorProps) {
   const anyDirty = dirty || [...drafts.current.values()].some(instanceDraftDirty);
   useEffect(() => props.onDirtyChange(anyDirty), [anyDirty, props.onDirtyChange]);
 
+  const reloadFromDisk = () => {
+    if (!props.assetPath) return;
+    forceReloadPath.current = props.assetPath;
+    setReloadToken((value) => value + 1);
+  };
+
   useEffect(() => {
-    const refresh = () => {
+    const refresh = (event: Event) => {
       void refreshProjectFiles().finally(() => {
         setAssetRevision((revision) => revision + 1);
       });
+      if (
+        suppressAssetChange.current
+        || !props.assetPath
+        || !projectAssetsChangeTouches(
+          (event as CustomEvent<unknown>).detail,
+          [props.assetPath],
+        )
+      ) return;
+      if (dirty) {
+        setError(
+          'Material Instance changed outside this editor. Reload to discard this draft before saving.',
+        );
+        return;
+      }
+      reloadFromDisk();
     };
     window.addEventListener(PROJECT_ASSETS_CHANGED_EVENT, refresh);
     return () => window.removeEventListener(PROJECT_ASSETS_CHANGED_EVENT, refresh);
-  }, []);
+  }, [dirty, props.assetPath]);
 
   const materialAssets = useMemo(() => {
     void assetRevision;
@@ -575,7 +603,12 @@ export function MaterialInstanceEditor(props: MaterialEditorProps) {
       }
       setAssetRevision((revision) => revision + 1);
       props.onAssetsChanged();
-      broadcastProjectAssetsChanged({ action: 'modified', sourcePath: path });
+      suppressAssetChange.current = true;
+      try {
+        broadcastProjectAssetsChanged({ action: 'modified', sourcePath: path });
+      } finally {
+        suppressAssetChange.current = false;
+      }
       props.onLog(`Saved ${path}`);
       return true;
     } catch (reason) {
@@ -728,6 +761,7 @@ export function MaterialInstanceEditor(props: MaterialEditorProps) {
         <button type="button" aria-label="Redo" disabled={!props.undoService.canRedo} onClick={props.onGlobalRedo}><Redo2 size={13} /></button>
         <button type="button" onClick={() => void createNew()}>New</button>
         <button type="button" disabled={!dirty || saving} onClick={revert}>Revert</button>
+        <button type="button" disabled={loading || saving} onClick={reloadFromDisk}>Reload</button>
         <button type="button" disabled={!dirty || saving || !effective} onClick={() => void save()}>
           {saving ? 'Saving…' : 'Save'}
         </button>
