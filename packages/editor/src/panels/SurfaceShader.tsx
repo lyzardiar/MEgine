@@ -12,7 +12,11 @@ import {
   surfaceShaderDiagnostics,
   validateSurfaceShaderSource,
 } from '../surfaceShader';
-import { registerSaveAllParticipant } from '../saveAll';
+import {
+  registerSaveAllParticipant,
+  registerSaveDocumentParticipant,
+  sameSaveDocumentPath,
+} from '../saveAll';
 import {
   resourceEditorDocuments,
   type WorkspaceResourceDocument,
@@ -372,9 +376,52 @@ export function SurfaceShaderEditor(props: {
     if (failures.length > 0) throw new Error(failures.join('; '));
   };
 
+  const saveDocument = async (path: string) => {
+    if (sameSaveDocumentPath(props.assetPath, path)) {
+      if (!await save()) throw new Error('Current Surface Shader could not be saved');
+      return;
+    }
+    const entry = [...drafts.current].find(([draftPath]) => (
+      sameSaveDocumentPath(draftPath, path)
+    ));
+    if (!entry || entry[1].source === entry[1].savedSource) {
+      throw new Error(`No dirty Surface Shader draft is open for ${path}`);
+    }
+    const [draftPath, draft] = entry;
+    setSaving(true);
+    try {
+      const normalized = await validateSource(draft.source);
+      await writeProjectAssetText(draftPath, normalized);
+      drafts.current.set(draftPath, {
+        source: normalized,
+        savedSource: normalized,
+      });
+      broadcastProjectAssetsChanged({ action: 'modified', sourcePath: draftPath });
+      props.onAssetsChanged();
+      props.onLog(desktop
+        ? `Saved ${draftPath}; Player Forward WGSL validation passed.`
+        : `Saved ${draftPath}; desktop Player validation remains required before build.`);
+      setDraftEpoch((value) => value + 1);
+    } finally {
+      setSaving(false);
+    }
+  };
+
   useEffect(() => registerSaveAllParticipant('Surface Shaders', () => (
     anyDirty && !saving ? saveAll : null
   )), [anyDirty, dirty, props.assetPath, savedSource, saving, source]);
+  useEffect(() => registerSaveDocumentParticipant('Surface Shaders', (path) => {
+    if (saving || validating) return null;
+    if (dirty && sameSaveDocumentPath(props.assetPath, path)) {
+      return () => saveDocument(path);
+    }
+    const draft = [...drafts.current].find(([draftPath]) => (
+      sameSaveDocumentPath(draftPath, path)
+    ))?.[1];
+    return draft && draft.source !== draft.savedSource
+      ? () => saveDocument(path)
+      : null;
+  }), [dirty, draftEpoch, props.assetPath, savedSource, saving, source, validating]);
 
   if (!props.assetPath) {
     return <div className="material-empty"><strong>Surface Shader</strong><span>Create or double-click a .mshader asset.</span><button type="button" onClick={() => void createNew()}>Create Shader</button></div>;

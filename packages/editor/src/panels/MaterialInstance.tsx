@@ -31,7 +31,11 @@ import {
   refreshProjectFiles,
   writeProjectAssetText,
 } from '../projectAssets';
-import { registerSaveAllParticipant } from '../saveAll';
+import {
+  registerSaveAllParticipant,
+  registerSaveDocumentParticipant,
+  sameSaveDocumentPath,
+} from '../saveAll';
 import type {
   EditorUndoCheckpoint,
   EditorUndoToken,
@@ -671,9 +675,54 @@ export function MaterialInstanceEditor(props: MaterialEditorProps) {
     if (failures.length > 0) throw new Error(failures.join('; '));
   };
 
+  const saveDocument = async (path: string) => {
+    if (sameSaveDocumentPath(props.assetPath, path)) {
+      if (!await save()) throw new Error('Current Material Instance could not be saved');
+      return;
+    }
+    const entry = [...drafts.current].find(([draftPath]) => (
+      sameSaveDocumentPath(draftPath, path)
+    ));
+    if (!entry || !instanceDraftDirty(entry[1])) {
+      throw new Error(`No dirty Material Instance draft is open for ${path}`);
+    }
+    const [draftPath, draft] = entry;
+    setSaving(true);
+    try {
+      const resolved = await resolveDocumentMaterial(draftPath);
+      await validateResolvedCustomParameters(resolved);
+      const text = serializeMaterialInstanceAsset(draft.instance);
+      await writeProjectAssetText(draftPath, text);
+      drafts.current.set(draftPath, {
+        instance: parseMaterialInstanceAsset(text),
+        savedText: text,
+      });
+      await refreshProjectFiles();
+      setAssetRevision((revision) => revision + 1);
+      broadcastProjectAssetsChanged({ action: 'modified', sourcePath: draftPath });
+      props.onAssetsChanged();
+      props.onLog(`Saved ${draftPath}`);
+      setDraftEpoch((value) => value + 1);
+    } finally {
+      setSaving(false);
+    }
+  };
+
   useEffect(() => registerSaveAllParticipant('Material Instances', () => (
     anyDirty && !saving ? saveAll : null
   )), [anyDirty, dirty, instance, props.assetPath, savedText, saving]);
+  useEffect(() => registerSaveDocumentParticipant('Material Instances', (path) => {
+    if (saving) return null;
+    if (dirty && sameSaveDocumentPath(props.assetPath, path)) {
+      return () => saveDocument(path);
+    }
+    const draft = [...drafts.current].find(([draftPath]) => (
+      sameSaveDocumentPath(draftPath, path)
+    ))?.[1];
+    return draft && instanceDraftDirty(draft)
+      ? () => saveDocument(path)
+      : null;
+  }), [dirty, draftEpoch, instance, props.assetPath, savedText, saving]);
 
   const createNew = async () => {
     try {

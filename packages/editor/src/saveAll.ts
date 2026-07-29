@@ -1,4 +1,5 @@
 export const SAVE_ALL_RESOURCES_EVENT = 'mengine:save-all-resources';
+export const SAVE_RESOURCE_DOCUMENT_EVENT = 'mengine:save-resource-document';
 
 export type SaveAllTask = {
   label: string;
@@ -18,9 +19,11 @@ export type RemoteSavePeer = {
 export type RemoteSaveRequest = {
   requestId: string;
   targets: string[];
+  paths?: string[];
 };
 
 type SaveAllRequest = { tasks: SaveAllTask[] };
+type SaveDocumentRequest = SaveAllRequest & { path: string };
 
 type PendingRemoteSave = {
   peers: Map<string, RemoteSavePeer>;
@@ -72,7 +75,10 @@ export class RemoteSaveCoordinator {
     this.requestId = requestId;
   }
 
-  request(peers: readonly RemoteSavePeer[]): Promise<SaveAllResult> {
+  request(
+    peers: readonly RemoteSavePeer[],
+    paths: readonly string[] = [],
+  ): Promise<SaveAllResult> {
     const uniquePeers = new Map<string, RemoteSavePeer>();
     for (const peer of peers) {
       if (!peer.sender || uniquePeers.has(peer.sender)) continue;
@@ -97,6 +103,7 @@ export class RemoteSaveCoordinator {
         this.dispatch({
           requestId,
           targets: [...uniquePeers.keys()],
+          ...(paths.length > 0 ? { paths: [...paths] } : {}),
         });
       } catch (reason) {
         clearTimeout(timeout);
@@ -163,6 +170,24 @@ export function registerSaveAllParticipant(
   return () => window.removeEventListener(SAVE_ALL_RESOURCES_EVENT, listener);
 }
 
+export function sameSaveDocumentPath(left: string | null, right: string): boolean {
+  return left?.replace(/\\/g, '/').toLocaleLowerCase()
+    === right.replace(/\\/g, '/').toLocaleLowerCase();
+}
+
+export function registerSaveDocumentParticipant(
+  label: string,
+  task: (path: string) => (() => Promise<void>) | null,
+): () => void {
+  const listener = (event: Event) => {
+    const request = (event as CustomEvent<SaveDocumentRequest>).detail;
+    const run = task(request.path);
+    if (run) request.tasks.push({ label, run });
+  };
+  window.addEventListener(SAVE_RESOURCE_DOCUMENT_EVENT, listener);
+  return () => window.removeEventListener(SAVE_RESOURCE_DOCUMENT_EVENT, listener);
+}
+
 export async function executeSaveAllTasks(tasks: readonly SaveAllTask[]): Promise<SaveAllResult> {
   const saved: string[] = [];
   const failures: SaveAllResult['failures'] = [];
@@ -186,4 +211,26 @@ export async function saveAllResources(): Promise<SaveAllResult> {
     detail: request,
   }));
   return executeSaveAllTasks(request.tasks);
+}
+
+export async function saveResourceDocument(path: string): Promise<SaveAllResult> {
+  const request: SaveDocumentRequest = { path, tasks: [] };
+  window.dispatchEvent(new CustomEvent<SaveDocumentRequest>(SAVE_RESOURCE_DOCUMENT_EVENT, {
+    detail: request,
+  }));
+  if (request.tasks.length > 1) {
+    return {
+      saved: [],
+      failures: [{
+        label: path,
+        error: `Multiple resource editors claimed this document: ${
+          request.tasks.map((task) => task.label).join(', ')
+        }`,
+      }],
+    };
+  }
+  const [task] = request.tasks;
+  return task
+    ? executeSaveAllTasks([{ label: path, run: task.run }])
+    : { saved: [], failures: [] };
 }

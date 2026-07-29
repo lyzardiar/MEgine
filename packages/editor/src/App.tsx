@@ -105,6 +105,7 @@ import {
   mergeSaveAllResults,
   RemoteSaveCoordinator,
   saveAllResources,
+  saveResourceDocument,
   type RemoteSavePeer,
   type SaveAllResult,
 } from './saveAll';
@@ -182,6 +183,7 @@ type WorkspaceSyncMessage =
       sender: string;
       requestId: string;
       targets: string[];
+      paths?: string[];
     }
   | {
       type: 'save-resources-result';
@@ -366,6 +368,7 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
   }>());
   const remoteSaveCoordinator = useRef<RemoteSaveCoordinator | null>(null);
   const saveResourcesInFlight = useRef<Promise<SaveAllResult> | null>(null);
+  const saveDocumentInFlight = useRef(new Map<string, Promise<SaveAllResult>>());
   const recoveryTimer = useRef<number | null>(null);
   const lastRecoveryError = useRef<string | null>(null);
   const lastAssetPollError = useRef<string | null>(null);
@@ -431,6 +434,21 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
     }
   };
 
+  const saveLocalResourceDocument = async (path: string): Promise<SaveAllResult> => {
+    const key = path.replace(/\\/g, '/').toLocaleLowerCase();
+    const existing = saveDocumentInFlight.current.get(key);
+    if (existing) return existing;
+    const request = saveResourceDocument(path);
+    saveDocumentInFlight.current.set(key, request);
+    try {
+      return await request;
+    } finally {
+      if (saveDocumentInFlight.current.get(key) === request) {
+        saveDocumentInFlight.current.delete(key);
+      }
+    }
+  };
+
   const waitForLocalResourcesClean = async (timeoutMs = 2_000): Promise<boolean> => {
     const deadline = Date.now() + timeoutMs;
     do {
@@ -438,6 +456,24 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
       if (!resourceDirtyRef.current) return true;
     } while (Date.now() < deadline);
     return !resourceDirtyRef.current;
+  };
+
+  const waitForLocalResourceDocumentClean = async (
+    path: string,
+    timeoutMs = 2_000,
+  ): Promise<boolean> => {
+    const deadline = Date.now() + timeoutMs;
+    do {
+      await new Promise((resolve) => window.setTimeout(resolve, 25));
+      const document = localResourceDocumentsRef.current.find(
+        (candidate) => sameAssetPath(candidate.path, path),
+      );
+      if (document && !document.dirty) return true;
+    } while (Date.now() < deadline);
+    const document = localResourceDocumentsRef.current.find(
+      (candidate) => sameAssetPath(candidate.path, path),
+    );
+    return Boolean(document && !document.dirty);
   };
 
   useEffect(() => {
@@ -1055,6 +1091,7 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
         sender: syncSender.current,
         requestId: request.requestId,
         targets: request.targets,
+        ...(request.paths ? { paths: request.paths } : {}),
       } satisfies WorkspaceSyncMessage);
     });
     remoteSaveCoordinator.current = saveCoordinator;
@@ -1074,7 +1111,11 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
         void (async () => {
           let result: SaveAllResult;
           try {
-            result = await saveLocalResources();
+            result = message.paths?.length
+              ? mergeSaveAllResults(await Promise.all(
+                  message.paths.map((path) => saveLocalResourceDocument(path)),
+                ))
+              : await saveLocalResources();
           } catch (reason) {
             result = {
               saved: [],
@@ -1084,15 +1125,32 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
               }],
             };
           }
-          const resourcesClean = result.failures.length > 0
-            ? !resourceDirtyRef.current
-            : await waitForLocalResourcesClean();
+          const resourcesClean = message.paths?.length
+            ? (
+                result.failures.length > 0
+                  ? message.paths.every((path) => {
+                      const document = localResourceDocumentsRef.current.find(
+                        (candidate) => sameAssetPath(candidate.path, path),
+                      );
+                      return Boolean(document && !document.dirty);
+                    })
+                  : (await Promise.all(
+                      message.paths.map((path) => waitForLocalResourceDocumentClean(path)),
+                    )).every(Boolean)
+              )
+            : (
+                result.failures.length > 0
+                  ? !resourceDirtyRef.current
+                  : await waitForLocalResourcesClean()
+              );
           if (!resourcesClean && result.failures.length === 0) {
             result = {
               ...result,
               failures: [{
-                label: props.detachedPanel ?? 'Workspace resources',
-                error: 'Workspace remains dirty after its Save All participants completed',
+                label: message.paths?.join(', ') ?? props.detachedPanel ?? 'Workspace resources',
+                error: message.paths?.length
+                  ? 'The requested document remains dirty after its save participant completed'
+                  : 'Workspace remains dirty after its Save All participants completed',
               }],
             };
           }
@@ -1690,6 +1748,102 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
       }
     },
     closeProject: closeWorkspaceProject,
+    saveDocument: async (requestedPath: string) => {
+      const remotePeers = await queryRemoteWorkspacePeers();
+      const localMatches = localResourceDocumentsRef.current.filter(
+        (document) => sameAssetPath(document.path, requestedPath),
+      );
+      const remoteMatches = remotePeers.flatMap((peer) => (
+        peer.documents
+          .filter((document) => sameAssetPath(document.path, requestedPath))
+          .map((document) => ({ peer, document }))
+      ));
+      const matches = [
+        ...localMatches.map((document) => ({
+          host: 'main',
+          panel: document.panel,
+          document,
+          peer: null,
+        })),
+        ...remoteMatches.map(({ peer, document }) => ({
+          host: peer.sender,
+          panel: peer.panel,
+          document,
+          peer,
+        })),
+      ];
+      if (matches.length === 0) {
+        throw new BridgeError(
+          'INVALID_ARGS',
+          `No open resource document matches "${requestedPath}"`,
+        );
+      }
+      const dirtyMatches = matches.filter((match) => match.document.dirty);
+      const canonicalPath = (dirtyMatches[0] ?? matches[0]).document.path;
+      if (dirtyMatches.length === 0) {
+        return { path: canonicalPath, saved: false, unchanged: true };
+      }
+      const dirtyHosts = new Set(dirtyMatches.map((match) => match.host));
+      if (dirtyHosts.size > 1 || dirtyMatches.length > 1) {
+        throw new BridgeError(
+          'CONFLICT',
+          `Multiple editor windows contain dirty drafts for "${canonicalPath}"`,
+          {
+            hosts: dirtyMatches.map((match) => ({
+              panel: match.panel,
+              sender: match.host,
+              kind: match.document.kind,
+            })),
+          },
+        );
+      }
+      const [target] = dirtyMatches;
+      let result: SaveAllResult;
+      if (target.peer) {
+        const coordinator = remoteSaveCoordinator.current;
+        if (!coordinator) {
+          throw new BridgeError(
+            'NOT_READY',
+            'Workspace save channel is unavailable',
+          );
+        }
+        result = await coordinator.request(
+          [{ sender: target.peer.sender, panel: target.peer.panel }],
+          [canonicalPath],
+        );
+      } else {
+        result = await saveLocalResourceDocument(canonicalPath);
+        if (
+          result.failures.length === 0
+          && !await waitForLocalResourceDocumentClean(canonicalPath)
+        ) {
+          result = {
+            ...result,
+            failures: [{
+              label: canonicalPath,
+              error: 'The requested document remains dirty after its save participant completed',
+            }],
+          };
+        }
+      }
+      if (result.failures.length > 0) {
+        throw new BridgeError(
+          'IO_ERROR',
+          `Could not save "${canonicalPath}": ${
+            result.failures.map((failure) => failure.error).join('; ')
+          }`,
+          { failures: structuredClone(result.failures) },
+        );
+      }
+      if (result.saved.length === 0) {
+        throw new BridgeError(
+          'NOT_READY',
+          `No resource editor accepted the save request for "${canonicalPath}"`,
+        );
+      }
+      postWorkspaceDirtyState();
+      return { path: canonicalPath, saved: true, unchanged: false };
+    },
     listDocuments: async () => {
       const remotePeers = await queryRemoteWorkspacePeers();
       const remoteDirty = new Set(

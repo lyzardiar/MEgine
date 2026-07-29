@@ -282,6 +282,11 @@ export interface AgentWorkspaceProvider {
     closedWindows: string[];
     discardedUnsavedChanges: boolean;
   }>;
+  saveDocument: (path: string) => Promise<{
+    path: string;
+    saved: boolean;
+    unchanged: boolean;
+  }>;
   listDocuments: () => Promise<AgentWorkspaceDocument[]>;
   openAsset: (target: AgentResourceEditorTarget) => Promise<void>;
   createAsset: (request: AgentCreateAssetRequest) => Promise<AgentCreateAssetResult>;
@@ -3960,6 +3965,12 @@ class AgentBridge {
         unnamedScene: optionalString(args, 'name'),
         overwrite: optionalBoolean(args, 'overwrite', false),
       });
+      return this.finishAsyncCommand({ ok: true, data: result }, options);
+    }
+    if (commandId === 'workspace.save_document') {
+      const result = await this.requireWorkspaceProvider().saveDocument(
+        requiredString(args, 'path'),
+      );
       return this.finishAsyncCommand({ ok: true, data: result }, options);
     }
     if (commandId === 'scene.load_json') {

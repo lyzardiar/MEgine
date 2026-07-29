@@ -183,7 +183,11 @@ import {
   refreshProjectFiles,
   writeProjectAssetText,
 } from '../projectAssets';
-import { registerSaveAllParticipant } from '../saveAll';
+import {
+  registerSaveAllParticipant,
+  registerSaveDocumentParticipant,
+  sameSaveDocumentPath,
+} from '../saveAll';
 import {
   initializeTimelineEditorPreferencesEvents,
   readTimelineEditorPreferences,
@@ -2188,9 +2192,49 @@ export function Timeline(props: {
     if (failures.length > 0) throw new Error(failures.join('; '));
   };
 
+  const persistDocument = async (path: string) => {
+    if (sameSaveDocumentPath(clipPath || null, path)) {
+      if (!await persist()) throw new Error('Current Animation Clip could not be saved');
+      return;
+    }
+    const entry = [...drafts.current].find(([draftPath]) => (
+      sameSaveDocumentPath(draftPath, path)
+    ));
+    if (!entry || !animationDraftDirty(entry[1])) {
+      throw new Error(`No dirty Animation Clip draft is open for ${path}`);
+    }
+    const [draftPath, draft] = entry;
+    setSaving(true);
+    try {
+      const normalized = normalizeAnimationClip(draft.clip);
+      const text = serializeAnimationClip(normalized);
+      await writeProjectAssetText(draftPath, text);
+      drafts.current.set(draftPath, { ...draft, clip: normalized, savedText: text });
+      await refreshProjectFiles();
+      broadcastProjectAssetsChanged({ action: 'modified', sourcePath: draftPath });
+      props.onAssetsChanged();
+      props.onLog(`Saved ${draftPath}`);
+      setDraftEpoch((value) => value + 1);
+    } finally {
+      setSaving(false);
+    }
+  };
+
   useEffect(() => registerSaveAllParticipant('Animation Clips', () => (
     anyDirty && !saving ? persistAll : null
   )), [anyDirty, clip, clipPath, dirty, savedText, saving]);
+  useEffect(() => registerSaveDocumentParticipant('Animation Clips', (path) => {
+    if (saving) return null;
+    if (dirty && sameSaveDocumentPath(clipPath || null, path)) {
+      return () => persistDocument(path);
+    }
+    const draft = [...drafts.current].find(([draftPath]) => (
+      sameSaveDocumentPath(draftPath, path)
+    ))?.[1];
+    return draft && animationDraftDirty(draft)
+      ? () => persistDocument(path)
+      : null;
+  }), [clip, clipPath, dirty, draftEpoch, savedText, saving]);
 
   const createClip = async () => {
     if (!props.entity) return;

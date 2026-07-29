@@ -48,7 +48,11 @@ import {
   refreshProjectFiles,
   writeProjectAssetText,
 } from '../projectAssets';
-import { registerSaveAllParticipant } from '../saveAll';
+import {
+  registerSaveAllParticipant,
+  registerSaveDocumentParticipant,
+  sameSaveDocumentPath,
+} from '../saveAll';
 import type {
   EditorUndoCheckpoint,
   EditorUndoService,
@@ -1013,6 +1017,38 @@ export function Sequencer(props: SequencerProps) {
     }
   };
 
+  const saveDocument = async (path: string) => {
+    if (sameSaveDocumentPath(props.assetPath, path)) {
+      if (!await save()) throw new Error('Current Timeline could not be saved');
+      return;
+    }
+    const entry = [...drafts.current].find(([draftPath]) => (
+      sameSaveDocumentPath(draftPath, path)
+    ));
+    if (!entry || !sequencerDraftDirty(entry[1])) {
+      throw new Error(`No dirty Timeline draft is open for ${path}`);
+    }
+    const [draftPath, draft] = entry;
+    setSaving(true);
+    try {
+      validateTimelineAsset(draft.asset);
+      const text = serializeTimelineAsset(draft.asset);
+      await writeProjectAssetText(draftPath, text);
+      drafts.current.set(draftPath, {
+        ...draft,
+        asset: parseTimelineAsset(text),
+        savedText: text,
+      });
+      await refreshProjectFiles();
+      broadcastProjectAssetsChanged({ action: 'modified', sourcePath: draftPath });
+      props.onAssetsChanged();
+      props.onLog(`Saved ${draftPath}`);
+      setDraftEpoch((value) => value + 1);
+    } finally {
+      setSaving(false);
+    }
+  };
+
   useEffect(() => registerSaveAllParticipant('Timelines', () => {
     if (!anyDirty) return null;
     return async () => {
@@ -1034,6 +1070,18 @@ export function Sequencer(props: SequencerProps) {
       props.onAssetsChanged();
     };
   }), [anyDirty, asset, dirty, payloadInvalid, props.assetPath, savedText]);
+  useEffect(() => registerSaveDocumentParticipant('Timelines', (path) => {
+    if (saving) return null;
+    if (dirty && sameSaveDocumentPath(props.assetPath, path)) {
+      return () => saveDocument(path);
+    }
+    const draft = [...drafts.current].find(([draftPath]) => (
+      sameSaveDocumentPath(draftPath, path)
+    ))?.[1];
+    return draft && sequencerDraftDirty(draft)
+      ? () => saveDocument(path)
+      : null;
+  }), [asset, dirty, draftEpoch, payloadInvalid, props.assetPath, savedText, saving]);
 
   useEffect(() => {
     if (!props.previewEnabled || !playing || !asset) return;

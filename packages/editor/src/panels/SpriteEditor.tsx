@@ -22,7 +22,11 @@ import {
   projectAssetsChangeTouches,
   PROJECT_ASSETS_CHANGED_EVENT,
 } from '../assetEditorEvents';
-import { registerSaveAllParticipant } from '../saveAll';
+import {
+  registerSaveAllParticipant,
+  registerSaveDocumentParticipant,
+  sameSaveDocumentPath,
+} from '../saveAll';
 
 type TextureSize = [number, number];
 
@@ -298,6 +302,13 @@ export function SpriteEditor(props: {
 
   useEffect(() => registerSaveAllParticipant('Sprite Import Settings', () => (
     dirty && !saving
+      ? async () => {
+        if (!await apply()) throw new Error('Sprite import settings could not be saved');
+      }
+      : null
+  )), [basePath, dirty, saving, settings]);
+  useEffect(() => registerSaveDocumentParticipant('Sprite Import Settings', (path) => (
+    dirty && !saving && sameSaveDocumentPath(basePath, path)
       ? async () => {
         if (!await apply()) throw new Error('Sprite import settings could not be saved');
       }

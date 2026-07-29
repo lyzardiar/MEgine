@@ -37,7 +37,11 @@ import {
   refreshProjectFiles,
   writeProjectAssetText,
 } from '../projectAssets';
-import { registerSaveAllParticipant } from '../saveAll';
+import {
+  registerSaveAllParticipant,
+  registerSaveDocumentParticipant,
+  sameSaveDocumentPath,
+} from '../saveAll';
 import type {
   EditorUndoCheckpoint,
   EditorUndoService,
@@ -696,9 +700,54 @@ function AnimatorControllerEditor(props: AnimatorEditorProps) {
     if (failures.length > 0) throw new Error(failures.join('; '));
   };
 
+  const saveDocument = async (path: string) => {
+    if (sameSaveDocumentPath(props.assetPath, path)) {
+      if (!await save()) throw new Error('Current Animator Controller could not be saved');
+      return;
+    }
+    const entry = [...drafts.current].find(([draftPath]) => (
+      sameSaveDocumentPath(draftPath, path)
+    ));
+    if (!entry || !animatorDraftDirty(entry[1])) {
+      throw new Error(`No dirty Animator Controller draft is open for ${path}`);
+    }
+    const [draftPath, draft] = entry;
+    setSaving(true);
+    try {
+      validateAnimatorController(draft.controller);
+      const text = serializeAnimatorController(draft.controller);
+      await writeProjectAssetText(draftPath, text);
+      const normalized = parseAnimatorController(text);
+      drafts.current.set(draftPath, {
+        ...draft,
+        controller: normalized,
+        savedFingerprint: controllerFingerprint(normalized),
+      });
+      await refreshProjectFiles();
+      broadcastProjectAssetsChanged({ action: 'modified', sourcePath: draftPath });
+      props.onAssetsChanged();
+      props.onLog(`Saved ${draftPath}`);
+      setDraftEpoch((value) => value + 1);
+    } finally {
+      setSaving(false);
+    }
+  };
+
   useEffect(() => registerSaveAllParticipant('Animator Controllers', () => (
     anyDirty && !saving ? saveAll : null
   )), [anyDirty, controller, dirty, props.assetPath, savedFingerprint, saving]);
+  useEffect(() => registerSaveDocumentParticipant('Animator Controllers', (path) => {
+    if (saving) return null;
+    if (dirty && sameSaveDocumentPath(props.assetPath, path)) {
+      return () => saveDocument(path);
+    }
+    const draft = [...drafts.current].find(([draftPath]) => (
+      sameSaveDocumentPath(draftPath, path)
+    ))?.[1];
+    return draft && animatorDraftDirty(draft)
+      ? () => saveDocument(path)
+      : null;
+  }), [controller, dirty, draftEpoch, props.assetPath, savedFingerprint, saving]);
 
   const createNew = async () => {
     try {

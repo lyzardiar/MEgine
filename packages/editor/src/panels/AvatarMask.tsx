@@ -25,7 +25,11 @@ import {
   refreshProjectFiles,
   writeProjectAssetText,
 } from '../projectAssets';
-import { registerSaveAllParticipant } from '../saveAll';
+import {
+  registerSaveAllParticipant,
+  registerSaveDocumentParticipant,
+  sameSaveDocumentPath,
+} from '../saveAll';
 import type {
   EditorUndoCheckpoint,
   EditorUndoService,
@@ -355,9 +359,51 @@ export function AvatarMaskEditor(props: {
     if (failures.length > 0) throw new Error(failures.join('; '));
   };
 
+  const saveDocument = async (path: string) => {
+    if (sameSaveDocumentPath(props.assetPath, path)) {
+      if (!await save()) throw new Error('Current Avatar Mask could not be saved');
+      return;
+    }
+    const entry = [...drafts.current].find(([draftPath]) => (
+      sameSaveDocumentPath(draftPath, path)
+    ));
+    if (!entry || !avatarMaskDraftDirty(entry[1])) {
+      throw new Error(`No dirty Avatar Mask draft is open for ${path}`);
+    }
+    const [draftPath, draft] = entry;
+    setSaving(true);
+    try {
+      await writeMask(draftPath, draft.mask);
+      const normalized = parseAvatarMask(serializeAvatarMask(draft.mask));
+      drafts.current.set(draftPath, {
+        mask: normalized,
+        savedFingerprint: fingerprint(normalized),
+      });
+      await refreshProjectFiles();
+      broadcastProjectAssetsChanged({ action: 'modified', sourcePath: draftPath });
+      props.onAssetsChanged();
+      props.onLog(`Saved ${draftPath}`);
+      setDraftEpoch((value) => value + 1);
+    } finally {
+      setSaving(false);
+    }
+  };
+
   useEffect(() => registerSaveAllParticipant('Avatar Masks', () => (
     anyDirty && !saving ? saveAll : null
   )), [anyDirty, dirty, mask, props.assetPath, saving]);
+  useEffect(() => registerSaveDocumentParticipant('Avatar Masks', (path) => {
+    if (saving) return null;
+    if (dirty && sameSaveDocumentPath(props.assetPath, path)) {
+      return () => saveDocument(path);
+    }
+    const draft = [...drafts.current].find(([draftPath]) => (
+      sameSaveDocumentPath(draftPath, path)
+    ))?.[1];
+    return draft && avatarMaskDraftDirty(draft)
+      ? () => saveDocument(path)
+      : null;
+  }), [dirty, draftEpoch, mask, props.assetPath, saving]);
 
   const createNew = async () => {
     try {

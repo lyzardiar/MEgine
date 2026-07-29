@@ -23,7 +23,11 @@ import {
   projectAssetsChangeTouches,
   PROJECT_ASSETS_CHANGED_EVENT,
 } from '../assetEditorEvents';
-import { registerSaveAllParticipant } from '../saveAll';
+import {
+  registerSaveAllParticipant,
+  registerSaveDocumentParticipant,
+  sameSaveDocumentPath,
+} from '../saveAll';
 import { SpriteListField } from './uiFieldEditors';
 
 function uniqueAtlasPath(): string {
@@ -222,6 +226,11 @@ export function SpriteAtlasEditor(props: {
 
   useEffect(() => registerSaveAllParticipant('Sprite Atlas', () => (
     dirty && !saving && !packing
+      ? async () => { await save(); }
+      : null
+  )), [asset, dirty, packing, props.assetPath, saving]);
+  useEffect(() => registerSaveDocumentParticipant('Sprite Atlas', (path) => (
+    dirty && !saving && !packing && sameSaveDocumentPath(props.assetPath, path)
       ? async () => { await save(); }
       : null
   )), [asset, dirty, packing, props.assetPath, saving]);

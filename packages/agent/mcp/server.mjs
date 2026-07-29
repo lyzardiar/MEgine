@@ -2063,6 +2063,18 @@ const TOOLS = [
     [],
   ),
   execTool(
+    'save_document',
+    'Save exactly one open dirty resource document by its Assets/... path without saving the scene or any other resource draft. Clean documents return unchanged=true; documents that are not open are rejected.',
+    'workspace.save_document',
+    {
+      path: {
+        type: 'string',
+        description: 'Exact open resource document path returned by list_open_documents',
+      },
+    },
+    ['path'],
+  ),
+  execTool(
     'load_scene_json',
     'Strictly validate and atomically replace the current authored scene world in memory. The operation creates one undo step, does not save to disk, and preserves the current Scene-view camera and project game resolution.',
     'scene.load_json',
@@ -3171,6 +3183,7 @@ const IDEMPOTENT_BRIDGE_COMMANDS = new Set([
   'project.settings.set_tags_and_layers',
   'scene.save',
   'scene.save_all',
+  'workspace.save_document',
   'asset.open',
   'build.settings.set_scenes',
   'build.settings.set_asset_policy',
