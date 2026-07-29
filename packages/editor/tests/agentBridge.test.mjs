@@ -71,14 +71,24 @@ test('whole-window agent capture is background-safe and addressable by window la
   assert.match(rust, /const offset = __MENGINE_OFFSET__/);
   assert.match(rust, /semanticElements\.slice\(offset, offset \+ limit\)/);
   assert.match(rust, /new Map\(candidates\.map/);
-  assert.match(rust, /const snapshotRevision = `ui-v22-/);
+  assert.match(rust, /const snapshotRevision = `ui-v23-/);
   assert.match(rust, /revisionHash = BigInt\.asUintN\(64/);
   assert.match(rust, /const semanticScopeFor = \(element\) =>/);
   assert.match(rust, /role === 'tabpanel'/);
   assert.match(rust, /const qualifiedNameFor = \(scope, name\) =>/);
   assert.match(rust, /scope: scope \|\| null/);
   assert.match(rust, /qualifiedName: qualifiedNameFor\(scope, name\) \|\| null/);
-  assert.equal([...rust.matchAll(/version: 22,/g)].length, 2);
+  assert.equal([...rust.matchAll(/version: 23,/g)].length, 2);
+  assert.match(
+    rust,
+    /element instanceof HTMLElement\s+\|\| element instanceof SVGElement/,
+  );
+  assert.match(rust, /element\.hasAttribute\('tabindex'\)/);
+  assert.match(rust, /if \(keyboardTarget\) actions\.push\('keyPress'\)/);
+  assert.doesNotMatch(
+    rust,
+    /keyboardTarget\s+\|\| typeof props\.onKeyDown === 'function'/,
+  );
   assert.match(
     rust,
     /const structural = \/\^h\[1-6\]\$\/\.test\(tag\)\s+\|\| \['p', 'summary', 'legend', 'caption'\]\.includes\(tag\)/,
@@ -172,6 +182,16 @@ test('whole-window agent capture is background-safe and addressable by window la
   assert.match(interactionScript, /valueBlurHandledByReact: \['setValue', 'keyPress'\]\.includes\(action\)/);
   assert.match(interactionScript, /valueHandledByReact = dispatchValueChange\(element, nextValue\)/);
   assert.match(interactionScript, /pendingFocusTarget = next/);
+  assert.match(interactionScript, /let keyboardValueTarget = false/);
+  assert.match(interactionScript, /if \(keyboardValueTarget\) pendingValueBlur = true/);
+  assert.match(
+    interactionScript,
+    /keyboardValueTarget\s+&&\s+document\.activeElement !== element/,
+  );
+  assert.match(
+    interactionScript,
+    /if \(pendingFocusTarget instanceof HTMLElement\) \{\s+dispatchReactFocusLifecycle/,
+  );
   assert.match(interactionScript, /requestedKey === 'Enter' \|\| requestedKey === 'Escape'/);
   assert.match(interactionScript, /const wheelEvent = new WheelEvent\('wheel'/);
   assert.match(interactionScript, /const applyNativeScroll = element\.dispatchEvent\(wheelEvent\)/);

@@ -3302,21 +3302,18 @@ const WINDOW_UI_SNAPSHOT_SCRIPT: &str = r#"
     if (scrollsVertically || scrollsHorizontally || wheelGesture) {
       actions.push('scroll');
     }
-    const keyboardTarget = element instanceof HTMLElement && (
+    const keyboardTarget = (
+      element instanceof HTMLElement
+      || element instanceof SVGElement
+    ) && (
       element.tabIndex >= 0
+      || element.hasAttribute('tabindex')
       || writableInput
       || element instanceof HTMLTextAreaElement
       || element instanceof HTMLSelectElement
       || element.isContentEditable
     );
-    if (
-      keyboardTarget
-      || typeof props.onKeyDown === 'function'
-      || typeof props.onKeyUp === 'function'
-      || typeof props.onKeyPress === 'function'
-    ) {
-      actions.push('keyPress');
-    }
+    if (keyboardTarget) actions.push('keyPress');
     if (element.draggable || typeof props.onDragStart === 'function') {
       actions.push('dragTo');
     }
@@ -3625,7 +3622,7 @@ const WINDOW_UI_SNAPSHOT_SCRIPT: &str = r#"
   const activeElementSelector =
     document.activeElement instanceof Element ? selectorFor(document.activeElement) : null;
   const revisionSource = JSON.stringify({
-    version: 22,
+    version: 23,
     title: document.title,
     url: location.href,
     viewport,
@@ -3639,7 +3636,7 @@ const WINDOW_UI_SNAPSHOT_SCRIPT: &str = r#"
     revisionHash ^= BigInt(revisionSource.charCodeAt(index));
     revisionHash = BigInt.asUintN(64, revisionHash * 0x100000001b3n);
   }
-  const snapshotRevision = `ui-v22-${candidates.length}-${
+  const snapshotRevision = `ui-v23-${candidates.length}-${
     revisionHash.toString(16).padStart(16, '0')
   }`;
   const guardedElements = new Map(semanticElements.map((semanticElement, index) => [
@@ -3660,7 +3657,7 @@ const WINDOW_UI_SNAPSHOT_SCRIPT: &str = r#"
   }
   const elements = semanticElements.slice(offset, offset + limit);
   return {
-    version: 22,
+    version: 23,
     snapshotRevision,
     title: document.title,
     url: location.href,
@@ -4778,6 +4775,7 @@ const WINDOW_UI_INTERACTION_SCRIPT: &str = r#"
   let valueBlurHandledByReact = null;
   let performedSettledFrames = 0;
   let pendingFocusTarget = null;
+  let keyboardValueTarget = false;
   if (action === 'click') {
     dispatchClick(1);
   } else if (action === 'doubleClick') {
@@ -5131,6 +5129,28 @@ const WINDOW_UI_INTERACTION_SCRIPT: &str = r#"
       }
     }
   } else if (action === 'keyPress') {
+    const keyboardInputType = element instanceof HTMLInputElement
+      ? String(element.type || 'text').toLowerCase()
+      : '';
+    keyboardValueTarget = (
+      element instanceof HTMLInputElement
+      && ![
+        'button',
+        'submit',
+        'reset',
+        'file',
+        'image',
+        'checkbox',
+        'radio',
+      ].includes(keyboardInputType)
+    )
+      || element instanceof HTMLTextAreaElement
+      || element instanceof HTMLSelectElement
+      || (
+        element instanceof HTMLElement
+        && element.isContentEditable
+        && element.getAttribute('aria-readonly') !== 'true'
+      );
     const printableKey = (
       typeof requestedKey === 'string'
       && Array.from(requestedKey).length === 1
@@ -5758,12 +5778,14 @@ const WINDOW_UI_INTERACTION_SCRIPT: &str = r#"
           : (index + 1) % focusable.length;
       const next = focusable[nextIndex];
       if (next instanceof HTMLElement) {
-        pendingValueBlur = true;
+        if (keyboardValueTarget) pendingValueBlur = true;
         pendingFocusTarget = next;
       }
     }
     dispatchKeyboard('keyup');
     if (
+      keyboardValueTarget
+      &&
       document.activeElement !== element
       && (requestedKey === 'Enter' || requestedKey === 'Escape')
     ) {
@@ -5837,13 +5859,13 @@ const WINDOW_UI_INTERACTION_SCRIPT: &str = r#"
     await waitForRender();
     performedSettledFrames += 1;
     valueCommitMethod = 'blur';
-    if (pendingFocusTarget instanceof HTMLElement) {
-      dispatchReactFocusLifecycle(
-        pendingFocusTarget,
-        'focus',
-        () => pendingFocusTarget.focus({ preventScroll: true }),
-      );
-    }
+  }
+  if (pendingFocusTarget instanceof HTMLElement) {
+    dispatchReactFocusLifecycle(
+      pendingFocusTarget,
+      'focus',
+      () => pendingFocusTarget.focus({ preventScroll: true }),
+    );
   }
   await waitForRender();
   performedSettledFrames += 1;
