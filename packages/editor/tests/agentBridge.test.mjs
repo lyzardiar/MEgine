@@ -609,6 +609,18 @@ test('every cross-window editor channel is isolated by native editor instance', 
   assert.match(main, /initializeBuildEditorEvents\(\)/);
 });
 
+test('Project Settings editor shares the Agent revision guard and preserves dirty drafts', () => {
+  const projectSettings = fs.readFileSync(
+    path.join(root, 'src', 'panels', 'ProjectSettings.tsx'),
+    'utf8',
+  );
+  assert.match(projectSettings, /loadSortingLayersSnapshot\(\)/);
+  assert.match(projectSettings, /persistProjectSettingsGuarded\([\s\S]*revision,[\s\S]*'project-settings'/);
+  assert.match(projectSettings, /if \(!discardDraft && dirtyRef\.current\)/);
+  assert.match(projectSettings, /Project Settings changed outside this editor/);
+  assert.doesNotMatch(projectSettings, /\bpersistProjectSettings\(/);
+});
+
 test('panel and menu agent surfaces use live providers and background activation', () => {
   const bridge = fs.readFileSync(path.join(root, 'src', 'agent', 'AgentBridge.ts'), 'utf8');
   const registry = fs.readFileSync(path.join(root, 'src', 'editorWindow', 'registry.ts'), 'utf8');

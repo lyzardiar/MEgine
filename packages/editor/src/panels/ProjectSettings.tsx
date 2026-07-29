@@ -17,8 +17,8 @@ import { registerSaveAllParticipant } from '../saveAll';
 import {
   SORTING_LAYERS_CHANGED_EVENT,
   getSortingLayers,
-  loadSortingLayers,
-  persistProjectSettings,
+  loadSortingLayersSnapshot,
+  persistProjectSettingsGuarded,
 } from '../sortingLayers';
 
 function fingerprint(
@@ -69,11 +69,14 @@ export function ProjectSettings(props: {
   const [saved, setSaved] = useState(
     fingerprint(initial.layers, initial.tags, initial.gameLayers),
   );
+  const [revision, setRevision] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
   const dirty = fingerprint(layers, tags, gameLayers) !== saved;
   const dirtyRef = useRef(dirty);
+  const reloadGeneration = useRef(0);
+  const suppressSettingsChange = useRef(false);
   const error = useMemo(
     () => validateSortingLayers(layers) ?? validateTagsAndLayers(tags, gameLayers),
     [gameLayers, layers, tags],
@@ -86,26 +89,55 @@ export function ProjectSettings(props: {
 
   useEffect(() => () => props.onDirtyChange?.(false), [props.onDirtyChange]);
 
+  const reloadFromDisk = async (discardDraft: boolean): Promise<boolean> => {
+    const generation = reloadGeneration.current + 1;
+    reloadGeneration.current = generation;
+    setLoading(true);
+    try {
+      const snapshot = await loadSortingLayersSnapshot();
+      if (reloadGeneration.current !== generation) return false;
+      if (!discardDraft && dirtyRef.current) {
+        setMessage(
+          'Project Settings changed outside this editor. Reload to discard this draft before saving.',
+        );
+        return false;
+      }
+      setLayers(snapshot.settings.layers);
+      setTags(snapshot.settings.tags);
+      setGameLayers(snapshot.settings.gameLayers);
+      setSaved(fingerprint(
+        snapshot.settings.layers,
+        snapshot.settings.tags,
+        snapshot.settings.gameLayers,
+      ));
+      setRevision(snapshot.revision);
+      setMessage(null);
+      return true;
+    } catch (reason) {
+      if (reloadGeneration.current === generation) {
+        setMessage(reason instanceof Error ? reason.message : String(reason));
+      }
+      return false;
+    } finally {
+      if (reloadGeneration.current === generation) setLoading(false);
+    }
+  };
+
   useEffect(() => {
-    let cancelled = false;
-    const apply = () => {
-      if (cancelled || dirtyRef.current) return;
-      const settings = getSortingLayers();
-      setLayers(settings.layers);
-      setTags(settings.tags);
-      setGameLayers(settings.gameLayers);
-      setSaved(fingerprint(settings.layers, settings.tags, settings.gameLayers));
+    const onChanged = () => {
+      if (suppressSettingsChange.current) return;
+      if (dirtyRef.current) {
+        setMessage(
+          'Project Settings changed outside this editor. Reload to discard this draft before saving.',
+        );
+        return;
+      }
+      void reloadFromDisk(false);
     };
-    const onChanged = () => apply();
     window.addEventListener(SORTING_LAYERS_CHANGED_EVENT, onChanged);
-    void loadSortingLayers()
-      .then(() => apply())
-      .catch((reason: unknown) => {
-        if (!cancelled) setMessage(reason instanceof Error ? reason.message : String(reason));
-      })
-      .finally(() => { if (!cancelled) setLoading(false); });
+    void reloadFromDisk(false);
     return () => {
-      cancelled = true;
+      reloadGeneration.current += 1;
       window.removeEventListener(SORTING_LAYERS_CHANGED_EVENT, onChanged);
     };
   }, []);
@@ -126,19 +158,30 @@ export function ProjectSettings(props: {
 
   const save = async (): Promise<boolean> => {
     if (error || saving) return false;
+    if (!revision) {
+      setMessage('Project Settings revision is not loaded. Reload before saving.');
+      return false;
+    }
     setSaving(true);
     setMessage(null);
+    suppressSettingsChange.current = true;
     try {
-      const next = await persistProjectSettings({
-        version: 1,
-        layers,
-        tags,
-        gameLayers,
-      });
+      const snapshot = await persistProjectSettingsGuarded(
+        {
+          version: 1,
+          layers,
+          tags,
+          gameLayers,
+        },
+        revision,
+        'project-settings',
+      );
+      const next = snapshot.settings;
       setLayers(next.layers);
       setTags(next.tags);
       setGameLayers(next.gameLayers);
       setSaved(fingerprint(next.layers, next.tags, next.gameLayers));
+      setRevision(snapshot.revision);
       setMessage('Tags, GameObject layers, and Sorting Layers saved.');
       props.onLog?.(
         `Saved ${next.tags.length} tag(s), ${next.gameLayers.length} GameObject layer(s), and ${next.layers.length} sorting layer(s).`,
@@ -150,6 +193,7 @@ export function ProjectSettings(props: {
       props.onLog?.(`Project Settings save failed: ${detail}`, 'error');
       return false;
     } finally {
+      suppressSettingsChange.current = false;
       setSaving(false);
     }
   };
@@ -160,7 +204,7 @@ export function ProjectSettings(props: {
         if (!await save()) throw new Error(error ?? 'Project Settings save failed');
       }
       : null
-  )), [dirty, error, gameLayers, layers, saving, tags]);
+  )), [dirty, error, gameLayers, layers, revision, saving, tags]);
 
   return (
     <div className="project-settings-panel">
@@ -354,19 +398,16 @@ export function ProjectSettings(props: {
       <footer>
         <button
           type="button"
-          disabled={!dirty || saving}
-          onClick={() => {
-            const next = getSortingLayers();
-            setLayers(next.layers);
-            setTags(next.tags);
-            setGameLayers(next.gameLayers);
-            setSaved(fingerprint(next.layers, next.tags, next.gameLayers));
-            setMessage(null);
-          }}
+          disabled={loading || saving}
+          onClick={() => void reloadFromDisk(true)}
         >
-          Revert
+          Reload
         </button>
-        <button type="button" disabled={!dirty || !!error || saving} onClick={() => void save()}>
+        <button
+          type="button"
+          disabled={!dirty || !!error || !revision || saving}
+          onClick={() => void save()}
+        >
           Apply
         </button>
       </footer>
