@@ -38,6 +38,11 @@ test('core editor navigation exposes named semantic controls', () => {
   assert.match(project, /aria-label=\{`\$\{folder\} contents`\}/);
   assert.match(project, /aria-label="Close asset Trash preview"\s*autoFocus/);
   assert.match(project, /aria-label="Close project Trash"\s*autoFocus/);
+  assert.match(
+    spriteEditor,
+    /data-agent-blocked-actions="click keyPress"\s*data-agent-alternative="get_sprite_import_settings"/,
+  );
+  assert.match(spriteEditor, /navigator\.clipboard\.writeText\(reference\)/);
 
   assert.match(hierarchy, /role="tree"/);
   assert.match(hierarchy, /aria-label="Scene hierarchy"/);
