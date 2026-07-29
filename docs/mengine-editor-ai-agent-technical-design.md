@@ -193,7 +193,7 @@ MEngine 编辑器当前对人类友好，但对 AI Agent 不够友好。AI Agent
 | query id | 返回 | 集成点 |
 | --- | --- | --- |
 | `window.list` | `[{ label, title, typeId?, editorType?, agentOwned, kind: "main"\|"panel"\|"editor", visible, focused, position, size, url }]` | ✅ Rust `app.webview_windows()`；注册编辑器窗同时返回与 `window.types` / `window.open_editor` 一致的规范 `typeId`，并保留等值 `editorType` 兼容别名；标签规则 `panel-<id>`（`detachedPanelWindow.ts`）、`editor-<base64url(UTF-8 typeId)>`（`nativeEditorWindow.ts`），完整编码扩展注册的类型标识，不会因固定宽度哈希碰撞误复用其他窗口；Agent 创建的辅助窗口还把 `agentOwned=true` 固化在原生 WebView URL，主 WebView 重载后仍可恢复关闭权限，Rust 销毁命令会再次校验该标记；可直接确认后台实例从未显示 |
-| `window.ui_snapshot` | `{ windowLabel?, maxElements?, offset?, expectedSnapshotRevision? }` → `{ snapshotRevision, nextOffset, elements: [{ role, name, text, value, state, rect, actions, selector }], truncated, ... }` | ✅ WebView2 `Runtime.evaluate` 离屏提取可见且未被自身/祖先 `aria-hidden=true` 或 `inert` 排除的语义 DOM；名称与文本也跳过这些子树中的装饰内容；密码脱敏，默认 2000/上限 5000 项，不需要 OCR；续页必须回传首屏 `snapshotRevision`，语义内容或顺序变化时返回 `STALE_REVISION` 并从 offset 0 重读 |
+| `window.ui_snapshot` | `{ windowLabel?, maxElements?, offset?, expectedSnapshotRevision? }` → `{ snapshotRevision, nextOffset, elements: [{ role, name, text, value, state, rect, actions, selector }], truncated, ... }` | ✅ WebView2 `Runtime.evaluate` 离屏提取可见且未被自身/组合树祖先 `aria-hidden=true` 或 `inert` 排除的语义 DOM，并递归覆盖扩展组件的开放 Shadow DOM；Shadow selector 使用 `host >>> descendant` 分段且仍绑定快照内的真实元素身份，名称/说明的 ID 引用按所在 Document/ShadowRoot 解析；密码脱敏，默认 2000/上限 5000 项，不需要 OCR；续页必须回传首屏 `snapshotRevision`，语义内容或顺序变化时返回 `STALE_REVISION` 并从 offset 0 重读 |
 | `window.ui_content` | `{ windowLabel?, selector, expectedSnapshotRevision, field, offset?, maxChars?, expectedContentRevision? }` → `{ contentRevision, nextOffset, content, ... }` | ✅ 只允许精确读取同一快照完整语义集合中的 selector，返回未截断的语义名称/说明、未归一化文本、表单值或 `options` JSON（原生 select/datalist 的 value、label、group、disabled、selected）；每页必须回传 selector 所属 `snapshotRevision`，续页还必须回传首屏 `contentRevision`；元素身份或内容变化时返回 `STALE_REVISION`，避免读错重排后的元素或把长代码、日志和未保存文本拼成撕裂结果；分页游标保持为 UTF-16 单元，但版本 3 不会从代理对中间开始或结束，命中 emoji 等字符边界时一页可比 `maxChars` 多 1 个单元，调用方传入代理对中间的游标则收到 `invalidContentOffset` 与可恢复的 `restartOffset` |
 | `dialog.state` | 当前编辑器内 alert/confirm/prompt 的稳定 id、完整消息、按钮标签与 prompt 默认值；无对话框时为 `null` | ✅ 非阻塞 DOM Dialog Host；可被语义快照和整窗截图同时读取 |
 | `panel.list` | `[{ kind, title, visible, active, detached, dockPath }]` | ✅ 可由 `panel.get_layout` 的 docked/detached/active 集合推导 |
@@ -366,7 +366,7 @@ Space 或方向/首尾/翻页键触发 checkbox、radio、单选 select、number
 
 语义快照 v26 保留表单控件和 `contenteditable` 的空字符串值；只有不具备值语义的元素才返回 `value: null`。因此 Agent 能稳定区分“文本框当前为空”和“该语义元素没有 value”，不会在读取未保存的空字段时丢失状态。
 
-语义快照 v27 的 revision guard 除 DOM Mutation 外，还监听 input/change、焦点、光标选区、滚动、toggle/reset、窗口与 VisualViewport 的 resize/scroll，以及 hash/popstate 和 History API URL 变化。这些不会可靠产生 DOM Mutation、但会改变快照值、选区、活动元素、滚动状态、bounds 或 URL 的更新，现在都会立即撤销旧 revision；精确内容分页、元素截图和后台写动作不能再用旧快照跨越这类状态变化。
+语义快照 v28 的 revision guard 除 Document DOM Mutation 外，会发现并分别观察每个开放 ShadowRoot；运行期 `attachShadow()` 也会立即注册观察并撤销旧 revision。它还监听 Document/ShadowRoot 的 input/change、焦点、光标选区、滚动、toggle/reset，以及窗口与 VisualViewport 的 resize/scroll、hash/popstate 和 History API URL 变化。这些不会可靠产生 Document DOM Mutation、但会改变快照值、选区、活动元素、滚动状态、bounds 或 URL 的更新，现在都会立即撤销旧 revision；精确内容分页、元素截图和后台写动作不能再用旧快照跨越这类状态变化。
 
 精确文本内容 revision v2 逐个保留可渲染文本节点的原始空白，同时排除任一 `aria-hidden=true`、`inert`、`display:none`、`content-visibility:hidden` 或透明祖先下的装饰文字。`window.ui_content(field=text)` 因而与语义快照使用同一隐藏边界，不会在分页正文中重新混入对象槽图标、拖放提示或其他 Agent 不应读取的辅助层。
 

@@ -2831,23 +2831,26 @@ const WINDOW_UI_SNAPSHOT_SCRIPT: &str = r#"
   const maxGuardedRevisions = 8;
   const revisionGuardKey = Symbol.for('mengine.agent.uiRevisionGuard');
   let revisionGuard = window[revisionGuardKey];
-  if (!revisionGuard) {
+  if (!revisionGuard || typeof revisionGuard.observeRoot !== 'function') {
+    revisionGuard?.observer?.disconnect?.();
     const invalidateRevisionGuard = () => {
       revisionGuard.epoch += 1;
       revisionGuard.revisions.clear();
     };
-    revisionGuard = {
-      epoch: 0,
-      revisions: new Map(),
-      invalidate: invalidateRevisionGuard,
-    };
-    const observer = new MutationObserver(invalidateRevisionGuard);
-    observer.observe(document, {
+    const mutationOptions = {
       attributes: true,
       characterData: true,
       childList: true,
       subtree: true,
-    });
+    };
+    const observer = new MutationObserver(invalidateRevisionGuard);
+    revisionGuard = {
+      epoch: 0,
+      revisions: new Map(),
+      invalidate: invalidateRevisionGuard,
+      observer,
+      observedRoots: new WeakSet(),
+    };
     const documentInvalidationEvents = [
       'input',
       'change',
@@ -2858,9 +2861,18 @@ const WINDOW_UI_SNAPSHOT_SCRIPT: &str = r#"
       'toggle',
       'reset',
     ];
-    for (const eventName of documentInvalidationEvents) {
-      document.addEventListener(eventName, invalidateRevisionGuard, true);
-    }
+    revisionGuard.observeRoot = (root) => {
+      if (
+        !(root instanceof Document || root instanceof ShadowRoot)
+        || revisionGuard.observedRoots.has(root)
+      ) return;
+      revisionGuard.observedRoots.add(root);
+      observer.observe(root, mutationOptions);
+      for (const eventName of documentInvalidationEvents) {
+        root.addEventListener(eventName, invalidateRevisionGuard, true);
+      }
+    };
+    revisionGuard.observeRoot(document);
     const windowInvalidationEvents = ['resize', 'scroll', 'hashchange', 'popstate'];
     for (const eventName of windowInvalidationEvents) {
       window.addEventListener(eventName, invalidateRevisionGuard, true);
@@ -2878,11 +2890,27 @@ const WINDOW_UI_SNAPSHOT_SCRIPT: &str = r#"
         return result;
       };
     }
-    revisionGuard.observer = observer;
     revisionGuard.documentInvalidationEvents = documentInvalidationEvents;
     revisionGuard.windowInvalidationEvents = windowInvalidationEvents;
     revisionGuard.originalHistoryMethods = originalHistoryMethods;
     window[revisionGuardKey] = revisionGuard;
+  }
+  const attachShadowGuardKey = Symbol.for('mengine.agent.attachShadowGuard');
+  if (!Element.prototype[attachShadowGuardKey]) {
+    const originalAttachShadow = Element.prototype.attachShadow;
+    Object.defineProperty(Element.prototype, attachShadowGuardKey, {
+      value: originalAttachShadow,
+      configurable: false,
+      enumerable: false,
+      writable: false,
+    });
+    Element.prototype.attachShadow = function (...args) {
+      const root = originalAttachShadow.apply(this, args);
+      const currentGuard = window[revisionGuardKey];
+      currentGuard?.observeRoot?.(root);
+      currentGuard?.invalidate?.();
+      return root;
+    };
   }
   const normalize = (value, max = 400) => String(value ?? '')
     .replace(/\s+/g, ' ')
@@ -2917,7 +2945,7 @@ const WINDOW_UI_SNAPSHOT_SCRIPT: &str = r#"
           blockedActions.add(blockedAction);
         }
       }
-      current = current.parentElement;
+      current = composedParent(current);
     }
     return blockedActions.size > 0
       ? {
@@ -2981,8 +3009,38 @@ const WINDOW_UI_SNAPSHOT_SCRIPT: &str = r#"
     if (['button', 'submit', 'reset', 'image'].includes(type)) return 'button';
     return 'textbox';
   };
+  const composedParent = (element) => {
+    if (!(element instanceof Element)) return null;
+    if (element.assignedSlot) return element.assignedSlot;
+    if (element.parentElement) return element.parentElement;
+    const root = element.getRootNode();
+    return root instanceof ShadowRoot ? root.host : null;
+  };
+  const closestComposed = (element, selector) => {
+    let current = element;
+    while (current instanceof Element) {
+      if (current.matches(selector)) return current;
+      current = composedParent(current);
+    }
+    return null;
+  };
+  const composedContains = (container, candidate) => {
+    let current = candidate instanceof Element
+      ? candidate
+      : candidate?.parentElement;
+    while (current instanceof Element) {
+      if (current === container) return true;
+      current = composedParent(current);
+    }
+    return false;
+  };
+  const deepActiveElement = () => {
+    let active = document.activeElement;
+    while (active?.shadowRoot?.activeElement) active = active.shadowRoot.activeElement;
+    return active;
+  };
   const semanticallyHidden = (element) => Boolean(
-    element.closest('[aria-hidden="true"], [inert]'),
+    closestComposed(element, '[aria-hidden="true"], [inert]'),
   );
   const renderedRectFor = (element, style = getComputedStyle(element)) => {
     const rect = element.getBoundingClientRect();
@@ -3039,7 +3097,7 @@ const WINDOW_UI_SNAPSHOT_SCRIPT: &str = r#"
   const effectivelyDisabled = (element) => Boolean(
     element.disabled === true
       || element.matches(':disabled')
-      || element.closest('[aria-disabled="true"]'),
+      || closestComposed(element, '[aria-disabled="true"]'),
   );
   const semanticText = (
     root,
@@ -3061,16 +3119,19 @@ const WINDOW_UI_SNAPSHOT_SCRIPT: &str = r#"
     }
     return normalize(parts.join(' '));
   };
-  const referencedText = (idRefs) => normalize(idRefs).split(/\s+/)
-    .map((id) => document.getElementById(id))
+  const referencedText = (idRefs, context) => {
+    const root = context instanceof Element ? context.getRootNode() : document;
+    return normalize(idRefs).split(/\s+/)
+    .map((id) => root.getElementById?.(id) || null)
     .filter(Boolean)
     .map((node) => semanticText(node, null, semanticallyHidden(node)))
     .filter(Boolean)
     .join(' ');
+  };
   const labelledByText = (element) => {
     const labelledBy = normalize(element.getAttribute('aria-labelledby'));
     if (labelledBy) {
-      const text = referencedText(labelledBy);
+      const text = referencedText(labelledBy, element);
       if (text) return normalize(text);
     }
     return '';
@@ -3116,7 +3177,7 @@ const WINDOW_UI_SNAPSHOT_SCRIPT: &str = r#"
     return /[\p{L}\p{N}]/u.test(content) ? content : '';
   };
   const containingLabelText = (element) => {
-    const label = element.closest('label');
+    const label = closestComposed(element, 'label');
     if (!label) return '';
     return semanticText(label, element);
   };
@@ -3152,7 +3213,7 @@ const WINDOW_UI_SNAPSHOT_SCRIPT: &str = r#"
         const label = explicit || accessibleName(current, role);
         if (label) return label;
       }
-      current = current.parentElement;
+      current = composedParent(current);
     }
     return '';
   };
@@ -3175,20 +3236,21 @@ const WINDOW_UI_SNAPSHOT_SCRIPT: &str = r#"
       .map((node) => node.textContent)
       .join(' '));
   };
-  const selectorFor = (element) => {
+  const selectorWithinRoot = (element, root) => {
     const escape = (value) => CSS.escape(String(value));
     if (element.id) {
       const selector = `#${escape(element.id)}`;
-      if (document.querySelectorAll(selector).length === 1) return selector;
+      if (root.querySelectorAll(selector).length === 1) return selector;
     }
     const parts = [];
     let current = element;
-    while (current && current !== document.documentElement) {
+    const boundary = root instanceof Document ? document.documentElement : null;
+    while (current && current !== boundary) {
       let part = current.localName;
       const parent = current.parentElement;
       if (current.id) {
         const selector = `#${escape(current.id)}`;
-        if (document.querySelectorAll(selector).length === 1) {
+        if (root.querySelectorAll(selector).length === 1) {
           parts.unshift(selector);
           break;
         }
@@ -3204,6 +3266,17 @@ const WINDOW_UI_SNAPSHOT_SCRIPT: &str = r#"
       current = parent;
     }
     return parts.join(' > ');
+  };
+  const selectorFor = (element) => {
+    const segments = [];
+    let current = element;
+    while (current instanceof Element) {
+      const root = current.getRootNode();
+      if (!(root instanceof Document || root instanceof ShadowRoot)) break;
+      segments.unshift(selectorWithinRoot(current, root));
+      current = root instanceof ShadowRoot ? root.host : null;
+    }
+    return segments.join(' >>> ');
   };
   const valueFor = (element) => {
     if (element instanceof HTMLInputElement) {
@@ -3434,7 +3507,7 @@ const WINDOW_UI_SNAPSHOT_SCRIPT: &str = r#"
         || normalize(current.getAttribute('aria-label'), 160)
         || nativeLabelText(current);
       if (label) return `${label} scroll area`;
-      current = current.parentElement;
+      current = composedParent(current);
     }
     return 'Scrollable content';
   };
@@ -3540,7 +3613,7 @@ const WINDOW_UI_SNAPSHOT_SCRIPT: &str = r#"
     const state = {
       disabled: effectivelyDisabled(element),
       readOnly: Boolean(element.readOnly || element.getAttribute('aria-readonly') === 'true'),
-      focused: document.activeElement === element,
+      focused: deepActiveElement() === element,
     };
     if (modalBlocked) state.modalBlocked = true;
     for (const key of ariaStateKeys) {
@@ -3588,7 +3661,7 @@ const WINDOW_UI_SNAPSHOT_SCRIPT: &str = r#"
     return state;
   };
   const descriptionFor = (element, name) => normalize(
-    referencedText(element.getAttribute('aria-describedby'))
+    referencedText(element.getAttribute('aria-describedby'), element)
       || element.getAttribute('aria-description')
       || (
         normalize(element.getAttribute('title')) !== name
@@ -3618,9 +3691,22 @@ const WINDOW_UI_SNAPSHOT_SCRIPT: &str = r#"
       height: Math.round(rect.height * 100) / 100,
     };
   };
-  const all = [document.documentElement, ...document.querySelectorAll('*')];
+  const all = [];
+  const collectOpenComposedTree = (root) => {
+    if (root instanceof Document) all.push(root.documentElement);
+    for (const element of root.querySelectorAll('*')) {
+      all.push(element);
+      if (element.shadowRoot) {
+        revisionGuard.observeRoot(element.shadowRoot);
+        collectOpenComposedTree(element.shadowRoot);
+      }
+    }
+  };
+  collectOpenComposedTree(document);
   const visibleModalDialogs = Array.from(
-    document.querySelectorAll('dialog, [role="dialog"][aria-modal="true"]'),
+    all.filter((candidate) => candidate.matches?.(
+      'dialog, [role="dialog"][aria-modal="true"]',
+    )),
   ).filter((candidate) => (
     (candidate instanceof HTMLElement || candidate instanceof SVGElement)
     && visible(candidate)
@@ -3632,12 +3718,12 @@ const WINDOW_UI_SNAPSHOT_SCRIPT: &str = r#"
     while (current instanceof Element) {
       const zIndex = Number.parseInt(getComputedStyle(current).zIndex, 10);
       if (Number.isFinite(zIndex)) layer = Math.max(layer, zIndex);
-      current = current.parentElement;
+      current = composedParent(current);
     }
     return layer;
   };
   let activeModal = visibleModalDialogs.find((candidate) => (
-    candidate.contains(document.activeElement)
+    composedContains(candidate, deepActiveElement())
   )) || null;
   let activeModalLayer = activeModal
     ? Number.POSITIVE_INFINITY
@@ -3657,7 +3743,7 @@ const WINDOW_UI_SNAPSHOT_SCRIPT: &str = r#"
     const directName = accessibleName(element, role);
     const text = ownText(element, role);
     const tag = element.localName;
-    const modalBlocked = Boolean(activeModal && !activeModal.contains(element));
+    const modalBlocked = Boolean(activeModal && !composedContains(activeModal, element));
     const actions = modalBlocked ? [] : actionList(element, role);
     const name = directName || (actions.includes('scroll') ? scrollContextName(element) : '');
     const structural = /^h[1-6]$/.test(tag)
@@ -3669,8 +3755,8 @@ const WINDOW_UI_SNAPSHOT_SCRIPT: &str = r#"
   const semanticElementFor = (entry) => {
     const { element, role, name, text, actions, modalBlocked } = entry;
     const scope = semanticScopeFor(element);
-    let parent = element.parentElement;
-    while (parent && !ids.has(parent)) parent = parent.parentElement;
+    let parent = composedParent(element);
+    while (parent && !ids.has(parent)) parent = composedParent(parent);
     return {
       id: ids.get(element),
       parentId: parent ? ids.get(parent) || null : null,
@@ -3699,10 +3785,11 @@ const WINDOW_UI_SNAPSHOT_SCRIPT: &str = r#"
     scrollX: window.scrollX,
     scrollY: window.scrollY,
   };
+  const activeElement = deepActiveElement();
   const activeElementSelector =
-    document.activeElement instanceof Element ? selectorFor(document.activeElement) : null;
+    activeElement instanceof Element ? selectorFor(activeElement) : null;
   const revisionSource = JSON.stringify({
-    version: 27,
+    version: 28,
     title: document.title,
     url: location.href,
     viewport,
@@ -3716,7 +3803,7 @@ const WINDOW_UI_SNAPSHOT_SCRIPT: &str = r#"
     revisionHash ^= BigInt(revisionSource.charCodeAt(index));
     revisionHash = BigInt.asUintN(64, revisionHash * 0x100000001b3n);
   }
-  const snapshotRevision = `ui-v27-${candidates.length}-${
+  const snapshotRevision = `ui-v28-${candidates.length}-${
     revisionHash.toString(16).padStart(16, '0')
   }`;
   const guardedElements = new Map(semanticElements.map((semanticElement, index) => [
@@ -3737,7 +3824,7 @@ const WINDOW_UI_SNAPSHOT_SCRIPT: &str = r#"
   }
   const elements = semanticElements.slice(offset, offset + limit);
   return {
-    version: 27,
+    version: 28,
     snapshotRevision,
     title: document.title,
     url: location.href,
@@ -3788,8 +3875,12 @@ const WINDOW_UI_ELEMENT_BOUNDS_SCRIPT: &str = r#"
       expectedSnapshotRevision,
     };
   }
-  const element = document.querySelector(selector);
-  if (element !== guardedElement.element) {
+  const element = guardedElement.element;
+  if (
+    !(element instanceof Element)
+    || !element.isConnected
+    || element.ownerDocument !== document
+  ) {
     return {
       ok: false,
       error: 'Editor window semantic element changed before capture',
@@ -3807,7 +3898,22 @@ const WINDOW_UI_ELEMENT_BOUNDS_SCRIPT: &str = r#"
       expectedSnapshotRevision,
     };
   }
-  if (element.closest('[aria-hidden="true"], [inert]')) {
+  const composedParent = (target) => {
+    if (!(target instanceof Element)) return null;
+    if (target.assignedSlot) return target.assignedSlot;
+    if (target.parentElement) return target.parentElement;
+    const root = target.getRootNode();
+    return root instanceof ShadowRoot ? root.host : null;
+  };
+  const closestComposed = (target, cssSelector) => {
+    let current = target;
+    while (current instanceof Element) {
+      if (current.matches(cssSelector)) return current;
+      current = composedParent(current);
+    }
+    return null;
+  };
+  if (closestComposed(element, '[aria-hidden="true"], [inert]')) {
     return {
       ok: false,
       error: `Selector ${selector} is hidden from the semantic accessibility tree`,
@@ -3904,14 +4010,12 @@ const WINDOW_UI_CONTENT_SCRIPT: &str = r#"
       expectedSnapshotRevision,
     };
   }
-  let element;
-  try {
-    element = document.querySelector(selector);
-  } catch (error) {
-    return { ok: false, error: `Invalid selector: ${String(error)}` };
-  }
-  if (!element) return { ok: false, error: `No element matches ${selector}` };
-  if (element !== guardedElement.element) {
+  const element = guardedElement.element;
+  if (
+    !(element instanceof Element)
+    || !element.isConnected
+    || element.ownerDocument !== document
+  ) {
     return {
       ok: false,
       error: 'Editor window semantic selector changed; get a fresh UI snapshot before reading exact content',
@@ -3924,8 +4028,24 @@ const WINDOW_UI_CONTENT_SCRIPT: &str = r#"
   const normalizeSemantic = (value) => String(value ?? '')
     .replace(/\s+/g, ' ')
     .trim();
+  const composedParent = (target) => {
+    if (!(target instanceof Element)) return null;
+    if (target.assignedSlot) return target.assignedSlot;
+    if (target.parentElement) return target.parentElement;
+    const root = target.getRootNode();
+    return root instanceof ShadowRoot ? root.host : null;
+  };
+  const closestComposed = (target, cssSelector) => {
+    let current = target;
+    while (current instanceof Element) {
+      if (current.matches(cssSelector)) return current;
+      current = composedParent(current);
+    }
+    return null;
+  };
   const semanticallyHidden = (target) => Boolean(
-    target instanceof Element && target.closest('[aria-hidden="true"], [inert]'),
+    target instanceof Element
+      && closestComposed(target, '[aria-hidden="true"], [inert]'),
   );
   const semanticText = (
     root,
@@ -3947,16 +4067,19 @@ const WINDOW_UI_CONTENT_SCRIPT: &str = r#"
     }
     return normalizeSemantic(parts.join(' '));
   };
-  const referencedText = (idRefs) => normalizeSemantic(idRefs).split(/\s+/)
-    .map((id) => document.getElementById(id))
+  const referencedText = (idRefs, context) => {
+    const root = context instanceof Element ? context.getRootNode() : document;
+    return normalizeSemantic(idRefs).split(/\s+/)
+    .map((id) => root.getElementById?.(id) || null)
     .filter(Boolean)
     .map((node) => semanticText(node, null, semanticallyHidden(node)))
     .filter(Boolean)
     .join(' ');
+  };
   const labelledByText = (target) => {
     const labelledBy = normalizeSemantic(target.getAttribute('aria-labelledby'));
     if (labelledBy) {
-      const text = referencedText(labelledBy);
+      const text = referencedText(labelledBy, target);
       if (text) return normalizeSemantic(text);
     }
     return '';
@@ -4020,7 +4143,7 @@ const WINDOW_UI_CONTENT_SCRIPT: &str = r#"
     'button', 'link', 'heading', 'menuitem', 'option', 'tab',
   ].includes(role);
   const containingLabelText = (target) => {
-    const label = target.closest('label');
+    const label = closestComposed(target, 'label');
     return label ? semanticText(label, target) : '';
   };
   const semanticName = (target) => {
@@ -4048,7 +4171,7 @@ const WINDOW_UI_CONTENT_SCRIPT: &str = r#"
     );
   };
   const semanticDescription = (target, name) => normalizeSemantic(
-    referencedText(target.getAttribute('aria-describedby'))
+    referencedText(target.getAttribute('aria-describedby'), target)
       || target.getAttribute('aria-description')
       || (
         normalizeSemantic(target.getAttribute('title')) !== name
@@ -4071,7 +4194,7 @@ const WINDOW_UI_CONTENT_SCRIPT: &str = r#"
         || Number(style.opacity) === 0
         || current.hidden
       ) return false;
-      current = current.parentElement;
+      current = composedParent(current);
     }
     return true;
   };
@@ -4240,6 +4363,47 @@ const WINDOW_UI_INTERACTION_SCRIPT: &str = r#"
     altKey: requestedAltKey === true,
     metaKey: requestedMetaKey === true,
   };
+  const composedParent = (target) => {
+    if (!(target instanceof Element)) return null;
+    if (target.assignedSlot) return target.assignedSlot;
+    if (target.parentElement) return target.parentElement;
+    const root = target.getRootNode();
+    return root instanceof ShadowRoot ? root.host : null;
+  };
+  const closestComposed = (target, cssSelector) => {
+    let current = target;
+    while (current instanceof Element) {
+      if (current.matches(cssSelector)) return current;
+      current = composedParent(current);
+    }
+    return null;
+  };
+  const composedContains = (container, candidate) => {
+    let current = candidate instanceof Element
+      ? candidate
+      : candidate?.parentElement;
+    while (current instanceof Element) {
+      if (current === container) return true;
+      current = composedParent(current);
+    }
+    return false;
+  };
+  const deepActiveElement = () => {
+    let active = document.activeElement;
+    while (active?.shadowRoot?.activeElement) active = active.shadowRoot.activeElement;
+    return active;
+  };
+  const allOpenComposedElements = () => {
+    const elements = [];
+    const collect = (root) => {
+      for (const candidate of root.querySelectorAll('*')) {
+        elements.push(candidate);
+        if (candidate.shadowRoot) collect(candidate.shadowRoot);
+      }
+    };
+    collect(document);
+    return elements;
+  };
   const revisionGuard = window[Symbol.for('mengine.agent.uiRevisionGuard')];
   const guardedRevision = revisionGuard?.revisions?.get(expectedSnapshotRevision);
   if (!revisionGuard || guardedRevision?.epoch !== revisionGuard.epoch) {
@@ -4304,7 +4468,7 @@ const WINDOW_UI_INTERACTION_SCRIPT: &str = r#"
           blockedActions.add(blockedAction);
         }
       }
-      current = current.parentElement;
+      current = composedParent(current);
     }
     return blockedActions.size > 0
       ? {
@@ -4313,14 +4477,12 @@ const WINDOW_UI_INTERACTION_SCRIPT: &str = r#"
         }
       : null;
   };
-  let element;
-  try {
-    element = document.querySelector(selector);
-  } catch (error) {
-    return { ok: false, error: `Invalid selector: ${String(error)}` };
-  }
-  if (!element) return { ok: false, error: `No element matches ${selector}` };
-  if (element !== guardedElement.element) {
+  const element = guardedElement.element;
+  if (
+    !(element instanceof Element)
+    || !element.isConnected
+    || element.ownerDocument !== document
+  ) {
     return {
       ok: false,
       error: 'Editor window semantic selector changed; get a fresh UI snapshot before interacting',
@@ -4332,15 +4494,12 @@ const WINDOW_UI_INTERACTION_SCRIPT: &str = r#"
   }
   let targetElement = null;
   if (action === 'dragTo') {
-    try {
-      targetElement = document.querySelector(targetSelector);
-    } catch (error) {
-      return { ok: false, error: `Invalid target selector: ${String(error)}` };
-    }
-    if (!targetElement) {
-      return { ok: false, error: `No element matches target ${targetSelector}` };
-    }
-    if (targetElement !== guardedTarget.element) {
+    targetElement = guardedTarget.element;
+    if (
+      !(targetElement instanceof Element)
+      || !targetElement.isConnected
+      || targetElement.ownerDocument !== document
+    ) {
       return {
         ok: false,
         error: 'Editor window semantic target selector changed; get a fresh UI snapshot before interacting',
@@ -4353,7 +4512,8 @@ const WINDOW_UI_INTERACTION_SCRIPT: &str = r#"
   }
   const normalizeName = (value) => String(value || '').replace(/\s+/g, ' ').trim().slice(0, 160);
   const semanticallyHidden = (target) => Boolean(
-    target instanceof Element && target.closest('[aria-hidden="true"], [inert]'),
+    target instanceof Element
+      && closestComposed(target, '[aria-hidden="true"], [inert]'),
   );
   const semanticText = (root, includeHiddenSubtree = false) => {
     const parts = [];
@@ -4370,9 +4530,10 @@ const WINDOW_UI_INTERACTION_SCRIPT: &str = r#"
   };
   const labelledByText = (target) => {
     const ids = String(target.getAttribute('aria-labelledby') || '').split(/\s+/).filter(Boolean);
+    const root = target.getRootNode();
     return normalizeName(
       ids.map((id) => {
-        const labelledBy = document.getElementById(id);
+        const labelledBy = root.getElementById?.(id) || null;
         return labelledBy
           ? semanticText(labelledBy, semanticallyHidden(labelledBy))
           : '';
@@ -4453,11 +4614,11 @@ const WINDOW_UI_INTERACTION_SCRIPT: &str = r#"
     const direct = directName(target);
     if (direct) return direct;
     if (includeScrollContext) {
-      let current = target.parentElement;
+      let current = composedParent(target);
       while (current instanceof Element) {
         const context = directName(current);
         if (context) return `${context} scroll area`;
-        current = current.parentElement;
+        current = composedParent(current);
       }
     }
     return semanticText(target);
@@ -4507,7 +4668,7 @@ const WINDOW_UI_INTERACTION_SCRIPT: &str = r#"
   const effectivelyDisabled = (target) => Boolean(
     target.disabled === true
       || target.matches(':disabled')
-      || target.closest('[aria-disabled="true"]'),
+      || closestComposed(target, '[aria-disabled="true"]'),
   );
   const nativeDialogIsModal = (target) => {
     if (target.localName !== 'dialog' || !target.hasAttribute('open')) return false;
@@ -4525,7 +4686,9 @@ const WINDOW_UI_INTERACTION_SCRIPT: &str = r#"
       )
   );
   const visibleModalDialogs = Array.from(
-    document.querySelectorAll('dialog, [role="dialog"][aria-modal="true"]'),
+    allOpenComposedElements().filter((candidate) => candidate.matches(
+      'dialog, [role="dialog"][aria-modal="true"]',
+    )),
   ).filter((candidate) => rendered(candidate) && isActiveModalDialog(candidate));
   const modalLayerFor = (candidate) => {
     let layer = 0;
@@ -4533,12 +4696,12 @@ const WINDOW_UI_INTERACTION_SCRIPT: &str = r#"
     while (current instanceof Element) {
       const zIndex = Number.parseInt(getComputedStyle(current).zIndex, 10);
       if (Number.isFinite(zIndex)) layer = Math.max(layer, zIndex);
-      current = current.parentElement;
+      current = composedParent(current);
     }
     return layer;
   };
   let activeModal = visibleModalDialogs.find((candidate) => (
-    candidate.contains(document.activeElement)
+    composedContains(candidate, deepActiveElement())
   )) || null;
   let activeModalLayer = activeModal
     ? Number.POSITIVE_INFINITY
@@ -4553,12 +4716,12 @@ const WINDOW_UI_INTERACTION_SCRIPT: &str = r#"
   if (
     activeModal
     && (
-      !activeModal.contains(element)
-      || (targetElement && !activeModal.contains(targetElement))
+      !composedContains(activeModal, element)
+      || (targetElement && !composedContains(activeModal, targetElement))
     )
   ) {
-    const blockedTarget = !activeModal.contains(element) ? 'Element' : 'Target element';
-    const blockedSelector = !activeModal.contains(element) ? selector : targetSelector;
+    const blockedTarget = !composedContains(activeModal, element) ? 'Element' : 'Target element';
+    const blockedSelector = !composedContains(activeModal, element) ? selector : targetSelector;
     const activeModalName = interactionName(activeModal) || 'Modal dialog';
     return {
       ok: false,
@@ -4816,7 +4979,7 @@ const WINDOW_UI_INTERACTION_SCRIPT: &str = r#"
     const captureName = type === 'focus' ? 'onFocusCapture' : 'onBlurCapture';
     const bubbleName = type === 'focus' ? 'onFocus' : 'onBlur';
     const path = [];
-    for (let current = target; current instanceof Element; current = current.parentElement) {
+    for (let current = target; current instanceof Element; current = composedParent(current)) {
       path.push({ target: current, props: reactPropsFor(current) });
     }
     const handlers = [];
@@ -5216,7 +5379,7 @@ const WINDOW_UI_INTERACTION_SCRIPT: &str = r#"
       if (
         previous
         && previous !== element
-        && !previous.contains(element)
+        && !composedContains(previous, element)
       ) {
         dispatchLeave(previous, element);
       }
@@ -5250,7 +5413,7 @@ const WINDOW_UI_INTERACTION_SCRIPT: &str = r#"
         () => element.focus({ preventScroll: true }),
       );
       valueFocusHandledByReact = focusLifecycle.handledByReact;
-      if (document.activeElement !== element) return false;
+      if (deepActiveElement() !== element) return false;
       pendingValueBlur = true;
       return true;
     };
@@ -5806,7 +5969,7 @@ const WINDOW_UI_INTERACTION_SCRIPT: &str = r#"
         () => element.focus({ preventScroll: true }),
       );
       valueFocusHandledByReact = focusLifecycle.handledByReact;
-      if (document.activeElement !== element) {
+      if (deepActiveElement() !== element) {
         return { ok: false, error: `Element ${selector} could not receive keyboard focus` };
       }
     }
@@ -6373,7 +6536,7 @@ const WINDOW_UI_INTERACTION_SCRIPT: &str = r#"
     );
     const applyNativeDialogDefault = () => {
       if (requestedKey !== 'Escape') return false;
-      const dialog = element.closest('dialog');
+      const dialog = closestComposed(element, 'dialog');
       if (!dialog || !nativeDialogIsModal(dialog)) return false;
       const cancelled = !dialog.dispatchEvent(new Event('cancel', {
         cancelable: true,
@@ -6551,17 +6714,19 @@ const WINDOW_UI_INTERACTION_SCRIPT: &str = r#"
           || element instanceof HTMLSelectElement
         )
       ) {
-        const form = element.form || element.closest('form');
+        const form = element.form || closestComposed(element, 'form');
         if (form instanceof HTMLFormElement && typeof form.requestSubmit === 'function') {
           form.requestSubmit();
         }
       }
     }
     if (acceptsDefault && requestedKey === 'Tab') {
-      const focusable = Array.from(document.querySelectorAll(
-        'button, input, select, textarea, a[href], area[href], summary, '
-          + '[contenteditable], [tabindex]',
-      )).filter((candidate) => (
+      const focusable = allOpenComposedElements().filter((candidate) => (
+        candidate.matches(
+          'button, input, select, textarea, a[href], area[href], summary, '
+            + '[contenteditable], [tabindex]',
+        )
+        &&
         (
           candidate instanceof HTMLElement
           || candidate instanceof SVGElement
@@ -6570,7 +6735,7 @@ const WINDOW_UI_INTERACTION_SCRIPT: &str = r#"
         && candidate.tabIndex >= 0
         && rendered(candidate)
         && !effectivelyDisabled(candidate)
-        && (!activeModal || activeModal.contains(candidate))
+        && (!activeModal || composedContains(activeModal, candidate))
       )).map((candidate, domIndex) => ({
         candidate,
         domIndex,
@@ -6603,7 +6768,7 @@ const WINDOW_UI_INTERACTION_SCRIPT: &str = r#"
     if (
       keyboardValueTarget
       &&
-      document.activeElement !== element
+      deepActiveElement() !== element
       && (requestedKey === 'Enter' || requestedKey === 'Escape')
     ) {
       pendingValueBlur = true;
@@ -6662,13 +6827,13 @@ const WINDOW_UI_INTERACTION_SCRIPT: &str = r#"
         element,
         'blur',
         () => {
-          if (document.activeElement === element) element.blur();
+          if (deepActiveElement() === element) element.blur();
         },
       );
       valueBlurHandledByReact = blurLifecycle.handledByReact;
       valueCommitConfirmed = (
         valueDraftSynchronized !== false
-        && document.activeElement !== element
+        && deepActiveElement() !== element
       );
     } else {
       valueCommitConfirmed = false;

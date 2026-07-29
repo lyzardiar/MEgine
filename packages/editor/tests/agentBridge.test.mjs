@@ -50,7 +50,7 @@ test('whole-window agent capture is background-safe and addressable by window la
   assert.match(rust, /WINDOW_UI_CONTENT_SCRIPT/);
   assert.match(rust, /WINDOW_UI_ELEMENT_BOUNDS_SCRIPT/);
   assert.match(rust, /guardedRevision\.elements\?\.get\(selector\)/);
-  assert.match(rust, /element !== guardedElement\.element/);
+  assert.match(rust, /const element = guardedElement\.element/);
   assert.match(rust, /semantic content changed during element capture/);
   assert.match(protocol, /snapshotRevision\?: string/);
   assert.match(protocol, /elementRect\?: EditorUiRect/);
@@ -86,17 +86,25 @@ test('whole-window agent capture is background-safe and addressable by window la
   assert.match(rust, /const offset = __MENGINE_OFFSET__/);
   assert.match(rust, /semanticElements\.slice\(offset, offset \+ limit\)/);
   assert.match(rust, /new Map\(candidates\.map/);
-  assert.match(rust, /const snapshotRevision = `ui-v27-/);
+  assert.match(rust, /const snapshotRevision = `ui-v28-/);
   assert.match(rust, /revisionHash = BigInt\.asUintN\(64/);
   assert.match(rust, /const semanticScopeFor = \(element\) =>/);
   assert.match(rust, /role === 'tabpanel'/);
   assert.match(rust, /const qualifiedNameFor = \(scope, name\) =>/);
   assert.match(rust, /scope: scope \|\| null/);
   assert.match(rust, /qualifiedName: qualifiedNameFor\(scope, name\) \|\| null/);
-  assert.equal([...rust.matchAll(/version: 27,/g)].length, 2);
+  assert.equal([...rust.matchAll(/version: 28,/g)].length, 2);
   assert.match(rust, /const invalidateRevisionGuard = \(\) =>/);
   assert.match(rust, /'input',\s*'change',\s*'selectionchange',\s*'focusin',\s*'focusout',\s*'scroll'/);
-  assert.match(rust, /document\.addEventListener\(eventName, invalidateRevisionGuard, true\)/);
+  assert.match(rust, /root\.addEventListener\(eventName, invalidateRevisionGuard, true\)/);
+  assert.match(rust, /root instanceof Document \|\| root instanceof ShadowRoot/);
+  assert.match(rust, /Element\.prototype\.attachShadow = function/);
+  assert.match(rust, /revisionGuard\.observeRoot\(element\.shadowRoot\)/);
+  assert.match(rust, /collectOpenComposedTree\(element\.shadowRoot\)/);
+  assert.match(rust, /segments\.join\(' >>> '\)/);
+  assert.match(rust, /const deepActiveElement = \(\) =>/);
+  assert.equal([...rust.matchAll(/if \((?:element|target)\.assignedSlot\) return (?:element|target)\.assignedSlot/g)].length, 4);
+  assert.match(interactionScript, /allOpenComposedElements\(\)\.filter/);
   assert.match(rust, /const windowInvalidationEvents = \['resize', 'scroll', 'hashchange', 'popstate'\]/);
   assert.match(rust, /window\.visualViewport\?\.addEventListener\('scroll', invalidateRevisionGuard, true\)/);
   assert.match(rust, /for \(const methodName of \['pushState', 'replaceState'\]\)/);
@@ -140,7 +148,7 @@ test('whole-window agent capture is background-safe and addressable by window la
   assert.match(rust, /state\.expanded = element\.open/);
   assert.equal([...rust.matchAll(/const nativeDialogIsModal = \(/g)].length, 2);
   assert.equal(
-    [...rust.matchAll(/querySelectorAll\('dialog, \[role="dialog"\]\[aria-modal="true"\]'\)/g)].length,
+    [...rust.matchAll(/'dialog, \[role="dialog"\]\[aria-modal="true"\]'/g)].length,
     2,
   );
   assert.match(rust, /state\.open = element\.hasAttribute\('open'\)/);
@@ -171,10 +179,10 @@ test('whole-window agent capture is background-safe and addressable by window la
     [...rust.matchAll(/guardedRevision\.elements\?\.get\(/g)].length,
     4,
   );
-  assert.match(contentScript, /element !== guardedElement\.element/);
+  assert.match(contentScript, /const element = guardedElement\.element/);
   assert.match(contentScript, /selectorNotExposed: true/);
-  assert.match(interactionScript, /element !== guardedElement\.element/);
-  assert.match(interactionScript, /targetElement !== guardedTarget\.element/);
+  assert.match(interactionScript, /const element = guardedElement\.element/);
+  assert.match(interactionScript, /targetElement = guardedTarget\.element/);
   assert.match(interactionScript, /if \(!allowedActions\.includes\(action\)\)/);
   assert.match(interactionScript, /actionNotExposed: true/);
   assert.match(interactionScript, /const coordinateFor = \(/);
@@ -261,7 +269,7 @@ test('whole-window agent capture is background-safe and addressable by window la
   assert.match(interactionScript, /if \(keyboardValueTarget\) pendingValueBlur = true/);
   assert.match(
     interactionScript,
-    /keyboardValueTarget\s+&&\s+document\.activeElement !== element/,
+    /keyboardValueTarget\s+&&\s+deepActiveElement\(\) !== element/,
   );
   assert.match(
     interactionScript,
@@ -330,12 +338,12 @@ test('whole-window agent capture is background-safe and addressable by window la
   assert.equal([...rust.matchAll(/const effectivelyDisabled = \(/g)].length, 2);
   assert.equal([...rust.matchAll(/\.matches\(':disabled'\)/g)].length, 2);
   assert.equal(
-    [...rust.matchAll(/\.closest\('\[aria-disabled="true"\]'\)/g)].length,
+    [...rust.matchAll(/closestComposed\([^,]+, '\[aria-disabled="true"\]'\)/g)].length,
     2,
   );
   assert.equal([...rust.matchAll(/const semanticallyHidden = \(/g)].length, 3);
   assert.equal(
-    [...rust.matchAll(/\.closest\('\[aria-hidden="true"\], \[inert\]'\)/g)].length,
+    [...rust.matchAll(/closestComposed\([^,]+, '\[aria-hidden="true"\], \[inert\]'\)/g)].length,
     4,
   );
   assert.equal([...rust.matchAll(/const semanticText = \(/g)].length, 3);
@@ -361,10 +369,10 @@ test('whole-window agent capture is background-safe and addressable by window la
     /semanticText\(labelledBy, semanticallyHidden\(labelledBy\)\)/,
   );
   assert.equal([...rust.matchAll(/document\.createTreeWalker\(/g)].length, 6);
-  assert.match(rust, /const referencedText = \(idRefs\) =>/);
+  assert.match(rust, /const referencedText = \(idRefs, context\) =>/);
   assert.equal([...rust.matchAll(/const labelledByText = \(/g)].length, 3);
   assert.equal([...rust.matchAll(/const nativeLabelText = \(/g)].length, 3);
-  assert.match(rust, /const text = referencedText\(labelledBy\)/);
+  assert.match(rust, /const text = referencedText\(labelledBy, (?:element|target)\)/);
   assert.match(
     rust,
     /labelledByText\(element\)\s*\|\| element\.getAttribute\('aria-label'\)\s*\|\| nativeLabelText\(element\)/,
@@ -379,11 +387,11 @@ test('whole-window agent capture is background-safe and addressable by window la
   );
   assert.match(
     rust,
-    /referencedText\(element\.getAttribute\('aria-describedby'\)\)/,
+    /referencedText\(element\.getAttribute\('aria-describedby'\), element\)/,
   );
   assert.match(
     rust,
-    /referencedText\(element\.getAttribute\('aria-describedby'\)\)\s*\|\| element\.getAttribute\('aria-description'\)/,
+    /referencedText\(element\.getAttribute\('aria-describedby'\), element\)\s*\|\| element\.getAttribute\('aria-description'\)/,
   );
   assert.match(rust, /const content = semanticText\(element\)/);
   assert.match(rust, /return semanticText\(label, element\)/);
@@ -431,7 +439,7 @@ test('whole-window agent capture is background-safe and addressable by window la
   assert.equal([...rust.matchAll(/const modalLayerFor = \(candidate\) =>/g)].length, 2);
   assert.equal([...rust.matchAll(/if \(layer >= activeModalLayer\)/g)].length, 2);
   assert.equal(
-    [...rust.matchAll(/candidate\.contains\(document\.activeElement\)/g)].length,
+    [...rust.matchAll(/composedContains\(candidate, deepActiveElement\(\)\)/g)].length,
     2,
   );
   assert.match(rust, /state\.modalBlocked = true/);
@@ -617,7 +625,7 @@ test('whole-window agent capture is background-safe and addressable by window la
   assert.match(bridge, /clipboardDenied: true/);
   assert.match(interactionScript, /is blocked by active modal dialog/);
   assert.match(interactionScript, /modalBlocked: true/);
-  assert.match(interactionScript, /activeModal\.contains\(targetElement\)/);
+  assert.match(interactionScript, /composedContains\(activeModal, targetElement\)/);
   assert.match(bridge, /if \(result\.modalBlocked\) \{/);
   assert.match(bridge, /'Interact with or dismiss the active modal dialog first'/);
   assert.match(rust, /MENGINE_EDITOR_CONFIG_DIR/);
@@ -644,7 +652,7 @@ test('whole-window agent capture is background-safe and addressable by window la
   assert.match(interactionScript, /&& !effectivelyDisabled\(candidate\)/);
   assert.match(
     interactionScript,
-    /&& \(!activeModal \|\| activeModal\.contains\(candidate\)\)/,
+    /&& \(!activeModal \|\| composedContains\(activeModal, candidate\)\)/,
   );
   assert.match(interactionScript, /const leftPositive = left\.tabIndex > 0/);
   assert.match(interactionScript, /return left\.tabIndex - right\.tabIndex/);
@@ -671,12 +679,13 @@ test('whole-window agent capture is background-safe and addressable by window la
   assert.match(rust, /Object\.defineProperty\(element, name/);
   assert.match(rust, /dispatchPointerAt\(element, 'mousemove'/);
   assert.match(rust, /Symbol\.for\('mengine\.agent\.hoveredElement'\)/);
-  assert.match(rust, /!previous\.contains\(element\)/);
+  assert.match(rust, /!composedContains\(previous, element\)/);
   assert.match(rust, /props\.onPointerLeave\(reactHoverEvent\(target/);
   assert.match(rust, /reactProps\.onPointerEnter\(reactHoverEvent/);
   assert.doesNotMatch(contentScript, /targetElement|targetSelector|action === 'dragTo'/);
   assert.match(interactionScript, /let targetElement = null/);
-  assert.match(interactionScript, /document\.querySelector\(targetSelector\)/);
+  assert.doesNotMatch(interactionScript, /document\.querySelector\(targetSelector\)/);
+  assert.match(interactionScript, /targetElement = guardedTarget\.element/);
   assert.match(rust, /new KeyboardEvent\(type/);
   assert.match(rust, /requestedKey === 'Space' \? ' ' :/);
   assert.match(rust, /element\.focus\(\{ preventScroll: true \}\)/);
