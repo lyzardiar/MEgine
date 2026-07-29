@@ -88,17 +88,34 @@ export function ToolBar(props: {
       <div className="tool-group center">
         <button
           type="button"
-          className={`play-btn${props.mode === 'play' ? ' on' : ''}`}
-          aria-label="Play"
-          title="Play"
+          className={`play-btn${props.mode !== 'edit' ? ' on' : ''}`}
+          aria-label="Enter Play Mode"
+          aria-pressed={props.mode !== 'edit'}
+          title="Enter Play Mode"
+          disabled={props.mode !== 'edit'}
           onClick={props.onPlay}
         >
           <Play size={14} fill="currentColor" aria-hidden="true" />
         </button>
-        <button type="button" className="play-btn" aria-label="Pause" title="Pause" onClick={props.onPause}>
+        <button
+          type="button"
+          className={`play-btn${props.mode === 'pause' ? ' on' : ''}`}
+          aria-label={props.mode === 'pause' ? 'Resume Play Mode' : 'Pause Play Mode'}
+          aria-pressed={props.mode === 'pause'}
+          title={props.mode === 'pause' ? 'Resume Play Mode' : 'Pause Play Mode'}
+          disabled={props.mode === 'edit'}
+          onClick={props.onPause}
+        >
           <Pause size={14} fill="currentColor" aria-hidden="true" />
         </button>
-        <button type="button" className="play-btn" aria-label="Stop" title="Stop" onClick={props.onStop}>
+        <button
+          type="button"
+          className="play-btn"
+          aria-label="Exit Play Mode"
+          title="Exit Play Mode"
+          disabled={props.mode === 'edit'}
+          onClick={props.onStop}
+        >
           <Square size={12} fill="currentColor" aria-hidden="true" />
         </button>
         <button

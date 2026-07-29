@@ -182,7 +182,7 @@ test('whole-window agent capture is background-safe and addressable by window la
   assert.match(rust, /while \(revisionGuard\.revisions\.size > maxGuardedRevisions\)/);
   assert.equal(
     [...rust.matchAll(/guardedRevision\?\.epoch !== revisionGuard\.epoch/g)].length,
-    2,
+    1,
   );
   assert.equal(
     [...rust.matchAll(/guardedRevision\.elements\?\.get\(/g)].length,

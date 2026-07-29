@@ -2819,17 +2819,20 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
           updateSceneViewPreferences({ handleOrientation: next });
         }}
         onPlay={() => {
+          if (store.mode !== 'edit') return;
           store.play();
           setViewTab('game');
           log('Entered Play Mode → Game');
           refresh();
         }}
         onPause={() => {
+          if (store.mode === 'edit') return;
           store.pause();
           log(store.mode === 'pause' ? 'Paused' : 'Resumed');
           refresh();
         }}
         onStop={() => {
+          if (store.mode === 'edit') return;
           store.stop();
           setViewTab('scene');
           log('Exited Play Mode → Scene');

@@ -2199,22 +2199,6 @@ pub async fn interact_editor_window(
         );
     }
     validate_background_ui_interaction_window(&app, &window_label)?;
-    let current_snapshot =
-        inspect_editor_window_impl(app.clone(), window_label.clone(), 50, 0).await?;
-    let actual_snapshot_revision = current_snapshot
-        .get("snapshotRevision")
-        .and_then(serde_json::Value::as_str)
-        .ok_or_else(|| "editor UI snapshot did not contain a revision".to_string())?;
-    if actual_snapshot_revision != expected_snapshot_revision {
-        return Ok(serde_json::json!({
-            "ok": false,
-            "error": "Editor window semantic content changed; get a fresh UI snapshot before interacting",
-            "staleSnapshot": true,
-            "expectedSnapshotRevision": expected_snapshot_revision,
-            "actualSnapshotRevision": actual_snapshot_revision,
-            "restartOffset": 0,
-        }));
-    }
     // Recheck immediately before injection so a window made visible while the
     // semantic snapshot was being validated cannot receive background input.
     validate_background_ui_interaction_window(&app, &window_label)?;
@@ -2648,15 +2632,67 @@ async fn interact_editor_window_impl(
         "ctrlKey": ctrl_key.unwrap_or(false),
         "altKey": alt_key.unwrap_or(false),
         "metaKey": meta_key.unwrap_or(false),
-        "expectedSnapshotRevision": expected_snapshot_revision,
+        "expectedSnapshotRevision": expected_snapshot_revision.clone(),
     })
     .to_string();
     let payload = base64::engine::general_purpose::STANDARD.encode(payload);
-    let expression = WINDOW_UI_INTERACTION_SCRIPT.replace(
+    let interaction_expression = WINDOW_UI_INTERACTION_SCRIPT.replace(
         "__MENGINE_PAYLOAD_BASE64__",
         &serde_json::to_string(&payload).map_err(|error| error.to_string())?,
     );
-    evaluate_webview_script_with_await(&app, &window_label, expression, true).await
+    let snapshot_expression = WINDOW_UI_SNAPSHOT_SCRIPT
+        .replace("__MENGINE_MAX_ELEMENTS__", "50")
+        .replace("__MENGINE_OFFSET__", "0");
+    // Refresh the current semantic guard and synchronously dispatch the action
+    // in one renderer task. Live React updates cannot invalidate the guard in
+    // the gap between two DevTools Runtime.evaluate calls.
+    let expression = [
+        "(() => { const preActionSnapshot = (",
+        &snapshot_expression,
+        "); const pendingInteraction = (",
+        &interaction_expression,
+        "); return Promise.resolve(pendingInteraction).then((result) => ({ preActionSnapshotRevision: preActionSnapshot.snapshotRevision, result })); })()",
+    ]
+    .concat();
+    let envelope =
+        evaluate_webview_script_with_await(&app, &window_label, expression, true).await?;
+    let pre_snapshot_revision = envelope
+        .get("preActionSnapshotRevision")
+        .and_then(serde_json::Value::as_str)
+        .ok_or_else(|| {
+            "WebView2 UI interaction did not report its pre-action snapshot revision".to_string()
+        })?
+        .to_string();
+    let mut result = envelope
+        .get("result")
+        .cloned()
+        .ok_or_else(|| "WebView2 UI interaction did not return a result".to_string())?;
+    let stale_snapshot = result
+        .get("staleSnapshot")
+        .and_then(serde_json::Value::as_bool)
+        == Some(true);
+    let object = result
+        .as_object_mut()
+        .ok_or_else(|| "WebView2 UI interaction returned a non-object value".to_string())?;
+    object.insert(
+        "preSnapshotRevision".to_string(),
+        serde_json::Value::String(pre_snapshot_revision.clone()),
+    );
+    object.insert(
+        "snapshotDriftedBeforeAction".to_string(),
+        serde_json::Value::Bool(pre_snapshot_revision != expected_snapshot_revision),
+    );
+    if stale_snapshot
+        && object
+            .get("actualSnapshotRevision")
+            .is_none_or(serde_json::Value::is_null)
+    {
+        object.insert(
+            "actualSnapshotRevision".to_string(),
+            serde_json::Value::String(pre_snapshot_revision),
+        );
+    }
+    Ok(result)
 }
 
 #[cfg(windows)]
@@ -2857,7 +2893,6 @@ const WINDOW_UI_SNAPSHOT_SCRIPT: &str = r#"
     revisionGuard?.observer?.disconnect?.();
     const invalidateRevisionGuard = () => {
       revisionGuard.epoch += 1;
-      revisionGuard.revisions.clear();
     };
     const mutationOptions = {
       attributes: true,
@@ -3888,11 +3923,22 @@ const WINDOW_UI_SNAPSHOT_SCRIPT: &str = r#"
   const snapshotRevision = `ui-v30-${candidates.length}-${
     revisionHash.toString(16).padStart(16, '0')
   }`;
+  const interactionSignatureFor = (semanticElement) => {
+    const state = { ...semanticElement.state };
+    delete state.focused;
+    return JSON.stringify({
+      ...semanticElement,
+      state,
+      rect: undefined,
+      scroll: undefined,
+    });
+  };
   const guardedElements = new Map(semanticElements.map((semanticElement, index) => [
     semanticElement.selector,
     {
       element: candidates[index].element,
       actions: [...semanticElement.actions],
+      signature: interactionSignatureFor(semanticElement),
     },
   ]));
   revisionGuard.revisions.delete(snapshotRevision);
@@ -3900,6 +3946,7 @@ const WINDOW_UI_SNAPSHOT_SCRIPT: &str = r#"
     epoch: revisionGuard.epoch,
     elements: guardedElements,
   });
+  revisionGuard.latestRevision = snapshotRevision;
   while (revisionGuard.revisions.size > maxGuardedRevisions) {
     const oldestRevision = revisionGuard.revisions.keys().next().value;
     revisionGuard.revisions.delete(oldestRevision);
@@ -4568,7 +4615,7 @@ const WINDOW_UI_INTERACTION_SCRIPT: &str = r#"
   };
   const revisionGuard = window[Symbol.for('mengine.agent.uiRevisionGuard')];
   const guardedRevision = revisionGuard?.revisions?.get(expectedSnapshotRevision);
-  if (!revisionGuard || guardedRevision?.epoch !== revisionGuard.epoch) {
+  if (!revisionGuard || !guardedRevision) {
     return {
       ok: false,
       error: 'Editor window semantic content changed; get a fresh UI snapshot before interacting',
@@ -4587,6 +4634,24 @@ const WINDOW_UI_INTERACTION_SCRIPT: &str = r#"
       expectedSnapshotRevision,
     };
   }
+  const currentSnapshotRevision = revisionGuard.latestRevision;
+  const currentRevision = revisionGuard.revisions?.get(currentSnapshotRevision);
+  const currentGuardedElement = currentRevision?.elements?.get(selector);
+  if (
+    currentRevision?.epoch !== revisionGuard.epoch
+    || !currentGuardedElement
+    || currentGuardedElement.element !== guardedElement.element
+    || currentGuardedElement.signature !== guardedElement.signature
+  ) {
+    return {
+      ok: false,
+      error: 'Editor window semantic target changed; get a fresh UI snapshot before interacting',
+      staleSnapshot: true,
+      expectedSnapshotRevision,
+      actualSnapshotRevision: currentSnapshotRevision || null,
+      restartOffset: 0,
+    };
+  }
   const guardedTarget = action === 'dragTo'
     ? guardedRevision.elements?.get(targetSelector)
     : null;
@@ -4597,6 +4662,26 @@ const WINDOW_UI_INTERACTION_SCRIPT: &str = r#"
       selectorNotExposed: true,
       targetSelectorNotExposed: true,
       expectedSnapshotRevision,
+    };
+  }
+  const currentGuardedTarget = action === 'dragTo'
+    ? currentRevision?.elements?.get(targetSelector)
+    : null;
+  if (
+    action === 'dragTo'
+    && (
+      !currentGuardedTarget
+      || currentGuardedTarget.element !== guardedTarget.element
+      || currentGuardedTarget.signature !== guardedTarget.signature
+    )
+  ) {
+    return {
+      ok: false,
+      error: 'Editor window semantic drag target changed; get a fresh UI snapshot before interacting',
+      staleSnapshot: true,
+      expectedSnapshotRevision,
+      actualSnapshotRevision: currentSnapshotRevision || null,
+      restartOffset: 0,
     };
   }
   const agentActionNames = [

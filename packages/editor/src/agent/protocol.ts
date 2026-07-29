@@ -204,6 +204,8 @@ export interface EditorUiActionResult {
   staleSnapshot?: boolean;
   expectedSnapshotRevision?: string;
   actualSnapshotRevision?: string;
+  preSnapshotRevision?: string;
+  snapshotDriftedBeforeAction?: boolean;
   restartOffset?: number;
   settledFrames?: number;
   elementConnected?: boolean;
