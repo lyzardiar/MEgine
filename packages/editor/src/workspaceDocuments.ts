@@ -21,6 +21,20 @@ function comparablePath(path: string): string {
   return path.replace(/\\/g, '/').toLocaleLowerCase();
 }
 
+export function dropChangedCleanDrafts<T>(
+  drafts: Map<string, T>,
+  changeTouches: (path: string) => boolean,
+  isDirty: (draft: T) => boolean,
+): string[] {
+  const dropped: string[] = [];
+  for (const [path, draft] of drafts) {
+    if (!changeTouches(path) || isDirty(draft)) continue;
+    drafts.delete(path);
+    dropped.push(path);
+  }
+  return dropped;
+}
+
 export function resourceEditorDocuments(
   kind: WorkspaceResourceDocumentKind,
   panel: string,

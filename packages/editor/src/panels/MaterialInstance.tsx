@@ -13,7 +13,10 @@ import {
   serializeMaterialAsset,
   type MaterialAsset,
 } from '../materialAsset';
-import { resourceEditorDocuments } from '../workspaceDocuments';
+import {
+  dropChangedCleanDrafts,
+  resourceEditorDocuments,
+} from '../workspaceDocuments';
 import {
   applyMaterialInstance,
   createMaterialInstanceAsset,
@@ -369,13 +372,22 @@ export function MaterialInstanceEditor(props: MaterialEditorProps) {
       void refreshProjectFiles().finally(() => {
         setAssetRevision((revision) => revision + 1);
       });
+      const detail = (event as CustomEvent<unknown>).detail;
+      if (suppressAssetChange.current) return;
+      const dropped = dropChangedCleanDrafts(
+        drafts.current,
+        (path) => projectAssetsChangeTouches(detail, [path]),
+        instanceDraftDirty,
+      );
+      if (dropped.length > 0) {
+        for (const path of dropped) {
+          props.undoService.clear(`material-instance:${path}`);
+        }
+        setDraftEpoch((value) => value + 1);
+      }
       if (
-        suppressAssetChange.current
-        || !props.assetPath
-        || !projectAssetsChangeTouches(
-          (event as CustomEvent<unknown>).detail,
-          [props.assetPath],
-        )
+        !props.assetPath
+        || !projectAssetsChangeTouches(detail, [props.assetPath])
       ) return;
       if (dirty) {
         setError(

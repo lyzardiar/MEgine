@@ -87,6 +87,7 @@ import {
   PROJECT_ASSETS_CHANGED_EVENT,
 } from '../assetEditorEvents';
 import {
+  dropChangedCleanDrafts,
   resourceEditorDocuments,
   type WorkspaceResourceDocument,
 } from '../workspaceDocuments';
@@ -578,13 +579,20 @@ export function Sequencer(props: SequencerProps) {
       clearAudioWaveforms();
       audioPreviewController.invalidate();
       setPreviewAssetEpoch((value) => value + 1);
+      const detail = (event as CustomEvent<unknown>).detail;
+      if (suppressAssetChange.current) return;
+      const dropped = dropChangedCleanDrafts(
+        drafts.current,
+        (path) => projectAssetsChangeTouches(detail, [path]),
+        sequencerDraftDirty,
+      );
+      if (dropped.length > 0) {
+        for (const path of dropped) props.undoService.clear(`timeline:${path}`);
+        setDraftEpoch((value) => value + 1);
+      }
       if (
-        suppressAssetChange.current
-        || !props.assetPath
-        || !projectAssetsChangeTouches(
-          (event as CustomEvent<unknown>).detail,
-          [props.assetPath],
-        )
+        !props.assetPath
+        || !projectAssetsChangeTouches(detail, [props.assetPath])
       ) return;
       if (dirty) {
         setError(

@@ -173,6 +173,7 @@ import {
   PROJECT_ASSETS_CHANGED_EVENT,
 } from '../assetEditorEvents';
 import {
+  dropChangedCleanDrafts,
   resourceEditorDocuments,
   type WorkspaceResourceDocument,
 } from '../workspaceDocuments';
@@ -1900,14 +1901,21 @@ export function Timeline(props: {
   };
 
   useEffect(() => {
-    if (!clipPath) return;
     const onAssetsChanged = (event: Event) => {
+      const detail = (event as CustomEvent<unknown>).detail;
+      if (suppressAssetChange.current) return;
+      const dropped = dropChangedCleanDrafts(
+        drafts.current,
+        (path) => projectAssetsChangeTouches(detail, [path]),
+        animationDraftDirty,
+      );
+      if (dropped.length > 0) {
+        for (const path of dropped) props.undoService.clear(`animation:${path}`);
+        setDraftEpoch((value) => value + 1);
+      }
       if (
-        suppressAssetChange.current
-        || !projectAssetsChangeTouches(
-          (event as CustomEvent<unknown>).detail,
-          [clipPath],
-        )
+        !clipPath
+        || !projectAssetsChangeTouches(detail, [clipPath])
       ) return;
       if (dirty) {
         setError(

@@ -8,6 +8,7 @@ import {
 } from 'react';
 import { Redo2, Undo2 } from 'lucide-react';
 import {
+  dropChangedCleanDrafts,
   resourceEditorDocuments,
   type WorkspaceResourceDocument,
 } from '../workspaceDocuments';
@@ -262,14 +263,21 @@ export function AvatarMaskEditor(props: {
   };
 
   useEffect(() => {
-    if (!props.assetPath) return;
     const onAssetsChanged = (event: Event) => {
+      const detail = (event as CustomEvent<unknown>).detail;
+      if (suppressAssetChange.current) return;
+      const dropped = dropChangedCleanDrafts(
+        drafts.current,
+        (path) => projectAssetsChangeTouches(detail, [path]),
+        avatarMaskDraftDirty,
+      );
+      if (dropped.length > 0) {
+        for (const path of dropped) props.undoService.clear(`avatar-mask:${path}`);
+        setDraftEpoch((value) => value + 1);
+      }
       if (
-        suppressAssetChange.current
-        || !projectAssetsChangeTouches(
-          (event as CustomEvent<unknown>).detail,
-          [props.assetPath!],
-        )
+        !props.assetPath
+        || !projectAssetsChangeTouches(detail, [props.assetPath])
       ) return;
       if (dirty) {
         setError(

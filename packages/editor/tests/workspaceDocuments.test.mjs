@@ -2,10 +2,31 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 
 import {
+  dropChangedCleanDrafts,
   gateWorkspaceResourceSelection,
   mergeWorkspaceResourceDocuments,
   resourceEditorDocuments,
 } from '../src/workspaceDocuments.ts';
+
+test('external changes drop only clean matching cached drafts', () => {
+  const drafts = new Map([
+    ['Assets/Materials/Clean.mmat', { dirty: false }],
+    ['Assets/Materials/Dirty.mmat', { dirty: true }],
+    ['Assets/Materials/Other.mmat', { dirty: false }],
+  ]);
+  assert.deepEqual(
+    dropChangedCleanDrafts(
+      drafts,
+      (path) => path.includes('Clean') || path.includes('Dirty'),
+      (draft) => draft.dirty,
+    ),
+    ['Assets/Materials/Clean.mmat'],
+  );
+  assert.deepEqual([...drafts.keys()], [
+    'Assets/Materials/Dirty.mmat',
+    'Assets/Materials/Other.mmat',
+  ]);
+});
 
 test('resource editor documents distinguish the selected asset from cached drafts', () => {
   assert.deepEqual(

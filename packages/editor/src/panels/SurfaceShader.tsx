@@ -20,6 +20,7 @@ import {
   sameSaveDocumentPath,
 } from '../saveAll';
 import {
+  dropChangedCleanDrafts,
   resourceEditorDocuments,
   type WorkspaceResourceDocument,
 } from '../workspaceDocuments';
@@ -183,14 +184,21 @@ export function SurfaceShaderEditor(props: {
   };
 
   useEffect(() => {
-    if (!props.assetPath) return;
     const onAssetsChanged = (event: Event) => {
+      const detail = (event as CustomEvent<unknown>).detail;
+      if (suppressAssetChange.current) return;
+      const dropped = dropChangedCleanDrafts(
+        drafts.current,
+        (path) => projectAssetsChangeTouches(detail, [path]),
+        (draft) => draft.source !== draft.savedSource,
+      );
+      if (dropped.length > 0) {
+        for (const path of dropped) props.undoService.clear(`surface-shader:${path}`);
+        setDraftEpoch((value) => value + 1);
+      }
       if (
-        suppressAssetChange.current
-        || !projectAssetsChangeTouches(
-          (event as CustomEvent<unknown>).detail,
-          [props.assetPath!],
-        )
+        !props.assetPath
+        || !projectAssetsChangeTouches(detail, [props.assetPath])
       ) return;
       if (dirty) {
         setError(

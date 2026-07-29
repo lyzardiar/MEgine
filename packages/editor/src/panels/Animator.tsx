@@ -11,6 +11,7 @@ import type { WorldSnapshotView } from '@mengine/api';
 import { Redo2, Undo2 } from 'lucide-react';
 import { createAnimationClip, serializeAnimationClip } from '../animationClip';
 import {
+  dropChangedCleanDrafts,
   mergeWorkspaceResourceDocuments,
   resourceEditorDocuments,
   type WorkspaceResourceDocument,
@@ -594,14 +595,21 @@ function AnimatorControllerEditor(props: AnimatorEditorProps) {
   };
 
   useEffect(() => {
-    if (!props.assetPath) return;
     const onAssetsChanged = (event: Event) => {
+      const detail = (event as CustomEvent<unknown>).detail;
+      if (suppressAssetChange.current) return;
+      const dropped = dropChangedCleanDrafts(
+        drafts.current,
+        (path) => projectAssetsChangeTouches(detail, [path]),
+        animatorDraftDirty,
+      );
+      if (dropped.length > 0) {
+        for (const path of dropped) props.undoService.clear(`animator:${path}`);
+        setDraftEpoch((value) => value + 1);
+      }
       if (
-        suppressAssetChange.current
-        || !projectAssetsChangeTouches(
-          (event as CustomEvent<unknown>).detail,
-          [props.assetPath!],
-        )
+        !props.assetPath
+        || !projectAssetsChangeTouches(detail, [props.assetPath])
       ) return;
       if (dirty) {
         setError(

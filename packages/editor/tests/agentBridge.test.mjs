@@ -877,6 +877,11 @@ test('workspace documents include cached resource drafts with exact per-document
       /drafts\.current\.set\(previous(?:Path)?[\s\S]{0,600}?setDraftEpoch/,
       file,
     );
+    assert.match(
+      source,
+      /dropChangedCleanDrafts\(/,
+      `${file} must invalidate clean cached drafts after external changes`,
+    );
   }
 });
 
