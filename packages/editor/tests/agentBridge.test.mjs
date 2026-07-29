@@ -142,6 +142,17 @@ test('whole-window agent capture is background-safe and addressable by window la
   assert.match(interactionScript, /invalidPointerCoordinates: true/);
   assert.match(interactionScript, /requestedTargetOffsetX/);
   assert.match(interactionScript, /targetClientX: targetCoordinates\?\.clientX \?\? null/);
+  assert.match(interactionScript, /const wheelEvent = new WheelEvent\('wheel'/);
+  assert.match(interactionScript, /const applyNativeScroll = element\.dispatchEvent\(wheelEvent\)/);
+  assert.match(interactionScript, /if \(applyNativeScroll\) \{/);
+  assert.match(
+    interactionScript,
+    /action === 'scroll'[\s\S]*?const deltaY = Number\(requestedDeltaY \?\? 0\)/,
+  );
+  assert.match(rust, /getAttribute\('data-agent-wheel'\) === 'true'/);
+  assert.match(rust, /typeof props\.onWheel === 'function'/);
+  assert.match(rust, /"contextClick"\s*\|\s*"scroll"\s*\|\s*"keyPress"/);
+  assert.match(bridge, /window\.ui_scroll requires a non-zero deltaX or deltaY/);
   assert.match(bridge, /if \(result\.selectorNotExposed \|\| result\.actionNotExposed\)/);
   assert.match(bridge, /if \(result\.invalidPointerCoordinates\)/);
   assert.match(protocol, /targetSelectorNotExposed\?: boolean/);
@@ -365,7 +376,7 @@ test('whole-window agent capture is background-safe and addressable by window la
   assert.match(rust, /actions\.push\('dragBy'\)/);
   assert.match(rust, /"shiftKey": shift_key\.unwrap_or\(false\)/);
   assert.match(rust, /"ctrlKey": ctrl_key\.unwrap_or\(false\)/);
-  assert.match(rust, /modifier keys are only valid for click, key, or drag actions/);
+  assert.match(rust, /modifier keys are only valid for click, wheel, key, or drag actions/);
   assert.match(rust, /shiftKey: requestedShiftKey === true/);
   assert.match(rust, /\.\.\.modifiers/);
   assert.match(rust, /modifiers\.shiftKey \? focusable\.length - 1 : 0/);

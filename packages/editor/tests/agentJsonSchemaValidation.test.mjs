@@ -61,6 +61,14 @@ test('direct AgentBridge schema validation matches MCP for valid command argumen
       altKey: false,
       expectedSnapshotRevision: UI_REVISION,
     }],
+    ['window.ui_scroll', {
+      selector: '#timeline',
+      offsetX: 24,
+      offsetY: 12,
+      deltaX: 120,
+      shiftKey: true,
+      expectedSnapshotRevision: UI_REVISION,
+    }],
     ['window.ui_drag_to', {
       selector: '#source',
       targetSelector: '#target',

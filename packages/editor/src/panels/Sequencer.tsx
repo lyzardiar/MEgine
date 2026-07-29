@@ -3360,6 +3360,9 @@ export function Sequencer(props: SequencerProps) {
         <div
           className={`sequencer-tracks${panning ? ' panning' : ''}`}
           ref={tracksViewport}
+          role="region"
+          aria-label="Sequencer tracks viewport"
+          data-agent-wheel="true"
           title="Drag empty lanes to marquee-select. Shift adds; Ctrl/Cmd toggles. Middle-drag pans horizontally."
           style={{ '--sequencer-lane-width': `${laneWidth}px` } as CSSProperties}
           onWheel={(event) => {

@@ -141,6 +141,7 @@ test('command schemas expose exact high-risk guards and shared optimistic option
     'window.ui_click',
     'window.ui_double_click',
     'window.ui_context_click',
+    'window.ui_scroll',
     'window.ui_drag_to',
     'window.ui_drag_by',
     'window.ui_hover',
@@ -157,6 +158,11 @@ test('command schemas expose exact high-risk guards and shared optimistic option
   assert.equal(
     COMMAND_PARAMS_SCHEMAS['window.ui_drag_to'].properties.targetOffsetY.maximum,
     1_000_000,
+  );
+  assert.equal(COMMAND_PARAMS_SCHEMAS['window.ui_scroll'].properties.shiftKey.type, 'boolean');
+  assert.deepEqual(
+    COMMAND_PARAMS_SCHEMAS['window.ui_scroll'].required,
+    ['selector', 'expectedSnapshotRevision'],
   );
   assert.deepEqual(
     COMMAND_PARAMS_SCHEMAS['build.run'].required,

@@ -1086,6 +1086,7 @@ function AnimationCurveWorkspace(props: {
       <svg
         className={drag?.kind === 'view' ? `is-${drag.mode}` : undefined}
         role="application"
+        data-agent-wheel="true"
         aria-roledescription="animation curve editor"
         viewBox={`0 0 ${CURVE_VIEW_WIDTH} ${CURVE_VIEW_HEIGHT}`}
         preserveAspectRatio="none"
@@ -4083,6 +4084,9 @@ export function Timeline(props: {
 
           <div
             className="timeline-grid-scroll"
+            role="region"
+            aria-label="Timeline track grid"
+            data-agent-wheel="true"
             hidden={viewMode === 'curves'}
             onWheel={(event) => {
               if (event.ctrlKey) {

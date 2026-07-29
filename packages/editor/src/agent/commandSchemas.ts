@@ -920,6 +920,8 @@ export const COMMAND_PARAMS_SCHEMAS: Record<string, AgentJsonSchema> = {
   }, [...uiInteractionRequired, 'value']),
   'window.ui_scroll': objectSchema({
     ...uiInteractionContext,
+    ...uiModifierContext,
+    ...uiPointerOffsetContext,
     selector: stringValue('Exact scrollable selector returned by window.ui_snapshot'),
     deltaX: {
       type: 'number',
@@ -931,9 +933,9 @@ export const COMMAND_PARAMS_SCHEMAS: Record<string, AgentJsonSchema> = {
       type: 'number',
       minimum: -1_000_000,
       maximum: 1_000_000,
-      description: 'Vertical CSS-pixel delta',
+      description: 'Vertical CSS-pixel delta; default 0',
     },
-  }, [...uiInteractionRequired, 'deltaY']),
+  }, uiInteractionRequired),
   'window.ui_drag_to': objectSchema({
     ...uiInteractionContext,
     ...uiModifierContext,

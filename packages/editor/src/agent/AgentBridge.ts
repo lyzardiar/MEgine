@@ -4711,6 +4711,7 @@ class AgentBridge {
         commandId === 'window.ui_click'
         || commandId === 'window.ui_double_click'
         || commandId === 'window.ui_context_click'
+        || commandId === 'window.ui_scroll'
         || commandId === 'window.ui_drag_to'
         || commandId === 'window.ui_drag_by'
         || commandId === 'window.ui_hover'
@@ -4732,13 +4733,19 @@ class AgentBridge {
       const deltaX = commandId === 'window.ui_drag_by'
         ? requiredBoundedUiDelta(args, 'deltaX')
         : optionalBoundedUiDelta(args, 'deltaX', 0);
-      const deltaY = commandId === 'window.ui_scroll' || commandId === 'window.ui_drag_by'
+      const deltaY = commandId === 'window.ui_drag_by'
         ? requiredBoundedUiDelta(args, 'deltaY')
-        : undefined;
+        : optionalBoundedUiDelta(args, 'deltaY', 0);
       if (commandId === 'window.ui_drag_by' && deltaX === 0 && deltaY === 0) {
         throw new BridgeError(
           'INVALID_ARGS',
           'window.ui_drag_by requires a non-zero deltaX or deltaY',
+        );
+      }
+      if (commandId === 'window.ui_scroll' && deltaX === 0 && deltaY === 0) {
+        throw new BridgeError(
+          'INVALID_ARGS',
+          'window.ui_scroll requires a non-zero deltaX or deltaY',
         );
       }
       const key = commandId === 'window.ui_press_key'

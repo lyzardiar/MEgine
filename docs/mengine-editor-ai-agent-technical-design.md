@@ -332,7 +332,7 @@ Rust Host 使用独立的工程生命周期互斥门串行化 open/create/close 
 | `menu.invoke` | `{ path }` | ✅ 查 `MenuItemEntry`、执行实时 validator，再复用 `entry.action(ctx)` |
 | `window.ui_click` | `{ windowLabel?, selector, offsetX?, offsetY?, shiftKey?, ctrlKey?, altKey?, metaKey? }` | ✅ 对 `window.ui_snapshot` 返回的 selector 合成受限 Pointer/Mouse/Click 事件；可使用元素左上角相对 CSS 像素定位画布内目标，省略坐标时兼容使用可见元素中心，并可携带显式修饰键完成范围/追加选择，不激活顶层窗口 |
 | `window.ui_set_value` | `{ windowLabel?, selector, value }` | ✅ 仅允许 input/textarea/select/contenteditable，触发 input/change；拒绝 disabled/readonly，禁止调用方注入脚本 |
-| `window.ui_double_click` / `context_click` / `scroll` | 快照 selector 与对应参数 | ✅ 双击和上下文菜单同样支持可选 `offsetX/offsetY` 精确点位；滚动支持虚拟化容器；均遵守元素级 Agent 禁止策略，脚本 IDE 启动、系统文件选择器、工程关闭与进程退出等人工路径不能借键盘或上下文菜单旁路 |
+| `window.ui_double_click` / `context_click` / `scroll` | 快照 selector 与对应参数 | ✅ 双击和上下文菜单支持可选 `offsetX/offsetY` 精确点位；滚轮可指定元素内落点、横纵增量和修饰键，先派发真实语义 `WheelEvent` 供 Scene/Timeline 等画布缩放消费，未消费时再执行原生容器滚动；均遵守元素级 Agent 禁止策略，脚本 IDE 启动、系统文件选择器、工程关闭与进程退出等人工路径不能借键盘或上下文菜单旁路 |
 | `window.ui_drag_to` | `{ windowLabel?, selector, targetSelector, offsetX?, offsetY?, targetOffsetX?, targetOffsetY?, shiftKey?, ctrlKey?, altKey?, metaKey? }` | ✅ 仅接受语义快照中的源/目标 selector，可分别指定源与目标元素内的 CSS 像素点，在同一隐藏 WebView 内合成可带修饰键的 HTML5 拖放事件；不移动前台鼠标 |
 | `window.ui_drag_by` | `{ windowLabel?, selector, offsetX?, offsetY?, deltaX, deltaY, shiftKey?, ctrlKey?, altKey?, metaKey? }` | ✅ 从快照标记为 `dragBy` 的元素内精确点位（默认中心）开始，在同一隐藏 WebView 内分步合成可带修饰键的 Pointer/Mouse 手势；起点必须位于当前元素与视口内、终点必须留在视口内，不接受屏幕坐标且不移动系统鼠标 |
 | `window.ui_hover` | `{ windowLabel?, selector, offsetX?, offsetY? }` | ✅ 仅接受快照标记为 `hover` 的 React 悬停目标；可指定元素内精确点位，在同一隐藏 WebView 内合成进入/离开事件，用于展开层级菜单且不移动系统鼠标 |

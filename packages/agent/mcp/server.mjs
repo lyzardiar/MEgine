@@ -3183,10 +3183,12 @@ const TOOLS = [
   ),
   execTool(
     'scroll_window_ui',
-    'Scroll a container marked with the scroll action by get_window_ui only when its editor window is hidden and unfocused. This enables inspection of virtualized content without foreground input.',
+    'Dispatch a CSS-pixel wheel gesture at an exact element-relative point on a target marked with the scroll action by get_window_ui. Unhandled wheel gestures fall back to native element scrolling, enabling both canvas zoom controls and virtualized content inspection without foreground input.',
     'window.ui_scroll',
     {
       ...uiInteractionProperties('Exact scrollable selector returned by get_window_ui'),
+      ...uiModifierProperties(),
+      ...uiPointerOffsetProperties(),
       deltaX: {
         type: 'number',
         minimum: -1000000,
@@ -3197,10 +3199,10 @@ const TOOLS = [
         type: 'number',
         minimum: -1000000,
         maximum: 1000000,
-        description: 'Vertical CSS-pixel delta',
+        description: 'Vertical CSS-pixel delta (default: 0)',
       },
     },
-    ['selector', 'expectedSnapshotRevision', 'deltaY'],
+    ['selector', 'expectedSnapshotRevision'],
   ),
   execTool(
     'drag_window_ui',

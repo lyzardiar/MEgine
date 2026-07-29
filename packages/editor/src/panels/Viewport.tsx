@@ -3544,6 +3544,7 @@ export function Viewport(props: {
         ref={canvasRef}
         data-scene-viewport={props.tab === 'scene' ? 'true' : undefined}
         role="application"
+        data-agent-wheel="true"
         aria-roledescription={props.tab === 'scene'
           ? 'interactive scene canvas'
           : 'interactive game canvas'}

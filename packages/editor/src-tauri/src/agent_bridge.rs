@@ -2058,7 +2058,7 @@ pub async fn interact_editor_window(
     }
     let pointer_action = matches!(
         action.as_str(),
-        "click" | "doubleClick" | "contextClick" | "dragTo" | "dragBy" | "hover"
+        "click" | "doubleClick" | "contextClick" | "scroll" | "dragTo" | "dragBy" | "hover"
     );
     if !pointer_action && (offset_x.is_some() || offset_y.is_some()) {
         return Err("offsetX and offsetY are only valid for pointer actions".to_string());
@@ -2066,8 +2066,11 @@ pub async fn interact_editor_window(
     if action != "dragTo" && (target_offset_x.is_some() || target_offset_y.is_some()) {
         return Err("targetOffsetX and targetOffsetY are only valid for dragTo".to_string());
     }
-    if action == "scroll" && delta_y.is_none() {
-        return Err("scroll requires deltaY".to_string());
+    if action == "scroll"
+        && delta_x.unwrap_or_default() == 0.0
+        && delta_y.unwrap_or_default() == 0.0
+    {
+        return Err("scroll requires a non-zero deltaX or deltaY".to_string());
     }
     if action == "dragBy"
         && (delta_x.is_none() || delta_y.is_none() || delta_x == Some(0.0) && delta_y == Some(0.0))
@@ -2091,10 +2094,12 @@ pub async fn interact_editor_window(
     if has_modifiers
         && !matches!(
             action.as_str(),
-            "click" | "doubleClick" | "contextClick" | "keyPress" | "dragTo" | "dragBy"
+            "click" | "doubleClick" | "contextClick" | "scroll" | "keyPress" | "dragTo" | "dragBy"
         )
     {
-        return Err("modifier keys are only valid for click, key, or drag actions".to_string());
+        return Err(
+            "modifier keys are only valid for click, wheel, key, or drag actions".to_string(),
+        );
     }
     let expected_snapshot_revision = expected_snapshot_revision.trim().to_string();
     if !valid_ui_snapshot_revision(&expected_snapshot_revision) {
@@ -3199,7 +3204,9 @@ const WINDOW_UI_SNAPSHOT_SCRIPT: &str = r#"
     const scrollsHorizontally = style
       && scrollableOverflow(style.overflowX)
       && element.scrollWidth > element.clientWidth + 1;
-    if (scrollsVertically || scrollsHorizontally) {
+    const wheelGesture = element.getAttribute('data-agent-wheel') === 'true'
+      && typeof props.onWheel === 'function';
+    if (scrollsVertically || scrollsHorizontally || wheelGesture) {
       actions.push('scroll');
     }
     const keyboardTarget = element instanceof HTMLElement && (
@@ -4330,6 +4337,7 @@ const WINDOW_UI_INTERACTION_SCRIPT: &str = r#"
     'click',
     'doubleClick',
     'contextClick',
+    'scroll',
     'dragTo',
     'dragBy',
     'hover',
@@ -5473,11 +5481,27 @@ const WINDOW_UI_INTERACTION_SCRIPT: &str = r#"
       return { ok: false, error: `Element ${selector} is not scrollable` };
     }
     const deltaX = Number(requestedDeltaX ?? 0);
-    const deltaY = Number(requestedDeltaY);
+    const deltaY = Number(requestedDeltaY ?? 0);
     if (!Number.isFinite(deltaX) || !Number.isFinite(deltaY)) {
       return { ok: false, error: 'Scroll deltas must be finite numbers' };
     }
-    element.scrollBy({ left: deltaX, top: deltaY, behavior: 'instant' });
+    const coordinates = sourceCoordinates;
+    const wheelEvent = new WheelEvent('wheel', {
+      bubbles: true,
+      cancelable: true,
+      composed: true,
+      view: window,
+      clientX: coordinates.clientX,
+      clientY: coordinates.clientY,
+      deltaX,
+      deltaY,
+      deltaMode: WheelEvent.DOM_DELTA_PIXEL,
+      ...modifiers,
+    });
+    const applyNativeScroll = element.dispatchEvent(wheelEvent);
+    if (applyNativeScroll) {
+      element.scrollBy({ left: deltaX, top: deltaY, behavior: 'instant' });
+    }
   }
   const waitForRender = () => new Promise((resolve) => {
     let settled = false;
@@ -5507,8 +5531,8 @@ const WINDOW_UI_INTERACTION_SCRIPT: &str = r#"
     targetOffsetY: targetCoordinates?.offsetY ?? null,
     targetClientX: targetCoordinates?.clientX ?? null,
     targetClientY: targetCoordinates?.clientY ?? null,
-    deltaX: action === 'dragBy' ? requestedDeltaX : null,
-    deltaY: action === 'dragBy' ? requestedDeltaY : null,
+    deltaX: action === 'dragBy' || action === 'scroll' ? requestedDeltaX ?? 0 : null,
+    deltaY: action === 'dragBy' || action === 'scroll' ? requestedDeltaY ?? 0 : null,
     selector,
     targetSelector: action === 'dragTo' ? targetSelector : null,
     targetName: targetElement ? interactionName(targetElement) : null,

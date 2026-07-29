@@ -157,7 +157,7 @@ test('core editor navigation exposes named semantic controls', () => {
   );
   assert.match(
     viewport,
-    /role="application"\s*aria-roledescription=\{props\.tab === 'scene'/,
+    /role="application"[^>]*data-agent-wheel="true"[^>]*aria-roledescription=\{props\.tab === 'scene'/,
   );
   assert.match(
     timeline,
@@ -165,8 +165,9 @@ test('core editor navigation exposes named semantic controls', () => {
   );
   assert.match(
     timeline,
-    /role="application"\s*aria-roledescription="animation curve editor"/,
+    /role="application"[^>]*data-agent-wheel="true"[^>]*aria-roledescription="animation curve editor"/,
   );
+  assert.equal(timeline.match(/data-agent-wheel="true"/g)?.length, 2);
   assert.match(profiler, /role="img"[^>]*aria-label=\{`\$\{props\.label\} history`\}/);
   assert.match(animator, /role="group"[^>]*aria-label="Animator state graph"/);
   assert.match(timeline, /aria-label="Animation Timeline workspace"/);
@@ -214,6 +215,10 @@ test('complex authoring rows identify their selectable semantic regions', () => 
   assert.match(sequencer, /aria-label=\{`\$\{group\.name\} group lane`\}/);
   assert.match(sequencer, /aria-label=\{`\$\{track\.name\} \$\{track\.type\} lane`\}/);
   assert.match(sequencer, /aria-label="Sequencer workspace"/);
+  assert.match(
+    sequencer,
+    /aria-label="Sequencer tracks viewport"\s*data-agent-wheel="true"/,
+  );
   assert.match(sequencer, /aria-label="Scrub Sequencer time ruler"/);
   assert.match(
     avatarMask,
