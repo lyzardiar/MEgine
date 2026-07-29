@@ -183,6 +183,8 @@ test('core editor navigation exposes named semantic controls', () => {
   );
   assert.equal(timeline.match(/data-agent-wheel="true"/g)?.length, 2);
   assert.match(profiler, /role="img"[^>]*aria-label=\{`\$\{props\.label\} history`\}/);
+  assert.match(profiler, /editorProfilerUiRefreshDelay/);
+  assert.match(profiler, /document\.hasFocus\(\)/);
   assert.match(profiler, /role="tab"[^>]*aria-selected=\{source === value\}/);
   assert.match(profiler, /aria-controls="profiler-source-panel"/);
   assert.match(profiler, /tabIndex=\{source === value \? 0 : -1\}/);

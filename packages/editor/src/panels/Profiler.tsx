@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import {
   clearEditorProfilerSamples,
+  editorProfilerUiRefreshDelay,
   readEditorProfilerSamples,
   subscribeEditorProfiler,
   summarizeEditorProfilerSamples,
@@ -98,11 +99,36 @@ export function Profiler() {
   }, []);
 
   useEffect(() => {
-    if (!visible) return undefined;
-    if (!frozen) setSamples(readEditorProfilerSamples(source));
-    return subscribeEditorProfiler(() => {
-      if (!frozen) setSamples(readEditorProfilerSamples(source));
-    });
+    if (!visible || frozen) return undefined;
+    let refreshTimer: number | null = null;
+    let lastPublishedAt = Number.NEGATIVE_INFINITY;
+    const publish = () => {
+      refreshTimer = null;
+      lastPublishedAt = performance.now();
+      setSamples(readEditorProfilerSamples(source));
+    };
+    const schedule = () => {
+      const delay = editorProfilerUiRefreshDelay(
+        lastPublishedAt,
+        performance.now(),
+        document.hasFocus(),
+      );
+      if (delay <= 0) {
+        if (refreshTimer != null) {
+          window.clearTimeout(refreshTimer);
+          refreshTimer = null;
+        }
+        publish();
+      } else if (refreshTimer == null) {
+        refreshTimer = window.setTimeout(publish, delay);
+      }
+    };
+    publish();
+    const unsubscribe = subscribeEditorProfiler(schedule);
+    return () => {
+      unsubscribe();
+      if (refreshTimer != null) window.clearTimeout(refreshTimer);
+    };
   }, [frozen, source, visible]);
 
   const summary = useMemo(() => summarizeEditorProfilerSamples(samples), [samples]);

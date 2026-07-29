@@ -2,6 +2,8 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 import {
   createEditorProfilerSampler,
+  EDITOR_PROFILER_BACKGROUND_UI_INTERVAL_MS,
+  editorProfilerUiRefreshDelay,
   summarizeEditorProfilerSamples,
 } from '../src/editorProfiler.ts';
 
@@ -70,4 +72,17 @@ test('editor profiler summary separates sustained p95 cost from isolated peaks',
   assert.equal(summary.peakFrameMs, 80);
   assert.equal(summary.p95PaintMs, 2);
   assert.equal(summary.peakPaintMs, 30);
+});
+
+test('editor profiler UI coalesces only background updates into stable snapshot windows', () => {
+  assert.equal(editorProfilerUiRefreshDelay(1_000, 1_010, true), 0);
+  assert.equal(editorProfilerUiRefreshDelay(Number.NEGATIVE_INFINITY, 1_000, false), 0);
+  assert.equal(
+    editorProfilerUiRefreshDelay(1_000, 1_250, false),
+    EDITOR_PROFILER_BACKGROUND_UI_INTERVAL_MS - 250,
+  );
+  assert.equal(editorProfilerUiRefreshDelay(1_000, 2_000, false), 0);
+  assert.equal(editorProfilerUiRefreshDelay(2_000, 1_000, false), 0);
+  assert.equal(editorProfilerUiRefreshDelay(1_000, Number.NaN, false), 0);
+  assert.equal(editorProfilerUiRefreshDelay(1_000, 1_001, false, -1), 0);
 });

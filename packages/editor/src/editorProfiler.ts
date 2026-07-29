@@ -2,6 +2,23 @@ import { createEditorBroadcastChannel } from './editorInstance.ts';
 
 export const EDITOR_PROFILER_SAMPLE_INTERVAL_MS = 250;
 export const EDITOR_PROFILER_SAMPLE_LIMIT = 480;
+export const EDITOR_PROFILER_BACKGROUND_UI_INTERVAL_MS = 1_000;
+
+export function editorProfilerUiRefreshDelay(
+  lastPublishedAt: number,
+  now: number,
+  focused: boolean,
+  backgroundIntervalMs = EDITOR_PROFILER_BACKGROUND_UI_INTERVAL_MS,
+): number {
+  if (focused) return 0;
+  if (!Number.isFinite(lastPublishedAt) || !Number.isFinite(now) || now < lastPublishedAt) {
+    return 0;
+  }
+  const interval = Number.isFinite(backgroundIntervalMs)
+    ? Math.max(0, backgroundIntervalMs)
+    : EDITOR_PROFILER_BACKGROUND_UI_INTERVAL_MS;
+  return Math.max(0, interval - (now - lastPublishedAt));
+}
 
 export type EditorProfilerSource = 'scene' | 'game';
 
