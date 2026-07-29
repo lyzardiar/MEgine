@@ -128,6 +128,7 @@ import {
   type SceneViewPreferencesChangeDetail,
 } from './sceneViewPreferences';
 import {
+  gateWorkspaceResourceSelection,
   mergeWorkspaceResourceDocuments,
   resourceEditorDocuments,
   type WorkspaceResourceDocument,
@@ -371,8 +372,8 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
   const recoveryReady = useRef(false);
   const recoveryCheckpointActive = useRef(false);
   const localResourceDocuments = useMemo(() => mergeWorkspaceResourceDocuments(
-    animationDocuments,
-    sequencerDocuments,
+    gateWorkspaceResourceSelection(animationDocuments, timelineAssetPath == null),
+    gateWorkspaceResourceSelection(sequencerDocuments, timelineAssetPath != null),
     animatorDocuments,
     materialDocuments,
     shaderDocuments,
@@ -394,6 +395,7 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
     spriteAtlasPath,
     spriteDirty,
     spritePath,
+    timelineAssetPath,
   ]);
   const localResourceDocumentsRef = useRef(localResourceDocuments);
   localResourceDocumentsRef.current = localResourceDocuments;

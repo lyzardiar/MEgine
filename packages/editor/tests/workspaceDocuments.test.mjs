@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 
 import {
+  gateWorkspaceResourceSelection,
   mergeWorkspaceResourceDocuments,
   resourceEditorDocuments,
 } from '../src/workspaceDocuments.ts';
@@ -63,4 +64,29 @@ test('workspace document merging is deterministic and preserves dirty selected s
       selected: true,
     }],
   );
+});
+
+test('shared panel routes expose only the visible document as selected', () => {
+  const documents = [
+    {
+      kind: 'animation',
+      panel: 'timeline',
+      path: 'Assets/Animations/Run.manim',
+      dirty: true,
+      selected: true,
+    },
+    {
+      kind: 'animation',
+      panel: 'timeline',
+      path: 'Assets/Animations/Idle.manim',
+      dirty: false,
+      selected: false,
+    },
+  ];
+
+  assert.deepEqual(gateWorkspaceResourceSelection(documents, false), [
+    { ...documents[0], selected: false },
+    documents[1],
+  ]);
+  assert.deepEqual(gateWorkspaceResourceSelection(documents, true), documents);
 });

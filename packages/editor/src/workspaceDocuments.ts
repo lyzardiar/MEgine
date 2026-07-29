@@ -78,3 +78,13 @@ export function mergeWorkspaceResourceDocuments(
     || left.path.localeCompare(right.path)
   ));
 }
+
+export function gateWorkspaceResourceSelection(
+  documents: readonly WorkspaceResourceDocument[],
+  routeActive: boolean,
+): WorkspaceResourceDocument[] {
+  return documents.map((document) => ({
+    ...document,
+    selected: routeActive && document.selected,
+  }));
+}
