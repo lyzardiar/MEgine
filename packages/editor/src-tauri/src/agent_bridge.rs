@@ -3445,7 +3445,7 @@ const WINDOW_UI_SNAPSHOT_SCRIPT: &str = r#"
     const actions = modalBlocked ? [] : actionList(element, role);
     const name = directName || (actions.includes('scroll') ? scrollContextName(element) : '');
     const structural = /^h[1-6]$/.test(tag)
-      || ['p', 'label', 'summary', 'legend', 'caption'].includes(tag);
+      || ['p', 'summary', 'legend', 'caption'].includes(tag);
     if (!role && !name && !text && !structural && actions.length === 0) continue;
     candidates.push({ element, role, name, text, actions, modalBlocked });
   }
@@ -3486,7 +3486,7 @@ const WINDOW_UI_SNAPSHOT_SCRIPT: &str = r#"
   const activeElementSelector =
     document.activeElement instanceof Element ? selectorFor(document.activeElement) : null;
   const revisionSource = JSON.stringify({
-    version: 20,
+    version: 21,
     title: document.title,
     url: location.href,
     viewport,
@@ -3500,7 +3500,7 @@ const WINDOW_UI_SNAPSHOT_SCRIPT: &str = r#"
     revisionHash ^= BigInt(revisionSource.charCodeAt(index));
     revisionHash = BigInt.asUintN(64, revisionHash * 0x100000001b3n);
   }
-  const snapshotRevision = `ui-v19-${candidates.length}-${
+  const snapshotRevision = `ui-v21-${candidates.length}-${
     revisionHash.toString(16).padStart(16, '0')
   }`;
   const guardedElements = new Map(semanticElements.map((semanticElement, index) => [
@@ -3521,7 +3521,7 @@ const WINDOW_UI_SNAPSHOT_SCRIPT: &str = r#"
   }
   const elements = semanticElements.slice(offset, offset + limit);
   return {
-    version: 20,
+    version: 21,
     snapshotRevision,
     title: document.title,
     url: location.href,
