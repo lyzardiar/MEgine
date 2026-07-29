@@ -2429,6 +2429,7 @@ const WINDOW_UI_SNAPSHOT_SCRIPT: &str = r#"
 (() => {
   const limit = __MENGINE_MAX_ELEMENTS__;
   const offset = __MENGINE_OFFSET__;
+  const maxGuardedRevisions = 8;
   const revisionGuardKey = Symbol.for('mengine.agent.uiRevisionGuard');
   let revisionGuard = window[revisionGuardKey];
   if (!revisionGuard) {
@@ -3059,7 +3060,7 @@ const WINDOW_UI_SNAPSHOT_SCRIPT: &str = r#"
   const activeElementSelector =
     document.activeElement instanceof Element ? selectorFor(document.activeElement) : null;
   const revisionSource = JSON.stringify({
-    version: 9,
+    version: 10,
     title: document.title,
     url: location.href,
     viewport,
@@ -3073,13 +3074,28 @@ const WINDOW_UI_SNAPSHOT_SCRIPT: &str = r#"
     revisionHash ^= BigInt(revisionSource.charCodeAt(index));
     revisionHash = BigInt.asUintN(64, revisionHash * 0x100000001b3n);
   }
-  const snapshotRevision = `ui-v8-${candidates.length}-${
+  const snapshotRevision = `ui-v9-${candidates.length}-${
     revisionHash.toString(16).padStart(16, '0')
   }`;
-  revisionGuard.revisions.set(snapshotRevision, revisionGuard.epoch);
+  const guardedElements = new Map(semanticElements.map((semanticElement, index) => [
+    semanticElement.selector,
+    {
+      element: candidates[index].element,
+      actions: [...semanticElement.actions],
+    },
+  ]));
+  revisionGuard.revisions.delete(snapshotRevision);
+  revisionGuard.revisions.set(snapshotRevision, {
+    epoch: revisionGuard.epoch,
+    elements: guardedElements,
+  });
+  while (revisionGuard.revisions.size > maxGuardedRevisions) {
+    const oldestRevision = revisionGuard.revisions.keys().next().value;
+    revisionGuard.revisions.delete(oldestRevision);
+  }
   const elements = semanticElements.slice(offset, offset + limit);
   return {
-    version: 9,
+    version: 10,
     snapshotRevision,
     title: document.title,
     url: location.href,
@@ -3107,8 +3123,8 @@ const WINDOW_UI_CONTENT_SCRIPT: &str = r#"
   const payload = JSON.parse(atob(__MENGINE_PAYLOAD_BASE64__));
   const { selector, field, offset, maxChars, expectedSnapshotRevision } = payload;
   const revisionGuard = window[Symbol.for('mengine.agent.uiRevisionGuard')];
-  const guardedEpoch = revisionGuard?.revisions?.get(expectedSnapshotRevision);
-  if (!revisionGuard || guardedEpoch !== revisionGuard.epoch) {
+  const guardedRevision = revisionGuard?.revisions?.get(expectedSnapshotRevision);
+  if (!revisionGuard || guardedRevision?.epoch !== revisionGuard.epoch) {
     return {
       ok: false,
       error: 'Editor window semantic content changed; get a fresh UI snapshot before reading exact content',
@@ -3118,6 +3134,15 @@ const WINDOW_UI_CONTENT_SCRIPT: &str = r#"
       restartOffset: 0,
     };
   }
+  const guardedElement = guardedRevision.elements?.get(selector);
+  if (!guardedElement) {
+    return {
+      ok: false,
+      error: `Selector ${selector} is not exposed by the expected semantic UI snapshot`,
+      selectorNotExposed: true,
+      expectedSnapshotRevision,
+    };
+  }
   let element;
   try {
     element = document.querySelector(selector);
@@ -3125,6 +3150,16 @@ const WINDOW_UI_CONTENT_SCRIPT: &str = r#"
     return { ok: false, error: `Invalid selector: ${String(error)}` };
   }
   if (!element) return { ok: false, error: `No element matches ${selector}` };
+  if (element !== guardedElement.element) {
+    return {
+      ok: false,
+      error: 'Editor window semantic selector changed; get a fresh UI snapshot before reading exact content',
+      staleSnapshot: true,
+      expectedSnapshotRevision,
+      actualSnapshotRevision: null,
+      restartOffset: 0,
+    };
+  }
   let content;
   if (field === 'options') {
     let kind;
@@ -3238,8 +3273,8 @@ const WINDOW_UI_INTERACTION_SCRIPT: &str = r#"
     metaKey: requestedMetaKey === true,
   };
   const revisionGuard = window[Symbol.for('mengine.agent.uiRevisionGuard')];
-  const guardedEpoch = revisionGuard?.revisions?.get(expectedSnapshotRevision);
-  if (!revisionGuard || guardedEpoch !== revisionGuard.epoch) {
+  const guardedRevision = revisionGuard?.revisions?.get(expectedSnapshotRevision);
+  if (!revisionGuard || guardedRevision?.epoch !== revisionGuard.epoch) {
     return {
       ok: false,
       error: 'Editor window semantic content changed; get a fresh UI snapshot before interacting',
@@ -3247,6 +3282,27 @@ const WINDOW_UI_INTERACTION_SCRIPT: &str = r#"
       expectedSnapshotRevision,
       actualSnapshotRevision: null,
       restartOffset: 0,
+    };
+  }
+  const guardedElement = guardedRevision.elements?.get(selector);
+  if (!guardedElement) {
+    return {
+      ok: false,
+      error: `Selector ${selector} is not exposed by the expected semantic UI snapshot`,
+      selectorNotExposed: true,
+      expectedSnapshotRevision,
+    };
+  }
+  const guardedTarget = action === 'dragTo'
+    ? guardedRevision.elements?.get(targetSelector)
+    : null;
+  if (action === 'dragTo' && !guardedTarget) {
+    return {
+      ok: false,
+      error: `Target selector ${targetSelector} is not exposed by the expected semantic UI snapshot`,
+      selectorNotExposed: true,
+      targetSelectorNotExposed: true,
+      expectedSnapshotRevision,
     };
   }
   const agentActionNames = [
@@ -3296,6 +3352,16 @@ const WINDOW_UI_INTERACTION_SCRIPT: &str = r#"
     return { ok: false, error: `Invalid selector: ${String(error)}` };
   }
   if (!element) return { ok: false, error: `No element matches ${selector}` };
+  if (element !== guardedElement.element) {
+    return {
+      ok: false,
+      error: 'Editor window semantic selector changed; get a fresh UI snapshot before interacting',
+      staleSnapshot: true,
+      expectedSnapshotRevision,
+      actualSnapshotRevision: null,
+      restartOffset: 0,
+    };
+  }
   let targetElement = null;
   if (action === 'dragTo') {
     try {
@@ -3305,6 +3371,16 @@ const WINDOW_UI_INTERACTION_SCRIPT: &str = r#"
     }
     if (!targetElement) {
       return { ok: false, error: `No element matches target ${targetSelector}` };
+    }
+    if (targetElement !== guardedTarget.element) {
+      return {
+        ok: false,
+        error: 'Editor window semantic target selector changed; get a fresh UI snapshot before interacting',
+        staleSnapshot: true,
+        expectedSnapshotRevision,
+        actualSnapshotRevision: null,
+        restartOffset: 0,
+      };
     }
   }
   const normalizeName = (value) => String(value || '').replace(/\s+/g, ' ').trim().slice(0, 160);
@@ -3481,6 +3557,19 @@ const WINDOW_UI_INTERACTION_SCRIPT: &str = r#"
   }
   if (targetElement && effectivelyDisabled(targetElement)) {
     return { ok: false, error: `Target element ${targetSelector} is disabled` };
+  }
+  const allowedActions = Array.isArray(guardedElement.actions)
+    ? guardedElement.actions
+    : [];
+  if (!allowedActions.includes(action)) {
+    return {
+      ok: false,
+      error: `Element ${selector} does not expose the ${action} semantic action`,
+      actionNotExposed: true,
+      requiredAction: action,
+      allowedActions,
+      expectedSnapshotRevision,
+    };
   }
   const eventCoordinates = (target = element) => {
     const rect = target.getBoundingClientRect();

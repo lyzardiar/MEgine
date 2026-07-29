@@ -40,21 +40,43 @@ test('whole-window agent capture is background-safe and addressable by window la
   assert.match(rust, /state\.checked = element\.indeterminate \? 'mixed' : element\.checked/);
   assert.match(rust, /WINDOW_UI_CONTENT_SCRIPT/);
   assert.match(rust, /Password values cannot be read/);
-  assert.match(contentScript, /guardedEpoch !== revisionGuard\.epoch/);
+  assert.match(contentScript, /guardedRevision\?\.epoch !== revisionGuard\.epoch/);
   assert.match(rust, /content\.slice\(start, start \+ Number\(maxChars\)\)/);
   assert.match(rust, /const contentRevision = `content-v1-/);
   assert.match(rust, /revisionHashA = Math\.imul/);
   assert.match(rust, /const offset = __MENGINE_OFFSET__/);
   assert.match(rust, /semanticElements\.slice\(offset, offset \+ limit\)/);
   assert.match(rust, /new Map\(candidates\.map/);
-  assert.match(rust, /const snapshotRevision = `ui-v8-/);
+  assert.match(rust, /const snapshotRevision = `ui-v9-/);
   assert.match(rust, /revisionHash = BigInt\.asUintN\(64/);
   assert.match(rust, /const semanticScopeFor = \(element\) =>/);
   assert.match(rust, /role === 'tabpanel'/);
   assert.match(rust, /const qualifiedNameFor = \(scope, name\) =>/);
   assert.match(rust, /scope: scope \|\| null/);
   assert.match(rust, /qualifiedName: qualifiedNameFor\(scope, name\) \|\| null/);
-  assert.equal([...rust.matchAll(/version: 9,/g)].length, 2);
+  assert.equal([...rust.matchAll(/version: 10,/g)].length, 2);
+  assert.match(rust, /const maxGuardedRevisions = 8/);
+  assert.match(rust, /const guardedElements = new Map\(semanticElements\.map/);
+  assert.match(rust, /element: candidates\[index\]\.element/);
+  assert.match(rust, /actions: \[\.\.\.semanticElement\.actions\]/);
+  assert.match(rust, /while \(revisionGuard\.revisions\.size > maxGuardedRevisions\)/);
+  assert.equal(
+    [...rust.matchAll(/guardedRevision\?\.epoch !== revisionGuard\.epoch/g)].length,
+    2,
+  );
+  assert.equal(
+    [...rust.matchAll(/guardedRevision\.elements\?\.get\(/g)].length,
+    3,
+  );
+  assert.match(contentScript, /element !== guardedElement\.element/);
+  assert.match(contentScript, /selectorNotExposed: true/);
+  assert.match(interactionScript, /element !== guardedElement\.element/);
+  assert.match(interactionScript, /targetElement !== guardedTarget\.element/);
+  assert.match(interactionScript, /if \(!allowedActions\.includes\(action\)\)/);
+  assert.match(interactionScript, /actionNotExposed: true/);
+  assert.match(bridge, /if \(result\.selectorNotExposed \|\| result\.actionNotExposed\)/);
+  assert.match(protocol, /targetSelectorNotExposed\?: boolean/);
+  assert.match(protocol, /allowedActions\?: EditorUiAction\[\]/);
   assert.match(rust, /const ariaStateKeys = \[/);
   for (const key of [
     'valuemin',
@@ -282,7 +304,7 @@ test('whole-window agent capture is background-safe and addressable by window la
   assert.match(rust, /semantic_ui_interaction_refuses_visible_or_focused_windows/);
   assert.match(rust, /actualSnapshotRevision/);
   assert.match(rust, /new MutationObserver/);
-  assert.match(rust, /guardedEpoch !== revisionGuard\.epoch/);
+  assert.match(rust, /guardedRevision\?\.epoch !== revisionGuard\.epoch/);
   assert.match(rust, /evaluate_webview_script_with_await\(&app, &window_label, expression, true\)/);
   assert.match(rust, /await waitForRender\(\)/);
   assert.match(rust, /postObservationConfirmed/);

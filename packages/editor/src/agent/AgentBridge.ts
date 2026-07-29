@@ -927,6 +927,7 @@ class AgentBridge {
       ok?: boolean;
       error?: string;
       staleSnapshot?: boolean;
+      selectorNotExposed?: boolean;
       expectedSnapshotRevision?: string;
       actualSnapshotRevision?: string;
       restartOffset?: number;
@@ -952,6 +953,18 @@ class AgentBridge {
             expectedSnapshotRevision: result.expectedSnapshotRevision,
             actualSnapshotRevision: result.actualSnapshotRevision,
             restartOffset: result.restartOffset ?? 0,
+          },
+        );
+      }
+      if (result.selectorNotExposed) {
+        throw new BridgeError(
+          'INVALID_ARGS',
+          result.error ?? 'Selector is not exposed by the expected semantic UI snapshot',
+          {
+            windowLabel,
+            selector,
+            expectedSnapshotRevision,
+            selectorNotExposed: true,
           },
         );
       }
@@ -1085,6 +1098,23 @@ class AgentBridge {
             selector,
             constraintViolation: true,
             validityIssues: result.validityIssues ?? [],
+          },
+        );
+      }
+      if (result.selectorNotExposed || result.actionNotExposed) {
+        throw new BridgeError(
+          'INVALID_ARGS',
+          result.error ?? 'Semantic UI selector or action is not exposed by the expected snapshot',
+          {
+            windowLabel,
+            selector,
+            targetSelector: targetSelector ?? null,
+            expectedSnapshotRevision,
+            selectorNotExposed: result.selectorNotExposed ?? false,
+            targetSelectorNotExposed: result.targetSelectorNotExposed ?? false,
+            actionNotExposed: result.actionNotExposed ?? false,
+            requiredAction: result.requiredAction ?? null,
+            allowedActions: result.allowedActions ?? [],
           },
         );
       }

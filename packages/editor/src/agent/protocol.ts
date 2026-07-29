@@ -202,6 +202,11 @@ export interface EditorUiActionResult {
   activeModalName?: string | null;
   constraintViolation?: boolean;
   validityIssues?: string[];
+  selectorNotExposed?: boolean;
+  targetSelectorNotExposed?: boolean;
+  actionNotExposed?: boolean;
+  requiredAction?: EditorUiAction;
+  allowedActions?: EditorUiAction[];
   action?: EditorUiAction;
   selector?: string;
   targetSelector?: string | null;
