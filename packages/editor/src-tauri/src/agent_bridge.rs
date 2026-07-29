@@ -2554,6 +2554,21 @@ const WINDOW_UI_SNAPSHOT_SCRIPT: &str = r#"
     const rect = element.getBoundingClientRect();
     return rect.width > 0 && rect.height > 0;
   };
+  const nativeDialogIsModal = (element) => {
+    if (element.localName !== 'dialog' || !element.hasAttribute('open')) return false;
+    try {
+      return element.matches(':modal');
+    } catch {
+      return false;
+    }
+  };
+  const isActiveModalDialog = (element) => (
+    nativeDialogIsModal(element)
+      || (
+        normalize(element.getAttribute('role'), 80) === 'dialog'
+        && element.getAttribute('aria-modal') === 'true'
+      )
+  );
   const effectivelyDisabled = (element) => Boolean(
     element.disabled === true
       || element.matches(':disabled')
@@ -2978,6 +2993,11 @@ const WINDOW_UI_SNAPSHOT_SCRIPT: &str = r#"
         state.expanded = element.parentElement.open;
       }
     }
+    if (element.localName === 'dialog') {
+      state.open = element.hasAttribute('open');
+      const nativeModal = nativeDialogIsModal(element);
+      if (nativeModal || state.modal === undefined) state.modal = nativeModal;
+    }
     if (
       element instanceof HTMLInputElement
       && ['checkbox', 'radio'].includes(element.type)
@@ -3034,10 +3054,11 @@ const WINDOW_UI_SNAPSHOT_SCRIPT: &str = r#"
   };
   const all = [document.documentElement, ...document.querySelectorAll('*')];
   const visibleModalDialogs = Array.from(
-    document.querySelectorAll('[role="dialog"][aria-modal="true"]'),
+    document.querySelectorAll('dialog, [role="dialog"][aria-modal="true"]'),
   ).filter((candidate) => (
     (candidate instanceof HTMLElement || candidate instanceof SVGElement)
     && visible(candidate)
+    && isActiveModalDialog(candidate)
   ));
   const modalLayerFor = (candidate) => {
     let layer = 0;
@@ -3049,8 +3070,12 @@ const WINDOW_UI_SNAPSHOT_SCRIPT: &str = r#"
     }
     return layer;
   };
-  let activeModal = null;
-  let activeModalLayer = Number.NEGATIVE_INFINITY;
+  let activeModal = visibleModalDialogs.find((candidate) => (
+    candidate.contains(document.activeElement)
+  )) || null;
+  let activeModalLayer = activeModal
+    ? Number.POSITIVE_INFINITY
+    : Number.NEGATIVE_INFINITY;
   for (const candidate of visibleModalDialogs) {
     const layer = modalLayerFor(candidate);
     if (layer >= activeModalLayer) {
@@ -3111,7 +3136,7 @@ const WINDOW_UI_SNAPSHOT_SCRIPT: &str = r#"
   const activeElementSelector =
     document.activeElement instanceof Element ? selectorFor(document.activeElement) : null;
   const revisionSource = JSON.stringify({
-    version: 15,
+    version: 16,
     title: document.title,
     url: location.href,
     viewport,
@@ -3125,7 +3150,7 @@ const WINDOW_UI_SNAPSHOT_SCRIPT: &str = r#"
     revisionHash ^= BigInt(revisionSource.charCodeAt(index));
     revisionHash = BigInt.asUintN(64, revisionHash * 0x100000001b3n);
   }
-  const snapshotRevision = `ui-v14-${candidates.length}-${
+  const snapshotRevision = `ui-v15-${candidates.length}-${
     revisionHash.toString(16).padStart(16, '0')
   }`;
   const guardedElements = new Map(semanticElements.map((semanticElement, index) => [
@@ -3146,7 +3171,7 @@ const WINDOW_UI_SNAPSHOT_SCRIPT: &str = r#"
   }
   const elements = semanticElements.slice(offset, offset + limit);
   return {
-    version: 15,
+    version: 16,
     snapshotRevision,
     title: document.title,
     url: location.href,
@@ -3537,9 +3562,24 @@ const WINDOW_UI_INTERACTION_SCRIPT: &str = r#"
       || target.matches(':disabled')
       || target.closest('[aria-disabled="true"]'),
   );
+  const nativeDialogIsModal = (target) => {
+    if (target.localName !== 'dialog' || !target.hasAttribute('open')) return false;
+    try {
+      return target.matches(':modal');
+    } catch {
+      return false;
+    }
+  };
+  const isActiveModalDialog = (target) => (
+    nativeDialogIsModal(target)
+      || (
+        normalizeName(target.getAttribute('role')) === 'dialog'
+        && target.getAttribute('aria-modal') === 'true'
+      )
+  );
   const visibleModalDialogs = Array.from(
-    document.querySelectorAll('[role="dialog"][aria-modal="true"]'),
-  ).filter(rendered);
+    document.querySelectorAll('dialog, [role="dialog"][aria-modal="true"]'),
+  ).filter((candidate) => rendered(candidate) && isActiveModalDialog(candidate));
   const modalLayerFor = (candidate) => {
     let layer = 0;
     let current = candidate;
@@ -3550,8 +3590,12 @@ const WINDOW_UI_INTERACTION_SCRIPT: &str = r#"
     }
     return layer;
   };
-  let activeModal = null;
-  let activeModalLayer = Number.NEGATIVE_INFINITY;
+  let activeModal = visibleModalDialogs.find((candidate) => (
+    candidate.contains(document.activeElement)
+  )) || null;
+  let activeModalLayer = activeModal
+    ? Number.POSITIVE_INFINITY
+    : Number.NEGATIVE_INFINITY;
   for (const candidate of visibleModalDialogs) {
     const layer = modalLayerFor(candidate);
     if (layer >= activeModalLayer) {

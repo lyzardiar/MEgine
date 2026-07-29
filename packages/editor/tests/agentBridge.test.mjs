@@ -51,14 +51,14 @@ test('whole-window agent capture is background-safe and addressable by window la
   assert.match(rust, /const offset = __MENGINE_OFFSET__/);
   assert.match(rust, /semanticElements\.slice\(offset, offset \+ limit\)/);
   assert.match(rust, /new Map\(candidates\.map/);
-  assert.match(rust, /const snapshotRevision = `ui-v14-/);
+  assert.match(rust, /const snapshotRevision = `ui-v15-/);
   assert.match(rust, /revisionHash = BigInt\.asUintN\(64/);
   assert.match(rust, /const semanticScopeFor = \(element\) =>/);
   assert.match(rust, /role === 'tabpanel'/);
   assert.match(rust, /const qualifiedNameFor = \(scope, name\) =>/);
   assert.match(rust, /scope: scope \|\| null/);
   assert.match(rust, /qualifiedName: qualifiedNameFor\(scope, name\) \|\| null/);
-  assert.equal([...rust.matchAll(/version: 15,/g)].length, 2);
+  assert.equal([...rust.matchAll(/version: 16,/g)].length, 2);
   assert.match(rust, /if \(tag === 'article'\) return 'article'/);
   assert.match(rust, /if \(tag === 'aside'\) return 'complementary'/);
   assert.match(
@@ -73,6 +73,13 @@ test('whole-window agent capture is background-safe and addressable by window la
   assert.match(rust, /tag === 'section'[\s\S]*return 'region'/);
   assert.match(rust, /if \(element instanceof HTMLDetailsElement\)/);
   assert.match(rust, /state\.expanded = element\.open/);
+  assert.equal([...rust.matchAll(/const nativeDialogIsModal = \(/g)].length, 2);
+  assert.equal(
+    [...rust.matchAll(/querySelectorAll\('dialog, \[role="dialog"\]\[aria-modal="true"\]'\)/g)].length,
+    2,
+  );
+  assert.match(rust, /state\.open = element\.hasAttribute\('open'\)/);
+  assert.match(rust, /if \(nativeModal \|\| state\.modal === undefined\) state\.modal = nativeModal/);
   assert.match(
     rust,
     /element\.localName === 'summary'[\s\S]*element\.parentElement instanceof HTMLDetailsElement/,
@@ -184,6 +191,10 @@ test('whole-window agent capture is background-safe and addressable by window la
   assert.match(rust, /const visibleModalDialogs = Array\.from\(/);
   assert.equal([...rust.matchAll(/const modalLayerFor = \(candidate\) =>/g)].length, 2);
   assert.equal([...rust.matchAll(/if \(layer >= activeModalLayer\)/g)].length, 2);
+  assert.equal(
+    [...rust.matchAll(/candidate\.contains\(document\.activeElement\)/g)].length,
+    2,
+  );
   assert.match(rust, /state\.modalBlocked = true/);
   assert.match(rust, /const actions = modalBlocked \? \[\] : actionList\(element, role\)/);
   assert.match(rust, /state: stateFor\(element, modalBlocked\)/);
