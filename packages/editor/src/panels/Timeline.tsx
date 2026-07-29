@@ -1848,7 +1848,7 @@ export function Timeline(props: {
     setSelectedKeys([]);
     setSelectedEvent(null);
     setLoading(true);
-    void readProjectAssetText(clipPath)
+    void readProjectAssetText(clipPath, { replaceWriteBaseline: true })
       .then((text) => {
         if (cancelled) return;
         const loaded = parseAnimationClip(text);

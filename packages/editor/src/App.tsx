@@ -58,6 +58,7 @@ import {
 } from './assetEditorEvents';
 import {
   pollProjectFileChanges,
+  projectAssetHasExternalWriteConflict,
   refreshProjectFiles,
   type ProjectAssetChange,
 } from './projectAssets';
@@ -395,7 +396,11 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
       spriteAtlasDirty,
       [],
     ),
-  ), [
+  ).map((document) => ({
+    ...document,
+    conflicted: document.dirty
+      && projectAssetHasExternalWriteConflict(document.path),
+  })), [
     animationDocuments,
     animatorDocuments,
     materialDocuments,
@@ -405,6 +410,7 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
     spriteAtlasPath,
     spriteDirty,
     spritePath,
+    sceneTick,
     timelineAssetPath,
   ]);
   const localResourceDocumentsRef = useRef(localResourceDocuments);
@@ -916,6 +922,8 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
         changes?: ProjectAssetChange[];
       }>).detail;
       const changes = detail?.changes ?? [];
+      await refreshProjectFiles();
+      bumpScenes();
       const changed = new Map(changes.map((change) => [change.relPath.toLocaleLowerCase(), change]));
       const reload = async (
         panel: keyof typeof assetReloadEpoch,
@@ -1911,6 +1919,19 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
       );
       if (!target) {
         return { path: canonicalPath, saved: false, unchanged: true };
+      }
+      if (target.document.conflicted) {
+        throw new BridgeError(
+          'CONFLICT',
+          `Document "${canonicalPath}" changed on disk after its draft was loaded`,
+          {
+            path: canonicalPath,
+            allowedActions: [
+              'workspace.discard_document',
+              'workspace.close_document with dirtyAction=discard',
+            ],
+          },
+        );
       }
       let result: SaveAllResult;
       if (target.peer) {

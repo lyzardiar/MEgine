@@ -239,7 +239,10 @@ export function MaterialInstanceEditor(props: MaterialEditorProps) {
       return () => { cancelled = true; };
     }
     setLoading(true);
-    void Promise.all([readProjectAssetText(props.assetPath), refreshProjectFiles()])
+    void Promise.all([
+      readProjectAssetText(props.assetPath, { replaceWriteBaseline: true }),
+      refreshProjectFiles(),
+    ])
       .then(([text]) => {
         if (cancelled) return;
         const parsed = parseMaterialInstanceAsset(text);

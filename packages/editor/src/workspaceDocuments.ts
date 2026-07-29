@@ -14,6 +14,7 @@ export type WorkspaceResourceDocument = {
   panel: string;
   path: string;
   dirty: boolean;
+  conflicted?: boolean;
   selected: boolean;
 };
 
@@ -80,6 +81,9 @@ export function mergeWorkspaceResourceDocuments(
         ? {
             ...previous,
             dirty: previous.dirty || document.dirty,
+            ...(previous.conflicted || document.conflicted
+              ? { conflicted: true }
+              : {}),
             selected: previous.selected || document.selected,
           }
         : structuredClone(document));

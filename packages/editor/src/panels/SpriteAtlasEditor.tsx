@@ -103,7 +103,7 @@ export function SpriteAtlasEditor(props: {
     setSavedAsset(null);
     setPlan(null);
     setPreview(null);
-    void readProjectAssetText(props.assetPath)
+    void readProjectAssetText(props.assetPath, { replaceWriteBaseline: true })
       .then((text) => {
         if (cancelled) return;
         const parsed = parseSpriteAtlasAsset(text);

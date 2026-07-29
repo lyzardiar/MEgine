@@ -320,11 +320,17 @@ export type AgentWorkspaceDocument = {
   panel: string;
   path: string | null;
   dirty: boolean;
+  /** True when an authored draft's accepted disk revision is no longer current. */
+  conflicted?: boolean;
   /** Provider-only marker: false for an open cached draft that is not selected in its panel. */
   selected?: boolean;
 };
 
-type AgentObservedWorkspaceDocument = Omit<AgentWorkspaceDocument, 'selected'> & {
+type AgentObservedWorkspaceDocument = Omit<
+  AgentWorkspaceDocument,
+  'conflicted' | 'selected'
+> & {
+  conflicted: boolean;
   active: boolean;
   detached: boolean;
   windowLabel: string;
@@ -1651,9 +1657,14 @@ class AgentBridge {
     const result = {
       documents: documents.map((document) => {
         const detachedWindow = detachedPanels.get(document.panel);
-        const { selected = true, ...visibleDocument } = document;
+        const {
+          conflicted = false,
+          selected = true,
+          ...visibleDocument
+        } = document;
         return {
           ...structuredClone(visibleDocument),
+          conflicted,
           active: selected && (
             detachedWindow !== undefined || activePanels.has(document.panel)
           ),

@@ -142,7 +142,7 @@ export function SurfaceShaderEditor(props: {
       return () => { cancelled = true; };
     }
     setLoading(true);
-    void readProjectAssetText(props.assetPath)
+    void readProjectAssetText(props.assetPath, { replaceWriteBaseline: true })
       .then((text) => {
         if (cancelled) return;
         const normalized = normalizeSurfaceShaderSource(text);

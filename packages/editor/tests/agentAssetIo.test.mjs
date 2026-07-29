@@ -2,7 +2,9 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 import {
   isProjectTextAssetPath,
+  projectAssetHasExternalWriteConflict,
   readProjectAssetBytesWithRevision,
+  refreshProjectFiles,
   resetProjectAssetState,
   writeProjectAssetText,
 } from '../src/projectAssets.ts';
@@ -103,4 +105,80 @@ test('explicit agent writes do not advance an open editor implicit write baselin
     requests[2].init.headers['X-MEngine-Expected-Revision'],
     'editor-revision',
   );
+});
+
+test('incidental reads preserve an editor baseline until an intentional reload', async () => {
+  const originalFetch = globalThis.fetch;
+  const writes = [];
+  let revision = 'editor-revision';
+  resetProjectAssetState();
+  globalThis.fetch = async (url, init = {}) => {
+    if (String(url).endsWith('/__mengine/assets')) {
+      return new Response(JSON.stringify({
+        assets: [{
+          id: 'Assets/Scripts/example.ts',
+          guid: '0123456789abcdef0123456789abcdef',
+          name: 'example.ts',
+          folder: 'Assets/Scripts',
+          relPath: 'Assets/Scripts/example.ts',
+          kind: 'script',
+          revision,
+          size: 1,
+          metaStatus: 'ready',
+          metaError: null,
+        }],
+      }), {
+        status: 200,
+        headers: { 'Content-Type': 'application/json' },
+      });
+    }
+    if (!init.method) {
+      return new Response(revision, {
+        status: 200,
+        headers: { 'X-MEngine-Asset-Revision': revision },
+      });
+    }
+    writes.push(init.headers['X-MEngine-Expected-Revision']);
+    return new Response(JSON.stringify({ revision: 'saved-revision', asset: null }), {
+      status: 200,
+      headers: { 'Content-Type': 'application/json' },
+    });
+  };
+
+  try {
+    await readProjectAssetBytesWithRevision(
+      'Assets/Scripts/example.ts',
+      { replaceWriteBaseline: true },
+    );
+    await refreshProjectFiles();
+    assert.equal(
+      projectAssetHasExternalWriteConflict('Assets/Scripts/example.ts'),
+      false,
+    );
+
+    revision = 'external-revision';
+    await refreshProjectFiles();
+    assert.equal(
+      projectAssetHasExternalWriteConflict('Assets/Scripts/example.ts'),
+      true,
+    );
+
+    await readProjectAssetBytesWithRevision('Assets/Scripts/example.ts');
+    await writeProjectAssetText('Assets/Scripts/example.ts', 'stale editor contents');
+    assert.equal(writes[0], 'editor-revision');
+    assert.equal(
+      projectAssetHasExternalWriteConflict('Assets/Scripts/example.ts'),
+      true,
+    );
+
+    await readProjectAssetBytesWithRevision(
+      'Assets/Scripts/example.ts',
+      { replaceWriteBaseline: true },
+    );
+    await writeProjectAssetText('Assets/Scripts/example.ts', 'reloaded editor contents');
+    assert.equal(writes[1], 'external-revision');
+  } finally {
+    globalThis.fetch = originalFetch;
+    resetProjectAssetState();
+  }
 });

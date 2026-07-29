@@ -74,6 +74,7 @@ test('workspace document merging is deterministic and preserves dirty selected s
         panel: 'material',
         path: 'assets\\materials\\hero.mmat',
         dirty: true,
+        conflicted: true,
         selected: false,
       }],
     ),
@@ -82,6 +83,7 @@ test('workspace document merging is deterministic and preserves dirty selected s
       panel: 'material',
       path: 'Assets/Materials/Hero.mmat',
       dirty: true,
+      conflicted: true,
       selected: true,
     }],
   );

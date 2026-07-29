@@ -776,6 +776,8 @@ test('panel and menu agent surfaces use live providers and background activation
   assert.match(app, /waitForLocalResourceDocumentClean\(canonicalPath\)/);
   assert.match(app, /waitForLocalResourceDocumentDiscarded\(canonicalPath\)/);
   assert.match(app, /waitForLocalResourceDocumentClosed\(canonicalPath\)/);
+  assert.match(app, /projectAssetHasExternalWriteConflict\(document\.path\)/);
+  assert.match(app, /if \(target\.document\.conflicted\)/);
   assert.match(app, /await saveRemoteResources\(\)/);
   assert.match(app, /Workspace remains dirty after its Save All participants completed/);
   assert.match(app, /agentBridge\.observeWorkspace\(\)/);
@@ -841,6 +843,14 @@ test('resource editors register exact document save, discard, and close particip
       `${editor} must not recache a closing current document`,
     );
   }
+  for (const editor of editors.filter((name) => name !== 'SpriteEditor.tsx')) {
+    const source = fs.readFileSync(path.join(root, 'src', 'panels', editor), 'utf8');
+    assert.match(
+      source,
+      /replaceWriteBaseline: true/,
+      `${editor} must replace its write baseline only when loading the authored document`,
+    );
+  }
 });
 
 test('workspace documents include cached resource drafts with exact per-document state', () => {
@@ -863,7 +873,11 @@ test('workspace documents include cached resource drafts with exact per-document
   );
   assert.match(app, /documents\.push\(\.\.\.resourceDocuments\)/);
   assert.doesNotMatch(app, /dirty: document\.dirty \|\| remoteDirty\.has\(document\.panel\)/);
-  assert.match(bridge, /const \{ selected = true, \.\.\.visibleDocument \} = document/);
+  assert.match(
+    bridge,
+    /conflicted = false,[\s\S]*?selected = true,[\s\S]*?\.\.\.visibleDocument/,
+  );
+  assert.match(bridge, /conflicted,[\s\S]*?active: selected &&/);
   assert.match(
     bridge,
     /active: selected && \(\s*detachedWindow !== undefined \|\| activePanels\.has\(document\.panel\)\s*\)/,
