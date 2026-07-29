@@ -1060,6 +1060,22 @@ class AgentBridge {
           },
         );
       }
+      if (result.modalBlocked) {
+        throw new BridgeError(
+          'CONFLICT',
+          result.error ?? 'Editor UI interaction is blocked by an active modal dialog',
+          {
+            windowLabel,
+            selector,
+            targetSelector: targetSelector ?? null,
+            modalBlocked: true,
+            activeModalName: result.activeModalName ?? null,
+            agentAlternative:
+              result.agentAlternative
+              ?? 'Interact with or dismiss the active modal dialog first',
+          },
+        );
+      }
       throw new BridgeError('INVALID_ARGS', result.error ?? 'Editor UI interaction failed');
     }
     return result;

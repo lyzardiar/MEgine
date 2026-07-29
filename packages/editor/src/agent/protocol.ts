@@ -187,6 +187,8 @@ export interface EditorUiActionResult {
   modifiers?: EditorUiModifiers;
   agentBlocked?: boolean;
   agentAlternative?: string | null;
+  modalBlocked?: boolean;
+  activeModalName?: string | null;
   action?: EditorUiAction;
   selector?: string;
   targetSelector?: string | null;

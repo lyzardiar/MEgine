@@ -2827,12 +2827,13 @@ const WINDOW_UI_SNAPSHOT_SCRIPT: &str = r#"
     }
     return 'Scrollable content';
   };
-  const stateFor = (element) => {
+  const stateFor = (element, modalBlocked = false) => {
     const state = {
       disabled: Boolean(element.disabled || element.getAttribute('aria-disabled') === 'true'),
       readOnly: Boolean(element.readOnly || element.getAttribute('aria-readonly') === 'true'),
       focused: document.activeElement === element,
     };
+    if (modalBlocked) state.modalBlocked = true;
     for (const key of [
       'checked',
       'selected',
@@ -2841,6 +2842,7 @@ const WINDOW_UI_SNAPSHOT_SCRIPT: &str = r#"
       'current',
       'level',
       'haspopup',
+      'modal',
     ]) {
       const value = element.getAttribute(`aria-${key}`);
       if (value !== null) state[key] = value;
@@ -2887,6 +2889,31 @@ const WINDOW_UI_SNAPSHOT_SCRIPT: &str = r#"
     };
   };
   const all = [document.documentElement, ...document.querySelectorAll('*')];
+  const visibleModalDialogs = Array.from(
+    document.querySelectorAll('[role="dialog"][aria-modal="true"]'),
+  ).filter((candidate) => (
+    (candidate instanceof HTMLElement || candidate instanceof SVGElement)
+    && visible(candidate)
+  ));
+  const modalLayerFor = (candidate) => {
+    let layer = 0;
+    let current = candidate;
+    while (current instanceof Element) {
+      const zIndex = Number.parseInt(getComputedStyle(current).zIndex, 10);
+      if (Number.isFinite(zIndex)) layer = Math.max(layer, zIndex);
+      current = current.parentElement;
+    }
+    return layer;
+  };
+  let activeModal = null;
+  let activeModalLayer = Number.NEGATIVE_INFINITY;
+  for (const candidate of visibleModalDialogs) {
+    const layer = modalLayerFor(candidate);
+    if (layer >= activeModalLayer) {
+      activeModal = candidate;
+      activeModalLayer = layer;
+    }
+  }
   const candidates = [];
   for (const element of all) {
     if (!(element instanceof HTMLElement || element instanceof SVGElement)
@@ -2895,16 +2922,17 @@ const WINDOW_UI_SNAPSHOT_SCRIPT: &str = r#"
     const directName = accessibleName(element, role);
     const text = ownText(element, role);
     const tag = element.localName;
-    const actions = actionList(element, role);
+    const modalBlocked = Boolean(activeModal && !activeModal.contains(element));
+    const actions = modalBlocked ? [] : actionList(element, role);
     const name = directName || (actions.includes('scroll') ? scrollContextName(element) : '');
     const structural = /^h[1-6]$/.test(tag)
       || ['p', 'label', 'summary', 'legend', 'caption'].includes(tag);
     if (!role && !name && !text && !structural && actions.length === 0) continue;
-    candidates.push({ element, role, name, text, actions });
+    candidates.push({ element, role, name, text, actions, modalBlocked });
   }
   const ids = new Map(candidates.map((entry, index) => [entry.element, `ui-${index + 1}`]));
   const semanticElementFor = (entry) => {
-    const { element, role, name, text, actions } = entry;
+    const { element, role, name, text, actions, modalBlocked } = entry;
     const scope = semanticScopeFor(element);
     let parent = element.parentElement;
     while (parent && !ids.has(parent)) parent = parent.parentElement;
@@ -2921,7 +2949,7 @@ const WINDOW_UI_SNAPSHOT_SCRIPT: &str = r#"
       value: valueFor(element) || null,
       control: controlFor(element),
       description: descriptionFor(element, name),
-      state: stateFor(element),
+      state: stateFor(element, modalBlocked),
       agentInteraction: agentPolicyFor(element),
       actions,
       scroll: scrollFor(element, actions),
@@ -2939,7 +2967,7 @@ const WINDOW_UI_SNAPSHOT_SCRIPT: &str = r#"
   const activeElementSelector =
     document.activeElement instanceof Element ? selectorFor(document.activeElement) : null;
   const revisionSource = JSON.stringify({
-    version: 4,
+    version: 5,
     title: document.title,
     url: location.href,
     viewport,
@@ -2953,13 +2981,13 @@ const WINDOW_UI_SNAPSHOT_SCRIPT: &str = r#"
     revisionHash ^= BigInt(revisionSource.charCodeAt(index));
     revisionHash = BigInt.asUintN(64, revisionHash * 0x100000001b3n);
   }
-  const snapshotRevision = `ui-v3-${candidates.length}-${
+  const snapshotRevision = `ui-v4-${candidates.length}-${
     revisionHash.toString(16).padStart(16, '0')
   }`;
   revisionGuard.revisions.set(snapshotRevision, revisionGuard.epoch);
   const elements = semanticElements.slice(offset, offset + limit);
   return {
-    version: 4,
+    version: 5,
     snapshotRevision,
     title: document.title,
     url: location.href,
@@ -3243,6 +3271,58 @@ const WINDOW_UI_INTERACTION_SCRIPT: &str = r#"
     }
     return normalizeName(target.innerText || target.textContent);
   };
+  const rendered = (target) => {
+    if (!(target instanceof HTMLElement || target instanceof SVGElement)) return false;
+    const style = getComputedStyle(target);
+    if (
+      style.display === 'none'
+      || style.visibility === 'hidden'
+      || Number(style.opacity) === 0
+      || target.hidden
+    ) return false;
+    const rect = target.getBoundingClientRect();
+    return rect.width > 0 && rect.height > 0;
+  };
+  const visibleModalDialogs = Array.from(
+    document.querySelectorAll('[role="dialog"][aria-modal="true"]'),
+  ).filter(rendered);
+  const modalLayerFor = (candidate) => {
+    let layer = 0;
+    let current = candidate;
+    while (current instanceof Element) {
+      const zIndex = Number.parseInt(getComputedStyle(current).zIndex, 10);
+      if (Number.isFinite(zIndex)) layer = Math.max(layer, zIndex);
+      current = current.parentElement;
+    }
+    return layer;
+  };
+  let activeModal = null;
+  let activeModalLayer = Number.NEGATIVE_INFINITY;
+  for (const candidate of visibleModalDialogs) {
+    const layer = modalLayerFor(candidate);
+    if (layer >= activeModalLayer) {
+      activeModal = candidate;
+      activeModalLayer = layer;
+    }
+  }
+  if (
+    activeModal
+    && (
+      !activeModal.contains(element)
+      || (targetElement && !activeModal.contains(targetElement))
+    )
+  ) {
+    const blockedTarget = !activeModal.contains(element) ? 'Element' : 'Target element';
+    const blockedSelector = !activeModal.contains(element) ? selector : targetSelector;
+    const activeModalName = interactionName(activeModal) || 'Modal dialog';
+    return {
+      ok: false,
+      error: `${blockedTarget} ${blockedSelector} is blocked by active modal dialog "${activeModalName}"`,
+      modalBlocked: true,
+      activeModalName,
+      agentAlternative: 'Interact with or dismiss the active modal dialog first',
+    };
+  }
   const agentPolicy = agentPolicyFor(element);
   if (agentPolicy && (
     agentPolicy.blockedActions === null

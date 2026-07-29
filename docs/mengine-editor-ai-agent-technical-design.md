@@ -343,6 +343,8 @@ Rust Host 使用独立的工程生命周期互斥门串行化 open/create/close 
 
 `snapshotRevision` 的哈希输入与快照的可观察内容共用同一份 `semanticElements` 序列化结果，覆盖 id/parent、selector、role/name/text、快照控件值、原生 input 类型与 min/max/step/pattern/长度约束、select/datalist 选项数量及内容指纹、description、disabled/readOnly/focused 与 ARIA/check 状态、Agent 交互策略、actions、滚动状态、bounds，并同时覆盖 viewport、活动元素和 DOM/语义元素总数。任何已返回字段或选项内容的变化都会使续页和写动作的旧 revision 失效，不会把不同时间点的控件状态拼成一份快照；未归一化的完整长文本、值和选项 JSON 通过 `window.ui_content` 分页读取。
 
+存在可见的 `role="dialog" aria-modal="true"` 时，语义快照仍保留底层界面的只读观察，但会把模态框外元素标记为 `state.modalBlocked=true` 并移除其动作；原生动作脚本再次独立检查当前最上层模态框，拒绝任何越界 selector 或拖放目标，并返回结构化 `CONFLICT`。因此合成 DOM 事件不能绕过视觉遮罩修改底层编辑器状态。
+
 #### 4.2.7 资产与构建
 
 | command id | 映射 |
