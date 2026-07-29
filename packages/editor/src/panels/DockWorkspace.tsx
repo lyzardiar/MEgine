@@ -716,6 +716,7 @@ function DockLeaf(props: {
   return (
     <div
       className="dock-pane"
+      aria-label={`Dock ${node.panels.map((panel) => PANEL_TITLES[panel]).join(', ')} drop target`}
       ref={frameRef}
       data-dock-leaf-id={node.id}
       onDragOver={(e) => {
@@ -748,6 +749,7 @@ function DockLeaf(props: {
                 role="tab"
                 aria-selected={active === kind}
                 aria-controls={panelId}
+                data-agent-drag-by="true"
                 className={`dock-tab dock-tab-drag${active === kind ? ' active' : ''}${dirty ? ' dirty' : ''}`}
                 title={dirty
                   ? `Save ${PANEL_TITLES[kind]} before moving or detaching it`

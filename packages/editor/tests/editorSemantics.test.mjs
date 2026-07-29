@@ -67,14 +67,18 @@ test('core editor navigation exposes named semantic controls', () => {
   assert.match(dock, /role="tablist" aria-label="Dock panels"/);
   assert.match(dock, /role="tab"/);
   assert.match(dock, /aria-selected=\{active === kind\}/);
+  assert.match(dock, /data-agent-drag-by="true"/);
   assert.match(dock, /role="tabpanel"/);
   assert.match(dock, /aria-label=\{`\$\{PANEL_TITLES\[panel\]\} panel`\}/);
+  assert.match(dock, /aria-label=\{`Dock \$\{node\.panels\.map/);
   assert.match(dock, /aria-label=\{`Resize dock split \$\{props\.direction\}`\}/);
   assert.match(hierarchyMenu, /role="menu"\s*aria-label="Hierarchy context menu"/);
   assert.match(objectPicker, /aria-label=\{`Close \$\{props\.title\}`\}/);
   assert.match(spriteEditor, /aria-label="Select sprite slice from preview"\s*onClick=/);
   assert.match(timeline, /aria-label="Animation Timeline workspace"/);
   assert.match(timeline, /aria-label="Animation Timeline lanes"/);
+  assert.match(panel('Material.tsx'), /aria-label=\{`\$\{props\.label\} texture drop target`\}/);
+  assert.match(panel('SpriteAtlasEditor.tsx'), /aria-label="Sprite Atlas source drop target"/);
   assert.match(dialogHost, /aria-label=\{`\$\{dialog\.title\} dialog keyboard controls`\}/);
 });
 

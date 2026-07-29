@@ -301,7 +301,12 @@ export function SpriteAtlasEditor(props: {
           {!preview && !loading && <div className="sprite-atlas-preview-empty">Pack Atlas to generate the PNG and Sprite subresources.</div>}
           <canvas ref={canvasRef} style={{ width: previewSize.width, height: previewSize.height }} />
         </div>
-        <aside className="sprite-atlas-inspector" onDragOver={(event) => event.preventDefault()} onDrop={onDrop}>
+        <aside
+          className="sprite-atlas-inspector"
+          aria-label="Sprite Atlas source drop target"
+          onDragOver={(event) => event.preventDefault()}
+          onDrop={onDrop}
+        >
           {asset && (
             <>
               <section>

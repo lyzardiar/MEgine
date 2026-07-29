@@ -157,6 +157,7 @@ function MaterialTextureSlot(props: {
   }));
   return (
     <div
+      aria-label={`${props.label} texture drop target`}
       className={`material-texture-slot${props.missing ? ' missing' : ''}`}
       onDragOver={(event) => event.preventDefault()}
       onDrop={props.onDrop}

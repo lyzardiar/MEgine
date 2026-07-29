@@ -68,6 +68,9 @@ test('whole-window agent capture is background-safe and addressable by window la
   assert.match(rust, /actions\.push\('keyPress'\)/);
   assert.match(rust, /actions\.push\('dragTo'\)/);
   assert.match(rust, /actions\.push\('dragBy'\)/);
+  assert.match(rust, /getAttribute\('data-agent-drag-by'\) === 'true'/);
+  assert.match(rust, /typeof props\.onClick !== 'function' \|\| explicitDragBy/);
+  assert.match(rust, /typeof reactProps\.onClick === 'function' && !explicitDragBy/);
   assert.match(rust, /actions\.push\('hover'\)/);
   assert.match(rust, /new DataTransfer\(\)/);
   assert.match(rust, /new DragEvent\(type/);

@@ -2642,7 +2642,11 @@ const WINDOW_UI_SNAPSHOT_SCRIPT: &str = r#"
     );
     const mouseGesture = typeof props.onMouseDown === 'function'
       && typeof props.onClick !== 'function';
-    if ((pointerGesture || mouseGesture) && typeof props.onClick !== 'function') {
+    const explicitDragBy = element.getAttribute('data-agent-drag-by') === 'true';
+    if (
+      (pointerGesture || mouseGesture)
+      && (typeof props.onClick !== 'function' || explicitDragBy)
+    ) {
       actions.push('dragBy');
     }
     if (
@@ -3286,9 +3290,10 @@ const WINDOW_UI_INTERACTION_SCRIPT: &str = r#"
     );
     const mouseGesture = typeof reactProps.onMouseDown === 'function'
       && typeof reactProps.onClick !== 'function';
+    const explicitDragBy = element.getAttribute('data-agent-drag-by') === 'true';
     if (
       (!pointerGesture && !mouseGesture)
-      || typeof reactProps.onClick === 'function'
+      || (typeof reactProps.onClick === 'function' && !explicitDragBy)
     ) {
       return { ok: false, error: `Element ${selector} is not a draggable pointer gesture` };
     }
