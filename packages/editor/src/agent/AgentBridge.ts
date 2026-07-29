@@ -1204,6 +1204,17 @@ class AgentBridge {
           },
         );
       }
+      if (result.clipboardDenied) {
+        throw new BridgeError(
+          'READONLY',
+          result.error ?? 'The Agent private text clipboard cannot access this control',
+          {
+            windowLabel,
+            selector,
+            clipboardDenied: true,
+          },
+        );
+      }
       if (result.selectorNotExposed || result.actionNotExposed) {
         throw new BridgeError(
           'INVALID_ARGS',

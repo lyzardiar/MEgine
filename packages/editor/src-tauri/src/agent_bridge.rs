@@ -4972,6 +4972,8 @@ const WINDOW_UI_INTERACTION_SCRIPT: &str = r#"
   let performedSettledFrames = 0;
   let pendingFocusTarget = null;
   let keyboardValueTarget = false;
+  let semanticClipboardOperation = null;
+  let semanticClipboardLength = null;
   if (action === 'click') {
     dispatchClick(1);
   } else if (action === 'doubleClick') {
@@ -5359,6 +5361,24 @@ const WINDOW_UI_INTERACTION_SCRIPT: &str = r#"
       !modifiers.altKey
       && modifiers.ctrlKey !== modifiers.metaKey
     );
+    const semanticClipboardKey = Symbol.for('mengine.agent.textClipboard');
+    const readSemanticClipboard = () => (
+      typeof window[semanticClipboardKey] === 'string'
+        ? window[semanticClipboardKey]
+        : ''
+    );
+    const writeSemanticClipboard = (text) => {
+      window[semanticClipboardKey] = String(text);
+      return window[semanticClipboardKey].length;
+    };
+    const primaryClipboardShortcut = (
+      primaryTextShortcut
+      && !modifiers.shiftKey
+      && ['c', 'x', 'v'].includes(key.toLowerCase())
+    );
+    const clipboardCommand = primaryClipboardShortcut
+      ? key.toLowerCase()
+      : null;
     const selectAllShortcut = (
       key.toLowerCase() === 'a'
       && !modifiers.shiftKey
@@ -5446,15 +5466,29 @@ const WINDOW_UI_INTERACTION_SCRIPT: &str = r#"
     };
     const primaryTextDefault = (
       primaryTextShortcut
-      && [
-        'ArrowLeft',
-        'ArrowRight',
-        'Home',
-        'End',
-        'Backspace',
-        'Delete',
-      ].includes(requestedKey)
+      && (
+        primaryClipboardShortcut
+        || [
+          'ArrowLeft',
+          'ArrowRight',
+          'Home',
+          'End',
+          'Backspace',
+          'Delete',
+        ].includes(requestedKey)
+      )
     );
+    if (
+      primaryClipboardShortcut
+      && element instanceof HTMLInputElement
+      && String(element.type).toLowerCase() === 'password'
+    ) {
+      return {
+        ok: false,
+        error: 'Password fields cannot use the Agent private text clipboard',
+        clipboardDenied: true,
+      };
+    }
     const code = requestedKey === 'Space'
       ? 'Space'
       : /^[A-Za-z]$/.test(key)
@@ -5543,6 +5577,27 @@ const WINDOW_UI_INTERACTION_SCRIPT: &str = r#"
       const anchor = direction === 'backward' ? end : start;
       const focus = direction === 'backward' ? start : end;
       const verticalColumnKey = Symbol.for('mengine.agent.textVerticalColumn');
+      if (clipboardCommand === 'c') {
+        if (start !== end) {
+          writeSemanticClipboard(element.value.slice(start, end));
+        }
+        semanticClipboardOperation = 'copy';
+        semanticClipboardLength = readSemanticClipboard().length;
+        return true;
+      }
+      if (clipboardCommand === 'x') {
+        if (!keyboardReadOnly && start !== end) {
+          writeSemanticClipboard(element.value.slice(start, end));
+        }
+        semanticClipboardOperation = 'cut';
+        semanticClipboardLength = readSemanticClipboard().length;
+        if (keyboardReadOnly || start === end) return true;
+      }
+      if (clipboardCommand === 'v') {
+        semanticClipboardOperation = 'paste';
+        semanticClipboardLength = readSemanticClipboard().length;
+        if (keyboardReadOnly) return true;
+      }
       if (requestedKey === 'ArrowLeft') {
         delete element[verticalColumnKey];
         if (modifiers.shiftKey) {
@@ -5666,7 +5721,13 @@ const WINDOW_UI_INTERACTION_SCRIPT: &str = r#"
       let replacementStart = start;
       let replacementEnd = end;
       let inputType = 'insertText';
-      if (printableKey) {
+      if (clipboardCommand === 'x') {
+        replacement = '';
+        inputType = 'deleteByCut';
+      } else if (clipboardCommand === 'v') {
+        replacement = readSemanticClipboard();
+        inputType = 'insertFromPaste';
+      } else if (printableKey) {
         replacement = key;
       } else if (requestedKey === 'Space') {
         replacement = ' ';
@@ -5810,6 +5871,27 @@ const WINDOW_UI_INTERACTION_SCRIPT: &str = r#"
       const start = Math.min(anchor, focus);
       const end = Math.max(anchor, focus);
       const verticalColumnKey = Symbol.for('mengine.agent.textVerticalColumn');
+      if (clipboardCommand === 'c') {
+        if (start !== end) {
+          writeSemanticClipboard(text.slice(start, end));
+        }
+        semanticClipboardOperation = 'copy';
+        semanticClipboardLength = readSemanticClipboard().length;
+        return true;
+      }
+      if (clipboardCommand === 'x') {
+        if (!keyboardReadOnly && start !== end) {
+          writeSemanticClipboard(text.slice(start, end));
+        }
+        semanticClipboardOperation = 'cut';
+        semanticClipboardLength = readSemanticClipboard().length;
+        if (keyboardReadOnly || start === end) return true;
+      }
+      if (clipboardCommand === 'v') {
+        semanticClipboardOperation = 'paste';
+        semanticClipboardLength = readSemanticClipboard().length;
+        if (keyboardReadOnly) return true;
+      }
       if (requestedKey === 'ArrowLeft' || requestedKey === 'ArrowRight') {
         delete element[verticalColumnKey];
         const nextFocus = requestedKey === 'ArrowLeft'
@@ -5904,7 +5986,13 @@ const WINDOW_UI_INTERACTION_SCRIPT: &str = r#"
       let replacementStart = start;
       let replacementEnd = end;
       let inputType = 'insertText';
-      if (printableKey) {
+      if (clipboardCommand === 'x') {
+        replacement = '';
+        inputType = 'deleteByCut';
+      } else if (clipboardCommand === 'v') {
+        replacement = readSemanticClipboard();
+        inputType = 'insertFromPaste';
+      } else if (printableKey) {
         replacement = key;
       } else if (requestedKey === 'Space') {
         replacement = ' ';
@@ -6322,6 +6410,9 @@ const WINDOW_UI_INTERACTION_SCRIPT: &str = r#"
     valueBlurHandledByReact: ['setValue', 'keyPress'].includes(action)
       ? valueBlurHandledByReact
       : null,
+    clipboardOperation: action === 'keyPress' ? semanticClipboardOperation : null,
+    clipboardLength: action === 'keyPress' ? semanticClipboardLength : null,
+    clipboardScope: semanticClipboardOperation ? 'window-private' : null,
     deltaX: action === 'dragBy'
       ? performedDragPath[performedDragPath.length - 1].deltaX
       : action === 'scroll' ? requestedDeltaX ?? 0 : null,

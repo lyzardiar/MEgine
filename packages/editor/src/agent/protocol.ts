@@ -218,6 +218,7 @@ export interface EditorUiActionResult {
   activeModalName?: string | null;
   constraintViolation?: boolean;
   validityIssues?: string[];
+  clipboardDenied?: boolean;
   selectorNotExposed?: boolean;
   targetSelectorNotExposed?: boolean;
   actionNotExposed?: boolean;
@@ -247,6 +248,9 @@ export interface EditorUiActionResult {
   valueDraftSynchronized?: boolean | null;
   valueFocusHandledByReact?: boolean | null;
   valueBlurHandledByReact?: boolean | null;
+  clipboardOperation?: 'copy' | 'cut' | 'paste' | null;
+  clipboardLength?: number | null;
+  clipboardScope?: 'window-private' | null;
   deltaX?: number | null;
   deltaY?: number | null;
   tag?: string;

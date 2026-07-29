@@ -300,6 +300,10 @@ test('whole-window agent capture is background-safe and addressable by window la
   assert.match(protocol, /valueDraftSynchronized\?: boolean \| null/);
   assert.match(protocol, /valueFocusHandledByReact\?: boolean \| null/);
   assert.match(protocol, /valueBlurHandledByReact\?: boolean \| null/);
+  assert.match(protocol, /clipboardOperation\?: 'copy' \| 'cut' \| 'paste' \| null/);
+  assert.match(protocol, /clipboardLength\?: number \| null/);
+  assert.match(protocol, /clipboardScope\?: 'window-private' \| null/);
+  assert.match(protocol, /clipboardDenied\?: boolean/);
   assert.match(protocol, /allowedActions\?: EditorUiAction\[\]/);
   assert.match(rust, /const ariaStateKeys = \[/);
   for (const key of [
@@ -461,6 +465,28 @@ test('whole-window agent capture is background-safe and addressable by window la
   assert.match(interactionScript, /const primaryTextShortcut = \(/);
   assert.match(interactionScript, /!modifiers\.altKey/);
   assert.match(interactionScript, /modifiers\.ctrlKey !== modifiers\.metaKey/);
+  assert.match(
+    interactionScript,
+    /const semanticClipboardKey = Symbol\.for\('mengine\.agent\.textClipboard'\)/,
+  );
+  assert.match(interactionScript, /const primaryClipboardShortcut = \(/);
+  assert.match(interactionScript, /\['c', 'x', 'v'\]\.includes\(key\.toLowerCase\(\)\)/);
+  assert.match(interactionScript, /Password fields cannot use the Agent private text clipboard/);
+  assert.match(
+    interactionScript,
+    /writeSemanticClipboard\(element\.value\.slice\(start, end\)\)/,
+  );
+  assert.match(interactionScript, /writeSemanticClipboard\(text\.slice\(start, end\)\)/);
+  assert.equal([...interactionScript.matchAll(/inputType = 'deleteByCut'/g)].length, 2);
+  assert.equal([...interactionScript.matchAll(/inputType = 'insertFromPaste'/g)].length, 2);
+  assert.match(
+    interactionScript,
+    /clipboardScope: semanticClipboardOperation \? 'window-private' : null/,
+  );
+  assert.doesNotMatch(
+    interactionScript,
+    /navigator\.clipboard|new ClipboardEvent|execCommand\(/,
+  );
   assert.match(interactionScript, /const selectAllShortcut = \(/);
   assert.match(interactionScript, /key\.toLowerCase\(\) === 'a'/);
   assert.match(interactionScript, /&& primaryTextShortcut/);
@@ -563,6 +589,8 @@ test('whole-window agent capture is background-safe and addressable by window la
   assert.match(interactionScript, /const handledNativeDefault = \(/);
   assert.match(bridge, /if \(result\.constraintViolation\) \{/);
   assert.match(bridge, /validityIssues: result\.validityIssues \?\? \[\]/);
+  assert.match(bridge, /if \(result\.clipboardDenied\) \{/);
+  assert.match(bridge, /clipboardDenied: true/);
   assert.match(interactionScript, /is blocked by active modal dialog/);
   assert.match(interactionScript, /modalBlocked: true/);
   assert.match(interactionScript, /activeModal\.contains\(targetElement\)/);
