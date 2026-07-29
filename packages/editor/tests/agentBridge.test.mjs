@@ -71,14 +71,14 @@ test('whole-window agent capture is background-safe and addressable by window la
   assert.match(rust, /const offset = __MENGINE_OFFSET__/);
   assert.match(rust, /semanticElements\.slice\(offset, offset \+ limit\)/);
   assert.match(rust, /new Map\(candidates\.map/);
-  assert.match(rust, /const snapshotRevision = `ui-v23-/);
+  assert.match(rust, /const snapshotRevision = `ui-v24-/);
   assert.match(rust, /revisionHash = BigInt\.asUintN\(64/);
   assert.match(rust, /const semanticScopeFor = \(element\) =>/);
   assert.match(rust, /role === 'tabpanel'/);
   assert.match(rust, /const qualifiedNameFor = \(scope, name\) =>/);
   assert.match(rust, /scope: scope \|\| null/);
   assert.match(rust, /qualifiedName: qualifiedNameFor\(scope, name\) \|\| null/);
-  assert.equal([...rust.matchAll(/version: 23,/g)].length, 2);
+  assert.equal([...rust.matchAll(/version: 24,/g)].length, 2);
   assert.match(
     rust,
     /element instanceof HTMLElement\s+\|\| element instanceof SVGElement/,
@@ -192,6 +192,19 @@ test('whole-window agent capture is background-safe and addressable by window la
     /next instanceof HTMLElement \|\| next instanceof SVGElement/,
   );
   assert.match(interactionScript, /let keyboardValueTarget = false/);
+  assert.match(interactionScript, /const keyboardReadOnly = Boolean\(/);
+  assert.match(
+    interactionScript,
+    /keyboardValueTarget = !keyboardReadOnly && \(/,
+  );
+  assert.match(
+    rust,
+    /element instanceof HTMLSelectElement && !readOnly/,
+  );
+  assert.match(
+    interactionScript,
+    /keyboardReadOnly\s+&&\s+\(\s+element instanceof HTMLInputElement\s+\|\| element instanceof HTMLSelectElement/,
+  );
   assert.match(interactionScript, /if \(keyboardValueTarget\) pendingValueBlur = true/);
   assert.match(
     interactionScript,

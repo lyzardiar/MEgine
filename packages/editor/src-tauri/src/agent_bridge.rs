@@ -3283,9 +3283,9 @@ const WINDOW_UI_SNAPSHOT_SCRIPT: &str = r#"
     const readOnly = Boolean(
       element.readOnly || element.getAttribute('aria-readonly') === 'true',
     );
-    if ((writableInput && !element.readOnly)
-      || (element instanceof HTMLTextAreaElement && !element.readOnly)
-      || element instanceof HTMLSelectElement
+    if ((writableInput && !readOnly)
+      || (element instanceof HTMLTextAreaElement && !readOnly)
+      || (element instanceof HTMLSelectElement && !readOnly)
       || (element.isContentEditable && !readOnly)) {
       actions.push('setValue');
     }
@@ -3622,7 +3622,7 @@ const WINDOW_UI_SNAPSHOT_SCRIPT: &str = r#"
   const activeElementSelector =
     document.activeElement instanceof Element ? selectorFor(document.activeElement) : null;
   const revisionSource = JSON.stringify({
-    version: 23,
+    version: 24,
     title: document.title,
     url: location.href,
     viewport,
@@ -3636,7 +3636,7 @@ const WINDOW_UI_SNAPSHOT_SCRIPT: &str = r#"
     revisionHash ^= BigInt(revisionSource.charCodeAt(index));
     revisionHash = BigInt.asUintN(64, revisionHash * 0x100000001b3n);
   }
-  const snapshotRevision = `ui-v23-${candidates.length}-${
+  const snapshotRevision = `ui-v24-${candidates.length}-${
     revisionHash.toString(16).padStart(16, '0')
   }`;
   const guardedElements = new Map(semanticElements.map((semanticElement, index) => [
@@ -3657,7 +3657,7 @@ const WINDOW_UI_SNAPSHOT_SCRIPT: &str = r#"
   }
   const elements = semanticElements.slice(offset, offset + limit);
   return {
-    version: 23,
+    version: 24,
     snapshotRevision,
     title: document.title,
     url: location.href,
@@ -5132,24 +5132,25 @@ const WINDOW_UI_INTERACTION_SCRIPT: &str = r#"
     const keyboardInputType = element instanceof HTMLInputElement
       ? String(element.type || 'text').toLowerCase()
       : '';
-    keyboardValueTarget = (
-      element instanceof HTMLInputElement
-      && ![
-        'button',
-        'submit',
-        'reset',
-        'file',
-        'image',
-        'checkbox',
-        'radio',
-      ].includes(keyboardInputType)
-    )
-      || element instanceof HTMLTextAreaElement
-      || element instanceof HTMLSelectElement
-      || (
-        element instanceof HTMLElement
-        && element.isContentEditable
-        && element.getAttribute('aria-readonly') !== 'true'
+    const keyboardReadOnly = Boolean(
+      element.readOnly || element.getAttribute('aria-readonly') === 'true',
+    );
+    keyboardValueTarget = !keyboardReadOnly && (
+      (
+        element instanceof HTMLInputElement
+        && ![
+          'button',
+          'submit',
+          'reset',
+          'file',
+          'image',
+          'checkbox',
+          'radio',
+        ].includes(keyboardInputType)
+      )
+        || element instanceof HTMLTextAreaElement
+        || element instanceof HTMLSelectElement
+        || (element instanceof HTMLElement && element.isContentEditable)
       );
     const printableKey = (
       typeof requestedKey === 'string'
@@ -5350,13 +5351,13 @@ const WINDOW_UI_INTERACTION_SCRIPT: &str = r#"
         replacement = '\n';
         inputType = 'insertLineBreak';
       } else if (requestedKey === 'Backspace') {
-        if (element.readOnly) return true;
+        if (keyboardReadOnly) return true;
         if (start === end && start === 0) return true;
         inputType = 'deleteContentBackward';
         if (start === end) replacementStart = Math.max(0, start - 1);
         replacement = '';
       } else if (requestedKey === 'Delete') {
-        if (element.readOnly) return true;
+        if (keyboardReadOnly) return true;
         if (start === end && end === length) return true;
         inputType = 'deleteContentForward';
         if (start === end) replacementEnd = Math.min(length, end + 1);
@@ -5365,7 +5366,7 @@ const WINDOW_UI_INTERACTION_SCRIPT: &str = r#"
         return false;
       }
       delete element[verticalColumnKey];
-      if (element.readOnly) return true;
+      if (keyboardReadOnly) return true;
       const prototype = element instanceof HTMLInputElement
         ? HTMLInputElement.prototype
         : HTMLTextAreaElement.prototype;
@@ -5558,7 +5559,7 @@ const WINDOW_UI_INTERACTION_SCRIPT: &str = r#"
         return false;
       }
       delete element[verticalColumnKey];
-      if (element.getAttribute('aria-readonly') === 'true') return true;
+      if (keyboardReadOnly) return true;
       const beforeInput = new InputEvent('beforeinput', {
         bubbles: true,
         cancelable: true,
@@ -5605,6 +5606,24 @@ const WINDOW_UI_INTERACTION_SCRIPT: &str = r#"
       && applyNativeDialogDefault()
     );
     const applyNativeControlDefault = () => {
+      if (
+        keyboardReadOnly
+        && (
+          element instanceof HTMLInputElement
+          || element instanceof HTMLSelectElement
+        )
+        && [
+          'Space',
+          'ArrowLeft',
+          'ArrowRight',
+          'ArrowUp',
+          'ArrowDown',
+          'PageUp',
+          'PageDown',
+          'Home',
+          'End',
+        ].includes(requestedKey)
+      ) return true;
       if (
         requestedKey === 'Space'
         && element instanceof HTMLInputElement
