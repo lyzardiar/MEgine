@@ -3294,7 +3294,7 @@ const TOOLS = [
   ),
   execTool(
     'press_window_ui_key',
-    'Press an allow-listed semantic key with optional modifiers on an element marked with the keyPress action by get_window_ui only when its editor window is hidden and unfocused.',
+    'Press an allow-listed semantic key with optional modifiers on an element marked with the keyPress action by get_window_ui only when its editor window is hidden and unfocused. Text edits synchronize React-controlled drafts; Enter/Escape blur commits and Tab commits before moving semantic focus.',
     'window.ui_press_key',
     {
       ...uiInteractionProperties('Exact keyboard target selector returned by get_window_ui'),

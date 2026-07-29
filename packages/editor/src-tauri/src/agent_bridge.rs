@@ -4704,6 +4704,7 @@ const WINDOW_UI_INTERACTION_SCRIPT: &str = r#"
   let valueFocusHandledByReact = null;
   let valueBlurHandledByReact = null;
   let performedSettledFrames = 0;
+  let pendingFocusTarget = null;
   if (action === 'click') {
     dispatchClick(1);
   } else if (action === 'doubleClick') {
@@ -5071,7 +5072,15 @@ const WINDOW_UI_INTERACTION_SCRIPT: &str = r#"
           ? `Digit${key}`
           : key;
     if (typeof element.focus === 'function') {
-      element.focus({ preventScroll: true });
+      const focusLifecycle = dispatchReactFocusLifecycle(
+        element,
+        'focus',
+        () => element.focus({ preventScroll: true }),
+      );
+      valueFocusHandledByReact = focusLifecycle.handledByReact;
+      if (document.activeElement !== element) {
+        return { ok: false, error: `Element ${selector} could not receive keyboard focus` };
+      }
     }
     const dispatchKeyboard = (type) => element.dispatchEvent(new KeyboardEvent(type, {
       key,
@@ -5284,12 +5293,7 @@ const WINDOW_UI_INTERACTION_SCRIPT: &str = r#"
       const caret = replacementStart + replacement.length;
       setter.call(element, nextValue);
       element.setSelectionRange(caret, caret, 'none');
-      element.dispatchEvent(new InputEvent('input', {
-        bubbles: true,
-        composed: true,
-        inputType,
-        data: replacement || null,
-      }));
+      valueHandledByReact = dispatchValueChange(element, nextValue);
       if (element.isConnected) element.setSelectionRange(caret, caret, 'none');
       return true;
     };
@@ -5482,12 +5486,7 @@ const WINDOW_UI_INTERACTION_SCRIPT: &str = r#"
       }
       const caret = replacementStart + replacement.length;
       setSelection(caret, caret);
-      element.dispatchEvent(new InputEvent('input', {
-        bubbles: true,
-        composed: true,
-        inputType,
-        data: replacement || null,
-      }));
+      valueHandledByReact = dispatchValueChange(element, String(element.textContent ?? ''));
       if (element.isConnected) setSelection(caret, caret);
       return true;
     };
@@ -5562,8 +5561,7 @@ const WINDOW_UI_INTERACTION_SCRIPT: &str = r#"
         const nextIndex = optionIndices[boundedPosition];
         if (nextIndex !== element.selectedIndex) {
           element.selectedIndex = nextIndex;
-          element.dispatchEvent(new Event('input', { bubbles: true }));
-          element.dispatchEvent(new Event('change', { bubbles: true }));
+          valueHandledByReact = dispatchValueChange(element, element.value);
         }
         return true;
       }
@@ -5612,8 +5610,7 @@ const WINDOW_UI_INTERACTION_SCRIPT: &str = r#"
         return false;
       }
       if (element.value !== previousValue) {
-        element.dispatchEvent(new Event('input', { bubbles: true }));
-        element.dispatchEvent(new Event('change', { bubbles: true }));
+        valueHandledByReact = dispatchValueChange(element, element.value);
       }
       return true;
     };
@@ -5687,9 +5684,18 @@ const WINDOW_UI_INTERACTION_SCRIPT: &str = r#"
           ? (index - 1 + focusable.length) % focusable.length
           : (index + 1) % focusable.length;
       const next = focusable[nextIndex];
-      if (next instanceof HTMLElement) next.focus({ preventScroll: true });
+      if (next instanceof HTMLElement) {
+        pendingValueBlur = true;
+        pendingFocusTarget = next;
+      }
     }
     dispatchKeyboard('keyup');
+    if (
+      document.activeElement !== element
+      && (requestedKey === 'Enter' || requestedKey === 'Escape')
+    ) {
+      pendingValueBlur = true;
+    }
   } else if (action === 'scroll') {
     if (!(element instanceof HTMLElement) || typeof element.scrollBy !== 'function') {
       return { ok: false, error: `Element ${selector} is not scrollable` };
@@ -5739,8 +5745,14 @@ const WINDOW_UI_INTERACTION_SCRIPT: &str = r#"
       }
       valueDraftSynchronized = false;
     }
-    if (element.isConnected && document.activeElement === element) {
-      const blurLifecycle = dispatchReactFocusLifecycle(element, 'blur', () => element.blur());
+    if (element.isConnected) {
+      const blurLifecycle = dispatchReactFocusLifecycle(
+        element,
+        'blur',
+        () => {
+          if (document.activeElement === element) element.blur();
+        },
+      );
       valueBlurHandledByReact = blurLifecycle.handledByReact;
       valueCommitConfirmed = (
         valueDraftSynchronized !== false
@@ -5752,6 +5764,13 @@ const WINDOW_UI_INTERACTION_SCRIPT: &str = r#"
     await waitForRender();
     performedSettledFrames += 1;
     valueCommitMethod = 'blur';
+    if (pendingFocusTarget instanceof HTMLElement) {
+      dispatchReactFocusLifecycle(
+        pendingFocusTarget,
+        'focus',
+        () => pendingFocusTarget.focus({ preventScroll: true }),
+      );
+    }
   }
   await waitForRender();
   performedSettledFrames += 1;
@@ -5776,12 +5795,16 @@ const WINDOW_UI_INTERACTION_SCRIPT: &str = r#"
     path: action === 'dragBy' ? performedDragPath : null,
     hoverState: action === 'hover' ? performedHoverState : null,
     hoverStateChanged: action === 'hover' ? hoverStateChanged : null,
-    valueCommitMethod: action === 'setValue' ? valueCommitMethod : null,
-    valueCommitConfirmed: action === 'setValue' ? valueCommitConfirmed : null,
-    valueHandledByReact: action === 'setValue' ? valueHandledByReact : null,
-    valueDraftSynchronized: action === 'setValue' ? valueDraftSynchronized : null,
-    valueFocusHandledByReact: action === 'setValue' ? valueFocusHandledByReact : null,
-    valueBlurHandledByReact: action === 'setValue' ? valueBlurHandledByReact : null,
+    valueCommitMethod: ['setValue', 'keyPress'].includes(action) ? valueCommitMethod : null,
+    valueCommitConfirmed: ['setValue', 'keyPress'].includes(action) ? valueCommitConfirmed : null,
+    valueHandledByReact: ['setValue', 'keyPress'].includes(action) ? valueHandledByReact : null,
+    valueDraftSynchronized: ['setValue', 'keyPress'].includes(action) ? valueDraftSynchronized : null,
+    valueFocusHandledByReact: ['setValue', 'keyPress'].includes(action)
+      ? valueFocusHandledByReact
+      : null,
+    valueBlurHandledByReact: ['setValue', 'keyPress'].includes(action)
+      ? valueBlurHandledByReact
+      : null,
     deltaX: action === 'dragBy'
       ? performedDragPath[performedDragPath.length - 1].deltaX
       : action === 'scroll' ? requestedDeltaX ?? 0 : null,
