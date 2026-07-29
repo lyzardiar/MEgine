@@ -79,6 +79,8 @@ export function ObjectPicker(props: {
     <div
       ref={panelRef}
       className="object-picker"
+      role="dialog"
+      aria-label={props.title}
       style={style}
       onPointerDown={(e) => e.stopPropagation()}
     >
@@ -90,15 +92,27 @@ export function ObjectPicker(props: {
       </div>
       <input
         ref={inputRef}
+        type="search"
         className="object-picker-search"
+        role="combobox"
+        aria-label={`Search ${props.title}`}
+        aria-controls="object-picker-results"
+        aria-expanded="true"
         placeholder="Search…"
         value={query}
         onChange={(e) => setQuery(e.target.value)}
       />
-      <div className="object-picker-list">
+      <div
+        id="object-picker-results"
+        className="object-picker-list"
+        role="listbox"
+        aria-label={`${props.title} options`}
+      >
         {props.allowNone && (
           <button
             type="button"
+            role="option"
+            aria-selected={!props.current}
             className={`object-picker-item${!props.current ? ' active' : ''}`}
             onClick={() => {
               props.onPick(null);
@@ -113,6 +127,8 @@ export function ObjectPicker(props: {
           <button
             key={it.id}
             type="button"
+            role="option"
+            aria-selected={props.current === it.id}
             className={`object-picker-item${props.current === it.id ? ' active' : ''}`}
             onClick={() => {
               props.onPick(it.id);

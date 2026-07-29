@@ -198,6 +198,8 @@ function MaterialTextureSlot(props: {
           type="button"
           title={`Select ${props.label}`}
           aria-label={`Select ${props.label}`}
+          aria-haspopup="dialog"
+          aria-expanded={pickerOpen}
           onClick={() => {
             setAnchor(pickerButton.current?.getBoundingClientRect() ?? null);
             setPickerOpen(true);

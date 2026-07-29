@@ -231,12 +231,17 @@ function CompBlock(props: {
                 ⋮
               </button>
               {menuOpen && (
-                <div className="comp-context-menu">
+                <div
+                  className="comp-context-menu"
+                  role="menu"
+                  aria-label={`${props.title} component context menu`}
+                >
                   {menuItems.map((item, index) => (
                     <div key={`${item.label}-${index}`}>
-                      {item.separatorBefore && <div className="comp-context-sep" />}
+                      {item.separatorBefore && <div className="comp-context-sep" role="separator" />}
                       <button
                         type="button"
+                        role="menuitem"
                         className="comp-context-item"
                         disabled={item.disabled}
                         onClick={() => {

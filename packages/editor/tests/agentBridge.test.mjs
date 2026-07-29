@@ -789,6 +789,10 @@ test('panel and menu agent surfaces use live providers and background activation
     project,
     /data-agent-alternative="import_asset_file"[\s\S]*?void completeImport\(\)/,
   );
+  assert.match(
+    project,
+    /role="menu"\s*aria-label=\{ctx\.asset \? `\$\{ctx\.asset\.name\} asset context menu` : `\$\{folder\} context menu`\}/,
+  );
   assert.match(project, /role="tree" aria-label="Project folders"/);
   assert.match(project, /role="treeitem"/);
   assert.match(project, /aria-label=\{f\}/);

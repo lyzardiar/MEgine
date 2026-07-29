@@ -86,6 +86,20 @@ test('core editor navigation exposes named semantic controls', () => {
   assert.match(dock, /label=\{`Resize dock split between \$\{/);
   assert.match(hierarchyMenu, /role="menu"\s*aria-label="Hierarchy context menu"/);
   assert.match(objectPicker, /aria-label=\{`Close \$\{props\.title\}`\}/);
+  assert.match(objectPicker, /role="dialog"\s*aria-label=\{props\.title\}/);
+  assert.match(objectPicker, /role="combobox"\s*aria-label=\{`Search \$\{props\.title\}`\}/);
+  assert.match(objectPicker, /role="listbox"\s*aria-label=\{`\$\{props\.title\} options`\}/);
+  assert.equal([...objectPicker.matchAll(/role="option"/g)].length, 2);
+  assert.equal(
+    [...fieldEditors.matchAll(/aria-haspopup="dialog"\s*aria-expanded=\{pickerOpen\}/g)].length,
+    5,
+  );
+  assert.equal(
+    [...material.matchAll(/aria-haspopup="dialog"\s*aria-expanded=\{pickerOpen\}/g)].length,
+    1,
+  );
+  assert.match(inspector, /role="menu"\s*aria-label=\{`\$\{props\.title\} component context menu`\}/);
+  assert.match(inspector, /role="menuitem"/);
   assert.match(spriteEditor, /aria-label="Select sprite slice from preview"\s*onClick=/);
   assert.match(timeline, /aria-label="Animation Timeline workspace"/);
   assert.match(timeline, /aria-label="Animation Timeline lanes"/);

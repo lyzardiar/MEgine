@@ -1150,6 +1150,8 @@ export function Project(props: {
           <div
             className="hier-ctx"
             style={{ left: ctx.x, top: ctx.y }}
+            role="menu"
+            aria-label={ctx.asset ? `${ctx.asset.name} asset context menu` : `${folder} context menu`}
             onPointerDown={(e) => e.stopPropagation()}
           >
             {!ctx.asset && (

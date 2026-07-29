@@ -269,6 +269,9 @@ export function SpriteSlot(props: {
           type="button"
           className="object-slot-picker"
           title={props.baseTextureOnly ? 'Select Texture' : 'Select Sprite'}
+          aria-label={props.baseTextureOnly ? 'Select Texture' : 'Select Sprite'}
+          aria-haspopup="dialog"
+          aria-expanded={pickerOpen}
           onClick={openPicker}
         />
         {resolved && resolved !== noneValue && (
@@ -363,6 +366,9 @@ export function NamedReferenceField(props: {
           type="button"
           className="object-slot-picker"
           title={`Select ${props.referenceType}`}
+          aria-label={`Select ${props.referenceType}`}
+          aria-haspopup="dialog"
+          aria-expanded={pickerOpen}
           onClick={() => {
             setAnchor(pickerBtnRef.current?.getBoundingClientRect() ?? null);
             setPickerOpen(true);
@@ -481,6 +487,9 @@ export function ProjectAssetSlot(props: {
           type="button"
           className="object-slot-picker"
           title={`Select ${props.referenceType}`}
+          aria-label={`Select ${props.referenceType}`}
+          aria-haspopup="dialog"
+          aria-expanded={pickerOpen}
           onClick={() => {
             setAnchor(pickerBtnRef.current?.getBoundingClientRect() ?? null);
             setPickerOpen(true);
@@ -793,6 +802,9 @@ export function EntityReferenceField(props: {
           type="button"
           className="object-slot-picker"
           title="Select GameObject"
+          aria-label="Select GameObject"
+          aria-haspopup="dialog"
+          aria-expanded={pickerOpen}
           onClick={() => {
             setAnchor(pickerBtnRef.current?.getBoundingClientRect() ?? null);
             setPickerOpen(true);
@@ -988,6 +1000,9 @@ export function UnityEventField(props: {
               type="button"
               className="object-slot-picker"
               title="Select GameObject"
+              aria-label="Select GameObject"
+              aria-haspopup="dialog"
+              aria-expanded={pickerOpen}
               onClick={() => {
                 setAnchor(pickerBtnRef.current?.getBoundingClientRect() ?? null);
                 setPickerOpen(true);
