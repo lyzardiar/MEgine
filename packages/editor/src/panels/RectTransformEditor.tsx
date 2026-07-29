@@ -147,7 +147,9 @@ export function RectTransformEditor(props: {
           className={`rect-anchor-current${presetOpen ? ' active' : ''}`}
           title="Anchor Presets"
           aria-label="Anchor Presets"
+          aria-haspopup="dialog"
           aria-expanded={presetOpen}
+          aria-controls="rect-anchor-presets-dialog"
           onClick={() => setPresetOpen((open) => !open)}
         >
           <AnchorIcon min={rt.anchor_min} max={rt.anchor_max} />
@@ -160,7 +162,12 @@ export function RectTransformEditor(props: {
           </span>
         </div>
         {presetOpen && (
-          <div className="rect-anchor-popup" role="dialog" aria-label="Anchor Presets">
+          <div
+            id="rect-anchor-presets-dialog"
+            className="rect-anchor-popup"
+            role="dialog"
+            aria-label="Anchor Presets"
+          >
             <div className="rect-anchor-popup-title">Anchor Presets</div>
             <div className="rect-anchor-popup-hint">Shift: also set pivot · Alt: also set position</div>
             <div className="rect-anchor-preset-grid">

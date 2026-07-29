@@ -3342,7 +3342,9 @@ export function Viewport(props: {
                 type="button"
                 className={snapSettingsOpen ? 'active' : ''}
                 aria-label="Snap settings"
+                aria-haspopup="dialog"
                 aria-expanded={snapSettingsOpen}
+                aria-controls="scene-snap-settings-dialog"
                 title="Snap settings"
                 onClick={() => setSnapSettingsOpen((open) => !open)}
               >
@@ -3350,7 +3352,12 @@ export function Viewport(props: {
               </button>
             </div>
             {snapSettingsOpen && (
-              <div className="scene-snap-popup" role="dialog" aria-label="Scene Snapping">
+              <div
+                id="scene-snap-settings-dialog"
+                className="scene-snap-popup"
+                role="dialog"
+                aria-label="Scene Snapping"
+              >
                 <strong>RectTransform Snapping</strong>
                 <label>
                   Move
@@ -3392,7 +3399,9 @@ export function Viewport(props: {
             <button
               type="button"
               aria-label="Align RectTransforms"
+              aria-haspopup="dialog"
               aria-expanded={alignOpen}
+              aria-controls="scene-rect-alignment-dialog"
               disabled={alignableRectCount < 2}
               className={alignOpen ? 'active' : ''}
               title="Align selected RectTransforms to the primary selection"
@@ -3402,7 +3411,12 @@ export function Viewport(props: {
               <ChevronDown size={11} aria-hidden />
             </button>
             {alignOpen && (
-              <div className="scene-align-popup" role="dialog" aria-label="Rect Alignment">
+              <div
+                id="scene-rect-alignment-dialog"
+                className="scene-align-popup"
+                role="dialog"
+                aria-label="Rect Alignment"
+              >
                 <strong>Align to Primary</strong>
                 <div className="scene-align-grid">
                   {([

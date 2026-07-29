@@ -16,6 +16,7 @@ test('core editor navigation exposes named semantic controls', () => {
   const hierarchyMenu = panel('HierarchyContextMenu.tsx');
   const objectPicker = panel('ObjectPicker.tsx');
   const spriteEditor = panel('SpriteEditor.tsx');
+  const viewport = panel('Viewport.tsx');
   const timeline = panel('Timeline.tsx');
   const rectTransform = panel('RectTransformEditor.tsx');
   const schemaFields = panel('SchemaFieldEditor.tsx');
@@ -60,6 +61,14 @@ test('core editor navigation exposes named semantic controls', () => {
   assert.match(inspector, /aria-label=\{`Adjust \$\{props\.label\}`\}/);
   assert.match(rectTransform, /aria-label=\{`Adjust \$\{props\.ariaLabel\}`\}/);
   assert.match(rectTransform, /aria-label=\{props\.ariaLabel\}/);
+  assert.match(
+    rectTransform,
+    /aria-label="Anchor Presets"\s*aria-haspopup="dialog"\s*aria-expanded=\{presetOpen\}\s*aria-controls="rect-anchor-presets-dialog"/,
+  );
+  assert.match(
+    rectTransform,
+    /id="rect-anchor-presets-dialog"\s*className="rect-anchor-popup"\s*role="dialog"/,
+  );
   assert.match(schemaFields, /aria-label=\{`\$\{label\} slider`\}/);
   assert.match(schemaFields, /aria-label=\{`\$\{label\} value`\}/);
   assert.match(fieldEditors, /aria-label=\{`\$\{props\.label\} color`\}/);
@@ -74,6 +83,14 @@ test('core editor navigation exposes named semantic controls', () => {
   assert.match(material, /aria-label=\{`\$\{props\.label\} texture preview`\}/);
   assert.match(buildSettings, /aria-label="Refresh build history"/);
   assert.match(buildSettings, /aria-label="Refresh patch inventory"/);
+  assert.match(
+    viewport,
+    /aria-label="Snap settings"\s*aria-haspopup="dialog"\s*aria-expanded=\{snapSettingsOpen\}\s*aria-controls="scene-snap-settings-dialog"/,
+  );
+  assert.match(
+    viewport,
+    /aria-label="Align RectTransforms"\s*aria-haspopup="dialog"\s*aria-expanded=\{alignOpen\}\s*aria-controls="scene-rect-alignment-dialog"/,
+  );
 
   assert.match(dock, /role="tablist" aria-label="Dock panels"/);
   assert.match(dock, /role="tab"/);
