@@ -3170,7 +3170,7 @@ const WINDOW_UI_SNAPSHOT_SCRIPT: &str = r#"
       return element.hasAttribute('value') ? normalize(element.value) : '';
     }
     if (element.isContentEditable) return normalize(element.textContent);
-    return '';
+    return null;
   };
   const optionPayloadFor = (element) => {
     let kind;
@@ -3631,7 +3631,7 @@ const WINDOW_UI_SNAPSHOT_SCRIPT: &str = r#"
       scope: scope || null,
       qualifiedName: qualifiedNameFor(scope, name) || null,
       text: text && text !== name ? text : null,
-      value: valueFor(element) || null,
+      value: valueFor(element),
       control: controlFor(element),
       description: descriptionFor(element, name),
       state: stateFor(element, modalBlocked),
@@ -3652,7 +3652,7 @@ const WINDOW_UI_SNAPSHOT_SCRIPT: &str = r#"
   const activeElementSelector =
     document.activeElement instanceof Element ? selectorFor(document.activeElement) : null;
   const revisionSource = JSON.stringify({
-    version: 25,
+    version: 26,
     title: document.title,
     url: location.href,
     viewport,
@@ -3666,7 +3666,7 @@ const WINDOW_UI_SNAPSHOT_SCRIPT: &str = r#"
     revisionHash ^= BigInt(revisionSource.charCodeAt(index));
     revisionHash = BigInt.asUintN(64, revisionHash * 0x100000001b3n);
   }
-  const snapshotRevision = `ui-v25-${candidates.length}-${
+  const snapshotRevision = `ui-v26-${candidates.length}-${
     revisionHash.toString(16).padStart(16, '0')
   }`;
   const guardedElements = new Map(semanticElements.map((semanticElement, index) => [
@@ -3687,7 +3687,7 @@ const WINDOW_UI_SNAPSHOT_SCRIPT: &str = r#"
   }
   const elements = semanticElements.slice(offset, offset + limit);
   return {
-    version: 25,
+    version: 26,
     snapshotRevision,
     title: document.title,
     url: location.href,
