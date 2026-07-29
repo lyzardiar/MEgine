@@ -77,7 +77,7 @@ test('whole-window agent capture is background-safe and addressable by window la
   assert.match(contentScript, /end \+= 1/);
   assert.match(contentScript, /const page = content\.slice\(start, end\)/);
   assert.match(contentScript, /const exactSemanticText = \(root\) =>/);
-  assert.match(contentScript, /textNodeIsRendered\(node\.parentElement\)/);
+  assert.match(contentScript, /textNodeIsRendered\(semanticParent\)/);
   assert.match(contentScript, /style\.contentVisibility === 'hidden'/);
   assert.match(contentScript, /content = exactSemanticText\(element\)/);
   assert.doesNotMatch(contentScript, /element\.innerText/);
@@ -86,24 +86,29 @@ test('whole-window agent capture is background-safe and addressable by window la
   assert.match(rust, /const offset = __MENGINE_OFFSET__/);
   assert.match(rust, /semanticElements\.slice\(offset, offset \+ limit\)/);
   assert.match(rust, /new Map\(candidates\.map/);
-  assert.match(rust, /const snapshotRevision = `ui-v28-/);
+  assert.match(rust, /const snapshotRevision = `ui-v29-/);
   assert.match(rust, /revisionHash = BigInt\.asUintN\(64/);
   assert.match(rust, /const semanticScopeFor = \(element\) =>/);
   assert.match(rust, /role === 'tabpanel'/);
   assert.match(rust, /const qualifiedNameFor = \(scope, name\) =>/);
   assert.match(rust, /scope: scope \|\| null/);
   assert.match(rust, /qualifiedName: qualifiedNameFor\(scope, name\) \|\| null/);
-  assert.equal([...rust.matchAll(/version: 28,/g)].length, 2);
+  assert.equal([...rust.matchAll(/version: 29,/g)].length, 2);
   assert.match(rust, /const invalidateRevisionGuard = \(\) =>/);
   assert.match(rust, /'input',\s*'change',\s*'selectionchange',\s*'focusin',\s*'focusout',\s*'scroll'/);
   assert.match(rust, /root\.addEventListener\(eventName, invalidateRevisionGuard, true\)/);
   assert.match(rust, /root instanceof Document \|\| root instanceof ShadowRoot/);
   assert.match(rust, /Element\.prototype\.attachShadow = function/);
   assert.match(rust, /revisionGuard\.observeRoot\(element\.shadowRoot\)/);
-  assert.match(rust, /collectOpenComposedTree\(element\.shadowRoot\)/);
+  assert.match(rust, /collectOpenComposedTree\(document\.documentElement\)/);
+  assert.match(rust, /if \(child instanceof Element\) collectOpenComposedTree\(child\)/);
   assert.match(rust, /segments\.join\(' >>> '\)/);
   assert.match(rust, /const deepActiveElement = \(\) =>/);
   assert.equal([...rust.matchAll(/if \((?:element|target)\.assignedSlot\) return (?:element|target)\.assignedSlot/g)].length, 4);
+  assert.equal([...rust.matchAll(/const composedChildNodes = \(node\) =>/g)].length, 3);
+  assert.equal([...rust.matchAll(/assignedNodes\(\{ flatten: true \}\)/g)].length, 3);
+  assert.equal([...rust.matchAll(/node\.shadowRoot\.childNodes/g)].length, 3);
+  assert.match(rust, /const visit = \(node, semanticParent = null\) =>/);
   assert.match(interactionScript, /allOpenComposedElements\(\)\.filter/);
   assert.match(rust, /const windowInvalidationEvents = \['resize', 'scroll', 'hashchange', 'popstate'\]/);
   assert.match(rust, /window\.visualViewport\?\.addEventListener\('scroll', invalidateRevisionGuard, true\)/);
@@ -357,7 +362,7 @@ test('whole-window agent capture is background-safe and addressable by window la
   assert.match(rust, /tag === 'img' && normalize\(element\.getAttribute\('alt'\)\)/);
   assert.equal([...rust.matchAll(/includeHiddenSubtree = false/g)].length, 3);
   assert.equal(
-    [...rust.matchAll(/includeHiddenSubtree \|\| !parent \|\| !semanticallyHidden\(parent\)/g)].length,
+    [...rust.matchAll(/includeHiddenSubtree\s*\|\| !\(semanticParent instanceof Element\)\s*\|\| !semanticallyHidden\(semanticParent\)/g)].length,
     3,
   );
   assert.equal(
@@ -368,7 +373,7 @@ test('whole-window agent capture is background-safe and addressable by window la
     interactionScript,
     /semanticText\(labelledBy, semanticallyHidden\(labelledBy\)\)/,
   );
-  assert.equal([...rust.matchAll(/document\.createTreeWalker\(/g)].length, 6);
+  assert.equal([...rust.matchAll(/document\.createTreeWalker\(/g)].length, 2);
   assert.match(rust, /const referencedText = \(idRefs, context\) =>/);
   assert.equal([...rust.matchAll(/const labelledByText = \(/g)].length, 3);
   assert.equal([...rust.matchAll(/const nativeLabelText = \(/g)].length, 3);

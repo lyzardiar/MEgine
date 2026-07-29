@@ -3039,6 +3039,16 @@ const WINDOW_UI_SNAPSHOT_SCRIPT: &str = r#"
     while (active?.shadowRoot?.activeElement) active = active.shadowRoot.activeElement;
     return active;
   };
+  const composedChildNodes = (node) => {
+    if (node instanceof HTMLSlotElement) {
+      const assigned = node.assignedNodes({ flatten: true });
+      if (assigned.length > 0) return assigned;
+    }
+    if (node instanceof Element && node.shadowRoot) {
+      return Array.from(node.shadowRoot.childNodes);
+    }
+    return Array.from(node.childNodes || []);
+  };
   const semanticallyHidden = (element) => Boolean(
     closestComposed(element, '[aria-hidden="true"], [inert]'),
   );
@@ -3105,18 +3115,30 @@ const WINDOW_UI_SNAPSHOT_SCRIPT: &str = r#"
     includeHiddenSubtree = false,
   ) => {
     const parts = [];
-    const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT);
-    let node = walker.nextNode();
-    while (node) {
-      const parent = node.parentElement;
-      if (
-        (includeHiddenSubtree || !parent || !semanticallyHidden(parent))
-        && !(excludedElement instanceof Element && excludedElement.contains(node))
-      ) {
-        parts.push(node.textContent || '');
+    const visit = (node, semanticParent = null) => {
+      if (node.nodeType === Node.TEXT_NODE) {
+        if (
+          includeHiddenSubtree
+          || !(semanticParent instanceof Element)
+          || !semanticallyHidden(semanticParent)
+        ) {
+          parts.push(node.textContent || '');
+        }
+        return;
       }
-      node = walker.nextNode();
-    }
+      if (node instanceof Element) {
+        if (excludedElement instanceof Element && node === excludedElement) return;
+        if (
+          ['script', 'style', 'template', 'noscript'].includes(node.localName)
+          || (!includeHiddenSubtree && semanticallyHidden(node))
+        ) return;
+      }
+      const nextParent = node instanceof Element ? node : semanticParent;
+      for (const child of composedChildNodes(node)) {
+        visit(child, nextParent);
+      }
+    };
+    visit(root);
     return normalize(parts.join(' '));
   };
   const referencedText = (idRefs, context) => {
@@ -3692,17 +3714,17 @@ const WINDOW_UI_SNAPSHOT_SCRIPT: &str = r#"
     };
   };
   const all = [];
-  const collectOpenComposedTree = (root) => {
-    if (root instanceof Document) all.push(root.documentElement);
-    for (const element of root.querySelectorAll('*')) {
-      all.push(element);
-      if (element.shadowRoot) {
-        revisionGuard.observeRoot(element.shadowRoot);
-        collectOpenComposedTree(element.shadowRoot);
-      }
+  const collectedElements = new Set();
+  const collectOpenComposedTree = (element) => {
+    if (!(element instanceof Element) || collectedElements.has(element)) return;
+    collectedElements.add(element);
+    all.push(element);
+    if (element.shadowRoot) revisionGuard.observeRoot(element.shadowRoot);
+    for (const child of composedChildNodes(element)) {
+      if (child instanceof Element) collectOpenComposedTree(child);
     }
   };
-  collectOpenComposedTree(document);
+  collectOpenComposedTree(document.documentElement);
   const visibleModalDialogs = Array.from(
     all.filter((candidate) => candidate.matches?.(
       'dialog, [role="dialog"][aria-modal="true"]',
@@ -3789,7 +3811,7 @@ const WINDOW_UI_SNAPSHOT_SCRIPT: &str = r#"
   const activeElementSelector =
     activeElement instanceof Element ? selectorFor(activeElement) : null;
   const revisionSource = JSON.stringify({
-    version: 28,
+    version: 29,
     title: document.title,
     url: location.href,
     viewport,
@@ -3803,7 +3825,7 @@ const WINDOW_UI_SNAPSHOT_SCRIPT: &str = r#"
     revisionHash ^= BigInt(revisionSource.charCodeAt(index));
     revisionHash = BigInt.asUintN(64, revisionHash * 0x100000001b3n);
   }
-  const snapshotRevision = `ui-v28-${candidates.length}-${
+  const snapshotRevision = `ui-v29-${candidates.length}-${
     revisionHash.toString(16).padStart(16, '0')
   }`;
   const guardedElements = new Map(semanticElements.map((semanticElement, index) => [
@@ -3824,7 +3846,7 @@ const WINDOW_UI_SNAPSHOT_SCRIPT: &str = r#"
   }
   const elements = semanticElements.slice(offset, offset + limit);
   return {
-    version: 28,
+    version: 29,
     snapshotRevision,
     title: document.title,
     url: location.href,
@@ -4043,6 +4065,16 @@ const WINDOW_UI_CONTENT_SCRIPT: &str = r#"
     }
     return null;
   };
+  const composedChildNodes = (node) => {
+    if (node instanceof HTMLSlotElement) {
+      const assigned = node.assignedNodes({ flatten: true });
+      if (assigned.length > 0) return assigned;
+    }
+    if (node instanceof Element && node.shadowRoot) {
+      return Array.from(node.shadowRoot.childNodes);
+    }
+    return Array.from(node.childNodes || []);
+  };
   const semanticallyHidden = (target) => Boolean(
     target instanceof Element
       && closestComposed(target, '[aria-hidden="true"], [inert]'),
@@ -4053,18 +4085,30 @@ const WINDOW_UI_CONTENT_SCRIPT: &str = r#"
     includeHiddenSubtree = false,
   ) => {
     const parts = [];
-    const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT);
-    let node = walker.nextNode();
-    while (node) {
-      const parent = node.parentElement;
-      if (
-        (includeHiddenSubtree || !parent || !semanticallyHidden(parent))
-        && !(excludedElement instanceof Element && excludedElement.contains(node))
-      ) {
-        parts.push(node.textContent || '');
+    const visit = (node, semanticParent = null) => {
+      if (node.nodeType === Node.TEXT_NODE) {
+        if (
+          includeHiddenSubtree
+          || !(semanticParent instanceof Element)
+          || !semanticallyHidden(semanticParent)
+        ) {
+          parts.push(node.textContent || '');
+        }
+        return;
       }
-      node = walker.nextNode();
-    }
+      if (node instanceof Element) {
+        if (excludedElement instanceof Element && node === excludedElement) return;
+        if (
+          ['script', 'style', 'template', 'noscript'].includes(node.localName)
+          || (!includeHiddenSubtree && semanticallyHidden(node))
+        ) return;
+      }
+      const nextParent = node instanceof Element ? node : semanticParent;
+      for (const child of composedChildNodes(node)) {
+        visit(child, nextParent);
+      }
+    };
+    visit(root);
     return normalizeSemantic(parts.join(' '));
   };
   const referencedText = (idRefs, context) => {
@@ -4200,14 +4244,19 @@ const WINDOW_UI_CONTENT_SCRIPT: &str = r#"
   };
   const exactSemanticText = (root) => {
     const parts = [];
-    const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT);
-    let node = walker.nextNode();
-    while (node) {
-      if (textNodeIsRendered(node.parentElement)) {
-        parts.push(node.textContent || '');
+    const visit = (node, semanticParent = null) => {
+      if (node.nodeType === Node.TEXT_NODE) {
+        if (textNodeIsRendered(semanticParent)) {
+          parts.push(node.textContent || '');
+        }
+        return;
       }
-      node = walker.nextNode();
-    }
+      const nextParent = node instanceof Element ? node : semanticParent;
+      for (const child of composedChildNodes(node)) {
+        visit(child, nextParent);
+      }
+    };
+    visit(root);
     return parts.join('');
   };
   let content;
@@ -4393,15 +4442,28 @@ const WINDOW_UI_INTERACTION_SCRIPT: &str = r#"
     while (active?.shadowRoot?.activeElement) active = active.shadowRoot.activeElement;
     return active;
   };
+  const composedChildNodes = (node) => {
+    if (node instanceof HTMLSlotElement) {
+      const assigned = node.assignedNodes({ flatten: true });
+      if (assigned.length > 0) return assigned;
+    }
+    if (node instanceof Element && node.shadowRoot) {
+      return Array.from(node.shadowRoot.childNodes);
+    }
+    return Array.from(node.childNodes || []);
+  };
   const allOpenComposedElements = () => {
     const elements = [];
-    const collect = (root) => {
-      for (const candidate of root.querySelectorAll('*')) {
-        elements.push(candidate);
-        if (candidate.shadowRoot) collect(candidate.shadowRoot);
+    const collected = new Set();
+    const collect = (candidate) => {
+      if (!(candidate instanceof Element) || collected.has(candidate)) return;
+      collected.add(candidate);
+      elements.push(candidate);
+      for (const child of composedChildNodes(candidate)) {
+        if (child instanceof Element) collect(child);
       }
     };
-    collect(document);
+    collect(document.documentElement);
     return elements;
   };
   const revisionGuard = window[Symbol.for('mengine.agent.uiRevisionGuard')];
@@ -4517,15 +4579,29 @@ const WINDOW_UI_INTERACTION_SCRIPT: &str = r#"
   );
   const semanticText = (root, includeHiddenSubtree = false) => {
     const parts = [];
-    const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT);
-    let node = walker.nextNode();
-    while (node) {
-      const parent = node.parentElement;
-      if (includeHiddenSubtree || !parent || !semanticallyHidden(parent)) {
-        parts.push(node.textContent || '');
+    const visit = (node, semanticParent = null) => {
+      if (node.nodeType === Node.TEXT_NODE) {
+        if (
+          includeHiddenSubtree
+          || !(semanticParent instanceof Element)
+          || !semanticallyHidden(semanticParent)
+        ) {
+          parts.push(node.textContent || '');
+        }
+        return;
       }
-      node = walker.nextNode();
-    }
+      if (node instanceof Element) {
+        if (
+          ['script', 'style', 'template', 'noscript'].includes(node.localName)
+          || (!includeHiddenSubtree && semanticallyHidden(node))
+        ) return;
+      }
+      const nextParent = node instanceof Element ? node : semanticParent;
+      for (const child of composedChildNodes(node)) {
+        visit(child, nextParent);
+      }
+    };
+    visit(root);
     return normalizeName(parts.join(' '));
   };
   const labelledByText = (target) => {
