@@ -62,7 +62,12 @@ export interface EditorUiElement {
   selector: string;
   tag: string;
   role: string | null;
+  /** Original accessible name exposed by the control. */
   name: string | null;
+  /** Nearest stable panel, dialog, menu, or editor-window scope. */
+  scope: string | null;
+  /** Scope-qualified name for unambiguous whole-window search. */
+  qualifiedName: string | null;
   text: string | null;
   value: string | null;
   description: string | null;

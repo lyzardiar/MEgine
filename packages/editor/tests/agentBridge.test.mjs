@@ -46,8 +46,14 @@ test('whole-window agent capture is background-safe and addressable by window la
   assert.match(rust, /const offset = __MENGINE_OFFSET__/);
   assert.match(rust, /semanticElements\.slice\(offset, offset \+ limit\)/);
   assert.match(rust, /new Map\(candidates\.map/);
-  assert.match(rust, /const snapshotRevision = `ui-v1-/);
+  assert.match(rust, /const snapshotRevision = `ui-v2-/);
   assert.match(rust, /revisionHash = BigInt\.asUintN\(64/);
+  assert.match(rust, /const semanticScopeFor = \(element\) =>/);
+  assert.match(rust, /role === 'tabpanel'/);
+  assert.match(rust, /const qualifiedNameFor = \(scope, name\) =>/);
+  assert.match(rust, /scope: scope \|\| null/);
+  assert.match(rust, /qualifiedName: qualifiedNameFor\(scope, name\) \|\| null/);
+  assert.equal([...rust.matchAll(/version: 3,/g)].length, 2);
   assert.match(rust, /nextOffset:/);
   assert.match(rust, /hasMore:/);
   assert.match(rust, /WINDOW_UI_INTERACTION_SCRIPT/);

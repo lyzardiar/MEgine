@@ -20,6 +20,9 @@ test('core editor navigation exposes named semantic controls', () => {
   const rectTransform = panel('RectTransformEditor.tsx');
   const schemaFields = panel('SchemaFieldEditor.tsx');
   const fieldEditors = panel('uiFieldEditors.tsx');
+  const projectSettings = panel('ProjectSettings.tsx');
+  const material = panel('Material.tsx');
+  const buildSettings = panel('BuildSettings.tsx');
   const dialogHost = fs.readFileSync(path.join(root, 'src', 'EditorDialogHost.tsx'), 'utf8');
 
   assert.match(project, /role="tree" aria-label="Project folders"/);
@@ -64,6 +67,12 @@ test('core editor navigation exposes named semantic controls', () => {
   assert.match(fieldEditors, /aria-label=\{`\$\{props\.label\} asset drop target`\}/);
   assert.match(fieldEditors, /aria-label=\{`\$\{props\.label\} entity drop target`\}/);
   assert.match(fieldEditors, /aria-label="Image Type"/);
+  assert.match(projectSettings, /aria-label=\{`Remove tag \$\{tag\}`\}/);
+  assert.match(projectSettings, /aria-label=\{`Remove GameObject layer \$\{layer\.name\}`\}/);
+  assert.match(projectSettings, /aria-label=\{`Remove sorting layer \$\{layer\.name\}`\}/);
+  assert.match(material, /aria-label=\{`\$\{props\.label\} texture preview`\}/);
+  assert.match(buildSettings, /aria-label="Refresh build history"/);
+  assert.match(buildSettings, /aria-label="Refresh patch inventory"/);
 
   assert.match(dock, /role="tablist" aria-label="Dock panels"/);
   assert.match(dock, /role="tab"/);

@@ -2554,6 +2554,35 @@ const WINDOW_UI_SNAPSHOT_SCRIPT: &str = r#"
       || element.getAttribute('title')
       || (nameFromContent(role) ? element.innerText || element.textContent : ''),
   );
+  const semanticScopeFor = (element) => {
+    let current = element;
+    while (current instanceof Element) {
+      const explicit = normalize(current.getAttribute('data-agent-scope'), 160);
+      const role = normalize(current.getAttribute('role') || implicitRole(current), 80);
+      const scopedContainer = Boolean(explicit)
+        || role === 'tabpanel'
+        || role === 'dialog'
+        || role === 'menu'
+        || current.classList.contains('detached-panel-workspace')
+        || current.classList.contains('editor-window');
+      if (scopedContainer) {
+        const label = explicit || accessibleName(current, role);
+        if (label) return label;
+      }
+      current = current.parentElement;
+    }
+    return '';
+  };
+  const qualifiedNameFor = (scope, name) => {
+    if (!name || !scope || name === scope) return name;
+    const scopeBase = normalize(scope.replace(/\s+(?:panel|window|dialog|menu)$/iu, ''), 160);
+    if (!scopeBase) return name;
+    const lowerName = name.toLocaleLowerCase();
+    const lowerScope = scopeBase.toLocaleLowerCase();
+    return lowerName === lowerScope || lowerName.startsWith(`${lowerScope} `)
+      ? name
+      : normalize(`${scopeBase} / ${name}`, 400);
+  };
   const ownText = (element, role) => {
     if (nameFromContent(role) || element.children.length === 0) {
       return normalize(element.innerText || element.textContent);
@@ -2779,6 +2808,7 @@ const WINDOW_UI_SNAPSHOT_SCRIPT: &str = r#"
   const ids = new Map(candidates.map((entry, index) => [entry.element, `ui-${index + 1}`]));
   const semanticElementFor = (entry) => {
     const { element, role, name, text, actions } = entry;
+    const scope = semanticScopeFor(element);
     let parent = element.parentElement;
     while (parent && !ids.has(parent)) parent = parent.parentElement;
     return {
@@ -2788,6 +2818,8 @@ const WINDOW_UI_SNAPSHOT_SCRIPT: &str = r#"
       tag: element.localName,
       role: role || null,
       name: name || null,
+      scope: scope || null,
+      qualifiedName: qualifiedNameFor(scope, name) || null,
       text: text && text !== name ? text : null,
       value: valueFor(element) || null,
       description: descriptionFor(element, name),
@@ -2809,7 +2841,7 @@ const WINDOW_UI_SNAPSHOT_SCRIPT: &str = r#"
   const activeElementSelector =
     document.activeElement instanceof Element ? selectorFor(document.activeElement) : null;
   const revisionSource = JSON.stringify({
-    version: 2,
+    version: 3,
     title: document.title,
     url: location.href,
     viewport,
@@ -2823,13 +2855,13 @@ const WINDOW_UI_SNAPSHOT_SCRIPT: &str = r#"
     revisionHash ^= BigInt(revisionSource.charCodeAt(index));
     revisionHash = BigInt.asUintN(64, revisionHash * 0x100000001b3n);
   }
-  const snapshotRevision = `ui-v1-${candidates.length}-${
+  const snapshotRevision = `ui-v2-${candidates.length}-${
     revisionHash.toString(16).padStart(16, '0')
   }`;
   revisionGuard.revisions.set(snapshotRevision, revisionGuard.epoch);
   const elements = semanticElements.slice(offset, offset + limit);
   return {
-    version: 2,
+    version: 3,
     snapshotRevision,
     title: document.title,
     url: location.href,

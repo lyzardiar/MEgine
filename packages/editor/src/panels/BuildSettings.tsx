@@ -1084,6 +1084,7 @@ export function BuildSettings(props: {
               <span>{buildHistory.length}/{historyRetentionLimit} retained</span>
               <button
                 type="button"
+                aria-label="Refresh build history"
                 disabled={historyLoading || historyComparing || buildArtifactBusy}
                 onClick={() => void refreshBuildHistory()}
               >
@@ -1216,6 +1217,7 @@ export function BuildSettings(props: {
               <span>{buildPatches.length} patches</span>
               <button
                 type="button"
+                aria-label="Refresh patch inventory"
                 disabled={patchInventoryLoading || buildArtifactBusy}
                 onClick={() => void refreshBuildPatches()}
               >

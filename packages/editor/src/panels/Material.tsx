@@ -178,6 +178,7 @@ function MaterialTextureSlot(props: {
           type="button"
           className="material-texture-thumb"
           disabled={!current}
+          aria-label={`${props.label} texture preview`}
           title={current ? 'Ping texture in Project' : props.value ? 'Texture is missing' : 'No texture assigned'}
           onClick={() => current && pingProjectAsset(current.relPath, current.folder)}
         >

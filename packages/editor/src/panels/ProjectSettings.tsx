@@ -259,6 +259,7 @@ export function ProjectSettings(props: {
                 <span className="sorting-layer-actions">
                   <button
                     type="button"
+                    aria-label={`Remove tag ${tag}`}
                     title={isDefault ? 'The Untagged tag cannot be removed' : 'Remove tag'}
                     disabled={isDefault || saving}
                     onClick={() => {
@@ -321,6 +322,7 @@ export function ProjectSettings(props: {
                 <span className="sorting-layer-actions">
                   <button
                     type="button"
+                    aria-label={`Remove GameObject layer ${layer.name}`}
                     title={isDefault ? 'The Default layer cannot be removed' : 'Remove layer'}
                     disabled={isDefault || saving}
                     onClick={() => {
@@ -378,6 +380,7 @@ export function ProjectSettings(props: {
                   <button type="button" title="Move down" disabled={index === layers.length - 1 || saving} onClick={() => move(index, 1)}>Down</button>
                   <button
                     type="button"
+                    aria-label={`Remove sorting layer ${layer.name}`}
                     title={isDefault ? 'The Default layer cannot be removed' : 'Remove layer'}
                     disabled={isDefault || saving}
                     onClick={() => {
