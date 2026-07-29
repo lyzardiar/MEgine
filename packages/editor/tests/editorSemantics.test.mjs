@@ -25,6 +25,8 @@ test('core editor navigation exposes named semantic controls', () => {
   const projectSettings = panel('ProjectSettings.tsx');
   const material = panel('Material.tsx');
   const buildSettings = panel('BuildSettings.tsx');
+  const profiler = panel('Profiler.tsx');
+  const animator = panel('Animator.tsx');
   const dialogHost = fs.readFileSync(path.join(root, 'src', 'EditorDialogHost.tsx'), 'utf8');
 
   assert.match(project, /role="tree" aria-label="Project folders"/);
@@ -149,7 +151,24 @@ test('core editor navigation exposes named semantic controls', () => {
   assert.match(inspector, /role="menuitem"/);
   assert.match(inspector, /aria-haspopup="menu"\s*aria-expanded=\{menuOpen\}\s*aria-controls=\{contextMenuId\}/);
   assert.match(project, /moveMenuItemFocus\(event\.currentTarget, event\.target, event\.key\)/);
-  assert.match(spriteEditor, /aria-label="Select sprite slice from preview"\s*onClick=/);
+  assert.match(
+    spriteEditor,
+    /role="img"\s*aria-label="Select sprite slice from preview"\s*onClick=/,
+  );
+  assert.match(
+    viewport,
+    /role="application"\s*aria-roledescription=\{props\.tab === 'scene'/,
+  );
+  assert.match(
+    timeline,
+    /role="img"[^>]*aria-label="Animation curve preview"/,
+  );
+  assert.match(
+    timeline,
+    /role="application"\s*aria-roledescription="animation curve editor"/,
+  );
+  assert.match(profiler, /role="img"[^>]*aria-label=\{`\$\{props\.label\} history`\}/);
+  assert.match(animator, /role="group"[^>]*aria-label="Animator state graph"/);
   assert.match(timeline, /aria-label="Animation Timeline workspace"/);
   assert.match(timeline, /aria-label="Animation Timeline lanes"/);
   assert.equal(timeline.match(/data-agent-drag-by="true"/g)?.length, 2);

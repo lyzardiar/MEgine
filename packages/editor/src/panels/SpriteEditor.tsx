@@ -358,6 +358,7 @@ export function SpriteEditor(props: {
           <canvas
             ref={canvasRef}
             style={{ width: canvasSize.width, height: canvasSize.height }}
+            role="img"
             aria-label="Select sprite slice from preview"
             onClick={selectAtPointer}
           />

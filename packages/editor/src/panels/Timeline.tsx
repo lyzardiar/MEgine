@@ -358,7 +358,7 @@ function AnimationCurvePreview(props: {
         <strong>Curve</strong>
         <span>{minimum.toFixed(3)} to {maximum.toFixed(3)}</span>
       </header>
-      <svg viewBox={`0 0 ${width} ${height}`} preserveAspectRatio="none" aria-label="Animation curve preview">
+      <svg role="img" viewBox={`0 0 ${width} ${height}`} preserveAspectRatio="none" aria-label="Animation curve preview">
         <line className="timeline-curve-midline" x1="0" y1={height / 2} x2={width} y2={height / 2} />
         {first.slice(0, CURVE_COLORS.length).map((_channel, channel) => (
           <polyline
@@ -1085,6 +1085,8 @@ function AnimationCurveWorkspace(props: {
       </header>
       <svg
         className={drag?.kind === 'view' ? `is-${drag.mode}` : undefined}
+        role="application"
+        aria-roledescription="animation curve editor"
         viewBox={`0 0 ${CURVE_VIEW_WIDTH} ${CURVE_VIEW_HEIGHT}`}
         preserveAspectRatio="none"
         aria-label="Editable animation curve"

@@ -47,7 +47,7 @@ function ProfileGraph(props: {
   return (
     <section className="profiler-graph">
       <header><strong>{props.label}</strong><span>0–{maximum.toFixed(1)} ms</span></header>
-      <svg viewBox="0 0 300 72" preserveAspectRatio="none" aria-label={`${props.label} history`}>
+      <svg role="img" viewBox="0 0 300 72" preserveAspectRatio="none" aria-label={`${props.label} history`}>
         <path className="profiler-grid" d="M0 20H300 M0 36H300 M0 52H300" />
         {budgetY != null && (
           <path className="profiler-budget" d={`M0 ${budgetY.toFixed(2)}H300`} />

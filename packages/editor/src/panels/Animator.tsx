@@ -205,7 +205,7 @@ function AnimatorStateGraph(props: {
       </div>
       <div className="animator-graph-viewport" ref={viewport}>
         <div className="animator-graph-canvas" style={{ width: graphWidth, height: graphHeight }}>
-          <svg width={graphWidth} height={graphHeight} aria-label="Animator state graph">
+          <svg role="group" width={graphWidth} height={graphHeight} aria-label="Animator state graph">
             <defs>
               <marker id="animator-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
                 <path d="M 0 0 L 10 5 L 0 10 z" fill="context-stroke" />

@@ -3543,6 +3543,10 @@ export function Viewport(props: {
       <canvas
         ref={canvasRef}
         data-scene-viewport={props.tab === 'scene' ? 'true' : undefined}
+        role="application"
+        aria-roledescription={props.tab === 'scene'
+          ? 'interactive scene canvas'
+          : 'interactive game canvas'}
         tabIndex={0}
         aria-label={props.tab === 'scene' ? 'Scene viewport' : 'Game viewport'}
         onMouseDown={(event) => {
