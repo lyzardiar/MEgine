@@ -2549,15 +2549,16 @@ const WINDOW_UI_SNAPSHOT_SCRIPT: &str = r#"
     }
     return normalize(parts.join(' '));
   };
+  const referencedText = (idRefs) => normalize(idRefs).split(/\s+/)
+    .map((id) => document.getElementById(id))
+    .filter(Boolean)
+    .map((node) => semanticText(node))
+    .filter(Boolean)
+    .join(' ');
   const labelledText = (element) => {
     const labelledBy = normalize(element.getAttribute('aria-labelledby'));
     if (labelledBy) {
-      const text = labelledBy.split(/\s+/)
-        .map((id) => document.getElementById(id))
-        .filter(Boolean)
-        .map((node) => semanticText(node))
-        .filter(Boolean)
-        .join(' ');
+      const text = referencedText(labelledBy);
       if (text) return normalize(text);
     }
     if (element.labels?.length) {
@@ -2965,7 +2966,8 @@ const WINDOW_UI_SNAPSHOT_SCRIPT: &str = r#"
     return state;
   };
   const descriptionFor = (element, name) => normalize(
-    element.getAttribute('aria-description')
+    referencedText(element.getAttribute('aria-describedby'))
+      || element.getAttribute('aria-description')
       || (
         normalize(element.getAttribute('title')) !== name
           ? element.getAttribute('title')
@@ -3073,7 +3075,7 @@ const WINDOW_UI_SNAPSHOT_SCRIPT: &str = r#"
   const activeElementSelector =
     document.activeElement instanceof Element ? selectorFor(document.activeElement) : null;
   const revisionSource = JSON.stringify({
-    version: 12,
+    version: 13,
     title: document.title,
     url: location.href,
     viewport,
@@ -3087,7 +3089,7 @@ const WINDOW_UI_SNAPSHOT_SCRIPT: &str = r#"
     revisionHash ^= BigInt(revisionSource.charCodeAt(index));
     revisionHash = BigInt.asUintN(64, revisionHash * 0x100000001b3n);
   }
-  const snapshotRevision = `ui-v11-${candidates.length}-${
+  const snapshotRevision = `ui-v12-${candidates.length}-${
     revisionHash.toString(16).padStart(16, '0')
   }`;
   const guardedElements = new Map(semanticElements.map((semanticElement, index) => [
@@ -3108,7 +3110,7 @@ const WINDOW_UI_SNAPSHOT_SCRIPT: &str = r#"
   }
   const elements = semanticElements.slice(offset, offset + limit);
   return {
-    version: 12,
+    version: 13,
     snapshotRevision,
     title: document.title,
     url: location.href,

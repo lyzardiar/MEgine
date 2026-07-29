@@ -24,7 +24,7 @@ function assertParity(commandId, args, valid) {
   }
 }
 
-const UI_REVISION = 'ui-v11-42-0123456789abcdef';
+const UI_REVISION = 'ui-v12-42-0123456789abcdef';
 
 test('direct AgentBridge schema validation matches MCP for valid command arguments', () => {
   for (const [commandId, args] of [
