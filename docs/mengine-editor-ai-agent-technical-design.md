@@ -186,7 +186,7 @@ MEngine 编辑器当前对人类友好，但对 AI Agent 不够友好。AI Agent
 
 说明：当前 Scene/Game 视口是 Canvas2D，`toDataURL` 可稳定截取，无 WebGL `preserveDrawingBuffer` 顾虑。编辑器整窗/浮动窗口不能使用 GDI 屏幕 `BitBlt`：该方式必须把编辑器置前，且窗口被遮挡时会截到其它应用。当前实现改为 WebView2 DevTools 渲染面截图，并已在主窗 `visible=false` 的真实 Tauri 实例上验证：工程欢迎页仍能完整成像，请求前后 Windows 前台窗口句柄不变。**前向兼容**：本地编辑器方案规划了「Rust 进程内原生 wgpu Surface」的真实 Scene View，届时视口不再是 DOM canvas，需改用 wgpu 纹理回读；窗口 UI 截图仍由 WebView2 路径负责。
 
-后台自动化实例可设置 `MENGINE_EDITOR_BACKGROUND=1`。主窗口配置从创建时即为 `visible=false/focus=false`；普通启动由 Rust `setup` 显式显示并聚焦，后台模式则从未显示或抢占前台，不依赖 Windows 对 `SW_HIDE` 的不稳定事后处理。Rust 在创建任一 WebView 前还会把后台进程的应用标识替换为由原生编辑器实例 ID 派生的唯一标识，使主窗口、分离面板与辅助编辑器窗口共享本进程独有的 WebView2 数据目录，不会读取或改写前台实例的 Dock 布局、Detached Panel 状态、场景/Timeline 偏好及浏览器缓存；退出时仅清理精确匹配该临时标识的配置与数据目录。发现记录同时公开非敏感的 `runtimeIdentifier` 与 `background`，便于启动器准确清理被强制终止的专属运行目录。测试或并行 Agent 实例仍应把 `MENGINE_EDITOR_CONFIG_DIR` 指向独立的绝对目录，使 Bridge 发现记录和最近工程也不会互相覆盖；未显式指定时，后台发现记录继续发布到正式编辑器的稳定配置目录，保持单实例 CLI 自动发现兼容。
+后台自动化实例可设置 `MENGINE_EDITOR_BACKGROUND=1`。主窗口配置从创建时即为 `visible=false/focus=false`；普通启动由 Rust `setup` 显式显示并聚焦，后台模式则从未显示或抢占前台，不依赖 Windows 对 `SW_HIDE` 的不稳定事后处理。Rust 在创建任一 WebView 前还会把后台进程的应用标识替换为由原生编辑器实例 ID 派生的唯一标识，使主窗口、分离面板与辅助编辑器窗口共享本进程独有的 WebView2 数据目录，不会读取或改写前台实例的 Dock 布局、Detached Panel 状态、场景/Timeline 偏好及浏览器缓存；退出时仅清理精确匹配该临时标识的配置与数据目录。发现记录同时公开非敏感的 `runtimeIdentifier` 与 `background`，便于启动器准确清理被强制终止的专属运行目录。后台进程在自动发现目录内写入独立的 `agent-bridge-background.json`，不会再覆盖前台 `agent-bridge.json`；CLI、HTTP 与 MCP 连接器按“后台优先、前台回退”依次尝试有效记录，后台记录缺失、损坏或连接失败时不会阻断前台只读连接。测试或多个并行后台 Agent 实例只需分别把 `MENGINE_EDITOR_CONFIG_DIR` 指向独立的绝对目录，Rust Host 与全部连接器都会自动把它作为发现根目录，无需再重复设置 `MENGINE_AGENT_BRIDGE_FILE`，且各自的 Bridge 记录和最近工程不会互相覆盖。
 
 #### 4.1.2 窗口与面板枚举（用户明确提出）
 

@@ -715,6 +715,7 @@ test('whole-window agent capture is background-safe and addressable by window la
   assert.match(native, /default_editor_config_dir\(\)/);
   assert.match(rust, /"runtimeIdentifier": app\.config\(\)\.identifier/);
   assert.match(rust, /"background": crate::starts_in_background\(\)/);
+  assert.match(rust, /agent-bridge-background\.json/);
   assert.match(native, /let background = starts_in_background\(\)/);
   assert.match(native, /main\.hide\(\)\?/);
   assert.match(native, /main\.set_focusable\(false\)\?/);

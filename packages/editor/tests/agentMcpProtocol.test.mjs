@@ -1,4 +1,6 @@
 import assert from 'node:assert/strict';
+import fs from 'node:fs';
+import os from 'node:os';
 import { spawn } from 'node:child_process';
 import { once } from 'node:events';
 import path from 'node:path';
@@ -7,9 +9,11 @@ import { fileURLToPath } from 'node:url';
 import {
   BoundedNdjsonDecoder,
   BoundedWriteQueue,
+  defaultDiscoveryPaths,
   EVENT_RESOURCE_URIS,
   incomingMessageError,
   negotiateProtocolVersion,
+  readDiscoveryCandidates,
   RESOURCES,
   ResourceSubscriptions,
   rpcOnce,
@@ -19,6 +23,74 @@ import {
 const editorRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const repositoryRoot = path.resolve(editorRoot, '..', '..');
 const serverPath = path.join(repositoryRoot, 'packages', 'agent', 'mcp', 'server.mjs');
+
+test('Agent discovery prefers background records and preserves foreground fallback', () => {
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), 'mengine-discovery-test-'));
+  try {
+    const [backgroundFile, foregroundFile] = defaultDiscoveryPaths({
+      platform: 'win32',
+      env: { APPDATA: root },
+      homeDir: root,
+    });
+    assert.deepEqual(
+      defaultDiscoveryPaths({
+        platform: 'win32',
+        env: {
+          APPDATA: path.join(root, 'ignored'),
+          MENGINE_EDITOR_CONFIG_DIR: root,
+        },
+        homeDir: root,
+      }),
+      [
+        path.join(root, 'agent-bridge-background.json'),
+        path.join(root, 'agent-bridge.json'),
+      ],
+    );
+    fs.mkdirSync(path.dirname(backgroundFile), { recursive: true });
+    fs.writeFileSync(foregroundFile, JSON.stringify({
+      port: 4101,
+      token: 'foreground-token',
+      pid: 101,
+      runtimeIdentifier: 'com.mengine.editor',
+      background: false,
+    }));
+    fs.writeFileSync(backgroundFile, JSON.stringify({
+      port: 4102,
+      token: 'background-token',
+      pid: 102,
+      runtimeIdentifier: 'com.mengine.editor.agent-test',
+      background: true,
+    }));
+    assert.deepEqual(
+      readDiscoveryCandidates({
+        explicitFile: null,
+        paths: [backgroundFile, foregroundFile],
+      }).map(({ file, port, background }) => ({ file, port, background })),
+      [
+        { file: backgroundFile, port: 4102, background: true },
+        { file: foregroundFile, port: 4101, background: false },
+      ],
+    );
+
+    fs.writeFileSync(backgroundFile, '{broken');
+    assert.deepEqual(
+      readDiscoveryCandidates({
+        explicitFile: null,
+        paths: [backgroundFile, foregroundFile],
+      }).map(({ file, port }) => ({ file, port })),
+      [{ file: foregroundFile, port: 4101 }],
+    );
+    assert.throws(
+      () => readDiscoveryCandidates({
+        explicitFile: backgroundFile,
+        paths: [foregroundFile],
+      }),
+      /not valid JSON/,
+    );
+  } finally {
+    fs.rmSync(root, { recursive: true, force: true });
+  }
+});
 
 async function runStdioSession(lines) {
   const child = spawn(process.execPath, [serverPath], {

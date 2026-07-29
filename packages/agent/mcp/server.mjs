@@ -14,7 +14,8 @@
  *   node packages/agent/mcp/server.mjs
  *
  * Configure the editor location with MENGINE_AGENT_BRIDGE_FILE, or rely on the
- * default Tauri app-config path (<APPDATA>/com.mengine.editor/agent-bridge.json).
+ * default Tauri app-config records. The hidden background editor is preferred
+ * without replacing the foreground editor's record.
  */
 
 import fs from 'node:fs';
@@ -56,21 +57,32 @@ const DANGEROUS_AGENT_COMMAND_SET = new Set(DANGEROUS_AGENT_COMMANDS);
 
 // ── Discovery ────────────────────────────────────────────────────────────
 
-function defaultDiscoveryPath() {
+function defaultDiscoveryPaths({
+  platform = process.platform,
+  env = process.env,
+  homeDir = os.homedir(),
+} = {}) {
   const base =
-    process.platform === 'win32'
-      ? process.env.APPDATA || path.join(os.homedir(), 'AppData', 'Roaming')
-      : process.platform === 'darwin'
-        ? path.join(os.homedir(), 'Library', 'Application Support')
-        : process.env.XDG_CONFIG_HOME || path.join(os.homedir(), '.config');
-  return path.join(base, 'com.mengine.editor', 'agent-bridge.json');
+    platform === 'win32'
+      ? env.APPDATA || path.join(homeDir, 'AppData', 'Roaming')
+      : platform === 'darwin'
+        ? path.join(homeDir, 'Library', 'Application Support')
+        : env.XDG_CONFIG_HOME || path.join(homeDir, '.config');
+  const configuredDirectory = env.MENGINE_EDITOR_CONFIG_DIR;
+  const directory = typeof configuredDirectory === 'string'
+    && path.isAbsolute(configuredDirectory)
+    ? configuredDirectory
+    : path.join(base, 'com.mengine.editor');
+  return [
+    path.join(directory, 'agent-bridge-background.json'),
+    path.join(directory, 'agent-bridge.json'),
+  ];
 }
 
-function readDiscovery() {
-  const file = process.env.MENGINE_AGENT_BRIDGE_FILE || defaultDiscoveryPath();
+function readDiscoveryFile(file, readFile = (target) => fs.readFileSync(target, 'utf-8')) {
   let raw;
   try {
-    raw = fs.readFileSync(file, 'utf-8');
+    raw = readFile(file);
   } catch (error) {
     throw new BridgeConnectionError(
       `Cannot read AgentBridge discovery file at ${file}. ` +
@@ -100,10 +112,39 @@ function readDiscovery() {
     );
   }
   return {
+    file,
     port: data.port,
     token: data.token,
     pid: Number.isSafeInteger(data.pid) && data.pid > 0 ? data.pid : null,
+    runtimeIdentifier: typeof data.runtimeIdentifier === 'string'
+      ? data.runtimeIdentifier
+      : null,
+    background: data.background === true,
   };
+}
+
+function readDiscoveryCandidates({
+  explicitFile = process.env.MENGINE_AGENT_BRIDGE_FILE || null,
+  paths = defaultDiscoveryPaths(),
+  readFile,
+} = {}) {
+  const files = explicitFile ? [explicitFile] : paths;
+  const candidates = [];
+  const failures = [];
+  for (const file of files) {
+    try {
+      candidates.push(readDiscoveryFile(file, readFile));
+    } catch (error) {
+      failures.push(error);
+    }
+  }
+  if (candidates.length > 0) return candidates;
+  if (explicitFile && failures[0]) throw failures[0];
+  throw new BridgeConnectionError(
+    `Cannot read any AgentBridge discovery record. Tried: ${files.join(', ')}. ` +
+      'Is the MEngine editor running? Set MENGINE_AGENT_BRIDGE_FILE to override.',
+    { cause: failures[0] },
+  );
 }
 
 // ── Bridge client (WebSocket) ────────────────────────────────────────────
@@ -258,12 +299,19 @@ async function connectLatestBridge() {
   let lastError;
   for (let attempt = 0; attempt < BRIDGE_CONNECT_ATTEMPTS; attempt += 1) {
     try {
-      return await connectBridge(readDiscovery());
+      const candidates = readDiscoveryCandidates();
+      for (const discovery of candidates) {
+        try {
+          return await connectBridge(discovery);
+        } catch (error) {
+          lastError = error;
+        }
+      }
     } catch (error) {
       lastError = error;
-      if (attempt + 1 < BRIDGE_CONNECT_ATTEMPTS) {
-        await new Promise((resolve) => setTimeout(resolve, BRIDGE_CONNECT_RETRY_MS));
-      }
+    }
+    if (attempt + 1 < BRIDGE_CONNECT_ATTEMPTS) {
+      await new Promise((resolve) => setTimeout(resolve, BRIDGE_CONNECT_RETRY_MS));
     }
   }
   throw lastError;
@@ -424,7 +472,10 @@ async function rpc(
 
     let latestDiscovery = null;
     try {
-      latestDiscovery = readDiscovery();
+      const candidates = readDiscoveryCandidates();
+      latestDiscovery = candidates.find((candidate) => (
+        sameEditorProcess(firstConnection.discovery, candidate)
+      )) ?? candidates[0];
     } catch (discoveryError) {
       if (error.sent && !retryAcrossEditorRestart) {
         throw new BridgeOutcomeUnknownError(
@@ -4723,8 +4774,10 @@ export {
   bridgeQuery,
   closeBridgeConnection,
   DANGEROUS_AGENT_COMMANDS,
+  defaultDiscoveryPaths,
   incomingMessageError,
   negotiateProtocolVersion,
+  readDiscoveryCandidates,
   rpcOnce,
   renderPrompt,
   SUPPORTED_PROTOCOL_VERSIONS,

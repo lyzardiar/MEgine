@@ -881,11 +881,15 @@ fn discovery_file_path(app: &AppHandle) -> Option<PathBuf> {
             log::warn!("MENGINE_EDITOR_CONFIG_DIR must be an absolute path");
             return None;
         }
-        return Some(directory.join("agent-bridge.json"));
+        return Some(directory.join(if crate::starts_in_background() {
+            "agent-bridge-background.json"
+        } else {
+            "agent-bridge.json"
+        }));
     }
     if crate::starts_in_background() {
         return crate::default_editor_config_dir()
-            .map(|directory| directory.join("agent-bridge.json"));
+            .map(|directory| directory.join("agent-bridge-background.json"));
     }
     app.path()
         .app_config_dir()
@@ -895,7 +899,9 @@ fn discovery_file_path(app: &AppHandle) -> Option<PathBuf> {
 
 /// Write `{ port, token, pid }` so adapters can discover and authenticate.
 /// Location: `$MENGINE_AGENT_BRIDGE_FILE` if set, then
-/// `$MENGINE_EDITOR_CONFIG_DIR/agent-bridge.json`, else the native app config dir.
+/// `$MENGINE_EDITOR_CONFIG_DIR`, else the stable native app config directory.
+/// Background records use `agent-bridge-background.json` so they never replace
+/// the foreground `agent-bridge.json`.
 fn write_discovery_file(app: &AppHandle, port: u16, token: &str) {
     let path = discovery_file_path(app);
     let Some(path) = path else {
