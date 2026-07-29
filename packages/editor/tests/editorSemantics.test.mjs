@@ -51,7 +51,7 @@ test('core editor navigation exposes named semantic controls', () => {
 
   assert.match(inspector, /aria-label="Projection"/);
   assert.match(inspector, /aria-label="Clear Flags"/);
-  assert.match(inspector, /aria-label="Primary"/);
+  assert.match(inspector, /aria-label="Camera 3D Primary"/);
   assert.match(inspector, /aria-label=\{`Adjust \$\{props\.ariaLabel/);
   assert.match(inspector, /aria-label=\{`Adjust \$\{props\.label\}`\}/);
   assert.match(rectTransform, /aria-label=\{`Adjust \$\{props\.ariaLabel\}`\}/);
@@ -72,7 +72,8 @@ test('core editor navigation exposes named semantic controls', () => {
   assert.match(dock, /role="tabpanel"/);
   assert.match(dock, /aria-label=\{`\$\{PANEL_TITLES\[panel\]\} panel`\}/);
   assert.match(dock, /aria-label=\{`Dock \$\{node\.panels\.map/);
-  assert.match(dock, /aria-label=\{`Resize dock split \$\{props\.direction\}`\}/);
+  assert.match(dock, /aria-label=\{props\.label\}/);
+  assert.match(dock, /label=\{`Resize dock split between \$\{/);
   assert.match(hierarchyMenu, /role="menu"\s*aria-label="Hierarchy context menu"/);
   assert.match(objectPicker, /aria-label=\{`Close \$\{props\.title\}`\}/);
   assert.match(spriteEditor, /aria-label="Select sprite slice from preview"\s*onClick=/);

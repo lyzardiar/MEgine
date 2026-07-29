@@ -170,6 +170,10 @@ function AxisInput(props: {
   );
 }
 
+function axisSemanticLabel(scope: string, field: string, axis: string): string {
+  return `${scope} ${field} ${axis.toUpperCase()}`;
+}
+
 function CompBlock(props: {
   title: string;
   children: ReactNode;
@@ -218,6 +222,7 @@ function CompBlock(props: {
                 type="button"
                 className="comp-menu-btn"
                 title="Context Menu"
+                aria-label={`${props.title} Context Menu`}
                 onClick={(e) => {
                   e.stopPropagation();
                   setMenuOpen((o) => !o);
@@ -407,7 +412,7 @@ function Camera3DEditor(props: {
         <label>Primary</label>
         <input
           type="checkbox"
-          aria-label="Primary"
+          aria-label="Camera 3D Primary"
           checked={!!d.primary}
           onChange={(e) => props.onChange({ ...d, primary: e.target.checked })}
         />
@@ -628,6 +633,7 @@ function MaterialPropertyBlockEditor(props: {
                     <AxisInput
                       key={axis}
                       label={axis}
+                      ariaLabel={axisSemanticLabel('Surface Shader', parameter.label, axis)}
                       value={value[index]}
                       step={0.01}
                       onChange={(nextValue) => {
@@ -712,6 +718,11 @@ function GenericCompEditor(props: {
           return null;
         }
         const label = meta?.label ?? inspectorLabel(key);
+        const semanticLabel = props.componentType
+          ? `${getComponentCatalog().find((entry) => entry.type === props.componentType)?.label
+            ?? getBehaviour(props.componentType)?.label
+            ?? props.componentType} ${label}`
+          : label;
         const setValue = (
           value: unknown,
           nestedPath: readonly (string | number)[] = [],
@@ -813,7 +824,7 @@ function GenericCompEditor(props: {
                 ref={(element) => {
                   if (element) element.indeterminate = mixed;
                 }}
-                aria-label={label}
+                aria-label={semanticLabel}
                 aria-checked={mixed ? 'mixed' : val}
                 title={mixed ? 'Mixed values' : undefined}
                 onChange={(e) => setValue(e.target.checked)}
@@ -1292,6 +1303,7 @@ function MultiSelectionInspector(props: {
                 <AxisInput
                   key={axis}
                   label={axis === 0 ? 'x' : 'y'}
+                  ariaLabel={axisSemanticLabel('Rect Transform', 'Position', axis === 0 ? 'x' : 'y')}
                   value={primaryRect.anchored_position[axis]}
                   mixed={valuesAreMixed(rectValues.map((value) => value.anchored_position[axis]))}
                   onChange={(value) => setRectAxis('anchored_position', axis, value)}
@@ -1304,6 +1316,7 @@ function MultiSelectionInspector(props: {
                 <AxisInput
                   key={axis}
                   label={axis === 0 ? 'w' : 'h'}
+                  ariaLabel={axisSemanticLabel('Rect Transform', 'Size', axis === 0 ? 'w' : 'h')}
                   value={primaryRect.size_delta[axis]}
                   mixed={valuesAreMixed(rectValues.map((value) => value.size_delta[axis]))}
                   onChange={(value) => setRectAxis('size_delta', axis, value)}
@@ -1314,6 +1327,7 @@ function MultiSelectionInspector(props: {
               <label>Rotation</label>
               <AxisInput
                 label="z"
+                ariaLabel={axisSemanticLabel('Rect Transform', 'Rotation', 'z')}
                 value={primaryRect.local_rotation}
                 mixed={valuesAreMixed(rectValues.map((value) => value.local_rotation))}
                 step={1}
@@ -1326,6 +1340,7 @@ function MultiSelectionInspector(props: {
                 <AxisInput
                   key={axis}
                   label={axis === 0 ? 'x' : 'y'}
+                  ariaLabel={axisSemanticLabel('Rect Transform', 'Scale', axis === 0 ? 'x' : 'y')}
                   value={primaryRect.local_scale[axis]}
                   mixed={valuesAreMixed(rectValues.map((value) => value.local_scale[axis]))}
                   onChange={(value) => setRectAxis('local_scale', axis, value)}
@@ -1360,6 +1375,11 @@ function MultiSelectionInspector(props: {
                     <AxisInput
                       key={axis}
                       label={(['x', 'y', 'z'] as const)[axis]}
+                      ariaLabel={axisSemanticLabel(
+                        'Transform',
+                        field[0].toUpperCase() + field.slice(1),
+                        (['x', 'y', 'z'] as const)[axis],
+                      )}
                       value={primaryValues[axis]}
                       mixed={valuesAreMixed(allValues.map((values) => values[axis]))}
                       step={field === 'rotation' ? 1 : 0.1}
@@ -1735,21 +1755,69 @@ export function Inspector(props: {
         >
           <div className="axis-row">
             <label>Position</label>
-            <AxisInput label="x" value={t.position[0]} onChange={(v) => setPos(0, v)} />
-            <AxisInput label="y" value={t.position[1]} onChange={(v) => setPos(1, v)} />
-            <AxisInput label="z" value={t.position[2]} onChange={(v) => setPos(2, v)} />
+            <AxisInput
+              ariaLabel={axisSemanticLabel('Transform', 'Position', 'x')}
+              label="x"
+              value={t.position[0]}
+              onChange={(v) => setPos(0, v)}
+            />
+            <AxisInput
+              ariaLabel={axisSemanticLabel('Transform', 'Position', 'y')}
+              label="y"
+              value={t.position[1]}
+              onChange={(v) => setPos(1, v)}
+            />
+            <AxisInput
+              ariaLabel={axisSemanticLabel('Transform', 'Position', 'z')}
+              label="z"
+              value={t.position[2]}
+              onChange={(v) => setPos(2, v)}
+            />
           </div>
           <div className="axis-row">
             <label>Rotation</label>
-            <AxisInput label="x" value={euler[0]} step={1} onChange={(v) => setRot(0, v)} />
-            <AxisInput label="y" value={euler[1]} step={1} onChange={(v) => setRot(1, v)} />
-            <AxisInput label="z" value={euler[2]} step={1} onChange={(v) => setRot(2, v)} />
+            <AxisInput
+              ariaLabel={axisSemanticLabel('Transform', 'Rotation', 'x')}
+              label="x"
+              value={euler[0]}
+              step={1}
+              onChange={(v) => setRot(0, v)}
+            />
+            <AxisInput
+              ariaLabel={axisSemanticLabel('Transform', 'Rotation', 'y')}
+              label="y"
+              value={euler[1]}
+              step={1}
+              onChange={(v) => setRot(1, v)}
+            />
+            <AxisInput
+              ariaLabel={axisSemanticLabel('Transform', 'Rotation', 'z')}
+              label="z"
+              value={euler[2]}
+              step={1}
+              onChange={(v) => setRot(2, v)}
+            />
           </div>
           <div className="axis-row">
             <label>Scale</label>
-            <AxisInput label="x" value={t.scale[0]} onChange={(v) => setScale(0, v)} />
-            <AxisInput label="y" value={t.scale[1]} onChange={(v) => setScale(1, v)} />
-            <AxisInput label="z" value={t.scale[2]} onChange={(v) => setScale(2, v)} />
+            <AxisInput
+              ariaLabel={axisSemanticLabel('Transform', 'Scale', 'x')}
+              label="x"
+              value={t.scale[0]}
+              onChange={(v) => setScale(0, v)}
+            />
+            <AxisInput
+              ariaLabel={axisSemanticLabel('Transform', 'Scale', 'y')}
+              label="y"
+              value={t.scale[1]}
+              onChange={(v) => setScale(1, v)}
+            />
+            <AxisInput
+              ariaLabel={axisSemanticLabel('Transform', 'Scale', 'z')}
+              label="z"
+              value={t.scale[2]}
+              onChange={(v) => setScale(2, v)}
+            />
           </div>
         </CompBlock>
       )}

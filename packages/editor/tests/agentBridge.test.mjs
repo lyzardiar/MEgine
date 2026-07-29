@@ -601,6 +601,44 @@ test('editor dialogs are non-blocking, semantic, and Agent-addressable', () => {
   }
 });
 
+test('Inspector controls expose context-specific Agent semantic names', () => {
+  const inspector = fs.readFileSync(
+    path.join(root, 'src', 'panels', 'Inspector.tsx'),
+    'utf8',
+  );
+
+  assert.match(
+    inspector,
+    /aria-label=\{`\$\{props\.title\} Context Menu`\}/,
+  );
+  assert.match(
+    inspector,
+    /function axisSemanticLabel\(scope: string, field: string, axis: string\)/,
+  );
+  assert.match(
+    inspector,
+    /axisSemanticLabel\('Surface Shader', parameter\.label, axis\)/,
+  );
+  assert.equal(
+    [...inspector.matchAll(
+      /axisSemanticLabel\('Transform', '(?:Position|Rotation|Scale)', '[xyz]'\)/g,
+    )].length,
+    9,
+  );
+  assert.equal(
+    [...inspector.matchAll(
+      /axisSemanticLabel\('Rect Transform', '(?:Position|Size|Rotation|Scale)'/g,
+    )].length,
+    4,
+  );
+  assert.match(
+    inspector,
+    /axisSemanticLabel\(\s*'Transform',\s*field\[0\]\.toUpperCase\(\) \+ field\.slice\(1\),\s*\(\['x', 'y', 'z'\] as const\)\[axis\],\s*\)/,
+  );
+  assert.match(inspector, /aria-label="Camera 3D Primary"/);
+  assert.match(inspector, /aria-label=\{semanticLabel\}/);
+});
+
 test('every cross-window editor channel is isolated by native editor instance', () => {
   const main = fs.readFileSync(path.join(root, 'src', 'main.tsx'), 'utf8');
   const files = [

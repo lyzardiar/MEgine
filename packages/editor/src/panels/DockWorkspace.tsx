@@ -619,6 +619,7 @@ function saveTree(tree: DockNode) {
 
 function Splitter(props: {
   direction: 'horizontal' | 'vertical';
+  label: string;
   onDrag: (delta: number) => void;
 }) {
   const dragging = useRef(false);
@@ -650,7 +651,7 @@ function Splitter(props: {
   return (
     <div
       className={`dock-splitter ${props.direction}`}
-      aria-label={`Resize dock split ${props.direction}`}
+      aria-label={props.label}
       onMouseDown={(e) => {
         e.preventDefault();
         dragging.current = true;
@@ -921,6 +922,11 @@ function DockNodeView(props: {
       </div>
       <Splitter
         direction={horizontal ? 'horizontal' : 'vertical'}
+        label={`Resize dock split between ${
+          [...collectPanels(node.a)].map((panel) => PANEL_TITLES[panel]).join(', ')
+        } and ${
+          [...collectPanels(node.b)].map((panel) => PANEL_TITLES[panel]).join(', ')
+        }`}
         onDrag={(delta) => {
           const box = boxRef.current;
           if (!box) return;
