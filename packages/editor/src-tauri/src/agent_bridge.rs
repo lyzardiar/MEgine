@@ -5355,11 +5355,14 @@ const WINDOW_UI_INTERACTION_SCRIPT: &str = r#"
       && !/[\p{Cc}\p{Cs}\p{Z}]/u.test(requestedKey)
     );
     const key = requestedKey === 'Space' ? ' ' : String(requestedKey || '');
+    const primaryTextShortcut = (
+      !modifiers.altKey
+      && modifiers.ctrlKey !== modifiers.metaKey
+    );
     const selectAllShortcut = (
       key.toLowerCase() === 'a'
       && !modifiers.shiftKey
-      && !modifiers.altKey
-      && modifiers.ctrlKey !== modifiers.metaKey
+      && primaryTextShortcut
     );
     const graphemeBoundaries = (rawText) => {
       const text = String(rawText ?? '');
@@ -5405,6 +5408,53 @@ const WINDOW_UI_INTERACTION_SCRIPT: &str = r#"
       }
       return 0;
     };
+    const wordStarts = (rawText) => {
+      const text = String(rawText ?? '');
+      const starts = [];
+      if (typeof Intl.Segmenter === 'function') {
+        const segments = new Intl.Segmenter(undefined, {
+          granularity: 'word',
+        }).segment(text);
+        for (const segment of segments) {
+          if (segment.isWordLike) starts.push(segment.index);
+        }
+      } else {
+        let offset = 0;
+        let insideWord = false;
+        for (const codePoint of Array.from(text)) {
+          const wordLike = /[\p{L}\p{N}\p{M}_]/u.test(codePoint);
+          if (wordLike && !insideWord) starts.push(offset);
+          insideWord = wordLike;
+          offset += codePoint.length;
+        }
+      }
+      return starts;
+    };
+    const previousWordBoundary = (starts, rawOffset) => {
+      const offset = Number(rawOffset);
+      for (let index = starts.length - 1; index >= 0; index -= 1) {
+        if (starts[index] < offset) return starts[index];
+      }
+      return 0;
+    };
+    const nextWordBoundary = (starts, rawOffset, length) => {
+      const offset = Number(rawOffset);
+      for (const start of starts) {
+        if (start > offset) return start;
+      }
+      return length;
+    };
+    const primaryTextDefault = (
+      primaryTextShortcut
+      && [
+        'ArrowLeft',
+        'ArrowRight',
+        'Home',
+        'End',
+        'Backspace',
+        'Delete',
+      ].includes(requestedKey)
+    );
     const code = requestedKey === 'Space'
       ? 'Space'
       : /^[A-Za-z]$/.test(key)
@@ -5467,6 +5517,7 @@ const WINDOW_UI_INTERACTION_SCRIPT: &str = r#"
       if (typeof start !== 'number' || typeof end !== 'number') return false;
       const length = element.value.length;
       const boundaries = graphemeBoundaries(element.value);
+      const starts = wordStarts(element.value);
       const setSelection = (anchor, focus) => {
         const boundedAnchor = Math.max(0, Math.min(length, anchor));
         const boundedFocus = Math.max(0, Math.min(length, focus));
@@ -5485,17 +5536,27 @@ const WINDOW_UI_INTERACTION_SCRIPT: &str = r#"
         setSelection(0, length);
         return true;
       }
-      if (modifiers.ctrlKey || modifiers.altKey || modifiers.metaKey) return false;
+      if (
+        (modifiers.ctrlKey || modifiers.altKey || modifiers.metaKey)
+        && !primaryTextDefault
+      ) return false;
       const anchor = direction === 'backward' ? end : start;
       const focus = direction === 'backward' ? start : end;
       const verticalColumnKey = Symbol.for('mengine.agent.textVerticalColumn');
       if (requestedKey === 'ArrowLeft') {
         delete element[verticalColumnKey];
         if (modifiers.shiftKey) {
-          setSelection(anchor, previousGraphemeBoundary(boundaries, focus));
+          setSelection(
+            anchor,
+            primaryTextShortcut
+              ? previousWordBoundary(starts, focus)
+              : previousGraphemeBoundary(boundaries, focus),
+          );
         } else {
           const caret = start === end
-            ? previousGraphemeBoundary(boundaries, start)
+            ? primaryTextShortcut
+              ? previousWordBoundary(starts, start)
+              : previousGraphemeBoundary(boundaries, start)
             : start;
           setSelection(caret, caret);
         }
@@ -5504,10 +5565,17 @@ const WINDOW_UI_INTERACTION_SCRIPT: &str = r#"
       if (requestedKey === 'ArrowRight') {
         delete element[verticalColumnKey];
         if (modifiers.shiftKey) {
-          setSelection(anchor, nextGraphemeBoundary(boundaries, focus));
+          setSelection(
+            anchor,
+            primaryTextShortcut
+              ? nextWordBoundary(starts, focus, length)
+              : nextGraphemeBoundary(boundaries, focus),
+          );
         } else {
           const caret = start === end
-            ? nextGraphemeBoundary(boundaries, end)
+            ? primaryTextShortcut
+              ? nextWordBoundary(starts, end, length)
+              : nextGraphemeBoundary(boundaries, end)
             : end;
           setSelection(caret, caret);
         }
@@ -5575,16 +5643,18 @@ const WINDOW_UI_INTERACTION_SCRIPT: &str = r#"
       }
       if (requestedKey === 'Home') {
         delete element[verticalColumnKey];
-        const lineStart = element instanceof HTMLTextAreaElement
-          ? element.value.lastIndexOf('\n', Math.max(0, focus - 1)) + 1
-          : 0;
+        const lineStart = primaryTextShortcut
+          ? 0
+          : element instanceof HTMLTextAreaElement
+            ? element.value.lastIndexOf('\n', Math.max(0, focus - 1)) + 1
+            : 0;
         if (modifiers.shiftKey) setSelection(anchor, lineStart);
         else setSelection(lineStart, lineStart);
         return true;
       }
       if (requestedKey === 'End') {
         delete element[verticalColumnKey];
-        const nextLineBreak = element instanceof HTMLTextAreaElement
+        const nextLineBreak = !primaryTextShortcut && element instanceof HTMLTextAreaElement
           ? element.value.indexOf('\n', focus)
           : -1;
         const lineEnd = nextLineBreak < 0 ? length : nextLineBreak;
@@ -5609,17 +5679,25 @@ const WINDOW_UI_INTERACTION_SCRIPT: &str = r#"
       } else if (requestedKey === 'Backspace') {
         if (keyboardReadOnly) return true;
         if (start === end && start === 0) return true;
-        inputType = 'deleteContentBackward';
+        inputType = primaryTextShortcut
+          ? 'deleteWordBackward'
+          : 'deleteContentBackward';
         if (start === end) {
-          replacementStart = previousGraphemeBoundary(boundaries, start);
+          replacementStart = primaryTextShortcut
+            ? previousWordBoundary(starts, start)
+            : previousGraphemeBoundary(boundaries, start);
         }
         replacement = '';
       } else if (requestedKey === 'Delete') {
         if (keyboardReadOnly) return true;
         if (start === end && end === length) return true;
-        inputType = 'deleteContentForward';
+        inputType = primaryTextShortcut
+          ? 'deleteWordForward'
+          : 'deleteContentForward';
         if (start === end) {
-          replacementEnd = nextGraphemeBoundary(boundaries, end);
+          replacementEnd = primaryTextShortcut
+            ? nextWordBoundary(starts, end, length)
+            : nextGraphemeBoundary(boundaries, end);
         }
         replacement = '';
       } else {
@@ -5667,9 +5745,10 @@ const WINDOW_UI_INTERACTION_SCRIPT: &str = r#"
         return true;
       }
       if (
-        modifiers.ctrlKey
-        || modifiers.altKey
-        || modifiers.metaKey
+        (
+          (modifiers.ctrlKey || modifiers.altKey || modifiers.metaKey)
+          && !primaryTextDefault
+        )
         || selection.rangeCount === 0
       ) return false;
       const pointInside = (node) => Boolean(
@@ -5696,6 +5775,7 @@ const WINDOW_UI_INTERACTION_SCRIPT: &str = r#"
       const text = String(element.textContent ?? '');
       const length = text.length;
       const boundaries = graphemeBoundaries(text);
+      const starts = wordStarts(text);
       const textPointAt = (rawOffset) => {
         const targetOffset = Math.max(0, Math.min(length, rawOffset));
         const walker = document.createTreeWalker(element, NodeFilter.SHOW_TEXT);
@@ -5733,8 +5813,12 @@ const WINDOW_UI_INTERACTION_SCRIPT: &str = r#"
       if (requestedKey === 'ArrowLeft' || requestedKey === 'ArrowRight') {
         delete element[verticalColumnKey];
         const nextFocus = requestedKey === 'ArrowLeft'
-          ? previousGraphemeBoundary(boundaries, focus)
-          : nextGraphemeBoundary(boundaries, focus);
+          ? primaryTextShortcut
+            ? previousWordBoundary(starts, focus)
+            : previousGraphemeBoundary(boundaries, focus)
+          : primaryTextShortcut
+            ? nextWordBoundary(starts, focus, length)
+            : nextGraphemeBoundary(boundaries, focus);
         if (modifiers.shiftKey) setSelection(anchor, nextFocus);
         else {
           const caret = start === end
@@ -5805,7 +5889,13 @@ const WINDOW_UI_INTERACTION_SCRIPT: &str = r#"
         const lineStart = text.lastIndexOf('\n', Math.max(0, focus - 1)) + 1;
         const nextLineBreak = text.indexOf('\n', focus);
         const lineEnd = nextLineBreak < 0 ? length : nextLineBreak;
-        const target = requestedKey === 'Home' ? lineStart : lineEnd;
+        const target = requestedKey === 'Home'
+          ? primaryTextShortcut
+            ? 0
+            : lineStart
+          : primaryTextShortcut
+            ? length
+            : lineEnd;
         if (modifiers.shiftKey) setSelection(anchor, target);
         else setSelection(target, target);
         return true;
@@ -5823,16 +5913,24 @@ const WINDOW_UI_INTERACTION_SCRIPT: &str = r#"
         inputType = 'insertLineBreak';
       } else if (requestedKey === 'Backspace') {
         if (start === end && start === 0) return true;
-        inputType = 'deleteContentBackward';
+        inputType = primaryTextShortcut
+          ? 'deleteWordBackward'
+          : 'deleteContentBackward';
         if (start === end) {
-          replacementStart = previousGraphemeBoundary(boundaries, start);
+          replacementStart = primaryTextShortcut
+            ? previousWordBoundary(starts, start)
+            : previousGraphemeBoundary(boundaries, start);
         }
         replacement = '';
       } else if (requestedKey === 'Delete') {
         if (start === end && end === length) return true;
-        inputType = 'deleteContentForward';
+        inputType = primaryTextShortcut
+          ? 'deleteWordForward'
+          : 'deleteContentForward';
         if (start === end) {
-          replacementEnd = nextGraphemeBoundary(boundaries, end);
+          replacementEnd = primaryTextShortcut
+            ? nextWordBoundary(starts, end, length)
+            : nextGraphemeBoundary(boundaries, end);
         }
         replacement = '';
       } else {

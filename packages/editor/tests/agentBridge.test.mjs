@@ -458,9 +458,12 @@ test('whole-window agent capture is background-safe and addressable by window la
   assert.match(rust, /value\.strip_prefix\('F'\)/);
   assert.match(rust, /\(1\.\.=24\)\.contains\(&parsed\)/);
   assert.match(interactionScript, /if \(printableKey\) \{\s*replacement = key/);
+  assert.match(interactionScript, /const primaryTextShortcut = \(/);
+  assert.match(interactionScript, /!modifiers\.altKey/);
+  assert.match(interactionScript, /modifiers\.ctrlKey !== modifiers\.metaKey/);
   assert.match(interactionScript, /const selectAllShortcut = \(/);
   assert.match(interactionScript, /key\.toLowerCase\(\) === 'a'/);
-  assert.match(interactionScript, /modifiers\.ctrlKey !== modifiers\.metaKey/);
+  assert.match(interactionScript, /&& primaryTextShortcut/);
   assert.match(
     interactionScript,
     /if \(selectAllShortcut\) \{\s*setSelection\(0, length\);\s*return true;/,
@@ -473,23 +476,43 @@ test('whole-window agent capture is background-safe and addressable by window la
   assert.match(interactionScript, /typeof Intl\.Segmenter === 'function'/);
   assert.match(interactionScript, /granularity: 'grapheme'/);
   assert.match(interactionScript, /for \(const codePoint of Array\.from\(text\)\)/);
+  assert.match(interactionScript, /const wordStarts = \(rawText\) =>/);
+  assert.match(interactionScript, /granularity: 'word'/);
+  assert.match(interactionScript, /segment\.isWordLike/);
+  assert.match(interactionScript, /\/\[\\p\{L\}\\p\{N\}\\p\{M\}_\]\/u/);
+  assert.match(interactionScript, /const previousWordBoundary = \(starts, rawOffset\) =>/);
+  assert.match(interactionScript, /const nextWordBoundary = \(starts, rawOffset, length\) =>/);
+  assert.match(interactionScript, /const primaryTextDefault = \(/);
+  assert.match(interactionScript, /&& !primaryTextDefault/);
   assert.match(
     interactionScript,
-    /setSelection\(anchor, previousGraphemeBoundary\(boundaries, focus\)\)/,
+    /\? previousWordBoundary\(starts, focus\)\s*: previousGraphemeBoundary\(boundaries, focus\)/,
   );
   assert.match(
     interactionScript,
-    /setSelection\(anchor, nextGraphemeBoundary\(boundaries, focus\)\)/,
+    /\? nextWordBoundary\(starts, focus, length\)\s*: nextGraphemeBoundary\(boundaries, focus\)/,
   );
   assert.equal(
     [...interactionScript.matchAll(
       /replacementStart = previousGraphemeBoundary\(boundaries, start\)/g,
     )].length,
-    2,
+    0,
   );
   assert.equal(
     [...interactionScript.matchAll(
       /replacementEnd = nextGraphemeBoundary\(boundaries, end\)/g,
+    )].length,
+    0,
+  );
+  assert.equal(
+    [...interactionScript.matchAll(
+      /replacementStart = primaryTextShortcut\s*\? previousWordBoundary\(starts, start\)\s*: previousGraphemeBoundary\(boundaries, start\)/g,
+    )].length,
+    2,
+  );
+  assert.equal(
+    [...interactionScript.matchAll(
+      /replacementEnd = primaryTextShortcut\s*\? nextWordBoundary\(starts, end, length\)\s*: nextGraphemeBoundary\(boundaries, end\)/g,
     )].length,
     2,
   );
@@ -497,8 +520,22 @@ test('whole-window agent capture is background-safe and addressable by window la
   assert.doesNotMatch(interactionScript, /replacementEnd = Math\.min\(length, end \+ 1\)/);
   assert.match(interactionScript, /element\.maxLength >= 0 && nextValue\.length > element\.maxLength/);
   assert.match(interactionScript, /element\.setSelectionRange\(/);
-  assert.match(interactionScript, /inputType = 'deleteContentBackward'/);
-  assert.match(interactionScript, /inputType = 'deleteContentForward'/);
+  assert.equal(
+    [...interactionScript.matchAll(/'deleteContentBackward'/g)].length,
+    2,
+  );
+  assert.equal(
+    [...interactionScript.matchAll(/'deleteContentForward'/g)].length,
+    2,
+  );
+  assert.equal(
+    [...interactionScript.matchAll(/'deleteWordBackward'/g)].length,
+    2,
+  );
+  assert.equal(
+    [...interactionScript.matchAll(/'deleteWordForward'/g)].length,
+    2,
+  );
   assert.match(interactionScript, /inputType = 'insertLineBreak'/);
   assert.match(interactionScript, /const handledTextDefault = acceptsDefault && applyTextControlDefault\(\)/);
   assert.match(interactionScript, /const applyContentEditableDefault = \(\) =>/);
