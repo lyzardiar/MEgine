@@ -459,7 +459,8 @@ export function createEditorStore(undoService: EditorUndoService = createEditorU
     components: Record<string, unknown>,
     parent: number | null,
     withUndo: boolean,
-  ) => {
+  ): number | null => {
+    if (mode !== 'edit') return null;
     if (withUndo) pushUndo(`Create ${name}`);
     const id = nextId++;
     const e = normalizeEntity({
@@ -493,7 +494,8 @@ export function createEditorStore(undoService: EditorUndoService = createEditorU
     withUndo: boolean,
     atIndex?: number,
     instanceId = createPrefabId('instance'),
-  ): number => {
+  ): number | null => {
+    if (mode !== 'edit') return null;
     if (withUndo) pushUndo('Instantiate Prefab');
     const nodes = flattenPrefabNodes(prefab);
     const entitiesByNode = new Map<string, number>();
@@ -510,6 +512,7 @@ export function createEditorStore(undoService: EditorUndoService = createEditorU
         root: entry.parentNodeId == null,
       };
       const id = spawnAt(entry.node.name, components, nodeParent, false);
+      if (id == null) return null;
       const entity = find(id)!;
       entity.active = entry.node.active;
       entity.tag = entry.node.tag;
@@ -533,7 +536,8 @@ export function createEditorStore(undoService: EditorUndoService = createEditorU
     return root;
   };
 
-  const ensureUiCanvasInternal = (withUndo: boolean): number => {
+  const ensureUiCanvasInternal = (withUndo: boolean): number | null => {
+    if (mode !== 'edit') return null;
     const existing = editEntities.find((e) => e.components.Canvas);
     if (existing) return existing.entity;
     return spawnAt('Canvas', createUiCanvasComponents(), null, withUndo);
@@ -544,7 +548,8 @@ export function createEditorStore(undoService: EditorUndoService = createEditorU
     name: string,
     components: Record<string, unknown>,
     requestedParent?: number | null,
-  ): number => {
+  ): number | null => {
+    if (mode !== 'edit') return null;
     pushUndo(`Create ${name}`);
     let parent = requestedParent;
     if (parent === undefined) {
@@ -553,11 +558,15 @@ export function createEditorStore(undoService: EditorUndoService = createEditorU
       parent = selectedEntity && (selectedEntity.components.Canvas || selectedEntity.components.RectTransform)
         ? selected
         : ensureUiCanvasInternal(false);
+      if (parent == null) return null;
     }
     return spawnAt(name, components, parent ?? null, false);
   };
 
-  const spawnSpriteAsset = (sprite: string, options: SpriteSpawnOptions = {}): number => {
+  const spawnSpriteAsset = (
+    sprite: string,
+    options: SpriteSpawnOptions = {},
+  ): number | null => {
     const spawn = createSpriteSpawnComponents(sprite, options);
     return spawnAt(spawn.name, spawn.components, spawn.parent, true);
   };
@@ -2147,7 +2156,7 @@ export function createEditorStore(undoService: EditorUndoService = createEditorU
       );
     },
     /** Ensure a Canvas exists; return its entity id. */
-    ensureUiCanvas(): number {
+    ensureUiCanvas(): number | null {
       return ensureUiCanvasInternal(true);
     },
     spawnUiCanvas() {
@@ -2347,13 +2356,19 @@ export function createEditorStore(undoService: EditorUndoService = createEditorU
       return serializeScene(sceneName, list());
     },
     newScene() {
+      if (mode !== 'edit') return false;
       buildDefaultScene();
+      return true;
     },
     loadSceneJson(json: string) {
+      if (mode !== 'edit') return false;
       applySceneJson(json, 'edit', true);
+      return true;
     },
     replaceSceneWorldJson(json: string) {
+      if (mode !== 'edit') return false;
       applySceneJson(json, 'edit', true, false);
+      return true;
     },
     loadRemoteSceneJson(json: string, remoteMode: EditorMode) {
       applySceneJson(json, remoteMode, false);

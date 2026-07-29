@@ -1147,6 +1147,7 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
       size,
       pivot: resolveSpritePivot(path),
     });
+    if (id == null) throw new Error('Sprites can only be created in Edit mode');
     if (options.position == null) store.frameSelected();
     log(`Created SpriteRenderer ${path} (entity ${id})`);
     refresh();
@@ -2378,6 +2379,7 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
         }
         case 'model': {
           const entity = store.spawnModel(target.path);
+          if (entity == null) throw new Error('Models can only be created in Edit mode');
           log(`Instantiated model ${target.path} from AgentBridge (entity ${entity})`);
           refresh();
           return entity;
