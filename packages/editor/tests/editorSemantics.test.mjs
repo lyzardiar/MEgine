@@ -38,6 +38,7 @@ test('core editor navigation exposes named semantic controls', () => {
   assert.match(hierarchy, /if \(event\.target !== event\.currentTarget\) return/);
   assert.match(hierarchy, /event\.key === 'F2'/);
   assert.match(hierarchy, /aria-label=\{`Rename \$\{n\.entity\.name/);
+  assert.match(hierarchy, /aria-label=\{`Drag \$\{n\.entity\.name/);
 
   assert.match(menu, /role="menubar" aria-label="Main menu"/);
   assert.match(menu, /role="menuitem"/);

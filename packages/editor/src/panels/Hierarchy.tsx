@@ -556,6 +556,7 @@ export function Hierarchy(props: {
               <span
                 className="hier-icon"
                 draggable={editing !== id}
+                aria-label={`Drag ${n.entity.name ?? `Entity ${id}`}`}
                 title="拖动节点行调整层级；拖动图标可赋值给对象引用"
                 onDragStart={(e) => onDragStart(e, id)}
                 onDragEnd={clearPointerDrag}
