@@ -24,6 +24,7 @@ test('core editor navigation exposes named semantic controls', () => {
   assert.match(project, /tabIndex=\{0\} aria-label="Project browser"/);
   assert.match(project, /role="treeitem"/);
   assert.match(project, /aria-label=\{f\}/);
+  assert.match(project, /aria-label=\{`Rename \$\{a\.name\}`\}/);
   assert.match(project, /event\.key !== 'Enter' && event\.key !== ' '/);
   assert.match(project, /aria-label=\{`\$\{folder\} contents`\}/);
 
@@ -34,6 +35,7 @@ test('core editor navigation exposes named semantic controls', () => {
   assert.match(hierarchy, /aria-level=\{n\.depth \+ 1\}/);
   assert.match(hierarchy, /if \(event\.target !== event\.currentTarget\) return/);
   assert.match(hierarchy, /event\.key === 'F2'/);
+  assert.match(hierarchy, /aria-label=\{`Rename \$\{n\.entity\.name/);
 
   assert.match(menu, /role="menubar" aria-label="Main menu"/);
   assert.match(menu, /role="menuitem"/);
@@ -88,6 +90,12 @@ test('complex authoring rows identify their selectable semantic regions', () => 
   assert.match(
     animator,
     /role="button"\s*aria-label=\{`Select transition \$\{transition\.from\} to \$\{transition\.to\}`\}/,
+  );
+  assert.match(animator, /aria-label=\{`Parameter \$\{index \+ 1\} name`\}/);
+  assert.match(animator, /aria-label=\{`\$\{state\.name\} blend child \$\{childIndex \+ 1\} clip`\}/);
+  assert.match(
+    animator,
+    /aria-label=\{`Transition \$\{transition\.from\} to \$\{transition\.to\} condition \$\{conditionIndex \+ 1\} threshold`\}/,
   );
   assert.match(sequencer, /aria-label=\{`\$\{group\.name\} group lane`\}/);
   assert.match(sequencer, /aria-label=\{`\$\{track\.name\} \$\{track\.type\} lane`\}/);

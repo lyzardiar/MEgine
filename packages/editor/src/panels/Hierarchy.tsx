@@ -565,6 +565,7 @@ export function Hierarchy(props: {
               {editing === id ? (
                 <input
                   className="hier-rename"
+                  aria-label={`Rename ${n.entity.name ?? `Entity ${id}`}`}
                   autoFocus
                   value={editValue}
                   onChange={(e) => setEditValue(e.target.value)}

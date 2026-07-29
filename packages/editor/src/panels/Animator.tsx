@@ -966,7 +966,7 @@ function AnimatorControllerEditor(props: AnimatorEditorProps) {
                           if (transition.to === previous) transition.to = next;
                         }
                       })} />
-                      <select value={state.clip} onChange={(event) => update((draft) => { draft.layers[layerIndex].states[stateIndex].clip = event.target.value; })}>
+                      <select aria-label={`Independent state ${state.name} clip`} value={state.clip} onChange={(event) => update((draft) => { draft.layers[layerIndex].states[stateIndex].clip = event.target.value; })}>
                         {state.clip && !clips.some((clip) => clip.relPath === state.clip) && <option value={state.clip}>{state.clip} (Missing)</option>}
                         <option value="">Select Animation Clip</option>
                         {clips.map((clip) => <option key={clip.id} value={clip.relPath}>{clip.name}</option>)}
@@ -1019,14 +1019,14 @@ function AnimatorControllerEditor(props: AnimatorEditorProps) {
                         const modes = parameterModes(parameter?.kind ?? 'float');
                         return (
                           <div className="animator-row condition" key={conditionIndex}>
-                            <select value={condition.parameter} onChange={(event) => update((draft) => {
+                            <select aria-label={`Independent transition ${transition.from} to ${transition.to} condition ${conditionIndex + 1} parameter`} value={condition.parameter} onChange={(event) => update((draft) => {
                               const next = draft.parameters.find((item) => item.name === event.target.value)!;
                               const target = draft.layers[layerIndex].transitions[transitionIndex].conditions[conditionIndex];
                               target.parameter = next.name;
                               target.mode = parameterModes(next.kind)[0];
                             })}>{controller.parameters.map((item) => <option key={item.name} value={item.name}>{item.name}</option>)}</select>
-                            <select value={condition.mode} onChange={(event) => update((draft) => { draft.layers[layerIndex].transitions[transitionIndex].conditions[conditionIndex].mode = event.target.value as AnimatorConditionMode; })}>{modes.map((mode) => <option key={mode} value={mode}>{mode}</option>)}</select>
-                            {!['if', 'if_not', 'trigger'].includes(condition.mode) && <input type="number" step="0.1" value={condition.threshold} onChange={(event) => update((draft) => { draft.layers[layerIndex].transitions[transitionIndex].conditions[conditionIndex].threshold = Number(event.target.value); })} />}
+                            <select aria-label={`Independent transition ${transition.from} to ${transition.to} condition ${conditionIndex + 1} mode`} value={condition.mode} onChange={(event) => update((draft) => { draft.layers[layerIndex].transitions[transitionIndex].conditions[conditionIndex].mode = event.target.value as AnimatorConditionMode; })}>{modes.map((mode) => <option key={mode} value={mode}>{mode}</option>)}</select>
+                            {!['if', 'if_not', 'trigger'].includes(condition.mode) && <input aria-label={`Independent transition ${transition.from} to ${transition.to} condition ${conditionIndex + 1} threshold`} type="number" step="0.1" value={condition.threshold} onChange={(event) => update((draft) => { draft.layers[layerIndex].transitions[transitionIndex].conditions[conditionIndex].threshold = Number(event.target.value); })} />}
                             <button type="button" aria-label={`Delete condition ${conditionIndex + 1} from independent transition ${transition.from} to ${transition.to}`} onClick={() => update((draft) => { draft.layers[layerIndex].transitions[transitionIndex].conditions.splice(conditionIndex, 1); })}>×</button>
                           </div>
                         );
@@ -1181,7 +1181,7 @@ function AnimatorControllerEditor(props: AnimatorEditorProps) {
             const usedByBlendTree = controller.states.some((state) => state.blend_tree?.parameter === parameter.name);
             return (
             <div className="animator-row" key={`${index}-${parameter.name}`}>
-              <input value={parameter.name} onChange={(event) => update((draft) => {
+              <input aria-label={`Parameter ${index + 1} name`} value={parameter.name} onChange={(event) => update((draft) => {
                 const previous = draft.parameters[index].name;
                 const next = event.target.value;
                 draft.parameters[index].name = next;
@@ -1201,7 +1201,7 @@ function AnimatorControllerEditor(props: AnimatorEditorProps) {
                   }
                 }
               })} />
-              <select value={parameter.kind} onChange={(event) => update((draft) => {
+              <select aria-label={`${parameter.name} parameter type`} value={parameter.kind} onChange={(event) => update((draft) => {
                 const next = event.target.value as AnimatorParameterKind;
                 if (usedByBlendTree && next !== 'float' && next !== 'int') return;
                 draft.parameters[index].kind = next;
@@ -1224,9 +1224,9 @@ function AnimatorControllerEditor(props: AnimatorEditorProps) {
               })}>
                 <option value="bool" disabled={usedByBlendTree}>Bool</option><option value="float">Float</option><option value="int">Int</option><option value="trigger" disabled={usedByBlendTree}>Trigger</option>
               </select>
-              {parameter.kind === 'bool' && <input type="checkbox" checked={parameter.default_bool} onChange={(event) => update((draft) => { draft.parameters[index].default_bool = event.target.checked; })} />}
-              {parameter.kind === 'float' && <input type="number" step="0.1" value={parameter.default_float} onChange={(event) => update((draft) => { draft.parameters[index].default_float = Number(event.target.value); })} />}
-              {parameter.kind === 'int' && <input type="number" step="1" value={parameter.default_int} onChange={(event) => update((draft) => { draft.parameters[index].default_int = Number(event.target.value); })} />}
+              {parameter.kind === 'bool' && <input aria-label={`${parameter.name} default value`} type="checkbox" checked={parameter.default_bool} onChange={(event) => update((draft) => { draft.parameters[index].default_bool = event.target.checked; })} />}
+              {parameter.kind === 'float' && <input aria-label={`${parameter.name} default value`} type="number" step="0.1" value={parameter.default_float} onChange={(event) => update((draft) => { draft.parameters[index].default_float = Number(event.target.value); })} />}
+              {parameter.kind === 'int' && <input aria-label={`${parameter.name} default value`} type="number" step="1" value={parameter.default_int} onChange={(event) => update((draft) => { draft.parameters[index].default_int = Number(event.target.value); })} />}
               <button type="button" aria-label={`Delete parameter ${parameter.name}`} disabled={usedByBlendTree} title={usedByBlendTree ? 'Blend Tree parameter is in use' : 'Delete parameter'} onClick={() => update((draft) => {
                 const name = draft.parameters[index].name;
                 draft.parameters.splice(index, 1);
@@ -1268,7 +1268,7 @@ function AnimatorControllerEditor(props: AnimatorEditorProps) {
                 setSelectedTransition(null);
               }}
             >
-              <input value={state.name} onChange={(event) => update((draft) => {
+              <input aria-label={`State ${index + 1} name`} value={state.name} onChange={(event) => update((draft) => {
                 const previous = draft.states[index].name;
                 const next = event.target.value;
                 draft.states[index].name = next;
@@ -1309,7 +1309,7 @@ function AnimatorControllerEditor(props: AnimatorEditorProps) {
                 <option value="clip">Animation Clip</option>
                 <option value="blend_tree">1D Blend Tree</option>
               </select>
-              {!state.blend_tree && <select value={state.clip} onChange={(event) => update((draft) => { draft.states[index].clip = event.target.value; })}>
+              {!state.blend_tree && <select aria-label={`${state.name} clip`} value={state.clip} onChange={(event) => update((draft) => { draft.states[index].clip = event.target.value; })}>
                 {!clips.some((clip) => clip.relPath === state.clip) && <option value={state.clip}>{state.clip || 'Select Clip…'}</option>}
                 {clips.map((clip) => <option key={clip.id} value={clip.relPath}>{clip.name}</option>)}
               </select>}
@@ -1377,7 +1377,7 @@ function AnimatorControllerEditor(props: AnimatorEditorProps) {
                       <input aria-label="Blend threshold" type="number" step="0.1" value={child.threshold} onChange={(event) => update((draft) => {
                         draft.states[index].blend_tree!.children[childIndex].threshold = Number(event.target.value);
                       })} />
-                      <select value={child.clip} onChange={(event) => update((draft) => {
+                      <select aria-label={`${state.name} blend child ${childIndex + 1} clip`} value={child.clip} onChange={(event) => update((draft) => {
                         draft.states[index].blend_tree!.children[childIndex].clip = event.target.value;
                       })}>
                         {!clips.some((clip) => clip.relPath === child.clip) && <option value={child.clip}>{child.clip || 'Select Clip…'}</option>}
@@ -1420,7 +1420,7 @@ function AnimatorControllerEditor(props: AnimatorEditorProps) {
               }}
             >
               <div className="animator-row">
-                <select value={transition.from} onChange={(event) => update((draft) => {
+                <select aria-label={`Transition ${transitionIndex + 1} source`} value={transition.from} onChange={(event) => update((draft) => {
                   const target = draft.transitions[transitionIndex];
                   target.from = event.target.value;
                   if (target.to === target.from) {
@@ -1430,7 +1430,7 @@ function AnimatorControllerEditor(props: AnimatorEditorProps) {
                   <option value="*">Any State</option>{controller.states.map((state) => <option key={state.name} value={state.name}>{state.name}</option>)}
                 </select>
                 <span>→</span>
-                <select value={transition.to} onChange={(event) => update((draft) => { draft.transitions[transitionIndex].to = event.target.value; })}>
+                <select aria-label={`Transition ${transitionIndex + 1} destination`} value={transition.to} onChange={(event) => update((draft) => { draft.transitions[transitionIndex].to = event.target.value; })}>
                   {controller.states.filter((state) => state.name !== transition.from).map((state) => <option key={state.name} value={state.name}>{state.name}</option>)}
                 </select>
                 <label>Blend <input type="number" min="0" step="0.05" value={transition.duration} onChange={(event) => update((draft) => { draft.transitions[transitionIndex].duration = Number(event.target.value); })} /></label>
@@ -1458,7 +1458,7 @@ function AnimatorControllerEditor(props: AnimatorEditorProps) {
               </div>
               <div className="animator-row">
                 <label><input type="checkbox" checked={transition.has_exit_time} onChange={(event) => update((draft) => { draft.transitions[transitionIndex].has_exit_time = event.target.checked; })} /> Exit Time</label>
-                {transition.has_exit_time && <input type="number" min="0" step="0.05" value={transition.exit_time} onChange={(event) => update((draft) => { draft.transitions[transitionIndex].exit_time = Number(event.target.value); })} />}
+                {transition.has_exit_time && <input aria-label={`Transition ${transition.from} to ${transition.to} exit time`} type="number" min="0" step="0.05" value={transition.exit_time} onChange={(event) => update((draft) => { draft.transitions[transitionIndex].exit_time = Number(event.target.value); })} />}
                 <button type="button" disabled={controller.parameters.length === 0} onClick={() => update((draft) => {
                   const parameter = draft.parameters[0];
                   if (!parameter) return;
@@ -1469,14 +1469,14 @@ function AnimatorControllerEditor(props: AnimatorEditorProps) {
                 const parameter = controller.parameters.find((item) => item.name === condition.parameter);
                 const modes = parameterModes(parameter?.kind ?? 'float');
                 return <div className="animator-row condition" key={conditionIndex}>
-                  <select value={condition.parameter} onChange={(event) => update((draft) => {
+                  <select aria-label={`Transition ${transition.from} to ${transition.to} condition ${conditionIndex + 1} parameter`} value={condition.parameter} onChange={(event) => update((draft) => {
                     const next = draft.parameters.find((item) => item.name === event.target.value)!;
                     const target = draft.transitions[transitionIndex].conditions[conditionIndex];
                     target.parameter = next.name;
                     target.mode = parameterModes(next.kind)[0];
                   })}>{controller.parameters.map((item) => <option key={item.name} value={item.name}>{item.name}</option>)}</select>
-                  <select value={condition.mode} onChange={(event) => update((draft) => { draft.transitions[transitionIndex].conditions[conditionIndex].mode = event.target.value as AnimatorConditionMode; })}>{modes.map((mode) => <option key={mode} value={mode}>{mode}</option>)}</select>
-                  {!['if', 'if_not', 'trigger'].includes(condition.mode) && <input type="number" step="0.1" value={condition.threshold} onChange={(event) => update((draft) => { draft.transitions[transitionIndex].conditions[conditionIndex].threshold = Number(event.target.value); })} />}
+                  <select aria-label={`Transition ${transition.from} to ${transition.to} condition ${conditionIndex + 1} mode`} value={condition.mode} onChange={(event) => update((draft) => { draft.transitions[transitionIndex].conditions[conditionIndex].mode = event.target.value as AnimatorConditionMode; })}>{modes.map((mode) => <option key={mode} value={mode}>{mode}</option>)}</select>
+                  {!['if', 'if_not', 'trigger'].includes(condition.mode) && <input aria-label={`Transition ${transition.from} to ${transition.to} condition ${conditionIndex + 1} threshold`} type="number" step="0.1" value={condition.threshold} onChange={(event) => update((draft) => { draft.transitions[transitionIndex].conditions[conditionIndex].threshold = Number(event.target.value); })} />}
                   <button type="button" aria-label={`Delete condition ${conditionIndex + 1} from transition ${transition.from} to ${transition.to}`} onClick={() => update((draft) => { draft.transitions[transitionIndex].conditions.splice(conditionIndex, 1); })}>×</button>
                 </div>;
               })}

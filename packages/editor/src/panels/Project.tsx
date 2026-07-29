@@ -1107,6 +1107,7 @@ export function Project(props: {
               {isEditing ? (
                 <input
                   className="asset-rename"
+                  aria-label={`Rename ${a.name}`}
                   autoFocus
                   value={editValue}
                   onClick={(e) => e.stopPropagation()}
