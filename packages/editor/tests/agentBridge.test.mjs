@@ -756,6 +756,9 @@ test('panel and menu agent surfaces use live providers and background activation
   assert.match(app, /\.\.\.resourceDocumentPathsRef\.current/);
   assert.match(app, /setMaterialPath\(message\.materialPath \?\? null\)/);
   assert.match(app, /openAsset: async \(target: AgentResourceEditorTarget\)/);
+  assert.match(app, /resourceEditorPreservesDrafts\(target\.kind\)/);
+  assert.match(app, /locallyDirty && !preservesDrafts/);
+  assert.match(app, /remoteDirty\.includes\(target\.panel\) && !preservesDrafts/);
   assert.match(app, /createAsset: async \(request: AgentCreateAssetRequest\)/);
   assert.match(app, /instantiateAsset: async \(target: AgentInstantiableAssetTarget\)/);
   assert.match(app, /type: 'request-save-resources'/);

@@ -17,6 +17,10 @@ export type AgentResourceEditorTarget = {
   path: string;
 };
 
+export function resourceEditorPreservesDrafts(kind: AgentResourceEditorKind): boolean {
+  return kind !== 'sprite' && kind !== 'sprite-atlas';
+}
+
 export type AgentInstantiableAssetTarget = {
   kind: 'prefab' | 'model' | 'sprite';
   path: string;

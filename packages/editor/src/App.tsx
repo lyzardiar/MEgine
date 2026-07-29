@@ -72,6 +72,7 @@ import {
   type AgentWorkspaceDocument,
   type AgentWorkspaceProvider,
 } from './agent/AgentBridge';
+import { resourceEditorPreservesDrafts } from './agent/resourceTargets';
 import { formatConsoleLog, logService } from './agent/LogService';
 import { BridgeError, type PanelLayoutSnapshot } from './agent/protocol';
 import { EditorWindowHost } from './editorWindow';
@@ -1922,14 +1923,15 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
         }
       })();
       if (!sameAssetPath(currentPath, target.path)) {
-        if (locallyDirty) {
+        const preservesDrafts = resourceEditorPreservesDrafts(target.kind);
+        if (locallyDirty && !preservesDrafts) {
           throw new BridgeError(
             'CONFLICT',
             `${target.panel} has unsaved changes; save all before opening another asset`,
           );
         }
         const remoteDirty = await queryRemoteDirtyPanels();
-        if (remoteDirty.includes(target.panel)) {
+        if (remoteDirty.includes(target.panel) && !preservesDrafts) {
           throw new BridgeError(
             'CONFLICT',
             `Detached ${target.panel} has unsaved changes; save all before opening another asset`,
