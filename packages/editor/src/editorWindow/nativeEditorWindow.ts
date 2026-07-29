@@ -1,6 +1,6 @@
 import { WebviewWindow } from '@tauri-apps/api/webviewWindow';
 import { isDesktopEditor } from '../transport/editorTransport';
-import { editorWindowLabelFor } from './editorWindowLabel';
+import { editorWindowLabelFor, editorWindowUrlFor } from './editorWindowLabel';
 
 export function editorWindowTypeFromLocation(): string | null {
   return new URLSearchParams(window.location.search).get('editorWindow');
@@ -12,8 +12,10 @@ export async function openNativeEditorWindow(options: {
   width: number;
   height: number;
   activateWindow?: boolean;
+  /** Persist native identity so ownership survives a main-WebView reload. */
+  agentOwned?: boolean;
 }): Promise<boolean> {
-  const url = `/?editorWindow=${encodeURIComponent(options.typeId)}`;
+  const url = editorWindowUrlFor(options.typeId, options.agentOwned === true);
   const activateWindow = options.activateWindow !== false;
   if (!isDesktopEditor()) {
     if (!activateWindow) return false;

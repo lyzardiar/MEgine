@@ -15,3 +15,10 @@ export function editorWindowLabelFor(typeId: string): string {
     .replace(/=+$/u, '');
   return `editor-${encoded}`;
 }
+
+/** Build the exact route for one native registered editor window. */
+export function editorWindowUrlFor(typeId: string, agentOwned = false): string {
+  const params = new URLSearchParams({ editorWindow: typeId });
+  if (agentOwned) params.set('agentOwned', 'true');
+  return `/?${params.toString()}`;
+}

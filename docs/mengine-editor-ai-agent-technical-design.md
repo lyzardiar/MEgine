@@ -192,7 +192,7 @@ MEngine 编辑器当前对人类友好，但对 AI Agent 不够友好。AI Agent
 
 | query id | 返回 | 集成点 |
 | --- | --- | --- |
-| `window.list` | `[{ label, title, typeId?, editorType?, kind: "main"\|"panel"\|"editor", visible, focused, position, size, url }]` | ✅ Rust `app.webview_windows()`；注册编辑器窗同时返回与 `window.types` / `window.open_editor` 一致的规范 `typeId`，并保留等值 `editorType` 兼容别名；标签规则 `panel-<id>`（`detachedPanelWindow.ts`）、`editor-<base64url(UTF-8 typeId)>`（`nativeEditorWindow.ts`），完整编码扩展注册的类型标识，不会因固定宽度哈希碰撞误复用其他窗口；可直接确认后台实例从未显示 |
+| `window.list` | `[{ label, title, typeId?, editorType?, agentOwned, kind: "main"\|"panel"\|"editor", visible, focused, position, size, url }]` | ✅ Rust `app.webview_windows()`；注册编辑器窗同时返回与 `window.types` / `window.open_editor` 一致的规范 `typeId`，并保留等值 `editorType` 兼容别名；标签规则 `panel-<id>`（`detachedPanelWindow.ts`）、`editor-<base64url(UTF-8 typeId)>`（`nativeEditorWindow.ts`），完整编码扩展注册的类型标识，不会因固定宽度哈希碰撞误复用其他窗口；Agent 创建的辅助窗口还把 `agentOwned=true` 固化在原生 WebView URL，主 WebView 重载后仍可恢复关闭权限，Rust 销毁命令会再次校验该标记；可直接确认后台实例从未显示 |
 | `window.ui_snapshot` | `{ windowLabel?, maxElements?, offset?, expectedSnapshotRevision? }` → `{ snapshotRevision, nextOffset, elements: [{ role, name, text, value, state, rect, actions, selector }], truncated, ... }` | ✅ WebView2 `Runtime.evaluate` 离屏提取可见且未被自身/祖先 `aria-hidden=true` 或 `inert` 排除的语义 DOM；名称与文本也跳过这些子树中的装饰内容；密码脱敏，默认 2000/上限 5000 项，不需要 OCR；续页必须回传首屏 `snapshotRevision`，语义内容或顺序变化时返回 `STALE_REVISION` 并从 offset 0 重读 |
 | `window.ui_content` | `{ windowLabel?, selector, expectedSnapshotRevision, field, offset?, maxChars?, expectedContentRevision? }` → `{ contentRevision, nextOffset, content, ... }` | ✅ 只允许精确读取同一快照完整语义集合中的 selector，返回未截断的语义名称/说明、未归一化文本、表单值或 `options` JSON（原生 select/datalist 的 value、label、group、disabled、selected）；每页必须回传 selector 所属 `snapshotRevision`，续页还必须回传首屏 `contentRevision`；元素身份或内容变化时返回 `STALE_REVISION`，避免读错重排后的元素或把长代码、日志和未保存文本拼成撕裂结果；分页游标保持为 UTF-16 单元，但版本 3 不会从代理对中间开始或结束，命中 emoji 等字符边界时一页可比 `maxChars` 多 1 个单元，调用方传入代理对中间的游标则收到 `invalidContentOffset` 与可恢复的 `restartOffset` |
 | `dialog.state` | 当前编辑器内 alert/confirm/prompt 的稳定 id、完整消息、按钮标签与 prompt 默认值；无对话框时为 `null` | ✅ 非阻塞 DOM Dialog Host；可被语义快照和整窗截图同时读取 |
@@ -328,7 +328,7 @@ Rust Host 使用独立的工程生命周期互斥门串行化 open/create/close 
 | `panel.reset_layout` | `{}` | ✅ 复用 `mengine:reset-dock-layout`；已是默认布局则零变更返回，否则主窗与全部拆分面板窗必须 hidden/unfocused |
 | `panel.detach` / `dock` | `{ kind }` | ✅ 复用 `detachedPanelWindow` 与 dock channel；Agent 拆分窗以 `visible=false/focus=false` 创建，脏资源面板拒绝迁移，任何实际布局变更均拒绝影响可见或聚焦宿主 |
 | `layout.reset` | — | dispatch `mengine:reset-dock-layout` |
-| `window.open_editor` | `{ typeId }` | ✅ 隐藏创建后同时等待原生窗口可发现与目标 WebView 非空语义快照就绪；返回初始 `snapshotRevision` / `semanticElementCount`，不会把仍在加载的窗口误报为空；成功创建及 `window.close` 销毁均发出 `window.changed` |
+| `window.open_editor` | `{ typeId }` | ✅ 隐藏创建后同时等待原生窗口可发现与目标 WebView 非空语义快照就绪；返回原生 `agentOwned`、初始 `snapshotRevision` / `semanticElementCount`，不会把仍在加载的窗口误报为空；成功创建及 `window.close` 销毁均发出 `window.changed` |
 | `menu.invoke` | `{ path }` | ✅ 查 `MenuItemEntry`、执行实时 validator，再复用 `entry.action(ctx)` |
 | `window.ui_click` | `{ windowLabel?, selector, offsetX?, offsetY?, shiftKey?, ctrlKey?, altKey?, metaKey? }` | ✅ 对 `window.ui_snapshot` 返回的 selector 合成受限 Pointer/Mouse/Click 事件；可使用元素左上角相对 CSS 像素定位画布内目标，省略坐标时兼容使用可见元素中心，并可携带显式修饰键完成范围/追加选择，不激活顶层窗口 |
 | `window.ui_set_value` | `{ windowLabel?, selector, value }` | ✅ 仅允许 input/textarea/select/contenteditable；文本型控件按 `focus → input/change → render → blur → render` 原子提交，保证 `onBlur` 草稿与 Inspector 撤销手势在操作后观察前闭合；checkbox/radio 通过 change 直接提交。拒绝 disabled/readonly，禁止调用方注入脚本 |

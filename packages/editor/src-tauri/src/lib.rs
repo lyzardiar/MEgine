@@ -5302,6 +5302,8 @@ struct EditorWindowInfo {
     type_id: Option<String>,
     /// Backward-compatible alias retained for existing Agent clients.
     editor_type: Option<String>,
+    /// Native identity marker persisted in the WebView URL across reloads.
+    agent_owned: bool,
     url: String,
     visible: bool,
     focused: bool,
@@ -5355,6 +5357,11 @@ fn validate_agent_editor_window_state(visible: bool, focused: bool) -> Result<()
     Ok(())
 }
 
+fn agent_editor_window_url_is_owned(url: &tauri::Url) -> bool {
+    url.query_pairs()
+        .any(|(key, value)| key == "agentOwned" && value == "true")
+}
+
 /// Close one exact hidden, unfocused registered auxiliary editor window.
 ///
 /// The main window and detached core panels deliberately use their own
@@ -5369,6 +5376,14 @@ fn close_editor_window(
     let window = app
         .get_webview_window(&label)
         .ok_or_else(|| format!("editor window \"{label}\" was not found"))?;
+    let url = window
+        .url()
+        .map_err(|error| format!("could not inspect editor window \"{label}\" URL: {error}"))?;
+    if !agent_editor_window_url_is_owned(&url) {
+        return Err(format!(
+            "editor window \"{label}\" is not owned by background Agent work"
+        ));
+    }
     let visible = window
         .is_visible()
         .map_err(|error| format!("could not inspect editor window \"{label}\": {error}"))?;
@@ -5411,6 +5426,7 @@ fn list_editor_windows(app: tauri::AppHandle) -> Vec<EditorWindowInfo> {
                     .find(|(key, _)| key == "editorWindow")
                     .map(|(_, value)| value.to_string())
             });
+            let agent_owned = url.as_ref().is_some_and(agent_editor_window_url_is_owned);
             let position = window.outer_position().ok();
             let size = window.outer_size().ok();
             EditorWindowInfo {
@@ -5420,6 +5436,7 @@ fn list_editor_windows(app: tauri::AppHandle) -> Vec<EditorWindowInfo> {
                 panel_kind,
                 type_id: editor_type.clone(),
                 editor_type,
+                agent_owned,
                 url: url_str,
                 visible: window.is_visible().unwrap_or(false),
                 focused: window.is_focused().unwrap_or(false),
@@ -5705,6 +5722,23 @@ mod tests {
         assert!(validate_agent_editor_window_state(true, false).is_err());
         assert!(validate_agent_editor_window_state(false, true).is_err());
         assert!(validate_agent_editor_window_state(true, true).is_err());
+    }
+
+    #[test]
+    fn agent_window_close_requires_persisted_native_ownership() {
+        let owned = tauri::Url::parse(
+            "http://tauri.localhost/?editorWindow=EditorWindow.Test&agentOwned=true",
+        )
+        .unwrap();
+        let foreground =
+            tauri::Url::parse("http://tauri.localhost/?editorWindow=EditorWindow.Test").unwrap();
+        let false_marker = tauri::Url::parse(
+            "http://tauri.localhost/?editorWindow=EditorWindow.Test&agentOwned=false",
+        )
+        .unwrap();
+        assert!(agent_editor_window_url_is_owned(&owned));
+        assert!(!agent_editor_window_url_is_owned(&foreground));
+        assert!(!agent_editor_window_url_is_owned(&false_marker));
     }
 
     #[test]

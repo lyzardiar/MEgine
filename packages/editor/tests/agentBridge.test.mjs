@@ -817,7 +817,7 @@ test('whole-window agent capture is background-safe and addressable by window la
   assert.match(bridge, /isDefaultPanelLayout\(lastLayout\)/);
   assert.match(bridge, /function isDefaultPanelLayout\(layout: PanelLayoutSnapshot\)/);
   assert.match(bridge, /nativePanelWindows: lastNativePanelWindows/);
-  assert.match(bridge, /agentOwnedEditorWindows = new Set<string>\(\)/);
+  assert.doesNotMatch(bridge, /agentOwnedEditorWindows = new Set<string>\(\)/);
   assert.match(
     bridge,
     /existing && \(existing\.visible \|\| existing\.focused\)[\s\S]*cannot be reused for background Agent work/,
@@ -826,11 +826,12 @@ test('whole-window agent capture is background-safe and addressable by window la
     bridge,
     /if \(target\.visible \|\| target\.focused\)[\s\S]*cannot be used for background Agent work/,
   );
-  assert.match(bridge, /if \(existing === undefined\) this\.agentOwnedEditorWindows\.add/);
-  assert.match(bridge, /if \(!this\.agentOwnedEditorWindows\.has\(windowLabel\)\)/);
+  assert.match(bridge, /agentOwned: existing === undefined/);
+  assert.match(bridge, /if \(!target\.agentOwned\)/);
   assert.match(bridge, /if \(target\.visible \|\| target\.focused\)/);
-  assert.match(bridge, /this\.agentOwnedEditorWindows\.delete\(windowLabel\)/);
+  assert.doesNotMatch(bridge, /agentOwnedEditorWindows\.delete\(windowLabel\)/);
   assert.match(bridge, /snapshotRevision: initialSnapshot\.snapshotRevision/);
+  assert.match(bridge, /agentOwned: target\.agentOwned/);
   assert.match(bridge, /did not expose semantic UI within 5 seconds/);
   assert.match(mcp, /windowLabel: args\.windowLabel \|\| 'main'/);
   assert.match(mcp, /name: 'get_window_ui'/);
@@ -862,7 +863,7 @@ test('whole-window agent capture is background-safe and addressable by window la
   assert.match(bridge, /this\.windowObservationTimer = window\.setInterval/);
   assert.match(bridge, /private recordWindowInventory/);
   assert.match(bridge, /windows: snapshot/);
-  assert.match(bridge, /if \(!openLabels\.has\(label\)\) this\.agentOwnedEditorWindows\.delete\(label\)/);
+  assert.match(bridge, /created without its native Agent ownership marker/);
   assert.match(bridge, /closeRegisteredEditorWindow\(target\.label, false\)/);
   assert.match(mcp, /name: 'get_panel_layout'/);
   assert.match(mcp, /name: 'list_panels'/);

@@ -284,6 +284,8 @@ export interface EditorWindowInfo {
   typeId: string | null;
   /** Backward-compatible alias for existing Agent clients. */
   editorType: string | null;
+  /** True only for a native auxiliary window created by background Agent work. */
+  agentOwned: boolean;
   url: string;
   visible: boolean;
   focused: boolean;

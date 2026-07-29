@@ -464,7 +464,6 @@ class AgentBridge {
   private observedProjectSignature: string | null = null;
   private editorBootReady = false;
   private editorBootGeneration = 0;
-  private readonly agentOwnedEditorWindows = new Set<string>();
 
   /** Wire the bridge to the live editor store. Called once from App. */
   connect(store: EditorStore): void {
@@ -1582,10 +1581,6 @@ class AgentBridge {
     emitEvent = true,
   ): void {
     const snapshot = structuredClone(windows);
-    const openLabels = new Set(snapshot.map((window) => window.label));
-    for (const label of this.agentOwnedEditorWindows) {
-      if (!openLabels.has(label)) this.agentOwnedEditorWindows.delete(label);
-    }
     const signature = JSON.stringify(snapshot);
     const inventoryChanged = signature !== this.observedWindowSignature;
     if (inventoryChanged) this.observedWindowSignature = signature;
@@ -1673,7 +1668,7 @@ class AgentBridge {
         { windowLabel, kind: target.kind },
       );
     }
-    if (!this.agentOwnedEditorWindows.has(windowLabel)) {
+    if (!target.agentOwned) {
       throw new BridgeError(
         'READONLY',
         `Editor window "${windowLabel}" was not created by this Agent session and cannot be closed in the background`,
@@ -1681,7 +1676,7 @@ class AgentBridge {
           windowLabel,
           visible: target.visible,
           focused: target.focused,
-          createdByAgent: false,
+          createdByAgent: target.agentOwned,
         },
       );
     }
@@ -1693,7 +1688,7 @@ class AgentBridge {
           windowLabel,
           visible: target.visible,
           focused: target.focused,
-          createdByAgent: true,
+          createdByAgent: target.agentOwned,
         },
       );
     }
@@ -1705,7 +1700,6 @@ class AgentBridge {
       ),
     );
     if (result.closed) {
-      this.agentOwnedEditorWindows.delete(windowLabel);
       await this.observeWindowInventory(
         {
           action: 'closed',
@@ -1737,6 +1731,7 @@ class AgentBridge {
     created: boolean;
     visible: boolean;
     focused: boolean;
+    agentOwned: boolean;
     semanticReady: true;
     snapshotRevision: string;
     semanticElementCount: number;
@@ -1791,6 +1786,7 @@ class AgentBridge {
       width: definition.width,
       height: definition.height,
       activateWindow: false,
+      agentOwned: existing === undefined,
     });
     if (!opened) {
       throw new BridgeError(
@@ -1826,7 +1822,16 @@ class AgentBridge {
         },
       );
     }
-    if (existing === undefined) this.agentOwnedEditorWindows.add(target.label);
+    if (existing === undefined && !target.agentOwned) {
+      throw new BridgeError(
+        'IO_ERROR',
+        `Editor window "${target.label}" was created without its native Agent ownership marker`,
+        {
+          typeId: normalizedTypeId,
+          windowLabel: target.label,
+        },
+      );
+    }
     let initialSnapshot: EditorUiSnapshot | null = null;
     for (let attempt = 0; attempt < 100; attempt += 1) {
       try {
@@ -1857,6 +1862,7 @@ class AgentBridge {
       created: existing === undefined,
       visible: target.visible,
       focused: target.focused,
+      agentOwned: target.agentOwned,
       semanticReady: true as const,
       snapshotRevision: initialSnapshot.snapshotRevision,
       semanticElementCount: initialSnapshot.totalSemanticElements,

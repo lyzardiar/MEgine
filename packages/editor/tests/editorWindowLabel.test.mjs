@@ -1,6 +1,9 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { editorWindowLabelFor } from '../src/editorWindow/editorWindowLabel.ts';
+import {
+  editorWindowLabelFor,
+  editorWindowUrlFor,
+} from '../src/editorWindow/editorWindowLabel.ts';
 
 function legacyHashedLabel(typeId) {
   let hash = 2166136261;
@@ -17,6 +20,17 @@ test('native editor window labels preserve distinct extension type ids', () => {
 
   assert.equal(legacyHashedLabel(first), legacyHashedLabel(second));
   assert.notEqual(editorWindowLabelFor(first), editorWindowLabelFor(second));
+});
+
+test('native editor window routes persist Agent ownership only when requested', () => {
+  const typeId = 'EditorWindow.检查器';
+  const foreground = new URL(editorWindowUrlFor(typeId), 'http://tauri.localhost');
+  const agent = new URL(editorWindowUrlFor(typeId, true), 'http://tauri.localhost');
+
+  assert.equal(foreground.searchParams.get('editorWindow'), typeId);
+  assert.equal(foreground.searchParams.has('agentOwned'), false);
+  assert.equal(agent.searchParams.get('editorWindow'), typeId);
+  assert.equal(agent.searchParams.get('agentOwned'), 'true');
 });
 
 test('native editor window labels preserve UTF-8 identity with Tauri-safe characters', () => {
