@@ -1770,6 +1770,10 @@ pub async fn interact_editor_window(
     delta_x: Option<f64>,
     delta_y: Option<f64>,
     key: Option<String>,
+    shift_key: Option<bool>,
+    ctrl_key: Option<bool>,
+    alt_key: Option<bool>,
+    meta_key: Option<bool>,
     expected_snapshot_revision: String,
 ) -> Result<serde_json::Value, String> {
     let window_label = window_label.unwrap_or_else(|| "main".to_string());
@@ -1846,6 +1850,18 @@ pub async fn interact_editor_window(
     } else if key.is_some() {
         return Err("key is only valid for keyPress".to_string());
     }
+    let has_modifiers = shift_key == Some(true)
+        || ctrl_key == Some(true)
+        || alt_key == Some(true)
+        || meta_key == Some(true);
+    if has_modifiers
+        && !matches!(
+            action.as_str(),
+            "click" | "doubleClick" | "contextClick" | "keyPress" | "dragTo" | "dragBy"
+        )
+    {
+        return Err("modifier keys are only valid for click, key, or drag actions".to_string());
+    }
     let expected_snapshot_revision = expected_snapshot_revision.trim().to_string();
     if !valid_ui_snapshot_revision(&expected_snapshot_revision) {
         return Err(
@@ -1883,6 +1899,10 @@ pub async fn interact_editor_window(
         delta_x,
         delta_y,
         key,
+        shift_key,
+        ctrl_key,
+        alt_key,
+        meta_key,
         expected_snapshot_revision.clone(),
     )
     .await?;
@@ -2205,6 +2225,10 @@ async fn interact_editor_window_impl(
     delta_x: Option<f64>,
     delta_y: Option<f64>,
     key: Option<String>,
+    shift_key: Option<bool>,
+    ctrl_key: Option<bool>,
+    alt_key: Option<bool>,
+    meta_key: Option<bool>,
     expected_snapshot_revision: String,
 ) -> Result<serde_json::Value, String> {
     use base64::Engine as _;
@@ -2216,6 +2240,10 @@ async fn interact_editor_window_impl(
         "deltaX": delta_x,
         "deltaY": delta_y,
         "key": key,
+        "shiftKey": shift_key.unwrap_or(false),
+        "ctrlKey": ctrl_key.unwrap_or(false),
+        "altKey": alt_key.unwrap_or(false),
+        "metaKey": meta_key.unwrap_or(false),
         "expectedSnapshotRevision": expected_snapshot_revision,
     })
     .to_string();
@@ -2381,6 +2409,10 @@ async fn interact_editor_window_impl(
     _delta_x: Option<f64>,
     _delta_y: Option<f64>,
     _key: Option<String>,
+    _shift_key: Option<bool>,
+    _ctrl_key: Option<bool>,
+    _alt_key: Option<bool>,
+    _meta_key: Option<bool>,
     _expected_snapshot_revision: String,
 ) -> Result<serde_json::Value, String> {
     Err("background editor-window interaction is currently only supported on Windows".to_string())
@@ -2904,8 +2936,18 @@ const WINDOW_UI_INTERACTION_SCRIPT: &str = r#"
     deltaX: requestedDeltaX,
     deltaY: requestedDeltaY,
     key: requestedKey,
+    shiftKey: requestedShiftKey,
+    ctrlKey: requestedCtrlKey,
+    altKey: requestedAltKey,
+    metaKey: requestedMetaKey,
     expectedSnapshotRevision,
   } = payload;
+  const modifiers = {
+    shiftKey: requestedShiftKey === true,
+    ctrlKey: requestedCtrlKey === true,
+    altKey: requestedAltKey === true,
+    metaKey: requestedMetaKey === true,
+  };
   const revisionGuard = window[Symbol.for('mengine.agent.uiRevisionGuard')];
   const guardedEpoch = revisionGuard?.revisions?.get(expectedSnapshotRevision);
   if (!revisionGuard || guardedEpoch !== revisionGuard.epoch) {
@@ -3105,6 +3147,7 @@ const WINDOW_UI_INTERACTION_SCRIPT: &str = r#"
       pointerId: 1,
       pointerType: 'mouse',
       isPrimary: true,
+      ...modifiers,
       ...coordinates,
     }));
   };
@@ -3127,6 +3170,7 @@ const WINDOW_UI_INTERACTION_SCRIPT: &str = r#"
       pointerType: 'mouse',
       isPrimary: true,
       relatedTarget,
+      ...modifiers,
       ...coordinates,
       preventDefault() { this.defaultPrevented = true; },
       stopPropagation() {},
@@ -3164,6 +3208,7 @@ const WINDOW_UI_INTERACTION_SCRIPT: &str = r#"
       bubbles: true,
       cancelable: true,
       defaultPrevented: false,
+      ...modifiers,
       preventDefault() { this.defaultPrevented = true; },
       stopPropagation() {},
       isDefaultPrevented() { return this.defaultPrevented; },
@@ -3200,7 +3245,10 @@ const WINDOW_UI_INTERACTION_SCRIPT: &str = r#"
           : (element.indeterminate ? true : !element.checked),
         true,
       );
-    } else if (typeof element.click === 'function') element.click();
+    } else if (
+      !Object.values(modifiers).some(Boolean)
+      && typeof element.click === 'function'
+    ) element.click();
     else dispatchPointer('click', 0, 0, detail);
   };
   if (action === 'click') {
@@ -3233,6 +3281,7 @@ const WINDOW_UI_INTERACTION_SCRIPT: &str = r#"
       bubbles: true,
       cancelable: true,
       composed: true,
+      ...modifiers,
       dataTransfer,
       ...eventCoordinates(target),
     }));
@@ -3435,6 +3484,7 @@ const WINDOW_UI_INTERACTION_SCRIPT: &str = r#"
       bubbles: true,
       cancelable: true,
       composed: true,
+      ...modifiers,
     }));
     const acceptsDefault = dispatchKeyboard('keydown');
     if (requestedKey === 'Enter' || requestedKey === 'Space') {
@@ -3478,7 +3528,12 @@ const WINDOW_UI_INTERACTION_SCRIPT: &str = r#"
         && candidate.getClientRects().length > 0
       ));
       const index = focusable.indexOf(element);
-      const next = focusable[index >= 0 ? (index + 1) % focusable.length : 0];
+      const nextIndex = index < 0
+        ? (modifiers.shiftKey ? focusable.length - 1 : 0)
+        : modifiers.shiftKey
+          ? (index - 1 + focusable.length) % focusable.length
+          : (index + 1) % focusable.length;
+      const next = focusable[nextIndex];
       if (next instanceof HTMLElement) next.focus({ preventScroll: true });
     }
     dispatchKeyboard('keyup');
@@ -3512,6 +3567,7 @@ const WINDOW_UI_INTERACTION_SCRIPT: &str = r#"
     elementConnected: element.isConnected,
     action,
     key: action === 'keyPress' ? requestedKey : null,
+    modifiers,
     deltaX: action === 'dragBy' ? requestedDeltaX : null,
     deltaY: action === 'dragBy' ? requestedDeltaY : null,
     selector,

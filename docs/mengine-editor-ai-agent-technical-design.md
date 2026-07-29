@@ -329,13 +329,13 @@ Rust Host 使用独立的工程生命周期互斥门串行化 open/create/close 
 | `layout.reset` | — | dispatch `mengine:reset-dock-layout` |
 | `window.open_editor` | `{ typeId }` | ✅ 隐藏创建后同时等待原生窗口可发现与目标 WebView 非空语义快照就绪；返回初始 `snapshotRevision` / `semanticElementCount`，不会把仍在加载的窗口误报为空；成功创建及 `window.close` 销毁均发出 `window.changed` |
 | `menu.invoke` | `{ path }` | ✅ 查 `MenuItemEntry`、执行实时 validator，再复用 `entry.action(ctx)` |
-| `window.ui_click` | `{ windowLabel?, selector }` | ✅ 对 `window.ui_snapshot` 返回的 selector 调用受限 DOM `click()`；不激活顶层窗口 |
+| `window.ui_click` | `{ windowLabel?, selector, shiftKey?, ctrlKey?, altKey?, metaKey? }` | ✅ 对 `window.ui_snapshot` 返回的 selector 合成受限 Pointer/Mouse/Click 事件；可携带显式修饰键完成范围/追加选择，不激活顶层窗口 |
 | `window.ui_set_value` | `{ windowLabel?, selector, value }` | ✅ 仅允许 input/textarea/select/contenteditable，触发 input/change；拒绝 disabled/readonly，禁止调用方注入脚本 |
 | `window.ui_double_click` / `context_click` / `scroll` | 快照 selector 与对应参数 | ✅ 支持双击、上下文菜单和虚拟化容器滚动；均遵守元素级 Agent 禁止策略，脚本 IDE 启动、系统文件选择器、工程关闭与进程退出等人工路径不能借键盘或上下文菜单旁路 |
-| `window.ui_drag_to` | `{ windowLabel?, selector, targetSelector }` | ✅ 仅接受语义快照中的源/目标 selector，在同一隐藏 WebView 内合成 HTML5 拖放事件；不移动前台鼠标 |
-| `window.ui_drag_by` | `{ windowLabel?, selector, deltaX, deltaY }` | ✅ 从快照标记为 `dragBy` 的元素中心开始，在同一隐藏 WebView 内分步合成 Pointer/Mouse 手势；终点必须留在视口内，不接受屏幕坐标且不移动系统鼠标 |
+| `window.ui_drag_to` | `{ windowLabel?, selector, targetSelector, shiftKey?, ctrlKey?, altKey?, metaKey? }` | ✅ 仅接受语义快照中的源/目标 selector，在同一隐藏 WebView 内合成可带修饰键的 HTML5 拖放事件；不移动前台鼠标 |
+| `window.ui_drag_by` | `{ windowLabel?, selector, deltaX, deltaY, shiftKey?, ctrlKey?, altKey?, metaKey? }` | ✅ 从快照标记为 `dragBy` 的元素中心开始，在同一隐藏 WebView 内分步合成可带修饰键的 Pointer/Mouse 手势；终点必须留在视口内，不接受屏幕坐标且不移动系统鼠标 |
 | `window.ui_hover` | `{ windowLabel?, selector }` | ✅ 仅接受快照标记为 `hover` 的 React 悬停目标；在同一隐藏 WebView 内合成进入/离开事件，用于展开层级菜单且不移动系统鼠标 |
-| `window.ui_press_key` | `{ windowLabel?, selector, key }` | ✅ 仅允许 Enter/Escape/Tab/Space、方向/翻页/首尾及删除类语义键；事件只进入目标隐藏 WebView，不向前台应用注入输入 |
+| `window.ui_press_key` | `{ windowLabel?, selector, key, shiftKey?, ctrlKey?, altKey?, metaKey? }` | ✅ 仅允许 Enter/Escape/Tab/Space、方向/翻页/首尾及删除类语义键；修饰键随 Key/Pointer 事件进入目标隐藏 WebView，`Shift+Tab` 支持反向焦点导航，不向前台应用注入输入 |
 
 所有 `window.ui_*` 写动作还必须传入 selector 所属页面的 `expectedSnapshotRevision`。Rust Host 会在事件分发前重新计算完整语义元素身份与顺序指纹；隐藏 WebView 还把 revision 绑定到 DOM mutation epoch，并在查询 selector 前于同一个 JS 任务内同步复核。DOM 已重排、语义内容已变化或检查与执行之间出现竞态时返回 `STALE_REVISION`，调用方必须重新读取快照，不能把过期 selector 作用到新元素。
 

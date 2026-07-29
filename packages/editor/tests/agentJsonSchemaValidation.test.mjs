@@ -36,6 +36,13 @@ test('direct AgentBridge schema validation matches MCP for valid command argumen
     ['window.ui_press_key', {
       selector: '#dialog-input',
       key: 'Enter',
+      shiftKey: true,
+      expectedSnapshotRevision: UI_REVISION,
+    }],
+    ['window.ui_click', {
+      selector: '#range-end',
+      ctrlKey: true,
+      altKey: false,
       expectedSnapshotRevision: UI_REVISION,
     }],
     ['window.ui_drag_to', {
@@ -98,6 +105,17 @@ test('direct AgentBridge schema validation matches MCP for malformed or extra ar
     ['window.ui_press_key', {
       selector: '#dialog-input',
       key: 'A',
+      expectedSnapshotRevision: UI_REVISION,
+    }],
+    ['window.ui_click', {
+      selector: '#range-end',
+      shiftKey: 'true',
+      expectedSnapshotRevision: UI_REVISION,
+    }],
+    ['window.ui_set_value', {
+      selector: '#name',
+      value: 'Example',
+      shiftKey: true,
       expectedSnapshotRevision: UI_REVISION,
     }],
     ['window.ui_drag_to', {

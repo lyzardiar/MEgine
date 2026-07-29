@@ -138,6 +138,13 @@ export interface EditorUiContentPage {
   content: string;
 }
 
+export interface EditorUiModifiers {
+  shiftKey: boolean;
+  ctrlKey: boolean;
+  altKey: boolean;
+  metaKey: boolean;
+}
+
 export interface EditorUiActionResult {
   ok: boolean;
   error?: string;
@@ -152,6 +159,7 @@ export interface EditorUiActionResult {
   postSnapshotRevision?: string;
   postSemanticElementCount?: number;
   snapshotChanged?: boolean;
+  modifiers?: EditorUiModifiers;
   agentBlocked?: boolean;
   agentAlternative?: string | null;
   action?: EditorUiAction;

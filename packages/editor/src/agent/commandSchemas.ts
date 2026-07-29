@@ -132,6 +132,12 @@ const uiInteractionContext: SchemaProperties = {
     description: 'Exact snapshotRevision returned with the selector by window.ui_snapshot',
   },
 };
+const uiModifierContext: SchemaProperties = {
+  shiftKey: booleanValue('Dispatch the interaction with Shift held'),
+  ctrlKey: booleanValue('Dispatch the interaction with Control held'),
+  altKey: booleanValue('Dispatch the interaction with Alt held'),
+  metaKey: booleanValue('Dispatch the interaction with Meta held'),
+};
 const uiInteractionRequired = ['selector', 'expectedSnapshotRevision'];
 
 export const COMMAND_PARAMS_SCHEMAS: Record<string, AgentJsonSchema> = {
@@ -842,14 +848,17 @@ export const COMMAND_PARAMS_SCHEMAS: Record<string, AgentJsonSchema> = {
   }, ['typeId']),
   'window.ui_click': objectSchema({
     ...uiInteractionContext,
+    ...uiModifierContext,
     selector: stringValue('Exact selector returned by window.ui_snapshot'),
   }, uiInteractionRequired),
   'window.ui_double_click': objectSchema({
     ...uiInteractionContext,
+    ...uiModifierContext,
     selector: stringValue('Exact selector returned by window.ui_snapshot'),
   }, uiInteractionRequired),
   'window.ui_context_click': objectSchema({
     ...uiInteractionContext,
+    ...uiModifierContext,
     selector: stringValue('Exact selector returned by window.ui_snapshot'),
   }, uiInteractionRequired),
   'window.ui_set_value': objectSchema({
@@ -875,11 +884,13 @@ export const COMMAND_PARAMS_SCHEMAS: Record<string, AgentJsonSchema> = {
   }, [...uiInteractionRequired, 'deltaY']),
   'window.ui_drag_to': objectSchema({
     ...uiInteractionContext,
+    ...uiModifierContext,
     selector: stringValue('Exact draggable source selector returned by window.ui_snapshot'),
     targetSelector: stringValue('Exact drop target selector returned by window.ui_snapshot'),
   }, [...uiInteractionRequired, 'targetSelector']),
   'window.ui_drag_by': objectSchema({
     ...uiInteractionContext,
+    ...uiModifierContext,
     selector: stringValue('Exact pointer-gesture selector returned by window.ui_snapshot'),
     deltaX: {
       type: 'number',
@@ -900,6 +911,7 @@ export const COMMAND_PARAMS_SCHEMAS: Record<string, AgentJsonSchema> = {
   }, uiInteractionRequired),
   'window.ui_press_key': objectSchema({
     ...uiInteractionContext,
+    ...uiModifierContext,
     selector: stringValue('Exact keyboard target selector returned by window.ui_snapshot'),
     key: {
       type: 'string',
@@ -919,7 +931,7 @@ export const COMMAND_PARAMS_SCHEMAS: Record<string, AgentJsonSchema> = {
         'Backspace',
         'Delete',
       ],
-      description: 'Allow-listed semantic key without modifiers',
+      description: 'Allow-listed semantic key with optional modifier flags',
     },
   }, [...uiInteractionRequired, 'key']),
 };

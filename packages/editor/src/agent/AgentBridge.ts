@@ -28,6 +28,7 @@ import {
   type EditorState,
   type EditorUiActionResult,
   type EditorUiContentPage,
+  type EditorUiModifiers,
   type EditorUiSnapshot,
   type EditorWindowInfo,
   type HierarchyNode,
@@ -965,6 +966,12 @@ class AgentBridge {
     deltaY?: number,
     key?: string,
     expectedSnapshotRevision?: string,
+    modifiers: EditorUiModifiers = {
+      shiftKey: false,
+      ctrlKey: false,
+      altKey: false,
+      metaKey: false,
+    },
   ): Promise<EditorUiActionResult> {
     if (!isDesktopEditor()) {
       throw new BridgeError('NOT_READY', 'Window UI interaction requires the desktop editor');
@@ -1009,6 +1016,7 @@ class AgentBridge {
       deltaX,
       deltaY,
       key,
+      ...modifiers,
       expectedSnapshotRevision,
     });
     if (!result.ok) {
@@ -4476,6 +4484,12 @@ class AgentBridge {
         ? requiredString(args, 'key')
         : undefined;
       const expectedSnapshotRevision = requiredString(args, 'expectedSnapshotRevision');
+      const modifiers: EditorUiModifiers = {
+        shiftKey: optionalBoolean(args, 'shiftKey', false),
+        ctrlKey: optionalBoolean(args, 'ctrlKey', false),
+        altKey: optionalBoolean(args, 'altKey', false),
+        metaKey: optionalBoolean(args, 'metaKey', false),
+      };
       const result: CommandResult = {
         ok: true,
         data: await this.interactWindow(
@@ -4488,6 +4502,7 @@ class AgentBridge {
           deltaY,
           key,
           expectedSnapshotRevision,
+          modifiers,
         ),
       };
       return this.finishAsyncCommand(result, options, windowLabel);

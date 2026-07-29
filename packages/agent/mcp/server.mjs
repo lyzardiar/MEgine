@@ -930,6 +930,15 @@ function uiInteractionProperties(selectorDescription) {
   };
 }
 
+function uiModifierProperties() {
+  return {
+    shiftKey: { type: 'boolean', description: 'Dispatch with Shift held' },
+    ctrlKey: { type: 'boolean', description: 'Dispatch with Control held' },
+    altKey: { type: 'boolean', description: 'Dispatch with Alt held' },
+    metaKey: { type: 'boolean', description: 'Dispatch with Meta held' },
+  };
+}
+
 const TOOLS = [
   {
     name: 'get_project_state',
@@ -3000,28 +3009,31 @@ const TOOLS = [
   ),
   execTool(
     'click_window_ui',
-    'Click an element returned by get_window_ui only when its editor window is hidden and unfocused. Prefer domain-specific tools when available.',
+    'Click an element returned by get_window_ui with optional Shift/Control/Alt/Meta modifiers only when its editor window is hidden and unfocused. Prefer domain-specific tools when available.',
     'window.ui_click',
     {
       ...uiInteractionProperties('Exact selector returned by get_window_ui'),
+      ...uiModifierProperties(),
     },
     ['selector', 'expectedSnapshotRevision'],
   ),
   execTool(
     'double_click_window_ui',
-    'Double-click an element marked with the doubleClick action by get_window_ui only when its editor window is hidden and unfocused.',
+    'Double-click an element marked with the doubleClick action by get_window_ui with optional modifiers only when its editor window is hidden and unfocused.',
     'window.ui_double_click',
     {
       ...uiInteractionProperties('Exact selector returned by get_window_ui'),
+      ...uiModifierProperties(),
     },
     ['selector', 'expectedSnapshotRevision'],
   ),
   execTool(
     'open_window_ui_context_menu',
-    'Open the context menu for an element marked with the contextClick action by get_window_ui only when its editor window is hidden and unfocused.',
+    'Open the context menu for an element marked with the contextClick action by get_window_ui with optional modifiers only when its editor window is hidden and unfocused.',
     'window.ui_context_click',
     {
       ...uiInteractionProperties('Exact selector returned by get_window_ui'),
+      ...uiModifierProperties(),
     },
     ['selector', 'expectedSnapshotRevision'],
   ),
@@ -3058,20 +3070,22 @@ const TOOLS = [
   ),
   execTool(
     'drag_window_ui',
-    'Drag a source marked with the dragTo action by get_window_ui onto another semantic element. The editor window must be hidden and unfocused; the HTML drag events never move the OS cursor.',
+    'Drag a source marked with the dragTo action by get_window_ui onto another semantic element with optional modifiers. The editor window must be hidden and unfocused; the HTML drag events never move the OS cursor.',
     'window.ui_drag_to',
     {
       ...uiInteractionProperties('Exact draggable source selector returned by get_window_ui'),
+      ...uiModifierProperties(),
       targetSelector: { type: 'string', description: 'Exact drop target selector returned by get_window_ui' },
     },
     ['selector', 'expectedSnapshotRevision', 'targetSelector'],
   ),
   execTool(
     'drag_window_ui_by',
-    'Perform a bounded pointer drag from the center of an element marked with the dragBy action by get_window_ui. The editor window must be hidden and unfocused, and the endpoint must stay inside the same WebView.',
+    'Perform a bounded pointer drag with optional modifiers from the center of an element marked with the dragBy action by get_window_ui. The editor window must be hidden and unfocused, and the endpoint must stay inside the same WebView.',
     'window.ui_drag_by',
     {
       ...uiInteractionProperties('Exact pointer-gesture selector returned by get_window_ui'),
+      ...uiModifierProperties(),
       deltaX: {
         type: 'number',
         minimum: -1000000,
@@ -3098,10 +3112,11 @@ const TOOLS = [
   ),
   execTool(
     'press_window_ui_key',
-    'Press an allow-listed semantic key on an element marked with the keyPress action by get_window_ui only when its editor window is hidden and unfocused.',
+    'Press an allow-listed semantic key with optional modifiers on an element marked with the keyPress action by get_window_ui only when its editor window is hidden and unfocused.',
     'window.ui_press_key',
     {
       ...uiInteractionProperties('Exact keyboard target selector returned by get_window_ui'),
+      ...uiModifierProperties(),
       key: {
         type: 'string',
         enum: [
@@ -3120,7 +3135,7 @@ const TOOLS = [
           'Backspace',
           'Delete',
         ],
-        description: 'Allow-listed semantic key without modifiers',
+        description: 'Allow-listed semantic key with optional modifier flags',
       },
     },
     ['selector', 'expectedSnapshotRevision', 'key'],

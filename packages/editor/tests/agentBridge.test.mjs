@@ -68,6 +68,12 @@ test('whole-window agent capture is background-safe and addressable by window la
   assert.match(rust, /actions\.push\('keyPress'\)/);
   assert.match(rust, /actions\.push\('dragTo'\)/);
   assert.match(rust, /actions\.push\('dragBy'\)/);
+  assert.match(rust, /"shiftKey": shift_key\.unwrap_or\(false\)/);
+  assert.match(rust, /"ctrlKey": ctrl_key\.unwrap_or\(false\)/);
+  assert.match(rust, /modifier keys are only valid for click, key, or drag actions/);
+  assert.match(rust, /shiftKey: requestedShiftKey === true/);
+  assert.match(rust, /\.\.\.modifiers/);
+  assert.match(rust, /modifiers\.shiftKey \? focusable\.length - 1 : 0/);
   assert.match(rust, /getAttribute\('data-agent-drag-by'\) === 'true'/);
   assert.match(rust, /typeof props\.onClick !== 'function' \|\| explicitDragBy/);
   assert.match(rust, /typeof reactProps\.onClick === 'function' && !explicitDragBy/);
