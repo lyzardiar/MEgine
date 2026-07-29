@@ -219,6 +219,7 @@ export interface EditorUiActionResult {
   constraintViolation?: boolean;
   validityIssues?: string[];
   clipboardDenied?: boolean;
+  textHistoryDenied?: boolean;
   selectorNotExposed?: boolean;
   targetSelectorNotExposed?: boolean;
   actionNotExposed?: boolean;
@@ -251,6 +252,11 @@ export interface EditorUiActionResult {
   clipboardOperation?: 'copy' | 'cut' | 'paste' | null;
   clipboardLength?: number | null;
   clipboardScope?: 'window-private' | null;
+  textHistoryOperation?: 'undo' | 'redo' | null;
+  textHistoryApplied?: boolean | null;
+  textHistoryUndoDepth?: number | null;
+  textHistoryRedoDepth?: number | null;
+  textHistoryScope?: 'element-private' | null;
   deltaX?: number | null;
   deltaY?: number | null;
   tag?: string;

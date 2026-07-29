@@ -4974,6 +4974,28 @@ const WINDOW_UI_INTERACTION_SCRIPT: &str = r#"
   let keyboardValueTarget = false;
   let semanticClipboardOperation = null;
   let semanticClipboardLength = null;
+  let performedTextHistoryOperation = null;
+  let textHistoryApplied = null;
+  let textHistoryUndoDepth = null;
+  let textHistoryRedoDepth = null;
+  const semanticTextHistoryKey = Symbol.for('mengine.agent.textHistory');
+  const semanticTextHistoryInputTypes = ['text', 'search', 'email', 'url', 'tel'];
+  const isSemanticTextHistoryTarget = (target) => (
+    (
+      target instanceof HTMLInputElement
+      && semanticTextHistoryInputTypes.includes(String(target.type).toLowerCase())
+    )
+    || target instanceof HTMLTextAreaElement
+    || (target instanceof HTMLElement && target.isContentEditable)
+  );
+  let semanticTextHistoryRegistry = window[semanticTextHistoryKey];
+  if (!(semanticTextHistoryRegistry instanceof WeakMap)) {
+    semanticTextHistoryRegistry = new WeakMap();
+    window[semanticTextHistoryKey] = semanticTextHistoryRegistry;
+  }
+  const clearSemanticTextHistory = (target) => {
+    if (isSemanticTextHistoryTarget(target)) semanticTextHistoryRegistry.delete(target);
+  };
   if (action === 'click') {
     dispatchClick(1);
   } else if (action === 'doubleClick') {
@@ -5315,12 +5337,14 @@ const WINDOW_UI_INTERACTION_SCRIPT: &str = r#"
         if (!beginBlurCommit()) {
           return { ok: false, error: `Element ${selector} could not receive edit focus` };
         }
+        clearSemanticTextHistory(element);
         setter.call(element, valueToApply);
         valueHandledByReact = dispatchValueChange(element, valueToApply);
       } else if (element.isContentEditable) {
         if (!beginBlurCommit()) {
           return { ok: false, error: `Element ${selector} could not receive edit focus` };
         }
+        clearSemanticTextHistory(element);
         element.textContent = value;
         valueHandledByReact = dispatchValueChange(element, value);
       } else {
@@ -5384,6 +5408,260 @@ const WINDOW_UI_INTERACTION_SCRIPT: &str = r#"
       && !modifiers.shiftKey
       && primaryTextShortcut
     );
+    const requestedTextHistoryOperation = primaryTextShortcut && (
+      (
+        key.toLowerCase() === 'z'
+        && !modifiers.shiftKey
+        && 'undo'
+      )
+      || (
+        (
+          (key.toLowerCase() === 'y' && !modifiers.shiftKey)
+          || (key.toLowerCase() === 'z' && modifiers.shiftKey)
+        )
+        && 'redo'
+      )
+    ) || null;
+    const textHistoryMaxEntries = 64;
+    const textHistoryMaxCharacters = 1000000;
+    const textHistoryStateFor = (target) => {
+      let state = semanticTextHistoryRegistry.get(target);
+      if (!state) {
+        state = { undo: [], redo: [] };
+        semanticTextHistoryRegistry.set(target, state);
+      }
+      return state;
+    };
+    const textHistorySnapshotCost = (snapshot) => (
+      snapshot?.kind === 'contenteditable'
+        ? String(snapshot.html ?? '').length
+        : String(snapshot?.value ?? '').length
+    );
+    const textHistoryStackCost = (stack) => stack.reduce(
+      (total, snapshot) => total + textHistorySnapshotCost(snapshot),
+      0,
+    );
+    const sameTextHistorySnapshot = (left, right) => (
+      left?.kind === right?.kind
+      && (
+        left?.kind === 'contenteditable'
+          ? (
+              left.html === right.html
+              && left.anchor === right.anchor
+              && left.focus === right.focus
+            )
+          : (
+              left?.value === right?.value
+              && left?.start === right?.start
+              && left?.end === right?.end
+              && left?.direction === right?.direction
+            )
+      )
+    );
+    const pushTextHistorySnapshot = (stack, snapshot) => {
+      if (!snapshot || textHistorySnapshotCost(snapshot) > textHistoryMaxCharacters) {
+        return false;
+      }
+      if (sameTextHistorySnapshot(stack[stack.length - 1], snapshot)) return true;
+      stack.push(snapshot);
+      while (
+        stack.length > textHistoryMaxEntries
+        || textHistoryStackCost(stack) > textHistoryMaxCharacters
+      ) stack.shift();
+      return stack.includes(snapshot);
+    };
+    const contentEditableTextOffset = (target, node, offset) => {
+      if (
+        !node
+        || !(
+          node === target
+          || target.contains(node.nodeType === Node.ELEMENT_NODE ? node : node.parentElement)
+        )
+      ) return null;
+      const range = document.createRange();
+      range.selectNodeContents(target);
+      try {
+        range.setEnd(node, offset);
+        return String(range.cloneContents().textContent ?? '').length;
+      } catch {
+        return null;
+      }
+    };
+    const contentEditableTextPoint = (target, rawOffset) => {
+      const textLength = String(target.textContent ?? '').length;
+      let remaining = Math.max(0, Math.min(textLength, Number(rawOffset)));
+      const walker = document.createTreeWalker(target, NodeFilter.SHOW_TEXT);
+      let node = walker.nextNode();
+      let last = null;
+      while (node) {
+        last = node;
+        const nodeLength = String(node.textContent ?? '').length;
+        if (remaining <= nodeLength) return { node, offset: remaining };
+        remaining -= nodeLength;
+        node = walker.nextNode();
+      }
+      return last
+        ? { node: last, offset: String(last.textContent ?? '').length }
+        : { node: target, offset: 0 };
+    };
+    const restoreContentEditableSelection = (target, anchor, focus) => {
+      const selection = window.getSelection();
+      if (!selection) return false;
+      const anchorPoint = contentEditableTextPoint(target, anchor);
+      const focusPoint = contentEditableTextPoint(target, focus);
+      const range = document.createRange();
+      range.setStart(anchorPoint.node, anchorPoint.offset);
+      range.collapse(true);
+      selection.removeAllRanges();
+      selection.addRange(range);
+      if (typeof selection.extend === 'function') {
+        selection.extend(focusPoint.node, focusPoint.offset);
+      } else {
+        range.setEnd(focusPoint.node, focusPoint.offset);
+      }
+      return true;
+    };
+    const captureTextHistorySnapshot = (target) => {
+      if (
+        target instanceof HTMLInputElement
+        || target instanceof HTMLTextAreaElement
+      ) {
+        if (
+          target instanceof HTMLInputElement
+          && String(target.type).toLowerCase() === 'password'
+        ) return null;
+        let start;
+        let end;
+        let direction;
+        try {
+          start = target.selectionStart;
+          end = target.selectionEnd;
+          direction = target.selectionDirection || 'none';
+        } catch {
+          return null;
+        }
+        if (typeof start !== 'number' || typeof end !== 'number') return null;
+        return {
+          kind: 'value',
+          value: String(target.value),
+          start,
+          end,
+          direction,
+        };
+      }
+      if (!(target instanceof HTMLElement) || !target.isContentEditable) return null;
+      const selection = window.getSelection();
+      const textLength = String(target.textContent ?? '').length;
+      const anchor = selection
+        ? contentEditableTextOffset(target, selection.anchorNode, selection.anchorOffset)
+        : null;
+      const focus = selection
+        ? contentEditableTextOffset(target, selection.focusNode, selection.focusOffset)
+        : null;
+      return {
+        kind: 'contenteditable',
+        html: target.innerHTML,
+        anchor: anchor ?? textLength,
+        focus: focus ?? textLength,
+      };
+    };
+    const restoreTextHistorySnapshot = (target, snapshot) => {
+      if (
+        snapshot?.kind === 'value'
+        && (
+          target instanceof HTMLInputElement
+          || target instanceof HTMLTextAreaElement
+        )
+      ) {
+        const prototype = target instanceof HTMLInputElement
+          ? HTMLInputElement.prototype
+          : HTMLTextAreaElement.prototype;
+        const setter = Object.getOwnPropertyDescriptor(prototype, 'value')?.set;
+        if (!setter) return false;
+        setter.call(target, snapshot.value);
+        try {
+          target.setSelectionRange(
+            snapshot.start,
+            snapshot.end,
+            snapshot.direction,
+          );
+        } catch {
+          return false;
+        }
+        valueHandledByReact = dispatchValueChange(target, snapshot.value);
+        if (target.isConnected) {
+          target.setSelectionRange(
+            snapshot.start,
+            snapshot.end,
+            snapshot.direction,
+          );
+        }
+        valueCommitMethod = 'change';
+        pendingValueChangeConfirmation = () => (
+          target.isConnected && String(target.value) === snapshot.value
+        );
+        return true;
+      }
+      if (
+        snapshot?.kind === 'contenteditable'
+        && target instanceof HTMLElement
+        && target.isContentEditable
+      ) {
+        target.innerHTML = snapshot.html;
+        restoreContentEditableSelection(target, snapshot.anchor, snapshot.focus);
+        valueHandledByReact = dispatchValueChange(
+          target,
+          String(target.textContent ?? ''),
+        );
+        if (target.isConnected) {
+          restoreContentEditableSelection(target, snapshot.anchor, snapshot.focus);
+        }
+        valueCommitMethod = 'change';
+        pendingValueChangeConfirmation = () => (
+          target.isConnected && target.innerHTML === snapshot.html
+        );
+        return true;
+      }
+      return false;
+    };
+    const recordTextHistoryMutation = (target, snapshot) => {
+      const state = textHistoryStateFor(target);
+      state.redo.length = 0;
+      pushTextHistorySnapshot(state.undo, snapshot);
+    };
+    const applyTextHistoryOperation = (target, operation) => {
+      performedTextHistoryOperation = operation;
+      const state = textHistoryStateFor(target);
+      const source = operation === 'undo' ? state.undo : state.redo;
+      const destination = operation === 'undo' ? state.redo : state.undo;
+      textHistoryApplied = false;
+      textHistoryUndoDepth = state.undo.length;
+      textHistoryRedoDepth = state.redo.length;
+      if (keyboardReadOnly || source.length === 0) return true;
+      const current = captureTextHistorySnapshot(target);
+      const snapshot = source[source.length - 1];
+      if (
+        !current
+        || !snapshot
+        || textHistorySnapshotCost(current) > textHistoryMaxCharacters
+      ) return true;
+      const beforeInput = new InputEvent('beforeinput', {
+        bubbles: true,
+        cancelable: true,
+        composed: true,
+        inputType: operation === 'undo' ? 'historyUndo' : 'historyRedo',
+        data: null,
+      });
+      if (!target.dispatchEvent(beforeInput)) return true;
+      if (!restoreTextHistorySnapshot(target, snapshot)) return true;
+      source.pop();
+      pushTextHistorySnapshot(destination, current);
+      delete target[Symbol.for('mengine.agent.textVerticalColumn')];
+      textHistoryApplied = true;
+      textHistoryUndoDepth = state.undo.length;
+      textHistoryRedoDepth = state.redo.length;
+      return true;
+    };
     const graphemeBoundaries = (rawText) => {
       const text = String(rawText ?? '');
       const boundaries = [0];
@@ -5467,6 +5745,8 @@ const WINDOW_UI_INTERACTION_SCRIPT: &str = r#"
     const primaryTextDefault = (
       primaryTextShortcut
       && (
+        requestedTextHistoryOperation !== null
+        ||
         primaryClipboardShortcut
         || [
           'ArrowLeft',
@@ -5487,6 +5767,17 @@ const WINDOW_UI_INTERACTION_SCRIPT: &str = r#"
         ok: false,
         error: 'Password fields cannot use the Agent private text clipboard',
         clipboardDenied: true,
+      };
+    }
+    if (
+      requestedTextHistoryOperation
+      && element instanceof HTMLInputElement
+      && String(element.type).toLowerCase() === 'password'
+    ) {
+      return {
+        ok: false,
+        error: 'Password fields cannot use the Agent private text history',
+        textHistoryDenied: true,
       };
     }
     const code = requestedKey === 'Space'
@@ -5549,6 +5840,9 @@ const WINDOW_UI_INTERACTION_SCRIPT: &str = r#"
         return false;
       }
       if (typeof start !== 'number' || typeof end !== 'number') return false;
+      if (requestedTextHistoryOperation) {
+        return applyTextHistoryOperation(element, requestedTextHistoryOperation);
+      }
       const length = element.value.length;
       const boundaries = graphemeBoundaries(element.value);
       const starts = wordStarts(element.value);
@@ -5784,6 +6078,9 @@ const WINDOW_UI_INTERACTION_SCRIPT: &str = r#"
       });
       if (!element.dispatchEvent(beforeInput)) return true;
       const caret = replacementStart + replacement.length;
+      if (nextValue !== element.value || start !== caret || end !== caret) {
+        recordTextHistoryMutation(element, captureTextHistorySnapshot(element));
+      }
       setter.call(element, nextValue);
       element.setSelectionRange(caret, caret, 'none');
       valueHandledByReact = dispatchValueChange(element, nextValue);
@@ -5798,6 +6095,9 @@ const WINDOW_UI_INTERACTION_SCRIPT: &str = r#"
       ) return false;
       const selection = window.getSelection();
       if (!selection) return false;
+      if (requestedTextHistoryOperation) {
+        return applyTextHistoryOperation(element, requestedTextHistoryOperation);
+      }
       if (selectAllShortcut) {
         const range = document.createRange();
         range.selectNodeContents(element);
@@ -6034,6 +6334,11 @@ const WINDOW_UI_INTERACTION_SCRIPT: &str = r#"
         data: replacement || null,
       });
       if (!element.dispatchEvent(beforeInput)) return true;
+      const caret = replacementStart + replacement.length;
+      if (text !== `${text.slice(0, replacementStart)}${replacement}${text.slice(replacementEnd)}`
+        || start !== caret || end !== caret) {
+        recordTextHistoryMutation(element, captureTextHistorySnapshot(element));
+      }
       const replacementRange = document.createRange();
       const startPoint = textPointAt(replacementStart);
       const endPoint = textPointAt(replacementEnd);
@@ -6044,7 +6349,6 @@ const WINDOW_UI_INTERACTION_SCRIPT: &str = r#"
         const inserted = document.createTextNode(replacement);
         replacementRange.insertNode(inserted);
       }
-      const caret = replacementStart + replacement.length;
       setSelection(caret, caret);
       valueHandledByReact = dispatchValueChange(element, String(element.textContent ?? ''));
       if (element.isConnected) setSelection(caret, caret);
@@ -6413,6 +6717,11 @@ const WINDOW_UI_INTERACTION_SCRIPT: &str = r#"
     clipboardOperation: action === 'keyPress' ? semanticClipboardOperation : null,
     clipboardLength: action === 'keyPress' ? semanticClipboardLength : null,
     clipboardScope: semanticClipboardOperation ? 'window-private' : null,
+    textHistoryOperation: action === 'keyPress' ? performedTextHistoryOperation : null,
+    textHistoryApplied: action === 'keyPress' ? textHistoryApplied : null,
+    textHistoryUndoDepth: action === 'keyPress' ? textHistoryUndoDepth : null,
+    textHistoryRedoDepth: action === 'keyPress' ? textHistoryRedoDepth : null,
+    textHistoryScope: performedTextHistoryOperation ? 'element-private' : null,
     deltaX: action === 'dragBy'
       ? performedDragPath[performedDragPath.length - 1].deltaX
       : action === 'scroll' ? requestedDeltaX ?? 0 : null,

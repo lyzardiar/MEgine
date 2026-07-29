@@ -304,6 +304,12 @@ test('whole-window agent capture is background-safe and addressable by window la
   assert.match(protocol, /clipboardLength\?: number \| null/);
   assert.match(protocol, /clipboardScope\?: 'window-private' \| null/);
   assert.match(protocol, /clipboardDenied\?: boolean/);
+  assert.match(protocol, /textHistoryDenied\?: boolean/);
+  assert.match(protocol, /textHistoryOperation\?: 'undo' \| 'redo' \| null/);
+  assert.match(protocol, /textHistoryApplied\?: boolean \| null/);
+  assert.match(protocol, /textHistoryUndoDepth\?: number \| null/);
+  assert.match(protocol, /textHistoryRedoDepth\?: number \| null/);
+  assert.match(protocol, /textHistoryScope\?: 'element-private' \| null/);
   assert.match(protocol, /allowedActions\?: EditorUiAction\[\]/);
   assert.match(rust, /const ariaStateKeys = \[/);
   for (const key of [
@@ -354,7 +360,7 @@ test('whole-window agent capture is background-safe and addressable by window la
     interactionScript,
     /semanticText\(labelledBy, semanticallyHidden\(labelledBy\)\)/,
   );
-  assert.equal([...rust.matchAll(/document\.createTreeWalker\(/g)].length, 5);
+  assert.equal([...rust.matchAll(/document\.createTreeWalker\(/g)].length, 6);
   assert.match(rust, /const referencedText = \(idRefs\) =>/);
   assert.equal([...rust.matchAll(/const labelledByText = \(/g)].length, 3);
   assert.equal([...rust.matchAll(/const nativeLabelText = \(/g)].length, 3);
@@ -486,6 +492,24 @@ test('whole-window agent capture is background-safe and addressable by window la
   assert.doesNotMatch(
     interactionScript,
     /navigator\.clipboard|new ClipboardEvent|execCommand\(/,
+  );
+  assert.match(
+    interactionScript,
+    /const semanticTextHistoryKey = Symbol\.for\('mengine\.agent\.textHistory'\)/,
+  );
+  assert.match(interactionScript, /semanticTextHistoryRegistry instanceof WeakMap/);
+  assert.match(interactionScript, /const textHistoryMaxEntries = 64/);
+  assert.match(interactionScript, /const textHistoryMaxCharacters = 1000000/);
+  assert.match(interactionScript, /const requestedTextHistoryOperation = primaryTextShortcut/);
+  assert.match(interactionScript, /key\.toLowerCase\(\) === 'z'/);
+  assert.match(interactionScript, /key\.toLowerCase\(\) === 'y'/);
+  assert.match(interactionScript, /inputType: operation === 'undo' \? 'historyUndo' : 'historyRedo'/);
+  assert.match(interactionScript, /recordTextHistoryMutation\(element, captureTextHistorySnapshot\(element\)\)/);
+  assert.match(interactionScript, /clearSemanticTextHistory\(element\)/);
+  assert.match(interactionScript, /Password fields cannot use the Agent private text history/);
+  assert.match(
+    interactionScript,
+    /textHistoryScope: performedTextHistoryOperation \? 'element-private' : null/,
   );
   assert.match(interactionScript, /const selectAllShortcut = \(/);
   assert.match(interactionScript, /key\.toLowerCase\(\) === 'a'/);
@@ -737,6 +761,8 @@ test('whole-window agent capture is background-safe and addressable by window la
   assert.match(bridge, /Hover leave target does not match the current semantic hover target/);
   assert.match(bridge, /Semantic value edit changed the control but did not confirm its commit boundary/);
   assert.match(bridge, /if \(result\.valueCommitConfirmed === false\)/);
+  assert.match(bridge, /if \(result\.textHistoryDenied\)/);
+  assert.match(bridge, /The Agent private text history cannot access this control/);
   assert.match(bridge, /Window UI interaction requires expectedSnapshotRevision/);
   assert.match(bridge, /must be hidden and unfocused before semantic UI interaction/);
   assert.match(bridge, /requiredWindowState: 'hidden-unfocused'/);
@@ -819,6 +845,8 @@ test('whole-window agent capture is background-safe and addressable by window la
   assert.match(mcp, /'drag_window_ui_by'/);
   assert.match(mcp, /'hover_window_ui'/);
   assert.match(mcp, /'press_window_ui_key'/);
+  assert.match(mcp, /bounded element-private history/);
+  assert.match(mcp, /never touches the editor scene\/resource undo stack/);
   assert.match(mcp, /'respond_to_dialog'/);
   assert.match(mcp, /'close_editor_window'/);
   assert.match(mcp, /'open_editor_window'/);

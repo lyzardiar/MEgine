@@ -1215,6 +1215,17 @@ class AgentBridge {
           },
         );
       }
+      if (result.textHistoryDenied) {
+        throw new BridgeError(
+          'READONLY',
+          result.error ?? 'The Agent private text history cannot access this control',
+          {
+            windowLabel,
+            selector,
+            textHistoryDenied: true,
+          },
+        );
+      }
       if (result.selectorNotExposed || result.actionNotExposed) {
         throw new BridgeError(
           'INVALID_ARGS',
