@@ -81,6 +81,10 @@ test('command schemas expose exact high-risk guards and shared optimistic option
     ['path'],
   );
   assert.deepEqual(
+    COMMAND_PARAMS_SCHEMAS['workspace.reload_document'].required,
+    ['path'],
+  );
+  assert.deepEqual(
     COMMAND_PARAMS_SCHEMAS['workspace.close_document'].required,
     ['path'],
   );

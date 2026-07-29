@@ -292,6 +292,10 @@ export interface AgentWorkspaceProvider {
     discarded: boolean;
     unchanged: boolean;
   }>;
+  reloadDocument: (path: string) => Promise<{
+    target: AgentResourceEditorTarget;
+    discarded: boolean;
+  }>;
   closeDocument: (
     path: string,
     dirtyAction?: 'reject' | 'save' | 'discard',
@@ -4002,6 +4006,34 @@ class AgentBridge {
         requiredString(args, 'path'),
       );
       return this.finishAsyncCommand({ ok: true, data: result }, options);
+    }
+    if (commandId === 'workspace.reload_document') {
+      const requestedPath = requiredString(args, 'path');
+      const normalized = normalizeAssetPath(requestedPath);
+      const matches = (await this.getWorkspaceDocuments()).documents.filter(
+        (document) => (
+          document.path?.replace(/\\/g, '/').toLocaleLowerCase()
+          === normalized.toLocaleLowerCase()
+        ),
+      );
+      if (matches.length === 1) {
+        await this.assertPanelWindowMutationAllowed(
+          'workspace.reload_document',
+          [matches[0].windowLabel],
+        );
+      }
+      const result = await this.requireWorkspaceProvider().reloadDocument(
+        requestedPath,
+      );
+      const document = await this.waitForWorkspaceDocument(result.target);
+      return this.finishAsyncCommand({
+        ok: true,
+        data: {
+          ...document,
+          reloaded: true,
+          discarded: result.discarded,
+        },
+      }, options, document.windowLabel);
     }
     if (commandId === 'workspace.close_document') {
       const dirtyAction = optionalString(args, 'dirtyAction') ?? 'reject';

@@ -767,6 +767,7 @@ test('panel and menu agent surfaces use live providers and background activation
   assert.match(app, /operation\?: ResourceDocumentOperation/);
   assert.match(app, /saveDocument: async \(requestedPath: string\)/);
   assert.match(app, /discardDocument: async \(requestedPath: string\)/);
+  assert.match(app, /reloadDocument: async \(requestedPath: string\)/);
   assert.match(app, /closeDocument: async \(/);
   assert.match(app, /allowedDirtyActions: \['save', 'discard'\]/);
   assert.match(app, /coordinator\.request\([\s\S]*?\[canonicalPath\]/);
@@ -776,12 +777,18 @@ test('panel and menu agent surfaces use live providers and background activation
   assert.match(app, /waitForLocalResourceDocumentClean\(canonicalPath\)/);
   assert.match(app, /waitForLocalResourceDocumentDiscarded\(canonicalPath\)/);
   assert.match(app, /waitForLocalResourceDocumentClosed\(canonicalPath\)/);
+  assert.match(
+    app,
+    /await agentWorkspaceProviderRef\.current!\.openAsset\(target\)/,
+  );
   assert.match(app, /projectAssetHasExternalWriteConflict\(document\.path\)/);
   assert.match(app, /if \(target\.document\.conflicted\)/);
   assert.match(app, /await saveRemoteResources\(\)/);
   assert.match(app, /Workspace remains dirty after its Save All participants completed/);
   assert.match(app, /agentBridge\.observeWorkspace\(\)/);
   assert.match(bridge, /this\.appendEvent\('workspace\.changed', result\)/);
+  assert.match(bridge, /commandId === 'workspace\.reload_document'/);
+  assert.match(bridge, /waitForWorkspaceDocument\(result\.target\)/);
 });
 
 test('resource editors register exact document save, discard, and close participants', () => {

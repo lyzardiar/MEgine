@@ -1928,6 +1928,7 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
             path: canonicalPath,
             allowedActions: [
               'workspace.discard_document',
+              'workspace.reload_document',
               'workspace.close_document with dirtyAction=discard',
             ],
           },
@@ -2032,6 +2033,58 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
       }
       postWorkspaceDirtyState();
       return { path: canonicalPath, discarded: true, unchanged: false };
+    },
+    reloadDocument: async (requestedPath: string) => {
+      const initial = await resolveWorkspaceDocumentMutationTarget(requestedPath);
+      const canonicalPath = initial.canonicalPath;
+      if (initial.matches.length > 1) {
+        throw new BridgeError(
+          'CONFLICT',
+          `Multiple editor windows contain "${canonicalPath}"`,
+          {
+            hosts: initial.matches.map((match) => ({
+              panel: match.panel,
+              sender: match.host,
+              kind: match.document.kind,
+              dirty: match.document.dirty,
+            })),
+          },
+        );
+      }
+      const [match] = initial.matches;
+      const target: AgentResourceEditorTarget = {
+        kind: match.document.kind,
+        panel: match.document.panel,
+        path: canonicalPath,
+      };
+      const discarded = match.document.dirty;
+      if (discarded) {
+        await agentWorkspaceProviderRef.current!.discardDocument(canonicalPath);
+      }
+
+      const remaining = await collectWorkspaceDocumentMutationTargets(canonicalPath);
+      if (remaining.length > 1) {
+        throw new BridgeError(
+          'CONFLICT',
+          `Multiple editor windows still contain "${canonicalPath}" after discard`,
+          {
+            hosts: remaining.map((candidate) => ({
+              panel: candidate.panel,
+              sender: candidate.host,
+              kind: candidate.document.kind,
+              dirty: candidate.document.dirty,
+            })),
+          },
+        );
+      }
+      if (remaining.length === 1) {
+        await agentWorkspaceProviderRef.current!.closeDocument(
+          canonicalPath,
+          'reject',
+        );
+      }
+      await agentWorkspaceProviderRef.current!.openAsset(target);
+      return { target, discarded };
     },
     closeDocument: async (
       requestedPath: string,

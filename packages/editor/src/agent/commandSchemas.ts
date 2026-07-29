@@ -270,6 +270,9 @@ export const COMMAND_PARAMS_SCHEMAS: Record<string, AgentJsonSchema> = {
   'workspace.discard_document': objectSchema({
     path: assetPath,
   }, ['path']),
+  'workspace.reload_document': objectSchema({
+    path: assetPath,
+  }, ['path']),
   'workspace.close_document': objectSchema({
     path: assetPath,
     dirtyAction: {

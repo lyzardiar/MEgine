@@ -2087,6 +2087,18 @@ const TOOLS = [
     ['path'],
   ),
   execTool(
+    'reload_document',
+    'Discard one exact resource draft when needed, close that document, and reload its latest disk version in the matching hidden, unfocused resource editor. No other document is changed.',
+    'workspace.reload_document',
+    {
+      path: {
+        type: 'string',
+        description: 'Exact open resource document path returned by list_open_documents',
+      },
+    },
+    ['path'],
+  ),
+  execTool(
     'close_document',
     'Close exactly one open resource document by its Assets/... path. Dirty documents are rejected unless dirtyAction explicitly saves or discards that one draft first.',
     'workspace.close_document',
@@ -3214,6 +3226,7 @@ const IDEMPOTENT_BRIDGE_COMMANDS = new Set([
   'scene.save_all',
   'workspace.save_document',
   'workspace.discard_document',
+  'workspace.reload_document',
   'asset.open',
   'build.settings.set_scenes',
   'build.settings.set_asset_policy',
