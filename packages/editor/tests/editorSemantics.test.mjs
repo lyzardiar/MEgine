@@ -155,6 +155,12 @@ test('core editor navigation exposes named semantic controls', () => {
   assert.equal(timeline.match(/data-agent-drag-by="true"/g)?.length, 2);
   assert.match(panel('Material.tsx'), /aria-label=\{`\$\{props\.label\} texture drop target`\}/);
   assert.match(panel('SpriteAtlasEditor.tsx'), /aria-label="Sprite Atlas source drop target"/);
+  assert.match(panel('SpriteAtlasEditor.tsx'), /role="img"/);
+  assert.match(panel('SpriteAtlasEditor.tsx'), /aria-hidden=\{!preview\}/);
+  assert.match(
+    panel('SpriteAtlasEditor.tsx'),
+    /Sprite Atlas packed preview, \$\{preview\.naturalWidth\} by \$\{preview\.naturalHeight\} pixels/,
+  );
   assert.match(dialogHost, /aria-label=\{`\$\{dialog\.title\} dialog keyboard controls`\}/);
 });
 
