@@ -1521,10 +1521,21 @@ mod transport_tests {
 
     #[test]
     fn semantic_ui_keys_accept_single_printable_characters_only() {
-        for valid in ["Enter", "ArrowLeft", "A", "7", "文", "é"] {
+        for valid in [
+            "Enter",
+            "ArrowLeft",
+            "F1",
+            "F2",
+            "F12",
+            "F24",
+            "A",
+            "7",
+            "文",
+            "é",
+        ] {
             assert!(valid_editor_ui_key(valid), "{valid}");
         }
-        for invalid in ["", "AB", "👩‍💻", " ", "\n", "\0"] {
+        for invalid in ["", "F0", "F02", "F25", "f2", "AB", "👩‍💻", " ", "\n", "\0"] {
             assert!(!valid_editor_ui_key(invalid), "{invalid:?}");
         }
     }
@@ -2004,6 +2015,12 @@ fn valid_editor_ui_key(value: &str) -> bool {
             | "Delete"
     ) {
         return true;
+    }
+    if let Some(number) = value.strip_prefix('F') {
+        return number
+            .parse::<u8>()
+            .map(|parsed| (1..=24).contains(&parsed) && number == parsed.to_string())
+            .unwrap_or(false);
     }
     let mut characters = value.chars();
     matches!(

@@ -50,6 +50,11 @@ test('direct AgentBridge schema validation matches MCP for valid command argumen
       key: '文',
       expectedSnapshotRevision: UI_REVISION,
     }],
+    ['window.ui_press_key', {
+      selector: '#rename-target',
+      key: 'F2',
+      expectedSnapshotRevision: UI_REVISION,
+    }],
     ['window.ui_click', {
       selector: '#range-end',
       ctrlKey: true,
@@ -121,6 +126,11 @@ test('direct AgentBridge schema validation matches MCP for malformed or extra ar
     ['window.ui_press_key', {
       selector: '#dialog-input',
       key: ' ',
+      expectedSnapshotRevision: UI_REVISION,
+    }],
+    ['window.ui_press_key', {
+      selector: '#dialog-input',
+      key: 'F25',
       expectedSnapshotRevision: UI_REVISION,
     }],
     ['window.ui_click', {
