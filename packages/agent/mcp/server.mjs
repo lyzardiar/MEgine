@@ -3219,7 +3219,7 @@ const TOOLS = [
   ),
   execTool(
     'drag_window_ui_by',
-    'Perform a bounded pointer drag with optional modifiers from an exact element-relative CSS-pixel offset, or its center by default, on an element marked with the dragBy action by get_window_ui. The editor window must be hidden and unfocused, and the endpoint must stay inside the same WebView.',
+    'Perform a bounded pointer drag with optional modifiers from an exact element-relative CSS-pixel offset, or its center by default, on an element marked with the dragBy action by get_window_ui. Use deltaX/deltaY for a straight gesture or path for up to 64 cumulative displacement points. The editor window must be hidden and unfocused, and every path point must stay inside the same WebView.',
     'window.ui_drag_by',
     {
       ...uiInteractionProperties('Exact pointer-gesture selector returned by get_window_ui'),
@@ -3229,6 +3229,31 @@ const TOOLS = [
         type: 'string',
         enum: ['left', 'middle', 'right'],
         description: 'Mouse button held during the pointer gesture (default: left)',
+      },
+      path: {
+        type: 'array',
+        minItems: 1,
+        maxItems: 64,
+        items: {
+          type: 'object',
+          properties: {
+            deltaX: {
+              type: 'number',
+              minimum: -1000000,
+              maximum: 1000000,
+              description: 'Cumulative horizontal CSS-pixel displacement from the gesture start',
+            },
+            deltaY: {
+              type: 'number',
+              minimum: -1000000,
+              maximum: 1000000,
+              description: 'Cumulative vertical CSS-pixel displacement from the gesture start',
+            },
+          },
+          required: ['deltaX', 'deltaY'],
+          additionalProperties: false,
+        },
+        description: 'Optional bounded multi-segment path; mutually exclusive with deltaX and deltaY',
       },
       deltaX: {
         type: 'number',
@@ -3243,7 +3268,14 @@ const TOOLS = [
         description: 'Vertical CSS-pixel displacement; may be zero',
       },
     },
-    ['selector', 'expectedSnapshotRevision', 'deltaX', 'deltaY'],
+    ['selector', 'expectedSnapshotRevision'],
+    (args) => args,
+    {
+      anyOf: [
+        { required: ['deltaX', 'deltaY'] },
+        { required: ['path'] },
+      ],
+    },
   ),
   execTool(
     'hover_window_ui',

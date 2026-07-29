@@ -1680,6 +1680,13 @@ pub struct WindowCaptureRegion {
     height: f64,
 }
 
+#[derive(Clone, Copy, Debug, PartialEq, serde::Deserialize, serde::Serialize)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+pub struct EditorUiDragPathPoint {
+    delta_x: f64,
+    delta_y: f64,
+}
+
 fn validated_capture_region(
     region: WindowCaptureRegion,
     viewport_width: f64,
@@ -1999,6 +2006,7 @@ pub async fn interact_editor_window(
     target_offset_x: Option<f64>,
     target_offset_y: Option<f64>,
     button: Option<String>,
+    path: Option<Vec<EditorUiDragPathPoint>>,
     delta_x: Option<f64>,
     delta_y: Option<f64>,
     key: Option<String>,
@@ -2083,10 +2091,36 @@ pub async fn interact_editor_window(
     {
         return Err("scroll requires a non-zero deltaX or deltaY".to_string());
     }
-    if action == "dragBy"
-        && (delta_x.is_none() || delta_y.is_none() || delta_x == Some(0.0) && delta_y == Some(0.0))
-    {
-        return Err("dragBy requires non-zero deltaX or deltaY and both fields".to_string());
+    if action == "dragBy" {
+        if let Some(path) = path.as_ref() {
+            if !(1..=64).contains(&path.len()) {
+                return Err("path must contain 1 to 64 cumulative drag points".to_string());
+            }
+            if delta_x.is_some() || delta_y.is_some() {
+                return Err("path is mutually exclusive with deltaX and deltaY".to_string());
+            }
+            if path.iter().any(|point| {
+                !point.delta_x.is_finite()
+                    || !point.delta_y.is_finite()
+                    || point.delta_x.abs() > 1_000_000.0
+                    || point.delta_y.abs() > 1_000_000.0
+            }) {
+                return Err("path displacements must be from -1000000 to 1000000".to_string());
+            }
+            if !path
+                .iter()
+                .any(|point| point.delta_x != 0.0 || point.delta_y != 0.0)
+            {
+                return Err("path must contain at least one non-zero displacement".to_string());
+            }
+        } else if delta_x.is_none()
+            || delta_y.is_none()
+            || delta_x == Some(0.0) && delta_y == Some(0.0)
+        {
+            return Err("dragBy requires a path or non-zero deltaX/deltaY fields".to_string());
+        }
+    } else if path.is_some() {
+        return Err("path is only valid for dragBy".to_string());
     }
     if action == "keyPress" {
         let key = key
@@ -2151,6 +2185,7 @@ pub async fn interact_editor_window(
         target_offset_x,
         target_offset_y,
         button,
+        path,
         delta_x,
         delta_y,
         key,
@@ -2536,6 +2571,7 @@ async fn interact_editor_window_impl(
     target_offset_x: Option<f64>,
     target_offset_y: Option<f64>,
     button: Option<String>,
+    path: Option<Vec<EditorUiDragPathPoint>>,
     delta_x: Option<f64>,
     delta_y: Option<f64>,
     key: Option<String>,
@@ -2556,6 +2592,7 @@ async fn interact_editor_window_impl(
         "targetOffsetX": target_offset_x,
         "targetOffsetY": target_offset_y,
         "button": button,
+        "path": path,
         "deltaX": delta_x,
         "deltaY": delta_y,
         "key": key,
@@ -2740,6 +2777,7 @@ async fn interact_editor_window_impl(
     _target_offset_x: Option<f64>,
     _target_offset_y: Option<f64>,
     _button: Option<String>,
+    _path: Option<Vec<EditorUiDragPathPoint>>,
     _delta_x: Option<f64>,
     _delta_y: Option<f64>,
     _key: Option<String>,
@@ -3958,6 +3996,7 @@ const WINDOW_UI_INTERACTION_SCRIPT: &str = r#"
     targetOffsetX: requestedTargetOffsetX,
     targetOffsetY: requestedTargetOffsetY,
     button: requestedButton,
+    path: requestedPath,
     deltaX: requestedDeltaX,
     deltaY: requestedDeltaY,
     key: requestedKey,
@@ -4566,6 +4605,7 @@ const WINDOW_UI_INTERACTION_SCRIPT: &str = r#"
     ) element.click();
     else dispatchPointer('click', 0, 0, detail);
   };
+  let performedDragPath = null;
   if (action === 'click') {
     dispatchClick(1);
   } else if (action === 'doubleClick') {
@@ -4616,34 +4656,49 @@ const WINDOW_UI_INTERACTION_SCRIPT: &str = r#"
     dispatchPointerAt(targetElement, 'pointerup', 0, 0, 1);
     dispatchPointerAt(targetElement, 'mouseup', 0, 0, 1);
   } else if (action === 'dragBy') {
-    const deltaX = Number(requestedDeltaX);
-    const deltaY = Number(requestedDeltaY);
+    const path = Array.isArray(requestedPath)
+      ? requestedPath.map((point) => ({
+          deltaX: Number(point?.deltaX),
+          deltaY: Number(point?.deltaY),
+        }))
+      : [{
+          deltaX: Number(requestedDeltaX),
+          deltaY: Number(requestedDeltaY),
+        }];
     const buttonName = requestedButton ?? 'left';
     const button = buttonName === 'middle' ? 1 : buttonName === 'right' ? 2 : 0;
     const heldButtons = button === 1 ? 4 : button === 2 ? 2 : 1;
     if (
-      !Number.isFinite(deltaX)
-      || !Number.isFinite(deltaY)
-      || (deltaX === 0 && deltaY === 0)
+      path.length < 1
+      || path.length > 64
+      || path.some((point) => (
+        !Number.isFinite(point.deltaX)
+        || !Number.isFinite(point.deltaY)
+        || Math.abs(point.deltaX) > 1000000
+        || Math.abs(point.deltaY) > 1000000
+      ))
+      || !path.some((point) => point.deltaX !== 0 || point.deltaY !== 0)
     ) {
-      return { ok: false, error: 'dragBy requires finite non-zero CSS-pixel deltas' };
+      return { ok: false, error: 'dragBy requires 1 to 64 finite path points with a non-zero displacement' };
     }
     const start = sourceCoordinates;
-    const end = {
-      clientX: start.clientX + deltaX,
-      clientY: start.clientY + deltaY,
-    };
-    if (
-      end.clientX < 0
-      || end.clientY < 0
-      || end.clientX >= document.documentElement.clientWidth
-      || end.clientY >= document.documentElement.clientHeight
-    ) {
+    const resolvedPath = path.map((point) => ({
+      clientX: start.clientX + point.deltaX,
+      clientY: start.clientY + point.deltaY,
+    }));
+    if (resolvedPath.some((point) => (
+      point.clientX < 0
+      || point.clientY < 0
+      || point.clientX >= document.documentElement.clientWidth
+      || point.clientY >= document.documentElement.clientHeight
+    ))) {
       return {
         ok: false,
-        error: 'dragBy must end inside the target WebView viewport',
+        error: 'Every dragBy path point must stay inside the target WebView viewport',
       };
     }
+    performedDragPath = path;
+    const end = resolvedPath[resolvedPath.length - 1];
     const reactProps = reactPropsFor(element);
     const gestureHint = String(
       `${element.getAttribute('aria-label') || ''} `
@@ -4686,16 +4741,22 @@ const WINDOW_UI_INTERACTION_SCRIPT: &str = r#"
       });
       dispatchPointerAt(element, 'pointerdown', button, heldButtons, 1, start);
       dispatchPointerAt(element, 'mousedown', button, heldButtons, 1, start);
-      const distance = Math.hypot(deltaX, deltaY);
-      const steps = Math.max(2, Math.min(16, Math.ceil(distance / 20)));
-      for (let step = 1; step <= steps; step += 1) {
-        const progress = step / steps;
-        const coordinates = {
-          clientX: start.clientX + deltaX * progress,
-          clientY: start.clientY + deltaY * progress,
-        };
-        dispatchPointerAt(element, 'pointermove', -1, heldButtons, 1, coordinates);
-        dispatchPointerAt(element, 'mousemove', 0, heldButtons, 1, coordinates);
+      let previous = { deltaX: 0, deltaY: 0 };
+      for (const point of path) {
+        const segmentX = point.deltaX - previous.deltaX;
+        const segmentY = point.deltaY - previous.deltaY;
+        const distance = Math.hypot(segmentX, segmentY);
+        const steps = Math.max(2, Math.min(8, Math.ceil(distance / 20)));
+        for (let step = 1; step <= steps; step += 1) {
+          const progress = step / steps;
+          const coordinates = {
+            clientX: start.clientX + previous.deltaX + segmentX * progress,
+            clientY: start.clientY + previous.deltaY + segmentY * progress,
+          };
+          dispatchPointerAt(element, 'pointermove', -1, heldButtons, 1, coordinates);
+          dispatchPointerAt(element, 'mousemove', 0, heldButtons, 1, coordinates);
+        }
+        previous = point;
       }
       dispatchPointerAt(element, 'pointerup', button, 0, 1, end);
       dispatchPointerAt(element, 'mouseup', button, 0, 1, end);
@@ -5551,8 +5612,13 @@ const WINDOW_UI_INTERACTION_SCRIPT: &str = r#"
     targetClientX: targetCoordinates?.clientX ?? null,
     targetClientY: targetCoordinates?.clientY ?? null,
     button: action === 'dragBy' ? requestedButton ?? 'left' : null,
-    deltaX: action === 'dragBy' || action === 'scroll' ? requestedDeltaX ?? 0 : null,
-    deltaY: action === 'dragBy' || action === 'scroll' ? requestedDeltaY ?? 0 : null,
+    path: action === 'dragBy' ? performedDragPath : null,
+    deltaX: action === 'dragBy'
+      ? performedDragPath[performedDragPath.length - 1].deltaX
+      : action === 'scroll' ? requestedDeltaX ?? 0 : null,
+    deltaY: action === 'dragBy'
+      ? performedDragPath[performedDragPath.length - 1].deltaY
+      : action === 'scroll' ? requestedDeltaY ?? 0 : null,
     selector,
     targetSelector: action === 'dragTo' ? targetSelector : null,
     targetName: targetElement ? interactionName(targetElement) : null,

@@ -334,7 +334,7 @@ Rust Host 使用独立的工程生命周期互斥门串行化 open/create/close 
 | `window.ui_set_value` | `{ windowLabel?, selector, value }` | ✅ 仅允许 input/textarea/select/contenteditable，触发 input/change；拒绝 disabled/readonly，禁止调用方注入脚本 |
 | `window.ui_double_click` / `context_click` / `scroll` | 快照 selector 与对应参数 | ✅ 双击和上下文菜单支持可选 `offsetX/offsetY` 精确点位；滚轮可指定元素内落点、横纵增量和修饰键，先派发真实语义 `WheelEvent` 供 Scene/Timeline 等画布缩放消费，未消费时再执行原生容器滚动；均遵守元素级 Agent 禁止策略，脚本 IDE 启动、系统文件选择器、工程关闭与进程退出等人工路径不能借键盘或上下文菜单旁路 |
 | `window.ui_drag_to` | `{ windowLabel?, selector, targetSelector, offsetX?, offsetY?, targetOffsetX?, targetOffsetY?, shiftKey?, ctrlKey?, altKey?, metaKey? }` | ✅ 仅接受语义快照中的源/目标 selector，可分别指定源与目标元素内的 CSS 像素点，在同一隐藏 WebView 内合成可带修饰键的 HTML5 拖放事件；不移动前台鼠标 |
-| `window.ui_drag_by` | `{ windowLabel?, selector, offsetX?, offsetY?, button?, deltaX, deltaY, shiftKey?, ctrlKey?, altKey?, metaKey? }` | ✅ 从快照标记为 `dragBy` 的元素内精确点位（默认中心）开始，可选择 `left/middle/right` 按钮，在同一隐藏 WebView 内分步合成可带修饰键的 Pointer/Mouse 手势；起点必须位于当前元素与视口内、终点必须留在视口内，不接受屏幕坐标且不移动系统鼠标 |
+| `window.ui_drag_by` | `{ windowLabel?, selector, offsetX?, offsetY?, button?, deltaX?/deltaY? 或 path?, shiftKey?, ctrlKey?, altKey?, metaKey? }` | ✅ 从快照标记为 `dragBy` 的元素内精确点位（默认中心）开始，可选择 `left/middle/right` 按钮；简单手势使用单终点增量，曲线/绕行手势可传最多 64 个相对起点的累计位移点。所有路径点必须留在同一隐藏 WebView 视口内，事件数量有界，不接受屏幕坐标且不移动系统鼠标 |
 | `window.ui_hover` | `{ windowLabel?, selector, offsetX?, offsetY? }` | ✅ 仅接受快照标记为 `hover` 的 React 悬停目标；可指定元素内精确点位，在同一隐藏 WebView 内合成进入/离开事件，用于展开层级菜单且不移动系统鼠标 |
 | `window.ui_press_key` | `{ windowLabel?, selector, key, shiftKey?, ctrlKey?, altKey?, metaKey? }` | ✅ 允许 Enter/Escape/Tab/Space、方向/翻页/首尾/删除类语义键、F1–F24 功能键，或单个非空白可打印 Unicode 字符；可打印键能逐字编辑 input/textarea/contenteditable，功能键与修饰键组合可触发编辑器快捷键。多字符文本、控制字符与调用方脚本仍被拒绝，所有事件只进入目标隐藏 WebView，不向前台应用注入输入 |
 

@@ -28,6 +28,7 @@ import {
   type EditorState,
   type EditorUiActionResult,
   type EditorUiContentPage,
+  type EditorUiDragPathPoint,
   type EditorUiModifiers,
   type EditorUiSnapshot,
   type EditorWindowInfo,
@@ -1078,6 +1079,7 @@ class AgentBridge {
     targetOffsetX?: number,
     targetOffsetY?: number,
     button?: 'left' | 'middle' | 'right',
+    path?: EditorUiDragPathPoint[],
     deltaX?: number,
     deltaY?: number,
     key?: string,
@@ -1134,6 +1136,7 @@ class AgentBridge {
       targetOffsetX,
       targetOffsetY,
       button,
+      path,
       deltaX,
       deltaY,
       key,
@@ -4735,17 +4738,32 @@ class AgentBridge {
       const button = commandId === 'window.ui_drag_by'
         ? optionalEnum(args, 'button', ['left', 'middle', 'right'] as const, 'left')
         : undefined;
-      const deltaX = commandId === 'window.ui_drag_by'
-        ? requiredBoundedUiDelta(args, 'deltaX')
-        : optionalBoundedUiDelta(args, 'deltaX', 0);
-      const deltaY = commandId === 'window.ui_drag_by'
-        ? requiredBoundedUiDelta(args, 'deltaY')
-        : optionalBoundedUiDelta(args, 'deltaY', 0);
-      if (commandId === 'window.ui_drag_by' && deltaX === 0 && deltaY === 0) {
-        throw new BridgeError(
-          'INVALID_ARGS',
-          'window.ui_drag_by requires a non-zero deltaX or deltaY',
-        );
+      const path = commandId === 'window.ui_drag_by' && args.path !== undefined
+        ? requiredUiDragPath(args)
+        : undefined;
+      let deltaX: number | undefined;
+      let deltaY: number | undefined;
+      if (commandId === 'window.ui_drag_by') {
+        if (path) {
+          if (args.deltaX !== undefined || args.deltaY !== undefined) {
+            throw new BridgeError(
+              'INVALID_ARGS',
+              'window.ui_drag_by path is mutually exclusive with deltaX and deltaY',
+            );
+          }
+        } else {
+          deltaX = requiredBoundedUiDelta(args, 'deltaX');
+          deltaY = requiredBoundedUiDelta(args, 'deltaY');
+          if (deltaX === 0 && deltaY === 0) {
+            throw new BridgeError(
+              'INVALID_ARGS',
+              'window.ui_drag_by requires a non-zero deltaX or deltaY',
+            );
+          }
+        }
+      } else if (commandId === 'window.ui_scroll') {
+        deltaX = optionalBoundedUiDelta(args, 'deltaX', 0);
+        deltaY = optionalBoundedUiDelta(args, 'deltaY', 0);
       }
       if (commandId === 'window.ui_scroll' && deltaX === 0 && deltaY === 0) {
         throw new BridgeError(
@@ -4776,6 +4794,7 @@ class AgentBridge {
           targetOffsetX,
           targetOffsetY,
           button,
+          path,
           deltaX,
           deltaY,
           key,
@@ -5273,6 +5292,34 @@ function requiredBoundedUiDelta(
     );
   }
   return value;
+}
+
+function requiredUiDragPath(
+  args: Record<string, unknown>,
+): EditorUiDragPathPoint[] {
+  const value = args.path;
+  if (!Array.isArray(value) || value.length < 1 || value.length > 64) {
+    throw new BridgeError(
+      'INVALID_ARGS',
+      '"path" must contain 1 to 64 cumulative drag points',
+    );
+  }
+  const path = value.map((point, index) => {
+    if (!point || typeof point !== 'object' || Array.isArray(point)) {
+      throw new BridgeError('INVALID_ARGS', `"path[${index}]" must be an object`);
+    }
+    const record = point as Record<string, unknown>;
+    const deltaX = requiredBoundedUiDelta(record, 'deltaX');
+    const deltaY = requiredBoundedUiDelta(record, 'deltaY');
+    return { deltaX, deltaY };
+  });
+  if (!path.some((point) => point.deltaX !== 0 || point.deltaY !== 0)) {
+    throw new BridgeError(
+      'INVALID_ARGS',
+      '"path" must contain at least one non-zero displacement',
+    );
+  }
+  return path;
 }
 
 function requiredUiContentField(

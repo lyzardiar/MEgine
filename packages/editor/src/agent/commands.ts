@@ -1268,7 +1268,7 @@ const COMMAND_SUMMARIES: CommandSummary[] = [
   { id: 'window.ui_set_value', category: 'window', description: 'Set an input value inside a hidden, unfocused editor window', readOnly: false },
   { id: 'window.ui_scroll', category: 'window', description: 'Dispatch a precise semantic wheel gesture inside a hidden, unfocused editor window', readOnly: false },
   { id: 'window.ui_drag_to', category: 'window', description: 'Drag one semantic UI element to another with optional modifiers inside a hidden, unfocused editor window', readOnly: false },
-  { id: 'window.ui_drag_by', category: 'window', description: 'Perform a bounded pointer drag with optional modifiers inside a hidden, unfocused editor WebView', readOnly: false },
+  { id: 'window.ui_drag_by', category: 'window', description: 'Perform a bounded straight or multi-segment pointer drag inside a hidden, unfocused editor WebView', readOnly: false },
   { id: 'window.ui_hover', category: 'window', description: 'Hover one semantic UI element inside a hidden, unfocused editor window', readOnly: false },
   { id: 'window.ui_press_key', category: 'window', description: 'Press an allow-listed semantic key with optional modifiers inside a hidden, unfocused editor window', readOnly: false },
 ];

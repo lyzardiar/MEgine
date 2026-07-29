@@ -164,6 +164,15 @@ test('command schemas expose exact high-risk guards and shared optimistic option
     COMMAND_PARAMS_SCHEMAS['window.ui_drag_by'].properties.button.enum,
     ['left', 'middle', 'right'],
   );
+  assert.equal(COMMAND_PARAMS_SCHEMAS['window.ui_drag_by'].properties.path.minItems, 1);
+  assert.equal(COMMAND_PARAMS_SCHEMAS['window.ui_drag_by'].properties.path.maxItems, 64);
+  assert.deepEqual(
+    COMMAND_PARAMS_SCHEMAS['window.ui_drag_by'].anyOf,
+    [
+      { required: ['deltaX', 'deltaY'] },
+      { required: ['path'] },
+    ],
+  );
   assert.deepEqual(
     COMMAND_PARAMS_SCHEMAS['window.ui_scroll'].required,
     ['selector', 'expectedSnapshotRevision'],

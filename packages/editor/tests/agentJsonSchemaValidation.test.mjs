@@ -81,6 +81,15 @@ test('direct AgentBridge schema validation matches MCP for valid command argumen
       deltaY: 0,
       expectedSnapshotRevision: UI_REVISION,
     }],
+    ['window.ui_drag_by', {
+      selector: '#canvas',
+      path: [
+        { deltaX: 10, deltaY: 0 },
+        { deltaX: 10, deltaY: 20 },
+        { deltaX: 30, deltaY: 20 },
+      ],
+      expectedSnapshotRevision: UI_REVISION,
+    }],
     ['window.ui_hover', {
       selector: '#submenu',
       expectedSnapshotRevision: UI_REVISION,
@@ -160,6 +169,11 @@ test('direct AgentBridge schema validation matches MCP for malformed or extra ar
     ['window.ui_drag_by', {
       selector: '#splitter',
       deltaX: 40,
+      expectedSnapshotRevision: UI_REVISION,
+    }],
+    ['window.ui_drag_by', {
+      selector: '#canvas',
+      path: [{ deltaX: 10 }],
       expectedSnapshotRevision: UI_REVISION,
     }],
     ['window.ui_hover', {}],

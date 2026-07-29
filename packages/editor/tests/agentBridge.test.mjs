@@ -148,6 +148,10 @@ test('whole-window agent capture is background-safe and addressable by window la
   assert.match(interactionScript, /'pointermove', -1, heldButtons/);
   assert.match(interactionScript, /'mousemove', 0, heldButtons/);
   assert.match(interactionScript, /button: action === 'dragBy' \? requestedButton \?\? 'left' : null/);
+  assert.match(interactionScript, /Array\.isArray\(requestedPath\)/);
+  assert.match(interactionScript, /path\.length > 64/);
+  assert.match(interactionScript, /for \(const point of path\)/);
+  assert.match(interactionScript, /Every dragBy path point must stay inside the target WebView viewport/);
   assert.match(interactionScript, /const wheelEvent = new WheelEvent\('wheel'/);
   assert.match(interactionScript, /const applyNativeScroll = element\.dispatchEvent\(wheelEvent\)/);
   assert.match(interactionScript, /if \(applyNativeScroll\) \{/);
@@ -165,6 +169,7 @@ test('whole-window agent capture is background-safe and addressable by window la
   assert.match(protocol, /invalidPointerCoordinates\?: boolean/);
   assert.match(protocol, /targetClientY\?: number \| null/);
   assert.match(protocol, /button\?: 'left' \| 'middle' \| 'right' \| null/);
+  assert.match(protocol, /path\?: EditorUiDragPathPoint\[\] \| null/);
   assert.match(protocol, /allowedActions\?: EditorUiAction\[\]/);
   assert.match(rust, /const ariaStateKeys = \[/);
   for (const key of [
@@ -394,7 +399,7 @@ test('whole-window agent capture is background-safe and addressable by window la
   assert.match(rust, /new DataTransfer\(\)/);
   assert.match(rust, /new DragEvent\(type/);
   assert.match(rust, /dispatchDrag\(targetElement, 'drop'\)/);
-  assert.match(rust, /dragBy must end inside the target WebView viewport/);
+  assert.match(rust, /Every dragBy path point must stay inside the target WebView viewport/);
   assert.match(rust, /Object\.defineProperty\(element, name/);
   assert.match(rust, /dispatchPointerAt\(element, 'mousemove'/);
   assert.match(rust, /Symbol\.for\('mengine\.agent\.hoveredElement'\)/);
@@ -484,6 +489,7 @@ test('whole-window agent capture is background-safe and addressable by window la
   assert.match(rust, /source_width,/);
   assert.match(rust, /scale: output_scale\.min\(1\.0\)/);
   assert.match(bridge, /window\.ui_drag_by requires a non-zero deltaX or deltaY/);
+  assert.match(bridge, /window\.ui_drag_by path is mutually exclusive with deltaX and deltaY/);
   assert.match(bridge, /Window UI interaction requires expectedSnapshotRevision/);
   assert.match(bridge, /must be hidden and unfocused before semantic UI interaction/);
   assert.match(bridge, /requiredWindowState: 'hidden-unfocused'/);

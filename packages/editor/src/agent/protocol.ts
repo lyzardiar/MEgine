@@ -190,6 +190,11 @@ export interface EditorUiModifiers {
   metaKey: boolean;
 }
 
+export interface EditorUiDragPathPoint {
+  deltaX: number;
+  deltaY: number;
+}
+
 export interface EditorUiActionResult {
   ok: boolean;
   error?: string;
@@ -230,6 +235,7 @@ export interface EditorUiActionResult {
   targetClientX?: number | null;
   targetClientY?: number | null;
   button?: 'left' | 'middle' | 'right' | null;
+  path?: EditorUiDragPathPoint[] | null;
   deltaX?: number | null;
   deltaY?: number | null;
   tag?: string;

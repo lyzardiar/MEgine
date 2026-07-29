@@ -954,6 +954,26 @@ export const COMMAND_PARAMS_SCHEMAS: Record<string, AgentJsonSchema> = {
       enum: ['left', 'middle', 'right'],
       description: 'Mouse button held during the pointer gesture; default left',
     },
+    path: {
+      type: 'array',
+      minItems: 1,
+      maxItems: 64,
+      items: objectSchema({
+        deltaX: {
+          type: 'number',
+          minimum: -1_000_000,
+          maximum: 1_000_000,
+          description: 'Cumulative horizontal CSS-pixel displacement from the gesture start',
+        },
+        deltaY: {
+          type: 'number',
+          minimum: -1_000_000,
+          maximum: 1_000_000,
+          description: 'Cumulative vertical CSS-pixel displacement from the gesture start',
+        },
+      }, ['deltaX', 'deltaY']),
+      description: 'Optional bounded multi-segment path; mutually exclusive with deltaX and deltaY',
+    },
     deltaX: {
       type: 'number',
       minimum: -1_000_000,
@@ -966,7 +986,12 @@ export const COMMAND_PARAMS_SCHEMAS: Record<string, AgentJsonSchema> = {
       maximum: 1_000_000,
       description: 'Vertical CSS-pixel displacement; may be zero',
     },
-  }, [...uiInteractionRequired, 'deltaX', 'deltaY']),
+  }, uiInteractionRequired, {
+    anyOf: [
+      { required: ['deltaX', 'deltaY'] },
+      { required: ['path'] },
+    ],
+  }),
   'window.ui_hover': objectSchema({
     ...uiInteractionContext,
     ...uiPointerOffsetContext,
