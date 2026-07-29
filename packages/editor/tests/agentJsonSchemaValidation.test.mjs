@@ -39,6 +39,17 @@ test('direct AgentBridge schema validation matches MCP for valid command argumen
       shiftKey: true,
       expectedSnapshotRevision: UI_REVISION,
     }],
+    ['window.ui_press_key', {
+      selector: '#shortcut-target',
+      key: 'A',
+      ctrlKey: true,
+      expectedSnapshotRevision: UI_REVISION,
+    }],
+    ['window.ui_press_key', {
+      selector: '#unicode-input',
+      key: '文',
+      expectedSnapshotRevision: UI_REVISION,
+    }],
     ['window.ui_click', {
       selector: '#range-end',
       ctrlKey: true,
@@ -104,7 +115,12 @@ test('direct AgentBridge schema validation matches MCP for malformed or extra ar
     ['playback.step', { deltaTime: 0 }],
     ['window.ui_press_key', {
       selector: '#dialog-input',
-      key: 'A',
+      key: 'AB',
+      expectedSnapshotRevision: UI_REVISION,
+    }],
+    ['window.ui_press_key', {
+      selector: '#dialog-input',
+      key: ' ',
       expectedSnapshotRevision: UI_REVISION,
     }],
     ['window.ui_click', {

@@ -1520,6 +1520,16 @@ mod transport_tests {
     }
 
     #[test]
+    fn semantic_ui_keys_accept_single_printable_characters_only() {
+        for valid in ["Enter", "ArrowLeft", "A", "7", "文", "é"] {
+            assert!(valid_editor_ui_key(valid), "{valid}");
+        }
+        for invalid in ["", "AB", "👩‍💻", " ", "\n", "\0"] {
+            assert!(!valid_editor_ui_key(invalid), "{invalid:?}");
+        }
+    }
+
+    #[test]
     fn screenshot_size_is_bounded_before_native_capture() {
         assert_eq!(validated_screenshot_max_size(None).unwrap(), 2_048);
         assert_eq!(validated_screenshot_max_size(Some(256)).unwrap(), 256);
@@ -1831,23 +1841,7 @@ pub async fn interact_editor_window(
         let key = key
             .as_deref()
             .ok_or_else(|| "keyPress requires key".to_string())?;
-        if !matches!(
-            key,
-            "Enter"
-                | "Escape"
-                | "Tab"
-                | "Space"
-                | "ArrowUp"
-                | "ArrowDown"
-                | "ArrowLeft"
-                | "ArrowRight"
-                | "Home"
-                | "End"
-                | "PageUp"
-                | "PageDown"
-                | "Backspace"
-                | "Delete"
-        ) {
+        if !valid_editor_ui_key(key) {
             return Err(format!("unsupported editor UI key \"{key}\""));
         }
     } else if key.is_some() {
@@ -1989,6 +1983,33 @@ fn valid_ui_snapshot_revision(value: &str) -> bool {
                     .all(|ch| ch.is_ascii_hexdigit() && !ch.is_ascii_uppercase())
         })
         && parts.next().is_none()
+}
+
+fn valid_editor_ui_key(value: &str) -> bool {
+    if matches!(
+        value,
+        "Enter"
+            | "Escape"
+            | "Tab"
+            | "Space"
+            | "ArrowUp"
+            | "ArrowDown"
+            | "ArrowLeft"
+            | "ArrowRight"
+            | "Home"
+            | "End"
+            | "PageUp"
+            | "PageDown"
+            | "Backspace"
+            | "Delete"
+    ) {
+        return true;
+    }
+    let mut characters = value.chars();
+    matches!(
+        (characters.next(), characters.next()),
+        (Some(character), None) if !character.is_control() && !character.is_whitespace()
+    )
 }
 
 fn validate_background_ui_interaction_state(visible: bool, focused: bool) -> Result<(), String> {
@@ -3274,7 +3295,10 @@ const WINDOW_UI_SNAPSHOT_SCRIPT: &str = r#"
 #[cfg(windows)]
 const WINDOW_UI_CONTENT_SCRIPT: &str = r#"
 (() => {
-  const payload = JSON.parse(atob(__MENGINE_PAYLOAD_BASE64__));
+  const payload = JSON.parse(new TextDecoder().decode(Uint8Array.from(
+    atob(__MENGINE_PAYLOAD_BASE64__),
+    (character) => character.charCodeAt(0),
+  )));
   const { selector, field, offset, maxChars, expectedSnapshotRevision } = payload;
   const revisionGuard = window[Symbol.for('mengine.agent.uiRevisionGuard')];
   const guardedRevision = revisionGuard?.revisions?.get(expectedSnapshotRevision);
@@ -3521,7 +3545,10 @@ const WINDOW_UI_CONTENT_SCRIPT: &str = r#"
 #[cfg(windows)]
 const WINDOW_UI_INTERACTION_SCRIPT: &str = r#"
 (async () => {
-  const payload = JSON.parse(atob(__MENGINE_PAYLOAD_BASE64__));
+  const payload = JSON.parse(new TextDecoder().decode(Uint8Array.from(
+    atob(__MENGINE_PAYLOAD_BASE64__),
+    (character) => character.charCodeAt(0),
+  )));
   const {
     selector,
     action,
@@ -4349,8 +4376,19 @@ const WINDOW_UI_INTERACTION_SCRIPT: &str = r#"
       }
     }
   } else if (action === 'keyPress') {
+    const printableKey = (
+      typeof requestedKey === 'string'
+      && Array.from(requestedKey).length === 1
+      && !/[\p{Cc}\p{Cs}\p{Z}]/u.test(requestedKey)
+    );
     const key = requestedKey === 'Space' ? ' ' : String(requestedKey || '');
-    const code = requestedKey === 'Space' ? 'Space' : String(requestedKey || '');
+    const code = requestedKey === 'Space'
+      ? 'Space'
+      : /^[A-Za-z]$/.test(key)
+        ? `Key${key.toUpperCase()}`
+        : /^[0-9]$/.test(key)
+          ? `Digit${key}`
+          : key;
     if (typeof element.focus === 'function') {
       element.focus({ preventScroll: true });
     }
@@ -4363,7 +4401,16 @@ const WINDOW_UI_INTERACTION_SCRIPT: &str = r#"
       ...modifiers,
     }));
     const acceptsDefault = dispatchKeyboard('keydown');
-    if (requestedKey === 'Enter' || requestedKey === 'Space') {
+    if (
+      requestedKey === 'Enter'
+      || requestedKey === 'Space'
+      || (
+        printableKey
+        && !modifiers.ctrlKey
+        && !modifiers.altKey
+        && !modifiers.metaKey
+      )
+    ) {
       dispatchKeyboard('keypress');
     }
     const applyTextControlDefault = () => {
@@ -4509,7 +4556,9 @@ const WINDOW_UI_INTERACTION_SCRIPT: &str = r#"
       let replacementStart = start;
       let replacementEnd = end;
       let inputType = 'insertText';
-      if (requestedKey === 'Space') {
+      if (printableKey) {
+        replacement = key;
+      } else if (requestedKey === 'Space') {
         replacement = ' ';
       } else if (
         requestedKey === 'Enter'
@@ -4542,11 +4591,21 @@ const WINDOW_UI_INTERACTION_SCRIPT: &str = r#"
       const nextValue = `${element.value.slice(0, replacementStart)}${
         replacement
       }${element.value.slice(replacementEnd)}`;
+      if (element.maxLength >= 0 && nextValue.length > element.maxLength) return true;
+      const beforeInput = new InputEvent('beforeinput', {
+        bubbles: true,
+        cancelable: true,
+        composed: true,
+        inputType,
+        data: replacement || null,
+      });
+      if (!element.dispatchEvent(beforeInput)) return true;
       const caret = replacementStart + replacement.length;
       setter.call(element, nextValue);
       element.setSelectionRange(caret, caret, 'none');
       element.dispatchEvent(new InputEvent('input', {
         bubbles: true,
+        composed: true,
         inputType,
         data: replacement || null,
       }));
@@ -4700,7 +4759,9 @@ const WINDOW_UI_INTERACTION_SCRIPT: &str = r#"
       let replacementStart = start;
       let replacementEnd = end;
       let inputType = 'insertText';
-      if (requestedKey === 'Space') {
+      if (printableKey) {
+        replacement = key;
+      } else if (requestedKey === 'Space') {
         replacement = ' ';
       } else if (requestedKey === 'Enter') {
         replacement = '\n';

@@ -31,6 +31,10 @@ test('whole-window agent capture is background-safe and addressable by window la
   )?.[1];
   assert.ok(contentScript);
   assert.ok(interactionScript);
+  assert.equal(
+    [...rust.matchAll(/new TextDecoder\(\)\.decode\(Uint8Array\.from\(/g)].length,
+    2,
+  );
 
   assert.match(native, /type_id: Option<String>/);
   assert.match(native, /type_id: editor_type\.clone\(\)/);
@@ -261,6 +265,16 @@ test('whole-window agent capture is background-safe and addressable by window la
   assert.match(interactionScript, /target\.value\.length < target\.minLength/);
   assert.match(interactionScript, /return constraintFailure\(validityIssues\)/);
   assert.match(interactionScript, /const applyTextControlDefault = \(\) =>/);
+  assert.match(interactionScript, /const printableKey = \(/);
+  assert.match(interactionScript, /Array\.from\(requestedKey\)\.length === 1/);
+  assert.match(
+    interactionScript,
+    /&& !\/\[\\p\{Cc\}\\p\{Cs\}\\p\{Z\}\]\/u\.test\(requestedKey\)/,
+  );
+  assert.match(interactionScript, /`Key\$\{key\.toUpperCase\(\)\}`/);
+  assert.match(interactionScript, /`Digit\$\{key\}`/);
+  assert.match(interactionScript, /if \(printableKey\) \{\s*replacement = key/);
+  assert.match(interactionScript, /element\.maxLength >= 0 && nextValue\.length > element\.maxLength/);
   assert.match(interactionScript, /element\.setSelectionRange\(/);
   assert.match(interactionScript, /inputType = 'deleteContentBackward'/);
   assert.match(interactionScript, /inputType = 'deleteContentForward'/);

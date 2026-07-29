@@ -335,7 +335,7 @@ Rust Host 使用独立的工程生命周期互斥门串行化 open/create/close 
 | `window.ui_drag_to` | `{ windowLabel?, selector, targetSelector, shiftKey?, ctrlKey?, altKey?, metaKey? }` | ✅ 仅接受语义快照中的源/目标 selector，在同一隐藏 WebView 内合成可带修饰键的 HTML5 拖放事件；不移动前台鼠标 |
 | `window.ui_drag_by` | `{ windowLabel?, selector, deltaX, deltaY, shiftKey?, ctrlKey?, altKey?, metaKey? }` | ✅ 从快照标记为 `dragBy` 的元素中心开始，在同一隐藏 WebView 内分步合成可带修饰键的 Pointer/Mouse 手势；终点必须留在视口内，不接受屏幕坐标且不移动系统鼠标 |
 | `window.ui_hover` | `{ windowLabel?, selector }` | ✅ 仅接受快照标记为 `hover` 的 React 悬停目标；在同一隐藏 WebView 内合成进入/离开事件，用于展开层级菜单且不移动系统鼠标 |
-| `window.ui_press_key` | `{ windowLabel?, selector, key, shiftKey?, ctrlKey?, altKey?, metaKey? }` | ✅ 仅允许 Enter/Escape/Tab/Space、方向/翻页/首尾及删除类语义键；修饰键随 Key/Pointer 事件进入目标隐藏 WebView，`Shift+Tab` 支持反向焦点导航，不向前台应用注入输入 |
+| `window.ui_press_key` | `{ windowLabel?, selector, key, shiftKey?, ctrlKey?, altKey?, metaKey? }` | ✅ 允许 Enter/Escape/Tab/Space、方向/翻页/首尾/删除类语义键，或单个非空白可打印 Unicode 字符；可打印键能逐字编辑 input/textarea/contenteditable，修饰键组合可触发编辑器快捷键。多字符文本、控制字符与调用方脚本仍被拒绝，所有事件只进入目标隐藏 WebView，不向前台应用注入输入 |
 
 所有 `window.ui_*` 写动作还必须传入 selector 所属页面的 `expectedSnapshotRevision`。Rust Host 会在事件分发前重新计算完整语义元素身份与顺序指纹；隐藏 WebView 还把 revision 绑定到 DOM mutation epoch、完整语义 selector、对应 DOM 元素身份和当时声明的动作集合，并在查询 selector 前于同一个 JS 任务内同步复核。源 selector 不属于该快照、动作未由该元素声明，或拖放目标不属于该快照时返回带原因的 `INVALID_ARGS`；DOM 已重排、元素身份已变化或检查与执行之间出现竞态时返回 `STALE_REVISION`。调用方必须重新读取快照，不能用手写的非快照 selector、把未声明动作作用到元素，或把过期 selector 作用到新元素。每个窗口最多保留最近 8 份 revision 授权记录，MutationObserver 观察到页面变化时全部失效，不会因滚动或重复查询无限保留 DOM 引用。
 
