@@ -368,6 +368,8 @@ Space 或方向/首尾/翻页键触发 checkbox、radio、单选 select、number
 
 语义快照 v27 的 revision guard 除 DOM Mutation 外，还监听 input/change、焦点、光标选区、滚动、toggle/reset、窗口与 VisualViewport 的 resize/scroll，以及 hash/popstate 和 History API URL 变化。这些不会可靠产生 DOM Mutation、但会改变快照值、选区、活动元素、滚动状态、bounds 或 URL 的更新，现在都会立即撤销旧 revision；精确内容分页、元素截图和后台写动作不能再用旧快照跨越这类状态变化。
 
+精确文本内容 revision v2 逐个保留可渲染文本节点的原始空白，同时排除任一 `aria-hidden=true`、`inert`、`display:none`、`content-visibility:hidden` 或透明祖先下的装饰文字。`window.ui_content(field=text)` 因而与语义快照使用同一隐藏边界，不会在分页正文中重新混入对象槽图标、拖放提示或其他 Agent 不应读取的辅助层。
+
 #### 4.2.7 资产与构建
 
 | command id | 映射 |

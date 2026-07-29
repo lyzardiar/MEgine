@@ -4044,6 +4044,37 @@ const WINDOW_UI_CONTENT_SCRIPT: &str = r#"
           : ''
       ),
   );
+  const textNodeIsRendered = (parent) => {
+    if (!(parent instanceof Element) || semanticallyHidden(parent)) return false;
+    const parentStyle = getComputedStyle(parent);
+    if (parentStyle.visibility === 'hidden' || parentStyle.visibility === 'collapse') {
+      return false;
+    }
+    let current = parent;
+    while (current instanceof Element) {
+      const style = getComputedStyle(current);
+      if (
+        style.display === 'none'
+        || style.contentVisibility === 'hidden'
+        || Number(style.opacity) === 0
+        || current.hidden
+      ) return false;
+      current = current.parentElement;
+    }
+    return true;
+  };
+  const exactSemanticText = (root) => {
+    const parts = [];
+    const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT);
+    let node = walker.nextNode();
+    while (node) {
+      if (textNodeIsRendered(node.parentElement)) {
+        parts.push(node.textContent || '');
+      }
+      node = walker.nextNode();
+    }
+    return parts.join('');
+  };
   let content;
   if (field === 'options') {
     let kind;
@@ -4104,7 +4135,7 @@ const WINDOW_UI_CONTENT_SCRIPT: &str = r#"
       return { ok: false, error: `Element ${selector} has no readable value` };
     }
   } else {
-    content = String(element.innerText ?? element.textContent ?? '');
+    content = exactSemanticText(element);
   }
   const revisionSource = JSON.stringify([selector, field, content]);
   let revisionHashA = 0x811c9dc5;
@@ -4114,7 +4145,7 @@ const WINDOW_UI_CONTENT_SCRIPT: &str = r#"
     revisionHashA = Math.imul(revisionHashA ^ code, 0x01000193);
     revisionHashB = Math.imul(revisionHashB ^ (code + index), 0x85ebca6b);
   }
-  const contentRevision = `content-v1-${content.length}-${
+  const contentRevision = `content-v2-${content.length}-${
     (revisionHashA >>> 0).toString(16).padStart(8, '0')
   }${(revisionHashB >>> 0).toString(16).padStart(8, '0')}`;
   const start = Math.min(Number(offset), content.length);
@@ -4122,7 +4153,7 @@ const WINDOW_UI_CONTENT_SCRIPT: &str = r#"
   const nextOffset = start + page.length < content.length ? start + page.length : null;
   return {
     ok: true,
-    version: 1,
+    version: 2,
     contentRevision,
     selector,
     field,

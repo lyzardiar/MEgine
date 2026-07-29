@@ -66,7 +66,13 @@ test('whole-window agent capture is background-safe and addressable by window la
     /field: 'text' \| 'name' \| 'description' \| 'value' \| 'options'/,
   );
   assert.match(rust, /content\.slice\(start, start \+ Number\(maxChars\)\)/);
-  assert.match(rust, /const contentRevision = `content-v1-/);
+  assert.match(rust, /const contentRevision = `content-v2-/);
+  assert.match(contentScript, /const exactSemanticText = \(root\) =>/);
+  assert.match(contentScript, /textNodeIsRendered\(node\.parentElement\)/);
+  assert.match(contentScript, /style\.contentVisibility === 'hidden'/);
+  assert.match(contentScript, /content = exactSemanticText\(element\)/);
+  assert.doesNotMatch(contentScript, /element\.innerText/);
+  assert.match(contentScript, /version: 2,/);
   assert.match(rust, /revisionHashA = Math\.imul/);
   assert.match(rust, /const offset = __MENGINE_OFFSET__/);
   assert.match(rust, /semanticElements\.slice\(offset, offset \+ limit\)/);
@@ -335,7 +341,7 @@ test('whole-window agent capture is background-safe and addressable by window la
     interactionScript,
     /semanticText\(labelledBy, semanticallyHidden\(labelledBy\)\)/,
   );
-  assert.equal([...rust.matchAll(/document\.createTreeWalker\(/g)].length, 4);
+  assert.equal([...rust.matchAll(/document\.createTreeWalker\(/g)].length, 5);
   assert.match(rust, /const referencedText = \(idRefs\) =>/);
   assert.equal([...rust.matchAll(/const labelledByText = \(/g)].length, 3);
   assert.equal([...rust.matchAll(/const nativeLabelText = \(/g)].length, 3);
