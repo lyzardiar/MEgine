@@ -161,6 +161,10 @@ test('command schemas expose exact high-risk guards and shared optimistic option
   );
   assert.equal(COMMAND_PARAMS_SCHEMAS['window.ui_scroll'].properties.shiftKey.type, 'boolean');
   assert.deepEqual(
+    COMMAND_PARAMS_SCHEMAS['window.ui_drag_by'].properties.button.enum,
+    ['left', 'middle', 'right'],
+  );
+  assert.deepEqual(
     COMMAND_PARAMS_SCHEMAS['window.ui_scroll'].required,
     ['selector', 'expectedSnapshotRevision'],
   );

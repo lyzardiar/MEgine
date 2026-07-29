@@ -76,6 +76,7 @@ test('direct AgentBridge schema validation matches MCP for valid command argumen
     }],
     ['window.ui_drag_by', {
       selector: '#splitter',
+      button: 'right',
       deltaX: 40,
       deltaY: 0,
       expectedSnapshotRevision: UI_REVISION,

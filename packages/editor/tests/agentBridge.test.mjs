@@ -142,6 +142,12 @@ test('whole-window agent capture is background-safe and addressable by window la
   assert.match(interactionScript, /invalidPointerCoordinates: true/);
   assert.match(interactionScript, /requestedTargetOffsetX/);
   assert.match(interactionScript, /targetClientX: targetCoordinates\?\.clientX \?\? null/);
+  assert.match(interactionScript, /const buttonName = requestedButton \?\? 'left'/);
+  assert.match(interactionScript, /const heldButtons = button === 1 \? 4 : button === 2 \? 2 : 1/);
+  assert.match(interactionScript, /'pointerdown', button, heldButtons/);
+  assert.match(interactionScript, /'pointermove', -1, heldButtons/);
+  assert.match(interactionScript, /'mousemove', 0, heldButtons/);
+  assert.match(interactionScript, /button: action === 'dragBy' \? requestedButton \?\? 'left' : null/);
   assert.match(interactionScript, /const wheelEvent = new WheelEvent\('wheel'/);
   assert.match(interactionScript, /const applyNativeScroll = element\.dispatchEvent\(wheelEvent\)/);
   assert.match(interactionScript, /if \(applyNativeScroll\) \{/);
@@ -158,6 +164,7 @@ test('whole-window agent capture is background-safe and addressable by window la
   assert.match(protocol, /targetSelectorNotExposed\?: boolean/);
   assert.match(protocol, /invalidPointerCoordinates\?: boolean/);
   assert.match(protocol, /targetClientY\?: number \| null/);
+  assert.match(protocol, /button\?: 'left' \| 'middle' \| 'right' \| null/);
   assert.match(protocol, /allowedActions\?: EditorUiAction\[\]/);
   assert.match(rust, /const ariaStateKeys = \[/);
   for (const key of [

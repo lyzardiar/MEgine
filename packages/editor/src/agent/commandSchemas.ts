@@ -949,6 +949,11 @@ export const COMMAND_PARAMS_SCHEMAS: Record<string, AgentJsonSchema> = {
     ...uiModifierContext,
     ...uiPointerOffsetContext,
     selector: stringValue('Exact pointer-gesture selector returned by window.ui_snapshot'),
+    button: {
+      type: 'string',
+      enum: ['left', 'middle', 'right'],
+      description: 'Mouse button held during the pointer gesture; default left',
+    },
     deltaX: {
       type: 'number',
       minimum: -1_000_000,

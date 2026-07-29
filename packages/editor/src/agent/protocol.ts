@@ -229,6 +229,7 @@ export interface EditorUiActionResult {
   targetOffsetY?: number | null;
   targetClientX?: number | null;
   targetClientY?: number | null;
+  button?: 'left' | 'middle' | 'right' | null;
   deltaX?: number | null;
   deltaY?: number | null;
   tag?: string;

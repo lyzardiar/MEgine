@@ -1077,6 +1077,7 @@ class AgentBridge {
     offsetY?: number,
     targetOffsetX?: number,
     targetOffsetY?: number,
+    button?: 'left' | 'middle' | 'right',
     deltaX?: number,
     deltaY?: number,
     key?: string,
@@ -1132,6 +1133,7 @@ class AgentBridge {
       offsetY,
       targetOffsetX,
       targetOffsetY,
+      button,
       deltaX,
       deltaY,
       key,
@@ -4730,6 +4732,9 @@ class AgentBridge {
         && args.targetOffsetY !== undefined
         ? requiredBoundedUiDelta(args, 'targetOffsetY')
         : undefined;
+      const button = commandId === 'window.ui_drag_by'
+        ? optionalEnum(args, 'button', ['left', 'middle', 'right'] as const, 'left')
+        : undefined;
       const deltaX = commandId === 'window.ui_drag_by'
         ? requiredBoundedUiDelta(args, 'deltaX')
         : optionalBoundedUiDelta(args, 'deltaX', 0);
@@ -4770,6 +4775,7 @@ class AgentBridge {
           offsetY,
           targetOffsetX,
           targetOffsetY,
+          button,
           deltaX,
           deltaY,
           key,

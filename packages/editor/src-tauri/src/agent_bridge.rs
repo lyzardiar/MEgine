@@ -1998,6 +1998,7 @@ pub async fn interact_editor_window(
     offset_y: Option<f64>,
     target_offset_x: Option<f64>,
     target_offset_y: Option<f64>,
+    button: Option<String>,
     delta_x: Option<f64>,
     delta_y: Option<f64>,
     key: Option<String>,
@@ -2065,6 +2066,16 @@ pub async fn interact_editor_window(
     }
     if action != "dragTo" && (target_offset_x.is_some() || target_offset_y.is_some()) {
         return Err("targetOffsetX and targetOffsetY are only valid for dragTo".to_string());
+    }
+    if action == "dragBy" {
+        if button
+            .as_deref()
+            .is_some_and(|button| !matches!(button, "left" | "middle" | "right"))
+        {
+            return Err("button must be left, middle, or right".to_string());
+        }
+    } else if button.is_some() {
+        return Err("button is only valid for dragBy".to_string());
     }
     if action == "scroll"
         && delta_x.unwrap_or_default() == 0.0
@@ -2139,6 +2150,7 @@ pub async fn interact_editor_window(
         offset_y,
         target_offset_x,
         target_offset_y,
+        button,
         delta_x,
         delta_y,
         key,
@@ -2523,6 +2535,7 @@ async fn interact_editor_window_impl(
     offset_y: Option<f64>,
     target_offset_x: Option<f64>,
     target_offset_y: Option<f64>,
+    button: Option<String>,
     delta_x: Option<f64>,
     delta_y: Option<f64>,
     key: Option<String>,
@@ -2542,6 +2555,7 @@ async fn interact_editor_window_impl(
         "offsetY": offset_y,
         "targetOffsetX": target_offset_x,
         "targetOffsetY": target_offset_y,
+        "button": button,
         "deltaX": delta_x,
         "deltaY": delta_y,
         "key": key,
@@ -2725,6 +2739,7 @@ async fn interact_editor_window_impl(
     _offset_y: Option<f64>,
     _target_offset_x: Option<f64>,
     _target_offset_y: Option<f64>,
+    _button: Option<String>,
     _delta_x: Option<f64>,
     _delta_y: Option<f64>,
     _key: Option<String>,
@@ -3942,6 +3957,7 @@ const WINDOW_UI_INTERACTION_SCRIPT: &str = r#"
     offsetY: requestedOffsetY,
     targetOffsetX: requestedTargetOffsetX,
     targetOffsetY: requestedTargetOffsetY,
+    button: requestedButton,
     deltaX: requestedDeltaX,
     deltaY: requestedDeltaY,
     key: requestedKey,
@@ -4602,6 +4618,9 @@ const WINDOW_UI_INTERACTION_SCRIPT: &str = r#"
   } else if (action === 'dragBy') {
     const deltaX = Number(requestedDeltaX);
     const deltaY = Number(requestedDeltaY);
+    const buttonName = requestedButton ?? 'left';
+    const button = buttonName === 'middle' ? 1 : buttonName === 'right' ? 2 : 0;
+    const heldButtons = button === 1 ? 4 : button === 2 ? 2 : 1;
     if (
       !Number.isFinite(deltaX)
       || !Number.isFinite(deltaY)
@@ -4665,8 +4684,8 @@ const WINDOW_UI_INTERACTION_SCRIPT: &str = r#"
           value: implementation,
         });
       });
-      dispatchPointerAt(element, 'pointerdown', 0, 1, 1, start);
-      dispatchPointerAt(element, 'mousedown', 0, 1, 1, start);
+      dispatchPointerAt(element, 'pointerdown', button, heldButtons, 1, start);
+      dispatchPointerAt(element, 'mousedown', button, heldButtons, 1, start);
       const distance = Math.hypot(deltaX, deltaY);
       const steps = Math.max(2, Math.min(16, Math.ceil(distance / 20)));
       for (let step = 1; step <= steps; step += 1) {
@@ -4675,11 +4694,11 @@ const WINDOW_UI_INTERACTION_SCRIPT: &str = r#"
           clientX: start.clientX + deltaX * progress,
           clientY: start.clientY + deltaY * progress,
         };
-        dispatchPointerAt(element, 'pointermove', 0, 1, 1, coordinates);
-        dispatchPointerAt(element, 'mousemove', 0, 1, 1, coordinates);
+        dispatchPointerAt(element, 'pointermove', -1, heldButtons, 1, coordinates);
+        dispatchPointerAt(element, 'mousemove', 0, heldButtons, 1, coordinates);
       }
-      dispatchPointerAt(element, 'pointerup', 0, 0, 1, end);
-      dispatchPointerAt(element, 'mouseup', 0, 0, 1, end);
+      dispatchPointerAt(element, 'pointerup', button, 0, 1, end);
+      dispatchPointerAt(element, 'mouseup', button, 0, 1, end);
     } finally {
       captureMethods.forEach(([name], index) => {
         const descriptor = captureDescriptors[index];
@@ -5531,6 +5550,7 @@ const WINDOW_UI_INTERACTION_SCRIPT: &str = r#"
     targetOffsetY: targetCoordinates?.offsetY ?? null,
     targetClientX: targetCoordinates?.clientX ?? null,
     targetClientY: targetCoordinates?.clientY ?? null,
+    button: action === 'dragBy' ? requestedButton ?? 'left' : null,
     deltaX: action === 'dragBy' || action === 'scroll' ? requestedDeltaX ?? 0 : null,
     deltaY: action === 'dragBy' || action === 'scroll' ? requestedDeltaY ?? 0 : null,
     selector,

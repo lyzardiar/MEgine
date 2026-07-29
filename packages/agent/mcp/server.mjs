@@ -3225,6 +3225,11 @@ const TOOLS = [
       ...uiInteractionProperties('Exact pointer-gesture selector returned by get_window_ui'),
       ...uiModifierProperties(),
       ...uiPointerOffsetProperties(),
+      button: {
+        type: 'string',
+        enum: ['left', 'middle', 'right'],
+        description: 'Mouse button held during the pointer gesture (default: left)',
+      },
       deltaX: {
         type: 'number',
         minimum: -1000000,
