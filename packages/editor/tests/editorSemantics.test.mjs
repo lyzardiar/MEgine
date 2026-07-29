@@ -33,6 +33,8 @@ test('core editor navigation exposes named semantic controls', () => {
   assert.match(project, /aria-label=\{`Rename \$\{a\.name\}`\}/);
   assert.match(project, /event\.key !== 'Enter' && event\.key !== ' '/);
   assert.match(project, /aria-label=\{`\$\{folder\} contents`\}/);
+  assert.match(project, /aria-label="Close asset Trash preview"\s*autoFocus/);
+  assert.match(project, /aria-label="Close project Trash"\s*autoFocus/);
 
   assert.match(hierarchy, /role="tree"/);
   assert.match(hierarchy, /aria-label="Scene hierarchy"/);

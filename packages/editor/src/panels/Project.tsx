@@ -1681,6 +1681,7 @@ export function Project(props: {
               <button
                 type="button"
                 aria-label="Close asset Trash preview"
+                autoFocus
                 disabled={assetTrash.applying}
                 onClick={closeAssetTrash}
               >×</button>
@@ -1822,6 +1823,7 @@ export function Project(props: {
               <button
                 type="button"
                 aria-label="Close project Trash"
+                autoFocus
                 disabled={trashBrowser.restoring != null}
                 onClick={() => setTrashBrowser(null)}
               >×</button>
