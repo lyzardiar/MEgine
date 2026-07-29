@@ -168,6 +168,7 @@ export function MenuBar(props: {
   };
   const hasSelection = props.selectedIds.length > 0;
   const canEditSelection = props.store.mode === 'edit' && hasSelection;
+  const canUseFileActions = props.store.mode === 'edit';
 
   return (
     <div className="menu-bar" ref={root} role="menubar" aria-label="Main menu">
@@ -197,24 +198,50 @@ export function MenuBar(props: {
               aria-label={`${name} menu`}
               onKeyDown={(event) => onOpenMenuKeyDown(event, name, index)}
             >
-              <button type="button" role="menuitem" onClick={() => { props.onNew(); setOpen(null); }}>
+              <button
+                type="button"
+                role="menuitem"
+                disabled={!canUseFileActions}
+                onClick={() => { props.onNew(); setOpen(null); }}
+              >
                 New Scene <span className="hint">Ctrl+N</span>
               </button>
-              <button type="button" role="menuitem" onClick={() => { props.onSave(); setOpen(null); }}>
+              <button
+                type="button"
+                role="menuitem"
+                disabled={!canUseFileActions}
+                onClick={() => { props.onSave(); setOpen(null); }}
+              >
                 Save Scene <span className="hint">Ctrl+S</span>
               </button>
-              <button type="button" role="menuitem" onClick={() => { props.onSaveAll(); setOpen(null); }}>
+              <button
+                type="button"
+                role="menuitem"
+                disabled={!canUseFileActions}
+                onClick={() => { props.onSaveAll(); setOpen(null); }}
+              >
                 Save All <span className="hint">Ctrl+Alt+S</span>
               </button>
-              <button type="button" role="menuitem" onClick={() => { props.onSaveAs(); setOpen(null); }}>
+              <button
+                type="button"
+                role="menuitem"
+                disabled={!canUseFileActions}
+                onClick={() => { props.onSaveAs(); setOpen(null); }}
+              >
                 Save Scene As…
               </button>
-              <button type="button" role="menuitem" onClick={() => { props.onLoad(); setOpen(null); }}>
+              <button
+                type="button"
+                role="menuitem"
+                disabled={!canUseFileActions}
+                onClick={() => { props.onLoad(); setOpen(null); }}
+              >
                 Open Scene…
               </button>
               <button
                 type="button"
                 role="menuitem"
+                disabled={!canUseFileActions}
                 data-agent-interaction="blocked"
                 data-agent-alternative="close_project"
                 onClick={() => { props.onCloseProject(); setOpen(null); }}

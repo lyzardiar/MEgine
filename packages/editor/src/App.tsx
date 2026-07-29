@@ -1558,7 +1558,14 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
     }
   };
 
+  const ensureEditModeForFileAction = (action: string): boolean => {
+    if (store.mode === 'edit') return true;
+    log(`Stop Play Mode before ${action}.`, 'warn');
+    return false;
+  };
+
   const saveSceneForBuild = async () => {
+    if (!ensureEditModeForFileAction('saving a scene for a build')) return false;
     const current = sceneNameRef.current;
     if (!current) {
       log('Build requires a named scene.', 'warn');
@@ -1568,6 +1575,7 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
   };
 
   const saveScene = async () => {
+    if (!ensureEditModeForFileAction('saving a scene')) return;
     const current = sceneNameRef.current;
     if (current) {
       await persistScene(current);
@@ -1583,6 +1591,7 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
   };
 
   const saveEverything = async (unnamedScene?: string): Promise<boolean> => {
+    if (!ensureEditModeForFileAction('saving the workspace')) return false;
     const hadDirtyScene = sceneDirtyRef.current;
     let sceneSaved = true;
     if (hadDirtyScene) {
@@ -1611,6 +1620,7 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
   };
 
   const saveSceneAs = async () => {
+    if (!ensureEditModeForFileAction('saving a scene')) return;
     const name = await askSceneName('另存为 — 请输入新名称', sceneNameRef.current ?? 'Untitled');
     if (!name) return;
     if (sceneExists(name) && name !== sceneNameRef.current) {
@@ -1623,6 +1633,7 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
   };
 
   const newScene = async () => {
+    if (!ensureEditModeForFileAction('creating a scene')) return;
     const name = await askSceneName('新建场景 — 请输入名称', 'NewScene');
     if (!name) return;
     if (sceneExists(name) && !await confirmEditor(`场景「${name}」已存在，要覆盖吗？`, {
@@ -2417,6 +2428,7 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
   };
 
   const requestProjectClose = async (): Promise<void> => {
+    if (!ensureEditModeForFileAction('closing the project')) return;
     try {
       const dirtyPanels = await queryProjectDirtyPanels();
       if (
@@ -2471,6 +2483,7 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
   }, []);
 
   const openSceneDialog = async () => {
+    if (!ensureEditModeForFileAction('opening a scene')) return;
     const scenes = listScenes();
     if (!scenes.length) {
       log('还没有已保存的场景。先 File → New Scene 并命名。', 'warn');
