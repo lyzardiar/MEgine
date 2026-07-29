@@ -2642,6 +2642,10 @@ const WINDOW_UI_SNAPSHOT_SCRIPT: &str = r#"
   const actionList = (element, role) => {
     const actions = [];
     const props = reactProps(element);
+    const disabled = Boolean(
+      element.disabled || element.getAttribute('aria-disabled') === 'true',
+    );
+    if (disabled) return actions;
     if (role === 'button' || role === 'link' || role === 'menuitem'
       || role === 'tab' || role === 'option' || role === 'checkbox'
       || role === 'radio' || role === 'switch'
@@ -3488,9 +3492,59 @@ const WINDOW_UI_INTERACTION_SCRIPT: &str = r#"
       else if (element instanceof HTMLTextAreaElement) prototype = HTMLTextAreaElement.prototype;
       else if (element instanceof HTMLSelectElement) prototype = HTMLSelectElement.prototype;
       if (prototype) {
+        if (element instanceof HTMLSelectElement) {
+          const option = Array.from(element.options).find(
+            (candidate) => candidate.value === value,
+          );
+          const disabledGroup = option?.parentElement instanceof HTMLOptGroupElement
+            && option.parentElement.disabled;
+          if (!option || option.disabled || disabledGroup) {
+            const valueLabel = value.length > 160 ? `${value.slice(0, 157)}...` : value;
+            return {
+              ok: false,
+              error: `Element ${selector} does not offer enabled option "${valueLabel}"`,
+            };
+          }
+        }
+        if (
+          element instanceof HTMLInputElement
+          && ['number', 'range'].includes(String(element.type).toLowerCase())
+          && (
+            !value.trim()
+              ? element.type === 'range'
+              : !Number.isFinite(Number(value))
+          )
+        ) {
+          return {
+            ok: false,
+            error: `Element ${selector} requires a finite numeric value`,
+          };
+        }
+        if (
+          element instanceof HTMLInputElement
+          && String(element.type).toLowerCase() === 'color'
+          && !/^#[0-9a-f]{6}$/i.test(value)
+        ) {
+          return {
+            ok: false,
+            error: `Element ${selector} requires a six-digit hexadecimal color`,
+          };
+        }
         const setter = Object.getOwnPropertyDescriptor(prototype, 'value')?.set;
         if (!setter) return { ok: false, error: `Element ${selector} has no value setter` };
-        setter.call(element, value);
+        const valueToApply = element instanceof HTMLInputElement
+          && String(element.type).toLowerCase() === 'color'
+          ? value.toLowerCase()
+          : value;
+        const previousValue = String(element.value);
+        setter.call(element, valueToApply);
+        if (String(element.value) !== valueToApply) {
+          setter.call(element, previousValue);
+          return {
+            ok: false,
+            error: `Element ${selector} cannot represent the requested value`,
+          };
+        }
         element.dispatchEvent(new Event('input', { bubbles: true }));
         element.dispatchEvent(new Event('change', { bubbles: true }));
       } else if (element.isContentEditable) {

@@ -61,6 +61,12 @@ test('whole-window agent capture is background-safe and addressable by window la
   assert.match(rust, /HTMLInputElement\.prototype,\s*'checked'/);
   assert.match(rust, /typeof reactProps\.onChange === 'function'/);
   assert.match(rust, /\['checkbox', 'radio'\]\.includes\(element\.type\)/);
+  assert.match(interactionScript, /does not offer enabled option/);
+  assert.match(interactionScript, /requires a finite numeric value/);
+  assert.match(interactionScript, /requires a six-digit hexadecimal color/);
+  assert.match(interactionScript, /cannot represent the requested value/);
+  assert.match(interactionScript, /setter\.call\(element, previousValue\)/);
+  assert.match(rust, /if \(disabled\) return actions;/);
   assert.match(rust, /MENGINE_EDITOR_CONFIG_DIR/);
   assert.match(rust, /\| "dragTo"/);
   assert.match(rust, /key\.startsWith\('__reactProps\$'\)/);

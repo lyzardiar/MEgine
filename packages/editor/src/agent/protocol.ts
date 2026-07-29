@@ -177,13 +177,14 @@ export interface EditorUiActionResult {
   role?: string | null;
   name?: string | null;
   value?: string | null;
+  checked?: boolean | null;
   key?: string | null;
-  scrollLeft?: number;
-  scrollTop?: number;
-  scrollWidth?: number;
-  scrollHeight?: number;
-  clientWidth?: number;
-  clientHeight?: number;
+  scrollLeft?: number | null;
+  scrollTop?: number | null;
+  scrollWidth?: number | null;
+  scrollHeight?: number | null;
+  clientWidth?: number | null;
+  clientHeight?: number | null;
 }
 
 /** One open editor window (main, detached panel, or floating editor window). */
