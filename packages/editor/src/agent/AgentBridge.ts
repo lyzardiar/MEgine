@@ -879,10 +879,10 @@ class AgentBridge {
     return snapshot;
   }
 
-  /** Read exact, unnormalized UI text/value in bounded pages. */
+  /** Read exact, unnormalized UI text, value, or serialized options in bounded pages. */
   async readWindowContent(
     selector: string,
-    field: 'text' | 'value',
+    field: 'text' | 'value' | 'options',
     expectedSnapshotRevision: string,
     windowLabel = 'main',
     offset = 0,
@@ -5075,10 +5075,10 @@ function requiredBoundedUiDelta(
 
 function requiredUiContentField(
   args: Record<string, unknown>,
-): 'text' | 'value' {
+): 'text' | 'value' | 'options' {
   const value = args.field;
-  if (value !== 'text' && value !== 'value') {
-    throw new BridgeError('INVALID_ARGS', '"field" must be "text" or "value"');
+  if (value !== 'text' && value !== 'value' && value !== 'options') {
+    throw new BridgeError('INVALID_ARGS', '"field" must be "text", "value", or "options"');
   }
   return value;
 }

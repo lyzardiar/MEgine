@@ -193,7 +193,7 @@ MEngine 编辑器当前对人类友好，但对 AI Agent 不够友好。AI Agent
 | --- | --- | --- |
 | `window.list` | `[{ label, title, typeId?, kind: "main"\|"panel"\|"editor", visible, focused, position, size, url }]` | ✅ Rust `app.webview_windows()`；标签规则 `panel-<id>`（`detachedPanelWindow.ts`）、`editor-<hash>`（`nativeEditorWindow.ts`）；可直接确认后台实例从未显示 |
 | `window.ui_snapshot` | `{ windowLabel?, maxElements?, offset?, expectedSnapshotRevision? }` → `{ snapshotRevision, nextOffset, elements: [{ role, name, text, value, state, rect, actions, selector }], truncated, ... }` | ✅ WebView2 `Runtime.evaluate` 离屏提取可见语义 DOM；密码脱敏，默认 2000/上限 5000 项，不需要 OCR；续页必须回传首屏 `snapshotRevision`，语义内容或顺序变化时返回 `STALE_REVISION` 并从 offset 0 重读 |
-| `window.ui_content` | `{ windowLabel?, selector, expectedSnapshotRevision, field, offset?, maxChars?, expectedContentRevision? }` → `{ contentRevision, nextOffset, content, ... }` | ✅ 精确读取未归一化的文本或表单值；每页必须回传 selector 所属 `snapshotRevision`，续页还必须回传首屏 `contentRevision`；元素身份或内容变化时返回 `STALE_REVISION`，避免读错重排后的元素或把长代码、日志和未保存文本拼成撕裂结果 |
+| `window.ui_content` | `{ windowLabel?, selector, expectedSnapshotRevision, field, offset?, maxChars?, expectedContentRevision? }` → `{ contentRevision, nextOffset, content, ... }` | ✅ 精确读取未归一化的文本、表单值或 `options` JSON（原生 select/datalist 的 value、label、group、disabled、selected）；每页必须回传 selector 所属 `snapshotRevision`，续页还必须回传首屏 `contentRevision`；元素身份或内容变化时返回 `STALE_REVISION`，避免读错重排后的元素或把长代码、日志和未保存文本拼成撕裂结果 |
 | `dialog.state` | 当前编辑器内 alert/confirm/prompt 的稳定 id、完整消息、按钮标签与 prompt 默认值；无对话框时为 `null` | ✅ 非阻塞 DOM Dialog Host；可被语义快照和整窗截图同时读取 |
 | `panel.list` | `[{ kind, title, visible, active, detached, dockPath }]` | ✅ 可由 `panel.get_layout` 的 docked/detached/active 集合推导 |
 | `panel.get_layout` | dock 二叉树（leaf/split）+ docked/detached/active 集合 | ✅ `DockWorkspace` 每次树变化直连 AgentBridge，读取实时内存树而不是过期 localStorage |
@@ -341,7 +341,7 @@ Rust Host 使用独立的工程生命周期互斥门串行化 open/create/close 
 
 动作分发后，目标 WebView 会等待两次渲染机会（后台限流时由有界 timer 接管），Rust Host 再读取一次完整语义指纹。成功结果携带 `settledFrames`、`postObservationConfirmed`、`postSnapshotRevision`、`postSemanticElementCount` 与 `snapshotChanged`；因此 Agent 可以直接把返回的 post revision 用于下一次交互，而不需要任意 sleep。若动作已执行但目标窗口随即消失，结果保留成功分发并以 `postObservationConfirmed=false` 和 `postObservationError` 明确标记未能完成后置观测。
 
-`snapshotRevision` 的哈希输入与快照的可观察内容共用同一份 `semanticElements` 序列化结果，覆盖 id/parent、selector、role/name/text、快照控件值、description、disabled/readOnly/focused 与 ARIA/check 状态、Agent 交互策略、actions、滚动状态、bounds，并同时覆盖 viewport、活动元素和 DOM/语义元素总数。任何已返回字段的变化都会使续页和写动作的旧 revision 失效，不会把不同时间点的控件状态拼成一份快照；未归一化的完整长文本和值仍通过 `window.ui_content` 分页读取。
+`snapshotRevision` 的哈希输入与快照的可观察内容共用同一份 `semanticElements` 序列化结果，覆盖 id/parent、selector、role/name/text、快照控件值、原生 input 类型与 min/max/step/pattern/长度约束、select/datalist 选项数量及内容指纹、description、disabled/readOnly/focused 与 ARIA/check 状态、Agent 交互策略、actions、滚动状态、bounds，并同时覆盖 viewport、活动元素和 DOM/语义元素总数。任何已返回字段或选项内容的变化都会使续页和写动作的旧 revision 失效，不会把不同时间点的控件状态拼成一份快照；未归一化的完整长文本、值和选项 JSON 通过 `window.ui_content` 分页读取。
 
 #### 4.2.7 资产与构建
 

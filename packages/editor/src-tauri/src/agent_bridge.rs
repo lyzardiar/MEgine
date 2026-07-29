@@ -1698,7 +1698,7 @@ pub async fn inspect_editor_window(
     inspect_editor_window_impl(app, window_label, max_elements, offset).await
 }
 
-/// Read an exact page of one element's text or value without normalizing it.
+/// Read an exact page of one element's text, value, or options without normalizing it.
 #[tauri::command]
 pub async fn read_editor_ui_content(
     app: AppHandle,
@@ -1714,8 +1714,8 @@ pub async fn read_editor_ui_content(
     if selector.is_empty() || selector.len() > 1_000 {
         return Err("selector must contain 1 to 1000 characters".to_string());
     }
-    if !matches!(field.as_str(), "text" | "value") {
-        return Err("field must be text or value".to_string());
+    if !matches!(field.as_str(), "text" | "value" | "options") {
+        return Err("field must be text, value, or options".to_string());
     }
     let offset = offset.unwrap_or(0).min(10_000_000);
     let max_chars = max_chars.unwrap_or(10_000).clamp(1, 100_000);
@@ -2633,6 +2633,99 @@ const WINDOW_UI_SNAPSHOT_SCRIPT: &str = r#"
     if (element.isContentEditable) return normalize(element.textContent);
     return '';
   };
+  const optionPayloadFor = (element) => {
+    let kind;
+    let multiple = false;
+    let rawOptions;
+    if (element instanceof HTMLSelectElement) {
+      kind = 'select';
+      multiple = element.multiple;
+      rawOptions = Array.from(element.options);
+    } else if (element instanceof HTMLInputElement && element.list) {
+      kind = 'datalist';
+      rawOptions = Array.from(element.list.options);
+    } else {
+      return null;
+    }
+    return {
+      version: 1,
+      kind,
+      multiple,
+      options: rawOptions.map((option, index) => {
+        const group = option.parentElement instanceof HTMLOptGroupElement
+          ? option.parentElement
+          : null;
+        return {
+          index,
+          value: String(option.value),
+          label: String(option.label || option.textContent || option.value),
+          disabled: Boolean(option.disabled || group?.disabled),
+          selected: kind === 'select' ? option.selected : false,
+          group: group?.label || null,
+        };
+      }),
+    };
+  };
+  const compactContentRevision = (prefix, content) => {
+    let hashA = 0x811c9dc5;
+    let hashB = 0x9e3779b9;
+    for (let index = 0; index < content.length; index += 1) {
+      const code = content.charCodeAt(index);
+      hashA = Math.imul(hashA ^ code, 0x01000193);
+      hashB = Math.imul(hashB ^ (code + index), 0x85ebca6b);
+    }
+    return `${prefix}-v1-${content.length}-${
+      (hashA >>> 0).toString(16).padStart(8, '0')
+    }${(hashB >>> 0).toString(16).padStart(8, '0')}`;
+  };
+  const controlFor = (element) => {
+    if (element instanceof HTMLInputElement) {
+      const control = {
+        kind: 'input',
+        inputType: String(element.type || 'text').toLowerCase(),
+        required: element.required,
+      };
+      for (const attribute of ['min', 'max', 'step', 'pattern', 'accept']) {
+        if (element.hasAttribute(attribute)) {
+          control[attribute] = String(element.getAttribute(attribute));
+        }
+      }
+      if (element.hasAttribute('minlength')) control.minLength = element.minLength;
+      if (element.hasAttribute('maxlength')) control.maxLength = element.maxLength;
+      const optionPayload = optionPayloadFor(element);
+      if (optionPayload) {
+        const optionContent = JSON.stringify(optionPayload);
+        control.optionCount = optionPayload.options.length;
+        control.optionsRevision = compactContentRevision('options', optionContent);
+      }
+      return control;
+    }
+    if (element instanceof HTMLTextAreaElement) {
+      const control = {
+        kind: 'textarea',
+        required: element.required,
+      };
+      if (element.hasAttribute('minlength')) control.minLength = element.minLength;
+      if (element.hasAttribute('maxlength')) control.maxLength = element.maxLength;
+      return control;
+    }
+    if (element instanceof HTMLSelectElement) {
+      const optionPayload = optionPayloadFor(element);
+      const optionContent = JSON.stringify(optionPayload);
+      return {
+        kind: 'select',
+        required: element.required,
+        multiple: element.multiple,
+        size: element.size,
+        optionCount: optionPayload.options.length,
+        optionsRevision: compactContentRevision('options', optionContent),
+      };
+    }
+    if (element instanceof HTMLElement && element.isContentEditable) {
+      return { kind: 'contenteditable' };
+    }
+    return null;
+  };
   const reactProps = (element) => {
     for (const key of Object.keys(element)) {
       if (key.startsWith('__reactProps$')) return element[key] || {};
@@ -2826,6 +2919,7 @@ const WINDOW_UI_SNAPSHOT_SCRIPT: &str = r#"
       qualifiedName: qualifiedNameFor(scope, name) || null,
       text: text && text !== name ? text : null,
       value: valueFor(element) || null,
+      control: controlFor(element),
       description: descriptionFor(element, name),
       state: stateFor(element),
       agentInteraction: agentPolicyFor(element),
@@ -2845,7 +2939,7 @@ const WINDOW_UI_SNAPSHOT_SCRIPT: &str = r#"
   const activeElementSelector =
     document.activeElement instanceof Element ? selectorFor(document.activeElement) : null;
   const revisionSource = JSON.stringify({
-    version: 3,
+    version: 4,
     title: document.title,
     url: location.href,
     viewport,
@@ -2859,13 +2953,13 @@ const WINDOW_UI_SNAPSHOT_SCRIPT: &str = r#"
     revisionHash ^= BigInt(revisionSource.charCodeAt(index));
     revisionHash = BigInt.asUintN(64, revisionHash * 0x100000001b3n);
   }
-  const snapshotRevision = `ui-v2-${candidates.length}-${
+  const snapshotRevision = `ui-v3-${candidates.length}-${
     revisionHash.toString(16).padStart(16, '0')
   }`;
   revisionGuard.revisions.set(snapshotRevision, revisionGuard.epoch);
   const elements = semanticElements.slice(offset, offset + limit);
   return {
-    version: 3,
+    version: 4,
     snapshotRevision,
     title: document.title,
     url: location.href,
@@ -2912,7 +3006,42 @@ const WINDOW_UI_CONTENT_SCRIPT: &str = r#"
   }
   if (!element) return { ok: false, error: `No element matches ${selector}` };
   let content;
-  if (field === 'value') {
+  if (field === 'options') {
+    let kind;
+    let multiple = false;
+    let rawOptions;
+    if (element instanceof HTMLSelectElement) {
+      kind = 'select';
+      multiple = element.multiple;
+      rawOptions = Array.from(element.options);
+    } else if (element instanceof HTMLInputElement && element.list) {
+      kind = 'datalist';
+      rawOptions = Array.from(element.list.options);
+    } else {
+      return {
+        ok: false,
+        error: `Element ${selector} has no readable select or datalist options`,
+      };
+    }
+    content = JSON.stringify({
+      version: 1,
+      kind,
+      multiple,
+      options: rawOptions.map((option, index) => {
+        const group = option.parentElement instanceof HTMLOptGroupElement
+          ? option.parentElement
+          : null;
+        return {
+          index,
+          value: String(option.value),
+          label: String(option.label || option.textContent || option.value),
+          disabled: Boolean(option.disabled || group?.disabled),
+          selected: kind === 'select' ? option.selected : false,
+          group: group?.label || null,
+        };
+      }),
+    });
+  } else if (field === 'value') {
     if (element instanceof HTMLInputElement) {
       if (String(element.type).toLowerCase() === 'password') {
         return { ok: false, error: 'Password values cannot be read' };

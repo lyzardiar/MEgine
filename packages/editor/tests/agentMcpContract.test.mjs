@@ -296,6 +296,14 @@ test('MCP validates tool arguments before dispatch with bounded structured issue
     }),
     /Invalid arguments/,
   );
+  assert.doesNotThrow(
+    () => validateToolArguments(tool('read_window_ui_content'), {
+      selector: '#projection',
+      expectedSnapshotRevision: 'ui-v3-42-0123456789abcdef',
+      field: 'options',
+      maxChars: 64,
+    }),
+  );
   assert.throws(
     () => validateToolArguments(tool('apply_batch'), {
       commands: [{ op: 'unknown', components: {} }],

@@ -43,6 +43,24 @@ export interface EditorUiRect {
   height: number;
 }
 
+export interface EditorUiControlMetadata {
+  kind: 'input' | 'textarea' | 'select' | 'contenteditable';
+  inputType?: string;
+  required?: boolean;
+  multiple?: boolean;
+  size?: number;
+  min?: string;
+  max?: string;
+  step?: string;
+  minLength?: number;
+  maxLength?: number;
+  pattern?: string;
+  accept?: string;
+  optionCount?: number;
+  /** Changes whenever option values, labels, groups, disabled state, or selection changes. */
+  optionsRevision?: string;
+}
+
 export type EditorUiAction =
   | 'click'
   | 'doubleClick'
@@ -70,6 +88,8 @@ export interface EditorUiElement {
   qualifiedName: string | null;
   text: string | null;
   value: string | null;
+  /** Native form-control constraints and a bounded fingerprint for exact option discovery. */
+  control: EditorUiControlMetadata | null;
   description: string | null;
   state: Record<string, boolean | string>;
   /** Present when one or more UI actions require foreground-only user input. */
@@ -135,7 +155,7 @@ export interface EditorUiContentPage {
   captureMethod: string;
   backgroundSafe: boolean;
   selector: string;
-  field: 'text' | 'value';
+  field: 'text' | 'value' | 'options';
   offset: number;
   count: number;
   totalLength: number;
