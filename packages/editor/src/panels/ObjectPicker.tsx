@@ -1,7 +1,19 @@
 /** Unity-style searchable Object Picker popup. */
 
-import { useEffect, useMemo, useRef, useState, type CSSProperties } from 'react';
+import {
+  useEffect,
+  useId,
+  useMemo,
+  useRef,
+  useState,
+  type CSSProperties,
+  type KeyboardEvent as ReactKeyboardEvent,
+} from 'react';
 import { createPortal } from 'react-dom';
+import {
+  nextObjectPickerOptionIndex,
+  type ObjectPickerNavigationKey,
+} from '../objectPickerNavigation';
 
 export type PickerItem = {
   id: string;
@@ -23,8 +35,10 @@ export function ObjectPicker(props: {
   onClose: () => void;
 }) {
   const [query, setQuery] = useState('');
+  const [activeKey, setActiveKey] = useState<string | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const panelRef = useRef<HTMLDivElement>(null);
+  const listId = useId();
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
@@ -36,6 +50,31 @@ export function ObjectPicker(props: {
         it.id.toLowerCase().includes(q),
     );
   }, [props.items, query]);
+
+  const options = useMemo(() => [
+    ...(props.allowNone ? [{ key: 'none', value: null as string | null }] : []),
+    ...filtered.map((item) => ({ key: `item:${item.id}`, value: item.id })),
+  ], [filtered, props.allowNone]);
+  const activeIndex = options.findIndex((option) => option.key === activeKey);
+  const activeOptionId = activeIndex >= 0 ? `${listId}-option-${activeIndex}` : undefined;
+
+  useEffect(() => {
+    setActiveKey((currentKey) => {
+      if (currentKey && options.some((option) => option.key === currentKey)) return currentKey;
+      const selectedKey = props.current
+        ? `item:${props.current}`
+        : props.allowNone
+          ? 'none'
+          : null;
+      if (selectedKey && options.some((option) => option.key === selectedKey)) return selectedKey;
+      return options[0]?.key ?? null;
+    });
+  }, [options, props.allowNone, props.current]);
+
+  useEffect(() => {
+    if (!activeOptionId) return;
+    document.getElementById(activeOptionId)?.scrollIntoView({ block: 'nearest' });
+  }, [activeOptionId]);
 
   useEffect(() => {
     inputRef.current?.focus();
@@ -53,6 +92,44 @@ export function ObjectPicker(props: {
       window.removeEventListener('pointerdown', onDown, true);
     };
   }, [props.onClose]);
+
+  const choose = (value: string | null) => {
+    props.onPick(value);
+    props.onClose();
+  };
+
+  const onSearchKeyDown = (event: ReactKeyboardEvent<HTMLInputElement>) => {
+    if (event.key === 'Escape') {
+      event.preventDefault();
+      event.stopPropagation();
+      props.onClose();
+      return;
+    }
+    if (event.key === 'Enter') {
+      const active = options[activeIndex];
+      if (!active) return;
+      event.preventDefault();
+      event.stopPropagation();
+      choose(active.value);
+      return;
+    }
+    if (![
+      'ArrowDown',
+      'ArrowUp',
+      'Home',
+      'End',
+      'PageDown',
+      'PageUp',
+    ].includes(event.key)) return;
+    event.preventDefault();
+    event.stopPropagation();
+    const nextIndex = nextObjectPickerOptionIndex(
+      options.length,
+      activeIndex,
+      event.key as ObjectPickerNavigationKey,
+    );
+    setActiveKey(options[nextIndex]?.key ?? null);
+  };
 
   const style: CSSProperties = (() => {
     const w = 280;
@@ -96,54 +173,58 @@ export function ObjectPicker(props: {
         className="object-picker-search"
         role="combobox"
         aria-label={`Search ${props.title}`}
-        aria-controls="object-picker-results"
+        aria-controls={listId}
         aria-expanded="true"
+        aria-activedescendant={activeOptionId}
         placeholder="Search…"
         value={query}
         onChange={(e) => setQuery(e.target.value)}
+        onKeyDown={onSearchKeyDown}
       />
       <div
-        id="object-picker-results"
+        id={listId}
         className="object-picker-list"
         role="listbox"
         aria-label={`${props.title} options`}
       >
         {props.allowNone && (
           <button
+            id={`${listId}-option-0`}
             type="button"
             role="option"
-            aria-selected={!props.current}
-            className={`object-picker-item${!props.current ? ' active' : ''}`}
-            onClick={() => {
-              props.onPick(null);
-              props.onClose();
-            }}
+            aria-selected={activeKey === 'none'}
+            className={`object-picker-item${activeKey === 'none' ? ' active' : ''}`}
+            onPointerMove={() => setActiveKey('none')}
+            onClick={() => choose(null)}
           >
             <span className="object-picker-ico">∅</span>
             <span className="object-picker-lab">{props.noneLabel ?? 'None'}</span>
           </button>
         )}
-        {filtered.map((it) => (
-          <button
-            key={it.id}
-            type="button"
-            role="option"
-            aria-selected={props.current === it.id}
-            className={`object-picker-item${props.current === it.id ? ' active' : ''}`}
-            onClick={() => {
-              props.onPick(it.id);
-              props.onClose();
-            }}
-          >
-            <span className="object-picker-ico">
-              {it.thumbUrl ? <img src={it.thumbUrl} alt="" /> : (it.icon ?? '○')}
-            </span>
-            <span className="object-picker-texts">
-              <span className="object-picker-lab">{it.label}</span>
-              {it.sub && <span className="object-picker-sub">{it.sub}</span>}
-            </span>
-          </button>
-        ))}
+        {filtered.map((it, index) => {
+          const optionKey = `item:${it.id}`;
+          const optionIndex = index + (props.allowNone ? 1 : 0);
+          return (
+            <button
+              key={it.id}
+              id={`${listId}-option-${optionIndex}`}
+              type="button"
+              role="option"
+              aria-selected={activeKey === optionKey}
+              className={`object-picker-item${activeKey === optionKey ? ' active' : ''}`}
+              onPointerMove={() => setActiveKey(optionKey)}
+              onClick={() => choose(it.id)}
+            >
+              <span className="object-picker-ico">
+                {it.thumbUrl ? <img src={it.thumbUrl} alt="" /> : (it.icon ?? '○')}
+              </span>
+              <span className="object-picker-texts">
+                <span className="object-picker-lab">{it.label}</span>
+                {it.sub && <span className="object-picker-sub">{it.sub}</span>}
+              </span>
+            </button>
+          );
+        })}
         {filtered.length === 0 && (
           <div className="object-picker-empty">No results</div>
         )}

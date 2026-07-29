@@ -90,6 +90,10 @@ test('core editor navigation exposes named semantic controls', () => {
   assert.match(objectPicker, /role="combobox"\s*aria-label=\{`Search \$\{props\.title\}`\}/);
   assert.match(objectPicker, /role="listbox"\s*aria-label=\{`\$\{props\.title\} options`\}/);
   assert.equal([...objectPicker.matchAll(/role="option"/g)].length, 2);
+  assert.match(objectPicker, /aria-controls=\{listId\}/);
+  assert.match(objectPicker, /aria-activedescendant=\{activeOptionId\}/);
+  assert.match(objectPicker, /onKeyDown=\{onSearchKeyDown\}/);
+  assert.match(objectPicker, /nextObjectPickerOptionIndex\(/);
   assert.equal(
     [...fieldEditors.matchAll(/aria-haspopup="dialog"\s*aria-expanded=\{pickerOpen\}/g)].length,
     5,
