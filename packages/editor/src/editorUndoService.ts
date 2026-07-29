@@ -141,6 +141,12 @@ export function createEditorUndoService(limit = 128) {
     get canRedo() {
       return redoStack.length > 0;
     },
+    get undoScope() {
+      return undoStack.at(-1)?.scope ?? null;
+    },
+    get redoScope() {
+      return redoStack.at(-1)?.scope ?? null;
+    },
     get undoLabel() {
       return undoStack.at(-1)?.label ?? null;
     },

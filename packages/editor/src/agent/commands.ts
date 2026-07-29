@@ -1097,10 +1097,16 @@ export const WRITE_COMMANDS: Record<string, CommandHandler> = {
     };
   },
   'history.undo': (ctx) => {
+    if (ctx.store.mode !== 'edit' && ctx.store.undoScope === 'scene') {
+      throw new BridgeError('READONLY', 'Stop playback before undoing a scene edit');
+    }
     ctx.store.undo();
     return { ok: true, data: { canUndo: ctx.store.canUndo } };
   },
   'history.redo': (ctx) => {
+    if (ctx.store.mode !== 'edit' && ctx.store.redoScope === 'scene') {
+      throw new BridgeError('READONLY', 'Stop playback before redoing a scene edit');
+    }
     ctx.store.redo();
     return { ok: true, data: { canRedo: ctx.store.canRedo } };
   },

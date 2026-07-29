@@ -766,19 +766,25 @@ export function createEditorStore(undoService: EditorUndoService = createEditorU
       return gameResolution ? { ...gameResolution } : null;
     },
     get canUndo() {
-      return undoService.canUndo;
+      return undoService.canUndo && (mode === 'edit' || undoService.undoScope !== 'scene');
     },
     get canRedo() {
-      return undoService.canRedo;
+      return undoService.canRedo && (mode === 'edit' || undoService.redoScope !== 'scene');
+    },
+    get undoScope() {
+      return undoService.undoScope;
+    },
+    get redoScope() {
+      return undoService.redoScope;
     },
     get canPaste() {
       return mode === 'edit' && (clipboard?.roots.length ?? 0) > 0;
     },
     get undoLabel() {
-      return undoService.undoLabel;
+      return this.canUndo ? undoService.undoLabel : null;
     },
     get redoLabel() {
-      return undoService.redoLabel;
+      return this.canRedo ? undoService.redoLabel : null;
     },
     setGameResolution(resolution: GameResolution | null) {
       gameResolution = normalizeGameResolution(resolution);
@@ -1264,9 +1270,11 @@ export function createEditorStore(undoService: EditorUndoService = createEditorU
       mode = mode === 'play' ? 'pause' : mode === 'pause' ? 'play' : mode;
     },
     undo() {
+      if (!this.canUndo) return false;
       return undoService.undo();
     },
     redo() {
+      if (!this.canRedo) return false;
       return undoService.redo();
     },
     tick(dt: number) {
