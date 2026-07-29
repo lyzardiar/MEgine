@@ -345,6 +345,8 @@ Rust Host 使用独立的工程生命周期互斥门串行化 open/create/close 
 
 存在可见的 `role="dialog" aria-modal="true"` 时，语义快照仍保留底层界面的只读观察，但会把模态框外元素标记为 `state.modalBlocked=true` 并移除其动作；原生动作脚本再次独立检查当前最上层模态框，拒绝任何越界 selector 或拖放目标，并返回结构化 `CONFLICT`。因此合成 DOM 事件不能绕过视觉遮罩修改底层编辑器状态。
 
+快照与原生动作脚本还分别使用浏览器权威的 `:disabled` 匹配和 `aria-disabled` 祖先检查计算有效禁用状态。被 `<fieldset disabled>`、`<optgroup disabled>` 或禁用 ARIA 容器包围的后代会返回 `state.disabled=true` 且不再暴露动作；执行端即使收到手工构造的 selector 也会再次拒绝源元素或拖放目标，Agent 不能用合成 React 事件绕过 Timeline 锁定区等 UI 门禁。
+
 `setValue` 在发出 React/input/change 事件前先用原生 `ValidityState` 校验 required、type、pattern、min/max/step 及长度约束；不合法的临时 DOM 值会先回滚，再以 `INVALID_ARGS` 返回具体 `validityIssues`，不会让 Agent 绕过快照中已经公开的控件约束。
 
 #### 4.2.7 资产与构建

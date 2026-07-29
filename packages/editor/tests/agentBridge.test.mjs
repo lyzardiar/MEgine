@@ -46,14 +46,14 @@ test('whole-window agent capture is background-safe and addressable by window la
   assert.match(rust, /const offset = __MENGINE_OFFSET__/);
   assert.match(rust, /semanticElements\.slice\(offset, offset \+ limit\)/);
   assert.match(rust, /new Map\(candidates\.map/);
-  assert.match(rust, /const snapshotRevision = `ui-v5-/);
+  assert.match(rust, /const snapshotRevision = `ui-v6-/);
   assert.match(rust, /revisionHash = BigInt\.asUintN\(64/);
   assert.match(rust, /const semanticScopeFor = \(element\) =>/);
   assert.match(rust, /role === 'tabpanel'/);
   assert.match(rust, /const qualifiedNameFor = \(scope, name\) =>/);
   assert.match(rust, /scope: scope \|\| null/);
   assert.match(rust, /qualifiedName: qualifiedNameFor\(scope, name\) \|\| null/);
-  assert.equal([...rust.matchAll(/version: 6,/g)].length, 2);
+  assert.equal([...rust.matchAll(/version: 7,/g)].length, 2);
   assert.match(rust, /const ariaStateKeys = \[/);
   for (const key of [
     'valuemin',
@@ -70,6 +70,19 @@ test('whole-window agent capture is background-safe and addressable by window la
     assert.match(rust, new RegExp(`'${key}'`));
   }
   assert.match(rust, /for \(const key of ariaStateKeys\)/);
+  assert.equal([...rust.matchAll(/const effectivelyDisabled = \(/g)].length, 2);
+  assert.equal([...rust.matchAll(/\.matches\(':disabled'\)/g)].length, 2);
+  assert.equal(
+    [...rust.matchAll(/\.closest\('\[aria-disabled="true"\]'\)/g)].length,
+    2,
+  );
+  assert.match(rust, /if \(effectivelyDisabled\(element\)\) return actions/);
+  assert.match(rust, /disabled: effectivelyDisabled\(element\)/);
+  assert.match(interactionScript, /if \(effectivelyDisabled\(element\)\)/);
+  assert.match(
+    interactionScript,
+    /if \(targetElement && effectivelyDisabled\(targetElement\)\)/,
+  );
   assert.match(rust, /const controlFor = \(element\) =>/);
   assert.match(rust, /control: controlFor\(element\)/);
   assert.match(rust, /control\.optionsRevision = compactContentRevision\('options'/);
@@ -106,7 +119,6 @@ test('whole-window agent capture is background-safe and addressable by window la
   assert.match(interactionScript, /activeModal\.contains\(targetElement\)/);
   assert.match(bridge, /if \(result\.modalBlocked\) \{/);
   assert.match(bridge, /'Interact with or dismiss the active modal dialog first'/);
-  assert.match(rust, /if \(disabled\) return actions;/);
   assert.match(rust, /MENGINE_EDITOR_CONFIG_DIR/);
   assert.match(rust, /\| "dragTo"/);
   assert.match(rust, /key\.startsWith\('__reactProps\$'\)/);

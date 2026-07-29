@@ -2517,6 +2517,11 @@ const WINDOW_UI_SNAPSHOT_SCRIPT: &str = r#"
     const rect = element.getBoundingClientRect();
     return rect.width > 0 && rect.height > 0;
   };
+  const effectivelyDisabled = (element) => Boolean(
+    element.disabled === true
+      || element.matches(':disabled')
+      || element.closest('[aria-disabled="true"]'),
+  );
   const labelledText = (element) => {
     const labelledBy = normalize(element.getAttribute('aria-labelledby'));
     if (labelledBy) {
@@ -2735,10 +2740,7 @@ const WINDOW_UI_SNAPSHOT_SCRIPT: &str = r#"
   const actionList = (element, role) => {
     const actions = [];
     const props = reactProps(element);
-    const disabled = Boolean(
-      element.disabled || element.getAttribute('aria-disabled') === 'true',
-    );
-    if (disabled) return actions;
+    if (effectivelyDisabled(element)) return actions;
     if (role === 'button' || role === 'link' || role === 'menuitem'
       || role === 'tab' || role === 'option' || role === 'checkbox'
       || role === 'radio' || role === 'switch'
@@ -2866,7 +2868,7 @@ const WINDOW_UI_SNAPSHOT_SCRIPT: &str = r#"
   ];
   const stateFor = (element, modalBlocked = false) => {
     const state = {
-      disabled: Boolean(element.disabled || element.getAttribute('aria-disabled') === 'true'),
+      disabled: effectivelyDisabled(element),
       readOnly: Boolean(element.readOnly || element.getAttribute('aria-readonly') === 'true'),
       focused: document.activeElement === element,
     };
@@ -2995,7 +2997,7 @@ const WINDOW_UI_SNAPSHOT_SCRIPT: &str = r#"
   const activeElementSelector =
     document.activeElement instanceof Element ? selectorFor(document.activeElement) : null;
   const revisionSource = JSON.stringify({
-    version: 6,
+    version: 7,
     title: document.title,
     url: location.href,
     viewport,
@@ -3009,13 +3011,13 @@ const WINDOW_UI_SNAPSHOT_SCRIPT: &str = r#"
     revisionHash ^= BigInt(revisionSource.charCodeAt(index));
     revisionHash = BigInt.asUintN(64, revisionHash * 0x100000001b3n);
   }
-  const snapshotRevision = `ui-v5-${candidates.length}-${
+  const snapshotRevision = `ui-v6-${candidates.length}-${
     revisionHash.toString(16).padStart(16, '0')
   }`;
   revisionGuard.revisions.set(snapshotRevision, revisionGuard.epoch);
   const elements = semanticElements.slice(offset, offset + limit);
   return {
-    version: 6,
+    version: 7,
     snapshotRevision,
     title: document.title,
     url: location.href,
@@ -3311,6 +3313,11 @@ const WINDOW_UI_INTERACTION_SCRIPT: &str = r#"
     const rect = target.getBoundingClientRect();
     return rect.width > 0 && rect.height > 0;
   };
+  const effectivelyDisabled = (target) => Boolean(
+    target.disabled === true
+      || target.matches(':disabled')
+      || target.closest('[aria-disabled="true"]'),
+  );
   const visibleModalDialogs = Array.from(
     document.querySelectorAll('[role="dialog"][aria-modal="true"]'),
   ).filter(rendered);
@@ -3381,15 +3388,10 @@ const WINDOW_UI_INTERACTION_SCRIPT: &str = r#"
       agentAlternative: alternative,
     };
   }
-  const disabled = Boolean(
-    element.disabled || element.getAttribute('aria-disabled') === 'true',
-  );
-  if (disabled) {
+  if (effectivelyDisabled(element)) {
     return { ok: false, error: `Element ${selector} is disabled` };
   }
-  if (targetElement && Boolean(
-    targetElement.disabled || targetElement.getAttribute('aria-disabled') === 'true',
-  )) {
+  if (targetElement && effectivelyDisabled(targetElement)) {
     return { ok: false, error: `Target element ${targetSelector} is disabled` };
   }
   const eventCoordinates = (target = element) => {
