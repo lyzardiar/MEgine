@@ -2888,6 +2888,7 @@ const WINDOW_UI_SNAPSHOT_SCRIPT: &str = r#"
     if (tag === 'dt') return 'term';
     if (tag === 'dd') return 'definition';
     if (tag === 'figure') return 'figure';
+    if (tag === 'img' && normalize(element.getAttribute('alt'))) return 'img';
     if (tag === 'hr') return 'separator';
     if (tag === 'li') return 'listitem';
     if (['ol', 'ul', 'menu'].includes(tag)) return 'list';
@@ -3005,6 +3006,28 @@ const WINDOW_UI_SNAPSHOT_SCRIPT: &str = r#"
     }
     return '';
   };
+  const nativeCaptionText = (element) => {
+    const captionTag = element.localName === 'fieldset'
+      ? 'legend'
+      : element.localName === 'figure'
+        ? 'figcaption'
+        : element.localName === 'table'
+          ? 'caption'
+          : '';
+    if (!captionTag) return '';
+    const caption = Array.from(element.children)
+      .find((child) => child.localName === captionTag);
+    return caption
+      ? semanticText(caption, null, semanticallyHidden(caption))
+      : '';
+  };
+  const nativeButtonValue = (element) => {
+    if (!(element instanceof HTMLInputElement)) return '';
+    const type = String(element.type || 'text').toLowerCase();
+    return ['button', 'submit', 'reset'].includes(type)
+      ? normalize(element.value)
+      : '';
+  };
   const nameFromContent = (role) => [
     'button', 'link', 'heading', 'menuitem', 'option', 'tab',
   ].includes(role);
@@ -3023,6 +3046,8 @@ const WINDOW_UI_SNAPSHOT_SCRIPT: &str = r#"
       || element.getAttribute('aria-label')
       || nativeLabelText(element)
       || element.getAttribute('alt')
+      || nativeCaptionText(element)
+      || nativeButtonValue(element)
       || meaningfulContentName(element, role)
       || (
         ['status', 'meter', 'progressbar'].includes(role)
@@ -3600,7 +3625,7 @@ const WINDOW_UI_SNAPSHOT_SCRIPT: &str = r#"
   const activeElementSelector =
     document.activeElement instanceof Element ? selectorFor(document.activeElement) : null;
   const revisionSource = JSON.stringify({
-    version: 21,
+    version: 22,
     title: document.title,
     url: location.href,
     viewport,
@@ -3614,7 +3639,7 @@ const WINDOW_UI_SNAPSHOT_SCRIPT: &str = r#"
     revisionHash ^= BigInt(revisionSource.charCodeAt(index));
     revisionHash = BigInt.asUintN(64, revisionHash * 0x100000001b3n);
   }
-  const snapshotRevision = `ui-v21-${candidates.length}-${
+  const snapshotRevision = `ui-v22-${candidates.length}-${
     revisionHash.toString(16).padStart(16, '0')
   }`;
   const guardedElements = new Map(semanticElements.map((semanticElement, index) => [
@@ -3635,7 +3660,7 @@ const WINDOW_UI_SNAPSHOT_SCRIPT: &str = r#"
   }
   const elements = semanticElements.slice(offset, offset + limit);
   return {
-    version: 21,
+    version: 22,
     snapshotRevision,
     title: document.title,
     url: location.href,
@@ -3840,6 +3865,28 @@ const WINDOW_UI_CONTENT_SCRIPT: &str = r#"
     }
     return '';
   };
+  const nativeCaptionText = (target) => {
+    const captionTag = target.localName === 'fieldset'
+      ? 'legend'
+      : target.localName === 'figure'
+        ? 'figcaption'
+        : target.localName === 'table'
+          ? 'caption'
+          : '';
+    if (!captionTag) return '';
+    const caption = Array.from(target.children)
+      .find((child) => child.localName === captionTag);
+    return caption
+      ? semanticText(caption, null, semanticallyHidden(caption))
+      : '';
+  };
+  const nativeButtonValue = (target) => {
+    if (!(target instanceof HTMLInputElement)) return '';
+    const type = String(target.type || 'text').toLowerCase();
+    return ['button', 'submit', 'reset'].includes(type)
+      ? normalizeSemantic(target.value)
+      : '';
+  };
   const implicitNamingRole = (target) => {
     const tag = target.localName;
     if (/^h[1-6]$/.test(tag)) return 'heading';
@@ -3881,6 +3928,8 @@ const WINDOW_UI_CONTENT_SCRIPT: &str = r#"
         || target.getAttribute('aria-label')
         || nativeLabelText(target)
         || target.getAttribute('alt')
+        || nativeCaptionText(target)
+        || nativeButtonValue(target)
         || meaningfulContent
         || (
           ['status', 'meter', 'progressbar'].includes(role)
@@ -4172,6 +4221,28 @@ const WINDOW_UI_INTERACTION_SCRIPT: &str = r#"
       .map((label) => semanticText(label, semanticallyHidden(label)))
       .join(' '),
   );
+  const nativeCaptionText = (target) => {
+    const captionTag = target.localName === 'fieldset'
+      ? 'legend'
+      : target.localName === 'figure'
+        ? 'figcaption'
+        : target.localName === 'table'
+          ? 'caption'
+          : '';
+    if (!captionTag) return '';
+    const caption = Array.from(target.children)
+      .find((child) => child.localName === captionTag);
+    return caption
+      ? semanticText(caption, semanticallyHidden(caption))
+      : '';
+  };
+  const nativeButtonValue = (target) => {
+    if (!(target instanceof HTMLInputElement)) return '';
+    const type = String(target.type || 'text').toLowerCase();
+    return ['button', 'submit', 'reset'].includes(type)
+      ? normalizeName(target.value)
+      : '';
+  };
   const roleForName = (target) => {
     const explicit = normalizeName(target.getAttribute('role'));
     if (explicit) return explicit;
@@ -4208,6 +4279,8 @@ const WINDOW_UI_INTERACTION_SCRIPT: &str = r#"
       || normalizeName(target.getAttribute('aria-label'))
       || nativeLabelText(target)
       || normalizeName(target.getAttribute('alt'))
+      || nativeCaptionText(target)
+      || nativeButtonValue(target)
       || meaningfulContent
       || normalizeName(target.getAttribute('placeholder'))
       || normalizeName(target.getAttribute('title'))

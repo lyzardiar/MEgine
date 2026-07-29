@@ -3785,7 +3785,11 @@ export function Sequencer(props: SequencerProps) {
               {asset.groups.map((group) => <option value={group.id} disabled={group.locked} key={group.id}>{group.name}</option>)}
             </select></label>
             {selectedTrackLocked && <p className="sequencer-lock-notice"><Lock size={12} /> Content editing is disabled by this track or its group.</p>}
-            <fieldset className="sequencer-inspector-fields" disabled={selectedTrackLocked}>
+            <fieldset
+              className="sequencer-inspector-fields"
+              aria-label={`${selectedTrack.type === 'signal' ? 'Signal' : selectedTrack.type === 'activation' ? 'Activation' : selectedTrack.type === 'audio' ? 'Audio' : selectedTrack.type === 'animation' ? 'Animation' : selectedTrack.type === 'particle' ? 'Particle' : selectedTrack.type === 'control' ? 'Control' : 'Camera'} Track fields`}
+              disabled={selectedTrackLocked}
+            >
               <label>Name <input value={selectedTrack.name} onChange={(event) => update((draft) => { draft.tracks[selection!.track].name = event.target.value; })} /></label>
               {selectedTrack.type !== 'signal' && selectedTrack.type !== 'camera' && <label>Target (binding key / child path)<input value={selectedTrack.target} placeholder={selectedTrack.type === 'audio' ? 'Audio/Music' : selectedTrack.type === 'animation' ? 'Characters/Hero' : selectedTrack.type === 'particle' ? 'Effects/Burst' : selectedTrack.type === 'control' ? 'Sequences/Nested' : 'Canvas/Dialog'} onChange={(event) => {
                 clearBindingBeforeTargetEdit(selectedTrack.target);
@@ -3802,7 +3806,11 @@ export function Sequencer(props: SequencerProps) {
               <button type="button" className="sequencer-danger" onClick={() => deleteSelection()}><Trash2 size={14} /> Delete {selectedTrackIds.length > 1 ? `${selectedTrackIds.length} Tracks` : 'Track'}</button>
             </fieldset>
           </>}
-          {selectedMarker && <fieldset className="sequencer-inspector-fields" disabled={selectedTrackLocked}>
+          {selectedMarker && <fieldset
+            className="sequencer-inspector-fields"
+            aria-label="Signal Marker fields"
+            disabled={selectedTrackLocked}
+          >
             {selectedTrackLocked && <p className="sequencer-lock-notice"><Lock size={12} /> Unlock the track or its group to edit this signal.</p>}
             <label>Name <input value={selectedMarker.name} onChange={(event) => update((draft) => {
               const track = draft.tracks[selection!.track];
@@ -3831,7 +3839,11 @@ export function Sequencer(props: SequencerProps) {
             }} /></label>
             <button type="button" className="sequencer-danger" onClick={() => deleteSelection()}><Trash2 size={14} /> Delete {selectedItems.length > 1 ? `${selectedItems.length} Items` : 'Signal'}</button>
           </fieldset>}
-          {selectedClip && <fieldset className="sequencer-inspector-fields" disabled={selectedTrackLocked}>
+          {selectedClip && <fieldset
+            className="sequencer-inspector-fields"
+            aria-label={`${selectedActivationClip ? 'Activation Clip' : selectedAudioClip ? 'Audio Clip' : selectedAnimationClip ? 'Animation Clip' : selectedParticleClip ? 'Particle Clip' : selectedControlClip ? 'Sub-Timeline Clip' : 'Camera Shot'} fields`}
+            disabled={selectedTrackLocked}
+          >
             {selectedTrackLocked && <p className="sequencer-lock-notice"><Lock size={12} /> Unlock the track or its group to edit this clip.</p>}
             <label>Start <input type="number" min={0} max={asset.duration - selectedClip.duration} step={1 / asset.frame_rate} value={selectedClip.start} onChange={(event) => update((draft) => {
               const track = draft.tracks[selection!.track];

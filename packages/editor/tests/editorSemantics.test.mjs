@@ -220,6 +220,10 @@ test('complex authoring rows identify their selectable semantic regions', () => 
     /aria-label="Sequencer tracks viewport"\s*data-agent-wheel="true"/,
   );
   assert.match(sequencer, /aria-label="Scrub Sequencer time ruler"/);
+  assert.match(sequencer, /aria-label=\{`\$\{selectedTrack\.type === 'signal'/);
+  assert.match(sequencer, /Track fields`\}/);
+  assert.match(sequencer, /aria-label="Signal Marker fields"/);
+  assert.match(sequencer, /aria-label=\{`\$\{selectedActivationClip \? 'Activation Clip'/);
   assert.match(
     avatarMask,
     /aria-label=\{`Delete Avatar Mask path \$\{index \+ 1\}`\}/,
