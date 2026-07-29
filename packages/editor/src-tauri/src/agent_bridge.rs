@@ -2518,7 +2518,7 @@ const WINDOW_UI_SNAPSHOT_SCRIPT: &str = r#"
     return 'textbox';
   };
   const semanticallyHidden = (element) => Boolean(
-    element.closest('[aria-hidden="true"]'),
+    element.closest('[aria-hidden="true"], [inert]'),
   );
   const visible = (element) => {
     if (semanticallyHidden(element)) return false;
@@ -2533,20 +2533,36 @@ const WINDOW_UI_SNAPSHOT_SCRIPT: &str = r#"
       || element.matches(':disabled')
       || element.closest('[aria-disabled="true"]'),
   );
+  const semanticText = (root, excludedElement = null) => {
+    const parts = [];
+    const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT);
+    let node = walker.nextNode();
+    while (node) {
+      const parent = node.parentElement;
+      if (
+        (!parent || !semanticallyHidden(parent))
+        && !(excludedElement instanceof Element && excludedElement.contains(node))
+      ) {
+        parts.push(node.textContent || '');
+      }
+      node = walker.nextNode();
+    }
+    return normalize(parts.join(' '));
+  };
   const labelledText = (element) => {
     const labelledBy = normalize(element.getAttribute('aria-labelledby'));
     if (labelledBy) {
       const text = labelledBy.split(/\s+/)
         .map((id) => document.getElementById(id))
         .filter(Boolean)
-        .map((node) => normalize(node.innerText || node.textContent))
+        .map((node) => semanticText(node))
         .filter(Boolean)
         .join(' ');
       if (text) return normalize(text);
     }
     if (element.labels?.length) {
       const text = Array.from(element.labels)
-        .map((label) => normalize(label.innerText || label.textContent))
+        .map((label) => semanticText(label))
         .filter(Boolean)
         .join(' ');
       if (text) return normalize(text);
@@ -2558,16 +2574,13 @@ const WINDOW_UI_SNAPSHOT_SCRIPT: &str = r#"
   ].includes(role);
   const meaningfulContentName = (element, role) => {
     if (!nameFromContent(role)) return '';
-    const content = normalize(element.innerText || element.textContent);
+    const content = semanticText(element);
     return /[\p{L}\p{N}]/u.test(content) ? content : '';
   };
   const containingLabelText = (element) => {
     const label = element.closest('label');
     if (!label) return '';
-    return normalize(Array.from(label.childNodes)
-      .filter((node) => node !== element)
-      .map((node) => node.textContent)
-      .join(' '));
+    return semanticText(label, element);
   };
   const accessibleName = (element, role) => normalize(
     element.getAttribute('aria-label')
@@ -2581,7 +2594,7 @@ const WINDOW_UI_SNAPSHOT_SCRIPT: &str = r#"
       )
       || element.getAttribute('placeholder')
       || element.getAttribute('title')
-      || (nameFromContent(role) ? element.innerText || element.textContent : ''),
+      || (nameFromContent(role) ? semanticText(element) : ''),
   );
   const semanticScopeFor = (element) => {
     let current = element;
@@ -2614,7 +2627,7 @@ const WINDOW_UI_SNAPSHOT_SCRIPT: &str = r#"
   };
   const ownText = (element, role) => {
     if (nameFromContent(role) || element.children.length === 0) {
-      return normalize(element.innerText || element.textContent);
+      return semanticText(element);
     }
     return normalize(Array.from(element.childNodes)
       .filter((node) => node.nodeType === Node.TEXT_NODE)
@@ -3060,7 +3073,7 @@ const WINDOW_UI_SNAPSHOT_SCRIPT: &str = r#"
   const activeElementSelector =
     document.activeElement instanceof Element ? selectorFor(document.activeElement) : null;
   const revisionSource = JSON.stringify({
-    version: 10,
+    version: 11,
     title: document.title,
     url: location.href,
     viewport,
@@ -3074,7 +3087,7 @@ const WINDOW_UI_SNAPSHOT_SCRIPT: &str = r#"
     revisionHash ^= BigInt(revisionSource.charCodeAt(index));
     revisionHash = BigInt.asUintN(64, revisionHash * 0x100000001b3n);
   }
-  const snapshotRevision = `ui-v9-${candidates.length}-${
+  const snapshotRevision = `ui-v10-${candidates.length}-${
     revisionHash.toString(16).padStart(16, '0')
   }`;
   const guardedElements = new Map(semanticElements.map((semanticElement, index) => [
@@ -3095,7 +3108,7 @@ const WINDOW_UI_SNAPSHOT_SCRIPT: &str = r#"
   }
   const elements = semanticElements.slice(offset, offset + limit);
   return {
-    version: 10,
+    version: 11,
     snapshotRevision,
     title: document.title,
     url: location.href,
@@ -3384,15 +3397,34 @@ const WINDOW_UI_INTERACTION_SCRIPT: &str = r#"
     }
   }
   const normalizeName = (value) => String(value || '').replace(/\s+/g, ' ').trim().slice(0, 160);
+  const semanticallyHidden = (target) => Boolean(
+    target instanceof Element && target.closest('[aria-hidden="true"], [inert]'),
+  );
+  const semanticText = (root) => {
+    const parts = [];
+    const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT);
+    let node = walker.nextNode();
+    while (node) {
+      const parent = node.parentElement;
+      if (!parent || !semanticallyHidden(parent)) {
+        parts.push(node.textContent || '');
+      }
+      node = walker.nextNode();
+    }
+    return normalizeName(parts.join(' '));
+  };
   const labelledText = (target) => {
     const ids = String(target.getAttribute('aria-labelledby') || '').split(/\s+/).filter(Boolean);
     const referenced = normalizeName(
-      ids.map((id) => document.getElementById(id)?.textContent || '').join(' '),
+      ids.map((id) => {
+        const labelledBy = document.getElementById(id);
+        return labelledBy ? semanticText(labelledBy) : '';
+      }).join(' '),
     );
     if (referenced) return referenced;
     return normalizeName(
       Array.from(target.labels || [])
-        .map((label) => label.innerText || label.textContent || '')
+        .map((label) => semanticText(label))
         .join(' '),
     );
   };
@@ -3425,7 +3457,7 @@ const WINDOW_UI_INTERACTION_SCRIPT: &str = r#"
   const directName = (target) => {
     const role = roleForName(target);
     const content = ['button', 'link', 'heading', 'menuitem', 'option', 'tab'].includes(role)
-      ? normalizeName(target.innerText || target.textContent)
+      ? semanticText(target)
       : '';
     const meaningfulContent = /[\p{L}\p{N}]/u.test(content) ? content : '';
     return normalizeName(target.getAttribute('aria-label'))
@@ -3447,11 +3479,8 @@ const WINDOW_UI_INTERACTION_SCRIPT: &str = r#"
         current = current.parentElement;
       }
     }
-    return normalizeName(target.innerText || target.textContent);
+    return semanticText(target);
   };
-  const semanticallyHidden = (target) => Boolean(
-    target instanceof Element && target.closest('[aria-hidden="true"]'),
-  );
   const rendered = (target) => {
     if (!(target instanceof HTMLElement || target instanceof SVGElement)) return false;
     if (semanticallyHidden(target)) return false;

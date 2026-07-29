@@ -226,8 +226,13 @@ function CompBlock(props: {
   return (
     <div className="comp">
       <div className="comp-head">
-        <button type="button" className="comp-toggle" onClick={() => setOpen(!open)}>
-          <span className="comp-foldout">{open ? '▾' : '▸'}</span>
+        <button
+          type="button"
+          className="comp-toggle"
+          aria-expanded={open}
+          onClick={() => setOpen(!open)}
+        >
+          <span className="comp-foldout" aria-hidden>{open ? '▾' : '▸'}</span>
           <span className="comp-icon" aria-hidden>{props.title.slice(0, 1).toUpperCase()}</span>
           <span className="comp-title">{props.title}</span>
         </button>

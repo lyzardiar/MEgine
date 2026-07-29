@@ -65,6 +65,11 @@ test('core editor navigation exposes named semantic controls', () => {
   assert.match(inspector, /aria-label="Projection"/);
   assert.match(inspector, /aria-label="Clear Flags"/);
   assert.match(inspector, /aria-label="Camera 3D Primary"/);
+  assert.match(
+    inspector,
+    /className="comp-toggle"\s*aria-expanded=\{open\}/,
+  );
+  assert.match(inspector, /className="comp-foldout" aria-hidden/);
   assert.match(inspector, /aria-label=\{`Adjust \$\{props\.ariaLabel/);
   assert.match(inspector, /aria-label=\{`Adjust \$\{props\.label\}`\}/);
   assert.match(rectTransform, /aria-label=\{`Adjust \$\{props\.ariaLabel\}`\}/);
@@ -83,6 +88,11 @@ test('core editor navigation exposes named semantic controls', () => {
   );
   assert.match(schemaFields, /aria-label=\{`\$\{label\} slider`\}/);
   assert.match(schemaFields, /aria-label=\{`\$\{label\} value`\}/);
+  assert.match(
+    schemaFields,
+    /className="schema-foldout-toggle"\s*aria-expanded=\{open\}/,
+  );
+  assert.match(schemaFields, /<span aria-hidden>\{open \? '▾' : '▸'\}<\/span>/);
   assert.match(fieldEditors, /aria-label=\{`\$\{props\.label\} color`\}/);
   assert.match(fieldEditors, /aria-label=\{`\$\{props\.label\} component`\}/);
   assert.match(fieldEditors, /aria-label=\{`\$\{props\.label\} sprite drop target`\}/);

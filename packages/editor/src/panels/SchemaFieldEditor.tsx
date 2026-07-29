@@ -436,9 +436,10 @@ export function SchemaFieldEditor(props: {
             <button
               type="button"
               className="schema-foldout-toggle"
+              aria-expanded={open}
               onClick={() => setFoldOpen((s) => ({ ...s, [b.name]: !open }))}
             >
-              {open ? '▾' : '▸'} {b.name}
+              <span aria-hidden>{open ? '▾' : '▸'}</span> {b.name}
             </button>
             {open && b.fields.map(renderWidget)}
           </div>
