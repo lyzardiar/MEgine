@@ -3749,11 +3749,12 @@ export function Timeline(props: {
       {loading && <div className="timeline-message">Loading Animation Clip…</div>}
       {error && <div className="timeline-message error">{error}</div>}
       {clip && (
-        <div
-          className={`timeline-workspace${detailsOpen ? ' details-open' : ''}`}
-          ref={workspaceRef}
-          tabIndex={0}
-          onKeyDown={handleTimelineKeyDown}
+    <div
+      className={`timeline-workspace${detailsOpen ? ' details-open' : ''}`}
+      ref={workspaceRef}
+      tabIndex={0}
+      aria-label="Animation Timeline workspace"
+      onKeyDown={handleTimelineKeyDown}
           onKeyUp={handleTimelineKeyUp}
           onPointerDown={(event) => {
             const target = event.target as HTMLElement;
@@ -4032,10 +4033,11 @@ export function Timeline(props: {
                 aria-label="Animation dope sheet"
                 title="Ctrl + Wheel to zoom · Shift + Wheel to scroll horizontally"
               >
-                <div
-                  className="timeline-lanes"
-                  ref={dopeSheetContentRef}
-                  style={{ width: `${zoom * 100}%` }}
+              <div
+                className="timeline-lanes"
+                ref={dopeSheetContentRef}
+                aria-label="Animation Timeline lanes"
+                style={{ width: `${zoom * 100}%` }}
                   onPointerDown={beginTimelineMarquee}
                   onPointerMove={moveTimelineMarquee}
                   onPointerUp={(event) => finishTimelineMarquee(event, true)}

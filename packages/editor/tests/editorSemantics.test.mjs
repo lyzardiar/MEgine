@@ -16,9 +16,11 @@ test('core editor navigation exposes named semantic controls', () => {
   const hierarchyMenu = panel('HierarchyContextMenu.tsx');
   const objectPicker = panel('ObjectPicker.tsx');
   const spriteEditor = panel('SpriteEditor.tsx');
+  const timeline = panel('Timeline.tsx');
   const rectTransform = panel('RectTransformEditor.tsx');
   const schemaFields = panel('SchemaFieldEditor.tsx');
   const fieldEditors = panel('uiFieldEditors.tsx');
+  const dialogHost = fs.readFileSync(path.join(root, 'src', 'EditorDialogHost.tsx'), 'utf8');
 
   assert.match(project, /role="tree" aria-label="Project folders"/);
   assert.match(project, /tabIndex=\{0\} aria-label="Project browser"/);
@@ -67,6 +69,9 @@ test('core editor navigation exposes named semantic controls', () => {
   assert.match(hierarchyMenu, /role="menu"\s*aria-label="Hierarchy context menu"/);
   assert.match(objectPicker, /aria-label=\{`Close \$\{props\.title\}`\}/);
   assert.match(spriteEditor, /aria-label="Select sprite slice from preview"\s*onClick=/);
+  assert.match(timeline, /aria-label="Animation Timeline workspace"/);
+  assert.match(timeline, /aria-label="Animation Timeline lanes"/);
+  assert.match(dialogHost, /aria-label=\{`\$\{dialog\.title\} dialog keyboard controls`\}/);
 });
 
 test('complex authoring rows identify their selectable semantic regions', () => {
@@ -99,6 +104,8 @@ test('complex authoring rows identify their selectable semantic regions', () => 
   );
   assert.match(sequencer, /aria-label=\{`\$\{group\.name\} group lane`\}/);
   assert.match(sequencer, /aria-label=\{`\$\{track\.name\} \$\{track\.type\} lane`\}/);
+  assert.match(sequencer, /aria-label="Sequencer workspace"/);
+  assert.match(sequencer, /aria-label="Scrub Sequencer time ruler"/);
   assert.match(
     avatarMask,
     /aria-label=\{`Delete Avatar Mask path \$\{index \+ 1\}`\}/,
@@ -150,4 +157,6 @@ test('editor window failures stay isolated and dragging always releases global s
   assert.match(host, /window\.removeEventListener\('blur', onUp\)/);
   assert.match(host, /document\.body\.classList\.remove\('ew-dragging'\)/);
   assert.match(host, /aria-label=\{`Resize \$\{win\.title\} window`\}/);
+  assert.match(host, /aria-label=\{`\$\{win\.title\} window`\}/);
+  assert.match(host, /aria-label=\{`Move \$\{win\.title\} window`\}/);
 });

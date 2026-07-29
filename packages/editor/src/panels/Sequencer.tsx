@@ -3033,6 +3033,7 @@ export function Sequencer(props: SequencerProps) {
     <div
       className={`timeline-panel sequencer-panel${trackDragVisual || groupDragVisual ? ' track-dragging' : ''}`}
       tabIndex={0}
+      aria-label="Sequencer workspace"
       onPointerDownCapture={(event) => {
         finishKeyboardNudge();
         const target = event.target as HTMLElement;
@@ -3284,6 +3285,7 @@ export function Sequencer(props: SequencerProps) {
             <div className="sequencer-track-header">Tracks</div>
             <div
               className="sequencer-ruler"
+              aria-label="Scrub Sequencer time ruler"
               onPointerDown={(event) => {
                 if (event.button !== 0) return;
                 rulerScrubPointer.current = event.pointerId;

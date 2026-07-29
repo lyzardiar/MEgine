@@ -58,6 +58,7 @@ export function EditorDialogHost() {
     <div
       className="editor-dialog-backdrop"
       data-editor-dialog-id={dialog.id}
+      aria-label={`${dialog.title} dialog keyboard controls`}
       onKeyDown={(event) => {
         if (event.key === 'Escape' && dialog.cancelLabel) {
           event.preventDefault();

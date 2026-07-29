@@ -116,6 +116,7 @@ function WindowFrame(props: { win: EditorWindowInstance }) {
   return (
     <div
       className="editor-window"
+      aria-label={`${win.title} window`}
       style={{
         left: geom.x,
         top: geom.y,
@@ -124,7 +125,11 @@ function WindowFrame(props: { win: EditorWindowInstance }) {
       }}
       onMouseDown={() => focusEditorWindow(win.id)}
     >
-      <div className="editor-window-title" onMouseDown={onTitleDown}>
+      <div
+        className="editor-window-title"
+        aria-label={`Move ${win.title} window`}
+        onMouseDown={onTitleDown}
+      >
         <span className="editor-window-title-text">{win.title}</span>
         <button
           type="button"

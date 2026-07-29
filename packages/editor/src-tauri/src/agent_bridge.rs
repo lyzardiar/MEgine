@@ -2461,6 +2461,7 @@ const WINDOW_UI_SNAPSHOT_SCRIPT: &str = r#"
     const tag = element.localName;
     if (/^h[1-6]$/.test(tag)) return 'heading';
     if (tag === 'button') return 'button';
+    if (tag === 'summary') return 'button';
     if (tag === 'a' && element.hasAttribute('href')) return 'link';
     if (tag === 'textarea') return 'textbox';
     if (tag === 'select') return element.multiple ? 'listbox' : 'combobox';
@@ -2989,6 +2990,7 @@ const WINDOW_UI_INTERACTION_SCRIPT: &str = r#"
     if (explicit) return explicit;
     if (/^h[1-6]$/.test(target.localName)) return 'heading';
     if (target.localName === 'button') return 'button';
+    if (target.localName === 'summary') return 'button';
     if (target.localName === 'a' && target.hasAttribute('href')) return 'link';
     if (target.localName === 'textarea') return 'textbox';
     if (target.localName === 'select') return target.multiple ? 'listbox' : 'combobox';
