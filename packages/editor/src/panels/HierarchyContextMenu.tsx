@@ -42,6 +42,8 @@ export function HierarchyContextMenu(props: {
     getMenuRevision,
   );
   const gameObjectItems = listMenuItems('GameObject');
+  const canEditSelection =
+    props.menuContext.store.mode === 'edit' && props.hasSelection;
 
   useLayoutEffect(() => {
     const rect = ref.current?.getBoundingClientRect();
@@ -119,13 +121,18 @@ export function HierarchyContextMenu(props: {
         }
       }}
     >
-      <Item action="cut" label="Cut" hint="Ctrl+X" disabled={!props.hasSelection} />
+      <Item action="cut" label="Cut" hint="Ctrl+X" disabled={!canEditSelection} />
       <Item action="copy" label="Copy" hint="Ctrl+C" disabled={!props.hasSelection} />
-      <Item action="paste" label="Paste" hint="Ctrl+V" />
+      <Item
+        action="paste"
+        label="Paste"
+        hint="Ctrl+V"
+        disabled={!props.menuContext.store.canPaste}
+      />
       <div className="sep" />
       <Item action="rename" label="Rename" hint="F2" disabled={!props.hasSelection} />
-      <Item action="duplicate" label="Duplicate" hint="Ctrl+D" disabled={!props.hasSelection} />
-      <Item action="delete" label="Delete" hint="Del" disabled={!props.hasSelection} />
+      <Item action="duplicate" label="Duplicate" hint="Ctrl+D" disabled={!canEditSelection} />
+      <Item action="delete" label="Delete" hint="Del" disabled={!canEditSelection} />
       <div className="sep" role="separator" />
       <PopupMenuItems
         entries={gameObjectItems}

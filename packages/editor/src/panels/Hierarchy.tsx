@@ -153,16 +153,13 @@ export function Hierarchy(props: {
     const s = props.store;
     switch (action) {
       case 'cut':
-        s.cutSelection();
-        props.onLog('Cut');
+        if (s.cutSelection()) props.onLog('Cut');
         break;
       case 'copy':
-        s.copySelection();
-        props.onLog('Copy');
+        if (s.copySelection()) props.onLog('Copy');
         break;
       case 'paste':
-        s.paste();
-        props.onLog('Paste');
+        if (s.paste()) props.onLog('Paste');
         break;
       case 'rename': {
         const id = s.selected;
@@ -173,12 +170,10 @@ export function Hierarchy(props: {
         break;
       }
       case 'duplicate':
-        s.duplicateSelection();
-        props.onLog('Duplicate');
+        if (s.duplicateSelection() != null) props.onLog('Duplicate');
         break;
       case 'delete':
-        s.deleteSelection();
-        props.onLog('Delete');
+        if (s.deleteSelection()) props.onLog('Delete');
         break;
       case 'selectChildren':
         s.selectChildren();

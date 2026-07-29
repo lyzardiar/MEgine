@@ -35,7 +35,12 @@ export function MenuBar(props: {
   onExit: () => void;
   onUndo: () => void;
   onRedo: () => void;
+  onCut: () => void;
+  onCopy: () => void;
+  onPaste: () => void;
   onDuplicate: () => void;
+  onDelete: () => void;
+  onSelectAll: () => void;
   store: EditorStore;
   selectedIds: readonly number[];
   onRefresh: () => void;
@@ -161,6 +166,8 @@ export function MenuBar(props: {
     refresh: props.onRefresh,
     log: props.onLog,
   };
+  const hasSelection = props.selectedIds.length > 0;
+  const canEditSelection = props.store.mode === 'edit' && hasSelection;
 
   return (
     <div className="menu-bar" ref={root} role="menubar" aria-label="Main menu">
@@ -262,8 +269,55 @@ export function MenuBar(props: {
                 Redo{props.store.redoLabel ? ` ${props.store.redoLabel}` : ''} <span className="hint">Ctrl+Shift+Z</span>
               </button>
               <div className="sep" />
-              <button type="button" role="menuitem" onClick={() => { props.onDuplicate(); setOpen(null); }}>
+              <button
+                type="button"
+                role="menuitem"
+                disabled={!canEditSelection}
+                onClick={() => { props.onCut(); setOpen(null); }}
+              >
+                Cut <span className="hint">Ctrl+X</span>
+              </button>
+              <button
+                type="button"
+                role="menuitem"
+                disabled={!hasSelection}
+                onClick={() => { props.onCopy(); setOpen(null); }}
+              >
+                Copy <span className="hint">Ctrl+C</span>
+              </button>
+              <button
+                type="button"
+                role="menuitem"
+                disabled={!props.store.canPaste}
+                onClick={() => { props.onPaste(); setOpen(null); }}
+              >
+                Paste <span className="hint">Ctrl+V</span>
+              </button>
+              <div className="sep" role="separator" />
+              <button
+                type="button"
+                role="menuitem"
+                disabled={!canEditSelection}
+                onClick={() => { props.onDuplicate(); setOpen(null); }}
+              >
                 Duplicate <span className="hint">Ctrl+D</span>
+              </button>
+              <button
+                type="button"
+                role="menuitem"
+                disabled={!canEditSelection}
+                onClick={() => { props.onDelete(); setOpen(null); }}
+              >
+                Delete <span className="hint">Del</span>
+              </button>
+              <div className="sep" role="separator" />
+              <button
+                type="button"
+                role="menuitem"
+                disabled={props.store.getVisibleFlat().length === 0}
+                onClick={() => { props.onSelectAll(); setOpen(null); }}
+              >
+                Select All <span className="hint">Ctrl+A</span>
               </button>
               {editItems.length > 0 && <div className="sep" role="separator" />}
               <PopupMenuItems

@@ -2652,28 +2652,28 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
       }
       if (ctrl && e.key.toLowerCase() === 'd') {
         e.preventDefault();
-        store.duplicateSelection();
-        log('Duplicate');
-        refresh();
+        if (store.duplicateSelection() != null) {
+          log('Duplicate');
+          refresh();
+        }
         return;
       }
       if (ctrl && e.key.toLowerCase() === 'c') {
         e.preventDefault();
-        store.copySelection();
-        log('Copy');
+        if (store.copySelection()) log('Copy');
         return;
       }
       if (ctrl && e.key.toLowerCase() === 'x') {
         e.preventDefault();
-        store.cutSelection();
-        log('Cut');
+        if (store.cutSelection()) log('Cut');
         return;
       }
       if (ctrl && e.key.toLowerCase() === 'v') {
         e.preventDefault();
-        store.paste();
-        log('Paste');
-        refresh();
+        if (store.paste()) {
+          log('Paste');
+          refresh();
+        }
         return;
       }
       if (ctrl && e.key.toLowerCase() === 'a') {
@@ -2684,9 +2684,10 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
       }
       if (e.key === 'Delete' || e.key === 'Backspace') {
         e.preventDefault();
-        store.deleteSelection();
-        log('Delete');
-        refresh();
+        if (store.deleteSelection()) {
+          log('Delete');
+          refresh();
+        }
         return;
       }
       if (e.key === 'F2') {
@@ -2771,9 +2772,29 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
           store.redo();
           refresh();
         }}
+        onCut={() => {
+          if (store.cutSelection()) log('Cut');
+        }}
+        onCopy={() => {
+          if (store.copySelection()) log('Copy');
+        }}
+        onPaste={() => {
+          if (!store.paste()) return;
+          log('Paste');
+          refresh();
+        }}
         onDuplicate={() => {
-          store.duplicateSelection();
+          if (store.duplicateSelection() == null) return;
           log('Duplicate');
+          refresh();
+        }}
+        onDelete={() => {
+          if (!store.deleteSelection()) return;
+          log('Delete');
+          refresh();
+        }}
+        onSelectAll={() => {
+          store.selectAllVisible();
           refresh();
         }}
         store={store}

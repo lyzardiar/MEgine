@@ -771,6 +771,9 @@ export function createEditorStore(undoService: EditorUndoService = createEditorU
     get canRedo() {
       return undoService.canRedo;
     },
+    get canPaste() {
+      return mode === 'edit' && (clipboard?.roots.length ?? 0) > 0;
+    },
     get undoLabel() {
       return undoService.undoLabel;
     },
@@ -1121,16 +1124,18 @@ export function createEditorStore(undoService: EditorUndoService = createEditorU
       return primarySelected();
     },
     deleteSelection() {
-      if (!selectedIds.length || mode !== 'edit') return;
+      if (!selectedIds.length || mode !== 'edit') return false;
       pushUndo('Delete GameObjects');
       const roots = selectedHierarchyRoots(editEntities, selectedIds);
       deleteIdsWithSubtree(roots);
+      return true;
     },
     deleteSelected() {
       this.deleteSelection();
     },
     copySelection() {
       const roots = selectedHierarchyRoots(editEntities, selectedIds);
+      if (!roots.length) return false;
       const payload: EntityRec[] = [];
       for (const r of roots) {
         for (const id of collectSubtreeIds(r)) {
@@ -1139,13 +1144,15 @@ export function createEditorStore(undoService: EditorUndoService = createEditorU
         }
       }
       clipboard = { roots: payload, cut: false };
+      return true;
     },
     cutSelection() {
-      this.copySelection();
-      if (clipboard) clipboard.cut = true;
+      if (mode !== 'edit' || !this.copySelection() || !clipboard) return false;
+      clipboard.cut = true;
+      return true;
     },
     paste() {
-      if (!clipboard || mode !== 'edit') return;
+      if (!clipboard?.roots.length || mode !== 'edit') return false;
       const parent = primarySelected();
       const oldIds = clipboard.roots.map((e) => e.entity);
       const clipSet = new Set(oldIds);
@@ -1156,8 +1163,9 @@ export function createEditorStore(undoService: EditorUndoService = createEditorU
           clipboard = null;
           selectedIds = roots;
           selectionAnchor = roots[roots.length - 1] ?? null;
+          return true;
         }
-        return;
+        return false;
       }
 
       pushUndo('Paste GameObjects');
@@ -1200,6 +1208,7 @@ export function createEditorStore(undoService: EditorUndoService = createEditorU
 
       selectedIds = actualRoots.map((r) => idMap.get(r.entity)!);
       selectionAnchor = selectedIds[selectedIds.length - 1] ?? null;
+      return true;
     },
     navigateVisible(delta: number) {
       const flat = getVisibleFlat().map((n) => n.entity.entity);
