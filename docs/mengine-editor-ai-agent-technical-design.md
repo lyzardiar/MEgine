@@ -366,6 +366,8 @@ Space 或方向/首尾/翻页键触发 checkbox、radio、单选 select、number
 
 语义快照 v26 保留表单控件和 `contenteditable` 的空字符串值；只有不具备值语义的元素才返回 `value: null`。因此 Agent 能稳定区分“文本框当前为空”和“该语义元素没有 value”，不会在读取未保存的空字段时丢失状态。
 
+语义快照 v27 的 revision guard 除 DOM Mutation 外，还监听 input/change、焦点、光标选区、滚动、toggle/reset、窗口与 VisualViewport 的 resize/scroll，以及 hash/popstate 和 History API URL 变化。这些不会可靠产生 DOM Mutation、但会改变快照值、选区、活动元素、滚动状态、bounds 或 URL 的更新，现在都会立即撤销旧 revision；精确内容分页、元素截图和后台写动作不能再用旧快照跨越这类状态变化。
+
 #### 4.2.7 资产与构建
 
 | command id | 映射 |

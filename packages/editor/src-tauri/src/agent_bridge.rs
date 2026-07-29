@@ -2820,18 +2820,56 @@ const WINDOW_UI_SNAPSHOT_SCRIPT: &str = r#"
   const revisionGuardKey = Symbol.for('mengine.agent.uiRevisionGuard');
   let revisionGuard = window[revisionGuardKey];
   if (!revisionGuard) {
-    revisionGuard = { epoch: 0, revisions: new Map() };
-    const observer = new MutationObserver(() => {
+    const invalidateRevisionGuard = () => {
       revisionGuard.epoch += 1;
       revisionGuard.revisions.clear();
-    });
+    };
+    revisionGuard = {
+      epoch: 0,
+      revisions: new Map(),
+      invalidate: invalidateRevisionGuard,
+    };
+    const observer = new MutationObserver(invalidateRevisionGuard);
     observer.observe(document, {
       attributes: true,
       characterData: true,
       childList: true,
       subtree: true,
     });
+    const documentInvalidationEvents = [
+      'input',
+      'change',
+      'selectionchange',
+      'focusin',
+      'focusout',
+      'scroll',
+      'toggle',
+      'reset',
+    ];
+    for (const eventName of documentInvalidationEvents) {
+      document.addEventListener(eventName, invalidateRevisionGuard, true);
+    }
+    const windowInvalidationEvents = ['resize', 'scroll', 'hashchange', 'popstate'];
+    for (const eventName of windowInvalidationEvents) {
+      window.addEventListener(eventName, invalidateRevisionGuard, true);
+    }
+    window.visualViewport?.addEventListener('resize', invalidateRevisionGuard, true);
+    window.visualViewport?.addEventListener('scroll', invalidateRevisionGuard, true);
+    const originalHistoryMethods = {};
+    for (const methodName of ['pushState', 'replaceState']) {
+      const originalMethod = window.history[methodName];
+      originalHistoryMethods[methodName] = originalMethod;
+      window.history[methodName] = function (...args) {
+        const previousUrl = window.location.href;
+        const result = originalMethod.apply(this, args);
+        if (window.location.href !== previousUrl) invalidateRevisionGuard();
+        return result;
+      };
+    }
     revisionGuard.observer = observer;
+    revisionGuard.documentInvalidationEvents = documentInvalidationEvents;
+    revisionGuard.windowInvalidationEvents = windowInvalidationEvents;
+    revisionGuard.originalHistoryMethods = originalHistoryMethods;
     window[revisionGuardKey] = revisionGuard;
   }
   const normalize = (value, max = 400) => String(value ?? '')
@@ -3652,7 +3690,7 @@ const WINDOW_UI_SNAPSHOT_SCRIPT: &str = r#"
   const activeElementSelector =
     document.activeElement instanceof Element ? selectorFor(document.activeElement) : null;
   const revisionSource = JSON.stringify({
-    version: 26,
+    version: 27,
     title: document.title,
     url: location.href,
     viewport,
@@ -3666,7 +3704,7 @@ const WINDOW_UI_SNAPSHOT_SCRIPT: &str = r#"
     revisionHash ^= BigInt(revisionSource.charCodeAt(index));
     revisionHash = BigInt.asUintN(64, revisionHash * 0x100000001b3n);
   }
-  const snapshotRevision = `ui-v26-${candidates.length}-${
+  const snapshotRevision = `ui-v27-${candidates.length}-${
     revisionHash.toString(16).padStart(16, '0')
   }`;
   const guardedElements = new Map(semanticElements.map((semanticElement, index) => [
@@ -3687,7 +3725,7 @@ const WINDOW_UI_SNAPSHOT_SCRIPT: &str = r#"
   }
   const elements = semanticElements.slice(offset, offset + limit);
   return {
-    version: 26,
+    version: 27,
     snapshotRevision,
     title: document.title,
     url: location.href,
