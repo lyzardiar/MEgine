@@ -59,14 +59,14 @@ test('whole-window agent capture is background-safe and addressable by window la
   assert.match(rust, /const offset = __MENGINE_OFFSET__/);
   assert.match(rust, /semanticElements\.slice\(offset, offset \+ limit\)/);
   assert.match(rust, /new Map\(candidates\.map/);
-  assert.match(rust, /const snapshotRevision = `ui-v15-/);
+  assert.match(rust, /const snapshotRevision = `ui-v16-/);
   assert.match(rust, /revisionHash = BigInt\.asUintN\(64/);
   assert.match(rust, /const semanticScopeFor = \(element\) =>/);
   assert.match(rust, /role === 'tabpanel'/);
   assert.match(rust, /const qualifiedNameFor = \(scope, name\) =>/);
   assert.match(rust, /scope: scope \|\| null/);
   assert.match(rust, /qualifiedName: qualifiedNameFor\(scope, name\) \|\| null/);
-  assert.equal([...rust.matchAll(/version: 16,/g)].length, 2);
+  assert.equal([...rust.matchAll(/version: 17,/g)].length, 2);
   assert.match(rust, /if \(tag === 'article'\) return 'article'/);
   assert.match(rust, /if \(tag === 'aside'\) return 'complementary'/);
   assert.match(
@@ -88,6 +88,11 @@ test('whole-window agent capture is background-safe and addressable by window la
   );
   assert.match(rust, /state\.open = element\.hasAttribute\('open'\)/);
   assert.match(rust, /if \(nativeModal \|\| state\.modal === undefined\) state\.modal = nativeModal/);
+  assert.match(rust, /const selectionFor = \(element\) =>/);
+  assert.match(rust, /selectionStart: element\.selectionStart/);
+  assert.match(rust, /selectionEnd: element\.selectionEnd/);
+  assert.match(rust, /selectionDirection: element\.selectionDirection \|\| 'none'/);
+  assert.match(rust, /if \(selection\) Object\.assign\(state, selection\)/);
   assert.match(
     rust,
     /element\.localName === 'summary'[\s\S]*element\.parentElement instanceof HTMLDetailsElement/,
@@ -225,6 +230,12 @@ test('whole-window agent capture is background-safe and addressable by window la
   assert.match(interactionScript, /'stepMismatch'/);
   assert.match(interactionScript, /target\.value\.length < target\.minLength/);
   assert.match(interactionScript, /return constraintFailure\(validityIssues\)/);
+  assert.match(interactionScript, /const applyTextControlDefault = \(\) =>/);
+  assert.match(interactionScript, /element\.setSelectionRange\(/);
+  assert.match(interactionScript, /inputType = 'deleteContentBackward'/);
+  assert.match(interactionScript, /inputType = 'deleteContentForward'/);
+  assert.match(interactionScript, /inputType = 'insertLineBreak'/);
+  assert.match(interactionScript, /const handledTextDefault = acceptsDefault && applyTextControlDefault\(\)/);
   assert.match(bridge, /if \(result\.constraintViolation\) \{/);
   assert.match(bridge, /validityIssues: result\.validityIssues \?\? \[\]/);
   assert.match(interactionScript, /is blocked by active modal dialog/);

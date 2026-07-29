@@ -76,17 +76,17 @@ test('query schemas accept documented read shapes and reject malformed or extra 
     }],
     ['window.ui_content', {
       selector: '#labelled-control',
-      expectedSnapshotRevision: 'ui-v15-100-0123456789abcdef',
+      expectedSnapshotRevision: 'ui-v16-100-0123456789abcdef',
       field: 'name',
     }],
     ['window.ui_content', {
       selector: '#described-control',
-      expectedSnapshotRevision: 'ui-v15-100-0123456789abcdef',
+      expectedSnapshotRevision: 'ui-v16-100-0123456789abcdef',
       field: 'description',
     }],
     ['window.ui_content', {
       selector: '#projection',
-      expectedSnapshotRevision: 'ui-v15-100-0123456789abcdef',
+      expectedSnapshotRevision: 'ui-v16-100-0123456789abcdef',
       field: 'options',
     }],
     ['window.ui_content', {

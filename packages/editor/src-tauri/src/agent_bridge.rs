@@ -2975,6 +2975,30 @@ const WINDOW_UI_SNAPSHOT_SCRIPT: &str = r#"
     'details',
     'errormessage',
   ];
+  const selectionFor = (element) => {
+    const password = element instanceof HTMLInputElement
+      && String(element.type).toLowerCase() === 'password';
+    if (
+      password
+      || !(
+        element instanceof HTMLInputElement
+        || element instanceof HTMLTextAreaElement
+      )
+    ) return null;
+    try {
+      if (
+        typeof element.selectionStart !== 'number'
+        || typeof element.selectionEnd !== 'number'
+      ) return null;
+      return {
+        selectionStart: element.selectionStart,
+        selectionEnd: element.selectionEnd,
+        selectionDirection: element.selectionDirection || 'none',
+      };
+    } catch {
+      return null;
+    }
+  };
   const stateFor = (element, modalBlocked = false) => {
     const state = {
       disabled: effectivelyDisabled(element),
@@ -3022,6 +3046,8 @@ const WINDOW_UI_SNAPSHOT_SCRIPT: &str = r#"
       if (state.valuemax === undefined) state.valuemax = String(element.max);
       if (state.valuenow === undefined) state.valuenow = String(element.value);
     }
+    const selection = selectionFor(element);
+    if (selection) Object.assign(state, selection);
     return state;
   };
   const descriptionFor = (element, name) => normalize(
@@ -3139,7 +3165,7 @@ const WINDOW_UI_SNAPSHOT_SCRIPT: &str = r#"
   const activeElementSelector =
     document.activeElement instanceof Element ? selectorFor(document.activeElement) : null;
   const revisionSource = JSON.stringify({
-    version: 16,
+    version: 17,
     title: document.title,
     url: location.href,
     viewport,
@@ -3153,7 +3179,7 @@ const WINDOW_UI_SNAPSHOT_SCRIPT: &str = r#"
     revisionHash ^= BigInt(revisionSource.charCodeAt(index));
     revisionHash = BigInt.asUintN(64, revisionHash * 0x100000001b3n);
   }
-  const snapshotRevision = `ui-v15-${candidates.length}-${
+  const snapshotRevision = `ui-v16-${candidates.length}-${
     revisionHash.toString(16).padStart(16, '0')
   }`;
   const guardedElements = new Map(semanticElements.map((semanticElement, index) => [
@@ -3174,7 +3200,7 @@ const WINDOW_UI_SNAPSHOT_SCRIPT: &str = r#"
   }
   const elements = semanticElements.slice(offset, offset + limit);
   return {
-    version: 16,
+    version: 17,
     snapshotRevision,
     title: document.title,
     url: location.href,
@@ -4281,7 +4307,133 @@ const WINDOW_UI_INTERACTION_SCRIPT: &str = r#"
     if (requestedKey === 'Enter' || requestedKey === 'Space') {
       dispatchKeyboard('keypress');
     }
-    if (acceptsDefault && (requestedKey === 'Enter' || requestedKey === 'Space')) {
+    const applyTextControlDefault = () => {
+      const password = element instanceof HTMLInputElement
+        && String(element.type).toLowerCase() === 'password';
+      if (
+        password
+        || !(
+          element instanceof HTMLInputElement
+          || element instanceof HTMLTextAreaElement
+        )
+        || modifiers.ctrlKey
+        || modifiers.altKey
+        || modifiers.metaKey
+      ) return false;
+      let start;
+      let end;
+      let direction;
+      try {
+        start = element.selectionStart;
+        end = element.selectionEnd;
+        direction = element.selectionDirection || 'none';
+      } catch {
+        return false;
+      }
+      if (typeof start !== 'number' || typeof end !== 'number') return false;
+      const length = element.value.length;
+      const setSelection = (anchor, focus) => {
+        const boundedAnchor = Math.max(0, Math.min(length, anchor));
+        const boundedFocus = Math.max(0, Math.min(length, focus));
+        const nextDirection = boundedFocus < boundedAnchor
+          ? 'backward'
+          : boundedFocus > boundedAnchor
+            ? 'forward'
+            : 'none';
+        element.setSelectionRange(
+          Math.min(boundedAnchor, boundedFocus),
+          Math.max(boundedAnchor, boundedFocus),
+          nextDirection,
+        );
+      };
+      const anchor = direction === 'backward' ? end : start;
+      const focus = direction === 'backward' ? start : end;
+      if (requestedKey === 'ArrowLeft') {
+        if (modifiers.shiftKey) setSelection(anchor, focus - 1);
+        else {
+          const caret = start === end ? Math.max(0, start - 1) : start;
+          setSelection(caret, caret);
+        }
+        return true;
+      }
+      if (requestedKey === 'ArrowRight') {
+        if (modifiers.shiftKey) setSelection(anchor, focus + 1);
+        else {
+          const caret = start === end ? Math.min(length, end + 1) : end;
+          setSelection(caret, caret);
+        }
+        return true;
+      }
+      if (requestedKey === 'Home') {
+        const lineStart = element instanceof HTMLTextAreaElement
+          ? element.value.lastIndexOf('\n', Math.max(0, focus - 1)) + 1
+          : 0;
+        if (modifiers.shiftKey) setSelection(anchor, lineStart);
+        else setSelection(lineStart, lineStart);
+        return true;
+      }
+      if (requestedKey === 'End') {
+        const nextLineBreak = element instanceof HTMLTextAreaElement
+          ? element.value.indexOf('\n', focus)
+          : -1;
+        const lineEnd = nextLineBreak < 0 ? length : nextLineBreak;
+        if (modifiers.shiftKey) setSelection(anchor, lineEnd);
+        else setSelection(lineEnd, lineEnd);
+        return true;
+      }
+      let replacement = null;
+      let replacementStart = start;
+      let replacementEnd = end;
+      let inputType = 'insertText';
+      if (requestedKey === 'Space') {
+        replacement = ' ';
+      } else if (
+        requestedKey === 'Enter'
+        && element instanceof HTMLTextAreaElement
+      ) {
+        replacement = '\n';
+        inputType = 'insertLineBreak';
+      } else if (requestedKey === 'Backspace') {
+        if (element.readOnly) return true;
+        if (start === end && start === 0) return true;
+        inputType = 'deleteContentBackward';
+        if (start === end) replacementStart = Math.max(0, start - 1);
+        replacement = '';
+      } else if (requestedKey === 'Delete') {
+        if (element.readOnly) return true;
+        if (start === end && end === length) return true;
+        inputType = 'deleteContentForward';
+        if (start === end) replacementEnd = Math.min(length, end + 1);
+        replacement = '';
+      } else {
+        return false;
+      }
+      if (element.readOnly) return true;
+      const prototype = element instanceof HTMLInputElement
+        ? HTMLInputElement.prototype
+        : HTMLTextAreaElement.prototype;
+      const setter = Object.getOwnPropertyDescriptor(prototype, 'value')?.set;
+      if (!setter) return false;
+      const nextValue = `${element.value.slice(0, replacementStart)}${
+        replacement
+      }${element.value.slice(replacementEnd)}`;
+      const caret = replacementStart + replacement.length;
+      setter.call(element, nextValue);
+      element.setSelectionRange(caret, caret, 'none');
+      element.dispatchEvent(new InputEvent('input', {
+        bubbles: true,
+        inputType,
+        data: replacement || null,
+      }));
+      if (element.isConnected) element.setSelectionRange(caret, caret, 'none');
+      return true;
+    };
+    const handledTextDefault = acceptsDefault && applyTextControlDefault();
+    if (
+      acceptsDefault
+      && !handledTextDefault
+      && (requestedKey === 'Enter' || requestedKey === 'Space')
+    ) {
       const role = roleForName(element);
       const activates = (
         element instanceof HTMLButtonElement
@@ -4298,7 +4450,6 @@ const WINDOW_UI_INTERACTION_SCRIPT: &str = r#"
         requestedKey === 'Enter'
         && (
           element instanceof HTMLInputElement
-          || element instanceof HTMLTextAreaElement
           || element instanceof HTMLSelectElement
         )
       ) {
